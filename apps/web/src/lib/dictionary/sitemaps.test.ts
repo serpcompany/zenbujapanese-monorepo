@@ -12,7 +12,8 @@ import {
 vi.mock('@opennextjs/cloudflare', () => ({ getCloudflareContext: async () => ({ ctx: {} }) }))
 vi.mock('./data', () => ({ dictionaryService: vi.fn() }))
 
-/** A dictionary service with `count` words numbered from 1, in sitemaps of `perSitemap`. */
+const rouCompatibilityIdeograph = '廊'
+
 function fakeService(count: number, perSitemap: number) {
   const build = 'abc123'
   const entSeqs = Array.from({ length: count }, (_, index) => index + 1)
@@ -39,9 +40,7 @@ function fakeService(count: number, perSitemap: number) {
   return {
     wordSitemaps: async () => ({ data: sitemaps, build }),
     sitemapWords,
-    // 㐂 has no meanings or readings, so the service leaves it out. U+F928 is the compatibility
-    // ideograph 廊, which must keep its own URL.
-    indexableKanji: async () => ({ data: ['見', '廊', '𠀋'], build }),
+    indexableKanji: async () => ({ data: ['見', rouCompatibilityIdeograph, '𠀋'], build }),
     conjugationSitemap: async () => ({
       data: [
         { entSeq: 1259290, slug: '見る', forms: ['plain/past', 'polite/past'] },
@@ -117,7 +116,6 @@ describe('with a dictionary service', () => {
     expect(urls[0]).toBe('https://zenbujapanese.com/dictionary/%E8%A6%8B%E3%82%8B-1/')
     expect(urls[1]).toBe('https://zenbujapanese.com/dictionary/w&amp;2-2/')
     expect(urls.at(-1)).toBe('https://zenbujapanese.com/dictionary/w&amp;20000-20000/')
-    // Two requests of 10,000, then one that finds nothing more.
     expect(service.sitemapWords).toHaveBeenCalledTimes(3)
     expect(service.sitemapWords).toHaveBeenNthCalledWith(2, 1, 10_000, 10_000)
 

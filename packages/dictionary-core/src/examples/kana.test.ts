@@ -1,8 +1,7 @@
 import { describe, expect, test } from 'vitest'
 import { toHiragana, toKatakana } from './kana'
 
-// Read from Foundation's applyingTransform(.hiraganaToKatakana, reverse:) on macOS.
-describe('ICU Hiragana-Katakana', () => {
+describe('ICU Hiragana-Katakana, as Foundation’s applyingTransform gives it on macOS', () => {
   test.each([
     ['ミル', 'みる'],
     ['ヴァ', 'ゔぁ'],

@@ -1,6 +1,3 @@
-// The service's entry point: checks the files, starts the worker threads, and serves HTTP. It
-// answers /healthz with 503 until every thread has loaded, and stops cleanly on SIGTERM.
-
 import { serve } from '@hono/node-server'
 import type { ConjugationSitemapWord } from '@zenbu/dictionary-core/artifact/conjugation-sitemap'
 import { createApp } from './app'
@@ -8,6 +5,9 @@ import { readConfig } from './config'
 import { verifyFiles } from './load'
 import { errorFields, log } from './log'
 import { computeConjugationSitemap, createPool } from './pool'
+
+const conjugationSitemapAttempts = 3
+const conjugationSitemapRetryDelayMs = 60_000
 
 async function main() {
   const config = readConfig()
@@ -32,19 +32,22 @@ async function main() {
   pool.ready.then(
     () => {
       log('info', 'ready', { ms: Math.round(performance.now() - started) })
-      // Once the answering threads are up, work out the conjugations sitemap in a thread of its
-      // own; its route answers 503 until then. A failure is retried, a minute later.
-      const compute = (attempt: number) =>
+      const attemptConjugationSitemap = (attempt: number) =>
         computeConjugationSitemap(files).then(
           sitemap => {
             conjugationSitemap = sitemap
           },
           error => {
             log('error', 'the conjugations sitemap failed', { attempt, ...errorFields(error) })
-            if (attempt < 3) setTimeout(() => compute(attempt + 1), 60_000).unref()
+            if (attempt < conjugationSitemapAttempts) {
+              setTimeout(
+                () => attemptConjugationSitemap(attempt + 1),
+                conjugationSitemapRetryDelayMs
+              ).unref()
+            }
           }
         )
-      compute(1)
+      attemptConjugationSitemap(1)
     },
     error => {
       log('error', 'a worker failed to load', errorFields(error))

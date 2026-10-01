@@ -15,7 +15,6 @@ const found: SearchExamplesData = {
   examplesPath: '/dictionary/search/%E9%A3%9F%E3%81%B9%E3%82%8B/examples.json?build=b1'
 }
 
-/** A request for `segment`'s examples, the segment as the browser sends it. */
 function get(segment: string, query = '') {
   return GET(
     new NextRequest(`https://zenbujapanese.com/dictionary/search/${segment}/examples.json${query}`)

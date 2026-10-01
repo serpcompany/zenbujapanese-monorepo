@@ -8,12 +8,6 @@ import { gateEnabled, gateService, recordedCases } from './gate'
 import { readRenderedPage, visibleText } from './rendered'
 import { SearchResults } from './search-results'
 
-// Renders the search results page's component to HTML, as the server does, and reads back what a
-// reader sees: the sections in order, the Example Sentences row, the reading refinement, the kanji
-// row, each row's headword, meaning, and chips, and the no-results state. The first tests render
-// fixed data; the last renders what the dictionary service answers for cases of the app-recorded
-// search-results.json suite (./gate.ts).
-
 const render = (data: SearchData) => renderToStaticMarkup(<SearchResults data={data} />)
 
 function word(
@@ -112,7 +106,6 @@ describe('the search results page', () => {
     })
     const page = readRenderedPage(html)
     expect(page.kanji).toEqual({ character: '要', text: 'KANJI pivot, vital point, key point' })
-    // The kanji row comes before the first word.
     expect(html.indexOf('data-kanji-row')).toBeLessThan(html.indexOf('data-result-row'))
     expect(page.rows.map(row => row.headword)).toEqual(['必要'])
   })
@@ -217,10 +210,6 @@ interface SuiteCase {
   }[]
 }
 
-/**
- * The rendered cases: romaji with a refinement and its primary entry's examples, a kanji, English,
- * kana, 60 words, and no results.
- */
 const renderedQueries = ['iru', 'いる', '日', 'eat', 'かえる', 'い', 'qzxvkj']
 
 const suiteCases = recordedCases<SuiteCase>('search-results.json').filter(expected =>
@@ -234,7 +223,6 @@ describe.runIf(gateEnabled)('the rendered search results page matches the app', 
 
   test.each(suiteCases)('「$query」', async expected => {
     const { screen, kanjiHasPage } = (await gateService().search(expected.query)).data
-    // Linked as searchDictionary links them.
     const data = linkSearchScreen(screen, { dictionaryLoaded: true, kanjiHasPage })
     const html = render(data)
     const page = readRenderedPage(html)
@@ -270,7 +258,6 @@ describe.runIf(gateEnabled)('the rendered search results page matches the app', 
       summary: row.summary,
       chips: row.chips.map(chip => `${chip.name} ${chip.text}`)
     }))
-    // The page renders every word at once, and counts them.
     expect(page.rows).toEqual(expectedRows)
     expect(visibleText(html)).toMatch(new RegExp(`^${expectedRows.length} words? for `))
   })

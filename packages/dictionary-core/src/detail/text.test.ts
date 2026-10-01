@@ -3,8 +3,7 @@ import { graphemeCount, graphemes } from './text'
 
 const character = (code: number) => String.fromCharCode(code)
 
-/** Every code unit graphemeCount counts without segmenting. */
-const singleUnits = [
+const unitsCountedWithoutSegmenting = [
   [0x20, 0x7e],
   [0x3000, 0x3029],
   [0x3030, 0x3098],
@@ -16,7 +15,7 @@ const singleUnits = [
 
 describe('graphemeCount', () => {
   test('counts as the segmenter does wherever it skips it: no such unit joins a neighbor', () => {
-    const joined = singleUnits.filter(code => {
+    const joined = unitsCountedWithoutSegmenting.filter(code => {
       const unit = character(code)
       return (
         graphemes(unit + unit).length !== 2 ||
@@ -27,9 +26,7 @@ describe('graphemeCount', () => {
     expect(joined).toEqual([])
   })
 
-  test('segments text with anything else', () => {
-    // か and a combining voiced sound mark are one Character, as are CR LF and a flag's two
-    // regional indicators.
+  test('segments anything else: a combining mark, CR LF, or a flag joins its neighbor', () => {
     expect(graphemeCount(`か${character(0x3099)}`)).toBe(1)
     expect(graphemeCount(`ﾀ${character(0xff9e)}`)).toBe(1)
     expect(graphemeCount('a\r\nb')).toBe(3)

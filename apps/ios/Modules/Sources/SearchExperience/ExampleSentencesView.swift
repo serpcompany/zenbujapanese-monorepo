@@ -62,12 +62,7 @@ struct ExampleSentencesView: View {
   }
 }
 
-/// What the Example Sentences screen that Search's examples row opens lists, and which words it
-/// accents. `ExampleSentencesView`, `LinkedJapaneseText`, and the example-search conformance suite
-/// all use it, so the suite follows any change to the screen.
 enum ExampleSentencesScreen {
-  /// The primary entry's examples when the results use them (a deinflected or romaji query),
-  /// otherwise the sentences that contain the query. A failed retrieval lists nothing.
   static func examples(
     query: SearchQuery,
     highlightedEntry: DictionaryEntry?,
@@ -80,8 +75,6 @@ enum ExampleSentencesScreen {
     return (try? await client.search(query)) ?? []
   }
 
-  /// Unicode-scalar ranges of every occurrence of the query in `text`, which the screen compares
-  /// with each word's scalar range to accent the words that make up the query.
   static func queryScalarRanges(in text: String, query: String) -> [Range<Int>] {
     let scalars = Array(text.unicodeScalars)
     let query = Array(query.unicodeScalars)
@@ -115,9 +108,6 @@ private struct ExampleSentenceRow: View {
   }
 }
 
-/// Example Sentences as list sections, one card per sentence, with loading and empty states.
-/// Word Detail and the conjugated form screen share it, so examples look and behave the same
-/// wherever they appear. Place it directly in a `List`, not inside a `Section`.
 struct ExampleSentenceSections: View {
   let title: String
   let examples: [ExampleSentence]
@@ -131,8 +121,6 @@ struct ExampleSentenceSections: View {
   let openWord: (DictionaryEntry) -> Void
 
   var body: some View {
-    // Keep loaded rows during refresh so a native Back transition does not collapse the
-    // List and discard its scroll position.
     if isLoading && examples.isEmpty {
       Section(title) { ProgressView("Loading examples") }
     } else if examples.isEmpty {
@@ -153,26 +141,19 @@ struct ExampleSentenceSections: View {
             openWord: openWord
           )
         } header: {
-          // Only the first card carries the heading; the rest follow as their own cards.
           if index == 0 { Text(title) }
         }
-        // Consecutive examples belong together, so they use the system's compact spacing
-        // rather than the default gap between unrelated sections.
         .listSectionSpacing(.compact)
       }
     }
   }
 }
 
-/// The shared learner-visible geometry for Japanese/translation rows with a speech action.
-/// Dedicated Examples expose one native word-selection menu, while Word Detail retains its
-/// evidence-backed inline current-word treatment.
 struct JapaneseExampleRowContent: View {
   @Environment(ReadingAidPreferences.self) private var readingAidPreferences
   enum Presentation {
     case dedicated(index: Int)
     case wordDetail(index: Int)
-    /// An example on a conjugated form's screen, highlighting that form.
     case conjugatedForm(ConjugatedForm.Kind, index: Int)
 
     struct WordSelectorConfiguration {

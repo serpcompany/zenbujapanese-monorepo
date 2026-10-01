@@ -1,22 +1,6 @@
-/**
- * Worker configuration for zenbujapanese.com. The top level is local development; `staging` and
- * `production` are deployed environments. Bindings are not inherited, so each environment repeats
- * them. See docs/agents/web.md.
- *
- * - `DB`, the site's database: every environment shares its schema (src/db/schema.ts),
- *   migrations (drizzle/), and ledger (SERP Drizzle + D1 standard).
- * - `DICTIONARY_API_URL`, the dictionary service every dictionary page reads (apps/dictionary-api,
- *   ADR 0009), with the `DICTIONARY_API_TOKEN` secret. Local development leaves it empty and reads
- *   fixtures, unless .dev.vars names a service. Each deployed environment names its service at
- *   deploy time: `Web deploy` replaces that environment's DICTIONARY_API_URL placeholder with the
- *   GitHub environment's DICTIONARY_API_URL variable.
- * A deployed environment never falls back to local fixtures: a missing or failing service fails
- * the request (src/lib/dictionary/data.ts).
- */
 {
   "$schema": "node_modules/wrangler/config-schema.json",
   "name": "zenbujapanese-web",
-  // worker.ts wraps OpenNext's .open-next/worker.js to answer retired word URLs with 410.
   "main": "worker.ts",
   "compatibility_date": "2026-09-28",
   "compatibility_flags": ["nodejs_compat", "global_fetch_strictly_public"],
@@ -55,8 +39,6 @@
     },
     "production": {
       "vars": { "SITE_ENV": "production", "DICTIONARY_API_URL": "DICTIONARY_API_URL" },
-      // Keep workers_dev: CI smoke-tests the workers.dev URL, which skips the zone's bot
-      // protection. www redirects to the apex in next.config.ts.
       "workers_dev": true,
       "routes": [
         { "pattern": "zenbujapanese.com", "custom_domain": true },

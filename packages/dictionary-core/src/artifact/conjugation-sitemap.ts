@@ -1,11 +1,3 @@
-// The conjugations sitemap's contents (#511): every word with a conjugation table, and the form
-// screens search engines may index, those that list examples (`indexedForms` in
-// ../detail/conjugation.ts). Whether a form lists examples is what its screen would list
-// (`Dictionary.formSentences`), worked out for every spelling at once rather than by a search
-// each: one pass over the sentences finds every spelling's, `rankJapanese` ranks them as the
-// app's Japanese search does, and the first in which Kuromoji reads the form as one word decides.
-// The service runs it once, in the background, when it starts.
-
 import { conjugationTable, indexedForms } from '../detail/conjugation'
 import { wordSlug } from '../detail/slug'
 import type { Tokenize } from '../examples/morphology'
@@ -16,12 +8,9 @@ import { allExampleSentences, rankJapanese, searchExamples } from './example-sea
 import { usesFormIn } from './word-examples'
 import { jmdictSource } from './words'
 
-/** A word with a conjugation table, and its form screens search engines may index. */
 export interface ConjugationSitemapWord {
   entSeq: number
-  /** The slug the word's pages live under. */
   slug: string
-  /** Each indexed form screen, as `<register>/<kind>` (`plain/past`). */
   forms: string[]
 }
 
@@ -30,24 +19,9 @@ interface TrieNode {
   surface: string | null
 }
 
-/**
- * The spellings in `surfaces` that a conjugated form's screen lists examples for: the same answer
- * as `formSentences(surface).length > 0`, for all of them in one pass. As there, each searches as
- * normalized and keeps the sentences that contain it as written.
- */
-export function formsWithExamples(
-  db: ArtifactDatabase,
-  surfaces: readonly string[],
-  tokenize: Tokenize
-): Set<string> {
-  const found = new Set<string>()
-  const forms = [...new Set(surfaces)]
-    .map(surface => ({ surface, query: normalizeQuery(surface) }))
-    .filter(form => form.query !== '')
-
-  // Each sentence's analysis once, however many forms ask.
+function memoizedUsesForm(tokenize: Tokenize) {
   const answers = new Map<number, Map<string, boolean>>()
-  const uses = (sentence: ExampleSentence, surface: string) => {
+  return (sentence: ExampleSentence, surface: string) => {
     let known = answers.get(sentence.rowid)
     if (!known) {
       known = new Map()
@@ -60,20 +34,11 @@ export function formsWithExamples(
     }
     return answer
   }
+}
 
-  // A form whose query is ASCII searches English, as its screen does; there are few.
-  for (const { surface, query } of forms.filter(form => isASCII(form.query))) {
-    const searched = searchExamples(db, query)
-    if (typeof searched !== 'string' && searched.sentences.some(s => uses(s, surface))) {
-      found.add(surface)
-    }
-  }
-
-  // Every other form: the sentences that contain its query, found by walking a trie of the
-  // queries from each position of each sentence, as `instr` finds them one query at a time.
-  const japanese = forms.filter(form => !isASCII(form.query))
+function queryTrie(queries: Iterable<string>): TrieNode {
   const root: TrieNode = { next: new Map(), surface: null }
-  for (const query of new Set(japanese.map(form => form.query))) {
+  for (const query of queries) {
     let node = root
     for (let index = 0; index < query.length; index++) {
       const unit = query.charCodeAt(index)
@@ -86,8 +51,16 @@ export function formsWithExamples(
     }
     node.surface = query
   }
+  return root
+}
+
+function sentencesContainingEach(
+  sentences: readonly ExampleSentence[],
+  queries: Iterable<string>
+): Map<string, ExampleSentence[]> {
+  const root = queryTrie(queries)
   const containing = new Map<string, ExampleSentence[]>()
-  for (const sentence of allExampleSentences(db)) {
+  for (const sentence of sentences) {
     const text = sentence.japanese
     const seen = new Set<string>()
     for (let start = 0; start < text.length; start++) {
@@ -103,18 +76,40 @@ export function formsWithExamples(
       }
     }
   }
-  // The app's first 100, in its order.
-  for (const { surface, query } of japanese) {
+  return containing
+}
+
+export function formsWithExamples(
+  db: ArtifactDatabase,
+  surfaces: readonly string[],
+  tokenize: Tokenize
+): Set<string> {
+  const found = new Set<string>()
+  const forms = [...new Set(surfaces)]
+    .map(surface => ({ surface, query: normalizeQuery(surface) }))
+    .filter(form => form.query !== '')
+  const uses = memoizedUsesForm(tokenize)
+
+  const englishForms = forms.filter(form => isASCII(form.query))
+  for (const { surface, query } of englishForms) {
+    const searched = searchExamples(db, query)
+    if (typeof searched !== 'string' && searched.sentences.some(s => uses(s, surface))) {
+      found.add(surface)
+    }
+  }
+
+  const japaneseForms = forms.filter(form => !isASCII(form.query))
+  const containing = sentencesContainingEach(
+    allExampleSentences(db),
+    new Set(japaneseForms.map(form => form.query))
+  )
+  for (const { surface, query } of japaneseForms) {
     const ranked = rankJapanese(query, containing.get(query) ?? []).sentences
     if (ranked.some(sentence => uses(sentence, surface))) found.add(surface)
   }
   return found
 }
 
-/**
- * Every JMdict word with a conjugation table, in `ent_seq` order, with the form screens search
- * engines may index.
- */
 export function conjugationSitemap(
   db: ArtifactDatabase,
   tokenize: Tokenize

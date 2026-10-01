@@ -1,18 +1,11 @@
+import { dictionaryContract } from '@zenbu/dictionary-core/artifact/contract'
 import { dictionaryService } from '@/lib/dictionary/data'
+import { errorFields, log } from '@/lib/log'
 
-// Never cached: it answers for the service as it is now.
 export const dynamic = 'force-dynamic'
 
 const headers = { 'Cache-Control': 'no-store', 'X-Robots-Tag': 'noindex' }
 
-/**
- * `/dictionary/service.json`: whether this site's Worker reaches its dictionary service, and the
- * build the service answers with. CI reads it through the site's workers.dev address (smoke.sh,
- * and the Dictionary API deploy workflow's await-build.sh), since Bot Fight Mode on the zone
- * challenges CI runners that ask the service directly; it also proves the Worker isn't
- * challenged. It answers 502 when the Worker can't reach the service, with the kind of failure,
- * and 404 where the site reads no service (local fixtures). Search engines skip it.
- */
 export async function GET() {
   try {
     const api = await dictionaryService()
@@ -23,10 +16,23 @@ export async function GET() {
       )
     }
     const health = await api.health()
-    return Response.json(health, { status: health.status === 200 ? 200 : 502, headers })
+    if (health.status !== 200) {
+      log('warn', 'dictionary_service_unhealthy', {
+        status: health.status,
+        mitigated: health.mitigated
+      })
+    } else if (health.contract !== dictionaryContract) {
+      log('warn', 'dictionary_contract_mismatch', {
+        service: health.contract,
+        site: dictionaryContract
+      })
+    }
+    return Response.json(
+      { ...health, siteContract: dictionaryContract },
+      { status: health.status === 200 ? 200 : 502, headers }
+    )
   } catch (error) {
-    // Only the kind of failure (a TypeError for no connection, a TimeoutError), never its message,
-    // which can name internal detail.
+    log('error', 'dictionary_service_unreachable', errorFields(error))
     const kind = error instanceof Error ? error.name : 'Error'
     return Response.json({ status: 0, build: null, error: kind }, { status: 502, headers })
   }

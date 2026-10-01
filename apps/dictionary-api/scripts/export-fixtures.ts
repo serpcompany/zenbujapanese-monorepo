@@ -1,21 +1,10 @@
-// Exports the core's local fixtures (packages/dictionary-core/src/fixtures): the いる homographs,
-// the words written with 要, their conjugated forms' examples, and the kanji 要, in the detail
-// core's row shapes. They're read from
-// the app's bundled data by the code the service answers with, so their shapes can't drift from
-// what the website renders in staging and production. Local development without a dictionary
-// service renders them (docs/agents/web.md).
-//
-//     pnpm --filter zenbujapanese-dictionary-api fixtures [path/to/SearchExperience/Resources]
-//
-// The directory defaults to the app's bundled resources, which must be real files rather than
-// Git LFS pointers (`git lfs pull`).
-
 import { writeFileSync } from 'node:fs'
 import { join, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { Dictionary } from '@zenbu/dictionary-core/artifact/dictionary'
 import { kanjiCandidateRows, readKanji } from '@zenbu/dictionary-core/artifact/kanji'
 import { conjugationTable } from '@zenbu/dictionary-core/detail/conjugation'
+import { examplesPerPage } from '@zenbu/dictionary-core/detail/examples'
 import type {
   ExampleSentenceRow,
   FormExampleRows,
@@ -27,18 +16,14 @@ import { loadKuromoji } from '../src/kuromoji'
 const serviceDir = resolve(fileURLToPath(new URL('.', import.meta.url)), '..')
 const output = join(serviceDir, '../../packages/dictionary-core/src/fixtures')
 
-/** The いる homographs and the words written with 要, as JMdict entry numbers. */
 const entryNumbers = [
   1546640, 1577980, 1465580, 1391500, 1322180, 1587780, 1609600, 2188720, 1546750, 1546680, 1546850,
   1612150
 ]
-/** Kanji with a fixture page. */
 const kanjiCharacters = ['要']
-/** Each fixture word's and form's first examples: two pages' worth, so a page can load more. */
-const examplesPerWord = 50
+const examplesPerWord = 2 * examplesPerPage
 
-/** One row per line, so a regenerated fixture diffs by row. Biome leaves these files alone. */
-function write(name: string, rows: unknown[]) {
+function writeOneRowPerLine(name: string, rows: unknown[]) {
   const lines = rows.map(row => JSON.stringify(row)).join(',\n')
   writeFileSync(join(output, name), `[\n${lines}\n]\n`)
 }
@@ -77,14 +62,14 @@ for (const entSeq of entryNumbers) {
     }
   }
 }
-write('words.json', words)
+writeOneRowPerLine('words.json', words)
 examples.sort((left, right) => left.example.entSeq - right.example.entSeq)
-write(
+writeOneRowPerLine(
   'word-examples.json',
   examples.map(({ example }) => example)
 )
 const forms = [...formExamples.keys()].sort()
-write(
+writeOneRowPerLine(
   'form-examples.json',
   forms.flatMap(surface => (formExamples.get(surface) ?? []).map(({ example }) => example))
 )
@@ -92,11 +77,11 @@ const sentences = new Map<number, ExampleSentenceRow>()
 for (const { sentence } of [...examples, ...[...formExamples.values()].flat()]) {
   sentences.set(sentence.id, sentence)
 }
-write(
+writeOneRowPerLine(
   'example-sentences.json',
   [...sentences.values()].sort((left, right) => left.id - right.id)
 )
-write(
+writeOneRowPerLine(
   'example-counts.json',
   counts.sort((left, right) => left.entSeq - right.entSeq)
 )
@@ -111,12 +96,10 @@ for (const character of kanjiCharacters) {
   }
   const { words: _ordered, ...rest } = rows
   kanji.push(rest)
-  // Every candidate, which the fixtures order as the service does (fixtures/index.ts).
   kanjiWords.push(
     ...kanjiCandidateRows(artifact.db, character).map(word => ({ kanji: character, ...word }))
   )
 }
-// Word rows, most of the data, go one per line in their own file, keyed by their kanji.
-write('kanji.json', kanji)
-write('kanji-words.json', kanjiWords)
+writeOneRowPerLine('kanji.json', kanji)
+writeOneRowPerLine('kanji-words.json', kanjiWords)
 artifact.close()

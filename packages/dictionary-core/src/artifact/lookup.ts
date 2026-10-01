@@ -1,7 +1,3 @@
-// `LookupClient.entriesMatchingForm` on the artifact: `rankedJapanese(_, exactFormOnly: true)`,
-// the app's exact-form query (`exactJapaneseCandidateSQL`), ranked and deduplicated by the search
-// port. Example linking (../examples/linking.ts) looks every word up with it.
-
 import type { LinkEntry } from '../examples/linking'
 import { isASCII, normalizeQuery } from '../search/query'
 import { type JapaneseRow, rankJapanese } from '../search/search'
@@ -31,15 +27,8 @@ const exactJapaneseCandidateSQL = `SELECT lower(hex(e.id)) AS id, e.source_recor
       )
     )`
 
-/** Looks a form up, remembering each form's entries, as the app's analyzer caches them. */
 export type FormLookup = (form: string) => LinkEntry[]
 
-/**
- * The entries with a written or reading form equal to the normalized form, in search order, one
- * per equivalence group: the leading entry's reading and parts of speech, under its group's
- * lowest ID. The app looks an ASCII form up in English, which linking doesn't port; such a form
- * finds nothing here, and the conformance suites would show a word the app links differently.
- */
 export function formLookup(
   db: ArtifactDatabase,
   cache: Cache<string, LinkEntry[]> = new Map()

@@ -3,13 +3,6 @@
 import { type ReactNode, useCallback, useEffect, useRef, useState } from 'react'
 import { Button } from '@/components/ui/button'
 
-// A list that renders its first items with the page, then loads the next ones from a JSON route
-// named for the dictionary build the page came from, as the list scrolls into view or with the
-// button: a word page's, a search's, and a conjugated form's example sentences. Each
-// request asks for the items from the number it already shows, so none repeats or is skipped. A
-// route that no longer knows the build (a deploy since the page loaded) answers 404, and the list
-// offers a reload instead.
-
 export interface LoadMoreLabels {
   more: string
   loading: string
@@ -17,19 +10,12 @@ export interface LoadMoreLabels {
   reload: string
 }
 
-/** What a request for the next page found. */
 export type NextPage<T> =
   | { kind: 'items'; items: T[] }
-  /** The route no longer knows the page's build, or has nothing more for it. */
   | { kind: 'stale' }
   | { kind: 'failed' }
-  /** Another request for the list is still running, so this one asked for nothing. */
   | { kind: 'busy' }
 
-/**
- * Fetches a list's next page, unless one is already on its way: a click on Load more and the
- * list scrolling into view can ask at once, for the same position, and only the first may fetch.
- */
 export async function loadNextPage<T>(
   inFlight: { current: boolean },
   url: string,
@@ -58,20 +44,15 @@ export function useLoadMore<T>({
   read
 }: {
   initial: T[]
-  /** How many items the list has in all. */
   total: number
-  /** The JSON route, with its query string; `&from=<n>` is added. */
   path: string
-  /** The items in the route's response. */
   read: (response: unknown) => T[]
 }) {
   const [items, setItems] = useState(initial)
   const [loading, setLoading] = useState(false)
   const [failed, setFailed] = useState(false)
-  // The dictionary was updated since the page loaded, so its next items are another list's.
   const [stale, setStale] = useState(false)
   const end = useRef<HTMLDivElement>(null)
-  // Set synchronously, unlike `loading`, so a click and the observer can't both fetch.
   const inFlight = useRef(false)
   const hasMore = items.length < total
 
@@ -103,7 +84,6 @@ export function useLoadMore<T>({
   return { items, loading, failed, stale, hasMore, end, loadMore }
 }
 
-/** What follows the list: the Load more button the list also scrolls into, or the reload offer. */
 export function LoadMoreFooter({
   state,
   labels

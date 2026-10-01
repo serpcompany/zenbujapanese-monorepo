@@ -15,8 +15,9 @@ describe('compareStrings', () => {
     expect(sign('0a1b', '0a1c')).toBe(-1)
     expect(sign('食べる', '食べ')).toBe(1)
     expect(sign('abc', 'abc')).toBe(0)
-    // U+FF21 (Ａ) is a smaller scalar than U+20000 (𠀀), though its UTF-16 unit is larger than the
-    // high surrogate that starts 𠀀.
+  })
+
+  test('orders a smaller scalar first even when its UTF-16 unit is larger than a surrogate', () => {
     const fullwidthA = String.fromCodePoint(0xff21)
     const supplementary = String.fromCodePoint(0x20000)
     expect(sign(`x${fullwidthA}`, `x${supplementary}`)).toBe(-1)
@@ -31,9 +32,11 @@ describe('normalizeQuery', () => {
     expect(normalizeQuery('食べ　る')).toBe('食べ る')
   })
 
-  test('splits words where Swift does, by grapheme', () => {
-    // NFKC turns ゛ into a space and a combining mark, one grapheme that starts with whitespace.
+  test('drops a grapheme that starts with whitespace, as NFKC makes ゛', () => {
     expect(normalizeQuery('あ゛')).toBe('あ')
+  })
+
+  test('splits words where Swift does, by grapheme', () => {
     expect(normalizeQuery('eat\u0085now')).toBe('eat now')
     expect(normalizeQuery('﻿taberu')).toBe('﻿taberu')
   })

@@ -40,7 +40,9 @@ Downloads are unversioned, so the snapshots used are pinned in
 - **Merge (TV & Movies):** mean list percentile; a word missing from a list counts as that list's
   last position.
 - **Mapping:** `FrequencyPackMappingV2` joins on dictionary form **and** reading, honoring
-  JMdict reading restrictions. It is additive: V1 packs keep their pinned V1 policy.
+  JMdict reading restrictions. It is additive: V1 packs keep their pinned V1 policy, and a row
+  without a reading maps exactly as in V1. A unique reading-constrained match is labelled
+  `exactWrittenReading` or `exactReading`.
 
 Reading-aware mapping cuts ambiguous rows by 30–41% on every list (Novels: 12,859 → 7,600) and
 resolves homographs such as 方 (ほう/かた) that V1 must skip.

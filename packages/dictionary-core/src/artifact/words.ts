@@ -1,8 +1,3 @@
-// A word page's rows, read from the artifact when the page is asked for (ADR 0009): the entry as
-// the app's `selectedColumns` read it (LookupClient.swift), its sense restrictions, its related
-// words resolved to JMdict entry numbers, UniDic's and CompoundPitch's pitch, its frequency
-// evidence, and the kanji in its forms. Each word page is one JMdict entry, by its number.
-
 import type {
   EntryRow,
   FormRow,
@@ -16,10 +11,8 @@ import type { ArtifactDatabase } from './database'
 import { frequencyByEntry, frequencyQueries } from './frequency'
 import type { KanjiData } from './kanji-data'
 
-/** The source every artifact entry comes from (`entries.source_identity`). */
 export const jmdictSource = 'edrdg.jmdict'
 
-/** LookupClient.swift's SearchFormKind. */
 const formKinds: Record<number, 'written' | 'reading'> = { 0: 'written', 1: 'reading' }
 
 interface EntryRecord {
@@ -52,20 +45,15 @@ const entrySelect = `SELECT lower(hex(e.id)) AS id, e.source_record_id, e.headwo
     lower(hex(e.semantic_fingerprint)) AS fingerprint
   FROM entries e LEFT JOIN compound_pitch.entry_pitch c ON c.entry_id = e.id`
 
-/** A word page's entry and what its links need. */
 export interface WordRecord {
   entry: EntryRow
   frequency: FrequencyRow[]
   kanji: KanjiGlossRow[]
-  /** `semantic_fingerprint`, lowercase hex: entries that share it are one word to the app. */
   fingerprint: string
-  /** The slug its page lives under. */
   slug: string
-  /** Each related word's page slug, by `ent_seq`. */
   relatedSlugs: Map<number, string>
 }
 
-/** The entry with this JMdict number, or null for a number the artifact doesn't hold. */
 export function readWord(
   db: ArtifactDatabase,
   kanji: KanjiData,
@@ -144,7 +132,6 @@ export function readWord(
   }
 }
 
-/** An entry's identity and what its page slug is made of. */
 export interface EntryIdentity {
   id: string
   entSeq: number
@@ -152,7 +139,6 @@ export interface EntryIdentity {
   reading: string
 }
 
-/** Entries by lowercase hex Language Reference ID. */
 export function entriesById(
   db: ArtifactDatabase,
   ids: readonly string[]
@@ -171,7 +157,6 @@ export function entriesById(
   )
 }
 
-/** Each word page's slug, by JMdict number, for the numbers the artifact holds. */
 export function slugsByEntSeq(
   db: ArtifactDatabase,
   entSeqs: readonly number[]
@@ -186,10 +171,6 @@ export function slugsByEntSeq(
   return new Map(rows.map(row => [row.ent_seq, wordSlug(row.headword, row.reading)]))
 }
 
-/**
- * The entry a word's page shows examples for, as `LookupClient.entry(_:)` opens it: its
- * equivalence group's (entries sharing its semantic fingerprint) with the lowest ID.
- */
 export function canonicalEntryId(db: ArtifactDatabase, fingerprint: string): string {
   const [row] = db.all<{ id: string }>(
     `SELECT lower(hex(id)) AS id FROM entries WHERE semantic_fingerprint = unhex(?)

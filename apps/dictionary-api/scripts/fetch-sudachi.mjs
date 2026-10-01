@@ -1,10 +1,4 @@
 #!/usr/bin/env node
-// Downloads the Sudachi dictionary the app installs (SudachiDict Core, pinned in the app's
-// LanguageTechnologyPackCatalog.json), checks the download and the extracted system.dic against
-// the catalog's SHA-256s, and writes it to <out> (default .sudachi/system_core.dic). A file
-// already there that checks out is kept.
-//
-//   node scripts/fetch-sudachi.mjs [resources dir] [out]
 
 import { createHash } from 'node:crypto'
 import { existsSync, mkdirSync, readFileSync, renameSync, writeFileSync } from 'node:fs'
@@ -38,14 +32,20 @@ if (sha256(archive) !== pack.downloadSHA256) {
   throw new Error(`The download is ${sha256(archive)}, not ${pack.downloadSHA256}`)
 }
 
-/** One entry of a ZIP archive (a wheel), found through its central directory. */
+const endOfCentralDirectorySignature = Buffer.from([0x50, 0x4b, 0x05, 0x06])
+const centralDirectoryHeaderSignature = 0x02014b50
+const storedMethod = 0
+const deflatedMethod = 8
+
 function zipEntry(zip, name) {
-  const end = zip.lastIndexOf(Buffer.from([0x50, 0x4b, 0x05, 0x06]))
+  const end = zip.lastIndexOf(endOfCentralDirectorySignature)
   if (end < 0) throw new Error('Not a ZIP archive')
   let offset = zip.readUInt32LE(end + 16)
   const count = zip.readUInt16LE(end + 10)
   for (let index = 0; index < count; index++) {
-    if (zip.readUInt32LE(offset) !== 0x02014b50) throw new Error('A damaged ZIP directory')
+    if (zip.readUInt32LE(offset) !== centralDirectoryHeaderSignature) {
+      throw new Error('A damaged ZIP directory')
+    }
     const method = zip.readUInt16LE(offset + 10)
     const compressed = zip.readUInt32LE(offset + 20)
     const nameLength = zip.readUInt16LE(offset + 28)
@@ -56,8 +56,8 @@ function zipEntry(zip, name) {
     if (entryName === name) {
       const start = local + 30 + zip.readUInt16LE(local + 26) + zip.readUInt16LE(local + 28)
       const data = zip.subarray(start, start + compressed)
-      if (method === 0) return data
-      if (method === 8) return inflateRawSync(data)
+      if (method === storedMethod) return data
+      if (method === deflatedMethod) return inflateRawSync(data)
       throw new Error(`${name} uses ZIP method ${method}`)
     }
     offset += 46 + nameLength + extraLength + commentLength

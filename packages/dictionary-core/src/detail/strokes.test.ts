@@ -3,8 +3,6 @@ import { fixtureKanjiRows } from '../fixtures'
 import { kanjiDetail } from './kanji'
 import { decodeStroke, strokeOrder } from './strokes'
 
-// KanjiStrokeOrderClient.swift's decodeStroke and its stroke-count check.
-
 describe('decodeStroke', () => {
   test('一: a move, then cubic curves, as an SVG path starting where the app puts its dot', () => {
     expect(decodeStroke([0, 11, 54.25, 1, 14.19, 54.87, 17.25, 55, 20.73, 54.75])).toEqual({

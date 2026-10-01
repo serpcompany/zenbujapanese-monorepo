@@ -1,17 +1,13 @@
 import SwiftUI
 
-/// A video the learner opened, most recent first.
 struct WatchedVideo: Codable, Hashable, Identifiable {
   let videoID: String
   var title: String?
-  /// The share of the captions' words the learner knew when last watched, from 0 to 1.
   var comprehension: Double?
   var author: String?
   var duration: TimeInterval?
-  /// Where the learner left off.
   var position: TimeInterval?
 
-  /// How far through the video the learner got, from 0 to 1.
   var progress: Double? {
     guard let duration, duration > 0, let position else { return nil }
     return min(max(position / duration, 0), 1)
@@ -21,7 +17,6 @@ struct WatchedVideo: Codable, Hashable, Identifiable {
   var thumbnailURL: URL? { URL(string: "https://i.ytimg.com/vi/\(videoID)/mqdefault.jpg") }
 }
 
-/// Recently watched videos, stored only on the device.
 @MainActor
 @Observable
 final class WatchHistory {
@@ -36,7 +31,6 @@ final class WatchHistory {
       .flatMap { try? JSONDecoder().decode([WatchedVideo].self, from: $0) } ?? []
   }
 
-  /// Moves the video to the top, applying any new details and keeping the rest.
   func record(_ videoID: YouTubeVideoID, update: (inout WatchedVideo) -> Void = { _ in }) {
     var video =
       videos.first { $0.videoID == videoID.rawValue } ?? WatchedVideo(videoID: videoID.rawValue)
@@ -57,7 +51,6 @@ final class WatchHistory {
   }
 }
 
-/// Lists recently watched videos, and searches for or opens a video from a browser-style bar.
 struct WatchAndListenView: View {
   @State private var query = ""
   let history: WatchHistory
@@ -76,7 +69,6 @@ struct WatchAndListenView: View {
           )
         }
       } else {
-        // Each video is its own card, like example sentences on a word's page.
         List {
           ForEach(history.videos.enumerated(), id: \.element.id) { index, video in
             Section {
@@ -114,7 +106,6 @@ struct WatchAndListenView: View {
     .onSubmit(of: .search, submit)
   }
 
-  /// Opens a pasted video link directly; searches for anything else.
   private func submit() {
     let text = query.trimmingCharacters(in: .whitespacesAndNewlines)
     guard !text.isEmpty else { return }
@@ -127,7 +118,6 @@ struct WatchAndListenView: View {
   }
 }
 
-/// Plays a video above its Japanese captions, following along as it plays.
 struct WatchSessionView: View {
   private enum CaptionState {
     case loading
@@ -138,13 +128,10 @@ struct WatchSessionView: View {
   @Environment(ReadingAidPreferences.self) private var readingAidPreferences
   @Environment(WordKnowledge.self) private var wordKnowledge
   @State private var player = YouTubePlayerController()
-  /// The dictionary word of every countable word occurrence in the captions.
   @State private var captionWords: [LanguageReferenceID]?
   @State private var captionState = CaptionState.loading
-  /// Whether on-device translation of missing lines has started for these captions.
   @State private var isTranslatingMissingLines = false
   @State private var missingTranslationTask: Task<Void, Never>?
-  /// The position the learner is dragging the scrubber to, until they let go.
   @State private var scrubPosition: TimeInterval?
   @Binding private var presentedWord: RecognizedWordSheetRequest?
 
@@ -171,7 +158,6 @@ struct WatchSessionView: View {
     VStack(spacing: 0) {
       YouTubePlayerView(videoID: videoID, controller: player)
         .aspectRatio(16 / 9, contentMode: .fit)
-        // Taps on the video play or pause instead of bringing up YouTube's overlays.
         .overlay {
           Color.clear
             .contentShape(.rect)
@@ -183,7 +169,6 @@ struct WatchSessionView: View {
       Divider()
       captions
     }
-    // The video names itself in the player, so the bar keeps room for Player's own actions.
     .navigationTitle("Player")
     .navigationBarTitleDisplayMode(.inline)
     .toolbar {
@@ -210,7 +195,6 @@ struct WatchSessionView: View {
     }
   }
 
-  /// Quick access to the reading aids Player uses, and to the video itself.
   private var playerMenu: some View {
     @Bindable var preferences = readingAidPreferences
     return Menu("More", systemImage: "ellipsis") {
@@ -233,7 +217,6 @@ struct WatchSessionView: View {
     .accessibilityIdentifier("watch.more")
   }
 
-  /// How much of the captions' vocabulary the learner knows, fixed above the caption cards.
   private var comprehensionSummary: some View {
     HStack(spacing: 8) {
       if let comprehension, let fraction = comprehension.fraction,
@@ -260,11 +243,8 @@ struct WatchSessionView: View {
     captionWords.map { Comprehension(words: $0, isKnown: wordKnowledge.isKnown) }
   }
 
-  /// Changes when the caption text changes, not when translations arrive.
   private var captionTextIdentity: [String] { loadedCues.map(\.text) }
 
-  /// Analyzes every caption line once, so comprehension covers the whole video, not just the
-  /// lines on screen.
   private func analyzeCaptionWords() async {
     let lines = captionTextIdentity
     guard !lines.isEmpty else { return }
@@ -344,7 +324,6 @@ struct WatchSessionView: View {
     }
   }
 
-  /// The line being spoken is the active card.
   private func cueRow(_ cue: SubtitleCue) -> some View {
     CaptionCard(
       text: cue.text,
@@ -355,7 +334,6 @@ struct WatchSessionView: View {
       openCandidates: { surface, candidates in open(surface, candidates: candidates, from: cue) },
       openWord: { entry in open(entry, from: cue) }
     )
-    // Tapping a line outside its words plays the video from that line.
     .contentShape(.rect)
     .onTapGesture { play(cue) }
     .accessibilityElement(children: .contain)
@@ -363,8 +341,6 @@ struct WatchSessionView: View {
     .accessibilityIdentifier("watch.cue.\(cue.id)")
   }
 
-  /// Transport controls between the player and the captions, in the style of a music app:
-  /// a scrubber with elapsed and remaining time, line-by-line skipping, and playback speed.
   private var playbackControls: some View {
     VStack(spacing: 0) {
       PlaybackScrubber(
@@ -372,7 +348,6 @@ struct WatchSessionView: View {
         duration: player.duration,
         scrub: { scrubPosition = $0 },
         commit: { position in
-          // A repeated line follows the scrubber to the line at its new position.
           if player.loop != nil,
             let cue = loadedCues.last(where: { $0.start <= position }) ?? loadedCues.first
           {
@@ -426,7 +401,6 @@ struct WatchSessionView: View {
     .disabled(player.state != .ready)
   }
 
-  /// Repeats the current line until turned off, like a music app's repeat-one.
   private var repeatButton: some View {
     let isOn = player.loop != nil
     return Button(isOn ? "Stop Repeating Line" : "Repeat Line", systemImage: "repeat.1") {
@@ -474,8 +448,6 @@ struct WatchSessionView: View {
     return []
   }
 
-  /// The line being spoken, the last line spoken during a pause between lines, or the first
-  /// line before any is spoken, so one line is always current.
   private func activeCue(in cues: [SubtitleCue]) -> SubtitleCue? {
     cues.last { $0.start <= player.currentTime } ?? cues.first
   }
@@ -483,11 +455,8 @@ struct WatchSessionView: View {
   private func step(by offset: Int) {
     let cues = loadedCues
     guard !cues.isEmpty else { return }
-    // Before the first line starts, "next" goes to the first line.
     let index = cues.last { $0.start <= player.currentTime }?.id ?? -1
     let target = cues[min(max(index + offset, 0), cues.count - 1)]
-    // While repeating, the new line repeats; while playing, keep playing from the new line;
-    // while paused, play just that line.
     if player.loop != nil {
       play(target)
     } else if player.isPlaying, !player.isPlayingOneStretch {
@@ -497,7 +466,6 @@ struct WatchSessionView: View {
     }
   }
 
-  /// Plays from a line; while repeating, that line becomes the one repeated.
   private func play(_ cue: SubtitleCue) {
     if player.loop != nil { player.setLoop(cue.start...cue.end) }
     player.seek(to: cue.start)
@@ -514,7 +482,6 @@ struct WatchSessionView: View {
     )
   }
 
-  /// Opens a word with several possible entries in the same sheet, which lists them to choose.
   private func open(_ surface: String, candidates: [DictionaryEntry], from cue: SubtitleCue) {
     player.pause()
     presentedWord = RecognizedWordSheetRequest(
@@ -532,7 +499,6 @@ struct WatchSessionView: View {
     isTranslatingMissingLines = false
     do {
       var captions = try await captionClient.captions(videoID)
-      // Apple translates each line itself, so YouTube's translations aren't shown.
       if readingAidPreferences.translationSource == .apple {
         captions = captions.withoutTranslations
       }
@@ -547,8 +513,6 @@ struct WatchSessionView: View {
     }
   }
 
-  /// Translates on the device the lines YouTube didn't translate. It uses only language assets
-  /// already installed, so it never interrupts playback to ask for a download.
   private func requestMissingTranslations() {
     let lines = loadedCues.filter { $0.translation == nil }
     guard readingAidPreferences.showsTranslations, !isTranslatingMissingLines, !lines.isEmpty
@@ -567,7 +531,6 @@ struct WatchSessionView: View {
   }
 
   private func setTranslation(_ translation: String, for cueID: Int, text: String) {
-    // The captions may have reloaded since translation began; only write to the same line.
     guard case .loaded(let captions) = captionState, captions.cues.indices.contains(cueID),
       captions.cues[cueID].text == text
     else { return }
@@ -594,8 +557,6 @@ struct WatchSessionView: View {
   }
 }
 
-/// A thin music-app scrubber: a 4pt track whose small knob grows while dragged. The stock
-/// slider's knob is too large for a player's progress bar.
 private struct PlaybackScrubber: View {
   let position: TimeInterval
   let duration: TimeInterval
@@ -642,7 +603,6 @@ private struct PlaybackScrubber: View {
   }
 }
 
-/// A recent video as a full-width card, like a video feed.
 private struct RecentVideoCard: View {
   let video: WatchedVideo
 
@@ -663,7 +623,6 @@ private struct RecentVideoCard: View {
   }
 }
 
-/// A video's thumbnail with its comprehension pill, length, and how far the learner watched.
 private struct RecentVideoThumbnail: View {
   let video: WatchedVideo
 
@@ -710,8 +669,6 @@ private struct RecentVideoThumbnail: View {
   }
 }
 
-/// The share of a video's words the learner knows, as a pill over its thumbnail, colored by how
-/// much is known, on a dark backing so it reads over any image.
 struct ComprehensionBadge: View {
   let fraction: Double
 
@@ -731,8 +688,6 @@ struct ComprehensionBadge: View {
     .accessibilityLabel("\(percent) of words known")
   }
 
-  /// Red under 25%, orange to 50%, yellow to 75%, and green from 75%, so a glance shows how
-  /// comfortable a video will be.
   static func color(for fraction: Double) -> Color {
     switch fraction {
     case ..<0.25: .red

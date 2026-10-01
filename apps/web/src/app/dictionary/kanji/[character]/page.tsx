@@ -18,7 +18,6 @@ import { decodeSegment, kanjiPath } from '@/lib/dictionary/urls'
 
 type Props = PageProps<'/dictionary/kanji/[character]'>
 
-/** `/dictionary/kanji/<character>/`: the exact character, never Unicode-normalized. */
 async function load(params: Props['params']) {
   const kanji = await getKanjiPage(decodeSegment((await params).character))
   if (!kanji) notFound()
@@ -43,7 +42,6 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   )
 }
 
-/** A character, linking to its kanji page when it has one. */
 function CharacterLink({ character, path }: { character: string; path: string | null }) {
   return path ? (
     <Link href={path} lang="ja" className="underline-offset-4 hover:underline">
@@ -70,7 +68,6 @@ export default async function KanjiPage({ params }: Props) {
               <span lang="ja" className="text-8xl leading-none">
                 {kanji.character}
               </span>
-              {/* KanjiDetailView's stroke-order button, under the glyph; none without a diagram. */}
               {kanji.strokeOrder ? (
                 <StrokeOrder character={kanji.character} order={kanji.strokeOrder} />
               ) : null}
@@ -183,7 +180,6 @@ export default async function KanjiPage({ params }: Props) {
                   ) : null}
                 </>
               )
-              // A word without a page yet (#465) shows without a link.
               return word.path ? (
                 <Item key={word.entSeq} render={<Link href={word.path} />}>
                   {content}

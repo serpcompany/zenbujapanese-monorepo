@@ -17,6 +17,9 @@ The website follows these SERP engineering standards:
 - [URL trailing slash](https://github.com/serpcompany/serp/blob/main/docs/engineering/standards/url-trailing-slash.md):
   pages end with a slash (`/about/`); files never do (`/robots.txt`, `/sitemap-index.xml`). The
   other form redirects (308) to it. `src/lib/pages.ts` is the single list of static page paths.
+  Next.js redirects `/robots.txt/` to `/robots.txt` itself, but OpenNext skips it, so
+  `next.config.ts` repeats that redirect, with a rule of its own for a top-level file, since
+  OpenNext can't fill an empty path parameter.
 
 Before writing Next.js code, read the relevant guide in `node_modules/next/dist/docs/`; this
 Next.js version differs from older releases (see `apps/web/AGENTS.md`).
@@ -24,8 +27,9 @@ Next.js version differs from older releases (see `apps/web/AGENTS.md`).
 ## Run and verify
 
 - `pnpm dev` runs Next.js in Node, with Cloudflare bindings (the local D1 database, and
-  `.dev.vars`) available through `getCloudflareContext()`. Dictionary pages show local fixtures
-  unless `.dev.vars` names a dictionary service (see Dictionary).
+  `.dev.vars`) available through `getCloudflareContext()` (`initOpenNextCloudflareForDev` in
+  `next.config.ts`). Dictionary pages show local fixtures unless `.dev.vars` names a dictionary
+  service (see Dictionary).
 - `pnpm preview` builds with OpenNext and serves the Worker in workerd, the production runtime.
   Check routes, redirects, and headers there before deploying.
 - `pnpm check` runs Biome, typecheck, `drizzle-kit check` (migration validation), Vitest, and
@@ -33,10 +37,54 @@ Next.js version differs from older releases (see `apps/web/AGENTS.md`).
   `apps/web/**` or the core.
 - `scripts/smoke.sh <base-url> <staging|production>` checks a running site's key pages, the
   `/privacy` redirect, that environment's search-engine rules, and dictionary pages against the
-  app-recorded suites.
+  app-recorded suites. Each check retries for about 15 seconds, since for a few seconds after a
+  deploy some requests still reach the previous Worker version.
 
 After changing routes, open the changed pages in `pnpm preview` and confirm `/sitemap-index.xml`
 lists every child sitemap and each child sitemap lists the new URLs.
+
+### How the build and checks are set up
+
+- Next.js compiles the core's TypeScript source with the site (`transpilePackages` in
+  `apps/web/next.config.ts`). `turbopack.root` is the workspace root, where the lockfile is:
+  Turbopack reads the core from there, and OpenNext finds the site's standalone build under it
+  (`.next/standalone/apps/web`).
+- The generated `apps/web/cloudflare-env.d.ts` imports `worker.ts`'s type, so `tsc` reads
+  `apps/web/worker.ts` although `tsconfig.json` leaves it out. Its import of
+  `.open-next/worker.js` resolves only after an OpenNext build; until then
+  `apps/web/open-next-worker.d.ts` types it, so a fresh checkout typechecks too.
+- `apps/web/vitest.config.ts` has two projects: `*.interaction.test.tsx` run in happy-dom, the
+  other tests in Node. Both set `__NEXT_TRAILING_SLASH`, so `next/link` draws links with their
+  trailing slash, as the build does with `trailingSlash`.
+- `apps/web/biome.json` allows `dangerouslySetInnerHTML` only in
+  `apps/web/src/components/dictionary/dictionary-breadcrumbs.tsx`, for its `BreadcrumbList`
+  JSON-LD, which escapes `<` so the JSON can't close its script tag (the Next.js JSON-LD guide).
+- The scripts in `apps/web/scripts/` read a command's output whole before searching it:
+  `curl | grep -q` fails under `pipefail` when grep exits early. Their `.shellcheckrc` turns off
+  ShellCheck's SC2329: `smoke.sh`'s checks are functions that `eventually` calls by name, which
+  ShellCheck reads as never called.
+
+### Code layout
+
+`apps/web/src` has three layers, and imports point down only. Biome's `noRestrictedImports`
+enforces each rule (`apps/web/biome.json`), with a message that says where the code belongs; tests
+may import anything.
+
+- `src/lib` and `src/db` hold the site's data and logic. They import no component, hook, or route.
+- `src/components` and `src/hooks` render what they're given. They import from `src/lib`, never a
+  route.
+- `src/app` holds the routes, which put the other two together.
+
+Only `src/lib/dictionary/data.ts` reads the dictionary service's client
+(`src/lib/dictionary/api.ts`), so every page gets the site's URLs and, in local development, the
+fixtures; the one other caller is `src/lib/dictionary/retired.ts`, which `worker.ts` runs before
+Next.js. The rendered-page gate's `src/components/dictionary/gate.ts` is test tooling and calls it
+directly.
+
+The site logs JSON lines through `log()` in `apps/web/src/lib/log.ts`: a level, a message that
+names the event (`dictionary_service_unreachable`), and fields. Workers Logs keep them. Nothing
+else calls `console`, which Biome's `noRestrictedGlobals` enforces outside tests, so every line an
+agent reads there has the same shape.
 
 ## Dictionary
 
@@ -44,25 +92,41 @@ Every search, word, kanji, example, sitemap, and retired entry comes from the di
 which runs the shared core on the app's own artifact (ADR 0009). Nothing is precomputed or
 imported: a new build of the dictionary is a new service image, and the site needs no deploy for
 it. Pages read the service only through `src/lib/dictionary/data.ts`, which runs the core's detail
-functions over the rows the service answers with and adds only the site's URLs.
+functions over the rows the service answers with and adds only the site's URLs. Its page functions
+are memoized per request (React's `cache`), so a page and its metadata ask the service once.
 
 `src/lib/dictionary/api.ts` is the service's client. It sends the `DICTIONARY_API_TOKEN` secret as
 a bearer token to `DICTIONARY_API_URL` and keeps each answer in the Worker's edge cache (the Cache
-API) for 10 minutes, keyed without the token; `pnpm dev` has no such cache. The service names the
-build that answered (`X-Dictionary-Build`: the artifact's SHA-256 prefix and the service's
-release), and URLs that load more of a page's list carry it, so a page open across a new build
-never mixes two builds' lists. A 404 means "not there" (no such word, kanji, or sitemap, or a
-search without examples); any other failure fails the request, so an outage never renders as an
-empty or noindexed page. A query or form over the service's 200 characters
+API) for 10 minutes, keyed without the token, since that cache is the Worker's own, not a shared
+HTTP cache; `pnpm dev` has no such cache. The service names the build that answered
+(`X-Dictionary-Build`: the artifact's SHA-256 prefix and the service's release), and URLs that
+load more of a page's list carry it, so a page open across a new build never mixes two builds'
+lists. Such a list (`apps/web/src/components/dictionary/load-more.tsx`) asks for the items from
+the number it shows, so none repeats or is skipped; a route that no longer knows the page's build
+answers 404, and the list offers a reload. Since those URLs name their build, browsers and the
+edge keep their answers for a day.
+
+The service names its contract too (`X-Dictionary-Contract`), the number of its answers' shapes
+([`dictionary-core.md`](dictionary-core.md), Rules). The site and the service deploy separately,
+in either order, so after a change to a shape they can disagree until the other deploys. The site
+still serves then: it logs `dictionary_contract_mismatch` (a warning, with both numbers), and
+leaves that answer out of the edge cache, whose key names the contract, so it reads the matching
+answer as soon as the service has it. A service that names no contract answers the first one.
+`/dictionary/service.json` shows both (`contract` and `siteContract`), and the smoke test warns
+when they differ. A 404 from the service means "not there" (no such word, kanji,
+or sitemap, or a search without examples); any other failure fails the request, so an outage never
+renders as an empty or noindexed page. A query or form over the service's 200 characters
 (`maximumQueryLength`) finds nothing without asking it.
 
 Only local development falls back to fixtures, when no `DICTIONARY_API_URL` is set, as in
 `pnpm dev` by default. Staging and production (`SITE_ENV` set) always name a service, and there a
 missing one fails the request rather than passing fixtures off as the dictionary.
+`apps/web/.gitignore` still lists `.search-d1/` and `.dictionary-d1/`, local copies of the
+dictionary from before the service; they're safe to delete.
 
 To run `pnpm dev` on the whole dictionary, start the service (see
-[`dictionary-api.md`](dictionary-api.md)) and name it in `apps/web/.dev.vars`, which is never
-committed:
+[`dictionary-api.md`](dictionary-api.md)) and name it in `.dev.vars` in `apps/web`, which is
+never committed:
 
 ```sh
 DICTIONARY_API_URL=http://localhost:8788
@@ -105,17 +169,29 @@ about five; the service and the edge cache keep the answer after that.
 
 `packages/dictionary-core/src/detail/` is the detail core: pure functions, `wordDetail(rows)` and
 `kanjiDetail(rows)`, that turn the service's rows (`detail/rows.ts`) into what the word and kanji
-pages render. Each function is a port of the app's Swift and names its source, so the pages show
-what the app shows (see the [product docs](../../apps/web/docs/product/dictionary.md)).
+pages render. Each function is a port of the app's Swift (the Swift sources section of
+[`dictionary-core.md`](dictionary-core.md) names each one's source), so the pages show what the
+app shows (see the [product docs](../../apps/web/docs/product/dictionary.md)).
 
 `getWordPage` and `getKanjiPage` ask the service once per page. The answer names the slug of
 every word the page links to and which kanji have pages, so every link goes to a page that
-exists. Word pages live under the slug the service names. A word page's later examples load from
+exists. Word pages live under the slug the service names, and a redirect to it percent-encodes
+the path (`encodeURI`), since a `Location` header is ASCII. A word page's later examples load from
 `/dictionary/examples/<ent_seq>.json?build=<build>&from=<n>` (`getWordExamples`).
+
+Next.js passes a page its segment encoded but `generateMetadata` decoded: search pages tell
+`searchQuery` which it has (`decoded`), and word and kanji pages read it with `decodeSegment`
+(`apps/web/src/lib/dictionary/urls.ts`), which accepts either. The JSON routes read their text
+from the request's path as sent and decode it once
+(`apps/web/src/lib/dictionary/example-routes.ts`); a search's route answers only a query already
+in its normal form, as its page asks for it.
 
 The part of speech opens the word's conjugation table in a sheet, as the app pushes it, and a
 form's screen there loads all its examples from `/dictionary/conjugations/<form>.json` when it
-opens. The table and each form also have their own pages, which the sheet links to
+opens; that URL names no build, so its answers are kept an hour rather than a day. The table's
+page keeps its register in the address (`#polite`) with `history.replaceState(null, …)`: with
+null state, Next.js's router adopts the new address instead of restoring the previous one. The
+table and each form also have their own pages, which the sheet links to
 (`/dictionary/<slug>-<ent_seq>/conjugations/` and `…/conjugations/<plain|polite>/<kind>/`,
 `getConjugationsPage` and `getConjugatedFormPage`): the service answers the word's rows without
 examples, the detail core conjugates them, and a form's page lists its examples by spelling, 25
@@ -127,7 +203,9 @@ Without a service, the rows are local fixtures in `packages/dictionary-core/src/
 exported from the app's bundled data by the service's own readers (`pnpm --filter
 zenbujapanese-dictionary-api fixtures`), so their shapes can't drift; each fixture word and each
 of its conjugated forms keeps its first 50 examples. Rerun it after changing a row shape; the
-fixture JSON is generated, so Biome skips it.
+fixture JSON is generated, so Biome skips it. A fixture search lists its words in
+`fixtureSearchOrder`, the app's order: each is its own match group, so the frequency re-sort
+keeps that order.
 
 ### The rendered-page gate
 
@@ -135,8 +213,13 @@ The service's own tests replay the app-recorded suites (`apps/ios/LanguageData/C
 through the core on the real artifact: search retrieval, search results, example search, word
 detail, and kanji detail, every example field included (see
 [`dictionary-api.md`](dictionary-api.md)). The site's gate then renders what a running service
-answers through the pages' components with React's server renderer, and reads back what a reader
-sees:
+answers through the pages' components with React's server renderer, linked by the same code as
+`data.ts` (`apps/web/src/lib/dictionary/page-example.ts` and
+`apps/web/src/lib/dictionary/results/links.ts`), and reads back what a reader sees, from the
+drawing itself (such as each pitch dot's position) rather than the data the page was given.
+`apps/web/src/components/dictionary/rendered.ts` and `rendered-word.ts` do the reading. Their one
+text extractor, `htmlText`, removes tags until none remain and leaves `&lt;` and `&gt;` encoded,
+so the text it reads never holds a `<` (`rendered.test.ts`). The gate's tests:
 
 - `components/dictionary/search-results.test.tsx` renders seven search-results cases: sections,
   the Example Sentences row, the refinement, the kanji row, and each row's headword, meaning,
@@ -183,13 +266,18 @@ zone) and the `CLOUDFLARE_ACCOUNT_ID` variable.
 
 The `deploy:*` and remote `db:migrate:*` scripts remain for a human-run emergency only.
 
+In `apps/web/wrangler.jsonc`, the top level is local development, and `env.staging` and
+`env.production` are the deployed environments. Wrangler doesn't pass bindings down to an
+environment, so each repeats them.
+
 ### Dictionary service
 
 Each deployed environment reads its own dictionary service:
 
 - The GitHub environment's `DICTIONARY_API_URL` variable is the service's HTTPS origin, such as
-  `https://dictionary.example.com`. `Web deploy` writes it over that environment's
-  `DICTIONARY_API_URL` placeholder in `wrangler.jsonc`.
+  `https://dictionary.example.com`, with no path, since the site asks for `/v1/…` from it.
+  `Web deploy` writes it over that environment's `DICTIONARY_API_URL` placeholder in
+  `wrangler.jsonc`.
 - The Worker's `DICTIONARY_API_TOKEN` secret is the token the service was started with. Set it by
   hand, and again to rotate it: `pnpm exec wrangler secret put DICTIONARY_API_TOKEN --env
   <staging|production>`.
@@ -198,18 +286,23 @@ Each deployed environment reads its own dictionary service:
 itself, since Bot Fight Mode on the zone challenges CI runners. The smoke test asks through the
 deployed site, at `/dictionary/service.json` (whether the site's Worker reaches its service, and
 the service's build; `Cache-Control: no-store`, `noindex`), and its dictionary pages then prove the
-token works. Bot Fight Mode challenges the Worker's request too when a CI runner sets it off,
-whatever headers the runner sends, and `/dictionary/service.json` then reports the challenge: the
-smoke test skips its dictionary checks with a warning, `/sitemap-index.xml` among them since it
-lists the service's sitemaps, and runs them in full from a machine Cloudflare doesn't challenge,
-such as your own. Visitors Cloudflare scores as bots get a 500 on dictionary pages and the sitemap
-index for the same reason.
+token works. The route answers 502 unless the service answers 200, with only the kind of failure
+when the Worker can't reach it (such as `TypeError` or `TimeoutError`), never its message, which
+can name internal detail; it answers 404 where the site reads no service. Bot Fight Mode challenges
+the Worker's request too when a CI runner sets it off, whatever headers the runner sends, and
+`/dictionary/service.json` then reports the challenge: the smoke test skips its dictionary checks
+with a warning, `/sitemap-index.xml` among them since it lists the service's sitemaps, and runs
+them in full from a machine Cloudflare doesn't challenge, such as your own. Visitors Cloudflare
+scores as bots get a 500 on dictionary pages and the sitemap index for the same reason.
 
 The site reads whatever service its environment names, so a new service deploys before a site
 change that needs it. The `Dictionary API deploy` workflow deploys the service itself
 ([`dictionary-api.md`](dictionary-api.md), Ship it), and `Web deploy` waits for the same commit's
 service deploy to an environment to sign and tag its image, before deploying the site there
-(`scripts/wait-for-dictionary-service.sh`).
+(`apps/web/scripts/wait-for-dictionary-service.sh`, which needs `GH_TOKEN` with read access to the
+repository's Actions). The server pulls a tagged image on its own schedule, so for a few minutes
+either one can be live without the other; the contract number makes a mismatch in that window
+visible (Dictionary, above).
 
 ### Environment configuration
 
@@ -244,7 +337,10 @@ redirects (308) to it in one hop, keeping the canonical trailing-slash form, thr
 
 - `www.zenbujapanese.com`, a custom domain on the production Worker.
 - Each Worker's workers.dev URL. Wrangler enables it by default; left alone it serves a crawlable
-  duplicate of the site.
+  duplicate of the site. Keep `workers_dev` on: CI smoke-tests these URLs.
+
+`redirectHostTo` lists its file rules before `/:path+`, which would also match files, and gives
+`/` a rule of its own, since OpenNext can't fill an empty path parameter.
 
 The zone is on the free plan, whose Bot Fight Mode blocks CI runners and cannot be skipped by WAF
 rules, so CI smoke-tests the workers.dev URLs with the `x-zenbu-smoke-test` header, which exempts a
@@ -291,12 +387,15 @@ sitemap at `/sitemap`.
 
 The dictionary's sitemaps (`src/lib/dictionary/sitemaps.ts`, ADR 0007) exist wherever the site
 has a dictionary service, staging and production, not local fixtures, so the index renders per
-request. `/dictionary/`, the search box, is a static page in `src/lib/pages.ts`:
+request (`force-dynamic`, as does `/sitemap.xml`, which crawlers look for by default): a build
+can't reach the service, so prerendering would fail the build or freeze an index without them.
+`/dictionary/`, the search box, is a static page in `src/lib/pages.ts`:
 
 - `/sitemaps/dictionary/<n>.xml`: every word page's canonical URL under its slug,
   percent-encoded, 50,000 to a file in `ent_seq` order (five files for 218,382 words). The
   service works out each file's `ent_seq` range once, and the site streams a file's words from it
-  10,000 at a time.
+  10,000 at a time (`urlSetStream`), so a file never sits whole in memory; a failure mid-stream
+  errors the response rather than ending it early.
 - `/sitemaps/kanji.xml`: the kanji pages search engines may index: those with meanings or
   readings.
 - `/sitemaps/conjugations.xml`: every conjugation table, then the form pages search engines may
@@ -306,8 +405,8 @@ request. `/dictionary/`, the search box, is a static page in `src/lib/pages.ts`:
   503 with `Retry-After`, which search engines retry.
 
 All three are kept in the Worker's edge cache (the Cache API) under the dictionary build the service
-names, so they change with the build, within the 10 minutes its answers stay cached; `pnpm dev`
-has no such cache.
+names, so they change with the build, within the 10 minutes its answers stay cached. Cloudflare
+doesn't cache a Worker's responses on its own, and `pnpm dev` has no such cache.
 
 ## Retired word URLs
 
@@ -315,6 +414,10 @@ A word URL whose `ent_seq` the dictionary retired answers 410 or 308 (ADR 0007; 
 in the [product docs](../../apps/web/docs/product/dictionary.md#urls-seo-and-indexing)). Next.js
 pages can't answer 410, so `worker.ts`, the Worker's entry in `wrangler.jsonc`, answers these
 before OpenNext's worker and passes every other request on (`src/lib/dictionary/retired.ts`). It
-asks the service for the retired entries once per isolate, wherever the site has a service.
+asks the service for the retired entries once per isolate (a release retires a few hundred at
+most), wherever the site has a service; when the service can't list them, the request goes on to
+the app, which answers 404, or fails while the service fails. `worker.ts` bundles `retired.ts`
+and what it imports (`api.ts`, `urls.ts`, and `src/lib/log.ts`) outside Next.js, so they import
+no Next.js module and no `@/` path, which a Biome rule in `apps/web/biome.json` enforces.
 `pnpm dev` runs Next.js alone, so check retired URLs in `pnpm preview`. The service lists none
 until #463 records retired entries.

@@ -3,11 +3,6 @@ import { formExample } from '@zenbu/dictionary-core/detail/examples'
 import { beforeAll, describe, expect, test } from 'vitest'
 import { artifactAvailable, dictionary } from './support'
 
-// A conjugated form's examples (ConjugationsView.swift's ConjugatedFormView.loadExamples): the
-// sentences containing the form in which Kuromoji, with the app's inflection grouping, finds it as
-// one word. The word-detail suite records every form's list; these check the rule and the paging
-// on forms whose sentences show it.
-
 describe.runIf(artifactAvailable)("a conjugated form's examples", () => {
   let service: Dictionary
 
@@ -41,8 +36,7 @@ describe.runIf(artifactAvailable)("a conjugated form's examples", () => {
     expect(page.rows[0]?.example.position).toBe(25)
   })
 
-  test('a form inside a longer word is not its example', () => {
-    // 食べた occurs inside 食べたい, which Kuromoji keeps as one word.
+  test('a form inside a longer word Kuromoji keeps whole, as 食べた in 食べたい, is not its example', () => {
     const texts = service
       .formExamples('食べた', 0, 100)
       .rows.map(({ sentence }) => sentence.japanese)

@@ -3,7 +3,6 @@ import Translation
 
 struct NaturalTranslationClient: Sendable {
   var availability: @Sendable () async throws -> NaturalTranslationAvailability
-  /// Translates each source text in one batch, returning translations keyed by source.
   var translateAllInstalled: @Sendable ([String]) async throws -> [String: String]
 
   init(
@@ -46,7 +45,6 @@ struct NaturalTranslationClient: Sendable {
 }
 
 extension TranslationSession {
-  /// Translates several texts in one batch, keyed by source text.
   func translations(for sources: [String]) async throws -> [String: String] {
     let requests = sources.enumerated().map { index, source in
       TranslationSession.Request(sourceText: source, clientIdentifier: String(index))

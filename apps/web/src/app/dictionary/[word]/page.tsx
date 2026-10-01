@@ -20,15 +20,12 @@ import { decodeSegment, parseWordSegment } from '@/lib/dictionary/urls'
 
 type Props = PageProps<'/dictionary/[word]'>
 
-/** `/dictionary/<slug>-<ent_seq>/`: the number decides the word; any other slug redirects. */
 async function load(params: Props['params']) {
   const segment = (await params).word
   const parsed = parseWordSegment(segment)
   if (!parsed) notFound()
   const word = await getWordPage(parsed.entSeq)
   if (!word) notFound()
-  // Any other slug, a bare number, or a padded one (要る-01546640) redirects, so each word has
-  // one URL. Location headers are ASCII, so the Japanese slug is percent-encoded.
   if (decodeSegment(segment) !== `${word.slug}-${word.entSeq}`) {
     permanentRedirect(encodeURI(word.path))
   }
@@ -46,7 +43,6 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   )
 }
 
-/** Kanji rows, each linking to its kanji page when it has one. */
 function KanjiItems({ kanji }: { kanji: WordPageData['kanji'] }) {
   return (
     <div className="-mx-3 flex flex-col">
@@ -76,7 +72,6 @@ function KanjiItems({ kanji }: { kanji: WordPageData['kanji'] }) {
   )
 }
 
-/** One line of alternative forms, written or reading, as the app's AlternativeFormLine. */
 function AlternativeForms({ forms }: { forms: WordPageData['alternatives'] }) {
   if (forms.length === 0) return null
   return (

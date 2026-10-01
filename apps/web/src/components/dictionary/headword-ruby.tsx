@@ -4,13 +4,6 @@ import type { RubySegment } from '@zenbu/dictionary-core/detail/ruby'
 import { graphemes } from '@zenbu/dictionary-core/detail/text'
 import { useState } from 'react'
 
-// A headword with furigana and the app's Furigana kanji highlight (JapaneseRubyText.swift): in a
-// kanji run whose kanji readings split it one way, each kanji is a toggle that colors it and its
-// part of the furigana (学 and がっ in 学校). Selecting it again clears the highlight; selecting
-// another kanji moves it. The furigana stays compact, as in the app. A conjugated form's changed
-// ending (`highlightedEnding`) is drawn in the accent color too, as JapaneseRubyText draws it.
-
-/** The app's accent color, which the selected kanji and its kana take. */
 export const accent = 'text-blue-600 dark:text-blue-400'
 
 interface Selected {
@@ -18,10 +11,6 @@ interface Selected {
   kanji: number
 }
 
-/**
- * `text`, which starts `offset` Characters into the headword, with the Characters from
- * `endingStart` on in the accent color.
- */
 function Ending({
   text,
   offset,
@@ -52,9 +41,7 @@ export function HeadwordRuby({
 }: {
   segments: RubySegment[]
   className?: string
-  /** A trailing part of the headword drawn in the accent color, such as a conjugation's ending. */
   highlightedEnding?: string
-  /** Off where the text is itself inside a control, such as a conjugation row. */
   highlightsKanji?: boolean
 }) {
   const [selected, setSelected] = useState<Selected | null>(null)
@@ -84,14 +71,17 @@ export function HeadwordRuby({
             </ruby>
           )
         }
-        const kanji = graphemes(segment.text)
+        const kanji = graphemes(segment.text).map((character, position) => ({
+          character,
+          position
+        }))
+        const readingParts = split.map((part, position) => ({ part, position }))
         const isSelected = (position: number) =>
           selected?.segment === index && selected.kanji === position
         return (
           <ruby key={key} data-kanji-split={split.join('・')}>
-            {kanji.map((character, position) => (
+            {kanji.map(({ character, position }) => (
               <button
-                // biome-ignore lint/suspicious/noArrayIndexKey: a kanji can repeat, so its position is its identity.
                 key={position}
                 type="button"
                 aria-pressed={isSelected(position)}
@@ -107,9 +97,8 @@ export function HeadwordRuby({
               </button>
             ))}
             <rt className="text-[0.45em] font-normal text-muted-foreground">
-              {split.map((part, position) => (
+              {readingParts.map(({ part, position }) => (
                 <span
-                  // biome-ignore lint/suspicious/noArrayIndexKey: parts can repeat, as kanji can.
                   key={position}
                   className={`transition-colors motion-reduce:transition-none ${isSelected(position) ? accent : ''}`}
                 >

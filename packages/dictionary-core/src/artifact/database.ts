@@ -1,22 +1,12 @@
-// The language-data artifact as the core reads it (ADR 0006, ADR 0009): the app's
-// LanguageReferenceData.sqlite3, opened read-only, with the app's other bundled databases
-// attached under the names in `attachments`. Every client opens these files locally, so access is
-// synchronous, as SQLite's own is; the search core's async `SearchDatabase` wraps it
-// (`searchDatabase`).
-
 import type { SearchDatabase } from '../search/search'
 import { exampleIndexMetadata } from './example-search'
 
-/** A value SQLite binds or returns. */
 export type SqlValue = string | number | bigint | null | Uint8Array
 
-/** The artifact, opened by a client with `attachments` attached. */
 export interface ArtifactDatabase {
-  /** Every row `sql` returns, with `params` bound to its `?` placeholders in order. */
   all<Row>(sql: string, params?: readonly SqlValue[]): Row[]
 }
 
-/** The search core's database access over the artifact. */
 export function searchDatabase(db: ArtifactDatabase): SearchDatabase {
   return {
     async all<Row>(sql: string, params: readonly (string | number)[]) {
@@ -25,12 +15,6 @@ export function searchDatabase(db: ArtifactDatabase): SearchDatabase {
   }
 }
 
-/**
- * The app's other bundled databases, by the name each is attached under: its file in the app's
- * SearchExperience/Resources, and the `artifact_schema` (and, for a frequency pack, `pack_id`)
- * its `metadata` table must record. The packs map entries by Language Reference ID, so each is
- * built for one LanguageReferenceData.sqlite3 (`language_data_sha256`).
- */
 export const attachments = {
   compound_pitch: {
     file: 'CompoundPitch.sqlite3',
@@ -64,10 +48,6 @@ export const attachments = {
 
 export type AttachmentName = keyof typeof attachments
 
-/**
- * The artifact versions the core reads (the `metadata` table's `transform`). A new version is a
- * change here, reviewed with the re-recorded conformance suites (ADR 0006).
- */
 export const supportedTransforms: readonly string[] = [
   '"jmdict-to-zenbu-language-reference-data-v2"'
 ]
@@ -77,11 +57,6 @@ function metadata(db: ArtifactDatabase, schema: string): Map<string, string> {
   return new Map(rows.map(row => [row.key, row.value]))
 }
 
-/**
- * Throws unless `db` is an artifact this core reads, with every attachment the one it expects,
- * built for this artifact (`sourceSha256`, the SHA-256 of LanguageReferenceData.sqlite3). A client
- * checks once, when it opens the files, before anything is read.
- */
 export function checkArtifact(db: ArtifactDatabase, sourceSha256: string): void {
   const refuse = (message: string): never => {
     throw new Error(`Refusing the language data: ${message}`)
@@ -91,7 +66,6 @@ export function checkArtifact(db: ArtifactDatabase, sourceSha256: string): void 
   if (transform === undefined || !supportedTransforms.includes(transform)) {
     refuse(`unsupported artifact transform ${transform}; the core reads ${supportedTransforms}`)
   }
-  // The example index, as the app's validateBaseCorpus and validateEnglishIndex check it.
   for (const [key, expected] of Object.entries(exampleIndexMetadata)) {
     if (main.get(key) !== expected) refuse(`its ${key} is ${main.get(key)}, not ${expected}`)
   }

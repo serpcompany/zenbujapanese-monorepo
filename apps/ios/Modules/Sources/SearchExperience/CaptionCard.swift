@@ -1,16 +1,11 @@
 import SwiftUI
 
-/// A line of Japanese as a caption card: linked text with furigana and word underlines, then its
-/// translation. The Player's captions and Image Search's lines share it; place it in a plain
-/// `List` with `captionCardRow(isActive:)`.
 struct CaptionCard: View {
   @Environment(ReadingAidPreferences.self) private var readingAidPreferences
 
   let text: String
   let translation: String?
-  /// The word whose sheet is open, accented when it appears in this card.
   let highlightedEntry: DictionaryEntry?
-  /// A short label in the card's top corner, such as the line's time.
   let label: String?
   let japaneseTextAnalysisClient: JapaneseTextAnalysisClient
   let identifierPrefix: String
@@ -56,7 +51,6 @@ struct CaptionCard: View {
           .padding(.top, 8)
       }
     }
-    // The label sits in the card's top corner, above the text, so it never takes a line.
     .padding(.top, label == nil ? 10 : 22)
     .padding(.bottom, 10)
     .overlay(alignment: .topTrailing) {
@@ -72,7 +66,6 @@ struct CaptionCard: View {
 }
 
 extension View {
-  /// Lays out a `CaptionCard` as a row of a plain `List`, with the card behind it.
   func captionCardRow(isActive: Bool) -> some View {
     padding(.horizontal, 8)
       .listRowSeparator(.hidden)
@@ -81,7 +74,6 @@ extension View {
   }
 }
 
-/// A card behind each line; the current line gets a tinted fill and an accent outline.
 private struct CaptionCardBackground: View {
   let isActive: Bool
 

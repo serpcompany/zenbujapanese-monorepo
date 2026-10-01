@@ -1,9 +1,5 @@
 import type { RubySegment } from '@zenbu/dictionary-core/detail/ruby'
 
-/**
- * Japanese text with furigana over the segments that need it. `pageWord` marks an example's word
- * that the page is about, which the page accents.
- */
 export function RubyText({
   segments,
   className,

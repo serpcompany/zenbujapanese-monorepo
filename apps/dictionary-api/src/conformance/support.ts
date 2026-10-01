@@ -1,8 +1,3 @@
-// What the app-recorded conformance suites (apps/ios/LanguageData/Conformance, ADR 0006) run
-// against: the service's dictionary, on the app's bundled files, with Kuromoji and, when its
-// dictionary is present, Sudachi. They run wherever those files are real rather than Git LFS
-// pointers; `pnpm sudachi` fetches Sudachi's dictionary.
-
 import { createHash } from 'node:crypto'
 import { existsSync, readFileSync } from 'node:fs'
 import { join, resolve } from 'node:path'
@@ -14,7 +9,7 @@ import {
   fileSha256,
   type OpenedArtifact,
   openArtifact,
-  requireContent
+  rejectGitLfsPointer
 } from '../artifact'
 import { loadKuromoji } from '../kuromoji'
 import { loadSudachi, prepareSudachi, sudachiContract } from '../sudachi'
@@ -24,21 +19,17 @@ export const resources = join(repository, 'apps/ios/Modules/Sources/SearchExperi
 const suites = join(repository, 'apps/ios/LanguageData/Conformance')
 const sudachiDictionary = join(repository, 'apps/dictionary-api/.sudachi/system_core.dic')
 
-/** Whether the app's bundled files are here, not Git LFS pointers. */
 export const artifactAvailable = (() => {
   try {
-    requireContent(join(resources, artifactFile))
+    rejectGitLfsPointer(join(resources, artifactFile))
     return true
   } catch {
     return false
   }
 })()
 
-/** Whether Sudachi's dictionary has been fetched (`pnpm sudachi`). */
 export const sudachiAvailable = existsSync(sudachiDictionary)
 
-// CI fetches both first and sets ZENBU_REQUIRE_ARTIFACT=1, so there a missing file fails the run
-// instead of skipping the suites.
 if (process.env.ZENBU_REQUIRE_ARTIFACT === '1' && !(artifactAvailable && sudachiAvailable)) {
   throw new Error(
     `ZENBU_REQUIRE_ARTIFACT is set, but ${artifactAvailable ? "Sudachi's dictionary is missing (pnpm sudachi)" : `${artifactFile} is a Git LFS pointer or missing (git lfs pull)`}`
@@ -51,10 +42,6 @@ export function readSuite<Suite>(name: string): Suite {
 
 const sha256 = (path: string) => createHash('sha256').update(readFileSync(path)).digest('hex')
 
-/**
- * Throws unless each file a suite pins is the one in the repository: a suite recorded from other
- * data compares nothing useful.
- */
 export function requirePinnedArtifacts(artifacts: { name: string; sha256: string }[]): void {
   const mismatched = artifacts.flatMap(({ name, sha256: pinned }) => {
     const path = join(resources, name)
@@ -81,7 +68,6 @@ async function open() {
   return opened
 }
 
-/** Sudachi with the app's dictionary, when it has been fetched. */
 export function sudachiAnalyzer(): MorphologyAnalyzer | undefined {
   if (!sudachiAvailable) return undefined
   if (!sudachi) {
@@ -91,10 +77,6 @@ export function sudachiAnalyzer(): MorphologyAnalyzer | undefined {
   return sudachi
 }
 
-/**
- * The service's dictionary. `morphology` supplies Sudachi, for suites recorded with full text
- * analysis; a suite recorded with reduced analysis runs without it, as the app did.
- */
 export async function dictionary(options: { morphology: boolean }): Promise<Dictionary> {
   const { artifact, tokenize } = await open()
   const morphology = options.morphology ? sudachiAnalyzer() : undefined
@@ -109,7 +91,6 @@ export async function artifactDatabase() {
   return (await open()).artifact.db
 }
 
-/** The app's Kuromoji, as the service loads it. */
 export async function tokenizer() {
   return (await open()).tokenize
 }

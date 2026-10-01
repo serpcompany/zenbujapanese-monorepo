@@ -10,13 +10,6 @@ import {
   requirePinnedArtifacts
 } from './support'
 
-// The example-search suite (example-search.json, ExampleSearchConformanceTests.swift): what
-// Search's "View N Example Sentences" row says and what its Example Sentences screen lists for 67
-// queries, replayed through the service. Each case's row title and count, the entry the screen
-// highlights (whose words link to it), whether it lists that entry's examples, every pair ID in
-// order, and the first few sentences' words with their entry or candidates and whether they match
-// the query.
-
 interface SuiteToken {
   surface: string
   entry?: string
@@ -37,24 +30,22 @@ interface SuiteCase {
 
 interface Suite {
   artifacts: { name: string; sha256: string }[]
-  /** How many of each case's examples it records with their tokens. */
   tokenLimit: number
   cases: SuiteCase[]
 }
 
 const suite = readSuite<Suite>('example-search')
+const rowCountForMoreThanFifty = 51
 
 describe.runIf(artifactAvailable)('example search conformance', () => {
   let service: Dictionary
 
   beforeAll(async () => {
     requirePinnedArtifacts(suite.artifacts)
-    // As the app's test host records it, without the Japanese Text Analysis pack.
     service = await dictionary({ morphology: false })
   })
 
-  /** Language Reference IDs by `ent_seq`. */
-  async function idsOf(entSeqs: number[]): Promise<Map<number, string>> {
+  async function languageReferenceIds(entSeqs: number[]): Promise<Map<number, string>> {
     if (entSeqs.length === 0) return new Map()
     const db = await artifactDatabase()
     const rows = db.all<{ ent_seq: number; id: string }>(
@@ -71,7 +62,7 @@ describe.runIf(artifactAvailable)('example search conformance', () => {
     const row = screen.state === 'results' ? screen.examples : null
     const found = await service.searchExamples(expected.query, 0, 100)
     const shown = found?.rows.slice(0, suite.tokenLimit) ?? []
-    const ids = await idsOf([
+    const ids = await languageReferenceIds([
       ...new Set(shown.flatMap(({ example }) => example.links.flatMap(link => link.entSeqs)))
     ])
     const id = (number: number) => ids.get(number) ?? `missing ${number}`
@@ -104,7 +95,11 @@ describe.runIf(artifactAvailable)('example search conformance', () => {
     }
     const { query: _query, covers: _covers, ...recorded } = expected
     expect(observed).toEqual(recorded)
-    // The page lists what the row counts: all of them up to 50, and more than 50 past it.
-    if (found) expect(found.listed === expected.count || expected.count === 51).toBe(true)
+    if (found) {
+      expect(
+        found.listed === expected.count || expected.count === rowCountForMoreThanFifty,
+        'the page lists what the row counts'
+      ).toBe(true)
+    }
   })
 })

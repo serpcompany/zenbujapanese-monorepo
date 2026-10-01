@@ -1,0 +1,215 @@
+name: Weekly maintenance
+
+on:
+  schedule:
+    - cron: "0 14 * * 1"
+  workflow_dispatch:
+
+concurrency:
+  group: weekly-maintenance
+  cancel-in-progress: false
+
+jobs:
+  doc-gardening:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    permissions:
+      contents: write
+      pull-requests: write
+      issues: read
+      id-token: write
+    env:
+      HAS_CLAUDE_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN != '' }}
+    steps:
+      - name: Skip while the CLAUDE_CODE_OAUTH_TOKEN secret isn't set
+        if: env.HAS_CLAUDE_TOKEN != 'true'
+        run: echo "::notice::CLAUDE_CODE_OAUTH_TOKEN isn't set, so the docs aren't gardened (docs/agents/ci.md, Weekly maintenance)."
+
+      - uses: actions/checkout@v5
+        if: env.HAS_CLAUDE_TOKEN == 'true'
+        with:
+          fetch-depth: 0
+
+      - uses: pnpm/action-setup@v6
+        if: env.HAS_CLAUDE_TOKEN == 'true'
+        with:
+          package_json_file: package.json
+
+      - uses: actions/setup-node@v5
+        if: env.HAS_CLAUDE_TOKEN == 'true'
+        with:
+          node-version: 22
+          cache: pnpm
+          cache-dependency-path: pnpm-lock.yaml
+
+      - name: Install the repository checks
+        if: env.HAS_CLAUDE_TOKEN == 'true'
+        run: pnpm install --frozen-lockfile --filter zenbujapanese-checks
+
+      - name: Build the maintenance report
+        if: env.HAS_CLAUDE_TOKEN == 'true'
+        run: mkdir -p tmp && pnpm -s maintenance:report > tmp/maintenance-report.md
+
+      - name: Note when doc gardening starts
+        if: env.HAS_CLAUDE_TOKEN == 'true'
+        run: echo "GARDENING_STARTED_AT=$(date -u +%Y-%m-%dT%H:%M:%SZ)" >> "$GITHUB_ENV"
+
+      - name: Garden the docs with Claude
+        id: garden
+        if: env.HAS_CLAUDE_TOKEN == 'true'
+        uses: anthropics/claude-code-action@v1
+        env:
+          CLAUDE_CODE_DISABLE_BACKGROUND_TASKS: "1"
+        with:
+          claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          prompt: |
+            You are this repository's weekly doc gardener. Follow AGENTS.md and docs/agents/code.md.
+            Goal: docs that no longer match the code are fixed in one small pull request.
+
+            0. First run `gh pr list --state open --search "Weekly doc gardening in:title"`. If it
+               lists a pull request, stop and say that a gardening pull request is already open,
+               with its number.
+            1. Read tmp/maintenance-report.md. Your work list is the "Checks" failures that are
+               about docs and the "Docs to re-verify" list. Handle at most 8 docs, starting with
+               the ones whose referenced files changed most.
+            2. For each, read it and the code it describes. Fix what is no longer true and remove
+               what no longer exists. Keep the doc's structure and its plain, specific style. If a
+               doc is still accurate, change nothing in it.
+            3. Update docs/quality.md where an area's tests, CI, or docs changed, and
+               docs/tech-debt.md where debt was paid off or added.
+            4. Edit only Markdown: AGENTS.md, ARCHITECTURE.md, README.md files, docs/ except
+               docs/adr/ (ADRs record decisions; never rewrite them), apps/*/docs/, and
+               .claude/skills/. Never touch code, tests, workflows, or anything a tool generates.
+            5. Run `pnpm -s verify docs`; it must pass.
+            6. If you changed nothing, stop and say "No doc drift found". Otherwise create the
+               branch docs/gardening-<YYYY-MM-DD>, commit with the message "Bring the docs back in
+               line with the code", push it, and open a pull request into main titled "Weekly doc
+               gardening (<YYYY-MM-DD>)". Its body lists each doc you changed, what was wrong, and
+               the code you checked it against, then the docs you checked without changes.
+          claude_args: |
+            --max-turns 80
+            --strict-mcp-config
+            --allowedTools "Read,Edit,Write,Glob,Grep,Bash(git:*),Bash(gh pr list:*),Bash(gh pr create:*),Bash(pnpm -s verify docs),Bash(date:*)"
+
+      - name: Keep the doc gardening transcript
+        if: always() && env.HAS_CLAUDE_TOKEN == 'true' && steps.garden.outputs.execution_file != ''
+        uses: actions/upload-artifact@v7
+        with:
+          name: doc-gardening-transcript
+          path: ${{ steps.garden.outputs.execution_file }}
+          retention-days: 7
+          overwrite: true
+
+      - name: Fail unless doc gardening finished
+        if: env.HAS_CLAUDE_TOKEN == 'true'
+        env:
+          EXECUTION_FILE: ${{ steps.garden.outputs.execution_file }}
+          GITHUB_TOKEN: ${{ github.token }}
+        shell: node {0}
+        run: |
+          const fs = require('node:fs')
+          const clean = (value, max = 120) => String(value).replace(/[\r\n%]+/g, ' ').slice(0, max)
+          const fail = message => {
+            console.log(`::error title=Doc gardening didn't finish::${clean(message, 900)}`)
+            process.exit(1)
+          }
+          const readResult = () => {
+            const file = process.env.EXECUTION_FILE
+            if (!file || !fs.existsSync(file)) fail('Doc gardening wrote no execution log.')
+            let messages
+            try {
+              messages = JSON.parse(fs.readFileSync(file, 'utf8'))
+            } catch (error) {
+              fail(`The execution log isn't JSON: ${error.message}`)
+            }
+            if (!Array.isArray(messages)) fail("The execution log isn't a list of messages.")
+            const result = messages.filter(entry => entry?.type === 'result').at(-1)
+            if (!result) fail('The execution log has no result.')
+            return { messages, result }
+          }
+          const openGardeningPrs = async () => {
+            const api = `${process.env.GITHUB_API_URL || 'https://api.github.com'}/repos/${process.env.GITHUB_REPOSITORY}`
+            const response = await fetch(`${api}/pulls?state=open&base=main&per_page=100`, {
+              headers: {
+                Accept: 'application/vnd.github+json',
+                Authorization: `Bearer ${process.env.GITHUB_TOKEN}`,
+                'X-GitHub-Api-Version': '2022-11-28'
+              }
+            })
+            if (!response.ok) throw new Error(`GET /pulls returned ${response.status}`)
+            return (await response.json()).filter(pr => String(pr?.head?.ref).startsWith('docs/gardening-'))
+          }
+          const main = async () => {
+            const { messages, result } = readResult()
+            const said = String(result.result || '')
+            console.log(`Doc gardening: ${result.num_turns} turns, about $${Number(result.total_cost_usd || 0).toFixed(2)}. Claude said: ${clean(said || '(nothing)', 400)}`)
+            if (result.is_error) fail(`Doc gardening ended with ${result.subtype || 'an error'}.`)
+            const sets = messages.filter(entry => entry?.type === 'system' && entry.subtype === 'background_tasks_changed')
+            const running = (sets.at(-1)?.tasks || []).filter(task => task && !task.ambient)
+            if (running.length) fail(`Doc gardening ended with ${running.length} background task(s) still running.`)
+            const denied = [...new Set((result.permission_denials || []).map(denial =>
+              denial?.tool_input?.command ? `${denial.tool_name} (${clean(denial.tool_input.command)})` : String(denial?.tool_name)
+            ))]
+            const startedAt = Date.parse(process.env.GARDENING_STARTED_AT || '')
+            if (Number.isNaN(startedAt)) fail("GARDENING_STARTED_AT isn't set, so the check can't tell whether this run opened a pull request.")
+            let prs
+            try {
+              prs = await openGardeningPrs()
+            } catch (error) {
+              fail(`Couldn't list the open pull requests to check the outcome: ${error.message}`)
+            }
+            const opened = prs.filter(pr => Date.parse(pr.created_at) >= startedAt - 30 * 1000)
+            let outcome = null
+            if (opened.length > 0) outcome = `opened ${opened.map(pr => `#${pr.number}`).join(', ')}`
+            else if (/No doc drift found/i.test(said)) outcome = 'found no doc drift'
+            else if (prs.length > 0 && /already/i.test(said)) outcome = `left the open gardening pull request #${prs[0].number} alone`
+            if (!outcome) {
+              const reason = denied.length > 0 ? ` Claude was denied ${denied.join(', ')}; allow it in claude_args.` : ''
+              fail(`Doc gardening finished without opening a pull request or reporting "No doc drift found".${reason}`)
+            }
+            if (denied.length > 0) {
+              console.log(`::warning title=Doc gardening was denied tools::Claude was denied ${clean(denied.join(', '), 600)} but still ${outcome}. Allow it in claude_args if the job needs it.`)
+            }
+            console.log(`Doc gardening ${outcome}.`)
+          }
+          main().catch(error => fail(`The doc gardening check failed: ${error?.message}`))
+
+  report:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+      issues: write
+    env:
+      GH_TOKEN: ${{ github.token }}
+      TITLE: Weekly repository maintenance
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+
+      - uses: pnpm/action-setup@v6
+        with:
+          package_json_file: package.json
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: pnpm
+          cache-dependency-path: pnpm-lock.yaml
+
+      - name: Install the repository checks
+        run: pnpm install --frozen-lockfile --filter zenbujapanese-checks
+
+      - name: Build the maintenance report
+        run: pnpm -s maintenance:report > report.md
+
+      - name: Open or update the maintenance issue
+        run: |
+          number=$(gh issue list --state open --search "\"$TITLE\" in:title" --json number --jq '.[0].number // empty')
+          if [ -n "$number" ]; then
+            gh issue edit "$number" --body-file report.md
+            gh issue comment "$number" --body "Report refreshed on $(date -u +%F)."
+          else
+            gh issue create --title "$TITLE" --body-file report.md --label ready-for-agent
+          fi

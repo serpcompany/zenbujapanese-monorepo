@@ -296,8 +296,6 @@ struct TranslationSentenceTests {
       SubtitleCue(id: 3, start: 53.44, end: 60.57, text: "狂わせないでね"),
       SubtitleCue(id: 4, start: 64.76, end: 69.96, text: "上に置いて"),
     ]
-    // Four lines are too many for one card, so they stay separate, and the sentence goes on its
-    // last line, where YouTube shows it.
     let paired = YouTubeCaptionParsing.pairing(japanese, with: sentences)
     #expect(paired.map(\.text) == japanese.map(\.text))
     #expect(paired.map(\.translation) == [
@@ -326,7 +324,6 @@ struct CaptionCardSizeTests {
 
   @Test("no card ever exceeds the line and character limits, whatever the translations span")
   func cardsStayBounded() {
-    // Twelve lyric lines and translations of every length and alignment.
     let japanese = (0..<12).map {
       SubtitleCue(id: $0, start: Double($0) * 4, end: Double($0 + 1) * 4, text: "愛さないで恋いなんてまた\($0)")
     }

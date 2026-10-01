@@ -1,8 +1,9 @@
-// The service's HTTP API, which only the website calls (ADR 0009). Every /v1 route needs the
-// bearer token; /healthz, for the host, doesn't. docs/agents/dictionary-api.md lists the routes.
-
 import { timingSafeEqual } from 'node:crypto'
 import type { ConjugationSitemapWord } from '@zenbu/dictionary-core/artifact/conjugation-sitemap'
+import {
+  dictionaryContract,
+  dictionaryContractHeader
+} from '@zenbu/dictionary-core/artifact/contract'
 import { maximumEntSeq, maximumQueryLength } from '@zenbu/dictionary-core/artifact/dictionary'
 import { examplesPerPage } from '@zenbu/dictionary-core/detail/examples'
 import { Hono } from 'hono'
@@ -10,11 +11,9 @@ import { routePath } from 'hono/route'
 import { errorFields, log } from './log'
 import type { DictionaryService } from './service'
 
-/** How many sitemap words one request returns at most. */
-const maximumSitemapPage = 10_000
+const maximumSitemapWordsPerRequest = 10_000
 
 class BadRequest extends Error {}
-/** A well-formed request for something that can't exist, such as word 0: the same as unknown. */
 class NotFound extends Error {}
 
 function tokenMatches(header: string | undefined, token: string): boolean {
@@ -23,7 +22,6 @@ function tokenMatches(header: string | undefined, token: string): boolean {
   return presented.length === expected.length && timingSafeEqual(presented, expected)
 }
 
-/** A whole number in `[minimum, maximum]`, or the fallback when absent. */
 function integer(value: string | undefined, name: string, fallback: number, maximum: number) {
   if (value === undefined || value === '') return fallback
   if (!/^\d+$/.test(value)) throw new BadRequest(`${name} must be a whole number`)
@@ -42,9 +40,7 @@ function text(value: string, name: string): string {
 export interface AppOptions {
   service: DictionaryService
   token: string
-  /** Whether the service can answer yet (every worker loaded). */
   ready(): boolean
-  /** The conjugations sitemap, or null while it's still being worked out after startup. */
   conjugationSitemap(): ConjugationSitemapWord[] | null
 }
 
@@ -56,7 +52,6 @@ export function createApp({ service, token, ready, conjugationSitemap }: AppOpti
     await next()
     log('info', 'request', {
       method: context.req.method,
-      // The route, not the path: queries stay out of the logs.
       route: routePath(context),
       status: context.res.status,
       ms: Math.round(performance.now() - started)
@@ -66,7 +61,12 @@ export function createApp({ service, token, ready, conjugationSitemap }: AppOpti
   app.get('/healthz', async context => {
     if (!ready()) return context.json({ status: 'starting' }, 503)
     const info = await service.info()
-    return context.json({ status: 'ok', build: info.build, features: info.features })
+    return context.json({
+      status: 'ok',
+      build: info.build,
+      contract: dictionaryContract,
+      features: info.features
+    })
   })
 
   app.use('/v1/*', async (context, next) => {
@@ -77,6 +77,7 @@ export function createApp({ service, token, ready, conjugationSitemap }: AppOpti
     await next()
     const info = await service.info()
     context.header('X-Dictionary-Build', info.build)
+    context.header(dictionaryContractHeader, String(dictionaryContract))
   })
 
   app.get('/v1/info', async context => context.json(await service.info()))
@@ -141,7 +142,12 @@ export function createApp({ service, token, ready, conjugationSitemap }: AppOpti
     const words = await service.sitemapWords(
       integer(context.req.param('number'), 'sitemap', 0, 1_000),
       integer(context.req.query('after'), 'after', 0, 99_999_999),
-      integer(context.req.query('limit'), 'limit', maximumSitemapPage, maximumSitemapPage)
+      integer(
+        context.req.query('limit'),
+        'limit',
+        maximumSitemapWordsPerRequest,
+        maximumSitemapWordsPerRequest
+      )
     )
     return words ? context.json(words) : context.json({ error: 'no such sitemap' }, 404)
   })

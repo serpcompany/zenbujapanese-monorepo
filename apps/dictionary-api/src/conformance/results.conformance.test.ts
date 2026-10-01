@@ -10,14 +10,6 @@ import {
 import { beforeAll, describe, expect, test } from 'vitest'
 import { artifactAvailable, dictionary, readSuite, requirePinnedArtifacts } from './support'
 
-// The search results suite (search-results.json, SearchResultsConformanceTests.swift): the
-// results screen after the frequency re-sort, as the service answers a search. Compared: the
-// state, sections, the Example Sentences row (its title, count, and the primary entry it opens),
-// the reading refinement, the kanji row, every row (ID, entry number, headword, reading,
-// meaning, chips, match group, and retrieval position, in order), and the count VoiceOver reads.
-// The app recorded it with reduced text analysis (the suite's `textAnalysis`), so it runs
-// without Sudachi, as the app did.
-
 interface SuiteChip {
   pack?: string
   name: string
@@ -61,8 +53,7 @@ interface Suite {
 
 const suite = readSuite<Suite>('search-results')
 
-/** The app's pack IDs for the default frequency dictionaries, by short name. */
-const packIds: Record<string, string> = {
+const defaultFrequencyPackIds: Record<string, string> = {
   JLPT: 'zenbu.jlpt.waller.levels',
   YouTube: 'zenbu.tubelex.youtube.ja.unidic-3.1'
 }
@@ -70,7 +61,6 @@ const packIds: Record<string, string> = {
 const name = (values: Record<string, number>, value: number) =>
   Object.keys(values).find(key => values[key] === value) ?? String(value)
 
-/** SearchResultsConformanceTests.swift's `describe(_:)`: a row's match group. */
 function describeMatch(sourceOrder: number, rank: Rank): string {
   const match =
     rank.kind === 'japanese'
@@ -80,8 +70,7 @@ function describeMatch(sourceOrder: number, rank: Rank): string {
   return `source=${sourceOrder} ${match}`
 }
 
-/** A case as the service answers it, in the suite's shape. */
-function observed(
+function caseAsTheServiceAnswers(
   expected: SuiteCase,
   screen: SearchResultsScreen,
   results: Awaited<ReturnType<Dictionary['searchResults']>>
@@ -134,7 +123,7 @@ function observed(
         reading: row.reading,
         summary: row.summary,
         chips: row.chips.map(chip => ({
-          pack: packIds[chip.source],
+          pack: defaultFrequencyPackIds[chip.source],
           name: chip.source,
           text: chip.value,
           ...(chip.tier ? { tier: tierLabels[chip.tier] } : {})
@@ -147,18 +136,16 @@ function observed(
   }
 }
 
-/** The recorded case as the service reports it. */
-function comparable(expected: SuiteCase): SuiteCase {
+const withFirstProvenanceOnly = (row: SuiteRow): SuiteRow => ({
+  ...row,
+  entSeq: row.entSeq.slice(0, 1)
+})
+
+function recordedCaseAsTheServiceReports(expected: SuiteCase): SuiteCase {
   const { covers: _covers, ...rest } = expected
   return {
     ...rest,
-    ...(rest.results
-      ? {
-          // The service keeps the entry number of the row's Language Reference ID, the first of
-          // the app's merged provenances.
-          results: rest.results.map(row => ({ ...row, entSeq: row.entSeq.slice(0, 1) }))
-        }
-      : {})
+    ...(rest.results ? { results: rest.results.map(withFirstProvenanceOnly) } : {})
   }
 }
 
@@ -173,20 +160,22 @@ describe.runIf(artifactAvailable)('search results conformance', () => {
 
   beforeAll(async () => {
     requirePinnedArtifacts(suite.artifacts)
-    // Recorded without Sudachi: no sentence search, as in the app.
-    expect(suite.textAnalysis).toBe('reduced')
+    expect(suite.textAnalysis, 'the app recorded the suite without Sudachi').toBe('reduced')
     service = await dictionary({ morphology: false })
   })
 
   test('the suite was recorded with the default frequency dictionaries, JLPT then YouTube', () => {
-    expect(suite.frequencyPacks).toEqual([packIds.JLPT, packIds.YouTube])
+    expect(suite.frequencyPacks).toEqual([
+      defaultFrequencyPackIds.JLPT,
+      defaultFrequencyPackIds.YouTube
+    ])
   })
 
   test.each(suite.cases)('「$query」', async expected => {
     const results = await service.searchResults(expected.query)
     const { screen } = await service.search(expected.query)
-    const actual = observed(expected, screen, results)
-    const wanted = comparable(expected)
+    const actual = caseAsTheServiceAnswers(expected, screen, results)
+    const wanted = recordedCaseAsTheServiceReports(expected)
     expect(
       actual,
       `「${expected.query}」: expected ${describeRows(wanted.results)} but found ${describeRows(actual.results)}`

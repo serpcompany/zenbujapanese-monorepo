@@ -31,9 +31,10 @@ are named by file and test title.
 
 ## Dictionary home
 
-**Search box.** `/dictionary/` is a centered heading, a one-line description, and the search box,
-focused on load. The box is a text field and a Search button; it searches in Japanese, kana,
-romaji, or English. Submitting it opens that query's results page.
+**Search box.** `/dictionary/` is a heading, a one-line description, and the search box, focused
+on load, centered a little above the middle of the screen, where the eye lands first. The box is a
+text field and a Search button; it searches in Japanese, kana, romaji, or English. Submitting it
+opens that query's results page.
 
 - Source: #462 (the dictionary page is only a search box); #484 (the hero layout, the description,
   and the `Input` and `Button` form, which replaced #462's `InputGroup`).
@@ -207,9 +208,12 @@ without searching: that is the dictionary service's limit, and the app has none.
   nothing for a query past the service’s 200 characters, without asking it".
 
 **Credits.** A results page that finds something ends with a Sources list: JMdict, KANJIDIC2, JLPT
-levels, and TUBELEX, each with its licence.
+levels, and TUBELEX, each with its licence. Every page's credits match the app's Credits &
+Attributions, and EDRDG's licence requires them, with links, on every page that shows JMdict,
+KANJIDIC2, or RADKFILE data.
 
-- Source: #465 (credit every source a page shows, on every page); `src/lib/dictionary/sources.ts`.
+- Source: #465 (credit every source a page shows, on every page); `CreditsView.swift`; the EDRDG
+  licence; `src/lib/dictionary/sources.ts`.
 - Check: No automated check yet (#511).
 
 **Left out on purpose.** The website has no Recent list, camera button, or Image Search. It also
@@ -633,7 +637,8 @@ shows N2. The meanings follow on one line.
 
 **Stroke order.** A kanji with a KanjiVG diagram has a stroke-order button under the glyph. It
 opens a dialog, or a drawer on phones, that draws the strokes on a dashed grid and plays, pauses,
-or steps through them. A kanji without a diagram has no button. The page then credits KanjiVG.
+or steps through them, starting from the first stroke each time it opens, as the app's sheet does.
+A kanji without a diagram has no button. The page then credits KanjiVG.
 
 - Source: `KanjiStrokeOrderView.swift`; `components/dictionary/stroke-order.tsx`.
 - Check: KD `hasStrokeOrder`, `strokeOrderStrokes`;
@@ -726,8 +731,8 @@ number past any JMdict entry.
   it answers, so a page and its links always agree.
 
 **Retired word URLs.** A word whose entry was retired returns 410 Gone, or redirects (308) to its
-replacement in one hop. No entry is recorded as retired until #463 records retired entries in
-the app's data.
+replacement in one hop when the dictionary holds the replacement. No entry is recorded as retired
+until #463 records retired entries in the app's data.
 
 - Source: ADR 0007; #465.
 - Check: `src/lib/dictionary/retired.test.ts`, "retiredWordResponse".
@@ -938,7 +943,8 @@ marks it, so Word Meanings shows under every linked word.
 **Search sitemaps.** Child sitemaps list the canonical search URLs of a chosen query set (ADR
 0007), and the sitemap index lists them.
 
-- Source: #466; #463 (the query set).
+- Source: #466. #463 no longer supplies the query set (it dropped the precomputed search-sitemap
+  queries with ADR 0009), so which queries to list is still open.
 - Check it will get: a `sitemaps.test.ts` case and a smoke check.
 
 **Structured data.** Word and kanji pages carry structured data beyond `BreadcrumbList`.

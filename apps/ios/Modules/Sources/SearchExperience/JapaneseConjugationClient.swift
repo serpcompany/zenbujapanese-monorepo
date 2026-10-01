@@ -1,7 +1,5 @@
 import Foundation
 
-/// Builds a word's conjugation table. The website ports `JapaneseConjugator` (see also
-/// packages/dictionary-core/src/detail/conjugation.ts); change both together.
 struct JapaneseConjugationClient: Sendable {
   var table: @Sendable (DictionaryEntry) -> ConjugationTable?
 
@@ -9,7 +7,6 @@ struct JapaneseConjugationClient: Sendable {
 }
 
 struct ConjugationTable: Hashable, Sendable {
-  /// One line on how this word class forms its conjugations.
   let rule: String
   let plain: [ConjugatedForm]
   let polite: [ConjugatedForm]
@@ -33,7 +30,6 @@ struct ConjugatedForm: Hashable, Identifiable, Sendable {
   let id: Kind
   let surface: String
   let reading: String
-  /// The part of `surface` added after the unchanging stem, such as させる in 見させる.
   let ending: String
 
   enum Kind: String, CaseIterable, Hashable, Sendable {

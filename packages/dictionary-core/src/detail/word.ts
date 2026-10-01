@@ -1,5 +1,3 @@
-// The word page, as the app's word detail shows it (WordDetailView.swift, DictionaryEntry.swift).
-
 import { type Conjugations, conjugations } from './conjugation'
 import { type Example, wordExample } from './examples'
 import {
@@ -22,20 +20,17 @@ import type {
 import { type RubySegment, rubySegments } from './ruby'
 import { graphemes, isCJKUnifiedIdeograph, isKanjiCharacter } from './text'
 
-/** A word as a search result or list row shows it. */
 export interface WordSummary {
   entSeq: number
   headword: string
   reading: string
   ruby: RubySegment[]
   summary: string
-  /** Chips for the dictionaries that rank or list the word. */
   frequency: FrequencyResult[]
 }
 
 export interface WordKanji {
   character: string
-  /** The kanji's first two KANJIDIC2 meanings, when it has any. */
   meaning: string | null
 }
 
@@ -43,7 +38,6 @@ export interface AlternativeForm {
   value: string
   kind: 'written' | 'reading'
   labels: string[]
-  /** The form's first kanji, which the app opens when the form is selected. */
   kanji: string | null
 }
 
@@ -57,26 +51,20 @@ export interface RelatedWord {
 }
 
 export interface WordDetail extends WordSummary {
-  /** The first sense's word class; empty when none has a name, and the page shows no row. */
   partOfSpeech: string
-  /** The conjugation table the part-of-speech row opens; null when it opens none. */
   conjugations: Conjugations | null
   pitch: PitchAccent | null
   senses: { number: number; meaning: string; notes: string[] }[]
-  /** One row per default dictionary, including those without the word. */
   frequencyRows: FrequencyRowDetail[]
   alternatives: AlternativeForm[]
   kanji: WordKanji[]
   alternativeKanji: WordKanji[]
   related: RelatedWord[]
-  /** The first examples; the page loads the rest (up to the app's 100) as it scrolls. */
   examples: Example[]
   exampleCount: ExampleCountRow | null
-  /** What Share sends: the headword, its reading, and the numbered meanings. */
   shareText: string
 }
 
-/** A word as a search result shows it. */
 export function wordSummary(
   entry: Pick<EntryRow, 'entSeq' | 'headword' | 'reading' | 'summary'>,
   frequency: readonly FrequencyRow[]
@@ -91,12 +79,10 @@ export function wordSummary(
   }
 }
 
-/** `DictionaryEntry.primaryKanji`: the headword's CJK unified ideographs, each once, in order. */
 export function primaryKanji(headword: string): string[] {
   return [...new Set(graphemes(headword).filter(isCJKUnifiedIdeograph))]
 }
 
-/** `DictionaryEntry.alternativeKanji`: kanji in the other written forms that the headword lacks. */
 export function alternativeKanji(entry: Pick<EntryRow, 'headword' | 'writtenForms'>): string[] {
   const primary = new Set(primaryKanji(entry.headword))
   const seen = new Set<string>()
@@ -112,10 +98,6 @@ export function alternativeKanji(entry: Pick<EntryRow, 'headword' | 'writtenForm
     })
 }
 
-/**
- * `DictionaryEntry.alternativeForms`: the other written forms, then the other readings, without
- * `Search only` forms or repeats.
- */
 export function alternativeForms(
   entry: Pick<EntryRow, 'headword' | 'reading' | 'writtenForms' | 'readingForms'>
 ): FormRow[] {
@@ -128,12 +110,10 @@ export function alternativeForms(
   })
 }
 
-/** `DictionaryEntry.displayPartOfSpeech`: the first sense's, falling back to the entry's. */
 export function displayPartOfSpeech(entry: Pick<EntryRow, 'senses' | 'partsOfSpeech'>): string {
   return partOfSpeechPhrase(entry.senses[0]?.partsOfSpeech ?? entry.partsOfSpeech)
 }
 
-/** WordDetailView's `shareText`. */
 export function wordShareText(entry: Pick<EntryRow, 'headword' | 'reading' | 'senses'>): string {
   const heading =
     entry.reading === entry.headword ? entry.headword : `${entry.headword}【${entry.reading}】`
@@ -141,21 +121,23 @@ export function wordShareText(entry: Pick<EntryRow, 'headword' | 'reading' | 'se
   return [heading, ...meanings].join('\n')
 }
 
-/** AlternativeFormLine: the form's first kanji opens that kanji, when it is one. */
 function formKanji(value: string): string | null {
   const character = graphemes(value).find(isCJKUnifiedIdeograph)
   return character && isKanjiCharacter(character) ? character : null
 }
 
+const meaningsPerKanji = 2
+
 function wordKanji(characters: string[], glosses: readonly KanjiGlossRow[]): WordKanji[] {
-  // Like the app's KanjiCharacter, a character with a variation selector has no kanji page.
   return characters.filter(isKanjiCharacter).map(character => {
     const meanings = glosses.find(gloss => gloss.character === character)?.meanings ?? []
-    return { character, meaning: meanings.length > 0 ? meanings.slice(0, 2).join(', ') : null }
+    return {
+      character,
+      meaning: meanings.length > 0 ? meanings.slice(0, meaningsPerKanji).join(', ') : null
+    }
   })
 }
 
-/** Everything the word page shows, in the app's section order. */
 export function wordDetail(rows: WordRows): WordDetail {
   const { entry } = rows
   const pitch = entry.pitch ?? entry.compoundPitch
@@ -163,7 +145,6 @@ export function wordDetail(rows: WordRows): WordDetail {
   const readings = new Map(rows.kanji.map(({ character, readings }) => [character, readings]))
   return {
     ...summary,
-    // The headword's kanji highlight their own part of the furigana when tapped.
     ruby: withKanjiReadings(summary.ruby, readings),
     partOfSpeech: displayPartOfSpeech(entry),
     conjugations: conjugations(entry, readings),

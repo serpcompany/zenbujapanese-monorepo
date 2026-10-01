@@ -11,9 +11,6 @@ import {
   topPercent
 } from './frequency'
 
-// Expected values follow FrequencyTier, FrequencyPresentationModel, and
-// SearchFrequencyRankPresentationModel in FrequencyPack.swift.
-
 describe('tierForRank (FrequencyTier(rank:))', () => {
   test.each([
     [1, 'veryCommon'],
@@ -43,8 +40,7 @@ describe('tierForLevel (FrequencyTier(level:))', () => {
 })
 
 describe('frequencyResults', () => {
-  test('lists each default dictionary, JLPT then YouTube', () => {
-    // 要る (1546640)
+  test('lists each default dictionary, JLPT then YouTube, grouping ranks as en_US numbers', () => {
     expect(
       frequencyResults([
         { pack: 'jlpt', level: 5 },
@@ -54,7 +50,6 @@ describe('frequencyResults', () => {
       { source: 'JLPT', value: 'N5', tier: 'veryCommon', spokenTier: null },
       { source: 'YouTube', value: '949', tier: 'veryCommon', spokenTier: 'very common' }
     ])
-    // 炒る (1391500): ranks are grouped as en_US numbers.
     expect(
       frequencyResults([
         { pack: 'jlpt', level: 2 },
@@ -69,7 +64,6 @@ describe('frequencyResults', () => {
   })
 
   test('says what a dictionary lacks', () => {
-    // 要 (1609600) is in neither.
     expect(frequencyResults([])).toEqual([
       { source: 'JLPT', value: 'Not listed', tier: null, spokenTier: null },
       { source: 'YouTube', value: 'No rank', tier: null, spokenTier: null }
@@ -79,11 +73,9 @@ describe('frequencyResults', () => {
 
 describe('frequencyChips', () => {
   test('shows only dictionaries that rank or list the word, since JLPT is a level list', () => {
-    // 射る (1322180): YouTube only.
     expect(frequencyChips([{ pack: 'tubelex', rank: 20_940 }])).toEqual([
       { source: 'YouTube', value: '20,940', tier: 'uncommon', spokenTier: 'uncommon' }
     ])
-    // いる (1577980): JLPT only.
     expect(frequencyChips([{ pack: 'jlpt', level: 5 }])).toEqual([
       { source: 'JLPT', value: 'N5', tier: 'veryCommon', spokenTier: null }
     ])
@@ -93,7 +85,6 @@ describe('frequencyChips', () => {
 
 describe('frequencyRowDetails (FrequencyDisclosurePresentation)', () => {
   test('opens the JLPT level, or the rank and its percentile', () => {
-    // 見る (1259290): the word-detail suite records N5, and #41 in the top 0.01%.
     const [jlpt, youtube] = frequencyRowDetails([
       { pack: 'jlpt', level: 5 },
       { pack: 'tubelex', rank: 41 }
@@ -144,7 +135,9 @@ describe('frequencyRowDetails (FrequencyDisclosurePresentation)', () => {
   test('topPercent (FrequencyEvidence.topPercentDisplay) rounds to two places', () => {
     expect(topPercent(949, 351_453)).toBe('Top 0.27%')
     expect(topPercent(14_572, 351_453)).toBe('Top 4.15%')
-    // Ranks are grouped as en_US numbers.
+  })
+
+  test('groups a Frequency Details rank as an en_US number', () => {
     expect(frequencyRowDetails([{ pack: 'tubelex', rank: 14_572 }])[1].details.rows[0]).toEqual({
       label: 'Rank',
       value: '#14,572'

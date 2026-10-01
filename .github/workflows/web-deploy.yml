@@ -1,18 +1,5 @@
 name: Web deploy
 
-# Promotes merged website code through staging, then production, per the SERP Drizzle + D1
-# standard. Each environment reads the dictionary from its own dictionary service (ADR 0009):
-# the job waits for this commit's deploy of the service to the environment, if it has one, points
-# the site at the service, deploys, and smoke-tests, which checks that the site reaches it where
-# Cloudflare doesn't challenge the runner (scripts/smoke.sh).
-# Production runs once staging passes; add a required reviewer on the `production` GitHub
-# environment to gate it manually (it has none, by the owner's decision).
-#
-# Each GitHub environment holds the service's URL (the DICTIONARY_API_URL variable), and each
-# Worker environment the DICTIONARY_API_TOKEN secret the service expects (docs/agents/web.md,
-# Dictionary service). A new build of the dictionary is a new service image, which the
-# `Dictionary API deploy` workflow deploys (docs/agents/dictionary-api.md); the site needs no
-# deploy for it.
 on:
   push:
     branches: [main]
@@ -31,7 +18,6 @@ concurrency:
 
 permissions:
   contents: read
-  # To see the same commit's dictionary service deploy.
   actions: read
 
 env:
@@ -52,18 +38,17 @@ jobs:
         shell: bash
         working-directory: apps/web
     steps:
-      - uses: actions/checkout@v4
-      - uses: pnpm/action-setup@v4
+      - uses: actions/checkout@v5
+      - uses: pnpm/action-setup@v6
         with:
           package_json_file: package.json
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v5
         with:
           node-version: 22
           cache: pnpm
           cache-dependency-path: pnpm-lock.yaml
       - run: pnpm install --frozen-lockfile
       - name: Wait for this commit's dictionary service deploy
-        # A commit that changes both the service and the site ships the service first.
         env:
           GH_TOKEN: ${{ github.token }}
         run: ./scripts/wait-for-dictionary-service.sh "$SITE"
@@ -73,14 +58,10 @@ jobs:
       - name: Deploy
         run: pnpm deploy:staging 2>&1 | tee deploy.log
       - name: Smoke test
-        # The workers.dev URL skips the zone's bot protection, which blocks CI runners.
         run: ./scripts/smoke.sh "$(grep -oE 'https://[a-z0-9.-]+\.workers\.dev' deploy.log | head -1)" staging
 
   production:
     needs: staging
-    # Set the repository variable DEPLOY_PRODUCTION to false to deploy staging only, such as while a
-    # batch of data changes is still being checked there. A manual run of this workflow still deploys
-    # production, and so does every push once the variable is unset.
     if: vars.DEPLOY_PRODUCTION != 'false' || github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
     environment:
@@ -94,18 +75,17 @@ jobs:
         shell: bash
         working-directory: apps/web
     steps:
-      - uses: actions/checkout@v4
-      - uses: pnpm/action-setup@v4
+      - uses: actions/checkout@v5
+      - uses: pnpm/action-setup@v6
         with:
           package_json_file: package.json
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v5
         with:
           node-version: 22
           cache: pnpm
           cache-dependency-path: pnpm-lock.yaml
       - run: pnpm install --frozen-lockfile
       - name: Wait for this commit's dictionary service deploy
-        # A commit that changes both the service and the site ships the service first.
         env:
           GH_TOKEN: ${{ github.token }}
         run: ./scripts/wait-for-dictionary-service.sh "$SITE"
@@ -115,8 +95,6 @@ jobs:
       - name: Deploy
         run: pnpm deploy:production 2>&1 | tee deploy.log
         env:
-          # Public, build-time analytics IDs for production pages (production environment variables).
           NEXT_PUBLIC_GTM_ID: ${{ vars.NEXT_PUBLIC_GTM_ID }}
       - name: Smoke test
-        # The workers.dev URL skips the zone's bot protection, which blocks CI runners.
         run: ./scripts/smoke.sh "$(grep -oE 'https://[a-z0-9.-]+\.workers\.dev' deploy.log | head -1)" production

@@ -12,7 +12,6 @@ export default function DictionaryPage() {
   return (
     <main className="mx-auto flex w-full max-w-2xl flex-1 flex-col gap-4 px-4 pt-4 pb-6">
       <DictionaryBreadcrumbs />
-      {/* Centered a little above the middle, where the eye lands first. */}
       <section className="flex flex-1 flex-col items-center justify-center gap-8 pt-10 pb-[12vh] text-center">
         <div className="flex flex-col items-center gap-4">
           <h1 className="text-4xl font-semibold tracking-tight text-balance sm:text-5xl">

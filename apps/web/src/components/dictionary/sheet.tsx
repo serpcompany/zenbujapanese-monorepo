@@ -20,11 +20,6 @@ import {
 } from '@/components/ui/drawer'
 import { useMediaQuery } from '@/hooks/use-media-query'
 
-/**
- * A screen the app opens as a sheet: a dialog on wide screens, a drawer on phones, as the stroke
- * order and get-the-app prompts open. Done closes it, as in the app. `header` goes beside the
- * title, such as a back button.
- */
 export function Sheet({
   open,
   onOpenChange,
@@ -37,7 +32,6 @@ export function Sheet({
   onOpenChange: (open: boolean) => void
   title: string
   header?: ReactNode
-  /** A wider dialog, for a table. */
   wide?: boolean
   children: ReactNode
 }) {

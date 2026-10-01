@@ -1,6 +1,5 @@
 import Foundation
 
-/// An 11-character YouTube video identifier.
 struct YouTubeVideoID: Hashable, Sendable {
   let rawValue: String
 
@@ -13,10 +12,6 @@ struct YouTubeVideoID: Hashable, Sendable {
     self.rawValue = rawValue
   }
 
-  /// Reads a video from a pasted link or a bare identifier.
-  ///
-  /// Accepts `watch?v=`, `youtu.be/`, `shorts/`, `embed/`, `live/`, and `v/` links on any
-  /// YouTube host, with or without a scheme.
   init?(link: String) {
     let trimmed = link.trimmingCharacters(in: .whitespacesAndNewlines)
     if let id = YouTubeVideoID(rawValue: trimmed) {
@@ -52,15 +47,11 @@ struct YouTubeVideoID: Hashable, Sendable {
 }
 
 extension YouTubeVideoID {
-  /// Reads a video from text typed or pasted into a search bar. Unlike `init(link:)`, a bare
-  /// 11-character word such as "programming" is a search, not a video ID.
   init?(pastedLink text: String) {
     guard text.lowercased().contains("youtu") else { return nil }
     self.init(link: text)
   }
 
-  /// Reads a video from a page a search engine navigates to, including redirect links such as
-  /// Google's `/url?q=https://www.youtube.com/watch?v=…`.
   init?(navigatingTo url: URL) {
     if let id = YouTubeVideoID(pastedLink: url.absoluteString) {
       self = id
@@ -73,7 +64,6 @@ extension YouTubeVideoID {
   }
 }
 
-/// One timed Japanese subtitle line with its English translation, when one exists.
 struct SubtitleCue: Identifiable, Hashable, Sendable {
   let id: Int
   let start: TimeInterval
@@ -95,7 +85,6 @@ struct YouTubeVideoCaptions: Sendable {
   let title: String?
   let cues: [SubtitleCue]
   let isAutomatic: Bool
-  /// The channel that published the video.
   var author: String? = nil
 }
 
@@ -121,7 +110,6 @@ enum YouTubeCaptionError: Error, Equatable {
 }
 
 enum YouTubeCaptionParsing {
-  /// Chooses creator-made Japanese captions over automatic ones.
   static func japaneseTrack(in tracks: [YouTubeCaptionTrack]) -> YouTubeCaptionTrack? {
     let japanese = tracks.filter {
       $0.languageCode == "ja" || $0.languageCode.hasPrefix("ja-")
@@ -129,7 +117,6 @@ enum YouTubeCaptionParsing {
     return japanese.first { !$0.isAutomatic } ?? japanese.first
   }
 
-  /// Reads caption tracks from a YouTube player response.
   static func tracks(fromPlayerResponse data: Data) throws -> (
     title: String?, author: String?, tracks: [YouTubeCaptionTrack]
   ) {
@@ -150,7 +137,6 @@ enum YouTubeCaptionParsing {
     return (response.videoDetails?.title, response.videoDetails?.author, tracks)
   }
 
-  /// Parses YouTube's timed-text XML (`<transcript><text start dur>`), dropping empty lines.
   static func cues(fromTimedText data: Data, joiner: String) throws -> [SubtitleCue] {
     let delegate = TimedTextParserDelegate()
     let parser = XMLParser(data: data)
@@ -165,7 +151,6 @@ enum YouTubeCaptionParsing {
         .joined(separator: joiner)
         .removingSoundTags
       guard !text.isEmpty else { continue }
-      // Automatic captions overlap; end each line when the next begins.
       let next = delegate.lines.dropFirst(index + 1).first?.start
       let end = min(line.start + line.duration, next ?? .infinity)
       cues.append(
@@ -174,9 +159,6 @@ enum YouTubeCaptionParsing {
     return cues
   }
 
-  /// Reads YouTube's translated timed text as whole sentences. YouTube keeps the Japanese
-  /// track's time slots, leaves them empty while a sentence continues, and puts the sentence in
-  /// its last slot, so each sentence spans from the first empty slot before it.
   static func translationSentences(fromTimedText data: Data) throws -> [SubtitleCue] {
     let delegate = TimedTextParserDelegate()
     let parser = XMLParser(data: data)
@@ -202,7 +184,6 @@ enum YouTubeCaptionParsing {
         text: text
       )
       sentenceStart = nil
-      // A word split across slots, such as "Do" and "n't", joins the sentence it finishes.
       if text.hasPrefix("n't") || text.hasPrefix("'"), let previous = sentences.popLast() {
         sentence = SubtitleCue(
           id: previous.id, start: sentence.start, end: sentence.end, text: previous.text + text)
@@ -212,18 +193,11 @@ enum YouTubeCaptionParsing {
     return sentences
   }
 
-  /// The most caption lines one card may merge, so every card fits on screen.
   static let maximumLinesPerCard = 2
-  /// The most Japanese characters one merged card may hold.
   static let maximumCharactersPerCard = 40
 
-  /// Pairs Japanese lines with translated lines by time. YouTube often translates automatic
-  /// captions a whole sentence at a time. A sentence spanning a few short lines merges them into
-  /// one card; a longer one leaves its lines as separate cards and puts the sentence on its last
-  /// line, where YouTube shows it, so no card grows past what fits on screen.
   static func pairing(_ cues: [SubtitleCue], with translations: [SubtitleCue]) -> [SubtitleCue] {
     guard !cues.isEmpty, !translations.isEmpty else { return cues }
-    // The Japanese lines each translated line meaningfully overlaps.
     let spans: [(translation: SubtitleCue, lines: ClosedRange<Int>)] = translations.compactMap {
       translation in
       let lines = cues.indices.filter { overlaps(cues[$0], translation) }
@@ -234,8 +208,6 @@ enum YouTubeCaptionParsing {
       lines.count <= maximumLinesPerCard
         && cues[lines].map(\.text.count).reduce(0, +) <= maximumCharactersPerCard
     }
-    // Lines a translation spans merge into one card when they fit; lines outside any merge
-    // stay one card each.
     var groups: [ClosedRange<Int>] = []
     for span in spans.map(\.lines).sorted(by: { $0.lowerBound < $1.lowerBound }) {
       guard fits(span) else { continue }
@@ -255,7 +227,6 @@ enum YouTubeCaptionParsing {
     while index < cues.count {
       let group = groups.first { $0.contains(index) } ?? index...index
       let lines = cues[group]
-      // A translation belongs to the card holding the last line it spans.
       let text = spans
         .filter { group.contains($0.lines.upperBound) }
         .map(\.translation.text)
@@ -273,15 +244,12 @@ enum YouTubeCaptionParsing {
     return paired
   }
 
-  /// Whether a translated line covers enough of a Japanese line to belong to it, so small
-  /// timing differences at the edges don't join neighboring lines.
   private static func overlaps(_ line: SubtitleCue, _ translation: SubtitleCue) -> Bool {
     let overlap = min(line.end, translation.end) - max(line.start, translation.start)
     let lineLength = line.end - line.start
     return overlap > 0 && (overlap >= 0.5 || overlap >= lineLength / 2)
   }
 
-  /// Joins translated pieces, keeping a word split across pieces, such as "Do" and "n't", whole.
   private static func joinTranslation(_ joined: String, _ next: String) -> String {
     guard !joined.isEmpty else { return next }
     let attaches = next.hasPrefix("n't") || next.hasPrefix("'") || next.first?.isPunctuation == true
@@ -348,7 +316,6 @@ private final class TimedTextParserDelegate: NSObject, XMLParserDelegate {
     qualifiedName: String?
   ) {
     guard elementName == "text", var line = current else { return }
-    // Timed text escapes HTML entities a second time, such as `&amp;#39;`.
     line.text = line.text.decodingHTMLEntities
     lines.append(line)
     current = nil
@@ -356,8 +323,6 @@ private final class TimedTextParserDelegate: NSObject, XMLParserDelegate {
 }
 
 extension String {
-  /// Drops bracketed sound descriptions, such as [音楽] or [Music], which automatic captions
-  /// add between lyrics.
   fileprivate var removingSoundTags: String {
     replacing(/\s*[\[［][^\]］]*[\]］]\s*/, with: " ")
       .trimmingCharacters(in: .whitespaces)
@@ -381,7 +346,6 @@ extension String {
   }
 }
 
-/// Loads a YouTube video's Japanese captions and their English translation.
 struct YouTubeCaptionClient: Sendable {
   var captions: @Sendable (YouTubeVideoID) async throws -> YouTubeVideoCaptions
 
@@ -426,7 +390,6 @@ struct YouTubeCaptionClient: Sendable {
     guard var components = URLComponents(url: baseURL, resolvingAgainstBaseURL: false) else {
       throw YouTubeCaptionError.unreadableCaptions
     }
-    // The default format is the `<transcript><text>` XML this client parses.
     var items = (components.queryItems ?? []).filter { $0.name != "fmt" && $0.name != "tlang" }
     if let language { items.append(URLQueryItem(name: "tlang", value: language)) }
     components.queryItems = items

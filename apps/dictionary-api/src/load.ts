@@ -1,6 +1,3 @@
-// Loads the dictionary from the app's files: once per worker thread, after the main thread has
-// checked the large files' SHA-256s (`verifyFiles`), so each thread only opens them.
-
 import { join } from 'node:path'
 import { Dictionary } from '@zenbu/dictionary-core/artifact/dictionary'
 import { artifactFile, fileSha256, openArtifact } from './artifact'
@@ -8,20 +5,13 @@ import { loadKuromoji } from './kuromoji'
 import { inProcessService, type ServiceInfo } from './service'
 import { loadSudachi, prepareSudachi, sudachiContract } from './sudachi'
 
-/** What every thread loads from, checked once. */
 export interface VerifiedFiles {
   resources: string
   artifactSha256: string
-  /** Sudachi's dictionary, checked against the app's pin; null leaves sentence search off. */
   sudachiDictionary: string | null
   release: string
 }
 
-/**
- * Hashes LanguageReferenceData.sqlite3, which the packs must have been built for, and Sudachi's
- * dictionary, which must be the one the app pins, then configures Sudachi. Throws on a mismatch.
- * Runs on the main thread, before any worker starts.
- */
 export async function verifyFiles(options: {
   resources: string
   sudachiDictionary: string | null
@@ -44,7 +34,6 @@ export async function verifyFiles(options: {
   return { ...options, artifactSha256 }
 }
 
-/** The dictionary and its service, in this thread. */
 export function loadService(files: VerifiedFiles) {
   const artifact = openArtifact(files.resources, files.artifactSha256)
   const tokenize = loadKuromoji(join(files.resources, 'Kuromoji'))

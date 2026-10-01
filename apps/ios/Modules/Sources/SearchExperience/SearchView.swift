@@ -230,9 +230,6 @@ struct SearchView: View {
     }
   }
 
-  /// Searches for `taskID`, then again for the current query when it changed without SwiftUI
-  /// starting a newer task. SwiftUI can miss the last keystroke before Return, and without the
-  /// retry the finished search would leave Searching on screen.
   private func search(_ taskID: SearchTaskID) async {
     var taskID = taskID
     while !Task.isCancelled, settledSearchTaskID != taskID {
@@ -643,7 +640,6 @@ private struct SearchResultsView: View {
   let query: SearchQuery
   let results: LookupSearchResults
   let exampleCount: Int
-  /// Radical-origin searches intentionally retain only their leading lexical-rank group.
   let rankedEntryLimit: Int?
   let frequencyCapability: FrequencyCapability
   let frequencyRefreshID: Int
@@ -718,7 +714,6 @@ private struct SearchResultsView: View {
               link: SearchExperienceRoute.word(entry, nil)
             )
           }
-          // Plain List headers and footers pin over scrolling rows, so the notice is a row.
           if let frequencyUnavailableNotice {
             Label(frequencyUnavailableNotice, systemImage: "info.circle")
               .font(.footnote)
@@ -777,31 +772,23 @@ private struct SearchResultsView: View {
   }
 }
 
-/// What the Search results screen shows for a finished search. `SearchView` and the search-results
-/// conformance suite both use it, so the suite follows any change to the screen.
 enum SearchResultsScreen {
-  /// Discovered Words lists at most this many words.
   static let discoveredWordLimit = 12
   static let discoveredWordsHeading = "Discovered Words"
   static let kanjiLabel = "KANJI"
 
-  /// The rows below the Example Sentences and refinement rows.
   enum List {
     case discoveredWords([DictionaryEntry])
-    /// A single-kanji query's kanji row, then the entries in frequency order.
     case ranked(kanji: KanjiCharacter?, entries: [DictionaryEntry])
     case none
   }
 
-  /// Example sentences containing the query itself.
   static func directExampleCount(
     _ query: SearchQuery, using client: ExampleSentenceClient
   ) async -> Int {
     (try? await client.count(query)) ?? 0
   }
 
-  /// The Example Sentences row's count: the primary entry's examples when the results use
-  /// them, otherwise sentences containing the query.
   static func exampleCount(
     _ results: LookupSearchResults, query: SearchQuery, directCount: Int,
     using client: ExampleSentenceClient
@@ -812,8 +799,6 @@ enum SearchResultsScreen {
     return directCount
   }
 
-  /// Whether Search shows No Dictionary Matches instead of a list. A single kanji always has
-  /// its kanji row.
   static func showsNoResults(
     _ results: LookupSearchResults, exampleCount: Int, query: SearchQuery
   ) -> Bool {
@@ -833,8 +818,6 @@ enum SearchResultsScreen {
     entry?.summary ?? "Kanji detail"
   }
 
-  /// The entries Search looks up frequency for and lists. Radical-origin searches keep only
-  /// their leading lexical-rank group.
   static func presentedEntries(
     _ results: LookupSearchResults, rankedEntryLimit: Int?
   ) -> [DictionaryEntry] {
@@ -850,8 +833,6 @@ enum SearchResultsScreen {
     return entries.compactMap { seen.insert($0.id).inserted ? $0.id : nil }
   }
 
-  /// `ordered` is the presented entries after `SearchResultFrequencyOrdering`. Discovered Words
-  /// keeps dictionary order.
   static func list(
     query: SearchQuery, results: LookupSearchResults, ordered: [DictionaryEntry]
   ) -> List {
@@ -864,18 +845,14 @@ enum SearchResultsScreen {
     return .none
   }
 
-  /// The count VoiceOver reads with each ranked row ("Result 1 of N"), including the kanji row.
   static func rankedCount(query: SearchQuery, entries: [DictionaryEntry]) -> Int {
     entries.count + (query.isSingleKanji ? 1 : 0)
   }
 }
 
-/// Discloses enabled dictionaries whose data could not be read, and says how Search is ordered
-/// without them.
 enum SearchFrequencyUnavailableNotice {
   static func text(for ranks: [FrequencyRanks]) -> String? {
     let packCount = ranks.map(\.count).max() ?? 0
-    // Unavailable packs, one per priority position that any displayed entry reports.
     let unavailable: [FrequencyPackUnavailable] = (0..<packCount).compactMap { position in
       for entryRanks in ranks where entryRanks.indices.contains(position) {
         if case .unavailable(let unavailable) = entryRanks[position] { return unavailable }
@@ -923,8 +900,6 @@ private struct KanjiPrimaryRow: View {
   }
 }
 
-/// A dictionary result: headword and reading, meaning, frequency chips, and the Known badge.
-/// Search and the word sheet's choice list share it; each chooses where a row links.
 struct ResultRow<Link: Hashable>: View {
   let entry: DictionaryEntry
   let summary: String
@@ -974,8 +949,6 @@ struct ResultRow<Link: Hashable>: View {
     .accessibilityIdentifier(resultIdentifier)
   }
 
-  /// Every ranked dictionary at standard sizes. At accessibility sizes only the dictionary that
-  /// orders the results is drawn, plus a count, so the headword and meaning stay prominent.
   @ViewBuilder
   private var frequencyChips: some View {
     let visible = frequencyPresentation.collapsed(
@@ -1071,12 +1044,6 @@ enum ResultRank {
 }
 
 enum SearchResultFrequencyOrdering {
-  /// Explicit match evidence is primary. Enabled dictionaries order only equivalent matches:
-  /// first by how common the first dictionary that ranks an entry says it is, so an entry the
-  /// first dictionary misses (家 in YouTube) still places by its JLPT level or next rank; then by
-  /// the first dictionary's rank or level, the next dictionary's to break ties, and so on, with
-  /// a ranked entry before an unranked one. The original dictionary rank and canonical entry ID
-  /// are deterministic fallbacks.
   static func ordered(
     _ results: LookupSearchResults,
     entries: [DictionaryEntry]? = nil,
@@ -1118,7 +1085,6 @@ enum SearchResultFrequencyOrdering {
   }
 }
 
-/// A heading placed as a row, because a plain List pins Section headers over scrolling rows.
 struct SearchListHeading: View {
   let title: LocalizedStringKey
 

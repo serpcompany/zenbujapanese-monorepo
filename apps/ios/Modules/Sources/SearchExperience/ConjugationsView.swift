@@ -104,7 +104,6 @@ private struct ConjugationRow: View {
   }
 }
 
-/// One conjugated form: what it means, the form itself, and the Example Sentences that use it.
 struct ConjugatedFormView: View {
   @State private var examples: [ExampleSentence] = []
   @State private var isLoadingExamples = true
@@ -121,7 +120,6 @@ struct ConjugatedFormView: View {
   var body: some View {
     let presentation = form.id.presentation
     List {
-      // What the form means is the reason to open this screen, so it leads.
       Section {
         VStack(alignment: .leading, spacing: 10) {
           Text(presentation.explanation)
@@ -180,16 +178,7 @@ struct ConjugatedFormView: View {
   private var sharedSpellings: [String] { table.sharedSpellings(of: form, in: mode) }
 }
 
-// The conjugation screens' words and examples, shared by the views and the word-detail
-// conformance suite, so the website's conjugation screens are held to the app's (see also
-// packages/dictionary-core/src/detail/conjugation.ts, and
-// packages/dictionary-core/src/examples/forms.ts, which the dictionary service lists each form's
-// examples with).
-
 extension ConjugatedForm {
-  /// Every retrieved Example Sentence in which the parser reads this exact form as one word,
-  /// in retrieval order. Word boundaries come from the same inflection grouping linked text
-  /// uses, so 見たかった (wanted to see) and 見た目 (appearance) are not examples of past 見た.
   func examples(
     exampleSentenceClient: ExampleSentenceClient,
     japaneseTextAnalysisClient: JapaneseTextAnalysisClient
@@ -206,8 +195,6 @@ extension ConjugatedForm {
 }
 
 extension ConjugationTable {
-  /// Other forms in `mode` with the same spelling as `form`, such as potential and passive
-  /// 見られる, which the form's screen names.
   func sharedSpellings(of form: ConjugatedForm, in mode: ConjugationMode) -> [String] {
     forms(for: mode)
       .filter { $0.id != form.id && $0.surface == form.surface }
@@ -216,8 +203,6 @@ extension ConjugationTable {
 }
 
 extension ConjugatedForm {
-  /// Whether the table's row shows furigana: the stem's reading is already in the header, so
-  /// only when the ending itself has kanji, as in 来させる, whose reading changes.
   var rowShowsFurigana: Bool { ending.contains(where: \.isKanji) }
 }
 

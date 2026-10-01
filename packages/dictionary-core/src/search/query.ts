@@ -1,8 +1,5 @@
-// Ports apps/ios/Modules/Sources/SearchExperience/SearchQuery.swift.
-
 const graphemeSegmenter = new Intl.Segmenter('en', { granularity: 'grapheme' })
 
-/** Swift's `String.count`: grapheme clusters, not UTF-16 code units. */
 export function graphemes(value: string): string[] {
   return Array.from(graphemeSegmenter.segment(value), segment => segment.segment)
 }
@@ -19,11 +16,6 @@ function compareScalars(lhs: string, rhs: string): number {
 
 const isSurrogate = (unit: number) => unit >= 0xd800 && unit <= 0xdfff
 
-/**
- * Swift's `String <`: compares by Unicode scalar, not UTF-16 code unit. Code units that aren't
- * surrogates are scalars, so text compares unit by unit until a surrogate differs. Ranking
- * compares every result's fingerprint this way.
- */
 export function compareStrings(lhs: string, rhs: string): number {
   const length = Math.min(lhs.length, rhs.length)
   for (let index = 0; index < length; index++) {
@@ -35,12 +27,6 @@ export function compareStrings(lhs: string, rhs: string): number {
   return lhs.length - rhs.length
 }
 
-/**
- * Compatibility-composed, lowercased, and with whitespace runs collapsed to one space. Like
- * Swift's `split(whereSeparator: \.isWhitespace)`, a grapheme whose first scalar is whitespace
- * separates words and is dropped whole, so ゛ (a space and a combining mark after NFKC) goes
- * with it, and U+FEFF, which isn't whitespace, stays.
- */
 export function normalizeQuery(raw: string): string {
   const folded = raw.normalize('NFKC').toLowerCase()
   if (/^[\x20-\x7e]*$/.test(folded)) return folded.split(' ').filter(Boolean).join(' ')
@@ -95,7 +81,15 @@ export function isMixedScript(value: string): boolean {
   return japaneseSegments(value).length > 0 && /[a-z]/i.test(value)
 }
 
-/** Dictionary-form candidates for an inflected romaji query, such as tabeta → taberu. */
+const irregularDictionaryForms = new Map([
+  ['shita', 'suru'],
+  ['shite', 'suru'],
+  ['kita', 'kuru'],
+  ['kite', 'kuru'],
+  ['itta', 'iku'],
+  ['itte', 'iku']
+])
+
 export function romajiDeinflectedCandidates(value: string): string[] {
   if (!isASCII(value)) return []
   const candidates: string[] = []
@@ -109,10 +103,8 @@ export function romajiDeinflectedCandidates(value: string): string[] {
     for (const ending of endings) append(stem + ending)
   }
 
-  // Irregulars first: their regular-looking alternatives are valid words too.
-  if (value === 'shita' || value === 'shite') append('suru')
-  if (value === 'kita' || value === 'kite') append('kuru')
-  if (value === 'itta' || value === 'itte') append('iku')
+  const irregular = irregularDictionaryForms.get(value)
+  if (irregular) append(irregular)
 
   replaceSuffix('shita', ['su'])
   replaceSuffix('shite', ['su'])
@@ -132,7 +124,6 @@ export function romajiDeinflectedCandidates(value: string): string[] {
 
 const literalReplacements: Record<string, string> = { mondai: 'monday' }
 
-/** The app's reference-compatible literal query policy. */
 export function literalQuery(value: string): string {
   return literalReplacements[value] ?? value
 }

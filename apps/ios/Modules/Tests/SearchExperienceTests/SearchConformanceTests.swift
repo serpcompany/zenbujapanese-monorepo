@@ -2,13 +2,6 @@ import Foundation
 import Testing
 @testable import SearchExperience
 
-/// Checks Search retrieval against the shared conformance suite in
-/// `apps/ios/LanguageData/Conformance/search-retrieval.json`: each query must return the same
-/// Language Reference IDs, in the same order, before frequency evidence reorders them.
-///
-/// Every Zenbu client that searches the dictionary must pass the same file. After an intended
-/// change to Search or the dictionary, rewrite its expectations by running this suite with
-/// `TEST_RUNNER_ZENBU_RECORD_CONFORMANCE=1`, and review the diff.
 @Suite("Search conformance suite")
 struct SearchConformanceTests {
   @Test("Search returns the suite's Language Reference IDs in the suite's order")
@@ -50,10 +43,10 @@ struct SearchConformanceTests {
 
   private static var suiteURL: URL {
     URL(fileURLWithPath: #filePath)
-      .deletingLastPathComponent()  // SearchExperienceTests
-      .deletingLastPathComponent()  // Tests
-      .deletingLastPathComponent()  // Modules
-      .deletingLastPathComponent()  // apps/ios
+      .deletingLastPathComponent()
+      .deletingLastPathComponent()
+      .deletingLastPathComponent()
+      .deletingLastPathComponent()
       .appending(path: "LanguageData/Conformance/search-retrieval.json")
   }
 
@@ -107,8 +100,6 @@ private struct ConformanceCase: Codable {
   var results: [ConformanceResult]?
 }
 
-/// Only `id` and its position are the contract. The headword and reading make the file and
-/// failures readable.
 private struct ConformanceResult: Codable {
   let id: String
   let headword: String

@@ -1,10 +1,3 @@
-// The app's Kuromoji morphology as its example links see it: KuromojiMorphologyClient.swift's
-// conversion of kuromoji.js tokens into candidates, and JapaneseInflectionGrouping.swift, which
-// joins a verb or adjective with its inflection pieces.
-// Change the Swift and this port in the same PR, and re-record the word-detail suite; the
-// Search parity workflow checks that both change (issue 464).
-
-/** A token as kuromoji.js's `tokenize` returns it (the fields the app decodes). */
 export interface KuromojiToken {
   word_type: string
   word_position: number
@@ -17,14 +10,8 @@ export interface KuromojiToken {
   reading?: string
 }
 
-/**
- * The app's Kuromoji tokenizer, a capability a client supplies: kuromoji.js with the IPADIC files
- * the app bundles (SearchExperience/Resources/Kuromoji), as KuromojiMorphologyClient.swift runs
- * them. It returns tokens as kuromoji.js's `tokenize` does.
- */
 export type Tokenize = (text: string) => KuromojiToken[]
 
-/** JapaneseMorphologyCandidate. */
 export interface MorphologyCandidate {
   surface: string
   dictionaryForm: string
@@ -33,15 +20,9 @@ export interface MorphologyCandidate {
   partOfSpeech: string[]
   isOutOfVocabulary: boolean
   children: MorphologyCandidate[]
-  /** A word joined from a head and its inflection pieces, such as 見なかった. */
   joinsInflection: boolean
 }
 
-/**
- * KuromojiJapaneseMorphologyAdapter.analyze: the tokens as candidates, or null where the app
- * throws `invalidProviderRange` (tokens that don't tile the text), which makes its analyzer fall
- * back to the whole text as one unlinked token.
- */
 export function kuromojiCandidates(
   text: string,
   tokens: KuromojiToken[]
@@ -49,7 +30,6 @@ export function kuromojiCandidates(
   let previousEnd = 0
   const candidates: MorphologyCandidate[] = []
   for (const token of tokens) {
-    // word_position is 1-based, in UTF-16 code units, as NSRange reads it.
     const start = token.word_position - 1
     const end = start + token.surface_form.length
     if (start !== previousEnd || text.slice(start, end) !== token.surface_form) return null
@@ -74,7 +54,6 @@ export function kuromojiCandidates(
 const isInflectingHead = (candidate: MorphologyCandidate) =>
   candidate.partOfSpeech[0] === '動詞' || candidate.partOfSpeech[0] === '形容詞'
 
-/** IPADIC tags a na-adjective stem as a noun with 形容動詞語幹; UniDic tags it 形状詞. */
 function isNaAdjectiveStem(candidate: MorphologyCandidate): boolean {
   const pos = candidate.partOfSpeech
   return pos[0] === '形状詞' || (pos[0] === '名詞' && pos.includes('形容動詞語幹'))
@@ -88,9 +67,8 @@ function attaches(candidate: MorphologyCandidate, previous: MorphologyCandidate)
     case '助詞':
       return pos.includes('接続助詞') && ['て', 'で', 'ば'].includes(candidate.surface)
     case '動詞': {
-      // IPADIC tags れる, られる, せる, and させる as suffix verbs.
-      if (pos.includes('接尾')) return true
-      // Helper verbs such as いる and しまう continue a te-form: 見ている, 見てしまう.
+      const isSuffixVerb = pos.includes('接尾')
+      if (isSuffixVerb) return true
       const isHelper = pos.includes('非自立') || pos.includes('非自立可能')
       return isHelper && ['て', 'で'].includes(previous.surface)
     }
@@ -113,7 +91,6 @@ function joined(pieces: MorphologyCandidate[]): MorphologyCandidate {
   }
 }
 
-/** JapaneseInflectionGrouping.group. */
 export function groupInflections(candidates: MorphologyCandidate[]): MorphologyCandidate[] {
   const grouped: MorphologyCandidate[] = []
   let index = 0

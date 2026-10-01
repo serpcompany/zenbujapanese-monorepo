@@ -10,7 +10,7 @@ inputs:
 runs:
   using: composite
   steps:
-    - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5.6.0
+    - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1
       with:
         python-version: '3.12'
         cache: pip
@@ -23,15 +23,11 @@ runs:
     - name: List the Git LFS files the release holds
       id: lfs
       shell: bash
-      # On its own line so a failure stops the step, and never empty: an empty --include would
-      # pull every LFS file in the repository.
       run: |
         paths=$(python language-data/pipeline/package.py lfs-paths)
         test -n "$paths"
         echo "paths=$paths" >> "$GITHUB_OUTPUT"
-    # Their pointers are in the checkout until the pull, so this key is their oids. A restored
-    # object can't change a release: the build checks every file against its pointer's oid.
-    - uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
+    - uses: actions/cache@caa296126883cff596d87d8935842f9db880ef25
       with:
         path: .git/lfs/objects
         key: language-data-lfs-${{ hashFiles('apps/ios/Modules/Sources/SearchExperience/Resources/*.sqlite3', 'apps/ios/Modules/Sources/SearchExperience/Resources/Kuromoji/*.dat.gz') }}
@@ -44,7 +40,6 @@ runs:
       shell: bash
       env:
         OUT: ${{ inputs.out }}
-      # `shell: bash` runs with pipefail, so `| tee` doesn't hide a refusal.
       run: python language-data/pipeline/package.py build --out "$OUT" | tee -a "$GITHUB_STEP_SUMMARY"
     - name: Validate the manifest and the staged files
       shell: bash

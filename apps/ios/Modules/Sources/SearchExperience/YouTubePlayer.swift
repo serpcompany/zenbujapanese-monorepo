@@ -1,14 +1,12 @@
 import SwiftUI
 import WebKit
 
-/// Drives YouTube's embedded IFrame player and reports its playback time.
 @MainActor
 @Observable
 final class YouTubePlayerController {
   enum State: Equatable {
     case loading
     case ready
-    /// The embedded player's error code, such as 101 or 150 when embedding is disabled.
     case failed(Int)
   }
 
@@ -19,17 +17,13 @@ final class YouTubePlayerController {
   private(set) var playbackRate: Double = 1
   @ObservationIgnored fileprivate weak var webView: WKWebView?
 
-  /// Where playback pauses by itself, when only one stretch of the video should play.
   @ObservationIgnored private var pauseTime: TimeInterval?
-  /// Where a one-stretch playback starts; reports from before the seek landed are ignored.
   @ObservationIgnored private var stretchStart: TimeInterval?
-  /// A stretch that plays over and over until the loop is turned off.
   private(set) var loop: ClosedRange<TimeInterval>?
 
   func setLoop(_ range: ClosedRange<TimeInterval>?) {
     loop = range
   }
-  /// Whether the current playback will pause by itself at the end of a stretch.
   var isPlayingOneStretch: Bool { pauseTime != nil }
 
   func play() {
@@ -55,7 +49,6 @@ final class YouTubePlayerController {
     run("player.seekTo(\(max(time, 0)), true);" + (shouldPlay ? "player.playVideo();" : ""))
   }
 
-  /// Plays from `start` and pauses again at `end`.
   func play(from start: TimeInterval, until end: TimeInterval) {
     seek(to: start)
     stretchStart = start
@@ -82,13 +75,11 @@ final class YouTubePlayerController {
     case "time":
       if let time = message["time"] as? Double {
         if let stretchStart, let pauseTime {
-          // A report outside the stretch was sent before the seek applied.
           guard time >= stretchStart - 0.5, time < pauseTime + 1 else { break }
           self.stretchStart = nil
         }
         currentTime = time
         if let pauseTime, time >= pauseTime { pause() }
-        // YT.PlayerState.ENDED is 0: a repeated line that runs to the video's end restarts too.
         let hasEnded = message["state"] as? Int == 0
         if let loop, isPlaying || hasEnded,
           time >= loop.upperBound || time < loop.lowerBound - 1 || hasEnded
@@ -97,7 +88,6 @@ final class YouTubePlayerController {
         }
       }
       if let length = message["duration"] as? Double, length > 0 { duration = length }
-      // YT.PlayerState.PLAYING is 1 and BUFFERING is 3.
       if let playerState = message["state"] as? Int { isPlaying = playerState == 1 || playerState == 3 }
     case "error":
       state = .failed(message["code"] as? Int ?? 0)
@@ -124,7 +114,6 @@ struct YouTubePlayerView: UIViewRepresentable {
     webView.scrollView.isScrollEnabled = false
     webView.accessibilityIdentifier = "watch.player"
     controller.webView = webView
-    // YouTube requires an identifying origin and referrer for embedded playback.
     webView.loadHTMLString(Self.html(videoID), baseURL: Self.origin)
     return webView
   }
@@ -181,7 +170,6 @@ struct YouTubePlayerView: UIViewRepresentable {
     """
   }
 
-  /// Forwards script messages without the content controller retaining the player controller.
   final class MessageProxy: NSObject, WKScriptMessageHandler {
     private weak var controller: YouTubePlayerController?
 

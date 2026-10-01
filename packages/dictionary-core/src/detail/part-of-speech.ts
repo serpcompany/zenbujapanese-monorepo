@@ -1,6 +1,3 @@
-// Ports PartOfSpeechFormatter.swift: one word class, then its modifiers, in sentence case, such as
-// "Godan verb (intransitive)" rather than "Godan Verb · Intransitive Verb".
-
 const verbClassNames: Record<string, string> = {
   godanVerb: 'Godan verb',
   ichidanVerb: 'Ichidan verb',
@@ -12,7 +9,6 @@ const verbClassNames: Record<string, string> = {
   auxiliaryVerb: 'Auxiliary verb'
 }
 
-/** Everything else. "Unclassified" is left out: it tells a learner nothing. */
 const otherNames: Record<string, string> = {
   pronoun: 'Pronoun',
   nounPrefix: 'Prefix',
@@ -42,7 +38,6 @@ const otherNames: Record<string, string> = {
 const name = (names: Record<string, string>, part: string) =>
   Object.hasOwn(names, part) ? names[part] : undefined
 
-/** `PartOfSpeechFormatter.phrase(for:)`. */
 export function partOfSpeechPhrase(parts: readonly string[]): string {
   const transitive = parts.includes('transitive')
   const intransitive = parts.includes('intransitive')
@@ -51,12 +46,9 @@ export function partOfSpeechPhrase(parts: readonly string[]): string {
   for (const part of parts) {
     const verb = name(verbClassNames, part)
     if (verb) phrases.push(verb)
-    // A generic "Verb" adds nothing beside a specific class such as "Godan verb".
     else if (part === 'verb') {
       if (!hasVerbClass) phrases.push('Verb')
-    }
-    // "Noun (の)" and "Adverb (と)" already say noun and adverb.
-    else if (part === 'noun') {
+    } else if (part === 'noun') {
       if (!parts.includes('noAdjective')) phrases.push('Noun')
     } else if (part === 'adverb') {
       if (!parts.includes('adverbTo')) phrases.push('Adverb')

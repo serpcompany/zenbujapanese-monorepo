@@ -57,6 +57,23 @@
           }
         }
       }
+    },
+    {
+      "includes": ["src/**", "!**/*.test.ts", "!**/*.test.tsx"],
+      "linter": {
+        "rules": {
+          "style": {
+            "noRestrictedGlobals": {
+              "level": "error",
+              "options": {
+                "deniedGlobals": {
+                  "console": "The dictionary core runs on every client and logs nothing: return what happened, as a result or an error, and let the client log it (docs/agents/dictionary-core.md)."
+                }
+              }
+            }
+          }
+        }
+      }
     }
   ],
   "assist": {

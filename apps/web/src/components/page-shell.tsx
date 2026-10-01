@@ -1,6 +1,5 @@
 import type { ReactNode } from 'react'
 
-/** Unstyled text page. Visual design comes after the mockup rounds (#402). */
 export function PageShell({
   title,
   updated,

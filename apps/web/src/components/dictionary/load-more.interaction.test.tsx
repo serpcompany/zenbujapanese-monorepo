@@ -1,12 +1,8 @@
-// @vitest-environment happy-dom
 import { act } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 import type { PageExample } from '@/lib/dictionary/page-example'
 import { ExampleList } from './example-list'
-
-// A paged list in a DOM: the Load more button and the list scrolling into view (the
-// IntersectionObserver) at once load the next page once, and every example shows once, in order.
 
 declare global {
   var IS_REACT_ACT_ENVIRONMENT: boolean
@@ -15,8 +11,7 @@ globalThis.IS_REACT_ACT_ENVIRONMENT = true
 
 let container: HTMLDivElement
 let root: Root
-/** The list's observer callback, which the test calls as scrolling would. */
-let intersect: (() => void) | null = null
+let scrollListIntoView: (() => void) | null = null
 
 beforeEach(() => {
   document.body.innerHTML = '<div id="root"></div>'
@@ -26,7 +21,7 @@ beforeEach(() => {
     'IntersectionObserver',
     class {
       constructor(callback: (entries: { isIntersecting: boolean }[]) => void) {
-        intersect = () => callback([{ isIntersecting: true }])
+        scrollListIntoView = () => callback([{ isIntersecting: true }])
       }
       observe() {}
       disconnect() {}
@@ -38,7 +33,7 @@ afterEach(() => {
   act(() => root.unmount())
   document.body.replaceChildren()
   vi.unstubAllGlobals()
-  intersect = null
+  scrollListIntoView = null
 })
 
 const example = (position: number): PageExample => ({
@@ -71,8 +66,8 @@ describe('a paged list', () => {
     const button = [...container.querySelectorAll('button')].find(
       candidate => candidate.textContent === 'Load more examples'
     )
-    if (!button || !intersect) throw new Error('No Load more button or observer')
-    const scroll = intersect
+    if (!button || !scrollListIntoView) throw new Error('No Load more button or observer')
+    const scroll = scrollListIntoView
     await act(async () => {
       button.click()
       scroll()
@@ -83,7 +78,6 @@ describe('a paged list', () => {
       answer(Response.json({ examples: [25, 26, 27, 28, 29].map(example) }))
     })
     expect(shown()).toEqual(Array.from({ length: 30 }, (_, index) => index))
-    // Every example is shown, so there is nothing more to load.
     expect(container.textContent).not.toContain('Load more examples')
   })
 })

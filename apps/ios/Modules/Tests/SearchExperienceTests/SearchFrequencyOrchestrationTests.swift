@@ -55,7 +55,6 @@ struct SearchFrequencyOrchestrationTests {
       _ = try await delayed.value
       Issue.record("A cancelled frequency request unexpectedly produced evidence")
     } catch is CancellationError {
-      // Expected: the loader checks cancellation even if its provider returns a value.
     } catch {
       Issue.record("Unexpected cancellation error: \(error)")
     }

@@ -1,7 +1,6 @@
 import { describe, expect, test } from 'vitest'
 import { ftsPhrase, ftsPrefix } from './fts'
 
-// The app's match strings (LookupClient.swift), which FTS4 reads directly.
 describe('ftsPhrase', () => {
   test('quotes the value', () => {
     expect(ftsPhrase('eat')).toBe('"eat"')

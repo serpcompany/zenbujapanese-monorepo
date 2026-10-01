@@ -1,18 +1,5 @@
-// The website runs a TypeScript port of this grouping:
-// packages/dictionary-core/src/examples/morphology.ts.
-// Change both in the same PR and re-record the word-detail conformance suite (issue 464).
 import Foundation
 
-/// Joins a verb or adjective with the inflection pieces a parser splits off, so 見なかった reads
-/// and links as one word instead of 見 + なかっ + た.
-///
-/// Both parsers split inflections into separate morphemes: auxiliaries (ない, た, ます), the
-/// connective particles て, で, and ば, IPADIC's suffix verbs (れる, られる, せる, させる), and
-/// helper verbs such as いる or しまう after て. A na-adjective stem joins one following な, で,
-/// or に (静かな), but not the predicate copula, so 静かだ still reads as 静か + だ. The joined
-/// candidate keeps the head's dictionary form, so it resolves to the head's entry, and keeps the
-/// pieces as children, so the analyzer can fall back to them when the joined word resolves to
-/// nothing.
 enum JapaneseInflectionGrouping {
   static func group(_ candidates: [JapaneseMorphologyCandidate]) -> [JapaneseMorphologyCandidate] {
     var grouped: [JapaneseMorphologyCandidate] = []
@@ -42,7 +29,6 @@ enum JapaneseInflectionGrouping {
     ["動詞", "形容詞"].contains(candidate.partOfSpeech.first)
   }
 
-  /// IPADIC tags a na-adjective stem as a noun with 形容動詞語幹; UniDic tags it 形状詞.
   private static func isNaAdjectiveStem(_ candidate: JapaneseMorphologyCandidate) -> Bool {
     let pos = candidate.partOfSpeech
     return pos.first == "形状詞" || (pos.first == "名詞" && pos.contains("形容動詞語幹"))
@@ -59,9 +45,7 @@ enum JapaneseInflectionGrouping {
     case "助詞":
       return pos.contains("接続助詞") && ["て", "で", "ば"].contains(candidate.surface)
     case "動詞":
-      // IPADIC tags れる, られる, せる, and させる as suffix verbs.
       if pos.contains("接尾") { return true }
-      // Helper verbs such as いる and しまう continue a te-form: 見ている, 見てしまう.
       let isHelper = pos.contains("非自立") || pos.contains("非自立可能")
       return isHelper && ["て", "で"].contains(previous.surface)
     default:

@@ -1,10 +1,8 @@
 import SwiftUI
 
-/// The Word Detail and Kanji Detail menu item that marks a word or kanji known or unknown.
 struct KnownWordMenuButton: View {
   @Environment(WordKnowledge.self) private var wordKnowledge
   let item: SavedItem
-  /// The accessibility identifier prefix of the screen showing the button.
   var identifierPrefix = "word-detail"
 
   var body: some View {
@@ -20,9 +18,7 @@ struct KnownWordMenuButton: View {
   }
 }
 
-/// The capsule Search results and Word Detail show for a known word.
 struct KnownWordBadge: View {
-  /// Off where the surrounding row already says "Known" to VoiceOver.
   var announces = false
 
   var body: some View {
@@ -41,7 +37,6 @@ struct KnownWordBadge: View {
   }
 }
 
-/// Account → Known Words: every word and kanji the learner marked known, most recent first.
 struct KnownWordsView: View {
   @Environment(WordKnowledge.self) private var wordKnowledge
   @State private var searchText = ""
@@ -125,8 +120,6 @@ struct KnownWordsView: View {
 
 }
 
-/// A saved word in Known Words or a list: its headword with furigana, the Known capsule when
-/// asked for, and when it was saved.
 struct SavedWordRow: View {
   let headword: String
   let reading: String

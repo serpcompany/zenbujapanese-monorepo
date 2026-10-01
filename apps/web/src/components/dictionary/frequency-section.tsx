@@ -9,13 +9,6 @@ import { useState } from 'react'
 import { FrequencyDot, SpokenTier } from './frequency'
 import { Sheet } from './sheet'
 
-// The word page's Frequency rows, each opening that dictionary's Frequency Details as the app's
-// FrequencyRankRow opens FrequencyDisclosureView (WordDetailView.swift): the dictionary's name,
-// domain, description, version, and source, then the word's JLPT level, or its rank and
-// percentile, or why it has neither. The app's Manage Frequency Dictionaries button is left out:
-// the website uses the default dictionaries only (#464).
-
-/** The details' fields, as the app's two list sections show them. */
 export function FrequencyDetailsContent({ details }: { details: FrequencyDetails }) {
   const { pack } = details
   return (
@@ -54,8 +47,7 @@ export function FrequencyDetailsContent({ details }: { details: FrequencyDetails
 
 export function FrequencySection({ rows }: { rows: FrequencyRowDetail[] }) {
   const [open, setOpen] = useState<FrequencyRowDetail | null>(null)
-  // Stays set while the sheet animates closed, so its content doesn't vanish mid-animation.
-  const [shown, setShown] = useState<FrequencyRowDetail | null>(null)
+  const [lastOpened, setLastOpened] = useState<FrequencyRowDetail | null>(null)
   return (
     <>
       <ul className="-mx-2 flex flex-col">
@@ -68,7 +60,7 @@ export function FrequencySection({ rows }: { rows: FrequencyRowDetail[] }) {
               data-frequency-row={row.source}
               className="flex w-full cursor-pointer items-center gap-3 rounded-md px-2 py-2 text-left outline-none transition-colors hover:bg-muted focus-visible:ring-3 focus-visible:ring-ring/50 motion-reduce:transition-none"
               onClick={() => {
-                setShown(row)
+                setLastOpened(row)
                 setOpen(row)
               }}
             >
@@ -89,7 +81,7 @@ export function FrequencySection({ rows }: { rows: FrequencyRowDetail[] }) {
         }}
         title="Frequency Details"
       >
-        {shown ? <FrequencyDetailsContent details={shown.details} /> : null}
+        {lastOpened ? <FrequencyDetailsContent details={lastOpened.details} /> : null}
       </Sheet>
     </>
   )

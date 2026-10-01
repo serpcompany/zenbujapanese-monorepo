@@ -4,12 +4,10 @@ import { groupInflections, kuromojiCandidates } from '@zenbu/dictionary-core/exa
 import { describe, expect, test } from 'vitest'
 import { loadKuromoji } from './kuromoji'
 
-// The app's bundled Kuromoji. Its dictionary files are Git LFS objects, so without `git lfs pull`
-// this is skipped; the Dictionary API workflow pulls them and runs it for real.
 const directory = fileURLToPath(
   new URL('../../ios/Modules/Sources/SearchExperience/Resources/Kuromoji', import.meta.url)
 )
-const available = (() => {
+const dictionaryPulledFromGitLfs = (() => {
   try {
     return !readFileSync(`${directory}/base.dat.gz`).subarray(0, 7).toString().startsWith('version')
   } catch {
@@ -17,8 +15,8 @@ const available = (() => {
   }
 })()
 
-describe.runIf(available)("the app's Kuromoji in Node", () => {
-  const tokenize = available ? loadKuromoji(directory) : () => []
+describe.runIf(dictionaryPulledFromGitLfs)("the app's Kuromoji in Node", () => {
+  const tokenize = dictionaryPulledFromGitLfs ? loadKuromoji(directory) : () => []
 
   test('splits a sentence as the app records it', () => {
     const text = '見るからに明らかだよ。'

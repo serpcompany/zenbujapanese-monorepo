@@ -24,6 +24,7 @@ import {
   type WordKanji,
   wordDetail
 } from '@zenbu/dictionary-core/detail/word'
+import { exampleLimit } from '@zenbu/dictionary-core/examples/retrieval'
 import {
   fixtureFormExamples,
   fixtureKanjiRows,
@@ -58,31 +59,21 @@ import {
   wordSlug
 } from './urls'
 
-// Pages read the dictionary only through this module. It runs the detail core over the rows the
-// dictionary service answers with (./api.ts, ADR 0009) and adds only the site's URLs. Only local
-// development without a service (no DICTIONARY_API_URL, as in `pnpm dev` by default) falls back to
-// fixtures; staging and production, which serve the dictionary, never do.
-
 export interface WordPageData
   extends Omit<WordDetail, 'alternatives' | 'kanji' | 'alternativeKanji' | 'related' | 'examples'> {
-  /** Where the word's page lives now; a request under another slug redirects here. */
   slug: string
   path: string
   alternatives: Linked<AlternativeForm>[]
   kanji: Linked<WordKanji>[]
   alternativeKanji: Linked<WordKanji>[]
   related: Linked<RelatedWord>[]
-  /** The first examples; the rest load from `examplesPath` as the page scrolls. */
   examples: PageExample[]
   examplesPath: string
-  /** The conjugation table's page, which the part of speech's sheet links to; null without one. */
   conjugationsPath: string | null
 }
 
-/** A word as its conjugation screens show it: the headline, meaning, and word class. */
 export interface ConjugationWordData {
   entSeq: number
-  /** The slug the word's pages live under; another redirects. */
   slug: string
   headword: string
   reading: string
@@ -90,26 +81,20 @@ export interface ConjugationWordData {
   partOfSpeech: string
   ruby: RubySegment[]
   pitch: PitchAccent | null
-  /** The word's page, and its conjugation table's. */
   path: string
   conjugationsPath: string
 }
 
-/** The conjugation table's page (ConjugationsView). */
 export interface ConjugationsPageData extends ConjugationWordData {
   conjugations: Conjugations
 }
 
-/** A conjugated form's page (ConjugatedFormView). */
 export interface ConjugatedFormPageData extends ConjugationWordData {
   mode: ConjugationMode
   row: ConjugationRow
-  /** Where the form's page lives, and the page search engines should index for it. */
   formPath: string
   canonicalPath: string
-  /** The first examples; the rest load from `examplesPath` as the page scrolls. */
   examples: PageExample[]
-  /** How many examples the form lists, at most 100. */
   listed: number
   examplesPath: string
 }
@@ -120,19 +105,14 @@ export interface KanjiPageData
   components: Linked<{ character: string }>[]
   elements: Linked<KanjiElement>[]
   words: Linked<KanjiWord>[]
-  /** A kanji with no meanings or readings stays out of search engines (#465). */
   indexable: boolean
 }
 
-/** What a search's Example Sentences row opens (`/dictionary/search/<query>/examples/`). */
 export interface SearchExamplesData {
   query: string
-  /** The first examples; the rest load from `examplesPath` as the page scrolls. */
   examples: PageExample[]
-  /** How many there are, at most 100, and whether more matched than are listed. */
   listed: number
   truncated: boolean
-  /** Whether search engines may index it (`searchExamplesIndexable`). */
   indexable: boolean
   examplesPath: string
 }
@@ -143,7 +123,6 @@ export type { SearchData, SearchWord } from './results/links'
 const wordRowsBySeq = new Map(fixtureWordRows.map(rows => [rows.entry.entSeq, rows]))
 const kanjiRowsByCharacter = new Map(fixtureKanjiRows.map(rows => [rows.kanji.character, rows]))
 
-/** The fixtures' links: only fixture words and kanji have pages. */
 const fixtureLinks: Links = {
   word(entSeq) {
     const rows = entSeq === null ? undefined : wordRowsBySeq.get(entSeq)
@@ -154,11 +133,6 @@ const fixtureLinks: Links = {
   }
 }
 
-/**
- * The dictionary service, or null when local development runs without one. Staging and
- * production (`SITE_ENV` set) always name one, so there a missing service fails the request
- * rather than passing fixtures off as the dictionary.
- */
 export async function dictionaryService(): Promise<DictionaryApi | null> {
   const { env } = await getCloudflareContext({ async: true })
   const api = dictionaryApi(env)
@@ -168,21 +142,12 @@ export async function dictionaryService(): Promise<DictionaryApi | null> {
 
 const fixtureBuild = 'fixtures'
 
-/**
- * Where a page loads more of a word's examples (src/app/dictionary/examples), for the build the
- * page came from, so a page never mixes its first examples with another build's next ones.
- */
 export const examplesPath = (entSeq: number, build: string) =>
   `/dictionary/examples/${entSeq}.json?build=${encodeURIComponent(build)}`
 
-/**
- * Where a search's examples page loads more of them (src/app/dictionary/search/[query]/
- * examples.json), for the build the page came from.
- */
 export const moreSearchExamplesPath = (query: string, build: string) =>
   `${searchPath(query)}examples.json?build=${encodeURIComponent(build)}`
 
-/** Where a conjugated form's page loads more of its examples, by the form's spelling. */
 export const formExamplesPath = (surface: string, build: string) =>
   `/dictionary/examples/forms/${encodeURIComponent(surface)}.json?build=${encodeURIComponent(build)}`
 
@@ -224,10 +189,6 @@ function kanjiPage(rows: KanjiRows, indexable: boolean, links: Links): KanjiPage
   }
 }
 
-/**
- * A failing service throws, so the request fails rather than rendering a 404. Memoized per
- * request, so the page and its metadata ask once.
- */
 export const getWordPage = cache(async (entSeq: number): Promise<WordPageData | null> => {
   const api = await dictionaryService()
   if (api) {
@@ -246,11 +207,6 @@ export const getWordPage = cache(async (entSeq: number): Promise<WordPageData | 
   )
 })
 
-/**
- * `examplesPerPage` of a word's examples from position `from`, as its page loads more; null for
- * an unknown word, or when `build` isn't the build that answers now (the page is from an earlier
- * deploy). A failing service throws.
- */
 export async function getWordExamples(
   entSeq: number,
   from: number,
@@ -271,7 +227,6 @@ export async function getWordExamples(
     .map(row => pageExample(wordExample(row), fixtureLinks))
 }
 
-/** A word's conjugation screens' rows, without examples, and its slug; null without a table. */
 async function conjugationWord(entSeq: number): Promise<{ rows: WordRows; slug: string } | null> {
   const api = await dictionaryService()
   if (api) return (await api.conjugationWord(entSeq))?.data ?? null
@@ -283,11 +238,6 @@ async function conjugationWord(entSeq: number): Promise<{ rows: WordRows; slug: 
   }
 }
 
-/**
- * The conjugation table's page (ConjugationsView), which the part of speech's sheet links to;
- * null for an unknown word or one whose part of speech opens none. Memoized per request, like
- * getWordPage.
- */
 export const getConjugationsPage = cache(
   async (entSeq: number): Promise<ConjugationsPageData | null> => {
     const word = await conjugationWord(entSeq)
@@ -311,10 +261,6 @@ export const getConjugationsPage = cache(
   }
 )
 
-/**
- * A conjugated form's page (ConjugatedFormView) and its first examples; null for an unknown
- * word, a word without a table, or a register or kind its table lacks. Memoized per request.
- */
 export const getConjugatedFormPage = cache(
   async (
     entSeq: number,
@@ -348,10 +294,6 @@ export const getConjugatedFormPage = cache(
   }
 )
 
-/**
- * `limit` of a conjugated form's examples from `from`, linked, with how many it lists and the
- * build that answered. A form past the service's query limit lists none.
- */
 async function formExamplePage(
   surface: string,
   from: number,
@@ -378,11 +320,6 @@ async function formExamplePage(
   }
 }
 
-/**
- * `examplesPerPage` of a conjugated form's examples from position `from`, by the form's
- * spelling, as its page loads more; null when `build` isn't the build that answers now. A failing
- * service throws.
- */
 export async function getFormExamples(
   surface: string,
   from: number,
@@ -392,15 +329,10 @@ export async function getFormExamples(
   return found.build === build ? found.examples : null
 }
 
-/**
- * All of a conjugated form's examples, at most 100, as the word page's conjugations sheet lists
- * them when the form opens.
- */
 export async function getConjugationExamples(form: string): Promise<PageExample[]> {
-  return (await formExamplePage(form, 0, 100)).examples
+  return (await formExamplePage(form, 0, exampleLimit)).examples
 }
 
-/** Memoized per request, like getWordPage. */
 export const getKanjiPage = cache(async (character: string): Promise<KanjiPageData | null> => {
   const api = await dictionaryService()
   if (api) {
@@ -415,7 +347,6 @@ export const getKanjiPage = cache(async (character: string): Promise<KanjiPageDa
   return kanjiPage(rows, meanings.length > 0 || readings.length > 0, fixtureLinks)
 })
 
-/** Results as the search core returns them, for `searchResultsScreen`. */
 function searchResults(items: SearchResults['items']): SearchResults {
   return {
     items,
@@ -428,10 +359,6 @@ function searchResults(items: SearchResults['items']): SearchResults {
   }
 }
 
-/**
- * The fixtures' results, in the order the app lists them (`fixtureSearchOrder`), with their
- * frequency. Each is its own match group, so the re-sort keeps that order.
- */
 function fixtureScreen(query: string): SearchResultsScreen {
   const ordered = Object.hasOwn(fixtureSearchOrder, query) ? fixtureSearchOrder[query] : undefined
   const matches: WordRows[] = ordered
@@ -464,14 +391,8 @@ function fixtureScreen(query: string): SearchResultsScreen {
   return searchResultsScreen(query, results, frequency)
 }
 
-/**
- * The search results screen with its links: every word links to its page, and a one-kanji
- * query's kanji row to the kanji's; on fixtures, only fixture words and kanji. Memoized per
- * request, so the page and its metadata search once.
- */
 export const searchDictionary = cache(async (query: string): Promise<SearchData> => {
   const api = await dictionaryService()
-  // Past the service's limit (`maximumQueryLength`), a query finds nothing.
   if (!isReadableLength(query)) return { state: 'noResults', query }
   if (api) {
     const { screen, kanjiHasPage } = (await api.search(query)).data
@@ -481,12 +402,6 @@ export const searchDictionary = cache(async (query: string): Promise<SearchData>
   return linkSearchScreen(fixtureScreen(query), { dictionaryLoaded: false, kanjiHasPage })
 })
 
-/**
- * What a search's Example Sentences row opens, from position `from`: the primary entry's
- * examples for a romaji or deinflected query, otherwise the sentences containing the query.
- * Null without any, which the app never opens, so the page answers 404; and on fixtures, which
- * hold no example search. Memoized per request.
- */
 export const getSearchExamples = cache(
   async (query: string, from = 0, build?: string): Promise<SearchExamplesData | null> => {
     const api = await dictionaryService()
@@ -505,10 +420,5 @@ export const getSearchExamples = cache(
   }
 )
 
-/**
- * Whether search engines may index a search's Example Sentences page: only a direct Japanese
- * search's, by the owner's decision on #511. A romaji or deinflected search lists its primary
- * entry's examples, which that entry's word page already has.
- */
 export const searchExamplesIndexable = (query: string, usesPrimaryEntryExamples: boolean) =>
   !isASCII(normalizeQuery(query)) && !usesPrimaryEntryExamples

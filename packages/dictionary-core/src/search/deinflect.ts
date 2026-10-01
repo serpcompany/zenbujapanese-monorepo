@@ -1,4 +1,3 @@
-// Ports apps/ios/Modules/Sources/SearchExperience/JapaneseDeinflection.swift.
 import { graphemeCount } from '../detail/text'
 import { graphemes } from './query'
 
@@ -24,7 +23,6 @@ export function acceptsPartsOfSpeech(wordClass: WordClass, parts: readonly strin
 export interface Deinflection {
   term: string
   wordClasses: WordClass[]
-  /** Number of rules applied; shorter chains are more plausible readings of the query. */
   depth: number
 }
 
@@ -53,6 +51,7 @@ const maximumDepth = 6
 const length = graphemeCount
 const dropLast = (value: string) => graphemes(value).slice(0, -1).join('')
 const pastForm = (te: string) => dropLast(te) + (te.endsWith('で') ? 'だ' : 'た')
+const ikuSoundChangeStems = ['行', 'い']
 
 function verbPatterns(): VerbPattern[] {
   const patterns: VerbPattern[] = [
@@ -94,8 +93,7 @@ function verbPatterns(): VerbPattern[] {
       derived: [`${a}れる`, `${a}せる`, `${e}る`]
     })
   }
-  // 行く is the one godan く verb with a っ sound change.
-  for (const stem of ['行', 'い']) {
+  for (const stem of ikuSoundChangeStems) {
     patterns.push({
       base: `${stem}く`,
       wordClass: 'godan',
@@ -177,10 +175,9 @@ function verbRules(pattern: VerbPattern): Rule[] {
   add(pattern.volitional, [''])
   add(pattern.imperative, [''])
   add(pattern.derived, [''], ['ichidan'])
-  // Contracted てしまう: 食べちゃう, 読んじゃう.
   for (const te of pattern.te) {
-    const contracted = dropLast(te) + (te.endsWith('で') ? 'じゃう' : 'ちゃう')
-    rules.push({ inflected: contracted, base: pattern.base, input: ['godan'], output })
+    const contractedTeShimau = dropLast(te) + (te.endsWith('で') ? 'じゃう' : 'ちゃう')
+    rules.push({ inflected: contractedTeShimau, base: pattern.base, input: ['godan'], output })
   }
   return rules.filter(rule => rule.inflected !== '')
 }
@@ -209,11 +206,6 @@ function adjectiveRules(): Rule[] {
 
 const rules: Rule[] = [...verbPatterns().flatMap(verbRules), ...adjectiveRules()]
 
-/**
- * Condition-aware, chained suffix rewriting for kana and kanji inflections. Every rule may
- * apply to the surface text; after that, a rule only applies when its input classes include
- * the class the previous rule produced. Candidates are hypotheses that lookup filters.
- */
 export function deinflect(text: string): Deinflection[] {
   if (!text) return []
   const results: Deinflection[] = []
@@ -232,7 +224,6 @@ export function deinflect(text: string): Deinflection[] {
         const key = `${base}|${[...rule.output].sort().join(',')}`
         if (base === text || seen.has(key)) continue
         seen.add(key)
-        // A copy, so a caller that changes it can't change the rule for later searches.
         results.push({ term: base, wordClasses: [...rule.output], depth })
         next.push({ term: base, classes: rule.output })
         if (rule.output.includes('suru') && base.endsWith('する') && length(base) > 2) {

@@ -14,11 +14,6 @@ import type { PageExample, PageExampleToken } from '@/lib/dictionary/page-exampl
 
 const linkClass = 'underline-offset-4 hover:text-muted-foreground'
 
-/**
- * One word of a sentence, as the app's LinkedTokenView draws it: a word with an entry is
- * underlined and links to it (the page's own word stands out), a word with several possible
- * entries links to a search for it, and anything else is plain text.
- */
 function Token({ token }: { token: PageExampleToken }) {
   const className = token.isPageWord
     ? 'mr-0.5 border-b-2 border-foreground font-medium'
@@ -58,7 +53,6 @@ function License({ name }: { name: string }) {
   )
 }
 
-/** Each side of the Tatoeba pair, with its contributor and license. */
 function Attribution({ example }: { example: PageExample }) {
   const { japanese, english } = example
   const sameLicense = japanese.license === english.license
@@ -112,11 +106,6 @@ const exampleLabels = {
   reload: 'Reload for more examples'
 }
 
-/**
- * A word's, a search's, or a conjugated form's examples: the first ones rendered with the page,
- * then more loaded from `path` as the list scrolls into view (or with the button), up to the
- * `listed` the app shows. Without a `path`, the list is complete, as in the conjugation sheet.
- */
 export function ExampleList({
   initial,
   listed,

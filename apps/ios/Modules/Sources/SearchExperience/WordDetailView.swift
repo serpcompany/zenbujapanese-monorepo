@@ -11,7 +11,6 @@ struct WordDetailView: View {
   @State private var showsListPicker = false
   @State private var frequencyDisclosure: FrequencyDisclosureItem?
   @State private var analysisAvailability = JapaneseTextAnalysisAvailability.full
-  /// Empty while loading and when no frequency dictionary is enabled.
   @State private var frequency = FrequencyRanks()
 
   let entry: DictionaryEntry
@@ -288,8 +287,6 @@ private struct WordDetailKanjiLink: View {
   }
 }
 
-/// The word itself: headword with furigana (following the Reading Aids setting), and its pitch
-/// accent, pronounce button, and latest encounter photo in the space to its right.
 private struct WordHeroView: View {
   let entry: DictionaryEntry
   let encounterMedia: [EncounterMedia]
@@ -328,23 +325,17 @@ private struct WordHeroView: View {
   }
 }
 
-/// A word or conjugated form shown large with furigana (following the Reading Aids setting),
-/// with its pitch accent, pronounce button, and an optional accessory to its right. Word Detail
-/// and the conjugation screens share it so a word always looks the same.
 struct WordHeadline<Accessory: View>: View {
   @Environment(\.dynamicTypeSize) private var dynamicTypeSize
   @Environment(ReadingAidPreferences.self) private var readingAidPreferences
   let surface: String
   let reading: String
-  /// A trailing part of `surface` in the accent color, such as a conjugation's ending.
   var highlightedEnding = ""
   var pitch: PitchAccent?
   let identifierPrefix: String
   let pronounce: () -> Void
   @ViewBuilder let accessory: () -> Accessory
 
-  /// The headword beside the pitch accent and controls, at the largest size that fits there.
-  /// When even the smaller headword doesn't fit, the controls move under a full-size headword.
   var body: some View {
     Group {
       if dynamicTypeSize.isAccessibilitySize {
@@ -376,8 +367,6 @@ struct WordHeadline<Accessory: View>: View {
     }
   }
 
-  /// The headword on its own line: full size with furigana, or wrapped text with the reading
-  /// underneath when even that is too wide.
   private var headword: some View {
     ViewThatFits(in: .horizontal) {
       rubyHeadword(baseFont: .largeTitle, rubyFont: .title3.weight(.semibold))
@@ -413,8 +402,6 @@ struct WordHeadline<Accessory: View>: View {
     }
   }
 
-  /// A headword always needs its reading, so it moves under the headword when the learner
-  /// turns furigana off.
   @ViewBuilder
   private var readingWithoutFurigana: some View {
     if !readingAidPreferences.showsFurigana, reading != surface {
@@ -427,8 +414,6 @@ struct WordHeadline<Accessory: View>: View {
 
   private var controls: some View {
     HStack(spacing: 8) {
-      // With a pitch accent, the pitch pill is also the pronounce button, so a long word keeps
-      // room for its headword.
       if let pitch {
         PitchAccentBadge(reading: reading, pitch: pitch, pronounce: pronounce)
           .accessibilityIdentifier("\(identifierPrefix).pronounce")
@@ -470,7 +455,6 @@ extension WordHeadline where Accessory == EmptyView {
 }
 
 extension String {
-  /// This string with `ending` drawn in the accent color when it ends the string.
   func highlightingEnding(_ ending: String) -> AttributedString {
     var result = AttributedString(self)
     guard !ending.isEmpty, hasSuffix(ending) else { return result }
@@ -480,7 +464,6 @@ extension String {
   }
 }
 
-/// The part of speech, which opens the conjugation table when one exists.
 private struct PartOfSpeechRow: View {
   let entry: DictionaryEntry
   let conjugationTable: ConjugationTable?
@@ -506,9 +489,6 @@ private struct PartOfSpeechRow: View {
   private var title: String { entry.displayPartOfSpeech }
 }
 
-/// The reading in katakana with its pitch accent drawn as a contour: a dot per mora at high or
-/// low pitch joined by a line, and a hollow dot for the pitch of a following particle.
-/// The reading's pitch accent in a capsule with a speaker, which pronounces the word.
 private struct PitchAccentBadge: View {
   let reading: String
   let pitch: PitchAccent
@@ -546,7 +526,6 @@ private struct PitchAccentBadge: View {
           .fixedSize()
           .frame(width: moraWidth * layout.widths[index])
       }
-      // Room for the particle dot after the last mora.
       Color.clear.frame(width: moraWidth * PitchContourLayout.particleWidth, height: 1)
     }
     .padding(.vertical, contourSpace)
@@ -557,19 +536,12 @@ private struct PitchAccentBadge: View {
   }
 }
 
-/// Where PitchAccentBadge draws the contour, in mora widths: the reading's morae in katakana,
-/// each one mora wide, or 1.5 for a combined mora such as キョ, then room for the particle. Each
-/// mora's point is at its center, high or low; the particle's point is centered in its room.
-/// The word-detail conformance suite records it, so the website's graph is held to the app's
-/// (see also packages/dictionary-core/src/detail/pitch.ts).
 struct PitchContourLayout: Equatable {
   struct Point: Equatable {
-    /// From the left edge of the first mora, in mora widths.
     let x: Double
     let high: Bool
   }
 
-  /// The room after the last mora for the particle's hollow dot, in mora widths.
   static let particleWidth = 0.6
 
   let morae: [String]
@@ -579,7 +551,6 @@ struct PitchContourLayout: Equatable {
 
   init(reading: String, pitch: PitchAccent) {
     morae = reading.katakana.morae
-    // A combined mora such as キョ needs more room than a single kana.
     widths = morae.map { $0.count > 1 ? 1.5 : 1 }
     let levels = pitch.levels(moraCount: morae.count)
     var x = 0.0
@@ -593,8 +564,6 @@ struct PitchContourLayout: Equatable {
   }
 }
 
-/// Draws pitch levels across the morae: high points at the top edge, low points at the bottom
-/// edge, and a hollow point for the following particle.
 private struct PitchContour: View {
   let layout: PitchContourLayout
   let moraWidth: CGFloat
@@ -641,7 +610,6 @@ extension String {
   }
 }
 
-/// The latest photo attached to a word or kanji, with how many there are; it opens them all.
 struct SavedItemPhotoButton: View {
   @State private var presentedMedia: EncounterMedia?
   let media: EncounterMedia
@@ -747,7 +715,6 @@ private struct EncounterMediaViewer: View {
   }
 }
 
-/// One enabled dictionary's rank for this entry. Selecting it opens that dictionary's details.
 private struct FrequencyRankRow: View {
   let result: FrequencyLookupResult
   let showDetails: (FrequencyLookupResult) -> Void
@@ -768,7 +735,6 @@ private struct FrequencyRankRow: View {
       }
       .contentShape(.rect)
     }
-    // List buttons tint their labels with the accent color; keep the row's own text colors.
     .tint(.primary)
     .accessibilityElement(children: .ignore)
     .accessibilityLabel(presentation.inlineAccessibilityLabel)
@@ -786,10 +752,6 @@ private struct FrequencyDisclosureItem: Identifiable {
   }
 }
 
-/// What Frequency Details shows for one dictionary's result: the dictionary, then the entry's
-/// JLPT level, or its rank and percentile, or why there is neither. The word-detail conformance
-/// suite records it, so the website's sheet is held to the app's (see also
-/// packages/dictionary-core/src/detail/frequency.ts).
 struct FrequencyDisclosurePresentation: Equatable {
   struct Pack: Equatable {
     let name: String
@@ -805,10 +767,8 @@ struct FrequencyDisclosurePresentation: Equatable {
   }
 
   let pack: Pack?
-  /// The second section's title: Level for a JLPT level, otherwise Frequency.
   let section: String
   let rows: [Row]
-  /// Shown only when there are no rows.
   let explanation: String?
 
   init(result: FrequencyLookupResult) {
@@ -1001,7 +961,6 @@ private struct RelationshipsSection: View {
   }
 }
 
-/// The lists holding the word, each opening that list, then Add to List, which opens the picker.
 extension Character {
   fileprivate var isKanji: Bool {
     unicodeScalars.contains { (0x3400...0x9FFF).contains(Int($0.value)) }

@@ -1,18 +1,9 @@
-// The app's example search for a typed query (ADR 0009): ExampleSentenceData.retrieveEnglish and
-// retrieveJapanese in apps/ios/Modules/Sources/SearchExperience/ExampleSentenceClient.swift, with
-// its queries on the artifact's FTS4 indexes. An English query matches every Tatoeba pair by its
-// English phrase (Porter-stemmed, and shown only when some pair holds the exact phrase); anything
-// else matches pairs whose Japanese contains it. Search results offer them as "View N Example
-// Sentences", and /dictionary/search/<query>/examples/ lists them.
-// Change the Swift and this port in the same PR; the Search parity workflow checks it.
-
 import { graphemeCount, graphemes } from '../detail/text'
-import { exampleLimit } from '../examples/retrieval'
+import { exampleLimit, reportedExampleCount } from '../examples/retrieval'
 import { isASCII, normalizeQuery } from '../search/query'
 import type { ArtifactDatabase } from './database'
 import type { EntryExamples, ExampleSentence } from './example-retrieval'
 
-/** ExampleSentenceLexicalRelation, for the relations a typed query's examples use. */
 const Relation = {
   exactSurfacePhrase: 0,
   porterEquivalentPhrase: 1,
@@ -20,7 +11,6 @@ const Relation = {
   containedJapaneseSurface: 3
 } as const
 
-/** Why the app's search throws for a query, so Search shows no examples. */
 export type ExampleSearchError = 'empty' | 'embeddedQuote' | 'noPorterTerms'
 
 const porterTable = 'example_sentence_english_porter_fts'
@@ -28,7 +18,6 @@ const exactTable = 'example_sentence_english_exact_fts'
 const mapTable = 'example_sentence_fts_map'
 const probeTable = 'temp.example_sentence_porter_query_probe'
 
-/** The metadata the app's validateEnglishIndex requires of the bundled index. */
 export const exampleIndexMetadata: Readonly<Record<string, string>> = {
   retrieval_index_schema_version: 'zenbu.example-sentence-retrieval-index.v2',
   retrieval_policy_version: 'ExampleSentenceRetrievalPolicy/v1',
@@ -46,7 +35,6 @@ interface Match {
   pairId: string
 }
 
-/** RankTuple's order. */
 function compareMatches(left: Match, right: Match): number {
   return (
     left.relation - right.relation ||
@@ -61,14 +49,11 @@ function result(matches: Match[]): EntryExamples {
   const sorted = matches.sort(compareMatches)
   return {
     sentences: sorted.slice(0, exampleLimit).map(match => match.sentence),
-    count: sorted.length > 50 ? 51 : sorted.length,
+    count: reportedExampleCount(sorted.length),
     truncated: sorted.length > exampleLimit
   }
 }
 
-// UTF-8 offsets, which FTS4's offsets() reports, as UTF-16 indexes into the same text.
-
-/** Each UTF-8 byte offset that starts a code point, mapped to its UTF-16 index. */
 function utf8Boundaries(text: string): Map<number, number> {
   const boundaries = new Map<number, number>()
   let bytes = 0
@@ -83,7 +68,6 @@ function utf8Boundaries(text: string): Map<number, number> {
   return boundaries
 }
 
-/** The UTF-16 index of each grapheme cluster's start, and the text's end. */
 function graphemeStarts(text: string): Map<number, number> {
   const starts = new Map<number, number>()
   let index = 0
@@ -95,10 +79,6 @@ function graphemeStarts(text: string): Map<number, number> {
   return starts
 }
 
-/**
- * A text's UTF-8 offsets as UTF-16 indexes, and those as grapheme positions; undefined for an
- * offset inside a character or cluster. In printable ASCII, all three are the same.
- */
 interface TextOffsets {
   utf16(byteOffset: number): number | undefined
   grapheme(index: number): number | undefined
@@ -121,12 +101,13 @@ interface FtsOffset {
   byteLength: number
 }
 
-/** offsets()'s value: four numbers per match, of which the term, byte offset, and byte length. */
+const numbersPerOffset = 4
+
 function parseOffsets(raw: string): FtsOffset[] | null {
   const values = raw.split(' ').filter(Boolean).map(Number)
-  if (values.length % 4 !== 0 || values.some(Number.isNaN)) return null
+  if (values.length % numbersPerOffset !== 0 || values.some(Number.isNaN)) return null
   const offsets: FtsOffset[] = []
-  for (let index = 0; index < values.length; index += 4) {
+  for (let index = 0; index < values.length; index += numbersPerOffset) {
     offsets.push({
       term: values[index + 1],
       byteOffset: values[index + 2],
@@ -136,10 +117,6 @@ function parseOffsets(raw: string): FtsOffset[] | null {
   return offsets
 }
 
-/**
- * `phraseRange(in:offsets:)`: the first place the phrase's terms occur in order, without
- * crossing the end of a sentence, as a grapheme location and length; null when there's none.
- */
 function phraseRange(
   text: string,
   offsets: FtsOffset[]
@@ -184,7 +161,6 @@ function phraseRange(
   return null
 }
 
-/** `porterEmitsTerms`: whether the Porter tokenizer finds any term in the query. */
 function porterEmitsTerms(db: ArtifactDatabase, query: string, matchExpression: string): boolean {
   db.all(`CREATE VIRTUAL TABLE IF NOT EXISTS ${probeTable} USING fts4(value, tokenize=porter)`)
   db.all(`DELETE FROM ${probeTable}`)
@@ -196,7 +172,6 @@ function porterEmitsTerms(db: ArtifactDatabase, query: string, matchExpression: 
   return row?.count === 1
 }
 
-/** matchinfo(…, 'l')'s first value: the column's length in terms, a native 32-bit integer. */
 function documentTermCount(matchinfo: Uint8Array): number {
   if (matchinfo.byteLength < 4) throw new Error('matchinfo returned no column length')
   return new DataView(matchinfo.buffer, matchinfo.byteOffset, 4).getUint32(0, true)
@@ -204,7 +179,6 @@ function documentTermCount(matchinfo: Uint8Array): number {
 
 const sentenceColumns = 'e.rowid AS rowid, lower(hex(e.id)) AS pairId, e.japanese, e.english'
 
-/** Every Tatoeba pair the app searches, as the searches read them. */
 export function allExampleSentences(db: ArtifactDatabase): ExampleSentence[] {
   return db.all<ExampleSentence>(`SELECT ${sentenceColumns} FROM example_sentences e`)
 }
@@ -257,8 +231,8 @@ function retrieveEnglish(db: ArtifactDatabase, query: string): EntryExamples | E
     })
   }
   const candidates = [...matches.values()]
-  // The app shows Porter-equivalent pairs only when some pair has the exact phrase.
-  return candidates.some(candidate => candidate.exactSurface) ? result(candidates) : result([])
+  const anyPairHasTheExactPhrase = candidates.some(candidate => candidate.exactSurface)
+  return anyPairHasTheExactPhrase ? result(candidates) : result([])
 }
 
 function retrieveJapanese(db: ArtifactDatabase, query: string): EntryExamples {
@@ -271,11 +245,6 @@ function retrieveJapanese(db: ArtifactDatabase, query: string): EntryExamples {
   )
 }
 
-/**
- * `retrieveJapanese`'s ranking of the sentences that contain `query`: a sentence that is exactly
- * the query first, then each by where it first occurs, the sentence's length, and its pair ID; at
- * most 100. Sentences that don't contain it are left out.
- */
 export function rankJapanese(query: string, sentences: readonly ExampleSentence[]): EntryExamples {
   const matches: Match[] = []
   for (const sentence of sentences) {
@@ -296,11 +265,6 @@ export function rankJapanese(query: string, sentences: readonly ExampleSentence[
   return result(matches)
 }
 
-/**
- * `ExampleSentenceClient.search`: the pairs a typed query matches, at most 100, in the app's
- * order, with the count the app reports (`count(_:)`); an error where the app throws, so Search
- * shows no examples.
- */
 export function searchExamples(
   db: ArtifactDatabase,
   rawQuery: string

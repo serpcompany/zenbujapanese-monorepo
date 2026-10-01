@@ -1,5 +1,3 @@
-// @vitest-environment happy-dom
-
 import { conjugations } from '@zenbu/dictionary-core/detail/conjugation'
 import { frequencyRowDetails } from '@zenbu/dictionary-core/detail/frequency'
 import { rubySegments } from '@zenbu/dictionary-core/detail/ruby'
@@ -9,11 +7,6 @@ import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 import { ConjugationsButton, ConjugationTable } from './conjugations'
 import { FrequencySection } from './frequency-section'
 import { HeadwordRuby } from './headword-ruby'
-
-// What selecting does on the word page, in a DOM: a headword kanji highlights itself and its part
-// of the furigana, as the app's Furigana kanji highlight does, a Frequency row opens its details
-// as a sheet, the part of speech opens the conjugation table as a sheet, and the table's register
-// control switches the forms its rows open.
 
 declare global {
   var IS_REACT_ACT_ENVIRONMENT: boolean
@@ -36,7 +29,6 @@ afterEach(() => {
 
 const accent = 'text-blue-600'
 
-/** Which kanji, and which furigana parts, are highlighted. */
 function highlighted() {
   const kanji = [...container.querySelectorAll('button[data-kanji]')]
   const parts = [...container.querySelectorAll('rt span')]
@@ -73,7 +65,6 @@ describe('the headword’s kanji highlight', () => {
       )
     )
     expect(highlighted()).toEqual({ pressed: [], kanji: [], furigana: [] })
-    // 肉 and にく in 弱肉強食, the app docs' example.
     select('肉')
     expect(highlighted()).toEqual({ pressed: ['肉'], kanji: ['肉'], furigana: ['にく'] })
     select('食')
@@ -157,7 +148,6 @@ describe('the conjugations sheet', () => {
     expect(document.querySelector('[data-conjugated-form]')?.textContent).toContain(
       'Same spelling as Passive.'
     )
-    // The form's screen loads its examples, and links to the form's own page.
     expect(fetcher).toHaveBeenCalledWith(
       `/dictionary/conjugations/${encodeURIComponent('見られます')}.json`
     )
@@ -167,7 +157,6 @@ describe('the conjugations sheet', () => {
     expect(pageLink()).toBe('/dictionary/見る-1259290/conjugations/polite/potential/')
     await click('[aria-label="Back to conjugations"]')
     expect(document.querySelector('[data-conjugated-form]')).toBeNull()
-    // Back keeps the register the reader chose.
     expect(surfaces()[0]).toBe('見ます')
     vi.unstubAllGlobals()
   })
@@ -218,7 +207,6 @@ describe('the conjugation table’s page', () => {
       { surface: '見ます', href: '/dictionary/見る-1259290/conjugations/polite/present-future/' },
       { surface: '見ました', href: '/dictionary/見る-1259290/conjugations/polite/past/' }
     ])
-    // The address keeps the register, so returning from a Polite form shows Polite.
     expect(window.location.hash).toBe('#polite')
   })
 

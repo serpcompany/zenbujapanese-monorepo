@@ -1,0 +1,73 @@
+name: iOS
+
+on:
+  pull_request:
+    paths:
+      - apps/ios/**
+      - .github/workflows/ios.yml
+  workflow_dispatch:
+
+concurrency:
+  group: ios-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+env:
+  LFS_FILES: apps/ios/**
+
+jobs:
+  contracts:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v5
+      - name: Restore the Git LFS files
+        uses: actions/cache@v5
+        with:
+          path: .git/lfs/objects
+          key: lfs-ios-${{ hashFiles('apps/ios/Modules/Sources/SearchExperience/Resources/*.sqlite3', 'apps/ios/Modules/Sources/SearchExperience/Resources/Kuromoji/*.dat.gz', 'apps/ios/LanguageData/Sources/*.gz', 'apps/ios/LanguageData/Sources/*.xz', 'apps/ios/LanguageData/Sources/*/*.xz') }}
+      - name: Fetch the Git LFS files
+        run: git lfs pull --include="$LFS_FILES"
+      - name: Run the data tools' contract tests
+        run: python3 -m unittest discover --start-directory apps/ios/Tools/tests --pattern 'test_*.py' --verbose
+
+  swift:
+    if: ${{ vars.IOS_SWIFT_TESTS == 'on' || github.event_name == 'workflow_dispatch' }}
+    runs-on: macos-26
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v5
+      - name: Restore the Git LFS files
+        uses: actions/cache@v5
+        with:
+          path: .git/lfs/objects
+          key: lfs-ios-${{ hashFiles('apps/ios/Modules/Sources/SearchExperience/Resources/*.sqlite3', 'apps/ios/Modules/Sources/SearchExperience/Resources/Kuromoji/*.dat.gz', 'apps/ios/LanguageData/Sources/*.gz', 'apps/ios/LanguageData/Sources/*.xz', 'apps/ios/LanguageData/Sources/*/*.xz') }}
+      - name: Fetch the Git LFS files
+        run: git lfs pull --include="$LFS_FILES"
+      - name: Pick the first iPhone Simulator on the newest iOS runtime
+        run: |
+          xcodebuild -version
+          udid=$(xcrun simctl list devices available --json | python3 -c '
+          import json, sys
+          devices = json.load(sys.stdin)["devices"]
+          runtimes = sorted(
+              (runtime for runtime in devices if ".SimRuntime.iOS-" in runtime),
+              key=lambda runtime: [int(part) for part in runtime.rsplit("iOS-", 1)[1].split("-")],
+          )
+          for runtime in reversed(runtimes):
+              phones = [device for device in devices[runtime] if device["name"].startswith("iPhone")]
+              if phones:
+                  print(phones[0]["udid"])
+                  break
+          else:
+              sys.exit("No available iPhone Simulator")
+          ')
+          echo "SIMULATOR=$udid" >>"$GITHUB_ENV"
+      - name: Run SearchExperienceTests
+        working-directory: apps/ios/Modules
+        run: |
+          xcodebuild -scheme ZenbuJapaneseModules \
+            -destination "platform=iOS Simulator,id=$SIMULATOR" \
+            ONLY_ACTIVE_ARCH=YES test

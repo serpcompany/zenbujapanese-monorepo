@@ -2,15 +2,13 @@ import { renderToStaticMarkup } from 'react-dom/server'
 import { expect, test } from 'vitest'
 import { SiteFooter } from './site-footer'
 
-// Renders the footer as the server does and reads its links back, so a link the #462 design
-// lists can't go missing unnoticed.
+const withTrailingSlash = (href: string) => (href.endsWith('/') ? href : `${href}/`)
 
 function footerLinks(): [text: string, href: string][] {
   const html = renderToStaticMarkup(<SiteFooter />)
-  // Outside Next.js, Link drops the trailing slash `trailingSlash: true` adds to the page's HTML.
   return [...html.matchAll(/<a [^>]*href="([^"]+)"[^>]*>([^<]+)<\/a>/g)].map(([, href, text]) => [
     text,
-    href.endsWith('/') ? href : `${href}/`
+    withTrailingSlash(href)
   ])
 }
 

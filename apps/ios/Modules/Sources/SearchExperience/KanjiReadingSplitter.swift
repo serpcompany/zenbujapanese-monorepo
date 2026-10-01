@@ -1,13 +1,6 @@
 import Foundation
 
-/// Splits a kanji run's reading into one reading per kanji, using each kanji's KANJIDIC on and
-/// kun readings with the sound changes compounds make: voicing (人々 ひとびと), half-voicing
-/// (発表 はっぴょう), and a small っ (学校 がっこう).
-///
-/// The website ports it (see also packages/dictionary-core/src/detail/kanji-split.ts); change
-/// both together.
 enum KanjiReadingSplitter {
-  /// One reading per character of `kanji`, or nil when no split or more than one split fits.
   static func split(_ kanji: String, reading: String) -> [String]? {
     let characters = Array(kanji)
     let target = hiragana(reading)
@@ -32,7 +25,6 @@ enum KanjiReadingSplitter {
 
     search(0, 0, previous: nil)
     guard found.count == 1, let split = found.first else { return nil }
-    // Keep the original kana, such as katakana in a reading, for display.
     let original = Array(reading)
     var offset = 0
     return split.map { piece in
@@ -41,12 +33,10 @@ enum KanjiReadingSplitter {
     }
   }
 
-  /// Loads the kanji readings, so the first split doesn't wait for them.
   static func prepare() {
     _ = variants
   }
 
-  /// Each kanji's readings in hiragana with their compound sound changes, longest first.
   private static let variants: [Character: [[Character]]] = {
     guard let url = Bundle.module.url(forResource: "KanjiReferenceData", withExtension: "json"),
       let data = try? Data(contentsOf: url),
@@ -76,7 +66,6 @@ enum KanjiReadingSplitter {
     return result
   }()
 
-  /// Katakana shifted to hiragana; everything else unchanged.
   private static func hiragana(_ value: String) -> [Character] {
     value.map { character in
       guard let scalar = character.unicodeScalars.first, character.unicodeScalars.count == 1,

@@ -5,20 +5,13 @@ export const site = {
     'An offline-first Japanese dictionary, image-text reader, and translator for iPhone.',
   url: 'https://zenbujapanese.com',
   supportEmail: 'support@zenbujapanese.com',
-  /** Where "Get the app" leads. The home page until the App Store link is known. */
   appUrl: '/'
 } as const
 
-/**
- * Production is marked by SITE_ENV=production both at build time (`pnpm deploy:production`, for
- * next.config headers) and at runtime (the production Worker var in wrangler.jsonc, for anything
- * rendered on request). Everything else is kept out of search engines.
- */
 export function isProductionSite() {
   return process.env.SITE_ENV === 'production'
 }
 
-/** A deployed environment, staging or production (SITE_ENV set), rather than local development. */
 export function isDeployedSite() {
   return process.env.SITE_ENV === 'staging' || process.env.SITE_ENV === 'production'
 }

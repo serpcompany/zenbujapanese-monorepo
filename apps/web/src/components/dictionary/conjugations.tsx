@@ -23,16 +23,6 @@ import { PitchAccent } from './pitch-accent'
 import { PronounceButton } from './pronounce-button'
 import { Sheet } from './sheet'
 
-// The conjugation screens, as ConjugationsView.swift shows them. The table: the word with its
-// reading, meaning, word class, and a one-line rule, a Plain/Polite control when both registers
-// exist, and each form with its changed ending in the accent color. A form's screen
-// (ConjugatedFormView): what the form means, whether another form shares its spelling, the form
-// with furigana, its ending highlighted, and a speaker, then the Example Sentences that use it.
-// The website shows them two ways: in a sheet the word page's part-of-speech row opens, with Back
-// from a form to the table, as the app pushes them; and as pages of their own, the table under
-// the word's page and each form under the table (urls.ts), which the sheet links to and search
-// engines index.
-
 export interface ConjugationWord {
   ruby: RubySegment[]
   reading: string
@@ -41,7 +31,6 @@ export interface ConjugationWord {
   pitch: PitchAccentData | null
 }
 
-/** A form's surface with its ending in the accent color, as the app's `highlightingEnding`. */
 function EndingText({ surface, ending }: { surface: string; ending: string }) {
   if (!ending || !surface.endsWith(ending)) return surface
   const characters = graphemes(surface)
@@ -59,11 +48,6 @@ function EndingText({ surface, ending }: { surface: string; ending: string }) {
 const rowClass =
   'flex w-full cursor-pointer items-center gap-3 rounded-md px-2 py-2 text-left outline-none transition-colors hover:bg-muted focus-visible:ring-3 focus-visible:ring-ring/50 motion-reduce:transition-none'
 
-/**
- * ConjugationsView's list: the header, the register control, and a row per form. On the table's
- * page (`wordPath`, the word page's path) each row opens its form's page; in the sheet
- * (`onSelect`) it opens the form's screen there.
- */
 export function ConjugationTableContent({
   word,
   conjugations,
@@ -163,11 +147,6 @@ export function ConjugationTableContent({
   )
 }
 
-/**
- * The conjugation table's page body: the table in the register the reader chose, which the
- * address keeps (`#polite`, urls.ts `conjugationsHref`), so returning from a Polite form shows
- * Polite again, as the app's Back does.
- */
 export function ConjugationTable({
   word,
   conjugations,
@@ -191,8 +170,6 @@ export function ConjugationTable({
       onModeChange={next => {
         setMode(next)
         const { pathname, search } = window.location
-        // Null state: Next.js's router then adopts the new address as its own, rather than
-        // restoring the previous one from the state it keeps.
         window.history.replaceState(
           null,
           '',
@@ -204,7 +181,6 @@ export function ConjugationTable({
   )
 }
 
-/** ConjugatedFormView: what the form means, a shared spelling, and the form itself. */
 export function ConjugatedFormContent({ row }: { row: ConjugationRow }) {
   return (
     <div className="flex flex-col gap-4" data-conjugated-form={row.kind}>
@@ -229,11 +205,6 @@ export function ConjugatedFormContent({ row }: { row: ConjugationRow }) {
   )
 }
 
-/**
- * A form's Example Sentences on its page, as ConjugatedFormView lists them: the first ones with
- * the page, then more as the list scrolls, each with the form's words accented; or the screen's
- * empty state.
- */
 export function ConjugatedFormExamples({
   examples,
   listed,
@@ -257,10 +228,6 @@ type LoadedExamples =
   | { state: 'loaded'; examples: PageExample[] }
   | { state: 'failed' }
 
-/**
- * A form's Example Sentences in the sheet: all of them, loaded when the form's screen opens
- * (src/app/dictionary/conjugations).
- */
 function SheetFormExamples({ surface }: { surface: string }) {
   const [loaded, setLoaded] = useState<LoadedExamples>({ state: 'loading' })
   useEffect(() => {
@@ -295,7 +262,6 @@ function SheetFormExamples({ surface }: { surface: string }) {
   )
 }
 
-/** The sheet's link to what it shows as a page of its own. */
 function PageLink({ href, children }: { href: string; children: ReactNode }) {
   return (
     <Link
@@ -308,10 +274,6 @@ function PageLink({ href, children }: { href: string; children: ReactNode }) {
   )
 }
 
-/**
- * The part-of-speech row, which opens the conjugation table in a sheet when the word has one;
- * the sheet links the table and each form to its own page, under `wordPath`.
- */
 export function ConjugationsButton({
   word,
   conjugations,

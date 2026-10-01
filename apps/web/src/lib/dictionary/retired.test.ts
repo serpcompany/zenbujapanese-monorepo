@@ -2,13 +2,9 @@ import { describe, expect, test, vi } from 'vitest'
 import type { DictionaryApi } from './api'
 import { apiRetiredLookup, retiredWordResponse, retiredWordsLookup } from './retired'
 
-// Fixture retired entries until the pipeline (#463) records real ones: 1000010 is retired with no
-// replacement, 1000020 is replaced by 1259290 (見る), and 1000030's replacement isn't in this
-// release.
 const retired = { 1000010: null, 1000020: 1259290, 1000030: 9999999 }
 const slugs = new Map([[1259290, '見る']])
 
-/** A dictionary service holding the fixture entries; `failing` makes every call fail. */
 function fakeApi({ failing = false } = {}) {
   const api = {
     retired: vi.fn(async () => {

@@ -6,7 +6,6 @@ import Testing
 @MainActor
 @Suite("Image text translation")
 struct ImageTextTranslationTests {
-  /// Two columns of one sentence and a short list item: three lines, two paragraphs.
   private let observations = [
     RecognizedImageTextObservation(
       id: 0, text: "家族って「ある」ものじゃ",

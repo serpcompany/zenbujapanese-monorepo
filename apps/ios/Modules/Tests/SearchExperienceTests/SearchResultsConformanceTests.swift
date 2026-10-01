@@ -3,20 +3,6 @@ import Testing
 
 @testable import SearchExperience
 
-/// Checks what the Search results screen shows against the app-recorded suite in
-/// `apps/ios/LanguageData/Conformance/search-results.json`, so the website's search pages can be
-/// held to the app. Unlike `search-retrieval.json`, which records retrieval order, this records
-/// the list after `SearchResultFrequencyOrdering` re-sorts it with the frequency dictionaries a
-/// new install enables (JLPT, then TUBELEX), with each row's summary and chips, the kanji row,
-/// the Example Sentences and reading-refinement rows, and the frequency notice. Each case is read
-/// from the models `SearchView` and `SearchResultsView` use, at standard text sizes.
-///
-/// Recent searches and known words don't change the list; the enabled frequency dictionaries
-/// and their order do, so the suite pins a fresh install's.
-///
-/// After an intended change to Search results or their data, record it again by running this
-/// suite with `TEST_RUNNER_ZENBU_RECORD_CONFORMANCE=1`, and review the diff. Recording keeps each
-/// case's `query` and `covers` and rewrites the rest.
 @Suite("Search results conformance suite")
 struct SearchResultsConformanceTests {
   static let artifactNames = [
@@ -79,10 +65,6 @@ struct SearchResultsConformanceTests {
     }
   }
 
-  /// The package's test host lacks the Sudachi dictionary the app bundles, so Search can't split
-  /// a query into words here. Search only splits a query that matches nothing directly, and
-  /// ignores words that aren't Japanese, so a case is only recorded when splitting can't change
-  /// it: it has direct matches, or is not Japanese.
   private static func checkIndependentOfTextAnalysis(
     _ observed: SearchResultsCase, textAnalysis: String
   ) throws {
@@ -95,7 +77,6 @@ struct SearchResultsConformanceTests {
     }
   }
 
-  /// Each position whose row differs, with its ID and the fields that changed.
   private static func rowDifferences(
     _ expected: [SearchResultsCase.Row], _ observed: [SearchResultsCase.Row]
   ) throws -> [String] {
@@ -130,11 +111,9 @@ struct SearchResultsConformanceTests {
   }
 }
 
-/// Reads one query's results screen from the same clients and models the app gives `SearchView`.
 private struct SearchResultsObserver {
   let lookupClient = LookupClient.live
   let exampleSentenceClient = ExampleSentenceClient.live
-  /// A fresh install's frequency dictionaries, independent of the Simulator's saved choices.
   let frequency: FrequencyPackManager
 
   init() async throws {
@@ -164,7 +143,6 @@ private struct SearchResultsObserver {
     var observed = SearchResultsCase(query: recorded.query, covers: recorded.covers)
     let query = SearchQuery(recorded.query)
 
-    // SearchView.search(_:)
     let results = try await lookupClient.search(query)
     let exampleCount = await SearchResultsScreen.exampleCount(
       results, query: query,
@@ -189,7 +167,6 @@ private struct SearchResultsObserver {
     }
     observed.state = "results"
 
-    // SearchResultsView, for a typed query (only radical input limits the list).
     let presentedEntries = SearchResultsScreen.presentedEntries(results, rankedEntryLimit: nil)
     let displayedIDs = SearchResultsScreen.displayedEntryIDs(presentedEntries)
     let capability = FrequencyCapability(batchLookup: { [frequency] ids in
@@ -271,8 +248,6 @@ private struct SearchResultsObserver {
     return observed
   }
 
-  /// The match group a row sorts in before frequency: its source (the exact form, then
-  /// deinflected lemmas, then other matches), then how it matched.
   private static func describe(_ relevance: DictionaryRelevance) -> String {
     let match =
       switch relevance.matchRank {
@@ -293,38 +268,24 @@ private struct SearchResultsSuite: Codable {
   let suite: String
   let formatVersion: Int
   var artifacts: [ConformanceArtifact]?
-  /// The frequency dictionaries a new install enables, in priority order.
   var frequencyPacks: [String]?
-  /// Whether Search could split queries into words when recorded.
   var textAnalysis: String?
   var cases: [SearchResultsCase]
 }
 
-/// One query's results screen. Only `query` and `covers` are written by hand.
 private struct SearchResultsCase: Codable {
-  /// The query as typed.
   let query: String
-  /// Why the case is in the suite.
   let covers: String?
   var resolution: String?
   var presentation: String?
-  /// `results`, or `noResults` for the No Dictionary Matches screen.
   var state: String?
-  /// The list's sections, in order: `examples`, `readingRefinement`, then `discoveredWords` or
-  /// `results`.
   var sections: [String]?
   var examples: Examples?
   var readingRefinement: Refinement?
-  /// The heading row over discovered words.
   var heading: String?
-  /// The kanji row that leads a single-kanji query's results.
   var kanji: Kanji?
-  /// The rows in the order shown.
   var results: [Row]?
-  /// The count VoiceOver reads for each row ("Result 1 of N"), including the kanji row. The
-  /// screen shows no count.
   var voiceOverCount: Int?
-  /// The row under the results naming frequency dictionaries that couldn't be read.
   var frequencyNotice: String?
 
   init(query: String, covers: String?) {
@@ -335,7 +296,6 @@ private struct SearchResultsCase: Codable {
   struct Examples: Codable {
     let title: String
     let count: Int
-    /// The entry whose examples it opens, when not the query's own matches.
     let primaryEntry: String?
   }
 
@@ -348,30 +308,23 @@ private struct SearchResultsCase: Codable {
     let character: String
     let label: String
     let summary: String
-    /// The entry whose summary the row shows.
     let entry: String?
   }
 
   struct Row: Codable {
     let languageReferenceID: String
-    /// The JMdict entry numbers behind the entry.
     let entSeq: [String]
     let headword: String
     let reading: String
     let summary: String
-    /// The frequency chips, in order.
     let chips: [Chip]
-    /// The match group the row sorts in before frequency; see `SearchResultFrequencyOrdering`.
     let match: String
-    /// The row's position before the frequency re-sort, the last tiebreak.
     let retrievalOrder: Int
   }
 
   struct Chip: Codable {
     let pack: String?
-    /// The dictionary's short name.
     let name: String
-    /// A rank, a JLPT level, or "—" for the first dictionary without a rank.
     let text: String
     let tier: String?
   }

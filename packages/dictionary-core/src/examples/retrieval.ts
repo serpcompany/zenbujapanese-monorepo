@@ -1,23 +1,19 @@
-// What the app's example retrieval for a dictionary entry ranks by (ExampleSentenceData in
-// apps/ios/Modules/Sources/SearchExperience/ExampleSentenceClient.swift): its limit, the lexical
-// relations and RankTuple order an entry's examples use, and how it normalizes the entry's forms.
-// The artifact layer's retrieval (../artifact/example-retrieval.ts) runs the app's queries with
-// them. Change the Swift and this port in the same PR, and re-record the word-detail suite; the
-// Search parity workflow checks that both change.
-
 import { graphemeCount, graphemes } from '../detail/text'
 
-/** How many examples the app lists at most (`result(matches:)`). */
 export const exampleLimit = 100
 
-/** ExampleSentenceLexicalRelation, for the relations an entry's examples use. */
+export const exactExampleCountLimit = 50
+
+export function reportedExampleCount(matches: number): number {
+  return matches > exactExampleCountLimit ? exactExampleCountLimit + 1 : matches
+}
+
 export const LexicalRelation = {
   selectedWrittenForm: 4,
   alternateWrittenForm: 5,
   reading: 6
 } as const
 
-/** The entry fields retrieval reads: `ExampleSentenceRetrievalRequest.dictionaryEntry`. */
 export interface RetrievalEntry {
   id: string
   headword: string
@@ -25,13 +21,8 @@ export interface RetrievalEntry {
   writtenForms: string[]
 }
 
-/**
- * Why the app's retrieval throws for an entry, so Word Detail shows no examples:
- * `invalidQuery(.missingEntryEvidence)`.
- */
 export type RetrievalError = 'missingEntryEvidence'
 
-/** `normalizedEntryEvidence`: NFKC, with whitespace runs collapsed to one space. */
 export function normalizedEntryEvidence(value: string): string {
   const words: string[] = []
   let word = ''
@@ -47,7 +38,6 @@ export function normalizedEntryEvidence(value: string): string {
   return words.join(' ')
 }
 
-/** `graphemeRange(of:in:)`'s location: the first occurrence, in graphemes, or null. */
 export function graphemePosition(term: string, text: string): number | null {
   const index = text.indexOf(term)
   if (index < 0) return null
@@ -61,7 +51,6 @@ interface Ranked {
   pairId: string
 }
 
-/** RankTuple's order (English term count is 0 for every entry example). */
 export function compareRanks(left: Ranked, right: Ranked): number {
   if (left.relation !== right.relation) return left.relation - right.relation
   if (left.position !== right.position) return left.position - right.position

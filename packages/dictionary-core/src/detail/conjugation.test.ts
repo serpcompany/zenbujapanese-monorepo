@@ -9,10 +9,6 @@ import {
   sharedSpellings
 } from './conjugation'
 
-// Expected values follow JapaneseConjugator in JapaneseConjugationClient.swift and
-// ConjugationsView.swift. The word-detail suite checks the port against the app for every case
-// with a table; these cover each rule's edges.
-
 const table = (headword: string, reading: string, partsOfSpeech: string[]) =>
   conjugationTable({ headword, reading, partsOfSpeech })
 
@@ -34,9 +30,11 @@ describe('conjugationTable (JapaneseConjugator.table)', () => {
     expect(surfaces('買う', 'かう', ['godanVerb'], 'Polite')?.[0]).toBe('買います')
   })
 
-  test('する verbs keep the noun; 来る changes its reading', () => {
-    // The app's rule appends できる to the noun (app bug #521); the port copies it.
+  test('する verbs keep the noun, and copy app bug #521: the potential appends できる to it', () => {
     expect(surfaces('愛する', 'あいする', ['suruVerb'], 'Plain')?.[5]).toBe('愛できる')
+  })
+
+  test('来る changes its reading', () => {
     const kuru = table('来る', 'くる', ['kuruVerb'])
     expect(kuru?.plain[2]).toEqual({
       kind: 'negative',
@@ -53,7 +51,9 @@ describe('conjugationTable (JapaneseConjugator.table)', () => {
     expect(takai && formsFor(takai, 'Polite')).toEqual(takai?.plain)
     expect(table('いい', 'いい', ['iAdjective'])).toBeNull()
     expect(table('学校', 'がっこう', ['noun'])).toBeNull()
-    // A verb whose written and read endings differ has none.
+  })
+
+  test('a verb whose written and read endings differ has no table', () => {
     expect(table('見る', 'みた', ['ichidanVerb'])).toBeNull()
   })
 

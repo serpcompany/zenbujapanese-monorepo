@@ -2,11 +2,6 @@ import type { Dictionary } from '@zenbu/dictionary-core/artifact/dictionary'
 import { beforeAll, describe, expect, test } from 'vitest'
 import { artifactAvailable, dictionary, sudachiAvailable } from './support'
 
-// Sentence search with the app's Sudachi (SearchView.swift's Discovered Words). No app-recorded
-// suite covers it yet: recording one needs the app's Japanese Text Analysis pack in the
-// Simulator. Until then, these check the cases the app's manual checks name (docs/agents/ios.md,
-// Search manual checks).
-
 describe.runIf(artifactAvailable && sudachiAvailable)('sentence search', () => {
   let service: Dictionary
 

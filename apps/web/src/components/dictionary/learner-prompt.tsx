@@ -26,7 +26,6 @@ const prompts = {
   }
 }
 
-/** A learner section (Lists or Notes) that opens the get-the-app prompt until accounts exist. */
 export function LearnerPrompt({ kind }: { kind: keyof typeof prompts }) {
   const [action, setAction] = useState<string | null>(null)
   const { title, description, icon: Icon } = prompts[kind]

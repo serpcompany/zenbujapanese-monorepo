@@ -9,8 +9,6 @@ struct RecognizedImageTextObservation: Hashable, Identifiable, Sendable {
   let boundingBox: CGRect
   let confidence: Float
   let characterBoxes: [CGRect]
-  /// Whether the line runs top to bottom, judged in image pixels rather than normalized
-  /// coordinates so a wide or tall image doesn't skew the result.
   let isVertical: Bool
 
   init(
@@ -45,8 +43,6 @@ struct ImageTextRecognitionClient: Sendable {
   }
 }
 
-/// Uses the Swift Vision `RecognizeTextRequest`, which reads vertical Japanese columns
-/// right to left. `VNRecognizeTextRequest` returns nothing for vertical Japanese.
 private enum VisionTextRecognizer {
   static func recognize(_ asset: ImageTextAsset) async throws -> [RecognizedImageTextObservation] {
     try Task.checkCancellation()
@@ -100,8 +96,6 @@ private enum VisionTextRecognizer {
     }
   }
 
-  /// A line is vertical when its characters advance downward. Single-character lines fall back
-  /// to the shape of the line's box.
   private static func isVertical(
     _ boundingBox: CGRect,
     characterBoxes: [CGRect],

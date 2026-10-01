@@ -5,7 +5,6 @@ import Testing
 
 @Suite("Image text notes")
 struct ImageTextExplanationTests {
-  /// Knows only two of the three proverbs, so the test sees which phrases the model keeps.
   private static let client = ImageTextExplanationClient.live(
     lookupClient: LookupClient(
       search: { _ in throw CancellationError() },
@@ -18,7 +17,6 @@ struct ImageTextExplanationTests {
     )
   )
 
-  /// Runs only where Apple Intelligence is available, such as a Mac with it turned on.
   @Test(
     "context describes the text, and notes are dictionary entries in it",
     .enabled(if: client.availability() == .available)
@@ -31,7 +29,6 @@ struct ImageTextExplanationTests {
     #expect(Set(insights.notes.map(\.phrase)) == ["背水の陣", "机上の空論"])
   }
 
-  /// Runs only where Apple Intelligence is available.
   @Test(
     "on-device translation returns one translation per source",
     .enabled(if: client.availability() == .available)
@@ -44,8 +41,6 @@ struct ImageTextExplanationTests {
     #expect(translations.values.allSatisfy { !$0.isEmpty })
   }
 
-  /// Some Simulator runtimes report the model available but can't run it, such as iOS 26 under
-  /// macOS 27, where its safety check fails. Those runs have nothing to test.
   private static func modelRuns() async -> Bool {
     (try? await LanguageModelSession().respond(to: "Reply with OK.")) != nil
   }

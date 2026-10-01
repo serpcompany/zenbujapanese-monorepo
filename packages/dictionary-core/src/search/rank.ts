@@ -1,4 +1,3 @@
-// Ports apps/ios/Modules/Sources/SearchExperience/DictionaryRanking.swift.
 import { compareStrings } from './query'
 
 export interface PriorityProfile {
@@ -27,7 +26,6 @@ function category({ primaryMask, secondaryMask }: PriorityProfile): number {
 
 const bitCount = (value: number) => value.toString(2).replaceAll('0', '').length
 
-/** Negative when `lhs` ranks first; zero when neither ranks first. */
 export function compareProfiles(lhs: PriorityProfile, rhs: PriorityProfile): number {
   const categories = category(lhs) - category(rhs)
   if (categories !== 0) return categories
@@ -118,7 +116,6 @@ export function compareJapaneseRanks(lhs: JapaneseRank, rhs: JapaneseRank): numb
   )
 }
 
-/** The coarse rank Search presents: English ranks sort before Japanese ones. */
 export function comparePresentationRanks(lhs: Rank, rhs: Rank): number {
   if (lhs.kind === 'english' && rhs.kind === 'english') {
     return firstDifference(
@@ -133,7 +130,6 @@ export function comparePresentationRanks(lhs: Rank, rhs: Rank): number {
   return lhs.kind === 'english' ? -1 : 1
 }
 
-/** Whether two ranks share the leading lexical group (the app's legacy rank equality). */
 export function sameLexicalGroup(lhs: Rank, rhs: Rank): boolean {
   if (lhs.kind === 'english' && rhs.kind === 'english') {
     return (

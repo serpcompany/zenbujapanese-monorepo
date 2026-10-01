@@ -1,3 +1,4 @@
+import { dictionaryContract } from '@zenbu/dictionary-core/artifact/contract'
 import { afterEach, describe, expect, test, vi } from 'vitest'
 import type { DictionaryApi, ServiceHealth } from '@/lib/dictionary/api'
 import { dictionaryService } from '@/lib/dictionary/data'
@@ -9,31 +10,72 @@ const service = (health: () => Promise<ServiceHealth>) => ({ health }) as unknow
 
 describe('GET /dictionary/service.json', () => {
   afterEach(() => {
+    vi.restoreAllMocks()
     vi.clearAllMocks()
   })
 
   test('names the build the service answers with, uncached and out of search engines', async () => {
     vi.mocked(dictionaryService).mockResolvedValue(
-      service(async () => ({ status: 200, build: 'e13452e70d34-0123456789ab', mitigated: null }))
+      service(async () => ({
+        status: 200,
+        build: 'e13452e70d34-0123456789ab',
+        contract: dictionaryContract,
+        mitigated: null
+      }))
     )
+    const logged = vi.spyOn(console, 'log').mockImplementation(() => {})
     const response = await GET()
     expect(response.status).toBe(200)
     expect(await response.json()).toEqual({
       status: 200,
       build: 'e13452e70d34-0123456789ab',
-      mitigated: null
+      contract: dictionaryContract,
+      mitigated: null,
+      siteContract: dictionaryContract
     })
     expect(response.headers.get('Cache-Control')).toBe('no-store')
     expect(response.headers.get('X-Robots-Tag')).toBe('noindex')
+    expect(logged).not.toHaveBeenCalled()
+  })
+
+  test('still answers 200 when the service answers another contract, and logs it', async () => {
+    vi.mocked(dictionaryService).mockResolvedValue(
+      service(async () => ({
+        status: 200,
+        build: 'e13452e70d34-0123456789ab',
+        contract: dictionaryContract + 1,
+        mitigated: null
+      }))
+    )
+    const logged = vi.spyOn(console, 'log').mockImplementation(() => {})
+    const response = await GET()
+    expect(response.status).toBe(200)
+    expect(await response.json()).toMatchObject({
+      contract: dictionaryContract + 1,
+      siteContract: dictionaryContract
+    })
+    expect(JSON.parse(logged.mock.calls[0][0] as string)).toMatchObject({
+      level: 'warn',
+      message: 'dictionary_contract_mismatch',
+      service: dictionaryContract + 1,
+      site: dictionaryContract
+    })
   })
 
   test('answers 502 when Cloudflare challenges the Worker, saying so', async () => {
     vi.mocked(dictionaryService).mockResolvedValue(
-      service(async () => ({ status: 403, build: null, mitigated: 'challenge' }))
+      service(async () => ({ status: 403, build: null, contract: null, mitigated: 'challenge' }))
     )
+    const logged = vi.spyOn(console, 'log').mockImplementation(() => {})
     const response = await GET()
     expect(response.status).toBe(502)
     expect(await response.json()).toMatchObject({ status: 403, mitigated: 'challenge' })
+    expect(JSON.parse(logged.mock.calls[0][0] as string)).toMatchObject({
+      level: 'warn',
+      message: 'dictionary_service_unhealthy',
+      status: 403,
+      mitigated: 'challenge'
+    })
   })
 
   test('answers 502 when the service is unreachable, with the kind of failure but not its message', async () => {
@@ -42,11 +84,17 @@ describe('GET /dictionary/service.json', () => {
         throw new TypeError('fetch failed: connect ECONNREFUSED 10.0.0.5:8788')
       })
     )
+    const logged = vi.spyOn(console, 'error').mockImplementation(() => {})
     const response = await GET()
     expect(response.status).toBe(502)
     const body = await response.json()
     expect(body).toEqual({ status: 0, build: null, error: 'TypeError' })
     expect(JSON.stringify(body)).not.toContain('10.0.0.5')
+    expect(JSON.parse(logged.mock.calls[0][0] as string)).toMatchObject({
+      level: 'error',
+      message: 'dictionary_service_unreachable',
+      error: 'fetch failed: connect ECONNREFUSED 10.0.0.5:8788'
+    })
   })
 
   test('is not found where the site reads no service', async () => {

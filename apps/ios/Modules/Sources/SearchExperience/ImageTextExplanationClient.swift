@@ -1,7 +1,6 @@
 import Foundation
 import FoundationModels
 
-/// An idiom or set expression in recognized text, with its dictionary meaning.
 struct ImageTextNote: Hashable, Identifiable, Sendable {
   let phrase: String
   let entry: DictionaryEntry
@@ -10,14 +9,10 @@ struct ImageTextNote: Hashable, Identifiable, Sendable {
   var meaning: String { entry.meanings.prefix(3).joined(separator: "; ") }
 }
 
-/// What a recognized page is, for Translate's Context section.
 struct ImageTextInsights: Hashable, Sendable {
-  /// A few sentences on what the text is and what it's for.
   let context: String
   let notes: [ImageTextNote]
 
-  /// Notes on idioms inside longer text. An idiom that is a whole paragraph, as in a list of
-  /// proverbs, already has its meaning under Translation, so Context doesn't repeat it.
   func notes(notRepeating paragraphs: [ImageTextParagraph]) -> [ImageTextNote] {
     let paragraphTexts = Set(paragraphs.map(\.text))
     return notes.filter { !paragraphTexts.contains($0.phrase) }
@@ -26,26 +21,14 @@ struct ImageTextInsights: Hashable, Sendable {
 
 enum ImageTextExplanationAvailability: Equatable, Sendable {
   case available
-  /// Apple Intelligence is off; the learner can turn it on in Settings.
   case appleIntelligenceNotEnabled
-  /// The on-device model is still downloading.
   case modelNotReady
-  /// This device can't run the on-device model.
   case unsupported
 }
 
-/// Explains and, where Apple Translation isn't available, translates recognized text with Apple's
-/// on-device language model.
-///
-/// The model is kept away from word-level claims it gets wrong. Asked to explain idioms, it
-/// confidently misread them (背水の陣 as "a surprise attack") and invented grammar; asked to
-/// translate them, it went word by word (木を見て森を見ず as "look at the forest"). So it only
-/// picks idioms, which are kept when they're dictionary entries and shown with the dictionary's
-/// meaning, and those meanings are handed to it whenever it translates or describes the text.
 struct ImageTextExplanationClient: Sendable {
   var availability: @Sendable () -> ImageTextExplanationAvailability
   var explain: @Sendable (_ text: String) async throws -> ImageTextInsights
-  /// Translations keyed by source text, for devices without Apple Translation.
   var translate: @Sendable (_ sources: [String]) async throws -> [String: String]
 
   static let unavailable = ImageTextExplanationClient(
@@ -77,16 +60,12 @@ struct ImageTextExplanationClient: Sendable {
 private struct OnDeviceExplainer {
   let lookupClient: LookupClient
 
-  /// The on-device model's context is small, so long pages are cut to their opening.
   private static let maximumTextLength = 1_200
 
   private static let instructions = """
     You help an English-speaking learner read Japanese recognized in a photo.
     """
 
-  /// Translating and describing a learner's own text is a content transformation, so the
-  /// permissive guardrails apply; the default ones refused an ordinary novel page about illness.
-  /// They cover plain-text responses only, so translation and context aren't guided.
   private static let model = SystemLanguageModel(guardrails: .permissiveContentTransformations)
 
   private func session() -> LanguageModelSession {
@@ -97,7 +76,6 @@ private struct OnDeviceExplainer {
     let text = String(fullText.prefix(Self.maximumTextLength))
     guard !text.isEmpty else { return ImageTextInsights(context: "", notes: []) }
 
-    // Picking idioms is optional: without it, lines that are dictionary entries still get notes.
     let picked = try? await session().respond(
       to: """
         Pick the idioms, proverbs, and set expressions a learner is most likely to miss in \
@@ -136,8 +114,6 @@ private struct OnDeviceExplainer {
     )
   }
 
-  /// Translates in batches that stay under the model's context, since a page's paragraphs and
-  /// lines together can be twice the page's text.
   func translations(_ sources: [String]) async throws -> [String: String] {
     var translations: [String: String] = [:]
     var batch: [String] = []
@@ -175,7 +151,6 @@ private struct OnDeviceExplainer {
         """
     )
     var translations: [String: String] = [:]
-    // Accepts "1. text", "1) text", and "**1.** text".
     let numberedLine = /^[\s*]*(\d+)[\s*]*[.):][\s*]*(.+)$/
     for line in response.content.split(separator: "\n") {
       guard let match = try? numberedLine.wholeMatch(in: line),
@@ -186,9 +161,6 @@ private struct OnDeviceExplainer {
     return translations
   }
 
-  /// The model sometimes picks single words such as する, whose form can match an unrelated
-  /// entry (擦る, "to rub"). Notes are for set phrases: entries tagged as expressions, or phrases
-  /// of several words, such as 背水の陣.
   private static func isSetPhrase(_ phrase: String, entry: DictionaryEntry) -> Bool {
     entry.partsOfSpeech.contains(.expression) || phrase.count >= 4
   }

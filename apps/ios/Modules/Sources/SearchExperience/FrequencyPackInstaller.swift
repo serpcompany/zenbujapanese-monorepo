@@ -244,7 +244,6 @@ enum FrequencyPackInstaller {
     try Data(contentsOf: mappingPolicyURL(version: version)).sha256
   }
 
-  /// V1 matches forms only; V2 also requires a supplied source reading to match.
   private static func mappingPolicyURL(version: Int) throws -> URL {
     guard [1, 2].contains(version),
       let url = Bundle.module.url(

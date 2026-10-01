@@ -1,8 +1,7 @@
 import type { Metadata } from 'next'
 
-/** Title, description, and canonical URL for a dictionary page. `path` is already percent-encoded. */
 export function dictionaryMetadata(
-  path: string,
+  encodedPath: string,
   title: string,
   description: string,
   options: { index?: boolean } = {}
@@ -10,8 +9,8 @@ export function dictionaryMetadata(
   return {
     title,
     description,
-    alternates: { canonical: path },
-    openGraph: { title, description, url: path },
+    alternates: { canonical: encodedPath },
+    openGraph: { title, description, url: encodedPath },
     ...(options.index === false ? { robots: { index: false, follow: true } } : {})
   }
 }

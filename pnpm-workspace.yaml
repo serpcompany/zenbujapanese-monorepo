@@ -2,6 +2,7 @@ packages:
   - apps/web
   - apps/dictionary-api
   - packages/*
+  - tools/*
 
 ignoredBuiltDependencies:
   - sharp

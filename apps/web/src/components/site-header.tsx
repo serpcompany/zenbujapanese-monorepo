@@ -15,7 +15,6 @@ export function SiteHeader() {
           >
             {site.mark}
           </span>
-          {/* On phones only the mark shows; the name stays for screen readers. */}
           <span className="max-md:sr-only">{site.name}</span>
         </Link>
         <div className="flex min-w-0 flex-1">

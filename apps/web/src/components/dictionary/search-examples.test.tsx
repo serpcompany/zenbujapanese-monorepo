@@ -9,23 +9,13 @@ import { gateEnabled, gateService, recordedCases } from './gate'
 import { readRenderedExamples, visibleText } from './rendered'
 import { SearchExamples } from './search-examples'
 
-// Renders a search's Example Sentences page component to HTML, as the server does, and reads back
-// what a reader sees: the title and count, each sentence's words with their links, furigana, and
-// the query's words marked, its translation and Tatoeba credit, and the Load more button. The
-// first test renders fixed data. The last ones render what the dictionary service answers
-// (./gate.ts): for every search-results.json case with an Example Sentences row, as many examples
-// as the row's count promises; and for cases of example-search.json, the sentences the app lists,
-// in its order, read as the app shows them, loading the rest of each list as the page does.
-
 const render = (data: SearchExamplesData) => renderToStaticMarkup(<SearchExamples data={data} />)
 
-/** Every word page under a slug the test can read back. */
 const links: Links = {
   word: entSeq => (entSeq === null ? null : `/dictionary/w-${entSeq}/`),
   kanji: () => null
 }
 
-/** パンを食べた。 as the page shows it on the search for 食べた. */
 const example = (position: number): PageExample =>
   pageExample(
     wordExample({
@@ -81,7 +71,6 @@ describe('the Example Sentences page', () => {
       position: 0,
       words: [
         { text: 'パン', furigana: '', href: '/dictionary/w-1049020/', marked: false },
-        // A word with several entries searches for its dictionary form.
         { text: 'を', furigana: '', href: '/dictionary/search/%E3%82%92/', marked: false },
         { text: '食べた', furigana: '食(た)', href: '/dictionary/w-1358280/', marked: true },
         { text: '。', furigana: '', href: null, marked: false }
@@ -112,7 +101,6 @@ describe('whether search engines may index the page', () => {
     expect(searchExamplesIndexable('食べた', true)).toBe(false)
     expect(searchExamplesIndexable('miru', true)).toBe(false)
     expect(searchExamplesIndexable('eat', false)).toBe(false)
-    // A full-width query searches as the ASCII it normalizes to.
     expect(searchExamplesIndexable('ｅａｔ', false)).toBe(false)
   })
 })
@@ -127,6 +115,7 @@ const rowCases = recordedCases<ResultsCase>('search-results.json').filter(
 )
 
 const japanese = /[\p{Script=Hiragana}\p{Script=Katakana}\p{Script=Han}]/u
+const exampleSentenceResultCountExactUpTo = 50
 
 describe.runIf(gateEnabled)('the search examples page matches its Example Sentences row', () => {
   test.each(rowCases)('「$query」', async expected => {
@@ -135,9 +124,9 @@ describe.runIf(gateEnabled)('the search examples page matches its Example Senten
     const found = await gateService().searchExamples(expected.query)
     if (!found) throw new Error(`No examples for ${expected.query}`)
     const { listed, rows } = found.data
-    // ExampleSentenceResultCount: exact up to 50, and 51 for more.
-    if (row.count > 50) expect(listed).toBeGreaterThan(50)
-    else expect(listed).toBe(row.count)
+    if (row.count > exampleSentenceResultCountExactUpTo) {
+      expect(listed).toBeGreaterThan(exampleSentenceResultCountExactUpTo)
+    } else expect(listed).toBe(row.count)
 
     const examples: PageExample[] = rows.map(rows => {
       const example = wordExample(rows)
@@ -155,7 +144,6 @@ describe.runIf(gateEnabled)('the search examples page matches its Example Senten
         ).toBe(true)
       }
     }
-    // A one-letter wildcard's examples (t*) take the service seconds the first time.
   }, 30_000)
 })
 
@@ -169,10 +157,6 @@ interface ExampleSearchCase {
   }[]
 }
 
-/**
- * The rendered cases: a direct Japanese search (100 examples, over four loads), a deinflected
- * one and a romaji one (the primary entry's examples), English, kana with few, and none.
- */
 const renderedQueries = ['見る', '食べた', 'miru', 'eat', 'すし', 't*', '^the', 'qzxvkj']
 
 const exampleSearchCases = recordedCases<ExampleSearchCase>('example-search.json').filter(
@@ -187,12 +171,10 @@ describe.runIf(gateEnabled)('the rendered Example Sentences page matches the app
   })
 
   test.each(exampleSearchCases)('「$query」', async expected => {
-    // As data.ts's getSearchExamples reads them, and the examples.json route the rest.
     const query = normalizeSearchQuery(expected.query)
     const service = gateService()
     const found = await service.searchExamples(query)
     const ids = expected.ids ?? []
-    // A search without sentences has no page (404), as the app never opens one.
     if (ids.length === 0) {
       expect(found).toBeNull()
       return
@@ -219,7 +201,6 @@ describe.runIf(gateEnabled)('the rendered Example Sentences page matches the app
     const html = render(data)
     const rendered = readRenderedExamples(html)
 
-    // The page renders the first 25, then the route serves 25 at a time, each once, in order.
     expect(rendered.map(example => example.position)).toEqual(
       ids.slice(0, examplesPerPage).map((_, position) => position)
     )
@@ -234,7 +215,6 @@ describe.runIf(gateEnabled)('the rendered Example Sentences page matches the app
     expect(loaded.map(example => example.position)).toEqual(ids.map((_, position) => position))
     expect(visibleText(html)).toContain(ids.length > examplesPerPage ? 'Load more examples' : query)
 
-    // The first sentences read as the app shows them: its words, with the query's marked.
     for (const [index, shown] of (expected.shown ?? []).entries()) {
       const example = rendered[index]
       expect(example.words.map(word => word.text).join('')).toBe(shown.japanese)
@@ -245,7 +225,6 @@ describe.runIf(gateEnabled)('the rendered Example Sentences page matches the app
       expect(example.translation).toBe(shown.english)
       expect(example.credit).toMatch(/^Tatoeba: Japanese #\d+.*; English #\d+/)
     }
-    // Every word linked to one entry has its page; a word with kanji, furigana.
     for (const word of rendered.flatMap(example => example.words)) {
       const wordPage = word.href !== null && !word.href.startsWith('/dictionary/search/')
       if (wordPage && /[㐀-鿿々]/u.test(word.text)) {

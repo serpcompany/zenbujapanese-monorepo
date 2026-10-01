@@ -9,7 +9,6 @@ struct CreditsView: View {
         )
       }
 
-      // The EDRDG licence requires links to each file's documentation.
       Section("JMdict, KANJIDIC2 & RADKFILE") {
         Text("Dictionary, kanji, and radical data by the Electronic Dictionary Research and Development Group.")
         LabeledContent("License", value: "CC BY-SA 4.0")
@@ -86,7 +85,6 @@ struct CreditsView: View {
   }
 }
 
-/// Every license text and term the credited sources require Zenbu to ship or link.
 private struct LicensesView: View {
   var body: some View {
     List {

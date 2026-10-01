@@ -1,7 +1,5 @@
 import Foundation
 
-/// A dictionary word or a kanji the learner can mark known, add to a list, write notes about,
-/// or attach photos to.
 struct SavedItem: Hashable, Sendable {
   enum Kind: Hashable, Sendable {
     case word(LanguageReferenceID, noteID: WordNoteID)
@@ -21,8 +19,6 @@ struct SavedItem: Hashable, Sendable {
     SavedItem(kind: .kanji(character), headword: character.rawValue, reading: reading)
   }
 
-  /// The ID Known Words and Lists save: a word's Language Reference ID, or `kanji:` followed by
-  /// the character. The prefix can't collide with a Language Reference ID, which is hexadecimal.
   var storedID: String {
     switch kind {
     case .word(let id, _): id.rawValue
@@ -30,7 +26,6 @@ struct SavedItem: Hashable, Sendable {
     }
   }
 
-  /// The key notes and photos are saved under.
   var noteID: WordNoteID {
     switch kind {
     case .word(_, let noteID): noteID
@@ -42,7 +37,6 @@ struct SavedItem: Hashable, Sendable {
     EncounterWordReference(id: noteID, headword: headword, reading: reading)
   }
 
-  /// The kanji a saved ID names, or nil when it names a word.
   static func kanji(storedID: String) -> KanjiCharacter? {
     guard storedID.hasPrefix(kanjiPrefix) else { return nil }
     return KanjiCharacter(String(storedID.dropFirst(kanjiPrefix.count)))

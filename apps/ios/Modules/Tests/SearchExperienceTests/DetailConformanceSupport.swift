@@ -2,27 +2,20 @@ import Foundation
 
 @testable import SearchExperience
 
-/// Shared plumbing for the app-recorded detail conformance suites in
-/// `apps/ios/LanguageData/Conformance/`: where they live, whether this run records them, and the
-/// bundled artifacts they pin.
 enum DetailConformance {
-  /// Set by `TEST_RUNNER_ZENBU_RECORD_CONFORMANCE=1`, the same switch as the search suite.
   static var isRecording: Bool {
     ProcessInfo.processInfo.environment["ZENBU_RECORD_CONFORMANCE"] == "1"
   }
 
   static func suiteURL(_ fileName: String) -> URL {
     URL(fileURLWithPath: #filePath)
-      .deletingLastPathComponent()  // SearchExperienceTests
-      .deletingLastPathComponent()  // Tests
-      .deletingLastPathComponent()  // Modules
-      .deletingLastPathComponent()  // apps/ios
+      .deletingLastPathComponent()
+      .deletingLastPathComponent()
+      .deletingLastPathComponent()
+      .deletingLastPathComponent()
       .appending(path: "LanguageData/Conformance/\(fileName)")
   }
 
-  /// The SHA-256 of each named file as the app bundles it, so a suite states exactly which data
-  /// it was recorded against. A name such as `Kuromoji/base.dat.gz` looks in that subdirectory
-  /// first, as the app does.
   static func artifacts(_ names: [String]) throws -> [ConformanceArtifact] {
     guard let databaseURL = Bundle.languageReferenceDataURL,
       let bundle = Bundle(url: databaseURL.deletingLastPathComponent())
@@ -49,7 +42,6 @@ enum DetailConformance {
     try (encoder.encode(value) + Data("\n".utf8)).write(to: url)
   }
 
-  /// The top-level fields where two recorded values differ, for a readable failure.
   static func differences<Value: Encodable>(_ expected: Value, _ observed: Value) throws
     -> [String]
   {

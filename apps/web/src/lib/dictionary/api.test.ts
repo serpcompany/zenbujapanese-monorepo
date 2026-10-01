@@ -1,4 +1,5 @@
-import { describe, expect, test } from 'vitest'
+import { dictionaryContract } from '@zenbu/dictionary-core/artifact/contract'
+import { afterEach, describe, expect, test, vi } from 'vitest'
 import { dictionaryApi } from './api'
 
 const environment = {
@@ -17,13 +18,14 @@ function serviceAnswering(response: Response) {
 }
 
 describe('health', () => {
-  test("names the build a healthy service answers with, and doesn't send the token", async () => {
+  test("names the build and contract a healthy service answers with, and doesn't send the token", async () => {
     const { api, requests } = serviceAnswering(
-      Response.json({ status: 'ok', build: 'e13452e70d34-0123456789ab' })
+      Response.json({ status: 'ok', build: 'e13452e70d34-0123456789ab', contract: 7 })
     )
     expect(await api.health()).toEqual({
       status: 200,
       build: 'e13452e70d34-0123456789ab',
+      contract: 7,
       mitigated: null
     })
     expect(requests.map(request => request.url)).toEqual(['https://dictionary.example.com/healthz'])
@@ -37,11 +39,75 @@ describe('health', () => {
         headers: { 'content-type': 'text/html', 'cf-mitigated': 'challenge' }
       })
     )
-    expect(await api.health()).toEqual({ status: 403, build: null, mitigated: 'challenge' })
+    expect(await api.health()).toEqual({
+      status: 403,
+      build: null,
+      contract: null,
+      mitigated: 'challenge'
+    })
+  })
+
+  test('takes a service that names no contract as answering the first one', async () => {
+    const { api } = serviceAnswering(Response.json({ status: 'ok', build: 'e13452e70d34-old' }))
+    expect((await api.health()).contract).toBe(1)
   })
 
   test('has no build while the service starts', async () => {
     const { api } = serviceAnswering(Response.json({ status: 'starting' }, { status: 503 }))
-    expect(await api.health()).toEqual({ status: 503, build: null, mitigated: null })
+    expect(await api.health()).toEqual({
+      status: 503,
+      build: null,
+      contract: null,
+      mitigated: null
+    })
+  })
+})
+
+describe('the contract', () => {
+  afterEach(() => {
+    vi.restoreAllMocks()
+    vi.unstubAllGlobals()
+  })
+
+  function edgeCache() {
+    const stored: string[] = []
+    vi.stubGlobal('caches', {
+      default: {
+        match: async () => undefined,
+        put: async (key: Request) => {
+          stored.push(key.url)
+        }
+      }
+    })
+    return stored
+  }
+
+  const answering = (contract: number) =>
+    serviceAnswering(
+      Response.json(['要'], { headers: { 'X-Dictionary-Contract': String(contract) } })
+    ).api
+
+  test('caches an answer from its own contract under a key naming the contract', async () => {
+    const stored = edgeCache()
+    const logged = vi.spyOn(console, 'log').mockImplementation(() => {})
+    expect((await answering(dictionaryContract).indexableKanji()).data).toEqual(['要'])
+    expect(stored).toEqual([
+      `https://dictionary.example.com/v1/sitemaps/kanji?contract=${dictionaryContract}`
+    ])
+    expect(logged).not.toHaveBeenCalled()
+  })
+
+  test('still serves an answer from another contract, logging it and leaving it out of the cache', async () => {
+    const stored = edgeCache()
+    const logged = vi.spyOn(console, 'log').mockImplementation(() => {})
+    expect((await answering(dictionaryContract + 1).indexableKanji()).data).toEqual(['要'])
+    expect(stored).toEqual([])
+    expect(JSON.parse(logged.mock.calls[0][0] as string)).toMatchObject({
+      level: 'warn',
+      message: 'dictionary_contract_mismatch',
+      path: '/v1/sitemaps/kanji',
+      service: dictionaryContract + 1,
+      site: dictionaryContract
+    })
   })
 })

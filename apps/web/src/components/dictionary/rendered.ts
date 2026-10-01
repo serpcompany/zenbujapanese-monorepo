@@ -1,14 +1,6 @@
-// Reads what a rendered search results page or Example Sentences page shows, from its
-// server-rendered HTML, for the rendered-page tests (search-results.test.tsx and
-// search-examples.test.tsx): the sections in order, the Example Sentences row, the kanji row, and
-// each word row's headword, meaning, and chips; and each example's words, links, marked words,
-// furigana, translation, and credit, as a reader sees them. Test-only.
+const screenReaderOnly = /<span class="sr-only">[\s\S]*?<\/span>/g
 
-/** Text only screen readers get, such as a chip's spoken tier. */
-const srOnly = /<span class="sr-only">[\s\S]*?<\/span>/g
-
-/** Applies `pattern` until nothing changes, so a removal can't leave a new match behind. */
-function removeAll(text: string, pattern: RegExp, replacement = ''): string {
+function removeUntilNoneRemain(text: string, pattern: RegExp, replacement = ''): string {
   let previous: string
   let current = text
   do {
@@ -18,43 +10,30 @@ function removeAll(text: string, pattern: RegExp, replacement = ''): string {
   return current
 }
 
-/** The HTML without text only screen readers get, removed until none remains. */
 export function withoutScreenReaderText(html: string): string {
-  return removeAll(html, srOnly)
+  return removeUntilNoneRemain(html, screenReaderOnly)
 }
 
-/** Furigana: a `<ruby>`'s reading. */
 const furiganaTag = /<rt\b[^>]*>[\s\S]*?<\/rt>/g
 
-/**
- * The one text extractor every rendered-page reader uses: tags removed until none remain, so a
- * removal can't leave a new tag behind (`<scr<script>ipt>`), then any `<` an unfinished tag left,
- * and quotes and ampersands decoded. `&lt;` and `&gt;` stay encoded, so the result never holds a
- * `<`; React encodes every one in text, so no suite text loses one. Furigana is left out unless
- * `furigana` keeps it. Whitespace is kept as written.
- */
+const blockEnd = /<\/(?:p|div|h\d)>/g
+
 export function htmlText(html: string, { furigana = false }: { furigana?: boolean } = {}): string {
-  const text = furigana ? html : removeAll(html, furiganaTag)
-  return removeAll(text, /<[^>]*>/g)
+  const text = furigana ? html : removeUntilNoneRemain(html, furiganaTag)
+  return removeUntilNoneRemain(text, /<[^>]*>/g)
     .replace(/</g, '')
     .replace(/&quot;/g, '"')
     .replace(/&#x27;/g, "'")
     .replace(/&amp;(?!lt;|gt;)/g, '&')
 }
 
-/**
- * Visible text: furigana (`<rt>`) and screen-reader-only text left out, tags removed, quotes and
- * ampersands decoded (`htmlText`), and whitespace collapsed.
- */
 export function visibleText(html: string): string {
-  let text = removeAll(html, furiganaTag)
-  text = removeAll(text, srOnly)
-  // A block ends a line.
-  text = removeAll(text, /<\/(?:p|div|h\d)>/g, ' ')
+  let text = removeUntilNoneRemain(html, furiganaTag)
+  text = removeUntilNoneRemain(text, screenReaderOnly)
+  text = removeUntilNoneRemain(text, blockEnd, ' ')
   return htmlText(text).replace(/\s+/g, ' ').trim()
 }
 
-/** The HTML from each match of `marker` to the next, with the marker's captured value. */
 function segments(html: string, marker: RegExp): { value: string; html: string }[] {
   const matches = [...html.matchAll(marker)]
   return matches.map((match, index) => ({
@@ -71,9 +50,7 @@ export interface RenderedRow {
 }
 
 export interface RenderedPage {
-  /** `data-section` values, in document order. */
   sections: string[]
-  /** The Example Sentences row's text and where it goes. */
   examples: { text: string; href: string | null } | null
   refinement: string | null
   kanji: { character: string; text: string } | null
@@ -85,7 +62,6 @@ export function readRenderedPage(html: string): RenderedPage {
   const sections = [...html.matchAll(/data-section="([^"]+)"/g)].map(match => match[1])
   const refinement = html.match(/data-section="readingRefinement"[\s\S]*?<\/p>/)
   const examples = html.match(/data-section="examples"[\s\S]*?<\/p>/)
-  // The kanji, then its label and meaning (the row's content).
   const kanji = html.match(
     /<span lang="ja" class="[^"]*text-4xl[^"]*">([^<]+)<\/span>[\s\S]*?data-kanji-row="[^"]*"[^>]*>([\s\S]*?)<\/div>/
   )
@@ -119,7 +95,6 @@ export function readRenderedPage(html: string): RenderedPage {
   }
 }
 
-/** The top-level elements of an HTML fragment, each whole. */
 function topLevelElements(html: string): string[] {
   const elements: string[] = []
   let depth = 0
@@ -139,10 +114,8 @@ function topLevelElements(html: string): string[] {
 
 export interface RenderedExampleWord {
   text: string
-  /** Furigana, as `base(reading)` for each annotated part; empty without any. */
   furigana: string
   href: string | null
-  /** Marked as the page's word, or the query's. */
   marked: boolean
 }
 
@@ -153,7 +126,6 @@ export interface RenderedExample {
   credit: string
 }
 
-/** Each example's words, translation, and credit, in document order. */
 export function readRenderedExamples(html: string): RenderedExample[] {
   return segments(html, /data-example="(\d+)"/g).map(({ value, html: item }) => {
     const japanese = item.match(/<p lang="ja"[^>]*>([\s\S]*?)<\/p>/)?.[1] ?? ''

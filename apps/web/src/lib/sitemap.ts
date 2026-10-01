@@ -15,10 +15,6 @@ function lastmod(date: Date | undefined) {
   return date ? `<lastmod>${date.toISOString()}</lastmod>` : ''
 }
 
-/**
- * Child sitemaps listed by /sitemap-index.xml, before the dictionary's
- * (src/lib/dictionary/sitemaps.ts). Each holds at most 50,000 URLs.
- */
 export const childSitemaps = ['/sitemaps/pages.xml'] as const
 
 export function sitemapIndexXml(paths: readonly string[]) {
@@ -42,10 +38,6 @@ export function urlSetXml(entries: readonly SitemapEntry[]) {
   return `${urlSetOpen}${urlItems(entries)}${urlSetClose}`
 }
 
-/**
- * A urlset written as its entries arrive, a page at a time, so a 50,000-URL sitemap never sits
- * whole in memory. A failure mid-stream errors the response rather than ending it early.
- */
 export function urlSetStream(pages: AsyncIterable<readonly SitemapEntry[]>) {
   const encoder = new TextEncoder()
   const iterator = pages[Symbol.asyncIterator]()

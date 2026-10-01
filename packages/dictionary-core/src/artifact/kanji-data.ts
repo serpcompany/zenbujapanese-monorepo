@@ -1,7 +1,3 @@
-// The app's bundled kanji files, which a client reads and hands the core parsed:
-// KanjiReferenceData.json (KANJIDIC2 and KRADFILE) and KanjiElementReferenceData.json (Kanjium).
-// Checked as the app's clients check them, then read into the detail core's rows.
-
 import type {
   KanjiElementRow,
   KanjiGlossRow,
@@ -10,7 +6,6 @@ import type {
   KanjiStructureRow
 } from '../detail/rows'
 
-/** A kanji in KanjiReferenceData.json's `entries`. */
 export interface KanjiReferenceEntry {
   character: string
   strokeCount: number
@@ -28,7 +23,6 @@ export interface KanjiReferenceFile {
   entries: KanjiReferenceEntry[]
 }
 
-/** A kanji in KanjiElementReferenceData.json's `kanji`. */
 export interface KanjiStructureEntry {
   character: string
   meanings: string[]
@@ -38,7 +32,6 @@ export interface KanjiStructureEntry {
   explicitPhoneticElement: string | null
 }
 
-/** An element in KanjiElementReferenceData.json's `elements`. */
 export interface KanjiElementEntry {
   glyph: string
   alternatives: string[]
@@ -60,7 +53,6 @@ const referenceSources = {
 } as const
 const elementsSchema = 'zenbu.kanji-elements.v1'
 
-/** Code point order, as SQLite's BINARY collation sorts UTF-8 text. */
 export function compareCodePoints(left: string, right: string): number {
   const a = Array.from(left)
   const b = Array.from(right)
@@ -71,7 +63,6 @@ export function compareCodePoints(left: string, right: string): number {
   return a.length - b.length
 }
 
-/** DictionaryEntry.swift's isCJKUnifiedIdeograph, for one code point. */
 export const isCJKUnifiedIdeograph = (character: string) => {
   const code = character.codePointAt(0) ?? 0
   return code >= 0x3400 && code <= 0x9fff
@@ -82,7 +73,6 @@ export class KanjiData {
   private readonly structures: Map<string, KanjiStructureEntry>
   private readonly elementsByGlyph: Map<string, KanjiElementEntry>
 
-  /** Throws unless both files are the versions the core reads. */
   constructor(reference: KanjiReferenceFile, elements: KanjiElementFile) {
     for (const [key, value] of Object.entries(referenceSources)) {
       const recorded = reference[key as keyof typeof referenceSources]
@@ -102,7 +92,6 @@ export class KanjiData {
     this.elementsByGlyph = new Map(elements.elements.map(element => [element.glyph, element]))
   }
 
-  /** Whether the kanji has a page: every kanji KanjiReferenceData.json lists does. */
   has(character: string): boolean {
     return this.byCharacter.has(character)
   }
@@ -121,23 +110,17 @@ export class KanjiData {
     }
   }
 
-  /** A kanji with no meanings or readings stays out of search engines (#465). */
   isIndexable(character: string): boolean {
     const entry = this.byCharacter.get(character)
     return entry !== undefined && (entry.meanings.length > 0 || entry.readings.length > 0)
   }
 
-  /** Every kanji search engines may index, in code point order. */
   indexableCharacters(): string[] {
     return [...this.byCharacter.keys()]
       .filter(character => this.isIndexable(character))
       .sort(compareCodePoints)
   }
 
-  /**
-   * KANJIDIC2's meanings and readings for the CJK unified ideographs in a word's forms, first
-   * occurrence first: the word page's Kanji sections.
-   */
   glossRows(forms: string[]): KanjiGlossRow[] {
     const characters: string[] = []
     for (const form of forms) {
@@ -160,7 +143,6 @@ export class KanjiData {
     })
   }
 
-  /** Kanjium's structure for the kanji; null when it has none. */
   structure(character: string): KanjiStructureRow | null {
     const entry = this.structures.get(character)
     if (!entry) return null
@@ -171,7 +153,6 @@ export class KanjiData {
     }
   }
 
-  /** The elements a structure names, in its order, where the file describes them. */
   elementRows(glyphs: string[]): KanjiElementRow[] {
     return glyphs.flatMap(glyph => {
       const element = this.elementsByGlyph.get(glyph)

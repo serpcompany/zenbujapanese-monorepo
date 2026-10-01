@@ -28,11 +28,9 @@ struct LinkedJapaneseText: View {
   let presentation: Presentation
   let japaneseIdentifier: String?
   let highlightsCurrentEntry: Bool
-  /// Accents the words that make up each occurrence of `highlightedQuery` in the text.
   let highlightsQuery: Bool
   let tokensChanged: ([JapaneseTextToken]) -> Void
   let openWord: (DictionaryEntry) -> Void
-  /// Opens a word with several possible entries. Without it, the entries appear in a menu.
   let openCandidates: ((_ surface: String, _ candidates: [DictionaryEntry]) -> Void)?
 
   init(
@@ -143,14 +141,10 @@ struct LinkedJapaneseText: View {
     }
   }
 
-  /// Unicode-scalar ranges of every occurrence of the query, matching token scalar ranges.
   private var queryScalarRanges: [Range<Int>] {
     ExampleSentencesScreen.queryScalarRanges(in: text, query: highlightedQuery.value)
   }
 
-  /// Whether the token is part of an occurrence of the query, so the view accents it. Shared with
-  /// the word-detail conformance suite, which records the words a conjugated form's screen
-  /// accents (see also apps/web/src/lib/dictionary/examples/forms.ts).
   nonisolated static func matchesQuery(
     _ token: JapaneseTextToken, queryRanges: [Range<Int>]
   ) -> Bool {
@@ -184,8 +178,6 @@ private struct LinkedTokenView: View {
 
   private var isHighlighted: Bool { isCurrentEntry || matchesQuery }
 
-  /// The entry's reading when the text uses one of its forms; otherwise the parsed reading of
-  /// the text itself, so an inflected word such as 見なかった gets furigana for 見, not 見る.
   private func displayReading(for entry: DictionaryEntry) -> String {
     let forms = [entry.headword] + entry.writtenForms.map(\.value) + entry.readingForms.map(\.value)
     guard !forms.contains(token.surface), let reading = token.reading, !reading.isEmpty else {
@@ -194,8 +186,6 @@ private struct LinkedTokenView: View {
     return reading.applyingTransform(.hiraganaToKatakana, reverse: true) ?? reading
   }
 
-  /// The word's short meaning when Word Meanings is on, skipping particles, auxiliaries,
-  /// and words the learner already knows.
   private func meaning(for entry: DictionaryEntry) -> String? {
     guard readingAidPreferences.showsWordMeanings,
       !token.isFunctionWord,
@@ -236,11 +226,7 @@ private struct LinkedTokenView: View {
             hidesFurigana: hidesFurigana(for: entry),
             highlightsKanjiOnTap: false
           )
-          // Each word's own underline carries the interactive affordance and shows where
-          // one parsed word ends and the next begins. The current entry or query match is
-          // accented, ruby included, so it stays associated with its base text.
           .foregroundStyle(isHighlighted ? Color.accentColor : Color.primary)
-          // Known words drop the underline, like their meaning, so unknown words stand out.
           .wordUnderline(
             isHighlighted: isHighlighted,
             isVisible: isHighlighted || !wordKnowledge.isKnown(entry.id)
@@ -315,9 +301,6 @@ private struct LinkedTokenView: View {
   }
 }
 
-/// Shows a meaning under a word. The word keeps its baseline, so lines of linked text stay
-/// aligned, and takes the wider of its own and its meaning's width, so meanings never overlap.
-/// Long meanings are cut off at a fixed width.
 private struct WordMeaning: ViewModifier {
   let meaning: String?
   @ScaledMetric(relativeTo: .caption) private var maximumMeaningWidth: CGFloat = 96
@@ -327,14 +310,12 @@ private struct WordMeaning: ViewModifier {
   func body(content: Content) -> some View {
     if let meaning {
       let meaningWidth = min(meaningSize.width, maximumMeaningWidth)
-      // The word keeps its natural width; the frame below only ever widens it.
       content
         .fixedSize()
         .onGeometryChange(for: CGFloat.self) { $0.size.width } action: { wordWidth = $0 }
         .padding(.bottom, meaningSize.height)
         .frame(width: max(wordWidth, meaningWidth))
         .overlay(alignment: .bottom) {
-          // Accent-colored so word meanings read apart from the sentence translation.
           Text(meaning)
             .font(.caption)
             .foregroundStyle(.tint)
@@ -356,7 +337,6 @@ private struct WordMeaning: ViewModifier {
 }
 
 extension View {
-  /// A short underline inset from both edges, so adjacent words read as separate pieces.
   fileprivate func wordUnderline(isHighlighted: Bool, isVisible: Bool = true) -> some View {
     padding(.bottom, 3)
       .overlay(alignment: .bottom) {

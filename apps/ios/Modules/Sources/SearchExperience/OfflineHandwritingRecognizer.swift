@@ -3,11 +3,6 @@ import CoreML
 import CoreVideo
 import Foundation
 
-/// Image-based recognition of a completed character drawing.
-///
-/// DaKanji receives only the rasterized final shape. Stroke order, stroke
-/// direction, and the number of gestures used to construct the shape are not
-/// model inputs.
 actor OfflineHandwritingRecognizer {
   static let shared = OfflineHandwritingRecognizer()
 

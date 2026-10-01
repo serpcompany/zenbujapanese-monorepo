@@ -166,7 +166,6 @@ final class WordKnowledgeTests {
   func retryAfterFailedWrite() async throws {
     let knowledge = WordKnowledge(fileURL: fileURL)
     await knowledge.flush()
-    // A regular file where the directory should be makes the write fail.
     try Data().write(to: directory)
     knowledge.setStatus(.known, id: taberu, headword: "食べる", reading: "たべる")
     await knowledge.flush()
@@ -238,7 +237,6 @@ final class WordKnowledgeTests {
   func couldNotKeepCopy() async throws {
     try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
     try Data("not json".utf8).write(to: fileURL)
-    // A locked directory takes no new files, so the copy fails.
     try setDirectoryLocked(true)
     defer { try? setDirectoryLocked(false) }
 

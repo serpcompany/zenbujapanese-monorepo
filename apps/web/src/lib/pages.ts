@@ -4,7 +4,6 @@ export type SitePage = {
   description: string
 }
 
-/** Static pages, in the order the HTML sitemap and pages sitemap list them. */
 export const sitePages = [
   { path: '/', title: 'Home', description: 'Zenbu Japanese dictionary and translator.' },
   {

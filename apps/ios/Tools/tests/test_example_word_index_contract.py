@@ -20,8 +20,6 @@ class ExampleWordIndexContractTests(unittest.TestCase):
             metadata = dict(database.execute("SELECT key, value FROM metadata"))
         finally:
             database.close()
-        # Every frequency pack already pins the bundled LanguageReferenceData SHA-256, so
-        # the word index must have been built against that same database.
         catalog = json.loads(CATALOG.read_text(encoding="utf-8"))
         language_data_hashes = {pack["languageDataSHA256"] for pack in catalog["packs"]}
         self.assertEqual({metadata["language_data_sha256"]}, language_data_hashes)

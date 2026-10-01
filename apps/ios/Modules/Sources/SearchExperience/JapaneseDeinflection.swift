@@ -1,15 +1,10 @@
-// The website runs a TypeScript port of this search logic: packages/dictionary-core/src/search/deinflect.ts.
-// Change both in the same PR and re-record the conformance suite (issue 481).
 import Foundation
 
-/// The dictionary word class a deinflected candidate must have. Candidates are only
-/// accepted when a dictionary entry with that exact form carries a matching part of speech.
 enum JapaneseWordClass: Hashable, Sendable {
   case ichidan
   case godan
   case kuru
   case suru
-  /// A noun used with する, such as 勉強 in 勉強した.
   case suruNoun
   case iAdjective
 
@@ -28,16 +23,9 @@ enum JapaneseWordClass: Hashable, Sendable {
 struct JapaneseDeinflection: Hashable, Sendable {
   let term: String
   let wordClasses: Set<JapaneseWordClass>
-  /// Number of rules applied; shorter chains are more plausible readings of the query.
   let depth: Int
 }
 
-/// Condition-aware, chained suffix rewriting for kana and kanji inflections.
-///
-/// Each rule rewrites an inflected suffix to a base suffix. Every rule may apply to the
-/// surface text; after that, a rule only applies when its input classes include the class
-/// the previous rule produced (ない is an i-adjective, so なかった → ない → base).
-/// Candidates are hypotheses; lookup keeps only forms that exist with a matching class.
 enum JapaneseDeinflector {
   static let maximumDepth = 6
 
@@ -77,7 +65,6 @@ enum JapaneseDeinflector {
     let output: Set<JapaneseWordClass>
   }
 
-  /// The stems one verb class exposes to the shared suffix families below.
   private struct VerbPattern {
     let base: String
     let wordClass: JapaneseWordClass
@@ -88,7 +75,6 @@ enum JapaneseDeinflector {
     let conditional: [String]
     let volitional: [String]
     let imperative: [String]
-    /// Derived ichidan verbs: passive, causative, and potential.
     let derived: [String]
   }
 
@@ -101,7 +87,6 @@ enum JapaneseDeinflector {
         ta: ["た"], conditional: ["れ"], volitional: ["よう"], imperative: ["ろ", "よ"],
         derived: ["られる", "させる", "れる"])
     ]
-    // Godan rows: ending, a-, i-, e-, o-stems, and the te-form sound change.
     let godanRows: [(String, String, String, String, String, String)] = [
       ("う", "わ", "い", "え", "お", "って"), ("く", "か", "き", "け", "こ", "いて"),
       ("ぐ", "が", "ぎ", "げ", "ご", "いで"), ("す", "さ", "し", "せ", "そ", "して"),
@@ -116,7 +101,6 @@ enum JapaneseDeinflector {
           ta: [pastForm(te)], conditional: [e], volitional: [o + "う"], imperative: [e],
           derived: [a + "れる", a + "せる", e + "る"]))
     }
-    // 行く is the one godan く verb with a っ sound change.
     for stem in ["行", "い"] {
       patterns.append(
         VerbPattern(
@@ -172,7 +156,6 @@ enum JapaneseDeinflector {
     add(pattern.volitional, [""])
     add(pattern.imperative, [""])
     add(pattern.derived, [""], input: [.ichidan])
-    // Contracted てしまう: 食べちゃう, 読んじゃう.
     for te in pattern.te {
       let contracted = String(te.dropLast()) + (te.hasSuffix("で") ? "じゃう" : "ちゃう")
       rules.append(Rule(inflected: contracted, base: pattern.base, input: [.godan], output: output))

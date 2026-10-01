@@ -41,11 +41,10 @@ const example: WordExampleRow = {
 describe('wordExample', () => {
   const shown = wordExample({ sentence, example })
 
-  test('links each word, with furigana over linked kanji only', () => {
+  test('links each word, with the page reading over kanji linked to one entry, and an ambiguous word to a search', () => {
     expect(
       shown.tokens.map(token => [token.text, token.ruby, token.link, token.isPageWord])
     ).toEqual([
-      // The page's link names the reading the app shows, not Kuromoji's.
       ['君', [{ text: '君', reading: 'きみ' }], { entSeq: 1311120 }, false],
       ['を', [{ text: 'を' }], { entSeq: 2029010 }, false],
       [
@@ -54,7 +53,6 @@ describe('wordExample', () => {
         { entSeq: 1259290 },
         true
       ],
-      // An ambiguous word has no furigana and searches for its dictionary form.
       ['だ', [{ text: 'だ' }], { entSeqs: [2089020, 1628500], query: 'だ' }, false],
       ['よ', [{ text: 'よ' }], { entSeq: 2029080 }, false],
       ['。', [{ text: '。' }], null, false]

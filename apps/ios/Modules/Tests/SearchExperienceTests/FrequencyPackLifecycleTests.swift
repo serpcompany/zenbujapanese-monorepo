@@ -94,7 +94,6 @@ struct FrequencyPackLifecycleTests {
 
     let manager = try makeManager(catalog, storage: storage, source: Data())
     #expect(try await manager.snapshot().enabledPackIDs.first == jlpt.packID)
-    // 会う (JMdict 1198180) is on Waller's N5 list; the other ID matches no entry.
     let meetID = try #require(jmdictID(1_198_180))
     let unlisted = LanguageReferenceID(rawValue: "ffffffffffffffffffffffffffffffff")
     let ranks = try await manager.evidence(for: [unlisted, meetID])

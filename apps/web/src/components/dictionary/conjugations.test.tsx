@@ -31,13 +31,6 @@ import { gateEnabled, gateService, recordedCases } from './gate'
 import { readConjugatedForm, readConjugationTable, readExamples } from './rendered-word'
 import { WordHeader } from './word-header'
 
-// Renders the conjugation table's page and each form's page to HTML, as the server does, and reads
-// back what a reader sees: the header's meaning and rule, the Plain/Polite control, each row's
-// title, form, highlighted ending, and the form page it opens, and each form's meaning, shared
-// spelling, furigana, and examples, with each example's words, links, and accented form. The first
-// tests render fixed data; the last renders what the dictionary service answers for every
-// word-detail.json case (./gate.ts).
-
 const noReadings = new Map()
 const miruPath = '/dictionary/見る-1259290/'
 
@@ -233,7 +226,6 @@ describe('the conjugation table', () => {
   })
 })
 
-/** A form as the suite records it, with the examples its screen lists. */
 interface SuiteForm extends SuiteConjugationForm {
   examples: SuiteFormExamples
 }
@@ -253,7 +245,6 @@ describe.runIf(gateEnabled)('the rendered conjugation pages match the app', () =
     const entSeq = Number(expected.entSeq[0])
     const page = await service.word(entSeq)
     if (!page) throw new Error(`No word ${entSeq}`)
-    // The part-of-speech row opens the table exactly when the app's does.
     const pageDetail = wordDetail(page.data.rows)
     const header = renderToStaticMarkup(
       <WordHeader
@@ -267,7 +258,6 @@ describe.runIf(gateEnabled)('the rendered conjugation pages match the app', () =
       />
     )
     expect(header.includes('data-opens-conjugations')).toBe(expected.opensConjugations)
-    // The table's and forms' pages read the word without its examples.
     const word = await service.conjugationWord(entSeq)
     if (!word) {
       expect(expected.conjugations).toBeUndefined()
@@ -321,8 +311,6 @@ describe.runIf(gateEnabled)('the rendered conjugation pages match the app', () =
           furigana: recorded.furigana,
           ending: recorded.ending
         })
-        // The form's page draws its first examples, in the app's order, each word linked where
-        // the app links it and the form's words accented.
         const { data: found } = await service.formExamples(row.surface, 0, examplesPerPage)
         expect(found.listed).toBe(recorded.examples.ids.length)
         const links = serviceLinks(found.slugs, [])
@@ -338,8 +326,6 @@ describe.runIf(gateEnabled)('the rendered conjugation pages match the app', () =
           recorded.examples.ids.slice(0, examplesPerPage)
         )
         if (recorded.examples.ids.length === 0) expect(html).toContain(noFormExamplesMessage)
-        // Which entry each word links to, the service's conformance suite checks
-        // (apps/dictionary-api); here, that a word with one entry opens a word page.
         for (const [position, shown] of recorded.examples.shown.entries()) {
           expect(examples[position].tokens).toEqual(
             shown.tokens.map(token => ({

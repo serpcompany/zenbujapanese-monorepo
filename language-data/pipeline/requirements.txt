@@ -1,7 +1,3 @@
-# For `package.py validate`, `publish.py` and the tests: JSON Schema validation (the build needs
-# only the standard library). Every package is pinned with its hashes, and CI installs it with
-# `pip install --require-hashes`. To change a pin, regenerate this file from the bare pins:
-#   uv pip compile <pins> --generate-hashes --python-version 3.12 --universal --no-header --no-annotate
 attrs==26.1.0 \
     --hash=sha256:c647aa4a12dfbad9333ca4e71fe62ddc36f4e63b2d260a37a8b83d2f043ac309 \
     --hash=sha256:d03ceb89cb322a8fd706d4fb91940737b6642aa36998fe130a9bc96c985eff32

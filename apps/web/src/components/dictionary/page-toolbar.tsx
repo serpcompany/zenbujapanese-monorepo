@@ -39,17 +39,16 @@ async function copyLink() {
   }
 }
 
-/** The word and kanji detail toolbar, as in the app: title, Share, and a ••• menu. */
+const ignoreClosedShareSheet = () => undefined
+
 export function PageToolbar({ title, shareText }: { title: string; shareText: string }) {
   const [action, setAction] = useState<string | null>(null)
 
   async function share() {
     if (navigator.share) {
-      try {
-        await navigator.share({ title, text: shareText, url: window.location.href })
-      } catch {
-        // The reader closed the share sheet.
-      }
+      await navigator
+        .share({ title, text: shareText, url: window.location.href })
+        .catch(ignoreClosedShareSheet)
       return
     }
     await copyLink()

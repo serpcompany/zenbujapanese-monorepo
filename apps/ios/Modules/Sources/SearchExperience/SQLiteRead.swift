@@ -24,7 +24,6 @@ func checkedSQLiteStep(_ statement: OpaquePointer) throws -> SQLiteReadStep {
   }
 }
 
-/// Tells SQLite to copy bound text and blobs before `sqlite3_bind_*` returns.
 let sqliteTransient = unsafeBitCast(-1, to: sqlite3_destructor_type.self)
 
 func sqliteBind(_ value: String, at index: Int32, to statement: OpaquePointer) {
@@ -37,19 +36,16 @@ func sqliteBind(_ value: Data, at index: Int32, to statement: OpaquePointer) {
   }
 }
 
-/// The column's text, or an empty string for `NULL`.
 func sqliteText(_ statement: OpaquePointer, _ column: Int32) -> String {
   guard let text = sqlite3_column_text(statement, column) else { return "" }
   return String(cString: text)
 }
 
-/// The column's bytes, or empty data for `NULL`.
 func sqliteData(_ statement: OpaquePointer, _ column: Int32) -> Data {
   guard let bytes = sqlite3_column_blob(statement, column) else { return Data() }
   return Data(bytes: bytes, count: Int(sqlite3_column_bytes(statement, column)))
 }
 
-/// Owns an open SQLite handle and closes it on deinit.
 final class SQLiteConnection: @unchecked Sendable {
   let pointer: OpaquePointer
 
@@ -63,7 +59,6 @@ final class SQLiteConnection: @unchecked Sendable {
 }
 
 extension Bundle {
-  /// The bundled `LanguageReferenceData.sqlite3` dictionary database.
   static var languageReferenceDataURL: URL? {
     Bundle.module.url(forResource: "LanguageReferenceData", withExtension: "sqlite3")
   }

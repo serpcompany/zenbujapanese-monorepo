@@ -8,7 +8,8 @@ bundled Language Reference Data so ordinary dictionary lookup works offline.
 A learner can search in Japanese or English using:
 
 - the keyboard;
-- handwriting recognition;
+- handwriting recognition, which reads the finished drawing's shape, so stroke order and
+  direction don't matter;
 - radical selection; or
 - Image Search using the camera, Photo Library, or an image file.
 
@@ -18,8 +19,15 @@ learner's priority order (see [Frequency Dictionaries](index.md#account)). Frequ
 result the query did not match or lifts an incidental match above a direct one. English rows
 show the meaning that matched.
 
-Each row shows compact chips such as `JLPT N3` or `YouTube 812`, one per enabled dictionary
-that ranks or lists the word, with a colored dot for how common it is.
+Each row shows compact chips such as `JLPT N3` or `YouTube 812`: one for the first enabled
+dictionary, which orders the results (a dash when it doesn't rank the word), then one for each
+other dictionary that ranks it. JLPT shows only when it lists the word. At accessibility text
+sizes, only the first dictionary's chip shows, followed by a count of the rest.
+
+A chip's dot says how common the word is: green for a rank up to 1,500, yellow to 5,000, orange
+to 15,000, red to 30,000, and gray beyond. These are Migaku's star cutoffs, so learners who know
+that scale read the chips the same way. JLPT N5 and N4 are green, N3 and N2 yellow, and N1
+orange. With Differentiate Without Color on, a star count such as 5★ replaces the dot.
 
 A word the learner knows shows a green **✓ Known** capsule at the right of its headword.
 Swiping a row to the right, or long-pressing it, marks the word known or unknown without

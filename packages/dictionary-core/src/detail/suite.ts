@@ -1,31 +1,20 @@
-// The word-detail conformance suite's shapes for what the detail core computes, so the dictionary
-// service's replay (apps/dictionary-api/src/conformance/detail.conformance.test.ts) and the
-// website's rendered word page test (word-page.test.tsx) compare the same fields the app records
-// in WordDetailConformanceTests.swift. Test-only.
-
 import type { ConjugationRow, Conjugations } from './conjugation'
 import type { FrequencyDetails } from './frequency'
 import type { PitchAccent } from './pitch'
 import type { RubySegment } from './ruby'
 
-/** `furigana[]`: each segment, with the per-kanji split tapping a kanji highlights. */
 export interface SuiteFurigana {
   base: string
   reading?: string
   kanjiReadings?: string[]
 }
 
-/**
- * `pitch.graph`, PitchContourLayout: the morae drawn, then each point, `x` in hundredths of a mora
- * width, high (H) or low (L).
- */
 export interface SuitePitchGraph {
   morae: string[]
   points: { x: number; level: string }[]
   particle: { x: number; level: string }
 }
 
-/** `frequency[].details`, FrequencyDisclosurePresentation: what a Frequency row opens. */
 export interface SuiteFrequencyDetails {
   pack?: { name: string; domain: string; description: string; version: string; source: string }
   section: string
@@ -33,7 +22,6 @@ export interface SuiteFrequencyDetails {
   explanation?: string
 }
 
-/** `conjugations`: the table the part-of-speech row opens, and each form's screen. */
 export interface SuiteConjugations {
   summary: string
   rule: string
@@ -52,14 +40,9 @@ export interface SuiteConjugationForm {
   rowFurigana: boolean
   furigana: SuiteFurigana[]
   sharedSpellings?: string[]
-  /** The Example Sentences the form's screen lists. */
   examples?: SuiteFormExamples
 }
 
-/**
- * `conjugations.<register>[].examples`: every example's pair ID in order, and the first few with
- * each word's entry (one link) or candidates (several), and whether the screen accents it.
- */
 export interface SuiteFormExamples {
   ids: string[]
   shown: {
