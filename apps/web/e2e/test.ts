@@ -4,6 +4,8 @@ import { fixtureSearchOrder, fixtureWordRows } from '@zenbu/dictionary-core/fixt
 
 export { expect }
 
+export const onProductionBuild = process.env.E2E_SERVER === 'preview'
+
 export const test = base.extend<{ allowedConsoleErrors: RegExp[]; consoleErrors: string[] }>({
   allowedConsoleErrors: [[], { option: true }],
   consoleErrors: [

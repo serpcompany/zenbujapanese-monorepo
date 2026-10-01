@@ -1,4 +1,4 @@
-import { expect, needed, test } from './test'
+import { expect, needed, onProductionBuild, test } from './test'
 
 test.describe('URLs', () => {
   test.beforeEach(({ browserName: _ }, testInfo) => {
@@ -30,6 +30,20 @@ test.describe('URLs', () => {
     await page.goto('/privacy')
     await expect(page).toHaveURL('/legal/privacy/')
   })
+
+  for (const from of ['/privacy', '/privacy/', '/privacy?from=app']) {
+    test(`${from} redirects to the privacy policy in one hop`, async ({ request, baseURL }) => {
+      test.skip(
+        !onProductionBuild,
+        'worker.ts answers it before Next.js, and next dev runs Next.js alone'
+      )
+      const response = await request.get(from, { maxRedirects: 0 })
+      expect(response.status()).toBe(308)
+      const location = new URL(response.headers().location, baseURL)
+      expect(location.pathname).toBe('/legal/privacy/')
+      expect(location.search).toBe(new URL(from, baseURL).search)
+    })
+  }
 
   for (const path of [
     '/dictionary/999999999/',

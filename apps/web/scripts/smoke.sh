@@ -58,7 +58,7 @@ pages_list_pages() {
 }
 eventually 'pages sitemap lists slashed page URLs' 'pages sitemap has a non-canonical URL' \
   pages_list_pages
-expect /privacy 308
+expect_redirect /privacy /legal/privacy/
 
 header_has_dictionary() {
   local home
