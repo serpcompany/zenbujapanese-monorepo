@@ -1,5 +1,6 @@
+import { spawnSync } from 'node:child_process'
 import { existsSync, readFileSync } from 'node:fs'
-import { relative, resolve, sep } from 'node:path'
+import { isAbsolute, relative, resolve, sep } from 'node:path'
 import { findComments } from './comments/find'
 import { root } from './files'
 import { commentRule, sizeRule } from './rules'
@@ -14,7 +15,8 @@ const edited = call.tool_input?.file_path
 if (!edited || !existsSync(edited)) process.exit(0)
 
 const path = relative(root, resolve(edited)).split(sep).join('/')
-if (path.startsWith('..')) process.exit(0)
+if (!path || path.startsWith('..') || isAbsolute(path)) process.exit(0)
+if (spawnSync('git', ['check-ignore', '--quiet', path], { cwd: root }).status === 0) process.exit(0)
 
 const messages: string[] = []
 for (const file of findComments([path]).found) {

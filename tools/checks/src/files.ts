@@ -57,8 +57,8 @@ const pinnedBytes: readonly [RegExp, string][] = [
     "every published frequency pack's mappingPolicySHA256"
   ],
   [
-    /^apps\/ios\/Tools\//,
-    'the data each iOS data tool built, which records its SHA-256, until that data is next rebuilt'
+    /^apps\/ios\/Tools\/[^/]+\.py$/,
+    'the data the iOS data tools built, which records their SHA-256, until that data is next rebuilt'
   ]
 ]
 

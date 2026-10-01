@@ -1,6 +1,6 @@
-import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs'
+import { readFileSync } from 'node:fs'
 import { join, posix } from 'node:path'
-import { classify, root } from './files'
+import { classify, repositoryFiles, root } from './files'
 
 export interface Reference {
   line: number
@@ -91,30 +91,53 @@ export function isOwnedDoc(path: string): boolean {
   return path.endsWith('.md') && kind !== 'third-party' && kind !== 'written-by-a-tool'
 }
 
+interface Tree {
+  files: ReadonlySet<string>
+  folders: ReadonlySet<string>
+}
+
+let tree: Tree | undefined
+
+function repositoryTree(): Tree {
+  if (tree) return tree
+  const files = new Set(repositoryFiles())
+  const folders = new Set(['.'])
+  for (const file of files) {
+    for (let folder = posix.dirname(file); !folders.has(folder); folder = posix.dirname(folder)) {
+      folders.add(folder)
+    }
+  }
+  tree = { files, folders }
+  return tree
+}
+
+const isFile = (path: string) => repositoryTree().files.has(path)
+const isFolder = (path: string) => repositoryTree().folders.has(posix.normalize(path || '.'))
+const exists = (path: string) => isFile(path) || isFolder(path)
+
 export function referencedFiles(path: string, text: string): string[] {
   if (isDecisionRecord(path)) return []
   const linked = markdownLinks(text)
     .filter(({ target }) => !isExternal(target))
     .map(({ target }) => resolveLink(path, target))
   const named = codePaths(text).map(({ target }) =>
-    existsSync(join(root, target)) ? target : posix.join(posix.dirname(path), target)
+    exists(target) ? target : posix.join(posix.dirname(path), target)
   )
   return [...new Set([...linked, ...named])]
-    .filter(target => !target.endsWith('.md') && existsSync(join(root, target)))
-    .filter(target => statSync(join(root, target)).isFile())
+    .filter(target => !target.endsWith('.md') && isFile(target))
     .sort()
 }
 
 function markdownFilesIn(folder: string): string[] {
-  const absolute = join(root, folder)
-  if (!existsSync(absolute) || !statSync(absolute).isDirectory()) return []
-  return readdirSync(absolute)
-    .filter(name => name.endsWith('.md'))
-    .map(name => (folder ? `${folder}/${name}` : name))
+  const parent = posix.normalize(folder || '.')
+  return [...repositoryTree().files].filter(
+    path => path.endsWith('.md') && posix.dirname(path) === parent
+  )
 }
 
 export function checkDocs(files: readonly string[]): DocProblem[] {
-  const owned = files.filter(isOwnedDoc)
+  const requested = new Set(files)
+  const owned = [...repositoryTree().files].filter(isOwnedDoc)
   const problems: DocProblem[] = []
   const linkedFrom = new Map<string, string[]>()
 
@@ -124,17 +147,15 @@ export function checkDocs(files: readonly string[]): DocProblem[] {
     for (const { line, target } of markdownLinks(text)) {
       if (isExternal(target)) continue
       const resolved = resolveLink(path, target)
-      if (!existsSync(join(root, resolved))) {
+      if (!exists(resolved)) {
         problems.push({ path, line, problem: `links to ${target}, which doesn't exist` })
         continue
       }
-      linked.push(
-        ...(statSync(join(root, resolved)).isDirectory() ? markdownFilesIn(resolved) : [resolved])
-      )
+      linked.push(...(isFolder(resolved) ? markdownFilesIn(resolved) : [resolved]))
     }
     for (const { line, target } of isDecisionRecord(path) ? [] : codePaths(text)) {
       const fromHere = posix.join(posix.dirname(path), target)
-      if (!existsSync(join(root, target)) && !existsSync(join(root, fromHere))) {
+      if (!exists(target) && !exists(fromHere)) {
         problems.push({ path, line, problem: `names ${target}, which doesn't exist` })
       }
     }
@@ -156,5 +177,5 @@ export function checkDocs(files: readonly string[]): DocProblem[] {
       problems.push({ path, problem: "isn't linked from AGENTS.md, or from any doc it leads to" })
     }
   }
-  return problems
+  return problems.filter(problem => requested.has(problem.path))
 }

@@ -19,7 +19,7 @@ Pick the smallest setup that shows the change. Run one site at a time on this ma
   and searches that find them, such as `/dictionary/search/いる/`. Other words are 404s here.
 - **On the whole dictionary**: start the dictionary service first (`pnpm dev` in
   `apps/dictionary-api`, set up as in `docs/agents/dictionary-api.md`, Run it), wait until
-  `http://localhost:8788/healthz` answers 200, then name it in `apps/web/.dev.vars` (as in
+  `http://localhost:8788/healthz` answers 200, then name it in `.dev.vars` in `apps/web` (as in
   `docs/agents/web.md`, Dictionary) and restart the site. Never print `.env` or `.dev.vars`:
   they hold the token. Sentence search, examples, and conjugated forms need this setup.
 - **The production build**: `pnpm preview` builds with OpenNext and serves the Worker in workerd,

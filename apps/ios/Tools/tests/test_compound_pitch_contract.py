@@ -20,8 +20,6 @@ class CompoundPitchContractTests(unittest.TestCase):
             metadata = dict(database.execute("SELECT key, value FROM metadata"))
         finally:
             database.close()
-        # Every frequency pack pins the bundled LanguageReferenceData SHA-256, so the estimates
-        # must have been made against that same database.
         catalog = json.loads(CATALOG.read_text(encoding="utf-8"))
         self.assertEqual(
             {metadata["language_data_sha256"]},

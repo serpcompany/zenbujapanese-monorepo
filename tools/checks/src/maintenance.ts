@@ -50,9 +50,18 @@ export function docsToReverify(
 
 const code = (text: string) => `\`${text}\``
 
+export const problemsShownPerCheck = 50
+
 function listed(items: readonly string[], limit: number): string {
   const shown = items.slice(0, limit).map(code).join(', ')
   return items.length > limit ? `${shown}, +${items.length - limit} more` : shown
+}
+
+function failure(name: string, problems: readonly string[]): string {
+  const shown = problems.slice(0, problemsShownPerCheck).join('\n')
+  const more = problems.length - problemsShownPerCheck
+  const rest = more > 0 ? `\n\n${more} more: run ${code(`pnpm verify ${name}`)} for every one.` : ''
+  return `${code(`pnpm verify ${name}`)} fails:\n\n\`\`\`text\n${shown}\n\`\`\`${rest}`
 }
 
 export function renderReport(facts: MaintenanceFacts): string {
@@ -60,12 +69,7 @@ export function renderReport(facts: MaintenanceFacts): string {
   const sections = [
     '## Checks',
     failing.length
-      ? failing
-          .map(
-            check =>
-              `${code(`pnpm verify ${check.name}`)} fails:\n\n\`\`\`text\n${check.problems.join('\n')}\n\`\`\``
-          )
-          .join('\n\n')
+      ? failing.map(check => failure(check.name, check.problems)).join('\n\n')
       : `Passing: ${facts.checks.map(check => check.name).join(', ')}.`,
     '## Docs to re-verify',
     'Files these docs name or link changed after the doc was last edited. Check that each doc still matches them.',

@@ -36,10 +36,12 @@ TOML, XML, and ignore files.
   [`tools/checks/src/files.ts`](../../tools/checks/src/files.ts) lists them by name, with the tool,
   source, or checksum for each. Two things are pinned. The frequency packs' mapping SQL: every
   published frequency pack carries its SHA-256, and the app refuses a pack whose mapping doesn't
-  match, so changing even a comment there would break installed packs. And the iOS data tools
-  (`apps/ios/Tools/`): each records its own SHA-256, and its helpers', in the data it built, so
-  they keep their comments and size until that data is next rebuilt; whoever rebuilds it, on a Mac
-  that can check the app with it, cleans them up then ([`tech-debt.md`](../tech-debt.md)).
+  match, so changing even a comment there would break installed packs. And the iOS data tools, the
+  Python files directly in `apps/ios/Tools/`: each records its own SHA-256, and its helpers', in
+  the data it built, so they keep their comments and size until that data is next rebuilt;
+  whoever rebuilds it, on a Mac that can check the app with it, cleans them up then
+  ([`tech-debt.md`](../tech-debt.md)). Their tests in `apps/ios/Tools/tests/` aren't pinned, and
+  follow every rule.
 
 ## File size
 
@@ -59,9 +61,11 @@ as pinned files (No comments, above).
 
 The docs are the map agents work from, so they stay correct and reachable:
 
-- Every relative link resolves, and every repository path a doc names in code (such as
-  `apps/web/scripts/smoke.sh`) exists, from the repository root or from the doc's folder. ADRs are
-  records, so the path check skips them.
+- Every relative link resolves, and every repository path a doc names in code that starts at a
+  top-level folder (`apps/`, `packages/`, `tools/`, `docs/`, `language-data/`, `assets/`,
+  `.github/`, or `.claude/`, such as `apps/web/scripts/smoke.sh`) exists, from the repository root
+  or from the doc's folder. A gitignored file counts as missing, so a run here and a run in CI
+  agree. ADRs are records, so the path check skips them.
 - Every doc can be reached from `AGENTS.md` by following links. `AGENTS.md`, `CLAUDE.md`, the root
   `README.md`, and files under `.claude/` and `.github/` are entry points. A link to a folder
   reaches the Markdown files directly in it.

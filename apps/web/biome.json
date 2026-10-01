@@ -196,6 +196,31 @@
           }
         }
       }
+    },
+    {
+      "includes": [
+        "src/lib/dictionary/retired.ts",
+        "src/lib/dictionary/api.ts",
+        "src/lib/dictionary/urls.ts",
+        "src/lib/log.ts"
+      ],
+      "linter": {
+        "rules": {
+          "style": {
+            "noRestrictedImports": {
+              "level": "error",
+              "options": {
+                "patterns": [
+                  {
+                    "group": ["@/*", "@/**", "next", "next/**", "react", "react/**", "server-only"],
+                    "message": "worker.ts bundles this file outside Next.js, so it imports no Next.js module and no @/ path: use a relative path, and keep Next.js code in the files Next.js builds (docs/agents/web.md, Retired word URLs)."
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
     }
   ],
   "assist": {

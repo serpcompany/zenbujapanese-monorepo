@@ -4,7 +4,7 @@ import {
   dictionaryContract,
   dictionaryContractHeader
 } from '@zenbu/dictionary-core/artifact/contract'
-import { log } from '@/lib/log'
+import { log } from '../log'
 
 export interface DictionaryApiEnvironment {
   DICTIONARY_API_URL?: string

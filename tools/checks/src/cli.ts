@@ -75,6 +75,12 @@ const inRequestedPaths = (file: string) =>
     return file === prefix || file.startsWith(`${prefix}/`)
   })
 const files = paths.length ? repositoryFiles().filter(inRequestedPaths) : repositoryFiles()
+if (paths.length && !files.length) {
+  console.error(
+    `No repository file is under ${paths.join(', ')}. Name paths relative to the repository root.`
+  )
+  process.exit(2)
+}
 const outcomes = (requested ? [requested] : Object.keys(checks)).map(name => checks[name](files))
 for (const outcome of outcomes) {
   if (!outcome.report.length) continue

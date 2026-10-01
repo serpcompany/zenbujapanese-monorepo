@@ -56,7 +56,7 @@ through tsx, whose loader doesn't reach worker threads by itself, so there each 
 `src/worker-dev.mjs`, which registers the loader first; the image runs the bundle. The service
 hashes the artifact and Sudachi's dictionary, starts its worker threads, and answers `/healthz`
 with 503 until every thread has loaded, then with its build. To run the website against it, name
-it in `apps/web/.dev.vars` (see [`web.md`](web.md), Dictionary).
+it in `.dev.vars` in `apps/web` (see [`web.md`](web.md), Dictionary).
 
 | Variable | Default | What it sets |
 | --- | --- | --- |

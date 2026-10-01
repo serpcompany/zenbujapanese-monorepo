@@ -41,13 +41,22 @@ const linters: readonly Linter[] = [
     name: 'actionlint',
     command: 'actionlint',
     image: `rhysd/actionlint:${linterVersions.actionlint}`,
-    args: () => []
+    args: files => {
+      const workflows = files.filter(path => /^\.github\/workflows\/[^/]+\.ya?ml$/.test(path))
+      return workflows.length ? workflows : null
+    }
   },
   {
     name: 'Ruff',
     command: 'ruff',
     image: `ghcr.io/astral-sh/ruff:${linterVersions.ruff}`,
-    args: () => ['check', '--quiet']
+    args: files => {
+      const python = files.filter(path => {
+        const kind = classify(path)
+        return kind.kind === 'code' && kind.language === 'python'
+      })
+      return python.length ? ['check', '--quiet', '--force-exclude', ...python] : null
+    }
   }
 ]
 

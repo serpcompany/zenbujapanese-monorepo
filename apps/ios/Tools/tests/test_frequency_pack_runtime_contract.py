@@ -107,8 +107,6 @@ class FrequencyPackRuntimeContractTests(unittest.TestCase):
                 self.assertEqual(report[key], pack[key])
         self.assertEqual(report["importerSHA256"], pack["offlineImporterSHA256"])
 
-        # TUBELEX counts spellings JMdict files under several entries; the UniDic lemma reading
-        # places these on one (#440).
         with sqlite3.connect(TUBELEX) as database:
             database.execute("ATTACH DATABASE ? AS language", (str(LANGUAGE_DATA),))
             for headword, reading, rank in (

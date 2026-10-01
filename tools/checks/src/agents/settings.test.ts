@@ -110,6 +110,15 @@ describe('.claude/settings.json', () => {
     'gh secret set CLAUDE_CODE_OAUTH_TOKEN',
     'gh variable set DEPLOY_PRODUCTION --body false',
     'gh api repos/serpcompany/zenbujapanese-monorepo/issues/1/sub_issues --method POST -F sub_issue_id=2',
+    'gh api -XPUT repos/serpcompany/zenbujapanese-monorepo/environments/production',
+    'gh api --method=PATCH repos/serpcompany/zenbujapanese-monorepo',
+    'gh api graphql -f query="mutation { mergePullRequest(input: {pullRequestId: \\"x\\"}) { clientMutationId } }"',
+    'gh api repos/serpcompany/zenbujapanese-monorepo/issues -f title=Hello',
+    'gh api repos/serpcompany/zenbujapanese-monorepo/issues --field title=Hello',
+    'gh api repos/serpcompany/zenbujapanese-monorepo/rulesets --input ruleset.json',
+    'npx wrangler@4 deploy --env production',
+    'npx wrangler@4.143.0 secret put DICTIONARY_API_TOKEN',
+    'npx @opennextjs/cloudflare@1 deploy',
     'python language-data/pipeline/publish.py publish out',
     'python3 language-data/pipeline/publish.py verify --hash all'
   ])('asks before %s', command => {
@@ -135,6 +144,8 @@ describe('.claude/settings.json', () => {
     'docker build -t zenbujapanese-dictionary-api .',
     'gh pr view 7 --comments',
     'gh api repos/serpcompany/zenbujapanese-monorepo/pulls/7/comments',
+    'gh api repos/serpcompany/zenbujapanese-monorepo/actions/runs --jq ".workflow_runs[0].status"',
+    'gh api repos/actions/checkout/contents/action.yml?ref=v5 --jq .content',
     'git push -u origin chore/agent-harness'
   ])('runs %s without asking', command => {
     for (const shell of shells) expect(decision(shell, command), shell).toBe('default')

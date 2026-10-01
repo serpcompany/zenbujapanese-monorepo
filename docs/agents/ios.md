@@ -120,7 +120,9 @@ Frequency-pack selection has one repo-local Python contract test. Run
 `python3 -m unittest apps/ios/Tools/tests/test_frequency_pack_runtime_contract.py` to verify
 that every selectable manifest pins a known evidence row and rank, each ordered source agrees
 with the generated mapping analysis, the bundled TUBELEX artifact contains its pinned row, and
-the bundled JLPT level pack matches its pinned source files and import report. Rebuild the JLPT
+the bundled JLPT level pack matches its pinned source files and import report. It also checks
+that 事, 時, 上, and 先生, spellings TUBELEX counts once although JMdict files them under several
+entries, carry their rank on the one entry their UniDic lemma reading names (#440). Rebuild the JLPT
 pack with `python3 apps/ios/Tools/import_jlpt_level_pack.py > apps/ios/LanguageData/Generated/JLPT-Waller-2025-08-26.import.json`
 and copy the reported hashes into its catalog manifest.
 

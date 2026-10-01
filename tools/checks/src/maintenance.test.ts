@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest'
-import { docsToReverify, lastChangeTimes, renderReport } from './maintenance'
+import { docsToReverify, lastChangeTimes, problemsShownPerCheck, renderReport } from './maintenance'
 
 const log = [
   '',
@@ -71,6 +71,18 @@ describe('renderReport', () => {
     expect(report).toContain('27 open items')
     expect(report).toContain('`apps/ios/SearchView.swift`: 1101 lines')
     expect(report).toContain('5 commits have changed code since')
+  })
+
+  test('caps a check that fails many times, so the issue stays under GitHub’s size limit', () => {
+    const problems = Array.from(
+      { length: 3000 },
+      (_, index) => `docs/a.md:${index}  ${'x'.repeat(60)}`
+    )
+    const report = renderReport({ ...facts, checks: [{ name: 'docs', problems }] })
+    expect(report).toContain(`docs/a.md:${problemsShownPerCheck - 1} `)
+    expect(report).not.toContain(`docs/a.md:${problemsShownPerCheck} `)
+    expect(report).toContain(`${3000 - problemsShownPerCheck} more: run \`pnpm verify docs\``)
+    expect(report.length).toBeLessThan(65_536)
   })
 
   test('says when every check passes and no doc needs re-verifying', () => {

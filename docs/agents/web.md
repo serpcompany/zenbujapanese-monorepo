@@ -125,8 +125,8 @@ missing one fails the request rather than passing fixtures off as the dictionary
 dictionary from before the service; they're safe to delete.
 
 To run `pnpm dev` on the whole dictionary, start the service (see
-[`dictionary-api.md`](dictionary-api.md)) and name it in `apps/web/.dev.vars`, which is never
-committed:
+[`dictionary-api.md`](dictionary-api.md)) and name it in `.dev.vars` in `apps/web`, which is
+never committed:
 
 ```sh
 DICTIONARY_API_URL=http://localhost:8788
@@ -417,7 +417,7 @@ before OpenNext's worker and passes every other request on (`src/lib/dictionary/
 asks the service for the retired entries once per isolate (a release retires a few hundred at
 most), wherever the site has a service; when the service can't list them, the request goes on to
 the app, which answers 404, or fails while the service fails. `worker.ts` bundles `retired.ts`
-and what it imports (`api.ts`, `urls.ts`) outside Next.js, so they import no Next.js module and
-no `@/` path.
+and what it imports (`api.ts`, `urls.ts`, and `src/lib/log.ts`) outside Next.js, so they import
+no Next.js module and no `@/` path, which a Biome rule in `apps/web/biome.json` enforces.
 `pnpm dev` runs Next.js alone, so check retired URLs in `pnpm preview`. The service lists none
 until #463 records retired entries.

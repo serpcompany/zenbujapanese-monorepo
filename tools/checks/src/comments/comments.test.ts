@@ -140,6 +140,24 @@ describe('YAML', () => {
     ])
     expect(texts('yaml', source, 'config.yml')).toEqual(['# heading', '# trailing'])
   })
+
+  test("reads a node step's run block as JavaScript", () => {
+    const source = [
+      'jobs:',
+      '  a:',
+      '    steps:',
+      '      - shell: node {0}',
+      '        run: |',
+      "          const url = 'https://example.com/#anchor'",
+      '          // a line comment',
+      '          /* a block comment */',
+      '          console.log(url)'
+    ].join('\n')
+    expect(texts('yaml', source, '.github/workflows/a.yml')).toEqual([
+      '// a line comment',
+      '/* a block comment */'
+    ])
+  })
 })
 
 describe('other languages', () => {
