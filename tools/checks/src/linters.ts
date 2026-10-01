@@ -53,7 +53,9 @@ const linters: readonly Linter[] = [
     args: files => {
       const python = files.filter(path => {
         const kind = classify(path)
-        return kind.kind === 'code' && kind.language === 'python'
+        return kind.kind === 'code'
+          ? kind.language === 'python'
+          : kind.kind === 'pinned-bytes' && path.endsWith('.py')
       })
       return python.length ? ['check', '--quiet', '--force-exclude', ...python] : null
     }
