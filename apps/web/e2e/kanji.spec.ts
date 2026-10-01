@@ -35,10 +35,13 @@ test.describe('kanji details', () => {
     })
   }
 
-  test("opens a word from the kanji's readings", async ({ page }) => {
+  test("a reading row opens its first word, named as the app's row is", async ({ page }) => {
     await page.goto(kanjiSearch)
     await page.getByRole('button', { name: rows[0].row, exact: true }).click()
-    await page.getByRole('main').getByRole('link', { name: needed.headword, exact: true }).click()
+    const main = page.getByRole('main')
+    await expect(main.getByRole('link', { name: /^Name reading とし/ })).toHaveCount(0)
+    const reading = new RegExp(`^Kun reading い\\.る, ${needed.headword}, `)
+    await main.getByRole('link', { name: reading }).click()
     await expect(page).toHaveURL(needed.path)
     await expect(page.getByRole('heading', { level: 1, name: needed.headword })).toBeVisible()
   })

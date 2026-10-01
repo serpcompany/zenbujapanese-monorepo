@@ -67,6 +67,12 @@ header_has_dictionary() {
 }
 eventually 'the header links to the dictionary and has search' \
   'the header is missing the Dictionary link or search' header_has_dictionary
+header_marks_dictionary() {
+  grep -oE '<a [^>]*>Dictionary</a>' <<<"$(body /dictionary/)" | grep 'href="/dictionary/"' |
+    grep -q 'aria-current="page"'
+}
+eventually 'the header marks Dictionary current on the dictionary home' \
+  'the header does not mark Dictionary current on the dictionary home' header_marks_dictionary
 footer_has_legal() {
   grep -qE '<footer[^>]*>.*href="/legal/"[^>]*>Legal</a>' <<<"$(body / | tr -d '\n')"
 }

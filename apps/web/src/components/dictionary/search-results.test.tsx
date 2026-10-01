@@ -1,3 +1,4 @@
+import { readFileSync } from 'node:fs'
 import { wordExample } from '@zenbu/dictionary-core/detail/examples'
 import { kanjiDetail } from '@zenbu/dictionary-core/detail/kanji'
 import type { KanjiRows } from '@zenbu/dictionary-core/detail/rows'
@@ -20,6 +21,22 @@ import { SearchResults } from './search-results'
 
 const render = (data: SearchData, examples: SearchExamplesData | null = null) =>
   renderToStaticMarkup(<SearchResults data={data} examples={examples} />)
+
+function meaningClamp(): { fallback: number; lines: (rootPx: number) => number } {
+  const css = readFileSync(new URL('../../app/globals.css', import.meta.url), 'utf8')
+  const rule = css.match(/@utility meaning-clamp \{([\s\S]*?)\n\}/)?.[1] ?? ''
+  const [fallback, computed] = [...rule.matchAll(/-webkit-line-clamp: ([^;{]+);/g)].map(
+    ([, value]) => value
+  )
+  expect(rule).toMatch(/@supports[^{]*\{\s*-webkit-line-clamp: calc/)
+  expect(computed).toMatch(/^calc\((?:[\d.\s+*/()-]|px|rem|max|sign|,)+\)$/)
+  const lines = (rootPx: number) => {
+    const expression = computed.replaceAll('1rem', `${rootPx}px`).replaceAll('px', '')
+    const evaluate = new Function('calc', 'max', 'sign', `return ${expression}`)
+    return evaluate((value: number) => value, Math.max, Math.sign) as number
+  }
+  return { fallback: Number(fallback), lines }
+}
 
 function word(
   entSeq: number,
@@ -186,7 +203,7 @@ describe('the search results page', () => {
     expect(page.rows).toEqual([])
   })
 
-  test('clamps each meaning to two lines, as the app does', () => {
+  test('clamps each meaning to two lines, and lifts the clamp with large text, as the app does', () => {
     const html = render({
       state: 'results',
       query: 'x',
@@ -197,7 +214,13 @@ describe('the search results page', () => {
       rows: [word(1, '語', 'ご', 'word', [])],
       resultCount: 1
     })
-    expect(html).toContain('<p class="line-clamp-2 text-sm">word</p>')
+    expect(html).toContain('<p class="meaning-clamp text-sm">word</p>')
+    const rule = meaningClamp()
+    expect(rule.fallback).toBe(2)
+    for (const rootPx of [12, 16, 20, (16 * 23) / 17]) expect(rule.lines(rootPx)).toBe(2)
+    for (const rootPx of [22, 24, (16 * 28) / 17, 32]) {
+      expect(rule.lines(rootPx)).toBeGreaterThan(900)
+    }
   })
 
   test('shows only the Example Sentences when only sentences match', () => {
