@@ -77,7 +77,8 @@ no reason to hold it. Making merges wait for the review is a branch rule the own
 `.github/workflows/maintenance.yml` runs every Monday, and by hand. Both jobs start from
 `pnpm maintenance:report` (`tools/checks/src/report.ts`), a Markdown report built only from the
 repository: the checks' failures, the docs whose named or linked files changed after the doc was
-last edited, the known debt and size exceptions, and how many commits have changed code since
+last edited, the known debt and size exceptions, the code files within 50 lines of the size limit
+(to split before a change has to), and how many commits have changed code since
 [`quality.md`](../quality.md) was last graded.
 
 - **`doc-gardening`**: unless a "Weekly doc gardening" pull request is already open, Claude takes up

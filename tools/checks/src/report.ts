@@ -5,7 +5,7 @@ import { findComments } from './comments/find'
 import { checkDocs, isOwnedDoc, referencedFiles } from './docs'
 import { repositoryFiles, root } from './files'
 import { docsToReverify, lastChangeTimes, renderReport } from './maintenance'
-import { checkSizes, knownLargeFiles } from './sizes'
+import { checkSizes, filesNearLimit, knownLargeFiles } from './sizes'
 
 const git = (...args: string[]) =>
   execFileSync('git', args, { cwd: root, encoding: 'utf8', maxBuffer: 256 * 1024 * 1024 })
@@ -67,6 +67,7 @@ process.stdout.write(
       .split('\n')
       .filter(line => line.startsWith('| ') && !/^\|\s*(-|Debt\b)/.test(line)).length,
     sizeExceptions: Object.entries(knownLargeFiles).map(([path, { lines }]) => ({ path, lines })),
+    nearLimit: filesNearLimit(files),
     qualityChanged: qualitySeconds
       ? new Date(qualitySeconds * 1000).toISOString().slice(0, 10)
       : null,

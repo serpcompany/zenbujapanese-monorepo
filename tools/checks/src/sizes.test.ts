@@ -1,5 +1,5 @@
 import { expect, test } from 'vitest'
-import { checkSizes } from './sizes'
+import { checkSizes, filesNearLimit } from './sizes'
 
 const small = 'tools/checks/src/text.ts'
 
@@ -29,4 +29,13 @@ test('refuses an exception without a reason', () => {
   expect(checkSizes([large], { [large]: { lines: 5000, reason: ' ' } })).toEqual([
     { path: large, problem: 'is excepted from the limit without a reason' }
   ])
+})
+
+test('lists code files near the limit, leaving out the excepted ones and the rest', () => {
+  const files = [
+    'tools/checks/src/text.ts',
+    'apps/ios/Modules/Sources/SearchExperience/SearchView.swift'
+  ]
+  expect(filesNearLimit(files, {})).toEqual([])
+  expect(filesNearLimit(files)).toEqual([])
 })

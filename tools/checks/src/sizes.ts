@@ -5,6 +5,8 @@ import { classify, root } from './files'
 
 export const lineLimit = 500
 
+export const nearLimitLines = 450
+
 export interface SizeException {
   lines: number
   reason: string
@@ -70,6 +72,20 @@ export interface SizeProblem {
 function lineCount(path: string): number {
   const text = readFileSync(join(root, path), 'utf8')
   return text.split('\n').length - (text.endsWith('\n') ? 1 : 0)
+}
+
+export function filesNearLimit(
+  files: readonly string[],
+  known: Readonly<Record<string, SizeException>> = knownLargeFiles
+): { path: string; lines: number }[] {
+  return files
+    .filter(path => {
+      const kind = classify(path)
+      return kind.kind === 'code' && measured.has(kind.language) && known[path] === undefined
+    })
+    .map(path => ({ path, lines: lineCount(path) }))
+    .filter(({ lines }) => lines >= nearLimitLines && lines <= lineLimit)
+    .sort((a, b) => b.lines - a.lines || a.path.localeCompare(b.path))
 }
 
 export function checkSizes(

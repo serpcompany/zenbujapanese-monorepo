@@ -76,7 +76,7 @@ The docs are the map agents work from, so they stay correct and reachable:
 | --- | --- | --- |
 | `pnpm verify` | No comments, docs, and file size ([`tools/checks`](../../tools/checks/)), then ShellCheck, actionlint, and Ruff | The `Repository` workflow, on every pull request |
 | `pnpm verify <check> [paths]` | One check (`comments`, `docs`, `sizes`, or `linters`), on the given repository paths or on every file | By hand |
-| `pnpm maintenance:report` | A Markdown report: the checks' failures, docs whose named files changed since, known debt, and quality grades' age (`tools/checks/src/report.ts`) | `Weekly maintenance`, on Mondays ([`ci.md`](ci.md)); by hand |
+| `pnpm maintenance:report` | A Markdown report: the checks' failures, docs whose named files changed since, known debt, code files within 50 lines of the size limit, and quality grades' age (`tools/checks/src/report.ts`) | `Weekly maintenance`, on Mondays ([`ci.md`](ci.md)); by hand |
 | The edit hook | No comments and file size, on each file Claude Code writes, as it writes it (`.claude/settings.json`) | Claude Code sessions in this repository |
 | `pnpm check` | `pnpm verify`, then `pnpm check` in every package | By hand, before a pull request |
 | `pnpm check` in a package | Biome (with the package's import and logging rules), typecheck, tests, and its build | The package's workflow, on pull requests that change it |

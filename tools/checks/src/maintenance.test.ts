@@ -59,6 +59,7 @@ describe('renderReport', () => {
     staleDocs: [{ doc: 'docs/agents/web.md', changed: ['a', 'b', 'c', 'd', 'e', 'f', 'g'] }],
     debtRows: 27,
     sizeExceptions: [{ path: 'apps/ios/SearchView.swift', lines: 1101 }],
+    nearLimit: [{ path: 'packages/dictionary-core/src/search/english.ts', lines: 471 }],
     qualityChanged: '2026-09-30',
     codeCommitsSinceQuality: 5
   }
@@ -71,6 +72,8 @@ describe('renderReport', () => {
     expect(report).toContain('27 open items')
     expect(report).toContain('`apps/ios/SearchView.swift`: 1101 lines')
     expect(report).toContain('5 commits have changed code since')
+    expect(report).toContain('1 code files have 450 lines or more')
+    expect(report).toContain('- `packages/dictionary-core/src/search/english.ts`: 471 lines')
   })
 
   test('caps a check that fails many times, so the issue stays under GitHub’s size limit', () => {

@@ -1,3 +1,5 @@
+import { lineLimit, nearLimitLines } from './sizes'
+
 export interface DocReferences {
   doc: string
   references: readonly string[]
@@ -19,6 +21,7 @@ export interface MaintenanceFacts {
   staleDocs: StaleDoc[]
   debtRows: number
   sizeExceptions: SizeExceptionRow[]
+  nearLimit: SizeExceptionRow[]
   qualityChanged: string | null
   codeCommitsSinceQuality: number
 }
@@ -84,6 +87,11 @@ export function renderReport(facts: MaintenanceFacts): string {
       `- Files over the size limit, each with its reason in ${code('tools/checks/src/sizes.ts')}: ${facts.sizeExceptions.length}.`,
       ...facts.sizeExceptions.map(({ path, lines }) => `  - ${code(path)}: ${lines} lines`)
     ].join('\n'),
+    '## Files near the size limit',
+    `${facts.nearLimit.length} code files have ${nearLimitLines} lines or more. Every one stops at ${lineLimit}, and only the files above may pass it: split one of these by responsibility before a change has to.`,
+    facts.nearLimit.length
+      ? facts.nearLimit.map(({ path, lines }) => `- ${code(path)}: ${lines} lines`).join('\n')
+      : 'None.',
     '## Quality grades',
     facts.qualityChanged
       ? `${code('docs/quality.md')} last changed ${facts.qualityChanged}; ${facts.codeCommitsSinceQuality} commits have changed code since.`
@@ -91,7 +99,7 @@ export function renderReport(facts: MaintenanceFacts): string {
     "## This week's checklist",
     [
       '- [ ] Fix any failing check, and re-verify the docs listed above against the code.',
-      `- [ ] Pay down one item from ${code('docs/tech-debt.md')} in a small pull request, and remove its row.`,
+      `- [ ] Pay down one item from ${code('docs/tech-debt.md')}, or split one file near the size limit, in a small pull request.`,
       `- [ ] Re-grade an area in ${code('docs/quality.md')} whose tests, CI, or docs changed.`,
       `- [ ] If a failure pattern keeps coming up in reviews, add it to ${code('docs/agents/code.md')} and, where possible, a check.`
     ].join('\n')
