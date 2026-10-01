@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import type { ReactNode } from 'react'
 import type { KanjiDetailsData } from '@/lib/dictionary/data'
+import { KanjiReadings } from './kanji-readings'
 import { RubyText } from './ruby-text'
 import { StrokeOrder } from './stroke-order'
 
@@ -50,39 +51,7 @@ export function KanjiDetails({ kanji }: { kanji: KanjiDetailsData }) {
 
       {kanji.readings.length > 0 ? (
         <Part title="Readings">
-          <ul className="flex flex-col divide-y">
-            {kanji.readings.map(reading => (
-              <li
-                key={`${reading.kind}${reading.value}`}
-                className="grid grid-cols-[3.5rem_1fr] gap-x-3 gap-y-1 py-3 first:pt-0 last:pb-0"
-              >
-                <span className="font-medium">{reading.label}</span>
-                <span lang="ja" className="text-lg">
-                  {reading.value}
-                </span>
-                {reading.words.length > 0 ? (
-                  <ul className="col-start-2 flex flex-col text-muted-foreground">
-                    {reading.words.map(word => (
-                      <li key={word.entSeq}>
-                        {word.path ? (
-                          <Link
-                            href={word.path}
-                            lang="ja"
-                            className="text-foreground underline-offset-4 hover:underline"
-                          >
-                            {word.headword}
-                          </Link>
-                        ) : (
-                          <span lang="ja">{word.headword}</span>
-                        )}{' '}
-                        · {word.summary}
-                      </li>
-                    ))}
-                  </ul>
-                ) : null}
-              </li>
-            ))}
-          </ul>
+          <KanjiReadings readings={kanji.readings} />
         </Part>
       ) : null}
 

@@ -128,3 +128,13 @@
     @apply font-sans;
   }
 }
+
+@utility meaning-clamp {
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  @supports (-webkit-line-clamp: calc(2 + sign(1rem - 1px))) {
+    -webkit-line-clamp: calc(2 + 998 * max(0, sign(1rem - 16px * 23 / 17)));
+  }
+}

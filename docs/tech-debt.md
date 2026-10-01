@@ -34,8 +34,8 @@ off. A row without an issue says "No issue yet"; open one before starting the wo
 
 | Debt | Why it matters | Issue |
 | --- | --- | --- |
-| 10 of the 70 behaviors in `apps/web/docs/product/dictionary.md` have no automated check, and 13 more have a part without one, mostly layout, sheets, and speech. | A change that breaks them passes CI. | #511 |
-| The website lacks app behaviors that the product docs require, under Required, not built yet: Reading Aids, handwriting and radical input (#526), kanji reading rows and element detail, and more. | The website is meant to show what the app shows; each difference without a decision on file is a bug. | #511 |
+| 4 of the 67 behaviors in `apps/web/docs/product/dictionary.md` have no automated check, and 12 more have a part without one, mostly layout and speech. | A change that breaks them passes CI. | #511 |
+| The website lacks app behaviors that the product docs require, under Required, not built yet: Reading Aids, handwriting and radical input (#526), kanji element detail, the kanji details' Share and menu, and more. | The website is meant to show what the app shows; each difference without a decision on file is a bug. | #511 |
 | Search result pages are in no sitemap. #463 dropped its precomputed search-sitemap query set after ADR 0009, and the route audit decides which search pages stay indexable at all. | Search engines find search pages only through links. | #544 |
 
 ## Language data

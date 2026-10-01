@@ -67,10 +67,22 @@ header_has_dictionary() {
 }
 eventually 'the header links to the dictionary and has search' \
   'the header is missing the Dictionary link or search' header_has_dictionary
-footer_has_legal() {
-  grep -qE '<footer[^>]*>.*href="/legal/"[^>]*>Legal</a>' <<<"$(body / | tr -d '\n')"
+header_marks_dictionary() {
+  grep -oE '<a [^>]*>Dictionary</a>' <<<"$(body /dictionary/)" | grep 'href="/dictionary/"' |
+    grep -q 'aria-current="page"'
 }
-eventually 'the footer links Legal' 'the footer is missing the Legal link' footer_has_legal
+eventually 'the header marks Dictionary current on the dictionary home' \
+  'the header does not mark Dictionary current on the dictionary home' header_marks_dictionary
+footer_links_seen=""
+footer_matches_the_design() {
+  footer_links_seen="$(body / | tr -d '\n' | grep -oE '<footer.*</footer>' |
+    grep -oE 'href="[^"]*"[^>]*>[^<]+</a>' | sed -E 's/href="([^"]*)"[^>]*>([^<]+)<\/a>/\2 \1/' |
+    paste -sd, -)"
+  [ "$footer_links_seen" = 'Contact /contact/,Legal /legal/,Privacy /legal/privacy/,Terms /legal/terms/,Sources /sources/,Sitemap /sitemap/' ]
+}
+show_footer_seen() { echo "$footer_links_seen"; }
+eventually 'the footer links what the #462 design lists' \
+  'the footer differs from the #462 design' footer_matches_the_design show_footer_seen
 
 word=/dictionary/%E8%A6%8B%E3%82%8B-1259290/
 kanji_search=/dictionary/search/%E8%A6%8B/

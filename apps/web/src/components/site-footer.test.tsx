@@ -1,5 +1,6 @@
 import { renderToStaticMarkup } from 'react-dom/server'
 import { expect, test } from 'vitest'
+import { sitePages } from '@/lib/pages'
 import { SiteFooter } from './site-footer'
 
 const withTrailingSlash = (href: string) => (href.endsWith('/') ? href : `${href}/`)
@@ -12,10 +13,18 @@ function footerLinks(): [text: string, href: string][] {
   ])
 }
 
-test('the footer links Legal after Contact, before the legal pages, as the #462 design does', () => {
-  const links = footerLinks()
-  expect(links).toContainEqual(['Legal', '/legal/'])
-  const titles = links.map(([text]) => text)
-  expect(titles.indexOf('Legal')).toBe(titles.indexOf('Contact') + 1)
-  expect(titles.indexOf('Legal')).toBeLessThan(titles.indexOf('Privacy Policy'))
+test('the footer links what the #462 design lists, in its order', () => {
+  expect(footerLinks()).toEqual([
+    ['Contact', '/contact/'],
+    ['Legal', '/legal/'],
+    ['Privacy', '/legal/privacy/'],
+    ['Terms', '/legal/terms/'],
+    ['Sources', '/sources/'],
+    ['Sitemap', '/sitemap/']
+  ])
+})
+
+test('every footer link is a page the site has', () => {
+  const paths: string[] = sitePages.map(page => page.path)
+  expect(footerLinks().filter(([, href]) => !paths.includes(href))).toEqual([])
 })
