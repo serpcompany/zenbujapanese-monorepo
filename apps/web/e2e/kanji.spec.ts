@@ -15,9 +15,14 @@ async function expectKanjiDetails(page: Page) {
   await expect(main.getByRole('term')).toHaveText(['Strokes', 'Grade', 'JLPT'])
   await expect(main.getByRole('definition')).toHaveText(['9', '4', 'N2'])
   await expect(main.getByText('need, main point, essence, pivot, key to')).toBeVisible()
-  for (const part of ['Readings', 'Elements', 'Words']) {
+  for (const part of ['Readings', 'Elements', 'Lists', 'Notes', 'Words']) {
     await expect(main.getByRole('heading', { level: 3, name: part })).toBeVisible()
   }
+}
+
+async function openKanji(page: Page, { path, row }: (typeof rows)[number]) {
+  await page.goto(path)
+  await page.getByRole('button', { name: row, exact: true }).click()
 }
 
 test.describe('kanji details', () => {
@@ -72,4 +77,47 @@ test.describe('kanji details', () => {
       }
     })
   }
+
+  for (const kanji of rows) {
+    test(`${kanji.on}: 要's More actions offer the app's actions`, async ({ page }) => {
+      await openKanji(page, kanji)
+      await page.getByRole('button', { name: 'More actions for 要' }).click()
+      const menu = page.getByRole('menu', { name: 'More actions for 要' })
+      for (const item of [
+        'Mark as Known',
+        'Add to List…',
+        'Add Note',
+        'Open in App',
+        'Copy Link'
+      ]) {
+        await expect(menu.getByRole('menuitem', { name: item })).toBeVisible()
+      }
+      await menu.getByRole('menuitem', { name: 'Add Note' }).click()
+      const prompt = page.getByRole('dialog', { name: 'Add Note works in the app' })
+      await expect(prompt.getByRole('button', { name: 'Get the app' })).toBeVisible()
+    })
+  }
+
+  test("Copy Link copies 要's search page, from the word page too", async ({
+    page,
+    context,
+    baseURL
+  }) => {
+    await context.grantPermissions(['clipboard-read', 'clipboard-write'])
+    await openKanji(page, rows[1])
+    await page.getByRole('button', { name: 'More actions for 要' }).click()
+    await page.getByRole('menuitem', { name: 'Copy Link' }).click()
+    await expect(page.getByText('Link copied')).toBeVisible()
+    expect(await page.evaluate(() => navigator.clipboard.readText())).toBe(
+      new URL(kanjiSearch, baseURL).href
+    )
+  })
+
+  test("Lists and Notes open the get-the-app prompt, as a word page's do", async ({ page }) => {
+    await openKanji(page, rows[0])
+    const details = page.locator('[data-kanji-details="要"]')
+    await details.getByRole('button', { name: 'Add to List' }).click()
+    const prompt = page.getByRole('dialog', { name: 'Add to List works in the app' })
+    await expect(prompt.getByRole('button', { name: 'Get the app' })).toBeVisible()
+  })
 })

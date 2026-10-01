@@ -1,8 +1,11 @@
 import Link from 'next/link'
 import type { ReactNode } from 'react'
 import type { KanjiDetailsData } from '@/lib/dictionary/data'
+import { kanjiSearchPath } from '@/lib/dictionary/urls'
 import { KanjiReadings } from './kanji-readings'
+import { LearnerPrompt } from './learner-prompt'
 import { RubyText } from './ruby-text'
+import { SavedItemActions } from './saved-item-actions'
 import { StrokeOrder } from './stroke-order'
 
 function CharacterLink({ character, path }: { character: string; path: string | null }) {
@@ -27,8 +30,8 @@ function Part({ title, children }: { title: string; children: ReactNode }) {
 export function KanjiDetails({ kanji }: { kanji: KanjiDetailsData }) {
   return (
     <div className="flex flex-col gap-5" data-kanji-details={kanji.character}>
-      <div className="flex flex-wrap items-center gap-6">
-        <div className="flex flex-col items-center gap-2">
+      <div className="flex items-start gap-4 sm:gap-6">
+        <div className="flex shrink-0 flex-col items-center gap-2">
           <span lang="ja" className="text-7xl leading-none">
             {kanji.character}
           </span>
@@ -36,7 +39,7 @@ export function KanjiDetails({ kanji }: { kanji: KanjiDetailsData }) {
             <StrokeOrder character={kanji.character} order={kanji.strokeOrder} />
           ) : null}
         </div>
-        <dl className="flex flex-1 justify-around gap-4">
+        <dl className="flex flex-1 flex-wrap justify-around gap-x-3 gap-y-2 self-center">
           {kanji.stats.map(stat => (
             <div key={stat.label} className="flex flex-col-reverse items-center">
               <dt className="text-xs text-muted-foreground">{stat.label}</dt>
@@ -44,6 +47,14 @@ export function KanjiDetails({ kanji }: { kanji: KanjiDetailsData }) {
             </div>
           ))}
         </dl>
+        <div className="shrink-0">
+          <SavedItemActions
+            title={kanji.character}
+            shareText={kanji.shareText}
+            path={kanjiSearchPath(kanji.character)}
+            name={kanji.character}
+          />
+        </div>
       </div>
       {kanji.meanings.length > 0 ? (
         <p className="text-lg font-medium">{kanji.meanings.join(', ')}</p>
@@ -85,6 +96,14 @@ export function KanjiDetails({ kanji }: { kanji: KanjiDetailsData }) {
           </ul>
         </Part>
       ) : null}
+
+      <Part title="Lists">
+        <LearnerPrompt kind="lists" />
+      </Part>
+
+      <Part title="Notes">
+        <LearnerPrompt kind="notes" />
+      </Part>
 
       {kanji.words.length > 0 ? (
         <Part title="Words">
