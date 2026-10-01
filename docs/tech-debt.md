@@ -53,8 +53,7 @@ off. A row without an issue says "No issue yet"; open one before starting the wo
 
 | Debt | Why it matters | Issue |
 | --- | --- | --- |
-| The website logs nothing (`apps/web/src` has no logging), the service's logs stay on its server, which agents can't reach, and the smoke test has no latency budget. | An agent can't read why staging or production failed, or see a slowdown. | #516 |
-| Claude's pull request review (`Code review`) and the weekly doc gardening (`Weekly maintenance`) are off until the owners set the `CLAUDE_CODE_OAUTH_TOKEN` secret ([`ci.md`](agents/ci.md)). | Until then changes merge on green checks alone, and nothing notices prose that no longer matches the code. | #516 |
+| The website's log lines (`log()` in `apps/web/src/lib/log.ts`) stay in Workers Logs and the service's on its server, neither of which agents can query, and the smoke test has no latency budget. | An agent can't read why staging or production failed, or see a slowdown. | #516 |
 | `zenbujapanese/research`, which `AGENTS.md` routes to and ADR 0005 links into, isn't readable by every maintainer: `gh` can't resolve it for at least one. | Agents working for them can't follow those links. | #516 |
 | The Clipy skill, `/wayfinder`, and XcodeBuildMCP, which `docs/agents/clipy.md`, `docs/agents/issue-tracker.md`, and `docs/agents/ios.md` rely on, are installed per user. `.mcp.json` holds only the Chrome DevTools server. | Cloud agents and teammates' agents don't get them. | #516 |
 | `docs/agents/web.md` is still one guide for running, the dictionary, deploys, the database, and sitemaps. | A small page change sends an agent through all of it. | #516 |

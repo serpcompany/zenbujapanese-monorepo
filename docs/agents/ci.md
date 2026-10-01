@@ -67,9 +67,10 @@ It's advisory, and never blocks merging. How it's built, and why:
 The inline scripts are tested by running them as the workflow does, against a stand-in for the
 GitHub API (`tools/checks/src/agents/code-review.test.ts`).
 
-It's off until the owners set the `CLAUDE_CODE_OAUTH_TOKEN` repository secret: until then the job
+It runs with the `CLAUDE_CODE_OAUTH_TOKEN` repository secret, which is set; without it the job
 only notes that it skipped. The action skips a pull request that changes this workflow, which must
-match `main`'s. Making merges wait for the review is a branch rule the owners decide.
+match `main`'s, so that pull request's `review` check fails saying no review happened: expected, and
+no reason to hold it. Making merges wait for the review is a branch rule the owners decide.
 
 ## Weekly maintenance
 
@@ -90,7 +91,8 @@ last edited, the known debt and size exceptions, and how many commits have chang
 - **`report`** posts the report as one open issue, "Weekly repository maintenance", labelled
   `ready-for-agent`, and edits it each week rather than opening another.
 
-Doc gardening is off until `CLAUDE_CODE_OAUTH_TOKEN` is set; the report runs regardless.
+Doc gardening runs with `CLAUDE_CODE_OAUTH_TOKEN` too, and skips without it; the report needs no
+token.
 
 ## Web
 
