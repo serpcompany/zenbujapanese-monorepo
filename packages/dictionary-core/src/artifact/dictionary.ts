@@ -1,4 +1,3 @@
-import { conjugationTable } from '../detail/conjugation'
 import { examplesPerPage } from '../detail/examples'
 import type { FormExampleRows, KanjiRows, WordExampleRows, WordRows } from '../detail/rows'
 import { wordSlug } from '../detail/slug'
@@ -38,7 +37,6 @@ export type Slugs = Record<number, string>
 
 export interface SearchResponse {
   screen: SearchResultsScreen
-  kanjiHasPage: boolean
 }
 
 export interface WordResponse {
@@ -51,11 +49,6 @@ export interface WordResponse {
 export interface ExamplesResponse {
   rows: WordExampleRows[]
   slugs: Slugs
-}
-
-export interface ConjugationWordResponse {
-  rows: WordRows
-  slug: string
 }
 
 export interface FormExamplesResponse {
@@ -73,7 +66,6 @@ export interface SearchExamplesResponse extends ExamplesResponse {
 
 export interface KanjiResponse {
   rows: KanjiRows
-  indexable: boolean
   slugs: Slugs
   kanjiPages: string[]
 }
@@ -197,8 +189,7 @@ export class Dictionary {
     const { usesPrimaryEntryExamples, examples } = await this.examplesFor(query, results)
     const count = resultsExampleCount(usesPrimaryEntryExamples, examples)
     const response: SearchResponse = {
-      screen: searchResultsScreen(query, results, frequency, count),
-      kanjiHasPage: this.kanjiData.has(query)
+      screen: searchResultsScreen(query, results, frequency, count)
     }
     this.searches.set(query, response)
     return response
@@ -305,21 +296,6 @@ export class Dictionary {
     return { rows, slugs: toRecord(slugsByEntSeq(this.db, exampleLinkEntSeqs(rows))) }
   }
 
-  conjugationWord(entSeq: number): ConjugationWordResponse | null {
-    const word = readWord(this.db, this.kanjiData, entSeq)
-    if (!word || !conjugationTable(word.entry)) return null
-    return {
-      rows: {
-        entry: word.entry,
-        frequency: word.frequency,
-        kanji: word.kanji,
-        examples: [],
-        exampleCount: null
-      },
-      slug: word.slug
-    }
-  }
-
   formSentences(form: string): ExampleSentence[] {
     const cached = this.forms.get(form)
     if (cached) return cached
@@ -364,7 +340,6 @@ export class Dictionary {
     const response = rows
       ? {
           rows,
-          indexable: this.kanjiData.isIndexable(character),
           slugs: toRecord(
             slugsByEntSeq(
               this.db,
@@ -423,9 +398,5 @@ export class Dictionary {
 
   retired(): Record<number, number | null> {
     return {}
-  }
-
-  indexableKanji(): string[] {
-    return this.kanjiData.indexableCharacters()
   }
 }

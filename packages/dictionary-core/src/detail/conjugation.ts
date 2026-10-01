@@ -135,44 +135,6 @@ export function conjugations(
   return { rule: table.rule, modes, rows: { Plain: rows('Plain'), Polite: rows('Polite') } }
 }
 
-export const conjugationModes: Record<string, ConjugationMode> = {
-  plain: 'Plain',
-  polite: 'Polite'
-}
-
-export function isConjugationKind(kind: string): kind is ConjugationKind {
-  return Object.hasOwn(conjugationKinds, kind)
-}
-
-export function canonicalForm(
-  table: Pick<ConjugationTable, 'plain' | 'polite'>,
-  mode: ConjugationMode,
-  form: ConjugatedForm
-): { mode: ConjugationMode; kind: ConjugationKind } {
-  const plainSame = table.plain.find(other => other.kind === form.kind)
-  const register: ConjugationMode =
-    mode === 'Polite' && plainSame?.surface === form.surface ? 'Plain' : mode
-  const forms = register === 'Polite' && table.polite.length > 0 ? table.polite : table.plain
-  const first = forms.find(other => other.surface === form.surface)
-  return { mode: register, kind: first?.kind ?? form.kind }
-}
-
-export function indexedForms(
-  table: ConjugationTable,
-  hasExamples: (surface: string) => boolean
-): string[] {
-  const modes: ConjugationMode[] = supportsModes(table) ? ['Plain', 'Polite'] : ['Plain']
-  return modes.flatMap(mode =>
-    formsFor(table, mode)
-      .filter(form => {
-        if (!hasExamples(form.surface)) return false
-        const canonical = canonicalForm(table, mode, form)
-        return canonical.mode === mode && canonical.kind === form.kind
-      })
-      .map(form => `${mode.toLowerCase()}/${form.kind}`)
-  )
-}
-
 export function sharedSpellingNote(titles: readonly string[]): string {
   const list =
     titles.length <= 2

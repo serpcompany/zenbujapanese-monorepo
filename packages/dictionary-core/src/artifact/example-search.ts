@@ -179,10 +179,6 @@ function documentTermCount(matchinfo: Uint8Array): number {
 
 const sentenceColumns = 'e.rowid AS rowid, lower(hex(e.id)) AS pairId, e.japanese, e.english'
 
-export function allExampleSentences(db: ArtifactDatabase): ExampleSentence[] {
-  return db.all<ExampleSentence>(`SELECT ${sentenceColumns} FROM example_sentences e`)
-}
-
 function retrieveEnglish(db: ArtifactDatabase, query: string): EntryExamples | ExampleSearchError {
   if (query.includes('"')) return 'embeddedQuote'
   const matchExpression = `"${query}"`

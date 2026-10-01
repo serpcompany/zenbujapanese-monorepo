@@ -13,30 +13,23 @@ const info = {
 function fakeService(overrides: Partial<DictionaryService> = {}): DictionaryService {
   return {
     info: async () => info,
-    search: async query => ({ screen: { state: 'noResults', query }, kanjiHasPage: false }),
+    search: async query => ({ screen: { state: 'noResults', query } }),
     searchExamples: async () => null,
     word: async entSeq => (entSeq === 1358280 ? ({ slug: '食べる' } as never) : null),
     wordExamples: async () => ({ rows: [], slugs: {} }),
-    conjugationWord: async entSeq => (entSeq === 1358280 ? ({ slug: '食べる' } as never) : null),
     formExamples: async () => ({ rows: [], listed: 0, slugs: {} }),
-    kanji: async character => (character === '要' ? ({ indexable: true } as never) : null),
+    kanji: async character => (character === '要' ? ({ slugs: {} } as never) : null),
     wordSitemaps: async () => [],
     sitemapWords: async () => null,
-    indexableKanji: async () => ['要'],
     retired: async () => ({}),
     ...overrides
   }
 }
 
-function app(service = fakeService(), ready = true, sitemap: unknown[] | null = []) {
+function app(service = fakeService(), ready = true) {
   vi.spyOn(process.stdout, 'write').mockImplementation(() => true)
   vi.spyOn(process.stderr, 'write').mockImplementation(() => true)
-  return createApp({
-    service,
-    token,
-    ready: () => ready,
-    conjugationSitemap: () => sitemap as never
-  })
+  return createApp({ service, token, ready: () => ready })
 }
 
 const get = (path: string, auth = `Bearer ${token}`) =>
@@ -141,22 +134,12 @@ describe('routes', () => {
     expect(formExamples).toHaveBeenCalledWith('食べた', 25, 100)
   })
 
-  test("404s a word's conjugations when it has no table", async () => {
-    expect((await app().request(get('/v1/words/1358280/conjugations'))).status).toBe(200)
-    expect((await app().request(get('/v1/words/1206730/conjugations'))).status).toBe(404)
-  })
-
-  test('answers 503 for the conjugations sitemap until it has been worked out', async () => {
-    const pending = await app(fakeService(), true, null).request(get('/v1/sitemaps/conjugations'))
-    expect(pending.status).toBe(503)
-    expect(pending.headers.get('retry-after')).toBe('60')
-    const done = await app(fakeService(), true, [{ entSeq: 1, slug: 'x', forms: [] }]).request(
-      get('/v1/sitemaps/conjugations')
-    )
-    expect(await done.json()).toEqual([{ entSeq: 1, slug: 'x', forms: [] }])
-  })
-
-  test('404s an unknown route', async () => {
-    expect((await app().request(get('/v1/nothing'))).status).toBe(404)
+  test.each([
+    '/v1/nothing',
+    '/v1/words/1358280/conjugations',
+    '/v1/sitemaps/kanji',
+    '/v1/sitemaps/conjugations'
+  ])('404s %s, a route it has no longer or never had', async path => {
+    expect((await app().request(get(path))).status).toBe(404)
   })
 })

@@ -118,8 +118,7 @@ function searchAnswer(
   { examples = 0 } = {}
 ): SearchResponse {
   return {
-    screen: searchResultsScreen(query, results(entries), new Map(), examples),
-    kanjiHasPage: false
+    screen: searchResultsScreen(query, results(entries), new Map(), examples)
   }
 }
 
@@ -134,7 +133,6 @@ if (!iruRows || !kanameRows) throw new Error('no fixtures for 要る and 要')
 
 const kanjiAnswer: KanjiResponse = {
   rows: kanameRows,
-  indexable: true,
   slugs: Object.fromEntries(kanameRows.words.map(row => [row.entSeq, row.headword])),
   kanjiPages: ['女']
 }

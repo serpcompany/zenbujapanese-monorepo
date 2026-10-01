@@ -5,7 +5,8 @@ import { expect, test } from 'vitest'
 import { answeredContract, dictionaryContract } from './contract'
 
 const recordedShapes: Readonly<Record<number, string>> = {
-  1: '0ba1a72450be2bf7'
+  1: '0ba1a72450be2bf7',
+  2: '95e3a88fb8e6be64'
 }
 
 const plainFlags =

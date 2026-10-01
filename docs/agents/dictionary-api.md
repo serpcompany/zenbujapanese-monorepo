@@ -2,11 +2,9 @@
 
 `apps/dictionary-api` is the website's dictionary service (ADR 0009): a Node service that runs the
 shared core (`packages/dictionary-core`) on the app's own bundled data and answers every search,
-word, kanji, example, conjugation, sitemap, and retired-entry request the website makes. Nothing is
-precomputed for a release: it reads `LanguageReferenceData.sqlite3` and its packs with the app's own
-SQL when a page asks, and works out the conjugations sitemap once when it starts (unused since ADR
-0010; #552 removes it). Only the website
-calls it, with a bearer token. The website's side is in [`web.md`](web.md), Dictionary.
+word, kanji, example, conjugated form, sitemap, and retired-entry request the website makes.
+Nothing is precomputed for a release: it reads `LanguageReferenceData.sqlite3` and its packs with
+the app's own SQL when a page asks. Only the website calls it, with a bearer token. The website's side is in [`web.md`](web.md), Dictionary.
 
 Run every command below from `apps/dictionary-api`, after `pnpm install` at the repository root.
 
@@ -81,25 +79,21 @@ URL-encoded path segment of at most 200 characters (`maximumQueryLength`, which 
 checks too). A 404 means there's no such thing: no such word, kanji, or sitemap, a query without
 examples, or an unknown route. A word number or kanji that can't exist, such as word 0, a number
 past any JMdict entry, or two characters, is a 404 too. A 400 names what was malformed; a 401
-means the token is missing or wrong; a 503 means the service is still starting, or, for the
-conjugations sitemap, still working it out, with `Retry-After`; a 500 says nothing more and logs
-the error.
+means the token is missing or wrong; a 503 means the service is still starting; a 500 says nothing
+more and logs the error.
 
 | Route | Answer |
 | --- | --- |
 | `GET /healthz` | No token. 503 while starting; then the build, contract, and features. |
 | `GET /v1/info` | The build, the artifact's name and SHA-256, and the features. |
-| `GET /v1/search/<query>` | The results screen, and `kanjiHasPage`, which the website no longer reads (ADR 0010; removed in #552). |
+| `GET /v1/search/<query>` | The results screen. |
 | `GET /v1/search/<query>/examples?from=` | 25 of the examples the Example Sentences row opens, from `from`. |
 | `GET /v1/words/<ent_seq>` | A word page's rows, its slug, the slugs it links to, and which kanji have details (`kanjiPages`). |
 | `GET /v1/words/<ent_seq>/examples?from=` | 25 more of a word's examples. |
-| `GET /v1/words/<ent_seq>/conjugations` | A word's rows without examples, and its slug; 404 for a word without a table. Unused since ADR 0010 removed the conjugation pages; removed in #552. |
 | `GET /v1/conjugations/<form>/examples?from=&limit=` | `limit` (25, at most 100) of a conjugated form's examples from `from`, by its spelling as written, with how many it lists. |
-| `GET /v1/kanji/<character>` | A kanji's rows for its details, and its links. Its `indexable`, which the website no longer reads, is removed in #552. |
+| `GET /v1/kanji/<character>` | A kanji's rows for its details, the slugs of the words it lists, and which of its components and elements have details (`kanjiPages`). |
 | `GET /v1/sitemaps/words` | Each word sitemap's `ent_seq` range. |
 | `GET /v1/sitemaps/words/<n>?after=&limit=` | A sitemap's words after `after`, with their slugs. |
-| `GET /v1/sitemaps/kanji` | Every indexable kanji. Unused since ADR 0010 removed the kanji sitemap; removed in #552. |
-| `GET /v1/sitemaps/conjugations` | Every word with a conjugation table, and its forms that list examples; 503 until it's worked out. Unused since ADR 0010 removed the conjugations sitemap; removed in #552. |
 | `GET /v1/retired` | Retired entries and their replacements; empty until #463. |
 
 ## How it runs
@@ -117,16 +111,6 @@ answers for 10 minutes on top.
 
 Logs are one JSON object per line on stdout (errors on stderr): each request's method, route
 pattern, status, and time. Queries never appear in the logs.
-
-Once every thread has loaded, the main thread starts one more worker thread for the conjugations
-sitemap, which the website stopped reading when ADR 0010 removed its conjugation pages (#552
-removes it): every JMdict word the core conjugates (20,364), and which of their forms' pages list
-examples (13,168). Asking each form as its page does would take hours, so
-`formsWithExamples` (`packages/dictionary-core/src/artifact/conjugation-sitemap.ts`) finds every
-spelling's sentences in one pass over all of them, with a trie of the spellings, ranks each
-spelling's as the app's Japanese search does, and runs Kuromoji on them until one reads the form
-as one word. It takes about half a minute and about 800 MB more memory, then the thread exits; a
-failure is tried again a minute later, three attempts in all. The main thread keeps the answer.
 
 A broad query takes one to two seconds the first time: い reads 73,000 entries with the app's own
 SQL, and "to" matches 50,000 Tatoeba pairs. A one-letter wildcard's examples take longer: `a*`,
@@ -181,8 +165,7 @@ Detail lists no examples, and neither does the page. Without the files the suite
 the retrieval suite's sentence-search cases skip. No suite records sentence search yet (recording
 it needs the app's Japanese Text Analysis pack in the Simulator), so `sentence-search.test.ts`
 checks the cases the app's manual checks name.
-`conjugation-examples.test.ts` pages a form's examples, and `conjugation-sitemap.test.ts` holds
-the sitemap's one pass to each form's own list on every form the word-detail suite records.
+`conjugation-examples.test.ts` pages a form's examples.
 `full-text.test.ts` checks English search where FTS4 differs from other engines.
 
 The `Dictionary API` workflow runs `pnpm check` on pull requests with the Git LFS files and
@@ -214,11 +197,9 @@ docker build -f apps/dictionary-api/Dockerfile --build-arg RELEASE=$(git rev-par
 docker run -p 8788:8788 -e DICTIONARY_API_TOKEN=<token> zenbujapanese-dictionary-api
 ```
 
-The image is about 1 GB, and uses about 750 MiB of memory with two worker threads, and about
-1.4 GB for the half minute after it starts, while it works out the conjugations sitemap. The
-kernel's cache of the files it reads comes on top (about 600 MB once the sitemap has read every
-sentence); a container's memory reading, such as `docker stats`, counts it, but it can be
-reclaimed. It has a health check on `/healthz` and stops cleanly on SIGTERM.
+The image is about 1 GB, and uses about 750 MiB of memory with two worker threads. The kernel's
+cache of the files it reads comes on top; a container's memory reading, such as `docker stats`,
+counts it, but it can be reclaimed. It has a health check on `/healthz` and stops cleanly on SIGTERM.
 
 It holds one build of the data, so a new artifact is a new image. `scripts/build.mjs` bundles
 `src/server.ts` and `src/worker.ts`, with the core and Hono; Sudachi's native module stays outside
@@ -333,8 +314,7 @@ out an image pulled by digest alone.
 Staging and production share one server: the Linux x86-64 server whose nginx container, on the
 `web_network` Docker network, fronts serpcompany's other sites through Cloudflare. The slots run on
 a network of their own that nginx joins as well (step 4). The two
-services need about 1.5 GB of memory between them, plus about 1.4 GB more for the half minute after
-a deploy starts one, and 5 GB of disk for images. A person with root sets it up once:
+services need about 1.5 GB of memory between them, and 5 GB of disk for images. A person with root sets it up once:
 
 1. **cosign**, which the deployer verifies each image's signature with: the version the workflow
    signs with, checked against its release's SHA-256 (for an arm64 server, `cosign-linux-arm64`

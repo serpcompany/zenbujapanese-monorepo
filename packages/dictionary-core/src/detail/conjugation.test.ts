@@ -1,13 +1,5 @@
 import { describe, expect, test } from 'vitest'
-import {
-  canonicalForm,
-  conjugationTable,
-  formsFor,
-  indexedForms,
-  isConjugationKind,
-  rowShowsFurigana,
-  sharedSpellings
-} from './conjugation'
+import { conjugationTable, formsFor, rowShowsFurigana, sharedSpellings } from './conjugation'
 
 const table = (headword: string, reading: string, partsOfSpeech: string[]) =>
   conjugationTable({ headword, reading, partsOfSpeech })
@@ -77,67 +69,5 @@ describe('what the screens show', () => {
     const kuru = table('来る', 'くる', ['kuruVerb'])
     expect(kuru?.plain.every(rowShowsFurigana)).toBe(true)
     expect(table('見る', 'みる', ['ichidanVerb'])?.plain.some(rowShowsFurigana)).toBe(false)
-  })
-})
-
-describe('which form pages search engines index', () => {
-  const miru = conjugationTable({
-    headword: '見る',
-    reading: 'みる',
-    partsOfSpeech: ['ichidanVerb']
-  })
-  if (!miru) throw new Error('見る has no table')
-
-  const form = (mode: 'Plain' | 'Polite', kind: string) => {
-    const found = formsFor(miru, mode).find(candidate => candidate.kind === kind)
-    if (!found) throw new Error(`No ${mode} ${kind}`)
-    return found
-  }
-
-  test('a Polite form spelled as its Plain form names the Plain page (te-form, conditional)', () => {
-    expect(canonicalForm(miru, 'Polite', form('Polite', 'te-form'))).toEqual({
-      mode: 'Plain',
-      kind: 'te-form'
-    })
-    expect(canonicalForm(miru, 'Polite', form('Polite', 'past'))).toEqual({
-      mode: 'Polite',
-      kind: 'past'
-    })
-    expect(canonicalForm(miru, 'Plain', form('Plain', 'past'))).toEqual({
-      mode: 'Plain',
-      kind: 'past'
-    })
-  })
-
-  test('a form spelled as an earlier one in its register names it (passive 見られる)', () => {
-    expect(canonicalForm(miru, 'Plain', form('Plain', 'passive'))).toEqual({
-      mode: 'Plain',
-      kind: 'potential'
-    })
-    expect(canonicalForm(miru, 'Plain', form('Plain', 'potential'))).toEqual({
-      mode: 'Plain',
-      kind: 'potential'
-    })
-    expect(canonicalForm(miru, 'Polite', form('Polite', 'passive'))).toEqual({
-      mode: 'Polite',
-      kind: 'potential'
-    })
-  })
-
-  test('indexes each canonical form page that lists examples', () => {
-    const withExamples = new Set(['見る', '見た', '見て', '見ました', '見られる', '見られます'])
-    expect(indexedForms(miru, surface => withExamples.has(surface))).toEqual([
-      'plain/present-future',
-      'plain/past',
-      'plain/te-form',
-      'plain/potential',
-      'polite/past',
-      'polite/potential'
-    ])
-  })
-
-  test('knows the app’s kinds', () => {
-    expect(isConjugationKind('past-negative')).toBe(true)
-    expect(isConjugationKind('toString')).toBe(false)
   })
 })

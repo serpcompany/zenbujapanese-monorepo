@@ -1,30 +1,13 @@
 import { Worker } from 'node:worker_threads'
-import type { ConjugationSitemapWord } from '@zenbu/dictionary-core/artifact/conjugation-sitemap'
 import type { VerifiedFiles } from './load'
 import { log } from './log'
 import type { DictionaryService, ServiceMethod } from './service'
-import type { Call, Reply, SitemapReply } from './worker'
+import type { Call, Reply } from './worker'
 
 interface Thread {
   worker: Worker
   ready: Promise<void>
   pending: Map<number, { resolve(value: unknown): void; reject(error: Error): void }>
-}
-
-export function computeConjugationSitemap(files: VerifiedFiles): Promise<ConjugationSitemapWord[]> {
-  return new Promise((resolve, reject) => {
-    const worker = new Worker(workerUrl(), {
-      workerData: { ...files, task: 'conjugation-sitemap' }
-    })
-    worker.once('message', (message: SitemapReply) => {
-      resolve(message.sitemap)
-      void worker.terminate()
-    })
-    worker.once('error', reject)
-    worker.once('exit', code => {
-      if (code !== 0) reject(new Error(`The conjugations sitemap worker exited (${code})`))
-    })
-  })
 }
 
 export interface Pool extends DictionaryService {
@@ -108,12 +91,10 @@ export function createPool(files: VerifiedFiles, size: number): Pool {
     searchExamples: (query, from) => call('searchExamples', [query, from]),
     word: entSeq => call('word', [entSeq]),
     wordExamples: (entSeq, from) => call('wordExamples', [entSeq, from]),
-    conjugationWord: entSeq => call('conjugationWord', [entSeq]),
     formExamples: (form, from, limit) => call('formExamples', [form, from, limit]),
     kanji: character => call('kanji', [character]),
     wordSitemaps: () => call('wordSitemaps', []),
     sitemapWords: (number, after, limit) => call('sitemapWords', [number, after, limit]),
-    indexableKanji: () => call('indexableKanji', []),
     retired: () => call('retired', [])
   }
 }
