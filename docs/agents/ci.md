@@ -40,7 +40,9 @@ comments, docs, file sizes, and the linters. What each enforces is in [`code.md`
 draft or opened by a bot, with the repository's `pr-review` skill
 (`.claude/skills/pr-review/SKILL.md`): three reviewers in parallel (bugs, rules, and tests and
 docs), each new finding as an inline comment, and one summary comment it updates on every review.
-It's advisory, and never blocks merging. How it's built, and why:
+Its check doesn't block merging, since `main`'s ruleset requires no checks, but the ruleset does
+require every review conversation to be resolved, so an inline finding blocks merging until it's
+fixed or answered and resolved. How it's built, and why:
 
 - **The skill and the rules come from the base branch.** The action replaces `CLAUDE.md`,
   `.claude/`, and `.mcp.json` with the base branch's copies before Claude starts, so a pull request
@@ -70,7 +72,7 @@ GitHub API (`tools/checks/src/agents/code-review.test.ts`).
 It runs with the `CLAUDE_CODE_OAUTH_TOKEN` repository secret, which is set; without it the job
 only notes that it skipped. The action skips a pull request that changes this workflow, which must
 match `main`'s, so that pull request's `review` check fails saying no review happened: expected, and
-no reason to hold it. Making merges wait for the review is a branch rule the owners decide.
+no reason to hold it. Making merges wait for its check is a branch rule the owners decide.
 
 ## Weekly maintenance
 

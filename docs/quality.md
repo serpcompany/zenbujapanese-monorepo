@@ -122,8 +122,9 @@ A change is checked by hand in a browser with the `verify-web` skill
 | Repository checks, `tools/checks` | A | `tools/checks/src/docs.test.ts`, `tools/checks/src/sizes.test.ts`, `tools/checks/src/maintenance.test.ts`, the comment checks' tests in `tools/checks/src/comments/`, and the agent tooling's in `tools/checks/src/agents/`: the permission rules, `.mcp.json`, and the Claude workflows' inline scripts | `Repository`, on every pull request: the checks' own tests, then `pnpm verify` | [`code.md`](agents/code.md) | `pnpm verify`; Claude Code's edit hook |
 
 - **Repository checks, A.** They run on every pull request, and each failure says how to fix it.
-  Main gap: Swift has no linter, and no scheduled run compares the docs' prose with the code
-  (#516).
+  Main gap: Swift has no linter (#516). The docs' links and paths are checked on every pull
+  request, but whether their prose still matches the code is checked only weekly, by doc gardening
+  in `Weekly maintenance`.
 
 Last graded 2026-09-30. An area's grade is updated in the same pull request that changes its
 tests, CI, or docs.

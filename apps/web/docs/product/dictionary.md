@@ -964,8 +964,9 @@ marks it, so Word Meanings shows under every linked word.
 **Search sitemaps.** Child sitemaps list the canonical search URLs of a chosen query set (ADR
 0007), and the sitemap index lists them.
 
-- Source: #466. #463 no longer supplies the query set (it dropped the precomputed search-sitemap
-  queries with ADR 0009), so which queries to list is still open.
+- Source: #466, whose last open item this was; the route audit (#544) now decides which search
+  pages stay indexable at all, and so whether any belong in a sitemap. #463 no longer supplies the
+  query set (it dropped the precomputed search-sitemap queries with ADR 0009).
 - Check it will get: a `sitemaps.test.ts` case and a smoke check.
 
 **Structured data.** Word and kanji pages carry structured data beyond `BreadcrumbList`.
