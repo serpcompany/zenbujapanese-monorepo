@@ -793,16 +793,17 @@ lucide has no brand icons, and #511 asked for a phone.
 - Source: #462 design; #511 (the phone icon).
 - Check: `src/components/site-header.test.tsx`, "the Get the app button leads with a phone icon".
 
-**Footer.** The footer links what the #462 design lists, in its order and with its labels:
-Contact, Legal (`/legal/`), Privacy, Terms, Sources, and Sitemap, then the copyright line. Every
-one is a page the site has. The legal index lists the DMCA Copyright Policy and Affiliate
-Disclosure with the others, and the sitemap lists every page, About and Support among them, which
-phones reach there since the design's phone header hides them.
+**Footer.** The footer links Dictionary, About and Support (on phones only), Contact, Legal
+(`/legal/`), Privacy Policy, Terms of Use, DMCA Copyright Policy, Affiliate Disclosure, Sources,
+and Sitemap, then the copyright line. Legal follows Contact, as in the #462 design. The #462
+mockup's footer lists only Contact, Legal, Privacy, Terms, Sources, and Sitemap. Whether the
+footer drops the other links is waiting on the owner's and Devin's decision (#511); until then it
+keeps them.
 
-- Source: #462 design.
-- Check: `src/components/site-footer.test.tsx`, "the footer links what the #462 design lists, in
-  its order" and "every footer link is a page the site has"; smoke "the footer links what the #462
-  design lists".
+- Source: #462 design (Contact, Legal, Privacy, Terms, Sources, Sitemap).
+- Check: the Legal link: `src/components/site-footer.test.tsx`, "the footer links Legal after
+  Contact, before the legal pages, as the #462 design does"; smoke "the footer links Legal". The
+  other links: No automated check yet (#511).
 
 **Reading Aids.** The website has no Reading Aids settings yet. It shows what the app shows with
 its defaults: headwords and linked example words have furigana, examples show their translation,

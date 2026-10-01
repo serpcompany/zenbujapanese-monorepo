@@ -73,16 +73,10 @@ header_marks_dictionary() {
 }
 eventually 'the header marks Dictionary current on the dictionary home' \
   'the header does not mark Dictionary current on the dictionary home' header_marks_dictionary
-footer_links_seen=""
-footer_matches_the_design() {
-  footer_links_seen="$(body / | tr -d '\n' | grep -oE '<footer.*</footer>' |
-    grep -oE 'href="[^"]*"[^>]*>[^<]+</a>' | sed -E 's/href="([^"]*)"[^>]*>([^<]+)<\/a>/\2 \1/' |
-    paste -sd, -)"
-  [ "$footer_links_seen" = 'Contact /contact/,Legal /legal/,Privacy /legal/privacy/,Terms /legal/terms/,Sources /sources/,Sitemap /sitemap/' ]
+footer_has_legal() {
+  grep -qE '<footer[^>]*>.*href="/legal/"[^>]*>Legal</a>' <<<"$(body / | tr -d '\n')"
 }
-show_footer_seen() { echo "$footer_links_seen"; }
-eventually 'the footer links what the #462 design lists' \
-  'the footer differs from the #462 design' footer_matches_the_design show_footer_seen
+eventually 'the footer links Legal' 'the footer is missing the Legal link' footer_has_legal
 
 word=/dictionary/%E8%A6%8B%E3%82%8B-1259290/
 kanji_search=/dictionary/search/%E8%A6%8B/
