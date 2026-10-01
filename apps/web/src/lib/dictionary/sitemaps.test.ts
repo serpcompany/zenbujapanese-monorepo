@@ -1,18 +1,9 @@
 import { afterEach, describe, expect, test, vi } from 'vitest'
 import { dictionaryService } from './data'
-import {
-  conjugationSitemapResponse,
-  dictionarySitemapPaths,
-  kanjiSitemapResponse,
-  kanjiUrl,
-  wordSitemapResponse,
-  wordUrl
-} from './sitemaps'
+import { dictionarySitemapPaths, wordSitemapResponse, wordUrl } from './sitemaps'
 
 vi.mock('@opennextjs/cloudflare', () => ({ getCloudflareContext: async () => ({ ctx: {} }) }))
 vi.mock('./data', () => ({ dictionaryService: vi.fn() }))
-
-const rouCompatibilityIdeograph = '廊'
 
 function fakeService(count: number, perSitemap: number) {
   const build = 'abc123'
@@ -39,15 +30,7 @@ function fakeService(count: number, perSitemap: number) {
   })
   return {
     wordSitemaps: async () => ({ data: sitemaps, build }),
-    sitemapWords,
-    indexableKanji: async () => ({ data: ['見', rouCompatibilityIdeograph, '𠀋'], build }),
-    conjugationSitemap: async () => ({
-      data: [
-        { entSeq: 1259290, slug: '見る', forms: ['plain/past', 'polite/past'] },
-        { entSeq: 1611000, slug: '静か', forms: [] }
-      ],
-      build
-    })
+    sitemapWords
   }
 }
 
@@ -63,44 +46,17 @@ describe('without a dictionary service (local fixtures)', () => {
     vi.mocked(dictionaryService).mockResolvedValue(null)
     expect(await dictionarySitemapPaths()).toEqual([])
     expect(await wordSitemapResponse(request('/sitemaps/dictionary/1.xml'), 1)).toBeNull()
-    expect(await kanjiSitemapResponse(request('/sitemaps/kanji.xml'))).toBeNull()
-    expect(await conjugationSitemapResponse(request('/sitemaps/conjugations.xml'))).toBeNull()
   })
 })
 
 describe('with a dictionary service', () => {
-  test('the index lists every word sitemap, then the kanji and conjugations sitemaps', async () => {
+  test('the index lists every word sitemap, and nothing else', async () => {
     vi.mocked(dictionaryService).mockResolvedValue(fakeService(5, 2) as never)
     expect(await dictionarySitemapPaths()).toEqual([
       '/sitemaps/dictionary/1.xml',
       '/sitemaps/dictionary/2.xml',
-      '/sitemaps/dictionary/3.xml',
-      '/sitemaps/kanji.xml',
-      '/sitemaps/conjugations.xml'
+      '/sitemaps/dictionary/3.xml'
     ])
-  })
-
-  test('the conjugations sitemap lists each table, then its form pages that list examples', async () => {
-    vi.mocked(dictionaryService).mockResolvedValue(fakeService(1, 1) as never)
-    const response = await conjugationSitemapResponse(request('/sitemaps/conjugations.xml'))
-    expect(response?.headers.get('Content-Type')).toBe('application/xml; charset=utf-8')
-    const miru = 'https://zenbujapanese.com/dictionary/%E8%A6%8B%E3%82%8B-1259290/conjugations/'
-    expect(locs((await response?.text()) ?? '')).toEqual([
-      miru,
-      `${miru}plain/past/`,
-      `${miru}polite/past/`,
-      'https://zenbujapanese.com/dictionary/%E9%9D%99%E3%81%8B-1611000/conjugations/'
-    ])
-  })
-
-  test('the conjugations sitemap answers 503 until the service has worked it out', async () => {
-    vi.mocked(dictionaryService).mockResolvedValue({
-      ...fakeService(1, 1),
-      conjugationSitemap: async () => null
-    } as never)
-    const response = await conjugationSitemapResponse(request('/sitemaps/conjugations.xml'))
-    expect(response?.status).toBe(503)
-    expect(response?.headers.get('Retry-After')).toBe('60')
   })
 
   test('a word sitemap streams its range of canonical, percent-encoded, escaped URLs', async () => {
@@ -123,21 +79,10 @@ describe('with a dictionary service', () => {
     expect(locs((await second?.text()) ?? '')).toHaveLength(5_000)
     expect(await wordSitemapResponse(request('/sitemaps/dictionary/3.xml'), 3)).toBeNull()
   })
-
-  test('the kanji sitemap lists the indexable kanji exactly, never normalized', async () => {
-    vi.mocked(dictionaryService).mockResolvedValue(fakeService(1, 1) as never)
-    const response = await kanjiSitemapResponse(request('/sitemaps/kanji.xml'))
-    expect(locs((await response?.text()) ?? '')).toEqual([
-      'https://zenbujapanese.com/dictionary/kanji/%E8%A6%8B/',
-      'https://zenbujapanese.com/dictionary/kanji/%EF%A4%A8/',
-      'https://zenbujapanese.com/dictionary/kanji/%F0%A0%80%8B/'
-    ])
-  })
 })
 
 test('canonical URLs match the pages', () => {
   expect(wordUrl(1259290, '見る')).toBe(
     'https://zenbujapanese.com/dictionary/%E8%A6%8B%E3%82%8B-1259290/'
   )
-  expect(kanjiUrl('廊')).toBe('https://zenbujapanese.com/dictionary/kanji/%E5%BB%8A/')
 })

@@ -4,11 +4,7 @@ import {
   conjugations,
   sharedSpellingNote
 } from '@zenbu/dictionary-core/detail/conjugation'
-import {
-  examplesPerPage,
-  formExample,
-  noFormExamplesMessage
-} from '@zenbu/dictionary-core/detail/examples'
+import { formExample, noFormExamplesMessage } from '@zenbu/dictionary-core/detail/examples'
 import type { ExampleSentenceRow, FormExampleRow } from '@zenbu/dictionary-core/detail/rows'
 import { rubySegments } from '@zenbu/dictionary-core/detail/ruby'
 import type {
@@ -17,95 +13,65 @@ import type {
   SuiteFormExamples
 } from '@zenbu/dictionary-core/detail/suite'
 import { wordDetail } from '@zenbu/dictionary-core/detail/word'
+import { exampleLimit } from '@zenbu/dictionary-core/examples/retrieval'
 import { renderToStaticMarkup } from 'react-dom/server'
 import { describe, expect, test } from 'vitest'
-import { pageExample, serviceLinks, storedWordPath } from '@/lib/dictionary/page-example'
-import { conjugatedFormPath } from '@/lib/dictionary/urls'
+import { pageExample, serviceLinks } from '@/lib/dictionary/page-example'
 import {
   ConjugatedFormContent,
-  ConjugatedFormExamples,
+  ConjugationsSection,
   ConjugationTableContent,
-  type ConjugationWord
+  FormExampleList
 } from './conjugations'
 import { gateEnabled, gateService, recordedCases } from './gate'
 import { readConjugatedForm, readConjugationTable, readExamples } from './rendered-word'
 import { WordHeader } from './word-header'
 
 const noReadings = new Map()
-const miruPath = '/dictionary/見る-1259290/'
 
-function table(word: ConjugationWord, data: Conjugations, mode: ConjugationMode, path = miruPath) {
-  return renderToStaticMarkup(
-    <ConjugationTableContent
-      word={word}
-      conjugations={data}
-      mode={mode}
-      onModeChange={() => {}}
-      wordPath={path}
-    />
-  )
-}
+const table = (data: Conjugations) =>
+  readConjugationTable(renderToStaticMarkup(<ConjugationTableContent conjugations={data} />))
 
 const miru = conjugations(
   { headword: '見る', reading: 'みる', partsOfSpeech: ['ichidanVerb', 'transitive'] },
   noReadings
 ) as Conjugations
-const miruWord: ConjugationWord = {
-  ruby: rubySegments('見る', 'みる'),
-  reading: 'みる',
-  summary: 'to see, to look, to watch, to view, to observe',
-  partOfSpeech: 'Ichidan verb (transitive)',
-  pitch: null
-}
+
+const potential = miru.rows.Plain.find(row => row.kind === 'potential')
+if (!potential) throw new Error('No potential form')
 
 describe('the conjugation table', () => {
-  test('shows the word, its rule, the register control, and each form, opening its page', () => {
-    const plain = readConjugationTable(table(miruWord, miru, 'Plain'))
-    expect(plain.summary).toBe('to see, to look, to watch, to view, to observe')
-    expect(plain.rule).toBe('Drop る, then add the ending.')
-    expect(plain.modes).toEqual(['Plain', 'Polite'])
-    expect(plain.rows.slice(0, 3)).toEqual([
+  test('shows the rule, the register control, and both registers’ rows, Polite hidden', () => {
+    const drawn = table(miru)
+    expect(drawn.rule).toBe('Drop る, then add the ending.')
+    expect(drawn.modes).toEqual(['Plain', 'Polite'])
+    expect(Object.keys(drawn.registers)).toEqual(['Plain', 'Polite'])
+    expect(drawn.registers.Plain.hidden).toBe(false)
+    expect(drawn.registers.Polite.hidden).toBe(true)
+    expect(drawn.registers.Plain.rows.slice(0, 3)).toEqual([
       {
         kind: 'present-future',
         title: 'Present/Future',
         surface: '見る',
         ending: 'る',
-        rowFurigana: false,
-        href: '/dictionary/見る-1259290/conjugations/plain/present-future/'
+        rowFurigana: false
       },
-      {
-        kind: 'past',
-        title: 'Past',
-        surface: '見た',
-        ending: 'た',
-        rowFurigana: false,
-        href: '/dictionary/見る-1259290/conjugations/plain/past/'
-      },
-      {
-        kind: 'negative',
-        title: 'Negative',
-        surface: '見ない',
-        ending: 'ない',
-        rowFurigana: false,
-        href: '/dictionary/見る-1259290/conjugations/plain/negative/'
-      }
+      { kind: 'past', title: 'Past', surface: '見た', ending: 'た', rowFurigana: false },
+      { kind: 'negative', title: 'Negative', surface: '見ない', ending: 'ない', rowFurigana: false }
     ])
-    const polite = readConjugationTable(table(miruWord, miru, 'Polite'))
-    expect(polite.rows[0]).toMatchObject({
-      surface: '見ます',
-      ending: 'ます',
-      href: '/dictionary/見る-1259290/conjugations/polite/present-future/'
-    })
+    expect(drawn.registers.Polite.rows[0]).toMatchObject({ surface: '見ます', ending: 'ます' })
   })
 
-  test('an adjective has no register control', () => {
+  test('an adjective has no register control, and one register', () => {
     const shizuka = conjugations(
       { headword: '静か', reading: 'しずか', partsOfSpeech: ['naAdjective'] },
       noReadings
     ) as Conjugations
-    const html = table({ ...miruWord, ruby: rubySegments('静か', 'しずか') }, shizuka, 'Plain')
+    const html = renderToStaticMarkup(<ConjugationTableContent conjugations={shizuka} />)
     expect(html).not.toContain('data-conjugation-mode')
-    expect(readConjugationTable(html).rows.map(row => row.surface)).toEqual([
+    const drawn = readConjugationTable(html)
+    expect(Object.keys(drawn.registers)).toEqual(['Plain'])
+    expect(drawn.registers.Plain.rows.map(row => row.surface)).toEqual([
       '静か',
       '静かな',
       '静かで',
@@ -119,22 +85,27 @@ describe('the conjugation table', () => {
       { headword: '来る', reading: 'くる', partsOfSpeech: ['kuruVerb'] },
       noReadings
     ) as Conjugations
-    const rows = readConjugationTable(
-      table(miruWord, kuru, 'Plain', '/dictionary/来る-1547720/')
-    ).rows
-    expect(rows.find(row => row.kind === 'causative')).toEqual({
+    expect(table(kuru).registers.Plain.rows.find(row => row.kind === 'causative')).toEqual({
       kind: 'causative',
       title: 'Causative',
       surface: '来させる',
       ending: '来させる',
-      rowFurigana: true,
-      href: '/dictionary/来る-1547720/conjugations/plain/causative/'
+      rowFurigana: true
     })
   })
 
-  test('a form’s page says what it means, and which forms share its spelling', () => {
-    const potential = miru.rows.Plain.find(row => row.kind === 'potential')
-    if (!potential) throw new Error('No potential form')
+  test('each form is a closed row, named for its form, holding what the form means', () => {
+    const html = renderToStaticMarkup(<ConjugationTableContent conjugations={miru} />)
+    const past = html.match(/data-conjugation-row="past"><button([^>]*)>/)?.[1] ?? ''
+    expect(past).toContain('aria-expanded="false"')
+    expect(past).toContain('aria-label="Past, 見た, みた"')
+    const panel = past.match(/aria-controls="([^"]+)"/)?.[1]
+    expect(html).toContain(`<div id="${panel}" hidden=""><div`)
+    expect(table(miru).registers.Plain.forms[1].explanation).toBe(miru.rows.Plain[1].explanation)
+    expect(html).not.toContain('data-conjugation-examples')
+  })
+
+  test('a form says what it means, and which forms share its spelling', () => {
     const form = readConjugatedForm(renderToStaticMarkup(<ConjugatedFormContent row={potential} />))
     expect(form).toEqual({
       explanation:
@@ -143,6 +114,8 @@ describe('the conjugation table', () => {
       furigana: [{ base: '見', reading: 'み' }, { base: 'られる' }],
       ending: 'られる'
     })
+    const index = miru.rows.Plain.indexOf(potential)
+    expect(table(miru).registers.Plain.forms[index]).toEqual(form)
   })
 
   test('a form’s examples link each word and accent the form’s words', () => {
@@ -175,11 +148,7 @@ describe('the conjugation table', () => {
     }
     const links = serviceLinks({ 1259290: '見る' }, [])
     const html = renderToStaticMarkup(
-      <ConjugatedFormExamples
-        examples={[pageExample(formExample({ sentence, example }), links)]}
-        listed={1}
-        path="/dictionary/examples/forms/%E8%A6%8B%E3%81%9F.json?build=b"
-      />
+      <FormExampleList examples={[pageExample(formExample({ sentence, example }), links)]} />
     )
     expect(readExamples(html)).toEqual([
       {
@@ -191,7 +160,8 @@ describe('the conjugation table', () => {
         ]
       }
     ])
-    const none = renderToStaticMarkup(<ConjugatedFormExamples examples={[]} listed={0} path="" />)
+    expect(html).not.toContain('Load more examples')
+    const none = renderToStaticMarkup(<FormExampleList examples={[]} />)
     expect(none).toContain(noFormExamplesMessage)
     expect(noFormExamplesMessage).toBe('No example sentences use this form yet.')
   })
@@ -207,22 +177,33 @@ describe('the conjugation table', () => {
       'Same spelling as A, B, and C. Context tells them apart.'
     )
   })
+})
 
-  test('the part-of-speech row opens the table only when the word has one', () => {
+describe('the Conjugations section', () => {
+  test('starts closed, at #conjugations, with the table inside', () => {
+    const html = renderToStaticMarkup(<ConjugationsSection conjugations={miru} />)
+    expect(html).toMatch(/^<div[^>]* id="conjugations"/)
+    expect(html).toMatch(/<h2[^>]*><button type="button" aria-expanded="false"[^>]*>Conjugations/)
+    const panel = html.match(/aria-controls="([^"]+)"/)?.[1]
+    expect(html).toContain(`<div id="${panel}" hidden="" class="pt-4"><div`)
+    expect(html).toContain('data-conjugation-table="true"')
+  })
+
+  test('the part-of-speech row links to it only when the word has a table', () => {
     const header = (data: Conjugations | null) =>
       renderToStaticMarkup(
         <WordHeader
-          ruby={miruWord.ruby}
+          ruby={rubySegments('見る', 'みる')}
           reading="みる"
-          summary={miruWord.summary}
           pitch={null}
           partOfSpeech="Ichidan verb (transitive)"
           conjugations={data}
-          path={miruPath}
         />
       )
-    expect(header(miru)).toMatch(/<button[^>]* data-opens-conjugations="true"/)
+    expect(header(miru)).toMatch(/<a href="#conjugations" data-opens-conjugations="true"/)
+    expect(header(miru)).toContain('Ichidan verb (transitive)')
     expect(header(null)).not.toContain('data-opens-conjugations')
+    expect(header(null)).toContain('<p class="text-sm">Ichidan verb (transitive)</p>')
   })
 })
 
@@ -239,91 +220,72 @@ interface SuiteCase {
 
 const suiteCases = recordedCases<SuiteCase>('word-detail.json')
 
-describe.runIf(gateEnabled)('the rendered conjugation pages match the app', () => {
+describe.runIf(gateEnabled)('the rendered Conjugations section matches the app', () => {
   test.each(suiteCases)('$covers', async expected => {
     const service = gateService()
     const entSeq = Number(expected.entSeq[0])
     const page = await service.word(entSeq)
     if (!page) throw new Error(`No word ${entSeq}`)
-    const pageDetail = wordDetail(page.data.rows)
+    const detail = wordDetail(page.data.rows)
     const header = renderToStaticMarkup(
       <WordHeader
-        ruby={pageDetail.ruby}
-        reading={pageDetail.reading}
-        summary={pageDetail.summary}
-        pitch={pageDetail.pitch}
-        partOfSpeech={pageDetail.partOfSpeech}
-        conjugations={pageDetail.conjugations}
-        path={storedWordPath(page.data.slug, entSeq)}
+        ruby={detail.ruby}
+        reading={detail.reading}
+        pitch={detail.pitch}
+        partOfSpeech={detail.partOfSpeech}
+        conjugations={detail.conjugations}
       />
     )
     expect(header.includes('data-opens-conjugations')).toBe(expected.opensConjugations)
-    const word = await service.conjugationWord(entSeq)
-    if (!word) {
-      expect(expected.conjugations).toBeUndefined()
-      expect(pageDetail.conjugations).toBeNull()
-      return
-    }
-    const detail = wordDetail(word.data.rows)
-    const path = storedWordPath(word.data.slug, detail.entSeq)
     const suite = expected.conjugations
-    if (!suite || !detail.conjugations) {
-      expect(detail.conjugations).toBeNull()
-      return
-    }
+    expect(detail.conjugations !== null).toBe(suite !== undefined)
+    if (!suite || !detail.conjugations) return
     const data = detail.conjugations
-    const word_: ConjugationWord = {
-      ruby: detail.ruby,
-      reading: detail.reading,
-      summary: detail.summary,
-      partOfSpeech: detail.partOfSpeech,
-      pitch: detail.pitch
-    }
+    const drawn = table(data)
+    expect({ rule: drawn.rule, modes: drawn.modes }).toEqual({
+      rule: suite.rule,
+      modes: suite.modes
+    })
     const registers: [ConjugationMode, SuiteForm[]][] = [
       ['Plain', suite.plain],
       ...(suite.polite ? [['Polite', suite.polite] as [ConjugationMode, SuiteForm[]]] : [])
     ]
+    expect(Object.keys(drawn.registers)).toEqual(registers.map(([mode]) => mode))
     for (const [mode, forms] of registers) {
-      const drawn = readConjugationTable(table(word_, data, mode, path))
-      expect({ summary: drawn.summary, rule: drawn.rule, modes: drawn.modes }).toEqual({
-        summary: suite.summary,
-        rule: suite.rule,
-        modes: suite.modes
-      })
-      expect(drawn.rows).toEqual(
+      const register = drawn.registers[mode]
+      expect(register.hidden).toBe(mode !== 'Plain')
+      expect(register.rows).toEqual(
         forms.map(({ kind, title, surface, ending, rowFurigana }) => ({
           kind,
           title,
           surface,
           ending,
-          rowFurigana,
-          href: conjugatedFormPath(path, mode, kind)
+          rowFurigana
         }))
       )
-      for (const [index, row] of data.rows[mode].entries()) {
-        const recorded = forms[index]
-        const form = readConjugatedForm(renderToStaticMarkup(<ConjugatedFormContent row={row} />))
-        expect(form).toEqual({
+      expect(register.forms).toEqual(
+        forms.map(recorded => ({
           explanation: recorded.explanation,
           sharedSpelling: recorded.sharedSpellings
             ? sharedSpellingNote(recorded.sharedSpellings)
             : null,
           furigana: recorded.furigana,
           ending: recorded.ending
-        })
-        const { data: found } = await service.formExamples(row.surface, 0, examplesPerPage)
+        }))
+      )
+      for (const [index, row] of data.rows[mode].entries()) {
+        const recorded = forms[index]
+        const { data: found } = await service.formExamples(row.surface, 0, exampleLimit)
         expect(found.listed).toBe(recorded.examples.ids.length)
         const links = serviceLinks(found.slugs, [])
         const html = renderToStaticMarkup(
-          <ConjugatedFormExamples
+          <FormExampleList
             examples={found.rows.map(rows => pageExample(formExample(rows), links))}
-            listed={found.listed}
-            path="/dictionary/examples/forms/form.json?build=b"
           />
         )
         const examples = readExamples(html)
         expect(examples.map(example => `esp1_${example.pairId}`)).toEqual(
-          recorded.examples.ids.slice(0, examplesPerPage)
+          recorded.examples.ids.slice(0, exampleLimit)
         )
         if (recorded.examples.ids.length === 0) expect(html).toContain(noFormExamplesMessage)
         for (const [position, shown] of recorded.examples.shown.entries()) {

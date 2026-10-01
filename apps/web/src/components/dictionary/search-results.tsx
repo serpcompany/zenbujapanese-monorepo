@@ -1,12 +1,18 @@
+import { exampleCountText } from '@zenbu/dictionary-core/detail/examples'
 import { ChevronRightIcon, SearchIcon } from 'lucide-react'
 import Link from 'next/link'
 import { Fragment, type ReactNode } from 'react'
+import { Disclosure } from '@/components/dictionary/disclosure'
+import { ExampleList } from '@/components/dictionary/example-list'
 import { FrequencyBadges } from '@/components/dictionary/frequency'
+import { KanjiDetails } from '@/components/dictionary/kanji-details'
 import { RubyText } from '@/components/dictionary/ruby-text'
 import { Card } from '@/components/ui/card'
 import { Empty, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from '@/components/ui/empty'
 import { Item, ItemActions, ItemContent, ItemGroup, ItemSeparator } from '@/components/ui/item'
-import type { SearchData, SearchWord } from '@/lib/dictionary/data'
+import type { SearchData, SearchExamplesData, SearchWord } from '@/lib/dictionary/data'
+
+export const searchExamplesAnchor = 'examples'
 
 function Row({
   path,
@@ -58,9 +64,58 @@ function NoResults() {
   )
 }
 
-export function SearchResults({ data }: { data: SearchData }) {
+function KanjiRow({
+  kanji
+}: {
+  kanji: NonNullable<Extract<SearchData, { state: 'results' }>['kanji']>
+}) {
+  const summary = (
+    <>
+      <span lang="ja" className="text-4xl font-light">
+        {kanji.character}
+      </span>
+      <span className="flex flex-col gap-0.5" data-kanji-row={kanji.character}>
+        <span className="text-xs font-bold">{kanji.label}</span>
+        <span>{kanji.summary}</span>
+      </span>
+    </>
+  )
+  return kanji.details ? (
+    <Disclosure
+      label={`${kanji.character}, kanji, ${kanji.summary}, shows kanji details`}
+      buttonClassName="rounded-none px-4 py-3"
+      summary={summary}
+    >
+      <div className="px-4 pt-2 pb-4">
+        <KanjiDetails kanji={kanji.details} />
+      </div>
+    </Disclosure>
+  ) : (
+    <div className="flex items-center gap-3 px-4 py-3">{summary}</div>
+  )
+}
+
+export function SearchExamplesSection({ data }: { data: SearchExamplesData }) {
+  return (
+    <Card id={searchExamplesAnchor} className="scroll-mt-4 px-4" data-section="searchExamples">
+      <div className="flex flex-col gap-1">
+        <h2 className="font-semibold">Example Sentences</h2>
+        <p className="text-sm text-muted-foreground">{exampleCountText(data)}</p>
+      </div>
+      <ExampleList initial={data.examples} listed={data.listed} path={data.examplesPath} />
+    </Card>
+  )
+}
+
+export function SearchResults({
+  data,
+  examples = null
+}: {
+  data: SearchData
+  examples?: SearchExamplesData | null
+}) {
   if (data.state === 'noResults') return <NoResults />
-  const { query, kanji, rows, readingRefinement, examples } = data
+  const { query, kanji, rows, readingRefinement } = data
   const discovered = data.sections.includes('discoveredWords')
   const listed = data.sections.includes('results') || discovered
   return (
@@ -71,11 +126,17 @@ export function SearchResults({ data }: { data: SearchData }) {
           {query}
         </span>
       </p>
-      {examples ? (
+      {data.examples && (data.examples.target.kind === 'word' || examples) ? (
         <Card className="py-0" data-section="examples">
-          <Row path={examples.path}>
+          <Row
+            path={
+              data.examples.target.kind === 'word'
+                ? data.examples.target.path
+                : `#${searchExamplesAnchor}`
+            }
+          >
             <ItemContent>
-              <p className="font-semibold">{examples.title}</p>
+              <p className="font-semibold">{data.examples.title}</p>
             </ItemContent>
           </Row>
         </Card>
@@ -98,17 +159,7 @@ export function SearchResults({ data }: { data: SearchData }) {
         <Card className="py-2" data-section={discovered ? 'discoveredWords' : 'results'}>
           <ItemGroup className="gap-0">
             {discovered ? <h2 className="px-4 py-2 font-semibold">Discovered Words</h2> : null}
-            {kanji ? (
-              <Row path={kanji.path}>
-                <span lang="ja" className="text-4xl font-light">
-                  {kanji.character}
-                </span>
-                <ItemContent className="gap-0.5" data-kanji-row={kanji.character}>
-                  <p className="text-xs font-bold">{kanji.label}</p>
-                  <p>{kanji.summary}</p>
-                </ItemContent>
-              </Row>
-            ) : null}
+            {kanji ? <KanjiRow kanji={kanji} /> : null}
             {rows.map((word, position) => (
               <Fragment key={word.id}>
                 {position > 0 || kanji ? <ItemSeparator className="my-0" /> : null}
@@ -118,6 +169,7 @@ export function SearchResults({ data }: { data: SearchData }) {
           </ItemGroup>
         </Card>
       ) : null}
+      {examples ? <SearchExamplesSection data={examples} /> : null}
     </>
   )
 }

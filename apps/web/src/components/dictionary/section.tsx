@@ -1,9 +1,17 @@
 import type { ReactNode } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 
-export function Section({ title, children }: { title: string; children: ReactNode }) {
+export function Section({
+  title,
+  id,
+  children
+}: {
+  title: string
+  id?: string
+  children: ReactNode
+}) {
   return (
-    <Card>
+    <Card id={id} className={id ? 'scroll-mt-4' : undefined}>
       <CardHeader>
         <CardTitle>{title}</CardTitle>
       </CardHeader>

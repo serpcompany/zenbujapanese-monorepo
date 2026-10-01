@@ -11,8 +11,12 @@ test.describe('URLs', () => {
   for (const [from, to] of [
     ['/dictionary/1546640/', needed.path],
     [encodeURI('/dictionary/要らない-1546640/'), needed.path],
-    ['/dictionary/1546640/conjugations/plain/past/', `${needed.path}conjugations/plain/past/`],
     ['/dictionary/search/IRU/', '/dictionary/search/iru/'],
+    [encodeURI('/dictionary/kanji/要/'), encodeURI('/dictionary/search/要/')],
+    [`${needed.path}conjugations/`, needed.path],
+    [`${needed.path}conjugations/plain/past/`, needed.path],
+    [`${needed.path}conjugations/polite/te-form/`, needed.path],
+    ['/dictionary/search/iru/examples/', '/dictionary/search/iru/'],
     ['/support', '/support/'],
     ['/robots.txt/', '/robots.txt']
   ]) {
@@ -46,12 +50,20 @@ test.describe('URLs', () => {
   }
 
   for (const path of [
+    '/dictionary/search/conjugations/',
+    '/dictionary/search/conjugations/examples.json?build=fixtures&from=0'
+  ]) {
+    test(`${path} is the search's own, not a removed conjugation page`, async ({ request }) => {
+      const response = await request.get(path, { maxRedirects: 0 })
+      expect(response.status()).not.toBe(308)
+    })
+  }
+
+  for (const path of [
     '/dictionary/999999999/',
     '/dictionary/0/',
-    `${needed.path}conjugations/plain/`,
-    `${needed.path}conjugations/plain/not-a-form/`,
-    encodeURI('/dictionary/kanji/犬/'),
-    encodeURI('/dictionary/kanji/要要/')
+    '/sitemaps/kanji.xml',
+    '/sitemaps/conjugations.xml'
   ]) {
     test(`${decodeURI(path)} is 404`, async ({ request }) => {
       expect((await request.get(path, { maxRedirects: 0 })).status()).toBe(404)

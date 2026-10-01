@@ -3,10 +3,10 @@ import { DictionaryBreadcrumbs } from '@/components/dictionary/dictionary-breadc
 import { SearchForm } from '@/components/dictionary/search-form'
 import { SearchResults } from '@/components/dictionary/search-results'
 import { SourceCredits } from '@/components/dictionary/source-credits'
-import { searchDictionary } from '@/lib/dictionary/data'
+import { getSearchExamples, searchDictionary } from '@/lib/dictionary/data'
 import { dictionaryMetadata } from '@/lib/dictionary/metadata'
 import { isIndexable } from '@/lib/dictionary/results/links'
-import { pageSources } from '@/lib/dictionary/sources'
+import { pageSources, withShownData } from '@/lib/dictionary/sources'
 import { searchPath } from '@/lib/dictionary/urls'
 import { searchQuery } from './query'
 
@@ -30,14 +30,25 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
 export default async function SearchResultsPage({ params }: Props) {
   const data = await load(params, false)
+  const examples =
+    data.state === 'results' && data.examples?.target.kind === 'inline'
+      ? await getSearchExamples(data.query)
+      : null
   return (
     <main className="mx-auto flex w-full max-w-2xl flex-col gap-4 px-4 pt-4 pb-6">
       <DictionaryBreadcrumbs
         page={{ label: `Search: ${data.query}`, path: searchPath(data.query), lang: 'ja' }}
       />
       <SearchForm defaultValue={data.query} />
-      <SearchResults data={data} />
-      {data.state === 'results' ? <SourceCredits sources={pageSources.search} /> : null}
+      <SearchResults data={data} examples={examples} />
+      {data.state === 'results' ? (
+        <SourceCredits
+          sources={withShownData(pageSources.search, {
+            kanji: data.kanji?.details ? [data.kanji.details] : [],
+            examples: examples !== null
+          })}
+        />
+      ) : null}
     </main>
   )
 }

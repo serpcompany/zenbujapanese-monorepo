@@ -18,7 +18,7 @@ Each module ports the app's Swift, in `apps/ios/Modules/Sources/SearchExperience
 | --- | --- | --- |
 | `search/` | Search retrieval: query normalization, deinflection, ranking, full-text phrases, and sentence search through a supplied analyzer. | `LookupClient`, `SearchQuery`, `DictionaryRanking`, `JapaneseDeinflection`, `DictionaryEntry`, `JapaneseTextAnalysisClient` |
 | `results/` | The results screen: the frequency re-sort, rows, chips, and the Example Sentences, reading-refinement, and kanji rows. | `SearchView` (`SearchResultsScreen`), `FrequencyPack` |
-| `detail/` | Word and kanji pages from their rows: furigana, pitch, Frequency Details, conjugations, kanji, and examples. | `WordDetailView`, `KanjiDetailView`, `JapaneseRubyText`, `KanjiReadingSplitter`, `JapaneseConjugationClient`, `ConjugationsView` |
+| `detail/` | Word pages and kanji details from their rows: furigana, pitch, Frequency Details, conjugations, kanji, and examples. | `WordDetailView`, `KanjiDetailView`, `JapaneseRubyText`, `KanjiReadingSplitter`, `JapaneseConjugationClient`, `ConjugationsView` |
 | `examples/` | Example linking, inflection grouping, and the ranks example retrieval shares. | `JapaneseTextAnalysisClient`, `JapaneseInflectionGrouping`, `KuromojiMorphologyClient`, `ExampleSentenceClient` |
 | `artifact/` | Reads `LanguageReferenceData.sqlite3` and its packs with the app's own SQL, checks them, and answers search, word, kanji, example, and sitemap requests (`Dictionary`). | `LookupClient`, `ExampleSentenceClient`, `KanjiLookupClient` |
 | `fixtures/` | Rows exported from the app's data for twelve words and the kanji 要, each word and each of its conjugated forms with its first 50 examples, for local development and tests; never production. | — |
@@ -153,10 +153,11 @@ the app-recorded suites (`apps/ios/LanguageData/Conformance/`) check the port ag
 
 - **Conjugation.** The table is for the first conjugating class among the entry's parts of speech,
   not the first sense's. A row shows furigana only when its ending has kanji (来させる), since the
-  header gives the stem's reading. `canonicalForm` and `indexedForms` decide each form page's
-  canonical URL and which pages search engines may index: a page without examples is only an
-  explanation and the form. The website's product docs say what these pages show
-  ([`dictionary.md`](../../apps/web/docs/product/dictionary.md), Conjugation pages).
+  header gives the stem's reading. The website shows the table in its word page's Conjugations
+  section ([`dictionary.md`](../../apps/web/docs/product/dictionary.md), Word page). `canonicalForm`
+  and `indexedForms` decided the conjugated form pages' canonicals and indexing; ADR 0010 removed
+  those pages, and only the service's unused conjugations sitemap route still calls them, until
+  #552 removes it.
 - **Frequency.** The website uses only the app's default dictionaries, the bundled packs in
   `FrequencyPackCatalog.json`'s order: JLPT levels, then TUBELEX (YouTube). Tiers use Migaku's star
   cutoffs, and JLPT levels map onto the same scale. `frequency.test.ts` pins each pack's
@@ -168,12 +169,12 @@ the app-recorded suites (`apps/ios/LanguageData/Conformance/`) check the port ag
   fits the kanji's KANJIDIC2 on and kun readings, taken without okurigana, with their voiced and
   half-voiced sound changes, and with a final つ, ち, く, or き as a small っ (学 がく → がっ); 々
   reads as the kanji before it.
-- **Kanji pages.** `kanjiWords` groups the entries written with the kanji by semantic fingerprint
+- **Kanji details.** `kanjiWords` groups the entries written with the kanji by semantic fingerprint
   and orders the groups by a headword starting with the kanji, the shortest headword, any common
   entry, the highest rank score, then the fingerprint; each of the first 24 groups shows as its
   entry with the smallest ID (`normalizedEntry`). Stroke data that doesn't decode shows no stroke
   order rather than failing the page, since clients read `KanjiStrokeData.sqlite3` as the app
-  ships it. A character with a variation selector has no kanji page, as in the app.
+  ships it. A character with a variation selector has no kanji details, as in the app.
 - `partOfSpeechPhrase` leaves out "Unclassified", which tells a learner nothing, and a generic
   "Verb", "Noun", or "Adverb" beside a phrase that already says it.
 - `wordSlug` is shared so every client builds the same word URL as the app's share links (ADR
@@ -220,8 +221,8 @@ records keyed by JMdict entry number.
   `supportedTransforms`, reviewed with the re-recorded suites (ADR 0006).
 - `isUnreadableQuery` matches only FTS4's own query parser errors: a bare "syntax error" would hide
   a real SQL bug as no results.
-- A query's examples are cached, so the results page, the examples page, and each page of more
-  share one retrieval. The caches of sentence lists keep a quarter as many entries, since each
+- A query's examples are cached, so the results page's row, its sentences section, and each page
+  of more share one retrieval. The caches of sentence lists keep a quarter as many entries, since each
   holds up to 100 sentences.
 - `KanjiData` refuses kanji files that aren't the versions the core reads, and a kanji with no
   meanings or readings isn't indexable (#465).

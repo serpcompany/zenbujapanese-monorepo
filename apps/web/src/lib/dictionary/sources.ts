@@ -79,16 +79,21 @@ const defaultFrequency = [sources.jlpt, sources.tubelex]
 
 export const pageSources = {
   search: [sources.jmdict, sources.kanjidic2, ...defaultFrequency],
-  searchExamples: [sources.tatoeba, sources.jmdict],
-  word: [sources.jmdict, sources.unidic, sources.kanjidic2, ...defaultFrequency, sources.tatoeba],
-  kanji: [sources.kanjidic2, sources.radkfile, sources.kanjium, sources.jmdict],
-  conjugations: [sources.jmdict, sources.unidic, sources.kanjidic2],
-  conjugatedForm: [sources.jmdict, sources.kanjidic2, sources.tatoeba],
-  kanjiWithStrokes: [
-    sources.kanjidic2,
-    sources.radkfile,
-    sources.kanjivg,
-    sources.kanjium,
-    sources.jmdict
+  word: [sources.jmdict, sources.unidic, sources.kanjidic2, ...defaultFrequency, sources.tatoeba]
+}
+
+export function withShownData(
+  base: readonly Source[],
+  shown: { kanji: readonly { strokeOrder: unknown }[]; examples?: boolean }
+): Source[] {
+  const extra = [
+    ...(shown.kanji.length > 0 ? [sources.kanjidic2, sources.radkfile] : []),
+    ...(shown.kanji.some(kanji => kanji.strokeOrder) ? [sources.kanjivg] : []),
+    ...(shown.kanji.length > 0 ? [sources.kanjium] : []),
+    ...(shown.examples ? [sources.tatoeba] : [])
+  ]
+  return [
+    ...base,
+    ...extra.filter((source, index) => !base.includes(source) && extra.indexOf(source) === index)
   ]
 }
