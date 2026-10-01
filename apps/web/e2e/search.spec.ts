@@ -14,12 +14,12 @@ test.describe('search', () => {
     ).toHaveValue('iru')
   })
 
-  for (const query of ['iru', 'いる']) {
+  for (const query of ['iru', 'いる', '要']) {
     test(`lists ${query}'s words in the app's order`, async ({ page }) => {
       await page.goto(`/dictionary/search/${encodeURIComponent(query)}/`)
       const hrefs = await page
         .getByRole('main')
-        .locator('a')
+        .getByRole('link')
         .evaluateAll(links => links.map(link => link.getAttribute('href') ?? ''))
       expect(hrefs.filter(href => /^\/dictionary\/[^/]+-\d+\/$/.test(href))).toEqual(
         searchOrder(query).map(word => decodeURI(word.path))

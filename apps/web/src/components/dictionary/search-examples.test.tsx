@@ -2,14 +2,14 @@ import { examplesPerPage, wordExample } from '@zenbu/dictionary-core/detail/exam
 import { renderToStaticMarkup } from 'react-dom/server'
 import { describe, expect, test } from 'vitest'
 import type { PageExample, SearchExamplesData } from '@/lib/dictionary/data'
-import { searchExamplesIndexable } from '@/lib/dictionary/data'
 import { type Links, pageExample, serviceLinks } from '@/lib/dictionary/page-example'
 import { normalizeSearchQuery, searchPath } from '@/lib/dictionary/urls'
 import { gateEnabled, gateService, recordedCases } from './gate'
 import { readRenderedExamples, visibleText } from './rendered'
-import { SearchExamples } from './search-examples'
+import { SearchExamplesSection } from './search-results'
 
-const render = (data: SearchExamplesData) => renderToStaticMarkup(<SearchExamples data={data} />)
+const render = (data: SearchExamplesData) =>
+  renderToStaticMarkup(<SearchExamplesSection data={data} />)
 
 const links: Links = {
   word: entSeq => (entSeq === null ? null : `/dictionary/w-${entSeq}/`),
@@ -53,18 +53,18 @@ const example = (position: number): PageExample =>
     links
   )
 
-describe('the Example Sentences page', () => {
-  test('titles the page with the query and its count, and shows each one', () => {
+describe('a search’s Example Sentences section', () => {
+  test('sits at #examples, titled with its count, and shows each one', () => {
     const html = render({
-      query: '食べた',
+      query: 'eat',
       listed: 60,
       truncated: false,
-      indexable: true,
       examples: Array.from({ length: 25 }, (_, position) => example(position)),
-      examplesPath: '/dictionary/search/%E9%A3%9F%E3%81%B9%E3%81%9F/examples.json?build=b'
+      examplesPath: '/dictionary/search/eat/examples.json?build=b'
     })
-    expect(visibleText(html)).toMatch(/^食べた 60 examples パン/)
-    expect(html).toContain('<h1 lang="ja"')
+    expect(visibleText(html)).toMatch(/^Example Sentences 60 examples パン/)
+    expect(html).toMatch(/^<div[^>]* id="examples"[^>]*data-section="searchExamples"/)
+    expect(html).toContain('<h2 class="font-semibold">Example Sentences</h2>')
     const [first, ...rest] = readRenderedExamples(html)
     expect(rest).toHaveLength(24)
     expect(first).toEqual({
@@ -81,27 +81,15 @@ describe('the Example Sentences page', () => {
     expect(visibleText(html)).toContain('Load more examples')
   })
 
-  test('reads an English query as English', () => {
+  test('says when it lists only the first 100 of more', () => {
     const html = render({
-      query: 'eat',
+      query: 'the',
       listed: 100,
       truncated: true,
-      indexable: false,
       examples: [example(0)],
-      examplesPath: '/dictionary/search/eat/examples.json?build=b'
+      examplesPath: '/dictionary/search/the/examples.json?build=b'
     })
-    expect(html).toContain('<h1 class=')
-    expect(visibleText(html)).toMatch(/^eat The first 100 of more than 100 examples/)
-  })
-})
-
-describe('whether search engines may index the page', () => {
-  test('only a direct Japanese search’s', () => {
-    expect(searchExamplesIndexable('食べた', false)).toBe(true)
-    expect(searchExamplesIndexable('食べた', true)).toBe(false)
-    expect(searchExamplesIndexable('miru', true)).toBe(false)
-    expect(searchExamplesIndexable('eat', false)).toBe(false)
-    expect(searchExamplesIndexable('ｅａｔ', false)).toBe(false)
+    expect(visibleText(html)).toMatch(/^Example Sentences The first 100 of more than 100 examples/)
   })
 })
 
@@ -117,7 +105,7 @@ const rowCases = recordedCases<ResultsCase>('search-results.json').filter(
 const japanese = /[\p{Script=Hiragana}\p{Script=Katakana}\p{Script=Han}]/u
 const exampleSentenceResultCountExactUpTo = 50
 
-describe.runIf(gateEnabled)('the search examples page matches its Example Sentences row', () => {
+describe.runIf(gateEnabled)('a search’s examples match its Example Sentences row', () => {
   test.each(rowCases)('「$query」', async expected => {
     const row = expected.examples
     if (!row) throw new Error('no examples row')
@@ -163,7 +151,7 @@ const exampleSearchCases = recordedCases<ExampleSearchCase>('example-search.json
   expected => renderedQueries.includes(expected.query)
 )
 
-describe.runIf(gateEnabled)('the rendered Example Sentences page matches the app', () => {
+describe.runIf(gateEnabled)('the rendered Example Sentences section matches the app', () => {
   test('renders every chosen case', () => {
     expect(exampleSearchCases.map(expected => expected.query).sort()).toEqual(
       [...renderedQueries].sort()
@@ -194,7 +182,6 @@ describe.runIf(gateEnabled)('the rendered Example Sentences page matches the app
       query: found.data.query,
       listed: found.data.listed,
       truncated: found.data.truncated,
-      indexable: searchExamplesIndexable(query, found.data.usesPrimaryEntryExamples),
       examples: first.examples,
       examplesPath: `${searchPath(query)}examples.json?build=${found.build}`
     }
@@ -213,7 +200,7 @@ describe.runIf(gateEnabled)('the rendered Example Sentences page matches the app
     }
     expect(pairIds).toEqual(ids)
     expect(loaded.map(example => example.position)).toEqual(ids.map((_, position) => position))
-    expect(visibleText(html)).toContain(ids.length > examplesPerPage ? 'Load more examples' : query)
+    expect(visibleText(html).includes('Load more examples')).toBe(ids.length > examplesPerPage)
 
     for (const [index, shown] of (expected.shown ?? []).entries()) {
       const example = rendered[index]

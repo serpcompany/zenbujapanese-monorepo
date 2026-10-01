@@ -18,7 +18,7 @@ Pick the smallest setup that shows the change. Run one site at a time on this ma
 
 - **On fixtures**: `pnpm dev` in `apps/web` serves `http://localhost:3000/`. Without a dictionary
   service, dictionary pages read the local fixtures (`packages/dictionary-core/src/fixtures/`):
-  twelve words and the kanji 要, such as `/dictionary/要る-1546640/` and `/dictionary/kanji/要/`,
+  twelve words and the kanji 要, such as `/dictionary/要る-1546640/` and `/dictionary/search/要/`,
   and searches that find them, such as `/dictionary/search/いる/`. Other words are 404s here.
 - **On the whole dictionary**: start the dictionary service first (`pnpm dev` in
   `apps/dictionary-api`, set up as in `docs/agents/dictionary-api.md`, Run it), wait until

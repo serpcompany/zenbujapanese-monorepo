@@ -3,7 +3,7 @@ import type { PitchAccent as PitchAccentData } from '@zenbu/dictionary-core/deta
 import type { RubySegment } from '@zenbu/dictionary-core/detail/ruby'
 import { Card, CardContent } from '@/components/ui/card'
 import { Separator } from '@/components/ui/separator'
-import { ConjugationsButton } from './conjugations'
+import { ConjugationsLink } from './conjugations'
 import { HeadwordRuby } from './headword-ruby'
 import { PitchAccent } from './pitch-accent'
 import { PronounceButton } from './pronounce-button'
@@ -11,19 +11,15 @@ import { PronounceButton } from './pronounce-button'
 export function WordHeader({
   ruby,
   reading,
-  summary,
   pitch,
   partOfSpeech,
-  conjugations,
-  path
+  conjugations
 }: {
   ruby: RubySegment[]
   reading: string
-  summary: string
   pitch: PitchAccentData | null
   partOfSpeech: string
   conjugations: Conjugations | null
-  path: string
 }) {
   return (
     <Card>
@@ -39,11 +35,7 @@ export function WordHeader({
         {conjugations ? (
           <>
             <Separator />
-            <ConjugationsButton
-              word={{ ruby, reading, summary, partOfSpeech, pitch }}
-              conjugations={conjugations}
-              wordPath={path}
-            />
+            <ConjugationsLink partOfSpeech={partOfSpeech} />
           </>
         ) : partOfSpeech ? (
           <>

@@ -1,10 +1,11 @@
 import { conjugations } from '@zenbu/dictionary-core/detail/conjugation'
+import { formExample } from '@zenbu/dictionary-core/detail/examples'
 import { frequencyRowDetails } from '@zenbu/dictionary-core/detail/frequency'
-import { rubySegments } from '@zenbu/dictionary-core/detail/ruby'
 import { act } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
-import { ConjugationsButton, ConjugationTable } from './conjugations'
+import { pageExample } from '@/lib/dictionary/page-example'
+import { ConjugationsLink, ConjugationsSection } from './conjugations'
 import { FrequencySection } from './frequency-section'
 import { HeadwordRuby } from './headword-ruby'
 
@@ -104,145 +105,154 @@ describe('the Frequency section', () => {
   })
 })
 
-describe('the conjugations sheet', () => {
-  test('the part of speech opens it; Polite switches register; a row opens its form; Back returns', async () => {
-    const data = conjugations(
-      { headword: '見る', reading: 'みる', partsOfSpeech: ['ichidanVerb', 'transitive'] },
-      new Map()
-    )
-    if (!data) throw new Error('見る has no table')
-    const fetcher = vi.fn(async (_url: string) => Response.json({ examples: [] }))
-    vi.stubGlobal('fetch', fetcher)
-    act(() =>
-      root.render(
-        <ConjugationsButton
-          word={{
-            ruby: rubySegments('見る', 'みる'),
-            reading: 'みる',
-            summary: 'to see',
-            partOfSpeech: 'Ichidan verb (transitive)',
-            pitch: null
-          }}
-          conjugations={data}
-          wordPath="/dictionary/見る-1259290/"
-        />
-      )
-    )
-    const click = async (selector: string) => {
-      const element = document.querySelector<HTMLElement>(selector)
-      if (!element) throw new Error(`Nothing matches ${selector}`)
-      await act(async () => element.click())
-    }
-    const surfaces = () =>
-      [...document.querySelectorAll('[data-conjugation-surface]')].map(node => node.textContent)
-    const pageLink = () =>
-      decodeURI(document.querySelector('[data-conjugation-page-link]')?.getAttribute('href') ?? '')
-    await click('[data-opens-conjugations]')
-    expect(document.body.textContent).toContain('Conjugations')
-    expect(surfaces().slice(0, 2)).toEqual(['見る', '見た'])
-    expect(pageLink()).toBe('/dictionary/見る-1259290/conjugations/')
-    await click('[data-conjugation-mode="Polite"]')
-    expect(surfaces().slice(0, 2)).toEqual(['見ます', '見ました'])
-    expect(pageLink()).toBe('/dictionary/見る-1259290/conjugations/#polite')
-    await click('[data-conjugation-row="potential"]')
-    expect(document.querySelector('[data-conjugated-form]')?.textContent).toContain(
-      'Same spelling as Passive.'
-    )
-    expect(fetcher).toHaveBeenCalledWith(
-      `/dictionary/conjugations/${encodeURIComponent('見られます')}.json`
-    )
-    expect(document.querySelector('[data-conjugation-examples]')?.textContent).toContain(
-      'No example sentences use this form yet.'
-    )
-    expect(pageLink()).toBe('/dictionary/見る-1259290/conjugations/polite/potential/')
-    await click('[aria-label="Back to conjugations"]')
-    expect(document.querySelector('[data-conjugated-form]')).toBeNull()
-    expect(surfaces()[0]).toBe('見ます')
-    vi.unstubAllGlobals()
-  })
-})
-
-describe('the conjugation table’s page', () => {
-  const data = conjugations(
+describe('the Conjugations section', () => {
+  const miru = conjugations(
     { headword: '見る', reading: 'みる', partsOfSpeech: ['ichidanVerb', 'transitive'] },
     new Map()
   )
-  const renderTable = () => {
-    if (!data) throw new Error('見る has no table')
+  const wordPath = '/dictionary/見る-1259290/'
+
+  const renderSection = () => {
+    if (!miru) throw new Error('見る has no table')
     act(() =>
       root.render(
-        <ConjugationTable
-          word={{
-            ruby: rubySegments('見る', 'みる'),
-            reading: 'みる',
-            summary: 'to see',
-            partOfSpeech: 'Ichidan verb (transitive)',
-            pitch: null
-          }}
-          conjugations={data}
-          wordPath="/dictionary/見る-1259290/"
-        />
+        <>
+          <ConjugationsLink partOfSpeech="Ichidan verb (transitive)" />
+          <ConjugationsSection conjugations={miru} />
+        </>
       )
     )
   }
-  const rows = () =>
-    [...document.querySelectorAll<HTMLAnchorElement>('[data-conjugation-row]')].map(row => ({
-      surface: row.querySelector('[data-conjugation-surface]')?.textContent,
-      href: decodeURI(row.getAttribute('href') ?? '')
-    }))
+
+  const element = <Found extends HTMLElement>(selector: string) => {
+    const found = document.querySelector<Found>(selector)
+    if (!found) throw new Error(`Nothing matches ${selector}`)
+    return found
+  }
+  const click = async (selector: string) => {
+    const target = element(selector)
+    await act(async () => target.click())
+  }
+  const sectionButton = '#conjugations h2 button'
+  const isOpen = (button: string) => element(button).getAttribute('aria-expanded') === 'true'
+  const shownSurfaces = () =>
+    [
+      ...document.querySelectorAll(
+        '[data-conjugation-rows]:not([hidden]) [data-conjugation-surface]'
+      )
+    ].map(node => node.textContent)
+  const rowButton = (kind: string, mode = 'Plain') =>
+    `[data-conjugation-rows="${mode}"] [data-conjugation-row="${kind}"] > button`
+
+  const examplesFetch = (answer: () => Promise<Response>) => {
+    const fetcher = vi.fn(async (_url: string) => answer())
+    vi.stubGlobal('fetch', fetcher)
+    return fetcher
+  }
+
+  beforeEach(() => {
+    window.history.replaceState(null, '', wordPath)
+  })
 
   afterEach(() => {
     window.history.replaceState(null, '', '/')
+    vi.unstubAllGlobals()
   })
 
-  test('Polite switches register, and each row opens its form in that register', async () => {
-    renderTable()
-    expect(rows().slice(0, 2)).toEqual([
-      { surface: '見る', href: '/dictionary/見る-1259290/conjugations/plain/present-future/' },
-      { surface: '見た', href: '/dictionary/見る-1259290/conjugations/plain/past/' }
-    ])
-    const polite = document.querySelector<HTMLElement>('[data-conjugation-mode="Polite"]')
-    await act(async () => polite?.click())
-    expect(rows().slice(0, 2)).toEqual([
-      { surface: '見ます', href: '/dictionary/見る-1259290/conjugations/polite/present-future/' },
-      { surface: '見ました', href: '/dictionary/見る-1259290/conjugations/polite/past/' }
-    ])
-    expect(window.location.hash).toBe('#polite')
+  test('starts closed, and opens when the address names it', () => {
+    renderSection()
+    expect(isOpen(sectionButton)).toBe(false)
+    act(() => root.unmount())
+    root = createRoot(container)
+    window.history.replaceState(null, '', `${wordPath}#conjugations`)
+    renderSection()
+    expect(isOpen(sectionButton)).toBe(true)
   })
 
-  test('the register goes into the address with null state, so the router keeps it', async () => {
-    window.history.replaceState(
-      { __NA: true, tree: [] },
-      '',
-      '/dictionary/見る-1259290/conjugations/'
-    )
-    const replace = vi.spyOn(window.history, 'replaceState')
-    renderTable()
-    const click = async (mode: string) => {
-      const tab = document.querySelector<HTMLElement>(`[data-conjugation-mode="${mode}"]`)
-      await act(async () => tab?.click())
-    }
-    await click('Polite')
-    expect(replace).toHaveBeenLastCalledWith(
-      null,
-      '',
-      `${encodeURI('/dictionary/見る-1259290/conjugations/')}#polite`
-    )
-    expect(window.history.state).toBeNull()
-    expect(window.location.hash).toBe('#polite')
-    await click('Plain')
-    expect(replace).toHaveBeenLastCalledWith(
-      null,
-      '',
-      encodeURI('/dictionary/見る-1259290/conjugations/')
+  test('the part of speech opens it, and opens it again once it is closed', async () => {
+    renderSection()
+    expect(element('[data-opens-conjugations]').getAttribute('href')).toBe('#conjugations')
+    await click('[data-opens-conjugations]')
+    expect(window.location.hash).toBe('#conjugations')
+    expect(isOpen(sectionButton)).toBe(true)
+    await click(sectionButton)
+    expect(isOpen(sectionButton)).toBe(false)
+    await click('[data-opens-conjugations]')
+    expect(isOpen(sectionButton)).toBe(true)
+  })
+
+  test('Polite switches register, and the other register stays in the page, hidden', async () => {
+    renderSection()
+    await click(sectionButton)
+    expect(shownSurfaces().slice(0, 2)).toEqual(['見る', '見た'])
+    expect(element('[data-conjugation-rows="Polite"]').hidden).toBe(true)
+    await click('[data-conjugation-mode="Polite"]')
+    expect(shownSurfaces().slice(0, 2)).toEqual(['見ます', '見ました'])
+    expect(element('[data-conjugation-rows="Plain"]').hidden).toBe(true)
+    expect(document.querySelectorAll('[data-conjugation-rows="Plain"] li')).toHaveLength(
+      miru?.rows.Plain.length ?? 0
     )
     expect(window.location.hash).toBe('')
-    replace.mockRestore()
   })
 
-  test('opens in Polite when the address names it, as Back from a Polite form does', () => {
-    window.history.replaceState(null, '', '/dictionary/見る-1259290/conjugations/#polite')
-    renderTable()
-    expect(rows()[0].surface).toBe('見ます')
+  test('a row opens its form, which loads its examples once, from the JSON route', async () => {
+    const fetcher = examplesFetch(async () => Response.json({ examples: [] }))
+    renderSection()
+    await click(sectionButton)
+    await click('[data-conjugation-mode="Polite"]')
+    const potential = rowButton('potential', 'Polite')
+    expect(element(potential).getAttribute('aria-label')).toBe('Potential, 見られます, みられます')
+    expect(fetcher).not.toHaveBeenCalled()
+    await click(potential)
+    expect(isOpen(potential)).toBe(true)
+    const form = element('[data-conjugation-rows="Polite"] [data-conjugated-form="potential"]')
+    expect(form.textContent).toContain('Same spelling as Passive.')
+    expect(fetcher).toHaveBeenCalledWith(
+      `/dictionary/conjugations/${encodeURIComponent('見られます')}.json`
+    )
+    const examples = element('[data-conjugation-rows="Polite"] [data-conjugation-examples]')
+    expect(examples.dataset.conjugationExamples).toBe('loaded')
+    expect(examples.textContent).toContain('No example sentences use this form yet.')
+    await click(potential)
+    expect(isOpen(potential)).toBe(false)
+    await click(potential)
+    expect(fetcher).toHaveBeenCalledTimes(1)
+  })
+
+  test('an opened form lists the examples its route returns', async () => {
+    const example = pageExample(
+      formExample({
+        sentence: {
+          id: 7,
+          pairId: '0'.repeat(32),
+          japanese: '見た。',
+          english: 'I saw it.',
+          tokens: [{ text: '見た', reading: 'みた', dictionaryForm: '見る' }, { text: '。' }],
+          japaneseTatoebaId: 1,
+          japaneseContributor: null,
+          japaneseLicense: 'CC BY 2.0 FR',
+          englishTatoebaId: 2,
+          englishContributor: null,
+          englishLicense: 'CC BY 2.0 FR'
+        },
+        example: { surface: '見た', position: 0, sentenceId: 7, highlights: [0], links: [] }
+      }),
+      { word: () => null, kanji: () => null }
+    )
+    examplesFetch(async () => Response.json({ examples: [example] }))
+    renderSection()
+    await click(rowButton('past'))
+    const examples = element('[data-conjugation-rows="Plain"] [data-conjugation-examples]')
+    expect(examples.textContent).toContain('I saw it.')
+    expect(examples.textContent).not.toContain('No example sentences use this form yet.')
+  })
+
+  test('a form says so when its examples can’t load', async () => {
+    examplesFetch(async () => new Response('{}', { status: 503 }))
+    renderSection()
+    await click(rowButton('past'))
+    const examples = element('[data-conjugation-rows="Plain"] [data-conjugation-examples]')
+    expect(examples.dataset.conjugationExamples).toBe('failed')
+    expect(examples.textContent).toContain('Examples couldn’t load. Try again later.')
   })
 })

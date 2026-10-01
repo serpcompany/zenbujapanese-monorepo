@@ -90,9 +90,9 @@ describe('the contract', () => {
   test('caches an answer from its own contract under a key naming the contract', async () => {
     const stored = edgeCache()
     const logged = vi.spyOn(console, 'log').mockImplementation(() => {})
-    expect((await answering(dictionaryContract).indexableKanji()).data).toEqual(['要'])
+    expect((await answering(dictionaryContract).wordSitemaps()).data).toEqual(['要'])
     expect(stored).toEqual([
-      `https://dictionary.example.com/v1/sitemaps/kanji?contract=${dictionaryContract}`
+      `https://dictionary.example.com/v1/sitemaps/words?contract=${dictionaryContract}`
     ])
     expect(logged).not.toHaveBeenCalled()
   })
@@ -100,12 +100,12 @@ describe('the contract', () => {
   test('still serves an answer from another contract, logging it and leaving it out of the cache', async () => {
     const stored = edgeCache()
     const logged = vi.spyOn(console, 'log').mockImplementation(() => {})
-    expect((await answering(dictionaryContract + 1).indexableKanji()).data).toEqual(['要'])
+    expect((await answering(dictionaryContract + 1).wordSitemaps()).data).toEqual(['要'])
     expect(stored).toEqual([])
     expect(JSON.parse(logged.mock.calls[0][0] as string)).toMatchObject({
       level: 'warn',
       message: 'dictionary_contract_mismatch',
-      path: '/v1/sitemaps/kanji',
+      path: '/v1/sitemaps/words',
       service: dictionaryContract + 1,
       site: dictionaryContract
     })

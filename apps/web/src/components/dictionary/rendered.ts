@@ -63,7 +63,7 @@ export function readRenderedPage(html: string): RenderedPage {
   const refinement = html.match(/data-section="readingRefinement"[\s\S]*?<\/p>/)
   const examples = html.match(/data-section="examples"[\s\S]*?<\/p>/)
   const kanji = html.match(
-    /<span lang="ja" class="[^"]*text-4xl[^"]*">([^<]+)<\/span>[\s\S]*?data-kanji-row="[^"]*"[^>]*>([\s\S]*?)<\/div>/
+    /<span lang="ja" class="[^"]*text-4xl[^"]*">([^<]+)<\/span><span[^>]*data-kanji-row="[^"]*"[^>]*>([\s\S]*?)<\/span><\/span>/
   )
   const rows = segments(html, /data-result-row="(\d+)"/g).map(({ value, html: row }) => {
     const headword = row.match(/<span lang="ja"[^>]*>([\s\S]*?)<\/span>\s*<p/)?.[1] ?? ''
@@ -89,7 +89,12 @@ export function readRenderedPage(html: string): RenderedPage {
         }
       : null,
     refinement: refinement ? visibleText(`<x ${refinement[0]}`) : null,
-    kanji: kanji ? { character: visibleText(kanji[1]), text: visibleText(kanji[2]) } : null,
+    kanji: kanji
+      ? {
+          character: visibleText(kanji[1]),
+          text: kanji[2].split('</span>').map(visibleText).filter(Boolean).join(' ')
+        }
+      : null,
     rows,
     noResults: empty && rows.length === 0 ? visibleText(empty[1]) : null
   }

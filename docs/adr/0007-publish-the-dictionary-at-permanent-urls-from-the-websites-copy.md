@@ -41,7 +41,9 @@ A kanji page is `/dictionary/kanji/<character>/`, for example `/dictionary/kanji
 character is the kanji's permanent ID, as it is in the app, which saves a kanji as itself. The
 path is the exact code point and is never Unicode-normalized: 75 KANJIDIC2 characters are
 compatibility ideographs that NFC would turn into a different kanji. A kanji with no meanings or
-readings is `noindex`.
+readings is `noindex`. ([ADR 0010](0010-give-the-dictionary-three-page-types.md) removes kanji
+pages: a kanji's details are shown on the word pages that use it and in a one-kanji search's
+results, and these URLs redirect to that search.)
 
 ## Search pages are indexed
 

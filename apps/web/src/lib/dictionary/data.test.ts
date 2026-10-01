@@ -1,5 +1,4 @@
 import type {
-  ConjugationWordResponse,
   ExamplesResponse,
   FormExamplesResponse,
   KanjiResponse,
@@ -17,11 +16,8 @@ import type {
 } from '@zenbu/dictionary-core/search/search'
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 import {
-  getConjugatedFormPage,
   getConjugationExamples,
-  getConjugationsPage,
-  getFormExamples,
-  getKanjiPage,
+  getKanjiDetails,
   getSearchExamples,
   getWordExamples,
   getWordPage,
@@ -119,11 +115,11 @@ function results(entries: SearchEntry[]): SearchResults {
 function searchAnswer(
   query: string,
   entries: SearchEntry[],
-  { examples = 0, kanjiHasPage = false } = {}
+  { examples = 0 } = {}
 ): SearchResponse {
   return {
     screen: searchResultsScreen(query, results(entries), new Map(), examples),
-    kanjiHasPage
+    kanjiHasPage: false
   }
 }
 
@@ -135,6 +131,13 @@ function rowsOf(data: SearchData) {
 const iruRows = fixtureWordRows.find(rows => rows.entry.entSeq === 1546640)
 const kanameRows = fixtureKanjiRows.find(rows => rows.kanji.character === '要')
 if (!iruRows || !kanameRows) throw new Error('no fixtures for 要る and 要')
+
+const kanjiAnswer: KanjiResponse = {
+  rows: kanameRows,
+  indexable: true,
+  slugs: Object.fromEntries(kanameRows.words.map(row => [row.entSeq, row.headword])),
+  kanjiPages: ['女']
+}
 
 const formRows = (surface: string, count: number): FormExampleRows[] =>
   iruRows.examples.slice(0, count).map(({ sentence, example }) => ({
@@ -160,31 +163,34 @@ describe('searchDictionary', () => {
     expect(data).toMatchObject({ kanji: null, readingRefinement: null, examples: null })
   })
 
-  test('leads with the Example Sentences row, which opens the search’s examples page', async () => {
-    serve({ '/v1/search/eat': searchAnswer('eat', [eat.entry], { examples: 51 }) })
-    const data = await searchDictionary('eat')
-    expect(data).toMatchObject({
+  test('leads with the Example Sentences row: English lists them on the page, Japanese opens the top word’s', async () => {
+    serve({
+      '/v1/search/eat': searchAnswer('eat', [eat.entry], { examples: 51 }),
+      '/v1/search/いる': searchAnswer('いる', [iru, eat.entry], { examples: 3 })
+    })
+    expect(await searchDictionary('eat')).toMatchObject({
       sections: ['examples', 'results'],
-      examples: {
-        count: 51,
-        title: 'View 50+ Example Sentences',
-        path: '/dictionary/search/eat/examples/'
-      }
+      examples: { count: 51, title: 'View 50+ Example Sentences', target: { kind: 'inline' } }
+    })
+    expect(await searchDictionary('いる')).toMatchObject({
+      examples: { target: { kind: 'word', path: '/dictionary/要る-1546640/#examples' } }
     })
   })
 
-  test('links the kanji row when the service says the kanji has a page', async () => {
-    serve({
-      '/v1/search/要': searchAnswer('要', [iru], { kanjiHasPage: true }),
+  test('gives the kanji row the kanji’s details when the service has them', async () => {
+    const requests = serve({
+      '/v1/search/要': searchAnswer('要', [iru]),
+      '/v1/kanji/要': kanjiAnswer,
       '/v1/search/㐂': searchAnswer('㐂', [])
     })
-    expect(await searchDictionary('要')).toMatchObject({
-      kanji: { character: '要', label: 'KANJI', path: '/dictionary/kanji/要/' }
-    })
+    const kaname = await searchDictionary('要')
+    expect(kaname).toMatchObject({ kanji: { character: '要', label: 'KANJI' } })
+    expect(kaname.state === 'results' && kaname.kanji?.details?.meanings[0]).toBe('need')
     expect(await searchDictionary('㐂')).toMatchObject({
-      kanji: { character: '㐂', summary: 'Kanji detail', path: null },
+      kanji: { character: '㐂', summary: 'Kanji detail', details: null },
       rows: []
     })
+    expect(requests).toEqual(['/v1/search/要', '/v1/kanji/要', '/v1/search/㐂', '/v1/kanji/㐂'])
   })
 
   test('shows No Dictionary Matches when nothing matches', async () => {
@@ -197,6 +203,8 @@ describe('searchDictionary', () => {
     expect(rowsOf(data).map(word => word.entSeq)).toEqual([
       1546640, 1577980, 1391500, 1465580, 1322180, 1587780
     ])
+    const kaname = await searchDictionary('要')
+    expect(kaname.state === 'results' && kaname.kanji?.details?.character).toBe('要')
   })
 
   test('fails when the service fails, rather than showing no results', async () => {
@@ -214,11 +222,24 @@ describe('searchDictionary', () => {
   })
 })
 
-describe('word and kanji pages', () => {
+describe('word pages and kanji details', () => {
   test('read the fixtures without a service', async () => {
-    expect((await getWordPage(1546640))?.path).toBe('/dictionary/要る-1546640/')
+    const page = await getWordPage(1546640)
+    expect(page?.path).toBe('/dictionary/要る-1546640/')
+    expect(page?.kanji[0].details?.words).toHaveLength(24)
     expect(await getWordPage(taberuWithoutFixture)).toBeNull()
-    expect((await getKanjiPage('要'))?.words).toHaveLength(24)
+    expect((await getKanjiDetails('要'))?.words).toHaveLength(24)
+    expect(await getKanjiDetails('項')).toBeNull()
+  })
+
+  test('a word’s kanji carry their details, when the dictionary has them', async () => {
+    const page = await getWordPage(1546750)
+    expect(
+      page?.kanji.map(kanji => [kanji.character, kanji.path, kanji.details?.character])
+    ).toEqual([
+      ['要', '/dictionary/search/%E8%A6%81/', '要'],
+      ['項', null, undefined]
+    ])
   })
 
   test('a word page reads the service and links by the slugs it names', async () => {
@@ -249,12 +270,18 @@ describe('word and kanji pages', () => {
       slugs: { 1577980: 'いる', 1546640: '要る' },
       kanjiPages: ['要']
     }
-    serve({ '/v1/words/1546640': answer })
+    const requests = serve({ '/v1/words/1546640': answer, '/v1/kanji/要': kanjiAnswer })
     const page = await getWordPage(1546640)
+    expect(requests).toEqual(['/v1/words/1546640', '/v1/kanji/要'])
     expect(page?.path).toBe('/dictionary/要る-1546640/')
     expect(page?.slug).toBe('要る')
     expect(page?.kanji).toEqual([
-      { character: '要', meaning: 'need, main point', path: '/dictionary/kanji/要/' }
+      {
+        character: '要',
+        meaning: 'need, main point',
+        path: '/dictionary/search/%E8%A6%81/',
+        details: expect.objectContaining({ character: '要' })
+      }
     ])
     expect(page?.related.map(related => related.path)).toEqual(['/dictionary/いる-1577980/', null])
     const tokens = page?.examples.flatMap(example => example.tokens) ?? []
@@ -300,30 +327,33 @@ describe('word and kanji pages', () => {
   test('a number the service lacks has no word page, even when a fixture has it', async () => {
     serve({})
     expect(await getWordPage(1546640)).toBeNull()
-    expect(await getKanjiPage('要')).toBeNull()
+    expect(await getKanjiDetails('要')).toBeNull()
   })
 
-  test('a kanji page reads the service', async () => {
-    const answer: KanjiResponse = {
-      rows: kanameRows,
-      indexable: false,
-      slugs: Object.fromEntries(kanameRows.words.map(row => [row.entSeq, row.headword])),
-      kanjiPages: ['女']
-    }
-    serve({ '/v1/kanji/要': answer })
-    const page = await getKanjiPage('要')
-    expect(page?.words[2].path).toBe('/dictionary/要る-1546640/')
-    expect(page?.elements.map(element => [element.character, element.path])).toEqual([
-      ['女', '/dictionary/kanji/女/'],
+  test('kanji details read the service, and link each kanji to its search', async () => {
+    serve({ '/v1/kanji/要': kanjiAnswer })
+    const details = await getKanjiDetails('要')
+    expect(details?.words[2].path).toBe('/dictionary/要る-1546640/')
+    expect(details?.elements.map(element => [element.character, element.path])).toEqual([
+      ['女', '/dictionary/search/%E5%A5%B3/'],
       ['覀', null]
     ])
-    expect(page?.indexable).toBe(false)
   })
 
   test('a failing service fails the request', async () => {
     serve({ '/v1/words/1546640': 500, '/v1/kanji/要': 500 })
     await expect(getWordPage(1546640)).rejects.toThrow('answered 500')
-    await expect(getKanjiPage('要')).rejects.toThrow('answered 500')
+    await expect(getKanjiDetails('要')).rejects.toThrow('answered 500')
+  })
+
+  test('a word page whose kanji details fail still shows, with that kanji closed, and logs it', async () => {
+    const logged = vi.spyOn(console, 'log').mockImplementation(() => {})
+    const answer: WordResponse = { rows: iruRows, slug: '要る', slugs: {}, kanjiPages: ['要'] }
+    serve({ '/v1/words/1546640': answer, '/v1/kanji/要': 500 })
+    const page = await getWordPage(1546640)
+    expect(page?.kanji.map(kanji => [kanji.character, kanji.details])).toEqual([['要', null]])
+    expect(logged).toHaveBeenCalledWith(expect.stringContaining('"kanji_details_unavailable"'))
+    logged.mockRestore()
   })
 
   test.each([
@@ -332,29 +362,28 @@ describe('word and kanji pages', () => {
   ])('%s fails without a service instead of showing fixtures', async site => {
     vi.stubEnv('SITE_ENV', site)
     await expect(getWordPage(1546640)).rejects.toThrow('DICTIONARY_API_URL isn’t set')
-    await expect(getKanjiPage('要')).rejects.toThrow('DICTIONARY_API_URL isn’t set')
+    await expect(getKanjiDetails('要')).rejects.toThrow('DICTIONARY_API_URL isn’t set')
     await expect(searchDictionary('いる')).rejects.toThrow('DICTIONARY_API_URL isn’t set')
   })
 })
 
-describe('example sentence pages', () => {
-  const sentences = (query = 'eat', usesPrimaryEntryExamples = false): SearchExamplesResponse => ({
-    query,
+describe('example sentences', () => {
+  const sentences = (): SearchExamplesResponse => ({
+    query: 'eat',
     listed: 100,
     truncated: true,
-    usesPrimaryEntryExamples,
+    usesPrimaryEntryExamples: false,
     rows: iruRows.examples.slice(0, 2),
     slugs: { 1546640: '要る' }
   })
 
-  test('a search’s examples page reads the service, and loads more for the same build', async () => {
+  test('a search’s examples read the service, and load more for the same build', async () => {
     serve({ '/v1/search/eat/examples?from=0': sentences() })
     const page = await getSearchExamples('eat')
     expect(page).toMatchObject({
       query: 'eat',
       listed: 100,
       truncated: true,
-      indexable: false,
       examplesPath: '/dictionary/search/eat/examples.json?build=build-1'
     })
     expect(page?.examples).toHaveLength(2)
@@ -363,28 +392,19 @@ describe('example sentence pages', () => {
     )
   })
 
-  test('only a direct Japanese search’s examples page is indexed', async () => {
-    serve({
-      '/v1/search/要る/examples?from=0': sentences('要る'),
-      '/v1/search/要った/examples?from=0': sentences('要った', true)
-    })
-    expect((await getSearchExamples('要る'))?.indexable).toBe(true)
-    expect((await getSearchExamples('要った'))?.indexable).toBe(false)
-  })
-
-  test('a search’s examples page from another build loads no more', async () => {
+  test('a search’s examples from another build load no more', async () => {
     serve({ '/v1/search/eat/examples?from=25': sentences() })
     expect(await getSearchExamples('eat', 25, 'build-0')).toBeNull()
     expect(await getSearchExamples('eat', 25, 'build-1')).not.toBeNull()
   })
 
-  test('a search without examples, or without a service, has no examples page', async () => {
+  test('a search without examples, or without a service, has none', async () => {
     expect(await getSearchExamples('eat')).toBeNull()
     serve({})
     expect(await getSearchExamples('qzxvkj')).toBeNull()
   })
 
-  test('a conjugated form’s examples come from the service, all at once for the sheet', async () => {
+  test('a conjugated form’s examples come from the service, all at once for its row', async () => {
     const answer: FormExamplesResponse = {
       rows: formRows('要ります', 1),
       listed: 1,
@@ -400,92 +420,25 @@ describe('example sentence pages', () => {
   })
 })
 
-describe('conjugation pages', () => {
-  test('a word with a conjugation table has its page, and each form its own', async () => {
-    expect((await getWordPage(1546640))?.conjugationsPath).toBe(
-      '/dictionary/要る-1546640/conjugations/'
-    )
-    expect((await getWordPage(kanameNoun))?.conjugationsPath).toBeNull()
-    expect(await getConjugationsPage(kanameNoun)).toBeNull()
-    expect(await getConjugationsPage(taberuWithoutFixture)).toBeNull()
-    const table = await getConjugationsPage(1546640)
-    expect(table?.conjugationsPath).toBe('/dictionary/要る-1546640/conjugations/')
-    expect(table?.conjugations.rows.Plain.map(row => row.surface).slice(0, 2)).toEqual([
+describe('conjugations', () => {
+  test('a word page carries its conjugation table, and a noun none', async () => {
+    const page = await getWordPage(1546640)
+    expect(page?.conjugations?.rows.Plain.map(row => row.surface).slice(0, 2)).toEqual([
       '要る',
       '要った'
     ])
-    const past = await getConjugatedFormPage(1546640, 'Polite', 'past')
-    expect(past).toMatchObject({
-      mode: 'Polite',
-      row: { surface: '要りました' },
-      formPath: '/dictionary/要る-1546640/conjugations/polite/past/',
-      canonicalPath: '/dictionary/要る-1546640/conjugations/polite/past/'
-    })
-    expect(await getConjugatedFormPage(1546640, 'Plain', 'standalone')).toBeNull()
-    expect(await getConjugatedFormPage(kanameNoun, 'Plain', 'past')).toBeNull()
+    expect(page?.conjugations?.rows.Polite[1].surface).toBe('要りました')
+    expect((await getWordPage(kanameNoun))?.conjugations).toBeNull()
   })
 
-  test('a Polite form spelled as its Plain form names the Plain page as canonical', async () => {
-    const te = await getConjugatedFormPage(1546640, 'Polite', 'te-form')
-    expect(te?.row.surface).toBe('要って')
-    expect(te?.formPath).toBe('/dictionary/要る-1546640/conjugations/polite/te-form/')
-    expect(te?.canonicalPath).toBe('/dictionary/要る-1546640/conjugations/plain/te-form/')
-  })
-
-  test('a form spelled as an earlier one in its register names it as canonical', async () => {
-    const passive = await getConjugatedFormPage(1577980, 'Plain', 'passive')
-    expect(passive?.row.surface).toBe('いられる')
-    expect(passive?.canonicalPath).toBe('/dictionary/いる-1577980/conjugations/plain/potential/')
-    const potential = await getConjugatedFormPage(1577980, 'Plain', 'potential')
-    expect(potential?.canonicalPath).toBe(potential?.formPath)
-  })
-
-  test('a form page shows its first 25 examples, and the rest load 25 at a time', async () => {
-    const form = await getConjugatedFormPage(1465580, 'Plain', 'present-future')
-    expect(form?.examples).toHaveLength(25)
-    expect(form?.listed).toBe(50)
-    expect(form?.examples[0].tokens.some(token => token.isPageWord)).toBe(true)
-    expect(form?.examplesPath).toBe(
-      `/dictionary/examples/forms/${encodeURIComponent('入る')}.json?build=fixtures`
+  test('a form’s examples come from the fixtures without a service, all at once', async () => {
+    const examples = await getConjugationExamples('入る')
+    expect(examples).toHaveLength(50)
+    expect(examples.map(example => example.position)).toEqual(
+      Array.from({ length: 50 }, (_, index) => index)
     )
-    const more = await getFormExamples('入る', 25, 'fixtures')
-    expect(more?.map(example => example.position)).toEqual(
-      Array.from({ length: 25 }, (_, index) => 25 + index)
-    )
-    expect(await getFormExamples('入る', 25, 'build-0')).toBeNull()
-    expect((await getConjugatedFormPage(1546640, 'Plain', 'imperative'))?.listed).toBe(0)
-  })
-
-  test('conjugation pages read the service', async () => {
-    const word: ConjugationWordResponse = {
-      rows: { ...iruRows, examples: [], exampleCount: null },
-      slug: '要る'
-    }
-    const examples: FormExamplesResponse = {
-      rows: formRows('要った', 2),
-      listed: 30,
-      slugs: { 1546640: '要る' }
-    }
-    const requests = serve({
-      '/v1/words/1546640/conjugations': word,
-      '/v1/conjugations/要った/examples?from=0&limit=25': examples,
-      '/v1/conjugations/要った/examples?from=25&limit=25': examples
-    })
-    const form = await getConjugatedFormPage(1546640, 'Plain', 'past')
-    expect(requests).toEqual([
-      '/v1/words/1546640/conjugations',
-      '/v1/conjugations/要った/examples?from=0&limit=25'
-    ])
-    expect(form?.listed).toBe(30)
-    expect(form?.examples[0].tokens.find(token => token.isPageWord)?.path).toBe(
-      '/dictionary/要る-1546640/'
-    )
-    expect(form?.examplesPath).toBe(
-      `/dictionary/examples/forms/${encodeURIComponent('要った')}.json?build=build-1`
-    )
-    expect(await getFormExamples('要った', 25, 'build-1')).toHaveLength(2)
-    expect(await getFormExamples('要った', 25, 'build-0')).toBeNull()
-    expect(await getConjugationsPage(kanameNoun)).toBeNull()
+    expect(examples[0].tokens.some(token => token.isPageWord)).toBe(true)
+    expect(await getConjugationExamples('要れ')).toEqual([])
   })
 })
 

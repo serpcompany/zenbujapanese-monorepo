@@ -106,50 +106,80 @@ function visible(html: string): string {
   return htmlText(html).trim()
 }
 
-export interface RenderedConjugationTable {
-  summary: string
-  rule: string
-  modes: string[]
-  rows: {
-    kind: string
-    title: string
-    surface: string
-    ending: string
-    rowFurigana: boolean
-    href: string
-  }[]
-}
-
-export function readConjugationTable(html: string): RenderedConjugationTable {
-  const field = (name: string) =>
-    textWithFurigana(html.match(new RegExp(`${name}="true">([\\s\\S]*?)</p>`))?.[1] ?? '')
-  const modes = [...html.matchAll(/data-conjugation-mode="([^"]+)"/g)].map(([, mode]) => mode)
-  const rows = [
-    ...html.matchAll(
-      /<a([^>]*data-conjugation-row="([^"]+)"[^>]*)><span class="text-muted-foreground">([^<]*)<\/span><span[^>]*data-conjugation-surface="true">([\s\S]*?)<\/span><svg/g
-    )
-  ].map(([, tag, kind, title, surface]) => ({
-    kind,
-    title,
-    surface: visible(surface),
-    ending: endings(surface),
-    rowFurigana: surface.includes('<ruby'),
-    href: attribute(tag, 'href') ?? ''
-  }))
-  return {
-    summary: field('data-conjugation-summary'),
-    rule: field('data-conjugation-rule'),
-    modes: modes.length > 0 ? modes : ['Plain'],
-    rows
-  }
-}
-
-export function readConjugatedForm(html: string): {
+export interface RenderedConjugatedForm {
   explanation: string
   sharedSpelling: string | null
   furigana: SuiteFurigana[]
   ending: string
-} {
+}
+
+export interface RenderedConjugationRow {
+  kind: string
+  title: string
+  surface: string
+  ending: string
+  rowFurigana: boolean
+}
+
+export interface RenderedConjugationRegister {
+  hidden: boolean
+  rows: RenderedConjugationRow[]
+  forms: RenderedConjugatedForm[]
+}
+
+export interface RenderedConjugationTable {
+  rule: string
+  modes: string[]
+  registers: Record<string, RenderedConjugationRegister>
+}
+
+function markedSlices(html: string, marker: RegExp): { match: RegExpExecArray; html: string }[] {
+  const matches = [...html.matchAll(marker)]
+  return matches.map((match, index) => ({
+    match,
+    html: html.slice(match.index, matches[index + 1]?.index ?? html.length)
+  }))
+}
+
+const conjugationRowSummary =
+  /^<div[^>]*data-conjugation-row="([^"]+)"[^>]*><button[^>]*><span class="text-muted-foreground">([^<]*)<\/span><span[^>]*data-conjugation-surface="true">([\s\S]*?)<\/span><svg/
+
+function readConjugationRegister(html: string): RenderedConjugationRegister {
+  const rows = markedSlices(html, /<div[^>]*data-conjugation-row="/g).map(row => {
+    const summary = row.html.match(conjugationRowSummary)
+    if (!summary) throw new Error('A conjugation row has no title and surface')
+    const [, kind, title, surface] = summary
+    return {
+      row: {
+        kind,
+        title,
+        surface: visible(surface),
+        ending: endings(surface),
+        rowFurigana: surface.includes('<ruby')
+      },
+      form: readConjugatedForm(row.html.slice(summary[0].length))
+    }
+  })
+  return {
+    hidden: attribute(html.match(/^<ul([^>]*)>/)?.[1] ?? '', 'hidden') !== null,
+    rows: rows.map(({ row }) => row),
+    forms: rows.map(({ form }) => form)
+  }
+}
+
+export function readConjugationTable(html: string): RenderedConjugationTable {
+  const modes = [...html.matchAll(/data-conjugation-mode="([^"]+)"/g)].map(([, mode]) => mode)
+  const registers = markedSlices(html, /<ul[^>]*data-conjugation-rows="([^"]+)"/g).map(
+    ({ match, html: register }) => [match[1], readConjugationRegister(register)] as const
+  )
+  return {
+    rule: textWithFurigana(html.match(/data-conjugation-rule="true">([\s\S]*?)<\/p>/)?.[1] ?? ''),
+    modes: modes.length > 0 ? modes : ['Plain'],
+    registers: Object.fromEntries(registers)
+  }
+}
+
+export function readConjugatedForm(html: string): RenderedConjugatedForm {
   const shared = html.match(/data-shared-spelling="true">(?:<svg[\s\S]*?<\/svg>)?([\s\S]*?)<\/p>/)
   const headline = html.match(/<span lang="ja" class="[^"]*text-4xl[^"]*">[\s\S]*?<\/span><button/)
   return {

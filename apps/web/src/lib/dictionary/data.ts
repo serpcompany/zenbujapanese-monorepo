@@ -1,11 +1,5 @@
 import { getCloudflareContext } from '@opennextjs/cloudflare'
 import { isReadableLength } from '@zenbu/dictionary-core/artifact/dictionary'
-import {
-  type ConjugationMode,
-  type ConjugationRow,
-  type Conjugations,
-  canonicalForm
-} from '@zenbu/dictionary-core/detail/conjugation'
 import { examplesPerPage, formExample, wordExample } from '@zenbu/dictionary-core/detail/examples'
 import {
   type KanjiDetail,
@@ -14,9 +8,7 @@ import {
   type KanjiWord,
   kanjiDetail
 } from '@zenbu/dictionary-core/detail/kanji'
-import type { PitchAccent } from '@zenbu/dictionary-core/detail/pitch'
 import type { FrequencyRow, KanjiRows, WordRows } from '@zenbu/dictionary-core/detail/rows'
-import type { RubySegment } from '@zenbu/dictionary-core/detail/ruby'
 import {
   type AlternativeForm,
   type RelatedWord,
@@ -32,13 +24,12 @@ import {
   fixtureWordRows
 } from '@zenbu/dictionary-core/fixtures'
 import {
-  isSingleKanji,
   type SearchResultsScreen,
   searchResultsScreen
 } from '@zenbu/dictionary-core/results/results'
-import { isASCII, normalizeQuery } from '@zenbu/dictionary-core/search/query'
 import type { SearchResults } from '@zenbu/dictionary-core/search/search'
 import { cache } from 'react'
+import { errorFields, log } from '@/lib/log'
 import { isDeployedSite } from '@/lib/site'
 import { type DictionaryApi, dictionaryApi } from './api'
 import {
@@ -50,14 +41,7 @@ import {
   storedWordPath
 } from './page-example'
 import { linkSearchScreen, type SearchData } from './results/links'
-import {
-  conjugatedFormPath,
-  conjugationsPath,
-  kanjiPath,
-  searchPath,
-  wordPath,
-  wordSlug
-} from './urls'
+import { kanjiSearchPath, searchPath, wordPath, wordSlug } from './urls'
 
 export interface WordPageData
   extends Omit<WordDetail, 'alternatives' | 'kanji' | 'alternativeKanji' | 'related' | 'examples'> {
@@ -69,43 +53,23 @@ export interface WordPageData
   related: Linked<RelatedWord>[]
   examples: PageExample[]
   examplesPath: string
-  conjugationsPath: string | null
 }
 
-export interface ConjugationWordData {
-  entSeq: number
-  slug: string
-  headword: string
-  reading: string
-  summary: string
-  partOfSpeech: string
-  ruby: RubySegment[]
-  pitch: PitchAccent | null
-  path: string
-  conjugationsPath: string
+export interface WordPageKanji extends Linked<WordKanji> {
+  details: KanjiDetailsData | null
 }
 
-export interface ConjugationsPageData extends ConjugationWordData {
-  conjugations: Conjugations
+export interface WordPageWithKanji extends Omit<WordPageData, 'kanji' | 'alternativeKanji'> {
+  kanji: WordPageKanji[]
+  alternativeKanji: WordPageKanji[]
 }
 
-export interface ConjugatedFormPageData extends ConjugationWordData {
-  mode: ConjugationMode
-  row: ConjugationRow
-  formPath: string
-  canonicalPath: string
-  examples: PageExample[]
-  listed: number
-  examplesPath: string
-}
-
-export interface KanjiPageData
+export interface KanjiDetailsData
   extends Omit<KanjiDetail, 'readings' | 'components' | 'elements' | 'words'> {
   readings: (Omit<KanjiReading, 'words'> & { words: Linked<KanjiWord>[] })[]
   components: Linked<{ character: string }>[]
   elements: Linked<KanjiElement>[]
   words: Linked<KanjiWord>[]
-  indexable: boolean
 }
 
 export interface SearchExamplesData {
@@ -113,7 +77,6 @@ export interface SearchExamplesData {
   examples: PageExample[]
   listed: number
   truncated: boolean
-  indexable: boolean
   examplesPath: string
 }
 
@@ -129,7 +92,9 @@ const fixtureLinks: Links = {
     return rows ? wordPath(rows.entry) : null
   },
   kanji(character) {
-    return character !== null && kanjiRowsByCharacter.has(character) ? kanjiPath(character) : null
+    return character !== null && kanjiRowsByCharacter.has(character)
+      ? kanjiSearchPath(character)
+      : null
   }
 }
 
@@ -149,9 +114,6 @@ export const examplesPath = (entSeq: number, build: string) =>
 export const moreSearchExamplesPath = (query: string, build: string) =>
   `${searchPath(query)}examples.json?build=${encodeURIComponent(build)}`
 
-export const formExamplesPath = (surface: string, build: string) =>
-  `/dictionary/examples/forms/${encodeURIComponent(surface)}.json?build=${encodeURIComponent(build)}`
-
 function wordPage(rows: WordRows, slug: string, links: Links, build: string): WordPageData {
   const detail = wordDetail(rows)
   const linkKanji = (kanji: WordKanji) => ({ ...kanji, path: links.kanji(kanji.character) })
@@ -164,14 +126,11 @@ function wordPage(rows: WordRows, slug: string, links: Links, build: string): Wo
     alternativeKanji: detail.alternativeKanji.map(linkKanji),
     related: detail.related.map(word => ({ ...word, path: links.word(word.entSeq) })),
     examples: detail.examples.map(example => pageExample(example, links)),
-    examplesPath: examplesPath(detail.entSeq, build),
-    conjugationsPath: detail.conjugations
-      ? conjugationsPath(storedWordPath(slug, detail.entSeq))
-      : null
+    examplesPath: examplesPath(detail.entSeq, build)
   }
 }
 
-function kanjiPage(rows: KanjiRows, indexable: boolean, links: Links): KanjiPageData {
+function kanjiDetails(rows: KanjiRows, links: Links): KanjiDetailsData {
   const detail = kanjiDetail(rows)
   const linkWord = (word: KanjiWord) => ({ ...word, path: links.word(word.entSeq) })
   return {
@@ -185,12 +144,11 @@ function kanjiPage(rows: KanjiRows, indexable: boolean, links: Links): KanjiPage
       ...element,
       path: links.kanji(element.character)
     })),
-    words: detail.words.map(linkWord),
-    indexable
+    words: detail.words.map(linkWord)
   }
 }
 
-export const getWordPage = cache(async (entSeq: number): Promise<WordPageData | null> => {
+const getWordRows = cache(async (entSeq: number): Promise<WordPageData | null> => {
   const api = await dictionaryService()
   if (api) {
     const found = await api.word(entSeq)
@@ -206,6 +164,31 @@ export const getWordPage = cache(async (entSeq: number): Promise<WordPageData | 
     fixtureLinks,
     fixtureBuild
   )
+})
+
+async function detailsIfAvailable(character: string): Promise<KanjiDetailsData | null> {
+  try {
+    return await getKanjiDetails(character)
+  } catch (error) {
+    log('warn', 'kanji_details_unavailable', { character, ...errorFields(error) })
+    return null
+  }
+}
+
+async function withKanjiDetails(kanji: Linked<WordKanji>[]): Promise<WordPageKanji[]> {
+  return Promise.all(
+    kanji.map(async item => ({ ...item, details: await detailsIfAvailable(item.character) }))
+  )
+}
+
+export const getWordPage = cache(async (entSeq: number): Promise<WordPageWithKanji | null> => {
+  const page = await getWordRows(entSeq)
+  if (!page) return null
+  const [kanji, alternativeKanji] = await Promise.all([
+    withKanjiDetails(page.kanji),
+    withKanjiDetails(page.alternativeKanji)
+  ])
+  return { ...page, kanji, alternativeKanji }
 })
 
 export async function getWordExamples(
@@ -228,82 +211,14 @@ export async function getWordExamples(
     .map(row => pageExample(wordExample(row), fixtureLinks))
 }
 
-async function conjugationWord(entSeq: number): Promise<{ rows: WordRows; slug: string } | null> {
-  const api = await dictionaryService()
-  if (api) return (await api.conjugationWord(entSeq))?.data ?? null
-  const rows = wordRowsBySeq.get(entSeq)
-  if (!rows) return null
-  return {
-    rows: { ...rows, examples: [], exampleCount: null },
-    slug: wordSlug(rows.entry.headword, rows.entry.reading)
-  }
-}
-
-export const getConjugationsPage = cache(
-  async (entSeq: number): Promise<ConjugationsPageData | null> => {
-    const word = await conjugationWord(entSeq)
-    if (!word) return null
-    const detail = wordDetail(word.rows)
-    if (!detail.conjugations) return null
-    const path = storedWordPath(word.slug, detail.entSeq)
-    return {
-      entSeq: detail.entSeq,
-      slug: word.slug,
-      headword: detail.headword,
-      reading: detail.reading,
-      summary: detail.summary,
-      partOfSpeech: detail.partOfSpeech,
-      ruby: detail.ruby,
-      pitch: detail.pitch,
-      path,
-      conjugationsPath: conjugationsPath(path),
-      conjugations: detail.conjugations
-    }
-  }
-)
-
-export const getConjugatedFormPage = cache(
-  async (
-    entSeq: number,
-    mode: ConjugationMode,
-    kind: string
-  ): Promise<ConjugatedFormPageData | null> => {
-    const page = await getConjugationsPage(entSeq)
-    if (!page?.conjugations.modes.includes(mode)) return null
-    const row = page.conjugations.rows[mode].find(form => form.kind === kind)
-    if (!row) return null
-    const { conjugations, ...word } = page
-    const canonical = canonicalForm(
-      {
-        plain: conjugations.rows.Plain,
-        polite: conjugations.modes.includes('Polite') ? conjugations.rows.Polite : []
-      },
-      mode,
-      row
-    )
-    const found = await formExamplePage(row.surface, 0, examplesPerPage)
-    return {
-      ...word,
-      mode,
-      row,
-      formPath: conjugatedFormPath(page.path, mode, row.kind),
-      canonicalPath: conjugatedFormPath(page.path, canonical.mode, canonical.kind),
-      examples: found.examples,
-      listed: found.listed,
-      examplesPath: formExamplesPath(row.surface, found.build)
-    }
-  }
-)
-
 async function formExamplePage(
   surface: string,
-  from: number,
   limit: number
 ): Promise<{ examples: PageExample[]; listed: number; build: string }> {
   const api = await dictionaryService()
   if (api) {
     if (!isReadableLength(surface)) return { examples: [], listed: 0, build: '' }
-    const found = await api.formExamples(surface, from, limit)
+    const found = await api.formExamples(surface, 0, limit)
     const links = serviceLinks(found.data.slugs, [])
     return {
       examples: found.data.rows.map(row => pageExample(formExample(row), links)),
@@ -313,40 +228,29 @@ async function formExamplePage(
   }
   const rows = fixtureFormExamples.get(surface) ?? []
   return {
-    examples: rows
-      .slice(from, from + limit)
-      .map(row => pageExample(formExample(row), fixtureLinks)),
+    examples: rows.slice(0, limit).map(row => pageExample(formExample(row), fixtureLinks)),
     listed: rows.length,
     build: fixtureBuild
   }
 }
 
-export async function getFormExamples(
-  surface: string,
-  from: number,
-  build: string
-): Promise<PageExample[] | null> {
-  const found = await formExamplePage(surface, from, examplesPerPage)
-  return found.build === build ? found.examples : null
-}
-
 export async function getConjugationExamples(form: string): Promise<PageExample[]> {
-  return (await formExamplePage(form, 0, exampleLimit)).examples
+  return (await formExamplePage(form, exampleLimit)).examples
 }
 
-export const getKanjiPage = cache(async (character: string): Promise<KanjiPageData | null> => {
-  const api = await dictionaryService()
-  if (api) {
-    const found = await api.kanji(character)
-    if (!found) return null
-    const { rows, indexable, slugs, kanjiPages } = found.data
-    return kanjiPage(rows, indexable, serviceLinks(slugs, kanjiPages))
+export const getKanjiDetails = cache(
+  async (character: string): Promise<KanjiDetailsData | null> => {
+    const api = await dictionaryService()
+    if (api) {
+      const found = await api.kanji(character)
+      if (!found) return null
+      const { rows, slugs, kanjiPages } = found.data
+      return kanjiDetails(rows, serviceLinks(slugs, kanjiPages))
+    }
+    const rows = kanjiRowsByCharacter.get(character)
+    return rows ? kanjiDetails(rows, fixtureLinks) : null
   }
-  const rows = kanjiRowsByCharacter.get(character)
-  if (!rows) return null
-  const { meanings, readings } = rows.kanji
-  return kanjiPage(rows, meanings.length > 0 || readings.length > 0, fixtureLinks)
-})
+)
 
 function searchResults(items: SearchResults['items']): SearchResults {
   return {
@@ -395,12 +299,12 @@ function fixtureScreen(query: string): SearchResultsScreen {
 export const searchDictionary = cache(async (query: string): Promise<SearchData> => {
   const api = await dictionaryService()
   if (!isReadableLength(query)) return { state: 'noResults', query }
-  if (api) {
-    const { screen, kanjiHasPage } = (await api.search(query)).data
-    return linkSearchScreen(screen, { dictionaryLoaded: true, kanjiHasPage })
-  }
-  const kanjiHasPage = isSingleKanji(query) && kanjiRowsByCharacter.has(query)
-  return linkSearchScreen(fixtureScreen(query), { dictionaryLoaded: false, kanjiHasPage })
+  const screen = api ? (await api.search(query)).data.screen : fixtureScreen(query)
+  const kanji =
+    screen.state === 'results' && screen.kanji
+      ? await detailsIfAvailable(screen.kanji.character)
+      : null
+  return linkSearchScreen(screen, { dictionaryLoaded: api !== null, kanji })
 })
 
 export const getSearchExamples = cache(
@@ -415,11 +319,7 @@ export const getSearchExamples = cache(
       examples: found.data.rows.map(row => pageExample(wordExample(row), links)),
       listed: found.data.listed,
       truncated: found.data.truncated,
-      indexable: searchExamplesIndexable(query, found.data.usesPrimaryEntryExamples),
       examplesPath: moreSearchExamplesPath(found.data.query, found.build)
     }
   }
 )
-
-export const searchExamplesIndexable = (query: string, usesPrimaryEntryExamples: boolean) =>
-  !isASCII(normalizeQuery(query)) && !usesPrimaryEntryExamples

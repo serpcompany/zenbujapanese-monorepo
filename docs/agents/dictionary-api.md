@@ -4,7 +4,8 @@
 shared core (`packages/dictionary-core`) on the app's own bundled data and answers every search,
 word, kanji, example, conjugation, sitemap, and retired-entry request the website makes. Nothing is
 precomputed for a release: it reads `LanguageReferenceData.sqlite3` and its packs with the app's own
-SQL when a page asks, and works out the conjugations sitemap once when it starts. Only the website
+SQL when a page asks, and works out the conjugations sitemap once when it starts (unused since ADR
+0010; #552 removes it). Only the website
 calls it, with a bearer token. The website's side is in [`web.md`](web.md), Dictionary.
 
 Run every command below from `apps/dictionary-api`, after `pnpm install` at the repository root.
@@ -88,17 +89,17 @@ the error.
 | --- | --- |
 | `GET /healthz` | No token. 503 while starting; then the build, contract, and features. |
 | `GET /v1/info` | The build, the artifact's name and SHA-256, and the features. |
-| `GET /v1/search/<query>` | The results screen, and whether a one-kanji query's kanji has a page. |
+| `GET /v1/search/<query>` | The results screen, and `kanjiHasPage`, which the website no longer reads (ADR 0010; removed in #552). |
 | `GET /v1/search/<query>/examples?from=` | 25 of the examples the Example Sentences row opens, from `from`. |
-| `GET /v1/words/<ent_seq>` | A word page's rows, its slug, the slugs it links to, and its kanji pages. |
+| `GET /v1/words/<ent_seq>` | A word page's rows, its slug, the slugs it links to, and which kanji have details (`kanjiPages`). |
 | `GET /v1/words/<ent_seq>/examples?from=` | 25 more of a word's examples. |
-| `GET /v1/words/<ent_seq>/conjugations` | What a word's conjugation pages show: its rows without examples, and its slug; 404 for a word without a table. |
+| `GET /v1/words/<ent_seq>/conjugations` | A word's rows without examples, and its slug; 404 for a word without a table. Unused since ADR 0010 removed the conjugation pages; removed in #552. |
 | `GET /v1/conjugations/<form>/examples?from=&limit=` | `limit` (25, at most 100) of a conjugated form's examples from `from`, by its spelling as written, with how many it lists. |
-| `GET /v1/kanji/<character>` | A kanji page's rows, whether it's indexable, and its links. |
+| `GET /v1/kanji/<character>` | A kanji's rows for its details, and its links. Its `indexable`, which the website no longer reads, is removed in #552. |
 | `GET /v1/sitemaps/words` | Each word sitemap's `ent_seq` range. |
 | `GET /v1/sitemaps/words/<n>?after=&limit=` | A sitemap's words after `after`, with their slugs. |
-| `GET /v1/sitemaps/kanji` | Every indexable kanji. |
-| `GET /v1/sitemaps/conjugations` | Every word with a conjugation table, and its form pages search engines may index; 503 until it's worked out. |
+| `GET /v1/sitemaps/kanji` | Every indexable kanji. Unused since ADR 0010 removed the kanji sitemap; removed in #552. |
+| `GET /v1/sitemaps/conjugations` | Every word with a conjugation table, and its forms that list examples; 503 until it's worked out. Unused since ADR 0010 removed the conjugations sitemap; removed in #552. |
 | `GET /v1/retired` | Retired entries and their replacements; empty until #463. |
 
 ## How it runs
@@ -110,7 +111,7 @@ process's environment, which only the main thread can set, so the main thread se
 read-only, checking it, its packs, and Kuromoji's pinned files as they load, and answer calls one
 at a time: SQLite is synchronous, so a slow query holds only its own thread. Each call goes to the
 thread with the fewest in flight, and a thread that dies is replaced. Each thread keeps recent
-searches, word examples, a query's examples, kanji pages, and word lookups in LRU caches, so a
+searches, word examples, a query's examples, kanji details, and word lookups in LRU caches, so a
 page's first request pays for a broad query and the rest don't. The website's edge cache keeps
 answers for 10 minutes on top.
 
@@ -118,7 +119,8 @@ Logs are one JSON object per line on stdout (errors on stderr): each request's m
 pattern, status, and time. Queries never appear in the logs.
 
 Once every thread has loaded, the main thread starts one more worker thread for the conjugations
-sitemap: every JMdict word the core conjugates (20,364), and which of their forms' pages list
+sitemap, which the website stopped reading when ADR 0010 removed its conjugation pages (#552
+removes it): every JMdict word the core conjugates (20,364), and which of their forms' pages list
 examples (13,168). Asking each form as its page does would take hours, so
 `formsWithExamples` (`packages/dictionary-core/src/artifact/conjugation-sitemap.ts`) finds every
 spelling's sentences in one pass over all of them, with a trie of the spellings, ranks each

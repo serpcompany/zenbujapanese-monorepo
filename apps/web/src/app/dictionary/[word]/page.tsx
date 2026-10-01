@@ -1,21 +1,23 @@
 import { exampleCountText, noExamplesMessage } from '@zenbu/dictionary-core/detail/examples'
-import { ChevronRightIcon } from 'lucide-react'
 import type { Metadata } from 'next'
 import Link from 'next/link'
 import { notFound, permanentRedirect } from 'next/navigation'
+import { ConjugationsSection } from '@/components/dictionary/conjugations'
 import { DictionaryBreadcrumbs } from '@/components/dictionary/dictionary-breadcrumbs'
+import { Disclosure } from '@/components/dictionary/disclosure'
 import { ExampleList } from '@/components/dictionary/example-list'
 import { FrequencySection } from '@/components/dictionary/frequency-section'
+import { KanjiDetails } from '@/components/dictionary/kanji-details'
 import { LearnerPrompt } from '@/components/dictionary/learner-prompt'
 import { PageToolbar } from '@/components/dictionary/page-toolbar'
 import { RubyText } from '@/components/dictionary/ruby-text'
 import { Section } from '@/components/dictionary/section'
 import { SourceCredits } from '@/components/dictionary/source-credits'
 import { WordHeader } from '@/components/dictionary/word-header'
-import { Item, ItemActions, ItemContent } from '@/components/ui/item'
-import { getWordPage, type WordPageData } from '@/lib/dictionary/data'
+import { getWordPage, type WordPageData, type WordPageKanji } from '@/lib/dictionary/data'
 import { dictionaryMetadata } from '@/lib/dictionary/metadata'
-import { pageSources } from '@/lib/dictionary/sources'
+import { wordExamplesAnchor } from '@/lib/dictionary/results/links'
+import { pageSources, withShownData } from '@/lib/dictionary/sources'
 import { decodeSegment, parseWordSegment } from '@/lib/dictionary/urls'
 
 type Props = PageProps<'/dictionary/[word]'>
@@ -43,32 +45,40 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   )
 }
 
-function KanjiItems({ kanji }: { kanji: WordPageData['kanji'] }) {
+function KanjiItems({ kanji }: { kanji: WordPageKanji[] }) {
   return (
-    <div className="-mx-3 flex flex-col">
+    <ul className="-mx-2 flex flex-col">
       {kanji.map(item => {
-        const content = (
+        const summary = (
           <>
             <span lang="ja" className="text-2xl font-semibold">
               {item.character}
             </span>
-            <ItemContent className="text-muted-foreground">{item.meaning}</ItemContent>
-            {item.path ? (
-              <ItemActions>
-                <ChevronRightIcon className="size-4 text-muted-foreground" />
-              </ItemActions>
-            ) : null}
+            <span className="text-muted-foreground">{item.meaning}</span>
           </>
         )
-        return item.path ? (
-          <Item key={item.character} render={<Link href={item.path} />}>
-            {content}
-          </Item>
-        ) : (
-          <Item key={item.character}>{content}</Item>
+        return (
+          <li key={item.character}>
+            {item.details ? (
+              <Disclosure
+                data-kanji-row={item.character}
+                label={`${item.character}, ${item.meaning}, shows kanji details`}
+                buttonClassName="px-2 py-2"
+                summary={summary}
+              >
+                <div className="px-2 pt-2 pb-4">
+                  <KanjiDetails kanji={item.details} />
+                </div>
+              </Disclosure>
+            ) : (
+              <div className="flex items-center gap-3 px-2 py-2" data-kanji-row={item.character}>
+                {summary}
+              </div>
+            )}
+          </li>
         )
       })}
-    </div>
+    </ul>
   )
 }
 
@@ -115,11 +125,9 @@ export default async function WordPage({ params }: Props) {
       <WordHeader
         ruby={word.ruby}
         reading={word.reading}
-        summary={word.summary}
         pitch={word.pitch}
         partOfSpeech={word.partOfSpeech}
         conjugations={word.conjugations}
-        path={word.path}
       />
 
       <Section title="Meaning">
@@ -141,6 +149,8 @@ export default async function WordPage({ params }: Props) {
       <Section title="Frequency">
         <FrequencySection rows={word.frequencyRows} />
       </Section>
+
+      {word.conjugations ? <ConjugationsSection conjugations={word.conjugations} /> : null}
 
       {word.alternatives.length > 0 ? (
         <Section title="Alternatives">
@@ -194,7 +204,7 @@ export default async function WordPage({ params }: Props) {
         <LearnerPrompt kind="notes" />
       </Section>
 
-      <Section title="Examples">
+      <Section title="Examples" id={wordExamplesAnchor}>
         {word.exampleCount && word.examples.length > 0 ? (
           <div className="flex flex-col gap-3">
             <p className="text-sm text-muted-foreground">{exampleCountText(word.exampleCount)}</p>
@@ -209,7 +219,13 @@ export default async function WordPage({ params }: Props) {
         )}
       </Section>
 
-      <SourceCredits sources={pageSources.word} />
+      <SourceCredits
+        sources={withShownData(pageSources.word, {
+          kanji: [...word.kanji, ...word.alternativeKanji].flatMap(item =>
+            item.details ? [item.details] : []
+          )
+        })}
+      />
     </main>
   )
 }

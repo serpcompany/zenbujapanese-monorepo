@@ -94,8 +94,6 @@ export function dictionaryApi(
     word: (entSeq: number) => get<DictionaryContract['word']>(`/v1/words/${entSeq}`),
     wordExamples: (entSeq: number, from: number) =>
       get<DictionaryContract['wordExamples']>(`/v1/words/${entSeq}/examples?from=${from}`),
-    conjugationWord: (entSeq: number) =>
-      get<DictionaryContract['conjugationWord']>(`/v1/words/${entSeq}/conjugations`),
     formExamples: (form: string, from: number, limit: number) =>
       required<DictionaryContract['formExamples']>(
         `/v1/conjugations/${segment(form)}/examples?from=${from}&limit=${limit}`
@@ -107,9 +105,6 @@ export function dictionaryApi(
       get<DictionaryContract['sitemapWords']>(
         `/v1/sitemaps/words/${number}?after=${after}&limit=${limit}`
       ),
-    indexableKanji: () => required<DictionaryContract['indexableKanji']>('/v1/sitemaps/kanji'),
-    conjugationSitemap: () =>
-      get<DictionaryContract['conjugationSitemap']>('/v1/sitemaps/conjugations', true),
     retired: () => required<DictionaryContract['retired']>('/v1/retired'),
     health: async (): Promise<ServiceHealth> => {
       const response = await fetcher(

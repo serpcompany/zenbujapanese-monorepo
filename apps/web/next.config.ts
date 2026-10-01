@@ -2,7 +2,7 @@ import { join } from 'node:path'
 import { initOpenNextCloudflareForDev } from '@opennextjs/cloudflare'
 import type { NextConfig } from 'next'
 import type { Redirect } from 'next/dist/lib/load-custom-routes'
-import { movedPages } from './src/lib/moved-pages'
+import { movedPages, removedDictionaryPages } from './src/lib/moved-pages'
 import { isProductionSite } from './src/lib/site'
 
 const wwwHost = { type: 'host', value: 'www.zenbujapanese.com' } as const
@@ -58,7 +58,8 @@ const nextConfig: NextConfig = {
         source,
         destination,
         permanent: true
-      }))
+      })),
+      ...removedDictionaryPages.map(rule => ({ ...rule, permanent: true }))
     ]
   },
   async headers() {

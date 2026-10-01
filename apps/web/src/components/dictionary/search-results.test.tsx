@@ -1,14 +1,25 @@
+import { wordExample } from '@zenbu/dictionary-core/detail/examples'
+import { kanjiDetail } from '@zenbu/dictionary-core/detail/kanji'
+import type { KanjiRows } from '@zenbu/dictionary-core/detail/rows'
 import { rubySegments } from '@zenbu/dictionary-core/detail/ruby'
+import { fixtureKanjiRows } from '@zenbu/dictionary-core/fixtures'
 import { renderToStaticMarkup } from 'react-dom/server'
 import { describe, expect, test } from 'vitest'
-import type { SearchData, SearchWord } from '@/lib/dictionary/data'
+import type {
+  KanjiDetailsData,
+  SearchData,
+  SearchExamplesData,
+  SearchWord
+} from '@/lib/dictionary/data'
+import { pageExample, serviceLinks } from '@/lib/dictionary/page-example'
 import { linkSearchScreen } from '@/lib/dictionary/results/links'
-import { normalizeSearchQuery, searchExamplesPath } from '@/lib/dictionary/urls'
+import { searchPath } from '@/lib/dictionary/urls'
 import { gateEnabled, gateService, recordedCases } from './gate'
 import { readRenderedPage, visibleText } from './rendered'
 import { SearchResults } from './search-results'
 
-const render = (data: SearchData) => renderToStaticMarkup(<SearchResults data={data} />)
+const render = (data: SearchData, examples: SearchExamplesData | null = null) =>
+  renderToStaticMarkup(<SearchResults data={data} examples={examples} />)
 
 function word(
   entSeq: number,
@@ -35,6 +46,32 @@ function word(
   }
 }
 
+function unlinked<Item>(item: Item): Item & { path: null } {
+  return { ...item, path: null }
+}
+
+function unlinkedKanjiDetails(rows: KanjiRows): KanjiDetailsData {
+  const detail = kanjiDetail(rows)
+  return {
+    ...detail,
+    readings: detail.readings.map(reading => ({ ...reading, words: reading.words.map(unlinked) })),
+    components: detail.components.map(character => unlinked({ character })),
+    elements: detail.elements.map(unlinked),
+    words: detail.words.map(unlinked)
+  }
+}
+
+const kanameRows = fixtureKanjiRows.find(rows => rows.kanji.character === '要')
+if (!kanameRows) throw new Error('No fixture for 要')
+
+const noExamplesYet = (query: string): SearchExamplesData => ({
+  query,
+  examples: [],
+  listed: 0,
+  truncated: false,
+  examplesPath: `${searchPath(query)}examples.json?build=b`
+})
+
 describe('the search results page', () => {
   test('shows the Example Sentences row, the reading refinement, then the rows in order with their chips', () => {
     const html = render({
@@ -44,8 +81,8 @@ describe('the search results page', () => {
       examples: {
         title: 'View 3 Example Sentences',
         count: 3,
-        primaryEntry: 'x',
-        path: '/dictionary/search/iru/examples/'
+        primaryEntry: '1546640',
+        target: { kind: 'word', path: '/dictionary/要る-1546640/#examples' }
       },
       readingRefinement: {
         query: 'いる',
@@ -66,7 +103,7 @@ describe('the search results page', () => {
     expect(page.sections).toEqual(['examples', 'readingRefinement', 'results'])
     expect(page.examples).toEqual({
       text: 'View 3 Example Sentences',
-      href: '/dictionary/search/iru/examples/'
+      href: '/dictionary/要る-1546640/#examples'
     })
     expect(page.refinement).toBe('Search for「いる」')
     expect(html).toContain('href="/dictionary/search/いる')
@@ -99,7 +136,7 @@ describe('the search results page', () => {
         label: 'KANJI',
         summary: 'pivot, vital point, key point',
         entryId: 'x',
-        path: '/dictionary/kanji/要/'
+        details: null
       },
       rows: [word(1609600, '必要', 'ひつよう', 'necessary', [['JLPT', 'N4']])],
       resultCount: 2
@@ -108,6 +145,37 @@ describe('the search results page', () => {
     expect(page.kanji).toEqual({ character: '要', text: 'KANJI pivot, vital point, key point' })
     expect(html.indexOf('data-kanji-row')).toBeLessThan(html.indexOf('data-result-row'))
     expect(page.rows.map(row => row.headword)).toEqual(['必要'])
+    expect(html).not.toContain('data-kanji-details')
+    expect(html).not.toContain('shows kanji details')
+  })
+
+  test('the KANJI row opens to the kanji’s details when the dictionary has them', () => {
+    const html = render({
+      state: 'results',
+      query: '要',
+      sections: ['results'],
+      examples: null,
+      readingRefinement: null,
+      kanji: {
+        character: '要',
+        label: 'KANJI',
+        summary: 'pivot',
+        entryId: 'x',
+        details: unlinkedKanjiDetails(kanameRows)
+      },
+      rows: [],
+      resultCount: 1
+    })
+    expect(readRenderedPage(html).kanji).toEqual({ character: '要', text: 'KANJI pivot' })
+    const button = html.match(/<button([^>]*)><span lang="ja" class="text-4xl/)?.[1] ?? ''
+    expect(button).toContain('aria-expanded="false"')
+    expect(button).toContain('aria-label="要, kanji, pivot, shows kanji details"')
+    const panel = button.match(/aria-controls="([^"]+)"/)?.[1]
+    const details = html.slice(html.indexOf(`<div id="${panel}" hidden="">`))
+    expect(details).toMatch(/^<div id="[^"]+" hidden=""><div[^>]*><div[^>]*data-kanji-details="要"/)
+    expect(visibleText(details)).toContain('need, main point, essence, pivot, key to')
+    expect(visibleText(details)).toContain('Readings Onヨウ')
+    expect(details).toContain('aria-label="Show stroke order for 要"')
   })
 
   test('says No Dictionary Matches, as the app does, when nothing matches', () => {
@@ -132,30 +200,33 @@ describe('the search results page', () => {
     expect(html).toContain('<p class="line-clamp-2 text-sm">word</p>')
   })
 
-  test('shows only the Example Sentences row when only sentences match', () => {
+  test('shows only the Example Sentences when only sentences match', () => {
     const page = readRenderedPage(
-      render({
-        state: 'results',
-        query: 'it is',
-        sections: ['examples'],
-        examples: {
-          title: 'View 50+ Example Sentences',
-          count: 51,
-          primaryEntry: null,
-          path: '/dictionary/search/it%20is/examples/'
+      render(
+        {
+          state: 'results',
+          query: 'it is',
+          sections: ['examples'],
+          examples: {
+            title: 'View 50+ Example Sentences',
+            count: 51,
+            primaryEntry: null,
+            target: { kind: 'inline' }
+          },
+          readingRefinement: null,
+          kanji: null,
+          rows: [],
+          resultCount: 0
         },
-        readingRefinement: null,
-        kanji: null,
-        rows: [],
-        resultCount: 0
-      })
+        noExamplesYet('it is')
+      )
     )
-    expect(page.sections).toEqual(['examples'])
+    expect(page.sections).toEqual(['examples', 'searchExamples'])
     expect(page.rows).toEqual([])
   })
 
-  test('leads with the Example Sentences row, linked to the search’s examples page', () => {
-    const html = render({
+  test('an English search lists its Example Sentences below the words, and its row links down to them', () => {
+    const data: SearchData = {
       state: 'results',
       query: 'eat',
       sections: ['examples', 'results'],
@@ -163,19 +234,19 @@ describe('the search results page', () => {
         count: 51,
         title: 'View 50+ Example Sentences',
         primaryEntry: null,
-        path: '/dictionary/search/eat/examples/'
+        target: { kind: 'inline' }
       },
       readingRefinement: null,
       kanji: null,
       rows: [word(1358280, '食べる', 'たべる', 'to eat', [])],
       resultCount: 1
-    })
+    }
+    const html = render(data, noExamplesYet('eat'))
     const page = readRenderedPage(html)
-    expect(page.sections).toEqual(['examples', 'results'])
-    expect(page.examples).toEqual({
-      text: 'View 50+ Example Sentences',
-      href: '/dictionary/search/eat/examples/'
-    })
+    expect(page.sections).toEqual(['examples', 'results', 'searchExamples'])
+    expect(page.examples).toEqual({ text: 'View 50+ Example Sentences', href: '#examples' })
+    expect(html).toMatch(/<div[^>]* id="examples"[^>]*data-section="searchExamples"/)
+    expect(readRenderedPage(render(data)).sections).toEqual(['results'])
   })
 
   test('lists a sentence’s Discovered Words, below its Example Sentences row', () => {
@@ -183,7 +254,12 @@ describe('the search results page', () => {
       state: 'results',
       query: '日本語を勉強する',
       sections: ['examples', 'discoveredWords'],
-      examples: { count: 3, title: 'View 3 Example Sentences', primaryEntry: null, path: null },
+      examples: {
+        count: 3,
+        title: 'View 3 Example Sentences',
+        primaryEntry: null,
+        target: { kind: 'word', path: '/dictionary/日本語-1464530/#examples' }
+      },
       readingRefinement: null,
       kanji: null,
       rows: [word(1464530, '日本語', 'にほんご', 'Japanese (language)', [])],
@@ -191,6 +267,7 @@ describe('the search results page', () => {
     })
     const page = readRenderedPage(html)
     expect(page.sections).toEqual(['examples', 'discoveredWords'])
+    expect(page.examples?.href).toBe('/dictionary/日本語-1464530/#examples')
     expect(page.rows.map(row => row.headword)).toEqual(['日本語'])
   })
 })
@@ -216,15 +293,37 @@ const suiteCases = recordedCases<SuiteCase>('search-results.json').filter(expect
   renderedQueries.includes(expected.query)
 )
 
+async function serviceKanji(character: string): Promise<KanjiDetailsData | null> {
+  const found = await gateService().kanji(character)
+  return found ? unlinkedKanjiDetails(found.data.rows) : null
+}
+
+async function inlineExamples(data: SearchData): Promise<SearchExamplesData | null> {
+  if (data.state !== 'results' || data.examples?.target.kind !== 'inline') return null
+  const found = await gateService().searchExamples(data.query)
+  if (!found) return null
+  const links = serviceLinks(found.data.slugs, [])
+  return {
+    query: found.data.query,
+    examples: found.data.rows.map(row => pageExample(wordExample(row), links)),
+    listed: found.data.listed,
+    truncated: found.data.truncated,
+    examplesPath: `${searchPath(found.data.query)}examples.json?build=${found.build}`
+  }
+}
+
 describe.runIf(gateEnabled)('the rendered search results page matches the app', () => {
   test('renders every chosen case', () => {
     expect(suiteCases.map(expected => expected.query).sort()).toEqual([...renderedQueries].sort())
   })
 
   test.each(suiteCases)('「$query」', async expected => {
-    const { screen, kanjiHasPage } = (await gateService().search(expected.query)).data
-    const data = linkSearchScreen(screen, { dictionaryLoaded: true, kanjiHasPage })
-    const html = render(data)
+    const { screen } = (await gateService().search(expected.query)).data
+    const kanji =
+      screen.state === 'results' && screen.kanji ? await serviceKanji(screen.kanji.character) : null
+    const data = linkSearchScreen(screen, { dictionaryLoaded: true, kanji })
+    const examples = await inlineExamples(data)
+    const html = render(data, examples)
     const page = readRenderedPage(html)
     for (const row of data.state === 'results' ? data.rows : []) {
       expect(html).toContain(`href="${row.path ?? ''}"`)
@@ -234,15 +333,21 @@ describe.runIf(gateEnabled)('the rendered search results page matches the app', 
       expect(page.noResults).toMatch(/^No Dictionary Matches/)
       return
     }
-    expect(page.sections).toEqual(expected.sections ?? [])
+    if (data.state !== 'results') throw new Error(`「${expected.query}」 has no results`)
+    expect(page.sections.filter(section => section !== 'searchExamples')).toEqual(
+      expected.sections ?? []
+    )
+    const target = data.examples?.target
     expect(page.examples).toEqual(
       expected.examples
         ? {
             text: expected.examples.title,
-            href: searchExamplesPath(normalizeSearchQuery(expected.query))
+            href: target?.kind === 'word' ? target.path : '#examples'
           }
         : null
     )
+    if (target?.kind === 'word') expect(target.path).toMatch(/^\/dictionary\/[^/]+-\d+\/#examples$/)
+    expect(page.sections.includes('searchExamples')).toBe(target?.kind === 'inline')
     expect(page.refinement).toBe(expected.readingRefinement?.title ?? null)
     expect(page.kanji).toEqual(
       expected.kanji
@@ -252,6 +357,9 @@ describe.runIf(gateEnabled)('the rendered search results page matches the app', 
           }
         : null
     )
+    if (data.kanji) {
+      expect(html.includes(`data-kanji-details="${data.kanji.character}"`)).toBe(kanji !== null)
+    }
     const expectedRows = (expected.results ?? []).map(row => ({
       entSeq: Number(row.entSeq[0]),
       headword: row.headword,

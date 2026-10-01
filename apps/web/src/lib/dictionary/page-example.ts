@@ -1,6 +1,6 @@
 import type { Slugs } from '@zenbu/dictionary-core/artifact/dictionary'
 import type { Example, ExampleToken } from '@zenbu/dictionary-core/detail/examples'
-import { hasSearchPath, kanjiPath, searchPath } from './urls'
+import { hasSearchPath, kanjiSearchPath, searchPath } from './urls'
 
 export type Linked<T> = T & { path: string | null }
 
@@ -25,7 +25,7 @@ export function serviceLinks(slugs: Slugs, kanjiPages: readonly string[]): Links
       return entSeq === null || slug === undefined ? null : storedWordPath(slug, entSeq)
     },
     kanji(character) {
-      return character !== null && pages.has(character) ? kanjiPath(character) : null
+      return character !== null && pages.has(character) ? kanjiSearchPath(character) : null
     }
   }
 }

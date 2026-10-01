@@ -6,34 +6,12 @@ export function wordPath(entry: { headword: string; reading: string; entSeq: num
   return `/dictionary/${wordSlug(entry.headword, entry.reading)}-${entry.entSeq}/`
 }
 
-export function conjugationsPath(wordPagePath: string): string {
-  return `${wordPagePath}conjugations/`
-}
-
-export function conjugatedFormPath(
-  wordPagePath: string,
-  mode: 'Plain' | 'Polite',
-  kind: string
-): string {
-  return `${conjugationsPath(wordPagePath)}${mode.toLowerCase()}/${kind}/`
-}
-
-export const politeRegisterHash = '#polite'
-
-export function conjugationsHref(tablePath: string, mode: 'Plain' | 'Polite'): string {
-  return mode === 'Polite' ? `${tablePath}${politeRegisterHash}` : tablePath
-}
-
-export function kanjiPath(character: string): string {
-  return `/dictionary/kanji/${character}/`
-}
-
 export function searchPath(query: string): string {
   return `/dictionary/search/${encodeURIComponent(query).replaceAll('.', '%2E')}/`
 }
 
-export function searchExamplesPath(query: string): string {
-  return `${searchPath(query)}examples/`
+export function kanjiSearchPath(character: string): string {
+  return searchPath(character)
 }
 
 export function hasSearchPath(query: string): boolean {

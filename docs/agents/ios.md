@@ -81,7 +81,7 @@ comes from `ExampleSentencesScreen` in `ExampleSentencesView.swift`, which the v
 `query` and `covers` fields and recording.
 
 `WordDetailConformanceTests` and `KanjiDetailConformanceTests` do the same for the detail
-screens, so the website's word and kanji pages can be checked against the app. They check
+screens, so the website's word pages and kanji details can be checked against the app. They check
 `word-detail.json` and `kanji-detail.json` in the same folder, reading each case from the
 models and clients the views use: for a word, its headword, furigana (with each kanji run's
 per-kanji split, `JapaneseRubyText.kanjiReadings`), part of speech, pitch (with the contour

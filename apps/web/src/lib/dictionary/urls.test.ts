@@ -1,9 +1,7 @@
 import { describe, expect, test } from 'vitest'
 import {
-  conjugatedFormPath,
-  conjugationsHref,
-  conjugationsPath,
   hasSearchPath,
+  kanjiSearchPath,
   normalizeSearchQuery,
   parseWordSegment,
   searchPath,
@@ -54,21 +52,9 @@ describe('search URLs', () => {
   })
 })
 
-describe('conjugation URLs', () => {
-  test('put the table under the word, and each form under the table by register and kind', () => {
-    const word = '/dictionary/見る-1259290/'
-    expect(conjugationsPath(word)).toBe('/dictionary/見る-1259290/conjugations/')
-    expect(conjugatedFormPath(word, 'Plain', 'past')).toBe(
-      '/dictionary/見る-1259290/conjugations/plain/past/'
-    )
-    expect(conjugatedFormPath(word, 'Polite', 'past-negative')).toBe(
-      '/dictionary/見る-1259290/conjugations/polite/past-negative/'
-    )
-  })
-
-  test('link back to the table in the register a form is in', () => {
-    const table = '/dictionary/見る-1259290/conjugations/'
-    expect(conjugationsHref(table, 'Plain')).toBe(table)
-    expect(conjugationsHref(table, 'Polite')).toBe(`${table}#polite`)
+describe('kanji links', () => {
+  test('open the kanji’s search, which leads with its KANJI row', () => {
+    expect(kanjiSearchPath('要')).toBe('/dictionary/search/%E8%A6%81/')
+    expect(kanjiSearchPath('𠀋')).toBe(searchPath('𠀋'))
   })
 })

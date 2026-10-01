@@ -32,29 +32,26 @@ test.describe('word page', () => {
     await expect(page.getByRole('button', { name: 'Load more examples' })).toHaveCount(0)
   })
 
-  test("opens the conjugations sheet, a form's examples, and the table's page", async ({
+  test('the part of speech opens the Conjugations section, again after it closes', async ({
     page
   }) => {
-    await page.getByRole('button', { name: /shows conjugations$/ }).click()
-    const sheet = page.getByRole('dialog', { name: 'Conjugations' })
-    await expect(sheet.getByRole('tab', { name: 'Plain' })).toHaveAttribute('aria-selected', 'true')
-    await expect(sheet.getByRole('button', { name: /^Past, 要った, いった$/ })).toBeVisible()
+    const conjugations = page
+      .getByRole('heading', { level: 2, name: 'Conjugations' })
+      .getByRole('button', { name: 'Conjugations' })
+    const partOfSpeech = page.getByRole('link', { name: /shows conjugations$/ })
+    await expect(conjugations).toHaveAttribute('aria-expanded', 'false')
+    await expect(partOfSpeech).toHaveAttribute('href', '#conjugations')
+    await partOfSpeech.click()
+    await expect(page).toHaveURL(`${needed.path}#conjugations`)
+    await expect(conjugations).toHaveAttribute('aria-expanded', 'true')
+    await expect(
+      page.getByRole('button', { name: 'Past, 要った, いった', exact: true })
+    ).toBeVisible()
 
-    await sheet.getByRole('tab', { name: 'Polite' }).click()
-    await expect(sheet.getByRole('button', { name: /^Past, 要った, いった$/ })).toHaveCount(0)
-    await sheet.getByRole('tab', { name: 'Plain' }).click()
-
-    await sheet.getByRole('button', { name: /^Past, 要った, いった$/ }).click()
-    const form = page.getByRole('dialog', { name: 'Past' })
-    await expect(form.getByRole('heading', { name: 'Examples' })).toBeVisible()
-    await expect(form.getByRole('listitem').first()).toBeVisible()
-    await form.getByRole('button', { name: 'Back to conjugations' }).click()
-
-    await page
-      .getByRole('dialog', { name: 'Conjugations' })
-      .getByRole('link', { name: 'Open the conjugation table’s page' })
-      .click()
-    await expect(page).toHaveURL(`${needed.path}conjugations/`)
+    await conjugations.click()
+    await expect(conjugations).toHaveAttribute('aria-expanded', 'false')
+    await partOfSpeech.click()
+    await expect(conjugations).toHaveAttribute('aria-expanded', 'true')
   })
 
   test('opens Frequency Details from a frequency row', async ({ page }) => {
@@ -86,9 +83,19 @@ test.describe('word page', () => {
     )
   })
 
-  test('opens a kanji from the Kanji section', async ({ page }) => {
-    await page.getByRole('link', { name: /^要 need, main point/ }).click()
-    await expect(page).toHaveURL(encodeURI('/dictionary/kanji/要/'))
-    await expect(page.getByRole('heading', { level: 1, name: '要' })).toBeVisible()
+  test('opens and closes a kanji in the Kanji section', async ({ page }) => {
+    const kanji = page.getByRole('button', { name: '要, need, main point, shows kanji details' })
+    const strokeOrder = page.getByRole('button', { name: 'Show stroke order for 要' })
+    await kanji.click()
+    await expect(kanji).toHaveAttribute('aria-expanded', 'true')
+    await expect(strokeOrder).toBeVisible()
+    await kanji.click()
+    await expect(kanji).toHaveAttribute('aria-expanded', 'false')
+    await expect(strokeOrder).toBeHidden()
   })
+})
+
+test("a word's #examples opens the page at its Examples section", async ({ page }) => {
+  await page.goto(`${needed.path}#examples`)
+  await expect(examples(page).first()).toBeInViewport()
 })

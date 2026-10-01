@@ -163,53 +163,68 @@ that kanji (chosen before the re-sort, "Kanji detail" without one), and No Dicti
 The page's component, `components/dictionary/search-results.tsx`, only renders it, every word at
 once (at most the app's 60). `results/links.ts` adds links (`linkSearchScreen`, shared by
 `data.ts` and the rendered-page test) and decides indexing: a page is indexed only when it lists
-a word or its kanji row opens a kanji page. A query full-text search can't read is answered as
-finding nothing by the service.
+a word or its kanji row has details to show. The KANJI row opens in place to the kanji's details
+(`components/dictionary/kanji-details.tsx`, from `getKanjiDetails`), as the word page's kanji do.
+A query full-text search can't read is answered as finding nothing by the service.
 
 With Sudachi, the service analyzes a sentence as the app does and lists its Discovered Words.
-The Example Sentences row opens `/dictionary/search/<query>/examples/`: the query's sentences, or
-its primary entry's for a romaji or deinflected query, 25 at first and the rest from
-`examples.json` beside it. It's indexed only for a direct Japanese search
-(`searchExamplesIndexable`, the SEO owner's decision on #511): a romaji or deinflected search lists
-its primary entry's examples, which that word's page already has.
+The Example Sentences row goes where the sentences are (`examplesTarget` in `results/links.ts`,
+ADR 0010):
+
+- To a word page's Examples (`#examples`), when the sentences are that word's: the primary
+  entry's for a romaji or deinflected search, or the top result's for a Japanese one.
+- To a section on the results page itself, for an English search, whose sentences match its
+  English words and aren't any one word's. The section lists 25 at first and loads the rest from
+  `examples.json` beside the page; the page fetches them only then (`getSearchExamples`).
 
 A broad query (い, "to") takes the service one to two seconds the first time, most of it the
 app's own SQL, and a one-letter wildcard's Example Sentences (`t*`, over 100,000 sentences) up to
 about five; the service and the edge cache keep the answer after that.
 
-### Word and kanji pages
+### Word pages
 
 `packages/dictionary-core/src/detail/` is the detail core: pure functions, `wordDetail(rows)` and
-`kanjiDetail(rows)`, that turn the service's rows (`detail/rows.ts`) into what the word and kanji
-pages render. Each function is a port of the app's Swift (the Swift sources section of
+`kanjiDetail(rows)`, that turn the service's rows (`detail/rows.ts`) into what the word page and
+kanji details render. Each function is a port of the app's Swift (the Swift sources section of
 [`dictionary-core.md`](dictionary-core.md) names each one's source), so the pages show what the
 app shows (see the [product docs](../../apps/web/docs/product/dictionary.md)).
 
-`getWordPage` and `getKanjiPage` ask the service once per page. The answer names the slug of
-every word the page links to and which kanji have pages, so every link goes to a page that
-exists. Word pages live under the slug the service names, and a redirect to it percent-encodes
-the path (`encodeURI`), since a `Location` header is ASCII. A word page's later examples load from
-`/dictionary/examples/<ent_seq>.json?build=<build>&from=<n>` (`getWordExamples`).
+The word page holds everything the app drills into from a word (ADR 0010), in sections that open
+and close and stay in the HTML while closed (`components/dictionary/disclosure.tsx`):
+
+- **Conjugations:** the header's part of speech opens it (`#conjugations`). Each form opens to
+  its examples, which load from `/dictionary/conjugations/<form>.json` the first time it opens
+  (`components/dictionary/conjugations.tsx`).
+- **Kanji:** each kanji opens to its details.
+- **Examples:** the section the search page's Example Sentences row links to (`#examples`).
+
+`getWordPage` asks the service for the word, then for each of its kanji's details
+(`getKanjiDetails`, cached per request). The word's answer names the slug of every word it links
+to and which kanji have details, so every link goes somewhere that exists; a kanji links to its
+search page, which opens to its details. Word pages live under the slug the service names, and a
+redirect to it percent-encodes the path (`encodeURI`), since a `Location` header is ASCII. A word
+page's later examples load from `/dictionary/examples/<ent_seq>.json?build=<build>&from=<n>`
+(`getWordExamples`).
+
+The kanji, conjugation, and Example Sentences pages that came before ADR 0010 are gone. Their
+URLs answer 308 to the nearest page (`removedDictionaryPages` in `apps/web/src/lib/moved-pages.ts`,
+which `next.config.ts` reads). `apps/web/src/app/routes.test.ts` fails when a page or data route
+appears that ADR 0010 doesn't list.
 
 Next.js passes a page its segment encoded but `generateMetadata` decoded: search pages tell
-`searchQuery` which it has (`decoded`), and word and kanji pages read it with `decodeSegment`
+`searchQuery` which it has (`decoded`), and word pages read it with `decodeSegment`
 (`apps/web/src/lib/dictionary/urls.ts`), which accepts either. The JSON routes read their text
 from the request's path as sent and decode it once
 (`apps/web/src/lib/dictionary/example-routes.ts`); a search's route answers only a query already
 in its normal form, as its page asks for it.
 
-The part of speech opens the word's conjugation table in a sheet, as the app pushes it, and a
-form's screen there loads all its examples from `/dictionary/conjugations/<form>.json` when it
-opens; that URL names no build, so its answers are kept an hour rather than a day. The table's
-page keeps its register in the address (`#polite`) with `history.replaceState(null, …)`: with
-null state, Next.js's router adopts the new address instead of restoring the previous one. The
-table and each form also have their own pages, which the sheet links to
-(`/dictionary/<slug>-<ent_seq>/conjugations/` and `…/conjugations/<plain|polite>/<kind>/`,
-`getConjugationsPage` and `getConjugatedFormPage`): the service answers the word's rows without
-examples, the detail core conjugates them, and a form's page lists its examples by spelling, 25
-at first and the rest from `/dictionary/examples/forms/<form>.json?build=<build>&from=<n>`
-(`getFormExamples`). The form routes read the spelling as written, since the app's form screen
-searches it normalized but matches it as written (a full-width Ｈ).
+The detail core conjugates the word's rows into the Conjugations section's table. Both
+registers' forms are in the page's HTML, the one not shown hidden, so the Plain and Polite tabs
+switch without a request and the register isn't in the address. A form loads all its examples
+from `/dictionary/conjugations/<form>.json` (`getConjugationExamples`) the first time it opens;
+that URL names no build, so its answers are kept an hour rather than a day. The route reads the
+spelling as written, since the app's form screen searches it normalized but matches it as written
+(a full-width Ｈ).
 
 Without a service, the rows are local fixtures in `packages/dictionary-core/src/fixtures/`,
 exported from the app's bundled data by the service's own readers (`pnpm --filter
@@ -253,7 +268,7 @@ ZENBU_DICTIONARY_API=1 ZENBU_DICTIONARY_API_TOKEN=<token> pnpm exec vitest run s
 `ZENBU_DICTIONARY_API_URL` names another service (default `http://localhost:8788`). The
 `Dictionary API` workflow runs the gate on pull requests against the service it builds, and
 `smoke.sh` checks the deployed pages against the search-results suite's `iru` and `eat` cases, the
-example-search suite's 見る, and the word-detail suite's 見る and 学校 at run time.
+example-search suite's `eat`, and the word-detail suite's 見る and 学校 at run time.
 
 ## Environments and deploys
 
@@ -413,15 +428,10 @@ can't reach the service, so prerendering would fail the build or freeze an index
   service works out each file's `ent_seq` range once, and the site streams a file's words from it
   10,000 at a time (`urlSetStream`), so a file never sits whole in memory; a failure mid-stream
   errors the response rather than ending it early.
-- `/sitemaps/kanji.xml`: the kanji pages search engines may index: those with meanings or
-  readings.
-- `/sitemaps/conjugations.xml`: every conjugation table, then the form pages search engines may
-  index: those that list examples, each under its canonical URL (33,532 URLs: 20,364 tables and
-  13,168 forms, in one file). Which forms list examples, the service works out for every spelling
-  at once when it starts, in the background (about half a minute); until then the sitemap answers
-  503 with `Retry-After`, which search engines retry.
+Those are the only dictionary sitemaps (ADR 0010): the kanji and conjugations sitemaps went with
+their pages.
 
-All three are kept in the Worker's edge cache (the Cache API) under the dictionary build the service
+They're kept in the Worker's edge cache (the Cache API) under the dictionary build the service
 names, so they change with the build, within the 10 minutes its answers stay cached. Cloudflare
 doesn't cache a Worker's responses on its own, and `pnpm dev` has no such cache.
 
