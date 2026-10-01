@@ -104,7 +104,11 @@
       }
     },
     {
-      "includes": ["src/lib/dictionary/data.ts", "src/lib/dictionary/retired.ts"],
+      "includes": [
+        "src/lib/dictionary/data.ts",
+        "src/lib/dictionary/retired.ts",
+        "src/lib/moved-pages.ts"
+      ],
       "linter": {
         "rules": {
           "style": {

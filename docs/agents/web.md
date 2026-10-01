@@ -365,7 +365,12 @@ and send a `Host` header: with that environment's custom domains, Wrangler rewri
 route's domain and host rules never match.
 
 `/privacy` and `/support` must keep working: the shipped iOS app and App Store metadata link to
-them.
+them. A page that moved, such as `/privacy`, is listed in `apps/web/src/lib/moved-pages.ts`, and
+`worker.ts` answers it with one 308 before Next.js runs (so, like `retired.ts`, it imports no
+Next.js module and no `@/` path): Next.js adds a missing trailing slash
+before it reads `next.config.ts`'s redirects, so a redirect there takes two hops (`/privacy`, then
+`/privacy/`, then `/legal/privacy/`). `next.config.ts` lists the same pages, so `pnpm dev`, which
+doesn't run `worker.ts`, still redirects them, in those two hops.
 
 Email Routing on the zone forwards `support@zenbujapanese.com` to `support+zenbujapanese@serp.co`
 and `dmca@zenbujapanese.com` to `dmca+zenbujapanese@serp.co`.

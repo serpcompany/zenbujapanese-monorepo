@@ -724,6 +724,15 @@ and there is no romaji and no word meanings under example words. The settings ar
 - Source: App docs index, Account (Reading Aids); `ReadingAidPreferences.swift` (the defaults).
 - Check: No automated check yet (#511).
 
+**App links.** The shipped iOS app and its App Store metadata link to `/privacy` and `/support`, so
+both keep working. `/privacy` redirects (308) to `/legal/privacy/` in one hop, with its query, as
+does `/privacy/`; `/support` redirects to `/support/`, as every page without its slash does.
+
+- Source: the shipped app's links; the one hop found by the browser tests.
+- Check: `src/lib/moved-pages.test.ts`; `apps/web/e2e/urls.spec.ts`, "/privacy redirects to the
+  privacy policy in one hop" (on the production build) and "/support redirects to /support/ in one
+  hop"; smoke `308 /privacy -> /legal/privacy/`.
+
 ## URLs, SEO, and indexing
 
 **Word URLs.** A word lives at `/dictionary/<slug>-<ent_seq>/`, where the slug is the headword and
