@@ -377,8 +377,8 @@ it.
   in place of the back button).
 - Check: the share text: `packages/dictionary-core/src/detail/word.test.ts`, "要る (1546640)"; the
   menu and the prompt, at a desktop and a phone width: `apps/web/e2e/word.spec.ts`, "opens the More
-  actions menu with the app's actions" and "copies the link from the More actions menu". Share
-  itself: No automated check yet (#511).
+  actions menu with the app's actions" and "copies the link from the More actions menu"; Share:
+  `src/components/dictionary/saved-item-actions.interaction.test.tsx`, "sends the page it is on".
 
 **Header card.** The card shows the headword with furigana, and beside it the pitch accent in a
 capsule that pronounces the word, or a standalone speaker when the word has no pitch. Either uses
@@ -712,6 +712,26 @@ N2. The meanings follow on one line.
   `apps/web/e2e/kanji.spec.ts`, "the search page for 要 opens 要 to its stroke order, metrics,
   meanings, readings, and words", and the same on the word page. KD doesn't record JLPT.
 
+**Share and actions.** Beside the metrics, Share and a ••• menu, as the app's Kanji Detail has
+them. Share sends the kanji, its readings, and its meanings, as the app's does, with the link to
+the kanji's search page, the only URL a kanji has (ADR 0010). Without a share sheet it copies that
+link. The menu is a word page's: Mark as Known, Add to List…, Add Note, Add Photo, Open in App,
+and Copy Link, which copies the kanji's search page, not the page the details are on. The learner
+actions and Open in App open the get-the-app prompt. Each button is named for its kanji ("Share
+要", "More actions for 要"), since a word page can show several kanji's details.
+
+- Source: App docs, Dictionary and kanji details (Share and the ••• menu); `KanjiDetailView.swift`
+  (`ShareLink(item: shareText)`, `SavedItemMenu`); `SavedItemActions.swift`; #462 (the menu
+  items and the get-the-app prompt).
+- Check: the share text: `packages/dictionary-core/src/detail/kanji.test.ts`, "要"; Share:
+  `src/components/dictionary/saved-item-actions.interaction.test.tsx` ("a kanji's Share"), "sends
+  the kanji, its share text, and its search page, not the page it is on" and "copies the kanji's
+  search page where the browser has no share sheet"; the buttons' names:
+  `src/components/dictionary/kanji-details.test.tsx`, "Share and More actions, named for the
+  kanji"; the menu, the prompt, and Copy Link at a desktop and a phone width:
+  `apps/web/e2e/kanji.spec.ts`, "…: 要's More actions offer the app's actions" (on the search and
+  word pages) and "Copy Link copies 要's search page, from the word page too".
+
 **Stroke order.** A kanji with a KanjiVG diagram has a stroke-order button under the glyph. It
 opens a dialog, or a drawer on phones, that draws the strokes on a dashed grid and plays, pauses,
 or steps through them, starting from the first stroke each time it opens, as the app's sheet does.
@@ -749,6 +769,16 @@ screen; see [Required, not built yet](#required-not-built-yet-511).
   "kanjiElements (KanjiElementReferenceData.elements)" and "a kanji without elements lists its
   components; one stroke is singular"; the links: `src/lib/dictionary/data.test.ts`, "kanji details
   read the service, and link each kanji to its search".
+
+**Lists and Notes.** After the elements and before the words, as in the app, the Lists and Notes
+prompts a word page has: Add to List and Add Note, each opening the get-the-app prompt.
+
+- Source: `KanjiDetailView.swift` (the `LISTS` and `NOTES` sections); #462 (learner sections as
+  get-the-app prompts until #468).
+- Check: `src/components/dictionary/kanji-details.test.tsx`, "Lists and Notes come after the
+  elements and before the words, in the app's order" and "Lists and Notes offer the app, as on a
+  word page"; `apps/web/e2e/kanji.spec.ts`, "Lists and Notes open the get-the-app prompt, as a word
+  page's do".
 
 **Words.** The app's 24 words containing the kanji, in the app's order, each with furigana and its
 summary, opening its word page.
@@ -953,15 +983,6 @@ its leading group of equally strong matches, as the app limits it (`rankedEntryL
 
 - App source: `KanjiElementDetailView.swift`; `KanjiElementLookupClient.swift`.
 - Check it will get: an app-recorded element-detail suite, and a rendered-page check.
-
-**Share, actions, Lists, and Notes.** A kanji's details offer what the app's Kanji Detail has
-beside them: Share, which sends the kanji, its readings, and its meanings; the ••• menu a word page
-has; and the Lists and Notes prompts. The kanji page had them; the details that replaced it (ADR
-0010) don't yet.
-
-- App source: `KanjiDetailView.swift`; `SavedItemActions.swift`.
-- Check it will get: an interaction test of the details' Share and menu. The share text already
-  has one: `packages/dictionary-core/src/detail/kanji.test.ts`, "要".
 
 ### Site-wide
 
