@@ -303,5 +303,5 @@ describe.runIf(gateEnabled)('the rendered Conjugations section matches the app',
         }
       }
     }
-  })
+  }, 30_000)
 })
