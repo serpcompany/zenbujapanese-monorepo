@@ -1,13 +1,9 @@
 import { serve } from '@hono/node-server'
-import type { ConjugationSitemapWord } from '@zenbu/dictionary-core/artifact/conjugation-sitemap'
 import { createApp } from './app'
 import { readConfig } from './config'
 import { verifyFiles } from './load'
 import { errorFields, log } from './log'
-import { computeConjugationSitemap, createPool } from './pool'
-
-const conjugationSitemapAttempts = 3
-const conjugationSitemapRetryDelayMs = 60_000
+import { createPool } from './pool'
 
 async function main() {
   const config = readConfig()
@@ -19,36 +15,16 @@ async function main() {
     sentenceSearch: files.sudachiDictionary !== null
   })
   const pool = createPool(files, config.workers)
-  let conjugationSitemap: ConjugationSitemapWord[] | null = null
   const app = createApp({
     service: pool,
     token: config.token,
-    ready: () => pool.readyCount() === config.workers,
-    conjugationSitemap: () => conjugationSitemap
+    ready: () => pool.readyCount() === config.workers
   })
   const server = serve({ fetch: app.fetch, port: config.port }, ({ port }) =>
     log('info', 'listening', { port, workers: config.workers, release: config.release })
   )
   pool.ready.then(
-    () => {
-      log('info', 'ready', { ms: Math.round(performance.now() - started) })
-      const attemptConjugationSitemap = (attempt: number) =>
-        computeConjugationSitemap(files).then(
-          sitemap => {
-            conjugationSitemap = sitemap
-          },
-          error => {
-            log('error', 'the conjugations sitemap failed', { attempt, ...errorFields(error) })
-            if (attempt < conjugationSitemapAttempts) {
-              setTimeout(
-                () => attemptConjugationSitemap(attempt + 1),
-                conjugationSitemapRetryDelayMs
-              ).unref()
-            }
-          }
-        )
-      attemptConjugationSitemap(1)
-    },
+    () => log('info', 'ready', { ms: Math.round(performance.now() - started) }),
     error => {
       log('error', 'a worker failed to load', errorFields(error))
       process.exit(1)

@@ -154,10 +154,7 @@ the app-recorded suites (`apps/ios/LanguageData/Conformance/`) check the port ag
 - **Conjugation.** The table is for the first conjugating class among the entry's parts of speech,
   not the first sense's. A row shows furigana only when its ending has kanji (来させる), since the
   header gives the stem's reading. The website shows the table in its word page's Conjugations
-  section ([`dictionary.md`](../../apps/web/docs/product/dictionary.md), Word page). `canonicalForm`
-  and `indexedForms` decided the conjugated form pages' canonicals and indexing; ADR 0010 removed
-  those pages, and only the service's unused conjugations sitemap route still calls them, until
-  #552 removes it.
+  section ([`dictionary.md`](../../apps/web/docs/product/dictionary.md), Word page).
 - **Frequency.** The website uses only the app's default dictionaries, the bundled packs in
   `FrequencyPackCatalog.json`'s order: JLPT levels, then TUBELEX (YouTube). Tiers use Migaku's star
   cutoffs, and JLPT levels map onto the same scale. `frequency.test.ts` pins each pack's

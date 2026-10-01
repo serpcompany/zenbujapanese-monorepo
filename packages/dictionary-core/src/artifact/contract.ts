@@ -1,6 +1,4 @@
-import type { ConjugationSitemapWord } from './conjugation-sitemap'
 import type {
-  ConjugationWordResponse,
   ExamplesResponse,
   FormExamplesResponse,
   KanjiResponse,
@@ -10,7 +8,7 @@ import type {
   WordSitemap
 } from './dictionary'
 
-export const dictionaryContract = 1
+export const dictionaryContract = 2
 
 export const firstDictionaryContract = 1
 
@@ -26,13 +24,10 @@ export interface DictionaryContract {
   searchExamples: SearchExamplesResponse
   word: WordResponse
   wordExamples: ExamplesResponse
-  conjugationWord: ConjugationWordResponse
   formExamples: FormExamplesResponse
   kanji: KanjiResponse
   wordSitemaps: WordSitemap[]
   sitemapWords: SitemapWord[]
-  indexableKanji: string[]
-  conjugationSitemap: ConjugationSitemapWord[]
   retired: Record<string, number | null>
 }
 

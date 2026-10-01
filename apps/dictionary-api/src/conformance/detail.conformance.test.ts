@@ -400,7 +400,6 @@ describe.runIf(artifactAvailable)('word and kanji detail conformance', () => {
       ...(detail.strokeOrder ? { strokeOrderStrokes: detail.strokeOrder.strokes.length } : {})
     }
     expect(observed).toEqual(withoutFields(expected, ['covers']))
-    expect(found.indexable).toBe(detail.meanings.length > 0 || detail.readings.length > 0)
     expect(
       detail.words.filter(word => !(word.entSeq in found.slugs)),
       'every listed word links to its page'

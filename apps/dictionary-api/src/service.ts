@@ -1,6 +1,5 @@
 import type { SitemapWord } from '@zenbu/dictionary-core/artifact/contract'
 import type {
-  ConjugationWordResponse,
   Dictionary,
   ExamplesResponse,
   FormExamplesResponse,
@@ -23,12 +22,10 @@ export interface DictionaryService {
   searchExamples(query: string, from: number): Promise<SearchExamplesResponse | null>
   word(entSeq: number): Promise<WordResponse | null>
   wordExamples(entSeq: number, from: number): Promise<ExamplesResponse | null>
-  conjugationWord(entSeq: number): Promise<ConjugationWordResponse | null>
   formExamples(form: string, from: number, limit: number): Promise<FormExamplesResponse>
   kanji(character: string): Promise<KanjiResponse | null>
   wordSitemaps(): Promise<WordSitemap[]>
   sitemapWords(number: number, after: number, limit: number): Promise<SitemapWord[] | null>
-  indexableKanji(): Promise<string[]>
   retired(): Promise<Record<number, number | null>>
 }
 
@@ -41,7 +38,6 @@ export function inProcessService(dictionary: Dictionary, info: ServiceInfo): Dic
     searchExamples: (query, from) => dictionary.searchExamples(query, from),
     word: async entSeq => dictionary.word(entSeq),
     wordExamples: async (entSeq, from) => dictionary.wordExamples(entSeq, from),
-    conjugationWord: async entSeq => dictionary.conjugationWord(entSeq),
     formExamples: async (form, from, limit) => dictionary.formExamples(form, from, limit),
     kanji: async character => dictionary.kanji(character),
     wordSitemaps: async () => dictionary.wordSitemaps(),
@@ -49,7 +45,6 @@ export function inProcessService(dictionary: Dictionary, info: ServiceInfo): Dic
       const sitemap = dictionary.wordSitemaps().find(candidate => candidate.number === number)
       return sitemap ? dictionary.sitemapWords(sitemap, after, limit) : null
     },
-    indexableKanji: async () => dictionary.indexableKanji(),
     retired: async () => dictionary.retired()
   }
 }

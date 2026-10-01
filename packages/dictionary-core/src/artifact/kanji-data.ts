@@ -53,16 +53,6 @@ const referenceSources = {
 } as const
 const elementsSchema = 'zenbu.kanji-elements.v1'
 
-export function compareCodePoints(left: string, right: string): number {
-  const a = Array.from(left)
-  const b = Array.from(right)
-  for (let index = 0; index < Math.min(a.length, b.length); index++) {
-    const difference = (a[index].codePointAt(0) ?? 0) - (b[index].codePointAt(0) ?? 0)
-    if (difference !== 0) return difference
-  }
-  return a.length - b.length
-}
-
 export const isCJKUnifiedIdeograph = (character: string) => {
   const code = character.codePointAt(0) ?? 0
   return code >= 0x3400 && code <= 0x9fff
@@ -108,17 +98,6 @@ export class KanjiData {
       readings: entry.readings.map(({ value, kind }) => ({ value, kind })),
       components: entry.components
     }
-  }
-
-  isIndexable(character: string): boolean {
-    const entry = this.byCharacter.get(character)
-    return entry !== undefined && (entry.meanings.length > 0 || entry.readings.length > 0)
-  }
-
-  indexableCharacters(): string[] {
-    return [...this.byCharacter.keys()]
-      .filter(character => this.isIndexable(character))
-      .sort(compareCodePoints)
   }
 
   glossRows(forms: string[]): KanjiGlossRow[] {

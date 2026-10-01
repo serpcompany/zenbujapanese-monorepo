@@ -1,5 +1,4 @@
 import { timingSafeEqual } from 'node:crypto'
-import type { ConjugationSitemapWord } from '@zenbu/dictionary-core/artifact/conjugation-sitemap'
 import {
   dictionaryContract,
   dictionaryContractHeader
@@ -41,10 +40,9 @@ export interface AppOptions {
   service: DictionaryService
   token: string
   ready(): boolean
-  conjugationSitemap(): ConjugationSitemapWord[] | null
 }
 
-export function createApp({ service, token, ready, conjugationSitemap }: AppOptions) {
+export function createApp({ service, token, ready }: AppOptions) {
   const app = new Hono()
 
   app.use(async (context, next) => {
@@ -114,11 +112,6 @@ export function createApp({ service, token, ready, conjugationSitemap }: AppOpti
     return examples ? context.json(examples) : context.json({ error: 'no such word' }, 404)
   })
 
-  app.get('/v1/words/:entSeq/conjugations', async context => {
-    const word = await service.conjugationWord(entSeq(context.req.param('entSeq')))
-    return word ? context.json(word) : context.json({ error: 'no conjugation table' }, 404)
-  })
-
   app.get('/v1/conjugations/:form/examples', async context =>
     context.json(
       await service.formExamples(
@@ -150,15 +143,6 @@ export function createApp({ service, token, ready, conjugationSitemap }: AppOpti
       )
     )
     return words ? context.json(words) : context.json({ error: 'no such sitemap' }, 404)
-  })
-
-  app.get('/v1/sitemaps/kanji', async context => context.json(await service.indexableKanji()))
-
-  app.get('/v1/sitemaps/conjugations', context => {
-    const sitemap = conjugationSitemap()
-    if (sitemap) return context.json(sitemap)
-    context.header('Retry-After', '60')
-    return context.json({ error: 'the conjugations sitemap is still being worked out' }, 503)
   })
 
   app.get('/v1/retired', async context => context.json(await service.retired()))
