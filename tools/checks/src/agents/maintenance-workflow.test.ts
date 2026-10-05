@@ -95,11 +95,15 @@ describe('the Weekly maintenance workflow', () => {
 
   test('posts the same report as one issue', () => {
     const report = workflowSteps(workflow, 'report')
-    expect(report.some(step => step.run?.includes('pnpm -s maintenance:report > report.md'))).toBe(
-      true
-    )
     expect(
-      report.some(step => step.run?.includes('gh issue edit "$number" --body-file report.md'))
+      report.some(step =>
+        step.run?.includes('pnpm -s maintenance:report > tmp/maintenance-report.md')
+      )
+    ).toBe(true)
+    expect(
+      report.some(step =>
+        step.run?.includes('gh issue edit "$number" --body-file tmp/maintenance-report.md')
+      )
     ).toBe(true)
   })
 })

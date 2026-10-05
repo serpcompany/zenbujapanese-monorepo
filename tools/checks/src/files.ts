@@ -1,5 +1,5 @@
 import { execFileSync } from 'node:child_process'
-import { existsSync, readFileSync } from 'node:fs'
+import { readFileSync, statSync } from 'node:fs'
 import { basename, extname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
@@ -12,7 +12,9 @@ export function repositoryFiles(): string[] {
     { cwd: root, encoding: 'utf8', maxBuffer: 64 * 1024 * 1024 }
   )
   const paths = new Set(listed.split('\0').filter(Boolean))
-  return [...paths].filter(path => existsSync(join(root, path))).sort()
+  return [...paths]
+    .filter(path => statSync(join(root, path), { throwIfNoEntry: false })?.isFile())
+    .sort()
 }
 
 export type Language =

@@ -202,14 +202,14 @@ jobs:
         run: pnpm install --frozen-lockfile --filter zenbujapanese-checks
 
       - name: Build the maintenance report
-        run: pnpm -s maintenance:report > report.md
+        run: mkdir -p tmp && pnpm -s maintenance:report > tmp/maintenance-report.md
 
       - name: Open or update the maintenance issue
         run: |
           number=$(gh issue list --state open --search "\"$TITLE\" in:title" --json number --jq '.[0].number // empty')
           if [ -n "$number" ]; then
-            gh issue edit "$number" --body-file report.md
+            gh issue edit "$number" --body-file tmp/maintenance-report.md
             gh issue comment "$number" --body "Report refreshed on $(date -u +%F)."
           else
-            gh issue create --title "$TITLE" --body-file report.md --label ready-for-agent
+            gh issue create --title "$TITLE" --body-file tmp/maintenance-report.md --label ready-for-agent
           fi
