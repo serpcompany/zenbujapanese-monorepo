@@ -17,7 +17,7 @@ Each module ports the app's Swift, in `apps/ios/Modules/Sources/SearchExperience
 | Folder | What it does | Main Swift sources |
 | --- | --- | --- |
 | `search/` | Search retrieval: query normalization, deinflection, ranking, full-text phrases, and sentence search through a supplied analyzer. | `LookupClient`, `SearchQuery`, `DictionaryRanking`, `JapaneseDeinflection`, `DictionaryEntry`, `JapaneseTextAnalysisClient` |
-| `results/` | The results screen: the frequency re-sort, rows, chips, and the Example Sentences, reading-refinement, and kanji rows. | `SearchView` (`SearchResultsScreen`), `FrequencyPack` |
+| `results/` | The results screen: the frequency re-sort, rows, chips, and the Example Sentences, reading-refinement, and kanji rows. | `SearchResultsView`, `SearchResultsScreen`, `SearchResultFrequencyOrdering`, `FrequencyPack` |
 | `detail/` | Word pages and kanji details from their rows: furigana, pitch, Frequency Details, conjugations, kanji, and examples. | `WordDetailView`, `KanjiDetailView`, `JapaneseRubyText`, `KanjiReadingSplitter`, `JapaneseConjugationClient`, `ConjugationsView` |
 | `examples/` | Example linking, inflection grouping, and the ranks example retrieval shares. | `JapaneseTextAnalysisClient`, `JapaneseInflectionGrouping`, `KuromojiMorphologyClient`, `ExampleSentenceClient` |
 | `artifact/` | Reads `LanguageReferenceData.sqlite3` and its packs with the app's own SQL, checks them, and answers search, word, kanji, example, and sitemap requests (`Dictionary`). | `LookupClient`, `ExampleSentenceClient`, `KanjiLookupClient` |
@@ -83,7 +83,7 @@ the app-recorded suites (`apps/ios/LanguageData/Conformance/`) check the port ag
 | `search/deinflect.ts` | `JapaneseDeinflection.swift` |
 | `search/fts.ts` | `ftsPhrase` and `ftsPrefix` in `LookupClient.swift`, unchanged, since the core queries the same FTS4 indexes; `\p{L}\p{M}\p{N}` stands for `CharacterSet.alphanumerics`. |
 | `search/morphology.ts` | `lookupSegments` in `JapaneseTextAnalysisClient.swift`; the analyzer itself is a capability. |
-| `results/results.ts` | `SearchResultsView` in `SearchView.swift` (`orderedItems` is `SearchResultFrequencyOrdering.ordered`, `primaryItem` is `LookupSearchResults.primaryEntry(for:)`), with `FrequencyPack.swift`. |
+| `results/results.ts` | `SearchResultsView.swift` (`orderedItems` is `SearchResultFrequencyOrdering.ordered`, in `SearchResultFrequencyOrdering.swift`; `primaryItem` is `LookupSearchResults.primaryEntry(for:)`), with `FrequencyPack.swift`. |
 | `detail/word.ts` | `WordDetailView.swift` and `DictionaryEntry.swift` |
 | `detail/kanji.ts` | `KanjiDetailView.swift`, with its words from `entries(containingKanji:)` in `LookupClient.swift` and its elements from `KanjiElementLookupClient.swift`. |
 | `detail/conjugation-table.ts` | `JapaneseConjugator`, `ConjugationTable`, `ConjugationMode`, and `ConjugatedForm` in `JapaneseConjugationClient.swift`. |
@@ -103,7 +103,7 @@ the app-recorded suites (`apps/ios/LanguageData/Conformance/`) check the port ag
 | `examples/kana.ts` | Foundation's `applyingTransform(.hiraganaToKatakana, reverse:)` |
 | `examples/retrieval.ts`, `artifact/example-retrieval.ts` | `ExampleSentenceData.retrieveEntry` and `retrieveIndexedEntry` in `ExampleSentenceClient.swift`, with its queries. |
 | `artifact/example-search.ts` | `ExampleSentenceData.retrieveEnglish` and `retrieveJapanese` in `ExampleSentenceClient.swift`, with its queries. |
-| `artifact/search-examples.ts` | `SearchResultsScreen.exampleCount` and `directExampleCount` in `SearchView.swift`. |
+| `artifact/search-examples.ts` | `SearchResultsScreen.exampleCount` and `directExampleCount` in `SearchResultsScreen.swift`. |
 | `artifact/lookup.ts` | `LookupClient.entriesMatchingForm`: `exactJapaneseCandidateSQL`, ranked and deduplicated by the search port. |
 | `artifact/words.ts`, `artifact/kanji.ts` | `selectedColumns`, `entry(_:)`, and `kanjiCandidateRowsSQL` in `LookupClient.swift`. |
 

@@ -48,10 +48,6 @@ export const knownLargeFiles: Readonly<Record<string, SizeException>> = {
     lines: 1022,
     reason: swiftCantBeCheckedHere
   },
-  'apps/ios/Modules/Sources/SearchExperience/SearchView.swift': {
-    lines: 1033,
-    reason: swiftCantBeCheckedHere
-  },
   'apps/ios/Modules/Sources/SearchExperience/WatchAndListenView.swift': {
     lines: 699,
     reason: swiftCantBeCheckedHere

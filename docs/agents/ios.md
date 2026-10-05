@@ -130,7 +130,7 @@ matches that aren't Japanese. It doesn't cover Japanese queries with no direct m
 Discovered Words: Search splits those into words with the Sudachi dictionary the app bundles,
 which the package's test host lacks, so recording fails on them. Check those in the Simulator.
 The screen's titles, counts, and which rows it shows come from `SearchResultsScreen` in
-`SearchView.swift`, which the view and the suite share. Record it with
+`SearchResultsScreen.swift`, which the view and the suite share. Record it with
 `-only-testing:SearchExperienceTests/SearchResultsConformanceTests`; add a query by adding its
 `query` and `covers` fields and recording.
 
@@ -231,7 +231,7 @@ side of a pair without the other; change both, and re-record the suite that cove
 ## Search and linked text
 
 `LookupClient` retrieves a relevance-filtered, deduplicated set in dictionary order and never
-reads frequency; `SearchResultFrequencyOrdering` (`SearchView.swift`) reorders only that bounded
+reads frequency; `SearchResultFrequencyOrdering` reorders only that bounded
 set. An exact dictionary form stays first (した is 下 and 舌 before する), then deinflected lemmas
 by chain length, so a direct conjugation (まけたら → 負ける) outranks a longer chain, then prefix
 and contains matches. Radical searches keep only the leading lexical-rank group.

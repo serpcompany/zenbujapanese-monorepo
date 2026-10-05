@@ -87,7 +87,8 @@ limit.
 the app does with its Japanese Text Analysis pack. The dictionary service runs the same Sudachi,
 with the dictionary the app pins.
 
-- Source: App docs, Search (Discovered Words); `SearchView.swift`; `JapaneseMorphologyClient.swift`;
+- Source: App docs, Search (Discovered Words); `SearchResultsView.swift` and `SearchResultsScreen.swift`;
+  `JapaneseMorphologyClient.swift`;
   ADR 0009 (the owner's decision to build what the website couldn't analyze before).
 - Check: `apps/dictionary-api/src/conformance/sentence-search.test.ts`, "「日本語を勉強する」 lists
   its words as Discovered Words" and "a word the dictionary holds is still searched as itself". SR
@@ -103,7 +104,7 @@ first), a ranked word before an unranked one, then the retrieval order. So い�
 いる, 炒る, 入る, as the app and the #462 design do. The frequency comes from the app's JLPT and
 TUBELEX packs, read by the dictionary service for all of a search's results, one query per pack.
 
-- Source: App docs, Search; `SearchResultFrequencyOrdering` in `SearchView.swift`; #462 (rows in
+- Source: App docs, Search; `SearchResultFrequencyOrdering.swift`; #462 (rows in
   the order the app shows with its default dictionaries).
 - Check: SRR `results` (every row's ID, in order, with its `match` group and `retrievalOrder`) for
   54 queries, including `iru` and いる; `packages/dictionary-core/src/results/results.test.ts`,
@@ -122,7 +123,7 @@ count; the line follows the #462 design's wording.
 **All at once.** A results page lists every word the search finds in its HTML, at most the app's
 60, as the app's list does; nothing loads later.
 
-- Source: `SearchResultsView` in `SearchView.swift` (one list of up to 60); the owner's decision
+- Source: `SearchResultsView.swift` (one list of up to 60); the owner's decision
   of 2026-09-29 (all at once, rather than #466's 25 and then load more).
 - Check: `search-results.test.tsx`, the SRR cases (every SRR row rendered, in order); smoke "iru
   lists all its words at once, in the app's order", which reads iru's rows from SRR.
@@ -147,7 +148,7 @@ row opens the sentences where the site shows them:
   [Example Sentences section](#example-sentences-section).
 
 - Source: App docs, Search; the examples section of `SearchResultsView` and
-  `SearchResultsScreen.exampleCount` and `exampleActionTitle` in `SearchView.swift`; ADR 0010 and
+  `SearchResultsScreen.exampleCount` and `exampleActionTitle` in `SearchResultsScreen.swift`; ADR 0010 and
   the owner's decision on #544 (where the row leads, with no Example Sentences page).
 - Check: SRR `examples` (title, count, and primary entry) and `sections` for all 54 queries;
   `search-results.test.tsx`, "shows the Example Sentences row, the reading refinement, then the
@@ -168,7 +169,7 @@ offers ("Search for「いる」" for `iru`), the page shows that row in its own 
 results, and it opens that search.
 
 - Source: App docs, Search ("a Japanese-reading refinement"); the reading-refinement section of
-  `SearchResultsView` in `SearchView.swift` (`search.reading-refinement`).
+  `SearchResultsView.swift` (`search.reading-refinement`).
 - Check: SR and SRR `readingRefinement`, SRR `sections`; `search-results.test.tsx`, "shows the
   Example Sentences row, the reading refinement, then the rows in order with their chips" (title and
   link) and the SRR cases (title); smoke (the row and its link).
@@ -181,7 +182,7 @@ the page's HTML while closed. A kanji the dictionary has no details for, or whos
 dictionary service couldn't answer, is a row that doesn't open.
 
 - Source: App docs, Search ("a dedicated Kanji result for a single-kanji query");
-  `KanjiPrimaryRow` and `primaryEntry(for:)` in `SearchView.swift` and `DictionaryEntry.swift`;
+  `KanjiPrimaryRow` and `primaryEntry(for:)` in `SearchResultsView.swift` and `DictionaryEntry.swift`;
   ADR 0010 (a one-kanji search shows its kanji's details).
 - Check: SRR `kanji` (character, label, summary, and entry) for 8 kanji, and whether each SRR case
   draws its kanji's details; `search-results.test.tsx`, "leads a one-kanji query with the KANJI
@@ -206,7 +207,7 @@ one (a 23 pt body) is an accessibility size, so the clamp lifts once the root fo
 two lines. Page zoom isn't text size and keeps the clamp.
 
 - Source: App docs, Search ("English rows show the meaning that matched"); `ResultRow` in
-  `SearchView.swift` (`lineLimit(dynamicTypeSize.isAccessibilitySize ? nil : 2)`);
+  `ResultRow.swift` (`lineLimit(dynamicTypeSize.isAccessibilitySize ? nil : 2)`);
   `displaySummary` in `DictionaryEntry.swift`; #462.
 - Check: SRR `results[].headword`, `reading`, and `summary`; `search-results.test.tsx` (each row's
   headword, meaning, and link in the SRR cases, and "clamps each meaning to two lines, and lifts
@@ -973,7 +974,7 @@ app does.
 **Radical searches keep the strongest matches.** A search started from radical input lists only
 its leading group of equally strong matches, as the app limits it (`rankedEntryLimit`).
 
-- App source: `SearchResultsView` and its `rankedEntryLimit` in `SearchView.swift`.
+- App source: `SearchResultsView` and its `rankedEntryLimit` in `SearchResultsView.swift`.
 - Check it will get: radical-origin cases in the planned search results suite, recording the rows
   the app lists.
 
