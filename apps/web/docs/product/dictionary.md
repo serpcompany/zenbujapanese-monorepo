@@ -389,8 +389,8 @@ its modifiers, such as "Godan verb (intransitive)", and is left out when no clas
 comes from the first sense's parts of speech, falling back to the entry's. For a word with a
 conjugation table the row links to the page's Conjugations section (see Conjugations).
 
-- Source: App docs, Dictionary and kanji details; `WordHeadline` and `PitchAccentBadge` in
-  `WordDetailView.swift`; `PartOfSpeechFormatter.swift`; `DictionaryEntry.displayPartOfSpeech`;
+- Source: App docs, Dictionary and kanji details; `WordHeadline.swift` and
+  `PitchAccentBadge.swift`; `PartOfSpeechFormatter.swift`; `DictionaryEntry.displayPartOfSpeech`;
   #462.
 - Check: WD `furigana`, `partOfSpeech`; `packages/dictionary-core/src/detail/word.test.ts`, "names
   one word class, then its modifiers" and "shows no part of speech when no class has a name";
@@ -407,7 +407,7 @@ the website has no page for either (ADR 0010). A word the app doesn't conjugate 
 no section.
 
 - Source: App docs, Dictionary and kanji details (the conjugation table); `PartOfSpeechRow` in
-  `WordDetailView.swift` (a `NavigationLink`); `JapaneseConjugationClient.swift`
+  `WordDetailSections.swift` (a `NavigationLink`); `JapaneseConjugationClient.swift`
   (`JapaneseConjugator`); ADR 0010 (the table on the word page).
 - Check: WD `opensConjugations`, compared by the service's WD replay and drawn by Conjugations
   rendered; `src/components/dictionary/conjugations.test.tsx`, "starts closed, at #conjugations,
@@ -458,7 +458,7 @@ readers hear "Pronounce «reading». Pitch accent, downstep N, M mora", as the a
 say it: M is the source's mora count, even where it differs from the morae drawn (#511 review).
 
 - Source: App docs, Dictionary and kanji details; `PitchAccentBadge` and `PitchContourLayout` in
-  `WordDetailView.swift`; #462 design.
+  `PitchAccentBadge.swift`; #462 design.
 - Check: WD `pitch` (downstep, levels, mora count, particle, source, and `graph`: the morae and each
   dot's position and level); WD rendered reads each dot's position from the drawn SVG;
   `packages/dictionary-core/src/detail/pitch.test.ts`;
@@ -476,7 +476,7 @@ Frequency, Lists, Notes, and Examples.
 
 **Meaning.** Senses are numbered, each with its notes.
 
-- Source: `WordDetailView.swift`.
+- Source: `MeaningSection` in `WordDetailSections.swift`.
 - Check: WD `senses`.
 
 **Frequency.** One row per default dictionary, JLPT then YouTube, with its dot and its level or
@@ -498,7 +498,7 @@ word, why ("YouTube has no mapped frequency rank for this entry."). The app's Ma
 Dictionaries button is left out, since the website uses the default dictionaries only.
 
 - Source: App docs, Dictionary and kanji details; `FrequencyDisclosureView` and
-  `FrequencyDisclosurePresentation` in `WordDetailView.swift`; `FrequencyPack.swift`; #464 (the
+  `FrequencyDisclosurePresentation` in `FrequencyDisclosure.swift`; `FrequencyPack.swift`; #464 (the
   default dictionaries only).
 - Check: WD `frequency[].details` (the gate compares the detail core's, and WD rendered reads them
   back from the drawn details); `packages/dictionary-core/src/detail/frequency.test.ts`,
@@ -513,7 +513,7 @@ their labels, leaving out Search only forms and repeats. A form with a kanji lin
 for its first kanji, which leads with that kanji's row and its details, as the app's form line
 opens that kanji.
 
-- Source: `DictionaryEntry.alternativeForms`; `AlternativeFormsSection` in `WordDetailView.swift`;
+- Source: `DictionaryEntry.alternativeForms`; `AlternativeFormsSection` in `WordDetailSections.swift`;
   ADR 0010 (a kanji's details open from its search).
 - Check: WD `alternativeForms`; `packages/dictionary-core/src/detail/word.test.ts`, "leaves out
   Search only forms and repeats from the alternatives"; where a kanji links:
@@ -544,7 +544,7 @@ character alone; the meanings follow the #462 design.
 **Related words.** Each related word shows its headword with furigana, the relation, and its
 summary, and opens its word page when it has one.
 
-- Source: `RelationshipsSection` in `WordDetailView.swift`.
+- Source: `RelationshipsSection` in `WordDetailSections.swift`.
 - Check: WD `relatedWords`; the conformance test checks that every related word links to its page.
 
 **Lists and Notes.** Each section shows a prompt, Add to List or Add Note, that opens the

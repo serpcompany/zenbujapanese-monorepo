@@ -84,18 +84,18 @@ the app-recorded suites (`apps/ios/LanguageData/Conformance/`) check the port ag
 | `search/fts.ts` | `ftsPhrase` and `ftsPrefix` in `LookupJapaneseRanking.swift`, unchanged, since the core queries the same FTS4 indexes; `\p{L}\p{M}\p{N}` stands for `CharacterSet.alphanumerics`. |
 | `search/morphology.ts` | `lookupSegments` in `JapaneseTextAnalysisClient.swift`; the analyzer itself is a capability. |
 | `results/results.ts` | `SearchResultsView.swift` (`orderedItems` is `SearchResultFrequencyOrdering.ordered`, in `SearchResultFrequencyOrdering.swift`; `primaryItem` is `LookupSearchResults.primaryEntry(for:)`), with `FrequencyPack.swift`. |
-| `detail/word.ts` | `WordDetailView.swift` and `DictionaryEntry.swift` |
+| `detail/word.ts` | `WordDetailView.swift`, with its headline in `WordHeadline.swift` and its sections in `WordDetailSections.swift`, and `DictionaryEntry.swift` |
 | `detail/kanji.ts` | `KanjiDetailView.swift`, with its words from `entries(containingKanji:)` in `LookupClient.swift` and its elements from `KanjiElementLookupClient.swift`. |
 | `detail/conjugation-table.ts` | `JapaneseConjugator`, `ConjugationTable`, `ConjugationMode`, and `ConjugatedForm` in `JapaneseConjugationClient.swift`. |
 | `detail/conjugation.ts` | What `ConjugationsView.swift` shows for a `detail/conjugation-table.ts` table: `ConjugatedForm.Kind.presentation`, `sharedSpellings(of:in:)`, and `rowShowsFurigana`. The suite's `opensConjugations` and `conjugations` check both modules. |
-| `detail/frequency.ts` | `FrequencyTier`, `FrequencyPresentationModel`, and `SearchFrequencyRankPresentationModel` in `FrequencyPack.swift`, and `FrequencyDisclosurePresentation` in `WordDetailView.swift`. |
-| `detail/pitch.ts` | `String.morae` and `PitchAccent.levels` in `DictionaryEntry.swift`, and `PitchContourLayout` in `WordDetailView.swift`. |
+| `detail/frequency.ts` | `FrequencyTier`, `FrequencyPresentationModel`, and `SearchFrequencyRankPresentationModel` in `FrequencyPack.swift`, and `FrequencyDisclosurePresentation` in `FrequencyDisclosure.swift`. |
+| `detail/pitch.ts` | `String.morae` and `PitchAccent.levels` in `DictionaryEntry.swift`, and `PitchContourLayout` in `PitchAccentBadge.swift`. |
 | `detail/ruby.ts` | `JapaneseRubyAnnotation` in `JapaneseTextAnalysisClient.swift`, which `JapaneseRubyText.swift` draws. |
 | `detail/kanji-split.ts` | `KanjiReadingSplitter.swift`, and `kanjiReadings` in `JapaneseRubyText.swift`. |
 | `detail/examples.ts` | The `.wordDetail` and `.conjugatedForm` presentations in `ExampleSentencesView.swift`, and `LinkedJapaneseText.swift`. |
 | `detail/strokes.ts` | `decodeStroke` in `KanjiStrokeOrderClient.swift`, and `KanjiStrokeShape` in `KanjiStrokeOrderView.swift`. |
 | `detail/part-of-speech.ts` | `PartOfSpeechFormatter.swift` |
-| `detail/text.ts` | `isCJKUnifiedIdeograph` in `DictionaryEntry.swift`, `KanjiCharacter.init` in `KanjiLookupClient.swift`, `hiragana` in `KanjiDetailView.swift`, and `katakana` in `WordDetailView.swift`. |
+| `detail/text.ts` | `isCJKUnifiedIdeograph` in `DictionaryEntry.swift`, `KanjiCharacter.init` in `KanjiLookupClient.swift`, `hiragana` in `KanjiDetailView.swift`, and `katakana` in `PitchAccentBadge.swift`. |
 | `detail/suite.ts` | Test-only: the fields `WordDetailConformanceTests.swift` records, for the service's replay (`apps/dictionary-api/src/conformance/detail.conformance.test.ts`) and the website's `word-page.test.tsx`. |
 | `examples/linking.ts` | `JapaneseTextAnalyzer` in `JapaneseTextAnalysisClient.swift`, and `displayReading(for:)` in `LinkedJapaneseText.swift`. |
 | `examples/morphology.ts` | The token conversion in `KuromojiMorphologyClient.swift`, and `JapaneseInflectionGrouping.swift`. |
