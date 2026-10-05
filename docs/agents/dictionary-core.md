@@ -101,8 +101,8 @@ the app-recorded suites (`apps/ios/LanguageData/Conformance/`) check the port ag
 | `examples/morphology.ts` | The token conversion in `KuromojiMorphologyClient.swift`, and `JapaneseInflectionGrouping.swift`. |
 | `examples/forms.ts` | `ConjugatedForm.examples` in `ConjugationsView.swift`, `JapaneseTextAnalysisClient.words`, and `queryScalarRanges` and `matchesQuery` in `LinkedJapaneseText.swift`. |
 | `examples/kana.ts` | Foundation's `applyingTransform(.hiraganaToKatakana, reverse:)` |
-| `examples/retrieval.ts`, `artifact/example-retrieval.ts` | `ExampleSentenceData.retrieveEntry` and `retrieveIndexedEntry` in `ExampleSentenceClient.swift`, with its queries. |
-| `artifact/example-search.ts` | `ExampleSentenceData.retrieveEnglish` and `retrieveJapanese` in `ExampleSentenceClient.swift`, with its queries. |
+| `examples/retrieval.ts`, `artifact/example-retrieval.ts` | `ExampleSentenceData.retrieveEntry` and `retrieveIndexedEntry` in `ExampleSentenceEntryRetrieval.swift`, with its queries. |
+| `artifact/example-search.ts` | `ExampleSentenceData.retrieveEnglish` and `retrieveJapanese` in `ExampleSentenceSearchRetrieval.swift`, with its queries. |
 | `artifact/search-examples.ts` | `SearchResultsScreen.exampleCount` and `directExampleCount` in `SearchResultsScreen.swift`. |
 | `artifact/lookup.ts` | `LookupClient.entriesMatchingForm`: `exactJapaneseCandidateSQL`, ranked and deduplicated by the search port. |
 | `artifact/words.ts`, `artifact/kanji.ts` | `entry(_:)` in `LookupClient.swift`, and `selectedColumns` and `kanjiCandidateRowsSQL` in `LookupDatabase.swift`. |

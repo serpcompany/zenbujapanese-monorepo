@@ -15,6 +15,10 @@ on:
       - apps/ios/Modules/Sources/SearchExperience/DictionaryEntry.swift
       - apps/ios/Modules/Sources/SearchExperience/JapaneseTextAnalysisClient.swift
       - apps/ios/Modules/Sources/SearchExperience/ExampleSentenceClient.swift
+      - apps/ios/Modules/Sources/SearchExperience/ExampleSentenceDatabase.swift
+      - apps/ios/Modules/Sources/SearchExperience/ExampleSentenceEntryRetrieval.swift
+      - apps/ios/Modules/Sources/SearchExperience/ExampleSentenceModels.swift
+      - apps/ios/Modules/Sources/SearchExperience/ExampleSentenceSearchRetrieval.swift
       - apps/ios/Modules/Sources/SearchExperience/JapaneseInflectionGrouping.swift
       - apps/ios/Modules/Sources/SearchExperience/KuromojiMorphologyClient.swift
       - apps/ios/Modules/Sources/SearchExperience/LinkedJapaneseText.swift
@@ -77,7 +81,7 @@ jobs:
             "${swift_dir}(LookupClient|LookupDatabase|LookupEnglishRanking|LookupJapaneseRanking|LookupRankedEntries|SearchQuery|DictionaryRanking|JapaneseDeinflection|DictionaryEntry|JapaneseTextAnalysisClient)\.swift$" \
             '^packages/dictionary-core/src/search/' 'packages/dictionary-core/src/search/'
           check examples \
-            "${swift_dir}(ExampleSentenceClient|JapaneseTextAnalysisClient|JapaneseInflectionGrouping|KuromojiMorphologyClient|LinkedJapaneseText)\.swift$" \
+            "${swift_dir}(ExampleSentenceClient|ExampleSentenceDatabase|ExampleSentenceEntryRetrieval|ExampleSentenceModels|ExampleSentenceSearchRetrieval|JapaneseTextAnalysisClient|JapaneseInflectionGrouping|KuromojiMorphologyClient|LinkedJapaneseText)\.swift$" \
             '^(packages/dictionary-core/src/examples/[^/]+|packages/dictionary-core/src/artifact/(example-retrieval|example-search|word-examples|search-examples|lookup)|apps/dictionary-api/src/kuromoji)\.ts$' \
             'packages/dictionary-core/src/examples/ and its artifact/ example files'
           check detail \

@@ -290,8 +290,9 @@ At most the app's 100 are listed.
 The dictionary service runs the app's own search, its SQL on the app's own FTS4 indexes, so a
 search lists what the app lists however many sentences it reads.
 
-- Source: App docs, Search; `ExampleSentenceClient.swift` (`search`, `retrieveEnglish`,
-  `retrieveJapanese`, `examples`); `ExampleSentencesScreen.examples` in
+- Source: App docs, Search; `ExampleSentenceClient.swift` (`search`, `examples`);
+  `ExampleSentenceSearchRetrieval.swift` (`retrieveEnglish`, `retrieveJapanese`);
+  `ExampleSentencesScreen.examples` in
   `ExampleSentencesView.swift`; ADR 0009 (the app's own data and queries in the dictionary
   service).
 - Check: ES `ids` (every listed pair ID, in order) and `usesPrimaryEntryExamples` for 67 queries,
@@ -559,7 +560,7 @@ or with the Load more examples button. A line above the list gives the count: "N
 examples says "No source-matched examples". The section is at `#examples`, where a search's
 Example Sentences row opens it.
 
-- Source: App docs, Dictionary and kanji details; `ExampleSentenceClient.swift`; #464 (25, then
+- Source: App docs, Dictionary and kanji details; `ExampleSentenceEntryRetrieval.swift`; #464 (25, then
   load more as you scroll, plus the total); #499 (readings share examples, and headwords that
   change under NFKC, such as Ｔシャツ, have none, as in the app).
 - Check: WD `examples` (`listed`, `reportedCount`, `truncated`, and the first 25 in `shown`);
