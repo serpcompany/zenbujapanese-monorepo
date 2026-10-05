@@ -422,7 +422,7 @@ struct WatchSessionView: View {
     Menu {
       Picker(
         "Playback Speed",
-        selection: Binding(get: { player.playbackRate }, set: player.setPlaybackRate)
+        selection: Binding(get: { player.playbackRate }, set: { player.setPlaybackRate($0) })
       ) {
         ForEach(Self.playbackRates, id: \.self) { rate in
           Text(Self.rateLabel(rate)).tag(rate)

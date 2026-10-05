@@ -10,6 +10,20 @@ The current `sudachi-swift` binary lacks an x86_64 Simulator slice. Use
 `ONLY_ACTIVE_ARCH=YES`; a generic dual-architecture Simulator build fails at
 link time.
 
+The app's **Prepare bundled Sudachi Core** build phase runs offline: it copies the pinned Sudachi
+Core dictionary from `~/Library/Caches/com.zenbujapanese.build/SudachiCore` (or
+`ZENBU_SUDACHI_BUILD_CACHE`), and fails with "verified Sudachi build cache is missing" until that
+cache is filled. Fill it once per Mac, online, from the repository root:
+
+```sh
+python3 apps/ios/Tools/prepare_sudachi_core.py \
+  --manifest apps/ios/Modules/Sources/SearchExperience/Resources/LanguageTechnologyPackCatalog.json \
+  --cache ~/Library/Caches/com.zenbujapanese.build/SudachiCore --cache-only
+```
+
+It downloads the release `LanguageTechnologyPackCatalog.json` names from GitHub (72 MB) and checks
+its SHA-256; later builds reuse it.
+
 ## Interactive parsing comparison harness
 
 The app defaults to the bundled Kuromoji engine for interactive Japanese in Image Search,

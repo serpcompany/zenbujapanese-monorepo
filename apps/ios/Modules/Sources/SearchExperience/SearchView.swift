@@ -35,8 +35,73 @@ struct SearchView: View {
   @FocusState private var isSearchFocused: Bool
 
   var body: some View {
+    searchScreen
+      .confirmationDialog("Image Search", isPresented: $showsImageSources) {
+        Button("Take Photo") { presentCamera() }
+          .accessibilityIdentifier("image-source.camera")
+        Button("Photo Library") { presentPhotoLibrary() }
+          .accessibilityIdentifier("image-source.photo-library")
+        Button("Files") { showsFileImporter = true }
+          .accessibilityIdentifier("image-source.files")
+        Button("Cancel", role: .cancel) {}
+      }
+      .sheet(item: $presentedImageSource) { source in
+        switch source {
+        case .camera:
+          ImageCameraPicker { result in
+            presentedImageSource = nil
+            importCameraImage(result)
+          }
+          .ignoresSafeArea()
+        }
+      }
+      .photosPicker(
+        isPresented: $showsPhotoLibrary,
+        selection: $selectedPhotoItems,
+        maxSelectionCount: 1,
+        matching: .images
+      )
+      .onChange(of: selectedPhotoItems) { _, items in
+        importPhotoLibraryItems(items)
+      }
+      .fileImporter(
+        isPresented: $showsFileImporter,
+        allowedContentTypes: [.image],
+        allowsMultipleSelection: true,
+        onCompletion: importImages,
+        onCancellation: {}
+      )
+      .alert(
+        imageImportAlert?.title ?? "",
+        isPresented: $isShowingImageImportAlert,
+        presenting: imageImportAlert
+      ) { alert in
+        if alert.offersSettings {
+          Button("Open Settings", action: cameraAuthorizationClient.openSettings)
+          Button("Cancel", role: .cancel) {}
+        } else {
+          Button("OK") {}
+        }
+      } message: { alert in
+        Text(alert.message)
+      }
+      .alert("Clear Recent Searches?", isPresented: $isConfirmingClearAll) {
+        Button("Cancel", role: .cancel) {}
+        Button("Clear All", role: .destructive) {
+          clearRecentSearches()
+        }
+      } message: {
+        Text("This removes every recent Search query from this device.")
+      }
+      .onDisappear {
+        imageImportTask?.cancel()
+        imageImportTask = nil
+      }
+  }
+
+  private var searchScreen: some View {
     let taskID = searchTaskID
-    VStack(spacing: 0) {
+    return VStack(spacing: 0) {
       SearchBar(
         query: $query,
         isFocused: $isSearchFocused,
@@ -49,86 +114,9 @@ struct SearchView: View {
         completeSubmission(submittedQuery)
       }
 
-      switch resolvedPresentationState {
-      case .idle:
-        RecentSearchHistoryView(
-          recentSearchStore: recentSearchStore,
-          refreshID: recentSearchRefreshID,
-          selectSearch: selectRecentSearch,
-          searches: $recentSearches
-        )
+      presentedContent
 
-      case .loading:
-        ProgressView("Searching")
-          .frame(maxWidth: .infinity, maxHeight: .infinity)
-          .accessibilityIdentifier("search.loading")
-
-      case .results:
-        SearchResultsView(
-          query: searchQuery,
-          results: results,
-          exampleCount: exampleCount,
-          rankedEntryLimit: sparseRadicalQuery == searchQuery
-            ? results.leadingLexicalEntryCount : nil,
-          frequencyCapability: frequencyCapability,
-          frequencyRefreshID: frequencyRefreshID,
-          selectRefinement: selectRefinement
-        )
-        .id(
-          SearchResultsIdentity(
-            query: searchQuery,
-            entries: results.entries.map(\.id),
-            refinement: results.readingRefinement?.query
-          )
-        )
-
-      case .failure:
-        ScrollView {
-          ContentUnavailableView {
-            Label("Dictionary unavailable", systemImage: "exclamationmark.triangle")
-              .foregroundStyle(.red)
-          } description: {
-            Text("Zenbu couldn't open its offline Language Reference Data.")
-          } actions: {
-            Button("Retry") {
-              retryID += 1
-            }
-            .buttonStyle(.borderedProminent)
-          }
-          .padding(.vertical, 24)
-        }
-        .accessibilityIdentifier("search.failure")
-
-      case .noResults:
-        ContentUnavailableView {
-          Label("No Dictionary Matches", systemImage: "magnifyingglass")
-        } description: {
-          Text("Try another Japanese or English Search query.")
-        }
-        .accessibilityIdentifier("search.no-results")
-
-      case .specializedInput:
-        Color.clear
-      }
-
-      switch inputMode {
-      case .keyboard where isSearchFocused:
-        SearchInputModePicker(
-          selectedMode: .keyboard,
-          selectMode: selectInputMode
-        )
-      case .handwriting:
-        HandwritingInputView(
-          query: $query,
-          recognitionClient: handwritingRecognitionClient,
-          selectMode: selectInputMode,
-          submit: submitComposedQuery
-        )
-      case .radicals:
-        EmptyView()
-      default:
-        EmptyView()
-      }
+      inputModeAccessory
     }
     .safeAreaInset(edge: .bottom, spacing: 0) {
       if inputMode == .radicals {
@@ -167,66 +155,92 @@ struct SearchView: View {
     .task(id: taskID) {
       await search(taskID)
     }
-    .confirmationDialog("Image Search", isPresented: $showsImageSources) {
-      Button("Take Photo") { presentCamera() }
-        .accessibilityIdentifier("image-source.camera")
-      Button("Photo Library") { presentPhotoLibrary() }
-        .accessibilityIdentifier("image-source.photo-library")
-      Button("Files") { showsFileImporter = true }
-        .accessibilityIdentifier("image-source.files")
-      Button("Cancel", role: .cancel) {}
-    }
-    .sheet(item: $presentedImageSource) { source in
-      switch source {
-      case .camera:
-        ImageCameraPicker { result in
-          presentedImageSource = nil
-          importCameraImage(result)
+  }
+
+  @ViewBuilder
+  private var presentedContent: some View {
+    switch resolvedPresentationState {
+    case .idle:
+      RecentSearchHistoryView(
+        recentSearchStore: recentSearchStore,
+        refreshID: recentSearchRefreshID,
+        selectSearch: selectRecentSearch,
+        searches: $recentSearches
+      )
+
+    case .loading:
+      ProgressView("Searching")
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .accessibilityIdentifier("search.loading")
+
+    case .results:
+      SearchResultsView(
+        query: searchQuery,
+        results: results,
+        exampleCount: exampleCount,
+        rankedEntryLimit: sparseRadicalQuery == searchQuery
+          ? results.leadingLexicalEntryCount : nil,
+        frequencyCapability: frequencyCapability,
+        frequencyRefreshID: frequencyRefreshID,
+        selectRefinement: selectRefinement
+      )
+      .id(
+        SearchResultsIdentity(
+          query: searchQuery,
+          entries: results.entries.map(\.id),
+          refinement: results.readingRefinement?.query
+        )
+      )
+
+    case .failure:
+      ScrollView {
+        ContentUnavailableView {
+          Label("Dictionary unavailable", systemImage: "exclamationmark.triangle")
+            .foregroundStyle(.red)
+        } description: {
+          Text("Zenbu couldn't open its offline Language Reference Data.")
+        } actions: {
+          Button("Retry") {
+            retryID += 1
+          }
+          .buttonStyle(.borderedProminent)
         }
-        .ignoresSafeArea()
+        .padding(.vertical, 24)
       }
-    }
-    .photosPicker(
-      isPresented: $showsPhotoLibrary,
-      selection: $selectedPhotoItems,
-      maxSelectionCount: 1,
-      matching: .images
-    )
-    .onChange(of: selectedPhotoItems) { _, items in
-      importPhotoLibraryItems(items)
-    }
-    .fileImporter(
-      isPresented: $showsFileImporter,
-      allowedContentTypes: [.image],
-      allowsMultipleSelection: true,
-      onCompletion: importImages,
-      onCancellation: {}
-    )
-    .alert(
-      imageImportAlert?.title ?? "",
-      isPresented: $isShowingImageImportAlert,
-      presenting: imageImportAlert
-    ) { alert in
-      if alert.offersSettings {
-        Button("Open Settings", action: cameraAuthorizationClient.openSettings)
-        Button("Cancel", role: .cancel) {}
-      } else {
-        Button("OK") {}
+      .accessibilityIdentifier("search.failure")
+
+    case .noResults:
+      ContentUnavailableView {
+        Label("No Dictionary Matches", systemImage: "magnifyingglass")
+      } description: {
+        Text("Try another Japanese or English Search query.")
       }
-    } message: { alert in
-      Text(alert.message)
+      .accessibilityIdentifier("search.no-results")
+
+    case .specializedInput:
+      Color.clear
     }
-    .alert("Clear Recent Searches?", isPresented: $isConfirmingClearAll) {
-      Button("Cancel", role: .cancel) {}
-      Button("Clear All", role: .destructive) {
-        clearRecentSearches()
-      }
-    } message: {
-      Text("This removes every recent Search query from this device.")
-    }
-    .onDisappear {
-      imageImportTask?.cancel()
-      imageImportTask = nil
+  }
+
+  @ViewBuilder
+  private var inputModeAccessory: some View {
+    switch inputMode {
+    case .keyboard where isSearchFocused:
+      SearchInputModePicker(
+        selectedMode: .keyboard,
+        selectMode: selectInputMode
+      )
+    case .handwriting:
+      HandwritingInputView(
+        query: $query,
+        recognitionClient: handwritingRecognitionClient,
+        selectMode: selectInputMode,
+        submit: submitComposedQuery
+      )
+    case .radicals:
+      EmptyView()
+    default:
+      EmptyView()
     }
   }
 
@@ -552,88 +566,6 @@ private struct SearchResultsIdentity: Hashable {
   let query: SearchQuery
   let entries: [LanguageReferenceID]
   let refinement: SearchQuery?
-}
-
-private struct SearchBar: View {
-  @Environment(\.dynamicTypeSize) private var dynamicTypeSize
-  @Binding var query: String
-  var isFocused: FocusState<Bool>.Binding
-  let isInputActive: Bool
-  let activateKeyboard: () -> Void
-  let openImageSource: () -> Void
-  let cancel: () -> Void
-  let submitQuery: (SearchQuery) -> Void
-
-  var body: some View {
-    HStack(spacing: 12) {
-      HStack(spacing: 8) {
-        Image(systemName: "magnifyingglass")
-          .foregroundStyle(.secondary)
-
-        searchTextField
-          .textInputAutocapitalization(.never)
-          .autocorrectionDisabled()
-          .submitLabel(.search)
-          .focused(isFocused)
-          .onChange(of: isFocused.wrappedValue) { _, focused in
-            if focused { activateKeyboard() }
-          }
-          .onSubmit {
-            let submittedQuery = SearchQuery(query)
-            query = submittedQuery.value
-            submitQuery(submittedQuery)
-            isFocused.wrappedValue = false
-          }
-          .accessibilityIdentifier("search.field")
-
-        if !query.isEmpty {
-          Button {
-            query = ""
-          } label: {
-            Image(systemName: "xmark.circle.fill")
-              .foregroundStyle(.secondary)
-              .frame(width: 44, height: 44)
-              .contentShape(Rectangle())
-          }
-          .buttonStyle(.plain)
-          .accessibilityLabel("Clear text")
-        }
-
-      }
-      .font(.body)
-      .padding(.horizontal, 10)
-      .frame(minHeight: 44)
-      .background(.fill.tertiary, in: RoundedRectangle(cornerRadius: 9))
-
-      Button(action: openImageSource) {
-        Image(systemName: "camera")
-          .font(.title3)
-          .frame(width: 44, height: 44)
-          .contentShape(Rectangle())
-      }
-      .buttonStyle(.plain)
-      .accessibilityLabel("Image Search")
-      .accessibilityIdentifier("search.image-source")
-
-      if isInputActive {
-        Button("Cancel", action: cancel)
-          .buttonStyle(.plain)
-          .frame(minHeight: 44)
-          .accessibilityIdentifier("search.cancel")
-      }
-    }
-    .padding(.horizontal, 16)
-    .padding(.bottom, 10)
-  }
-
-  @ViewBuilder
-  private var searchTextField: some View {
-    if dynamicTypeSize >= .xxLarge {
-      TextField("Search", text: $query)
-    } else {
-      TextField("Search Japanese or English", text: $query)
-    }
-  }
 }
 
 private struct SearchResultsView: View {
