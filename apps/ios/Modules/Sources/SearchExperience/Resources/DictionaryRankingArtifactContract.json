@@ -1,6 +1,6 @@
 {
-  "databaseBytes": 481669120,
-  "databaseSHA256": "e13452e70d34124b50ace380fa1da348530c88b1eca0315ab14129d89ee0f073",
+  "databaseBytes": 481689600,
+  "databaseSHA256": "d99d5d0f3bd8ef935a2712e18efe9745d057d2a0cab7d291504f28b34d5fa449",
   "evidenceCounts": {
     "canonical_senses": 253020,
     "form_priority_profiles": 56127,
@@ -23,11 +23,11 @@
     "source_rows": 6
   },
   "toolSHA256": {
-    "dictionary_ranking_adapter_sha256": "a6ec035fcb4188eb8a3668f19dffd1ffee37c6a3d478def8f883a6981140a3a8",
-    "dictionary_ranking_contract_sha256": "9d6777997e9b935562ae9c2b18e6d4e4ba58f056a0c07be6b0017032ec065596",
-    "import_tool_sha256": "95233b469fed78de566492b3f41a6e3c1cc562b5988f79879b6190fd640f31b4",
-    "shared_tooling_sha256": "7a348e2ad80858dd6e0f47921e0f62c5e076048d0c03ede96e03747416e9faf0",
-    "tatoeba_adapter_sha256": "e04cf72c85a25a23b50bd893a370e53ee3a6c930536265d43ed6c881d331634e",
-    "unidic_adapter_sha256": "f616738d7f45e3c75ece903d62ce2092923a6e68cf0925dafe030563c753985a"
+    "dictionary_ranking_adapter_sha256": "c8efea2701988d854a7b18bfa53062ab196958ad9196e044202a43e28fa7573a",
+    "dictionary_ranking_contract_sha256": "b7df18edcc9b20a0c961c2be913f9e12816a69fdea6522ecd11610570f41e59e",
+    "import_tool_sha256": "9f155f04aa5ee725c5c3f285e3606ae0699a3ba62cc92e8610b87923a1584bcf",
+    "shared_tooling_sha256": "f263bf19549702d7c50b0a35160a3d8104431debb2b55c6f773969f7946444af",
+    "tatoeba_adapter_sha256": "65e5d32fe6b20ca18cf95cf1b9d6167f89d7c3cc1cf54f9a245f0743c421f584",
+    "unidic_adapter_sha256": "5bbb91b89e11a65239a0bea2d8a765431eb9888f9a8fff9dc8f828e2d304e58a"
   }
 }

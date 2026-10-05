@@ -36,28 +36,20 @@ TOML, XML, and ignore files.
 - Markdown is prose, not code. Files written by a tool (regenerated, never edited), third-party
   files, and files whose exact bytes a published checksum pins are left as they are:
   [`tools/checks/src/files.ts`](../../tools/checks/src/files.ts) lists them by name, with the tool,
-  source, or checksum for each. Two things are pinned. The frequency packs' mapping SQL: every
+  source, or checksum for each. One thing is pinned: the frequency packs' mapping SQL. Every
   published frequency pack carries its SHA-256, and the app refuses a pack whose mapping doesn't
-  match, so changing even a comment there would break installed packs. And the iOS data tools, the
-  Python files directly in `apps/ios/Tools/`: each records its own SHA-256, and its helpers', in
-  the data it built, so they keep their comments and size until that data is next rebuilt;
-  whoever rebuilds it, on a Mac that can check the app with it, cleans them up then
-  ([`tech-debt.md`](../tech-debt.md)). Their tests in `apps/ios/Tools/tests/` aren't pinned, and
-  follow every rule.
+  match, so changing even a comment there would break installed packs.
 
 ## File size
 
 A code file (TypeScript, JavaScript, Swift, Python, or shell) has at most 500 lines. Split one that
 outgrows it by responsibility, into files named for what each does.
 
-There are no exceptions without a reason that makes splitting unsafe now. The only ones are Swift
-files already over the limit: the machines agents work on here can neither build nor test Swift,
-so a split can't be checked, and it waits for a developer or agent with a Mac
-([`tech-debt.md`](../tech-debt.md)). They're listed in
-[`tools/checks/src/sizes.ts`](../../tools/checks/src/sizes.ts), each with its size and that reason,
-and may only shrink: the check refuses an entry without a reason, asks for an entry to be lowered as
-its file shrinks, and for it to go once the file is under the limit. The iOS data tools are exempt
-as pinned files (No comments, above).
+There are no exceptions without a reason that makes splitting unsafe now, and none today. An
+exception goes in `knownLargeFiles` in [`tools/checks/src/sizes.ts`](../../tools/checks/src/sizes.ts),
+with its size and that reason, and may only shrink: the check refuses an entry without a reason,
+asks for an entry to be lowered as its file shrinks, and for it to go once the file is under the
+limit.
 
 ## Docs
 

@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-"""Build a deterministic app-owned Frequency Pack artifact from a curated source."""
 
 from __future__ import annotations
 
@@ -46,12 +45,6 @@ def normalized_form(value: str) -> str:
 
 
 def artifact_content_sha256(metadata: dict[str, str]) -> str:
-    """Digest logical metadata (including mapping SHA), independent of SQLite pages.
-
-    V1 starts with its UTF-8 domain separator, then key-sorted metadata. Each UTF-8
-    key and value is prefixed by its unsigned 64-bit big-endian byte length. The
-    mapping SHA transitively covers every ordered evidence row and its typed fields.
-    """
     digest = hashlib.sha256(b"zenbu.frequency-pack-content.v1\0")
     for key, value in sorted(metadata.items()):
         for item in (key.encode("utf-8"), value.encode("utf-8")):
@@ -133,12 +126,6 @@ def source_rows(
 
 
 def unidic_lemma_readings(unidic: Path, manifest: dict[str, object]) -> dict[tuple[str, str], str]:
-    """Map each UniDic (lemma, part of speech) to its reading when UniDic gives exactly one.
-
-    TUBELEX counts UniDic lemmas, so a lemma's reading (lForm) names the word it counted even
-    when JMdict files the same spelling under several readings. Lemmas UniDic itself files under
-    more than one reading, such as 家 (イエ, ウチ, ヤ), get none.
-    """
     reading_source = manifest["readingSource"]
     assert isinstance(reading_source, dict)
     if sha256(unidic) != reading_source["sha256"]:
@@ -156,7 +143,6 @@ def unidic_lemma_readings(unidic: Path, manifest: dict[str, object]) -> dict[tup
 
 
 def source_reading(form: str, lemma_reading: str) -> str:
-    """JMdict writes readings of katakana words in katakana and of everything else in hiragana."""
     if KATAKANA_WORD.match(form):
         return lemma_reading
     return "".join(chr(ord(c) - 0x60) if "ァ" <= c <= "ヶ" else c for c in lemma_reading)
@@ -168,7 +154,6 @@ def mapped_database(
     mapping_sql_file: Path,
     language_data: Path,
 ) -> sqlite3.Connection:
-    """Run a mapping policy over the rows in memory; digests are left empty."""
     database = sqlite3.connect(":memory:")
     database.executescript(
         "CREATE TABLE source_rows (rank INTEGER PRIMARY KEY, form TEXT NOT NULL, "
@@ -200,12 +185,6 @@ def source_readings(
     language_data: Path,
     unidic: Path | None,
 ) -> list[str]:
-    """Give a row a reading only where V1 can't place it, so rows V1 places keep their mapping.
-
-    V2 prefers a reading match over a better-ranked spelling-only match for the same entry, so a
-    reading that would move an entry V1 already ranks to a worse row is withdrawn. No entry V1
-    ranks loses its rank or gets a worse one.
-    """
     if "readingSource" not in manifest:
         return [""] * len(rows)
     if unidic is None:

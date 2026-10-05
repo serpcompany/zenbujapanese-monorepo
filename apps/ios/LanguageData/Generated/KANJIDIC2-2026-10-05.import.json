@@ -2,15 +2,15 @@
   "source": {
     "resource_id": "SOURCE-COMPONENT-KANJIDIC2",
     "identity": "EDRDG KANJIDIC2",
-    "snapshot": "2026-08-10",
+    "snapshot": "2026-10-05",
     "download_url": "https://www.edrdg.org/pub/Nihongo/kanjidic2.xml.gz",
-    "fetched_at_utc": "2026-08-10T21:02:53Z",
-    "http_last_modified": "Mon, 10 Aug 2026 03:30:34 GMT",
-    "http_etag": "\"16b6b3-658a8fa24822b\"",
-    "compressed_bytes": 1488563,
-    "sha256": "0801e3e8f2f5ab23cd428840bbc6508445087a42a187781891b6c4d7e98e05d8",
+    "fetched_at_utc": "2026-10-05T22:23:11Z",
+    "http_last_modified": "Mon, 05 Oct 2026 03:30:36 GMT",
+    "http_etag": "\"16b6bd-65d0f8160b00d\"",
+    "compressed_bytes": 1488573,
+    "sha256": "d9184343a8ce9e999ce9d22d45ca7201f906f80064073fb210faff436e7fa7e4",
     "file_version": "4",
-    "database_version": "2026-222",
+    "database_version": "2026-278",
     "license": "EDRDG general dictionary licence (CC BY-SA 4.0)",
     "license_url": "https://www.edrdg.org/edrdg/licence.html",
     "documentation_url": "https://www.edrdg.org/wiki/index.php/KANJIDIC_Project"
@@ -19,8 +19,8 @@
     "identity": "edrdg-kanjidic2-radicals-to-zenbu-kanji-reference-data-v1",
     "header": {
       "fileVersion": "4",
-      "databaseVersion": "2026-222",
-      "dateOfCreation": "2026-08-10"
+      "databaseVersion": "2026-278",
+      "dateOfCreation": "2026-10-05"
     },
     "entry_count": 13108,
     "entries_with_meanings": 10384,
@@ -44,11 +44,11 @@
       "non-Japanese readings",
       "dictionary-reference identifiers"
     ],
-    "metadata_source_sha256": "0801e3e8f2f5ab23cd428840bbc6508445087a42a187781891b6c4d7e98e05d8",
+    "metadata_source_sha256": "d9184343a8ce9e999ce9d22d45ca7201f906f80064073fb210faff436e7fa7e4",
     "component_artifact_sha256": "f7c9eed0f56739c79e7970af916567fbe9d7c04ab084dbc24fac4bd0a6bd2a3c",
-    "import_tool_sha256": "96cebe8826933e9b6841a7230bfe234c227da4e5e414dcde9c9f367cfc017af9",
-    "shared_tooling_sha256": "7a348e2ad80858dd6e0f47921e0f62c5e076048d0c03ede96e03747416e9faf0",
-    "artifact_sha256": "425d44716b5429a423d97f0e70ff7bf8f7465c65fa5ebdd58c28020155816845",
-    "artifact_bytes": 4045598
+    "import_tool_sha256": "e603f8a4546b09964a9f62dce3235432ad8fc2925db2a44ccb24567cfccbf1c7",
+    "shared_tooling_sha256": "f263bf19549702d7c50b0a35160a3d8104431debb2b55c6f773969f7946444af",
+    "artifact_sha256": "f2f2dfcc30baec36ed4dcbffbd494e7c3f283aa3d7233ec0cf2d6d262dfbb47f",
+    "artifact_bytes": 4045602
   }
 }

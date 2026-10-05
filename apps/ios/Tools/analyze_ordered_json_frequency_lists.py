@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-"""Analyze checksum-pinned ordered JSON frequency archives for optional runtime packs."""
 
 from __future__ import annotations
 

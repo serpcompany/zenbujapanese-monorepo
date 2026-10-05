@@ -1,5 +1,3 @@
-"""UniDic source adapter for app-owned pitch-accent facts."""
-
 from __future__ import annotations
 
 import csv

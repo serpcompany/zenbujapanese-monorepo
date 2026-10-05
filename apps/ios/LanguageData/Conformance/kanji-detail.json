@@ -2,19 +2,19 @@
   "artifacts" : [
     {
       "name" : "LanguageReferenceData.sqlite3",
-      "sha256" : "e13452e70d34124b50ace380fa1da348530c88b1eca0315ab14129d89ee0f073"
+      "sha256" : "d99d5d0f3bd8ef935a2712e18efe9745d057d2a0cab7d291504f28b34d5fa449"
     },
     {
       "name" : "KanjiReferenceData.json",
-      "sha256" : "425d44716b5429a423d97f0e70ff7bf8f7465c65fa5ebdd58c28020155816845"
+      "sha256" : "f2f2dfcc30baec36ed4dcbffbd494e7c3f283aa3d7233ec0cf2d6d262dfbb47f"
     },
     {
       "name" : "KanjiElementReferenceData.json",
-      "sha256" : "ec160ef29ddd5bd4a81835605a8d240af31140cc695a05eaace83a79a8e8a423"
+      "sha256" : "1984078130d717d5cccf3bb0b04ef6ed0a7a20983bb40872665ba9b3a048882f"
     },
     {
       "name" : "KanjiStrokeData.sqlite3",
-      "sha256" : "1b9bcd2546759e09e6dd9d9f461fd2e2a89ca739032aac3ebb06e3fde6566f76"
+      "sha256" : "c603b7befa57aa0c5952e37ae848080609ff8a7de6f95a127efe156e191c0acd"
     }
   ],
   "cases" : [

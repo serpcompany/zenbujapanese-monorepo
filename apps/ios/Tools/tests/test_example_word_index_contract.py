@@ -9,8 +9,8 @@ ROOT = Path(__file__).resolve().parents[4]
 RESOURCES = ROOT / "apps/ios/Modules/Sources/SearchExperience/Resources"
 WORD_INDEX = RESOURCES / "ExampleWordIndex.sqlite3"
 CATALOG = RESOURCES / "FrequencyPackCatalog.json"
-SOURCE_RECORD = ROOT / "apps/ios/LanguageData/Sources/Tatoeba-jpn-indices-2026-09-26.source.json"
-IMPORT_REPORT = ROOT / "apps/ios/LanguageData/Generated/Tatoeba-jpn-indices-2026-09-26.import.json"
+(SOURCE_RECORD,) = (ROOT / "apps/ios/LanguageData/Sources").glob("Tatoeba-jpn-indices-*.source.json")
+IMPORT_REPORT = ROOT / "apps/ios/LanguageData/Generated" / SOURCE_RECORD.name.replace(".source.json", ".import.json")
 
 
 class ExampleWordIndexContractTests(unittest.TestCase):

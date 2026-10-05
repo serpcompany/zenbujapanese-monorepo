@@ -7,15 +7,21 @@ this directory holds the iOS specifics.
 
 The `*.source.json` files are the source of truth for upstream identity,
 snapshot, download location, checksum, and import configuration. The importers under
-`apps/ios/Tools/` define the transformations. Generated runtime artifacts live
+`apps/ios/Tools/` define the transformations ([their README](../../Tools/README.md), which says how
+to rebuild everything and refresh a snapshot). Generated runtime artifacts live
 under `apps/ios/Modules/Sources/SearchExperience/Resources/`.
+
+Sources published only as the latest file at a fixed URL are committed, in Git LFS, beside their
+records: `JMdict_e-2026-08-10.gz`, and the `Tatoeba-2026-10-03/`, `Tatoeba-jpn-indices-2026-10-03/`,
+`KANJIDIC2-2026-10-05/`, and `EDRDG-radicals-2026-08-10/` folders. Fixed upstream releases too large
+to commit (UniDic, KanjiVG, and Kanjium) are downloaded by the rebuild and git-ignored.
 
 | Data | Source record | Importer |
 | --- | --- | --- |
-| Dictionary entries and examples | `JMdict_e-2026-08-10.source.json`, `UniDic-CWJ-3.1.0.source.json`, `Tatoeba-2026-08-08.source.json` | `import_jmdict.py` |
-| Examples for kana-headword words | `Tatoeba-jpn-indices-2026-09-26.source.json` | `import_example_word_index.py` |
+| Dictionary entries and examples | `JMdict_e-2026-08-10.source.json`, `UniDic-CWJ-3.1.0.source.json`, `Tatoeba-2026-10-03.source.json` | `import_jmdict.py` |
+| Examples for kana-headword words | `Tatoeba-jpn-indices-2026-10-03.source.json` | `import_example_word_index.py` |
 | Estimated pitch for two-part compounds | `UniDic-CWJ-3.1.0.source.json` | `import_compound_pitch.py` |
-| Kanji reference data | `KANJIDIC2-2026-08-10.source.json` | `import_kanjidic.py` |
+| Kanji reference data | `KANJIDIC2-2026-10-05.source.json` | `import_kanjidic.py` |
 | Radicals and components | `EDRDG-radicals-2026-08-10.source.json` | `import_radicals.py` |
 | Kanji elements | `Kanjium-8a0cdaa.source.json` | `import_kanji_elements.py` |
 | Stroke diagrams | `KanjiVG-2025-08-16.source.json` | `import_kanjivg.py` |

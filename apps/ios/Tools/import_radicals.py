@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-"""Normalize pinned EDRDG KRADFILE/RADKFILE into Zenbu radical reference data."""
 
 from __future__ import annotations
 

@@ -55,10 +55,6 @@ const pinnedBytes: readonly [RegExp, string][] = [
   [
     /^apps\/ios\/Modules\/Sources\/SearchExperience\/Resources\/FrequencyPackMappingV\d+\.sql$/,
     "every published frequency pack's mappingPolicySHA256"
-  ],
-  [
-    /^apps\/ios\/Tools\/[^/]+\.py$/,
-    'the data the iOS data tools built, which records their SHA-256, until that data is next rebuilt'
   ]
 ]
 
@@ -120,6 +116,7 @@ const proseAndData = new Set([
   '.woff2',
   '.gz',
   '.xz',
+  '.bz2',
   '.zip',
   '.sqlite3',
   '.mlmodel',

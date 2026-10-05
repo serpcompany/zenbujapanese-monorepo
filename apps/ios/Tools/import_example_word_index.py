@@ -1,12 +1,4 @@
 #!/usr/bin/env python3
-"""Link Tatoeba example sentences to kana-headword dictionary entries.
-
-Word Detail finds examples for a kanji-headword entry by its written forms, but a
-kana-headword entry (それで, そんなに, でも) only has its reading, and short kana
-readings occur inside unrelated words (でも in いつでも, 何でも). Tatoeba's
-`jpn_indices` export lists the dictionary words each Japanese sentence uses, so
-this artifact records which sentences use each kana-headword entry as a word.
-"""
 
 from __future__ import annotations
 
@@ -24,12 +16,9 @@ from language_data_tools import file_sha256
 ARTIFACT_SCHEMA = "zenbu.example-word-index.v1"
 JMDICT_SOURCE_IDENTITY = "edrdg.jmdict"
 TATOEBA_SOURCE_IDENTITY = "tatoeba.weekly-export"
-FORM_KINDS = (0, 1)  # written, reading
-# Word Detail shows at most 100 examples and counts past 50 as "50+", so the
-# artifact keeps each entry's best 200 sentences.
+FORM_KINDS = (0, 1)
 SENTENCES_PER_ENTRY = 200
 
-# headword, then optional (reading) or (#JMdict sequence), [sense], {surface}, and ~
 TOKEN_PATTERN = re.compile(
     r"^(?P<head>[^(\[{~]+)"
     r"(?:\((?:#(?P<sequence>\d+)|(?P<reading>[^)]+))\))?"
@@ -90,7 +79,6 @@ def is_kana(value: str) -> bool:
 
 
 def resolve(token, by_sequence, headwords, by_form, readings, primary_written) -> bytes | None:
-    """The one dictionary entry a Tatoeba index token names, or None when ambiguous."""
     if token["sequence"]:
         return by_sequence.get(int(token["sequence"]))
     head = token["head"]
@@ -98,10 +86,6 @@ def resolve(token, by_sequence, headwords, by_form, readings, primary_written) -
     if token["reading"]:
         candidates = {entry for entry in candidates if token["reading"] in readings[entry]}
     if len(candidates) > 1:
-        # An index headword is the entry's first written form (其れ for それ), or its kana
-        # when the word is usually written in kana. Bare kana such as そう can therefore
-        # name several usually-kana entries (the adverb 然う and the suffix そう); it names
-        # one only when a single candidate shows that kana as its headword.
         if is_kana(head):
             candidates = {entry for entry in candidates if headwords[entry] == head}
         else:
@@ -141,7 +125,6 @@ def import_index(source: Path, source_manifest: dict, language_data: Path, outpu
 
     lines = index_lines(source)
     tokens_seen = tokens_resolved = unpaired_lines = 0
-    # entry id -> pair id -> (checked, surface)
     links: dict[bytes, dict[bytes, tuple[bool, str]]] = defaultdict(dict)
     for line in lines:
         japanese_id, english_id, body = line.split("\t", 2)

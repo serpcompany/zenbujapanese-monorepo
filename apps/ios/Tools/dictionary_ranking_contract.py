@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-"""Generate the app's typed runtime contract from one import transform."""
 
 from __future__ import annotations
 
