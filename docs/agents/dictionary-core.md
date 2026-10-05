@@ -17,7 +17,7 @@ Each module ports the app's Swift, in `apps/ios/Modules/Sources/SearchExperience
 | Folder | What it does | Main Swift sources |
 | --- | --- | --- |
 | `search/` | Search retrieval: query normalization, deinflection, ranking, full-text phrases, and sentence search through a supplied analyzer. | `LookupClient`, `SearchQuery`, `DictionaryRanking`, `JapaneseDeinflection`, `DictionaryEntry`, `JapaneseTextAnalysisClient` |
-| `results/` | The results screen: the frequency re-sort, rows, chips, and the Example Sentences, reading-refinement, and kanji rows. | `SearchResultsView`, `SearchResultsScreen`, `SearchResultFrequencyOrdering`, `FrequencyPack` |
+| `results/` | The results screen: the frequency re-sort, rows, chips, and the Example Sentences, reading-refinement, and kanji rows. | `SearchResultsView`, `SearchResultsScreen`, `SearchResultFrequencyOrdering`, `FrequencyPresentation` |
 | `detail/` | Word pages and kanji details from their rows: furigana, pitch, Frequency Details, conjugations, kanji, and examples. | `WordDetailView`, `KanjiDetailView`, `JapaneseRubyText`, `KanjiReadingSplitter`, `JapaneseConjugationClient`, `ConjugationsView` |
 | `examples/` | Example linking, inflection grouping, and the ranks example retrieval shares. | `JapaneseTextAnalysisClient`, `JapaneseInflectionGrouping`, `KuromojiMorphologyClient`, `ExampleSentenceClient` |
 | `artifact/` | Reads `LanguageReferenceData.sqlite3` and its packs with the app's own SQL, checks them, and answers search, word, kanji, example, and sitemap requests (`Dictionary`). | `LookupClient`, `ExampleSentenceClient`, `KanjiLookupClient` |
@@ -83,12 +83,12 @@ the app-recorded suites (`apps/ios/LanguageData/Conformance/`) check the port ag
 | `search/deinflect.ts` | `JapaneseDeinflection.swift` |
 | `search/fts.ts` | `ftsPhrase` and `ftsPrefix` in `LookupJapaneseRanking.swift`, unchanged, since the core queries the same FTS4 indexes; `\p{L}\p{M}\p{N}` stands for `CharacterSet.alphanumerics`. |
 | `search/morphology.ts` | `lookupSegments` in `JapaneseTextAnalysisClient.swift`; the analyzer itself is a capability. |
-| `results/results.ts` | `SearchResultsView.swift` (`orderedItems` is `SearchResultFrequencyOrdering.ordered`, in `SearchResultFrequencyOrdering.swift`; `primaryItem` is `LookupSearchResults.primaryEntry(for:)`), with `FrequencyPack.swift`. |
+| `results/results.ts` | `SearchResultsView.swift` (`orderedItems` is `SearchResultFrequencyOrdering.ordered`, in `SearchResultFrequencyOrdering.swift`; `primaryItem` is `LookupSearchResults.primaryEntry(for:)`), with `FrequencyPresentation.swift`. |
 | `detail/word.ts` | `WordDetailView.swift`, with its headline in `WordHeadline.swift` and its sections in `WordDetailSections.swift`, and `DictionaryEntry.swift` |
 | `detail/kanji.ts` | `KanjiDetailView.swift`, with its words from `entries(containingKanji:)` in `LookupClient.swift` and its elements from `KanjiElementLookupClient.swift`. |
 | `detail/conjugation-table.ts` | `JapaneseConjugator`, `ConjugationTable`, `ConjugationMode`, and `ConjugatedForm` in `JapaneseConjugationClient.swift`. |
 | `detail/conjugation.ts` | What `ConjugationsView.swift` shows for a `detail/conjugation-table.ts` table: `ConjugatedForm.Kind.presentation`, `sharedSpellings(of:in:)`, and `rowShowsFurigana`. The suite's `opensConjugations` and `conjugations` check both modules. |
-| `detail/frequency.ts` | `FrequencyTier`, `FrequencyPresentationModel`, and `SearchFrequencyRankPresentationModel` in `FrequencyPack.swift`, and `FrequencyDisclosurePresentation` in `FrequencyDisclosure.swift`. |
+| `detail/frequency.ts` | `FrequencyTier`, `FrequencyPresentationModel`, and `SearchFrequencyRankPresentationModel` in `FrequencyPresentation.swift`, and `FrequencyDisclosurePresentation` in `FrequencyDisclosure.swift`. |
 | `detail/pitch.ts` | `String.morae` and `PitchAccent.levels` in `DictionaryEntry.swift`, and `PitchContourLayout` in `PitchAccentBadge.swift`. |
 | `detail/ruby.ts` | `JapaneseRubyAnnotation` in `JapaneseTextAnalysisClient.swift`, which `JapaneseRubyText.swift` draws. |
 | `detail/kanji-split.ts` | `KanjiReadingSplitter.swift`, and `kanjiReadings` in `JapaneseRubyText.swift`. |

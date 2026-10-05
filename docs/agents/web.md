@@ -149,8 +149,9 @@ DICTIONARY_API_TOKEN=<the token the service was started with>
 
 The service runs the search core (`packages/dictionary-core/src/search/`, the app's Search
 retrieval with its own SQL on the artifact's FTS4 indexes) and the results core
-(`packages/dictionary-core/src/results/`, ported from SearchView.swift and FrequencyPack.swift),
-and answers with the results screen. `orderedItems` is
+(`packages/dictionary-core/src/results/`, ported from SearchResultsView.swift,
+SearchResultFrequencyOrdering.swift, and FrequencyPresentation.swift), and answers with the results
+screen. `orderedItems` is
 `SearchResultFrequencyOrdering.ordered`: within each match group (the result's source, then its
 coarse match rank), the more common tier from the first dictionary that has one, then each
 dictionary's value in priority order (lower first, ranked before unranked), then the retrieval

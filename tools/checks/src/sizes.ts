@@ -16,10 +16,6 @@ const swiftCantBeCheckedHere =
   'Swift: the machines agents work on here can neither build nor test it, so splitting it waits for a Mac that can check the result'
 
 export const knownLargeFiles: Readonly<Record<string, SizeException>> = {
-  'apps/ios/Modules/Sources/SearchExperience/FrequencyPack.swift': {
-    lines: 773,
-    reason: swiftCantBeCheckedHere
-  },
   'apps/ios/Modules/Sources/SearchExperience/FrequencyPackManager.swift': {
     lines: 585,
     reason: swiftCantBeCheckedHere

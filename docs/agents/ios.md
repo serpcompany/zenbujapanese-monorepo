@@ -273,7 +273,7 @@ are matched by pack family, the ID's first three parts, so a rebuilt pack keeps 
 historical manifest can share its pack version with the current one when only derived hashes
 changed, as after a language-data rebuild.
 
-An artifact's content digest (`FrequencyPackArtifactContent` in `FrequencyPack.swift`, matched by
+An artifact's content digest (`FrequencyPackArtifactContent` in `FrequencyPackArtifact.swift`, matched by
 `import_frequency_pack.py`) hashes `zenbu.frequency-pack-content.v1` and a NUL byte, then the
 metadata sorted by key, each UTF-8 key and value prefixed with its byte length as an unsigned
 64-bit big-endian integer; `FrequencyPackContentDigestV1.json` is a test vector. Its

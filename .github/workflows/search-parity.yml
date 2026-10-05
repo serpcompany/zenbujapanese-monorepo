@@ -30,6 +30,7 @@ on:
       - apps/ios/Modules/Sources/SearchExperience/PitchAccentBadge.swift
       - apps/ios/Modules/Sources/SearchExperience/FrequencyDisclosure.swift
       - apps/ios/Modules/Sources/SearchExperience/FrequencyPack.swift
+      - apps/ios/Modules/Sources/SearchExperience/FrequencyPresentation.swift
       - apps/ios/Modules/Sources/SearchExperience/JapaneseConjugationClient.swift
       - apps/ios/Modules/Sources/SearchExperience/ConjugationsView.swift
       - packages/dictionary-core/src/search/**
@@ -89,7 +90,7 @@ jobs:
             '^(packages/dictionary-core/src/examples/[^/]+|packages/dictionary-core/src/artifact/(example-retrieval|example-search|word-examples|search-examples|lookup)|apps/dictionary-api/src/kuromoji)\.ts$' \
             'packages/dictionary-core/src/examples/ and its artifact/ example files'
           check detail \
-            "${swift_dir}(KanjiReadingSplitter|JapaneseRubyText|WordDetailView|WordDetailSections|WordHeadline|PitchAccentBadge|FrequencyDisclosure|FrequencyPack|JapaneseConjugationClient|ConjugationsView)\.swift$" \
+            "${swift_dir}(KanjiReadingSplitter|JapaneseRubyText|WordDetailView|WordDetailSections|WordHeadline|PitchAccentBadge|FrequencyDisclosure|FrequencyPack|FrequencyPresentation|JapaneseConjugationClient|ConjugationsView)\.swift$" \
             '^packages/dictionary-core/src/detail/(kanji-split|pitch|frequency|conjugation|conjugation-table)\.ts$' \
             'packages/dictionary-core/src/detail/{kanji-split,pitch,frequency,conjugation,conjugation-table}.ts'
           [ "$status" -eq 0 ] && echo "Search parity OK."

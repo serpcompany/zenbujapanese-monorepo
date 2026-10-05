@@ -221,7 +221,7 @@ app picks them: `JLPT N5` when the JLPT list has it, and `YouTube 812` when TUBE
 chip has the app's colored dot for how common the word is: green, yellow, orange, red, or gray for
 rare. Screen readers hear the tier after a rank, as the app's labels speak it.
 
-- Source: App docs, Search; `SearchFrequencyRankPresentationModel` in `FrequencyPack.swift`;
+- Source: App docs, Search; `SearchFrequencyRankPresentationModel` in `FrequencyPresentation.swift`;
   `FrequencyRankChip.swift`.
 - Check: SRR `results[].chips` (dictionary, text, and tier) for every row of 54 queries;
   `search-results.test.tsx` (the chips as rendered in the SRR cases); smoke (iru's chips);
@@ -484,7 +484,7 @@ rank. A dictionary without the word says "Not listed" (JLPT) or "No rank" (YouTu
 are unofficial estimates, as the Sources list says.
 
 - Source: App docs, Dictionary and kanji details; `FrequencyPresentationModel` in
-  `FrequencyPack.swift`; #464 (JLPT and TUBELEX only).
+  `FrequencyPresentation.swift`; #464 (JLPT and TUBELEX only).
 - Check: WD `frequency`, and WD rendered (each row's name and value as listed);
   `packages/dictionary-core/src/detail/frequency.test.ts`, "lists each default dictionary, JLPT then
   YouTube" and "says what a dictionary lacks".
