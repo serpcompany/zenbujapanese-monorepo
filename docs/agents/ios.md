@@ -22,7 +22,8 @@ cache is filled. Fill it once per Mac, online, from the repository root:
 ```sh
 python3 apps/ios/Tools/prepare_sudachi_core.py \
   --manifest apps/ios/Modules/Sources/SearchExperience/Resources/LanguageTechnologyPackCatalog.json \
-  --cache ~/Library/Caches/com.zenbujapanese.build/SudachiCore --cache-only
+  --cache "${ZENBU_SUDACHI_BUILD_CACHE:-$HOME/Library/Caches/com.zenbujapanese.build/SudachiCore}" \
+  --cache-only
 ```
 
 It downloads the release `LanguageTechnologyPackCatalog.json` names from GitHub (72 MB) and checks
@@ -40,7 +41,8 @@ or how fast it feels. The app needs iOS 26.0 or later, and the Sudachi cache abo
    team under the ZenbuJapanese target's **Signing & Capabilities**. On Zenbu's Apple Developer
    team, keep the bundle ID. A free Apple ID (a Personal Team) can't use
    `com.zenbujapanese.dictionary`, which Zenbu's team registered: change it to one of your own,
-   such as `com.<you>.zenbujapanese`, and don't commit the team or bundle ID change.
+   such as `com.<you>.zenbujapanese`. The project sets no team, so picking one edits
+   `project.pbxproj`; don't commit that edit, or a bundle ID change.
 3. Choose the iPhone as the run destination and run.
 4. If iOS asks, turn on Developer Mode under Settings → Privacy & Security → Developer Mode. With a
    free Apple ID, also trust it under Settings → General → VPN & Device Management.
