@@ -708,7 +708,8 @@ Credits).
 when KANJIDIC2 has them. JLPT reads as the app writes it, `N` and KANJIDIC2's level, so 要 shows
 N2. The meanings follow on one line.
 
-- Source: `KanjiDetailView.swift`; #485 (the website shows JLPT as the app does).
+- Source: `KanjiOverview` in `KanjiDetailSections.swift`; #485 (the website shows JLPT as the app
+  does).
 - Check: KD `strokeCount`, `grade`, `meanings`; `packages/dictionary-core/src/detail/kanji.test.ts`,
   "要" and "a kanji without elements lists its components; one stroke is singular";
   `apps/web/e2e/kanji.spec.ts`, "the search page for 要 opens 要 to its stroke order, metrics,
@@ -750,8 +751,8 @@ chevron, as the app's row does; screen readers hear the app's label for it ("Kun
 要る, to be needed, …"). A row without words opens nothing. The words aren't links of their own,
 as in the app.
 
-- Source: `KanjiReadingsSection` and `KanjiReadingRow` in `KanjiDetailView.swift`; #462 (the row
-  layout).
+- Source: `KanjiReadingsSection` and `KanjiReadingRow` in `KanjiDetailSections.swift`; #462 (the
+  row layout).
 - Check: KD `readings`; `packages/dictionary-core/src/detail/kanji.test.ts`, "lists up to three
   words whose reading starts with the reading’s stem"; the rows:
   `src/components/dictionary/kanji-readings.test.tsx` ("the rendered kanji Readings rows match the
@@ -766,7 +767,7 @@ appear only for a kanji without elements. An element or component that is a kanj
 kanji's search, which leads with its row and details. The app also opens an element detail
 screen; see [Required, not built yet](#required-not-built-yet-511).
 
-- Source: `KanjiDetailView.swift`; `KanjiElementLookupClient.swift`.
+- Source: `KanjiElementsSection` in `KanjiDetailSections.swift`; `KanjiElementLookupClient.swift`.
 - Check: KD `elements`, `components`; `packages/dictionary-core/src/detail/kanji.test.ts`,
   "kanjiElements (KanjiElementReferenceData.elements)" and "a kanji without elements lists its
   components; one stroke is singular"; the links: `src/lib/dictionary/data.test.ts`, "kanji details
@@ -785,7 +786,8 @@ prompts a word page has: Add to List and Add Note, each opening the get-the-app 
 **Words.** The app's 24 words containing the kanji, in the app's order, each with furigana and its
 summary, opening its word page.
 
-- Source: `entries(containingKanji:)` in `LookupClient.swift`; `KanjiDetailView.swift`.
+- Source: `entries(containingKanji:)` in `LookupClient.swift`; `KanjiDetailView.swift`;
+  `KanjiWordsSection` in `KanjiDetailSections.swift`.
 - Check: KD `words`; `packages/dictionary-core/src/detail/kanji.test.ts`, "lists the app’s 24 words
   for 要, in its order"; the conformance test checks every listed word links to its page.
 
