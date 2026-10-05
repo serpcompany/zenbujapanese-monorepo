@@ -5,6 +5,10 @@ on:
     types: [opened, synchronize, reopened, labeled, unlabeled]
     paths:
       - apps/ios/Modules/Sources/SearchExperience/LookupClient.swift
+      - apps/ios/Modules/Sources/SearchExperience/LookupDatabase.swift
+      - apps/ios/Modules/Sources/SearchExperience/LookupEnglishRanking.swift
+      - apps/ios/Modules/Sources/SearchExperience/LookupJapaneseRanking.swift
+      - apps/ios/Modules/Sources/SearchExperience/LookupRankedEntries.swift
       - apps/ios/Modules/Sources/SearchExperience/SearchQuery.swift
       - apps/ios/Modules/Sources/SearchExperience/DictionaryRanking.swift
       - apps/ios/Modules/Sources/SearchExperience/JapaneseDeinflection.swift
@@ -70,7 +74,7 @@ jobs:
             fi
           }
           check search \
-            "${swift_dir}(LookupClient|SearchQuery|DictionaryRanking|JapaneseDeinflection|DictionaryEntry|JapaneseTextAnalysisClient)\.swift$" \
+            "${swift_dir}(LookupClient|LookupDatabase|LookupEnglishRanking|LookupJapaneseRanking|LookupRankedEntries|SearchQuery|DictionaryRanking|JapaneseDeinflection|DictionaryEntry|JapaneseTextAnalysisClient)\.swift$" \
             '^packages/dictionary-core/src/search/' 'packages/dictionary-core/src/search/'
           check examples \
             "${swift_dir}(ExampleSentenceClient|JapaneseTextAnalysisClient|JapaneseInflectionGrouping|KuromojiMorphologyClient|LinkedJapaneseText)\.swift$" \

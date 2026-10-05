@@ -73,15 +73,15 @@ the app-recorded suites (`apps/ios/LanguageData/Conformance/`) check the port ag
 | Module | Ports |
 | --- | --- |
 | `search/search.ts` | `searchUncached`, `searchOnce`, and `japaneseDeinflectedSources` in `LookupClient.swift`: the order in which a query tries its searches, from the reading refinement through deinflection to the analyzed segments. Results come back in dictionary order, before the frequency re-sort, as the suite pins them (ADR 0006). |
-| `search/database.ts` | `SearchFormKind`, `decodeEntry`, and `priorityProfile` in `LookupClient.swift`, with the entry columns its candidate queries select. `withParametersTruncatedAtNul` reads parameters as the app binds them ([Matching the Swift](#matching-the-swift), Bound text). |
-| `search/japanese.ts` | `rankedJapanese` in `LookupClient.swift`, with `japaneseCandidateSQL` and `exactJapaneseCandidateSQL`. |
-| `search/english.ts` | `rankedEnglish`, `glossEvidence`, `romajiEvidence`, `glossRelation`, `glossEvidencePrecedes`, `glossTokenPattern`, and `hasSearchTerms` in `LookupClient.swift`, with `asciiCandidateSQL` and `exactASCIICandidateSQL`. |
-| `search/ranked-entries.ts` | `RankedDictionaryEntry` and `deduplicated` in `LookupClient.swift`. |
-| `search/composition.ts` | `LookupSearchResults` (`composing`, and `empty` as `noResults`) and `LookupSearchResultItem` in `DictionaryEntry.swift`, and `resultItems` in `LookupClient.swift`. |
+| `search/database.ts` | `SearchFormKind`, `decodeEntry`, and `priorityProfile` in `LookupDatabase.swift`, with the entry columns its candidate queries select. `withParametersTruncatedAtNul` reads parameters as the app binds them ([Matching the Swift](#matching-the-swift), Bound text). |
+| `search/japanese.ts` | `rankedJapanese` in `LookupJapaneseRanking.swift`, with `japaneseCandidateSQL` and `exactJapaneseCandidateSQL`. |
+| `search/english.ts` | `rankedEnglish`, `glossEvidence`, `romajiEvidence`, `glossRelation`, `glossEvidencePrecedes`, `glossTokenPattern`, and `hasSearchTerms` in `LookupEnglishRanking.swift`, with `asciiCandidateSQL` and `exactASCIICandidateSQL`. |
+| `search/ranked-entries.ts` | `RankedDictionaryEntry` and `deduplicated` in `LookupRankedEntries.swift`. |
+| `search/composition.ts` | `LookupSearchResults` (`composing`, and `empty` as `noResults`) and `LookupSearchResultItem` in `DictionaryEntry.swift`, and `resultItems` in `LookupRankedEntries.swift`. |
 | `search/query.ts` | `SearchQuery.swift` |
 | `search/rank.ts` | `DictionaryRanking.swift` |
 | `search/deinflect.ts` | `JapaneseDeinflection.swift` |
-| `search/fts.ts` | `ftsPhrase` and `ftsPrefix` in `LookupClient.swift`, unchanged, since the core queries the same FTS4 indexes; `\p{L}\p{M}\p{N}` stands for `CharacterSet.alphanumerics`. |
+| `search/fts.ts` | `ftsPhrase` and `ftsPrefix` in `LookupJapaneseRanking.swift`, unchanged, since the core queries the same FTS4 indexes; `\p{L}\p{M}\p{N}` stands for `CharacterSet.alphanumerics`. |
 | `search/morphology.ts` | `lookupSegments` in `JapaneseTextAnalysisClient.swift`; the analyzer itself is a capability. |
 | `results/results.ts` | `SearchResultsView.swift` (`orderedItems` is `SearchResultFrequencyOrdering.ordered`, in `SearchResultFrequencyOrdering.swift`; `primaryItem` is `LookupSearchResults.primaryEntry(for:)`), with `FrequencyPack.swift`. |
 | `detail/word.ts` | `WordDetailView.swift` and `DictionaryEntry.swift` |
@@ -105,7 +105,7 @@ the app-recorded suites (`apps/ios/LanguageData/Conformance/`) check the port ag
 | `artifact/example-search.ts` | `ExampleSentenceData.retrieveEnglish` and `retrieveJapanese` in `ExampleSentenceClient.swift`, with its queries. |
 | `artifact/search-examples.ts` | `SearchResultsScreen.exampleCount` and `directExampleCount` in `SearchResultsScreen.swift`. |
 | `artifact/lookup.ts` | `LookupClient.entriesMatchingForm`: `exactJapaneseCandidateSQL`, ranked and deduplicated by the search port. |
-| `artifact/words.ts`, `artifact/kanji.ts` | `selectedColumns`, `entry(_:)`, and `kanjiCandidateRowsSQL` in `LookupClient.swift`. |
+| `artifact/words.ts`, `artifact/kanji.ts` | `entry(_:)` in `LookupClient.swift`, and `selectedColumns` and `kanjiCandidateRowsSQL` in `LookupDatabase.swift`. |
 
 ## Matching the Swift
 
