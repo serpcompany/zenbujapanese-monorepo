@@ -6,9 +6,75 @@ Use XcodeBuildMCP to discover the project, scheme, and an already-booted iOS
 Simulator from the current checkout. Build and run with the `arm64` architecture,
 then inspect the launched app before reporting success.
 
+The command-line tools must point at Xcode, not at the Command Line Tools, or `xcodebuild` and
+the Simulator tools refuse to run. `xcode-select -p` shows which; fix it once per Mac with
+`sudo xcode-select -s /Applications/Xcode.app/Contents/Developer`.
+
 The current `sudachi-swift` binary lacks an x86_64 Simulator slice. Use
 `ONLY_ACTIVE_ARCH=YES`; a generic dual-architecture Simulator build fails at
 link time.
+
+The app's **Prepare bundled Sudachi Core** build phase runs offline: it copies the pinned Sudachi
+Core dictionary from `~/Library/Caches/com.zenbujapanese.build/SudachiCore` (or
+`ZENBU_SUDACHI_BUILD_CACHE`), and fails with "verified Sudachi build cache is missing" until that
+cache is filled. Fill it once per Mac, online, from the repository root:
+
+```sh
+python3 apps/ios/Tools/prepare_sudachi_core.py \
+  --manifest apps/ios/Modules/Sources/SearchExperience/Resources/LanguageTechnologyPackCatalog.json \
+  --cache "${ZENBU_SUDACHI_BUILD_CACHE:-$HOME/Library/Caches/com.zenbujapanese.build/SudachiCore}" \
+  --cache-only
+```
+
+It downloads the release `LanguageTechnologyPackCatalog.json` names from GitHub (72 MB) and checks
+its SHA-256; later builds reuse it.
+
+## Install on an iPhone
+
+Check a change on a real iPhone when the Simulator can't show it: the camera, Apple Translation,
+or how fast it feels. The app needs iOS 26.0 or later, and the Sudachi cache above.
+
+### From the Mac the iPhone is connected to
+
+1. Connect the iPhone by USB, or pair it over the same Wi-Fi, and tap **Trust** on it.
+2. Open `apps/ios/ZenbuJapanese.xcodeproj`, sign in under Xcode → Settings → Accounts, and pick a
+   team under the ZenbuJapanese target's **Signing & Capabilities**. On Zenbu's Apple Developer
+   team, keep the bundle ID. A free Apple ID (a Personal Team) can't use
+   `com.zenbujapanese.dictionary`, which Zenbu's team registered: change it to one of your own,
+   such as `com.<you>.zenbujapanese`. The project sets no team, so picking one edits
+   `project.pbxproj`; don't commit that edit, or a bundle ID change.
+3. Choose the iPhone as the run destination and run.
+4. If iOS asks, turn on Developer Mode under Settings → Privacy & Security → Developer Mode. With a
+   free Apple ID, also trust it under Settings → General → VPN & Device Management.
+
+### From a Mac the iPhone can't reach
+
+Remote Desktop doesn't pass an iPhone's USB connection through to a Mac, so Xcode on a cloud Mac
+never sees the phone. Build an unsigned `.ipa` there, and install it from the computer the phone
+is plugged into, whether it runs Windows, macOS, or Linux.
+
+1. On the Mac, from the repository root, build for devices without signing and package the app:
+
+   ```sh
+   xcodebuild -project apps/ios/ZenbuJapanese.xcodeproj -scheme ZenbuJapanese \
+     -configuration Release -destination 'generic/platform=iOS' \
+     -derivedDataPath /tmp/zenbu-device CODE_SIGNING_ALLOWED=NO build
+   rm -rf /tmp/zenbu-ipa && mkdir -p /tmp/zenbu-ipa/Payload
+   ditto "/tmp/zenbu-device/Build/Products/Release-iphoneos/Zenbu Japanese.app" \
+     "/tmp/zenbu-ipa/Payload/Zenbu Japanese.app"
+   (cd /tmp/zenbu-ipa && zip -qry ZenbuJapanese.ipa Payload)
+   ```
+
+   `/tmp/zenbu-ipa/ZenbuJapanese.ipa` is about 320 MB, mostly the bundled dictionaries.
+2. Copy it to the computer the iPhone is plugged into, for example through a cloud drive.
+3. Install it with [iloader](https://github.com/nab138/iloader), a free, open-source sideloader.
+   Download it only from that repository, since lookalike copies exist. It signs the app with the
+   Apple ID you sign in with, a free one included, and installs it over USB.
+4. On the iPhone, turn on Developer Mode if iOS asks, and trust the Apple ID under Settings →
+   General → VPN & Device Management.
+
+A free Apple ID's install stops opening after 7 days, and an Apple ID can keep at most 3 such apps
+installed; install it again to renew it.
 
 ## Interactive parsing comparison harness
 
