@@ -31,9 +31,11 @@ The Jiten source ZIPs are served from the CDN at URLs named by their SHA-256, so
 change them: the script compares them with the last commit's catalog. If one changes, it fails;
 run it again with `--jiten-sources <dir>` and publish them
 ([`ios.md`](../../../docs/agents/ios.md), the frequency packs) before merging. A new TUBELEX,
-Wikipedia, or JLPT source fails it too, until its manifest names the source's SHA-256, bytes,
-snapshot, and download URL; the script copies everything else from the import reports and the
-built artifacts.
+Wikipedia, or JLPT source fails it too, until its manifest describes the source: `sourceSHA256`,
+`sourceBytes`, `sourceSnapshot`, `downloadURL` (for Wikipedia, published first), the corpus counts,
+and any description that names the snapshot. On every rebuild the script copies the mapping
+fields, digests, and smoke test from the import reports, and the fields the app checks against an
+artifact (pack version, covered rows, token total, and policy versions) from the artifact itself.
 
 After a rebuild, re-record the five conformance suites and review their diffs, then run
 `SearchExperienceTests` ([`ios.md`](../../../docs/agents/ios.md), Current verification boundary),
@@ -65,7 +67,9 @@ The importers record their own SHA-256, and some of the modules they use, in wha
 the contract tests, the app, and the language-data pipeline check those records, so editing a tool
 means rebuilding everything it built. Not every module a tool imports is recorded:
 `import_jlpt_level_pack.py` records only itself, `import_compound_pitch.py` not `unidic_adapter.py`,
-and `build_jiten_frequency_packs.py` not `analyze_ordered_json_frequency_lists.py`. `LanguageReferenceData.sqlite3`'s metadata, its import
+and `build_jiten_frequency_packs.py` not `analyze_ordered_json_frequency_lists.py`.
+`example_sentence_retrieval_index.py` records its own SHA-256 in the database's retrieval
+metadata, outside the ranking contract's six. `LanguageReferenceData.sqlite3`'s metadata, its import
 report, and `DictionaryRankingArtifactContract.json` record six: `import_tool_sha256`, the
 `tatoeba_adapter.py`, `unidic_adapter.py`, `dictionary_ranking_adapter.py`, and
 `dictionary_ranking_contract.py` hashes, and `shared_tooling_sha256` for `language_data_tools.py`.

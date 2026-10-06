@@ -238,9 +238,9 @@ jobs:
 
 ## Search parity
 
-`.github/workflows/search-parity.yml` keeps two implementations in step. Search retrieval, word
-pages' examples, and parts of the word page's detail (the per-kanji furigana highlight, the pitch
-graph, Frequency Details, and the conjugation table) exist twice until issue 481 makes TypeScript
+`.github/workflows/search-parity.yml` keeps two implementations in step. Search retrieval, the
+results screen, word pages' examples, and parts of the word page's detail (the per-kanji furigana
+highlight, the pitch graph, Frequency Details, and the conjugation table) exist twice until issue 481 makes TypeScript
 the single core (ADR 0008): Swift for the iOS app, and a TypeScript port for the website.
 
 It runs on a pull request that changes a file of any pair below, and again when a label is added
@@ -254,7 +254,7 @@ and skips the check.
 | search | `LookupClient`, `LookupDatabase`, `LookupEnglishRanking`, `LookupJapaneseRanking`, `LookupRankedEntries`, `SearchQuery`, `DictionaryRanking`, `JapaneseDeinflection`, `DictionaryEntry`, `JapaneseTextAnalysisClient` | Everything in `packages/dictionary-core/src/search/` |
 | examples | `ExampleSentenceClient`, `ExampleSentenceDatabase`, `ExampleSentenceEntryRetrieval`, `ExampleSentenceModels`, `ExampleSentenceSearchRetrieval`, `JapaneseTextAnalysisClient`, `JapaneseInflectionGrouping`, `KuromojiMorphologyClient`, `LinkedJapaneseText` (the conjugated form's highlight) | The `.ts` files in `packages/dictionary-core/src/examples/`; `example-retrieval.ts`, `example-search.ts`, `word-examples.ts`, and `lookup.ts` in `packages/dictionary-core/src/artifact/`; `apps/dictionary-api/src/kuromoji.ts` |
 | detail | `KanjiReadingSplitter`, `JapaneseRubyText` (the per-kanji furigana highlight), `WordDetailView`, `WordHeadline`, `WordDetailSections`, `PitchAccentBadge` (`PitchContourLayout`), `FrequencyDisclosure` (`FrequencyDisclosurePresentation`), `FrequencyPack`, `FrequencyPresentation`, `JapaneseConjugationClient`, `ConjugationsView` | `kanji-split.ts`, `pitch.ts`, `frequency.ts`, `conjugation.ts`, and `conjugation-table.ts` in `packages/dictionary-core/src/detail/` |
-| results | `SearchResultsView`, `SearchResultsScreen` (the Example Sentences row's count), `SearchResultFrequencyOrdering` | The `.ts` files in `packages/dictionary-core/src/results/`, and `search-examples.ts` in `packages/dictionary-core/src/artifact/` |
+| results | `SearchResultsView`, `SearchResultsScreen` (the results screen's rows, titles, and counts), `SearchResultFrequencyOrdering` | The `.ts` files in `packages/dictionary-core/src/results/`, and `search-examples.ts` in `packages/dictionary-core/src/artifact/` |
 
 Each pair is one `check` call in the workflow's script: the pair's name, a pattern for its Swift
 files, a pattern for its TypeScript files, and where the port is, which the error names. To change

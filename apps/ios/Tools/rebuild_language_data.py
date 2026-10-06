@@ -34,6 +34,8 @@ CHECKED_ARTIFACT_FIELDS = {
     "packVersion": "pack_version",
     "coveredSourceRows": "covered_source_rows",
     "sourceTotalTokens": "source_total_tokens",
+    "mappingPolicyVersion": "mapping_policy_version",
+    "presentationPolicyVersion": "presentation_policy_version",
 }
 
 
@@ -235,8 +237,8 @@ def artifact_facts(artifact: Path) -> tuple[dict, dict]:
 def same_source(manifest: dict, pack_report: dict) -> None:
     if pack_report["sourceSHA256"] != manifest["sourceSHA256"]:
         raise SystemExit(
-            f"{manifest['packID']} has a new source: update its manifest's sourceSHA256, sourceBytes, "
-            "sourceSnapshot, and downloadURL (publishing a downloadable pack's source), then rebuild"
+            f"{manifest['packID']} has a new source: update its manifest's source fields "
+            "(apps/ios/Tools/README.md, Rebuild everything), publish a downloadable pack's source, then rebuild"
         )
 
 
@@ -290,10 +292,13 @@ def update_catalog(wikipedia_artifact: Path) -> None:
     CATALOG.write_text(json.dumps(catalog, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
 
 
-def committed_catalog() -> dict:
+def published_catalog() -> dict:
     path = CATALOG.relative_to(REPOSITORY).as_posix()
+    base = subprocess.run(
+        ["git", "merge-base", "HEAD", "origin/main"], cwd=REPOSITORY, capture_output=True, text=True, check=True
+    ).stdout.strip()
     shown = subprocess.run(
-        ["git", "show", f"HEAD:{path}"], cwd=REPOSITORY, capture_output=True, text=True, check=True
+        ["git", "show", f"{base}:{path}"], cwd=REPOSITORY, capture_output=True, text=True, check=True
     )
     return json.loads(shown.stdout)
 
@@ -301,14 +306,14 @@ def committed_catalog() -> dict:
 def build_jiten(archives: Path) -> list[str]:
     before = {
         manifest["packID"]: manifest["sourceSHA256"]
-        for manifest in committed_catalog()["packs"]
+        for manifest in published_catalog()["packs"]
         if manifest["packID"].startswith("zenbu.jiten.")
     }
     run("build_jiten_frequency_packs.py", "--out-dir", archives)
     changed = []
-    for pack_id, source_sha256 in sorted(before.items()):
-        archive = archives / f"{pack_id}.json.zip"
-        if file_sha256(archive) != source_sha256:
+    for archive in sorted(archives.glob("zenbu.jiten.*.json.zip")):
+        pack_id = archive.name.removesuffix(".json.zip")
+        if file_sha256(archive) != before.get(pack_id):
             changed.append(str(archive))
     anime = archives / "zenbu.jiten.anime.ja.ordered-v2.json.zip"
     if file_sha256(anime) != file_sha256(ANIME_FIXTURE):
