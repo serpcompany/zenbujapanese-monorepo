@@ -94,6 +94,15 @@ class ToolProvenanceTests(unittest.TestCase):
                         "(apps/ios/Tools/README.md)",
                     )
 
+    def test_every_import_report_is_checked(self) -> None:
+        for report in GENERATED.glob("*.import.json"):
+            with self.subTest(report=report.name):
+                self.assertEqual(
+                    1,
+                    sum(report.match(pattern) for pattern in REPORTS),
+                    f"{report.name} matches no pattern in REPORTS: add the tools it records",
+                )
+
     def test_each_import_report_records_the_tools_as_they_are(self) -> None:
         for pattern, tools in REPORTS.items():
             (report,) = GENERATED.glob(pattern)
