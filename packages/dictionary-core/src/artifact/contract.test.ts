@@ -6,7 +6,8 @@ import { answeredContract, dictionaryContract } from './contract'
 
 const recordedShapes: Readonly<Record<number, string>> = {
   1: '0ba1a72450be2bf7',
-  2: '95e3a88fb8e6be64'
+  2: '95e3a88fb8e6be64',
+  3: 'e7a8161c547e46e9'
 }
 
 const plainFlags =

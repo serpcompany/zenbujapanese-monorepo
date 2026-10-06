@@ -82,7 +82,8 @@ Rules).
 
 Every `/v1` route needs `Authorization: Bearer <token>` and answers JSON; a query or form is one
 URL-encoded path segment of at most 200 characters (`maximumQueryLength`, which the website
-checks too). A 404 means there's no such thing: no such word, kanji, or sitemap, a query without
+checks too). The routes stay clear of `/v1/auth`, `/v1/me`, `/v1/sync`, and `/v1/health`, which the
+API host's nginx sends to the account service. A 404 means there's no such thing: no such word, kanji, or sitemap, a query without
 examples, or an unknown route. A word number or kanji that can't exist, such as word 0, a number
 past any JMdict entry, or two characters, is a 404 too. A 400 names what was malformed; a 401
 means the token is missing or wrong; a 503 means the service is still starting; a 500 says nothing
@@ -101,6 +102,17 @@ more and logs the error.
 | `GET /v1/sitemaps/words` | Each word sitemap's `ent_seq` range. |
 | `GET /v1/sitemaps/words/<n>?after=&limit=` | A sitemap's words after `after`, with their slugs. |
 | `GET /v1/retired` | Retired entries and their replacements; empty until #463. |
+| `GET /v1/browse` | The browse pages' totals: entries, each kana script's words, common words and the most used 24, the kanji lists' sizes and grade 1's kanji, and the JLPT levels' words. |
+| `GET /v1/browse/kana/<script>` | `hiragana` or `katakana`: how many words start with each kana. |
+| `GET /v1/browse/kana/<script>/<kana>` | A kana's two-kana groups with their counts, the words read as that kana alone, and the kanas before and after it. |
+| `GET /v1/browse/kana/<script>/<kana>/<two kana>?page=` | 200 of the words whose reading starts with the two kana, in kana order. |
+| `GET /v1/browse/categories` | How many words each category lists (`packages/dictionary-core/src/browse/categories.ts`). |
+| `GET /v1/browse/categories/<slug>?order=&page=` | 200 of a category's words, most used on YouTube first (`used`, the default) or in kana order (`kana`). |
+| `GET /v1/browse/ranked` | Each ranked list's mapped and listed words and its top 6, and each JLPT level's words and its first 5. |
+| `GET /v1/browse/ranked/<slug>?page=` | A ranked list's words ranked 200 at a time, to rank 10,000, or a JLPT level's words (`jlpt-n5`…) in kana order. |
+| `GET /v1/browse/kanji` | Each kanji list's kanji, most frequent first, and how many jōyō kanji have each stroke count. |
+| `GET /v1/browse/kanji/<slug>` | A kanji list (`grade-1`…`grade-6`, `secondary-school`, `jinmeiyo`, `strokes-<n>`) with each kanji's first meaning. |
+| `GET /v1/sitemaps/browse` | What the browse sitemap lists: every kana and its groups' pages, each category's and list's pages, and the kanji lists. |
 
 ## How it runs
 
@@ -112,7 +124,10 @@ read-only, checking it, its packs, and Kuromoji's pinned files as they load, and
 at a time: SQLite is synchronous, so a slow query holds only its own thread. Each call goes to the
 thread with the fewest in flight, and a thread that dies is replaced. Each thread keeps recent
 searches, word examples, a query's examples, kanji details, and word lookups in LRU caches, so a
-page's first request pays for a broad query and the rest don't. The website's edge cache keeps
+page's first request pays for a broad query and the rest don't. The browse routes read the
+artifact with plain scans, which take 0.1 to 0.8 seconds the first time (the category counts,
+every category at once, take the longest), and keep the ordered row IDs of the 32 most recent
+lists, and the totals, after that. The website's edge cache keeps
 answers for 10 minutes on top.
 
 Logs are one JSON object per line on stdout (errors on stderr): each request's method, route

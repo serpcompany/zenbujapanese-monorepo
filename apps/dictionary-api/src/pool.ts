@@ -95,6 +95,17 @@ export function createPool(files: VerifiedFiles, size: number): Pool {
     kanji: character => call('kanji', [character]),
     wordSitemaps: () => call('wordSitemaps', []),
     sitemapWords: (number, after, limit) => call('sitemapWords', [number, after, limit]),
-    retired: () => call('retired', [])
+    retired: () => call('retired', []),
+    browseSummary: () => call('browseSummary', []),
+    kanaIndex: script => call('kanaIndex', [script]),
+    kanaInitial: (script, initial) => call('kanaInitial', [script, initial]),
+    kanaWords: (script, prefix, page) => call('kanaWords', [script, prefix, page]),
+    browseCategories: () => call('browseCategories', []),
+    categoryWords: (slug, order, page) => call('categoryWords', [slug, order, page]),
+    rankedLists: () => call('rankedLists', []),
+    rankedWords: (slug, page) => call('rankedWords', [slug, page]),
+    kanjiHub: () => call('kanjiHub', []),
+    kanjiList: slug => call('kanjiList', [slug]),
+    browseSitemap: () => call('browseSitemap', [])
   }
 }

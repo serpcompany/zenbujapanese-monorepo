@@ -86,6 +86,10 @@ export class KanjiData {
     return this.byCharacter.has(character)
   }
 
+  entries(): KanjiReferenceEntry[] {
+    return [...this.byCharacter.values()]
+  }
+
   row(character: string): KanjiRow | null {
     const entry = this.byCharacter.get(character)
     if (!entry) return null

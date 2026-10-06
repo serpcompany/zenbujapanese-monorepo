@@ -2,6 +2,7 @@ import { createHash } from 'node:crypto'
 import { existsSync, readFileSync } from 'node:fs'
 import { join, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
+import { DictionaryBrowse } from '@zenbu/dictionary-core/artifact/browse'
 import { Dictionary } from '@zenbu/dictionary-core/artifact/dictionary'
 import type { MorphologyAnalyzer } from '@zenbu/dictionary-core/search/search'
 import {
@@ -89,4 +90,9 @@ export async function dictionary(options: { morphology: boolean }): Promise<Dict
 
 export async function artifactDatabase() {
   return (await open()).artifact.db
+}
+
+export async function browse(): Promise<DictionaryBrowse> {
+  const { artifact } = await open()
+  return new DictionaryBrowse(artifact.db, artifact.kanji)
 }

@@ -20,7 +20,8 @@ Each module ports the app's Swift, in `apps/ios/Modules/Sources/SearchExperience
 | `results/` | The results screen: the frequency re-sort, rows, chips, and the Example Sentences, reading-refinement, and kanji rows. | `SearchResultsView`, `SearchResultsScreen`, `SearchResultFrequencyOrdering`, `FrequencyPresentation` |
 | `detail/` | Word pages and kanji details from their rows: furigana, pitch, Frequency Details, conjugations, kanji, and examples. | `WordDetailView`, `KanjiDetailView`, `JapaneseRubyText`, `KanjiReadingSplitter`, `JapaneseConjugationClient`, `ConjugationsView` |
 | `examples/` | Example linking, inflection grouping, and the ranks example retrieval shares. | `JapaneseTextAnalysisClient`, `JapaneseInflectionGrouping`, `KuromojiMorphologyClient`, `ExampleSentenceClient` |
-| `artifact/` | Reads `LanguageReferenceData.sqlite3` and its packs with the app's own SQL, checks them, and answers search, word, kanji, example, and sitemap requests (`Dictionary`). | `LookupClient`, `ExampleSentenceClient`, `KanjiLookupClient` |
+| `artifact/` | Reads `LanguageReferenceData.sqlite3` and its packs with the app's own SQL, checks them, and answers search, word, kanji, example, and sitemap requests (`Dictionary`), and the browse pages' (`DictionaryBrowse`). | `LookupClient`, `ExampleSentenceClient`, `KanjiLookupClient` |
+| `browse/` | What the website's browse pages list: the kana charts, the categories and the labels each matches, the ranked and JLPT lists, the kanji lists, and the service paths the website asks for them. The app has no browse screens, so nothing here is a port. | — |
 | `fixtures/` | Rows exported from the app's data for twelve words and the kanji 要, each word and each of its conjugated forms with its first 50 examples, for local development and tests; never production. | — |
 
 ## Rules
@@ -224,6 +225,30 @@ records keyed by JMdict entry number.
   holds up to 100 sentences.
 - `KanjiData` refuses kanji files that aren't the versions the core reads, and a kanji with no
   meanings or readings isn't indexable (#465).
+
+## Browse
+
+`DictionaryBrowse` (`artifact/browse.ts`) answers the browse routes
+([`dictionary-api.md`](dictionary-api.md), Routes) with SQL of its own, since the app has no
+browse screens:
+
+- **Kana.** A word is under the script of its reading's first character: hiragana for
+  U+3041–U+309F, katakana for anything else, so every entry is under one of the two. A kana's
+  page groups its words by their first two characters; a word read as the kana alone is listed on
+  the kana's own page. Groups list their words in kana order (by reading, then JMdict entry
+  number), 200 to a page (`browsePageSize`).
+- **Categories** (`browse/categories.ts`) match the entry's parts of speech, or any sense's
+  `usage`, `fields`, or `dialects` labels ([`apps/ios/Tools/README.md`](../../apps/ios/Tools/README.md),
+  `jmdict_labels.py`), or JMdict's common marker. A category lists its words most used first (by
+  TUBELEX rank, then kana order, with unranked words after) or in kana order. Labels the website
+  leaves out (names, and vulgar, derogatory, sensitive, or X-rated words) have no category.
+- **Ranked lists** (`browse/lists.ts`) are TUBELEX, and the Wikipedia and Jiten lists in
+  `RankedLists.sqlite3`, each to rank 10,000, 200 ranks to a page; a page lists the words ranked
+  in its range, so ranks a source row maps to no entry leave gaps. The JLPT lists are the level
+  pack's words at each level, in kana order.
+- **Kanji lists** are KANJIDIC2's school grades 1 to 6, secondary school (grade 8), jinmeiyō
+  (grades 9 and 10), and the jōyō kanji (grades 1 to 6 and 8) by stroke count, each most frequent
+  first by KANJIDIC2's newspaper frequency, then by code point.
 
 ## Rows
 
