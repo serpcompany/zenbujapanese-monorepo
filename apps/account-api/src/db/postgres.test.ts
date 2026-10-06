@@ -1,8 +1,12 @@
+import { randomUUID } from 'node:crypto'
 import { PGlite } from '@electric-sql/pglite'
 import { PGLiteSocketServer } from '@electric-sql/pglite-socket'
 import pg from 'pg'
 import { afterAll, beforeAll, describe, expect, test, vi } from 'vitest'
 import { migrationsFolder as migrations } from '../config'
+import { createAccounts } from '../domain/accounts'
+import { cursorKey, cursors } from '../domain/cursor'
+import { accountStore } from './accounts'
 import { migratePostgres, migrationLock, openPostgres } from './postgres'
 
 const realPostgres = process.env.ACCOUNT_API_TEST_DATABASE_URL ?? ''
@@ -54,4 +58,58 @@ describe('Postgres, through the driver the service runs', () => {
     await database.close()
     expect(await database.ready()).toBe(false)
   })
+
+  test.skipIf(realPostgres === '')(
+    'lets one of many changes made at once to one account through, and applies a mutation sent many times at once once',
+    async () => {
+      await migratePostgres(url, migrations)
+      const database = openPostgres(url)
+      const raw = new pg.Client({ connectionString: url })
+      await raw.connect()
+      const id = `race-${randomUUID()}`
+      await raw.query('insert into users (id, name, email) values ($1, $2, $3)', [
+        id,
+        '',
+        `${id}@example.com`
+      ])
+      const accounts = createAccounts(accountStore(database.db), cursors(cursorKey('test')))
+      const updates = await Promise.all(
+        Array.from({ length: 8 }, (_, index) =>
+          accounts.updateProfile(id, 1, { name: `Name ${index}` })
+        )
+      )
+      expect(updates.map(update => update?.status).sort()).toEqual([
+        ...Array(7).fill('conflict'),
+        'updated'
+      ])
+      const mutation = {
+        id: 'sent-at-once',
+        entity: 'profile',
+        operation: 'update',
+        baseVersion: 2,
+        fields: { username: id.slice(0, 30).replaceAll('-', '_') }
+      }
+      const answers = await Promise.all(
+        Array.from({ length: 6 }, () => accounts.sync(id, { mutations: [mutation] }))
+      )
+      for (const answer of answers) {
+        expect(answer).toMatchObject({
+          status: 'synced',
+          results: [{ id: 'sent-at-once', status: 'applied', version: 3 }]
+        })
+      }
+      const journal = await raw.query(
+        'select operation, entity_version from sync_changes where user_id = $1 order by sequence',
+        [id]
+      )
+      expect(journal.rows).toEqual([
+        { operation: 'create', entity_version: 1 },
+        { operation: 'update', entity_version: 2 },
+        { operation: 'update', entity_version: 3 }
+      ])
+      await raw.query('delete from users where id = $1', [id])
+      await raw.end()
+      await database.close()
+    }
+  )
 })

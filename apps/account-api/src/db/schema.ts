@@ -5,6 +5,7 @@ import {
   index,
   integer,
   pgTable,
+  primaryKey,
   text,
   timestamp,
   uniqueIndex
@@ -27,6 +28,8 @@ export const users = pgTable(
     email: text('email').notNull().unique(),
     emailVerified: boolean('email_verified').notNull().default(false),
     image: text('image'),
+    username: text('username').unique(),
+    version: integer('version').notNull().default(1),
     createdAt: created(),
     updatedAt: updated()
   },
@@ -100,6 +103,37 @@ export const rateLimits = pgTable('rate_limits', {
   count: integer('count').notNull(),
   lastRequest: bigint('last_request', { mode: 'number' }).notNull()
 })
+
+export const syncChanges = pgTable(
+  'sync_changes',
+  {
+    sequence: bigint('sequence', { mode: 'number' }).primaryKey().generatedAlwaysAsIdentity(),
+    userId: owner(),
+    entityType: text('entity_type').notNull(),
+    entityId: text('entity_id').notNull(),
+    entityVersion: integer('entity_version').notNull(),
+    operation: text('operation').notNull(),
+    changedAt: moment('changed_at').notNull().defaultNow()
+  },
+  table => [index('sync_changes_user_sequence').on(table.userId, table.sequence)]
+)
+
+export const syncMutations = pgTable(
+  'sync_mutations',
+  {
+    userId: owner(),
+    clientMutationId: text('client_mutation_id').notNull(),
+    entityType: text('entity_type').notNull(),
+    entityId: text('entity_id'),
+    operation: text('operation').notNull(),
+    requestSha256: text('request_sha256').notNull(),
+    outcome: text('outcome').notNull(),
+    resultingServerVersion: integer('resulting_server_version'),
+    errorCode: text('error_code'),
+    createdAt: created()
+  },
+  table => [primaryKey({ columns: [table.userId, table.clientMutationId] })]
+)
 
 export const authSchema = {
   user: users,

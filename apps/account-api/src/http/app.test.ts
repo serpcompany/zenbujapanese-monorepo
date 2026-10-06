@@ -1,19 +1,11 @@
 import { servedByAccountService, servedByEachServiceItself } from '@zenbu/node-service/api-host'
 import { HTTPException } from 'hono/http-exception'
 import { afterEach, describe, expect, test, vi } from 'vitest'
+import { standIns } from '../test/app'
 import { type AppOptions, createApp } from './app'
 
-const signInRefused = () =>
-  Promise.resolve(Response.json({ code: 'INVALID_OTP', message: 'Invalid OTP' }, { status: 400 }))
-
 const app = (databaseReady: () => Promise<boolean>, options: Partial<AppOptions> = {}) =>
-  createApp({
-    release: 'abc123def456',
-    databaseReady,
-    auth: { handler: signInRefused },
-    devMailbox: null,
-    ...options
-  })
+  createApp({ ...standIns, databaseReady, ...options })
 const up = () => Promise.resolve(true)
 const down = () => Promise.resolve(false)
 
@@ -78,6 +70,51 @@ describe('the account service', () => {
       route: '/v1/health',
       error: 'connect ECONNREFUSED 10.0.0.5:5432 for user zenbu'
     })
+  })
+
+  test("hides a database error in sync from the caller, and says nothing of the learner's data", async () => {
+    vi.spyOn(process.stderr, 'write').mockReturnValue(true)
+    const service = app(up, {
+      verifyAccessToken: async () => 'user-1',
+      accounts: {
+        profile: async () => null,
+        updateProfile: async () => null,
+        sync: () =>
+          Promise.reject(new Error('duplicate key value violates "users_pkey" (id)=(user-1)'))
+      }
+    })
+    const response = await service.request('/v1/sync', {
+      method: 'POST',
+      headers: { authorization: 'Bearer token', 'content-type': 'application/json' },
+      body: '{}'
+    })
+    expect(response.status).toBe(500)
+    expect(await response.text()).not.toMatch(/duplicate|users_pkey|user-1/)
+  })
+
+  test('answers cross-origin requests only from the trusted origins, by name, never with *', async () => {
+    const trusted = 'https://zenbujapanese.com'
+    const service = app(up, { allowedOrigins: [trusted] })
+    for (const path of ['/v1/me', '/v1/sync', '/v1/auth/get-session', '/v1/health']) {
+      const preflight = (origin: string) =>
+        service.request(path, {
+          method: 'OPTIONS',
+          headers: {
+            origin,
+            'access-control-request-method': 'POST',
+            'access-control-request-headers': 'authorization, content-type'
+          }
+        })
+      const allowed = await preflight(trusted)
+      expect(allowed.headers.get('access-control-allow-origin'), path).toBe(trusted)
+      expect(allowed.headers.get('access-control-allow-credentials')).toBe('true')
+      const refused = await preflight('https://evil.example')
+      expect(refused.headers.get('access-control-allow-origin'), path).toBeNull()
+    }
+    const plain = await service.request('/v1/health', {
+      headers: { origin: 'https://evil.example' }
+    })
+    expect(plain.headers.get('access-control-allow-origin')).toBeNull()
   })
 
   test("puts the sign-in errors Better Auth answers in the service's JSON error format", async () => {

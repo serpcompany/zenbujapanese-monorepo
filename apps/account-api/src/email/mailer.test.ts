@@ -1,5 +1,6 @@
 import { afterEach, describe, expect, test, vi } from 'vitest'
 import type { EmailConfig, EmailProvider } from '../config'
+import { logged } from '../test/logged'
 import { DevMailbox } from './mailbox'
 import { createMailer } from './mailer'
 import { signInCodeMessage } from './sign-in-code'
@@ -14,17 +15,6 @@ const config = (
   provider,
   allowedRecipients
 })
-
-function logged() {
-  const lines: string[] = []
-  const collect = (chunk: unknown) => {
-    lines.push(String(chunk))
-    return true
-  }
-  vi.spyOn(process.stdout, 'write').mockImplementation(collect)
-  vi.spyOn(process.stderr, 'write').mockImplementation(collect)
-  return () => lines.join('')
-}
 
 afterEach(() => vi.restoreAllMocks())
 

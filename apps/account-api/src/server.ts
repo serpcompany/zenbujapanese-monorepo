@@ -1,8 +1,12 @@
 import { runService, serveUntilStopped } from '@zenbu/node-service/http'
 import { log } from '@zenbu/node-service/log'
+import { accessTokenVerifier } from './auth/access-tokens'
 import { createAuth } from './auth/auth'
 import { readConfig } from './config'
+import { accountStore } from './db/accounts'
 import { migratePostgres, openPostgres } from './db/postgres'
+import { createAccounts } from './domain/accounts'
+import { cursorKey, cursors } from './domain/cursor'
 import { DevMailbox } from './email/mailbox'
 import { createMailer } from './email/mailer'
 import { createApp } from './http/app'
@@ -20,6 +24,9 @@ async function main() {
     release: config.release,
     databaseReady: database.ready,
     auth,
+    accounts: createAccounts(accountStore(database.db), cursors(cursorKey(config.auth.secret))),
+    verifyAccessToken: accessTokenVerifier(() => auth.api.getJwks(), config.auth.publicUrl),
+    allowedOrigins: config.auth.trustedOrigins,
     devMailbox
   })
   serveUntilStopped({

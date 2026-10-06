@@ -1,20 +1,26 @@
 import { PGlite } from '@electric-sql/pglite'
 import { drizzle } from 'drizzle-orm/pglite'
 import { migrate } from 'drizzle-orm/pglite/migrator'
+import { accessTokenVerifier } from '../auth/access-tokens'
 import { createAuth } from '../auth/auth'
 import { type AuthConfig, migrationsFolder as migrations } from '../config'
+import { accountStore } from '../db/accounts'
+import { createAccounts } from '../domain/accounts'
+import { cursorKey, cursors } from '../domain/cursor'
 import { DevMailbox } from '../email/mailbox'
 import { createMailer } from '../email/mailer'
 import { createApp } from '../http/app'
 
 export const publicUrl = 'http://localhost:8789'
+const trustedOrigin = 'http://localhost:3000'
+export const testSecret = 'test-only-secret-that-is-long-enough-for-better-auth'
 export const appBundleIdentifier = 'com.zenbujapanese.dictionary'
 export const googleClientIds = ['web.apps.googleusercontent.com', 'ios.apps.googleusercontent.com']
 
 const authConfig: AuthConfig = {
   publicUrl,
-  secret: 'test-only-secret-that-is-long-enough-for-better-auth',
-  trustedOrigins: [],
+  secret: testSecret,
+  trustedOrigins: [trustedOrigin],
   cookieDomain: undefined,
   cookiePrefix: 'zenbu-test',
   apple: { servicesIds: [], appBundleIdentifier, signingKey: null },
@@ -41,6 +47,9 @@ export async function startService({ emailSender = true }: { emailSender?: boole
     release: 'test',
     databaseReady: async () => true,
     auth,
+    accounts: createAccounts(accountStore(db), cursors(cursorKey(testSecret))),
+    verifyAccessToken: accessTokenVerifier(() => auth.api.getJwks(), publicUrl),
+    allowedOrigins: authConfig.trustedOrigins,
     devMailbox: mailbox
   })
   const call = async (

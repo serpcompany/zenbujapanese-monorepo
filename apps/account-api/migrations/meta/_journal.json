@@ -8,6 +8,20 @@
       "when": 1791316327610,
       "tag": "0000_sign_in",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1791321525446,
+      "tag": "0001_sync",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1791321530008,
+      "tag": "0002_journal_accounts",
+      "breakpoints": true
     }
   ]
 }

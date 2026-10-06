@@ -4,8 +4,9 @@
 Postgres database, beside the dictionary service on the API servers
 ([ADR 0011](../adr/0011-run-accounts-and-sync-in-their-own-service-on-the-api-servers.md)). It signs
 learners in with Apple, Google, or a code sent by email, through Better Auth, and issues the tokens
-the apps and other services use. `/v1/me` and `/v1/sync` come in
-[#567](https://github.com/serpcompany/zenbujapanese-monorepo/issues/567). Every Zenbu app stays
+the apps and other services use. Signed-in apps read and change the learner's profile at
+`/v1/me`, and keep their copies in step with `/v1/sync`
+([#567](https://github.com/serpcompany/zenbujapanese-monorepo/issues/567)). Every Zenbu app stays
 local-first, so nothing in an app waits on this service.
 
 Clients reach it at the API host, `api.zenbujapanese.com`, which it shares with the dictionary
@@ -64,6 +65,9 @@ which only the log records.
 | --- | --- |
 | `GET /v1/health` | `{ "status": "ok" }`, or `503` with `{ "status": "unavailable" }` while the database doesn't answer. It names nothing else (#374). |
 | `GET /healthz` | The same, with the release, for the deployer and the image's health check. |
+| `GET /v1/me` | With an access token, the learner's profile: `id`, `name`, `username`, `email`, `version`, `createdAt`, and `updatedAt`. |
+| `PATCH /v1/me` | With an access token, changes the name, the username, or both: `{ "baseVersion": 3, "name": "...", "username": "..." }`. It answers `409 version_conflict`, with the profile as it is now in `current`, if the profile has moved past `baseVersion`, and `409 username_taken`. |
+| `POST /v1/sync` | With an access token, applies the device's changes and answers what changed after its cursor (Profiles and sync, below). |
 | `POST /v1/auth/email-otp/send-verification-otp` | Emails a sign-in code: `{ "email": "...", "type": "sign-in" }`. It answers the same whether or not the email has an account. |
 | `POST /v1/auth/sign-in/email-otp` | Signs in with the code: `{ "email": "...", "otp": "123456" }`. |
 | `POST /v1/auth/sign-in/nonce` | A nonce for one Apple or Google sign-in: `{ "nonce": "...", "expiresIn": 600 }`. |
@@ -80,7 +84,21 @@ The routes under `/v1/auth/` are Better Auth's, with its errors put in the forma
 `invalid_otp`, `oauth_link_error`, or `too_many_requests`. Only the routes above are open: Better
 Auth has more (passwords, changing or verifying an email, editing or deleting the account), and
 `src/auth/routes.ts` lists the open ones, so every other answers `404 not_found`, including those a
-Better Auth upgrade adds. The profile is `/v1/me`'s (#567), and deleting an account is #574's.
+Better Auth upgrade adds. The profile changes through `/v1/me`, and deleting an account is #574's.
+
+`/v1/me` and `/v1/sync` take only an access token from `GET /v1/auth/token`, as
+`Authorization: Bearer <token>`, checked against the service's own JWKS. They refuse the session
+token, so the long-lived token only ever goes to `/v1/auth`, and they answer every refusal alike:
+`401 unauthorized`, with `WWW-Authenticate: Bearer`. Their bodies are at most 64 KB
+(`413 too_large`). A browser can call the service only from the origins in
+`ACCOUNT_API_TRUSTED_ORIGINS`: CORS names each one, never `*`.
+
+**The contract** for `/v1/health`, `/v1/me`, and `/v1/sync` is
+[`apps/account-api/openapi.json`](../../apps/account-api/openapi.json), OpenAPI 3.1. The routes
+are declared with `@hono/zod-openapi`, so the schemas that check each request are the ones the
+contract shows, and a test writes the file from them and fails when it differs. After changing a
+route, run `pnpm test -u` and commit the new file with its diff. Sign-in's routes are Better
+Auth's, listed above.
 
 ## Sign-in
 
@@ -148,6 +166,44 @@ says (ADR 0011), by `src/email/mailer.ts`, the one function that sends:
 The service doesn't wait for the email before it answers, so how long it takes doesn't show
 whether an email has an account.
 
+## Profiles and sync
+
+The profile is the one entity that syncs for now; known words and lists come in #572. Its rules
+are in `src/domain`, so `PATCH /v1/me` and a sync mutation change it the same way.
+
+- **A name** is 1 to 100 characters once trimmed, with runs of spaces made one and no control or
+  invisible format characters, kept in Unicode NFC.
+- **A username** is 3 to 30 letters a to z, digits, or underscores, after Unicode NFKC, trimming,
+  and lowercasing (`Kana_Fan` is `kana_fan`), unique across accounts, or `null`.
+- **The email** doesn't change here: changing it needs proof that the learner owns the new
+  address, which nothing builds yet.
+- **Versions.** A profile starts at version 1, and each change adds one. A change names the
+  version it was made to (`baseVersion`); if the profile has moved on, nothing changes, and the
+  answer is the profile as it is now. Nothing is last-write-wins. Sending the current values
+  again changes nothing.
+- **The journal**, `sync_changes`, gets a row for each change, and for each new account, from a
+  trigger on `users`, so an account Better Auth makes is in it too. Every write to an account's
+  journal holds that account's `users` row locked, so its entries commit in the order of their
+  sequence, which the cursor relies on.
+- **A sync** applies its mutations in order, each in its own transaction. Then it reads up to
+  `limit` of the account's journal entries after the cursor (100 unless the request says, at most
+  500), and answers each entity they name once, as it is now. While `hasMore` is true, the client
+  syncs again with the new cursor.
+- **Mutation IDs.** `sync_mutations` keeps the result of each mutation by the ID the client gave
+  it: applied, conflict, or rejected. The same mutation sent again under its ID gets the same
+  result and applies nothing; a conflict answers with the profile as it is then. A different
+  mutation under a used ID is rejected (`mutation_id_reused`). A result is final: to try again,
+  the client sends a new mutation with a new ID.
+- **Unknown entities and operations** are rejected one by one, and the rest still apply, so an
+  older service can answer a newer app.
+- **The cursor** is opaque: a journal position, encrypted and authenticated (AES-256-GCM) for the
+  account with a key derived from `ACCOUNT_API_SECRET`, so it shows nothing of the journal, and a
+  sync that reads nothing new answers the cursor it was sent. A cursor another account was given, or one past the end of the journal,
+  as after a restore, is refused with `410 invalid_cursor` before anything applies. The client then
+  syncs from no cursor and keeps what comes back. Changing the secret makes every client do that
+  once.
+- **Limits:** 50 mutations, a 64 KB body, and 500 journal entries a request.
+
 ## Code layout
 
 `apps/account-api/src` is in layers. Biome's `noRestrictedImports` enforces each rule
@@ -155,18 +211,21 @@ whether an email has an account.
 in a subfolder is held to them too ([`code.md`](code.md), Checks). Each says where the code
 belongs; tests may import anything.
 
-- **`src/http`** is the HTTP layer, in Hono. It answers from what `src/server.ts` hands it (the
-  database's state, the sign-in handler, and the dev mailbox), and imports none of them.
+- **`src/http`** is the HTTP layer, in Hono, with `/v1/me` and `/v1/sync` declared for the
+  contract (`accounts.ts`, `schemas.ts`). It answers from what `src/server.ts` hands it (the
+  database's state, the sign-in handler, the access-token check, the account rules, and the dev
+  mailbox), and imports none of them but the domain.
 - **`src/auth`** sets up Better Auth on the database and the mailer: its routes under
   `/v1/auth`, which are open (`routes.ts`), the guards that hold this doc's rules
   (`guards.ts`, a Better Auth plugin after `bearer`, so it sees the bearer session), the nonce
-  (`nonce.ts`), and what an identity may hold (`identities.ts`). It imports nothing of the HTTP
-  layer.
+  (`nonce.ts`), what an identity may hold (`identities.ts`), and the access-token check the other
+  routes use (`access-tokens.ts`). It imports nothing of the HTTP layer.
 - **`src/email`** sends a message, and imports neither sign-in, the database, nor HTTP.
-- **`src/domain`** will hold the account and sync rules (#567), which the others build on, so it
-  imports none of them, nor Hono, nor a database driver.
-- **`src/db`** is the database layer: Drizzle ORM over `pg`, the schema, and the migrations. It
-  knows nothing of HTTP or sign-in.
+- **`src/domain`** holds the profile and sync rules: a profile's fields, versions and conflicts,
+  the cursor, and the results kept by mutation ID. It works through the store it's handed
+  (`store.ts`), so it imports no other layer, nor Hono, nor a database driver.
+- **`src/db`** is the database layer: Drizzle ORM over `pg`, the schema, the migrations, and the
+  store the domain works through (`accounts.ts`). It knows nothing of HTTP or sign-in.
 
 `src/config.ts` reads the environment, and `src/server.ts` wires the layers together and is
 imported by nothing. Logging, the request log, and stopping cleanly on SIGTERM come from
@@ -182,12 +241,14 @@ The service owns one Postgres 18 database per environment, and only it connects 
 are in `src/db/schema.ts`:
 
 - `users`: the account (Better Auth's random ID, its name and email, unique whatever its case,
-  and whether the email is verified);
+  whether the email is verified, the username, unique, and the profile's version);
 - `user_identities`: each way an account signs in;
 - `sessions`: what an app or the website holds;
 - `verifications`: the codes, encrypted, and the sign-in nonces;
 - `signing_keys`: the access tokens' keys, encrypted with `ACCOUNT_API_SECRET`;
-- `rate_limits`.
+- `rate_limits`;
+- `sync_changes`: the journal, read by account and sequence;
+- `sync_mutations`: each sync mutation's result, by account and the client's mutation ID.
 
 Better Auth names its models `user`, `account`, `session`, `verification`, and `jwks`. The schema
 maps them to these tables, and `account` to #374's `user_identities`, whose `provider` and
@@ -196,7 +257,9 @@ maps them to these tables, and `account` to #374's `user_identities`, whose `pro
 The migrations are in `apps/account-api/migrations/`, in Drizzle's format. To change the schema,
 change `src/db/schema.ts`, then run `pnpm db:generate --name <what it does>` and commit the SQL and
 `meta/` files it writes. Never edit a migration once it has run anywhere: Drizzle tells them apart
-by their hash, so it would run the edited one again over the tables it made. Add a new one. They're drizzle-kit's, as it writes them, comments and formatting
+by their hash, so it would run the edited one again over the tables it made. Add a new one. For
+SQL drizzle-kit doesn't write, such as the journal's trigger, run `pnpm db:generate --custom --name
+<what it does>` and write it into the empty file. They're drizzle-kit's, comments and formatting
 included, so Biome and the comments check leave the folder alone.
 
 The service applies the migrations when it starts, before it listens, holding a Postgres advisory
@@ -225,6 +288,28 @@ They sign new and existing learners in each way, and refuse:
   until the signed-in learner adds it, and adding one with a session over 10 minutes old;
 - a session's token after signing out, and the unsigned token;
 - every Better Auth route that isn't open.
+
+The profile and sync tests (`src/http/me.test.ts` and `sync.test.ts`) sign learners in the same
+way and call the routes with their access tokens. They show:
+
+- **Access:** the session token, a token signed with another key, a forged one, a malformed one,
+  an expired one, and one for a deleted account are all refused alike, and `X-User-Id` lets no one
+  in.
+- **Profiles:** a change's normalized fields, its version and `updatedAt` moving on, an unchanged
+  write, a stale version's conflict with the current profile, three changes from one version at
+  once (one goes through), a username taken whatever its case, and each refused field.
+- **Sync:** a new device's first sync, then only newer changes; paging; queued mutations applied
+  in order; a retry applied once and answered the same; a conflict, again on a retry; unknown
+  entities and operations, and a reused ID, rejected while the rest apply.
+- **Bounds:** another account's profile, cursor, and mutation IDs out of reach; a forged or
+  too-new cursor refused before anything applies; the request bounds; and logs that hold no
+  profile, email, or token.
+
+The domain's own tests (`src/domain/`) cover the name and username rules and the cursor, and
+`src/http/openapi.test.ts` keeps `openapi.json` in step with the routes. In CI, and when
+`ACCOUNT_API_TEST_DATABASE_URL` names a real Postgres database, `src/db/postgres.test.ts` also
+sends eight changes to one account at once through the `pg` pool, and one mutation six times at
+once: one change goes through, and the mutation applies once.
 
 ## Ship it
 
@@ -300,6 +385,17 @@ step 2). The deployer sees the environment's file change and deploys it again wi
 it would a new image, with no request dropped ([`api-servers.md`](api-servers.md), The deployer).
 The restored database belongs to the environment's role, so the service migrates it as it would
 its own.
+
+Before it serves, move the sync journal's sequence far past where it was, so the changes made
+from then on reach every app, whatever cursor it holds from before the restore:
+
+```sh
+docker exec zenbujapanese-account-db psql --username postgres --dbname <restored database> \
+  --command "select setval('sync_changes_sequence_seq', (select coalesce(max(sequence), 0) from sync_changes) + 1000000000)"
+```
+
+Until the next change, an app whose cursor is past the restored journal is told to sync from no
+cursor; what changed after the backup is lost, as for any restore.
 
 A night's backup fails, and cron's run exits with an error the journal shows, when Postgres
 doesn't answer, or when an environment is set up (its file exists) but its database is missing.

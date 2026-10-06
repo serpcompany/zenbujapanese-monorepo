@@ -95,14 +95,15 @@ A change is checked by hand in a browser with the `verify-web` skill
 
 | Area | Grade | Graded | Code | Tests | CI before merge | Docs | By hand |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| Account service | A | 2026-10-06 | `apps/account-api/src/`, `apps/account-api/migrations/` | `apps/account-api/src/config.test.ts`; the routes in `apps/account-api/src/http/app.test.ts`; sign-in in `apps/account-api/src/auth/` (codes, providers, linking, tokens, and the open routes), the whole service on PGlite with stand-ins for Apple's and Google's keys; the mailer in `apps/account-api/src/email/`; and the migrations, the schema's rules, and the `pg` driver in `apps/account-api/src/db/`, on PGlite or, in CI, Postgres 18 | `Account API`, against Postgres 18; `Account API deploy` builds the image and checks that it migrates an empty database, answers, and publishes a signing key | [`account-api.md`](agents/account-api.md), ADR 0011 | `pnpm dev` with the dev mailbox, and its routes |
+| Account service | A | 2026-10-06 | `apps/account-api/src/`, `apps/account-api/migrations/` | `apps/account-api/src/config.test.ts`; the routes in `apps/account-api/src/http/app.test.ts`; sign-in in `apps/account-api/src/auth/` (codes, providers, linking, tokens, and the open routes), the whole service on PGlite with stand-ins for Apple's and Google's keys; `/v1/me` and `/v1/sync` in `apps/account-api/src/http/` (access, profiles, conflicts, the journal, cursors, retries, bounds, and the logs), and the OpenAPI contract against the routes; the profile and cursor rules in `apps/account-api/src/domain/`; the mailer in `apps/account-api/src/email/`; and the migrations, the schema's rules, the journal's trigger, and the `pg` driver in `apps/account-api/src/db/`, on PGlite or, in CI, Postgres 18, where changes made at once to one account are raced | `Account API`, against Postgres 18; `Account API deploy` builds the image and checks that it migrates an empty database, answers, and publishes a signing key | [`account-api.md`](agents/account-api.md), ADR 0011 | `pnpm dev` with the dev mailbox, and its routes |
 | What the Node services share | A | 2026-10-06 | `packages/node-service/src/` | `packages/node-service/src/log.test.ts`, and `http.test.ts`: the request log, and a real server stopped with SIGTERM | `Account API`; `Dictionary API` runs the dictionary service's tests through it | [`dictionary-api.md`](agents/dictionary-api.md), Code layout | Through both services |
 
-- **Account service, A.** Sign-in, its tokens and refusals, the mailer, the routes, configuration,
-  migrations, and database driver are tested on every pull request that changes them, with the
-  driver against a real Postgres, and the image is checked before it ships. Main gaps: Apple's and
-  Google's real keys and Email Service are first used on staging; it hasn't run on the server
-  (#565's and #566's server steps); and `/v1/me` and `/v1/sync` are #567.
+- **Account service, A.** Sign-in, its tokens and refusals, profiles and sync, the mailer, the
+  routes and their contract, configuration, migrations, and database driver are tested on every
+  pull request that changes them, with the driver and the races against a real Postgres, and the
+  image is checked before it ships. Main gaps: Apple's and Google's real keys and Email Service are
+  first used on staging; it hasn't run on the server (#565's, #566's, and #567's server steps); and
+  no app syncs with it yet (#573).
 - **What the Node services share, A.** Small, and tested on its own and through both services.
 
 ## Language data

@@ -1,0 +1,605 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "Zenbu account service",
+    "version": "1",
+    "description": "Accounts, profiles, and sync for every Zenbu app (ADR 0011). Sign-in is under /v1/auth, Better Auth's routes, listed in docs/agents/account-api.md. Every error is the Error schema."
+  },
+  "servers": [
+    {
+      "url": "https://api.zenbujapanese.com",
+      "description": "Production"
+    },
+    {
+      "url": "https://api-staging.zenbujapanese.com",
+      "description": "Staging"
+    }
+  ],
+  "components": {
+    "securitySchemes": {
+      "accessToken": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT",
+        "description": "A 15-minute access token from GET /v1/auth/token, which takes the session token a sign-in returns. Never the session token itself."
+      }
+    },
+    "schemas": {
+      "Profile": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "The Zenbu user ID. It never changes."
+          },
+          "name": {
+            "type": "string"
+          },
+          "username": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "email": {
+            "type": "string",
+            "description": "The account's email. It can't be changed here."
+          },
+          "version": {
+            "type": "integer",
+            "minimum": 1,
+            "description": "The profile revision. It goes up by one with each change; send it back as `baseVersion` to change the profile."
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "username",
+          "email",
+          "version",
+          "createdAt",
+          "updatedAt"
+        ]
+      },
+      "Error": {
+        "type": "object",
+        "properties": {
+          "error": {
+            "type": "object",
+            "properties": {
+              "code": {
+                "type": "string",
+                "example": "unauthorized"
+              },
+              "message": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "code",
+              "message"
+            ]
+          }
+        },
+        "required": [
+          "error"
+        ],
+        "description": "Every error. `code` is stable and machine-readable; `message` is for people and may change."
+      },
+      "ProfileConflict": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/Error"
+          },
+          {
+            "type": "object",
+            "properties": {
+              "current": {
+                "$ref": "#/components/schemas/Profile"
+              }
+            },
+            "required": [
+              "current"
+            ]
+          }
+        ],
+        "description": "The profile changed since `baseVersion`. `current` is the profile as it is now."
+      },
+      "ProfilePatch": {
+        "type": "object",
+        "properties": {
+          "baseVersion": {
+            "type": "integer",
+            "minimum": 1,
+            "description": "The profile `version` this change was made to. If the profile has changed since, nothing is changed and the answer is a conflict with the current profile."
+          },
+          "name": {
+            "type": "string",
+            "description": "1 to 100 characters once trimmed, with runs of spaces made one and no control characters. Stored in Unicode NFC."
+          },
+          "username": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "3 to 30 letters a to z, digits, or underscores, unique across accounts. It's normalized first (Unicode NFKC, trimmed, lowercased), so `Kana_Fan` is `kana_fan`. `null` removes it."
+          }
+        },
+        "required": [
+          "baseVersion"
+        ],
+        "additionalProperties": false
+      },
+      "SyncAnswer": {
+        "type": "object",
+        "properties": {
+          "results": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/MutationResult"
+            },
+            "description": "One per mutation, in order."
+          },
+          "changes": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Change"
+            },
+            "description": "The entities that changed after the cursor, each once, as they are now, including the ones this request changed."
+          },
+          "cursor": {
+            "type": "string",
+            "description": "Opaque, and at most 200 characters. Keep it once the changes are applied, and send it next time."
+          },
+          "hasMore": {
+            "type": "boolean",
+            "description": "More changes are waiting: sync again with the new cursor."
+          }
+        },
+        "required": [
+          "results",
+          "changes",
+          "cursor",
+          "hasMore"
+        ]
+      },
+      "MutationResult": {
+        "oneOf": [
+          {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string"
+              },
+              "status": {
+                "type": "string",
+                "enum": [
+                  "applied"
+                ]
+              },
+              "version": {
+                "type": "integer"
+              }
+            },
+            "required": [
+              "id",
+              "status",
+              "version"
+            ]
+          },
+          {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string"
+              },
+              "status": {
+                "type": "string",
+                "enum": [
+                  "conflict"
+                ]
+              },
+              "version": {
+                "type": "integer"
+              },
+              "current": {
+                "$ref": "#/components/schemas/Profile"
+              }
+            },
+            "required": [
+              "id",
+              "status",
+              "version",
+              "current"
+            ]
+          },
+          {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string"
+              },
+              "status": {
+                "type": "string",
+                "enum": [
+                  "rejected"
+                ]
+              },
+              "error": {
+                "type": "object",
+                "properties": {
+                  "code": {
+                    "type": "string",
+                    "example": "unauthorized"
+                  },
+                  "message": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "code",
+                  "message"
+                ]
+              }
+            },
+            "required": [
+              "id",
+              "status",
+              "error"
+            ]
+          }
+        ],
+        "description": "`applied`: the change is in, at `version`. `conflict`: the entity changed since `baseVersion`, so nothing changed; `current` is it as it is now. `rejected`: the change can never apply as sent; `error.code` says why. A result is final: to try again, send a new mutation with a new ID."
+      },
+      "Change": {
+        "type": "object",
+        "properties": {
+          "entity": {
+            "type": "string",
+            "enum": [
+              "profile"
+            ]
+          },
+          "entityId": {
+            "type": "string"
+          },
+          "operation": {
+            "type": "string",
+            "enum": [
+              "put"
+            ],
+            "description": "The entity as it is now is in `data`."
+          },
+          "version": {
+            "type": "integer"
+          },
+          "data": {
+            "$ref": "#/components/schemas/Profile"
+          }
+        },
+        "required": [
+          "entity",
+          "entityId",
+          "operation",
+          "version",
+          "data"
+        ]
+      },
+      "SyncRequest": {
+        "type": "object",
+        "properties": {
+          "cursor": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "minLength": 1,
+            "maxLength": 200,
+            "description": "The `cursor` from the last answer whose changes the client applied. Leave it out, or send null, to start from the beginning."
+          },
+          "limit": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 500,
+            "description": "The most journal entries to read this time. Default 100."
+          },
+          "mutations": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Mutation"
+            },
+            "maxItems": 50,
+            "description": "Up to 50 changes made on the device, applied in order before the changes are read."
+          }
+        }
+      },
+      "Mutation": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "pattern": "^[A-Za-z0-9_-]{8,64}$",
+            "description": "A client-made ID, unique for each mutation, such as a UUID. Sending the same ID again never applies it twice: the answer is the first result. Reusing an ID for a different mutation is rejected with `mutation_id_reused`."
+          },
+          "entity": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 64,
+            "description": "The entity type. Only `profile` today; any other is rejected."
+          },
+          "operation": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 64,
+            "description": "For `profile`, only `update`."
+          },
+          "entityId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200,
+            "description": "For `profile`, the account's ID, or left out."
+          },
+          "baseVersion": {
+            "type": "integer",
+            "minimum": 1,
+            "description": "The profile `version` this change was made to. If the profile has changed since, nothing is changed and the answer is a conflict with the current profile."
+          },
+          "fields": {
+            "type": "object",
+            "additionalProperties": {},
+            "description": "For a `profile` update, `name`, `username`, or both, as in PATCH /v1/me."
+          }
+        },
+        "required": [
+          "id",
+          "entity",
+          "operation"
+        ]
+      }
+    },
+    "parameters": {}
+  },
+  "paths": {
+    "/v1/health": {
+      "get": {
+        "summary": "Whether the service can answer",
+        "responses": {
+          "200": {
+            "description": "It can.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": {
+                      "type": "string",
+                      "enum": [
+                        "ok"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "status"
+                  ]
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Its database doesn't answer.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": {
+                      "type": "string",
+                      "enum": [
+                        "unavailable"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "status"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/me": {
+      "get": {
+        "summary": "The signed-in account's profile",
+        "security": [
+          {
+            "accessToken": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The profile.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Profile"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "`unauthorized`: no access token, or one that is expired, forged, or for an account that no longer exists. Get a new one from GET /v1/auth/token.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      },
+      "patch": {
+        "summary": "Change the signed-in account's name or username",
+        "description": "Optimistic concurrency: send the `version` last seen as `baseVersion`. The change goes through only if the profile is still at that version, and then its version goes up by one and it appears in /v1/sync. Sending the current values again changes nothing.",
+        "security": [
+          {
+            "accessToken": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ProfilePatch"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "The profile, as changed.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Profile"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "`bad_request`, or `invalid_fields`: a name or username out of bounds.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "`unauthorized`: no access token, or one that is expired, forged, or for an account that no longer exists. Get a new one from GET /v1/auth/token.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "`version_conflict`, with `current`: the profile changed since `baseVersion`. `username_taken`: another account has that username.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/ProfileConflict"
+                    },
+                    {
+                      "$ref": "#/components/schemas/Error"
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "413": {
+            "description": "`too_large`: the body is over 64 KB.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/sync": {
+      "post": {
+        "summary": "Send the changes made on the device, and get the changes made elsewhere",
+        "description": "Applies `mutations` in order, then answers with the changes after `cursor`. Every mutation is idempotent by its ID, so a request can be sent again after a lost answer. Each answer holds at most `limit` journal entries; while `hasMore` is true, sync again with the new cursor. Results and changes are bounded by the request limits.",
+        "security": [
+          {
+            "accessToken": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SyncRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "The results and the changes.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SyncAnswer"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "`bad_request`: the body is not JSON, or not this shape.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "`unauthorized`: no access token, or one that is expired, forged, or for an account that no longer exists. Get a new one from GET /v1/auth/token.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "410": {
+            "description": "`invalid_cursor`: the cursor isn't one this service gave this account, or is past what it holds, as after a restore. Nothing was applied. Sync again with no cursor, and keep what comes back.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "413": {
+            "description": "`too_large`: the body is over 64 KB.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "webhooks": {}
+}

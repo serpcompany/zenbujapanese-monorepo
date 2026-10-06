@@ -41,6 +41,10 @@ const writtenByTools: readonly [RegExp, string][] = [
   [/^apps\/web\/cloudflare-env\.d\.ts$/, 'wrangler types (pnpm cf-typegen in apps/web)'],
   [/^pnpm-lock\.yaml$/, 'pnpm install'],
   [/^apps\/account-api\/migrations\//, 'drizzle-kit (pnpm db:generate in apps/account-api)'],
+  [
+    /^apps\/account-api\/openapi\.json$/,
+    "the account service's tests (pnpm test -u in apps/account-api)"
+  ],
   [/\.(pbxproj|xcscheme|xcworkspacedata)$/, 'Xcode'],
   [/(^|\/)Package\.resolved$/, 'Swift Package Manager']
 ]

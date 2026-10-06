@@ -7,7 +7,7 @@
   },
   "files": {
     "ignoreUnknown": true,
-    "includes": ["**", "!node_modules", "!dist", "!migrations"]
+    "includes": ["**", "!node_modules", "!dist", "!migrations", "!openapi.json"]
   },
   "formatter": {
     "enabled": true,
