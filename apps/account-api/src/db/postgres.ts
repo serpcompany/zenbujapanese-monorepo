@@ -52,5 +52,5 @@ export function openPostgres(url: string): Database {
     log('error', 'an idle database connection failed', failureFields(error))
   )
   const db = drizzle(pool)
-  return { ready: () => answers(db), close: () => pool.end() }
+  return { db, ready: () => answers(db), close: () => pool.end() }
 }

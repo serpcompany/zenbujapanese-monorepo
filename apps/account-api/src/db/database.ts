@@ -6,6 +6,7 @@ import { failureFields } from '../failure'
 export type Drizzle = PgDatabase<PgQueryResultHKT>
 
 export interface Database {
+  db: Drizzle
   ready(): Promise<boolean>
   close(): Promise<void>
 }

@@ -2,10 +2,9 @@ import { PGlite } from '@electric-sql/pglite'
 import { PGLiteSocketServer } from '@electric-sql/pglite-socket'
 import pg from 'pg'
 import { afterAll, beforeAll, describe, expect, test, vi } from 'vitest'
-import { readConfig } from '../config'
+import { migrationsFolder as migrations } from '../config'
 import { migratePostgres, migrationLock, openPostgres } from './postgres'
 
-const { migrations } = readConfig({ DATABASE_URL: 'postgres://localhost/account' })
 const realPostgres = process.env.ACCOUNT_API_TEST_DATABASE_URL ?? ''
 let url = realPostgres
 let stop = async () => {}

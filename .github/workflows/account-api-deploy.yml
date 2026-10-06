@@ -107,6 +107,8 @@ jobs:
         run: |
           docker run --detach --name candidate --network host --read-only --tmpfs /tmp \
             --env DATABASE_URL=postgres://account@127.0.0.1:5432/account \
+            --env ACCOUNT_API_URL=http://localhost:8789 \
+            --env ACCOUNT_API_SECRET=ci-only-secret-for-the-image-check-0123 \
             zenbujapanese-account-api:candidate
           curl -fsS --retry 30 --retry-delay 2 --retry-connrefused --retry-all-errors \
             http://localhost:8789/healthz >health.json
@@ -119,6 +121,11 @@ jobs:
           health="$(curl -fsS http://localhost:8789/v1/health)"
           if [ "$health" != '{"status":"ok"}' ]; then
             echo "::error::/v1/health answers $health"
+            exit 1
+          fi
+          keys="$(curl -fsS http://localhost:8789/v1/auth/jwks | jq '.keys | length')"
+          if [ "$keys" -lt 1 ]; then
+            echo "::error::/v1/auth/jwks publishes no signing key"
             exit 1
           fi
       - name: Show the image's log

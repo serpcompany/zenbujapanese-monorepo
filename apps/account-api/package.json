@@ -8,6 +8,7 @@
     "dev": "node --env-file-if-exists=.env --watch --import tsx src/server.ts",
     "start": "node dist/server.mjs",
     "build": "node scripts/build.mjs",
+    "db:generate": "drizzle-kit generate",
     "format": "biome format --write",
     "lint": "biome check",
     "typecheck": "tsc --noEmit",
@@ -16,6 +17,7 @@
   },
   "dependencies": {
     "@zenbu/node-service": "workspace:*",
+    "better-auth": "1.7.7",
     "drizzle-orm": "^0.45.3",
     "hono": "^4.13.11",
     "pg": "^8.23.1"
@@ -26,7 +28,9 @@
     "@electric-sql/pglite-socket": "0.2.11",
     "@types/node": "^22.20.4",
     "@types/pg": "^8.23.1",
+    "drizzle-kit": "^0.31.11",
     "esbuild": "^0.28.2",
+    "jose": "^6.2.12",
     "tsx": "^4.23.15",
     "typescript": "^5",
     "vitest": "^5.0.2"

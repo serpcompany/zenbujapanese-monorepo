@@ -374,8 +374,10 @@ root ones). Tests and the backups script
 
 Its `image` job starts the image beside a Postgres 18 service container, on the runner's network,
 with a read-only file system as the server runs it. It checks that the image migrates the empty
-database, that `/healthz` names this commit's release, and that `/v1/health` answers
-`{"status":"ok"}`. The `staging` job signs with this workflow's identity,
+database, that `/healthz` names this commit's release, that `/v1/health` answers
+`{"status":"ok"}`, and that `/v1/auth/jwks` publishes a signing key. The image runs with CI-only
+values for its required settings (`ACCOUNT_API_URL`, `ACCOUNT_API_SECRET`), and no sign-in
+method on. The `staging` job signs with this workflow's identity,
 `.github/workflows/account-api-deploy.yml@refs/heads/main`, which the deployer requires of the
 account service's images. The first push creates the image's package in the organization,
 private ([`api-servers.md`](api-servers.md), Set up the server). Until the server is set up for

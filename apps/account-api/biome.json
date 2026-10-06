@@ -7,7 +7,7 @@
   },
   "files": {
     "ignoreUnknown": true,
-    "includes": ["**", "!node_modules", "!dist"]
+    "includes": ["**", "!node_modules", "!dist", "!migrations"]
   },
   "formatter": {
     "enabled": true,
@@ -58,9 +58,15 @@
                       "pg",
                       "drizzle-orm",
                       "drizzle-orm/**",
-                      "@electric-sql/**"
+                      "@electric-sql/**",
+                      "../auth",
+                      "../auth/**",
+                      "../email",
+                      "../email/**",
+                      "better-auth",
+                      "better-auth/**"
                     ],
-                    "message": "src/http is the HTTP layer: it answers from what src/server.ts hands it, through the domain, and never touches the database itself (docs/agents/account-api.md, Code layout). Put database code in src/db, and the rules in src/domain."
+                    "message": "src/http is the HTTP layer: it answers from what src/server.ts hands it (the database's state, the auth handler, the dev mailbox), and imports neither the database, sign-in, nor email (docs/agents/account-api.md, Code layout)."
                   }
                 ]
               }
@@ -92,7 +98,13 @@
                       "pg",
                       "drizzle-orm",
                       "drizzle-orm/**",
-                      "@electric-sql/**"
+                      "@electric-sql/**",
+                      "../auth",
+                      "../auth/**",
+                      "../email",
+                      "../email/**",
+                      "better-auth",
+                      "better-auth/**"
                     ],
                     "message": "src/domain holds the account and sync rules, which the HTTP layer and the database layer both build on, so it imports neither, nor Hono, nor a database driver (docs/agents/account-api.md, Code layout). Take what a rule needs as a parameter."
                   }
@@ -120,9 +132,71 @@
                       "hono",
                       "hono/**",
                       "@hono/**",
-                      "@zenbu/node-service/http"
+                      "@zenbu/node-service/http",
+                      "../auth",
+                      "../auth/**",
+                      "../email",
+                      "../email/**",
+                      "better-auth",
+                      "better-auth/**"
                     ],
-                    "message": "src/db is the database layer: the HTTP layer builds on it through src/server.ts, so it knows nothing of HTTP (docs/agents/account-api.md, Code layout)."
+                    "message": "src/db is the database layer: sign-in and the HTTP layer build on it, so it knows nothing of them (docs/agents/account-api.md, Code layout)."
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "includes": ["src/email/**", "!**/*.test.ts"],
+      "linter": {
+        "rules": {
+          "style": {
+            "noRestrictedImports": {
+              "level": "error",
+              "options": {
+                "patterns": [
+                  {
+                    "group": [
+                      "../http",
+                      "../http/**",
+                      "../db",
+                      "../db/**",
+                      "../auth",
+                      "../auth/**",
+                      "../server",
+                      "hono",
+                      "hono/**",
+                      "@hono/**",
+                      "pg",
+                      "drizzle-orm",
+                      "drizzle-orm/**",
+                      "better-auth",
+                      "better-auth/**"
+                    ],
+                    "message": "src/email sends a message and nothing more: sign-in uses it, so it imports neither sign-in, the database, nor HTTP (docs/agents/account-api.md, Code layout)."
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "includes": ["src/auth/**", "!**/*.test.ts"],
+      "linter": {
+        "rules": {
+          "style": {
+            "noRestrictedImports": {
+              "level": "error",
+              "options": {
+                "patterns": [
+                  {
+                    "group": ["../http", "../http/**", "../server", "hono", "hono/**", "@hono/**"],
+                    "message": "src/auth sets up sign-in on the database and the mailer; src/server.ts hands its handler to the HTTP layer, so it knows nothing of HTTP (docs/agents/account-api.md, Code layout)."
                   }
                 ]
               }

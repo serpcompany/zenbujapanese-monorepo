@@ -1,9 +1,19 @@
 import { HTTPException } from 'hono/http-exception'
 import { afterEach, describe, expect, test, vi } from 'vitest'
-import { createApp } from './app'
+import { type AppOptions, createApp } from './app'
 
-const app = (databaseReady: () => Promise<boolean>) =>
-  createApp({ release: 'abc123def456', databaseReady })
+const signInRefused = () =>
+  Promise.resolve(Response.json({ code: 'INVALID_OTP', message: 'Invalid OTP' }, { status: 400 }))
+
+const app = (databaseReady: () => Promise<boolean>, options: Partial<AppOptions> = {}) =>
+  createApp({
+    release: 'abc123def456',
+    databaseReady,
+    auth: { handler: signInRefused },
+    emailSignIn: true,
+    devMailbox: null,
+    ...options
+  })
 const up = () => Promise.resolve(true)
 const down = () => Promise.resolve(false)
 
@@ -68,5 +78,39 @@ describe('the account service', () => {
       route: '/v1/health',
       error: 'connect ECONNREFUSED 10.0.0.5:5432 for user zenbu'
     })
+  })
+
+  test("puts the sign-in errors Better Auth answers in the service's JSON error format", async () => {
+    const response = await app(up).request('/v1/auth/sign-in/email-otp', { method: 'POST' })
+    expect(response.status).toBe(400)
+    expect(await response.json()).toEqual({
+      error: { code: 'invalid_otp', message: 'Invalid OTP' }
+    })
+  })
+
+  test('says email sign-in is unavailable, rather than sending nothing, while no sender is set', async () => {
+    const handler = vi.fn(signInRefused)
+    const response = await app(up, { emailSignIn: false, auth: { handler } }).request(
+      '/v1/auth/email-otp/send-verification-otp',
+      { method: 'POST' }
+    )
+    expect(response.status).toBe(503)
+    expect(await response.json()).toMatchObject({ error: { code: 'email_unavailable' } })
+    expect(handler).not.toHaveBeenCalled()
+  })
+
+  test('shows the dev mailbox only on a local run, and only to a local request', async () => {
+    const devMailbox = {
+      messages: () => [{ to: 'a@example.com', subject: 'code', text: '123456', at: 'now' }]
+    }
+    const local = await app(up, { devMailbox }).request('http://localhost:8789/dev/mail')
+    expect(local.status).toBe(200)
+    expect(await local.json()).toEqual({ messages: devMailbox.messages() })
+    const remote = await app(up, { devMailbox }).request(
+      'https://account-api.zenbujapanese.com/dev/mail'
+    )
+    expect(remote.status).toBe(404)
+    const deployed = await app(up).request('http://localhost:8789/dev/mail')
+    expect(deployed.status).toBe(404)
   })
 })

@@ -143,7 +143,7 @@ const service: Part = {
   ]
 }
 
-const accountTestCode = '\\.test\\.ts$'
+const accountTestCode = '(\\.test\\.ts$|^src/test/)'
 
 const account: Part = {
   folder: 'apps/account-api',
@@ -164,7 +164,9 @@ const account: Part = {
       comment:
         'src/http is the HTTP layer: it answers from what src/server.ts hands it, through the domain, and never touches the database (docs/agents/account-api.md, Code layout). Put database code in src/db.',
       from: { path: '^src/http/', pathNot: accountTestCode },
-      to: { path: ['^src/db/', '(^|/)node_modules/(pg|drizzle-orm)/'] }
+      to: {
+        path: ['^src/(db|auth|email)/', '(^|/)node_modules/(pg|drizzle-orm|better-auth)/']
+      }
     },
     {
       name: 'account-domain-builds-on-no-layer',
@@ -179,6 +181,28 @@ const account: Part = {
           '(^|/)node_modules/(pg|drizzle-orm|hono|@hono)/'
         ]
       }
+    },
+    {
+      name: 'account-email-sends-and-nothing-more',
+      severity: 'error',
+      comment:
+        'src/email sends a message and nothing more: sign-in uses it, so it imports neither sign-in, the database, nor HTTP (docs/agents/account-api.md, Code layout).',
+      from: { path: '^src/email/', pathNot: accountTestCode },
+      to: {
+        path: [
+          '^src/(http|db|auth|domain)/',
+          '^src/server\\.ts$',
+          '(^|/)node_modules/(pg|drizzle-orm|better-auth|hono|@hono)/'
+        ]
+      }
+    },
+    {
+      name: 'account-sign-in-knows-no-http',
+      severity: 'error',
+      comment:
+        'src/auth sets up sign-in on the database and the mailer; src/server.ts hands its handler to the HTTP layer, so it knows nothing of HTTP (docs/agents/account-api.md, Code layout).',
+      from: { path: '^src/auth/', pathNot: accountTestCode },
+      to: { path: ['^src/http/', '^src/server\\.ts$', '(^|/)node_modules/(hono|@hono)/'] }
     },
     {
       name: 'account-database-knows-no-http',

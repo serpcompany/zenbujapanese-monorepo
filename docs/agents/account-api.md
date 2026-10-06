@@ -1,13 +1,12 @@
 # Account service
 
-`apps/account-api` is where Zenbu accounts, sign-in, and sync will run: a Node service with its own
+`apps/account-api` is where Zenbu accounts, sign-in, and sync run: a Node service with its own
 Postgres database, beside the dictionary service on the API servers
-([ADR 0011](../adr/0011-run-accounts-and-sync-in-their-own-service-on-the-api-servers.md)). So far
-it's the skeleton: it migrates its database, answers its health checks, and ships the way the
-dictionary service does. Sign-in comes in
-[#566](https://github.com/serpcompany/zenbujapanese-monorepo/issues/566), and `/v1/me` and
-`/v1/sync` in [#567](https://github.com/serpcompany/zenbujapanese-monorepo/issues/567). Every Zenbu
-app stays local-first, so nothing in an app waits on this service.
+([ADR 0011](../adr/0011-run-accounts-and-sync-in-their-own-service-on-the-api-servers.md)). It signs
+learners in with Apple, Google, or a code sent by email, through Better Auth, and issues the tokens
+the apps and other services use. `/v1/me` and `/v1/sync` come in
+[#567](https://github.com/serpcompany/zenbujapanese-monorepo/issues/567). Every Zenbu app stays
+local-first, so nothing in an app waits on this service.
 
 Run every command below from `apps/account-api`, after `pnpm install` at the repository root.
 
@@ -18,17 +17,34 @@ The service needs a Postgres database of its own. Any Postgres 18 works; with Do
 ```sh
 docker run -d --name zenbu-account-db -e POSTGRES_USER=account -e POSTGRES_DB=account \
   -e POSTGRES_HOST_AUTH_METHOD=trust -p 5432:5432 postgres:18
-echo 'DATABASE_URL=postgres://account@localhost:5432/account' > .env
+cat > .env <<EOF
+DATABASE_URL=postgres://account@localhost:5432/account
+ACCOUNT_API_URL=http://localhost:8789
+ACCOUNT_API_SECRET=$(openssl rand -hex 32)
+ACCOUNT_API_EMAIL=dev-mailbox
+EOF
 pnpm dev
 ```
 
 `trust` lets anyone on the machine in without a password, so keep it to a local database.
 `pnpm dev` reads `.env` (gitignored), applies the migrations, and serves on port 8789, restarting
-on every change.
+on every change. With `ACCOUNT_API_EMAIL=dev-mailbox`, no email leaves the machine: the codes it
+would send are at `http://localhost:8789/dev/mail` (Email, below).
 
 | Variable | Default | What it does |
 | --- | --- | --- |
 | `DATABASE_URL` | required | The Postgres database the service owns: `postgres://user:password@host:port/database`. It's never logged or repeated in an error. |
+| `ACCOUNT_API_URL` | required | The service's own origin, such as `https://account-api.zenbujapanese.com`. Its access tokens name it as their issuer and audience. |
+| `ACCOUNT_API_SECRET` | required | At least 32 characters. It signs sessions, and encrypts the token-signing keys and the providers' tokens in the database, so changing it signs everyone out. |
+| `ACCOUNT_API_TRUSTED_ORIGINS` | none | The website origins, comma-separated, that may sign in with a cookie, such as `https://zenbujapanese.com`. |
+| `ACCOUNT_API_COOKIE_DOMAIN` | none | The domain the session cookie is shared across, such as `zenbujapanese.com`, so the website on the zone's root reads it. |
+| `APPLE_CLIENT_IDS`, `APPLE_CLIENT_SECRET`, `APPLE_APP_BUNDLE_IDENTIFIER` | off | Sign in with Apple: the Services IDs, the client secret (a JWT made with the Sign in with Apple key), and the iOS app's bundle ID, which a native sign-in's token names. |
+| `GOOGLE_CLIENT_IDS`, `GOOGLE_CLIENT_SECRET` | off | Sign in with Google: the OAuth client IDs, comma-separated (the web client's and the iOS app's), and the web client's secret. |
+| `ACCOUNT_API_EMAIL` | off | Who sends the codes: `cloudflare`, `usesend`, or, on a local run only, `dev-mailbox`. Off, the email sign-in answers `503 email_unavailable`. |
+| `CLOUDFLARE_ACCOUNT_ID`, `CLOUDFLARE_EMAIL_TOKEN` | | For `cloudflare`: the account, and an API token that may only send email. |
+| `USESEND_API_KEY` | | For `usesend`. |
+| `EMAIL_FROM` | `Zenbu Japanese <support@zenbujapanese.com>` | The sender, which is also where replies go. |
+| `EMAIL_ALLOWED_RECIPIENTS` | everyone | Staging's test recipients, comma-separated: addresses, or domains as `@example.com`. A code for anyone else isn't sent. |
 | `PORT` | `8789` | The port it listens on. |
 | `ACCOUNT_API_RELEASE` | `local` | The release `/healthz` names. The image sets it to its commit. |
 
@@ -41,19 +57,83 @@ never says what went wrong inside, which only the log records.
 | --- | --- |
 | `GET /v1/health` | `{ "status": "ok" }`, or `503` with `{ "status": "unavailable" }` while the database doesn't answer. It names nothing else (#374). |
 | `GET /healthz` | The same, with the release, for the deployer and the image's health check. |
+| `POST /v1/auth/email-otp/send-verification-otp` | Emails a sign-in code: `{ "email": "...", "type": "sign-in" }`. It answers the same whether or not the email has an account. |
+| `POST /v1/auth/sign-in/email-otp` | Signs in with the code: `{ "email": "...", "otp": "123456" }`. |
+| `POST /v1/auth/sign-in/social` | Signs in with an ID token from Sign in with Apple or Google on the device: `{ "provider": "apple", "idToken": { "token": "...", "nonce": "..." } }`. |
+| `POST /v1/auth/link-social` | Signed in, adds another way to sign in to the learner's account, the same way. |
+| `GET /v1/auth/token` | Signed in, a 15-minute access token for the other services. |
+| `GET /v1/auth/jwks` | The keys an access token is checked with. |
+| `GET /v1/auth/get-session`, `POST /v1/auth/sign-out` | The session, and signing out of it. |
+| `GET /dev/mail` | On a local run with the dev mailbox, and only to a request for the machine itself, the codes it would have sent. Elsewhere, `404`. |
+
+Every route under `/v1/auth/` is Better Auth's, with its errors put in the format above, such as
+`invalid_otp`, `oauth_link_error`, or `too_many_requests`.
+
+## Sign-in
+
+**What an app keeps.** A sign-in answers with the learner and, in the `set-auth-token` header, a
+session token. The session token is the app's refresh token: it lasts 60 days from its last use,
+and the app sends it as `Authorization: Bearer <token>` to this service only, to get access tokens
+from `GET /v1/auth/token` and to sign out. An access token is an EdDSA JWT that names the account
+(`sub`), the service (`iss` and `aud`, both `ACCOUNT_API_URL`), and when it expires, 15 minutes on:
+nothing else, so a service that receives one learns only the account's ID. Another service checks
+it against `GET /v1/auth/jwks`. Signing out ends the session, so its token gets no more access
+tokens. The website signs in the same way, but keeps the session in a cookie on
+`ACCOUNT_API_COOKIE_DOMAIN`, for the origins in `ACCOUNT_API_TRUSTED_ORIGINS`.
+
+**One account per email, and no account taken over by one** (#374):
+
+- The Zenbu user ID, a UUID, is the identity. Each way the learner signs in is a row in
+  `user_identities`, unique by provider and subject: `apple` or `google` and the token's `sub`, or
+  `email` and the address.
+- A new Apple or Google sign-in whose email already has an account is refused
+  (`oauth_link_error`), never linked by its email. The learner signs in the way they did before,
+  then links the new way (`POST /v1/auth/link-social`).
+- A code sent to an email signs in to that email's account, whichever way it was made, since
+  reading the code proves the email.
+- Apple's and Google's tokens are checked against their keys, issuer, audience, the nonce the app
+  sent, and age: none older than an hour.
+
+**Codes** are six digits, last 10 minutes, are stored only as a hash, and allow five wrong
+guesses. **Rate limits**, kept in the database so they outlast a deploy, count by the address
+Cloudflare reports (`CF-Connecting-IP`): five codes sent and ten tried per 10 minutes, twenty
+Apple or Google sign-ins a minute, and 100 requests a minute to anything else under `/v1/auth/`.
+
+## Email
+
+The codes are sent as SERP's
+[transactional email standard](https://github.com/serpcompany/serp/blob/main/docs/engineering/standards/transactional-email.md)
+says (ADR 0011), by `src/email/mailer.ts`, the one function that sends:
+
+- **Through Cloudflare Email Service's REST API**, from `EMAIL_FROM`, with no other `Reply-To`.
+  `ACCOUNT_API_EMAIL=usesend` sends through useSend instead, with nothing else changed.
+- **Staging sends only to its test recipients** (`EMAIL_ALLOWED_RECIPIENTS`), since the REST API's
+  token can't restrict them the way a Worker binding does.
+- **A local run never sends.** With `dev-mailbox`, a message is kept in memory and shown at
+  `/dev/mail`, which answers only on a local run, and only to a request for `localhost`,
+  `127.0.0.1`, or `[::1]`. The image runs with `NODE_ENV=production`, and refuses to start with
+  `dev-mailbox`.
+- **Nothing logs a recipient, a code, or a link**: only "sent", "captured", "skipped", or "failed",
+  with the sender and a status or the error's kind.
+
+The service doesn't wait for the email before it answers, so how long it takes doesn't show
+whether an email has an account.
 
 ## Code layout
 
-`apps/account-api/src` has three layers. Biome's `noRestrictedImports` enforces each rule
-(`apps/account-api/biome.json`), with a message that says where the code belongs; tests may import
-anything.
+`apps/account-api/src` is in layers. Biome's `noRestrictedImports` enforces each rule
+(`apps/account-api/biome.json`), and `pnpm verify` enforces them again by resolved path, so a file
+in a subfolder is held to them too ([`code.md`](code.md), Checks). Each says where the code
+belongs; tests may import anything.
 
-- **`src/http`** is the HTTP layer, in Hono. It answers from what `src/server.ts` hands it, and
-  never touches the database itself.
-- **`src/domain`** will hold the account and sync rules (#567), which both other layers build on,
-  so it imports neither, nor Hono, nor a database driver.
-- **`src/db`** is the database layer: Drizzle ORM over `pg`, and the migrations. It knows nothing
-  of HTTP.
+- **`src/http`** is the HTTP layer, in Hono. It answers from what `src/server.ts` hands it (the
+  database's state, the sign-in handler, and the dev mailbox), and imports none of them.
+- **`src/auth`** sets up Better Auth on the database and the mailer. It knows nothing of HTTP.
+- **`src/email`** sends a message, and imports neither sign-in, the database, nor HTTP.
+- **`src/domain`** will hold the account and sync rules (#567), which the others build on, so it
+  imports none of them, nor Hono, nor a database driver.
+- **`src/db`** is the database layer: Drizzle ORM over `pg`, the schema, and the migrations. It
+  knows nothing of HTTP or sign-in.
 
 `src/config.ts` reads the environment, and `src/server.ts` wires the layers together and is
 imported by nothing. Logging, the request log, and stopping cleanly on SIGTERM come from
@@ -65,10 +145,24 @@ says for email.
 
 ## The database
 
-The service owns one Postgres 18 database per environment, and only it connects to it. The schema
-is in versioned migrations in `apps/account-api/migrations/`, in Drizzle's format (one SQL file per
-migration, and `meta/_journal.json`). There are none yet: the first tables come with sign-in
-(#566).
+The service owns one Postgres 18 database per environment, and only it connects to it. Its tables
+are in `src/db/schema.ts`:
+
+- `users`: the account (a UUID, its name and email, and whether the email is verified);
+- `user_identities`: each way an account signs in;
+- `sessions`: what an app or the website holds;
+- `verifications`: the codes, hashed;
+- `signing_keys`: the access tokens' keys, encrypted with `ACCOUNT_API_SECRET`;
+- `rate_limits`.
+
+Better Auth names its models `user`, `account`, `session`, `verification`, and `jwks`. The schema
+maps them to these tables, and `account` to #374's `user_identities`, whose `provider` and
+`subject` are Better Auth's `providerId` and `accountId`.
+
+The migrations are in `apps/account-api/migrations/`, in Drizzle's format. To change the schema,
+change `src/db/schema.ts`, then run `pnpm db:generate --name <what it does>` and commit the SQL and
+`meta/` files it writes. They're drizzle-kit's, as it writes them, comments and formatting
+included, so Biome and the comments check leave the folder alone.
 
 The service applies the migrations when it starts, before it listens, holding a Postgres advisory
 lock so two starts take them one after the other. A deploy starts the new image while the old one
@@ -83,7 +177,16 @@ pnpm check
 
 It runs Biome, the typecheck, the tests, and the bundle. The tests need no database server: they
 run Postgres in the test process with PGlite, both directly and through its socket server, which
-the service's own `pg` driver connects to. Set `ACCOUNT_API_TEST_DATABASE_URL` to an empty
+the service's own `pg` driver connects to. The sign-in tests (`src/auth/auth.test.ts`) run the
+whole service with the dev mailbox, and stand in for Apple's and Google's signing keys at their
+own URLs, so Better Auth's checks of a real token run. They sign new and existing learners in each
+way, and refuse:
+
+- an expired token, one older than an hour, one for another app or from another issuer, a forged
+  one, a malformed one, and one for another nonce;
+- a code used twice, and a sixth code sent from one address in 10 minutes;
+- a second way in with an account's email, until it's linked;
+- a session's token after signing out. Set `ACCOUNT_API_TEST_DATABASE_URL` to an empty
 Postgres database to run the driver tests against it instead, including two migrations started at
 once, which PGlite's single session can't show. The `Account API` workflow does that against
 Postgres 18 ([`ci.md`](ci.md), Account API).
@@ -206,9 +309,39 @@ First set up what the services share: cosign, the deployer, and registry access
    done
    unset password
    ```
-3. **More settings**, such as sign-in's keys (#566), go in the environment's file too. An
-   environment without its file isn't deployed, and the deployer deploys an environment again when
-   its file changes.
+3. **Sign-in's settings**, in each environment's file (the settings table, above). An environment
+   without its file isn't deployed, and the deployer deploys an environment again when its file
+   changes, so a setting added later takes effect within 5 minutes.
+   - **The service:** `ACCOUNT_API_URL` (`https://account-api-staging.zenbujapanese.com` or
+     `https://account-api.zenbujapanese.com`), a new `ACCOUNT_API_SECRET` for each environment
+     (`openssl rand -hex 32`), and, for the website (#468), `ACCOUNT_API_TRUSTED_ORIGINS` and
+     `ACCOUNT_API_COOKIE_DOMAIN=zenbujapanese.com`.
+   - **Apple** (Apple Developer):
+     - Sign in with Apple on the iOS app's App ID (`com.zenbujapanese.dictionary`).
+     - A Services ID for the website, whose return URL is `<ACCOUNT_API_URL>/v1/auth/callback/apple`.
+     - A Sign in with Apple key, from which the client secret is made: a JWT that lasts at most
+       six months, so it's made again before then.
+
+     Then set `APPLE_CLIENT_IDS` (the Services ID), `APPLE_CLIENT_SECRET`, and
+     `APPLE_APP_BUNDLE_IDENTIFIER`.
+   - **Google** (Google Cloud, OAuth clients):
+     - a web client, whose redirect URI is `<ACCOUNT_API_URL>/v1/auth/callback/google`;
+     - an iOS client, for the app's bundle ID.
+
+     Then set `GOOGLE_CLIENT_IDS` (the web client's, then the iOS client's) and
+     `GOOGLE_CLIENT_SECRET` (the web client's).
+   - **Email**, as SERP's transactional email standard says:
+     1. `support@zenbujapanese.com` receives mail before anything sends from it: Email Routing
+        forwards it to `support+zenbujapanese@serp.co`.
+     2. Onboard `zenbujapanese.com` in Cloudflare (Compute → Email Service → Email Sending), which
+        adds its SPF, DKIM, DMARC, and bounce records and needs the Workers Paid plan.
+     3. Make an API token that may only send email.
+     4. Set `ACCOUNT_API_EMAIL=cloudflare`, `CLOUDFLARE_ACCOUNT_ID`, and `CLOUDFLARE_EMAIL_TOKEN`.
+        On staging, also set `EMAIL_ALLOWED_RECIPIENTS` to the testers.
+
+     The first code staging sends shows whether Email Service takes the sender's name with its
+     address (`Zenbu Japanese <support@zenbujapanese.com>`); if it doesn't, set `EMAIL_FROM` to the
+     address alone.
 4. **nginx.** The nginx repository holds `nginx/account-api-staging.zenbujapanese.com.conf` and
    `nginx/account-api.zenbujapanese.com.conf`, which proxy to the environment's alias on port 8789
    ([`api-servers.md`](api-servers.md), Set up the server, step 4).
@@ -248,3 +381,7 @@ First set up what the services share: cosign, the deployer, and registry access
      Mode challenges it, the owners turn Bot Fight Mode off (ADR 0011), and this doc says so.
    - Run the backup by hand (`sudo zenbujapanese-account-backups`), then restore it into a new
      database (Back up and restore, above).
+   - On staging, each way signs in a new learner and an existing one: a code, Apple and Google in
+     the app, and Apple and Google on the website once #468 has its pages. The same email through a
+     second way is refused until it's linked. An access token from `GET /v1/auth/token` checks out
+     against `GET /v1/auth/jwks`.

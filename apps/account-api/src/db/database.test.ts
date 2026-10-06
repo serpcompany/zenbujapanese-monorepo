@@ -4,10 +4,8 @@ import { PGlite } from '@electric-sql/pglite'
 import { drizzle } from 'drizzle-orm/pglite'
 import { migrate } from 'drizzle-orm/pglite/migrator'
 import { describe, expect, test } from 'vitest'
-import { readConfig } from '../config'
+import { migrationsFolder as migrations } from '../config'
 import { answers } from './database'
-
-const { migrations } = readConfig({ DATABASE_URL: 'postgres://localhost/account' })
 
 describe('the migrations', () => {
   test('list a SQL file for every entry in their journal', () => {
@@ -33,6 +31,25 @@ describe('the migrations', () => {
     const applied = await client.query("select to_regclass('drizzle.__drizzle_migrations') as name")
     expect(applied.rows).toEqual([{ name: 'drizzle.__drizzle_migrations' }])
     expect(await answers(db)).toBe(true)
+    await client.close()
+  })
+
+  test("hold #374's rules: one account per email, and one per provider's subject", async () => {
+    const client = new PGlite()
+    await migrate(drizzle(client), { migrationsFolder: migrations })
+    const insertUser = (email: string) =>
+      client.query('insert into users (name, email) values ($1, $2) returning id', ['', email])
+    const { rows } = await insertUser('one@example.com')
+    const userId = (rows[0] as { id: string }).id
+    await expect(insertUser('one@example.com')).rejects.toThrow(/users_email_unique/)
+    const identity = () =>
+      client.query('insert into user_identities (user_id, provider, subject) values ($1, $2, $3)', [
+        userId,
+        'google',
+        'subject-1'
+      ])
+    await identity()
+    await expect(identity()).rejects.toThrow(/user_identities_provider_subject/)
     await client.close()
   })
 })

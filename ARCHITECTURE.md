@@ -10,7 +10,7 @@ layers apart. Each part's own doc has the detail; each rule here is enforced by 
 | `apps/ios` | The iPhone app, in Swift. It reads the language data bundled with it, which its importers in `apps/ios/Tools` build. | [`docs/agents/ios.md`](docs/agents/ios.md) |
 | `apps/web` | zenbujapanese.com: Next.js on Cloudflare Workers through OpenNext. Its dictionary pages read the dictionary service. | [`docs/agents/web.md`](docs/agents/web.md) |
 | `apps/dictionary-api` | The dictionary service: Node, in a Docker image on serpcompany's server, answering the website's dictionary requests by running the shared core on the app's language data. | [`docs/agents/dictionary-api.md`](docs/agents/dictionary-api.md) |
-| `apps/account-api` | The account service: Node and Postgres on the same server, for Zenbu accounts, sign-in, and sync (ADR 0011). So far it migrates its database and answers its health checks. | [`docs/agents/account-api.md`](docs/agents/account-api.md) |
+| `apps/account-api` | The account service: Node and Postgres on the same server, for Zenbu accounts, sign-in, and sync (ADR 0011). It signs learners in with Apple, Google, or an emailed code, through Better Auth, and issues the access tokens other services check. | [`docs/agents/account-api.md`](docs/agents/account-api.md) |
 | `packages/dictionary-core` | The shared TypeScript core: search, results, word and kanji detail, and examples, ported from the app's Swift. Every client is to run it (ADR 0008). | [`docs/agents/dictionary-core.md`](docs/agents/dictionary-core.md) |
 | `packages/node-service` | What the two Node services share: JSON-line logs, the request log, and a server that stops cleanly. | [`docs/agents/dictionary-api.md`](docs/agents/dictionary-api.md), Code layout |
 | `deploy` | The API servers' deployer, which swaps each service's signed image into its slots. | [`docs/agents/api-servers.md`](docs/agents/api-servers.md) |
@@ -59,8 +59,9 @@ saying where the code belongs:
 - **The service**: readers and shared modules, then the worker layer, then HTTP, which reaches the
   dictionary only through the `DictionaryService` interface
   ([`docs/agents/dictionary-api.md`](docs/agents/dictionary-api.md), Code layout).
-- **The account service**: the domain, then the database and HTTP layers, which never import each
-  other ([`docs/agents/account-api.md`](docs/agents/account-api.md), Code layout).
+- **The account service**: the domain; then the database, email, and sign-in; then HTTP, which
+  reaches them only through what `src/server.ts` hands it
+  ([`docs/agents/account-api.md`](docs/agents/account-api.md), Code layout).
 - **The website**: `src/lib`, then components and hooks, then routes; only
   `src/lib/dictionary/data.ts` reads the service's client, apart from `retired.ts`, which
   `worker.ts` runs before Next.js ([`docs/agents/web.md`](docs/agents/web.md), Code layout).
