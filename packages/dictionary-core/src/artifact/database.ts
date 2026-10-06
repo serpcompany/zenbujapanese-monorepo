@@ -1,5 +1,4 @@
 import type { SearchDatabase } from '../search/search'
-import { exampleIndexMetadata } from './example-search'
 
 export type SqlValue = string | number | bigint | null | Uint8Array
 
@@ -46,11 +45,15 @@ export const attachments = {
   }
 } as const
 
-export type AttachmentName = keyof typeof attachments
+const exampleIndexMetadata: Readonly<Record<string, string>> = {
+  retrieval_index_schema_version: 'zenbu.example-sentence-retrieval-index.v2',
+  retrieval_policy_version: 'ExampleSentenceRetrievalPolicy/v1',
+  retrieval_porter_tokenizer: 'fts4/porter',
+  retrieval_exact_tokenizer: 'fts4/simple',
+  retrieval_pair_id_scheme: 'esp1-sha256-128-nfc-length-prefixed'
+}
 
-export const supportedTransforms: readonly string[] = [
-  '"jmdict-to-zenbu-language-reference-data-v2"'
-]
+const supportedTransforms: readonly string[] = ['"jmdict-to-zenbu-language-reference-data-v2"']
 
 function metadata(db: ArtifactDatabase, schema: string): Map<string, string> {
   const rows = db.all<{ key: string; value: string }>(`SELECT key, value FROM ${schema}.metadata`)

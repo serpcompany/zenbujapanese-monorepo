@@ -1,13 +1,10 @@
 import { getCloudflareContext } from '@opennextjs/cloudflare'
-import { isReadableLength } from '@zenbu/dictionary-core/artifact/dictionary'
-import { examplesPerPage, formExample, wordExample } from '@zenbu/dictionary-core/detail/examples'
 import {
-  type KanjiDetail,
-  type KanjiElement,
-  type KanjiReading,
-  type KanjiWord,
-  kanjiDetail
-} from '@zenbu/dictionary-core/detail/kanji'
+  isReadableLength,
+  type SearchExamplesResponse
+} from '@zenbu/dictionary-core/artifact/dictionary'
+import { examplesPerPage, formExample, wordExample } from '@zenbu/dictionary-core/detail/examples'
+import { type KanjiWord, kanjiDetail } from '@zenbu/dictionary-core/detail/kanji'
 import type { FrequencyRow, KanjiRows, WordRows } from '@zenbu/dictionary-core/detail/rows'
 import {
   type AlternativeForm,
@@ -31,7 +28,8 @@ import type { SearchResults } from '@zenbu/dictionary-core/search/search'
 import { cache } from 'react'
 import { errorFields, log } from '@/lib/log'
 import { isDeployedSite } from '@/lib/site'
-import { type DictionaryApi, dictionaryApi } from './api'
+import { type Answer, type DictionaryApi, dictionaryApi } from './api'
+import type { KanjiDetailsData } from './kanji-details'
 import {
   type Linked,
   type Links,
@@ -64,14 +62,6 @@ export interface WordPageWithKanji extends Omit<WordPageData, 'kanji' | 'alterna
   alternativeKanji: WordPageKanji[]
 }
 
-export interface KanjiDetailsData
-  extends Omit<KanjiDetail, 'readings' | 'components' | 'elements' | 'words'> {
-  readings: (Omit<KanjiReading, 'words'> & { words: Linked<KanjiWord>[] })[]
-  components: Linked<{ character: string }>[]
-  elements: Linked<KanjiElement>[]
-  words: Linked<KanjiWord>[]
-}
-
 export interface SearchExamplesData {
   query: string
   examples: PageExample[]
@@ -80,7 +70,7 @@ export interface SearchExamplesData {
   examplesPath: string
 }
 
-export type { PageExample, PageExampleToken } from './page-example'
+export type { PageExample } from './page-example'
 export type { SearchData, SearchWord } from './results/links'
 
 const wordRowsBySeq = new Map(fixtureWordRows.map(rows => [rows.entry.entSeq, rows]))
@@ -108,10 +98,10 @@ export async function dictionaryService(): Promise<DictionaryApi | null> {
 
 const fixtureBuild = 'fixtures'
 
-export const examplesPath = (entSeq: number, build: string) =>
+const examplesPath = (entSeq: number, build: string) =>
   `/dictionary/examples/${entSeq}.json?build=${encodeURIComponent(build)}`
 
-export const moreSearchExamplesPath = (query: string, build: string) =>
+const moreSearchExamplesPath = (query: string, build: string) =>
   `${searchPath(query)}examples.json?build=${encodeURIComponent(build)}`
 
 function wordPage(rows: WordRows, slug: string, links: Links, build: string): WordPageData {
@@ -307,19 +297,23 @@ export const searchDictionary = cache(async (query: string): Promise<SearchData>
   return linkSearchScreen(screen, { dictionaryLoaded: api !== null, kanji })
 })
 
+export function searchExamplesData(found: Answer<SearchExamplesResponse>): SearchExamplesData {
+  const links = serviceLinks(found.data.slugs, [])
+  return {
+    query: found.data.query,
+    examples: found.data.rows.map(row => pageExample(wordExample(row), links)),
+    listed: found.data.listed,
+    truncated: found.data.truncated,
+    examplesPath: moreSearchExamplesPath(found.data.query, found.build)
+  }
+}
+
 export const getSearchExamples = cache(
   async (query: string, from = 0, build?: string): Promise<SearchExamplesData | null> => {
     const api = await dictionaryService()
     if (!api || !isReadableLength(query)) return null
     const found = await api.searchExamples(query, from)
     if (!found || (build !== undefined && found.build !== build)) return null
-    const links = serviceLinks(found.data.slugs, [])
-    return {
-      query: found.data.query,
-      examples: found.data.rows.map(row => pageExample(wordExample(row), links)),
-      listed: found.data.listed,
-      truncated: found.data.truncated,
-      examplesPath: moreSearchExamplesPath(found.data.query, found.build)
-    }
+    return searchExamplesData(found)
   }
 )

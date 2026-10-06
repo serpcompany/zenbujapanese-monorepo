@@ -73,13 +73,7 @@ export function StrokeOrder({ character, order }: { character: string; order: St
   )
 }
 
-export function StrokeOrderPlayer({
-  character,
-  order
-}: {
-  character: string
-  order: StrokeOrderData
-}) {
+function StrokeOrderPlayer({ character, order }: { character: string; order: StrokeOrderData }) {
   const count = order.strokes.length
   const [progress, setProgress] = useState<Progress>({ completed: 0, active: 0 })
   const [mode, setMode] = useState<keyof typeof strokeDurationMs | null>(null)

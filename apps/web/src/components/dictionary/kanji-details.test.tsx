@@ -1,26 +1,10 @@
-import { kanjiDetail } from '@zenbu/dictionary-core/detail/kanji'
-import { fixtureKanjiRows } from '@zenbu/dictionary-core/fixtures'
 import { renderToStaticMarkup } from 'react-dom/server'
 import { describe, expect, test } from 'vitest'
-import type { KanjiDetailsData } from '@/lib/dictionary/data'
+import { fixtureKanji, unlinkedKanjiDetails } from '@/test/kanji-details'
+import { visibleText } from '@/test/rendered'
 import { KanjiDetails } from './kanji-details'
-import { visibleText } from './rendered'
 
-function details(): KanjiDetailsData {
-  const kanameRows = fixtureKanjiRows.find(rows => rows.kanji.character === '要')
-  if (!kanameRows) throw new Error('No fixture for 要')
-  const detail = kanjiDetail(kanameRows)
-  const unlinked = <T,>(item: T) => ({ ...item, path: null })
-  return {
-    ...detail,
-    readings: detail.readings.map(reading => ({ ...reading, words: reading.words.map(unlinked) })),
-    components: detail.components.map(character => unlinked({ character })),
-    elements: detail.elements.map(unlinked),
-    words: detail.words.map(unlinked)
-  }
-}
-
-const html = renderToStaticMarkup(<KanjiDetails kanji={details()} />)
+const html = renderToStaticMarkup(<KanjiDetails kanji={unlinkedKanjiDetails(fixtureKanji('要'))} />)
 
 describe("a kanji's details offer what the app's Kanji Detail has beside them", () => {
   test('Share and More actions, named for the kanji', () => {

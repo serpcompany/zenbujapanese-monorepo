@@ -8,7 +8,7 @@ import unittest
 from contextlib import closing
 from pathlib import Path
 
-from scratch_release import ScratchBuildTestCase, pack_database, sha256
+from scratch_release import ScratchBuildTestCase, sha256
 
 
 class BuildPinTests(ScratchBuildTestCase):
@@ -47,11 +47,7 @@ class BuildPinTests(ScratchBuildTestCase):
         self.refused(r"zenbu\.pack is bundled as Pack\.sqlite3, which isn't in the release")
 
     def test_refuses_a_language_data_pin_on_another_release_file(self):
-        pack = pack_database(self.scratch.mapping_sha, self.scratch.mapping_sha)
-        self.scratch.lfs["data/res/Pack.sqlite3"] = pack
-        self.scratch.pack_sha = sha256(pack)
-        self.scratch.catalog["packs"][0]["bundledArtifactSHA256"] = sha256(pack)
-        self.scratch.set_catalog()
+        self.scratch.bundle_pack(self.scratch.mapping_sha)
         self.scratch.set_suite_two()
         self.scratch.commit()
         self.refused(r"Pack\.sqlite3: language_data_sha256 pins [0-9a-f]{64}, not Language")
@@ -103,11 +99,7 @@ class BuildPinTests(ScratchBuildTestCase):
         self.scratch.set_contract()
         for pack in self.scratch.catalog["packs"]:
             pack["languageDataSHA256"] = sha256(changed)
-        pack = pack_database(sha256(changed), self.scratch.mapping_sha)
-        self.scratch.lfs["data/res/Pack.sqlite3"] = pack
-        self.scratch.pack_sha = sha256(pack)
-        self.scratch.catalog["packs"][0]["bundledArtifactSHA256"] = sha256(pack)
-        self.scratch.set_catalog()
+        self.scratch.bundle_pack(sha256(changed))
         self.scratch.plain["data/conf/one.json"] = json.dumps(
             {"suite": "one", "artifact": {"name": "Language.sqlite3", "sha256": sha256(changed)}}
         ).encode()

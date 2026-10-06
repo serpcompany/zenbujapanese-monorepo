@@ -1,0 +1,26 @@
+pre-commit:
+  parallel: true
+  commands:
+    verify:
+      run: pnpm --silent verify comments,sizes,secrets {staged_files}
+    web:
+      root: apps/web/
+      glob: "*.{ts,tsx,js,mjs,cjs,json,jsonc,css}"
+      run: pnpm --silent --filter zenbujapanese-web lint --no-errors-on-unmatched --files-ignore-unknown=true {staged_files}
+    dictionary-api:
+      root: apps/dictionary-api/
+      glob: "*.{ts,js,mjs,cjs,json,jsonc}"
+      run: pnpm --silent --filter zenbujapanese-dictionary-api lint --no-errors-on-unmatched --files-ignore-unknown=true {staged_files}
+    dictionary-core:
+      root: packages/dictionary-core/
+      glob: "*.{ts,js,mjs,cjs,json,jsonc}"
+      run: pnpm --silent --filter @zenbu/dictionary-core lint --no-errors-on-unmatched --files-ignore-unknown=true {staged_files}
+    checks:
+      root: tools/checks/
+      glob: "*.{ts,js,mjs,cjs,json,jsonc}"
+      run: pnpm --silent --filter zenbujapanese-checks lint --no-errors-on-unmatched --files-ignore-unknown=true {staged_files}
+
+pre-push:
+  commands:
+    verify:
+      run: pnpm --silent verify

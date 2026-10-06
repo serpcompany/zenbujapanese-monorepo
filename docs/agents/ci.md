@@ -13,7 +13,8 @@ with `pnpm install --frozen-lockfile`.
 | --- | --- | --- |
 | `Repository` | `.github/workflows/repository.yml` | Every pull request |
 | `Code review` | `.github/workflows/code-review.yml` | Every pull request that isn't a draft |
-| `Weekly maintenance` | `.github/workflows/maintenance.yml` | Mondays at 14:00 UTC; by hand |
+| `Claude` | `.github/workflows/claude.yml` | `@claude` in an issue, a pull request comment, a review, or a review comment |
+| `Weekly maintenance` | `.github/workflows/maintenance.yml` | Mondays at 14:00 UTC; by hand, every job or one |
 | `Web` | `.github/workflows/web.yml` | Pull requests that change the site or the core |
 | `Web deploy` | `.github/workflows/web-deploy.yml` | Pushes to `main` that change the site or the core; by hand |
 | `Dictionary core` | `.github/workflows/dictionary-core.yml` | Pull requests that change the core |
@@ -31,8 +32,12 @@ starts it too, except for `Search parity`.
 ## Repository
 
 `.github/workflows/repository.yml` runs on every pull request; a new push cancels the pull
-request's last run. It runs the checks' own `pnpm check` (`tools/checks`), then `pnpm verify`: no
-comments, docs, file sizes, and the linters. What each enforces is in [`code.md`](code.md), Checks.
+request's last run. It installs the whole workspace, since the dead-code and import checks read
+every package, then runs the checks' own `pnpm check` (`tools/checks`), then `pnpm verify`: no
+comments, docs, file sizes, secrets, duplicate code, dead code, imports, and the linters. On a pull
+request from a `fix/` branch it then checks that the pull request changes a test (`fix-branch`,
+comparing the merge commit with its first parent, which is why it checks out two commits). What
+each enforces is in [`code.md`](code.md), Checks.
 
 ## Code review
 
@@ -42,7 +47,8 @@ draft or opened by a bot, with the repository's `pr-review` skill
 docs), each new finding as an inline comment, and one summary comment it updates on every review.
 Its check doesn't block merging, since `main`'s ruleset requires no checks, but the ruleset does
 require every review conversation to be resolved, so an inline finding blocks merging until it's
-fixed or answered and resolved. How it's built, and why:
+fixed or answered and resolved. A finding can be answered with an `@claude` request in its thread
+(@claude requests, below). How it's built, and why:
 
 - **The skill and the rules come from the base branch.** The action replaces `CLAUDE.md`,
   `.claude/`, and `.mcp.json` with the base branch's copies before Claude starts, so a pull request
@@ -51,62 +57,179 @@ fixed or answered and resolved. How it's built, and why:
   a file outside the checkout and hands it to Claude and every subagent
   (`--append-system-prompt-file`, `--append-subagent-system-prompt-file`), so a pull request can't
   weaken the rules it's reviewed against either.
-- **A re-review raises only what's new.** Before Claude starts, the job reads what `claude[bot]`
-  posted on the pull request and adds it to that file; the summary says whether each earlier
-  finding is fixed.
+- **A re-review raises only what's new, and edits one summary.** Before Claude starts, the job
+  adds to that file the top-level inline findings `claude[bot]` posted on the pull request and
+  the summary: the latest comment by `github-actions[bot]` that starts with `## Claude review`.
+  Claude posts only inline findings. It writes the summary to `tmp/review-summary.md`, and a step
+  after it posts that file with the job's own token (`issues: write`), editing the earlier
+  summary by id or creating one, never the latest comment, which can be an answer to an
+  `@claude` request. The step refuses a file without the heading or too long for a comment, and
+  the job deletes any `tmp/review-summary.md` the pull request carries before Claude starts.
+  Claude's answers to `@claude` requests, and its replies in review threads, are passed in as
+  context only, never as findings. The summary says whether each earlier finding is fixed.
+- **It reviews the pushes `@claude` makes.** `allowed_bots: "claude[bot]"` lets the review run on
+  a push an `@claude` request made to the pull request, whose actor is then a bot. A pull request
+  a bot opened, such as a gardening one, isn't reviewed.
 - **Subagents stay in the foreground** (`CLAUDE_CODE_DISABLE_BACKGROUND_TASKS=1`). Claude Code runs
   them in the background by default, and the action stops at Claude's first result, so a review
   would end green having posted nothing (anthropics/claude-code-action#1646).
-- **The model is pinned** (`--model`), and `--strict-mcp-config` keeps `.mcp.json`'s servers, such
-  as Chrome, out of CI. `--allowedTools` lists every tool in the skill's `allowed-tools`.
+- **The model is pinned** (`--model`), so an action update can't change it, and
+  `--strict-mcp-config` keeps `.mcp.json`'s servers, such as Chrome, out of CI. `--allowedTools`
+  lists every tool in the skill's `allowed-tools`. Naming Glob and Grep there brings those tools
+  back on Linux, where Claude Code otherwise searches with `grep` and `find` in Bash.
+- **The settings never block what a CI job uses.** The action restores `.claude/` from the base
+  branch, so `.claude/settings.json` applies in CI, where an ask rule can't prompt and so denies.
+  Its rules therefore never deny or ask for a tool a Claude job uses: the tools in each job's
+  `--allowedTools`, Read, Glob, and Grep, `git push` to a branch, and `gh pr create`. Every
+  `gh api` write still asks, which is why the review's summary is posted by a workflow step
+  rather than by Claude. `tools/checks/src/agents/settings.test.ts` checks both directions: every
+  package script that deploys is asked, and nothing a Claude job in any workflow runs is.
 - **The check fails unless Claude posted.** After the review, a script fails the job when Claude
   left no log, ended in an error, ended with subagents still running, or posted and updated
-  nothing during the run; a denied tool fails it only when nothing was posted. It runs inline
-  because the job can mint an OIDC token, so it runs no script from the pull request.
+  nothing during the run; a denied tool fails it only when nothing was posted. It counts only the
+  review's own output: the summary, top-level inline comments, and reviews, not an answer to an
+  `@claude` request. It runs inline because the job can mint an OIDC token, so it runs no script
+  from the pull request.
 - **The transcript is kept** for a week as the `claude-review-transcript` artifact: the action's
-  own log shows counts only.
+  own log shows counts only. The step summary shows each run's turns, time, estimated cost, and
+  models.
 
 The inline scripts are tested by running them as the workflow does, against a stand-in for the
 GitHub API (`tools/checks/src/agents/code-review.test.ts`).
 
 It runs with the `CLAUDE_CODE_OAUTH_TOKEN` repository secret, which is set; without it the job
-only notes that it skipped. The action skips a pull request that changes this workflow, which must
-match `main`'s, so that pull request's `review` check fails saying no review happened: expected, and
-no reason to hold it. Making merges wait for its check is a branch rule the owners decide.
+only notes that it skipped (Claude's app and token, below). The action skips a pull request that
+changes this workflow, which must match `main`'s, so that pull request's `review` check fails
+saying no review happened: expected, and no reason to hold it. So a change to a Claude workflow
+can't be tried on its own pull request; try it in a throwaway repository with the same workflow,
+skill, and rules first. Making merges wait for its check is a branch rule the owners decide.
+
+## @claude requests
+
+`.github/workflows/claude.yml` answers `@claude` in an issue, a pull request comment, a review,
+or a review comment, from the repository's owners, members, and collaborators, and never from a
+bot, so Claude's own comments can't start it again. The repository is public, so the job checks
+the commenter's association before it does anything: otherwise a stranger's `@claude` on their
+own fork's pull request would check out and install that pull request with the job's tokens.
+It also skips, with a notice, a pull request whose branch is in a fork, whoever asks: checking it
+would run the fork's code with this repository's tokens, and Claude can't push to it. One run per
+issue or pull request goes at a time, and a new one waits rather than cancelling it. The job, not
+the workflow, holds that queue, so a comment that doesn't ask can't displace a waiting request.
+GitHub keeps only one waiting run per queue, though: a third request while one runs and one
+waits replaces the waiting one, so ask again after the first finishes.
+
+- **Where it works.** On a pull request it checks out the pull request's head and may push fixes
+  to its branch, which starts a re-review (Code review, above); on an issue it branches from
+  `main` and links a pull request to open. It sets up pnpm and Node as `Repository` does and
+  installs every package (`pnpm install --frozen-lockfile --ignore-scripts --ignore-pnpmfile`, so
+  no install script or pnpmfile hook runs), since the edit hook needs the checks' dependencies and
+  a fix may touch any package. The checkout keeps no token in the working tree (`persist-credentials: false`); the
+  action sets up its own for pushing. It runs the pull request's own code when it checks it, so
+  ask it only on a pull request whose code you trust.
+- **The rules it follows.** A file appended to its system prompt says to follow `AGENTS.md`,
+  `ARCHITECTURE.md`, [`code.md`](code.md), and `CONTEXT.md`; before pushing, to run `pnpm verify`
+  and then `pnpm check` for each package it changed, and to push nothing and say why if one still
+  fails; that a Swift change can't be built on the runner ([`ios.md`](ios.md)), so it says so;
+  to stage files by path; and never to push to `main`. Blanket adds (`git add -A`, `.`, `-u`, and
+  `git commit -a`) are refused with `--disallowedTools`: on a pull request the action resets
+  `.claude/`, `.mcp.json`, and `CLAUDE.md` to the base branch's copies, and a blanket add would
+  commit that reset. Its commits keep the Co-Authored-By trailer Claude Code adds, by the owner's
+  decision.
+- **Its limits.** `--max-turns 60`, a 45-minute timeout, and `BASH_DEFAULT_TIMEOUT_MS` of 15
+  minutes, since `pnpm check` builds the site and `pnpm verify` runs its linters in Docker. Like
+  the review, it pins the model, keeps subagents in the foreground, leaves the MCP servers out, and
+  keeps its transcript (`claude-transcript`).
+- **The check after it.** A script reads Claude's log and the branch. It passes when Claude
+  answered in its comment or pushed, fails when Claude did neither, ended in an error, or ended
+  with subagents running, and warns when a commit changes a file the action resets or Claude
+  pushed without replying (`tools/checks/src/agents/claude-workflow.test.ts`).
+
+It uses the same app and token as the review, and like the review it runs only once its workflow
+file matches `main`'s.
 
 ## Weekly maintenance
 
-`.github/workflows/maintenance.yml` runs every Monday, and by hand. Both jobs start from
-`pnpm maintenance:report` (`tools/checks/src/report.ts`), a Markdown report built only from the
-repository: the checks' failures, the docs whose named or linked files changed after the doc was
-last edited, the known debt and size exceptions, the code files within 50 lines of the size limit
-(to split before a change has to), and how many commits have changed code since
-[`quality.md`](../quality.md) was last graded.
+`.github/workflows/maintenance.yml` runs every Monday, and by hand from the Actions tab, where
+"Which job to run" picks one job or all of them. Each job starts from `pnpm maintenance:report`
+(`tools/checks/src/report.ts`), a Markdown report built only from the repository: the checks'
+failures; the docs whose named or linked files changed after the doc was last edited; the rows of
+[`quality.md`](../quality.md) whose Code changed after their Graded date ("Scores to re-grade");
+the known debt, counted by Size with the first small item named
+([`tech-debt.md`](../tech-debt.md)); the size exceptions; and the code files within 50 lines of
+the size limit (to split before a change has to). A job writes it under `tmp/`, which git
+ignores: a Markdown file at the repository root would fail the docs check the report runs.
 
 - **`doc-gardening`**: unless a "Weekly doc gardening" pull request is already open, Claude takes up
-  to eight docs from the report, checks each against the code, fixes what's no longer true in
-  Markdown only (never an ADR, code, or a workflow), updates [`quality.md`](../quality.md) and
-  [`tech-debt.md`](../tech-debt.md), runs `pnpm verify docs`, and opens one pull request into
-  `main`. Like the review, it keeps subagents in the foreground, leaves the MCP servers out, and
-  keeps its transcript (`doc-gardening-transcript`); a script then fails the job unless it opened a
-  gardening pull request, said "No doc drift found", or left an open one alone
-  (`tools/checks/src/agents/maintenance-workflow.test.ts`).
-- **`report`** posts the report as one open issue, "Weekly repository maintenance", labelled
+  to eight docs from the report, checks each against the code, and fixes what's no longer true in
+  Markdown only (never an ADR, code, or a workflow). It re-grades each row under "Scores to
+  re-grade" and sets its Graded date, even when the grade stays the same, and updates
+  [`tech-debt.md`](../tech-debt.md). It runs `pnpm verify docs` and opens one pull request into
+  `main` from `docs/gardening-<date>`, with its body written to `tmp/pr-body.md`: each doc changed,
+  each row re-graded with its old and new grade, and the docs checked without changes. It installs
+  every package, since the report it starts from runs the dead-code and import checks.
+- **`code-gardening`**: unless a `chore/code-gardening-` pull request is still open, Claude fixes
+  one item in one pull request into `main`: the first `small` row of
+  [`tech-debt.md`](../tech-debt.md), or else one file near the size limit, split by
+  responsibility. It passes over an item that needs a deploy, a language-data release or anything
+  in R2, a change under `apps/ios` or in Swift (the runner can't build or test it), a product
+  doc's behavior or wording, an ADR-level decision, or another decision a person makes. It deletes
+  the row it fixed, writes no code comments, runs `pnpm check`, and opens a pull request from
+  `chore/code-gardening-<date>`, or says "Nothing to garden". It installs every package, since
+  `pnpm check` checks them all, and has 60 minutes.
+- **`report`** installs every package, as doc gardening does, and posts the report as one open issue, "Weekly repository maintenance", labelled
   `ready-for-agent`, and edits it each week rather than opening another.
 
-Doc gardening runs with `CLAUDE_CODE_OAUTH_TOKEN` too, and skips without it; the report needs no
-token.
+Both gardening jobs pin the model (`--model`), keep subagents in the foreground, give each Bash
+command 15 minutes (`BASH_DEFAULT_TIMEOUT_MS`), leave the MCP servers out, and keep their
+transcripts (`doc-gardening-transcript`, `code-gardening-transcript`). A script after each prints
+what Claude said and passes only on an outcome. Doc gardening's: a gardening pull request opened
+during the run, "No doc drift found", or an open one left alone. Code gardening's: exactly one
+pull request opened, or "Nothing to garden"; a second pull request fails it. Both fail when Claude
+left no log, ended in an error or with subagents running, or reached no outcome, and a denied tool
+only warns when Claude got there anyway, since it often retries a refused command another way
+(`tools/checks/src/agents/maintenance-workflow.test.ts`). A bot opens their pull requests, so
+`Code review` skips them: skim each and merge it.
+
+Work the issue in small pull requests, one item each:
+
+1. **Checks and docs:** fix a failing check, or a doc the gardening pull request left unresolved.
+2. **Scores:** re-grade a row under "Scores to re-grade" and set its Graded date.
+3. **Debt:** pay down one row of [`tech-debt.md`](../tech-debt.md), and delete it.
+4. **Size:** split one file the report lists as near the 500-line limit, by responsibility.
+5. **Harness:** if recent reviews repeat a mistake, add it to [`code.md`](code.md) and, where
+   possible, a check whose message says how to fix it.
+
+The gardening jobs run with `CLAUDE_CODE_OAUTH_TOKEN` too, and skip without it; the report needs
+no token.
+
+## Claude's app and token (admin only)
+
+The review, `@claude`, and gardening jobs authenticate as the Claude GitHub App and run on a
+Claude subscription. An admin sets them up once:
+
+1. Install the [Claude GitHub App](https://github.com/apps/claude) on this repository. The action
+   posts comments and pushes as the app (`claude[bot]`).
+2. On a machine with Claude Code signed in to a Pro, Max, Team, or Enterprise plan, run
+   `claude setup-token`, and save the token it prints as the repository secret
+   `CLAUDE_CODE_OAUTH_TOKEN`.
+
+The token belongs to whoever generated it: every run counts against their plan's usage limits,
+beside the Actions minutes. If their plan changes, or runs start failing to authenticate,
+regenerate it and replace the secret.
 
 ## Web
 
 `.github/workflows/web.yml` runs on pull requests that change `apps/web/**` or the core. In
 `apps/web`, it runs ShellCheck 0.11 on the scripts in `apps/web/scripts/`, at warning level, in
-Docker, since the runner's own ShellCheck is older; then `pnpm check` ([`web.md`](web.md), Run and
-verify); then it builds twice more, with
+Docker, since the runner's own ShellCheck is older; checks that `cloudflare-env.d.ts` is what
+`pnpm cf-typegen` writes from `wrangler.jsonc`, and that it writes no other file, so a binding
+changed without regenerating the types fails here; then `pnpm check` ([`web.md`](web.md), Run and verify); then it builds twice more, with
 `SITE_ENV=staging` and with `SITE_ENV=production`. `pnpm check` builds without `SITE_ENV`, but
 static pages and prerendering differ by environment, so a route that reads a binding at build time
 fails only in that environment's build. Neither build reaches the dictionary service: deployed
-pages read it only at request time.
+pages read it only at request time. Each step names `apps/web` as its working directory, rather
+than the jobs setting it as a default, because the dead-code check reads a step's working directory
+to find the scripts and binaries a step runs, and not a job's.
 
 Its `e2e` job runs the browser tests ([`web.md`](web.md), Run and verify) on the site as it
 deploys: it installs Chromium, builds with OpenNext without `SITE_ENV`, so the build reads the
@@ -129,7 +252,7 @@ job, then the `production` job, each in the GitHub environment of that name:
    ([`dictionary-api.md`](dictionary-api.md), How a deploy works).
 2. points the site at the environment's service (`apps/web/scripts/use-dictionary-service.sh`, with
    the environment's `DICTIONARY_API_URL` variable);
-3. applies the environment's D1 migrations, deploys, and smoke-tests (`apps/web/scripts/smoke.sh`)
+3. deploys and smoke-tests (`apps/web/scripts/smoke.sh`)
    the workers.dev URL the deploy printed, since the zone's bot protection blocks CI runners. When
    Cloudflare challenges the site's Worker for the runner too, the smoke test skips its dictionary
    checks with a warning ([`web.md`](web.md), Dictionary service).
@@ -152,7 +275,7 @@ the core. Those tests need no data: the app-recorded suites run through the core
 
 `.github/workflows/dictionary-api.yml` checks the dictionary service on pull requests that change
 the service, the core, the website's dictionary code (`apps/web/src/lib/dictionary/`,
-`apps/web/src/components/dictionary/`, `apps/web/vitest.config.ts`), the conformance suites
+`apps/web/src/components/dictionary/`, `apps/web/src/test/`, `apps/web/vitest.config.ts`), the conformance suites
 (`apps/ios/LanguageData/Conformance/`), or the app's resources
 (`apps/ios/Modules/Sources/SearchExperience/Resources/`), and by hand. A new push cancels the pull
 request's last run. Its `scripts` job runs ShellCheck 0.11 on the server's deploy scripts
@@ -164,7 +287,10 @@ request's last run. Its `scripts` job runs ShellCheck 0.11 on the server's deplo
    the app's pin, or downloads and checks it);
 2. runs `pnpm check` in `apps/dictionary-api`: Biome, typecheck, the app-recorded suites on the
    real files, and the bundle;
-3. starts the built service and runs the website's rendered-page gate against it
+3. exports the core's fixtures from the real files and fails if they differ from the committed
+   ones (`packages/dictionary-core/src/fixtures/`) or add a file, so a data rebuild that changes a fixture word's
+   rows re-exports them in the same pull request;
+4. starts the built service and runs the website's rendered-page gate against it
    ([`web.md`](web.md), The rendered-page gate), and prints the service's log if a step failed.
 
 `ZENBU_REQUIRE_ARTIFACT=1` makes the suites fail, rather than skip, without the app's files or
@@ -226,9 +352,11 @@ rollback's comes from an image the run pulled. The whole deploy is in
 jobs:
 
 - `contracts` runs the data tools' contract tests (`apps/ios/Tools/tests/`) on Linux, with every
-  Git LFS file under `apps/ios`: they check the bundled packs and indexes against their pinned
-  sources, import reports, and the bundled dictionary ([`ios.md`](ios.md)). Its LFS cache is keyed
-  on the pointers of every LFS pattern under `apps/ios`, apart from the service's.
+  Git LFS file under `apps/ios` but the archived source snapshots (`LFS_SNAPSHOTS`), which only a
+  rebuild reads: they check the bundled packs and indexes against their pinned sources, import
+  reports, and the bundled dictionary, and that each import report records the current hash of
+  the tool that wrote it ([`ios.md`](ios.md)). Its LFS cache is keyed on the pointers
+  of the LFS patterns it fetches.
 - `swift` runs `SearchExperienceTests` with `xcodebuild` on the first iPhone Simulator of the
   newest iOS runtime, on `macos-26` (Xcode 26, for the iOS 26 SDK the package needs; arm64, which
   the `sudachi-swift` binary needs). A macOS minute costs about ten times a Linux one, so it runs
@@ -237,9 +365,9 @@ jobs:
 
 ## Search parity
 
-`.github/workflows/search-parity.yml` keeps two implementations in step. Search retrieval, word
-pages' examples, and parts of the word page's detail (the per-kanji furigana highlight, the pitch
-graph, Frequency Details, and the conjugation table) exist twice until issue 481 makes TypeScript
+`.github/workflows/search-parity.yml` keeps two implementations in step. Search retrieval, the
+results screen, word pages' examples, and parts of the word page's detail (the per-kanji furigana
+highlight, the pitch graph, Frequency Details, and the conjugation table) exist twice until issue 481 makes TypeScript
 the single core (ADR 0008): Swift for the iOS app, and a TypeScript port for the website.
 
 It runs on a pull request that changes a file of any pair below, and again when a label is added
@@ -250,9 +378,10 @@ and skips the check.
 
 | Pair | Swift sources (`<name>.swift` in `apps/ios/Modules/Sources/SearchExperience/`) | TypeScript ports |
 | --- | --- | --- |
-| search | `LookupClient`, `SearchQuery`, `DictionaryRanking`, `JapaneseDeinflection`, `DictionaryEntry`, `JapaneseTextAnalysisClient` | Everything in `packages/dictionary-core/src/search/` |
-| examples | `ExampleSentenceClient`, `JapaneseTextAnalysisClient`, `JapaneseInflectionGrouping`, `KuromojiMorphologyClient`, `LinkedJapaneseText` (the conjugated form's highlight) | The `.ts` files in `packages/dictionary-core/src/examples/`; `example-retrieval.ts`, `example-search.ts`, `word-examples.ts`, `search-examples.ts`, and `lookup.ts` in `packages/dictionary-core/src/artifact/`; `apps/dictionary-api/src/kuromoji.ts` |
-| detail | `KanjiReadingSplitter`, `JapaneseRubyText` (the per-kanji furigana highlight), `WordDetailView` (`PitchContourLayout`, `FrequencyDisclosurePresentation`), `FrequencyPack`, `JapaneseConjugationClient`, `ConjugationsView` | `kanji-split.ts`, `pitch.ts`, `frequency.ts`, `conjugation.ts`, and `conjugation-table.ts` in `packages/dictionary-core/src/detail/` |
+| search | `LookupClient`, `LookupDatabase`, `LookupEnglishRanking`, `LookupJapaneseRanking`, `LookupRankedEntries`, `SearchQuery`, `DictionaryRanking`, `JapaneseDeinflection`, `DictionaryEntry`, `JapaneseTextAnalysisClient` | Everything in `packages/dictionary-core/src/search/` |
+| examples | `ExampleSentenceClient`, `ExampleSentenceDatabase`, `ExampleSentenceEntryRetrieval`, `ExampleSentenceModels`, `ExampleSentenceSearchRetrieval`, `JapaneseTextAnalysisClient`, `JapaneseInflectionGrouping`, `KuromojiMorphologyClient`, `LinkedJapaneseText` (the conjugated form's highlight) | The `.ts` files in `packages/dictionary-core/src/examples/`; `example-retrieval.ts`, `example-search.ts`, `word-examples.ts`, and `lookup.ts` in `packages/dictionary-core/src/artifact/`; `apps/dictionary-api/src/kuromoji.ts` |
+| detail | `KanjiReadingSplitter`, `JapaneseRubyText` (the per-kanji furigana highlight), `WordDetailView`, `WordHeadline`, `WordDetailSections`, `PitchAccentBadge` (`PitchContourLayout`), `FrequencyDisclosure` (`FrequencyDisclosurePresentation`), `FrequencyPack`, `FrequencyPresentation`, `JapaneseConjugationClient`, `ConjugationsView` | `kanji-split.ts`, `pitch.ts`, `frequency.ts`, `conjugation.ts`, and `conjugation-table.ts` in `packages/dictionary-core/src/detail/` |
+| results | `SearchResultsView`, `SearchResultsScreen` (the results screen's rows, titles, and counts), `SearchResultFrequencyOrdering` | The `.ts` files in `packages/dictionary-core/src/results/`, and `search-examples.ts` in `packages/dictionary-core/src/artifact/` |
 
 Each pair is one `check` call in the workflow's script: the pair's name, a pattern for its Swift
 files, a pattern for its TypeScript files, and where the port is, which the error names. To change

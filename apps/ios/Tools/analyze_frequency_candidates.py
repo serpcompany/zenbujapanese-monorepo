@@ -1,10 +1,4 @@
 #!/usr/bin/env python3
-"""Map frequency-list candidates and compare them with current packs, TUBELEX, and Wikipedia.
-
-Reports coverage (mapped / ambiguous / unmapped) under FrequencyPackMappingV1 and, for lists with
-readings, FrequencyPackMappingV2, plus overlap, top-1k Jaccard, and rank correlation. Used for
-#376 to choose the Jiten packs; results are in LanguageData/Generated/Frequency-candidates-376.analysis.json.
-"""
 
 from __future__ import annotations
 
@@ -18,21 +12,21 @@ import sys
 import zipfile
 from pathlib import Path
 
-TOOLS = Path(__file__).resolve().parent
-sys.path.insert(0, str(TOOLS))
-from build_jiten_frequency_packs import jiten_pairs, read_list  # noqa: E402
-from analyze_ordered_json_frequency_lists import (  # noqa: E402
+from analyze_ordered_json_frequency_lists import (
     MAPPING_SQL as MAPPING_V1,
     canonical_json,
     comparison,
     normalized,
     sha256,
 )
+from build_jiten_frequency_packs import jiten_pairs, read_list
+from import_frequency_pack import mapping_counts, mapping_script
+
+TOOLS = Path(__file__).resolve().parent
 
 MAPPING_V2 = MAPPING_V1.with_name("FrequencyPackMappingV2.sql")
 TUBELEX = TOOLS.parent / "LanguageData/Sources/TUBELEX-ja-310-lemma-pos.tsv.xz"
 
-# (rank, form, reading, count, pos, digest)
 Row = tuple[int, str, str, int, str, bytes]
 
 
@@ -45,10 +39,6 @@ def jiten_rows(paths: list[Path]) -> list[Row]:
 
 
 def tubelex_category_rows(categories: list[str]) -> list[Row]:
-    """Rank TUBELEX lemma+POS rows by the sum of the chosen `count:<category>` columns.
-
-    Output is TSV-path compatible: word, summed count, POS, so the V1 runtime can install it.
-    """
     columns = [f"count:{name}" for name in categories]
     scored: list[tuple[int, int, str, str, bytes]] = []
     with lzma.open(TUBELEX, "rt", encoding="utf-8", newline="") as handle:
@@ -65,7 +55,7 @@ def tubelex_category_rows(categories: list[str]) -> list[Row]:
             derived = {"word": record["word"], "count": str(count), "pos": record["pos"]}
             scored.append((-count, order, normalized(record["word"]), record["pos"],
                            hashlib.sha256(canonical_json(derived)).digest()))
-    scored.sort()  # count descending; ties keep TUBELEX file order
+    scored.sort()
     return [(i, form, "", -neg, pos, d) for i, (neg, _, form, pos, d) in enumerate(scored, 1)]
 
 
@@ -82,7 +72,6 @@ def ordered_json_rows(archive: Path) -> list[Row]:
 
 
 def map_rows(rows: list[Row], policy: Path, language_data: Path, output: Path) -> dict[str, object]:
-    """Run a mapping policy exactly as the importer does and keep the artifact for comparisons."""
     output.unlink(missing_ok=True)
     database = sqlite3.connect(output)
     database.executescript(
@@ -95,8 +84,6 @@ def map_rows(rows: list[Row], policy: Path, language_data: Path, output: Path) -
         "mapping_relation TEXT NOT NULL, matched_form TEXT NOT NULL, source_pos TEXT NOT NULL, "
         "source_record_digest BLOB NOT NULL) WITHOUT ROWID;"
     )
-    # The mapping SQL groups by `rank`, so tied source rows must stay distinct: map on row
-    # position, keep the assigned rank in `source_rank`, and swap it back in afterwards.
     database.execute("ALTER TABLE source_rows ADD COLUMN source_rank INTEGER")
     database.executemany(
         "INSERT INTO source_rows(rank, form, source_reading, source_count, source_pos, "
@@ -104,22 +91,13 @@ def map_rows(rows: list[Row], policy: Path, language_data: Path, output: Path) -
         ((position, form, reading, count, pos, digest, rank)
          for position, (rank, form, reading, count, pos, digest) in enumerate(rows, 1)),
     )
-    sql = (policy.read_text(encoding="utf-8")
-           .replace("{{LANGUAGE_DATA_PATH}}", str(language_data).replace("'", "''"))
-           .replace("{{COVERED_SOURCE_ROWS}}", str(len(rows))))
-    database.executescript(sql)
-    # Re-express evidence rank in the chosen source-rank policy (position → assigned rank).
+    database.executescript(mapping_script(policy, language_data, len(rows)))
     database.execute(
         "UPDATE frequency_evidence SET rank = (SELECT s.source_rank FROM source_rows s "
         "WHERE s.rank = frequency_evidence.rank)"
     )
     count = len(rows)
-    mapped = database.execute("SELECT count(*) FROM frequency_evidence").fetchone()[0]
-    ambiguous = database.execute(
-        "SELECT count(*) FROM resolutions WHERE candidate_count > 1 AND pos_candidate_count != 1"
-    ).fetchone()[0]
-    matched = database.execute("SELECT count(*) FROM resolutions").fetchone()[0]
-    eligible = database.execute("SELECT count(*) FROM eligible").fetchone()[0]
+    mapped, ambiguous, matched, eligible = mapping_counts(database)
     relations = dict(database.execute(
         "SELECT mapping_relation, count(*) FROM frequency_evidence GROUP BY 1 ORDER BY 1"))
     top_ambiguous = [form for (form,) in database.execute(
@@ -184,7 +162,6 @@ def main() -> None:
         "current": [],
     }
     artifacts: dict[str, Path] = {}
-    # Current packs first so replacements can be compared against them.
     for current in plan.get("current", []):
         rows = ordered_json_rows(arguments.current_archives / current["archive"])
         out = arguments.work / f"current-{current['id']}.sqlite3"

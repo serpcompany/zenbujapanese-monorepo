@@ -1,0 +1,44 @@
+{
+  "source": {
+    "resource_id": "SOURCE-COMPONENT-TATOEBA-JPN-INDICES",
+    "identity": "Tatoeba Japanese indices export 2026-10-03",
+    "snapshot_date": "2026-10-03",
+    "fetched_at_utc": "2026-10-05T22:23:10Z",
+    "license": "CC BY 2.0 FR",
+    "license_url": "https://creativecommons.org/licenses/by/2.0/fr/",
+    "notice": "apps/ios/Modules/Sources/SearchExperience/Resources/TATOEBA-NOTICE.txt",
+    "documentation_url": "https://en.wiki.tatoeba.org/articles/show/japanese-indices",
+    "download_url": "https://downloads.tatoeba.org/exports/jpn_indices.tar.bz2",
+    "http_last_modified": "Sat, 03 Oct 2026 06:27:31 GMT",
+    "http_etag": "\"6ac0a053-2bb207\"",
+    "compressed_bytes": 2863623,
+    "sha256": "6c00f06f5f3a360107a8dff45a9cb602c73ecc754b9a697663a6c579971f9a46",
+    "compatibility": "Sentence IDs are stable across Tatoeba exports. Index lines are matched to the bundled 2026-10-03 sentence pairs by Japanese and English sentence ID; lines without a bundled pair are skipped and counted in the import report."
+  },
+  "transform": {
+    "identity": "tatoeba-jpn-indices-to-zenbu-example-word-index-v1",
+    "artifact_schema": "zenbu.example-word-index.v1",
+    "index_lines": 150075,
+    "index_lines_without_bundled_pair": 5950,
+    "tokens": 1137972,
+    "tokens_resolved_to_one_entry": 1123671,
+    "kana_headword_entries_linked": 4124,
+    "entry_sentence_rows": 57953,
+    "sentences_per_entry": 200,
+    "retained_fields": [
+      "sentence-to-entry links",
+      "surface form in the sentence"
+    ],
+    "excluded_fields": [
+      "sense numbers",
+      "kanji-headword entries",
+      "unresolved tokens"
+    ],
+    "source_sha256": "6c00f06f5f3a360107a8dff45a9cb602c73ecc754b9a697663a6c579971f9a46",
+    "language_data_sha256": "0c9074da7e8c561c3c0d6409dfdaf78c0a920169f79e1438dfd42c2f91d67c87",
+    "import_tool_sha256": "ef17f2015bc9a4af82c2ee2ce2f10a7e37c18cfee49da23c550507f86d026913",
+    "shared_tooling_sha256": "0c0dec180f4f11f49c6d1ee6048d9a3dc4986d88ef5fc4bc6aa9302e62743b39",
+    "artifact_sha256": "c31199326d49fcdd1db9b2b567732fdccc9922a5422e895d4a7478d3a43d0bb2",
+    "artifact_bytes": 2904064
+  }
+}

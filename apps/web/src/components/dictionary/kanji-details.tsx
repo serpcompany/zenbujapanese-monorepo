@@ -1,6 +1,6 @@
 import Link from 'next/link'
 import type { ReactNode } from 'react'
-import type { KanjiDetailsData } from '@/lib/dictionary/data'
+import type { KanjiDetailsData } from '@/lib/dictionary/kanji-details'
 import { kanjiSearchPath } from '@/lib/dictionary/urls'
 import { KanjiReadings } from './kanji-readings'
 import { LearnerPrompt } from './learner-prompt'

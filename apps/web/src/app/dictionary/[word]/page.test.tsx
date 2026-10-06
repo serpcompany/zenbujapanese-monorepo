@@ -1,6 +1,6 @@
 import { renderToStaticMarkup } from 'react-dom/server'
 import { describe, expect, test, vi } from 'vitest'
-import { visibleText } from '@/components/dictionary/rendered'
+import { visibleText } from '@/test/rendered'
 import WordPage from './page'
 
 vi.mock('@opennextjs/cloudflare', () => ({ getCloudflareContext: async () => ({ env: {} }) }))
@@ -52,6 +52,13 @@ describe('the word page, read from the fixtures', () => {
       'TUBELEX',
       'Tatoeba'
     ])
+  })
+
+  test('keeps its Sources closed, with every credit in the HTML', async () => {
+    const html = await renderWord('いる-1577980')
+    const sources = html.slice(html.indexOf('<footer'))
+    expect(sources).toMatch(/^<footer[^>]*><details class="group"><summary[^>]*>Sources<svg/)
+    expect(credited(sources)).toContain('Tatoeba')
   })
 
   test('a verb has a closed Conjugations section, which its part of speech links to', async () => {

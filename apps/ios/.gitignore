@@ -9,3 +9,4 @@ LanguageData/Sources/*.gz
 LanguageData/Sources/*.bz2
 LanguageData/Sources/*.zip
 LanguageData/Sources/*.sqlite
+LanguageData/Sources/*.part

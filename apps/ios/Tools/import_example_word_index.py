@@ -1,35 +1,22 @@
 #!/usr/bin/env python3
-"""Link Tatoeba example sentences to kana-headword dictionary entries.
-
-Word Detail finds examples for a kanji-headword entry by its written forms, but a
-kana-headword entry (それで, そんなに, でも) only has its reading, and short kana
-readings occur inside unrelated words (でも in いつでも, 何でも). Tatoeba's
-`jpn_indices` export lists the dictionary words each Japanese sentence uses, so
-this artifact records which sentences use each kana-headword entry as a word.
-"""
 
 from __future__ import annotations
 
-import argparse
-import json
 import re
 import sqlite3
 import tarfile
 from collections import defaultdict
 from pathlib import Path
 
-from language_data_tools import file_sha256
+from language_data_tools import built_artifact, file_sha256, run_import
 
 
 ARTIFACT_SCHEMA = "zenbu.example-word-index.v1"
 JMDICT_SOURCE_IDENTITY = "edrdg.jmdict"
 TATOEBA_SOURCE_IDENTITY = "tatoeba.weekly-export"
-FORM_KINDS = (0, 1)  # written, reading
-# Word Detail shows at most 100 examples and counts past 50 as "50+", so the
-# artifact keeps each entry's best 200 sentences.
+FORM_KINDS = (0, 1)
 SENTENCES_PER_ENTRY = 200
 
-# headword, then optional (reading) or (#JMdict sequence), [sense], {surface}, and ~
 TOKEN_PATTERN = re.compile(
     r"^(?P<head>[^(\[{~]+)"
     r"(?:\((?:#(?P<sequence>\d+)|(?P<reading>[^)]+))\))?"
@@ -90,7 +77,6 @@ def is_kana(value: str) -> bool:
 
 
 def resolve(token, by_sequence, headwords, by_form, readings, primary_written) -> bytes | None:
-    """The one dictionary entry a Tatoeba index token names, or None when ambiguous."""
     if token["sequence"]:
         return by_sequence.get(int(token["sequence"]))
     head = token["head"]
@@ -98,10 +84,6 @@ def resolve(token, by_sequence, headwords, by_form, readings, primary_written) -
     if token["reading"]:
         candidates = {entry for entry in candidates if token["reading"] in readings[entry]}
     if len(candidates) > 1:
-        # An index headword is the entry's first written form (其れ for それ), or its kana
-        # when the word is usually written in kana. Bare kana such as そう can therefore
-        # name several usually-kana entries (the adverb 然う and the suffix そう); it names
-        # one only when a single candidate shows that kana as its headword.
         if is_kana(head):
             candidates = {entry for entry in candidates if headwords[entry] == head}
         else:
@@ -141,7 +123,6 @@ def import_index(source: Path, source_manifest: dict, language_data: Path, outpu
 
     lines = index_lines(source)
     tokens_seen = tokens_resolved = unpaired_lines = 0
-    # entry id -> pair id -> (checked, surface)
     links: dict[bytes, dict[bytes, tuple[bool, str]]] = defaultdict(dict)
     for line in lines:
         japanese_id, english_id, body = line.split("\t", 2)
@@ -225,29 +206,17 @@ def import_index(source: Path, source_manifest: dict, language_data: Path, outpu
         "excluded_fields": ["sense numbers", "kanji-headword entries", "unresolved tokens"],
         "source_sha256": source_manifest["sha256"],
         "language_data_sha256": language_data_sha256,
-        "import_tool_sha256": file_sha256(Path(__file__)),
-        "shared_tooling_sha256": file_sha256(Path(__file__).with_name("language_data_tools.py")),
-        "artifact_sha256": file_sha256(output),
-        "artifact_bytes": output.stat().st_size,
+        **built_artifact(Path(__file__), output),
     }
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--source", type=Path, required=True)
-    parser.add_argument("--source-manifest", type=Path, required=True)
-    parser.add_argument("--language-data", type=Path, required=True)
-    parser.add_argument("--output", type=Path, required=True)
-    parser.add_argument("--import-manifest", type=Path, required=True)
-    arguments = parser.parse_args()
-
-    source_manifest = json.loads(arguments.source_manifest.read_text())
-    transform = import_index(
-        arguments.source, source_manifest, arguments.language_data, arguments.output
+    run_import(
+        lambda arguments, source_manifest: import_index(
+            arguments.source, source_manifest, arguments.language_data, arguments.output
+        ),
+        "--language-data",
     )
-    manifest = {"source": source_manifest, "transform": transform}
-    arguments.import_manifest.write_text(json.dumps(manifest, ensure_ascii=False, indent=2) + "\n")
-    print(json.dumps(transform, ensure_ascii=False, indent=2))
 
 
 if __name__ == "__main__":

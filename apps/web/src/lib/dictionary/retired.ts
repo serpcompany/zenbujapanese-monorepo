@@ -1,7 +1,7 @@
 import { type DictionaryApi, type DictionaryApiEnvironment, dictionaryApi } from './api'
 import { parseWordSegment } from './urls'
 
-export interface RetiredWord {
+interface RetiredWord {
   replacement: { entSeq: number; slug: string } | null
 }
 

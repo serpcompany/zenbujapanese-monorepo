@@ -16,7 +16,7 @@ export function tierForLevel(level: number): FrequencyTier {
   return 'moderate'
 }
 
-export interface FrequencyPackDisclosure {
+interface FrequencyPackDisclosure {
   id: string
   name: string
   domain: string
@@ -67,7 +67,7 @@ export const defaultFrequencyPacks: readonly FrequencyPack[] = [
   }
 ]
 
-export const levelExplanation =
+const levelExplanation =
   "JLPT levels are study estimates from Jonathan Waller's vocabulary lists. JLPT has published no official vocabulary list since 2010."
 
 export interface FrequencyDetails {

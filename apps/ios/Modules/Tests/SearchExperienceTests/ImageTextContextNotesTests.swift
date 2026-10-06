@@ -13,26 +13,7 @@ struct ImageTextContextNotesTests {
   }
 
   private func note(_ phrase: String) -> ImageTextNote {
-    ImageTextNote(
-      phrase: phrase,
-      entry: DictionaryEntry(
-        id: LanguageReferenceID(rawValue: phrase),
-        noteID: WordNoteID(rawValue: phrase),
-        sourceProvenances: [
-          LanguageReferenceProvenance(sourceIdentity: "fixture", sourceRecordID: phrase)
-        ],
-        reading: phrase,
-        headword: phrase,
-        summary: phrase,
-        meanings: [phrase],
-        partsOfSpeech: [],
-        writtenForms: [],
-        readingForms: [],
-        senses: [],
-        relationships: [],
-        pitchAccent: nil,
-        isCommon: false
-      ))
+    ImageTextNote(phrase: phrase, entry: .fixture(id: phrase, headword: phrase))
   }
 
   @Test("an idiom that is a whole paragraph isn't repeated under Context")

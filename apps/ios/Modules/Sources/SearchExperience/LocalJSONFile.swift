@@ -133,6 +133,22 @@ final class LocalFileWriteQueue {
   }
 }
 
+@MainActor
+protocol LocalFileStore: AnyObject {
+  var writes: LocalFileWriteQueue { get }
+  func persist()
+}
+
+extension LocalFileStore {
+  func saveIfNeeded() {
+    if writes.hasUnsavedChanges { persist() }
+  }
+
+  func flush() async {
+    await writes.flush()
+  }
+}
+
 extension JSONEncoder {
   static var localStore: JSONEncoder {
     let encoder = JSONEncoder()

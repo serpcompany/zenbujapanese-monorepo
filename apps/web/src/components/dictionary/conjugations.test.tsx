@@ -17,14 +17,14 @@ import { exampleLimit } from '@zenbu/dictionary-core/examples/retrieval'
 import { renderToStaticMarkup } from 'react-dom/server'
 import { describe, expect, test } from 'vitest'
 import { pageExample, serviceLinks } from '@/lib/dictionary/page-example'
+import { gateEnabled, gateService, recordedCases } from '@/test/gate'
+import { readConjugatedForm, readConjugationTable, readExamples } from '@/test/rendered-word'
 import {
   ConjugatedFormContent,
   ConjugationsSection,
   ConjugationTableContent,
   FormExampleList
 } from './conjugations'
-import { gateEnabled, gateService, recordedCases } from './gate'
-import { readConjugatedForm, readConjugationTable, readExamples } from './rendered-word'
 import { WordHeader } from './word-header'
 
 const noReadings = new Map()
@@ -193,6 +193,7 @@ describe('the Conjugations section', () => {
     const header = (data: Conjugations | null) =>
       renderToStaticMarkup(
         <WordHeader
+          headword="見る"
           ruby={rubySegments('見る', 'みる')}
           reading="みる"
           pitch={null}
@@ -229,6 +230,7 @@ describe.runIf(gateEnabled)('the rendered Conjugations section matches the app',
     const detail = wordDetail(page.data.rows)
     const header = renderToStaticMarkup(
       <WordHeader
+        headword={detail.headword}
         ruby={detail.ruby}
         reading={detail.reading}
         pitch={detail.pitch}

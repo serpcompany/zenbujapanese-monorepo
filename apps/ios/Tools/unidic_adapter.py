@@ -1,5 +1,3 @@
-"""UniDic source adapter for app-owned pitch-accent facts."""
-
 from __future__ import annotations
 
 import csv
@@ -9,7 +7,7 @@ import sqlite3
 import unicodedata
 import zipfile
 from pathlib import Path
-from typing import Callable
+from typing import Callable, Iterator
 
 
 def hiragana(value: str) -> str:
@@ -22,6 +20,22 @@ def hiragana(value: str) -> str:
 def mora_count(value: str) -> int:
     combining_kana = set("ぁぃぅぇぉゃゅょゎァィゥェォャュョヮ")
     return sum(1 for character in unicodedata.normalize("NFKC", value) if character not in combining_kana)
+
+
+def accented_lexicon_rows(source: Path) -> Iterator[tuple[list[str], int]]:
+    with zipfile.ZipFile(source) as archive:
+        lexicon_name = next((name for name in archive.namelist() if name.endswith("/lex_3_1.csv")), None)
+        if not lexicon_name:
+            raise ValueError("UniDic archive is missing lex_3_1.csv")
+        with archive.open(lexicon_name) as raw, io.TextIOWrapper(raw, encoding="utf-8", newline="") as text:
+            for row in csv.reader(text):
+                if len(row) < 31 or row[28] == "*":
+                    continue
+                try:
+                    downstep = int(row[28].split(",", maxsplit=1)[0])
+                except ValueError:
+                    continue
+                yield row, downstep
 
 
 def apply_unidic_pitch(
@@ -39,28 +53,17 @@ def apply_unidic_pitch(
             entry_ids_by_key.setdefault((normalize(str(form)), reading), []).append(record["id"])
 
     accents_by_entry_id: dict[object, set[tuple[int, int]]] = {}
-    with zipfile.ZipFile(source) as archive:
-        lexicon_name = next((name for name in archive.namelist() if name.endswith("/lex_3_1.csv")), None)
-        if not lexicon_name:
-            raise ValueError("UniDic archive is missing lex_3_1.csv")
-        with archive.open(lexicon_name) as raw, io.TextIOWrapper(raw, encoding="utf-8", newline="") as text:
-            for row in csv.reader(text):
-                if len(row) < 31 or row[28] == "*":
-                    continue
-                try:
-                    downstep = int(row[28].split(",", maxsplit=1)[0])
-                except ValueError:
-                    continue
-                pronunciation = hiragana(row[15])
-                lexical_reading = hiragana(row[10])
-                entry_ids: list[object] = []
-                for reading in (pronunciation, lexical_reading):
-                    for entry_id in entry_ids_by_key.get((normalize(row[14]), normalize(reading)), []):
-                        if entry_id not in entry_ids:
-                            entry_ids.append(entry_id)
-                accent = (downstep, mora_count(pronunciation))
-                for entry_id in entry_ids:
-                    accents_by_entry_id.setdefault(entry_id, set()).add(accent)
+    for row, downstep in accented_lexicon_rows(source):
+        pronunciation = hiragana(row[15])
+        lexical_reading = hiragana(row[10])
+        entry_ids: list[object] = []
+        for reading in (pronunciation, lexical_reading):
+            for entry_id in entry_ids_by_key.get((normalize(row[14]), normalize(reading)), []):
+                if entry_id not in entry_ids:
+                    entry_ids.append(entry_id)
+        accent = (downstep, mora_count(pronunciation))
+        for entry_id in entry_ids:
+            accents_by_entry_id.setdefault(entry_id, set()).add(accent)
 
     for entry_id, accents in accents_by_entry_id.items():
         downstep, count = sorted(accents)[0]

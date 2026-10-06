@@ -9,7 +9,7 @@ export interface SenseRestrictionRow {
   form: string
 }
 
-export interface SenseRow {
+interface SenseRow {
   meaning: string
   notes: string[]
   partsOfSpeech: string[]
@@ -22,7 +22,7 @@ export interface PitchRow {
   sourceIdentity: string
 }
 
-export interface RelationshipRow {
+interface RelationshipRow {
   headword: string
   reading: string
   summary: string
@@ -159,10 +159,7 @@ export interface KanjiWordRow {
   containsKanji: boolean
 }
 
-export type KanjiListWordRow = Pick<
-  KanjiWordRow,
-  'id' | 'entSeq' | 'headword' | 'reading' | 'summary'
->
+type KanjiListWordRow = Pick<KanjiWordRow, 'id' | 'entSeq' | 'headword' | 'reading' | 'summary'>
 
 export interface KanjiRows {
   kanji: KanjiRow

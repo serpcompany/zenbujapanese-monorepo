@@ -1,0 +1,16 @@
+{
+  "resource_id": "SOURCE-COMPONENT-KANJIDIC2",
+  "identity": "EDRDG KANJIDIC2",
+  "snapshot": "2026-10-05",
+  "download_url": "https://www.edrdg.org/pub/Nihongo/kanjidic2.xml.gz",
+  "fetched_at_utc": "2026-10-05T22:23:11Z",
+  "http_last_modified": "Mon, 05 Oct 2026 03:30:36 GMT",
+  "http_etag": "\"16b6bd-65d0f8160b00d\"",
+  "compressed_bytes": 1488573,
+  "sha256": "d9184343a8ce9e999ce9d22d45ca7201f906f80064073fb210faff436e7fa7e4",
+  "file_version": "4",
+  "database_version": "2026-278",
+  "license": "EDRDG general dictionary licence (CC BY-SA 4.0)",
+  "license_url": "https://www.edrdg.org/edrdg/licence.html",
+  "documentation_url": "https://www.edrdg.org/wiki/index.php/KANJIDIC_Project"
+}

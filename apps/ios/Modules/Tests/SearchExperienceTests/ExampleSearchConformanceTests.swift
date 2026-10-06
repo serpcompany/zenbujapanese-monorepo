@@ -88,9 +88,8 @@ private struct ExampleSearchObserver {
           tokens: tokens.map { token in
             ExampleSearchCase.Token(
               surface: token.surface,
-              entry: token.entry?.id.rawValue,
-              candidates: token.entry == nil && !token.candidateEntries.isEmpty
-                ? token.candidateEntries.map(\.id.rawValue) : nil,
+              entry: token.recordedEntryID,
+              candidates: token.recordedCandidateIDs,
               queryMatch: queryRanges.contains { $0.overlaps(token.scalarRange) } ? true : nil
             )
           }

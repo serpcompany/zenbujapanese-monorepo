@@ -1,0 +1,20 @@
+{
+  "$schema": "https://unpkg.com/knip@6/schema.json",
+  "ignore": ["apps/ios/**"],
+  "workspaces": {
+    ".": {},
+    "apps/web": {
+      "entry": ["open-next.config.ts", "e2e/**/*.ts"]
+    },
+    "apps/dictionary-api": {
+      "entry": ["src/worker-dev.mjs", "scripts/*.{ts,mjs}"]
+    },
+    "packages/dictionary-core": {
+      "includeEntryExports": true
+    },
+    "tools/checks": {
+      "entry": ["hook.mjs"],
+      "ignoreDependencies": ["@secretlint/secretlint-rule-preset-recommend"]
+    }
+  }
+}

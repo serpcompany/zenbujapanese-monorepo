@@ -3,7 +3,8 @@ import { existsSync, readFileSync } from 'node:fs'
 import { isAbsolute, relative, resolve, sep } from 'node:path'
 import { findComments } from './comments/find'
 import { root } from './files'
-import { commentRule, sizeRule } from './rules'
+import { commentRule, secretRule, sizeRule } from './rules'
+import { findSecrets } from './secrets'
 import { checkSizes } from './sizes'
 
 interface ToolCall {
@@ -27,6 +28,8 @@ for (const file of findComments([path]).found) {
 }
 const sizes = checkSizes([path]).filter(size => size.path === path)
 if (sizes.length) messages.push(...sizes.map(size => `${size.path}  ${size.problem}`), sizeRule)
+const secrets = await findSecrets([path])
+if (secrets.length) messages.push(...secrets, secretRule)
 
 if (messages.length) {
   console.error(messages.join('\n'))

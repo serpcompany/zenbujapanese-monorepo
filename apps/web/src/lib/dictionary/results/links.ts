@@ -6,14 +6,14 @@ import type {
   SearchResultsScreen
 } from '@zenbu/dictionary-core/results/results'
 import { isASCII, normalizeQuery } from '@zenbu/dictionary-core/search/query'
-import type { KanjiDetailsData } from '../data'
+import type { KanjiDetailsData } from '../kanji-details'
 import { hasSearchPath, searchPath, wordPath } from '../urls'
 
 type Linked<T> = T & { path: string | null }
 
 export type SearchWord = Linked<ResultRow>
 
-export type SearchExamplesTarget = { kind: 'word'; path: string } | { kind: 'inline' }
+type SearchExamplesTarget = { kind: 'word'; path: string } | { kind: 'inline' }
 
 export type SearchData =
   | Extract<SearchResultsScreen, { state: 'noResults' }>

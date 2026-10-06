@@ -1,8 +1,8 @@
 # Website working guide
 
 `apps/web` is zenbujapanese.com: Next.js served from Cloudflare Workers through OpenNext, with
-Cloudflare D1 through Drizzle for the site's own data. It reads the dictionary from the
-dictionary service (`apps/dictionary-api`, ADR 0009; see
+no database of its own. It reads the dictionary from the dictionary service
+(`apps/dictionary-api`, ADR 0009; see
 [`dictionary-api.md`](dictionary-api.md)). It builds with pnpm in the repository's workspace (the
 root `pnpm-workspace.yaml` and lockfile), which it shares with the dictionary core
 (`packages/dictionary-core`) and the service, and still owns its build, tests, and deploys
@@ -12,7 +12,6 @@ What the dictionary pages show, and the check that enforces each behavior, is in
 
 The website follows these SERP engineering standards:
 
-- [Drizzle + D1 data promotion](https://github.com/serpcompany/serp/blob/main/docs/engineering/standards/database-management-promotion-drizzle-d1.md)
 - [Environment configuration](https://github.com/serpcompany/serp/blob/main/docs/engineering/standards/environment-configuration.md)
 - [URL trailing slash](https://github.com/serpcompany/serp/blob/main/docs/engineering/standards/url-trailing-slash.md):
   pages end with a slash (`/about/`); files never do (`/robots.txt`, `/sitemap-index.xml`). The
@@ -26,15 +25,13 @@ Next.js version differs from older releases (see `apps/web/AGENTS.md`).
 
 ## Run and verify
 
-- `pnpm dev` runs Next.js in Node, with Cloudflare bindings (the local D1 database, and
-  `.dev.vars`) available through `getCloudflareContext()` (`initOpenNextCloudflareForDev` in
-  `next.config.ts`). Dictionary pages show local fixtures unless `.dev.vars` names a dictionary
-  service (see Dictionary).
+- `pnpm dev` runs Next.js in Node, with Cloudflare bindings and `.dev.vars` available through
+  `getCloudflareContext()` (`initOpenNextCloudflareForDev` in `next.config.ts`). Dictionary pages
+  show local fixtures unless `.dev.vars` names a dictionary service (see Dictionary).
 - `pnpm preview` builds with OpenNext and serves the Worker in workerd, the production runtime.
   Check routes, redirects, and headers there before deploying.
-- `pnpm check` runs Biome, typecheck, `drizzle-kit check` (migration validation), Vitest, and
-  `next build`. The `Web` GitHub Actions workflow runs it on pull requests that change
-  `apps/web/**` or the core.
+- `pnpm check` runs Biome, typecheck, Vitest, and `next build`. The `Web` GitHub Actions workflow
+  runs it on pull requests that change `apps/web/**` or the core.
 - `pnpm test:e2e` runs the browser tests in `apps/web/e2e/` with Playwright, at a desktop and a
   phone width, on the dictionary fixtures. Locally it starts `next dev` on port 3100 with
   `ZENBU_DICTIONARY_FIXTURES=1`, which makes the site read the fixtures even when `.dev.vars` names
@@ -82,16 +79,22 @@ lists every child sitemap and each child sitemap lists the new URLs.
 enforces each rule (`apps/web/biome.json`), with a message that says where the code belongs; tests
 may import anything.
 
-- `src/lib` and `src/db` hold the site's data and logic. They import no component, hook, or route.
+- `src/lib` holds the site's data and logic. It imports no component, hook, or route.
 - `src/components` and `src/hooks` render what they're given. They import from `src/lib`, never a
   route.
 - `src/app` holds the routes, which put the other two together.
+- `src/test` holds what only tests use: the rendered-page gate and the readers of rendered HTML.
+  Nothing outside a test imports it.
 
 Only `src/lib/dictionary/data.ts` reads the dictionary service's client
 (`src/lib/dictionary/api.ts`), so every page gets the site's URLs and, in local development, the
 fixtures; the one other caller is `src/lib/dictionary/retired.ts`, which `worker.ts` runs before
-Next.js. The rendered-page gate's `src/components/dictionary/gate.ts` is test tooling and calls it
-directly.
+Next.js. The rendered-page gate's `src/test/gate.ts` is test tooling and calls it directly.
+
+`pnpm verify dependencies` checks the same layers by the files imports resolve to, and more: no
+import cycles, nothing outside a test importing a test or `src/test`, every module reachable from
+a route or `worker.ts`, nothing `worker.ts` reaches loading Next.js or React, and no import of the
+dictionary service's code ([`code.md`](code.md), Imports).
 
 The site logs JSON lines through `log()` in `apps/web/src/lib/log.ts`: a level, a message that
 names the event (`dictionary_service_unreachable`), and fields. Workers Logs keep them. Nothing
@@ -149,8 +152,9 @@ DICTIONARY_API_TOKEN=<the token the service was started with>
 
 The service runs the search core (`packages/dictionary-core/src/search/`, the app's Search
 retrieval with its own SQL on the artifact's FTS4 indexes) and the results core
-(`packages/dictionary-core/src/results/`, ported from SearchView.swift and FrequencyPack.swift),
-and answers with the results screen. `orderedItems` is
+(`packages/dictionary-core/src/results/`, ported from SearchResultsView.swift,
+SearchResultFrequencyOrdering.swift, and FrequencyPresentation.swift), and answers with the results
+screen. `orderedItems` is
 `SearchResultFrequencyOrdering.ordered`: within each match group (the result's source, then its
 coarse match rank), the more common tier from the first dictionary that has one, then each
 dictionary's value in priority order (lower first, ranked before unranked), then the retrieval
@@ -244,7 +248,7 @@ answers through the pages' components with React's server renderer, linked by th
 `data.ts` (`apps/web/src/lib/dictionary/page-example.ts` and
 `apps/web/src/lib/dictionary/results/links.ts`), and reads back what a reader sees, from the
 drawing itself (such as each pitch dot's position) rather than the data the page was given.
-`apps/web/src/components/dictionary/rendered.ts` and `rendered-word.ts` do the reading. Their one
+`apps/web/src/test/rendered.ts` and `rendered-word.ts` do the reading. Their one
 text extractor, `htmlText`, removes tags until none remain and leaves `&lt;` and `&gt;` encoded,
 so the text it reads never holds a `<` (`rendered.test.ts`). The gate's tests:
 
@@ -272,30 +276,33 @@ example-search suite's `eat`, and the word-detail suite's 見る and 学校 at r
 
 ## Environments and deploys
 
-| Environment | Worker | Domain | D1 database |
-| --- | --- | --- | --- |
-| Local | — | `localhost` | `zenbujapanese-web-local` (local only) |
-| Staging | `zenbujapanese-web-staging` | `staging.zenbujapanese.com` | `zenbujapanese-web-staging` |
-| Production | `zenbujapanese-web-production` | `zenbujapanese.com` (`www` redirects to it) | `zenbujapanese-web-production` |
+| Environment | Worker | Domain |
+| --- | --- | --- |
+| Local | — | `localhost` |
+| Staging | `zenbujapanese-web-staging` | `staging.zenbujapanese.com` |
+| Production | `zenbujapanese-web-production` | `zenbujapanese.com` (`www` redirects to it) |
 
-Deploys and remote migrations run only through the `Web deploy` GitHub Actions workflow, never
-from an agent's machine. Each merge to `main` that changes `apps/web/**` or the core points
-staging at its dictionary service, applies staging migrations, deploys staging, and smoke-tests
-its workers.dev URL (`scripts/smoke.sh`). The production job then runs automatically once staging
-passes: it does the same for production with the same commit. Staging's smoke tests are the gate:
-the `production` GitHub environment has no required reviewer, by the owner's decision. Add one
-(Settings → Environments → production) to review production deploys by hand. Both environments
+Deploys run only through the `Web deploy` GitHub Actions workflow, never from an agent's machine.
+Each merge to `main` that changes `apps/web/**` or the core points staging at its dictionary
+service, deploys staging, and smoke-tests its workers.dev URL (`scripts/smoke.sh`). The
+production job then runs automatically once staging passes: it does the same for production with
+the same commit. Staging's smoke tests are the gate: the `production` GitHub environment has no
+required reviewer, by the owner's decision. Add one (Settings → Environments → production) to
+review production deploys by hand. Both environments
 deploy only from `main`. Setting the repository variable `DEPLOY_PRODUCTION` to `false` pauses the
 production job on pushes, so `main` deploys staging only; a manual run of `Web deploy` still
 deploys production. The workflow uses the `CLOUDFLARE_API_TOKEN` secret (the "Edit
-Cloudflare Workers" template plus D1 Edit, limited to the SERP account and the zenbujapanese.com
-zone) and the `CLOUDFLARE_ACCOUNT_ID` variable.
+Cloudflare Workers" template, limited to the SERP account and the zenbujapanese.com zone; it no
+longer needs the D1 Edit it was created with) and the `CLOUDFLARE_ACCOUNT_ID` variable.
 
-The `deploy:*` and remote `db:migrate:*` scripts remain for a human-run emergency only.
+The `deploy:*` scripts remain for a human-run emergency only.
 
 In `apps/web/wrangler.jsonc`, the top level is local development, and `env.staging` and
 `env.production` are the deployed environments. Wrangler doesn't pass bindings down to an
-environment, so each repeats them.
+environment, so each repeats them. After changing bindings or vars there, run `pnpm cf-typegen`,
+which rewrites `apps/web/cloudflare-env.d.ts` from `wrangler.jsonc` alone: it reads no `.dev.vars`
+(`--env-file /dev/null`), so a local secret never enters the types, and the `Web` workflow fails
+when the committed file differs from what it writes.
 
 ### Dictionary service
 
@@ -389,25 +396,6 @@ doesn't run `worker.ts`, still redirects them, in those two hops.
 
 Email Routing on the zone forwards `support@zenbujapanese.com` to `support+zenbujapanese@serp.co`
 and `dmca@zenbujapanese.com` to `dmca+zenbujapanese@serp.co`.
-
-## Database
-
-D1 follows the SERP [Drizzle + D1 standard](https://github.com/serpcompany/serp/blob/main/docs/engineering/standards/database-management-promotion-drizzle-d1.md).
-The site's database, `DB`, holds the site's own data; the dictionary is not in D1 (see
-Dictionary). All three environments' databases share the `DB` binding, the schema in
-`src/db/schema.ts`, the migrations in `drizzle/`, and the `d1_migrations` ledger table. Staging
-and production are targeted through named Wrangler environments (`--env staging`, `--env
-production`) rather than `--preview`, so each has its own Worker and domain. Local uses seeded
-fixture data, staging controlled fixtures, and production real data only.
-
-1. Change `src/db/schema.ts`, then run `pnpm db:generate` and review the SQL.
-2. `pnpm db:migrate:local`, then verify with `pnpm dev` or `pnpm preview`.
-3. `pnpm db:migrate:staging`, then verify staging.
-4. `pnpm db:migrate:production`.
-
-Each script names its target database explicitly; `db:migrations:list:<env>` shows what is
-applied. Never run `drizzle-kit push` against a shared database, and never seed production.
-After changing bindings or vars in `wrangler.jsonc`, run `pnpm cf-typegen`.
 
 ## Sitemaps
 

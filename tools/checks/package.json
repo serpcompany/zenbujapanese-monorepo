@@ -2,12 +2,13 @@
   "name": "zenbujapanese-checks",
   "version": "0.0.0",
   "private": true,
-  "description": "The repository-wide checks behind pnpm verify: no comments in code, docs whose links resolve and that AGENTS.md reaches, file size limits, and the shell, workflow, and Python linters.",
+  "description": "The repository-wide checks behind pnpm verify: no comments in code, docs whose links, anchors, paths, and scripts resolve and that AGENTS.md reaches, file size limits, no secrets, no duplicate or dead code, imports that follow each part's layers, and the shell, workflow, and Python linters; plus the weekly maintenance report and the fix-branch check.",
   "type": "module",
   "scripts": {
     "verify": "tsx src/cli.ts",
     "hook": "tsx src/hook.ts",
     "report": "tsx src/report.ts",
+    "fix-branch": "tsx src/fix-branch.ts",
     "format": "biome format --write",
     "lint": "biome check",
     "typecheck": "tsc --noEmit",
@@ -21,7 +22,12 @@
   },
   "devDependencies": {
     "@biomejs/biome": "2.4.2",
+    "@secretlint/node": "11.3.1",
+    "@secretlint/secretlint-rule-preset-recommend": "11.3.1",
     "@types/node": "^22.20.4",
+    "dependency-cruiser": "17.3.6",
+    "jscpd": "4.0.7",
+    "knip": "6.39.0",
     "vitest": "^5.0.2"
   },
   "packageManager": "pnpm@10.17.0",

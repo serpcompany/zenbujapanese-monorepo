@@ -1,11 +1,10 @@
-"""Shared integrity helpers for Zenbu's pinned Language Reference Data tooling."""
-
 from __future__ import annotations
 
+import argparse
 import hashlib
 import json
-import urllib.request
 from pathlib import Path
+from typing import Callable
 
 
 def file_sha256(path: Path) -> str:
@@ -16,27 +15,35 @@ def file_sha256(path: Path) -> str:
     return digest.hexdigest()
 
 
-def observe_remote(download_url: str, user_agent: str) -> dict[str, object]:
-    digest = hashlib.sha256()
-    byte_count = 0
-    request = urllib.request.Request(download_url, headers={"User-Agent": user_agent})
-    with urllib.request.urlopen(request, timeout=120) as response:
-        while chunk := response.read(1024 * 1024):
-            digest.update(chunk)
-            byte_count += len(chunk)
-        return {
-            "download_url": response.url,
-            "http_last_modified": response.headers.get("Last-Modified"),
-            "http_etag": response.headers.get("ETag"),
-            "compressed_bytes": byte_count,
-            "sha256": digest.hexdigest(),
-        }
+def _import_arguments(*inputs: str) -> argparse.Namespace:
+    parser = argparse.ArgumentParser()
+    for name in ("--source", "--source-manifest", *inputs, "--output", "--import-manifest"):
+        parser.add_argument(name, type=Path, required=True)
+    return parser.parse_args()
 
 
-def fetch_remote_json(download_url: str, user_agent: str) -> object:
-    request = urllib.request.Request(
-        download_url,
-        headers={"Accept": "application/vnd.github+json", "User-Agent": user_agent},
-    )
-    with urllib.request.urlopen(request, timeout=120) as response:
-        return json.load(response)
+def built_artifact(import_tool: Path, artifact: Path) -> dict[str, object]:
+    return {
+        "import_tool_sha256": file_sha256(import_tool),
+        "shared_tooling_sha256": file_sha256(Path(__file__)),
+        "artifact_sha256": file_sha256(artifact),
+        "artifact_bytes": artifact.stat().st_size,
+    }
+
+
+def write_import_report(
+    path: Path, source_manifest: dict[str, object], transform: dict[str, object]
+) -> None:
+    report = {"source": source_manifest, "transform": transform}
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(json.dumps(report, ensure_ascii=False, indent=2) + "\n")
+    print(json.dumps(transform, ensure_ascii=False, indent=2))
+
+
+def run_import(
+    build: Callable[[argparse.Namespace, dict[str, object]], dict[str, object]], *inputs: str
+) -> None:
+    arguments = _import_arguments(*inputs)
+    source_manifest = json.loads(arguments.source_manifest.read_text())
+    transform = build(arguments, source_manifest)
+    write_import_report(arguments.import_manifest, source_manifest, transform)

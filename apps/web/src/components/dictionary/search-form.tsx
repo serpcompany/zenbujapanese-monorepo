@@ -2,9 +2,9 @@ import { Button } from '@/components/ui/button'
 import { ButtonGroup } from '@/components/ui/button-group'
 import { Input } from '@/components/ui/input'
 
-export const searchAction = '/dictionary/search/'
-export const searchPlaceholder = 'Search Japanese or English'
-export const typeWithoutBrowserClearButton = 'text'
+const searchAction = '/dictionary/search/'
+const searchPlaceholder = 'Search Japanese or English'
+const typeWithoutBrowserClearButton = 'text'
 
 export function SearchForm({
   defaultValue,

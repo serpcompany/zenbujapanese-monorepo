@@ -1,15 +1,6 @@
 import Foundation
 
-struct PrimaryPriorityMarkers: OptionSet, Hashable, Sendable {
-  let rawValue: Int
-
-  static let special = Self(rawValue: 1 << 0)
-  static let learner = Self(rawValue: 1 << 1)
-  static let news = Self(rawValue: 1 << 2)
-  static let loanword = Self(rawValue: 1 << 3)
-}
-
-struct SecondaryPriorityMarkers: OptionSet, Hashable, Sendable {
+struct PriorityMarkers: OptionSet, Hashable, Sendable {
   let rawValue: Int
 
   static let special = Self(rawValue: 1 << 0)
@@ -19,8 +10,8 @@ struct SecondaryPriorityMarkers: OptionSet, Hashable, Sendable {
 }
 
 struct LanguageReferencePriorityProfile: Hashable, Sendable, Comparable {
-  let primaryMarkers: PrimaryPriorityMarkers
-  let secondaryMarkers: SecondaryPriorityMarkers
+  let primaryMarkers: PriorityMarkers
+  let secondaryMarkers: PriorityMarkers
   let newsFrequencyBand: Int?
 
   static let unmarked = Self(
@@ -114,7 +105,20 @@ struct DictionaryMatch: Hashable, Sendable {
   let displayedFormPriority: LanguageReferencePriorityProfile
 }
 
-struct EnglishDictionaryRank: Comparable, Sendable {
+protocol EnglishPlacementRank {
+  var lane: DictionaryMatch.EvidenceLane { get }
+  var corroborationRank: Int { get }
+  var romajiSpecificityRank: Int { get }
+  var senseOrder: Int { get }
+}
+
+extension EnglishPlacementRank {
+  var englishPlacement: (DictionaryMatch.EvidenceLane, Int, Int, Int) {
+    (lane, corroborationRank, romajiSpecificityRank, senseOrder)
+  }
+}
+
+struct EnglishDictionaryRank: Comparable, Sendable, EnglishPlacementRank {
   let lane: DictionaryMatch.EvidenceLane
   let corroborationRank: Int
   let romajiSpecificityRank: Int
@@ -139,14 +143,9 @@ struct EnglishDictionaryRank: Comparable, Sendable {
   }
 
   static func < (lhs: Self, rhs: Self) -> Bool {
-    if lhs.lane != rhs.lane { return lhs.lane < rhs.lane }
-    if lhs.corroborationRank != rhs.corroborationRank {
-      return lhs.corroborationRank < rhs.corroborationRank
+    if lhs.englishPlacement != rhs.englishPlacement {
+      return lhs.englishPlacement < rhs.englishPlacement
     }
-    if lhs.romajiSpecificityRank != rhs.romajiSpecificityRank {
-      return lhs.romajiSpecificityRank < rhs.romajiSpecificityRank
-    }
-    if lhs.senseOrder != rhs.senseOrder { return lhs.senseOrder < rhs.senseOrder }
     if lhs.priorityPresenceRank != rhs.priorityPresenceRank {
       return lhs.priorityPresenceRank < rhs.priorityPresenceRank
     }
@@ -204,7 +203,7 @@ enum DictionaryPresentationRank: Equatable, Sendable, Comparable {
   }
 }
 
-struct EnglishDictionaryPresentationRank: Equatable, Sendable, Comparable {
+struct EnglishDictionaryPresentationRank: Equatable, Sendable, Comparable, EnglishPlacementRank {
   let lane: DictionaryMatch.EvidenceLane
   let corroborationRank: Int
   let romajiSpecificityRank: Int
@@ -212,14 +211,9 @@ struct EnglishDictionaryPresentationRank: Equatable, Sendable, Comparable {
   let relation: DictionaryMatch.GlossRelation
 
   static func < (lhs: Self, rhs: Self) -> Bool {
-    if lhs.lane != rhs.lane { return lhs.lane < rhs.lane }
-    if lhs.corroborationRank != rhs.corroborationRank {
-      return lhs.corroborationRank < rhs.corroborationRank
+    if lhs.englishPlacement != rhs.englishPlacement {
+      return lhs.englishPlacement < rhs.englishPlacement
     }
-    if lhs.romajiSpecificityRank != rhs.romajiSpecificityRank {
-      return lhs.romajiSpecificityRank < rhs.romajiSpecificityRank
-    }
-    if lhs.senseOrder != rhs.senseOrder { return lhs.senseOrder < rhs.senseOrder }
     return lhs.relation < rhs.relation
   }
 }

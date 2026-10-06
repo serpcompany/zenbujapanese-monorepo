@@ -1,22 +1,19 @@
 import { readFileSync } from 'node:fs'
-import { wordExample } from '@zenbu/dictionary-core/detail/examples'
-import { kanjiDetail } from '@zenbu/dictionary-core/detail/kanji'
-import type { KanjiRows } from '@zenbu/dictionary-core/detail/rows'
 import { rubySegments } from '@zenbu/dictionary-core/detail/ruby'
-import { fixtureKanjiRows } from '@zenbu/dictionary-core/fixtures'
 import { renderToStaticMarkup } from 'react-dom/server'
 import { describe, expect, test } from 'vitest'
-import type {
-  KanjiDetailsData,
-  SearchData,
-  SearchExamplesData,
-  SearchWord
+import {
+  type SearchData,
+  type SearchExamplesData,
+  type SearchWord,
+  searchExamplesData
 } from '@/lib/dictionary/data'
-import { pageExample, serviceLinks } from '@/lib/dictionary/page-example'
+import type { KanjiDetailsData } from '@/lib/dictionary/kanji-details'
 import { linkSearchScreen } from '@/lib/dictionary/results/links'
 import { searchPath } from '@/lib/dictionary/urls'
-import { gateEnabled, gateService, recordedCases } from './gate'
-import { readRenderedPage, visibleText } from './rendered'
+import { gateEnabled, gateService, recordedCases } from '@/test/gate'
+import { fixtureKanji, unlinkedKanjiDetails } from '@/test/kanji-details'
+import { readRenderedPage, visibleText } from '@/test/rendered'
 import { SearchResults } from './search-results'
 
 const render = (data: SearchData, examples: SearchExamplesData | null = null) =>
@@ -63,23 +60,7 @@ function word(
   }
 }
 
-function unlinked<Item>(item: Item): Item & { path: null } {
-  return { ...item, path: null }
-}
-
-function unlinkedKanjiDetails(rows: KanjiRows): KanjiDetailsData {
-  const detail = kanjiDetail(rows)
-  return {
-    ...detail,
-    readings: detail.readings.map(reading => ({ ...reading, words: reading.words.map(unlinked) })),
-    components: detail.components.map(character => unlinked({ character })),
-    elements: detail.elements.map(unlinked),
-    words: detail.words.map(unlinked)
-  }
-}
-
-const kanameRows = fixtureKanjiRows.find(rows => rows.kanji.character === '要')
-if (!kanameRows) throw new Error('No fixture for 要')
+const kanameRows = fixtureKanji('要')
 
 const noExamplesYet = (query: string): SearchExamplesData => ({
   query,
@@ -324,15 +305,7 @@ async function serviceKanji(character: string): Promise<KanjiDetailsData | null>
 async function inlineExamples(data: SearchData): Promise<SearchExamplesData | null> {
   if (data.state !== 'results' || data.examples?.target.kind !== 'inline') return null
   const found = await gateService().searchExamples(data.query)
-  if (!found) return null
-  const links = serviceLinks(found.data.slugs, [])
-  return {
-    query: found.data.query,
-    examples: found.data.rows.map(row => pageExample(wordExample(row), links)),
-    listed: found.data.listed,
-    truncated: found.data.truncated,
-    examplesPath: `${searchPath(found.data.query)}examples.json?build=${found.build}`
-  }
+  return found ? searchExamplesData(found) : null
 }
 
 describe.runIf(gateEnabled)('the rendered search results page matches the app', () => {
