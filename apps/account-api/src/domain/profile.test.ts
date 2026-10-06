@@ -13,7 +13,16 @@ describe('a name', () => {
   test('is 1 to 100 characters, with no control or invisible format characters', () => {
     expect(normalizeName('x'.repeat(100))).toBe('x'.repeat(100))
     expect(normalizeName('語'.repeat(100))).toBe('語'.repeat(100))
-    for (const refused of ['', '   ', 'x'.repeat(101), 'a\u0000b', 'a​b', 42, null]) {
+    for (const refused of [
+      '',
+      '   ',
+      'x'.repeat(101),
+      'a\u0000b',
+      'a\u200bb',
+      '\ud800ok',
+      42,
+      null
+    ]) {
       expect(normalizeName(refused), String(refused)).toEqual(invalid)
     }
   })

@@ -92,6 +92,16 @@ describe('the account service', () => {
     expect(await response.text()).not.toMatch(/duplicate|users_pkey|user-1/)
   })
 
+  test('refuses a body over 64 KB to sign-in, as to the other routes', async () => {
+    const response = await app(up).request('/v1/auth/sign-in/email-otp', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ email: 'a@example.com', otp: '123456', name: 'x'.repeat(70 * 1024) })
+    })
+    expect(response.status).toBe(413)
+    expect(await response.json()).toMatchObject({ error: { code: 'too_large' } })
+  })
+
   test('answers cross-origin requests only from the trusted origins, by name, never with *', async () => {
     const trusted = 'https://zenbujapanese.com'
     const service = app(up, { allowedOrigins: [trusted] })

@@ -20,6 +20,9 @@ const profileName = (raw: unknown) => {
   return isRejection(name) ? '' : name
 }
 
+const pictureUrl = (raw: unknown) =>
+  typeof raw === 'string' && raw.length <= 2048 && /^https:\/\/[\x21-\x7e]+$/.test(raw) ? raw : null
+
 export function identityHooks(mailer: Mailer) {
   return {
     user: {
@@ -32,7 +35,7 @@ export function identityHooks(mailer: Mailer) {
                 "That Apple or Google account's email isn't verified, so it can't make an account."
             })
           }
-          return { data: { ...user, name: profileName(user.name) } }
+          return { data: { ...user, name: profileName(user.name), image: pictureUrl(user.image) } }
         }
       }
     },

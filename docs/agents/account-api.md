@@ -173,19 +173,20 @@ are in `src/domain`, so `PATCH /v1/me` and a sync mutation change it the same wa
 
 - **A name** is 1 to 100 characters once trimmed, with runs of spaces made one and no control or
   invisible format characters, kept in Unicode NFC. A name given at sign-up, by the learner or by
-  Apple or Google, is held to the same rule, and is left empty if it fails it.
+  Apple or Google, is held to the same rule, and is left empty if it fails it. So is a picture's
+  address, which must be `https` and at most 2,048 characters, or is left out.
 - **A username** is 3 to 30 letters a to z, digits, or underscores, after Unicode NFKC, trimming,
   and lowercasing (`Kana_Fan` is `kana_fan`), unique across accounts, or `null`.
 - **The email** doesn't change here: changing it needs proof that the learner owns the new
   address, which nothing builds yet.
-- **Versions.** A profile starts at version 1, and each change adds one. A change names the
+- **Versions.** A profile starts at version 1, and each change adds one (and a restore a million:
+  Back up and restore). A change names the
   version it was made to (`baseVersion`); if the profile has moved on, nothing changes, and the
   answer is the profile as it is now. Nothing is last-write-wins. Sending the current values
   again changes nothing.
 - **The journal**, `sync_changes`, gets a row for each change, and for each new account, from a
-  trigger on `users`, so an account Better Auth makes is in it too. The trigger and
-  `sync_after_restore()` (Back up and restore) name the profile in SQL, and the first-sync test
-  fails if they and the domain disagree. Every write to an account's
+  trigger on `users`, so an account Better Auth makes is in it too. The trigger names the profile
+  in SQL, and the first-sync test fails if it and the domain disagree. Every write to an account's
   journal holds that account's `users` row locked, so its entries commit in the order of their
   sequence, which the cursor relies on.
 - **A sync** applies its mutations in order, each in its own transaction. Then it reads up to
@@ -255,7 +256,9 @@ are in `src/db/schema.ts`:
 - `signing_keys`: the access tokens' keys, encrypted with `ACCOUNT_API_SECRET`;
 - `rate_limits`;
 - `sync_changes`: the journal, read by account and sequence;
-- `sync_mutations`: each sync mutation's result, by account and the client's mutation ID.
+- `sync_mutations`: each sync mutation's result, by account and the client's mutation ID;
+- `sync_origin`: the OID of the database the service last started on, which tells it a restored
+  copy (Back up and restore).
 
 Better Auth names its models `user`, `account`, `session`, `verification`, and `jwks`. The schema
 maps them to these tables, and `account` to #374's `user_identities`, whose `provider` and
@@ -317,7 +320,7 @@ way and call the routes with their access tokens. They show:
 
 The domain's own tests (`src/domain/`) cover the name and username rules and the cursor;
 `src/db/database.test.ts` covers the journal's trigger and backfill, the sync tables' rules, and
-`sync_after_restore()`; and
+fencing a restored copy; and
 `src/http/openapi.test.ts` keeps `openapi.json` in step with the routes. In CI, and when
 `ACCOUNT_API_TEST_DATABASE_URL` names a real Postgres database, `src/db/postgres.test.ts` also
 sends eight changes to one account at once through the `pg` pool, and one mutation six times at
@@ -398,13 +401,15 @@ it would a new image, with no request dropped ([`api-servers.md`](api-servers.md
 The restored database belongs to the environment's role, so the service migrates it as it would
 its own.
 
-A restore also runs `sync_after_restore()` on the new database, once the backup is in: it moves
-the journal's sequence a billion past where it was, every profile's version a million past, and
-journals each profile at its new version. So a change an app made after the backup, and lost with
-it, can't come back under a version the server reuses: it conflicts, and the app takes the
-profile as it is. Every app hears of each profile on its next sync, whatever cursor it holds; one
-whose cursor is past the restored journal is told to sync from no cursor until the next change.
-What changed after the backup is lost, as for any restore.
+**The service fences a restored database itself**, the first time it starts on it. It keeps the
+OID of the database it serves in `sync_origin`. A restore is always a new database, with a new
+OID, so when the two differ after migrating, under the migration lock, it moves the journal's
+sequence a billion past where it was and every profile's version a million past, journals each
+profile at its new version, and logs `a restored database`. So a change an app made after the
+backup, and lost with it, can't come back under a version the server reuses: it conflicts, and
+the app takes the profile as it is. Every app hears of each profile on its next sync, whatever
+cursor it holds. A database restored only to look at is never served, so it stays as the backup
+was. What changed after the backup is lost, as for any restore.
 
 A night's backup fails, and cron's run exits with an error the journal shows, when Postgres
 doesn't answer, or when an environment is set up (its file exists) but its database is missing.

@@ -135,6 +135,10 @@ export const syncMutations = pgTable(
   table => [primaryKey({ columns: [table.userId, table.clientMutationId] })]
 )
 
+export const syncOrigin = pgTable('sync_origin', {
+  databaseOid: bigint('database_oid', { mode: 'number' }).primaryKey()
+})
+
 export const authSchema = {
   user: users,
   account: userIdentities,

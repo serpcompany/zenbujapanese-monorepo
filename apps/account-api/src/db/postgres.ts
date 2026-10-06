@@ -4,6 +4,7 @@ import { migrate } from 'drizzle-orm/node-postgres/migrator'
 import pg from 'pg'
 import { failureFields } from '../failure'
 import { answers, type Database } from './database'
+import { fenceIfRestored } from './restores'
 
 export const migrationLock = 565_011
 const connectSeconds = 5
@@ -40,7 +41,11 @@ export async function migratePostgres(url: string, migrationsFolder: string): Pr
   try {
     await client.query(`set lock_timeout = '${tableLockTimeout}'`)
     await takeMigrationLock(client)
-    await migrate(drizzle(client), { migrationsFolder })
+    const db = drizzle(client)
+    await migrate(db, { migrationsFolder })
+    if ((await fenceIfRestored(db)) === 'restored') {
+      log('warn', 'a restored database: moved the sync journal and profile versions past it')
+    }
   } finally {
     await client.end()
   }

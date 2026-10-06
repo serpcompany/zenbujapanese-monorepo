@@ -69,19 +69,26 @@ describe('GET /v1/me', () => {
       const token = await accounts.running.service.call('/v1/auth/token', {
         token: signedIn.headers.get('set-auth-token') ?? ''
       })
-      return (await accounts.me(String(token.body?.token))).body
+      const profile = (await accounts.me(String(token.body?.token))).body
+      const [stored] = await accounts.running.service.rows(
+        `select image from users where email = '${email}'`
+      )
+      return { ...profile, image: stored?.image }
     }
-    expect(await signUp('named@example.com', { name: '  Kana \t Fan ' })).toMatchObject({
-      name: 'Kana Fan'
-    })
+    expect(
+      await signUp('named@example.com', {
+        name: '  Kana \t Fan ',
+        image: 'https://example.com/kana.png'
+      })
+    ).toMatchObject({ name: 'Kana Fan', image: 'https://example.com/kana.png' })
     expect(
       await signUp('unnamed@example.com', {
         name: ` ${'x'.repeat(5000)}\u202e`,
         username: 'hijack',
         version: 99,
-        image: 'https://example.com/a.png'
+        image: `https://example.com/${'x'.repeat(60_000)}\u0000`
       })
-    ).toMatchObject({ name: '', username: null, version: 1 })
+    ).toMatchObject({ name: '', username: null, version: 1, image: null })
   })
 
   test('keeps the profile as it is when the learner signs in again', async () => {

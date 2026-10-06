@@ -10,6 +10,7 @@ import { createAccounts } from '../domain/accounts'
 import { cursorKey, cursors } from '../domain/cursor'
 import { accountStore } from './accounts'
 import { answers } from './database'
+import { fenceIfRestored, restoreGap } from './restores'
 
 const journalOf = (folder: string) =>
   JSON.parse(readFileSync(join(folder, 'meta/_journal.json'), 'utf8')) as {
@@ -128,32 +129,37 @@ describe('the migrations', () => {
     await client.close()
   })
 
-  test('move every profile and the journal past a restored backup, so writes made before it conflict and apps hear of it', async () => {
+  test('fence a restored copy once: profiles and the journal move past it, so writes made before it conflict and apps hear of it', async () => {
     const client = await migrated()
-    const accounts = createAccounts(accountStore(drizzle(client)), cursors(cursorKey('test')))
+    const db = drizzle(client)
+    const accounts = createAccounts(accountStore(db), cursors(cursorKey('test')))
+    expect(await fenceIfRestored(db)).toBe('first start')
+    expect(await fenceIfRestored(db)).toBe('same database')
     await client.query("insert into users (id, name, email) values ('u1', '', 'u1@example.com')")
     await accounts.updateProfile('u1', 1, { name: 'In the backup' })
     const synced = await accounts.sync('u1', {})
-    expect(synced.status).toBe('synced')
     const cursor = synced.status === 'synced' ? synced.cursor : ''
 
-    await client.query('select sync_after_restore()')
+    await client.query('update sync_origin set database_oid = 1')
+    expect(await fenceIfRestored(db)).toBe('restored')
+    expect(await fenceIfRestored(db)).toBe('same database')
 
+    const fenced = 2 + restoreGap.versions
     for (const seen of [2, 3]) {
       expect(await accounts.updateProfile('u1', seen, { name: 'Sent again' })).toMatchObject({
         status: 'conflict',
-        profile: { name: 'In the backup', version: 1_000_002 }
+        profile: { name: 'In the backup', version: fenced }
       })
     }
     expect(await accounts.sync('u1', { cursor })).toMatchObject({
       status: 'synced',
-      changes: [{ entity: 'profile', version: 1_000_002 }]
+      changes: [{ entity: 'profile', version: fenced }]
     })
     await client.query("insert into users (id, name, email) values ('u2', '', 'u2@example.com')")
     const journal = await client.query<{ sequence: number }>(
       "select sequence from sync_changes where user_id = 'u2'"
     )
-    expect(Number(journal.rows[0]?.sequence)).toBeGreaterThan(1_000_000_000)
+    expect(Number(journal.rows[0]?.sequence)).toBeGreaterThan(restoreGap.journal)
     await client.close()
   })
 })

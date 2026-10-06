@@ -48,7 +48,7 @@
           "version": {
             "type": "integer",
             "minimum": 1,
-            "description": "The profile revision. It goes up by one with each change; send it back as `baseVersion` to change the profile."
+            "description": "The profile revision. It goes up with each change, by one, or by a million when the service starts on a restored backup; send it back as `baseVersion` to change the profile."
           },
           "createdAt": {
             "type": "string",

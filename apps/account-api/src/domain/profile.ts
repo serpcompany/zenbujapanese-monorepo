@@ -30,7 +30,7 @@ export const profileLimits = { nameLength: 100, usernameLength: { min: 3, max: 3
 
 const { min, max } = profileLimits.usernameLength
 const usernamePattern = new RegExp(`^[a-z0-9_]{${min},${max}}$`)
-const controlCharacters = /\p{Cc}|\p{Cf}/u
+const controlCharacters = /\p{Cc}|\p{Cf}|\p{Cs}/u
 
 export const rejection = (code: RejectionCode, message: string): Rejection => ({ code, message })
 
