@@ -12,7 +12,8 @@ describe('heading anchors', () => {
     expect(headingSlug('What changes, and why?')).toBe('what-changes-and-why')
     expect(headingSlug('見る の 例')).toBe('見る-の-例')
     expect(headingSlug('The <kbd>Return</kbd> key')).toBe('the-return-key')
-    expect(headingSlug('Nested <<b>i</b>>tags')).toBe('nested-tags')
+    expect(headingSlug('Nested <<b>i</b>>tags')).toBe('nested-itags')
+    expect(headingSlug('a < b, and <script unclosed')).toBe('a--b-and-script-unclosed')
   })
 
   test('number a repeated heading', () => {
