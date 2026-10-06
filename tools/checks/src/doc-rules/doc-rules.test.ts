@@ -14,6 +14,7 @@ describe('heading anchors', () => {
     expect(headingSlug('The <kbd>Return</kbd> key')).toBe('the-return-key')
     expect(headingSlug('Nested <<b>i</b>>tags')).toBe('nested-itags')
     expect(headingSlug('a < b, and <script unclosed')).toBe('a--b-and-script-unclosed')
+    expect(headingSlug('<a<b>c> > d')).toBe('ac--d')
   })
 
   test('number a repeated heading', () => {
