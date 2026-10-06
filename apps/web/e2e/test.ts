@@ -1,4 +1,4 @@
-import { test as base, expect } from '@playwright/test'
+import { test as base, expect, type Page } from '@playwright/test'
 import { wordSlug } from '@zenbu/dictionary-core/detail/slug'
 import { fixtureSearchOrder, fixtureWordRows } from '@zenbu/dictionary-core/fixtures'
 
@@ -44,3 +44,6 @@ export const searchOrder = (query: string) =>
   (fixtureSearchOrder[query] ?? []).map(entSeq => word(entSeq))
 
 export const needed = word(1546640)
+
+export const sourcesToggle = (page: Page) =>
+  page.getByRole('main').locator('summary', { hasText: 'Sources' })

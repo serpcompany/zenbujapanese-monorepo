@@ -1,5 +1,5 @@
 import type { Page } from '@playwright/test'
-import { expect, needed, test } from './test'
+import { expect, needed, sourcesToggle, test } from './test'
 
 const examples = (page: Page) =>
   page
@@ -30,6 +30,16 @@ test.describe('word page', () => {
     await page.getByRole('button', { name: 'Load more examples' }).scrollIntoViewIfNeeded()
     await expect(examples(page)).toHaveCount(50)
     await expect(page.getByRole('button', { name: 'Load more examples' })).toHaveCount(0)
+  })
+
+  test('credits no single example, and keeps its Sources closed until opened', async ({ page }) => {
+    await expect(examples(page).first()).toBeVisible()
+    await expect(examples(page).filter({ hasText: 'Tatoeba' })).toHaveCount(0)
+    const tatoeba = page.getByRole('main').getByRole('link', { name: 'Tatoeba', exact: true })
+    await expect(tatoeba).toBeHidden()
+    await sourcesToggle(page).click()
+    await expect(tatoeba).toBeVisible()
+    await expect(tatoeba).toHaveAttribute('href', 'https://tatoeba.org/')
   })
 
   test('the part of speech opens the Conjugations section, again after it closes', async ({
