@@ -162,31 +162,9 @@ struct KanjiDetailView: View {
     }
     .navigationTitle(character.rawValue)
     .navigationBarTitleDisplayMode(.inline)
-    .toolbar {
-      ToolbarItemGroup(placement: .topBarTrailing) {
-        if notes.isEditing {
-          Button("Done", action: notes.finishEditing)
-            .font(.body.weight(.semibold))
-            .accessibilityIdentifier("word-note.done")
-        } else {
-          ShareLink(item: shareText) {
-            Label("Share", systemImage: "square.and.arrow.up")
-          }
-          .accessibilityIdentifier("kanji-detail.share")
-          SavedItemMenu(
-            item: item,
-            identifierPrefix: "kanji-detail",
-            addToList: { showsListPicker = true },
-            addNote: notes.beginAdding,
-            photos: photos
-          )
-        }
-      }
-    }
-    .savedItemPhotoPresentation(photos)
-    .sheet(isPresented: $showsListPicker) {
-      WordListPickerView(item: item)
-    }
+    .savedItemActions(
+      for: item, identifierPrefix: "kanji-detail", shareText: shareText, notes: notes,
+      photos: photos, showsListPicker: $showsListPicker)
     .onChange(of: notes.editingNoteID) { _, noteID in
       noteEditorFocused = noteID != nil
     }

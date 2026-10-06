@@ -39,7 +39,6 @@ export type FileKind =
 
 const writtenByTools: readonly [RegExp, string][] = [
   [/^apps\/web\/cloudflare-env\.d\.ts$/, 'wrangler types (pnpm cf-typegen in apps/web)'],
-  [/^apps\/web\/drizzle\//, 'drizzle-kit (pnpm db:generate in apps/web)'],
   [/^pnpm-lock\.yaml$/, 'pnpm install'],
   [/\.(pbxproj|xcscheme|xcworkspacedata)$/, 'Xcode'],
   [/(^|\/)Package\.resolved$/, 'Swift Package Manager']

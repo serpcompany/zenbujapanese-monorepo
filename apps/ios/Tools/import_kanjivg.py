@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import argparse
 import gzip
 import json
 import re
@@ -10,7 +9,7 @@ import sqlite3
 import xml.etree.ElementTree as ET
 from pathlib import Path
 
-from language_data_tools import file_sha256
+from language_data_tools import built_artifact, file_sha256, run_import
 
 
 TOKEN_PATTERN = re.compile(r"[A-Za-z]|[-+]?(?:\d*\.\d+|\d+\.?)(?:[eE][-+]?\d+)?")
@@ -70,45 +69,27 @@ def normalized_path(path_data: str) -> list[int | float]:
             prior_control_x = prior_control_y = None
             command = ""
             continue
-        if command in ("C", "c"):
-            control1_x, control1_y = number(), number()
-            control2_x, control2_y = number(), number()
-            end_x, end_y = number(), number()
-            if command == "c":
-                control1_x += current_x
-                control1_y += current_y
-                control2_x += current_x
-                control2_y += current_y
-                end_x += current_x
-                end_y += current_y
-            encoded.extend(
-                (
-                    1,
-                    rounded(control1_x),
-                    rounded(control1_y),
-                    rounded(control2_x),
-                    rounded(control2_y),
-                    rounded(end_x),
-                    rounded(end_y),
+        if command in ("C", "c", "S", "s"):
+            relative = command in ("c", "s")
+            if command in ("C", "c"):
+                control1_x, control1_y = number(), number()
+                if relative:
+                    control1_x += current_x
+                    control1_y += current_y
+            else:
+                control1_x = (
+                    2 * current_x - prior_control_x
+                    if prior_control_x is not None
+                    else current_x
                 )
-            )
-            current_x, current_y = end_x, end_y
-            prior_control_x, prior_control_y = control2_x, control2_y
-            continue
-        if command in ("S", "s"):
-            control1_x = (
-                2 * current_x - prior_control_x
-                if prior_control_x is not None
-                else current_x
-            )
-            control1_y = (
-                2 * current_y - prior_control_y
-                if prior_control_y is not None
-                else current_y
-            )
+                control1_y = (
+                    2 * current_y - prior_control_y
+                    if prior_control_y is not None
+                    else current_y
+                )
             control2_x, control2_y = number(), number()
             end_x, end_y = number(), number()
-            if command == "s":
+            if relative:
                 control2_x += current_x
                 control2_y += current_y
                 end_x += current_x
@@ -234,27 +215,16 @@ def import_snapshot(source: Path, source_manifest: dict[str, object], output: Pa
         ],
         "source_sha256": file_sha256(source),
         "license_sha256": source_manifest["license_sha256"],
-        "import_tool_sha256": file_sha256(Path(__file__)),
-        "shared_tooling_sha256": file_sha256(Path(__file__).with_name("language_data_tools.py")),
-        "artifact_sha256": file_sha256(output),
-        "artifact_bytes": output.stat().st_size,
+        **built_artifact(Path(__file__), output),
     }
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--source", type=Path, required=True)
-    parser.add_argument("--source-manifest", type=Path, required=True)
-    parser.add_argument("--output", type=Path, required=True)
-    parser.add_argument("--import-manifest", type=Path, required=True)
-    arguments = parser.parse_args()
-
-    source_manifest = json.loads(arguments.source_manifest.read_text())
-    transform = import_snapshot(arguments.source, source_manifest, arguments.output)
-    manifest = {"source": source_manifest, "transform": transform}
-    arguments.import_manifest.parent.mkdir(parents=True, exist_ok=True)
-    arguments.import_manifest.write_text(json.dumps(manifest, ensure_ascii=False, indent=2) + "\n")
-    print(json.dumps(transform, ensure_ascii=False, indent=2))
+    run_import(
+        lambda arguments, source_manifest: import_snapshot(
+            arguments.source, source_manifest, arguments.output
+        )
+    )
 
 
 if __name__ == "__main__":

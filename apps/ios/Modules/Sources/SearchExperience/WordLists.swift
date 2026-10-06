@@ -22,7 +22,7 @@ struct WordListMembership: Codable, Hashable, Identifiable, Sendable {
 
 @MainActor
 @Observable
-final class WordLists {
+final class WordLists: LocalFileStore {
   static let shared = WordLists()
 
   static let defaultListName = String(localized: "Favorites")
@@ -33,7 +33,7 @@ final class WordLists {
   private(set) var lists: [WordList] = []
   private(set) var membershipsByList: [UUID: [WordListMembership]] = [:]
   @ObservationIgnored private let writer: WordListsWriter
-  @ObservationIgnored private let writes = LocalFileWriteQueue()
+  @ObservationIgnored let writes = LocalFileWriteQueue()
 
   init(fileURL: URL = WordLists.defaultFileURL) {
     let writer = WordListsWriter(fileURL: fileURL)
@@ -159,15 +159,8 @@ final class WordLists {
     persist()
   }
 
-  func saveIfNeeded() {
-    if writes.hasUnsavedChanges { persist() }
-  }
-
-  func flush() async {
-    await writes.flush()
-  }
-
-  private func persist() {
+  func persist() {
+    guard canChange else { return }
     let writer = writer
     writes.save { [self] in
       await writer.write(lists: lists, memberships: membershipsByList.values.flatMap(\.self))

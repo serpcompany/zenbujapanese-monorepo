@@ -4,8 +4,8 @@ import { describe, expect, test } from 'vitest'
 import type { PageExample, SearchExamplesData } from '@/lib/dictionary/data'
 import { type Links, pageExample, serviceLinks } from '@/lib/dictionary/page-example'
 import { normalizeSearchQuery, searchPath } from '@/lib/dictionary/urls'
-import { gateEnabled, gateService, recordedCases } from './gate'
-import { readRenderedExamples, visibleText } from './rendered'
+import { gateEnabled, gateService, recordedCases } from '@/test/gate'
+import { readRenderedExamples, visibleText } from '@/test/rendered'
 import { SearchExamplesSection } from './search-results'
 
 const render = (data: SearchExamplesData) =>

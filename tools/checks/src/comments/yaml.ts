@@ -47,6 +47,6 @@ function runBlockComments(text: string): Span[] {
 }
 
 export function yamlComments(path: string, text: string): Span[] {
-  const runsShell = path.startsWith('.github/')
+  const runsShell = path.startsWith('.github/') || path === 'lefthook.yml'
   return [...yamlOnlyComments(text), ...(runsShell ? runBlockComments(text) : [])]
 }

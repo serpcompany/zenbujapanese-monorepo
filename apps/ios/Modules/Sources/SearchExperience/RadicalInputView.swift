@@ -94,16 +94,9 @@ struct RadicalInputView: View {
   @ViewBuilder
   private var candidateStrip: some View {
     if radicalCandidates.isEmpty {
-      HStack {
+      CandidateStripMessage {
         Text("Select one or more radicals")
-        Spacer()
       }
-      .font(.body)
-      .foregroundStyle(.secondary)
-      .fixedSize(horizontal: false, vertical: true)
-      .padding(.horizontal, 14)
-      .padding(.vertical, 6)
-      .frame(minHeight: 46)
     } else {
       ScrollView(.horizontal, showsIndicators: false) {
         LazyHStack(spacing: 0) {

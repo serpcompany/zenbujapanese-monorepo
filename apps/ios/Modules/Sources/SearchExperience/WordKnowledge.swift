@@ -38,7 +38,7 @@ struct WordKnowledgeRecord: Codable, Hashable, Identifiable, Sendable {
 
 @MainActor
 @Observable
-final class WordKnowledge {
+final class WordKnowledge: LocalFileStore {
   static let shared = WordKnowledge()
 
   private(set) var isLoaded = false
@@ -47,7 +47,7 @@ final class WordKnowledge {
   private(set) var records: [String: WordKnowledgeRecord] = [:]
   private(set) var knownRecords: [WordKnowledgeRecord] = []
   @ObservationIgnored private let writer: WordKnowledgeWriter
-  @ObservationIgnored private let writes = LocalFileWriteQueue()
+  @ObservationIgnored let writes = LocalFileWriteQueue()
 
   init(fileURL: URL = WordKnowledge.defaultFileURL) {
     let writer = WordKnowledgeWriter(fileURL: fileURL)
@@ -120,15 +120,8 @@ final class WordKnowledge {
     persist()
   }
 
-  func saveIfNeeded() {
-    if writes.hasUnsavedChanges { persist() }
-  }
-
-  func flush() async {
-    await writes.flush()
-  }
-
-  private func persist() {
+  func persist() {
+    guard isLoaded, !isReadOnly else { return }
     let writer = writer
     writes.save { [self] in await writer.write(Array(records.values)) }
   }

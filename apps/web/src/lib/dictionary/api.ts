@@ -18,7 +18,7 @@ export interface Answer<T> {
 
 const edgeCacheSeconds = 600
 
-export class DictionaryApiError extends Error {}
+class DictionaryApiError extends Error {}
 
 type Fetch = (input: Request) => Promise<Response>
 

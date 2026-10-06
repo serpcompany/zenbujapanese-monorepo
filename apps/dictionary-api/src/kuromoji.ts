@@ -4,7 +4,7 @@ import { join } from 'node:path'
 import vm from 'node:vm'
 import type { KuromojiToken, Tokenize } from '@zenbu/dictionary-core/examples/morphology'
 
-export const pinnedKuromojiFiles: Record<string, string> = {
+const pinnedKuromojiFiles: Record<string, string> = {
   'kuromoji.js': 'ab0ac10f1c4a9b5e246e63e57b04ba14d3a6148cd7e8d62cb97a960d4f85a3e6',
   'base.dat.gz': '0803327762e1c93ca731e4319ab8343340f2806bb84941207782cde9d2d5a8eb',
   'cc.dat.gz': '02b7631be0d4de3a1a75cd9f9cc51536e4f94c9e6b389b813e06ba0f6e7de765',

@@ -66,9 +66,21 @@ For each page the change touches:
 6. Compare what you see with the behavior's entry in `apps/web/docs/product/`. A difference with
    no decision on file is a bug; a deliberate change updates the entry in the same pull request.
 
-On the production build or staging, also check what only it does, with `get_network_request` on
-the page's document request: a URL without its slash answers 308 to the one with it, and staging
-sends `X-Robots-Tag: noindex`.
+On the production build (`pnpm preview`) or staging, where the Worker runs as deployed, also check
+the responses, with `get_network_request` on the page's document request:
+
+- a URL without its slash answers 308 to the one with it;
+- a moved page (`apps/web/src/lib/moved-pages.ts`) answers 308 from `apps/web/worker.ts`, before
+  Next.js runs;
+- staging and every local build send `X-Robots-Tag: noindex, nofollow`, and production sends none;
+- the document's `cache-control` says how the page was rendered: one rendered for each request
+  answers `private, no-cache, no-store`, so a page meant to be static that answers it reads
+  something per request.
+
+Measure speed on the preview, never on `next dev`, which compiles each route on first use and runs
+React's development build: `performance_start_trace` with a reload, `performance_stop_trace`, then
+`performance_analyze_insight` on the insights the trace names, or `lighthouse_audit` for a score.
+Say which build you measured.
 
 ## 4. Report
 

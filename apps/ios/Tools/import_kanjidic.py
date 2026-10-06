@@ -2,13 +2,12 @@
 
 from __future__ import annotations
 
-import argparse
 import gzip
 import json
 import xml.etree.ElementTree as ET
 from pathlib import Path
 
-from language_data_tools import file_sha256
+from language_data_tools import built_artifact, file_sha256, run_import
 
 
 def optional_int(parent: ET.Element, path: str) -> int | None:
@@ -144,36 +143,22 @@ def import_snapshot(
         ],
         "metadata_source_sha256": file_sha256(source),
         "component_artifact_sha256": file_sha256(radical_artifact),
-        "import_tool_sha256": file_sha256(Path(__file__)),
-        "shared_tooling_sha256": file_sha256(Path(__file__).with_name("language_data_tools.py")),
-        "artifact_sha256": file_sha256(output),
-        "artifact_bytes": output.stat().st_size,
+        **built_artifact(Path(__file__), output),
     }
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--source", type=Path, required=True)
-    parser.add_argument("--source-manifest", type=Path, required=True)
-    parser.add_argument("--radical-artifact", type=Path, required=True)
-    parser.add_argument("--radical-manifest", type=Path, required=True)
-    parser.add_argument("--output", type=Path, required=True)
-    parser.add_argument("--import-manifest", type=Path, required=True)
-    arguments = parser.parse_args()
-
-    source_manifest = json.loads(arguments.source_manifest.read_text())
-    radical_manifest = json.loads(arguments.radical_manifest.read_text())
-    transform = import_snapshot(
-        arguments.source,
-        source_manifest,
-        arguments.radical_artifact,
-        radical_manifest,
-        arguments.output,
+    run_import(
+        lambda arguments, source_manifest: import_snapshot(
+            arguments.source,
+            source_manifest,
+            arguments.radical_artifact,
+            json.loads(arguments.radical_manifest.read_text()),
+            arguments.output,
+        ),
+        "--radical-artifact",
+        "--radical-manifest",
     )
-    manifest = {"source": source_manifest, "transform": transform}
-    arguments.import_manifest.parent.mkdir(parents=True, exist_ok=True)
-    arguments.import_manifest.write_text(json.dumps(manifest, ensure_ascii=False, indent=2) + "\n")
-    print(json.dumps(transform, ensure_ascii=False, indent=2))
 
 
 if __name__ == "__main__":

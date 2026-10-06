@@ -17,7 +17,7 @@ import { ExampleList } from './example-list'
 import { accent, HeadwordRuby } from './headword-ruby'
 import { PronounceButton } from './pronounce-button'
 
-export const conjugationsAnchor = 'conjugations'
+const conjugationsAnchor = 'conjugations'
 
 function EndingText({ surface, ending }: { surface: string; ending: string }) {
   if (!ending || !surface.endsWith(ending)) return surface

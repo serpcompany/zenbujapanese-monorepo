@@ -41,7 +41,7 @@ export function kanjiCandidateRows(db: ArtifactDatabase, character: string): Kan
   }))
 }
 
-export function kanjiStrokes(db: ArtifactDatabase, character: string): KanjiStrokesRow | null {
+function kanjiStrokes(db: ArtifactDatabase, character: string): KanjiStrokesRow | null {
   const [row] = db.all<{ viewport_size: number; stroke_count: number; strokes_json: string }>(
     'SELECT viewport_size, stroke_count, strokes_json FROM strokes.stroke_diagrams WHERE character = ?',
     [character]

@@ -19,7 +19,10 @@
   "linter": {
     "enabled": true,
     "rules": {
-      "recommended": true
+      "recommended": true,
+      "style": {
+        "noNonNullAssertion": "error"
+      }
     }
   },
   "overrides": [
@@ -42,8 +45,6 @@
                       "react-dom",
                       "react-dom/**",
                       "@opennextjs/**",
-                      "drizzle-orm",
-                      "drizzle-orm/**",
                       "server-only",
                       "wrangler",
                       "hono",

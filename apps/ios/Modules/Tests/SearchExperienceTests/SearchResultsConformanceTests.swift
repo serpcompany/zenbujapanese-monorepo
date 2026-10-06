@@ -117,15 +117,7 @@ private struct SearchResultsObserver {
   let frequency: FrequencyPackManager
 
   init() async throws {
-    let catalog = try FrequencyPackCatalog.bundled()
-    frequency = try FrequencyPackManager(
-      catalog: catalog,
-      bundledArtifactURLs: try catalog.bundledArtifactURLs(),
-      languageDataURL: try FrequencyPackCatalog.languageDataURL(),
-      storageDirectory: FileManager.default.temporaryDirectory
-        .appending(path: "SearchResultsConformance-\(UUID().uuidString)"),
-      download: { _ in throw CancellationError() }
-    )
+    frequency = try .freshInstall(storagePrefix: "SearchResultsConformance")
   }
 
   func enabledPackIDs() async throws -> [String] {

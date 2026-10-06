@@ -172,31 +172,9 @@ struct WordDetailView: View {
     }
     .navigationTitle(entry.headword)
     .navigationBarTitleDisplayMode(.inline)
-    .toolbar {
-      ToolbarItemGroup(placement: .topBarTrailing) {
-        if notes.isEditing {
-          Button("Done", action: notes.finishEditing)
-            .font(.body.weight(.semibold))
-            .accessibilityIdentifier("word-note.done")
-        } else {
-          ShareLink(item: shareText) {
-            Label("Share", systemImage: "square.and.arrow.up")
-          }
-          .accessibilityIdentifier("word-detail.share")
-          SavedItemMenu(
-            item: item,
-            identifierPrefix: "word-detail",
-            addToList: { showsListPicker = true },
-            addNote: notes.beginAdding,
-            photos: photos
-          )
-        }
-      }
-    }
-    .savedItemPhotoPresentation(photos)
-    .sheet(isPresented: $showsListPicker) {
-      WordListPickerView(item: item)
-    }
+    .savedItemActions(
+      for: item, identifierPrefix: "word-detail", shareText: shareText, notes: notes,
+      photos: photos, showsListPicker: $showsListPicker)
     .sheet(item: $frequencyDisclosure) { item in
       FrequencyDisclosureView(
         item: item,

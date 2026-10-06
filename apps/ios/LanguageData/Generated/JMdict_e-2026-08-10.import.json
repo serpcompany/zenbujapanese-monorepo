@@ -72,7 +72,7 @@
       "retrieval_corpus_sha256": "f759cc13c9a0fb41739703b913ce11767aeb4d2986d56b17590073a9ea065205",
       "retrieval_index_mapping_sha256": "eb666c2743e1cb166ec3ce594626aaaa88271b99f387bac43cb7873e0edf3b20",
       "retrieval_provenance_sha256": "43f374b654959ca76f683ab55e372f086f3f0bc0defc06d6d10f527e5e80ea66",
-      "retrieval_importer_sha256": "9936876653a700f4a37358dd7a4d22ba23c3b88fd9d8d1f580e40c7ecc80bf90",
+      "retrieval_importer_sha256": "d245b41556f14fd6d5ba02bf3975607cf6424795e68aa21471ca444d0d331990",
       "retrieval_index_row_count": "232774",
       "retrieval_exact_index_row_count": "232774",
       "retrieval_porter_tokenizer": "fts4/porter",
@@ -211,10 +211,10 @@
     "import_tool_sha256": "9f155f04aa5ee725c5c3f285e3606ae0699a3ba62cc92e8610b87923a1584bcf",
     "dictionary_ranking_adapter_sha256": "c8efea2701988d854a7b18bfa53062ab196958ad9196e044202a43e28fa7573a",
     "dictionary_ranking_contract_sha256": "b7df18edcc9b20a0c961c2be913f9e12816a69fdea6522ecd11610570f41e59e",
-    "shared_tooling_sha256": "f263bf19549702d7c50b0a35160a3d8104431debb2b55c6f773969f7946444af",
-    "unidic_adapter_sha256": "5bbb91b89e11a65239a0bea2d8a765431eb9888f9a8fff9dc8f828e2d304e58a",
+    "shared_tooling_sha256": "0c0dec180f4f11f49c6d1ee6048d9a3dc4986d88ef5fc4bc6aa9302e62743b39",
+    "unidic_adapter_sha256": "ca6e2c0d83c594072c999ffd600c05e06cedfe98944db0500f948af41496e028",
     "tatoeba_adapter_sha256": "65e5d32fe6b20ca18cf95cf1b9d6167f89d7c3cc1cf54f9a245f0743c421f584",
-    "database_sha256": "d99d5d0f3bd8ef935a2712e18efe9745d057d2a0cab7d291504f28b34d5fa449",
+    "database_sha256": "0c9074da7e8c561c3c0d6409dfdaf78c0a920169f79e1438dfd42c2f91d67c87",
     "database_bytes": 481689600
   }
 }

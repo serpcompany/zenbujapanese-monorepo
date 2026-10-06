@@ -249,7 +249,7 @@ export function conjugatedFormExamples(
   return searched.sentences.filter(sentence => usesFormIn(sentence.japanese, form, tokenize))
 }
 
-export function usesFormIn(japanese: string, form: string, tokenize: Tokenize): boolean {
+function usesFormIn(japanese: string, form: string, tokenize: Tokenize): boolean {
   return usesForm(japanese, kuromojiCandidates(japanese, tokenize(japanese)), form)
 }
 

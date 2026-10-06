@@ -91,7 +91,7 @@ final class WordListsTests {
   func toggle() async throws {
     let lists = await loadedLists()
     let favorites = try #require(lists.lists.first).id
-    let entry = entry(taberu, headword: "食べる", reading: "たべる")
+    let entry = DictionaryEntry.fixture(id: taberu.rawValue, headword: "食べる", reading: "たべる")
     lists.toggle(entry, in: favorites)
     #expect(lists.contains(taberu, in: favorites))
     lists.toggle(entry, in: favorites)
@@ -118,8 +118,8 @@ final class WordListsTests {
     try writeFile("""
       {"version":1,"lists":[{"id":"\(listID)","name":"Favorites","position":0,"createdAt":0,"updatedAt":0}],
       "memberships":[
-      {"listID":"\(listID)","entryID":"\(taberu.rawValue)","headword":"食べる","reading":"たべる","addedAt":0},
-      {"listID":"\(listID)","entryID":"\(taberu.rawValue)","headword":"食べる","reading":"たべる","addedAt":5}]}
+      \(taberuMembership(in: listID, addedAt: 0)),
+      \(taberuMembership(in: listID, addedAt: 5))]}
       """)
     let lists = await loadedLists()
     #expect(lists.wordCount(in: listID) == 1)
@@ -133,7 +133,7 @@ final class WordListsTests {
       {"id":"\(listID)","name":"Old","position":0,"createdAt":0,"updatedAt":0},
       {"id":"\(listID)","name":"New","position":0,"createdAt":0,"updatedAt":5}],
       "memberships":[
-      {"listID":"\(listID)","entryID":"\(taberu.rawValue)","headword":"食べる","reading":"たべる","addedAt":0}]}
+      \(taberuMembership(in: listID, addedAt: 0))]}
       """)
     let lists = await loadedLists()
     #expect(lists.lists.map(\.name) == ["New"])
@@ -175,7 +175,7 @@ final class WordListsTests {
       {"version":1,"lists":[{"id":"\(listID)","name":"Anime","position":0,"createdAt":0,"updatedAt":0},
       {"id":"not-a-uuid","name":"Broken"}],
       "memberships":[
-      {"listID":"\(listID)","entryID":"\(taberu.rawValue)","headword":"食べる","reading":"たべる","addedAt":0}]}
+      \(taberuMembership(in: listID, addedAt: 0))]}
       """)
     let lists = await loadedLists()
     #expect(lists.lists.map(\.name) == ["Anime"])
@@ -246,27 +246,8 @@ final class WordListsTests {
     #expect(reloaded.lists.map(\.name) == ["Favorites", "Anime"])
   }
 
-  private func entry(
-    _ id: LanguageReferenceID, headword: String, reading: String
-  ) -> DictionaryEntry {
-    DictionaryEntry(
-      id: id,
-      noteID: WordNoteID(rawValue: id.rawValue),
-      sourceProvenances: [
-        LanguageReferenceProvenance(sourceIdentity: "fixture", sourceRecordID: id.rawValue)
-      ],
-      reading: reading,
-      headword: headword,
-      summary: headword,
-      meanings: [headword],
-      partsOfSpeech: [],
-      writtenForms: [],
-      readingForms: [],
-      senses: [],
-      relationships: [],
-      pitchAccent: nil,
-      isCommon: false
-    )
+  private func taberuMembership(in listID: UUID, addedAt: Int) -> String {
+    #"{"listID":"\#(listID)","entryID":"\#(taberu.rawValue)","headword":"食べる","reading":"たべる","addedAt":\#(addedAt)}"#
   }
 
   private func writeFile(_ contents: String) throws {

@@ -67,7 +67,11 @@ record: JMdict's as `JMdict_e-<date>.gz`, and the others in a folder named like 
 
 The importers record their own SHA-256, and some of the modules they use, in what they build, and
 the contract tests, the app, and the language-data pipeline check those records, so editing a tool
-means rebuilding everything it built. Not every module a tool imports is recorded:
+means rebuilding everything it built, in the same pull request. `tests/test_tool_provenance.py`
+fails until then: every tool SHA-256 an import report, the ranking contract, or a catalog pack
+records must be the tool's as it is now, and every import report must be in its list. Analysis
+reports (`*.analysis.json`) record the tools and data as they were when the study ran, so they
+aren't checked. Not every module a tool imports is recorded:
 `import_jlpt_level_pack.py` records only itself, `import_compound_pitch.py` not `unidic_adapter.py`,
 and `build_jiten_frequency_packs.py` not `analyze_ordered_json_frequency_lists.py`.
 `example_sentence_retrieval_index.py` records its own SHA-256 in the database's retrieval

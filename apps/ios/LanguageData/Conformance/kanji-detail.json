@@ -2,7 +2,7 @@
   "artifacts" : [
     {
       "name" : "LanguageReferenceData.sqlite3",
-      "sha256" : "d99d5d0f3bd8ef935a2712e18efe9745d057d2a0cab7d291504f28b34d5fa449"
+      "sha256" : "0c9074da7e8c561c3c0d6409dfdaf78c0a920169f79e1438dfd42c2f91d67c87"
     },
     {
       "name" : "KanjiReferenceData.json",

@@ -1,6 +1,6 @@
 import { renderToStaticMarkup } from 'react-dom/server'
 import { describe, expect, test, vi } from 'vitest'
-import { visibleText } from '@/components/dictionary/rendered'
+import { visibleText } from '@/test/rendered'
 import WordPage from './page'
 
 vi.mock('@opennextjs/cloudflare', () => ({ getCloudflareContext: async () => ({ env: {} }) }))

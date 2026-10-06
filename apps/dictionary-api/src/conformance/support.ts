@@ -15,7 +15,7 @@ import { loadKuromoji } from '../kuromoji'
 import { loadSudachi, prepareSudachi, sudachiContract } from '../sudachi'
 
 const repository = resolve(fileURLToPath(new URL('.', import.meta.url)), '../../../..')
-export const resources = join(repository, 'apps/ios/Modules/Sources/SearchExperience/Resources')
+const resources = join(repository, 'apps/ios/Modules/Sources/SearchExperience/Resources')
 const suites = join(repository, 'apps/ios/LanguageData/Conformance')
 const sudachiDictionary = join(repository, 'apps/dictionary-api/.sudachi/system_core.dic')
 
@@ -89,8 +89,4 @@ export async function dictionary(options: { morphology: boolean }): Promise<Dict
 
 export async function artifactDatabase() {
   return (await open()).artifact.db
-}
-
-export async function tokenizer() {
-  return (await open()).tokenize
 }

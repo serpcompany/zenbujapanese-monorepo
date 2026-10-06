@@ -53,7 +53,7 @@ const referenceSources = {
 } as const
 const elementsSchema = 'zenbu.kanji-elements.v1'
 
-export const isCJKUnifiedIdeograph = (character: string) => {
+const isCJKUnifiedIdeograph = (character: string) => {
   const code = character.codePointAt(0) ?? 0
   return code >= 0x3400 && code <= 0x9fff
 }

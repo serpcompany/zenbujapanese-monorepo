@@ -16,9 +16,9 @@ struct SearchResultOrderingTests {
       sorted == [prioritizedExact, prioritizedQualified, unprioritizedExact]
     )
 
-    let qualified = fixtureEntry(
+    let qualified = DictionaryEntry.fixture(
       id: "00000000000000000000000000000004", headword: "qualified")
-    let exact = fixtureEntry(id: "00000000000000000000000000000005", headword: "exact")
+    let exact = DictionaryEntry.fixture(id: "00000000000000000000000000000005", headword: "exact")
     let results = LookupSearchResults(
       items: [
         fixtureEnglishItem(entry: qualified, rank: prioritizedQualified, fallbackOrder: 0),
@@ -87,9 +87,9 @@ struct SearchResultOrderingTests {
 
   @Test("frequency only changes order for equivalent match evidence")
   func equalRelevanceFrequencyOrdering() {
-    let directA = fixtureEntry(id: "00000000000000000000000000000001", headword: "甲")
-    let directB = fixtureEntry(id: "00000000000000000000000000000002", headword: "乙")
-    let weaker = fixtureEntry(id: "00000000000000000000000000000003", headword: "丙")
+    let directA = DictionaryEntry.fixture(id: "00000000000000000000000000000001", headword: "甲")
+    let directB = DictionaryEntry.fixture(id: "00000000000000000000000000000002", headword: "乙")
+    let weaker = DictionaryEntry.fixture(id: "00000000000000000000000000000003", headword: "丙")
     let results = LookupSearchResults(
       items: [
         fixtureItem(entry: directA, relation: .writtenExact, fallbackOrder: 0),
@@ -111,14 +111,10 @@ struct SearchResultOrderingTests {
 
   @Test("missing and equal frequency evidence retain deterministic dictionary order")
   func frequencyFallback() {
-    let first = fixtureEntry(id: "00000000000000000000000000000001", headword: "甲")
-    let second = fixtureEntry(id: "00000000000000000000000000000002", headword: "乙")
-    let third = fixtureEntry(id: "00000000000000000000000000000003", headword: "丙")
-    let results = LookupSearchResults(
-      items: [first, second, third].enumerated().map {
-        fixtureItem(entry: $0.element, fallbackOrder: $0.offset)
-      }
-    )
+    let first = DictionaryEntry.fixture(id: "00000000000000000000000000000001", headword: "甲")
+    let second = DictionaryEntry.fixture(id: "00000000000000000000000000000002", headword: "乙")
+    let third = DictionaryEntry.fixture(id: "00000000000000000000000000000003", headword: "丙")
+    let results = fixtureResults([first, second, third])
     let evidence: [LanguageReferenceID: FrequencyLookupResult] = [
       first.id: .evidence(fixtureEvidence(id: first.id, rank: 10)),
       second.id: .evidence(fixtureEvidence(id: second.id, rank: 10)),
@@ -132,17 +128,12 @@ struct SearchResultOrderingTests {
 
   @Test("JLPT level orders first and the next dictionary's rank breaks level ties")
   func levelThenRank() {
-    let n3 = fixtureEntry(id: "00000000000000000000000000000001", headword: "甲")
-    let n5Rare = fixtureEntry(id: "00000000000000000000000000000002", headword: "乙")
-    let n5Common = fixtureEntry(id: "00000000000000000000000000000003", headword: "丙")
-    let unlisted = fixtureEntry(id: "00000000000000000000000000000004", headword: "丁")
-    let results = LookupSearchResults(
-      items: [n3, n5Rare, n5Common, unlisted].enumerated().map {
-        fixtureItem(entry: $0.element, fallbackOrder: $0.offset)
-      })
-    let jlpt = FrequencyPackDisclosure(
-      id: FrequencyPackID(rawValue: "jlpt"), kind: .level, displayName: "JLPT",
-      domain: "Fixture", domainDescription: "Fixture", version: "1", attribution: "Fixture")
+    let n3 = DictionaryEntry.fixture(id: "00000000000000000000000000000001", headword: "甲")
+    let n5Rare = DictionaryEntry.fixture(id: "00000000000000000000000000000002", headword: "乙")
+    let n5Common = DictionaryEntry.fixture(id: "00000000000000000000000000000003", headword: "丙")
+    let unlisted = DictionaryEntry.fixture(id: "00000000000000000000000000000004", headword: "丁")
+    let results = fixtureResults([n3, n5Rare, n5Common, unlisted])
+    let jlpt = FrequencyPackDisclosure.fixture(id: "jlpt", displayName: "JLPT", kind: .level)
     func level(_ entry: DictionaryEntry, _ level: JLPTLevel) -> FrequencyLookupResult {
       .level(FrequencyLevelEvidence(pack: jlpt, languageReferenceID: entry.id, level: level))
     }
@@ -163,17 +154,12 @@ struct SearchResultOrderingTests {
 
   @Test("an entry the first dictionary misses places by the next dictionary, not last")
   func unrankedInFirstDictionaryUsesTheNext() {
-    let ie = fixtureEntry(id: "00000000000000000000000000000001", headword: "家")
-    let sumai = fixtureEntry(id: "00000000000000000000000000000002", headword: "住まい")
-    let okusha = fixtureEntry(id: "00000000000000000000000000000003", headword: "屋舎")
-    let unranked = fixtureEntry(id: "00000000000000000000000000000004", headword: "舎屋")
-    let results = LookupSearchResults(
-      items: [unranked, okusha, sumai, ie].enumerated().map {
-        fixtureItem(entry: $0.element, fallbackOrder: $0.offset)
-      })
-    let jlpt = FrequencyPackDisclosure(
-      id: FrequencyPackID(rawValue: "jlpt"), kind: .level, displayName: "JLPT",
-      domain: "Fixture", domainDescription: "Fixture", version: "1", attribution: "Fixture")
+    let ie = DictionaryEntry.fixture(id: "00000000000000000000000000000001", headword: "家")
+    let sumai = DictionaryEntry.fixture(id: "00000000000000000000000000000002", headword: "住まい")
+    let okusha = DictionaryEntry.fixture(id: "00000000000000000000000000000003", headword: "屋舎")
+    let unranked = DictionaryEntry.fixture(id: "00000000000000000000000000000004", headword: "舎屋")
+    let results = fixtureResults([unranked, okusha, sumai, ie])
+    let jlpt = FrequencyPackDisclosure.fixture(id: "jlpt", displayName: "JLPT", kind: .level)
     let youTube = fixtureEvidence(id: sumai.id, rank: 1).pack
     let ranks: [LanguageReferenceID: FrequencyRanks] = [
       ie.id: [
@@ -195,12 +181,9 @@ struct SearchResultOrderingTests {
 
   @Test("changing active-pack evidence reorders only equivalent results")
   func packSwitch() {
-    let first = fixtureEntry(id: "00000000000000000000000000000001", headword: "甲")
-    let second = fixtureEntry(id: "00000000000000000000000000000002", headword: "乙")
-    let results = LookupSearchResults(
-      items: [first, second].enumerated().map {
-        fixtureItem(entry: $0.element, fallbackOrder: $0.offset)
-      })
+    let first = DictionaryEntry.fixture(id: "00000000000000000000000000000001", headword: "甲")
+    let second = DictionaryEntry.fixture(id: "00000000000000000000000000000002", headword: "乙")
+    let results = fixtureResults([first, second])
     let packA = [
       first.id: FrequencyLookupResult.evidence(fixtureEvidence(id: first.id, rank: 1)),
       second.id: FrequencyLookupResult.evidence(fixtureEvidence(id: second.id, rank: 2)),
@@ -284,22 +267,11 @@ struct SearchResultOrderingTests {
     let results = try await LookupClient.live.search(query)
     #expect(results.wasDeinflected)
 
-    let stronger = try #require(results.entries.first { $0.headword == "替え歌" })
-    let weaker = try #require(results.entries.first { $0.headword == "変える" })
-    let first = try #require(results.entries.first { $0.headword == "嘉悦大学" })
-    let second = try #require(results.entries.first { $0.headword == "嘉悦女子短大" })
-    #expect(results.relevance(for: stronger) < results.relevance(for: weaker))
-    #expect(results.relevance(for: first) == results.relevance(for: second))
-
-    let evidence: [LanguageReferenceID: FrequencyLookupResult] = [
-      stronger.id: .evidence(fixtureEvidence(id: stronger.id, rank: 50_000)),
-      weaker.id: .evidence(fixtureEvidence(id: weaker.id, rank: 1)),
-      first.id: .evidence(fixtureEvidence(id: first.id, rank: 50_000)),
-      second.id: .evidence(fixtureEvidence(id: second.id, rank: 1)),
-    ]
-    let ordered = SearchResultFrequencyOrdering.ordered(results, ranks: evidence.mapValues { [$0] })
-    #expect(ordered.firstIndex(of: stronger)! < ordered.firstIndex(of: weaker)!)
-    #expect(ordered.firstIndex(of: second)! < ordered.firstIndex(of: first)!)
+    try assertRelevanceOrdering(
+      in: results,
+      crossGroup: ("替え歌", "変える"),
+      sameGroup: ("嘉悦大学", "嘉悦女子短大")
+    )
   }
 
   @Test("deinflection composition preserves structured relevance metadata")
@@ -366,7 +338,18 @@ private func assertLiveRelevanceOrdering(
   crossGroup: (stronger: String, weaker: String),
   sameGroup: (first: String, second: String)
 ) async throws {
-  let results = try await LookupClient.live.search(SearchQuery(query))
+  try assertRelevanceOrdering(
+    in: try await LookupClient.live.search(SearchQuery(query)),
+    crossGroup: crossGroup,
+    sameGroup: sameGroup
+  )
+}
+
+private func assertRelevanceOrdering(
+  in results: LookupSearchResults,
+  crossGroup: (stronger: String, weaker: String),
+  sameGroup: (first: String, second: String)
+) throws {
   let stronger = try #require(results.entries.first { $0.headword == crossGroup.stronger })
   let weaker = try #require(results.entries.first { $0.headword == crossGroup.weaker })
   let first = try #require(results.entries.first { $0.headword == sameGroup.first })
@@ -391,7 +374,7 @@ private func fixtureItem(
   matchedSummary: String? = nil
 ) -> LookupSearchResultItem {
   fixtureItem(
-    entry: fixtureEntry(id: id, headword: headword),
+    entry: DictionaryEntry.fixture(id: id, headword: headword),
     sourceOrder: group,
     matchedSummary: matchedSummary
   )
@@ -415,51 +398,14 @@ private func fixtureItem(
   )
 }
 
-private func fixtureEntry(id: String, headword: String) -> DictionaryEntry {
-  DictionaryEntry(
-    id: LanguageReferenceID(rawValue: id),
-    noteID: WordNoteID(rawValue: id),
-    sourceProvenances: [
-      LanguageReferenceProvenance(sourceIdentity: "fixture", sourceRecordID: id)
-    ],
-    reading: headword,
-    headword: headword,
-    summary: headword,
-    meanings: [headword],
-    partsOfSpeech: [],
-    writtenForms: [],
-    readingForms: [],
-    senses: [],
-    relationships: [],
-    pitchAccent: nil,
-    isCommon: false
-  )
+private func fixtureResults(_ entries: [DictionaryEntry]) -> LookupSearchResults {
+  LookupSearchResults(
+    items: entries.enumerated().map { fixtureItem(entry: $0.element, fallbackOrder: $0.offset) })
 }
 
 private func fixtureEvidence(id: LanguageReferenceID, rank: Int) -> FrequencyEvidence {
-  FrequencyEvidence(
-    pack: FrequencyPackDisclosure(
-      id: FrequencyPackID(rawValue: "fixture"),
-      kind: .rank,
-      displayName: "Fixture",
-      domain: "Fixture",
-      domainDescription: "Fixture",
-      version: "1",
-      attribution: "Fixture"
-    ),
-    languageReferenceID: id,
-    rank: rank,
-    coveredSourceRows: 1,
-    sourceCount: 0,
-    sourceTotalTokens: 0,
-    sourceDocuments: nil,
-    sourceVideos: nil,
-    sourceChannels: nil,
-    matchedForm: "fixture",
-    sourcePartOfSpeech: nil,
-    sourceRecordDigest: "fixture",
-    mappingRelation: .exactWrittenReading
-  )
+  .fixture(
+    pack: .fixture(id: "fixture", displayName: "Fixture"), languageReferenceID: id, rank: rank)
 }
 
 private func numericRank(_ result: FrequencyLookupResult?) -> Int? {

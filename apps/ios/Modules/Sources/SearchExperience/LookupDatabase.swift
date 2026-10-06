@@ -33,10 +33,10 @@ extension LanguageReferenceData {
     startingAt column: Int32
   ) -> LanguageReferencePriorityProfile {
     LanguageReferencePriorityProfile(
-      primaryMarkers: PrimaryPriorityMarkers(
+      primaryMarkers: PriorityMarkers(
         rawValue: Int(sqlite3_column_int(statement, column))
       ),
-      secondaryMarkers: SecondaryPriorityMarkers(
+      secondaryMarkers: PriorityMarkers(
         rawValue: Int(sqlite3_column_int(statement, column + 1))
       ),
       newsFrequencyBand: sqlite3_column_type(statement, column + 2) == SQLITE_NULL

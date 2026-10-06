@@ -29,3 +29,10 @@ test('finds repository paths in code spans, skipping patterns and placeholders',
     { target: '.github/workflows/web.yml', line: 3 }
   ])
 })
+
+test('reads a path with a line number as the path', () => {
+  expect(codePaths('See `apps/web/worker.ts:12` and `tools/checks/src/cli.ts:4-9`.')).toEqual([
+    { target: 'apps/web/worker.ts', line: 1 },
+    { target: 'tools/checks/src/cli.ts', line: 1 }
+  ])
+})

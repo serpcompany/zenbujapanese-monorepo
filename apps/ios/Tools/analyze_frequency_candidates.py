@@ -20,6 +20,7 @@ from analyze_ordered_json_frequency_lists import (
     sha256,
 )
 from build_jiten_frequency_packs import jiten_pairs, read_list
+from import_frequency_pack import mapping_counts, mapping_script
 
 TOOLS = Path(__file__).resolve().parent
 
@@ -90,21 +91,13 @@ def map_rows(rows: list[Row], policy: Path, language_data: Path, output: Path) -
         ((position, form, reading, count, pos, digest, rank)
          for position, (rank, form, reading, count, pos, digest) in enumerate(rows, 1)),
     )
-    sql = (policy.read_text(encoding="utf-8")
-           .replace("{{LANGUAGE_DATA_PATH}}", str(language_data).replace("'", "''"))
-           .replace("{{COVERED_SOURCE_ROWS}}", str(len(rows))))
-    database.executescript(sql)
+    database.executescript(mapping_script(policy, language_data, len(rows)))
     database.execute(
         "UPDATE frequency_evidence SET rank = (SELECT s.source_rank FROM source_rows s "
         "WHERE s.rank = frequency_evidence.rank)"
     )
     count = len(rows)
-    mapped = database.execute("SELECT count(*) FROM frequency_evidence").fetchone()[0]
-    ambiguous = database.execute(
-        "SELECT count(*) FROM resolutions WHERE candidate_count > 1 AND pos_candidate_count != 1"
-    ).fetchone()[0]
-    matched = database.execute("SELECT count(*) FROM resolutions").fetchone()[0]
-    eligible = database.execute("SELECT count(*) FROM eligible").fetchone()[0]
+    mapped, ambiguous, matched, eligible = mapping_counts(database)
     relations = dict(database.execute(
         "SELECT mapping_relation, count(*) FROM frequency_evidence GROUP BY 1 ORDER BY 1"))
     top_ambiguous = [form for (form,) in database.execute(

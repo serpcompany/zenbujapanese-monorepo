@@ -183,7 +183,7 @@ that on. Until then, run `SearchExperienceTests` on a Mac, and verify ordinary a
 building, launching, and inspecting the real app.
 
 Frequency-pack selection has one repo-local Python contract test. Run
-`python3 -m unittest apps/ios/Tools/tests/test_frequency_pack_runtime_contract.py` to verify
+`python3 -m unittest discover -s apps/ios/Tools/tests -p test_frequency_pack_runtime_contract.py` to verify
 that every selectable manifest pins a known evidence row and rank, each ordered source agrees
 with the generated mapping analysis, the bundled TUBELEX artifact contains its pinned row, and
 the bundled JLPT level pack matches its pinned source files and import report. It also checks
@@ -192,14 +192,14 @@ entries, carry their rank on the one entry their UniDic lemma reading names (#44
 
 Examples for kana-headword words come from `ExampleWordIndex.sqlite3`, which is built against the
 bundled `LanguageReferenceData.sqlite3`. Run
-`python3 -m unittest apps/ios/Tools/tests/test_example_word_index_contract.py` to verify that it
+`python3 -m unittest discover -s apps/ios/Tools/tests -p test_example_word_index_contract.py` to verify that it
 matches that database, its pinned source, and its import report. Without the index, as with a
 test database, kana headwords get no examples rather than substring matches. Tatoeba's index
 writes both the adverb 然う and the suffix そう as bare そう, so those sentences link to neither.
 
 Pitch for two-part compounds UniDic doesn't list whole, such as 記者会見, comes from
 `CompoundPitch.sqlite3`, also built against that database. Run
-`python3 -m unittest apps/ios/Tools/tests/test_compound_pitch_contract.py` to verify it.
+`python3 -m unittest discover -s apps/ios/Tools/tests -p test_compound_pitch_contract.py` to verify it.
 
 Every frequency pack, the example word index, and the compound pitch estimates pin the SHA-256 of
 `LanguageReferenceData.sqlite3`, and each data tool records its own SHA-256 in what it builds, so

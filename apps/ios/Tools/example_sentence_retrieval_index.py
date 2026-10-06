@@ -12,6 +12,7 @@ import struct
 import tempfile
 from pathlib import Path
 
+from language_data_tools import file_sha256
 from tatoeba_adapter import EXAMPLE_PAIR_ID_SCHEME
 
 
@@ -39,14 +40,6 @@ def corpus_checksum(database: sqlite3.Connection) -> str:
     ):
         for value in row:
             _update_length_prefixed(digest, value)
-    return digest.hexdigest()
-
-
-def file_checksum(path: Path) -> str:
-    digest = hashlib.sha256()
-    with path.open("rb") as source:
-        for chunk in iter(lambda: source.read(1024 * 1024), b""):
-            digest.update(chunk)
     return digest.hexdigest()
 
 
@@ -78,7 +71,7 @@ def build_indexes(database: sqlite3.Connection, importer_path: Path | None = Non
     importer_path = importer_path or Path(__file__)
     source_count = int(database.execute("SELECT count(*) FROM example_sentences").fetchone()[0])
     source_checksum = corpus_checksum(database)
-    importer_checksum = file_checksum(importer_path)
+    importer_checksum = file_sha256(importer_path)
 
     with database:
         database.execute(f"DROP TABLE IF EXISTS {PORTER_TABLE}")
@@ -314,7 +307,7 @@ def validate_manifest(database_path: Path, manifest_path: Path, metadata: dict[s
     recorded = transform.get("example_sentence_retrieval", {})
     if recorded != metadata:
         raise ValueError("generated import manifest retrieval metadata disagrees with the database")
-    actual_sha256 = file_checksum(database_path)
+    actual_sha256 = file_sha256(database_path)
     if transform.get("database_sha256") != actual_sha256:
         raise ValueError(
             "generated import manifest database checksum mismatch: "
@@ -337,7 +330,7 @@ def rebuild_atomically(path: Path) -> None:
         try:
             build_indexes(database)
             database.execute("VACUUM")
-            validate_indexes(database, expected_importer_checksum=file_checksum(Path(__file__)))
+            validate_indexes(database, expected_importer_checksum=file_sha256(Path(__file__)))
         finally:
             database.close()
         os.replace(replacement, path)

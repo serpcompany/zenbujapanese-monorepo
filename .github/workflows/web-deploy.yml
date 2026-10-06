@@ -54,7 +54,6 @@ jobs:
         run: ./scripts/wait-for-dictionary-service.sh "$SITE"
       - name: Point the site at the dictionary service
         run: ./scripts/use-dictionary-service.sh "$SITE" "$DICTIONARY_API_URL"
-      - run: pnpm db:migrate:staging
       - name: Deploy
         run: pnpm deploy:staging 2>&1 | tee deploy.log
       - name: Smoke test
@@ -91,7 +90,6 @@ jobs:
         run: ./scripts/wait-for-dictionary-service.sh "$SITE"
       - name: Point the site at the dictionary service
         run: ./scripts/use-dictionary-service.sh "$SITE" "$DICTIONARY_API_URL"
-      - run: pnpm db:migrate:production
       - name: Deploy
         run: pnpm deploy:production 2>&1 | tee deploy.log
         env:

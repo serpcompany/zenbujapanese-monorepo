@@ -214,21 +214,22 @@ extension LanguageReferenceData {
     SELECT \(selectedColumns), p.primary_mask, p.secondary_mask, p.news_frequency_band
     FROM candidates c
     JOIN entries e ON e.id = c.entry_id
-    LEFT JOIN form_priority_profiles p
-      ON p.entry_id = e.id AND p.form = e.headword
-      AND p.kind = CASE WHEN e.headword = e.reading
-        THEN \(SearchFormKind.reading.rawValue) ELSE \(SearchFormKind.written.rawValue) END
+    \(displayedFormProfileJoin)
     """
 
   private static let exactASCIICandidateSQL = """
     SELECT \(selectedColumns), p.primary_mask, p.secondary_mask, p.news_frequency_band
     FROM forms f
     JOIN entries e ON e.id = f.entry_id
+    \(displayedFormProfileJoin)
+    WHERE f.kind = \(SearchFormKind.romaji.rawValue) AND f.form = ?
+    """
+
+  private static let displayedFormProfileJoin = """
     LEFT JOIN form_priority_profiles p
       ON p.entry_id = e.id AND p.form = e.headword
       AND p.kind = CASE WHEN e.headword = e.reading
         THEN \(SearchFormKind.reading.rawValue) ELSE \(SearchFormKind.written.rawValue) END
-    WHERE f.kind = \(SearchFormKind.romaji.rawValue) AND f.form = ?
     """
 
   private static let glossEvidenceSQL = """

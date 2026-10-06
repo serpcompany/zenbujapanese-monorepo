@@ -53,6 +53,46 @@ def artifact_content_sha256(metadata: dict[str, str]) -> str:
     return digest.hexdigest()
 
 
+def mapping_script(policy: Path, language_data: Path, covered_rows: int) -> str:
+    return (
+        policy.read_text(encoding="utf-8")
+        .replace("{{LANGUAGE_DATA_PATH}}", str(language_data).replace("'", "''"))
+        .replace("{{COVERED_SOURCE_ROWS}}", str(covered_rows))
+    )
+
+
+def mapping_counts(database: sqlite3.Connection) -> tuple[int, int, int, int]:
+    mapped = database.execute("SELECT count(*) FROM frequency_evidence").fetchone()[0]
+    ambiguous = database.execute(
+        "SELECT count(*) FROM resolutions WHERE candidate_count > 1 AND pos_candidate_count != 1"
+    ).fetchone()[0]
+    matched = database.execute("SELECT count(*) FROM resolutions").fetchone()[0]
+    eligible = database.execute("SELECT count(*) FROM eligible").fetchone()[0]
+    return mapped, ambiguous, matched, eligible
+
+
+def evidence_sha256(database: sqlite3.Connection) -> str:
+    digest = hashlib.sha256()
+    for identifier, rank, count, form, relation, source_pos, source_digest in database.execute(
+        "SELECT language_reference_id, rank, source_count, matched_form, "
+        "mapping_relation, source_pos, source_record_digest "
+        "FROM frequency_evidence ORDER BY language_reference_id"
+    ):
+        digest.update(
+            identifier
+            + rank.to_bytes(8, "big")
+            + count.to_bytes(8, "big")
+            + form.encode("utf-8")
+            + b"\0"
+            + relation.encode("utf-8")
+            + b"\0"
+            + source_pos.encode("utf-8")
+            + b"\0"
+            + source_digest
+        )
+    return digest.hexdigest()
+
+
 def read_manifest(path: Path) -> dict[str, object]:
     manifest = json.loads(path.read_text(encoding="utf-8"))
     required = (
@@ -263,40 +303,11 @@ def create_artifact(
                     for (rank, form, count, pos, record), reading in zip(rows, readings)
                 ],
             )
-            mapping_sql = (
-                mapping_sql_file.read_text(encoding="utf-8")
-                .replace("{{LANGUAGE_DATA_PATH}}", str(language_data).replace("'", "''"))
-                .replace("{{COVERED_SOURCE_ROWS}}", str(len(rows)))
-            )
-            database.executescript(mapping_sql)
-            mapped = database.execute("SELECT count(*) FROM frequency_evidence").fetchone()[0]
-            ambiguous = database.execute(
-                "SELECT count(*) FROM resolutions "
-                "WHERE candidate_count > 1 AND pos_candidate_count != 1"
-            ).fetchone()[0]
-            matched = database.execute("SELECT count(*) FROM resolutions").fetchone()[0]
-            eligible = database.execute("SELECT count(*) FROM eligible").fetchone()[0]
+            database.executescript(mapping_script(mapping_sql_file, language_data, len(rows)))
+            mapped, ambiguous, matched, eligible = mapping_counts(database)
             unmapped = len(rows) - matched
             duplicate_mappings = eligible - mapped
-            mapping_digest = hashlib.sha256()
-            for identifier, rank, count, form, relation, source_pos, source_digest in database.execute(
-                "SELECT language_reference_id, rank, source_count, matched_form, "
-                "mapping_relation, source_pos, source_record_digest "
-                "FROM frequency_evidence ORDER BY language_reference_id"
-            ):
-                mapping_digest.update(
-                    identifier
-                    + rank.to_bytes(8, "big")
-                    + count.to_bytes(8, "big")
-                    + form.encode("utf-8")
-                    + b"\0"
-                    + relation.encode("utf-8")
-                    + b"\0"
-                    + source_pos.encode("utf-8")
-                    + b"\0"
-                    + source_digest
-                )
-            mapping_sha256 = mapping_digest.hexdigest()
+            mapping_sha256 = evidence_sha256(database)
             metadata = {
                 "artifact_schema": ARTIFACT_SCHEMA,
                 "pack_id": str(manifest["packID"]),

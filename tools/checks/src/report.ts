@@ -2,10 +2,16 @@ import { execFileSync } from 'node:child_process'
 import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { findComments } from './comments/find'
+import { findDeadCode } from './deadcode'
+import { checkDependencies, parts } from './dependencies'
 import { checkDocs, isOwnedDoc, referencedFiles } from './docs'
+import { findDuplicates } from './duplicates'
 import { repositoryFiles, root } from './files'
-import { docsToReverify, lastChangeTimes, renderReport } from './maintenance'
+import { duplicateProblems, knownDuplicates } from './known-duplicates'
+import { type CheckProblems, docsToReverify, lastChangeTimes, renderReport } from './maintenance'
+import { findSecrets } from './secrets'
 import { checkSizes, filesNearLimit, knownLargeFiles } from './sizes'
+import { scoresToRegrade, summarizeDebt } from './work-tracking'
 
 const git = (...args: string[]) =>
   execFileSync('git', args, { cwd: root, encoding: 'utf8', maxBuffer: 256 * 1024 * 1024 })
@@ -15,7 +21,7 @@ const files = repositoryFiles()
 const times = lastChangeTimes(git('log', '--format=%x00%ct', '--name-only'))
 
 const comments = findComments(files)
-const checks = [
+const checks: CheckProblems[] = [
   {
     name: 'comments',
     problems: [
@@ -34,43 +40,36 @@ const checks = [
   {
     name: 'sizes',
     problems: checkSizes(files).map(problem => `${problem.path}  ${problem.problem}`)
-  }
+  },
+  { name: 'secrets', problems: await findSecrets(files) },
+  { name: 'duplicates', problems: duplicateProblems(findDuplicates(files), files) },
+  { name: 'deadcode', problems: findDeadCode() }
 ]
+
+const ruleExplanation = /^ {4}\S|^x \d+ dependency violations/
+const dependencyFindings: string[] = []
+for (const part of parts) {
+  const report = await checkDependencies(part)
+  dependencyFindings.push(...report.filter(line => !ruleExplanation.test(line)))
+}
+checks.push({ name: 'dependencies', problems: dependencyFindings })
 
 const docs = files
   .filter(isOwnedDoc)
   .map(doc => ({ doc, references: referencedFiles(doc, read(doc)) }))
-
-const qualitySeconds = times.get('docs/quality.md')
-const codeCommitsSinceQuality = qualitySeconds
-  ? Number(
-      git(
-        'rev-list',
-        '--count',
-        `--since=${qualitySeconds + 1}`,
-        'HEAD',
-        '--',
-        'apps',
-        'packages',
-        'language-data',
-        'tools'
-      ).trim()
-    )
-  : 0
 
 process.stdout.write(
   renderReport({
     date: new Date().toISOString().slice(0, 10),
     checks,
     staleDocs: docsToReverify(docs, times),
-    debtRows: read('docs/tech-debt.md')
-      .split('\n')
-      .filter(line => line.startsWith('| ') && !/^\|\s*(-|Debt\b)/.test(line)).length,
+    quality: scoresToRegrade(read('docs/quality.md'), times),
+    debt: summarizeDebt(read('docs/tech-debt.md')),
     sizeExceptions: Object.entries(knownLargeFiles).map(([path, { lines }]) => ({ path, lines })),
-    nearLimit: filesNearLimit(files),
-    qualityChanged: qualitySeconds
-      ? new Date(qualitySeconds * 1000).toISOString().slice(0, 10)
-      : null,
-    codeCommitsSinceQuality
+    duplicateExceptions: Object.entries(knownDuplicates).map(([pair, { blocks }]) => ({
+      pair,
+      blocks
+    })),
+    nearLimit: filesNearLimit(files)
   })
 )

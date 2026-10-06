@@ -18,14 +18,6 @@ const exactTable = 'example_sentence_english_exact_fts'
 const mapTable = 'example_sentence_fts_map'
 const probeTable = 'temp.example_sentence_porter_query_probe'
 
-export const exampleIndexMetadata: Readonly<Record<string, string>> = {
-  retrieval_index_schema_version: 'zenbu.example-sentence-retrieval-index.v2',
-  retrieval_policy_version: 'ExampleSentenceRetrievalPolicy/v1',
-  retrieval_porter_tokenizer: 'fts4/porter',
-  retrieval_exact_tokenizer: 'fts4/simple',
-  retrieval_pair_id_scheme: 'esp1-sha256-128-nfc-length-prefixed'
-}
-
 interface Match {
   sentence: ExampleSentence
   relation: number
@@ -241,7 +233,7 @@ function retrieveJapanese(db: ArtifactDatabase, query: string): EntryExamples {
   )
 }
 
-export function rankJapanese(query: string, sentences: readonly ExampleSentence[]): EntryExamples {
+function rankJapanese(query: string, sentences: readonly ExampleSentence[]): EntryExamples {
   const matches: Match[] = []
   for (const sentence of sentences) {
     const index = sentence.japanese.indexOf(query)

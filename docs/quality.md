@@ -2,9 +2,15 @@
 
 A grade for each product area and layer, from what the repository holds: its automated tests,
 whether CI runs them before a pull request merges, whether docs describe its behavior, and how a
-change is checked by hand. The line under each table gives the evidence for each grade and the
+change is checked by hand. Each row names the code its grade covers (Code) and the day it was
+last graded (Graded, in UTC). The line under each table gives the evidence for each grade and the
 main gap, which is what would raise it. Known debt, each item with its issue, is in
 [`tech-debt.md`](tech-debt.md).
+
+The weekly maintenance report lists every row whose code changed after the day it was graded,
+under "Scores to re-grade", and doc gardening re-grades those rows
+([`ci.md`](agents/ci.md), Weekly maintenance). A folder in Code counts as changed when any file
+in it changes.
 
 | Grade | Means |
 | --- | --- |
@@ -25,13 +31,13 @@ hand. The product docs are in
 [`apps/ios/docs/product/`](../apps/ios/docs/product/index.md), and the manual checks named below
 are sections of `ios.md`.
 
-| Area | Grade | Tests | CI before merge | Product docs | By hand |
-| --- | --- | --- | --- | --- | --- |
-| Search | C | `SearchResultOrderingTests`, `JapaneseDeinflectionTests`, `SearchFrequencyChipTests`, `SearchFrequencyOrchestrationTests`, `FrequencyPackLifecycleTests`, `PartOfSpeechFormatterTests`, `PitchAccentTests`, and the app-recorded suites `SearchConformanceTests`, `SearchResultsConformanceTests`, and `ExampleSearchConformanceTests` | None. `Search parity` checks only that a ported Swift file and its TypeScript port change together | [Search](../apps/ios/docs/product/dictionary.md#search) | Search manual checks, in the Simulator |
-| Word and kanji detail | C | The app-recorded suites `WordDetailConformanceTests` and `KanjiDetailConformanceTests`, and `KanjiReadingSplitterTests`, `LinkedWordResolutionTests`, `KanaHeadwordExampleTests`, `CompoundPitchTests`, `JapaneseInflectionGroupingTests`, `WordSheetPresentationTests` | None | [Dictionary and kanji details](../apps/ios/docs/product/dictionary.md#dictionary-and-kanji-details) | The parsing comparison harness; no checklist for the screens themselves |
-| Player | C | `YouTubeCaptionsTests`: links, caption-track choice, timed text, translation pairing, card size, word meanings, and comprehension | None | [Player](../apps/ios/docs/product/player.md) | Player manual checks, with four videos |
-| Lists and Known Words | C | `WordListsTests`, `WordKnowledgeTests`, `SavedKanjiTests`: storage, reloads, unreadable and newer-version files, and failed writes | None | [Known Words and Lists](../apps/ios/docs/product/index.md#known-words) | Word lists and Known words manual checks |
-| Image Search | C | `ImageTextRecognitionTests` (Vision on the images in `apps/ios/Modules/Tests/SearchExperienceTests/Fixtures/ImageText`), `ImageTextTranslationTests`, `ImageTextExplanationTests`, `ImageTextContextNotesTests` | None | [Image Search](../apps/ios/docs/product/dictionary.md#image-search) | Image Search manual checks; Apple Translation only on a device |
+| Area | Grade | Graded | Code | Tests | CI before merge | Product docs | By hand |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| Search | C | 2026-10-06 | `apps/ios/Modules/Sources/SearchExperience/SearchView.swift`, `apps/ios/Modules/Sources/SearchExperience/SearchResultsView.swift`, `apps/ios/Modules/Sources/SearchExperience/LookupClient.swift`, `apps/ios/Modules/Sources/SearchExperience/LookupDatabase.swift`, `apps/ios/Modules/Sources/SearchExperience/JapaneseDeinflection.swift` | `SearchResultOrderingTests`, `JapaneseDeinflectionTests`, `SearchFrequencyChipTests`, `SearchFrequencyOrchestrationTests`, `FrequencyPackLifecycleTests`, `PartOfSpeechFormatterTests`, `PitchAccentTests`, and the app-recorded suites `SearchConformanceTests`, `SearchResultsConformanceTests`, and `ExampleSearchConformanceTests` | None. `Search parity` checks only that a ported Swift file and its TypeScript port change together | [Search](../apps/ios/docs/product/dictionary.md#search) | Search manual checks, in the Simulator |
+| Word and kanji detail | C | 2026-10-06 | `apps/ios/Modules/Sources/SearchExperience/WordDetailView.swift`, `apps/ios/Modules/Sources/SearchExperience/WordDetailSections.swift`, `apps/ios/Modules/Sources/SearchExperience/KanjiDetailView.swift`, `apps/ios/Modules/Sources/SearchExperience/KanjiDetailSections.swift` | The app-recorded suites `WordDetailConformanceTests` and `KanjiDetailConformanceTests`, and `KanjiReadingSplitterTests`, `LinkedWordResolutionTests`, `KanaHeadwordExampleTests`, `CompoundPitchTests`, `JapaneseInflectionGroupingTests`, `WordSheetPresentationTests` | None | [Dictionary and kanji details](../apps/ios/docs/product/dictionary.md#dictionary-and-kanji-details) | The parsing comparison harness; no checklist for the screens themselves |
+| Player | C | 2026-10-06 | `apps/ios/Modules/Sources/SearchExperience/WatchAndListenView.swift`, `apps/ios/Modules/Sources/SearchExperience/WatchSessionView.swift`, `apps/ios/Modules/Sources/SearchExperience/WatchHistory.swift`, `apps/ios/Modules/Sources/SearchExperience/PlaybackScrubber.swift`, `apps/ios/Modules/Sources/SearchExperience/YouTubePlayer.swift`, `apps/ios/Modules/Sources/SearchExperience/YouTubeCaptions.swift`, `apps/ios/Modules/Sources/SearchExperience/CaptionCard.swift` | `YouTubeCaptionsTests`: links, caption-track choice, timed text, translation pairing, card size, word meanings, and comprehension | None | [Player](../apps/ios/docs/product/player.md) | Player manual checks, with four videos |
+| Lists and Known Words | C | 2026-10-06 | `apps/ios/Modules/Sources/SearchExperience/WordLists.swift`, `apps/ios/Modules/Sources/SearchExperience/WordListsView.swift`, `apps/ios/Modules/Sources/SearchExperience/WordKnowledge.swift`, `apps/ios/Modules/Sources/SearchExperience/KnownWordsView.swift`, `apps/ios/Modules/Sources/SearchExperience/SavedItem.swift` | `WordListsTests`, `WordKnowledgeTests`, `SavedKanjiTests`: storage, reloads, unreadable and newer-version files, and failed writes | None | [Known Words and Lists](../apps/ios/docs/product/index.md#known-words) | Word lists and Known words manual checks |
+| Image Search | C | 2026-10-06 | `apps/ios/Modules/Sources/SearchExperience/ImageTextFlowModel.swift`, `apps/ios/Modules/Sources/SearchExperience/ImageTextFlowView.swift`, `apps/ios/Modules/Sources/SearchExperience/ImageTextRecognitionClient.swift`, `apps/ios/Modules/Sources/SearchExperience/ImageTextExplanationClient.swift` | `ImageTextRecognitionTests` (Vision on the images in `apps/ios/Modules/Tests/SearchExperienceTests/Fixtures/ImageText`), `ImageTextTranslationTests`, `ImageTextExplanationTests`, `ImageTextContextNotesTests` | None | [Image Search](../apps/ios/docs/product/dictionary.md#image-search) | Image Search manual checks; Apple Translation only on a device |
 
 - **Search, C.** Thorough tests, three suites the website is held to, and a checklist, but no CI.
   Main gap: nothing runs the Swift against its own recorded suites before merge, and no suite
@@ -56,10 +62,10 @@ the core. The product docs are in [`apps/web/docs/product/`](../apps/web/docs/pr
 A change is checked by hand in a browser with the `verify-web` skill
 ([`SKILL.md`](../.claude/skills/verify-web/SKILL.md)).
 
-| Area | Grade | Tests | CI before merge | Product docs | By hand |
-| --- | --- | --- | --- | --- | --- |
-| Dictionary pages | B | The rendered-page gate in `apps/web/src/components/dictionary/` (`search-results.test.tsx`, `search-examples.test.tsx`, `word-page.test.tsx`, `conjugations.test.tsx`) and its interaction tests, unit tests in `apps/web/src/lib/dictionary/`, route tests under `apps/web/src/app/dictionary/`, the browser tests in `apps/web/e2e/` (search and word pages, their conjugations and kanji details, URLs, and layout, failing on any console error), and `apps/web/scripts/smoke.sh` after each deploy | `Web` (`check` and `e2e`); `Dictionary API` runs the gate against the service it builds | [Dictionary](../apps/web/docs/product/dictionary.md), which names the check for each behavior | `verify-web`, on the fixtures or the whole dictionary |
-| Other pages | C | `apps/web/src/lib/pages.test.ts`, `apps/web/src/lib/sitemap.test.ts`, `apps/web/src/components/site-footer.test.tsx`, `apps/web/src/components/site-header.test.tsx`; `smoke.sh` asks for `/`, `/support/`, and `/legal/privacy/`, the `/privacy` redirect, and each environment's search-engine rules | `Web` | None for the home, about, support, contact, legal, sources, and sitemap pages. The header, footer, and URL rules are in [Dictionary](../apps/web/docs/product/dictionary.md#header-footer-and-site-wide) | `verify-web` |
+| Area | Grade | Graded | Code | Tests | CI before merge | Product docs | By hand |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| Dictionary pages | B | 2026-10-06 | `apps/web/src/app/dictionary/`, `apps/web/src/components/dictionary/`, `apps/web/src/lib/dictionary/`, `apps/web/src/test/`, `apps/web/e2e/` | The rendered-page gate in `apps/web/src/components/dictionary/` (`search-results.test.tsx`, `search-examples.test.tsx`, `word-page.test.tsx`, `conjugations.test.tsx`) and its interaction tests, unit tests in `apps/web/src/lib/dictionary/`, route tests under `apps/web/src/app/dictionary/`, the browser tests in `apps/web/e2e/` (search and word pages, their conjugations and kanji details, URLs, and layout, failing on any console error), and `apps/web/scripts/smoke.sh` after each deploy | `Web` (`check` and `e2e`); `Dictionary API` runs the gate against the service it builds | [Dictionary](../apps/web/docs/product/dictionary.md), which names the check for each behavior | `verify-web`, on the fixtures or the whole dictionary |
+| Other pages | C | 2026-10-01 | `apps/web/src/app/page.tsx`, `apps/web/src/app/about/`, `apps/web/src/app/contact/`, `apps/web/src/app/legal/`, `apps/web/src/app/sources/`, `apps/web/src/app/support/`, `apps/web/src/components/site-header.tsx`, `apps/web/src/components/site-footer.tsx`, `apps/web/src/lib/pages.ts`, `apps/web/src/lib/sitemap.ts` | `apps/web/src/lib/pages.test.ts`, `apps/web/src/lib/sitemap.test.ts`, `apps/web/src/components/site-footer.test.tsx`, `apps/web/src/components/site-header.test.tsx`; `smoke.sh` asks for `/`, `/support/`, and `/legal/privacy/`, the `/privacy` redirect, and each environment's search-engine rules | `Web` | None for the home, about, support, contact, legal, sources, and sitemap pages. The header, footer, and URL rules are in [Dictionary](../apps/web/docs/product/dictionary.md#header-footer-and-site-wide) | `verify-web` |
 
 - **Dictionary pages, B.** What each page shows is held to the app's recorded suites before
   merge, every behavior names its check, and the browser tests drive the pages as a learner does.
@@ -73,10 +79,10 @@ A change is checked by hand in a browser with the `verify-web` skill
 
 ## Dictionary service and core
 
-| Area | Grade | Tests | CI before merge | Docs | By hand |
-| --- | --- | --- | --- | --- | --- |
-| Dictionary service, `apps/dictionary-api` | A | The five app-recorded suites, replayed on the app's data in `apps/dictionary-api/src/conformance/`, beside `sentence-search.test.ts`, `full-text.test.ts`, and `conjugation-examples.test.ts`; the routes in `apps/dictionary-api/src/app.test.ts` | `Dictionary API`, where the suites fail rather than skip without the data; `Dictionary API deploy` builds the image and checks that it answers | [`dictionary-api.md`](agents/dictionary-api.md), ADR 0009 | `pnpm dev` and its routes; `verify-web` on the whole dictionary |
-| Shared dictionary core, `packages/dictionary-core` | A | Unit tests beside the code in `packages/dictionary-core/src/` (`search`, `results`, `detail`, `examples`, and `artifact`); the service's suites run through it | `Dictionary core` (Biome with its import rules, typecheck, and tests); `Search parity`; `Dictionary API` | [`dictionary-core.md`](agents/dictionary-core.md), ADR 0008 | Through the service and the website |
+| Area | Grade | Graded | Code | Tests | CI before merge | Docs | By hand |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| Dictionary service | A | 2026-10-06 | `apps/dictionary-api/src/` | The five app-recorded suites, replayed on the app's data in `apps/dictionary-api/src/conformance/`, beside `sentence-search.test.ts`, `full-text.test.ts`, and `conjugation-examples.test.ts`; the routes in `apps/dictionary-api/src/app.test.ts` | `Dictionary API`, where the suites fail rather than skip without the data, and the core's fixtures must match what the service exports from it; `Dictionary API deploy` builds the image and checks that it answers | [`dictionary-api.md`](agents/dictionary-api.md), ADR 0009 | `pnpm dev` and its routes; `verify-web` on the whole dictionary |
+| Shared dictionary core | A | 2026-10-06 | `packages/dictionary-core/src/` | Unit tests beside the code in `packages/dictionary-core/src/` (`search`, `results`, `detail`, `examples`, and `artifact`); the service's suites run through it | `Dictionary core` (Biome with its import rules, typecheck, and tests); `Repository`'s import check, which refuses any runtime the core reaches; `Search parity`; `Dictionary API`, which also checks the fixtures against the data | [`dictionary-core.md`](agents/dictionary-core.md), ADR 0008 | Through the service and the website |
 
 - **Dictionary service, A.** Every recorded suite runs on the real data on each pull request that
   changes the service, the core, a suite, or the data, and the image is checked before it ships.
@@ -87,10 +93,10 @@ A change is checked by hand in a browser with the `verify-web` skill
 
 ## Language data
 
-| Area | Grade | Tests | CI before merge | Docs | By hand |
-| --- | --- | --- | --- | --- | --- |
-| Language-data pipeline, `language-data/pipeline` | B | `language-data/pipeline/tests/`: the packager, the publisher against a fake bucket, and the schemas | `Language data build`: the tests, then packaging and validating the release | [`language-data/README.md`](../language-data/README.md), ADR 0006 | `package.py build` and `validate` on a workstation |
-| iOS data tools, `apps/ios/Tools` | B | `apps/ios/Tools/tests/`: contract tests for the frequency packs, the example word index, and compound pitch | `iOS` runs the contract tests on pull requests that change `apps/ios`; Ruff lints the tools in `pnpm verify`. `Language data build` checks the pins between the files they write, when those files change | [`apps/ios/Tools/README.md`](../apps/ios/Tools/README.md), [`apps/ios/LanguageData/Sources/README.md`](../apps/ios/LanguageData/Sources/README.md), [`ios.md`](agents/ios.md), [`data-sources.md`](data-sources.md) | `rebuild_language_data.py` rebuilds everything on the pinned Python and runs the contract tests; then re-record the suites on a Mac |
+| Area | Grade | Graded | Code | Tests | CI before merge | Docs | By hand |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| Language-data pipeline | B | 2026-10-06 | `language-data/pipeline/` | `language-data/pipeline/tests/`: the packager, the publisher against a fake bucket, and the schemas | `Language data build`: the tests, then packaging and validating the release | [`language-data/README.md`](../language-data/README.md), ADR 0006 | `package.py build` and `validate` on a workstation |
+| iOS data tools | B | 2026-10-06 | `apps/ios/Tools/` | `apps/ios/Tools/tests/`: contract tests for the frequency packs, the example word index, and compound pitch, and a provenance test that fails when a tool changes without the data it built | `iOS` runs the contract tests on pull requests that change `apps/ios`; Ruff lints the tools in `pnpm verify`. `Language data build` checks the pins between the files they write, when those files change | [`apps/ios/Tools/README.md`](../apps/ios/Tools/README.md), [`apps/ios/LanguageData/Sources/README.md`](../apps/ios/LanguageData/Sources/README.md), [`ios.md`](agents/ios.md), [`data-sources.md`](data-sources.md) | `rebuild_language_data.py` rebuilds everything on the pinned Python and runs the contract tests; then re-record the suites on a Mac |
 
 - **Language-data pipeline, B.** Every pull request that changes the data or the pipeline
   rebuilds and validates the release. Main gap: publishing has run only against the fake bucket,
@@ -103,10 +109,10 @@ A change is checked by hand in a browser with the `verify-web` skill
 
 ## Delivery
 
-| Area | Grade | Tests | CI before merge | Docs | By hand |
-| --- | --- | --- | --- | --- | --- |
-| Website and service deploys | C | `apps/web/scripts/smoke.sh` after each deploy, where staging's run gates production, though from CI it skips its dictionary checks; the image check in `Dictionary API deploy`; `apps/web/scripts/wait-for-dictionary-service.sh`, which ships the service's image before the site | The image check, and ShellCheck and actionlint in `Repository`. `Web deploy` and `Dictionary API deploy` run after merge | [`web.md`](agents/web.md), Environments and deploys; [`dictionary-api.md`](agents/dictionary-api.md), Ship it | `verify-web` on staging; the server's deployer was checked by hand on staging |
-| iOS releases | D | None | None | None: no doc says how a build reaches TestFlight or the App Store | Outside the repository |
+| Area | Grade | Graded | Code | Tests | CI before merge | Docs | By hand |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| Website and service deploys | C | 2026-10-06 | `.github/workflows/web-deploy.yml`, `.github/workflows/dictionary-api-deploy.yml`, `apps/web/scripts/`, `apps/dictionary-api/deploy/`, `apps/dictionary-api/Dockerfile` | `apps/web/scripts/smoke.sh` after each deploy, where staging's run gates production, though from CI it skips its dictionary checks; the image check in `Dictionary API deploy`; `apps/web/scripts/wait-for-dictionary-service.sh`, which ships the service's image before the site | The image check, and ShellCheck and actionlint in `Repository`. `Web deploy` and `Dictionary API deploy` run after merge | [`web.md`](agents/web.md), Environments and deploys; [`dictionary-api.md`](agents/dictionary-api.md), Ship it | `verify-web` on staging; the server's deployer was checked by hand on staging |
+| iOS releases | D | 2026-09-30 | None | None | None | None: no doc says how a build reaches TestFlight or the App Store | Outside the repository |
 
 - **Website and service deploys, C.** The image is checked and signed before it's published, and
   the server runs only images main signed. But Bot Fight Mode challenges CI runners, so nothing in
@@ -119,14 +125,15 @@ A change is checked by hand in a browser with the `verify-web` skill
 
 ## Repository
 
-| Area | Grade | Tests | CI before merge | Docs | By hand |
-| --- | --- | --- | --- | --- | --- |
-| Repository checks, `tools/checks` | A | `tools/checks/src/docs.test.ts`, `tools/checks/src/sizes.test.ts`, `tools/checks/src/maintenance.test.ts`, the comment checks' tests in `tools/checks/src/comments/`, and the agent tooling's in `tools/checks/src/agents/`: the permission rules, `.mcp.json`, and the Claude workflows' inline scripts | `Repository`, on every pull request: the checks' own tests, then `pnpm verify` | [`code.md`](agents/code.md) | `pnpm verify`; Claude Code's edit hook |
+| Area | Grade | Graded | Code | Tests | CI before merge | Docs | By hand |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| Repository checks | A | 2026-10-06 | `tools/checks/src/`, `.claude/`, `knip.json`, `lefthook.yml`, `.github/workflows/repository.yml`, `.github/workflows/code-review.yml`, `.github/workflows/claude.yml`, `.github/workflows/maintenance.yml` | The checks' tests in `tools/checks/src/`: docs and the doc rules (`tools/checks/src/doc-rules/`), sizes, secrets, duplicates and their exceptions, imports (on scratch packages with a cycle, an unused module, and a test import), fix branches, the report, and the comment checks' in `tools/checks/src/comments/`; the agent tooling's in `tools/checks/src/agents/`: the permission rules, `.mcp.json`, and the inline scripts of the review, `@claude`, and both gardening jobs | `Repository`, on every pull request: the checks' own tests, then `pnpm verify` (no comments, docs, sizes, secrets, duplicate code, dead code, imports, and the linters), and on a `fix/` branch, a changed test | [`code.md`](agents/code.md) | `pnpm verify`; the git hooks; Claude Code's edit hook |
 
-- **Repository checks, A.** They run on every pull request, and each failure says how to fix it.
-  Main gap: Swift has no linter (#516). The docs' links and paths are checked on every pull
-  request, but whether their prose still matches the code is checked only weekly, by doc gardening
-  in `Weekly maintenance`.
+- **Repository checks, A.** They run on every pull request and in the git hooks, and each failure
+  says how to fix it. Main gap: Swift has no linter (#516), and nothing refuses a cast of parsed
+  JSON ([`tech-debt.md`](tech-debt.md), Checks). The docs' links, anchors, paths, and scripts are
+  checked on every pull request, but whether their prose still matches the code is checked only
+  weekly, by doc gardening in `Weekly maintenance`.
 
-Last graded 2026-09-30. An area's grade is updated in the same pull request that changes its
-tests, CI, or docs.
+Re-grade an area, and set its Graded date to that day, in the same pull request that changes its
+tests, CI, or docs, even when its grade stays the same.

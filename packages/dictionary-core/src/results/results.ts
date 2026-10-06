@@ -109,7 +109,7 @@ export interface KanjiRow {
   entryId: string | null
 }
 
-export type ResultsSection = 'examples' | 'readingRefinement' | 'results' | 'discoveredWords'
+type ResultsSection = 'examples' | 'readingRefinement' | 'results' | 'discoveredWords'
 
 export interface ExamplesRow {
   title: string
@@ -117,12 +117,12 @@ export interface ExamplesRow {
   primaryEntry: string | null
 }
 
-export function exampleActionTitle(count: number): string {
+function exampleActionTitle(count: number): string {
   if (count > exactExampleCountLimit) return `View ${exactExampleCountLimit}+ Example Sentences`
   return `View ${count} Example ${count === 1 ? 'Sentence' : 'Sentences'}`
 }
 
-export const discoveredWordLimit = 12
+const discoveredWordLimit = 12
 
 export type SearchResultsScreen =
   | { state: 'noResults'; query: string }
@@ -137,7 +137,7 @@ export type SearchResultsScreen =
       resultCount: number
     }
 
-export const isSingleKanji = (query: string) => isKanjiCharacter(query)
+const isSingleKanji = (query: string) => isKanjiCharacter(query)
 
 export function primaryItem(results: SearchResults, query: string): SearchResultItem | undefined {
   const normalized = normalizeQuery(query)

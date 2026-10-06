@@ -54,4 +54,7 @@ showed, which checks ran and passed, and what was left and who can finish it (fo
 that needs a Mac). Show it to the person before pushing or opening anything.
 
 Once it's open, the `Code review` workflow reviews every push with the `pr-review` skill. Answer
-each finding (fix it, or reply with why not), then run this skill again before the next push.
+each finding (fix it, or reply with why not), then run this skill again before the next push. A
+finding can also be answered with an `@claude` request in its thread: the `Claude` workflow fixes
+it on the pull request's branch and pushes, which starts a re-review (`docs/agents/ci.md`,
+@claude requests).

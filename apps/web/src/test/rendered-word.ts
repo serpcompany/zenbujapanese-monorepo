@@ -113,7 +113,7 @@ export interface RenderedConjugatedForm {
   ending: string
 }
 
-export interface RenderedConjugationRow {
+interface RenderedConjugationRow {
   kind: string
   title: string
   surface: string
@@ -121,7 +121,7 @@ export interface RenderedConjugationRow {
   rowFurigana: boolean
 }
 
-export interface RenderedConjugationRegister {
+interface RenderedConjugationRegister {
   hidden: boolean
   rows: RenderedConjugationRow[]
   forms: RenderedConjugatedForm[]

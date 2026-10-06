@@ -8,7 +8,7 @@ import json
 from collections import defaultdict
 from pathlib import Path
 
-from language_data_tools import file_sha256
+from language_data_tools import built_artifact, file_sha256
 
 
 DISPLAY_GLYPHS = {
@@ -133,10 +133,7 @@ def main() -> None:
             "component_count": len(components),
             "membership_count": sum(len(values) for values in krad_inversion.values()),
             "display_aliases": DISPLAY_GLYPHS,
-            "import_tool_sha256": file_sha256(Path(__file__)),
-            "shared_tooling_sha256": file_sha256(Path(__file__).with_name("language_data_tools.py")),
-            "artifact_sha256": file_sha256(args.output),
-            "artifact_bytes": args.output.stat().st_size,
+            **built_artifact(Path(__file__), args.output),
         },
     }
     args.import_manifest.parent.mkdir(parents=True, exist_ok=True)
