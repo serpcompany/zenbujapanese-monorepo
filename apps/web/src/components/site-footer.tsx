@@ -1,30 +1,24 @@
 import Link from 'next/link'
 import { SiteBrand } from '@/components/site-brand'
-import { legalPages } from '@/lib/pages'
+import { legalPages, pageFor, type SitePage } from '@/lib/pages'
 import { site } from '@/lib/site'
 
-type FooterLink = { path: string; title: string }
-
-const footerColumns: { heading: string; links: readonly FooterLink[] }[] = [
+const footerColumns: { heading: string; links: readonly Pick<SitePage, 'path' | 'title'>[] }[] = [
   {
     heading: 'Product',
     links: [
       { path: '/dictionary/', title: 'Dictionary' },
-      { path: '/sources/', title: 'Sources' },
-      { path: '/sitemap/', title: 'Sitemap' }
+      pageFor('/sources/'),
+      pageFor('/sitemap/')
     ]
   },
   {
     heading: 'Company',
-    links: [
-      { path: '/about/', title: 'About' },
-      { path: '/support/', title: 'Support' },
-      { path: '/contact/', title: 'Contact' }
-    ]
+    links: [pageFor('/about/'), pageFor('/support/'), pageFor('/contact/')]
   },
   {
     heading: 'Policies',
-    links: [{ path: '/legal/', title: 'Legal' }, ...legalPages]
+    links: [pageFor('/legal/'), ...legalPages]
   }
 ]
 

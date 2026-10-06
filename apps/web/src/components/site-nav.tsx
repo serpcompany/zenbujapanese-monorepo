@@ -23,8 +23,8 @@ export function useSectionLinks() {
     const isCurrent = section.path === current
     return {
       ...section,
-      isCurrent,
-      ariaCurrent: isCurrent ? ariaCurrentFor(path, section.path) : undefined
+      ariaCurrent: isCurrent ? ariaCurrentFor(path, section.path) : undefined,
+      currentClass: isCurrent ? 'bg-muted text-foreground' : 'text-muted-foreground'
     }
   })
 }
@@ -39,7 +39,7 @@ export function SiteNav() {
           aria-current={section.ariaCurrent}
           className={cn(
             'rounded-md px-3 py-1.5 font-medium transition-colors hover:text-foreground',
-            section.isCurrent ? 'bg-muted text-foreground' : 'text-muted-foreground'
+            section.currentClass
           )}
         >
           {section.label}
