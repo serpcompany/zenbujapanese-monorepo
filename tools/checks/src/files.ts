@@ -124,6 +124,12 @@ const proseAndData = new Set([
   '.gitkeep'
 ])
 
+export function extensionsOf(language: Language): string[] {
+  return Object.entries(languagesByExtension)
+    .filter(([, each]) => each === language)
+    .map(([extension]) => extension.slice(1))
+}
+
 function shebangLanguage(path: string): Language | undefined {
   const firstLine = readFileSync(join(root, path), 'utf8').split('\n', 1)[0]
   if (/^#!.*\b(ba|z)?sh\b/.test(firstLine)) return 'shell'
