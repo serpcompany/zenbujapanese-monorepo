@@ -1,7 +1,9 @@
 # iOS product documentation
 
 This folder describes user-facing behavior that exists in the Zenbu Japanese iOS app.
-It is updated with the implementation and is not a roadmap or an ideas backlog.
+It is updated with the implementation and is not a roadmap or an ideas backlog. The one exception
+is [Required, not built yet](#required-not-built-yet-563), which lists behavior the owners have
+decided the app must have but doesn't yet.
 
 The app runs in portrait on iPhone. It has three tabs:
 
@@ -85,7 +87,8 @@ Known Words shows its count on the Account row and lists every word and kanji th
 known, most recent first. A learner can search the list by headword or reading, swipe an item to
 mark it unknown, or open its word or kanji page in Search. A word whose entry ID changed opens the entry with the
 same headword and reading, and a search for the headword only when there is none.
-Known words are stored only on the device. If the saved known words
+Known words are stored only on the device; Known across apps is decided but not built
+([Required, not built yet](#required-not-built-yet-563)). If the saved known words
 came from a newer version of Zenbu, or a damaged file couldn't be kept aside, they are shown but
 can't be changed, and Known Words and the Mark as Known button say so. If the file exists but
 can't be read at launch, such as before the device's first unlock, nothing is shown or saved over
@@ -126,3 +129,28 @@ association from one word, or delete the image and all of its word associations.
 These images are stored locally and participate in normal system-managed device backup. The
 Media Library is not currently a general file store, import system, analysis tool, sync service,
 or publishing destination.
+
+## Required, not built yet (#563)
+
+Behavior the owners have decided the app must have, but which isn't built yet. When one is built,
+it moves into its section above in the same PR.
+
+### Known across apps
+
+Decided on 2026-10-06 ([#563](https://github.com/serpcompany/zenbujapanese-monorepo/issues/563),
+decision 4). Once a learner is signed in to the same Zenbu account in this app and in Tomodachi:
+
+- The first time a word reaches Tomo's "knows it" stage, Tomodachi marks it Known. After the app
+  syncs, it shows in Known Words, with the **✓ Known** capsule wherever the word appears.
+- Tomodachi never un-marks a word; only the learner does.
+- Words Known in Zenbu aren't introduced to Tomo as new, though Tomo can still review them.
+- After the learner un-marks a word, Tomodachi marks it again only once the word climbs back to
+  "knows it".
+
+Built by:
+
+- the account service and its sync API (#565, #566, #567);
+- Tomodachi's access to the account, including its mark-Known scope (#570);
+- syncing Known words through the account (#572);
+- sign-in and sync in this app (#573);
+- Tomodachi recording when a word first reaches "knows it", in its own repository.
