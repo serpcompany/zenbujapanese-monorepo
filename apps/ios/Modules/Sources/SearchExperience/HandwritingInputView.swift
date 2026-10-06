@@ -57,7 +57,7 @@ struct HandwritingInputView: View {
   @ViewBuilder
   private var candidateStrip: some View {
     if model.candidates.isEmpty {
-      HStack {
+      CandidateStripMessage {
         switch model.recognitionState {
         case .idle:
           Text("Draw one Japanese character")
@@ -72,14 +72,7 @@ struct HandwritingInputView: View {
           Text("Recognition unavailable. Erase and try again.")
             .accessibilityIdentifier("handwriting.failure")
         }
-        Spacer()
       }
-      .font(.body)
-      .foregroundStyle(.secondary)
-      .fixedSize(horizontal: false, vertical: true)
-      .padding(.horizontal, 14)
-      .padding(.vertical, 6)
-      .frame(minHeight: 46)
     } else {
       ScrollView(.horizontal, showsIndicators: false) {
         HStack(spacing: 0) {

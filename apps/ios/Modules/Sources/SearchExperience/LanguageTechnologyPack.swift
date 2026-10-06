@@ -7,15 +7,6 @@ struct LanguageTechnologyPackID: Codable, Hashable, RawRepresentable, Sendable {
   let rawValue: String
 
   init(rawValue: String) { self.rawValue = rawValue }
-
-  init(from decoder: Decoder) throws {
-    rawValue = try decoder.singleValueContainer().decode(String.self)
-  }
-
-  func encode(to encoder: Encoder) throws {
-    var container = encoder.singleValueContainer()
-    try container.encode(rawValue)
-  }
 }
 
 struct LanguageTechnologyPackCatalog: Codable, Equatable, Sendable {

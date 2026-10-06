@@ -12,9 +12,9 @@ struct LinkedWordResolutionTests {
         ("しまっ", "しまう", ["動詞", "自立"]), ("た", "た", ["助動詞"]),
       ],
       dictionary: [
-        "本": [entry("hon", "本")],
-        "しまう": [entry("shimau", "しまう", [.godanVerb])],
-        "しまった": [entry("shimatta", "しまった")],
+        "本": [.fixture(id: "hon", headword: "本")],
+        "しまう": [.fixture(id: "shimau", headword: "しまう", partsOfSpeech: [.godanVerb])],
+        "しまった": [.fixture(id: "shimatta", headword: "しまった")],
       ])
     #expect(tokens.map(\.surface) == ["本", "を", "しまった"])
     #expect(tokens.last?.entry?.headword == "しまう")
@@ -27,7 +27,7 @@ struct LinkedWordResolutionTests {
       parts: [
         ("見", "見る", ["動詞", "自立"]), ("なかっ", "ない", ["助動詞"]), ("た", "た", ["助動詞"]),
       ],
-      dictionary: ["見る": [entry("miru", "見る", [.ichidanVerb])]])
+      dictionary: ["見る": [.fixture(id: "miru", headword: "見る", partsOfSpeech: [.ichidanVerb])]])
     #expect(tokens.map(\.surface) == ["見なかった"])
     #expect(tokens.first?.entry?.headword == "見る")
   }
@@ -37,7 +37,7 @@ struct LinkedWordResolutionTests {
     let tokens = await linkedTokens(
       "ほげない",
       parts: [("ほげ", "ほげる", ["動詞", "自立"]), ("ない", "ない", ["助動詞"])],
-      dictionary: ["ない": [entry("nai", "ない")]])
+      dictionary: ["ない": [.fixture(id: "nai", headword: "ない")]])
     #expect(tokens.map(\.surface) == ["ほげ", "ない"])
   }
 
@@ -92,27 +92,6 @@ struct LinkedWordResolutionTests {
       entriesContainingKanji: { _ in [] }
     )
     return .resolving(morphologyClient: morphology, lookupClient: lookup)
-  }
-
-  private func entry(
-    _ id: String, _ headword: String, _ partsOfSpeech: [PartOfSpeech] = []
-  ) -> DictionaryEntry {
-    DictionaryEntry(
-      id: LanguageReferenceID(rawValue: id),
-      noteID: WordNoteID(rawValue: id),
-      sourceProvenances: [LanguageReferenceProvenance(sourceIdentity: "fixture", sourceRecordID: id)],
-      reading: headword,
-      headword: headword,
-      summary: headword,
-      meanings: [headword],
-      partsOfSpeech: partsOfSpeech,
-      writtenForms: [],
-      readingForms: [],
-      senses: [],
-      relationships: [],
-      pitchAccent: nil,
-      isCommon: false
-    )
   }
 
   private enum FixtureError: Error { case unused }

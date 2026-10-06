@@ -10,7 +10,7 @@ struct ImageTextExplanationTests {
       search: { _ in throw CancellationError() },
       entry: { _ in nil },
       entryMatchingForm: { form in
-        form == "背水の陣" || form == "机上の空論" ? entry(form) : nil
+        form == "背水の陣" || form == "机上の空論" ? .fixture(id: form, headword: form) : nil
       },
       entriesMatchingForm: { _ in [] },
       entriesContainingKanji: { _ in [] }
@@ -43,26 +43,5 @@ struct ImageTextExplanationTests {
 
   private static func modelRuns() async -> Bool {
     (try? await LanguageModelSession().respond(to: "Reply with OK.")) != nil
-  }
-
-  private static func entry(_ headword: String) -> DictionaryEntry {
-    DictionaryEntry(
-      id: LanguageReferenceID(rawValue: headword),
-      noteID: WordNoteID(rawValue: headword),
-      sourceProvenances: [
-        LanguageReferenceProvenance(sourceIdentity: "fixture", sourceRecordID: headword)
-      ],
-      reading: headword,
-      headword: headword,
-      summary: headword,
-      meanings: [headword],
-      partsOfSpeech: [],
-      writtenForms: [],
-      readingForms: [],
-      senses: [],
-      relationships: [],
-      pitchAccent: nil,
-      isCommon: false
-    )
   }
 }

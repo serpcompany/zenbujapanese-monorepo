@@ -47,15 +47,7 @@ struct SearchResultsView: View {
       case .discoveredWords(let entries):
         Section {
           SearchListHeading(LocalizedStringKey(SearchResultsScreen.discoveredWordsHeading))
-          ForEach(entries.enumerated(), id: \.element.id) { index, entry in
-            ResultRow(
-              entry: entry,
-              summary: results.displaySummary(for: entry),
-              frequencyRanks: frequencyLoadState.results[entry.id],
-              rank: .discovered(position: index + 1, count: entries.count),
-              link: SearchExperienceRoute.word(entry, nil)
-            )
-          }
+          resultRows(entries) { .discovered(position: $0 + 1, count: entries.count) }
         }
       case .ranked(let kanji, let entries):
         Section {
@@ -66,16 +58,10 @@ struct SearchResultsView: View {
               resultCount: SearchResultsScreen.rankedCount(query: query, entries: entries)
             )
           }
-          ForEach(entries.enumerated(), id: \.element.id) { index, entry in
-            ResultRow(
-              entry: entry,
-              summary: results.displaySummary(for: entry),
-              frequencyRanks: frequencyLoadState.results[entry.id],
-              rank: .result(
-                position: index + (kanji == nil ? 1 : 2),
-                count: SearchResultsScreen.rankedCount(query: query, entries: entries)
-              ),
-              link: SearchExperienceRoute.word(entry, nil)
+          resultRows(entries) { index in
+            .result(
+              position: index + (kanji == nil ? 1 : 2),
+              count: SearchResultsScreen.rankedCount(query: query, entries: entries)
             )
           }
           if let frequencyUnavailableNotice {
@@ -111,6 +97,20 @@ struct SearchResultsView: View {
           for: requestID
         )
       }
+    }
+  }
+
+  private func resultRows(
+    _ entries: [DictionaryEntry], rank: @escaping (Int) -> ResultRank
+  ) -> some View {
+    ForEach(entries.enumerated(), id: \.element.id) { index, entry in
+      ResultRow(
+        entry: entry,
+        summary: results.displaySummary(for: entry),
+        frequencyRanks: frequencyLoadState.results[entry.id],
+        rank: rank(index),
+        link: SearchExperienceRoute.word(entry, nil)
+      )
     }
   }
 

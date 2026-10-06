@@ -84,31 +84,12 @@ extension LanguageReferenceData {
     return lhs.normalizedForm < rhs.normalizedForm
   }
 
-  private static let japaneseCandidateSQL = """
-    SELECT \(selectedColumns), f.form, f.kind,
-      (SELECT count(*) FROM canonical_senses s WHERE s.entry_id = e.id),
-      p.primary_mask, p.secondary_mask, p.news_frequency_band
-    FROM forms f
-    JOIN entries e ON e.id = f.entry_id
-    LEFT JOIN form_priority_profiles p
-      ON p.entry_id = f.entry_id AND p.form = f.form AND p.kind = f.kind
-    WHERE f.kind IN (\(SearchFormKind.written.rawValue), \(SearchFormKind.reading.rawValue))
-      AND instr(f.form, ?) > 0
-      AND (
-        f.kind != \(SearchFormKind.reading.rawValue)
-        OR NOT EXISTS (
-          SELECT 1 FROM reading_form_restrictions r
-          WHERE r.entry_id = f.entry_id AND r.reading = f.form
-        )
-        OR EXISTS (
-          SELECT 1 FROM reading_form_restrictions r
-          WHERE r.entry_id = f.entry_id AND r.reading = f.form
-            AND r.written_form = e.headword
-        )
-      )
-    """
+  private static let japaneseCandidateSQL = candidateSQL(where: "instr(f.form, ?) > 0")
 
-  private static let exactJapaneseCandidateSQL = """
+  private static let exactJapaneseCandidateSQL = candidateSQL(where: "f.form = ?")
+
+  private static func candidateSQL(where formCondition: String) -> String {
+    """
     SELECT \(selectedColumns), f.form, f.kind,
       (SELECT count(*) FROM canonical_senses s WHERE s.entry_id = e.id),
       p.primary_mask, p.secondary_mask, p.news_frequency_band
@@ -117,7 +98,7 @@ extension LanguageReferenceData {
     LEFT JOIN form_priority_profiles p
       ON p.entry_id = f.entry_id AND p.form = f.form AND p.kind = f.kind
     WHERE f.kind IN (\(SearchFormKind.written.rawValue), \(SearchFormKind.reading.rawValue))
-      AND f.form = ?
+      AND \(formCondition)
       AND (
         f.kind != \(SearchFormKind.reading.rawValue)
         OR NOT EXISTS (
@@ -131,4 +112,5 @@ extension LanguageReferenceData {
         )
       )
     """
+  }
 }

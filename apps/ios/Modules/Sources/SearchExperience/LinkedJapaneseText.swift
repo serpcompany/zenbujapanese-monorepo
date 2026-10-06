@@ -199,45 +199,55 @@ private struct LinkedTokenView: View {
       && wordKnowledge.isKnown(entry.id)
   }
 
+  private var wordColor: Color {
+    isHighlighted ? Color.accentColor : Color.primary
+  }
+
+  private var minimumHitRegionHeight: CGFloat? {
+    presentation.usesMinimumHitRegionHeight ? 44 : nil
+  }
+
+  private func rubyText(for entry: DictionaryEntry) -> some View {
+    JapaneseRubyText(
+      surface: token.surface,
+      reading: displayReading(for: entry),
+      exposesAccessibility: false,
+      displaysRomaji: false,
+      hidesFurigana: hidesFurigana(for: entry),
+      highlightsKanjiOnTap: false
+    )
+    .foregroundStyle(wordColor)
+  }
+
+  private var candidateLabel: some View {
+    Text(token.surface)
+      .font(.body)
+      .foregroundStyle(wordColor)
+      .wordUnderline(isHighlighted: isHighlighted)
+      .frame(minHeight: minimumHitRegionHeight, alignment: .bottom)
+      .contentShape(Rectangle())
+  }
+
   var body: some View {
     if let entry = token.entry {
       if presentation.usesDedicatedWordSelector {
-        JapaneseRubyText(
-          surface: token.surface,
-          reading: displayReading(for: entry),
-          exposesAccessibility: false,
-          displaysRomaji: false,
-          hidesFurigana: hidesFurigana(for: entry),
-          highlightsKanjiOnTap: false
-        )
-        .foregroundStyle(isHighlighted ? Color.accentColor : Color.primary)
-        .accessibilityElement(children: .ignore)
-        .accessibilityLabel(token.surface)
-        .accessibilityIdentifier(identifier)
+        rubyText(for: entry)
+          .accessibilityElement(children: .ignore)
+          .accessibilityLabel(token.surface)
+          .accessibilityIdentifier(identifier)
       } else {
         Button {
           openWord(entry)
         } label: {
-          JapaneseRubyText(
-            surface: token.surface,
-            reading: displayReading(for: entry),
-            exposesAccessibility: false,
-            displaysRomaji: false,
-            hidesFurigana: hidesFurigana(for: entry),
-            highlightsKanjiOnTap: false
-          )
-          .foregroundStyle(isHighlighted ? Color.accentColor : Color.primary)
-          .wordUnderline(
-            isHighlighted: isHighlighted,
-            isVisible: isHighlighted || !wordKnowledge.isKnown(entry.id)
-          )
-          .modifier(WordMeaning(meaning: meaning(for: entry)))
+          rubyText(for: entry)
+            .wordUnderline(
+              isHighlighted: isHighlighted,
+              isVisible: isHighlighted || !wordKnowledge.isKnown(entry.id)
+            )
+            .modifier(WordMeaning(meaning: meaning(for: entry)))
         }
         .buttonStyle(.plain)
-        .frame(
-          minHeight: presentation.usesMinimumHitRegionHeight ? 44 : nil,
-          alignment: .bottom
-        )
+        .frame(minHeight: minimumHitRegionHeight, alignment: .bottom)
         .contentShape(Rectangle())
         .accessibilityLabel("\(token.surface), \(entry.reading), \(entry.summary)")
         .accessibilityValue(isCurrentEntry ? "Current word" : "")
@@ -253,20 +263,10 @@ private struct LinkedTokenView: View {
         Button {
           openCandidates(token.surface, token.candidateEntries)
         } label: {
-          Text(token.surface)
-            .font(.body)
-            .foregroundStyle(isHighlighted ? Color.accentColor : Color.primary)
-            .wordUnderline(isHighlighted: isHighlighted)
-            .frame(
-              minHeight: presentation.usesMinimumHitRegionHeight ? 44 : nil,
-              alignment: .bottom
-            )
-            .contentShape(Rectangle())
+          candidateLabel
         }
         .buttonStyle(.plain)
-        .accessibilityLabel("\(token.surface), choose dictionary entry")
-        .accessibilityHint("Shows \(token.candidateEntries.count) possible dictionary entries")
-        .accessibilityIdentifier(identifier)
+        .candidateChoiceAccessibility(token: token, identifier: identifier)
       } else {
         Menu {
           ForEach(token.candidateEntries) { candidate in
@@ -277,21 +277,11 @@ private struct LinkedTokenView: View {
             }
           }
         } label: {
-          Text(token.surface)
-            .font(.body)
-            .foregroundStyle(isHighlighted ? Color.accentColor : Color.primary)
-            .wordUnderline(isHighlighted: isHighlighted)
-            .frame(
-              minHeight: presentation.usesMinimumHitRegionHeight ? 44 : nil,
-              alignment: .bottom
-            )
-            .contentShape(Rectangle())
+          candidateLabel
         }
         .buttonStyle(.plain)
         .contentShape(Rectangle())
-        .accessibilityLabel("\(token.surface), choose dictionary entry")
-        .accessibilityHint("Shows \(token.candidateEntries.count) possible dictionary entries")
-        .accessibilityIdentifier(identifier)
+        .candidateChoiceAccessibility(token: token, identifier: identifier)
       }
     } else {
       Text(token.surface)
@@ -337,6 +327,14 @@ private struct WordMeaning: ViewModifier {
 }
 
 extension View {
+  fileprivate func candidateChoiceAccessibility(
+    token: JapaneseTextToken, identifier: String
+  ) -> some View {
+    accessibilityLabel("\(token.surface), choose dictionary entry")
+      .accessibilityHint("Shows \(token.candidateEntries.count) possible dictionary entries")
+      .accessibilityIdentifier(identifier)
+  }
+
   fileprivate func wordUnderline(isHighlighted: Bool, isVisible: Bool = true) -> some View {
     padding(.bottom, 3)
       .overlay(alignment: .bottom) {

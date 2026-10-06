@@ -14,24 +14,10 @@ enum FrequencyPackArtifactContent {
   }
 
   static func mappingSHA256(_ database: OpaquePointer) throws -> String {
-    var statement: OpaquePointer?
-    guard
-      sqlite3_prepare_v2(
-        database,
-        "SELECT language_reference_id,rank,source_count,matched_form,mapping_relation,source_pos,source_record_digest FROM frequency_evidence ORDER BY language_reference_id",
-        -1,
-        &statement,
-        nil
-      ) == SQLITE_OK, let statement
-    else { throw sqliteError(database) }
-    defer { sqlite3_finalize(statement) }
-    var digest = SHA256()
-    while sqlite3_step(statement) == SQLITE_ROW {
-      guard let identifier = sqlite3_column_blob(statement, 0) else {
-        throw FrequencyPackError.invalidArtifact
-      }
-      digest.update(
-        data: Data(bytes: identifier, count: Int(sqlite3_column_bytes(statement, 0))))
+    try evidenceDigest(
+      database,
+      sql: "SELECT language_reference_id,rank,source_count,matched_form,mapping_relation,source_pos,source_record_digest FROM frequency_evidence ORDER BY language_reference_id"
+    ) { statement, digest in
       var rank = UInt64(sqlite3_column_int64(statement, 1)).bigEndian
       var count = UInt64(sqlite3_column_int64(statement, 2)).bigEndian
       digest.update(data: Data(bytes: &rank, count: MemoryLayout<UInt64>.size))
@@ -49,19 +35,24 @@ enum FrequencyPackArtifactContent {
       digest.update(
         data: Data(bytes: sourceDigest, count: Int(sqlite3_column_bytes(statement, 6))))
     }
-    return digest.finalize().hexString
   }
 
   static func levelMappingSHA256(_ database: OpaquePointer) throws -> String {
+    try evidenceDigest(
+      database,
+      sql: "SELECT language_reference_id, level FROM level_evidence ORDER BY language_reference_id"
+    ) { statement, digest in
+      var level = UInt64(sqlite3_column_int64(statement, 1)).bigEndian
+      digest.update(data: Data(bytes: &level, count: MemoryLayout<UInt64>.size))
+    }
+  }
+
+  private static func evidenceDigest(
+    _ database: OpaquePointer, sql: String,
+    updatingWithRow updateWithRow: (OpaquePointer, inout SHA256) throws -> Void
+  ) throws -> String {
     var statement: OpaquePointer?
-    guard
-      sqlite3_prepare_v2(
-        database,
-        "SELECT language_reference_id, level FROM level_evidence ORDER BY language_reference_id",
-        -1,
-        &statement,
-        nil
-      ) == SQLITE_OK, let statement
+    guard sqlite3_prepare_v2(database, sql, -1, &statement, nil) == SQLITE_OK, let statement
     else { throw sqliteError(database) }
     defer { sqlite3_finalize(statement) }
     var digest = SHA256()
@@ -71,8 +62,7 @@ enum FrequencyPackArtifactContent {
       }
       digest.update(
         data: Data(bytes: identifier, count: Int(sqlite3_column_bytes(statement, 0))))
-      var level = UInt64(sqlite3_column_int64(statement, 1)).bigEndian
-      digest.update(data: Data(bytes: &level, count: MemoryLayout<UInt64>.size))
+      try updateWithRow(statement, &digest)
     }
     return digest.finalize().hexString
   }
@@ -236,78 +226,59 @@ struct FrequencyPackArtifact: Sendable {
     if manifest.packKind == .level {
       return try levelEvidence(for: ids, in: database)
     }
-    var statement: OpaquePointer?
-    guard
-      sqlite3_prepare_v2(
-        database,
-        "SELECT rank, source_count, covered_source_rows, mapping_relation, matched_form, "
-          + "source_pos, lower(hex(source_record_digest)) "
-          + "FROM frequency_evidence WHERE language_reference_id = ?",
-        -1,
-        &statement,
-        nil
-      ) == SQLITE_OK,
-      let statement
-    else {
-      throw FrequencyPackError.sqlite(String(cString: sqlite3_errmsg(database)))
-    }
-    defer { sqlite3_finalize(statement) }
-    var results: [LanguageReferenceID: FrequencyLookupResult] = [:]
-    for id in ids {
-      sqlite3_reset(statement)
-      sqlite3_clear_bindings(statement)
-      guard let key = id.bytes else {
-        results[id] = .noEvidence(pack: manifest.disclosure)
-        continue
+    return try lookUpEvidence(
+      for: ids, in: database,
+      sql: "SELECT rank, source_count, covered_source_rows, mapping_relation, matched_form, "
+        + "source_pos, lower(hex(source_record_digest)) "
+        + "FROM frequency_evidence WHERE language_reference_id = ?"
+    ) { statement, id in
+      guard
+        let relation = FrequencyEvidence.MappingRelation(
+          rawValue: sqliteText(statement, 3))
+      else {
+        throw FrequencyPackError.invalidArtifact
       }
-      sqliteBind(key, at: 1, to: statement)
-      switch sqlite3_step(statement) {
-      case SQLITE_DONE:
-        results[id] = .noEvidence(pack: manifest.disclosure)
-      case SQLITE_ROW:
-        guard
-          let relation = FrequencyEvidence.MappingRelation(
-            rawValue: sqliteText(statement, 3))
-        else {
-          throw FrequencyPackError.invalidArtifact
-        }
-        results[id] = .evidence(
-          FrequencyEvidence(
-            pack: manifest.disclosure,
-            languageReferenceID: id,
-            rank: Int(sqlite3_column_int64(statement, 0)),
-            coveredSourceRows: Int(sqlite3_column_int64(statement, 2)),
-            sourceCount: Int(sqlite3_column_int64(statement, 1)),
-            sourceTotalTokens: manifest.sourceTotalTokens,
-            sourceDocuments: manifest.corpusDocuments,
-            sourceVideos: manifest.corpusVideos,
-            sourceChannels: manifest.corpusChannels,
-            matchedForm: sqliteText(statement, 4),
-            sourcePartOfSpeech: sqliteText(statement, 5).nilIfEmpty,
-            sourceRecordDigest: sqliteText(statement, 6),
-            mappingRelation: relation
-          )
+      return .evidence(
+        FrequencyEvidence(
+          pack: manifest.disclosure,
+          languageReferenceID: id,
+          rank: Int(sqlite3_column_int64(statement, 0)),
+          coveredSourceRows: Int(sqlite3_column_int64(statement, 2)),
+          sourceCount: Int(sqlite3_column_int64(statement, 1)),
+          sourceTotalTokens: manifest.sourceTotalTokens,
+          sourceDocuments: manifest.corpusDocuments,
+          sourceVideos: manifest.corpusVideos,
+          sourceChannels: manifest.corpusChannels,
+          matchedForm: sqliteText(statement, 4),
+          sourcePartOfSpeech: sqliteText(statement, 5).nilIfEmpty,
+          sourceRecordDigest: sqliteText(statement, 6),
+          mappingRelation: relation
         )
-      default:
-        throw FrequencyPackError.sqlite(String(cString: sqlite3_errmsg(database)))
-      }
+      )
     }
-    return results
   }
 
   private func levelEvidence(for ids: [LanguageReferenceID], in database: OpaquePointer) throws
     -> [LanguageReferenceID: FrequencyLookupResult]
   {
+    try lookUpEvidence(
+      for: ids, in: database,
+      sql: "SELECT level FROM level_evidence WHERE language_reference_id = ?"
+    ) { statement, id in
+      guard let level = JLPTLevel(rawValue: Int(sqlite3_column_int64(statement, 0))) else {
+        throw FrequencyPackError.invalidArtifact
+      }
+      return .level(
+        FrequencyLevelEvidence(pack: manifest.disclosure, languageReferenceID: id, level: level))
+    }
+  }
+
+  private func lookUpEvidence(
+    for ids: [LanguageReferenceID], in database: OpaquePointer, sql: String,
+    readingRow readRow: (OpaquePointer, LanguageReferenceID) throws -> FrequencyLookupResult
+  ) throws -> [LanguageReferenceID: FrequencyLookupResult] {
     var statement: OpaquePointer?
-    guard
-      sqlite3_prepare_v2(
-        database,
-        "SELECT level FROM level_evidence WHERE language_reference_id = ?",
-        -1,
-        &statement,
-        nil
-      ) == SQLITE_OK,
-      let statement
+    guard sqlite3_prepare_v2(database, sql, -1, &statement, nil) == SQLITE_OK, let statement
     else {
       throw FrequencyPackError.sqlite(String(cString: sqlite3_errmsg(database)))
     }
@@ -325,11 +296,7 @@ struct FrequencyPackArtifact: Sendable {
       case SQLITE_DONE:
         results[id] = .noEvidence(pack: manifest.disclosure)
       case SQLITE_ROW:
-        guard let level = JLPTLevel(rawValue: Int(sqlite3_column_int64(statement, 0))) else {
-          throw FrequencyPackError.invalidArtifact
-        }
-        results[id] = .level(
-          FrequencyLevelEvidence(pack: manifest.disclosure, languageReferenceID: id, level: level))
+        results[id] = try readRow(statement, id)
       default:
         throw FrequencyPackError.sqlite(String(cString: sqlite3_errmsg(database)))
       }

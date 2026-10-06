@@ -3,7 +3,14 @@ import Testing
 @testable import SearchExperience
 
 @Suite("Optional frequency dictionary lifecycle", .serialized)
-struct FrequencyPackLifecycleTests {
+final class FrequencyPackLifecycleTests {
+  private let storage = FileManager.default.temporaryDirectory
+    .appendingPathComponent("frequency-pack-lifecycle-\(UUID().uuidString)", isDirectory: true)
+
+  deinit {
+    try? FileManager.default.removeItem(at: storage)
+  }
+
   @Test("downloaded packs enable, rank in order, restore, reorder, disable, and remove")
   func installEnableRestoreReorderAndRemove() async throws {
     let catalog = try FrequencyPackCatalog.bundled()
@@ -11,12 +18,8 @@ struct FrequencyPackLifecycleTests {
     #expect(bundledIDs.map(\.rawValue) == ["zenbu.jlpt.waller.levels", "zenbu.tubelex.youtube.ja.unidic-3.1"])
     let bundled = try #require(catalog.packs.first { $0.bundled && $0.packKind == .rank })
     let jlpt = try #require(catalog.packs.first { $0.packKind == .level })
-    let optional = try #require(
-      catalog.packs.first { $0.packID.rawValue == "zenbu.jiten.anime.ja.ordered-v2" }
-    )
+    let optional = try animePack(in: catalog)
     let source = try animeSource()
-    let storage = temporaryStorage()
-    defer { try? FileManager.default.removeItem(at: storage) }
 
     let manager = try makeManager(catalog, storage: storage, source: source)
     let initial = try await manager.snapshot()
@@ -65,12 +68,8 @@ struct FrequencyPackLifecycleTests {
   @Test("a saved single active pack migrates to the only enabled pack")
   func legacyActivePackMigrates() async throws {
     let catalog = try FrequencyPackCatalog.bundled()
-    let optional = try #require(
-      catalog.packs.first { $0.packID.rawValue == "zenbu.jiten.anime.ja.ordered-v2" }
-    )
+    let optional = try animePack(in: catalog)
     let source = try animeSource()
-    let storage = temporaryStorage()
-    defer { try? FileManager.default.removeItem(at: storage) }
 
     let manager = try makeManager(catalog, storage: storage, source: source)
     try await manager.download(optional.packID)
@@ -89,8 +88,6 @@ struct FrequencyPackLifecycleTests {
   func bundledJLPTLevels() async throws {
     let catalog = try FrequencyPackCatalog.bundled()
     let jlpt = try #require(catalog.packs.first { $0.packKind == .level })
-    let storage = temporaryStorage()
-    defer { try? FileManager.default.removeItem(at: storage) }
 
     let manager = try makeManager(catalog, storage: storage, source: Data())
     #expect(try await manager.snapshot().enabledPackIDs.first == jlpt.packID)
@@ -115,8 +112,6 @@ struct FrequencyPackLifecycleTests {
     let catalog = try FrequencyPackCatalog.bundled()
     let jlpt = try #require(catalog.packs.first { $0.packKind == .level })
     let tubelex = try #require(catalog.packs.first { $0.bundled && $0.packKind == .rank })
-    let storage = temporaryStorage()
-    defer { try? FileManager.default.removeItem(at: storage) }
     try FileManager.default.createDirectory(at: storage, withIntermediateDirectories: true)
     try Data(#"{"enabledPackIDs":["\#(tubelex.packID.rawValue)"],"installedRecords":[]}"#.utf8)
       .write(to: storage.appendingPathComponent("state.json"))
@@ -133,6 +128,10 @@ struct FrequencyPackLifecycleTests {
     return LanguageReferenceID(rawValue: String(digest.prefix(32)))
   }
 
+  private func animePack(in catalog: FrequencyPackCatalog) throws -> FrequencyPackManifest {
+    try #require(catalog.packs.first { $0.packID.rawValue == "zenbu.jiten.anime.ja.ordered-v2" })
+  }
+
   private func animeSource() throws -> Data {
     let sourceURL = try #require(
       Bundle.module.url(
@@ -141,21 +140,10 @@ struct FrequencyPackLifecycleTests {
     return try Data(contentsOf: sourceURL)
   }
 
-  private func temporaryStorage() -> URL {
-    FileManager.default.temporaryDirectory
-      .appendingPathComponent("frequency-pack-lifecycle-\(UUID().uuidString)", isDirectory: true)
-  }
-
   private func makeManager(
     _ catalog: FrequencyPackCatalog, storage: URL, source: Data
   ) throws -> FrequencyPackManager {
-    try FrequencyPackManager(
-      catalog: catalog,
-      bundledArtifactURLs: try catalog.bundledArtifactURLs(),
-      languageDataURL: try FrequencyPackCatalog.languageDataURL(),
-      storageDirectory: storage,
-      download: { _ in source }
-    )
+    try .bundled(catalog, storageDirectory: storage, download: { _ in source })
   }
 
   private func packID(_ result: FrequencyLookupResult?) -> FrequencyPackID? {

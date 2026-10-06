@@ -54,15 +54,7 @@ private struct WordDetailObserver {
   let frequency: FrequencyPackManager
 
   init() async throws {
-    let catalog = try FrequencyPackCatalog.bundled()
-    frequency = try FrequencyPackManager(
-      catalog: catalog,
-      bundledArtifactURLs: try catalog.bundledArtifactURLs(),
-      languageDataURL: try FrequencyPackCatalog.languageDataURL(),
-      storageDirectory: FileManager.default.temporaryDirectory
-        .appending(path: "WordDetailConformance-\(UUID().uuidString)"),
-      download: { _ in throw CancellationError() }
-    )
+    frequency = try .freshInstall(storagePrefix: "WordDetailConformance")
     let availability = await textAnalysisClient.availability()
     guard availability == .full else { throw WordDetailObserverError.textAnalysisUnavailable }
   }
@@ -161,9 +153,8 @@ private struct WordDetailObserver {
             tokens: tokens.map { token in
               WordDetailCase.FormToken(
                 surface: token.surface,
-                entry: token.entry?.id.rawValue,
-                candidates: token.entry == nil && !token.candidateEntries.isEmpty
-                  ? token.candidateEntries.map(\.id.rawValue) : nil,
+                entry: token.recordedEntryID,
+                candidates: token.recordedCandidateIDs,
                 highlighted: LinkedJapaneseText.matchesQuery(token, queryRanges: ranges)
                   ? true : nil
               )
@@ -208,9 +199,8 @@ private struct WordDetailObserver {
           tokens: tokens.map { token in
             WordDetailCase.Token(
               surface: token.surface,
-              entry: token.entry?.id.rawValue,
-              candidates: token.entry == nil && !token.candidateEntries.isEmpty
-                ? token.candidateEntries.map(\.id.rawValue) : nil,
+              entry: token.recordedEntryID,
+              candidates: token.recordedCandidateIDs,
               pageWord: token.represents(entry) ? true : nil
             )
           }
