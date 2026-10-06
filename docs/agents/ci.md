@@ -226,9 +226,10 @@ rollback's comes from an image the run pulled. The whole deploy is in
 jobs:
 
 - `contracts` runs the data tools' contract tests (`apps/ios/Tools/tests/`) on Linux, with every
-  Git LFS file under `apps/ios`: they check the bundled packs and indexes against their pinned
-  sources, import reports, and the bundled dictionary ([`ios.md`](ios.md)). Its LFS cache is keyed
-  on the pointers of every LFS pattern under `apps/ios`, apart from the service's.
+  Git LFS file under `apps/ios` but the archived source snapshots (`LFS_SNAPSHOTS`), which only a
+  rebuild reads: they check the bundled packs and indexes against their pinned sources, import
+  reports, and the bundled dictionary ([`ios.md`](ios.md)). Its LFS cache is keyed on the pointers
+  of the LFS patterns it fetches.
 - `swift` runs `SearchExperienceTests` with `xcodebuild` on the first iPhone Simulator of the
   newest iOS runtime, on `macos-26` (Xcode 26, for the iOS 26 SDK the package needs; arm64, which
   the `sudachi-swift` binary needs). A macOS minute costs about ten times a Linux one, so it runs
@@ -251,8 +252,9 @@ and skips the check.
 | Pair | Swift sources (`<name>.swift` in `apps/ios/Modules/Sources/SearchExperience/`) | TypeScript ports |
 | --- | --- | --- |
 | search | `LookupClient`, `LookupDatabase`, `LookupEnglishRanking`, `LookupJapaneseRanking`, `LookupRankedEntries`, `SearchQuery`, `DictionaryRanking`, `JapaneseDeinflection`, `DictionaryEntry`, `JapaneseTextAnalysisClient` | Everything in `packages/dictionary-core/src/search/` |
-| examples | `ExampleSentenceClient`, `ExampleSentenceDatabase`, `ExampleSentenceEntryRetrieval`, `ExampleSentenceModels`, `ExampleSentenceSearchRetrieval`, `JapaneseTextAnalysisClient`, `JapaneseInflectionGrouping`, `KuromojiMorphologyClient`, `LinkedJapaneseText` (the conjugated form's highlight) | The `.ts` files in `packages/dictionary-core/src/examples/`; `example-retrieval.ts`, `example-search.ts`, `word-examples.ts`, `search-examples.ts`, and `lookup.ts` in `packages/dictionary-core/src/artifact/`; `apps/dictionary-api/src/kuromoji.ts` |
+| examples | `ExampleSentenceClient`, `ExampleSentenceDatabase`, `ExampleSentenceEntryRetrieval`, `ExampleSentenceModels`, `ExampleSentenceSearchRetrieval`, `JapaneseTextAnalysisClient`, `JapaneseInflectionGrouping`, `KuromojiMorphologyClient`, `LinkedJapaneseText` (the conjugated form's highlight) | The `.ts` files in `packages/dictionary-core/src/examples/`; `example-retrieval.ts`, `example-search.ts`, `word-examples.ts`, and `lookup.ts` in `packages/dictionary-core/src/artifact/`; `apps/dictionary-api/src/kuromoji.ts` |
 | detail | `KanjiReadingSplitter`, `JapaneseRubyText` (the per-kanji furigana highlight), `WordDetailView`, `WordHeadline`, `WordDetailSections`, `PitchAccentBadge` (`PitchContourLayout`), `FrequencyDisclosure` (`FrequencyDisclosurePresentation`), `FrequencyPack`, `FrequencyPresentation`, `JapaneseConjugationClient`, `ConjugationsView` | `kanji-split.ts`, `pitch.ts`, `frequency.ts`, `conjugation.ts`, and `conjugation-table.ts` in `packages/dictionary-core/src/detail/` |
+| results | `SearchResultsView`, `SearchResultsScreen` (the Example Sentences row's count), `SearchResultFrequencyOrdering` | The `.ts` files in `packages/dictionary-core/src/results/`, and `search-examples.ts` in `packages/dictionary-core/src/artifact/` |
 
 Each pair is one `check` call in the workflow's script: the pair's name, a pattern for its Swift
 files, a pattern for its TypeScript files, and where the port is, which the error names. To change

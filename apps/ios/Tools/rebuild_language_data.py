@@ -2,7 +2,6 @@
 from __future__ import annotations
 
 import argparse
-import hashlib
 import json
 import shutil
 import sqlite3
@@ -11,6 +10,8 @@ import sys
 import tempfile
 import urllib.request
 from pathlib import Path
+
+from language_data_tools import file_sha256
 
 TOOLS = Path(__file__).resolve().parent
 IOS = TOOLS.parent
@@ -29,14 +30,11 @@ FIRST_EVIDENCE_ROW = (
 TUBELEX = "zenbu.tubelex.youtube.ja.unidic-3.1"
 WIKIPEDIA = "zenbu.wikipedia.written.ja.unidic-3.1"
 JLPT = "zenbu.jlpt.waller.levels"
-
-
-def sha256(path: Path) -> str:
-    digest = hashlib.sha256()
-    with path.open("rb") as source:
-        for chunk in iter(lambda: source.read(1024 * 1024), b""):
-            digest.update(chunk)
-    return digest.hexdigest()
+CHECKED_ARTIFACT_FIELDS = {
+    "packVersion": "pack_version",
+    "coveredSourceRows": "covered_source_rows",
+    "sourceTotalTokens": "source_total_tokens",
+}
 
 
 def only(pattern: str) -> Path:
@@ -75,11 +73,13 @@ def fixed_download(record_path: Path, download: bool) -> Path:
     path = SOURCES / download_name(pinned["download_url"])
     if not path.exists() and download:
         print(f"downloading {pinned['download_url']}", file=sys.stderr)
-        with urllib.request.urlopen(pinned["download_url"], timeout=600) as response, path.open("wb") as output:
+        partial = path.with_name(f"{path.name}.part")
+        with urllib.request.urlopen(pinned["download_url"], timeout=600) as response, partial.open("wb") as output:
             shutil.copyfileobj(response, output)
+        partial.replace(path)
     if not path.exists():
         raise SystemExit(f"{path.name} is missing: run again with --download, or fetch {pinned['download_url']}")
-    if sha256(path) != pinned["sha256"]:
+    if file_sha256(path) != pinned["sha256"]:
         raise SystemExit(f"{path.name} doesn't match {record_path.name}")
     return path
 
@@ -222,27 +222,41 @@ def build_dependents(unidic: Path, scratch: Path) -> Path:
     return wikipedia_artifact
 
 
-def first_evidence_row(artifact: Path) -> dict:
+def artifact_facts(artifact: Path) -> tuple[dict, dict]:
     database = sqlite3.connect(f"file:{artifact}?mode=ro", uri=True)
     try:
         identifier, rank = database.execute(FIRST_EVIDENCE_ROW).fetchone()
+        metadata = dict(database.execute("SELECT key, value FROM metadata"))
     finally:
         database.close()
-    return {"languageReferenceID": identifier, "rank": rank}
+    return {"languageReferenceID": identifier, "rank": rank}, metadata
+
+
+def same_source(manifest: dict, pack_report: dict) -> None:
+    if pack_report["sourceSHA256"] != manifest["sourceSHA256"]:
+        raise SystemExit(
+            f"{manifest['packID']} has a new source: update its manifest's sourceSHA256, sourceBytes, "
+            "sourceSnapshot, and downloadURL (publishing a downloadable pack's source), then rebuild"
+        )
 
 
 def rank_pack_fields(manifest: dict, pack_report: dict, artifact: Path, bundled: bool) -> dict:
+    same_source(manifest, pack_report)
+    smoke_test, metadata = artifact_facts(artifact)
     updated = dict(manifest)
     for key, value in pack_report.items():
         if key in manifest:
             updated[key] = value
     updated["offlineImporterSHA256"] = pack_report["importerSHA256"]
     updated["bundledArtifactSHA256"] = pack_report["artifactSHA256"] if bundled else None
-    updated["smokeTest"] = first_evidence_row(artifact)
+    updated["smokeTest"] = smoke_test
+    for field, key in CHECKED_ARTIFACT_FIELDS.items():
+        updated[field] = type(manifest[field])(metadata[key])
     return updated
 
 
 def level_pack_fields(manifest: dict, pack_report: dict) -> dict:
+    same_source(manifest, pack_report)
     updated = dict(manifest)
     for key, value in pack_report.items():
         if key in manifest:
@@ -276,20 +290,28 @@ def update_catalog(wikipedia_artifact: Path) -> None:
     CATALOG.write_text(json.dumps(catalog, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
 
 
+def committed_catalog() -> dict:
+    path = CATALOG.relative_to(REPOSITORY).as_posix()
+    shown = subprocess.run(
+        ["git", "show", f"HEAD:{path}"], cwd=REPOSITORY, capture_output=True, text=True, check=True
+    )
+    return json.loads(shown.stdout)
+
+
 def build_jiten(archives: Path) -> list[str]:
     before = {
         manifest["packID"]: manifest["sourceSHA256"]
-        for manifest in json.loads(CATALOG.read_text(encoding="utf-8"))["packs"]
+        for manifest in committed_catalog()["packs"]
         if manifest["packID"].startswith("zenbu.jiten.")
     }
     run("build_jiten_frequency_packs.py", "--out-dir", archives)
     changed = []
     for pack_id, source_sha256 in sorted(before.items()):
         archive = archives / f"{pack_id}.json.zip"
-        if sha256(archive) != source_sha256:
+        if file_sha256(archive) != source_sha256:
             changed.append(str(archive))
     anime = archives / "zenbu.jiten.anime.ja.ordered-v2.json.zip"
-    if sha256(anime) != sha256(ANIME_FIXTURE):
+    if file_sha256(anime) != file_sha256(ANIME_FIXTURE):
         shutil.copyfile(anime, ANIME_FIXTURE)
     return changed
 

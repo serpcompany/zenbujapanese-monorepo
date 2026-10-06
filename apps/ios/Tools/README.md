@@ -28,8 +28,12 @@ zlib decides the Jiten ZIPs' bytes. uv's standalone build pins all three, so a r
 same sources gives the same files on any Mac.
 
 The Jiten source ZIPs are served from the CDN at URLs named by their SHA-256, so a rebuild must not
-change them. If one changes, the script fails; run it again with `--jiten-sources <dir>` and
-publish them ([`ios.md`](../../../docs/agents/ios.md), the frequency packs) before merging.
+change them: the script compares them with the last commit's catalog. If one changes, it fails;
+run it again with `--jiten-sources <dir>` and publish them
+([`ios.md`](../../../docs/agents/ios.md), the frequency packs) before merging. A new TUBELEX,
+Wikipedia, or JLPT source fails it too, until its manifest names the source's SHA-256, bytes,
+snapshot, and download URL; the script copies everything else from the import reports and the
+built artifacts.
 
 After a rebuild, re-record the five conformance suites and review their diffs, then run
 `SearchExperienceTests` ([`ios.md`](../../../docs/agents/ios.md), Current verification boundary),
@@ -49,15 +53,19 @@ record: JMdict's as `JMdict_e-<date>.gz`, and the others in a folder named like 
    Tatoeba's `aggregate_sha256` is the SHA-256 of its seven files' SHA-256s, each followed by LF.
 2. Delete the previous record and folder. The rebuild refuses a kind with two records, and
    replaces the previous snapshot's import report.
-3. For a new JMdict, update the evidence counts in `jmdict_entries.py` to the new export's.
+3. Name the new records in `apps/ios/LanguageData/Sources/README.md` and, for EDRDG's files,
+   `EDRDG-ATTRIBUTION.md`, which ships in the language-data release. For a new JMdict, also update
+   the evidence counts in `jmdict_entries.py` to the new export's.
 4. Rebuild everything, re-record the suites, and list in the pull request what changed for
    learners: entries, examples added and removed, and kanji.
 
 ## Provenance
 
-Each tool records the SHA-256 of itself and the modules it uses in what it builds, and the
-contract tests, the app, and the language-data pipeline check those records, so editing a tool
-means rebuilding everything it built. `LanguageReferenceData.sqlite3`'s metadata, its import
+The importers record their own SHA-256, and some of the modules they use, in what they build, and
+the contract tests, the app, and the language-data pipeline check those records, so editing a tool
+means rebuilding everything it built. Not every module a tool imports is recorded:
+`import_jlpt_level_pack.py` records only itself, `import_compound_pitch.py` not `unidic_adapter.py`,
+and `build_jiten_frequency_packs.py` not `analyze_ordered_json_frequency_lists.py`. `LanguageReferenceData.sqlite3`'s metadata, its import
 report, and `DictionaryRankingArtifactContract.json` record six: `import_tool_sha256`, the
 `tatoeba_adapter.py`, `unidic_adapter.py`, `dictionary_ranking_adapter.py`, and
 `dictionary_ranking_contract.py` hashes, and `shared_tooling_sha256` for `language_data_tools.py`.
