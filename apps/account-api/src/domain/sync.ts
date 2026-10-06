@@ -2,7 +2,14 @@ import { createHash } from 'node:crypto'
 import type { Cursors } from './cursor'
 import { type Profile, type Rejection, type RejectionCode, rejection } from './profile'
 import { updateProfile, usernameTaken } from './profile-update'
-import type { AccountStore, EntityType, JournalEntry, LockedAccount, MutationRecord } from './store'
+import type {
+  AccountStore,
+  EntityType,
+  JournalEntry,
+  LockedAccount,
+  MutationRecord,
+  RecordedMutation
+} from './store'
 
 export const syncLimits = { mutations: 50, changes: { standard: 100, most: 500 } } as const
 
@@ -149,12 +156,15 @@ function resultOf(id: string, outcome: Outcome): MutationResult {
   return { id, status: 'rejected', error: outcome.rejection }
 }
 
-function replayed(record: MutationRecord, account: LockedAccount): Outcome {
-  if (record.outcome === 'applied') {
-    return { status: 'applied', version: record.resultingServerVersion ?? account.profile.version }
+const isRejectionCode = (code: string | null): code is RejectionCode =>
+  code !== null && Object.hasOwn(replayedMessages, code)
+
+function replayed(record: RecordedMutation, account: LockedAccount): Outcome {
+  if (record.outcome === 'applied' && record.resultingServerVersion !== null) {
+    return { status: 'applied', version: record.resultingServerVersion }
   }
   if (record.outcome === 'conflict') return { status: 'conflict', current: account.profile }
-  const code = record.errorCode ?? 'invalid_mutation'
+  const code = isRejectionCode(record.errorCode) ? record.errorCode : 'invalid_mutation'
   return { status: 'rejected', rejection: rejection(code, replayedMessages[code]) }
 }
 
@@ -215,6 +225,7 @@ async function changesIn(
 
 export function syncer(store: AccountStore, cursors: Cursors) {
   return async (userId: string, request: SyncRequest): Promise<SyncAnswer> => {
+    if (!(await store.profile(userId))) return { status: 'no_account' }
     const after = request.cursor ? cursors.decode(userId, request.cursor) : 0
     if (after === null || after > (await store.journalHead())) return { status: 'invalid_cursor' }
     const results: MutationResult[] = []

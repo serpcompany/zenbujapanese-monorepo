@@ -255,6 +255,52 @@ describe('POST /v1/sync', () => {
     expect((await accounts.me(learner.token)).body).toMatchObject({ version: 1 })
   })
 
+  test("refuses a token for an account that's gone", async () => {
+    const learner = await accounts.learner('sync-gone@example.com')
+    await accounts.running.service.rows(`delete from users where id = '${learner.userId}'`)
+    const refused = await accounts.sync(learner.token, { mutations: [rename('Gone', 1)] })
+    expect(refused).toMatchObject({ status: 401, body: { error: { code: 'unauthorized' } } })
+  })
+
+  test('refuses what it could not store or hash: control characters, and fields that nest', async () => {
+    const learner = await accounts.learner('unsafe@example.com')
+    const unsafe = [
+      { ...rename('A', 1), entity: 'pro\u0000file' },
+      { ...rename('A', 1), operation: 'up date' },
+      { ...rename('A', 1), entityId: `${learner.userId}\u0000` },
+      { ...rename('A', 1), fields: { name: { nested: { deeper: 'x' } } } },
+      { ...rename('A', 1), fields: { name: ['A'] } }
+    ]
+    for (const mutation of unsafe) {
+      const refused = await accounts.sync(learner.token, { mutations: [mutation] })
+      expect(refused.status, JSON.stringify(mutation)).toBe(400)
+    }
+    expect((await accounts.me(learner.token)).body).toMatchObject({ version: 1 })
+  })
+
+  test('answers a batch sent again after it failed partway: what applied stands, and the rest apply', async () => {
+    const learner = await accounts.learner('partway@example.com')
+    const failOnSecond = `create function fail_second() returns trigger language plpgsql as $$
+      begin if new.client_mutation_id = 'partway-0002' then raise exception 'lost'; end if; return new; end $$;
+      create trigger fail_second before insert on sync_mutations for each row execute function fail_second();`
+    await accounts.running.service.client.exec(failOnSecond)
+    const batch = {
+      mutations: [rename('First', 1, 'partway-0001'), rename('Second', 2, 'partway-0002')]
+    }
+    vi.spyOn(process.stderr, 'write').mockReturnValue(true)
+    const failed = await accounts.sync(learner.token, batch)
+    expect(failed).toMatchObject({ status: 500, body: { error: { code: 'internal' } } })
+    await accounts.running.service.client.exec(
+      'drop trigger fail_second on sync_mutations; drop function fail_second();'
+    )
+    expect((await accounts.me(learner.token)).body).toMatchObject({ name: 'First', version: 2 })
+    const retried = await synced(learner, batch)
+    expect(retried.results).toEqual([
+      { id: 'partway-0001', status: 'applied', version: 2 },
+      { id: 'partway-0002', status: 'applied', version: 3 }
+    ])
+  })
+
   test("logs each request's route and status, and never the learner's profile or tokens", async () => {
     const learner = await accounts.learner('quiet-logs@example.com')
     const lines = logged()

@@ -11,7 +11,8 @@ readonly usage="usage: backups.sh                                (back up every 
        backups.sh restore <environment>/<backup>.dump <new database>
 
 A restore downloads one backup into a new, empty database beside the others. It never writes to a
-database that exists, so it can't overwrite one an environment uses."
+database that exists, so it can't overwrite one an environment uses. It moves the restored sync
+journal and profile versions past any the apps saw, so they resync rather than miss a change."
 
 log() {
   logger --tag zenbujapanese-account-backups -- "$*" 2>/dev/null || true
@@ -120,6 +121,12 @@ restore() {
     log "restore: pg_restore of $key into $target failed; $target is left for a look"
     return 1
   }
+  if [ "$(psql_value "$target" "select to_regprocedure('sync_after_restore()') is not null")" = t ]; then
+    psql_value "$target" 'select sync_after_restore()' >/dev/null || {
+      log "restore: moving the sync journal and profile versions in $target past the backup's failed; run no environment on it"
+      return 1
+    }
+  fi
   tables="$(psql_value "$target" "select count(*) from information_schema.tables where table_schema not in ('pg_catalog', 'information_schema')")"
   migrations=0
   if [ "$(psql_value "$target" "select to_regclass('drizzle.__drizzle_migrations') is not null")" = t ]; then

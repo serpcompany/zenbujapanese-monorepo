@@ -31,6 +31,10 @@ const unauthorized = json(
 )
 const tooLarge = json(ErrorSchema, `\`too_large\`: the body is over ${bodyLimitKb} KB.`)
 const malformed = json(ErrorSchema, '`bad_request`: the body is not JSON, or not this shape.')
+const failed = json(
+  ErrorSchema,
+  '`internal`: the service failed, and nothing says why. Try again later, backing off. In a sync, the mutations before the failure stand, and sending the request again answers them as before.'
+)
 
 const unauthorizedBody = errorBody(
   'unauthorized',
@@ -77,7 +81,7 @@ const readProfile = createRoute({
   path: '/v1/me',
   summary: "The signed-in account's profile",
   security,
-  responses: { 200: json(ProfileSchema, 'The profile.'), 401: unauthorized }
+  responses: { 200: json(ProfileSchema, 'The profile.'), 401: unauthorized, 500: failed }
 })
 
 const changeProfile = createRoute({
@@ -98,7 +102,8 @@ const changeProfile = createRoute({
       z.union([ProfileConflictSchema, ErrorSchema]),
       '`version_conflict`, with `current`: the profile changed since `baseVersion`. `username_taken`: another account has that username.'
     ),
-    413: tooLarge
+    413: tooLarge,
+    500: failed
   }
 })
 
@@ -120,7 +125,8 @@ const sync = createRoute({
       ErrorSchema,
       "`invalid_cursor`: the cursor isn't one this service gave this account, or is past what it holds, as after a restore. Nothing was applied. Sync again with no cursor, and keep what comes back."
     ),
-    413: tooLarge
+    413: tooLarge,
+    500: failed
   }
 })
 

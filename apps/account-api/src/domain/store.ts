@@ -10,7 +10,7 @@ export interface JournalEntry {
   operation: string
 }
 
-export type MutationOutcome = 'applied' | 'conflict' | 'rejected'
+type MutationOutcome = 'applied' | 'conflict' | 'rejected'
 
 export interface MutationRecord {
   clientMutationId: string
@@ -23,11 +23,16 @@ export interface MutationRecord {
   errorCode: RejectionCode | null
 }
 
+export type RecordedMutation = Omit<MutationRecord, 'outcome' | 'errorCode'> & {
+  outcome: string
+  errorCode: string | null
+}
+
 export interface LockedAccount {
   readonly profile: Profile
   saveProfile(next: EditableProfile, version: number): Promise<Profile | 'username_taken'>
   journal(entry: Omit<JournalEntry, 'sequence'>): Promise<void>
-  recordedMutation(clientMutationId: string): Promise<MutationRecord | null>
+  recordedMutation(clientMutationId: string): Promise<RecordedMutation | null>
   recordMutation(record: MutationRecord): Promise<void>
 }
 

@@ -6,6 +6,9 @@ import { drizzle } from 'drizzle-orm/pglite'
 import { migrate } from 'drizzle-orm/pglite/migrator'
 import { describe, expect, test } from 'vitest'
 import { migrationsFolder as migrations } from '../config'
+import { createAccounts } from '../domain/accounts'
+import { cursorKey, cursors } from '../domain/cursor'
+import { accountStore } from './accounts'
 import { answers } from './database'
 
 const journalOf = (folder: string) =>
@@ -122,6 +125,35 @@ describe('the migrations', () => {
       "select (select count(*) from sync_changes where user_id = 'u1')::int as journal, (select count(*) from sync_mutations where user_id = 'u1')::int as mutations"
     )
     expect(left.rows).toEqual([{ journal: 0, mutations: 0 }])
+    await client.close()
+  })
+
+  test('move every profile and the journal past a restored backup, so writes made before it conflict and apps hear of it', async () => {
+    const client = await migrated()
+    const accounts = createAccounts(accountStore(drizzle(client)), cursors(cursorKey('test')))
+    await client.query("insert into users (id, name, email) values ('u1', '', 'u1@example.com')")
+    await accounts.updateProfile('u1', 1, { name: 'In the backup' })
+    const synced = await accounts.sync('u1', {})
+    expect(synced.status).toBe('synced')
+    const cursor = synced.status === 'synced' ? synced.cursor : ''
+
+    await client.query('select sync_after_restore()')
+
+    for (const seen of [2, 3]) {
+      expect(await accounts.updateProfile('u1', seen, { name: 'Sent again' })).toMatchObject({
+        status: 'conflict',
+        profile: { name: 'In the backup', version: 1_000_002 }
+      })
+    }
+    expect(await accounts.sync('u1', { cursor })).toMatchObject({
+      status: 'synced',
+      changes: [{ entity: 'profile', version: 1_000_002 }]
+    })
+    await client.query("insert into users (id, name, email) values ('u2', '', 'u2@example.com')")
+    const journal = await client.query<{ sequence: number }>(
+      "select sequence from sync_changes where user_id = 'u2'"
+    )
+    expect(Number(journal.rows[0]?.sequence)).toBeGreaterThan(1_000_000_000)
     await client.close()
   })
 })

@@ -1,6 +1,5 @@
 import { and, asc, eq, gt, max, sql } from 'drizzle-orm'
-import type { RejectionCode } from '../domain/profile'
-import type { AccountStore, LockedAccount, MutationOutcome } from '../domain/store'
+import type { AccountStore, LockedAccount } from '../domain/store'
 import type { Drizzle } from './database'
 import { syncChanges, syncMutations, users } from './schema'
 
@@ -77,13 +76,7 @@ export function accountStore(db: Drizzle): AccountStore {
                   eq(syncMutations.clientMutationId, clientMutationId)
                 )
               )
-            return record
-              ? {
-                  ...record,
-                  outcome: record.outcome as MutationOutcome,
-                  errorCode: record.errorCode as RejectionCode | null
-                }
-              : null
+            return record ?? null
           },
           async recordMutation(record) {
             await tx.insert(syncMutations).values({ userId, ...record })

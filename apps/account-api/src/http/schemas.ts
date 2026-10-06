@@ -60,6 +60,8 @@ export const ProfileConflictSchema = ErrorSchema.extend({ current: ProfileSchema
   { description: 'The profile changed since `baseVersion`. `current` is the profile as it is now.' }
 )
 
+const nameLike = /^[A-Za-z][A-Za-z0-9_-]{0,63}$/
+
 const MutationSchema = z
   .object({
     id: z
@@ -67,24 +69,26 @@ const MutationSchema = z
       .regex(/^[A-Za-z0-9_-]{8,64}$/)
       .openapi({
         description:
-          'A client-made ID, unique for each mutation, such as a UUID. Sending the same ID again never applies it twice: the answer is the first result. Reusing an ID for a different mutation is rejected with `mutation_id_reused`.'
+          'A client-made ID, unique for each mutation, such as a UUID. Sending the same mutation again under its ID never applies it twice, and gets the same outcome: applied at the same version, a conflict with the entity as it is then, or a rejection with the same `error.code`. Reusing an ID for a different mutation is rejected with `mutation_id_reused`.'
       }),
     entity: z
       .string()
-      .min(1)
-      .max(64)
+      .regex(nameLike)
       .openapi({ description: 'The entity type. Only `profile` today; any other is rejected.' }),
-    operation: z.string().min(1).max(64).openapi({ description: 'For `profile`, only `update`.' }),
+    operation: z.string().regex(nameLike).openapi({ description: 'For `profile`, only `update`.' }),
     entityId: z
       .string()
-      .min(1)
-      .max(200)
+      .regex(/^[\x21-\x7e]{1,200}$/)
       .optional()
       .openapi({ description: "For `profile`, the account's ID, or left out." }),
     baseVersion: baseVersionSchema.optional(),
-    fields: z.record(z.string(), z.unknown()).optional().openapi({
-      description: 'For a `profile` update, `name`, `username`, or both, as in PATCH /v1/me.'
-    })
+    fields: z
+      .record(z.string().max(64), z.union([z.string(), z.number(), z.boolean(), z.null()]))
+      .optional()
+      .openapi({
+        description:
+          'For a `profile` update, `name`, `username`, or both, as in PATCH /v1/me. Each value is a string, number, boolean, or null.'
+      })
   })
   .openapi('Mutation')
 

@@ -327,24 +327,21 @@
           "id": {
             "type": "string",
             "pattern": "^[A-Za-z0-9_-]{8,64}$",
-            "description": "A client-made ID, unique for each mutation, such as a UUID. Sending the same ID again never applies it twice: the answer is the first result. Reusing an ID for a different mutation is rejected with `mutation_id_reused`."
+            "description": "A client-made ID, unique for each mutation, such as a UUID. Sending the same mutation again under its ID never applies it twice, and gets the same outcome: applied at the same version, a conflict with the entity as it is then, or a rejection with the same `error.code`. Reusing an ID for a different mutation is rejected with `mutation_id_reused`."
           },
           "entity": {
             "type": "string",
-            "minLength": 1,
-            "maxLength": 64,
+            "pattern": "^[A-Za-z][A-Za-z0-9_-]{0,63}$",
             "description": "The entity type. Only `profile` today; any other is rejected."
           },
           "operation": {
             "type": "string",
-            "minLength": 1,
-            "maxLength": 64,
+            "pattern": "^[A-Za-z][A-Za-z0-9_-]{0,63}$",
             "description": "For `profile`, only `update`."
           },
           "entityId": {
             "type": "string",
-            "minLength": 1,
-            "maxLength": 200,
+            "pattern": "^[\\x21-\\x7e]{1,200}$",
             "description": "For `profile`, the account's ID, or left out."
           },
           "baseVersion": {
@@ -354,8 +351,23 @@
           },
           "fields": {
             "type": "object",
-            "additionalProperties": {},
-            "description": "For a `profile` update, `name`, `username`, or both, as in PATCH /v1/me."
+            "additionalProperties": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "boolean"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "description": "For a `profile` update, `name`, `username`, or both, as in PATCH /v1/me. Each value is a string, number, boolean, or null."
           }
         },
         "required": [
@@ -445,6 +457,16 @@
                 }
               }
             }
+          },
+          "500": {
+            "description": "`internal`: the service failed, and nothing says why. Try again later, backing off. In a sync, the mutations before the failure stand, and sending the request again answers them as before.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
           }
         }
       },
@@ -523,6 +545,16 @@
                 }
               }
             }
+          },
+          "500": {
+            "description": "`internal`: the service failed, and nothing says why. Try again later, backing off. In a sync, the mutations before the failure stand, and sending the request again answers them as before.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
           }
         }
       }
@@ -589,6 +621,16 @@
           },
           "413": {
             "description": "`too_large`: the body is over 64 KB.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "`internal`: the service failed, and nothing says why. Try again later, backing off. In a sync, the mutations before the failure stand, and sending the request again answers them as before.",
             "content": {
               "application/json": {
                 "schema": {

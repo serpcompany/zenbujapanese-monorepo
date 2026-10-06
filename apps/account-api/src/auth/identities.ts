@@ -1,5 +1,6 @@
 import type { BetterAuthOptions } from 'better-auth'
 import { APIError } from 'better-auth/api'
+import { isRejection, normalizeName } from '../domain/profile'
 import type { Mailer } from '../email/mailer'
 import { signInAddedMessage } from '../email/sign-in-added'
 
@@ -14,6 +15,11 @@ const providerTokens = {
   scope: null
 }
 
+const profileName = (raw: unknown) => {
+  const name = normalizeName(raw)
+  return isRejection(name) ? '' : name
+}
+
 export function identityHooks(mailer: Mailer) {
   return {
     user: {
@@ -26,6 +32,7 @@ export function identityHooks(mailer: Mailer) {
                 "That Apple or Google account's email isn't verified, so it can't make an account."
             })
           }
+          return { data: { ...user, name: profileName(user.name) } }
         }
       }
     },

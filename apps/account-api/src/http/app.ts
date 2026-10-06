@@ -58,17 +58,13 @@ export function createApp(options: AppOptions) {
     maxAge: 600
   })
   for (const path of ['/v1/auth/*', '/v1/health', ...accountPaths]) app.use(path, crossOrigin)
-  for (const path of accountPaths) {
-    app.use(path, requireAccount(options.verifyAccessToken))
-    app.use(
-      path,
-      bodyLimit({
-        maxSize: bodyLimitKb * 1024,
-        onError: context =>
-          context.json(errorBody('too_large', `The body is over ${bodyLimitKb} KB.`), 413)
-      })
-    )
-  }
+  for (const path of accountPaths) app.use(path, requireAccount(options.verifyAccessToken))
+  const limitedBody = bodyLimit({
+    maxSize: bodyLimitKb * 1024,
+    onError: context =>
+      context.json(errorBody('too_large', `The body is over ${bodyLimitKb} KB.`), 413)
+  })
+  for (const path of ['/v1/auth/*', ...accountPaths]) app.use(path, limitedBody)
 
   app.get('/healthz', async context =>
     (await databaseReady())

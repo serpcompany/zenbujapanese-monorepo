@@ -59,6 +59,39 @@ describe('GET /v1/me', () => {
     expect((await accounts.me(learner.token)).status).toBe(401)
   })
 
+  test('holds a name given at sign-up to the profile rules, and ignores fields sign-up has no say in', async () => {
+    const signUp = async (email: string, extra: Record<string, unknown>) => {
+      const otp = await accounts.running.as.emailCode(email)
+      const signedIn = await accounts.running.service.call('/v1/auth/sign-in/email-otp', {
+        body: { email, otp, ...extra }
+      })
+      expect(signedIn.status).toBe(200)
+      const token = await accounts.running.service.call('/v1/auth/token', {
+        token: signedIn.headers.get('set-auth-token') ?? ''
+      })
+      return (await accounts.me(String(token.body?.token))).body
+    }
+    expect(await signUp('named@example.com', { name: '  Kana \t Fan ' })).toMatchObject({
+      name: 'Kana Fan'
+    })
+    expect(
+      await signUp('unnamed@example.com', {
+        name: ` ${'x'.repeat(5000)}\u202e`,
+        username: 'hijack',
+        version: 99,
+        image: 'https://example.com/a.png'
+      })
+    ).toMatchObject({ name: '', username: null, version: 1 })
+  })
+
+  test('keeps the profile as it is when the learner signs in again', async () => {
+    const first = await accounts.learner('again@example.com')
+    const before = (await accounts.me(first.token)).body
+    const again = await accounts.learner('again@example.com')
+    expect(again.userId).toBe(first.userId)
+    expect((await accounts.me(again.token)).body).toEqual(before)
+  })
+
   test("refuses a token for an account that's gone", async () => {
     const learner = await accounts.learner('gone@example.com')
     await accounts.running.service.rows(`delete from users where id = '${learner.userId}'`)
@@ -108,7 +141,7 @@ describe('PATCH /v1/me', () => {
     expect((await accounts.me(learner.token)).body).toMatchObject({ name: 'From the phone' })
   })
 
-  test('lets one of two changes made at once from the same version through, never both', async () => {
+  test('lets one of several changes sent together from one version through, and conflicts the rest', async () => {
     const learner = await accounts.learner('race@example.com')
     const answers = await Promise.all(
       ['First', 'Second', 'Third'].map(name =>

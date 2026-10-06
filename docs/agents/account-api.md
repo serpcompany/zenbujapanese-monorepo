@@ -89,8 +89,8 @@ Better Auth upgrade adds. The profile changes through `/v1/me`, and deleting an 
 `/v1/me` and `/v1/sync` take only an access token from `GET /v1/auth/token`, as
 `Authorization: Bearer <token>`, checked against the service's own JWKS. They refuse the session
 token, so the long-lived token only ever goes to `/v1/auth`, and they answer every refusal alike:
-`401 unauthorized`, with `WWW-Authenticate: Bearer`. Their bodies are at most 64 KB
-(`413 too_large`). A browser can call the service only from the origins in
+`401 unauthorized`, with `WWW-Authenticate: Bearer`. Their bodies, and those sent to `/v1/auth`,
+are at most 64 KB (`413 too_large`). A browser can call the service only from the origins in
 `ACCOUNT_API_TRUSTED_ORIGINS`: CORS names each one, never `*`.
 
 **The contract** for `/v1/health`, `/v1/me`, and `/v1/sync` is
@@ -172,7 +172,8 @@ The profile is the one entity that syncs for now; known words and lists come in 
 are in `src/domain`, so `PATCH /v1/me` and a sync mutation change it the same way.
 
 - **A name** is 1 to 100 characters once trimmed, with runs of spaces made one and no control or
-  invisible format characters, kept in Unicode NFC.
+  invisible format characters, kept in Unicode NFC. A name given at sign-up, by the learner or by
+  Apple or Google, is held to the same rule, and is left empty if it fails it.
 - **A username** is 3 to 30 letters a to z, digits, or underscores, after Unicode NFKC, trimming,
   and lowercasing (`Kana_Fan` is `kana_fan`), unique across accounts, or `null`.
 - **The email** doesn't change here: changing it needs proof that the learner owns the new
@@ -182,7 +183,9 @@ are in `src/domain`, so `PATCH /v1/me` and a sync mutation change it the same wa
   answer is the profile as it is now. Nothing is last-write-wins. Sending the current values
   again changes nothing.
 - **The journal**, `sync_changes`, gets a row for each change, and for each new account, from a
-  trigger on `users`, so an account Better Auth makes is in it too. Every write to an account's
+  trigger on `users`, so an account Better Auth makes is in it too. The trigger and
+  `sync_after_restore()` (Back up and restore) name the profile in SQL, and the first-sync test
+  fails if they and the domain disagree. Every write to an account's
   journal holds that account's `users` row locked, so its entries commit in the order of their
   sequence, which the cursor relies on.
 - **A sync** applies its mutations in order, each in its own transaction. Then it reads up to
@@ -190,10 +193,14 @@ are in `src/domain`, so `PATCH /v1/me` and a sync mutation change it the same wa
   500), and answers each entity they name once, as it is now. While `hasMore` is true, the client
   syncs again with the new cursor.
 - **Mutation IDs.** `sync_mutations` keeps the result of each mutation by the ID the client gave
-  it: applied, conflict, or rejected. The same mutation sent again under its ID gets the same
-  result and applies nothing; a conflict answers with the profile as it is then. A different
-  mutation under a used ID is rejected (`mutation_id_reused`). A result is final: to try again,
-  the client sends a new mutation with a new ID.
+  it: applied, conflict, or rejected. The same mutation sent again under its ID applies nothing
+  and gets the same outcome: applied at the same version, a conflict with the profile as it is
+  then, or a rejection with the same code. A different mutation under a used ID is rejected
+  (`mutation_id_reused`). A result is final: to try again, the client sends a new mutation with a
+  new ID. Each mutation commits on its own, so after a failure partway through a batch, sending
+  the batch again answers the ones that applied and applies the rest.
+- **Fields** a mutation sends are strings, numbers, booleans, or null, and its entity, operation,
+  and entity ID are plain printable text, so nothing a client sends can fail to store or hash.
 - **Unknown entities and operations** are rejected one by one, and the rest still apply, so an
   older service can answer a newer app.
 - **The cursor** is opaque: a journal position, encrypted and authenticated (AES-256-GCM) for the
@@ -302,10 +309,15 @@ way and call the routes with their access tokens. They show:
   in order; a retry applied once and answered the same; a conflict, again on a retry; unknown
   entities and operations, and a reused ID, rejected while the rest apply.
 - **Bounds:** another account's profile, cursor, and mutation IDs out of reach; a forged or
-  too-new cursor refused before anything applies; the request bounds; and logs that hold no
-  profile, email, or token.
+  too-new cursor refused before anything applies; the request bounds, and fields that nest or hold
+  control characters; and logs that hold no profile, email, or token.
+- **Edges:** a name given at sign-up held to the rules, and fields sign-up has no say in ignored;
+  a repeat sign-in leaving the profile; a deleted account refused at both routes; and a batch that
+  fails partway, sent again.
 
-The domain's own tests (`src/domain/`) cover the name and username rules and the cursor, and
+The domain's own tests (`src/domain/`) cover the name and username rules and the cursor;
+`src/db/database.test.ts` covers the journal's trigger and backfill, the sync tables' rules, and
+`sync_after_restore()`; and
 `src/http/openapi.test.ts` keeps `openapi.json` in step with the routes. In CI, and when
 `ACCOUNT_API_TEST_DATABASE_URL` names a real Postgres database, `src/db/postgres.test.ts` also
 sends eight changes to one account at once through the `pg` pool, and one mutation six times at
@@ -386,16 +398,13 @@ it would a new image, with no request dropped ([`api-servers.md`](api-servers.md
 The restored database belongs to the environment's role, so the service migrates it as it would
 its own.
 
-Before it serves, move the sync journal's sequence far past where it was, so the changes made
-from then on reach every app, whatever cursor it holds from before the restore:
-
-```sh
-docker exec zenbujapanese-account-db psql --username postgres --dbname <restored database> \
-  --command "select setval('sync_changes_sequence_seq', (select coalesce(max(sequence), 0) from sync_changes) + 1000000000)"
-```
-
-Until the next change, an app whose cursor is past the restored journal is told to sync from no
-cursor; what changed after the backup is lost, as for any restore.
+A restore also runs `sync_after_restore()` on the new database, once the backup is in: it moves
+the journal's sequence a billion past where it was, every profile's version a million past, and
+journals each profile at its new version. So a change an app made after the backup, and lost with
+it, can't come back under a version the server reuses: it conflicts, and the app takes the
+profile as it is. Every app hears of each profile on its next sync, whatever cursor it holds; one
+whose cursor is past the restored journal is told to sync from no cursor until the next change.
+What changed after the backup is lost, as for any restore.
 
 A night's backup fails, and cron's run exits with an error the journal shows, when Postgres
 doesn't answer, or when an environment is set up (its file exists) but its database is missing.
