@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-"""Normalize pinned structural kanji data into app-owned element references."""
 
 from __future__ import annotations
 

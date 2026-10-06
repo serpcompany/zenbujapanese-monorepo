@@ -2,23 +2,23 @@
   "artifacts" : [
     {
       "name" : "LanguageReferenceData.sqlite3",
-      "sha256" : "e13452e70d34124b50ace380fa1da348530c88b1eca0315ab14129d89ee0f073"
+      "sha256" : "d99d5d0f3bd8ef935a2712e18efe9745d057d2a0cab7d291504f28b34d5fa449"
     },
     {
       "name" : "ExampleWordIndex.sqlite3",
-      "sha256" : "49bcb0fec530ac2bfd0a5444d253db15aed7754b36ff4e23941257c589d9ea75"
+      "sha256" : "524f1643ead98c11498c57575fbc6c1fe5b4b32b50e49e6c20cf3a6c6627a460"
     },
     {
       "name" : "JLPTLevelPack.sqlite3",
-      "sha256" : "5ff2fa165b54b83a646095d350cc736525ea2f7a19cb965e74e77ebfcf259e7a"
+      "sha256" : "6d832569cc144c295fe683dd11156ba5e479beca9ffd4348273f5a1205b17e7b"
     },
     {
       "name" : "TUBELEXFrequencyPack.sqlite3",
-      "sha256" : "fa842c5de2af0c2804a245929409f4847140a4378ed1a6769ecbb7a74a18c6c2"
+      "sha256" : "73f4219cb1c48619de39f661f75d770c70508ca776f70e3388e320b6c877ae6c"
     },
     {
       "name" : "FrequencyPackCatalog.json",
-      "sha256" : "0e30892a47f6d52351aeadb62e50f5fa96c05bf3afc8bdcac5a4142f9788bc0d"
+      "sha256" : "7b12426b36c70b391fcd99069d9fc373b5c0edbc983d0ffedc0a708c7bd6a7cf"
     },
     {
       "name" : "FrequencyPackMappingV1.sql",
@@ -30,7 +30,7 @@
     },
     {
       "name" : "DictionaryRankingArtifactContract.json",
-      "sha256" : "8a9b3f054c4a4361acb7e816fa00c8e63b38698856f3630050b33223a48fbe85"
+      "sha256" : "3c4860546f4b5c468b9746a4b770dfe2b0db1ac64422d0dac1de6f090763ef4f"
     },
     {
       "name" : "LanguageTechnologyPackCatalog.json",

@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-"""Normalize pinned KanjiVG paths into app-owned ordered stroke diagrams."""
 
 from __future__ import annotations
 
@@ -38,12 +37,6 @@ def rounded(value: float) -> int | float:
 
 
 def normalized_path(path_data: str) -> list[int | float]:
-    """Encode absolute move/cubic commands as compact app-owned numeric instructions.
-
-    Opcode 0 is move(x, y); opcode 1 is cubic(control1, control2, end).
-    KanjiVG r20250816 uses only M/m, C/c, and S/s path commands. Any future
-    command fails promotion instead of silently entering the runtime artifact.
-    """
 
     tokens = TOKEN_PATTERN.findall(path_data.replace(",", " "))
     index = 0

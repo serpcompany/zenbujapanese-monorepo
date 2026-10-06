@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-"""Build and validate Zenbu's derived Example Sentence Retrieval indexes."""
 
 from __future__ import annotations
 
@@ -34,7 +33,6 @@ def _update_length_prefixed(digest: "hashlib._Hash", value: str | bytes) -> None
 
 
 def corpus_checksum(database: sqlite3.Connection) -> str:
-    """Hash canonical pair identity and text without depending on SQLite layout."""
     digest = hashlib.sha256()
     for row in database.execute(
         "SELECT id, japanese, english FROM example_sentences ORDER BY id"
@@ -77,7 +75,6 @@ def provenance_checksum(database: sqlite3.Connection) -> str:
 
 
 def build_indexes(database: sqlite3.Connection, importer_path: Path | None = None) -> dict[str, str]:
-    """Replace the complete derived index in one importer transaction."""
     importer_path = importer_path or Path(__file__)
     source_count = int(database.execute("SELECT count(*) FROM example_sentences").fetchone()[0])
     source_checksum = corpus_checksum(database)
@@ -161,7 +158,6 @@ def _metadata(database: sqlite3.Connection) -> dict[str, str]:
 def validate_indexes(
     database: sqlite3.Connection, expected_importer_checksum: str | None = None
 ) -> dict[str, str]:
-    """Fail closed unless the final artifact satisfies the frozen v1 contract."""
     integrity = str(database.execute("PRAGMA integrity_check").fetchone()[0])
     if integrity != "ok":
         raise ValueError(f"SQLite integrity_check failed: {integrity}")
@@ -305,8 +301,6 @@ def validate_indexes(
     if orphan:
         raise ValueError(f"derived index maps unknown app-owned pair {orphan[0]}")
 
-    # Exercise the exact bound-phrase form used at runtime. A zero-row corpus is
-    # valid for a test artifact; successful prepare/step proves module support.
     database.execute(
         f"SELECT count(*) FROM {PORTER_TABLE} WHERE {PORTER_TABLE} MATCH ?",
         ('"retrieval capability probe"',),
@@ -335,7 +329,6 @@ def validate_manifest(database_path: Path, manifest_path: Path, metadata: dict[s
 
 
 def rebuild_atomically(path: Path) -> None:
-    """Build a replacement beside the artifact, validate it, then atomically replace."""
     path = path.resolve()
     with tempfile.TemporaryDirectory(prefix="zenbu-example-retrieval-", dir=path.parent) as directory:
         replacement = Path(directory) / path.name

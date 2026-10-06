@@ -66,7 +66,7 @@ when:
 - **A language-reference pin names another file:** a pack's `language_data_sha256`, the
   catalog's `languageDataSHA256`, or the ranking contract's `databaseSHA256`.
 - **The ranking contract disagrees with the database** in anything the app checks at launch
-  (`LookupClient.validateDictionaryRankingMetadata`): size, policy, schema version, mapping,
+  (`LanguageReferenceData.validateDictionaryRankingMetadata`, in `LookupDatabase.swift`): size, policy, schema version, mapping,
   evidence and search-index counts, tool hashes, and semantic equivalence. It compares the keys
   the app decodes (the `CodingKeys` in
   `apps/ios/Modules/Sources/SearchExperience/DictionaryRankingArtifactContract.swift`), since the

@@ -90,13 +90,14 @@ A change is checked by hand in a browser with the `verify-web` skill
 | Area | Grade | Tests | CI before merge | Docs | By hand |
 | --- | --- | --- | --- | --- | --- |
 | Language-data pipeline, `language-data/pipeline` | B | `language-data/pipeline/tests/`: the packager, the publisher against a fake bucket, and the schemas | `Language data build`: the tests, then packaging and validating the release | [`language-data/README.md`](../language-data/README.md), ADR 0006 | `package.py build` and `validate` on a workstation |
-| iOS data tools, `apps/ios/Tools` | B | `apps/ios/Tools/tests/`: contract tests for the frequency packs, the example word index, and compound pitch | `iOS` runs the contract tests on pull requests that change `apps/ios`; Ruff lints the tools in `pnpm verify`. `Language data build` checks the pins between the files they write, when those files change | [`apps/ios/LanguageData/Sources/README.md`](../apps/ios/LanguageData/Sources/README.md), [`ios.md`](agents/ios.md), [`data-sources.md`](data-sources.md) | Rebuild on a workstation, then run the contract tests |
+| iOS data tools, `apps/ios/Tools` | B | `apps/ios/Tools/tests/`: contract tests for the frequency packs, the example word index, and compound pitch | `iOS` runs the contract tests on pull requests that change `apps/ios`; Ruff lints the tools in `pnpm verify`. `Language data build` checks the pins between the files they write, when those files change | [`apps/ios/Tools/README.md`](../apps/ios/Tools/README.md), [`apps/ios/LanguageData/Sources/README.md`](../apps/ios/LanguageData/Sources/README.md), [`ios.md`](agents/ios.md), [`data-sources.md`](data-sources.md) | `rebuild_language_data.py` rebuilds everything on the pinned Python and runs the contract tests; then re-record the suites on a Mac |
 
 - **Language-data pipeline, B.** Every pull request that changes the data or the pipeline
   rebuilds and validates the release. Main gap: publishing has run only against the fake bucket,
   since the `language-data-release` environment has no R2 token, and no client reads a release
   yet (#463, #473).
-- **iOS data tools, B.** The `iOS` workflow runs the three contract tests before merge, but the
+- **iOS data tools, B.** The `iOS` workflow runs the three contract tests before merge, and a
+  rebuild is one command, on a pinned Python, from sources archived beside their records. But the
   importers, such as `apps/ios/Tools/import_jmdict.py`, have no tests of their own. Main gap: an
   importer change is checked only through the files it writes.
 

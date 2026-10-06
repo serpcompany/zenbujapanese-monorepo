@@ -2,11 +2,11 @@
   "artifacts" : [
     {
       "name" : "LanguageReferenceData.sqlite3",
-      "sha256" : "e13452e70d34124b50ace380fa1da348530c88b1eca0315ab14129d89ee0f073"
+      "sha256" : "d99d5d0f3bd8ef935a2712e18efe9745d057d2a0cab7d291504f28b34d5fa449"
     },
     {
       "name" : "ExampleWordIndex.sqlite3",
-      "sha256" : "49bcb0fec530ac2bfd0a5444d253db15aed7754b36ff4e23941257c589d9ea75"
+      "sha256" : "524f1643ead98c11498c57575fbc6c1fe5b4b32b50e49e6c20cf3a6c6627a460"
     },
     {
       "name" : "Kuromoji/kuromoji.js",
@@ -445,6 +445,7 @@
         "esp1_bdb503419265d1cf40760c0e35fdd6dd",
         "esp1_08efe43c3c9531516879a95b77ccc267",
         "esp1_12d9e419bfef4d65e0fe6ebd8016fed7",
+        "esp1_d90a6805cc2649584ac0125ca99f238b",
         "esp1_fc75e12ee5e17ad256e65c47573d5154",
         "esp1_51e5289847f0bfd610e5a26e8e7804cd",
         "esp1_bbc227863f5102401d76ca637379298a",
@@ -512,8 +513,7 @@
         "esp1_6b3d4956b6b54d9d249718c505e64a2f",
         "esp1_0c2febbfd33f74b72edb459e1af4377b",
         "esp1_4d1939165285eb1f1e51e94e4dbbf569",
-        "esp1_cd932a60fef96776e7852c5392be1ea2",
-        "esp1_ceac267b3a697a7d818e31035fe48cda"
+        "esp1_cd932a60fef96776e7852c5392be1ea2"
       ],
       "query" : "食べる",
       "shown" : [
@@ -3855,6 +3855,7 @@
         "esp1_f73cd4d9414d1c4ba02f67e9f847c141",
         "esp1_f83ad958386355e5375ff223c17a5176",
         "esp1_fa5045367f2039870070aab93e327049",
+        "esp1_fbbaf7e0f8eeb6cd89f9d944de8dd4e3",
         "esp1_ffcd5d56e081e73c5a6edfd7c044980e",
         "esp1_bd0888975ad3e1aa51c55655b260a847",
         "esp1_cc026491f6a2892598a97db3ce84489f",
@@ -3912,8 +3913,7 @@
         "esp1_495dd9e1e635bec02b6f9433edeb57d2",
         "esp1_d3a87c282902895281bc5caf01b1689c",
         "esp1_dbeefbff56f3103d6a0aefccf74f10a8",
-        "esp1_714eed5f8582203c2de3829daf697c94",
-        "esp1_7e50b871e211d2e5e89b8b304a6558b2"
+        "esp1_714eed5f8582203c2de3829daf697c94"
       ],
       "query" : "。",
       "shown" : [
@@ -4872,6 +4872,7 @@
         "esp1_bdb503419265d1cf40760c0e35fdd6dd",
         "esp1_08efe43c3c9531516879a95b77ccc267",
         "esp1_12d9e419bfef4d65e0fe6ebd8016fed7",
+        "esp1_d90a6805cc2649584ac0125ca99f238b",
         "esp1_fc75e12ee5e17ad256e65c47573d5154",
         "esp1_51e5289847f0bfd610e5a26e8e7804cd",
         "esp1_bbc227863f5102401d76ca637379298a",
@@ -4939,8 +4940,7 @@
         "esp1_6b3d4956b6b54d9d249718c505e64a2f",
         "esp1_0c2febbfd33f74b72edb459e1af4377b",
         "esp1_4d1939165285eb1f1e51e94e4dbbf569",
-        "esp1_cd932a60fef96776e7852c5392be1ea2",
-        "esp1_ceac267b3a697a7d818e31035fe48cda"
+        "esp1_cd932a60fef96776e7852c5392be1ea2"
       ],
       "query" : "食べた",
       "shown" : [
@@ -6258,6 +6258,7 @@
         "esp1_bdb503419265d1cf40760c0e35fdd6dd",
         "esp1_08efe43c3c9531516879a95b77ccc267",
         "esp1_12d9e419bfef4d65e0fe6ebd8016fed7",
+        "esp1_d90a6805cc2649584ac0125ca99f238b",
         "esp1_fc75e12ee5e17ad256e65c47573d5154",
         "esp1_51e5289847f0bfd610e5a26e8e7804cd",
         "esp1_bbc227863f5102401d76ca637379298a",
@@ -6325,8 +6326,7 @@
         "esp1_6b3d4956b6b54d9d249718c505e64a2f",
         "esp1_0c2febbfd33f74b72edb459e1af4377b",
         "esp1_4d1939165285eb1f1e51e94e4dbbf569",
-        "esp1_cd932a60fef96776e7852c5392be1ea2",
-        "esp1_ceac267b3a697a7d818e31035fe48cda"
+        "esp1_cd932a60fef96776e7852c5392be1ea2"
       ],
       "query" : "taberu",
       "shown" : [
@@ -10676,6 +10676,7 @@
         "esp1_737d07d628041659f1146eff976ed1f8",
         "esp1_dd7c28671c52f00530c51f09cdbd5f19",
         "esp1_4aba396939ea27954318fca18b94b557",
+        "esp1_1cfa7cf2e9fe53da08aa8d294b02c74f",
         "esp1_64aebae4f49971d973d01d2f1a19945b",
         "esp1_b25410f57154f68560d0d6358bd6a38d",
         "esp1_2b640515e5228edf6cd40fd17c714da6",
@@ -10724,8 +10725,7 @@
         "esp1_c14ea0d7263938ff473adb0193acbaed",
         "esp1_2fa5d5548b014942a1da35db632c71d5",
         "esp1_3e9a2bb9542b2b345174a3fd619c8d02",
-        "esp1_0c700d483c873f3e4d76743c712b1522",
-        "esp1_3a2e02a7520124bd326d5b49f981b670"
+        "esp1_0c700d483c873f3e4d76743c712b1522"
       ],
       "query" : "good",
       "shown" : [

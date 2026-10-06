@@ -1,11 +1,4 @@
 #!/usr/bin/env python3
-"""Build downloadable Frequency Pack sources from pinned Jiten lists and update the catalog.
-
-Each pack in `Jiten-<date>.source.json` becomes a ZIP holding one JSON array of
-`[dictionary form, reading]` pairs in rank order. The app installs it with
-FrequencyPackMappingV2, which matches on both form and reading. Manifest counts and digests are
-computed exactly as FrequencyPackInstaller verifies them on device.
-"""
 
 from __future__ import annotations
 
@@ -21,14 +14,14 @@ import tempfile
 import zipfile
 from pathlib import Path
 
-TOOLS = Path(__file__).resolve().parent
-sys.path.insert(0, str(TOOLS))
-from analyze_ordered_json_frequency_lists import (  # noqa: E402
+from analyze_ordered_json_frequency_lists import (
     artifact_content_sha256,
     canonical_json,
     normalized,
     sha256,
 )
+
+TOOLS = Path(__file__).resolve().parent
 
 IOS = TOOLS.parent
 RESOURCES = IOS / "Modules/Sources/SearchExperience/Resources"
@@ -42,19 +35,13 @@ ZIP_TIMESTAMP = (2026, 9, 27, 0, 0, 0)
 
 
 def assign_ranks(source_ranks: list[int]) -> tuple[list[int], int]:
-    """Return (rank for each kept row, number of leading rows to keep).
-
-    Drop the final bucket at max(source_ranks), which holds words Jiten never observed, then rank
-    by row position. Position keeps the "every row receives a distinct rank" contract; Jiten's
-    order inside a tie bucket is kept as published.
-    """
     if not source_ranks:
         return [], 0
     tail = max(source_ranks)
     keep = len(source_ranks)
     while keep and source_ranks[keep - 1] == tail:
         keep -= 1
-    if keep == 0 or len(source_ranks) - keep < 2:  # no real tail bucket: keep everything
+    if keep == 0 or len(source_ranks) - keep < 2:
         keep = len(source_ranks)
     return list(range(1, keep + 1)), keep
 
@@ -71,11 +58,6 @@ def read_list(path: Path, expected_sha256: str | None = None) -> list[tuple[str,
 
 
 def jiten_pairs(lists: list[list[tuple[str, str]]]) -> list[tuple[str, str]]:
-    """Merge ranked lists by mean list percentile (position / kept rows).
-
-    A pair missing from a list counts as percentile 1.0, so a word must be common across all the
-    merged media to rank high. Ties keep first-seen order. One list is returned unchanged.
-    """
     if len(lists) == 1:
         return lists[0]
     percentiles: dict[tuple[str, str], list[float]] = {}
@@ -214,11 +196,6 @@ def manifest_for(spec: dict, record: dict, out_dir: Path) -> dict[str, object]:
 
 
 def update_catalog(manifests: list[dict[str, object]]) -> None:
-    """Replace every Jiten pack in the catalog with `manifests`, after the licensed core packs.
-
-    A replaced manifest that changed moves to `trustedHistoricalManifests`, so a pack a learner
-    already installed from it stays trusted.
-    """
     catalog = json.loads(CATALOG.read_text(encoding="utf-8"))
     rebuilt = {m["packID"]: m for m in manifests}
     for old in catalog["packs"]:
@@ -252,7 +229,9 @@ def write_analysis(manifests: list[dict[str, object]], record: dict) -> None:
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description=__doc__)
+    parser = argparse.ArgumentParser(
+        description="Build downloadable Frequency Pack sources from pinned Jiten lists and update the catalog."
+    )
     parser.add_argument("--out-dir", type=Path, required=True,
                         help="where to write the source ZIPs for publish_frequency_pack_sources.py")
     arguments = parser.parse_args()

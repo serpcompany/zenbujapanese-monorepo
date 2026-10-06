@@ -1,10 +1,4 @@
 #!/usr/bin/env python3
-"""Build the bundled JLPT level pack from Waller's lists with stephenmk's JMdict IDs.
-
-Each source row carries a JMdict sequence number, so rows map to Language Reference IDs by
-an exact join. Rows without a sequence number are unmapped. An entry listed at several levels
-keeps the easiest (highest-numbered) level.
-"""
 
 from __future__ import annotations
 
@@ -18,7 +12,7 @@ import tempfile
 from pathlib import Path
 
 from import_frequency_pack import artifact_content_sha256, sha256
-from import_jmdict import language_reference_id
+from jmdict_normalization import language_reference_id
 
 
 ARTIFACT_SCHEMA = "zenbu.level-pack.v1"
@@ -27,7 +21,6 @@ REPOSITORY = Path(__file__).resolve().parents[3]
 
 
 def mapping_sha256(rows: list[tuple[bytes, int]]) -> str:
-    """Digest every (ID, level) row in ID order: 16 ID bytes, then a 64-bit big-endian level."""
     digest = hashlib.sha256()
     for identifier, level in rows:
         digest.update(identifier)
@@ -128,7 +121,9 @@ def build(record_path: Path, language_data: Path, output: Path) -> dict[str, obj
 
 
 def main() -> int:
-    parser = argparse.ArgumentParser(description=__doc__)
+    parser = argparse.ArgumentParser(
+        description="Build the bundled JLPT level pack from Waller's lists with stephenmk's JMdict IDs."
+    )
     parser.add_argument(
         "--record",
         type=Path,

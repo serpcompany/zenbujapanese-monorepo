@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-"""Deterministic app-owned integrity evidence for Dictionary Ranking tables."""
 
 from __future__ import annotations
 

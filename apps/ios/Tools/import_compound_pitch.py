@@ -1,14 +1,4 @@
 #!/usr/bin/env python3
-"""Estimate pitch accent for two-part noun compounds that UniDic doesn't list whole.
-
-UniDic is a short-unit dictionary, so compounds such as 記者会見 or 自問自答 have no lexeme of
-their own and get no pitch from `unidic_adapter`. When such a compound splits into two UniDic
-nouns and the second has accent-combination type C2, the compound's downstep falls on the second
-part's first mora (記者+会見 → きしゃか＼いけん). Measured against entries whose pitch UniDic does
-supply, this rule matches 92% of two-part C2 compounds; the other combination types are too
-unreliable to ship. Results go to a separate artifact, so the language data and every hash
-pinned to it stay unchanged.
-"""
 
 from __future__ import annotations
 
@@ -32,7 +22,6 @@ COMBINATION_TYPES = {"C1", "C2", "C3", "C4", "C5"}
 
 
 def load_lexemes(source: Path) -> dict[str, set[tuple[str, int, str, str]]]:
-    """UniDic lexemes by written form: (reading, downstep, combination type, part of speech)."""
     lexemes: dict[str, set[tuple[str, int, str, str]]] = defaultdict(set)
     with zipfile.ZipFile(source) as archive:
         name = next(name for name in archive.namelist() if name.endswith("/lex_3_1.csv"))
@@ -55,13 +44,12 @@ def is_kanji(value: str) -> bool:
 
 
 def two_part_split(headword: str, reading: str, lexemes) -> list[tuple] | None:
-    """The unique way to split a kanji compound into two noun-like UniDic parts."""
     splits = []
     for index in range(1, len(headword)):
-        for first in lexemes.get(headword[:index], ()):
+        for first in sorted(lexemes.get(headword[:index], ())):
             if not reading.startswith(first[0]) or first[3] not in NOUN_LIKE:
                 continue
-            for second in lexemes.get(headword[index:], ()):
+            for second in sorted(lexemes.get(headword[index:], ())):
                 if first[0] + second[0] == reading and second[3] in NOUN_LIKE:
                     splits.append((first, second))
     types = {second[2] for _, second in splits}

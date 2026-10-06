@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-"""Normalize pinned KANJIDIC2 and radical components into app-owned kanji reference data."""
 
 from __future__ import annotations
 

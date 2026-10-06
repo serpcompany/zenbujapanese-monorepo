@@ -1,5 +1,3 @@
-"""Tatoeba source adapter for app-owned offline example pairs."""
-
 from __future__ import annotations
 
 import bz2
@@ -44,7 +42,6 @@ def _canonical_pair(japanese: str, english: str) -> tuple[str, str]:
 
 
 def app_owned_example_pair_storage_id(japanese: str, english: str) -> bytes:
-    """Return the compact opaque identity stored behind the corpus boundary."""
     digest = hashlib.sha256()
     digest.update(b"zenbu.example-sentence-pair.v1\0")
     for value in _canonical_pair(japanese, english):
@@ -55,7 +52,6 @@ def app_owned_example_pair_storage_id(japanese: str, english: str) -> bytes:
 
 
 def app_owned_example_pair_id(japanese: str, english: str) -> str:
-    """Return the public encoding of the app-owned semantic-pair identity."""
     return EXAMPLE_PAIR_ID_PREFIX + app_owned_example_pair_storage_id(japanese, english).hex()
 
 
@@ -106,7 +102,6 @@ def import_tatoeba_examples(
     database: sqlite3.Connection,
     snapshot: TatoebaSnapshotInputs,
 ) -> dict[str, int]:
-    """Import deterministic semantic pairs with explicit source/license provenance."""
     english_id_by_japanese_id: dict[int, int] = {}
     with bz2.open(snapshot.japanese_english_links, mode="rt", encoding="utf-8") as links:
         for line in links:
