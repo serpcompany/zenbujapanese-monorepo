@@ -1,8 +1,10 @@
 import { writeFileSync } from 'node:fs'
 import { join, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
+import { DictionaryBrowse } from '@zenbu/dictionary-core/artifact/browse'
 import { Dictionary } from '@zenbu/dictionary-core/artifact/dictionary'
 import { kanjiCandidateRows, readKanji } from '@zenbu/dictionary-core/artifact/kanji'
+import { browseService } from '@zenbu/dictionary-core/browse/service-paths'
 import { conjugationTable } from '@zenbu/dictionary-core/detail/conjugation'
 import { examplesPerPage } from '@zenbu/dictionary-core/detail/examples'
 import type {
@@ -102,4 +104,38 @@ for (const character of kanjiCharacters) {
 }
 writeOneRowPerLine('kanji.json', kanji)
 writeOneRowPerLine('kanji-words.json', kanjiWords)
+
+const browse = new DictionaryBrowse(artifact.db, artifact.kanji)
+const wordsPerList = 20
+const shortened = <Answer extends { words: unknown[] }>(answer: Answer | null) =>
+  answer ? { ...answer, words: answer.words.slice(0, wordsPerList) } : null
+const browseAnswers: [{ path: string }, unknown][] = [
+  [browseService.summary(), browse.summary()],
+  [browseService.kanaIndex('hiragana'), browse.kanaIndex('hiragana')],
+  [browseService.kanaIndex('katakana'), browse.kanaIndex('katakana')],
+  [browseService.kanaInitial('hiragana', 'い'), shortened(browse.kanaInitial('hiragana', 'い'))],
+  [
+    browseService.kanaWords('hiragana', 'いる', 1),
+    shortened(browse.kanaWords('hiragana', 'いる', 1))
+  ],
+  [browseService.categories(), browse.categoryCounts()],
+  ...[1, 2].map((page): [{ path: string }, unknown] => [
+    browseService.categoryWords('ichidan-verbs', 'used', page),
+    shortened(browse.categoryWords('ichidan-verbs', 'used', page))
+  ]),
+  [
+    browseService.categoryWords('ichidan-verbs', 'kana', 1),
+    shortened(browse.categoryWords('ichidan-verbs', 'kana', 1))
+  ],
+  [browseService.rankedLists(), browse.rankedLists()],
+  [browseService.rankedWords('youtube', 1), shortened(browse.rankedWords('youtube', 1))],
+  [browseService.rankedWords('anime', 1), shortened(browse.rankedWords('anime', 1))],
+  [browseService.rankedWords('jlpt-n5', 1), shortened(browse.rankedWords('jlpt-n5', 1))],
+  [browseService.kanjiHub(), browse.kanjiHub()],
+  [browseService.kanjiList('grade-4'), browse.kanjiList('grade-4')]
+]
+writeFileSync(
+  join(output, 'browse.json'),
+  `{\n${browseAnswers.map(([{ path }, answer]) => `${JSON.stringify(path)}: ${JSON.stringify(answer)}`).join(',\n')}\n}\n`
+)
 artifact.close()

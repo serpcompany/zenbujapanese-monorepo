@@ -15,7 +15,7 @@ Licenses screen, and point the source record at that file instead of keeping a s
 
 | Category | Source | What it supplies | Current consumer |
 | --- | --- | --- | --- |
-| Dictionaries and language analysis | [JMdict](https://www.edrdg.org/jmdict/j_jmdict.html) | Japanese written forms, readings, English meanings, usage information, cross-references, and source priority evidence. | iOS, Website |
+| Dictionaries and language analysis | [JMdict](https://www.edrdg.org/jmdict/j_jmdict.html) | Japanese written forms, readings, English meanings, usage, subject-field, and dialect labels, cross-references, and source priority evidence. | iOS, Website |
 | Dictionaries and language analysis | [UniDic](https://clrd.ninjal.ac.jp/unidic_archive/cwj/3.1.0/) | Source-matched pronunciation and pitch-accent facts used while importing JMdict, and the accent-combination types used to estimate pitch for two-part compounds. | iOS, Website |
 | Dictionaries and language analysis | [SudachiDict Core](https://github.com/WorksApplications/SudachiDict) | Lexical data required by Sudachi.rs to identify and describe Japanese words. It is not Zenbu's learner-facing Japanese-English dictionary. | iOS, Website |
 | Dictionaries and language analysis | [MeCab IPADIC through kuromoji.js](https://github.com/takuyaa/kuromoji.js) | Bundled morphological data used by Kuromoji to parse interactive Japanese text. It is not Zenbu's learner-facing Japanese-English dictionary. | iOS, Website |
@@ -27,8 +27,8 @@ Licenses screen, and point the source record at that file instead of keeping a s
 | Kanji and handwriting | [DaKanji](https://github.com/dariyooo/DaKanji-Single-Kanji-Recognition) | A model that predicts candidate Japanese characters from a completed drawing. | iOS |
 | Study levels | [JLPT vocabulary lists with JMdict IDs](https://github.com/stephenmk/yomitan-jlpt-vocab) | Unofficial JLPT level estimates (N5–N1) from Jonathan Waller's lists. | iOS, Website |
 | Frequency data | [TUBELEX](https://github.com/naist-nlp/tubelex) | Japanese word frequency data from occurrences across YouTube. | iOS, Website |
-| Frequency data | [Wikipedia Word Frequency Clean](https://github.com/adno/wikipedia-word-frequency-clean) | Japanese word frequency data from occurrences across Wikipedia. | iOS |
-| Frequency data | [Jiten](https://jiten.moe/frequency-dictionaries) | Optional domain frequency lists for TV and film, anime, manga, novels, visual novels, and video games, keyed by dictionary form and reading (CC BY-SA 4.0), downloaded on demand. | iOS (the website credits it on `/sources/` but shows no Jiten data) |
+| Frequency data | [Wikipedia Word Frequency Clean](https://github.com/adno/wikipedia-word-frequency-clean) | Japanese word frequency data from occurrences across Wikipedia. | iOS, Website |
+| Frequency data | [Jiten](https://jiten.moe/frequency-dictionaries) | Optional domain frequency lists for TV and film, anime, manga, novels, visual novels, and video games, keyed by dictionary form and reading (CC BY-SA 4.0), downloaded on demand. | iOS, Website (the frequency dictionary pages rank words by them) |
 | Video captions | [YouTube](https://www.youtube.com/) | Japanese captions for the video a learner opens in Player, and YouTube's English translation of them, fetched when the video opens and not stored. | iOS |
 | Unverified app-owned data | [`Zenbu Word Relationships`](../apps/ios/LanguageData/Sources/Zenbu-Word-Relationships-v1.json) | Two uncited relationships between dictionary entries. No source or reviewer is recorded, so the file is pending a separate removal decision. | iOS |
 

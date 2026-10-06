@@ -1,6 +1,11 @@
 import { afterEach, describe, expect, test, vi } from 'vitest'
 import { dictionaryService } from './data'
-import { dictionarySitemapPaths, wordSitemapResponse, wordUrl } from './sitemaps'
+import {
+  browseSitemapResponse,
+  dictionarySitemapPaths,
+  wordSitemapResponse,
+  wordUrl
+} from './sitemaps'
 
 vi.mock('@opennextjs/cloudflare', () => ({ getCloudflareContext: async () => ({ ctx: {} }) }))
 vi.mock('./data', () => ({ dictionaryService: vi.fn() }))
@@ -28,9 +33,26 @@ function fakeService(count: number, perSitemap: number) {
       .map(entSeq => ({ entSeq, slug: entSeq === 1 ? '見る' : `w&${entSeq}` }))
     return { data, build }
   })
+  const browse = vi.fn(async ({ path }: { path: string }) =>
+    path === '/v1/sitemaps/browse'
+      ? {
+          data: {
+            kana: [
+              { initial: 'か', prefixes: [{ prefix: 'かが', pages: 2 }] },
+              { initial: 'カ', prefixes: [] }
+            ],
+            categories: [{ slug: 'onomatopoeia', pages: 1 }],
+            rankedLists: [{ slug: 'anime', pages: 2 }],
+            kanjiLists: ['grade-1']
+          },
+          build
+        }
+      : null
+  )
   return {
     wordSitemaps: async () => ({ data: sitemaps, build }),
-    sitemapWords
+    sitemapWords,
+    browse
   }
 }
 
@@ -46,17 +68,49 @@ describe('without a dictionary service (local fixtures)', () => {
     vi.mocked(dictionaryService).mockResolvedValue(null)
     expect(await dictionarySitemapPaths()).toEqual([])
     expect(await wordSitemapResponse(request('/sitemaps/dictionary/1.xml'), 1)).toBeNull()
+    expect(await browseSitemapResponse(request('/sitemaps/browse.xml'))).toBeNull()
   })
 })
 
 describe('with a dictionary service', () => {
-  test('the index lists every word sitemap, and nothing else', async () => {
+  test('the index lists every word sitemap and the browse sitemap, and nothing else', async () => {
     vi.mocked(dictionaryService).mockResolvedValue(fakeService(5, 2) as never)
     expect(await dictionarySitemapPaths()).toEqual([
       '/sitemaps/dictionary/1.xml',
       '/sitemaps/dictionary/2.xml',
-      '/sitemaps/dictionary/3.xml'
+      '/sitemaps/dictionary/3.xml',
+      '/sitemaps/browse.xml'
     ])
+  })
+
+  test('the browse sitemap lists every browse page', async () => {
+    vi.mocked(dictionaryService).mockResolvedValue(fakeService(5, 2) as never)
+    const response = await browseSitemapResponse(request('/sitemaps/browse.xml'))
+    const urls = locs((await response?.text()) ?? '')
+    const site = 'https://zenbujapanese.com/dictionary/browse'
+    expect(urls).toEqual(
+      expect.arrayContaining([
+        `${site}/`,
+        `${site}/kana/`,
+        `${site}/hiragana/`,
+        `${site}/katakana/`,
+        `${site}/kanji/`,
+        `${site}/frequency-dictionaries/`,
+        `${site}/parts-of-speech/`,
+        `${site}/usage/`,
+        `${site}/subjects/`,
+        `${site}/hiragana/%E3%81%8B/`,
+        `${site}/hiragana/%E3%81%8B%E3%81%8C/`,
+        `${site}/hiragana/%E3%81%8B%E3%81%8C/2/`,
+        `${site}/katakana/%E3%82%AB/`,
+        `${site}/onomatopoeia/`,
+        `${site}/onomatopoeia/kana-order/`,
+        `${site}/frequency-dictionaries/anime/`,
+        `${site}/frequency-dictionaries/anime/2/`,
+        `${site}/kanji/grade-1/`
+      ])
+    )
+    expect(urls).toHaveLength(18)
   })
 
   test('a word sitemap streams its range of canonical, percent-encoded, escaped URLs', async () => {

@@ -4,7 +4,7 @@ export const rankedListLimit = 10_000
 
 export const pageCount = (total: number) => Math.max(1, Math.ceil(total / browsePageSize))
 
-export type RankedListSource = { kind: 'tubelex' } | { kind: 'pack'; packId: string }
+type RankedListSource = { kind: 'tubelex' } | { kind: 'pack'; packId: string }
 
 export interface RankedList {
   slug: string

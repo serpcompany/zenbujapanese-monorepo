@@ -19,3 +19,10 @@ test('the footer links Legal after Contact, before the legal pages, as the #462 
   expect(titles.indexOf('Legal')).toBe(titles.indexOf('Contact') + 1)
   expect(titles.indexOf('Legal')).toBeLessThan(titles.indexOf('Privacy Policy'))
 })
+
+test('the footer links the browse pages after Dictionary', () => {
+  const titles = footerLinks().map(([text]) => text)
+  expect(titles.slice(0, 3)).toEqual(['Dictionary', 'Browse by kana', 'Kanji by grade'])
+  expect(footerLinks()).toContainEqual(['Browse by kana', '/dictionary/browse/kana/'])
+  expect(footerLinks()).toContainEqual(['Kanji by grade', '/dictionary/browse/kanji/'])
+})

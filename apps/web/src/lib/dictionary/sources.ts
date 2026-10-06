@@ -3,9 +3,11 @@ export interface Source {
   url: string
   credit: string
   license: { name: string; url?: string }
+  notice?: string
 }
 
 const ccBySa4 = { name: 'CC BY-SA 4.0', url: 'https://creativecommons.org/licenses/by-sa/4.0/' }
+const bsd3 = { name: 'BSD-3-Clause', url: 'https://opensource.org/license/bsd-3-clause' }
 const edrdgLicence = {
   name: 'EDRDG licence, CC BY-SA 4.0',
   url: 'https://www.edrdg.org/edrdg/licence.html'
@@ -59,13 +61,22 @@ export const sources = {
     name: 'TUBELEX',
     url: 'https://github.com/naist-nlp/tubelex',
     credit: 'YouTube frequency data by Adam Nohejl and contributors.',
-    license: { name: 'BSD-3-Clause' }
+    license: bsd3
+  },
+  wikipedia: {
+    name: 'Wikipedia Word Frequency Clean',
+    url: 'https://github.com/adno/wikipedia-word-frequency-clean',
+    credit: 'Wikipedia frequency data by Adam Nohejl and contributors.',
+    license: bsd3
   },
   jiten: {
     name: 'Jiten',
     url: 'https://jiten.moe/frequency-dictionaries',
-    credit: 'Anime frequency data by Jiten (jiten.moe).',
-    license: ccBySa4
+    credit:
+      'TV and movie, anime, manga, novel, visual novel, and video game frequency data by Jiten (jiten.moe), modified.',
+    license: ccBySa4,
+    notice:
+      'The rankings from Jiten on this page are adapted from its data, and are shared under the same licence, CC BY-SA 4.0.'
   },
   tatoeba: {
     name: 'Tatoeba',
@@ -79,7 +90,10 @@ const defaultFrequency = [sources.jlpt, sources.tubelex]
 
 export const pageSources = {
   search: [sources.jmdict, sources.kanjidic2, ...defaultFrequency],
-  word: [sources.jmdict, sources.unidic, sources.kanjidic2, ...defaultFrequency, sources.tatoeba]
+  word: [sources.jmdict, sources.unidic, sources.kanjidic2, ...defaultFrequency, sources.tatoeba],
+  browse: [sources.jmdict, ...defaultFrequency],
+  kanji: [sources.kanjidic2],
+  frequency: [sources.jmdict, ...defaultFrequency, sources.wikipedia, sources.jiten]
 }
 
 export function withShownData(

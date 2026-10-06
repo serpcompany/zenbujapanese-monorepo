@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import { kanaChartsPath, kanjiListsPath } from '@/lib/dictionary/browse/paths'
 import { legalPages } from '@/lib/pages'
 import { site } from '@/lib/site'
 
@@ -8,6 +9,8 @@ export function SiteFooter() {
       <div className="mx-auto flex max-w-5xl flex-col gap-2 px-4 py-6 text-sm text-muted-foreground md:px-5">
         <nav className="flex flex-wrap gap-x-4 gap-y-1.5 [&_a:hover]:text-foreground">
           <Link href="/dictionary/">Dictionary</Link>
+          <Link href={kanaChartsPath}>Browse by kana</Link>
+          <Link href={kanjiListsPath}>Kanji by grade</Link>
           <Link href="/about/" className="md:hidden">
             About
           </Link>

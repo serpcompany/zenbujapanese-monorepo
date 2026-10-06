@@ -21,7 +21,7 @@ export function SourceCredits({ sources }: { sources: Source[] }) {
             ) : (
               source.license.name
             )}
-            .
+            .{source.notice ? ` ${source.notice}` : null}
           </li>
         ))}
       </ul>

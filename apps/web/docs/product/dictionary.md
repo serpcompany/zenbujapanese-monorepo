@@ -5,7 +5,8 @@ Each behavior below says what the website does, where that behavior comes from, 
 check that enforces it (see [How behavior is verified](index.md#how-behavior-is-verified)).
 
 The dictionary has three page types (ADR 0010): the [home](#dictionary-home), a search's
-[results](#search-results), and a [word](#word-page). What the app opens from a word as screens of
+[results](#search-results), and a [word](#word-page). The browse pages that list and link to them
+(ADR 0010, amended for #614) are in [Browse pages](browse.md). What the app opens from a word as screens of
 its own, the conjugation table and its forms, a kanji's details, and the example sentences, is on
 the word page, in sections that open and close and stay in the page's HTML while closed.
 
@@ -46,6 +47,9 @@ opens that query's results page.
 - Check: smoke `200 /dictionary/`; `apps/web/e2e/search.spec.ts`, "the dictionary home searches
   and lands on the canonical results page" (the heading, the box, and submitting it). The layout: No
   automated check yet (#511).
+
+**Browse sections.** Below the search box, the home leads into the browse pages: by kana, kanji by
+school grade, categories, and common words ([Browse pages](browse.md#dictionary-home)).
 
 **Breadcrumbs.** Every dictionary page starts with a breadcrumb trail under the site header:
 Home › Dictionary on this page, then the page's own crumb on the others. The app has none.
@@ -827,9 +831,10 @@ lucide has no brand icons, and #511 asked for a phone.
 - Source: #462 design; #511 (the phone icon).
 - Check: `src/components/site-header.test.tsx`, "the Get the app button leads with a phone icon".
 
-**Footer.** The footer links Dictionary, About and Support (on phones only), Contact, Legal
-(`/legal/`), Privacy Policy, Terms of Use, DMCA Copyright Policy, Affiliate Disclosure, Sources,
-and Sitemap, then the copyright line. Legal follows Contact, as in the #462 design. The #462
+**Footer.** The footer links Dictionary, Browse by kana, Kanji by grade, About and Support (on
+phones only), Contact, Legal (`/legal/`), Privacy Policy, Terms of Use, DMCA Copyright Policy,
+Affiliate Disclosure, Sources, and Sitemap, then the copyright line. The browse links follow the
+#614 mockup ([Browse pages](browse.md#site-wide)). Legal follows Contact, as in the #462 design. The #462
 mockup's footer lists only Contact, Legal, Privacy, Terms, Sources, and Sitemap. Whether the
 footer drops the other links is waiting on the owner's and Devin's decision (#511); until then it
 keeps them.
@@ -943,12 +948,13 @@ crawling (see [`docs/agents/web.md`](../../../../docs/agents/web.md)).
   `src/lib/dictionary/results/links.test.ts`, "isIndexable".
 
 **Sitemaps.** The pages sitemap lists the dictionary home. The sitemap index also lists the word
-sitemaps, with every word page's canonical URL. Those are the only dictionary sitemaps (ADR 0010).
-Search pages aren't in any sitemap yet.
+sitemaps, with every word page's canonical URL, and the browse sitemap, with every browse page's
+([Browse pages](browse.md#site-wide)). Those are the only dictionary sitemaps (ADR 0010, amended
+for #614). Search pages aren't in any sitemap yet.
 
 - Source: ADR 0007; #465; ADR 0010.
-- Check: `src/lib/dictionary/sitemaps.test.ts`, "the index lists every word sitemap, and nothing
-  else"; smoke "$index lists the pages and word sitemaps, and no kanji or conjugations sitemap"
+- Check: `src/lib/dictionary/sitemaps.test.ts`, "the index lists every word sitemap and the
+  browse sitemap, and nothing else"; smoke "$index lists the pages and word sitemaps, and no kanji or conjugations sitemap"
   (for `/sitemap-index.xml` and `/sitemap.xml`), "word sitemap lists 1 to 50,000 canonical URLs",
   and `404 /sitemaps/kanji.xml`.
 
