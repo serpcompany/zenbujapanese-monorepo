@@ -65,3 +65,32 @@ plan that a check can enforce.
 The decision is the owner's and Devin's, on
 [issue 544](https://github.com/serpcompany/zenbujapanese-monorepo/issues/544). This decision
 amends [ADR 0007](0007-publish-the-dictionary-at-permanent-urls-from-the-websites-copy.md).
+
+## Amendment: browse pages
+
+The owner's decision of 2026-10-06 on
+[issue 614](https://github.com/serpcompany/zenbujapanese-monorepo/issues/614) adds browse pages,
+under `/dictionary/browse/`. An Ahrefs audit found the word pages orphaned: a sitemap listed them,
+but no page linked to them. The browse pages list words and kanji and link to their word and
+search pages, so every word is a few links from the dictionary home; what a word or kanji shows
+stays on those pages. They are:
+
+- the hub, `/dictionary/browse/`;
+- kana: the charts, `/dictionary/browse/kana/`; each script's kana, `/dictionary/browse/hiragana/`
+  and `/dictionary/browse/katakana/`; a kana's page, such as `/dictionary/browse/hiragana/か/`; and
+  the words that start with two kana, such as `/dictionary/browse/hiragana/かが/`, a page at a
+  time (`…/かが/2/`);
+- kanji lists: `/dictionary/browse/kanji/`, and each list, such as
+  `/dictionary/browse/kanji/grade-2/` (the school grades, secondary school, jinmeiyō, and each
+  stroke count);
+- frequency dictionaries: `/dictionary/browse/frequency-dictionaries/`, and each list, such as
+  `/dictionary/browse/frequency-dictionaries/anime/`, a page at a time: the app's eight ranked
+  dictionaries and the five JLPT levels;
+- categories: `/dictionary/browse/parts-of-speech/`, `/dictionary/browse/usage/`, and
+  `/dictionary/browse/subjects/`, and each category's words, such as
+  `/dictionary/browse/onomatopoeia/`, most used first, or in kana order at `…/kana-order/`, a page
+  at a time.
+
+`/sitemaps/browse.xml` lists them, and `apps/web/src/app/routes.test.ts` lists their routes with
+the others. The dictionary has these page types besides the three above; the rest of this
+decision stands.
