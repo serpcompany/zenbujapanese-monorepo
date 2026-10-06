@@ -18,7 +18,6 @@ export interface AppOptions {
   release: string
   databaseReady(): Promise<boolean>
   auth: AuthHandler
-  emailSignIn: boolean
   devMailbox: Mailbox | null
 }
 
@@ -28,7 +27,7 @@ function isLocal(url: string): boolean {
   return localHosts.has(new URL(url).hostname)
 }
 
-export function createApp({ release, databaseReady, auth, emailSignIn, devMailbox }: AppOptions) {
+export function createApp({ release, databaseReady, auth, devMailbox }: AppOptions) {
   const app = new Hono()
 
   app.use(logRequests())
@@ -44,14 +43,6 @@ export function createApp({ release, databaseReady, auth, emailSignIn, devMailbo
       ? context.json({ status: 'ok' })
       : context.json({ status: 'unavailable' }, 503)
   )
-
-  app.post('/v1/auth/email-otp/send-verification-otp', async (context, next) => {
-    if (emailSignIn) return next()
-    return context.json(
-      errorBody('email_unavailable', 'Signing in with an email code is not available right now.'),
-      503
-    )
-  })
 
   app.on(['GET', 'POST'], '/v1/auth/*', async context =>
     inErrorFormat(await auth.handler(context.req.raw))

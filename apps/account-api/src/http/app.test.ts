@@ -10,7 +10,6 @@ const app = (databaseReady: () => Promise<boolean>, options: Partial<AppOptions>
     release: 'abc123def456',
     databaseReady,
     auth: { handler: signInRefused },
-    emailSignIn: true,
     devMailbox: null,
     ...options
   })
@@ -86,17 +85,6 @@ describe('the account service', () => {
     expect(await response.json()).toEqual({
       error: { code: 'invalid_otp', message: 'Invalid OTP' }
     })
-  })
-
-  test('says email sign-in is unavailable, rather than sending nothing, while no sender is set', async () => {
-    const handler = vi.fn(signInRefused)
-    const response = await app(up, { emailSignIn: false, auth: { handler } }).request(
-      '/v1/auth/email-otp/send-verification-otp',
-      { method: 'POST' }
-    )
-    expect(response.status).toBe(503)
-    expect(await response.json()).toMatchObject({ error: { code: 'email_unavailable' } })
-    expect(handler).not.toHaveBeenCalled()
   })
 
   test('shows the dev mailbox only on a local run, and only to a local request', async () => {

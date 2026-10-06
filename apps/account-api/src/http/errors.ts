@@ -26,17 +26,19 @@ function isErrorBody(body: unknown): body is ErrorBody {
 }
 
 export async function inErrorFormat(response: Response): Promise<Response> {
-  if (response.ok || !response.headers.get('content-type')?.includes('application/json')) {
-    return response
-  }
-  const body: unknown = await response
-    .clone()
-    .json()
-    .catch(() => null)
+  if (response.status < 400) return response
+  const json = response.headers.get('content-type')?.includes('application/json') ?? false
+  const body: unknown = json
+    ? await response
+        .clone()
+        .json()
+        .catch(() => null)
+    : null
   if (isErrorBody(body)) return response
   const { code, message } = (body ?? {}) as { code?: unknown; message?: unknown }
   const headers = new Headers(response.headers)
   headers.delete('content-length')
+  headers.set('content-type', 'application/json')
   return new Response(
     JSON.stringify(
       errorBody(

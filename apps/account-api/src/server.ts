@@ -15,17 +15,17 @@ async function main() {
   const database = openPostgres(config.databaseUrl)
   const devMailbox = config.email.provider?.kind === 'dev-mailbox' ? new DevMailbox() : null
   const mailer = createMailer(config.email, devMailbox)
-  const auth = createAuth({ config: config.auth, db: database.db, mailer })
+  const auth = await createAuth({ config: config.auth, db: database.db, mailer })
   const app = createApp({
     release: config.release,
     databaseReady: database.ready,
     auth,
-    emailSignIn: mailer.available,
     devMailbox
   })
   serveUntilStopped({
     fetch: app.fetch,
     port: config.port,
+    hostname: devMailbox ? '127.0.0.1' : undefined,
     listening: {
       release: config.release,
       signIn: {

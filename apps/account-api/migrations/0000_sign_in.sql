@@ -1,5 +1,5 @@
 CREATE TABLE "rate_limits" (
-	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
+	"id" text PRIMARY KEY NOT NULL,
 	"key" text NOT NULL,
 	"count" integer NOT NULL,
 	"last_request" bigint NOT NULL,
@@ -7,8 +7,8 @@ CREATE TABLE "rate_limits" (
 );
 --> statement-breakpoint
 CREATE TABLE "sessions" (
-	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
-	"user_id" uuid NOT NULL,
+	"id" text PRIMARY KEY NOT NULL,
+	"user_id" text NOT NULL,
 	"token" text NOT NULL,
 	"expires_at" timestamp with time zone NOT NULL,
 	"ip_address" text,
@@ -19,7 +19,7 @@ CREATE TABLE "sessions" (
 );
 --> statement-breakpoint
 CREATE TABLE "signing_keys" (
-	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
+	"id" text PRIMARY KEY NOT NULL,
 	"public_key" text NOT NULL,
 	"private_key" text NOT NULL,
 	"alg" text,
@@ -29,8 +29,8 @@ CREATE TABLE "signing_keys" (
 );
 --> statement-breakpoint
 CREATE TABLE "user_identities" (
-	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
-	"user_id" uuid NOT NULL,
+	"id" text PRIMARY KEY NOT NULL,
+	"user_id" text NOT NULL,
 	"provider" text NOT NULL,
 	"subject" text NOT NULL,
 	"access_token" text,
@@ -45,7 +45,7 @@ CREATE TABLE "user_identities" (
 );
 --> statement-breakpoint
 CREATE TABLE "users" (
-	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
+	"id" text PRIMARY KEY NOT NULL,
 	"name" text NOT NULL,
 	"email" text NOT NULL,
 	"email_verified" boolean DEFAULT false NOT NULL,
@@ -56,7 +56,7 @@ CREATE TABLE "users" (
 );
 --> statement-breakpoint
 CREATE TABLE "verifications" (
-	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
+	"id" text PRIMARY KEY NOT NULL,
 	"identifier" text NOT NULL,
 	"value" text NOT NULL,
 	"expires_at" timestamp with time zone NOT NULL,
@@ -69,4 +69,5 @@ ALTER TABLE "user_identities" ADD CONSTRAINT "user_identities_user_id_users_id_f
 CREATE INDEX "sessions_user_id" ON "sessions" USING btree ("user_id");--> statement-breakpoint
 CREATE UNIQUE INDEX "user_identities_provider_subject" ON "user_identities" USING btree ("provider","subject");--> statement-breakpoint
 CREATE INDEX "user_identities_user_id" ON "user_identities" USING btree ("user_id");--> statement-breakpoint
+CREATE UNIQUE INDEX "users_email_ignoring_case" ON "users" USING btree (lower("email"));--> statement-breakpoint
 CREATE INDEX "verifications_identifier" ON "verifications" USING btree ("identifier");

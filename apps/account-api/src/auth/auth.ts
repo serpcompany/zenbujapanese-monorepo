@@ -7,6 +7,12 @@ import type { Drizzle } from '../db/database'
 import { authSchema } from '../db/schema'
 import type { Mailer } from '../email/mailer'
 import { codeMinutes, signInCodeMessage } from '../email/sign-in-code'
+import { failureFields } from '../failure'
+import { appleClientSecret } from './apple'
+import { signInGuards } from './guards'
+import { identityHooks } from './identities'
+import { signInNonce } from './nonce'
+import { authPath, route } from './routes'
 
 export interface AuthOptions {
   config: AuthConfig
@@ -15,31 +21,30 @@ export interface AuthOptions {
 }
 
 const day = 60 * 60 * 24
-const authPath = '/v1/auth'
-const accessTokenLifetime = '15m'
-const emailProvider = 'email'
-const emailCodeSignIn = '/sign-in/email-otp'
 
-function socialProviders(config: AuthConfig) {
+async function socialProviders(config: AuthConfig) {
+  const apple = config.apple
+  const google = config.google
   return {
-    ...(config.apple && {
+    ...(apple && {
       apple: {
-        clientId: config.apple.clientIds,
-        clientSecret: config.apple.clientSecret,
-        appBundleIdentifier: config.apple.appBundleIdentifier,
+        clientId: apple.servicesIds,
+        clientSecret:
+          apple.signingKey && apple.servicesIds.length > 0
+            ? await appleClientSecret(apple.signingKey, apple.servicesIds[0])
+            : '',
+        appBundleIdentifier: apple.appBundleIdentifier,
         audience: [
-          ...config.apple.clientIds,
-          ...(config.apple.appBundleIdentifier ? [config.apple.appBundleIdentifier] : [])
+          ...apple.servicesIds,
+          ...(apple.appBundleIdentifier ? [apple.appBundleIdentifier] : [])
         ]
       }
     }),
-    ...(config.google && {
-      google: { clientId: config.google.clientIds, clientSecret: config.google.clientSecret }
-    })
+    ...(google && { google: { clientId: google.clientIds, clientSecret: google.clientSecret } })
   }
 }
 
-export function createAuth({ config, db, mailer }: AuthOptions) {
+export async function createAuth({ config, db, mailer }: AuthOptions) {
   return betterAuth({
     appName: 'Zenbu Japanese',
     baseURL: config.publicUrl,
@@ -52,52 +57,37 @@ export function createAuth({ config, db, mailer }: AuthOptions) {
       encryptOAuthTokens: true,
       accountLinking: { enabled: true, disableImplicitLinking: true, allowDifferentEmails: true }
     },
-    socialProviders: socialProviders(config),
+    socialProviders: await socialProviders(config),
     plugins: [
       emailOTP({
         otpLength: 6,
         expiresIn: codeMinutes * 60,
         allowedAttempts: 5,
-        storeOTP: 'hashed',
+        storeOTP: 'encrypted',
         async sendVerificationOTP({ email, otp }) {
           void mailer.send(signInCodeMessage(email, otp))
         }
       }),
-      jwt({ jwt: { expirationTime: accessTokenLifetime, definePayload: () => ({}) } }),
-      bearer()
+      jwt({ jwt: { expirationTime: '15m', definePayload: () => ({}) } }),
+      bearer({ requireSignature: true }),
+      signInNonce(),
+      signInGuards(mailer)
     ],
-    databaseHooks: {
-      session: {
-        create: {
-          async after(session, context) {
-            if (context?.path !== emailCodeSignIn) return
-            const adapter = context.context.internalAdapter
-            const identities = await adapter.findAccounts(session.userId)
-            if (identities.some(identity => identity.providerId === emailProvider)) return
-            const user = await adapter.findUserById(session.userId)
-            if (!user) return
-            await adapter.linkAccount({
-              userId: user.id,
-              providerId: emailProvider,
-              accountId: user.email
-            })
-          }
-        }
-      }
-    },
+    databaseHooks: identityHooks(mailer),
     rateLimit: {
       enabled: true,
       storage: 'database',
       window: 60,
       max: 100,
       customRules: {
-        '/email-otp/send-verification-otp': { window: 10 * 60, max: 5 },
-        '/sign-in/email-otp': { window: 10 * 60, max: 10 },
-        '/sign-in/social': { window: 60, max: 20 }
+        [route.sendCode]: { window: 10 * 60, max: 5 },
+        [route.signInWithCode]: { window: 10 * 60, max: 10 },
+        [route.signInWithProvider]: { window: 60, max: 20 },
+        [route.nonce]: { window: 60, max: 30 }
       }
     },
     advanced: {
-      database: { generateId: 'uuid' },
+      cookiePrefix: config.cookiePrefix,
       useSecureCookies: config.publicUrl.startsWith('https://'),
       ...(config.cookieDomain && {
         crossSubDomainCookies: { enabled: true, domain: config.cookieDomain }
@@ -106,7 +96,14 @@ export function createAuth({ config, db, mailer }: AuthOptions) {
     },
     logger: {
       level: 'warn',
-      log: (level, message) => log(level === 'error' ? 'error' : 'warn', `auth: ${message}`)
+      log: (level, message, ...details) => {
+        const error = details.find(detail => detail instanceof Error)
+        log(
+          level === 'error' ? 'error' : 'warn',
+          `auth: ${message}`,
+          error ? failureFields(error) : {}
+        )
+      }
     }
   })
 }

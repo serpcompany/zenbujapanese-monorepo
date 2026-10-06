@@ -16,13 +16,14 @@ const authConfig: AuthConfig = {
   secret: 'test-only-secret-that-is-long-enough-for-better-auth',
   trustedOrigins: [],
   cookieDomain: undefined,
-  apple: { clientIds: ['com.zenbujapanese.web'], clientSecret: 'unused', appBundleIdentifier },
+  cookiePrefix: 'zenbu-test',
+  apple: { servicesIds: [], appBundleIdentifier, signingKey: null },
   google: { clientIds: googleClientIds, clientSecret: 'unused' }
 }
 
 let addresses = 0
 
-export async function startService() {
+export async function startService({ emailSender = true }: { emailSender?: boolean } = {}) {
   const client = new PGlite()
   const db = drizzle(client)
   await migrate(db, { migrationsFolder: migrations })
@@ -30,17 +31,16 @@ export async function startService() {
   const mailer = createMailer(
     {
       from: 'Zenbu Japanese <support@zenbujapanese.com>',
-      provider: { kind: 'dev-mailbox' },
+      provider: emailSender ? { kind: 'dev-mailbox' } : null,
       allowedRecipients: null
     },
     mailbox
   )
-  const auth = createAuth({ config: authConfig, db, mailer })
+  const auth = await createAuth({ config: authConfig, db, mailer })
   const app = createApp({
     release: 'test',
     databaseReady: async () => true,
     auth,
-    emailSignIn: true,
     devMailbox: mailbox
   })
   const call = async (
@@ -69,7 +69,7 @@ export async function startService() {
     }
   }
   const rows = async (sql: string) => (await client.query<Record<string, unknown>>(sql)).rows
-  return { app, client, mailbox, call, rows, close: () => client.close() }
+  return { app, auth, client, mailbox, call, rows, close: () => client.close() }
 }
 
 export type Service = Awaited<ReturnType<typeof startService>>

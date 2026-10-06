@@ -19,13 +19,14 @@ export function logRequests(): MiddlewareHandler {
 export interface ServeOptions {
   fetch: Parameters<typeof serve>[0]['fetch']
   port: number
+  hostname?: string
   listening: Record<string, unknown>
   close(): Promise<void>
 }
 
-export function serveUntilStopped({ fetch, port, listening, close }: ServeOptions): void {
-  const server = serve({ fetch, port }, info =>
-    log('info', 'listening', { port: info.port, ...listening })
+export function serveUntilStopped({ fetch, port, hostname, listening, close }: ServeOptions): void {
+  const server = serve({ fetch, port, hostname }, info =>
+    log('info', 'listening', { address: info.address, port: info.port, ...listening })
   )
   let stopping = false
   const stop = (signal: string) => {

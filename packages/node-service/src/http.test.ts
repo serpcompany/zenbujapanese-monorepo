@@ -58,8 +58,12 @@ describe('logRequests', () => {
 describe('serveUntilStopped', () => {
   test('serves until SIGTERM, then closes what the service holds once and exits cleanly', async () => {
     const port = await freePort()
-    const { child, closed, output } = runScript('stopping-service.ts', { PORT: String(port) })
+    const { child, closed, output } = runScript('stopping-service.ts', {
+      PORT: String(port),
+      HOSTNAME_TO_SERVE: '127.0.0.1'
+    })
     await vi.waitFor(() => expect(output()).toContain('"listening"'), { timeout: 15_000 })
+    expect(output()).toContain('"address":"127.0.0.1"')
     expect(await (await fetch(`http://127.0.0.1:${port}/`)).text()).toBe('ok')
     child.kill('SIGTERM')
     child.kill('SIGINT')

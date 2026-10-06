@@ -1,3 +1,4 @@
+import { sql } from 'drizzle-orm'
 import {
   bigint,
   boolean,
@@ -6,28 +7,31 @@ import {
   pgTable,
   text,
   timestamp,
-  uniqueIndex,
-  uuid
+  uniqueIndex
 } from 'drizzle-orm/pg-core'
 
 const moment = (name: string) => timestamp(name, { withTimezone: true })
 const created = () => moment('created_at').notNull().defaultNow()
 const updated = () => moment('updated_at').notNull().defaultNow()
-const key = () => uuid('id').primaryKey().defaultRandom()
+const key = () => text('id').primaryKey()
 const owner = () =>
-  uuid('user_id')
+  text('user_id')
     .notNull()
     .references(() => users.id, { onDelete: 'cascade' })
 
-export const users = pgTable('users', {
-  id: key(),
-  name: text('name').notNull(),
-  email: text('email').notNull().unique(),
-  emailVerified: boolean('email_verified').notNull().default(false),
-  image: text('image'),
-  createdAt: created(),
-  updatedAt: updated()
-})
+export const users = pgTable(
+  'users',
+  {
+    id: key(),
+    name: text('name').notNull(),
+    email: text('email').notNull().unique(),
+    emailVerified: boolean('email_verified').notNull().default(false),
+    image: text('image'),
+    createdAt: created(),
+    updatedAt: updated()
+  },
+  table => [uniqueIndex('users_email_ignoring_case').on(sql`lower(${table.email})`)]
+)
 
 export const userIdentities = pgTable(
   'user_identities',

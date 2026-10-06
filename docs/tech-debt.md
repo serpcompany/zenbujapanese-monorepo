@@ -61,7 +61,6 @@ it must pass it over ([`ci.md`](agents/ci.md), Weekly maintenance).
 | --- | --- | --- | --- |
 | The server's deployer (`deploy/deployer.sh`) and the account service's backups (`apps/account-api/deploy/backups.sh`) have no tests: ShellCheck is all that runs before merge. | A change to either is first exercised on the server, where it deploys production or backs it up. A test would run them against stand-ins for `docker`, `cosign`, and `aws`, which their fixed `PATH` keeps out. | No issue yet | medium |
 | Sign-in's rate limits count only by address (`CF-Connecting-IP`), not by account or email ([`account-api.md`](agents/account-api.md), Sign-in). | Codes to one email can still come from many addresses, up to five each per 10 minutes. Per-account and per-client limits are #570's. | #570 | small |
-| Sign in with Apple's client secret is a JWT that lasts at most six months, made by hand from the key; nothing makes it again. | When it lapses, Sign in with Apple on the website stops (the app's native sign-in doesn't use it). | No issue yet | small |
 | Nothing refuses an account migration that drops or renames what the running code reads. The rule is to add first and remove in a later release ([`account-api.md`](agents/account-api.md), The database). | A deploy migrates while the old image still serves, so such a migration breaks it until the new one takes over. | No issue yet | small |
 
 ## Harness

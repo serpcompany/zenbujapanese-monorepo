@@ -26,6 +26,9 @@ importers:
       hono:
         specifier: ^4.13.11
         version: 4.13.11
+      jose:
+        specifier: ^6.2.12
+        version: 6.2.12
       pg:
         specifier: ^8.23.1
         version: 8.23.1
@@ -51,9 +54,6 @@ importers:
       esbuild:
         specifier: ^0.28.2
         version: 0.28.2
-      jose:
-        specifier: ^6.2.12
-        version: 6.2.12
       tsx:
         specifier: ^4.23.15
         version: 4.23.15

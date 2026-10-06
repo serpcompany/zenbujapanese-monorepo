@@ -34,22 +34,21 @@ describe('the migrations', () => {
     await client.close()
   })
 
-  test("hold #374's rules: one account per email, and one per provider's subject", async () => {
+  test("hold #374's rules: one account per email, whatever its case, and one per provider's subject", async () => {
     const client = new PGlite()
     await migrate(drizzle(client), { migrationsFolder: migrations })
-    const insertUser = (email: string) =>
-      client.query('insert into users (name, email) values ($1, $2) returning id', ['', email])
-    const { rows } = await insertUser('one@example.com')
-    const userId = (rows[0] as { id: string }).id
-    await expect(insertUser('one@example.com')).rejects.toThrow(/users_email_unique/)
-    const identity = () =>
-      client.query('insert into user_identities (user_id, provider, subject) values ($1, $2, $3)', [
-        userId,
-        'google',
-        'subject-1'
-      ])
-    await identity()
-    await expect(identity()).rejects.toThrow(/user_identities_provider_subject/)
+    const insertUser = (id: string, email: string) =>
+      client.query('insert into users (id, name, email) values ($1, $2, $3)', [id, '', email])
+    await insertUser('u1', 'one@example.com')
+    await expect(insertUser('u2', 'one@example.com')).rejects.toThrow(/users_email_unique/)
+    await expect(insertUser('u3', 'One@Example.com')).rejects.toThrow(/users_email_ignoring_case/)
+    const identity = (id: string) =>
+      client.query(
+        'insert into user_identities (id, user_id, provider, subject) values ($1, $2, $3, $4)',
+        [id, 'u1', 'google', 'subject-1']
+      )
+    await identity('i1')
+    await expect(identity('i2')).rejects.toThrow(/user_identities_provider_subject/)
     await client.close()
   })
 })

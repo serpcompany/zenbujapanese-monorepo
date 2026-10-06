@@ -1,10 +1,16 @@
 import { fileURLToPath } from 'node:url'
 import { readPort } from '@zenbu/node-service/config'
 
+export interface AppleSigningKey {
+  teamId: string
+  keyId: string
+  privateKey: string
+}
+
 interface AppleConfig {
-  clientIds: string[]
-  clientSecret: string
+  servicesIds: string[]
   appBundleIdentifier: string | undefined
+  signingKey: AppleSigningKey | null
 }
 
 interface GoogleConfig {
@@ -28,6 +34,7 @@ export interface AuthConfig {
   secret: string
   trustedOrigins: string[]
   cookieDomain: string | undefined
+  cookiePrefix: string
   apple: AppleConfig | null
   google: GoogleConfig | null
 }
@@ -41,7 +48,9 @@ export interface Config {
   email: EmailConfig
 }
 
-const defaultSender = 'Zenbu Japanese <support@zenbujapanese.com>'
+const supportAddress = 'support@zenbujapanese.com'
+const defaultSender = `Zenbu Japanese <${supportAddress}>`
+const everyone = 'everyone'
 export const migrationsFolder = fileURLToPath(new URL('../migrations', import.meta.url))
 
 function list(value: string | undefined): string[] {
@@ -57,20 +66,57 @@ function required(env: NodeJS.ProcessEnv, name: string, why: string): string {
   return value
 }
 
-function readApple(env: NodeJS.ProcessEnv): AppleConfig | null {
-  const clientIds = list(env.APPLE_CLIENT_IDS)
-  if (clientIds.length === 0) return null
-  return {
-    clientIds,
-    clientSecret: env.APPLE_CLIENT_SECRET?.trim() ?? '',
-    appBundleIdentifier: env.APPLE_APP_BUNDLE_IDENTIFIER?.trim() || undefined
+function readAppleKey(env: NodeJS.ProcessEnv): AppleSigningKey | null {
+  const teamId = env.APPLE_TEAM_ID?.trim() ?? ''
+  const keyId = env.APPLE_KEY_ID?.trim() ?? ''
+  const privateKey = (env.APPLE_PRIVATE_KEY ?? '').replaceAll('\\n', '\n').trim()
+  if (teamId === '' && keyId === '' && privateKey === '') return null
+  if (teamId === '' || keyId === '' || !privateKey.includes('PRIVATE KEY')) {
+    throw new Error(
+      "APPLE_TEAM_ID, APPLE_KEY_ID, and APPLE_PRIVATE_KEY (the .p8 key) are set together, to make Apple's client secret"
+    )
   }
+  return { teamId, keyId, privateKey }
+}
+
+function readApple(env: NodeJS.ProcessEnv): AppleConfig | null {
+  const servicesIds = list(env.APPLE_SERVICES_IDS)
+  const appBundleIdentifier = env.APPLE_APP_BUNDLE_IDENTIFIER?.trim() || undefined
+  const signingKey = readAppleKey(env)
+  if (servicesIds.length === 0 && appBundleIdentifier === undefined) return null
+  if (servicesIds.length > 0 && signingKey === null) {
+    throw new Error(
+      'APPLE_SERVICES_IDS needs APPLE_TEAM_ID, APPLE_KEY_ID, and APPLE_PRIVATE_KEY: signing in on the web makes a client secret from the key'
+    )
+  }
+  return { servicesIds, appBundleIdentifier, signingKey }
 }
 
 function readGoogle(env: NodeJS.ProcessEnv): GoogleConfig | null {
   const clientIds = list(env.GOOGLE_CLIENT_IDS)
   if (clientIds.length === 0) return null
   return { clientIds, clientSecret: env.GOOGLE_CLIENT_SECRET?.trim() ?? '' }
+}
+
+function readSender(env: NodeJS.ProcessEnv): string {
+  const from = env.EMAIL_FROM?.trim() || defaultSender
+  const address = /<([^>]+)>\s*$/.exec(from)?.[1] ?? from
+  if (address.toLowerCase() !== supportAddress) {
+    throw new Error(
+      `EMAIL_FROM must send from ${supportAddress}, the one address the standard allows`
+    )
+  }
+  return from
+}
+
+function readRecipients(env: NodeJS.ProcessEnv, provider: EmailProvider | null): string[] | null {
+  const value = env.EMAIL_ALLOWED_RECIPIENTS?.trim() ?? ''
+  if (value === everyone) return null
+  if (value !== '') return list(value)
+  if (provider === null || provider.kind === 'dev-mailbox') return null
+  throw new Error(
+    `EMAIL_ALLOWED_RECIPIENTS must name staging's test recipients, or be ${everyone} in production, before email is sent`
+  )
 }
 
 function readEmailProvider(env: NodeJS.ProcessEnv): EmailProvider | null {
@@ -122,13 +168,15 @@ export function readConfig(env: NodeJS.ProcessEnv = process.env): Config {
       secret,
       trustedOrigins: list(env.ACCOUNT_API_TRUSTED_ORIGINS),
       cookieDomain: env.ACCOUNT_API_COOKIE_DOMAIN?.trim() || undefined,
+      cookiePrefix: env.ACCOUNT_API_COOKIE_PREFIX?.trim() || 'zenbu',
       apple: readApple(env),
       google: readGoogle(env)
     },
-    email: {
-      from: env.EMAIL_FROM?.trim() || defaultSender,
-      provider: readEmailProvider(env),
-      allowedRecipients: env.EMAIL_ALLOWED_RECIPIENTS ? list(env.EMAIL_ALLOWED_RECIPIENTS) : null
-    }
+    email: readEmail(env)
   }
+}
+
+function readEmail(env: NodeJS.ProcessEnv): EmailConfig {
+  const provider = readEmailProvider(env)
+  return { from: readSender(env), provider, allowedRecipients: readRecipients(env, provider) }
 }
