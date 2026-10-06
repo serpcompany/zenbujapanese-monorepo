@@ -52,7 +52,7 @@ const coreByName = {
   name: 'core-by-package-name',
   severity: 'error',
   comment:
-    'Apps reach the shared core through its package name, @zenbu/dictionary-core, never a relative path into packages/ (ARCHITECTURE.md, Layers).',
+    'Apps reach a shared package through its name, such as @zenbu/dictionary-core or @zenbu/node-service, never a relative path into packages/ (ARCHITECTURE.md, Layers).',
   from: {},
   to: { path: '^\\.\\./\\.\\./packages/', dependencyTypes: ['local'] }
 } satisfies IForbiddenRuleType
@@ -73,6 +73,11 @@ const web: Part = {
       'web-never-imports-the-service',
       'dictionary-api',
       'The website reaches the dictionary service only over HTTP, through src/lib/dictionary/api.ts, and shares row shapes through the core (ARCHITECTURE.md, Layers).'
+    ),
+    neverImports(
+      'web-never-imports-the-account-service',
+      'account-api',
+      'The website reaches the account service only over HTTP, through its /v1 API (ARCHITECTURE.md, Layers).'
     ),
     {
       name: 'worker-runs-before-nextjs',
@@ -129,7 +134,49 @@ const service: Part = {
       'service-never-imports-the-website',
       'web',
       'The dictionary service knows nothing of the website: they share row shapes through the core, and the website calls the service over HTTP (ARCHITECTURE.md, Layers).'
+    ),
+    neverImports(
+      'service-never-imports-the-account-service',
+      'account-api',
+      'The dictionary service checks an account only through the account service, over HTTP and its JWKS (ADR 0012), never by importing it (ARCHITECTURE.md, Layers).'
     )
+  ]
+}
+
+const accountTestCode = '\\.test\\.ts$'
+
+const account: Part = {
+  folder: 'apps/account-api',
+  sources: ['src', 'scripts'],
+  testCode: accountTestCode,
+  rules: [
+    reachableFrom(['^src/server\\.ts$'], accountTestCode),
+    runtimeImportsNoDevDependency('^src/', accountTestCode),
+    coreByName,
+    neverImports(
+      'account-service-never-imports-another-app',
+      '(web|dictionary-api)',
+      'The account service knows nothing of the website or the dictionary service: they call it over HTTP (ARCHITECTURE.md, Layers).'
+    )
+  ]
+}
+
+const nodeServiceTestCode = '(\\.test\\.ts$|^src/test/)'
+
+const nodeService: Part = {
+  folder: 'packages/node-service',
+  sources: ['src'],
+  testCode: nodeServiceTestCode,
+  rules: [
+    runtimeImportsNoDevDependency('^src/', nodeServiceTestCode),
+    {
+      name: 'node-service-imports-no-app',
+      severity: 'error',
+      comment:
+        'What the Node services share imports none of them and no repository tool (ARCHITECTURE.md, Layers). Pass what it needs in as a parameter.',
+      from: {},
+      to: { path: '^\\.\\./\\.\\./(apps|tools)/' }
+    }
   ]
 }
 
@@ -171,7 +218,7 @@ const checks: Part = {
   rules: [reachableFrom(['^src/(cli|hook|report|fix-branch)\\.ts$'], checksTestCode)]
 }
 
-export const parts: readonly Part[] = [web, service, core, checks]
+export const parts: readonly Part[] = [web, service, account, core, nodeService, checks]
 
 function sharedRules(part: Part): IForbiddenRuleType[] {
   return [

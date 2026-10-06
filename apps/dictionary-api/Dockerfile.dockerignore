@@ -3,7 +3,9 @@
 !pnpm-lock.yaml
 !pnpm-workspace.yaml
 !apps/web/package.json
+!apps/account-api/package.json
 !packages/dictionary-core/**
+!packages/node-service/**
 !apps/dictionary-api/**
 !apps/ios/Modules/Sources/SearchExperience/Resources/LanguageReferenceData.sqlite3
 !apps/ios/Modules/Sources/SearchExperience/Resources/CompoundPitch.sqlite3

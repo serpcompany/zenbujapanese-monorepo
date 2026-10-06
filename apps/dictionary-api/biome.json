@@ -79,7 +79,6 @@
         "src/kuromoji.ts",
         "src/sudachi.ts",
         "src/config.ts",
-        "src/log.ts",
         "src/service.ts"
       ],
       "linter": {
@@ -98,9 +97,10 @@
                       "./load",
                       "hono",
                       "hono/**",
-                      "@hono/**"
+                      "@hono/**",
+                      "@zenbu/node-service/http"
                     ],
-                    "message": "The readers (src/artifact.ts, src/kuromoji.ts, src/sudachi.ts) and the shared modules (src/config.ts, src/log.ts, src/service.ts) are the bottom layer: the worker threads and the HTTP layer build on them, so they import neither (docs/agents/dictionary-api.md, Code layout)."
+                    "message": "The readers (src/artifact.ts, src/kuromoji.ts, src/sudachi.ts) and the shared modules (src/config.ts, src/service.ts) are the bottom layer: the worker threads and the HTTP layer build on them, so they import neither (docs/agents/dictionary-api.md, Code layout)."
                   }
                 ]
               }
@@ -119,7 +119,14 @@
               "options": {
                 "patterns": [
                   {
-                    "group": ["./app", "./server", "hono", "hono/**", "@hono/**"],
+                    "group": [
+                      "./app",
+                      "./server",
+                      "hono",
+                      "hono/**",
+                      "@hono/**",
+                      "@zenbu/node-service/http"
+                    ],
                     "message": "src/load.ts, src/worker.ts, and src/pool.ts run the dictionary in worker threads and know nothing of HTTP: src/app.ts is the HTTP layer, and src/server.ts wires the two together (docs/agents/dictionary-api.md, Code layout)."
                   }
                 ]
@@ -130,7 +137,7 @@
       }
     },
     {
-      "includes": ["src/**", "!src/log.ts", "!**/*.test.ts", "!**/*.test.tsx"],
+      "includes": ["src/**", "!**/*.test.ts", "!**/*.test.tsx"],
       "linter": {
         "rules": {
           "style": {
@@ -138,7 +145,7 @@
               "level": "error",
               "options": {
                 "deniedGlobals": {
-                  "console": "The service logs JSON lines through log() in src/log.ts (a level, a message naming the event, and fields), which the server's journal and Docker keep; call it instead of console (docs/agents/dictionary-api.md, Code layout)."
+                  "console": "The service logs JSON lines through log() from @zenbu/node-service/log (a level, a message naming the event, and fields), which the server's journal and Docker keep; call it instead of console (docs/agents/dictionary-api.md, Code layout)."
                 }
               }
             }

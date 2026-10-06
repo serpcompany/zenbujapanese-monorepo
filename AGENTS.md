@@ -14,6 +14,8 @@ Routing only. Open the smallest source matching the task.
 - [`docs/agents/ios.md`](docs/agents/ios.md) — Xcode build and launch, installing on an iPhone, Simulator verification, and the current iOS test and CI boundary.
 - [`docs/agents/web.md`](docs/agents/web.md) — zenbujapanese.com: run, verify, the dictionary service it reads, environments, deploys, and sitemaps.
 - [`docs/agents/dictionary-api.md`](docs/agents/dictionary-api.md) — the website's dictionary service: run, check, routes, the Docker image, and deploying it.
+- [`docs/agents/account-api.md`](docs/agents/account-api.md) — the account service: run, check, routes, its Postgres and migrations, the Docker image, deploying it, and backups.
+- [`docs/agents/api-servers.md`](docs/agents/api-servers.md) — the server the services run on: the deployer, its slots, and setting the server up.
 - [`docs/agents/dictionary-core.md`](docs/agents/dictionary-core.md) — the shared TypeScript dictionary core: what it ports, its rules, and its checks.
 - [`docs/agents/ci.md`](docs/agents/ci.md) — every GitHub Actions workflow: what starts it, what it runs, and why.
 - [`language-data/README.md`](language-data/README.md) — language-data releases: the manifest, what a release packages, the build workflow, and publishing to R2.

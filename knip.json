@@ -9,8 +9,15 @@
     "apps/dictionary-api": {
       "entry": ["src/worker-dev.mjs", "scripts/*.{ts,mjs}"]
     },
+    "apps/account-api": {
+      "entry": ["scripts/*.mjs"]
+    },
     "packages/dictionary-core": {
       "includeEntryExports": true
+    },
+    "packages/node-service": {
+      "includeEntryExports": true,
+      "ignoreDependencies": ["tsx"]
     },
     "tools/checks": {
       "entry": ["hook.mjs"],

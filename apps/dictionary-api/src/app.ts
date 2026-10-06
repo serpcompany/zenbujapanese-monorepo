@@ -5,9 +5,10 @@ import {
 } from '@zenbu/dictionary-core/artifact/contract'
 import { maximumEntSeq, maximumQueryLength } from '@zenbu/dictionary-core/artifact/dictionary'
 import { examplesPerPage } from '@zenbu/dictionary-core/detail/examples'
+import { logRequests } from '@zenbu/node-service/http'
+import { errorFields, log } from '@zenbu/node-service/log'
 import { Hono } from 'hono'
 import { routePath } from 'hono/route'
-import { errorFields, log } from './log'
 import type { DictionaryService } from './service'
 
 const maximumSitemapWordsPerRequest = 10_000
@@ -45,16 +46,7 @@ export interface AppOptions {
 export function createApp({ service, token, ready }: AppOptions) {
   const app = new Hono()
 
-  app.use(async (context, next) => {
-    const started = performance.now()
-    await next()
-    log('info', 'request', {
-      method: context.req.method,
-      route: routePath(context),
-      status: context.res.status,
-      ms: Math.round(performance.now() - started)
-    })
-  })
+  app.use(logRequests())
 
   app.get('/healthz', async context => {
     if (!ready()) return context.json({ status: 'starting' }, 503)

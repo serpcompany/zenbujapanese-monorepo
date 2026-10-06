@@ -55,6 +55,13 @@ it must pass it over ([`ci.md`](agents/ci.md), Weekly maintenance).
 | Frequency-pack sources are uploaded from a workstation with `apps/ios/Tools/publish_frequency_pack_sources.py`, which ADR 0006 allowed until the release pipeline exists. The pipeline exists but doesn't upload them. | Uploads to the CDN happen outside CI, with a person's Cloudflare login. | No issue yet | medium |
 | `apps/ios/LanguageData/Sources/Zenbu-Word-Relationships-v1.json` holds two relationships with no source or reviewer, pending a removal decision ([`data-sources.md`](data-sources.md)). | They're built into `LanguageReferenceData.sqlite3`, which the app and the website read. | No issue yet | medium |
 
+## Delivery
+
+| Debt | Why it matters | Issue | Size |
+| --- | --- | --- | --- |
+| The server's deployer (`deploy/deployer.sh`) and the account service's backups (`apps/account-api/deploy/backups.sh`) have no tests: ShellCheck is all that runs before merge. | A change to either is first exercised on the server, where it deploys production or backs it up. A test would run them against stand-ins for `docker`, `cosign`, and `aws`, which their fixed `PATH` keeps out. | No issue yet | medium |
+| Nothing refuses an account migration that drops or renames what the running code reads. The rule is to add first and remove in a later release ([`account-api.md`](agents/account-api.md), The database). | A deploy migrates while the old image still serves, so such a migration breaks it until the new one takes over. | No issue yet | small |
+
 ## Harness
 
 | Debt | Why it matters | Issue | Size |

@@ -6,7 +6,9 @@ on:
     paths:
       - apps/dictionary-api/**
       - packages/dictionary-core/**
+      - packages/node-service/**
       - apps/web/package.json
+      - apps/account-api/package.json
       - package.json
       - pnpm-lock.yaml
       - pnpm-workspace.yaml
@@ -17,12 +19,14 @@ on:
       - .github/workflows/dictionary-api-deploy.yml
       - '!**/*.test.ts'
       - '!apps/dictionary-api/src/conformance/**'
-      - '!apps/dictionary-api/deploy/**'
+      - '!packages/node-service/src/test/**'
   pull_request:
     paths:
       - apps/dictionary-api/**
       - packages/dictionary-core/**
+      - packages/node-service/**
       - apps/web/package.json
+      - apps/account-api/package.json
       - package.json
       - pnpm-lock.yaml
       - pnpm-workspace.yaml
@@ -33,7 +37,7 @@ on:
       - .github/workflows/dictionary-api-deploy.yml
       - '!**/*.test.ts'
       - '!apps/dictionary-api/src/conformance/**'
-      - '!apps/dictionary-api/deploy/**'
+      - '!packages/node-service/src/test/**'
   workflow_dispatch:
     inputs:
       tag:

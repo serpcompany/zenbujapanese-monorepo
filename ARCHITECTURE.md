@@ -10,7 +10,10 @@ layers apart. Each part's own doc has the detail; each rule here is enforced by 
 | `apps/ios` | The iPhone app, in Swift. It reads the language data bundled with it, which its importers in `apps/ios/Tools` build. | [`docs/agents/ios.md`](docs/agents/ios.md) |
 | `apps/web` | zenbujapanese.com: Next.js on Cloudflare Workers through OpenNext. Its dictionary pages read the dictionary service. | [`docs/agents/web.md`](docs/agents/web.md) |
 | `apps/dictionary-api` | The dictionary service: Node, in a Docker image on serpcompany's server, answering the website's dictionary requests by running the shared core on the app's language data. | [`docs/agents/dictionary-api.md`](docs/agents/dictionary-api.md) |
+| `apps/account-api` | The account service: Node and Postgres on the same server, for Zenbu accounts, sign-in, and sync (ADR 0011). So far it migrates its database and answers its health checks. | [`docs/agents/account-api.md`](docs/agents/account-api.md) |
 | `packages/dictionary-core` | The shared TypeScript core: search, results, word and kanji detail, and examples, ported from the app's Swift. Every client is to run it (ADR 0008). | [`docs/agents/dictionary-core.md`](docs/agents/dictionary-core.md) |
+| `packages/node-service` | What the two Node services share: JSON-line logs, the request log, and a server that stops cleanly. | [`docs/agents/dictionary-api.md`](docs/agents/dictionary-api.md), Code layout |
+| `deploy` | The API servers' deployer, which swaps each service's signed image into its slots. | [`docs/agents/api-servers.md`](docs/agents/api-servers.md) |
 | `language-data` | The language-data release: the manifest and the pipeline that packages and publishes the app's data as a versioned artifact (ADR 0006). | [`language-data/README.md`](language-data/README.md) |
 | `tools/checks` | The repository-wide checks behind `pnpm verify`. | [`docs/agents/code.md`](docs/agents/code.md) |
 
@@ -27,6 +30,8 @@ flowchart LR
     Image --> Server["Server: two slots behind nginx"]
     Server -->|"bearer token, through Cloudflare"| Site["Website Worker"]
     Core --> Site
+    Accounts["Account service image"] --> Server
+    Server --- Postgres[("Postgres, on the server")]
 ```
 
 The app's bundled data is the one source: the importers build it, the app bundles it, the service's
@@ -34,7 +39,11 @@ image copies it, and the release packages it. The website reads no data of its o
 service, which runs the same core the website renders with. A new build of the data is a new
 service image, deployed without touching the site.
 
-The service's answers are a contract, typed and numbered in the core (`DictionaryContract`,
+The account service holds what learners keep across devices. Its Postgres database sits on the same
+server, on a network only the service's slots reach, and every app keeps its own copy and works
+offline (ADR 0011).
+
+The dictionary service's answers are a contract, typed and numbered in the core (`DictionaryContract`,
 `dictionaryContract`). The site and the service deploy separately, in either order, so the site
 compares the service's number with its own and logs a mismatch rather than refusing it; a test
 fails a shape change that doesn't raise the number
@@ -50,11 +59,14 @@ saying where the code belongs:
 - **The service**: readers and shared modules, then the worker layer, then HTTP, which reaches the
   dictionary only through the `DictionaryService` interface
   ([`docs/agents/dictionary-api.md`](docs/agents/dictionary-api.md), Code layout).
+- **The account service**: the domain, then the database and HTTP layers, which never import each
+  other ([`docs/agents/account-api.md`](docs/agents/account-api.md), Code layout).
 - **The website**: `src/lib`, then components and hooks, then routes; only
   `src/lib/dictionary/data.ts` reads the service's client, apart from `retired.ts`, which
   `worker.ts` runs before Next.js ([`docs/agents/web.md`](docs/agents/web.md), Code layout).
 - **Across parts**: the core and the app's Swift change together, which `Search parity` checks
   ([`docs/agents/ci.md`](docs/agents/ci.md)); the website and the service share their row shapes
-  through the core.
+  through the core; no app imports another, and apps reach a shared package by its name.
 
-Every package logs through its own `log()`, or, for the core, not at all.
+The website logs through its own `log()`, the Node services through `packages/node-service`'s, and
+the core not at all.

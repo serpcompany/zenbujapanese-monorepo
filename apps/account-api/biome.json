@@ -1,0 +1,185 @@
+{
+  "$schema": "https://biomejs.dev/schemas/2.4.2/schema.json",
+  "vcs": {
+    "enabled": true,
+    "clientKind": "git",
+    "useIgnoreFile": true
+  },
+  "files": {
+    "ignoreUnknown": true,
+    "includes": ["**", "!node_modules", "!dist"]
+  },
+  "formatter": {
+    "enabled": true,
+    "indentStyle": "space",
+    "indentWidth": 2,
+    "lineEnding": "lf",
+    "lineWidth": 100
+  },
+  "linter": {
+    "enabled": true,
+    "rules": {
+      "recommended": true,
+      "style": {
+        "noNonNullAssertion": "error"
+      }
+    }
+  },
+  "assist": {
+    "actions": {
+      "source": {
+        "organizeImports": "on"
+      }
+    }
+  },
+  "javascript": {
+    "formatter": {
+      "quoteStyle": "single",
+      "semicolons": "asNeeded",
+      "trailingCommas": "none",
+      "arrowParentheses": "asNeeded"
+    }
+  },
+  "overrides": [
+    {
+      "includes": ["src/http/**", "!**/*.test.ts"],
+      "linter": {
+        "rules": {
+          "style": {
+            "noRestrictedImports": {
+              "level": "error",
+              "options": {
+                "patterns": [
+                  {
+                    "group": [
+                      "../db",
+                      "../db/**",
+                      "../server",
+                      "pg",
+                      "drizzle-orm",
+                      "drizzle-orm/**",
+                      "@electric-sql/**"
+                    ],
+                    "message": "src/http is the HTTP layer: it answers from what src/server.ts hands it, through the domain, and never touches the database itself (docs/agents/account-api.md, Code layout). Put database code in src/db, and the rules in src/domain."
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "includes": ["src/domain/**", "!**/*.test.ts"],
+      "linter": {
+        "rules": {
+          "style": {
+            "noRestrictedImports": {
+              "level": "error",
+              "options": {
+                "patterns": [
+                  {
+                    "group": [
+                      "../http",
+                      "../http/**",
+                      "../db",
+                      "../db/**",
+                      "../server",
+                      "hono",
+                      "hono/**",
+                      "@hono/**",
+                      "@zenbu/node-service/http",
+                      "pg",
+                      "drizzle-orm",
+                      "drizzle-orm/**",
+                      "@electric-sql/**"
+                    ],
+                    "message": "src/domain holds the account and sync rules, which the HTTP layer and the database layer both build on, so it imports neither, nor Hono, nor a database driver (docs/agents/account-api.md, Code layout). Take what a rule needs as a parameter."
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "includes": ["src/db/**", "!**/*.test.ts"],
+      "linter": {
+        "rules": {
+          "style": {
+            "noRestrictedImports": {
+              "level": "error",
+              "options": {
+                "patterns": [
+                  {
+                    "group": [
+                      "../http",
+                      "../http/**",
+                      "../server",
+                      "hono",
+                      "hono/**",
+                      "@hono/**",
+                      "@zenbu/node-service/http"
+                    ],
+                    "message": "src/db is the database layer: the HTTP layer builds on it through src/server.ts, so it knows nothing of HTTP (docs/agents/account-api.md, Code layout)."
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "includes": ["src/config.ts"],
+      "linter": {
+        "rules": {
+          "style": {
+            "noRestrictedImports": {
+              "level": "error",
+              "options": {
+                "patterns": [
+                  {
+                    "group": [
+                      "./http",
+                      "./http/**",
+                      "./db",
+                      "./db/**",
+                      "./domain",
+                      "./domain/**",
+                      "./server",
+                      "hono",
+                      "hono/**",
+                      "pg",
+                      "drizzle-orm",
+                      "drizzle-orm/**"
+                    ],
+                    "message": "src/config.ts only reads the environment; src/server.ts hands what it read to the layers (docs/agents/account-api.md, Code layout)."
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "includes": ["src/**", "!**/*.test.ts"],
+      "linter": {
+        "rules": {
+          "style": {
+            "noRestrictedGlobals": {
+              "level": "error",
+              "options": {
+                "deniedGlobals": {
+                  "console": "The service logs JSON lines through log() from @zenbu/node-service/log (a level, a message naming the event, and fields), and never a learner's email, a code, a token, or a link; call it instead of console (docs/agents/account-api.md, Code layout)."
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  ]
+}

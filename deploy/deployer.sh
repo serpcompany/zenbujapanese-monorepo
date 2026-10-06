@@ -2,21 +2,10 @@
 set -uo pipefail
 export PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
 
-readonly repository=ghcr.io/serpcompany/zenbujapanese-dictionary-api
-readonly network=zenbujapanese-dictionary-api
+readonly services=(dictionary-api account-api)
 readonly nginx_container=nginx
-readonly config_dir=/etc/zenbujapanese-dictionary-api
-readonly registry_file="$config_dir/registry.env"
-readonly state_dir=/var/lib/zenbujapanese-dictionary-api
-readonly lock_file=/run/zenbujapanese-dictionary-api.lock
-readonly slot_label=zenbujapanese.dictionary-api.slot
-readonly environment_label=zenbujapanese.dictionary-api.environment
-readonly signer_identity=https://github.com/serpcompany/zenbujapanese-monorepo/.github/workflows/dictionary-api-deploy.yml@refs/heads/main
 readonly signer_issuer=https://token.actions.githubusercontent.com
-readonly container_limits=(
-  --memory 4g --memory-swap 4g --cpus 4 --pids-limit 512
-  --log-driver json-file --log-opt max-size=10m --log-opt max-file=3
-)
+readonly container_logs=(--log-driver json-file --log-opt max-size=10m --log-opt max-file=3)
 readonly container_security=(
   --user 1000:1000 --cap-drop ALL --security-opt no-new-privileges --read-only
   --tmpfs /tmp:size=64m
@@ -24,10 +13,38 @@ readonly container_security=(
 readonly ready_seconds=180
 readonly health_timeout_ms=3000
 readonly nginx_resolve_seconds=10
+service=deployer
+
+use_service() {
+  service="$1"
+  repository="ghcr.io/serpcompany/zenbujapanese-$service"
+  network="zenbujapanese-$service"
+  config_dir="/etc/zenbujapanese-$service"
+  registry_file="$config_dir/registry.env"
+  state_dir="/var/lib/zenbujapanese-$service"
+  lock_file="/run/zenbujapanese-$service.lock"
+  slot_label="zenbujapanese.$service.slot"
+  environment_label="zenbujapanese.$service.environment"
+  signer_identity="https://github.com/serpcompany/zenbujapanese-monorepo/.github/workflows/$service-deploy.yml@refs/heads/main"
+  case "$service" in
+    dictionary-api)
+      release_variable=DICTIONARY_API_RELEASE
+      network_internal=true
+      private_networks=()
+      container_limits=(--memory 4g --memory-swap 4g --cpus 4 --pids-limit 512)
+      ;;
+    account-api)
+      release_variable=ACCOUNT_API_RELEASE
+      network_internal=false
+      private_networks=(zenbujapanese-account-db)
+      container_limits=(--memory 512m --memory-swap 512m --cpus 1 --pids-limit 256)
+      ;;
+  esac
+}
 
 log() {
-  logger --tag zenbujapanese-dictionary-api -- "$*" 2>/dev/null || true
-  echo "$*" >&2
+  logger --tag "zenbujapanese-$service" -- "$service: $*" 2>/dev/null || true
+  echo "$service: $*" >&2
 }
 
 run_dir="$(mktemp -d)" || exit 1
@@ -35,6 +52,7 @@ trap 'rm -rf "$run_dir"' EXIT
 
 use_registry_login() {
   local username token
+  unset DOCKER_CONFIG
   [ -e "$registry_file" ] || return 0
   username="$(sed -n 's/^GHCR_USERNAME=//p' "$registry_file" | tail -n 1 | tr -d '\r[:space:]')"
   token="$(sed -n 's/^GHCR_TOKEN=//p' "$registry_file" | tail -n 1 | tr -d '\r[:space:]')"
@@ -42,10 +60,10 @@ use_registry_login() {
     log "$registry_file needs both GHCR_USERNAME and GHCR_TOKEN"
     return 1
   fi
-  mkdir -p "$run_dir/docker"
+  mkdir -p "$run_dir/$service/docker"
   printf '{"auths":{"%s":{"auth":"%s"}}}\n' "${repository%%/*}" \
-    "$(printf '%s:%s' "$username" "$token" | base64 --wrap 0)" >"$run_dir/docker/config.json"
-  export DOCKER_CONFIG="$run_dir/docker"
+    "$(printf '%s:%s' "$username" "$token" | base64 --wrap 0)" >"$run_dir/$service/docker/config.json"
+  export DOCKER_CONFIG="$run_dir/$service/docker"
 }
 
 running_slots() {
@@ -56,12 +74,16 @@ build_of() {
   timeout 10 docker exec "$1" node -e "
     fetch('http://127.0.0.1:' + process.env.PORT + '/healthz', { signal: AbortSignal.timeout($health_timeout_ms) })
       .then(response => (response.ok ? response.json() : Promise.reject(response.status)))
-      .then(health => console.log(health.build), () => process.exit(1))" 2>/dev/null
+      .then(health => console.log(health.build ?? health.release), () => process.exit(1))" 2>/dev/null
+}
+
+answers_as() {
+  [ "$1" = "$2" ] || [[ "$1" == *"-$2" ]]
 }
 
 release_of() {
   docker image inspect --format '{{range .Config.Env}}{{println .}}{{end}}' "$1" |
-    sed -n 's/^DICTIONARY_API_RELEASE=//p'
+    sed -n "s/^$release_variable=//p"
 }
 
 digest_reference_of() {
@@ -75,9 +97,13 @@ signed_on_main() {
 }
 
 network_ready() {
-  [ "$(docker network inspect --format '{{.Internal}}' "$network" 2>/dev/null)" = true ] &&
+  local private
+  [ "$(docker network inspect --format '{{.Internal}}' "$network" 2>/dev/null)" = "$network_internal" ] &&
     docker network inspect --format '{{range .Containers}}{{.Name}}{{println}}{{end}}' "$network" |
-    grep --quiet --line-regexp --fixed-strings "$nginx_container"
+    grep --quiet --line-regexp --fixed-strings "$nginx_container" || return 1
+  for private in "${private_networks[@]}"; do
+    [ "$(docker network inspect --format '{{.Internal}}' "$private" 2>/dev/null)" = true ] || return 1
+  done
 }
 
 on_network() {
@@ -120,9 +146,9 @@ prune() {
 }
 
 deploy() {
-  local environment="$1" reference="$2" release="$3" name="zenbujapanese-dictionary-api-$1"
-  local running container slot="" candidate new cidfile="$run_dir/$1.cid" build deadline
-  local replaced=()
+  local environment="$1" reference="$2" release="$3" name="zenbujapanese-$service-$1"
+  local running container slot="" candidate new cidfile="$run_dir/$service-$1.cid" build deadline
+  local private replaced=()
 
   for container in $(docker ps --all --filter "label=$environment_label=$environment" \
     --filter status=exited --filter status=created --format '{{.ID}}'); do
@@ -141,15 +167,27 @@ deploy() {
   }
 
   log "$environment: starting $reference (release $release) in slot $slot"
-  if ! docker run --detach --cidfile "$cidfile" --name "$name-$slot" \
+  if ! docker create --cidfile "$cidfile" --name "$name-$slot" \
     --label "$environment_label=$environment" --label "$slot_label=$slot" \
     --network "$network" --env-file "$config_dir/$environment.env" \
-    "${container_limits[@]}" "${container_security[@]}" "$reference" >/dev/null; then
-    log "$environment: couldn't start $reference"
+    "${container_limits[@]}" "${container_logs[@]}" "${container_security[@]}" "$reference" >/dev/null; then
+    log "$environment: couldn't create a container for $reference"
     [ -s "$cidfile" ] && docker rm --force --volumes "$(cat "$cidfile")" >/dev/null 2>&1
     return 2
   fi
   new="$(cat "$cidfile")"
+  for private in "${private_networks[@]}"; do
+    if ! docker network connect "$private" "$new" >/dev/null; then
+      log "$environment: couldn't connect $reference to the $private network; kept the running version"
+      docker rm --force --volumes "$new" >/dev/null
+      return 2
+    fi
+  done
+  if ! docker start "$new" >/dev/null; then
+    log "$environment: couldn't start $reference; kept the running version"
+    docker rm --force --volumes "$new" >/dev/null
+    return 2
+  fi
 
   deadline=$((SECONDS + ready_seconds))
   until build="$(build_of "$new")"; do
@@ -162,7 +200,7 @@ deploy() {
     fi
     sleep 2
   done
-  if [[ "$build" != *"-$release" ]]; then
+  if ! answers_as "$build" "$release"; then
     log "$environment: $reference answers as $build, not release $release; kept the running version"
     docker rm --force --volumes "$new" >/dev/null
     return 1
@@ -185,9 +223,9 @@ deploy() {
 
 finish() {
   local environment="$1" current="$2" release="$3" running="$4"
-  local name="zenbujapanese-dictionary-api-$1" build container
+  local name="zenbujapanese-$service-$1" build container
   build="$(build_of "$current")" || return 1
-  [[ "$build" == *"-$release" ]] || return 1
+  answers_as "$build" "$release" || return 1
   if ! has_alias "$current" "$name"; then
     log "$environment: giving $current, left from a deploy cut short, the network alias"
     give_alias "$current" "$name" || return 1
@@ -216,7 +254,7 @@ check() {
   image="$(docker image inspect --format '{{.Id}}' "$repository:$environment")" || return 1
   release="$(release_of "$image")"
   [[ "$release" =~ ^[A-Za-z0-9._-]+$ ]] || {
-    log "$environment: $image names no DICTIONARY_API_RELEASE; not deploying it"
+    log "$environment: $image names no $release_variable; not deploying it"
     return 1
   }
 
@@ -227,7 +265,7 @@ check() {
   done
   if [ -n "$current" ]; then
     finish "$environment" "$current" "$release" "$running" && return 0
-    if has_alias "$current" "zenbujapanese-dictionary-api-$environment"; then
+    if has_alias "$current" "zenbujapanese-$service-$environment"; then
       log "$environment: $current doesn't answer /healthz as release $release; left as it is"
       return 1
     fi
@@ -249,7 +287,7 @@ check() {
     return 1
   fi
   if ! signed_on_main "$reference"; then
-    log "$environment: $reference isn't signed by the Dictionary API deploy workflow on main; not deploying it"
+    log "$environment: $reference isn't signed by .github/workflows/$service-deploy.yml on main; not deploying it"
     return 1
   fi
   if [ "$(docker image inspect --format '{{len .Config.Volumes}}' "$image")" != 0 ]; then
@@ -257,7 +295,7 @@ check() {
     return 1
   fi
   if ! network_ready; then
-    log "$environment: the $network network is missing, isn't internal, or doesn't have $nginx_container on it, so a slot there couldn't serve; not deploying (docs/agents/dictionary-api.md, Set up the server)"
+    log "$environment: the $network network is missing, isn't as internal as it should be, or doesn't have $nginx_container on it, or a private network (${private_networks[*]:-none}) is missing or reaches out, so a slot there couldn't serve; not deploying (docs/agents/api-servers.md, Set up the server)"
     return 1
   fi
 
@@ -272,20 +310,38 @@ check() {
   esac
 }
 
+deploy_service() {
+  local environment status=0
+  use_service "$1"
+  if [ ! -d "$config_dir" ]; then
+    log "skipped; it isn't set up on this server ($config_dir is missing)"
+    return 0
+  fi
+  mkdir -p "$state_dir"
+  exec 9>>"$lock_file"
+  if ! flock --nonblock 9; then
+    log "an earlier run is still deploying; this one skips"
+    exec 9>&-
+    return 0
+  fi
+  if use_registry_login; then
+    for environment in staging production; do
+      check "$environment" || status=1
+    done
+  else
+    status=1
+  fi
+  exec 9>&-
+  return "$status"
+}
+
 [ "$(id -u)" = 0 ] || {
   echo "run it as root (cron does)" >&2
   exit 1
 }
-mkdir -p "$state_dir"
-exec 9>>"$lock_file"
-flock --nonblock 9 || {
-  log "an earlier run is still deploying; this one skips"
-  exit 0
-}
-use_registry_login || exit 1
 
 status=0
-for environment in staging production; do
-  check "$environment" || status=1
+for service in "${services[@]}"; do
+  deploy_service "$service" || status=1
 done
 exit "$status"

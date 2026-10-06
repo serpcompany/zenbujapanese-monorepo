@@ -1,6 +1,7 @@
 packages:
   - apps/web
   - apps/dictionary-api
+  - apps/account-api
   - packages/*
   - tools/*
 

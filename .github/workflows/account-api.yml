@@ -1,0 +1,65 @@
+name: Account API
+
+on:
+  pull_request:
+    paths:
+      - apps/account-api/**
+      - packages/node-service/**
+      - deploy/**
+      - package.json
+      - pnpm-lock.yaml
+      - pnpm-workspace.yaml
+      - .github/workflows/account-api.yml
+  workflow_dispatch:
+
+concurrency:
+  group: account-api-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  scripts:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v5
+      - name: ShellCheck the server's scripts
+        run: >-
+          docker run --rm -v "$PWD:/mnt" -w /mnt koalaman/shellcheck:v0.11.0
+          deploy/deployer.sh apps/account-api/deploy/backups.sh
+
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    services:
+      postgres:
+        image: postgres:18
+        env:
+          POSTGRES_USER: account
+          POSTGRES_DB: account
+          POSTGRES_HOST_AUTH_METHOD: trust
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready --username account" --health-interval 2s --health-timeout 5s
+          --health-retries 30
+    env:
+      ACCOUNT_API_TEST_DATABASE_URL: postgres://account@localhost:5432/account
+    steps:
+      - uses: actions/checkout@v5
+      - uses: pnpm/action-setup@v6
+        with:
+          package_json_file: package.json
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: pnpm
+          cache-dependency-path: pnpm-lock.yaml
+      - run: pnpm install --frozen-lockfile
+      - name: Check what the services share
+        run: pnpm --filter @zenbu/node-service check
+      - name: Check the service, against Postgres 18
+        working-directory: apps/account-api
+        run: pnpm check
