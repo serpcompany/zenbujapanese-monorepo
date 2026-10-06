@@ -1,11 +1,14 @@
 import { readFileSync } from 'node:fs'
-import { wordExample } from '@zenbu/dictionary-core/detail/examples'
 import { rubySegments } from '@zenbu/dictionary-core/detail/ruby'
 import { renderToStaticMarkup } from 'react-dom/server'
 import { describe, expect, test } from 'vitest'
-import type { SearchData, SearchExamplesData, SearchWord } from '@/lib/dictionary/data'
+import {
+  type SearchData,
+  type SearchExamplesData,
+  type SearchWord,
+  searchExamplesData
+} from '@/lib/dictionary/data'
 import type { KanjiDetailsData } from '@/lib/dictionary/kanji-details'
-import { pageExample, serviceLinks } from '@/lib/dictionary/page-example'
 import { linkSearchScreen } from '@/lib/dictionary/results/links'
 import { searchPath } from '@/lib/dictionary/urls'
 import { gateEnabled, gateService, recordedCases } from '@/test/gate'
@@ -302,15 +305,7 @@ async function serviceKanji(character: string): Promise<KanjiDetailsData | null>
 async function inlineExamples(data: SearchData): Promise<SearchExamplesData | null> {
   if (data.state !== 'results' || data.examples?.target.kind !== 'inline') return null
   const found = await gateService().searchExamples(data.query)
-  if (!found) return null
-  const links = serviceLinks(found.data.slugs, [])
-  return {
-    query: found.data.query,
-    examples: found.data.rows.map(row => pageExample(wordExample(row), links)),
-    listed: found.data.listed,
-    truncated: found.data.truncated,
-    examplesPath: `${searchPath(found.data.query)}examples.json?build=${found.build}`
-  }
+  return found ? searchExamplesData(found) : null
 }
 
 describe.runIf(gateEnabled)('the rendered search results page matches the app', () => {

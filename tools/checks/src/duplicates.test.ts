@@ -37,6 +37,15 @@ test('finds a block repeated across files and names both places', () => {
   )
 })
 
+test.each([
+  ['tsx', 'ts'],
+  ['js', 'ts']
+])('compares a .%s file with a .%s file', (left, right) => {
+  const first = file(`component.${left}`, repeated('uniqueTitles'))
+  const second = file(`helper.${right}`, `export const app = 'zenbu'\n\n${repeated('uniqueIds')}`)
+  expect(findDuplicates([first, second])).toHaveLength(1)
+})
+
 test('passes code that says each thing once', () => {
   const only = file('only.ts', repeated('uniqueRows'))
   const other = file('other.ts', 'export const greeting = (name: string) => `Hello, ${name}`\n')

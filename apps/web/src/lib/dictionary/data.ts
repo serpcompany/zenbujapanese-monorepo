@@ -1,5 +1,8 @@
 import { getCloudflareContext } from '@opennextjs/cloudflare'
-import { isReadableLength } from '@zenbu/dictionary-core/artifact/dictionary'
+import {
+  isReadableLength,
+  type SearchExamplesResponse
+} from '@zenbu/dictionary-core/artifact/dictionary'
 import { examplesPerPage, formExample, wordExample } from '@zenbu/dictionary-core/detail/examples'
 import { type KanjiWord, kanjiDetail } from '@zenbu/dictionary-core/detail/kanji'
 import type { FrequencyRow, KanjiRows, WordRows } from '@zenbu/dictionary-core/detail/rows'
@@ -25,7 +28,7 @@ import type { SearchResults } from '@zenbu/dictionary-core/search/search'
 import { cache } from 'react'
 import { errorFields, log } from '@/lib/log'
 import { isDeployedSite } from '@/lib/site'
-import { type DictionaryApi, dictionaryApi } from './api'
+import { type Answer, type DictionaryApi, dictionaryApi } from './api'
 import type { KanjiDetailsData } from './kanji-details'
 import {
   type Linked,
@@ -294,19 +297,23 @@ export const searchDictionary = cache(async (query: string): Promise<SearchData>
   return linkSearchScreen(screen, { dictionaryLoaded: api !== null, kanji })
 })
 
+export function searchExamplesData(found: Answer<SearchExamplesResponse>): SearchExamplesData {
+  const links = serviceLinks(found.data.slugs, [])
+  return {
+    query: found.data.query,
+    examples: found.data.rows.map(row => pageExample(wordExample(row), links)),
+    listed: found.data.listed,
+    truncated: found.data.truncated,
+    examplesPath: moreSearchExamplesPath(found.data.query, found.build)
+  }
+}
+
 export const getSearchExamples = cache(
   async (query: string, from = 0, build?: string): Promise<SearchExamplesData | null> => {
     const api = await dictionaryService()
     if (!api || !isReadableLength(query)) return null
     const found = await api.searchExamples(query, from)
     if (!found || (build !== undefined && found.build !== build)) return null
-    const links = serviceLinks(found.data.slugs, [])
-    return {
-      query: found.data.query,
-      examples: found.data.rows.map(row => pageExample(wordExample(row), links)),
-      listed: found.data.listed,
-      truncated: found.data.truncated,
-      examplesPath: moreSearchExamplesPath(found.data.query, found.build)
-    }
+    return searchExamplesData(found)
   }
 )

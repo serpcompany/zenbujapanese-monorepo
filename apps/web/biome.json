@@ -231,8 +231,16 @@
               "options": {
                 "paths": {
                   "@playwright/test": {
-                    "importNames": ["default", "test", "expect"],
-                    "message": "Browser specs take test and expect from e2e/test.ts, whose test fails on any console error the spec doesn't allow (the browser-tests skill). Import them from './test'."
+                    "message": "Browser specs take test and expect from e2e/test.ts, whose test fails on any console error the spec doesn't allow (the browser-tests skill). Import them from './test', and take only Playwright's types from @playwright/test.",
+                    "allowImportNames": [
+                      "Page",
+                      "Locator",
+                      "BrowserContext",
+                      "Request",
+                      "Response",
+                      "Route",
+                      "TestInfo"
+                    ]
                   }
                 }
               }

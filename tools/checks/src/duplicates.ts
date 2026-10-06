@@ -9,7 +9,8 @@ const minimumTokens = 50
 const minimumLines = 5
 
 const scannedLanguages: ReadonlySet<Language> = new Set(['typescript', 'swift', 'python', 'shell'])
-const jscpdFormats = 'typescript,tsx,javascript,swift,python,bash'
+const jscpdFormats = 'typescript,swift,python,bash'
+const jscpdExtensions = 'typescript:ts,tsx,mts,cts,js,jsx,mjs,cjs'
 
 interface Location {
   name: string
@@ -90,6 +91,8 @@ export function findDuplicates(files: readonly string[]): Duplicate[] {
         String(minimumLines),
         '--format',
         jscpdFormats,
+        '--formats-exts',
+        jscpdExtensions,
         '--reporters',
         'json',
         '--output',
