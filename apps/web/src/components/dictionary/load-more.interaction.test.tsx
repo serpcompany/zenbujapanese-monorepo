@@ -41,9 +41,7 @@ const example = (position: number): PageExample => ({
   pairId: position.toString(16),
   text: '見る。',
   tokens: [],
-  translation: `Example ${position}.`,
-  japanese: { id: position, contributor: null, license: 'CC BY 2.0 FR' },
-  english: { id: 1_000 + position, contributor: null, license: 'CC BY 2.0 FR' }
+  translation: `Example ${position}.`
 })
 
 const shown = () =>

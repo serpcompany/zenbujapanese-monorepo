@@ -54,6 +54,13 @@ describe('the word page, read from the fixtures', () => {
     ])
   })
 
+  test('keeps its Sources closed, with every credit in the HTML', async () => {
+    const html = await renderWord('いる-1577980')
+    const sources = html.slice(html.indexOf('<footer'))
+    expect(sources).toMatch(/^<footer[^>]*><details class="group"><summary[^>]*>Sources<svg/)
+    expect(credited(sources)).toContain('Tatoeba')
+  })
+
   test('a verb has a closed Conjugations section, which its part of speech links to', async () => {
     const html = await renderWord('要る-1546640')
     expect(html).toMatch(/<a href="#conjugations" data-opens-conjugations="true"/)
