@@ -28,14 +28,16 @@ zlib decides the Jiten ZIPs' bytes. uv's standalone build pins all three, so a r
 same sources gives the same files on any Mac.
 
 The Jiten source ZIPs are served from the CDN at URLs named by their SHA-256, so a rebuild must not
-change them: the script compares them with the last commit's catalog. If one changes, it fails;
-run it again with `--jiten-sources <dir>` and publish them
-([`ios.md`](../../../docs/agents/ios.md), the frequency packs) before merging. A new TUBELEX,
+change them: the script compares them with the catalog where the branch left `origin/main`. If one
+changes, it fails; run it again with `--jiten-sources <dir>` and publish them
+([`ios.md`](../../../docs/agents/ios.md), the frequency packs) before merging. Until the branch
+merges, a rebuild still reports them, published or not. A new TUBELEX,
 Wikipedia, or JLPT source fails it too, until its manifest describes the source: `sourceSHA256`,
 `sourceBytes`, `sourceSnapshot`, `downloadURL` (for Wikipedia, published first), the corpus counts,
 and any description that names the snapshot. On every rebuild the script copies the mapping
-fields, digests, and smoke test from the import reports, and the fields the app checks against an
-artifact (pack version, covered rows, token total, and policy versions) from the artifact itself.
+fields and digests from the import reports, and the smoke test and the fields the app checks
+against an artifact (pack version, covered rows, token total, and policy versions) from the rank
+packs' artifacts; JLPT's smoke test comes from its report.
 
 After a rebuild, re-record the five conformance suites and review their diffs, then run
 `SearchExperienceTests` ([`ios.md`](../../../docs/agents/ios.md), Current verification boundary),

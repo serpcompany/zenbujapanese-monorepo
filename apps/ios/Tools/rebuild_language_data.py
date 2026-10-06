@@ -292,23 +292,27 @@ def update_catalog(wikipedia_artifact: Path) -> None:
     CATALOG.write_text(json.dumps(catalog, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
 
 
-def published_catalog() -> dict:
-    path = CATALOG.relative_to(REPOSITORY).as_posix()
-    base = subprocess.run(
-        ["git", "merge-base", "HEAD", "origin/main"], cwd=REPOSITORY, capture_output=True, text=True, check=True
-    ).stdout.strip()
-    shown = subprocess.run(
-        ["git", "show", f"{base}:{path}"], cwd=REPOSITORY, capture_output=True, text=True, check=True
-    )
-    return json.loads(shown.stdout)
+def git(*arguments: str) -> str:
+    result = subprocess.run(["git", *arguments], cwd=REPOSITORY, capture_output=True, text=True)
+    if result.returncode != 0:
+        raise SystemExit(
+            f"git {' '.join(arguments)} failed: {result.stderr.strip()}\n"
+            "the Jiten check compares with main's catalog: run git fetch origin main"
+        )
+    return result.stdout
 
 
-def build_jiten(archives: Path) -> list[str]:
-    before = {
+def published_jiten_sources() -> dict[str, str]:
+    base = git("merge-base", "HEAD", "origin/main").strip()
+    catalog = json.loads(git("show", f"{base}:{CATALOG.relative_to(REPOSITORY).as_posix()}"))
+    return {
         manifest["packID"]: manifest["sourceSHA256"]
-        for manifest in published_catalog()["packs"]
+        for manifest in catalog["packs"]
         if manifest["packID"].startswith("zenbu.jiten.")
     }
+
+
+def build_jiten(archives: Path, before: dict[str, str]) -> list[str]:
     run("build_jiten_frequency_packs.py", "--out-dir", archives)
     changed = []
     for archive in sorted(archives.glob("zenbu.jiten.*.json.zip")):
@@ -333,6 +337,7 @@ def main() -> None:
             f"the data tools are pinned to Python {PINNED_PYTHON_TEXT}: "
             f"uv run --no-project --python {PINNED_PYTHON_TEXT} python {Path(__file__).relative_to(REPOSITORY)}"
         )
+    published = published_jiten_sources()
     unidic = fixed_download(only("UniDic-*.source.json"), arguments.download)
     with tempfile.TemporaryDirectory() as directory:
         scratch = Path(directory)
@@ -340,7 +345,7 @@ def main() -> None:
         build_language_reference(unidic)
         wikipedia_artifact = build_dependents(unidic, scratch)
         update_catalog(wikipedia_artifact)
-        changed = build_jiten(arguments.jiten_sources or scratch / "jiten")
+        changed = build_jiten(arguments.jiten_sources or scratch / "jiten", published)
     subprocess.run(
         [sys.executable, "-m", "unittest", "discover", "--start-directory", str(TOOLS / "tests"), "--pattern", "test_*.py"],
         check=True,
