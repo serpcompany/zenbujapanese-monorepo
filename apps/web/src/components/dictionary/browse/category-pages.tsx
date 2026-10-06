@@ -1,9 +1,5 @@
 import type { CategoryOrder } from '@zenbu/dictionary-core/artifact/browse'
-import {
-  type BrowseCategory,
-  browseCategory,
-  commonWords
-} from '@zenbu/dictionary-core/browse/categories'
+import { type BrowseCategory, browseCategory } from '@zenbu/dictionary-core/browse/categories'
 import Link from 'next/link'
 import {
   BrowseHeading,
@@ -17,8 +13,8 @@ import { WordList } from '@/components/dictionary/word-row'
 import {
   categoryHeading,
   categoryIntro,
-  featuredCategories,
   formatCount,
+  moreWaysToBrowse,
   orderNames
 } from '@/lib/dictionary/browse/copy'
 import type { BrowseWordsPage } from '@/lib/dictionary/browse/data'
@@ -31,16 +27,8 @@ import {
 } from '@/lib/dictionary/browse/paths'
 import { pageSources, sources } from '@/lib/dictionary/sources'
 
-const moreWays = [
-  ...featuredCategories.usage,
-  'archaic-words',
-  'godan-verbs',
-  'medicine',
-  commonWords.slug
-]
-
 function MoreWaysToBrowse({ current }: { current: string }) {
-  const shown = moreWays
+  const shown = moreWaysToBrowse
     .filter(slug => slug !== current)
     .flatMap(slug => browseCategory(slug) ?? [])
   return (

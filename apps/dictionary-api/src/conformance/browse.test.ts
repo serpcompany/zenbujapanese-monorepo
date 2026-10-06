@@ -61,12 +61,10 @@ describe.runIf(artifactAvailable)('browsing the dictionary on the app’s data',
     expect(isSorted(readings(kana))).toBe(true)
   })
 
-  test('every category the site links has words', () => {
-    const counted = new Set(service.categoryCounts().categories.map(({ slug }) => slug))
-    for (const slug of ['nouns', 'onomatopoeia', 'yojijukugo', 'kansai-dialect', 'medicine']) {
-      expect(counted).toContain(slug)
-    }
-    expect(counted.size).toBeLessThanOrEqual(browseCategories.length)
+  test('every category the core names has words, so no category page is empty', () => {
+    const counted = service.categoryCounts().categories
+    expect(counted.map(({ slug }) => slug)).toEqual(browseCategories.map(({ slug }) => slug))
+    expect(counted.every(({ count }) => count > 0)).toBe(true)
   })
 
   test.each(rankedLists.map(list => list.slug))('the %s list ranks words from 1', slug => {

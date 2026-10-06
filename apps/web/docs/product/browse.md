@@ -26,8 +26,13 @@ below are today's and change with the data.
 - **Common words:** the 24 common words most used on YouTube, each opening its word page, and a
   link to all common words.
 
+When the dictionary service can't answer, the home shows its search box without these sections,
+as it did before them, rather than failing.
+
 - Source: #614 mockup "/dictionary/ — home (changed)".
-- Check: Browse spec, "the dictionary home leads into the browse pages".
+- Check: Browse spec, "the dictionary home leads into the browse pages";
+  `src/lib/dictionary/browse/data.test.ts`, "the home leaves its browse sections out, and logs
+  why, when the service can’t answer".
 
 ## The hub
 
@@ -151,10 +156,12 @@ parts of speech, usage labels, subject fields, and dialects, and its common word
 ## Site-wide
 
 **Breadcrumbs.** Each browse page's trail starts Home › Dictionary › Browse, then its parents, as
-"Hiragana › か › かが".
+"Hiragana › か › かが". A trail of more than three crumbs wraps onto another line where it doesn't
+fit, rather than overlapping; a shorter one stays on one line and truncates its last crumb.
 
 - Source: #614 mockups.
-- Check: Browse spec, "a kana’s page lists its two-kana groups and leads to their words".
+- Check: Browse spec, "a kana’s page lists its two-kana groups and leads to their words" and "a
+  long breadcrumb trail wraps rather than overlapping".
 
 **Footer.** The footer links Browse by kana and Kanji by grade after Dictionary.
 
@@ -174,14 +181,15 @@ the last, or a list, kana, or category the dictionary doesn't have, is 404.
 
 - Source: ADR 0010 (amended).
 - Check: Browse spec, "a list’s first page has no number, and a page past its last is 404";
-  `src/lib/dictionary/browse/paths.test.ts`.
+  `src/lib/dictionary/browse/paths.test.ts`; that each browse page without parameters is read
+  when it's asked for, never at build time: `src/app/dictionary/browse/dynamic.test.ts`.
 
 **Browse sitemap.** `/sitemaps/browse.xml` lists every browse page, and the sitemap index lists it
 wherever the site has a dictionary service.
 
 - Source: #614 mockup "Footer + /sitemap/ (changed)" (`/sitemaps/browse.xml` in
   `/sitemap-index.xml`).
-- Check: `src/lib/dictionary/browse/sitemap.test.ts`, "the browse sitemap lists every browse page";
+- Check: `src/lib/dictionary/sitemaps.test.ts`, "the browse sitemap lists every browse page";
   Browse service, "the browse sitemap fits in one file".
 
 ## Not built

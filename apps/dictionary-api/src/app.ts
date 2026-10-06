@@ -5,6 +5,7 @@ import {
 } from '@zenbu/dictionary-core/artifact/contract'
 import { maximumEntSeq, maximumQueryLength } from '@zenbu/dictionary-core/artifact/dictionary'
 import { isKanaScript, type KanaScript } from '@zenbu/dictionary-core/browse/kana'
+import { maximumBrowsePage } from '@zenbu/dictionary-core/browse/lists'
 import { examplesPerPage } from '@zenbu/dictionary-core/detail/examples'
 import { type Context, Hono } from 'hono'
 import { routePath } from 'hono/route'
@@ -150,7 +151,8 @@ export function createApp({ service, token, ready }: AppOptions) {
 
   const found = <T>(context: Context, answer: T | null, what: string) =>
     answer ? context.json(answer) : context.json({ error: `no such ${what}` }, 404)
-  const page = (context: Context) => integer(context.req.query('page'), 'page', 1, 10_000)
+  const page = (context: Context) =>
+    integer(context.req.query('page'), 'page', 1, maximumBrowsePage)
   const script = (value: string): KanaScript => {
     if (!isKanaScript(value)) throw new NotFound('no such script')
     return value

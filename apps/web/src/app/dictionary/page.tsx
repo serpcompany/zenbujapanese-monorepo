@@ -1,7 +1,7 @@
 import { DictionaryHomeSections } from '@/components/dictionary/browse/home-sections'
 import { DictionaryBreadcrumbs } from '@/components/dictionary/dictionary-breadcrumbs'
 import { SearchForm } from '@/components/dictionary/search-form'
-import { getBrowseSummary } from '@/lib/dictionary/browse/data'
+import { getBrowseSummaryIfAvailable } from '@/lib/dictionary/browse/data'
 import { dictionaryMetadata } from '@/lib/dictionary/metadata'
 
 export const dynamic = 'force-dynamic'
@@ -13,7 +13,7 @@ export const metadata = dictionaryMetadata(
 )
 
 export default async function DictionaryPage() {
-  const summary = await getBrowseSummary()
+  const summary = await getBrowseSummaryIfAvailable()
   return (
     <main className="mx-auto flex w-full max-w-5xl flex-1 flex-col gap-4 px-4 pt-4 pb-16 md:px-5">
       <DictionaryBreadcrumbs />
@@ -31,7 +31,7 @@ export default async function DictionaryPage() {
           <SearchForm autoFocus />
         </div>
       </section>
-      <DictionaryHomeSections summary={summary} />
+      {summary ? <DictionaryHomeSections summary={summary} /> : null}
     </main>
   )
 }

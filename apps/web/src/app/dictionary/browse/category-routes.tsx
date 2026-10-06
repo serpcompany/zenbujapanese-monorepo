@@ -33,7 +33,7 @@ function metadata({ category, words, order, page }: Loaded): Metadata {
 async function paged(order: CategoryOrder, params: PagedParams['params']) {
   const { category, page: segment } = await params
   const number = pageNumber(segment)
-  if (!number) notFound()
+  if (!number || !browseCategory(category)) notFound()
   if ('redirect' in number) permanentRedirect(categoryPath(category, order))
   return load(category, order, number.page)
 }

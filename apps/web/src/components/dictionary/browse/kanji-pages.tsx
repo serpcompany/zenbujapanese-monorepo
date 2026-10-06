@@ -3,7 +3,8 @@ import {
   gradeLists,
   jinmeiyo,
   type KanjiList,
-  secondarySchool
+  secondarySchool,
+  strokeList
 } from '@zenbu/dictionary-core/browse/lists'
 import Link from 'next/link'
 import {
@@ -146,7 +147,7 @@ export function KanjiHubPage({ hub, joyo }: { hub: KanjiHubResponse; joyo: numbe
           {hub.strokes.map(({ strokes, count }) => (
             <li key={strokes}>
               <Link
-                href={kanjiListPath(`strokes-${strokes}`)}
+                href={kanjiListPath(strokeList(strokes).slug)}
                 aria-label={`${strokes} strokes, ${plural(count, 'kanji', 'kanji')}`}
                 className="flex min-h-14 flex-col items-center justify-center rounded-lg border hover:bg-muted"
               >

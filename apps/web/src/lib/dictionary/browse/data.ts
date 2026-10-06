@@ -14,10 +14,10 @@ import {
 } from '@zenbu/dictionary-core/browse/service-paths'
 import { fixtureBrowseAnswers } from '@zenbu/dictionary-core/fixtures'
 import { cache } from 'react'
+import { errorFields, log } from '@/lib/log'
 import { dictionaryService } from '../data'
+import type { Linked } from '../page-example'
 import { linkedWordPath } from '../results/links'
-
-export type Linked<T> = T & { path: string | null }
 
 export type BrowseWordsPage = Omit<BrowseWordsResponse, 'words'> & { words: Linked<BrowseWord>[] }
 
@@ -61,6 +61,15 @@ export const getBrowseSummary = cache(async () => {
   const { data, dictionaryLoaded } = await required(browseService.summary())
   return { ...data, commonWords: linked(data.commonWords, dictionaryLoaded) }
 })
+
+export async function getBrowseSummaryIfAvailable() {
+  try {
+    return await getBrowseSummary()
+  } catch (error) {
+    log('warn', 'browse_summary_unavailable', errorFields(error))
+    return null
+  }
+}
 
 export const getKanaIndex = cache(
   async (script: KanaScript) => (await required(browseService.kanaIndex(script))).data

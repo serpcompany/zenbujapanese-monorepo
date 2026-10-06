@@ -8,13 +8,13 @@ import { CategoryLinkLists } from '@/components/dictionary/browse/category-links
 import { KanaCharts } from '@/components/dictionary/browse/hub-pages'
 import { KanjiTiles } from '@/components/dictionary/browse/kanji-tiles'
 import { formatCount, plural } from '@/lib/dictionary/browse/copy'
-import type { Linked } from '@/lib/dictionary/browse/data'
 import {
   categoryPath,
   kanjiListPath,
   kanjiListsPath,
   scriptPath
 } from '@/lib/dictionary/browse/paths'
+import type { Linked } from '@/lib/dictionary/page-example'
 
 type Summary = Omit<BrowseSummaryResponse, 'commonWords'> & {
   commonWords: Linked<BrowseSummaryResponse['commonWords'][number]>[]

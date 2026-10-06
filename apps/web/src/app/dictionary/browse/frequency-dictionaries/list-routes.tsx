@@ -45,7 +45,7 @@ const view = (loaded: Loaded) => (
 async function paged(params: PagedParams['params']) {
   const { list, page: segment } = await params
   const number = pageNumber(segment)
-  if (!number) notFound()
+  if (!number || !(rankedList(list) || jlptList(list))) notFound()
   if ('redirect' in number) permanentRedirect(rankedListPath(list))
   return load(list, number.page)
 }

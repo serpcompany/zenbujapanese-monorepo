@@ -120,8 +120,9 @@ export function kanaRoute(script: KanaScript) {
 async function pagedPrefix(script: KanaScript, params: PagedParams['params']) {
   const { prefix, page: segment } = await params
   const number = pageNumber(segment)
-  if (!number) notFound()
-  if ('redirect' in number) permanentRedirect(kanaPath(script, decodeSegment(prefix)))
+  const kana = decodeSegment(prefix)
+  if (!number || Array.from(kana).length !== 2 || kanaScriptOf(kana) !== script) notFound()
+  if ('redirect' in number) permanentRedirect(kanaPath(script, kana))
   const found = await prefixPage(script, prefix, number.page)
   if (!found.words) notFound()
   return { found, page: number.page }

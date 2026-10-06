@@ -6,7 +6,7 @@ import {
   rankedLists,
   secondarySchool
 } from '@zenbu/dictionary-core/browse/lists'
-import { legalPages, sitePages } from '../../pages'
+import { legalPages, pageFor, type sitePages } from '../../pages'
 import {
   browsePath,
   categoryIndexes,
@@ -20,17 +20,15 @@ import {
   strokeCountsPath
 } from './paths'
 
+type SitePath = (typeof sitePages)[number]['path']
+
 export interface TreeNode {
   title: string
   path: string
   children?: TreeNode[]
 }
 
-const page = (path: string): TreeNode => {
-  const found = sitePages.find(candidate => candidate.path === path)
-  if (!found) throw new Error(`Unknown page: ${path}`)
-  return { title: found.title, path }
-}
+const page = (path: SitePath): TreeNode => ({ title: pageFor(path).title, path })
 
 export const homeTree: TreeNode = {
   ...page('/'),

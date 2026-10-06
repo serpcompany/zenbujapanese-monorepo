@@ -256,7 +256,10 @@ each list cut to its first 20 words. Any other browse page is a 404 there.
 and `…/1/` redirects to it. The hiragana and katakana routes, and each category's four, are one
 line each over the route helpers beside them (`kana-routes.tsx`, `category-routes.tsx`,
 `frequency-dictionaries/list-routes.tsx`). Pages without parameters that read the service are
-`force-dynamic`, as `/dictionary/` now is, so a build never reads it. The words show as search
+`force-dynamic`, as `/dictionary/` now is, so a build never reads it
+(`src/app/dictionary/browse/dynamic.test.ts`). The home leaves its browse sections out when the
+service can't answer (`getBrowseSummaryIfAvailable`), as when the site deploys a few minutes ahead
+of a service without the browse routes, rather than failing the search box with them. The words show as search
 results' rows do (`components/dictionary/word-row.tsx`).
 
 ### The rendered-page gate

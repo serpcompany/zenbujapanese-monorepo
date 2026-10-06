@@ -7,6 +7,7 @@ import { FrequencyBadges } from '@/components/dictionary/frequency'
 import { RubyText } from '@/components/dictionary/ruby-text'
 import { Card } from '@/components/ui/card'
 import { Item, ItemActions, ItemContent, ItemGroup, ItemSeparator } from '@/components/ui/item'
+import { formatCount } from '@/lib/dictionary/browse/copy'
 
 export function Row({
   path,
@@ -41,14 +42,12 @@ export interface RowWord {
   rank?: number | null
 }
 
-const formatRank = new Intl.NumberFormat('en-US')
-
 export function WordRow({ word }: { word: RowWord }) {
   return (
     <Row path={word.path}>
       {word.rank ? (
         <span className="w-12 shrink-0 text-sm text-muted-foreground tabular-nums">
-          #{formatRank.format(word.rank)}
+          #{formatCount(word.rank)}
         </span>
       ) : null}
       <ItemContent className="gap-1.5" data-result-row={word.entSeq}>

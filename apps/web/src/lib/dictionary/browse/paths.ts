@@ -1,7 +1,7 @@
 import type { CategoryOrder } from '@zenbu/dictionary-core/artifact/browse'
 import type { CategoryKind } from '@zenbu/dictionary-core/browse/categories'
 import type { KanaScript } from '@zenbu/dictionary-core/browse/kana'
-import { rankPage } from '@zenbu/dictionary-core/browse/lists'
+import { maximumBrowsePage, rankPage } from '@zenbu/dictionary-core/browse/lists'
 
 export const browsePath = '/dictionary/browse/'
 export const kanaChartsPath = `${browsePath}kana/`
@@ -44,7 +44,7 @@ export const strokeCountsPath = `${kanjiListsPath}#${strokeCountsAnchor}`
 export type PageNumber = { page: number } | { redirect: true } | null
 
 export function pageNumber(segment: string): PageNumber {
-  if (!/^[1-9]\d{0,4}$/u.test(segment)) return null
+  if (!/^[1-9]\d*$/u.test(segment) || Number(segment) > maximumBrowsePage) return null
   const page = Number(segment)
   return page === 1 ? { redirect: true } : { page }
 }

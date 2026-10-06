@@ -173,6 +173,16 @@ test.describe('browse pages', () => {
     await expect(main).toContainText('shared under the same licence')
   })
 
+  test('a long breadcrumb trail wraps rather than overlapping', async ({ page }) => {
+    await page.goto(browse('frequency-dictionaries/anime/'))
+    const crumbs = page.getByRole('navigation', { name: 'breadcrumb' }).getByRole('listitem')
+    await expect(crumbs).toHaveCount(5)
+    const overflowing = await crumbs.evaluateAll(items =>
+      items.filter(item => item.scrollWidth > item.clientWidth).map(item => item.textContent)
+    )
+    expect(overflowing).toEqual([])
+  })
+
   test('the sitemap page lists the browse pages', async ({ page }) => {
     await page.goto('/sitemap/')
     for (const [name, path] of [
@@ -210,6 +220,10 @@ test.describe('browse URLs', () => {
     expect(new URL(first.headers().location, baseURL).pathname).toBe(browse('ichidan-verbs/'))
     for (const path of [
       browse('ichidan-verbs/9999/'),
+      browse('ichidan-verbs/10001/'),
+      browse('no-such-category/2/'),
+      browse('no-such-category/1/'),
+      browse('kana/1/'),
       browse('no-such-category/'),
       browse('kanji/grade-9/'),
       kana('katakana', 'か')

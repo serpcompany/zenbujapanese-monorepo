@@ -23,13 +23,14 @@ import { FrequencyDot } from '@/components/dictionary/frequency'
 import { SourceCredits } from '@/components/dictionary/source-credits'
 import { WordList } from '@/components/dictionary/word-row'
 import { formatCount, plural, rankedListCopy } from '@/lib/dictionary/browse/copy'
-import type { BrowseWordsPage, Linked } from '@/lib/dictionary/browse/data'
+import type { BrowseWordsPage } from '@/lib/dictionary/browse/data'
 import {
   browsePath,
   frequencyDictionariesPath,
   rankBandPath,
   rankedListPath
 } from '@/lib/dictionary/browse/paths'
+import type { Linked } from '@/lib/dictionary/page-example'
 import { pageSources, type Source } from '@/lib/dictionary/sources'
 
 type Word = Linked<{ entSeq: number; headword: string; reading: string }>

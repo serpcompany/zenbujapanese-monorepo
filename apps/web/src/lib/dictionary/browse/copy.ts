@@ -147,6 +147,14 @@ export const featuredCategories = {
   subject: ['medicine', 'computing', 'food-and-cooking', 'law', 'business', 'sports', 'buddhism']
 } as const
 
+export const moreWaysToBrowse: readonly string[] = [
+  ...featuredCategories.usage,
+  'archaic-words',
+  'godan-verbs',
+  'medicine',
+  'common-words'
+]
+
 export const jlptCopy: RankedListCopy = {
   description:
     "Words from Jonathan Waller's unofficial JLPT vocabulary lists. JLPT has published no official list since 2010, so levels are study estimates.",

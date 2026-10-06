@@ -40,10 +40,17 @@ describe('browse URLs', () => {
 describe('pageNumber', () => {
   test('reads a later page, and sends page 1 to the list’s own URL', () => {
     expect(pageNumber('2')).toEqual({ page: 2 })
+    expect(pageNumber('10000')).toEqual({ page: 10_000 })
     expect(pageNumber('1')).toEqual({ redirect: true })
   })
 
-  test.each(['0', '02', 'two', '', '123456'])('finds no page in "%s"', segment => {
+  test.each([
+    '0',
+    '02',
+    'two',
+    '',
+    '10001'
+  ])('finds no page in "%s", so it is 404 rather than a page the service refuses', segment => {
     expect(pageNumber(segment)).toBeNull()
   })
 })

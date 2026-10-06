@@ -2,7 +2,14 @@ import { browseCategory } from '@zenbu/dictionary-core/browse/categories'
 import { rankedLists } from '@zenbu/dictionary-core/browse/lists'
 import { describe, expect, test } from 'vitest'
 import { sources } from '../sources'
-import { categoryHeading, categoryIntro, kanjiListIntro, rankedListCopy } from './copy'
+import {
+  categoryHeading,
+  categoryIntro,
+  featuredCategories,
+  kanjiListIntro,
+  moreWaysToBrowse,
+  rankedListCopy
+} from './copy'
 
 describe('ranked lists', () => {
   test('each ranked list credits its source', () => {
@@ -24,6 +31,11 @@ describe('ranked lists', () => {
     expect(sources.wikipedia.license.name).toBe('BSD-3-Clause')
     expect(sources.tubelex.license.name).toBe('BSD-3-Clause')
   })
+})
+
+test('every category the pages feature is one the core lists', () => {
+  const featured = [...Object.values(featuredCategories).flat(), ...moreWaysToBrowse]
+  expect(featured.filter(slug => !browseCategory(slug))).toEqual([])
 })
 
 describe('category copy', () => {
