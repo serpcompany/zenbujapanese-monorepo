@@ -201,7 +201,11 @@ The image is about 1 GB, and uses about 750 MiB of memory with two worker thread
 cache of the files it reads comes on top; a container's memory reading, such as `docker stats`,
 counts it, but it can be reclaimed. It has a health check on `/healthz` and stops cleanly on SIGTERM.
 
-It holds one build of the data, so a new artifact is a new image. `scripts/build.mjs` bundles
+It holds one build of the data, so a new artifact is a new image. Its layers go from what changes
+least to what changes most: Kuromoji, the language data, Sudachi's dictionary, the installed
+packages, and last the bundled code. A code change so makes only a new top layer of a few MB,
+which is all CI pushes and the server pulls; the language data's layers, about 1 GB, are built
+and moved only when the data changes. `scripts/build.mjs` bundles
 `src/server.ts` and `src/worker.ts`, with the core and Hono; Sudachi's native module stays outside
 the bundle, among the production dependencies the image installs. The build
 context is the repository root, and `Dockerfile.dockerignore` lets in only what the `Dockerfile`

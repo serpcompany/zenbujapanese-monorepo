@@ -28,9 +28,7 @@ ENV NODE_ENV=production \
   DICTIONARY_RESOURCES=/service/resources \
   SUDACHI_DICTIONARY=/service/sudachi/system_core.dic
 WORKDIR /service
-COPY --from=build /service/node_modules node_modules
-COPY --from=build /repo/apps/dictionary-api/dist dist
-COPY --from=sudachi /sudachi sudachi
+COPY apps/ios/Modules/Sources/SearchExperience/Resources/Kuromoji resources/Kuromoji
 COPY apps/ios/Modules/Sources/SearchExperience/Resources/LanguageReferenceData.sqlite3 \
   apps/ios/Modules/Sources/SearchExperience/Resources/CompoundPitch.sqlite3 \
   apps/ios/Modules/Sources/SearchExperience/Resources/JLPTLevelPack.sqlite3 \
@@ -41,7 +39,9 @@ COPY apps/ios/Modules/Sources/SearchExperience/Resources/LanguageReferenceData.s
   apps/ios/Modules/Sources/SearchExperience/Resources/KanjiElementReferenceData.json \
   apps/ios/Modules/Sources/SearchExperience/Resources/LanguageTechnologyPackCatalog.json \
   resources/
-COPY apps/ios/Modules/Sources/SearchExperience/Resources/Kuromoji resources/Kuromoji
+COPY --from=sudachi /sudachi sudachi
+COPY --from=build /service/node_modules node_modules
+COPY --from=build /repo/apps/dictionary-api/dist dist
 ARG RELEASE=unknown
 ENV DICTIONARY_API_RELEASE=${RELEASE}
 USER node
