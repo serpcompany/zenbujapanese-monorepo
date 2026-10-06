@@ -45,5 +45,7 @@ test('the footer leads with the brand linking home and its tagline, and ends wit
   expect(firstLink?.[1]).toBe('/')
   expect(firstLink?.[2]).toContain(`>${site.name}</span>`)
   expect(html).toContain(site.description)
-  expect(html.replace(/<[^>]*>/g, '')).toContain(`© ${new Date().getFullYear()} ${site.name}`)
+  const copyright = html.match(/<p [^>]*>©([\s\S]*?)<\/p>\s*<\/div>\s*<\/footer>$/)?.[1] ?? ''
+  expect(copyright).toContain(String(new Date().getFullYear()))
+  expect(copyright).toContain(site.name)
 })
