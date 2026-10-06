@@ -1,5 +1,5 @@
 import { spawn } from 'node:child_process'
-import { mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
+import { mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
 import { createServer, type IncomingMessage } from 'node:http'
 import type { AddressInfo } from 'node:net'
 import { tmpdir } from 'node:os'
@@ -18,31 +18,69 @@ export interface Step {
   with?: Record<string, unknown>
 }
 
-interface Workflow {
-  jobs: Record<string, { steps?: Step[] }>
+interface Job {
+  if?: string
+  concurrency?: { group: string; 'cancel-in-progress'?: boolean }
+  'timeout-minutes'?: number
+  permissions?: Record<string, string>
+  env?: Record<string, string>
+  steps?: Step[]
 }
+
+export interface Workflow {
+  on: Record<string, unknown>
+  concurrency?: { group: string; 'cancel-in-progress'?: boolean }
+  jobs: Record<string, Job>
+}
+
+const workflowsFolder = '.github/workflows'
+const claudeAction = 'anthropics/claude-code-action'
 
 export function readRepositoryFile(path: string): string {
   return readFileSync(join(root, path), 'utf8')
 }
 
+export function readWorkflow(path: string): Workflow {
+  return parse(readRepositoryFile(path)) as Workflow
+}
+
+export function workflowFiles(): string[] {
+  return readdirSync(join(root, workflowsFolder))
+    .filter(name => /\.ya?ml$/.test(name))
+    .sort()
+    .map(name => `${workflowsFolder}/${name}`)
+}
+
 export function workflowSteps(path: string, job?: string): Step[] {
-  const workflow = parse(readRepositoryFile(path)) as Workflow
+  const workflow = readWorkflow(path)
   const jobs = job ? [workflow.jobs[job]] : Object.values(workflow.jobs)
   return jobs.flatMap(each => each?.steps ?? [])
 }
 
 export function claudeStep(steps: readonly Step[]): { step: Step; index: number } {
-  const index = steps.findIndex(step => step.uses?.startsWith('anthropics/claude-code-action'))
+  const index = steps.findIndex(step => step.uses?.startsWith(claudeAction))
   return { step: steps[index], index }
 }
 
-export function allowedTools(step: Step): string[] {
-  const list = /--allowedTools\s+"([^"]*)"/.exec(String(step.with?.claude_args ?? ''))?.[1] ?? ''
+export function claudeSteps(path: string): Step[] {
+  return workflowSteps(path).filter(step => step.uses?.startsWith(claudeAction))
+}
+
+function toolList(step: Step, flag: string): string[] {
+  const pattern = new RegExp(`${flag}\\s+"([^"]*)"`)
+  const list = pattern.exec(String(step.with?.claude_args ?? ''))?.[1] ?? ''
   return list
     .split(',')
     .map(tool => tool.trim())
     .filter(Boolean)
+}
+
+export function allowedTools(step: Step): string[] {
+  return toolList(step, '--allowedTools')
+}
+
+export function disallowedTools(step: Step): string[] {
+  return toolList(step, '--disallowedTools')
 }
 
 export function guardAfter(steps: readonly Step[], claude: Step): { step: Step; index: number } {
