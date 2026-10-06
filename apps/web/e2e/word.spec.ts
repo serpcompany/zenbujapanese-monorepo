@@ -19,7 +19,12 @@ test.describe('word page', () => {
     const heading = page.getByRole('heading', { level: 1 })
     await expect(heading).toHaveCount(1)
     await expect(heading).toHaveAccessibleName(needed.headword)
-    await expect(heading.locator('rt')).toHaveText('い')
+    expect(await heading.evaluate(element => element.textContent)).toBe(needed.headword)
+    const reading = heading.locator('rt [data-reading]')
+    await expect(reading).toHaveAttribute('data-reading', 'い')
+    expect(await reading.evaluate(element => getComputedStyle(element, '::before').content)).toBe(
+      '"い"'
+    )
     const breadcrumb = page.getByRole('navigation', { name: 'breadcrumb' })
     await expect(breadcrumb.getByRole('link', { name: 'Dictionary' })).toHaveAttribute(
       'href',

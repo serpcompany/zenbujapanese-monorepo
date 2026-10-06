@@ -398,9 +398,12 @@ on phones. Open in App doesn't open the app yet (#467). Copy Link copies the pag
   "copies the link from the More actions menu"; Share:
   `src/components/dictionary/saved-item-actions.interaction.test.tsx`, "sends the page it is on".
 
-**Header card.** The card shows the headword with furigana, the page's one `h1`, named for the
-headword alone so the furigana and the kanji toggles don't change its name. Beside it is the pitch
-accent in a capsule that pronounces the word, or a standalone speaker when the word has no pitch.
+**Header card.** The card shows the headword with furigana, the page's one `h1`. The heading's text
+is the headword alone: each furigana reading is a `data-reading` attribute drawn with CSS
+(`::before`), so the readings look the same but aren't in the text search engines read. The `h1`
+keeps an `aria-label` of the headword, since the kanji toggles' labels ("要, よう") would otherwise
+enter its name. Ruby elsewhere, such as in example sentences, keeps its readings as text. Beside
+it is the pitch accent in a capsule that pronounces the word, or a standalone speaker when the word has no pitch.
 Either uses the browser's Japanese voice. Under a separator, the part-of-speech row names one word
 class and its modifiers, such as "Godan verb (intransitive)", and is left out when no class has a
 name. It comes from the first sense's parts of speech, falling back to the entry's. For a word
@@ -408,13 +411,13 @@ with a conjugation table the row links to the page's Conjugations section (see C
 
 - Source: App docs, Dictionary and kanji details; `WordHeadline.swift` and
   `PitchAccentBadge.swift`; `PartOfSpeechFormatter.swift`; `DictionaryEntry.displayPartOfSpeech`;
-  #462; #576 (the headword is the `h1`).
+  #462; #576 (the headword is the `h1`, with its readings out of its text).
 - Check: WD `furigana`, `partOfSpeech`; `packages/dictionary-core/src/detail/word.test.ts`, "names
   one word class, then its modifiers" and "shows no part of speech when no class has a name";
   `src/components/dictionary/word-page.test.tsx`, "is the page heading, named for the headword
   whatever its furigana" and "shows a standalone speaker for a word without pitch";
   `apps/web/e2e/word.spec.ts`, "shows the word, its breadcrumb, and its meaning" (one `h1`, its
-  name, and its furigana). Speaking: No automated check yet (#511).
+  name, its text, and its reading drawn by `::before`). Speaking: No automated check yet (#511).
 
 **Conjugations.** A verb or adjective the app conjugates (ichidan, godan, する, 来る, i- and
 na-adjectives, but not いい) has a [Conjugations section](#conjugations-section) after Frequency,

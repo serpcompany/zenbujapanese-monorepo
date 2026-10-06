@@ -26,9 +26,11 @@ export function readFurigana(html: string, size = 'text-5xl'): SuiteFurigana[] {
     if (plain !== undefined) return { base: textWithFurigana(plain) }
     const [, base, reading] = ruby.match(/^([\s\S]*)<rt[^>]*>([\s\S]*)<\/rt>$/) ?? []
     const toggles = [...base.matchAll(/<button([^>]*)>([^<]*)<\/button>/g)]
+    const parts = [...reading.matchAll(/<span([^>]*)>([^<]*)<\/span>/g)].map(
+      ([, tag, text]) => attribute(tag, 'data-reading') ?? text
+    )
     if (toggles.length === 0)
-      return { base: textWithFurigana(base), reading: textWithFurigana(reading) }
-    const parts = [...reading.matchAll(/<span[^>]*>([^<]*)<\/span>/g)].map(([, part]) => part)
+      return { base: textWithFurigana(base), reading: parts.join('') || textWithFurigana(reading) }
     const toggleParts = toggles.map(([, tag]) => attribute(tag, 'data-kanji-reading'))
     if (toggleParts.some((part, index) => part !== parts[index])) {
       throw new Error(`The toggles (${toggleParts}) and the furigana (${parts}) disagree`)

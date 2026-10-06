@@ -11,6 +11,7 @@ import { wordDetail } from '@zenbu/dictionary-core/detail/word'
 import { renderToStaticMarkup } from 'react-dom/server'
 import { describe, expect, test } from 'vitest'
 import { gateEnabled, gateService, recordedCases } from '@/test/gate'
+import { htmlText } from '@/test/rendered'
 import {
   readFrequencyDetails,
   readFrequencyRows,
@@ -38,9 +39,13 @@ describe('the word header', () => {
       pitch: null,
       partOfSpeech: 'Noun'
     })
-    const headings = [...html.matchAll(/<h1([^>]*)>/g)].map(([, attributes]) => attributes)
+    const headings = [...html.matchAll(/<h1([^>]*)>([\s\S]*?)<\/h1>/g)]
     expect(headings).toHaveLength(1)
-    expect(headings[0]).toContain('aria-label="学校"')
+    const [, attributes, content] = headings[0]
+    expect(attributes).toContain('aria-label="学校"')
+    expect(htmlText(content, { furigana: true })).toBe('学校')
+    expect(content).toContain('data-reading="がっ"')
+    expect(content).toContain('data-reading="こう"')
     expect(readFurigana(html)).toEqual([
       { base: '学校', reading: 'がっこう', kanjiReadings: ['がっ', 'こう'] }
     ])
