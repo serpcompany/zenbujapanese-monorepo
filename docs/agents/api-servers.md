@@ -51,7 +51,14 @@ missing or isn't internal, since a slot there couldn't serve.
 5. It stops the old one.
 
 That's about 20 seconds, and nginx is never reloaded. A new image that doesn't come up is removed,
-the old one keeps serving, and that image isn't tried again until the tag moves.
+the old one keeps serving, and that image isn't tried again until the tag moves or the
+environment's file changes.
+
+**A changed environment file deploys again.** Docker reads an environment's file
+(`/etc/zenbujapanese-<service>/<environment>.env`) only when it creates a container. So each slot
+carries a label with the file's SHA-256, and when the file changes, the deployer deploys the same
+image again, the same way, so the new settings take effect without a request dropped. A slot
+started before slots had the label counts as current until its image changes.
 
 **Only main's images run.** Anyone who can push to a package can push an image and move a tag,
 including a workflow run from any branch, so the tag alone decides nothing. Each service's deploy
@@ -95,9 +102,10 @@ To look after it:
   environment that isn't set up, an image main didn't sign, an image that failed before, and a run
   that found an earlier one still deploying.
 - **Retry a failed image.** An image that didn't come up is recorded, with when and why, in
-  `/var/lib/zenbujapanese-<service>/failed-<environment>`, and skipped until the tag moves. When it
-  failed for a reason that wasn't the image's (the server restarting Docker mid-deploy), delete
-  that file to try it again on the next run.
+  `/var/lib/zenbujapanese-<service>/failed-<environment>`, and skipped until the tag moves or the
+  environment's file changes. When it failed for a reason that wasn't the image's (the server
+  restarting Docker mid-deploy, or the account service's database being down while it started),
+  delete that file to try it again on the next run.
 
 ## Set up the server
 
@@ -143,6 +151,7 @@ A person with root sets these up once. Each service then has its own steps
    service's folder on every run:
    ```sh
    service=account-api
+   sudo install -d -m 700 /etc/zenbujapanese-$service
    read -rsp 'Token: ' token && echo
    printf 'GHCR_USERNAME=%s\nGHCR_TOKEN=%s\n' <github user> "$token" |
      sudo tee /etc/zenbujapanese-$service/registry.env >/dev/null

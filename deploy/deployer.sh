@@ -25,6 +25,7 @@ use_service() {
   lock_file="/run/zenbujapanese-$service.lock"
   slot_label="zenbujapanese.$service.slot"
   environment_label="zenbujapanese.$service.environment"
+  settings_label="zenbujapanese.$service.settings"
   signer_identity="https://github.com/serpcompany/zenbujapanese-monorepo/.github/workflows/$service-deploy.yml@refs/heads/main"
   case "$service" in
     dictionary-api)
@@ -75,6 +76,15 @@ build_of() {
     fetch('http://127.0.0.1:' + process.env.PORT + '/healthz', { signal: AbortSignal.timeout($health_timeout_ms) })
       .then(response => (response.ok ? response.json() : Promise.reject(response.status)))
       .then(health => console.log(health.build ?? health.release), () => process.exit(1))" 2>/dev/null
+}
+
+settings_of() {
+  sha256sum "$config_dir/$1.env" | cut -d ' ' -f 1
+}
+
+settings_label_of() {
+  docker inspect --format "{{index .Config.Labels \"$settings_label\"}}" "$1" 2>/dev/null |
+    sed 's/^<no value>$//'
 }
 
 answers_as() {
@@ -146,7 +156,7 @@ prune() {
 }
 
 deploy() {
-  local environment="$1" reference="$2" release="$3" name="zenbujapanese-$service-$1"
+  local environment="$1" reference="$2" release="$3" settings="$4" name="zenbujapanese-$service-$1"
   local running container slot="" candidate new cidfile="$run_dir/$service-$1.cid" build deadline
   local private replaced=()
 
@@ -169,6 +179,7 @@ deploy() {
   log "$environment: starting $reference (release $release) in slot $slot"
   if ! docker create --cidfile "$cidfile" --name "$name-$slot" \
     --label "$environment_label=$environment" --label "$slot_label=$slot" \
+    --label "$settings_label=$settings" \
     --network "$network" --env-file "$config_dir/$environment.env" \
     "${container_limits[@]}" "${container_logs[@]}" "${container_security[@]}" "$reference" >/dev/null; then
     log "$environment: couldn't create a container for $reference"
@@ -241,8 +252,8 @@ finish() {
 }
 
 check() {
-  local environment="$1" image reference release running container current="" error
-  local failed_file="$state_dir/failed-$environment" failed_image failed_at failed_why
+  local environment="$1" image reference release running container current="" error settings label
+  local failed_file="$state_dir/failed-$environment" failed_image failed_settings failed_at failed_why
   if [ ! -r "$config_dir/$environment.env" ]; then
     log "$environment: skipped; it isn't set up on this server ($config_dir/$environment.env is missing)"
     return 0
@@ -258,10 +269,18 @@ check() {
     return 1
   }
 
+  settings="$(settings_of "$environment")" || return 1
+
   running="$(running_slots "$environment")"
   for container in $running; do
     on_network "$container" || continue
-    [ "$(docker inspect --format '{{.Image}}' "$container")" = "$image" ] && current="$container"
+    [ "$(docker inspect --format '{{.Image}}' "$container")" = "$image" ] || continue
+    label="$(settings_label_of "$container")"
+    if [ -n "$label" ] && [ "$label" != "$settings" ]; then
+      log "$environment: $config_dir/$environment.env changed since $container started; deploying $image again"
+      continue
+    fi
+    current="$container"
   done
   if [ -n "$current" ]; then
     finish "$environment" "$current" "$release" "$running" && return 0
@@ -273,9 +292,10 @@ check() {
     docker rm --force --volumes "$current" >/dev/null
   fi
 
-  if [ -r "$failed_file" ] && read -r failed_image failed_at failed_why <"$failed_file" &&
-    [ "$failed_image" = "$image" ]; then
-    log "$environment: skipping $image, which failed at $failed_at: $failed_why. It's tried again when the tag moves, or after: rm $failed_file"
+  if [ -r "$failed_file" ] &&
+    read -r failed_image failed_settings failed_at failed_why <"$failed_file" &&
+    [ "$failed_image" = "$image" ] && [ "$failed_settings" = "$settings" ]; then
+    log "$environment: skipping $image, which failed at $failed_at: $failed_why. It's tried again when the tag moves or $config_dir/$environment.env changes, or after: rm $failed_file"
     return 1
   fi
   if ! reference="$(digest_reference_of "$image")"; then
@@ -299,11 +319,11 @@ check() {
     return 1
   fi
 
-  deploy "$environment" "$reference" "$release"
+  deploy "$environment" "$reference" "$release" "$settings"
   case $? in
     0) rm -f "$failed_file" ;;
     1)
-      printf '%s %s %s\n' "$image" "$(date -u +%FT%TZ)" "it didn't answer /healthz as release $release (see the log above it)" >"$failed_file"
+      printf '%s %s %s %s\n' "$image" "$settings" "$(date -u +%FT%TZ)" "it didn't answer /healthz as release $release (see the log above it)" >"$failed_file"
       return 1
       ;;
     *) return 1 ;;

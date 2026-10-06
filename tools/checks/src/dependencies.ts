@@ -157,7 +157,37 @@ const account: Part = {
       'account-service-never-imports-another-app',
       '(web|dictionary-api)',
       'The account service knows nothing of the website or the dictionary service: they call it over HTTP (ARCHITECTURE.md, Layers).'
-    )
+    ),
+    {
+      name: 'account-http-never-reaches-the-database',
+      severity: 'error',
+      comment:
+        'src/http is the HTTP layer: it answers from what src/server.ts hands it, through the domain, and never touches the database (docs/agents/account-api.md, Code layout). Put database code in src/db.',
+      from: { path: '^src/http/', pathNot: accountTestCode },
+      to: { path: ['^src/db/', '(^|/)node_modules/(pg|drizzle-orm)/'] }
+    },
+    {
+      name: 'account-domain-builds-on-no-layer',
+      severity: 'error',
+      comment:
+        'src/domain holds the account and sync rules, which the HTTP and database layers build on, so it imports neither, nor Hono, nor a database driver (docs/agents/account-api.md, Code layout). Take what a rule needs as a parameter.',
+      from: { path: '^src/domain/', pathNot: accountTestCode },
+      to: {
+        path: [
+          '^src/(http|db)/',
+          '^src/server\\.ts$',
+          '(^|/)node_modules/(pg|drizzle-orm|hono|@hono)/'
+        ]
+      }
+    },
+    {
+      name: 'account-database-knows-no-http',
+      severity: 'error',
+      comment:
+        'src/db is the database layer: the HTTP layer builds on it through src/server.ts, so it knows nothing of HTTP (docs/agents/account-api.md, Code layout).',
+      from: { path: '^src/db/', pathNot: accountTestCode },
+      to: { path: ['^src/http/', '^src/server\\.ts$', '(^|/)node_modules/(hono|@hono)/'] }
+    }
   ]
 }
 

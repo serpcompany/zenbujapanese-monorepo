@@ -2,8 +2,6 @@
 !package.json
 !pnpm-lock.yaml
 !pnpm-workspace.yaml
-!apps/web/package.json
-!apps/dictionary-api/package.json
 !packages/node-service/**
 !apps/account-api/**
 **/node_modules

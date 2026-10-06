@@ -27,7 +27,10 @@ export function serveUntilStopped({ fetch, port, listening, close }: ServeOption
   const server = serve({ fetch, port }, info =>
     log('info', 'listening', { port: info.port, ...listening })
   )
+  let stopping = false
   const stop = (signal: string) => {
+    if (stopping) return
+    stopping = true
     log('info', 'stopping', { signal })
     server.close(() => void close().then(() => process.exit(0)))
   }

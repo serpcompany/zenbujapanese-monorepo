@@ -8,9 +8,15 @@ describe('readConfig', () => {
     for (const DATABASE_URL of [undefined, '', 'mysql://localhost/account', 'postgres://']) {
       expect(() => readConfig({ DATABASE_URL })).toThrow(/^DATABASE_URL must be set/)
     }
-    expect(() => readConfig({ DATABASE_URL: 'https://secret-password@x' })).not.toThrow(
-      /secret-password/
-    )
+    const refused = (() => {
+      try {
+        readConfig({ DATABASE_URL: 'https://secret-password@x' })
+      } catch (error) {
+        return String(error)
+      }
+    })()
+    expect(refused).toMatch(/DATABASE_URL must be set/)
+    expect(refused).not.toContain('secret-password')
   })
 
   test('defaults the port and release, and finds the migrations beside the code', () => {
@@ -19,7 +25,8 @@ describe('readConfig', () => {
     expect(config.migrations).toMatch(/apps\/account-api\/migrations$/)
   })
 
-  test('refuses a port that is not a positive whole number', () => {
+  test('reads its port as the shared config does', () => {
+    expect(readConfig({ DATABASE_URL: databaseUrl, PORT: '9000' }).port).toBe(9000)
     expect(() => readConfig({ DATABASE_URL: databaseUrl, PORT: 'eighty' })).toThrow('PORT')
   })
 })

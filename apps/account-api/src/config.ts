@@ -1,4 +1,5 @@
 import { fileURLToPath } from 'node:url'
+import { readPort } from '@zenbu/node-service/config'
 
 export interface Config {
   port: number
@@ -14,10 +15,8 @@ export function readConfig(env: NodeJS.ProcessEnv = process.env): Config {
       'DATABASE_URL must be set to the Postgres database the service owns (postgres://user:password@host/database)'
     )
   }
-  const port = Number(env.PORT ?? 8789)
-  if (!Number.isInteger(port) || port <= 0) throw new Error(`PORT is ${env.PORT}`)
   return {
-    port,
+    port: readPort(env.PORT, 8789),
     databaseUrl,
     migrations: fileURLToPath(new URL('../migrations', import.meta.url)),
     release: env.ACCOUNT_API_RELEASE ?? 'local'

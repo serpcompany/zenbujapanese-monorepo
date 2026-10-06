@@ -3,7 +3,6 @@
 !pnpm-lock.yaml
 !pnpm-workspace.yaml
 !apps/web/package.json
-!apps/account-api/package.json
 !packages/dictionary-core/**
 !packages/node-service/**
 !apps/dictionary-api/**

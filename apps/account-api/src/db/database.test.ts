@@ -13,12 +13,16 @@ describe('the migrations', () => {
   test('list a SQL file for every entry in their journal', () => {
     const journal = JSON.parse(readFileSync(join(migrations, 'meta/_journal.json'), 'utf8')) as {
       dialect: string
-      entries: { tag: string }[]
+      entries: { tag: string; when: number }[]
     }
     expect(journal.dialect).toBe('postgresql')
     for (const { tag } of journal.entries) {
       expect(existsSync(join(migrations, `${tag}.sql`)), tag).toBe(true)
     }
+    const times = journal.entries.map(entry => entry.when)
+    expect(times, 'Drizzle skips a migration older than the last one applied').toEqual(
+      [...times].sort((a, b) => a - b)
+    )
   })
 
   test('apply to an empty database, and again with nothing left to do', async () => {

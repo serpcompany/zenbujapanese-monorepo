@@ -3,7 +3,8 @@ set -uo pipefail
 export PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
 
 readonly database_container=zenbujapanese-account-db
-readonly settings_file=/etc/zenbujapanese-account-api/backup.env
+readonly config_dir=/etc/zenbujapanese-account-api
+readonly settings_file="$config_dir/backup.env"
 readonly lock_file=/run/zenbujapanese-account-backups.lock
 readonly environments=(staging production)
 readonly usage="usage: backups.sh                                (back up every environment; cron runs this)
@@ -45,14 +46,22 @@ psql_value() {
     --no-align --command "$2"
 }
 
-has_database() {
-  [ "$(psql_value postgres "select count(*) from pg_database where datname = '$1'" 2>/dev/null)" = 1 ]
+databases_named() {
+  psql_value postgres "select count(*) from pg_database where datname = '$1'"
 }
 
 back_up() {
-  local environment="$1" stamp="$2" database="account_$1" dump="$work/$1.dump"
-  if ! has_database "$database"; then
-    log "$environment: there's no $database database yet; skipped"
+  local environment="$1" stamp="$2" database="account_$1" dump="$work/$1.dump" count
+  if ! count="$(databases_named "$database")"; then
+    log "$environment: couldn't ask Postgres ($database_container) whether $database exists"
+    return 1
+  fi
+  if [ "$count" != 1 ]; then
+    if [ -e "$config_dir/$environment.env" ]; then
+      log "$environment: it's set up ($config_dir/$environment.env), but there's no $database database"
+      return 1
+    fi
+    log "$environment: it isn't set up on this server; skipped"
     return 0
   fi
   if ! docker exec "$database_container" pg_dump --username postgres --format custom \
@@ -83,7 +92,7 @@ back_up_all() {
 }
 
 restore() {
-  local key="$1" target="$2" dump="$work/restore.dump" tables migrations
+  local key="$1" target="$2" dump="$work/restore.dump" owner="account_${1%%/*}" count tables migrations
   [[ "$key" =~ ^(staging|production)/[0-9TZ-]+\.dump$ ]] || {
     echo "not a backup's name: $key" >&2
     return 2
@@ -92,7 +101,11 @@ restore() {
     echo "not a database name (lowercase letters, digits, and _): $target" >&2
     return 2
   }
-  if has_database "$target"; then
+  count="$(databases_named "$target")" || {
+    echo "couldn't ask Postgres ($database_container) whether $target exists" >&2
+    return 1
+  }
+  if [ "$count" != 0 ]; then
     echo "$target already exists; a restore only creates a new database" >&2
     return 1
   fi
@@ -100,15 +113,19 @@ restore() {
     log "restore: couldn't download $key from $bucket"
     return 1
   }
-  docker exec "$database_container" createdb --username postgres "$target" || return 1
+  docker exec "$database_container" createdb --username postgres --owner "$owner" "$target" ||
+    return 1
   docker exec --interactive "$database_container" pg_restore --username postgres --no-owner \
-    --exit-on-error --dbname "$target" <"$dump" || {
+    --role "$owner" --exit-on-error --dbname "$target" <"$dump" || {
     log "restore: pg_restore of $key into $target failed; $target is left for a look"
     return 1
   }
   tables="$(psql_value "$target" "select count(*) from information_schema.tables where table_schema not in ('pg_catalog', 'information_schema')")"
-  migrations="$(psql_value "$target" 'select count(*) from drizzle.__drizzle_migrations')"
-  log "restore: $key is in $target, with $tables tables and $migrations migrations applied"
+  migrations=0
+  if [ "$(psql_value "$target" "select to_regclass('drizzle.__drizzle_migrations') is not null")" = t ]; then
+    migrations="$(psql_value "$target" 'select count(*) from drizzle.__drizzle_migrations')"
+  fi
+  log "restore: $key is in $target, owned by $owner, with $tables tables and $migrations migrations applied"
 }
 
 [ "$(id -u)" = 0 ] || {

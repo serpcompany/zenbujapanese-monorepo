@@ -6,7 +6,6 @@ on:
       - apps/dictionary-api/**
       - packages/dictionary-core/**
       - packages/node-service/**
-      - deploy/**
       - apps/web/src/lib/dictionary/**
       - apps/web/src/components/dictionary/**
       - apps/web/src/test/**

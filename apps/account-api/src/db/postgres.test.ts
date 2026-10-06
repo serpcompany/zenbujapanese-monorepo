@@ -1,8 +1,9 @@
 import { PGlite } from '@electric-sql/pglite'
 import { PGLiteSocketServer } from '@electric-sql/pglite-socket'
-import { afterAll, beforeAll, describe, expect, test } from 'vitest'
+import pg from 'pg'
+import { afterAll, beforeAll, describe, expect, test, vi } from 'vitest'
 import { readConfig } from '../config'
-import { migratePostgres, openPostgres } from './postgres'
+import { migratePostgres, migrationLock, openPostgres } from './postgres'
 
 const { migrations } = readConfig({ DATABASE_URL: 'postgres://localhost/account' })
 const realPostgres = process.env.ACCOUNT_API_TEST_DATABASE_URL ?? ''
@@ -30,9 +31,21 @@ describe('Postgres, through the driver the service runs', () => {
   })
 
   test.skipIf(realPostgres === '')(
-    'takes the migrations from two starts at once, one after the other',
+    'waits while another start holds the migration lock, then migrates',
     async () => {
-      await Promise.all([migratePostgres(url, migrations), migratePostgres(url, migrations)])
+      const other = new pg.Client({ connectionString: url })
+      await other.connect()
+      await other.query('select pg_advisory_lock($1)', [migrationLock])
+      let finished = false
+      const migrating = migratePostgres(url, migrations).then(() => {
+        finished = true
+      })
+      await new Promise(resolve => setTimeout(resolve, 2500))
+      expect(finished).toBe(false)
+      await other.query('select pg_advisory_unlock($1)', [migrationLock])
+      await other.end()
+      await vi.waitFor(() => expect(finished).toBe(true), { timeout: 10_000 })
+      await migrating
     }
   )
 

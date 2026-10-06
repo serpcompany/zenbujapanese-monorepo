@@ -138,7 +138,7 @@ runners: check `https://account-api-staging.zenbujapanese.com/v1/health` in a br
 
 ## Back up and restore
 
-`deploy/backups.sh` backs up each environment's database every night: `pg_dump` in Postgres's
+`apps/account-api/deploy/backups.sh` backs up each environment's database every night: `pg_dump` in Postgres's
 custom format, uploaded to the private R2 bucket `zenbujapanese-account-backups` as
 `<environment>/<time>.dump`. The bucket's lifecycle rule deletes a backup after 30 days. The
 script runs as root, takes no input but its arguments, and reads its bucket and key from a
@@ -151,13 +151,21 @@ never a backup's contents.
 sudo zenbujapanese-account-backups restore staging/2026-10-06T031700Z.dump account_restore_check
 ```
 
-It downloads the backup, creates the database, restores into it, and logs how many tables and
-migrations it holds. It never writes to a database that exists, so it can't overwrite one an
+It downloads the backup, creates the database owned by the backup's environment's role
+(`account_staging` for a staging backup), restores into it as that role, and logs how many tables
+and migrations it holds. It never writes to a database that exists, so it can't overwrite one an
 environment uses. Drop the database when you're done looking
-(`docker exec zenbujapanese-account-db dropdb --username postgres account_restore_check`). To run an
-environment on a restored database, point its `DATABASE_URL` at it (Set up the server, step 3),
-then restart its slot (`docker restart` on the container
-`docker ps --filter label=zenbujapanese.account-api.environment=<environment>` lists).
+(`docker exec zenbujapanese-account-db dropdb --username postgres account_restore_check`).
+
+To run an environment on a restored database, point its `DATABASE_URL` at it (Set up the server,
+step 2). The deployer sees the environment's file change and deploys it again within 5 minutes, as
+it would a new image, with no request dropped ([`api-servers.md`](api-servers.md), The deployer).
+The restored database belongs to the environment's role, so the service migrates it as it would
+its own.
+
+A night's backup fails, and cron's run exits with an error the journal shows, when Postgres
+doesn't answer, or when an environment is set up (its file exists) but its database is missing.
+An environment that isn't set up is skipped.
 
 ## Set up the server
 
@@ -175,14 +183,22 @@ First set up what the services share: cosign, the deployer, and registry access
      --network zenbujapanese-account-db --volume zenbujapanese-account-db:/var/lib/postgresql \
      --env-file /etc/zenbujapanese-account-db/postgres.env --memory 1g --shm-size 256m postgres:18
    ```
-2. **A role and a database for each environment**, each owning only its own:
+2. **A role and a database for each environment**, each owning only its own, and each
+   environment's file, `/etc/zenbujapanese-account-api/<environment>.env`, which names them. The
+   SQL goes in on stdin, so the password never shows in a process listing, and nothing is created
+   twice, so a rerun only sets a new password and rewrites the file:
    ```sh
    sudo install -d -m 700 /etc/zenbujapanese-account-api
    for environment in staging production; do
      password="$(openssl rand -hex 24)"
-     docker exec zenbujapanese-account-db psql --username postgres --quiet \
-       --command "create role account_$environment login password '$password'" \
-       --command "create database account_$environment owner account_$environment"
+     docker exec --interactive zenbujapanese-account-db psql --username postgres --quiet \
+       --set ON_ERROR_STOP=1 <<SQL
+   select 'create role account_$environment login'
+     where not exists (select from pg_roles where rolname = 'account_$environment') \gexec
+   select 'create database account_$environment owner account_$environment'
+     where not exists (select from pg_database where datname = 'account_$environment') \gexec
+   alter role account_$environment password '$password';
+   SQL
      printf 'DATABASE_URL=postgres://account_%s:%s@zenbujapanese-account-db:5432/account_%s\n' \
        "$environment" "$password" "$environment" |
        sudo tee /etc/zenbujapanese-account-api/$environment.env >/dev/null
@@ -190,8 +206,9 @@ First set up what the services share: cosign, the deployer, and registry access
    done
    unset password
    ```
-3. **Each environment's file**, `/etc/zenbujapanese-account-api/<environment>.env`, which step 2
-   wrote. An environment without its file isn't deployed. Add sign-in's keys to it as #566 says.
+3. **More settings**, such as sign-in's keys (#566), go in the environment's file too. An
+   environment without its file isn't deployed, and the deployer deploys an environment again when
+   its file changes.
 4. **nginx.** The nginx repository holds `nginx/account-api-staging.zenbujapanese.com.conf` and
    `nginx/account-api.zenbujapanese.com.conf`, which proxy to the environment's alias on port 8789
    ([`api-servers.md`](api-servers.md), Set up the server, step 4).
@@ -211,7 +228,7 @@ First set up what the services share: cosign, the deployer, and registry access
      objects after 30 days, and an R2 API token with Object Read & Write on that bucket alone.
    - The script and its settings:
    ```sh
-   sudo install -m 755 deploy/backups.sh /usr/local/bin/zenbujapanese-account-backups
+   sudo install -m 755 apps/account-api/deploy/backups.sh /usr/local/bin/zenbujapanese-account-backups
    read -rsp 'Secret access key: ' secret && echo
    printf 'R2_BUCKET=zenbujapanese-account-backups\nR2_ENDPOINT=https://%s.r2.cloudflarestorage.com\nR2_ACCESS_KEY_ID=%s\nR2_SECRET_ACCESS_KEY=%s\n' \
      <cloudflare account id> <access key id> "$secret" |

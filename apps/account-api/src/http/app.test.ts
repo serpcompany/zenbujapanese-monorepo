@@ -1,3 +1,4 @@
+import { HTTPException } from 'hono/http-exception'
 import { afterEach, describe, expect, test, vi } from 'vitest'
 import { createApp } from './app'
 
@@ -16,10 +17,12 @@ describe('the account service', () => {
   })
 
   test('answers 503 to both health checks while the database is unreachable', async () => {
-    expect((await app(down).request('/v1/health')).status).toBe(503)
-    const health = await app(down).request('/healthz')
+    const health = await app(down).request('/v1/health')
     expect(health.status).toBe(503)
-    expect(await health.json()).toEqual({ status: 'unavailable', release: 'abc123def456' })
+    expect(await health.json()).toEqual({ status: 'unavailable' })
+    const deployer = await app(down).request('/healthz')
+    expect(deployer.status).toBe(503)
+    expect(await deployer.json()).toEqual({ status: 'unavailable', release: 'abc123def456' })
   })
 
   test('names its release on /healthz, for the deployer', async () => {
@@ -34,6 +37,18 @@ describe('the account service', () => {
     expect(response.status).toBe(404)
     expect(await response.json()).toEqual({
       error: { code: 'not_found', message: 'There is nothing here.' }
+    })
+  })
+
+  test('answers an HTTP error with its own status, in the JSON error format', async () => {
+    const service = app(up)
+    service.post('/v1/too-large', () => {
+      throw new HTTPException(413, { message: 'The request is too large.' })
+    })
+    const response = await service.request('/v1/too-large', { method: 'POST' })
+    expect(response.status).toBe(413)
+    expect(await response.json()).toEqual({
+      error: { code: 'too_large', message: 'The request is too large.' }
     })
   })
 

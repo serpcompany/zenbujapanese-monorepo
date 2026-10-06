@@ -1,8 +1,10 @@
 import { logRequests } from '@zenbu/node-service/http'
-import { errorFields, log } from '@zenbu/node-service/log'
+import { log } from '@zenbu/node-service/log'
 import { Hono } from 'hono'
+import { HTTPException } from 'hono/http-exception'
 import { routePath } from 'hono/route'
-import { errorBody } from './errors'
+import { failureFields } from '../failure'
+import { errorBody, errorCode } from './errors'
 
 export interface AppOptions {
   release: string
@@ -29,7 +31,10 @@ export function createApp({ release, databaseReady }: AppOptions) {
   app.notFound(context => context.json(errorBody('not_found', 'There is nothing here.'), 404))
 
   app.onError((error, context) => {
-    log('error', 'request failed', { route: routePath(context), ...errorFields(error) })
+    if (error instanceof HTTPException) {
+      return context.json(errorBody(errorCode(error.status), error.message), error.status)
+    }
+    log('error', 'request failed', { route: routePath(context), ...failureFields(error) })
     return context.json(errorBody('internal', 'Something went wrong. Try again later.'), 500)
   })
 

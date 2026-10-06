@@ -132,7 +132,7 @@
       }
     },
     {
-      "includes": ["src/config.ts"],
+      "includes": ["src/config.ts", "src/failure.ts"],
       "linter": {
         "rules": {
           "style": {
@@ -155,7 +155,7 @@
                       "drizzle-orm",
                       "drizzle-orm/**"
                     ],
-                    "message": "src/config.ts only reads the environment; src/server.ts hands what it read to the layers (docs/agents/account-api.md, Code layout)."
+                    "message": "src/config.ts reads the environment and src/failure.ts describes an error for the log; both sit below every layer, so they import none (docs/agents/account-api.md, Code layout)."
                   }
                 ]
               }

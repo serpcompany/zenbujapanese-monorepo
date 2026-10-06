@@ -20,7 +20,7 @@ with `pnpm install --frozen-lockfile`.
 | `Dictionary core` | `.github/workflows/dictionary-core.yml` | Pull requests that change the core |
 | `Dictionary API` | `.github/workflows/dictionary-api.yml` | Pull requests that change the service or what it reads; pushes to `main` that change its cached files; by hand |
 | `Dictionary API deploy` | `.github/workflows/dictionary-api-deploy.yml` | Pushes to `main` and pull requests that change what the image holds; by hand |
-| `Account API` | `.github/workflows/account-api.yml` | Pull requests that change the account service, what the services share, or the deployer; by hand |
+| `Account API` | `.github/workflows/account-api.yml` | Pull requests that change the account service or what the services share; by hand |
 | `Account API deploy` | `.github/workflows/account-api-deploy.yml` | Pushes to `main` and pull requests that change what the image holds; by hand |
 | `iOS` | `.github/workflows/ios.yml` | Pull requests that change `apps/ios`; by hand |
 | `Search parity` | `.github/workflows/search-parity.yml` | Pull requests that change a Swift source or a TypeScript port it pairs |
@@ -276,14 +276,14 @@ the core. Those tests need no data: the app-recorded suites run through the core
 ## Dictionary API
 
 `.github/workflows/dictionary-api.yml` checks the dictionary service on pull requests that change
-the service, the core, what the services share (`packages/node-service/`), the deployer
-(`deploy/`), the website's dictionary code (`apps/web/src/lib/dictionary/`,
+the service, the core, what the services share (`packages/node-service/`), the website's
+dictionary code (`apps/web/src/lib/dictionary/`,
 `apps/web/src/components/dictionary/`, `apps/web/src/test/`, `apps/web/vitest.config.ts`), the conformance suites
 (`apps/ios/LanguageData/Conformance/`), or the app's resources
 (`apps/ios/Modules/Sources/SearchExperience/Resources/`), and by hand. A new push cancels the pull
 request's last run. Its `scripts` job runs ShellCheck 0.11 on the server's deployer
-(`deploy/deployer.sh`), in Docker, since the runner's own ShellCheck is older, and since no deploy
-workflow has it in its paths. Its `check` job:
+(`deploy/deployer.sh`), in Docker, since the runner's own ShellCheck is older; `Repository`'s
+`pnpm verify` runs ShellCheck on it too, on any pull request that changes it. Its `check` job:
 
 1. restores and pulls the app's Git LFS files the service reads (the `.sqlite3` files and
    Kuromoji's), then Sudachi's dictionary (`pnpm sudachi`, which keeps a cached copy that matches
@@ -313,8 +313,7 @@ it. See [`dictionary-api.md`](dictionary-api.md), Check it.
 `.github/workflows/dictionary-api-deploy.yml` ships the service's Docker image
 (`apps/dictionary-api/Dockerfile`, ADR 0009). It runs on a push to `main` that changes what the
 image holds: the service, the core, what the services share, the package files it installs from
-(the root ones, `apps/web/package.json`, and `apps/account-api/package.json`), and the app's files
-it copies (the `.sqlite3` files, the
+(the root ones and `apps/web/package.json`), and the app's files it copies (the `.sqlite3` files, the
 `Kanji*ReferenceData.json` files, the pack catalog, and Kuromoji's). Tests and the service's
 conformance code (`apps/dictionary-api/src/conformance/`) aren't in the image, so they don't start
 it. A pull request that
@@ -352,13 +351,11 @@ rollback's comes from an image the run pulled. The whole deploy is in
 
 ## Account API
 
-`.github/workflows/account-api.yml` checks the account service on pull requests that change it,
-what the services share (`packages/node-service/`), or the deployer (`deploy/`), and by hand. A
-new push cancels the pull request's last run.
+`.github/workflows/account-api.yml` checks the account service on pull requests that change it or
+what the services share (`packages/node-service/`), and by hand. A new push cancels the pull
+request's last run. The deployer and the backups script (`deploy/deployer.sh`,
+`apps/account-api/deploy/backups.sh`) are ShellChecked by `Repository`'s `pnpm verify`.
 
-- **`scripts`** runs ShellCheck 0.11, in Docker, on the server's deployer and the account
-  service's backups (`deploy/deployer.sh` and `apps/account-api/deploy/backups.sh`). No deploy
-  workflow has either in its paths, since neither is in an image.
 - **`check`** runs `pnpm check` for `packages/node-service`, then for `apps/account-api`, with a
   Postgres 18 service container. `ACCOUNT_API_TEST_DATABASE_URL` points the service's database
   tests at it, so the migrations and the `pg` driver run against the Postgres the server runs,
@@ -372,7 +369,7 @@ new push cancels the pull request's last run.
 service's, with the same three jobs, the same signing, the same `staging` and `production`
 environments, and the same rollback by `tag`. It runs on a push to `main` that changes what the
 image holds: the service, what the services share, and the package files it installs from (the
-root ones and the two other apps' `package.json`). Tests and the backups script
+root ones). Tests and the backups script
 (`apps/account-api/deploy/`) aren't in the image, so they don't start it.
 
 Its `image` job starts the image beside a Postgres 18 service container, on the runner's network,
