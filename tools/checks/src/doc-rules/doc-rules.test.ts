@@ -2,7 +2,7 @@ import { describe, expect, test } from 'vitest'
 import { anchorOf, headingAnchors, headingSlug } from './anchors'
 import { hiddenComments } from './hidden'
 import { outOfLayout } from './layout'
-import { missingScript, pnpmInvocations, type Workspace } from './scripts'
+import { missingScript, pnpmInvocations, type Workspace, workspaceManifest } from './scripts'
 import { skillProblems } from './skills'
 
 describe('heading anchors', () => {
@@ -11,6 +11,8 @@ describe('heading anchors', () => {
     expect(headingSlug('`pnpm verify` and [the hook](x.md)')).toBe('pnpm-verify-and-the-hook')
     expect(headingSlug('What changes, and why?')).toBe('what-changes-and-why')
     expect(headingSlug('見る の 例')).toBe('見る-の-例')
+    expect(headingSlug('The <kbd>Return</kbd> key')).toBe('the-return-key')
+    expect(headingSlug('Nested <<b>i</b>>tags')).toBe('nested-tags')
   })
 
   test('number a repeated heading', () => {
@@ -103,5 +105,20 @@ describe('skills', () => {
     expect(skillProblems(path, '# No frontmatter\n', [path])).toEqual([
       'has no YAML frontmatter between --- lines, which Claude Code reads the skill from'
     ])
+  })
+})
+
+describe('workspace patterns', () => {
+  test.each([
+    ['packages/*', 'packages/dictionary-core/package.json', true],
+    ['packages/*', 'packages/a/b/package.json', false],
+    ['packages/*/*', 'packages/a/b/package.json', true],
+    ['packages/**', 'packages/a/b/package.json', true],
+    ['apps/web', 'apps/web/package.json', true],
+    ['apps/web', 'apps/web-staging/package.json', false],
+    ['tools/*.d', 'tools/checks.d/package.json', true],
+    ['tools/*.d', 'tools/checksxd/package.json', false]
+  ])('%s matches %s: %s', (pattern, path, matches) => {
+    expect(workspaceManifest(pattern).test(path)).toBe(matches)
   })
 })

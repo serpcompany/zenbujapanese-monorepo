@@ -69,11 +69,18 @@ function manifestOf(path: string): { name?: string; scripts: string[] } {
   }
 }
 
+const escapeRegExp = (text: string) => text.replace(/[\\^$.*+?()[\]{}|/]/g, '\\$&')
+
+export function workspaceManifest(pattern: string): RegExp {
+  const folders = pattern
+    .split('/')
+    .map(part => (part === '**' ? '.+' : part.split('*').map(escapeRegExp).join('[^/]+')))
+    .join('/')
+  return new RegExp(`^${folders}/package\\.json$`)
+}
+
 export function workspaces(): Workspace[] {
-  const packages = workspacePatterns()
-  const patterns = packages.map(
-    pattern => new RegExp(`^${pattern.replace('*', '[^/]+')}/package\\.json$`)
-  )
+  const patterns = workspacePatterns().map(workspaceManifest)
   const manifests = repositoryFiles().filter(
     path => path === 'package.json' || patterns.some(pattern => pattern.test(path))
   )

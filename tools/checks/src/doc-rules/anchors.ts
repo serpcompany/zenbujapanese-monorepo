@@ -1,9 +1,12 @@
 const heading = /^#{1,6}\s+(.*?)\s*#*\s*$/
 
+function withoutTags(text: string): string {
+  const stripped = text.replace(/<[^<>]*>/g, '')
+  return stripped === text ? text : withoutTags(stripped)
+}
+
 export function headingSlug(text: string): string {
-  return text
-    .replace(/\[([^\]]*)\]\([^)]*\)/g, '$1')
-    .replace(/<[^>]+>/g, '')
+  return withoutTags(text.replace(/\[([^\]]*)\]\([^)]*\)/g, '$1'))
     .toLowerCase()
     .replace(/[^\p{L}\p{N}\p{M} _-]/gu, '')
     .replace(/ /g, '-')
