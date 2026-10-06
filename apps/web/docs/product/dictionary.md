@@ -48,10 +48,20 @@ opens that query's results page.
   automated check yet (#511).
 
 **Breadcrumbs.** Every dictionary page starts with a breadcrumb trail under the site header:
-Home › Dictionary on this page, then the page's own crumb on the others. The app has none.
+Home › Dictionary on this page, then the page's own crumb on the others. The app has none. The
+trail stays on one line: a long last crumb (a long headword or query) is cut short with an
+ellipsis, and Home and Dictionary keep their full width.
 
-- Source: #484.
-- Check: `apps/web/e2e/word.spec.ts`, "shows the word, its breadcrumb, and its meaning".
+- Source: #484; #576 (Home and Dictionary never shrink).
+- Check: `apps/web/e2e/word.spec.ts`, "shows the word, its breadcrumb, and its meaning";
+  `apps/web/e2e/search.spec.ts`, "a long query's crumb is cut short, never Home or Dictionary".
+
+**Column.** Every dictionary page is one column, at most 768 pixels wide (`max-w-3xl`), centered,
+with 16-pixel margins; on a phone it fills the screen's width.
+
+- Source: #576 (widened from 672 pixels).
+- Check: `apps/web/e2e/search.spec.ts`, "is one column, at most 768 pixels wide", on the home, the
+  search page, a results page, and a word page, at a desktop and a phone width.
 
 ## Search results
 
@@ -370,36 +380,44 @@ query, which the results page already shows, and has no count line.
 
 ## Word page
 
-**Toolbar.** The page's title is the headword, followed by Share and a ••• menu. Share sends the
-headword, its reading, and the numbered meanings, as the app's does, through the browser's share
-sheet; without one it copies the link. The menu lists Mark as Known, Add to List…, Add Note, Add
-Photo, Open in App, and Copy Link. The learner actions and Open in App open the get-the-app prompt,
-a dialog on wide screens and a drawer on phones. Open in App doesn't open the app yet (#467). Copy
-Link copies the page URL and shows "Link copied". There is no back button; the breadcrumbs replace
-it.
+**Toolbar.** Share and a ••• menu sit at the end of the breadcrumb row, at every width; the page
+has no title row above the header card. Share sends the headword, its reading, and the numbered
+meanings, as the app's does, through the browser's share sheet; without one it copies the link.
+The menu lists Mark as Known, Add to List…, Add Note, Add Photo, Open in App, and Copy Link. The
+learner actions and Open in App open the get-the-app prompt, a dialog on wide screens and a drawer
+on phones. Open in App doesn't open the app yet (#467). Copy Link copies the page URL and shows
+"Link copied". There is no back button; the breadcrumbs replace it.
 
 - Source: App docs, Dictionary and kanji details (Share and the ••• menu); `SavedItemActions.swift`;
   #462 (toolbar and menu items, get-the-app prompt, `Sonner` for Link copied); #484 (breadcrumbs
-  in place of the back button).
+  in place of the back button); #576 (no title row; the buttons moved to the breadcrumb row).
 - Check: the share text: `packages/dictionary-core/src/detail/word.test.ts`, "要る (1546640)"; the
-  menu and the prompt, at a desktop and a phone width: `apps/web/e2e/word.spec.ts`, "opens the More
-  actions menu with the app's actions" and "copies the link from the More actions menu"; Share:
+  buttons' place, at a desktop and a phone width: `apps/web/e2e/word.spec.ts`, "puts Share and More
+  actions at the end of the breadcrumb row"; the menu and the prompt, at a desktop and a phone
+  width: `apps/web/e2e/word.spec.ts`, "opens the More actions menu with the app's actions" and
+  "copies the link from the More actions menu"; Share:
   `src/components/dictionary/saved-item-actions.interaction.test.tsx`, "sends the page it is on".
 
-**Header card.** The card shows the headword with furigana, and beside it the pitch accent in a
-capsule that pronounces the word, or a standalone speaker when the word has no pitch. Either uses
-the browser's Japanese voice. Under a separator, the part-of-speech row names one word class and
-its modifiers, such as "Godan verb (intransitive)", and is left out when no class has a name. It
-comes from the first sense's parts of speech, falling back to the entry's. For a word with a
-conjugation table the row links to the page's Conjugations section (see Conjugations).
+**Header card.** The card shows the headword with furigana, the page's one `h1`. The heading's text
+is the headword alone: each furigana reading is a `data-reading` attribute drawn with CSS
+(`::before`), so the readings look the same but aren't in the text search engines read. The `h1`
+keeps an `aria-label` of the headword, since the kanji toggles' labels ("要, よう") would otherwise
+enter its name. Ruby elsewhere, such as in example sentences, keeps its readings as text. Beside
+it is the pitch accent in a capsule that pronounces the word, or a standalone speaker when the word has no pitch.
+Either uses the browser's Japanese voice. Under a separator, the part-of-speech row names one word
+class and its modifiers, such as "Godan verb (intransitive)", and is left out when no class has a
+name. It comes from the first sense's parts of speech, falling back to the entry's. For a word
+with a conjugation table the row links to the page's Conjugations section (see Conjugations).
 
 - Source: App docs, Dictionary and kanji details; `WordHeadline.swift` and
   `PitchAccentBadge.swift`; `PartOfSpeechFormatter.swift`; `DictionaryEntry.displayPartOfSpeech`;
-  #462.
+  #462; #576 (the headword is the `h1`, with its readings out of its text).
 - Check: WD `furigana`, `partOfSpeech`; `packages/dictionary-core/src/detail/word.test.ts`, "names
   one word class, then its modifiers" and "shows no part of speech when no class has a name";
-  `src/components/dictionary/word-page.test.tsx`, "shows a standalone speaker for a word without
-  pitch". Speaking: No automated check yet (#511).
+  `src/components/dictionary/word-page.test.tsx`, "is the page heading, named for the headword
+  whatever its furigana" and "shows a standalone speaker for a word without pitch";
+  `apps/web/e2e/word.spec.ts`, "shows the word, its breadcrumb, and its meaning" (one `h1`, its
+  name, its text, and its reading drawn by `::before`). Speaking: No automated check yet (#511).
 
 **Conjugations.** A verb or adjective the app conjugates (ichidan, godan, する, 来る, i- and
 na-adjectives, but not いい) has a [Conjugations section](#conjugations-section) after Frequency,

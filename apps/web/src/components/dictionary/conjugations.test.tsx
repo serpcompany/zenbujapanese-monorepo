@@ -193,6 +193,7 @@ describe('the Conjugations section', () => {
     const header = (data: Conjugations | null) =>
       renderToStaticMarkup(
         <WordHeader
+          headword="見る"
           ruby={rubySegments('見る', 'みる')}
           reading="みる"
           pitch={null}
@@ -229,6 +230,7 @@ describe.runIf(gateEnabled)('the rendered Conjugations section matches the app',
     const detail = wordDetail(page.data.rows)
     const header = renderToStaticMarkup(
       <WordHeader
+        headword={detail.headword}
         ruby={detail.ruby}
         reading={detail.reading}
         pitch={detail.pitch}

@@ -16,7 +16,7 @@ export default async function SearchIndexPage({ searchParams }: PageProps<'/dict
   const query = normalizeSearchQuery(typeof q === 'string' ? q : '')
   if (query && hasSearchPath(query)) permanentRedirect(searchPath(query))
   return (
-    <main className="mx-auto flex w-full max-w-2xl flex-col gap-4 px-4 pt-4 pb-6">
+    <main className="mx-auto flex w-full max-w-3xl flex-col gap-4 px-4 pt-4 pb-6">
       <DictionaryBreadcrumbs page={{ label: 'Search', path: '/dictionary/search/' }} />
       <SearchForm autoFocus defaultValue={query || undefined} />
       <h1 className="text-2xl font-semibold tracking-tight">Search the dictionary</h1>
