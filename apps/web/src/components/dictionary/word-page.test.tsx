@@ -24,11 +24,28 @@ const unidic = 'UniDic for Contemporary Written Japanese 3.1.0'
 
 type HeaderProps = Parameters<typeof WordHeader>[0]
 
-function header(props: Omit<HeaderProps, 'conjugations'> & Partial<HeaderProps>) {
-  return renderToStaticMarkup(<WordHeader conjugations={null} {...props} />)
+function header(props: Omit<HeaderProps, 'conjugations' | 'headword'> & Partial<HeaderProps>) {
+  const headword = props.ruby.map(segment => segment.text).join('')
+  return renderToStaticMarkup(<WordHeader headword={headword} conjugations={null} {...props} />)
 }
 
 describe('the word header', () => {
+  test('is the page heading, named for the headword whatever its furigana', () => {
+    const html = header({
+      headword: '学校',
+      ruby: [{ text: '学校', reading: 'がっこう', kanjiReadings: ['がっ', 'こう'] }],
+      reading: 'がっこう',
+      pitch: null,
+      partOfSpeech: 'Noun'
+    })
+    const headings = [...html.matchAll(/<h1([^>]*)>/g)].map(([, attributes]) => attributes)
+    expect(headings).toHaveLength(1)
+    expect(headings[0]).toContain('aria-label="学校"')
+    expect(readFurigana(html)).toEqual([
+      { base: '学校', reading: 'がっこう', kanjiReadings: ['がっ', 'こう'] }
+    ])
+  })
+
   test('makes each kanji of a split run a toggle over its own part of the furigana', () => {
     const html = header({
       ruby: [{ text: '学校', reading: 'がっこう', kanjiReadings: ['がっ', 'こう'] }],

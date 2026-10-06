@@ -15,7 +15,9 @@ function attribute(tag: string, name: string): string | null {
 
 export function readFurigana(html: string, size = 'text-5xl'): SuiteFurigana[] {
   const headword = html.match(
-    new RegExp(`<span lang="ja" class="[^"]*${size}[^"]*">([\\s\\S]*?)</span><(?:button|div)`)
+    new RegExp(
+      `<span lang="ja" class="[^"]*${size}[^"]*">([\\s\\S]*?)</span>(?:</h1>)?<(?:button|div)`
+    )
   )
   if (!headword) throw new Error('No headword in the rendered header')
   const unhighlighted = headword[1].replace(endingSpan, '$1')
