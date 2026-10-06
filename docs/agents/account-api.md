@@ -8,6 +8,10 @@ the apps and other services use. `/v1/me` and `/v1/sync` come in
 [#567](https://github.com/serpcompany/zenbujapanese-monorepo/issues/567). Every Zenbu app stays
 local-first, so nothing in an app waits on this service.
 
+Clients reach it at the API host, `api.zenbujapanese.com`, which it shares with the dictionary
+service: nginx sends it `/v1/auth`, `/v1/me`, `/v1/sync`, and `/v1/health`
+([`api-servers.md`](api-servers.md), The API host).
+
 Run every command below from `apps/account-api`, after `pnpm install` at the repository root.
 
 ## Run it
@@ -34,7 +38,7 @@ would send are at `http://localhost:8789/dev/mail` (Email, below).
 | Variable | Default | What it does |
 | --- | --- | --- |
 | `DATABASE_URL` | required | The Postgres database the service owns: `postgres://user:password@host:port/database`. It's never logged or repeated in an error. |
-| `ACCOUNT_API_URL` | required | The service's own origin, such as `https://account-api.zenbujapanese.com`. Its access tokens name it as their issuer and audience. |
+| `ACCOUNT_API_URL` | required | The API host's origin, such as `https://api.zenbujapanese.com`. Its access tokens name it as their issuer and audience. |
 | `ACCOUNT_API_SECRET` | required | At least 32 characters. It signs session tokens and encrypts the codes and the token-signing keys in the database. Changing it signs everyone out, and needs `delete from signing_keys` too, or no access token can be made. |
 | `ACCOUNT_API_TRUSTED_ORIGINS` | none | The website origins, comma-separated, that may sign in with a cookie, such as `https://zenbujapanese.com`. |
 | `ACCOUNT_API_COOKIE_DOMAIN` | none | The domain the session cookie is shared across, such as `zenbujapanese.com`, so the website on the zone's root reads it. |
@@ -261,7 +265,7 @@ holds (the service, what the services share, or the lockfile), and by hand:
 
 The `staging` environment only accepts `main`, and the deployer runs an image only when `main`'s
 workflow signed it. Nothing in CI can see what the server runs, since Bot Fight Mode challenges CI
-runners: check `https://account-api-staging.zenbujapanese.com/v1/health` in a browser.
+runners: check `https://api-staging.zenbujapanese.com/v1/health` in a browser.
 
 - **Roll back** by running the workflow by hand with `tag` set to the version to go back to, such
   as `sha-0123456789ab`. A migration doesn't roll back: an older image runs against the newer
@@ -343,8 +347,8 @@ First set up what the services share: cosign, the deployer, and registry access
 3. **Sign-in's settings**, in each environment's file (the settings table, above). An environment
    without its file isn't deployed, and the deployer deploys an environment again when its file
    changes, so a setting added later takes effect within 5 minutes.
-   - **The service:** `ACCOUNT_API_URL` (`https://account-api-staging.zenbujapanese.com` or
-     `https://account-api.zenbujapanese.com`), a new `ACCOUNT_API_SECRET` for each environment
+   - **The service:** `ACCOUNT_API_URL` (`https://api-staging.zenbujapanese.com` or
+     `https://api.zenbujapanese.com`), a new `ACCOUNT_API_SECRET` for each environment
      (`openssl rand -hex 32`), and, for the website (#468), `ACCOUNT_API_TRUSTED_ORIGINS`,
      `ACCOUNT_API_COOKIE_DOMAIN=zenbujapanese.com`, and on staging
      `ACCOUNT_API_COOKIE_PREFIX=zenbu-staging`.
@@ -376,9 +380,9 @@ First set up what the services share: cosign, the deployer, and registry access
      The first code staging sends shows whether Email Service takes the sender's name with its
      address (`Zenbu Japanese <support@zenbujapanese.com>`); if it doesn't, set `EMAIL_FROM` to the
      address alone.
-4. **nginx.** The nginx repository holds `nginx/account-api-staging.zenbujapanese.com.conf` and
-   `nginx/account-api.zenbujapanese.com.conf`, which proxy to the environment's alias on port 8789
-   ([`api-servers.md`](api-servers.md), Set up the server, step 4).
+4. **nginx.** The API host's sites, `nginx/api-staging.zenbujapanese.com.conf` and
+   `nginx/api.zenbujapanese.com.conf` in the nginx repository, send the account service's paths to
+   the environment's alias on port 8789 ([`api-servers.md`](api-servers.md), The API host).
 
    **The slots' network.** Create it, not internal, since the service calls Apple, Google, and
    Email Service, and connect the running nginx to it:
@@ -386,9 +390,9 @@ First set up what the services share: cosign, the deployer, and registry access
    docker network create zenbujapanese-account-api
    docker network connect zenbujapanese-account-api nginx
    ```
-5. **Cloudflare**: proxied DNS records for `account-api.zenbujapanese.com` and
-   `account-api-staging.zenbujapanese.com` ([`api-servers.md`](api-servers.md), Set up the server,
-   step 5).
+5. **Cloudflare**: proxied DNS records for `api.zenbujapanese.com` and
+   `api-staging.zenbujapanese.com` ([`api-servers.md`](api-servers.md), Set up the server, step
+   5).
 6. **Backups.**
    - The AWS CLI v2, from AWS's installer.
    - An R2 bucket, `zenbujapanese-account-backups`, private, with a lifecycle rule that deletes
@@ -409,8 +413,9 @@ First set up what the services share: cosign, the deployer, and registry access
 7. **The first deploy.** Run the workflow by hand (Actions → Account API deploy → Run workflow); the
    deployer starts each image within 5 minutes of its tag moving. Then, before anything relies on
    it:
-   - `GET /v1/health` answers on `https://account-api-staging.zenbujapanese.com` and
-     `https://account-api.zenbujapanese.com`, in a browser.
+   - `GET /v1/health` answers on `https://api-staging.zenbujapanese.com` and
+     `https://api.zenbujapanese.com`, in a browser, and a dictionary route answers on the same
+     host.
    - A request from the iOS app, on the Simulator and on a device, reaches staging. If Bot Fight
      Mode challenges it, the owners turn Bot Fight Mode off (ADR 0011), and this doc says so.
    - Run the backup by hand (`sudo zenbujapanese-account-backups`), then restore it into a new

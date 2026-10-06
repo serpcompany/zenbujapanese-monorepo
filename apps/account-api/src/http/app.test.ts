@@ -1,3 +1,4 @@
+import { servedByAccountService, servedByEachServiceItself } from '@zenbu/node-service/api-host'
 import { HTTPException } from 'hono/http-exception'
 import { afterEach, describe, expect, test, vi } from 'vitest'
 import { type AppOptions, createApp } from './app'
@@ -94,11 +95,19 @@ describe('the account service', () => {
     const local = await app(up, { devMailbox }).request('http://localhost:8789/dev/mail')
     expect(local.status).toBe(200)
     expect(await local.json()).toEqual({ messages: devMailbox.messages() })
-    const remote = await app(up, { devMailbox }).request(
-      'https://account-api.zenbujapanese.com/dev/mail'
-    )
+    const remote = await app(up, { devMailbox }).request('https://api.zenbujapanese.com/dev/mail')
     expect(remote.status).toBe(404)
     const deployed = await app(up).request('http://localhost:8789/dev/mail')
     expect(deployed.status).toBe(404)
+  })
+
+  test('answers only paths nginx sends it on the API host, besides its own /healthz and /dev/mail', () => {
+    const paths = app(up)
+      .routes.map(route => route.path)
+      .filter(path => path !== '/*')
+    expect(paths.length).toBeGreaterThan(3)
+    expect(
+      paths.filter(path => !servedByAccountService(path) && !servedByEachServiceItself(path))
+    ).toEqual([])
   })
 })

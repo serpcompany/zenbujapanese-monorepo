@@ -8,8 +8,40 @@ Zenbu's Node services run in Docker on serpcompany's server, behind its nginx an
 Staging and production share the one Linux x86-64 server. Its nginx container, on the
 `web_network` Docker network, fronts serpcompany's other sites too. GitHub holds no access to it:
 a service's deploy workflow publishes a signed image and moves a tag, and the deployer on the
-server does the rest. This doc covers what the services share: the deployer and setting up the
-server. Each service's doc covers its image, its workflow, and its own setup.
+server does the rest. This doc covers what the services share: the API host, the deployer, and
+setting up the server. Each service's doc covers its image, its workflow, and its own setup.
+
+## The API host
+
+Clients reach both services at one host, `api.zenbujapanese.com`, and `api-staging.zenbujapanese.com`
+for staging (ADR 0011). nginx sends a request by its path:
+
+- `/v1/auth`, `/v1/me`, `/v1/sync`, and `/v1/health`, and anything under them, to the account
+  service;
+- every other path to the dictionary service, including `/healthz`.
+
+The list is `accountServicePaths` in `packages/node-service/src/api-host.ts`. Each service's tests
+check its routes against it: every account route is on the list, and no dictionary route is, so a
+new route that would land on the wrong service fails a test. nginx's sites hold the same list, so
+a change to it is made in both, in the nginx repository too. Each environment's site sends the
+account paths to the account service's alias and the rest to the dictionary service's, with
+nginx's resolver and failover as for every slot (Set up the server, step 4):
+
+```nginx
+location ~ ^/v1/(auth|me|sync|health)(/|$) {
+    set $account zenbujapanese-account-api-staging:8789;
+    proxy_pass http://$account;
+}
+location / {
+    set $dictionary zenbujapanese-dictionary-api-staging:8788;
+    proxy_pass http://$dictionary;
+}
+```
+
+The dictionary service also keeps its own host (`dictionary-api.zenbujapanese.com`), which the
+website's Worker reads; it can move to the API host by changing `DICTIONARY_API_URL`. The two
+services stay apart because neither needs the other's data, and they could move to separate
+servers by changing only nginx's sites.
 
 ## The deployer
 
@@ -175,7 +207,7 @@ A person with root sets these up once. Each service then has its own steps
    ```sh
    docker exec nginx nginx -t && docker exec nginx nginx -s reload
    ```
-   A staging host name has one level (`account-api-staging.zenbujapanese.com`), since the origin
+   A staging host name has one level (`api-staging.zenbujapanese.com`), since the origin
    certificate covers `*.zenbujapanese.com` alone. Connecting nginx to a service's slots' network
    adds a second network: nginx keeps `web_network` and every other site, and doesn't restart. The
    nginx repository's `docker-compose.yml` lists each slots' network for nginx too (as an external

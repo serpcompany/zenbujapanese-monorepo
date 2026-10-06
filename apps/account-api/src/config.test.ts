@@ -12,7 +12,7 @@ beforeAll(async () => {
 const databaseUrl = 'postgres://localhost:5432/account'
 const base = {
   DATABASE_URL: databaseUrl,
-  ACCOUNT_API_URL: 'https://account-api.zenbujapanese.com',
+  ACCOUNT_API_URL: 'https://api.zenbujapanese.com',
   ACCOUNT_API_SECRET: 'a-test-secret-of-at-least-thirty-two-characters'
 }
 

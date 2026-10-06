@@ -39,7 +39,10 @@ image copies it, and the release packages it. The website reads no data of its o
 service, which runs the same core the website renders with. A new build of the data is a new
 service image, deployed without touching the site.
 
-The account service holds what learners keep across devices. Its Postgres database sits on the same
+Clients reach both services at one API host, `api.zenbujapanese.com`: nginx sends the account
+service's paths to it and the rest to the dictionary service, so they deploy apart
+([`docs/agents/api-servers.md`](docs/agents/api-servers.md), The API host). The account service
+holds what learners keep across devices. Its Postgres database sits on the same
 server, on a network only the service's slots reach, and every app keeps its own copy and works
 offline (ADR 0011).
 

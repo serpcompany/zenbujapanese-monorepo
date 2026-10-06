@@ -1,5 +1,7 @@
+import { servedByAccountService } from '@zenbu/node-service/api-host'
 import { describe, expect, test } from 'vitest'
 import { useSignInService } from '../test/sign-in'
+import { authPath, offeredRoutes } from './routes'
 
 const running = useSignInService()
 
@@ -34,5 +36,10 @@ describe('the sign-in routes', () => {
       "select count(*)::int as n from user_identities where provider = 'credential'"
     )
     expect(passwords).toEqual([{ n: 0 }])
+  })
+
+  test('are all under a path nginx sends to the account service', () => {
+    const paths = [...offeredRoutes].map(route => `${authPath}${route}`)
+    expect(paths.filter(path => !servedByAccountService(path))).toEqual([])
   })
 })

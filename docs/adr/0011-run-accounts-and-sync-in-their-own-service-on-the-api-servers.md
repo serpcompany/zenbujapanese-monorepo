@@ -14,10 +14,19 @@ feature.
 
 The service ships as a signed Docker image and deploys the way the dictionary service does: two
 slots per environment behind nginx, and the deployer on the server
-([`dictionary-api.md`](../agents/dictionary-api.md#ship-it)). It is a host on
-`zenbujapanese.com`, through Cloudflare: `account-api.zenbujapanese.com`, and
-`account-api-staging.zenbujapanese.com` for staging
-([issue 565](https://github.com/serpcompany/zenbujapanese-monorepo/issues/565)).
+([`dictionary-api.md`](../agents/dictionary-api.md#ship-it)).
+
+**One API host, two services.** Clients reach it at the one API host on `zenbujapanese.com`,
+through Cloudflare: `api.zenbujapanese.com`, and `api-staging.zenbujapanese.com` for staging. nginx
+sends the account service's paths (`/v1/auth`, `/v1/me`, `/v1/sync`, and `/v1/health`) to it and
+every other path to the dictionary service. So the apps see one central API, while the two
+services deploy, restart, and fail apart. Sign-in changes ship in a small image of their own,
+never the dictionary's 1 GB, and the dictionary keeps a network that reaches only nginx. They stay
+apart because neither needs the other: sign-in and sync never read the dictionary, and the
+dictionary checks an account's access token through this service's JWKS
+([ADR 0012](0012-let-signed-in-apps-fetch-word-cards-from-the-dictionary-service.md)). Moving
+them onto separate servers, or into one process, changes nginx and the deploys, not the API. The
+owners chose one host on 2026-10-06.
 
 ## Sign-in
 

@@ -1,4 +1,5 @@
 import { dictionaryContract } from '@zenbu/dictionary-core/artifact/contract'
+import { servedByAccountService } from '@zenbu/node-service/api-host'
 import { describe, expect, test, vi } from 'vitest'
 import { createApp } from './app'
 import type { DictionaryService } from './service'
@@ -141,5 +142,15 @@ describe('routes', () => {
     '/v1/sitemaps/conjugations'
   ])('404s %s, a route it has no longer or never had', async path => {
     expect((await app().request(get(path))).status).toBe(404)
+  })
+})
+
+describe('on the API host', () => {
+  test('answers no path nginx sends to the account service, so the two never collide', () => {
+    const paths = app()
+      .routes.map(route => route.path)
+      .filter(path => path !== '/*' && path !== '/v1/*')
+    expect(paths.length).toBeGreaterThan(5)
+    expect(paths.filter(servedByAccountService)).toEqual([])
   })
 })
