@@ -179,8 +179,8 @@ are in `src/domain`, so `PATCH /v1/me` and a sync mutation change it the same wa
   and lowercasing (`Kana_Fan` is `kana_fan`), unique across accounts, or `null`.
 - **The email** doesn't change here: changing it needs proof that the learner owns the new
   address, which nothing builds yet.
-- **Versions.** A profile starts at version 1, and each change adds one (and a restore a million:
-  Back up and restore). A change names the
+- **Versions.** A profile starts at version 1, and each change adds one. On a restored copy it
+  jumps to the time, in milliseconds (Back up and restore). A change names the
   version it was made to (`baseVersion`); if the profile has moved on, nothing changes, and the
   answer is the profile as it is now. Nothing is last-write-wins. Sending the current values
   again changes nothing.
@@ -320,7 +320,7 @@ way and call the routes with their access tokens. They show:
 
 The domain's own tests (`src/domain/`) cover the name and username rules and the cursor;
 `src/db/database.test.ts` covers the journal's trigger and backfill, the sync tables' rules, and
-fencing a restored copy; and
+fencing two restored copies of one backup; and
 `src/http/openapi.test.ts` keeps `openapi.json` in step with the routes. In CI, and when
 `ACCOUNT_API_TEST_DATABASE_URL` names a real Postgres database, `src/db/postgres.test.ts` also
 sends eight changes to one account at once through the `pg` pool, and one mutation six times at
@@ -376,9 +376,10 @@ runners: check `https://api-staging.zenbujapanese.com/v1/health` in a browser.
 
 ## Back up and restore
 
-`apps/account-api/deploy/backups.sh` backs up each environment's database every night: `pg_dump` in Postgres's
-custom format, uploaded to the private R2 bucket `zenbujapanese-account-backups` as
-`<environment>/<time>.dump`. The bucket's lifecycle rule deletes a backup after 30 days. The
+`apps/account-api/deploy/backups.sh` backs up each environment's database every night: the one
+its environment file's `DATABASE_URL` names, so after a restore it backs up the database the
+environment runs on. It's `pg_dump` in Postgres's custom format, uploaded to the private R2 bucket
+`zenbujapanese-account-backups` as `<environment>/<time>.dump`. The bucket's lifecycle rule deletes a backup after 30 days. The
 script runs as root, takes no input but its arguments, and reads its bucket and key from a
 root-only file, like the deployer. It logs to `journalctl -t zenbujapanese-account-backups`, and
 never a backup's contents.
@@ -403,13 +404,23 @@ its own.
 
 **The service fences a restored database itself**, the first time it starts on it. It keeps the
 OID of the database it serves in `sync_origin`. A restore is always a new database, with a new
-OID, so when the two differ after migrating, under the migration lock, it moves the journal's
-sequence a billion past where it was and every profile's version a million past, journals each
-profile at its new version, and logs `a restored database`. So a change an app made after the
-backup, and lost with it, can't come back under a version the server reuses: it conflicts, and
-the app takes the profile as it is. Every app hears of each profile on its next sync, whatever
-cursor it holds. A database restored only to look at is never served, so it stays as the backup
-was. What changed after the backup is lost, as for any restore.
+OID, so when the two differ after migrating, under the migration lock, it jumps every profile's
+version to the time in milliseconds and the journal's sequence to the time in microseconds (or
+leaves each where it is, if that's higher), journals each profile at its new version, and logs
+`a restored database`. The jump is to the clock, not by a fixed amount, so every restore lands
+past every earlier one, even a second restore of the same backup:
+
+- a change an app made after the backup, and lost with it, can't come back under a version the
+  server reuses: it conflicts, and the app takes the profile as it is;
+- every app hears of each profile on its next sync, whatever cursor it holds.
+
+What changed after the backup is lost, as for any restore. The service fences a database it
+starts on for the first time too, if it holds accounts, which covers a backup from before
+`sync_origin`. A database restored only to look at is never served, so it stays as the backup
+was. Moving the database by dump and reload, to a new server or across a major version without
+`pg_upgrade`, looks like a restore and is fenced the same way: every version jumps once, and an
+app's change made offline before the move conflicts. `pg_upgrade`, a container restart, and
+renaming a database keep its OID.
 
 A night's backup fails, and cron's run exits with an error the journal shows, when Postgres
 doesn't answer, or when an environment is set up (its file exists) but its database is missing.

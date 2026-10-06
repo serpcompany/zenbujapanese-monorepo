@@ -12,22 +12,15 @@
     {
       "idx": 1,
       "version": "7",
-      "when": 1791321525446,
+      "when": 1791326365310,
       "tag": "0001_sync",
       "breakpoints": true
     },
     {
       "idx": 2,
       "version": "7",
-      "when": 1791321530008,
+      "when": 1791326371710,
       "tag": "0002_journal_accounts",
-      "breakpoints": true
-    },
-    {
-      "idx": 3,
-      "version": "7",
-      "when": 1791324762244,
-      "tag": "0003_sync_origin",
       "breakpoints": true
     }
   ]

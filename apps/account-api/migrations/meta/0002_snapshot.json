@@ -1,6 +1,6 @@
 {
-  "id": "0d22a9cc-d207-4692-91f6-23893594da1a",
-  "prevId": "0035a170-9ee7-4bd8-af2b-fba27ac54602",
+  "id": "721b590a-a380-417c-be82-43b2c70a9223",
+  "prevId": "478db732-d59d-4d5d-8534-0694c4ad5f3a",
   "version": "7",
   "dialect": "postgresql",
   "tables": {
@@ -247,7 +247,7 @@
         },
         "entity_version": {
           "name": "entity_version",
-          "type": "integer",
+          "type": "bigint",
           "primaryKey": false,
           "notNull": true
         },
@@ -357,7 +357,7 @@
         },
         "resulting_server_version": {
           "name": "resulting_server_version",
-          "type": "integer",
+          "type": "bigint",
           "primaryKey": false,
           "notNull": false
         },
@@ -400,6 +400,25 @@
           ]
         }
       },
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.sync_origin": {
+      "name": "sync_origin",
+      "schema": "",
+      "columns": {
+        "database_oid": {
+          "name": "database_oid",
+          "type": "bigint",
+          "primaryKey": true,
+          "notNull": true
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
       "uniqueConstraints": {},
       "policies": {},
       "checkConstraints": {},
@@ -592,7 +611,7 @@
         },
         "version": {
           "name": "version",
-          "type": "integer",
+          "type": "bigint",
           "primaryKey": false,
           "notNull": true,
           "default": 1

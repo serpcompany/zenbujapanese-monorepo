@@ -50,8 +50,25 @@ databases_named() {
   psql_value postgres "select count(*) from pg_database where datname = '$1'"
 }
 
+served_database() {
+  local file="$config_dir/$1.env" url name
+  [ -r "$file" ] || {
+    echo "account_$1"
+    return 0
+  }
+  url="$(sed -n 's/^DATABASE_URL=//p' "$file" | tail -n 1 | tr -d '\r[:space:]')"
+  name="${url##*/}"
+  name="${name%%\?*}"
+  [[ "$name" =~ ^[a-z][a-z0-9_]{0,62}$ ]] || return 1
+  echo "$name"
+}
+
 back_up() {
-  local environment="$1" stamp="$2" database="account_$1" dump="$work/$1.dump" count
+  local environment="$1" stamp="$2" database dump="$work/$1.dump" count
+  database="$(served_database "$environment")" || {
+    log "$environment: $config_dir/$environment.env's DATABASE_URL names no database to back up"
+    return 1
+  }
   if ! count="$(databases_named "$database")"; then
     log "$environment: couldn't ask Postgres ($database_container) whether $database exists"
     return 1

@@ -99,7 +99,7 @@ describe('Postgres, through the driver the service runs', () => {
         })
       }
       const journal = await raw.query(
-        'select operation, entity_version from sync_changes where user_id = $1 order by sequence',
+        'select operation, entity_version::int as entity_version from sync_changes where user_id = $1 order by sequence',
         [id]
       )
       expect(journal.rows).toEqual([

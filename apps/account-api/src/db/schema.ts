@@ -29,7 +29,7 @@ export const users = pgTable(
     emailVerified: boolean('email_verified').notNull().default(false),
     image: text('image'),
     username: text('username').unique(),
-    version: integer('version').notNull().default(1),
+    version: bigint('version', { mode: 'number' }).notNull().default(1),
     createdAt: created(),
     updatedAt: updated()
   },
@@ -111,7 +111,7 @@ export const syncChanges = pgTable(
     userId: owner(),
     entityType: text('entity_type').notNull(),
     entityId: text('entity_id').notNull(),
-    entityVersion: integer('entity_version').notNull(),
+    entityVersion: bigint('entity_version', { mode: 'number' }).notNull(),
     operation: text('operation').notNull(),
     changedAt: moment('changed_at').notNull().defaultNow()
   },
@@ -128,7 +128,7 @@ export const syncMutations = pgTable(
     operation: text('operation').notNull(),
     requestSha256: text('request_sha256').notNull(),
     outcome: text('outcome').notNull(),
-    resultingServerVersion: integer('resulting_server_version'),
+    resultingServerVersion: bigint('resulting_server_version', { mode: 'number' }),
     errorCode: text('error_code'),
     createdAt: created()
   },

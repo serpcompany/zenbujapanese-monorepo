@@ -24,7 +24,7 @@ export const ProfileSchema = z
     email: z.string().openapi({ description: "The account's email. It can't be changed here." }),
     version: z.int().min(1).openapi({
       description:
-        'The profile revision. It goes up with each change, by one, or by a million when the service starts on a restored backup; send it back as `baseVersion` to change the profile.'
+        'The profile revision. It goes up by one with each change, and jumps to the time in milliseconds when the service starts on a restored backup; send it back as `baseVersion` to change the profile.'
     }),
     createdAt: z.iso.datetime(),
     updatedAt: z.iso.datetime()

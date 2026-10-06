@@ -6,11 +6,11 @@ import { drizzle } from 'drizzle-orm/pglite'
 import { migrate } from 'drizzle-orm/pglite/migrator'
 import { describe, expect, test } from 'vitest'
 import { migrationsFolder as migrations } from '../config'
-import { createAccounts } from '../domain/accounts'
+import { type Accounts, createAccounts } from '../domain/accounts'
 import { cursorKey, cursors } from '../domain/cursor'
 import { accountStore } from './accounts'
 import { answers } from './database'
-import { fenceIfRestored, restoreGap } from './restores'
+import { fenceIfRestored } from './restores'
 
 const journalOf = (folder: string) =>
   JSON.parse(readFileSync(join(folder, 'meta/_journal.json'), 'utf8')) as {
@@ -129,37 +129,51 @@ describe('the migrations', () => {
     await client.close()
   })
 
-  test('fence a restored copy once: profiles and the journal move past it, so writes made before it conflict and apps hear of it', async () => {
-    const client = await migrated()
-    const db = drizzle(client)
-    const accounts = createAccounts(accountStore(db), cursors(cursorKey('test')))
-    expect(await fenceIfRestored(db)).toBe('first start')
-    expect(await fenceIfRestored(db)).toBe('same database')
-    await client.query("insert into users (id, name, email) values ('u1', '', 'u1@example.com')")
-    await accounts.updateProfile('u1', 1, { name: 'In the backup' })
-    const synced = await accounts.sync('u1', {})
-    const cursor = synced.status === 'synced' ? synced.cursor : ''
+  test('fence a restored copy past every version and cursor an app saw, even a second copy of one backup', async () => {
+    const original = await migrated()
+    expect(await fenceIfRestored(drizzle(original))).toBe('first start')
+    expect(await fenceIfRestored(drizzle(original))).toBe('same database')
+    await original.query("insert into users (id, name, email) values ('u1', '', 'u1@example.com')")
+    const backup = await original.dumpDataDir()
+    await original.close()
 
-    await client.query('update sync_origin set database_oid = 1')
-    expect(await fenceIfRestored(db)).toBe('restored')
-    expect(await fenceIfRestored(db)).toBe('same database')
+    const restore = async () => {
+      const copy = new PGlite({ loadDataDir: backup })
+      const db = drizzle(copy)
+      await copy.query('update sync_origin set database_oid = 1')
+      expect(await fenceIfRestored(db)).toBe('restored')
+      expect(await fenceIfRestored(db)).toBe('same database')
+      return { copy, accounts: createAccounts(accountStore(db), cursors(cursorKey('test'))) }
+    }
+    const answered = (answer: Awaited<ReturnType<Accounts['sync']>>) =>
+      answer.status === 'synced' ? answer : expect.unreachable()
 
-    const fenced = 2 + restoreGap.versions
-    for (const seen of [2, 3]) {
-      expect(await accounts.updateProfile('u1', seen, { name: 'Sent again' })).toMatchObject({
+    const first = await restore()
+    const seen = answered(await first.accounts.sync('u1', {}))
+    const firstVersion = seen.changes[0]?.version ?? 0
+    expect(firstVersion).toBeGreaterThan(Date.now() - 60_000)
+    const changed = await first.accounts.updateProfile('u1', firstVersion, {
+      name: 'On the first copy'
+    })
+    expect(changed).toMatchObject({ status: 'updated' })
+    const cursor = answered(await first.accounts.sync('u1', { cursor: seen.cursor })).cursor
+    await first.copy.close()
+    await new Promise(resolve => setTimeout(resolve, 5))
+
+    const second = await restore()
+    for (const version of [firstVersion, firstVersion + 1]) {
+      expect(
+        await second.accounts.updateProfile('u1', version, { name: 'Sent again' })
+      ).toMatchObject({
         status: 'conflict',
-        profile: { name: 'In the backup', version: fenced }
+        profile: { name: '', version: expect.any(Number) }
       })
     }
-    expect(await accounts.sync('u1', { cursor })).toMatchObject({
-      status: 'synced',
-      changes: [{ entity: 'profile', version: fenced }]
-    })
-    await client.query("insert into users (id, name, email) values ('u2', '', 'u2@example.com')")
-    const journal = await client.query<{ sequence: number }>(
-      "select sequence from sync_changes where user_id = 'u2'"
-    )
-    expect(Number(journal.rows[0]?.sequence)).toBeGreaterThan(restoreGap.journal)
-    await client.close()
+    const caughtUp = answered(await second.accounts.sync('u1', { cursor }))
+    expect(caughtUp.changes).toEqual([
+      expect.objectContaining({ entity: 'profile', data: expect.objectContaining({ name: '' }) })
+    ])
+    expect(caughtUp.changes[0]?.version).toBeGreaterThan(firstVersion + 1)
+    await second.copy.close()
   })
 })
