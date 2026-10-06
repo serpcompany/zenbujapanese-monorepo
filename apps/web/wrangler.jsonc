@@ -11,30 +11,12 @@
   "observability": { "enabled": true },
   "vars": { "DICTIONARY_API_URL": "" },
   "upload_source_maps": true,
-  "d1_databases": [
-    {
-      "binding": "DB",
-      "database_name": "zenbujapanese-web-local",
-      "database_id": "local-only-do-not-deploy",
-      "migrations_dir": "drizzle",
-      "migrations_table": "d1_migrations"
-    }
-  ],
   "services": [{ "binding": "WORKER_SELF_REFERENCE", "service": "zenbujapanese-web" }],
   "env": {
     "staging": {
       "vars": { "SITE_ENV": "staging", "DICTIONARY_API_URL": "DICTIONARY_API_URL" },
       "workers_dev": true,
       "routes": [{ "pattern": "staging.zenbujapanese.com", "custom_domain": true }],
-      "d1_databases": [
-        {
-          "binding": "DB",
-          "database_name": "zenbujapanese-web-staging",
-          "database_id": "4af30e21-2703-4060-af22-554bffed3af9",
-          "migrations_dir": "drizzle",
-          "migrations_table": "d1_migrations"
-        }
-      ],
       "services": [{ "binding": "WORKER_SELF_REFERENCE", "service": "zenbujapanese-web-staging" }]
     },
     "production": {
@@ -43,15 +25,6 @@
       "routes": [
         { "pattern": "zenbujapanese.com", "custom_domain": true },
         { "pattern": "www.zenbujapanese.com", "custom_domain": true }
-      ],
-      "d1_databases": [
-        {
-          "binding": "DB",
-          "database_name": "zenbujapanese-web-production",
-          "database_id": "f40fb6bc-c5c0-4215-a78c-39253d64591d",
-          "migrations_dir": "drizzle",
-          "migrations_table": "d1_migrations"
-        }
       ],
       "services": [
         { "binding": "WORKER_SELF_REFERENCE", "service": "zenbujapanese-web-production" }

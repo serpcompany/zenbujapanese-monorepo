@@ -50,7 +50,7 @@ saying where the code belongs:
 - **The service**: readers and shared modules, then the worker layer, then HTTP, which reaches the
   dictionary only through the `DictionaryService` interface
   ([`docs/agents/dictionary-api.md`](docs/agents/dictionary-api.md), Code layout).
-- **The website**: `src/lib` and `src/db`, then components and hooks, then routes; only
+- **The website**: `src/lib`, then components and hooks, then routes; only
   `src/lib/dictionary/data.ts` reads the service's client, apart from `retired.ts`, which
   `worker.ts` runs before Next.js ([`docs/agents/web.md`](docs/agents/web.md), Code layout).
 - **Across parts**: the core and the app's Swift change together, which `Search parity` checks
