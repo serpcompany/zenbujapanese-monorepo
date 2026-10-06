@@ -111,8 +111,10 @@ describe('.claude/settings.json', () => {
     'gh variable set DEPLOY_PRODUCTION --body false',
     'gh api repos/serpcompany/zenbujapanese-monorepo/issues/1/sub_issues --method POST -F sub_issue_id=2',
     'gh api -XPUT repos/serpcompany/zenbujapanese-monorepo/environments/production',
-    'gh api --method PATCH repos/serpcompany/zenbujapanese-monorepo/environments/staging -f wait_timer=0',
+    'gh api --method=PATCH repos/serpcompany/zenbujapanese-monorepo',
     'gh api graphql -f query="mutation { mergePullRequest(input: {pullRequestId: \\"x\\"}) { clientMutationId } }"',
+    'gh api repos/serpcompany/zenbujapanese-monorepo/issues -f title=Hello',
+    'gh api repos/serpcompany/zenbujapanese-monorepo/issues --field title=Hello',
     'gh api repos/serpcompany/zenbujapanese-monorepo/rulesets --input ruleset.json',
     'gh api --method POST orgs/serpcompany/rulesets --input ruleset.json',
     'gh api --method PUT repos/serpcompany/zenbujapanese-monorepo/branches/main/protection --input protection.json',
@@ -135,7 +137,7 @@ describe('.claude/settings.json', () => {
     'gh api repos/serpcompany/zenbujapanese-monorepo/merges -f base=main -f head=feature',
     'gh api repos/serpcompany/zenbujapanese-monorepo/releases -f tag_name=v1',
     'gh api repos/serpcompany/zenbujapanese-monorepo/transfer -f new_owner=someone',
-    'gh api --method PATCH repos/serpcompany/zenbujapanese-monorepo/git/refs/heads/x -F force=true -f n=/issues/comments/1 -F body=@tmp/review-summary.md',
+    'gh api --method PATCH repos/serpcompany/zenbujapanese-monorepo/issues/comments/99 -F body=@tmp/review-summary.md',
     'gh repo delete serpcompany/zenbujapanese-monorepo --yes',
     'gh api --method PATCH repos/serpcompany/zenbujapanese-monorepo -f default_branch=staging',
     'gh api -X PATCH repos/serpcompany/zenbujapanese-monorepo -F private=true',
@@ -171,8 +173,6 @@ describe('.claude/settings.json', () => {
     'gh api repos/serpcompany/zenbujapanese-monorepo/actions/runs --jq ".workflow_runs[0].status"',
     'gh api repos/actions/checkout/contents/action.yml?ref=v5 --jq .content',
     'gh api repos/serpcompany/zenbujapanese-monorepo/issues/7/comments',
-    'gh api --method PATCH repos/serpcompany/zenbujapanese-monorepo/issues/comments/99 -F body=@tmp/review-summary.md',
-    'gh pr comment 7 --repo serpcompany/zenbujapanese-monorepo --body-file tmp/review-summary.md',
     'git push -u origin chore/agent-harness'
   ])('runs %s without asking', command => {
     for (const shell of shells) expect(decision(shell, command), shell).toBe('default')
@@ -216,12 +216,7 @@ describe('the CI Claude jobs under .claude/settings.json', () => {
       '.github/workflows/maintenance.yml'
     ])
     expect(tools).toEqual(
-      expect.arrayContaining([
-        'Task',
-        'Bash(git:*)',
-        'Bash(pnpm check)',
-        'Bash(gh api --method PATCH repos/*/issues/comments/* -F body=@tmp/review-summary.md)'
-      ])
+      expect.arrayContaining(['Task', 'Bash(git:*)', 'Bash(pnpm check)', 'Write'])
     )
   })
 

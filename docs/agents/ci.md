@@ -58,14 +58,15 @@ fixed or answered and resolved. A finding can be answered with an `@claude` requ
   (`--append-system-prompt-file`, `--append-subagent-system-prompt-file`), so a pull request can't
   weaken the rules it's reviewed against either.
 - **A re-review raises only what's new, and edits one summary.** Before Claude starts, the job
-  reads what `claude[bot]` posted on the pull request and adds to that file its top-level inline
-  findings, its summary (the comment that starts with `## Claude review`), and the summary's id.
-  Claude writes the summary to `tmp/review-summary.md` and updates that comment by id
-  (`gh api --method PATCH repos/<owner>/<repo>/issues/comments/<id> -F body=@tmp/review-summary.md`),
-  or creates it from the file when the pull request has none, and never with `gh pr comment --edit-last`:
-  Claude's latest comment can be its answer to an `@claude` request. Those answers, and its replies
-  in review threads, are passed in as context only, never as findings. The summary says whether
-  each earlier finding is fixed.
+  adds to that file the top-level inline findings `claude[bot]` posted on the pull request and
+  the summary: the latest comment by `github-actions[bot]` that starts with `## Claude review`.
+  Claude posts only inline findings. It writes the summary to `tmp/review-summary.md`, and a step
+  after it posts that file with the job's own token (`issues: write`), editing the earlier
+  summary by id or creating one, never the latest comment, which can be an answer to an
+  `@claude` request. The step refuses a file without the heading or too long for a comment, and
+  the job deletes any `tmp/review-summary.md` the pull request carries before Claude starts.
+  Claude's answers to `@claude` requests, and its replies in review threads, are passed in as
+  context only, never as findings. The summary says whether each earlier finding is fixed.
 - **It reviews the pushes `@claude` makes.** `allowed_bots: "claude[bot]"` lets the review run on
   a push an `@claude` request made to the pull request, whose actor is then a bot. A pull request
   a bot opened, such as a gardening one, isn't reviewed.
@@ -79,16 +80,10 @@ fixed or answered and resolved. A finding can be answered with an `@claude` requ
 - **The settings never block what a CI job uses.** The action restores `.claude/` from the base
   branch, so `.claude/settings.json` applies in CI, where an ask rule can't prompt and so denies.
   Its rules therefore never deny or ask for a tool a Claude job uses: the tools in each job's
-  `--allowedTools`, Read, Glob, and Grep, `git push` to a branch, `gh pr create`, and the summary's
-  `gh api --method PATCH`. Its `gh api` asks name sensitive endpoints (GraphQL, rulesets,
-  environments, branch protection, secrets, variables, merges, sub-issues, webhooks,
-  collaborators, keys, workflow dispatches, reruns and cancels, git refs and objects, releases,
-  and transfers), repository settings by field, any `--input`, and every `DELETE` or `PUT`,
-  rather than every write. A rule matches anywhere in a command, so the summary's body goes in a
-  file rather than the command, where its words could match one; and the allow rule names that
-  file, so it can't edit a comment with anything else. `tools/checks/src/agents/settings.test.ts`
-  checks both directions: every package script that deploys is asked, and nothing a Claude job
-  in any workflow runs is.
+  `--allowedTools`, Read, Glob, and Grep, `git push` to a branch, and `gh pr create`. Every
+  `gh api` write still asks, which is why the review's summary is posted by a workflow step
+  rather than by Claude. `tools/checks/src/agents/settings.test.ts` checks both directions: every
+  package script that deploys is asked, and nothing a Claude job in any workflow runs is.
 - **The check fails unless Claude posted.** After the review, a script fails the job when Claude
   left no log, ended in an error, ended with subagents still running, or posted and updated
   nothing during the run; a denied tool fails it only when nothing was posted. It counts only the
@@ -115,17 +110,20 @@ skill, and rules first. Making merges wait for its check is a branch rule the ow
 or a review comment, from the repository's owners, members, and collaborators, and never from a
 bot, so Claude's own comments can't start it again. The repository is public, so the job checks
 the commenter's association before it does anything: otherwise a stranger's `@claude` on their
-own fork's pull request would check out and install that pull request with the job's tokens. One
-run per issue or pull request goes at a time, and a new one waits rather than cancelling it; the
-job, not the workflow, holds that queue, so a comment that doesn't ask can't displace a waiting
-request.
+own fork's pull request would check out and install that pull request with the job's tokens.
+It also skips, with a notice, a pull request whose branch is in a fork, whoever asks: checking it
+would run the fork's code with this repository's tokens, and Claude can't push to it. One run per
+issue or pull request goes at a time, and a new one waits rather than cancelling it. The job, not
+the workflow, holds that queue, so a comment that doesn't ask can't displace a waiting request.
+GitHub keeps only one waiting run per queue, though: a third request while one runs and one
+waits replaces the waiting one, so ask again after the first finishes.
 
 - **Where it works.** On a pull request it checks out the pull request's head and may push fixes
   to its branch, which starts a re-review (Code review, above); on an issue it branches from
   `main` and links a pull request to open. It sets up pnpm and Node as `Repository` does and
-  installs every package (`pnpm install --frozen-lockfile --ignore-scripts`, so no package's
-  install script runs), since the edit hook needs the checks' dependencies and a fix may touch any
-  package. The checkout keeps no token in the working tree (`persist-credentials: false`); the
+  installs every package (`pnpm install --frozen-lockfile --ignore-scripts --ignore-pnpmfile`, so
+  no install script or pnpmfile hook runs), since the edit hook needs the checks' dependencies and
+  a fix may touch any package. The checkout keeps no token in the working tree (`persist-credentials: false`); the
   action sets up its own for pushing. It runs the pull request's own code when it checks it, so
   ask it only on a pull request whose code you trust.
 - **The rules it follows.** A file appended to its system prompt says to follow `AGENTS.md`,
@@ -356,7 +354,8 @@ jobs:
 - `contracts` runs the data tools' contract tests (`apps/ios/Tools/tests/`) on Linux, with every
   Git LFS file under `apps/ios` but the archived source snapshots (`LFS_SNAPSHOTS`), which only a
   rebuild reads: they check the bundled packs and indexes against their pinned sources, import
-  reports, and the bundled dictionary ([`ios.md`](ios.md)). Its LFS cache is keyed on the pointers
+  reports, and the bundled dictionary, and that each import report records the current hash of
+  the tool that wrote it ([`ios.md`](ios.md)). Its LFS cache is keyed on the pointers
   of the LFS patterns it fetches.
 - `swift` runs `SearchExperienceTests` with `xcodebuild` on the first iPhone Simulator of the
   newest iOS runtime, on `macos-26` (Xcode 26, for the iOS 26 SDK the package needs; arm64, which

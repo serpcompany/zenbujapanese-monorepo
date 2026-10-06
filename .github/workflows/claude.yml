@@ -42,31 +42,61 @@ jobs:
         if: env.HAS_CLAUDE_TOKEN != 'true'
         run: echo "::notice::CLAUDE_CODE_OAUTH_TOKEN isn't set, so Claude doesn't answer (docs/agents/ci.md, @claude requests)."
 
-      - uses: actions/checkout@v5
+      - name: Skip a pull request from a fork
         if: env.HAS_CLAUDE_TOKEN == 'true'
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        shell: node {0}
+        run: |
+          const fs = require('node:fs')
+          const answer = value => fs.appendFileSync(process.env.GITHUB_ENV, `ANSWER=${value}\n`)
+          const main = async () => {
+            if (process.env.IS_PR !== 'true') return answer(true)
+            const repo = process.env.GITHUB_REPOSITORY
+            const api = `${process.env.GITHUB_API_URL || 'https://api.github.com'}/repos/${repo}`
+            const response = await fetch(`${api}/pulls/${process.env.ENTITY_NUMBER}`, {
+              headers: {
+                Accept: 'application/vnd.github+json',
+                Authorization: `Bearer ${process.env.GITHUB_TOKEN}`,
+                'X-GitHub-Api-Version': '2022-11-28'
+              }
+            })
+            if (!response.ok) throw new Error(`GET /pulls/${process.env.ENTITY_NUMBER} returned ${response.status}`)
+            const head = (await response.json())?.head?.repo?.full_name
+            if (head === repo) return answer(true)
+            console.log(`::notice::This pull request's branch is in ${head || 'a deleted fork'}, so Claude doesn't answer on it: checking it would run that fork's code with this repository's tokens, and Claude can't push to it (docs/agents/ci.md, @claude requests).`)
+            answer(false)
+          }
+          main().catch(error => {
+            console.log(`::error title=Couldn't read the pull request::${String(error?.message).replace(/[\r\n%]+/g, ' ')}`)
+            process.exit(1)
+          })
+
+      - uses: actions/checkout@v5
+        if: env.ANSWER == 'true'
         with:
           ref: ${{ env.IS_PR == 'true' && format('refs/pull/{0}/head', env.ENTITY_NUMBER) || env.BASE_BRANCH }}
           fetch-depth: 1
           persist-credentials: false
 
       - uses: pnpm/action-setup@v6
-        if: env.HAS_CLAUDE_TOKEN == 'true'
+        if: env.ANSWER == 'true'
         with:
           package_json_file: package.json
 
       - uses: actions/setup-node@v5
-        if: env.HAS_CLAUDE_TOKEN == 'true'
+        if: env.ANSWER == 'true'
         with:
           node-version: 22
           cache: pnpm
           cache-dependency-path: pnpm-lock.yaml
 
       - name: Install every package
-        if: env.HAS_CLAUDE_TOKEN == 'true'
-        run: pnpm install --frozen-lockfile --ignore-scripts
+        if: env.ANSWER == 'true'
+        run: pnpm install --frozen-lockfile --ignore-scripts --ignore-pnpmfile
 
       - name: Give Claude the repository rules
-        if: env.HAS_CLAUDE_TOKEN == 'true'
+        if: env.ANSWER == 'true'
         run: |
           cat > "$RUNNER_TEMP/claude-rules.md" <<'EOF'
           Rules for this request, from the repository's .github/workflows/claude.yml:
@@ -79,12 +109,12 @@ jobs:
           EOF
 
       - name: Note when Claude starts
-        if: env.HAS_CLAUDE_TOKEN == 'true'
+        if: env.ANSWER == 'true'
         run: echo "CLAUDE_STARTED_AT=$(date -u +%Y-%m-%dT%H:%M:%SZ)" >> "$GITHUB_ENV"
 
       - name: Answer with Claude
         id: claude
-        if: env.HAS_CLAUDE_TOKEN == 'true'
+        if: env.ANSWER == 'true'
         uses: anthropics/claude-code-action@v1
         env:
           CLAUDE_CODE_DISABLE_BACKGROUND_TASKS: "1"
@@ -101,7 +131,7 @@ jobs:
             --disallowedTools "Bash(git add -A*),Bash(git add --all*),Bash(git add .),Bash(git add -u*),Bash(git add --update*),Bash(git commit -a*),Bash(git commit --all*)"
 
       - name: Keep the transcript
-        if: always() && env.HAS_CLAUDE_TOKEN == 'true' && steps.claude.outputs.execution_file != ''
+        if: always() && env.ANSWER == 'true' && steps.claude.outputs.execution_file != ''
         uses: actions/upload-artifact@v7
         with:
           name: claude-transcript
@@ -110,7 +140,7 @@ jobs:
           overwrite: true
 
       - name: Fail unless Claude pushed or replied
-        if: env.HAS_CLAUDE_TOKEN == 'true'
+        if: env.ANSWER == 'true'
         env:
           EXECUTION_FILE: ${{ steps.claude.outputs.execution_file }}
           CLAUDE_BRANCH: ${{ steps.claude.outputs.branch_name }}

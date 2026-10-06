@@ -1,3 +1,5 @@
+import { tmpdir } from 'node:os'
+import { join } from 'node:path'
 import { describe, expect, test } from 'vitest'
 import {
   claudeResult,
@@ -12,6 +14,7 @@ import {
   guardAfter,
   type Route,
   readRepositoryFile,
+  readWorkflow,
   runNodeStep,
   workflowSteps
 } from './workflow'
@@ -24,12 +27,10 @@ const skillTools = (/^allowed-tools:\s*(.+)$/m.exec(skill)?.[1] ?? '')
   .split(',')
   .map(tool => tool.trim())
   .filter(Boolean)
-const editSummaryById =
-  'Bash(gh api --method PATCH repos/*/issues/comments/* -F body=@tmp/review-summary.md)'
-
 const repository = 'serpcompany/zenbujapanese-monorepo'
 const pr = '7'
 const bot = 'claude[bot]'
+const summaryBot = 'github-actions[bot]'
 const startedAt = '2026-10-01T10:00:00Z'
 const minutesAfterStart = (minutes: number) => minutesAfter(startedAt, minutes)
 const summaryBody = { body: '## Claude review\nReviewed abc1234.\n\nNo new findings.' }
@@ -76,6 +77,7 @@ const environment = {
   GITHUB_REPOSITORY: repository,
   PR_NUMBER: pr,
   REVIEW_BOT: bot,
+  SUMMARY_BOT: summaryBot,
   REVIEW_STARTED_AT: startedAt
 }
 
@@ -108,10 +110,16 @@ describe('the Code review workflow', () => {
     expect(skillTools.filter(tool => !allowed.includes(tool))).toEqual([])
   })
 
-  test('lets claude[bot] start a review, since its @claude fixes push to the pull request, and edit its summary by id', () => {
+  test('lets claude[bot] start a review, since its @claude fixes push to the pull request', () => {
     expect(review.with?.allowed_bots).toBe('claude[bot]')
-    expect(allowedTools(review)).toContain(editSummaryById)
-    expect(skillTools).toContain(editSummaryById)
+  })
+
+  test('lets Claude post only inline findings, and write its summary to a file', () => {
+    for (const tools of [allowedTools(review), skillTools]) {
+      expect(tools).toContain('Write')
+      expect(tools.filter(tool => /gh api|gh pr comment|gh pr review/.test(tool))).toEqual([])
+    }
+    expect(skill).toContain('`tmp/review-summary.md`')
     expect(skill).toContain('Never use `gh pr comment --edit-last`')
   })
 
@@ -142,7 +150,11 @@ describe('the Code review workflow', () => {
   test('checks the review afterwards, from when it started', () => {
     expect(guardIndex).toBeGreaterThan(reviewIndex)
     expect(guard.shell).toBe('node {0}')
-    expect(guard.env).toMatchObject({ GITHUB_TOKEN: '${{ github.token }}', REVIEW_BOT: bot })
+    expect(guard.env).toMatchObject({
+      GITHUB_TOKEN: '${{ github.token }}',
+      REVIEW_BOT: bot,
+      SUMMARY_BOT: summaryBot
+    })
     const startIndex = steps.findIndex(step => step.run?.includes('REVIEW_STARTED_AT='))
     expect(startIndex).toBeGreaterThan(-1)
     expect(startIndex).toBeLessThan(reviewIndex)
@@ -178,7 +190,7 @@ describe("the review's guard", () => {
   test.each<[string, PullRequest]>([
     [
       'a summary comment',
-      { issueComments: [{ login: bot, at: minutesAfterStart(4), details: summaryBody }] }
+      { issueComments: [{ login: summaryBot, at: minutesAfterStart(4), details: summaryBody }] }
     ],
     ['inline comments', { reviewComments: [{ login: bot, at: minutesAfterStart(5) }] }],
     ['a review', { reviews: [{ login: bot, at: minutesAfterStart(5) }] }],
@@ -187,7 +199,7 @@ describe("the review's guard", () => {
       {
         issueComments: [
           {
-            login: bot,
+            login: summaryBot,
             at: minutesAfterStart(-90),
             updatedAt: minutesAfterStart(4),
             details: summaryBody
@@ -217,6 +229,16 @@ describe("the review's guard", () => {
     expect(status).not.toBe(0)
   })
 
+  test("doesn't count a summary that the workflow didn't post", async () => {
+    const { status } = await runGuard(cleanLog, {
+      issueComments: [
+        { login: bot, at: minutesAfterStart(3), details: summaryBody },
+        { login: 'someone', at: minutesAfterStart(4), details: summaryBody }
+      ]
+    })
+    expect(status).not.toBe(0)
+  })
+
   test('warns but passes when Claude posted despite a denied tool', async () => {
     const { status, output } = await runGuard([result(deniedView)], {
       reviewComments: [{ login: bot, at: minutesAfterStart(5) }]
@@ -228,7 +250,7 @@ describe("the review's guard", () => {
   test('fails when only an earlier push was reviewed', async () => {
     const { status } = await runGuard(cleanLog, {
       reviewComments: [{ login: bot, at: minutesAfterStart(-90) }],
-      issueComments: [{ login: bot, at: minutesAfterStart(-90), details: summaryBody }]
+      issueComments: [{ login: summaryBot, at: minutesAfterStart(-90), details: summaryBody }]
     })
     expect(status).not.toBe(0)
   })
@@ -240,11 +262,11 @@ describe('the earlier findings given to the review', () => {
   const runFindings = async (pullRequest: PullRequest) => {
     const run = await runNodeStep(
       findings,
-      { ...environment, CONTEXT_FILE: 'context.md' },
+      { ...environment, CONTEXT_FILE: 'context.md', GITHUB_OUTPUT: 'output.txt' },
       github(pullRequest),
-      { 'context.md': '# Repository rules for this review\n' }
+      { 'context.md': '# Repository rules for this review\n', 'output.txt': '' }
     )
-    return { ...run, context: run.files['context.md'] }
+    return { ...run, context: run.files['context.md'], outputs: run.files['output.txt'] }
   }
 
   test('are read before the review, after the rules', () => {
@@ -253,7 +275,11 @@ describe('the earlier findings given to the review', () => {
     )
     expect(findingsIndex).toBeGreaterThan(rulesIndex)
     expect(findingsIndex).toBeLessThan(reviewIndex)
-    expect(findings.env).toMatchObject({ GITHUB_TOKEN: '${{ github.token }}', REVIEW_BOT: bot })
+    expect(findings.env).toMatchObject({
+      GITHUB_TOKEN: '${{ github.token }}',
+      REVIEW_BOT: bot,
+      SUMMARY_BOT: summaryBot
+    })
   })
 
   test("list Claude's inline comments and summary, and nobody else's", async () => {
@@ -290,7 +316,12 @@ describe('the earlier findings given to the review', () => {
       ],
       issueComments: [
         {
-          login: bot,
+          login: 'someone',
+          at: minutesAfterStart(-70),
+          details: { html_url: 'https://github.com/c/9', ...summaryBody }
+        },
+        {
+          login: summaryBot,
           at: minutesAfterStart(-60),
           details: { html_url: 'https://github.com/c/3', ...summaryBody }
         }
@@ -306,13 +337,14 @@ describe('the earlier findings given to the review', () => {
       'Summary comment (https://github.com/c/3): ## Claude review Reviewed abc1234.'
     )
     expect(context).not.toContain('Not Claude.')
+    expect(context).not.toContain('https://github.com/c/9')
   })
 
-  test('name the summary comment by id, to update in place, and give replies to @claude requests as context only', async () => {
-    const { status, context } = await runFindings({
+  test('pass on the summary comment to update in place, and give replies to @claude requests as context only', async () => {
+    const { status, context, outputs } = await runFindings({
       issueComments: [
         {
-          login: bot,
+          login: summaryBot,
           at: minutesAfterStart(-60),
           details: { id: 99, html_url: 'https://github.com/c/3', ...summaryBody }
         },
@@ -337,9 +369,9 @@ describe('the earlier findings given to the review', () => {
       ]
     })
     expect(status).toBe(0)
-    expect(context).toContain(
-      `gh api --method PATCH repos/${repository}/issues/comments/99 -F body=@tmp/review-summary.md`
-    )
+    expect(outputs).toBe('summary_id=99\n')
+    expect(context).toContain('Write the summary to tmp/review-summary.md')
+    expect(context).toContain('updates the summary comment above (https://github.com/c/3) in place')
     expect(context).toContain('Summary comment (https://github.com/c/3)')
     expect(context).toContain('# Replies to @claude requests')
     expect(context).toContain('- https://github.com/c/4: Done: I renamed the helper in abc1234.')
@@ -348,8 +380,8 @@ describe('the earlier findings given to the review', () => {
     expect(context).not.toContain('x.ts:3')
   })
 
-  test('ask the review to create the summary when there is none, and never to edit its latest comment', async () => {
-    const { context } = await runFindings({
+  test('have the workflow post a new summary when there is none, and never edit the latest comment', async () => {
+    const { context, outputs } = await runFindings({
       issueComments: [
         {
           login: bot,
@@ -358,11 +390,10 @@ describe('the earlier findings given to the review', () => {
         }
       ]
     })
-    expect(context).toContain(
-      `create it: \`gh pr comment ${pr} --repo ${repository} --body-file tmp/review-summary.md\``
-    )
+    expect(outputs).toBe('summary_id=\n')
+    expect(context).toContain("posts it as this pull request's summary comment")
     expect(context).toContain('None: this is the first review of this pull request.')
-    expect(context).not.toContain('--edit-last')
+    expect(context).not.toMatch(/--edit-last|gh pr comment|gh api/)
   })
 
   test('say when this is the first review', async () => {
@@ -376,5 +407,87 @@ describe('the earlier findings given to the review', () => {
     const { status, output } = await runFindings({ status: 403 })
     expect(output).toContain('::error')
     expect(status).not.toBe(0)
+  })
+})
+
+describe("the review's summary", () => {
+  const postIndex = steps.findIndex(step => step.name === "Post the review's summary")
+  const post = steps[postIndex]
+  const summary = `${summaryBody.body}\n`
+  const runPost = (summaryId: string, file: string | undefined, status = 201) =>
+    runNodeStep(
+      post,
+      {
+        PR_NUMBER: pr,
+        GITHUB_REPOSITORY: repository,
+        SUMMARY_ID: summaryId,
+        SUMMARY_FILE:
+          file === undefined ? join(tmpdir(), 'no-such-folder', 'summary.md') : 'summary.md'
+      },
+      (_, method) => (method === 'GET' ? undefined : { status, body: {} }),
+      file === undefined ? {} : { 'summary.md': file }
+    )
+
+  test('is posted by the workflow, between the review and its guard, with the job token', () => {
+    expect(postIndex).toBeGreaterThan(reviewIndex)
+    expect(postIndex).toBeLessThan(guardIndex)
+    expect(post.if).toContain(`steps.${review.id}.outcome == 'success'`)
+    expect(post.env).toMatchObject({
+      GITHUB_TOKEN: '${{ github.token }}',
+      SUMMARY_ID: '${{ steps.earlier.outputs.summary_id }}',
+      SUMMARY_FILE: 'tmp/review-summary.md'
+    })
+    expect(steps.find(step => step.env?.CONTEXT_FILE !== undefined)?.id).toBe('earlier')
+    expect(readWorkflow('.github/workflows/code-review.yml').jobs.review.permissions).toMatchObject(
+      {
+        contents: 'read',
+        issues: 'write'
+      }
+    )
+    const startIndex = steps.findIndex(step => step.run?.includes('REVIEW_STARTED_AT='))
+    expect(steps[startIndex].run).toContain('rm -f tmp/review-summary.md')
+  })
+
+  test('updates the earlier summary comment in place', async () => {
+    const { status, requests } = await runPost('99', summary, 200)
+    expect(status).toBe(0)
+    expect(requests).toEqual([
+      {
+        method: 'PATCH',
+        path: `/repos/${repository}/issues/comments/99`,
+        body: JSON.stringify({ body: summaryBody.body })
+      }
+    ])
+  })
+
+  test('posts a new summary comment when there is none', async () => {
+    const { status, requests } = await runPost('', summary)
+    expect(status).toBe(0)
+    expect(requests.map(({ method, path }) => `${method} ${path}`)).toEqual([
+      `POST /repos/${repository}/issues/${pr}/comments`
+    ])
+  })
+
+  test.each([
+    ['without its heading', 'Reviewed abc1234.\n\nNo new findings.', "doesn't start with"],
+    ['too long for a comment', `${summaryBody.body}\n${'x'.repeat(60_001)}`, '60000']
+  ])('refuses a summary %s, and posts nothing', async (_, file, message) => {
+    const { status, output, requests } = await runPost('99', file)
+    expect(status).not.toBe(0)
+    expect(output).toContain(message)
+    expect(requests).toEqual([])
+  })
+
+  test('fails when GitHub refuses the comment', async () => {
+    const { status, output } = await runPost('99', summary, 403)
+    expect(status).not.toBe(0)
+    expect(output).toContain('403')
+  })
+
+  test('warns and posts nothing when Claude wrote no summary', async () => {
+    const { status, output, requests } = await runPost('99', undefined)
+    expect(status).toBe(0)
+    expect(output).toContain('::warning')
+    expect(requests).toEqual([])
   })
 })

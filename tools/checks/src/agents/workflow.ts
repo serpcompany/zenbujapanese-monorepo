@@ -93,11 +93,18 @@ export function guardAfter(steps: readonly Step[], claude: Step): { step: Step; 
   return { step: steps[index], index }
 }
 
-export type Route = (url: URL) => { status: number; body: unknown } | undefined
+export type Route = (url: URL, method: string) => { status: number; body: unknown } | undefined
+
+interface SentRequest {
+  method: string
+  path: string
+  body: string
+}
 
 export interface StepRun {
   status: number | null
   output: string
+  requests: SentRequest[]
 }
 
 export async function runNodeStep(
@@ -107,13 +114,20 @@ export async function runNodeStep(
   files: Record<string, string> = {}
 ): Promise<StepRun & { files: Record<string, string> }> {
   const workDir = mkdtempSync(join(tmpdir(), 'workflow-step-'))
+  const requests: SentRequest[] = []
   const server = createServer((request: IncomingMessage, response) => {
-    const answer = route(new URL(request.url ?? '/', 'http://localhost')) ?? {
-      status: 404,
-      body: { message: 'Not Found' }
-    }
-    response.writeHead(answer.status, { 'content-type': 'application/json' })
-    response.end(JSON.stringify(answer.body))
+    let body = ''
+    request.on('data', (chunk: Buffer) => {
+      body += chunk.toString()
+    })
+    request.on('end', () => {
+      const url = new URL(request.url ?? '/', 'http://localhost')
+      const method = request.method ?? 'GET'
+      requests.push({ method, path: url.pathname, body })
+      const answer = route(url, method) ?? { status: 404, body: { message: 'Not Found' } }
+      response.writeHead(answer.status, { 'content-type': 'application/json' })
+      response.end(JSON.stringify(answer.body))
+    })
   })
   await new Promise<void>(resolve => server.listen(0, '127.0.0.1', resolve))
   try {
@@ -133,6 +147,8 @@ export async function runNodeStep(
       env: {
         ...process.env,
         GITHUB_API_URL: `http://127.0.0.1:${(server.address() as AddressInfo).port}`,
+        GITHUB_ENV: '',
+        GITHUB_OUTPUT: '',
         GITHUB_STEP_SUMMARY: '',
         GITHUB_TOKEN: 'test-token',
         ...resolved
@@ -149,7 +165,7 @@ export async function runNodeStep(
     const written = Object.fromEntries(
       Object.entries(paths).map(([name, path]) => [name, readFileSync(path, 'utf8')])
     )
-    return { status, output, files: written }
+    return { status, output, requests, files: written }
   } finally {
     await new Promise<void>(resolve => server.close(() => resolve()))
     rmSync(workDir, { recursive: true, force: true })

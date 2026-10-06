@@ -133,12 +133,14 @@ describe('the Claude workflow', () => {
     expect(job.concurrency?.['cancel-in-progress']).toBe(false)
   })
 
-  test("keeps the checkout's token out of the working tree and runs no install script from the pull request", () => {
+  test("keeps the checkout's token out of the working tree, and runs no install script or pnpmfile from the pull request", () => {
     const checkout = steps.find(step => step.uses?.startsWith('actions/checkout'))
     expect(checkout?.with?.['persist-credentials']).toBe(false)
-    expect(steps.some(step => step.run === 'pnpm install --frozen-lockfile --ignore-scripts')).toBe(
-      true
-    )
+    expect(
+      steps.some(
+        step => step.run === 'pnpm install --frozen-lockfile --ignore-scripts --ignore-pnpmfile'
+      )
+    ).toBe(true)
   })
 
   test('branches from main, installs every package as the Repository workflow does, and never pushes to main', () => {
@@ -197,6 +199,65 @@ describe('the Claude workflow', () => {
     const startIndex = steps.findIndex(step => step.run?.includes('CLAUDE_STARTED_AT='))
     expect(startIndex).toBeGreaterThan(-1)
     expect(startIndex).toBeLessThan(claudeIndex)
+  })
+})
+
+describe('the fork check before an @claude request', () => {
+  const sourceIndex = steps.findIndex(step => step.name === 'Skip a pull request from a fork')
+  const source = steps[sourceIndex]
+  const runSource = (isPullRequest: boolean, pullRequest: { status: number; body: unknown }) =>
+    runNodeStep(
+      source,
+      {
+        ENTITY_NUMBER: '7',
+        GITHUB_ENV: 'env.txt',
+        GITHUB_REPOSITORY: repository,
+        IS_PR: isPullRequest ? 'true' : 'false'
+      },
+      url => (url.pathname === `/repos/${repository}/pulls/7` ? pullRequest : undefined),
+      { 'env.txt': '' }
+    )
+  const fromRepository = (name: string | null) => ({
+    status: 200,
+    body: { head: { repo: name === null ? null : { full_name: name } } }
+  })
+
+  test('runs before anything is checked out, and every later step waits for it', () => {
+    const checkoutIndex = steps.findIndex(step => step.uses?.startsWith('actions/checkout'))
+    expect(sourceIndex).toBeGreaterThan(-1)
+    expect(sourceIndex).toBeLessThan(checkoutIndex)
+    expect(source.env?.GITHUB_TOKEN).toBe('${{ github.token }}')
+    for (const step of steps.slice(sourceIndex + 1))
+      expect(step.if).toContain("env.ANSWER == 'true'")
+  })
+
+  test.each<[string, boolean, { status: number; body: unknown }, string]>([
+    ['an issue', false, fromRepository('someone/fork'), 'ANSWER=true\n'],
+    [
+      "a pull request from this repository's branch",
+      true,
+      fromRepository(repository),
+      'ANSWER=true\n'
+    ],
+    [
+      'a pull request from a fork',
+      true,
+      fromRepository('someone/zenbujapanese-monorepo'),
+      'ANSWER=false\n'
+    ],
+    ['a pull request from a deleted fork', true, fromRepository(null), 'ANSWER=false\n']
+  ])('decides whether to answer on %s', async (_, isPullRequest, pullRequest, decision) => {
+    const { status, files, requests } = await runSource(isPullRequest, pullRequest)
+    expect(status).toBe(0)
+    expect(files['env.txt']).toBe(decision)
+    expect(requests).toHaveLength(isPullRequest ? 1 : 0)
+  })
+
+  test("fails, and answers nothing, when it can't read the pull request", async () => {
+    const { status, output, files } = await runSource(true, { status: 404, body: {} })
+    expect(status).not.toBe(0)
+    expect(output).toContain('404')
+    expect(files['env.txt']).toBe('')
   })
 })
 
