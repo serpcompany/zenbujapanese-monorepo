@@ -1,5 +1,5 @@
 import type { CategoryOrder } from '@zenbu/dictionary-core/artifact/browse'
-import type { BrowseCategory } from '@zenbu/dictionary-core/browse/categories'
+import { type BrowseCategory, commonWords } from '@zenbu/dictionary-core/browse/categories'
 import type { KanjiList } from '@zenbu/dictionary-core/browse/lists'
 import { type Source, sources } from '../sources'
 
@@ -152,7 +152,7 @@ export const moreWaysToBrowse: readonly string[] = [
   'archaic-words',
   'godan-verbs',
   'medicine',
-  'common-words'
+  commonWords.slug
 ]
 
 export const jlptCopy: RankedListCopy = {

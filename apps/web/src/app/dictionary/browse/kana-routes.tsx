@@ -7,6 +7,7 @@ import { plural } from '@/lib/dictionary/browse/copy'
 import {
   getKanaIndex,
   getKanaInitial,
+  getKanaInitials,
   getKanaWords,
   type KanaInitialPage
 } from '@/lib/dictionary/browse/data'
@@ -54,17 +55,27 @@ async function prefixPage(script: KanaScript, segment: string, page: number) {
   const prefix = decodeSegment(segment)
   const kana = Array.from(prefix)
   if (kanaScriptOf(prefix) !== script || kana.length < 1 || kana.length > 2) notFound()
-  if (kana.length === 1) return { prefix, initial: await initialFor(script, prefix), words: null }
+  if (kana.length === 1) {
+    return {
+      prefix,
+      initial: await initialFor(script, prefix),
+      words: null,
+      katakanaPath: await katakanaCounterpart(script, prefix)
+    }
+  }
   const [words, initial] = await Promise.all([
     getKanaWords(script, prefix, page),
     getKanaInitial(script, kana[0])
   ])
   if (!words || !initial) notFound()
-  return { prefix, initial, words }
+  return { prefix, initial, words, katakanaPath: null }
 }
 
-const counterpart = (script: KanaScript, kana: string) =>
-  script === 'hiragana' ? katakana(kana) : null
+async function katakanaCounterpart(script: KanaScript, kana: string): Promise<string | null> {
+  if (script !== 'hiragana') return null
+  const other = katakana(kana)
+  return (await getKanaInitials('katakana')).has(other) ? kanaPath('katakana', other) : null
+}
 
 function prefixMetadata(script: KanaScript, prefix: string, total: number, page: number) {
   const paged = page > 1 ? `, page ${page}` : ''
@@ -84,7 +95,6 @@ function KanaPrefix({
   found: Awaited<ReturnType<typeof prefixPage>>
   page: number
 }) {
-  const other = counterpart(script, found.initial.initial)
   return found.words ? (
     <KanaWords
       script={script}
@@ -99,7 +109,7 @@ function KanaPrefix({
       script={script}
       initial={found.initial}
       heading={startingWith(found.prefix)}
-      katakanaPath={other ? kanaPath('katakana', other) : null}
+      katakanaPath={found.katakanaPath}
     />
   )
 }
@@ -122,7 +132,11 @@ async function pagedPrefix(script: KanaScript, params: PagedParams['params']) {
   const number = pageNumber(segment)
   const kana = decodeSegment(prefix)
   if (!number || Array.from(kana).length !== 2 || kanaScriptOf(kana) !== script) notFound()
-  if ('redirect' in number) permanentRedirect(kanaPath(script, kana))
+  if ('redirect' in number) {
+    const group = await getKanaInitial(script, Array.from(kana)[0])
+    if (!group?.prefixes.some(each => each.kana === kana)) notFound()
+    permanentRedirect(kanaPath(script, kana))
+  }
   const found = await prefixPage(script, prefix, number.page)
   if (!found.words) notFound()
   return { found, page: number.page }

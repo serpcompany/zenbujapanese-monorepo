@@ -66,6 +66,10 @@ test.describe('browse pages', () => {
     await expect(
       page.getByRole('list', { name: 'Katakana gojūon' }).getByRole('link', { name: 'ツ tsu' })
     ).toHaveAttribute('href', kana('katakana', 'ツ'))
+    const voiced = page.getByRole('list', { name: 'Hiragana dakuon and handakuon' })
+    await expect(voiced.getByRole('link', { name: /^ぢ/ })).toHaveCount(0)
+    await expect(voiced.getByText('no words start with it')).toHaveCount(1)
+    await expect(hiragana.getByText('no words start with it')).toHaveCount(0)
     await hiragana.getByRole('link', { name: 'い i' }).click()
     await expect(page).toHaveURL(kana('hiragana', 'い'))
   })
@@ -89,6 +93,10 @@ test.describe('browse pages', () => {
     await expect(page.getByRole('navigation', { name: 'Kana' }).getByText('い')).toHaveAttribute(
       'aria-current',
       'page'
+    )
+    await expect(page.getByRole('main').getByRole('link', { name: 'Katakana' })).toHaveAttribute(
+      'href',
+      kana('katakana', 'イ')
     )
     await page
       .getByRole('list', { name: 'Two-kana groups' })
@@ -224,6 +232,7 @@ test.describe('browse URLs', () => {
       browse('no-such-category/2/'),
       browse('no-such-category/1/'),
       browse('kana/1/'),
+      `${kana('hiragana', 'ぁぁ')}1/`,
       browse('no-such-category/'),
       browse('kanji/grade-9/'),
       kana('katakana', 'か')

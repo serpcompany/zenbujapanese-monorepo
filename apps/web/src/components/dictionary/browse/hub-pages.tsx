@@ -43,20 +43,24 @@ const scriptNames: Record<KanaScript, { name: string; native: string }> = {
 }
 
 const kanaTile =
-  (script: KanaScript, note?: (romaji: string) => string) =>
-  (cell: { kana: string; romaji: string }): KanaTile => ({
-    href: kanaPath(script, cell.kana),
-    note: note?.(cell.romaji)
-  })
+  (script: KanaScript, initials: ReadonlySet<string>, withRomaji: boolean) =>
+  (cell: { kana: string; romaji: string }): KanaTile => {
+    const note = withRomaji ? cell.romaji : undefined
+    return initials.has(cell.kana)
+      ? { href: kanaPath(script, cell.kana), note }
+      : { href: null, note, label: 'no words start with it' }
+  }
 
 export function KanaCharts({
   script,
+  initials,
   withRomaji = false
 }: {
   script: KanaScript
+  initials: ReadonlySet<string>
   withRomaji?: boolean
 }) {
-  const tile = kanaTile(script, withRomaji ? romaji => romaji : undefined)
+  const tile = kanaTile(script, initials, withRomaji)
   return (
     <>
       <KanaChart
@@ -76,7 +80,15 @@ export function KanaCharts({
   )
 }
 
-function ScriptCard({ script, count }: { script: KanaScript; count: number }) {
+function ScriptCard({
+  script,
+  count,
+  initials
+}: {
+  script: KanaScript
+  count: number
+  initials: ReadonlySet<string>
+}) {
   return (
     <Panel label={scriptNames[script].name}>
       <PanelHeading title={scriptNames[script].name} href={scriptPath(script)} />
@@ -85,7 +97,7 @@ function ScriptCard({ script, count }: { script: KanaScript; count: number }) {
           ? `${plural(count, 'word')}, by the first kana of their reading`
           : `${plural(count, 'word')} written in katakana, mostly loanwords`}
       </p>
-      <KanaCharts script={script} />
+      <KanaCharts script={script} initials={initials} />
       <MoreLink href={scriptPath(script)}>All {scriptNames[script].name.toLowerCase()}</MoreLink>
     </Panel>
   )
@@ -93,7 +105,15 @@ function ScriptCard({ script, count }: { script: KanaScript; count: number }) {
 
 const youtubeBands = Array.from({ length: 10 }, (_, index) => index * 1_000 + 1)
 
-export function BrowseHub({ summary }: { summary: BrowseSummaryResponse }) {
+export type ScriptInitials = Record<KanaScript, ReadonlySet<string>>
+
+export function BrowseHub({
+  summary,
+  initials
+}: {
+  summary: BrowseSummaryResponse
+  initials: ScriptInitials
+}) {
   return (
     <BrowsePage>
       <DictionaryBreadcrumbs pages={[{ label: 'Browse', path: browsePath }]} />
@@ -101,8 +121,8 @@ export function BrowseHub({ summary }: { summary: BrowseSummaryResponse }) {
         All {formatCount(summary.entries)} entries, by how they’re written, by kanji, by how common
         they are, and by what kind of word they are.
       </BrowseHeading>
-      <ScriptCard script="hiragana" count={summary.scripts.hiragana} />
-      <ScriptCard script="katakana" count={summary.scripts.katakana} />
+      <ScriptCard script="hiragana" count={summary.scripts.hiragana} initials={initials.hiragana} />
+      <ScriptCard script="katakana" count={summary.scripts.katakana} initials={initials.katakana} />
       <div className="grid gap-4 md:grid-cols-2">
         <Panel label="Kanji">
           <PanelHeading title="Kanji" href={kanjiListsPath} />
@@ -167,7 +187,13 @@ export function BrowseHub({ summary }: { summary: BrowseSummaryResponse }) {
   )
 }
 
-export function KanaChartsPage({ summary }: { summary: BrowseSummaryResponse }) {
+export function KanaChartsPage({
+  summary,
+  initials
+}: {
+  summary: BrowseSummaryResponse
+  initials: ScriptInitials
+}) {
   return (
     <BrowsePage>
       <DictionaryBreadcrumbs
@@ -197,7 +223,7 @@ export function KanaChartsPage({ summary }: { summary: BrowseSummaryResponse }) 
           <p lang="ja" className="-mt-2 text-muted-foreground">
             {scriptNames[script].native}
           </p>
-          <KanaCharts script={script} withRomaji />
+          <KanaCharts script={script} initials={initials[script]} withRomaji />
         </Panel>
       ))}
       <SourceCredits sources={[sources.jmdict]} />

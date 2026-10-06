@@ -1,5 +1,5 @@
 import { BrowseHub } from '@/components/dictionary/browse/hub-pages'
-import { getBrowseSummary } from '@/lib/dictionary/browse/data'
+import { getBrowseSummary, getKanaInitials } from '@/lib/dictionary/browse/data'
 import { browsePath } from '@/lib/dictionary/browse/paths'
 import { dictionaryMetadata } from '@/lib/dictionary/metadata'
 
@@ -12,5 +12,10 @@ export const metadata = dictionaryMetadata(
 )
 
 export default async function BrowsePage() {
-  return <BrowseHub summary={await getBrowseSummary()} />
+  const [summary, hiragana, katakana] = await Promise.all([
+    getBrowseSummary(),
+    getKanaInitials('hiragana'),
+    getKanaInitials('katakana')
+  ])
+  return <BrowseHub summary={summary} initials={{ hiragana, katakana }} />
 }

@@ -42,7 +42,13 @@ function Section({
 
 const underlined = 'underline underline-offset-4 hover:text-foreground'
 
-export function DictionaryHomeSections({ summary }: { summary: Summary }) {
+export function DictionaryHomeSections({
+  summary,
+  hiragana
+}: {
+  summary: Summary
+  hiragana: ReadonlySet<string>
+}) {
   const kanjiCards = [
     ...gradeLists.map(list => ({ list, name: list.name })),
     { list: secondarySchool, name: secondarySchool.name },
@@ -69,7 +75,7 @@ export function DictionaryHomeSections({ summary }: { summary: Summary }) {
           </>
         }
       >
-        <KanaCharts script="hiragana" />
+        <KanaCharts script="hiragana" initials={hiragana} />
       </Section>
       <Section
         title="Kanji by school grade"

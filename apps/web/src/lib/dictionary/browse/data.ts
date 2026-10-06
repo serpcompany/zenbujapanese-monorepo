@@ -62,9 +62,10 @@ export const getBrowseSummary = cache(async () => {
   return { ...data, commonWords: linked(data.commonWords, dictionaryLoaded) }
 })
 
-export async function getBrowseSummaryIfAvailable() {
+export async function getHomeBrowse() {
   try {
-    return await getBrowseSummary()
+    const [summary, hiragana] = await Promise.all([getBrowseSummary(), getKanaInitials('hiragana')])
+    return { summary, hiragana }
   } catch (error) {
     log('warn', 'browse_summary_unavailable', errorFields(error))
     return null
@@ -73,6 +74,11 @@ export async function getBrowseSummaryIfAvailable() {
 
 export const getKanaIndex = cache(
   async (script: KanaScript) => (await required(browseService.kanaIndex(script))).data
+)
+
+export const getKanaInitials = cache(
+  async (script: KanaScript): Promise<ReadonlySet<string>> =>
+    new Set((await getKanaIndex(script)).initials.map(({ kana }) => kana))
 )
 
 export const getKanaInitial = cache(

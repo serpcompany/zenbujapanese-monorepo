@@ -3,7 +3,7 @@ import { cn } from 'cn'
 import Link from 'next/link'
 
 export interface KanaTile {
-  href: string
+  href: string | null
   note?: string
   shortNote?: string
   label?: string
@@ -37,29 +37,39 @@ export function KanaChart({
       {cells.map(({ key, cell }) => {
         const shown = cell ? tile(cell) : null
         if (!cell || !shown) return <li key={key} aria-hidden="true" />
+        const tileClass = cn(
+          'flex h-full flex-col items-center justify-center gap-0.5 rounded-lg border',
+          large ? 'min-h-16 py-1.5' : 'min-h-11',
+          shown.href ? 'hover:bg-muted' : 'border-dashed text-muted-foreground'
+        )
+        const contents = (
+          <>
+            <span className={large ? 'text-xl leading-none sm:text-2xl' : 'text-lg leading-none'}>
+              {cell.kana}
+            </span>
+            {shown.note ? (
+              <span
+                lang="en"
+                className="text-[10px] text-muted-foreground tabular-nums sm:text-[11px]"
+              >
+                <span className="sm:hidden">{shown.shortNote ?? shown.note}</span>
+                <span className="max-sm:hidden">{shown.note}</span>
+              </span>
+            ) : null}
+          </>
+        )
         return (
           <li key={key}>
-            <Link
-              href={shown.href}
-              aria-label={shown.label}
-              className={cn(
-                'flex h-full flex-col items-center justify-center gap-0.5 rounded-lg border hover:bg-muted',
-                large ? 'min-h-16 py-1.5' : 'min-h-11'
-              )}
-            >
-              <span className={large ? 'text-xl leading-none sm:text-2xl' : 'text-lg leading-none'}>
-                {cell.kana}
+            {shown.href ? (
+              <Link href={shown.href} aria-label={shown.label} className={tileClass}>
+                {contents}
+              </Link>
+            ) : (
+              <span className={tileClass}>
+                {contents}
+                {shown.label ? <span className="sr-only">, {shown.label}</span> : null}
               </span>
-              {shown.note ? (
-                <span
-                  lang="en"
-                  className="text-[10px] text-muted-foreground tabular-nums sm:text-[11px]"
-                >
-                  <span className="sm:hidden">{shown.shortNote ?? shown.note}</span>
-                  <span className="max-sm:hidden">{shown.note}</span>
-                </span>
-              ) : null}
-            </Link>
+            )}
           </li>
         )
       })}

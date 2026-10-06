@@ -17,8 +17,8 @@ below are today's and change with the data.
 
 **Browse sections.** Below the search box, `/dictionary/` leads into the browse pages:
 
-- **Browse by kana:** the 46 hiragana and their 25 voiced forms, each opening its kana's page,
-  with links to Hiragana and Katakana.
+- **Browse by kana:** the 46 hiragana and their 25 voiced forms, each that starts a word opening
+  its kana's page, with links to Hiragana and Katakana.
 - **Kanji by school grade:** a card for each grade, secondary school, and jinmeiyō with its count,
   linking to its list; grade 1's 80 kanji, each opening its search; and a link to every list.
 - **Browse by category:** parts of speech, usage, and subjects, seven of each, and a link to all of
@@ -48,8 +48,9 @@ for the frequency dictionaries, with the JLPT levels' word counts and the YouTub
 ## Kana
 
 **Charts.** `/dictionary/browse/kana/` shows the hiragana and katakana charts, gojūon then dakuon
-and handakuon, each kana with its Hepburn romaji. Each kana opens
-its page, and each chart links to its script's page with how many words it lists.
+and handakuon, each kana with its Hepburn romaji. Each kana that starts a word opens its page;
+one that starts none (ぢ, ヂ) is drawn dashed, without a link, as on the hub and the dictionary
+home. Each chart links to its script's page with how many words it lists.
 
 - Source: #614 mockup "/dictionary/browse/kana/".
 - Check: Browse spec, "the kana charts show each kana’s romaji and open its page".
@@ -69,7 +70,9 @@ katakana.
 **A kana's page.** `/dictionary/browse/hiragana/か/` is titled "Japanese words starting with か".
 It shows the script's kana, the current one marked, then each two-kana group (かあ, かい, … かん)
 with its count and, past 200 words, how many pages it has. The words read as the kana alone are
-listed below the groups. Links lead to the kanas before and after it, in Unicode order (お, が).
+listed below the groups. Links lead to the kanas before and after it, in Unicode order (お, が),
+and a hiragana's page links to its katakana's when words start with it (か to カ, but not っ,
+since no word starts with ッ).
 
 - Source: #614 mockup "/dictionary/browse/hiragana/か/".
 - Check: Browse spec, "a kana’s page lists its two-kana groups and leads to their words"; Browse
