@@ -15,7 +15,7 @@ uv run --no-project --python 3.14.8 python apps/ios/Tools/rebuild_language_data.
 `rebuild_language_data.py` runs every importer in dependency order: the radicals, KANJIDIC2, kanji
 elements, and stroke diagrams; then `LanguageReferenceData.sqlite3` and its ranking contract; then
 everything that pins that database's SHA-256: the example word index, compound pitch, the TUBELEX,
-Wikipedia, JLPT, and Jiten packs. It copies each pack's import report into its manifest in
+Wikipedia, JLPT, and Jiten packs, and the website's ranked lists. It copies each pack's import report into its manifest in
 `FrequencyPackCatalog.json`, moves a downloadable pack's previous manifest into
 `trustedHistoricalManifests` so packs a learner already installed stay trusted, and runs the
 contract tests in `apps/ios/Tools/tests/`. `--download` fetches the sources that are fixed upstream
@@ -99,6 +99,12 @@ Data, with UniDic pitch, Tatoeba examples, and app-owned word relationships.
   it expects from the pinned export.
 - `jmdict_relationships.py`: note identities, disambiguated in source order, and up to six related
   words per entry, from resolved cross-references and then the editorial relationship facts.
+- `jmdict_labels.py`: every JMdict usage (`misc`), subject-field (`field`), and dialect (`dial`)
+  entity code on a sense maps to a stable app-owned identifier, kept in the sense's `usage`,
+  `fields`, and `dialects` (left out when empty), and an unmapped code fails the import. The app
+  reads them and shows only the notes it showed before; the website's browse pages list words by
+  them. They aren't in a note's identity or the semantic fingerprint, so saved notes and ranking
+  don't change.
 
 **`tatoeba_adapter.py`** keeps one deterministic lowest-ID English translation per linked Japanese
 sentence. A pair's identity is derived only from its NFC-normalized Japanese and English: stored
@@ -149,7 +155,16 @@ several levels keeps the easiest. Its mapping digest is each ID's 16 bytes, then
 timestamp, of one JSON array of `[dictionary form, reading]` pairs in rank order. Each list's
 final bucket, Jiten's unobserved words, is dropped and the rest are ranked by position. A pack of
 several lists ranks pairs by mean list percentile, counting a missing pair as 1.0, so a word must
-be common across all of them. It rewrites the Jiten manifests, moving changed ones into history.
+be common across all of them. It rewrites the Jiten manifests, moving changed ones into history,
+and keeps each pack's mapped evidence beside its ZIP (`<packID>.sqlite3`), mapped with
+`FrequencyPackMappingV2.sql` as the app's installer maps it.
+
+**`build_ranked_lists.py`** collects the Wikipedia and Jiten packs' mapped ranks into
+`RankedLists.sqlite3` (`zenbu.ranked-lists.v1`), for the website's dictionary service: each
+pack's evidence must hash to the `mappingSHA256` its manifest pins, which the app checks when it
+installs the pack, so the service ranks words exactly as the app does. The file sits in the app's
+`Resources` beside the other artifacts but `Package.swift` leaves it out of the app;
+`tests/test_ranked_lists_contract.py` checks it against the catalog and the language data.
 
 **`analyze_frequency_candidates.py`** (#376) and **`analyze_ordered_json_frequency_lists.py`**
 (#351) are the analyses behind the current packs' choice, recorded in their `Generated/` reports

@@ -27,7 +27,7 @@ to commit (UniDic, KanjiVG, and Kanjium) are downloaded by the rebuild and git-i
 | Stroke diagrams | `KanjiVG-2025-08-16.source.json` | `import_kanjivg.py` |
 | Handwriting recognition | `DaKanji-v1.2.source.json` | Bundled Core ML model |
 | JLPT levels | `JLPT-Waller-2025-08-26.source.json` | `import_jlpt_level_pack.py` |
-| Frequency data | `TUBELEX-ja-310-lemma-pos.source.json`, `Wikipedia-ja-20221020-310-nfkc.source.json`, `Jiten-2026-09-27.source.json` (snapshots in `Jiten-2026-09-27/`); `Public-Japanese-Frequency-Catalog-2026-09-25.source.json` is historical (removed in #376) | `import_frequency_pack.py`, `build_jiten_frequency_packs.py`, on-device `FrequencyPackInstaller` |
+| Frequency data | `TUBELEX-ja-310-lemma-pos.source.json`, `Wikipedia-ja-20221020-310-nfkc.source.json`, `Jiten-2026-09-27.source.json` (snapshots in `Jiten-2026-09-27/`); `Public-Japanese-Frequency-Catalog-2026-09-25.source.json` is historical (removed in #376) | `import_frequency_pack.py`, `build_jiten_frequency_packs.py`, on-device `FrequencyPackInstaller`; `build_ranked_lists.py` for the website's dictionary service |
 | Interactive Japanese parsing | `Kuromoji-0.1.2.source.json` | Bundled JavaScriptCore engine and compressed IPADIC resources |
 | App-owned word relationships | `Zenbu-Word-Relationships-v1.json` | `import_jmdict.py` |
 

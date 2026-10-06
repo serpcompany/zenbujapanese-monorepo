@@ -102,7 +102,12 @@ export function readWord(
     readingForms: JSON.parse(record.reading_forms_json),
     senses: (
       JSON.parse(record.senses_json) as Omit<EntryRow['senses'][number], 'restrictions'>[]
-    ).map((sense, order) => ({ ...sense, restrictions: restrictions.get(order) ?? [] })),
+    ).map(({ meaning, notes, partsOfSpeech }, order) => ({
+      meaning,
+      notes,
+      partsOfSpeech,
+      restrictions: restrictions.get(order) ?? []
+    })),
     relationships: relationships.map(relationship => ({
       headword: relationship.headword,
       reading: relationship.reading,

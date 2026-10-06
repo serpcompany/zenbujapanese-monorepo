@@ -325,6 +325,18 @@ def build_jiten(archives: Path, before: dict[str, str]) -> list[str]:
     return changed
 
 
+def build_ranked_lists(wikipedia_artifact: Path, archives: Path) -> None:
+    run(
+        "build_ranked_lists.py",
+        "--catalog", CATALOG,
+        "--language-data", RESOURCES / "LanguageReferenceData.sqlite3",
+        "--wikipedia", wikipedia_artifact,
+        "--jiten", archives,
+        "--output", RESOURCES / "RankedLists.sqlite3",
+        "--import-manifest", GENERATED / "RankedLists.import.json",
+    )
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(
         description="Rebuild every artifact the iOS data tools write, in dependency order, and update the catalog."
@@ -345,7 +357,9 @@ def main() -> None:
         build_language_reference(unidic)
         wikipedia_artifact = build_dependents(unidic, scratch)
         update_catalog(wikipedia_artifact)
-        changed = build_jiten(arguments.jiten_sources or scratch / "jiten", published)
+        archives = arguments.jiten_sources or scratch / "jiten"
+        changed = build_jiten(archives, published)
+        build_ranked_lists(wikipedia_artifact, archives)
     subprocess.run(
         [sys.executable, "-m", "unittest", "discover", "--start-directory", str(TOOLS / "tests"), "--pattern", "test_*.py"],
         check=True,

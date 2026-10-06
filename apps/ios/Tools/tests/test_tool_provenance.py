@@ -42,6 +42,7 @@ REPORTS = {
     "JLPT-Waller-*.import.json": {"offlineImporterSHA256": "import_jlpt_level_pack.py"},
     "TUBELEX-*.import.json": {"importerSHA256": "import_frequency_pack.py"},
     "Wikipedia-*.import.json": {"importerSHA256": "import_frequency_pack.py"},
+    "RankedLists.import.json": {"importerSHA256": "build_ranked_lists.py"},
 }
 PACK_BUILDERS = {
     "zenbu.jlpt.": "import_jlpt_level_pack.py",
