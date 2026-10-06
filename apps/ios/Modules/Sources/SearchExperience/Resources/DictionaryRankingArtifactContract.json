@@ -1,6 +1,6 @@
 {
   "databaseBytes": 481689600,
-  "databaseSHA256": "d99d5d0f3bd8ef935a2712e18efe9745d057d2a0cab7d291504f28b34d5fa449",
+  "databaseSHA256": "0c9074da7e8c561c3c0d6409dfdaf78c0a920169f79e1438dfd42c2f91d67c87",
   "evidenceCounts": {
     "canonical_senses": 253020,
     "form_priority_profiles": 56127,
@@ -26,8 +26,8 @@
     "dictionary_ranking_adapter_sha256": "c8efea2701988d854a7b18bfa53062ab196958ad9196e044202a43e28fa7573a",
     "dictionary_ranking_contract_sha256": "b7df18edcc9b20a0c961c2be913f9e12816a69fdea6522ecd11610570f41e59e",
     "import_tool_sha256": "9f155f04aa5ee725c5c3f285e3606ae0699a3ba62cc92e8610b87923a1584bcf",
-    "shared_tooling_sha256": "f263bf19549702d7c50b0a35160a3d8104431debb2b55c6f773969f7946444af",
+    "shared_tooling_sha256": "0c0dec180f4f11f49c6d1ee6048d9a3dc4986d88ef5fc4bc6aa9302e62743b39",
     "tatoeba_adapter_sha256": "65e5d32fe6b20ca18cf95cf1b9d6167f89d7c3cc1cf54f9a245f0743c421f584",
-    "unidic_adapter_sha256": "5bbb91b89e11a65239a0bea2d8a765431eb9888f9a8fff9dc8f828e2d304e58a"
+    "unidic_adapter_sha256": "ca6e2c0d83c594072c999ffd600c05e06cedfe98944db0500f948af41496e028"
   }
 }

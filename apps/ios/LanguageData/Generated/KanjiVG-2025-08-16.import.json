@@ -45,8 +45,8 @@
     ],
     "source_sha256": "b36579789775ea912d5e98356bf243f54fb953fa3b58a16c2d6995f252e2a3e2",
     "license_sha256": "d255e07978fd16ddfec38bc59dc9d857b885dd44ddbf4e79baf207d30746bdcc",
-    "import_tool_sha256": "4676888484036261c1e027fb82c57831d680373b37294dd3b775857324cba4a6",
-    "shared_tooling_sha256": "f263bf19549702d7c50b0a35160a3d8104431debb2b55c6f773969f7946444af",
+    "import_tool_sha256": "c775a572b9c9fdd87f1a41ae4a5d632e56cb36c46d0c97e3c5fa437ad4feb6e5",
+    "shared_tooling_sha256": "0c0dec180f4f11f49c6d1ee6048d9a3dc4986d88ef5fc4bc6aa9302e62743b39",
     "artifact_sha256": "c603b7befa57aa0c5952e37ae848080609ff8a7de6f95a127efe156e191c0acd",
     "artifact_bytes": 21921792
   }

@@ -25,10 +25,10 @@
     "alternativeRelationshipCount": 1238,
     "kanjiumSourceSha256": "793a4e80fd1da3155a2ec9cf69db7376f46283ece5cb877a65f5d02557ed3613",
     "kanjiReferenceSha256": "f2f2dfcc30baec36ed4dcbffbd494e7c3f283aa3d7233ec0cf2d6d262dfbb47f",
-    "kanjiReferenceManifestSha256": "8c772aec51d70cccd9b32baae0b8524ae8b4d7b5b773700253d7917c029b415d",
+    "kanjiReferenceManifestSha256": "bfeb922ef8cb128deb1c3167c98a2c59e01c1f907a325a59e3c944736f13bb5f",
     "kanjiReferenceArtifactSha256": "f2f2dfcc30baec36ed4dcbffbd494e7c3f283aa3d7233ec0cf2d6d262dfbb47f",
     "importToolSha256": "59dfca1f92c1ab996949418b5c3d0a55fd595ef083063502626c001244a067de",
-    "sharedToolingSha256": "f263bf19549702d7c50b0a35160a3d8104431debb2b55c6f773969f7946444af",
+    "sharedToolingSha256": "0c0dec180f4f11f49c6d1ee6048d9a3dc4986d88ef5fc4bc6aa9302e62743b39",
     "artifactSha256": "1984078130d717d5cccf3bb0b04ef6ed0a7a20983bb40872665ba9b3a048882f",
     "artifactBytes": 1561672,
     "retainedFields": [

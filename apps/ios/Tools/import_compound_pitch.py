@@ -2,17 +2,13 @@
 
 from __future__ import annotations
 
-import argparse
-import csv
-import io
 import json
 import sqlite3
-import zipfile
 from collections import defaultdict
 from pathlib import Path
 
-from language_data_tools import file_sha256
-from unidic_adapter import hiragana, mora_count
+from language_data_tools import built_artifact, file_sha256, run_import
+from unidic_adapter import accented_lexicon_rows, hiragana, mora_count
 
 
 ARTIFACT_SCHEMA = "zenbu.compound-pitch.v1"
@@ -23,19 +19,10 @@ COMBINATION_TYPES = {"C1", "C2", "C3", "C4", "C5"}
 
 def load_lexemes(source: Path) -> dict[str, set[tuple[str, int, str, str]]]:
     lexemes: dict[str, set[tuple[str, int, str, str]]] = defaultdict(set)
-    with zipfile.ZipFile(source) as archive:
-        name = next(name for name in archive.namelist() if name.endswith("/lex_3_1.csv"))
-        with archive.open(name) as raw, io.TextIOWrapper(raw, encoding="utf-8", newline="") as text:
-            for row in csv.reader(text):
-                if len(row) < 31 or row[28] == "*":
-                    continue
-                try:
-                    downstep = int(row[28].split(",", maxsplit=1)[0])
-                except ValueError:
-                    continue
-                reading = hiragana(row[10])
-                if reading:
-                    lexemes[row[14]].add((reading, downstep, row[29].split(",")[0], row[4]))
+    for row, downstep in accented_lexicon_rows(source):
+        reading = hiragana(row[10])
+        if reading:
+            lexemes[row[14]].add((reading, downstep, row[29].split(",")[0], row[4]))
     return lexemes
 
 
@@ -135,29 +122,17 @@ def import_pitch(source: Path, source_manifest: dict, language_data: Path, outpu
         "common_entries_estimated": common,
         "source_sha256": source_manifest["sha256"],
         "language_data_sha256": language_data_sha256,
-        "import_tool_sha256": file_sha256(Path(__file__)),
-        "shared_tooling_sha256": file_sha256(Path(__file__).with_name("language_data_tools.py")),
-        "artifact_sha256": file_sha256(output),
-        "artifact_bytes": output.stat().st_size,
+        **built_artifact(Path(__file__), output),
     }
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--source", type=Path, required=True)
-    parser.add_argument("--source-manifest", type=Path, required=True)
-    parser.add_argument("--language-data", type=Path, required=True)
-    parser.add_argument("--output", type=Path, required=True)
-    parser.add_argument("--import-manifest", type=Path, required=True)
-    arguments = parser.parse_args()
-
-    source_manifest = json.loads(arguments.source_manifest.read_text())
-    transform = import_pitch(
-        arguments.source, source_manifest, arguments.language_data, arguments.output
+    run_import(
+        lambda arguments, source_manifest: import_pitch(
+            arguments.source, source_manifest, arguments.language_data, arguments.output
+        ),
+        "--language-data",
     )
-    manifest = {"source": source_manifest, "transform": transform}
-    arguments.import_manifest.write_text(json.dumps(manifest, ensure_ascii=False, indent=2) + "\n")
-    print(json.dumps(transform, ensure_ascii=False, indent=2))
 
 
 if __name__ == "__main__":
