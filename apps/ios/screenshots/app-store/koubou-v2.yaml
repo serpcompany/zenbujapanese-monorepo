@@ -1,0 +1,75 @@
+project:
+  name: Zenbu – Learn Japanese
+  output_dir: en-US/iphone-63-marketing-v2
+  device: iPhone 17 Pro - Silver - Portrait
+  output_size: iPhone6_3
+screenshots:
+  01-image-search:
+    template: templates-v2/single.html
+    variables:
+      tint: red
+      headline: Point at Japanese.<br>Tap any word.
+      subtitle: Snap a menu, sign, or page and look up every word on it
+    assets:
+      screen: en-US/iphone-63/05-image-search-word.png
+  02-translate:
+    template: templates-v2/duo.html
+    variables:
+      tint: white
+      headline: Get the meaning,<br><em>idioms and all</em>
+      subtitle: Natural translations of your photos, with idioms explained
+    assets:
+      back: en-US/iphone-63/06-image-search-photo.png
+      front: en-US/iphone-63/07-image-search-translate.png
+  03-word:
+    template: templates-v2/word.html
+    variables:
+      tint: pink
+      headline: Hear it.<br><em>See the pitch.</em>
+      subtitle: Pitch accent, audio, and how common each word is
+    assets:
+      screen: en-US/iphone-63/08-word-detail-pitch.png
+  04-handwriting:
+    template: templates-v2/handwriting.html
+    variables:
+      tint: ink
+      headline: Can't type it?<br><em>Draw it.</em>
+      subtitle: Look up kanji you can't read, in any stroke order
+    assets:
+      results: en-US/iphone-63/10-handwriting-results.png
+      drawing: en-US/iphone-63/09-handwriting.png
+  05-kanji:
+    template: templates-v2/duo.html
+    variables:
+      tint: white
+      headline: See how kanji<br>are <em>built</em>
+      subtitle: Parts, readings, and stroke order
+    assets:
+      back: en-US/iphone-63/12-kanji-stroke-order.png
+      front: en-US/iphone-63/11-kanji-detail.png
+  06-examples:
+    template: templates-v2/single.html
+    variables:
+      tint: pink
+      headline: Learn words in<br><em>real sentences</em>
+      subtitle: Tap any word in a sentence to look it up
+    assets:
+      screen: en-US/iphone-63/13-example-sentences.png
+  07-conjugations:
+    template: templates-v2/duo.html
+    variables:
+      tint: white
+      headline: Every verb form,<br><em>explained</em>
+      subtitle: What each form means, with real examples
+    assets:
+      back: en-US/iphone-63/14-conjugations.png
+      front: en-US/iphone-63/15-conjugation-form.png
+  08-no-account:
+    template: templates-v2/closing.html
+    variables:
+      tint: red
+      headline: No account.<br>No ads.
+      subtitle: Your lists, notes, and known words stay on your iPhone
+      badges: <span>Offline dictionary</span><span>No analytics</span>
+    assets:
+      screen: en-US/iphone-63/16-lists.png
