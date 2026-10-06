@@ -222,8 +222,8 @@ regenerate it and replace the secret.
 `.github/workflows/web.yml` runs on pull requests that change `apps/web/**` or the core. In
 `apps/web`, it runs ShellCheck 0.11 on the scripts in `apps/web/scripts/`, at warning level, in
 Docker, since the runner's own ShellCheck is older; checks that `cloudflare-env.d.ts` is what
-`pnpm cf-typegen` writes from `wrangler.jsonc`, so a binding changed without regenerating the types
-fails here; then `pnpm check` ([`web.md`](web.md), Run and verify); then it builds twice more, with
+`pnpm cf-typegen` writes from `wrangler.jsonc`, and that it writes no other file, so a binding
+changed without regenerating the types fails here; then `pnpm check` ([`web.md`](web.md), Run and verify); then it builds twice more, with
 `SITE_ENV=staging` and with `SITE_ENV=production`. `pnpm check` builds without `SITE_ENV`, but
 static pages and prerendering differ by environment, so a route that reads a binding at build time
 fails only in that environment's build. Neither build reaches the dictionary service: deployed
@@ -288,7 +288,7 @@ request's last run. Its `scripts` job runs ShellCheck 0.11 on the server's deplo
 2. runs `pnpm check` in `apps/dictionary-api`: Biome, typecheck, the app-recorded suites on the
    real files, and the bundle;
 3. exports the core's fixtures from the real files and fails if they differ from the committed
-   ones (`packages/dictionary-core/src/fixtures/`), so a data rebuild that changes a fixture word's
+   ones (`packages/dictionary-core/src/fixtures/`) or add a file, so a data rebuild that changes a fixture word's
    rows re-exports them in the same pull request;
 4. starts the built service and runs the website's rendered-page gate against it
    ([`web.md`](web.md), The rendered-page gate), and prints the service's log if a step failed.

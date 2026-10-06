@@ -34,7 +34,14 @@ jobs:
           scripts/smoke.sh scripts/use-dictionary-service.sh scripts/wait-for-dictionary-service.sh
       - name: cloudflare-env.d.ts matches wrangler.jsonc
         working-directory: apps/web
-        run: pnpm cf-typegen && git diff --exit-code -- cloudflare-env.d.ts
+        run: |
+          pnpm cf-typegen
+          changed=$(git status --porcelain --untracked-files=all -- .)
+          if [ -n "$changed" ]; then
+            git diff -- cloudflare-env.d.ts
+            echo "::error::pnpm cf-typegen changed or added: ${changed//$'\n'/, }. Run it in apps/web and commit cloudflare-env.d.ts, the only file it should write."
+            exit 1
+          fi
       - working-directory: apps/web
         run: pnpm check
       - name: Build for staging
