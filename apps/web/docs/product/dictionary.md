@@ -57,9 +57,9 @@ Home › Dictionary on this page, then the page's own crumb on the others. The a
 
 **Searching.** A search runs when the learner submits the box, not as they type. The box submits
 to `/dictionary/search/?q=<query>`, which redirects (308) to the query's own results page. The
-results page keeps its box under the breadcrumbs, filled with the query; word pages use the
-header's search. The app searches as the learner types; the website searches on Enter so that
-each search is its own page.
+results page keeps its box under the breadcrumbs, filled with the query; word pages have no box,
+and reach search through the header's Dictionary link (#561). The app searches as the learner
+types; the website searches on Enter so that each search is its own page.
 
 - Source: #466 (search on Enter, not as you type).
 - Check: `src/lib/dictionary/urls.test.ts`, "search URLs", checks how a query is normalized and
@@ -804,17 +804,26 @@ Detail in the app, so its row doesn't open.
 
 ## Header, footer, and site-wide
 
-**Header.** The 全 mark links home, with the site name beside it on wide screens. A header search
-field appears on wide screens, and a search button on phones, except on the dictionary home and
-search pages, which have their own box. The nav links Dictionary, About, and Support on wide
-screens.
+**Header.** The 全 mark and the site name link home; on a screen narrower than 360 pixels the name
+is left to screen readers so the row fits. The header has no search: the Dictionary link leads to
+the dictionary home, whose box searches (#561). On wide screens the nav links Dictionary, About,
+and Support beside the name, and Get the app sits at the right. On phones a menu button (lucide
+`Menu`) beside Get the app opens a sheet from the right, titled with the site name, that lists the
+same three links with the current one marked. Following a link, its close button (lucide `X`),
+going back or forward, or widening the window past the phone layout closes it.
 
-- Source: #462 design; #484.
-- Check: smoke "the header links to the dictionary and has search". The layout: No automated check
-  yet (#511).
+- Source: #462 design; #484; #561 (no search in the header, the phone menu).
+- Check: `src/components/site-header.test.tsx`, "the header on %s has no search, and a menu button
+  for phones"; `apps/web/e2e/site.spec.ts`, "the header has no search, and its Dictionary link
+  leads to the search box", "the header leads to About and marks it current" (the nav on desktop,
+  the menu on phones), "the header fits a 320-pixel phone, with the site name left to screen
+  readers", "the phone menu closes when the browser goes back, and stays closed going forward", and
+  "the phone menu closes when the window widens, and stays closed when it narrows"; smoke "the
+  header links to the dictionary and has no search"; `apps/web/e2e/layout.spec.ts`, which checks
+  that no page scrolls sideways at either width.
 
-**Current section.** The nav marks the section the page is in, as the #462 design marks
-Dictionary: in the foreground color and medium weight, where the others are muted. Every page
+**Current section.** The nav marks the section the page is in: in the foreground color on a muted
+background, where the others are muted text (#561, after the #462 design's Dictionary). Every page
 under `/dictionary/` (search results and word pages) is in Dictionary; `/about/` and `/support/`
 are their own. Home, the legal pages, and the other pages are in none. Screen readers hear the
 link as the current page on the section's own page (`aria-current="page"`) and as current on the
@@ -832,17 +841,21 @@ lucide has no brand icons, and #511 asked for a phone.
 - Source: #462 design; #511 (the phone icon).
 - Check: `src/components/site-header.test.tsx`, "the Get the app button leads with a phone icon".
 
-**Footer.** The footer links Dictionary, About and Support (on phones only), Contact, Legal
-(`/legal/`), Privacy Policy, Terms of Use, DMCA Copyright Policy, Affiliate Disclosure, Sources,
-and Sitemap, then the copyright line. Legal follows Contact, as in the #462 design. The #462
-mockup's footer lists only Contact, Legal, Privacy, Terms, Sources, and Sitemap. Whether the
-footer drops the other links is waiting on the owner's and Devin's decision (#511); until then it
-keeps them.
+**Footer.** The footer starts with the 全 mark and the site name, linking home, and the site's
+one-line description. Beside them on wide screens, and below them in two columns on phones, three
+labelled groups hold every link: Product (Dictionary, Sources, Sitemap), Company (About, Support,
+Contact), and Policies (Legal (`/legal/`), Privacy Policy, Terms of Use, DMCA Copyright Policy,
+Affiliate Disclosure). A rule, then the copyright line, ends it. Legal follows Contact, as in the
+#462 design. The #462 mockup's footer lists only Contact, Legal, Privacy, Terms, Sources, and
+Sitemap. Whether the footer drops the other links is waiting on the owner's and Devin's decision
+(#511); until then it keeps them.
 
-- Source: #462 design (Contact, Legal, Privacy, Terms, Sources, Sitemap).
-- Check: the Legal link: `src/components/site-footer.test.tsx`, "the footer links Legal after
-  Contact, before the legal pages, as the #462 design does"; smoke "the footer links Legal". The
-  other links: No automated check yet (#511).
+- Source: #462 design (Contact, Legal, Privacy, Terms, Sources, Sitemap); #561 (the groups).
+- Check: `src/components/site-footer.test.tsx`, "the footer links Legal after Contact, before the
+  legal pages, as the #462 design does", "the footer groups every link under Product, Company, and
+  Policies", and "the footer leads with the brand linking home and its tagline, and ends with the
+  copyright"; `apps/web/e2e/site.spec.ts`, "the footer groups its links under Product, Company, and
+  Policies"; smoke "the footer links Legal".
 
 **Reading Aids.** The website has no Reading Aids settings yet. It shows what the app shows with
 its defaults: headwords and linked example words have furigana, examples show their translation,

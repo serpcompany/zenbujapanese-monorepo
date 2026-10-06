@@ -45,5 +45,8 @@ export const searchOrder = (query: string) =>
 
 export const needed = word(1546640)
 
+export const sidewaysOverflow = (page: Page) =>
+  page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth)
+
 export const sourcesToggle = (page: Page) =>
   page.getByRole('main').locator('summary', { hasText: 'Sources' })
