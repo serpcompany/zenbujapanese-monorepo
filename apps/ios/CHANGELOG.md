@@ -64,6 +64,9 @@ All notable user-facing changes to Zenbu Japanese are recorded here.
 
 ### Changed
 
+- The app is published as a new App Store app, with the bundle ID `com.zenbujapanese.app`. Copies
+  of 1.0.0 (`com.zenbujapanese.dictionary`) don't update to it, and their Known Words, notes, and
+  recent searches stay in that app.
 - Words you marked known no longer show an underline in linked Japanese.
 - The word sheet from Image Search and Player has a close button and **Open Full Entry** in its top
   bar instead of Done and a bottom button, and no longer repeats the word as its title. Its
