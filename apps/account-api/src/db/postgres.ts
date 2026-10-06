@@ -43,8 +43,14 @@ export async function migratePostgres(url: string, migrationsFolder: string): Pr
     await takeMigrationLock(client)
     const db = drizzle(client)
     await migrate(db, { migrationsFolder })
-    if ((await fenceIfRestored(db)) === 'restored') {
+    const start = await fenceIfRestored(db)
+    if (start === 'restored') {
       log('warn', 'a restored database: moved the sync journal and profile versions past it')
+    } else if (start === 'first start') {
+      log(
+        'info',
+        'first start on this database: moved the sync journal and profile versions to now'
+      )
     }
   } finally {
     await client.end()

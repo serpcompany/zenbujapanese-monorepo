@@ -206,10 +206,10 @@ are in `src/domain`, so `PATCH /v1/me` and a sync mutation change it the same wa
   older service can answer a newer app.
 - **The cursor** is opaque: a journal position, encrypted and authenticated (AES-256-GCM) for the
   account with a key derived from `ACCOUNT_API_SECRET`, so it shows nothing of the journal, and a
-  sync that reads nothing new answers the cursor it was sent. A cursor another account was given, or one past the end of the journal,
-  as after a restore, is refused with `410 invalid_cursor` before anything applies. The client then
-  syncs from no cursor and keeps what comes back. Changing the secret makes every client do that
-  once.
+  sync that reads nothing new answers the cursor it was sent. A cursor another account was given,
+  or one past the end of the journal, as when an environment goes back to a database it left, is
+  refused with `410 invalid_cursor` before anything applies. The client then syncs from no cursor
+  and keeps what comes back. Changing the secret makes every client do that once.
 - **Limits:** 50 mutations, a 64 KB body, and 500 journal entries a request.
 
 ## Code layout
@@ -266,8 +266,9 @@ maps them to these tables, and `account` to #374's `user_identities`, whose `pro
 
 The migrations are in `apps/account-api/migrations/`, in Drizzle's format. To change the schema,
 change `src/db/schema.ts`, then run `pnpm db:generate --name <what it does>` and commit the SQL and
-`meta/` files it writes. Never edit a migration once it has run anywhere: Drizzle tells them apart
-by their hash, so it would run the edited one again over the tables it made. Add a new one. For
+`meta/` files it writes. Never edit or regenerate a migration once it has run anywhere: Drizzle
+runs only those dated after the last one a database ran, so an edited one never runs where the old
+one did, and a regenerated one, with a new date, runs again over the tables it made. Add a new one. For
 SQL drizzle-kit doesn't write, such as the journal's trigger, run `pnpm db:generate --custom --name
 <what it does>` and write it into the empty file. They're drizzle-kit's, comments and formatting
 included, so Biome and the comments check leave the folder alone.
@@ -414,9 +415,10 @@ past every earlier one, even a second restore of the same backup:
   server reuses: it conflicts, and the app takes the profile as it is;
 - every app hears of each profile on its next sync, whatever cursor it holds.
 
-What changed after the backup is lost, as for any restore. The service fences a database it
-starts on for the first time too, if it holds accounts, which covers a backup from before
-`sync_origin`. A database restored only to look at is never served, so it stays as the backup
+What changed after the backup is lost, as for any restore. The first time the service starts on
+any database, it fences it too, and logs `first start on this database`: a new one's journal starts
+at the time, and the accounts one already holds (on the first deploy of `sync_origin`, or from a
+backup made before it) jump as a restored copy's do. A database restored only to look at is never served, so it stays as the backup
 was. Moving the database by dump and reload, to a new server or across a major version without
 `pg_upgrade`, looks like a restore and is fenced the same way: every version jumps once, and an
 app's change made offline before the move conflicts. `pg_upgrade`, a container restart, and
