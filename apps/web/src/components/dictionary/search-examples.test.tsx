@@ -75,10 +75,28 @@ describe('a search’s Example Sentences section', () => {
         { text: '食べた', furigana: '食(た)', href: '/dictionary/w-1358280/', marked: true },
         { text: '。', furigana: '', href: null, marked: false }
       ],
-      translation: 'I ate bread.',
-      credit: 'Tatoeba: Japanese #100; English #200 by CK, CC BY 2.0 FR'
+      translation: 'I ate bread.'
     })
     expect(visibleText(html)).toContain('Load more examples')
+  })
+
+  test('credits no single sentence, leaving Tatoeba to the page’s Sources', () => {
+    const html = render({
+      query: 'eat',
+      listed: 1,
+      truncated: false,
+      examples: [example(0)],
+      examplesPath: '/dictionary/search/eat/examples.json?build=b'
+    })
+    expect(visibleText(html)).not.toContain('Tatoeba')
+    expect(html).not.toContain('tatoeba.org')
+    expect(Object.keys(example(0)).sort()).toEqual([
+      'pairId',
+      'position',
+      'text',
+      'tokens',
+      'translation'
+    ])
   })
 
   test('says when it lists only the first 100 of more', () => {
@@ -210,7 +228,6 @@ describe.runIf(gateEnabled)('the rendered Example Sentences section matches the 
         shown.tokens.map(token => token.queryMatch === true)
       )
       expect(example.translation).toBe(shown.english)
-      expect(example.credit).toMatch(/^Tatoeba: Japanese #\d+.*; English #\d+/)
     }
     for (const word of rendered.flatMap(example => example.words)) {
       const wordPage = word.href !== null && !word.href.startsWith('/dictionary/search/')
