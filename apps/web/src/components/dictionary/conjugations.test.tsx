@@ -17,14 +17,14 @@ import { exampleLimit } from '@zenbu/dictionary-core/examples/retrieval'
 import { renderToStaticMarkup } from 'react-dom/server'
 import { describe, expect, test } from 'vitest'
 import { pageExample, serviceLinks } from '@/lib/dictionary/page-example'
+import { gateEnabled, gateService, recordedCases } from '@/test/gate'
+import { readConjugatedForm, readConjugationTable, readExamples } from '@/test/rendered-word'
 import {
   ConjugatedFormContent,
   ConjugationsSection,
   ConjugationTableContent,
   FormExampleList
 } from './conjugations'
-import { gateEnabled, gateService, recordedCases } from './gate'
-import { readConjugatedForm, readConjugationTable, readExamples } from './rendered-word'
 import { WordHeader } from './word-header'
 
 const noReadings = new Map()

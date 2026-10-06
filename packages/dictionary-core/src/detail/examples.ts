@@ -10,7 +10,7 @@ import { type RubySegment, rubySegments } from './ruby'
 
 export const examplesPerPage = 25
 
-export type ExampleLink = { entSeq: number } | { entSeqs: number[]; query: string }
+type ExampleLink = { entSeq: number } | { entSeqs: number[]; query: string }
 
 export interface ExampleToken {
   text: string

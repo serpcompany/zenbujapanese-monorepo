@@ -4,7 +4,7 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { cn } from '@/lib/utils'
 
-export const headerSections = [
+const headerSections = [
   { path: '/dictionary/', label: 'Dictionary' },
   { path: '/about/', label: 'About' },
   { path: '/support/', label: 'Support' }
@@ -12,7 +12,7 @@ export const headerSections = [
 
 const withSlash = (path: string) => (path.endsWith('/') ? path : `${path}/`)
 
-export function currentSection(pathname: string): string | null {
+function currentSection(pathname: string): string | null {
   const path = withSlash(pathname)
   return headerSections.find(section => path.startsWith(section.path))?.path ?? null
 }

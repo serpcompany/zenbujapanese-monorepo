@@ -9,7 +9,7 @@ import { type RubySegment, rubySegments } from './ruby'
 import { type StrokeOrder, strokeOrder } from './strokes'
 import { hiragana, isKanjiCharacter } from './text'
 
-export const kanjiWordLimit = 24
+const kanjiWordLimit = 24
 
 export interface KanjiWord {
   entSeq: number
@@ -26,7 +26,7 @@ export interface KanjiReading {
   words: KanjiWord[]
 }
 
-export type KanjiElementRole = 'meaningStructure' | 'sound' | 'soundPattern'
+type KanjiElementRole = 'meaningStructure' | 'sound' | 'soundPattern'
 
 export interface KanjiElement {
   character: string
@@ -131,9 +131,7 @@ export function kanjiElements(
 
 const readingLabels = { on: 'On', kun: 'Kun', name: 'Name' } as const
 
-export function kanjiShareText(
-  kanji: Pick<KanjiRows['kanji'], 'character' | 'readings' | 'meanings'>
-) {
+function kanjiShareText(kanji: Pick<KanjiRows['kanji'], 'character' | 'readings' | 'meanings'>) {
   const readings = kanji.readings.map(reading => reading.value).join('、')
   const heading = readings ? `${kanji.character}【${readings}】` : kanji.character
   return [heading, kanji.meanings.join(', ')].filter(Boolean).join('\n')

@@ -132,17 +132,14 @@ export function readWord(
   }
 }
 
-export interface EntryIdentity {
+interface EntryIdentity {
   id: string
   entSeq: number
   headword: string
   reading: string
 }
 
-export function entriesById(
-  db: ArtifactDatabase,
-  ids: readonly string[]
-): Map<string, EntryIdentity> {
+function entriesById(db: ArtifactDatabase, ids: readonly string[]): Map<string, EntryIdentity> {
   if (ids.length === 0) return new Map()
   const rows = db.all<{ id: string; ent_seq: number; headword: string; reading: string }>(
     `SELECT lower(hex(id)) AS id, source_record_id AS ent_seq, headword, reading FROM entries

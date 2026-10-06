@@ -25,8 +25,9 @@ Each module ports the app's Swift, in `apps/ios/Modules/Sources/SearchExperience
 
 ## Rules
 
-- **No runtime or framework.** Biome refuses `node:*`, Next.js, React, Wrangler, Hono, and
-  Drizzle imports in `src` (tests aside). A client passes in what it has: the artifact as an
+- **No runtime or framework.** Biome refuses `node:*`, Next.js, React, Wrangler, and Hono
+  imports in `src` (tests aside), and `pnpm verify dependencies` refuses any Node built-in or
+  package the core imports for more than its types. A client passes in what it has: the artifact as an
   `ArtifactDatabase` (synchronous `all(sql, params)`), the kanji files as `KanjiData`, and its
   capabilities: `tokenize` (the app's Kuromoji) and `morphology` (the app's Sudachi). Without
   `morphology`, sentence search is off and the rest of Search is unchanged (ADR 0008).

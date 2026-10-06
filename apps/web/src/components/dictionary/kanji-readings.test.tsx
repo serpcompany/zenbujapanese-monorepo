@@ -1,9 +1,9 @@
 import { readFileSync } from 'node:fs'
 import { renderToStaticMarkup } from 'react-dom/server'
 import { describe, expect, test } from 'vitest'
-import type { KanjiDetailsData } from '@/lib/dictionary/data'
+import type { KanjiDetailsData } from '@/lib/dictionary/kanji-details'
+import { visibleText } from '@/test/rendered'
 import { KanjiReadings } from './kanji-readings'
-import { visibleText } from './rendered'
 
 interface SuiteWord {
   headword: string

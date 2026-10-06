@@ -25,12 +25,10 @@ import { sameLexicalGroup } from './rank'
 import type { RankedEntry } from './ranked-entries'
 
 export type { SearchResultItem, SearchResults } from './composition'
-export { searchResultLimit } from './composition'
-export type { EntryRow, SearchDatabase, SearchEntry } from './database'
+export type { SearchDatabase, SearchEntry } from './database'
 export type { JapaneseRow } from './japanese'
 export { rankJapanese } from './japanese'
-export type { MorphologyAnalyzer, MorphologyWord } from './morphology'
-export type { RankedEntry } from './ranked-entries'
+export type { MorphologyAnalyzer } from './morphology'
 
 export interface SearchCapabilities {
   morphology?: MorphologyAnalyzer
@@ -40,7 +38,7 @@ export interface SearchFeatures {
   sentenceSearch: boolean
 }
 
-export function searchFeatures(capabilities: SearchCapabilities): SearchFeatures {
+function searchFeatures(capabilities: SearchCapabilities): SearchFeatures {
   return { sentenceSearch: capabilities.morphology !== undefined }
 }
 

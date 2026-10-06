@@ -11,15 +11,10 @@ import { type KanjiReadings, withKanjiReadings } from './kanji-split'
 import type { EntryRow } from './rows'
 import { type RubySegment, rubySegments } from './ruby'
 
-export type {
-  ConjugatedForm,
-  ConjugationKind,
-  ConjugationMode,
-  ConjugationTable
-} from './conjugation-table'
-export { conjugationTable, formsFor, supportsModes } from './conjugation-table'
+export type { ConjugatedForm, ConjugationMode, ConjugationTable } from './conjugation-table'
+export { conjugationTable, formsFor } from './conjugation-table'
 
-export const conjugationKinds: Record<ConjugationKind, { title: string; explanation: string }> = {
+const conjugationKinds: Record<ConjugationKind, { title: string; explanation: string }> = {
   'present-future': {
     title: 'Present/Future',
     explanation:

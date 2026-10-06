@@ -1,22 +1,16 @@
 import { readFileSync } from 'node:fs'
 import { wordExample } from '@zenbu/dictionary-core/detail/examples'
-import { kanjiDetail } from '@zenbu/dictionary-core/detail/kanji'
-import type { KanjiRows } from '@zenbu/dictionary-core/detail/rows'
 import { rubySegments } from '@zenbu/dictionary-core/detail/ruby'
-import { fixtureKanjiRows } from '@zenbu/dictionary-core/fixtures'
 import { renderToStaticMarkup } from 'react-dom/server'
 import { describe, expect, test } from 'vitest'
-import type {
-  KanjiDetailsData,
-  SearchData,
-  SearchExamplesData,
-  SearchWord
-} from '@/lib/dictionary/data'
+import type { SearchData, SearchExamplesData, SearchWord } from '@/lib/dictionary/data'
+import type { KanjiDetailsData } from '@/lib/dictionary/kanji-details'
 import { pageExample, serviceLinks } from '@/lib/dictionary/page-example'
 import { linkSearchScreen } from '@/lib/dictionary/results/links'
 import { searchPath } from '@/lib/dictionary/urls'
-import { gateEnabled, gateService, recordedCases } from './gate'
-import { readRenderedPage, visibleText } from './rendered'
+import { gateEnabled, gateService, recordedCases } from '@/test/gate'
+import { fixtureKanji, unlinkedKanjiDetails } from '@/test/kanji-details'
+import { readRenderedPage, visibleText } from '@/test/rendered'
 import { SearchResults } from './search-results'
 
 const render = (data: SearchData, examples: SearchExamplesData | null = null) =>
@@ -63,23 +57,7 @@ function word(
   }
 }
 
-function unlinked<Item>(item: Item): Item & { path: null } {
-  return { ...item, path: null }
-}
-
-function unlinkedKanjiDetails(rows: KanjiRows): KanjiDetailsData {
-  const detail = kanjiDetail(rows)
-  return {
-    ...detail,
-    readings: detail.readings.map(reading => ({ ...reading, words: reading.words.map(unlinked) })),
-    components: detail.components.map(character => unlinked({ character })),
-    elements: detail.elements.map(unlinked),
-    words: detail.words.map(unlinked)
-  }
-}
-
-const kanameRows = fixtureKanjiRows.find(rows => rows.kanji.character === '要')
-if (!kanameRows) throw new Error('No fixture for 要')
+const kanameRows = fixtureKanji('要')
 
 const noExamplesYet = (query: string): SearchExamplesData => ({
   query,

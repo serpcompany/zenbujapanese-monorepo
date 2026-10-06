@@ -7,6 +7,7 @@ on:
       - packages/dictionary-core/**
       - apps/web/src/lib/dictionary/**
       - apps/web/src/components/dictionary/**
+      - apps/web/src/test/**
       - apps/web/vitest.config.ts
       - package.json
       - pnpm-lock.yaml
@@ -79,6 +80,10 @@ jobs:
       - name: Check the service
         working-directory: apps/dictionary-api
         run: pnpm check
+      - name: The core's fixtures match the language data
+        run: |
+          pnpm --filter zenbujapanese-dictionary-api fixtures
+          git diff --exit-code -- packages/dictionary-core/src/fixtures
       - name: Start the service
         working-directory: apps/dictionary-api
         run: |

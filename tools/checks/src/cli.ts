@@ -1,8 +1,23 @@
 import { findComments } from './comments/find'
+import { findDeadCode } from './deadcode'
+import { checkDependencies, parts } from './dependencies'
 import { checkDocs } from './docs'
+import { findDuplicates } from './duplicates'
 import { repositoryFiles, root } from './files'
+import { duplicateProblems } from './known-duplicates'
 import { runLinters } from './linters'
-import { commentRule, docsRule, linterRule, sizeRule, unclassifiedRule } from './rules'
+import {
+  commentRule,
+  deadCodeRule,
+  dependencyRule,
+  docsRule,
+  duplicateRule,
+  linterRule,
+  secretRule,
+  sizeRule,
+  unclassifiedRule
+} from './rules'
+import { findSecrets } from './secrets'
 import { checkSizes } from './sizes'
 
 interface Outcome {
@@ -11,7 +26,7 @@ interface Outcome {
   report: string[]
 }
 
-type Check = (files: string[]) => Outcome
+type Check = (files: string[], paths: string[]) => Outcome | Promise<Outcome>
 
 const comments: Check = files => {
   const { found, unclassified } = findComments(files)
@@ -62,18 +77,62 @@ const linters: Check = files => {
   return { name: 'linters', passed: !failed, report }
 }
 
-const checks: Record<string, Check> = { comments, docs, sizes, linters }
+const secrets: Check = async files => {
+  const report = await findSecrets(files)
+  if (report.length) report.push(secretRule)
+  return { name: 'secrets', passed: !report.length, report }
+}
+
+const duplicates: Check = files => {
+  const report = duplicateProblems(findDuplicates(files), files)
+  if (report.length) report.push(duplicateRule)
+  return { name: 'duplicates', passed: !report.length, report }
+}
+
+const deadcode: Check = () => {
+  const report = findDeadCode()
+  if (report.length) report.push(deadCodeRule)
+  return { name: 'deadcode', passed: !report.length, report }
+}
+
+const overlaps = (folder: string, path: string) =>
+  folder === path || folder.startsWith(`${path}/`) || path.startsWith(`${folder}/`)
+
+const dependencies: Check = async (_files, paths) => {
+  const requested = paths.length
+    ? parts.filter(part => paths.some(path => overlaps(part.folder, path)))
+    : parts
+  const report: string[] = []
+  for (const part of requested) report.push(...(await checkDependencies(part)))
+  if (report.length) report.push(dependencyRule)
+  return { name: 'dependencies', passed: !report.length, report }
+}
+
+const checks: Record<string, Check> = {
+  comments,
+  docs,
+  sizes,
+  secrets,
+  duplicates,
+  deadcode,
+  dependencies,
+  linters
+}
 
 const [requested, ...paths] = process.argv.slice(2)
-if (requested && !checks[requested]) {
-  console.error(`Unknown check ${requested}. Run one of: ${Object.keys(checks).join(', ')}.`)
+const names = requested ? requested.split(',') : Object.keys(checks)
+const unknown = names.filter(name => !checks[name])
+if (unknown.length) {
+  console.error(
+    `Unknown check ${unknown.join(', ')}. Run any of: ${Object.keys(checks).join(', ')}.`
+  )
   process.exit(2)
 }
+const prefixes = paths.map(path =>
+  path.replaceAll('\\', '/').replace(/^\.\//, '').replace(/\/$/, '')
+)
 const inRequestedPaths = (file: string) =>
-  paths.some(path => {
-    const prefix = path.replaceAll('\\', '/').replace(/^\.\//, '').replace(/\/$/, '')
-    return file === prefix || file.startsWith(`${prefix}/`)
-  })
+  prefixes.some(prefix => file === prefix || file.startsWith(`${prefix}/`))
 const files = paths.length ? repositoryFiles().filter(inRequestedPaths) : repositoryFiles()
 if (paths.length && !files.length) {
   console.error(
@@ -81,7 +140,10 @@ if (paths.length && !files.length) {
   )
   process.exit(2)
 }
-const outcomes = (requested ? [requested] : Object.keys(checks)).map(name => checks[name](files))
+const outcomes: Outcome[] = []
+for (const name of names) {
+  outcomes.push(await checks[name](files, prefixes))
+}
 for (const outcome of outcomes) {
   if (!outcome.report.length) continue
   console.log(`\n${outcome.name}\n${outcome.report.join('\n')}`)

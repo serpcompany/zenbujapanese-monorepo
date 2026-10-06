@@ -12,7 +12,7 @@ import { Empty, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from '@/
 import { Item, ItemActions, ItemContent, ItemGroup, ItemSeparator } from '@/components/ui/item'
 import type { SearchData, SearchExamplesData, SearchWord } from '@/lib/dictionary/data'
 
-export const searchExamplesAnchor = 'examples'
+const searchExamplesAnchor = 'examples'
 
 function Row({
   path,

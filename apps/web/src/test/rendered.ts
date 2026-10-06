@@ -42,7 +42,7 @@ function segments(html: string, marker: RegExp): { value: string; html: string }
   }))
 }
 
-export interface RenderedRow {
+interface RenderedRow {
   entSeq: number
   headword: string
   summary: string
@@ -117,7 +117,7 @@ function topLevelElements(html: string): string[] {
   return elements
 }
 
-export interface RenderedExampleWord {
+interface RenderedExampleWord {
   text: string
   furigana: string
   href: string | null

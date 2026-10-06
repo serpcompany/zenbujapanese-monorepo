@@ -16,6 +16,8 @@ jobs:
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@v5
+        with:
+          fetch-depth: 2
       - uses: pnpm/action-setup@v6
         with:
           package_json_file: package.json
@@ -24,8 +26,13 @@ jobs:
           node-version: 22
           cache: pnpm
           cache-dependency-path: pnpm-lock.yaml
-      - run: pnpm install --frozen-lockfile --filter zenbujapanese-checks
+      - run: pnpm install --frozen-lockfile
       - name: The checks' own lint, typecheck, and tests
         run: pnpm --filter zenbujapanese-checks check
-      - name: No comments, docs, file sizes, and the pinned linters in Docker
+      - name: No comments, docs, sizes, secrets, duplicates, dead code, import rules, and the pinned linters
         run: pnpm verify
+      - name: A fix/ branch changes a test
+        if: startsWith(github.head_ref, 'fix/')
+        env:
+          BRANCH: ${{ github.head_ref }}
+        run: pnpm --silent --filter zenbujapanese-checks fix-branch "$BRANCH" HEAD^1

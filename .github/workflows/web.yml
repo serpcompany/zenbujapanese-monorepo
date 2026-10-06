@@ -16,9 +16,6 @@ permissions:
 jobs:
   check:
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: apps/web
     steps:
       - uses: actions/checkout@v5
       - uses: pnpm/action-setup@v6
@@ -31,21 +28,25 @@ jobs:
           cache-dependency-path: pnpm-lock.yaml
       - run: pnpm install --frozen-lockfile
       - name: ShellCheck the scripts
+        working-directory: apps/web
         run: >-
           docker run --rm -v "$PWD:/mnt" -w /mnt koalaman/shellcheck:v0.11.0 --severity=warning
           scripts/smoke.sh scripts/use-dictionary-service.sh scripts/wait-for-dictionary-service.sh
-      - run: pnpm check
+      - name: cloudflare-env.d.ts matches wrangler.jsonc
+        working-directory: apps/web
+        run: pnpm cf-typegen && git diff --exit-code -- cloudflare-env.d.ts
+      - working-directory: apps/web
+        run: pnpm check
       - name: Build for staging
+        working-directory: apps/web
         run: SITE_ENV=staging pnpm build
       - name: Build for production
+        working-directory: apps/web
         run: SITE_ENV=production pnpm build
 
   e2e:
     runs-on: ubuntu-latest
     timeout-minutes: 25
-    defaults:
-      run:
-        working-directory: apps/web
     steps:
       - uses: actions/checkout@v5
       - uses: pnpm/action-setup@v6
@@ -58,10 +59,13 @@ jobs:
           cache-dependency-path: pnpm-lock.yaml
       - run: pnpm install --frozen-lockfile
       - name: Install Chromium
+        working-directory: apps/web
         run: pnpm exec playwright install --with-deps chromium
       - name: Build the site as it deploys, on the fixtures
+        working-directory: apps/web
         run: pnpm exec opennextjs-cloudflare build
       - name: Run the browser tests on the build, in workerd
+        working-directory: apps/web
         env:
           E2E_SERVER: preview
         run: pnpm test:e2e

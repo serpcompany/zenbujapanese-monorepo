@@ -10,14 +10,14 @@ import {
 import { wordDetail } from '@zenbu/dictionary-core/detail/word'
 import { renderToStaticMarkup } from 'react-dom/server'
 import { describe, expect, test } from 'vitest'
-import { FrequencyDetailsContent, FrequencySection } from './frequency-section'
-import { gateEnabled, gateService, recordedCases } from './gate'
+import { gateEnabled, gateService, recordedCases } from '@/test/gate'
 import {
   readFrequencyDetails,
   readFrequencyRows,
   readFurigana,
   readPitchGraph
-} from './rendered-word'
+} from '@/test/rendered-word'
+import { FrequencyDetailsContent, FrequencySection } from './frequency-section'
 import { WordHeader } from './word-header'
 
 const unidic = 'UniDic for Contemporary Written Japanese 3.1.0'

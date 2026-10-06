@@ -1,7 +1,7 @@
 import { ChevronRightIcon } from 'lucide-react'
 import Link from 'next/link'
 import { Item } from '@/components/ui/item'
-import type { KanjiDetailsData } from '@/lib/dictionary/data'
+import type { KanjiDetailsData } from '@/lib/dictionary/kanji-details'
 
 type Reading = KanjiDetailsData['readings'][number]
 

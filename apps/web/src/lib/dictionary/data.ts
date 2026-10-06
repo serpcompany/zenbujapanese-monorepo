@@ -1,13 +1,7 @@
 import { getCloudflareContext } from '@opennextjs/cloudflare'
 import { isReadableLength } from '@zenbu/dictionary-core/artifact/dictionary'
 import { examplesPerPage, formExample, wordExample } from '@zenbu/dictionary-core/detail/examples'
-import {
-  type KanjiDetail,
-  type KanjiElement,
-  type KanjiReading,
-  type KanjiWord,
-  kanjiDetail
-} from '@zenbu/dictionary-core/detail/kanji'
+import { type KanjiWord, kanjiDetail } from '@zenbu/dictionary-core/detail/kanji'
 import type { FrequencyRow, KanjiRows, WordRows } from '@zenbu/dictionary-core/detail/rows'
 import {
   type AlternativeForm,
@@ -32,6 +26,7 @@ import { cache } from 'react'
 import { errorFields, log } from '@/lib/log'
 import { isDeployedSite } from '@/lib/site'
 import { type DictionaryApi, dictionaryApi } from './api'
+import type { KanjiDetailsData } from './kanji-details'
 import {
   type Linked,
   type Links,
@@ -64,14 +59,6 @@ export interface WordPageWithKanji extends Omit<WordPageData, 'kanji' | 'alterna
   alternativeKanji: WordPageKanji[]
 }
 
-export interface KanjiDetailsData
-  extends Omit<KanjiDetail, 'readings' | 'components' | 'elements' | 'words'> {
-  readings: (Omit<KanjiReading, 'words'> & { words: Linked<KanjiWord>[] })[]
-  components: Linked<{ character: string }>[]
-  elements: Linked<KanjiElement>[]
-  words: Linked<KanjiWord>[]
-}
-
 export interface SearchExamplesData {
   query: string
   examples: PageExample[]
@@ -80,7 +67,7 @@ export interface SearchExamplesData {
   examplesPath: string
 }
 
-export type { PageExample, PageExampleToken } from './page-example'
+export type { PageExample } from './page-example'
 export type { SearchData, SearchWord } from './results/links'
 
 const wordRowsBySeq = new Map(fixtureWordRows.map(rows => [rows.entry.entSeq, rows]))
@@ -108,10 +95,10 @@ export async function dictionaryService(): Promise<DictionaryApi | null> {
 
 const fixtureBuild = 'fixtures'
 
-export const examplesPath = (entSeq: number, build: string) =>
+const examplesPath = (entSeq: number, build: string) =>
   `/dictionary/examples/${entSeq}.json?build=${encodeURIComponent(build)}`
 
-export const moreSearchExamplesPath = (query: string, build: string) =>
+const moreSearchExamplesPath = (query: string, build: string) =>
   `${searchPath(query)}examples.json?build=${encodeURIComponent(build)}`
 
 function wordPage(rows: WordRows, slug: string, links: Links, build: string): WordPageData {
