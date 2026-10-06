@@ -254,14 +254,16 @@ without searching: that is the dictionary service's limit, and the app has none.
 levels, and TUBELEX, each with its licence. When it shows a kanji's details, it adds RADKFILE,
 KanjiVG when the details draw stroke order, and Kanjium; when it lists example sentences, Tatoeba.
 Every page's credits match the app's Credits & Attributions, and EDRDG's licence requires them,
-with links, on every page that shows JMdict, KANJIDIC2, or RADKFILE data.
+with links, on every page that shows JMdict, KANJIDIC2, or RADKFILE data. The list sits in a
+Sources disclosure that starts closed; closed, its credits and links stay in the page's HTML.
 
-- Source: #465 (credit every source a page shows, on every page); `CreditsView.swift`; the EDRDG
-  licence; `src/lib/dictionary/sources.ts`.
-- Check: what a kanji's details and the sentences add: `src/lib/dictionary/sources.test.ts`
-  ("withShownData, the credits for what a page shows"); `apps/web/e2e/kanji.spec.ts`, "the search
-  page for 要 credits KanjiVG and Kanjium for the kanji details" and "/dictionary/search/iru/,
-  without kanji details, credits neither". The base list: No automated check yet (#511).
+- Source: #465 (credit every source a page shows, on every page); #560 (closed by default);
+  `CreditsView.swift`; the EDRDG licence; `src/lib/dictionary/sources.ts`.
+- Check: closed, in the page, then opened to its links: `apps/web/e2e/kanji.spec.ts`, "the search
+  page for 要 credits KanjiVG and Kanjium for the kanji details". What a kanji's details and the
+  sentences add: `src/lib/dictionary/sources.test.ts` ("withShownData, the credits for what a page
+  shows"); `apps/web/e2e/kanji.spec.ts`, that test and "/dictionary/search/iru/, without kanji
+  details, credits neither". The base list: No automated check yet (#511).
 
 **Left out on purpose.** The website has no Recent list, camera button, or Image Search. It also
 has no ✓ Known capsule and no swipe or long-press to mark a word known, since learner data lives in
@@ -327,11 +329,13 @@ sentence's words in a Words menu beside it; the website links them inline in the
   one"); `data.test.ts`, "a search’s examples read the service, and load more for the same build"
   (each word linked by the slugs the service names).
 
-**Translation, speaker, and credits.** Each sentence shows its translation and a speaker, and
-credits both sides of its Tatoeba pair, as a word page's examples do.
+**Translation, speaker, and credits.** Each sentence shows its translation and a speaker, as a
+word page's examples do. No sentence is credited on its own: the page's Sources list credits
+Tatoeba.
 
-- Source: `ExampleSentencesView.swift`; #465 (per-sentence attribution).
-- Check: ES `shown[].english`; `search-examples.test.tsx` (the translation and credit).
+- Source: `ExampleSentencesView.swift`; #560 (per-sentence credits removed, as the app has none).
+- Check: ES `shown[].english`; `search-examples.test.tsx` (the translation), and "credits no single
+  sentence, leaving Tatoeba to the page’s Sources".
 
 **Paging.** The section renders its first 25 sentences, then loads 25 more at a time as the
 learner scrolls, or with the Load more examples button, from
@@ -588,14 +592,12 @@ color. Split compounds such as 一日 have no marked word, as in the app.
   linked kanji only". The underline style: No automated check yet (#511).
 
 **Example translation, speaker, and credits.** Each example shows its English translation and a
-speaker that reads the sentence. Under it, each side of the Tatoeba pair is credited with its
-sentence ID, linking to Tatoeba, its contributor, and its licence. The app doesn't credit each
-sentence.
+speaker that reads the sentence. Like the app, it doesn't credit each sentence: the page's Sources
+list credits Tatoeba and its licence, CC BY 2.0 FR.
 
-- Source: #465 (per-sentence attribution).
-- Check: `packages/dictionary-core/src/detail/examples.test.ts`, "keeps the position, text,
-  translation, and both sides’ attribution"; the conformance test checks each side's attribution is
-  intact.
+- Source: #560 (per-sentence credits, added under #465, removed as clutter).
+- Check: `apps/web/e2e/word.spec.ts`, "credits no single example, and keeps its Sources closed
+  until opened".
 
 **Examples across a deploy.** A page loads later examples only from the dictionary build it was
 rendered from. When the dictionary has been updated since, the page says "These examples have been
@@ -608,10 +610,13 @@ updated since the page loaded." and offers a reload.
 
 **Credits.** A word page ends with a Sources list: JMdict, UniDic, KANJIDIC2, JLPT levels, TUBELEX,
 and Tatoeba. When it can show a kanji's details, it adds RADKFILE, KanjiVG when any of them draws
-stroke order, and Kanjium.
+stroke order, and Kanjium. The list starts closed, as a results page's does, with its credits and
+links in the page's HTML.
 
-- Source: #465; `src/lib/dictionary/sources.ts`.
-- Check: `src/app/dictionary/[word]/page.test.tsx`, "credits the kanji data its details show";
+- Source: #465; #560 (closed by default); `src/lib/dictionary/sources.ts`.
+- Check: `src/app/dictionary/[word]/page.test.tsx`, "credits the kanji data its details show" and
+  "keeps its Sources closed, with every credit in the HTML"; `apps/web/e2e/word.spec.ts`, "credits
+  no single example, and keeps its Sources closed until opened";
   `src/lib/dictionary/sources.test.ts`; `apps/web/e2e/kanji.spec.ts`, "the word page credits
   KanjiVG and Kanjium for the kanji details" and "/dictionary/いる-1577980/, without kanji details,
   credits neither". The base list: No automated check yet (#511).
@@ -669,8 +674,8 @@ examples of 見た. They load all at once from `/dictionary/conjugations/<form>.
 the form opens, so the page doesn't carry every form's examples; until then the form says
 "Loading examples", and if they can't load, "Examples couldn’t load. Try again later." Each
 example links its words as the app's screen does, with no page entry, and accents the words that
-make up the form with the thicker underline; the translation, speaker, and per-sentence credits
-are a word page's. A form without examples says "No example sentences use this form yet." The
+make up the form with the thicker underline; the translation and speaker are a word page's, with
+no per-sentence credits. A form without examples says "No example sentences use this form yet." The
 dictionary service runs the app's search and Kuromoji for a form when it's first asked, and keeps
 the list; like the app, it finds a form's examples by its spelling alone.
 
