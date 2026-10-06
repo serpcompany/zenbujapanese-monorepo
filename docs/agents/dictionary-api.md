@@ -18,10 +18,16 @@ git lfs pull --include="apps/ios/Modules/Sources/SearchExperience/Resources/**"
 ```
 
 - `LanguageReferenceData.sqlite3`, with `CompoundPitch`, `JLPTLevelPack`, `TUBELEXFrequencyPack`,
-  `KanjiStrokeData`, and `ExampleWordIndex` attached read-only. At start the service refuses an
-  artifact whose transform or example index it doesn't read, or a pack that isn't the one it
-  expects (`checkArtifact`); every pack but the stroke data must be built for this
+  `KanjiStrokeData`, `ExampleWordIndex`, and `RankedLists` attached read-only. At start the service
+  refuses an artifact whose transform or example index it doesn't read, or a pack that isn't the
+  one it expects (`checkArtifact`); every pack but the stroke data must be built for this
   `LanguageReferenceData.sqlite3`.
+- `RankedLists.sqlite3` holds the Wikipedia and six Jiten lists' ranks, mapped to Language
+  Reference IDs as the app maps them when a learner installs the pack, from their pinned sources
+  ([`apps/ios/Tools/README.md`](../../apps/ios/Tools/README.md), `build_ranked_lists.py`). The app
+  doesn't bundle it. With TUBELEX, which the app bundles, the service has all eight of the app's
+  ranked frequency dictionaries; `checkArtifact` refuses a file that lacks one the core lists
+  (`packages/dictionary-core/src/browse/lists.ts`).
 - `KanjiReferenceData.json` and `KanjiElementReferenceData.json`.
 - Kuromoji's files, for example word links and conjugated form examples. `src/kuromoji.ts` ports
   `apps/ios/Modules/Sources/SearchExperience/KuromojiMorphologyClient.swift`: it runs the app's
