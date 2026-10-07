@@ -96,6 +96,8 @@
       "k_ele/ke_inf",
       "r_ele/re_inf",
       "sense/misc",
+      "sense/field",
+      "sense/dial",
       "sense/s_inf",
       "sense/xref",
       "sense/gloss[@xml:lang='eng']"
@@ -113,6 +115,7 @@
       "provenance-free semantic fingerprint includes all display forms, meanings, senses, applicability, and gloss atom boundaries",
       "semantically equivalent rows normalize to the lexicographically smallest opaque app-owned identity while retaining every sorted unique source provenance; ranking evidence remains unchanged",
       "provider form and usage labels normalized to an app-owned presentation vocabulary",
+      "every JMdict usage, subject-field, and dialect entity code on a sense mapped explicitly to app-owned label identifiers; an unmapped code fails the import",
       "cross-references resolved to app-owned linked entries",
       "JMdict cross-reference form, reading, and target-sense qualifiers preserved; supplied readings require an exact target reading",
       "human-reviewed app-owned word relationships resolved from a versioned editorial fact source",
@@ -205,16 +208,16 @@
       "decision_comment_url": "https://github.com/serpcompany/zenbujapanese-monorepo/issues/140#issuecomment-5303558635",
       "statement": "Preserve the full current example-sentence experience for version 1.0, retain all available attribution and not-supplied evidence, disclose the known uncertainty, and do not represent this owner decision as independent legal advice."
     },
-    "example_transform_sha256": "f5c172dce31d040684a26a66348d81c53832fbb3575bbd08e4a9473a9a7aa150",
+    "example_transform_sha256": "714bc94967c5fb2252635c0a1bc2ea4a963e020307b091a2cc07e1fb5db2d494",
     "relationship_source_resource_id": "zenbu-word-relationships-v1",
     "relationship_source_sha256": "2c483c933f5a42baad194db9a45c1d6251e09ebcb2a40c6475ca3d984ea2dd38",
-    "import_tool_sha256": "9f155f04aa5ee725c5c3f285e3606ae0699a3ba62cc92e8610b87923a1584bcf",
+    "import_tool_sha256": "50f6374d4ffd8bbb796f33923251a4f33b0386c3479468a6915393e6c5c3b22e",
     "dictionary_ranking_adapter_sha256": "c8efea2701988d854a7b18bfa53062ab196958ad9196e044202a43e28fa7573a",
     "dictionary_ranking_contract_sha256": "b7df18edcc9b20a0c961c2be913f9e12816a69fdea6522ecd11610570f41e59e",
     "shared_tooling_sha256": "0c0dec180f4f11f49c6d1ee6048d9a3dc4986d88ef5fc4bc6aa9302e62743b39",
     "unidic_adapter_sha256": "ca6e2c0d83c594072c999ffd600c05e06cedfe98944db0500f948af41496e028",
     "tatoeba_adapter_sha256": "65e5d32fe6b20ca18cf95cf1b9d6167f89d7c3cc1cf54f9a245f0743c421f584",
-    "database_sha256": "0c9074da7e8c561c3c0d6409dfdaf78c0a920169f79e1438dfd42c2f91d67c87",
-    "database_bytes": 481689600
+    "database_sha256": "290ca9d430454cafe77880d89c45500905ad168c825c71bb7676172afccf66f2",
+    "database_bytes": 483983360
   }
 }

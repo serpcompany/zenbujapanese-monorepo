@@ -35,7 +35,7 @@ export default async function SearchResultsPage({ params }: Props) {
       ? await getSearchExamples(data.query)
       : null
   return (
-    <main className="mx-auto flex w-full max-w-2xl flex-col gap-4 px-4 pt-4 pb-6">
+    <main className="mx-auto flex w-full max-w-3xl flex-col gap-4 px-4 pt-4 pb-6">
       <DictionaryBreadcrumbs
         page={{ label: `Search: ${data.query}`, path: searchPath(data.query), lang: 'ja' }}
       />

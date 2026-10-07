@@ -47,7 +47,11 @@ const writtenByTools: readonly [RegExp, string][] = [
 const thirdParty: readonly [RegExp, string][] = [
   [/^apps\/ios\/Modules\/Sources\/SearchExperience\/Resources\/Kuromoji\//, 'Kuromoji'],
   [/^apps\/ios\/Modules\/Sources\/SearchExperience\/Resources\/SudachiRuntime\//, 'Sudachi'],
-  [/^language-data\/notices\//, 'the language data sources']
+  [/^language-data\/notices\//, 'the language data sources'],
+  [
+    /^apps\/ios\/LanguageData\/Sources\/Kanji-JLPT-Waller-[^/]+\/[^/]+\.html$/,
+    "Jonathan Waller's tanos.co.uk pages, as the Wayback Machine captured them"
+  ]
 ]
 
 const pinnedBytes: readonly [RegExp, string][] = [

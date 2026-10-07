@@ -1,5 +1,4 @@
-import type { Page } from '@playwright/test'
-import { expect, needed, test } from './test'
+import { expect, needed, sidewaysOverflow, test } from './test'
 
 const pages = [
   '/',
@@ -22,9 +21,6 @@ const opened = [
     open: ['要, kanji, pivot, shows kanji details']
   }
 ]
-
-const sidewaysOverflow = (page: Page) =>
-  page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth)
 
 test.describe('layout', () => {
   for (const path of pages) {

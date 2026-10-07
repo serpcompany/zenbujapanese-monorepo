@@ -31,6 +31,13 @@ const fixtureWordPaths = new Map(
   fixtureWordRows.map(({ entry }) => [entry.entSeq, wordPath(entry)])
 )
 
+export function linkedWordPath(
+  word: { entSeq: number; headword: string; reading: string },
+  dictionaryLoaded: boolean
+): string | null {
+  return dictionaryLoaded ? wordPath(word) : (fixtureWordPaths.get(word.entSeq) ?? null)
+}
+
 export interface SearchLinks {
   dictionaryLoaded: boolean
   kanji: KanjiDetailsData | null
@@ -57,7 +64,7 @@ export function linkSearchScreen(screen: SearchResultsScreen, links: SearchLinks
   const refinement = screen.readingRefinement
   const rows = screen.rows.map(row => ({
     ...row,
-    path: links.dictionaryLoaded ? wordPath(row) : (fixtureWordPaths.get(row.entSeq) ?? null)
+    path: linkedWordPath(row, links.dictionaryLoaded)
   }))
   return {
     ...screen,

@@ -1,0 +1,9 @@
+JLPT Kanji Levels
+
+Unofficial level estimates from Jonathan Waller's JLPT kanji lists (tanos.co.uk).
+License: CC BY
+Project: https://web.archive.org/web/20200806005029/http://www.tanos.co.uk/jlpt/jlpt5/kanji/
+
+KanjiReferenceData.json's wallerJlptLevel holds each kanji's level from these lists. Waller's
+site licenses what he doesn't sell under Creative Commons BY, asking for credit and a link. It no
+longer resolves, so the link is the Internet Archive's copy.

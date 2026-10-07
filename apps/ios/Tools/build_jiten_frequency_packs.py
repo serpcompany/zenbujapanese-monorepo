@@ -10,7 +10,6 @@ import json
 import lzma
 import sqlite3
 import sys
-import tempfile
 import zipfile
 from pathlib import Path
 
@@ -78,50 +77,53 @@ def write_source(pairs: list[tuple[str, str]], archive: Path, entry: str) -> int
     return len(raw)
 
 
-def mapping_fields(pairs: list[tuple[str, str]], pack_id: str, version: str) -> dict[str, object]:
-    with tempfile.TemporaryDirectory() as directory:
-        database = sqlite3.connect(Path(directory) / "pack.sqlite3")
-        database.executescript(
-            "CREATE TABLE source_rows(rank INTEGER PRIMARY KEY, form TEXT NOT NULL, "
-            "source_reading TEXT NOT NULL, source_count INTEGER NOT NULL, source_pos TEXT NOT NULL, "
-            "source_record_digest BLOB NOT NULL);"
-            "CREATE TABLE frequency_evidence(language_reference_id BLOB PRIMARY KEY, "
-            "rank INTEGER NOT NULL, source_count INTEGER NOT NULL, covered_source_rows INTEGER NOT NULL, "
-            "mapping_relation TEXT NOT NULL, matched_form TEXT NOT NULL, source_pos TEXT NOT NULL, "
-            "source_record_digest BLOB NOT NULL) WITHOUT ROWID;"
-        )
-        database.executemany(
-            "INSERT INTO source_rows VALUES (?, ?, ?, 0, '', ?)",
-            ((rank, normalized(word), normalized(reading),
-              hashlib.sha256(canonical_json([word, reading])).digest())
-             for rank, (word, reading) in enumerate(pairs, 1)),
-        )
-        database.executescript(
-            MAPPING_V2.read_text(encoding="utf-8")
-            .replace("{{LANGUAGE_DATA_PATH}}", str(LANGUAGE_DATA).replace("'", "''"))
-            .replace("{{COVERED_SOURCE_ROWS}}", str(len(pairs)))
-        )
+def mapping_fields(
+    pairs: list[tuple[str, str]], pack_id: str, version: str, evidence: Path
+) -> dict[str, object]:
+    evidence.unlink(missing_ok=True)
+    database = sqlite3.connect(evidence)
+    database.executescript(
+        "CREATE TABLE source_rows(rank INTEGER PRIMARY KEY, form TEXT NOT NULL, "
+        "source_reading TEXT NOT NULL, source_count INTEGER NOT NULL, source_pos TEXT NOT NULL, "
+        "source_record_digest BLOB NOT NULL);"
+        "CREATE TABLE frequency_evidence(language_reference_id BLOB PRIMARY KEY, "
+        "rank INTEGER NOT NULL, source_count INTEGER NOT NULL, covered_source_rows INTEGER NOT NULL, "
+        "mapping_relation TEXT NOT NULL, matched_form TEXT NOT NULL, source_pos TEXT NOT NULL, "
+        "source_record_digest BLOB NOT NULL) WITHOUT ROWID;"
+    )
+    database.executemany(
+        "INSERT INTO source_rows VALUES (?, ?, ?, 0, '', ?)",
+        ((rank, normalized(word), normalized(reading),
+          hashlib.sha256(canonical_json([word, reading])).digest())
+         for rank, (word, reading) in enumerate(pairs, 1)),
+    )
+    database.executescript(
+        MAPPING_V2.read_text(encoding="utf-8")
+        .replace("{{LANGUAGE_DATA_PATH}}", str(LANGUAGE_DATA).replace("'", "''"))
+        .replace("{{COVERED_SOURCE_ROWS}}", str(len(pairs)))
+    )
 
-        def one(sql: str) -> int:
-            return database.execute(sql).fetchone()[0]
+    def one(sql: str) -> int:
+        return database.execute(sql).fetchone()[0]
 
-        mapped = one("SELECT count(*) FROM frequency_evidence")
-        ambiguous = one(
-            "SELECT count(*) FROM resolutions WHERE candidate_count>1 AND pos_candidate_count != 1")
-        unmapped = len(pairs) - one("SELECT count(*) FROM resolutions")
-        duplicates = one("SELECT count(*) FROM eligible") - mapped
-        digest = hashlib.sha256()
-        for identifier, rank, count, form, relation, pos, source_digest in database.execute(
-            "SELECT language_reference_id, rank, source_count, matched_form, mapping_relation, "
-            "source_pos, source_record_digest FROM frequency_evidence ORDER BY language_reference_id"
-        ):
-            digest.update(identifier + rank.to_bytes(8, "big") + count.to_bytes(8, "big")
-                          + form.encode() + b"\0" + relation.encode() + b"\0" + pos.encode()
-                          + b"\0" + source_digest)
-        smoke = database.execute(
-            "SELECT lower(hex(language_reference_id)), rank FROM frequency_evidence "
-            "ORDER BY rank, language_reference_id LIMIT 1").fetchone()
-        database.close()
+    mapped = one("SELECT count(*) FROM frequency_evidence")
+    ambiguous = one(
+        "SELECT count(*) FROM resolutions WHERE candidate_count>1 AND pos_candidate_count != 1")
+    unmapped = len(pairs) - one("SELECT count(*) FROM resolutions")
+    duplicates = one("SELECT count(*) FROM eligible") - mapped
+    digest = hashlib.sha256()
+    for identifier, rank, count, form, relation, pos, source_digest in database.execute(
+        "SELECT language_reference_id, rank, source_count, matched_form, mapping_relation, "
+        "source_pos, source_record_digest FROM frequency_evidence ORDER BY language_reference_id"
+    ):
+        digest.update(identifier + rank.to_bytes(8, "big") + count.to_bytes(8, "big")
+                      + form.encode() + b"\0" + relation.encode() + b"\0" + pos.encode()
+                      + b"\0" + source_digest)
+    smoke = database.execute(
+        "SELECT lower(hex(language_reference_id)), rank FROM frequency_evidence "
+        "ORDER BY rank, language_reference_id LIMIT 1").fetchone()
+    database.commit()
+    database.close()
     metadata = {
         "artifact_schema": "zenbu.frequency-pack.v1", "pack_id": pack_id, "pack_version": version,
         "mapping_policy_version": "2", "presentation_policy_version": "1",
@@ -153,7 +155,7 @@ def manifest_for(spec: dict, record: dict, out_dir: Path) -> dict[str, object]:
     joined = " + ".join(media)
     merge = (" Lists are merged by mean list percentile; a word missing from a list counts as "
              "its last position." if len(media) > 1 else "")
-    fields = mapping_fields(pairs, pack_id, version)
+    fields = mapping_fields(pairs, pack_id, version, out_dir / f"{pack_id}.sqlite3")
     return {
         "packID": pack_id,
         "packVersion": version,

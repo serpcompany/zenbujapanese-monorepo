@@ -7,3 +7,4 @@ apps/ios/LanguageData/Sources/Jiten-*/*.csv.xz filter=lfs diff=lfs merge=lfs -te
 apps/ios/LanguageData/Sources/Tatoeba-*/*.bz2 filter=lfs diff=lfs merge=lfs -text
 apps/ios/LanguageData/Sources/KANJIDIC2-*/*.gz filter=lfs diff=lfs merge=lfs -text
 apps/ios/LanguageData/Sources/EDRDG-radicals-*/*.gz filter=lfs diff=lfs merge=lfs -text
+apps/ios/LanguageData/Sources/Kanji-JLPT-Waller-*/*.html filter=lfs diff=lfs merge=lfs -text

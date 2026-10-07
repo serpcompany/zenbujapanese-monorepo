@@ -20,10 +20,14 @@ a sign-in prompt once account pages (#468) exist.
   shows it, with what the app opens from it: its conjugation table and forms, its kanji's details,
   and its examples.
 
-The dictionary has only these three page types (ADR 0010); the kanji, conjugation, and Example
-Sentences pages that came before it redirect to the nearest of them. The shared header and footer,
-and the URL, indexing, and sitemap rules, apply to all of them.
-[Dictionary](dictionary.md) describes every behavior, page by page.
+- **Browse pages**, under `/dictionary/browse/`: lists of words by kana, category, and frequency,
+  and of kanji, linking to the word and search pages.
+
+The dictionary has these page types (ADR 0010, amended for #614); the kanji, conjugation, and
+Example Sentences pages that came before it redirect to the nearest of them. The shared header and
+footer, and the URL, indexing, and sitemap rules, apply to all of them.
+[Dictionary](dictionary.md) describes every behavior, page by page, and [Browse pages](browse.md)
+the browse pages.
 
 The legal pages are under `/legal/`. [Privacy Policy](privacy.md) describes what
 `/legal/privacy/` says about the app, the website, and a Zenbu account, Tomodachi included.
