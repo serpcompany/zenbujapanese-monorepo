@@ -363,6 +363,10 @@ previews stay still.
   animated stroke, and the pitch downstep. Everything else uses SwiftUI's system styles.
 - Account's support and privacy URLs (`AccountAndMediaLibraryView.swift`) match the App Store
   listing's in `apps/ios/metadata/`; change both together.
+- The privacy manifest (`apps/ios/App/PrivacyInfo.xcprivacy`) declares no collected data, which
+  stays true until the app signs in (#573). The app's data, the App Store privacy labels, and the
+  manifest change together, as the
+  [App Store privacy labels](../../apps/web/docs/app-store-privacy-labels.md) say.
 - `CreditsView` links the documentation of each EDRDG file (JMdict, KANJIDIC2, RADKFILE), as the
   EDRDG licence requires.
 
