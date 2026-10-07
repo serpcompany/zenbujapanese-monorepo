@@ -10,7 +10,6 @@ struct LiveConversationView: View {
   @State private var isFollowingLatest = true
   @State private var isConfirmingExit = false
   @State private var wasListeningBeforeExit = false
-  @State private var isChoosingMode = false
 
   var body: some View {
     VStack(spacing: 0) {
@@ -36,11 +35,6 @@ struct LiveConversationView: View {
     .navigationTitle(session.mode.languagePair)
     .navigationBarTitleDisplayMode(.inline)
     .navigationBarBackButtonHidden()
-    .sheet(isPresented: $isChoosingMode) {
-      LiveModesSheet(selection: session.mode, confirmTitle: String(localized: "Done")) { mode in
-        Task { await experience.switchMode(to: mode) }
-      }
-    }
     .toolbar {
       ToolbarItem(placement: .topBarLeading) {
         Button("Back", systemImage: "chevron.backward", action: requestExit)
@@ -148,8 +142,6 @@ struct LiveConversationView: View {
       Toggle(isOn: furigana) {
         Label("Furigana", systemImage: "textformat.size.smaller")
       }
-      Divider()
-      Button("Change Mode…", systemImage: session.mode.systemImage) { isChoosingMode = true }
     }
     .accessibilityIdentifier("translate.conversation.options")
   }

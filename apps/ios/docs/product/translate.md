@@ -13,15 +13,22 @@ engine yet, so there is no Online/Offline switch and no cost or model details.
 
 ## The tab's home
 
-The tab opens on the live modes. It has a small **Translate** title with a History button, a
-**Type to translate** field, a large illustration of the selected mode, the three modes listed
-with a description each, and **Start** above the tab bar. The selected mode is tinted with a
-checkmark, and the choice is remembered. **Start** starts that mode right away.
+The tab opens on four ways to translate. It has a small **Translate** title with a History
+button, an illustration of the selected option, the four options listed with a description each,
+and **Start** above the tab bar. The selected option is tinted with a checkmark, and the choice
+is remembered.
+
+| Option | What **Start** does |
+| --- | --- |
+| **Conversation** | Two-way and live. Each turn is detected as Japanese or English. Translations play out loud, and the microphone keeps listening while they play, so someone who keeps talking isn't lost. A translation never starts while someone is talking. The speaker button silences them. |
+| **Listening** | One-way and live, for a TV, a guide, or announcements. Hears Japanese only, from a distance and without voice isolation. English leads each card, and each translation plays as soon as it's ready. With earphones the microphone keeps listening; on the iPhone's speaker it waits while each translation plays, so it doesn't hear itself. |
+| **Text** | Opens the typing screen, ready to type or paste. |
+| **Document Upload** | Opens the file picker for a PDF, a photo, or a text file. Its text opens on the typing screen, translated. A PDF's own text is used. A scanned PDF (its first 10 pages) or a photo is read with on-device text recognition. A file with no text shows **Couldn't read this document**. |
 
 ## Typing to translate
 
-**Type to translate** opens a screen with one large card reading **Translate anything**, already
-typing. Translate detects the language:
+The typing screen is one large card reading **Translate anything**. Translate detects the
+language:
 text with any kana or kanji is Japanese and is translated into English, and text with only Latin
 letters is English and is translated into Japanese. There is no swap button. The translation
 appears in the same card under a divider, with a label such as **English → Japanese** and
@@ -29,29 +36,23 @@ buttons to copy and speak it; Japanese in it is underlined and tappable. An ✕ 
 If Apple's Japanese language isn't downloaded, the card offers **Download Japanese**, which shows
 Apple's download prompt.
 
-## Starting
+## Starting a live mode
 
-The modes are:
-
-| Mode | What it does |
-| --- | --- |
-| **Conversation** | Two-way. Each turn is detected as Japanese or English. Translations play out loud, and the microphone keeps listening while they play, so someone who keeps talking isn't lost. A translation never starts while someone is talking. |
-| **Listening** | One-way, for a TV, a guide, or announcements. Hears Japanese only, from a distance and without voice isolation. English leads each card, and each translation plays as soon as it's ready. With earphones the microphone keeps listening; on the iPhone's speaker it waits while each translation plays, so it doesn't hear itself. |
-| **Text Only** | Like Conversation, but nothing plays, so the microphone never turns off between turns. |
-
-The first time, iOS asks for the microphone. If access is off, a banner reads **Microphone access
-is off** with **Open Settings**.
+The first time, **Start** brings up iOS's request for the microphone. If access was turned off,
+**Start** shows **Allow the microphone** with **Open Settings** and **Cancel**. A missing
+translation download shows **Download Japanese**, and a missing speech download explains that it
+needs a connection once. Nothing stays on the home screen afterward.
 
 ## The conversation
 
 The conversation replaces the tab's home and fills the screen: the tab bar is hidden while it's
 open. The top bar has Back, the title **Japanese ⇄ English** (**Japanese → English** in
-Listening), and a **•••** menu with the layout (**Cards** or **Two Panes**), **Furigana**, and
-**Change Mode…**.
+Listening), and a **•••** menu with the layout (**Cards** or **Two Panes**) and **Furigana**. To
+change mode, leave and pick another option on the home.
 
 Along the bottom are the conversation's controls:
 
-- a speaker button that mutes spoken translations, switching to Text Only, and turns them back on
+- a speaker button that mutes spoken translations and turns them back on
   (not in Listening);
 - the speech speed, **−** and **+** in steps of 0.1 from 0.5× to 2.0×, remembered for the next
   conversation;
@@ -88,9 +89,6 @@ text is one Dynamic Type size larger than the rest of the app.
   bar is back, a full-width bar above the tab bar shows the timer and button with a status line,
   reading **Conversation still listening · Return** or **Conversation paused · Return** on other
   tabs; tapping it returns to the conversation.
-- **Modes.** **Change Mode…** reopens Live translation modes with **Done**; switching between
-  Conversation and Text Only keeps the conversation, and switching to or from Listening saves it
-  and starts a new one.
 
 ## Pausing and leaving
 

@@ -140,7 +140,7 @@ extension HistoryRetention {
 }
 
 enum TranslateRoute: Hashable {
-  case typing
+  case text(String)
   case history
   case conversation(UUID)
 }

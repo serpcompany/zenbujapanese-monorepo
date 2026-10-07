@@ -15,7 +15,7 @@ struct TranslateTabRoot: View {
         TranslateHomeView(
           experience: experience,
           openHistory: { push(.history) },
-          openTyping: { push(.typing) }
+          openText: { push(.text($0)) }
         )
         .transition(.move(edge: .leading))
       }
@@ -23,8 +23,8 @@ struct TranslateTabRoot: View {
     .animation(.smooth, value: experience.session == nil)
     .navigationDestination(for: TranslateRoute.self) { route in
       switch route {
-      case .typing:
-        TypedTranslationScreen(experience: experience, words: words)
+      case .text(let text):
+        TypedTranslationScreen(text: text, experience: experience, words: words)
       case .history:
         TranslateHistoryView(history: experience.history, transcript: transcriptActions)
       case .conversation(let id):

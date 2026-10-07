@@ -47,7 +47,7 @@ struct TypedTranslationCard: View {
     .frame(maxWidth: .infinity, maxHeight: .infinity)
     .background(Color(uiColor: .secondarySystemBackground), in: .rect(cornerRadius: 32))
     .task(id: request) { await translate(request.text) }
-    .onAppear { isEditing = true }
+    .onAppear { if text.isEmpty { isEditing = true } }
     .sensoryFeedback(.success, trigger: copyCount)
   }
 

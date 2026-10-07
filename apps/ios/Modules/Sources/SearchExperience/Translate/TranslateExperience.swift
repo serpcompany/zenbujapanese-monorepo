@@ -23,7 +23,7 @@ enum TranslateStartProblem: Equatable {
 @MainActor
 @Observable
 final class TranslateExperience {
-  private static let modeKey = "translate.mode.v1"
+  private static let startKey = "translate.start.v1"
   private static let layoutKey = "translate.layout.v1"
   private static let speechSpeedKey = "translate.speech-speed.v1"
   static let speechSpeeds = 0.5...2.0
@@ -34,8 +34,8 @@ final class TranslateExperience {
   private(set) var preparation: TranslatePreparation?
   private(set) var startProblem: TranslateStartProblem?
   var translationDownload: TranslationSession.Configuration?
-  var preferredMode: TranslateMode {
-    didSet { defaults.set(preferredMode.rawValue, forKey: Self.modeKey) }
+  var preferredStart: TranslateStart {
+    didSet { defaults.set(preferredStart.rawValue, forKey: Self.startKey) }
   }
   var layout: ConversationLayout {
     didSet { defaults.set(layout.rawValue, forKey: Self.layoutKey) }
@@ -60,8 +60,8 @@ final class TranslateExperience {
     self.services = services
     self.history = history
     self.defaults = defaults
-    preferredMode =
-      defaults.string(forKey: Self.modeKey).flatMap(TranslateMode.init(rawValue:))
+    preferredStart =
+      defaults.string(forKey: Self.startKey).flatMap(TranslateStart.init(rawValue:))
       ?? .conversation
     layout =
       defaults.string(forKey: Self.layoutKey).flatMap(ConversationLayout.init(rawValue:)) ?? .cards
@@ -84,7 +84,8 @@ final class TranslateExperience {
   var isPreparing: Bool { preparation != nil }
 
   func start(_ requestedMode: TranslateMode? = nil) async {
-    await start(requestedMode ?? preferredMode, offeringTranslationDownload: true)
+    await start(
+      requestedMode ?? preferredStart.liveMode ?? .conversation, offeringTranslationDownload: true)
   }
 
   func dismissStartProblem() {
@@ -110,7 +111,6 @@ final class TranslateExperience {
   }
 
   func switchMode(to mode: TranslateMode) async {
-    preferredMode = mode
     guard let session, session.mode != mode else { return }
     if session.mode.canSwitchWithinSession(to: mode) {
       session.switchMode(to: mode)

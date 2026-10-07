@@ -5,16 +5,15 @@ import UIKit
 struct TranslateHomeView: View {
   @Bindable var experience: TranslateExperience
   let openHistory: () -> Void
-  let openTyping: () -> Void
+  let openText: (String) -> Void
+  @State private var isChoosingDocument = false
+  @State private var isReadingDocument = false
+  @State private var unreadableDocument = false
 
   var body: some View {
     ScrollView {
       VStack(spacing: 16) {
-        if let problem = experience.startProblem {
-          StartProblemBanner(problem: problem, experience: experience)
-        }
-        typeField
-        LiveModesPicker(selection: $experience.preferredMode)
+        TranslateStartPicker(selection: $experience.preferredStart)
       }
       .padding(.horizontal)
       .padding(.bottom, 24)
@@ -29,20 +28,40 @@ struct TranslateHomeView: View {
           .accessibilityIdentifier("translate.history")
       }
     }
+    .fileImporter(isPresented: $isChoosingDocument, allowedContentTypes: DocumentText.readableTypes) {
+      result in
+      guard case .success(let url) = result else { return }
+      Task { await read(url) }
+    }
+    .modifier(StartProblemAlert(experience: experience))
+    .alert("Couldn't read this document", isPresented: $unreadableDocument) {
+      Button("OK", role: .cancel) {}
+    } message: {
+      Text("Choose a PDF, a photo, or a text file with Japanese or English text in it.")
+    }
   }
 
-  private var typeField: some View {
-    Button(action: openTyping) {
-      Label("Type to translate", systemImage: "keyboard")
-        .font(.body)
-        .foregroundStyle(.secondary)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(.horizontal, 14)
-        .frame(minHeight: 44)
-        .background(Color(uiColor: .secondarySystemBackground), in: .rect(cornerRadius: 12))
+  private var isBusy: Bool { experience.isPreparing || isReadingDocument }
+
+  private func start() {
+    switch experience.preferredStart {
+    case .conversation, .listening:
+      Task { await experience.start() }
+    case .text:
+      openText("")
+    case .document:
+      isChoosingDocument = true
     }
-    .buttonStyle(.plain)
-    .accessibilityIdentifier("translate.typed.open")
+  }
+
+  private func read(_ url: URL) async {
+    isReadingDocument = true
+    defer { isReadingDocument = false }
+    do {
+      openText(try await DocumentText.read(url))
+    } catch {
+      unreadableDocument = true
+    }
   }
 
   private var startButton: some View {
@@ -53,11 +72,9 @@ struct TranslateHomeView: View {
           .foregroundStyle(.secondary)
           .accessibilityIdentifier("translate.preparing")
       }
-      Button {
-        Task { await experience.start(experience.preferredMode) }
-      } label: {
+      Button(action: start) {
         Group {
-          if experience.isPreparing {
+          if isBusy {
             ProgressView()
           } else {
             Text("Start")
@@ -69,8 +86,8 @@ struct TranslateHomeView: View {
       .buttonStyle(.borderedProminent)
       .buttonBorderShape(.capsule)
       .controlSize(.large)
-      .disabled(experience.isPreparing)
-      .accessibilityIdentifier("translate.modes.confirm")
+      .disabled(isBusy)
+      .accessibilityIdentifier("translate.start")
     }
     .padding(.bottom, 8)
   }
@@ -79,74 +96,67 @@ struct TranslateHomeView: View {
 struct TypedTranslationScreen: View {
   let experience: TranslateExperience
   let words: TranslateWordLinks
-  @State private var text = ""
+  @State private var text: String
+
+  init(text: String, experience: TranslateExperience, words: TranslateWordLinks) {
+    _text = State(initialValue: text)
+    self.experience = experience
+    self.words = words
+  }
 
   var body: some View {
     TypedTranslationCard(text: $text, experience: experience, words: words)
       .padding(.horizontal)
       .padding(.bottom, 12)
       .background(Color(uiColor: .systemBackground))
-      .navigationTitle("Type to Translate")
+      .navigationTitle("Text")
       .navigationBarTitleDisplayMode(.inline)
   }
 }
 
-private struct StartProblemBanner: View {
-  let problem: TranslateStartProblem
+private struct StartProblemAlert: ViewModifier {
   let experience: TranslateExperience
   @Environment(\.openURL) private var openURL
 
-  var body: some View {
-    HStack(alignment: .top, spacing: 12) {
-      Image(
-        systemName: problem == .microphoneDenied
-          ? "mic.slash.fill" : "exclamationmark.triangle.fill"
-      )
-      .foregroundStyle(.red)
-      .font(.title3)
-      VStack(alignment: .leading, spacing: 4) {
-        Text(title).font(.headline)
-        Text(message).font(.subheadline).foregroundStyle(.secondary)
-        actions
+  func body(content: Content) -> some View {
+    content.alert(
+      title, isPresented: isPresented, presenting: experience.startProblem
+    ) { problem in
+      switch problem {
+      case .microphoneDenied:
+        Button("Open Settings") {
+          if let url = URL(string: UIApplication.openSettingsURLString) { openURL(url) }
+        }
+        Button("Cancel", role: .cancel) {}
+      case .translationUnavailable:
+        Button("Download Japanese") { experience.requestTranslationDownload() }
+        Button("Cancel", role: .cancel) {}
+      case .speechUnavailable:
+        Button("OK", role: .cancel) {}
       }
-      Spacer(minLength: 0)
-      Button("Dismiss", systemImage: "xmark") { experience.dismissStartProblem() }
-        .labelStyle(.iconOnly)
-        .buttonStyle(.plain)
-        .foregroundStyle(.secondary)
+    } message: { _ in
+      Text(message)
     }
-    .padding(16)
-    .background(Color(uiColor: .secondarySystemBackground), in: .rect(cornerRadius: 24))
-    .accessibilityElement(children: .contain)
-    .accessibilityIdentifier("translate.start-problem")
   }
 
-  @ViewBuilder
-  private var actions: some View {
-    switch problem {
-    case .microphoneDenied:
-      Button("Open Settings") {
-        if let url = URL(string: UIApplication.openSettingsURLString) { openURL(url) }
-      }
-      .font(.subheadline.weight(.semibold))
-    case .translationUnavailable:
-      Button("Download Japanese") { experience.requestTranslationDownload() }
-        .font(.subheadline.weight(.semibold))
-    case .speechUnavailable:
-      EmptyView()
-    }
+  private var isPresented: Binding<Bool> {
+    Binding(
+      get: { experience.startProblem != nil },
+      set: { if !$0 { experience.dismissStartProblem() } })
   }
 
   private var title: String {
-    switch problem {
-    case .microphoneDenied: String(localized: "Microphone access is off")
+    guard let problem = experience.startProblem else { return "" }
+    return switch problem {
+    case .microphoneDenied: String(localized: "Allow the microphone")
     case .speechUnavailable: String(localized: "Speech recognition isn't ready")
     case .translationUnavailable: String(localized: "Translation isn't downloaded")
     }
   }
 
   private var message: String {
-    switch problem {
+    guard let problem = experience.startProblem else { return "" }
+    return switch problem {
     case .microphoneDenied: TranslatorFailure.microphoneDenied.message
     case .speechUnavailable:
       String(

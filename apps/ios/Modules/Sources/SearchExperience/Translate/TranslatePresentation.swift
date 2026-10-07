@@ -6,7 +6,7 @@ extension TranslateMode {
     switch self {
     case .conversation: String(localized: "Conversation")
     case .listening: String(localized: "Listening")
-    case .textOnly: String(localized: "Text Only")
+    case .textOnly: String(localized: "Conversation")
     }
   }
 
@@ -15,25 +15,6 @@ extension TranslateMode {
     case .conversation: "bubble.left.and.bubble.right"
     case .listening: "ear"
     case .textOnly: "text.bubble"
-    }
-  }
-
-  var summary: String {
-    switch self {
-    case .conversation:
-      String(localized: "Take turns speaking Japanese or English. Translations play out loud on your iPhone.")
-    case .listening:
-      String(localized: "Hear Japanese around you, like a TV, a guide, or announcements, in English. Best with earphones.")
-    case .textOnly:
-      String(localized: "Take turns speaking. Read the translations; nothing plays out loud.")
-    }
-  }
-
-  var heroSymbol: String {
-    switch self {
-    case .conversation: "person.2.wave.2.fill"
-    case .listening: "ear.badge.waveform"
-    case .textOnly: "text.bubble.fill"
     }
   }
 

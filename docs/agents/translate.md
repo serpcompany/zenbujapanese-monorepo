@@ -43,9 +43,11 @@ The tab is split across two Swift targets in `apps/ios/Modules`
   (`AVSpeechSynthesizer`), and `TranslateExperience`, which owns the session, History, the
   remembered mode, and the start checks (microphone, Apple Translation, speech assets), which
   are on-device-specific and change when an Online engine arrives. The home is
-  `TranslateHomeView`: the modes (`LiveModesPicker`, shared with the `LiveModesSheet` that
-  **Change Mode…** opens) and Start. **Type to translate** pushes `TypedTranslationScreen` with
-  `TypedTranslationCard`. `SearchExperienceRootView` adds
+  `TranslateHomeView`: the four `TranslateStart` options (`TranslateStartPicker`) and Start. Text
+  pushes `TypedTranslationScreen` with `TypedTranslationCard`; Document Upload reads the file with
+  `DocumentText` (PDFKit, then Vision text recognition for scanned pages and photos) and pushes
+  the same screen with its text. Muting a conversation still switches it to the internal Text
+  Only mode, which History labels Conversation. `SearchExperienceRootView` adds
   the tab, its navigation stack, and its word sheet, and `TranslateSessionChrome` adds the session
   bar for other tabs (`TranslateSessionAccessory`, a `tabViewBottomAccessory`, hidden while the
   conversation is on screen), the silence prompt, and the background pause to the whole `TabView`.
@@ -161,15 +163,15 @@ Release builds don't contain the harness.
 
 In the Simulator, with the harness:
 
-- **Type to translate**, then `Where can I buy a Suica card?`, shows **English →
+- **Text**, **Start**, then `Where can I buy a Suica card?`, shows **English →
   Japanese**, copy, speak, and linked Japanese; tapping a word closes the keyboard and opens Word
   Detail at half height.
-- The tab opens on the modes; **Start** with Conversation shows the
+- The tab opens on Conversation, Listening, Text, and Document Upload; **Start** with Conversation shows the
   station conversation full screen, without the tab bar: an English card, then a wider gap and one
   Japanese turn of three cards whose audio waits (**N waiting for a pause**), each card turning
   active while it plays. Along the bottom are the speaker, − 1.0× +, and the red timer with a pause
   button that becomes a blue play while paused. **•••** switches to **Two Panes** (a dark Japanese
-  pane over a light English one) and back, turns on **Furigana**, and offers **Change Mode…**.
+  pane over a light English one) and back, and turns on **Furigana**.
 - In History, a conversation's transcript has a speaker and a bookmark on each sentence;
   bookmarking one lists it under **Bookmarked**.
 - Opening a word's full entry shows the full-width session bar above the tab bar; another tab
