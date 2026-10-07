@@ -2,51 +2,34 @@ import SwiftUI
 import TranslatorCore
 
 enum ConversationRow: Identifiable {
-  case label(id: String, language: SpokenLanguage, isLive: Bool)
-  case sentence(TranslatedSentence, language: SpokenLanguage)
-  case live(LiveSentence)
+  case sentence(TranslatedSentence, language: SpokenLanguage, startsTurn: Bool)
+  case live(LiveSentence, startsTurn: Bool)
 
   var id: String {
     switch self {
-    case .label(let id, _, _): id
-    case .sentence(let sentence, _): sentence.id.uuidString
+    case .sentence(let sentence, _, _): sentence.id.uuidString
     case .live: "live"
+    }
+  }
+
+  var startsTurn: Bool {
+    switch self {
+    case .sentence(_, _, let startsTurn), .live(_, let startsTurn): startsTurn
     }
   }
 
   @MainActor
   static func rows(for session: LiveConversation) -> [ConversationRow] {
     var rows: [ConversationRow] = []
-    for turn in session.conversation.turns where !turn.sentences.isEmpty {
-      rows.append(
-        .label(id: "label.\(turn.id)", language: turn.language, isLive: turn.id == session.openTurnID))
-      rows += turn.sentences.map { .sentence($0, language: turn.language) }
+    for turn in session.conversation.turns {
+      let followsAnotherTurn = !rows.isEmpty
+      rows += turn.sentences.enumerated().map { index, sentence in
+        .sentence(sentence, language: turn.language, startsTurn: index == 0 && followsAnotherTurn)
+      }
     }
     guard let live = session.liveSentence else { return rows }
-    if session.openTurn?.language != live.language {
-      rows.append(.label(id: "label.live", language: live.language, isLive: true))
-    }
-    rows.append(.live(live))
+    rows.append(.live(live, startsTurn: session.openTurn?.language != live.language && !rows.isEmpty))
     return rows
-  }
-}
-
-struct ConversationLanguageLabel: View {
-  let language: SpokenLanguage
-  let isLive: Bool
-
-  var body: some View {
-    HStack {
-      Text(language.directionLabel)
-      Spacer()
-      if isLive { Text("live").foregroundStyle(.tint) }
-    }
-    .font(.caption.weight(.semibold))
-    .foregroundStyle(.secondary)
-    .padding(.horizontal, 12)
-    .listRowSeparator(.hidden)
-    .listRowBackground(Color.clear)
-    .listRowInsets(EdgeInsets(top: 10, leading: 16, bottom: 0, trailing: 16))
   }
 }
 
@@ -58,27 +41,57 @@ struct SentenceCard: View {
   let isUntranslated: Bool
   let isSpeaking: Bool
   let words: TranslateWordLinks
+  var replay: (() -> Void)?
+  var bookmark: Binding<Bool>?
 
   var body: some View {
-    VStack(alignment: .leading, spacing: 8) {
+    VStack(alignment: .leading, spacing: 10) {
       if leadsWithTranslation {
         translation
+        separator
         source.foregroundStyle(.secondary)
       } else {
         source
+        separator
         translation.foregroundStyle(isSpeaking ? .primary : .secondary)
       }
-      if isSpeaking {
-        Label("Speaking \(language.counterpart.name)", systemImage: "waveform")
-          .symbolEffect(.variableColor.iterative)
-          .font(.caption.weight(.semibold))
-          .foregroundStyle(.tint)
-      }
+      if replay != nil || bookmark != nil { actions }
     }
     .padding(.vertical, 10)
     .frame(maxWidth: .infinity, alignment: .leading)
     .accessibilityElement(children: .contain)
+    .accessibilityValue(isSpeaking ? Text("Speaking \(language.counterpart.name)") : Text(""))
     .accessibilityIdentifier("translate.sentence.\(sentence.id)")
+  }
+
+  private var separator: some View {
+    Rectangle()
+      .fill(.separator)
+      .frame(maxWidth: .infinity)
+      .frame(height: 1)
+  }
+
+  private var actions: some View {
+    HStack(spacing: 20) {
+      Spacer()
+      if let replay {
+        Button("Play Translation", systemImage: "speaker.wave.2", action: replay)
+          .disabled(sentence.translation == nil)
+          .accessibilityIdentifier("translate.sentence.\(sentence.id).replay")
+      }
+      if let bookmark {
+        Button(
+          bookmark.wrappedValue ? "Remove Bookmark" : "Bookmark",
+          systemImage: bookmark.wrappedValue ? "bookmark.fill" : "bookmark"
+        ) { bookmark.wrappedValue.toggle() }
+        .foregroundStyle(bookmark.wrappedValue ? AnyShapeStyle(.tint) : AnyShapeStyle(.secondary))
+        .accessibilityAddTraits(bookmark.wrappedValue ? .isSelected : [])
+        .accessibilityIdentifier("translate.sentence.\(sentence.id).bookmark")
+      }
+    }
+    .labelStyle(.iconOnly)
+    .buttonStyle(.borderless)
+    .foregroundStyle(.secondary)
   }
 
   private var source: some View {
@@ -210,5 +223,15 @@ struct ConversationStatusCard: View {
   private var buttonTitle: String {
     if case .failed = activity { return String(localized: "Try Again") }
     return String(localized: "Resume")
+  }
+}
+
+struct OneSizeLargerText: ViewModifier {
+  @Environment(\.dynamicTypeSize) private var size
+
+  func body(content: Content) -> some View {
+    let sizes = DynamicTypeSize.allCases
+    let index = sizes.firstIndex(of: size).map { min($0 + 1, sizes.count - 1) }
+    content.dynamicTypeSize(index.map { sizes[$0] } ?? size)
   }
 }

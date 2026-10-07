@@ -13,6 +13,49 @@ struct LiveConversationView: View {
   @State private var isChoosingMode = false
 
   var body: some View {
+    VStack(spacing: 0) {
+      Group {
+        switch experience.layout {
+        case .cards: cards
+        case .twoPanes: TwoPaneConversationView(session: session, words: words).padding(.top, 8)
+        }
+      }
+      .modifier(OneSizeLargerText())
+      .environment(experience.readingAids)
+      .frame(maxHeight: .infinity)
+      ConversationControlBar(session: session, experience: experience)
+    }
+    .toolbar(.hidden, for: .tabBar)
+    .alert("Leave this conversation?", isPresented: $isConfirmingExit) {
+      Button("Save and Exit") { leave(saving: true) }
+      Button("Exit Without Saving", role: .destructive) { leave(saving: false) }
+      Button("Cancel", role: .cancel) {}
+    } message: {
+      Text("Save its \(session.conversation.turnCountLabel) to History, or leave without saving.")
+    }
+    .navigationTitle(session.mode.languagePair)
+    .navigationBarTitleDisplayMode(.inline)
+    .navigationBarBackButtonHidden()
+    .sheet(isPresented: $isChoosingMode) {
+      LiveModesSheet(selection: session.mode, confirmTitle: String(localized: "Done")) { mode in
+        Task { await experience.switchMode(to: mode) }
+      }
+    }
+    .toolbar {
+      ToolbarItem(placement: .topBarLeading) {
+        Button("Back", systemImage: "chevron.backward", action: requestExit)
+          .accessibilityIdentifier("translate.conversation.back")
+      }
+      ToolbarItem(placement: .topBarTrailing) { optionsMenu }
+    }
+    .onChange(of: isConfirmingExit) { _, isConfirming in
+      guard !isConfirming, experience.session === session, session.status == .paused(.leaving)
+      else { return }
+      if wasListeningBeforeExit { session.start() }
+    }
+  }
+
+  private var cards: some View {
     ScrollViewReader { proxy in
       List {
         ForEach(ConversationRow.rows(for: session)) { row in
@@ -54,44 +97,13 @@ struct LiveConversationView: View {
         }
       }
     }
-    .navigationTitle(session.mode.languagePair)
-    .navigationBarTitleDisplayMode(.inline)
-    .navigationBarBackButtonHidden()
-    .toolbarTitleMenu { conversationMenu }
-    .sheet(isPresented: $isChoosingMode) {
-      LiveModesSheet(selection: session.mode, confirmTitle: String(localized: "Done")) { mode in
-        Task { await experience.switchMode(to: mode) }
-      }
-    }
-    .toolbar {
-      ToolbarItem(placement: .topBarLeading) {
-        Button("Back", systemImage: "chevron.backward", action: requestExit)
-          .accessibilityIdentifier("translate.conversation.back")
-          .confirmationDialog(
-            "Leave this conversation?", isPresented: $isConfirmingExit, titleVisibility: .visible
-          ) {
-            Button("Save and Exit") { leave(saving: true) }
-            Button("Exit Without Saving", role: .destructive) { leave(saving: false) }
-            Button("Cancel", role: .cancel) {}
-          } message: {
-            Text("Save its \(session.conversation.turnCountLabel) to History, or leave without saving.")
-          }
-      }
-      ToolbarItem(placement: .topBarTrailing) { ConversationTimerControl(session: session) }
-    }
-    .onChange(of: isConfirmingExit) { _, isConfirming in
-      guard !isConfirming, experience.session === session, session.status == .paused(.leaving)
-      else { return }
-      if wasListeningBeforeExit { session.start() }
-    }
   }
 
   @ViewBuilder
   private func rowView(_ row: ConversationRow) -> some View {
+    let gap: CGFloat = row.startsTurn ? 14 : 0
     switch row {
-    case .label(_, let language, let isLive):
-      ConversationLanguageLabel(language: language, isLive: isLive)
-    case .sentence(let sentence, let language):
+    case .sentence(let sentence, let language, _):
       SentenceCard(
         sentence: sentence,
         language: language,
@@ -101,10 +113,11 @@ struct LiveConversationView: View {
         isSpeaking: session.speakingSentenceID == sentence.id,
         words: words
       )
-      .captionCardRow(isActive: session.speakingSentenceID == sentence.id)
-    case .live(let live):
+      .captionCardRow(
+        isActive: session.speakingSentenceID == sentence.id, cornerRadius: 6, gapAbove: gap)
+    case .live(let live, _):
       LiveSentenceCard(sentence: live, leadsWithTranslation: session.mode == .listening)
-        .captionCardRow(isActive: true)
+        .captionCardRow(isActive: true, cornerRadius: 6, gapAbove: gap)
     }
   }
 
@@ -125,22 +138,30 @@ struct LiveConversationView: View {
     .listRowBackground(Color.clear)
   }
 
-  @ViewBuilder
-  private var conversationMenu: some View {
-    if session.mode != .listening {
-      Toggle(isOn: playsAloud) {
-        Label("Play Translations Aloud", systemImage: "speaker.wave.2")
+  private var optionsMenu: some View {
+    Menu("Options", systemImage: "ellipsis") {
+      Picker("Layout", selection: layout) {
+        Label("Cards", systemImage: "rectangle.grid.1x2").tag(ConversationLayout.cards)
+        Label("Two Panes", systemImage: "rectangle.split.1x2").tag(ConversationLayout.twoPanes)
       }
-      .accessibilityIdentifier("translate.conversation.plays-aloud")
+      .pickerStyle(.inline)
+      Toggle(isOn: furigana) {
+        Label("Furigana", systemImage: "textformat.size.smaller")
+      }
+      Divider()
+      Button("Change Mode…", systemImage: session.mode.systemImage) { isChoosingMode = true }
     }
-    Button("Change Mode…", systemImage: session.mode.systemImage) { isChoosingMode = true }
+    .accessibilityIdentifier("translate.conversation.options")
   }
 
-  private var playsAloud: Binding<Bool> {
+  private var layout: Binding<ConversationLayout> {
+    Binding(get: { experience.layout }, set: { experience.layout = $0 })
+  }
+
+  private var furigana: Binding<Bool> {
     Binding(
-      get: { session.mode == .conversation },
-      set: { plays in Task { await experience.switchMode(to: plays ? .conversation : .textOnly) } }
-    )
+      get: { experience.readingAids.showsFurigana },
+      set: { experience.readingAids.showsFurigana = $0 })
   }
 
   private func leave(saving: Bool) {

@@ -46,8 +46,12 @@ The tab is split across two Swift targets in `apps/ios/Modules`
   `TypedTranslationCard` and the mode picker `LiveModesSheet`. `SearchExperienceRootView` adds
   the tab, its navigation stack, and its word sheet, and `TranslateSessionChrome` adds the session
   bar for other tabs (`TranslateSessionAccessory`, a `tabViewBottomAccessory`, hidden while the
-  conversation is on screen, where `ConversationTimerControl` in the top bar takes its place), the
-  silence prompt, and the background pause to the whole `TabView`.
+  conversation is on screen), the silence prompt, and the background pause to the whole `TabView`.
+  The conversation itself hides the tab bar and puts `ConversationControlBar` (mute, speech speed,
+  timer and pause) along the bottom; `TwoPaneConversationView` is its second layout. The layout,
+  the speech speed, and Translate's own `ReadingAidPreferences` (furigana off by default, stored
+  under `translate.reading-aids.v1`) live on `TranslateExperience`. Bookmarks are a field on
+  `TranslatedSentence`, and `ConversationHistory.bookmarks` lists them.
 
 ## Rules that aren't obvious
 
@@ -159,12 +163,15 @@ In the Simulator, with the harness:
   Japanese**, copy, speak, and linked Japanese; tapping a word closes the keyboard and opens Word
   Detail at half height.
 - The card's microphone opens **Live translation modes**; **Start** with Conversation shows the
-  station conversation: an **EN → 日本語** turn, then one Japanese turn of three cards whose audio
-  waits (**N waiting for a pause**), each card turning active while it plays. The pill at the top
-  right has the red timer and a pause button that becomes a blue play while paused; the title's
-  menu has **Play Translations Aloud** and **Change Mode…**.
-- Opening a word's full entry, or another tab, shows the full-width session bar; other tabs read
-  **Conversation still listening · Return**, which returns to the conversation.
+  station conversation full screen, without the tab bar: an English card, then a wider gap and one
+  Japanese turn of three cards whose audio waits (**N waiting for a pause**), each card turning
+  active while it plays. Along the bottom are the speaker, − 1.0× +, and the red timer with a pause
+  button that becomes a blue play while paused. **•••** switches to **Two Panes** (a dark Japanese
+  pane over a light English one) and back, turns on **Furigana**, and offers **Change Mode…**.
+- In History, a conversation's transcript has a speaker and a bookmark on each sentence;
+  bookmarking one lists it under **Bookmarked**.
+- Opening a word's full entry shows the full-width session bar above the tab bar; another tab
+  reads **Conversation still listening · Return**, which returns to the conversation.
 - Back shows **Leave this conversation?** from the Back button; **Save and Exit** returns home, and
   History lists it with **Today, HH:MM · N turns**, a long-press menu, and the transcript.
 - **Listening** leads each card with English and plays as it goes. After 20 seconds of silence,

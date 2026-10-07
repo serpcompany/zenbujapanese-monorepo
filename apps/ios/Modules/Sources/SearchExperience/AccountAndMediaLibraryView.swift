@@ -1,15 +1,17 @@
 import SwiftUI
+import TranslatorCore
 @preconcurrency import Translation
 import UIKit
 
 struct AccountNavigationView: View {
   @Binding var path: [AccountRoute]
   let store: EncounterMediaStore
+  let translationHistory: ConversationHistory
   let openItem: (String, String, String) -> Void
 
   var body: some View {
     NavigationStack(path: $path) {
-      AccountRootView()
+      AccountRootView(translationHistory: translationHistory)
         .navigationDestination(for: AccountRoute.self) { route in
           switch route {
           case .profile:
@@ -37,6 +39,7 @@ struct AccountNavigationView: View {
 struct AccountRootView: View {
   @Environment(WordKnowledge.self) private var wordKnowledge
   @Environment(WordLists.self) private var wordLists
+  @Bindable var translationHistory: ConversationHistory
 
   var body: some View {
     List {
@@ -86,6 +89,16 @@ struct AccountRootView: View {
           AccountRowLabel("Frequency Dictionaries", systemImage: "chart.bar.fill", tint: .green)
         }
         .accessibilityIdentifier("account.frequency-dictionaries")
+
+        Picker(selection: $translationHistory.retention) {
+          ForEach(HistoryRetention.allCases) { retention in
+            Text(retention.title).tag(retention)
+          }
+        } label: {
+          AccountRowLabel("Keep Translations", systemImage: "clock.fill", tint: .purple)
+        }
+        .pickerStyle(.menu)
+        .accessibilityIdentifier("account.keep-translations")
       }
 
       Section {

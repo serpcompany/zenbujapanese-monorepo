@@ -39,30 +39,50 @@ is off** with **Open Settings**.
 
 ## The conversation
 
-The conversation replaces the tab's home, and the tab bar stays visible. The top bar has Back;
-the title **Japanese ⇄ English** (**Japanese → English** in Listening), which opens a menu with
-**Play Translations Aloud** (turning it off switches to Text Only) and **Change Mode…**; and, on
-the right, a pill with the timer and a pause button, like the iOS screen-recording indicator. The
-timer is red while listening and gray while paused, and the button is a red pause while listening
-and a blue play while paused. VoiceOver reads what's happening (**Listening**, **Hearing speech**,
-**2 waiting for a pause**, **Speaking English**, **Paused**…). There is no stop button.
+The conversation replaces the tab's home and fills the screen: the tab bar is hidden while it's
+open. The top bar has Back, the title **Japanese ⇄ English** (**Japanese → English** in
+Listening), and a **•••** menu with the layout (**Cards** or **Two Panes**), **Furigana**, and
+**Change Mode…**.
 
-- **Cards.** Each sentence is a card in the Player's caption style, under a label such as
-  **日本語 → EN** for each speaker's turn. The sentence being heard has a tinted fill and an
-  accent outline, grows as it's recognized, and shows a provisional translation in italics; once
+Along the bottom are the conversation's controls:
+
+- a speaker button that mutes spoken translations, switching to Text Only, and turns them back on
+  (not in Listening);
+- the speech speed, **−** and **+** in steps of 0.1 from 0.5× to 2.0×, remembered for the next
+  conversation;
+- the timer with a pause button. The timer is red while listening and gray while paused, and the
+  button is a red pause while listening and a blue play while paused.
+
+VoiceOver reads what's happening (**Listening**, **Hearing speech**, **2 waiting for a pause**,
+**Speaking English**, **Paused**…). There is no stop button.
+
+Translate shows Japanese without furigana unless **Furigana** is on in the **•••** menu. That
+choice is Translate's own: Reading Aids still sets furigana for the rest of the app. Conversation
+text is one Dynamic Type size larger than the rest of the app.
+
+- **Cards.** Each sentence is a card with small corners, its source above a hairline and its
+  translation below. Cards in one speaker's turn sit close together, and a new turn starts after a
+  wider gap; there are no language labels. The sentence being heard has a tinted fill and an
+  accent outline, grows as it's recognized, and shows a provisional translation in italics. Once
   the speaker finishes the sentence, the card keeps that translation until the final one replaces
-  it, so a long sentence never goes back to **Translating…**. A card turns active again
-  while its translation is spoken, with **Speaking English** or **Speaking Japanese** under it.
+  it, so a long sentence never goes back to **Translating…**. A card turns active again while its
+  translation is spoken.
+- **Two Panes.** Japanese fills a dark pane on top and English a light pane below, as in Owll
+  Translator. Each pane holds the whole conversation in its language: what was said in it and
+  the translation of what was said in the other. The newest line is bold, earlier lines are dimmed,
+  and the line being spoken is highlighted. The sentence being heard grows in its own pane while
+  its provisional translation grows in the other. Each pane follows its newest line. The layout
+  chosen in **•••** is remembered.
 - **Long speech.** A speaker who keeps talking stays one turn. Its text is held until they pause,
   then shows as one or more cards. The audio waits (**3 waiting for a pause**) and plays in order
   about 2 seconds after the speaker stops. A turn that runs for 30 seconds without a pause plays
   what's waiting anyway.
 - **Scrolling.** The list follows the newest text. Scrolling up stops following and shows
   **Jump to Latest**.
-- **Elsewhere in the app.** On other tabs, and on a word's full entry opened from the conversation, a full-width bar above the
-  tab bar shows the same timer and button with a status line, reading **Conversation still listening ·
-  Return** or **Conversation paused · Return** on other tabs; tapping it returns to the
-  conversation.
+- **Elsewhere in the app.** On a word's full entry opened from the conversation, where the tab
+  bar is back, a full-width bar above the tab bar shows the timer and button with a status line,
+  reading **Conversation still listening · Return** or **Conversation paused · Return** on other
+  tabs; tapping it returns to the conversation.
 - **Modes.** **Change Mode…** reopens Live translation modes with **Done**; switching between
   Conversation and Text Only keeps the conversation, and switching to or from Listening saves it
   and starts a new one.
@@ -85,14 +105,17 @@ fresh silence timer.
 ## History
 
 The History button opens every saved conversation, newest first, in one list: each row shows its
-first sentence and a line such as **Today, 09:12 · 6 turns**. Search, in the toolbar, matches the
+first sentence and a line such as **Today, 09:12 · 6 turns**. **All** and **Bookmarked** at the
+top switch to the bookmarked sentences, each with its translation. Search, in the toolbar, matches the
 Japanese or the English. Long-pressing a row offers **Copy**, **Share**, and **Delete**; the
-**•••** menu offers **Keep History** (30 Days, 1 Year, or Forever) and **Delete All…**. Deleting
-a conversation, or all of them, asks first, and there's no swipe to delete. Choosing a shorter
-Keep History removes older conversations right away, and again at each launch. A conversation
-opens as its transcript, with its length, turns, and mode above it; each turn names its language,
-and every Japanese word is tappable. Its **•••** menu offers **Copy Transcript**, **Share**, and
-**Delete Conversation**.
+**•••** menu offers **Delete All…**. Deleting a conversation, or all of them, asks first, and
+there's no swipe to delete. How long conversations are kept is **Keep Translations** in Account
+(30 Days, 1 Year, or Forever). Choosing a shorter time removes older conversations right away,
+and again at each launch. A conversation
+opens as its transcript, with its length, turns, and mode above it. Each turn is a group of
+cards like the conversation's, and every Japanese word is tappable. Each sentence has a speaker
+button that plays its translation again, at the conversation's speech speed, and a bookmark. Its
+**•••** menu offers **Copy Transcript**, **Share**, and **Delete Conversation**.
 
 A conversation is saved after every translated sentence, so closing the app loses nothing; **Exit
 Without Saving** deletes it. Conversations are stored only on the device, one file each.

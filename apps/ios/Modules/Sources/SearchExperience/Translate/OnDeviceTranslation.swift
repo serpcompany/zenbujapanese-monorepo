@@ -55,6 +55,7 @@ final class SystemSpeechPlayer: NSObject, AVSpeechSynthesizerDelegate {
   private var synthesizer = AVSpeechSynthesizer()
   private var waiting: (utterance: ObjectIdentifier, continuation: CheckedContinuation<Void, Never>)?
   private var engineOutput: EchoCancelledPlayback?
+  var speed = 1.0
   private var resetObserver: (any NSObjectProtocol)?
 
   override private init() {
@@ -83,10 +84,11 @@ final class SystemSpeechPlayer: NSObject, AVSpeechSynthesizerDelegate {
     synthesizer.delegate = self
   }
 
-  private static func utterance(_ text: String, in language: SpokenLanguage) -> AVSpeechUtterance {
+  private func utterance(_ text: String, in language: SpokenLanguage) -> AVSpeechUtterance {
     let utterance = AVSpeechUtterance(string: text)
     utterance.voice = AVSpeechSynthesisVoice(language: language.localeIdentifier)
-    utterance.rate = language == .japanese ? 0.46 : 0.49
+    let rate = Float(language == .japanese ? 0.46 : 0.49) * Float(speed)
+    utterance.rate = min(max(rate, AVSpeechUtteranceMinimumSpeechRate), AVSpeechUtteranceMaximumSpeechRate)
     return utterance
   }
 
@@ -98,21 +100,21 @@ final class SystemSpeechPlayer: NSObject, AVSpeechSynthesizerDelegate {
     #if DEBUG
       TranslateDiagnostics.shared.note("speak \(language.rawValue) \(text)")
     #endif
-    let utterance = Self.utterance(text, in: language)
+    let spoken = utterance(text, in: language)
     await withCheckedContinuation { continuation in
       let generation = output.begin(continuation)
       synthesizer.write(
-        utterance,
+        spoken,
         toBufferCallback: EchoCancelledPlayback.receiver(for: output, generation: generation))
     }
   }
 
   func speak(_ text: String, in language: SpokenLanguage) async {
     stop()
-    let utterance = Self.utterance(text, in: language)
+    let spoken = utterance(text, in: language)
     await withCheckedContinuation { continuation in
-      waiting = (ObjectIdentifier(utterance), continuation)
-      synthesizer.speak(utterance)
+      waiting = (ObjectIdentifier(spoken), continuation)
+      synthesizer.speak(spoken)
     }
   }
 
@@ -152,6 +154,7 @@ struct TranslateServices: Sendable {
   var speechNeedsDownload: @Sendable ([SpokenLanguage]) async throws -> Bool
   var installSpeech: @Sendable ([SpokenLanguage], @escaping @Sendable (Double) -> Void) async throws -> Void
   var timing = ConversationTiming.standard
+  var setSpeechSpeed: @MainActor (Double) -> Void = { _ in }
 
   static let onDevice = TranslateServices(
     clients: TranslatorClients(
@@ -167,6 +170,7 @@ struct TranslateServices: Sendable {
     requestMicrophone: { await AVAudioApplication.requestRecordPermission() },
     translationAvailability: { await OnDeviceTranslation.availability() },
     speechNeedsDownload: { try await OnDeviceSpeechAssets.needsDownload($0) },
-    installSpeech: { try await OnDeviceSpeechAssets.install($0, progress: $1) }
+    installSpeech: { try await OnDeviceSpeechAssets.install($0, progress: $1) },
+    setSpeechSpeed: { SystemSpeechPlayer.shared.speed = $0 }
   )
 }

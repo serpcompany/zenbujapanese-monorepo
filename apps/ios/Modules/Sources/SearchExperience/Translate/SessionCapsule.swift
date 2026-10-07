@@ -41,39 +41,3 @@ struct SessionCapsuleContent: View {
     }
   }
 }
-
-struct ConversationTimerControl: View {
-  let session: LiveConversation
-
-  var body: some View {
-    HStack(spacing: 6) {
-      TimelineView(.periodic(from: .now, by: 1)) { context in
-        Text(
-          Duration.seconds(session.elapsed(at: context.date))
-            .formatted(.time(pattern: .minuteSecond))
-        )
-        .font(.headline.monospacedDigit())
-        .foregroundStyle(isPaused ? Color.secondary : Color.red)
-        .accessibilityLabel("Conversation time")
-      }
-      Button {
-        if isPaused { session.start() } else { session.pause() }
-      } label: {
-        Image(systemName: isPaused ? "play.fill" : "pause.fill")
-          .foregroundStyle(isPaused ? Color.accentColor : Color.red)
-          .frame(width: 28, height: 28)
-          .contentShape(.rect)
-      }
-      .buttonStyle(.plain)
-      .accessibilityLabel(isPaused ? "Resume" : "Pause")
-      .accessibilityValue(session.activity.statusLine(listeningFor: session.mode))
-      .accessibilityIdentifier("translate.session.toggle")
-    }
-    .padding(.leading, 10)
-    .padding(.trailing, 4)
-    .accessibilityElement(children: .contain)
-    .accessibilityIdentifier("translate.session")
-  }
-
-  private var isPaused: Bool { session.activity.isPaused }
-}

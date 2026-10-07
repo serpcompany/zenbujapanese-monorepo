@@ -158,6 +158,7 @@ struct TranslateLinkedText: View {
   let language: SpokenLanguage
   let identifier: String
   let words: TranslateWordLinks
+  @Environment(ReadingAidPreferences.self) private var readingAids
 
   var body: some View {
     if language == .japanese {
@@ -167,6 +168,7 @@ struct TranslateLinkedText: View {
         highlightedEntry: nil,
         japaneseTextAnalysisClient: words.analysisClient,
         identifierPrefix: identifier,
+        presentation: readingAids.showsFurigana ? .standard : .compactLinks,
         openCandidates: { surface, candidates in
           words.open(
             RecognizedWordSheetRequest(

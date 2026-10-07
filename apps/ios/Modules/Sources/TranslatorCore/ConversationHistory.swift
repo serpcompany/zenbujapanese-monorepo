@@ -71,6 +71,27 @@ public final class ConversationHistory: ConversationArchiving {
     conversations.filter { $0.matches(query) }
   }
 
+  public var bookmarks: [BookmarkedSentence] {
+    conversations.flatMap { conversation in
+      conversation.turns.flatMap { turn in
+        turn.sentences.filter(\.isBookmarked).map {
+          BookmarkedSentence(conversationID: conversation.id, language: turn.language, sentence: $0)
+        }
+      }
+    }
+  }
+
+  public func setBookmarked(_ isBookmarked: Bool, sentence id: UUID, in conversationID: UUID) {
+    guard var conversation = conversation(conversationID) else { return }
+    for turn in conversation.turns.indices {
+      for sentence in conversation.turns[turn].sentences.indices
+      where conversation.turns[turn].sentences[sentence].id == id {
+        conversation.turns[turn].sentences[sentence].isBookmarked = isBookmarked
+      }
+    }
+    save(conversation)
+  }
+
   public func save(_ conversation: Conversation) {
     if let index = conversations.firstIndex(where: { $0.id == conversation.id }) {
       conversations[index] = conversation

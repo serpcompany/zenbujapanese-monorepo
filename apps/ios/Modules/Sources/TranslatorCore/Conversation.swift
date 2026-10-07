@@ -4,12 +4,32 @@ public struct TranslatedSentence: Codable, Sendable, Hashable, Identifiable {
   public let id: UUID
   public var text: String
   public var translation: String?
+  public var isBookmarked: Bool
 
-  public init(id: UUID = UUID(), text: String, translation: String? = nil) {
+  public init(
+    id: UUID = UUID(), text: String, translation: String? = nil, isBookmarked: Bool = false
+  ) {
     self.id = id
     self.text = text
     self.translation = translation
+    self.isBookmarked = isBookmarked
   }
+
+  public init(from decoder: any Decoder) throws {
+    let container = try decoder.container(keyedBy: CodingKeys.self)
+    id = try container.decode(UUID.self, forKey: .id)
+    text = try container.decode(String.self, forKey: .text)
+    translation = try container.decodeIfPresent(String.self, forKey: .translation)
+    isBookmarked = try container.decodeIfPresent(Bool.self, forKey: .isBookmarked) ?? false
+  }
+}
+
+public struct BookmarkedSentence: Sendable, Hashable, Identifiable {
+  public let conversationID: UUID
+  public let language: SpokenLanguage
+  public let sentence: TranslatedSentence
+
+  public var id: UUID { sentence.id }
 }
 
 public struct ConversationTurn: Codable, Sendable, Hashable, Identifiable {

@@ -96,6 +96,7 @@ public struct SearchExperienceRootView: View {
         AccountNavigationView(
           path: $accountPath,
           store: encounterMediaStore,
+          translationHistory: translateExperience.history,
           openItem: openSavedItem
         )
       } label: {

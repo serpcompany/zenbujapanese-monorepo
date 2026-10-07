@@ -42,7 +42,9 @@ sign-in yet; the tab holds on-device content and preferences. It provides:
   meaning under each linked word the learner hasn't marked known); and Sentence Translations,
   with a translation language (English so far) and who translates Player captions — YouTube, or
   Apple Translation on the device, which Reading Aids offers to download;
-- management of optional frequency dictionaries; and
+- management of optional frequency dictionaries;
+- **Keep Translations**, how long Translate keeps saved conversations (30 Days, 1 Year, or
+  Forever); and
 - the app's name, version, and description, followed by Help & Support and the Privacy Policy,
   which open the Zenbu website, and source credits and attributions.
 

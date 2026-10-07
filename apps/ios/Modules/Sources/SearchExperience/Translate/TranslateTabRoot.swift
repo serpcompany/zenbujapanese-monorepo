@@ -24,11 +24,19 @@ struct TranslateTabRoot: View {
     .navigationDestination(for: TranslateRoute.self) { route in
       switch route {
       case .history:
-        TranslateHistoryView(history: experience.history)
+        TranslateHistoryView(history: experience.history, transcript: transcriptActions)
       case .conversation(let id):
         TranslateConversationDetailView(
-          conversationID: id, history: experience.history, words: words)
+          conversationID: id, history: experience.history, actions: transcriptActions)
       }
     }
+  }
+
+  private var transcriptActions: TranscriptActions {
+    TranscriptActions(
+      words: words, readingAids: experience.readingAids,
+      speak: { text, language in
+        Task { await experience.services.clients.playback.speak(text, language) }
+      })
   }
 }

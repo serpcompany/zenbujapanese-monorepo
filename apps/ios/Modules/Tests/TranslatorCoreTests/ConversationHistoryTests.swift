@@ -46,6 +46,30 @@ final class ConversationHistoryTests {
     return conversation
   }
 
+  @Test("a bookmarked sentence survives a relaunch and is listed with its language")
+  func bookmarks() async {
+    let history = await loadedHistory()
+    let saved = conversation(daysAgo: 0)
+    history.save(saved)
+    let sentence = saved.turns[1].sentences[0]
+    history.setBookmarked(true, sentence: sentence.id, in: saved.id)
+    await history.flush()
+
+    let reloaded = await loadedHistory()
+    #expect(reloaded.bookmarks.map(\.sentence.text) == ["Great."])
+    #expect(reloaded.bookmarks.first?.language == .english)
+    reloaded.setBookmarked(false, sentence: sentence.id, in: saved.id)
+    #expect(reloaded.bookmarks.isEmpty)
+  }
+
+  @Test("a sentence saved before bookmarks existed reads as not bookmarked")
+  func sentenceWithoutBookmarkField() throws {
+    let json = #"{"id":"6F9619FF-8B86-D011-B42D-00CF4FC964FF","text":"はい。","translation":"Yes."}"#
+    let sentence = try JSONDecoder().decode(TranslatedSentence.self, from: Data(json.utf8))
+    #expect(!sentence.isBookmarked)
+    #expect(sentence.translation == "Yes.")
+  }
+
   @Test("saved conversations survive a relaunch, newest first")
   func persists() async {
     let history = await loadedHistory()

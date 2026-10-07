@@ -9,6 +9,11 @@ enum TranslatePreparation: Equatable {
   case downloadingSpeech(Double)
 }
 
+enum ConversationLayout: String, CaseIterable {
+  case cards
+  case twoPanes
+}
+
 enum TranslateStartProblem: Equatable {
   case microphoneDenied
   case speechUnavailable
@@ -19,6 +24,10 @@ enum TranslateStartProblem: Equatable {
 @Observable
 final class TranslateExperience {
   private static let modeKey = "translate.mode.v1"
+  private static let layoutKey = "translate.layout.v1"
+  private static let speechSpeedKey = "translate.speech-speed.v1"
+  static let speechSpeeds = 0.5...2.0
+  static let speechSpeedStep = 0.1
 
   let history: ConversationHistory
   private(set) var session: LiveConversation?
@@ -28,6 +37,16 @@ final class TranslateExperience {
   var preferredMode: TranslateMode {
     didSet { defaults.set(preferredMode.rawValue, forKey: Self.modeKey) }
   }
+  var layout: ConversationLayout {
+    didSet { defaults.set(layout.rawValue, forKey: Self.layoutKey) }
+  }
+  var speechSpeed: Double {
+    didSet {
+      defaults.set(speechSpeed, forKey: Self.speechSpeedKey)
+      services.setSpeechSpeed(speechSpeed)
+    }
+  }
+  @ObservationIgnored let readingAids: ReadingAidPreferences
 
   @ObservationIgnored let services: TranslateServices
   @ObservationIgnored private let defaults: UserDefaults
@@ -44,6 +63,18 @@ final class TranslateExperience {
     preferredMode =
       defaults.string(forKey: Self.modeKey).flatMap(TranslateMode.init(rawValue:))
       ?? .conversation
+    layout =
+      defaults.string(forKey: Self.layoutKey).flatMap(ConversationLayout.init(rawValue:)) ?? .cards
+    let speed = defaults.object(forKey: Self.speechSpeedKey) as? Double ?? 1
+    speechSpeed = speed
+    readingAids = ReadingAidPreferences(
+      defaults: defaults, storageKey: "translate.reading-aids.v1", furiganaByDefault: false)
+    services.setSpeechSpeed(speed)
+  }
+
+  func changeSpeechSpeed(by steps: Int) {
+    let next = ((speechSpeed + Double(steps) * Self.speechSpeedStep) * 10).rounded() / 10
+    speechSpeed = min(max(next, Self.speechSpeeds.lowerBound), Self.speechSpeeds.upperBound)
   }
 
   static func live() -> TranslateExperience {
