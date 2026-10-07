@@ -329,17 +329,28 @@ the account service ([`account-api.md`](account-api.md); the website's side of i
   can't read a Worker var: `next.config.ts` reads the environment's `ACCOUNT_API_URL` from
   `wrangler.jsonc` when it builds (`src/lib/account/availability.ts`, by `SITE_ENV`) and passes
   `ZENBU_ACCOUNT_PAGES` (`open` or `closed`) to the build, which draws Sign in only where it's
-  `open`. A value set only in `.dev.vars` changes the pages, not the footer.
+  `open`. A value set only in `.dev.vars` changes the pages, not the footer. The `Web` workflow
+  checks each environment's build for the link ([`ci.md`](ci.md), Web).
 
   | Var | What it does |
   | --- | --- |
-  | `ACCOUNT_API_URL` | The account service's origin: `http://localhost:8789` locally and `https://api-staging.zenbujapanese.com` on staging. Production's is empty until its account service answers on `https://api.zenbujapanese.com`; then set it there. Empty, the pages say signing in isn't available, link to no other account page, and the footer has no Sign in. |
+  | `ACCOUNT_API_URL` | The account service's origin: `http://localhost:8789` locally and `https://api-staging.zenbujapanese.com` on staging. Production's is empty until its account service answers on `https://api.zenbujapanese.com` (opening it, below). Empty, the pages say signing in isn't available, link to no other account page, and the footer has no Sign in. |
   | `ACCOUNT_APPLE_SERVICES_ID` | The Services ID Sign in with Apple JS signs in as: the first of the service's `APPLE_SERVICES_IDS`, the one the service takes the website's Apple codes as. Empty, the pages offer no Apple. |
   | `ACCOUNT_GOOGLE_SIGN_IN` | `on` offers Google, once the service has a Google web client. |
 
   Apple and Google are off on staging and production until the service has them
   ([`account-api.md`](account-api.md), Set up the server); then set these in `wrangler.jsonc` and
   run `pnpm cf-typegen`.
+
+  **Opening production's account pages**, once its account service answers on
+  `https://api.zenbujapanese.com`, is one pull request: set production's `ACCOUNT_API_URL` to it,
+  run `pnpm cf-typegen`, and change what pins it closed: the `Web` workflow's production footer
+  step, `src/lib/account/settings.test.ts` and `src/lib/dictionary-service-deploy.test.ts`, and the
+  product docs that say production's pages are closed ([Account pages](../../apps/web/docs/product/account.md),
+  the [index](../../apps/web/docs/product/index.md), and [Privacy Policy](../../apps/web/docs/product/privacy.md)).
+  The privacy policy's text stays true. `main` then deploys staging; production deploys when a
+  person runs `Web deploy` by hand while `DEPLOY_PRODUCTION` is `false` (Environments and
+  deploys, below).
 - **Apple** runs in Sign in with Apple JS's popup (`src/lib/account/apple.ts`), which hands the
   page Apple's ID token and authorization code. Apple answers a popup only on a page of its return
   URL's origin, so the return URL is the site's own `/account/`, and deleting an Apple account

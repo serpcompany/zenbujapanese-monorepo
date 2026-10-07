@@ -69,10 +69,9 @@ export default function PrivacyPage() {
 
       <h2>Your Zenbu account</h2>
       <p>
-        The app doesn't offer Zenbu accounts yet, and this website will offer them before it does.
-        You'll never need one: everything in the app works without one, and while you're signed out,
-        our apps send nothing to our account service. If you create or sign in to a Zenbu account,
-        the account service keeps:
+        The app doesn't offer Zenbu accounts yet, and you'll never need one: everything in the app
+        works without one, and while you're signed out, our apps send nothing to our account
+        service. If you create or sign in to a Zenbu account, the account service keeps:
       </p>
       <ul>
         <li>

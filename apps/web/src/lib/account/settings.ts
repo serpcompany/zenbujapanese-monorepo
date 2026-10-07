@@ -1,5 +1,6 @@
 import { getCloudflareContext } from '@opennextjs/cloudflare'
 import { log } from '@/lib/log'
+import { isAnOrigin } from './availability'
 
 export interface AccountSettings {
   apiUrl: string
@@ -13,12 +14,10 @@ interface AccountEnv {
   ACCOUNT_GOOGLE_SIGN_IN?: string
 }
 
-const anOrigin = /^https?:\/\/[^/\s]+$/
-
 export function accountSettingsFrom(env: AccountEnv): AccountSettings | null {
   const apiUrl = env.ACCOUNT_API_URL?.trim() ?? ''
   if (apiUrl === '') return null
-  if (!anOrigin.test(apiUrl)) {
+  if (!isAnOrigin(apiUrl)) {
     log('error', 'account_service_url_invalid', {
       expected: 'an origin, such as https://example.com'
     })

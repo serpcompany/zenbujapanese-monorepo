@@ -27,11 +27,12 @@ in a DOM with a stand-in for the service.
 password needed), and `/account/` (Your account), each with the site's header and footer. Each is
 `noindex, nofollow`, and no sitemap lists them: not `/sitemaps/pages.xml`, and not `/sitemap/`.
 Without an account service (an empty `ACCOUNT_API_URL`, as in production today), each says signing
-in to a Zenbu account isn't available on this site yet, and links to no other account page.
+in to a Zenbu account isn't available on this site yet, without the intro that describes signing
+in, and links to no other account page.
 
-- Source: #468; #402's sitemap sheet. Closed in production because its account service doesn't
-  run yet ([`account-api.md`](../../../../docs/agents/account-api.md), Set up the server), and a
-  sign-in that can't work shouldn't show.
+- Source: #468, whose #402 sitemap sheet lists the four pages. Closed in production because its
+  account service doesn't run yet ([`account-api.md`](../../../../docs/agents/account-api.md), Set
+  up the server), and a sign-in that can't work shouldn't show.
 - Check: Account spec, "/login/ is noindex, with the site's header and footer" (and each other
   page), "no sitemap lists them"; `src/app/account-pages.test.tsx`, "/login/ says signing in isn't
   available, and links no account page, without an account service" (and each other page) and
@@ -46,7 +47,7 @@ in local storage (`zenbu-signed-in`), which the pages set on signing in and clea
 on deleting the account, and when the account page finds no session. The server draws Sign in, so
 the page and its first render in the browser agree.
 
-- Source: #468 (one footer link; the header is Devin's).
+- Source: #468, so the pages can be reached; the header is unchanged.
 - Check: `src/components/site-footer.test.tsx`, "the footer groups every link under Product,
   Company, and Policies", "the footer leads to signing in, as the server draws it before the
   browser knows", and "the footer leaves signing in out where the site's account pages are
@@ -63,10 +64,14 @@ Privacy Policy; Sign in links to Create an account; both link "Can't sign in?" t
 learner goes to `/account/`. A browser that already signed in sees "You're signed in. Go to your
 account." above the ways.
 
-- Source: #468's decisions (passwordless; `/register/` is the same flow, worded for making an
-  account).
+- Source: #477 and ADR 0011 (Apple, Google, and an emailed code, through the account service);
+  #468 (the #402 sitemap sheet lists `/register/`), here the same flow, worded for making an
+  account.
 - Check: Sign-in form tests, "emails a code, signs in with it, and goes to the account page";
-  Account service spec, which registers from `/register/`.
+  `src/app/account-pages.test.tsx`, "offer signing in, and lead to each other, with an account
+  service" (the links, "Can't sign in?" and the Privacy Policy included); Account spec, "Sign
+  in's \"Can't sign in?\" leads to signing in by email code"; Account service spec, which
+  registers from `/register/`.
 
 **The email code.** The learner enters their email, then the 6-digit code ("It works for 10
 minutes"), with "Send a new code" and "Use another email". A refusal says what to do:
@@ -87,7 +92,8 @@ minutes"), with "Send a new code" and "Use another email". A refusal says what t
 nothing to reset, and offers the email code; it links to Sign in for an account made with Apple or
 Google.
 
-- Source: #468's decisions.
+- Source: #468 (the #402 sitemap sheet lists `/forgot-password/`); accounts have no password
+  (ADR 0011).
 - Check: Account service spec, which signs in again from `/forgot-password/`.
 
 **Sign in with Apple.** Offered where the Worker names a Services ID (`ACCOUNT_APPLE_SERVICES_ID`).
@@ -100,7 +106,8 @@ page's own origin for a popup. It signs in with Apple's ID token and the nonce, 
 sign-in, the name Apple hands the page. A closed popup says nothing; a blocked one says to allow
 pop-ups; a nonce the service no longer knows says to try again.
 
-- Source: #468's decisions (Sign in with Apple JS in popup mode).
+- Source: ADR 0011; the popup is how the page gets Apple's code for deleting an Apple account
+  ([`web.md`](../../../../docs/agents/web.md), Account pages).
 - Check: `src/lib/account/apple.test.ts`; Sign-in form tests, "signs in with Apple's popup, passing
   the first sign-in's name"; Account page tests, "won't confirm with another Apple ID, and asks
   again when Apple refuses the code" (the next nonce, ready before the next click); Ways tests,
@@ -114,7 +121,7 @@ a failure, back to the page it started on with `?error=`, which the page names: 
 an account another way, an unverified email, an account another Zenbu account uses, or a cancel.
 Back from Google with the browser's Back button, the buttons work again.
 
-- Source: #468's decisions; Better Auth's web sign-in.
+- Source: ADR 0011; Better Auth's web sign-in.
 - Check: Sign-in form tests, "sends the browser to Google, to come back to the account page, or
   here on a failure" and "says what went wrong when Google's sign-in comes back with an error".
   Google itself: not run.
@@ -135,13 +142,14 @@ account. When the service can't answer, it says so, with Try again.
 **Access tokens.** The page keeps its 15-minute access token in memory only, renews it a minute
 before it expires, and on a `401` gets one new token and asks again. It takes a token only for the
 account it shows: one for another account, as after signing in elsewhere in another tab, shows
-signed out, and when the page comes to show another account, it drops the token it held. When the service refuses a new token (`401`, `unauthorized` or `sign_in_again`), the
-page shows signed out; another `401`, such as a refused Apple token, says what went wrong and keeps
-the learner signed in. The signed session token stays in its HttpOnly cookie, on the account
+signed out, and when the page comes to show another account, it drops the token it held. When the
+service refuses a new token (`401`, `unauthorized` or `sign_in_again`), the page shows signed out;
+another `401`, such as a refused Apple token, says what went wrong and keeps the learner signed
+in. The signed session token stays in its HttpOnly cookie, on the account
 service's host: the page never holds it. The session's bare token, which `get-session` shows and
 which signs nothing in, only names the session to sign out after a fresh sign-in.
 
-- Source: the client guide (Access tokens); #468's security decisions.
+- Source: the client guide (Access tokens).
 - Check: `src/lib/account/access-tokens.test.ts`, with "drops the token it holds when the page
   shows another account"; `src/lib/account/messages.test.ts`, "takes a 401
   as signed out only when it says the session is gone, not for a refused token or nonce"; Account
@@ -240,8 +248,8 @@ data, signs the browser out, and the footer says Sign in again.
 
 - Source: #574; the client guide (Deleting the account).
 - Check: `src/lib/account/flows.test.ts`, "signs the browser out once deleted, and sorts each
-  refusal for the page"; Account page tests, "deletes after the learner confirms and, with a sign-in over nine
-  minutes old, signs in again by code", "asks for a fresh sign-in when the service answers
+  refusal for the page"; Account page tests, "deletes after the learner confirms and, with a
+  sign-in over nine minutes old, signs in again by code", "asks for a fresh sign-in when the service answers
   sign_in_again, though the page thought it fresh", "deletes an Apple account with Apple's code,
   after Apple signs it in again with the same Apple ID", and "won't confirm with another Apple ID,
   and asks again when Apple refuses the code"; Account service spec.
@@ -253,10 +261,14 @@ data, signs the browser out, and the footer says Sign in again.
 in production, whose value is empty until its account service answers on `api.zenbujapanese.com`.
 An empty value closes the account pages; one that isn't an origin closes them too and logs
 `account_service_url_invalid`. The footer's link is drawn when the site is built, from the same
-value in `apps/web/wrangler.jsonc` for the environment being built, so it and the pages agree.
+value in `apps/web/wrangler.jsonc` for the environment being built, held to the same rule (an
+origin), so it and the pages agree. Opening production is in
+[`web.md`](../../../../docs/agents/web.md), Account pages.
 
 - Source: production's account service doesn't run yet
   ([`account-api.md`](../../../../docs/agents/account-api.md), Set up the server).
 - Check: `src/lib/account/settings.test.ts`, "name staging's account service, and none yet for
-  production, so its pages stay closed"; `src/lib/dictionary-service-deploy.test.ts`, which also
-  checks production's value stays empty through `Web deploy`.
+  production, so its pages stay closed" and "close the footer, as the pages, for a value that is
+  no origin"; `src/lib/dictionary-service-deploy.test.ts`, which also checks production's value
+  stays empty through `Web deploy`; the `Web` workflow's checks of each environment's build for the
+  footer's link ([`ci.md`](../../../../docs/agents/ci.md), Web).

@@ -12,7 +12,9 @@ export default async function AccountPage({ searchParams }: PageProps<'/account'
   return (
     <AccountPageShell
       title={accountPages.account.title}
-      intro="Your Zenbu account works in the Zenbu Japanese app and on this site."
+      intro={
+        settings ? 'Your Zenbu account works in the Zenbu Japanese app and on this site.' : null
+      }
     >
       {settings ? (
         <AccountView settings={settings} returnedError={returnedError(await searchParams)} />

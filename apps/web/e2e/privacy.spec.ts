@@ -48,7 +48,7 @@ test.describe('privacy policy', () => {
       /^The study data you sync: your known words.*your lists' names, their order, and the words in them; a record of each item's latest change.*the result of each sync request/
     ])
     await expectNamed(page, 'Your Zenbu account', [
-      "the app doesn't offer Zenbu accounts yet, and this website will offer them before it does",
+      "the app doesn't offer Zenbu accounts yet, and you'll never need one",
       'signed out, our apps send nothing to our account service',
       'encrypted copy of each code',
       "aren't synced: they stay on your device"

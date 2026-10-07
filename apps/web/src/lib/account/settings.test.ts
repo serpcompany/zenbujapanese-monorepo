@@ -1,6 +1,6 @@
 import { readFileSync } from 'node:fs'
 import { describe, expect, test } from 'vitest'
-import { accountServiceIn } from './availability'
+import { accountPagesFor, accountServiceIn } from './availability'
 import { accountSettingsFrom } from './settings'
 
 const wrangler = readFileSync(new URL('../../../wrangler.jsonc', import.meta.url), 'utf8')
@@ -32,8 +32,18 @@ describe("the website's account settings", () => {
 
   test("name staging's account service, and none yet for production, so its pages stay closed", () => {
     expect(accountServiceIn(wrangler, 'staging')).toBe('https://api-staging.zenbujapanese.com')
-    expect(accountServiceIn(wrangler, 'production')).toBe('')
+    expect(accountServiceIn(wrangler, 'production')).toBeNull()
     expect(accountServiceIn(wrangler, undefined)).toBe('http://localhost:8789')
-    expect(accountServiceIn(wrangler, 'preview')).toBe('')
+    expect(accountServiceIn(wrangler, 'preview')).toBeNull()
+    expect(accountPagesFor(wrangler, 'staging')).toBe('open')
+    expect(accountPagesFor(wrangler, 'production')).toBe('closed')
+    expect(accountPagesFor(wrangler, undefined)).toBe('open')
+  })
+
+  test('close the footer, as the pages, for a value that is no origin', () => {
+    const named = (value: string) =>
+      JSON.stringify({ env: { production: { vars: { ACCOUNT_API_URL: value } } } })
+    expect(accountPagesFor(named('https://api.zenbujapanese.com/v1'), 'production')).toBe('closed')
+    expect(accountPagesFor(named('https://api.zenbujapanese.com'), 'production')).toBe('open')
   })
 })

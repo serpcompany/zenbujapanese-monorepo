@@ -3,7 +3,7 @@ import { join } from 'node:path'
 import { initOpenNextCloudflareForDev } from '@opennextjs/cloudflare'
 import type { NextConfig } from 'next'
 import type { Redirect } from 'next/dist/lib/load-custom-routes'
-import { accountServiceIn } from './src/lib/account/availability'
+import { accountPagesFor } from './src/lib/account/availability'
 import { movedPages, removedDictionaryPages } from './src/lib/moved-pages'
 import { isProductionSite } from './src/lib/site'
 
@@ -35,13 +35,13 @@ function redirectHostTo(
   ]
 }
 
-const accountService = accountServiceIn(
+const accountPages = accountPagesFor(
   readFileSync(join(process.cwd(), 'wrangler.jsonc'), 'utf8'),
   process.env.SITE_ENV
 )
 
 const nextConfig: NextConfig = {
-  env: { ZENBU_ACCOUNT_PAGES: accountService ? 'open' : 'closed' },
+  env: { ZENBU_ACCOUNT_PAGES: accountPages },
   trailingSlash: true,
   transpilePackages: ['@zenbu/dictionary-core'],
   turbopack: { root: join(process.cwd(), '../..') },

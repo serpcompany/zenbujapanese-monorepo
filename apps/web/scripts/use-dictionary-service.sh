@@ -21,10 +21,11 @@ SITE="$env" ORIGIN="$url" node --input-type=module -e '
   import { readFileSync, writeFileSync } from "node:fs"
   const { SITE, ORIGIN } = process.env
   const config = readFileSync("wrangler.jsonc", "utf8")
-  const named = "(\"SITE_ENV\":\\s*\"" + SITE + "\",\\s*\"DICTIONARY_API_URL\":\\s*)"
-  const placeholder = new RegExp(named + "\"DICTIONARY_API_URL\"")
+  const site = "(\"SITE_ENV\":\\s*\"" + SITE + "\",\\s*)"
+  const placeholder = new RegExp(site + "\"DICTIONARY_API_URL\":\\s*\"DICTIONARY_API_URL\"")
   if (!placeholder.test(config)) process.exit(1)
-  writeFileSync("wrangler.jsonc", config.replace(placeholder, (_, before) => before + JSON.stringify(ORIGIN)))
+  const service = "\"DICTIONARY_API_URL\": " + JSON.stringify(ORIGIN)
+  writeFileSync("wrangler.jsonc", config.replace(placeholder, (_, before) => before + service))
 ' || {
   echo "::error::wrangler.jsonc has no DICTIONARY_API_URL placeholder for $env"
   exit 1

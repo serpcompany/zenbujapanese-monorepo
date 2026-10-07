@@ -6,14 +6,14 @@ export function AccountPageShell({
   children
 }: {
   title: string
-  intro: ReactNode
+  intro: ReactNode | null
   children: ReactNode
 }) {
   return (
     <main className="mx-auto flex w-full max-w-md flex-col gap-6 px-4 py-10 [&_a]:underline">
       <div className="flex flex-col gap-2">
         <h1 className="text-2xl font-semibold">{title}</h1>
-        <div className="text-muted-foreground">{intro}</div>
+        {intro ? <div className="text-muted-foreground">{intro}</div> : null}
       </div>
       {children}
     </main>

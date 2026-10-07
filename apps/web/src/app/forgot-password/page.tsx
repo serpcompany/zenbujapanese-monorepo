@@ -17,7 +17,11 @@ export default async function ForgotPasswordPage() {
   return (
     <AccountPageShell
       title={accountPages.forgotPassword.title}
-      intro="Zenbu accounts have no password, so there’s nothing to reset. Enter your email and we’ll send you a code that signs you in."
+      intro={
+        settings
+          ? 'Zenbu accounts have no password, so there’s nothing to reset. Enter your email and we’ll send you a code that signs you in.'
+          : null
+      }
     >
       {settings ? (
         <SignInForm settings={settings} purpose="email-only" returnedError={null} />

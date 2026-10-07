@@ -13,9 +13,9 @@ account pages (#468). Neither signs in for everyone yet: the app doesn't offer a
 website's account pages are open only where its environment names an account service (staging
 today, [Account pages](account.md#configuration)). So the page says the app has "no account or
 cloud sync yet", and says what happens "if you create or sign in to a Zenbu account, on this
-website or in the app once they offer one", never that one exists today. The pull request that
-lets the app sign in (#573) changes the short version and the account section's "yet", and the one
-that opens production's account pages changes what the page says of the website. When the service keeps something new, keeps it longer, sends email through another provider,
+website or in the app once they offer one", never that one exists today, which stays true when
+production's account pages open. The pull request that lets the app sign in (#573) changes the
+short version and the account section's "yet". When the service keeps something new, keeps it longer, sends email through another provider,
 or an app gets a new scope, change the page, its Effective date, this doc, and the
 [App Store privacy labels](../app-store-privacy-labels.md) in the same pull request.
 
@@ -24,8 +24,8 @@ or an app gets a new scope, change the page, its Effective date, this doc, and t
 **The account's data.** The short version says the app collects nothing and has no account or
 cloud sync yet, what an account keeps if a learner makes one on the website or in the app once
 they offer one, and that the website uses a cookie only to keep a signed-in learner signed in. The
-account section says the app doesn't offer accounts yet and the website will first, that the apps
-send the account service nothing while signed out, and lists what a Zenbu account keeps:
+account section says the app doesn't offer accounts yet, that the apps send the account service
+nothing while signed out, and lists what a Zenbu account keeps:
 
 - the account: a Zenbu user ID, the email and whether it's verified, an optional name and
   username, a profile picture's address only if the provider sends one at sign-up, and when it

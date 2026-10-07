@@ -17,7 +17,7 @@ export default async function SignInPage({ searchParams }: PageProps<'/login'>) 
   return (
     <AccountPageShell
       title={accountPages.signIn.title}
-      intro="Sign in to your Zenbu account. There’s no password."
+      intro={settings ? 'Sign in to your Zenbu account. There’s no password.' : null}
     >
       {settings ? (
         <SignInForm

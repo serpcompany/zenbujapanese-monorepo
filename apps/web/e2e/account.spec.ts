@@ -101,6 +101,14 @@ test.describe('account pages', () => {
     await expect(footerAccountLink(page)).toHaveAttribute('href', '/account/')
   })
 
+  test('Sign in\'s "Can\'t sign in?" leads to signing in by email code', async ({ page }) => {
+    await standInForTheAccountService(page, signedOutService)
+    await page.goto('/login/')
+    await page.getByRole('link', { name: 'Can’t sign in?' }).click()
+    await expect(page.getByRole('heading', { level: 1, name: 'No password needed' })).toBeVisible()
+    await expect(page.getByRole('button', { name: 'Email me a code' })).toBeVisible()
+  })
+
   test.describe('without the account service', () => {
     test.use({ allowedConsoleErrors: [/Failed to load resource/] })
 

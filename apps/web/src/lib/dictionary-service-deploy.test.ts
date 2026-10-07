@@ -1,14 +1,20 @@
 import { execFileSync } from 'node:child_process'
-import { chmodSync, copyFileSync, mkdtempSync, readFileSync, writeFileSync } from 'node:fs'
+import { chmodSync, copyFileSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { fileURLToPath } from 'node:url'
-import { expect, test } from 'vitest'
+import { afterEach, expect, test } from 'vitest'
 
 const site = fileURLToPath(new URL('../..', import.meta.url))
+const folders: string[] = []
+
+afterEach(() => {
+  for (const folder of folders.splice(0)) rmSync(folder, { recursive: true, force: true })
+})
 
 function deployedCopy() {
   const folder = mkdtempSync(join(tmpdir(), 'web-deploy-'))
+  folders.push(folder)
   copyFileSync(join(site, 'wrangler.jsonc'), join(folder, 'wrangler.jsonc'))
   const pnpm = join(folder, 'pnpm')
   writeFileSync(pnpm, '#!/usr/bin/env bash\necho \'[{"name":"DICTIONARY_API_TOKEN"}]\'\n')

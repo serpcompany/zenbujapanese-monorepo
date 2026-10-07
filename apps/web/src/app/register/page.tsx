@@ -17,7 +17,11 @@ export default async function RegisterPage({ searchParams }: PageProps<'/registe
   return (
     <AccountPageShell
       title={accountPages.register.title}
-      intro="Make your Zenbu account. There’s no password: a new email gets a code that makes your account, and an email that has one signs you in to it."
+      intro={
+        settings
+          ? 'Make your Zenbu account. There’s no password: a new email gets a code that makes your account, and an email that has one signs you in to it.'
+          : null
+      }
     >
       {settings ? (
         <SignInForm

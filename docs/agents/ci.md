@@ -231,7 +231,10 @@ changed without regenerating the types fails here; then `pnpm check` ([`web.md`]
 `SITE_ENV=staging` and with `SITE_ENV=production`. `pnpm check` builds without `SITE_ENV`, but
 static pages and prerendering differ by environment, so a route that reads a binding at build time
 fails only in that environment's build. Neither build reaches the dictionary service: deployed
-pages read it only at request time. Each step names `apps/web` as its working directory, rather
+pages read it only at request time. After each, it checks the prerendered `/about/` for the
+footer's Sign in link (`href="/login/"`): staging's has it, and production's mustn't while
+production's `ACCOUNT_API_URL` is empty ([`web.md`](web.md), Account pages); when production's
+account pages open, that step changes with them. Each step names `apps/web` as its working directory, rather
 than the jobs setting it as a default, because the dead-code check reads a step's working directory
 to find the scripts and binaries a step runs, and not a job's.
 

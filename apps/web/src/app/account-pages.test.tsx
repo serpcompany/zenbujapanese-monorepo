@@ -36,6 +36,8 @@ describe('the account pages', () => {
     const html = renderToStaticMarkup(await page())
     expect(html).toContain('isn’t available on this site yet')
     expect(html).not.toContain('Email me a code')
+    expect(html).not.toContain('a code')
+    expect(html).not.toContain('works in the Zenbu Japanese app')
     expect(accountLinks(html)).toEqual([])
   })
 
@@ -49,5 +51,6 @@ describe('the account pages', () => {
     const register = renderToStaticMarkup(await pages['/register/']())
     expect(accountLinks(register)).toEqual(['/login/', '/forgot-password/'])
     expect(register).toContain('Can’t sign in?')
+    expect(register).toContain('href="/legal/privacy/"')
   })
 })

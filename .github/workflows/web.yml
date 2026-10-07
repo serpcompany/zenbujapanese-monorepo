@@ -47,9 +47,19 @@ jobs:
       - name: Build for staging
         working-directory: apps/web
         run: SITE_ENV=staging pnpm build
+      - name: Staging's footer links signing in
+        working-directory: apps/web
+        run: grep -q 'href="/login/"' .next/server/app/about.html
       - name: Build for production
         working-directory: apps/web
         run: SITE_ENV=production pnpm build
+      - name: Production's footer doesn't, while its account pages are closed
+        working-directory: apps/web
+        run: |
+          if grep -q 'href="/login/"' .next/server/app/about.html; then
+            echo "::error::The production build links /login/, but production's ACCOUNT_API_URL in wrangler.jsonc is empty, so its account pages are closed (docs/agents/web.md, Account pages)."
+            exit 1
+          fi
 
   e2e:
     runs-on: ubuntu-latest
