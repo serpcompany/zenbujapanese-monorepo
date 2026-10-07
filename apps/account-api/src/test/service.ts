@@ -70,7 +70,7 @@ export async function startService({
     databaseReady: async () => true,
     auth,
     accounts: createAccounts(store, cursors(cursorKey(testSecret))),
-    deleteAccount: accountDeleter(store, appleRevoker(config.apple), {
+    deleteAccount: accountDeleter(store, appleRevoker(config.apple, config.publicUrl), {
       accountDeleted: email => void mailer.send(accountDeletedMessage(email))
     }),
     verifyAccessToken: accessTokenVerifier(() => auth.api.getJwks(), publicUrl),

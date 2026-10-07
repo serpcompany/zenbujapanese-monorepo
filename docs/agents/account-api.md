@@ -268,15 +268,21 @@ mutation change the profile through the same rule.
 Any app that can make an account can delete it (App Review guideline 5.1.1(v), #574), so every app
 has `account:delete`, Tomodachi too. `DELETE /v1/me` needs the learner to confirm in the app
 (`{ "confirm": true }`) and a sign-in from the last 10 minutes, which the access token's
-`auth_time` names (`403 sign_in_again`).
+`auth_time` names (`403 sign_in_again`). A token from before `auth_time` existed works everywhere
+else, and deletes only after a fresh sign-in.
 
 - **Apple.** An account that signs in with Apple sends the authorization code from that fresh Sign
   in with Apple. Before deleting anything, the service exchanges it at Apple for a refresh token,
-  signing as the app's bundle ID (or the website's Services ID), and revokes it, as App Review
-  requires; it keeps no Apple token otherwise. With no code it answers `400
-  apple_authorization_needed`, with one Apple refuses `400 apple_authorization_invalid`, and if
-  Apple doesn't answer `503 apple_unavailable`, deleting nothing. Without an Apple key set up
-  (a local run), it skips Apple.
+  as the app's bundle ID, or the website's Services ID with its return URL, checks that Apple's
+  answer names one of the account's Apple IDs, and revokes the token, as App Review requires; it
+  keeps no Apple token otherwise. So the service needs Apple's key wherever Apple sign-in is set
+  up: it refuses to start without one, but at `localhost`, where it skips Apple. The answers:
+  - no code: `400 apple_authorization_needed`;
+  - a code Apple has used or expired: `400 apple_authorization_invalid`;
+  - a code from another Apple ID: `400 apple_account_mismatch`, after revoking what it made;
+  - anything else, Apple down or refusing the key: `503 apple_unavailable`, with nothing deleted,
+    and the key's refusal logged as an error. The code may be used up, so the app gets a new one
+    by signing in with Apple again.
 - **What goes:** the account's row, and with it, by cascade, its ways to sign in, its sessions,
   its synced profile, known words, lists, and list words, its journal, and its mutation results;
   and any sign-in code waiting for its email. Its access tokens stop working at `/v1/me` and
@@ -561,9 +567,11 @@ First set up what the services share: cosign, the deployer, and registry access
    - **Apple** (Apple Developer, on the team that owns the app's ID, `W3GXL2NQQP` while the app
      ships from the backup account, #616):
      - Sign in with Apple on the iOS app's App ID (`com.zenbujapanese.app`) and on Tomodachi's
-       (`com.zenbujapanese.tomodachi`). The apps need only this: set `APPLE_APP_BUNDLE_IDENTIFIER`
-       to the iOS app's ID; the service also takes every app's bundle ID from
-       `src/domain/clients.ts`.
+       (`com.zenbujapanese.tomodachi`). Set `APPLE_APP_BUNDLE_IDENTIFIER` to the iOS app's ID; the
+       service also takes every app's bundle ID from `src/domain/clients.ts`.
+     - A Sign in with Apple key, enabled for those App IDs, as `APPLE_TEAM_ID`, `APPLE_KEY_ID`, and
+       `APPLE_PRIVATE_KEY`: deleting an account revokes its Apple sign-in with it (Deleting an
+       account), so the service won't start with Apple and without the key, but at `localhost`.
      - Apple's user ID for a learner is the same in every app of one team, so the iOS app and
        Tomodachi must stay in one team for an Apple sign-in to reach one account. Moving an app to
        another team (#616's transfer to the business account) changes its learners' Apple user

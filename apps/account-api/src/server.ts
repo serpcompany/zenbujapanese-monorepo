@@ -39,7 +39,7 @@ async function main() {
     databaseReady: database.ready,
     auth,
     accounts: createAccounts(store, cursors(cursorKey(config.auth.secret))),
-    deleteAccount: accountDeleter(store, appleRevoker(config.auth.apple), {
+    deleteAccount: accountDeleter(store, appleRevoker(config.auth.apple, config.auth.publicUrl), {
       accountDeleted: email => void mailer.send(accountDeletedMessage(email))
     }),
     verifyAccessToken: accessTokenVerifier(() => auth.api.getJwks(), config.auth.publicUrl),

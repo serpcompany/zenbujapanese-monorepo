@@ -79,11 +79,16 @@ function readAppleKey(env: NodeJS.ProcessEnv): AppleSigningKey | null {
   return { teamId, keyId, privateKey }
 }
 
-function readApple(env: NodeJS.ProcessEnv): AppleConfig | null {
+function readApple(env: NodeJS.ProcessEnv, local: boolean): AppleConfig | null {
   const servicesIds = list(env.APPLE_SERVICES_IDS)
   const appBundleIdentifier = env.APPLE_APP_BUNDLE_IDENTIFIER?.trim() || undefined
   const signingKey = readAppleKey(env)
   if (servicesIds.length === 0 && appBundleIdentifier === undefined) return null
+  if (!local && signingKey === null) {
+    throw new Error(
+      'Signing in with Apple needs APPLE_TEAM_ID, APPLE_KEY_ID, and APPLE_PRIVATE_KEY: deleting an account revokes its Apple sign-in with the key, as App Review requires. Only a run at localhost may leave them out.'
+    )
+  }
   if (servicesIds.length > 0 && signingKey === null) {
     throw new Error(
       'APPLE_SERVICES_IDS needs APPLE_TEAM_ID, APPLE_KEY_ID, and APPLE_PRIVATE_KEY: signing in on the web makes a client secret from the key'
@@ -169,7 +174,7 @@ export function readConfig(env: NodeJS.ProcessEnv = process.env): Config {
       trustedOrigins: list(env.ACCOUNT_API_TRUSTED_ORIGINS),
       cookieDomain: env.ACCOUNT_API_COOKIE_DOMAIN?.trim() || undefined,
       cookiePrefix: env.ACCOUNT_API_COOKIE_PREFIX?.trim() || 'zenbu',
-      apple: readApple(env),
+      apple: readApple(env, /^https?:\/\/(localhost|127\.0\.0\.1|\[::1\])(:\d+)?$/.test(publicUrl)),
       google: readGoogle(env)
     },
     email: readEmail(env)

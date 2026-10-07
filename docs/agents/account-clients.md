@@ -147,9 +147,10 @@ Every app that signs in offers deleting the account (App Review guideline 5.1.1(
 2. If the account signs in with Apple, sign in with Apple, and keep the **authorization code**
    Apple gives with that sign-in.
 3. `DELETE /v1/me` with `{ "confirm": true }`, and `"appleAuthorizationCode"` for an Apple
-   account. The service revokes your app's Apple access with it before deleting
-   (`apple_authorization_needed`, `apple_authorization_invalid`; on `503 apple_unavailable`
-   nothing was deleted, so try again).
+   account: the code from signing in with the Apple ID the account uses. The service revokes your
+   app's Apple access with it before deleting. `apple_authorization_needed`,
+   `apple_authorization_invalid`, `apple_account_mismatch`, and `503 apple_unavailable` delete
+   nothing: sign in with Apple again for a new code, and try again.
 4. On `200`, sign out on the device: forget the session token and the cursor, and keep the
    device's data. The account, and everything it synced, is gone; signing in again makes a new
    one.

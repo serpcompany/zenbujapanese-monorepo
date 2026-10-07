@@ -83,9 +83,16 @@ describe('readConfig', () => {
     })
   })
 
-  test("reads Apple: the app's bundle ID alone for the app, and a key for the web", () => {
+  test("reads Apple: a key with the app's bundle ID or the web's, and the bundle ID alone only at localhost", () => {
+    expect(refusal({ ...base, APPLE_APP_BUNDLE_IDENTIFIER: 'com.zenbujapanese.app' })).toMatch(
+      /revokes its Apple sign-in/
+    )
     expect(
-      readConfig({ ...base, APPLE_APP_BUNDLE_IDENTIFIER: 'com.zenbujapanese.app' }).auth.apple
+      readConfig({
+        ...base,
+        ACCOUNT_API_URL: 'http://localhost:8789',
+        APPLE_APP_BUNDLE_IDENTIFIER: 'com.zenbujapanese.app'
+      }).auth.apple
     ).toEqual({
       servicesIds: [],
       appBundleIdentifier: 'com.zenbujapanese.app',

@@ -4,7 +4,8 @@ import { vi } from 'vitest'
 const appleKeys = 'https://appleid.apple.com/auth/keys'
 const appleToken = 'https://appleid.apple.com/auth/token'
 const appleRevoke = 'https://appleid.apple.com/auth/revoke'
-export const goodAppleCode = 'apple-good-code'
+export const appleCodeFor = (appleUserId: string) => `apple-code:${appleUserId}`
+export const misconfiguredAppleCode = 'invalid-client'
 const googleKeys = 'https://www.googleapis.com/oauth2/v3/certs'
 
 type Key = Awaited<ReturnType<typeof generateKeyPair>>['privateKey']
@@ -46,9 +47,11 @@ export async function standInForProviders() {
     if (url.startsWith(appleKeys)) return answer(apple.keys)
     if (url.startsWith(googleKeys)) return answer(google.keys)
     if (url === appleToken) {
-      return form(init).get('code') === goodAppleCode
-        ? answer({ refresh_token: 'apple-refresh-token', access_token: 'apple-access' })
-        : answer({ error: 'invalid_grant' }, 400)
+      const code = form(init).get('code') ?? ''
+      if (code === misconfiguredAppleCode) return answer({ error: 'invalid_client' }, 400)
+      if (!code.startsWith('apple-code:')) return answer({ error: 'invalid_grant' }, 400)
+      const idToken = await apple.signer.sign({ sub: code.slice('apple-code:'.length) })
+      return answer({ refresh_token: `refresh-for-${code}`, id_token: idToken })
     }
     if (url === appleRevoke) {
       appleRevoked.push(form(init).get('token') ?? '')
