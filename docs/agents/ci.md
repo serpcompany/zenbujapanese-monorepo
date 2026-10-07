@@ -353,8 +353,10 @@ rollback's comes from an image the run pulled. The whole deploy is in
 
 ## Account API
 
-`.github/workflows/account-api.yml` checks the account service on pull requests that change it or
-what the services share (`packages/node-service/`), and by hand. A new push cancels the pull
+`.github/workflows/account-api.yml` checks the account service on pull requests that change it,
+what the services share (`packages/node-service/`), or the website's account pages (their routes,
+`apps/web/src/components/account/`, `apps/web/src/lib/account/`, the hooks, the browser test
+against the service, and `apps/web/wrangler.jsonc`), and by hand. A new push cancels the pull
 request's last run. The deployer and the backups script (`deploy/deployer.sh`,
 `apps/account-api/deploy/backups.sh`) are ShellChecked by `Repository`'s `pnpm verify`.
 
@@ -363,6 +365,15 @@ request's last run. The deployer and the backups script (`deploy/deployer.sh`,
   tests at it, so the migrations and the `pg` driver run against the Postgres the server runs,
   including two migrations started at once. The container trusts any connection and lives only as
   long as the job, so it has no password. See [`account-api.md`](account-api.md), Check it.
+- **`website`** starts the service from its source on a Postgres 18 container, with the dev
+  mailbox and the website's local origin, then runs the website's browser test against it
+  (`apps/web/e2e/account-service.spec.ts`, on `next dev`, at the desktop width): a learner
+  registers with an emailed code, edits the profile, signs out, signs in again, and deletes the
+  account after a fresh sign-in ([`web.md`](web.md), Account pages). The `Web` workflow can't run
+  it, with no service, so it runs here, as `Dictionary API` runs the website's rendered-page gate
+  against the service it builds. `ACCOUNT_API_SECRET` is a CI-only value. On a failure it prints
+  the service's log and keeps the test's trace, video, and screenshot as `account-pages-report`
+  for a week.
 
 ## Account API deploy
 
