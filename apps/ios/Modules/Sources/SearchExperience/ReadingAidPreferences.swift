@@ -16,6 +16,7 @@ final class ReadingAidPreferences {
 
   private static let storageKey = "reading-aids.preferences.v1"
   private let defaults: UserDefaults
+  private let storageKey: String
 
   var showsFurigana = true {
     didSet { persist() }
@@ -39,12 +40,19 @@ final class ReadingAidPreferences {
     didSet { persist() }
   }
 
-  init(defaults: UserDefaults = .standard) {
+  init(
+    defaults: UserDefaults = .standard, storageKey: String = ReadingAidPreferences.storageKey,
+    furiganaByDefault: Bool = true
+  ) {
     self.defaults = defaults
+    self.storageKey = storageKey
     guard
-      let data = defaults.data(forKey: Self.storageKey),
+      let data = defaults.data(forKey: storageKey),
       let stored = try? JSONDecoder().decode(StoredPreferences.self, from: data)
-    else { return }
+    else {
+      if !furiganaByDefault { showsFurigana = false }
+      return
+    }
     showsFurigana = stored.showsFurigana
     showsRomaji = stored.showsRomaji
     showsWordMeanings = stored.showsWordMeanings ?? false
@@ -67,7 +75,7 @@ final class ReadingAidPreferences {
       translationSource: translationSource.rawValue
     )
     guard let data = try? JSONEncoder().encode(stored) else { return }
-    defaults.set(data, forKey: Self.storageKey)
+    defaults.set(data, forKey: storageKey)
   }
 }
 
