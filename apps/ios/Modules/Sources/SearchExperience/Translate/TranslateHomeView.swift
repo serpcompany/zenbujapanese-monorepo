@@ -4,25 +4,22 @@ import UIKit
 
 struct TranslateHomeView: View {
   @Bindable var experience: TranslateExperience
-  let words: TranslateWordLinks
   let openHistory: () -> Void
-  @State private var typedText = ""
-  @State private var isChoosingMode = false
+  let openTyping: () -> Void
 
   var body: some View {
-    VStack(spacing: 12) {
-      if let problem = experience.startProblem {
-        StartProblemBanner(problem: problem, experience: experience)
+    ScrollView {
+      VStack(spacing: 16) {
+        if let problem = experience.startProblem {
+          StartProblemBanner(problem: problem, experience: experience)
+        }
+        typeField
+        LiveModesPicker(selection: $experience.preferredMode)
       }
-      TypedTranslationCard(
-        text: $typedText,
-        experience: experience,
-        words: words,
-        openLiveModes: { isChoosingMode = true }
-      )
+      .padding(.horizontal)
+      .padding(.bottom, 24)
     }
-    .padding(.horizontal)
-    .padding(.bottom, 12)
+    .safeAreaInset(edge: .bottom) { startButton }
     .background(Color(uiColor: .systemBackground))
     .navigationTitle("Translate")
     .navigationBarTitleDisplayMode(.inline)
@@ -32,13 +29,65 @@ struct TranslateHomeView: View {
           .accessibilityIdentifier("translate.history")
       }
     }
-    .sheet(isPresented: $isChoosingMode) {
-      LiveModesSheet(selection: experience.preferredMode, confirmTitle: String(localized: "Start")) {
-        mode in
-        experience.preferredMode = mode
-        Task { await experience.start(mode) }
-      }
+  }
+
+  private var typeField: some View {
+    Button(action: openTyping) {
+      Label("Type to translate", systemImage: "keyboard")
+        .font(.body)
+        .foregroundStyle(.secondary)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(.horizontal, 14)
+        .frame(minHeight: 44)
+        .background(Color(uiColor: .secondarySystemBackground), in: .rect(cornerRadius: 12))
     }
+    .buttonStyle(.plain)
+    .accessibilityIdentifier("translate.typed.open")
+  }
+
+  private var startButton: some View {
+    VStack(spacing: 8) {
+      if let preparation = experience.preparation {
+        Text(preparation.label)
+          .font(.subheadline)
+          .foregroundStyle(.secondary)
+          .accessibilityIdentifier("translate.preparing")
+      }
+      Button {
+        Task { await experience.start(experience.preferredMode) }
+      } label: {
+        Group {
+          if experience.isPreparing {
+            ProgressView()
+          } else {
+            Text("Start")
+          }
+        }
+        .font(.headline)
+        .padding(.horizontal, 28)
+      }
+      .buttonStyle(.borderedProminent)
+      .buttonBorderShape(.capsule)
+      .controlSize(.large)
+      .disabled(experience.isPreparing)
+      .accessibilityIdentifier("translate.modes.confirm")
+    }
+    .padding(.bottom, 8)
+  }
+}
+
+struct TypedTranslationScreen: View {
+  let experience: TranslateExperience
+  let words: TranslateWordLinks
+  @State private var text = ""
+
+  var body: some View {
+    TypedTranslationCard(text: $text, experience: experience, words: words)
+      .padding(.horizontal)
+      .padding(.bottom, 12)
+      .background(Color(uiColor: .systemBackground))
+      .navigationTitle("Type to Translate")
+      .navigationBarTitleDisplayMode(.inline)
   }
 }
 

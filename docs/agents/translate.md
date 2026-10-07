@@ -42,8 +42,10 @@ The tab is split across two Swift targets in `apps/ios/Modules`
   Translation, one `TranslationSession` per sentence), `SystemSpeechPlayer`
   (`AVSpeechSynthesizer`), and `TranslateExperience`, which owns the session, History, the
   remembered mode, and the start checks (microphone, Apple Translation, speech assets), which
-  are on-device-specific and change when an Online engine arrives. The home card is
-  `TypedTranslationCard` and the mode picker `LiveModesSheet`. `SearchExperienceRootView` adds
+  are on-device-specific and change when an Online engine arrives. The home is
+  `TranslateHomeView`: the modes (`LiveModesPicker`, shared with the `LiveModesSheet` that
+  **Change Mode…** opens) and Start. **Type to translate** pushes `TypedTranslationScreen` with
+  `TypedTranslationCard`. `SearchExperienceRootView` adds
   the tab, its navigation stack, and its word sheet, and `TranslateSessionChrome` adds the session
   bar for other tabs (`TranslateSessionAccessory`, a `tabViewBottomAccessory`, hidden while the
   conversation is on screen), the silence prompt, and the background pause to the whole `TabView`.
@@ -159,10 +161,10 @@ Release builds don't contain the harness.
 
 In the Simulator, with the harness:
 
-- Typing `Where can I buy a Suica card?` in the **Translate anything** card shows **English →
+- **Type to translate**, then `Where can I buy a Suica card?`, shows **English →
   Japanese**, copy, speak, and linked Japanese; tapping a word closes the keyboard and opens Word
   Detail at half height.
-- The card's microphone opens **Live translation modes**; **Start** with Conversation shows the
+- The tab opens on the modes; **Start** with Conversation shows the
   station conversation full screen, without the tab bar: an English card, then a wider gap and one
   Japanese turn of three cards whose audio waits (**N waiting for a pause**), each card turning
   active while it plays. Along the bottom are the speaker, − 1.0× +, and the red timer with a pause

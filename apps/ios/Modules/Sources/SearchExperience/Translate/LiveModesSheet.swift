@@ -22,13 +22,7 @@ struct LiveModesSheet: View {
           Text("Live translation modes")
             .font(.largeTitle)
             .multilineTextAlignment(.center)
-          hero
-          VStack(spacing: 2) {
-            ForEach(TranslateMode.allCases) { mode in
-              ModeOption(mode: mode, isSelected: mode == selection) { selection = mode }
-            }
-          }
-          .clipShape(.rect(cornerRadius: 24))
+          LiveModesPicker(selection: $selection)
         }
         .padding(.horizontal)
         .padding(.bottom, 24)
@@ -56,6 +50,22 @@ struct LiveModesSheet: View {
     }
     .presentationDetents([.large])
     .accessibilityIdentifier("translate.modes")
+  }
+}
+
+struct LiveModesPicker: View {
+  @Binding var selection: TranslateMode
+
+  var body: some View {
+    VStack(spacing: 24) {
+      hero
+      VStack(spacing: 2) {
+        ForEach(TranslateMode.allCases) { mode in
+          ModeOption(mode: mode, isSelected: mode == selection) { selection = mode }
+        }
+      }
+      .clipShape(.rect(cornerRadius: 24))
+    }
   }
 
   private var hero: some View {

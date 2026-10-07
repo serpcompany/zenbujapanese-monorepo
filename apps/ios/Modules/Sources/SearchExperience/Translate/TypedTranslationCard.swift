@@ -21,7 +21,6 @@ struct TypedTranslationCard: View {
   @Binding var text: String
   let experience: TranslateExperience
   let words: TranslateWordLinks
-  let openLiveModes: () -> Void
   @State private var status = Status.idle
   @State private var copyCount = 0
   @FocusState private var isEditing: Bool
@@ -48,6 +47,7 @@ struct TypedTranslationCard: View {
     .frame(maxWidth: .infinity, maxHeight: .infinity)
     .background(Color(uiColor: .secondarySystemBackground), in: .rect(cornerRadius: 32))
     .task(id: request) { await translate(request.text) }
+    .onAppear { isEditing = true }
     .sensoryFeedback(.success, trigger: copyCount)
   }
 
@@ -64,28 +64,6 @@ struct TypedTranslationCard: View {
         .accessibilityIdentifier("translate.typed.clear")
       }
       Spacer()
-      if let preparation = experience.preparation {
-        Text(preparation.label)
-          .font(.subheadline)
-          .foregroundStyle(.secondary)
-          .accessibilityIdentifier("translate.preparing")
-      }
-      Button(action: openLiveModes) {
-        Group {
-          if experience.isPreparing {
-            ProgressView()
-          } else {
-            Image(systemName: "mic")
-          }
-        }
-        .font(.title2)
-        .frame(width: 32, height: 32)
-      }
-      .buttonStyle(.glass)
-      .buttonBorderShape(.circle)
-      .disabled(experience.isPreparing)
-      .accessibilityLabel("Live translation")
-      .accessibilityIdentifier("translate.live")
     }
     .padding(16)
   }

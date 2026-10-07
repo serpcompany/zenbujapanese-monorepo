@@ -7,14 +7,21 @@ Japanese word on the tab opens the same dictionary sheet the Player uses.
 
 Everything runs on the iPhone: Apple's speech recognition, Apple Translation, and the system
 voice. Nothing is sent to a server, and nothing costs money. The first conversation downloads
-Apple's Japanese and English speech recognition and translation once, with progress shown beside
-the microphone button; after that, Translate works without a connection. There is no Online
+Apple's Japanese and English speech recognition and translation once, with progress shown above
+the Start button; after that, Translate works without a connection. There is no Online
 engine yet, so there is no Online/Offline switch and no cost or model details.
+
+## The tab's home
+
+The tab opens on the live modes. It has a small **Translate** title with a History button, a
+**Type to translate** field, a large illustration of the selected mode, the three modes listed
+with a description each, and **Start** above the tab bar. The selected mode is tinted with a
+checkmark, and the choice is remembered. **Start** starts that mode right away.
 
 ## Typing to translate
 
-The tab has a small **Translate** title with a History button, and one large card reading
-**Translate anything**; tapping anywhere in it starts typing. Translate detects the language:
+**Type to translate** opens a screen with one large card reading **Translate anything**, already
+typing. Translate detects the language:
 text with any kana or kanji is Japanese and is translated into English, and text with only Latin
 letters is English and is translated into Japanese. There is no swap button. The translation
 appears in the same card under a divider, with a label such as **English → Japanese** and
@@ -24,9 +31,7 @@ Apple's download prompt.
 
 ## Starting
 
-The microphone button in the card's corner opens **Live translation modes**, a sheet listing
-each mode with a description; the selected one is tinted with a checkmark, and the choice is
-remembered. **Start** closes the sheet and starts right away:
+The modes are:
 
 | Mode | What it does |
 | --- | --- |
