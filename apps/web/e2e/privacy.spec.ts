@@ -140,4 +140,19 @@ test.describe('privacy policy', () => {
         .getByRole('link')
     ).toHaveAttribute('href', /^mailto:/)
   })
+
+  test("names Translate's microphone, and keeps its conversations on the device", async ({
+    page
+  }) => {
+    await expectNamed(page, 'Information in the app', [
+      'Media Library photos, and Translate conversations are stored',
+      'microphone only while a conversation or Listening is running',
+      'recognized and translated on your device, and no audio is kept',
+      'stay on your device until you delete them'
+    ])
+    await expectNamed(page, 'Permissions', [
+      'camera access only when you choose to take a photo',
+      'microphone access only when you start a Translate conversation or Listening'
+    ])
+  })
 })
