@@ -109,6 +109,7 @@ final class TranslateExperience {
     guard let session else { return }
     await session.leave(saving: saving)
     self.session = nil
+    history.liveConversationID = nil
   }
 
   func sceneMovedToBackground() {
@@ -150,6 +151,7 @@ final class TranslateExperience {
     let session = LiveConversation(
       mode: mode, clients: services.clients, archive: history, timing: services.timing)
     self.session = session
+    history.liveConversationID = session.conversation.id
     session.start()
   }
 

@@ -38,8 +38,8 @@ sign-in yet; the tab holds on-device content and preferences. It provides:
 - the Media Library;
 - Known Words;
 - Lists;
-- **Keep Translations**, how long Translate keeps saved conversations (30 Days, 1 Year, or
-  Forever). Choosing a shorter time that would delete conversations asks first, with how many;
+- **Translations**, with how many conversations Translate has saved, which opens the same
+  **Translations** screen as the Translate tab;
 - Reading Aids: Furigana, Romaji, and Hide Furigana on Known Words; Word Meanings (a short
   meaning under each linked word the learner hasn't marked known); and Sentence Translations,
   with a translation language (English so far) and who translates Player captions — YouTube, or

@@ -51,7 +51,7 @@ struct TranslateHistoryView: View {
     }
     .searchable(text: $query, prompt: "Search Japanese or English")
     .searchToolbarBehavior(.minimize)
-    .navigationTitle("History")
+    .navigationTitle("Translations")
     .navigationBarTitleDisplayMode(.inline)
     .toolbar {
       ToolbarItem(placement: .topBarTrailing) { moreMenu }
@@ -63,7 +63,7 @@ struct TranslateHistoryView: View {
       Button("Delete Conversation", role: .destructive) { history.delete(conversation.id) }
     }
     .confirmationDialog(
-      "Delete all \(history.conversations.count) conversations? This can't be undone.",
+      "Delete all \(history.saved.count) conversations? This can't be undone.",
       isPresented: $isConfirmingDeleteAll, titleVisibility: .visible
     ) {
       Button("Delete All Conversations", role: .destructive) { history.deleteAll() }
@@ -107,7 +107,7 @@ struct TranslateHistoryView: View {
       Button("Delete All…", systemImage: "trash", role: .destructive) {
         isConfirmingDeleteAll = true
       }
-      .disabled(history.conversations.isEmpty)
+      .disabled(history.saved.isEmpty)
     }
     .accessibilityIdentifier("translate.history.more")
   }
@@ -138,16 +138,6 @@ private struct HistoryRow: View {
       "\(ConversationDateLabel.text(for: conversation.startedAt)) · \(conversation.turnCountLabel)"
     guard let percent = comprehension?.percentText else { return summary }
     return summary + " · " + String(localized: "\(percent) known")
-  }
-}
-
-extension HistoryRetention {
-  var title: String {
-    switch self {
-    case .thirtyDays: String(localized: "30 Days")
-    case .oneYear: String(localized: "1 Year")
-    case .forever: String(localized: "Forever")
-    }
   }
 }
 

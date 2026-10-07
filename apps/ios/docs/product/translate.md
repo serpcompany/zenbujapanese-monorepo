@@ -13,8 +13,8 @@ engine yet, so there is no Online/Offline switch and no cost or model details.
 
 ## The tab's home
 
-The tab opens on four ways to translate. It has a small **Translate** title with a History
-button, an illustration of the selected option, the four options listed with a description each,
+The tab opens on four ways to translate. It has a small **Translate** title with a
+**Translations** button (a clock), an illustration of the selected option, the four options listed with a description each,
 and **Start** above the tab bar. The selected option is tinted with a checkmark, and the choice
 is remembered.
 
@@ -108,9 +108,9 @@ hands-free conversation isn't paused by Auto-Lock; once it pauses or ends, Auto-
 - **Interruptions.** A call or another app taking the microphone stops listening; an alert says what
   happened, with **Try Again**.
 
-## History
+## Translations
 
-The History button opens every saved conversation, newest first, in one list: each row shows its
+The **Translations** button opens every saved conversation, newest first, in one list: each row shows its
 first sentence and a line such as **Today, 09:12 · 6 turns · 82% known**. The percentage is the
 share of the Japanese that was spoken, particles aside, made of words marked known, counted the
 way the Player counts captions; it updates as words are marked known, and a conversation with no
@@ -118,9 +118,10 @@ Japanese spoken shows none. The transcript's header shows it too. **All** and **
 top switch to the bookmarked sentences, each with its translation. Search, in the toolbar, matches the
 Japanese or the English. Long-pressing a row offers **Copy**, **Share**, and **Delete**; the
 **•••** menu offers **Delete All…**. Deleting a conversation, or all of them, asks first, and
-there's no swipe to delete. How long conversations are kept is **Keep Translations** in Account
-(30 Days, 1 Year, or Forever). Choosing a shorter time that would remove conversations asks
-first, with how many, then removes them; older conversations are also removed at each launch. A conversation
+there's no swipe to delete. Conversations are kept until they're deleted. **Translations** in
+Account opens the same screen, inside Account, and a deletion in either shows in both. The
+conversation in progress isn't listed until it ends, and while one is live, transcripts have no
+speaker button, so a replay can't talk over it. A conversation
 opens as its transcript, with its length, turns, and mode above it. Each turn is a group of
 cards like the conversation's, and every Japanese word is tappable. Each sentence has a speaker
 button that plays its translation again, at the conversation's speech speed, and a bookmark. Its
@@ -128,10 +129,11 @@ button that plays its translation again, at the conversation's speech speed, and
 
 A conversation is saved after every translated sentence, so closing the app loses nothing; **Exit
 Without Saving** deletes it. Conversations are stored only on the device, one file each.
-Browsing History never turns on the microphone.
+Browsing Translations never turns on the microphone.
 
 ## Looking up words
 
-Every Japanese word in the cards, History, and typed results is underlined and opens Word Detail
+Every Japanese word in the cards, saved Translations, and typed results is underlined and opens Word Detail
 at half height, as in the Player; particles and punctuation aren't linked. **Open Full Entry**
-opens the word inside the Translate tab. Looking a word up doesn't pause listening.
+opens the word inside the tab it was tapped in: Translate, or Account from Account →
+**Translations**. Looking a word up doesn't pause listening.

@@ -31,7 +31,7 @@ struct LiveConversationView: View {
       Button("Exit Without Saving", role: .destructive) { leave(saving: false) }
       Button("Cancel", role: .cancel) {}
     } message: {
-      Text("Save its \(session.conversation.turnCountLabel) to History, or leave without saving.")
+      Text("Save its \(session.conversation.turnCountLabel) to Translations, or leave without saving.")
     }
     .navigationBarTitleDisplayMode(.inline)
     .navigationBarBackButtonHidden()

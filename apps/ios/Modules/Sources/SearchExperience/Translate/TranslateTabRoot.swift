@@ -21,7 +21,16 @@ struct TranslateTabRoot: View {
       }
     }
     .animation(.smooth, value: experience.session == nil)
-    .navigationDestination(for: TranslateRoute.self) { route in
+    .modifier(TranslateDestinations(experience: experience, words: words))
+  }
+}
+
+struct TranslateDestinations: ViewModifier {
+  let experience: TranslateExperience
+  let words: TranslateWordLinks
+
+  func body(content: Content) -> some View {
+    content.navigationDestination(for: TranslateRoute.self) { route in
       switch route {
       case .text(let text):
         TypedTranslationScreen(text: text, experience: experience, words: words)
@@ -38,8 +47,9 @@ struct TranslateTabRoot: View {
     TranscriptActions(
       words: words, readingAids: experience.readingAids,
       conversationWords: experience.conversationWords,
-      speak: { text, language in
-        Task { await experience.services.clients.playback.speak(text, language) }
-      })
+      speak: experience.session == nil
+        ? { text, language in
+          Task { await experience.services.clients.playback.speak(text, language) }
+        } : nil)
   }
 }

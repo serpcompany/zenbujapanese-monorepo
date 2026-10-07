@@ -6,7 +6,7 @@ struct TranscriptActions {
   let words: TranslateWordLinks
   let readingAids: ReadingAidPreferences
   let conversationWords: ConversationWords
-  let speak: (String, SpokenLanguage) -> Void
+  let speak: ((String, SpokenLanguage) -> Void)?
 
   @MainActor
   func comprehension(of conversation: Conversation, isKnown: (LanguageReferenceID) -> Bool)
@@ -33,9 +33,11 @@ struct TranscriptSentence: View {
       isUntranslated: sentence.translation == nil,
       isSpeaking: false,
       words: actions.words,
-      replay: {
-        guard let translation = sentence.translation else { return }
-        actions.speak(translation, language.counterpart)
+      replay: actions.speak.map { speak in
+        {
+          guard let translation = sentence.translation else { return }
+          speak(translation, language.counterpart)
+        }
       },
       bookmark: Binding(
         get: { sentence.isBookmarked },

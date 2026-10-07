@@ -16,9 +16,9 @@ All notable user-facing changes to Zenbu Japanese are recorded here.
   speed, and pause; silence asks **Are you still there?** before pausing, and leaving the app
   pauses too. **Text** translates what you type or paste in whichever direction you wrote, and
   **Document Upload** translates the text in a PDF, a photo, or a text file. Conversations are
-  saved to **History**, which shows how many of each one's words you know and has search, copy,
+  saved to **Translations**, which shows how many of each one's words you know and has search, copy,
   share, and delete; in a transcript each sentence can be replayed or bookmarked, and
-  **Bookmarked** lists them. **Account → Keep Translations** sets how long conversations are kept.
+  **Bookmarked** lists them. **Account → Translations** opens it too.
   Every Japanese word opens the dictionary at half height.
 - Image Search has four views: **Photo**, **Both** (the image above the Player's caption cards,
   with furigana and line translations), **Text** (the recognized Japanese as paragraph cards),

@@ -47,8 +47,11 @@ The tab is split across two Swift targets in `apps/ios/Modules`
   pushes `TypedTranslationScreen` with `TypedTranslationCard`; Document Upload reads the file with
   `DocumentText` (PDFKit, then Vision text recognition for scanned pages and photos) and pushes
   the same screen with its text. Muting a conversation still switches it to the internal Text
-  Only mode, which History labels Conversation. `SearchExperienceRootView` adds
-  the tab, its navigation stack, and its word sheet, and `TranslateSessionChrome` adds the session
+  Only mode, which the Translations screen labels Conversation. `TranslateDestinations` pushes
+  the Translations screen, its transcripts, and Text for both the Translate tab and Account
+  (Account → Translations), and `ConversationHistory.saved` leaves out the conversation still live.
+  `SearchExperienceRootView` adds the tab, its navigation stack, and the word sheets for it and
+  Account, and `TranslateSessionChrome` adds the session
   bar for other tabs (`TranslateSessionAccessory`, a `tabViewBottomAccessory`, hidden while the
   conversation is on screen), the silence prompt, the background pause, and the idle timer (off
   while a session is live) to the whole `TabView`.
@@ -179,13 +182,18 @@ In the Simulator, with the harness:
   active while it plays. Along the bottom are the speaker, − 1.0× +, and the red timer with a pause
   button that becomes a blue play while paused. **•••** switches to **Two Panes** (a dark Japanese
   pane over a light English one) and back, and turns on **Furigana**.
-- In History, a conversation's transcript has a speaker and a bookmark on each sentence;
+- In Translations, a conversation's transcript has a speaker and a bookmark on each sentence;
   bookmarking one lists it under **Bookmarked**. Its **•••** → **Furigana** shows furigana, and
   the conversation and Text screens follow the same switch.
 - Opening a word's full entry shows the full-width session bar above the tab bar; another tab
   reads **Conversation still listening · Return**, which returns to the conversation.
 - Back shows **Leave this conversation?** from the Back button; **Save and Exit** returns home, and
-  History lists it with **Today, HH:MM · N turns**, a long-press menu, and the transcript.
+  Translations lists it with **Today, HH:MM · N turns**, a long-press menu, and the transcript.
+- Account → **Translations** shows how many conversations are saved and opens the same
+  Translations screen inside Account; a word in a transcript opens at half height, Back returns to Account, and a
+  deletion there lowers the count and leaves the Translate tab's Translations without it. With
+  a conversation live (start one, then switch to Account), it isn't listed, and transcripts have
+  no speaker button.
 - **Listening** leads each card with English and plays as it goes. After 20 seconds of silence,
   **Are you still there?** counts down and pauses with an alert offering **Resume**.
 - While listening, the Simulator's screen doesn't auto-lock (Settings → Display & Brightness →

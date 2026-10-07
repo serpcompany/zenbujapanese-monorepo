@@ -2,22 +2,6 @@ import Foundation
 import Observation
 import OSLog
 
-public enum HistoryRetention: String, CaseIterable, Sendable, Identifiable {
-  case thirtyDays
-  case oneYear
-  case forever
-
-  public var id: Self { self }
-
-  public func cutoff(before now: Date, calendar: Calendar = .current) -> Date? {
-    switch self {
-    case .thirtyDays: calendar.date(byAdding: .day, value: -30, to: now)
-    case .oneYear: calendar.date(byAdding: .year, value: -1, to: now)
-    case .forever: nil
-    }
-  }
-}
-
 @MainActor
 @Observable
 public final class ConversationHistory: ConversationArchiving {
@@ -27,34 +11,16 @@ public final class ConversationHistory: ConversationArchiving {
   .appending(path: "Zenbu Japanese", directoryHint: .isDirectory)
   .appending(path: "Translate Conversations", directoryHint: .isDirectory)
 
-  static let retentionKey = "translate.history-retention.v1"
-
   public private(set) var conversations: [Conversation] = []
   public private(set) var isLoaded = false
-  public var retention: HistoryRetention {
-    didSet {
-      defaults.set(retention.rawValue, forKey: Self.retentionKey)
-      applyRetention()
-    }
-  }
+  public var liveConversationID: UUID?
 
   @ObservationIgnored private let store: ConversationFileStore
-  @ObservationIgnored private let defaults: UserDefaults
-  @ObservationIgnored private let now: () -> Date
   @ObservationIgnored private var removedBeforeLoad: Set<UUID> = []
   @ObservationIgnored private var lastWrite: Task<Void, Never>?
 
-  public init(
-    directory: URL = ConversationHistory.defaultDirectory,
-    defaults: UserDefaults = .standard,
-    now: @escaping () -> Date = Date.init
-  ) {
+  public init(directory: URL = ConversationHistory.defaultDirectory) {
     store = ConversationFileStore(directory: directory)
-    self.defaults = defaults
-    self.now = now
-    retention =
-      defaults.string(forKey: Self.retentionKey).flatMap(HistoryRetention.init(rawValue:))
-      ?? .forever
     lastWrite = Task { [store] in
       let loaded = await store.loadAll()
       finishLoading(loaded)
@@ -65,12 +31,16 @@ public final class ConversationHistory: ConversationArchiving {
     conversations.first { $0.id == id }
   }
 
+  public var saved: [Conversation] {
+    conversations.filter { $0.id != liveConversationID }
+  }
+
   public func search(_ query: String) -> [Conversation] {
-    conversations.filter { $0.matches(query) }
+    saved.filter { $0.matches(query) }
   }
 
   public var bookmarks: [BookmarkedSentence] {
-    conversations.flatMap { conversation in
+    saved.flatMap { conversation in
       conversation.turns.flatMap { turn in
         turn.sentences.filter(\.isBookmarked).map {
           BookmarkedSentence(conversationID: conversation.id, language: turn.language, sentence: $0)
@@ -107,7 +77,7 @@ public final class ConversationHistory: ConversationArchiving {
   }
 
   public func deleteAll() {
-    for conversation in conversations { delete(conversation.id) }
+    for conversation in saved { delete(conversation.id) }
   }
 
   public func flush() async {
@@ -125,20 +95,6 @@ public final class ConversationHistory: ConversationArchiving {
     sortNewestFirst()
     removedBeforeLoad = []
     isLoaded = true
-    applyRetention()
-  }
-
-  public func expiredCount(under retention: HistoryRetention) -> Int {
-    expired(under: retention).count
-  }
-
-  private func applyRetention() {
-    for conversation in expired(under: retention) { delete(conversation.id) }
-  }
-
-  private func expired(under retention: HistoryRetention) -> [Conversation] {
-    guard let cutoff = retention.cutoff(before: now()) else { return [] }
-    return conversations.filter { $0.updatedAt < cutoff }
   }
 
   private func sortNewestFirst() {

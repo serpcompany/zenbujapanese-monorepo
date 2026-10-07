@@ -3,36 +3,35 @@ import TranslatorCore
 @preconcurrency import Translation
 import UIKit
 
-struct AccountNavigationView: View {
-  @Binding var path: [AccountRoute]
+struct AccountTabRoot: View {
   let store: EncounterMediaStore
-  let translationHistory: ConversationHistory
+  let translate: TranslateExperience
+  let words: TranslateWordLinks
   let openItem: (String, String, String) -> Void
 
   var body: some View {
-    NavigationStack(path: $path) {
-      AccountRootView(translationHistory: translationHistory)
-        .navigationDestination(for: AccountRoute.self) { route in
-          switch route {
-          case .profile:
-            ProfileView()
-          case .readingAids:
-            ReadingAidSettingsView()
-          case .mediaLibrary:
-            MediaLibraryView(store: store)
-          case .knownWords:
-            KnownWordsView { openItem($0.entryID, $0.headword, $0.reading) }
-          case .wordLists:
-            WordListsView()
-          case .wordList(let listID):
-            WordListView(listID: listID) { openItem($0.entryID, $0.headword, $0.reading) }
-          case .frequencyDictionaries:
-            FrequencyDictionariesView(client: .live)
-          case .credits:
-            CreditsView()
-          }
+    AccountRootView(translationHistory: translate.history)
+      .navigationDestination(for: AccountRoute.self) { route in
+        switch route {
+        case .profile:
+          ProfileView()
+        case .readingAids:
+          ReadingAidSettingsView()
+        case .mediaLibrary:
+          MediaLibraryView(store: store)
+        case .knownWords:
+          KnownWordsView { openItem($0.entryID, $0.headword, $0.reading) }
+        case .wordLists:
+          WordListsView()
+        case .wordList(let listID):
+          WordListView(listID: listID) { openItem($0.entryID, $0.headword, $0.reading) }
+        case .frequencyDictionaries:
+          FrequencyDictionariesView(client: .live)
+        case .credits:
+          CreditsView()
         }
-    }
+      }
+      .modifier(TranslateDestinations(experience: translate, words: words))
   }
 }
 
@@ -57,28 +56,25 @@ struct AccountRootView: View {
         .accessibilityIdentifier("account.media-library")
 
         NavigationLink(value: AccountRoute.knownWords) {
-          LabeledContent {
-            if wordKnowledge.isLoaded {
-              Text(wordKnowledge.knownCount, format: .number)
-            }
-          } label: {
-            AccountRowLabel("Known Words", systemImage: "checkmark.circle.fill", tint: .teal)
-          }
+          AccountCountRowLabel(
+            "Known Words", systemImage: "checkmark.circle.fill", tint: .teal,
+            count: wordKnowledge.isLoaded ? wordKnowledge.knownCount : nil)
         }
         .accessibilityIdentifier("account.known-words")
 
         NavigationLink(value: AccountRoute.wordLists) {
-          LabeledContent {
-            if wordLists.isLoaded {
-              Text(wordLists.lists.count, format: .number)
-            }
-          } label: {
-            AccountRowLabel("Lists", systemImage: "list.bullet.rectangle.fill", tint: .indigo)
-          }
+          AccountCountRowLabel(
+            "Lists", systemImage: "list.bullet.rectangle.fill", tint: .indigo,
+            count: wordLists.isLoaded ? wordLists.lists.count : nil)
         }
         .accessibilityIdentifier("account.lists")
 
-        KeepTranslationsPicker(history: translationHistory)
+        NavigationLink(value: TranslateRoute.history) {
+          AccountCountRowLabel(
+            "Translations", systemImage: "translate", tint: .purple,
+            count: translationHistory.isLoaded ? translationHistory.saved.count : nil)
+        }
+        .accessibilityIdentifier("account.translations")
       }
 
       Section {
@@ -144,6 +140,30 @@ struct AccountRowLabel: View {
         .foregroundStyle(.white)
         .frame(width: tileSize, height: tileSize)
         .background(tint.gradient, in: .rect(cornerRadius: tileSize * 0.23))
+    }
+  }
+}
+
+private struct AccountCountRowLabel: View {
+  let title: LocalizedStringKey
+  let systemImage: String
+  let tint: Color
+  let count: Int?
+
+  init(_ title: LocalizedStringKey, systemImage: String, tint: Color, count: Int?) {
+    self.title = title
+    self.systemImage = systemImage
+    self.tint = tint
+    self.count = count
+  }
+
+  var body: some View {
+    LabeledContent {
+      if let count {
+        Text(count, format: .number)
+      }
+    } label: {
+      AccountRowLabel(title, systemImage: systemImage, tint: tint)
     }
   }
 }
