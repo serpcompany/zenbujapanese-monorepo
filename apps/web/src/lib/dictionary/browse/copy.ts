@@ -1,6 +1,9 @@
+import type { CategoryOrder } from '@zenbu/dictionary-core/artifact/browse'
 import { type BrowseCategory, commonWords } from '@zenbu/dictionary-core/browse/categories'
-import type { KanjiList } from '@zenbu/dictionary-core/browse/lists'
+import { type KanjiList, rankBand } from '@zenbu/dictionary-core/browse/lists'
+import { type FrequencyTier, tierForRank } from '@zenbu/dictionary-core/detail/frequency'
 import { type Source, sources } from '../sources'
+import { categoryDescriptions } from './category-intros'
 
 const count = new Intl.NumberFormat('en-US')
 
@@ -65,17 +68,34 @@ function marking(category: BrowseCategory): string {
   }
 }
 
-export function categoryIntro(category: BrowseCategory, total: number) {
-  return `${plural(total, 'word')} JMdict ${marking(category)}, most used on YouTube first.`
+export const orderNames: Record<CategoryOrder, string> = {
+  used: 'Most used',
+  kana: 'Kana order'
 }
 
-interface RankedListCopy {
+function orderPhrase(category: BrowseCategory, order: CategoryOrder): string {
+  if (order === 'kana') return 'in kana order'
+  return category.kind === 'common'
+    ? 'most used on YouTube first'
+    : 'most used on YouTube first, starting with those it marks in their first meaning'
+}
+
+export function categoryIntro(category: BrowseCategory, total: number, order: CategoryOrder) {
+  const counted = `${plural(total, 'word')} JMdict ${marking(category)}, ${orderPhrase(category, order)}.`
+  const description = categoryDescriptions[category.slug]
+  return description ? `${counted} ${description}` : counted
+}
+
+export interface RankedListCopy {
   description: string
+  unranked?: string
   sources: Source[]
 }
 
 const jiten = (media: string): RankedListCopy => ({
   description: `Words ranked by how often they appear in ${media}, from Jiten's frequency lists.`,
+  unranked:
+    'Jiten’s lists count a spelling and its reading, not which dictionary word it is, and the app ranks a pair only when it names one word. Pairs several words share, such as に, は, and が, aren’t ranked, so the list skips their ranks.',
   sources: [sources.jmdict, sources.jiten]
 })
 
@@ -86,6 +106,8 @@ export const rankedListCopy: Record<string, RankedListCopy> = {
   },
   wikipedia: {
     description: 'Words ranked by how often they’re written in Japanese Wikipedia.',
+    unranked:
+      'The Wikipedia list counts written forms, not which dictionary word each is, and the app ranks a form only when it names one word. Forms several words share, such as に, は, and が, aren’t ranked, so the list skips their ranks.',
     sources: [sources.jmdict, sources.wikipedia]
   },
   'tv-and-movies': jiten('Japanese TV dramas and films'),
@@ -151,6 +173,53 @@ export const moreWaysToBrowse: readonly string[] = [
   'medicine',
   commonWords.slug
 ]
+
+export function rankRange(band: number): string {
+  const { first, last } = rankBand(band)
+  return `${formatCount(first)}–${formatCount(last)}`
+}
+
+export const rankBandHeading = (name: string, band: number) =>
+  `Most used Japanese words: ${name}, ranks ${rankRange(band)}`
+
+export const tierNames: Record<Exclude<FrequencyTier, 'rare'>, string> = {
+  veryCommon: 'Very common',
+  common: 'Common',
+  moderate: 'Less common',
+  uncommon: 'Uncommon'
+}
+
+const tiersInOrder: readonly FrequencyTier[] = [
+  'veryCommon',
+  'common',
+  'moderate',
+  'uncommon',
+  'rare'
+]
+const highestRankChecked = 1_000_000
+
+function lastRankOf(tier: FrequencyTier): number {
+  const atMost = (rank: number) =>
+    tiersInOrder.indexOf(tierForRank(rank)) <= tiersInOrder.indexOf(tier)
+  let low = 1
+  let high = highestRankChecked
+  while (low < high) {
+    const middle = Math.ceil((low + high) / 2)
+    if (atMost(middle)) low = middle
+    else high = middle - 1
+  }
+  return low
+}
+
+export const legendTiers = Object.keys(tierNames) as (keyof typeof tierNames)[]
+
+const listed = new Intl.ListFormat('en-US', { type: 'conjunction' })
+
+export const tierCutoffs = `The tiers are the ones the app’s chips use: ${listed.format(
+  legendTiers.map(
+    tier => `${tierNames[tier].toLowerCase()} to rank ${formatCount(lastRankOf(tier))}`
+  )
+)}.`
 
 export const jlptCopy: RankedListCopy = {
   description:

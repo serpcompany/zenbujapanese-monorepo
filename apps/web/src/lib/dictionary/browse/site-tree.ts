@@ -11,6 +11,7 @@ import {
   categoryIndexes,
   categoryPath,
   frequencyDictionariesPath,
+  jlptVocabularyPath,
   kanaChartsPath,
   kanjiListPath,
   kanjiListsPath,
@@ -67,10 +68,13 @@ export const dictionaryTree: TreeNode = {
         {
           title: 'Frequency dictionaries',
           path: frequencyDictionariesPath,
-          children: [...jlptLists, ...rankedLists].map(list => ({
-            title: list.name,
-            path: rankedListPath(list.slug)
-          }))
+          children: [
+            ...jlptLists.map(list => ({
+              title: `${list.name} vocabulary`,
+              path: jlptVocabularyPath(list.level)
+            })),
+            ...rankedLists.map(list => ({ title: list.name, path: rankedListPath(list.slug) }))
+          ]
         },
         ...Object.values(categoryIndexes).map(index => ({ title: index.name, path: index.path })),
         { title: commonWords.name, path: categoryPath(commonWords.slug) }

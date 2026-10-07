@@ -1,69 +1,95 @@
-import { jlptList, rankedList } from '@zenbu/dictionary-core/browse/lists'
+import { jlptLists, minimumIndexedWords, rankedList } from '@zenbu/dictionary-core/browse/lists'
 import type { Metadata } from 'next'
 import { notFound, permanentRedirect } from 'next/navigation'
-import { RankedListPage } from '@/components/dictionary/browse/frequency-pages'
-import { jlptCopy, rankedListCopy } from '@/lib/dictionary/browse/copy'
+import { JlptListPage, RankBandPage } from '@/components/dictionary/browse/frequency-pages'
+import { jlptCopy, rankBandHeading, rankedListCopy } from '@/lib/dictionary/browse/copy'
 import { getRankedWords } from '@/lib/dictionary/browse/data'
-import { pageNumber, rankedListPath } from '@/lib/dictionary/browse/paths'
+import {
+  jlptVocabularyPath,
+  pageNumber,
+  parseRankBand,
+  rankBandPath
+} from '@/lib/dictionary/browse/paths'
 import { dictionaryMetadata } from '@/lib/dictionary/metadata'
 
-type ListParams = { params: Promise<{ list: string }> }
-type PagedParams = { params: Promise<{ list: string; page: string }> }
+type BandParams = { params: Promise<{ list: string; band: string }> }
+type LevelParams = { params: Promise<{ level: string }> }
+type LevelPageParams = { params: Promise<{ level: string; page: string }> }
 
-async function load(slug: string, page: number) {
-  const ranked = rankedList(slug)
-  const jlpt = jlptList(slug)
-  const copy = ranked ? rankedListCopy[slug] : jlpt ? jlptCopy : undefined
-  const words = copy ? await getRankedWords(slug, page) : null
-  if (!copy || !words) notFound()
-  return { slug, name: ranked?.name ?? jlpt?.name ?? slug, copy, words, page, ranked: !!ranked }
+async function loadBand(params: BandParams['params']) {
+  const { list: slug, band: segment } = await params
+  const list = rankedList(slug)
+  const band = parseRankBand(segment)
+  const copy = rankedListCopy[slug]
+  const words = list && band && copy ? await getRankedWords(slug, band) : null
+  if (!list || !band || !copy || !words) notFound()
+  return { list, band, copy, words }
 }
 
-type Loaded = Awaited<ReturnType<typeof load>>
-
-function metadata({ slug, name, copy, page, ranked }: Loaded): Metadata {
-  const paged = page > 1 ? `, page ${page}` : ''
-  return dictionaryMetadata(
-    rankedListPath(slug, page),
-    `${ranked ? `Most used Japanese words: ${name}` : `${name} vocabulary`}${paged}`,
-    copy.description
-  )
-}
-
-const view = (loaded: Loaded) => (
-  <RankedListPage
-    slug={loaded.slug}
-    name={loaded.name}
-    description={loaded.copy.description}
-    sources={loaded.copy.sources}
-    words={loaded.words}
-    page={loaded.page}
-    ranked={loaded.ranked}
-  />
-)
-
-async function paged(params: PagedParams['params']) {
-  const { list, page: segment } = await params
-  const number = pageNumber(segment)
-  if (!number || !(rankedList(list) || jlptList(list))) notFound()
-  if ('redirect' in number) permanentRedirect(rankedListPath(list))
-  return load(list, number.page)
-}
-
-export const listRoute = {
-  async generateMetadata({ params }: ListParams): Promise<Metadata> {
-    return metadata(await load((await params).list, 1))
+export const rankBandRoute = {
+  async generateMetadata({ params }: BandParams): Promise<Metadata> {
+    const { list, band, copy, words } = await loadBand(params)
+    return dictionaryMetadata(
+      rankBandPath(list.slug, band),
+      rankBandHeading(list.name, band),
+      copy.description,
+      { index: words.words.length >= minimumIndexedWords }
+    )
   },
-  async Page({ params }: ListParams) {
-    return view(await load((await params).list, 1))
+  async Page({ params }: BandParams) {
+    const { list, band, copy, words } = await loadBand(params)
+    return <RankBandPage list={list} band={band} copy={copy} words={words} />
   }
 }
 
-export const pagedListRoute = {
-  async generateMetadata({ params }: PagedParams): Promise<Metadata> {
-    return metadata(await paged(params))
+const jlptLevel = (segment: string) => jlptLists.find(list => `n${list.level}` === segment)
+
+async function loadLevel(segment: string, page: number) {
+  const level = jlptLevel(segment)
+  const words = level ? await getRankedWords(level.slug, page) : null
+  if (!level || !words) notFound()
+  return { level, words, page }
+}
+
+type LoadedLevel = Awaited<ReturnType<typeof loadLevel>>
+
+function levelMetadata({ level, words, page }: LoadedLevel): Metadata {
+  const paged = page > 1 ? `, page ${page}` : ''
+  return dictionaryMetadata(
+    jlptVocabularyPath(level.level, page),
+    `${level.name} vocabulary${paged}`,
+    jlptCopy.description,
+    { index: words.total >= minimumIndexedWords }
+  )
+}
+
+const levelView = ({ level, words, page }: LoadedLevel) => (
+  <JlptListPage level={level} words={words} page={page} />
+)
+
+async function pagedLevel(params: LevelPageParams['params']) {
+  const { level: segment, page: pageSegment } = await params
+  const level = jlptLevel(segment)
+  const number = pageNumber(pageSegment)
+  if (!level || !number) notFound()
+  if ('redirect' in number) permanentRedirect(jlptVocabularyPath(level.level))
+  return loadLevel(segment, number.page)
+}
+
+export const jlptRoute = {
+  async generateMetadata({ params }: LevelParams): Promise<Metadata> {
+    return levelMetadata(await loadLevel((await params).level, 1))
   },
-  async Page({ params }: PagedParams) {
-    return view(await paged(params))
+  async Page({ params }: LevelParams) {
+    return levelView(await loadLevel((await params).level, 1))
+  }
+}
+
+export const pagedJlptRoute = {
+  async generateMetadata({ params }: LevelPageParams): Promise<Metadata> {
+    return levelMetadata(await pagedLevel(params))
+  },
+  async Page({ params }: LevelPageParams) {
+    return levelView(await pagedLevel(params))
   }
 }
