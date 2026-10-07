@@ -99,22 +99,11 @@ final class EchoCancelledPlayback: @unchecked Sendable {
       guard let converter,
         let output = AVAudioPCMBuffer(
           pcmFormat: Self.format,
-          frameCapacity: AVAudioFrameCount(Double(buffer.frameLength) * ratio) + 64)
+          frameCapacity: AVAudioFrameCount(Double(buffer.frameLength) * ratio) + 64),
+        let converted = converter.convertedBuffer(from: buffer, into: output)
       else { return nil }
-      var supplied = false
-      var error: NSError?
-      converter.convert(to: output, error: &error) { _, status in
-        if supplied {
-          status.pointee = .noDataNow
-          return nil
-        }
-        supplied = true
-        status.pointee = .haveData
-        return buffer
-      }
-      guard error == nil, output.frameLength > 0 else { return nil }
       scheduled += 1
-      return output
+      return converted
     }
   }
 }

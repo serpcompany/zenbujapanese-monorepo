@@ -8,14 +8,7 @@ struct SessionCapsuleContent: View {
   var body: some View {
     HStack(spacing: 12) {
       VStack(alignment: .leading, spacing: 1) {
-        TimelineView(.periodic(from: .now, by: 1)) { context in
-          Text(
-            Duration.seconds(session.elapsed(at: context.date))
-              .formatted(.time(pattern: .minuteSecond))
-          )
-          .font(.headline.monospacedDigit())
-          .foregroundStyle(session.activity.isPaused ? Color.secondary : Color.red)
-        }
+        ConversationClock(session: session)
         if let status {
           Text(status)
             .font(.subheadline.weight(.semibold))
