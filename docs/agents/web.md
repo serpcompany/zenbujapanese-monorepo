@@ -505,8 +505,10 @@ Static pages, the footer's Sign in among them (Account pages, above), come from 
 `SITE_ENV`, so a build without it would show the local site's footer beside production's pages.
 Production's `DICTIONARY_API_URL` is a placeholder until `Web deploy` writes it (Dictionary
 service, above), and with it every page answers 500, so name no dictionary service
-(`--var DICTIONARY_API_URL: --var DICTIONARY_API_TOKEN:`), or a local one and its token in
-`.dev.vars`. `scripts/smoke.sh <url> <staging|production>` asserts the
+(`--var DICTIONARY_API_URL: --var DICTIONARY_API_TOKEN:`). `preview` also reads `.dev.vars`, and a
+local `ACCOUNT_API_URL` there opens production's account pages, so move it aside first, or serve
+the build with `wrangler dev --env production --env-file /dev/null`, as the closed account spec
+does (Account pages, above). `scripts/smoke.sh <url> <staging|production>` asserts the
 search-engine rules for each environment, so CI fails if production is hidden or staging is
 exposed.
 
