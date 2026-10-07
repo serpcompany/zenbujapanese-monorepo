@@ -41,6 +41,7 @@ describe('signing in on the website', () => {
     })
     const page = render(<SignInForm settings={emailOnly} purpose="register" returnedError={null} />)
     expect(page.textContent).not.toContain('with Apple')
+    expect(page.textContent).not.toContain('with Google')
     await fill(page, 'Email', email)
     await submit(page, 'Email me a code')
     await shows(page, `We sent a 6-digit code to ${email}`)

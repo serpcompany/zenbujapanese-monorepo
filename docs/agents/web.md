@@ -348,8 +348,9 @@ the account service ([`account-api.md`](account-api.md); the website's side of i
   (`ACCOUNT_API_TRUSTED_ORIGINS`), and email codes to everyone ([`account-api.md`](account-api.md),
   Set up the server); Apple and Google can follow later. Then it's one pull request: set
   production's `ACCOUNT_API_URL` to it, run `pnpm cf-typegen`, and change what pins it closed: the
-  `Web` workflow's two closed-pages steps, `e2e/account-closed.spec.ts` and its server in
-  `playwright.config.ts`, and `src/lib/account/settings.test.ts`; and the docs that say
+  `Web` workflow's two closed-pages steps, `e2e/account-closed.spec.ts`, its server in
+  `playwright.config.ts`, the closed-run flag in `e2e/server.ts` and `e2e/test.ts`, and
+  `src/lib/account/settings.test.ts`; and the docs that say
   production's pages are closed: the product docs ([Account pages](../../apps/web/docs/product/account.md),
   the [index](../../apps/web/docs/product/index.md), and [Privacy Policy](../../apps/web/docs/product/privacy.md)),
   this section and its closed-spec paragraph (below), [`ci.md`](ci.md) (Web),

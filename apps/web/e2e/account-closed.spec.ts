@@ -45,6 +45,7 @@ test.describe("production's account pages, while its ACCOUNT_API_URL is empty", 
         'noindex, nofollow'
       )
       await expect(page.locator(anyAccountPage)).toHaveCount(0)
+      await page.waitForLoadState('networkidle')
       expect(requests).toEqual([])
     })
   }
@@ -55,6 +56,7 @@ test.describe("production's account pages, while its ACCOUNT_API_URL is empty", 
     await expect(page.getByRole('contentinfo').getByRole('link', { name: 'Sitemap' })).toBeVisible()
     await expect(footerAccountLink(page)).toHaveCount(0)
     await expect(page.locator(anyAccountPage)).toHaveCount(0)
+    await page.waitForLoadState('networkidle')
     expect(requests).toEqual([])
   })
 })
