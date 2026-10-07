@@ -63,6 +63,7 @@ public final class LiveConversation {
   @ObservationIgnored var finishUtteranceRequested = false
   @ObservationIgnored var provisionalInFlight = false
   @ObservationIgnored var micClosedForPlayback = false
+  @ObservationIgnored var echoGuard = EchoGuard()
   @ObservationIgnored var listenTask: Task<Void, Never>?
   @ObservationIgnored var tickTask: Task<Void, Never>?
   @ObservationIgnored var provisionalTask: Task<Void, Never>?
@@ -224,6 +225,7 @@ public final class LiveConversation {
     speakingLanguage = nil
     micClosedForPlayback = false
     finishUtteranceRequested = false
+    echoGuard.reset()
     listenTask?.cancel()
     listenTask = nil
     tickTask?.cancel()

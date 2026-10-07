@@ -14,6 +14,7 @@ struct LiveConversationTests {
   @Test("the acceptance fixture alternates J-E-J-E with each translation spoken in the other language")
   func acceptanceFixture() async {
     let harness = ConversationHarness()
+    harness.playback.reachesMicrophone = true
     await harness.startAndWaitForListening()
 
     for (language, text) in [
@@ -56,6 +57,7 @@ struct LiveConversationTests {
   @Test("long speech groups sentences in one turn and holds their audio until the pause")
   func longSpeechHoldsAudio() async {
     let harness = ConversationHarness()
+    harness.playback.reachesMicrophone = true
     await harness.startAndWaitForListening()
 
     let sentences = ["この先の階段を下りて、右に曲がってください。", "突き当たりに改札がありますが、出ないでください。", "そのまま五番線まで進んでください。"]
@@ -379,6 +381,7 @@ struct LiveConversationTests {
   @Test("muting while a translation plays stops the queue and opens the microphone again")
   func muteDuringPlayback() async {
     let harness = ConversationHarness()
+    harness.playback.reachesMicrophone = true
     await harness.startAndWaitForListening()
     await harness.hear(.japanese, tokyo)
     await harness.hear(.japanese, three)

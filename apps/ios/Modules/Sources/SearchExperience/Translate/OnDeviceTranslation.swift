@@ -39,13 +39,22 @@ final class SystemSpeechPlayer: NSObject, AVSpeechSynthesizerDelegate {
   static let shared = SystemSpeechPlayer()
 
   nonisolated static let client = SpeechPlaybackClient(
-    speak: { text, language in await SystemSpeechPlayer.shared.speak(text, in: language) },
+    speak: { text, language in
+      if let output = await OnDeviceTranscriber.shared.echoCancelledOutput() {
+        await SystemSpeechPlayer.shared.speak(text, in: language, through: output)
+      } else {
+        await SystemSpeechPlayer.shared.speak(text, in: language)
+      }
+    },
     stop: { await SystemSpeechPlayer.shared.stop() },
-    reachesMicrophone: { outputReachesMicrophone() }
+    reachesMicrophone: {
+      await OnDeviceTranscriber.shared.echoCancelledOutput() == nil && outputReachesMicrophone()
+    }
   )
 
   private var synthesizer = AVSpeechSynthesizer()
   private var waiting: (utterance: ObjectIdentifier, continuation: CheckedContinuation<Void, Never>)?
+  private var engineOutput: EchoCancelledPlayback?
   private var resetObserver: (any NSObjectProtocol)?
 
   override private init() {
@@ -74,11 +83,33 @@ final class SystemSpeechPlayer: NSObject, AVSpeechSynthesizerDelegate {
     synthesizer.delegate = self
   }
 
-  func speak(_ text: String, in language: SpokenLanguage) async {
-    stop()
+  private static func utterance(_ text: String, in language: SpokenLanguage) -> AVSpeechUtterance {
     let utterance = AVSpeechUtterance(string: text)
     utterance.voice = AVSpeechSynthesisVoice(language: language.localeIdentifier)
     utterance.rate = language == .japanese ? 0.46 : 0.49
+    return utterance
+  }
+
+  func speak(
+    _ text: String, in language: SpokenLanguage, through output: EchoCancelledPlayback
+  ) async {
+    stop()
+    engineOutput = output
+    #if DEBUG
+      TranslateDiagnostics.shared.note("speak \(language.rawValue) \(text)")
+    #endif
+    let utterance = Self.utterance(text, in: language)
+    await withCheckedContinuation { continuation in
+      let generation = output.begin(continuation)
+      synthesizer.write(
+        utterance,
+        toBufferCallback: EchoCancelledPlayback.receiver(for: output, generation: generation))
+    }
+  }
+
+  func speak(_ text: String, in language: SpokenLanguage) async {
+    stop()
+    let utterance = Self.utterance(text, in: language)
     await withCheckedContinuation { continuation in
       waiting = (ObjectIdentifier(utterance), continuation)
       synthesizer.speak(utterance)
@@ -87,6 +118,8 @@ final class SystemSpeechPlayer: NSObject, AVSpeechSynthesizerDelegate {
 
   func stop() {
     if synthesizer.isSpeaking { synthesizer.stopSpeaking(at: .immediate) }
+    engineOutput?.stop()
+    engineOutput = nil
     waiting?.continuation.resume()
     waiting = nil
   }

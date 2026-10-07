@@ -71,6 +71,9 @@ enum AnalyzerAudioPipeline {
     { buffer, _ in
       let isOpen = gate.isOpen
       guard let converted = converter.convert(buffer, silenced: !isOpen) else { return }
+      #if DEBUG
+        TranslateDiagnostics.shared.record(converted)
+      #endif
       for (index, input) in inputs.enumerated() {
         guard let own = index == 0 ? converted : copy(of: converted) else { continue }
         input.yield(AnalyzerInput(buffer: own))

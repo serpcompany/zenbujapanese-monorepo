@@ -4,6 +4,7 @@ extension LiveConversation {
   func receive(_ event: TranscriptionEvent) {
     guard status == .live else { return }
     let now = now()
+    if isEcho(event, at: now) { return }
     lastSpeechAt = now
     silencePromptDeadline = nil
     switch event {
@@ -14,12 +15,29 @@ extension LiveConversation {
     }
   }
 
+  private func isEcho(_ event: TranscriptionEvent, at now: Date) -> Bool {
+    let (text, isFinal) =
+      switch event {
+      case .volatile(_, let text): (text, false)
+      case .final(_, let text): (text, true)
+      }
+    guard echoGuard.isEcho(text, at: now) else { return false }
+    if isFinal {
+      finishUtteranceRequested = false
+      liveSentence = nil
+      cancelProvisionalTranslation()
+      enqueuePlayback([])
+    }
+    return true
+  }
+
   private func receiveVolatile(_ text: String, in language: SpokenLanguage, at now: Date) {
     guard !text.isEmpty else {
       liveSentence = nil
+      enqueuePlayback([])
       return
     }
-    if liveSentence?.text != text { lastVolatileChangeAt = now }
+    lastVolatileChangeAt = now
     let provisional =
       liveSentence?.language == language ? liveSentence?.provisionalTranslation : nil
     liveSentence = LiveSentence(
@@ -29,9 +47,14 @@ extension LiveConversation {
 
   private func receiveFinal(_ text: String, in language: SpokenLanguage, at now: Date) {
     finishUtteranceRequested = false
+    let provisional =
+      liveSentence?.language == language ? liveSentence?.provisionalTranslation : nil
     liveSentence = nil
     cancelProvisionalTranslation()
-    guard !text.isEmpty else { return }
+    guard !text.isEmpty else {
+      enqueuePlayback([])
+      return
+    }
     if let openTurn, openTurn.language != language { closeOpenTurn() }
     if openTurnID == nil {
       let turn = ConversationTurn(language: language, startedAt: now)
@@ -39,10 +62,10 @@ extension LiveConversation {
       openTurnID = turn.id
       openTurnStartedAt = now
     }
-    let sentence = TranslatedSentence(text: text)
+    let sentence = TranslatedSentence(text: text, translation: provisional)
     conversation.turns[conversation.turns.count - 1].sentences.append(sentence)
     translate(sentence, from: language)
-    if mode.playback == .asTranslated { enqueuePlayback([sentence.id]) }
+    enqueuePlayback(mode.playback == .asTranslated ? [sentence.id] : [])
   }
 
   func closeOpenTurn() {
@@ -125,22 +148,22 @@ extension LiveConversation {
     provisionalInFlight = false
   }
 
-  private func enqueuePlayback(_ ids: [UUID]) {
+  private var playbackMustWait: Bool {
+    mode.playback == .afterEachTurn && liveSentence != nil
+  }
+
+  func enqueuePlayback(_ ids: [UUID]) {
     playbackQueue.append(contentsOf: ids)
-    guard playbackTask == nil, !playbackQueue.isEmpty else { return }
+    guard playbackTask == nil, !playbackQueue.isEmpty, !playbackMustWait else { return }
     playbackTask = Task { await drainPlayback() }
   }
 
   private func playbackReachesMicrophone() async -> Bool {
-    switch mode.playback {
-    case .afterEachTurn: true
-    case .asTranslated: await clients.playback.reachesMicrophone()
-    case .never: false
-    }
+    mode.playback == .never ? false : await clients.playback.reachesMicrophone()
   }
 
   private func drainPlayback() async {
-    while status == .live, !Task.isCancelled, let id = playbackQueue.first {
+    while status == .live, !Task.isCancelled, !playbackMustWait, let id = playbackQueue.first {
       if let translating = translationTasks[id] { await translating.value }
       guard status == .live, !Task.isCancelled else { return }
       guard playbackQueue.first == id else { continue }
@@ -158,7 +181,9 @@ extension LiveConversation {
       guard mode.playback != .never else { break }
       speakingSentenceID = id
       speakingLanguage = target
+      echoGuard.startSpeaking(translation)
       await clients.playback.speak(translation, target)
+      echoGuard.finishSpeaking(at: now())
       speakingSentenceID = nil
       speakingLanguage = nil
     }

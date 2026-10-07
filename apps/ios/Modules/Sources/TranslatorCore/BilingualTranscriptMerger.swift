@@ -5,6 +5,7 @@ public struct TranscriberResult: Sendable, Equatable {
   public var text: String
   public var confidence: Double?
   public var isFinal: Bool
+  public var start: TimeInterval
   public var end: TimeInterval
 
   public init(
@@ -12,12 +13,14 @@ public struct TranscriberResult: Sendable, Equatable {
     text: String,
     confidence: Double?,
     isFinal: Bool,
+    start: TimeInterval? = nil,
     end: TimeInterval
   ) {
     self.language = language
     self.text = text
     self.confidence = confidence
     self.isFinal = isFinal
+    self.start = start ?? end
     self.end = end
   }
 }
@@ -70,10 +73,10 @@ public enum LanguageArbiter {
 public struct BilingualTranscriptMerger: Sendable {
   public static let pairingWindow: TimeInterval = 0.4
   static let endTolerance: TimeInterval = 0.3
-  static let liveWindow: TimeInterval = 0.8
-  static let settleLimit: TimeInterval = 1.5
+  static let settleLimit: TimeInterval = 2
   static let holdLimit: TimeInterval = 20
   static let minimumConfidence = 0.4
+  static let alreadyEmittedShare = 0.5
 
   public let languages: [SpokenLanguage]
   private var volatile: [SpokenLanguage: TranscriberResult] = [:]
@@ -94,6 +97,7 @@ public struct BilingualTranscriptMerger: Sendable {
     result.text = Self.cleaned(result.text)
     guard languages.count > 1 else { return passThrough(result) }
     guard result.end > emittedThrough + Self.endTolerance else { return [] }
+    if result.isFinal, Self.mostlyBefore(emittedThrough, result) { return [] }
     guard result.isFinal else {
       volatile[result.language] = result
       volatileHeardAt[result.language] = now
@@ -121,6 +125,12 @@ public struct BilingualTranscriptMerger: Sendable {
     firstFinalAt = nil
   }
 
+  static func mostlyBefore(_ time: TimeInterval, _ result: TranscriberResult) -> Bool {
+    let length = result.end - result.start
+    guard length > 0 else { return false }
+    return (time - result.start) / length > Self.alreadyEmittedShare
+  }
+
   static func cleaned(_ text: String) -> String {
     let trimmed = text.drop { !$0.isLetter && !$0.isNumber }
     return String(trimmed).trimmingCharacters(in: .whitespacesAndNewlines)
@@ -140,11 +150,10 @@ public struct BilingualTranscriptMerger: Sendable {
 
   private func counterpartIsUnfinished(at now: Date, held: TimeInterval) -> Bool {
     languages.contains { language in
-      guard finals[language]?.isEmpty ?? true, let heardAt = volatileHeardAt[language],
-        let live = volatile[language], !live.text.isEmpty
+      guard let heardAt = volatileHeardAt[language], let live = volatile[language],
+        !live.text.isEmpty
       else { return false }
-      let stillSpeaking = now.timeIntervalSince(heardAt) < Self.liveWindow
-      return held < (stillSpeaking ? Self.holdLimit : Self.settleLimit)
+      return held < Self.holdLimit && now.timeIntervalSince(heardAt) < Self.settleLimit
     }
   }
 

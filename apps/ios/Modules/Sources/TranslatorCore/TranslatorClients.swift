@@ -117,7 +117,7 @@ public struct ConversationTicker: Sendable {
 }
 
 public struct ConversationTiming: Sendable, Equatable {
-  public var turnEndPause: TimeInterval = 1.2
+  public var turnEndPause: TimeInterval = 0.8
   public var stalledSpeechPause: TimeInterval = 2.5
   public var longestTurn: TimeInterval = 30
   public var silenceBeforePrompt: TimeInterval = 170

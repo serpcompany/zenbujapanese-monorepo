@@ -75,10 +75,7 @@ extension ConversationActivity {
     case .hearing: String(localized: "Hearing speech")
     case .waiting(let count): String(localized: "\(count) waiting for a pause")
     case .translating: String(localized: "Translating")
-    case .speaking(let language):
-      mode == .conversation
-        ? String(localized: "Speaking \(language.name) · mic off")
-        : String(localized: "Speaking \(language.name)")
+    case .speaking(let language): String(localized: "Speaking \(language.name)")
     case .paused(.silence): String(localized: "Paused after 3 min of silence")
     case .paused(.background): String(localized: "Paused while you were away")
     case .paused: String(localized: "Paused")

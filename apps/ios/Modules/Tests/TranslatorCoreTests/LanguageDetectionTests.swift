@@ -44,10 +44,11 @@ struct BilingualTranscriptMergerTests {
 
   private func result(
     _ language: SpokenLanguage, _ text: String, confidence: Double?, final: Bool = true,
-    end: TimeInterval
+    start: TimeInterval? = nil, end: TimeInterval
   ) -> TranscriberResult {
     TranscriberResult(
-      language: language, text: text, confidence: confidence, isFinal: final, end: end)
+      language: language, text: text, confidence: confidence, isFinal: final, start: start,
+      end: end)
   }
 
   @Test("Japanese speech wins over the English recognizer's guess")
@@ -158,9 +159,42 @@ struct BilingualTranscriptMergerTests {
     _ = merger.receive(
       result(.japanese, "続いてスポーツです。", confidence: 0.9, end: 10),
       at: start.addingTimeInterval(1))
-    #expect(merger.flush(at: start.addingTimeInterval(2)).isEmpty)
+    #expect(merger.flush(at: start.addingTimeInterval(1.5)).isEmpty)
     #expect(
-      merger.flush(at: start.addingTimeInterval(2.6)) == [.final(.japanese, "続いてスポーツです。")])
+      merger.flush(at: start.addingTimeInterval(2.1)) == [.final(.japanese, "続いてスポーツです。")])
+  }
+
+  @Test("a recognizer's unfinished second sentence is waited for, not dropped")
+  func waitsForSecondSentence() {
+    var merger = BilingualTranscriptMerger(languages: [.japanese, .english])
+    _ = merger.receive(result(.english, "Thank you.", confidence: 0.9, end: 1), at: start)
+    _ = merger.receive(
+      result(.english, "See you", confidence: nil, final: false, end: 1.6), at: start)
+    _ = merger.receive(
+      result(.japanese, "サンキューシーユーゼア。", confidence: 0.7, end: 2.1),
+      at: start.addingTimeInterval(0.7))
+    #expect(merger.flush(at: start.addingTimeInterval(1.2)).isEmpty)
+    #expect(
+      merger.receive(
+        result(.english, "See you there.", confidence: 0.9, end: 2), at: start.addingTimeInterval(1.4))
+        == [.final(.english, "Thank you. See you there.")])
+  }
+
+  @Test("a late final that mostly covers speech already emitted is dropped")
+  func lateOverlappingFinal() {
+    var merger = BilingualTranscriptMerger(languages: [.japanese, .english])
+    _ = merger.receive(
+      result(.english, "I want to go to Kyoto tomorrow.", confidence: 0.91, start: 58.9, end: 63.9),
+      at: start)
+    #expect(
+      merger.flush(at: start.addingTimeInterval(0.5))
+        == [.final(.english, "I want to go to Kyoto tomorrow.")])
+    #expect(
+      merger.receive(
+        result(.japanese, "Ianto Go to Koo Tomorrow", confidence: 0.63, start: 59.8, end: 65.1),
+        at: start.addingTimeInterval(1)
+      ).isEmpty)
+    #expect(!merger.isWaitingForCounterpart)
   }
 
   @Test("live text includes the sentences held for the pause")

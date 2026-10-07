@@ -13,7 +13,7 @@ The tab is split across two Swift targets in `apps/ios/Modules`
   what happens during a conversation and in History, with no SwiftUI and no Apple speech or
   translation framework (`pnpm verify layers` enforces its imports):
   - `LiveConversation` is the conversation engine: turns and sentences, provisional and final
-    translations, held audio, the turn-end pause (1.2 s), the 30-second cutoff, the silence prompt
+    translations, held audio, the turn-end pause (0.8 s), the 30-second cutoff, the silence prompt
     (170 s, then 10 s), pause, resume, the background, and leaving. Times are in
     `ConversationTiming`.
   - It reaches the outside only through `TranscriptionClient`, `SentenceTranslationClient`, and
@@ -55,8 +55,14 @@ The tab is split across two Swift targets in `apps/ios/Modules`
   functions and hop to the actor or main actor themselves. A closure written inside an
   actor-isolated method is isolated to it, and Swift 6 crashes when the framework calls it on its
   own thread (the prior Owll clone's build 7).
-- In Conversation mode, and in Listening when the output is the iPhone's speaker
-  (`SpeechPlaybackClient.reachesMicrophone`), the microphone isn't stopped during playback:
+- Conversation keeps listening while a translation plays, the way Owll Translator does. The
+  system voice is synthesized with `AVSpeechSynthesizer.write` and played through the
+  conversation's own `AVAudioEngine` (`EchoCancelledPlayback`). Voice processing then knows the
+  sound and cancels it from the microphone, so `SpeechPlaybackClient.reachesMicrophone` is false.
+  `LiveConversation`'s `EchoGuard` backs this up: text that mostly repeats a translation spoken in
+  the last 1.5 s is ignored. Playback doesn't start the next sentence while anyone is talking.
+- When the sound does reach the microphone uncancelled (Listening on the iPhone's speaker, with
+  no voice processing, or a typed result), the microphone still isn't stopped during playback:
   `setHearing(false)` feeds the analyzers silence instead, so their timeline stays continuous, and
   voice processing's echo cancellation stays on. It doesn't finalize: finalizing as the silence
   began made the Japanese recognizer invent a low-confidence `はい`. That became a turn, and its
@@ -91,14 +97,46 @@ The tab is split across two Swift targets in `apps/ios/Modules`
 `TranslatorCoreTests` covers the engine with fake clients and a fake clock (the acceptance
 fixture's J-E-J-E turns, held audio, the 30-second cutoff, Text Only, Listening, the silence
 prompt, pause and resume, the background, leaving with and without saving, muting, provisional
-translations, a stalled sentence, failures), the merger, typed-language detection, and History
-storage. Run it from `apps/ios/Modules`:
+translations, a stalled sentence, failures), conversation playback (echo-cancelled playback
+keeps listening, the app's own voice is ignored, playback waits while someone talks, a finished
+sentence keeps its live translation), the merger, the pause detector, typed-language detection,
+and History storage. Run it from `apps/ios/Modules`:
 
 ```sh
 xcodebuild -scheme ZenbuJapaneseModules \
   -destination 'platform=iOS Simulator,id=<booted-simulator-udid>' \
   ONLY_ACTIVE_ARCH=YES -only-testing:TranslatorCoreTests test
 ```
+
+## Tuned values
+
+These were tuned on 2026-10-07 on an iPhone 17 Pro Max. A Mac played the #627 fixture, five English sentence pairs with 0.5–2.0 s pauses, and a 25 s fast Japanese monologue, in the Mac's Kyoko and Samantha voices. Owll Translator was measured on the same script. What's still wrong is in #640.
+
+| Value | Where | Now | What it fixed |
+| --- | --- | --- | --- |
+| Pairing window | `BilingualTranscriptMerger.pairingWindow` | 0.4 s | The shortest wait for the other recognizer. |
+| Settle limit | `BilingualTranscriptMerger.settleLimit` | 2 s since the other recognizer's sentence last changed | English finishes a sentence by itself 0.5–1 s after a pause. Without the wait, its second sentence was dropped as late, or its Japanese guess won. |
+| Hold limit | `BilingualTranscriptMerger.holdLimit` | 20 s | A monologue stays one turn while the speaker talks. |
+| Minimum confidence | `BilingualTranscriptMerger.minimumConfidence` | 0.4 | Drops phantom `はい` / `い` (0.19–0.32). Real winners measured 0.59–1.0. |
+| Already-emitted share | `BilingualTranscriptMerger.alreadyEmittedShare` | 0.5 | A late Japanese final over English that was already shown ("Ianto Go to Koo Tomorrow") is dropped. |
+| Arbiter weights | `LanguageArbiter.score` | confidence × 100 + script × 100 (unchanged) | The measured margins are wide. Japanese speech: Japanese 0.81–1.0 against English 0.04–0.45. English speech: English 0.59–0.97 against Japanese 0.5–0.75, which loses on script. |
+| Pause | `SpeechPauseDetector` | 0.6 s below 3 × the noise floor | Owll splits sentences at about 0.5 s. |
+| Pause confirmation | `OnDeviceTranscriber.pauseConfirmation` | 0.3 s | Japanese is finalized only if its text stopped changing. A loudness dip inside fast speech no longer cuts it. |
+| Stalled sentence | `OnDeviceTranscriber.stalledSentence` | 2 s | Only a recognizer that has really stopped is finalized. Finalizing both every time the shown text paused chopped the monologue. |
+| Turn-end pause | `ConversationTiming.turnEndPause` | 0.8 s (was 1.2) | Translations start 1.4–2.3 s after the speaker stops (was 2.3–5.4 s). Owll takes about 1.7–2 s. |
+| Echo guard | `EchoGuard` | 1.5 s, 60 % letter-pair overlap | A backstop if voice processing lets the app's own voice through. |
+
+## Device rig
+
+The engine is checked on an iPhone without anyone speaking:
+
+1. Install a Zenbu Dev Debug build ([`ios.md`](ios.md), Install on an iPhone) and start a Conversation on the phone.
+2. Make fixtures with `say -v Kyoko -o j1.aiff "今日は東京駅に行きます。"` and `say -v Samantha`, and play them beside the phone with `afplay`. Leave enough time after each one for the translation to play.
+3. Watch with `xcrun devicectl device capture screenshot --device <udid> --destination shot.png`. This works over Wi-Fi. `capture screen-record` doesn't, and iPhone Mirroring silences the microphone.
+4. Read the result with `xcrun devicectl device copy from --device <udid> --domain-type appDataContainer --domain-identifier com.zenbujapanese.app.dev --source "<path>" --destination <file>`:
+   - the conversation: `Library/Application Support/Zenbu Japanese/Translate Conversations/<id>.json`;
+   - Debug diagnostics (`TranslateDiagnostics`): `Library/Caches/TranslateDiagnostics/<time>/`. `events.log` has every recognizer result, pause, finalize, and spoken translation, and `heard.wav` has the audio the recognizers heard.
+5. To compare with another app, have the owner screen-record it. iOS records no microphone audio while an app holds the microphone, so read timing from the video.
 
 ## Simulator harness
 
@@ -108,7 +146,7 @@ conversation (and TV announcements in Listening), fixture translations, silent p
 20-second silence prompt, so every screen can be checked:
 
 ```sh
-SIMCTL_CHILD_ZENBU_TRANSLATE_SCRIPT=station xcrun simctl launch <udid> com.zenbujapanese.dictionary
+SIMCTL_CHILD_ZENBU_TRANSLATE_SCRIPT=station xcrun simctl launch <udid> com.zenbujapanese.app
 ```
 
 Release builds don't contain the harness.

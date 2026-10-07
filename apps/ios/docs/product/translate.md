@@ -30,7 +30,7 @@ remembered. **Start** closes the sheet and starts right away:
 
 | Mode | What it does |
 | --- | --- |
-| **Conversation** | Two-way. Each turn is detected as Japanese or English. Translations play out loud, and the microphone is off while they play. |
+| **Conversation** | Two-way. Each turn is detected as Japanese or English. Translations play out loud, and the microphone keeps listening while they play, so someone who keeps talking isn't lost. A translation never starts while someone is talking. |
 | **Listening** | One-way, for a TV, a guide, or announcements. Hears Japanese only, from a distance and without voice isolation. English leads each card, and each translation plays as soon as it's ready. With earphones the microphone keeps listening; on the iPhone's speaker it waits while each translation plays, so it doesn't hear itself. |
 | **Text Only** | Like Conversation, but nothing plays, so the microphone never turns off between turns. |
 
@@ -45,17 +45,18 @@ the title **Japanese ⇄ English** (**Japanese → English** in Listening), whic
 the right, a pill with the timer and a pause button, like the iOS screen-recording indicator. The
 timer is red while listening and gray while paused, and the button is a red pause while listening
 and a blue play while paused. VoiceOver reads what's happening (**Listening**, **Hearing speech**,
-**2 waiting for a pause**, **Speaking English · mic off**, **Paused**…). There is no stop button.
+**2 waiting for a pause**, **Speaking English**, **Paused**…). There is no stop button.
 
 - **Cards.** Each sentence is a card in the Player's caption style, under a label such as
   **日本語 → EN** for each speaker's turn. The sentence being heard has a tinted fill and an
   accent outline, grows as it's recognized, and shows a provisional translation in italics; once
-  the speaker finishes the sentence, it gets its final translation. A card turns active again
+  the speaker finishes the sentence, the card keeps that translation until the final one replaces
+  it, so a long sentence never goes back to **Translating…**. A card turns active again
   while its translation is spoken, with **Speaking English** or **Speaking Japanese** under it.
-- **Long speech.** A speaker who keeps talking gets one card per sentence in the same turn.
-  Translations show at once, but their audio waits (**3 waiting for a pause**) and plays in order
-  when the speaker pauses. A
-  turn that runs for 30 seconds without a pause plays what's waiting anyway.
+- **Long speech.** A speaker who keeps talking stays one turn. Its text is held until they pause,
+  then shows as one or more cards. The audio waits (**3 waiting for a pause**) and plays in order
+  about 2 seconds after the speaker stops. A turn that runs for 30 seconds without a pause plays
+  what's waiting anyway.
 - **Scrolling.** The list follows the newest text. Scrolling up stops following and shows
   **Jump to Latest**.
 - **Elsewhere in the app.** On other tabs, and on a word's full entry opened from the conversation, a full-width bar above the
