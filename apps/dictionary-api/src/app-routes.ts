@@ -1,7 +1,9 @@
 import { wordCardFormat } from '@zenbu/dictionary-core/cards/card'
 import { segmentationFormat } from '@zenbu/dictionary-core/cards/segmentation'
+import { wordCardLicense, wordCardSources } from '@zenbu/dictionary-core/cards/sources'
 import { isLanguageReferenceId } from '@zenbu/dictionary-core/cards/word-list'
 import type { Context, Hono } from 'hono'
+import { errorFields, log } from './log'
 import type { RateLimit } from './rate-limit'
 import {
   AccountKeysUnavailable,
@@ -38,14 +40,24 @@ export class AppError extends Error {
 export const appErrorAnswer = (context: Context, error: AppError) =>
   context.json({ error: { code: error.code, message: error.message } }, error.status)
 
-const bearer = (header: string | undefined) => header?.match(/^Bearer (\S+)$/)?.[1] ?? null
+const bearer = (header: string | undefined) => header?.match(/^Bearer\s+(\S+)$/i)?.[1] ?? null
 
-function cached(context: Context, info: ServiceInfo, answer: object) {
+const entityTags = (header: string) => header.split(',').map(tag => tag.trim().replace(/^W\//, ''))
+
+async function cacheable(
+  context: Context,
+  service: DictionaryService,
+  answer: (info: ServiceInfo) => Promise<object>
+) {
+  const info = await service.info()
   const tag = `"${info.build}"`
   context.header('Cache-Control', `private, max-age=${cachedFor}`)
   context.header('ETag', tag)
-  if (context.req.header('if-none-match') === tag) return context.body(null, 304)
-  return context.json({ ...answer, languageData: info.languageData })
+  const asked = context.req.header('if-none-match')
+  if (asked && (asked.trim() === '*' || entityTags(asked).includes(tag))) {
+    return context.body(null, 304)
+  }
+  return context.json({ ...(await answer(info)), languageData: info.languageData })
 }
 
 export function appRoutes(
@@ -66,6 +78,7 @@ export function appRoutes(
       caller = token ? await access.tokens(token) : null
     } catch (error) {
       if (error instanceof AccountKeysUnavailable) {
+        log('error', 'account keys unavailable', errorFields(error.cause ?? error))
         throw new AppError(503, 'unavailable', "The account service's keys couldn't be read")
       }
       throw error
@@ -75,6 +88,10 @@ export function appRoutes(
       throw new AppError(401, 'unauthorized', 'Send a valid Zenbu account access token')
     }
     if (!caller.scopes.has(dictionaryScope)) {
+      context.header(
+        'WWW-Authenticate',
+        `Bearer error="insufficient_scope", scope="${dictionaryScope}"`
+      )
       throw new AppError(403, 'insufficient_scope', `The token has no ${dictionaryScope} scope`)
     }
     const wait = access.limit(caller.account)
@@ -95,12 +112,16 @@ export function appRoutes(
     if (!named.every(isLanguageReferenceId)) {
       throw new AppError(400, 'bad_request', 'Each id must be a Language Reference ID')
     }
-    const [info, cards] = await Promise.all([service.info(), service.wordCards(named)])
-    const found = new Set(cards.map(card => card.languageReferenceID))
-    return cached(context, info, {
-      format: wordCardFormat,
-      cards,
-      missing: [...new Set(named)].filter(id => !found.has(id))
+    return cacheable(context, service, async () => {
+      const cards = await service.wordCards(named)
+      const found = new Set(cards.map(card => card.languageReferenceID))
+      return {
+        format: wordCardFormat,
+        license: wordCardLicense,
+        sources: wordCardSources,
+        cards,
+        missing: [...new Set(named)].filter(id => !found.has(id))
+      }
     })
   })
 
@@ -113,7 +134,10 @@ export function appRoutes(
         `text must be 1 to ${maximumSegmentedLength} characters`
       )
     }
-    const [info, tokens] = await Promise.all([service.info(), service.segment(text)])
-    return cached(context, info, { format: segmentationFormat, text, tokens })
+    return cacheable(context, service, async () => ({
+      format: segmentationFormat,
+      text,
+      tokens: await service.segment(text)
+    }))
   })
 }

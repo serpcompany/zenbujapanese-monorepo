@@ -85,6 +85,17 @@ describe.runIf(artifactAvailable)('the app routes on the app’s data', () => {
     expectCardsAsRecorded(answered.cards, wordSuite.cases)
   })
 
+  test('segmentation reads a linked word as its entry reads, as the app shows it', async () => {
+    const reading = async (text: string, word: string) => {
+      const answered = await answer<{ tokens: SegmentedToken[] }>(
+        `/v1/apps/segmentation?text=${encodeURIComponent(text)}`
+      )
+      return answered.tokens.find(token => token.text === word)?.reading
+    }
+    expect(await reading('日本に行く', '日本')).toBe('にほん')
+    expect(await reading('あの人は先生です', '人')).toBe('ひと')
+  })
+
   test('segmentation splits each recorded sentence into the words the suite links', async () => {
     expect(recordedSentences.length).toBeGreaterThan(500)
     for (const sentence of recordedSentences) {

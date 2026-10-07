@@ -1,3 +1,4 @@
+import type { SegmentedToken } from '../cards/segmentation'
 import type {
   ExampleCountRow,
   ExampleLinkRow,
@@ -88,12 +89,41 @@ function linkedEntries(db: ArtifactDatabase, ids: readonly string[]): Map<string
   )
 }
 
-export function tokenRows(tokens: readonly LinkedToken[]): ExampleSentenceTokenRow[] {
+function tokenRows(tokens: readonly LinkedToken[]): ExampleSentenceTokenRow[] {
   return tokens.map(token => {
     const row: ExampleSentenceTokenRow = { text: token.surface }
     if (hasKanji(token.surface)) row.reading = toHiragana(token.reading)
     if (token.dictionaryForm !== token.surface) row.dictionaryForm = token.dictionaryForm
     return row
+  })
+}
+
+export function segmentText(
+  db: ArtifactDatabase,
+  text: string,
+  capabilities: { tokenize: Tokenize; lookup: FormLookup }
+): SegmentedToken[] {
+  const linked = linkedTokens(
+    text,
+    kuromojiCandidates(text, capabilities.tokenize(text)),
+    null,
+    capabilities.lookup
+  )
+  const rows = tokenRows(linked)
+  const entries = linkedEntries(db, [
+    ...new Set(linked.flatMap(token => (token.entry ? [token.entry.id] : [])))
+  ])
+  return linked.map((token, position) => {
+    const target = token.entry ? entries.get(token.entry.id) : undefined
+    const row = rows[position]
+    return {
+      ...row,
+      ...(target && hasKanji(token.surface) ? { reading: displayReading(token, target) } : {}),
+      ...(token.entry ? { languageReferenceID: token.entry.id } : {}),
+      ...(!token.entry && token.candidates.length > 0
+        ? { candidates: token.candidates.map(candidate => candidate.id) }
+        : {})
+    }
   })
 }
 

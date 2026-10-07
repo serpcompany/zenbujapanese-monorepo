@@ -21,16 +21,24 @@ export interface Config {
   apps: AppsConfig | null
 }
 
+function webUrl(name: string, value: string): string {
+  const url = URL.canParse(value) ? new URL(value) : null
+  if (!url || (url.protocol !== 'https:' && url.protocol !== 'http:')) {
+    throw new Error(`${name} must be an http or https URL, not ${value}`)
+  }
+  return value
+}
+
 function readApps(env: NodeJS.ProcessEnv): AppsConfig | null {
   const accountUrl = env.ACCOUNT_API_URL?.replace(/\/+$/, '') ?? ''
   if (accountUrl === '') return null
-  const requestsPerMinute = Number(env.APP_REQUESTS_PER_MINUTE ?? 120)
+  const requestsPerMinute = Number(env.APP_REQUESTS_PER_MINUTE || 60)
   if (!Number.isInteger(requestsPerMinute) || requestsPerMinute < 1) {
     throw new Error(`APP_REQUESTS_PER_MINUTE is ${env.APP_REQUESTS_PER_MINUTE}`)
   }
   return {
-    accountUrl,
-    jwksUrl: env.ACCOUNT_JWKS_URL || `${accountUrl}/v1/auth/jwks`,
+    accountUrl: webUrl('ACCOUNT_API_URL', accountUrl),
+    jwksUrl: webUrl('ACCOUNT_JWKS_URL', env.ACCOUNT_JWKS_URL || `${accountUrl}/v1/auth/jwks`),
     requestsPerMinute
   }
 }

@@ -1,10 +1,10 @@
 import type { WordCard } from '../cards/card'
-import { type SegmentedToken, segmentedTokens } from '../cards/segmentation'
+import type { SegmentedToken } from '../cards/segmentation'
 import { examplesPerPage } from '../detail/examples'
 import type { FormExampleRows, KanjiRows, WordExampleRows, WordRows } from '../detail/rows'
 import { wordSlug } from '../detail/slug'
-import { type LinkEntry, linkedTokens } from '../examples/linking'
-import { kuromojiCandidates, type Tokenize } from '../examples/morphology'
+import type { LinkEntry } from '../examples/linking'
+import type { Tokenize } from '../examples/morphology'
 import { loadFrequency, type SearchResultsScreen, searchResultsScreen } from '../results/results'
 import { normalizeQuery } from '../search/query'
 import {
@@ -32,7 +32,7 @@ import {
   exampleCount,
   exampleLinkEntSeqs,
   exampleRows,
-  tokenRows,
+  segmentText,
   wordExampleRows
 } from './word-examples'
 import { canonicalEntryId, jmdictSource, readWord, slugsByEntSeq } from './words'
@@ -409,12 +409,6 @@ export class Dictionary {
   }
 
   segment(text: string): SegmentedToken[] {
-    const linked = linkedTokens(
-      text,
-      kuromojiCandidates(text, this.capabilities.tokenize(text)),
-      null,
-      this.lookup
-    )
-    return segmentedTokens(linked, tokenRows(linked))
+    return segmentText(this.db, text, this.linking)
   }
 }

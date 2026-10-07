@@ -20,6 +20,7 @@ export function accountTokens(options: {
 }): AccountTokens {
   const keys = createRemoteJWKSet(new URL(options.jwksUrl), {
     cooldownDuration: 30_000,
+    cacheMaxAge: Number.POSITIVE_INFINITY,
     ...(options.fetch ? { [customFetch]: options.fetch } : {})
   })
   return async token => {
@@ -27,12 +28,12 @@ export function accountTokens(options: {
       const { payload } = await jwtVerify(token, keys, {
         issuer: options.accountUrl,
         audience: options.accountUrl,
-        algorithms: ['EdDSA']
+        algorithms: ['EdDSA'],
+        requiredClaims: ['exp', 'sub', 'azp', 'scope']
       })
-      const { sub, azp, scope } = payload
-      if (typeof sub !== 'string' || sub === '' || typeof azp !== 'string') return null
-      const scopes = typeof scope === 'string' ? scope.split(' ').filter(Boolean) : []
-      return { account: sub, app: azp, scopes: new Set(scopes) }
+      const { sub, scope } = payload
+      if (typeof sub !== 'string' || sub === '' || typeof scope !== 'string') return null
+      return { account: sub, scopes: new Set(scope.split(' ').filter(Boolean)) }
     } catch (error) {
       if (refusedTokens.some(refused => error instanceof refused)) return null
       throw new AccountKeysUnavailable("The account service's keys couldn't be read", {

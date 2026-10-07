@@ -38,7 +38,7 @@ ambiguous: name it by one of its candidates' IDs instead.
 | Field | What it holds |
 | --- | --- |
 | `format` | `zenbu.word-cards.v1`. |
-| `languageData` | `release` (the language-data release, `language-data/release.json`), `file` (`LanguageReferenceData.sqlite3`), and its `sha256`. A card is true of that release. Key a cache on `release`: a published release never changes, so any change to the files a card reads (the frequency lists, pitch estimates, and kanji readings as well) comes with a new one, while `sha256` covers `LanguageReferenceData.sqlite3` alone. |
+| `languageData` | `release` (the language-data release, `language-data/release.json`), `file` (`LanguageReferenceData.sqlite3`), and its `sha256`. A card is true of that release. Key a cache on `release` and `sha256` together: a published release never changes, so any change to the files a card reads (the frequency lists, pitch estimates, and kanji readings as well) comes with a new one, and `sha256` catches a `LanguageReferenceData.sqlite3` that changed before its release was cut. |
 | `license` | The cards adapt CC BY-SA 4.0 data (JMdict and KANJIDIC2, the JLPT vocabulary lists, and Jiten), so they are shared under CC BY-SA 4.0: its `name`, `url`, and a `statement` to show with them. |
 | `sources` | Each source the cards hold data from: `name`, what it `supplies`, its `license` and `url`, and its `notice`, a file name in `notices/` and in the language-data release. Ship the notices with the cards. |
 | `cards` | One card for each word that resolved, in the list's order, each once. |

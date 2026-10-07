@@ -28,7 +28,6 @@ import type { SegmentedToken } from '@zenbu/dictionary-core/cards/segmentation'
 
 interface AppCaller {
   account: string
-  app: string
   scopes: ReadonlySet<string>
 }
 

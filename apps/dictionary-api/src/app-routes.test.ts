@@ -1,4 +1,6 @@
-import { beforeAll, describe, expect, test, vi } from 'vitest'
+import { wordCardLicense, wordCardSources } from '@zenbu/dictionary-core/cards/sources'
+import { SignJWT, UnsecuredJWT } from 'jose'
+import { afterEach, beforeAll, describe, expect, test, vi } from 'vitest'
 import { createApp } from './app'
 import { maximumCardsPerRequest, maximumSegmentedLength } from './app-routes'
 import { type TestAccountKeys, testAccountKeys } from './conformance/account-keys'
@@ -19,13 +21,27 @@ beforeAll(async () => {
 const accessToken = (...args: Parameters<TestAccountKeys['accessToken']>) =>
   keys.accessToken(...args)
 
-function app(options: { limit?: number; keysAnswer?: () => Response; access?: boolean } = {}) {
+let answered = 0
+
+afterEach(() => {
+  vi.useRealTimers()
+})
+
+function app(
+  options: { limit?: number; keysAnswer?: () => Response | undefined; access?: boolean } = {}
+) {
   vi.spyOn(process.stdout, 'write').mockImplementation(() => true)
   vi.spyOn(process.stderr, 'write').mockImplementation(() => true)
   return createApp({
     service: fakeService({
-      wordCards: async ids => (ids.includes(miru) ? [card] : []),
-      segment: async () => segmented
+      wordCards: async ids => {
+        answered++
+        return ids.includes(miru) ? [card] : []
+      },
+      segment: async () => {
+        answered++
+        return segmented
+      }
     }),
     token: serviceToken,
     ready: () => true,
@@ -52,6 +68,8 @@ describe('word cards for a signed-in app', () => {
     expect(response.status).toBe(200)
     expect(await response.json()).toEqual({
       format: 'zenbu.word-cards.v1',
+      license: wordCardLicense,
+      sources: wordCardSources,
       cards: [card],
       missing: [other],
       languageData: info.languageData
@@ -65,8 +83,14 @@ describe('word cards for a signed-in app', () => {
     expect(first.headers.get('cache-control')).toBe('private, max-age=86400')
     const tag = first.headers.get('etag') ?? ''
     expect(tag).toBe(`"${info.build}"`)
-    const again = await app().request(get(path, token, { 'if-none-match': tag }))
-    expect(again.status).toBe(304)
+    for (const asked of [tag, `W/${tag}`, `"other", W/${tag}`, '*']) {
+      const before = answered
+      const again = await app().request(get(path, token, { 'if-none-match': asked }))
+      expect(again.status, asked).toBe(304)
+      expect(answered, 'a 304 reads no cards').toBe(before)
+    }
+    const other = await app().request(get(path, token, { 'if-none-match': '"other"' }))
+    expect(other.status).toBe(200)
   })
 
   test.each([
@@ -141,14 +165,65 @@ describe('an app’s access token', () => {
     }
   })
 
-  test('refuses a token without the dictionary scope', async () => {
+  test('refuses a token without the dictionary scope, and names the scope', async () => {
     const token = await accessToken({ scope: 'lists:read known:read' })
     for (const path of paths) {
-      expect(await errorCode(await app().request(get(path, token)))).toEqual([
-        403,
-        'insufficient_scope'
-      ])
+      const response = await app().request(get(path, token))
+      expect(response.headers.get('www-authenticate')).toBe(
+        'Bearer error="insufficient_scope", scope="dictionary:read"'
+      )
+      expect(await errorCode(response)).toEqual([403, 'insufficient_scope'])
     }
+  })
+
+  test.each([
+    ['a token that never expires', () => accessToken({}, { expires: null })],
+    [
+      'an unsigned token',
+      async () =>
+        new UnsecuredJWT({ sub: 'account-1', azp: 'tomodachi', scope: 'dictionary:read' })
+          .setIssuer('https://accounts.test')
+          .setAudience('https://accounts.test')
+          .setExpirationTime('15m')
+          .encode()
+    ],
+    [
+      'a token signed with a shared secret',
+      () =>
+        new SignJWT({ sub: 'account-1', azp: 'tomodachi', scope: 'dictionary:read' })
+          .setProtectedHeader({ alg: 'HS256' })
+          .setIssuer('https://accounts.test')
+          .setAudience('https://accounts.test')
+          .setExpirationTime('15m')
+          .sign(new TextEncoder().encode('a shared secret of at least 32 bytes!'))
+    ]
+  ])('refuses %s', async (_, made) => {
+    expect(await errorCode(await app().request(get(paths[0], await made())))).toEqual([
+      401,
+      'unauthorized'
+    ])
+  })
+
+  test('takes the scheme in any case', async () => {
+    const token = await accessToken()
+    const response = await app().request(
+      new Request(`http://localhost${paths[0]}`, { headers: { authorization: `bearer ${token}` } })
+    )
+    expect(response.status).toBe(200)
+  })
+
+  test('keeps the keys it has while the account service is down, however long', async () => {
+    let down = false
+    const service = app({
+      keysAnswer: () => (down ? new Response('down', { status: 502 }) : undefined)
+    })
+    const token = await accessToken()
+    expect((await service.request(get(paths[0], token))).status).toBe(200)
+    down = true
+    vi.useFakeTimers({ toFake: ['Date'], now: Date.now() + 11 * 60_000 })
+    const before = keys.keyFetches()
+    expect((await service.request(get(paths[0], token))).status).toBe(200)
+    expect(keys.keyFetches()).toBe(before)
   })
 
   test('reloads the account service’s keys for a key it doesn’t know at most every 30 seconds', async () => {

@@ -276,8 +276,9 @@ the core. Those tests need no data: the app-recorded suites run through the core
 `.github/workflows/dictionary-api.yml` checks the dictionary service on pull requests that change
 the service, the core, the website's dictionary code (`apps/web/src/lib/dictionary/`,
 `apps/web/src/components/dictionary/`, `apps/web/src/test/`, `apps/web/vitest.config.ts`), the conformance suites
-(`apps/ios/LanguageData/Conformance/`), or the app's resources
-(`apps/ios/Modules/Sources/SearchExperience/Resources/`), and by hand. A new push cancels the pull
+(`apps/ios/LanguageData/Conformance/`), the app's resources
+(`apps/ios/Modules/Sources/SearchExperience/Resources/`), or `language-data/release.json` (the
+release the service names), and by hand. A new push cancels the pull
 request's last run. Its `scripts` job runs ShellCheck 0.11 on the server's deploy scripts
 (`apps/dictionary-api/deploy/`), in Docker, since the runner's own ShellCheck is older, and since
 `Dictionary API deploy` leaves those scripts out of its paths. Its `check` job:
@@ -311,7 +312,8 @@ it. See [`dictionary-api.md`](dictionary-api.md), Check it.
 (`apps/dictionary-api/Dockerfile`, ADR 0009). It runs on a push to `main` that changes what the
 image holds: the service, the core, the package files it installs from (the root ones and
 `apps/web/package.json`), and the app's files it copies (the `.sqlite3` files, the
-`Kanji*ReferenceData.json` files, the pack catalog, and Kuromoji's). Tests, the service's
+`Kanji*ReferenceData.json` files, the pack catalog, and Kuromoji's), and
+`language-data/release.json`, the release the app routes name. Tests, the service's
 conformance code (`apps/dictionary-api/src/conformance/`), and the server's scripts
 (`apps/dictionary-api/deploy/`) aren't in the image, so they don't start it. A pull request that
 changes the same files runs only the `image` job, which builds and checks without pushing; a new

@@ -73,8 +73,8 @@ it in `.dev.vars` in `apps/web` (see [`web.md`](web.md), Dictionary).
 | `DICTIONARY_API_RELEASE` | `local` | A name for this build of the code, such as its commit. |
 | `LANGUAGE_DATA_RELEASE_FILE` | `language-data/release.json` | The language-data release the files belong to, which the app routes name (the image copies it to `/service/language-data/release.json`). |
 | `ACCOUNT_API_URL` | none | The account service's public URL, such as `https://api.zenbujapanese.com`: an app token's `iss` and `aud` must be exactly this. Unset, the app routes answer 503. |
-| `ACCOUNT_JWKS_URL` | `<ACCOUNT_API_URL>/v1/auth/jwks` | Where the service reads the account service's signing keys. A slot reaches only nginx, so on the server this is a URL nginx answers with the account service's JWKS (Apps, below). |
-| `APP_REQUESTS_PER_MINUTE` | `120` | How many app-route requests one account may make in a minute. |
+| `ACCOUNT_JWKS_URL` | `<ACCOUNT_API_URL>/v1/auth/jwks` | Where the service reads the account service's signing keys. A slot reaches only nginx, so on the server this is a URL nginx answers with the account service's JWKS (Apps, below). It must answer `200` itself: the service follows no redirect. |
+| `APP_REQUESTS_PER_MINUTE` | `60` | How many app-route requests one account may make in a minute. |
 
 The build it reports (`X-Dictionary-Build` on every `/v1` answer, and `/healthz`) is the
 artifact's SHA-256 prefix and the release: a new artifact or new code is a new build. It reports
@@ -96,7 +96,7 @@ more and logs the error.
 | Route | Answer |
 | --- | --- |
 | `GET /healthz` | No token. 503 while starting; then the build, contract, and features. |
-| `GET /v1/info` | The build, the artifact's name and SHA-256, and the features. |
+| `GET /v1/info` | The build, the artifact's name and SHA-256, the features, and `languageData`: the language-data release, its file, and its SHA-256. |
 | `GET /v1/search/<query>` | The results screen. |
 | `GET /v1/search/<query>/examples?from=` | 25 of the examples the Example Sentences row opens, from `from`. |
 | `GET /v1/words/<ent_seq>` | A word page's rows, its slug, the slugs it links to, and which kanji have details (`kanjiPages`). |
@@ -128,27 +128,32 @@ service's are.
 
 | Route | Answer |
 | --- | --- |
-| `GET /v1/apps/word-cards?ids=<id>,<id>` | The word cards for 1 to 100 Language Reference IDs (`zenbu.word-cards.v1`, [`language-data/word-cards.md`](../../language-data/word-cards.md)), in the order asked, each once: `format`, `cards`, `missing` (the IDs no entry has), and `languageData`. |
+| `GET /v1/apps/word-cards?ids=<id>,<id>` | The word cards for 1 to 100 Language Reference IDs (`zenbu.word-cards.v1`, [`language-data/word-cards.md`](../../language-data/word-cards.md)), in the order asked, each once: `format`, `license`, `sources` (each source's notice), `cards`, `missing` (the IDs no entry has), and `languageData`. |
 | `GET /v1/apps/segmentation?text=` | A text of 1 to 200 characters split into words, as the app links captions and example sentences (`zenbu.segmentation.v1`): `format`, `text`, and `tokens`, each with its `text`, its `reading` in hiragana when it has kanji, its `dictionaryForm` when that differs, and its `languageReferenceID` when it's one word, or `candidates` when it may be several; and `languageData`. |
 
 - **The token.** The account service's access token: an EdDSA JWT whose signature checks against
-  the account service's JWKS, with `iss` and `aud` both `ACCOUNT_API_URL`, a `sub` (the account),
-  an `azp` (the app), and `dictionary:read` in its space-separated `scope`. The service caches the
-  keys (`jose`'s remote key set) and reads them again for a key it doesn't know at most every 30
+  the account service's JWKS, with `iss` and `aud` both `ACCOUNT_API_URL`, an `exp`, a `sub` (the
+  account), an `azp` (the app), and `dictionary:read` in its space-separated `scope`. The service
+  keeps the keys while it runs (`jose`'s remote key set), so an account service that's down
+  doesn't refuse tokens it signed, and reads them again for a key it doesn't know at most every 30
   seconds. No token, or one that fails any of that, is `401 unauthorized` with
-  `WWW-Authenticate: Bearer`; a token without the scope is `403 insufficient_scope`; keys the
-  service can't read are `503 unavailable`. The check is in `src/account-tokens.ts`; the service
-  imports nothing from the account service.
+  `WWW-Authenticate: Bearer`; a token without the scope is `403 insufficient_scope`, whose
+  `WWW-Authenticate` names the scope; keys the service can't read are `503 unavailable`, logged as
+  `account keys unavailable`. The check is in `src/account-tokens.ts`; the service imports nothing
+  from the account service.
 - **Bounds.** At most 100 IDs and 200 characters (`400 bad_request` past them), and
   `APP_REQUESTS_PER_MINUTE` requests a minute for each account (`sub`), counted by each server
   process, after which a request is `429 rate_limited` with `Retry-After`.
 - **Caching.** An answer carries the language data's `release`, file, and SHA-256, and is
-  `Cache-Control: private, max-age=86400` with the build as its `ETag`, so an app keeps it a day,
-  revalidates with `If-None-Match` for a `304`, and fetches again when the release changes.
-- **On the server.** A person sets `ACCOUNT_API_URL` in each environment's settings, and makes the
-  account service's JWKS reachable from the dictionary service's slots, which reach only nginx:
-  an nginx location on the slots' network that proxies to the account service's
-  `/v1/auth/jwks`, named in `ACCOUNT_JWKS_URL`. Until then the app routes answer 503.
+  `Cache-Control: private, max-age=86400` with the build as its `ETag`. The build changes with each
+  deploy, so an app keeps an answer a day and then revalidates with `If-None-Match`; a matching
+  tag, strong or weak, is `304` before any work. Cards stay right while `languageData`'s `release`
+  and `sha256` do: an app fetches again when either changes.
+- **On the server.** A person makes the account service's JWKS reachable from the dictionary
+  service's slots, which reach only nginx: an nginx location on the slots' network that proxies to
+  the account service's `/v1/auth/jwks` and answers `200` itself. Then they add `ACCOUNT_API_URL`
+  and `ACCOUNT_JWKS_URL` to each environment's settings (Set up the server, step 3). Until then the
+  app routes answer 503.
 
 ## How it runs
 
@@ -422,6 +427,14 @@ services need about 1.5 GB of memory between them, and 5 GB of disk for images. 
    done
    ```
    Set each environment's Worker to its token ([`web.md`](web.md), Dictionary service).
+
+   **The app routes.** Once the account service runs in an environment and nginx answers its JWKS
+   on the slots' network (Apps), add both to that environment's file. A slot reads the file when
+   it starts, so the next deploy takes them up:
+   ```sh
+   printf 'ACCOUNT_API_URL=%s\nACCOUNT_JWKS_URL=%s\n' "$account_url" "$jwks_url" |
+     sudo tee -a /etc/zenbujapanese-dictionary-api/$environment.env >/dev/null
+   ```
 4. **nginx.** The nginx repository holds each environment's site,
    `nginx/dictionary-api-staging.zenbujapanese.com.conf` and
    `nginx/dictionary-api.zenbujapanese.com.conf`: the `zenbujapanese.com` Cloudflare origin

@@ -12,9 +12,9 @@ export interface TestAccountKeys {
   keyFetches(): number
   accessToken(
     claims?: JWTPayload,
-    options?: { key?: Key; kid?: string; expires?: string }
+    options?: { key?: Key; kid?: string; expires?: string | null }
   ): Promise<string>
-  access(options?: { limit?: number; keysAnswer?: () => Response }): AppAccess
+  access(options?: { limit?: number; keysAnswer?: () => Response | undefined }): AppAccess
 }
 
 export async function testAccountKeys(): Promise<TestAccountKeys> {
@@ -25,8 +25,8 @@ export async function testAccountKeys(): Promise<TestAccountKeys> {
   return {
     stranger,
     keyFetches: () => fetches,
-    accessToken: (claims = {}, options = {}) =>
-      new SignJWT({
+    accessToken: (claims = {}, options = {}) => {
+      const token = new SignJWT({
         iss: accountUrl,
         aud: accountUrl,
         sub: 'account-1',
@@ -37,8 +37,9 @@ export async function testAccountKeys(): Promise<TestAccountKeys> {
       })
         .setProtectedHeader({ alg: 'EdDSA', kid: options.kid ?? 'current' })
         .setIssuedAt()
-        .setExpirationTime(options.expires ?? '15m')
-        .sign(options.key ?? pair.privateKey),
+      if (options.expires !== null) token.setExpirationTime(options.expires ?? '15m')
+      return token.sign(options.key ?? pair.privateKey)
+    },
     access: (options = {}) => ({
       tokens: accountTokens({
         accountUrl,
