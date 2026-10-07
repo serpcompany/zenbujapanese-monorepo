@@ -5,9 +5,11 @@ It is updated with the implementation and is not a roadmap or an ideas backlog. 
 is [Required, not built yet](#required-not-built-yet-563), which lists behavior the owners have
 decided the app must have but doesn't yet.
 
-The app runs in portrait on iPhone. It has three tabs:
+The app runs in portrait on iPhone. It has four tabs:
 
 - **Search** opens the [Dictionary](dictionary.md) Product Experience.
+- **Translate** opens [Translate](translate.md), a Japanese and English conversation translator
+  that runs on the iPhone.
 - **Player** opens [Player](player.md), where a learner watches YouTube
   videos with linked Japanese captions.
 - **Account** opens personal content, preferences, language-resource management, support, and credits.
@@ -41,6 +43,8 @@ lists. It provides:
 - the Media Library;
 - Known Words;
 - Lists;
+- **Translations**, with how many conversations Translate has saved, which opens the same
+  **Translations** screen as the Translate tab;
 - Reading Aids: Furigana, Romaji, and Hide Furigana on Known Words; Word Meanings (a short
   meaning under each linked word the learner hasn't marked known); and Sentence Translations,
   with a translation language (English so far) and who translates Player captions — YouTube, or

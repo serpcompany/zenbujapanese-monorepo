@@ -15,6 +15,9 @@ export const docsRule =
 export const sizeRule =
   'Code files stay under the line limit (docs/agents/code.md, File size). Split a file that outgrows it by responsibility, into files named for what each does. An exception needs a reason that makes splitting unsafe now; it goes in knownLargeFiles in tools/checks/src/sizes.ts with its size and that reason, and may only shrink.'
 
+export const layerRule =
+  "A layer imports only what ARCHITECTURE.md (Layers) lets it: tools/checks/src/layers.ts lists each Swift layer's folder and allowed imports. Move the code that needs the framework into the app target, behind one of the layer's clients, rather than widening the list."
+
 export const linterRule =
   'ShellCheck, actionlint, and Ruff run at the versions in tools/checks/src/linters.ts, in Docker, locally and in CI (docs/agents/code.md, Checks). Fix what they report. Without Docker, an installed copy runs instead; with neither, the linter is skipped here and still runs in CI.'
 

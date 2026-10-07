@@ -19,9 +19,15 @@ let package = Package(
     ),
   ],
   targets: [
+    .target(name: "TranslatorCore"),
+    .testTarget(
+      name: "TranslatorCoreTests",
+      dependencies: ["TranslatorCore"]
+    ),
     .target(
       name: "SearchExperience",
       dependencies: [
+        "TranslatorCore",
         .product(name: "Sudachi", package: "sudachi-swift"),
         .product(name: "ZIPFoundation", package: "ZIPFoundation"),
       ],

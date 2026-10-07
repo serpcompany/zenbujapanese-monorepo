@@ -10,7 +10,7 @@ const document = app.getOpenAPI31Document({
     title: 'Zenbu account service',
     version: '1',
     description:
-      "Accounts, sign-in, profiles, and sync for every Zenbu app (ADR 0011). Sign-in is Better Auth's, under /v1/auth; a test holds each of its answers to this contract. Every error is the Error schema."
+      "Accounts, sign-in, profiles, and sync for every Zenbu app (ADR 0012). Sign-in is Better Auth's, under /v1/auth; a test holds each of its answers to this contract. Every error is the Error schema."
   },
   servers: [
     { url: 'https://api.zenbujapanese.com', description: 'Production' },

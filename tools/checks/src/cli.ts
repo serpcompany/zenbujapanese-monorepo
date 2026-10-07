@@ -5,6 +5,7 @@ import { checkDocs } from './docs'
 import { findDuplicates } from './duplicates'
 import { repositoryFiles, root } from './files'
 import { duplicateProblems } from './known-duplicates'
+import { checkLayers } from './layers'
 import { runLinters } from './linters'
 import {
   commentRule,
@@ -12,6 +13,7 @@ import {
   dependencyRule,
   docsRule,
   duplicateRule,
+  layerRule,
   linterRule,
   secretRule,
   sizeRule,
@@ -53,6 +55,13 @@ const sizes: Check = files => {
   const report = problems.map(problem => `${problem.path}  ${problem.problem}`)
   if (problems.length) report.push(sizeRule)
   return { name: 'sizes', passed: !problems.length, report }
+}
+
+const layers: Check = files => {
+  const problems = checkLayers(files)
+  const report = problems.map(problem => `${problem.path}:${problem.line}  ${problem.problem}`)
+  if (problems.length) report.push(layerRule)
+  return { name: 'layers', passed: !problems.length, report }
 }
 
 const linters: Check = files => {
@@ -112,6 +121,7 @@ const checks: Record<string, Check> = {
   comments,
   docs,
   sizes,
+  layers,
   secrets,
   duplicates,
   deadcode,

@@ -44,7 +44,7 @@ struct ZenbuAccountRow: View {
 
 struct ZenbuAccountView: View {
   @Environment(ZenbuAccount.self) private var zenbuAccount
-  let close: () -> Void
+  @Environment(\.dismiss) private var dismiss
   @State private var confirmsSignOut = false
   @State private var deletes = false
 
@@ -79,7 +79,7 @@ struct ZenbuAccountView: View {
       Button("Sign Out") {
         Task {
           await zenbuAccount.signOut()
-          close()
+          dismiss()
         }
       }
     } message: {
@@ -88,7 +88,7 @@ struct ZenbuAccountView: View {
       )
     }
     .sheet(isPresented: $deletes) {
-      DeleteAccountView(finished: close)
+      DeleteAccountView { dismiss() }
     }
   }
 
