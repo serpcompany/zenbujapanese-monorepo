@@ -37,7 +37,8 @@ describe('access tokens', () => {
     ])
     expect(payload).toMatchObject({
       azp: 'zenbu-ios',
-      scope: 'account account:delete profile lists:read lists:write known:read known:write'
+      scope:
+        'account account:delete profile lists:read lists:write known:read known:write watch:read watch:write'
     })
     expect(Number(payload.exp) - Number(payload.iat)).toBe(15 * 60)
 

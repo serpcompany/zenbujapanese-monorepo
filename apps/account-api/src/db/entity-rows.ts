@@ -3,6 +3,7 @@ import { listWordSeparator } from '../domain/entities'
 import type { EntityReader, KnownWord, ListWord, WordList } from '../domain/store'
 import type { Drizzle } from './database'
 import { knownWords, listWords, syncChanges, users, wordLists } from './schema'
+import { watchedVideoReader, watchedVideoWriter } from './watched-video-rows'
 
 export const profileColumns = {
   id: users.id,
@@ -46,6 +47,7 @@ const listWordColumns = {
 
 export function readerOn(db: Drizzle, userId: string): EntityReader {
   return {
+    ...watchedVideoReader(db, userId),
     async currentProfile() {
       const [profile] = await db.select(profileColumns).from(users).where(eq(users.id, userId))
       return profile ?? null
@@ -82,6 +84,7 @@ export function readerOn(db: Drizzle, userId: string): EntityReader {
 
 export function writerOn(db: Drizzle, userId: string) {
   return {
+    ...watchedVideoWriter(db, userId),
     async saveKnownWord(word: Omit<KnownWord, 'updatedAt'>) {
       await db
         .insert(knownWords)

@@ -33,7 +33,7 @@ struct DeleteAccountView: View {
             Text("Your Zenbu account is deleted.")
               .font(.headline)
             Text(
-              "You're signed out. Your known words, lists, notes, and media are still on this iPhone, and Zenbu works as before."
+              "You're signed out. Your known words, lists, watch history, notes, and media are still on this iPhone, and Zenbu works as before."
             )
             .accessibilityIdentifier("delete-account.done-note")
           }
@@ -81,7 +81,7 @@ struct DeleteAccountView: View {
         "Deleting your Zenbu account deletes it, the ways you sign in, and everything it synced, on every device and Zenbu app. It can't be undone."
       )
       Text(
-        "This iPhone keeps your known words, lists, notes, and media, and Zenbu keeps working signed out."
+        "This iPhone keeps your known words, lists, watch history, notes, and media, and Zenbu keeps working signed out."
       )
       .foregroundStyle(.secondary)
     }

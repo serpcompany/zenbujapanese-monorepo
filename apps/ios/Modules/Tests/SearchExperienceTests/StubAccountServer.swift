@@ -221,6 +221,18 @@ enum StubSync {
       ])
   }
 
+  static func watchedVideo(
+    _ videoID: String, at watchedAt: String, version: Int, title: String = "Elsewhere",
+    position: Double = 42.5
+  ) -> [String: Any] {
+    put(
+      "watchedVideo", videoID, version,
+      [
+        "videoId": videoID, "title": title, "author": NSNull(), "duration": 600,
+        "position": position, "comprehension": 0.5, "watchedAt": watchedAt,
+      ])
+  }
+
   static func gone(_ entity: String, _ entityID: String, version: Int) -> [String: Any] {
     [
       "entity": entity, "entityId": entityID, "operation": "delete", "version": version,

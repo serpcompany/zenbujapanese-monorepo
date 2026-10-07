@@ -2,6 +2,7 @@ import { sql } from 'drizzle-orm'
 import {
   bigint,
   boolean,
+  doublePrecision,
   index,
   integer,
   pgTable,
@@ -185,6 +186,24 @@ export const listWords = pgTable(
     updatedAt: updated()
   },
   table => [primaryKey({ columns: [table.userId, table.listId, table.itemId] })]
+)
+
+export const watchedVideos = pgTable(
+  'watched_videos',
+  {
+    userId: owner(),
+    videoId: text('video_id').notNull(),
+    title: text('title'),
+    author: text('author'),
+    duration: doublePrecision('duration'),
+    position: doublePrecision('position'),
+    comprehension: doublePrecision('comprehension'),
+    watchedAt: moment('watched_at'),
+    status: text('status', { enum: ['watched', 'removed', 'pruned'] }).notNull(),
+    version: bigint('version', { mode: 'number' }).notNull(),
+    updatedAt: updated()
+  },
+  table => [primaryKey({ columns: [table.userId, table.videoId] })]
 )
 
 export const syncOrigin = pgTable('sync_origin', {

@@ -161,8 +161,26 @@ final class FakeAccountService: @unchecked Sendable {
       guard current?.data != nil else { return applied(version) }
       guard base == version else { return conflict() }
       return save(user, key, nil, version + 1, applied)
+    case ("watchedVideo", "watch"):
+      if current != nil, current?.data == nil, base != version { return conflict() }
+      var data = current?.data ?? ["videoId": mutation.entityId]
+      for (name, value) in mutation.fields ?? [:] { data[name] = Self.json(value) }
+      return save(user, key, data, version + 1, applied)
+    case ("watchedVideo", "remove"):
+      guard current?.data != nil else { return applied(version) }
+      return save(user, key, nil, version + 1, applied)
     default:
       return StubSync.rejected(mutation.id, "unknown_operation")
+    }
+  }
+
+  private static func json(_ value: SyncFieldValue) -> Any {
+    switch value {
+    case .string(let text): text
+    case .number(let number): number
+    case .decimal(let number): number
+    case .bool(let flag): flag
+    case .null: NSNull()
     }
   }
 

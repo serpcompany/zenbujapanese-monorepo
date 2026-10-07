@@ -7,7 +7,8 @@ final class ZenbuAccount {
   static let shared: ZenbuAccount? = AccountServiceConfiguration.resolve().map {
     ZenbuAccount(
       configuration: $0, session: AccountAPI.urlSession(),
-      storage: KeychainSessionTokenStorage(), wordKnowledge: .shared, wordLists: .shared)
+      storage: KeychainSessionTokenStorage(), wordKnowledge: .shared, wordLists: .shared,
+      watchHistory: .shared)
   }
 
   let configuration: AccountServiceConfiguration
@@ -22,6 +23,7 @@ final class ZenbuAccount {
     storage: any SessionTokenStorage,
     wordKnowledge: WordKnowledge,
     wordLists: WordLists,
+    watchHistory: WatchHistory,
     fileURL: URL = AccountSync.defaultFileURL,
     now: @escaping @MainActor () -> Date = Date.init
   ) {
@@ -31,7 +33,8 @@ final class ZenbuAccount {
     self.session = session
     sync = AccountSync(
       api: api, tokens: AccountTokens(api: api, storage: storage, now: now),
-      wordKnowledge: wordKnowledge, wordLists: wordLists, fileURL: fileURL, now: now)
+      wordKnowledge: wordKnowledge, wordLists: wordLists, watchHistory: watchHistory,
+      fileURL: fileURL, now: now)
     scheduler = AccountSyncScheduler(sync: sync, now: now)
   }
 

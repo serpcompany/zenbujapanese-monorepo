@@ -15,6 +15,7 @@ import type {
   MutationRecord,
   RecordedMutation
 } from './store'
+import { watchHistory } from './watch-history'
 import { listWords, wordLists } from './word-lists'
 
 export const syncLimits = {
@@ -49,7 +50,8 @@ const entities: Record<EntityType, Entity> = {
   profile: profiles,
   knownWord: knownWords,
   list: wordLists,
-  listWord: listWords
+  listWord: listWords,
+  watchedVideo: watchHistory
 }
 
 const unknownEntity = rejection('unknown_entity', 'This service syncs no entity of that type.')

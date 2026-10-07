@@ -61,6 +61,14 @@ describe('DELETE /v1/me', () => {
           entityId: '0'.repeat(32),
           baseVersion: 0,
           fields: { headword: '見る', reading: 'みる' }
+        },
+        {
+          id: randomUUID(),
+          entity: 'watchedVideo',
+          operation: 'watch',
+          entityId: 'dQw4w9WgXcQ',
+          baseVersion: 0,
+          fields: { watchedAt: '2026-10-01T12:00:00Z', title: 'Gone too' }
         }
       ]
     })
@@ -75,6 +83,7 @@ describe('DELETE /v1/me', () => {
       'user_identities',
       'known_words',
       'word_lists',
+      'watched_videos',
       'sync_changes',
       'sync_mutations'
     ]) {

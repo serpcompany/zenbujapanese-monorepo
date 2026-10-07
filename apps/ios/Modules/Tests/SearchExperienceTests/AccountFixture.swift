@@ -24,11 +24,13 @@ final class AccountFixture {
 
   let directory = FileManager.default.temporaryDirectory
     .appending(path: "account-tests-\(UUID().uuidString)", directoryHint: .isDirectory)
+  nonisolated let defaultsSuite = "account-tests-\(UUID().uuidString)"
   let server: StubAccountServer
   let storage: MemorySessionTokenStorage
   var now = Date(timeIntervalSince1970: 1_791_000_000)
   private(set) var wordKnowledge: WordKnowledge!
   private(set) var wordLists: WordLists!
+  private(set) var watchHistory: WatchHistory!
   private(set) var account: ZenbuAccount!
 
   var sync: AccountSync { account.sync }
@@ -40,17 +42,20 @@ final class AccountFixture {
 
   deinit {
     try? FileManager.default.removeItem(at: directory)
+    UserDefaults().removePersistentDomain(forName: defaultsSuite)
   }
 
   func launch() async {
     if account != nil { await settle() }
     wordKnowledge = WordKnowledge(fileURL: directory.appending(path: "word-knowledge.json"))
     wordLists = WordLists(fileURL: directory.appending(path: "word-lists.json"))
+    watchHistory = WatchHistory(
+      defaults: UserDefaults(suiteName: defaultsSuite) ?? .standard, now: { [unowned self] in now })
     account = ZenbuAccount(
       configuration: AccountServiceConfiguration(serviceURL: server.baseURL, googleClientID: nil),
       session: server.session, storage: storage, wordKnowledge: wordKnowledge,
-      wordLists: wordLists, fileURL: directory.appending(path: "account-sync.json"),
-      now: { [unowned self] in now })
+      wordLists: wordLists, watchHistory: watchHistory,
+      fileURL: directory.appending(path: "account-sync.json"), now: { [unowned self] in now })
     sync.onLocalChange = nil
     await settle()
   }
@@ -137,6 +142,14 @@ final class AccountFixture {
   func addMiru(to listID: UUID) {
     wordLists.addWord(
       LanguageReferenceID(rawValue: Self.miru), headword: "見る", reading: "みる", to: listID)
+  }
+
+  func watch(_ videoID: String, title: String = "日本の朝ごはん", position: TimeInterval? = nil) {
+    guard let id = YouTubeVideoID(rawValue: videoID) else { return }
+    watchHistory.record(id) { video in
+      video.title = title
+      video.position = position ?? video.position
+    }
   }
 
   var favorites: UUID { wordLists.lists[0].id }

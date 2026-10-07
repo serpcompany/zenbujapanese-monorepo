@@ -7,6 +7,8 @@ enum SavedItemChange: Sendable {
   case listDeleted(UUID)
   case wordAdded(WordListMembership)
   case wordRemoved(WordListMembership)
+  case videoWatched(WatchedVideo, previous: WatchedVideo?)
+  case videoRemoved(WatchedVideo)
 }
 
 struct KnownWordChange: Codable, Hashable, Sendable {
@@ -22,6 +24,8 @@ enum SyncUndo: Codable, Hashable, Sendable {
   case restoreList(WordList)
   case removeWord(listID: UUID, storedID: String)
   case restoreWord(WordListMembership)
+  case removeVideo(String)
+  case restoreVideo(WatchedVideo)
 }
 
 struct QueuedSyncChange: Codable, Hashable, Sendable, Identifiable {
@@ -55,6 +59,7 @@ struct AccountCopy: Codable, Hashable, Sendable {
     case knownWord(KnownWordChange)
     case list(WordList)
     case listWord(WordListMembership)
+    case watchedVideo(WatchedVideo)
     case gone
   }
 
@@ -82,6 +87,12 @@ struct AccountCopy: Codable, Hashable, Sendable {
         WordListMembership(
           listID: listID, entryID: word.itemId, headword: word.headword, reading: word.reading,
           addedAt: word.addedAt))
+    case .watchedVideo(let video):
+      value = .watchedVideo(
+        WatchedVideo(
+          videoID: video.videoId, title: video.title, comprehension: video.comprehension,
+          author: video.author, duration: video.duration, position: video.position,
+          watchedAt: video.watchedAt))
     case .gone:
       value = .gone
     case .unsynced:
@@ -105,6 +116,7 @@ struct AccountSyncState: Codable, Sendable, Equatable {
   var accountHadFavorites = false
   var signedOutQueueStart: Int?
   var endedOnItsOwn = false
+  var syncedEntities = SyncEntity.uploaded
 
   init(account: SignedInAccount? = nil) {
     self.account = account
@@ -124,6 +136,9 @@ struct AccountSyncState: Codable, Sendable, Equatable {
       try container.decodeIfPresent(Bool.self, forKey: .accountHadFavorites) ?? false
     signedOutQueueStart = try container.decodeIfPresent(Int.self, forKey: .signedOutQueueStart)
     endedOnItsOwn = try container.decodeIfPresent(Bool.self, forKey: .endedOnItsOwn) ?? false
+    syncedEntities =
+      try container.decodeIfPresent([String].self, forKey: .syncedEntities)
+      ?? SyncEntity.firstSynced
   }
 
   var keepsChanges: Bool { account != nil || signedOutFrom != nil }
@@ -145,6 +160,9 @@ struct AccountSyncState: Codable, Sendable, Equatable {
   }
 
   mutating func enqueue(_ change: QueuedSyncChange) {
+    if change.key.entity == SyncEntity.watchedVideo {
+      return enqueueReplacingUnsent(change)
+    }
     guard let start = signedOutQueueStart,
       let earlier = queue[start...].lastIndex(where: { $0.key == change.key })
     else { return queue.append(change) }
@@ -158,6 +176,14 @@ struct AccountSyncState: Codable, Sendable, Equatable {
       queue.remove(at: earlier)
     default:
       break
+    }
+    queue.append(change)
+  }
+
+  private mutating func enqueueReplacingUnsent(_ change: QueuedSyncChange) {
+    let first = queue.firstIndex { $0.key == change.key }
+    if let last = queue.lastIndex(where: { $0.key == change.key }), last != first {
+      queue.remove(at: last)
     }
     queue.append(change)
   }
@@ -265,6 +291,13 @@ extension SavedItemChange {
       return Self.queued(
         .listWord(listID: word.listID, storedID: word.entryID), "remove", state, fields: nil,
         undo: .restoreWord(word))
+    case .videoWatched(let video, let previous):
+      return Self.queued(
+        Self.key(video: video.videoID), "watch", state, fields: Self.fields(of: video),
+        undo: previous.map(SyncUndo.restoreVideo) ?? .removeVideo(video.videoID))
+    case .videoRemoved(let video):
+      return Self.queued(
+        Self.key(video: video.videoID), "remove", state, fields: nil, undo: .restoreVideo(video))
     }
   }
 
@@ -277,6 +310,29 @@ extension SavedItemChange {
 
   private static func key(_ listID: UUID) -> SyncEntityKey {
     SyncEntityKey(entity: SyncEntity.list, entityID: SyncEntityKey.listID(listID))
+  }
+
+  private static func key(video videoID: String) -> SyncEntityKey {
+    SyncEntityKey(entity: SyncEntity.watchedVideo, entityID: videoID)
+  }
+
+  private static func fields(of video: WatchedVideo) -> [String: SyncFieldValue] {
+    var fields: [String: SyncFieldValue] = [
+      "watchedAt": .string(
+        Date.ISO8601FormatStyle(includingFractionalSeconds: true).format(video.watchedAt ?? Date()))
+    ]
+    for (name, text) in [("title", video.title), ("author", video.author)] {
+      if let text, !text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+        fields[name] = .string(text)
+      }
+    }
+    for (name, number) in [
+      ("duration", video.duration), ("position", video.position),
+      ("comprehension", video.comprehension.map { min($0, 1) }),
+    ] {
+      if let number, number.isFinite, number >= 0 { fields[name] = .decimal(number) }
+    }
+    return fields
   }
 
   private static func text(_ headword: String, _ reading: String) -> [String: SyncFieldValue] {

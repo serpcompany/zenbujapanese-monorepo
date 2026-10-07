@@ -2,7 +2,7 @@ import { sql } from 'drizzle-orm'
 import { listWordSeparator } from '../domain/entities'
 import type { EntityType } from '../domain/store'
 import type { Drizzle } from './database'
-import { knownWords, listWords, syncOrigin, users, wordLists } from './schema'
+import { knownWords, listWords, syncOrigin, users, watchedVideos, wordLists } from './schema'
 
 export type DatabaseStart = 'first start' | 'same database' | 'restored'
 
@@ -10,7 +10,7 @@ const thisDatabase = sql<number>`(select oid::bigint from pg_database where datn
 const epoch = sql`extract(epoch from clock_timestamp())`
 const entity = (type: EntityType) => sql`${type}`
 
-const versioned = [users, knownWords, wordLists, listWords] as const
+const versioned = [users, knownWords, wordLists, listWords, watchedVideos] as const
 
 export function fenceIfRestored(db: Drizzle): Promise<DatabaseStart> {
   return db.transaction(async tx => {
@@ -36,7 +36,9 @@ export function fenceIfRestored(db: Drizzle): Promise<DatabaseStart> {
       union all
       select user_id, ${entity('list')}, id, version, 'restore' from word_lists
       union all
-      select user_id, ${entity('listWord')}, list_id || ${listWordSeparator} || item_id, version, 'restore' from list_words`)
+      select user_id, ${entity('listWord')}, list_id || ${listWordSeparator} || item_id, version, 'restore' from list_words
+      union all
+      select user_id, ${entity('watchedVideo')}, video_id, version, 'restore' from watched_videos`)
     if (origin) {
       await tx.update(syncOrigin).set({ databaseOid: thisDatabase })
       return 'restored'

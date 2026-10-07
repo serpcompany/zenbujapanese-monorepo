@@ -19,21 +19,21 @@ export default function PrivacyPage() {
         The app doesn't track you, and collects no data unless you sign in to a Zenbu account. It
         has no advertising, analytics, or third-party crash-reporting SDK, and everything in it
         works on your device without an account. If you create or sign in to a Zenbu account where
-        our apps or this website offer one, we keep your email, how you sign in, and the known words
-        and lists you sync on our servers, so your apps can share them, and you can delete the
-        account at any time. If you link it to Tomodachi, our companion app, Tomodachi can read your
-        lists and known words, mark words Known, and delete the account when you ask it to. The
-        website uses privacy-friendly, cookieless analytics to count visits, and, if you sign in on
-        it, only the cookies signing in needs.
+        our apps or this website offer one, we keep your email, how you sign in, and the known
+        words, lists, and watch history you sync on our servers, so your devices and apps can share
+        them, and you can delete the account at any time. If you link it to Tomodachi, our companion
+        app, Tomodachi can read your lists and known words, mark words Known, and delete the account
+        when you ask it to. The website uses privacy-friendly, cookieless analytics to count visits,
+        and, if you sign in on it, only the cookies signing in needs.
       </p>
 
       <h2>Information in the app</h2>
       <p>
-        Your profile, recent searches, word notes, known words, word lists, Media Library photos,
-        and Translate conversations are stored in the app's private storage on your device and are
-        not sent to {site.name}, except what a Zenbu account syncs if you create or sign in to one
-        (see below). Your device's own backups, such as iCloud Backup, can include them, under
-        Apple's terms.
+        Your profile, recent searches, word notes, known words, word lists, Player's watch history,
+        Media Library photos, and Translate conversations are stored in the app's private storage on
+        your device and are not sent to {site.name}, except what a Zenbu account syncs if you create
+        or sign in to one (see below). Your device's own backups, such as iCloud Backup, can include
+        them, under Apple's terms.
       </p>
       <p>
         Images you choose for Image Search are processed on your device. Opening a word from one
@@ -103,8 +103,13 @@ export default function PrivacyPage() {
         <li>
           <strong>The study data you sync:</strong> your known words, meaning which words and kanji
           they are and whether each is known; your lists' names, their order, and the words in them;
-          a record of each item's latest change, including a deletion, so your other devices follow
-          it; and the result of each sync request, so that a retry is never applied twice.
+          from the iPhone app, your watch history: the 50 YouTube videos you most recently watched
+          in its Player, each with its YouTube video ID, title, and channel, its length, where you
+          stopped, how much of its captions you know, and when you last watched it; a record of each
+          item's latest change, including a deletion, so your other devices follow it, which for a
+          video you removed from your history, or one past the 50, keeps only its YouTube video ID,
+          for the latest 100; and the result of each sync request, so that a retry is never applied
+          twice.
         </li>
       </ul>
       <p>
@@ -158,13 +163,13 @@ export default function PrivacyPage() {
       </ul>
       <p>
         It doesn't read or change your known words or lists yet; we'll update this policy before it
-        does. Its account pages connect from your browser to our account service at
-        api.zenbujapanese.com only when you open your account page or start to sign in. Pointing at
-        or tabbing to a Sign in with Apple button gets it ready: your browser loads Apple's Sign in
-        with Apple script from Apple and asks our account service for a one-time sign-in value.
-        Choosing Apple opens Apple's window; if you choose Google, your browser goes to Google and
-        comes back through our account service. Each handles that under its own terms and privacy
-        policy.
+        does. It can't read your watch history. Its account pages connect from your browser to our
+        account service at api.zenbujapanese.com only when you open your account page or start to
+        sign in. Pointing at or tabbing to a Sign in with Apple button gets it ready: your browser
+        loads Apple's Sign in with Apple script from Apple and asks our account service for a
+        one-time sign-in value. Choosing Apple opens Apple's window; if you choose Google, your
+        browser goes to Google and comes back through our account service. Each handles that under
+        its own terms and privacy policy.
       </p>
 
       <h2>Where account data is kept</h2>

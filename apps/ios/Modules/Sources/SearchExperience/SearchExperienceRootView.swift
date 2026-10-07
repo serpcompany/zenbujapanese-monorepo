@@ -17,7 +17,7 @@ public struct SearchExperienceRootView: View {
   @State private var imageWordSheet = WordSheetPresentation()
   @State private var watchPath = NavigationPath()
   @State private var watchWordSheet = WordSheetPresentation()
-  @State private var watchHistory = WatchHistory()
+  private let watchHistory = WatchHistory.shared
   @State private var translatePath = NavigationPath()
   @State private var translateWordSheet = WordSheetPresentation()
   @State private var translateExperience = TranslateExperience.live()

@@ -331,8 +331,8 @@ nothing (Account and sync, below).
 
 ## Account and sync
 
-The app signs in to the account service and syncs known words and lists exactly as the client
-guide says ([`account-clients.md`](account-clients.md)), as `zenbu-ios`. The code is in
+The app signs in to the account service and syncs known words, lists, and watch history exactly
+as the client guide says ([`account-clients.md`](account-clients.md)), as `zenbu-ios`. The code is in
 `SearchExperience`: `ZenbuAccount.swift` (sign-in, signing out, deleting),
 `AccountServiceConfiguration.swift`, `AccountAPI.swift` and `AccountSyncModels.swift` (the routes and
 their answers), `AccountTokens.swift`, `AccountSync.swift` and `AccountSyncState.swift` (the queue
@@ -383,8 +383,22 @@ tests prove that model against the real service.
   signed out. Nothing queued before signing out is merged, since it may have been sent.
   Signing in to the same user ID picks them up and syncs from the kept cursor. Signing in to any other account drops them, moves Favorites to its shared ID
   (`WordLists.favoritesID`, from the oldest list if it's still named Favorites), and queues the
-  phone's marks, lists, and list words at version 0 before the first sync. Deleting the account
-  drops everything.
+  phone's marks, lists, list words, and Recent videos at version 0 before the first sync. Deleting
+  the account drops everything.
+- **Entities added later.** `account-sync.json` names the entities the account's first upload
+  covered (`syncedEntities`; a file without it covered known words, lists, and list words). A phone
+  that signed in before its app synced an entity, such as watch history, queues that entity's items
+  at version 0 on its next sync, and syncs from no cursor, since its cursor passed that entity's
+  changes.
+- **Watch history.** `WatchHistory` (`WatchHistory.swift`, in `UserDefaults` under
+  `watch.recent-videos.v1`) reports each `record` and swipe removal through `changeObserver`, and
+  takes the account's copies through `applySynced`, which report nothing. It keeps the 50 newest
+  by `watchedAt` either way, so a video dropped past 50 sends no `remove`: the account prunes its
+  own. A video saved before Recent kept a time gets one when the history loads, a second apart in
+  its order. Each `record` queues the whole video as a `watch`, and a newer change to a video
+  replaces a queued one that isn't its first, the only one that can be on its way, so a viewing's
+  title, length, comprehension, and place go as about two watches. `WatchSessionView` records the
+  video as it opens, as its captions, length, and comprehension arrive, and as it closes.
 - **Favorites** has one ID in every app ([`account-clients.md`](account-clients.md), The rules, from
   your side). A second phone's `create` of it is rejected `already_exists`, which the first upload
   never undoes: the account's copy comes down, and the phone's words still add. If that copy comes
@@ -418,14 +432,17 @@ tests prove that model against the real service.
   sign-in replaces. Then it calls `DELETE /v1/me` and signs out. Each attempt with Apple uses a new
   code. If the answer is lost, the app asks `/v1/auth/token`: a `401` means the account is gone.
 
-`AccountSignInTests`, `AccountSyncTests`, `AccountSyncConflictTests`, `AccountSyncRecoveryTests`, and
-`AccountSignedOutTests` run the client against a stub server (`StubAccountServer`, a `URLProtocol`):
+`AccountSignInTests`, `AccountSyncTests`, `AccountSyncConflictTests`, `AccountSyncRecoveryTests`,
+`AccountSyncWatchHistoryTests`, and `AccountSignedOutTests` run the client against a stub server (`StubAccountServer`, a `URLProtocol`):
 sign-in, tokens and their refresh, the queue and cursor across a relaunch, retries under the same
 mutation IDs, each entity's conflicts and rejections, order and paging, list words held across a
 failed page, the request size, `410`, `429` and backoff, and signing out and deleting, which keep
 the phone's data. `AccountSignedOutTests` runs against `FakeAccountService`, a small copy of the
 service's sync rules, so two installs can share one account: changes made while signed out going
 to the same account, another account starting over, and two phones ending with one Favorites.
+`AccountSyncWatchHistoryTests` covers Recent's first upload, a newer watch replacing an unsent one,
+pulled videos kept to the newest 50, removals both ways, a watch that lost to a removal, a
+rejected watch, a phone catching up on watch history, and two phones through `FakeAccountService`.
 
 ## Image Search and Apple Intelligence
 

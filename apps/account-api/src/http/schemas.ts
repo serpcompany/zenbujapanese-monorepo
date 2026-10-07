@@ -1,6 +1,7 @@
 import { z } from '@hono/zod-openapi'
 import { profileLimits } from '../domain/profile'
 import { syncLimits } from '../domain/sync'
+import { watchLimits } from '../domain/watch-history'
 
 const { min, max } = profileLimits.usernameLength
 
@@ -92,7 +93,7 @@ const MutationSchema = z
       }),
     entity: z.string().regex(nameLike).openapi({
       description:
-        "`profile`, `knownWord`, `list`, or `listWord`. Any other is rejected with `unknown_entity`, and the rest of the request still applies. A change the app's scopes don't allow is rejected with `not_allowed`, and the app reads only the entities its scopes do."
+        "`profile`, `knownWord`, `list`, `listWord`, or `watchedVideo`. Any other is rejected with `unknown_entity`, and the rest of the request still applies. A change the app's scopes don't allow is rejected with `not_allowed`, and the app reads only the entities its scopes do."
     }),
     operation: z
       .string()
@@ -102,7 +103,8 @@ const MutationSchema = z
           "- `profile`: `update` (`fields` name, username, or both; `baseVersion`). It applies only at the profile's current version.",
           '- `knownWord`: `mark` (`fields` headword and reading) and `clear`, each with `baseVersion`. Either applies only if the word is still at `baseVersion`, so a mark made before the learner cleared the word loses to the clear, and one made after it wins. Marking a known word, or clearing one not known, is applied and changes nothing.',
           '- `list`: `create` (`fields` name and position), `update` (`fields` name, position, or both; `baseVersion`), and `delete`. An update applies only at the current version, so two renames conflict; one that already matches the list is applied. A delete wins over everything done to the list since, renames and words added elsewhere too, and takes its words with it. A list name is 1 to 500 characters once trimmed; control characters become spaces.',
-          '- `listWord`: `add` (`fields` headword and reading) and `remove` (`baseVersion`). An add always applies. A remove applies only if it saw the latest add, so an add the remover never saw wins.'
+          '- `listWord`: `add` (`fields` headword and reading) and `remove` (`baseVersion`). An add always applies. A remove applies only if it saw the latest add, so an add the remover never saw wins.',
+          `- \`watchedVideo\`: \`watch\` (\`fields\` watchedAt, and any of title, author, duration, position, and comprehension; \`baseVersion\`) and \`remove\`. A watch of a video the account has applies whatever its version, so the latest place in it wins; fields it leaves out keep theirs, and the video keeps the later watchedAt. A watch of a video the learner removed applies only at the removal's version, so one made before seeing the removal loses to it. A remove always applies. The account keeps the ${watchLimits.videos} most recently watched: a watch past that removes the oldest, which syncs as a delete.`
         ].join('\n')
       }),
     entityId: z
@@ -111,7 +113,7 @@ const MutationSchema = z
       .optional()
       .openapi({
         description:
-          "- `profile`: the account's ID, or left out.\n- `knownWord`: the item, a Language Reference ID (32 lowercase hex digits) or `kanji:` and one kanji, which is stored in Unicode NFC.\n- `list`: its UUID, in either case; answers name it in lowercase.\n- `listWord`: the list's UUID, a slash, and the item: `<list>/<item>`."
+          "- `profile`: the account's ID, or left out.\n- `knownWord`: the item, a Language Reference ID (32 lowercase hex digits) or `kanji:` and one kanji, which is stored in Unicode NFC.\n- `list`: its UUID, in either case; answers name it in lowercase.\n- `listWord`: the list's UUID, a slash, and the item: `<list>/<item>`.\n- `watchedVideo`: the YouTube video ID, 11 letters, digits, `-`, or `_`."
       }),
     baseVersion: syncBaseVersionSchema.optional(),
     fields: z
@@ -173,6 +175,29 @@ const ListWordSchema = z
   })
   .openapi('ListWord')
 
+const WatchedVideoSchema = z
+  .object({
+    videoId: z.string(),
+    title: z
+      .string()
+      .nullable()
+      .openapi({
+        description: `At most ${watchLimits.textLength} characters: a longer one is cut, and control characters become spaces.`
+      }),
+    author: z.string().nullable().openapi({ description: 'The channel, held as title is.' }),
+    duration: z.number().nullable().openapi({ description: 'Seconds.' }),
+    position: z.number().nullable().openapi({ description: 'Seconds: where the learner was.' }),
+    comprehension: z
+      .number()
+      .nullable()
+      .openapi({ description: "The share of the captions' words the learner knows, 0 to 1." }),
+    watchedAt: z.iso.datetime().openapi({
+      description:
+        "When the learner last watched it, as the app said; a time after the service's is taken as the service's."
+    })
+  })
+  .openapi('WatchedVideo')
+
 const put = <E extends string, D extends z.ZodType>(entity: E, data: D) =>
   z.object({
     entity: z.literal(entity),
@@ -188,8 +213,9 @@ const ChangeSchema = z
     put('knownWord', KnownWordSchema),
     put('list', WordListSchema),
     put('listWord', ListWordSchema),
+    put('watchedVideo', WatchedVideoSchema),
     z.object({
-      entity: z.enum(['knownWord', 'list', 'listWord']),
+      entity: z.enum(['knownWord', 'list', 'listWord', 'watchedVideo']),
       entityId: z.string(),
       operation: z.literal('delete'),
       version: z.int(),
@@ -198,7 +224,7 @@ const ChangeSchema = z
   ])
   .openapi('Change', {
     description:
-      'An entity as it is now (`put`, with `data`), or gone (`delete`): a deleted list, a word removed from a list, or one never there. A cleared known word is a `put` with `known: false`.'
+      'An entity as it is now (`put`, with `data`), or gone (`delete`): a deleted list, a word removed from a list, a video removed or past the newest the account keeps, or one never there. A cleared known word is a `put` with `known: false`.'
   })
 
 const resultBase = { id: z.string() }

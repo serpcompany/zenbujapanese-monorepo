@@ -1,7 +1,7 @@
 # Building an app on the Zenbu account
 
 How an app, such as the Zenbu iOS app or Tomodachi, signs a learner in to their Zenbu account and
-keeps its copy of their known words and lists in step. The contract is
+keeps its copy of their known words, lists, and other study data in step. The contract is
 [`apps/account-api/openapi.json`](../../apps/account-api/openapi.json): every route, field, answer, and
 error code. This guide is the order to use them in, and the rules no schema shows. How the service
 works inside is [`account-api.md`](account-api.md).
@@ -24,14 +24,17 @@ setting ([`account-api.md`](account-api.md), Settings).
 
 | App | ID | Scopes |
 | --- | --- | --- |
-| Zenbu Japanese for iOS | `zenbu-ios` | `account`, `account:delete`, `profile`, `lists:read`, `lists:write`, `known:read`, `known:write` |
-| zenbujapanese.com | `zenbu-web` | the same |
+| Zenbu Japanese for iOS | `zenbu-ios` | `account`, `account:delete`, `profile`, `lists:read`, `lists:write`, `known:read`, `known:write`, `watch:read`, `watch:write` |
+| zenbujapanese.com | `zenbu-web` | the same, but `watch:read` and `watch:write` |
 | Tomodachi | `tomodachi` | `account:delete`, `lists:read`, `known:read`, `known:mark`, `dictionary:read` |
 
 - `account` manages how the account signs in and where: linking and unlinking a way in, listing
   the ways in, and listing or signing out sessions. `profile` reads and changes the profile, and
   `GET /v1/auth/get-session`, which shows the email and name.
 - `known:mark` marks a word Known and never clears one: only the learner un-marks a word.
+- `watch:read` and `watch:write` read and change the videos the learner watched in the iOS app's
+  Player ([Watch history](#watch-history)). Only the iOS app has them: no other app shows them,
+  so none gets them, least privilege.
 - `dictionary:read` is for the dictionary service's routes for apps (#571).
 - An app without a scope gets `403 insufficient_scope` from the route, or `not_allowed` for a sync
   change, and sync never sends it the entities it can't read: Tomodachi never gets the profile.
@@ -151,8 +154,10 @@ first time:
    queued changes still go.
 
 **The first upload.** The first time a device syncs to an account, queue what the device has:
-each known word as a `mark`, each list as a `create`, and each list word as an `add`, all at base
-version 0, then sync with no cursor. The device had these before the account did, so a rejection
+each known word as a `mark`, each list as a `create`, each list word as an `add`, and each watched
+video as a `watch`, all at base version 0, then sync with no cursor. A device that already synced
+before its app could sync an entity uploads that entity's items the same way, once, and syncs
+again with no cursor, since its cursor passed that entity's changes. The device had these before the account did, so a rejection
 of one undoes nothing on the device: a list the account already has is rejected `already_exists`,
 and the account's copy comes down.
 
@@ -181,6 +186,27 @@ and the account's copy comes down.
   - An add always applies.
   - A remove applies only if your app had the latest add: an add from elsewhere wins.
   - An add to a list that's gone is rejected (`unknown_list`): undo it.
+
+### Watch history
+
+What the iOS app's Player lists under Recent, as `watchedVideo`, by YouTube video ID. It needs
+`watch:read` and `watch:write`.
+
+- **Send the whole video with each `watch`:** `watchedAt`, when the learner last watched it, and
+  whatever the device knows of `title`, `author` (the channel), `duration` and `position` (seconds),
+  and `comprehension` (0 to 1). A field left out keeps the account's value, and the account keeps
+  the later `watchedAt`. Send a watch each time one of them changes; while one is queued and not
+  yet sent, a newer watch of the same video can replace it.
+- **A watch of a video the account has always applies,** whatever its base version: the latest
+  place wins.
+- **`remove`, when the learner removes a video, always applies.** A watch of a removed video
+  applies only at the removal's version: one made before the device saw the removal conflicts,
+  and `current` is the delete. Take it. Watching it again afterwards brings it back.
+- **The account keeps the 50 latest by `watchedAt`.** A watch past that removes the oldest, which
+  comes down as a `delete`; drop it. Keep 50 on the device the same way, by `watchedAt`, so a
+  device that missed an old prune still shows what the account has. Don't send a `remove` for one
+  your device drops for being past 50.
+- **Order** the list by `watchedAt`, newest first.
 
 ## Deleting the account
 

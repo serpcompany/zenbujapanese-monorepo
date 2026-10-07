@@ -11,6 +11,7 @@ import {
   listWordEntityId,
   listWordSeparator,
   needsBaseVersion,
+  plainText,
   rejected
 } from './entities'
 import { isRejection, type Rejection, rejection } from './profile'
@@ -70,11 +71,7 @@ const listWordChange = (word: ListWord): Change =>
 
 function listName(raw: unknown): string | null {
   if (typeof raw !== 'string') return null
-  const name = raw
-    .replace(/\p{Cs}/gu, '\uFFFD')
-    .replace(/\p{Cc}/gu, ' ')
-    .normalize('NFC')
-    .trim()
+  const name = plainText(raw)
   const length = [...name].length
   return length > 0 && length <= listLimits.nameLength ? name : null
 }

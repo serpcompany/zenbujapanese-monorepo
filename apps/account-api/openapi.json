@@ -21,7 +21,7 @@
         "type": "http",
         "scheme": "bearer",
         "bearerFormat": "JWT",
-        "description": "A 15-minute access token from GET /v1/auth/token, which takes the session token a sign-in returns, never the session token itself. It names the account (`sub`), the app (`azp`), when the learner signed in (`auth_time`), and the app's scopes (`scope`): `account:delete` for DELETE /v1/me, `profile` for /v1/me, and for sync `lists:read`, `lists:write`, `known:read`, `known:write`, and `known:mark`, which marks a word Known but never clears one. The dictionary service takes `dictionary:read`."
+        "description": "A 15-minute access token from GET /v1/auth/token, which takes the session token a sign-in returns, never the session token itself. It names the account (`sub`), the app (`azp`), when the learner signed in (`auth_time`), and the app's scopes (`scope`): `account:delete` for DELETE /v1/me, `profile` for /v1/me, and for sync `lists:read`, `lists:write`, `known:read`, `known:write`, `known:mark`, which marks a word Known but never clears one, and `watch:read` and `watch:write`, for the videos the learner watched. The dictionary service takes `dictionary:read`."
       },
       "sessionToken": {
         "type": "http",
@@ -432,9 +432,43 @@
               "entity": {
                 "type": "string",
                 "enum": [
+                  "watchedVideo"
+                ]
+              },
+              "entityId": {
+                "type": "string"
+              },
+              "operation": {
+                "type": "string",
+                "enum": [
+                  "put"
+                ]
+              },
+              "version": {
+                "type": "integer"
+              },
+              "data": {
+                "$ref": "#/components/schemas/WatchedVideo"
+              }
+            },
+            "required": [
+              "entity",
+              "entityId",
+              "operation",
+              "version",
+              "data"
+            ]
+          },
+          {
+            "type": "object",
+            "properties": {
+              "entity": {
+                "type": "string",
+                "enum": [
                   "knownWord",
                   "list",
-                  "listWord"
+                  "listWord",
+                  "watchedVideo"
                 ]
               },
               "entityId": {
@@ -462,7 +496,7 @@
             ]
           }
         ],
-        "description": "An entity as it is now (`put`, with `data`), or gone (`delete`): a deleted list, a word removed from a list, or one never there. A cleared known word is a `put` with `known: false`."
+        "description": "An entity as it is now (`put`, with `data`), or gone (`delete`): a deleted list, a word removed from a list, a video removed or past the newest the account keeps, or one never there. A cleared known word is a `put` with `known: false`."
       },
       "KnownWord": {
         "type": "object",
@@ -539,6 +573,63 @@
           "addedAt"
         ]
       },
+      "WatchedVideo": {
+        "type": "object",
+        "properties": {
+          "videoId": {
+            "type": "string"
+          },
+          "title": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "At most 200 characters: a longer one is cut, and control characters become spaces."
+          },
+          "author": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "The channel, held as title is."
+          },
+          "duration": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "description": "Seconds."
+          },
+          "position": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "description": "Seconds: where the learner was."
+          },
+          "comprehension": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "description": "The share of the captions' words the learner knows, 0 to 1."
+          },
+          "watchedAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When the learner last watched it, as the app said; a time after the service's is taken as the service's."
+          }
+        },
+        "required": [
+          "videoId",
+          "title",
+          "author",
+          "duration",
+          "position",
+          "comprehension",
+          "watchedAt"
+        ]
+      },
       "SyncRequest": {
         "type": "object",
         "properties": {
@@ -578,17 +669,17 @@
           "entity": {
             "type": "string",
             "pattern": "^[A-Za-z][A-Za-z0-9_-]{0,63}$",
-            "description": "`profile`, `knownWord`, `list`, or `listWord`. Any other is rejected with `unknown_entity`, and the rest of the request still applies. A change the app's scopes don't allow is rejected with `not_allowed`, and the app reads only the entities its scopes do."
+            "description": "`profile`, `knownWord`, `list`, `listWord`, or `watchedVideo`. Any other is rejected with `unknown_entity`, and the rest of the request still applies. A change the app's scopes don't allow is rejected with `not_allowed`, and the app reads only the entities its scopes do."
           },
           "operation": {
             "type": "string",
             "pattern": "^[A-Za-z][A-Za-z0-9_-]{0,63}$",
-            "description": "- `profile`: `update` (`fields` name, username, or both; `baseVersion`). It applies only at the profile's current version.\n- `knownWord`: `mark` (`fields` headword and reading) and `clear`, each with `baseVersion`. Either applies only if the word is still at `baseVersion`, so a mark made before the learner cleared the word loses to the clear, and one made after it wins. Marking a known word, or clearing one not known, is applied and changes nothing.\n- `list`: `create` (`fields` name and position), `update` (`fields` name, position, or both; `baseVersion`), and `delete`. An update applies only at the current version, so two renames conflict; one that already matches the list is applied. A delete wins over everything done to the list since, renames and words added elsewhere too, and takes its words with it. A list name is 1 to 500 characters once trimmed; control characters become spaces.\n- `listWord`: `add` (`fields` headword and reading) and `remove` (`baseVersion`). An add always applies. A remove applies only if it saw the latest add, so an add the remover never saw wins."
+            "description": "- `profile`: `update` (`fields` name, username, or both; `baseVersion`). It applies only at the profile's current version.\n- `knownWord`: `mark` (`fields` headword and reading) and `clear`, each with `baseVersion`. Either applies only if the word is still at `baseVersion`, so a mark made before the learner cleared the word loses to the clear, and one made after it wins. Marking a known word, or clearing one not known, is applied and changes nothing.\n- `list`: `create` (`fields` name and position), `update` (`fields` name, position, or both; `baseVersion`), and `delete`. An update applies only at the current version, so two renames conflict; one that already matches the list is applied. A delete wins over everything done to the list since, renames and words added elsewhere too, and takes its words with it. A list name is 1 to 500 characters once trimmed; control characters become spaces.\n- `listWord`: `add` (`fields` headword and reading) and `remove` (`baseVersion`). An add always applies. A remove applies only if it saw the latest add, so an add the remover never saw wins.\n- `watchedVideo`: `watch` (`fields` watchedAt, and any of title, author, duration, position, and comprehension; `baseVersion`) and `remove`. A watch of a video the account has applies whatever its version, so the latest place in it wins; fields it leaves out keep theirs, and the video keeps the later watchedAt. A watch of a video the learner removed applies only at the removal's version, so one made before seeing the removal loses to it. A remove always applies. The account keeps the 50 most recently watched: a watch past that removes the oldest, which syncs as a delete."
           },
           "entityId": {
             "type": "string",
             "pattern": "^[^\\p{Cc}\\p{Cf}\\s]{1,200}$/u",
-            "description": "- `profile`: the account's ID, or left out.\n- `knownWord`: the item, a Language Reference ID (32 lowercase hex digits) or `kanji:` and one kanji, which is stored in Unicode NFC.\n- `list`: its UUID, in either case; answers name it in lowercase.\n- `listWord`: the list's UUID, a slash, and the item: `<list>/<item>`."
+            "description": "- `profile`: the account's ID, or left out.\n- `knownWord`: the item, a Language Reference ID (32 lowercase hex digits) or `kanji:` and one kanji, which is stored in Unicode NFC.\n- `list`: its UUID, in either case; answers name it in lowercase.\n- `listWord`: the list's UUID, a slash, and the item: `<list>/<item>`.\n- `watchedVideo`: the YouTube video ID, 11 letters, digits, `-`, or `_`."
           },
           "baseVersion": {
             "type": "integer",

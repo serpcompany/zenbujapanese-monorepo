@@ -46,7 +46,7 @@ test.describe('privacy policy', () => {
       /^Your account: a Zenbu user ID; your email and whether it's verified; a name and a username, both optional; the address of your profile picture/,
       /^How you sign in: for each way you sign in \(Apple, Google, or a code we email you\), the provider and your account ID with it\. We don't keep Apple's or Google's own sign-in tokens\./,
       /^Where you're signed in: a session for each device or browser you sign in on, with its IP address and user agent/,
-      /^The study data you sync: your known words.*your lists' names, their order, and the words in them; a record of each item's latest change.*the result of each sync request/
+      /^The study data you sync: your known words.*your lists' names, their order, and the words in them; from the iPhone app, your watch history.*a record of each item's latest change.*the result of each sync request/
     ])
     await expectNamed(page, 'Your Zenbu account', [
       "You'll never need a Zenbu account",
@@ -54,6 +54,21 @@ test.describe('privacy policy', () => {
       'encrypted copy of each code',
       "aren't synced: they stay on your device"
     ])
+  })
+
+  test('names the watch history the iPhone app syncs, and that only it reads it', async ({
+    page
+  }) => {
+    await expectNamed(page, 'The short version', [
+      'the known words, lists, and watch history you sync'
+    ])
+    await expectNamed(page, 'Your Zenbu account', [
+      'from the iPhone app, your watch history: the 50 YouTube videos you most recently watched in its Player',
+      'YouTube video ID, title, and channel, its length, where you stopped, how much of its captions you know, and when you last watched it',
+      'keeps only its YouTube video ID, for the latest 100'
+    ])
+    await expectNamed(page, 'Information in the app', ["Player's watch history"])
+    await expectNamed(page, 'Your account on this website', ["It can't read your watch history"])
   })
 
   test('names Tomodachi and the only things it can do with the account', async ({ page }) => {

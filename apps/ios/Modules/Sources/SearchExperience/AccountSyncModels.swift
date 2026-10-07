@@ -3,6 +3,7 @@ import Foundation
 enum SyncFieldValue: Codable, Hashable, Sendable {
   case string(String)
   case number(Int)
+  case decimal(Double)
   case bool(Bool)
   case null
 
@@ -14,6 +15,8 @@ enum SyncFieldValue: Codable, Hashable, Sendable {
       self = .bool(value)
     } else if let value = try? container.decode(Int.self) {
       self = .number(value)
+    } else if let value = try? container.decode(Double.self) {
+      self = .decimal(value)
     } else {
       self = .string(try container.decode(String.self))
     }
@@ -24,6 +27,7 @@ enum SyncFieldValue: Codable, Hashable, Sendable {
     switch self {
     case .string(let value): try container.encode(value)
     case .number(let value): try container.encode(value)
+    case .decimal(let value): try container.encode(value)
     case .bool(let value): try container.encode(value)
     case .null: try container.encodeNil()
     }
@@ -34,6 +38,10 @@ enum SyncEntity {
   static let knownWord = "knownWord"
   static let list = "list"
   static let listWord = "listWord"
+  static let watchedVideo = "watchedVideo"
+
+  static let firstSynced = [knownWord, list, listWord]
+  static let uploaded = firstSynced + [watchedVideo]
 }
 
 struct SyncEntityKey: Codable, Hashable, Sendable {
@@ -93,11 +101,22 @@ struct SyncedListWord: Decodable, Sendable {
   let addedAt: Date
 }
 
+struct SyncedWatchedVideo: Decodable, Sendable {
+  let videoId: String
+  let title: String?
+  let author: String?
+  let duration: Double?
+  let position: Double?
+  let comprehension: Double?
+  let watchedAt: Date
+}
+
 struct SyncChange: Decodable, Sendable {
   enum Payload: Sendable {
     case knownWord(SyncedKnownWord)
     case list(SyncedList)
     case listWord(SyncedListWord)
+    case watchedVideo(SyncedWatchedVideo)
     case gone
     case unsynced
   }
@@ -127,6 +146,8 @@ struct SyncChange: Decodable, Sendable {
       payload = .list(try container.decode(SyncedList.self, forKey: .data))
     case SyncEntity.listWord:
       payload = .listWord(try container.decode(SyncedListWord.self, forKey: .data))
+    case SyncEntity.watchedVideo:
+      payload = .watchedVideo(try container.decode(SyncedWatchedVideo.self, forKey: .data))
     default:
       payload = .unsynced
     }

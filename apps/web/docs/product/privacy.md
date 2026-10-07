@@ -34,8 +34,11 @@ send the account service nothing while signed out, and lists what a Zenbu accoun
   learner's account ID with it, and never Apple's or Google's own tokens;
 - a session for each signed-in device or browser, with its IP address and user agent;
 - the synced study data: known words (by Language Reference ID, with their status), lists (names,
-  order, and words), a record of each item's latest change, deletions included, and each sync
-  request's result.
+  order, and words), the iPhone app's watch history (the 50 most recently watched YouTube videos,
+  each with its video ID, title, channel, length, where the learner stopped, the share of its
+  captions they know, and when they last watched it), a record of each item's latest change,
+  deletions included (a removed or pruned video keeps only its video ID, for the latest 100), and
+  each sync request's result.
 
 It also says the codes are kept encrypted, and nonces too, for 10 minutes, with request counts by
 IP address for a few minutes; that notes, photos, recent searches, and settings stay on the device;
@@ -44,11 +47,16 @@ removed); and that the account service's logs hold each request's method, route,
 timing, never an email, a profile, a code or link, or a token.
 
 - Source: #563 decisions 1 and 2; #566 (sign-in), #567 (the profile and sync), #572 (known words
-  and lists).
+  and lists); watch history sync
+  ([`account-api.md`](../../../../docs/agents/account-api.md), Profiles and sync), which only the
+  iPhone app's scopes reach ([`account-clients.md`](../../../../docs/agents/account-clients.md),
+  Your app).
 - Check: `apps/web/e2e/privacy.spec.ts`, "names what a Zenbu account keeps, and that signed out the
   apps send it nothing": the short version's "without an account" and its cookies, the four kinds
-  of data, nothing sent signed out, the encrypted codes, and what stays on the device. The email's
-  uses and the logs: No automated check yet.
+  of data, nothing sent signed out, the encrypted codes, and what stays on the device; and "names the
+  watch history the iPhone app syncs, and that only it reads it": the short version, what each
+  video keeps, the app's on-device data, and the website's section. The email's uses and the logs:
+  No automated check yet.
 
 **The website's account pages.** A section, "Your account on this website", says that once the
 website offers sign-in, a learner signs in there with an emailed code, and with Apple or Google
@@ -56,8 +64,9 @@ where its sign-in page offers them, which stays true whichever ways production o
 what the website uses the account for, and only that: show the email and show and change the name and
 username; show how the learner signs in, and add or remove a way; sign out of this browser; delete
 the account. The website's pages hold that line, not its scopes: `zenbu-web` has the iOS app's
-scopes ([`account-clients.md`](../../../../docs/agents/account-clients.md), Your app). It says the
-website doesn't read or change known words or lists yet, that its pages connect from the browser to
+scopes but watch history's, which it never gets
+([`account-clients.md`](../../../../docs/agents/account-clients.md), Your app). It says the
+website doesn't read or change known words or lists yet, and can't read the watch history, that its pages connect from the browser to
 the account service only when the learner opens the account page or starts to sign in, that
 pointing at or tabbing to Sign in with Apple loads Apple's script and asks the service for a
 nonce, and that Apple's script and window, and Google's page, come from those companies. The website section names each thing signing in keeps in the browser: the
@@ -127,8 +136,8 @@ microphone beside the camera.
 - Check: `apps/web/e2e/privacy.spec.ts`, "names Translate's microphone, and keeps its
   conversations on the device": both sections' statements.
 
-**The rest of the policy.** The app's on-device data names the profile and the Media Library's
-photos, and says an Image Search image is kept in the Media Library once a word is opened from it,
+**The rest of the policy.** The app's on-device data names the profile, Player's watch history,
+and the Media Library's photos, and says an Image Search image is kept in the Media Library once a word is opened from it,
 as the app's [Image Search](../../../ios/docs/product/dictionary.md#image-search) docs say. The
 app's network features add signing in and syncing, only with an account, and say Cloudflare serves
 the optional dictionaries. The website's hosting and analytics, support email, and children are as

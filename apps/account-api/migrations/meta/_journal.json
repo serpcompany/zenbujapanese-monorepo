@@ -29,6 +29,13 @@
       "when": 1791342754319,
       "tag": "0003_session_clients",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1791409988799,
+      "tag": "0004_watch_history",
+      "breakpoints": true
     }
   ]
 }

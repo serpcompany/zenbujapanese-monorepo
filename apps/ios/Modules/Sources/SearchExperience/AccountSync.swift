@@ -22,6 +22,7 @@ final class AccountSync: LocalFileStore {
   @ObservationIgnored private let api: AccountAPI
   @ObservationIgnored private let wordKnowledge: WordKnowledge
   @ObservationIgnored private let wordLists: WordLists
+  @ObservationIgnored private let watchHistory: WatchHistory
   @ObservationIgnored private let file: AccountSyncStateFile
   @ObservationIgnored private let now: @MainActor () -> Date
   @ObservationIgnored let writes = LocalFileWriteQueue()
@@ -34,6 +35,7 @@ final class AccountSync: LocalFileStore {
     tokens: AccountTokens,
     wordKnowledge: WordKnowledge,
     wordLists: WordLists,
+    watchHistory: WatchHistory,
     fileURL: URL = AccountSync.defaultFileURL,
     now: @escaping @MainActor () -> Date = Date.init
   ) {
@@ -41,6 +43,7 @@ final class AccountSync: LocalFileStore {
     self.tokens = tokens
     self.wordKnowledge = wordKnowledge
     self.wordLists = wordLists
+    self.watchHistory = watchHistory
     self.now = now
     let file = AccountSyncStateFile(fileURL: fileURL)
     self.file = file
@@ -65,6 +68,7 @@ final class AccountSync: LocalFileStore {
     }
     wordKnowledge.changeObserver = { [weak self] change in self?.record(change) }
     wordLists.changeObserver = { [weak self] change in self?.record(change) }
+    watchHistory.changeObserver = { [weak self] change in self?.record(change) }
   }
 
   var canSync: Bool {
@@ -125,6 +129,7 @@ final class AccountSync: LocalFileStore {
     isSyncing = true
     defer { isSyncing = false }
     let session = session
+    catchUpOnNewEntities()
     do {
       try await pull(in: session)
       lastFailure = nil
@@ -163,7 +168,21 @@ final class AccountSync: LocalFileStore {
     let lists = wordLists.lists.map(SavedItemChange.listCreated)
     let words = wordLists.lists.flatMap { wordLists.words(in: $0.id).reversed() }
       .map(SavedItemChange.wordAdded)
-    return marks + lists + words
+    let videos = watchHistory.videos.reversed().map {
+      SavedItemChange.videoWatched($0, previous: nil)
+    }
+    return marks + lists + words + videos
+  }
+
+  private func catchUpOnNewEntities() {
+    let missing = Set(SyncEntity.uploaded).subtracting(state.syncedEntities)
+    guard !missing.isEmpty else { return }
+    state.queue += uploads().map(\.upload).filter { missing.contains($0.key.entity) }
+    state.syncedEntities = SyncEntity.uploaded
+    state.cursor = nil
+    state.heldWords = []
+    state.deferred = [:]
+    persist()
   }
 
   private func nextBatch() -> [QueuedSyncChange] {
@@ -272,6 +291,8 @@ final class AccountSync: LocalFileStore {
       guard wordLists.hasList(membership.listID) else { return state.hold(copy) }
       state.heldWords.removeAll { $0.key == copy.key }
       wordLists.applySynced(membership)
+    case .watchedVideo(let video):
+      watchHistory.applySynced(video)
     case .gone:
       removeLocally(copy.key)
     }
@@ -309,6 +330,8 @@ final class AccountSync: LocalFileStore {
       guard let parts = key.listWordParts else { return }
       state.heldWords.removeAll { $0.key == key }
       wordLists.applySyncedRemoval(of: parts.storedID, from: parts.listID)
+    case SyncEntity.watchedVideo:
+      watchHistory.applySyncedRemoval(of: key.entityID)
     default:
       return
     }
@@ -332,6 +355,10 @@ final class AccountSync: LocalFileStore {
       wordLists.applySyncedRemoval(of: storedID, from: listID)
     case .restoreWord(let membership):
       wordLists.applySynced(membership)
+    case .removeVideo(let videoID):
+      watchHistory.applySyncedRemoval(of: videoID)
+    case .restoreVideo(let video):
+      watchHistory.applySynced(video)
     }
   }
 
