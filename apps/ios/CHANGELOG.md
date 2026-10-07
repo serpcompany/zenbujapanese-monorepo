@@ -66,6 +66,9 @@ All notable user-facing changes to Zenbu Japanese are recorded here.
 
 - A kanji's **JLPT** level is now Jonathan Waller's estimate, N5 to N1, so 一 and 日 show N5
   instead of the old four-level N4. A kanji his lists leave out, such as 分, shows no JLPT level.
+- The app is published as a new App Store app, with the bundle ID `com.zenbujapanese.app`. Copies
+  of 1.0.0 (`com.zenbujapanese.dictionary`) don't update to it, and their Known Words, notes, and
+  recent searches stay in that app.
 - Words you marked known no longer show an underline in linked Japanese.
 - The word sheet from Image Search and Player has a close button and **Open Full Entry** in its top
   bar instead of Done and a bottom button, and no longer repeats the word as its title. Its

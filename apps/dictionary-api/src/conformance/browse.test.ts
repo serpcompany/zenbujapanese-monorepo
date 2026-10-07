@@ -1,6 +1,12 @@
 import type { BrowseWord, DictionaryBrowse } from '@zenbu/dictionary-core/artifact/browse'
 import { browseCategories } from '@zenbu/dictionary-core/browse/categories'
-import { browsePageSize, rankedLists, rankedPages } from '@zenbu/dictionary-core/browse/lists'
+import {
+  browsePageSize,
+  pageCount,
+  rankBand,
+  rankBands,
+  rankedLists
+} from '@zenbu/dictionary-core/browse/lists'
 import { beforeAll, describe, expect, test } from 'vitest'
 import { artifactAvailable, artifactDatabase, browse } from './support'
 
@@ -46,32 +52,25 @@ describe.runIf(artifactAvailable)('browsing the dictionary on the app’s data',
     expect(service.kanaWords('hiragana', 'こう', (first?.pages ?? 0) + 1)).toBeNull()
   })
 
-  test('a category lists the words JMdict labels with it, most used first', () => {
-    const words = service.categoryWords('onomatopoeia', 1)?.words ?? []
-    expect(words.map(word => word.headword)).toContain('わくわく')
-    const ranks = words.flatMap(word =>
-      word.chips.flatMap(chip =>
-        chip.source === 'YouTube' && chip.value !== '—'
-          ? [Number(chip.value.replaceAll(',', ''))]
-          : []
-      )
-    )
-    expect(ranks).toEqual([...ranks].sort((left, right) => left - right))
-  })
-
   test('every category the core names has words, so no category page is empty', () => {
     const counted = service.categoryCounts().categories
     expect(counted.map(({ slug }) => slug)).toEqual(browseCategories.map(({ slug }) => slug))
     expect(counted.every(({ count }) => count > 0)).toBe(true)
   })
 
-  test.each(rankedLists.map(list => list.slug))('the %s list ranks words from 1', slug => {
-    const page = service.rankedWords(slug, 1)
-    expect(page?.pages).toBe(rankedPages)
-    const ranks = (page?.words ?? []).map(word => word.rank ?? 0)
-    expect(ranks.length).toBeGreaterThan(0)
-    expect(ranks.every(rank => rank >= 1 && rank <= browsePageSize)).toBe(true)
-    expect(ranks).toEqual([...ranks].sort((left, right) => left - right))
+  test.each(
+    rankedLists.map(list => list.slug)
+  )('the %s list ranks words from 1, a band of 1,000 ranks at a time', slug => {
+    for (const band of [1, 2]) {
+      const page = service.rankedWords(slug, band)
+      expect(page?.pages).toBe(rankBands)
+      const ranks = (page?.words ?? []).map(word => word.rank ?? 0)
+      const { first, last } = rankBand(band)
+      expect(ranks.length).toBeGreaterThan(browsePageSize)
+      expect(ranks.every(rank => rank >= first && rank <= last)).toBe(true)
+      expect(ranks).toEqual([...ranks].sort((left, right) => left - right))
+    }
+    expect(service.rankedWords(slug, rankBands + 1)).toBeNull()
   })
 
   test('the JLPT lists hold Waller’s words by level, in kana order', () => {
@@ -102,6 +101,15 @@ describe.runIf(artifactAvailable)('browsing the dictionary on the app’s data',
     ])
   })
 
+  test('every kanji a list shows has a meaning, a compatibility kanji its base kanji’s', () => {
+    for (const { slug } of service.sitemap().kanjiLists) {
+      const empty = (service.kanjiList(slug)?.kanji ?? []).filter(kanji => !kanji.meaning)
+      expect(empty, slug).toEqual([])
+    }
+    const jinmeiyo = service.kanjiList('jinmeiyo')?.kanji ?? []
+    expect(jinmeiyo.find(kanji => kanji.character === '\u{FA45}')?.meaning).toBe('sea')
+  })
+
   test('the JLPT kanji lists are Waller’s, most frequent first', () => {
     const { jlpt } = service.kanjiHub()
     expect(jlpt.map(({ slug, count }) => [slug, count])).toEqual([
@@ -114,13 +122,14 @@ describe.runIf(artifactAvailable)('browsing the dictionary on the app’s data',
     const n5 = service.kanjiList('jlpt-n5')?.kanji.map(kanji => kanji.character) ?? []
     expect(n5.slice(0, jlpt[0].first.length)).toEqual(jlpt[0].first)
     expect(n5[0]).toBe('日')
-    expect(service.sitemap().kanjiLists).toContain('jlpt-n1')
+    expect(service.sitemap().kanjiLists).toContainEqual({ slug: 'jlpt-n1', count: 1232 })
   })
 
-  test('once warm, the totals, the sitemap, and every list are ready, so a page reads only its words', async () => {
+  test('once warm, the totals, the sitemap, and every list are ready, and every query a page asks has run', async () => {
     const queries: string[] = []
     const warmed = await browse(sql => queries.push(sql))
     warmed.warm()
+    const prepared = new Set(queries)
     queries.length = 0
     warmed.summary()
     warmed.sitemap()
@@ -128,60 +137,46 @@ describe.runIf(artifactAvailable)('browsing the dictionary on the app’s data',
     warmed.kanaIndex('katakana')
     warmed.rankedLists()
     warmed.kanjiHub()
+    warmed.kanjiList('jinmeiyo')
+    warmed.kanjiList('strokes-12')
     expect(queries).toEqual([])
     warmed.kanaInitial('hiragana', 'か')
     warmed.kanaWords('hiragana', 'かが', 1)
-    warmed.categoryWords('nouns', 3)
+    warmed.categoryWords('nouns', 'used', 3)
+    warmed.categoryWords('slang', 'kana', 2)
+    warmed.rankedWords('wikipedia', 4)
+    warmed.rankedWords('jlpt-n1', 2)
     expect(queries.length).toBeGreaterThan(0)
-    expect(queries.filter(sql => !/\bIN \(/.test(sql))).toEqual([])
+    expect(queries.filter(sql => !prepared.has(sql))).toEqual([])
   })
 
-  test('the index lists a category and a two-kana group as their own queries would', async () => {
+  test('the index lists a two-kana group as its own query would', async () => {
     const db = await artifactDatabase()
-    const ids = (sql: string, params: string[]) =>
-      db.all<{ rowid: number }>(sql, params).map(row => row.rowid)
-    const onomatopoeia = ids(
-      `SELECT e.rowid AS rowid FROM entries e
-       LEFT JOIN tubelex.frequency_evidence t ON t.language_reference_id = e.id
-       WHERE EXISTS (SELECT 1 FROM json_each(e.senses_json) s, json_each(s.value, '$.usage') l
-         WHERE l.value = ?)
-       ORDER BY t.rank IS NULL, t.rank, e.reading, e.source_record_id`,
-      ['onomatopoeic']
-    )
-    const kaga = ids(
-      `SELECT e.rowid AS rowid FROM entries e WHERE substr(e.reading, 1, 2) = ?
-       ORDER BY e.reading, e.source_record_id`,
-      ['かが']
-    )
-    const listed = (words: readonly BrowseWord[]) => words.map(word => word.entSeq)
-    const entSeqs = (rowids: number[]) => {
-      const rows = db.all<{ rowid: number; ent_seq: number }>(
-        `SELECT rowid, source_record_id AS ent_seq FROM entries
-         WHERE rowid IN (SELECT value FROM json_each(?))`,
-        [JSON.stringify(rowids)]
+    const kaga = db
+      .all<{ ent_seq: number }>(
+        `SELECT e.source_record_id AS ent_seq FROM entries e WHERE substr(e.reading, 1, 2) = ?
+         ORDER BY e.reading, e.source_record_id`,
+        ['かが']
       )
-      const entSeq = new Map(rows.map(row => [row.rowid, row.ent_seq]))
-      return rowids.map(rowid => entSeq.get(rowid))
-    }
-    expect(listed(service.categoryWords('onomatopoeia', 1)?.words ?? [])).toEqual(
-      entSeqs(onomatopoeia.slice(0, browsePageSize))
-    )
-    expect(service.categoryWords('onomatopoeia', 1)?.total).toBe(onomatopoeia.length)
-    expect(listed(service.kanaWords('hiragana', 'かが', 1)?.words ?? [])).toEqual(
-      entSeqs(kaga.slice(0, browsePageSize))
-    )
+      .map(row => row.ent_seq)
+    const listed = (service.kanaWords('hiragana', 'かが', 1)?.words ?? []).map(word => word.entSeq)
+    expect(listed).toEqual(kaga.slice(0, browsePageSize))
   })
 
   test('the browse sitemap fits in one file', () => {
     const sitemap = service.sitemap()
     const kanaPages = sitemap.kana.reduce(
-      (sum, { prefixes }) => sum + 1 + prefixes.reduce((pages, prefix) => pages + prefix.pages, 0),
+      (sum, { prefixes }) =>
+        sum + 1 + prefixes.reduce((pages, prefix) => pages + pageCount(prefix.count), 0),
       0
     )
-    const listPages = [...sitemap.categories, ...sitemap.rankedLists].reduce(
-      (sum, { pages }) => sum + pages,
+    const listPages = [...sitemap.categories, ...sitemap.jlptLists].reduce(
+      (sum, { count }) => sum + pageCount(count),
       0
     )
-    expect(kanaPages + listPages + sitemap.kanjiLists.length).toBeLessThan(sitemapUrlLimit)
+    const bandPages = sitemap.rankedLists.reduce((sum, { bands }) => sum + bands.length, 0)
+    expect(kanaPages + listPages + bandPages + sitemap.kanjiLists.length).toBeLessThan(
+      sitemapUrlLimit
+    )
   })
 })

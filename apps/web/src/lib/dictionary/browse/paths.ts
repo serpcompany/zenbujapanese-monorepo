@@ -1,6 +1,12 @@
-import type { CategoryKind } from '@zenbu/dictionary-core/browse/categories'
+import type { CategoryKind, CategoryOrder } from '@zenbu/dictionary-core/browse/categories'
 import type { KanaScript } from '@zenbu/dictionary-core/browse/kana'
-import { maximumBrowsePage, rankPage } from '@zenbu/dictionary-core/browse/lists'
+import {
+  allRankBands,
+  type JlptList,
+  jlptLists,
+  maximumBrowsePage,
+  rankBand
+} from '@zenbu/dictionary-core/browse/lists'
 
 export const browsePath = '/dictionary/browse/'
 export const kanaChartsPath = `${browsePath}kana/`
@@ -25,13 +31,31 @@ export const scriptPath = (script: KanaScript) => `${browsePath}${script}/`
 export const kanaPath = (script: KanaScript, kana: string, page = 1) =>
   withPage(`${scriptPath(script)}${encodeURIComponent(kana)}/`, page)
 
-export const categoryPath = (slug: string, page = 1) => withPage(`${browsePath}${slug}/`, page)
+export const categoryPath = (slug: string, order: CategoryOrder = 'used', page = 1) =>
+  withPage(`${browsePath}${slug}/${order === 'kana' ? 'kana-order/' : ''}`, page)
 
-export const rankedListPath = (slug: string, page = 1) =>
-  withPage(`${frequencyDictionariesPath}${slug}/`, page)
+const bandSegment = (band: number) => {
+  const { first, last } = rankBand(band)
+  return `${first}-${last}`
+}
 
-export const rankBandPath = (slug: string, firstRank: number) =>
-  rankedListPath(slug, rankPage(firstRank))
+export const rankBandPath = (slug: string, band: number) =>
+  `${frequencyDictionariesPath}${slug}/${bandSegment(band)}/`
+
+export const rankedListPath = (slug: string) => rankBandPath(slug, 1)
+
+export function parseRankBand(segment: string): number | null {
+  return allRankBands.find(({ band }) => bandSegment(band) === segment)?.band ?? null
+}
+
+const levelSegment = (level: number) => `n${level}`
+
+export const jlptVocabularyPath = (level: number, page = 1) =>
+  withPage(`${frequencyDictionariesPath}jlpt/${levelSegment(level)}/`, page)
+
+export function parseJlptLevel(segment: string): JlptList | null {
+  return jlptLists.find(({ level }) => levelSegment(level) === segment) ?? null
+}
 
 export const kanjiListPath = (slug: string) => `${kanjiListsPath}${slug}/`
 

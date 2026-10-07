@@ -1,5 +1,7 @@
 import { categoryRoute } from '../category-routes'
 
-export const generateMetadata = categoryRoute.generateMetadata
+const route = categoryRoute('used')
 
-export default categoryRoute.Page
+export const generateMetadata = route.generateMetadata
+
+export default route.Page

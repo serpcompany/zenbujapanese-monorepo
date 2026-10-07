@@ -61,12 +61,12 @@ eventually 'pages sitemap lists slashed page URLs' 'pages sitemap has a non-cano
 expect_redirect /privacy /legal/privacy/
 
 header_has_dictionary() {
-  local home
-  home="$(body /)"
-  grep -q 'href="/dictionary/"' <<<"$home" && grep -q '<search' <<<"$home"
+  local header
+  header="$(body / | tr -d '\n' | grep -oE '<header[^>]*>.*</header>')"
+  grep -q 'href="/dictionary/"' <<<"$header" && ! grep -q '<search' <<<"$header"
 }
-eventually 'the header links to the dictionary and has search' \
-  'the header is missing the Dictionary link or search' header_has_dictionary
+eventually 'the header links to the dictionary and has no search' \
+  'the header is missing the Dictionary link, or has a search' header_has_dictionary
 header_marks_dictionary() {
   grep -oE '<a [^>]*>Dictionary</a>' <<<"$(body /dictionary/)" | grep 'href="/dictionary/"' |
     grep -q 'aria-current="page"'

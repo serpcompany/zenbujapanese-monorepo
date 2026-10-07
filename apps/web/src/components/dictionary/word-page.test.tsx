@@ -11,6 +11,7 @@ import { wordDetail } from '@zenbu/dictionary-core/detail/word'
 import { renderToStaticMarkup } from 'react-dom/server'
 import { describe, expect, test } from 'vitest'
 import { gateEnabled, gateService, recordedCases } from '@/test/gate'
+import { htmlText } from '@/test/rendered'
 import {
   readFrequencyDetails,
   readFrequencyRows,
@@ -24,11 +25,32 @@ const unidic = 'UniDic for Contemporary Written Japanese 3.1.0'
 
 type HeaderProps = Parameters<typeof WordHeader>[0]
 
-function header(props: Omit<HeaderProps, 'conjugations'> & Partial<HeaderProps>) {
-  return renderToStaticMarkup(<WordHeader conjugations={null} {...props} />)
+function header(props: Omit<HeaderProps, 'conjugations' | 'headword'> & Partial<HeaderProps>) {
+  const headword = props.ruby.map(segment => segment.text).join('')
+  return renderToStaticMarkup(<WordHeader headword={headword} conjugations={null} {...props} />)
 }
 
 describe('the word header', () => {
+  test('is the page heading, named for the headword whatever its furigana', () => {
+    const html = header({
+      headword: '学校',
+      ruby: [{ text: '学校', reading: 'がっこう', kanjiReadings: ['がっ', 'こう'] }],
+      reading: 'がっこう',
+      pitch: null,
+      partOfSpeech: 'Noun'
+    })
+    const headings = [...html.matchAll(/<h1([^>]*)>([\s\S]*?)<\/h1>/g)]
+    expect(headings).toHaveLength(1)
+    const [, attributes, content] = headings[0]
+    expect(attributes).toContain('aria-label="学校"')
+    expect(htmlText(content, { furigana: true })).toBe('学校')
+    expect(content).toContain('data-reading="がっ"')
+    expect(content).toContain('data-reading="こう"')
+    expect(readFurigana(html)).toEqual([
+      { base: '学校', reading: 'がっこう', kanjiReadings: ['がっ', 'こう'] }
+    ])
+  })
+
   test('makes each kanji of a split run a toggle over its own part of the furigana', () => {
     const html = header({
       ruby: [{ text: '学校', reading: 'がっこう', kanjiReadings: ['がっ', 'こう'] }],

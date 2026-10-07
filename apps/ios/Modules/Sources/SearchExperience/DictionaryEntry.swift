@@ -158,9 +158,6 @@ struct DictionarySense: Hashable, Sendable, Codable {
   let meaning: String
   let notes: [String]
   let partsOfSpeech: [PartOfSpeech]
-  var usage: [String]? = nil
-  var fields: [String]? = nil
-  var dialects: [String]? = nil
 }
 
 struct DictionaryRelationship: Hashable, Sendable, Codable {

@@ -5,6 +5,7 @@ import type {
   WordLink
 } from '@zenbu/dictionary-core/artifact/browse'
 import type { DictionaryContract } from '@zenbu/dictionary-core/artifact/contract'
+import type { CategoryOrder } from '@zenbu/dictionary-core/browse/categories'
 import type { KanaScript } from '@zenbu/dictionary-core/browse/kana'
 import {
   type BrowseAnswer,
@@ -95,8 +96,8 @@ export const getCategoryCounts = cache(
   async () => (await required(browseService.categories())).data.categories
 )
 
-export const getCategoryWords = cache(async (slug: string, page: number) =>
-  wordsPage(await answer(browseService.categoryWords(slug, page)))
+export const getCategoryWords = cache(async (slug: string, order: CategoryOrder, page: number) =>
+  wordsPage(await answer(browseService.categoryWords(slug, order, page)))
 )
 
 export const getRankedLists = cache(async () => {

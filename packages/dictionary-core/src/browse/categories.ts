@@ -2,6 +2,13 @@ import { subjects } from './subjects'
 
 export type CategoryKind = 'partOfSpeech' | 'usage' | 'subject' | 'dialect' | 'common'
 
+export const categoryOrders = ['used', 'kana'] as const
+
+export type CategoryOrder = (typeof categoryOrders)[number]
+
+export const isCategoryOrder = (value: string): value is CategoryOrder =>
+  (categoryOrders as readonly string[]).includes(value)
+
 export interface BrowseCategory {
   slug: string
   kind: CategoryKind

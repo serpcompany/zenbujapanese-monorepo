@@ -120,16 +120,25 @@ const browseAnswers: [{ path: string }, unknown][] = [
   ],
   [browseService.categories(), browse.categoryCounts()],
   ...[1, 2].map((page): [{ path: string }, unknown] => [
-    browseService.categoryWords('ichidan-verbs', page),
-    shortened(browse.categoryWords('ichidan-verbs', page))
+    browseService.categoryWords('ichidan-verbs', 'used', page),
+    shortened(browse.categoryWords('ichidan-verbs', 'used', page))
   ]),
+  [
+    browseService.categoryWords('ichidan-verbs', 'kana', 1),
+    shortened(browse.categoryWords('ichidan-verbs', 'kana', 1))
+  ],
+  [
+    browseService.categoryWords('audiovisual', 'used', 1),
+    browse.categoryWords('audiovisual', 'used', 1)
+  ],
   [browseService.rankedLists(), browse.rankedLists()],
   [browseService.rankedWords('youtube', 1), shortened(browse.rankedWords('youtube', 1))],
   [browseService.rankedWords('anime', 1), shortened(browse.rankedWords('anime', 1))],
   [browseService.rankedWords('jlpt-n5', 1), shortened(browse.rankedWords('jlpt-n5', 1))],
   [browseService.kanjiHub(), browse.kanjiHub()],
   [browseService.kanjiList('grade-4'), browse.kanjiList('grade-4')],
-  [browseService.kanjiList('jlpt-n5'), browse.kanjiList('jlpt-n5')]
+  [browseService.kanjiList('jlpt-n5'), browse.kanjiList('jlpt-n5')],
+  [browseService.kanjiList('jinmeiyo'), browse.kanjiList('jinmeiyo')]
 ]
 writeFileSync(
   join(output, 'browse.json'),

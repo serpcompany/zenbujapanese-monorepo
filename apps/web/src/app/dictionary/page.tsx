@@ -15,7 +15,7 @@ export const metadata = dictionaryMetadata(
 export default async function DictionaryPage() {
   const browse = await getHomeBrowse()
   return (
-    <main className="mx-auto flex w-full max-w-5xl flex-1 flex-col gap-4 px-4 pt-4 pb-16 md:px-5">
+    <main className="mx-auto flex w-full max-w-3xl flex-1 flex-col gap-4 px-4 pt-4 pb-16">
       <DictionaryBreadcrumbs />
       <section className="mx-auto flex min-h-[70svh] w-full max-w-2xl flex-col items-center justify-center gap-8 pt-10 pb-[12vh] text-center">
         <div className="flex flex-col items-center gap-4">

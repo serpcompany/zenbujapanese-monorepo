@@ -55,7 +55,7 @@ export function DictionaryBreadcrumbs({
         {trail.map((crumb, index) => (
           <Fragment key={crumb.path}>
             {index > 0 ? <BreadcrumbSeparator /> : null}
-            <BreadcrumbItem className="min-w-0">
+            <BreadcrumbItem className={index === trail.length - 1 ? 'min-w-0' : 'shrink-0'}>
               {index === trail.length - 1 ? (
                 <BreadcrumbPage lang={crumb.lang} className="truncate">
                   {crumb.label}

@@ -33,7 +33,13 @@ export function fakeService(overrides: Partial<DictionaryService> = {}): Diction
     rankedWords: async () => null,
     kanjiHub: async () => ({ lists: [], jlpt: [], strokes: [] }),
     kanjiList: async () => null,
-    browseSitemap: async () => ({ kana: [], categories: [], rankedLists: [], kanjiLists: [] }),
+    browseSitemap: async () => ({
+      kana: [],
+      categories: [],
+      rankedLists: [],
+      jlptLists: [],
+      kanjiLists: []
+    }),
     wordCards: async () => [],
     segment: async () => [],
     ...overrides

@@ -106,17 +106,17 @@ more and logs the error.
 | `GET /v1/sitemaps/words` | Each word sitemap's `ent_seq` range. |
 | `GET /v1/sitemaps/words/<n>?after=&limit=` | A sitemap's words after `after`, with their slugs. |
 | `GET /v1/retired` | Retired entries and their replacements; empty until #463. |
-| `GET /v1/browse` | The browse pages' totals: entries, each kana script's words, common words and the most used 24, the kanji lists' sizes and grade 1's kanji, and the JLPT levels' words. |
+| `GET /v1/browse` | The browse pages' totals: entries, each kana script's words, common words and the 24 most used content words among them (no particles, auxiliaries, conjunctions, copulas, or bare prefixes and suffixes), the kanji lists' sizes and grade 1's kanji, and the JLPT levels' words. |
 | `GET /v1/browse/kana/<script>` | `hiragana` or `katakana`: how many words start with each kana. |
 | `GET /v1/browse/kana/<script>/<kana>` | A kana's two-kana groups with their counts, the words read as that kana alone, and the kanas before and after it. |
 | `GET /v1/browse/kana/<script>/<kana>/<two kana>?page=` | 200 of the words whose reading starts with the two kana, in kana order. |
 | `GET /v1/browse/categories` | How many words each category lists (`packages/dictionary-core/src/browse/categories.ts`). |
-| `GET /v1/browse/categories/<slug>?page=` | 200 of a category's words, most used on YouTube first, words it doesn't rank last. |
+| `GET /v1/browse/categories/<slug>?order=&page=` | 200 of a category's words, each with the first meaning that carries the label. `order=used` (the default) lists the words whose first meaning carries it, then the others, each most used on YouTube first, and words YouTube doesn't rank last; `order=kana` lists them all in kana order. |
 | `GET /v1/browse/ranked` | Each ranked list's mapped and listed words and its top 6, and each JLPT level's words and its first 5. |
-| `GET /v1/browse/ranked/<slug>?page=` | A ranked list's words ranked 200 at a time, to rank 10,000, or a JLPT level's words (`jlpt-n5`…) in kana order. |
+| `GET /v1/browse/ranked/<slug>?page=` | A ranked list's words a band of 1,000 ranks at a time (`page` 1 is ranks 1 to 1,000, and so on to 10, ranks 9,001 to 10,000), or 200 of a JLPT level's words (`jlpt-n5`…) in kana order. |
 | `GET /v1/browse/kanji` | Each school list's kanji, most frequent first; each JLPT level's kanji count and its first 5; and how many jōyō kanji have each stroke count. |
-| `GET /v1/browse/kanji/<slug>` | A kanji list (`grade-1`…`grade-6`, `secondary-school`, `jinmeiyo`, `jlpt-n5`…`jlpt-n1`, `strokes-<n>`) with each kanji's first meaning. |
-| `GET /v1/sitemaps/browse` | What the browse sitemap lists: every kana and its groups' pages, each category's and list's pages, and the kanji lists. |
+| `GET /v1/browse/kanji/<slug>` | A kanji list (`grade-1`…`grade-6`, `secondary-school`, `jinmeiyo`, `jlpt-n5`…`jlpt-n1`, `strokes-<n>`) with each kanji's first meaning, or its base kanji's for a compatibility character KANJIDIC2 gives none. |
+| `GET /v1/sitemaps/browse` | What the browse sitemap needs: every kana and its two-kana groups, each category, JLPT level, and kanji list, with their word or kanji counts, and each ranked list's words in each band, so the website can leave out lists of fewer than 10. |
 
 ### Apps
 
@@ -168,13 +168,17 @@ searches, word examples, a query's examples, kanji details, and word lookups in 
 page's first request pays for a broad query and the rest don't. The browse routes don't scan the
 artifact for a request: before a thread reports ready, it builds the browse index
 (`packages/dictionary-core/src/artifact/browse-index.ts`) in a few passes, every word in kana
-order by its first two kana and every category's words most used first, and answers the totals,
-the category counts, the kanji and ranked lists' summaries, and the browse sitemap, which it keeps
-(`DictionaryBrowse.warm`). A browse page then reads only its own words. The index holds about
-590,000 row IDs. On a busy workstation, warming added about 6 seconds to a thread's start, and
-about 250 MB to its memory while it builds, of which it keeps about 40 MB; every browse route's
-first request then took at most 26 ms, where the totals took 1 second and the category counts 2
-before. The website's edge cache keeps answers for 10 minutes on top.
+order by its first two kana and every category's words in both its orders, keeps the totals, the
+category counts, the kanji and ranked lists' summaries and counts, every kanji list, and the
+browse sitemap, and runs each statement a browse page asks once (`DictionaryBrowse.warm`). A
+browse page then reads only its own words, with statements already prepared. The index holds
+about 960,000 row IDs, the categories' as 32-bit arrays. On 2026-10-07, with two threads on this
+workstation (load average 5 over the last minute, falling from 180 over fifteen), each thread was
+ready about 9.4 seconds after it started, and every browse route's first request took at most 28
+ms (a JLPT level's first page); before the index, the totals took 1 second and the category counts
+2. Warming adds about 250 MB to a thread's resident memory, nearly all of it SQLite's cache of the
+pages it read; the index itself is under 10 MB of JavaScript heap. The website's edge cache keeps
+answers for 10 minutes on top.
 
 Logs are one JSON object per line on stdout (errors on stderr): each request's method, route
 pattern, status, and time. Queries never appear in the logs.

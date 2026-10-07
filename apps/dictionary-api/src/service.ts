@@ -22,6 +22,7 @@ import type {
   WordSitemap
 } from '@zenbu/dictionary-core/artifact/dictionary'
 import type { LanguageDataVersion } from '@zenbu/dictionary-core/artifact/word-cards'
+import type { CategoryOrder } from '@zenbu/dictionary-core/browse/categories'
 import type { KanaScript } from '@zenbu/dictionary-core/browse/kana'
 import type { WordCard } from '@zenbu/dictionary-core/cards/card'
 import type { SegmentedToken } from '@zenbu/dictionary-core/cards/segmentation'
@@ -58,7 +59,11 @@ export interface DictionaryService {
   kanaInitial(script: KanaScript, initial: string): Promise<KanaInitialResponse | null>
   kanaWords(script: KanaScript, prefix: string, page: number): Promise<BrowseWordsResponse | null>
   browseCategories(): Promise<CategoryCountsResponse>
-  categoryWords(slug: string, page: number): Promise<BrowseWordsResponse | null>
+  categoryWords(
+    slug: string,
+    order: CategoryOrder,
+    page: number
+  ): Promise<BrowseWordsResponse | null>
   rankedLists(): Promise<RankedListsResponse>
   rankedWords(slug: string, page: number): Promise<BrowseWordsResponse | null>
   kanjiHub(): Promise<KanjiHubResponse>
@@ -94,7 +99,7 @@ export function inProcessService(
     kanaInitial: async (script, initial) => browse.kanaInitial(script, initial),
     kanaWords: async (script, prefix, page) => browse.kanaWords(script, prefix, page),
     browseCategories: async () => browse.categoryCounts(),
-    categoryWords: async (slug, page) => browse.categoryWords(slug, page),
+    categoryWords: async (slug, order, page) => browse.categoryWords(slug, order, page),
     rankedLists: async () => browse.rankedLists(),
     rankedWords: async (slug, page) => browse.rankedWords(slug, page),
     kanjiHub: async () => browse.kanjiHub(),

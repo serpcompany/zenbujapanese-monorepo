@@ -83,14 +83,16 @@ stays on those pages. They are:
 - kanji lists: `/dictionary/browse/kanji/`, and each list, such as
   `/dictionary/browse/kanji/grade-2/` (the school grades, secondary school, jinmeiyō, the five
   JLPT levels from Jonathan Waller's kanji lists, and each stroke count);
-- frequency dictionaries: `/dictionary/browse/frequency-dictionaries/`, and each list, such as
-  `/dictionary/browse/frequency-dictionaries/anime/`, a page at a time: the app's eight ranked
-  dictionaries and the five JLPT levels;
+- frequency dictionaries: `/dictionary/browse/frequency-dictionaries/`; the app's eight ranked
+  dictionaries a band of 1,000 ranks at a time, such as
+  `/dictionary/browse/frequency-dictionaries/anime/1001-2000/`; and the five JLPT levels, such as
+  `/dictionary/browse/frequency-dictionaries/jlpt/n5/`, a page at a time;
 - categories: `/dictionary/browse/parts-of-speech/`, `/dictionary/browse/usage/`, and
   `/dictionary/browse/subjects/`, and each category's words, such as
-  `/dictionary/browse/onomatopoeia/`, most used first, a page at a time (`…/kana-order/`
-  redirects there).
+  `/dictionary/browse/onomatopoeia/`, most used first, a page at a time, and in kana order
+  (`…/onomatopoeia/kana-order/`), as the #614 mockup's tabs have them.
 
-`/sitemaps/browse.xml` lists them, and `apps/web/src/app/routes.test.ts` lists their routes with
-the others. The dictionary has these page types besides the three above; the rest of this
+`/sitemaps/browse.xml` lists them, each once: not a category's kana order, which is `noindex`, nor
+a list of fewer than 10 words, which is `noindex` too but stays linked. `apps/web/src/app/routes.test.ts`
+lists their routes with the others. The dictionary has these page types besides the three above; the rest of this
 decision stands.

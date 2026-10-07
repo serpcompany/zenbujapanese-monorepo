@@ -38,12 +38,27 @@ function fakeService(count: number, perSitemap: number) {
       ? {
           data: {
             kana: [
-              { initial: 'か', prefixes: [{ prefix: 'かが', pages: 2 }] },
-              { initial: 'カ', prefixes: [] }
+              {
+                initial: 'か',
+                count: 10_389,
+                prefixes: [
+                  { kana: 'かが', count: 201 },
+                  { kana: 'かカ', count: 1 }
+                ]
+              },
+              { initial: 'カ', count: 3_000, prefixes: [] },
+              { initial: 'ﾀ', count: 1, prefixes: [] }
             ],
-            categories: [{ slug: 'onomatopoeia', pages: 1 }],
-            rankedLists: [{ slug: 'anime', pages: 2 }],
-            kanjiLists: ['grade-1']
+            categories: [
+              { slug: 'onomatopoeia', count: 1_338 },
+              { slug: 'paleontology', count: 1 }
+            ],
+            rankedLists: [{ slug: 'anime', bands: [656, 784, 0, 0, 0, 0, 0, 0, 0, 9] }],
+            jlptLists: [{ slug: 'jlpt-n5', count: 667 }],
+            kanjiLists: [
+              { slug: 'grade-1', count: 80 },
+              { slug: 'strokes-29', count: 1 }
+            ]
           },
           build
         }
@@ -83,7 +98,7 @@ describe('with a dictionary service', () => {
     ])
   })
 
-  test('the browse sitemap lists every browse page', async () => {
+  test('the browse sitemap lists every browse page with 10 words or more, each once', async () => {
     vi.mocked(dictionaryService).mockResolvedValue(fakeService(5, 2) as never)
     const response = await browseSitemapResponse(request('/sitemaps/browse.xml'))
     const urls = locs((await response?.text()) ?? '')
@@ -104,13 +119,29 @@ describe('with a dictionary service', () => {
         `${site}/hiragana/%E3%81%8B%E3%81%8C/2/`,
         `${site}/katakana/%E3%82%AB/`,
         `${site}/onomatopoeia/`,
-        `${site}/frequency-dictionaries/anime/`,
-        `${site}/frequency-dictionaries/anime/2/`,
+        `${site}/onomatopoeia/7/`,
+        `${site}/frequency-dictionaries/anime/1-1000/`,
+        `${site}/frequency-dictionaries/anime/1001-2000/`,
+        `${site}/frequency-dictionaries/jlpt/n5/`,
+        `${site}/frequency-dictionaries/jlpt/n5/4/`,
         `${site}/kanji/grade-1/`
       ])
     )
-    expect(urls).toHaveLength(17)
-    expect(urls.filter(url => url.includes('kana-order'))).toEqual([])
+    expect(urls).toHaveLength(27)
+    expect(new Set(urls).size).toBe(urls.length)
+    for (const thin of [
+      'kana-order',
+      '%E3%81%8B%E3%82%AB',
+      '%EF%BE%80',
+      'paleontology',
+      '9001-10000',
+      'strokes-29'
+    ]) {
+      expect(
+        urls.filter(url => url.includes(thin)),
+        thin
+      ).toEqual([])
+    }
   })
 
   test('a word sitemap streams its range of canonical, percent-encoded, escaped URLs', async () => {
