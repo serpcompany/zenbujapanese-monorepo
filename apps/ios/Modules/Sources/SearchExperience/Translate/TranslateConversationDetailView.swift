@@ -5,7 +5,16 @@ import UIKit
 struct TranscriptActions {
   let words: TranslateWordLinks
   let readingAids: ReadingAidPreferences
+  let conversationWords: ConversationWords
   let speak: (String, SpokenLanguage) -> Void
+
+  @MainActor
+  func comprehension(of conversation: Conversation, isKnown: (LanguageReferenceID) -> Bool)
+    -> Comprehension?
+  {
+    conversationWords.comprehension(
+      of: conversation, analysis: words.analysisClient, isKnown: isKnown)
+  }
 }
 
 struct TranscriptSentence: View {
@@ -42,6 +51,7 @@ struct TranslateConversationDetailView: View {
   let history: ConversationHistory
   let actions: TranscriptActions
   @Environment(\.dismiss) private var dismiss
+  @Environment(WordKnowledge.self) private var wordKnowledge
   @State private var isConfirmingDelete = false
 
   var body: some View {
@@ -50,6 +60,15 @@ struct TranslateConversationDetailView: View {
     } else {
       ContentUnavailableView("Conversation Deleted", systemImage: "trash")
     }
+  }
+
+  private func header(_ conversation: Conversation) -> some View {
+    let summary =
+      "\(conversation.durationLabel) · \(conversation.turnCountLabel) · \(conversation.mode.title)"
+    let known = actions.comprehension(of: conversation, isKnown: wordKnowledge.isKnown)?
+      .percentText
+    return Text(known.map { summary + " · " + String(localized: "\($0) known") } ?? summary)
+      .accessibilityIdentifier("translate.detail.summary")
   }
 
   private func transcript(_ conversation: Conversation) -> some View {
@@ -62,11 +81,7 @@ struct TranslateConversationDetailView: View {
               history: history, actions: actions)
           }
         } header: {
-          if index == 0 {
-            Text(
-              "\(conversation.durationLabel) · \(conversation.turnCountLabel) · \(conversation.mode.title)"
-            )
-          }
+          if index == 0 { header(conversation) }
         }
       }
     }

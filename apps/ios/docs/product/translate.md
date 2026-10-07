@@ -99,16 +99,20 @@ fresh silence timer.
   Saving**, and **Cancel**, which resumes. With nothing said yet, Back just leaves.
 - **Silence.** After 2 minutes 50 seconds with no speech, **Are you still there?** counts down
   10 seconds with **Pause** and **Keep Listening**. Speech also dismisses it. With no answer, the
-  conversation pauses (it doesn't end), and a card explains why with **Resume**.
-- **Background.** When the app goes to the background, the conversation pauses, with a card
-  reading **Paused while you were away**.
-- **Interruptions.** A call or another app taking the microphone stops listening; a card says what
+  conversation pauses (it doesn't end), and an alert, **Paused after 3 minutes of silence**,
+  offers **Resume** and **Not Now**.
+- **Background.** When the app goes to the background, the conversation pauses, and on return an
+  alert reads **Paused while you were away**.
+- **Interruptions.** A call or another app taking the microphone stops listening; an alert says what
   happened, with **Try Again**.
 
 ## History
 
 The History button opens every saved conversation, newest first, in one list: each row shows its
-first sentence and a line such as **Today, 09:12 · 6 turns**. **All** and **Bookmarked** at the
+first sentence and a line such as **Today, 09:12 · 6 turns · 82% known**. The percentage is the
+share of the Japanese that was spoken, particles aside, made of words marked known, counted the
+way the Player counts captions; it updates as words are marked known, and a conversation with no
+Japanese spoken shows none. The transcript's header shows it too. **All** and **Bookmarked** at the
 top switch to the bookmarked sentences, each with its translation. Search, in the toolbar, matches the
 Japanese or the English. Long-pressing a row offers **Copy**, **Share**, and **Delete**; the
 **•••** menu offers **Delete All…**. Deleting a conversation, or all of them, asks first, and

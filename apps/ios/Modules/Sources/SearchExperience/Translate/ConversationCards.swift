@@ -156,48 +156,28 @@ struct LiveSentenceCard: View {
   }
 }
 
-struct ConversationStatusCard: View {
-  let activity: ConversationActivity
-  let resume: () -> Void
+struct ConversationStatusAlert: ViewModifier {
+  let session: LiveConversation
+  @State private var explained: ConversationActivity?
 
-  var body: some View {
-    HStack(alignment: .top, spacing: 12) {
-      Image(systemName: symbol)
-        .foregroundStyle(.white)
-        .frame(width: 30, height: 30)
-        .background(tint, in: .rect(cornerRadius: 7))
-      VStack(alignment: .leading, spacing: 4) {
-        Text(title).font(.headline)
-        Text(message).font(.subheadline).foregroundStyle(.secondary)
-        Button(buttonTitle, action: resume)
-          .font(.subheadline.weight(.semibold))
-          .buttonStyle(.borderless)
-          .accessibilityIdentifier("translate.status.resume")
+  func body(content: Content) -> some View {
+    content
+      .onChange(of: session.activity) { _, activity in
+        explained = activity.needsExplaining ? activity : nil
       }
-      Spacer(minLength: 0)
-    }
-    .padding(14)
-    .background(.background.secondary, in: .rect(cornerRadius: 16))
-    .listRowSeparator(.hidden)
-    .listRowBackground(Color.clear)
-    .accessibilityElement(children: .contain)
-    .accessibilityIdentifier("translate.status")
+      .alert(title, isPresented: isPresented, presenting: explained) { _ in
+        Button(buttonTitle) { session.start() }
+          .accessibilityIdentifier("translate.status.resume")
+        Button("Not Now", role: .cancel) {}
+      } message: { _ in
+        Text(message)
+      }
   }
 
-  private var symbol: String {
-    switch activity {
-    case .paused(.silence), .paused(.background): "moon.fill"
-    case .failed: "exclamationmark.triangle.fill"
-    default: "mic.slash.fill"
-    }
-  }
+  private var activity: ConversationActivity { explained ?? .listening }
 
-  private var tint: Color {
-    switch activity {
-    case .paused(.silence), .paused(.background): .indigo
-    case .failed: .orange
-    default: .gray
-    }
+  private var isPresented: Binding<Bool> {
+    Binding(get: { explained != nil }, set: { if !$0 { explained = nil } })
   }
 
   private var title: String {

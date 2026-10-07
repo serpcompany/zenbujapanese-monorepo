@@ -25,6 +25,7 @@ struct LiveConversationView: View {
       ConversationControlBar(session: session, experience: experience)
     }
     .toolbar(.hidden, for: .tabBar)
+    .modifier(ConversationStatusAlert(session: session))
     .alert("Leave this conversation?", isPresented: $isConfirmingExit) {
       Button("Save and Exit") { leave(saving: true) }
       Button("Exit Without Saving", role: .destructive) { leave(saving: false) }
@@ -54,9 +55,6 @@ struct LiveConversationView: View {
       List {
         ForEach(ConversationRow.rows(for: session)) { row in
           rowView(row).id(row.id)
-        }
-        if session.activity.needsExplaining {
-          ConversationStatusCard(activity: session.activity) { session.start() }
         }
         if session.conversation.turns.isEmpty, session.liveSentence == nil, session.isLive {
           emptyPrompt

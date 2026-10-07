@@ -47,6 +47,7 @@ final class TranslateExperience {
     }
   }
   @ObservationIgnored let readingAids: ReadingAidPreferences
+  @ObservationIgnored let conversationWords = ConversationWords()
 
   @ObservationIgnored let services: TranslateServices
   @ObservationIgnored private let defaults: UserDefaults

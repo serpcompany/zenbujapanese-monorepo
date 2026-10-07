@@ -181,7 +181,7 @@ In the Simulator, with the harness:
 - Back shows **Leave this conversation?** from the Back button; **Save and Exit** returns home, and
   History lists it with **Today, HH:MM · N turns**, a long-press menu, and the transcript.
 - **Listening** leads each card with English and plays as it goes. After 20 seconds of silence,
-  **Are you still there?** counts down and pauses with a card and **Resume**.
+  **Are you still there?** counts down and pauses with an alert offering **Resume**.
 - Sending the app home pauses with **Paused while you were away**; **Exit Without Saving** leaves
   no file in `Translate Conversations`.
 

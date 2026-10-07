@@ -37,6 +37,7 @@ struct TranslateTabRoot: View {
   private var transcriptActions: TranscriptActions {
     TranscriptActions(
       words: words, readingAids: experience.readingAids,
+      conversationWords: experience.conversationWords,
       speak: { text, language in
         Task { await experience.services.clients.playback.speak(text, language) }
       })

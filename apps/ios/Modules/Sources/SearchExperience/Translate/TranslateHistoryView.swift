@@ -12,6 +12,7 @@ struct TranslateHistoryView: View {
   let transcript: TranscriptActions
   @State private var query = ""
   @State private var filter = HistoryFilter.all
+  @Environment(WordKnowledge.self) private var wordKnowledge
   @State private var pendingDeletion: Conversation?
   @State private var isConfirmingDeleteAll = false
 
@@ -81,7 +82,10 @@ struct TranslateHistoryView: View {
   private func conversations(_ results: [Conversation]) -> some View {
     ForEach(results) { conversation in
       NavigationLink(value: TranslateRoute.conversation(conversation.id)) {
-        HistoryRow(conversation: conversation)
+        HistoryRow(
+          conversation: conversation,
+          comprehension: transcript.comprehension(
+            of: conversation, isKnown: wordKnowledge.isKnown))
       }
       .contextMenu {
         Button("Copy", systemImage: "doc.on.doc") {
@@ -115,17 +119,25 @@ struct TranslateHistoryView: View {
 
 private struct HistoryRow: View {
   let conversation: Conversation
+  let comprehension: Comprehension?
 
   var body: some View {
     VStack(alignment: .leading, spacing: 3) {
       Text(conversation.firstSentence?.text ?? "")
         .lineLimit(1)
-      Text("\(ConversationDateLabel.text(for: conversation.startedAt)) · \(conversation.turnCountLabel)")
+      Text(subtitle)
         .font(.subheadline)
         .foregroundStyle(.secondary)
         .monospacedDigit()
     }
     .padding(.vertical, 2)
+  }
+
+  private var subtitle: String {
+    let summary =
+      "\(ConversationDateLabel.text(for: conversation.startedAt)) · \(conversation.turnCountLabel)"
+    guard let percent = comprehension?.percentText else { return summary }
+    return summary + " · " + String(localized: "\(percent) known")
   }
 }
 
