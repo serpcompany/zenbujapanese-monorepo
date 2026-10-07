@@ -86,12 +86,24 @@ its own data and works signed out. There's no export feature: a learner asks
 - Check: `apps/web/e2e/privacy.spec.ts`, "says how long account data is kept, how to get a copy, and
   how to delete it": the retention list, item for item, the deletion, and the support email link.
 
+**Translate.** The app's on-device data names Translate's conversations, and says Translate uses the
+microphone only while a conversation or Listening runs, hears whoever speaks nearby, recognizes and
+translates speech on the device, and keeps no audio: a conversation's text, translations, and
+bookmarked sentences stay on the device until the learner deletes them. Permissions name the
+microphone beside the camera.
+
+- Source: the app's [Translate](../../../ios/docs/product/translate.md) docs ("Nothing is sent to a
+  server"; "Conversations are stored only on the device, one file each") and its microphone
+  permission (#624).
+- Check: `apps/web/e2e/privacy.spec.ts`, "names Translate's microphone, and keeps its
+  conversations on the device": both sections' statements.
+
 **The rest of the policy.** The app's on-device data names the profile and the Media Library's
 photos, and says an Image Search image is kept in the Media Library once a word is opened from it,
 as the app's [Image Search](../../../ios/docs/product/dictionary.md#image-search) docs say. The
 app's network features add signing in and syncing, only with an account, and say Cloudflare serves
-the optional dictionaries. Its permissions, the website's hosting and analytics, support email, and
-children are as they were; changes and contact name the account service too.
+the optional dictionaries. The website's hosting and analytics, support email, and children are as
+they were; changes and contact name the account service too.
 
 - Source: the policy of September 28, 2026; the app's
   [Account](../../../ios/docs/product/index.md#account) docs (the profile and the Media Library).

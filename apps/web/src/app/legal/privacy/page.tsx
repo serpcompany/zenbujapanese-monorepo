@@ -28,15 +28,22 @@ export default function PrivacyPage() {
 
       <h2>Information in the app</h2>
       <p>
-        Your profile, recent searches, word notes, known words, word lists, and Media Library photos
-        are stored in the app's private storage on your device and are not sent to {site.name},
-        except what a Zenbu account syncs if you create or sign in to one (see below). Your device's
-        own backups, such as iCloud Backup, can include them, under Apple's terms.
+        Your profile, recent searches, word notes, known words, word lists, Media Library photos,
+        and Translate conversations are stored in the app's private storage on your device and are
+        not sent to {site.name}, except what a Zenbu account syncs if you create or sign in to one
+        (see below). Your device's own backups, such as iCloud Backup, can include them, under
+        Apple's terms.
       </p>
       <p>
         Images you choose for Image Search are processed on your device. Opening a word from one
         keeps the image with that word in your Media Library, on your device; otherwise it is
         discarded when you close it.
+      </p>
+      <p>
+        Translate listens through the microphone only while a conversation or Listening is running,
+        and hears whoever is speaking nearby. Their speech is recognized and translated on your
+        device, and no audio is kept: the conversation's text, its translations, and the sentences
+        you bookmark stay on your device until you delete them.
       </p>
       <p>
         Text recognition, translation, and pronunciation use Apple's Vision, Translation, and speech
@@ -62,7 +69,8 @@ export default function PrivacyPage() {
 
       <h2>Permissions</h2>
       <p>
-        The app asks for camera access only when you choose to take a photo. Photos and files are
+        The app asks for camera access only when you choose to take a photo, and for microphone
+        access only when you start a Translate conversation or Listening. Photos and files are
         chosen through Apple's system pickers, which share only the item you select. You can change
         permissions in iPhone Settings.
       </p>
