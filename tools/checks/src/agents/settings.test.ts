@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest'
-import { allowedTools, claudeStep, readRepositoryFile, workflowSteps } from './workflow'
+import { allowedTools, claudeSteps, readRepositoryFile, workflowFiles } from './workflow'
 
 interface Rule {
   tool: string
@@ -77,9 +77,9 @@ const remoteScripts = workspacePackages.flatMap(path => {
 })
 
 describe('.claude/settings.json', () => {
-  test('asks before every package script that deploys or reaches a remote database', () => {
+  test('asks before every package script that deploys or reaches a remote service', () => {
     expect(remoteScripts.map(script => script.name)).toEqual(
-      expect.arrayContaining(['deploy:staging', 'deploy:production', 'db:migrate:production'])
+      expect.arrayContaining(['deploy:staging', 'deploy:production'])
     )
     const unasked = remoteScripts.flatMap(({ name, workspace }) =>
       shells.flatMap(shell =>
@@ -116,6 +116,33 @@ describe('.claude/settings.json', () => {
     'gh api repos/serpcompany/zenbujapanese-monorepo/issues -f title=Hello',
     'gh api repos/serpcompany/zenbujapanese-monorepo/issues --field title=Hello',
     'gh api repos/serpcompany/zenbujapanese-monorepo/rulesets --input ruleset.json',
+    'gh api --method POST orgs/serpcompany/rulesets --input ruleset.json',
+    'gh api --method PUT repos/serpcompany/zenbujapanese-monorepo/branches/main/protection --input protection.json',
+    'gh api repos/serpcompany/zenbujapanese-monorepo/actions/secrets/CLAUDE_CODE_OAUTH_TOKEN -X PUT -f encrypted_value=x',
+    'gh api repos/serpcompany/zenbujapanese-monorepo/actions/variables -f name=DEPLOY_PRODUCTION -f value=true',
+    'gh api -X PUT repos/serpcompany/zenbujapanese-monorepo/pulls/7/merge',
+    'gh api repos/serpcompany/zenbujapanese-monorepo/hooks -f url=https://example.com/hook',
+    'gh api --method PUT repos/serpcompany/zenbujapanese-monorepo/collaborators/someone',
+    'gh api repos/serpcompany/zenbujapanese-monorepo/keys -f key="ssh-ed25519 AAAA"',
+    'gh api --method DELETE repos/serpcompany/zenbujapanese-monorepo/issues/comments/99',
+    'gh api --method=DELETE repos/serpcompany/zenbujapanese-monorepo/git/refs/heads/feature',
+    'gh api -X DELETE repos/serpcompany/zenbujapanese-monorepo/labels/bug',
+    'gh api -XDELETE repos/serpcompany/zenbujapanese-monorepo/releases/1',
+    'gh api --method=PUT repos/serpcompany/zenbujapanese-monorepo/topics -f names[]=japanese',
+    'gh repo edit serpcompany/zenbujapanese-monorepo --enable-auto-merge',
+    'gh api repos/serpcompany/zenbujapanese-monorepo/actions/workflows/web-deploy.yml/dispatches -f ref=main',
+    'gh api -X POST repos/serpcompany/zenbujapanese-monorepo/actions/runs/1/rerun',
+    'gh api -X POST repos/serpcompany/zenbujapanese-monorepo/actions/runs/1/cancel',
+    'gh api -X PATCH repos/serpcompany/zenbujapanese-monorepo/git/refs/heads/main -F force=true -f sha=abc',
+    'gh api repos/serpcompany/zenbujapanese-monorepo/merges -f base=main -f head=feature',
+    'gh api repos/serpcompany/zenbujapanese-monorepo/releases -f tag_name=v1',
+    'gh api repos/serpcompany/zenbujapanese-monorepo/transfer -f new_owner=someone',
+    'gh api --method PATCH repos/serpcompany/zenbujapanese-monorepo/issues/comments/99 -F body=@tmp/review-summary.md',
+    'gh repo delete serpcompany/zenbujapanese-monorepo --yes',
+    'gh api --method PATCH repos/serpcompany/zenbujapanese-monorepo -f default_branch=staging',
+    'gh api -X PATCH repos/serpcompany/zenbujapanese-monorepo -F private=true',
+    'gh api --method=PATCH repos/serpcompany/zenbujapanese-monorepo -F allow_auto_merge=true',
+    'gh api --method PATCH repos/serpcompany/zenbujapanese-monorepo --input settings.json',
     'npx wrangler@4 deploy --env production',
     'npx wrangler@4.143.0 secret put DICTIONARY_API_TOKEN',
     'npx @opennextjs/cloudflare@1 deploy',
@@ -139,13 +166,13 @@ describe('.claude/settings.json', () => {
     'pnpm verify',
     'pnpm dev',
     'pnpm preview',
-    'pnpm db:migrate:local',
-    'pnpm exec wrangler d1 migrations list zenbujapanese-web-local --local',
+    'pnpm cf-typegen',
     'docker build -t zenbujapanese-dictionary-api .',
     'gh pr view 7 --comments',
     'gh api repos/serpcompany/zenbujapanese-monorepo/pulls/7/comments',
     'gh api repos/serpcompany/zenbujapanese-monorepo/actions/runs --jq ".workflow_runs[0].status"',
     'gh api repos/actions/checkout/contents/action.yml?ref=v5 --jq .content',
+    'gh api repos/serpcompany/zenbujapanese-monorepo/issues/7/comments',
     'git push -u origin chore/agent-harness'
   ])('runs %s without asking', command => {
     for (const shell of shells) expect(decision(shell, command), shell).toBe('default')
@@ -173,17 +200,28 @@ describe('.claude/settings.json', () => {
 })
 
 describe('the CI Claude jobs under .claude/settings.json', () => {
-  const reviewTools = allowedTools(
-    claudeStep(workflowSteps('.github/workflows/code-review.yml')).step
+  const jobs = workflowFiles().flatMap(path =>
+    claudeSteps(path).map(step => ({ path, tools: allowedTools(step) }))
   )
-  const gardeningTools = allowedTools(
-    claudeStep(workflowSteps('.github/workflows/maintenance.yml', 'doc-gardening')).step
-  )
+  const readOnlyToolsNeedingNoAllowRule = ['Read', 'Glob', 'Grep']
+  const tools = [
+    ...new Set([...jobs.flatMap(job => job.tools), ...readOnlyToolsNeedingNoAllowRule])
+  ]
+
+  test('are found in every workflow that runs Claude', () => {
+    expect(jobs.map(job => job.path)).toEqual([
+      '.github/workflows/claude.yml',
+      '.github/workflows/code-review.yml',
+      '.github/workflows/maintenance.yml',
+      '.github/workflows/maintenance.yml'
+    ])
+    expect(tools).toEqual(
+      expect.arrayContaining(['Task', 'Bash(git:*)', 'Bash(pnpm check)', 'Write'])
+    )
+  })
 
   test('are neither denied nor asked about a tool they use', () => {
-    expect(reviewTools).toContain('Task')
-    expect(gardeningTools).toContain('Bash(git:*)')
-    const blocked = [...new Set([...reviewTools, ...gardeningTools])].filter(tool => {
+    const blocked = tools.filter(tool => {
       const rule = parseRule(tool)
       if (rule.pattern === null) {
         return [...denyRules, ...askRules].some(other => other.tool === rule.tool)
@@ -194,10 +232,19 @@ describe('the CI Claude jobs under .claude/settings.json', () => {
   })
 
   test.each([
+    'git add apps/web/src/lib/log.ts',
+    'git commit -m "Split the website guide by task (#516)"',
+    'git push origin fl/feature',
+    'git push origin claude/issue-12-20261005-1400',
     'git push -u origin docs/gardening-2026-10-05',
-    'gh pr create --base main --title "Weekly doc gardening (2026-10-05)"',
-    'pnpm -s verify docs'
-  ])('let doc gardening run %s', command => {
+    'git push -u origin chore/code-gardening-2026-10-05',
+    'gh pr create --base main --title "Weekly doc gardening (2026-10-05)" --body-file tmp/pr-body.md',
+    'pnpm -s verify docs',
+    'pnpm verify',
+    'pnpm verify comments apps/web',
+    'pnpm check',
+    'pnpm --filter zenbujapanese-web check'
+  ])('let a CI job run %s', command => {
     expect(decision('Bash', command)).toBe('default')
   })
 })

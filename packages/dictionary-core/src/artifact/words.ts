@@ -102,7 +102,12 @@ export function readWord(
     readingForms: JSON.parse(record.reading_forms_json),
     senses: (
       JSON.parse(record.senses_json) as Omit<EntryRow['senses'][number], 'restrictions'>[]
-    ).map((sense, order) => ({ ...sense, restrictions: restrictions.get(order) ?? [] })),
+    ).map(({ meaning, notes, partsOfSpeech }, order) => ({
+      meaning,
+      notes,
+      partsOfSpeech,
+      restrictions: restrictions.get(order) ?? []
+    })),
     relationships: relationships.map(relationship => ({
       headword: relationship.headword,
       reading: relationship.reading,
@@ -132,17 +137,14 @@ export function readWord(
   }
 }
 
-export interface EntryIdentity {
+interface EntryIdentity {
   id: string
   entSeq: number
   headword: string
   reading: string
 }
 
-export function entriesById(
-  db: ArtifactDatabase,
-  ids: readonly string[]
-): Map<string, EntryIdentity> {
+function entriesById(db: ArtifactDatabase, ids: readonly string[]): Map<string, EntryIdentity> {
   if (ids.length === 0) return new Map()
   const rows = db.all<{ id: string; ent_seq: number; headword: string; reading: string }>(
     `SELECT lower(hex(id)) AS id, source_record_id AS ent_seq, headword, reading FROM entries

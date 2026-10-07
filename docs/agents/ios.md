@@ -6,24 +6,92 @@ Use XcodeBuildMCP to discover the project, scheme, and an already-booted iOS
 Simulator from the current checkout. Build and run with the `arm64` architecture,
 then inspect the launched app before reporting success.
 
-To try a branch on an iPhone without replacing the TestFlight app, build it as **Zenbu Dev**: the
-app target's bundle ID ends in `ZENBU_BUNDLE_ID_SUFFIX` and its name is `ZENBU_DISPLAY_NAME`, both
-empty or `Zenbu Japanese` by default, so overriding them on the command line installs a separate
-app with its own data. From `apps/ios`:
-
-```sh
-xcodebuild -project ZenbuJapanese.xcodeproj -scheme ZenbuJapanese -configuration Debug \
-  -destination 'platform=iOS,id=<device-udid>' \
-  DEVELOPMENT_TEAM=<team-id> CODE_SIGN_STYLE=Automatic \
-  ZENBU_BUNDLE_ID_SUFFIX=.dev ZENBU_DISPLAY_NAME="Zenbu Dev" -allowProvisioningUpdates build
-xcrun devicectl device install app --device <device-udid> <derived-data>/Build/Products/Debug-iphoneos/Zenbu\ Japanese.app
-```
-
-`xcrun devicectl list devices` lists paired iPhones and their UDIDs.
+The command-line tools must point at Xcode, not at the Command Line Tools, or `xcodebuild` and
+the Simulator tools refuse to run. `xcode-select -p` shows which; fix it once per Mac with
+`sudo xcode-select -s /Applications/Xcode.app/Contents/Developer`.
 
 The current `sudachi-swift` binary lacks an x86_64 Simulator slice. Use
 `ONLY_ACTIVE_ARCH=YES`; a generic dual-architecture Simulator build fails at
 link time.
+
+The app's **Prepare bundled Sudachi Core** build phase runs offline: it copies the pinned Sudachi
+Core dictionary from `~/Library/Caches/com.zenbujapanese.build/SudachiCore` (or
+`ZENBU_SUDACHI_BUILD_CACHE`), and fails with "verified Sudachi build cache is missing" until that
+cache is filled. Fill it once per Mac, online, from the repository root:
+
+```sh
+python3 apps/ios/Tools/prepare_sudachi_core.py \
+  --manifest apps/ios/Modules/Sources/SearchExperience/Resources/LanguageTechnologyPackCatalog.json \
+  --cache "${ZENBU_SUDACHI_BUILD_CACHE:-$HOME/Library/Caches/com.zenbujapanese.build/SudachiCore}" \
+  --cache-only
+```
+
+It downloads the release `LanguageTechnologyPackCatalog.json` names from GitHub (72 MB) and checks
+its SHA-256; later builds reuse it.
+
+## Install on an iPhone
+
+Check a change on a real iPhone when the Simulator can't show it: the camera, Apple Translation,
+or how fast it feels. The app needs iOS 26.0 or later, and the Sudachi cache above.
+
+### From the Mac the iPhone is connected to
+
+1. Connect the iPhone by USB, or pair it over the same Wi-Fi, and tap **Trust** on it.
+2. Open `apps/ios/ZenbuJapanese.xcodeproj`, sign in under Xcode → Settings → Accounts, and pick a
+   team under the ZenbuJapanese target's **Signing & Capabilities**. On the Apple Developer team
+   that publishes the app (the backup account's, while #616 is open), keep the bundle ID. A free
+   Apple ID (a Personal Team) can't use `com.zenbujapanese.app`, which that team registered:
+   change it to one of your own, such as `com.<you>.zenbujapanese`. The project sets no team, so
+   picking one edits `project.pbxproj`; don't commit that edit, or a bundle ID change.
+3. Choose the iPhone as the run destination and run.
+4. If iOS asks, turn on Developer Mode under Settings → Privacy & Security → Developer Mode. With a
+   free Apple ID, also trust it under Settings → General → VPN & Device Management.
+
+### Beside the TestFlight app
+
+To try unreleased work without replacing the TestFlight app, build it as **Zenbu Dev**. The
+target's bundle ID ends in `ZENBU_BUNDLE_ID_SUFFIX` and its name is `ZENBU_DISPLAY_NAME` (empty and
+`Zenbu Japanese` by default), so overriding them installs a separate app with its own data and
+leaves `project.pbxproj` alone. From `apps/ios`, with the phone's UDID from
+`xcrun devicectl list devices`:
+
+```sh
+xcodebuild -project ZenbuJapanese.xcodeproj -scheme ZenbuJapanese -configuration Debug \
+  -destination 'platform=iOS,id=<device-udid>' -derivedDataPath /tmp/zenbu-dev \
+  DEVELOPMENT_TEAM=<team-id> CODE_SIGN_STYLE=Automatic \
+  ZENBU_BUNDLE_ID_SUFFIX=.dev ZENBU_DISPLAY_NAME="Zenbu Dev" -allowProvisioningUpdates build
+xcrun devicectl device install app --device <device-udid> \
+  "/tmp/zenbu-dev/Build/Products/Debug-iphoneos/Zenbu Japanese.app"
+```
+
+### From a Mac the iPhone can't reach
+
+Remote Desktop doesn't pass an iPhone's USB connection through to a Mac, so Xcode on a cloud Mac
+never sees the phone. Build an unsigned `.ipa` there, and install it from the computer the phone
+is plugged into, whether it runs Windows, macOS, or Linux.
+
+1. On the Mac, from the repository root, build for devices without signing and package the app:
+
+   ```sh
+   xcodebuild -project apps/ios/ZenbuJapanese.xcodeproj -scheme ZenbuJapanese \
+     -configuration Release -destination 'generic/platform=iOS' \
+     -derivedDataPath /tmp/zenbu-device CODE_SIGNING_ALLOWED=NO build
+   rm -rf /tmp/zenbu-ipa && mkdir -p /tmp/zenbu-ipa/Payload
+   ditto "/tmp/zenbu-device/Build/Products/Release-iphoneos/Zenbu Japanese.app" \
+     "/tmp/zenbu-ipa/Payload/Zenbu Japanese.app"
+   (cd /tmp/zenbu-ipa && zip -qry ZenbuJapanese.ipa Payload)
+   ```
+
+   `/tmp/zenbu-ipa/ZenbuJapanese.ipa` is about 320 MB, mostly the bundled dictionaries.
+2. Copy it to the computer the iPhone is plugged into, for example through a cloud drive.
+3. Install it with [iloader](https://github.com/nab138/iloader), a free, open-source sideloader.
+   Download it only from that repository, since lookalike copies exist. It signs the app with the
+   Apple ID you sign in with, a free one included, and installs it over USB.
+4. On the iPhone, turn on Developer Mode if iOS asks, and trust the Apple ID under Settings →
+   General → VPN & Device Management.
+
+A free Apple ID's install stops opening after 7 days, and an Apple ID can keep at most 3 such apps
+installed; install it again to renew it.
 
 ## Interactive parsing comparison harness
 
@@ -82,7 +150,7 @@ matches that aren't Japanese. It doesn't cover Japanese queries with no direct m
 Discovered Words: Search splits those into words with the Sudachi dictionary the app bundles,
 which the package's test host lacks, so recording fails on them. Check those in the Simulator.
 The screen's titles, counts, and which rows it shows come from `SearchResultsScreen` in
-`SearchView.swift`, which the view and the suite share. Record it with
+`SearchResultsScreen.swift`, which the view and the suite share. Record it with
 `-only-testing:SearchExperienceTests/SearchResultsConformanceTests`; add a query by adding its
 `query` and `covers` fields and recording.
 
@@ -110,8 +178,7 @@ conjugation table its part of speech opens (each form with the words `Conjugatio
 `ConjugatedForm.examples`, and the first 3 with their linked tokens and which of them
 `LinkedJapaneseText.matchesQuery` accents), kanji, and its first 25 examples with their linked tokens; for
 a kanji, its metrics, meanings, readings with their words, elements, 24 words, and whether it
-has stroke data (not its JLPT metric, which the suites leave out until KANJIDIC2's old JLPT
-scale is decided, issue 485). The views and the suite
+has stroke data. The views and the suite
 share those helpers, so the suite records what the views draw. Each file pins the SHA-256 of
 every bundled artifact it was recorded against. After an intended
 change to either screen or its data, record them again with the same
@@ -135,35 +202,37 @@ that on. Until then, run `SearchExperienceTests` on a Mac, and verify ordinary a
 building, launching, and inspecting the real app.
 
 Frequency-pack selection has one repo-local Python contract test. Run
-`python3 -m unittest apps/ios/Tools/tests/test_frequency_pack_runtime_contract.py` to verify
+`python3 -m unittest discover -s apps/ios/Tools/tests -p test_frequency_pack_runtime_contract.py` to verify
 that every selectable manifest pins a known evidence row and rank, each ordered source agrees
 with the generated mapping analysis, the bundled TUBELEX artifact contains its pinned row, and
 the bundled JLPT level pack matches its pinned source files and import report. It also checks
 that 事, 時, 上, and 先生, spellings TUBELEX counts once although JMdict files them under several
-entries, carry their rank on the one entry their UniDic lemma reading names (#440). Rebuild the JLPT
-pack with `python3 apps/ios/Tools/import_jlpt_level_pack.py > apps/ios/LanguageData/Generated/JLPT-Waller-2025-08-26.import.json`
-and copy the reported hashes into its catalog manifest.
+entries, carry their rank on the one entry their UniDic lemma reading names (#440).
 
 Examples for kana-headword words come from `ExampleWordIndex.sqlite3`, which is built against the
 bundled `LanguageReferenceData.sqlite3`. Run
-`python3 -m unittest apps/ios/Tools/tests/test_example_word_index_contract.py` to verify that it
+`python3 -m unittest discover -s apps/ios/Tools/tests -p test_example_word_index_contract.py` to verify that it
 matches that database, its pinned source, and its import report. Without the index, as with a
 test database, kana headwords get no examples rather than substring matches. Tatoeba's index
 writes both the adverb 然う and the suffix そう as bare そう, so those sentences link to neither.
 
 Pitch for two-part compounds UniDic doesn't list whole, such as 記者会見, comes from
 `CompoundPitch.sqlite3`, also built against that database. Run
-`python3 -m unittest apps/ios/Tools/tests/test_compound_pitch_contract.py` to verify it.
+`python3 -m unittest discover -s apps/ios/Tools/tests -p test_compound_pitch_contract.py` to verify it.
 
-Every frequency pack pins the SHA-256 of `LanguageReferenceData.sqlite3`. After rebuilding it
-with `import_jmdict.py` (inputs are listed in `LanguageData/Sources/README.md`; large ones other
-than JMdict's `.gz` are git-ignored, so download them again from their source records), also
-copy its ranking contract into `DictionaryRankingArtifactContract.json`, rebuild the TUBELEX and
-Wikipedia packs with `import_frequency_pack.py` (TUBELEX also needs `--unidic apps/ios/LanguageData/Sources/unidic-cwj-3.1.0.zip`), rebuild the Jiten packs with
-`build_jiten_frequency_packs.py --out-dir <dir>` (it rewrites their manifests and keeps changed
-ones trusted) and publish the new ZIPs, rebuild the JLPT pack, rebuild the example word index with `import_example_word_index.py`, rebuild the compound pitch estimates with `import_compound_pitch.py`
-(inputs in `LanguageData/Sources/Tatoeba-jpn-indices-2026-09-26.source.json`), and update each catalog manifest. Move the previous manifests of downloadable
-packs into `trustedHistoricalManifests` so packs a learner already installed stay trusted.
+Every frequency pack, the example word index, and the compound pitch estimates pin the SHA-256 of
+`LanguageReferenceData.sqlite3`, and each data tool records its own SHA-256 in what it builds, so
+the language data is rebuilt as a whole, with one command on the pinned Python:
+
+```sh
+uv run --no-project --python 3.14.8 python apps/ios/Tools/rebuild_language_data.py --download
+```
+
+It runs every importer in order, copies each pack's import report into its catalog manifest,
+moves the previous manifests of downloadable packs into `trustedHistoricalManifests` so packs a
+learner already installed stay trusted, and runs the contract tests. Then re-record the five
+suites above and review their diffs. [`apps/ios/Tools/README.md`](../../apps/ios/Tools/README.md)
+says what each tool builds, why the Python is pinned, and how to move to a newer source snapshot.
 
 Downloadable packs are served from `cdn.zenbujapanese.com` (Cloudflare R2 bucket
 `zenbujapanese-cdn`), never from upstream hosts. Point a new or changed manifest's `downloadURL`
@@ -183,7 +252,7 @@ side of a pair without the other; change both, and re-record the suite that cove
 ## Search and linked text
 
 `LookupClient` retrieves a relevance-filtered, deduplicated set in dictionary order and never
-reads frequency; `SearchResultFrequencyOrdering` (`SearchView.swift`) reorders only that bounded
+reads frequency; `SearchResultFrequencyOrdering` reorders only that bounded
 set. An exact dictionary form stays first (した is 下 and 舌 before する), then deinflected lemmas
 by chain length, so a direct conjugation (まけたら → 負ける) outranks a longer chain, then prefix
 and contains matches. Radical searches keep only the leading lexical-rank group.
@@ -225,7 +294,7 @@ are matched by pack family, the ID's first three parts, so a rebuilt pack keeps 
 historical manifest can share its pack version with the current one when only derived hashes
 changed, as after a language-data rebuild.
 
-An artifact's content digest (`FrequencyPackArtifactContent` in `FrequencyPack.swift`, matched by
+An artifact's content digest (`FrequencyPackArtifactContent` in `FrequencyPackArtifact.swift`, matched by
 `import_frequency_pack.py`) hashes `zenbu.frequency-pack-content.v1` and a NUL byte, then the
 metadata sorted by key, each UTF-8 key and value prefixed with its byte length as an unsigned
 64-bit big-endian integer; `FrequencyPackContentDigestV1.json` is a test vector. Its

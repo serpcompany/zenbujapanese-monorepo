@@ -4,7 +4,8 @@ import { isAbsolute, relative, resolve, sep } from 'node:path'
 import { findComments } from './comments/find'
 import { root } from './files'
 import { checkLayers } from './layers'
-import { commentRule, layerRule, sizeRule } from './rules'
+import { commentRule, layerRule, secretRule, sizeRule } from './rules'
+import { findSecrets } from './secrets'
 import { checkSizes } from './sizes'
 
 interface ToolCall {
@@ -32,6 +33,8 @@ const layers = checkLayers([path])
 if (layers.length) {
   messages.push(...layers.map(layer => `${layer.path}:${layer.line}  ${layer.problem}`), layerRule)
 }
+const secrets = await findSecrets([path])
+if (secrets.length) messages.push(...secrets, secretRule)
 
 if (messages.length) {
   console.error(messages.join('\n'))

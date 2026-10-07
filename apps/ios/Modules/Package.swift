@@ -31,6 +31,7 @@ let package = Package(
         .product(name: "Sudachi", package: "sudachi-swift"),
         .product(name: "ZIPFoundation", package: "ZIPFoundation"),
       ],
+      exclude: ["Resources/RankedLists.sqlite3"],
       resources: [.process("Resources")],
       linkerSettings: [
         .linkedFramework("JavaScriptCore"),

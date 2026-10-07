@@ -12,55 +12,7 @@ export interface SizeException {
   reason: string
 }
 
-const swiftCantBeCheckedHere =
-  'Swift: the machines agents work on here can neither build nor test it, so splitting it waits for a Mac that can check the result'
-
-export const knownLargeFiles: Readonly<Record<string, SizeException>> = {
-  'apps/ios/Modules/Sources/SearchExperience/ExampleSentenceClient.swift': {
-    lines: 948,
-    reason: swiftCantBeCheckedHere
-  },
-  'apps/ios/Modules/Sources/SearchExperience/FrequencyPack.swift': {
-    lines: 773,
-    reason: swiftCantBeCheckedHere
-  },
-  'apps/ios/Modules/Sources/SearchExperience/FrequencyPackManager.swift': {
-    lines: 585,
-    reason: swiftCantBeCheckedHere
-  },
-  'apps/ios/Modules/Sources/SearchExperience/ImageTextFlowModel.swift': {
-    lines: 507,
-    reason: swiftCantBeCheckedHere
-  },
-  'apps/ios/Modules/Sources/SearchExperience/ImageTextFlowView.swift': {
-    lines: 782,
-    reason: swiftCantBeCheckedHere
-  },
-  'apps/ios/Modules/Sources/SearchExperience/KanjiDetailView.swift': {
-    lines: 694,
-    reason: swiftCantBeCheckedHere
-  },
-  'apps/ios/Modules/Sources/SearchExperience/LinkedJapaneseText.swift': {
-    lines: 551,
-    reason: swiftCantBeCheckedHere
-  },
-  'apps/ios/Modules/Sources/SearchExperience/LookupClient.swift': {
-    lines: 1022,
-    reason: swiftCantBeCheckedHere
-  },
-  'apps/ios/Modules/Sources/SearchExperience/SearchView.swift': {
-    lines: 1101,
-    reason: swiftCantBeCheckedHere
-  },
-  'apps/ios/Modules/Sources/SearchExperience/WatchAndListenView.swift': {
-    lines: 699,
-    reason: swiftCantBeCheckedHere
-  },
-  'apps/ios/Modules/Sources/SearchExperience/WordDetailView.swift': {
-    lines: 968,
-    reason: swiftCantBeCheckedHere
-  }
-}
+export const knownLargeFiles: Readonly<Record<string, SizeException>> = {}
 
 const measured = new Set<Language>(['typescript', 'swift', 'python', 'shell'])
 

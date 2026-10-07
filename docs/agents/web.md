@@ -1,8 +1,8 @@
 # Website working guide
 
 `apps/web` is zenbujapanese.com: Next.js served from Cloudflare Workers through OpenNext, with
-Cloudflare D1 through Drizzle for the site's own data. It reads the dictionary from the
-dictionary service (`apps/dictionary-api`, ADR 0009; see
+no database of its own. It reads the dictionary from the dictionary service
+(`apps/dictionary-api`, ADR 0009; see
 [`dictionary-api.md`](dictionary-api.md)). It builds with pnpm in the repository's workspace (the
 root `pnpm-workspace.yaml` and lockfile), which it shares with the dictionary core
 (`packages/dictionary-core`) and the service, and still owns its build, tests, and deploys
@@ -12,7 +12,6 @@ What the dictionary pages show, and the check that enforces each behavior, is in
 
 The website follows these SERP engineering standards:
 
-- [Drizzle + D1 data promotion](https://github.com/serpcompany/serp/blob/main/docs/engineering/standards/database-management-promotion-drizzle-d1.md)
 - [Environment configuration](https://github.com/serpcompany/serp/blob/main/docs/engineering/standards/environment-configuration.md)
 - [URL trailing slash](https://github.com/serpcompany/serp/blob/main/docs/engineering/standards/url-trailing-slash.md):
   pages end with a slash (`/about/`); files never do (`/robots.txt`, `/sitemap-index.xml`). The
@@ -26,15 +25,13 @@ Next.js version differs from older releases (see `apps/web/AGENTS.md`).
 
 ## Run and verify
 
-- `pnpm dev` runs Next.js in Node, with Cloudflare bindings (the local D1 database, and
-  `.dev.vars`) available through `getCloudflareContext()` (`initOpenNextCloudflareForDev` in
-  `next.config.ts`). Dictionary pages show local fixtures unless `.dev.vars` names a dictionary
-  service (see Dictionary).
+- `pnpm dev` runs Next.js in Node, with Cloudflare bindings and `.dev.vars` available through
+  `getCloudflareContext()` (`initOpenNextCloudflareForDev` in `next.config.ts`). Dictionary pages
+  show local fixtures unless `.dev.vars` names a dictionary service (see Dictionary).
 - `pnpm preview` builds with OpenNext and serves the Worker in workerd, the production runtime.
   Check routes, redirects, and headers there before deploying.
-- `pnpm check` runs Biome, typecheck, `drizzle-kit check` (migration validation), Vitest, and
-  `next build`. The `Web` GitHub Actions workflow runs it on pull requests that change
-  `apps/web/**` or the core.
+- `pnpm check` runs Biome, typecheck, Vitest, and `next build`. The `Web` GitHub Actions workflow
+  runs it on pull requests that change `apps/web/**` or the core.
 - `pnpm test:e2e` runs the browser tests in `apps/web/e2e/` with Playwright, at a desktop and a
   phone width, on the dictionary fixtures. Locally it starts `next dev` on port 3100 with
   `ZENBU_DICTIONARY_FIXTURES=1`, which makes the site read the fixtures even when `.dev.vars` names
@@ -82,16 +79,23 @@ lists every child sitemap and each child sitemap lists the new URLs.
 enforces each rule (`apps/web/biome.json`), with a message that says where the code belongs; tests
 may import anything.
 
-- `src/lib` and `src/db` hold the site's data and logic. They import no component, hook, or route.
+- `src/lib` holds the site's data and logic. It imports no component, hook, or route.
 - `src/components` and `src/hooks` render what they're given. They import from `src/lib`, never a
   route.
 - `src/app` holds the routes, which put the other two together.
+- `src/test` holds what only tests use: the rendered-page gate and the readers of rendered HTML.
+  Nothing outside a test imports it.
 
 Only `src/lib/dictionary/data.ts` reads the dictionary service's client
 (`src/lib/dictionary/api.ts`), so every page gets the site's URLs and, in local development, the
 fixtures; the one other caller is `src/lib/dictionary/retired.ts`, which `worker.ts` runs before
-Next.js. The rendered-page gate's `src/components/dictionary/gate.ts` is test tooling and calls it
-directly.
+Next.js. The browse pages' data (`src/lib/dictionary/browse/data.ts`) and the sitemaps
+(`src/lib/dictionary/sitemaps.ts`) ask the client `data.ts`'s `dictionaryService()` returns. The rendered-page gate's `src/test/gate.ts` is test tooling and calls it directly.
+
+`pnpm verify dependencies` checks the same layers by the files imports resolve to, and more: no
+import cycles, nothing outside a test importing a test or `src/test`, every module reachable from
+a route or `worker.ts`, nothing `worker.ts` reaches loading Next.js or React, and no import of the
+dictionary service's code ([`code.md`](code.md), Imports).
 
 The site logs JSON lines through `log()` in `apps/web/src/lib/log.ts`: a level, a message that
 names the event (`dictionary_service_unreachable`), and fields. Workers Logs keep them. Nothing
@@ -149,8 +153,9 @@ DICTIONARY_API_TOKEN=<the token the service was started with>
 
 The service runs the search core (`packages/dictionary-core/src/search/`, the app's Search
 retrieval with its own SQL on the artifact's FTS4 indexes) and the results core
-(`packages/dictionary-core/src/results/`, ported from SearchView.swift and FrequencyPack.swift),
-and answers with the results screen. `orderedItems` is
+(`packages/dictionary-core/src/results/`, ported from SearchResultsView.swift,
+SearchResultFrequencyOrdering.swift, and FrequencyPresentation.swift), and answers with the results
+screen. `orderedItems` is
 `SearchResultFrequencyOrdering.ordered`: within each match group (the result's source, then its
 coarse match rank), the more common tier from the first dictionary that has one, then each
 dictionary's value in priority order (lower first, ranked before unranked), then the retrieval
@@ -234,6 +239,35 @@ fixture JSON is generated, so Biome skips it. A fixture search lists its words i
 `fixtureSearchOrder`, the app's order: each is its own match group, so the frequency re-sort
 keeps that order.
 
+### Browse pages
+
+The browse pages (ADR 0010, amended for #614; the
+[product docs](../../apps/web/docs/product/browse.md)) list words and kanji by kana, category,
+frequency list, and kanji list, under `/dictionary/browse/`. `src/lib/dictionary/browse/data.ts`
+asks the service's browse routes ([`dictionary-api.md`](dictionary-api.md), Routes) at the paths
+`packages/dictionary-core/src/browse/service-paths.ts` names, and links each word as search
+results do (`linkedWordPath`). Without a service, it answers from the answers `pnpm --filter
+zenbujapanese-dictionary-api fixtures` exports to `packages/dictionary-core/src/fixtures/browse.json`,
+keyed by those paths: the summary, both scripts, い and the いる group, the categories,
+`ichidan-verbs` (two pages most used first and one in kana order) and `audiovisual` (one word, so
+not indexed), the ranked lists, YouTube's and anime's first bands, and JLPT N5, and the kanji
+lists, grade 4, JLPT N5's kanji, and all of jinmeiyō, with its compatibility kanji. Each word list
+is cut to its first 20 words. Any other browse page is a 404 there.
+
+`src/lib/dictionary/browse/paths.ts` builds the pages' URLs: a list's first page has no number,
+and `…/1/` redirects to it; a ranked list's page is a band of 1,000 ranks (`…/anime/1001-2000/`),
+and its name links to the first band; a JLPT level is `…/jlpt/n5/`; and a category's kana order is
+`…/<category>/kana-order/`. A list of fewer than 10 words, and a category's kana order, are
+`noindex, follow` (`dictionaryMetadata`'s `index`) and left out of `/sitemaps/browse.xml`. No
+browse page links to a URL that redirects (`e2e/browse-links.spec.ts` follows every link). The
+hiragana and katakana routes, and each category's four, are one line each over the route helpers
+beside them (`kana-routes.tsx`, `category-routes.tsx`, `frequency-dictionaries/list-routes.tsx`). Pages without parameters that read the service are
+`force-dynamic`, as `/dictionary/` now is, so a build never reads it
+(`src/app/dictionary/browse/dynamic.test.ts`). The home leaves its browse sections out when the
+service can't answer (`getHomeBrowse`), as when the site deploys a few minutes ahead
+of a service without the browse routes, rather than failing the search box with them. The words show as search
+results' rows do (`components/dictionary/word-row.tsx`).
+
 ### The rendered-page gate
 
 The service's own tests replay the app-recorded suites (`apps/ios/LanguageData/Conformance/`)
@@ -244,7 +278,7 @@ answers through the pages' components with React's server renderer, linked by th
 `data.ts` (`apps/web/src/lib/dictionary/page-example.ts` and
 `apps/web/src/lib/dictionary/results/links.ts`), and reads back what a reader sees, from the
 drawing itself (such as each pitch dot's position) rather than the data the page was given.
-`apps/web/src/components/dictionary/rendered.ts` and `rendered-word.ts` do the reading. Their one
+`apps/web/src/test/rendered.ts` and `rendered-word.ts` do the reading. Their one
 text extractor, `htmlText`, removes tags until none remain and leaves `&lt;` and `&gt;` encoded,
 so the text it reads never holds a `<` (`rendered.test.ts`). The gate's tests:
 
@@ -272,30 +306,33 @@ example-search suite's `eat`, and the word-detail suite's 見る and 学校 at r
 
 ## Environments and deploys
 
-| Environment | Worker | Domain | D1 database |
-| --- | --- | --- | --- |
-| Local | — | `localhost` | `zenbujapanese-web-local` (local only) |
-| Staging | `zenbujapanese-web-staging` | `staging.zenbujapanese.com` | `zenbujapanese-web-staging` |
-| Production | `zenbujapanese-web-production` | `zenbujapanese.com` (`www` redirects to it) | `zenbujapanese-web-production` |
+| Environment | Worker | Domain |
+| --- | --- | --- |
+| Local | — | `localhost` |
+| Staging | `zenbujapanese-web-staging` | `staging.zenbujapanese.com` |
+| Production | `zenbujapanese-web-production` | `zenbujapanese.com` (`www` redirects to it) |
 
-Deploys and remote migrations run only through the `Web deploy` GitHub Actions workflow, never
-from an agent's machine. Each merge to `main` that changes `apps/web/**` or the core points
-staging at its dictionary service, applies staging migrations, deploys staging, and smoke-tests
-its workers.dev URL (`scripts/smoke.sh`). The production job then runs automatically once staging
-passes: it does the same for production with the same commit. Staging's smoke tests are the gate:
-the `production` GitHub environment has no required reviewer, by the owner's decision. Add one
-(Settings → Environments → production) to review production deploys by hand. Both environments
+Deploys run only through the `Web deploy` GitHub Actions workflow, never from an agent's machine.
+Each merge to `main` that changes `apps/web/**` or the core points staging at its dictionary
+service, deploys staging, and smoke-tests its workers.dev URL (`scripts/smoke.sh`). The
+production job then runs automatically once staging passes: it does the same for production with
+the same commit. Staging's smoke tests are the gate: the `production` GitHub environment has no
+required reviewer, by the owner's decision. Add one (Settings → Environments → production) to
+review production deploys by hand. Both environments
 deploy only from `main`. Setting the repository variable `DEPLOY_PRODUCTION` to `false` pauses the
 production job on pushes, so `main` deploys staging only; a manual run of `Web deploy` still
 deploys production. The workflow uses the `CLOUDFLARE_API_TOKEN` secret (the "Edit
-Cloudflare Workers" template plus D1 Edit, limited to the SERP account and the zenbujapanese.com
-zone) and the `CLOUDFLARE_ACCOUNT_ID` variable.
+Cloudflare Workers" template, limited to the SERP account and the zenbujapanese.com zone; it no
+longer needs the D1 Edit it was created with) and the `CLOUDFLARE_ACCOUNT_ID` variable.
 
-The `deploy:*` and remote `db:migrate:*` scripts remain for a human-run emergency only.
+The `deploy:*` scripts remain for a human-run emergency only.
 
 In `apps/web/wrangler.jsonc`, the top level is local development, and `env.staging` and
 `env.production` are the deployed environments. Wrangler doesn't pass bindings down to an
-environment, so each repeats them.
+environment, so each repeats them. After changing bindings or vars there, run `pnpm cf-typegen`,
+which rewrites `apps/web/cloudflare-env.d.ts` from `wrangler.jsonc` alone: it reads no `.dev.vars`
+(`--env-file /dev/null`), so a local secret never enters the types, and the `Web` workflow fails
+when the committed file differs from what it writes.
 
 ### Dictionary service
 
@@ -390,25 +427,6 @@ doesn't run `worker.ts`, still redirects them, in those two hops.
 Email Routing on the zone forwards `support@zenbujapanese.com` to `support+zenbujapanese@serp.co`
 and `dmca@zenbujapanese.com` to `dmca+zenbujapanese@serp.co`.
 
-## Database
-
-D1 follows the SERP [Drizzle + D1 standard](https://github.com/serpcompany/serp/blob/main/docs/engineering/standards/database-management-promotion-drizzle-d1.md).
-The site's database, `DB`, holds the site's own data; the dictionary is not in D1 (see
-Dictionary). All three environments' databases share the `DB` binding, the schema in
-`src/db/schema.ts`, the migrations in `drizzle/`, and the `d1_migrations` ledger table. Staging
-and production are targeted through named Wrangler environments (`--env staging`, `--env
-production`) rather than `--preview`, so each has its own Worker and domain. Local uses seeded
-fixture data, staging controlled fixtures, and production real data only.
-
-1. Change `src/db/schema.ts`, then run `pnpm db:generate` and review the SQL.
-2. `pnpm db:migrate:local`, then verify with `pnpm dev` or `pnpm preview`.
-3. `pnpm db:migrate:staging`, then verify staging.
-4. `pnpm db:migrate:production`.
-
-Each script names its target database explicitly; `db:migrations:list:<env>` shows what is
-applied. Never run `drizzle-kit push` against a shared database, and never seed production.
-After changing bindings or vars in `wrangler.jsonc`, run `pnpm cf-typegen`.
-
 ## Sitemaps
 
 Sitemaps are hand-written route handlers built on `src/lib/sitemap.ts`. `/sitemap-index.xml` is
@@ -421,15 +439,17 @@ The dictionary's sitemaps (`src/lib/dictionary/sitemaps.ts`, ADR 0007) exist whe
 has a dictionary service, staging and production, not local fixtures, so the index renders per
 request (`force-dynamic`, as does `/sitemap.xml`, which crawlers look for by default): a build
 can't reach the service, so prerendering would fail the build or freeze an index without them.
-`/dictionary/`, the search box, is a static page in `src/lib/pages.ts`:
+`/dictionary/`, the search box and the browse sections below it, is listed in `src/lib/pages.ts`:
 
 - `/sitemaps/dictionary/<n>.xml`: every word page's canonical URL under its slug,
   percent-encoded, 50,000 to a file in `ent_seq` order (five files for 218,382 words). The
   service works out each file's `ent_seq` range once, and the site streams a file's words from it
   10,000 at a time (`urlSetStream`), so a file never sits whole in memory; a failure mid-stream
   errors the response rather than ending it early.
-Those are the only dictionary sitemaps (ADR 0010): the kanji and conjugations sitemaps went with
-their pages.
+- `/sitemaps/browse.xml`: every indexed browse page, built from what the service's
+  `/v1/sitemaps/browse` lists (`src/lib/dictionary/browse/sitemap.ts`), about 5,300 URLs.
+Those are the only dictionary sitemaps (ADR 0010, amended for #614): the kanji and conjugations
+sitemaps went with their pages.
 
 They're kept in the Worker's edge cache (the Cache API) under the dictionary build the service
 names, so they change with the build, within the 10 minutes its answers stay cached. Cloudflare

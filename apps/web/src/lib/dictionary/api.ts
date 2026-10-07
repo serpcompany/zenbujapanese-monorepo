@@ -4,6 +4,7 @@ import {
   dictionaryContract,
   dictionaryContractHeader
 } from '@zenbu/dictionary-core/artifact/contract'
+import type { BrowseAnswer, BrowsePath } from '@zenbu/dictionary-core/browse/service-paths'
 import { log } from '../log'
 
 export interface DictionaryApiEnvironment {
@@ -18,7 +19,7 @@ export interface Answer<T> {
 
 const edgeCacheSeconds = 600
 
-export class DictionaryApiError extends Error {}
+class DictionaryApiError extends Error {}
 
 type Fetch = (input: Request) => Promise<Response>
 
@@ -106,6 +107,8 @@ export function dictionaryApi(
         `/v1/sitemaps/words/${number}?after=${after}&limit=${limit}`
       ),
     retired: () => required<DictionaryContract['retired']>('/v1/retired'),
+    browse: <Name extends BrowseAnswer>(path: BrowsePath<Name>) =>
+      get<DictionaryContract[Name]>(path.path),
     health: async (): Promise<ServiceHealth> => {
       const response = await fetcher(
         new Request(new URL('/healthz', base).toString(), {

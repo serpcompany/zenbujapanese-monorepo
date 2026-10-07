@@ -1,12 +1,12 @@
 import type { PitchRow } from './rows'
 import { graphemes, katakana } from './text'
 
-export interface PitchPoint {
+interface PitchPoint {
   x: number
   high: boolean
 }
 
-export interface PitchGraph {
+interface PitchGraph {
   widths: number[]
   points: PitchPoint[]
   particle: PitchPoint
@@ -52,9 +52,9 @@ export function pitchLevels(
   return { morae: levels, particle: downstep === heiban }
 }
 
-export const particleWidth = 0.6
+const particleWidth = 0.6
 
-export function pitchGraph(
+function pitchGraph(
   kana: readonly string[],
   levels: { morae: boolean[]; particle: boolean }
 ): PitchGraph {

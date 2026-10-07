@@ -57,11 +57,29 @@ describe('renderReport', () => {
       { name: 'docs', problems: ['docs/agents/ci.md:16  links to gone.yml, which doesn’t exist'] }
     ],
     staleDocs: [{ doc: 'docs/agents/web.md', changed: ['a', 'b', 'c', 'd', 'e', 'f', 'g'] }],
-    debtRows: 27,
+    quality: {
+      stale: [
+        {
+          area: 'Dictionary pages',
+          graded: '2026-09-30',
+          changed: [{ path: 'apps/web/src/lib/dictionary/', day: '2026-10-03' }]
+        }
+      ],
+      ungraded: []
+    },
+    debt: {
+      open: 27,
+      bySize: { small: 2, medium: 15, large: 10 },
+      firstSmall: {
+        section: 'Harness',
+        debt: '`docs/agents/web.md` is still one guide.',
+        issue: '#516'
+      },
+      unsized: []
+    },
     sizeExceptions: [{ path: 'apps/ios/SearchView.swift', lines: 1101 }],
-    nearLimit: [{ path: 'packages/dictionary-core/src/search/english.ts', lines: 471 }],
-    qualityChanged: '2026-09-30',
-    codeCommitsSinceQuality: 5
+    duplicateExceptions: [{ pair: 'apps/ios/Tools/a.py and apps/ios/Tools/b.py', blocks: 2 }],
+    nearLimit: [{ path: 'packages/dictionary-core/src/search/english.ts', lines: 471 }]
   }
 
   test('shows a failing check with what it found, and caps each doc at five files', () => {
@@ -69,9 +87,9 @@ describe('renderReport', () => {
     expect(report).toContain('`pnpm verify docs` fails:')
     expect(report).toContain('links to gone.yml')
     expect(report).toContain('- `docs/agents/web.md`: `a`, `b`, `c`, `d`, `e`, +2 more')
-    expect(report).toContain('27 open items')
     expect(report).toContain('`apps/ios/SearchView.swift`: 1101 lines')
-    expect(report).toContain('5 commits have changed code since')
+    expect(report).toContain('known-duplicates.ts`: 2.')
+    expect(report).toContain('  - apps/ios/Tools/a.py and apps/ios/Tools/b.py: 2')
     expect(report).toContain('1 code files have 450 lines or more')
     expect(report).toContain('- `packages/dictionary-core/src/search/english.ts`: 471 lines')
   })
@@ -97,5 +115,44 @@ describe('renderReport', () => {
     expect(report).toContain('Passing: comments.')
     expect(report).toContain('## Docs to re-verify\n\nFiles')
     expect(report).toMatch(/Check that each doc still matches them\.\n\nNone\./)
+  })
+
+  test('lists each quality row to re-grade, with the code that changed and when', () => {
+    const report = renderReport(facts)
+    expect(report).toContain(
+      '## Scores to re-grade\n\nRows of `docs/quality.md` whose code changed after the day they were graded.'
+    )
+    expect(report).toContain(
+      '- Dictionary pages (graded 2026-09-30): `apps/web/src/lib/dictionary/` changed 2026-10-03'
+    )
+    const none = renderReport({ ...facts, quality: { stale: [], ungraded: ['Player'] } })
+    expect(none).toContain('- Rows without a Graded date, which each need one: Player.')
+    expect(none).not.toContain('Dictionary pages (graded')
+  })
+
+  test('sizes the known debt, and names the small item code gardening takes next', () => {
+    const report = renderReport(facts)
+    expect(report).toContain('27 open items (2 small, 15 medium, 10 large).')
+    expect(report).toContain(
+      '- First small item: Harness: `docs/agents/web.md` is still one guide. Issue: #516.'
+    )
+    expect(report).not.toContain('Rows without a Size')
+    const unsized = renderReport({
+      ...facts,
+      debt: {
+        ...facts.debt,
+        firstSmall: null,
+        unsized: [{ section: 'Code', debt: 'Two copies of search.', issue: '#481' }]
+      }
+    })
+    expect(unsized).toContain('- First small item: none.')
+    expect(unsized).toContain('- Rows without a Size, which each need one: 1.')
+    expect(unsized).toContain('  - Code: Two copies of search. Issue: #481.')
+  })
+
+  test('says how to work the issue, outside the checklist', () => {
+    expect(renderReport(facts)).toMatch(
+      /a check\.\n\nWork this issue one item per small pull request, as `docs\/agents\/ci\.md` says/
+    )
   })
 })

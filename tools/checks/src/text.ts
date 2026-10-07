@@ -9,7 +9,7 @@ export interface Comment {
   text: string
 }
 
-export function lineStarts(text: string): number[] {
+function lineStarts(text: string): number[] {
   const starts = [0]
   for (let index = 0; index < text.length; index++) {
     if (text[index] === '\n') starts.push(index + 1)

@@ -1,54 +1,16 @@
 import { exampleCountText } from '@zenbu/dictionary-core/detail/examples'
-import { ChevronRightIcon, SearchIcon } from 'lucide-react'
-import Link from 'next/link'
-import { Fragment, type ReactNode } from 'react'
+import { SearchIcon } from 'lucide-react'
+import { Fragment } from 'react'
 import { Disclosure } from '@/components/dictionary/disclosure'
 import { ExampleList } from '@/components/dictionary/example-list'
-import { FrequencyBadges } from '@/components/dictionary/frequency'
 import { KanjiDetails } from '@/components/dictionary/kanji-details'
-import { RubyText } from '@/components/dictionary/ruby-text'
+import { Row, WordRow } from '@/components/dictionary/word-row'
 import { Card } from '@/components/ui/card'
 import { Empty, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from '@/components/ui/empty'
-import { Item, ItemActions, ItemContent, ItemGroup, ItemSeparator } from '@/components/ui/item'
-import type { SearchData, SearchExamplesData, SearchWord } from '@/lib/dictionary/data'
+import { ItemContent, ItemGroup, ItemSeparator } from '@/components/ui/item'
+import type { SearchData, SearchExamplesData } from '@/lib/dictionary/data'
 
-export const searchExamplesAnchor = 'examples'
-
-function Row({
-  path,
-  label,
-  children
-}: {
-  path: string | null
-  label?: string
-  children: ReactNode
-}) {
-  return (
-    <Item
-      render={path ? <Link href={path} aria-label={label} /> : undefined}
-      className="rounded-none px-4"
-    >
-      {children}
-      {path ? (
-        <ItemActions>
-          <ChevronRightIcon className="size-4 text-muted-foreground" />
-        </ItemActions>
-      ) : null}
-    </Item>
-  )
-}
-
-function WordRow({ word }: { word: SearchWord }) {
-  return (
-    <Row path={word.path}>
-      <ItemContent className="gap-1.5" data-result-row={word.entSeq}>
-        <RubyText segments={word.ruby} className="text-2xl font-medium leading-tight" />
-        <p className="meaning-clamp text-sm">{word.summary}</p>
-        <FrequencyBadges frequency={word.chips} />
-      </ItemContent>
-    </Row>
-  )
-}
+const searchExamplesAnchor = 'examples'
 
 function NoResults() {
   return (

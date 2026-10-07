@@ -1,15 +1,14 @@
 #!/usr/bin/env python3
-"""Normalize pinned KANJIDIC2 and radical components into app-owned kanji reference data."""
 
 from __future__ import annotations
 
-import argparse
 import gzip
 import json
 import xml.etree.ElementTree as ET
 from pathlib import Path
 
-from language_data_tools import file_sha256
+from import_jlpt_kanji_levels import jlpt_kanji_levels
+from language_data_tools import built_artifact, file_sha256, run_import
 
 
 def optional_int(parent: ET.Element, path: str) -> int | None:
@@ -48,6 +47,7 @@ def import_snapshot(
     source_manifest: dict[str, object],
     radical_artifact: Path,
     radical_manifest: dict[str, object],
+    jlpt_kanji_record: Path,
     output: Path,
 ) -> dict[str, object]:
     if file_sha256(source) != source_manifest["sha256"]:
@@ -57,6 +57,7 @@ def import_snapshot(
         raise ValueError("Pinned radical artifact checksum mismatch")
 
     radical_data = json.loads(radical_artifact.read_text())
+    waller_levels, waller_report = jlpt_kanji_levels(jlpt_kanji_record)
     components_by_character = {
         record["value"]: record["components"] for record in radical_data["characters"]
     }
@@ -100,6 +101,7 @@ def import_snapshot(
                     "commonMiscounts": stroke_counts[1:],
                     "grade": optional_int(element, "misc/grade"),
                     "jlpt": optional_int(element, "misc/jlpt"),
+                    "wallerJlptLevel": waller_levels.get(literal),
                     "frequencyRank": optional_int(element, "misc/freq"),
                     "classicalRadicalNumber": classical_radical,
                     "meanings": english_meanings(element),
@@ -110,6 +112,9 @@ def import_snapshot(
             element.clear()
 
     entries.sort(key=lambda entry: str(entry["character"]))
+    unmatched = sorted(set(waller_levels) - {str(entry["character"]) for entry in entries})
+    if unmatched:
+        raise ValueError(f"Waller's JLPT kanji lists name kanji KANJIDIC2 lacks: {unmatched}")
     artifact = {
         "snapshot": header.get("dateOfCreation", source_manifest["snapshot"]),
         "metadataSourceIdentity": "edrdg.kanjidic2",
@@ -125,6 +130,7 @@ def import_snapshot(
         "entries_with_meanings": sum(bool(entry["meanings"]) for entry in entries),
         "entries_with_readings": sum(bool(entry["readings"]) for entry in entries),
         "entries_with_components": sum(bool(entry["components"]) for entry in entries),
+        "jlpt_kanji_levels": waller_report,
         "retained_fields": [
             "literal",
             "radical/rad_value[@rad_type='classical']",
@@ -145,36 +151,24 @@ def import_snapshot(
         ],
         "metadata_source_sha256": file_sha256(source),
         "component_artifact_sha256": file_sha256(radical_artifact),
-        "import_tool_sha256": file_sha256(Path(__file__)),
-        "shared_tooling_sha256": file_sha256(Path(__file__).with_name("language_data_tools.py")),
-        "artifact_sha256": file_sha256(output),
-        "artifact_bytes": output.stat().st_size,
+        **built_artifact(Path(__file__), output),
     }
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--source", type=Path, required=True)
-    parser.add_argument("--source-manifest", type=Path, required=True)
-    parser.add_argument("--radical-artifact", type=Path, required=True)
-    parser.add_argument("--radical-manifest", type=Path, required=True)
-    parser.add_argument("--output", type=Path, required=True)
-    parser.add_argument("--import-manifest", type=Path, required=True)
-    arguments = parser.parse_args()
-
-    source_manifest = json.loads(arguments.source_manifest.read_text())
-    radical_manifest = json.loads(arguments.radical_manifest.read_text())
-    transform = import_snapshot(
-        arguments.source,
-        source_manifest,
-        arguments.radical_artifact,
-        radical_manifest,
-        arguments.output,
+    run_import(
+        lambda arguments, source_manifest: import_snapshot(
+            arguments.source,
+            source_manifest,
+            arguments.radical_artifact,
+            json.loads(arguments.radical_manifest.read_text()),
+            arguments.jlpt_kanji_record,
+            arguments.output,
+        ),
+        "--radical-artifact",
+        "--radical-manifest",
+        "--jlpt-kanji-record",
     )
-    manifest = {"source": source_manifest, "transform": transform}
-    arguments.import_manifest.parent.mkdir(parents=True, exist_ok=True)
-    arguments.import_manifest.write_text(json.dumps(manifest, ensure_ascii=False, indent=2) + "\n")
-    print(json.dumps(transform, ensure_ascii=False, indent=2))
 
 
 if __name__ == "__main__":

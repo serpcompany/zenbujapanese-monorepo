@@ -82,30 +82,20 @@ struct SearchFrequencyChipTests {
   }
 
   private func pack(_ name: String, kind: FrequencyPackKind = .rank) -> FrequencyPackDisclosure {
-    FrequencyPackDisclosure(
-      id: FrequencyPackID(rawValue: name), kind: kind, displayName: name, domain: "Fixture",
-      domainDescription: "Fixture", version: "1", attribution: "Fixture")
+    .fixture(id: name, displayName: name, kind: kind)
   }
 
   private func evidence(pack: FrequencyPackDisclosure, rank: Int) -> FrequencyEvidence {
-    FrequencyEvidence(
-      pack: pack, languageReferenceID: id, rank: rank, coveredSourceRows: 1, sourceCount: 0,
-      sourceTotalTokens: 0, sourceDocuments: nil, sourceVideos: nil, sourceChannels: nil,
-      matchedForm: "fixture", sourcePartOfSpeech: nil, sourceRecordDigest: "fixture",
-      mappingRelation: .exactWrittenReading)
+    .fixture(pack: pack, languageReferenceID: id, rank: rank)
   }
 }
 
 @Suite("Search frequency unavailable notice")
 struct SearchFrequencyUnavailableNoticeTests {
-  private let jlpt = FrequencyPackDisclosure(
-    id: FrequencyPackID(rawValue: "zenbu.jlpt.waller.levels"), kind: .level,
-    displayName: "JLPT Levels",
-    domain: "Fixture", domainDescription: "Fixture", version: "1", attribution: "Fixture")
-  private let youtube = FrequencyPackDisclosure(
-    id: FrequencyPackID(rawValue: "zenbu.tubelex.youtube.ja.unidic-3.1"), kind: .rank,
-    displayName: "TUBELEX", domain: "Fixture", domainDescription: "Fixture", version: "1",
-    attribution: "Fixture")
+  private let jlpt = FrequencyPackDisclosure.fixture(
+    id: "zenbu.jlpt.waller.levels", displayName: "JLPT Levels", kind: .level)
+  private let youtube = FrequencyPackDisclosure.fixture(
+    id: "zenbu.tubelex.youtube.ja.unidic-3.1", displayName: "TUBELEX")
 
   @Test("no notice when every dictionary is available")
   func allAvailable() {

@@ -98,7 +98,7 @@ export function alternativeKanji(entry: Pick<EntryRow, 'headword' | 'writtenForm
     })
 }
 
-export function alternativeForms(
+function alternativeForms(
   entry: Pick<EntryRow, 'headword' | 'reading' | 'writtenForms' | 'readingForms'>
 ): FormRow[] {
   const seen = new Set<string>()
@@ -110,11 +110,11 @@ export function alternativeForms(
   })
 }
 
-export function displayPartOfSpeech(entry: Pick<EntryRow, 'senses' | 'partsOfSpeech'>): string {
+function displayPartOfSpeech(entry: Pick<EntryRow, 'senses' | 'partsOfSpeech'>): string {
   return partOfSpeechPhrase(entry.senses[0]?.partsOfSpeech ?? entry.partsOfSpeech)
 }
 
-export function wordShareText(entry: Pick<EntryRow, 'headword' | 'reading' | 'senses'>): string {
+function wordShareText(entry: Pick<EntryRow, 'headword' | 'reading' | 'senses'>): string {
   const heading =
     entry.reading === entry.headword ? entry.headword : `${entry.headword}【${entry.reading}】`
   const meanings = entry.senses.map((sense, index) => `${index + 1}. ${sense.meaning}`)

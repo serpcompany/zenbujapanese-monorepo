@@ -11,7 +11,7 @@
     "sha256": "b36579789775ea912d5e98356bf243f54fb953fa3b58a16c2d6995f252e2a3e2",
     "license": "CC BY-SA 3.0",
     "license_url": "https://creativecommons.org/licenses/by-sa/3.0/",
-    "license_file": "KANJIVG-CC-BY-SA-3.0.txt",
+    "license_file": "apps/ios/Modules/Sources/SearchExperience/Resources/KANJIVG-CC-BY-SA-3.0.txt",
     "license_sha256": "d255e07978fd16ddfec38bc59dc9d857b885dd44ddbf4e79baf207d30746bdcc",
     "copyright": "Copyright (C) 2009-2013 Ulrich Apel",
     "attribution": "Uses KanjiVG by Ulrich Apel",
@@ -45,9 +45,9 @@
     ],
     "source_sha256": "b36579789775ea912d5e98356bf243f54fb953fa3b58a16c2d6995f252e2a3e2",
     "license_sha256": "d255e07978fd16ddfec38bc59dc9d857b885dd44ddbf4e79baf207d30746bdcc",
-    "import_tool_sha256": "972488db7feb47b95b5450e1d3d3c687a7c9c6e2dce46fbbfd512b778a35574a",
-    "shared_tooling_sha256": "7a348e2ad80858dd6e0f47921e0f62c5e076048d0c03ede96e03747416e9faf0",
-    "artifact_sha256": "1b9bcd2546759e09e6dd9d9f461fd2e2a89ca739032aac3ebb06e3fde6566f76",
+    "import_tool_sha256": "c775a572b9c9fdd87f1a41ae4a5d632e56cb36c46d0c97e3c5fa437ad4feb6e5",
+    "shared_tooling_sha256": "0c0dec180f4f11f49c6d1ee6048d9a3dc4986d88ef5fc4bc6aa9302e62743b39",
+    "artifact_sha256": "c603b7befa57aa0c5952e37ae848080609ff8a7de6f95a127efe156e191c0acd",
     "artifact_bytes": 21921792
   }
 }

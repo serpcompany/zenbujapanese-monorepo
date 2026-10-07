@@ -1,11 +1,4 @@
 #!/usr/bin/env python3
-"""Upload downloadable frequency-pack source files to Zenbu's CDN bucket.
-
-Each given file is matched to catalog manifests by byte count and SHA-256, never by name, and
-uploaded to the object key named by the manifest's `downloadURL`. Keys contain the source
-SHA-256, so objects are immutable and every trusted historical manifest stays downloadable.
-After uploading, each public URL is fetched and verified against the manifest.
-"""
 
 from __future__ import annotations
 
@@ -46,7 +39,9 @@ def fetch(url: str) -> bytes:
 
 
 def main() -> int:
-    parser = argparse.ArgumentParser(description=__doc__)
+    parser = argparse.ArgumentParser(
+        description="Upload downloadable frequency-pack source files to Zenbu's CDN bucket."
+    )
     parser.add_argument("files", nargs="+", type=Path)
     parser.add_argument("--dry-run", action="store_true")
     arguments = parser.parse_args()

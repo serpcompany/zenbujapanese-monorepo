@@ -1,5 +1,5 @@
 import type { Page } from '@playwright/test'
-import { expect, needed, test } from './test'
+import { expect, needed, sourcesToggle, test } from './test'
 
 const examples = (page: Page) =>
   page
@@ -16,7 +16,15 @@ test.describe('word page', () => {
     await expect(page).toHaveTitle(
       `${needed.headword} (${needed.reading}) meaning | Zenbu Japanese`
     )
-    await expect(page.getByRole('heading', { level: 1, name: needed.headword })).toBeVisible()
+    const heading = page.getByRole('heading', { level: 1 })
+    await expect(heading).toHaveCount(1)
+    await expect(heading).toHaveAccessibleName(needed.headword)
+    expect(await heading.evaluate(element => element.textContent)).toBe(needed.headword)
+    const reading = heading.locator('rt [data-reading]')
+    await expect(reading).toHaveAttribute('data-reading', 'い')
+    expect(await reading.evaluate(element => getComputedStyle(element, '::before').content)).toBe(
+      '"い"'
+    )
     const breadcrumb = page.getByRole('navigation', { name: 'breadcrumb' })
     await expect(breadcrumb.getByRole('link', { name: 'Dictionary' })).toHaveAttribute(
       'href',
@@ -25,11 +33,37 @@ test.describe('word page', () => {
     await expect(page.getByRole('main')).toContainText('to be needed, to be necessary')
   })
 
+  test('puts Share and More actions at the end of the breadcrumb row', async ({ page }) => {
+    const breadcrumb = await page.getByRole('navigation', { name: 'breadcrumb' }).boundingBox()
+    const share = await page.getByRole('button', { name: 'Share', exact: true }).boundingBox()
+    const more = await page.getByRole('button', { name: 'More actions', exact: true }).boundingBox()
+    const card = await page
+      .locator('[data-slot="card"]', { has: page.getByRole('heading', { level: 1 }) })
+      .boundingBox()
+    if (!breadcrumb || !share || !more || !card) throw new Error('the toolbar is not on the page')
+    const middle = breadcrumb.y + breadcrumb.height / 2
+    expect(share.y).toBeLessThan(middle)
+    expect(share.y + share.height).toBeGreaterThan(middle)
+    expect(share.x).toBeGreaterThan(breadcrumb.x + breadcrumb.width)
+    expect(share.y + share.height).toBeLessThan(card.y)
+    expect(more.x + more.width).toBeCloseTo(card.x + card.width, 0)
+  })
+
   test('loads more examples when the list reaches its end, then has no more', async ({ page }) => {
     await expect(examples(page)).toHaveCount(25)
     await page.getByRole('button', { name: 'Load more examples' }).scrollIntoViewIfNeeded()
     await expect(examples(page)).toHaveCount(50)
     await expect(page.getByRole('button', { name: 'Load more examples' })).toHaveCount(0)
+  })
+
+  test('credits no single example, and keeps its Sources closed until opened', async ({ page }) => {
+    await expect(examples(page).first()).toBeVisible()
+    await expect(examples(page).filter({ hasText: 'Tatoeba' })).toHaveCount(0)
+    const tatoeba = page.getByRole('main').getByRole('link', { name: 'Tatoeba', exact: true })
+    await expect(tatoeba).toBeHidden()
+    await sourcesToggle(page).click()
+    await expect(tatoeba).toBeVisible()
+    await expect(tatoeba).toHaveAttribute('href', 'https://tatoeba.org/')
   })
 
   test('the part of speech opens the Conjugations section, again after it closes', async ({

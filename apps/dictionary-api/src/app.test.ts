@@ -22,6 +22,23 @@ function fakeService(overrides: Partial<DictionaryService> = {}): DictionaryServ
     wordSitemaps: async () => [],
     sitemapWords: async () => null,
     retired: async () => ({}),
+    browseSummary: async () => ({}) as never,
+    kanaIndex: async script => ({ script, total: 0, initials: [] }),
+    kanaInitial: async () => null,
+    kanaWords: async () => null,
+    browseCategories: async () => ({ categories: [] }),
+    categoryWords: async slug => (slug === 'nouns' ? ({ words: [] } as never) : null),
+    rankedLists: async () => ({ lists: [], jlpt: [] }),
+    rankedWords: async () => null,
+    kanjiHub: async () => ({ lists: [], jlpt: [], strokes: [] }),
+    kanjiList: async () => null,
+    browseSitemap: async () => ({
+      kana: [],
+      categories: [],
+      rankedLists: [],
+      jlptLists: [],
+      kanjiLists: []
+    }),
     ...overrides
   }
 }
@@ -132,6 +149,41 @@ describe('routes', () => {
       get(`/v1/conjugations/${encodeURIComponent('食べた')}/examples?from=25&limit=100`)
     )
     expect(formExamples).toHaveBeenCalledWith('食べた', 25, 100)
+  })
+
+  test('passes a kana list, its script, and its page on', async () => {
+    const kanaWords = vi.fn(fakeService().kanaWords)
+    const path = `/v1/browse/kana/hiragana/${encodeURIComponent('か')}/${encodeURIComponent('かが')}`
+    await app(fakeService({ kanaWords })).request(get(`${path}?page=2`))
+    expect(kanaWords).toHaveBeenCalledWith('hiragana', 'かが', 2)
+  })
+
+  test('passes a category, its order, and its first page on by default', async () => {
+    const categoryWords = vi.fn(fakeService().categoryWords)
+    const service = fakeService({ categoryWords })
+    expect((await app(service).request(get('/v1/browse/categories/nouns'))).status).toBe(200)
+    expect(categoryWords).toHaveBeenCalledWith('nouns', 'used', 1)
+    await app(service).request(get('/v1/browse/categories/nouns?order=kana&page=3'))
+    expect(categoryWords).toHaveBeenCalledWith('nouns', 'kana', 3)
+  })
+
+  test.each([
+    ['an order other than used or kana', '/v1/browse/categories/nouns?order=rank'],
+    ['a page that is not a number', '/v1/browse/ranked/youtube?page=two']
+  ])('400s %s', async (_, path) => {
+    expect((await app().request(get(path))).status).toBe(400)
+  })
+
+  test.each([
+    ['a script other than hiragana or katakana', '/v1/browse/kana/romaji'],
+    [
+      'a prefix that does not start with its kana',
+      `/v1/browse/kana/hiragana/か/${encodeURIComponent('きゃ')}`
+    ],
+    ['an unknown category', '/v1/browse/categories/nothing'],
+    ['an unknown kanji list', '/v1/browse/kanji/grade-9']
+  ])('404s %s', async (_, path) => {
+    expect((await app().request(get(path))).status).toBe(404)
   })
 
   test.each([

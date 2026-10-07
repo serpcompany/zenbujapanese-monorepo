@@ -17,16 +17,18 @@ Each module ports the app's Swift, in `apps/ios/Modules/Sources/SearchExperience
 | Folder | What it does | Main Swift sources |
 | --- | --- | --- |
 | `search/` | Search retrieval: query normalization, deinflection, ranking, full-text phrases, and sentence search through a supplied analyzer. | `LookupClient`, `SearchQuery`, `DictionaryRanking`, `JapaneseDeinflection`, `DictionaryEntry`, `JapaneseTextAnalysisClient` |
-| `results/` | The results screen: the frequency re-sort, rows, chips, and the Example Sentences, reading-refinement, and kanji rows. | `SearchView` (`SearchResultsScreen`), `FrequencyPack` |
+| `results/` | The results screen: the frequency re-sort, rows, chips, and the Example Sentences, reading-refinement, and kanji rows. | `SearchResultsView`, `SearchResultsScreen`, `SearchResultFrequencyOrdering`, `FrequencyPresentation` |
 | `detail/` | Word pages and kanji details from their rows: furigana, pitch, Frequency Details, conjugations, kanji, and examples. | `WordDetailView`, `KanjiDetailView`, `JapaneseRubyText`, `KanjiReadingSplitter`, `JapaneseConjugationClient`, `ConjugationsView` |
 | `examples/` | Example linking, inflection grouping, and the ranks example retrieval shares. | `JapaneseTextAnalysisClient`, `JapaneseInflectionGrouping`, `KuromojiMorphologyClient`, `ExampleSentenceClient` |
-| `artifact/` | Reads `LanguageReferenceData.sqlite3` and its packs with the app's own SQL, checks them, and answers search, word, kanji, example, and sitemap requests (`Dictionary`). | `LookupClient`, `ExampleSentenceClient`, `KanjiLookupClient` |
+| `artifact/` | Reads `LanguageReferenceData.sqlite3` and its packs with the app's own SQL, checks them, and answers search, word, kanji, example, and sitemap requests (`Dictionary`), and the browse pages' (`DictionaryBrowse`). | `LookupClient`, `ExampleSentenceClient`, `KanjiLookupClient` |
+| `browse/` | What the website's browse pages list: the kana charts, the categories and the labels each matches, the ranked and JLPT lists, the kanji lists, and the service paths the website asks for them. The app has no browse screens, so nothing here is a port. | — |
 | `fixtures/` | Rows exported from the app's data for twelve words and the kanji 要, each word and each of its conjugated forms with its first 50 examples, for local development and tests; never production. | — |
 
 ## Rules
 
-- **No runtime or framework.** Biome refuses `node:*`, Next.js, React, Wrangler, Hono, and
-  Drizzle imports in `src` (tests aside). A client passes in what it has: the artifact as an
+- **No runtime or framework.** Biome refuses `node:*`, Next.js, React, Wrangler, and Hono
+  imports in `src` (tests aside), and `pnpm verify dependencies` refuses any Node built-in or
+  package the core imports for more than its types. A client passes in what it has: the artifact as an
   `ArtifactDatabase` (synchronous `all(sql, params)`), the kanji files as `KanjiData`, and its
   capabilities: `tokenize` (the app's Kuromoji) and `morphology` (the app's Sudachi). Without
   `morphology`, sentence search is off and the rest of Search is unchanged (ADR 0008).
@@ -73,39 +75,39 @@ the app-recorded suites (`apps/ios/LanguageData/Conformance/`) check the port ag
 | Module | Ports |
 | --- | --- |
 | `search/search.ts` | `searchUncached`, `searchOnce`, and `japaneseDeinflectedSources` in `LookupClient.swift`: the order in which a query tries its searches, from the reading refinement through deinflection to the analyzed segments. Results come back in dictionary order, before the frequency re-sort, as the suite pins them (ADR 0006). |
-| `search/database.ts` | `SearchFormKind`, `decodeEntry`, and `priorityProfile` in `LookupClient.swift`, with the entry columns its candidate queries select. `withParametersTruncatedAtNul` reads parameters as the app binds them ([Matching the Swift](#matching-the-swift), Bound text). |
-| `search/japanese.ts` | `rankedJapanese` in `LookupClient.swift`, with `japaneseCandidateSQL` and `exactJapaneseCandidateSQL`. |
-| `search/english.ts` | `rankedEnglish`, `glossEvidence`, `romajiEvidence`, `glossRelation`, `glossEvidencePrecedes`, `glossTokenPattern`, and `hasSearchTerms` in `LookupClient.swift`, with `asciiCandidateSQL` and `exactASCIICandidateSQL`. |
-| `search/ranked-entries.ts` | `RankedDictionaryEntry` and `deduplicated` in `LookupClient.swift`. |
-| `search/composition.ts` | `LookupSearchResults` (`composing`, and `empty` as `noResults`) and `LookupSearchResultItem` in `DictionaryEntry.swift`, and `resultItems` in `LookupClient.swift`. |
+| `search/database.ts` | `SearchFormKind`, `decodeEntry`, and `priorityProfile` in `LookupDatabase.swift`, with the entry columns its candidate queries select. `withParametersTruncatedAtNul` reads parameters as the app binds them ([Matching the Swift](#matching-the-swift), Bound text). |
+| `search/japanese.ts` | `rankedJapanese` in `LookupJapaneseRanking.swift`, with `japaneseCandidateSQL` and `exactJapaneseCandidateSQL`. |
+| `search/english.ts` | `rankedEnglish`, `glossEvidence`, `romajiEvidence`, `glossRelation`, `glossEvidencePrecedes`, `glossTokenPattern`, and `hasSearchTerms` in `LookupEnglishRanking.swift`, with `asciiCandidateSQL` and `exactASCIICandidateSQL`. |
+| `search/ranked-entries.ts` | `RankedDictionaryEntry` and `deduplicated` in `LookupRankedEntries.swift`. |
+| `search/composition.ts` | `LookupSearchResults` (`composing`, and `empty` as `noResults`) and `LookupSearchResultItem` in `DictionaryEntry.swift`, and `resultItems` in `LookupRankedEntries.swift`. |
 | `search/query.ts` | `SearchQuery.swift` |
 | `search/rank.ts` | `DictionaryRanking.swift` |
 | `search/deinflect.ts` | `JapaneseDeinflection.swift` |
-| `search/fts.ts` | `ftsPhrase` and `ftsPrefix` in `LookupClient.swift`, unchanged, since the core queries the same FTS4 indexes; `\p{L}\p{M}\p{N}` stands for `CharacterSet.alphanumerics`. |
+| `search/fts.ts` | `ftsPhrase` and `ftsPrefix` in `LookupJapaneseRanking.swift`, unchanged, since the core queries the same FTS4 indexes; `\p{L}\p{M}\p{N}` stands for `CharacterSet.alphanumerics`. |
 | `search/morphology.ts` | `lookupSegments` in `JapaneseTextAnalysisClient.swift`; the analyzer itself is a capability. |
-| `results/results.ts` | `SearchResultsView` in `SearchView.swift` (`orderedItems` is `SearchResultFrequencyOrdering.ordered`, `primaryItem` is `LookupSearchResults.primaryEntry(for:)`), with `FrequencyPack.swift`. |
-| `detail/word.ts` | `WordDetailView.swift` and `DictionaryEntry.swift` |
-| `detail/kanji.ts` | `KanjiDetailView.swift`, with its words from `entries(containingKanji:)` in `LookupClient.swift` and its elements from `KanjiElementLookupClient.swift`. |
+| `results/results.ts` | `SearchResultsView.swift` (`orderedItems` is `SearchResultFrequencyOrdering.ordered`, in `SearchResultFrequencyOrdering.swift`; `primaryItem` is `LookupSearchResults.primaryEntry(for:)`), with `FrequencyPresentation.swift`. |
+| `detail/word.ts` | `WordDetailView.swift`, with its headline in `WordHeadline.swift` and its sections in `WordDetailSections.swift`, and `DictionaryEntry.swift` |
+| `detail/kanji.ts` | `KanjiDetailView.swift` and its sections in `KanjiDetailSections.swift`, with its words from `entries(containingKanji:)` in `LookupClient.swift` and its elements from `KanjiElementLookupClient.swift`. |
 | `detail/conjugation-table.ts` | `JapaneseConjugator`, `ConjugationTable`, `ConjugationMode`, and `ConjugatedForm` in `JapaneseConjugationClient.swift`. |
 | `detail/conjugation.ts` | What `ConjugationsView.swift` shows for a `detail/conjugation-table.ts` table: `ConjugatedForm.Kind.presentation`, `sharedSpellings(of:in:)`, and `rowShowsFurigana`. The suite's `opensConjugations` and `conjugations` check both modules. |
-| `detail/frequency.ts` | `FrequencyTier`, `FrequencyPresentationModel`, and `SearchFrequencyRankPresentationModel` in `FrequencyPack.swift`, and `FrequencyDisclosurePresentation` in `WordDetailView.swift`. |
-| `detail/pitch.ts` | `String.morae` and `PitchAccent.levels` in `DictionaryEntry.swift`, and `PitchContourLayout` in `WordDetailView.swift`. |
+| `detail/frequency.ts` | `FrequencyTier`, `FrequencyPresentationModel`, and `SearchFrequencyRankPresentationModel` in `FrequencyPresentation.swift`, and `FrequencyDisclosurePresentation` in `FrequencyDisclosure.swift`. |
+| `detail/pitch.ts` | `String.morae` and `PitchAccent.levels` in `DictionaryEntry.swift`, and `PitchContourLayout` in `PitchAccentBadge.swift`. |
 | `detail/ruby.ts` | `JapaneseRubyAnnotation` in `JapaneseTextAnalysisClient.swift`, which `JapaneseRubyText.swift` draws. |
 | `detail/kanji-split.ts` | `KanjiReadingSplitter.swift`, and `kanjiReadings` in `JapaneseRubyText.swift`. |
 | `detail/examples.ts` | The `.wordDetail` and `.conjugatedForm` presentations in `ExampleSentencesView.swift`, and `LinkedJapaneseText.swift`. |
 | `detail/strokes.ts` | `decodeStroke` in `KanjiStrokeOrderClient.swift`, and `KanjiStrokeShape` in `KanjiStrokeOrderView.swift`. |
 | `detail/part-of-speech.ts` | `PartOfSpeechFormatter.swift` |
-| `detail/text.ts` | `isCJKUnifiedIdeograph` in `DictionaryEntry.swift`, `KanjiCharacter.init` in `KanjiLookupClient.swift`, `hiragana` in `KanjiDetailView.swift`, and `katakana` in `WordDetailView.swift`. |
+| `detail/text.ts` | `isCJKUnifiedIdeograph` in `DictionaryEntry.swift`, `KanjiCharacter.init` in `KanjiLookupClient.swift`, `hiragana` in `KanjiDetailSections.swift`, and `katakana` in `PitchAccentBadge.swift`. |
 | `detail/suite.ts` | Test-only: the fields `WordDetailConformanceTests.swift` records, for the service's replay (`apps/dictionary-api/src/conformance/detail.conformance.test.ts`) and the website's `word-page.test.tsx`. |
 | `examples/linking.ts` | `JapaneseTextAnalyzer` in `JapaneseTextAnalysisClient.swift`, and `displayReading(for:)` in `LinkedJapaneseText.swift`. |
 | `examples/morphology.ts` | The token conversion in `KuromojiMorphologyClient.swift`, and `JapaneseInflectionGrouping.swift`. |
 | `examples/forms.ts` | `ConjugatedForm.examples` in `ConjugationsView.swift`, `JapaneseTextAnalysisClient.words`, and `queryScalarRanges` and `matchesQuery` in `LinkedJapaneseText.swift`. |
 | `examples/kana.ts` | Foundation's `applyingTransform(.hiraganaToKatakana, reverse:)` |
-| `examples/retrieval.ts`, `artifact/example-retrieval.ts` | `ExampleSentenceData.retrieveEntry` and `retrieveIndexedEntry` in `ExampleSentenceClient.swift`, with its queries. |
-| `artifact/example-search.ts` | `ExampleSentenceData.retrieveEnglish` and `retrieveJapanese` in `ExampleSentenceClient.swift`, with its queries. |
-| `artifact/search-examples.ts` | `SearchResultsScreen.exampleCount` and `directExampleCount` in `SearchView.swift`. |
+| `examples/retrieval.ts`, `artifact/example-retrieval.ts` | `ExampleSentenceData.retrieveEntry` and `retrieveIndexedEntry` in `ExampleSentenceEntryRetrieval.swift`, with its queries. |
+| `artifact/example-search.ts` | `ExampleSentenceData.retrieveEnglish` and `retrieveJapanese` in `ExampleSentenceSearchRetrieval.swift`, with its queries. |
+| `artifact/search-examples.ts` | `SearchResultsScreen.exampleCount` and `directExampleCount` in `SearchResultsScreen.swift`. |
 | `artifact/lookup.ts` | `LookupClient.entriesMatchingForm`: `exactJapaneseCandidateSQL`, ranked and deduplicated by the search port. |
-| `artifact/words.ts`, `artifact/kanji.ts` | `selectedColumns`, `entry(_:)`, and `kanjiCandidateRowsSQL` in `LookupClient.swift`. |
+| `artifact/words.ts`, `artifact/kanji.ts` | `entry(_:)` in `LookupClient.swift`, and `selectedColumns` and `kanjiCandidateRowsSQL` in `LookupDatabase.swift`. |
 
 ## Matching the Swift
 
@@ -224,6 +226,49 @@ records keyed by JMdict entry number.
 - `KanjiData` refuses kanji files that aren't the versions the core reads, and a kanji with no
   meanings or readings isn't indexable (#465).
 
+## Browse
+
+`DictionaryBrowse` (`artifact/browse.ts`) answers the browse routes
+([`dictionary-api.md`](dictionary-api.md), Routes) with SQL of its own, since the app has no
+browse screens. Its kana groups and categories come from one `BrowseIndex`
+(`artifact/browse-index.ts`), built in a few passes over the artifact. `warm()` builds it, keeps
+the totals, the category counts, the ranked lists' counts, every kanji list, and the sitemap, and
+runs each statement a browse page asks once, so the service calls it before a worker reports
+ready and a page's first request prepares nothing:
+
+- **Kana.** A word is under the script of its reading's first character: hiragana for
+  U+3041–U+309F, katakana for anything else, so every entry is under one of the two. A kana's
+  page groups its words by their first two characters; a word read as the kana alone is listed on
+  the kana's own page. Groups list their words in kana order (by reading, then JMdict entry
+  number), 200 to a page (`browsePageSize`).
+- **Categories** (`browse/categories.ts`) match any sense's `partsOfSpeech`, `usage`, `fields`, or
+  `dialects` labels ([`apps/ios/Tools/README.md`](../../apps/ios/Tools/README.md),
+  `jmdict_labels.py`), or JMdict's common marker. A category's row shows the first sense that has
+  its label, so と under Nouns reads "promoted pawn", not "if, when". Most used first, a category
+  lists the words TUBELEX ranks whose first sense has the label, then those that have it only on a
+  later sense, each by TUBELEX rank, then the words TUBELEX doesn't rank, in kana order. TUBELEX
+  ranks a word by all its uses, so ranking a later sense's word among the first would put と at the
+  top of Nouns and 行く at the top of Slang. It also lists them in kana order. Labels the website
+  leaves out (names, and vulgar, derogatory, sensitive, or X-rated words) have no category.
+- **Ranked lists** (`browse/lists.ts`) are TUBELEX, and the Wikipedia and Jiten lists in
+  `RankedLists.sqlite3`, each to rank 10,000, in bands of 1,000 ranks (`rankBand`); a band lists
+  the words ranked in its range, so ranks a source row maps to no entry leave gaps. Wikipedia's and
+  Jiten's lists count spellings (Jiten's with readings) without naming the entry, and the app's
+  mapping (`FrequencyPackMappingV2.sql`) ranks a row only when it names one entry, so spellings
+  several entries share, such as に and は, have no rank there. The JLPT lists are the level pack's
+  words at each level, in kana order.
+- **Common words** on the dictionary home (`summary().commonWords`) are the 24 most used common
+  words that are content words (`browse/content-words.ts`): not ones whose first sense is a
+  particle, auxiliary, conjunction, or copula, nor ones that are only a prefix or suffix.
+- **Kanji lists** are KANJIDIC2's school grades 1 to 6, secondary school (grade 8), jinmeiyō
+  (grades 9 and 10), the JLPT levels N5 to N1 (`wallerJlptLevel`, from Jonathan Waller's kanji
+  lists, not KANJIDIC2's `jlpt`), and the jōyō kanji (grades 1 to 6 and 8) by stroke count, each
+  most frequent first by KANJIDIC2's newspaper frequency, then by code point. Jinmeiyō holds 57
+  CJK compatibility characters, such as U+FA45 for 海; one KANJIDIC2 gives no meaning shows its
+  base kanji's.
+- **Thin lists.** The sitemap answer gives every list's word count, so the website can leave out
+  of `/sitemaps/browse.xml` the lists of fewer than `minimumIndexedWords` (10).
+
 ## Rows
 
 `detail/rows.ts` is the contract. What its types don't say:
@@ -249,10 +294,12 @@ records keyed by JMdict entry number.
   it scrolls.
 - A Tatoeba pair's two sentences each have their own ID, contributor (null when Tatoeba names
   none), and license.
-- A kanji's `jlpt` is KANJIDIC2's level, shown as `N` and the level. `structure` is null when
-  Kanjium has none, and `words` holds at most 24. `strokes` is KanjiVG's, in a square of
-  `viewportSize` (109): each stroke is opcode 0 then a point to move to, or opcode 1 then the
-  three points of a cubic curve.
+- A kanji's `jlpt` is the level Jonathan Waller's kanji lists give it (`wallerJlptLevel` in
+  `KanjiReferenceData.json`), shown as `N` and the level, and null for a kanji his lists leave out.
+  KANJIDIC2's own pre-2010 `jlpt` is still in the file, and nothing reads it. `structure` is null
+  when Kanjium has none, and `words` holds at most 24. `strokes` is KanjiVG's, in a square of
+  `viewportSize` (109): each stroke is opcode 0 then a point to move to, or opcode 1 then the three
+  points of a cubic curve.
 
 ## Check it
 

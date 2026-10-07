@@ -57,4 +57,9 @@ describe('kanji links', () => {
     expect(kanjiSearchPath('要')).toBe('/dictionary/search/%E8%A6%81/')
     expect(kanjiSearchPath('𠀋')).toBe(searchPath('𠀋'))
   })
+
+  test('a kanji links to the search page of its normalized form', () => {
+    expect(kanjiSearchPath('\u{FA45}')).toBe(kanjiSearchPath('海'))
+    expect(kanjiSearchPath('\u{F91D}')).toBe(kanjiSearchPath('欄'))
+  })
 })

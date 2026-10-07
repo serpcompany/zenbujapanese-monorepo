@@ -93,7 +93,7 @@ export function isCompatible(part: string, providerPOS: string): boolean {
   }
 }
 
-export function highlightedForms(entry: HighlightedEntry, preferred: string): Set<string> {
+function highlightedForms(entry: HighlightedEntry, preferred: string): Set<string> {
   return new Set(
     [preferred, entry.headword, entry.reading, ...entry.writtenForms, ...entry.readingForms].filter(
       form => form !== ''

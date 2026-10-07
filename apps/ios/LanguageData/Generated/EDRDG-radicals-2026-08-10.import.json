@@ -41,8 +41,8 @@
       "艾": "艹",
       "｜": "丨"
     },
-    "import_tool_sha256": "286d51d9bb35c5ac07a900e3abadc7673e547f6d8792f70dc6bb9bfeed75eb80",
-    "shared_tooling_sha256": "7a348e2ad80858dd6e0f47921e0f62c5e076048d0c03ede96e03747416e9faf0",
+    "import_tool_sha256": "a5b1dd9a5a51ec7b5f275a8a951a5552c21da51a73b3626fa2edbe3b78021497",
+    "shared_tooling_sha256": "0c0dec180f4f11f49c6d1ee6048d9a3dc4986d88ef5fc4bc6aa9302e62743b39",
     "artifact_sha256": "f7c9eed0f56739c79e7970af916567fbe9d7c04ab084dbc24fac4bd0a6bd2a3c",
     "artifact_bytes": 362198
   }

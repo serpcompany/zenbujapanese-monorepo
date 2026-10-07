@@ -141,6 +141,18 @@ describe('YAML', () => {
     expect(texts('yaml', source, 'config.yml')).toEqual(['# heading', '# trailing'])
   })
 
+  test("finds the shell comments in a git hook's run blocks", () => {
+    const source = [
+      'pre-push:',
+      '  commands:',
+      '    verify:',
+      '      run: |',
+      '        # a shell comment',
+      '        pnpm verify'
+    ].join('\n')
+    expect(texts('yaml', source, 'lefthook.yml')).toEqual(['# a shell comment'])
+  })
+
   test("reads a node step's run block as JavaScript", () => {
     const source = [
       'jobs:',

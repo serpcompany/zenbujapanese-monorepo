@@ -38,6 +38,7 @@ class RealInputsTests(unittest.TestCase):
             "ExampleWordIndex.sqlite3",
             "JLPTLevelPack.sqlite3",
             "TUBELEXFrequencyPack.sqlite3",
+            "RankedLists.sqlite3",
             "KanjiStrokeData.sqlite3",
             "KanjiReferenceData.json",
             "KanjiElementReferenceData.json",
@@ -51,6 +52,9 @@ class RealInputsTests(unittest.TestCase):
             "KANJIVG-CC-BY-SA-3.0.txt",
             "Kuromoji/NOTICE.md",
             "KANJIUM-NOTICE.txt",
+            "WIKIPEDIA-FREQUENCY-BSD-3-CLAUSE.txt",
+            "JITEN-NOTICE.txt",
+            "JLPT-KANJI-LEVELS-NOTICE.txt",
         ):
             self.assertIn(name, names)
         self.assertNotIn("LanguageTechnologyPackCatalog.json", names)
@@ -71,7 +75,7 @@ class RealInputsTests(unittest.TestCase):
 
     def test_the_lfs_files_are_the_databases_and_the_kuromoji_dictionary(self):
         paths = committed_files.lfs_paths(REPO, self.inputs)
-        self.assertEqual(len(paths), 18)
+        self.assertEqual(len(paths), 19)
         self.assertTrue(
             all(re.search(r"(\.sqlite3|/Kuromoji/[a-z_]+\.dat\.gz)$", p) for p in paths)
         )

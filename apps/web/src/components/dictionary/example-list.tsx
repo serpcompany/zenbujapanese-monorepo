@@ -1,10 +1,5 @@
 'use client'
 
-import {
-  licenseUrl,
-  type TatoebaSentence,
-  tatoebaSentenceUrl
-} from '@zenbu/dictionary-core/detail/examples'
 import Link from 'next/link'
 import { Fragment } from 'react'
 import { LoadMoreFooter, useLoadMore } from '@/components/dictionary/load-more'
@@ -31,44 +26,6 @@ function Token({ token }: { token: PageExampleToken }) {
   )
 }
 
-function Source({ sentence, label }: { sentence: TatoebaSentence; label: string }) {
-  return (
-    <>
-      <a href={tatoebaSentenceUrl(sentence.id)} className="underline underline-offset-2">
-        {label} #{sentence.id}
-      </a>
-      {sentence.contributor ? ` by ${sentence.contributor}` : null}
-    </>
-  )
-}
-
-function License({ name }: { name: string }) {
-  const url = licenseUrl(name)
-  return url ? (
-    <a href={url} className="underline underline-offset-2">
-      {name}
-    </a>
-  ) : (
-    name
-  )
-}
-
-function Attribution({ example }: { example: PageExample }) {
-  const { japanese, english } = example
-  const sameLicense = japanese.license === english.license
-  return (
-    <p className="text-xs text-muted-foreground">
-      Tatoeba: <Source sentence={japanese} label="Japanese" />
-      {sameLicense ? null : (
-        <>
-          , <License name={japanese.license} />
-        </>
-      )}
-      ; <Source sentence={english} label="English" />, <License name={english.license} />
-    </p>
-  )
-}
-
 function ExampleItem({ example }: { example: PageExample }) {
   let offset = 0
   return (
@@ -90,7 +47,6 @@ function ExampleItem({ example }: { example: PageExample }) {
           })}
         </p>
         <p className="text-muted-foreground">{example.translation}</p>
-        <Attribution example={example} />
       </div>
       <PronounceButton text={example.text} label="Pronounce sentence" />
     </li>

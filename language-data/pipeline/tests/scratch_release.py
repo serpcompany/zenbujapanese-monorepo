@@ -231,6 +231,13 @@ class Scratch:
     def set_catalog(self) -> None:
         self.plain["data/res/Catalog.json"] = json.dumps(self.catalog).encode()
 
+    def bundle_pack(self, language_sha: str) -> None:
+        pack = pack_database(language_sha, self.mapping_sha)
+        self.lfs["data/res/Pack.sqlite3"] = pack
+        self.pack_sha = sha256(pack)
+        self.catalog["packs"][0]["bundledArtifactSHA256"] = self.pack_sha
+        self.set_catalog()
+
     def set_suite_two(self, extra: list[dict] | None = None) -> None:
         self.plain["data/conf/two.json"] = json.dumps(
             {

@@ -2,6 +2,8 @@ import { createHash } from 'node:crypto'
 import { existsSync, readFileSync } from 'node:fs'
 import { join, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
+import { DictionaryBrowse } from '@zenbu/dictionary-core/artifact/browse'
+import type { ArtifactDatabase } from '@zenbu/dictionary-core/artifact/database'
 import { Dictionary } from '@zenbu/dictionary-core/artifact/dictionary'
 import type { MorphologyAnalyzer } from '@zenbu/dictionary-core/search/search'
 import {
@@ -15,7 +17,7 @@ import { loadKuromoji } from '../kuromoji'
 import { loadSudachi, prepareSudachi, sudachiContract } from '../sudachi'
 
 const repository = resolve(fileURLToPath(new URL('.', import.meta.url)), '../../../..')
-export const resources = join(repository, 'apps/ios/Modules/Sources/SearchExperience/Resources')
+const resources = join(repository, 'apps/ios/Modules/Sources/SearchExperience/Resources')
 const suites = join(repository, 'apps/ios/LanguageData/Conformance')
 const sudachiDictionary = join(repository, 'apps/dictionary-api/.sudachi/system_core.dic')
 
@@ -91,6 +93,15 @@ export async function artifactDatabase() {
   return (await open()).artifact.db
 }
 
-export async function tokenizer() {
-  return (await open()).tokenize
+export async function browse(watch?: (sql: string) => void): Promise<DictionaryBrowse> {
+  const { artifact } = await open()
+  const db: ArtifactDatabase = watch
+    ? {
+        all(sql, params) {
+          watch(sql)
+          return artifact.db.all(sql, params)
+        }
+      }
+    : artifact.db
+  return new DictionaryBrowse(db, artifact.kanji)
 }

@@ -10,7 +10,7 @@ export interface KanjiReferenceEntry {
   character: string
   strokeCount: number
   grade: number | null
-  jlpt: number | null
+  wallerJlptLevel: number | null
   frequencyRank: number | null
   meanings: string[]
   readings: KanjiReadingRow[]
@@ -53,7 +53,7 @@ const referenceSources = {
 } as const
 const elementsSchema = 'zenbu.kanji-elements.v1'
 
-export const isCJKUnifiedIdeograph = (character: string) => {
+const isCJKUnifiedIdeograph = (character: string) => {
   const code = character.codePointAt(0) ?? 0
   return code >= 0x3400 && code <= 0x9fff
 }
@@ -86,6 +86,10 @@ export class KanjiData {
     return this.byCharacter.has(character)
   }
 
+  entries(): KanjiReferenceEntry[] {
+    return [...this.byCharacter.values()]
+  }
+
   row(character: string): KanjiRow | null {
     const entry = this.byCharacter.get(character)
     if (!entry) return null
@@ -93,7 +97,7 @@ export class KanjiData {
       character: entry.character,
       strokeCount: entry.strokeCount,
       grade: entry.grade,
-      jlpt: entry.jlpt,
+      jlpt: entry.wallerJlptLevel,
       meanings: entry.meanings,
       readings: entry.readings.map(({ value, kind }) => ({ value, kind })),
       components: entry.components

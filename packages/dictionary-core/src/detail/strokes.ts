@@ -1,6 +1,6 @@
 import type { KanjiStrokesRow } from './rows'
 
-export interface StrokePoint {
+interface StrokePoint {
   x: number
   y: number
 }

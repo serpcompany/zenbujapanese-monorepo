@@ -104,7 +104,7 @@ interface QueryExamples {
   examples: EntryExamples | null
 }
 
-export const sitemapUrlLimit = 50_000
+const sitemapUrlLimit = 50_000
 
 export const maximumQueryLength = 200
 

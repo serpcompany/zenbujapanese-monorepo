@@ -18,6 +18,7 @@ import {
 } from '@zenbu/dictionary-core/detail/suite'
 import { wordDetail } from '@zenbu/dictionary-core/detail/word'
 import { beforeAll, describe, expect, test } from 'vitest'
+import { languageReferenceIds, shownAsRecorded } from './examples'
 import {
   artifactAvailable,
   artifactDatabase,
@@ -103,6 +104,7 @@ interface KanjiCase {
   strokeOrderStrokes?: number
   strokeCount?: number
   grade?: number
+  jlpt?: string
   meanings?: string[]
   readings?: { kind: string; value: string; words: SuiteWord[] }[]
   words?: SuiteWord[]
@@ -157,16 +159,6 @@ describe.runIf(artifactAvailable)('word and kanji detail conformance', () => {
     db = await artifactDatabase()
   })
 
-  function languageReferenceIds(entSeqs: number[]): Map<number, string> {
-    if (entSeqs.length === 0) return new Map()
-    const rows = db.all<{ ent_seq: number; id: string }>(
-      `SELECT source_record_id AS ent_seq, lower(hex(id)) AS id FROM entries
-       WHERE source_identity = 'edrdg.jmdict' AND source_record_id IN (${entSeqs.map(() => '?')})`,
-      entSeqs
-    )
-    return new Map(rows.map(row => [row.ent_seq, row.id]))
-  }
-
   function wordExamplesAsRecorded(
     entSeq: number,
     count: ExampleCountRow | null,
@@ -180,64 +172,21 @@ describe.runIf(artifactAvailable)('word and kanji detail conformance', () => {
     if (listsNothingAsTheAppDoes) {
       return { listed: 0, truncated: false, error: recorded.error, shown: [] }
     }
-    const ids = languageReferenceIds([
-      ...new Set(found.rows.flatMap(({ example }) => example.links.flatMap(link => link.entSeqs)))
-    ])
-    const id = (number: number) => ids.get(number) ?? `missing ${number}`
+    for (const { sentence } of found.rows) expectEachSideAttributed(sentence)
     return {
       listed: count?.listed ?? 0,
       reportedCount: count && count.count > 50 ? 'more than 50' : String(count?.count ?? 0),
       truncated: count?.truncated ?? false,
-      shown: found.rows.map(({ sentence, example }) => {
-        expectEachSideAttributed(sentence)
-        const links = new Map(example.links.map(link => [link.token, link.entSeqs]))
-        const highlights = new Set(example.highlights)
-        return {
-          id: `esp1_${sentence.pairId}`,
-          japanese: sentence.japanese,
-          english: sentence.english,
-          tokens: (example.tokens ?? sentence.tokens).map((token, index): SuiteToken => {
-            const entSeqs = links.get(index) ?? []
-            return {
-              surface: token.text,
-              ...(entSeqs.length === 1 ? { entry: id(entSeqs[0]) } : {}),
-              ...(entSeqs.length > 1 ? { candidates: entSeqs.map(id) } : {}),
-              ...(highlights.has(index) ? { pageWord: true } : {})
-            }
-          })
-        }
-      })
+      shown: shownAsRecorded(db, found.rows, 'pageWord')
     }
   }
 
   function formExamplesAsRecorded(surface: string, limit: number): SuiteFormExamples {
     const found = service.formExamples(surface, 0, 100)
     expect(found.rows.length).toBe(found.listed)
-    const shown = found.rows.slice(0, limit)
-    const ids = languageReferenceIds([
-      ...new Set(shown.flatMap(({ example }) => example.links.flatMap(link => link.entSeqs)))
-    ])
-    const id = (number: number) => ids.get(number) ?? `missing ${number}`
     return {
       ids: found.rows.map(({ sentence }) => `esp1_${sentence.pairId}`),
-      shown: shown.map(({ sentence, example }) => {
-        const links = new Map(example.links.map(link => [link.token, link.entSeqs]))
-        const highlights = new Set(example.highlights)
-        return {
-          id: `esp1_${sentence.pairId}`,
-          japanese: sentence.japanese,
-          english: sentence.english,
-          tokens: sentence.tokens.map((token, index) => {
-            const entSeqs = links.get(index) ?? []
-            return {
-              surface: token.text,
-              ...(entSeqs.length === 1 ? { entry: id(entSeqs[0]) } : {}),
-              ...(entSeqs.length > 1 ? { candidates: entSeqs.map(id) } : {}),
-              ...(highlights.has(index) ? { highlighted: true } : {})
-            }
-          })
-        }
-      })
+      shown: shownAsRecorded(db, found.rows.slice(0, limit), 'highlighted')
     }
   }
 
@@ -260,7 +209,7 @@ describe.runIf(artifactAvailable)('word and kanji detail conformance', () => {
     const { entry } = word.rows
     const detail = wordDetail(word.rows)
     const related = detail.related.flatMap(r => (r.entSeq === null ? [] : [r.entSeq]))
-    const targetIds = languageReferenceIds(related)
+    const targetIds = languageReferenceIds(db, related)
     const glosses = new Map(word.rows.kanji.map(gloss => [gloss.character, gloss.meanings]))
     const kanji = (list: typeof detail.kanji) =>
       list.map(({ character, meaning }) => {
@@ -363,6 +312,7 @@ describe.runIf(artifactAvailable)('word and kanji detail conformance', () => {
       summary: word.summary
     })
     const elementRows = new Map(rows.elements.map(element => [element.glyph, element]))
+    const jlpt = detail.stats.find(stat => stat.label === 'JLPT')?.value
     const observed: Omit<KanjiCase, 'covers'> = {
       character: rows.kanji.character,
       codePoint: codePoint(rows.kanji.character),
@@ -370,6 +320,7 @@ describe.runIf(artifactAvailable)('word and kanji detail conformance', () => {
       hasReference: true,
       strokeCount: rows.kanji.strokeCount,
       ...(rows.kanji.grade === null ? {} : { grade: rows.kanji.grade }),
+      ...(jlpt === undefined ? {} : { jlpt }),
       meanings: detail.meanings,
       readings: detail.readings.map(({ kind, value, words }) => ({
         kind,

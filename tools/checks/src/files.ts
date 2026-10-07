@@ -39,7 +39,6 @@ export type FileKind =
 
 const writtenByTools: readonly [RegExp, string][] = [
   [/^apps\/web\/cloudflare-env\.d\.ts$/, 'wrangler types (pnpm cf-typegen in apps/web)'],
-  [/^apps\/web\/drizzle\//, 'drizzle-kit (pnpm db:generate in apps/web)'],
   [/^pnpm-lock\.yaml$/, 'pnpm install'],
   [/\.(pbxproj|xcscheme|xcworkspacedata)$/, 'Xcode'],
   [/(^|\/)Package\.resolved$/, 'Swift Package Manager']
@@ -48,17 +47,17 @@ const writtenByTools: readonly [RegExp, string][] = [
 const thirdParty: readonly [RegExp, string][] = [
   [/^apps\/ios\/Modules\/Sources\/SearchExperience\/Resources\/Kuromoji\//, 'Kuromoji'],
   [/^apps\/ios\/Modules\/Sources\/SearchExperience\/Resources\/SudachiRuntime\//, 'Sudachi'],
-  [/^language-data\/notices\//, 'the language data sources']
+  [/^language-data\/notices\//, 'the language data sources'],
+  [
+    /^apps\/ios\/LanguageData\/Sources\/Kanji-JLPT-Waller-[^/]+\/[^/]+\.html$/,
+    "Jonathan Waller's tanos.co.uk pages, as the Wayback Machine captured them"
+  ]
 ]
 
 const pinnedBytes: readonly [RegExp, string][] = [
   [
     /^apps\/ios\/Modules\/Sources\/SearchExperience\/Resources\/FrequencyPackMappingV\d+\.sql$/,
     "every published frequency pack's mappingPolicySHA256"
-  ],
-  [
-    /^apps\/ios\/Tools\/[^/]+\.py$/,
-    'the data the iOS data tools built, which records their SHA-256, until that data is next rebuilt'
   ]
 ]
 
@@ -120,6 +119,7 @@ const proseAndData = new Set([
   '.woff2',
   '.gz',
   '.xz',
+  '.bz2',
   '.zip',
   '.sqlite3',
   '.mlmodel',

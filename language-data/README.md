@@ -12,7 +12,7 @@ moves them.
 | --- | --- |
 | [`release.json`](release.json) | The release to publish (`YYYY.MM.N`). The release it follows comes from the bucket's `releases.json` when it's published. |
 | [`release-inputs.json`](release-inputs.json) | What goes in the release, by repository path. Paths start with a root name from `roots`, so a move (#469) changes only `roots`. Names and paths are checked when it loads: plain relative paths only, with no `..`. |
-| [`notices/`](notices/) | Notices the release needs that the app has no file for. Kanjium's is worded as the app's Credits screen words it. |
+| [`notices/`](notices/) | Notices the release needs that the app has no file for: Kanjium's, Jiten's (for `RankedLists.sqlite3`), and Waller's JLPT kanji levels' (for `KanjiReferenceData.json`), each worded as the app's Credits screen words it. |
 | [`schemas/language-data-manifest.v1.schema.json`](schemas/language-data-manifest.v1.schema.json) | The manifest's JSON Schema, `zenbu.language-data-manifest.v1`. |
 | [`schemas/language-data-releases.v1.schema.json`](schemas/language-data-releases.v1.schema.json) | The JSON Schema of the bucket's `releases.json`, `zenbu.language-data-releases.v1`. |
 | [`pipeline/package.py`](pipeline/package.py) | The packager's command line: `build`, `lfs-paths`, and `validate`. |
@@ -66,7 +66,7 @@ when:
 - **A language-reference pin names another file:** a pack's `language_data_sha256`, the
   catalog's `languageDataSHA256`, or the ranking contract's `databaseSHA256`.
 - **The ranking contract disagrees with the database** in anything the app checks at launch
-  (`LookupClient.validateDictionaryRankingMetadata`): size, policy, schema version, mapping,
+  (`LanguageReferenceData.validateDictionaryRankingMetadata`, in `LookupDatabase.swift`): size, policy, schema version, mapping,
   evidence and search-index counts, tool hashes, and semantic equivalence. It compares the keys
   the app decodes (the `CodingKeys` in
   `apps/ios/Modules/Sources/SearchExperience/DictionaryRankingArtifactContract.swift`), since the

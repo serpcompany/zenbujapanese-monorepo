@@ -44,7 +44,7 @@ actor LocalJSONFile {
     self.currentVersion = currentVersion
     self.description = description
     logger = Logger(
-      subsystem: Bundle.main.bundleIdentifier ?? "com.zenbujapanese.dictionary",
+      subsystem: Bundle.main.bundleIdentifier ?? "com.zenbujapanese.app",
       category: logCategory)
   }
 
@@ -130,6 +130,22 @@ final class LocalFileWriteQueue {
       await task.value
       finished = task
     }
+  }
+}
+
+@MainActor
+protocol LocalFileStore: AnyObject {
+  var writes: LocalFileWriteQueue { get }
+  func persist()
+}
+
+extension LocalFileStore {
+  func saveIfNeeded() {
+    if writes.hasUnsavedChanges { persist() }
+  }
+
+  func flush() async {
+    await writes.flush()
   }
 }
 

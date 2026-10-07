@@ -16,7 +16,6 @@
       "!dist",
       "!build",
       "!cloudflare-env.d.ts",
-      "!drizzle",
       "!src/lib/dictionary/fixtures/*.json"
     ]
   },
@@ -35,7 +34,10 @@
   "linter": {
     "enabled": true,
     "rules": {
-      "recommended": true
+      "recommended": true,
+      "style": {
+        "noNonNullAssertion": "error"
+      }
     },
     "domains": {
       "next": "recommended",
@@ -68,7 +70,6 @@
     {
       "includes": [
         "src/lib/**",
-        "src/db/**",
         "!src/lib/dictionary/data.ts",
         "!src/lib/dictionary/retired.ts",
         "!**/*.test.ts",
@@ -90,7 +91,7 @@
                       "@/hooks",
                       "@/hooks/**"
                     ],
-                    "message": "src/lib and src/db hold the site's data and logic, which components (src/components), hooks (src/hooks), and routes (src/app) build on, so they never import those (docs/agents/web.md, Code layout). Move what both sides need into src/lib."
+                    "message": "src/lib holds the site's data and logic, which components (src/components), hooks (src/hooks), and routes (src/app) build on, so it never imports those (docs/agents/web.md, Code layout). Move what both sides need into src/lib."
                   },
                   {
                     "group": ["@/lib/dictionary/api", "./api"],
@@ -125,7 +126,7 @@
                       "@/hooks",
                       "@/hooks/**"
                     ],
-                    "message": "src/lib and src/db hold the site's data and logic, which components (src/components), hooks (src/hooks), and routes (src/app) build on, so they never import those (docs/agents/web.md, Code layout). Move what both sides need into src/lib."
+                    "message": "src/lib holds the site's data and logic, which components (src/components), hooks (src/hooks), and routes (src/app) build on, so it never imports those (docs/agents/web.md, Code layout). Move what both sides need into src/lib."
                   }
                 ]
               }
@@ -135,13 +136,7 @@
       }
     },
     {
-      "includes": [
-        "src/components/**",
-        "src/hooks/**",
-        "!src/components/dictionary/gate.ts",
-        "!**/*.test.ts",
-        "!**/*.test.tsx"
-      ],
+      "includes": ["src/components/**", "src/hooks/**", "!**/*.test.ts", "!**/*.test.tsx"],
       "linter": {
         "rules": {
           "style": {
@@ -220,6 +215,34 @@
                     "message": "worker.ts bundles this file outside Next.js, so it imports no Next.js module and no @/ path: use a relative path, and keep Next.js code in the files Next.js builds (docs/agents/web.md, Retired word URLs)."
                   }
                 ]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "includes": ["e2e/**/*.spec.ts"],
+      "linter": {
+        "rules": {
+          "style": {
+            "noRestrictedImports": {
+              "level": "error",
+              "options": {
+                "paths": {
+                  "@playwright/test": {
+                    "message": "Browser specs take test and expect from e2e/test.ts, whose test fails on any console error the spec doesn't allow (the browser-tests skill). Import them from './test', and take only Playwright's types from @playwright/test.",
+                    "allowImportNames": [
+                      "Page",
+                      "Locator",
+                      "BrowserContext",
+                      "Request",
+                      "Response",
+                      "Route",
+                      "TestInfo"
+                    ]
+                  }
+                }
               }
             }
           }

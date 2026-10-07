@@ -35,7 +35,7 @@ export function compareProfiles(lhs: PriorityProfile, rhs: PriorityProfile): num
   return bitCount(rhs.primaryMask) - bitCount(lhs.primaryMask)
 }
 
-export const profilesEqual = (lhs: PriorityProfile, rhs: PriorityProfile) =>
+const profilesEqual = (lhs: PriorityProfile, rhs: PriorityProfile) =>
   lhs.primaryMask === rhs.primaryMask &&
   lhs.secondaryMask === rhs.secondaryMask &&
   lhs.newsFrequencyBand === rhs.newsFrequencyBand
@@ -91,12 +91,16 @@ function firstDifference(...differences: (() => number)[]): number {
   return 0
 }
 
+const englishPlacement = (lhs: EnglishRank, rhs: EnglishRank) => [
+  () => lhs.lane - rhs.lane,
+  () => lhs.corroborationRank - rhs.corroborationRank,
+  () => lhs.romajiSpecificityRank - rhs.romajiSpecificityRank,
+  () => lhs.senseOrder - rhs.senseOrder
+]
+
 export function compareEnglishRanks(lhs: EnglishRank, rhs: EnglishRank): number {
   return firstDifference(
-    () => lhs.lane - rhs.lane,
-    () => lhs.corroborationRank - rhs.corroborationRank,
-    () => lhs.romajiSpecificityRank - rhs.romajiSpecificityRank,
-    () => lhs.senseOrder - rhs.senseOrder,
+    ...englishPlacement(lhs, rhs),
     () => lhs.priorityPresenceRank - rhs.priorityPresenceRank,
     () => lhs.relation - rhs.relation,
     () => compareProfiles(lhs.priorityProfile, rhs.priorityProfile),
@@ -118,13 +122,7 @@ export function compareJapaneseRanks(lhs: JapaneseRank, rhs: JapaneseRank): numb
 
 export function comparePresentationRanks(lhs: Rank, rhs: Rank): number {
   if (lhs.kind === 'english' && rhs.kind === 'english') {
-    return firstDifference(
-      () => lhs.lane - rhs.lane,
-      () => lhs.corroborationRank - rhs.corroborationRank,
-      () => lhs.romajiSpecificityRank - rhs.romajiSpecificityRank,
-      () => lhs.senseOrder - rhs.senseOrder,
-      () => lhs.relation - rhs.relation
-    )
+    return firstDifference(...englishPlacement(lhs, rhs), () => lhs.relation - rhs.relation)
   }
   if (lhs.kind === 'japanese' && rhs.kind === 'japanese') return lhs.relation - rhs.relation
   return lhs.kind === 'english' ? -1 : 1

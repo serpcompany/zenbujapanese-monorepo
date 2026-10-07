@@ -2,31 +2,31 @@
   "artifacts" : [
     {
       "name" : "LanguageReferenceData.sqlite3",
-      "sha256" : "e13452e70d34124b50ace380fa1da348530c88b1eca0315ab14129d89ee0f073"
+      "sha256" : "290ca9d430454cafe77880d89c45500905ad168c825c71bb7676172afccf66f2"
     },
     {
       "name" : "CompoundPitch.sqlite3",
-      "sha256" : "40bef5fe448959aa91ef9e490a530c19998b7e1812a216edcb32b8a672af11cf"
+      "sha256" : "1545dbc29fb6c453e5c3e82f54ea3d5f2b0e71d46fc1392185355136b34c648a"
     },
     {
       "name" : "ExampleWordIndex.sqlite3",
-      "sha256" : "49bcb0fec530ac2bfd0a5444d253db15aed7754b36ff4e23941257c589d9ea75"
+      "sha256" : "10f8410301bf8291faed20d85de41d1be8a01c7606751071940cda3a4329f15d"
     },
     {
       "name" : "JLPTLevelPack.sqlite3",
-      "sha256" : "5ff2fa165b54b83a646095d350cc736525ea2f7a19cb965e74e77ebfcf259e7a"
+      "sha256" : "d4f98779aed948afe82897b73629a58f82a2d7cb439e771c27a4d09ad545f689"
     },
     {
       "name" : "TUBELEXFrequencyPack.sqlite3",
-      "sha256" : "fa842c5de2af0c2804a245929409f4847140a4378ed1a6769ecbb7a74a18c6c2"
+      "sha256" : "81fa0e721d4968e3084fdb635acbfb10828ef74b25f86a5c491cc7a028d8f751"
     },
     {
       "name" : "FrequencyPackCatalog.json",
-      "sha256" : "0e30892a47f6d52351aeadb62e50f5fa96c05bf3afc8bdcac5a4142f9788bc0d"
+      "sha256" : "aabac08f5e869177d71367fde7f14162c4dbd4965ddb8c6146436ca0f469b4fd"
     },
     {
       "name" : "KanjiReferenceData.json",
-      "sha256" : "425d44716b5429a423d97f0e70ff7bf8f7465c65fa5ebdd58c28020155816845"
+      "sha256" : "9ed5bc957c46c9c19838be6e6a44ef39a207b13e5ca55395eb45ffb19bf55dad"
     },
     {
       "name" : "Kuromoji/kuromoji.js",
@@ -5105,6 +5105,7 @@
                 "esp1_bdb503419265d1cf40760c0e35fdd6dd",
                 "esp1_08efe43c3c9531516879a95b77ccc267",
                 "esp1_12d9e419bfef4d65e0fe6ebd8016fed7",
+                "esp1_d90a6805cc2649584ac0125ca99f238b",
                 "esp1_fc75e12ee5e17ad256e65c47573d5154",
                 "esp1_51e5289847f0bfd610e5a26e8e7804cd",
                 "esp1_bbc227863f5102401d76ca637379298a",
@@ -5172,8 +5173,7 @@
                 "esp1_6b3d4956b6b54d9d249718c505e64a2f",
                 "esp1_0c2febbfd33f74b72edb459e1af4377b",
                 "esp1_4d1939165285eb1f1e51e94e4dbbf569",
-                "esp1_cd932a60fef96776e7852c5392be1ea2",
-                "esp1_ceac267b3a697a7d818e31035fe48cda"
+                "esp1_cd932a60fef96776e7852c5392be1ea2"
               ],
               "shown" : [
                 {
@@ -5283,8 +5283,7 @@
                 "esp1_2dbff88d68cf97ee7e4241a1d90991dd",
                 "esp1_fdef4d07f4a5d11558186ee904f7936d",
                 "esp1_94dd1554424c601f37e75670097290ef",
-                "esp1_c381c3cedb3ab573bbddcba15b345f5c",
-                "esp1_5fb7b580e016aec5501e49b4997d11a9"
+                "esp1_c381c3cedb3ab573bbddcba15b345f5c"
               ],
               "shown" : [
                 {
@@ -98242,6 +98241,7 @@
                 "esp1_cf68b1acd3a5a87178b7da75d2f3e221",
                 "esp1_3e87c09077db40fec18f2868771e7075",
                 "esp1_2c310d1a638d84338b45e75db328960d",
+                "esp1_5020353280375cd0d87e0811c749f0e4",
                 "esp1_046c1d79d50a4b9b6f36f9e5febde7b1",
                 "esp1_462a7cd07c0a2aa9167ea34e03a36272",
                 "esp1_1430f1ddeafff4f29609901c7517e7aa",
@@ -98261,8 +98261,7 @@
                 "esp1_da205db065f6d66c850ff0e398a8363a",
                 "esp1_884e3fd2b53485f8911ce52f3b40ab25",
                 "esp1_828474e1eb701885dbdf81c7854994c0",
-                "esp1_4e349d025ef0016b53b4ab968713fed4",
-                "esp1_afe7f09f1c811e71177b6607ecbd285a"
+                "esp1_4e349d025ef0016b53b4ab968713fed4"
               ],
               "shown" : [
                 {
@@ -107531,6 +107530,7 @@
                 "esp1_3827cd6d58b06836ef2c7e61ca93d819",
                 "esp1_3daf425ef011be256ea2fc666a35a757",
                 "esp1_7974684f36a953ac1d1b6321e457e1dc",
+                "esp1_828bda58bc6ad9aca0a7745aa2d726d1",
                 "esp1_e2537cc8b4b081aba0a5b1d4d28a530d",
                 "esp1_fdcf8cea7ab2229be1fe7ef831218f28",
                 "esp1_02ca8f81584ce58ac0c350b1232fc109",

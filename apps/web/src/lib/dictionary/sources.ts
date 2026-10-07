@@ -3,9 +3,11 @@ export interface Source {
   url: string
   credit: string
   license: { name: string; url?: string }
+  notice?: string
 }
 
 const ccBySa4 = { name: 'CC BY-SA 4.0', url: 'https://creativecommons.org/licenses/by-sa/4.0/' }
+const bsd3 = { name: 'BSD-3-Clause', url: 'https://opensource.org/license/bsd-3-clause' }
 const edrdgLicence = {
   name: 'EDRDG licence, CC BY-SA 4.0',
   url: 'https://www.edrdg.org/edrdg/licence.html'
@@ -55,17 +57,32 @@ export const sources = {
       "Unofficial level estimates from Jonathan Waller's lists, matched to JMdict by stephenmk.",
     license: ccBySa4
   },
+  jlptKanji: {
+    name: 'JLPT kanji levels',
+    url: 'https://web.archive.org/web/20200806005029/http://www.tanos.co.uk/jlpt/jlpt5/kanji/',
+    credit: "Unofficial level estimates from Jonathan Waller's JLPT kanji lists (tanos.co.uk).",
+    license: { name: 'CC BY' }
+  },
   tubelex: {
     name: 'TUBELEX',
     url: 'https://github.com/naist-nlp/tubelex',
     credit: 'YouTube frequency data by Adam Nohejl and contributors.',
-    license: { name: 'BSD-3-Clause' }
+    license: bsd3
+  },
+  wikipedia: {
+    name: 'Wikipedia Word Frequency Clean',
+    url: 'https://github.com/adno/wikipedia-word-frequency-clean',
+    credit: 'Wikipedia frequency data by Adam Nohejl and contributors.',
+    license: bsd3
   },
   jiten: {
     name: 'Jiten',
     url: 'https://jiten.moe/frequency-dictionaries',
-    credit: 'Anime frequency data by Jiten (jiten.moe).',
-    license: ccBySa4
+    credit:
+      'TV and movie, anime, manga, novel, visual novel, and video game frequency data by Jiten (jiten.moe), modified.',
+    license: ccBySa4,
+    notice:
+      'The rankings from Jiten on this page are adapted from its data, and are shared under the same licence, CC BY-SA 4.0.'
   },
   tatoeba: {
     name: 'Tatoeba',
@@ -79,17 +96,27 @@ const defaultFrequency = [sources.jlpt, sources.tubelex]
 
 export const pageSources = {
   search: [sources.jmdict, sources.kanjidic2, ...defaultFrequency],
-  word: [sources.jmdict, sources.unidic, sources.kanjidic2, ...defaultFrequency, sources.tatoeba]
+  word: [sources.jmdict, sources.unidic, sources.kanjidic2, ...defaultFrequency, sources.tatoeba],
+  browse: [sources.jmdict, ...defaultFrequency],
+  kanji: [sources.kanjidic2],
+  kanjiLevels: [sources.kanjidic2, sources.jlptKanji],
+  frequency: [sources.jmdict, ...defaultFrequency, sources.wikipedia, sources.jiten]
 }
 
 export function withShownData(
   base: readonly Source[],
-  shown: { kanji: readonly { strokeOrder: unknown }[]; examples?: boolean }
+  shown: {
+    kanji: readonly { strokeOrder: unknown; stats: readonly { label: string }[] }[]
+    examples?: boolean
+  }
 ): Source[] {
   const extra = [
     ...(shown.kanji.length > 0 ? [sources.kanjidic2, sources.radkfile] : []),
     ...(shown.kanji.some(kanji => kanji.strokeOrder) ? [sources.kanjivg] : []),
     ...(shown.kanji.length > 0 ? [sources.kanjium] : []),
+    ...(shown.kanji.some(kanji => kanji.stats.some(stat => stat.label === 'JLPT'))
+      ? [sources.jlptKanji]
+      : []),
     ...(shown.examples ? [sources.tatoeba] : [])
   ]
   return [

@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-"""Analyze checksum-pinned ordered JSON frequency archives for optional runtime packs."""
 
 from __future__ import annotations
 
@@ -9,39 +8,25 @@ import json
 import math
 import sqlite3
 import tempfile
-import unicodedata
 import urllib.parse
 import zipfile
 from pathlib import Path
 
+from import_frequency_pack import (
+    artifact_content_sha256,
+    evidence_sha256,
+    mapping_counts,
+    mapping_script,
+    sha256,
+)
+from import_frequency_pack import normalized_form as normalized
 
 ROOT = Path(__file__).resolve().parents[3]
 MAPPING_SQL = ROOT / "apps/ios/Modules/Sources/SearchExperience/Resources/FrequencyPackMappingV1.sql"
 
 
-def sha256(path: Path) -> str:
-    digest = hashlib.sha256()
-    with path.open("rb") as handle:
-        for chunk in iter(lambda: handle.read(1024 * 1024), b""):
-            digest.update(chunk)
-    return digest.hexdigest()
-
-
 def canonical_json(value: object) -> bytes:
     return json.dumps(value, ensure_ascii=False, sort_keys=True, separators=(",", ":")).encode()
-
-
-def artifact_content_sha256(metadata: dict[str, str]) -> str:
-    digest = hashlib.sha256(b"zenbu.frequency-pack-content.v1\0")
-    for key, value in sorted(metadata.items()):
-        for item in (key.encode("utf-8"), value.encode("utf-8")):
-            digest.update(len(item).to_bytes(8, "big"))
-            digest.update(item)
-    return digest.hexdigest()
-
-
-def normalized(value: str) -> str:
-    return unicodedata.normalize("NFKC", value).strip()
 
 
 def read_rows(
@@ -118,39 +103,11 @@ def mapping_report(
             "INSERT INTO source_rows VALUES (?, ?, ?, '', ?)",
             ((rank, form, 0, digest) for rank, form, _, digest in rows),
         )
-        mapping = (
-            MAPPING_SQL.read_text(encoding="utf-8")
-            .replace("{{LANGUAGE_DATA_PATH}}", str(language_data).replace("'", "''"))
-            .replace("{{COVERED_SOURCE_ROWS}}", str(count))
-        )
-        database.executescript(mapping)
-        mapped = database.execute("SELECT count(*) FROM frequency_evidence").fetchone()[0]
-        ambiguous = database.execute(
-            "SELECT count(*) FROM resolutions WHERE candidate_count > 1 AND pos_candidate_count != 1"
-        ).fetchone()[0]
-        matched = database.execute("SELECT count(*) FROM resolutions").fetchone()[0]
-        eligible = database.execute("SELECT count(*) FROM eligible").fetchone()[0]
+        database.executescript(mapping_script(MAPPING_SQL, language_data, count))
+        mapped, ambiguous, matched, eligible = mapping_counts(database)
         repeated_forms = count - len({form for _, form, _, _ in rows})
         repeated_pairs = count - len({(form, reading) for _, form, reading, _ in rows})
-        mapping_digest = hashlib.sha256()
-        for identifier, rank, source_count, form, relation, source_pos, source_digest in database.execute(
-            "SELECT language_reference_id, rank, source_count, matched_form, "
-            "mapping_relation, source_pos, source_record_digest "
-            "FROM frequency_evidence ORDER BY language_reference_id"
-        ):
-            mapping_digest.update(
-                identifier
-                + rank.to_bytes(8, "big")
-                + source_count.to_bytes(8, "big")
-                + form.encode("utf-8")
-                + b"\0"
-                + relation.encode("utf-8")
-                + b"\0"
-                + source_pos.encode("utf-8")
-                + b"\0"
-                + source_digest
-            )
-        mapping_sha256 = mapping_digest.hexdigest()
+        mapping_sha256 = evidence_sha256(database)
         metadata = {
             "artifact_schema": "zenbu.frequency-pack.v1",
             "pack_id": pack_id,

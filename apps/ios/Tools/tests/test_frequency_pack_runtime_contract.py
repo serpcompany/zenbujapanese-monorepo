@@ -1,27 +1,17 @@
-import hashlib
 import json
 import sqlite3
 import unittest
-from pathlib import Path
 
+from contract_checks import CATALOG, GENERATED, RESOURCES, ROOT, SOURCES, sha256
 
-ROOT = Path(__file__).resolve().parents[4]
-CATALOG = (
-    ROOT
-    / "apps/ios/Modules/Sources/SearchExperience/Resources/FrequencyPackCatalog.json"
-)
-ANALYSIS = (
-    ROOT
-    / "apps/ios/LanguageData/Generated/Migaku-public-catalog-ja-ordered-json-v1.analysis.json"
-)
-JITEN_ANALYSIS = ROOT / "apps/ios/LanguageData/Generated/Jiten-2026-09-27.analysis.json"
-RESOURCES = ROOT / "apps/ios/Modules/Sources/SearchExperience/Resources"
+ANALYSIS = GENERATED / "Migaku-public-catalog-ja-ordered-json-v1.analysis.json"
+JITEN_ANALYSIS = GENERATED / "Jiten-2026-09-27.analysis.json"
 TUBELEX = RESOURCES / "TUBELEXFrequencyPack.sqlite3"
-TUBELEX_REPORT = ROOT / "apps/ios/LanguageData/Generated/TUBELEX-ja-310-lemma-pos.import.json"
+TUBELEX_REPORT = GENERATED / "TUBELEX-ja-310-lemma-pos.import.json"
 LANGUAGE_DATA = RESOURCES / "LanguageReferenceData.sqlite3"
 JLPT = RESOURCES / "JLPTLevelPack.sqlite3"
-JLPT_RECORD = ROOT / "apps/ios/LanguageData/Sources/JLPT-Waller-2025-08-26.source.json"
-JLPT_REPORT = ROOT / "apps/ios/LanguageData/Generated/JLPT-Waller-2025-08-26.import.json"
+JLPT_RECORD = SOURCES / "JLPT-Waller-2025-08-26.source.json"
+JLPT_REPORT = GENERATED / "JLPT-Waller-2025-08-26.import.json"
 JLPT_IMPORTER = ROOT / "apps/ios/Tools/import_jlpt_level_pack.py"
 
 
@@ -156,10 +146,6 @@ class FrequencyPackRuntimeContractTests(unittest.TestCase):
         self.assertEqual(
             report["levelCounts"], {f"N{level}": levels[level] for level in range(5, 0, -1)}
         )
-
-
-def sha256(path: Path) -> str:
-    return hashlib.sha256(path.read_bytes()).hexdigest()
 
 
 if __name__ == "__main__":

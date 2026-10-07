@@ -16,6 +16,7 @@ permissions:
 
 env:
   LFS_FILES: apps/ios/**
+  LFS_SNAPSHOTS: apps/ios/LanguageData/Sources/JMdict_e-*.gz,apps/ios/LanguageData/Sources/Tatoeba-*/*,apps/ios/LanguageData/Sources/KANJIDIC2-*/*,apps/ios/LanguageData/Sources/EDRDG-radicals-*/*,apps/ios/LanguageData/Sources/Kanji-JLPT-Waller-*/*
 
 jobs:
   contracts:
@@ -27,9 +28,9 @@ jobs:
         uses: actions/cache@v5
         with:
           path: .git/lfs/objects
-          key: lfs-ios-${{ hashFiles('apps/ios/Modules/Sources/SearchExperience/Resources/*.sqlite3', 'apps/ios/Modules/Sources/SearchExperience/Resources/Kuromoji/*.dat.gz', 'apps/ios/LanguageData/Sources/*.gz', 'apps/ios/LanguageData/Sources/*.xz', 'apps/ios/LanguageData/Sources/*/*.xz') }}
+          key: lfs-ios-${{ hashFiles('apps/ios/Modules/Sources/SearchExperience/Resources/*.sqlite3', 'apps/ios/Modules/Sources/SearchExperience/Resources/Kuromoji/*.dat.gz', 'apps/ios/LanguageData/Sources/*.xz', 'apps/ios/LanguageData/Sources/*/*.xz') }}
       - name: Fetch the Git LFS files
-        run: git lfs pull --include="$LFS_FILES"
+        run: git lfs pull --include="$LFS_FILES" --exclude="$LFS_SNAPSHOTS"
       - name: Run the data tools' contract tests
         run: python3 -m unittest discover --start-directory apps/ios/Tools/tests --pattern 'test_*.py' --verbose
 
@@ -43,9 +44,9 @@ jobs:
         uses: actions/cache@v5
         with:
           path: .git/lfs/objects
-          key: lfs-ios-${{ hashFiles('apps/ios/Modules/Sources/SearchExperience/Resources/*.sqlite3', 'apps/ios/Modules/Sources/SearchExperience/Resources/Kuromoji/*.dat.gz', 'apps/ios/LanguageData/Sources/*.gz', 'apps/ios/LanguageData/Sources/*.xz', 'apps/ios/LanguageData/Sources/*/*.xz') }}
+          key: lfs-ios-${{ hashFiles('apps/ios/Modules/Sources/SearchExperience/Resources/*.sqlite3', 'apps/ios/Modules/Sources/SearchExperience/Resources/Kuromoji/*.dat.gz', 'apps/ios/LanguageData/Sources/*.xz', 'apps/ios/LanguageData/Sources/*/*.xz') }}
       - name: Fetch the Git LFS files
-        run: git lfs pull --include="$LFS_FILES"
+        run: git lfs pull --include="$LFS_FILES" --exclude="$LFS_SNAPSHOTS"
       - name: Pick the first iPhone Simulator on the newest iOS runtime
         run: |
           xcodebuild -version

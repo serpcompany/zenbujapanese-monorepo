@@ -56,29 +56,29 @@
     "note_identity_duplicate_groups": 3,
     "note_identity_disambiguated_entries": 6,
     "pitch_entries": 79830,
-    "example_sentences": 232703,
+    "example_sentences": 232774,
     "example_sentence_provenance": {
-      "retained_pairs": 232703,
-      "provenance_rows": 232703,
+      "retained_pairs": 232774,
+      "provenance_rows": 232774,
       "cc0_pairs": 2,
-      "attributed_pairs": 232701,
-      "named_contributors": 3180,
-      "unassigned_sentence_sides": 131445
+      "attributed_pairs": 232772,
+      "named_contributors": 3184,
+      "unassigned_sentence_sides": 131398
     },
     "example_sentence_pair_id_scheme": "esp1-sha256-128-nfc-length-prefixed",
     "example_sentence_retrieval": {
       "retrieval_index_schema_version": "zenbu.example-sentence-retrieval-index.v2",
       "retrieval_policy_version": "ExampleSentenceRetrievalPolicy/v1",
-      "retrieval_corpus_sha256": "f829495f46c2bd2f102784f58ddf74cdf0f20869c363c15ed0548a3c72178a90",
-      "retrieval_index_mapping_sha256": "cb172ed6db2288ff4b79ced46cab900a1442dd521b7ce93045339d3b1759c5a5",
-      "retrieval_provenance_sha256": "ca6663e0dfb5286d3fc539f91d36c79662f3f1ed7f41ef581bde59a9b3daa9fa",
-      "retrieval_importer_sha256": "2edf81e718813ed407d5817619e1984ecfda4445160f1d056fcb9be2b34f8e0e",
-      "retrieval_index_row_count": "232703",
-      "retrieval_exact_index_row_count": "232703",
+      "retrieval_corpus_sha256": "f759cc13c9a0fb41739703b913ce11767aeb4d2986d56b17590073a9ea065205",
+      "retrieval_index_mapping_sha256": "eb666c2743e1cb166ec3ce594626aaaa88271b99f387bac43cb7873e0edf3b20",
+      "retrieval_provenance_sha256": "43f374b654959ca76f683ab55e372f086f3f0bc0defc06d6d10f527e5e80ea66",
+      "retrieval_importer_sha256": "d245b41556f14fd6d5ba02bf3975607cf6424795e68aa21471ca444d0d331990",
+      "retrieval_index_row_count": "232774",
+      "retrieval_exact_index_row_count": "232774",
       "retrieval_porter_tokenizer": "fts4/porter",
       "retrieval_exact_tokenizer": "fts4/simple",
       "retrieval_pair_id_scheme": "esp1-sha256-128-nfc-length-prefixed",
-      "retrieval_provenance_row_count": "232703"
+      "retrieval_provenance_row_count": "232774"
     },
     "rejection_reasons": {
       "missing_ent_seq_reading_or_english_gloss": 0
@@ -96,6 +96,8 @@
       "k_ele/ke_inf",
       "r_ele/re_inf",
       "sense/misc",
+      "sense/field",
+      "sense/dial",
       "sense/s_inf",
       "sense/xref",
       "sense/gloss[@xml:lang='eng']"
@@ -113,6 +115,7 @@
       "provenance-free semantic fingerprint includes all display forms, meanings, senses, applicability, and gloss atom boundaries",
       "semantically equivalent rows normalize to the lexicographically smallest opaque app-owned identity while retaining every sorted unique source provenance; ranking evidence remains unchanged",
       "provider form and usage labels normalized to an app-owned presentation vocabulary",
+      "every JMdict usage, subject-field, and dialect entity code on a sense mapped explicitly to app-owned label identifiers; an unmapped code fails the import",
       "cross-references resolved to app-owned linked entries",
       "JMdict cross-reference form, reading, and target-sense qualifiers preserved; supplied readings require an exact target reading",
       "human-reviewed app-owned word relationships resolved from a versioned editorial fact source",
@@ -131,59 +134,59 @@
     "pitch_source_resource_id": "SOURCE-COMPONENT-UNIDIC",
     "pitch_source_sha256": "340651aa78cc02caf690f94de8809d41c4acda694226517884ecad81c51523fc",
     "example_source_resource_id": "SOURCE-COMPONENT-TATOEBA",
-    "example_source_sha256": "2d262f6686050315b842b84d0e60b6d9613f6b42e431ea94d3fbe45b8e6b830e",
+    "example_source_sha256": "9f2217734c572d46dd7fa54236bb89c1ce84347a4f6ca57d71261192867682f2",
     "example_source_inputs": [
       {
         "role": "japanese_sentences",
         "identity": "Tatoeba Japanese sentences",
         "download_url": "https://downloads.tatoeba.org/exports/per_language/jpn/jpn_sentences.tsv.bz2",
-        "http_last_modified": "Sat, 08 Aug 2026 06:29:57 GMT",
-        "http_etag": "\"6a76cce5-3422f7\"",
-        "compressed_bytes": 3416823,
-        "sha256": "62c2ba106de8de3d9b8968156de28fbfd993de6e65772a44e586b5e872f0634a"
+        "http_last_modified": "Sat, 03 Oct 2026 06:31:08 GMT",
+        "http_etag": "\"6ac0a12c-342662\"",
+        "compressed_bytes": 3417698,
+        "sha256": "dd942845be225766229fa6391cbb7796c6b8bdcaea38809e65720cc406dace93"
       },
       {
         "role": "english_sentences",
         "identity": "Tatoeba English sentences",
         "download_url": "https://downloads.tatoeba.org/exports/per_language/eng/eng_sentences.tsv.bz2",
-        "http_last_modified": "Sat, 08 Aug 2026 06:29:57 GMT",
-        "http_etag": "\"6a76cce5-17aa06f\"",
-        "compressed_bytes": 24813679,
-        "sha256": "34fc76cc177ca65b56cb3b966a2b8f33efd8a1b0551eb855f31b5ab940d05e60"
+        "http_last_modified": "Sat, 03 Oct 2026 06:31:08 GMT",
+        "http_etag": "\"6ac0a12c-17bdc03\"",
+        "compressed_bytes": 24894467,
+        "sha256": "5f7ebf552bd3925dfd33236ccb6a210c5ba02b365e4a39964fb658e1209e87d9"
       },
       {
         "role": "japanese_english_links",
         "identity": "Tatoeba Japanese-English links",
         "download_url": "https://downloads.tatoeba.org/exports/per_language/jpn/jpn-eng_links.tsv.bz2",
-        "http_last_modified": "Sat, 08 Aug 2026 06:39:45 GMT",
-        "http_etag": "\"6a76cf31-163125\"",
-        "compressed_bytes": 1454373,
-        "sha256": "176eaaa0cb44006af0c99823e4e110c10568aa35bd4cb6f87dd5826d3e3bbca4"
+        "http_last_modified": "Sat, 03 Oct 2026 06:41:07 GMT",
+        "http_etag": "\"6ac0a383-16338f\"",
+        "compressed_bytes": 1454991,
+        "sha256": "b078aebb6b6b1e568fe0cb4683a4ae02e17d23b3a08f8a2b0bbb88e83ec697fa"
       },
       {
         "role": "japanese_detailed_sentences",
         "identity": "Tatoeba Japanese detailed sentences with supplied contributor usernames",
         "download_url": "https://downloads.tatoeba.org/exports/per_language/jpn/jpn_sentences_detailed.tsv.bz2",
-        "http_last_modified": "Sat, 08 Aug 2026 06:28:41 GMT",
-        "http_etag": "\"6a76cc99-440c84\"",
-        "compressed_bytes": 4459652,
-        "sha256": "ec113c38e4fa8bff8c1ed44b2786345084f1766780b86ef9bc754450ca21f0ac"
+        "http_last_modified": "Sat, 03 Oct 2026 06:29:49 GMT",
+        "http_etag": "\"6ac0a0dd-4416d0\"",
+        "compressed_bytes": 4462288,
+        "sha256": "591b040bce75503a3a41d51281cdc45ab5390505088b67b52020b7ecc59d24dd"
       },
       {
         "role": "english_detailed_sentences",
         "identity": "Tatoeba English detailed sentences with supplied contributor usernames",
         "download_url": "https://downloads.tatoeba.org/exports/per_language/eng/eng_sentences_detailed.tsv.bz2",
-        "http_last_modified": "Sat, 08 Aug 2026 06:28:41 GMT",
-        "http_etag": "\"6a76cc99-2130645\"",
-        "compressed_bytes": 34801221,
-        "sha256": "2080a8720ab4f5d7475dff0b49f40a37871f42ac29432ceb2084fe405f31cc02"
+        "http_last_modified": "Sat, 03 Oct 2026 06:29:49 GMT",
+        "http_etag": "\"6ac0a0dd-214d64c\"",
+        "compressed_bytes": 34920012,
+        "sha256": "d2c8fc271db70967cbf6e74069b34f394eccccca4a61fc84039e0f0549016ee8"
       },
       {
         "role": "japanese_cc0_sentences",
         "identity": "Tatoeba Japanese CC0 sentences",
         "download_url": "https://downloads.tatoeba.org/exports/per_language/jpn/jpn_sentences_CC0.tsv.bz2",
-        "http_last_modified": "Sat, 08 Aug 2026 06:29:58 GMT",
-        "http_etag": "\"6a76cce6-e4\"",
+        "http_last_modified": "Sat, 03 Oct 2026 06:31:09 GMT",
+        "http_etag": "\"6ac0a12d-e4\"",
         "compressed_bytes": 228,
         "sha256": "39e6768de61f901a0904d9e74e554772d4e12286121ec3e2c6bd5307ce543465"
       },
@@ -191,10 +194,10 @@
         "role": "english_cc0_sentences",
         "identity": "Tatoeba English CC0 sentences",
         "download_url": "https://downloads.tatoeba.org/exports/per_language/eng/eng_sentences_CC0.tsv.bz2",
-        "http_last_modified": "Sat, 08 Aug 2026 06:29:58 GMT",
-        "http_etag": "\"6a76cce6-13a94c\"",
-        "compressed_bytes": 1288524,
-        "sha256": "6ab169264a28008c25bf63042bf7535fc63137c9d7e09b7b8bd7812d10117d1b"
+        "http_last_modified": "Sat, 03 Oct 2026 06:31:09 GMT",
+        "http_etag": "\"6ac0a12d-13aa63\"",
+        "compressed_bytes": 1288803,
+        "sha256": "a51307f6eccb2ca558a4bcc66610c7aa818ddabdf5cfff40c3bb72cd2a1501c9"
       }
     ],
     "example_release_posture": {
@@ -205,16 +208,16 @@
       "decision_comment_url": "https://github.com/serpcompany/zenbujapanese-monorepo/issues/140#issuecomment-5303558635",
       "statement": "Preserve the full current example-sentence experience for version 1.0, retain all available attribution and not-supplied evidence, disclose the known uncertainty, and do not represent this owner decision as independent legal advice."
     },
-    "example_transform_sha256": "26e316e6da70eb27b33112de343176653778d29d5898bafdb2a579c606ad9a39",
+    "example_transform_sha256": "714bc94967c5fb2252635c0a1bc2ea4a963e020307b091a2cc07e1fb5db2d494",
     "relationship_source_resource_id": "zenbu-word-relationships-v1",
     "relationship_source_sha256": "2c483c933f5a42baad194db9a45c1d6251e09ebcb2a40c6475ca3d984ea2dd38",
-    "import_tool_sha256": "95233b469fed78de566492b3f41a6e3c1cc562b5988f79879b6190fd640f31b4",
-    "dictionary_ranking_adapter_sha256": "a6ec035fcb4188eb8a3668f19dffd1ffee37c6a3d478def8f883a6981140a3a8",
-    "dictionary_ranking_contract_sha256": "9d6777997e9b935562ae9c2b18e6d4e4ba58f056a0c07be6b0017032ec065596",
-    "shared_tooling_sha256": "7a348e2ad80858dd6e0f47921e0f62c5e076048d0c03ede96e03747416e9faf0",
-    "unidic_adapter_sha256": "f616738d7f45e3c75ece903d62ce2092923a6e68cf0925dafe030563c753985a",
-    "tatoeba_adapter_sha256": "e04cf72c85a25a23b50bd893a370e53ee3a6c930536265d43ed6c881d331634e",
-    "database_sha256": "e13452e70d34124b50ace380fa1da348530c88b1eca0315ab14129d89ee0f073",
-    "database_bytes": 481669120
+    "import_tool_sha256": "50f6374d4ffd8bbb796f33923251a4f33b0386c3479468a6915393e6c5c3b22e",
+    "dictionary_ranking_adapter_sha256": "c8efea2701988d854a7b18bfa53062ab196958ad9196e044202a43e28fa7573a",
+    "dictionary_ranking_contract_sha256": "b7df18edcc9b20a0c961c2be913f9e12816a69fdea6522ecd11610570f41e59e",
+    "shared_tooling_sha256": "0c0dec180f4f11f49c6d1ee6048d9a3dc4986d88ef5fc4bc6aa9302e62743b39",
+    "unidic_adapter_sha256": "ca6e2c0d83c594072c999ffd600c05e06cedfe98944db0500f948af41496e028",
+    "tatoeba_adapter_sha256": "65e5d32fe6b20ca18cf95cf1b9d6167f89d7c3cc1cf54f9a245f0743c421f584",
+    "database_sha256": "290ca9d430454cafe77880d89c45500905ad168c825c71bb7676172afccf66f2",
+    "database_bytes": 483983360
   }
 }

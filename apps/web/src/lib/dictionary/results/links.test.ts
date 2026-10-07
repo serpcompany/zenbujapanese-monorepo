@@ -1,6 +1,6 @@
 import type { SearchResultsScreen } from '@zenbu/dictionary-core/results/results'
 import { describe, expect, test } from 'vitest'
-import type { KanjiDetailsData } from '../data'
+import type { KanjiDetailsData } from '../kanji-details'
 import { isIndexable, linkSearchScreen, type SearchLinks } from './links'
 
 const kanjiOnly: SearchResultsScreen = {

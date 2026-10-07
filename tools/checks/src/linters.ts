@@ -15,7 +15,7 @@ interface Linter {
   args: (files: readonly string[]) => string[] | null
 }
 
-export const linterVersions = {
+const linterVersions = {
   shellcheck: '0.11.0',
   actionlint: '1.7.12',
   ruff: '0.13.0'
