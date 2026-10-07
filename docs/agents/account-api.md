@@ -2,7 +2,7 @@
 
 `apps/account-api` is where Zenbu accounts, sign-in, and sync run: a Node service with its own
 Postgres database, beside the dictionary service on the API servers
-([ADR 0011](../adr/0011-run-accounts-and-sync-in-their-own-service-on-the-api-servers.md)). It signs
+([ADR 0012](../adr/0012-run-accounts-and-sync-in-their-own-service-on-the-api-servers.md)). It signs
 learners in with Apple, Google, or a code sent by email, through Better Auth, and issues the tokens
 the apps and other services use. `/v1/me` and `/v1/sync` come in
 [#567](https://github.com/serpcompany/zenbujapanese-monorepo/issues/567). Every Zenbu app stays
@@ -100,7 +100,7 @@ checked against the provider's keys, issuer, audience (`APPLE_APP_BUNDLE_IDENTIF
 account is made only for an email the provider has verified. The providers' own tokens aren't
 kept.
 
-**One account per email, and no account taken over by one** (#374, ADR 0011):
+**One account per email, and no account taken over by one** (#374, ADR 0012):
 
 - The Zenbu user ID is the identity. Each way the learner signs in is a row in `user_identities`,
   unique by provider and subject: `apple` or `google` and the token's `sub`, or `email` and the
@@ -126,7 +126,7 @@ such request.
 
 The codes are sent as SERP's
 [transactional email standard](https://github.com/serpcompany/serp/blob/main/docs/engineering/standards/transactional-email.md)
-says (ADR 0011), by `src/email/mailer.ts`, the one function that sends:
+says (ADR 0012), by `src/email/mailer.ts`, the one function that sends:
 
 - **Through Cloudflare Email Service's REST API**, from `EMAIL_FROM`, with no other `Reply-To`.
   `ACCOUNT_API_EMAIL=usesend` sends through useSend instead, with nothing else changed.
