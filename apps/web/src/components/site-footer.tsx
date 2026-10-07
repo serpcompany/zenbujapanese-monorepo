@@ -1,5 +1,6 @@
 import Link from 'next/link'
 import { SiteBrand } from '@/components/site-brand'
+import { kanaChartsPath, kanjiListsPath } from '@/lib/dictionary/browse/paths'
 import { legalPages, pageFor, type SitePage } from '@/lib/pages'
 import { site } from '@/lib/site'
 
@@ -8,6 +9,8 @@ const footerColumns: { heading: string; links: readonly Pick<SitePage, 'path' | 
     heading: 'Product',
     links: [
       { path: '/dictionary/', title: 'Dictionary' },
+      { path: kanaChartsPath, title: 'Browse by kana' },
+      { path: kanjiListsPath, title: 'Kanji by grade' },
       pageFor('/sources/'),
       pageFor('/sitemap/')
     ]

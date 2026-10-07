@@ -30,13 +30,19 @@ test('the footer links Legal after Contact, before the legal pages, as the #462 
 
 test('the footer groups every link under Product, Company, and Policies', () => {
   expect(columns()).toEqual([
-    ['Product', ['Dictionary', 'Sources', 'Sitemap']],
+    ['Product', ['Dictionary', 'Browse by kana', 'Kanji by grade', 'Sources', 'Sitemap']],
     ['Company', ['About', 'Support', 'Contact']],
     [
       'Policies',
       ['Legal', 'Privacy Policy', 'Terms of Use', 'DMCA Copyright Policy', 'Affiliate Disclosure']
     ]
   ])
+})
+
+test("the footer's browse links open the kana charts and the kanji lists", () => {
+  const footerLinks = links(footer())
+  expect(footerLinks).toContainEqual(['Browse by kana', '/dictionary/browse/kana/'])
+  expect(footerLinks).toContainEqual(['Kanji by grade', '/dictionary/browse/kanji/'])
 })
 
 test('the footer leads with the brand linking home and its tagline, and ends with the copyright', () => {

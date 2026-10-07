@@ -5,7 +5,8 @@ Each behavior below says what the website does, where that behavior comes from, 
 check that enforces it (see [How behavior is verified](index.md#how-behavior-is-verified)).
 
 The dictionary has three page types (ADR 0010): the [home](#dictionary-home), a search's
-[results](#search-results), and a [word](#word-page). What the app opens from a word as screens of
+[results](#search-results), and a [word](#word-page). The browse pages that list and link to them
+(ADR 0010, amended for #614) are in [Browse pages](browse.md). What the app opens from a word as screens of
 its own, the conjugation table and its forms, a kanji's details, and the example sentences, is on
 the word page, in sections that open and close and stay in the page's HTML while closed.
 
@@ -47,6 +48,9 @@ opens that query's results page.
   and lands on the canonical results page" (the heading, the box, and submitting it). The layout: No
   automated check yet (#511).
 
+**Browse sections.** Below the search box, the home leads into the browse pages: by kana, kanji by
+school grade, categories, and common words ([Browse pages](browse.md#dictionary-home)).
+
 **Breadcrumbs.** Every dictionary page starts with a breadcrumb trail under the site header:
 Home › Dictionary on this page, then the page's own crumb on the others. The app has none. The
 trail stays on one line: a long last crumb (a long headword or query) is cut short with an
@@ -57,7 +61,9 @@ ellipsis, and Home and Dictionary keep their full width.
   `apps/web/e2e/search.spec.ts`, "a long query's crumb is cut short, never Home or Dictionary".
 
 **Column.** Every dictionary page is one column, at most 768 pixels wide (`max-w-3xl`), centered,
-with 16-pixel margins; on a phone it fills the screen's width.
+with 16-pixel margins; on a phone it fills the screen's width. The home's browse sections fit this
+column too. The browse pages under `/dictionary/browse/` are wider, as their mockups are
+([Browse pages](browse.md#site-wide)).
 
 - Source: #576 (widened from 672 pixels).
 - Check: `apps/web/e2e/search.spec.ts`, "is one column, at most 768 pixels wide", on the home, the
@@ -724,19 +730,25 @@ the list; like the app, it finds a form's examples by its spelling alone.
 A kanji's details are what the app's Kanji Detail shows. They open in place from a word page's
 Kanji and Alternative kanji rows, and from a one-kanji search's KANJI row, and are in the page's
 HTML while closed. A kanji has no page of its own (ADR 0010). A page that shows a kanji's details
-credits KANJIDIC2, RADKFILE, KanjiVG when it draws stroke order, and Kanjium (see each page's
-Credits).
+credits KANJIDIC2, RADKFILE, KanjiVG when it draws stroke order, Kanjium, and Waller's JLPT kanji
+lists (CC BY) when a kanji shows a JLPT level (see each page's Credits; checked by
+`src/lib/dictionary/sources.test.ts`, "withShownData").
 
-**Header.** The kanji, then its metrics: strokes ("Stroke" for one), and the grade and JLPT level
-when KANJIDIC2 has them. JLPT reads as the app writes it, `N` and KANJIDIC2's level, so 要 shows
-N2. The meanings follow on one line.
+**Header.** The kanji, then its metrics: strokes ("Stroke" for one), the grade when KANJIDIC2 has
+one, and the JLPT level when Jonathan Waller's kanji lists give one. JLPT reads as the app writes
+it, `N` and the level, so 一 and 日 show N5 and 要 shows N3. A kanji his lists leave out shows no
+JLPT level, never KANJIDIC2's pre-2010 one: that includes 172 jōyō kanji, such as 分, that no
+modern list gives a level. The meanings follow on one line.
 
-- Source: `KanjiOverview` in `KanjiDetailSections.swift`; #485 (the website shows JLPT as the app
-  does).
-- Check: KD `strokeCount`, `grade`, `meanings`; `packages/dictionary-core/src/detail/kanji.test.ts`,
-  "要" and "a kanji without elements lists its components; one stroke is singular";
-  `apps/web/e2e/kanji.spec.ts`, "the search page for 要 opens 要 to its stroke order, metrics,
-  meanings, readings, and words", and the same on the word page. KD doesn't record JLPT.
+- Source: `KanjiOverview` and `KanjiReferenceEntry.stats` in `KanjiDetailSections.swift`; the
+  owner's comment on #614 (2026-10-06): "Kanji JLPT levels come from Jonathan Waller's kanji
+  lists … This settles #485's level scale."
+- Check: KD `strokeCount`, `grade`, `jlpt` (一, 日, 要, and 分), and `meanings`;
+  `packages/dictionary-core/src/artifact/kanji-data.test.ts`, "a kanji’s JLPT level";
+  `packages/dictionary-core/src/detail/kanji.test.ts`, "要" and "a kanji without elements lists
+  its components; one stroke is singular"; `apps/web/e2e/kanji.spec.ts`, "the search page for 要
+  opens 要 to its stroke order, metrics, meanings, readings, and words", and the same on the word
+  page.
 
 **Share and actions.** Beside the metrics, Share and a ••• menu, as the app's Kanji Detail has
 them. Share sends the kanji, its readings, and its meanings, as the app's does, with the link to
@@ -861,12 +873,13 @@ lucide has no brand icons, and #511 asked for a phone.
 
 **Footer.** The footer starts with the 全 mark and the site name, linking home, and the site's
 one-line description. Beside them on wide screens, and below them in two columns on phones, three
-labelled groups hold every link: Product (Dictionary, Sources, Sitemap), Company (About, Support,
-Contact), and Policies (Legal (`/legal/`), Privacy Policy, Terms of Use, DMCA Copyright Policy,
-Affiliate Disclosure). A rule, then the copyright line, ends it. Legal follows Contact, as in the
-#462 design. The #462 mockup's footer lists only Contact, Legal, Privacy, Terms, Sources, and
-Sitemap. Whether the footer drops the other links is waiting on the owner's and Devin's decision
-(#511); until then it keeps them.
+labelled groups hold every link: Product (Dictionary, Browse by kana, Kanji by grade, Sources,
+Sitemap), Company (About, Support, Contact), and Policies (Legal (`/legal/`), Privacy Policy, Terms
+of Use, DMCA Copyright Policy, Affiliate Disclosure). A rule, then the copyright line, ends it. The
+browse links follow the #614 mockup ([Browse pages](browse.md#site-wide)). Legal follows Contact,
+as in the #462 design. The #462 mockup's footer lists only Contact, Legal, Privacy, Terms, Sources,
+and Sitemap. Whether the footer drops the other links is waiting on the owner's and Devin's
+decision (#511); until then it keeps them.
 
 - Source: #462 design (Contact, Legal, Privacy, Terms, Sources, Sitemap); #561 (the groups).
 - Check: `src/components/site-footer.test.tsx`, "the footer links Legal after Contact, before the
@@ -979,12 +992,13 @@ crawling (see [`docs/agents/web.md`](../../../../docs/agents/web.md)).
   `src/lib/dictionary/results/links.test.ts`, "isIndexable".
 
 **Sitemaps.** The pages sitemap lists the dictionary home. The sitemap index also lists the word
-sitemaps, with every word page's canonical URL. Those are the only dictionary sitemaps (ADR 0010).
-Search pages aren't in any sitemap yet.
+sitemaps, with every word page's canonical URL, and the browse sitemap, with every browse page's
+([Browse pages](browse.md#site-wide)). Those are the only dictionary sitemaps (ADR 0010, amended
+for #614). Search pages aren't in any sitemap yet.
 
 - Source: ADR 0007; #465; ADR 0010.
-- Check: `src/lib/dictionary/sitemaps.test.ts`, "the index lists every word sitemap, and nothing
-  else"; smoke "$index lists the pages and word sitemaps, and no kanji or conjugations sitemap"
+- Check: `src/lib/dictionary/sitemaps.test.ts`, "the index lists every word sitemap and the
+  browse sitemap, and nothing else"; smoke "$index lists the pages and word sitemaps, and no kanji or conjugations sitemap"
   (for `/sitemap-index.xml` and `/sitemap.xml`), "word sitemap lists 1 to 50,000 canonical URLs",
   and `404 /sitemaps/kanji.xml`.
 

@@ -57,7 +57,7 @@ test.describe('site header and footer', () => {
     await page.goto('/')
     const footer = page.getByRole('contentinfo')
     for (const [group, links] of [
-      ['Product', ['Dictionary', 'Sources', 'Sitemap']],
+      ['Product', ['Dictionary', 'Browse by kana', 'Kanji by grade', 'Sources', 'Sitemap']],
       ['Company', ['About', 'Support', 'Contact']],
       [
         'Policies',

@@ -1,14 +1,21 @@
 import type { FrequencyRow } from '../detail/rows'
 
-export function frequencyQueries(ids: readonly string[]) {
-  const placeholders = ids.map(() => 'unhex(?)').join(', ')
+function evidenceQueries(idsIn: string, params: string[]) {
   return {
     levels: `SELECT lower(hex(language_reference_id)) AS id, level FROM jlpt.level_evidence
-      WHERE language_reference_id IN (${placeholders})`,
+      WHERE language_reference_id IN (${idsIn})`,
     ranks: `SELECT lower(hex(language_reference_id)) AS id, rank FROM tubelex.frequency_evidence
-      WHERE language_reference_id IN (${placeholders})`,
-    params: [...ids]
+      WHERE language_reference_id IN (${idsIn})`,
+    params
   }
+}
+
+export function frequencyQueries(ids: readonly string[]) {
+  return evidenceQueries(ids.map(() => 'unhex(?)').join(', '), [...ids])
+}
+
+export function listedFrequencyQueries(ids: readonly string[]) {
+  return evidenceQueries('SELECT unhex(value) FROM json_each(?)', [JSON.stringify(ids)])
 }
 
 export function frequencyByEntry(
