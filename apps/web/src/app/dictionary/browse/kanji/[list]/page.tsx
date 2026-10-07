@@ -1,4 +1,4 @@
-import { kanjiList } from '@zenbu/dictionary-core/browse/lists'
+import { kanjiList, minimumIndexedWords } from '@zenbu/dictionary-core/browse/lists'
 import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
 import { KanjiListPage } from '@/components/dictionary/browse/kanji-pages'
@@ -18,8 +18,10 @@ async function load(params: Props['params']) {
 }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
-  const { list, intro } = await load(params)
-  return dictionaryMetadata(kanjiListPath(list.slug), `${list.name} kanji`, intro)
+  const { list, kanji, intro } = await load(params)
+  return dictionaryMetadata(kanjiListPath(list.slug), `${list.name} kanji`, intro, {
+    index: kanji.kanji.length >= minimumIndexedWords
+  })
 }
 
 export default async function KanjiListRoute({ params }: Props) {

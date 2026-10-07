@@ -1,4 +1,5 @@
 import { type KanaScript, kanaScriptOf } from '@zenbu/dictionary-core/browse/kana'
+import { minimumIndexedWords } from '@zenbu/dictionary-core/browse/lists'
 import { katakana } from '@zenbu/dictionary-core/detail/text'
 import type { Metadata } from 'next'
 import { notFound, permanentRedirect } from 'next/navigation'
@@ -82,7 +83,8 @@ function prefixMetadata(script: KanaScript, prefix: string, total: number, page:
   return dictionaryMetadata(
     kanaPath(script, prefix, page),
     `${startingWith(prefix)}${paged}`,
-    `${plural(total, 'Japanese word')} whose reading starts with ${prefix}, with their meanings.`
+    `${plural(total, 'Japanese word')} whose reading starts with ${prefix}, with their meanings.`,
+    { index: total >= minimumIndexedWords }
   )
 }
 

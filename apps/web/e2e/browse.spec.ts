@@ -1,7 +1,8 @@
-import { expect, needed, test } from './test'
+import { expect, needed, sourcesToggle, test } from './test'
 
 const browse = (path = '') => `/dictionary/browse/${path}`
 const kana = (script: string, value: string) => browse(`${script}/${encodeURIComponent(value)}/`)
+const search = (query: string) => `/dictionary/search/${encodeURIComponent(query)}/`
 
 test.describe('browse pages', () => {
   test('the dictionary home leads into the browse pages', async ({ page }) => {
@@ -18,7 +19,7 @@ test.describe('browse pages', () => {
     )
     await expect(grades.getByRole('link', { name: '日', exact: true })).toHaveAttribute(
       'href',
-      `/dictionary/search/${encodeURIComponent('日')}/`
+      search('日')
     )
     const categories = page.getByRole('region', { name: 'Browse by category' })
     await expect(categories.getByRole('link', { name: 'Onomatopoeia' })).toHaveAttribute(
@@ -119,34 +120,35 @@ test.describe('browse pages', () => {
     await expect(page).toHaveURL(needed.path)
   })
 
-  test('a category lists its words most used first, a page at a time', async ({ page }) => {
-    await page.goto(browse('parts-of-speech/'))
-    await page.getByRole('link', { name: /^Ichidan verbs/ }).click()
-    await expect(page).toHaveURL(browse('ichidan-verbs/'))
-    await expect(page.getByRole('heading', { level: 1 })).toHaveText('Japanese ichidan verbs')
-    await expect(page.getByRole('main')).toContainText('most used on YouTube first')
-    await expect(page.getByRole('navigation', { name: 'Order' })).toHaveCount(0)
-    await expect(page.locator('[data-section="words"]')).toContainText('てる')
-    await page
-      .getByRole('navigation', { name: 'Pages' })
-      .getByRole('link', { name: '2', exact: true })
-      .click()
-    await expect(page).toHaveURL(browse('ichidan-verbs/2/'))
-    await expect(page).toHaveTitle('Japanese ichidan verbs, page 2 | Zenbu Japanese')
+  test('a two-kana group leads to the groups before and after it', async ({ page }) => {
+    await page.goto(kana('hiragana', 'いる'))
+    const neighbors = page.getByRole('navigation', { name: 'Neighboring groups' })
+    await expect(neighbors.getByRole('link', { name: '← いり' })).toHaveAttribute(
+      'href',
+      kana('hiragana', 'いり')
+    )
+    await expect(neighbors.getByRole('link', { name: 'いれ →' })).toHaveAttribute(
+      'href',
+      kana('hiragana', 'いれ')
+    )
+    await expect(neighbors.getByText('いる', { exact: true })).toHaveAttribute(
+      'aria-current',
+      'page'
+    )
   })
 
   test('the kanji lists open each kanji’s search page', async ({ page }) => {
     await page.goto(browse('kanji/'))
     await expect(
       page.getByRole('list', { name: 'Grade 1 kanji' }).getByRole('link', { name: '日' })
-    ).toHaveAttribute('href', `/dictionary/search/${encodeURIComponent('日')}/`)
+    ).toHaveAttribute('href', search('日'))
     await expect(
       page.getByRole('list', { name: 'Stroke counts' }).getByRole('link')
     ).not.toHaveCount(0)
     await page.goto(browse('kanji/grade-4/'))
     await expect(page.getByRole('heading', { level: 1 })).toHaveText('Grade 4 kanji')
     await page.getByRole('link', { name: /^要/ }).click()
-    await expect(page).toHaveURL(`/dictionary/search/${encodeURIComponent('要')}/`)
+    await expect(page).toHaveURL(search('要'))
   })
 
   test('the JLPT kanji lists are Waller’s, credited under CC BY', async ({ page }) => {
@@ -169,43 +171,31 @@ test.describe('browse pages', () => {
     await expect(
       page.getByRole('navigation', { name: 'Kanji lists' }).getByRole('link', { name: 'JLPT N4' })
     ).toHaveAttribute('href', browse('kanji/jlpt-n4/'))
+    await sourcesToggle(page).click()
     await expect(main.getByRole('link', { name: 'JLPT kanji levels' })).toBeVisible()
     await expect(main).toContainText('CC BY')
     await main.getByRole('link', { name: /^日/ }).click()
-    await expect(page).toHaveURL(`/dictionary/search/${encodeURIComponent('日')}/`)
+    await expect(page).toHaveURL(search('日'))
   })
 
-  test('the frequency dictionaries lead to each list, and credit Jiten under CC BY-SA', async ({
+  test('a compatibility kanji keeps its glyph, with its base kanji’s meaning and search', async ({
     page
   }) => {
-    await page.goto(browse('frequency-dictionaries/'))
-    for (const name of ['YouTube', 'Wikipedia', 'TV and movies', 'Anime', 'Video games']) {
-      await expect(page.getByRole('heading', { level: 2, name })).toBeVisible()
-    }
-    await expect(page.getByRole('link', { name: /^N5/ })).toHaveAttribute(
-      'href',
-      browse('frequency-dictionaries/jlpt-n5/')
-    )
-    await page.getByRole('heading', { level: 2, name: 'Anime' }).getByRole('link').click()
-    await expect(page).toHaveURL(browse('frequency-dictionaries/anime/'))
-    await expect(page.getByRole('heading', { level: 1 })).toHaveText(
-      'Most used Japanese words: Anime'
-    )
-    const main = page.getByRole('main')
-    await expect(main).toContainText('Ranks 1 to 200.')
-    await expect(
-      main
-        .locator('[data-section="words"]')
-        .getByText(/^#\d+$/)
-        .first()
-    ).toBeVisible()
-    await expect(main.getByRole('link', { name: 'Jiten' })).toBeVisible()
-    await expect(main).toContainText('CC BY-SA 4.0')
-    await expect(main).toContainText('shared under the same licence')
+    await page.goto(browse('kanji/jinmeiyo/'))
+    const variant = page.getByRole('main').getByRole('link', { name: /^\u{FA45} sea$/u })
+    await expect(variant).toHaveAttribute('href', search('海'))
+  })
+
+  test('a browse page is one column, at most 1,024 pixels wide', async ({ page }) => {
+    await page.goto(browse())
+    const main = await page.getByRole('main').boundingBox()
+    const viewport = page.viewportSize()
+    if (!main || !viewport) throw new Error('The page has no main column')
+    expect(main.width).toBeCloseTo(Math.min(1_024, viewport.width), 0)
   })
 
   test('a long breadcrumb trail wraps rather than overlapping', async ({ page }) => {
-    await page.goto(browse('frequency-dictionaries/anime/'))
+    await page.goto(browse('frequency-dictionaries/anime/1-1000/'))
     const crumbs = page.getByRole('navigation', { name: 'breadcrumb' }).getByRole('listitem')
     await expect(crumbs).toHaveCount(5)
     const overflowing = await crumbs.evaluateAll(items =>
@@ -223,7 +213,8 @@ test.describe('browse pages', () => {
       ['Grade 1', 'kanji/grade-1/'],
       ['JLPT N5 kanji', 'kanji/jlpt-n5/'],
       ['Frequency dictionaries', 'frequency-dictionaries/'],
-      ['Anime', 'frequency-dictionaries/anime/'],
+      ['JLPT N5 vocabulary', 'frequency-dictionaries/jlpt/n5/'],
+      ['Anime', 'frequency-dictionaries/anime/1-1000/'],
       ['Parts of speech', 'parts-of-speech/'],
       ['Common words', 'common-words/']
     ]) {
@@ -243,14 +234,14 @@ test.describe('browse URLs', () => {
     )
   })
 
-  test('a list’s first page has no number, kana order redirects, and a page past the last is 404', async ({
+  test('a list’s first page has no number, and a page or list the dictionary lacks is 404', async ({
     request,
     baseURL
   }) => {
     for (const [from, to] of [
       ['ichidan-verbs/1/', 'ichidan-verbs/'],
-      ['ichidan-verbs/kana-order/', 'ichidan-verbs/'],
-      ['ichidan-verbs/kana-order/2/', 'ichidan-verbs/2/']
+      ['ichidan-verbs/kana-order/1/', 'ichidan-verbs/kana-order/'],
+      ['frequency-dictionaries/jlpt/n5/1/', 'frequency-dictionaries/jlpt/n5/']
     ]) {
       const response = await request.get(browse(from), { maxRedirects: 0 })
       expect(response.status(), from).toBe(308)
@@ -261,11 +252,19 @@ test.describe('browse URLs', () => {
       browse('ichidan-verbs/10001/'),
       browse('no-such-category/2/'),
       browse('no-such-category/1/'),
+      browse('no-such-category/kana-order/'),
       browse('kana/1/'),
       `${kana('hiragana', 'ぁぁ')}1/`,
       browse('no-such-category/'),
       browse('kanji/grade-9/'),
-      kana('katakana', 'か')
+      kana('katakana', 'か'),
+      browse('frequency-dictionaries/anime/'),
+      browse('frequency-dictionaries/anime/2/'),
+      browse('frequency-dictionaries/anime/1001-1999/'),
+      browse('frequency-dictionaries/anime/10001-11000/'),
+      browse('frequency-dictionaries/jlpt-n5/'),
+      browse('frequency-dictionaries/jlpt/'),
+      browse('frequency-dictionaries/jlpt/n6/')
     ]) {
       expect((await request.get(path, { maxRedirects: 0 })).status(), path).toBe(404)
     }
