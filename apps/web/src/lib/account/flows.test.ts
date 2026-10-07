@@ -1,16 +1,9 @@
 import { describe, expect, test, vi } from 'vitest'
-import { refusedResult } from '@/test/account-answers'
+import { refusedResult, stubAccountApi as stubApi } from '@/test/account-answers'
 import { accessTokens } from './access-tokens'
-import type { AccountApi } from './client'
-import { afterSigningInAgain, deleteTheAccount, stillSignedInAs } from './flows'
+import { afterSigningInAgain, deleteTheAccount, signedInAs } from './flows'
 
 const previous = { userId: 'u1', email: 'kana@example.com', signedInAt: 0, token: 'old-bare' }
-
-function stubApi(parts: Partial<Record<keyof AccountApi, unknown>>) {
-  return Object.fromEntries(
-    Object.entries(parts).map(([name, answer]) => [name, vi.fn(async () => answer)])
-  ) as unknown as AccountApi
-}
 
 describe('signing in again on the account page', () => {
   test("signs this browser's earlier session out, and forgets the access token", async () => {
@@ -35,10 +28,13 @@ describe('signing in again on the account page', () => {
 
   test('tells whether the browser is still signed in to the account on the page', async () => {
     const same = stubApi({ session: { ok: true, value: previous } })
-    expect(await stillSignedInAs(same, 'u1')).toBe(true)
-    expect(await stillSignedInAs(same, 'u9')).toBe(false)
+    expect(await signedInAs(same, 'u1')).toEqual({ kind: 'this-account' })
+    expect(await signedInAs(same, 'u9')).toEqual({ kind: 'elsewhere' })
     const offline = stubApi({ session: { ok: false, failure: { kind: 'offline' } } })
-    expect(await stillSignedInAs(offline, 'u1')).toBe(false)
+    expect(await signedInAs(offline, 'u1')).toEqual({
+      kind: 'failed',
+      failure: { kind: 'offline' }
+    })
   })
 })
 

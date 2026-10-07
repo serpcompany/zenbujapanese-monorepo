@@ -46,6 +46,14 @@ function SignedOut({ notice }: { notice: string | null }) {
   )
 }
 
+function withTheNewerProfile(shown: View, loaded: SignedInAccount): SignedInAccount {
+  if (shown.kind !== 'signed-in') return loaded
+  const { profile } = shown.account
+  return profile.id === loaded.profile.id && profile.version > loaded.profile.version
+    ? { ...loaded, profile }
+    : loaded
+}
+
 export function AccountView({
   settings,
   returnedError
@@ -81,14 +89,14 @@ export function AccountView({
     const { session } = loaded.account
     const confirmation = afterGoogleConfirmation(api, session)
     if (confirmation === 'this-account') setConfirmedHere(Date.now())
-    setView({
+    setView(current => ({
       kind: 'signed-in',
-      account: loaded.account,
+      account: withTheNewerProfile(current, loaded.account),
       notice:
         confirmation === 'another-account'
           ? `That Google account signs in to another Zenbu account, so this browser is now signed in to ${session.email}.`
           : null
-    })
+    }))
   }, [api, tokens, signedOut])
 
   const update = useCallback(
@@ -154,6 +162,7 @@ export function AccountView({
       <FormMessage problem={returnedError ? returnedErrorMessage(returnedError) : null} />
       <Notice>{view.notice}</Notice>
       <ProfileForm
+        key={account.profile.id}
         api={api}
         tokens={tokens}
         profile={account.profile}

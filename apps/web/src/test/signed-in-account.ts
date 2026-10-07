@@ -35,8 +35,8 @@ export const settings = (apple = false, google = false): AccountSettings => ({
   google
 })
 
-const sessionAnswer = (userId: string, token: string, minutes: number) =>
-  answer({ user: { id: userId, email }, session: { token, createdAt: minutesAgo(minutes) } })
+export const sessionAnswer = (userId: string, token: string, minutes: number, of = email) =>
+  answer({ user: { id: userId, email: of }, session: { token, createdAt: minutesAgo(minutes) } })
 
 export function signedIn({
   signedInMinutesAgo = 1,
@@ -46,13 +46,13 @@ export function signedIn({
 }: {
   signedInMinutesAgo?: number
   ways?: object[]
-  later?: { userId: string; minutesAgo: number }
+  later?: { userId: string; minutesAgo: number; email?: string }
   more?: Parameters<typeof stubAccountService>[0]
 } = {}) {
   return stubAccountService({
     'GET /v1/auth/get-session': [
       sessionAnswer('u1', 'old-bare', signedInMinutesAgo),
-      sessionAnswer(later.userId, 'new-bare', later.minutesAgo)
+      sessionAnswer(later.userId, 'new-bare', later.minutesAgo, later.email)
     ],
     'GET /v1/auth/token': [answer({ token: oldAccess }), answer({ token: newAccess })],
     'GET /v1/me': answer(profile),

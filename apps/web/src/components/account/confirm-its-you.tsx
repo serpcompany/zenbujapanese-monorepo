@@ -82,10 +82,14 @@ export function ConfirmItsYou({
           refuseApple={authorization =>
             appleUsers.includes(appleUserOf(authorization.idToken) ?? '') ? null : otherAppleId
           }
-          beforeGoogle={() => rememberConfirming(account.session)}
+          beforeGoogle={() => {
+            if (wanted.current) rememberConfirming(account.session)
+            return wanted.current
+          }}
           onSignedIn={async apple => {
             const session = await afterSigningInAgain(api, tokens, account.session)
-            onConfirmed(session, apple, wanted.current)
+            const sameAccount = session === null || session.userId === account.session.userId
+            onConfirmed(session, apple, wanted.current && sameAccount)
           }}
         />
       ) : (

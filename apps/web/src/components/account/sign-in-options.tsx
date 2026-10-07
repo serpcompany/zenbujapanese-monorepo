@@ -26,7 +26,7 @@ interface SignInOptionsProps {
   emailLabels: { send: string; signIn: string }
   googleReturn: { done: string; failed: string }
   refuseApple?: (authorization: AppleAuthorization) => string | null
-  beforeGoogle?: () => void
+  beforeGoogle?: () => boolean
   onSignedIn: (apple: AppleCode | null) => void | Promise<void>
 }
 
@@ -84,7 +84,7 @@ export function SignInOptions({
       setBusy(false)
       return setProblem(failureMessage(started.failure))
     }
-    beforeGoogle?.()
+    if (beforeGoogle && !beforeGoogle()) return setBusy(false)
     window.location.assign(started.value)
   }
 

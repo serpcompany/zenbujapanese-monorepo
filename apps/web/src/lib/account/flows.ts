@@ -22,9 +22,15 @@ export async function afterSigningInAgain(
   return session.value
 }
 
-export async function stillSignedInAs(api: AccountApi, userId: string): Promise<boolean> {
+export async function signedInAs(
+  api: AccountApi,
+  userId: string
+): Promise<
+  { kind: 'this-account' } | { kind: 'elsewhere' } | { kind: 'failed'; failure: Failure }
+> {
   const session = await api.session()
-  return session.ok && session.value?.userId === userId
+  if (!session.ok) return { kind: 'failed', failure: session.failure }
+  return session.value?.userId === userId ? { kind: 'this-account' } : { kind: 'elsewhere' }
 }
 
 export function afterGoogleConfirmation(
@@ -35,7 +41,8 @@ export function afterGoogleConfirmation(
   forgetConfirming()
   if (earlier === null) return 'none'
   if (earlier.userId !== session.userId) return 'another-account'
-  if (isEarlierSessionOf(earlier, session)) void api.revokeSession(earlier.token)
+  if (!isEarlierSessionOf(earlier, session)) return 'none'
+  void api.revokeSession(earlier.token)
   return 'this-account'
 }
 

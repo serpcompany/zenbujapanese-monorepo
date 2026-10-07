@@ -7,7 +7,7 @@ import { useBusy } from '@/hooks/use-busy'
 import type { AccessTokens } from '@/lib/account/access-tokens'
 import type { AccountSession, Identity, Provider } from '@/lib/account/answers'
 import type { AccountApi, Result } from '@/lib/account/client'
-import { afterSigningInAgain, stillSignedInAs } from '@/lib/account/flows'
+import { afterSigningInAgain, signedInAs } from '@/lib/account/flows'
 import { type SignedInAccount, signsInWith } from '@/lib/account/load'
 import { failureMessage, isSignedOut, needsFreshSignIn } from '@/lib/account/messages'
 import { accountPages } from '@/lib/account/pages'
@@ -73,8 +73,13 @@ export function SignInWaysSection({
   }
 
   async function signedInElsewhere() {
-    if (await stillSignedInAs(api, account.session.userId)) return false
+    const signedIn = await signedInAs(api, account.session.userId)
+    if (signedIn.kind === 'this-account') return false
     setBusy(false)
+    if (signedIn.kind === 'failed') {
+      setProblem(failureMessage(signedIn.failure))
+      return true
+    }
     setPending(null)
     onChanged()
     return true

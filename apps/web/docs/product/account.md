@@ -124,14 +124,15 @@ account. When the service can't answer, it says so, with Try again.
 **Access tokens.** The page keeps its 15-minute access token in memory only, renews it a minute
 before it expires, and on a `401` gets one new token and asks again. It takes a token only for the
 account it shows: one for another account, as after signing in elsewhere in another tab, shows
-signed out. When the service refuses a new token (`401`, `unauthorized` or `sign_in_again`), the
+signed out, and when the page comes to show another account, it drops the token it held. When the service refuses a new token (`401`, `unauthorized` or `sign_in_again`), the
 page shows signed out; another `401`, such as a refused Apple token, says what went wrong and keeps
 the learner signed in. The signed session token stays in its HttpOnly cookie, on the account
 service's host: the page never holds it. The session's bare token, which `get-session` shows and
 which signs nothing in, only names the session to sign out after a fresh sign-in.
 
 - Source: the client guide (Access tokens); #468's security decisions.
-- Check: `src/lib/account/access-tokens.test.ts`; `src/lib/account/messages.test.ts`, "takes a 401
+- Check: `src/lib/account/access-tokens.test.ts`, with "drops the token it holds when the page
+  shows another account"; `src/lib/account/messages.test.ts`, "takes a 401
   as signed out only when it says the session is gone, not for a refused token or nonce"; Account
   page tests, "gets a new access token once when /v1/me answers 401";
   `src/lib/account/load.test.ts`.
@@ -140,8 +141,8 @@ which signs nothing in, only names the session to sign out after a fresh sign-in
 sends only what changed, with the profile's version; an empty username removes it. When the
 profile changed in another app first, the form shows it as it is now and says so; a taken username
 says to try another; another refusal shows the service's reason. When the page reads a newer
-profile, as after changing how the learner signs in, the form shows it; an older one never
-replaces it.
+profile, as after changing how the learner signs in, the form shows it; an older one of the same
+account never replaces it, and another account's always does.
 
 - Source: `PATCH /v1/me` ([`account-api.md`](../../../../docs/agents/account-api.md), Profiles and
   sync).
@@ -154,17 +155,20 @@ its email. Each has Remove while there's more than one, which asks first ("Stop 
 …? We'll email you that it was removed."). Add Apple, Add Google, and Add an email code appear for
 the ways the account lacks, where the site offers them; an email code adds the account's own
 email. Changing a way needs a sign-in from the last 10 minutes, so the page asks the learner to
-confirm it's you first when theirs is older, or when the service says so. Before it changes a way,
-the page checks the browser is still signed in to the account it shows; signed in elsewhere since,
-as in another tab, it changes nothing and shows the account now signed in.
+confirm it's you first when theirs is older, or when the service says so. Before it removes a way,
+or adds Apple or Google, the page checks the browser is still signed in to the account it shows:
+signed in elsewhere since, as in another tab, it changes nothing and shows the account now signed
+in, and when it can't tell, it says so and changes nothing. An email code adds only the shown
+account's own email.
 
 - Source: the client guide (Signing in); `POST /v1/auth/link-social` and `unlink-account`.
 - Check: Ways tests, "removes a way to sign in after asking, and after a fresh sign-in when the
   last is old", "adds Google by sending the browser to Google, to come back to the account page",
   "adds the account's own email as a way to sign in, with a code", "adds Apple with its popup, and
-  stays signed in when Apple is refused on the way", and "changes nothing, and shows the account now
-  signed in, when another tab signed in elsewhere"; `src/lib/account/flows.test.ts`, "tells whether
-  the browser is still signed in to the account on the page".
+  stays signed in when Apple is refused on the way", "changes nothing, and shows the account now
+  signed in, when another tab signed in elsewhere", and "says so, and changes nothing, when it
+  can't tell which account the browser is in"; `src/lib/account/flows.test.ts`, "tells whether the
+  browser is still signed in to the account on the page".
 
 **Confirm it's you.** A fresh sign-in, with the ways the account has: Apple, Google, or a code to
 the account's own email. Apple must be the Apple ID the account uses: another is refused before
@@ -172,9 +176,11 @@ it signs in. Confirming, or adding an email code, which signs in again too, sign
 earlier session out, and the page takes a new access token, which carries the new sign-in. The
 page then counts itself fresh for nine minutes by its own clock, whatever the browser's clock says
 of the service's. Cancel while a confirmation is still finishing stops what it was for: nothing is
-deleted, removed, or added. Google's confirmation leaves the page and comes back to it; the page
-remembers the account it left from (in session storage) and, back on the same account, signs the
-earlier session out. If the Google account the learner chose signs in to another Zenbu account,
+deleted, removed, or added, and the browser doesn't leave for Google. A confirmation that lands the
+browser in another account goes on with nothing. Google's confirmation leaves the page and comes
+back to it; the page remembers the account it left from (in session storage) and, back on the same
+account with a new session, signs the earlier session out and counts as confirmed; back with the
+same session, as after Google failed, it counts as nothing. If the Google account the learner chose signs in to another Zenbu account,
 the page says the browser is now signed in to that one, and changes nothing else. Coming back with
 the browser's Back button forgets it; a page that can't load the account keeps it for Try again.
 
@@ -182,11 +188,14 @@ the browser's Back button forgets it; a page that can't load the account keeps i
 - Check: Account page tests, "deletes after the learner confirms and, with a sign-in over nine
   minutes old, signs in again by code", "won't confirm with another Apple ID, and asks again when
   Apple refuses the code", "after confirming with Google, signs the earlier session out, or says
-  when Google's account is another's", and "deletes nothing when the learner cancels while
-  confirming is still finishing"; Ways tests, "adds the account's own email as a way to sign in,
+  when Google's account is another's", "counts no confirmation when Google's sign-in didn't happen,
+  as back from a failed one", "deletes nothing when the learner cancels while confirming is still
+  finishing", and "goes on with nothing when confirming lands the browser in another account"; Ways
+  tests, "adds the account's own email as a way to sign in,
   with a code", "adds Apple after confirming, whatever the browser clock says of the new sign-in",
-  and "confirming with Google remembers the account it leaves from, and forgets it back without
-  signing in"; `src/lib/account/flows.test.ts`.
+  "confirming with Google remembers the account it leaves from, and forgets it back without
+  signing in", and "stays on the page when the learner cancels while Google's sign-in is starting";
+  `src/lib/account/flows.test.ts`.
 
 **Sign out.** Signs this browser out; the learner's other devices stay signed in. When the service
 can't sign it out, the page says so and stays signed in.

@@ -1,5 +1,5 @@
-import { describe, expect, test, vi } from 'vitest'
-import { jwtFor, refusedResult } from '@/test/account-answers'
+import { describe, expect, test } from 'vitest'
+import { jwtFor, refusedResult, stubAccountApi } from '@/test/account-answers'
 import { accessTokens } from './access-tokens'
 import type { AccountApi, Result } from './client'
 import { isFresh, loadAccount, type SignedInAccount } from './load'
@@ -17,18 +17,14 @@ const ok = <T>(value: T): Result<T> => ({ ok: true, value })
 const refused = (status: number) =>
   refusedResult(status, status === 401 ? 'unauthorized' : 'internal')
 
-function stubApi(parts: Partial<Record<keyof AccountApi, unknown>>) {
-  const answers = {
+const stubApi = (parts: Partial<Record<keyof AccountApi, unknown>>) =>
+  stubAccountApi({
     session: ok(session),
     accessToken: ok(jwtFor({ sub: 'u1' })),
     profile: ok(profile),
     identities: ok([]),
     ...parts
-  }
-  return Object.fromEntries(
-    Object.entries(answers).map(([name, answer]) => [name, vi.fn(async () => answer)])
-  ) as unknown as AccountApi
-}
+  })
 
 const load = (api: AccountApi) => loadAccount(api, accessTokens(api))
 

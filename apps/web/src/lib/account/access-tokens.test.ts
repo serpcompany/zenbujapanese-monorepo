@@ -55,6 +55,19 @@ describe('access tokens', () => {
     expect(call).not.toHaveBeenCalled()
   })
 
+  test('drops the token it holds when the page shows another account', async () => {
+    const accessToken = vi
+      .fn()
+      .mockResolvedValueOnce({ ok: true, value: jwtFor({ sub: 'u1' }) })
+      .mockResolvedValueOnce({ ok: true, value: jwtFor({ sub: 'u9' }) })
+    const tokens = accessTokens({ accessToken })
+    const call = vi.fn(async (token: string) => ({ ok: true as const, value: token }))
+    tokens.belongTo('u1')
+    await tokens.use(call)
+    tokens.belongTo('u9')
+    expect(await tokens.use(call)).toEqual({ ok: true, value: jwtFor({ sub: 'u9' }) })
+  })
+
   test('keeps no token that was being issued when it was told to forget', async () => {
     let answer: (value: { ok: true; value: string }) => void = () => {}
     const accessToken = vi

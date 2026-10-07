@@ -1,7 +1,10 @@
 import { afterEach, describe, expect, test, vi } from 'vitest'
+import { accessTokens } from '@/lib/account/access-tokens'
+import { accountApi } from '@/lib/account/client'
 import { idTokenFor } from '@/test/account-answers'
 import {
   answer,
+  apiUrl,
   click,
   fill,
   refusal,
@@ -22,10 +25,12 @@ import {
   newAccess,
   oldAccess,
   profile,
+  sessionAnswer,
   settings,
   signedIn
 } from '@/test/signed-in-account'
 import { AccountView } from './account-view'
+import { ConfirmItsYou } from './confirm-its-you'
 
 afterEach(unmount)
 
@@ -231,19 +236,59 @@ describe('the account page', () => {
     expect(window.sessionStorage.getItem('zenbu-confirming')).toBeNull()
   })
 
+  test("counts no confirmation when Google's sign-in didn't happen, as back from a failed one", async () => {
+    window.sessionStorage.setItem(
+      'zenbu-confirming',
+      JSON.stringify({ userId: 'u1', token: 'old-bare' })
+    )
+    const { routes } = signedIn({ signedInMinutesAgo: 20 })
+    const page = await askedToDelete()
+    await shows(page, 'Confirm it’s you')
+    expect(routes()).not.toContain('POST /v1/auth/revoke-session')
+    expect(routes()).not.toContain('DELETE /v1/me')
+  })
+
+  test('goes on with nothing when confirming lands the browser in another account', async () => {
+    signedIn({
+      more: {
+        'GET /v1/auth/get-session': sessionAnswer('u9', 'their-bare', 0, 'someone@example.com')
+      }
+    })
+    const api = accountApi(apiUrl)
+    const onConfirmed = vi.fn()
+    const page = render(
+      <ConfirmItsYou
+        api={api}
+        tokens={accessTokens(api)}
+        settings={settings()}
+        account={{
+          session: { userId: 'u1', email, signedInAt: 0, token: 'old-bare' },
+          profile,
+          identities: [{ id: 'i1', provider: 'email', subject: email }]
+        }}
+        appleOnly={false}
+        why="Deleting needs a sign-in from the last few minutes."
+        onConfirmed={onConfirmed}
+        onCancel={() => undefined}
+      />
+    )
+    await confirmWithEmailCode(page)
+    await vi.waitFor(() =>
+      expect(onConfirmed).toHaveBeenCalledWith(
+        expect.objectContaining({ userId: 'u9' }),
+        null,
+        false
+      )
+    )
+  })
+
   test('deletes nothing when the learner cancels while confirming is still finishing', async () => {
     let finish: (response: Response) => void = () => {}
     const { routes } = signedIn({
       signedInMinutesAgo: 20,
       more: {
         'GET /v1/auth/get-session': [
-          answer({
-            user: { id: 'u1', email },
-            session: {
-              token: 'old-bare',
-              createdAt: new Date(Date.now() - 1_200_000).toISOString()
-            }
-          }),
+          sessionAnswer('u1', 'old-bare', 20),
           () => new Promise<Response>(resolve => (finish = resolve))
         ]
       }
@@ -251,12 +296,7 @@ describe('the account page', () => {
     const page = await askedToDelete()
     await confirmWithEmailCode(page)
     await click(page, 'Cancel')
-    finish(
-      answer({
-        user: { id: 'u1', email },
-        session: { token: 'new-bare', createdAt: new Date().toISOString() }
-      })
-    )
+    finish(sessionAnswer('u1', 'new-bare', 0))
     await shows(page, 'Delete account')
     await vi.waitFor(() => expect(routes()).toContain('POST /v1/auth/revoke-session'))
     expect(routes()).not.toContain('DELETE /v1/me')

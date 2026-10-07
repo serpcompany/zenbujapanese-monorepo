@@ -55,7 +55,10 @@ export function accessTokens(api: Pick<AccountApi, 'accessToken'>, now = () => D
       issuing += 1
     },
     belongTo(userId: string) {
+      if (account === userId) return
       account = userId
+      current = null
+      issuing += 1
     }
   }
 }

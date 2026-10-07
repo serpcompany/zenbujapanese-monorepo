@@ -1,6 +1,6 @@
 import { act } from 'react'
 import { afterEach, describe, expect, test, vi } from 'vitest'
-import { idTokenFor } from '@/test/account-answers'
+import { idTokenFor, jwtFor } from '@/test/account-answers'
 import {
   answer,
   click,
@@ -20,6 +20,7 @@ import {
   emailWay,
   googleWay,
   profile,
+  sessionAnswer,
   settings,
   signedIn
 } from '@/test/signed-in-account'
@@ -162,17 +163,59 @@ describe('the ways to sign in, on the account page', () => {
     expect(window.sessionStorage.getItem('zenbu-confirming')).toBeNull()
   })
 
+  test("stays on the page when the learner cancels while Google's sign-in is starting", async () => {
+    const assign = leavingForGoogle()
+    let start: (response: Response) => void = () => {}
+    signedIn({
+      signedInMinutesAgo: 20,
+      ways: [emailWay, googleWay],
+      more: {
+        'POST /v1/auth/sign-in/social': () => new Promise<Response>(resolve => (start = resolve))
+      }
+    })
+    const page = render(<AccountView settings={settings(false, true)} returnedError={null} />)
+    await removingGoogle(page)
+    await click(page, 'Continue with Google')
+    await click(page, 'Cancel')
+    start(googlePage())
+    await settle()
+    expect(assign).not.toHaveBeenCalled()
+    expect(window.sessionStorage.getItem('zenbu-confirming')).toBeNull()
+  })
+
   test('changes nothing, and shows the account now signed in, when another tab signed in elsewhere', async () => {
+    const someoneElse = { ...profile, id: 'u9', name: 'Someone', email: 'someone@example.com' }
     const { routes } = signedIn({
       ways: [emailWay, googleWay],
-      later: { userId: 'u9', minutesAgo: 0 },
-      more: { 'POST /v1/auth/unlink-account': answer({ status: true }) }
+      later: { userId: 'u9', minutesAgo: 0, email: someoneElse.email },
+      more: {
+        'GET /v1/auth/token': [
+          answer({ token: jwtFor({ sub: 'u1' }) }),
+          answer({ token: jwtFor({ sub: 'u9' }) })
+        ],
+        'GET /v1/me': call =>
+          answer(call.authorization === `Bearer ${jwtFor({ sub: 'u9' })}` ? someoneElse : profile),
+        'POST /v1/auth/unlink-account': answer({ status: true })
+      }
     })
     const page = render(<AccountView settings={settings()} returnedError={null} />)
     await removingGoogle(page)
-    await vi.waitFor(() =>
-      expect(routes().filter(route => route === 'GET /v1/auth/list-accounts')).toHaveLength(2)
-    )
+    await shows(page, `Signed in as ${someoneElse.email}`)
+    expect(page.querySelector<HTMLInputElement>('#profile-name')?.value).toBe('Someone')
+    expect(routes()).not.toContain('POST /v1/auth/unlink-account')
+  })
+
+  test("says so, and changes nothing, when it can't tell which account the browser is in", async () => {
+    const { routes } = signedIn({
+      ways: [emailWay, googleWay],
+      more: {
+        'GET /v1/auth/get-session': [sessionAnswer('u1', 'old-bare', 1), refusal(500, 'internal')]
+      }
+    })
+    const page = render(<AccountView settings={settings()} returnedError={null} />)
+    await removingGoogle(page)
+    await shows(page, 'Something went wrong on our side')
+    expect(page.textContent).toContain(`Signed in as ${email}`)
     expect(routes()).not.toContain('POST /v1/auth/unlink-account')
   })
 })
