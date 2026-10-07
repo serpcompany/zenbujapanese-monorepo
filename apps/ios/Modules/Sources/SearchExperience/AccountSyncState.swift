@@ -44,26 +44,65 @@ struct SignedInAccount: Codable, Hashable, Sendable {
   let email: String
 }
 
-struct HeldListWord: Codable, Hashable, Sendable {
+struct AccountCopy: Codable, Hashable, Sendable {
+  enum Value: Codable, Hashable, Sendable {
+    case knownWord(KnownWordChange)
+    case list(WordList)
+    case listWord(WordListMembership)
+    case gone
+  }
+
   let key: SyncEntityKey
   let version: Int
-  let membership: WordListMembership
+  let value: Value
+
+  init?(_ change: SyncChange) {
+    key = change.key
+    version = change.version
+    switch change.payload {
+    case .knownWord(let word):
+      value = .knownWord(
+        KnownWordChange(
+          storedID: word.itemId, headword: word.headword, reading: word.reading, known: word.known))
+    case .list(let list):
+      guard let id = UUID(uuidString: list.id) else { return nil }
+      value = .list(
+        WordList(
+          id: id, name: list.name, position: list.position, createdAt: list.createdAt,
+          updatedAt: list.createdAt))
+    case .listWord(let word):
+      guard let listID = UUID(uuidString: word.listId) else { return nil }
+      value = .listWord(
+        WordListMembership(
+          listID: listID, entryID: word.itemId, headword: word.headword, reading: word.reading,
+          addedAt: word.addedAt))
+    case .gone:
+      value = .gone
+    case .unsynced:
+      return nil
+    }
+  }
 }
 
 struct AccountSyncState: Codable, Sendable, Equatable {
+  static let mostSignedOutChanges = 2_000
+  static let favoritesKey = SyncEntityKey(
+    entity: SyncEntity.list, entityID: SyncEntityKey.listID(WordLists.favoritesID))
+
   var account: SignedInAccount?
   var signedOutFrom: SignedInAccount?
   var cursor: String?
   var lastSyncedAt: Date?
   var queue: [QueuedSyncChange] = []
   var versions: [String: Int] = [:]
-  var heldWords: [HeldListWord] = []
-  var uploadsTheAccountHad: Set<String> = []
+  var heldWords: [AccountCopy] = []
+  var deferred: [String: AccountCopy] = [:]
+  var accountHadFavorites = false
+  var signedOutQueueStart: Int?
   var endedOnItsOwn = false
 
-  init(account: SignedInAccount? = nil, endedOnItsOwn: Bool = false) {
+  init(account: SignedInAccount? = nil) {
     self.account = account
-    self.endedOnItsOwn = endedOnItsOwn
   }
 
   init(from decoder: Decoder) throws {
@@ -74,9 +113,11 @@ struct AccountSyncState: Codable, Sendable, Equatable {
     lastSyncedAt = try container.decodeIfPresent(Date.self, forKey: .lastSyncedAt)
     queue = try container.decodeIfPresent([QueuedSyncChange].self, forKey: .queue) ?? []
     versions = try container.decodeIfPresent([String: Int].self, forKey: .versions) ?? [:]
-    heldWords = try container.decodeIfPresent([HeldListWord].self, forKey: .heldWords) ?? []
-    uploadsTheAccountHad =
-      try container.decodeIfPresent(Set<String>.self, forKey: .uploadsTheAccountHad) ?? []
+    heldWords = try container.decodeIfPresent([AccountCopy].self, forKey: .heldWords) ?? []
+    deferred = try container.decodeIfPresent([String: AccountCopy].self, forKey: .deferred) ?? [:]
+    accountHadFavorites =
+      try container.decodeIfPresent(Bool.self, forKey: .accountHadFavorites) ?? false
+    signedOutQueueStart = try container.decodeIfPresent(Int.self, forKey: .signedOutQueueStart)
     endedOnItsOwn = try container.decodeIfPresent(Bool.self, forKey: .endedOnItsOwn) ?? false
   }
 
@@ -86,14 +127,32 @@ struct AccountSyncState: Codable, Sendable, Equatable {
     signedOutFrom = account ?? signedOutFrom
     account = nil
     endedOnItsOwn = onItsOwn
+    if signedOutQueueStart == nil { signedOutQueueStart = queue.count }
   }
 
   mutating func resume(as account: SignedInAccount) -> Bool {
     guard signedOutFrom?.userID == account.userID else { return false }
     self.account = account
     signedOutFrom = nil
+    signedOutQueueStart = nil
     endedOnItsOwn = false
     return true
+  }
+
+  mutating func enqueue(_ change: QueuedSyncChange) {
+    guard let start = signedOutQueueStart else { return queue.append(change) }
+    if change.key.entity == SyncEntity.knownWord,
+      let earlier = queue[start...].lastIndex(where: { $0.key == change.key })
+    {
+      queue.remove(at: earlier)
+    }
+    guard queue.count - start < Self.mostSignedOutChanges else {
+      let endedOnItsOwn = endedOnItsOwn
+      self = AccountSyncState()
+      self.endedOnItsOwn = endedOnItsOwn
+      return
+    }
+    queue.append(change)
   }
 
   func version(of key: SyncEntityKey) -> Int {
@@ -113,10 +172,11 @@ struct AccountSyncState: Codable, Sendable, Equatable {
   mutating func forgetWords(of listID: UUID) {
     let prefix = SyncEntityKey.listWord(listID: listID, storedID: "").stored
     versions = versions.filter { !$0.key.hasPrefix(prefix) }
-    heldWords.removeAll { $0.membership.listID == listID }
+    deferred = deferred.filter { !$0.key.hasPrefix(prefix) }
+    heldWords.removeAll { $0.key.listWordParts?.listID == listID }
   }
 
-  mutating func hold(_ word: HeldListWord) {
+  mutating func hold(_ word: AccountCopy) {
     heldWords.removeAll { $0.key == word.key }
     heldWords.append(word)
   }

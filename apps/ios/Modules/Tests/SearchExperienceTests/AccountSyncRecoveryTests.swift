@@ -30,7 +30,7 @@ struct AccountSyncRecoveryTests {
     try await fixture.signIn()
     fixture.account.scheduler.stop()
     #expect(fixture.sync.state.cursor == "page-1")
-    #expect(fixture.sync.state.heldWords.map(\.membership.entryID) == [Fixture.miru])
+    #expect(fixture.sync.state.heldWords.map(\.key.listWordParts?.storedID) == [Fixture.miru])
 
     await fixture.launch()
     try await fixture.syncNow()

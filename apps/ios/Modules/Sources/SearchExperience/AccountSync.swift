@@ -149,7 +149,7 @@ final class AccountSync: LocalFileStore {
       return
     }
     guard !isUnavailable, state.keepsChanges else { return }
-    state.queue.append(change.queued(in: state))
+    state.enqueue(change.queued(in: state))
     persist()
     if account != nil { onLocalChange?() }
   }
@@ -195,6 +195,7 @@ final class AccountSync: LocalFileStore {
         guard self.session == session else { return }
         state.cursor = nil
         state.heldWords = []
+        state.deferred = [:]
         persist()
         continue
       }
@@ -208,8 +209,11 @@ final class AccountSync: LocalFileStore {
       persist()
       hasMore = answer.hasMore
     }
+    let leftovers = state.deferred.values
+    state.deferred = [:]
+    leftovers.forEach(apply)
     placeHeldWords()
-    state.uploadsTheAccountHad = []
+    state.accountHadFavorites = false
     state.lastSyncedAt = now()
     persist()
   }
@@ -219,17 +223,24 @@ final class AccountSync: LocalFileStore {
     state.queue.removeAll { sent.contains($0.id) }
     let outcomes = Dictionary(results.map { ($0.id, $0.outcome) }) { first, _ in first }
     for change in batch {
+      let settled = !state.hasQueuedChange(to: change.key)
       switch outcomes[change.id] {
       case .applied(let version):
         state.versions[change.key.stored] = version
         state.rebase(change.key, from: change.baseVersion, to: version)
+        if settled { state.deferred[change.key.stored] = nil }
       case .conflict(let current):
         apply(current)
       case .rejected(let code):
-        if change.undo == nil, change.operation == "create", code == "already_exists" {
-          state.uploadsTheAccountHad.insert(change.key.stored)
-        } else if !state.hasQueuedChange(to: change.key), let undo = change.undo {
+        if change.undo == nil, change.key == AccountSyncState.favoritesKey,
+          code == "already_exists"
+        {
+          state.accountHadFavorites = true
+        } else if settled, let undo = change.undo {
           self.undo(undo)
+        }
+        if settled, let copy = state.deferred.removeValue(forKey: change.key.stored) {
+          apply(copy)
         }
       case nil:
         continue
@@ -238,45 +249,39 @@ final class AccountSync: LocalFileStore {
   }
 
   private func apply(_ change: SyncChange) {
-    guard !state.hasQueuedChange(to: change.key) else { return }
-    switch change.payload {
-    case .knownWord(let word):
-      wordKnowledge.applySynced(
-        KnownWordChange(
-          storedID: word.itemId, headword: word.headword, reading: word.reading, known: word.known))
-    case .list(let list):
-      guard let id = UUID(uuidString: list.id) else { return }
-      state.uploadsTheAccountHad.remove(change.key.stored)
-      wordLists.applySynced(
-        WordList(
-          id: id, name: list.name, position: list.position, createdAt: list.createdAt,
-          updatedAt: list.createdAt))
-    case .listWord(let word):
-      guard let listID = UUID(uuidString: word.listId) else { return }
-      let membership = WordListMembership(
-        listID: listID, entryID: word.itemId, headword: word.headword, reading: word.reading,
-        addedAt: word.addedAt)
-      guard wordLists.hasList(listID) else {
-        state.hold(HeldListWord(key: change.key, version: change.version, membership: membership))
-        return
-      }
-      state.heldWords.removeAll { $0.key == change.key }
-      wordLists.applySynced(membership)
-    case .gone:
-      removeLocally(change.key)
-    case .unsynced:
+    if let copy = AccountCopy(change) { apply(copy) }
+  }
+
+  private func apply(_ copy: AccountCopy) {
+    guard !state.hasQueuedChange(to: copy.key) else {
+      state.deferred[copy.key.stored] = copy
       return
     }
-    state.versions[change.key.stored] = change.version
+    state.deferred[copy.key.stored] = nil
+    switch copy.value {
+    case .knownWord(let word):
+      wordKnowledge.applySynced(word)
+    case .list(let list):
+      if copy.key == AccountSyncState.favoritesKey { state.accountHadFavorites = false }
+      wordLists.applySynced(list)
+    case .listWord(let membership):
+      guard wordLists.hasList(membership.listID) else { return state.hold(copy) }
+      state.heldWords.removeAll { $0.key == copy.key }
+      wordLists.applySynced(membership)
+    case .gone:
+      removeLocally(copy.key)
+    }
+    state.versions[copy.key.stored] = copy.version
   }
 
   private func placeHeldWords() {
-    for held in state.heldWords
-    where wordLists.hasList(held.membership.listID) && !state.hasQueuedChange(to: held.key) {
-      wordLists.applySynced(held.membership)
-      state.versions[held.key.stored] = held.version
-    }
+    let held = state.heldWords
     state.heldWords = []
+    for word in held {
+      guard case .listWord(let membership) = word.value, wordLists.hasList(membership.listID)
+      else { continue }
+      apply(word)
+    }
   }
 
   private func removeLocally(_ key: SyncEntityKey) {
@@ -289,7 +294,8 @@ final class AccountSync: LocalFileStore {
           known: false))
     case SyncEntity.list:
       guard let listID = UUID(uuidString: key.entityID) else { return }
-      if state.uploadsTheAccountHad.remove(key.stored) != nil {
+      if key == AccountSyncState.favoritesKey, state.accountHadFavorites {
+        state.accountHadFavorites = false
         keepAsNewList(listID)
       } else {
         wordLists.applySyncedRemoval(ofList: listID)

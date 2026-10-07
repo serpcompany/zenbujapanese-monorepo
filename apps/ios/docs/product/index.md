@@ -147,8 +147,8 @@ email, taps **Email Me a Code**, and enters the 6-digit code. A refused sign-in 
 wrong or expired code, or an email whose account signs in with Apple or Google. Signed in, the
 Account row shows **Zenbu Account** and the email.
 
-**The first sync.** The first time this phone signs in to an account, the app sends the account
-everything on the phone: every known word, every list, and every list's words, then brings down
+**The first sync.** When this phone signs in to an account other than the one it last signed out
+of, the app sends the account everything on the phone: every known word, every list, and every list's words, then brings down
 everything the account already has. The same Apple ID, Google account, or email reaches the same
 account in every app.
 
@@ -171,7 +171,9 @@ again a few times, waiting longer each time, only while the app is open.
 - A known word marked or un-marked on another device first shows as it is there, for the learner
   to change again: an un-mark made before this phone saw a newer mark shows the word Known again.
 - A list renamed or moved elsewhere first keeps the other name or place.
-- A list deleted anywhere is deleted here with its words, whatever was done to it since.
+- A list deleted anywhere is deleted here with its words, whatever was done to it since. The one
+  exception is Favorites on a phone signing in to an account whose Favorites was deleted before
+  (below).
 - A word added to a list elsewhere stays, even if this phone removed it without seeing that add.
 - A change the account can never take, such as a word added to a list deleted elsewhere, is undone
   on the phone.
@@ -182,9 +184,10 @@ changes are waiting, and a note when the last sync failed, with **Sync Now**, **
 
 **Signing out** asks first, then forgets the sign-in on this phone and keeps everything: known
 words, lists, notes, and media stay, and every feature works. Changes made while signed out, such
-as an un-marked word, a deleted list, a removed word, or a rename, are kept in order, and go to the
-account when the learner signs in to the same account again, by the same rules as any change made
-offline. Signing in to a different account instead sends that account everything on the phone, as
+as an un-marked word, a deleted list, a removed word, or a rename, are kept in order (a word's
+marks and un-marks as just its last one), and go to the account when the learner signs in to the
+same account again, by the same rules as any change made offline. After 2,000 such changes, the
+app stops keeping them, and the next sign-in sends the account everything on the phone instead. Signing in to a different account instead sends that account everything on the phone, as
 a first sync does. If the account ends the session itself, such as after the account is deleted
 from another app, the app signs out the same way, and the Account row says so.
 

@@ -228,7 +228,7 @@ enum StubSync {
     ]
   }
 
-  private static func put(
+  static func put(
     _ entity: String, _ entityID: String, _ version: Int, _ data: [String: Any]
   ) -> [String: Any] {
     ["entity": entity, "entityId": entityID, "operation": "put", "version": version, "data": data]

@@ -348,24 +348,28 @@ tests prove that model against the real service.
   the file loads is queued once it has.
 - **Signing in and out.** Signing out forgets the session token but keeps the queue, cursor,
   versions, and waiting words under the account's user ID (`signedOutFrom`), and keeps queuing
-  changes with their base versions. Signing in to the same user ID picks them up and syncs from
-  the kept cursor. Signing in to any other account drops them, moves Favorites to its shared ID
+  changes with their base versions. While signed out, a word's new mark or un-mark replaces its
+  earlier one from the same signed-out stretch, and past 2,000 changes
+  (`AccountSyncState.mostSignedOutChanges`) the kept state is dropped, so the file stays small.
+  Signing in to the same user ID picks them up and syncs from the kept cursor. Signing in to any other account drops them, moves Favorites to its shared ID
   (`WordLists.favoritesID`, from the oldest list if it's still named Favorites), and queues the
   phone's marks, lists, and list words at version 0 before the first sync. Deleting the account
   drops everything.
 - **Favorites** has one ID in every app ([`account-clients.md`](account-clients.md), The rules, from
   your side). A second phone's `create` of it is rejected `already_exists`, which the first upload
   never undoes: the account's copy comes down, and the phone's words still add. If that copy comes
-  down deleted, the phone keeps its list under a new ID and uploads it with its words.
+  down deleted (`accountHadFavorites`), the phone keeps its list under a new ID and uploads it with
+  its words. Any other list the account deleted is deleted on the phone.
 - **A sync** sends up to 50 queued changes, at most 48 KB of them (the service takes 64 KB), and at
   most one per entity, so a second change to an entity goes after the first's result and is moved
   onto its version. An answer lost on the way is sent again unchanged. `applied` keeps the version;
   `conflict` takes `current`; `rejected` undoes the change with what it recorded (a word's earlier
   status, a list's earlier name), unless a later change to the entity is queued, and never undoes
-  the first upload, so a list the account already has stays. A pulled change skips an entity with
-  a change still queued. A list word whose list hasn't arrived is kept in the file until a sync
+  the first upload, so a list the account already has stays. A pulled copy of an entity with a
+  change still queued is held in the file (`deferred`) until that change's result: an applied or
+  conflicting result settles the entity, and a rejected one takes the held copy. A list word whose list hasn't arrived is kept in the file until a sync
   reaches `hasMore: false`, even across a failed page or a relaunch, then dropped if the list never
-  came. A deleted list drops its words. `410` drops the cursor and the waiting words, and syncs
+  came. A deleted list drops its words. `410` drops the cursor and the held copies and words, and syncs
   again, still sending the queue. A sync's answer is dropped if the learner signed out or in while
   it was on the way.
 - **When.** `AccountSyncScheduler` syncs a second after a local change, on becoming active (once

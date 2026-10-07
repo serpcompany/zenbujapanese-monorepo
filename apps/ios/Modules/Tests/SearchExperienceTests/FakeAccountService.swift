@@ -44,12 +44,9 @@ final class FakeAccountService: @unchecked Sendable {
       issued += 1
       let session = "session-\(issued).signed"
       sessions[session] = userID(for: email)
-      let user: [String: Any] = [
-        "id": userID(for: email), "email": email, "name": "", "emailVerified": true,
-        "image": NSNull(), "createdAt": "2026-10-06T10:00:00.000Z",
-        "updatedAt": "2026-10-06T10:00:00.000Z",
-      ]
-      return .json(200, ["token": "bare", "user": user], headers: ["set-auth-token": session])
+      return .json(
+        200, AccountFixture.signedIn(as: userID(for: email), email: email),
+        headers: ["set-auth-token": session])
     case "GET /v1/auth/token":
       guard let user = sessions[bearer(of: request)] else { return .error(401, "unauthorized") }
       issued += 1
@@ -90,10 +87,7 @@ final class FakeAccountService: @unchecked Sendable {
     guard let data = entity.data else {
       return StubSync.gone(kind, entityID, version: entity.version)
     }
-    return [
-      "entity": kind, "entityId": entityID, "operation": "put", "version": entity.version,
-      "data": data,
-    ]
+    return StubSync.put(kind, entityID, entity.version, data)
   }
 
   private func apply(_ mutation: StubSyncRequest.Mutation, for user: String) -> [String: Any] {

@@ -26,7 +26,7 @@ final class WordLists: LocalFileStore {
   static let shared = WordLists()
 
   static let defaultListName = String(localized: "Favorites")
-  static let favoritesID = UUID(uuidString: "2177c773-9e88-410f-9348-6cefaebe0a93")!
+  nonisolated static let favoritesID = UUID(uuidString: "2177c773-9e88-410f-9348-6cefaebe0a93")!
 
   private(set) var isLoaded = false
   private(set) var readOnlyReason: LocalFileReadOnlyReason?

@@ -127,6 +127,13 @@ final class AccountFixture {
       .unknown, id: LanguageReferenceID(rawValue: id), headword: "食べる", reading: "たべる")
   }
 
+  func markMany(_ count: Int) {
+    for number in 0..<count {
+      let id = String(repeating: "0", count: 20) + String(format: "%012x", number + 1)
+      markKnown(id, headword: "語\(number)")
+    }
+  }
+
   func addMiru(to listID: UUID) {
     wordLists.addWord(
       LanguageReferenceID(rawValue: Self.miru), headword: "見る", reading: "みる", to: listID)
@@ -138,7 +145,9 @@ final class AccountFixture {
     sync.state.queue.map { "\($0.key.entity) \($0.operation) \($0.key.entityID)" }
   }
 
-  nonisolated static func signedIn(as userID: String = userID) -> [String: Any] {
+  nonisolated static func signedIn(as userID: String = userID, email: String = email)
+    -> [String: Any]
+  {
     [
       "token": "session-1",
       "user": [
@@ -147,4 +156,5 @@ final class AccountFixture {
       ],
     ]
   }
+
 }

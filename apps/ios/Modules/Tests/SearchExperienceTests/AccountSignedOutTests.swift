@@ -75,6 +75,9 @@ struct AccountSignedOutTests {
 
     try await phone.signIn()
 
+    let resumed = try #require(phone.server.requests(to: "POST /v1/sync").last?.sync)
+    #expect(resumed.mutations.map(\.operation) == ["update"])
+    #expect(resumed.mutations.first?.baseVersion == 1)
     #expect(phone.wordLists.lists.map(\.name) == ["Theirs"])
   }
 
@@ -128,16 +131,26 @@ struct AccountSignedOutTests {
       LanguageReferenceID(rawValue: Fixture.taberu), headword: "食べる", reading: "たべる",
       to: first.favorites)
     second.addMiru(to: second.favorites)
+    second.markMany(60)
 
     try await first.signIn()
+    first.wordLists.renameList(WordLists.favoritesID, to: "Shared")
+    try await first.syncNow()
     try await second.signIn()
     try await first.syncNow()
 
     let both = Set([Fixture.taberu, Fixture.miru])
     for phone in [first, second] {
+      #expect(phone.wordLists.lists.map(\.name) == ["Shared"])
       #expect(phone.wordLists.lists.map(\.id) == [WordLists.favoritesID])
       #expect(Set(phone.wordLists.words(in: WordLists.favoritesID).map(\.entryID)) == both)
     }
+    second.wordLists.renameList(WordLists.favoritesID, to: "Ours")
+    try await second.syncNow()
+    #expect(second.wordLists.lists.map(\.name) == ["Ours"])
+    #expect(
+      service.data(of: listKey(WordLists.favoritesID), for: Fixture.email)?["name"] as? String
+        == "Ours")
     #expect(
       service.liveKeys(for: Fixture.email, entity: "list") == [listKey(WordLists.favoritesID)])
   }
@@ -178,6 +191,7 @@ struct AccountSignedOutTests {
     try await first.syncNow()
     let second = await install(on: server)
     second.addMiru(to: second.favorites)
+    second.markMany(60)
 
     try await second.signIn()
 
@@ -187,5 +201,50 @@ struct AccountSignedOutTests {
     #expect(second.wordLists.words(in: kept.id).map(\.entryID) == [Fixture.miru])
     #expect(service.liveKeys(for: Fixture.email, entity: "list") == [listKey(kept.id)])
     #expect(service.data(of: wordKey(kept.id, Fixture.miru), for: Fixture.email) != nil)
+  }
+
+  @Test("any other list the account deleted is deleted here when this phone signs in again")
+  func otherDeletedListsGo() async throws {
+    let server = StubAccountServer()
+    let service = FakeAccountService(on: server)
+    let phone = await install(on: server)
+    let drama = try #require(phone.wordLists.createList(named: "Drama"))
+    try await phone.signIn()
+    await phone.account.signOut()
+    service.change(
+      for: Fixture.email,
+      .init(
+        id: "elsewhere-2", entity: "list", operation: "delete",
+        entityId: drama.id.uuidString.lowercased(), baseVersion: 1, fields: nil))
+    try await phone.signIn(as: other)
+    await phone.account.signOut()
+
+    try await phone.signIn()
+
+    #expect(!phone.wordLists.hasList(drama.id))
+    #expect(phone.wordLists.lists.map(\.id) == [WordLists.favoritesID])
+    #expect(
+      service.liveKeys(for: Fixture.email, entity: "list") == [listKey(WordLists.favoritesID)])
+  }
+
+  @Test("while signed out, a word's changes queue as one, and too many changes start over")
+  func signedOutQueueStaysSmall() async throws {
+    let fixture = try await Fixture.afterSignIn()
+    await fixture.account.signOut()
+    for _ in 0..<3 {
+      fixture.markKnown(Fixture.taberu)
+      fixture.clearKnown(Fixture.taberu)
+    }
+    #expect(fixture.queuedOperations == ["knownWord clear \(Fixture.taberu)"])
+
+    fixture.markMany(AccountSyncState.mostSignedOutChanges)
+
+    #expect(fixture.sync.state.signedOutFrom == nil)
+    #expect(fixture.sync.state.queue.isEmpty)
+    let earlier = fixture.server.requests(to: "POST /v1/sync").count
+    try await fixture.signIn()
+    let syncs = fixture.server.requests(to: "POST /v1/sync").dropFirst(earlier)
+    #expect(syncs.first?.sync.cursor == nil)
+    #expect(syncs.first?.sync.mutations.allSatisfy { $0.baseVersion == 0 } == true)
   }
 }
