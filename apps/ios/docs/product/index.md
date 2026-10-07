@@ -186,7 +186,7 @@ changes are waiting, and a note when the last sync failed, with **Sync Now**, **
 words, lists, notes, and media stay, and every feature works. Changes made while signed out, such
 as an un-marked word, a deleted list, a removed word, or a rename, are kept in order (each word,
 list word, and list as just its latest change), and go to the account when the learner signs in to
-the same account again, by the same rules as any change made offline. Signing in to a different account instead sends that account everything on the phone, as
+the same account again, by the account's rules: a change made elsewhere first wins. Signing in to a different account instead sends that account everything on the phone, as
 a first sync does. If the account ends the session itself, such as after the account is deleted
 from another app, the app signs out the same way, and the Account row says so.
 

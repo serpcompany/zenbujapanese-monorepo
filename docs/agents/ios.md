@@ -369,8 +369,8 @@ tests prove that model against the real service.
   status, a list's earlier name), unless a later change to the entity is queued, and never undoes
   the first upload, so a list the account already has stays. A pulled copy of an entity with a
   change still queued is held in the file (`deferred`) until that change's result: a conflict's
-  `current` replaces it, an applied result takes it only if it's at least as new (an update that
-  changed nothing makes no newer copy), and a rejected one takes it. A list word whose list hasn't arrived is kept in the file until a sync
+  `current` replaces it, an applied result takes it only at the same version (the change changed
+  nothing, so no newer copy comes), and a rejected one takes it. A list word whose list hasn't arrived is kept in the file until a sync
   reaches `hasMore: false`, even across a failed page or a relaunch, then dropped if the list never
   came. A deleted list drops its words. `410` drops the cursor and the held copies and words, and syncs
   again, still sending the queue. A sync's answer is dropped if the learner signed out or in while

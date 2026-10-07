@@ -269,6 +269,19 @@ struct AccountSignedOutTests {
     #expect(phone.sync.state.queue.isEmpty)
   }
 
+  @Test("while signed out, deleting a renamed list queues only the delete")
+  func signedOutDeleteReplacesRename() async throws {
+    let (service, phone, lists) = try await signedInPhone(with: ["Old"])
+    let old = try #require(lists.first)
+    await phone.account.signOut()
+    phone.wordLists.renameList(old.id, to: "Older")
+    phone.wordLists.deleteList(old.id)
+
+    #expect(phone.queuedOperations == ["list delete \(old.id.uuidString.lowercased())"])
+    try await phone.signIn()
+    #expect(service.data(of: listKey(old.id), for: Fixture.email) == nil)
+  }
+
   @Test("a change that settles nothing still takes the account's copy it held back")
   func heldCopyAfterANoOp() async throws {
     let (service, phone, lists) = try await signedInPhone(with: ["Drama"])
