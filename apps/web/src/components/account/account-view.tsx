@@ -51,7 +51,7 @@ const madeWithinMs = 60_000
 function landedElsewhere({ session, profile }: SignedInAccount): string {
   const madeJustNow = Math.abs(Date.parse(profile.createdAt) - session.signedInAt) < madeWithinMs
   return madeJustNow
-    ? `That Google account had no Zenbu account, so it made a new one, ${session.email}, and this browser is signed in to it now. Sign out to go back.`
+    ? `That Google account had no Zenbu account, so it made a new one, ${session.email}, and this browser is signed in to it now. To use your own account, sign out, then sign in to it again; Delete account below removes the new one.`
     : `That Google account signs in to another Zenbu account, so this browser is now signed in to ${session.email}.`
 }
 

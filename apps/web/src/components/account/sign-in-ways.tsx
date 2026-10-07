@@ -196,7 +196,7 @@ export function SignInWaysSection({
       ) : null}
       <FormMessage problem={problem} />
       <Notice>{notice}</Notice>
-      {pending?.kind === 'add' && pending.provider === 'email' && freshNow() && !confirming ? (
+      {pending?.kind === 'add' && pending.provider === 'email' && !confirming ? (
         <EmailCodeForm
           api={api}
           email={account.profile.email}
@@ -206,6 +206,11 @@ export function SignInWaysSection({
             if (freshNow()) return true
             setConfirming(true)
             return false
+          }}
+          onRefusal={failure => {
+            if (failure.kind !== 'refused' || failure.code !== 'account_not_linked') return false
+            setConfirming(true)
+            return true
           }}
           onSignedIn={async () => {
             setPending(null)

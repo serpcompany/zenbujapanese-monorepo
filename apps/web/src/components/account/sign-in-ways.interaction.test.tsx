@@ -22,7 +22,9 @@ import {
   profile,
   sessionAnswer,
   settings,
-  signedIn
+  signedIn,
+  someoneElse,
+  thenSomeoneElse
 } from '@/test/signed-in-account'
 import { AccountView } from './account-view'
 
@@ -34,6 +36,15 @@ function leavingForGoogle() {
   const assign = vi.fn()
   vi.stubGlobal('location', { ...window.location, origin: window.location.origin, assign })
   return assign
+}
+
+async function codeTypedToAddEmail() {
+  const page = render(<AccountView settings={settings()} returnedError={null} />)
+  await shows(page, `Signed in as ${email}`)
+  await click(page, 'Add an email code')
+  await submit(page, 'Email me a code')
+  await fill(page, 'Code', '123456')
+  return page
 }
 
 async function removingGoogle(page: HTMLElement) {
@@ -165,17 +176,24 @@ describe('the ways to sign in, on the account page', () => {
 
   test('asks to confirm first when the sign-in grows old while the email code is on its way', async () => {
     const { routes } = signedIn({ signedInMinutesAgo: 8, ways: [googleWay] })
-    const page = render(<AccountView settings={settings()} returnedError={null} />)
-    await shows(page, `Signed in as ${email}`)
-    await click(page, 'Add an email code')
-    await submit(page, 'Email me a code')
-    await fill(page, 'Code', '123456')
+    const page = await codeTypedToAddEmail()
     const later = Date.now() + 3 * 60_000
     const clock = vi.spyOn(Date, 'now').mockReturnValue(later)
     await submit(page, 'Add it')
     clock.mockRestore()
     await shows(page, 'Confirm it’s you')
     expect(routes()).not.toContain('POST /v1/auth/sign-in/email-otp')
+  })
+
+  test('asks to confirm when the service finds the sign-in too old for the email code', async () => {
+    signedIn({
+      ways: [googleWay],
+      more: { 'POST /v1/auth/sign-in/email-otp': refusal(403, 'account_not_linked') }
+    })
+    const page = await codeTypedToAddEmail()
+    await submit(page, 'Add it')
+    await shows(page, 'Confirm it’s you')
+    expect(page.textContent).not.toContain('Sign in that way')
   })
 
   test("stays on the page when the learner cancels while Google's sign-in is starting", async () => {
@@ -199,19 +217,10 @@ describe('the ways to sign in, on the account page', () => {
   })
 
   test('changes nothing, and shows the account now signed in, when another tab signed in elsewhere', async () => {
-    const someoneElse = { ...profile, id: 'u9', name: 'Someone', email: 'someone@example.com' }
     const { routes } = signedIn({
       ways: [emailWay, googleWay],
       later: { userId: 'u9', minutesAgo: 0, email: someoneElse.email },
-      more: {
-        'GET /v1/auth/token': [
-          answer({ token: jwtFor({ sub: 'u1' }) }),
-          answer({ token: jwtFor({ sub: 'u9' }) })
-        ],
-        'GET /v1/me': call =>
-          answer(call.authorization === `Bearer ${jwtFor({ sub: 'u9' })}` ? someoneElse : profile),
-        'POST /v1/auth/unlink-account': answer({ status: true })
-      }
+      more: { ...thenSomeoneElse, 'POST /v1/auth/unlink-account': answer({ status: true }) }
     })
     const page = render(<AccountView settings={settings()} returnedError={null} />)
     await removingGoogle(page)

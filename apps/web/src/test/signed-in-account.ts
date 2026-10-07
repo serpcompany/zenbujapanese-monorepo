@@ -67,6 +67,17 @@ export function signedIn({
   })
 }
 
+export const someoneElse = { ...profile, id: 'u9', name: 'Someone', email: 'someone@example.com' }
+
+export const thenSomeoneElse = {
+  'GET /v1/auth/token': [
+    answer({ token: jwtFor({ sub: 'u1' }) }),
+    answer({ token: jwtFor({ sub: 'u9' }) })
+  ],
+  'GET /v1/me': (call: ServiceCall) =>
+    answer(call.authorization === `Bearer ${jwtFor({ sub: 'u9' })}` ? someoneElse : profile)
+}
+
 export const callTo = (calls: ServiceCall[], route: string) =>
   calls.filter(call => call.route === route)
 

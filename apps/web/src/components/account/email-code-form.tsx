@@ -3,7 +3,7 @@
 import { type FormEvent, useId, useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import type { AccountApi } from '@/lib/account/client'
+import type { AccountApi, Failure } from '@/lib/account/client'
 import { failureMessage } from '@/lib/account/messages'
 import { FormMessage } from './form-message'
 
@@ -14,6 +14,7 @@ interface EmailCodeFormProps {
   signInLabel: string
   onSignedIn: () => void | Promise<void>
   mayVerify?: () => boolean
+  onRefusal?: (failure: Failure) => boolean
 }
 
 export function EmailCodeForm({
@@ -22,7 +23,8 @@ export function EmailCodeForm({
   sendLabel,
   signInLabel,
   onSignedIn,
-  mayVerify
+  mayVerify,
+  onRefusal
 }: EmailCodeFormProps) {
   const id = useId()
   const [email, setEmail] = useState(fixedEmail ?? '')
@@ -51,7 +53,7 @@ export function EmailCodeForm({
     setProblem(null)
     const signedIn = await api.signInWithCode(sentTo, code.trim())
     if (signedIn.ok) await onSignedIn()
-    else setProblem(failureMessage(signedIn.failure))
+    else if (!onRefusal?.(signedIn.failure)) setProblem(failureMessage(signedIn.failure))
     setBusy(false)
   }
 

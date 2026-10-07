@@ -27,7 +27,9 @@ import {
   profile,
   sessionAnswer,
   settings,
-  signedIn
+  signedIn,
+  someoneElse,
+  thenSomeoneElse
 } from '@/test/signed-in-account'
 import { AccountView } from './account-view'
 import { ConfirmItsYou } from './confirm-its-you'
@@ -234,6 +236,20 @@ describe('the account page', () => {
     await shows(page, `That Google account signs in to another Zenbu account`)
     expect(callTo(other.calls, 'POST /v1/auth/revoke-session')).toEqual([])
     expect(window.sessionStorage.getItem('zenbu-confirming')).toBeNull()
+  })
+
+  test('closes Delete when confirming lands the browser in another account', async () => {
+    const { routes } = signedIn({
+      signedInMinutesAgo: 20,
+      later: { userId: 'u9', minutesAgo: 0, email: someoneElse.email },
+      more: thenSomeoneElse
+    })
+    const page = await askedToDelete()
+    await confirmWithEmailCode(page)
+    await shows(page, `Signed in as ${someoneElse.email}`)
+    expect(page.textContent).not.toContain('Confirm it’s you')
+    expect(page.textContent).toContain('Delete account')
+    expect(routes()).not.toContain('DELETE /v1/me')
   })
 
   test('says plainly when confirming with Google made a new account', async () => {
