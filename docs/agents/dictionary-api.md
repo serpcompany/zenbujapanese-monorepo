@@ -133,9 +133,11 @@ browse sitemap, and runs each statement a browse page asks once (`DictionaryBrow
 browse page then reads only its own words, with statements already prepared. The index holds
 about 960,000 row IDs, the categories' as 32-bit arrays. On 2026-10-07, with two threads on this
 workstation (load average 5 over the last minute, falling from 180 over fifteen), each thread was
-ready about 9.4 seconds after it started, the process held 1.45 GB, and every browse route's first
-request took at most 28 ms (a JLPT level's first page); before the index, the totals took 1 second
-and the category counts 2. The website's edge cache keeps answers for 10 minutes on top.
+ready about 9.4 seconds after it started, and every browse route's first request took at most 28
+ms (a JLPT level's first page); before the index, the totals took 1 second and the category counts
+2. Warming adds about 250 MB to a thread's resident memory, nearly all of it SQLite's cache of the
+pages it read; the index itself is under 10 MB of JavaScript heap. The website's edge cache keeps
+answers for 10 minutes on top.
 
 Logs are one JSON object per line on stdout (errors on stderr): each request's method, route
 pattern, status, and time. Queries never appear in the logs.

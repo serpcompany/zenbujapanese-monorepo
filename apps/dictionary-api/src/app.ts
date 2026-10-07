@@ -4,6 +4,7 @@ import {
   dictionaryContractHeader
 } from '@zenbu/dictionary-core/artifact/contract'
 import { maximumEntSeq, maximumQueryLength } from '@zenbu/dictionary-core/artifact/dictionary'
+import { categoryOrders, isCategoryOrder } from '@zenbu/dictionary-core/browse/categories'
 import { isKanaScript, type KanaScript } from '@zenbu/dictionary-core/browse/kana'
 import { maximumBrowsePage } from '@zenbu/dictionary-core/browse/lists'
 import { examplesPerPage } from '@zenbu/dictionary-core/detail/examples'
@@ -189,7 +190,8 @@ export function createApp({ service, token, ready }: AppOptions) {
 
   app.get('/v1/browse/categories/:slug', async context => {
     const order = context.req.query('order') ?? 'used'
-    if (order !== 'used' && order !== 'kana') throw new BadRequest('order must be used or kana')
+    if (!isCategoryOrder(order))
+      throw new BadRequest(`order must be ${categoryOrders.join(' or ')}`)
     return found(
       context,
       await service.categoryWords(context.req.param('slug'), order, page(context)),

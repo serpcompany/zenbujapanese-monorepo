@@ -1,12 +1,19 @@
-import { jlptLists, minimumIndexedWords, rankedList } from '@zenbu/dictionary-core/browse/lists'
+import { minimumIndexedWords, rankedList } from '@zenbu/dictionary-core/browse/lists'
 import type { Metadata } from 'next'
 import { notFound, permanentRedirect } from 'next/navigation'
 import { JlptListPage, RankBandPage } from '@/components/dictionary/browse/frequency-pages'
-import { jlptCopy, rankBandHeading, rankedListCopy } from '@/lib/dictionary/browse/copy'
+import {
+  jlptCopy,
+  plural,
+  rankBandHeading,
+  rankedListCopy,
+  rankRange
+} from '@/lib/dictionary/browse/copy'
 import { getRankedWords } from '@/lib/dictionary/browse/data'
 import {
   jlptVocabularyPath,
   pageNumber,
+  parseJlptLevel,
   parseRankBand,
   rankBandPath
 } from '@/lib/dictionary/browse/paths'
@@ -32,7 +39,7 @@ export const rankBandRoute = {
     return dictionaryMetadata(
       rankBandPath(list.slug, band),
       rankBandHeading(list.name, band),
-      copy.description,
+      `${copy.description} Ranks ${rankRange(band)}.`,
       { index: words.words.length >= minimumIndexedWords }
     )
   },
@@ -42,10 +49,8 @@ export const rankBandRoute = {
   }
 }
 
-const jlptLevel = (segment: string) => jlptLists.find(list => `n${list.level}` === segment)
-
 async function loadLevel(segment: string, page: number) {
-  const level = jlptLevel(segment)
+  const level = parseJlptLevel(segment)
   const words = level ? await getRankedWords(level.slug, page) : null
   if (!level || !words) notFound()
   return { level, words, page }
@@ -58,7 +63,7 @@ function levelMetadata({ level, words, page }: LoadedLevel): Metadata {
   return dictionaryMetadata(
     jlptVocabularyPath(level.level, page),
     `${level.name} vocabulary${paged}`,
-    jlptCopy.description,
+    `${plural(words.total, 'word')} Jonathan Waller lists for ${level.name}, in kana order${paged}. ${jlptCopy.description}`,
     { index: words.total >= minimumIndexedWords }
   )
 }
@@ -69,7 +74,7 @@ const levelView = ({ level, words, page }: LoadedLevel) => (
 
 async function pagedLevel(params: LevelPageParams['params']) {
   const { level: segment, page: pageSegment } = await params
-  const level = jlptLevel(segment)
+  const level = parseJlptLevel(segment)
   const number = pageNumber(pageSegment)
   if (!level || !number) notFound()
   if ('redirect' in number) permanentRedirect(jlptVocabularyPath(level.level))

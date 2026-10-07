@@ -57,6 +57,15 @@ test.describe('browse pages', () => {
     await expect(
       page.getByRole('list', { name: 'Kanji lists' }).getByRole('link', { name: 'JLPT N5' })
     ).toHaveAttribute('href', browse('kanji/jlpt-n5/'))
+    const youtube = page.getByRole('list', { name: 'Most used on YouTube' })
+    await expect(youtube.getByRole('link')).toHaveCount(10)
+    await expect(youtube.getByRole('link', { name: '1,001–2,000' })).toHaveAttribute(
+      'href',
+      browse('frequency-dictionaries/youtube/1001-2000/')
+    )
+    await expect(
+      page.getByRole('list', { name: 'JLPT vocabulary' }).getByRole('link', { name: /^N5/ })
+    ).toHaveAttribute('href', browse('frequency-dictionaries/jlpt/n5/'))
     await page.getByRole('link', { name: 'Frequency dictionaries', exact: true }).click()
     await expect(page.getByRole('heading', { level: 1 })).toHaveText(
       'Japanese frequency dictionaries'

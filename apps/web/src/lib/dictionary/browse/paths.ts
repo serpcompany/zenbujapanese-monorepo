@@ -1,7 +1,12 @@
-import type { CategoryOrder } from '@zenbu/dictionary-core/artifact/browse'
-import type { CategoryKind } from '@zenbu/dictionary-core/browse/categories'
+import type { CategoryKind, CategoryOrder } from '@zenbu/dictionary-core/browse/categories'
 import type { KanaScript } from '@zenbu/dictionary-core/browse/kana'
-import { allRankBands, maximumBrowsePage, rankBand } from '@zenbu/dictionary-core/browse/lists'
+import {
+  allRankBands,
+  type JlptList,
+  jlptLists,
+  maximumBrowsePage,
+  rankBand
+} from '@zenbu/dictionary-core/browse/lists'
 
 export const browsePath = '/dictionary/browse/'
 export const kanaChartsPath = `${browsePath}kana/`
@@ -43,8 +48,14 @@ export function parseRankBand(segment: string): number | null {
   return allRankBands.find(({ band }) => bandSegment(band) === segment)?.band ?? null
 }
 
+const levelSegment = (level: number) => `n${level}`
+
 export const jlptVocabularyPath = (level: number, page = 1) =>
-  withPage(`${frequencyDictionariesPath}jlpt/n${level}/`, page)
+  withPage(`${frequencyDictionariesPath}jlpt/${levelSegment(level)}/`, page)
+
+export function parseJlptLevel(segment: string): JlptList | null {
+  return jlptLists.find(({ level }) => levelSegment(level) === segment) ?? null
+}
 
 export const kanjiListPath = (slug: string) => `${kanjiListsPath}${slug}/`
 

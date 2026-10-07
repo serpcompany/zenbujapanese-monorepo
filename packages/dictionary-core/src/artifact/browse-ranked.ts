@@ -16,7 +16,7 @@ function rankedSource(list: RankedList): RankedSource {
       }
 }
 
-export interface RankedRow {
+interface RankedRow {
   rowid: number
   rank: number
 }

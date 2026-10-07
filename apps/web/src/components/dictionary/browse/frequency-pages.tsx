@@ -5,7 +5,7 @@ import {
   type RankBand,
   type RankedList,
   rankBandSize,
-  rankedLists
+  rankedList
 } from '@zenbu/dictionary-core/browse/lists'
 import { tierForRank } from '@zenbu/dictionary-core/detail/frequency'
 import { cn } from 'cn'
@@ -118,7 +118,7 @@ function RankBands({ slug, name, current }: { slug: string; name: string; curren
 }
 
 function RankedPanel({ list }: { list: RankedListsData['lists'][number] }) {
-  const definition = rankedLists.find(each => each.slug === list.slug)
+  const definition = rankedList(list.slug)
   const copy = rankedListCopy[list.slug]
   if (!definition || !copy || list.listed === 0) return null
   const [, source] = copy.sources

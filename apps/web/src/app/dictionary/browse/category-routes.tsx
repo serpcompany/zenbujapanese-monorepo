@@ -1,5 +1,4 @@
-import type { CategoryOrder } from '@zenbu/dictionary-core/artifact/browse'
-import { browseCategory } from '@zenbu/dictionary-core/browse/categories'
+import { browseCategory, type CategoryOrder } from '@zenbu/dictionary-core/browse/categories'
 import { minimumIndexedWords } from '@zenbu/dictionary-core/browse/lists'
 import type { Metadata } from 'next'
 import { notFound, permanentRedirect } from 'next/navigation'

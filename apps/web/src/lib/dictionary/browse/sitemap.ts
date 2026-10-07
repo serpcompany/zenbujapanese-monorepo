@@ -1,6 +1,6 @@
 import type { BrowseSitemapResponse } from '@zenbu/dictionary-core/artifact/browse'
 import { kanaScriptOf } from '@zenbu/dictionary-core/browse/kana'
-import { jlptLists, minimumIndexedWords, pageCount } from '@zenbu/dictionary-core/browse/lists'
+import { jlptList, minimumIndexedWords, pageCount } from '@zenbu/dictionary-core/browse/lists'
 import {
   browsePath,
   categoryIndexes,
@@ -45,7 +45,7 @@ export function browseSitemapPaths(sitemap: BrowseSitemapResponse): string[] {
       bands.flatMap((count, index) => (indexed({ count }) ? [rankBandPath(slug, index + 1)] : []))
     ),
     ...sitemap.jlptLists.filter(indexed).flatMap(({ slug, count }) => {
-      const level = jlptLists.find(list => list.slug === slug)?.level
+      const level = jlptList(slug)?.level
       return level === undefined ? [] : pages(count, page => jlptVocabularyPath(level, page))
     }),
     ...sitemap.kanjiLists.filter(indexed).map(({ slug }) => kanjiListPath(slug))

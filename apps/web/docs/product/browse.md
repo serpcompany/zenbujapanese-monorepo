@@ -128,8 +128,8 @@ kanji's details show the same level as these lists, or none
 kanji with its first meaning, most frequent first, with tabs for the grades, or for the JLPT
 levels on a JLPT list. Jinmeiyō holds 57 CJK compatibility characters, such as U+FA45, a variant of
 海. Each shows its own glyph and links straight to its base kanji's search page
-(`/dictionary/search/海/`), never to the compatibility character's URL, which redirects there; one
-KANJIDIC2 gives no meaning, as 25 of them, shows its base kanji's.
+(`/dictionary/search/海/`), never to the compatibility character's URL, which redirects there. The
+25 that KANJIDIC2 gives no meaning show their base kanji's.
 
 - Source: #614 mockup "/dictionary/browse/kanji/grade-2/".
 - Check: Browse spec, "the kanji lists open each kanji’s search page", "the JLPT kanji lists are
@@ -251,7 +251,7 @@ fit, rather than overlapping; a shorter one stays on one line and truncates its 
 are, so the kana charts and the kanji grids fit a row; on a phone it fills the screen's width.
 
 - Source: #614 mockups.
-- Check: No automated check yet.
+- Check: Browse spec, "a browse page is one column, at most 1,024 pixels wide".
 
 **HTML sitemap.** `/sitemap/` lists the site's pages, then the dictionary and its browse pages: the
 kana pages, each kanji list, each frequency dictionary, and the category lists.
@@ -266,7 +266,7 @@ words (or kanji) isn't indexed (`noindex, follow`), and neither is a category in
 rest are. The thin lists today are 11 categories (audiovisual and paleontology with 1 word, manga,
 Nagano dialect, and pathology with 2, and Tsugaru dialect, mechanical engineering, Tosa dialect,
 motorsport, gardening, and mining with 5 to 9), 3,924 of the 6,516 two-kana groups (such as
-かカ), 14 kana with no group of their own (such as ﾀ and 〜), and five stroke counts (1, 21, 22,
+かカ), 14 kana with fewer than 10 words (such as ﾀ, 〜, and ヲ), and five stroke counts (1, 21, 22,
 23, and 29 strokes). They stay linked from their kana, category list, or kanji lists, so every
 word stays a few links from the dictionary home.
 

@@ -1,4 +1,9 @@
-import { browseCategories, browseCategory, commonWords } from '../browse/categories'
+import {
+  browseCategories,
+  browseCategory,
+  type CategoryOrder,
+  commonWords
+} from '../browse/categories'
 import { type KanaScript, kanaScriptOf, kanaScripts } from '../browse/kana'
 import {
   browsePageSize,
@@ -21,7 +26,6 @@ import {
   BrowseIndex,
   type CategoryCount,
   type CategoryMembers,
-  type CategoryOrder,
   type KanaCount
 } from './browse-index'
 import {
@@ -48,7 +52,7 @@ import {
 import type { ArtifactDatabase } from './database'
 import type { KanjiData } from './kanji-data'
 
-export type { CategoryOrder, KanaCount } from './browse-index'
+export type { KanaCount } from './browse-index'
 export type { KanjiHubResponse, KanjiListResponse } from './browse-kanji'
 export type { BrowseWord, WordLink } from './browse-words'
 

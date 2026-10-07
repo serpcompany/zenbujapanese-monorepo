@@ -81,7 +81,7 @@ function senseMeanings(
   return new Map(rows.flatMap(row => (row.meaning === null ? [] : [[row.rowid, row.meaning]])))
 }
 
-export interface BrowseWordOptions {
+interface BrowseWordOptions {
   ranks?: ReadonlyMap<number, number>
   labelledSense?: ReadonlyMap<number, number>
 }

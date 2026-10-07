@@ -1,4 +1,9 @@
-import { type BrowseCategory, browseCategories, senseLabelKeys } from '../browse/categories'
+import {
+  type BrowseCategory,
+  browseCategories,
+  type CategoryOrder,
+  senseLabelKeys
+} from '../browse/categories'
 import type { ArtifactDatabase } from './database'
 
 export interface KanaCount {
@@ -11,11 +16,7 @@ export interface CategoryCount {
   count: number
 }
 
-export type CategoryOrder = 'used' | 'kana'
-
-export interface CategoryMembers {
-  used: Int32Array
-  kana: Int32Array
+export type CategoryMembers = Record<CategoryOrder, Int32Array> & {
   labelledSense: ReadonlyMap<number, number>
 }
 

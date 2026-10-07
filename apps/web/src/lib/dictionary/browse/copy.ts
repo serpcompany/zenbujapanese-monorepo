@@ -1,5 +1,8 @@
-import type { CategoryOrder } from '@zenbu/dictionary-core/artifact/browse'
-import { type BrowseCategory, commonWords } from '@zenbu/dictionary-core/browse/categories'
+import {
+  type BrowseCategory,
+  type CategoryOrder,
+  commonWords
+} from '@zenbu/dictionary-core/browse/categories'
 import { type KanjiList, rankBand } from '@zenbu/dictionary-core/browse/lists'
 import { type FrequencyTier, tierForRank } from '@zenbu/dictionary-core/detail/frequency'
 import { type Source, sources } from '../sources'
@@ -189,18 +192,17 @@ export const tierNames: Record<Exclude<FrequencyTier, 'rare'>, string> = {
   uncommon: 'Uncommon'
 }
 
-const tiersInOrder: readonly FrequencyTier[] = [
-  'veryCommon',
-  'common',
-  'moderate',
-  'uncommon',
-  'rare'
-]
+const tierOrder: Record<FrequencyTier, number> = {
+  veryCommon: 0,
+  common: 1,
+  moderate: 2,
+  uncommon: 3,
+  rare: 4
+}
 const highestRankChecked = 1_000_000
 
 function lastRankOf(tier: FrequencyTier): number {
-  const atMost = (rank: number) =>
-    tiersInOrder.indexOf(tierForRank(rank)) <= tiersInOrder.indexOf(tier)
+  const atMost = (rank: number) => tierOrder[tierForRank(rank)] <= tierOrder[tier]
   let low = 1
   let high = highestRankChecked
   while (low < high) {

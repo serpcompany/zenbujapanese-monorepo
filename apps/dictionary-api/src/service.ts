@@ -3,7 +3,6 @@ import type {
   BrowseSummaryResponse,
   BrowseWordsResponse,
   CategoryCountsResponse,
-  CategoryOrder,
   DictionaryBrowse,
   KanaIndexResponse,
   KanaInitialResponse,
@@ -22,6 +21,7 @@ import type {
   WordResponse,
   WordSitemap
 } from '@zenbu/dictionary-core/artifact/dictionary'
+import type { CategoryOrder } from '@zenbu/dictionary-core/browse/categories'
 import type { KanaScript } from '@zenbu/dictionary-core/browse/kana'
 
 export interface ServiceInfo {

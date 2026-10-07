@@ -5,6 +5,7 @@ import {
   jlptVocabularyPath,
   kanaPath,
   pageNumber,
+  parseJlptLevel,
   parseRankBand,
   rankBandPath,
   rankedListPath
@@ -16,6 +17,13 @@ describe('browse URLs', () => {
     expect(categoryPath('onomatopoeia', 'used', 2)).toBe('/dictionary/browse/onomatopoeia/2/')
     expect(jlptVocabularyPath(5)).toBe('/dictionary/browse/frequency-dictionaries/jlpt/n5/')
     expect(jlptVocabularyPath(1, 3)).toBe('/dictionary/browse/frequency-dictionaries/jlpt/n1/3/')
+  })
+
+  test('a JLPT level is read back from the URL its path builds', () => {
+    expect(parseJlptLevel('n5')?.slug).toBe('jlpt-n5')
+    expect(parseJlptLevel('n1')?.level).toBe(1)
+    expect(parseJlptLevel('n6')).toBeNull()
+    expect(parseJlptLevel('jlpt-n5')).toBeNull()
   })
 
   test('a category in kana order is its own list, beside the one most used first', () => {

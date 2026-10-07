@@ -1,11 +1,11 @@
 import type {
   BrowseWord,
   BrowseWordsResponse,
-  CategoryOrder,
   KanaInitialResponse,
   WordLink
 } from '@zenbu/dictionary-core/artifact/browse'
 import type { DictionaryContract } from '@zenbu/dictionary-core/artifact/contract'
+import type { CategoryOrder } from '@zenbu/dictionary-core/browse/categories'
 import type { KanaScript } from '@zenbu/dictionary-core/browse/kana'
 import {
   type BrowseAnswer,

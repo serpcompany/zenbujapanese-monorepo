@@ -1,5 +1,9 @@
-import type { CategoryOrder } from '@zenbu/dictionary-core/artifact/browse'
-import { type BrowseCategory, browseCategory } from '@zenbu/dictionary-core/browse/categories'
+import {
+  type BrowseCategory,
+  browseCategory,
+  type CategoryOrder,
+  categoryOrders
+} from '@zenbu/dictionary-core/browse/categories'
 import Link from 'next/link'
 import {
   BrowseHeading,
@@ -79,7 +83,7 @@ export function CategoryWords({
       </BrowseHeading>
       <LinkTabs
         label="Order"
-        tabs={(['used', 'kana'] as const).map(each => ({
+        tabs={categoryOrders.map(each => ({
           label: orderNames[each],
           href: categoryPath(category.slug, each),
           current: each === order
