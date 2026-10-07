@@ -271,17 +271,25 @@ const siblingsShown = 2
 function GroupNeighbors({
   script,
   prefix,
-  prefixes
+  initial
 }: {
   script: KanaScript
   prefix: string
-  prefixes: readonly KanaCount[]
+  initial: KanaInitialPage
 }) {
+  const { prefixes } = initial
   const position = prefixes.findIndex(({ kana }) => kana === prefix)
   const shown = prefixes.slice(Math.max(0, position - siblingsShown), position + siblingsShown + 1)
+  const previous = prefixes[position - 1]?.kana ?? initial.previous
+  const next = prefixes[position + 1]?.kana ?? initial.next
   const box = 'inline-flex h-11 min-w-11 items-center justify-center rounded-lg border px-3 text-sm'
   return (
     <nav aria-label="Neighboring groups" lang="ja" className="flex flex-wrap gap-2">
+      {previous ? (
+        <Link href={kanaPath(script, previous)} className={`${box} hover:bg-muted`}>
+          ← {previous}
+        </Link>
+      ) : null}
       {shown.map(({ kana }) =>
         kana === prefix ? (
           <span
@@ -297,6 +305,11 @@ function GroupNeighbors({
           </Link>
         )
       )}
+      {next ? (
+        <Link href={kanaPath(script, next)} className={`${box} hover:bg-muted`}>
+          {next} →
+        </Link>
+      ) : null}
     </nav>
   )
 }
@@ -330,7 +343,7 @@ export function KanaWords({
         {plural(words.total, 'word')}, in kana order
         {words.pages > 1 ? `, page ${page} of ${words.pages}` : ''}.
       </BrowseHeading>
-      <GroupNeighbors script={script} prefix={prefix} prefixes={initial.prefixes} />
+      <GroupNeighbors script={script} prefix={prefix} initial={initial} />
       <WordList words={words.words} section="words" />
       <Pagination
         page={page}

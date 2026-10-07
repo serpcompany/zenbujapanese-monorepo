@@ -102,8 +102,8 @@ Data, with UniDic pitch, Tatoeba examples, and app-owned word relationships.
 - `jmdict_labels.py`: every JMdict usage (`misc`), subject-field (`field`), and dialect (`dial`)
   entity code on a sense maps to a stable app-owned identifier, kept in the sense's `usage`,
   `fields`, and `dialects` (left out when empty), and an unmapped code fails the import. The app
-  reads them and shows only the notes it showed before; the website's browse pages list words by
-  them. They aren't in a note's identity or the semantic fingerprint, so saved notes and ranking
+  doesn't decode them, and shows the notes it showed before; the website's browse pages list
+  words by them. They aren't in a note's identity or the semantic fingerprint, so saved notes and ranking
   don't change.
 
 **`tatoeba_adapter.py`** keeps one deterministic lowest-ID English translation per linked Japanese

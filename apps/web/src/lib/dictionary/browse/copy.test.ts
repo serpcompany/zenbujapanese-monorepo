@@ -1,14 +1,16 @@
-import { browseCategory } from '@zenbu/dictionary-core/browse/categories'
+import { browseCategories, browseCategory } from '@zenbu/dictionary-core/browse/categories'
 import { rankedLists } from '@zenbu/dictionary-core/browse/lists'
 import { describe, expect, test } from 'vitest'
 import { sources } from '../sources'
+import { categoryDescriptions } from './category-intros'
 import {
   categoryHeading,
   categoryIntro,
   featuredCategories,
   kanjiListIntro,
   moreWaysToBrowse,
-  rankedListCopy
+  rankedListCopy,
+  tierCutoffs
 } from './copy'
 
 describe('ranked lists', () => {
@@ -54,12 +56,40 @@ describe('category copy', () => {
     expect(categoryHeading(category('kansai-dialect'))).toBe('Kansai dialect words')
   })
 
-  test('says how many words JMdict marks, most used first', () => {
-    expect(categoryIntro(category('onomatopoeia'), 1_338)).toBe(
-      '1,338 words JMdict marks as onomatopoeic or mimetic, most used on YouTube first.'
+  test('says how many words JMdict marks, in what order, then what the category is', () => {
+    expect(categoryIntro(category('onomatopoeia'), 1_338, 'used')).toBe(
+      `1,338 words JMdict marks as onomatopoeic or mimetic, most used on YouTube first, starting with those it marks in their first meaning. ${categoryDescriptions.onomatopoeia}`
     )
-    expect(categoryIntro(category('medicine'), 1)).toBe(
-      '1 word JMdict marks as medicine terms, most used on YouTube first.'
+    expect(categoryIntro(category('medicine'), 1, 'kana')).toMatch(
+      /^1 word JMdict marks as medicine terms, in kana order\. Medical terms, such as /
+    )
+    expect(categoryIntro(category('common-words'), 30_035, 'used')).toMatch(
+      /^30,035 words JMdict marks as common, from its priority lists, most used on YouTube first\. /
+    )
+  })
+
+  test('every category has its own one- or two-sentence intro', () => {
+    const slugs = browseCategories.map(each => each.slug)
+    expect(Object.keys(categoryDescriptions).sort()).toEqual([...slugs].sort())
+    for (const description of Object.values(categoryDescriptions)) {
+      expect(description.match(/[.!?](?=\s|$)/gu)?.length ?? 0, description).toBeLessThanOrEqual(2)
+    }
+    expect(new Set(Object.values(categoryDescriptions)).size).toBe(slugs.length)
+  })
+})
+
+describe('ranked list notes', () => {
+  test('the Wikipedia and Jiten lists say which words aren’t ranked, and why', () => {
+    for (const list of rankedLists) {
+      const unranked = rankedListCopy[list.slug]?.unranked
+      if (list.slug === 'youtube') expect(unranked).toBeUndefined()
+      else expect(unranked, list.slug).toMatch(/such as に, は, and が, aren’t ranked/)
+    }
+  })
+
+  test('the tier legend gives the cut-offs the app’s chips use', () => {
+    expect(tierCutoffs).toBe(
+      'The tiers are the ones the app’s chips use: very common to rank 1,500, common to rank 5,000, less common to rank 15,000, and uncommon to rank 30,000.'
     )
   })
 })

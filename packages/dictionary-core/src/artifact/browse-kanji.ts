@@ -62,12 +62,22 @@ export function kanjiHub(kanji: KanjiData): KanjiHubResponse {
   return { lists, jlpt, strokes }
 }
 
+function firstMeaning(kanji: KanjiData, entry: KanjiReferenceEntry): string {
+  const [own] = entry.meanings
+  if (own !== undefined) return own
+  const base = entry.character.normalize('NFKC')
+  return (base === entry.character ? undefined : kanji.row(base)?.meanings[0]) ?? ''
+}
+
 export function kanjiListResponse(kanji: KanjiData, slug: string): KanjiListResponse | null {
   const list = kanjiList(slug)
   const entries = list ? kanjiIn(kanji, list) : []
   if (entries.length === 0) return null
   return {
     slug,
-    kanji: entries.map(entry => ({ character: entry.character, meaning: entry.meanings[0] ?? '' }))
+    kanji: entries.map(entry => ({
+      character: entry.character,
+      meaning: firstMeaning(kanji, entry)
+    }))
   }
 }

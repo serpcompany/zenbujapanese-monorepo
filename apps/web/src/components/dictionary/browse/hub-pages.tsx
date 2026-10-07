@@ -7,6 +7,7 @@ import {
   type KanaScript
 } from '@zenbu/dictionary-core/browse/kana'
 import {
+  allRankBands,
   gradeLists,
   jlptKanjiLists,
   jlptLists,
@@ -26,17 +27,17 @@ import { CategoryChipCards } from '@/components/dictionary/browse/category-links
 import { KanaChart, type KanaTile } from '@/components/dictionary/browse/kana-chart'
 import { DictionaryBreadcrumbs } from '@/components/dictionary/dictionary-breadcrumbs'
 import { SourceCredits } from '@/components/dictionary/source-credits'
-import { formatCount, plural } from '@/lib/dictionary/browse/copy'
+import { formatCount, plural, rankRange } from '@/lib/dictionary/browse/copy'
 import {
   browsePath,
   categoryPath,
   frequencyDictionariesPath,
+  jlptVocabularyPath,
   kanaChartsPath,
   kanaPath,
   kanjiListPath,
   kanjiListsPath,
   rankBandPath,
-  rankedListPath,
   scriptPath,
   strokeCountsPath
 } from '@/lib/dictionary/browse/paths'
@@ -108,8 +109,6 @@ function ScriptCard({
   )
 }
 
-const youtubeBands = Array.from({ length: 10 }, (_, index) => index * 1_000 + 1)
-
 export type ScriptInitials = Record<KanaScript, ReadonlySet<string>>
 
 export function BrowseHub({
@@ -161,7 +160,7 @@ export function BrowseHub({
             {jlptLists.map(list => {
               const count = summary.jlpt.find(each => each.slug === list.slug)?.count ?? 0
               return (
-                <Chip key={list.slug} href={rankedListPath(list.slug)}>
+                <Chip key={list.slug} href={jlptVocabularyPath(list.level)}>
                   N{list.level} · {formatCount(count)}
                 </Chip>
               )
@@ -169,9 +168,9 @@ export function BrowseHub({
           </Chips>
           <p className="text-sm font-medium">Most used on YouTube</p>
           <Chips label="Most used on YouTube">
-            {youtubeBands.map(first => (
-              <Chip key={first} href={rankBandPath('youtube', first)}>
-                {formatCount(first)}–{formatCount(first + 999)}
+            {allRankBands.map(({ band }) => (
+              <Chip key={band} href={rankBandPath('youtube', band)}>
+                {rankRange(band)}
               </Chip>
             ))}
           </Chips>

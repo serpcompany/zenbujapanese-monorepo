@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'vitest'
 import { browseCategories, browseCategory } from './categories'
-import { kanjiList, pageCount, rankedPages, rankPage } from './lists'
+import { allRankBands, kanjiList, pageCount, rankBand } from './lists'
 import { browseService } from './service-paths'
 
 const browsePages = [
@@ -40,10 +40,11 @@ describe('pages', () => {
     expect(pageCount(201)).toBe(2)
   })
 
-  test('cover a ranked list’s ranks 200 at a time, to rank 10,000', () => {
-    expect(rankPage(1)).toBe(1)
-    expect(rankPage(1_001)).toBe(6)
-    expect(rankedPages).toBe(50)
+  test('cover a ranked list’s ranks in bands of 1,000, to rank 10,000', () => {
+    expect(rankBand(1)).toEqual({ band: 1, first: 1, last: 1_000 })
+    expect(rankBand(2)).toEqual({ band: 2, first: 1_001, last: 2_000 })
+    expect(allRankBands).toHaveLength(10)
+    expect(allRankBands.at(-1)).toEqual({ band: 10, first: 9_001, last: 10_000 })
   })
 })
 
@@ -64,6 +65,11 @@ describe('browseService, the service paths the website asks', () => {
     expect(browseService.kanaWords('hiragana', 'かが', 2).path).toBe(
       `/v1/browse/kana/hiragana/${encodeURIComponent('か')}/${encodeURIComponent('かが')}?page=2`
     )
-    expect(browseService.categoryWords('nouns', 3).path).toBe('/v1/browse/categories/nouns?page=3')
+    expect(browseService.categoryWords('nouns', 'used', 3).path).toBe(
+      '/v1/browse/categories/nouns?page=3'
+    )
+    expect(browseService.categoryWords('nouns', 'kana', 3).path).toBe(
+      '/v1/browse/categories/nouns?order=kana&page=3'
+    )
   })
 })

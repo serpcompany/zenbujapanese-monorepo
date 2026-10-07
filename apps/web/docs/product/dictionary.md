@@ -52,18 +52,30 @@ opens that query's results page.
 school grade, categories, and common words ([Browse pages](browse.md#dictionary-home)).
 
 **Breadcrumbs.** Every dictionary page starts with a breadcrumb trail under the site header:
-Home › Dictionary on this page, then the page's own crumb on the others. The app has none.
+Home › Dictionary on this page, then the page's own crumb on the others. The app has none. The
+trail stays on one line: a long last crumb (a long headword or query) is cut short with an
+ellipsis, and Home and Dictionary keep their full width.
 
-- Source: #484.
-- Check: `apps/web/e2e/word.spec.ts`, "shows the word, its breadcrumb, and its meaning".
+- Source: #484; #576 (Home and Dictionary never shrink).
+- Check: `apps/web/e2e/word.spec.ts`, "shows the word, its breadcrumb, and its meaning";
+  `apps/web/e2e/search.spec.ts`, "a long query's crumb is cut short, never Home or Dictionary".
+
+**Column.** Every dictionary page is one column, at most 768 pixels wide (`max-w-3xl`), centered,
+with 16-pixel margins; on a phone it fills the screen's width. The home's browse sections fit this
+column too. The browse pages under `/dictionary/browse/` are wider, as their mockups are
+([Browse pages](browse.md#site-wide)).
+
+- Source: #576 (widened from 672 pixels).
+- Check: `apps/web/e2e/search.spec.ts`, "is one column, at most 768 pixels wide", on the home, the
+  search page, a results page, and a word page, at a desktop and a phone width.
 
 ## Search results
 
 **Searching.** A search runs when the learner submits the box, not as they type. The box submits
 to `/dictionary/search/?q=<query>`, which redirects (308) to the query's own results page. The
-results page keeps its box under the breadcrumbs, filled with the query; word pages use the
-header's search. The app searches as the learner types; the website searches on Enter so that
-each search is its own page.
+results page keeps its box under the breadcrumbs, filled with the query; word pages have no box,
+and reach search through the header's Dictionary link (#561). The app searches as the learner
+types; the website searches on Enter so that each search is its own page.
 
 - Source: #466 (search on Enter, not as you type).
 - Check: `src/lib/dictionary/urls.test.ts`, "search URLs", checks how a query is normalized and
@@ -258,14 +270,16 @@ without searching: that is the dictionary service's limit, and the app has none.
 levels, and TUBELEX, each with its licence. When it shows a kanji's details, it adds RADKFILE,
 KanjiVG when the details draw stroke order, and Kanjium; when it lists example sentences, Tatoeba.
 Every page's credits match the app's Credits & Attributions, and EDRDG's licence requires them,
-with links, on every page that shows JMdict, KANJIDIC2, or RADKFILE data.
+with links, on every page that shows JMdict, KANJIDIC2, or RADKFILE data. The list sits in a
+Sources disclosure that starts closed; closed, its credits and links stay in the page's HTML.
 
-- Source: #465 (credit every source a page shows, on every page); `CreditsView.swift`; the EDRDG
-  licence; `src/lib/dictionary/sources.ts`.
-- Check: what a kanji's details and the sentences add: `src/lib/dictionary/sources.test.ts`
-  ("withShownData, the credits for what a page shows"); `apps/web/e2e/kanji.spec.ts`, "the search
-  page for 要 credits KanjiVG and Kanjium for the kanji details" and "/dictionary/search/iru/,
-  without kanji details, credits neither". The base list: No automated check yet (#511).
+- Source: #465 (credit every source a page shows, on every page); #560 (closed by default);
+  `CreditsView.swift`; the EDRDG licence; `src/lib/dictionary/sources.ts`.
+- Check: closed, in the page, then opened to its links: `apps/web/e2e/kanji.spec.ts`, "the search
+  page for 要 credits KanjiVG and Kanjium for the kanji details". What a kanji's details and the
+  sentences add: `src/lib/dictionary/sources.test.ts` ("withShownData, the credits for what a page
+  shows"); `apps/web/e2e/kanji.spec.ts`, that test and "/dictionary/search/iru/, without kanji
+  details, credits neither". The base list: No automated check yet (#511).
 
 **Left out on purpose.** The website has no Recent list, camera button, or Image Search. It also
 has no ✓ Known capsule and no swipe or long-press to mark a word known, since learner data lives in
@@ -331,11 +345,13 @@ sentence's words in a Words menu beside it; the website links them inline in the
   one"); `data.test.ts`, "a search’s examples read the service, and load more for the same build"
   (each word linked by the slugs the service names).
 
-**Translation, speaker, and credits.** Each sentence shows its translation and a speaker, and
-credits both sides of its Tatoeba pair, as a word page's examples do.
+**Translation, speaker, and credits.** Each sentence shows its translation and a speaker, as a
+word page's examples do. No sentence is credited on its own: the page's Sources list credits
+Tatoeba.
 
-- Source: `ExampleSentencesView.swift`; #465 (per-sentence attribution).
-- Check: ES `shown[].english`; `search-examples.test.tsx` (the translation and credit).
+- Source: `ExampleSentencesView.swift`; #560 (per-sentence credits removed, as the app has none).
+- Check: ES `shown[].english`; `search-examples.test.tsx` (the translation), and "credits no single
+  sentence, leaving Tatoeba to the page’s Sources".
 
 **Paging.** The section renders its first 25 sentences, then loads 25 more at a time as the
 learner scrolls, or with the Load more examples button, from
@@ -370,36 +386,44 @@ query, which the results page already shows, and has no count line.
 
 ## Word page
 
-**Toolbar.** The page's title is the headword, followed by Share and a ••• menu. Share sends the
-headword, its reading, and the numbered meanings, as the app's does, through the browser's share
-sheet; without one it copies the link. The menu lists Mark as Known, Add to List…, Add Note, Add
-Photo, Open in App, and Copy Link. The learner actions and Open in App open the get-the-app prompt,
-a dialog on wide screens and a drawer on phones. Open in App doesn't open the app yet (#467). Copy
-Link copies the page URL and shows "Link copied". There is no back button; the breadcrumbs replace
-it.
+**Toolbar.** Share and a ••• menu sit at the end of the breadcrumb row, at every width; the page
+has no title row above the header card. Share sends the headword, its reading, and the numbered
+meanings, as the app's does, through the browser's share sheet; without one it copies the link.
+The menu lists Mark as Known, Add to List…, Add Note, Add Photo, Open in App, and Copy Link. The
+learner actions and Open in App open the get-the-app prompt, a dialog on wide screens and a drawer
+on phones. Open in App doesn't open the app yet (#467). Copy Link copies the page URL and shows
+"Link copied". There is no back button; the breadcrumbs replace it.
 
 - Source: App docs, Dictionary and kanji details (Share and the ••• menu); `SavedItemActions.swift`;
   #462 (toolbar and menu items, get-the-app prompt, `Sonner` for Link copied); #484 (breadcrumbs
-  in place of the back button).
+  in place of the back button); #576 (no title row; the buttons moved to the breadcrumb row).
 - Check: the share text: `packages/dictionary-core/src/detail/word.test.ts`, "要る (1546640)"; the
-  menu and the prompt, at a desktop and a phone width: `apps/web/e2e/word.spec.ts`, "opens the More
-  actions menu with the app's actions" and "copies the link from the More actions menu"; Share:
+  buttons' place, at a desktop and a phone width: `apps/web/e2e/word.spec.ts`, "puts Share and More
+  actions at the end of the breadcrumb row"; the menu and the prompt, at a desktop and a phone
+  width: `apps/web/e2e/word.spec.ts`, "opens the More actions menu with the app's actions" and
+  "copies the link from the More actions menu"; Share:
   `src/components/dictionary/saved-item-actions.interaction.test.tsx`, "sends the page it is on".
 
-**Header card.** The card shows the headword with furigana, and beside it the pitch accent in a
-capsule that pronounces the word, or a standalone speaker when the word has no pitch. Either uses
-the browser's Japanese voice. Under a separator, the part-of-speech row names one word class and
-its modifiers, such as "Godan verb (intransitive)", and is left out when no class has a name. It
-comes from the first sense's parts of speech, falling back to the entry's. For a word with a
-conjugation table the row links to the page's Conjugations section (see Conjugations).
+**Header card.** The card shows the headword with furigana, the page's one `h1`. The heading's text
+is the headword alone: each furigana reading is a `data-reading` attribute drawn with CSS
+(`::before`), so the readings look the same but aren't in the text search engines read. The `h1`
+keeps an `aria-label` of the headword, since the kanji toggles' labels ("要, よう") would otherwise
+enter its name. Ruby elsewhere, such as in example sentences, keeps its readings as text. Beside
+it is the pitch accent in a capsule that pronounces the word, or a standalone speaker when the word has no pitch.
+Either uses the browser's Japanese voice. Under a separator, the part-of-speech row names one word
+class and its modifiers, such as "Godan verb (intransitive)", and is left out when no class has a
+name. It comes from the first sense's parts of speech, falling back to the entry's. For a word
+with a conjugation table the row links to the page's Conjugations section (see Conjugations).
 
 - Source: App docs, Dictionary and kanji details; `WordHeadline.swift` and
   `PitchAccentBadge.swift`; `PartOfSpeechFormatter.swift`; `DictionaryEntry.displayPartOfSpeech`;
-  #462.
+  #462; #576 (the headword is the `h1`, with its readings out of its text).
 - Check: WD `furigana`, `partOfSpeech`; `packages/dictionary-core/src/detail/word.test.ts`, "names
   one word class, then its modifiers" and "shows no part of speech when no class has a name";
-  `src/components/dictionary/word-page.test.tsx`, "shows a standalone speaker for a word without
-  pitch". Speaking: No automated check yet (#511).
+  `src/components/dictionary/word-page.test.tsx`, "is the page heading, named for the headword
+  whatever its furigana" and "shows a standalone speaker for a word without pitch";
+  `apps/web/e2e/word.spec.ts`, "shows the word, its breadcrumb, and its meaning" (one `h1`, its
+  name, its text, and its reading drawn by `::before`). Speaking: No automated check yet (#511).
 
 **Conjugations.** A verb or adjective the app conjugates (ichidan, godan, する, 来る, i- and
 na-adjectives, but not いい) has a [Conjugations section](#conjugations-section) after Frequency,
@@ -592,14 +616,12 @@ color. Split compounds such as 一日 have no marked word, as in the app.
   linked kanji only". The underline style: No automated check yet (#511).
 
 **Example translation, speaker, and credits.** Each example shows its English translation and a
-speaker that reads the sentence. Under it, each side of the Tatoeba pair is credited with its
-sentence ID, linking to Tatoeba, its contributor, and its licence. The app doesn't credit each
-sentence.
+speaker that reads the sentence. Like the app, it doesn't credit each sentence: the page's Sources
+list credits Tatoeba and its licence, CC BY 2.0 FR.
 
-- Source: #465 (per-sentence attribution).
-- Check: `packages/dictionary-core/src/detail/examples.test.ts`, "keeps the position, text,
-  translation, and both sides’ attribution"; the conformance test checks each side's attribution is
-  intact.
+- Source: #560 (per-sentence credits, added under #465, removed as clutter).
+- Check: `apps/web/e2e/word.spec.ts`, "credits no single example, and keeps its Sources closed
+  until opened".
 
 **Examples across a deploy.** A page loads later examples only from the dictionary build it was
 rendered from. When the dictionary has been updated since, the page says "These examples have been
@@ -612,10 +634,13 @@ updated since the page loaded." and offers a reload.
 
 **Credits.** A word page ends with a Sources list: JMdict, UniDic, KANJIDIC2, JLPT levels, TUBELEX,
 and Tatoeba. When it can show a kanji's details, it adds RADKFILE, KanjiVG when any of them draws
-stroke order, and Kanjium.
+stroke order, and Kanjium. The list starts closed, as a results page's does, with its credits and
+links in the page's HTML.
 
-- Source: #465; `src/lib/dictionary/sources.ts`.
-- Check: `src/app/dictionary/[word]/page.test.tsx`, "credits the kanji data its details show";
+- Source: #465; #560 (closed by default); `src/lib/dictionary/sources.ts`.
+- Check: `src/app/dictionary/[word]/page.test.tsx`, "credits the kanji data its details show" and
+  "keeps its Sources closed, with every credit in the HTML"; `apps/web/e2e/word.spec.ts`, "credits
+  no single example, and keeps its Sources closed until opened";
   `src/lib/dictionary/sources.test.ts`; `apps/web/e2e/kanji.spec.ts`, "the word page credits
   KanjiVG and Kanjium for the kanji details" and "/dictionary/いる-1577980/, without kanji details,
   credits neither". The base list: No automated check yet (#511).
@@ -673,8 +698,8 @@ examples of 見た. They load all at once from `/dictionary/conjugations/<form>.
 the form opens, so the page doesn't carry every form's examples; until then the form says
 "Loading examples", and if they can't load, "Examples couldn’t load. Try again later." Each
 example links its words as the app's screen does, with no page entry, and accents the words that
-make up the form with the thicker underline; the translation, speaker, and per-sentence credits
-are a word page's. A form without examples says "No example sentences use this form yet." The
+make up the form with the thicker underline; the translation and speaker are a word page's, with
+no per-sentence credits. A form without examples says "No example sentences use this form yet." The
 dictionary service runs the app's search and Kuromoji for a form when it's first asked, and keeps
 the list; like the app, it finds a form's examples by its spelling alone.
 
@@ -809,17 +834,26 @@ Detail in the app, so its row doesn't open.
 
 ## Header, footer, and site-wide
 
-**Header.** The 全 mark links home, with the site name beside it on wide screens. A header search
-field appears on wide screens, and a search button on phones, except on the dictionary home and
-search pages, which have their own box. The nav links Dictionary, About, and Support on wide
-screens.
+**Header.** The 全 mark and the site name link home; on a screen narrower than 360 pixels the name
+is left to screen readers so the row fits. The header has no search: the Dictionary link leads to
+the dictionary home, whose box searches (#561). On wide screens the nav links Dictionary, About,
+and Support beside the name, and Get the app sits at the right. On phones a menu button (lucide
+`Menu`) beside Get the app opens a sheet from the right, titled with the site name, that lists the
+same three links with the current one marked. Following a link, its close button (lucide `X`),
+going back or forward, or widening the window past the phone layout closes it.
 
-- Source: #462 design; #484.
-- Check: smoke "the header links to the dictionary and has search". The layout: No automated check
-  yet (#511).
+- Source: #462 design; #484; #561 (no search in the header, the phone menu).
+- Check: `src/components/site-header.test.tsx`, "the header on %s has no search, and a menu button
+  for phones"; `apps/web/e2e/site.spec.ts`, "the header has no search, and its Dictionary link
+  leads to the search box", "the header leads to About and marks it current" (the nav on desktop,
+  the menu on phones), "the header fits a 320-pixel phone, with the site name left to screen
+  readers", "the phone menu closes when the browser goes back, and stays closed going forward", and
+  "the phone menu closes when the window widens, and stays closed when it narrows"; smoke "the
+  header links to the dictionary and has no search"; `apps/web/e2e/layout.spec.ts`, which checks
+  that no page scrolls sideways at either width.
 
-**Current section.** The nav marks the section the page is in, as the #462 design marks
-Dictionary: in the foreground color and medium weight, where the others are muted. Every page
+**Current section.** The nav marks the section the page is in: in the foreground color on a muted
+background, where the others are muted text (#561, after the #462 design's Dictionary). Every page
 under `/dictionary/` (search results and word pages) is in Dictionary; `/about/` and `/support/`
 are their own. Home, the legal pages, and the other pages are in none. Screen readers hear the
 link as the current page on the section's own page (`aria-current="page"`) and as current on the
@@ -837,18 +871,22 @@ lucide has no brand icons, and #511 asked for a phone.
 - Source: #462 design; #511 (the phone icon).
 - Check: `src/components/site-header.test.tsx`, "the Get the app button leads with a phone icon".
 
-**Footer.** The footer links Dictionary, Browse by kana, Kanji by grade, About and Support (on
-phones only), Contact, Legal (`/legal/`), Privacy Policy, Terms of Use, DMCA Copyright Policy,
-Affiliate Disclosure, Sources, and Sitemap, then the copyright line. The browse links follow the
-#614 mockup ([Browse pages](browse.md#site-wide)). Legal follows Contact, as in the #462 design. The #462
-mockup's footer lists only Contact, Legal, Privacy, Terms, Sources, and Sitemap. Whether the
-footer drops the other links is waiting on the owner's and Devin's decision (#511); until then it
-keeps them.
+**Footer.** The footer starts with the 全 mark and the site name, linking home, and the site's
+one-line description. Beside them on wide screens, and below them in two columns on phones, three
+labelled groups hold every link: Product (Dictionary, Browse by kana, Kanji by grade, Sources,
+Sitemap), Company (About, Support, Contact), and Policies (Legal (`/legal/`), Privacy Policy, Terms
+of Use, DMCA Copyright Policy, Affiliate Disclosure). A rule, then the copyright line, ends it. The
+browse links follow the #614 mockup ([Browse pages](browse.md#site-wide)). Legal follows Contact,
+as in the #462 design. The #462 mockup's footer lists only Contact, Legal, Privacy, Terms, Sources,
+and Sitemap. Whether the footer drops the other links is waiting on the owner's and Devin's
+decision (#511); until then it keeps them.
 
-- Source: #462 design (Contact, Legal, Privacy, Terms, Sources, Sitemap).
-- Check: the Legal link: `src/components/site-footer.test.tsx`, "the footer links Legal after
-  Contact, before the legal pages, as the #462 design does"; smoke "the footer links Legal". The
-  other links: No automated check yet (#511).
+- Source: #462 design (Contact, Legal, Privacy, Terms, Sources, Sitemap); #561 (the groups).
+- Check: `src/components/site-footer.test.tsx`, "the footer links Legal after Contact, before the
+  legal pages, as the #462 design does", "the footer groups every link under Product, Company, and
+  Policies", and "the footer leads with the brand linking home and its tagline, and ends with the
+  copyright"; `apps/web/e2e/site.spec.ts`, "the footer groups its links under Product, Company, and
+  Policies"; smoke "the footer links Legal".
 
 **Reading Aids.** The website has no Reading Aids settings yet. It shows what the app shows with
 its defaults: headwords and linked example words have furigana, examples show their translation,

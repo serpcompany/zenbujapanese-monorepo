@@ -1,4 +1,4 @@
-import { type RankedList, rankedListLimit } from '../browse/lists'
+import { type RankedList, rankBandSize, rankBands, rankedListLimit } from '../browse/lists'
 import type { ArtifactDatabase, SqlValue } from './database'
 
 interface RankedSource {
@@ -16,7 +16,7 @@ function rankedSource(list: RankedList): RankedSource {
       }
 }
 
-export interface RankedRow {
+interface RankedRow {
   rowid: number
   rank: number
 }
@@ -49,6 +49,20 @@ export function rankedCounts(db: ArtifactDatabase, list: RankedList): RankedCoun
     [rankedListLimit, ...params]
   )
   return counts
+}
+
+export function rankedBandCounts(db: ArtifactDatabase, list: RankedList): number[] {
+  const { from, params } = rankedSource(list)
+  const counted = new Map(
+    db
+      .all<{ band: number; count: number }>(
+        `SELECT (r.rank - 1) / ${rankBandSize} + 1 AS band, count(*) AS count FROM ${from}
+         WHERE r.rank BETWEEN 1 AND ? GROUP BY band`,
+        [...params, rankedListLimit]
+      )
+      .map(({ band, count }) => [band, count])
+  )
+  return Array.from({ length: rankBands }, (_, index) => counted.get(index + 1) ?? 0)
 }
 
 export function jlptRowids(db: ArtifactDatabase, level: number): number[] {
