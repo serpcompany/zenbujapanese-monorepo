@@ -1,4 +1,5 @@
 import { join } from 'node:path'
+import { DictionaryBrowse } from '@zenbu/dictionary-core/artifact/browse'
 import { Dictionary } from '@zenbu/dictionary-core/artifact/dictionary'
 import { artifactFile, fileSha256, openArtifact } from './artifact'
 import { loadKuromoji } from './kuromoji'
@@ -48,5 +49,7 @@ export function loadService(files: VerifiedFiles) {
     artifact: { name: artifactFile, sha256: files.artifactSha256 },
     features: dictionary.features
   }
-  return { service: inProcessService(dictionary, info), close: artifact.close }
+  const browse = new DictionaryBrowse(artifact.db, artifact.kanji)
+  browse.warm()
+  return { service: inProcessService(dictionary, browse, info), close: artifact.close }
 }

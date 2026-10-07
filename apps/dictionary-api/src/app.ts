@@ -4,10 +4,13 @@ import {
   dictionaryContractHeader
 } from '@zenbu/dictionary-core/artifact/contract'
 import { maximumEntSeq, maximumQueryLength } from '@zenbu/dictionary-core/artifact/dictionary'
+import { categoryOrders, isCategoryOrder } from '@zenbu/dictionary-core/browse/categories'
+import { isKanaScript, type KanaScript } from '@zenbu/dictionary-core/browse/kana'
+import { maximumBrowsePage } from '@zenbu/dictionary-core/browse/lists'
 import { examplesPerPage } from '@zenbu/dictionary-core/detail/examples'
 import { logRequests } from '@zenbu/node-service/http'
 import { errorFields, log } from '@zenbu/node-service/log'
-import { Hono } from 'hono'
+import { type Context, Hono } from 'hono'
 import { routePath } from 'hono/route'
 import type { DictionaryService } from './service'
 
@@ -138,6 +141,69 @@ export function createApp({ service, token, ready }: AppOptions) {
   })
 
   app.get('/v1/retired', async context => context.json(await service.retired()))
+
+  const found = <T>(context: Context, answer: T | null, what: string) =>
+    answer ? context.json(answer) : context.json({ error: `no such ${what}` }, 404)
+  const page = (context: Context) =>
+    integer(context.req.query('page'), 'page', 1, maximumBrowsePage)
+  const script = (value: string): KanaScript => {
+    if (!isKanaScript(value)) throw new NotFound('no such script')
+    return value
+  }
+
+  app.get('/v1/browse', async context => context.json(await service.browseSummary()))
+
+  app.get('/v1/browse/kana/:script', async context =>
+    context.json(await service.kanaIndex(script(context.req.param('script'))))
+  )
+
+  app.get('/v1/browse/kana/:script/:initial', async context =>
+    found(
+      context,
+      await service.kanaInitial(
+        script(context.req.param('script')),
+        text(context.req.param('initial'), 'kana')
+      ),
+      'kana'
+    )
+  )
+
+  app.get('/v1/browse/kana/:script/:initial/:prefix', async context => {
+    const prefix = text(context.req.param('prefix'), 'kana')
+    if (!prefix.startsWith(context.req.param('initial'))) throw new NotFound('no such kana')
+    return found(
+      context,
+      await service.kanaWords(script(context.req.param('script')), prefix, page(context)),
+      'kana'
+    )
+  })
+
+  app.get('/v1/browse/categories', async context => context.json(await service.browseCategories()))
+
+  app.get('/v1/browse/categories/:slug', async context => {
+    const order = context.req.query('order') ?? 'used'
+    if (!isCategoryOrder(order))
+      throw new BadRequest(`order must be ${categoryOrders.join(' or ')}`)
+    return found(
+      context,
+      await service.categoryWords(context.req.param('slug'), order, page(context)),
+      'category'
+    )
+  })
+
+  app.get('/v1/browse/ranked', async context => context.json(await service.rankedLists()))
+
+  app.get('/v1/browse/ranked/:slug', async context =>
+    found(context, await service.rankedWords(context.req.param('slug'), page(context)), 'list')
+  )
+
+  app.get('/v1/browse/kanji', async context => context.json(await service.kanjiHub()))
+
+  app.get('/v1/browse/kanji/:slug', async context =>
+    found(context, await service.kanjiList(context.req.param('slug')), 'kanji list')
+  )
+
+  app.get('/v1/sitemaps/browse', async context => context.json(await service.browseSitemap()))
 
   app.notFound(context => context.json({ error: 'not found' }, 404))
 
