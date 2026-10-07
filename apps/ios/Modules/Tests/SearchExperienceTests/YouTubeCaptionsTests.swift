@@ -228,6 +228,22 @@ struct PlayerReadingAidTests {
     #expect(reloaded.translationSource == .apple)
     #expect(reloaded.hidesFuriganaOnKnownWords)
   }
+
+  @Test("Translate's furigana starts off and is stored apart from the app's reading aids")
+  @MainActor
+  func translateFurigana() throws {
+    let defaults = try #require(UserDefaults(suiteName: "TranslateReadingAidTests"))
+    defaults.removePersistentDomain(forName: "TranslateReadingAidTests")
+    let translate = ReadingAidPreferences(
+      defaults: defaults, storageKey: "translate.reading-aids.v1", furiganaByDefault: false)
+    #expect(!translate.showsFurigana)
+    #expect(ReadingAidPreferences(defaults: defaults).showsFurigana)
+    translate.showsFurigana = true
+    let reloaded = ReadingAidPreferences(
+      defaults: defaults, storageKey: "translate.reading-aids.v1", furiganaByDefault: false)
+    #expect(reloaded.showsFurigana)
+    #expect(ReadingAidPreferences(defaults: defaults).showsFurigana)
+  }
 }
 
 @Suite("Sentence-length translations")

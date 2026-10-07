@@ -24,7 +24,7 @@ services deploy, restart, and fail apart. Sign-in changes ship in a small image 
 never the dictionary's 1 GB, and the dictionary keeps a network that reaches only nginx. They stay
 apart because neither needs the other: sign-in and sync never read the dictionary, and the
 dictionary checks an account's access token through this service's JWKS
-([ADR 0012](0012-let-signed-in-apps-fetch-word-cards-from-the-dictionary-service.md)). Moving
+([ADR 0013](0013-let-signed-in-apps-fetch-word-cards-from-the-dictionary-service.md)). Moving
 them onto separate servers, or into one process, changes nginx and the deploys, not the API. The
 owners chose one host on 2026-10-06.
 
@@ -73,7 +73,7 @@ The sender sits behind one function, so moving to useSend is a configuration cha
   learner in one database would have to be split across databases past about 10,000 active
   learners. Postgres has neither limit at Zenbu's scale.
 - **Lookups beside accounts.** Signed-in apps fetch from the dictionary service
-  ([ADR 0012](0012-let-signed-in-apps-fetch-word-cards-from-the-dictionary-service.md)), which
+  ([ADR 0013](0013-let-signed-in-apps-fetch-word-cards-from-the-dictionary-service.md)), which
   verifies their tokens through this service's JWKS. Both run on the same servers.
 
 Cost didn't decide it. Sync is light: an active learner reads about 1,000 rows and writes about
