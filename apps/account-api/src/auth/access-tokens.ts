@@ -30,7 +30,7 @@ export function accessTokenVerifier(
       algorithms: ['EdDSA']
     })
     return typeof payload.sub === 'string' && payload.sub !== ''
-      ? principalOf(payload.sub, payload.azp, payload.scope)
+      ? principalOf(payload.sub, payload)
       : null
   }
 

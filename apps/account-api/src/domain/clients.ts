@@ -1,5 +1,6 @@
 export const scopes = [
   'account',
+  'account:delete',
   'profile',
   'lists:read',
   'lists:write',
@@ -23,6 +24,7 @@ export interface Client {
 
 const everythingZenbu: readonly Scope[] = [
   'account',
+  'account:delete',
   'profile',
   'lists:read',
   'lists:write',
@@ -52,7 +54,7 @@ export const clients: readonly Client[] = [
   {
     id: 'tomodachi',
     name: 'Tomodachi',
-    scopes: ['lists:read', 'known:read', 'known:mark', 'dictionary:read'],
+    scopes: ['account:delete', 'lists:read', 'known:read', 'known:mark', 'dictionary:read'],
     appleBundleIds: ['com.zenbujapanese.tomodachi'],
     origins: [],
     signsInOnTheWeb: false,
@@ -69,19 +71,19 @@ export interface Principal {
   userId: string
   clientId: string
   scopes: ReadonlySet<Scope>
+  signedInAt: Date
 }
 
-export function principalOf(
-  userId: string,
-  clientId: unknown,
-  scopeClaim: unknown
-): Principal | null {
-  const client = clientById(typeof clientId === 'string' ? clientId : null)
-  if (!client || typeof scopeClaim !== 'string') return null
-  const claimed = new Set(scopeClaim.split(' '))
+export function principalOf(userId: string, claims: Record<string, unknown>): Principal | null {
+  const client = clientById(typeof claims.azp === 'string' ? claims.azp : null)
+  if (!client || typeof claims.scope !== 'string' || typeof claims.auth_time !== 'number') {
+    return null
+  }
+  const claimed = new Set(claims.scope.split(' '))
   return {
     userId,
     clientId: client.id,
-    scopes: new Set(client.scopes.filter(scope => claimed.has(scope)))
+    scopes: new Set(client.scopes.filter(scope => claimed.has(scope))),
+    signedInAt: new Date(claims.auth_time * 1000)
   }
 }

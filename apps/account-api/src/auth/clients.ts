@@ -74,7 +74,10 @@ export function sessionClient(session: Record<string, unknown> | null | undefine
   return clientById(typeof session?.clientId === 'string' ? session.clientId : null)
 }
 
-export function tokenClaims(clientId: unknown): Record<string, string> {
-  const client = clientById(typeof clientId === 'string' ? clientId : null)
-  return client ? { azp: client.id, scope: client.scopes.join(' ') } : {}
+export function tokenClaims(session: Record<string, unknown>): Record<string, string | number> {
+  const client = sessionClient(session)
+  const signedIn = new Date(session.createdAt as string | Date).getTime()
+  return client && Number.isFinite(signedIn)
+    ? { azp: client.id, scope: client.scopes.join(' '), auth_time: Math.floor(signedIn / 1000) }
+    : {}
 }

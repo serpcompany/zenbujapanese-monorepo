@@ -135,6 +135,18 @@ or publishing destination.
 Behavior the owners have decided the app must have, but which isn't built yet. When one is built,
 it moves into its section above in the same PR.
 
+### Deleting the account
+
+Required by #574 (App Review guideline 5.1.1(v)). Once the app can sign in (#573), a signed-in
+learner can delete their Zenbu account from Account:
+
+- The app asks them to confirm, and to sign in again, with Sign in with Apple if the account uses
+  it, then deletes the account and everything it synced, through the account service
+  ([`docs/agents/account-clients.md`](../../../../docs/agents/account-clients.md), Deleting the
+  account).
+- Afterwards the app is signed out, and keeps everything on the phone: Known Words, lists, notes,
+  and media stay, and every feature works.
+
 ### Known across apps
 
 Decided on 2026-10-06 ([#563](https://github.com/serpcompany/zenbujapanese-monorepo/issues/563),

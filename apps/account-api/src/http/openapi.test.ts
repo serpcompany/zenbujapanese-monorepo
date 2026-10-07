@@ -31,6 +31,6 @@ describe('the OpenAPI contract', () => {
       '/v1/sync'
     ])
     expect(paths.filter(path => path.startsWith('/v1/auth/'))).toHaveLength(16)
-    expect(Object.keys(document.paths?.['/v1/me'] ?? {}).sort()).toEqual(['get', 'patch'])
+    expect(Object.keys(document.paths?.['/v1/me'] ?? {}).sort()).toEqual(['delete', 'get', 'patch'])
   })
 })

@@ -1,6 +1,7 @@
 import { createRoute, type OpenAPIHono, z } from '@hono/zod-openapi'
 import type { Context } from 'hono'
 import { createMiddleware } from 'hono/factory'
+import type { DeleteAccount } from '../domain/account-deletion'
 import type { Accounts } from '../domain/accounts'
 import type { Principal, Scope } from '../domain/clients'
 import type { Change } from '../domain/entities'
@@ -10,6 +11,7 @@ import type { AccountEnv } from './env'
 import { errorBody } from './errors'
 import { requestsPerMinute } from './rate-limit'
 import {
+  DeleteAccountSchema,
   ErrorSchema,
   ProfileConflictSchema,
   ProfilePatchSchema,
@@ -65,6 +67,7 @@ export function requireAccount(verifyAccessToken: (token: string) => Promise<Pri
     context.set('userId', principal.userId)
     context.set('clientId', principal.clientId)
     context.set('scopes', principal.scopes)
+    context.set('signedInAt', principal.signedInAt)
     await next()
   })
 }
@@ -153,6 +156,35 @@ const changeProfile = createRoute({
   }
 })
 
+const removeAccount = createRoute({
+  method: 'delete',
+  path: '/v1/me',
+  summary: 'Delete the signed-in account',
+  description:
+    "Deletes the account, its ways to sign in, its sessions, and everything it synced, at once; backups age out within 30 days, and the account's email is told. It needs `account:delete`, and a sign-in from the last 10 minutes, so the app asks the learner to sign in again first. An account that signs in with Apple sends a fresh Sign in with Apple authorization code from that sign-in, which the service uses to revoke the app's access with Apple. Each device keeps its own data and works signed out.",
+  security,
+  request: {
+    body: { content: { 'application/json': { schema: DeleteAccountSchema } }, required: true }
+  },
+  responses: {
+    200: json(z.object({ status: z.literal('deleted') }), 'Deleted.'),
+    400: json(
+      ErrorSchema,
+      '`bad_request`; `apple_authorization_needed`: the account signs in with Apple, so send a fresh authorization code; or `apple_authorization_invalid`: Apple refused it, so sign in with Apple again for a new one.'
+    ),
+    401: unauthorized,
+    403: json(
+      ErrorSchema,
+      "`insufficient_scope`: the app hasn't `account:delete`; or `sign_in_again`: the sign-in is over 10 minutes old."
+    ),
+    500: failed,
+    503: json(
+      ErrorSchema,
+      "`apple_unavailable`: Apple didn't answer. Nothing was deleted; try again."
+    )
+  }
+})
+
 const sync = createRoute({
   method: 'post',
   path: '/v1/sync',
@@ -177,9 +209,34 @@ const sync = createRoute({
   }
 })
 
+const deletionAnswers = {
+  no_account: [401, 'unauthorized', 'Send an access token from GET /v1/auth/token.'],
+  sign_in_again: [
+    403,
+    'sign_in_again',
+    'Deleting the account needs a sign-in from the last 10 minutes. Sign in again first.'
+  ],
+  apple_authorization_needed: [
+    400,
+    'apple_authorization_needed',
+    'This account signs in with Apple: send the authorization code from a fresh Sign in with Apple.'
+  ],
+  apple_authorization_invalid: [
+    400,
+    'apple_authorization_invalid',
+    'Apple refused that authorization code. Sign in with Apple again for a new one.'
+  ],
+  apple_unavailable: [
+    503,
+    'apple_unavailable',
+    "Apple didn't answer. Nothing was deleted; try again."
+  ]
+} as const
+
 export function accountRoutes(
   app: OpenAPIHono<AccountEnv>,
   accounts: Accounts,
+  deleteAccount: DeleteAccount,
   databaseReady: () => Promise<boolean>
 ) {
   app.openAPIRegistry.registerComponent('securitySchemes', 'accessToken', {
@@ -222,6 +279,21 @@ export function accountRoutes(
       return context.json(errorBody(code, message), code === 'username_taken' ? 409 : 400)
     }
     return context.json(profileJson(update.profile), 200)
+  })
+
+  app.openapi(removeAccount, async context => {
+    const deletion = await deleteAccount(
+      {
+        userId: context.get('userId'),
+        clientId: context.get('clientId'),
+        scopes: context.get('scopes'),
+        signedInAt: context.get('signedInAt')
+      },
+      context.req.valid('json').appleAuthorizationCode
+    )
+    if (deletion === 'deleted') return context.json({ status: 'deleted' as const }, 200)
+    const [status, code, message] = deletionAnswers[deletion]
+    return context.json(errorBody(code, message), status)
   })
 
   app.openapi(sync, async context => {

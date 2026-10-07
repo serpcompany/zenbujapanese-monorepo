@@ -24,9 +24,9 @@ setting ([`account-api.md`](account-api.md), Settings).
 
 | App | ID | Scopes |
 | --- | --- | --- |
-| Zenbu Japanese for iOS | `zenbu-ios` | `account`, `profile`, `lists:read`, `lists:write`, `known:read`, `known:write` |
+| Zenbu Japanese for iOS | `zenbu-ios` | `account`, `account:delete`, `profile`, `lists:read`, `lists:write`, `known:read`, `known:write` |
 | zenbujapanese.com | `zenbu-web` | the same |
-| Tomodachi | `tomodachi` | `lists:read`, `known:read`, `known:mark`, `dictionary:read` |
+| Tomodachi | `tomodachi` | `account:delete`, `lists:read`, `known:read`, `known:mark`, `dictionary:read` |
 
 - `account` manages how the account signs in and where: linking and unlinking a way in, listing
   the ways in, and listing or signing out sessions. `profile` reads and changes the profile, and
@@ -137,6 +137,22 @@ first time:
   - An add always applies.
   - A remove applies only if your app had the latest add: an add from elsewhere wins.
   - An add to a list that's gone is rejected (`unknown_list`): undo it.
+
+## Deleting the account
+
+Every app that signs in offers deleting the account (App Review guideline 5.1.1(v)):
+
+1. Ask the learner to confirm, and to sign in again: deleting needs a sign-in from the last 10
+   minutes (`403 sign_in_again`).
+2. If the account signs in with Apple, sign in with Apple, and keep the **authorization code**
+   Apple gives with that sign-in.
+3. `DELETE /v1/me` with `{ "confirm": true }`, and `"appleAuthorizationCode"` for an Apple
+   account. The service revokes your app's Apple access with it before deleting
+   (`apple_authorization_needed`, `apple_authorization_invalid`; on `503 apple_unavailable`
+   nothing was deleted, so try again).
+4. On `200`, sign out on the device: forget the session token and the cursor, and keep the
+   device's data. The account, and everything it synced, is gone; signing in again makes a new
+   one.
 
 ## Signing out
 

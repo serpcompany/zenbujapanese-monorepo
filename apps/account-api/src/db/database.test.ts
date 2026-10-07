@@ -11,6 +11,7 @@ import { scopes } from '../domain/clients'
 import { cursorKey, cursors } from '../domain/cursor'
 import { accountStore } from './accounts'
 import { answers } from './database'
+import { purgeExpired } from './housekeeping'
 import { fenceIfRestored } from './restores'
 
 const everyScope = new Set(scopes)
@@ -206,4 +207,25 @@ describe('the migrations', () => {
     )
     await second.copy.close()
   }, 120_000)
+
+  test('purge expired sessions, codes, and day-old rate limits, and keep the rest', async () => {
+    const client = await migrated()
+    await client.query("insert into users (id, name, email) values ('u1', '', 'u1@example.com')")
+    await client.query(`insert into sessions (id, user_id, token, expires_at) values
+      ('old', 'u1', 'old-token', now() - interval '1 minute'),
+      ('live', 'u1', 'live-token', now() + interval '1 day')`)
+    await client.query(`insert into verifications (id, identifier, value, expires_at) values
+      ('old', 'sign-in-otp-a@example.com', 'x', now() - interval '1 minute'),
+      ('live', 'sign-in-otp-b@example.com', 'x', now() + interval '5 minutes')`)
+    await client.query(
+      'insert into rate_limits (id, key, count, last_request) values ($1, $2, 1, $3), ($4, $5, 1, $6)',
+      ['old', 'old-key', Date.now() - 2 * 24 * 60 * 60 * 1000, 'live', 'live-key', Date.now()]
+    )
+    await purgeExpired(drizzle(client))
+    for (const table of ['sessions', 'verifications', 'rate_limits']) {
+      const left = await client.query<{ id: string }>(`select id from ${table}`)
+      expect(left.rows, table).toEqual([{ id: 'live' }])
+    }
+    await client.close()
+  })
 })

@@ -99,12 +99,15 @@ function signIn(service: Service) {
   }
 }
 
-export function useSignInService(options: { emailSender?: boolean; providers?: boolean } = {}) {
+export function useSignInService(
+  options: { emailSender?: boolean; providers?: boolean; appleKey?: boolean } = {}
+) {
   const running = {} as {
     service: Service
     as: ReturnType<typeof signIn>
     apple: IdentityProvider
     google: IdentityProvider
+    appleRevoked: string[]
   }
   beforeAll(async () => {
     if (options.providers) Object.assign(running, await standInForProviders())

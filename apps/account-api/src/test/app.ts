@@ -14,6 +14,7 @@ export const standIns: AppOptions = {
     updateProfile: async () => null,
     sync: async () => ({ status: 'no_account' })
   },
+  deleteAccount: async () => 'no_account',
   verifyAccessToken: async () => null,
   allowedOrigins: [],
   devMailbox: null

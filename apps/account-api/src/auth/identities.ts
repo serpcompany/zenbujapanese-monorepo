@@ -1,8 +1,8 @@
 import type { BetterAuthOptions } from 'better-auth'
 import { APIError } from 'better-auth/api'
 import { isRejection, normalizeName } from '../domain/profile'
+import { signInAddedMessage, signInRemovedMessage } from '../email/account-notices'
 import type { Mailer } from '../email/mailer'
-import { signInAddedMessage, signInRemovedMessage } from '../email/sign-in-ways'
 
 export const emailProvider = 'email'
 

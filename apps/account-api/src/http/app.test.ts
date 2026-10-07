@@ -79,7 +79,8 @@ describe('the account service', () => {
       verifyAccessToken: async () => ({
         userId: 'user-1',
         clientId: 'zenbu-ios',
-        scopes: new Set(scopes)
+        scopes: new Set(scopes),
+        signedInAt: new Date()
       }),
       accounts: {
         profile: async () => null,
@@ -104,7 +105,8 @@ describe('the account service', () => {
       verifyAccessToken: async token => ({
         userId: token,
         clientId: 'zenbu-ios',
-        scopes: new Set(scopes)
+        scopes: new Set(scopes),
+        signedInAt: new Date()
       })
     })
     const send = (path: string, account: string) =>

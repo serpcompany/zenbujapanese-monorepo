@@ -2,6 +2,9 @@ import { exportJWK, generateKeyPair, type JWTPayload, SignJWT } from 'jose'
 import { vi } from 'vitest'
 
 const appleKeys = 'https://appleid.apple.com/auth/keys'
+const appleToken = 'https://appleid.apple.com/auth/token'
+const appleRevoke = 'https://appleid.apple.com/auth/revoke'
+export const goodAppleCode = 'apple-good-code'
 const googleKeys = 'https://www.googleapis.com/oauth2/v3/certs'
 
 type Key = Awaited<ReturnType<typeof generateKeyPair>>['privateKey']
@@ -31,15 +34,29 @@ export async function standInForProviders() {
   const apple = await provider('https://appleid.apple.com', 'apple-test-key')
   const google = await provider('https://accounts.google.com', 'google-test-key')
   const realFetch = globalThis.fetch
-  const answer = (body: unknown) =>
-    new Response(JSON.stringify(body), { headers: { 'content-type': 'application/json' } })
+  const answer = (body: unknown, status = 200) =>
+    new Response(JSON.stringify(body), {
+      status,
+      headers: { 'content-type': 'application/json' }
+    })
+  const appleRevoked: string[] = []
+  const form = (init?: RequestInit) => new URLSearchParams(String(init?.body ?? ''))
   vi.spyOn(globalThis, 'fetch').mockImplementation(async (input, init) => {
     const url = input instanceof Request ? input.url : String(input)
     if (url.startsWith(appleKeys)) return answer(apple.keys)
     if (url.startsWith(googleKeys)) return answer(google.keys)
+    if (url === appleToken) {
+      return form(init).get('code') === goodAppleCode
+        ? answer({ refresh_token: 'apple-refresh-token', access_token: 'apple-access' })
+        : answer({ error: 'invalid_grant' }, 400)
+    }
+    if (url === appleRevoke) {
+      appleRevoked.push(form(init).get('token') ?? '')
+      return new Response(null, { status: 200 })
+    }
     return realFetch(input, init)
   })
-  return { apple: apple.signer, google: google.signer }
+  return { apple: apple.signer, google: google.signer, appleRevoked }
 }
 
 export function claims(

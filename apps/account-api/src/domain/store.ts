@@ -82,6 +82,8 @@ export interface LockedAccount extends EntityReader {
 
 export interface AccountStore {
   profile(userId: string): Promise<Profile | null>
+  identityProviders(userId: string): Promise<string[]>
+  deleteAccount(userId: string, email: string): Promise<void>
   reader(userId: string): EntityReader
   withLockedAccount<T>(
     userId: string,

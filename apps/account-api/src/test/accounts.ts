@@ -8,8 +8,8 @@ export interface Learner {
   token: string
 }
 
-export function useAccountService() {
-  const running = useSignInService({ providers: true })
+export function useAccountService(options: { appleKey?: boolean } = {}) {
+  const running = useSignInService({ providers: true, ...options })
   const call = (path: string, options: Parameters<typeof running.service.call>[1]) =>
     running.service.call(path, options)
 

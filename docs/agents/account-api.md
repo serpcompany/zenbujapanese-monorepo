@@ -68,6 +68,7 @@ which only the log records.
 | `GET /v1/me` | With an access token, the learner's profile: `id`, `name`, `username`, `email`, `version`, `createdAt`, and `updatedAt`. |
 | `PATCH /v1/me` | With an access token, changes the name, the username, or both: `{ "baseVersion": 3, "name": "...", "username": "..." }`. It answers `409 version_conflict`, with the profile as it is now in `current`, if the profile has moved past `baseVersion`, and `409 username_taken`. |
 | `POST /v1/sync` | With an access token, applies the device's changes and answers what changed after its cursor (Profiles and sync, below). |
+| `DELETE /v1/me` | With an access token from a sign-in in the last 10 minutes, deletes the account: `{ "confirm": true }`, and for an account that signs in with Apple, `"appleAuthorizationCode"` from that sign-in (Deleting an account, below). |
 | `POST /v1/auth/email-otp/send-verification-otp` | Emails a sign-in code: `{ "email": "...", "type": "sign-in" }`. It answers the same whether or not the email has an account. |
 | `POST /v1/auth/sign-in/email-otp` | Signs in with the code: `{ "email": "...", "otp": "123456" }`. |
 | `POST /v1/auth/sign-in/nonce` | A nonce for one Apple or Google sign-in: `{ "nonce": "...", "expiresIn": 600 }`. |
@@ -261,6 +262,32 @@ mutation change the profile through the same rule.
   refused with `410 invalid_cursor` before anything applies. The client then syncs from no cursor
   and keeps what comes back. Changing the secret makes every client do that once.
 - **Request limits:** 50 mutations, a 64 KB body, and 500 journal entries a request.
+
+## Deleting an account
+
+Any app that can make an account can delete it (App Review guideline 5.1.1(v), #574), so every app
+has `account:delete`, Tomodachi too. `DELETE /v1/me` needs the learner to confirm in the app
+(`{ "confirm": true }`) and a sign-in from the last 10 minutes, which the access token's
+`auth_time` names (`403 sign_in_again`).
+
+- **Apple.** An account that signs in with Apple sends the authorization code from that fresh Sign
+  in with Apple. Before deleting anything, the service exchanges it at Apple for a refresh token,
+  signing as the app's bundle ID (or the website's Services ID), and revokes it, as App Review
+  requires; it keeps no Apple token otherwise. With no code it answers `400
+  apple_authorization_needed`, with one Apple refuses `400 apple_authorization_invalid`, and if
+  Apple doesn't answer `503 apple_unavailable`, deleting nothing. Without an Apple key set up
+  (a local run), it skips Apple.
+- **What goes:** the account's row, and with it, by cascade, its ways to sign in, its sessions,
+  its synced profile, known words, lists, and list words, its journal, and its mutation results;
+  and any sign-in code waiting for its email. Its access tokens stop working at `/v1/me` and
+  `/v1/sync` at once (the account is gone), and expire within 15 minutes everywhere else. The
+  account's email is told. Backups that hold it are deleted within 30 days (Back up and
+  restore).
+- **Each device** keeps its own data and works signed out, as the apps' product docs say.
+- **Signing in again** with the same email or Apple or Google account makes a new account.
+
+The service also deletes expired sessions, expired sign-in codes and nonces, and rate-limit counts
+over a day old, when it starts and every hour (`src/db/housekeeping.ts`).
 
 ## Code layout
 

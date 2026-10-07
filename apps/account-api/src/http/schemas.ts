@@ -55,6 +55,16 @@ export const ProfilePatchSchema = z
   })
   .openapi('ProfilePatch')
 
+export const DeleteAccountSchema = z
+  .strictObject({
+    confirm: z.literal(true).openapi({ description: 'The learner confirmed in the app.' }),
+    appleAuthorizationCode: z.string().min(1).max(4096).optional().openapi({
+      description:
+        "From a fresh Sign in with Apple, for an account that signs in with Apple. It's used once, to revoke the app's access with Apple."
+    })
+  })
+  .openapi('DeleteAccount')
+
 export const ProfileConflictSchema = ErrorSchema.extend({ current: ProfileSchema }).openapi(
   'ProfileConflict',
   { description: 'The profile changed since `baseVersion`. `current` is the profile as it is now.' }

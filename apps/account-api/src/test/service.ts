@@ -1,12 +1,16 @@
 import { PGlite } from '@electric-sql/pglite'
 import { drizzle } from 'drizzle-orm/pglite'
 import { migrate } from 'drizzle-orm/pglite/migrator'
+import { exportPKCS8, generateKeyPair } from 'jose'
 import { accessTokenVerifier } from '../auth/access-tokens'
+import { appleRevoker } from '../auth/apple-revoke'
 import { createAuth } from '../auth/auth'
 import { type AuthConfig, migrationsFolder as migrations } from '../config'
 import { accountStore } from '../db/accounts'
+import { accountDeleter } from '../domain/account-deletion'
 import { createAccounts } from '../domain/accounts'
 import { cursorKey, cursors } from '../domain/cursor'
+import { accountDeletedMessage } from '../email/account-notices'
 import { DevMailbox } from '../email/mailbox'
 import { createMailer } from '../email/mailer'
 import { createApp } from '../http/app'
@@ -29,7 +33,24 @@ const authConfig: AuthConfig = {
 
 let addresses = 0
 
-export async function startService({ emailSender = true }: { emailSender?: boolean } = {}) {
+async function appleSigningKey() {
+  const { privateKey } = await generateKeyPair('ES256', { extractable: true })
+  return { teamId: 'W3GXL2NQQP', keyId: 'TESTKEY123', privateKey: await exportPKCS8(privateKey) }
+}
+
+export async function startService({
+  emailSender = true,
+  appleKey = false
+}: {
+  emailSender?: boolean
+  appleKey?: boolean
+} = {}) {
+  const config: AuthConfig = appleKey
+    ? {
+        ...authConfig,
+        apple: { servicesIds: [], appBundleIdentifier, signingKey: await appleSigningKey() }
+      }
+    : authConfig
   const client = new PGlite()
   const db = drizzle(client)
   await migrate(db, { migrationsFolder: migrations })
@@ -42,14 +63,18 @@ export async function startService({ emailSender = true }: { emailSender?: boole
     },
     mailbox
   )
-  const auth = await createAuth({ config: authConfig, db, mailer })
+  const auth = await createAuth({ config, db, mailer })
+  const store = accountStore(db)
   const app = createApp({
     release: 'test',
     databaseReady: async () => true,
     auth,
-    accounts: createAccounts(accountStore(db), cursors(cursorKey(testSecret))),
+    accounts: createAccounts(store, cursors(cursorKey(testSecret))),
+    deleteAccount: accountDeleter(store, appleRevoker(config.apple), {
+      accountDeleted: email => void mailer.send(accountDeletedMessage(email))
+    }),
     verifyAccessToken: accessTokenVerifier(() => auth.api.getJwks(), publicUrl),
-    allowedOrigins: authConfig.trustedOrigins,
+    allowedOrigins: config.trustedOrigins,
     devMailbox: mailbox
   })
   const call = async (

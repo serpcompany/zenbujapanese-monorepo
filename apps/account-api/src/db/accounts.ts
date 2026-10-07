@@ -2,7 +2,7 @@ import { and, asc, eq, gt, lt, max, sql } from 'drizzle-orm'
 import type { AccountStore, LockedAccount } from '../domain/store'
 import type { Drizzle } from './database'
 import { profileColumns, readerOn, writerOn } from './entity-rows'
-import { syncChanges, syncMutations, users } from './schema'
+import { syncChanges, syncMutations, userIdentities, users, verifications } from './schema'
 
 const journalColumns = {
   sequence: syncChanges.sequence,
@@ -24,6 +24,23 @@ function takesTheUsername(error: unknown): boolean {
 export function accountStore(db: Drizzle): AccountStore {
   return {
     profile: userId => readerOn(db, userId).currentProfile(),
+
+    async identityProviders(userId) {
+      const rows = await db
+        .select({ provider: userIdentities.providerId })
+        .from(userIdentities)
+        .where(eq(userIdentities.userId, userId))
+      return rows.map(row => row.provider)
+    },
+
+    async deleteAccount(userId, email) {
+      await db.transaction(async tx => {
+        await tx
+          .delete(verifications)
+          .where(eq(verifications.identifier, `sign-in-otp-${email.toLowerCase()}`))
+        await tx.delete(users).where(eq(users.id, userId))
+      })
+    },
 
     reader: userId => readerOn(db, userId),
 

@@ -5,6 +5,7 @@ import { bodyLimit } from 'hono/body-limit'
 import { cors } from 'hono/cors'
 import { HTTPException } from 'hono/http-exception'
 import { routePath } from 'hono/route'
+import type { DeleteAccount } from '../domain/account-deletion'
 import type { Accounts } from '../domain/accounts'
 import { clientById, type Principal } from '../domain/clients'
 import { failureFields } from '../failure'
@@ -27,6 +28,7 @@ export interface AppOptions {
   databaseReady(): Promise<boolean>
   auth: AuthHandler
   accounts: Accounts
+  deleteAccount: DeleteAccount
   verifyAccessToken(token: string): Promise<Principal | null>
   allowedOrigins: readonly string[]
   devMailbox: Mailbox | null
@@ -56,7 +58,7 @@ export function createApp(options: AppOptions) {
   const crossOrigin = cors({
     origin: origin => (options.allowedOrigins.includes(origin) ? origin : null),
     credentials: true,
-    allowMethods: ['GET', 'POST', 'PATCH'],
+    allowMethods: ['GET', 'POST', 'PATCH', 'DELETE'],
     allowHeaders: ['authorization', 'content-type', 'x-zenbu-client'],
     exposeHeaders: ['set-auth-token'],
     maxAge: 600
@@ -67,7 +69,9 @@ export function createApp(options: AppOptions) {
     app.use(path, requireAccount(options.verifyAccessToken))
     app.use(path, appLimit)
   }
-  app.use('/v1/me', requireScope('profile'), perAccountLimit(requestsPerMinute.profile))
+  app.on(['GET', 'PATCH'], '/v1/me', requireScope('profile'))
+  app.delete('/v1/me', requireScope('account:delete'))
+  app.use('/v1/me', perAccountLimit(requestsPerMinute.profile))
   app.use('/v1/sync', perAccountLimit(requestsPerMinute.sync))
   const limitedBody = bodyLimit({
     maxSize: bodyLimitKb * 1024,
@@ -82,7 +86,7 @@ export function createApp(options: AppOptions) {
       : context.json({ status: 'unavailable', release }, 503)
   )
 
-  accountRoutes(app, options.accounts, databaseReady)
+  accountRoutes(app, options.accounts, options.deleteAccount, databaseReady)
   signInContract(app)
 
   app.on(['GET', 'POST'], '/v1/auth/*', async context =>

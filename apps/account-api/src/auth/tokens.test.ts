@@ -25,10 +25,19 @@ describe('access tokens', () => {
     const jwks = createLocalJWKSet(keys.body as { keys: [] })
     const { payload } = await jwtVerify(token, jwks, { issuer: publicUrl, audience: publicUrl })
     expect(payload.sub).toBe(userIdOf(signedIn))
-    expect(Object.keys(payload).sort()).toEqual(['aud', 'azp', 'exp', 'iat', 'iss', 'scope', 'sub'])
+    expect(Object.keys(payload).sort()).toEqual([
+      'aud',
+      'auth_time',
+      'azp',
+      'exp',
+      'iat',
+      'iss',
+      'scope',
+      'sub'
+    ])
     expect(payload).toMatchObject({
       azp: 'zenbu-ios',
-      scope: 'account profile lists:read lists:write known:read known:write'
+      scope: 'account account:delete profile lists:read lists:write known:read known:write'
     })
     expect(Number(payload.exp) - Number(payload.iat)).toBe(15 * 60)
 

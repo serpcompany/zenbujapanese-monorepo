@@ -80,7 +80,7 @@ export async function createAuth({ config, db, mailer }: AuthOptions) {
       jwt({
         jwt: {
           expirationTime: '15m',
-          definePayload: ({ session }) => tokenClaims(session.clientId)
+          definePayload: ({ session }) => tokenClaims(session)
         }
       }),
       bearer({ requireSignature: true }),

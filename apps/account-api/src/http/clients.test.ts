@@ -20,11 +20,11 @@ async function send(token: string, ...mutations: Record<string, unknown>[]) {
 }
 
 describe("each app's access to an account", () => {
-  test('a Tomodachi token names the app and only its four scopes', async () => {
+  test('a Tomodachi token names the app and only its scopes', async () => {
     const tomodachi = await accounts.learner('tomo-token@example.com', 'tomodachi')
     expect(decodeJwt(tomodachi.token)).toMatchObject({
       azp: 'tomodachi',
-      scope: 'lists:read known:read known:mark dictionary:read'
+      scope: 'account:delete lists:read known:read known:mark dictionary:read'
     })
   })
 
