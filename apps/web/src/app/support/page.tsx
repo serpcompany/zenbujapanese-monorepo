@@ -14,6 +14,13 @@ export default function SupportPage() {
         iOS version, and what you were doing when the problem happened.
       </p>
       <p>
+        For help with Tomodachi (by {site.name}) for iPhone and Mac, email the same address. Include
+        your iPhone or Mac model, its iOS or macOS version, and what you were doing when the problem
+        happened.{' '}
+        <Link href="/legal/privacy/#tomodachi">How Tomodachi handles your information</Link> is in
+        the Privacy Policy.
+      </p>
+      <p>
         Read how we handle information in the <Link href="/legal/privacy/">Privacy Policy</Link>.
       </p>
     </PageShell>

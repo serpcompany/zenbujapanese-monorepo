@@ -8,17 +8,19 @@ export const metadata = pageMetadata('/legal/privacy/')
 export default function PrivacyPage() {
   const email = <a href={`mailto:${site.supportEmail}`}>{site.supportEmail}</a>
   return (
-    <PageShell title="Privacy Policy" updated="September 28, 2026">
+    <PageShell title="Privacy Policy" updated="October 8, 2026">
       <p>
-        This policy explains how we handle information in the {site.name} iPhone app and on
-        zenbujapanese.com.
+        This policy explains how we handle information in the {site.name} iPhone app, in Tomodachi
+        (by {site.name}) for iPhone and Mac, and on zenbujapanese.com.
       </p>
 
       <h2>The short version</h2>
       <p>
-        The app does not collect or track data. It has no advertising, analytics, third-party
-        crash-reporting SDK, account, or cloud sync. The website uses privacy-friendly, cookieless
-        analytics to count visits.
+        The {site.name} app does not collect or track data. It has no advertising, analytics,
+        third-party crash-reporting SDK, account, or cloud sync. Tomodachi does not collect or track
+        data either: it has no account, advertising, or analytics, and syncs your progress only
+        through your own iCloud. The website uses privacy-friendly, cookieless analytics to count
+        visits.
       </p>
 
       <h2>Information in the app</h2>
@@ -51,6 +53,48 @@ export default function PrivacyPage() {
         chosen through Apple's system pickers, which share only the item you select. You can change
         permissions in iPhone Settings.
       </p>
+
+      <h2 id="tomodachi">Tomodachi for iPhone and Mac</h2>
+      <p>
+        Tomodachi (by {site.name}) is our app for learning Japanese with a character, Tomo, on
+        iPhone and Mac. Its App Store privacy label is "Data Not Collected".
+      </p>
+      <ul>
+        <li>
+          <strong>No account.</strong> Tomodachi has no account or sign-in.
+        </li>
+        <li>
+          <strong>Your progress.</strong> Tomo, the words it learned, and your answers are saved on
+          your device. When you're signed in to iCloud, Tomo and its words also sync between your
+          devices through your own iCloud account, in Tomodachi's private CloudKit database. We run
+          no server for Tomodachi and can't see this data. Apple stores it under its own terms and
+          privacy practices.
+        </li>
+        <li>
+          <strong>Notifications.</strong> Reminders are local notifications that the app schedules
+          on your device. We send no marketing notifications, and Tomodachi has no tracking,
+          advertising, or analytics.
+        </li>
+        <li>
+          <strong>No microphone.</strong> Tomodachi doesn't use the microphone or speech
+          recognition.
+        </li>
+        <li>
+          <strong>On a Mac.</strong> Tomodachi opens when you log in only if you turn that on. You
+          can turn it off in its Settings or in System Settings → General → Login Items.
+        </li>
+        <li>
+          <strong>Deleting your data.</strong> "Start Tomo over" in Tomodachi's Settings takes Tomo
+          back to level 1 and clears the words it learned, on every device that syncs through your
+          iCloud. Deleting the app removes what it keeps on an iPhone, your answers included; on a
+          Mac, also delete the folder{' '}
+          <code className="wrap-anywhere">
+            ~/Library/Application Support/com.zenbujapanese.tomodachi
+          </code>
+          . To delete the copy in iCloud, remove Tomodachi's data in Settings → Apple Account →
+          iCloud, or in System Settings on a Mac.
+        </li>
+      </ul>
 
       <h2>This website</h2>
       <p>

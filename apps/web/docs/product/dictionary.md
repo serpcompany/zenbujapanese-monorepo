@@ -896,14 +896,31 @@ and there is no romaji and no word meanings under example words. The settings ar
 - Source: App docs index, Account (Reading Aids); `ReadingAidPreferences.swift` (the defaults).
 - Check: No automated check yet (#511).
 
-**App links.** The shipped iOS app and its App Store metadata link to `/privacy` and `/support`, so
-both keep working. `/privacy` redirects (308) to `/legal/privacy/` in one hop, with its query, as
-does `/privacy/`; `/support` redirects to `/support/`, as every page without its slash does.
+**App links.** The shipped iOS app, Tomodachi, and their App Store metadata link to `/privacy` and
+`/support`, so both keep working. `/privacy` redirects (308) to `/legal/privacy/` in one hop, with
+its query, as does `/privacy/`; `/support` redirects to `/support/`, as every page without its
+slash does.
 
 - Source: the shipped app's links; the one hop found by the browser tests.
 - Check: `src/lib/moved-pages.test.ts`; `apps/web/e2e/urls.spec.ts`, "/privacy redirects to the
   privacy policy in one hop" (on the production build) and "/support redirects to /support/ in one
   hop"; smoke `308 /privacy -> /legal/privacy/`.
+
+**Tomodachi in the privacy policy and support.** Tomodachi (by Zenbu Japanese), for iPhone and Mac,
+links to both pages from its About screen and its App Store record, so both cover it. The privacy
+policy's "Tomodachi for iPhone and Mac" section (`/legal/privacy/#tomodachi`) says it has no
+account, keeps progress on the device and in the learner's own iCloud (the CloudKit private
+database) with no server of ours, schedules reminders as local notifications, has no tracking,
+advertising, analytics, or microphone, opens at login on a Mac only when the learner turns that on,
+and how to delete its data. The support page sends Tomodachi's help to the support address and
+links that section. Both fit a 320-pixel phone, the Mac's data folder wrapping where it must.
+
+- Source: App Store guideline 5.1.1; serpcompany/tomodachi-app#105, which lists what's true of the
+  current apps.
+- Check: `apps/web/e2e/privacy-and-support.spec.ts`, "the privacy policy has a section for
+  Tomodachi for iPhone and Mac", "the support page says how to get help with Tomodachi",
+  "/legal/privacy/ fits a 320-pixel phone", and "/support/ fits a 320-pixel phone"; smoke "the
+  privacy policy and support page cover Tomodachi".
 
 ## URLs, SEO, and indexing
 

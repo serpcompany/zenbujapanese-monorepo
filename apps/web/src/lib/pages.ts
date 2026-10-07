@@ -12,13 +12,18 @@ export const sitePages = [
     description: 'Look up Japanese words and kanji in Japanese, kana, romaji, or English.'
   },
   { path: '/about/', title: 'About', description: 'About Zenbu Japanese.' },
-  { path: '/support/', title: 'Support', description: 'Get help with Zenbu Japanese.' },
+  {
+    path: '/support/',
+    title: 'Support',
+    description: 'Get help with Zenbu Japanese and Tomodachi.'
+  },
   { path: '/contact/', title: 'Contact', description: 'Contact the Zenbu Japanese team.' },
   { path: '/legal/', title: 'Legal', description: 'Zenbu Japanese legal policies.' },
   {
     path: '/legal/privacy/',
     title: 'Privacy Policy',
-    description: 'How Zenbu Japanese handles information in the app and on this website.'
+    description:
+      'How Zenbu Japanese handles information in its apps, Tomodachi included, and on this website.'
   },
   {
     path: '/legal/terms/',

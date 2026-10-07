@@ -77,6 +77,12 @@ footer_has_legal() {
   grep -qE '<footer[^>]*>.*href="/legal/"[^>]*>Legal</a>' <<<"$(body / | tr -d '\n')"
 }
 eventually 'the footer links Legal' 'the footer is missing the Legal link' footer_has_legal
+policies_cover_tomodachi() {
+  grep -q 'id="tomodachi"' <<<"$(body /legal/privacy/)" &&
+    grep -q 'For help with Tomodachi' <<<"$(body /support/)"
+}
+eventually 'the privacy policy and support page cover Tomodachi' \
+  'the privacy policy or the support page is missing Tomodachi' policies_cover_tomodachi
 
 word=/dictionary/%E8%A6%8B%E3%82%8B-1259290/
 kanji_search=/dictionary/search/%E8%A6%8B/

@@ -416,8 +416,9 @@ check in the same change. To test host rules locally, run `wrangler dev` without
 and send a `Host` header: with that environment's custom domains, Wrangler rewrites `Host` to the
 route's domain and host rules never match.
 
-`/privacy` and `/support` must keep working: the shipped iOS app and App Store metadata link to
-them. A page that moved, such as `/privacy`, is listed in `apps/web/src/lib/moved-pages.ts`, and
+`/privacy` and `/support` must keep working: the shipped iOS app, Tomodachi, and their App Store
+metadata link to them. A page that moved, such as `/privacy`, is listed in
+`apps/web/src/lib/moved-pages.ts`, and
 `worker.ts` answers it with one 308 before Next.js runs (so, like `retired.ts`, it imports no
 Next.js module and no `@/` path): Next.js adds a missing trailing slash
 before it reads `next.config.ts`'s redirects, so a redirect there takes two hops (`/privacy`, then
