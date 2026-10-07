@@ -206,6 +206,12 @@ service answers with reads them from the app's files (or the `Resources` folder 
 shapes can't drift from what staging and production render. It writes one row per line, so a
 regenerated fixture diffs by row.
 
+`pnpm word-cards <word list> <output folder>` exports word cards for an app that ships them, such
+as Tomodachi: the format, the word list, and what an export holds are in
+[`language-data/word-cards.md`](../../language-data/word-cards.md). It reads the app's files, the
+release ID in `language-data/release.json`, and the notices `language-data/release-inputs.json`
+names.
+
 ## Ship it
 
 The service ships as one Docker image holding the bundled code, the app's files it reads, and

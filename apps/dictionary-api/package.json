@@ -10,6 +10,7 @@
     "build": "node scripts/build.mjs",
     "sudachi": "node scripts/fetch-sudachi.mjs",
     "fixtures": "node --import tsx scripts/export-fixtures.ts",
+    "word-cards": "node --import tsx scripts/word-cards.ts",
     "format": "biome format --write",
     "lint": "biome check",
     "typecheck": "tsc --noEmit",

@@ -93,6 +93,10 @@ export async function artifactDatabase() {
   return (await open()).artifact.db
 }
 
+export async function artifactKanji() {
+  return (await open()).artifact.kanji
+}
+
 export async function browse(watch?: (sql: string) => void): Promise<DictionaryBrowse> {
   const { artifact } = await open()
   const db: ArtifactDatabase = watch
