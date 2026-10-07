@@ -36,7 +36,7 @@ test.describe('privacy policy', () => {
     page
   }) => {
     await expectNamed(page, 'The short version', [
-      'does not collect or track data',
+      "doesn't track you, and collects no data unless you sign in to a Zenbu account",
       'everything in it works on your device without an account',
       'if you create or sign in to a Zenbu account where our apps offer one',
       'delete the account when you ask it to'

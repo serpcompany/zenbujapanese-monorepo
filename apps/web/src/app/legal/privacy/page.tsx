@@ -16,13 +16,14 @@ export default function PrivacyPage() {
 
       <h2>The short version</h2>
       <p>
-        The app does not collect or track data. It has no advertising, analytics, or third-party
-        crash-reporting SDK, and everything in it works on your device without an account. If you
-        create or sign in to a Zenbu account where our apps offer one, we keep your email, how you
-        sign in, and the known words and lists you sync on our servers, so your apps can share them,
-        and you can delete the account at any time. If you link it to Tomodachi, our companion app,
-        Tomodachi can read your lists and known words, mark words Known, and delete the account when
-        you ask it to. The website uses privacy-friendly, cookieless analytics to count visits.
+        The app doesn't track you, and collects no data unless you sign in to a Zenbu account. It
+        has no advertising, analytics, or third-party crash-reporting SDK, and everything in it
+        works on your device without an account. If you create or sign in to a Zenbu account where
+        our apps offer one, we keep your email, how you sign in, and the known words and lists you
+        sync on our servers, so your apps can share them, and you can delete the account at any
+        time. If you link it to Tomodachi, our companion app, Tomodachi can read your lists and
+        known words, mark words Known, and delete the account when you ask it to. The website uses
+        privacy-friendly, cookieless analytics to count visits.
       </p>
 
       <h2>Information in the app</h2>
