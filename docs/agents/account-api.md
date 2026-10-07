@@ -73,7 +73,7 @@ which only the log records.
 | `POST /v1/auth/sign-in/nonce` | A nonce for one Apple or Google sign-in: `{ "nonce": "...", "expiresIn": 600 }`. |
 | `POST /v1/auth/sign-in/social` | Signs in with an ID token from Sign in with Apple or Google on the device, with the nonce: `{ "provider": "apple", "idToken": { "token": "...", "nonce": "..." } }`. Without an ID token, it starts the web sign-in, which comes back to `/v1/auth/callback/<provider>`. |
 | `POST /v1/auth/link-social` | Signed in within the last 10 minutes, adds another way to sign in, the same way. |
-| `GET /v1/auth/list-accounts`, `POST /v1/auth/unlink-account` | Signed in, the ways the learner signs in, and removing one (within 10 minutes of signing in; never the last). |
+| `GET /v1/auth/list-accounts`, `POST /v1/auth/unlink-account` | Signed in, the ways the learner signs in, and removing one by its `id` from the list: `{ "accountId": "..." }`, within 10 minutes of signing in, never the last, and the account's email is told. |
 | `GET /v1/auth/token` | Signed in, a 15-minute access token for the other services. |
 | `GET /v1/auth/jwks` | The keys an access token is checked with. |
 | `GET /v1/auth/get-session`, `POST /v1/auth/sign-out` | The session, and signing out of it. |
@@ -90,15 +90,21 @@ Better Auth upgrade adds. The profile changes through `/v1/me`, and deleting an 
 `Authorization: Bearer <token>`, checked against the service's own JWKS. They refuse the session
 token, so the long-lived token only ever goes to `/v1/auth`, and they answer every refusal alike:
 `401 unauthorized`, with `WWW-Authenticate: Bearer`. Their bodies, and those sent to `/v1/auth`,
-are at most 64 KB (`413 too_large`). A browser can call the service only from the origins in
-`ACCOUNT_API_TRUSTED_ORIGINS`: CORS names each one, never `*`.
+are at most 64 KB (`413 too_large`). Each account may send 60 requests a minute to `/v1/me` and
+120 to `/v1/sync` (`429 too_many_requests`, with `Retry-After`), counted in each slot's memory, so
+an app stuck in a loop, or a stolen access token, can't flood the service. A browser can call the
+service only from the origins in `ACCOUNT_API_TRUSTED_ORIGINS`: CORS names each one, never `*`.
 
-**The contract** for `/v1/health`, `/v1/me`, and `/v1/sync` is
-[`apps/account-api/openapi.json`](../../apps/account-api/openapi.json), OpenAPI 3.1. The routes
-are declared with `@hono/zod-openapi`, so the schemas that check each request are the ones the
-contract shows, and a test writes the file from them and fails when it differs. After changing a
-route, run `pnpm test -u` and commit the new file with its diff. Sign-in's routes are Better
-Auth's, listed above.
+**The contract** for every route above is
+[`apps/account-api/openapi.json`](../../apps/account-api/openapi.json), OpenAPI 3.1, and a test
+writes the file and fails when it differs: after changing a route, run `pnpm test -u` and commit
+the new file with its diff.
+
+- `/v1/health`, `/v1/me`, and `/v1/sync` are declared with `@hono/zod-openapi`, so the schemas
+  that check each request are the ones the contract shows.
+- Sign-in's routes are Better Auth's, declared in `src/http/sign-in-contract.ts`. A test holds the
+  list to `src/auth/routes.ts`, and calls each route to check its answer against what's
+  declared.
 
 ## Sign-in
 
@@ -184,8 +190,10 @@ are in `src/domain`, so `PATCH /v1/me` and a sync mutation change it the same wa
   version it was made to (`baseVersion`); if the profile has moved on, nothing changes, and the
   answer is the profile as it is now. Nothing is last-write-wins. Sending the current values
   again changes nothing.
-- **The journal**, `sync_changes`, gets a row for each change, and for each new account, from a
-  trigger on `users`, so an account Better Auth makes is in it too. The trigger names the profile
+- **The journal**, `sync_changes`, holds each entity's latest change: a change replaces the
+  entity's row, and a new account gets one from a trigger on `users`, so an account Better Auth
+  makes is in it too. A sync answers each entity as it is now, so the older rows were never
+  needed, and the journal grows with an account's entities, not its changes. The trigger names the profile
   in SQL, and the first-sync test fails if it and the domain disagree. Every write to an account's
   journal holds that account's `users` row locked, so its entries commit in the order of their
   sequence, which the cursor relies on.
@@ -199,7 +207,9 @@ are in `src/domain`, so `PATCH /v1/me` and a sync mutation change it the same wa
   then, or a rejection with the same code. A different mutation under a used ID is rejected
   (`mutation_id_reused`). A result is final: to try again, the client sends a new mutation with a
   new ID. Each mutation commits on its own, so after a failure partway through a batch, sending
-  the batch again answers the ones that applied and applies the rest.
+  the batch again answers the ones that applied and applies the rest. A result is kept 30 days,
+  then forgotten at the account's next mutation: a mutation sent again later is answered as new,
+  which for a profile change is a conflict, never a second change.
 - **Fields** a mutation sends are strings, numbers, booleans, or null, and its entity, operation,
   and entity ID are plain printable text, so nothing a client sends can fail to store or hash.
 - **Unknown entities and operations** are rejected one by one, and the rest still apply, so an
@@ -309,20 +319,22 @@ way and call the routes with their access tokens. They show:
 - **Profiles:** a change's normalized fields, its version and `updatedAt` moving on, an unchanged
   write, a stale version's conflict with the current profile, three changes from one version at
   once (one goes through), a username taken whatever its case, and each refused field.
-- **Sync:** a new device's first sync, then only newer changes; paging; queued mutations applied
-  in order; a retry applied once and answered the same; a conflict, again on a retry; unknown
-  entities and operations, and a reused ID, rejected while the rest apply.
+- **Sync:** a new device's first sync, then only newer changes; one journal row per entity;
+  paging; queued mutations applied in order; a retry applied once and answered the same; a
+  conflict, again on a retry; unknown entities and operations, and a reused ID, rejected while the
+  rest apply; and a result forgotten after 30 days.
 - **Bounds:** another account's profile, cursor, and mutation IDs out of reach; a forged or
   too-new cursor refused before anything applies; the request bounds, and fields that nest or hold
   control characters; and logs that hold no profile, email, or token.
 - **Edges:** a name given at sign-up held to the rules, and fields sign-up has no say in ignored;
-  a repeat sign-in leaving the profile; a deleted account refused at both routes; and a batch that
-  fails partway, sent again.
+  a repeat sign-in leaving the profile; a deleted account refused at both routes; a batch that
+  fails partway, sent again; and each account's rate limits.
 
 The domain's own tests (`src/domain/`) cover the name and username rules and the cursor;
 `src/db/database.test.ts` covers the journal's trigger and backfill, the sync tables' rules, and
 fencing two restored copies of one backup; and
-`src/http/openapi.test.ts` keeps `openapi.json` in step with the routes. In CI, and when
+`src/http/openapi.test.ts` keeps `openapi.json` in step with the routes, and
+`src/http/sign-in-contract.test.ts` holds each sign-in answer to it. In CI, and when
 `ACCOUNT_API_TEST_DATABASE_URL` names a real Postgres database, `src/db/postgres.test.ts` also
 sends eight changes to one account at once through the `pg` pool, and one mutation six times at
 once: one change goes through, and the mutation applies once.

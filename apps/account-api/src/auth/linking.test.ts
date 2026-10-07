@@ -102,21 +102,44 @@ describe('one email, two ways to sign in', () => {
     ])
   })
 
-  test('removing a way to sign in needs a fresh sign-in, and never removes the last one', async () => {
+  test('removing a way to sign in, by its id, needs a fresh sign-in, tells the email, and never removes the last one', async () => {
     const byCode = await running.as.withCode('unlink@example.com')
     const session = sessionToken(byCode)
-    const unlink = () =>
+    const idOf = async (provider: string) => {
+      const listed = await running.service.call('/v1/auth/list-accounts', { token: session })
+      return (listed.body as unknown as { id: string; providerId: string }[]).find(
+        identity => identity.providerId === provider
+      )?.id
+    }
+    const unlink = async (provider: string) =>
       running.service.call('/v1/auth/unlink-account', {
         token: session,
-        body: { providerId: 'email' }
+        body: { accountId: await idOf(provider) }
       })
-    const last = await unlink()
-    expect(last.status).toBeGreaterThanOrEqual(400)
+    expect(await unlink('email')).toMatchObject({
+      status: 400,
+      body: { error: { code: 'failed_to_unlink_last_account' } }
+    })
+
+    const nonce = await running.as.nonce()
+    const token = await running.as.idToken(
+      running.google,
+      'web.apps.googleusercontent.com',
+      'google-unlink',
+      'unlink@example.com',
+      nonce
+    )
+    expect((await running.as.link(session, 'google', token, nonce)).status).toBe(200)
+    const before = running.service.mailbox.messages().length
+    expect(await unlink('google')).toMatchObject({ status: 200, body: { status: true } })
     expect(await running.as.identitiesOf(userIdOf(byCode))).toEqual([
       { provider: 'email', subject: 'unlink@example.com' }
     ])
+    const notice = await running.as.lastMessageTo('unlink@example.com', before)
+    expect(notice.text).toContain('Sign in with Google no longer signs in')
+
     await running.as.ageSession(session, 30)
-    expect(await unlink()).toMatchObject({
+    expect(await unlink('email')).toMatchObject({
       status: 403,
       body: { error: { code: 'session_not_fresh' } }
     })

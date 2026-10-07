@@ -7,8 +7,11 @@ import { HTTPException } from 'hono/http-exception'
 import { routePath } from 'hono/route'
 import type { Accounts } from '../domain/accounts'
 import { failureFields } from '../failure'
-import { type AccountEnv, accountRoutes, bodyLimitKb, requireAccount } from './accounts'
+import { accountRoutes, bodyLimitKb, requireAccount } from './accounts'
+import type { AccountEnv } from './env'
 import { errorBody, errorCode, inErrorFormat } from './errors'
+import { perAccountLimit, requestsPerMinute } from './rate-limit'
+import { signInContract } from './sign-in-contract'
 
 interface AuthHandler {
   handler(request: Request): Promise<Response>
@@ -59,6 +62,8 @@ export function createApp(options: AppOptions) {
   })
   for (const path of ['/v1/auth/*', '/v1/health', ...accountPaths]) app.use(path, crossOrigin)
   for (const path of accountPaths) app.use(path, requireAccount(options.verifyAccessToken))
+  app.use('/v1/me', perAccountLimit(requestsPerMinute.profile))
+  app.use('/v1/sync', perAccountLimit(requestsPerMinute.sync))
   const limitedBody = bodyLimit({
     maxSize: bodyLimitKb * 1024,
     onError: context =>
@@ -73,6 +78,7 @@ export function createApp(options: AppOptions) {
   )
 
   accountRoutes(app, options.accounts, databaseReady)
+  signInContract(app)
 
   app.on(['GET', 'POST'], '/v1/auth/*', async context =>
     inErrorFormat(await auth.handler(context.req.raw))

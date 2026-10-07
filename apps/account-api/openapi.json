@@ -3,7 +3,7 @@
   "info": {
     "title": "Zenbu account service",
     "version": "1",
-    "description": "Accounts, profiles, and sync for every Zenbu app (ADR 0011). Sign-in is under /v1/auth, Better Auth's routes, listed in docs/agents/account-api.md. Every error is the Error schema."
+    "description": "Accounts, sign-in, profiles, and sync for every Zenbu app (ADR 0011). Sign-in is Better Auth's, under /v1/auth; a test holds each of its answers to this contract. Every error is the Error schema."
   },
   "servers": [
     {
@@ -22,6 +22,11 @@
         "scheme": "bearer",
         "bearerFormat": "JWT",
         "description": "A 15-minute access token from GET /v1/auth/token, which takes the session token a sign-in returns. Never the session token itself."
+      },
+      "sessionToken": {
+        "type": "http",
+        "scheme": "bearer",
+        "description": "The signed session token from a sign-in's `set-auth-token` header. Send it only to /v1/auth."
       }
     },
     "schemas": {
@@ -375,6 +380,186 @@
           "entity",
           "operation"
         ]
+      },
+      "SignIn": {
+        "type": "object",
+        "properties": {
+          "token": {
+            "type": "string",
+            "description": "The session's bare token. Keep the signed one from the `set-auth-token` header instead: it is the refresh token."
+          },
+          "user": {
+            "$ref": "#/components/schemas/SignedInUser"
+          }
+        },
+        "required": [
+          "token",
+          "user"
+        ],
+        "additionalProperties": {}
+      },
+      "SignedInUser": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "email": {
+            "type": "string"
+          },
+          "emailVerified": {
+            "type": "boolean"
+          },
+          "image": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "email",
+          "emailVerified",
+          "image",
+          "createdAt",
+          "updatedAt"
+        ],
+        "additionalProperties": {},
+        "description": "Who signed in. GET /v1/me has the profile, with the username and version."
+      },
+      "WebSignIn": {
+        "type": "object",
+        "properties": {
+          "url": {
+            "type": "string",
+            "format": "uri"
+          },
+          "redirect": {
+            "type": "boolean",
+            "enum": [
+              true
+            ]
+          }
+        },
+        "required": [
+          "url",
+          "redirect"
+        ]
+      },
+      "IdToken": {
+        "type": "object",
+        "properties": {
+          "token": {
+            "type": "string",
+            "description": "The ID token Sign in with Apple or Google gave the device."
+          },
+          "nonce": {
+            "type": "string",
+            "description": "The nonce from POST /v1/auth/sign-in/nonce, passed to Apple or Google."
+          }
+        },
+        "required": [
+          "token",
+          "nonce"
+        ]
+      },
+      "Session": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "userId": {
+            "type": "string"
+          },
+          "token": {
+            "type": "string",
+            "description": "The session's bare token, which names it to POST /v1/auth/revoke-session. It signs nothing in: only the signed one in `set-auth-token` does."
+          },
+          "expiresAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "ipAddress": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "userAgent": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "userId",
+          "token",
+          "expiresAt",
+          "createdAt",
+          "updatedAt",
+          "ipAddress",
+          "userAgent"
+        ],
+        "additionalProperties": {}
+      },
+      "Identity": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "providerId": {
+            "type": "string",
+            "description": "`apple`, `google`, or `email`."
+          },
+          "accountId": {
+            "type": "string"
+          },
+          "userId": {
+            "type": "string"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "id",
+          "providerId",
+          "accountId",
+          "userId",
+          "createdAt",
+          "updatedAt"
+        ],
+        "additionalProperties": {}
       }
     },
     "parameters": {}
@@ -450,6 +635,16 @@
           },
           "401": {
             "description": "`unauthorized`: no access token, or one that is expired, forged, or for an account that no longer exists. Get a new one from GET /v1/auth/token.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "`too_many_requests`: this account sent more than 60 requests here in the current minute. Wait the seconds `Retry-After` says.",
             "content": {
               "application/json": {
                 "schema": {
@@ -546,6 +741,16 @@
               }
             }
           },
+          "429": {
+            "description": "`too_many_requests`: this account sent more than 60 requests here in the current minute. Wait the seconds `Retry-After` says.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
           "500": {
             "description": "`internal`: the service failed, and nothing says why. Try again later, backing off. In a sync, the mutations before the failure stand, and sending the request again answers them as before.",
             "content": {
@@ -629,8 +834,906 @@
               }
             }
           },
+          "429": {
+            "description": "`too_many_requests`: this account sent more than 120 requests here in the current minute. Wait the seconds `Retry-After` says.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
           "500": {
             "description": "`internal`: the service failed, and nothing says why. Try again later, backing off. In a sync, the mutations before the failure stand, and sending the request again answers them as before.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/auth/email-otp/send-verification-otp": {
+      "post": {
+        "summary": "Email a sign-in code",
+        "description": "Answers the same whether or not the email has an account. Five codes per address in 10 minutes.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "email": {
+                    "type": "string",
+                    "format": "email"
+                  },
+                  "type": {
+                    "type": "string",
+                    "enum": [
+                      "sign-in"
+                    ]
+                  }
+                },
+                "required": [
+                  "email",
+                  "type"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Sent, or nothing to send.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "enum": [
+                        true
+                      ]
+                    }
+                  },
+                  "required": [
+                    "success"
+                  ]
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "`too_many_requests`.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "`email_unavailable`: no email sender is set up.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/auth/sign-in/email-otp": {
+      "post": {
+        "summary": "Sign in with the emailed code",
+        "description": "Makes the account on the first sign-in. A `name` is used only then, held to the profile's name rule.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "email": {
+                    "type": "string",
+                    "format": "email"
+                  },
+                  "otp": {
+                    "type": "string"
+                  },
+                  "name": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "email",
+                  "otp"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Signed in.",
+            "headers": {
+              "set-auth-token": {
+                "description": "The signed session token: the refresh token, good for 60 days from its last use. Send it as `Authorization: Bearer` to GET /v1/auth/token for an access token.",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SignIn"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "`invalid_otp`, `otp_expired`, or `too_many_attempts`.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "`account_not_linked`: an Apple or Google account has this email; sign in that way, then add the email.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "`too_many_requests`.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/auth/sign-in/nonce": {
+      "post": {
+        "summary": "A nonce for one Apple or Google sign-in",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {}
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Pass `nonce` to Apple or Google; it works once, within `expiresIn` seconds.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "nonce": {
+                      "type": "string"
+                    },
+                    "expiresIn": {
+                      "type": "integer"
+                    }
+                  },
+                  "required": [
+                    "nonce",
+                    "expiresIn"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/auth/sign-in/social": {
+      "post": {
+        "summary": "Sign in with Apple or Google",
+        "description": "With `idToken`, signs in with the token the device got, and makes the account on the first sign-in. Without it, starts the web sign-in, which comes back to GET /v1/auth/callback/{id}. A new account's email must be verified by the provider, and an email that already has an account is refused until the learner adds this way while signed in.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "provider": {
+                    "type": "string",
+                    "enum": [
+                      "apple",
+                      "google"
+                    ]
+                  },
+                  "idToken": {
+                    "$ref": "#/components/schemas/IdToken"
+                  },
+                  "callbackURL": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "provider"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Signed in, or, without `idToken`, the provider page to send the browser to.",
+            "headers": {
+              "set-auth-token": {
+                "description": "The signed session token: the refresh token, good for 60 days from its last use. Send it as `Authorization: Bearer` to GET /v1/auth/token for an access token.",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/SignIn"
+                    },
+                    {
+                      "$ref": "#/components/schemas/WebSignIn"
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "`nonce_required`, or a token that is invalid.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "`invalid_nonce`, or `invalid_token`.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "`email_not_verified`.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "`oauth_link_error`: that email has an account; add this way while signed in.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/auth/callback/{id}": {
+      "get": {
+        "summary": "Where Apple's or Google's web sign-in comes back",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "enum": [
+                "apple",
+                "google"
+              ]
+            },
+            "required": true,
+            "name": "id",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "302": {
+            "description": "On to the `callbackURL` the sign-in started with."
+          }
+        }
+      }
+    },
+    "/v1/auth/link-social": {
+      "post": {
+        "summary": "Add Apple or Google as another way to sign in",
+        "description": "Needs a sign-in from the last 10 minutes. The account email is told.",
+        "security": [
+          {
+            "sessionToken": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "provider": {
+                    "type": "string",
+                    "enum": [
+                      "apple",
+                      "google"
+                    ]
+                  },
+                  "idToken": {
+                    "$ref": "#/components/schemas/IdToken"
+                  }
+                },
+                "required": [
+                  "provider",
+                  "idToken"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Added.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": {
+                      "type": "boolean",
+                      "enum": [
+                        true
+                      ]
+                    }
+                  },
+                  "required": [
+                    "status"
+                  ],
+                  "additionalProperties": {}
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "`unauthorized`.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "`session_not_fresh`: sign in again first.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/auth/unlink-account": {
+      "post": {
+        "summary": "Remove a way to sign in",
+        "description": "Needs a sign-in from the last 10 minutes. The last way never goes. The account's email is told.",
+        "security": [
+          {
+            "sessionToken": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "accountId": {
+                    "type": "string",
+                    "description": "The way in's `id` from GET /v1/auth/list-accounts, not its provider's subject."
+                  }
+                },
+                "required": [
+                  "accountId"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Removed.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": {
+                      "type": "boolean",
+                      "enum": [
+                        true
+                      ]
+                    }
+                  },
+                  "required": [
+                    "status"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "`failed_to_unlink_last_account`, or `account_not_found`.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "`unauthorized`.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "`session_not_fresh`: sign in again first.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/auth/token": {
+      "get": {
+        "summary": "A 15-minute access token for /v1/me, /v1/sync, and the other services",
+        "security": [
+          {
+            "sessionToken": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "An EdDSA JWT naming only the account (`sub`).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "token": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "token"
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "`unauthorized`: the session is gone; sign in again.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/auth/jwks": {
+      "get": {
+        "summary": "The keys an access token is checked with",
+        "responses": {
+          "200": {
+            "description": "A JWKS.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "keys": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "kid": {
+                            "type": "string"
+                          },
+                          "alg": {
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "kid",
+                          "alg"
+                        ],
+                        "additionalProperties": {}
+                      }
+                    }
+                  },
+                  "required": [
+                    "keys"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/auth/get-session": {
+      "get": {
+        "summary": "The session the token names",
+        "security": [
+          {
+            "sessionToken": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The session, or `null` with no valid one.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": [
+                    "object",
+                    "null"
+                  ],
+                  "properties": {
+                    "session": {
+                      "$ref": "#/components/schemas/Session"
+                    },
+                    "user": {
+                      "$ref": "#/components/schemas/SignedInUser"
+                    }
+                  },
+                  "required": [
+                    "session",
+                    "user"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/auth/sign-out": {
+      "post": {
+        "summary": "End this session",
+        "security": [
+          {
+            "sessionToken": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {}
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Signed out.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "enum": [
+                        true
+                      ]
+                    }
+                  },
+                  "required": [
+                    "success"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/auth/list-accounts": {
+      "get": {
+        "summary": "The ways this account signs in",
+        "security": [
+          {
+            "sessionToken": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Each way in.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Identity"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "`unauthorized`.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/auth/list-sessions": {
+      "get": {
+        "summary": "Where this account is signed in",
+        "security": [
+          {
+            "sessionToken": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Each session.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Session"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "`unauthorized`.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/auth/revoke-session": {
+      "post": {
+        "summary": "Sign one session out",
+        "security": [
+          {
+            "sessionToken": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "token": {
+                    "type": "string",
+                    "description": "A session's `token` from list-sessions."
+                  }
+                },
+                "required": [
+                  "token"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Signed out.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": {
+                      "type": "boolean",
+                      "enum": [
+                        true
+                      ]
+                    }
+                  },
+                  "required": [
+                    "status"
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "`unauthorized`.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/auth/revoke-sessions": {
+      "post": {
+        "summary": "Sign every session out, this one too",
+        "security": [
+          {
+            "sessionToken": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {}
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Signed out.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": {
+                      "type": "boolean",
+                      "enum": [
+                        true
+                      ]
+                    }
+                  },
+                  "required": [
+                    "status"
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "`unauthorized`.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/auth/revoke-other-sessions": {
+      "post": {
+        "summary": "Sign every other session out",
+        "security": [
+          {
+            "sessionToken": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {}
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Signed out.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": {
+                      "type": "boolean",
+                      "enum": [
+                        true
+                      ]
+                    }
+                  },
+                  "required": [
+                    "status"
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "`unauthorized`.",
             "content": {
               "application/json": {
                 "schema": {

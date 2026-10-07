@@ -1,4 +1,4 @@
-import { and, asc, eq, gt, max, sql } from 'drizzle-orm'
+import { and, asc, eq, gt, lt, max, sql } from 'drizzle-orm'
 import type { AccountStore, LockedAccount } from '../domain/store'
 import type { Drizzle } from './database'
 import { syncChanges, syncMutations, users } from './schema'
@@ -64,6 +64,15 @@ export function accountStore(db: Drizzle): AccountStore {
             }
           },
           async journal(entry) {
+            await tx
+              .delete(syncChanges)
+              .where(
+                and(
+                  eq(syncChanges.userId, userId),
+                  eq(syncChanges.entityType, entry.entityType),
+                  eq(syncChanges.entityId, entry.entityId)
+                )
+              )
             await tx.insert(syncChanges).values({ userId, ...entry })
           },
           async recordedMutation(clientMutationId) {
@@ -80,6 +89,16 @@ export function accountStore(db: Drizzle): AccountStore {
           },
           async recordMutation(record) {
             await tx.insert(syncMutations).values({ userId, ...record })
+          },
+          async forgetMutationsOlderThan(days) {
+            await tx
+              .delete(syncMutations)
+              .where(
+                and(
+                  eq(syncMutations.userId, userId),
+                  lt(syncMutations.createdAt, sql`now() - make_interval(days => ${days})`)
+                )
+              )
           }
         }
         return work(account)

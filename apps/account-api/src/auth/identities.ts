@@ -2,7 +2,7 @@ import type { BetterAuthOptions } from 'better-auth'
 import { APIError } from 'better-auth/api'
 import { isRejection, normalizeName } from '../domain/profile'
 import type { Mailer } from '../email/mailer'
-import { signInAddedMessage } from '../email/sign-in-added'
+import { signInAddedMessage, signInRemovedMessage } from '../email/sign-in-ways'
 
 export const emailProvider = 'email'
 
@@ -56,6 +56,12 @@ export function identityHooks(mailer: Mailer) {
       update: {
         async before(account) {
           return { data: { ...account, ...providerTokens } }
+        }
+      },
+      delete: {
+        async after(account, context) {
+          const user = await context?.context.internalAdapter.findUserById(account.userId)
+          if (user) void mailer.send(signInRemovedMessage(user.email, account.providerId))
         }
       }
     }

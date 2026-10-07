@@ -74,20 +74,30 @@ describe('POST /v1/sync', () => {
     expect((await synced(learner, { cursor: next.cursor })).changes).toEqual([])
   })
 
-  test('pages through the journal, a limit at a time, each entity once a page as it is now', async () => {
-    const learner = await accounts.learner('pages@example.com')
+  test('keeps one journal row per entity, its latest, so the journal grows with entities, not changes', async () => {
+    const learner = await accounts.learner('compact@example.com')
     for (let version = 1; version <= 5; version++) {
       await accounts.changeMe(learner.token, { baseVersion: version, name: `Name ${version}` })
     }
-    const entries = await accounts.running.service.rows(
-      `select count(*)::int as n from sync_changes where user_id = '${learner.userId}'`
+    const journal = await accounts.running.service.rows(
+      `select entity_type, entity_version::int as version, operation from sync_changes where user_id = '${learner.userId}'`
     )
-    expect(entries).toEqual([{ n: 6 }])
+    expect(journal).toEqual([{ entity_type: 'profile', version: 6, operation: 'update' }])
+    const pages = await syncedToTheEnd(learner, 1)
+    expect(pages.map(page => page.changes.map(change => change.version))).toEqual([[6]])
+  })
+
+  test('pages through the journal a limit at a time, skipping entities this service does not know', async () => {
+    const learner = await accounts.learner('pages@example.com')
+    await accounts.running.service.rows(
+      `insert into sync_changes (user_id, entity_type, entity_id, entity_version, operation) select '${learner.userId}', 'laterEntity', 'item-' || n, 1, 'create' from generate_series(1, 4) as n`
+    )
+    await accounts.changeMe(learner.token, { baseVersion: 1, name: 'Last' })
     const pages = await syncedToTheEnd(learner, 2)
     expect(pages.map(page => page.hasMore)).toEqual([true, true, false])
-    for (const page of pages) {
-      expect(page.changes).toEqual([expect.objectContaining({ version: 6 })])
-    }
+    expect(pages.flatMap(page => page.changes)).toEqual([
+      expect.objectContaining({ entity: 'profile', version: 2 })
+    ])
   })
 
   test('applies queued mutations in order, and answers each', async () => {
@@ -111,11 +121,7 @@ describe('POST /v1/sync', () => {
     const journal = await accounts.running.service.rows(
       `select entity_type, entity_version, operation from sync_changes where user_id = '${learner.userId}' order by sequence`
     )
-    expect(journal).toEqual([
-      { entity_type: 'profile', entity_version: 1, operation: 'create' },
-      { entity_type: 'profile', entity_version: 2, operation: 'update' },
-      { entity_type: 'profile', entity_version: 3, operation: 'update' }
-    ])
+    expect(journal).toEqual([{ entity_type: 'profile', entity_version: 3, operation: 'update' }])
   })
 
   test('applies a mutation sent again after a lost answer once, and answers it as before', async () => {
@@ -299,6 +305,19 @@ describe('POST /v1/sync', () => {
       { id: 'partway-0001', status: 'applied', version: 2 },
       { id: 'partway-0002', status: 'applied', version: 3 }
     ])
+  })
+
+  test('keeps a mutation result 30 days, then forgets it on the next mutation', async () => {
+    const learner = await accounts.learner('forget@example.com')
+    await synced(learner, { mutations: [rename('Old', 1, 'kept-old-01')] })
+    await accounts.running.service.rows(
+      `update sync_mutations set created_at = now() - interval '31 days' where client_mutation_id = 'kept-old-01'`
+    )
+    await synced(learner, { mutations: [rename('New', 2, 'kept-new-01')] })
+    const kept = await accounts.running.service.rows(
+      `select client_mutation_id from sync_mutations where user_id = '${learner.userId}'`
+    )
+    expect(kept).toEqual([{ client_mutation_id: 'kept-new-01' }])
   })
 
   test("logs each request's route and status, and never the learner's profile or tokens", async () => {

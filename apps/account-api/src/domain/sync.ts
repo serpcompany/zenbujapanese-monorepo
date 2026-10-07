@@ -11,7 +11,11 @@ import type {
   RecordedMutation
 } from './store'
 
-export const syncLimits = { mutations: 50, changes: { standard: 100, most: 500 } } as const
+export const syncLimits = {
+  mutations: 50,
+  changes: { standard: 100, most: 500 },
+  resultsKeptDays: 30
+} as const
 
 export interface ClientMutation {
   id: string
@@ -200,6 +204,7 @@ function applyMutation(store: AccountStore, userId: string, mutation: ClientMuta
     }
     const outcome = await outcomeOf(account, mutation)
     await account.recordMutation(recordOf(mutation, sha256, outcome))
+    await account.forgetMutationsOlderThan(syncLimits.resultsKeptDays)
     return resultOf(mutation.id, outcome)
   })
 }

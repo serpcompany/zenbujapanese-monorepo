@@ -115,7 +115,10 @@ export const syncChanges = pgTable(
     operation: text('operation').notNull(),
     changedAt: moment('changed_at').notNull().defaultNow()
   },
-  table => [index('sync_changes_user_sequence').on(table.userId, table.sequence)]
+  table => [
+    index('sync_changes_user_sequence').on(table.userId, table.sequence),
+    uniqueIndex('sync_changes_entity').on(table.userId, table.entityType, table.entityId)
+  ]
 )
 
 export const syncMutations = pgTable(
@@ -132,7 +135,10 @@ export const syncMutations = pgTable(
     errorCode: text('error_code'),
     createdAt: created()
   },
-  table => [primaryKey({ columns: [table.userId, table.clientMutationId] })]
+  table => [
+    primaryKey({ columns: [table.userId, table.clientMutationId] }),
+    index('sync_mutations_user_created').on(table.userId, table.createdAt)
+  ]
 )
 
 export const syncOrigin = pgTable('sync_origin', {

@@ -92,6 +92,34 @@ describe('the account service', () => {
     expect(await response.text()).not.toMatch(/duplicate|users_pkey|user-1/)
   })
 
+  test('limits each account to 120 syncs and 60 profile requests a minute, alone', async () => {
+    vi.useFakeTimers({ toFake: ['Date'] })
+    vi.setSystemTime(new Date('2026-10-06T12:00:00.000Z'))
+    const service = app(up, { verifyAccessToken: async token => token })
+    const send = (path: string, account: string) =>
+      service.request(path, {
+        method: path === '/v1/sync' ? 'POST' : 'GET',
+        headers: { authorization: `Bearer ${account}`, 'content-type': 'application/json' },
+        body: path === '/v1/sync' ? '{}' : undefined
+      })
+    for (const [path, perMinute] of [
+      ['/v1/sync', 120],
+      ['/v1/me', 60]
+    ] as const) {
+      for (let request = 0; request < perMinute; request++) {
+        expect((await send(path, 'busy')).status).not.toBe(429)
+      }
+      const limited = await send(path, 'busy')
+      expect(limited.status, path).toBe(429)
+      expect(Number(limited.headers.get('retry-after'))).toBeGreaterThan(0)
+      expect(await limited.json()).toMatchObject({ error: { code: 'too_many_requests' } })
+      expect((await send(path, 'quiet')).status).not.toBe(429)
+    }
+    vi.setSystemTime(new Date('2026-10-06T12:01:00.000Z'))
+    expect((await send('/v1/sync', 'busy')).status).not.toBe(429)
+    vi.useRealTimers()
+  })
+
   test('refuses a body over 64 KB to sign-in, as to the other routes', async () => {
     const response = await app(up).request('/v1/auth/sign-in/email-otp', {
       method: 'POST',

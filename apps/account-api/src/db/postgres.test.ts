@@ -102,11 +102,7 @@ describe('Postgres, through the driver the service runs', () => {
         'select operation, entity_version::int as entity_version from sync_changes where user_id = $1 order by sequence',
         [id]
       )
-      expect(journal.rows).toEqual([
-        { operation: 'create', entity_version: 1 },
-        { operation: 'update', entity_version: 2 },
-        { operation: 'update', entity_version: 3 }
-      ])
+      expect(journal.rows).toEqual([{ operation: 'update', entity_version: 3 }])
       await raw.query('delete from users where id = $1', [id])
       await raw.end()
       await database.close()

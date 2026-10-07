@@ -34,6 +34,7 @@ export interface LockedAccount {
   journal(entry: Omit<JournalEntry, 'sequence'>): Promise<void>
   recordedMutation(clientMutationId: string): Promise<RecordedMutation | null>
   recordMutation(record: MutationRecord): Promise<void>
+  forgetMutationsOlderThan(days: number): Promise<void>
 }
 
 export interface AccountStore {

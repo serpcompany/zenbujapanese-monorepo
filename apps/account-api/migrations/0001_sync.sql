@@ -31,4 +31,6 @@ ALTER TABLE "users" ADD COLUMN "version" bigint DEFAULT 1 NOT NULL;--> statement
 ALTER TABLE "sync_changes" ADD CONSTRAINT "sync_changes_user_id_users_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."users"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "sync_mutations" ADD CONSTRAINT "sync_mutations_user_id_users_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."users"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 CREATE INDEX "sync_changes_user_sequence" ON "sync_changes" USING btree ("user_id","sequence");--> statement-breakpoint
+CREATE UNIQUE INDEX "sync_changes_entity" ON "sync_changes" USING btree ("user_id","entity_type","entity_id");--> statement-breakpoint
+CREATE INDEX "sync_mutations_user_created" ON "sync_mutations" USING btree ("user_id","created_at");--> statement-breakpoint
 ALTER TABLE "users" ADD CONSTRAINT "users_username_unique" UNIQUE("username");

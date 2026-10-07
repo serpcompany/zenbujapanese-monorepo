@@ -22,6 +22,7 @@ export function fenceIfRestored(db: Drizzle): Promise<DatabaseStart> {
     await tx
       .update(users)
       .set({ version: sql`greatest(${users.version} + 1, (${epoch} * 1000)::bigint)` })
+    await tx.execute(sql`delete from sync_changes where entity_type = ${profile}`)
     await tx.execute(
       sql`insert into sync_changes (user_id, entity_type, entity_id, entity_version, operation) select id, ${profile}, id, version, 'update' from users order by created_at, id`
     )

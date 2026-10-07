@@ -4,7 +4,9 @@ import { createMiddleware } from 'hono/factory'
 import type { Accounts } from '../domain/accounts'
 import type { Profile } from '../domain/profile'
 import type { Change, MutationResult } from '../domain/sync'
+import type { AccountEnv } from './env'
 import { errorBody } from './errors'
+import { requestsPerMinute } from './rate-limit'
 import {
   ErrorSchema,
   ProfileConflictSchema,
@@ -13,8 +15,6 @@ import {
   SyncAnswerSchema,
   SyncRequestSchema
 } from './schemas'
-
-export type AccountEnv = { Variables: { userId: string } }
 
 export const bodyLimitKb = 64
 
@@ -31,6 +31,11 @@ const unauthorized = json(
 )
 const tooLarge = json(ErrorSchema, `\`too_large\`: the body is over ${bodyLimitKb} KB.`)
 const malformed = json(ErrorSchema, '`bad_request`: the body is not JSON, or not this shape.')
+const tooMany = (perMinute: number) =>
+  json(
+    ErrorSchema,
+    `\`too_many_requests\`: this account sent more than ${perMinute} requests here in the current minute. Wait the seconds \`Retry-After\` says.`
+  )
 const failed = json(
   ErrorSchema,
   '`internal`: the service failed, and nothing says why. Try again later, backing off. In a sync, the mutations before the failure stand, and sending the request again answers them as before.'
@@ -81,7 +86,12 @@ const readProfile = createRoute({
   path: '/v1/me',
   summary: "The signed-in account's profile",
   security,
-  responses: { 200: json(ProfileSchema, 'The profile.'), 401: unauthorized, 500: failed }
+  responses: {
+    200: json(ProfileSchema, 'The profile.'),
+    401: unauthorized,
+    429: tooMany(requestsPerMinute.profile),
+    500: failed
+  }
 })
 
 const changeProfile = createRoute({
@@ -103,6 +113,7 @@ const changeProfile = createRoute({
       '`version_conflict`, with `current`: the profile changed since `baseVersion`. `username_taken`: another account has that username.'
     ),
     413: tooLarge,
+    429: tooMany(requestsPerMinute.profile),
     500: failed
   }
 })
@@ -126,6 +137,7 @@ const sync = createRoute({
       "`invalid_cursor`: the cursor isn't one this service gave this account, or is past what it holds, as after a restore. Nothing was applied. Sync again with no cursor, and keep what comes back."
     ),
     413: tooLarge,
+    429: tooMany(requestsPerMinute.sync),
     500: failed
   }
 })

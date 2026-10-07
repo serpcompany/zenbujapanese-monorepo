@@ -12,14 +12,14 @@
     {
       "idx": 1,
       "version": "7",
-      "when": 1791326365310,
+      "when": 1791335308805,
       "tag": "0001_sync",
       "breakpoints": true
     },
     {
       "idx": 2,
       "version": "7",
-      "when": 1791326371710,
+      "when": 1791335309665,
       "tag": "0002_journal_accounts",
       "breakpoints": true
     }
