@@ -105,9 +105,9 @@ vocabulary lists, rather than the levels KANJIDIC2 records, as the mockups have 
 chose his lists. The JLPT has published no kanji list since 2010, and the kanji lists page and each
 JLPT list say the levels are estimates. Both credit his lists under CC BY, linking to them as the
 Internet Archive keeps them, since his site no longer resolves. N1 includes 247 jinmeiyō kanji, and
-his lists leave out 172 jōyō kanji, such as 分 and 可. A kanji's details still show KANJIDIC2's
-pre-2010 level (#485), so 628 of the 2,211 listed kanji show another level there: 日 is in the N5
-list, and its details say N4.
+his lists leave out 172 jōyō kanji, such as 分 and 可, that no modern list gives a level. A
+kanji's details show the same level as these lists, or none
+([Dictionary](dictionary.md#kanji-details)).
 
 - Source: the owner's answers on #614.
 - Check: Browse spec, "the JLPT kanji lists are Waller’s, credited under CC BY"; Browse service,

@@ -180,7 +180,9 @@ EDRDG's radical files, KANJIDIC2, and Kanjium into the kanji reference data, in 
 **`import_jlpt_kanji_levels.py`** reads from the Internet Archive's captures of his five kanji
 pages: the one table on each page whose header is Kanji, Onyomi, Kunyomi, English. A page whose
 size, SHA-256, or kanji count differs from its record, or a kanji KANJIDIC2 lacks, fails the
-import. The app reads the level without showing it; the website's JLPT kanji lists use it.
+import. The app's and the website's kanji details show it as the JLPT level, and the website's
+JLPT kanji lists use it. KANJIDIC2's own `jlpt`, its pre-2010 level, stays in the file, and
+nothing reads it.
 
 **`publish_frequency_pack_sources.py`** uploads downloadable pack sources to the CDN bucket. It
 matches each file to manifests by byte count and SHA-256, never by name, uploads it to the key its

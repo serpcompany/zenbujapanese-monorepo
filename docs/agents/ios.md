@@ -158,8 +158,7 @@ conjugation table its part of speech opens (each form with the words `Conjugatio
 `ConjugatedForm.examples`, and the first 3 with their linked tokens and which of them
 `LinkedJapaneseText.matchesQuery` accents), kanji, and its first 25 examples with their linked tokens; for
 a kanji, its metrics, meanings, readings with their words, elements, 24 words, and whether it
-has stroke data (not its JLPT metric, which the suites leave out until KANJIDIC2's old JLPT
-scale is decided, issue 485). The views and the suite
+has stroke data. The views and the suite
 share those helpers, so the suite records what the views draw. Each file pins the SHA-256 of
 every bundled artifact it was recorded against. After an intended
 change to either screen or its data, record them again with the same

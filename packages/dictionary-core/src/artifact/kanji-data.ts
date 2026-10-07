@@ -10,7 +10,6 @@ export interface KanjiReferenceEntry {
   character: string
   strokeCount: number
   grade: number | null
-  jlpt: number | null
   wallerJlptLevel: number | null
   frequencyRank: number | null
   meanings: string[]
@@ -98,7 +97,7 @@ export class KanjiData {
       character: entry.character,
       strokeCount: entry.strokeCount,
       grade: entry.grade,
-      jlpt: entry.jlpt,
+      jlpt: entry.wallerJlptLevel,
       meanings: entry.meanings,
       readings: entry.readings.map(({ value, kind }) => ({ value, kind })),
       components: entry.components

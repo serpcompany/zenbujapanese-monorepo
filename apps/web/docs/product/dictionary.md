@@ -708,16 +708,21 @@ HTML while closed. A kanji has no page of its own (ADR 0010). A page that shows 
 credits KANJIDIC2, RADKFILE, KanjiVG when it draws stroke order, and Kanjium (see each page's
 Credits).
 
-**Header.** The kanji, then its metrics: strokes ("Stroke" for one), and the grade and JLPT level
-when KANJIDIC2 has them. JLPT reads as the app writes it, `N` and KANJIDIC2's level, so 要 shows
-N2. The meanings follow on one line.
+**Header.** The kanji, then its metrics: strokes ("Stroke" for one), the grade when KANJIDIC2 has
+one, and the JLPT level when Jonathan Waller's kanji lists give one. JLPT reads as the app writes
+it, `N` and the level, so 一 and 日 show N5 and 要 shows N3. A kanji his lists leave out shows no
+JLPT level, never KANJIDIC2's pre-2010 one: that includes 172 jōyō kanji, such as 分, that no
+modern list gives a level. The meanings follow on one line.
 
-- Source: `KanjiOverview` in `KanjiDetailSections.swift`; #485 (the website shows JLPT as the app
-  does).
-- Check: KD `strokeCount`, `grade`, `meanings`; `packages/dictionary-core/src/detail/kanji.test.ts`,
-  "要" and "a kanji without elements lists its components; one stroke is singular";
-  `apps/web/e2e/kanji.spec.ts`, "the search page for 要 opens 要 to its stroke order, metrics,
-  meanings, readings, and words", and the same on the word page. KD doesn't record JLPT.
+- Source: `KanjiOverview` and `KanjiReferenceEntry.stats` in `KanjiDetailSections.swift`; the
+  owner's comment on #614 (2026-10-06): "Kanji JLPT levels come from Jonathan Waller's kanji
+  lists … This settles #485's level scale."
+- Check: KD `strokeCount`, `grade`, `jlpt` (一, 日, 要, and 分), and `meanings`;
+  `packages/dictionary-core/src/artifact/kanji-data.test.ts`, "a kanji’s JLPT level";
+  `packages/dictionary-core/src/detail/kanji.test.ts`, "要" and "a kanji without elements lists
+  its components; one stroke is singular"; `apps/web/e2e/kanji.spec.ts`, "the search page for 要
+  opens 要 to its stroke order, metrics, meanings, readings, and words", and the same on the word
+  page.
 
 **Share and actions.** Beside the metrics, Share and a ••• menu, as the app's Kanji Detail has
 them. Share sends the kanji, its readings, and its meanings, as the app's does, with the link to

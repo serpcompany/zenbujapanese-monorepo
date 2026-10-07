@@ -276,11 +276,12 @@ browse screens:
   it scrolls.
 - A Tatoeba pair's two sentences each have their own ID, contributor (null when Tatoeba names
   none), and license.
-- A kanji's `jlpt` is KANJIDIC2's level, shown as `N` and the level. The JLPT kanji lists read
-  `wallerJlptLevel` instead, which the kanji row leaves out. `structure` is null when
-  Kanjium has none, and `words` holds at most 24. `strokes` is KanjiVG's, in a square of
-  `viewportSize` (109): each stroke is opcode 0 then a point to move to, or opcode 1 then the
-  three points of a cubic curve.
+- A kanji's `jlpt` is the level Jonathan Waller's kanji lists give it (`wallerJlptLevel` in
+  `KanjiReferenceData.json`), shown as `N` and the level, and null for a kanji his lists leave out.
+  KANJIDIC2's own pre-2010 `jlpt` is still in the file, and nothing reads it. `structure` is null
+  when Kanjium has none, and `words` holds at most 24. `strokes` is KanjiVG's, in a square of
+  `viewportSize` (109): each stroke is opcode 0 then a point to move to, or opcode 1 then the three
+  points of a cubic curve.
 
 ## Check it
 

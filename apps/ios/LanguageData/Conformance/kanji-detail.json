@@ -42,6 +42,7 @@
       "grade" : 4,
       "hasReference" : true,
       "hasStrokeOrder" : true,
+      "jlpt" : "N3",
       "meanings" : [
         "need",
         "main point",
@@ -262,13 +263,14 @@
       "components" : [
         "日"
       ],
-      "covers" : "grade 1, no elements, many readings",
+      "covers" : "grade 1, JLPT N5, no elements, many readings",
       "elements" : [
 
       ],
       "grade" : 1,
       "hasReference" : true,
       "hasStrokeOrder" : true,
+      "jlpt" : "N5",
       "meanings" : [
         "day",
         "sun",
@@ -644,6 +646,7 @@
       "grade" : 1,
       "hasReference" : true,
       "hasStrokeOrder" : true,
+      "jlpt" : "N5",
       "meanings" : [
         "book",
         "present",
@@ -863,6 +866,7 @@
       "grade" : 1,
       "hasReference" : true,
       "hasStrokeOrder" : true,
+      "jlpt" : "N5",
       "meanings" : [
         "person"
       ],
@@ -1191,6 +1195,7 @@
       "grade" : 1,
       "hasReference" : true,
       "hasStrokeOrder" : true,
+      "jlpt" : "N5",
       "meanings" : [
         "study",
         "learning",
@@ -1415,6 +1420,7 @@
       "grade" : 1,
       "hasReference" : true,
       "hasStrokeOrder" : true,
+      "jlpt" : "N5",
       "meanings" : [
         "water"
       ],
@@ -1747,6 +1753,7 @@
       "grade" : 1,
       "hasReference" : true,
       "hasStrokeOrder" : true,
+      "jlpt" : "N5",
       "meanings" : [
         "see",
         "hopes",
@@ -1984,6 +1991,7 @@
       "grade" : 2,
       "hasReference" : true,
       "hasStrokeOrder" : true,
+      "jlpt" : "N5",
       "meanings" : [
         "eat",
         "food"
@@ -2241,6 +2249,7 @@
       "grade" : 2,
       "hasReference" : true,
       "hasStrokeOrder" : true,
+      "jlpt" : "N5",
       "meanings" : [
         "tall",
         "high",
@@ -2561,6 +2570,7 @@
       "grade" : 1,
       "hasReference" : true,
       "hasStrokeOrder" : true,
+      "jlpt" : "N5",
       "meanings" : [
         "life",
         "genuine",
@@ -3125,6 +3135,7 @@
       "grade" : 2,
       "hasReference" : true,
       "hasStrokeOrder" : true,
+      "jlpt" : "N5",
       "meanings" : [
         "going",
         "journey",
@@ -3509,6 +3520,7 @@
       "grade" : 1,
       "hasReference" : true,
       "hasStrokeOrder" : true,
+      "jlpt" : "N5",
       "meanings" : [
         "large",
         "big"
@@ -3902,6 +3914,7 @@
       "grade" : 2,
       "hasReference" : true,
       "hasStrokeOrder" : true,
+      "jlpt" : "N5",
       "meanings" : [
         "word",
         "speech",
@@ -4128,6 +4141,7 @@
       "grade" : 4,
       "hasReference" : true,
       "hasStrokeOrder" : true,
+      "jlpt" : "N3",
       "meanings" : [
         "quiet"
       ],
@@ -4402,6 +4416,7 @@
       "grade" : 2,
       "hasReference" : true,
       "hasStrokeOrder" : true,
+      "jlpt" : "N4",
       "meanings" : [
         "house",
         "home",
@@ -4712,6 +4727,7 @@
       "grade" : 2,
       "hasReference" : true,
       "hasStrokeOrder" : true,
+      "jlpt" : "N5",
       "meanings" : [
         "in front",
         "before"
@@ -4986,6 +5002,7 @@
       "grade" : 6,
       "hasReference" : true,
       "hasStrokeOrder" : true,
+      "jlpt" : "N4",
       "meanings" : [
         "private",
         "I",
@@ -5217,6 +5234,7 @@
       "grade" : 8,
       "hasReference" : true,
       "hasStrokeOrder" : true,
+      "jlpt" : "N3",
       "meanings" : [
         "cat"
       ],
@@ -5415,6 +5433,320 @@
       ]
     },
     {
+      "character" : "分",
+      "codePoint" : "U+5206",
+      "covers" : "jōyō kanji Waller's JLPT lists leave out, which shows no JLPT level",
+      "elements" : [
+        {
+          "glyph" : "八",
+          "meanings" : [
+            "eight",
+            "eight radical (no. 12)"
+          ],
+          "role" : "meaningStructure"
+        },
+        {
+          "glyph" : "刀",
+          "meanings" : [
+            "sword",
+            "saber",
+            "knife"
+          ],
+          "role" : "meaningStructure"
+        }
+      ],
+      "grade" : 2,
+      "hasReference" : true,
+      "hasStrokeOrder" : true,
+      "meanings" : [
+        "part",
+        "minute of time",
+        "segment",
+        "share",
+        "degree",
+        "one's lot",
+        "duty",
+        "understand",
+        "know",
+        "rate",
+        "1%",
+        "chances",
+        "shaku/100"
+      ],
+      "opensDetail" : true,
+      "readings" : [
+        {
+          "kind" : "on",
+          "value" : "ブン",
+          "words" : [
+            {
+              "headword" : "分",
+              "id" : "43f54737bd99d2f60308fcb4fbdf5003",
+              "reading" : "ぶん",
+              "summary" : "part, portion, share"
+            },
+            {
+              "headword" : "分割",
+              "id" : "0a04aeaf81fe6721b088f26cd2cdd76f",
+              "reading" : "ぶんかつ",
+              "summary" : "partition, division, separation, segmenting, splitting"
+            },
+            {
+              "headword" : "分担",
+              "id" : "ea843f17349c3f7d9b7b2eb0d78505fd",
+              "reading" : "ぶんたん",
+              "summary" : "taking on one's share (e.g. of work), dividing (work, expenses, etc.) between, apportionment, allotment, allocation, assignment"
+            }
+          ]
+        },
+        {
+          "kind" : "on",
+          "value" : "フン",
+          "words" : [
+            {
+              "headword" : "分",
+              "id" : "611cff21c6baf4c231e226c8aa244357",
+              "reading" : "ふん",
+              "summary" : "minute (unit of time)"
+            },
+            {
+              "headword" : "分間",
+              "id" : "4eaeb966fe3108faf97c7cd6395ac4f6",
+              "reading" : "ふんかん",
+              "summary" : "minutes (period of)"
+            },
+            {
+              "headword" : "分別",
+              "id" : "8fb82532e5fdeb67ad5102f1bf399121",
+              "reading" : "ふんべつ",
+              "summary" : "discretion, prudence, good sense, judgement, judgment, wisdom, discernment"
+            }
+          ]
+        },
+        {
+          "kind" : "on",
+          "value" : "ブ",
+          "words" : [
+            {
+              "headword" : "分",
+              "id" : "43f54737bd99d2f60308fcb4fbdf5003",
+              "reading" : "ぶん",
+              "summary" : "part, portion, share"
+            },
+            {
+              "headword" : "分",
+              "id" : "290d2cd863a2a1ebbc84fc94eed28d43",
+              "reading" : "ぶ",
+              "summary" : "one-tenth, one percent (one-tenth of a wari), 3 mm (one-tenth of a sun), 2.4 mm (one-tenth of a mon, a traditional unit used to measure shoe sizes), 0.1 degree (one-tenth of a do, used to measure body temperature on any temperature scale)"
+            },
+            {
+              "headword" : "分割",
+              "id" : "0a04aeaf81fe6721b088f26cd2cdd76f",
+              "reading" : "ぶんかつ",
+              "summary" : "partition, division, separation, segmenting, splitting"
+            }
+          ]
+        },
+        {
+          "kind" : "kun",
+          "value" : "わ.ける",
+          "words" : [
+
+          ]
+        },
+        {
+          "kind" : "kun",
+          "value" : "わ.け",
+          "words" : [
+
+          ]
+        },
+        {
+          "kind" : "kun",
+          "value" : "わ.かれる",
+          "words" : [
+
+          ]
+        },
+        {
+          "kind" : "kun",
+          "value" : "わ.かる",
+          "words" : [
+
+          ]
+        },
+        {
+          "kind" : "kun",
+          "value" : "わ.かつ",
+          "words" : [
+
+          ]
+        },
+        {
+          "kind" : "name",
+          "value" : "いた",
+          "words" : [
+
+          ]
+        },
+        {
+          "kind" : "name",
+          "value" : "わけ",
+          "words" : [
+
+          ]
+        }
+      ],
+      "strokeCount" : 4,
+      "strokeOrderStrokes" : 4,
+      "words" : [
+        {
+          "headword" : "分",
+          "id" : "611cff21c6baf4c231e226c8aa244357",
+          "reading" : "ふん",
+          "summary" : "minute (unit of time)"
+        },
+        {
+          "headword" : "分",
+          "id" : "43f54737bd99d2f60308fcb4fbdf5003",
+          "reading" : "ぶん",
+          "summary" : "part, portion, share"
+        },
+        {
+          "headword" : "分",
+          "id" : "290d2cd863a2a1ebbc84fc94eed28d43",
+          "reading" : "ぶ",
+          "summary" : "one-tenth, one percent (one-tenth of a wari), 3 mm (one-tenth of a sun), 2.4 mm (one-tenth of a mon, a traditional unit used to measure shoe sizes), 0.1 degree (one-tenth of a do, used to measure body temperature on any temperature scale)"
+        },
+        {
+          "headword" : "分間",
+          "id" : "4eaeb966fe3108faf97c7cd6395ac4f6",
+          "reading" : "ふんかん",
+          "summary" : "minutes (period of)"
+        },
+        {
+          "headword" : "分割",
+          "id" : "0a04aeaf81fe6721b088f26cd2cdd76f",
+          "reading" : "ぶんかつ",
+          "summary" : "partition, division, separation, segmenting, splitting"
+        },
+        {
+          "headword" : "分担",
+          "id" : "ea843f17349c3f7d9b7b2eb0d78505fd",
+          "reading" : "ぶんたん",
+          "summary" : "taking on one's share (e.g. of work), dividing (work, expenses, etc.) between, apportionment, allotment, allocation, assignment"
+        },
+        {
+          "headword" : "分析",
+          "id" : "d208578b6a2e0e604aebc198e34b9e73",
+          "reading" : "ぶんせき",
+          "summary" : "analysis"
+        },
+        {
+          "headword" : "分泌",
+          "id" : "8ce58a4fffc65978021d43f28cbcd8be",
+          "reading" : "ぶんぴつ",
+          "summary" : "secretion"
+        },
+        {
+          "headword" : "分布",
+          "id" : "ea1c08f23ba4547a62cffbbba837536e",
+          "reading" : "ぶんぷ",
+          "summary" : "distribution"
+        },
+        {
+          "headword" : "分裂",
+          "id" : "03fc5e7e1d4aecbc077d8b307c97e337",
+          "reading" : "ぶんれつ",
+          "summary" : "split, division, break up"
+        },
+        {
+          "headword" : "分岐",
+          "id" : "f19aa4b9e34ea628ecf497a39efac13c",
+          "reading" : "ぶんき",
+          "summary" : "divergence, ramification, bifurcation, branching off"
+        },
+        {
+          "headword" : "分解",
+          "id" : "de4e96e7b8f44217b4c093843f99f943",
+          "reading" : "ぶんかい",
+          "summary" : "disassembly, dismantling, disaggregating, taking apart, breaking up, analysis, parsing"
+        },
+        {
+          "headword" : "分子",
+          "id" : "6932ff550ad1ecd0231d58f271308fb9",
+          "reading" : "ぶんし",
+          "summary" : "molecule"
+        },
+        {
+          "headword" : "分離",
+          "id" : "e9767e0bef39f11ba39d30a1274c1156",
+          "reading" : "ぶんり",
+          "summary" : "separation, partition, detachment, segregation, isolation"
+        },
+        {
+          "headword" : "分母",
+          "id" : "9ab30b2b9cfe5df60e5cba56c95394a8",
+          "reading" : "ぶんぼ",
+          "summary" : "denominator"
+        },
+        {
+          "headword" : "分別",
+          "id" : "8fb82532e5fdeb67ad5102f1bf399121",
+          "reading" : "ふんべつ",
+          "summary" : "discretion, prudence, good sense, judgement, judgment, wisdom, discernment"
+        },
+        {
+          "headword" : "分野",
+          "id" : "814dd413ad4f110e4dc4b974f9beb553",
+          "reading" : "ぶんや",
+          "summary" : "field, sphere, realm, division, branch"
+        },
+        {
+          "headword" : "分立",
+          "id" : "901e654ceae164cfa733a2e6b1acccbb",
+          "reading" : "ぶんりつ",
+          "summary" : "segregation, separation, independence"
+        },
+        {
+          "headword" : "分類",
+          "id" : "32f97aa10312ba0c0e652b9e7ff22cc9",
+          "reading" : "ぶんるい",
+          "summary" : "classification, categorization, sorting"
+        },
+        {
+          "headword" : "分別",
+          "id" : "f996689c3c001f2806c2b23b6acb47a0",
+          "reading" : "ぶんべつ",
+          "summary" : "separation (e.g. of rubbish when recycling), classification, discrimination, division, distinction"
+        },
+        {
+          "headword" : "分配",
+          "id" : "1188cbd3c5c9e6464d4e620a96d64248",
+          "reading" : "ぶんぱい",
+          "summary" : "division, splitting, sharing, distribution, dissemination, allocation"
+        },
+        {
+          "headword" : "分量",
+          "id" : "bc8ec76d49f2a0f969d2e9f071426e4f",
+          "reading" : "ぶんりょう",
+          "summary" : "amount, quantity"
+        },
+        {
+          "headword" : "分業",
+          "id" : "68d0d32d91d9c0e2d9780a4e2ca42d62",
+          "reading" : "ぶんぎょう",
+          "summary" : "division of labor, division of labour, specialization, specialisation, assembly-line production"
+        },
+        {
+          "headword" : "分散",
+          "id" : "0e41961ff06bb423cbc682ca378558b1",
+          "reading" : "ぶんさん",
+          "summary" : "dispersion, breakup, scattering, decentralization, decentralisation, distribution"
+        }
+      ]
+    },
+    {
       "character" : "気",
       "codePoint" : "U+6C17",
       "covers" : "grade 1",
@@ -5431,6 +5763,7 @@
       "grade" : 1,
       "hasReference" : true,
       "hasStrokeOrder" : true,
+      "jlpt" : "N5",
       "meanings" : [
         "spirit",
         "mind",
@@ -5692,6 +6025,7 @@
       "grade" : 2,
       "hasReference" : true,
       "hasStrokeOrder" : true,
+      "jlpt" : "N4",
       "meanings" : [
         "meeting",
         "meet",
@@ -5940,13 +6274,14 @@
       "components" : [
         "一"
       ],
-      "covers" : "one stroke",
+      "covers" : "one stroke, JLPT N5",
       "elements" : [
 
       ],
       "grade" : 1,
       "hasReference" : true,
       "hasStrokeOrder" : true,
+      "jlpt" : "N5",
       "meanings" : [
         "one",
         "one radical (no.1)"
@@ -6321,6 +6656,7 @@
       "grade" : 8,
       "hasReference" : true,
       "hasStrokeOrder" : true,
+      "jlpt" : "N1",
       "meanings" : [
         "the latter",
         "duplicate",
@@ -7079,6 +7415,7 @@
       "grade" : 8,
       "hasReference" : true,
       "hasStrokeOrder" : true,
+      "jlpt" : "N1",
       "meanings" : [
         "corridor",
         "hall",

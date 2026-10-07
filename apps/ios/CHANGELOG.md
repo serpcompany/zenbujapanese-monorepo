@@ -64,6 +64,8 @@ All notable user-facing changes to Zenbu Japanese are recorded here.
 
 ### Changed
 
+- A kanji's **JLPT** level is now Jonathan Waller's estimate, N5 to N1, so 一 and 日 show N5
+  instead of the old four-level N4. A kanji his lists leave out, such as 分, shows no JLPT level.
 - Words you marked known no longer show an underline in linked Japanese.
 - The word sheet from Image Search and Player has a close button and **Open Full Entry** in its top
   bar instead of Done and a bottom button, and no longer repeats the word as its title. Its

@@ -43,7 +43,7 @@ are sections of `ios.md`.
   Main gap: nothing runs the Swift against its own recorded suites before merge, and no suite
   records sentence search (#470).
 - **Word and kanji detail, C.** The recorded suites cover what both screens draw, but only on a
-  Mac. Main gap: no CI, and the kanji suite leaves out the JLPT metric (#485).
+  Mac. Main gap: no CI.
 - **Player, C.** The caption model is tested; the player isn't. Main gap: playback, the
   highlighted card, the controls, and the live caption fetch are checked only by hand.
 - **Lists and Known Words, C.** Storage is well tested. Main gap: the screens (swipes, Edit,

@@ -172,8 +172,8 @@ files: search retrieval, search results (every row, chip, and special row, the E
 row included), example search (every listed pair ID for 67 queries, and the first 5 sentences'
 words, links, and marks), word detail (the first 25 examples' order, tokens, links, and
 highlights, the counts, the furigana split, the pitch graph, each frequency row's details, and
-every conjugated form's examples), and kanji detail (all but JLPT, which the app's cases don't
-record). The word-detail suite's furigana, pitch graph, frequency details, and conjugations take
+every conjugated form's examples), and kanji detail (its metrics, Waller's JLPT level among
+them). The word-detail suite's furigana, pitch graph, frequency details, and conjugations take
 the shapes in `packages/dictionary-core/src/detail/suite.ts`, which the website's rendered-page
 test (`apps/web/src/components/dictionary/word-page.test.tsx`) shares. Each suite pins the files
 it was recorded from, and fails on others (`requirePinnedArtifacts`), since it would compare
