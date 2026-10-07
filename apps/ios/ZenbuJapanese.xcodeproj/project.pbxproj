@@ -19,6 +19,8 @@
 		0BB4AC5EE8C0DBD544F1CE40 /* ZenbuJapanese.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = ZenbuJapanese.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		A6DE26B8A994C087243DFB0F /* ZenbuJapaneseApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ZenbuJapaneseApp.swift; sourceTree = "<group>"; };
 		B2D15A10E4B85E9C93E4D7F2 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		C5730A0000000000000000A1 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		C5730A0000000000000000A2 /* ZenbuJapanese.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = ZenbuJapanese.entitlements; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -62,7 +64,9 @@
 			isa = PBXGroup;
 			children = (
 				B2D15A10E4B85E9C93E4D7F2 /* Assets.xcassets */,
+				C5730A0000000000000000A1 /* Info.plist */,
 				48A12CB315EF48F78F16871A /* PrivacyInfo.xcprivacy */,
+				C5730A0000000000000000A2 /* ZenbuJapanese.entitlements */,
 				A6DE26B8A994C087243DFB0F /* ZenbuJapaneseApp.swift */,
 			);
 			path = App;
@@ -173,9 +177,11 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_ENTITLEMENTS = App/ZenbuJapanese.entitlements;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
 				CURRENT_PROJECT_VERSION = 20;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = App/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = "$(ZENBU_DISPLAY_NAME)";
 				ZENBU_BUNDLE_ID_SUFFIX = "";
 				ZENBU_DISPLAY_NAME = "Zenbu Japanese";
@@ -195,6 +201,8 @@
 				SDKROOT = iphoneos;
 				SWIFT_VERSION = 6.0;
 				TARGETED_DEVICE_FAMILY = 1;
+				ZENBU_ACCOUNT_API_URL = "https://api.zenbujapanese.com";
+				ZENBU_GOOGLE_IOS_CLIENT_ID = "";
 			};
 			name = Release;
 		};
@@ -258,9 +266,11 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_ENTITLEMENTS = App/ZenbuJapanese.entitlements;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
 				CURRENT_PROJECT_VERSION = 20;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = App/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = "$(ZENBU_DISPLAY_NAME)";
 				ZENBU_BUNDLE_ID_SUFFIX = "";
 				ZENBU_DISPLAY_NAME = "Zenbu Japanese";
@@ -280,6 +290,8 @@
 				SDKROOT = iphoneos;
 				SWIFT_VERSION = 6.0;
 				TARGETED_DEVICE_FAMILY = 1;
+				ZENBU_ACCOUNT_API_URL = "https://api-staging.zenbujapanese.com";
+				ZENBU_GOOGLE_IOS_CLIENT_ID = "";
 			};
 			name = Debug;
 		};

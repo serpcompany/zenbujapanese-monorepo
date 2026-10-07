@@ -26,14 +26,17 @@ final class WordLists: LocalFileStore {
   static let shared = WordLists()
 
   static let defaultListName = String(localized: "Favorites")
+  nonisolated static let favoritesID = UUID(uuidString: "2177c773-9e88-410f-9348-6cefaebe0a93")!
 
   private(set) var isLoaded = false
   private(set) var readOnlyReason: LocalFileReadOnlyReason?
   var isReadOnly: Bool { readOnlyReason != nil }
   private(set) var lists: [WordList] = []
   private(set) var membershipsByList: [UUID: [WordListMembership]] = [:]
+  private(set) var movedListIDs: [UUID: UUID] = [:]
   @ObservationIgnored private let writer: WordListsWriter
   @ObservationIgnored let writes = LocalFileWriteQueue()
+  @ObservationIgnored var changeObserver: ((SavedItemChange) -> Void)?
 
   init(fileURL: URL = WordLists.defaultFileURL) {
     let writer = WordListsWriter(fileURL: fileURL)
@@ -42,16 +45,16 @@ final class WordLists: LocalFileStore {
       let loaded = await writer.load()
       readOnlyReason = loaded.readOnlyReason
       if let contents = loaded.contents {
-        lists = Dictionary(contents.lists.map { ($0.id, $0) }) {
-          $0.updatedAt >= $1.updatedAt ? $0 : $1
-        }
-        .values
-        .sorted { ($0.position, $0.createdAt) < ($1.position, $1.createdAt) }
+        lists = Self.ordered(
+          Dictionary(contents.lists.map { ($0.id, $0) }) {
+            $0.updatedAt >= $1.updatedAt ? $0 : $1
+          }
+          .values)
         membershipsByList = Self.grouped(contents.memberships, in: lists)
       }
       isLoaded = true
       if loaded.contents == nil {
-        createList(named: Self.defaultListName)
+        createList(named: Self.defaultListName, id: Self.favoritesID)
       } else if loaded.needsRewrite {
         persist()
       }
@@ -81,14 +84,15 @@ final class WordLists: LocalFileStore {
   }
 
   @discardableResult
-  func createList(named name: String) -> WordList? {
-    guard canChange, let name = Self.validName(name) else { return nil }
+  func createList(named name: String, id: UUID = UUID()) -> WordList? {
+    guard canChange, !hasList(id), let name = Self.validName(name) else { return nil }
     let now = Date()
     let list = WordList(
-      id: UUID(), name: name, position: (lists.map(\.position).max() ?? -1) + 1,
+      id: id, name: name, position: (lists.map(\.position).max() ?? -1) + 1,
       createdAt: now, updatedAt: now)
     lists.append(list)
     persist()
+    changeObserver?(.listCreated(list))
     return list
   }
 
@@ -96,9 +100,11 @@ final class WordLists: LocalFileStore {
     guard canChange, let name = Self.validName(name),
       let index = lists.firstIndex(where: { $0.id == listID }), lists[index].name != name
     else { return }
+    let previous = lists[index]
     lists[index].name = name
     lists[index].updatedAt = Date()
     persist()
+    changeObserver?(.listChanged(lists[index], previous: previous))
   }
 
   func deleteList(_ listID: UUID) {
@@ -106,17 +112,22 @@ final class WordLists: LocalFileStore {
     lists.removeAll { $0.id == listID }
     membershipsByList[listID] = nil
     persist()
+    changeObserver?(.listDeleted(listID))
   }
 
   func moveLists(fromOffsets source: IndexSet, toOffset destination: Int) {
     guard canChange else { return }
     lists.move(fromOffsets: source, toOffset: destination)
     let now = Date()
+    var moved: [(WordList, previous: WordList)] = []
     for index in lists.indices where lists[index].position != index {
+      let previous = lists[index]
       lists[index].position = index
       lists[index].updatedAt = now
+      moved.append((lists[index], previous))
     }
     persist()
+    for (list, previous) in moved { changeObserver?(.listChanged(list, previous: previous)) }
   }
 
   func toggle(_ entry: DictionaryEntry, in listID: UUID) {
@@ -144,9 +155,12 @@ final class WordLists: LocalFileStore {
   }
 
   func remove(storedID: String, from listID: UUID) {
-    guard canChange, contains(storedID: storedID, in: listID) else { return }
+    guard canChange,
+      let membership = membershipsByList[listID]?.first(where: { $0.entryID == storedID })
+    else { return }
     membershipsByList[listID]?.removeAll { $0.entryID == storedID }
     persist()
+    changeObserver?(.wordRemoved(membership))
   }
 
   private func add(storedID: String, headword: String, reading: String, to listID: UUID) {
@@ -157,6 +171,88 @@ final class WordLists: LocalFileStore {
       listID: listID, entryID: storedID, headword: headword, reading: reading, addedAt: Date())
     membershipsByList[listID, default: []].insert(membership, at: 0)
     persist()
+    changeObserver?(.wordAdded(membership))
+  }
+
+  func hasList(_ listID: UUID) -> Bool {
+    lists.contains { $0.id == listID }
+  }
+
+  func applySynced(_ list: WordList) {
+    guard canChange else { return }
+    if let index = lists.firstIndex(where: { $0.id == list.id }) {
+      guard lists[index].name != list.name || lists[index].position != list.position else { return }
+      lists[index].name = list.name
+      lists[index].position = list.position
+      lists[index].updatedAt = Date()
+    } else {
+      lists.append(list)
+      membershipsByList[list.id] = []
+    }
+    lists = Self.ordered(lists)
+    persist()
+  }
+
+  func useSharedFavoritesID() {
+    guard !hasList(Self.favoritesID),
+      let oldest = lists.min(by: { $0.createdAt < $1.createdAt }),
+      oldest.name == Self.defaultListName
+    else { return }
+    moveList(oldest.id, to: Self.favoritesID)
+  }
+
+  @discardableResult
+  func moveList(
+    _ listID: UUID, to newID: UUID
+  ) -> (list: WordList, words: [WordListMembership])? {
+    guard canChange, !hasList(newID), let index = lists.firstIndex(where: { $0.id == listID })
+    else { return nil }
+    let old = lists[index]
+    let list = WordList(
+      id: newID, name: old.name, position: old.position, createdAt: old.createdAt,
+      updatedAt: old.updatedAt)
+    let words = (membershipsByList.removeValue(forKey: listID) ?? []).map {
+      WordListMembership(
+        listID: newID, entryID: $0.entryID, headword: $0.headword, reading: $0.reading,
+        addedAt: $0.addedAt)
+    }
+    lists[index] = list
+    membershipsByList[newID] = words
+    movedListIDs[listID] = newID
+    persist()
+    return (list, words)
+  }
+
+  func currentID(of listID: UUID) -> UUID {
+    var current = listID
+    var seen: Set<UUID> = [listID]
+    while let next = movedListIDs[current], seen.insert(next).inserted {
+      current = next
+    }
+    return current
+  }
+
+  func applySyncedRemoval(ofList listID: UUID) {
+    guard canChange, hasList(listID) else { return }
+    lists.removeAll { $0.id == listID }
+    membershipsByList[listID] = nil
+    persist()
+  }
+
+  func applySynced(_ membership: WordListMembership) {
+    guard canChange, hasList(membership.listID) else { return }
+    var words = membershipsByList[membership.listID] ?? []
+    guard words.first(where: { $0.entryID == membership.entryID }) != membership else { return }
+    words.removeAll { $0.entryID == membership.entryID }
+    words.append(membership)
+    membershipsByList[membership.listID] = words.sorted { $0.addedAt > $1.addedAt }
+    persist()
+  }
+
+  func applySyncedRemoval(of storedID: String, from listID: UUID) {
+    guard canChange, contains(storedID: storedID, in: listID) else { return }
+    membershipsByList[listID]?.removeAll { $0.entryID == storedID }
+    persist()
   }
 
   func persist() {
@@ -165,6 +261,10 @@ final class WordLists: LocalFileStore {
     writes.save { [self] in
       await writer.write(lists: lists, memberships: membershipsByList.values.flatMap(\.self))
     }
+  }
+
+  private static func ordered(_ lists: some Sequence<WordList>) -> [WordList] {
+    lists.sorted { ($0.position, $0.createdAt) < ($1.position, $1.createdAt) }
   }
 
   private static func grouped(
@@ -181,9 +281,15 @@ final class WordLists: LocalFileStore {
     return grouped
   }
 
+  static let longestName = 500
+
   private static func validName(_ name: String) -> String? {
-    let trimmed = name.trimmingCharacters(in: .whitespacesAndNewlines)
-    return trimmed.isEmpty ? nil : trimmed
+    let printable = name.precomposedStringWithCanonicalMapping.unicodeScalars.map {
+      $0.properties.generalCategory == .control ? " " as Unicode.Scalar : $0
+    }
+    let capped = String(String.UnicodeScalarView(printable.prefix(longestName)))
+      .trimmingCharacters(in: .whitespacesAndNewlines)
+    return capped.isEmpty ? nil : capped
   }
 
   nonisolated static let defaultFileURL = FileManager.default.urls(

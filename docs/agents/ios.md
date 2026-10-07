@@ -64,6 +64,9 @@ xcrun devicectl device install app --device <device-udid> \
   "/tmp/zenbu-dev/Build/Products/Debug-iphoneos/Zenbu Japanese.app"
 ```
 
+Zenbu Dev signs in to the account with Google or an emailed code, not with Apple (Account and sync,
+below).
+
 ### From a Mac the iPhone can't reach
 
 Remote Desktop doesn't pass an iPhone's USB connection through to a Mac, so Xcode on a cloud Mac
@@ -322,7 +325,107 @@ opens a version 2 file read-only. A word is keyed by its Language Reference ID a
 `kanji:` and the character (`SavedItem.storedID`), which can't collide with the hexadecimal ID.
 Marking a word unknown keeps its record, so a later sync can tell a removal from no status. List
 records are shaped to become database rows, and a membership keeps its headword so the word can
-still be found if its entry's ID changes.
+still be found if its entry's ID changes. Each store reports a learner's change to the account
+sync (`changeObserver`), and takes the account's changes through `applySynced`, which reports
+nothing (Account and sync, below).
+
+## Account and sync
+
+The app signs in to the account service and syncs known words and lists exactly as the client
+guide says ([`account-clients.md`](account-clients.md)), as `zenbu-ios`. The code is in
+`SearchExperience`: `ZenbuAccount.swift` (sign-in, signing out, deleting),
+`AccountServiceConfiguration.swift`, `AccountAPI.swift` and `AccountSyncModels.swift` (the routes and
+their answers), `AccountTokens.swift`, `AccountSync.swift` and `AccountSyncState.swift` (the queue
+and how results and changes apply), `AccountSyncScheduler.swift` and `AccountBackgroundSync.swift`
+(when), `AppleSignIn.swift`, `GoogleSignIn.swift`, and the views `AccountSignInControls.swift`,
+`AccountSignInView.swift`, `ZenbuAccountView.swift`, and `DeleteAccountView.swift`.
+`apps/account-api/src/test/sync-client.ts` models the same client in TypeScript, and the service's
+tests prove that model against the real service.
+
+- **Which service.** The build setting `ZENBU_ACCOUNT_API_URL` fills `ZenbuAccountServiceURL` in
+  `apps/ios/App/Info.plist`: staging (`https://api-staging.zenbujapanese.com`) in Debug, production
+  in Release. For a service on the Mac ([`account-api.md`](account-api.md), Run it), launch with
+  the argument `-ZenbuAccountServiceURL http://127.0.0.1:8789` or the environment variable
+  `ZENBU_ACCOUNT_API_URL`, or build with `ZENBU_ACCOUNT_API_URL=http://127.0.0.1:8789` so every
+  launch, a background one too, uses it. The Simulator reaches the Mac's `127.0.0.1`, and App
+  Transport Security allows plain HTTP to an IP address.
+- **Apple.** `apps/ios/App/ZenbuJapanese.entitlements` asks for Sign in with Apple, which the App ID
+  (`com.zenbujapanese.app`) needs in Apple Developer. The app asks the service for a nonce and gives
+  Apple its SHA-256 (`AppleSignIn.swift`). Apple's token names the app's bundle ID, and the service
+  takes only the IDs in `apps/account-api/src/domain/clients.ts`, so a Zenbu Dev build
+  (`com.zenbujapanese.app.dev`) can't sign in with Apple. `ZENBU_BUNDLE_ID_SUFFIX` reaches the app as
+  `ZenbuBundleIDSuffix` in `apps/ios/App/Info.plist`; when it isn't empty, the sign-in sheet shows a
+  note in place of the Apple button, and deleting an Apple account says to use the App Store or
+  TestFlight app. Google and emailed codes work in Zenbu Dev.
+- **Google** needs no SDK: `ASWebAuthenticationSession` opens Google's OAuth for iOS with PKCE, the
+  nonce, and the reversed client ID as the redirect, which the session catches itself, so no URL
+  type is registered. The app exchanges the code at Google's token endpoint for the ID token. The
+  build setting `ZENBU_GOOGLE_IOS_CLIENT_ID` is the iOS OAuth client's ID, which isn't secret; it's
+  empty in the repository, and without it the Google button isn't shown. The same ID goes in the
+  service's `GOOGLE_CLIENT_IDS`.
+- **Tokens.** The signed session token (`set-auth-token`) is kept in the Keychain (service
+  `com.zenbujapanese.app.account`, readable after the first unlock, on this device only), and sent
+  only to `/v1/auth`. The 15-minute access token stays in memory, refreshed within a minute of its
+  `exp` or after a `401`; when `/v1/auth/token` answers `401`, the app signs out and keeps its data.
+  The `URLSession` keeps no cookies. A session token in the Keychain without `account-sync.json`
+  (a reinstall) is deleted.
+- **The queue.** `account-sync.json`, beside the stores, holds the account's ID and email, the
+  queue, the cursor, the last sync, each entity's server version, and list words waiting for their
+  list. A learner's change becomes a queued mutation with a new ID and, as `baseVersion`, the
+  entity's last server version (or the base of a change to it still queued). A change made before
+  the file loads is queued once it has.
+- **Signing in and out.** Signing out forgets the session token but keeps the queue, cursor,
+  versions, and waiting words under the account's user ID (`signedOutFrom`), and keeps queuing
+  changes with their base versions. While signed out (`signedOutQueueStart`), a change replaces an
+  earlier one to the same known word or list word from the same signed-out stretch, a list's
+  renames and moves merge into its earlier `create` or `update`, and its `delete` replaces an
+  earlier `update`, so the queue holds about one change per entity however long the learner stays
+  signed out. Nothing queued before signing out is merged, since it may have been sent.
+  Signing in to the same user ID picks them up and syncs from the kept cursor. Signing in to any other account drops them, moves Favorites to its shared ID
+  (`WordLists.favoritesID`, from the oldest list if it's still named Favorites), and queues the
+  phone's marks, lists, and list words at version 0 before the first sync. Deleting the account
+  drops everything.
+- **Favorites** has one ID in every app ([`account-clients.md`](account-clients.md), The rules, from
+  your side). A second phone's `create` of it is rejected `already_exists`, which the first upload
+  never undoes: the account's copy comes down, and the phone's words still add. If that copy comes
+  down deleted (`accountHadFavorites`), the phone keeps its list under a new ID and uploads it with
+  its words. Any other list the account deleted is deleted on the phone. A list screen open on
+  the old ID follows the list: `WordLists.moveList` records each move, and `WordListView` reads
+  its list through `WordLists.currentID(of:)`.
+- **A sync** sends up to 50 queued changes, at most 48 KB of them (the service takes 64 KB), and at
+  most one per entity, so a second change to an entity goes after the first's result and is moved
+  onto its version. An answer lost on the way is sent again unchanged. `applied` keeps the version;
+  `conflict` takes `current`; `rejected` undoes the change with what it recorded (a word's earlier
+  status, a list's earlier name), unless a later change to the entity is queued, and never undoes
+  the first upload, so a list the account already has stays. A pulled copy of an entity with a
+  change still queued is held in the file (`deferred`) until that change's result: a conflict's
+  `current` replaces it, an applied result takes it only at the same version (the change changed
+  nothing, so no newer copy comes), and a rejected one takes it. A list word whose list hasn't arrived is kept in the file until a sync
+  reaches `hasMore: false`, even across a failed page or a relaunch, then dropped if the list never
+  came. A deleted list drops its words. `410` drops the cursor and the held copies and words, and syncs
+  again, still sending the queue. A sync's answer is dropped if the learner signed out or in while
+  it was on the way.
+- **When.** `AccountSyncScheduler` syncs a second after a local change, on becoming active (once
+  the files have loaded) when changes are queued or the last sync is over 15 minutes old, in a
+  `BGAppRefreshTask` (`com.zenbujapanese.app.account-sync`, scheduled 15 minutes out on going to the
+  background, and stopped when iOS ends it), and on **Sync Now**. Never on a timer. A network
+  failure or `5xx` waits 2 seconds, doubling up to 5 minutes, at half to all of that at random, and
+  retries by itself at most 10 times, only in the foreground; a local change or becoming active
+  waits it out too, and **Sync Now** doesn't. `429` waits what `Retry-After` says, whatever starts
+  the sync.
+- **Deleting** signs in again first (Apple when `GET /v1/auth/list-accounts` lists it, keeping the
+  authorization code), refuses a sign-in to another account, and signs out the session the new
+  sign-in replaces. Then it calls `DELETE /v1/me` and signs out. Each attempt with Apple uses a new
+  code. If the answer is lost, the app asks `/v1/auth/token`: a `401` means the account is gone.
+
+`AccountSignInTests`, `AccountSyncTests`, `AccountSyncConflictTests`, `AccountSyncRecoveryTests`, and
+`AccountSignedOutTests` run the client against a stub server (`StubAccountServer`, a `URLProtocol`):
+sign-in, tokens and their refresh, the queue and cursor across a relaunch, retries under the same
+mutation IDs, each entity's conflicts and rejections, order and paging, list words held across a
+failed page, the request size, `410`, `429` and backoff, and signing out and deleting, which keep
+the phone's data. `AccountSignedOutTests` runs against `FakeAccountService`, a small copy of the
+service's sync rules, so two installs can share one account: changes made while signed out going
+to the same account, another account starting over, and two phones ending with one Favorites.
 
 ## Image Search and Apple Intelligence
 
@@ -451,6 +554,20 @@ word lists, also check in the Simulator:
   Words, renames or deletes itself from **•••**, and opens a word in Search;
   the index renames by swipe or by tapping a list in Edit, reorders in Edit, and asks before deleting a list that has words.
 - Lists live in `Application Support/Zenbu Japanese/word-lists.json` in the app's data container.
+
+## Account manual checks
+
+The Swift tests cover the client against a stub. When changing sign-in or sync, also check the app
+against a real service:
+
+- **On the Simulator, against a service on the Mac** (Account and sync, above): sign in with an
+  emailed code (the codes are at `/dev/mail`), mark a word Known, and add it to a new list. Read
+  them back with `POST /v1/sync` and an access token from a `curl` sign-in, or on a second
+  Simulator signed in to the same account. Make a list with `curl`, tap **Sync Now**, and see it.
+  Delete the account: the app is signed out and still has its known words and lists.
+- **On a device, against staging:** Sign in with Apple and with Google, and delete an account that
+  signs in with Apple. The Simulator can't show these: Apple's sign-in needs the App ID's
+  capability and a signed build, and Google needs the iOS client ID.
 
 ## Player manual checks
 

@@ -137,13 +137,24 @@ first time:
    - `applied`: keep its `version` as the entity's version.
    - `conflict`: the entity changed elsewhere first. Take `current`, the entity as it is now, over
      your copy.
-   - `rejected`: undo the change on the device. To try something else, queue a new change with a
-     new `id`; never send a result's `id` again with a different change.
+   - `rejected`: undo the change on the device, unless it was part of the first upload (below).
+     To try something else, queue a new change with a new `id`; never send a result's `id` again
+     with a different change.
 4. **Apply each change in `changes`** over your copy, by entity and `entityId`: `put` is the
    entity as it is now, `delete` is gone. Keep the `cursor`. While `hasMore` is true, sync again.
-   A list word can arrive a page before its list: hold it until `hasMore` is false.
+   A list word can arrive a page before its list: hold it until `hasMore` is false. An entity
+   with a change still queued keeps the device's copy for now: hold the account's copy until that
+   change's result. A conflict's `current` replaces it. If the change is applied at a newer
+   version, the account's copy of that comes in `changes`; if it's applied at the held copy's
+   version (it changed nothing), or rejected, take the held copy.
 5. **On `410 invalid_cursor`**, sync again with no cursor, and take what comes back over your copy;
    queued changes still go.
+
+**The first upload.** The first time a device syncs to an account, queue what the device has:
+each known word as a `mark`, each list as a `create`, and each list word as an `add`, all at base
+version 0, then sync with no cursor. The device had these before the account did, so a rejection
+of one undoes nothing on the device: a list the account already has is rejected `already_exists`,
+and the account's copy comes down.
 
 ### The rules, from your side
 
@@ -157,6 +168,15 @@ first time:
   - A rename or move conflicts if the list changed since.
   - A delete wins over everything done to the list since, and takes its words: when a list is
     deleted, drop its words on the device.
+  - **Favorites has one ID in every app: `2177c773-9e88-410f-9348-6cefaebe0a93`.** An app that
+    starts learners with a Favorites list gives it this ID, so every device's Favorites is one list
+    in the account (lists are the account's own, so the ID can't collide with another learner's).
+    On a second device, its `create` is rejected (`already_exists`): keep the list, take the
+    account's copy as it comes down, and its words' adds still apply. If the account's copy comes
+    down deleted, the device's Favorites never belonged to it: keep it and its words as a new list,
+    under a new ID, rather than dropping them, even though an `add` to the deleted list was
+    rejected (`unknown_list`). Any other list the account deleted is deleted on the device. The
+    iOS app moves an older install's Favorites to this ID before its first upload.
 - **List words**, `<list>/<item>`:
   - An add always applies.
   - A remove applies only if your app had the latest add: an add from elsewhere wins.
@@ -182,5 +202,11 @@ Every app that signs in offers deleting the account (App Review guideline 5.1.1(
 
 ## Signing out
 
-`POST /v1/auth/sign-out` with the session token, then forget it and the cursor. Keep the device's
-copy: it's the learner's.
+`POST /v1/auth/sign-out` with the session token, then forget it. Keep the device's copy: it's the
+learner's.
+
+An app may also keep its queue, cursor, and entity versions for the account it signed out of (the
+sign-in's user ID), and keep queuing changes, with their base versions, while signed out, as the
+iOS app does. When the same account signs in again, sync from them: the changes apply by the usual
+rules. When another account signs in, drop them, and send that account the device's copy as a
+first upload.
