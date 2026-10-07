@@ -168,6 +168,17 @@ describe('the account service', () => {
     expect(plain.headers.get('access-control-allow-origin')).toBeNull()
   })
 
+  test("lets the website read how long to wait after a 429, from the service's limits and Better Auth's", async () => {
+    const trusted = 'https://zenbujapanese.com'
+    const answer = await app(up, { allowedOrigins: [trusted] }).request('/v1/health', {
+      headers: { origin: trusted }
+    })
+    expect(answer.headers.get('access-control-expose-headers')?.split(',').sort()).toEqual([
+      'retry-after',
+      'x-retry-after'
+    ])
+  })
+
   test("puts the sign-in errors Better Auth answers in the service's JSON error format", async () => {
     const response = await app(up).request('/v1/auth/sign-in/email-otp', { method: 'POST' })
     expect(response.status).toBe(400)

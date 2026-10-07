@@ -5,10 +5,15 @@ const freshSignInMinutes = 10
 
 export type AppleRevocation = 'revoked' | 'invalid' | 'other_apple_id' | 'unavailable'
 
+export interface AppleAuthorization {
+  code?: string
+  redirectUri?: string
+}
+
 export interface AppleRevoker {
   configured: boolean
   revoke(
-    authorizationCode: string,
+    authorization: { code: string; redirectUri?: string },
     clientId: string,
     appleUserIds: readonly string[]
   ): Promise<AppleRevocation>
@@ -28,7 +33,10 @@ export type Deletion =
   | 'apple_unavailable'
 
 export function accountDeleter(store: AccountStore, apple: AppleRevoker, notices: DeletionNotices) {
-  return async (principal: Principal, appleAuthorizationCode?: string): Promise<Deletion> => {
+  return async (
+    principal: Principal,
+    authorization: AppleAuthorization = {}
+  ): Promise<Deletion> => {
     if (Date.now() - principal.signedInAt.getTime() > freshSignInMinutes * 60 * 1000) {
       return 'sign_in_again'
     }
@@ -38,8 +46,9 @@ export function accountDeleter(store: AccountStore, apple: AppleRevoker, notices
       .filter(identity => identity.provider === 'apple')
       .map(identity => identity.subject)
     if (appleUserIds.length > 0 && apple.configured) {
-      if (!appleAuthorizationCode) return 'apple_authorization_needed'
-      const revoked = await apple.revoke(appleAuthorizationCode, principal.clientId, appleUserIds)
+      const { code, redirectUri } = authorization
+      if (!code) return 'apple_authorization_needed'
+      const revoked = await apple.revoke({ code, redirectUri }, principal.clientId, appleUserIds)
       if (revoked === 'invalid') return 'apple_authorization_invalid'
       if (revoked === 'other_apple_id') return 'apple_account_mismatch'
       if (revoked === 'unavailable') return 'apple_unavailable'

@@ -170,7 +170,7 @@ const removeAccount = createRoute({
     200: json(z.object({ status: z.literal('deleted') }), 'Deleted.'),
     400: json(
       ErrorSchema,
-      "`bad_request`; `apple_authorization_needed`: the account signs in with Apple, so send a fresh authorization code; `apple_authorization_invalid`: Apple refused it, so sign in with Apple again for a new one; or `apple_account_mismatch`: it is another Apple ID's."
+      "`bad_request`, as for an `appleRedirectUri` on no website origin; `apple_authorization_needed`: the account signs in with Apple, so send a fresh authorization code; `apple_authorization_invalid`: Apple refused it, so sign in with Apple again for a new one; or `apple_account_mismatch`: it is another Apple ID's."
     ),
     401: unauthorized,
     403: json(
@@ -240,11 +240,15 @@ const deletionAnswers = {
   ]
 } as const
 
+const onTheWebsite = (uri: string, websiteOrigins: readonly string[]) =>
+  websiteOrigins.includes(new URL(uri).origin)
+
 export function accountRoutes(
   app: OpenAPIHono<AccountEnv>,
   accounts: Accounts,
   deleteAccount: DeleteAccount,
-  databaseReady: () => Promise<boolean>
+  databaseReady: () => Promise<boolean>,
+  websiteOrigins: readonly string[]
 ) {
   app.openAPIRegistry.registerComponent('securitySchemes', 'accessToken', {
     type: 'http',
@@ -289,6 +293,13 @@ export function accountRoutes(
   })
 
   app.openapi(removeAccount, async context => {
+    const { appleAuthorizationCode, appleRedirectUri } = context.req.valid('json')
+    if (appleRedirectUri !== undefined && !onTheWebsite(appleRedirectUri, websiteOrigins)) {
+      return context.json(
+        errorBody('bad_request', "appleRedirectUri must be on one of the website's origins."),
+        400
+      )
+    }
     const deletion = await deleteAccount(
       {
         userId: context.get('userId'),
@@ -296,7 +307,7 @@ export function accountRoutes(
         scopes: context.get('scopes'),
         signedInAt: context.get('signedInAt')
       },
-      context.req.valid('json').appleAuthorizationCode
+      { code: appleAuthorizationCode, redirectUri: appleRedirectUri }
     )
     if (deletion === 'deleted') return context.json({ status: 'deleted' as const }, 200)
     const [status, code, message] = deletionAnswers[deletion]

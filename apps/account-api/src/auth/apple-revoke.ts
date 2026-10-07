@@ -30,7 +30,7 @@ export function appleRevoker(apple: AuthConfig['apple'], publicUrl: string): App
   const key = apple?.signingKey ?? null
   return {
     configured: key !== null,
-    async revoke(authorizationCode, clientId, appleUserIds): Promise<AppleRevocation> {
+    async revoke({ code, redirectUri }, clientId, appleUserIds): Promise<AppleRevocation> {
       const app = clientById(clientId)
       const web = app?.signsInOnTheWeb ?? false
       const appleClientId = web ? apple?.servicesIds[0] : app?.appleBundleIds[0]
@@ -45,9 +45,9 @@ export function appleRevoker(apple: AuthConfig['apple'], publicUrl: string): App
       try {
         const exchanged = await post(appleToken, {
           ...credentials,
-          code: authorizationCode,
+          code,
           grant_type: 'authorization_code',
-          ...(web ? { redirect_uri: `${publicUrl}/v1/auth/callback/apple` } : {})
+          ...(web ? { redirect_uri: redirectUri ?? `${publicUrl}/v1/auth/callback/apple` } : {})
         })
         const answer = (await exchanged.json().catch(() => ({}))) as Record<string, unknown>
         if (!exchanged.ok) {

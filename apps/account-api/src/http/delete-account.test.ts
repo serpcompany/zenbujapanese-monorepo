@@ -1,10 +1,11 @@
 import { randomUUID } from 'node:crypto'
+import { decodeJwt } from 'jose'
 import { afterEach, describe, expect, test, vi } from 'vitest'
 import { type Learner, useAccountService } from '../test/accounts'
 import { appleCodeFor, misconfiguredAppleCode } from '../test/identity-provider'
 import { logged } from '../test/logged'
-import { appBundleIdentifier } from '../test/service'
-import { sessionToken, sha256 } from '../test/sign-in'
+import { appBundleIdentifier, publicUrl, websiteOrigin, websiteServicesId } from '../test/service'
+import { fromTheWebsite, sessionToken, sha256, websiteSession } from '../test/sign-in'
 
 const accounts = useAccountService({ appleKey: true })
 
@@ -12,6 +13,30 @@ afterEach(() => vi.useRealTimers())
 
 const remove = (learner: Learner, body: Record<string, unknown> = { confirm: true }) =>
   accounts.running.service.call('/v1/me', { token: learner.token, body, method: 'DELETE' })
+
+async function appleLearner(audience: string, appleUserId: string, onTheWebsite: boolean) {
+  const { as, service } = accounts.running
+  const nonce = await as.nonce()
+  const token = await as.idToken(
+    accounts.running.apple,
+    audience,
+    appleUserId,
+    `${appleUserId}@example.com`,
+    sha256(nonce)
+  )
+  const signedIn = await service.call('/v1/auth/sign-in/social', {
+    ...(onTheWebsite ? fromTheWebsite() : {}),
+    body: { provider: 'apple', idToken: { token, nonce } }
+  })
+  expect(signedIn.status).toBe(200)
+  const issued = await service.call(
+    '/v1/auth/token',
+    onTheWebsite ? fromTheWebsite(websiteSession(signedIn)) : { token: sessionToken(signedIn) }
+  )
+  return { userId: '', session: '', token: String(issued.body?.token) }
+}
+
+const exchangesFrom = (start: number) => accounts.running.appleExchanges.slice(start)
 
 describe('DELETE /v1/me', () => {
   test('deletes the account and all it synced, tells the email, and a later sign-in makes a new account', async () => {
@@ -85,18 +110,8 @@ describe('DELETE /v1/me', () => {
   })
 
   test("revokes the app's Apple access with a fresh authorization code before it deletes an Apple account", async () => {
-    const { as, service } = accounts.running
-    const nonce = await as.nonce()
-    const token = await as.idToken(
-      accounts.running.apple,
-      appBundleIdentifier,
-      'apple-deleting',
-      'apple-deleting@example.com',
-      sha256(nonce)
-    )
-    const signedIn = await as.withIdToken('apple', token, nonce)
-    const issued = await service.call('/v1/auth/token', { token: sessionToken(signedIn) })
-    const learner = { userId: '', session: '', token: String(issued.body?.token) }
+    const learner = await appleLearner(appBundleIdentifier, 'apple-deleting', false)
+    const exchanged = accounts.running.appleExchanges.length
 
     expect(await remove(learner)).toMatchObject({
       status: 400,
@@ -130,5 +145,44 @@ describe('DELETE /v1/me', () => {
       })
     ).toMatchObject({ status: 200 })
     expect(accounts.running.appleRevoked).toContain('refresh-for-apple-code:apple-deleting')
+    expect(new Set(exchangesFrom(exchanged).map(each => JSON.stringify(each)))).toEqual(
+      new Set([JSON.stringify({ clientId: appBundleIdentifier, redirectUri: null })])
+    )
+  })
+
+  test("takes the website's Apple code with the return URL its popup named, on the website's origins only", async () => {
+    const learner = await appleLearner(websiteServicesId, 'apple-web-deleting', true)
+    expect(decodeJwt(learner.token)).toMatchObject({ azp: 'zenbu-web' })
+    const code = appleCodeFor('apple-web-deleting')
+    const popupReturn = `${websiteOrigin}/account/`
+
+    expect(
+      await remove(learner, {
+        confirm: true,
+        appleAuthorizationCode: code,
+        appleRedirectUri: 'https://evil.example/account/'
+      })
+    ).toMatchObject({ status: 400, body: { error: { code: 'bad_request' } } })
+    let exchanged = accounts.running.appleExchanges.length
+    expect(
+      await remove(learner, { confirm: true, appleAuthorizationCode: appleCodeFor('someone') })
+    ).toMatchObject({ status: 400, body: { error: { code: 'apple_account_mismatch' } } })
+    expect(exchangesFrom(exchanged)).toEqual([
+      { clientId: websiteServicesId, redirectUri: `${publicUrl}/v1/auth/callback/apple` }
+    ])
+    expect((await accounts.me(learner.token)).status).toBe(200)
+
+    exchanged = accounts.running.appleExchanges.length
+    expect(
+      await remove(learner, {
+        confirm: true,
+        appleAuthorizationCode: code,
+        appleRedirectUri: popupReturn
+      })
+    ).toMatchObject({ status: 200, body: { status: 'deleted' } })
+    expect(exchangesFrom(exchanged)).toEqual([
+      { clientId: websiteServicesId, redirectUri: popupReturn }
+    ])
+    expect(accounts.running.appleRevoked).toContain('refresh-for-apple-code:apple-web-deleting')
   })
 })

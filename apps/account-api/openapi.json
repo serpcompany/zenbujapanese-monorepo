@@ -158,6 +158,12 @@
             "minLength": 1,
             "maxLength": 4096,
             "description": "From a fresh Sign in with Apple, for an account that signs in with Apple. It's used once, to revoke the app's access with Apple."
+          },
+          "appleRedirectUri": {
+            "type": "string",
+            "maxLength": 2048,
+            "format": "uri",
+            "description": "The website only: the return URL its Sign in with Apple popup named, which Apple needs again to take the code. It must be on one of the website's origins. Without it, the website's code is taken as one Apple sent to GET /v1/auth/callback/apple."
           }
         },
         "required": [
@@ -704,6 +710,23 @@
           "nonce": {
             "type": "string",
             "description": "The nonce from POST /v1/auth/sign-in/nonce, passed to Apple or Google."
+          },
+          "user": {
+            "type": "object",
+            "properties": {
+              "name": {
+                "type": "object",
+                "properties": {
+                  "firstName": {
+                    "type": "string"
+                  },
+                  "lastName": {
+                    "type": "string"
+                  }
+                }
+              }
+            },
+            "description": "The name Sign in with Apple JS hands the website on the learner's first sign-in. Apple's token has none, so it names a new account."
           }
         },
         "required": [
@@ -1059,7 +1082,7 @@
             }
           },
           "400": {
-            "description": "`bad_request`; `apple_authorization_needed`: the account signs in with Apple, so send a fresh authorization code; `apple_authorization_invalid`: Apple refused it, so sign in with Apple again for a new one; or `apple_account_mismatch`: it is another Apple ID's.",
+            "description": "`bad_request`, as for an `appleRedirectUri` on no website origin; `apple_authorization_needed`: the account signs in with Apple, so send a fresh authorization code; `apple_authorization_invalid`: Apple refused it, so sign in with Apple again for a new one; or `apple_account_mismatch`: it is another Apple ID's.",
             "content": {
               "application/json": {
                 "schema": {
@@ -1477,7 +1500,12 @@
                     "$ref": "#/components/schemas/IdToken"
                   },
                   "callbackURL": {
-                    "type": "string"
+                    "type": "string",
+                    "description": "The website's page the browser comes back to from Google, on one of the website's origins."
+                  },
+                  "errorCallbackURL": {
+                    "type": "string",
+                    "description": "Where it comes back instead when signing in fails, with `?error=` and a code such as `account_not_linked`."
                   }
                 },
                 "required": [
@@ -1583,7 +1611,7 @@
     "/v1/auth/link-social": {
       "post": {
         "summary": "Add Apple or Google as another way to sign in",
-        "description": "Needs a sign-in from the last 10 minutes. The account email is told.",
+        "description": "Needs a sign-in from the last 10 minutes. The account email is told. Without `idToken`, the website starts Google's sign-in, which comes back to `callbackURL` with the way added.",
         "security": [
           {
             "sessionToken": []
@@ -1605,11 +1633,18 @@
                   },
                   "idToken": {
                     "$ref": "#/components/schemas/IdToken"
+                  },
+                  "callbackURL": {
+                    "type": "string",
+                    "description": "The website's page the browser comes back to from Google, on one of the website's origins."
+                  },
+                  "errorCallbackURL": {
+                    "type": "string",
+                    "description": "Where it comes back instead when signing in fails, with `?error=` and a code such as `account_not_linked`."
                   }
                 },
                 "required": [
-                  "provider",
-                  "idToken"
+                  "provider"
                 ]
               }
             }
@@ -1617,23 +1652,30 @@
         },
         "responses": {
           "200": {
-            "description": "Added.",
+            "description": "Added, or, without `idToken`, the provider page to send the browser to.",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "status": {
-                      "type": "boolean",
-                      "enum": [
-                        true
-                      ]
+                  "anyOf": [
+                    {
+                      "type": "object",
+                      "properties": {
+                        "status": {
+                          "type": "boolean",
+                          "enum": [
+                            true
+                          ]
+                        }
+                      },
+                      "required": [
+                        "status"
+                      ],
+                      "additionalProperties": {}
+                    },
+                    {
+                      "$ref": "#/components/schemas/WebSignIn"
                     }
-                  },
-                  "required": [
-                    "status"
-                  ],
-                  "additionalProperties": {}
+                  ]
                 }
               }
             }
