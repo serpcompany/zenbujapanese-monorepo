@@ -162,7 +162,7 @@ export const wordLists: Entity = {
         if (!current || current.deleted) return applied(current?.version ?? 0)
         await account.dropListWords(id)
         const version = current.version + 1
-        return saveList(account, { ...current, deleted: true, version }, 'delete')
+        return saveList(account, { ...current, name: '', deleted: true, version }, 'delete')
       }
     }
   },

@@ -212,7 +212,7 @@ mutation change the profile through the same rule.
   word added to a deleted or unknown list is rejected (`unknown_list`).
 - **Each keeps its history** as its version and a row that stays (a cleared word, a deleted list,
   a removed list word), so a stale change finds the version it lost to. A deleted list's words are
-  deleted with it.
+  deleted with it, and its row keeps no name.
 - **Order:** on a page, lists come before their words, but a list word can come a page before its
   list, since the journal keeps each entity's latest change. A client holds such a word until the
   sync reaches `hasMore: false`. A rejected change (`unknown_list`, say) is undone on the device.
