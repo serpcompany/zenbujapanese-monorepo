@@ -84,7 +84,7 @@ describe('DELETE /v1/me', () => {
     expect(await remove(tomodachi)).toMatchObject({ status: 200, body: { status: 'deleted' } })
   })
 
-  test("revokes the app's Apple access with a fresh authorization code before it deletes an Apple account", async () => {
+  test("revokes the app's Apple access with a fresh authorization code before it deletes an Apple account, and never another account's", async () => {
     const { as, service } = accounts.running
     const nonce = await as.nonce()
     const token = await as.idToken(
@@ -113,6 +113,26 @@ describe('DELETE /v1/me', () => {
 
     expect(
       await remove(learner, { confirm: true, appleAuthorizationCode: appleCodeFor('someone-else') })
+    ).toMatchObject({ status: 400, body: { error: { code: 'apple_account_mismatch' } } })
+    expect(accounts.running.appleRevoked).toEqual(['refresh-for-apple-code:someone-else'])
+
+    const otherNonce = await as.nonce()
+    await as.withIdToken(
+      'apple',
+      await as.idToken(
+        accounts.running.apple,
+        appBundleIdentifier,
+        'apple-other-account',
+        'apple-other-account@example.com',
+        sha256(otherNonce)
+      ),
+      otherNonce
+    )
+    expect(
+      await remove(learner, {
+        confirm: true,
+        appleAuthorizationCode: appleCodeFor('apple-other-account')
+      })
     ).toMatchObject({ status: 400, body: { error: { code: 'apple_account_mismatch' } } })
     expect(accounts.running.appleRevoked).toEqual(['refresh-for-apple-code:someone-else'])
 

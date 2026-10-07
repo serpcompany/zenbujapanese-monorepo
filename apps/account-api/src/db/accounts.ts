@@ -31,6 +31,15 @@ export function accountStore(db: Drizzle): AccountStore {
         .from(userIdentities)
         .where(eq(userIdentities.userId, userId)),
 
+    async identityInUse(provider, subject) {
+      const [found] = await db
+        .select({ userId: userIdentities.userId })
+        .from(userIdentities)
+        .where(and(eq(userIdentities.providerId, provider), eq(userIdentities.accountId, subject)))
+        .limit(1)
+      return found !== undefined
+    },
+
     async deleteAccount(userId, email) {
       await db.transaction(async tx => {
         await tx
