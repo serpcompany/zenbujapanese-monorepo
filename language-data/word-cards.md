@@ -19,8 +19,8 @@ pnpm --filter zenbujapanese-dictionary-api word-cards <word list> <output folder
 ```
 
 after `git lfs pull` and `pnpm install` at the repository root; relative paths are from the
-folder the command is run in. It reads the app's committed language data, and its release from
-`release.json`. The word list has one word to a line: a Language Reference ID (32 hex characters,
+folder the command is run in. It reads the app's language data as the working tree has it, and
+its release from `release.json`. The word list has one word to a line: a Language Reference ID (32 hex characters,
 in either case), or a headword and its reading separated by a tab. Blank lines are skipped. The
 command writes `word-cards.json` and a fresh `notices/` folder to the output folder, and prints
 each line it couldn't read, and each word it couldn't resolve or found more than one entry for.
@@ -31,19 +31,21 @@ A headword and reading resolve to the entry that has the headword as a written o
 and the reading as a reading form, both compared as the app's Search normalizes them (so
 `ありがとう` finds 有難う, and `Tシャツ` finds Ｔシャツ). When more than one entry does, the ones
 whose own headword and reading are exactly those win. If more than one still does, the word is
-ambiguous: name it by one of its candidates' IDs instead.
+ambiguous: name it by one of its candidates' IDs instead. Entries the app shows as one word (the
+same meanings, written the same way) count as one: the one with the lowest ID, which the app
+keeps.
 
 ## An export
 
 | Field | What it holds |
 | --- | --- |
 | `format` | `zenbu.word-cards.v1`. |
-| `languageData` | `release` (the language-data release, `language-data/release.json`), `file` (`LanguageReferenceData.sqlite3`), and its `sha256`. A card is true of that release. Key a cache on `release` and `sha256` together: a published release never changes, so any change to the files a card reads (the frequency lists, pitch estimates, and kanji readings as well) comes with a new one, and `sha256` catches a `LanguageReferenceData.sqlite3` that changed before its release was cut. |
+| `languageData` | `release` (the language-data release, `language-data/release.json`) and `files`: the SHA-256 of each file a card is read from, by name (`LanguageReferenceData.sqlite3`, `CompoundPitch.sqlite3`, `JLPTLevelPack.sqlite3`, `TUBELEXFrequencyPack.sqlite3`, `RankedLists.sqlite3`, `KanjiReferenceData.json`, and `KanjiElementReferenceData.json`). Key a cache on `format` and all of `languageData`: a published release never changes, but the files can change on `main` before `release.json` is bumped for them, and the files' SHA-256s catch that. |
 | `license` | The cards adapt CC BY-SA 4.0 data (JMdict and KANJIDIC2, the JLPT vocabulary lists, and Jiten), so they are shared under CC BY-SA 4.0: its `name`, `url`, and a `statement` to show with them. |
 | `sources` | Each source the cards hold data from: `name`, what it `supplies`, its `license` and `url`, and its `notice`, a file name in `notices/` and in the language-data release. Ship the notices with the cards. |
 | `cards` | One card for each word that resolved, in the list's order, each once. |
 | `ambiguous` | Each word with more than one entry, once: the `query` and its `candidates` (`languageReferenceID`, `entSeq`, `headword`, `reading`, `summary`). |
-| `unresolved` | Each word with no entry, once: the `query` as the list named it. |
+| `unresolved` | Each word with no entry, once, as the list named it: `{ "headword", "reading" }`, or `{ "languageReferenceID" }` in lowercase. |
 
 The sources are JMdict and KANJIDIC2 (EDRDG), UniDic, the JLPT vocabulary lists, TUBELEX,
 Wikipedia Word Frequency Clean, and Jiten. Tatoeba isn't one: a card holds no example sentences.

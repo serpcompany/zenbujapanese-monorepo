@@ -7,7 +7,7 @@ import type {
   SenseRestrictionRow
 } from '../detail/rows'
 import { wordSlug } from '../detail/slug'
-import type { ArtifactDatabase } from './database'
+import { type ArtifactDatabase, listedIds } from './database'
 import { frequencyByEntry, frequencyQueries } from './frequency'
 import type { KanjiData } from './kanji-data'
 
@@ -152,7 +152,7 @@ export function entriesById(
   if (ids.length === 0) return new Map()
   const rows = db.all<EntryIdentity>(
     `SELECT lower(hex(id)) AS id, source_record_id AS entSeq, headword, reading, summary
-     FROM entries WHERE id IN (SELECT unhex(value) FROM json_each(?))`,
+     FROM entries WHERE id IN (${listedIds})`,
     [JSON.stringify(ids)]
   )
   return new Map(rows.map(row => [row.id, row]))

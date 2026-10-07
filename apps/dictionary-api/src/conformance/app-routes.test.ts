@@ -45,7 +45,7 @@ describe.runIf(artifactAvailable)('the app routes on the app’s data', () => {
   let keys: TestAccountKeys
   const sha256 =
     wordSuite.artifacts.find(file => file.name === 'LanguageReferenceData.sqlite3')?.sha256 ?? ''
-  const languageData = { release, file: 'LanguageReferenceData.sqlite3', sha256 }
+  const languageData = { release, files: { 'LanguageReferenceData.sqlite3': sha256 } }
 
   beforeAll(async () => {
     requirePinnedArtifacts(wordSuite.artifacts)
@@ -53,7 +53,7 @@ describe.runIf(artifactAvailable)('the app routes on the app’s data', () => {
     keys = await testAccountKeys()
     const service = inProcessService(await dictionary({ morphology: false }), await browse(), {
       build: 'conformance',
-      artifact: { name: languageData.file, sha256 },
+      artifact: { name: 'LanguageReferenceData.sqlite3', sha256 },
       languageData,
       features: { sentenceSearch: false }
     })

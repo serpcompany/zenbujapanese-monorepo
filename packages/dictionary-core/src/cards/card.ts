@@ -1,12 +1,12 @@
 import { rankedLists } from '../browse/lists'
 import { type FrequencyResult, levelResult, rankResult } from '../detail/frequency'
 import type { WordRows } from '../detail/rows'
-import { type SuiteFurigana, suiteFurigana } from '../detail/suite'
+import { type FuriganaSegment, furiganaSegments } from '../detail/ruby'
 import { wordDetail } from '../detail/word'
 
 export const wordCardFormat = 'zenbu.word-cards.v1'
 
-export type WordCardFurigana = SuiteFurigana
+export type WordCardFurigana = FuriganaSegment
 
 interface WordCardPitch {
   downstep: number
@@ -61,7 +61,7 @@ export function wordCard(rows: CardRows, ranks: ListRanks): WordCard {
     entSeq: entry.entSeq,
     headword: entry.headword,
     reading: entry.reading,
-    furigana: suiteFurigana(detail.ruby),
+    furigana: furiganaSegments(detail.ruby),
     pitch:
       detail.pitch && pitchRow
         ? {

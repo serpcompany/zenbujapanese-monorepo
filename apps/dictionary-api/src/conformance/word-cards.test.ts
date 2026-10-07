@@ -1,4 +1,5 @@
 import { spawnSync } from 'node:child_process'
+import { createHash } from 'node:crypto'
 import { mkdtempSync, readdirSync, readFileSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
@@ -7,7 +8,8 @@ import type { KanjiData } from '@zenbu/dictionary-core/artifact/kanji-data'
 import {
   exportWordCards,
   readWordCards,
-  resolveWords
+  resolveWords,
+  wordCardInputs
 } from '@zenbu/dictionary-core/artifact/word-cards'
 import { rankedLists } from '@zenbu/dictionary-core/browse/lists'
 import type { RecordedWord } from '@zenbu/dictionary-core/cards/suite'
@@ -18,7 +20,8 @@ import {
   artifactDatabase,
   artifactKanji,
   readSuite,
-  requirePinnedArtifacts
+  requirePinnedArtifacts,
+  resources
 } from './support'
 
 const wordSuite = readSuite<{
@@ -81,6 +84,12 @@ describe.runIf(artifactAvailable)('word cards on the app’s data', () => {
     ])
   })
 
+  test('entries the app shows as one word resolve to the one it keeps', () => {
+    const resolved = resolveWords(db, [{ headword: '閻魔', reading: 'えんま' }])
+    expect(resolved.ambiguous).toEqual([])
+    expect(resolved.languageReferenceIDs).toEqual(['176f4e451cc248ec386ac35f98801f36'])
+  })
+
   test('a kana word finds its kanji headword, and a form is found as the app normalizes it', () => {
     const resolved = resolveWords(db, [
       { headword: 'ありがとう', reading: 'ありがとう' },
@@ -94,7 +103,7 @@ describe.runIf(artifactAvailable)('word cards on the app’s data', () => {
   })
 
   test('an export lists each word once, in the list’s order, and reports a repeated miss once', () => {
-    const languageData = { release: 'test', file: 'LanguageReferenceData.sqlite3', sha256: 'abc' }
+    const languageData = { release: 'test', files: { 'LanguageReferenceData.sqlite3': 'abc' } }
     const missing = { headword: 'ありえない語', reading: 'ありえないご' }
     const exported = exportWordCards(db, kanji, languageData, [
       { headword: '見る', reading: 'みる' },
@@ -135,6 +144,16 @@ describe.runIf(artifactAvailable)('word cards on the app’s data', () => {
     expect(complete.status, complete.stderr).toBe(0)
     const exported = JSON.parse(readFileSync(join(folder, 'out/word-cards.json'), 'utf8'))
     expect(exported.cards).toHaveLength(1)
+    expect(exported.languageData.files).toEqual(
+      Object.fromEntries(
+        wordCardInputs.map(name => [
+          name,
+          createHash('sha256')
+            .update(readFileSync(join(resources, name)))
+            .digest('hex')
+        ])
+      )
+    )
     expect(readdirSync(join(folder, 'out/notices')).sort()).toEqual(
       exported.sources.map((source: { notice: string }) => source.notice).sort()
     )
@@ -144,7 +163,7 @@ describe.runIf(artifactAvailable)('word cards on the app’s data', () => {
   })
 
   test('an export names its language data and the notice every source needs', () => {
-    const languageData = { release: 'test', file: 'LanguageReferenceData.sqlite3', sha256: 'abc' }
+    const languageData = { release: 'test', files: { 'LanguageReferenceData.sqlite3': 'abc' } }
     const exported = exportWordCards(db, kanji, languageData, [
       { headword: '見る', reading: 'みる' }
     ])

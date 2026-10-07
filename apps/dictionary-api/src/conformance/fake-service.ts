@@ -5,8 +5,7 @@ export const info = {
   artifact: { name: 'LanguageReferenceData.sqlite3', sha256: 'e13452e70d34' },
   languageData: {
     release: '2026.10.1',
-    file: 'LanguageReferenceData.sqlite3',
-    sha256: 'e13452e70d34'
+    files: { 'LanguageReferenceData.sqlite3': 'e13452e70d34' }
   },
   features: { sentenceSearch: true }
 }

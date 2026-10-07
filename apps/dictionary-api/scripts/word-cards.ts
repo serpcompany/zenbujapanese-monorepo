@@ -1,7 +1,7 @@
 import { copyFileSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
 import { join, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
-import { exportWordCards } from '@zenbu/dictionary-core/artifact/word-cards'
+import { exportWordCards, wordCardInputs } from '@zenbu/dictionary-core/artifact/word-cards'
 import { parseWordList } from '@zenbu/dictionary-core/cards/word-list'
 import { artifactFile, fileSha256, openArtifact } from '../src/artifact'
 
@@ -35,14 +35,14 @@ const { release } = JSON.parse(
   readFileSync(join(repository, 'language-data/release.json'), 'utf8')
 ) as { release: string }
 const resources = join(repository, inputs.roots.resources)
-const sha256 = await fileSha256(join(resources, artifactFile))
-const artifact = openArtifact(resources, sha256)
-const exported = exportWordCards(
-  artifact.db,
-  artifact.kanji,
-  { release, file: artifactFile, sha256 },
-  list.queries
+const files = Object.fromEntries(
+  await Promise.all(
+    wordCardInputs.map(async name => [name, await fileSha256(join(resources, name))] as const)
+  )
 )
+const sha256 = files[artifactFile]
+const artifact = openArtifact(resources, sha256)
+const exported = exportWordCards(artifact.db, artifact.kanji, { release, files }, list.queries)
 artifact.close()
 
 const output = fromCaller(outputPath)
@@ -68,4 +68,4 @@ console.log(
 )
 const incomplete =
   list.unreadable.length + exported.ambiguous.length + exported.unresolved.length > 0
-process.exit(incomplete ? 1 : 0)
+process.exitCode = incomplete ? 1 : 0
