@@ -70,14 +70,16 @@ terms and send only what the account section lists.
 
 **Retention, a copy, and deletion.** The page says how long each kind of account data is kept: the
 account and its synced data until it's deleted; a session until sign-out or the account's deletion,
-working for 60 days after its last use; codes and nonces for 10 minutes; each sync request's result
-for 30 days, and until the next change synced after that; each backup for 30 days. A learner
-deletes the account from any app that can make one, which removes the account, its ways to sign
-in, and its synced data at once; backups age out within 30 days, and each device keeps its own data
-and works signed out. There's no export feature: a learner asks `support@zenbujapanese.com` for a
-copy (the owners confirm this on #575).
+working for 60 days after its last use and deleted within an hour of that; codes and nonces for 10
+minutes, deleted within an hour of that; request counts for a day after their last request; each
+sync request's result for 30 days, and until the next change synced after that; each backup for 30
+days. A learner deletes the account from any app that can make one, which removes the account, its
+ways to sign in, and its synced data at once; backups age out within 30 days, and each device keeps
+its own data and works signed out. There's no export feature: a learner asks
+`support@zenbujapanese.com` for a copy (the owners confirm this on #575).
 
-- Source: #574 (deletion); #565 (the backups' 30 days); #567 (sessions and sync results).
+- Source: #574 (deletion, and the hourly purge of expired sessions, codes, and request counts); #565
+  (the backups' 30 days); #567 (sessions and sync results).
 - Check: `apps/web/e2e/privacy.spec.ts`, "says how long account data is kept, how to get a copy, and
   how to delete it": the retention list, item for item, the deletion, and the support email link.
 

@@ -180,11 +180,11 @@ export default function PrivacyPage() {
         <li>your account and the data you sync until you delete the account;</li>
         <li>
           each session until you sign out of it or delete the account; a session stops working 60
-          days after it was last used;
+          days after it was last used, and is deleted within an hour of that;
         </li>
         <li>
-          sign-in codes and one-time sign-in values for 10 minutes, and request counts for a few
-          minutes;
+          sign-in codes and one-time sign-in values for 10 minutes, deleted within an hour of that,
+          and request counts for a day after their last request;
         </li>
         <li>
           each sync request's result for 30 days, and until the next change you sync after that;

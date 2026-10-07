@@ -88,8 +88,8 @@ test.describe('privacy policy', () => {
   }) => {
     await expect(listItems(page, "each night's backup")).toHaveText([
       /^your account and the data you sync until you delete the account/,
-      /^each session until you sign out of it or delete the account; a session stops working 60 days after it was last used/,
-      /^sign-in codes and one-time sign-in values for 10 minutes/,
+      /^each session until you sign out of it or delete the account; a session stops working 60 days after it was last used, and is deleted within an hour of that/,
+      /^sign-in codes and one-time sign-in values for 10 minutes, deleted within an hour of that, and request counts for a day after their last request/,
       /^each sync request's result for 30 days/,
       /^each night's backup for 30 days/
     ])
