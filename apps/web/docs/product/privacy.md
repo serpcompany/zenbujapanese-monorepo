@@ -22,10 +22,10 @@ page, its Effective date, this doc, and the
 
 ## Behaviors
 
-**The account's data.** The short version says the app collects nothing and works without an
-account, and that signing in on the website sets only the cookies signing in needs. The account
-section says a learner never needs an account, that the apps send the account service nothing
-while signed out, and lists what a Zenbu account keeps:
+**The account's data.** The short version says the app tracks nothing, collects nothing unless the
+learner signs in, and works without an account, and that signing in on the website sets only the
+cookies signing in needs. The account section says a learner never needs an account, that the apps
+send the account service nothing while signed out, and lists what a Zenbu account keeps:
 
 - the account: a Zenbu user ID, the email and whether it's verified, an optional name and
   username, a profile picture's address only if the provider sends one at sign-up, and when it
