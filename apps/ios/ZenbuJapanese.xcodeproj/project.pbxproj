@@ -182,6 +182,7 @@
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = UIInterfaceOrientationPortrait;
 				INFOPLIST_KEY_NSCameraUsageDescription = "Zenbu uses the camera to recognize Japanese text and save photos with words you are learning.";
+				INFOPLIST_KEY_NSMicrophoneUsageDescription = "Translate listens to the conversation so it can transcribe and translate it on this iPhone.";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -264,6 +265,7 @@
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = UIInterfaceOrientationPortrait;
 				INFOPLIST_KEY_NSCameraUsageDescription = "Zenbu uses the camera to recognize Japanese text and save photos with words you are learning.";
+				INFOPLIST_KEY_NSMicrophoneUsageDescription = "Translate listens to the conversation so it can transcribe and translate it on this iPhone.";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",

@@ -16,6 +16,9 @@ public struct SearchExperienceRootView: View {
   @State private var watchPath = NavigationPath()
   @State private var watchWordSheet = WordSheetPresentation()
   @State private var watchHistory = WatchHistory()
+  @State private var translatePath = NavigationPath()
+  @State private var translateWordSheet = WordSheetPresentation()
+  @State private var translateExperience = TranslateExperience.live()
   @State private var kanjiScrollWordIDs: [KanjiCharacter: LanguageReferenceID] = [:]
   @State private var kanjiScrollElementIDs: [KanjiCharacter: KanjiElementID] = [:]
   @State private var kanjiElementScrollContributionIDs: [KanjiElementID: KanjiCharacter] = [:]
@@ -78,6 +81,10 @@ public struct SearchExperienceRootView: View {
         searchNavigation
       }
 
+      Tab("Translate", systemImage: "translate", value: SearchExperienceTab.translate) {
+        translateNavigation
+      }
+
       Tab(
         "Player", systemImage: "play.rectangle",
         value: SearchExperienceTab.watchAndListen
@@ -98,6 +105,16 @@ public struct SearchExperienceRootView: View {
       }
     }
     .scrollEdgeEffectStyle(.hard, for: .bottom)
+    .modifier(
+      TranslateSessionChrome(
+        experience: translateExperience,
+        isTranslateSelected: selectedTab == .translate,
+        isConversationOnScreen: selectedTab == .translate && translatePath.isEmpty,
+        returnToTranslate: {
+          selectedTab = .translate
+          translatePath = NavigationPath()
+        }
+      ))
     .task {
       await Task.detached(priority: .utility) {
         KanjiReadingSplitter.prepare()
@@ -133,20 +150,7 @@ public struct SearchExperienceRootView: View {
         dictionaryDestination(route, in: .search)
       }
       .sheet(isPresented: imageWordSheet.isPresentedBinding) {
-        if let request = imageWordSheet.displayedRequest {
-          RecognizedWordSheet(
-            request: request,
-            detent: $imageWordSheet.detent,
-            openFullEntry: { entry in openFullEntry(entry, in: .search) }
-          ) { entry, encounterMedia in
-            wordDetailView(
-              entry: entry,
-              initialEncounterMedia: encounterMedia,
-              presentedInSheet: true,
-              in: .search
-            )
-          }
-        }
+        wordSheet(imageWordSheet, in: .search)
       }
     }
   }
@@ -255,20 +259,47 @@ public struct SearchExperienceRootView: View {
         dictionaryDestination(route, in: .player)
       }
       .sheet(isPresented: watchWordSheet.isPresentedBinding) {
-        if let request = watchWordSheet.displayedRequest {
-          RecognizedWordSheet(
-            request: request,
-            detent: $watchWordSheet.detent,
-            openFullEntry: { entry in openFullEntry(entry, in: .player) }
-          ) { entry, encounterMedia in
-            wordDetailView(
-              entry: entry,
-              initialEncounterMedia: encounterMedia,
-              presentedInSheet: true,
-              in: .player
-            )
-          }
-        }
+        wordSheet(watchWordSheet, in: .player)
+      }
+    }
+  }
+
+  private var translateNavigation: some View {
+    NavigationStack(path: $translatePath) {
+      TranslateTabRoot(
+        experience: translateExperience,
+        words: TranslateWordLinks(
+          analysisClient: japaneseTextAnalysisClient,
+          open: { translateWordSheet.request = $0 }
+        ),
+        push: { translatePath.append($0) }
+      )
+      .navigationDestination(for: SearchExperienceRoute.self) { route in
+        dictionaryDestination(route, in: .translate)
+      }
+      .sheet(isPresented: translateWordSheet.isPresentedBinding) {
+        wordSheet(translateWordSheet, in: .translate)
+      }
+    }
+  }
+
+  @ViewBuilder
+  private func wordSheet(_ presentation: WordSheetPresentation, in stack: DictionaryStack)
+    -> some View
+  {
+    @Bindable var presentation = presentation
+    if let request = presentation.displayedRequest {
+      RecognizedWordSheet(
+        request: request,
+        detent: $presentation.detent,
+        openFullEntry: { entry in openFullEntry(entry, in: stack) }
+      ) { entry, encounterMedia in
+        wordDetailView(
+          entry: entry,
+          initialEncounterMedia: encounterMedia,
+          presentedInSheet: true,
+          in: stack
+        )
       }
     }
   }
@@ -282,6 +313,7 @@ public struct SearchExperienceRootView: View {
     switch stack {
     case .search: searchPath.wrappedValue = path + [route]
     case .player: watchPath.append(route)
+    case .translate: translatePath.append(route)
     }
   }
 
@@ -329,6 +361,7 @@ public struct SearchExperienceRootView: View {
     guard shouldDismiss else { return }
     imageWordSheet.request = nil
     watchWordSheet.request = nil
+    translateWordSheet.request = nil
   }
 
   private var searchPath: Binding<[SearchExperienceRoute]> {
@@ -432,6 +465,7 @@ struct ImageWordContext: Hashable {
 enum DictionaryStack {
   case search
   case player
+  case translate
 }
 
 enum PlayerRoute: Hashable {
@@ -451,6 +485,7 @@ enum SearchExperienceRoute: Hashable {
 
 private enum SearchExperienceTab: Hashable {
   case search
+  case translate
   case watchAndListen
   case account
 }

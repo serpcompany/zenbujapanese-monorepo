@@ -53,6 +53,10 @@ saying where the code belongs:
 - **The website**: `src/lib` and `src/db`, then components and hooks, then routes; only
   `src/lib/dictionary/data.ts` reads the service's client, apart from `retired.ts`, which
   `worker.ts` runs before Next.js ([`docs/agents/web.md`](docs/agents/web.md), Code layout).
+- **The app**: `TranslatorCore`, the Translate tab's engine, imports only Foundation, Observation,
+  and OSLog (`tools/checks/src/layers.ts`), and can't import the app's `SearchExperience` target;
+  the app supplies its speech, translation, and playback clients
+  ([`docs/agents/translate.md`](docs/agents/translate.md)).
 - **Across parts**: the core and the app's Swift change together, which `Search parity` checks
   ([`docs/agents/ci.md`](docs/agents/ci.md)); the website and the service share their row shapes
   through the core.

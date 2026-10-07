@@ -18,7 +18,8 @@ main gap, which is what would raise it. Known debt, each item with its issue, is
 ## iOS app
 
 The app's tests are the `SearchExperienceTests` target, in
-`apps/ios/Modules/Tests/SearchExperienceTests/`, run with `xcodebuild` on a Mac
+`apps/ios/Modules/Tests/SearchExperienceTests/`, and the `TranslatorCoreTests` target, in
+`apps/ios/Modules/Tests/TranslatorCoreTests/`, run with `xcodebuild` on a Mac
 ([`ios.md`](agents/ios.md), Current verification boundary). The `iOS` workflow runs them on a
 macOS runner only once the owners turn it on (`IOS_SWIFT_TESTS`), so until then they run only by
 hand. The product docs are in
@@ -32,6 +33,7 @@ are sections of `ios.md`.
 | Player | C | `YouTubeCaptionsTests`: links, caption-track choice, timed text, translation pairing, card size, word meanings, and comprehension | None | [Player](../apps/ios/docs/product/player.md) | Player manual checks, with four videos |
 | Lists and Known Words | C | `WordListsTests`, `WordKnowledgeTests`, `SavedKanjiTests`: storage, reloads, unreadable and newer-version files, and failed writes | None | [Known Words and Lists](../apps/ios/docs/product/index.md#known-words) | Word lists and Known words manual checks |
 | Image Search | C | `ImageTextRecognitionTests` (Vision on the images in `apps/ios/Modules/Tests/SearchExperienceTests/Fixtures/ImageText`), `ImageTextTranslationTests`, `ImageTextExplanationTests`, `ImageTextContextNotesTests` | None | [Image Search](../apps/ios/docs/product/dictionary.md#image-search) | Image Search manual checks; Apple Translation only on a device |
+| Translate | C | `TranslatorCoreTests`: the conversation engine (turns, held audio, the 30-second cutoff, silence, pause, background, leaving, modes), bilingual transcript merging, typed-language detection, and History storage | None | [Translate](../apps/ios/docs/product/translate.md) | Translate manual checks: the scripted Simulator harness for every screen; the microphone, speech recognition, and Apple Translation only on a device |
 
 - **Search, C.** Thorough tests, three suites the website is held to, and a checklist, but no CI.
   Main gap: nothing runs the Swift against its own recorded suites before merge, and no suite
@@ -42,6 +44,10 @@ are sections of `ios.md`.
   highlighted card, the controls, and the live caption fetch are checked only by hand.
 - **Lists and Known Words, C.** Storage is well tested. Main gap: the screens (swipes, Edit,
   menus, and the list picker) are checked only by hand.
+- **Translate, C.** The engine and History are tested with fakes, and every screen runs in the
+  Simulator on a scripted conversation. Main gap: nothing yet shows the on-device recognizers
+  choosing Japanese or English correctly on real speech; that needs recordings and a device
+  (#624).
 - **Image Search, C.** Recognition runs on real images. Main gap: Apple Translation doesn't run
   in the Simulator, and the on-device model runs only where the Simulator's runtime matches the
   Mac, so translation and Context are checked by hand, on a device.

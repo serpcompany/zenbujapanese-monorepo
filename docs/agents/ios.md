@@ -43,6 +43,9 @@ xcodebuild -scheme ZenbuJapaneseModules \
   ONLY_ACTIVE_ARCH=YES test
 ```
 
+The Translate tab has its own test target, `TranslatorCoreTests`, and its own guide,
+[`translate.md`](translate.md).
+
 `SearchConformanceTests` checks Search against the shared conformance suite in
 `apps/ios/LanguageData/Conformance/search-retrieval.json` (see ADR 0006). Only each result's
 Language Reference ID and position are the contract; its headword and reading are there to make

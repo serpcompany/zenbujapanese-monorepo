@@ -1,8 +1,9 @@
 import { findComments } from './comments/find'
 import { checkDocs } from './docs'
 import { repositoryFiles, root } from './files'
+import { checkLayers } from './layers'
 import { runLinters } from './linters'
-import { commentRule, docsRule, linterRule, sizeRule, unclassifiedRule } from './rules'
+import { commentRule, docsRule, layerRule, linterRule, sizeRule, unclassifiedRule } from './rules'
 import { checkSizes } from './sizes'
 
 interface Outcome {
@@ -40,6 +41,13 @@ const sizes: Check = files => {
   return { name: 'sizes', passed: !problems.length, report }
 }
 
+const layers: Check = files => {
+  const problems = checkLayers(files)
+  const report = problems.map(problem => `${problem.path}:${problem.line}  ${problem.problem}`)
+  if (problems.length) report.push(layerRule)
+  return { name: 'layers', passed: !problems.length, report }
+}
+
 const linters: Check = files => {
   const results = runLinters(files)
   const report = results.flatMap(result => {
@@ -62,7 +70,7 @@ const linters: Check = files => {
   return { name: 'linters', passed: !failed, report }
 }
 
-const checks: Record<string, Check> = { comments, docs, sizes, linters }
+const checks: Record<string, Check> = { comments, docs, sizes, layers, linters }
 
 const [requested, ...paths] = process.argv.slice(2)
 if (requested && !checks[requested]) {

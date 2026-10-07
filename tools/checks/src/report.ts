@@ -4,6 +4,7 @@ import { join } from 'node:path'
 import { findComments } from './comments/find'
 import { checkDocs, isOwnedDoc, referencedFiles } from './docs'
 import { repositoryFiles, root } from './files'
+import { checkLayers } from './layers'
 import { docsToReverify, lastChangeTimes, renderReport } from './maintenance'
 import { checkSizes, filesNearLimit, knownLargeFiles } from './sizes'
 
@@ -34,6 +35,12 @@ const checks = [
   {
     name: 'sizes',
     problems: checkSizes(files).map(problem => `${problem.path}  ${problem.problem}`)
+  },
+  {
+    name: 'layers',
+    problems: checkLayers(files).map(
+      problem => `${problem.path}:${problem.line}  ${problem.problem}`
+    )
   }
 ]
 
