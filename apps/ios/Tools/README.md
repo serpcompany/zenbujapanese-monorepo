@@ -163,7 +163,9 @@ and keeps each pack's mapped evidence beside its ZIP (`<packID>.sqlite3`), mappe
 `RankedLists.sqlite3` (`zenbu.ranked-lists.v1`), for the website's dictionary service: each
 pack's evidence must hash to the `mappingSHA256` its manifest pins, which the app checks when it
 installs the pack, so the service ranks words exactly as the app does. The file sits in the app's
-`Resources` beside the other artifacts but `Package.swift` leaves it out of the app;
+`Resources` beside the other artifacts but `Package.swift` leaves it out of the app. The
+language-data release carries it, with Jiten's notice and Wikipedia's license
+([`language-data/README.md`](../../../language-data/README.md));
 `tests/test_ranked_lists_contract.py` checks it against the catalog and the language data.
 
 **`analyze_frequency_candidates.py`** (#376) and **`analyze_ordered_json_frequency_lists.py`**
