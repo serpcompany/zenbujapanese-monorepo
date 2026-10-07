@@ -116,6 +116,12 @@ A kanji detail can present readings, meanings, stroke order, components, element
 that contain the kanji. Component and element links can be followed without losing the
 learner's place in the preceding detail.
 
+Beside the kanji, a kanji detail shows its stroke count, its school grade when it has one, and
+its JLPT level when Jonathan Waller's kanji lists give one, as N5 to N1: 一 and 日 show N5. The
+JLPT has published no kanji list since 2010, so the level is his estimate. A kanji his lists
+leave out shows no JLPT level, including 172 jōyō kanji, such as 分, that no modern list gives
+one. `KanjiStatTests` and the kanji detail conformance suite check it.
+
 A kanji detail has the same **Share** button and **•••** menu as a word detail. Share sends the
 kanji, its readings, and its meanings as text. The menu marks the kanji known, adds it to lists,
 and adds notes and photos, which work as they do for a word. Lists and Notes sections appear

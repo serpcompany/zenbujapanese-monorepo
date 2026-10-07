@@ -20,28 +20,8 @@ struct KanjiOverview: View {
         }
         if let reference {
           HStack(spacing: 18) {
-            KanjiMetric(
-              value: "\(reference.strokeCount)",
-              caption: reference.strokeCount == 1 ? "Stroke" : "Strokes",
-              accessibilityLabel:
-                "\(reference.strokeCount) \(reference.strokeCount == 1 ? "Stroke" : "Strokes")",
-              identifier: "kanji-detail.strokes"
-            )
-            if let grade = reference.grade {
-              KanjiMetric(
-                value: "\(grade)",
-                caption: "Grade",
-                accessibilityLabel: "Grade \(grade)",
-                identifier: "kanji-detail.grade"
-              )
-            }
-            if let jlpt = reference.jlpt {
-              KanjiMetric(
-                value: "N\(jlpt)",
-                caption: "JLPT",
-                accessibilityLabel: "JLPT N\(jlpt)",
-                identifier: "kanji-detail.jlpt"
-              )
+            ForEach(reference.stats, id: \.identifier) { stat in
+              KanjiMetric(stat: stat)
             }
           }
         }
@@ -82,22 +62,59 @@ struct KanjiOverview: View {
   }
 }
 
-private struct KanjiMetric: View {
+struct KanjiStat: Hashable, Sendable {
   let value: String
   let caption: String
   let accessibilityLabel: String
   let identifier: String
+}
+
+extension KanjiReferenceEntry {
+  var stats: [KanjiStat] {
+    let strokes = strokeCount == 1 ? "Stroke" : "Strokes"
+    var stats = [
+      KanjiStat(
+        value: "\(strokeCount)",
+        caption: strokes,
+        accessibilityLabel: "\(strokeCount) \(strokes)",
+        identifier: "kanji-detail.strokes"
+      )
+    ]
+    if let grade {
+      stats.append(
+        KanjiStat(
+          value: "\(grade)",
+          caption: "Grade",
+          accessibilityLabel: "Grade \(grade)",
+          identifier: "kanji-detail.grade"
+        ))
+    }
+    if let wallerJlptLevel {
+      stats.append(
+        KanjiStat(
+          value: "N\(wallerJlptLevel)",
+          caption: "JLPT",
+          accessibilityLabel: "JLPT N\(wallerJlptLevel)",
+          identifier: "kanji-detail.jlpt"
+        ))
+    }
+    return stats
+  }
+}
+
+private struct KanjiMetric: View {
+  let stat: KanjiStat
 
   var body: some View {
     VStack(spacing: 4) {
-      Text(value)
+      Text(stat.value)
         .font(.title2.weight(.bold))
-      Text(caption.uppercased())
+      Text(stat.caption.uppercased())
         .font(.body)
     }
     .accessibilityElement(children: .ignore)
-    .accessibilityLabel(accessibilityLabel)
-    .accessibilityIdentifier(identifier)
+    .accessibilityLabel(stat.accessibilityLabel)
+    .accessibilityIdentifier(stat.identifier)
   }
 }
 

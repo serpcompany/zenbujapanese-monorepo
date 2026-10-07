@@ -89,7 +89,8 @@ may import anything.
 Only `src/lib/dictionary/data.ts` reads the dictionary service's client
 (`src/lib/dictionary/api.ts`), so every page gets the site's URLs and, in local development, the
 fixtures; the one other caller is `src/lib/dictionary/retired.ts`, which `worker.ts` runs before
-Next.js. The rendered-page gate's `src/test/gate.ts` is test tooling and calls it directly.
+Next.js. The browse pages' data (`src/lib/dictionary/browse/data.ts`) and the sitemaps
+(`src/lib/dictionary/sitemaps.ts`) ask the client `data.ts`'s `dictionaryService()` returns. The rendered-page gate's `src/test/gate.ts` is test tooling and calls it directly.
 
 `pnpm verify dependencies` checks the same layers by the files imports resolve to, and more: no
 import cycles, nothing outside a test importing a test or `src/test`, every module reachable from
@@ -237,6 +238,35 @@ of its conjugated forms keeps its first 50 examples. Rerun it after changing a r
 fixture JSON is generated, so Biome skips it. A fixture search lists its words in
 `fixtureSearchOrder`, the app's order: each is its own match group, so the frequency re-sort
 keeps that order.
+
+### Browse pages
+
+The browse pages (ADR 0010, amended for #614; the
+[product docs](../../apps/web/docs/product/browse.md)) list words and kanji by kana, category,
+frequency list, and kanji list, under `/dictionary/browse/`. `src/lib/dictionary/browse/data.ts`
+asks the service's browse routes ([`dictionary-api.md`](dictionary-api.md), Routes) at the paths
+`packages/dictionary-core/src/browse/service-paths.ts` names, and links each word as search
+results do (`linkedWordPath`). Without a service, it answers from the answers `pnpm --filter
+zenbujapanese-dictionary-api fixtures` exports to `packages/dictionary-core/src/fixtures/browse.json`,
+keyed by those paths: the summary, both scripts, い and the いる group, the categories,
+`ichidan-verbs` (two pages most used first and one in kana order) and `audiovisual` (one word, so
+not indexed), the ranked lists, YouTube's and anime's first bands, and JLPT N5, and the kanji
+lists, grade 4, JLPT N5's kanji, and all of jinmeiyō, with its compatibility kanji. Each word list
+is cut to its first 20 words. Any other browse page is a 404 there.
+
+`src/lib/dictionary/browse/paths.ts` builds the pages' URLs: a list's first page has no number,
+and `…/1/` redirects to it; a ranked list's page is a band of 1,000 ranks (`…/anime/1001-2000/`),
+and its name links to the first band; a JLPT level is `…/jlpt/n5/`; and a category's kana order is
+`…/<category>/kana-order/`. A list of fewer than 10 words, and a category's kana order, are
+`noindex, follow` (`dictionaryMetadata`'s `index`) and left out of `/sitemaps/browse.xml`. No
+browse page links to a URL that redirects (`e2e/browse-links.spec.ts` follows every link). The
+hiragana and katakana routes, and each category's four, are one line each over the route helpers
+beside them (`kana-routes.tsx`, `category-routes.tsx`, `frequency-dictionaries/list-routes.tsx`). Pages without parameters that read the service are
+`force-dynamic`, as `/dictionary/` now is, so a build never reads it
+(`src/app/dictionary/browse/dynamic.test.ts`). The home leaves its browse sections out when the
+service can't answer (`getHomeBrowse`), as when the site deploys a few minutes ahead
+of a service without the browse routes, rather than failing the search box with them. The words show as search
+results' rows do (`components/dictionary/word-row.tsx`).
 
 ### The rendered-page gate
 
@@ -417,15 +447,17 @@ The dictionary's sitemaps (`src/lib/dictionary/sitemaps.ts`, ADR 0007) exist whe
 has a dictionary service, staging and production, not local fixtures, so the index renders per
 request (`force-dynamic`, as does `/sitemap.xml`, which crawlers look for by default): a build
 can't reach the service, so prerendering would fail the build or freeze an index without them.
-`/dictionary/`, the search box, is a static page in `src/lib/pages.ts`:
+`/dictionary/`, the search box and the browse sections below it, is listed in `src/lib/pages.ts`:
 
 - `/sitemaps/dictionary/<n>.xml`: every word page's canonical URL under its slug,
   percent-encoded, 50,000 to a file in `ent_seq` order (five files for 218,382 words). The
   service works out each file's `ent_seq` range once, and the site streams a file's words from it
   10,000 at a time (`urlSetStream`), so a file never sits whole in memory; a failure mid-stream
   errors the response rather than ending it early.
-Those are the only dictionary sitemaps (ADR 0010): the kanji and conjugations sitemaps went with
-their pages.
+- `/sitemaps/browse.xml`: every indexed browse page, built from what the service's
+  `/v1/sitemaps/browse` lists (`src/lib/dictionary/browse/sitemap.ts`), about 5,300 URLs.
+Those are the only dictionary sitemaps (ADR 0010, amended for #614): the kanji and conjugations
+sitemaps went with their pages.
 
 They're kept in the Worker's edge cache (the Cache API) under the dictionary build the service
 names, so they change with the build, within the 10 minutes its answers stay cached. Cloudflare

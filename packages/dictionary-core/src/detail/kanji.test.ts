@@ -116,12 +116,12 @@ describe('kanjiElements (KanjiElementReferenceData.elements)', () => {
 })
 
 describe('kanjiDetail', () => {
-  test('要: strokes, grade, then JLPT as the app writes it, and no components beside Kanjium elements', () => {
+  test('要: strokes, grade, then Waller’s JLPT level as the app writes it, and no components beside Kanjium elements', () => {
     const detail = kanjiDetail(kaname)
     expect(detail.stats).toEqual([
       { label: 'Strokes', value: '9' },
       { label: 'Grade', value: '4' },
-      { label: 'JLPT', value: 'N2' }
+      { label: 'JLPT', value: 'N3' }
     ])
     expect(detail.meanings).toEqual(['need', 'main point', 'essence', 'pivot', 'key to'])
     expect(

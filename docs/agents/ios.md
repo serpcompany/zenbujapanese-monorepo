@@ -38,13 +38,13 @@ or how fast it feels. The app needs iOS 26.0 or later, and the Sudachi cache abo
 
 1. Connect the iPhone by USB, or pair it over the same Wi-Fi, and tap **Trust** on it.
 2. Open `apps/ios/ZenbuJapanese.xcodeproj`, sign in under Xcode → Settings → Accounts, and pick a
-   team under the ZenbuJapanese target's **Signing & Capabilities**. On Zenbu's Apple Developer
-   team, keep the bundle ID. A free Apple ID (a Personal Team) can't use
-   `com.zenbujapanese.dictionary`, which Zenbu's team registered: change it to one of your own,
-   such as `com.<you>.zenbujapanese`. A Personal Team can't sign Associated Domains either, so
-   also remove that capability ([Links from the website](#links-from-the-website)). The project
-   sets no team, so picking one edits `project.pbxproj`; don't commit that edit, a bundle ID
-   change, or the removed capability.
+   team under the ZenbuJapanese target's **Signing & Capabilities**. On the Apple Developer team
+   that publishes the app (the backup account's, while #616 is open), keep the bundle ID. A free
+   Apple ID (a Personal Team) can't use `com.zenbujapanese.app`, which that team registered:
+   change it to one of your own, such as `com.<you>.zenbujapanese`. A Personal Team can't sign
+   Associated Domains either, so also remove that capability
+   ([Links from the website](#links-from-the-website)). The project sets no team, so picking one
+   edits `project.pbxproj`; don't commit that edit, a bundle ID change, or the removed capability.
 3. Choose the iPhone as the run destination and run.
 4. If iOS asks, turn on Developer Mode under Settings → Privacy & Security → Developer Mode. With a
    free Apple ID, also trust it under Settings → General → VPN & Device Management.
@@ -196,8 +196,7 @@ conjugation table its part of speech opens (each form with the words `Conjugatio
 `ConjugatedForm.examples`, and the first 3 with their linked tokens and which of them
 `LinkedJapaneseText.matchesQuery` accents), kanji, and its first 25 examples with their linked tokens; for
 a kanji, its metrics, meanings, readings with their words, elements, 24 words, and whether it
-has stroke data (not its JLPT metric, which the suites leave out until KANJIDIC2's old JLPT
-scale is decided, issue 485). The views and the suite
+has stroke data. The views and the suite
 share those helpers, so the suite records what the views draw. Each file pins the SHA-256 of
 every bundled artifact it was recorded against. After an intended
 change to either screen or its data, record them again with the same
