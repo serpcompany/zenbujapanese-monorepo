@@ -185,11 +185,19 @@ fit, rather than overlapping; a shorter one stays on one line and truncates its 
 - Check: Browse spec, "a kana’s page lists its two-kana groups and leads to their words" and "a
   long breadcrumb trail wraps rather than overlapping".
 
-**Footer.** The footer links Browse by kana and Kanji by grade after Dictionary.
+**Footer.** The footer's Product group links Browse by kana and Kanji by grade after Dictionary
+([Dictionary](dictionary.md#header-footer-and-site-wide), Footer).
 
-- Source: #614 mockup "Footer + /sitemap/ (changed)".
-- Check: `src/components/site-footer.test.tsx`, "the footer links the browse pages after
-  Dictionary".
+- Source: #614 mockup "Footer + /sitemap/ (changed)"; #561 (the groups).
+- Check: `src/components/site-footer.test.tsx`, "the footer groups every link under Product,
+  Company, and Policies" and "the footer's browse links open the kana charts and the kanji lists";
+  `e2e/site.spec.ts`, "the footer groups its links under Product, Company, and Policies".
+
+**Width.** A browse page is one column, at most 1,024 pixels wide (`max-w-5xl`), as the mockups
+are, so the kana charts and the kanji grids fit a row; on a phone it fills the screen's width.
+
+- Source: #614 mockups.
+- Check: No automated check yet.
 
 **HTML sitemap.** `/sitemap/` lists the site's pages, then the dictionary and its browse pages: the
 kana pages, each kanji list, each frequency dictionary, and the category lists.

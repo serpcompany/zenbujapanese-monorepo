@@ -38,11 +38,11 @@ or how fast it feels. The app needs iOS 26.0 or later, and the Sudachi cache abo
 
 1. Connect the iPhone by USB, or pair it over the same Wi-Fi, and tap **Trust** on it.
 2. Open `apps/ios/ZenbuJapanese.xcodeproj`, sign in under Xcode → Settings → Accounts, and pick a
-   team under the ZenbuJapanese target's **Signing & Capabilities**. On Zenbu's Apple Developer
-   team, keep the bundle ID. A free Apple ID (a Personal Team) can't use
-   `com.zenbujapanese.dictionary`, which Zenbu's team registered: change it to one of your own,
-   such as `com.<you>.zenbujapanese`. The project sets no team, so picking one edits
-   `project.pbxproj`; don't commit that edit, or a bundle ID change.
+   team under the ZenbuJapanese target's **Signing & Capabilities**. On the Apple Developer team
+   that publishes the app (the backup account's, while #616 is open), keep the bundle ID. A free
+   Apple ID (a Personal Team) can't use `com.zenbujapanese.app`, which that team registered:
+   change it to one of your own, such as `com.<you>.zenbujapanese`. The project sets no team, so
+   picking one edits `project.pbxproj`; don't commit that edit, or a bundle ID change.
 3. Choose the iPhone as the run destination and run.
 4. If iOS asks, turn on Developer Mode under Settings → Privacy & Security → Developer Mode. With a
    free Apple ID, also trust it under Settings → General → VPN & Device Management.

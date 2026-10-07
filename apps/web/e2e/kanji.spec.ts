@@ -1,5 +1,5 @@
 import type { Page } from '@playwright/test'
-import { expect, needed, test, word } from './test'
+import { expect, needed, sourcesToggle, test, word } from './test'
 
 const kanjiSearch = encodeURI('/dictionary/search/要/')
 const kanaOnly = word(1577980)
@@ -63,6 +63,12 @@ test.describe('kanji details', () => {
   for (const { on, path } of rows) {
     test(`${on} credits KanjiVG and Kanjium for the kanji details`, async ({ page }) => {
       await page.goto(path)
+      const kanjiVG = page
+        .getByRole('main')
+        .getByRole('link', { name: 'KanjiVG', includeHidden: true })
+      await expect(kanjiVG).toBeAttached()
+      await expect(kanjiVG).toBeHidden()
+      await sourcesToggle(page).click()
       for (const source of ['KanjiVG', 'Kanjium']) {
         await expect(page.getByRole('main').getByRole('link', { name: source })).toBeVisible()
       }
@@ -72,6 +78,7 @@ test.describe('kanji details', () => {
   for (const path of ['/dictionary/search/iru/', kanaOnly.path]) {
     test(`${decodeURI(path)}, without kanji details, credits neither`, async ({ page }) => {
       await page.goto(path)
+      await sourcesToggle(page).click()
       await expect(page.getByRole('main').getByRole('link', { name: 'JMdict' })).toBeVisible()
       for (const source of ['KanjiVG', 'Kanjium']) {
         await expect(page.getByRole('main').getByRole('link', { name: source })).toHaveCount(0)

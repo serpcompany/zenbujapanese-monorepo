@@ -19,7 +19,7 @@ export interface ExampleToken {
   isPageWord: boolean
 }
 
-export interface TatoebaSentence {
+interface TatoebaSentence {
   id: number
   contributor: string | null
   license: string
@@ -102,8 +102,6 @@ export function exampleCountText(
 export const noExamplesMessage = 'No source-matched examples'
 
 export const noFormExamplesMessage = 'No example sentences use this form yet.'
-
-export const tatoebaSentenceUrl = (id: number) => `https://tatoeba.org/en/sentences/show/${id}`
 
 const licenseUrls: Record<string, string> = {
   'CC BY 2.0 FR': 'https://creativecommons.org/licenses/by/2.0/fr/',
