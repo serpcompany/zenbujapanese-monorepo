@@ -81,8 +81,8 @@ stays on those pages. They are:
   the words that start with two kana, such as `/dictionary/browse/hiragana/かが/`, a page at a
   time (`…/かが/2/`);
 - kanji lists: `/dictionary/browse/kanji/`, and each list, such as
-  `/dictionary/browse/kanji/grade-2/` (the school grades, secondary school, jinmeiyō, and each
-  stroke count);
+  `/dictionary/browse/kanji/grade-2/` (the school grades, secondary school, jinmeiyō, the five
+  JLPT levels from Jonathan Waller's kanji lists, and each stroke count);
 - frequency dictionaries: `/dictionary/browse/frequency-dictionaries/`, and each list, such as
   `/dictionary/browse/frequency-dictionaries/anime/`, a page at a time: the app's eight ranked
   dictionaries and the five JLPT levels;

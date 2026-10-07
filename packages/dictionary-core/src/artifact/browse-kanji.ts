@@ -1,11 +1,4 @@
-import {
-  gradeLists,
-  jinmeiyo,
-  joyoGrades,
-  type KanjiList,
-  kanjiList,
-  secondarySchool
-} from '../browse/lists'
+import { jlptKanjiLists, joyoGrades, type KanjiList, kanjiList, schoolLists } from '../browse/lists'
 import type { KanjiData, KanjiReferenceEntry } from './kanji-data'
 
 export interface KanjiItem {
@@ -15,8 +8,11 @@ export interface KanjiItem {
 
 export interface KanjiHubResponse {
   lists: { slug: string; characters: string[] }[]
+  jlpt: { slug: string; count: number; first: string[] }[]
   strokes: { strokes: number; count: number }[]
 }
+
+const firstJlptKanjiShown = 5
 
 export interface KanjiListResponse {
   slug: string
@@ -30,23 +26,30 @@ function byFrequency(left: KanjiReferenceEntry, right: KanjiReferenceEntry): num
   return rank(left) - rank(right) || codePoint(left.character) - codePoint(right.character)
 }
 
-function kanjiIn(kanji: KanjiData, list: KanjiList): KanjiReferenceEntry[] {
-  return kanji
+const listed = (entry: KanjiReferenceEntry, list: KanjiList) =>
+  (list.grades === undefined || (entry.grade !== null && list.grades.includes(entry.grade))) &&
+  (list.strokes === undefined || entry.strokeCount === list.strokes) &&
+  (list.jlptLevel === undefined || entry.wallerJlptLevel === list.jlptLevel)
+
+const kanjiIn = (kanji: KanjiData, list: KanjiList) =>
+  kanji
     .entries()
-    .filter(
-      entry =>
-        entry.grade !== null &&
-        list.grades.includes(entry.grade) &&
-        (list.strokes === undefined || entry.strokeCount === list.strokes)
-    )
+    .filter(entry => listed(entry, list))
     .sort(byFrequency)
-}
 
 export function kanjiHub(kanji: KanjiData): KanjiHubResponse {
-  const lists = [...gradeLists, secondarySchool, jinmeiyo].map(list => ({
+  const lists = schoolLists.map(list => ({
     slug: list.slug,
     characters: kanjiIn(kanji, list).map(entry => entry.character)
   }))
+  const jlpt = jlptKanjiLists.map(list => {
+    const characters = kanjiIn(kanji, list).map(entry => entry.character)
+    return {
+      slug: list.slug,
+      count: characters.length,
+      first: characters.slice(0, firstJlptKanjiShown)
+    }
+  })
   const counts = new Map<number, number>()
   for (const entry of kanji.entries()) {
     if (entry.grade !== null && joyoGrades.includes(entry.grade)) {
@@ -56,7 +59,7 @@ export function kanjiHub(kanji: KanjiData): KanjiHubResponse {
   const strokes = [...counts]
     .sort(([left], [right]) => left - right)
     .map(([strokeCount, count]) => ({ strokes: strokeCount, count }))
-  return { lists, strokes }
+  return { lists, jlpt, strokes }
 }
 
 export function kanjiListResponse(kanji: KanjiData, slug: string): KanjiListResponse | null {

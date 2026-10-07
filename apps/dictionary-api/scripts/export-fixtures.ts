@@ -132,7 +132,8 @@ const browseAnswers: [{ path: string }, unknown][] = [
   [browseService.rankedWords('anime', 1), shortened(browse.rankedWords('anime', 1))],
   [browseService.rankedWords('jlpt-n5', 1), shortened(browse.rankedWords('jlpt-n5', 1))],
   [browseService.kanjiHub(), browse.kanjiHub()],
-  [browseService.kanjiList('grade-4'), browse.kanjiList('grade-4')]
+  [browseService.kanjiList('grade-4'), browse.kanjiList('grade-4')],
+  [browseService.kanjiList('jlpt-n5'), browse.kanjiList('jlpt-n5')]
 ]
 writeFileSync(
   join(output, 'browse.json'),

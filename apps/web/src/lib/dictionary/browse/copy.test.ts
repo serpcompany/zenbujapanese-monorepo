@@ -71,4 +71,7 @@ test('kanji lists say what they hold', () => {
   expect(
     kanjiListIntro({ slug: 'strokes-1', name: '1 stroke', grades: [1], strokes: 1 }, 2)
   ).toMatch(/^The 2 jōyō kanji written with 1 stroke,/)
+  expect(kanjiListIntro({ slug: 'jlpt-n5', name: 'JLPT N5', jlptLevel: 5 }, 79)).toMatch(
+    /^The 79 kanji Jonathan Waller lists for JLPT N5, most frequent first\. The JLPT has published no kanji list since 2010/
+  )
 })

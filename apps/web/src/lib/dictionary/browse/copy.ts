@@ -112,17 +112,25 @@ const ordinals = ['first', 'second', 'third', 'fourth', 'fifth', 'sixth']
 const opensItsSearch =
   'Each opens its search page, with its readings, stroke order, and every word that uses it.'
 
+export const jlptKanjiEstimate =
+  'The JLPT has published no kanji list since 2010, so these levels are estimates.'
+
+function whichKanji(list: KanjiList): string {
+  const grades = list.grades ?? []
+  const [grade] = grades
+  if (list.strokes !== undefined) return `jōyō kanji written with ${plural(list.strokes, 'stroke')}`
+  if (list.jlptLevel !== undefined) return `kanji Jonathan Waller lists for JLPT N${list.jlptLevel}`
+  if (grades.length === 1 && grade <= ordinals.length) {
+    return `kanji Japanese schools teach in the ${ordinals[grade - 1]} year of primary school`
+  }
+  return grade === 8
+    ? 'jōyō kanji Japanese schools teach in secondary school'
+    : 'jinmeiyō kanji, approved for use in names'
+}
+
 export function kanjiListIntro(list: KanjiList, total: number): string {
-  const [grade] = list.grades
-  const which =
-    list.strokes !== undefined
-      ? `jōyō kanji written with ${plural(list.strokes, 'stroke')}`
-      : list.grades.length === 1 && grade <= ordinals.length
-        ? `kanji Japanese schools teach in the ${ordinals[grade - 1]} year of primary school`
-        : grade === 8
-          ? 'jōyō kanji Japanese schools teach in secondary school'
-          : 'jinmeiyō kanji, approved for use in names'
-  return `The ${formatCount(total)} ${which}, most frequent first. ${opensItsSearch}`
+  const estimate = list.jlptLevel === undefined ? '' : ` ${jlptKanjiEstimate}`
+  return `The ${formatCount(total)} ${whichKanji(list)}, most frequent first.${estimate} ${opensItsSearch}`
 }
 
 export const featuredCategories = {

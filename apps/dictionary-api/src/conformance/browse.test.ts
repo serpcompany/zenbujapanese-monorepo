@@ -104,6 +104,21 @@ describe.runIf(artifactAvailable)('browsing the dictionary on the app’s data',
     ])
   })
 
+  test('the JLPT kanji lists are Waller’s, most frequent first', () => {
+    const { jlpt } = service.kanjiHub()
+    expect(jlpt.map(({ slug, count }) => [slug, count])).toEqual([
+      ['jlpt-n5', 79],
+      ['jlpt-n4', 166],
+      ['jlpt-n3', 367],
+      ['jlpt-n2', 367],
+      ['jlpt-n1', 1232]
+    ])
+    const n5 = service.kanjiList('jlpt-n5')?.kanji.map(kanji => kanji.character) ?? []
+    expect(n5.slice(0, jlpt[0].first.length)).toEqual(jlpt[0].first)
+    expect(n5[0]).toBe('日')
+    expect(service.sitemap().kanjiLists).toContain('jlpt-n1')
+  })
+
   test('the browse sitemap fits in one file', () => {
     const sitemap = service.sitemap()
     const kanaPages = sitemap.kana.reduce(

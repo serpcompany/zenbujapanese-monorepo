@@ -247,8 +247,9 @@ browse screens:
   in its range, so ranks a source row maps to no entry leave gaps. The JLPT lists are the level
   pack's words at each level, in kana order.
 - **Kanji lists** are KANJIDIC2's school grades 1 to 6, secondary school (grade 8), jinmeiyō
-  (grades 9 and 10), and the jōyō kanji (grades 1 to 6 and 8) by stroke count, each most frequent
-  first by KANJIDIC2's newspaper frequency, then by code point.
+  (grades 9 and 10), the JLPT levels N5 to N1 (`wallerJlptLevel`, from Jonathan Waller's kanji
+  lists, not KANJIDIC2's `jlpt`), and the jōyō kanji (grades 1 to 6 and 8) by stroke count, each
+  most frequent first by KANJIDIC2's newspaper frequency, then by code point.
 
 ## Rows
 
@@ -275,7 +276,8 @@ browse screens:
   it scrolls.
 - A Tatoeba pair's two sentences each have their own ID, contributor (null when Tatoeba names
   none), and license.
-- A kanji's `jlpt` is KANJIDIC2's level, shown as `N` and the level. `structure` is null when
+- A kanji's `jlpt` is KANJIDIC2's level, shown as `N` and the level. The JLPT kanji lists read
+  `wallerJlptLevel` instead, which the kanji row leaves out. `structure` is null when
   Kanjium has none, and `words` holds at most 24. `strokes` is KanjiVG's, in a square of
   `viewportSize` (109): each stroke is opcode 0 then a point to move to, or opcode 1 then the
   three points of a cubic curve.

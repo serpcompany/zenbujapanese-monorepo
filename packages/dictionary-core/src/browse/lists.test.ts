@@ -48,12 +48,14 @@ describe('pages', () => {
 })
 
 describe('kanji lists', () => {
-  test('are the school grades, secondary school, jinmeiyō, and each stroke count', () => {
+  test('are the school grades, secondary school, jinmeiyō, the JLPT levels, and each stroke count', () => {
     expect(kanjiList('grade-2')?.grades).toEqual([2])
     expect(kanjiList('jinmeiyo')?.grades).toEqual([9, 10])
+    expect(kanjiList('jlpt-n3')).toEqual({ slug: 'jlpt-n3', name: 'JLPT N3', jlptLevel: 3 })
     expect(kanjiList('strokes-12')).toMatchObject({ strokes: 12, name: '12 strokes' })
     expect(kanjiList('strokes-0')).toBeUndefined()
     expect(kanjiList('grade-7')).toBeUndefined()
+    expect(kanjiList('jlpt-n6')).toBeUndefined()
   })
 })
 

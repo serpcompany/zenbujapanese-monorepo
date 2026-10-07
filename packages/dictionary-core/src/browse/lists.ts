@@ -61,8 +61,9 @@ export const rankedPages = rankPage(rankedListLimit)
 export interface KanjiList {
   slug: string
   name: string
-  grades: readonly number[]
+  grades?: readonly number[]
   strokes?: number
+  jlptLevel?: number
 }
 
 export const joyoGrades: readonly number[] = [1, 2, 3, 4, 5, 6, 8]
@@ -88,8 +89,16 @@ export const strokeList = (strokes: number): KanjiList => ({
   strokes
 })
 
+export const schoolLists: readonly KanjiList[] = [...gradeLists, secondarySchool, jinmeiyo]
+
+export const jlptKanjiLists: readonly KanjiList[] = jlptLists.map(({ slug, name, level }) => ({
+  slug,
+  name,
+  jlptLevel: level
+}))
+
 export function kanjiList(slug: string): KanjiList | undefined {
   const strokes = slug.match(/^strokes-([1-9]\d?)$/u)
   if (strokes) return strokeList(Number(strokes[1]))
-  return [...gradeLists, secondarySchool, jinmeiyo].find(list => list.slug === slug)
+  return [...schoolLists, ...jlptKanjiLists].find(list => list.slug === slug)
 }

@@ -316,6 +316,9 @@ export class DictionaryBrowse {
       ],
       kanjiLists: [
         ...this.kanjiHub().lists.map(list => list.slug),
+        ...this.kanjiHub()
+          .jlpt.filter(list => list.count > 0)
+          .map(list => list.slug),
         ...this.kanjiHub().strokes.map(({ strokes }) => strokeList(strokes).slug)
       ]
     }

@@ -30,7 +30,7 @@ function fakeService(overrides: Partial<DictionaryService> = {}): DictionaryServ
     categoryWords: async slug => (slug === 'nouns' ? ({ words: [] } as never) : null),
     rankedLists: async () => ({ lists: [], jlpt: [] }),
     rankedWords: async () => null,
-    kanjiHub: async () => ({ lists: [], strokes: [] }),
+    kanjiHub: async () => ({ lists: [], jlpt: [], strokes: [] }),
     kanjiList: async () => null,
     browseSitemap: async () => ({ kana: [], categories: [], rankedLists: [], kanjiLists: [] }),
     ...overrides
