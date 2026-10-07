@@ -18,6 +18,7 @@ export interface Crumb {
 }
 
 const home: Crumb = { label: 'Home', path: '/' }
+const shortTrail = 3
 const dictionary: Crumb = { label: 'Dictionary', path: '/dictionary/' }
 
 function jsonThatCannotCloseItsScript(value: unknown): string {
@@ -50,11 +51,11 @@ export function DictionaryBreadcrumbs({
   }
   return (
     <Breadcrumb>
-      <BreadcrumbList className="flex-nowrap">
+      <BreadcrumbList className={trail.length > shortTrail ? undefined : 'flex-nowrap'}>
         {trail.map((crumb, index) => (
           <Fragment key={crumb.path}>
             {index > 0 ? <BreadcrumbSeparator /> : null}
-            <BreadcrumbItem className="min-w-0">
+            <BreadcrumbItem className={index === trail.length - 1 ? 'min-w-0' : 'shrink-0'}>
               {index === trail.length - 1 ? (
                 <BreadcrumbPage lang={crumb.lang} className="truncate">
                   {crumb.label}

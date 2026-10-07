@@ -9,6 +9,7 @@ import type {
   WordExampleRow,
   WordRows
 } from '../detail/rows'
+import browse from './browse.json'
 import exampleCounts from './example-counts.json'
 import exampleSentences from './example-sentences.json'
 import formExamples from './form-examples.json'
@@ -65,3 +66,5 @@ export const fixtureSearchOrder: Record<string, number[]> = {
   iru: [1546640, 1577980, 1391500, 1465580, 1322180, 1587780],
   要: [1609600, 2188720, 1546640, 1546750, 1546680, 1546850, 1612150]
 }
+
+export const fixtureBrowseAnswers: Readonly<Record<string, unknown>> = browse

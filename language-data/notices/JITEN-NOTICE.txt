@@ -1,0 +1,9 @@
+Jiten
+
+TV & Movies, Anime, Manga, Novels, Visual Novels, and Video Games frequency data by Jiten (jiten.moe).
+License: CC BY-SA 4.0 (https://creativecommons.org/licenses/by-sa/4.0/)
+Project: https://jiten.moe/frequency-dictionaries
+
+RankedLists.sqlite3 holds these six lists' ranks, mapped to dictionary entries. It adapts Jiten's
+data and is shared under the same license. The license's full text is
+JLPT-VOCABULARY-CC-BY-SA-4.0.txt in this release, the same CC BY-SA 4.0 text.

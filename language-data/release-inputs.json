@@ -15,6 +15,7 @@
     { "name": "ExampleWordIndex.sqlite3", "path": "resources/ExampleWordIndex.sqlite3" },
     { "name": "JLPTLevelPack.sqlite3", "path": "resources/JLPTLevelPack.sqlite3" },
     { "name": "TUBELEXFrequencyPack.sqlite3", "path": "resources/TUBELEXFrequencyPack.sqlite3" },
+    { "name": "RankedLists.sqlite3", "path": "resources/RankedLists.sqlite3" },
     { "name": "KanjiStrokeData.sqlite3", "path": "resources/KanjiStrokeData.sqlite3" },
     {
       "name": "KanjiReferenceData.json",
@@ -56,7 +57,13 @@
     { "name": "UNIDIC-NEW-BSD.txt", "path": "resources/UNIDIC-NEW-BSD.txt" },
     { "name": "JLPT-VOCABULARY-CC-BY-SA-4.0.txt", "path": "resources/JLPT-VOCABULARY-CC-BY-SA-4.0.txt" },
     { "name": "TUBELEX-BSD-3-CLAUSE.txt", "path": "resources/TUBELEX-BSD-3-CLAUSE.txt" },
-    { "name": "KANJIUM-NOTICE.txt", "path": "notices/KANJIUM-NOTICE.txt" }
+    {
+      "name": "WIKIPEDIA-FREQUENCY-BSD-3-CLAUSE.txt",
+      "path": "resources/WIKIPEDIA-FREQUENCY-BSD-3-CLAUSE.txt"
+    },
+    { "name": "KANJIUM-NOTICE.txt", "path": "notices/KANJIUM-NOTICE.txt" },
+    { "name": "JITEN-NOTICE.txt", "path": "notices/JITEN-NOTICE.txt" },
+    { "name": "JLPT-KANJI-LEVELS-NOTICE.txt", "path": "notices/JLPT-KANJI-LEVELS-NOTICE.txt" }
   ],
   "frequency_pack_catalog": "resources/FrequencyPackCatalog.json",
   "source_archives": {

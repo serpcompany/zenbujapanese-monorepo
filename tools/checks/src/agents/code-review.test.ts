@@ -441,7 +441,7 @@ describe("the review's summary", () => {
     expect(readWorkflow('.github/workflows/code-review.yml').jobs.review.permissions).toMatchObject(
       {
         contents: 'read',
-        issues: 'write'
+        'pull-requests': 'write'
       }
     )
     const startIndex = steps.findIndex(step => step.run?.includes('REVIEW_STARTED_AT='))
