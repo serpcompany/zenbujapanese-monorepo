@@ -106,7 +106,7 @@ public struct SearchExperienceRootView: View {
       TranslateSessionChrome(
         experience: translateExperience,
         isTranslateSelected: selectedTab == .translate,
-        isConversationOnScreen: selectedTab == .translate && translatePath.isEmpty,
+        isConversationOnScreen: isConversationOnScreen,
         returnToTranslate: {
           selectedTab = .translate
           translatePath = NavigationPath()
@@ -256,10 +256,15 @@ public struct SearchExperienceRootView: View {
       TranslateTabRoot(
         experience: translateExperience,
         words: translateWords(opening: translateWordSheet),
+        isConversationOnScreen: isConversationOnScreen,
         push: { translatePath.append($0) }
       )
       .modifier(dictionaryRoutes(in: .translate, sheet: translateWordSheet))
     }
+  }
+
+  private var isConversationOnScreen: Bool {
+    selectedTab == .translate && translatePath.isEmpty
   }
 
   private var accountNavigation: some View {

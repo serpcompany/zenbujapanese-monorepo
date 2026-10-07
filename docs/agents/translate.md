@@ -55,7 +55,9 @@ The tab is split across two Swift targets in `apps/ios/Modules`
   bar for other tabs (`TranslateSessionAccessory`, a `tabViewBottomAccessory`, hidden while the
   conversation is on screen), the silence prompt, the background pause, and the idle timer (off
   while a session is live) to the whole `TabView`.
-  The conversation itself hides the tab bar and puts `ConversationControlBar` (mute, speech speed,
+  `TranslateChromeLayout` decides both bars: the tab bar hides only while the conversation itself
+  is on screen, and the session bar shows exactly when it doesn't, so a screen pushed over a live
+  conversation has both. The conversation itself puts `ConversationControlBar` (mute, speech speed,
   timer and pause) along the bottom; `TwoPaneConversationView` is its second layout. The layout,
   the speech speed, and Translate's own `ReadingAidPreferences` (furigana off by default, stored
   under `translate.reading-aids.v1`) live on `TranslateExperience`. Bookmarks are a field on

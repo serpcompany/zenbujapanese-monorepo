@@ -4,12 +4,15 @@ import TranslatorCore
 struct TranslateTabRoot: View {
   let experience: TranslateExperience
   let words: TranslateWordLinks
+  let isConversationOnScreen: Bool
   let push: (TranslateRoute) -> Void
 
   var body: some View {
     Group {
       if let session = experience.session {
-        LiveConversationView(session: session, experience: experience, words: words)
+        LiveConversationView(
+          session: session, experience: experience, words: words,
+          isOnScreen: isConversationOnScreen)
           .transition(.move(edge: .trailing))
       } else {
         TranslateHomeView(

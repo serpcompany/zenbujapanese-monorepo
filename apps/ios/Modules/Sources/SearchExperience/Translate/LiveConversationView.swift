@@ -7,6 +7,7 @@ struct LiveConversationView: View {
   let session: LiveConversation
   let experience: TranslateExperience
   let words: TranslateWordLinks
+  let isOnScreen: Bool
   @State private var isFollowingLatest = true
   @State private var isConfirmingExit = false
   @State private var wasListeningBeforeExit = false
@@ -24,7 +25,9 @@ struct LiveConversationView: View {
       .frame(maxHeight: .infinity)
       ConversationControlBar(session: session, experience: experience)
     }
-    .toolbar(.hidden, for: .tabBar)
+    .toolbar(
+      TranslateChromeLayout(isSessionLive: true, isConversationOnScreen: isOnScreen).tabBar,
+      for: .tabBar)
     .modifier(ConversationStatusAlert(session: session))
     .alert("Leave this conversation?", isPresented: $isConfirmingExit) {
       Button("Save and Exit") { leave(saving: true) }
