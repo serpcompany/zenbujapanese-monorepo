@@ -11,7 +11,7 @@ export function searchPath(query: string): string {
 }
 
 export function kanjiSearchPath(character: string): string {
-  return searchPath(character)
+  return searchPath(normalizeSearchQuery(character))
 }
 
 export function hasSearchPath(query: string): boolean {

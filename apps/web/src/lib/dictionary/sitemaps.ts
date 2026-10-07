@@ -1,15 +1,31 @@
 import { getCloudflareContext } from '@opennextjs/cloudflare'
+import { browseService } from '@zenbu/dictionary-core/browse/service-paths'
 import { absoluteUrl } from '@/lib/site'
-import { type SitemapEntry, urlSetStream, xmlResponse } from '@/lib/sitemap'
+import { type SitemapEntry, urlSetStream, urlSetXml, xmlResponse } from '@/lib/sitemap'
+import { browseSitemapPaths } from './browse/sitemap'
 import { dictionaryService } from './data'
 
 const wordsPerQuery = 10_000
+
+const browseSitemapPath = '/sitemaps/browse.xml'
 
 export async function dictionarySitemapPaths(): Promise<string[]> {
   const api = await dictionaryService()
   if (!api) return []
   const sitemaps = (await api.wordSitemaps()).data
-  return sitemaps.map(sitemap => `/sitemaps/dictionary/${sitemap.number}.xml`)
+  return [
+    ...sitemaps.map(sitemap => `/sitemaps/dictionary/${sitemap.number}.xml`),
+    browseSitemapPath
+  ]
+}
+
+export async function browseSitemapResponse(request: Request) {
+  const api = await dictionaryService()
+  const found = api ? await api.browse(browseService.sitemap()) : null
+  if (!found) return null
+  return cachedForBuild(request, found.build, () =>
+    xmlResponse(urlSetXml(browseSitemapPaths(found.data).map(path => ({ url: absoluteUrl(path) }))))
+  )
 }
 
 export const wordUrl = (entSeq: number, slug: string) =>

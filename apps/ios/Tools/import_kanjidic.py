@@ -7,6 +7,7 @@ import json
 import xml.etree.ElementTree as ET
 from pathlib import Path
 
+from import_jlpt_kanji_levels import jlpt_kanji_levels
 from language_data_tools import built_artifact, file_sha256, run_import
 
 
@@ -46,6 +47,7 @@ def import_snapshot(
     source_manifest: dict[str, object],
     radical_artifact: Path,
     radical_manifest: dict[str, object],
+    jlpt_kanji_record: Path,
     output: Path,
 ) -> dict[str, object]:
     if file_sha256(source) != source_manifest["sha256"]:
@@ -55,6 +57,7 @@ def import_snapshot(
         raise ValueError("Pinned radical artifact checksum mismatch")
 
     radical_data = json.loads(radical_artifact.read_text())
+    waller_levels, waller_report = jlpt_kanji_levels(jlpt_kanji_record)
     components_by_character = {
         record["value"]: record["components"] for record in radical_data["characters"]
     }
@@ -98,6 +101,7 @@ def import_snapshot(
                     "commonMiscounts": stroke_counts[1:],
                     "grade": optional_int(element, "misc/grade"),
                     "jlpt": optional_int(element, "misc/jlpt"),
+                    "wallerJlptLevel": waller_levels.get(literal),
                     "frequencyRank": optional_int(element, "misc/freq"),
                     "classicalRadicalNumber": classical_radical,
                     "meanings": english_meanings(element),
@@ -108,6 +112,9 @@ def import_snapshot(
             element.clear()
 
     entries.sort(key=lambda entry: str(entry["character"]))
+    unmatched = sorted(set(waller_levels) - {str(entry["character"]) for entry in entries})
+    if unmatched:
+        raise ValueError(f"Waller's JLPT kanji lists name kanji KANJIDIC2 lacks: {unmatched}")
     artifact = {
         "snapshot": header.get("dateOfCreation", source_manifest["snapshot"]),
         "metadataSourceIdentity": "edrdg.kanjidic2",
@@ -123,6 +130,7 @@ def import_snapshot(
         "entries_with_meanings": sum(bool(entry["meanings"]) for entry in entries),
         "entries_with_readings": sum(bool(entry["readings"]) for entry in entries),
         "entries_with_components": sum(bool(entry["components"]) for entry in entries),
+        "jlpt_kanji_levels": waller_report,
         "retained_fields": [
             "literal",
             "radical/rad_value[@rad_type='classical']",
@@ -154,10 +162,12 @@ def main() -> None:
             source_manifest,
             arguments.radical_artifact,
             json.loads(arguments.radical_manifest.read_text()),
+            arguments.jlpt_kanji_record,
             arguments.output,
         ),
         "--radical-artifact",
         "--radical-manifest",
+        "--jlpt-kanji-record",
     )
 
 
