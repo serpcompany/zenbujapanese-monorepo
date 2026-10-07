@@ -114,7 +114,9 @@ In the Simulator, with the harness:
 - Sending the app home pauses with **Paused while you were away**; **Exit Without Saving** leaves
   no file in `Translate Conversations`.
 
-On an iPhone, with iPhone Mirroring closed (it silences the microphone), and without the harness:
+On an iPhone, in a **Zenbu Dev** build ([`ios.md`](ios.md), Build and inspect) so the TestFlight
+app is untouched, with iPhone Mirroring closed (it silences the microphone), and without the
+harness:
 
 - The first Start asks for the microphone and downloads Apple's languages once, with progress.
 - The acceptance fixture, spoken in turn: `今日は東京駅に行きます。`,

@@ -6,6 +6,21 @@ Use XcodeBuildMCP to discover the project, scheme, and an already-booted iOS
 Simulator from the current checkout. Build and run with the `arm64` architecture,
 then inspect the launched app before reporting success.
 
+To try a branch on an iPhone without replacing the TestFlight app, build it as **Zenbu Dev**: the
+app target's bundle ID ends in `ZENBU_BUNDLE_ID_SUFFIX` and its name is `ZENBU_DISPLAY_NAME`, both
+empty or `Zenbu Japanese` by default, so overriding them on the command line installs a separate
+app with its own data. From `apps/ios`:
+
+```sh
+xcodebuild -project ZenbuJapanese.xcodeproj -scheme ZenbuJapanese -configuration Debug \
+  -destination 'platform=iOS,id=<device-udid>' \
+  DEVELOPMENT_TEAM=<team-id> CODE_SIGN_STYLE=Automatic \
+  ZENBU_BUNDLE_ID_SUFFIX=.dev ZENBU_DISPLAY_NAME="Zenbu Dev" -allowProvisioningUpdates build
+xcrun devicectl device install app --device <device-udid> <derived-data>/Build/Products/Debug-iphoneos/Zenbu\ Japanese.app
+```
+
+`xcrun devicectl list devices` lists paired iPhones and their UDIDs.
+
 The current `sudachi-swift` binary lacks an x86_64 Simulator slice. Use
 `ONLY_ACTIVE_ARCH=YES`; a generic dual-architecture Simulator build fails at
 link time.
