@@ -249,8 +249,8 @@ asks the service's browse routes ([`dictionary-api.md`](dictionary-api.md), Rout
 results do (`linkedWordPath`). Without a service, it answers from the answers `pnpm --filter
 zenbujapanese-dictionary-api fixtures` exports to `packages/dictionary-core/src/fixtures/browse.json`,
 keyed by those paths: the summary, both scripts, い and the いる group, the categories and
-`ichidan-verbs`, the ranked lists, YouTube, anime, and JLPT N5, and the kanji lists and grade 4,
-each list cut to its first 20 words. Any other browse page is a 404 there.
+`ichidan-verbs`, the ranked lists, YouTube, anime, and JLPT N5, and the kanji lists, grade 4, and
+JLPT N5's kanji, each list cut to its first 20 words. Any other browse page is a 404 there.
 
 `src/lib/dictionary/browse/paths.ts` builds the pages' URLs: a list's first page has no number,
 and `…/1/` redirects to it. The hiragana and katakana routes, and each category's four, are one

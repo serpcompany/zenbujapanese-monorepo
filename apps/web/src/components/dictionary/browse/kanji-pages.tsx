@@ -2,7 +2,9 @@ import type { KanjiHubResponse, KanjiListResponse } from '@zenbu/dictionary-core
 import {
   gradeLists,
   jinmeiyo,
+  jlptKanjiLists,
   type KanjiList,
+  schoolLists,
   secondarySchool,
   strokeList
 } from '@zenbu/dictionary-core/browse/lists'
@@ -10,13 +12,14 @@ import Link from 'next/link'
 import {
   BrowseHeading,
   BrowsePage,
+  LevelCard,
   LinkTabs,
   PanelHeading
 } from '@/components/dictionary/browse/browse-ui'
 import { KanjiMeaningTiles, KanjiTiles } from '@/components/dictionary/browse/kanji-tiles'
 import { DictionaryBreadcrumbs } from '@/components/dictionary/dictionary-breadcrumbs'
 import { SourceCredits } from '@/components/dictionary/source-credits'
-import { formatCount, plural } from '@/lib/dictionary/browse/copy'
+import { formatCount, jlptKanjiEstimate, plural } from '@/lib/dictionary/browse/copy'
 import {
   browsePath,
   kanjiListPath,
@@ -27,7 +30,6 @@ import { pageSources } from '@/lib/dictionary/sources'
 
 const browseCrumb = { label: 'Browse', path: browsePath }
 const kanjiCrumb = { label: 'Kanji', path: kanjiListsPath }
-const schoolLists = [...gradeLists, secondarySchool, jinmeiyo]
 
 const charactersOf = (hub: KanjiHubResponse, list: KanjiList) =>
   hub.lists.find(found => found.slug === list.slug)?.characters ?? []
@@ -77,6 +79,31 @@ function GradeJump({ hub }: { hub: KanjiHubResponse }) {
   )
 }
 
+function JlptLevels({ hub }: { hub: KanjiHubResponse }) {
+  const levels = jlptKanjiLists.flatMap(list => {
+    const level = hub.jlpt.find(each => each.slug === list.slug)
+    return level && level.count > 0 ? [{ list, level }] : []
+  })
+  if (levels.length === 0) return null
+  return (
+    <section aria-label="By JLPT level" className="flex flex-col gap-3.5">
+      <PanelHeading title="By JLPT level" aside="Jonathan Waller’s lists" />
+      <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-5">
+        {levels.map(({ list, level }) => (
+          <LevelCard
+            key={list.slug}
+            href={kanjiListPath(list.slug)}
+            title={list.name}
+            preview={level.first.join('')}
+            count={plural(level.count, 'kanji', 'kanji')}
+          />
+        ))}
+      </div>
+      <p className="text-sm text-muted-foreground">{jlptKanjiEstimate}</p>
+    </section>
+  )
+}
+
 export function KanjiHubPage({ hub, joyo }: { hub: KanjiHubResponse; joyo: number }) {
   const secondary = charactersOf(hub, secondarySchool)
   return (
@@ -84,9 +111,9 @@ export function KanjiHubPage({ hub, joyo }: { hub: KanjiHubResponse; joyo: numbe
       <DictionaryBreadcrumbs pages={[browseCrumb, kanjiCrumb]} />
       <BrowseHeading title="Kanji lists">
         The {formatCount(joyo)} jōyō kanji, and the{' '}
-        {formatCount(charactersOf(hub, jinmeiyo).length)} more used in names, by school grade and
-        stroke count. Each kanji opens its search page, with its readings, stroke order, and every
-        word that uses it.
+        {formatCount(charactersOf(hub, jinmeiyo).length)} more used in names, by school grade, JLPT
+        level, and stroke count. Each kanji opens its search page, with its readings, stroke order,
+        and every word that uses it.
       </BrowseHeading>
       <section className="flex flex-col gap-5">
         <PanelHeading title="By school grade" aside="Most frequent first" />
@@ -138,6 +165,7 @@ export function KanjiHubPage({ hub, joyo }: { hub: KanjiHubResponse; joyo: numbe
           <span className="text-sm text-muted-foreground">Open the list →</span>
         </Link>
       </section>
+      <JlptLevels hub={hub} />
       <section id={strokeCountsAnchor} className="flex scroll-mt-4 flex-col gap-3.5">
         <PanelHeading title="By stroke count" />
         <ul
@@ -161,7 +189,7 @@ export function KanjiHubPage({ hub, joyo }: { hub: KanjiHubResponse; joyo: numbe
           Strokes, then how many jōyō kanji have that many.
         </p>
       </section>
-      <SourceCredits sources={pageSources.kanji} />
+      <SourceCredits sources={pageSources.kanjiLevels} />
     </BrowsePage>
   )
 }
@@ -183,14 +211,16 @@ export function KanjiListPage({
       <BrowseHeading title={`${list.name} kanji`}>{intro}</BrowseHeading>
       <LinkTabs
         label="Kanji lists"
-        tabs={schoolLists.map(each => ({
+        tabs={(list.jlptLevel === undefined ? schoolLists : jlptKanjiLists).map(each => ({
           label: each.name,
           href: kanjiListPath(each.slug),
           current: each.slug === list.slug
         }))}
       />
       <KanjiMeaningTiles kanji={kanji.kanji} label={`${list.name} kanji`} />
-      <SourceCredits sources={pageSources.kanji} />
+      <SourceCredits
+        sources={list.jlptLevel === undefined ? pageSources.kanji : pageSources.kanjiLevels}
+      />
     </BrowsePage>
   )
 }

@@ -1,6 +1,5 @@
 import {
   browsePageSize,
-  type JlptList,
   jlptLists,
   rankedListLimit,
   rankedLists
@@ -14,6 +13,7 @@ import Link from 'next/link'
 import {
   BrowseHeading,
   BrowsePage,
+  LevelCard,
   Pagination,
   Panel,
   PanelHeading
@@ -117,21 +117,6 @@ function RankedPanel({ list }: { list: RankedListsData['lists'][number] }) {
   )
 }
 
-function JlptCard({ list, level }: { list: RankedListsData['jlpt'][number]; level: JlptList }) {
-  return (
-    <Link
-      href={rankedListPath(level.slug)}
-      className="flex flex-col gap-1.5 rounded-lg border px-4 py-3.5 hover:bg-muted"
-    >
-      <span className="font-semibold">N{level.level}</span>
-      <span lang="ja" className="text-[15px] text-muted-foreground">
-        {list.first.map(word => word.headword).join(' ')}
-      </span>
-      <span className="text-sm text-muted-foreground">{plural(list.count, 'word')}</span>
-    </Link>
-  )
-}
-
 export function FrequencyHubPage({ ranked }: { ranked: RankedListsData }) {
   const jlptWords = ranked.jlpt.reduce((sum, list) => sum + list.count, 0)
   return (
@@ -150,7 +135,15 @@ export function FrequencyHubPage({ ranked }: { ranked: RankedListsData }) {
         <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-5">
           {jlptLists.map(level => {
             const list = ranked.jlpt.find(each => each.slug === level.slug)
-            return list ? <JlptCard key={level.slug} list={list} level={level} /> : null
+            return list ? (
+              <LevelCard
+                key={level.slug}
+                href={rankedListPath(level.slug)}
+                title={`N${level.level}`}
+                preview={list.first.map(word => word.headword).join(' ')}
+                count={plural(list.count, 'word')}
+              />
+            ) : null
           })}
         </div>
       </Panel>

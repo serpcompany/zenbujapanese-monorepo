@@ -53,7 +53,6 @@ it must pass it over ([`ci.md`](agents/ci.md), Weekly maintenance).
 | The language-data sources, tools, and conformance suites live under `apps/ios`. | Every client depends on the iOS app's folders, which `language-data/release-inputs.json` names through its `roots`. | #469 | large |
 | The app bundles its own committed data rather than pinning a published release. | Once releases are published, nothing checks that the app holds the same files. | #473 | large |
 | Frequency-pack sources are uploaded from a workstation with `apps/ios/Tools/publish_frequency_pack_sources.py`, which ADR 0006 allowed until the release pipeline exists. The pipeline exists but doesn't upload them. | Uploads to the CDN happen outside CI, with a person's Cloudflare login. | No issue yet | medium |
-| No kanji has a JLPT level of its own: the owner chose Jonathan Waller's kanji lists for them (#614), and his site, tanos.co.uk, has no address record, so there's nothing to pin. The browse pages leave out the mockups' kanji by JLPT level. | Kanji show KANJIDIC2's pre-2010 levels, and learners can't browse kanji by N-level. Needs the owner's decision on another copy of the lists (an archived snapshot, or a mirror). | #614, #485 | medium |
 | `apps/ios/LanguageData/Sources/Zenbu-Word-Relationships-v1.json` holds two relationships with no source or reviewer, pending a removal decision ([`data-sources.md`](data-sources.md)). | They're built into `LanguageReferenceData.sqlite3`, which the app and the website read. | No issue yet | medium |
 
 ## Harness

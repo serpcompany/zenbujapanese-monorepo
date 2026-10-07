@@ -6,7 +6,12 @@ import {
   inScript,
   type KanaScript
 } from '@zenbu/dictionary-core/browse/kana'
-import { gradeLists, jlptLists, secondarySchool } from '@zenbu/dictionary-core/browse/lists'
+import {
+  gradeLists,
+  jlptKanjiLists,
+  jlptLists,
+  secondarySchool
+} from '@zenbu/dictionary-core/browse/lists'
 import Link from 'next/link'
 import {
   BrowseHeading,
@@ -127,7 +132,8 @@ export function BrowseHub({
         <Panel label="Kanji">
           <PanelHeading title="Kanji" href={kanjiListsPath} />
           <p className="text-sm text-muted-foreground">
-            {formatCount(summary.kanji.joyo)} jōyō kanji by school grade and stroke count
+            {formatCount(summary.kanji.joyo)} jōyō kanji by school grade, JLPT level, and stroke
+            count
           </p>
           <Chips label="Kanji lists">
             {gradeLists.slice(0, 3).map(list => (
@@ -136,6 +142,11 @@ export function BrowseHub({
               </Chip>
             ))}
             <Chip href={kanjiListPath(secondarySchool.slug)}>{secondarySchool.name}</Chip>
+            {jlptKanjiLists.slice(0, 2).map(list => (
+              <Chip key={list.slug} href={kanjiListPath(list.slug)}>
+                {list.name}
+              </Chip>
+            ))}
             <Chip href={strokeCountsPath}>By stroke count</Chip>
           </Chips>
           <MoreLink href={kanjiListsPath}>All kanji lists</MoreLink>

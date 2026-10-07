@@ -1,10 +1,9 @@
 import { commonWords } from '@zenbu/dictionary-core/browse/categories'
 import {
-  gradeLists,
-  jinmeiyo,
+  jlptKanjiLists,
   jlptLists,
   rankedLists,
-  secondarySchool
+  schoolLists
 } from '@zenbu/dictionary-core/browse/lists'
 import { legalPages, pageFor, type sitePages } from '../../pages'
 import {
@@ -57,7 +56,7 @@ export const dictionaryTree: TreeNode = {
           title: 'Kanji lists',
           path: kanjiListsPath,
           children: [
-            ...[...gradeLists, secondarySchool, jinmeiyo].map(list => ({
+            ...[...schoolLists, ...jlptKanjiLists].map(list => ({
               title: list.name,
               path: kanjiListPath(list.slug)
             })),

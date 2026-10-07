@@ -74,6 +74,31 @@ export function MoreLink({ href, children }: { href: string; children: ReactNode
   )
 }
 
+export function LevelCard({
+  href,
+  title,
+  preview,
+  count
+}: {
+  href: string
+  title: string
+  preview: string
+  count: string
+}) {
+  return (
+    <Link
+      href={href}
+      className="flex flex-col gap-1.5 rounded-lg border px-4 py-3.5 hover:bg-muted"
+    >
+      <span className="font-semibold">{title}</span>
+      <span lang="ja" className="text-[15px] text-muted-foreground">
+        {preview}
+      </span>
+      <span className="text-sm text-muted-foreground">{count}</span>
+    </Link>
+  )
+}
+
 export function Chips({ children, label }: { children: ReactNode; label?: string }) {
   return (
     <ul aria-label={label} className="flex flex-wrap gap-1.5">

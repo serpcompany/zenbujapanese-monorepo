@@ -38,8 +38,8 @@ as it did before them, rather than failing.
 
 **Browse.** `/dictionary/browse/` is titled "Browse the Japanese dictionary" and says how many
 entries the dictionary has. It has a card for hiragana and one for katakana, each with its kana
-and how many words it lists; one for the kanji lists, with the first grades and stroke counts; one
-for the frequency dictionaries, with the JLPT levels' word counts and the YouTube list's first
+and how many words it lists; one for the kanji lists, with the first grades, JLPT N5 and N4, and
+stroke counts; one for the frequency dictionaries, with the JLPT levels' word counts and the YouTube list's first
 10,000 ranks in bands of 1,000; one for each kind of category; and one for common words.
 
 - Source: #614 mockup "/dictionary/browse/".
@@ -91,21 +91,32 @@ are `/dictionary/browse/hiragana/かが/2/` and on.
 **Kanji lists.** `/dictionary/browse/kanji/` lists the 2,136 jōyō kanji by school grade, each
 grade's kanji most frequent first and each opening its search page, with links to jump to a
 grade (a menu on phones). Secondary school's 1,110 open from a collapsed section, and jinmeiyō's
-863 have a page of their own. Last come the stroke counts, each with how many jōyō kanji have it.
+863 have a page of their own. Then come the JLPT levels, N5 to N1, a card each with its five most
+frequent kanji and how many it lists: 79, 166, 367, 367, and 1,232. Last come the stroke counts,
+each with how many jōyō kanji have it.
 
 - Source: #614 mockups "/dictionary/browse/kanji/" (desktop and phone).
 - Check: Browse spec, "the kanji lists open each kanji’s search page"; Browse service, "the
   kanji lists follow KANJIDIC2’s grades, most frequent first".
 
+**JLPT levels.** The kanji's JLPT levels are Jonathan Waller's lists, the same author as the JLPT
+vocabulary lists, rather than the levels KANJIDIC2 records, as the mockups have it: the owner
+chose his lists. The JLPT has published no kanji list since 2010, and the kanji lists page and each
+JLPT list say the levels are estimates. Both credit his lists under CC BY, linking to them as the
+Internet Archive keeps them, since his site no longer resolves. N1 includes 247 jinmeiyō kanji.
+
+- Source: the owner's answers on #614.
+- Check: Browse spec, "the JLPT kanji lists are Waller’s, credited under CC BY"; Browse service,
+  "the JLPT kanji lists are Waller’s, most frequent first".
+
 **A kanji list.** `/dictionary/browse/kanji/grade-2/` and the others (`grade-1` to `grade-6`,
-`secondary-school`, `jinmeiyo`, `strokes-1` to `strokes-29`) show each kanji with its first
-meaning, most frequent first, with tabs for the grades.
+`secondary-school`, `jinmeiyo`, `jlpt-n5` to `jlpt-n1`, `strokes-1` to `strokes-29`) show each
+kanji with its first meaning, most frequent first, with tabs for the grades, or for the JLPT
+levels on a JLPT list.
 
 - Source: #614 mockup "/dictionary/browse/kanji/grade-2/".
-- Check: Browse spec, "the kanji lists open each kanji’s search page".
-
-The mockups' "By JLPT level" kanji lists aren't built: the owner chose Jonathan Waller's kanji
-lists for them, and his site, tanos.co.uk, is unavailable to pin the lists from.
+- Check: Browse spec, "the kanji lists open each kanji’s search page" and "the JLPT kanji lists
+  are Waller’s, credited under CC BY".
 
 ## Frequency dictionaries
 
@@ -195,9 +206,3 @@ wherever the site has a dictionary service.
 - Check: `src/lib/dictionary/sitemaps.test.ts`, "the browse sitemap lists every browse page";
   Browse service, "the browse sitemap fits in one file".
 
-## Not built
-
-- **The header's menus.** The #614 navbar mockups replace the header's Dictionary, About, and
-  Support links and its search field with Dictionary, Kanji, Kana, and Word lists menus. That
-  removes links people use today, which waits on the owner's decision.
-- **Kanji by JLPT level** (above, Kanji lists).

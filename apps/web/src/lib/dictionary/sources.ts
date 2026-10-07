@@ -57,6 +57,12 @@ export const sources = {
       "Unofficial level estimates from Jonathan Waller's lists, matched to JMdict by stephenmk.",
     license: ccBySa4
   },
+  jlptKanji: {
+    name: 'JLPT kanji levels',
+    url: 'https://web.archive.org/web/20200806005029/http://www.tanos.co.uk/jlpt/jlpt5/kanji/',
+    credit: "Unofficial level estimates from Jonathan Waller's JLPT kanji lists (tanos.co.uk).",
+    license: { name: 'CC BY' }
+  },
   tubelex: {
     name: 'TUBELEX',
     url: 'https://github.com/naist-nlp/tubelex',
@@ -93,6 +99,7 @@ export const pageSources = {
   word: [sources.jmdict, sources.unidic, sources.kanjidic2, ...defaultFrequency, sources.tatoeba],
   browse: [sources.jmdict, ...defaultFrequency],
   kanji: [sources.kanjidic2],
+  kanjiLevels: [sources.kanjidic2, sources.jlptKanji],
   frequency: [sources.jmdict, ...defaultFrequency, sources.wikipedia, sources.jiten]
 }
 

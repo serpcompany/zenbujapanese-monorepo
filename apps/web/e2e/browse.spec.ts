@@ -152,6 +152,29 @@ test.describe('browse pages', () => {
     await expect(page).toHaveURL(`/dictionary/search/${encodeURIComponent('要')}/`)
   })
 
+  test('the JLPT kanji lists are Waller’s, credited under CC BY', async ({ page }) => {
+    await page.goto(browse('kanji/'))
+    const levels = page.getByRole('region', { name: 'By JLPT level' })
+    await expect(levels.getByRole('link')).toHaveCount(5)
+    await expect(levels.getByRole('link', { name: /^JLPT N1/ })).toHaveAttribute(
+      'href',
+      browse('kanji/jlpt-n1/')
+    )
+    await expect(levels).toContainText('estimates')
+    await levels.getByRole('link', { name: /^JLPT N5/ }).click()
+    await expect(page).toHaveURL(browse('kanji/jlpt-n5/'))
+    await expect(page.getByRole('heading', { level: 1 })).toHaveText('JLPT N5 kanji')
+    const main = page.getByRole('main')
+    await expect(main).toContainText('The 79 kanji Jonathan Waller lists for JLPT N5')
+    await expect(
+      page.getByRole('navigation', { name: 'Kanji lists' }).getByRole('link', { name: 'JLPT N4' })
+    ).toHaveAttribute('href', browse('kanji/jlpt-n4/'))
+    await expect(main.getByRole('link', { name: 'JLPT kanji levels' })).toBeVisible()
+    await expect(main).toContainText('CC BY')
+    await main.getByRole('link', { name: /^日/ }).click()
+    await expect(page).toHaveURL(`/dictionary/search/${encodeURIComponent('日')}/`)
+  })
+
   test('the frequency dictionaries lead to each list, and credit Jiten under CC BY-SA', async ({
     page
   }) => {
