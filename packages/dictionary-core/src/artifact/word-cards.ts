@@ -2,7 +2,7 @@ import { type ListRanks, type WordCard, wordCard, wordCardFormat } from '../card
 import { type WordCardSource, wordCardLicense, wordCardSources } from '../cards/sources'
 import { isLanguageReferenceId, type WordQuery } from '../cards/word-list'
 import { normalizeQuery } from '../search/query'
-import type { ArtifactDatabase } from './database'
+import { type ArtifactDatabase, attachments, listedIds } from './database'
 import type { KanjiData } from './kanji-data'
 import { type EntryIdentity, entriesById, readWord } from './words'
 
@@ -21,10 +21,23 @@ export interface ResolvedWords {
   unresolved: WordQuery[]
 }
 
+export const wordCardInputs = [
+  'LanguageReferenceData.sqlite3',
+  attachments.compound_pitch.file,
+  attachments.jlpt.file,
+  attachments.tubelex.file,
+  attachments.ranked.file,
+  'KanjiReferenceData.json',
+  'KanjiElementReferenceData.json'
+] as const
+
 export interface LanguageDataVersion {
   release: string
-  file: string
-  sha256: string
+  files: Record<string, string>
+}
+
+interface Candidate extends EntryIdentity {
+  fingerprint: string
 }
 
 export interface WordCardExport {
@@ -37,10 +50,10 @@ export interface WordCardExport {
   unresolved: WordQuery[]
 }
 
-function candidatesFor(db: ArtifactDatabase, headword: string, reading: string): EntryIdentity[] {
-  return db.all<EntryIdentity>(
+function candidatesFor(db: ArtifactDatabase, headword: string, reading: string): Candidate[] {
+  return db.all<Candidate>(
     `SELECT DISTINCT lower(hex(e.id)) AS id, e.source_record_id AS entSeq,
-       e.headword, e.reading, e.summary
+       e.headword, e.reading, e.summary, lower(hex(e.semantic_fingerprint)) AS fingerprint
      FROM forms w
      JOIN forms r ON r.entry_id = w.entry_id AND r.kind = 1 AND r.form = ?
      JOIN entries e ON e.id = w.entry_id
@@ -48,6 +61,21 @@ function candidatesFor(db: ArtifactDatabase, headword: string, reading: string):
      ORDER BY e.source_record_id`,
     [normalizeQuery(reading), normalizeQuery(headword)]
   )
+}
+
+function canonical(candidates: readonly Candidate[]): EntryIdentity[] {
+  const kept = new Map<string, Candidate>()
+  for (const candidate of candidates) {
+    const held = kept.get(candidate.fingerprint)
+    if (!held || candidate.id < held.id) kept.set(candidate.fingerprint, candidate)
+  }
+  return [...kept.values()].map(({ id, entSeq, headword, reading, summary }) => ({
+    id,
+    entSeq,
+    headword,
+    reading,
+    summary
+  }))
 }
 
 function pick(candidates: EntryIdentity[], headword: string, reading: string): EntryIdentity[] {
@@ -77,7 +105,7 @@ export function resolveWords(db: ArtifactDatabase, queries: readonly WordQuery[]
       continue
     }
     const candidates = pick(
-      candidatesFor(db, query.headword, query.reading),
+      canonical(candidatesFor(db, query.headword, query.reading)),
       query.headword,
       query.reading
     )
@@ -98,7 +126,7 @@ function listRanks(db: ArtifactDatabase, ids: readonly string[]): Map<string, Ma
   for (const { id, packId, rank } of db.all<{ id: string; packId: string; rank: number }>(
     `SELECT lower(hex(r.language_reference_id)) AS id, l.pack_id AS packId, min(r.rank) AS rank
      FROM ranked.ranked_evidence r JOIN ranked.ranked_lists l ON l.list_id = r.list_id
-     WHERE r.language_reference_id IN (SELECT unhex(value) FROM json_each(?))
+     WHERE r.language_reference_id IN (${listedIds})
      GROUP BY r.language_reference_id, l.pack_id`,
     [JSON.stringify(ids)]
   )) {

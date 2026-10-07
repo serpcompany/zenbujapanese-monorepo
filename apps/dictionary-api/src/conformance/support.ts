@@ -17,7 +17,7 @@ import { loadKuromoji } from '../kuromoji'
 import { loadSudachi, prepareSudachi, sudachiContract } from '../sudachi'
 
 const repository = resolve(fileURLToPath(new URL('.', import.meta.url)), '../../../..')
-const resources = join(repository, 'apps/ios/Modules/Sources/SearchExperience/Resources')
+export const resources = join(repository, 'apps/ios/Modules/Sources/SearchExperience/Resources')
 const suites = join(repository, 'apps/ios/LanguageData/Conformance')
 const sudachiDictionary = join(repository, 'apps/dictionary-api/.sudachi/system_core.dic')
 

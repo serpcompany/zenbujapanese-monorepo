@@ -22,11 +22,22 @@ const catalog = JSON.parse(
   )
 ) as { packs: { packID: string; displayName: string }[] }
 
-const appShortNames: Record<string, string> = {
-  'zenbu.tubelex.youtube': 'YouTube',
-  'zenbu.wikipedia.written': 'Wikipedia',
-  'zenbu.jiten.video-games': 'Games'
-}
+const shortNameSwitch = readFileSync(
+  new URL(
+    '../../../../apps/ios/Modules/Sources/SearchExperience/FrequencyPackState.swift',
+    import.meta.url
+  ),
+  'utf8'
+)
+  .split('var shortName: String {')[1]
+  .split('default:')[0]
+
+const appShortNames: Record<string, string> = Object.fromEntries(
+  [...shortNameSwitch.matchAll(/case "([^"]+)": "([^"]+)"/g)].map(([, prefix, name]) => [
+    prefix,
+    name
+  ])
+)
 
 const fixtureWords = fixtureWordRows.flatMap(rows => {
   const recorded = suite.cases.find(word => Number(word.entSeq[0]) === rows.entry.entSeq)
@@ -46,6 +57,7 @@ describe('a word card', () => {
   })
 
   test('names each ranked list’s chip as the app’s FrequencyPackDisclosure.shortName does', () => {
+    expect(appShortNames).toMatchObject({ 'zenbu.tubelex.youtube': 'YouTube' })
     const expected = rankedLists.map(list => {
       const id =
         list.source.kind === 'pack' ? list.source.packId : 'zenbu.tubelex.youtube.ja.unidic-3.1'

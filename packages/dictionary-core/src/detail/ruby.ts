@@ -94,3 +94,17 @@ function firstIndex(needle: string[], haystack: string[], start: number): number
   }
   return null
 }
+
+export interface FuriganaSegment {
+  base: string
+  reading?: string
+  kanjiReadings?: string[]
+}
+
+export function furiganaSegments(ruby: readonly RubySegment[]): FuriganaSegment[] {
+  return ruby.map(({ text, reading, kanjiReadings }) => ({
+    base: text,
+    ...(reading === undefined ? {} : { reading }),
+    ...(kanjiReadings === undefined ? {} : { kanjiReadings })
+  }))
+}
