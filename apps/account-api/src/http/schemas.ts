@@ -87,7 +87,7 @@ const MutationSchema = z
         description: [
           "- `profile`: `update` (`fields` name, username, or both; `baseVersion`). It applies only at the profile's current version.",
           '- `knownWord`: `mark` (`fields` headword and reading) and `clear`, each with `baseVersion`. Either applies only if the word is still at `baseVersion`, so a mark made before the learner cleared the word loses to the clear, and one made after it wins. Marking a known word, or clearing one not known, is applied and changes nothing.',
-          '- `list`: `create` (`fields` name and position), `update` (`fields` name, position, or both; `baseVersion`), and `delete` (`baseVersion`). An update or delete applies only at the current version, so two renames conflict. Deleting a list takes its words with it.',
+          '- `list`: `create` (`fields` name and position), `update` (`fields` name, position, or both; `baseVersion`), and `delete`. An update applies only at the current version, so two renames conflict; one that already matches the list is applied. A delete wins over everything done to the list since, renames and words added elsewhere too, and takes its words with it. A list name is 1 to 500 characters once trimmed; control characters become spaces.',
           '- `listWord`: `add` (`fields` headword and reading) and `remove` (`baseVersion`). An add always applies. A remove applies only if it saw the latest add, so an add the remover never saw wins.'
         ].join('\n')
       }),
@@ -97,7 +97,7 @@ const MutationSchema = z
       .optional()
       .openapi({
         description:
-          "- `profile`: the account's ID, or left out.\n- `knownWord`: the item, a Language Reference ID (32 lowercase hex digits) or `kanji:` and one kanji.\n- `list`: its UUID, in lowercase.\n- `listWord`: the list's UUID, a slash, and the item: `<list>/<item>`."
+          "- `profile`: the account's ID, or left out.\n- `knownWord`: the item, a Language Reference ID (32 lowercase hex digits) or `kanji:` and one kanji, which is stored in Unicode NFC.\n- `list`: its UUID, in either case; answers name it in lowercase.\n- `listWord`: the list's UUID, a slash, and the item: `<list>/<item>`."
       }),
     baseVersion: syncBaseVersionSchema.optional(),
     fields: z
@@ -210,7 +210,7 @@ export const SyncAnswerSchema = z
     results: z.array(MutationResultSchema).openapi({ description: 'One per mutation, in order.' }),
     changes: z.array(ChangeSchema).openapi({
       description:
-        'The entities that changed after the cursor, each once, as they are now, including the ones this request changed.'
+        'The entities that changed after the cursor, each once, as they are now, including the ones this request changed. On a page, lists come before their words, but a word can come on an earlier page than its list: hold it until the sync reaches `hasMore: false`.'
     }),
     cursor: z.string().openapi({
       description:

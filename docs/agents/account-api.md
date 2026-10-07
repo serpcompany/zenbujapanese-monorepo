@@ -179,21 +179,29 @@ its own rule in `src/domain`, never blanket last-write-wins, and none needs a cl
 the version it was made to, and the rule decides what a stale one does. `PATCH /v1/me` and a sync
 mutation change the profile through the same rule.
 
-- **Known word** (`knownWord`, by item: a Language Reference ID, or `kanji:` and the kanji, as
-  the iOS app keys `word-knowledge.json`): `mark` and `clear` apply only at the word's current
+- **Known word** (`knownWord`, by item: a Language Reference ID, or `kanji:` and the kanji in
+  Unicode NFC, as the iOS app keys `word-knowledge.json`): `mark` and `clear` apply only at the word's current
   version (0 for one never seen), and marking a known word or clearing one not known changes
   nothing. So a mark made before the learner cleared the word loses to the clear, and a mark made
   after seeing the clear wins, as #563's decision 4 says for Tomodachi. A clear that never saw a
   later mark conflicts, and the learner sees the word Known again.
-- **List** (`list`, by its UUID): `create` with a name and a position, then `update` and `delete`
-  at the current version, so two renames conflict and the second gets the name as it is now.
-  Deleting a list takes its words with it, and its ID can't be used again.
+- **List** (`list`, by its UUID, in either case, as Swift writes it uppercase; answers name it in
+  lowercase): `create` with a name and a position, then `update` at the current version, so two
+  renames conflict and the second gets the name as it is now. An update that already matches the
+  list is applied. A name is the app's rule: 1 to 500 characters once trimmed, with control
+  characters made spaces, so nothing the app makes is refused. `delete` wins over everything done
+  to the list since, renames and words added elsewhere too: the learner deleted it. It takes the
+  list's words with it, and its ID can't be used again.
 - **List word** (`listWord`, `<list>/<item>`): `add` always applies, and `remove` applies only at
   the current version, so it removes only an add it saw: an add the remover never saw wins.
 - **Limits:** 500 lists an account and 5,000 words a list (`too_many_lists`, `list_full`); a
   word added to a deleted or unknown list is rejected (`unknown_list`).
-- **Each keeps its history** as its version and a row that never goes away (a cleared word, a
-  deleted list, a removed list word), so a stale change always finds the version it lost to.
+- **Each keeps its history** as its version and a row that stays (a cleared word, a deleted list,
+  a removed list word), so a stale change finds the version it lost to. A deleted list's words are
+  deleted with it.
+- **Order:** on a page, lists come before their words, but a list word can come a page before its
+  list, since the journal keeps each entity's latest change. A client holds such a word until the
+  sync reaches `hasMore: false`. A rejected change (`unknown_list`, say) is undone on the device.
 
 - **A name** is 1 to 100 characters once trimmed, with runs of spaces made one and no control or
   invisible format characters, kept in Unicode NFC. A name given at sign-up, by the learner or by
@@ -221,13 +229,13 @@ mutation change the profile through the same rule.
   syncs again with the new cursor.
 - **Mutation IDs.** `sync_mutations` keeps the result of each mutation by the ID the client gave
   it: applied, conflict, or rejected. The same mutation sent again under its ID applies nothing
-  and gets the same outcome: applied at the same version, a conflict with the profile as it is
+  and gets the same outcome: applied at the same version, a conflict with the entity as it is
   then, or a rejection with the same code. A different mutation under a used ID is rejected
   (`mutation_id_reused`). A result is final: to try again, the client sends a new mutation with a
   new ID. Each mutation commits on its own, so after a failure partway through a batch, sending
   the batch again answers the ones that applied and applies the rest. A result is kept 30 days,
-  then forgotten at the account's next mutation: a mutation sent again later is answered as new,
-  which for a profile change is a conflict, never a second change.
+  then forgotten at the account's next mutation: a mutation sent again later is answered as new.
+  Most then conflict or change nothing; a list word added again after a remove is back.
 - **Fields** a mutation sends are strings, numbers, booleans, or null, and its entity, operation,
   and entity ID are plain printable text, so nothing a client sends can fail to store or hash.
 - **Unknown entities and operations** are rejected one by one, and the rest still apply, so an

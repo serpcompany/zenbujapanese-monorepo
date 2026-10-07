@@ -81,7 +81,17 @@ const languageReferenceId = /^[0-9a-f]{32}$/
 const kanjiItem = /^kanji:\p{Script=Han}$/u
 const controlCharacters = /\p{Cc}|\p{Cf}|\p{Cs}/u
 
-export const isItemId = (id: string) => languageReferenceId.test(id) || kanjiItem.test(id)
+const isItemId = (id: string) => languageReferenceId.test(id) || kanjiItem.test(id)
+
+export function itemIdOf(raw: string | undefined): string | null {
+  const id = raw?.startsWith('kanji:') ? `kanji:${raw.slice(6).normalize('NFC')}` : (raw ?? '')
+  return isItemId(id) ? id : null
+}
+
+export const listWordSeparator = '/'
+
+export const listWordEntityId = (listId: string, itemId: string) =>
+  `${listId}${listWordSeparator}${itemId}`
 
 export const badItem = rejection(
   'invalid_mutation',

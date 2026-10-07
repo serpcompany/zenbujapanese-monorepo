@@ -1,4 +1,5 @@
 import { and, count, eq, sql } from 'drizzle-orm'
+import { listWordSeparator } from '../domain/entities'
 import type { EntityReader, KnownWord, ListWord, WordList } from '../domain/store'
 import type { Drizzle } from './database'
 import { knownWords, listWords, syncChanges, users, wordLists } from './schema'
@@ -139,7 +140,7 @@ export function writerOn(db: Drizzle, userId: string) {
           and(
             eq(syncChanges.userId, userId),
             eq(syncChanges.entityType, 'listWord'),
-            sql`${syncChanges.entityId} like ${`${listId}/%`}`
+            sql`${syncChanges.entityId} like ${`${listId}${listWordSeparator}%`}`
           )
         )
       await db

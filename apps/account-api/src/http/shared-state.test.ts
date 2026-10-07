@@ -298,3 +298,159 @@ test('two clients converge on the same known words and lists after offline edits
   await fresh.sync()
   expect(fresh.state()).toEqual(phone.state())
 })
+
+describe('lists the iOS app makes', () => {
+  test('take its uppercase UUIDs, and any name it allows, trimmed', async () => {
+    const learner = await accounts.learner('ios-lists@example.com')
+    const id = randomUUID().toUpperCase()
+    const names = ['🧑‍💻 Code', 'x'.repeat(300), 'Tab\there']
+    const results = await send(
+      learner,
+      ...names.map((name, position) =>
+        list(position === 0 ? id : randomUUID().toUpperCase(), 'create', 0, { name, position })
+      ),
+      listWord(id, word(30), 'add')
+    )
+    expect(results.map(result => result.status)).toEqual([
+      'applied',
+      'applied',
+      'applied',
+      'applied'
+    ])
+    const listed = await accounts.running.service.rows(
+      `select id, name from word_lists where user_id = '${learner.userId}' order by position`
+    )
+    expect(listed).toEqual([
+      { id: id.toLowerCase(), name: '🧑‍💻 Code' },
+      { id: expect.stringMatching(/^[0-9a-f-]{36}$/), name: 'x'.repeat(300) },
+      { id: expect.stringMatching(/^[0-9a-f-]{36}$/), name: 'Tab here' }
+    ])
+  })
+
+  test('refuse fields a list has not, and take a resent update that already matches', async () => {
+    const learner = await accounts.learner('list-fields@example.com')
+    const id = randomUUID()
+    await send(learner, list(id, 'create', 0, { name: 'Same', position: 0 }))
+    await send(learner, list(id, 'update', 1, { name: 'Renamed' }))
+    expect(await send(learner, list(id, 'update', 2, { bogus: 1 }))).toMatchObject([
+      { status: 'rejected', error: { code: 'invalid_fields' } }
+    ])
+    expect(await send(learner, list(id, 'update', 1, { name: 'Renamed' }))).toMatchObject([
+      { status: 'applied', version: 2 }
+    ])
+  })
+})
+
+test('deleting a list wins over what was done to it since, words added elsewhere too', async () => {
+  const learner = await accounts.learner('delete-wins@example.com')
+  const id = randomUUID()
+  await send(learner, list(id, 'create', 0, { name: 'Gone soon', position: 0 }))
+  await send(
+    learner,
+    list(id, 'update', 1, { name: 'Renamed on the Mac' }),
+    listWord(id, word(31), 'add')
+  )
+  expect(await send(learner, list(id, 'delete', 1))).toMatchObject([
+    { status: 'applied', version: 3 }
+  ])
+  expect(await send(learner, list(id, 'update', 1, { name: 'Too late' }))).toMatchObject([
+    { status: 'conflict', current: { entity: 'list', operation: 'delete', data: null } }
+  ])
+  expect(await send(learner, list(id, 'delete', 0))).toMatchObject([
+    { status: 'applied', version: 3 }
+  ])
+  const words = await accounts.running.service.rows(
+    `select count(*)::int as n from list_words where user_id = '${learner.userId}'`
+  )
+  expect(words).toEqual([{ n: 0 }])
+})
+
+test('a kanji written as a compatibility character is the same item', async () => {
+  const learner = await accounts.learner('kanji-forms@example.com')
+  await send(learner, mark('kanji:\u{FA10}', 0))
+  expect(await send(learner, mark('kanji:\u{585A}', 0))).toMatchObject([
+    { status: 'applied', version: 1 }
+  ])
+  const rows = await accounts.running.service.rows(
+    `select item_id from known_words where user_id = '${learner.userId}'`
+  )
+  expect(rows).toEqual([{ item_id: 'kanji:\u{585A}' }])
+})
+
+test('answers a list before its words on a page, even when the list changed last', async () => {
+  const learner = await accounts.learner('list-order@example.com')
+  const id = randomUUID()
+  await send(
+    learner,
+    list(id, 'create', 0, { name: 'Order', position: 0 }),
+    listWord(id, word(32), 'add')
+  )
+  await send(learner, list(id, 'update', 1, { name: 'Order, renamed' }))
+  const answer = await accounts.sync(learner.token, {})
+  const entities = (answer.body as unknown as { changes: { entity: string }[] }).changes.map(
+    change => change.entity
+  )
+  expect(entities.indexOf('list')).toBeLessThan(entities.indexOf('listWord'))
+})
+
+test('a conflict or a rejection sent again under its ID answers the same, for each entity', async () => {
+  const learner = await accounts.learner('replay-entities@example.com')
+  const id = randomUUID()
+  await send(learner, mark(word(33), 0), list(id, 'create', 0, { name: 'Replay', position: 0 }))
+  await send(learner, clear(word(33), 1), list(id, 'update', 1, { name: 'Renamed' }))
+  const batch = {
+    mutations: [
+      { id: 'replay-mark-01', ...mark(word(33), 1) },
+      { id: 'replay-list-01', ...list(id, 'update', 1, { name: 'Stale' }) },
+      { id: 'replay-bad-001', ...list(randomUUID(), 'create', 0, { name: '', position: 0 }) }
+    ]
+  }
+  const first = (await accounts.sync(learner.token, batch)).body as unknown as { results: Result[] }
+  const again = (await accounts.sync(learner.token, batch)).body as unknown as { results: Result[] }
+  const outcome = ({
+    id,
+    status,
+    version,
+    current,
+    error
+  }: Result & { error?: { code: string } }) => ({
+    id,
+    status,
+    version,
+    current,
+    code: error?.code
+  })
+  expect(first.results.map(result => result.status)).toEqual(['conflict', 'conflict', 'rejected'])
+  expect(again.results.map(outcome)).toEqual(first.results.map(outcome))
+})
+
+test('two clients converge through list deletes, word removes, and adds neither saw', async () => {
+  const learner = await accounts.learner('converge-deletes@example.com')
+  const phone = new SyncClient(accounts, learner.token)
+  const mac = new SyncClient(accounts, learner.token)
+  const doomed = randomUUID()
+  const kept = randomUUID()
+  phone.change('list', 'create', doomed, { name: 'Doomed', position: 0 })
+  phone.change('list', 'create', kept, { name: 'Kept', position: 1 })
+  phone.change('listWord', 'add', `${kept}/${word(40)}`, text)
+  await phone.sync()
+  await mac.sync()
+
+  phone.change('list', 'delete', doomed)
+  phone.change('listWord', 'remove', `${kept}/${word(40)}`)
+  mac.change('list', 'update', doomed, { name: 'Doomed, renamed' })
+  mac.change('listWord', 'add', `${doomed}/${word(41)}`, text)
+  mac.change('listWord', 'add', `${kept}/${word(42)}`, text)
+
+  await phone.sync()
+  await mac.sync()
+  await phone.sync()
+
+  expect(mac.state()).toEqual(phone.state())
+  expect(phone.dataOf('list', doomed)).toBeNull()
+  expect(phone.dataOf('listWord', `${kept}/${word(40)}`)).toBeNull()
+  expect(phone.dataOf('listWord', `${kept}/${word(42)}`)).toMatchObject({ itemId: word(42) })
+  const fresh = new SyncClient(accounts, learner.token)
+  await fresh.sync()
+  expect(fresh.state()).toEqual(phone.state())
+})

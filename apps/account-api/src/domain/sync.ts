@@ -162,6 +162,8 @@ function applyMutation(store: AccountStore, userId: string, mutation: ClientMuta
   })
 }
 
+const listsFirst = (change: Change) => (change.entity === 'listWord' ? 1 : 0)
+
 async function changesIn(reader: EntityReader, page: JournalEntry[]): Promise<Change[] | null> {
   const seen = new Set<string>()
   const changes: Change[] = []
@@ -174,7 +176,7 @@ async function changesIn(reader: EntityReader, page: JournalEntry[]): Promise<Ch
     if (!change) return null
     changes.push(change)
   }
-  return changes
+  return changes.sort((one, other) => listsFirst(one) - listsFirst(other))
 }
 
 export function syncer(store: AccountStore, cursors: Cursors) {

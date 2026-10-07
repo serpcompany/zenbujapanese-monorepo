@@ -1,4 +1,5 @@
 import { sql } from 'drizzle-orm'
+import { listWordSeparator } from '../domain/entities'
 import type { EntityType } from '../domain/store'
 import type { Drizzle } from './database'
 import { knownWords, listWords, syncOrigin, users, wordLists } from './schema'
@@ -35,7 +36,7 @@ export function fenceIfRestored(db: Drizzle): Promise<DatabaseStart> {
       union all
       select user_id, ${entity('list')}, id, version, 'restore' from word_lists
       union all
-      select user_id, ${entity('listWord')}, list_id || '/' || item_id, version, 'restore' from list_words`)
+      select user_id, ${entity('listWord')}, list_id || ${listWordSeparator} || item_id, version, 'restore' from list_words`)
     if (origin) {
       await tx.update(syncOrigin).set({ databaseOid: thisDatabase })
       return 'restored'

@@ -140,6 +140,9 @@ describe('the migrations', () => {
     await original.query(
       "insert into word_lists (user_id, id, name, position, version) values ('u1', '00000000-0000-4000-8000-000000000001', 'Kept', 0, 1)"
     )
+    await original.query(
+      "insert into list_words (user_id, list_id, item_id, headword, reading, present, version) values ('u1', '00000000-0000-4000-8000-000000000001', 'kanji:日', '日', 'にち', true, 1)"
+    )
     const backup = await original.dumpDataDir()
     await original.close()
 
@@ -170,7 +173,12 @@ describe('the migrations', () => {
     const fenced = await second.copy.query<{ entity_type: string; entity_version: string }>(
       'select entity_type, entity_version from sync_changes order by entity_type'
     )
-    expect(fenced.rows.map(row => row.entity_type)).toEqual(['knownWord', 'list', 'profile'])
+    expect(fenced.rows.map(row => row.entity_type)).toEqual([
+      'knownWord',
+      'list',
+      'listWord',
+      'profile'
+    ])
     for (const row of fenced.rows) {
       expect(Number(row.entity_version)).toBeGreaterThan(Date.now() - 60_000)
     }

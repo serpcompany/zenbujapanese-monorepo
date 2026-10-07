@@ -6,7 +6,7 @@ import {
   conflict,
   type Entity,
   gone,
-  isItemId,
+  itemIdOf,
   itemText,
   needsBaseVersion,
   type Outcome,
@@ -36,8 +36,8 @@ async function setKnown(
   mutation: ClientMutation,
   known: boolean
 ): Promise<Outcome> {
-  const itemId = mutation.entityId ?? ''
-  if (!isItemId(itemId)) return rejected(badItem)
+  const itemId = itemIdOf(mutation.entityId)
+  if (!itemId) return rejected(badItem)
   if (mutation.baseVersion === undefined) return rejected(needsBaseVersion)
   const current = await account.knownWord(itemId)
   const version = current?.version ?? 0
@@ -63,7 +63,8 @@ export const knownWords: Entity = {
     mark: (account, mutation) => setKnown(account, mutation, true),
     clear: (account, mutation) => setKnown(account, mutation, false)
   },
-  async current(reader, itemId) {
+  async current(reader, entityId) {
+    const itemId = itemIdOf(entityId) ?? entityId
     return currentOf(itemId, await reader.knownWord(itemId))
   }
 }
