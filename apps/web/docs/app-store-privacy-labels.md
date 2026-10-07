@@ -28,7 +28,7 @@ answer the request. Data kept only on the device, or in the learner's own iCloud
 | Contact Info → Name | The optional name, typed by the learner or sent by Apple or Google at sign-up. | App Functionality | Yes | No |
 | Identifiers → User ID | The Zenbu user ID, the optional username, and the learner's account ID at Apple or Google for each way they sign in. | App Functionality | Yes | No |
 | User Content → Other User Content | The known words and lists synced to the account. | App Functionality | Yes | No |
-| Other Data → Other Data Types | Each session's IP address and user agent, kept for security until the session ends, and the address of a profile picture Apple or Google sends at sign-up. | App Functionality | Yes | No |
+| Other Data → Other Data Types | Each session's IP address and user agent, kept for security with the session, and the address of a profile picture the provider sends at sign-up. | App Functionality | Yes | No |
 
 Neither app tracks: answer No to tracking for every type. The App Store then shows Contact Info,
 Identifiers, User Content, and Other Data under Data Linked to You, and nothing under Data Used to
@@ -43,8 +43,10 @@ Every other type is not collected. The ones a reviewer may ask about:
   picture's address (Other Data Types).
 - **Search History**: no. Searches stay on the device, and the dictionary service answers
   Tomodachi's word-card and segmentation requests without keeping them.
-- **Usage Data and Diagnostics**: no. The servers' logs record each request's method, route,
-  status, and timing, linked to no one.
+- **Usage Data and Diagnostics**: no. The services' request logs hold each request's method,
+  route, status, and timing, and nothing the learner sent or that identifies them. The API host's
+  nginx access log is configured outside this repository: if it keeps IP addresses or full URLs,
+  answer Other Diagnostic Data under Data Not Linked to You, or turn it off.
 - **Customer Support**: no. Support is by email, outside the apps.
 
 ## The Zenbu Japanese app
@@ -54,12 +56,13 @@ analytics or crash-reporting SDK.
 
 When the build with sign-in ships (#573), change these with the labels:
 
-- **The privacy manifest**, `apps/ios/App/PrivacyInfo.xcprivacy`: list the same five types under
-  `NSPrivacyCollectedDataTypes` (`NSPrivacyCollectedDataTypeEmailAddress`,
-  `NSPrivacyCollectedDataTypeName`, `NSPrivacyCollectedDataTypeUserID`,
-  `NSPrivacyCollectedDataTypeOtherUserContent`, and `NSPrivacyCollectedDataTypeOtherDataTypes`),
-  each with `NSPrivacyCollectedDataTypeLinked` true, `NSPrivacyCollectedDataTypeTracking` false, and
-  the purpose `NSPrivacyCollectedDataTypePurposeAppFunctionality`.
+- **The privacy manifest**, `apps/ios/App/PrivacyInfo.xcprivacy`: add one dictionary per type to
+  the `NSPrivacyCollectedDataTypes` array. Each has the keys `NSPrivacyCollectedDataType` (the
+  type: `NSPrivacyCollectedDataTypeEmailAddress`, `NSPrivacyCollectedDataTypeName`,
+  `NSPrivacyCollectedDataTypeUserID`, `NSPrivacyCollectedDataTypeOtherUserContent`, or
+  `NSPrivacyCollectedDataTypeOtherDataTypes`), `NSPrivacyCollectedDataTypeLinked` (true),
+  `NSPrivacyCollectedDataTypeTracking` (false), and `NSPrivacyCollectedDataTypePurposes` (an array
+  holding `NSPrivacyCollectedDataTypePurposeAppFunctionality`).
 - **The listing's description**, in `apps/ios/metadata/version/1.0/en-US.json`, which says the
   app has no cloud sync.
 
@@ -70,13 +73,18 @@ so the account gets the email, a name if Apple or Google sends one, the user IDs
 session's IP address and user agent. Its Other User Content is the Known marks it sends. Reading
 the learner's lists and known words adds no type, since the account already holds them.
 
-Not collected, as Tomodachi works today (its
-[architecture doc](https://github.com/serpcompany/tomodachi-app/blob/main/docs/architecture.md)):
+Its privacy manifest lists the same five types, the way the Zenbu app's does.
+
+Not collected:
 
 - its own progress, which syncs through the learner's private iCloud database, which only the
   learner's devices read;
-- spoken answers, which are recognized on the device;
-- word-card and segmentation requests, which the dictionary service answers without keeping.
+- spoken answers, which it recognizes on the device;
+- once the dictionary service answers them (#571), word-card and segmentation requests, which it
+  answers without keeping.
+
+The first two are as Tomodachi works today, in its
+[architecture doc](https://github.com/serpcompany/tomodachi-app/blob/main/docs/architecture.md).
 
 Tomodachi's owners also answer for what isn't the account's:
 

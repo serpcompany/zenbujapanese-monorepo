@@ -16,21 +16,21 @@ export default function PrivacyPage() {
 
       <h2>The short version</h2>
       <p>
-        The app works fully on your device without an account, and without one it doesn't collect
-        data. It never tracks you, and has no advertising, analytics, or third-party crash-reporting
-        SDK. If you create or link a Zenbu account, we keep your email, how you sign in, and the
-        known words and lists you sync on our servers, so your apps can share them, and you can
-        delete the account at any time. If you link it to Tomodachi, our companion app, Tomodachi
-        can read your lists and known words and mark words Known. The website uses privacy-friendly,
-        cookieless analytics to count visits.
+        The app does not collect or track data. It has no advertising, analytics, or third-party
+        crash-reporting SDK, and no account or cloud sync yet: everything in it works on your
+        device. If you create or sign in to a Zenbu account once the app offers one, we keep your
+        email, how you sign in, and the known words and lists you sync on our servers, so your apps
+        can share them, and you can delete the account at any time. If you link it to Tomodachi, our
+        companion app, Tomodachi can read your lists and known words and mark words Known. The
+        website uses privacy-friendly, cookieless analytics to count visits.
       </p>
 
       <h2>Information in the app</h2>
       <p>
         Your profile, recent searches, word notes, known words, word lists, and Media Library photos
         are stored in the app's private storage on your device and are not sent to {site.name},
-        except what a Zenbu account syncs if you create or link one (see below). Your device's own
-        backups, such as iCloud Backup, can include them, under Apple's terms.
+        except what a Zenbu account syncs if you create or sign in to one (see below). Your device's
+        own backups, such as iCloud Backup, can include them, under Apple's terms.
       </p>
       <p>
         Images you choose for Image Search are processed on your device. Opening a word from one
@@ -50,14 +50,14 @@ export default function PrivacyPage() {
         </li>
         <li>
           <strong>Optional dictionaries</strong> you choose to download come from
-          cdn.zenbujapanese.com. Our hosting provider, Cloudflare, processes routine request
-          information such as your IP address to deliver the file.
-        </li>
-        <li>
-          <strong>Sign-in and sync</strong>, only if you create or link a Zenbu account, connect to
-          our account service at api.zenbujapanese.com, through Cloudflare.
+          cdn.zenbujapanese.com. Cloudflare, which serves those files for us, processes routine
+          request information such as your IP address to deliver the file.
         </li>
       </ul>
+      <p>
+        If you create or sign in to a Zenbu account, signing in and syncing also connect to our
+        account service at api.zenbujapanese.com, through Cloudflare.
+      </p>
 
       <h2>Permissions</h2>
       <p>
@@ -68,16 +68,16 @@ export default function PrivacyPage() {
 
       <h2>Your Zenbu account</h2>
       <p>
-        You never need a Zenbu account: everything in the app works without one, and while you're
-        signed out, our apps send nothing to our account service. If you create or link a Zenbu
-        account, the account service keeps:
+        The app doesn't offer Zenbu accounts yet, and you'll never need one: everything in the app
+        works without one, and while you're signed out, our apps send nothing to our account
+        service. If you create or sign in to a Zenbu account, the account service keeps:
       </p>
       <ul>
         <li>
           <strong>Your account:</strong> a Zenbu user ID; your email and whether it's verified; a
-          name and a username, both optional; the address of your profile picture, only if Apple or
-          Google sends one when you sign up; and when the account was created and last changed, with
-          its profile's version number.
+          name and a username, both optional; the address of your profile picture, only if the
+          service you sign up with sends one; and when the account was created and last changed,
+          with its profile's version number.
         </li>
         <li>
           <strong>How you sign in:</strong> for each way you sign in (Apple, Google, or a code we
@@ -91,32 +91,32 @@ export default function PrivacyPage() {
           its operating system).
         </li>
         <li>
-          <strong>The study data you sync:</strong> your known words, each as the dictionary's ID
-          for the word or kanji with whether it's known; your lists' names, their order, and the
-          words in them; a record of each item's latest change; and the result of each sync request,
-          so that a retry is never applied twice.
+          <strong>The study data you sync:</strong> your known words, meaning which words and kanji
+          they are and whether each is known; your lists' names, their order, and the words in them;
+          a record of each item's latest change, including a deletion, so your other devices follow
+          it; and the result of each sync request, so that a retry is never applied twice.
         </li>
       </ul>
       <p>
-        To sign you in, it also keeps the codes we email you, encrypted, and one-time sign-in
-        values, each for 10 minutes, and counts requests from each IP address for a few minutes to
-        stop abuse. Word notes, photos, recent searches, and settings aren't synced: they stay on
-        your device. We'll update this policy before an app syncs anything else.
+        To sign you in, it also keeps an encrypted copy of each code we email you and one-time
+        sign-in values, each for 10 minutes, and counts requests from each IP address for a few
+        minutes to stop abuse. Word notes, photos, recent searches, and settings aren't synced: they
+        stay on your device. We'll update this policy before an app syncs anything else.
       </p>
       <p>
         We use this information only to sign you in, keep your apps in step, email you about signing
         in, and keep the service secure. We email you from {email}, through Cloudflare, only to send
         sign-in codes and to tell you when a way to sign in is added to or removed from your
-        account. Our servers' logs record each request's method, route, status, and timing, never
-        your email, your profile, a sign-in code or link, or a token.
+        account. The account service's logs record each request's method, route, status, and timing,
+        never your email, your profile, a sign-in code or link, or a token.
       </p>
 
       <h2>Tomodachi</h2>
       <p>
-        Tomodachi, our companion app for Mac and iPhone, works without an account. Its own study
-        progress syncs between your devices through your iCloud account, which Apple runs, not
-        through our servers. If you link your Zenbu account to Tomodachi, it signs in as described
-        above and can only:
+        Tomodachi, our companion app for Mac and iPhone, works without an account, and keeps its own
+        study progress in your iCloud account, which Apple runs, not on our servers. This policy
+        covers what Tomodachi does with a Zenbu account. If you link yours to Tomodachi, it signs in
+        as described above and can only:
       </p>
       <ul>
         <li>read your lists;</li>
@@ -129,8 +129,8 @@ export default function PrivacyPage() {
       </ul>
       <p>
         The dictionary service uses what Tomodachi sends only to answer it: none of it is added to
-        your account, and our logs don't record it. Before another app, such as our browser
-        extensions, uses your account, we'll update this policy to say what it can do.
+        your account, and the service's logs don't record it. Before another app or this website
+        lets you sign in to your account, we'll update this policy to say what it can do.
       </p>
 
       <h2>Where account data is kept</h2>
@@ -142,12 +142,6 @@ export default function PrivacyPage() {
       </p>
       <ul>
         <li>
-          <strong>Apple</strong>, when you use Sign in with Apple;
-        </li>
-        <li>
-          <strong>Google</strong>, when you sign in with Google;
-        </li>
-        <li>
           <strong>Cloudflare</strong>, which carries traffic to our servers, sends our email, and
           stores the backups;
         </li>
@@ -156,7 +150,8 @@ export default function PrivacyPage() {
         </li>
       </ul>
       <p>
-        Apple and Google handle your sign-in with them under their own terms and privacy policies.
+        If you sign in with Apple or Google, that company signs you in under its own terms and
+        privacy policy, and sends us only what's listed above.
       </p>
 
       <h2>This website</h2>
@@ -178,17 +173,22 @@ export default function PrivacyPage() {
       <h2>Retention and deletion</h2>
       <p>
         You can delete searches, notes, known words, and lists inside the app. Uninstalling the app
-        removes its remaining data from your device, but doesn't delete your account.
+        removes its remaining data from your device, but doesn't delete a Zenbu account.
       </p>
       <p>If you have a Zenbu account, we keep:</p>
       <ul>
         <li>your account and the data you sync until you delete the account;</li>
-        <li>each session until you sign out of it, or 60 days after it was last used;</li>
+        <li>
+          each session until you sign out of it or delete the account; a session stops working 60
+          days after it was last used;
+        </li>
         <li>
           sign-in codes and one-time sign-in values for 10 minutes, and request counts for a few
           minutes;
         </li>
-        <li>each sync request's result for 30 days;</li>
+        <li>
+          each sync request's result for 30 days, and until the next change you sync after that;
+        </li>
         <li>each night's backup for 30 days.</li>
       </ul>
       <p>
