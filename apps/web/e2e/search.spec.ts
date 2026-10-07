@@ -39,4 +39,34 @@ test.describe('search', () => {
     await expect(page.getByRole('main')).toContainText('zzzzqqq')
     await expect(page.getByRole('main').getByRole('link', { name: /^要 い る/ })).toHaveCount(0)
   })
+
+  test("a long query's crumb is cut short, never Home or Dictionary", async ({ page }) => {
+    await page.goto(encodeURI(`/dictionary/search/${'とりあつかいせつめいしょ'.repeat(4)}/`))
+    const breadcrumb = page.getByRole('navigation', { name: 'breadcrumb' })
+    for (const name of ['Home', 'Dictionary']) {
+      const overflow = await breadcrumb
+        .getByRole('link', { name, exact: true })
+        .evaluate(link => link.scrollWidth - (link.parentElement?.clientWidth ?? 0))
+      expect(overflow, `${name} spills out of its crumb`).toBeLessThanOrEqual(0)
+    }
+    const query = breadcrumb.locator('[aria-current="page"]')
+    expect(await query.evaluate(crumb => crumb.scrollWidth > crumb.clientWidth)).toBe(true)
+  })
 })
+
+const columnWidth = 768
+
+for (const path of [
+  '/dictionary/',
+  '/dictionary/search/',
+  '/dictionary/search/iru/',
+  needed.path
+]) {
+  test(`${decodeURI(path)} is one column, at most ${columnWidth} pixels wide`, async ({ page }) => {
+    await page.goto(path)
+    const main = await page.getByRole('main').boundingBox()
+    const viewport = page.viewportSize()
+    if (!main || !viewport) throw new Error('The page has no main column')
+    expect(main.width).toBeCloseTo(Math.min(columnWidth, viewport.width), 0)
+  })
+}

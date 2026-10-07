@@ -21,8 +21,9 @@ function navLinks(html: string): [text: string, current: string | null][] {
   ])
 }
 
-function navClass(html: string, text: string): string {
-  return mainNav(html).match(new RegExp(`<a [^>]*class="([^"]*)"[^>]*>${text}</a>`))?.[1] ?? ''
+function navClasses(html: string, text: string): string[] {
+  const classes = mainNav(html).match(new RegExp(`<a [^>]*class="([^"]*)"[^>]*>${text}</a>`))
+  return classes?.[1].split(' ') ?? []
 }
 
 describe('the header nav marks the current section, as the #462 design does', () => {
@@ -42,9 +43,11 @@ describe('the header nav marks the current section, as the #462 design does', ()
       ['About', null],
       ['Support', null]
     ])
-    expect(navClass(html, 'Dictionary')).toContain('text-foreground')
-    expect(navClass(html, 'Dictionary')).toContain('font-medium')
-    expect(navClass(html, 'About')).not.toContain('font-medium')
+    expect(navClasses(html, 'Dictionary')).toEqual(
+      expect.arrayContaining(['bg-muted', 'text-foreground'])
+    )
+    expect(navClasses(html, 'About')).not.toContain('bg-muted')
+    expect(navClasses(html, 'About')).toContain('text-muted-foreground')
   })
 
   test.each([
@@ -58,8 +61,22 @@ describe('the header nav marks the current section, as the #462 design does', ()
   test.each(['/', '/legal/privacy/', '/sources/', '/dictionaryx/'])('%s marks none', path => {
     const html = header(path)
     expect(navLinks(html).filter(([, current]) => current !== null)).toEqual([])
-    expect(navClass(html, 'Dictionary')).not.toContain('font-medium')
+    expect(navClasses(html, 'Dictionary')).not.toContain('bg-muted')
   })
+})
+
+test.each([
+  '/',
+  '/about/',
+  '/dictionary/%E8%A6%81%E3%82%8B-1546640/'
+])('the header on %s has no search, and a menu button for phones', path => {
+  const html = header(path)
+  expect(html).not.toContain('<search')
+  expect(html).not.toContain('name="q"')
+  const menu = html.match(/<button [^>]*aria-label="Menu"[^>]*>/)?.[0] ?? ''
+  expect(menu).toContain('aria-haspopup="dialog"')
+  expect(menu).toContain('aria-expanded="false"')
+  expect(menu.match(/class="([^"]*)"/)?.[1].split(' ')).toContain('md:hidden')
 })
 
 test('the Get the app button leads with a phone icon', () => {

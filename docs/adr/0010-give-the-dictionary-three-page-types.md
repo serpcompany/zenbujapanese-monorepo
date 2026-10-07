@@ -65,3 +65,34 @@ plan that a check can enforce.
 The decision is the owner's and Devin's, on
 [issue 544](https://github.com/serpcompany/zenbujapanese-monorepo/issues/544). This decision
 amends [ADR 0007](0007-publish-the-dictionary-at-permanent-urls-from-the-websites-copy.md).
+
+## Amendment: browse pages
+
+The owner's decision of 2026-10-06 on
+[issue 614](https://github.com/serpcompany/zenbujapanese-monorepo/issues/614) adds browse pages,
+under `/dictionary/browse/`. An Ahrefs audit found the word pages orphaned: a sitemap listed them,
+but no page linked to them. The browse pages list words and kanji and link to their word and
+search pages, so every word is a few links from the dictionary home; what a word or kanji shows
+stays on those pages. They are:
+
+- the hub, `/dictionary/browse/`;
+- kana: the charts, `/dictionary/browse/kana/`; each script's kana, `/dictionary/browse/hiragana/`
+  and `/dictionary/browse/katakana/`; a kana's page, such as `/dictionary/browse/hiragana/か/`; and
+  the words that start with two kana, such as `/dictionary/browse/hiragana/かが/`, a page at a
+  time (`…/かが/2/`);
+- kanji lists: `/dictionary/browse/kanji/`, and each list, such as
+  `/dictionary/browse/kanji/grade-2/` (the school grades, secondary school, jinmeiyō, the five
+  JLPT levels from Jonathan Waller's kanji lists, and each stroke count);
+- frequency dictionaries: `/dictionary/browse/frequency-dictionaries/`; the app's eight ranked
+  dictionaries a band of 1,000 ranks at a time, such as
+  `/dictionary/browse/frequency-dictionaries/anime/1001-2000/`; and the five JLPT levels, such as
+  `/dictionary/browse/frequency-dictionaries/jlpt/n5/`, a page at a time;
+- categories: `/dictionary/browse/parts-of-speech/`, `/dictionary/browse/usage/`, and
+  `/dictionary/browse/subjects/`, and each category's words, such as
+  `/dictionary/browse/onomatopoeia/`, most used first, a page at a time, and in kana order
+  (`…/onomatopoeia/kana-order/`), as the #614 mockup's tabs have them.
+
+`/sitemaps/browse.xml` lists them, each once: not a category's kana order, which is `noindex`, nor
+a list of fewer than 10 words, which is `noindex` too but stays linked. `apps/web/src/app/routes.test.ts`
+lists their routes with the others. The dictionary has these page types besides the three above; the rest of this
+decision stands.

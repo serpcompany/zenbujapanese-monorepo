@@ -63,10 +63,12 @@ fixed or answered and resolved. A finding can be answered with an `@claude` requ
   adds to that file the top-level inline findings `claude[bot]` posted on the pull request and
   the summary: the latest comment by `github-actions[bot]` that starts with `## Claude review`.
   Claude posts only inline findings. It writes the summary to `tmp/review-summary.md`, and a step
-  after it posts that file with the job's own token (`issues: write`), editing the earlier
-  summary by id or creating one, never the latest comment, which can be an answer to an
+  after it posts that file with the job's own token, editing the earlier summary by id or
+  creating one, never the latest comment, which can be an answer to an
   `@claude` request. The step refuses a file without the heading or too long for a comment, and
   the job deletes any `tmp/review-summary.md` the pull request carries before Claude starts.
+  The token needs `pull-requests: write`: GitHub refuses a comment on a pull request from a job
+  token with only `issues: write` (403).
   Claude's answers to `@claude` requests, and its replies in review threads, are passed in as
   context only, never as findings. The summary says whether each earlier finding is fixed.
 - **It reviews the pushes `@claude` makes.** `allowed_bots: "claude[bot]"` lets the review run on

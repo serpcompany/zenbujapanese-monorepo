@@ -1,3 +1,4 @@
+import { rankedPackIds } from '../browse/lists'
 import type { SearchDatabase } from '../search/search'
 
 export type SqlValue = string | number | bigint | null | Uint8Array
@@ -41,6 +42,11 @@ export const attachments = {
   word_index: {
     file: 'ExampleWordIndex.sqlite3',
     schema: 'zenbu.example-word-index.v1',
+    languageData: true
+  },
+  ranked: {
+    file: 'RankedLists.sqlite3',
+    schema: 'zenbu.ranked-lists.v1',
     languageData: true
   }
 } as const
@@ -111,4 +117,9 @@ export function checkArtifact(db: ArtifactDatabase, sourceSha256: string): void 
       )
     }
   }
+  const ranked = new Set(
+    db.all<{ pack_id: string }>('SELECT pack_id FROM ranked.ranked_lists').map(row => row.pack_id)
+  )
+  const missing = rankedPackIds.filter(packId => !ranked.has(packId))
+  if (missing.length > 0) refuse(`${attachments.ranked.file} has no ${missing.join(', ')}`)
 }

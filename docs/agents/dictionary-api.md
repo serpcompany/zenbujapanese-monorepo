@@ -18,10 +18,16 @@ git lfs pull --include="apps/ios/Modules/Sources/SearchExperience/Resources/**"
 ```
 
 - `LanguageReferenceData.sqlite3`, with `CompoundPitch`, `JLPTLevelPack`, `TUBELEXFrequencyPack`,
-  `KanjiStrokeData`, and `ExampleWordIndex` attached read-only. At start the service refuses an
-  artifact whose transform or example index it doesn't read, or a pack that isn't the one it
-  expects (`checkArtifact`); every pack but the stroke data must be built for this
+  `KanjiStrokeData`, `ExampleWordIndex`, and `RankedLists` attached read-only. At start the service
+  refuses an artifact whose transform or example index it doesn't read, or a pack that isn't the
+  one it expects (`checkArtifact`); every pack but the stroke data must be built for this
   `LanguageReferenceData.sqlite3`.
+- `RankedLists.sqlite3` holds the Wikipedia and six Jiten lists' ranks, mapped to Language
+  Reference IDs as the app maps them when a learner installs the pack, from their pinned sources
+  ([`apps/ios/Tools/README.md`](../../apps/ios/Tools/README.md), `build_ranked_lists.py`). The app
+  doesn't bundle it. With TUBELEX, which the app bundles, the service has all eight of the app's
+  ranked frequency dictionaries; `checkArtifact` refuses a file that lacks one the core lists
+  (`packages/dictionary-core/src/browse/lists.ts`).
 - `KanjiReferenceData.json` and `KanjiElementReferenceData.json`.
 - Kuromoji's files, for example word links and conjugated form examples. `src/kuromoji.ts` ports
   `apps/ios/Modules/Sources/SearchExperience/KuromojiMorphologyClient.swift`: it runs the app's
@@ -76,7 +82,8 @@ Rules).
 
 Every `/v1` route needs `Authorization: Bearer <token>` and answers JSON; a query or form is one
 URL-encoded path segment of at most 200 characters (`maximumQueryLength`, which the website
-checks too). A 404 means there's no such thing: no such word, kanji, or sitemap, a query without
+checks too). The routes stay clear of `/v1/auth`, `/v1/me`, `/v1/sync`, and `/v1/health`, which the
+API host's nginx sends to the account service. A 404 means there's no such thing: no such word, kanji, or sitemap, a query without
 examples, or an unknown route. A word number or kanji that can't exist, such as word 0, a number
 past any JMdict entry, or two characters, is a 404 too. A 400 names what was malformed; a 401
 means the token is missing or wrong; a 503 means the service is still starting; a 500 says nothing
@@ -95,6 +102,17 @@ more and logs the error.
 | `GET /v1/sitemaps/words` | Each word sitemap's `ent_seq` range. |
 | `GET /v1/sitemaps/words/<n>?after=&limit=` | A sitemap's words after `after`, with their slugs. |
 | `GET /v1/retired` | Retired entries and their replacements; empty until #463. |
+| `GET /v1/browse` | The browse pages' totals: entries, each kana script's words, common words and the 24 most used content words among them (no particles, auxiliaries, conjunctions, copulas, or bare prefixes and suffixes), the kanji lists' sizes and grade 1's kanji, and the JLPT levels' words. |
+| `GET /v1/browse/kana/<script>` | `hiragana` or `katakana`: how many words start with each kana. |
+| `GET /v1/browse/kana/<script>/<kana>` | A kana's two-kana groups with their counts, the words read as that kana alone, and the kanas before and after it. |
+| `GET /v1/browse/kana/<script>/<kana>/<two kana>?page=` | 200 of the words whose reading starts with the two kana, in kana order. |
+| `GET /v1/browse/categories` | How many words each category lists (`packages/dictionary-core/src/browse/categories.ts`). |
+| `GET /v1/browse/categories/<slug>?order=&page=` | 200 of a category's words, each with the first meaning that carries the label. `order=used` (the default) lists the words whose first meaning carries it, then the others, each most used on YouTube first, and words YouTube doesn't rank last; `order=kana` lists them all in kana order. |
+| `GET /v1/browse/ranked` | Each ranked list's mapped and listed words and its top 6, and each JLPT level's words and its first 5. |
+| `GET /v1/browse/ranked/<slug>?page=` | A ranked list's words a band of 1,000 ranks at a time (`page` 1 is ranks 1 to 1,000, and so on to 10, ranks 9,001 to 10,000), or 200 of a JLPT level's words (`jlpt-n5`…) in kana order. |
+| `GET /v1/browse/kanji` | Each school list's kanji, most frequent first; each JLPT level's kanji count and its first 5; and how many jōyō kanji have each stroke count. |
+| `GET /v1/browse/kanji/<slug>` | A kanji list (`grade-1`…`grade-6`, `secondary-school`, `jinmeiyo`, `jlpt-n5`…`jlpt-n1`, `strokes-<n>`) with each kanji's first meaning, or its base kanji's for a compatibility character KANJIDIC2 gives none. |
+| `GET /v1/sitemaps/browse` | What the browse sitemap needs: every kana and its two-kana groups, each category, JLPT level, and kanji list, with their word or kanji counts, and each ranked list's words in each band, so the website can leave out lists of fewer than 10. |
 
 ## How it runs
 
@@ -106,7 +124,19 @@ read-only, checking it, its packs, and Kuromoji's pinned files as they load, and
 at a time: SQLite is synchronous, so a slow query holds only its own thread. Each call goes to the
 thread with the fewest in flight, and a thread that dies is replaced. Each thread keeps recent
 searches, word examples, a query's examples, kanji details, and word lookups in LRU caches, so a
-page's first request pays for a broad query and the rest don't. The website's edge cache keeps
+page's first request pays for a broad query and the rest don't. The browse routes don't scan the
+artifact for a request: before a thread reports ready, it builds the browse index
+(`packages/dictionary-core/src/artifact/browse-index.ts`) in a few passes, every word in kana
+order by its first two kana and every category's words in both its orders, keeps the totals, the
+category counts, the kanji and ranked lists' summaries and counts, every kanji list, and the
+browse sitemap, and runs each statement a browse page asks once (`DictionaryBrowse.warm`). A
+browse page then reads only its own words, with statements already prepared. The index holds
+about 960,000 row IDs, the categories' as 32-bit arrays. On 2026-10-07, with two threads on this
+workstation (load average 5 over the last minute, falling from 180 over fifteen), each thread was
+ready about 9.4 seconds after it started, and every browse route's first request took at most 28
+ms (a JLPT level's first page); before the index, the totals took 1 second and the category counts
+2. Warming adds about 250 MB to a thread's resident memory, nearly all of it SQLite's cache of the
+pages it read; the index itself is under 10 MB of JavaScript heap. The website's edge cache keeps
 answers for 10 minutes on top.
 
 Logs are one JSON object per line on stdout (errors on stderr): each request's method, route
@@ -152,8 +182,8 @@ files: search retrieval, search results (every row, chip, and special row, the E
 row included), example search (every listed pair ID for 67 queries, and the first 5 sentences'
 words, links, and marks), word detail (the first 25 examples' order, tokens, links, and
 highlights, the counts, the furigana split, the pitch graph, each frequency row's details, and
-every conjugated form's examples), and kanji detail (all but JLPT, which the app's cases don't
-record). The word-detail suite's furigana, pitch graph, frequency details, and conjugations take
+every conjugated form's examples), and kanji detail (its metrics, Waller's JLPT level among
+them). The word-detail suite's furigana, pitch graph, frequency details, and conjugations take
 the shapes in `packages/dictionary-core/src/detail/suite.ts`, which the website's rendered-page
 test (`apps/web/src/components/dictionary/word-page.test.tsx`) shares. Each suite pins the files
 it was recorded from, and fails on others (`requirePinnedArtifacts`), since it would compare
@@ -202,7 +232,11 @@ The image is about 1 GB, and uses about 750 MiB of memory with two worker thread
 cache of the files it reads comes on top; a container's memory reading, such as `docker stats`,
 counts it, but it can be reclaimed. It has a health check on `/healthz` and stops cleanly on SIGTERM.
 
-It holds one build of the data, so a new artifact is a new image. `scripts/build.mjs` bundles
+It holds one build of the data, so a new artifact is a new image. Its layers go from what changes
+least to what changes most: Kuromoji, the language data, Sudachi's dictionary, the installed
+packages, and last the bundled code. A code change so makes only a new top layer of a few MB,
+which is all CI pushes and the server pulls; the language data's layers, about 1 GB, are built
+and moved only when the data changes. `scripts/build.mjs` bundles
 `src/server.ts` and `src/worker.ts`, with the core and Hono; Sudachi's native module stays outside
 the bundle, among the production dependencies the image installs. The build
 context is the repository root, and `Dockerfile.dockerignore` lets in only what the `Dockerfile`
