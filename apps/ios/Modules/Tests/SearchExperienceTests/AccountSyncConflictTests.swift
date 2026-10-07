@@ -163,4 +163,35 @@ struct AccountSyncConflictTests {
     try await fixture.signIn()
     #expect(fixture.wordLists.lists.map(\.name) == ["Favorites"])
   }
+
+  @Test(
+    "a copy held behind a queued change survives a relaunch, and wins when the change is rejected")
+  func heldCopySurvivesARelaunch() async throws {
+    let fixture = try await Fixture.afterSignIn()
+    let calls = CallCount()
+    fixture.serve { request in
+      switch calls.next() {
+      case 1:
+        StubSync.answer(
+          results: StubSync.applied(request),
+          changes: [StubSync.knownWord(Fixture.taberu, known: false, version: 7)], cursor: "c")
+      case 2: .offline
+      default:
+        StubSync.answer(
+          results: request.mutations.map { StubSync.rejected($0.id, "invalid_mutation") },
+          cursor: "c")
+      }
+    }
+    fixture.markKnown(Fixture.taberu)
+    fixture.clearKnown(Fixture.taberu)
+    await #expect(throws: AccountServiceError.unreachable) { try await fixture.syncNow() }
+    #expect(fixture.sync.state.deferred["knownWord:\(Fixture.taberu)"]?.version == 7)
+
+    await fixture.launch()
+    try await fixture.syncNow()
+
+    #expect(!fixture.wordKnowledge.isKnown(storedID: Fixture.taberu))
+    #expect(fixture.sync.state.versions["knownWord:\(Fixture.taberu)"] == 7)
+    #expect(fixture.sync.state.deferred.isEmpty)
+  }
 }

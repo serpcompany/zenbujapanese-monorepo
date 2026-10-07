@@ -15,6 +15,28 @@ struct AccountSignedOutTests {
     return fixture
   }
 
+  private func signedInPhone(
+    with listNames: [String] = []
+  ) async throws -> (service: FakeAccountService, phone: Fixture, lists: [WordList]) {
+    let server = StubAccountServer()
+    let service = FakeAccountService(on: server)
+    let phone = await install(on: server)
+    let lists = listNames.compactMap { phone.wordLists.createList(named: $0) }
+    try await phone.signIn()
+    return (service, phone, lists)
+  }
+
+  private func changeElsewhere(
+    _ service: FakeAccountService, list id: UUID, _ operation: String,
+    fields: [String: SyncFieldValue]? = nil
+  ) {
+    service.change(
+      for: Fixture.email,
+      .init(
+        id: UUID().uuidString.lowercased(), entity: "list", operation: operation,
+        entityId: id.uuidString.lowercased(), baseVersion: 1, fields: fields))
+  }
+
   private func listKey(_ id: UUID) -> String { "list:\(id.uuidString.lowercased())" }
 
   private func wordKey(_ list: UUID, _ item: String) -> String {
@@ -59,19 +81,11 @@ struct AccountSignedOutTests {
 
   @Test("a change made elsewhere while signed out wins over this phone's older one")
   func signedOutChangeConflicts() async throws {
-    let server = StubAccountServer()
-    let service = FakeAccountService(on: server)
-    let phone = await install(on: server)
+    let (service, phone, _) = try await signedInPhone()
     let favorites = phone.favorites
-    try await phone.signIn()
     await phone.account.signOut()
     phone.wordLists.renameList(favorites, to: "Mine")
-    service.change(
-      for: Fixture.email,
-      .init(
-        id: "elsewhere-1", entity: "list", operation: "update",
-        entityId: favorites.uuidString.lowercased(), baseVersion: 1,
-        fields: ["name": .string("Theirs")]))
+    changeElsewhere(service, list: favorites, "update", fields: ["name": .string("Theirs")])
 
     try await phone.signIn()
 
@@ -205,17 +219,10 @@ struct AccountSignedOutTests {
 
   @Test("any other list the account deleted is deleted here when this phone signs in again")
   func otherDeletedListsGo() async throws {
-    let server = StubAccountServer()
-    let service = FakeAccountService(on: server)
-    let phone = await install(on: server)
-    let drama = try #require(phone.wordLists.createList(named: "Drama"))
-    try await phone.signIn()
+    let (service, phone, lists) = try await signedInPhone(with: ["Drama"])
+    let drama = try #require(lists.first)
     await phone.account.signOut()
-    service.change(
-      for: Fixture.email,
-      .init(
-        id: "elsewhere-2", entity: "list", operation: "delete",
-        entityId: drama.id.uuidString.lowercased(), baseVersion: 1, fields: nil))
+    changeElsewhere(service, list: drama.id, "delete")
     try await phone.signIn(as: other)
     await phone.account.signOut()
 
@@ -227,24 +234,52 @@ struct AccountSignedOutTests {
       service.liveKeys(for: Fixture.email, entity: "list") == [listKey(WordLists.favoritesID)])
   }
 
-  @Test("while signed out, a word's changes queue as one, and too many changes start over")
+  @Test("while signed out, each word and list queues as one change, which goes on sign-in")
   func signedOutQueueStaysSmall() async throws {
-    let fixture = try await Fixture.afterSignIn()
-    await fixture.account.signOut()
-    for _ in 0..<3 {
-      fixture.markKnown(Fixture.taberu)
-      fixture.clearKnown(Fixture.taberu)
+    let (service, phone, _) = try await signedInPhone()
+    let favorites = phone.favorites
+    await phone.account.signOut()
+    let miru = LanguageReferenceID(rawValue: Fixture.miru)
+    for round in 0..<3 {
+      phone.markKnown(Fixture.taberu)
+      phone.clearKnown(Fixture.taberu)
+      phone.addMiru(to: favorites)
+      phone.wordLists.removeWord(miru, from: favorites)
+      phone.wordLists.renameList(favorites, to: "Mine \(round)")
     }
-    #expect(fixture.queuedOperations == ["knownWord clear \(Fixture.taberu)"])
+    let drama = try #require(phone.wordLists.createList(named: "Drama"))
+    phone.wordLists.renameList(drama.id, to: "Drama S2")
+    phone.addMiru(to: drama.id)
 
-    fixture.markMany(AccountSyncState.mostSignedOutChanges)
+    #expect(
+      phone.queuedOperations == [
+        "list update \(favorites.uuidString.lowercased())",
+        "knownWord clear \(Fixture.taberu)",
+        "listWord remove \(favorites.uuidString.lowercased())/\(Fixture.miru)",
+        "list create \(drama.id.uuidString.lowercased())",
+        "listWord add \(drama.id.uuidString.lowercased())/\(Fixture.miru)",
+      ])
+    try await phone.signIn()
 
-    #expect(fixture.sync.state.signedOutFrom == nil)
-    #expect(fixture.sync.state.queue.isEmpty)
-    let earlier = fixture.server.requests(to: "POST /v1/sync").count
-    try await fixture.signIn()
-    let syncs = fixture.server.requests(to: "POST /v1/sync").dropFirst(earlier)
-    #expect(syncs.first?.sync.cursor == nil)
-    #expect(syncs.first?.sync.mutations.allSatisfy { $0.baseVersion == 0 } == true)
+    let email = Fixture.email
+    #expect(service.data(of: listKey(favorites), for: email)?["name"] as? String == "Mine 2")
+    #expect(service.data(of: listKey(drama.id), for: email)?["name"] as? String == "Drama S2")
+    #expect(service.data(of: wordKey(drama.id, Fixture.miru), for: email) != nil)
+    #expect(service.data(of: wordKey(favorites, Fixture.miru), for: email) == nil)
+    #expect(phone.sync.state.queue.isEmpty)
+  }
+
+  @Test("a change that settles nothing still takes the account's copy it held back")
+  func heldCopyAfterANoOp() async throws {
+    let (service, phone, lists) = try await signedInPhone(with: ["Drama"])
+    let drama = try #require(lists.first)
+    changeElsewhere(service, list: drama.id, "update", fields: ["position": .number(0)])
+    phone.wordLists.renameList(drama.id, to: "Mine")
+    phone.wordLists.moveLists(fromOffsets: [1], toOffset: 0)
+
+    try await phone.syncNow()
+
+    #expect(phone.wordLists.lists.first { $0.id == drama.id }?.name == "Drama")
+    #expect(service.data(of: listKey(drama.id), for: Fixture.email)?["name"] as? String == "Drama")
   }
 }

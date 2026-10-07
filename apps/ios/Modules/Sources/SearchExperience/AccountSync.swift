@@ -228,7 +228,11 @@ final class AccountSync: LocalFileStore {
       case .applied(let version):
         state.versions[change.key.stored] = version
         state.rebase(change.key, from: change.baseVersion, to: version)
-        if settled { state.deferred[change.key.stored] = nil }
+        if settled, let copy = state.deferred.removeValue(forKey: change.key.stored),
+          copy.version >= version
+        {
+          apply(copy)
+        }
       case .conflict(let current):
         apply(current)
       case .rejected(let code):

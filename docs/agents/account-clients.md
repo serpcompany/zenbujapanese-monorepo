@@ -120,8 +120,9 @@ first time:
    entity as it is now, `delete` is gone. Keep the `cursor`. While `hasMore` is true, sync again.
    A list word can arrive a page before its list: hold it until `hasMore` is false. An entity
    with a change still queued keeps the device's copy for now: hold the account's copy until that
-   change's result. If the change is applied or conflicts, its result settles the entity; if it's
-   rejected, take the held copy.
+   change's result. A conflict's `current` replaces it. If the change is applied at a newer
+   version, the account's copy of that comes in `changes`; if it's applied at the held copy's
+   version (it changed nothing), or rejected, take the held copy.
 5. **On `410 invalid_cursor`**, sync again with no cursor, and take what comes back over your copy;
    queued changes still go.
 

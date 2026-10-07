@@ -348,9 +348,11 @@ tests prove that model against the real service.
   the file loads is queued once it has.
 - **Signing in and out.** Signing out forgets the session token but keeps the queue, cursor,
   versions, and waiting words under the account's user ID (`signedOutFrom`), and keeps queuing
-  changes with their base versions. While signed out, a word's new mark or un-mark replaces its
-  earlier one from the same signed-out stretch, and past 2,000 changes
-  (`AccountSyncState.mostSignedOutChanges`) the kept state is dropped, so the file stays small.
+  changes with their base versions. While signed out (`signedOutQueueStart`), a change replaces an
+  earlier one to the same known word or list word from the same signed-out stretch, a list's
+  renames and moves merge into its earlier `create` or `update`, and its `delete` replaces an
+  earlier `update`, so the queue holds about one change per entity however long the learner stays
+  signed out. Nothing queued before signing out is merged, since it may have been sent.
   Signing in to the same user ID picks them up and syncs from the kept cursor. Signing in to any other account drops them, moves Favorites to its shared ID
   (`WordLists.favoritesID`, from the oldest list if it's still named Favorites), and queues the
   phone's marks, lists, and list words at version 0 before the first sync. Deleting the account
@@ -366,8 +368,9 @@ tests prove that model against the real service.
   `conflict` takes `current`; `rejected` undoes the change with what it recorded (a word's earlier
   status, a list's earlier name), unless a later change to the entity is queued, and never undoes
   the first upload, so a list the account already has stays. A pulled copy of an entity with a
-  change still queued is held in the file (`deferred`) until that change's result: an applied or
-  conflicting result settles the entity, and a rejected one takes the held copy. A list word whose list hasn't arrived is kept in the file until a sync
+  change still queued is held in the file (`deferred`) until that change's result: a conflict's
+  `current` replaces it, an applied result takes it only if it's at least as new (an update that
+  changed nothing makes no newer copy), and a rejected one takes it. A list word whose list hasn't arrived is kept in the file until a sync
   reaches `hasMore: false`, even across a failed page or a relaunch, then dropped if the list never
   came. A deleted list drops its words. `410` drops the cursor and the held copies and words, and syncs
   again, still sending the queue. A sync's answer is dropped if the learner signed out or in while

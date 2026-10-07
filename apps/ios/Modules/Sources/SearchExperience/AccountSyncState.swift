@@ -32,6 +32,12 @@ struct QueuedSyncChange: Codable, Hashable, Sendable, Identifiable {
   let fields: [String: SyncFieldValue]?
   let undo: SyncUndo?
 
+  func merging(_ later: QueuedSyncChange) -> QueuedSyncChange {
+    QueuedSyncChange(
+      id: id, key: key, operation: operation, baseVersion: baseVersion,
+      fields: (fields ?? [:]).merging(later.fields ?? [:]) { _, newer in newer }, undo: undo)
+  }
+
   var payload: SyncMutationPayload {
     SyncMutationPayload(
       id: id, entity: key.entity, operation: operation, entityId: key.entityID,
@@ -85,7 +91,6 @@ struct AccountCopy: Codable, Hashable, Sendable {
 }
 
 struct AccountSyncState: Codable, Sendable, Equatable {
-  static let mostSignedOutChanges = 2_000
   static let favoritesKey = SyncEntityKey(
     entity: SyncEntity.list, entityID: SyncEntityKey.listID(WordLists.favoritesID))
 
@@ -140,17 +145,19 @@ struct AccountSyncState: Codable, Sendable, Equatable {
   }
 
   mutating func enqueue(_ change: QueuedSyncChange) {
-    guard let start = signedOutQueueStart else { return queue.append(change) }
-    if change.key.entity == SyncEntity.knownWord,
+    guard let start = signedOutQueueStart,
       let earlier = queue[start...].lastIndex(where: { $0.key == change.key })
-    {
-      queue.remove(at: earlier)
-    }
-    guard queue.count - start < Self.mostSignedOutChanges else {
-      let endedOnItsOwn = endedOnItsOwn
-      self = AccountSyncState()
-      self.endedOnItsOwn = endedOnItsOwn
+    else { return queue.append(change) }
+    let previous = queue[earlier]
+    switch (change.key.entity, previous.operation, change.operation) {
+    case (SyncEntity.list, "create", "update"), (SyncEntity.list, "update", "update"):
+      queue[earlier] = previous.merging(change)
       return
+    case (SyncEntity.list, "update", "delete"), (SyncEntity.knownWord, _, _),
+      (SyncEntity.listWord, _, _):
+      queue.remove(at: earlier)
+    default:
+      break
     }
     queue.append(change)
   }
