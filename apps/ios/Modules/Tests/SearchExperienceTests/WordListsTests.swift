@@ -68,6 +68,16 @@ final class WordListsTests {
     #expect(lists.lists.map(\.name) == ["Favorites", "Favorites"])
   }
 
+  @Test("names hold at most 500 characters, with control characters made spaces")
+  func nameLimits() async throws {
+    let lists = await loadedLists()
+    let long = try #require(lists.createList(named: String(repeating: "語", count: 600)))
+    #expect(long.name.unicodeScalars.count == WordLists.longestName)
+    let tabbed = try #require(lists.createList(named: "Anime\tS1\u{7}"))
+    #expect(tabbed.name == "Anime S1")
+    #expect(lists.createList(named: "\u{7}\u{8}") == nil)
+  }
+
   @Test("adding and removing words survive a reload, most recently added first")
   func membershipsPersist() async throws {
     let lists = await loadedLists()

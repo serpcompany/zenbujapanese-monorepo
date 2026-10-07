@@ -48,6 +48,8 @@ final class WordKnowledge: LocalFileStore {
   private(set) var knownRecords: [WordKnowledgeRecord] = []
   @ObservationIgnored private let writer: WordKnowledgeWriter
   @ObservationIgnored let writes = LocalFileWriteQueue()
+  @ObservationIgnored var changeObserver: ((SavedItemChange) -> Void)?
+  var canChange: Bool { isLoaded && !isReadOnly }
 
   init(fileURL: URL = WordKnowledge.defaultFileURL) {
     let writer = WordKnowledgeWriter(fileURL: fileURL)
@@ -106,7 +108,24 @@ final class WordKnowledge: LocalFileStore {
   private func setStatus(
     _ status: WordKnowledgeStatus, storedID: String, headword: String, reading: String
   ) {
-    guard isLoaded, !isReadOnly, (records[storedID]?.status ?? .unknown) != status else { return }
+    guard store(status, storedID: storedID, headword: headword, reading: reading) else { return }
+    changeObserver?(
+      .known(
+        KnownWordChange(
+          storedID: storedID, headword: headword, reading: reading, known: status == .known)))
+  }
+
+  func applySynced(_ word: KnownWordChange) {
+    store(
+      word.known ? .known : .unknown, storedID: word.storedID, headword: word.headword,
+      reading: word.reading)
+  }
+
+  @discardableResult
+  private func store(
+    _ status: WordKnowledgeStatus, storedID: String, headword: String, reading: String
+  ) -> Bool {
+    guard canChange, (records[storedID]?.status ?? .unknown) != status else { return false }
     let record = WordKnowledgeRecord(
       entryID: storedID,
       headword: headword,
@@ -118,10 +137,11 @@ final class WordKnowledge: LocalFileStore {
     knownRecords.removeAll { $0.entryID == storedID }
     if status == .known { knownRecords.insert(record, at: 0) }
     persist()
+    return true
   }
 
   func persist() {
-    guard isLoaded, !isReadOnly else { return }
+    guard canChange else { return }
     let writer = writer
     writes.save { [self] in await writer.write(Array(records.values)) }
   }

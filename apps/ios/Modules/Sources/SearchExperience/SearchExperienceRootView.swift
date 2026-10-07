@@ -5,6 +5,7 @@ public struct SearchExperienceRootView: View {
   @State private var userProfile = UserProfile()
   private let wordKnowledge = WordKnowledge.shared
   private let wordLists = WordLists.shared
+  private let zenbuAccount = ZenbuAccount.shared
   @Environment(\.scenePhase) private var scenePhase
   @State private var selectedTab = SearchExperienceTab.search
   @State private var frequencyRefreshID = 0
@@ -64,10 +65,17 @@ public struct SearchExperienceRootView: View {
       .environment(userProfile)
       .environment(wordKnowledge)
       .environment(wordLists)
-      .onChange(of: scenePhase) { _, phase in
-        if phase == .active {
+      .environment(zenbuAccount)
+      .onChange(of: scenePhase, initial: true) { _, phase in
+        switch phase {
+        case .active:
           wordKnowledge.saveIfNeeded()
           wordLists.saveIfNeeded()
+          zenbuAccount?.scheduler.appBecameActive()
+        case .background:
+          zenbuAccount?.scheduler.appEnteredBackground()
+        default:
+          break
         }
       }
   }

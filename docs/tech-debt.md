@@ -21,6 +21,8 @@ it must pass it over ([`ci.md`](agents/ci.md), Weekly maintenance).
 | Search, example, and word and kanji detail logic exist twice: the app's Swift, and its port in `packages/dictionary-core`. | Every change is made in both. `Search parity` checks that both sides of a pair change, not that they agree, and nothing tests the Swift before merge. | #481 | large |
 | The iOS app is one target, `SearchExperience` (`apps/ios/Modules/Sources/SearchExperience/`), holding Search, Player, Account, Lists, and Profile. | Nothing keeps one feature from reaching into another's code. Splitting it by feature needs a decision, and an ADR if so. | #516 | large |
 | Word notes and encounter media are keyed by `WordNoteID`, a hash of a word's meanings (ADR 0006). PR #480 re-keys them. | A JMdict edit to a word's meanings detaches its notes and media, and sync (#374) needs Language Reference IDs. | #474 | medium |
+| The iOS app's first sync after signing in sends the phone's known words, lists, and list words at version 0 (`AccountSync.begin` in `apps/ios/Modules/Sources/SearchExperience/AccountSync.swift`), but nothing the learner removed or renamed while signed out. | An un-mark, a deleted list, a removed word, or a rename made while signed out comes back from the account at the next sign-in. Sending them needs the account's versions first, so a decision on pulling before uploading. | No issue yet | medium |
+| Each new install starts with its own Favorites list, and signing in uploads it like any other list. | An account signed in on two phones has two lists named Favorites. Merging an untouched Favorites into the account's needs a product decision. | No issue yet | medium |
 
 ## Checks
 

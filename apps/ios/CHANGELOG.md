@@ -6,6 +6,13 @@ All notable user-facing changes to Zenbu Japanese are recorded here.
 
 ### Added
 
+- Sign in to a Zenbu account from **Account → Sign In to Sync**, with Apple, Google, or a code
+  sent by email, to keep your known words and lists the same on all your devices and Zenbu apps.
+  Zenbu syncs after each change, when it opens, and when you tap **Sync Now**. Everything still
+  works signed out and offline, and signing out keeps everything on your iPhone.
+- Delete your Zenbu account from **Account → Zenbu Account → Delete Account…**, after signing in
+  again. The account and everything it synced are deleted; your iPhone keeps its known words,
+  lists, notes, and media.
 - Image Search has four views: **Photo**, **Both** (the image above the Player's caption cards,
   with furigana and line translations), **Text** (the recognized Japanese as paragraph cards),
   and **Translate** (a natural translation, then context on what the text is and its idioms,
@@ -27,11 +34,11 @@ All notable user-facing changes to Zenbu Japanese are recorded here.
 - Mark words as **Known**. Swipe a Search result or long-press it, or use the **•••** menu on a
   word's page. Known words show a green **✓ Known** capsule in Search and on the word's page,
   and **Account → Known Words** lists them with a count, search, and swipe to mark unknown.
-  Known words are stored only on your device.
+  Known words are stored on your device.
 - Save words to your own **Lists**. Use **Add to List…** in the **•••** menu on a word's page
   to add it to any list or a new one; the word's page lists them above Notes. **Account → Lists** starts with **Favorites** and lets you
   create, rename (swipe, or tap a list in Edit), reorder, and delete lists, and search a list, swipe a word out of it, or select several words to remove. Lists
-  are stored only on your device.
+  are stored on your device.
 - Share a word from its page: the headword, reading, and meanings are shared as text.
 - New optional frequency dictionaries built from openly licensed Jiten lists (CC BY-SA 4.0):
   **TV & Movies**, **Anime**, **Manga**, **Novels**, **Visual Novels**, and **Video Games**.

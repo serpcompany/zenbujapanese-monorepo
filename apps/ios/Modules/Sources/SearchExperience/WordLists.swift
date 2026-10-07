@@ -34,6 +34,7 @@ final class WordLists: LocalFileStore {
   private(set) var membershipsByList: [UUID: [WordListMembership]] = [:]
   @ObservationIgnored private let writer: WordListsWriter
   @ObservationIgnored let writes = LocalFileWriteQueue()
+  @ObservationIgnored var changeObserver: ((SavedItemChange) -> Void)?
 
   init(fileURL: URL = WordLists.defaultFileURL) {
     let writer = WordListsWriter(fileURL: fileURL)
@@ -42,11 +43,11 @@ final class WordLists: LocalFileStore {
       let loaded = await writer.load()
       readOnlyReason = loaded.readOnlyReason
       if let contents = loaded.contents {
-        lists = Dictionary(contents.lists.map { ($0.id, $0) }) {
-          $0.updatedAt >= $1.updatedAt ? $0 : $1
-        }
-        .values
-        .sorted { ($0.position, $0.createdAt) < ($1.position, $1.createdAt) }
+        lists = Self.ordered(
+          Dictionary(contents.lists.map { ($0.id, $0) }) {
+            $0.updatedAt >= $1.updatedAt ? $0 : $1
+          }
+          .values)
         membershipsByList = Self.grouped(contents.memberships, in: lists)
       }
       isLoaded = true
@@ -89,6 +90,7 @@ final class WordLists: LocalFileStore {
       createdAt: now, updatedAt: now)
     lists.append(list)
     persist()
+    changeObserver?(.listCreated(list))
     return list
   }
 
@@ -96,9 +98,11 @@ final class WordLists: LocalFileStore {
     guard canChange, let name = Self.validName(name),
       let index = lists.firstIndex(where: { $0.id == listID }), lists[index].name != name
     else { return }
+    let previous = lists[index]
     lists[index].name = name
     lists[index].updatedAt = Date()
     persist()
+    changeObserver?(.listChanged(lists[index], previous: previous))
   }
 
   func deleteList(_ listID: UUID) {
@@ -106,17 +110,22 @@ final class WordLists: LocalFileStore {
     lists.removeAll { $0.id == listID }
     membershipsByList[listID] = nil
     persist()
+    changeObserver?(.listDeleted(listID))
   }
 
   func moveLists(fromOffsets source: IndexSet, toOffset destination: Int) {
     guard canChange else { return }
     lists.move(fromOffsets: source, toOffset: destination)
     let now = Date()
+    var moved: [(WordList, previous: WordList)] = []
     for index in lists.indices where lists[index].position != index {
+      let previous = lists[index]
       lists[index].position = index
       lists[index].updatedAt = now
+      moved.append((lists[index], previous))
     }
     persist()
+    for (list, previous) in moved { changeObserver?(.listChanged(list, previous: previous)) }
   }
 
   func toggle(_ entry: DictionaryEntry, in listID: UUID) {
@@ -144,9 +153,12 @@ final class WordLists: LocalFileStore {
   }
 
   func remove(storedID: String, from listID: UUID) {
-    guard canChange, contains(storedID: storedID, in: listID) else { return }
+    guard canChange,
+      let membership = membershipsByList[listID]?.first(where: { $0.entryID == storedID })
+    else { return }
     membershipsByList[listID]?.removeAll { $0.entryID == storedID }
     persist()
+    changeObserver?(.wordRemoved(membership))
   }
 
   private func add(storedID: String, headword: String, reading: String, to listID: UUID) {
@@ -157,6 +169,49 @@ final class WordLists: LocalFileStore {
       listID: listID, entryID: storedID, headword: headword, reading: reading, addedAt: Date())
     membershipsByList[listID, default: []].insert(membership, at: 0)
     persist()
+    changeObserver?(.wordAdded(membership))
+  }
+
+  func hasList(_ listID: UUID) -> Bool {
+    lists.contains { $0.id == listID }
+  }
+
+  func applySynced(_ list: WordList) {
+    guard canChange else { return }
+    if let index = lists.firstIndex(where: { $0.id == list.id }) {
+      guard lists[index].name != list.name || lists[index].position != list.position else { return }
+      lists[index].name = list.name
+      lists[index].position = list.position
+      lists[index].updatedAt = Date()
+    } else {
+      lists.append(list)
+      membershipsByList[list.id] = []
+    }
+    lists = Self.ordered(lists)
+    persist()
+  }
+
+  func applySyncedRemoval(ofList listID: UUID) {
+    guard canChange, hasList(listID) else { return }
+    lists.removeAll { $0.id == listID }
+    membershipsByList[listID] = nil
+    persist()
+  }
+
+  func applySynced(_ membership: WordListMembership) {
+    guard canChange, hasList(membership.listID) else { return }
+    var words = membershipsByList[membership.listID] ?? []
+    guard words.first(where: { $0.entryID == membership.entryID }) != membership else { return }
+    words.removeAll { $0.entryID == membership.entryID }
+    words.append(membership)
+    membershipsByList[membership.listID] = words.sorted { $0.addedAt > $1.addedAt }
+    persist()
+  }
+
+  func applySyncedRemoval(of storedID: String, from listID: UUID) {
+    guard canChange, contains(storedID: storedID, in: listID) else { return }
+    membershipsByList[listID]?.removeAll { $0.entryID == storedID }
+    persist()
   }
 
   func persist() {
@@ -165,6 +220,10 @@ final class WordLists: LocalFileStore {
     writes.save { [self] in
       await writer.write(lists: lists, memberships: membershipsByList.values.flatMap(\.self))
     }
+  }
+
+  private static func ordered(_ lists: some Sequence<WordList>) -> [WordList] {
+    lists.sorted { ($0.position, $0.createdAt) < ($1.position, $1.createdAt) }
   }
 
   private static func grouped(
@@ -181,9 +240,15 @@ final class WordLists: LocalFileStore {
     return grouped
   }
 
+  static let longestName = 500
+
   private static func validName(_ name: String) -> String? {
-    let trimmed = name.trimmingCharacters(in: .whitespacesAndNewlines)
-    return trimmed.isEmpty ? nil : trimmed
+    let printable = name.precomposedStringWithCanonicalMapping.unicodeScalars.map {
+      $0.properties.generalCategory == .control ? " " as Unicode.Scalar : $0
+    }
+    let capped = String(String.UnicodeScalarView(printable.prefix(longestName)))
+      .trimmingCharacters(in: .whitespacesAndNewlines)
+    return capped.isEmpty ? nil : capped
   }
 
   nonisolated static let defaultFileURL = FileManager.default.urls(

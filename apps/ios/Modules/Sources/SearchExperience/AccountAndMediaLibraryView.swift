@@ -14,6 +14,8 @@ struct AccountNavigationView: View {
           switch route {
           case .profile:
             ProfileView()
+          case .zenbuAccount:
+            ZenbuAccountView { path = [] }
           case .readingAids:
             ReadingAidSettingsView()
           case .mediaLibrary:
@@ -37,6 +39,7 @@ struct AccountNavigationView: View {
 struct AccountRootView: View {
   @Environment(WordKnowledge.self) private var wordKnowledge
   @Environment(WordLists.self) private var wordLists
+  @Environment(ZenbuAccount.self) private var zenbuAccount: ZenbuAccount?
 
   var body: some View {
     List {
@@ -45,6 +48,9 @@ struct AccountRootView: View {
           ProfileCardRow()
         }
         .accessibilityIdentifier("account.profile")
+        if zenbuAccount != nil {
+          ZenbuAccountRow()
+        }
       }
 
       Section {
@@ -117,22 +123,33 @@ struct AccountRootView: View {
   }
 }
 
-private struct AccountRowLabel: View {
+struct AccountRowLabel: View {
   let title: LocalizedStringKey
+  let subtitle: String?
   let systemImage: String
   let tint: Color
   @ScaledMetric(relativeTo: .body) private var tileSize = 30
   @ScaledMetric(relativeTo: .body) private var symbolSize = 15
 
-  init(_ title: LocalizedStringKey, systemImage: String, tint: Color) {
+  init(
+    _ title: LocalizedStringKey, subtitle: String? = nil, systemImage: String, tint: Color
+  ) {
     self.title = title
+    self.subtitle = subtitle
     self.systemImage = systemImage
     self.tint = tint
   }
 
   var body: some View {
     Label {
-      Text(title)
+      VStack(alignment: .leading, spacing: 2) {
+        Text(title)
+        if let subtitle {
+          Text(subtitle)
+            .font(.footnote)
+            .foregroundStyle(.secondary)
+        }
+      }
     } icon: {
       Image(systemName: systemImage)
         .font(.system(size: symbolSize, weight: .semibold))
@@ -227,6 +244,7 @@ private enum AppBundleInfo {
 
 enum AccountRoute: Hashable {
   case profile
+  case zenbuAccount
   case readingAids
   case mediaLibrary
   case knownWords
