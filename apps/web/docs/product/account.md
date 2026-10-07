@@ -71,7 +71,7 @@ Privacy Policy; Sign in links to Create an account; both link "Can't sign in?" t
 learner goes to `/account/`. A browser that already signed in sees "You're signed in. Go to your
 account." above the ways.
 
-- Source: #477 and ADR 0011 (Apple, Google, and an emailed code, through the account service);
+- Source: #477 and ADR 0012 (Apple, Google, and an emailed code, through the account service);
   #468 (the #402 sitemap sheet lists `/register/`), here the same flow, worded for making an
   account.
 - Check: Sign-in form tests, "emails a code, signs in with it, and goes to the account page";
@@ -100,7 +100,7 @@ nothing to reset, and offers the email code; it links to Sign in for an account 
 Google.
 
 - Source: #468 (the #402 sitemap sheet lists `/forgot-password/`); accounts have no password
-  (ADR 0011).
+  (ADR 0012).
 - Check: Account service spec, which signs in again from `/forgot-password/`.
 
 **Sign in with Apple.** Offered where the Worker names a Services ID (`ACCOUNT_APPLE_SERVICES_ID`).
@@ -113,7 +113,7 @@ page's own origin for a popup. It signs in with Apple's ID token and the nonce, 
 sign-in, the name Apple hands the page. A closed popup says nothing; a blocked one says to allow
 pop-ups; a nonce the service no longer knows says to try again.
 
-- Source: ADR 0011; the popup is how the page gets Apple's code for deleting an Apple account
+- Source: ADR 0012; the popup is how the page gets Apple's code for deleting an Apple account
   ([`web.md`](../../../../docs/agents/web.md), Account pages).
 - Check: `src/lib/account/apple.test.ts`; Sign-in form tests, "signs in with Apple's popup, passing
   the first sign-in's name"; Account page tests, "won't confirm with another Apple ID, and asks
@@ -128,7 +128,7 @@ a failure, back to the page it started on with `?error=`, which the page names: 
 an account another way, an unverified email, an account another Zenbu account uses, or a cancel.
 Back from Google with the browser's Back button, the buttons work again.
 
-- Source: ADR 0011; Better Auth's web sign-in.
+- Source: ADR 0012; Better Auth's web sign-in.
 - Check: Sign-in form tests, "sends the browser to Google, to come back to the account page, or
   here on a failure" and "says what went wrong when Google's sign-in comes back with an error".
   Google itself: not run.
