@@ -8,6 +8,7 @@ import xml.etree.ElementTree as ET
 from dataclasses import dataclass
 from pathlib import Path
 
+from jmdict_labels import sense_labels
 from jmdict_normalization import (
     FORM_KIND_READING,
     FORM_KIND_ROMAJI,
@@ -184,6 +185,7 @@ def import_entries(database: sqlite3.Connection, source: Path) -> ImportedEntrie
                         "meaning": ", ".join(meaning_group),
                         "notes": notes,
                         "partsOfSpeech": sense_parts_of_speech,
+                        **sense_labels(sense, entity_codes),
                     }
                 )
                 note_senses.append(

@@ -10,6 +10,7 @@
 !apps/ios/Modules/Sources/SearchExperience/Resources/CompoundPitch.sqlite3
 !apps/ios/Modules/Sources/SearchExperience/Resources/JLPTLevelPack.sqlite3
 !apps/ios/Modules/Sources/SearchExperience/Resources/TUBELEXFrequencyPack.sqlite3
+!apps/ios/Modules/Sources/SearchExperience/Resources/RankedLists.sqlite3
 !apps/ios/Modules/Sources/SearchExperience/Resources/KanjiStrokeData.sqlite3
 !apps/ios/Modules/Sources/SearchExperience/Resources/ExampleWordIndex.sqlite3
 !apps/ios/Modules/Sources/SearchExperience/Resources/KanjiReferenceData.json
