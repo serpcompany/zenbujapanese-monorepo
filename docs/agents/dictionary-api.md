@@ -127,13 +127,15 @@ searches, word examples, a query's examples, kanji details, and word lookups in 
 page's first request pays for a broad query and the rest don't. The browse routes don't scan the
 artifact for a request: before a thread reports ready, it builds the browse index
 (`packages/dictionary-core/src/artifact/browse-index.ts`) in a few passes, every word in kana
-order by its first two kana and every category's words most used first, and answers the totals,
-the category counts, the kanji and ranked lists' summaries, and the browse sitemap, which it keeps
-(`DictionaryBrowse.warm`). A browse page then reads only its own words. The index holds about
-590,000 row IDs. On a busy workstation, warming added about 6 seconds to a thread's start, and
-about 250 MB to its memory while it builds, of which it keeps about 40 MB; every browse route's
-first request then took at most 26 ms, where the totals took 1 second and the category counts 2
-before. The website's edge cache keeps answers for 10 minutes on top.
+order by its first two kana and every category's words in both its orders, keeps the totals, the
+category counts, the kanji and ranked lists' summaries and counts, every kanji list, and the
+browse sitemap, and runs each statement a browse page asks once (`DictionaryBrowse.warm`). A
+browse page then reads only its own words, with statements already prepared. The index holds
+about 960,000 row IDs, the categories' as 32-bit arrays. On 2026-10-07, with two threads on this
+workstation (load average 5 over the last minute, falling from 180 over fifteen), each thread was
+ready about 9.4 seconds after it started, the process held 1.45 GB, and every browse route's first
+request took at most 28 ms (a JLPT level's first page); before the index, the totals took 1 second
+and the category counts 2. The website's edge cache keeps answers for 10 minutes on top.
 
 Logs are one JSON object per line on stdout (errors on stderr): each request's method, route
 pattern, status, and time. Queries never appear in the logs.
