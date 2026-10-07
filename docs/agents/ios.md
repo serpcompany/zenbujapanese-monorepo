@@ -346,8 +346,18 @@ tests prove that model against the real service.
   queue, the cursor, the last sync, each entity's server version, and list words waiting for their
   list. A learner's change becomes a queued mutation with a new ID and, as `baseVersion`, the
   entity's last server version (or the base of a change to it still queued). A change made before
-  the file loads is queued once it has. Signing in queues the phone's marks, lists, and list words
-  at version 0, before the first sync.
+  the file loads is queued once it has.
+- **Signing in and out.** Signing out forgets the session token but keeps the queue, cursor,
+  versions, and waiting words under the account's user ID (`signedOutFrom`), and keeps queuing
+  changes with their base versions. Signing in to the same user ID picks them up and syncs from
+  the kept cursor. Signing in to any other account drops them, moves Favorites to its shared ID
+  (`WordLists.favoritesID`, from the oldest list if it's still named Favorites), and queues the
+  phone's marks, lists, and list words at version 0 before the first sync. Deleting the account
+  drops everything.
+- **Favorites** has one ID in every app ([`account-clients.md`](account-clients.md), The rules, from
+  your side). A second phone's `create` of it is rejected `already_exists`, which the first upload
+  never undoes: the account's copy comes down, and the phone's words still add. If that copy comes
+  down deleted, the phone keeps its list under a new ID and uploads it with its words.
 - **A sync** sends up to 50 queued changes, at most 48 KB of them (the service takes 64 KB), and at
   most one per entity, so a second change to an entity goes after the first's result and is moved
   onto its version. An answer lost on the way is sent again unchanged. `applied` keeps the version;
@@ -372,11 +382,14 @@ tests prove that model against the real service.
   sign-in replaces. Then it calls `DELETE /v1/me` and signs out. Each attempt with Apple uses a new
   code. If the answer is lost, the app asks `/v1/auth/token`: a `401` means the account is gone.
 
-`AccountSignInTests`, `AccountSyncTests`, `AccountSyncConflictTests`, and `AccountSyncRecoveryTests`
-run the client against a stub server (`StubAccountServer`, a `URLProtocol`): sign-in, tokens and
-their refresh, the queue and cursor across a relaunch, retries under the same mutation IDs, each
-entity's conflicts and rejections, order and paging, list words held across a failed page, the
-request size, `410`, `429` and backoff, and signing out and deleting, which keep the phone's data.
+`AccountSignInTests`, `AccountSyncTests`, `AccountSyncConflictTests`, `AccountSyncRecoveryTests`, and
+`AccountSignedOutTests` run the client against a stub server (`StubAccountServer`, a `URLProtocol`):
+sign-in, tokens and their refresh, the queue and cursor across a relaunch, retries under the same
+mutation IDs, each entity's conflicts and rejections, order and paging, list words held across a
+failed page, the request size, `410`, `429` and backoff, and signing out and deleting, which keep
+the phone's data. `AccountSignedOutTests` runs against `FakeAccountService`, a small copy of the
+service's sync rules, so two installs can share one account: changes made while signed out going
+to the same account, another account starting over, and two phones ending with one Favorites.
 
 ## Image Search and Apple Intelligence
 

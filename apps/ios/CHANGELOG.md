@@ -9,7 +9,8 @@ All notable user-facing changes to Zenbu Japanese are recorded here.
 - Sign in to a Zenbu account from **Account → Sign In to Sync**, with Apple, Google, or a code
   sent by email, to keep your known words and lists the same on all your devices and Zenbu apps.
   Zenbu syncs after each change, when it opens, and when you tap **Sync Now**. Everything still
-  works signed out and offline, and signing out keeps everything on your iPhone.
+  works signed out and offline, and signing out keeps everything on your iPhone; changes you make
+  while signed out sync when you sign back in. **Favorites** is one list on all your devices.
 - Delete your Zenbu account from **Account → Zenbu Account → Delete Account…**, after signing in
   again. The account and everything it synced are deleted; your iPhone keeps its known words,
   lists, notes, and media.

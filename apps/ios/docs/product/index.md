@@ -101,7 +101,8 @@ it, and Known Words asks the learner to reopen Zenbu.
 
 Lists are the learner's own named groups of dictionary words and kanji, such as "Favorites" or
 "Anime S1 vocab". A new install starts with one list, **Favorites**, which can be renamed or deleted like
-any other; once deleted it is not created again. Words and kanji are added from their page's **•••** menu
+any other; once deleted it is not created again. Signed in, Favorites is one list on every device
+and Zenbu app ([Zenbu account and sync](#zenbu-account-and-sync)). Words and kanji are added from their page's **•••** menu
 (see [Dictionary](dictionary.md)).
 
 The Account row shows how many lists there are. Lists shows every list in the learner's order
@@ -146,9 +147,17 @@ email, taps **Email Me a Code**, and enters the 6-digit code. A refused sign-in 
 wrong or expired code, or an email whose account signs in with Apple or Google. Signed in, the
 Account row shows **Zenbu Account** and the email.
 
-**The first sync.** Right after signing in, the app sends the account everything on the phone:
-every known word, every list, and every list's words, then brings down everything the account
-already has. The same Apple ID, Google account, or email reaches the same account in every app.
+**The first sync.** The first time this phone signs in to an account, the app sends the account
+everything on the phone: every known word, every list, and every list's words, then brings down
+everything the account already has. The same Apple ID, Google account, or email reaches the same
+account in every app.
+
+**Favorites is one list.** Every device's and app's Favorites is the same list in the account, so
+signing in on a second phone puts that phone's Favorites words into the account's Favorites, under
+its name and place, rather than making a second Favorites. An install that already had Favorites
+before it could sign in joins it the same way, if its oldest list is still named Favorites. If
+Favorites was deleted in the account, a phone signing in keeps its own Favorites, with its words,
+as a new list.
 
 **When it syncs.** After each change to a known word or a list, when the app opens or returns to
 the foreground with changes waiting or a last sync over 15 minutes ago, when iOS gives it time in
@@ -171,10 +180,13 @@ again a few times, waiting longer each time, only while the app is open.
 changes are waiting, and a note when the last sync failed, with **Sync Now**, **Sign Out**, and
 **Delete Account…**.
 
-**Signing out** asks first, then forgets the account on this phone and keeps everything: known
-words, lists, notes, and media stay, and stop syncing until the learner signs in again. If the
-account ends the session itself, such as after the account is deleted from another app, the app
-signs out the same way, and the Account row says so.
+**Signing out** asks first, then forgets the sign-in on this phone and keeps everything: known
+words, lists, notes, and media stay, and every feature works. Changes made while signed out, such
+as an un-marked word, a deleted list, a removed word, or a rename, are kept in order, and go to the
+account when the learner signs in to the same account again, by the same rules as any change made
+offline. Signing in to a different account instead sends that account everything on the phone, as
+a first sync does. If the account ends the session itself, such as after the account is deleted
+from another app, the app signs out the same way, and the Account row says so.
 
 ### Deleting the account
 
@@ -191,7 +203,8 @@ A signed-in learner can delete their Zenbu account from **Zenbu Account → Dele
   account). If Apple refuses or doesn't answer, nothing is deleted, and the learner signs in with
   Apple again to try again.
 - Afterwards the app is signed out and keeps everything on the phone: Known Words, lists, notes,
-  and media stay, and every feature works.
+  and media stay, and every feature works. Signing in again makes a new account, which gets
+  everything on the phone, as a first sync does.
 
 ## Required, not built yet (#563)
 

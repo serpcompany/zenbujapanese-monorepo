@@ -74,16 +74,16 @@ final class ZenbuAccount {
 
   func confirmIdentityWithApple() async throws -> String {
     let (signIn, authorizationCode) = try await appleSignIn()
-    try await resume(signIn)
+    try await reauthenticate(signIn)
     return authorizationCode
   }
 
   func confirmIdentityWithGoogle() async throws {
-    try await resume(try await googleSignIn())
+    try await reauthenticate(try await googleSignIn())
   }
 
   func confirmIdentity(email: String, code: String) async throws {
-    try await resume(try await emailSignIn(email: email, code: code))
+    try await reauthenticate(try await emailSignIn(email: email, code: code))
   }
 
   func deleteAccount(appleAuthorizationCode: String?) async throws {
@@ -99,7 +99,7 @@ final class ZenbuAccount {
       throw AccountServiceError.sessionEnded
     }
     scheduler.stop()
-    sync.endSession()
+    sync.forgetAccount()
   }
 
   private func accountIsGone() async throws -> Bool {
@@ -118,10 +118,10 @@ final class ZenbuAccount {
     scheduler.syncNow()
   }
 
-  private func resume(_ signIn: AccountSignIn) async throws {
+  private func reauthenticate(_ signIn: AccountSignIn) async throws {
     let earlier = sync.tokens.sessionToken
     do {
-      try sync.resume(signIn)
+      try sync.confirm(signIn)
     } catch {
       try? await api.signOut(sessionToken: signIn.sessionToken)
       throw error

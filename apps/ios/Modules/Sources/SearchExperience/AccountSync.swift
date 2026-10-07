@@ -89,12 +89,16 @@ final class AccountSync: LocalFileStore {
     tokens.replaceSession(with: signIn.sessionToken)
     session += 1
     lastFailure = nil
-    state = AccountSyncState(account: SignedInAccount(userID: signIn.userID, email: signIn.email))
-    state.queue = uploads().map(\.upload)
+    let account = SignedInAccount(userID: signIn.userID, email: signIn.email)
+    if !state.resume(as: account) {
+      wordLists.useSharedFavoritesID()
+      state = AccountSyncState(account: account)
+      state.queue = uploads().map(\.upload)
+    }
     persist()
   }
 
-  func resume(_ signIn: AccountSignIn) throws {
+  func confirm(_ signIn: AccountSignIn) throws {
     guard signIn.userID == account?.userID else { throw AccountServiceError.differentAccount }
     tokens.replaceSession(with: signIn.sessionToken)
   }
@@ -102,7 +106,15 @@ final class AccountSync: LocalFileStore {
   func endSession(onItsOwn: Bool = false) {
     session += 1
     tokens.forgetSession()
-    state = AccountSyncState(endedOnItsOwn: onItsOwn)
+    state.signOut(onItsOwn: onItsOwn)
+    lastFailure = nil
+    persist()
+  }
+
+  func forgetAccount() {
+    session += 1
+    tokens.forgetSession()
+    state = AccountSyncState()
     lastFailure = nil
     persist()
   }
@@ -136,10 +148,10 @@ final class AccountSync: LocalFileStore {
       changesBeforeLoad.append(change)
       return
     }
-    guard !isUnavailable, account != nil else { return }
+    guard !isUnavailable, state.keepsChanges else { return }
     state.queue.append(change.queued(in: state))
     persist()
-    onLocalChange?()
+    if account != nil { onLocalChange?() }
   }
 
   private func uploads() -> [SavedItemChange] {
@@ -197,6 +209,7 @@ final class AccountSync: LocalFileStore {
       hasMore = answer.hasMore
     }
     placeHeldWords()
+    state.uploadsTheAccountHad = []
     state.lastSyncedAt = now()
     persist()
   }
@@ -212,8 +225,12 @@ final class AccountSync: LocalFileStore {
         state.rebase(change.key, from: change.baseVersion, to: version)
       case .conflict(let current):
         apply(current)
-      case .rejected:
-        if !state.hasQueuedChange(to: change.key), let undo = change.undo { self.undo(undo) }
+      case .rejected(let code):
+        if change.undo == nil, change.operation == "create", code == "already_exists" {
+          state.uploadsTheAccountHad.insert(change.key.stored)
+        } else if !state.hasQueuedChange(to: change.key), let undo = change.undo {
+          self.undo(undo)
+        }
       case nil:
         continue
       }
@@ -229,6 +246,7 @@ final class AccountSync: LocalFileStore {
           storedID: word.itemId, headword: word.headword, reading: word.reading, known: word.known))
     case .list(let list):
       guard let id = UUID(uuidString: list.id) else { return }
+      state.uploadsTheAccountHad.remove(change.key.stored)
       wordLists.applySynced(
         WordList(
           id: id, name: list.name, position: list.position, createdAt: list.createdAt,
@@ -271,7 +289,11 @@ final class AccountSync: LocalFileStore {
           known: false))
     case SyncEntity.list:
       guard let listID = UUID(uuidString: key.entityID) else { return }
-      wordLists.applySyncedRemoval(ofList: listID)
+      if state.uploadsTheAccountHad.remove(key.stored) != nil {
+        keepAsNewList(listID)
+      } else {
+        wordLists.applySyncedRemoval(ofList: listID)
+      }
       state.forgetWords(of: listID)
     case SyncEntity.listWord:
       guard let parts = key.listWordParts else { return }
@@ -280,6 +302,12 @@ final class AccountSync: LocalFileStore {
     default:
       return
     }
+  }
+
+  private func keepAsNewList(_ listID: UUID) {
+    guard let moved = wordLists.moveList(listID, to: UUID()) else { return }
+    state.queue.append(SavedItemChange.listCreated(moved.list).upload)
+    state.queue += moved.words.reversed().map { SavedItemChange.wordAdded($0).upload }
   }
 
   private func undo(_ undo: SyncUndo) {

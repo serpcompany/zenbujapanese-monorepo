@@ -137,14 +137,18 @@ struct SyncResult: Decodable, Sendable {
   enum Outcome: Sendable {
     case applied(version: Int)
     case conflict(current: SyncChange)
-    case rejected
+    case rejected(code: String)
   }
 
   let id: String
   let outcome: Outcome
 
   private enum CodingKeys: String, CodingKey {
-    case id, status, version, current
+    case id, status, version, current, error
+  }
+
+  private struct Rejection: Decodable {
+    let code: String
   }
 
   init(from decoder: Decoder) throws {
@@ -156,7 +160,8 @@ struct SyncResult: Decodable, Sendable {
     case "conflict":
       outcome = .conflict(current: try container.decode(SyncChange.self, forKey: .current))
     default:
-      outcome = .rejected
+      let rejection = try? container.decodeIfPresent(Rejection.self, forKey: .error)
+      outcome = .rejected(code: rejection?.code ?? "")
     }
   }
 }

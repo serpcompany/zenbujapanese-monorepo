@@ -83,7 +83,9 @@ struct ZenbuAccountView: View {
         }
       }
     } message: {
-      Text("Your known words and lists stay on this iPhone, and stop syncing until you sign in.")
+      Text(
+        "Your known words and lists stay on this iPhone. Changes you make while signed out sync when you sign in to this account again."
+      )
     }
     .sheet(isPresented: $deletes) {
       DeleteAccountView(finished: close)

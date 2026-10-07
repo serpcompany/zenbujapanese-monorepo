@@ -52,11 +52,13 @@ struct HeldListWord: Codable, Hashable, Sendable {
 
 struct AccountSyncState: Codable, Sendable, Equatable {
   var account: SignedInAccount?
+  var signedOutFrom: SignedInAccount?
   var cursor: String?
   var lastSyncedAt: Date?
   var queue: [QueuedSyncChange] = []
   var versions: [String: Int] = [:]
   var heldWords: [HeldListWord] = []
+  var uploadsTheAccountHad: Set<String> = []
   var endedOnItsOwn = false
 
   init(account: SignedInAccount? = nil, endedOnItsOwn: Bool = false) {
@@ -67,12 +69,31 @@ struct AccountSyncState: Codable, Sendable, Equatable {
   init(from decoder: Decoder) throws {
     let container = try decoder.container(keyedBy: CodingKeys.self)
     account = try container.decodeIfPresent(SignedInAccount.self, forKey: .account)
+    signedOutFrom = try container.decodeIfPresent(SignedInAccount.self, forKey: .signedOutFrom)
     cursor = try container.decodeIfPresent(String.self, forKey: .cursor)
     lastSyncedAt = try container.decodeIfPresent(Date.self, forKey: .lastSyncedAt)
     queue = try container.decodeIfPresent([QueuedSyncChange].self, forKey: .queue) ?? []
     versions = try container.decodeIfPresent([String: Int].self, forKey: .versions) ?? [:]
     heldWords = try container.decodeIfPresent([HeldListWord].self, forKey: .heldWords) ?? []
+    uploadsTheAccountHad =
+      try container.decodeIfPresent(Set<String>.self, forKey: .uploadsTheAccountHad) ?? []
     endedOnItsOwn = try container.decodeIfPresent(Bool.self, forKey: .endedOnItsOwn) ?? false
+  }
+
+  var keepsChanges: Bool { account != nil || signedOutFrom != nil }
+
+  mutating func signOut(onItsOwn: Bool) {
+    signedOutFrom = account ?? signedOutFrom
+    account = nil
+    endedOnItsOwn = onItsOwn
+  }
+
+  mutating func resume(as account: SignedInAccount) -> Bool {
+    guard signedOutFrom?.userID == account.userID else { return false }
+    self.account = account
+    signedOutFrom = nil
+    endedOnItsOwn = false
+    return true
   }
 
   func version(of key: SyncEntityKey) -> Int {

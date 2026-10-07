@@ -133,6 +133,14 @@ first time:
   - A rename or move conflicts if the list changed since.
   - A delete wins over everything done to the list since, and takes its words: when a list is
     deleted, drop its words on the device.
+  - **Favorites has one ID in every app: `2177c773-9e88-410f-9348-6cefaebe0a93`.** An app that
+    starts learners with a Favorites list gives it this ID, so every device's Favorites is one list
+    in the account (lists are the account's own, so the ID can't collide with another learner's).
+    On a second device, its `create` is rejected (`already_exists`): keep the list, take the
+    account's copy as it comes down, and its words' adds still apply. If the account's copy comes
+    down deleted, the device's Favorites never belonged to it: keep its words as a new list, under
+    a new ID, rather than dropping them. The iOS app moves an older install's Favorites to this ID
+    before its first upload.
 - **List words**, `<list>/<item>`:
   - An add always applies.
   - A remove applies only if your app had the latest add: an add from elsewhere wins.
@@ -156,5 +164,11 @@ Every app that signs in offers deleting the account (App Review guideline 5.1.1(
 
 ## Signing out
 
-`POST /v1/auth/sign-out` with the session token, then forget it and the cursor. Keep the device's
-copy: it's the learner's.
+`POST /v1/auth/sign-out` with the session token, then forget it. Keep the device's copy: it's the
+learner's.
+
+An app may also keep its queue, cursor, and entity versions for the account it signed out of (the
+sign-in's user ID), and keep queuing changes, with their base versions, while signed out, as the
+iOS app does. When the same account signs in again, sync from them: the changes apply by the usual
+rules. When another account signs in, drop them, and send that account the device's copy at
+version 0, as a first sign-in does.

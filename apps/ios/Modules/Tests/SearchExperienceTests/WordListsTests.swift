@@ -26,6 +26,7 @@ final class WordListsTests {
   func seedsFavorites() async {
     let lists = await loadedLists()
     #expect(lists.lists.map(\.name) == ["Favorites"])
+    #expect(lists.lists.map(\.id) == [WordLists.favoritesID])
 
     let reloaded = await loadedLists()
     #expect(reloaded.lists.map(\.id) == lists.lists.map(\.id))

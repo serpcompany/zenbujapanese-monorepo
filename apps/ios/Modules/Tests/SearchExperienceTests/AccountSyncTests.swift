@@ -241,7 +241,7 @@ struct AccountSyncTests {
     #expect(fixture.sync.isDue(staleAfter: AccountSyncScheduler.staleAfter))
   }
 
-  @Test("signing out forgets the session, queue, and cursor, and keeps the phone's data")
+  @Test("signing out forgets the session, keeps the phone's data, and keeps queuing changes")
   func signOutKeepsData() async throws {
     let fixture = Fixture()
     fixture.serve()
@@ -255,15 +255,17 @@ struct AccountSyncTests {
     let signOut = try #require(fixture.server.requests(to: "POST /v1/auth/sign-out").first)
     #expect(signOut.header("Authorization") == "Bearer \(Fixture.sessionToken)")
     #expect(fixture.sync.account == nil)
-    #expect(fixture.sync.state == AccountSyncState())
+    #expect(fixture.sync.state.signedOutFrom?.userID == Fixture.userID)
+    #expect(fixture.sync.state.cursor == "cursor-1")
     #expect(fixture.storage.read() == nil)
     #expect(fixture.wordKnowledge.isKnown(storedID: Fixture.taberu))
     #expect(fixture.wordLists.lists.count == 1)
     fixture.markKnown(Fixture.miru)
-    #expect(fixture.sync.state.queue.isEmpty)
+    #expect(fixture.queuedOperations.last == "knownWord mark \(Fixture.miru)")
 
     await fixture.launch()
     #expect(fixture.sync.account == nil)
+    #expect(fixture.sync.state.queue.count == 2)
     #expect(fixture.wordKnowledge.isKnown(storedID: Fixture.miru))
   }
 

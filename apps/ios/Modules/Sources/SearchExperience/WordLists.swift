@@ -26,6 +26,7 @@ final class WordLists: LocalFileStore {
   static let shared = WordLists()
 
   static let defaultListName = String(localized: "Favorites")
+  static let favoritesID = UUID(uuidString: "2177c773-9e88-410f-9348-6cefaebe0a93")!
 
   private(set) var isLoaded = false
   private(set) var readOnlyReason: LocalFileReadOnlyReason?
@@ -52,7 +53,7 @@ final class WordLists: LocalFileStore {
       }
       isLoaded = true
       if loaded.contents == nil {
-        createList(named: Self.defaultListName)
+        createList(named: Self.defaultListName, id: Self.favoritesID)
       } else if loaded.needsRewrite {
         persist()
       }
@@ -82,11 +83,11 @@ final class WordLists: LocalFileStore {
   }
 
   @discardableResult
-  func createList(named name: String) -> WordList? {
-    guard canChange, let name = Self.validName(name) else { return nil }
+  func createList(named name: String, id: UUID = UUID()) -> WordList? {
+    guard canChange, !hasList(id), let name = Self.validName(name) else { return nil }
     let now = Date()
     let list = WordList(
-      id: UUID(), name: name, position: (lists.map(\.position).max() ?? -1) + 1,
+      id: id, name: name, position: (lists.map(\.position).max() ?? -1) + 1,
       createdAt: now, updatedAt: now)
     lists.append(list)
     persist()
@@ -189,6 +190,35 @@ final class WordLists: LocalFileStore {
     }
     lists = Self.ordered(lists)
     persist()
+  }
+
+  func useSharedFavoritesID() {
+    guard !hasList(Self.favoritesID),
+      let oldest = lists.min(by: { $0.createdAt < $1.createdAt }),
+      oldest.name == Self.defaultListName
+    else { return }
+    moveList(oldest.id, to: Self.favoritesID)
+  }
+
+  @discardableResult
+  func moveList(
+    _ listID: UUID, to newID: UUID
+  ) -> (list: WordList, words: [WordListMembership])? {
+    guard canChange, !hasList(newID), let index = lists.firstIndex(where: { $0.id == listID })
+    else { return nil }
+    let old = lists[index]
+    let list = WordList(
+      id: newID, name: old.name, position: old.position, createdAt: old.createdAt,
+      updatedAt: old.updatedAt)
+    let words = (membershipsByList.removeValue(forKey: listID) ?? []).map {
+      WordListMembership(
+        listID: newID, entryID: $0.entryID, headword: $0.headword, reading: $0.reading,
+        addedAt: $0.addedAt)
+    }
+    lists[index] = list
+    membershipsByList[newID] = words
+    persist()
+    return (list, words)
   }
 
   func applySyncedRemoval(ofList listID: UUID) {

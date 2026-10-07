@@ -24,7 +24,7 @@ final class AccountFixture {
 
   let directory = FileManager.default.temporaryDirectory
     .appending(path: "account-tests-\(UUID().uuidString)", directoryHint: .isDirectory)
-  let server = StubAccountServer()
+  let server: StubAccountServer
   let storage: MemorySessionTokenStorage
   var now = Date(timeIntervalSince1970: 1_791_000_000)
   private(set) var wordKnowledge: WordKnowledge!
@@ -33,8 +33,9 @@ final class AccountFixture {
 
   var sync: AccountSync { account.sync }
 
-  init(sessionToken: String? = nil) {
+  init(sessionToken: String? = nil, server: StubAccountServer = StubAccountServer()) {
     storage = MemorySessionTokenStorage(sessionToken)
+    self.server = server
   }
 
   deinit {
@@ -105,8 +106,8 @@ final class AccountFixture {
     }
   }
 
-  func signIn() async throws {
-    try await account.signIn(email: Self.email, code: "123456")
+  func signIn(as email: String = AccountFixture.email) async throws {
+    try await account.signIn(email: email, code: "123456")
     await account.scheduler.settled()
     await settle()
   }
