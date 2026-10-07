@@ -30,7 +30,7 @@ const badVideo = rejection(
 )
 const badFields = rejection(
   'invalid_fields',
-  `A watch has watchedAt, an ISO 8601 time, and may have title and author (strings, cut to ${watchLimits.textLength} characters), duration and position (seconds from 0 to ${watchLimits.seconds}), and comprehension (from 0 to 1). Nothing else.`
+  `A watch has watchedAt, an ISO 8601 time from 2000 on, and may have title and author (strings, cut to ${watchLimits.textLength} characters), duration and position (seconds from 0 to ${watchLimits.seconds}), and comprehension (from 0 to 1). Nothing else.`
 )
 
 const textFields = ['title', 'author'] as const
@@ -102,8 +102,19 @@ function watchFields(
   return { details, watchedAt }
 }
 
-const later = (one: Date | null | undefined, other: Date) =>
-  one && one.getTime() > other.getTime() ? one : other
+function merged(
+  watching: WatchedVideo | null,
+  sent: { details: Partial<Details>; watchedAt: Date }
+) {
+  const kept = detailsOf(watching)
+  if (!watching?.watchedAt || sent.watchedAt >= watching.watchedAt) {
+    return { ...kept, ...sent.details, watchedAt: sent.watchedAt }
+  }
+  const missing = Object.entries(sent.details).filter(
+    ([key]) => kept[key as keyof Details] === null
+  )
+  return { ...kept, ...Object.fromEntries(missing), watchedAt: watching.watchedAt }
+}
 
 const unchanged = (current: WatchedVideo, next: Omit<WatchedVideo, 'version' | 'updatedAt'>) =>
   (Object.keys(next) as (keyof typeof next)[]).every(key =>
@@ -147,13 +158,7 @@ async function watch(account: LockedAccount, mutation: ClientMutation): Promise<
     return conflict(asChange(current))
   }
   const watching = current?.status === 'watched' ? current : null
-  const next = {
-    videoId,
-    ...detailsOf(watching),
-    ...sent.details,
-    watchedAt: later(watching?.watchedAt, sent.watchedAt),
-    status: 'watched' as const
-  }
+  const next = { videoId, ...merged(watching, sent), status: 'watched' as const }
   if (watching && unchanged(watching, next)) return applied(watching.version)
   const version = (current?.version ?? 0) + 1
   await save(account, { ...next, version }, 'watch')
@@ -173,7 +178,7 @@ export const watchHistory: Entity = {
         const videoId = videoIdOf(mutation.entityId)
         if (!videoId) return rejected(badVideo)
         const current = await account.watchedVideo(videoId)
-        if (current?.status !== 'watched') return applied(current?.version ?? 0)
+        if (!current || current.status === 'removed') return applied(current?.version ?? 0)
         const version = current.version + 1
         await save(account, { ...emptied(videoId), status: 'removed', version }, 'remove')
         await account.forgetWatchedVideos(watchLimits.goneKept)

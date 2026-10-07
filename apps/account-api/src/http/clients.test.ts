@@ -9,15 +9,8 @@ const accounts = useAccountService()
 const word = (n: number) => n.toString(16).padStart(32, '0')
 const text = { headword: '見る', reading: 'みる' }
 
-type Result = { status: string; error?: { code: string } }
-
-async function send(token: string, ...mutations: Record<string, unknown>[]) {
-  const answer = await accounts.sync(token, {
-    mutations: mutations.map(mutation => ({ id: randomUUID(), ...mutation }))
-  })
-  expect(answer.status, JSON.stringify(answer.body)).toBe(200)
-  return answer.body as unknown as { results: Result[]; changes: { entity: string }[] }
-}
+const send = (token: string, ...mutations: Record<string, unknown>[]) =>
+  accounts.mutate(token, ...mutations)
 
 describe("each app's access to an account", () => {
   test('a Tomodachi token names the app and only its scopes', async () => {

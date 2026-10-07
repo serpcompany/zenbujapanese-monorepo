@@ -192,7 +192,8 @@ again a few times, waiting longer each time, only while the app is open.
 - A word added to a list elsewhere stays, even if this phone removed it without seeing that add.
 - A change the account can never take, such as a word added to a list deleted elsewhere, is undone
   on the phone.
-- A video watched on two devices keeps the place the learner reached last, and its newest time. A
+- A video watched on two devices keeps the place from the device that watched it last, by each
+  device's clock, even when the other syncs later. A
   video removed from Recent on one device is removed everywhere, even if another device, which
   hadn't heard of the removal, updated its place since; watching it again brings it back.
 - The account keeps the 50 most recently watched videos, as Recent does; a video watched on

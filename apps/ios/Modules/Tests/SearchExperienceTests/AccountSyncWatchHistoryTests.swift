@@ -212,18 +212,52 @@ struct AccountSyncWatchHistoryTests {
     #expect(service.liveKeys(for: Fixture.email, entity: "watchedVideo").isEmpty)
   }
 
-  @Test("videos saved before Recent kept a time get one in their order, and keep it")
+  @Test("videos saved before Recent kept a time are dated in their order, before any watched since")
   func datesOldVideos() throws {
     let suite = "watch-history-\(UUID().uuidString)"
     let defaults = try #require(UserDefaults(suiteName: suite))
     defer { UserDefaults().removePersistentDomain(forName: suite) }
     let old = [WatchedVideo(videoID: ramen), WatchedVideo(videoID: sushi)]
     defaults.set(try JSONEncoder().encode(old), forKey: "watch.recent-videos.v1")
-    let loadedAt = Date(timeIntervalSince1970: 1_800_000_000)
+    let start = WatchHistory.undatedStart
 
-    let history = WatchHistory(defaults: defaults, now: { loadedAt })
-    #expect(history.videos.map(\.watchedAt) == [loadedAt, loadedAt - 1])
-    let reloaded = WatchHistory(defaults: defaults, now: { loadedAt + 3600 })
-    #expect(reloaded.videos.map(\.watchedAt) == [loadedAt, loadedAt - 1])
+    let history = WatchHistory(defaults: defaults, now: { Date(timeIntervalSince1970: 1_800_000_000) })
+    #expect(history.videos.map(\.watchedAt) == [start + 2, start + 1])
+    history.record(try #require(YouTubeVideoID(rawValue: videoID(1))))
+    #expect(history.videos.map(\.videoID) == [videoID(1), ramen, sushi])
+    let reloaded = WatchHistory(defaults: defaults)
+    #expect(reloaded.videos.map(\.watchedAt).suffix(2) == [start + 2, start + 1])
+  }
+
+  @Test("the phone keeps the versions of the latest 100 videos gone from the account, and no more")
+  func boundsGoneVersions() async throws {
+    let fixture = try await Fixture.afterSignIn()
+    fixture.serve { _ in
+      StubSync.answer(
+        changes: (1...101).map { StubSync.gone("watchedVideo", videoID($0), version: 2) },
+        cursor: "c2")
+    }
+    try await fixture.syncNow()
+    let kept = fixture.sync.state.versions.keys.filter { $0.hasPrefix("watchedVideo:") }
+    #expect(kept.count == 100)
+    #expect(!kept.contains("watchedVideo:\(videoID(1))"))
+    #expect(kept.contains("watchedVideo:\(videoID(101))"))
+  }
+
+  @Test("a pulled video whose ID isn't a YouTube video ID is left out")
+  func refusesBadVideoIDs() async throws {
+    let fixture = try await Fixture.afterSignIn()
+    fixture.serve { _ in
+      StubSync.answer(
+        changes: [
+          StubSync.watchedVideo("not a video", at: iso(Date()), version: 1),
+          StubSync.put(
+            "watchedVideo", ramen, 1,
+            ["videoId": sushi, "title": NSNull(), "author": NSNull(), "duration": NSNull(),
+             "position": NSNull(), "comprehension": NSNull(), "watchedAt": iso(Date())]),
+        ], cursor: "c2")
+    }
+    try await fixture.syncNow()
+    #expect(fixture.watchHistory.videos.isEmpty)
   }
 }

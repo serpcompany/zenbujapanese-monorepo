@@ -96,10 +96,12 @@ const controlCharacters = /\p{Cc}|\p{Cf}|\p{Cs}/u
 
 const isoMoment = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d{1,9})?(Z|[+-]\d{2}:\d{2})$/
 
+const earliestMoment = new Date('2000-01-01T00:00:00Z')
+
 export function momentOf(raw: unknown): Date | null {
   if (typeof raw !== 'string' || !isoMoment.test(raw)) return null
   const moment = new Date(raw)
-  if (Number.isNaN(moment.getTime())) return null
+  if (Number.isNaN(moment.getTime()) || moment < earliestMoment) return null
   const now = new Date()
   return moment > now ? now : moment
 }

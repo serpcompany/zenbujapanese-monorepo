@@ -197,11 +197,13 @@ What the iOS app's Player lists under Recent, as `watchedVideo`, by YouTube vide
   and `comprehension` (0 to 1). A field left out keeps the account's value, and the account keeps
   the later `watchedAt`. Send a watch each time one of them changes; while one is queued and not
   yet sent, a newer watch of the same video can replace it.
-- **A watch of a video the account has always applies,** whatever its base version: the latest
-  place wins.
+- **A watch of a video the account has always applies,** whatever its base version. The watch
+  with the later `watchedAt` sets the place; an older one that arrives late only fills in fields
+  the account lacks. So use the device's clock for `watchedAt`, and a time from 2000 on.
 - **`remove`, when the learner removes a video, always applies.** A watch of a removed video
   applies only at the removal's version: one made before the device saw the removal conflicts,
-  and `current` is the delete. Take it. Watching it again afterwards brings it back.
+  and `current` is the delete. Take it. Watching it again afterwards brings it back. Keep a removed
+  video's version while the account remembers the removal (its latest 100).
 - **The account keeps the 50 latest by `watchedAt`.** A watch past that removes the oldest, which
   comes down as a `delete`; drop it. Keep 50 on the device the same way, by `watchedAt`, so a
   device that missed an old prune still shows what the account has. Don't send a `remove` for one

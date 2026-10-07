@@ -30,6 +30,7 @@ struct WatchedVideo: Codable, Hashable, Identifiable, Sendable {
 final class WatchHistory {
   static let shared = WatchHistory()
   static let kept = 50
+  static let undatedStart = Date(timeIntervalSince1970: 946_684_800)
 
   private(set) var videos: [WatchedVideo]
   @ObservationIgnored var changeObserver: ((SavedItemChange) -> Void)?
@@ -43,10 +44,10 @@ final class WatchHistory {
     let stored =
       defaults.data(forKey: Self.storageKey)
       .flatMap { try? JSONDecoder().decode([WatchedVideo].self, from: $0) } ?? []
-    let loadedAt = now()
     videos = stored.enumerated().map { index, video in
       var dated = video
-      dated.watchedAt = video.watchedAt ?? loadedAt.addingTimeInterval(-Double(index))
+      dated.watchedAt =
+        video.watchedAt ?? Self.undatedStart.addingTimeInterval(Double(stored.count - index))
       return dated
     }
     if stored.contains(where: { $0.watchedAt == nil }) { save() }

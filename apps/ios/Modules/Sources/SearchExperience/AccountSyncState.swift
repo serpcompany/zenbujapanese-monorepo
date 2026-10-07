@@ -88,6 +88,8 @@ struct AccountCopy: Codable, Hashable, Sendable {
           listID: listID, entryID: word.itemId, headword: word.headword, reading: word.reading,
           addedAt: word.addedAt))
     case .watchedVideo(let video):
+      guard video.videoId == change.key.entityID, YouTubeVideoID(rawValue: video.videoId) != nil
+      else { return nil }
       value = .watchedVideo(
         WatchedVideo(
           videoID: video.videoId, title: video.title, comprehension: video.comprehension,
@@ -102,6 +104,7 @@ struct AccountCopy: Codable, Hashable, Sendable {
 }
 
 struct AccountSyncState: Codable, Sendable, Equatable {
+  static let goneVideosKept = 100
   static let favoritesKey = SyncEntityKey(
     entity: SyncEntity.list, entityID: SyncEntityKey.listID(WordLists.favoritesID))
 
@@ -117,6 +120,7 @@ struct AccountSyncState: Codable, Sendable, Equatable {
   var signedOutQueueStart: Int?
   var endedOnItsOwn = false
   var syncedEntities = SyncEntity.uploaded
+  var goneVideos: [String] = []
 
   init(account: SignedInAccount? = nil) {
     self.account = account
@@ -139,6 +143,7 @@ struct AccountSyncState: Codable, Sendable, Equatable {
     syncedEntities =
       try container.decodeIfPresent([String].self, forKey: .syncedEntities)
       ?? SyncEntity.firstSynced
+    goneVideos = try container.decodeIfPresent([String].self, forKey: .goneVideos) ?? []
   }
 
   var keepsChanges: Bool { account != nil || signedOutFrom != nil }
@@ -186,6 +191,15 @@ struct AccountSyncState: Codable, Sendable, Equatable {
       queue.remove(at: last)
     }
     queue.append(change)
+  }
+
+  mutating func setVersion(_ version: Int, of key: SyncEntityKey, gone: Bool) {
+    versions[key.stored] = version
+    guard key.entity == SyncEntity.watchedVideo else { return }
+    goneVideos.removeAll { $0 == key.stored }
+    guard gone else { return }
+    goneVideos.append(key.stored)
+    while goneVideos.count > Self.goneVideosKept { versions[goneVideos.removeFirst()] = nil }
   }
 
   func version(of key: SyncEntityKey) -> Int {

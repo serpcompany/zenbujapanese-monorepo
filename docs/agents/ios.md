@@ -394,11 +394,15 @@ tests prove that model against the real service.
   `watch.recent-videos.v1`) reports each `record` and swipe removal through `changeObserver`, and
   takes the account's copies through `applySynced`, which report nothing. It keeps the 50 newest
   by `watchedAt` either way, so a video dropped past 50 sends no `remove`: the account prunes its
-  own. A video saved before Recent kept a time gets one when the history loads, a second apart in
-  its order. Each `record` queues the whole video as a `watch`, and a newer change to a video
-  replaces a queued one that isn't its first, the only one that can be on its way, so a viewing's
-  title, length, comprehension, and place go as about two watches. `WatchSessionView` records the
-  video as it opens, as its captions, length, and comprehension arrive, and as it closes.
+  own. A video saved before Recent kept a time is dated from 2000-01-01 when the history loads, a
+  second apart in its order, so it keeps its place on the phone and every video watched since,
+  anywhere, is newer. Each `record` queues the whole video as a `watch`, dated by the phone's
+  clock, and a newer change to a video replaces a queued one that isn't its first, the only one
+  that can be on its way, so a waiting watch is replaced rather than joined.
+  `WatchSessionView` records the video as it opens, as its captions, length, and comprehension
+  arrive, and as it closes. A pulled video whose ID isn't a YouTube video ID, or isn't the
+  change's, is left out. The file keeps a removed or pruned video's version for the latest 100
+  (`goneVideos`), as the account remembers its latest 100.
 - **Favorites** has one ID in every app ([`account-clients.md`](account-clients.md), The rules, from
   your side). A second phone's `create` of it is rejected `already_exists`, which the first upload
   never undoes: the account's copy comes down, and the phone's words still add. If that copy comes
@@ -442,7 +446,8 @@ service's sync rules, so two installs can share one account: changes made while 
 to the same account, another account starting over, and two phones ending with one Favorites.
 `AccountSyncWatchHistoryTests` covers Recent's first upload, a newer watch replacing an unsent one,
 pulled videos kept to the newest 50, removals both ways, a watch that lost to a removal, a
-rejected watch, a phone catching up on watch history, and two phones through `FakeAccountService`.
+rejected watch, a phone catching up on watch history, old videos' dates, the kept versions'
+bound, bad pulled IDs, and two phones through `FakeAccountService`.
 
 ## Image Search and Apple Intelligence
 

@@ -65,15 +65,19 @@ describe('watched videos', () => {
     ])
   })
 
-  test('a watch from a device that missed the latest one still applies: its place wins, and the video keeps the later time', async () => {
+  test('a watch at any version applies: the latest watch sets the place, and an older one sent late only fills in', async () => {
     const learner = await accounts.learner('watch-latest@example.com')
     await results(learner, watch(video(2), 0, { watchedAt: at(10), position: 100 }))
     expect(
-      await results(learner, watch(video(2), 0, { watchedAt: at(5), position: 300 }))
+      await results(learner, watch(video(2), 0, { watchedAt: at(20), position: 200 }))
     ).toMatchObject([{ status: 'applied', version: 2 }])
+    expect(
+      await results(learner, watch(video(2), 0, { watchedAt: at(5), position: 50, title: 'Late' }))
+    ).toMatchObject([{ status: 'applied', version: 3 }])
     expect((await changesOf(learner))[0]?.data).toMatchObject({
-      position: 300,
-      watchedAt: at(10)
+      position: 200,
+      title: 'Late',
+      watchedAt: at(20)
     })
     const before = Date.now()
     await results(learner, watch(video(3), 0, { watchedAt: '2100-01-01T00:00:00Z' }))
@@ -112,7 +116,7 @@ describe('watched videos', () => {
     ])
   })
 
-  test('keeps the 50 most recently watched: a newer one removes the oldest, as a delete', async () => {
+  test('keeps the 50 most recently watched: a newer one prunes the oldest, as a delete, which a removal there makes stick', async () => {
     const learner = await accounts.learner('watch-cap@example.com')
     const fifty = Array.from({ length: 50 }, (_, n) =>
       watch(video(n + 1), 0, { watchedAt: at(n + 1) })
@@ -133,6 +137,12 @@ describe('watched videos', () => {
     ])
     expect(await results(learner, watch(video(1), 1, { watchedAt: at(70) }))).toMatchObject([
       { status: 'applied', version: 3 }
+    ])
+    expect(await results(learner, remove(video(2)))).toMatchObject([
+      { status: 'applied', version: 3 }
+    ])
+    expect(await results(learner, watch(video(2), 1, { watchedAt: at(80) }))).toMatchObject([
+      { status: 'conflict', version: 3 }
     ])
     const live = await rows(
       `select video_id from watched_videos w join users u on u.id = w.user_id where u.email = 'watch-cap@example.com' and status = 'watched' order by watched_at`
@@ -170,6 +180,8 @@ describe('watched videos', () => {
       watch('too-short', 0, { watchedAt: at(0) }),
       watch(video(6), 0, {}),
       watch(video(6), 0, { watchedAt: 'yesterday' }),
+      watch(video(6), 0, { watchedAt: '0000-01-01T00:00:00Z' }),
+      watch(video(6), 0, { watchedAt: '1999-12-31T23:59:59Z' }),
       watch(video(6), 0, { watchedAt: at(0), position: -1 }),
       watch(video(6), 0, { watchedAt: at(0), comprehension: 1.5 }),
       watch(video(6), 0, { watchedAt: at(0), title: 7 }),
@@ -178,6 +190,8 @@ describe('watched videos', () => {
     )
     expect(answer.map(result => result.error?.code)).toEqual([
       'invalid_mutation',
+      'invalid_fields',
+      'invalid_fields',
       'invalid_fields',
       'invalid_fields',
       'invalid_fields',

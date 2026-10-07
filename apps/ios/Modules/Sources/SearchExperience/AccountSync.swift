@@ -245,7 +245,7 @@ final class AccountSync: LocalFileStore {
       let settled = !state.hasQueuedChange(to: change.key)
       switch outcomes[change.id] {
       case .applied(let version):
-        state.versions[change.key.stored] = version
+        state.setVersion(version, of: change.key, gone: change.operation == "remove")
         state.rebase(change.key, from: change.baseVersion, to: version)
         if settled, let copy = state.deferred.removeValue(forKey: change.key.stored),
           copy.version == version
@@ -296,7 +296,7 @@ final class AccountSync: LocalFileStore {
     case .gone:
       removeLocally(copy.key)
     }
-    state.versions[copy.key.stored] = copy.version
+    state.setVersion(copy.version, of: copy.key, gone: copy.value == .gone)
   }
 
   private func placeHeldWords() {

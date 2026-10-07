@@ -107,9 +107,9 @@ export default function PrivacyPage() {
           in its Player, each with its YouTube video ID, title, and channel, its length, where you
           stopped, how much of its captions you know, and when you last watched it; a record of each
           item's latest change, including a deletion, so your other devices follow it, which for a
-          video you removed from your history, or one past the 50, keeps only its YouTube video ID,
-          for the latest 100; and the result of each sync request, so that a retry is never applied
-          twice.
+          video you removed from your history, or one past the 50, keeps only its YouTube video ID
+          and when it went, for the latest 100; and the result of each sync request, which names the
+          item it changed and when, so that a retry is never applied twice.
         </li>
       </ul>
       <p>

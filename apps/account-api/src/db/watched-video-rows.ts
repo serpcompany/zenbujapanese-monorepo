@@ -1,5 +1,5 @@
 import { and, asc, count, desc, eq, inArray, ne, sql } from 'drizzle-orm'
-import type { WatchedVideo } from '../domain/store'
+import type { EntityType, WatchedVideo } from '../domain/store'
 import type { Drizzle } from './database'
 import { syncChanges, watchedVideos } from './schema'
 
@@ -16,7 +16,7 @@ const watchedVideoColumns = {
   updatedAt: watchedVideos.updatedAt
 }
 
-const watchedVideoEntity = 'watchedVideo'
+const watchedVideoEntity: EntityType = 'watchedVideo'
 
 export function watchedVideoReader(db: Drizzle, userId: string) {
   return {
@@ -57,21 +57,11 @@ export function watchedVideoWriter(db: Drizzle, userId: string) {
       return video ?? null
     },
     async forgetWatchedVideos(kept: number) {
-      const gone = db
+      const forgotten = await db
         .select({ videoId: watchedVideos.videoId })
         .from(watchedVideos)
         .where(and(ofTheAccount, ne(watchedVideos.status, 'watched')))
-      const forgotten = await db
-        .select({ videoId: syncChanges.entityId })
-        .from(syncChanges)
-        .where(
-          and(
-            eq(syncChanges.userId, userId),
-            eq(syncChanges.entityType, watchedVideoEntity),
-            inArray(syncChanges.entityId, gone)
-          )
-        )
-        .orderBy(desc(syncChanges.sequence))
+        .orderBy(desc(watchedVideos.updatedAt), desc(watchedVideos.videoId))
         .offset(kept)
       const videoIds = forgotten.map(row => row.videoId)
       if (videoIds.length === 0) return

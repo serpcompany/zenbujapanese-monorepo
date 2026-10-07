@@ -65,7 +65,8 @@ test.describe('privacy policy', () => {
     await expectNamed(page, 'Your Zenbu account', [
       'from the iPhone app, your watch history: the 50 YouTube videos you most recently watched in its Player',
       'YouTube video ID, title, and channel, its length, where you stopped, how much of its captions you know, and when you last watched it',
-      'keeps only its YouTube video ID, for the latest 100'
+      'keeps only its YouTube video ID and when it went, for the latest 100',
+      'the result of each sync request, which names the item it changed and when'
     ])
     await expectNamed(page, 'Information in the app', ["Player's watch history"])
     await expectNamed(page, 'Your account on this website', ["It can't read your watch history"])

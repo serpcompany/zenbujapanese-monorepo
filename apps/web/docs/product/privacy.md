@@ -37,8 +37,8 @@ send the account service nothing while signed out, and lists what a Zenbu accoun
   order, and words), the iPhone app's watch history (the 50 most recently watched YouTube videos,
   each with its video ID, title, channel, length, where the learner stopped, the share of its
   captions they know, and when they last watched it), a record of each item's latest change,
-  deletions included (a removed or pruned video keeps only its video ID, for the latest 100), and
-  each sync request's result.
+  deletions included (a removed or pruned video keeps only its video ID and when it went, for the
+  latest 100), and each sync request's result, which names the item it changed and when.
 
 It also says the codes are kept encrypted, and nonces too, for 10 minutes, with request counts by
 IP address for a few minutes; that notes, photos, recent searches, and settings stay on the device;
