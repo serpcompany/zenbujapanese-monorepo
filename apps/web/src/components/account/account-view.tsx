@@ -46,6 +46,15 @@ function SignedOut({ notice }: { notice: string | null }) {
   )
 }
 
+const madeWithinMs = 60_000
+
+function landedElsewhere({ session, profile }: SignedInAccount): string {
+  const madeJustNow = Math.abs(Date.parse(profile.createdAt) - session.signedInAt) < madeWithinMs
+  return madeJustNow
+    ? `That Google account had no Zenbu account, so it made a new one, ${session.email}, and this browser is signed in to it now. Sign out to go back.`
+    : `That Google account signs in to another Zenbu account, so this browser is now signed in to ${session.email}.`
+}
+
 function withTheNewerProfile(shown: View, loaded: SignedInAccount): SignedInAccount {
   if (shown.kind !== 'signed-in') return loaded
   const { profile } = shown.account
@@ -92,10 +101,7 @@ export function AccountView({
     setView(current => ({
       kind: 'signed-in',
       account: withTheNewerProfile(current, loaded.account),
-      notice:
-        confirmation === 'another-account'
-          ? `That Google account signs in to another Zenbu account, so this browser is now signed in to ${session.email}.`
-          : null
+      notice: confirmation === 'another-account' ? landedElsewhere(loaded.account) : null
     }))
   }, [api, tokens, signedOut])
 
@@ -162,14 +168,18 @@ export function AccountView({
       <FormMessage problem={returnedError ? returnedErrorMessage(returnedError) : null} />
       <Notice>{view.notice}</Notice>
       <ProfileForm
-        key={account.profile.id}
+        key={`profile-${account.session.userId}`}
         api={api}
         tokens={tokens}
         profile={account.profile}
         onChanged={profile => update(current => ({ ...current, profile }))}
         onSignedOut={shared.onSignedOut}
       />
-      <SignInWaysSection {...shared} onChanged={() => void load()} />
+      <SignInWaysSection
+        key={`ways-${account.session.userId}`}
+        {...shared}
+        onChanged={() => void load()}
+      />
       <section aria-labelledby="sign-out" className="flex flex-col gap-3">
         <h2 id="sign-out" className="text-lg font-medium">
           Sign out
@@ -195,6 +205,7 @@ export function AccountView({
         <FormMessage problem={signOutProblem} />
       </section>
       <DeleteAccount
+        key={`delete-${account.session.userId}`}
         {...shared}
         onDeleted={() => {
           tokens.forget()

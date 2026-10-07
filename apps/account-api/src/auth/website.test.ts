@@ -5,10 +5,11 @@ import {
   fromTheWebsite,
   websiteCookie as sessionCookie,
   setCookie,
-  useSignInService
+  useSignInService,
+  websiteSession
 } from '../test/sign-in'
 
-const running = useSignInService()
+const running = useSignInService({ providers: true })
 
 const sixtyDays = 60 * 24 * 60 * 60
 
@@ -44,6 +45,37 @@ describe('the website', () => {
       attributes: expect.arrayContaining(['max-age=0'])
     })
     expect((await service.call('/v1/auth/token', fromTheWebsite(session))).status).toBe(401)
+  })
+
+  test("keeps the browser's session when a refused sign-in made a session it then deleted", async () => {
+    const { service, as } = running
+    const email = 'google-only@example.com'
+    const nonce = await as.nonce()
+    const token = await as.idToken(
+      running.google,
+      'web.apps.googleusercontent.com',
+      'google-only',
+      email,
+      nonce
+    )
+    const signedIn = await service.call('/v1/auth/sign-in/social', {
+      ...fromTheWebsite(),
+      body: { provider: 'google', idToken: { token, nonce } }
+    })
+    expect(signedIn.status).toBe(200)
+    const session = websiteSession(signedIn)
+    await as.ageSession(session, 11)
+
+    const refused = await service.call('/v1/auth/sign-in/email-otp', {
+      ...fromTheWebsite(session),
+      body: { email, otp: await as.emailCode(email) }
+    })
+    expect(refused).toMatchObject({ status: 403, body: { error: { code: 'account_not_linked' } } })
+    expect(refused.headers.getSetCookie()).toEqual([])
+    expect(await service.call('/v1/auth/get-session', fromTheWebsite(session))).toMatchObject({
+      status: 200,
+      body: { user: { email } }
+    })
   })
 
   test('never hands the page the signed session token, which stays in the cookie', async () => {

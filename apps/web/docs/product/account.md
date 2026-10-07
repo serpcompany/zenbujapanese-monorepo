@@ -159,7 +159,8 @@ confirm it's you first when theirs is older, or when the service says so. Before
 or adds Apple or Google, the page checks the browser is still signed in to the account it shows:
 signed in elsewhere since, as in another tab, it changes nothing and shows the account now signed
 in, and when it can't tell, it says so and changes nothing. An email code adds only the shown
-account's own email.
+account's own email, and if the sign-in grows old while the code is on its way, the page asks to
+confirm it's you before it sends the code.
 
 - Source: the client guide (Signing in); `POST /v1/auth/link-social` and `unlink-account`.
 - Check: Ways tests, "removes a way to sign in after asking, and after a fresh sign-in when the
@@ -167,7 +168,8 @@ account's own email.
   "adds the account's own email as a way to sign in, with a code", "adds Apple with its popup, and
   stays signed in when Apple is refused on the way", "changes nothing, and shows the account now
   signed in, when another tab signed in elsewhere", and "says so, and changes nothing, when it
-  can't tell which account the browser is in"; `src/lib/account/flows.test.ts`, "tells whether the
+  can't tell which account the browser is in", and "asks to confirm first when the sign-in grows
+  old while the email code is on its way"; `src/lib/account/flows.test.ts`, "tells whether the
   browser is still signed in to the account on the page".
 
 **Confirm it's you.** A fresh sign-in, with the ways the account has: Apple, Google, or a code to
@@ -180,15 +182,18 @@ deleted, removed, or added, and the browser doesn't leave for Google. A confirma
 browser in another account goes on with nothing. Google's confirmation leaves the page and comes
 back to it; the page remembers the account it left from (in session storage) and, back on the same
 account with a new session, signs the earlier session out and counts as confirmed; back with the
-same session, as after Google failed, it counts as nothing. If the Google account the learner chose signs in to another Zenbu account,
-the page says the browser is now signed in to that one, and changes nothing else. Coming back with
+same session, as after Google failed, it counts as nothing. If the Google account the learner
+chose signs in to another Zenbu account, the page says the browser is now signed in to that one,
+and changes nothing else; if it had no Zenbu account, Google's sign-in makes one, as it does on
+Sign in, and the page says so plainly, with Sign out to go back. Coming back with
 the browser's Back button forgets it; a page that can't load the account keeps it for Try again.
 
 - Source: the client guide (Deleting the account: a sign-in from the last 10 minutes).
 - Check: Account page tests, "deletes after the learner confirms and, with a sign-in over nine
   minutes old, signs in again by code", "won't confirm with another Apple ID, and asks again when
   Apple refuses the code", "after confirming with Google, signs the earlier session out, or says
-  when Google's account is another's", "counts no confirmation when Google's sign-in didn't happen,
+  when Google's account is another's", "says plainly when confirming with Google made a new
+  account", "counts no confirmation when Google's sign-in didn't happen,
   as back from a failed one", "deletes nothing when the learner cancels while confirming is still
   finishing", and "goes on with nothing when confirming lands the browser in another account"; Ways
   tests, "adds the account's own email as a way to sign in,

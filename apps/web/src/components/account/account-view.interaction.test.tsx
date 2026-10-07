@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, test, vi } from 'vitest'
 import { accessTokens } from '@/lib/account/access-tokens'
 import { accountApi } from '@/lib/account/client'
-import { idTokenFor } from '@/test/account-answers'
+import { idTokenFor, jwtFor } from '@/test/account-answers'
 import {
   answer,
   apiUrl,
@@ -234,6 +234,26 @@ describe('the account page', () => {
     await shows(page, `That Google account signs in to another Zenbu account`)
     expect(callTo(other.calls, 'POST /v1/auth/revoke-session')).toEqual([])
     expect(window.sessionStorage.getItem('zenbu-confirming')).toBeNull()
+  })
+
+  test('says plainly when confirming with Google made a new account', async () => {
+    window.sessionStorage.setItem('zenbu-confirming', JSON.stringify({ userId: 'u1', token: 'x' }))
+    const made = {
+      ...profile,
+      id: 'u9',
+      email: 'new@example.com',
+      createdAt: new Date().toISOString()
+    }
+    signedIn({
+      more: {
+        'GET /v1/auth/get-session': sessionAnswer('u9', 'their-bare', 0, made.email),
+        'GET /v1/auth/token': answer({ token: jwtFor({ sub: 'u9' }) }),
+        'GET /v1/me': answer(made)
+      }
+    })
+    const page = render(<AccountView settings={settings()} returnedError={null} />)
+    await shows(page, 'That Google account had no Zenbu account, so it made a new one')
+    expect(page.textContent).toContain(`Signed in as ${made.email}`)
   })
 
   test("counts no confirmation when Google's sign-in didn't happen, as back from a failed one", async () => {

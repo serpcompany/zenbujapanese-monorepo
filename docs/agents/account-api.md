@@ -142,7 +142,9 @@ HttpOnly, `SameSite=Lax`, for 60 days from its last use, on the API host alone u
 `ACCOUNT_API_COOKIE_DOMAIN` is set. A Google sign-in adds `<prefix>.state` for its 5 minutes. A
 sign-in from one of those origins answers no `set-auth-token`, so the page never holds the signed
 session token, only the session's bare one that `get-session` shows, which signs nothing in; the
-browser sends the cookie to `/v1/auth`, and the page sends its access token to `/v1/me`.
+browser sends the cookie to `/v1/auth`, and the page sends its access token to `/v1/me`. A refused
+answer to one of those origins sets no cookie: refusing an email code into an account Apple or
+Google made deletes the session it had made, and its cookie would replace the browser's own.
 The website's side is in the [client guide](account-clients.md#the-website).
 
 **Apple and Google, in the app.** The app asks this service for a nonce, gives it to Apple (as its

@@ -13,6 +13,7 @@ interface EmailCodeFormProps {
   sendLabel: string
   signInLabel: string
   onSignedIn: () => void | Promise<void>
+  mayVerify?: () => boolean
 }
 
 export function EmailCodeForm({
@@ -20,7 +21,8 @@ export function EmailCodeForm({
   email: fixedEmail,
   sendLabel,
   signInLabel,
-  onSignedIn
+  onSignedIn,
+  mayVerify
 }: EmailCodeFormProps) {
   const id = useId()
   const [email, setEmail] = useState(fixedEmail ?? '')
@@ -44,7 +46,7 @@ export function EmailCodeForm({
 
   async function verify(event: FormEvent) {
     event.preventDefault()
-    if (!sentTo) return
+    if (!sentTo || (mayVerify && !mayVerify())) return
     setBusy(true)
     setProblem(null)
     const signedIn = await api.signInWithCode(sentTo, code.trim())

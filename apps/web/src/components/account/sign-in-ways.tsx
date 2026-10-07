@@ -202,6 +202,11 @@ export function SignInWaysSection({
           email={account.profile.email}
           sendLabel="Email me a code"
           signInLabel="Add it"
+          mayVerify={() => {
+            if (freshNow()) return true
+            setConfirming(true)
+            return false
+          }}
           onSignedIn={async () => {
             setPending(null)
             await afterSigningInAgain(api, tokens, account.session)

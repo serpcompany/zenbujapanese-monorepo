@@ -163,6 +163,21 @@ describe('the ways to sign in, on the account page', () => {
     expect(window.sessionStorage.getItem('zenbu-confirming')).toBeNull()
   })
 
+  test('asks to confirm first when the sign-in grows old while the email code is on its way', async () => {
+    const { routes } = signedIn({ signedInMinutesAgo: 8, ways: [googleWay] })
+    const page = render(<AccountView settings={settings()} returnedError={null} />)
+    await shows(page, `Signed in as ${email}`)
+    await click(page, 'Add an email code')
+    await submit(page, 'Email me a code')
+    await fill(page, 'Code', '123456')
+    const later = Date.now() + 3 * 60_000
+    const clock = vi.spyOn(Date, 'now').mockReturnValue(later)
+    await submit(page, 'Add it')
+    clock.mockRestore()
+    await shows(page, 'Confirm it’s you')
+    expect(routes()).not.toContain('POST /v1/auth/sign-in/email-otp')
+  })
+
   test("stays on the page when the learner cancels while Google's sign-in is starting", async () => {
     const assign = leavingForGoogle()
     let start: (response: Response) => void = () => {}
@@ -202,6 +217,8 @@ describe('the ways to sign in, on the account page', () => {
     await removingGoogle(page)
     await shows(page, `Signed in as ${someoneElse.email}`)
     expect(page.querySelector<HTMLInputElement>('#profile-name')?.value).toBe('Someone')
+    expect(page.querySelectorAll('#profile-name')).toHaveLength(1)
+    expect(page.textContent).not.toContain('Stop signing in with Google?')
     expect(routes()).not.toContain('POST /v1/auth/unlink-account')
   })
 

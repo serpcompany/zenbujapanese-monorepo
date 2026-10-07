@@ -42,9 +42,10 @@ function isLocal(url: string): boolean {
 
 const accountPaths = ['/v1/me', '/v1/sync'] as const
 
-function withoutSessionToken(response: Response): Response {
+function forTheWebsite(response: Response): Response {
   const headers = new Headers(response.headers)
   headers.delete('set-auth-token')
+  if (response.status >= 400) headers.delete('set-cookie')
   return new Response(response.body, {
     status: response.status,
     statusText: response.statusText,
@@ -102,7 +103,7 @@ export function createApp(options: AppOptions) {
   app.on(['GET', 'POST'], '/v1/auth/*', async context => {
     const answer = await inErrorFormat(await auth.handler(context.req.raw))
     const origin = context.req.header('origin')
-    return origin && options.allowedOrigins.includes(origin) ? withoutSessionToken(answer) : answer
+    return origin && options.allowedOrigins.includes(origin) ? forTheWebsite(answer) : answer
   })
 
   app.get('/dev/mail', context => {
