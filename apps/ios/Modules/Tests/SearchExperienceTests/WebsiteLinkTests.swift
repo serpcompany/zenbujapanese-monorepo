@@ -118,4 +118,25 @@ struct WebsiteLinkTests {
         == .open(.kanji(kanji, nil)))
     #expect(try await link("https://zenbujapanese.com/").route(using: .live) == .home)
   }
+
+  @Test("a link's route opens on Search's stack, or searches, whatever tab it came from")
+  func routesApplyToSearch() throws {
+    let mi = try #require(KanjiCharacter("見"))
+    let ki = try #require(KanjiCharacter("木"))
+    var searchPath: [SearchExperienceRoute] = [.kanji(ki, nil)]
+    var query = "ki"
+
+    WebsiteLinkRoute.open(.kanji(mi, nil)).apply(to: &searchPath, query: &query)
+    #expect(searchPath == [.kanji(ki, nil), .kanji(mi, nil)])
+    #expect(query == "ki")
+
+    WebsiteLinkRoute.search("iru").apply(to: &searchPath, query: &query)
+    #expect(searchPath.isEmpty)
+    #expect(query == "iru")
+
+    searchPath = [.kanji(mi, nil)]
+    WebsiteLinkRoute.home.apply(to: &searchPath, query: &query)
+    #expect(searchPath.isEmpty)
+    #expect(query == "iru")
+  }
 }

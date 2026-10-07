@@ -9,14 +9,17 @@ public struct SearchExperienceRootView: View {
   @State private var selectedTab = SearchExperienceTab.search
   @State private var frequencyRefreshID = 0
   @State private var path: [SearchExperienceRoute] = []
-  @State private var accountPath: [AccountRoute] = []
+  @State private var accountPath = NavigationPath()
+  @State private var accountWordSheet = WordSheetPresentation()
   @State private var query = ""
   @State private var imageTextSessionStore = ImageTextSessionStore()
   @State private var imageWordSheet = WordSheetPresentation()
   @State private var watchPath = NavigationPath()
   @State private var watchWordSheet = WordSheetPresentation()
   @State private var watchHistory = WatchHistory()
-  @State private var websiteLinkTask: Task<Void, Never>?
+  @State private var translatePath = NavigationPath()
+  @State private var translateWordSheet = WordSheetPresentation()
+  @State private var translateExperience = TranslateExperience.live()
   @State private var kanjiScrollWordIDs: [KanjiCharacter: LanguageReferenceID] = [:]
   @State private var kanjiScrollElementIDs: [KanjiCharacter: KanjiElementID] = [:]
   @State private var kanjiElementScrollContributionIDs: [KanjiElementID: KanjiCharacter] = [:]
@@ -65,7 +68,13 @@ public struct SearchExperienceRootView: View {
       .environment(userProfile)
       .environment(wordKnowledge)
       .environment(wordLists)
-      .onOpenURL(perform: openWebsiteLink)
+      .modifier(
+        WebsiteLinkOpening(
+          lookupClient: lookupClient, searchPath: searchPath, query: $query,
+          showSearch: {
+            selectedTab = .search
+            dismissRecognizedWordSheet(if: true)
+          }))
       .onChange(of: scenePhase) { _, phase in
         if phase == .active {
           wordKnowledge.saveIfNeeded()
@@ -80,6 +89,10 @@ public struct SearchExperienceRootView: View {
         searchNavigation
       }
 
+      Tab("Translate", systemImage: "translate", value: SearchExperienceTab.translate) {
+        translateNavigation
+      }
+
       Tab(
         "Player", systemImage: "play.rectangle",
         value: SearchExperienceTab.watchAndListen
@@ -88,11 +101,7 @@ public struct SearchExperienceRootView: View {
       }
 
       Tab(value: SearchExperienceTab.account) {
-        AccountNavigationView(
-          path: $accountPath,
-          store: encounterMediaStore,
-          openItem: openSavedItem
-        )
+        accountNavigation
       } label: {
         Label("Account", systemImage: "person.crop.circle")
           .accessibilityLabel("Account, personal content and settings")
@@ -100,6 +109,16 @@ public struct SearchExperienceRootView: View {
       }
     }
     .scrollEdgeEffectStyle(.hard, for: .bottom)
+    .modifier(
+      TranslateSessionChrome(
+        experience: translateExperience,
+        isTranslateSelected: selectedTab == .translate,
+        isConversationOnScreen: isConversationOnScreen,
+        returnToTranslate: {
+          selectedTab = .translate
+          translatePath = NavigationPath()
+        }
+      ))
     .task {
       await Task.detached(priority: .utility) {
         KanjiReadingSplitter.prepare()
@@ -131,25 +150,7 @@ public struct SearchExperienceRootView: View {
           path.append(.image(session.id))
         }
       )
-      .navigationDestination(for: SearchExperienceRoute.self) { route in
-        dictionaryDestination(route, in: .search)
-      }
-      .sheet(isPresented: imageWordSheet.isPresentedBinding) {
-        if let request = imageWordSheet.displayedRequest {
-          RecognizedWordSheet(
-            request: request,
-            detent: $imageWordSheet.detent,
-            openFullEntry: { entry in openFullEntry(entry, in: .search) }
-          ) { entry, encounterMedia in
-            wordDetailView(
-              entry: entry,
-              initialEncounterMedia: encounterMedia,
-              presentedInSheet: true,
-              in: .search
-            )
-          }
-        }
-      }
+      .modifier(dictionaryRoutes(in: .search, sheet: imageWordSheet))
     }
   }
 
@@ -253,24 +254,68 @@ public struct SearchExperienceRootView: View {
           }
         }
       }
-      .navigationDestination(for: SearchExperienceRoute.self) { route in
-        dictionaryDestination(route, in: .player)
-      }
-      .sheet(isPresented: watchWordSheet.isPresentedBinding) {
-        if let request = watchWordSheet.displayedRequest {
-          RecognizedWordSheet(
-            request: request,
-            detent: $watchWordSheet.detent,
-            openFullEntry: { entry in openFullEntry(entry, in: .player) }
-          ) { entry, encounterMedia in
-            wordDetailView(
-              entry: entry,
-              initialEncounterMedia: encounterMedia,
-              presentedInSheet: true,
-              in: .player
-            )
-          }
-        }
+      .modifier(dictionaryRoutes(in: .player, sheet: watchWordSheet))
+    }
+  }
+
+  private var translateNavigation: some View {
+    NavigationStack(path: $translatePath) {
+      TranslateTabRoot(
+        experience: translateExperience,
+        words: translateWords(opening: translateWordSheet),
+        isConversationOnScreen: isConversationOnScreen,
+        push: { translatePath.append($0) }
+      )
+      .modifier(dictionaryRoutes(in: .translate, sheet: translateWordSheet))
+    }
+  }
+
+  private var isConversationOnScreen: Bool {
+    selectedTab == .translate && translatePath.isEmpty
+  }
+
+  private var accountNavigation: some View {
+    NavigationStack(path: $accountPath) {
+      AccountTabRoot(
+        store: encounterMediaStore,
+        translate: translateExperience,
+        words: translateWords(opening: accountWordSheet),
+        openItem: openSavedItem
+      )
+      .modifier(dictionaryRoutes(in: .account, sheet: accountWordSheet))
+    }
+  }
+
+  private func translateWords(opening sheet: WordSheetPresentation) -> TranslateWordLinks {
+    TranslateWordLinks(analysisClient: japaneseTextAnalysisClient, open: { sheet.request = $0 })
+  }
+
+  private func dictionaryRoutes(in stack: DictionaryStack, sheet: WordSheetPresentation)
+    -> DictionaryRoutes<some View, some View>
+  {
+    DictionaryRoutes(
+      sheet: sheet,
+      destination: { dictionaryDestination($0, in: stack) },
+      wordSheet: { wordSheet(sheet, in: stack) })
+  }
+
+  @ViewBuilder
+  private func wordSheet(_ presentation: WordSheetPresentation, in stack: DictionaryStack)
+    -> some View
+  {
+    @Bindable var presentation = presentation
+    if let request = presentation.displayedRequest {
+      RecognizedWordSheet(
+        request: request,
+        detent: $presentation.detent,
+        openFullEntry: { entry in openFullEntry(entry, in: stack) }
+      ) { entry, encounterMedia in
+        wordDetailView(
+          entry: entry,
+          initialEncounterMedia: encounterMedia,
+          presentedInSheet: true,
+          in: stack
+        )
       }
     }
   }
@@ -284,6 +329,8 @@ public struct SearchExperienceRootView: View {
     switch stack {
     case .search: searchPath.wrappedValue = path + [route]
     case .player: watchPath.append(route)
+    case .translate: translatePath.append(route)
+    case .account: accountPath.append(route)
     }
   }
 
@@ -331,6 +378,8 @@ public struct SearchExperienceRootView: View {
     guard shouldDismiss else { return }
     imageWordSheet.request = nil
     watchWordSheet.request = nil
+    translateWordSheet.request = nil
+    accountWordSheet.request = nil
   }
 
   private var searchPath: Binding<[SearchExperienceRoute]> {
@@ -404,33 +453,21 @@ public struct SearchExperienceRootView: View {
     }
   }
 
-  private func openWebsiteLink(_ url: URL) {
-    selectedTab = .search
-    dismissRecognizedWordSheet(if: true)
-    websiteLinkTask?.cancel()
-    websiteLinkTask = Task { @MainActor in
-      let route = await WebsiteLink(url).route(using: lookupClient)
-      guard !Task.isCancelled else { return }
-      switch route {
-      case .open(let route):
-        push(route, in: .search)
-      case .search(let text):
-        path = []
-        query = text
-      case .home:
-        path = []
-      }
-    }
-  }
-
   private func openWordList(_ listID: UUID) {
-    selectedTab = .account
-    accountPath = [.wordLists, .wordList(listID)]
+    openInAccount(.wordList(listID), from: [.wordLists])
   }
 
   private func openFrequencyDictionaries() {
-    selectedTab = .account
-    accountPath = [.frequencyDictionaries]
+    openInAccount(.frequencyDictionaries, from: [])
+  }
+
+  private func openInAccount(_ route: AccountRoute, from parents: [AccountRoute]) {
+    if selectedTab == .account {
+      accountPath.append(route)
+    } else {
+      selectedTab = .account
+      accountPath = NavigationPath(parents + [route])
+    }
   }
 
   private func encounterMediaAttachment(for context: ImageWordContext?)
@@ -445,33 +482,9 @@ public struct SearchExperienceRootView: View {
   }
 }
 
-struct ImageWordContext: Hashable {
-  let sessionID: UUID
-  let assetID: UUID
-}
-
-enum DictionaryStack {
-  case search
-  case player
-}
-
-enum PlayerRoute: Hashable {
-  case video(YouTubeVideoID)
-  case search(VideoSearch)
-}
-
-enum SearchExperienceRoute: Hashable {
-  case word(DictionaryEntry, ImageWordContext?)
-  case kanji(KanjiCharacter, DictionaryEntry?)
-  case kanjiElement(KanjiElementID)
-  case examples(SearchQuery, DictionaryEntry?, Bool)
-  case conjugations(DictionaryEntry, ConjugationTable)
-  case conjugatedForm(DictionaryEntry, ConjugationTable, ConjugatedForm, ConjugationMode)
-  case image(UUID)
-}
-
 private enum SearchExperienceTab: Hashable {
   case search
+  case translate
   case watchAndListen
   case account
 }

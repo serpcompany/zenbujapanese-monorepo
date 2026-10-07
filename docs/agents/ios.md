@@ -49,6 +49,23 @@ or how fast it feels. The app needs iOS 26.0 or later, and the Sudachi cache abo
 4. If iOS asks, turn on Developer Mode under Settings → Privacy & Security → Developer Mode. With a
    free Apple ID, also trust it under Settings → General → VPN & Device Management.
 
+### Beside the TestFlight app
+
+To try unreleased work without replacing the TestFlight app, build it as **Zenbu Dev**. The
+target's bundle ID ends in `ZENBU_BUNDLE_ID_SUFFIX` and its name is `ZENBU_DISPLAY_NAME` (empty and
+`Zenbu Japanese` by default), so overriding them installs a separate app with its own data and
+leaves `project.pbxproj` alone. From `apps/ios`, with the phone's UDID from
+`xcrun devicectl list devices`:
+
+```sh
+xcodebuild -project ZenbuJapanese.xcodeproj -scheme ZenbuJapanese -configuration Debug \
+  -destination 'platform=iOS,id=<device-udid>' -derivedDataPath /tmp/zenbu-dev \
+  DEVELOPMENT_TEAM=<team-id> CODE_SIGN_STYLE=Automatic \
+  ZENBU_BUNDLE_ID_SUFFIX=.dev ZENBU_DISPLAY_NAME="Zenbu Dev" -allowProvisioningUpdates build
+xcrun devicectl device install app --device <device-udid> \
+  "/tmp/zenbu-dev/Build/Products/Debug-iphoneos/Zenbu Japanese.app"
+```
+
 ### From a Mac the iPhone can't reach
 
 Remote Desktop doesn't pass an iPhone's USB connection through to a Mac, so Xcode on a cloud Mac
@@ -89,7 +106,9 @@ only a person can do: enable Associated Domains for the App ID `com.zenbujapanes
 Apple Developer account that holds it, and set the website's `APPLE_TEAM_ID` to that account's
 team (`W3GXL2NQQP` until #616 moves the app to the business account).
 
-SwiftUI hands a universal link to `onOpenURL` in `SearchExperienceRootView`, and `WebsiteLink`
+SwiftUI hands a universal link to `onOpenURL` in `WebsiteLinkOpening` (`WebsiteLinkOpening.swift`),
+which `SearchExperienceRootView` applies. It switches to Search from any tab, Translate included,
+and `WebsiteLinkRoute.apply` puts the route on Search's stack. `WebsiteLink`
 (`WebsiteLink.swift`) reads it: the website's URL shapes, decoded one path segment at a time,
 and the Language Reference ID of a word URL's JMdict entry number, derived as
 `apps/ios/Tools/jmdict_normalization.py` does (the first 16 bytes of the SHA-256 of
@@ -146,6 +165,9 @@ xcodebuild -scheme ZenbuJapaneseModules \
   -destination 'platform=iOS Simulator,id=<booted-simulator-udid>' \
   ONLY_ACTIVE_ARCH=YES test
 ```
+
+The Translate tab has its own test target, `TranslatorCoreTests`, and its own guide,
+[`translate.md`](translate.md).
 
 `SearchConformanceTests` checks Search against the shared conformance suite in
 `apps/ios/LanguageData/Conformance/search-retrieval.json` (see ADR 0006). Only each result's

@@ -131,8 +131,9 @@ is saved as itself, not as a dictionary word, so marking 最 known doesn't mark 
 ## Links from zenbujapanese.com
 
 Tapping a zenbujapanese.com dictionary link in another app, such as Tomodachi's **Open in
-Zenbu**, opens it in Zenbu rather than the browser. Zenbu switches to the Search tab, closes an
-open word sheet, and:
+Zenbu**, opens it in Zenbu rather than the browser. From any tab, Translate included, Zenbu
+switches to the Search tab and closes an open word sheet. A running Translate conversation keeps
+going, and the bar above the tab bar returns to it. Then:
 
 - a word, `/dictionary/<slug>-<number>/` such as `/dictionary/見る-1259290/`, opens that word's
   Word Detail on top of what Search was showing. The number is JMdict's entry number, which

@@ -24,7 +24,8 @@ in it changes.
 ## iOS app
 
 The app's tests are the `SearchExperienceTests` target, in
-`apps/ios/Modules/Tests/SearchExperienceTests/`, run with `xcodebuild` on a Mac
+`apps/ios/Modules/Tests/SearchExperienceTests/`, and the `TranslatorCoreTests` target, in
+`apps/ios/Modules/Tests/TranslatorCoreTests/`, run with `xcodebuild` on a Mac
 ([`ios.md`](agents/ios.md), Current verification boundary). The `iOS` workflow runs them on a
 macOS runner only once the owners turn it on (`IOS_SWIFT_TESTS`), so until then they run only by
 hand. The product docs are in
@@ -38,6 +39,7 @@ are sections of `ios.md`.
 | Player | C | 2026-10-06 | `apps/ios/Modules/Sources/SearchExperience/WatchAndListenView.swift`, `apps/ios/Modules/Sources/SearchExperience/WatchSessionView.swift`, `apps/ios/Modules/Sources/SearchExperience/WatchHistory.swift`, `apps/ios/Modules/Sources/SearchExperience/PlaybackScrubber.swift`, `apps/ios/Modules/Sources/SearchExperience/YouTubePlayer.swift`, `apps/ios/Modules/Sources/SearchExperience/YouTubeCaptions.swift`, `apps/ios/Modules/Sources/SearchExperience/CaptionCard.swift` | `YouTubeCaptionsTests`: links, caption-track choice, timed text, translation pairing, card size, word meanings, and comprehension | None | [Player](../apps/ios/docs/product/player.md) | Player manual checks, with four videos |
 | Lists and Known Words | C | 2026-10-06 | `apps/ios/Modules/Sources/SearchExperience/WordLists.swift`, `apps/ios/Modules/Sources/SearchExperience/WordListsView.swift`, `apps/ios/Modules/Sources/SearchExperience/WordKnowledge.swift`, `apps/ios/Modules/Sources/SearchExperience/KnownWordsView.swift`, `apps/ios/Modules/Sources/SearchExperience/SavedItem.swift` | `WordListsTests`, `WordKnowledgeTests`, `SavedKanjiTests`: storage, reloads, unreadable and newer-version files, and failed writes | None | [Known Words and Lists](../apps/ios/docs/product/index.md#known-words) | Word lists and Known words manual checks |
 | Image Search | C | 2026-10-06 | `apps/ios/Modules/Sources/SearchExperience/ImageTextFlowModel.swift`, `apps/ios/Modules/Sources/SearchExperience/ImageTextFlowView.swift`, `apps/ios/Modules/Sources/SearchExperience/ImageTextRecognitionClient.swift`, `apps/ios/Modules/Sources/SearchExperience/ImageTextExplanationClient.swift` | `ImageTextRecognitionTests` (Vision on the images in `apps/ios/Modules/Tests/SearchExperienceTests/Fixtures/ImageText`), `ImageTextTranslationTests`, `ImageTextExplanationTests`, `ImageTextContextNotesTests` | None | [Image Search](../apps/ios/docs/product/dictionary.md#image-search) | Image Search manual checks; Apple Translation only on a device |
+| Translate | C | 2026-10-08 | `apps/ios/Modules/Sources/TranslatorCore/`, `apps/ios/Modules/Sources/SearchExperience/Translate/` | `TranslatorCoreTests`: the conversation engine (turns, held audio, the 30-second cutoff, silence, pause, background, leaving, modes), bilingual transcript merging, typed-language detection, History storage and bookmarks, playback timing, and pause detection; `SearchExperienceTests`: document text, each conversation's known-word share, and the spoken translation's time limit | None | [Translate](../apps/ios/docs/product/translate.md) | Translate manual checks: the scripted Simulator harness for every screen; the microphone, speech recognition, and Apple Translation only on a device |
 
 - **Search, C.** Thorough tests, three suites the website is held to, and a checklist, but no CI.
   Main gap: nothing runs the Swift against its own recorded suites before merge, no suite
@@ -49,6 +51,10 @@ are sections of `ios.md`.
   highlighted card, the controls, and the live caption fetch are checked only by hand.
 - **Lists and Known Words, C.** Storage is well tested. Main gap: the screens (swipes, Edit,
   menus, and the list picker) are checked only by hand.
+- **Translate, C.** The engine and History are tested with fakes, and every screen runs in the
+  Simulator on a scripted conversation. The on-device recognizers were checked on an iPhone with
+  a scripted conversation (#627). Main gap: no automated check runs them on recorded audio
+  (#640).
 - **Image Search, C.** Recognition runs on real images. Main gap: Apple Translation doesn't run
   in the Simulator, and the on-device model runs only where the Simulator's runtime matches the
   Mac, so translation and Context are checked by hand, on a device.
