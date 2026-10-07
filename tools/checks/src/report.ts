@@ -8,6 +8,7 @@ import { checkDocs, isOwnedDoc, referencedFiles } from './docs'
 import { findDuplicates } from './duplicates'
 import { repositoryFiles, root } from './files'
 import { duplicateProblems, knownDuplicates } from './known-duplicates'
+import { checkLayers } from './layers'
 import { type CheckProblems, docsToReverify, lastChangeTimes, renderReport } from './maintenance'
 import { findSecrets } from './secrets'
 import { checkSizes, filesNearLimit, knownLargeFiles } from './sizes'
@@ -40,6 +41,12 @@ const checks: CheckProblems[] = [
   {
     name: 'sizes',
     problems: checkSizes(files).map(problem => `${problem.path}  ${problem.problem}`)
+  },
+  {
+    name: 'layers',
+    problems: checkLayers(files).map(
+      problem => `${problem.path}:${problem.line}  ${problem.problem}`
+    )
   },
   { name: 'secrets', problems: await findSecrets(files) },
   { name: 'duplicates', problems: duplicateProblems(findDuplicates(files), files) },
