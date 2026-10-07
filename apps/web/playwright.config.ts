@@ -1,13 +1,12 @@
 import { defineConfig, devices } from '@playwright/test'
+import { onClosedProduction, onProductionBuild } from './e2e/server'
 
-const closedProduction = process.env.E2E_SITE_ENV === 'production'
-const onProductionBuild = process.env.E2E_SERVER === 'preview' || closedProduction
-const port = closedProduction
+const port = onClosedProduction
   ? 8797
   : onProductionBuild
     ? 8787
     : Number(process.env.E2E_PORT ?? 3100)
-const server = closedProduction
+const server = onClosedProduction
   ? `./node_modules/.bin/wrangler dev --env production --port ${port} --env-file /dev/null --var DICTIONARY_API_URL: --var DICTIONARY_API_TOKEN:`
   : onProductionBuild
     ? `pnpm exec opennextjs-cloudflare preview --port ${port}`
@@ -17,7 +16,7 @@ const inCI = Boolean(process.env.CI)
 
 export default defineConfig({
   testDir: 'e2e',
-  ...(closedProduction ? { testMatch: 'account-closed.spec.ts' } : {}),
+  ...(onClosedProduction ? { testMatch: 'account-closed.spec.ts' } : {}),
   outputDir: 'e2e/results',
   fullyParallel: true,
   forbidOnly: inCI,
@@ -41,7 +40,7 @@ export default defineConfig({
         command: server,
         env: { ZENBU_DICTIONARY_FIXTURES: '1' },
         url: `${baseURL}/`,
-        reuseExistingServer: !inCI && !closedProduction,
+        reuseExistingServer: !inCI && !onClosedProduction,
         timeout: 240_000
       }
 })

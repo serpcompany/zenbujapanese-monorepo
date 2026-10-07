@@ -31,8 +31,9 @@ option after it as a file filter.
 - **In CI** (`Web`, the `e2e` job) it runs on the production build in workerd, where the Worker's
   redirects and headers behave as deployed: `pnpm exec opennextjs-cloudflare build`, then
   `E2E_SERVER=preview pnpm test:e2e`. Then it builds a second time, as production deploys
-  (`SITE_ENV=production pnpm exec opennextjs-cloudflare build`), and runs only
-  `e2e/account-closed.spec.ts` on that build (`E2E_SITE_ENV=production pnpm exec playwright test`),
+  (`SITE_ENV=production NEXT_PUBLIC_GTM_ID=GTM-TEST000 pnpm exec opennextjs-cloudflare build`), and
+  runs only `e2e/account-closed.spec.ts` on that build (`E2E_SITE_ENV=production pnpm exec
+  playwright test`),
   served by `wrangler dev --env production` on port 8797 with production's vars, no dictionary
   service, and `--env-file /dev/null`, so no `.dev.vars` or `.env` file applies. It checks
   production's account pages stay closed while its `ACCOUNT_API_URL` is empty

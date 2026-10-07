@@ -36,7 +36,7 @@ case "$written" in
     exit 1
     ;;
   *)
-    echo "::error::Couldn't write $env's DICTIONARY_API_URL into wrangler.jsonc: node exited $written, with the error above"
+    echo "::error::Couldn't update wrangler.jsonc with $env's DICTIONARY_API_URL: node exited $written, with the error above"
     exit 1
     ;;
 esac

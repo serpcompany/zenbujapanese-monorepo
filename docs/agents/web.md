@@ -399,14 +399,17 @@ at most five from one address in 10 minutes, so a second run within 10 minutes n
 database, or `delete from rate_limits` in it.
 
 `e2e/account-closed.spec.ts` checks production's closed account pages and footer on the site built
-as production deploys, served by `wrangler dev --env production` on port 8797 with production's
+as production deploys (`SITE_ENV=production`, and a test Google Tag Manager ID, as `Web deploy`
+passes the real one), served by `wrangler dev --env production` on port 8797 with production's
 vars, no dictionary service, and `--env-file /dev/null`, so no `.dev.vars` or `.env` file can open
-the pages. It runs only when asked (`E2E_SITE_ENV=production`, which runs that spec alone), and the
+the pages. It answers every request off the site with an empty response, Tag Manager's included,
+so nothing leaves the machine, and fails on any request to the account service. It runs only when
+asked (`E2E_SITE_ENV=production`, which runs that spec alone), and the
 `Web` workflow's `e2e` job runs it after the other browser tests:
 
 ```sh
-SITE_ENV=production pnpm exec opennextjs-cloudflare build
-E2E_SITE_ENV=production pnpm exec playwright test e2e/account-closed.spec.ts
+SITE_ENV=production NEXT_PUBLIC_GTM_ID=GTM-TEST000 pnpm exec opennextjs-cloudflare build
+E2E_SITE_ENV=production pnpm exec playwright test
 ```
 
 That build replaces the one the other browser tests use in workerd, so build again without

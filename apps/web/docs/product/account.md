@@ -2,7 +2,9 @@
 
 zenbujapanese.com's account pages let a learner make, sign in to, see, change, and delete their
 Zenbu account (#468), against the account service ([`account-api.md`](../../../../docs/agents/account-api.md)).
-Signing in is passwordless: Apple, Google, or a code we email. The pages are open only where the
+Signing in is passwordless: a code we email, and Apple and Google where the site has them set up
+(`ACCOUNT_APPLE_SERVICES_ID` and `ACCOUNT_GOOGLE_SIGN_IN`; staging and production have neither
+yet). The pages are open only where the
 environment names an account service: locally and on staging, not yet in production
 (Configuration, below). The pages call the service from
 the learner's browser, never from the Worker ([`web.md`](../../../../docs/agents/web.md), Account
@@ -31,7 +33,7 @@ password needed), and `/account/` (Your account), each with the site's header an
 Their descriptions don't name Apple or Google, which a site offers only once they're set up.
 Without an account service (an empty `ACCOUNT_API_URL`, as in production today), each says signing
 in to a Zenbu account isn't available on this site yet, without the intro that describes signing
-in, and links to no other account page.
+in, links to no other account page, and asks the account service nothing.
 
 - Source: #468, whose #402 sitemap sheet lists the four pages. Closed in production because its
   account service doesn't run yet ([`account-api.md`](../../../../docs/agents/account-api.md), Set
@@ -60,8 +62,9 @@ the page and its first render in the browser agree.
 
 ## Signing in
 
-**Sign in and Create your account.** Both pages offer the same three ways: Sign in (or Sign up)
-with Apple, with Google, or "Email me a code". A new email gets a code that makes an account; an
+**Sign in and Create your account.** Both pages offer the same ways: "Email me a code", and Sign
+in (or Sign up) with Apple and with Google where the site has them set up (Sign in with Apple and
+Sign in with Google, below). A new email gets a code that makes an account; an
 email that has one signs in to it. Create your account says so, and links to Sign in and the
 Privacy Policy; Sign in links to Create an account; both link "Can't sign in?" to
 `/forgot-password/`, since there's no password to forget. Signed in, the

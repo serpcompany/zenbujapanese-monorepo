@@ -241,11 +241,12 @@ Its `e2e` job runs the browser tests ([`web.md`](web.md), Run and verify) on the
 deploys: it installs Chromium, builds with OpenNext without `SITE_ENV`, so the build reads the
 dictionary fixtures, and serves it in workerd with `opennextjs-cloudflare preview`. A test that
 fails is retried once, and Playwright reports one that passed on the retry as flaky. Then it
-builds again as production deploys (`SITE_ENV=production`) and runs `e2e/account-closed.spec.ts`
+builds again as production deploys (`SITE_ENV=production`, with a test `NEXT_PUBLIC_GTM_ID`,
+since `Web deploy` passes the real one) and runs `e2e/account-closed.spec.ts`
 on that build, served by `wrangler dev` with production's vars, no dictionary service, and no
 `.dev.vars` or `.env` file: while production's
-`ACCOUNT_API_URL` is empty, each account page says signing in isn't available, and nothing links
-to one, the prerendered footer included. When production's account pages open, those two steps go
+`ACCOUNT_API_URL` is empty, each account page says signing in isn't available and asks the
+account service nothing, and nothing links to one, the prerendered footer included. When production's account pages open, those two steps go
 with it ([`web.md`](web.md), Account pages). On a failure
 it uploads the report, traces, videos, and screenshots as the `playwright-report` artifact, kept
 for a week.

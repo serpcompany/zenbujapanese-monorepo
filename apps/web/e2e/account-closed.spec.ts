@@ -1,24 +1,30 @@
 import type { Page } from '@playwright/test'
-import { accountPages, expect, footerAccountLink, test } from './test'
+import { accountPages, expect, footerAccountLink, onClosedProduction, test } from './test'
 
 const anyAccountPage = accountPages.map(({ path }) => `a[href^="${path}"]`).join(', ')
 
+const accountServices = [
+  'https://api.zenbujapanese.com',
+  'https://api-staging.zenbujapanese.com',
+  'http://localhost:8789'
+]
+
 test.skip(
-  process.env.E2E_SITE_ENV !== 'production',
+  !onClosedProduction,
   "Runs on the site built and served with production's settings: E2E_SITE_ENV=production (docs/agents/web.md, Account pages)"
 )
 
-async function offSite(page: Page, baseURL: string | undefined) {
+async function requestsToTheAccountService(page: Page, baseURL: string | undefined) {
   const site = new URL(baseURL ?? 'http://localhost').origin
-  const origins: string[] = []
-  await page.route(
-    url => url.origin !== site,
-    route => {
-      origins.push(new URL(route.request().url()).origin)
-      return route.abort()
+  const requests: string[] = []
+  await page.route('**/*', route => {
+    const url = new URL(route.request().url())
+    if (accountServices.includes(url.origin) || /^\/v1\/(auth|me)(\/|$)/.test(url.pathname)) {
+      requests.push(url.href)
     }
-  )
-  return origins
+    return url.origin === site ? route.continue() : route.fulfill({ status: 204 })
+  })
+  return requests
 }
 
 test.describe("production's account pages, while its ACCOUNT_API_URL is empty", () => {
@@ -27,7 +33,7 @@ test.describe("production's account pages, while its ACCOUNT_API_URL is empty", 
       page,
       baseURL
     }) => {
-      const origins = await offSite(page, baseURL)
+      const requests = await requestsToTheAccountService(page, baseURL)
       await page.goto(path)
       await expect(page.getByRole('heading', { level: 1, name: title })).toBeVisible()
       await expect(page.getByRole('main')).toContainText(
@@ -39,16 +45,16 @@ test.describe("production's account pages, while its ACCOUNT_API_URL is empty", 
         'noindex, nofollow'
       )
       await expect(page.locator(anyAccountPage)).toHaveCount(0)
-      expect(origins).toEqual([])
+      expect(requests).toEqual([])
     })
   }
 
   test('a page built ahead of time has no Sign in in its footer', async ({ page, baseURL }) => {
-    const origins = await offSite(page, baseURL)
+    const requests = await requestsToTheAccountService(page, baseURL)
     await page.goto('/about/')
     await expect(page.getByRole('contentinfo').getByRole('link', { name: 'Sitemap' })).toBeVisible()
     await expect(footerAccountLink(page)).toHaveCount(0)
     await expect(page.locator(anyAccountPage)).toHaveCount(0)
-    expect(origins).toEqual([])
+    expect(requests).toEqual([])
   })
 })

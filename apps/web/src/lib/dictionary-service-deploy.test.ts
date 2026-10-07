@@ -59,14 +59,29 @@ test("Web deploy points each environment's Worker at its own dictionary service"
   )
 })
 
-test("Web deploy says when it couldn't write wrangler.jsonc, rather than blaming the placeholder", () => {
+function refusedOnce(spoil: (wrangler: string) => void) {
   const deployed = deployedCopy()
-  rmSync(join(deployed.folder, 'wrangler.jsonc'))
-  mkdirSync(join(deployed.folder, 'wrangler.jsonc'))
+  spoil(join(deployed.folder, 'wrangler.jsonc'))
   const refused = deployed.refusal('staging', 'https://dictionary-staging.example.com')
   expect(refused.stdout).toContain(
-    "Couldn't write staging's DICTIONARY_API_URL into wrangler.jsonc"
+    "Couldn't update wrangler.jsonc with staging's DICTIONARY_API_URL"
   )
   expect(refused.stdout).not.toContain('placeholder')
-  expect(refused.stderr).toContain('EISDIR')
+  return refused.stderr
+}
+
+test("Web deploy says when it couldn't read wrangler.jsonc, rather than blaming the placeholder", () => {
+  const stderr = refusedOnce(wrangler => {
+    rmSync(wrangler)
+    mkdirSync(wrangler)
+  })
+  expect(stderr).toContain('EISDIR')
 })
+
+test.skipIf(process.getuid?.() === 0)(
+  "Web deploy says when it couldn't write wrangler.jsonc, rather than blaming the placeholder",
+  () => {
+    const stderr = refusedOnce(wrangler => chmodSync(wrangler, 0o444))
+    expect(stderr).toContain('EACCES')
+  }
+)
