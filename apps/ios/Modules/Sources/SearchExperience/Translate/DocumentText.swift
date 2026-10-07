@@ -29,7 +29,7 @@ enum DocumentText {
   static func decode(_ data: Data) throws -> String {
     let hasByteOrderMark = data.starts(with: [0xFF, 0xFE]) || data.starts(with: [0xFE, 0xFF])
     let encodings: [String.Encoding] =
-      hasByteOrderMark ? [.utf16] : [.utf8, .shiftJIS, .japaneseEUC]
+      hasByteOrderMark ? [.utf16] : [.utf8, .japaneseEUC, .shiftJIS]
     for encoding in encodings {
       if let text = String(data: data, encoding: encoding) { return text }
     }

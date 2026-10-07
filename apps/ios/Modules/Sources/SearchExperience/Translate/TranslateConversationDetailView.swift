@@ -92,6 +92,8 @@ struct TranslateConversationDetailView: View {
     .toolbar {
       ToolbarItem(placement: .topBarTrailing) {
         Menu("More", systemImage: "ellipsis") {
+          FuriganaToggle(readingAids: actions.readingAids)
+          Divider()
           Button("Copy Transcript", systemImage: "doc.on.doc") {
             UIPasteboard.general.string = conversation.transcript
           }

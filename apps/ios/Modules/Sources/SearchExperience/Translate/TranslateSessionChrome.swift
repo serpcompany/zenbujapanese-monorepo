@@ -132,7 +132,7 @@ private struct StillThereCard: View {
           Text("Are you still there?")
             .font(.headline)
           Text(
-            "No one has spoken for \(timing.silenceLength). The conversation pauses in ^[\(seconds) second](inflect: true) so the microphone doesn't keep listening."
+            "No one has spoken for \(timing.silenceBeforePromptLength). The conversation pauses in ^[\(seconds) second](inflect: true) so the microphone doesn't keep listening."
           )
           .font(.subheadline)
           .foregroundStyle(.secondary)

@@ -36,9 +36,25 @@ extension SpokenLanguage {
 }
 
 extension ConversationTiming {
-  var silenceLength: String {
-    Duration.seconds(silenceBeforePrompt + promptCountdown)
-      .formatted(.units(allowed: [.minutes, .seconds], width: .wide))
+  var silenceBeforePromptLength: String { Self.length(silenceBeforePrompt) }
+  var silenceLength: String { Self.length(silenceBeforePrompt + promptCountdown) }
+
+  private static func length(_ seconds: TimeInterval) -> String {
+    Duration.seconds(seconds).formatted(.units(allowed: [.minutes, .seconds], width: .wide))
+  }
+}
+
+struct FuriganaToggle: View {
+  let readingAids: ReadingAidPreferences
+
+  var body: some View {
+    Toggle(isOn: showsFurigana) {
+      Label("Furigana", systemImage: "textformat.size.smaller")
+    }
+  }
+
+  private var showsFurigana: Binding<Bool> {
+    Binding(get: { readingAids.showsFurigana }, set: { readingAids.showsFurigana = $0 })
   }
 }
 

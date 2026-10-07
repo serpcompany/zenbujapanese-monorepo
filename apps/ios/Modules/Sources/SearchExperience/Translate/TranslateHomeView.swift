@@ -112,6 +112,14 @@ struct TypedTranslationScreen: View {
       .background(Color(uiColor: .systemBackground))
       .navigationTitle("Text")
       .navigationBarTitleDisplayMode(.inline)
+      .toolbar {
+        ToolbarItem(placement: .topBarTrailing) {
+          Menu("Options", systemImage: "ellipsis") {
+            FuriganaToggle(readingAids: experience.readingAids)
+          }
+          .accessibilityIdentifier("translate.text.options")
+        }
+      }
   }
 }
 

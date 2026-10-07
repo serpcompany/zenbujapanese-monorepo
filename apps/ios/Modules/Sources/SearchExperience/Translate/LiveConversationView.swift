@@ -136,21 +136,13 @@ struct LiveConversationView: View {
         Label("Two Panes", systemImage: "rectangle.split.1x2").tag(ConversationLayout.twoPanes)
       }
       .pickerStyle(.inline)
-      Toggle(isOn: furigana) {
-        Label("Furigana", systemImage: "textformat.size.smaller")
-      }
+      FuriganaToggle(readingAids: experience.readingAids)
     }
     .accessibilityIdentifier("translate.conversation.options")
   }
 
   private var layout: Binding<ConversationLayout> {
     Binding(get: { experience.layout }, set: { experience.layout = $0 })
-  }
-
-  private var furigana: Binding<Bool> {
-    Binding(
-      get: { experience.readingAids.showsFurigana },
-      set: { experience.readingAids.showsFurigana = $0 })
   }
 
   private func leave(saving: Bool) {

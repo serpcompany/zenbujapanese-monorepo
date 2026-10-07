@@ -14,6 +14,7 @@ struct KeepTranslationsPicker: View {
       AccountRowLabel("Keep Translations", systemImage: "clock.fill", tint: .purple)
     }
     .pickerStyle(.menu)
+    .disabled(!history.isLoaded)
     .accessibilityIdentifier("account.keep-translations")
     .confirmationDialog(
       "Delete older conversations?", isPresented: isConfirming, titleVisibility: .visible,

@@ -34,7 +34,7 @@ letters is English and is translated into Japanese. There is no swap button. The
 appears in the same card under a divider, with a label such as **English → Japanese** and
 buttons to copy and speak it; Japanese in it is underlined and tappable. An ✕ clears the text.
 If Apple's Japanese language isn't downloaded, the card offers **Download Japanese**, which shows
-Apple's download prompt.
+Apple's download prompt. Its **•••** menu holds **Furigana**.
 
 ## Starting a live mode
 
@@ -61,8 +61,9 @@ Along the bottom are the conversation's controls:
 VoiceOver reads what's happening (**Listening**, **Hearing speech**, **2 waiting for a pause**,
 **Speaking English**, **Paused**…). There is no stop button.
 
-Translate shows Japanese without furigana unless **Furigana** is on in the **•••** menu, in
-conversations, transcripts, and typed or document translations alike. Translate keeps its own
+Translate shows Japanese without furigana unless **Furigana** is on. One setting covers
+conversations, transcripts, and typed or document translations, and each of those screens has it
+in its **•••** menu. Translate keeps its own
 reading aids: the rest of the app's Reading Aids (furigana, romaji, word meanings) don't apply on
 the tab. Conversation text is one Dynamic Type size larger than the rest of the app.
 
@@ -93,7 +94,8 @@ the tab. Conversation text is one Dynamic Type size larger than the rest of the 
 ## Pausing and leaving
 
 Pausing turns off the microphone and playback; resuming continues the same conversation with a
-fresh silence timer.
+fresh silence timer. While a conversation is listening, the screen doesn't dim or lock, so a
+hands-free conversation isn't paused by Auto-Lock; once it pauses or ends, Auto-Lock works again.
 
 - **Back** pauses and asks **Leave this conversation?** with **Save and Exit**, **Exit Without
   Saving**, and **Cancel**, which resumes. With nothing said yet, Back just leaves.
@@ -117,12 +119,12 @@ top switch to the bookmarked sentences, each with its translation. Search, in th
 Japanese or the English. Long-pressing a row offers **Copy**, **Share**, and **Delete**; the
 **•••** menu offers **Delete All…**. Deleting a conversation, or all of them, asks first, and
 there's no swipe to delete. How long conversations are kept is **Keep Translations** in Account
-(30 Days, 1 Year, or Forever). Choosing a shorter time removes older conversations right away,
-and again at each launch. A conversation
+(30 Days, 1 Year, or Forever). Choosing a shorter time that would remove conversations asks
+first, with how many, then removes them; older conversations are also removed at each launch. A conversation
 opens as its transcript, with its length, turns, and mode above it. Each turn is a group of
 cards like the conversation's, and every Japanese word is tappable. Each sentence has a speaker
 button that plays its translation again, at the conversation's speech speed, and a bookmark. Its
-**•••** menu offers **Copy Transcript**, **Share**, and **Delete Conversation**.
+**•••** menu offers **Furigana**, **Copy Transcript**, **Share**, and **Delete Conversation**.
 
 A conversation is saved after every translated sentence, so closing the app loses nothing; **Exit
 Without Saving** deletes it. Conversations are stored only on the device, one file each.

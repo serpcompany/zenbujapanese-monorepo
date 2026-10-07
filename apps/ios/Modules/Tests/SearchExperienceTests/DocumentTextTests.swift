@@ -20,11 +20,13 @@ struct DocumentTextTests {
     #expect(try await DocumentText.read(url) == "東京駅はどこですか？\nWhere is Tokyo Station?")
   }
 
-  @Test("a Japanese text file is read in UTF-16 or Shift-JIS too")
-  func japaneseEncodings() throws {
-    let text = "東京駅はどこですか？"
-    #expect(try DocumentText.decode(try #require(text.data(using: .utf16))) == text)
-    #expect(try DocumentText.decode(try #require(text.data(using: .shiftJIS))) == text)
+  @Test("a Japanese text file is read in UTF-16, Shift-JIS, or EUC-JP too", arguments: [
+    "東京駅はどこですか？", "ありがとうございます", "すみません、駅はどこですか",
+  ])
+  func japaneseEncodings(text: String) throws {
+    for encoding: String.Encoding in [.utf16, .shiftJIS, .japaneseEUC] {
+      #expect(try DocumentText.decode(try #require(text.data(using: encoding))) == text)
+    }
   }
 
   @Test("a long document is cut to the character limit")
