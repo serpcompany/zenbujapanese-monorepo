@@ -75,15 +75,8 @@ struct ConversationControlBar: View {
 
   private var timer: some View {
     HStack(spacing: 12) {
-      TimelineView(.periodic(from: .now, by: 1)) { context in
-        Text(
-          Duration.seconds(session.elapsed(at: context.date))
-            .formatted(.time(pattern: .minuteSecond))
-        )
-        .font(.headline.monospacedDigit())
-        .foregroundStyle(isPaused ? Color.secondary : Color.red)
+      ConversationClock(session: session)
         .accessibilityLabel("Conversation time")
-      }
       Button {
         if isPaused { session.start() } else { session.pause() }
       } label: {
