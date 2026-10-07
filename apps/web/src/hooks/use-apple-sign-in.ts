@@ -21,12 +21,17 @@ const popupMessages = {
   failed: "Signing in with Apple didn't work. Try again."
 } as const
 
+const nonceGoodForMs = 9 * 60_000
+
 export function useAppleSignIn(api: AccountApi, servicesId: string | null) {
-  const preparing = useRef<Promise<ApplePreparation> | null>(null)
+  const preparing = useRef<{ since: number; preparation: Promise<ApplePreparation> } | null>(null)
 
   const prepare = useCallback(() => {
-    preparing.current ??= prepareApple(api.nonce)
-    return preparing.current
+    const held = preparing.current
+    if (held && Date.now() - held.since < nonceGoodForMs) return held.preparation
+    const preparation = prepareApple(api.nonce)
+    preparing.current = { since: Date.now(), preparation }
+    return preparation
   }, [api])
 
   const signIn = useCallback(async (): Promise<AppleOutcome> => {
@@ -48,6 +53,7 @@ export function useAppleSignIn(api: AccountApi, servicesId: string | null) {
       nonceHash,
       redirectURI: returnUrl
     })
+    void prepare()
     if (!popup.ok) return { ok: false, message: popupMessages[popup.reason] }
     return { ok: true, authorization: popup.authorization, nonce, returnUrl }
   }, [prepare, servicesId])

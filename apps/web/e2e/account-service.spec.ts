@@ -1,5 +1,5 @@
 import type { Page } from '@playwright/test'
-import { expect, test } from './test'
+import { expect, footerAccountLink, test } from './test'
 
 const accountService = process.env.ZENBU_ACCOUNT_API_URL ?? 'http://localhost:8789'
 const elevenMinutes = 11 * 60_000
@@ -35,9 +35,6 @@ async function enterEmailedCode(page: Page, request: Requests, email: string, su
   await page.getByLabel('Code').fill(code)
   await page.getByRole('button', { name: submit }).click()
 }
-
-const footerAccountLink = (page: Page) =>
-  page.getByRole('contentinfo').getByRole('link', { name: /^(Sign in|Account)$/ })
 
 test('a learner registers with an emailed code, edits the account, signs out, signs in again, and deletes it', async ({
   page,

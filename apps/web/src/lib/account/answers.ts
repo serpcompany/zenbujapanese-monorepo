@@ -1,7 +1,17 @@
 type Fields = Record<string, unknown>
 
-const isFields = (value: unknown): value is Fields =>
+export const isFields = (value: unknown): value is Fields =>
   typeof value === 'object' && value !== null && !Array.isArray(value)
+
+export function jwtClaims(token: string): Fields | null {
+  try {
+    const payload = token.split('.')[1] ?? ''
+    const claims: unknown = JSON.parse(atob(payload.replaceAll('-', '+').replaceAll('_', '/')))
+    return isFields(claims) ? claims : null
+  } catch {
+    return null
+  }
+}
 
 const textIn = (fields: Fields, key: string) =>
   typeof fields[key] === 'string' ? (fields[key] as string) : null
@@ -44,7 +54,8 @@ export function profileOf(value: unknown): Profile | null {
   const createdAt = textIn(value, 'createdAt')
   const username = value.username === null ? null : textIn(value, 'username')
   const version = value.version
-  if (id === null || name === null || email === null || createdAt === null) return null
+  if (id === null || name === null || email === null) return null
+  if (createdAt === null || Number.isNaN(Date.parse(createdAt))) return null
   if (username === null && value.username !== null) return null
   if (typeof version !== 'number' || !Number.isInteger(version)) return null
   return { id, name, username, email, version, createdAt }

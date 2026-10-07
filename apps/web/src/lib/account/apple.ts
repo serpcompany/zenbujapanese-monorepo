@@ -1,3 +1,4 @@
+import { isFields, jwtClaims } from './answers'
 import type { Failure, Result } from './client'
 
 const appleScriptUrl =
@@ -29,13 +30,14 @@ export interface AppleAuthorization {
   name: { firstName?: string; lastName?: string } | null
 }
 
+export interface AppleCode {
+  code: string
+  returnUrl: string
+}
+
 export type ApplePopup =
   | { ok: true; authorization: AppleAuthorization }
   | { ok: false; reason: 'cancelled' | 'blocked' | 'failed' }
-
-type Fields = Record<string, unknown>
-const isFields = (value: unknown): value is Fields =>
-  typeof value === 'object' && value !== null && !Array.isArray(value)
 
 export const appleReturnUrl = (origin: string) => `${origin}/account/`
 
@@ -54,13 +56,8 @@ export function appleAuthorizationOf(answer: unknown, state: string): AppleAutho
 }
 
 export function appleUserOf(idToken: string): string | null {
-  try {
-    const payload = idToken.split('.')[1] ?? ''
-    const claims: unknown = JSON.parse(atob(payload.replaceAll('-', '+').replaceAll('_', '/')))
-    return isFields(claims) && typeof claims.sub === 'string' ? claims.sub : null
-  } catch {
-    return null
-  }
+  const sub = jwtClaims(idToken)?.sub
+  return typeof sub === 'string' ? sub : null
 }
 
 export async function sha256Hex(text: string): Promise<string> {
@@ -92,13 +89,21 @@ export async function signInWithApplePopup(
 
 let loading: Promise<AppleAuth | null> | null = null
 
+function appleAuthOnThePage(): AppleAuth | null {
+  const auth: unknown = window.AppleID?.auth
+  return isFields(auth) && typeof auth.init === 'function' && typeof auth.signIn === 'function'
+    ? (auth as unknown as AppleAuth)
+    : null
+}
+
 function loadAppleAuth(): Promise<AppleAuth | null> {
-  if (window.AppleID?.auth) return Promise.resolve(window.AppleID.auth)
+  const loaded = appleAuthOnThePage()
+  if (loaded) return Promise.resolve(loaded)
   loading ??= new Promise(resolve => {
     const script = document.createElement('script')
     script.src = appleScriptUrl
     script.async = true
-    script.onload = () => resolve(window.AppleID?.auth ?? null)
+    script.onload = () => resolve(appleAuthOnThePage())
     script.onerror = () => {
       loading = null
       resolve(null)

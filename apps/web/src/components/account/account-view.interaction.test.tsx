@@ -1,11 +1,11 @@
 import { afterEach, describe, expect, test, vi } from 'vitest'
 import type { AccountSettings } from '@/lib/account/settings'
+import { idTokenFor, jwtFor } from '@/test/account-answers'
 import {
   answer,
   apiUrl,
   click,
   fill,
-  idTokenFor,
   refusal,
   render,
   type ServiceCall,
@@ -30,6 +30,8 @@ const profile = {
   createdAt: '2026-10-01T00:00:00.000Z',
   updatedAt: '2026-10-01T00:00:00.000Z'
 }
+const oldAccess = jwtFor({ sub: 'u1' }, 'old')
+const newAccess = jwtFor({ sub: 'u1' }, 'new')
 const emailWay = { id: 'i1', providerId: 'email', accountId: email }
 const appleWay = { id: 'i2', providerId: 'apple', accountId: '001.apple' }
 const googleWay = { id: 'i3', providerId: 'google', accountId: '109' }
@@ -50,11 +52,17 @@ function signedIn({
   more?: Parameters<typeof stubAccountService>[0]
 } = {}) {
   return stubAccountService({
-    'GET /v1/auth/get-session': answer({
-      user: { id: 'u1', email },
-      session: { token: 'old-bare', createdAt: minutesAgo(signedInMinutesAgo) }
-    }),
-    'GET /v1/auth/token': [answer({ token: 'old-access' }), answer({ token: 'new-access' })],
+    'GET /v1/auth/get-session': [
+      answer({
+        user: { id: 'u1', email },
+        session: { token: 'old-bare', createdAt: minutesAgo(signedInMinutesAgo) }
+      }),
+      answer({
+        user: { id: 'u1', email },
+        session: { token: 'new-bare', createdAt: minutesAgo(0) }
+      })
+    ],
+    'GET /v1/auth/token': [answer({ token: oldAccess }), answer({ token: newAccess })],
     'GET /v1/me': answer(profile),
     'GET /v1/auth/list-accounts': answer(ways),
     'POST /v1/auth/email-otp/send-verification-otp': answer({ success: true }),
@@ -76,21 +84,22 @@ async function confirmWithEmailCode(container: HTMLElement) {
   await submit(container, 'Confirm')
 }
 
-function appleAnswering(sub: string) {
+function appleAnswering(firstSub: string) {
   const init = vi.fn()
+  const apple = { sub: firstSub, init }
   vi.stubGlobal('AppleID', {
     auth: {
       init,
       signIn: async () => ({
         authorization: {
-          code: `apple-code-for-${sub}`,
-          id_token: idTokenFor(sub),
+          code: `apple-code-for-${apple.sub}`,
+          id_token: idTokenFor(apple.sub),
           state: init.mock.lastCall?.[0]?.state
         }
       })
     }
   })
-  return init
+  return apple
 }
 
 async function deletingAnAppleAccount(more: Parameters<typeof stubAccountService>[0] = {}) {
@@ -119,7 +128,7 @@ describe('the account page', () => {
     expect(page.textContent).toContain(`A code we email you (${email})`)
     expect(page.textContent).toContain('Member since October 1, 2026')
     expect(callTo(calls, 'GET /v1/me')).toEqual([
-      expect.objectContaining({ credentials: 'omit', authorization: 'Bearer old-access' })
+      expect.objectContaining({ credentials: 'omit', authorization: `Bearer ${oldAccess}` })
     ])
     expect(callTo(calls, 'GET /v1/auth/get-session')[0]?.credentials).toBe('include')
     expect(window.localStorage.getItem('zenbu-signed-in')).toBe('yes')
@@ -140,8 +149,8 @@ describe('the account page', () => {
     const page = render(<AccountView settings={settings()} returnedError={null} />)
     await shows(page, `Signed in as ${email}`)
     expect(callTo(calls, 'GET /v1/me').map(call => call.authorization)).toEqual([
-      'Bearer old-access',
-      'Bearer new-access'
+      `Bearer ${oldAccess}`,
+      `Bearer ${newAccess}`
     ])
   })
 
@@ -196,7 +205,7 @@ describe('the account page', () => {
     })
     expect(callTo(calls, 'POST /v1/auth/revoke-session')[0]?.body).toEqual({ token: 'old-bare' })
     expect(callTo(calls, 'DELETE /v1/me')).toEqual([
-      expect.objectContaining({ authorization: 'Bearer new-access', body: { confirm: true } })
+      expect.objectContaining({ authorization: `Bearer ${newAccess}`, body: { confirm: true } })
     ])
     expect(window.localStorage.getItem('zenbu-signed-in')).toBeNull()
   })
@@ -218,7 +227,7 @@ describe('the account page', () => {
   })
 
   test("deletes an Apple account with Apple's code, after Apple signs it in again with the same Apple ID", async () => {
-    const init = appleAnswering('001.apple')
+    const { init } = appleAnswering('001.apple')
     const { calls, page } = await deletingAnAppleAccount()
     await shows(page, 'Apple confirms it’s you')
     expect(page.textContent).not.toContain('Email me a code')
@@ -244,15 +253,19 @@ describe('the account page', () => {
   })
 
   test("won't confirm with another Apple ID, and asks again when Apple refuses the code", async () => {
-    appleAnswering('002.someone-else')
+    const apple = appleAnswering('002.someone-else')
     const { routes, page } = await deletingAnAppleAccount({
       'DELETE /v1/me': refusal(400, 'apple_authorization_invalid')
     })
     await click(page, 'Continue with Apple')
     await shows(page, 'That Apple ID is a different one')
     expect(routes()).not.toContain('POST /v1/auth/sign-in/social')
+    expect(
+      routes().filter(route => route === 'POST /v1/auth/sign-in/nonce'),
+      'the next popup is ready before the next click'
+    ).toHaveLength(2)
 
-    appleAnswering('001.apple')
+    apple.sub = '001.apple'
     await click(page, 'Continue with Apple')
     await shows(page, "Apple didn't accept that. Continue with Apple again.")
     expect(page.textContent).toContain('Continue with Apple')
@@ -316,5 +329,60 @@ describe('the account page', () => {
       body: { email, otp: '123456' }
     })
     await vi.waitFor(() => expect(callTo(calls, 'GET /v1/auth/list-accounts')).toHaveLength(2))
+    expect(callTo(calls, 'POST /v1/auth/revoke-session')[0]?.body).toEqual({ token: 'old-bare' })
+  })
+
+  test('adds Apple with its popup, and stays signed in when Apple is refused on the way', async () => {
+    appleAnswering('001.apple')
+    const { calls } = signedIn({
+      more: {
+        'POST /v1/auth/sign-in/nonce': answer({ nonce: 'n1', expiresIn: 600 }),
+        'POST /v1/auth/link-social': [refusal(401, 'invalid_nonce'), answer({ status: true })]
+      }
+    })
+    const page = render(<AccountView settings={settings(true)} returnedError={null} />)
+    await shows(page, `Signed in as ${email}`)
+    await click(page, 'Add Apple')
+    await shows(page, 'That took too long. Try again.')
+    expect(page.textContent).toContain(`Signed in as ${email}`)
+    expect(window.localStorage.getItem('zenbu-signed-in')).toBe('yes')
+    await click(page, 'Add Apple')
+    expect(callTo(calls, 'POST /v1/auth/link-social')[1]?.body).toEqual({
+      provider: 'apple',
+      idToken: { token: idTokenFor('001.apple'), nonce: 'n1' }
+    })
+    await vi.waitFor(() => expect(callTo(calls, 'GET /v1/auth/list-accounts')).toHaveLength(2))
+  })
+
+  test('keeps the learner signed in, and says so, when signing out fails', async () => {
+    signedIn({ more: { 'POST /v1/auth/sign-out': refusal(500, 'internal') } })
+    const page = render(<AccountView settings={settings()} returnedError={null} />)
+    await shows(page, `Signed in as ${email}`)
+    await click(page, 'Sign out')
+    await shows(page, 'Something went wrong on our side')
+    expect(page.textContent).toContain(`Signed in as ${email}`)
+  })
+
+  test("after confirming with Google, signs the earlier session out, or says when Google's account is another's", async () => {
+    window.sessionStorage.setItem(
+      'zenbu-confirming',
+      JSON.stringify({ userId: 'u1', token: 'older' })
+    )
+    const same = signedIn()
+    let page = render(<AccountView settings={settings()} returnedError={null} />)
+    await shows(page, `Signed in as ${email}`)
+    await vi.waitFor(() =>
+      expect(callTo(same.calls, 'POST /v1/auth/revoke-session')[0]?.body).toEqual({
+        token: 'older'
+      })
+    )
+    unmount()
+
+    window.sessionStorage.setItem('zenbu-confirming', JSON.stringify({ userId: 'u9', token: 'x' }))
+    const other = signedIn()
+    page = render(<AccountView settings={settings()} returnedError={null} />)
+    await shows(page, `That Google account signs in to another Zenbu account`)
+    expect(callTo(other.calls, 'POST /v1/auth/revoke-session')).toEqual([])
+    expect(window.sessionStorage.getItem('zenbu-confirming')).toBeNull()
   })
 })

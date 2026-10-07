@@ -1,5 +1,5 @@
 import type { Page, Route } from '@playwright/test'
-import { expect, test } from './test'
+import { expect, footerAccountLink, test } from './test'
 
 const accountPages = [
   { path: '/login/', title: 'Sign in' },
@@ -21,6 +21,9 @@ const profile = {
 
 type Answers = Record<string, unknown>
 
+const accessTokenFor = (sub: string) =>
+  `head.${Buffer.from(JSON.stringify({ sub })).toString('base64url')}.sig`
+
 async function standInForTheAccountService(page: Page, answers: Answers) {
   await page.route('**/v1/**', async (route: Route) => {
     const request = route.request()
@@ -40,15 +43,15 @@ async function standInForTheAccountService(page: Page, answers: Answers) {
 
 const signedOutService: Answers = { 'GET /v1/auth/get-session': null }
 
-const footerAccountLink = (page: Page) =>
-  page.getByRole('contentinfo').getByRole('link', { name: /^(Sign in|Account)$/ })
-
 test.describe('account pages', () => {
   for (const { path, title } of accountPages) {
     test(`${path} is noindex, with the site's header and footer`, async ({ page }) => {
       await standInForTheAccountService(page, signedOutService)
       await page.goto(path)
       await expect(page.getByRole('heading', { level: 1, name: title })).toBeVisible()
+      await expect(
+        page.getByRole('banner').getByRole('link', { name: 'Zenbu Japanese' })
+      ).toBeVisible()
       await expect(page).toHaveTitle(`${title} | Zenbu Japanese`)
       await expect(page.locator('meta[name="robots"]')).toHaveAttribute(
         'content',
@@ -81,7 +84,7 @@ test.describe('account pages', () => {
         user: { id: 'u1', email },
         session: { token: 'bare', createdAt: new Date().toISOString() }
       },
-      'GET /v1/auth/token': { token: 'access' },
+      'GET /v1/auth/token': { token: accessTokenFor(profile.id) },
       'GET /v1/me': profile,
       'GET /v1/auth/list-accounts': [{ id: 'i1', providerId: 'email', accountId: email }]
     })

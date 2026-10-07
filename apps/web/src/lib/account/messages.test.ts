@@ -1,16 +1,6 @@
 import { describe, expect, test } from 'vitest'
-import type { Failure } from './client'
-import { failureMessage, needsFreshSignIn, returnedErrorMessage } from './messages'
-
-const refused = (status: number, code: string, extra: Partial<Failure> = {}): Failure => ({
-  kind: 'refused',
-  status,
-  code,
-  message: '',
-  retryAfter: null,
-  current: null,
-  ...extra
-})
+import { refusedWith as refused } from '@/test/account-answers'
+import { failureMessage, isSignedOut, needsFreshSignIn, returnedErrorMessage } from './messages'
 
 describe('what the account pages say when the account service refuses', () => {
   test.each([
@@ -20,6 +10,7 @@ describe('what the account pages say when the account service refuses', () => {
     [refused(403, 'account_not_linked'), 'signs in with Apple or Google'],
     [refused(401, 'oauth_link_error'), 'An account already uses that email'],
     [refused(503, 'email_unavailable'), "isn't available right now"],
+    [refused(401, 'invalid_nonce'), 'That took too long'],
     [refused(403, 'sign_in_again'), 'confirm it’s you'],
     [refused(400, 'failed_to_unlink_last_account'), 'your only way to sign in'],
     [refused(409, 'username_taken'), 'username is taken'],
@@ -57,6 +48,13 @@ describe('what the account pages say when the account service refuses', () => {
     expect(returnedErrorMessage('state_mismatch')).toBe(
       "Signing in with Google didn't work. Try again."
     )
+  })
+
+  test('takes a 401 as signed out only when it says the session is gone, not for a refused token or nonce', () => {
+    expect(isSignedOut(refused(401, 'unauthorized'))).toBe(true)
+    expect(isSignedOut(refused(401, 'sign_in_again'))).toBe(true)
+    expect(isSignedOut(refused(401, 'invalid_nonce'))).toBe(false)
+    expect(isSignedOut(refused(401, 'invalid_token'))).toBe(false)
   })
 
   test('asks for a fresh sign-in on 403 sign_in_again and session_not_fresh only', () => {

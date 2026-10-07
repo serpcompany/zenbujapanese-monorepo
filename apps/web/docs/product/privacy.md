@@ -48,12 +48,14 @@ timing, never an email, a profile, a code or link, or a token.
   automated check yet.
 
 **The website's account pages.** A section, "Your account on this website", lists what the
-website can do signed in, and only that: show the email and show and change the name and username;
-show how the learner signs in, and add or remove a way; sign out of this browser; delete the
-account. It says the website doesn't read or change known words or lists yet, that its pages
-connect from the browser to the account service only when the learner opens the account page or
-starts signing in, and that Apple's script and window, and Google's page, come from those
-companies. The website section names each thing signing in keeps in the browser: the
+website uses the account for, and only that: show the email and show and change the name and
+username; show how the learner signs in, and add or remove a way; sign out of this browser; delete
+the account. The website's pages hold that line, not its scopes: `zenbu-web` has the iOS app's
+scopes ([`account-clients.md`](../../../../docs/agents/account-clients.md), Your app). It says the
+website doesn't read or change known words or lists yet, that its pages connect from the browser to
+the account service only when the learner opens the account page or starts to sign in, that
+pointing at or tabbing to Sign in with Apple loads Apple's script and asks the service for a
+nonce, and that Apple's script and window, and Google's page, come from those companies. The website section names each thing signing in keeps in the browser: the
 `__Secure-zenbu.session_token` cookie, which keeps the learner signed in for 60 days from its last
 use or until they sign out or delete the account; the `__Secure-zenbu.state` cookie, for 5 minutes
 during a Google sign-in; both set by the account service for its own host, so the website's pages

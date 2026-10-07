@@ -17,6 +17,7 @@ const refusals: Record<string, string> = {
   oauth_link_error: linkedElsewhere,
   email_not_verified: unverified,
   email_unavailable: "Signing in with an email code isn't available right now. Try again later.",
+  invalid_nonce: 'That took too long. Try again.',
   social_account_already_linked: anotherAccount,
   session_not_fresh: confirmFirst,
   sign_in_again: confirmFirst,
@@ -69,5 +70,7 @@ export const needsFreshSignIn = (failure: Failure) =>
   failure.status === 403 &&
   (failure.code === 'session_not_fresh' || failure.code === 'sign_in_again')
 
+const signedOutCodes = new Set(['unauthorized', 'sign_in_again', 'another_account'])
+
 export const isSignedOut = (failure: Failure) =>
-  failure.kind === 'refused' && failure.status === 401
+  failure.kind === 'refused' && failure.status === 401 && signedOutCodes.has(failure.code)

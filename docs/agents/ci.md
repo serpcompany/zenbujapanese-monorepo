@@ -355,8 +355,9 @@ rollback's comes from an image the run pulled. The whole deploy is in
 
 `.github/workflows/account-api.yml` checks the account service on pull requests that change it,
 what the services share (`packages/node-service/`), or the website's account pages (their routes,
-`apps/web/src/components/account/`, `apps/web/src/lib/account/`, the hooks, the browser test
-against the service, and `apps/web/wrangler.jsonc`), and by hand. A new push cancels the pull
+`apps/web/src/components/account/`, `apps/web/src/lib/account/`, the hooks, the layout, footer,
+and UI components they render in, the browser test against the service with `apps/web/e2e/test.ts`
+and `apps/web/playwright.config.ts`, and `apps/web/wrangler.jsonc`), and by hand. A new push cancels the pull
 request's last run. The deployer and the backups script (`deploy/deployer.sh`,
 `apps/account-api/deploy/backups.sh`) are ShellChecked by `Repository`'s `pnpm verify`.
 
@@ -371,7 +372,9 @@ request's last run. The deployer and the backups script (`deploy/deployer.sh`,
   registers with an emailed code, edits the profile, signs out, signs in again, and deletes the
   account after a fresh sign-in ([`web.md`](web.md), Account pages). The `Web` workflow can't run
   it, with no service, so it runs here, as `Dictionary API` runs the website's rendered-page gate
-  against the service it builds. `ACCOUNT_API_SECRET` is a CI-only value. On a failure it prints
+  against the service it builds. It doesn't retry a failed run, as the `Web` workflow does: the
+  service sends five codes from one address in 10 minutes, and a run sends three.
+  `ACCOUNT_API_SECRET` is a CI-only value. On a failure it prints
   the service's log and keeps the test's trace, video, and screenshot as `account-pages-report`
   for a week.
 

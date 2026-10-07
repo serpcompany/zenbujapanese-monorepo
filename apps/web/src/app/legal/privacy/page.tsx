@@ -138,7 +138,7 @@ export default function PrivacyPage() {
       <h2>Your account on this website</h2>
       <p>
         On zenbujapanese.com you can create or sign in to your Zenbu account with Apple, Google, or
-        a code we email you. Signed in, the website can only:
+        a code we email you. Signed in, the website uses your account only to:
       </p>
       <ul>
         <li>show your email, and show and change your name and username;</li>
@@ -149,10 +149,12 @@ export default function PrivacyPage() {
       <p>
         It doesn't read or change your known words or lists yet; we'll update this policy before it
         does. Its account pages connect from your browser to our account service at
-        api.zenbujapanese.com only when you open your account page or start signing in. If you
-        choose Apple, your browser loads Apple's Sign in with Apple script from Apple and opens
-        Apple's window; if you choose Google, your browser goes to Google and comes back through our
-        account service. Each handles that under its own terms and privacy policy.
+        api.zenbujapanese.com only when you open your account page or start to sign in. Pointing at
+        or tabbing to a Sign in with Apple button gets it ready: your browser loads Apple's Sign in
+        with Apple script from Apple and asks our account service for a one-time sign-in value.
+        Choosing Apple opens Apple's window; if you choose Google, your browser goes to Google and
+        comes back through our account service. Each handles that under its own terms and privacy
+        policy.
       </p>
 
       <h2>Where account data is kept</h2>

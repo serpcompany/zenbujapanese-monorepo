@@ -3,13 +3,15 @@
 import { useState } from 'react'
 import { Button } from '@/components/ui/button'
 import type { AccessTokens } from '@/lib/account/access-tokens'
+import type { AccountSession } from '@/lib/account/answers'
+import type { AppleCode } from '@/lib/account/apple'
 import type { AccountApi } from '@/lib/account/client'
+import { deleteTheAccount } from '@/lib/account/flows'
 import { type SignedInAccount, signsInWith } from '@/lib/account/load'
-import { failureMessage, isSignedOut, needsFreshSignIn } from '@/lib/account/messages'
+import { failureMessage } from '@/lib/account/messages'
 import type { AccountSettings } from '@/lib/account/settings'
 import { ConfirmItsYou } from './confirm-its-you'
 import { FormMessage } from './form-message'
-import type { AppleCode } from './sign-in-options'
 
 type Step = 'closed' | 'confirm' | 'confirm-identity' | 'deleting'
 
@@ -22,7 +24,7 @@ interface DeleteAccountProps {
   settings: AccountSettings
   account: SignedInAccount
   freshNow: () => boolean
-  onConfirmed: () => void
+  onConfirmed: (session: AccountSession | null) => void
   onDeleted: () => void
   onSignedOut: () => void
 }
@@ -44,23 +46,14 @@ export function DeleteAccount({
   async function remove(apple: AppleCode | null) {
     setStep('deleting')
     setProblem(null)
-    const deleted = await tokens.use(token =>
-      api.deleteAccount(
-        token,
-        apple ? { appleAuthorizationCode: apple.code, appleRedirectUri: apple.returnUrl } : null
-      )
-    )
-    if (deleted.ok) {
-      void api.signOut()
-      return onDeleted()
-    }
-    const { failure } = deleted
-    if (isSignedOut(failure)) return onSignedOut()
-    const appleRefused = failure.kind === 'refused' && failure.code.startsWith('apple_')
-    setProblem(appleRefused && !appleConfirms ? appleElsewhere : failureMessage(failure))
-    setStep(
-      needsFreshSignIn(failure) || (appleRefused && appleConfirms) ? 'confirm-identity' : 'confirm'
-    )
+    const deletion = await deleteTheAccount(api, tokens, apple)
+    if (deletion.kind === 'deleted') return onDeleted()
+    if (deletion.kind === 'signed-out') return onSignedOut()
+    const appleElsewhereNeeded = deletion.kind === 'refused' && deletion.byApple && !appleConfirms
+    setProblem(appleElsewhereNeeded ? appleElsewhere : failureMessage(deletion.failure))
+    const confirmAgain =
+      deletion.kind === 'confirm-first' || (deletion.kind === 'refused' && deletion.byApple)
+    setStep(confirmAgain && !appleElsewhereNeeded ? 'confirm-identity' : 'confirm')
   }
 
   return (
@@ -104,7 +97,12 @@ export function DeleteAccount({
             >
               Delete my account
             </Button>
-            <Button type="button" variant="ghost" onClick={() => setStep('closed')}>
+            <Button
+              type="button"
+              variant="ghost"
+              disabled={step === 'deleting'}
+              onClick={() => setStep('closed')}
+            >
               Keep my account
             </Button>
           </div>
@@ -124,8 +122,8 @@ export function DeleteAccount({
                 ? 'Your account signs in with Apple, so Apple confirms it’s you and we stop its access to your Apple ID.'
                 : 'Deleting needs a sign-in from the last few minutes.'
             }
-            onConfirmed={apple => {
-              onConfirmed()
+            onConfirmed={(session, apple) => {
+              onConfirmed(session)
               void remove(apple)
             }}
             onCancel={() => setStep('closed')}

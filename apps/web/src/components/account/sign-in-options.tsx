@@ -2,18 +2,14 @@
 
 import { useState } from 'react'
 import { useAppleSignIn } from '@/hooks/use-apple-sign-in'
-import type { AppleAuthorization } from '@/lib/account/apple'
+import { useBusy } from '@/hooks/use-busy'
+import type { AppleAuthorization, AppleCode } from '@/lib/account/apple'
 import type { AccountApi } from '@/lib/account/client'
 import { failureMessage } from '@/lib/account/messages'
 import type { AccountSettings } from '@/lib/account/settings'
 import { EmailCodeForm } from './email-code-form'
 import { FormMessage } from './form-message'
 import { AppleButton, GoogleButton } from './provider-buttons'
-
-export interface AppleCode {
-  code: string
-  returnUrl: string
-}
 
 export interface SignInWays {
   apple: boolean
@@ -30,6 +26,7 @@ interface SignInOptionsProps {
   emailLabels: { send: string; signIn: string }
   googleReturn: { done: string; failed: string }
   refuseApple?: (authorization: AppleAuthorization) => string | null
+  beforeGoogle?: () => void
   onSignedIn: (apple: AppleCode | null) => void
 }
 
@@ -42,10 +39,11 @@ export function SignInOptions({
   emailLabels,
   googleReturn,
   refuseApple,
+  beforeGoogle,
   onSignedIn
 }: SignInOptionsProps) {
   const apple = useAppleSignIn(api, settings.appleServicesId)
-  const [busy, setBusy] = useState(false)
+  const [busy, setBusy] = useBusy()
   const [problem, setProblem] = useState<string | null>(null)
   const offersApple = ways.apple && settings.appleServicesId !== null
   const offersGoogle = ways.google && settings.google
@@ -86,6 +84,7 @@ export function SignInOptions({
       setBusy(false)
       return setProblem(failureMessage(started.failure))
     }
+    beforeGoogle?.()
     window.location.assign(started.value)
   }
 

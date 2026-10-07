@@ -81,7 +81,8 @@ test.describe('privacy policy', () => {
     ])
     await expectNamed(page, 'Your account on this website', [
       "doesn't read or change your known words or lists yet",
-      'only when you open your account page or start signing in',
+      'only when you open your account page or start to sign in',
+      'pointing at or tabbing to a Sign in with Apple button gets it ready',
       "loads Apple's Sign in with Apple script from Apple",
       'goes to Google and comes back through our account service'
     ])

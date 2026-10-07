@@ -12,7 +12,12 @@ on:
       - apps/web/src/components/account/**
       - apps/web/src/hooks/**
       - apps/web/src/lib/account/**
+      - apps/web/src/app/layout.tsx
+      - apps/web/src/components/site-footer.tsx
+      - apps/web/src/components/ui/**
       - apps/web/e2e/account-service.spec.ts
+      - apps/web/e2e/test.ts
+      - apps/web/playwright.config.ts
       - apps/web/wrangler.jsonc
       - package.json
       - pnpm-lock.yaml
@@ -107,7 +112,7 @@ jobs:
         working-directory: apps/web
         env:
           ZENBU_ACCOUNT_API: '1'
-        run: pnpm exec playwright test e2e/account-service.spec.ts --project desktop
+        run: pnpm exec playwright test e2e/account-service.spec.ts --project desktop --retries 0
       - name: Show the service's log
         if: failure()
         run: cat apps/account-api/service.log || true

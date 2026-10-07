@@ -316,7 +316,9 @@ the account service ([`account-api.md`](account-api.md); the website's side of i
   the pages, with the service's URL, and their components call the service with `fetch` and
   `credentials: 'include'`. The service keeps the session in an HttpOnly cookie on its own host,
   which no page can read; the pages keep the 15-minute access token in memory
-  (`src/lib/account/access-tokens.ts`) and send it only to `/v1/me`, without cookies.
+  (`src/lib/account/access-tokens.ts`), for the account they show only, and send it only to
+  `/v1/me`, without cookies. What takes more than one call, such as deleting the account or
+  signing in again, is in `src/lib/account/flows.ts`; the components make the single calls.
 - **Each answer's shape is checked where it enters** (`src/lib/account/answers.ts`), and the
   client (`src/lib/account/client.ts`) turns every answer into a value, a refusal with its code and
   `Retry-After`, a network failure, or an answer of another shape; `src/lib/account/messages.ts`
@@ -327,7 +329,7 @@ the account service ([`account-api.md`](account-api.md); the website's side of i
   | Var | What it does |
   | --- | --- |
   | `ACCOUNT_API_URL` | The account service's origin: `http://localhost:8789` locally, `https://api-staging.zenbujapanese.com` on staging, and `https://api.zenbujapanese.com` in production. Empty, the pages say signing in isn't available. |
-  | `ACCOUNT_APPLE_SERVICES_ID` | The Services ID Sign in with Apple JS signs in as: one of the service's `APPLE_SERVICES_IDS`. Empty, the pages offer no Apple. |
+  | `ACCOUNT_APPLE_SERVICES_ID` | The Services ID Sign in with Apple JS signs in as: the first of the service's `APPLE_SERVICES_IDS`, the one the service takes the website's Apple codes as. Empty, the pages offer no Apple. |
   | `ACCOUNT_GOOGLE_SIGN_IN` | `on` offers Google, once the service has a Google web client. |
 
   Apple and Google are off on staging and production until the service has them
@@ -344,8 +346,11 @@ the account service ([`account-api.md`](account-api.md); the website's side of i
   `/v1/auth/callback/google`, then back, with `?error=` on a failure.
 - **Code:** the routes in `src/app/login/`, `src/app/register/`, `src/app/forgot-password/`, and
   `src/app/account/`; the components in `src/components/account/`; the hooks
-  `src/hooks/use-apple-sign-in.ts` and `src/hooks/use-seems-signed-in.ts`, which reads the
-  local-storage note behind the footer's Sign in or Account (`src/lib/account/signed-in.ts`).
+  `src/hooks/use-apple-sign-in.ts`, `src/hooks/use-busy.ts`, which frees the buttons when the
+  browser comes back from Google with Back, and `src/hooks/use-seems-signed-in.ts`, which reads
+  the local-storage note behind the footer's Sign in or Account (`src/lib/account/signed-in.ts`).
+  A confirmation through Google leaves the page, so `src/lib/account/confirming.ts` keeps the
+  account it left from in session storage, to sign its earlier session out on the way back.
 
 To run them locally, run the account service ([`account-api.md`](account-api.md), Run it) with
 `ACCOUNT_API_TRUSTED_ORIGINS=http://localhost:3000,http://localhost:3100`; `pnpm dev` reads it at

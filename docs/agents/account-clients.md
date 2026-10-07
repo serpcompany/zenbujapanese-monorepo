@@ -76,8 +76,11 @@ trusts (`ACCOUNT_API_TRUSTED_ORIGINS`), and keeps no token of its own
 
 - **Every call to `/v1/auth`** is a `fetch` with `credentials: 'include'`. The session is the
   service's HttpOnly cookie on its own host: a sign-in answers no `set-auth-token` to the website,
-  and the page never sees the session token. `GET /v1/auth/token` with the cookie answers the
-  access token, which the page keeps in memory and sends, without cookies, to `/v1/me`.
+  so the page never holds the signed session token. `GET /v1/auth/get-session` shows it the
+  session's bare `token`, which signs nothing in; the page sends it only to
+  `POST /v1/auth/revoke-session`, to sign this browser's earlier session out after a fresh sign-in.
+  `GET /v1/auth/token` with the cookie answers the access token, which the page keeps in memory
+  and sends, without cookies, to `/v1/me`.
 - **Apple** runs in Sign in with Apple JS's popup, as the Services ID, with the nonce's SHA-256
   and a return URL on the page's own origin, `<site>/account/`, since Apple answers a popup only
   there. The page signs in with the ID token and the nonce, as an app does, and on a first sign-in

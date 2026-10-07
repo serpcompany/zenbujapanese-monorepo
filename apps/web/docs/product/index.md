@@ -68,7 +68,9 @@ five kinds:
 - **Browser tests** (Playwright) in `apps/web/e2e/`, which open the site on the dictionary fixtures
   at a desktop and a phone width, and click through it as a reader does. The `Web` workflow runs
   them on the production build; [`docs/agents/web.md`](../../../../docs/agents/web.md) says how to
-  run them locally.
+  run them locally. The account pages' are in two kinds: `e2e/account.spec.ts`, with a stand-in
+  for the account service, runs with the rest, and `e2e/account-service.spec.ts` runs against a
+  real one, in the `Account API` workflow ([Account pages](account.md)).
 - **Smoke checks** in `apps/web/scripts/smoke.sh`, run against staging and production after each
   deploy. Each is named here by the message it prints.
 

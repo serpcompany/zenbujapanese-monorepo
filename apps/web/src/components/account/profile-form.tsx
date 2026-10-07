@@ -23,9 +23,16 @@ const memberSince = (createdAt: string) =>
 export function ProfileForm({ api, tokens, profile, onChanged, onSignedOut }: ProfileFormProps) {
   const [name, setName] = useState(profile.name)
   const [username, setUsername] = useState(profile.username ?? '')
+  const [shownVersion, setShownVersion] = useState(profile.version)
   const [busy, setBusy] = useState(false)
   const [problem, setProblem] = useState<string | null>(null)
   const [notice, setNotice] = useState<string | null>(null)
+
+  if (profile.version !== shownVersion) {
+    setShownVersion(profile.version)
+    setName(profile.name)
+    setUsername(profile.username ?? '')
+  }
 
   function showProfile(shown: Profile) {
     setName(shown.name)

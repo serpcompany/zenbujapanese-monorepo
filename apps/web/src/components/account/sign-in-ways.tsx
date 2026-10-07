@@ -3,9 +3,11 @@
 import { useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { useAppleSignIn } from '@/hooks/use-apple-sign-in'
+import { useBusy } from '@/hooks/use-busy'
 import type { AccessTokens } from '@/lib/account/access-tokens'
-import type { Identity, Provider } from '@/lib/account/answers'
+import type { AccountSession, Identity, Provider } from '@/lib/account/answers'
 import type { AccountApi, Result } from '@/lib/account/client'
+import { afterSigningInAgain } from '@/lib/account/flows'
 import { type SignedInAccount, signsInWith } from '@/lib/account/load'
 import { failureMessage, isSignedOut, needsFreshSignIn } from '@/lib/account/messages'
 import { accountPages } from '@/lib/account/pages'
@@ -30,7 +32,7 @@ interface SignInWaysProps {
   settings: AccountSettings
   account: SignedInAccount
   freshNow: () => boolean
-  onConfirmed: () => void
+  onConfirmed: (session: AccountSession | null) => void
   onChanged: () => void
   onSignedOut: () => void
 }
@@ -48,7 +50,7 @@ export function SignInWaysSection({
   const apple = useAppleSignIn(api, settings.appleServicesId)
   const [pending, setPending] = useState<Pending>(null)
   const [confirming, setConfirming] = useState(false)
-  const [busy, setBusy] = useState(false)
+  const [busy, setBusy] = useBusy()
   const [problem, setProblem] = useState<string | null>(null)
   const [notice, setNotice] = useState<string | null>(null)
   const onlyOne = account.identities.length === 1
@@ -167,6 +169,8 @@ export function SignInWaysSection({
               variant="outline"
               disabled={busy}
               onPointerEnter={provider === 'apple' ? () => void apple.prepare() : undefined}
+              onFocus={provider === 'apple' ? () => void apple.prepare() : undefined}
+              onTouchStart={provider === 'apple' ? () => void apple.prepare() : undefined}
               onClick={() => void act({ kind: 'add', provider }, freshNow())}
             >
               {provider === 'email' ? 'Add an email code' : `Add ${providerNames[provider]}`}
@@ -182,8 +186,9 @@ export function SignInWaysSection({
           email={account.profile.email}
           sendLabel="Email me a code"
           signInLabel="Add it"
-          onSignedIn={() => {
+          onSignedIn={async () => {
             setPending(null)
+            await afterSigningInAgain(api, tokens, account.session)
             onChanged()
           }}
         />
@@ -196,9 +201,9 @@ export function SignInWaysSection({
           account={account}
           appleOnly={false}
           why="Changing how you sign in needs a sign-in from the last few minutes."
-          onConfirmed={() => {
+          onConfirmed={session => {
             setConfirming(false)
-            onConfirmed()
+            onConfirmed(session)
             if (pending?.kind === 'add' && pending.provider === 'apple') {
               return setNotice('Confirmed. Now choose Add Apple again.')
             }

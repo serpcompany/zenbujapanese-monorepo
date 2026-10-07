@@ -1,30 +1,41 @@
+import { jwtClaims } from './answers'
 import type { AccountApi, Result } from './client'
 
 const renewBeforeMs = 60_000
 const assumedLifetimeMs = 10 * 60_000
 
-function expiryOf(token: string, now: number): number {
-  try {
-    const payload = token.split('.')[1] ?? ''
-    const json = atob(payload.replaceAll('-', '+').replaceAll('_', '/'))
-    const exp = (JSON.parse(json) as { exp?: unknown }).exp
-    return typeof exp === 'number' ? exp * 1000 : now + assumedLifetimeMs
-  } catch {
-    return now + assumedLifetimeMs
-  }
-}
+const expiryOf = (exp: unknown, now: number) =>
+  typeof exp === 'number' ? exp * 1000 : now + assumedLifetimeMs
 
 const isUnauthorized = (result: Result<unknown>) =>
   !result.ok && result.failure.kind === 'refused' && result.failure.status === 401
 
+const anotherAccount: Result<never> = {
+  ok: false,
+  failure: {
+    kind: 'refused',
+    status: 401,
+    code: 'another_account',
+    message: '',
+    retryAfter: null,
+    current: null
+  }
+}
+
 export function accessTokens(api: Pick<AccountApi, 'accessToken'>, now = () => Date.now()) {
   let current: { token: string; renewAt: number } | null = null
+  let issuing = 0
+  let account: string | null = null
 
   async function issue(): Promise<Result<string>> {
+    const issue = ++issuing
     current = null
     const issued = await api.accessToken()
-    if (issued.ok) {
-      current = { token: issued.value, renewAt: expiryOf(issued.value, now()) - renewBeforeMs }
+    if (!issued.ok) return issued
+    const claims = jwtClaims(issued.value)
+    if (account !== null && claims?.sub !== account) return anotherAccount
+    if (issue === issuing) {
+      current = { token: issued.value, renewAt: expiryOf(claims?.exp, now()) - renewBeforeMs }
     }
     return issued
   }
@@ -41,6 +52,10 @@ export function accessTokens(api: Pick<AccountApi, 'accessToken'>, now = () => D
     },
     forget() {
       current = null
+      issuing += 1
+    },
+    belongTo(userId: string) {
+      account = userId
     }
   }
 }

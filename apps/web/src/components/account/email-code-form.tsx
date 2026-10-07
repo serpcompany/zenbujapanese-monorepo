@@ -109,7 +109,13 @@ export function EmailCodeForm({
         {signInLabel}
       </Button>
       <div className="flex flex-wrap gap-x-4 gap-y-1 text-sm">
-        <Button type="button" variant="link" className="h-auto p-0" onClick={() => send()}>
+        <Button
+          type="button"
+          variant="link"
+          className="h-auto p-0"
+          disabled={busy}
+          onClick={() => send()}
+        >
           Send a new code
         </Button>
         {fixedEmail ? null : (
@@ -117,6 +123,7 @@ export function EmailCodeForm({
             type="button"
             variant="link"
             className="h-auto p-0"
+            disabled={busy}
             onClick={() => {
               setSentTo(null)
               setProblem(null)

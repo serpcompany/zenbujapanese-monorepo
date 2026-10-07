@@ -1,14 +1,8 @@
 import { describe, expect, test, vi } from 'vitest'
+import { jwtFor, refusedResult as refusal } from '@/test/account-answers'
 import { accessTokens } from './access-tokens'
-import type { Result } from './client'
 
-const jwtExpiringAt = (seconds: number) =>
-  `head.${btoa(JSON.stringify({ exp: seconds })).replaceAll('=', '')}.sig`
-
-const refusal = (status: number, code: string): Result<never> => ({
-  ok: false,
-  failure: { kind: 'refused', status, code, message: '', retryAfter: null, current: null }
-})
+const jwtExpiringAt = (seconds: number) => jwtFor({ exp: seconds })
 
 describe('access tokens', () => {
   test('keeps one in memory until a minute before it expires, then gets another', async () => {
@@ -50,6 +44,30 @@ describe('access tokens', () => {
     const call = vi.fn()
     expect(await accessTokens({ accessToken }).use(call)).toEqual(refusal(401, 'sign_in_again'))
     expect(call).not.toHaveBeenCalled()
+  })
+
+  test("refuses a token for an account other than the page's, as when another tab signed in", async () => {
+    const accessToken = vi.fn().mockResolvedValue({ ok: true, value: jwtFor({ sub: 'u2' }) })
+    const tokens = accessTokens({ accessToken })
+    tokens.belongTo('u1')
+    const call = vi.fn()
+    expect(await tokens.use(call)).toEqual(refusal(401, 'another_account'))
+    expect(call).not.toHaveBeenCalled()
+  })
+
+  test('keeps no token that was being issued when it was told to forget', async () => {
+    let answer: (value: { ok: true; value: string }) => void = () => {}
+    const accessToken = vi
+      .fn()
+      .mockImplementationOnce(() => new Promise(resolve => (answer = resolve)))
+      .mockResolvedValueOnce({ ok: true, value: 'after' })
+    const tokens = accessTokens({ accessToken })
+    const call = vi.fn(async (token: string) => ({ ok: true as const, value: token }))
+    const first = tokens.use(call)
+    tokens.forget()
+    answer({ ok: true, value: 'before' })
+    await first
+    expect(await tokens.use(call)).toEqual({ ok: true, value: 'after' })
   })
 
   test('forgets its token, as after signing in again, so the next one carries the new sign-in', async () => {

@@ -23,6 +23,7 @@ export async function loadAccount(api: AccountApi, tokens: AccessTokens): Promis
   const session = await api.session()
   if (!session.ok) return notLoaded(session)
   if (session.value === null) return { kind: 'signed-out' }
+  tokens.belongTo(session.value.userId)
   const [profile, identities] = await Promise.all([
     tokens.use(token => api.profile(token)),
     api.identities()
@@ -43,5 +44,5 @@ export const appleUsersOf = (account: SignedInAccount) =>
     .filter(identity => identity.provider === 'apple')
     .map(identity => identity.subject)
 
-export const isFresh = (account: SignedInAccount, confirmedAt: number, now = Date.now()) =>
-  now - Math.max(account.session.signedInAt, confirmedAt) < freshForMs
+export const isFresh = (account: SignedInAccount, now = Date.now()) =>
+  now - account.session.signedInAt < freshForMs

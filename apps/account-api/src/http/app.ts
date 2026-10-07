@@ -42,17 +42,9 @@ function isLocal(url: string): boolean {
 
 const accountPaths = ['/v1/me', '/v1/sync'] as const
 
-const sessionTokenHeader = 'set-auth-token'
-
 function withoutSessionToken(response: Response): Response {
   const headers = new Headers(response.headers)
-  headers.delete(sessionTokenHeader)
-  const exposed = (headers.get('access-control-expose-headers') ?? '')
-    .split(',')
-    .map(header => header.trim())
-    .filter(header => header !== '' && header.toLowerCase() !== sessionTokenHeader)
-  if (exposed.length > 0) headers.set('access-control-expose-headers', exposed.join(', '))
-  else headers.delete('access-control-expose-headers')
+  headers.delete('set-auth-token')
   return new Response(response.body, {
     status: response.status,
     statusText: response.statusText,

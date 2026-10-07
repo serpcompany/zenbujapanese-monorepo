@@ -4,9 +4,11 @@ import Link from 'next/link'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { accessTokens } from '@/lib/account/access-tokens'
+import type { AccountSession } from '@/lib/account/answers'
 import { accountApi } from '@/lib/account/client'
+import { takeConfirming } from '@/lib/account/confirming'
 import { isFresh, loadAccount, type SignedInAccount } from '@/lib/account/load'
-import { failureMessage, returnedErrorMessage } from '@/lib/account/messages'
+import { failureMessage, isSignedOut, returnedErrorMessage } from '@/lib/account/messages'
 import { accountPages } from '@/lib/account/pages'
 import type { AccountSettings } from '@/lib/account/settings'
 import { rememberSignedIn } from '@/lib/account/signed-in'
@@ -20,7 +22,7 @@ type View =
   | { kind: 'unreachable'; problem: string }
   | { kind: 'signed-out'; notice: string | null }
   | { kind: 'deleted' }
-  | { kind: 'signed-in'; account: SignedInAccount }
+  | { kind: 'signed-in'; account: SignedInAccount; notice: string | null }
 
 function SignedOut({ notice }: { notice: string | null }) {
   return (
@@ -53,7 +55,7 @@ export function AccountView({
   const api = useMemo(() => accountApi(settings.apiUrl), [settings.apiUrl])
   const tokens = useMemo(() => accessTokens(api), [api])
   const [view, setView] = useState<View>({ kind: 'loading' })
-  const [confirmedAt, setConfirmedAt] = useState(0)
+  const [signOutProblem, setSignOutProblem] = useState<string | null>(null)
 
   const signedOut = useCallback(
     (notice: string | null) => {
@@ -65,14 +67,34 @@ export function AccountView({
   )
 
   const load = useCallback(async () => {
+    const confirming = takeConfirming()
     const loaded = await loadAccount(api, tokens)
     if (loaded.kind === 'signed-out') return signedOut(null)
     if (loaded.kind === 'failed') {
       return setView({ kind: 'unreachable', problem: failureMessage(loaded.failure) })
     }
     rememberSignedIn(true)
-    setView({ kind: 'signed-in', account: loaded.account })
+    const { session } = loaded.account
+    const confirmedAnotherAccount = confirming !== null && confirming.userId !== session.userId
+    if (confirming && !confirmedAnotherAccount && confirming.token !== session.token) {
+      void api.revokeSession(confirming.token)
+    }
+    setView({
+      kind: 'signed-in',
+      account: loaded.account,
+      notice: confirmedAnotherAccount
+        ? `That Google account signs in to another Zenbu account, so this browser is now signed in to ${session.email}.`
+        : null
+    })
   }, [api, tokens, signedOut])
+
+  const update = useCallback(
+    (change: (account: SignedInAccount) => SignedInAccount) =>
+      setView(current =>
+        current.kind === 'signed-in' ? { ...current, account: change(current.account) } : current
+      ),
+    []
+  )
 
   useEffect(() => {
     void load()
@@ -112,8 +134,10 @@ export function AccountView({
     tokens,
     settings,
     account,
-    freshNow: () => isFresh(account, confirmedAt),
-    onConfirmed: () => setConfirmedAt(Date.now()),
+    freshNow: () => isFresh(account),
+    onConfirmed: (session: AccountSession | null) => {
+      if (session) update(current => ({ ...current, session }))
+    },
     onSignedOut: () => signedOut(null)
   }
 
@@ -123,11 +147,12 @@ export function AccountView({
         Signed in as <strong className="text-foreground">{account.profile.email}</strong>
       </p>
       <FormMessage problem={returnedError ? returnedErrorMessage(returnedError) : null} />
+      <Notice>{view.notice}</Notice>
       <ProfileForm
         api={api}
         tokens={tokens}
         profile={account.profile}
-        onChanged={profile => setView({ kind: 'signed-in', account: { ...account, profile } })}
+        onChanged={profile => update(current => ({ ...current, profile }))}
         onSignedOut={shared.onSignedOut}
       />
       <SignInWaysSection {...shared} onChanged={() => void load()} />
@@ -143,18 +168,17 @@ export function AccountView({
           variant="outline"
           className="self-start"
           onClick={async () => {
+            setSignOutProblem(null)
             const signedOutHere = await api.signOut()
-            if (!signedOutHere.ok && signedOutHere.failure.kind === 'offline') {
-              return setView({
-                kind: 'unreachable',
-                problem: failureMessage(signedOutHere.failure)
-              })
+            if (signedOutHere.ok || isSignedOut(signedOutHere.failure)) {
+              return signedOut('You’re signed out.')
             }
-            signedOut('You’re signed out.')
+            setSignOutProblem(failureMessage(signedOutHere.failure))
           }}
         >
           Sign out
         </Button>
+        <FormMessage problem={signOutProblem} />
       </section>
       <DeleteAccount
         {...shared}

@@ -1,4 +1,5 @@
 import { describe, expect, test, vi } from 'vitest'
+import { jwtFor, refusedResult } from '@/test/account-answers'
 import { accessTokens } from './access-tokens'
 import type { AccountApi, Result } from './client'
 import { isFresh, loadAccount, type SignedInAccount } from './load'
@@ -13,15 +14,13 @@ const profile = {
   createdAt: '2026-10-07T00:00:00.000Z'
 }
 const ok = <T>(value: T): Result<T> => ({ ok: true, value })
-const refused = (status: number): Result<never> => ({
-  ok: false,
-  failure: { kind: 'refused', status, code: 'x', message: '', retryAfter: null, current: null }
-})
+const refused = (status: number) =>
+  refusedResult(status, status === 401 ? 'unauthorized' : 'internal')
 
 function stubApi(parts: Partial<Record<keyof AccountApi, unknown>>) {
   const answers = {
     session: ok(session),
-    accessToken: ok('access'),
+    accessToken: ok(jwtFor({ sub: 'u1' })),
     profile: ok(profile),
     identities: ok([]),
     ...parts
@@ -56,11 +55,10 @@ describe('loading the account page', () => {
     expect(await load(stubApi({ profile: refused(500) }))).toMatchObject({ kind: 'failed' })
   })
 
-  test('counts a sign-in, or a confirmation, from the last nine minutes as fresh', () => {
+  test('counts a sign-in from the last nine minutes as fresh', () => {
     const account: SignedInAccount = { session, profile, identities: [] }
     const minute = 60_000
-    expect(isFresh(account, 0, 8 * minute)).toBe(true)
-    expect(isFresh(account, 0, 10 * minute)).toBe(false)
-    expect(isFresh(account, 5 * minute, 10 * minute)).toBe(true)
+    expect(isFresh(account, 8 * minute)).toBe(true)
+    expect(isFresh(account, 10 * minute)).toBe(false)
   })
 })

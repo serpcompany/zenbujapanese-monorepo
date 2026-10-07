@@ -46,7 +46,7 @@ describe('the website', () => {
     expect((await service.call('/v1/auth/token', fromTheWebsite(session))).status).toBe(401)
   })
 
-  test("never hands the page the session's token, which stays in the cookie", async () => {
+  test('never hands the page the signed session token, which stays in the cookie', async () => {
     const { service, as } = running
     const signedIn = await service.app.request('/v1/auth/sign-in/email-otp', {
       method: 'POST',

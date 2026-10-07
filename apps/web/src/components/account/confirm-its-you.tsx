@@ -2,12 +2,15 @@
 
 import { Button } from '@/components/ui/button'
 import type { AccessTokens } from '@/lib/account/access-tokens'
-import { appleUserOf } from '@/lib/account/apple'
+import type { AccountSession } from '@/lib/account/answers'
+import { type AppleCode, appleUserOf } from '@/lib/account/apple'
 import type { AccountApi } from '@/lib/account/client'
+import { rememberConfirming } from '@/lib/account/confirming'
+import { afterSigningInAgain } from '@/lib/account/flows'
 import { appleUsersOf, type SignedInAccount, signsInWith } from '@/lib/account/load'
 import { accountPages } from '@/lib/account/pages'
 import type { AccountSettings } from '@/lib/account/settings'
-import { type AppleCode, SignInOptions, type SignInWays } from './sign-in-options'
+import { SignInOptions, type SignInWays } from './sign-in-options'
 
 const otherAppleId =
   'That Apple ID is a different one from the one your account uses. Continue with the Apple ID your account uses.'
@@ -19,7 +22,7 @@ interface ConfirmItsYouProps {
   account: SignedInAccount
   appleOnly: boolean
   why: string
-  onConfirmed: (apple: AppleCode | null) => void
+  onConfirmed: (session: AccountSession | null, apple: AppleCode | null) => void
   onCancel: () => void
 }
 
@@ -65,10 +68,9 @@ export function ConfirmItsYou({
           refuseApple={authorization =>
             appleUsers.includes(appleUserOf(authorization.idToken) ?? '') ? null : otherAppleId
           }
-          onSignedIn={apple => {
-            void api.revokeSession(account.session.token)
-            tokens.forget()
-            onConfirmed(apple)
+          beforeGoogle={() => rememberConfirming(account.session)}
+          onSignedIn={async apple => {
+            onConfirmed(await afterSigningInAgain(api, tokens, account.session), apple)
           }}
         />
       ) : (

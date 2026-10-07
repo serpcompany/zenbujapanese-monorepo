@@ -1,5 +1,6 @@
 import { createHash } from 'node:crypto'
 import { describe, expect, test, vi } from 'vitest'
+import { idTokenFor } from '@/test/account-answers'
 import {
   type AppleAuth,
   appleAuthorizationOf,
@@ -8,9 +9,6 @@ import {
   sha256Hex,
   signInWithApplePopup
 } from './apple'
-
-const idTokenFor = (sub: string) =>
-  `head.${Buffer.from(JSON.stringify({ sub })).toString('base64url')}.sig`
 
 function appleAnswering(answer: (state: string) => Promise<unknown>) {
   let config: Parameters<AppleAuth['init']>[0] | null = null

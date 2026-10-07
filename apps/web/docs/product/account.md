@@ -78,21 +78,26 @@ Google.
 - Check: Account service spec, which signs in again from `/forgot-password/`.
 
 **Sign in with Apple.** Offered where the Worker names a Services ID (`ACCOUNT_APPLE_SERVICES_ID`).
-The page loads Apple's Sign in with Apple JS when the learner points at or focuses the button, and
-asks the service for a nonce then, so the click opens Apple's popup at once. It passes Apple the
-nonce's SHA-256 and the return URL `<site>/account/`, which Apple needs on the page's own origin
-for a popup. It signs in with Apple's ID token and the nonce, and, on a first sign-in, the name
-Apple hands the page. A closed popup says nothing; a blocked one says to allow pop-ups.
+The page loads Apple's Sign in with Apple JS when the learner points at, focuses, or touches the
+button, and asks the service for a nonce then, so the click opens Apple's popup at once; it gets
+the next nonce as soon as one is used, and a new one when the one it holds is nine minutes old. It
+passes Apple the nonce's SHA-256 and the return URL `<site>/account/`, which Apple needs on the
+page's own origin for a popup. It signs in with Apple's ID token and the nonce, and, on a first
+sign-in, the name Apple hands the page. A closed popup says nothing; a blocked one says to allow
+pop-ups; a nonce the service no longer knows says to try again.
 
 - Source: #468's decisions (Sign in with Apple JS in popup mode).
 - Check: `src/lib/account/apple.test.ts`; Sign-in form tests, "signs in with Apple's popup, passing
-  the first sign-in's name". Apple itself: not run; it takes no `localhost` return URL.
+  the first sign-in's name"; Account page tests, "won't confirm with another Apple ID, and asks
+  again when Apple refuses the code" (the next nonce, ready before the next click). Apple itself:
+  not run; it takes no `localhost` return URL.
 
 **Sign in with Google.** Offered where `ACCOUNT_GOOGLE_SIGN_IN` is `on`. The page asks the service
 to start Google's sign-in and sends the browser to the page it names (only an `https` one). Google
 comes back to the service, which sets the session and sends the browser on to `/account/`, or, on
 a failure, back to the page it started on with `?error=`, which the page names: an email that has
 an account another way, an unverified email, an account another Zenbu account uses, or a cancel.
+Back from Google with the browser's Back button, the buttons work again.
 
 - Source: #468's decisions; Better Auth's web sign-in.
 - Check: Sign-in form tests, "sends the browser to Google, to come back to the account page, or
@@ -113,18 +118,25 @@ account. When the service can't answer, it says so, with Try again.
   spec, "the account page says it can't reach it, and offers to try again".
 
 **Access tokens.** The page keeps its 15-minute access token in memory only, renews it a minute
-before it expires, and on a `401` gets one new token and asks again. When the service refuses a
-new token (`401`, `unauthorized` or `sign_in_again`), the page shows signed out. The session token
-stays in its HttpOnly cookie, on the account service's host: the page never sees it.
+before it expires, and on a `401` gets one new token and asks again. It takes a token only for the
+account it shows: one for another account, as after signing in elsewhere in another tab, shows
+signed out. When the service refuses a new token (`401`, `unauthorized` or `sign_in_again`), the
+page shows signed out; another `401`, such as a refused Apple token, says what went wrong and keeps
+the learner signed in. The signed session token stays in its HttpOnly cookie, on the account
+service's host: the page never holds it. The session's bare token, which `get-session` shows and
+which signs nothing in, only names the session to sign out after a fresh sign-in.
 
 - Source: the client guide (Access tokens); #468's security decisions.
-- Check: `src/lib/account/access-tokens.test.ts`; Account page tests, "gets a new access token once
-  when /v1/me answers 401"; `src/lib/account/load.test.ts`.
+- Check: `src/lib/account/access-tokens.test.ts`; `src/lib/account/messages.test.ts`, "takes a 401
+  as signed out only when it says the session is gone, not for a refused token or nonce"; Account
+  page tests, "gets a new access token once when /v1/me answers 401";
+  `src/lib/account/load.test.ts`.
 
 **Profile.** Name and Username, with Save, and "Member since" the day the account was made. Save
 sends only what changed, with the profile's version; an empty username removes it. When the
 profile changed in another app first, the form shows it as it is now and says so; a taken username
-says to try another; another refusal shows the service's reason.
+says to try another; another refusal shows the service's reason. When the page reads a newer
+profile, as after changing how the learner signs in, the form shows it.
 
 - Source: `PATCH /v1/me` ([`account-api.md`](../../../../docs/agents/account-api.md), Profiles and
   sync).
@@ -141,22 +153,30 @@ confirm it's you first when theirs is older, or when the service says so.
 - Source: the client guide (Signing in); `POST /v1/auth/link-social` and `unlink-account`.
 - Check: Account page tests, "removes a way to sign in after asking, and after a fresh sign-in
   when the last is old", "adds Google by sending the browser to Google, to come back to the account
-  page", and "adds the account's own email as a way to sign in, with a code". Adding Apple: No
-  automated check yet.
+  page", "adds the account's own email as a way to sign in, with a code", and "adds Apple with its
+  popup, and stays signed in when Apple is refused on the way".
 
 **Confirm it's you.** A fresh sign-in, with the ways the account has: Apple, Google, or a code to
 the account's own email. Apple must be the Apple ID the account uses: another is refused before
-it signs in. Confirming signs this browser's earlier session out, and the page takes a new access
-token, which carries the new sign-in. Google's confirmation leaves the page and comes back to it.
+it signs in. Confirming, or adding an email code, which signs in again too, signs this browser's
+earlier session out, and the page takes a new access token, which carries the new sign-in.
+Google's confirmation leaves the page and comes back to it; the page remembers the account it
+left from (in session storage) and, back on the same account, signs the earlier session out. If
+the Google account the learner chose signs in to another Zenbu account, the page says the browser
+is now signed in to that one, and changes nothing else.
 
 - Source: the client guide (Deleting the account: a sign-in from the last 10 minutes).
 - Check: Account page tests, "deletes after the learner confirms and, with a sign-in over nine
   minutes old, signs in again by code", "won't confirm with another Apple ID, and asks again when
-  Apple refuses the code".
+  Apple refuses the code", "adds the account's own email as a way to sign in, with a code", and
+  "after confirming with Google, signs the earlier session out, or says when Google's account is
+  another's".
 
-**Sign out.** Signs this browser out; the learner's other devices stay signed in.
+**Sign out.** Signs this browser out; the learner's other devices stay signed in. When the service
+can't sign it out, the page says so and stays signed in.
 
-- Check: Account page tests, "signs out of this browser"; Account service spec.
+- Check: Account page tests, "signs out of this browser" and "keeps the learner signed in, and says
+  so, when signing out fails"; Account service spec.
 
 **Delete your account.** Says what deleting removes and that each device keeps its data. Delete
 account asks "Delete <email> and everything it synced?", with Delete my account and Keep my

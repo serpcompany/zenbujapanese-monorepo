@@ -1,11 +1,12 @@
+import { act } from 'react'
 import { afterEach, describe, expect, test, vi } from 'vitest'
 import type { AccountSettings } from '@/lib/account/settings'
+import { idTokenFor } from '@/test/account-answers'
 import {
   answer,
   apiUrl,
   click,
   fill,
-  idTokenFor,
   refusal,
   render,
   shows,
@@ -120,6 +121,11 @@ describe('signing in on the website', () => {
       errorCallbackURL: `${window.location.origin}/register/`
     })
     expect(assign).toHaveBeenCalledWith('https://accounts.google.com/x')
+    const google = () => page.querySelector<HTMLButtonElement>('button[type="button"]')
+    expect(google()?.disabled).toBe(true)
+    const backAgain = Object.assign(new Event('pageshow'), { persisted: true })
+    await act(async () => window.dispatchEvent(backAgain))
+    expect(google()?.disabled).toBe(false)
   })
 
   test("says what went wrong when Google's sign-in comes back with an error", async () => {

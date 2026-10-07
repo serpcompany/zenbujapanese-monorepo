@@ -116,6 +116,3 @@ export async function submit(container: HTMLElement, name: string) {
   await act(async () => form.requestSubmit())
   await settle()
 }
-
-export const idTokenFor = (sub: string) =>
-  `head.${btoa(JSON.stringify({ sub })).replaceAll('=', '')}.sig`
