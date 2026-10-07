@@ -19,6 +19,7 @@
 		0BB4AC5EE8C0DBD544F1CE40 /* ZenbuJapanese.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = ZenbuJapanese.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		A6DE26B8A994C087243DFB0F /* ZenbuJapaneseApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ZenbuJapaneseApp.swift; sourceTree = "<group>"; };
 		B2D15A10E4B85E9C93E4D7F2 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		C5E8A7B2D6F94A1E8B3C2D10 /* ZenbuJapanese.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = ZenbuJapanese.entitlements; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -63,6 +64,7 @@
 			children = (
 				B2D15A10E4B85E9C93E4D7F2 /* Assets.xcassets */,
 				48A12CB315EF48F78F16871A /* PrivacyInfo.xcprivacy */,
+				C5E8A7B2D6F94A1E8B3C2D10 /* ZenbuJapanese.entitlements */,
 				A6DE26B8A994C087243DFB0F /* ZenbuJapaneseApp.swift */,
 			);
 			path = App;
@@ -173,6 +175,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_ENTITLEMENTS = App/ZenbuJapanese.entitlements;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
 				CURRENT_PROJECT_VERSION = 16;
 				GENERATE_INFOPLIST_FILE = YES;
@@ -255,6 +258,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_ENTITLEMENTS = App/ZenbuJapanese.entitlements;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
 				CURRENT_PROJECT_VERSION = 16;
 				GENERATE_INFOPLIST_FILE = YES;

@@ -64,6 +64,7 @@ public struct SearchExperienceRootView: View {
       .environment(userProfile)
       .environment(wordKnowledge)
       .environment(wordLists)
+      .onOpenURL(perform: openWebsiteLink)
       .onChange(of: scenePhase) { _, phase in
         if phase == .active {
           wordKnowledge.saveIfNeeded()
@@ -398,6 +399,22 @@ public struct SearchExperienceRootView: View {
       } else {
         path = []
         query = headword
+      }
+    }
+  }
+
+  private func openWebsiteLink(_ url: URL) {
+    selectedTab = .search
+    dismissRecognizedWordSheet(if: true)
+    Task { @MainActor in
+      switch await WebsiteLink(url).route(using: lookupClient) {
+      case .open(let route):
+        path.append(route)
+      case .search(let text):
+        path = []
+        query = text
+      case .home:
+        path = []
       }
     }
   }

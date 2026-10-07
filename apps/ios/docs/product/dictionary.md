@@ -122,6 +122,30 @@ and adds notes and photos, which work as they do for a word. Lists and Notes sec
 above the words containing the kanji, and a known kanji shows the **✓ Known** capsule. A kanji
 is saved as itself, not as a dictionary word, so marking 最 known doesn't mark the word 最.
 
+## Links from zenbujapanese.com
+
+Tapping a zenbujapanese.com dictionary link in another app, such as Tomodachi's **Open in
+Zenbu**, opens it in Zenbu rather than the browser. Zenbu switches to the Search tab, closes an
+open word sheet, and:
+
+- a word, `/dictionary/<slug>-<number>/` such as `/dictionary/見る-1259290/`, opens that word's
+  Word Detail on top of what Search was showing. The number is JMdict's entry number, which
+  decides the word whatever the slug says. A word the app's dictionary doesn't have searches the
+  slug's text instead, or returns to the Search screen when the URL has no slug;
+- a search, `/dictionary/search/<query>/`, returns to the Search screen and searches the query;
+- a kanji, `/dictionary/kanji/<kanji>/`, opens that kanji's detail; and
+- any other zenbujapanese.com URL returns to the Search screen.
+
+Old URLs the website redirects open where it sends them: a word's conjugation pages open the word,
+and a search's Example Sentences page the search. iOS opens Zenbu only for the URLs the website's
+association file claims ([website product docs](../../../web/docs/product/dictionary.md#urls-seo-and-indexing));
+until the website has Zenbu's Apple team ID, links open the website.
+
+- Source: #568, part of #563.
+- Check: `WebsiteLinkTests` (`apps/ios/Modules/Tests/SearchExperienceTests/WebsiteLinkTests.swift`)
+  for how each URL reads and what it opens, against the bundled dictionary. That iOS hands a
+  tapped link to Zenbu is checked on a device.
+
 ## Image Search
 
 Image Search recognizes Japanese text in one or more selected images. It reads both

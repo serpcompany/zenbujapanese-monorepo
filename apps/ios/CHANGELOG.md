@@ -6,6 +6,8 @@ All notable user-facing changes to Zenbu Japanese are recorded here.
 
 ### Added
 
+- Links to zenbujapanese.com's words, searches, and kanji, such as Tomodachi's **Open in Zenbu**,
+  open in Zenbu: a word opens its page, a search searches, and a kanji opens its detail.
 - Image Search has four views: **Photo**, **Both** (the image above the Player's caption cards,
   with furigana and line translations), **Text** (the recognized Japanese as paragraph cards),
   and **Translate** (a natural translation, then context on what the text is and its idioms,
