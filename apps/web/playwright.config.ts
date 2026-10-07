@@ -4,6 +4,7 @@ const onProductionBuild = process.env.E2E_SERVER === 'preview'
 const port = onProductionBuild ? 8787 : Number(process.env.E2E_PORT ?? 3100)
 const baseURL = process.env.E2E_BASE_URL ?? `http://localhost:${port}`
 const inCI = Boolean(process.env.CI)
+const appleTeamId = 'ABCDE12345'
 
 export default defineConfig({
   testDir: 'e2e',
@@ -28,7 +29,7 @@ export default defineConfig({
     ? undefined
     : {
         command: onProductionBuild
-          ? `pnpm exec opennextjs-cloudflare preview --port ${port}`
+          ? `pnpm exec opennextjs-cloudflare preview --port ${port} --var APPLE_TEAM_ID:${appleTeamId}`
           : `pnpm exec next dev --port ${port}`,
         env: { ZENBU_DICTIONARY_FIXTURES: '1' },
         url: `${baseURL}/`,

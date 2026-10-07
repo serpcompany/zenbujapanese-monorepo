@@ -348,6 +348,11 @@ Each value that differs by environment lives where the code that reads it runs:
   time. `deploy:production` sets these.
 - **`wrangler secret put --env <env>`** for secrets. **`.dev.vars`** holds local values only and is
   never committed.
+- **`APPLE_TEAM_ID`**, the Apple Developer team ID that the iOS app's association file names (see
+  [Links that open the app](#links-that-open-the-app)). It isn't secret, but it is set like one,
+  by hand, so it outlives every deploy, however it's run: `pnpm exec wrangler secret put
+  APPLE_TEAM_ID --env <staging|production>`. A var in `wrangler.jsonc` would have to be
+  committed, and a `--var` on a deploy would drop it from the next deploy run without one.
 
 `SITE_ENV=production` is set in both the production Worker `vars` and the `deploy:production` build.
 Anything else is non-production: it sends `X-Robots-Tag: noindex` and a `robots.txt` that disallows
@@ -436,3 +441,26 @@ and what it imports (`api.ts`, `urls.ts`, and `src/lib/log.ts`) outside Next.js,
 no Next.js module and no `@/` path, which a Biome rule in `apps/web/biome.json` enforces.
 `pnpm dev` runs Next.js alone, so check retired URLs in `pnpm preview`. The service lists none
 until #463 records retired entries.
+
+## Links that open the app
+
+`/.well-known/apple-app-site-association` tells iOS which of the site's URLs the Zenbu iOS app
+opens when it's installed (universal links, #568). The app claims `applinks:zenbujapanese.com`
+([`ios.md`](ios.md), Links from the website), and Apple's CDN fetches the file from that host
+alone, so the file has to answer there with a 200, as `application/json`, and without a redirect,
+which Apple doesn't follow. It claims search, kanji, and word URLs, and leaves out the JSON
+routes that load more of a page; what each opens in the app is in the
+[product docs](../../apps/web/docs/product/dictionary.md#urls-seo-and-indexing).
+
+`worker.ts` answers it before OpenNext, from `appleAppSiteAssociationResponse` in
+`apps/web/src/lib/app-links.ts`: OpenNext adds a trailing slash to any path without a file
+extension, `.well-known` paths included, and redirects (308) to it, though Next.js itself leaves
+`.well-known` alone. `worker.ts` bundles `app-links.ts` outside Next.js, so the Biome rule for
+`retired.ts` covers it too, and `pnpm dev`, which runs Next.js alone, doesn't serve the file:
+check it in `pnpm preview`.
+
+The file names the app as `<APPLE_TEAM_ID>.com.zenbujapanese.dictionary`. The team ID is the
+Worker's `APPLE_TEAM_ID` (Environment configuration, above); until it's set, or when it isn't
+ten capital letters and digits, the file answers 404, so no app claims the site's links, and a
+malformed one logs `apple_team_id_invalid`. Locally, put it in `.dev.vars` for `pnpm preview`;
+the browser tests pass a made-up one with `--var` when they run on the production build.

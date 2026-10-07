@@ -201,6 +201,7 @@
         "src/lib/dictionary/retired.ts",
         "src/lib/dictionary/api.ts",
         "src/lib/dictionary/urls.ts",
+        "src/lib/app-links.ts",
         "src/lib/log.ts"
       ],
       "linter": {

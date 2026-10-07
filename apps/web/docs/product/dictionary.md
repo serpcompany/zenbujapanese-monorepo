@@ -957,6 +957,21 @@ Search pages aren't in any sitemap yet.
 - Source: #484.
 - Check: No automated check yet (#511).
 
+**Opening a link in the app.** On an iPhone with the Zenbu app installed, a search, kanji, or word
+URL opens in the app (the [app's product docs](../../../ios/docs/product/dictionary.md#links-from-zenbujapanesecom)
+say where), and without it, on the website. `/.well-known/apple-app-site-association` says so: it
+names the app, `<team ID>.com.zenbujapanese.dictionary`, and claims `/dictionary/search/?*`,
+`/dictionary/kanji/?*`, and `/dictionary/*-*`, after excluding `/dictionary/*.json`, the JSON
+routes that load more of a page. The dictionary home and the site's other pages stay on the
+website. The file answers 200 as `application/json` at that exact path, without a redirect, and
+404 until the site has the Apple team ID (`APPLE_TEAM_ID`, set by a person), so nothing claims
+the site's links before then.
+
+- Source: #568, part of #563 (Tomodachi's "Open in Zenbu").
+- Check: `src/lib/app-links.test.ts`, "appleAppSiteAssociationResponse"; `apps/web/e2e/urls.spec.ts`,
+  "/.well-known/apple-app-site-association is JSON where Apple asks, claiming dictionary links for
+  the app", on the production build. That iOS then opens the app is checked on a device.
+
 ## Required, not built yet (#511)
 
 These are the #511 inventory's rows marked differs or missing, and the app features the owner's
