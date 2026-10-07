@@ -70,9 +70,14 @@ public enum LanguageArbiter {
 public struct BilingualTranscriptMerger: Sendable {
   public static let pairingWindow: TimeInterval = 0.4
   static let endTolerance: TimeInterval = 0.3
+  static let liveWindow: TimeInterval = 0.8
+  static let settleLimit: TimeInterval = 1.5
+  static let holdLimit: TimeInterval = 20
+  static let minimumConfidence = 0.4
 
   public let languages: [SpokenLanguage]
   private var volatile: [SpokenLanguage: TranscriberResult] = [:]
+  private var volatileHeardAt: [SpokenLanguage: Date] = [:]
   private var finals: [SpokenLanguage: [TranscriberResult]] = [:]
   private var firstFinalAt: Date?
   private var emittedThrough: TimeInterval = -.infinity
@@ -85,16 +90,14 @@ public struct BilingualTranscriptMerger: Sendable {
 
   public mutating func receive(_ result: TranscriberResult, at now: Date) -> [TranscriptionEvent] {
     guard languages.contains(result.language) else { return [] }
-    guard languages.count > 1 else {
-      return [
-        result.isFinal
-          ? .final(result.language, result.text) : .volatile(result.language, result.text)
-      ]
-    }
+    var result = result
+    result.text = Self.cleaned(result.text)
+    guard languages.count > 1 else { return passThrough(result) }
     guard result.end > emittedThrough + Self.endTolerance else { return [] }
     guard result.isFinal else {
       volatile[result.language] = result
-      return bestVolatile()
+      volatileHeardAt[result.language] = now
+      return bestLive()
     }
     volatile[result.language] = nil
     finals[result.language, default: []].append(result)
@@ -103,7 +106,9 @@ public struct BilingualTranscriptMerger: Sendable {
   }
 
   public mutating func flush(at now: Date) -> [TranscriptionEvent] {
-    guard let firstFinalAt, now.timeIntervalSince(firstFinalAt) >= Self.pairingWindow else {
+    guard let firstFinalAt else { return [] }
+    let held = now.timeIntervalSince(firstFinalAt)
+    guard held >= Self.pairingWindow, !counterpartIsUnfinished(at: now, held: held) else {
       return []
     }
     return emitFinal()
@@ -111,8 +116,36 @@ public struct BilingualTranscriptMerger: Sendable {
 
   public mutating func reset() {
     volatile = [:]
+    volatileHeardAt = [:]
     finals = [:]
     firstFinalAt = nil
+  }
+
+  static func cleaned(_ text: String) -> String {
+    let trimmed = text.drop { !$0.isLetter && !$0.isNumber }
+    return String(trimmed).trimmingCharacters(in: .whitespacesAndNewlines)
+  }
+
+  static func isWorthTranslating(_ candidate: TranscriptCandidate) -> Bool {
+    let letters = candidate.text.filter { $0.isLetter || $0.isNumber }.count
+    return letters > 1 && (candidate.confidence ?? 1) >= minimumConfidence
+  }
+
+  private func passThrough(_ result: TranscriberResult) -> [TranscriptionEvent] {
+    guard result.isFinal else { return [.volatile(result.language, result.text)] }
+    let candidate = TranscriptCandidate(
+      language: result.language, text: result.text, confidence: result.confidence)
+    return [.final(result.language, Self.isWorthTranslating(candidate) ? result.text : "")]
+  }
+
+  private func counterpartIsUnfinished(at now: Date, held: TimeInterval) -> Bool {
+    languages.contains { language in
+      guard finals[language]?.isEmpty ?? true, let heardAt = volatileHeardAt[language],
+        let live = volatile[language], !live.text.isEmpty
+      else { return false }
+      let stillSpeaking = now.timeIntervalSince(heardAt) < Self.liveWindow
+      return held < (stillSpeaking ? Self.holdLimit : Self.settleLimit)
+    }
   }
 
   private var finalsReachTheSameEnd: Bool {
@@ -124,27 +157,35 @@ public struct BilingualTranscriptMerger: Sendable {
   private mutating func emitFinal() -> [TranscriptionEvent] {
     let candidates = languages.compactMap { language -> TranscriptCandidate? in
       guard let results = finals[language], !results.isEmpty else { return nil }
-      let confidences = results.compactMap(\.confidence)
-      return TranscriptCandidate(
-        language: language,
-        text: language.joined(results.map(\.text)),
-        confidence: confidences.isEmpty
-          ? nil : confidences.reduce(0, +) / Double(confidences.count)
-      )
+      return candidate(language, from: results, live: nil)
     }
     emittedThrough = finals.values.flatMap { $0.map(\.end) }.max() ?? emittedThrough
     finals = [:]
     firstFinalAt = nil
     volatile = volatile.filter { $0.value.end > emittedThrough + Self.endTolerance }
-    guard let winner = LanguageArbiter.best(candidates) else { return [.final(languages[0], "")] }
+    guard let winner = LanguageArbiter.best(candidates), Self.isWorthTranslating(winner) else {
+      return [.final(languages[0], "")]
+    }
     return [.final(winner.language, winner.text)]
   }
 
-  private func bestVolatile() -> [TranscriptionEvent] {
-    let candidates = languages.compactMap { language in
-      volatile[language].map {
-        TranscriptCandidate(language: language, text: $0.text, confidence: $0.confidence)
-      }
+  private func candidate(
+    _ language: SpokenLanguage, from results: [TranscriberResult], live: TranscriberResult?
+  ) -> TranscriptCandidate {
+    let confidences = results.compactMap(\.confidence)
+    let texts = (results + [live].compactMap { $0 }).map(\.text).filter { !$0.isEmpty }
+    return TranscriptCandidate(
+      language: language,
+      text: language.joined(texts),
+      confidence: confidences.isEmpty ? nil : confidences.reduce(0, +) / Double(confidences.count)
+    )
+  }
+
+  private func bestLive() -> [TranscriptionEvent] {
+    let candidates = languages.compactMap { language -> TranscriptCandidate? in
+      let held = finals[language] ?? []
+      guard !held.isEmpty || volatile[language] != nil else { return nil }
+      return candidate(language, from: held, live: volatile[language])
     }
     guard let best = LanguageArbiter.best(candidates) else { return [.volatile(languages[0], "")] }
     return [.volatile(best.language, best.text)]

@@ -77,6 +77,23 @@ struct LiveConversationTests {
     #expect(harness.transcription.hearing == [false, true])
   }
 
+  @Test("a turn stays open while anyone is still talking")
+  func turnWaitsForSilence() async {
+    let harness = ConversationHarness()
+    await harness.startAndWaitForListening()
+
+    await harness.hear(.japanese, "今日は東京駅に行きます。")
+    harness.session.receive(.volatile(.english, "Please meet"))
+    await harness.pause(for: 3)
+    #expect(harness.session.openTurn != nil)
+    #expect(harness.playback.spoken.isEmpty)
+
+    harness.session.receive(.final(.english, ""))
+    await harness.pause(for: 1.3)
+    #expect(harness.session.openTurn == nil)
+    #expect(harness.playback.spoken.map(\.language) == [.english])
+  }
+
   @Test("a speaker who never pauses has the turn finished after about 30 seconds")
   func forceFinishesLongTurn() async {
     let harness = ConversationHarness()

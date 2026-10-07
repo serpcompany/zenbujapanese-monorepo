@@ -45,17 +45,27 @@ enum OnDeviceSpeechAssets {
   }
 }
 
+private struct LanguageAnalyzer {
+  let language: SpokenLanguage
+  let analyzer: SpeechAnalyzer
+  let input: AsyncStream<AnalyzerInput>.Continuation
+}
+
 actor OnDeviceTranscriber {
   static let shared = OnDeviceTranscriber()
+  static let pauseFinalizeMargin: TimeInterval = 0.1
+  static let finishedAtPauses: Set<SpokenLanguage> = [.japanese]
 
   private var engine = AVAudioEngine()
   private var generation = 0
   private let gate = MicrophoneGate()
-  private var analyzer: SpeechAnalyzer?
+  private var analyzers: [LanguageAnalyzer] = []
+  private var unfinished: Set<SpokenLanguage> = []
   private var analyzerFormat: AVAudioFormat?
   private var capture = CaptureProfile.nearbyVoices
   private var merger = BilingualTranscriptMerger(languages: [])
-  private var inputContinuation: AsyncStream<AnalyzerInput>.Continuation?
+  private var heardContinuation: AsyncStream<HeardAudio>.Continuation?
+  private var pauses = SpeechPauseDetector()
   private var eventContinuation: AsyncThrowingStream<TranscriptionEvent, any Error>.Continuation?
   private var resultTasks: [Task<Void, Never>] = []
   private var flushTask: Task<Void, Never>?
@@ -76,26 +86,37 @@ actor OnDeviceTranscriber {
       let format = await SpeechAnalyzer.bestAvailableAudioFormat(compatibleWith: modules)
     else { throw TranslatorFailure.speechRecognitionUnavailable }
     try ensureStillStarting(current)
-    let analyzer = SpeechAnalyzer(
-      modules: modules, options: .init(priority: .userInitiated, modelRetention: .lingering))
-    let (inputs, inputContinuation) = AsyncStream.makeStream(of: AnalyzerInput.self)
     let (events, eventContinuation) = AsyncThrowingStream.makeStream(
       of: TranscriptionEvent.self, throwing: (any Error).self)
-    self.analyzer = analyzer
     analyzerFormat = format
     capture = request.capture
     merger = BilingualTranscriptMerger(languages: request.languages)
-    self.inputContinuation = inputContinuation
+    pauses = SpeechPauseDetector()
+    let (heard, heardContinuation) = AsyncStream.makeStream(of: HeardAudio.self)
+    self.heardContinuation = heardContinuation
     self.eventContinuation = eventContinuation
     gate.set(true)
     do {
-      try await analyzer.prepareToAnalyze(in: format)
-      try await analyzer.start(inputSequence: inputs)
+      for (language, transcriber) in transcribers {
+        let analyzer = SpeechAnalyzer(
+          modules: [transcriber],
+          options: .init(priority: .userInitiated, modelRetention: .lingering))
+        let (inputs, input) = AsyncStream.makeStream(of: AnalyzerInput.self)
+        analyzers.append(
+          LanguageAnalyzer(
+            language: language, analyzer: analyzer, input: input))
+        try await analyzer.prepareToAnalyze(in: format)
+        try await analyzer.start(inputSequence: inputs)
+      }
     } catch {
       if current == generation { await stop() }
       throw TranslatorFailure.speechRecognitionUnavailable
     }
     try ensureStillStarting(current)
+    resultTasks.append(
+      Task {
+        for await audio in heard { await hear(audio) }
+      })
     for (language, transcriber) in transcribers {
       resultTasks.append(
         Task {
@@ -124,12 +145,11 @@ actor OnDeviceTranscriber {
   }
 
   func finishUtterance() async {
-    try? await analyzer?.finalize(through: nil)
+    for analyzer in analyzers { try? await analyzer.analyzer.finalize(through: nil) }
   }
 
   func setHearing(_ isHearing: Bool) async {
     gate.set(isHearing)
-    if !isHearing { await finishUtterance() }
   }
 
   func stop() async {
@@ -137,10 +157,15 @@ actor OnDeviceTranscriber {
     for observer in observers { NotificationCenter.default.removeObserver(observer) }
     observers = []
     stopAudio()
-    inputContinuation?.finish()
-    inputContinuation = nil
-    if let analyzer { await analyzer.cancelAndFinishNow() }
-    analyzer = nil
+    heardContinuation?.finish()
+    heardContinuation = nil
+    let running = analyzers
+    analyzers = []
+    unfinished = []
+    for analyzer in running {
+      analyzer.input.finish()
+      await analyzer.analyzer.cancelAndFinishNow()
+    }
     for task in resultTasks { task.cancel() }
     resultTasks = []
     flushTask?.cancel()
@@ -163,7 +188,7 @@ actor OnDeviceTranscriber {
   }
 
   private func startAudio() throws {
-    guard let analyzerFormat, let inputContinuation else {
+    guard let analyzerFormat, let heardContinuation, !analyzers.isEmpty else {
       throw TranslatorFailure.audioUnavailable
     }
     try AnalyzerAudioPipeline.configureSession(for: capture)
@@ -180,7 +205,8 @@ actor OnDeviceTranscriber {
     input.installTap(
       onBus: 0, bufferSize: 4096, format: inputFormat,
       block: AnalyzerAudioPipeline.tap(
-        converter: converter, gate: gate, continuation: inputContinuation))
+        converter: converter, gate: gate, inputs: analyzers.map(\.input),
+        heard: heardContinuation))
     tapInstalled = true
     engine.prepare()
     try engine.start()
@@ -195,7 +221,7 @@ actor OnDeviceTranscriber {
   }
 
   private func restartAudio() {
-    guard analyzer != nil else { return }
+    guard !analyzers.isEmpty else { return }
     stopAudio()
     do {
       try startAudio()
@@ -204,7 +230,21 @@ actor OnDeviceTranscriber {
     }
   }
 
+  private func hear(_ audio: HeardAudio) async {
+    guard let voiceEnd = pauses.hear(level: audio.level, duration: audio.duration) else { return }
+    let through = CMTime(seconds: voiceEnd + Self.pauseFinalizeMargin, preferredTimescale: 1000)
+    for analyzer in analyzers
+    where Self.finishedAtPauses.contains(analyzer.language) && unfinished.contains(analyzer.language) {
+      try? await analyzer.analyzer.finalize(through: through)
+    }
+  }
+
   private func receive(_ result: SpeechTranscriber.Result, from language: SpokenLanguage) {
+    if result.isFinal || result.text.characters.isEmpty {
+      unfinished.remove(language)
+    } else {
+      unfinished.insert(language)
+    }
     let events = merger.receive(
       TranscriberResult(
         language: language,

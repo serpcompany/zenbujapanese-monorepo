@@ -20,16 +20,25 @@ The tab is split across two Swift targets in `apps/ios/Modules`
     `SpeechPlaybackClient` (`TranslatorClients.swift`), structs of closures like the app's other
     clients, so an Online engine is another set of clients, not a change to the engine.
   - `BilingualTranscriptMerger` turns two recognizers' results (Japanese and English, hearing the
-    same audio) into one stream: it waits up to 0.4 s for the other recognizer's final, joins a
-    sentence a recognizer split in two, picks the language with `LanguageArbiter` (confidence plus
-    how well the text's script matches the language), and drops the loser's late final.
+    same audio) into one stream. It holds a final until the other recognizer's final arrives, for
+    at least 0.4 s. It keeps holding while the other recognizer still has an unfinished sentence:
+    up to 1.5 s once that sentence stops changing, and up to 20 s while it's still changing,
+    because the person is still talking. Then it joins each recognizer's sentences, picks the
+    language with `LanguageArbiter` (confidence plus how well the text's script matches the
+    language), and drops the loser's late final. Live text shows the held sentences plus the
+    unfinished one. Leading punctuation is trimmed. A winner with one letter, or with a confidence
+    below 0.4, becomes an empty final, which clears the live text without adding a sentence.
+  - `SpeechPauseDetector` finds the end of speech from the microphone's loudness: a level three
+    times the room's noise floor is voice, and 0.6 s without voice is a pause. Muted audio counts
+    as silence and leaves the noise floor alone.
   - `ConversationHistory` saves each conversation as its own JSON file in
     `Application Support/Zenbu Japanese/Translate Conversations/`, so saving after every sentence
     rewrites one small file. A file this version can't read, or one from a newer version, is
     skipped and left in place.
 - **`SearchExperience`** (`apps/ios/Modules/Sources/SearchExperience/Translate/`) holds the screens
   and the Apple adapters: `OnDeviceTranscriber` (an actor running `AVAudioEngine` into one
-  `SpeechAnalyzer` with a `SpeechTranscriber` per language), `OnDeviceTranslation` (Apple
+  `SpeechAnalyzer` per language, each with that language's `SpeechTranscriber`, fed copies of the
+  same audio), `OnDeviceTranslation` (Apple
   Translation, one `TranslationSession` per sentence), `SystemSpeechPlayer`
   (`AVSpeechSynthesizer`), and `TranslateExperience`, which owns the session, History, the
   remembered mode, and the start checks (microphone, Apple Translation, speech assets), which
@@ -48,8 +57,19 @@ The tab is split across two Swift targets in `apps/ios/Modules`
   own thread (the prior Owll clone's build 7).
 - In Conversation mode, and in Listening when the output is the iPhone's speaker
   (`SpeechPlaybackClient.reachesMicrophone`), the microphone isn't stopped during playback:
-  `setHearing(false)` feeds the analyzer silence instead, so the recognizer's timeline stays continuous and the speaker's
-  sentence is finalized, and voice processing's echo cancellation stays on. Ducking of other audio
+  `setHearing(false)` feeds the analyzers silence instead, so their timeline stays continuous, and
+  voice processing's echo cancellation stays on. It doesn't finalize: finalizing as the silence
+  began made the Japanese recognizer invent a low-confidence `はい`. That became a turn, and its
+  spoken "Yes" muted the microphone again, so the app looped on itself every 2 s (#637).
+- Apple's two recognizers end sentences differently. English ends a sentence by itself about
+  0.5–1 s after a pause. Japanese holds its sentence until the next speech begins, even across
+  English speech. So at each pause `OnDeviceTranscriber` finalizes only the Japanese analyzer
+  (`finishedAtPauses`), and only when it has an unfinished sentence. Finalizing the English
+  analyzer garbles the sentence spoken right after it ("Then Osaka on Friday." became `....`),
+  which is why each language has its own analyzer.
+- A turn closes only when nobody is talking: no live sentence in either language, and
+  `turnEndPause` since the last result. A wrong-language guess that becomes a turn closes the
+  real one and mutes the microphone while the person is still speaking. Ducking of other audio
   is set to the minimum so the system voice stays audible.
 - `TranslationSession` isn't `Sendable`, so a session is created inside each translation call
   rather than cached; `.translationTask`'s action is a `nonisolated` method for the same reason.

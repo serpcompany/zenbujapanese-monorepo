@@ -118,6 +118,89 @@ struct BilingualTranscriptMergerTests {
         == [.final(.japanese, "")])
   }
 
+  @Test("a lone guess waits while the other recognizer still hears speech")
+  func holdsWhileCounterpartSpeaks() {
+    var merger = BilingualTranscriptMerger(languages: [.japanese, .english])
+    _ = merger.receive(
+      result(.japanese, "明日は朝八時に新宿駅で", confidence: nil, final: false, end: 10), at: start)
+    #expect(
+      merger.receive(
+        result(.english, "Asubakasa Hachi, Jing, Jing.", confidence: 0.04, end: 11), at: start
+      ).isEmpty)
+    _ = merger.receive(
+      result(.japanese, "明日は朝八時に新宿駅で待ち合わせして", confidence: nil, final: false, end: 12),
+      at: start.addingTimeInterval(0.5))
+    #expect(merger.flush(at: start.addingTimeInterval(0.9)).isEmpty)
+    _ = merger.receive(
+      result(.japanese, "明日は朝八時に新宿駅で待ち合わせします。", confidence: 0.81, end: 23),
+      at: start.addingTimeInterval(1))
+    #expect(
+      merger.flush(at: start.addingTimeInterval(1.5))
+        == [.final(.japanese, "明日は朝八時に新宿駅で待ち合わせします。")])
+  }
+
+  @Test("a final waits briefly for the other recognizer's unfinished sentence to settle")
+  func waitsForCounterpartToSettle() {
+    var merger = BilingualTranscriptMerger(languages: [.japanese, .english])
+    _ = merger.receive(
+      result(.english, "Then Osaka on", confidence: nil, final: false, end: 5.5), at: start)
+    _ = merger.receive(
+      result(.japanese, "Thenos on Friday。", confidence: 0.55, end: 6.1),
+      at: start.addingTimeInterval(0.7))
+    #expect(merger.flush(at: start.addingTimeInterval(1.2)).isEmpty)
+    #expect(
+      merger.receive(
+        result(.english, "Then Osaka on Friday.", confidence: 0.86, end: 5.9),
+        at: start.addingTimeInterval(1.6)) == [.final(.english, "Then Osaka on Friday.")])
+
+    _ = merger.receive(
+      result(.english, "Sports", confidence: nil, final: false, end: 9), at: start)
+    _ = merger.receive(
+      result(.japanese, "続いてスポーツです。", confidence: 0.9, end: 10),
+      at: start.addingTimeInterval(1))
+    #expect(merger.flush(at: start.addingTimeInterval(2)).isEmpty)
+    #expect(
+      merger.flush(at: start.addingTimeInterval(2.6)) == [.final(.japanese, "続いてスポーツです。")])
+  }
+
+  @Test("live text includes the sentences held for the pause")
+  func liveTextIncludesHeldSentences() {
+    var merger = BilingualTranscriptMerger(languages: [.japanese, .english])
+    _ = merger.receive(
+      result(.japanese, "オーケー", confidence: nil, final: false, end: 1), at: start)
+    _ = merger.receive(
+      result(.english, "Okay, here's the plan.", confidence: 0.9, end: 1.5), at: start)
+    let events = merger.receive(
+      result(.english, "We'll take the train", confidence: nil, final: false, end: 2.5), at: start)
+    #expect(events == [.volatile(.english, "Okay, here's the plan. We'll take the train")])
+  }
+
+  @Test("leading punctuation is trimmed and punctuation alone is never a sentence")
+  func punctuation() {
+    var merger = BilingualTranscriptMerger(languages: [.japanese, .english])
+    _ = merger.receive(result(.japanese, "", confidence: nil, end: 2), at: start)
+    #expect(
+      merger.receive(result(.english, ". Please meet me.", confidence: 0.8, end: 2), at: start)
+        == [.final(.english, "Please meet me.")])
+    _ = merger.receive(result(.japanese, "", confidence: nil, end: 4), at: start)
+    #expect(
+      merger.receive(result(.english, "..", confidence: 0.8, end: 4), at: start)
+        == [.final(.japanese, "")])
+  }
+
+  @Test(
+    "a doubtful or one-letter result is not translated",
+    arguments: [("はい", 0.26), ("い", 0.19), ("あ", 0.98)])
+  func doubtfulResults(text: String, confidence: Double) {
+    var merger = BilingualTranscriptMerger(languages: [.japanese, .english])
+    _ = merger.receive(result(.japanese, text, confidence: confidence, end: 1), at: start)
+    #expect(merger.flush(at: start.addingTimeInterval(0.5)) == [.final(.japanese, "")])
+    var listening = BilingualTranscriptMerger(languages: [.japanese])
+    #expect(
+      listening.receive(result(.japanese, text, confidence: confidence, end: 1), at: start)
+        == [.final(.japanese, "")])
+  }
+
   @Test("one language passes straight through")
   func singleLanguage() {
     var merger = BilingualTranscriptMerger(languages: [.japanese])

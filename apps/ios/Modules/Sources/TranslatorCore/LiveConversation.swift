@@ -246,10 +246,8 @@ public final class LiveConversation {
       if now >= deadline { pause(.silence) }
       return
     }
-    if let startedAt = openTurnStartedAt, let openTurn {
-      let speakerStillTalking = liveSentence?.language == openTurn.language
-      let paused =
-        !speakerStillTalking && now.timeIntervalSince(lastSpeechAt) >= timing.turnEndPause
+    if let startedAt = openTurnStartedAt, openTurn != nil {
+      let paused = liveSentence == nil && now.timeIntervalSince(lastSpeechAt) >= timing.turnEndPause
       let tooLong = now.timeIntervalSince(startedAt) >= timing.longestTurn
       if paused || tooLong { closeOpenTurn() }
     }
