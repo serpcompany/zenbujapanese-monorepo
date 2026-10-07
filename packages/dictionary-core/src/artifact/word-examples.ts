@@ -88,7 +88,7 @@ function linkedEntries(db: ArtifactDatabase, ids: readonly string[]): Map<string
   )
 }
 
-function tokenRows(tokens: LinkedToken[]): ExampleSentenceTokenRow[] {
+export function tokenRows(tokens: readonly LinkedToken[]): ExampleSentenceTokenRow[] {
   return tokens.map(token => {
     const row: ExampleSentenceTokenRow = { text: token.surface }
     if (hasKanji(token.surface)) row.reading = toHiragana(token.reading)

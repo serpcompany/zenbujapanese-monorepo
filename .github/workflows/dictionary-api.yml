@@ -14,12 +14,14 @@ on:
       - pnpm-workspace.yaml
       - apps/ios/LanguageData/Conformance/**
       - apps/ios/Modules/Sources/SearchExperience/Resources/**
+      - language-data/release.json
       - .github/workflows/dictionary-api.yml
   push:
     branches: [main]
     paths:
       - apps/ios/Modules/Sources/SearchExperience/Resources/*.sqlite3
       - apps/ios/Modules/Sources/SearchExperience/Resources/Kuromoji/**
+      - language-data/release.json
       - apps/ios/Modules/Sources/SearchExperience/Resources/LanguageTechnologyPackCatalog.json
       - .github/workflows/dictionary-api.yml
   workflow_dispatch:

@@ -10,8 +10,9 @@ import {
   resolveWords
 } from '@zenbu/dictionary-core/artifact/word-cards'
 import { rankedLists } from '@zenbu/dictionary-core/browse/lists'
-import { cardFields, type RecordedWord, recordedFields } from '@zenbu/dictionary-core/cards/suite'
+import type { RecordedWord } from '@zenbu/dictionary-core/cards/suite'
 import { beforeAll, describe, expect, test } from 'vitest'
+import { expectCardsAsRecorded } from './cards'
 import {
   artifactAvailable,
   artifactDatabase,
@@ -43,11 +44,7 @@ describe.runIf(artifactAvailable)('word cards on the app’s data', () => {
       kanji,
       wordSuite.cases.map(word => word.languageReferenceID)
     )
-    const byId = new Map(cards.map(card => [card.languageReferenceID, card]))
-    for (const recorded of wordSuite.cases) {
-      const card = byId.get(recorded.languageReferenceID)
-      expect(card && cardFields(card), recorded.covers).toEqual(recordedFields(recorded))
-    }
+    expectCardsAsRecorded(cards, wordSuite.cases)
   })
 
   test('each ranked list’s chip is the word’s rank in that list', () => {

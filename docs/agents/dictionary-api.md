@@ -71,6 +71,10 @@ it in `.dev.vars` in `apps/web` (see [`web.md`](web.md), Dictionary).
 | `SUDACHI_DICTIONARY` | `.sudachi/system_core.dic` | Sudachi's dictionary; empty turns sentence search off. |
 | `DICTIONARY_API_WORKERS` | CPU cores, at most 4 | How many worker threads answer requests. |
 | `DICTIONARY_API_RELEASE` | `local` | A name for this build of the code, such as its commit. |
+| `LANGUAGE_DATA_RELEASE_FILE` | `language-data/release.json` | The language-data release the files belong to, which the app routes name (the image copies it to `/service/language-data/release.json`). |
+| `ACCOUNT_API_URL` | none | The account service's public URL, such as `https://api.zenbujapanese.com`: an app token's `iss` and `aud` must be exactly this. Unset, the app routes answer 503. |
+| `ACCOUNT_JWKS_URL` | `<ACCOUNT_API_URL>/v1/auth/jwks` | Where the service reads the account service's signing keys. A slot reaches only nginx, so on the server this is a URL nginx answers with the account service's JWKS (Apps, below). |
+| `APP_REQUESTS_PER_MINUTE` | `120` | How many app-route requests one account may make in a minute. |
 
 The build it reports (`X-Dictionary-Build` on every `/v1` answer, and `/healthz`) is the
 artifact's SHA-256 prefix and the release: a new artifact or new code is a new build. It reports
@@ -114,6 +118,38 @@ more and logs the error.
 | `GET /v1/browse/kanji/<slug>` | A kanji list (`grade-1`…`grade-6`, `secondary-school`, `jinmeiyo`, `jlpt-n5`…`jlpt-n1`, `strokes-<n>`) with each kanji's first meaning. |
 | `GET /v1/sitemaps/browse` | What the browse sitemap lists: every kana and its groups' pages, each category's and list's pages, and the kanji lists. |
 
+### Apps
+
+The routes under `/v1/apps` are for signed-in apps that don't bundle the language data, such as
+Tomodachi (#563, #571); they are the only routes an app calls. They take an account's access token
+and never the website's service token, which they refuse, and the website's routes refuse an
+account token. An error is `{ "error": { "code": "...", "message": "..." } }`, as the account
+service's are.
+
+| Route | Answer |
+| --- | --- |
+| `GET /v1/apps/word-cards?ids=<id>,<id>` | The word cards for 1 to 100 Language Reference IDs (`zenbu.word-cards.v1`, [`language-data/word-cards.md`](../../language-data/word-cards.md)), in the order asked, each once: `format`, `cards`, `missing` (the IDs no entry has), and `languageData`. |
+| `GET /v1/apps/segmentation?text=` | A text of 1 to 200 characters split into words, as the app links captions and example sentences (`zenbu.segmentation.v1`): `format`, `text`, and `tokens`, each with its `text`, its `reading` in hiragana when it has kanji, its `dictionaryForm` when that differs, and its `languageReferenceID` when it's one word, or `candidates` when it may be several; and `languageData`. |
+
+- **The token.** The account service's access token: an EdDSA JWT whose signature checks against
+  the account service's JWKS, with `iss` and `aud` both `ACCOUNT_API_URL`, a `sub` (the account),
+  an `azp` (the app), and `dictionary:read` in its space-separated `scope`. The service caches the
+  keys (`jose`'s remote key set) and reads them again for a key it doesn't know at most every 30
+  seconds. No token, or one that fails any of that, is `401 unauthorized` with
+  `WWW-Authenticate: Bearer`; a token without the scope is `403 insufficient_scope`; keys the
+  service can't read are `503 unavailable`. The check is in `src/account-tokens.ts`; the service
+  imports nothing from the account service.
+- **Bounds.** At most 100 IDs and 200 characters (`400 bad_request` past them), and
+  `APP_REQUESTS_PER_MINUTE` requests a minute for each account (`sub`), counted by each server
+  process, after which a request is `429 rate_limited` with `Retry-After`.
+- **Caching.** An answer carries the language data's `release`, file, and SHA-256, and is
+  `Cache-Control: private, max-age=86400` with the build as its `ETag`, so an app keeps it a day,
+  revalidates with `If-None-Match` for a `304`, and fetches again when the release changes.
+- **On the server.** A person sets `ACCOUNT_API_URL` in each environment's settings, and makes the
+  account service's JWKS reachable from the dictionary service's slots, which reach only nginx:
+  an nginx location on the slots' network that proxies to the account service's
+  `/v1/auth/jwks`, named in `ACCOUNT_JWKS_URL`. Until then the app routes answer 503.
+
 ## How it runs
 
 The main thread hashes the artifact and Sudachi's dictionary once, checks Sudachi's pins, and serves
@@ -151,13 +187,16 @@ the app's SQL.
 `noRestrictedImports` enforces each rule (`apps/dictionary-api/biome.json`), with a message that
 says where the code belongs; tests may import anything.
 
-- The readers (`src/artifact.ts`, `src/kuromoji.ts`, `src/sudachi.ts`) and the shared modules
-  (`src/config.ts`, `src/log.ts`, `src/service.ts`, the `DictionaryService` interface) are the
-  bottom layer. They import neither of the others, nor Hono.
+- The readers (`src/artifact.ts`, `src/kuromoji.ts`, `src/sudachi.ts`, and `src/account-tokens.ts`,
+  which reads the account service's keys) and the shared modules (`src/config.ts`, `src/log.ts`,
+  `src/rate-limit.ts`, `src/service.ts`, the `DictionaryService` interface) are the bottom layer.
+  They import neither of the others, nor Hono.
 - The worker layer (`src/load.ts`, `src/worker.ts`, `src/pool.ts`) runs the dictionary in worker
   threads, and knows nothing of HTTP.
-- The HTTP layer, `src/app.ts`, answers from the `DictionaryService` that `src/server.ts` hands it,
-  and reads nothing itself: no reader, no worker, no SQLite, no file.
+- The HTTP layer, `src/app.ts` and the app routes in `src/app-routes.ts`, answers from the
+  `DictionaryService` that `src/server.ts` hands it, and reads nothing itself: no reader, no worker,
+  no SQLite, no file. `src/server.ts` hands it the account-token check and the per-account limit
+  too, so it imports neither.
 
 `src/server.ts` wires the three together and is imported by nothing. The service logs JSON lines
 through `log()` in `src/log.ts` (a level, a message naming the event, and fields), which the

@@ -42,7 +42,7 @@
   },
   "overrides": [
     {
-      "includes": ["src/app.ts"],
+      "includes": ["src/app.ts", "src/app-routes.ts"],
       "linter": {
         "rules": {
           "style": {
@@ -60,11 +60,12 @@
                       "./worker",
                       "./server",
                       "./config",
+                      "./account-tokens",
                       "node:sqlite",
                       "node:worker_threads",
                       "node:fs"
                     ],
-                    "message": "src/app.ts is the HTTP layer: it answers from the DictionaryService interface (src/service.ts) that src/server.ts hands it, and reads nothing itself (docs/agents/dictionary-api.md, Code layout). Put reading code behind the service, in src/load.ts or a reader."
+                    "message": "src/app.ts and src/app-routes.ts are the HTTP layer: they answer from the DictionaryService interface (src/service.ts) that src/server.ts hands them, and read nothing themselves (docs/agents/dictionary-api.md, Code layout). Put reading code behind the service, in src/load.ts or a reader."
                   }
                 ]
               }
@@ -80,7 +81,9 @@
         "src/sudachi.ts",
         "src/config.ts",
         "src/log.ts",
-        "src/service.ts"
+        "src/service.ts",
+        "src/account-tokens.ts",
+        "src/rate-limit.ts"
       ],
       "linter": {
         "rules": {
@@ -100,7 +103,7 @@
                       "hono/**",
                       "@hono/**"
                     ],
-                    "message": "The readers (src/artifact.ts, src/kuromoji.ts, src/sudachi.ts) and the shared modules (src/config.ts, src/log.ts, src/service.ts) are the bottom layer: the worker threads and the HTTP layer build on them, so they import neither (docs/agents/dictionary-api.md, Code layout)."
+                    "message": "The readers (src/artifact.ts, src/kuromoji.ts, src/sudachi.ts, src/account-tokens.ts) and the shared modules (src/config.ts, src/log.ts, src/rate-limit.ts, src/service.ts) are the bottom layer: the worker threads and the HTTP layer build on them, so they import neither (docs/agents/dictionary-api.md, Code layout)."
                   }
                 ]
               }

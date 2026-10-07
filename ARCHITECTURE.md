@@ -26,13 +26,18 @@ flowchart LR
     Core["packages/dictionary-core"] --> Image
     Image --> Server["Server: two slots behind nginx"]
     Server -->|"bearer token, through Cloudflare"| Site["Website Worker"]
+    Server -->|"word cards and segmentation, for an account's access token"| Apps["Signed-in apps, such as Tomodachi"]
     Core --> Site
+    Core -->|"word-cards command"| Cards[("Baked word cards")]
+    Cards --> Apps
 ```
 
 The app's bundled data is the one source: the importers build it, the app bundles it, the service's
 image copies it, and the release packages it. The website reads no data of its own; it asks the
 service, which runs the same core the website renders with. A new build of the data is a new
-service image, deployed without touching the site.
+service image, deployed without touching the site. An app that doesn't bundle the data ships word
+cards the core exports, and, signed in, fetches more cards and segmentation from the service's
+`/v1/apps` routes with its account's access token ([`language-data/word-cards.md`](language-data/word-cards.md)).
 
 The service's answers are a contract, typed and numbered in the core (`DictionaryContract`,
 `dictionaryContract`). The site and the service deploy separately, in either order, so the site

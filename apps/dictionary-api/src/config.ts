@@ -4,13 +4,35 @@ import { fileURLToPath } from 'node:url'
 
 const serviceDir = resolve(fileURLToPath(new URL('.', import.meta.url)), '..')
 
+interface AppsConfig {
+  accountUrl: string
+  jwksUrl: string
+  requestsPerMinute: number
+}
+
 export interface Config {
   port: number
   token: string
   resources: string
+  languageDataRelease: string
   sudachiDictionary: string | null
   workers: number
   release: string
+  apps: AppsConfig | null
+}
+
+function readApps(env: NodeJS.ProcessEnv): AppsConfig | null {
+  const accountUrl = env.ACCOUNT_API_URL?.replace(/\/+$/, '') ?? ''
+  if (accountUrl === '') return null
+  const requestsPerMinute = Number(env.APP_REQUESTS_PER_MINUTE ?? 120)
+  if (!Number.isInteger(requestsPerMinute) || requestsPerMinute < 1) {
+    throw new Error(`APP_REQUESTS_PER_MINUTE is ${env.APP_REQUESTS_PER_MINUTE}`)
+  }
+  return {
+    accountUrl,
+    jwksUrl: env.ACCOUNT_JWKS_URL || `${accountUrl}/v1/auth/jwks`,
+    requestsPerMinute
+  }
 }
 
 export function readConfig(env: NodeJS.ProcessEnv = process.env): Config {
@@ -34,8 +56,12 @@ export function readConfig(env: NodeJS.ProcessEnv = process.env): Config {
       env.DICTIONARY_RESOURCES ??
         join(serviceDir, '../ios/Modules/Sources/SearchExperience/Resources')
     ),
+    languageDataRelease: resolve(
+      env.LANGUAGE_DATA_RELEASE_FILE ?? join(serviceDir, '../../language-data/release.json')
+    ),
     sudachiDictionary: env.SUDACHI_DICTIONARY === '' ? null : resolve(sudachi),
     workers,
-    release: env.DICTIONARY_API_RELEASE ?? 'local'
+    release: env.DICTIONARY_API_RELEASE ?? 'local',
+    apps: readApps(env)
   }
 }

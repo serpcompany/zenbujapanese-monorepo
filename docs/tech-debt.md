@@ -19,6 +19,7 @@ it must pass it over ([`ci.md`](agents/ci.md), Weekly maintenance).
 | Debt | Why it matters | Issue | Size |
 | --- | --- | --- | --- |
 | Search, example, and word and kanji detail logic exist twice: the app's Swift, and its port in `packages/dictionary-core`. | Every change is made in both. `Search parity` checks that both sides of a pair change, not that they agree, and nothing tests the Swift before merge. | #481 | large |
+| `RankedLists.sqlite3` has no index by Language Reference ID, so each word-cards request, and each export, reads all of its ~730,000 ranks once to find its words' ranks in the seven lists (`listRanks` in `packages/dictionary-core/src/artifact/word-cards.ts`). | A word-cards request holds a worker thread for about 0.1 seconds whatever its size, which the per-account limit bounds. An index in `build_ranked_lists.py` makes it a lookup, at the cost of a rebuilt language-data release. | #571 | small |
 | The iOS app is one target, `SearchExperience` (`apps/ios/Modules/Sources/SearchExperience/`), holding Search, Player, Account, Lists, and Profile. | Nothing keeps one feature from reaching into another's code. Splitting it by feature needs a decision, and an ADR if so. | #516 | large |
 | Word notes and encounter media are keyed by `WordNoteID`, a hash of a word's meanings (ADR 0006). PR #480 re-keys them. | A JMdict edit to a word's meanings detaches its notes and media, and sync (#374) needs Language Reference IDs. | #474 | medium |
 

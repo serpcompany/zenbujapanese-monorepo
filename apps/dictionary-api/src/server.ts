@@ -1,9 +1,11 @@
 import { serve } from '@hono/node-server'
+import { accountTokens } from './account-tokens'
 import { createApp } from './app'
 import { readConfig } from './config'
 import { verifyFiles } from './load'
 import { errorFields, log } from './log'
 import { createPool } from './pool'
+import { perMinute } from './rate-limit'
 
 async function main() {
   const config = readConfig()
@@ -18,7 +20,11 @@ async function main() {
   const app = createApp({
     service: pool,
     token: config.token,
-    ready: () => pool.readyCount() === config.workers
+    ready: () => pool.readyCount() === config.workers,
+    access: config.apps && {
+      tokens: accountTokens(config.apps),
+      limit: perMinute(config.apps.requestsPerMinute)
+    }
   })
   const server = serve({ fetch: app.fetch, port: config.port }, ({ port }) =>
     log('info', 'listening', { port, workers: config.workers, release: config.release })

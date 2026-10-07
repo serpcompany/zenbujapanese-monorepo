@@ -9,6 +9,7 @@ import { maximumBrowsePage } from '@zenbu/dictionary-core/browse/lists'
 import { examplesPerPage } from '@zenbu/dictionary-core/detail/examples'
 import { type Context, Hono } from 'hono'
 import { routePath } from 'hono/route'
+import { type AppAccess, AppError, appErrorAnswer, appPaths, appRoutes } from './app-routes'
 import { errorFields, log } from './log'
 import type { DictionaryService } from './service'
 
@@ -42,9 +43,10 @@ export interface AppOptions {
   service: DictionaryService
   token: string
   ready(): boolean
+  access?: AppAccess | null
 }
 
-export function createApp({ service, token, ready }: AppOptions) {
+export function createApp({ service, token, ready, access = null }: AppOptions) {
   const app = new Hono()
 
   app.use(async (context, next) => {
@@ -70,6 +72,7 @@ export function createApp({ service, token, ready }: AppOptions) {
   })
 
   app.use('/v1/*', async (context, next) => {
+    if (context.req.path.startsWith(`${appPaths}/`)) return next()
     if (!tokenMatches(context.req.header('authorization'), token)) {
       return context.json({ error: 'unauthorized' }, 401)
     }
@@ -209,9 +212,12 @@ export function createApp({ service, token, ready }: AppOptions) {
 
   app.get('/v1/sitemaps/browse', async context => context.json(await service.browseSitemap()))
 
+  appRoutes(app, { service, ready, access })
+
   app.notFound(context => context.json({ error: 'not found' }, 404))
 
   app.onError((error, context) => {
+    if (error instanceof AppError) return appErrorAnswer(context, error)
     if (error instanceof BadRequest) return context.json({ error: error.message }, 400)
     if (error instanceof NotFound) return context.json({ error: error.message }, 404)
     log('error', 'request failed', { route: routePath(context), ...errorFields(error) })
