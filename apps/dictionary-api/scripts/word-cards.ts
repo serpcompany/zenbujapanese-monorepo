@@ -1,4 +1,4 @@
-import { copyFileSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs'
+import { copyFileSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
 import { join, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { exportWordCards } from '@zenbu/dictionary-core/artifact/word-cards'
@@ -6,8 +6,8 @@ import { parseWordList } from '@zenbu/dictionary-core/cards/word-list'
 import { artifactFile, fileSha256, openArtifact } from '../src/artifact'
 
 const repository = resolve(fileURLToPath(new URL('.', import.meta.url)), '../../..')
-const usage =
-  'pnpm --filter zenbujapanese-dictionary-api word-cards <word list> <output folder> [resources]'
+const usage = 'pnpm --filter zenbujapanese-dictionary-api word-cards <word list> <output folder>'
+const fromCaller = (path: string) => resolve(process.env.INIT_CWD ?? process.cwd(), path)
 
 interface ReleaseInputs {
   roots: Record<string, string>
@@ -21,20 +21,20 @@ function releaseFile(inputs: ReleaseInputs, name: string): string {
   return join(repository, inputs.roots[root], ...rest)
 }
 
-const [listPath, outputPath, resourcesPath] = process.argv.slice(2)
+const [listPath, outputPath] = process.argv.slice(2)
 if (!listPath || !outputPath) {
   console.error(`Usage: ${usage}`)
   process.exit(2)
 }
 
-const list = parseWordList(readFileSync(resolve(listPath), 'utf8'))
+const list = parseWordList(readFileSync(fromCaller(listPath), 'utf8'))
 const inputs = JSON.parse(
   readFileSync(join(repository, 'language-data/release-inputs.json'), 'utf8')
 ) as ReleaseInputs
 const { release } = JSON.parse(
   readFileSync(join(repository, 'language-data/release.json'), 'utf8')
 ) as { release: string }
-const resources = resolve(resourcesPath ?? join(repository, inputs.roots.resources))
+const resources = join(repository, inputs.roots.resources)
 const sha256 = await fileSha256(join(resources, artifactFile))
 const artifact = openArtifact(resources, sha256)
 const exported = exportWordCards(
@@ -45,7 +45,8 @@ const exported = exportWordCards(
 )
 artifact.close()
 
-const output = resolve(outputPath)
+const output = fromCaller(outputPath)
+rmSync(join(output, 'notices'), { recursive: true, force: true })
 mkdirSync(join(output, 'notices'), { recursive: true })
 writeFileSync(join(output, 'word-cards.json'), `${JSON.stringify(exported, null, 2)}\n`)
 for (const { notice } of exported.sources) {
@@ -65,3 +66,6 @@ console.log(
     `with ${exported.ambiguous.length} ambiguous, ${exported.unresolved.length} unresolved, and ` +
     `${list.unreadable.length} unreadable lines; language data ${release} (${sha256.slice(0, 12)})`
 )
+const incomplete =
+  list.unreadable.length + exported.ambiguous.length + exported.unresolved.length > 0
+process.exit(incomplete ? 1 : 0)

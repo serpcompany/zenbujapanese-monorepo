@@ -12,6 +12,22 @@ const suite = JSON.parse(
   )
 ) as { cases: (RecordedWord & { entSeq: string[] })[] }
 
+const catalog = JSON.parse(
+  readFileSync(
+    new URL(
+      '../../../../apps/ios/Modules/Sources/SearchExperience/Resources/FrequencyPackCatalog.json',
+      import.meta.url
+    ),
+    'utf8'
+  )
+) as { packs: { packID: string; displayName: string }[] }
+
+const appShortNames: Record<string, string> = {
+  'zenbu.tubelex.youtube': 'YouTube',
+  'zenbu.wikipedia.written': 'Wikipedia',
+  'zenbu.jiten.video-games': 'Games'
+}
+
 const fixtureWords = fixtureWordRows.flatMap(rows => {
   const recorded = suite.cases.find(word => Number(word.entSeq[0]) === rows.entry.entSeq)
   return recorded ? [{ rows, recorded }] : []
@@ -27,6 +43,16 @@ describe('a word card', () => {
     recorded
   }) => {
     expect(cardFields(wordCard(rows, new Map()))).toEqual(recordedFields(recorded))
+  })
+
+  test('names each ranked list’s chip as the app’s FrequencyPackDisclosure.shortName does', () => {
+    const expected = rankedLists.map(list => {
+      const id =
+        list.source.kind === 'pack' ? list.source.packId : 'zenbu.tubelex.youtube.ja.unidic-3.1'
+      const pack = catalog.packs.find(candidate => candidate.packID === id)
+      return appShortNames[id.split('.').slice(0, 3).join('.')] ?? pack?.displayName
+    })
+    expect(rankedLists.map(list => list.chip)).toEqual(expected)
   })
 
   test('has a chip for each of the eight ranked lists, in their order, ranked or not', () => {

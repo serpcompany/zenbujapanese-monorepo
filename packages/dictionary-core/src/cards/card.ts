@@ -1,16 +1,12 @@
 import { rankedLists } from '../browse/lists'
 import { type FrequencyResult, levelResult, rankResult } from '../detail/frequency'
 import type { WordRows } from '../detail/rows'
-import { suiteFurigana } from '../detail/suite'
+import { type SuiteFurigana, suiteFurigana } from '../detail/suite'
 import { wordDetail } from '../detail/word'
 
 export const wordCardFormat = 'zenbu.word-cards.v1'
 
-export interface WordCardFurigana {
-  base: string
-  reading?: string
-  kanjiReadings?: string[]
-}
+export type WordCardFurigana = SuiteFurigana
 
 interface WordCardPitch {
   downstep: number
@@ -70,7 +66,7 @@ export function wordCard(rows: CardRows, ranks: ListRanks): WordCard {
       detail.pitch && pitchRow
         ? {
             downstep: detail.pitch.downstep,
-            moraCount: detail.pitch.morae.length,
+            moraCount: pitchRow.moraCount,
             morae: detail.pitch.morae.map(({ mora }) => mora),
             levels: detail.pitch.morae.map(({ high }) => (high ? 'H' : 'L')).join(''),
             particle: detail.pitch.particleHigh ? 'H' : 'L',

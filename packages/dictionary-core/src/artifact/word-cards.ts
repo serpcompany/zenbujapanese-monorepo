@@ -1,17 +1,13 @@
 import { type ListRanks, type WordCard, wordCard, wordCardFormat } from '../cards/card'
-import { type WordCardSource, wordCardSources } from '../cards/sources'
+import { type WordCardSource, wordCardLicense, wordCardSources } from '../cards/sources'
 import { isLanguageReferenceId, type WordQuery } from '../cards/word-list'
 import { normalizeQuery } from '../search/query'
 import type { ArtifactDatabase } from './database'
 import type { KanjiData } from './kanji-data'
-import { readWord } from './words'
+import { type EntryIdentity, entriesById, readWord } from './words'
 
-interface WordCandidate {
+interface WordCandidate extends Omit<EntryIdentity, 'id'> {
   languageReferenceID: string
-  entSeq: number
-  headword: string
-  reading: string
-  summary: string
 }
 
 interface AmbiguousWord {
@@ -34,24 +30,16 @@ export interface LanguageDataVersion {
 export interface WordCardExport {
   format: typeof wordCardFormat
   languageData: LanguageDataVersion
+  license: typeof wordCardLicense
   sources: readonly WordCardSource[]
   cards: WordCard[]
   ambiguous: AmbiguousWord[]
   unresolved: WordQuery[]
 }
 
-function entriesById(db: ArtifactDatabase, ids: readonly string[]): Map<string, WordCandidate> {
-  const rows = db.all<WordCandidate>(
-    `SELECT lower(hex(id)) AS languageReferenceID, source_record_id AS entSeq, headword, reading,
-       summary FROM entries WHERE id IN (SELECT unhex(value) FROM json_each(?))`,
-    [JSON.stringify(ids)]
-  )
-  return new Map(rows.map(row => [row.languageReferenceID, row]))
-}
-
-function candidatesFor(db: ArtifactDatabase, headword: string, reading: string): WordCandidate[] {
-  return db.all<WordCandidate>(
-    `SELECT DISTINCT lower(hex(e.id)) AS languageReferenceID, e.source_record_id AS entSeq,
+function candidatesFor(db: ArtifactDatabase, headword: string, reading: string): EntryIdentity[] {
+  return db.all<EntryIdentity>(
+    `SELECT DISTINCT lower(hex(e.id)) AS id, e.source_record_id AS entSeq,
        e.headword, e.reading, e.summary
      FROM forms w
      JOIN forms r ON r.entry_id = w.entry_id AND r.kind = 1 AND r.form = ?
@@ -62,7 +50,7 @@ function candidatesFor(db: ArtifactDatabase, headword: string, reading: string):
   )
 }
 
-function pick(candidates: WordCandidate[], headword: string, reading: string): WordCandidate[] {
+function pick(candidates: EntryIdentity[], headword: string, reading: string): EntryIdentity[] {
   const exact = candidates.filter(
     candidate => candidate.headword === headword && candidate.reading === reading
   )
@@ -77,10 +65,14 @@ export function resolveWords(db: ArtifactDatabase, queries: readonly WordQuery[]
   const resolved = new Set<string>()
   const ambiguous: AmbiguousWord[] = []
   const unresolved: WordQuery[] = []
+  const reported = new Set<string>()
   for (const query of queries) {
+    const key = JSON.stringify(query)
+    if (reported.has(key)) continue
+    reported.add(key)
     if ('languageReferenceID' in query) {
       const entry = known.get(query.languageReferenceID.toLowerCase())
-      if (entry) resolved.add(entry.languageReferenceID)
+      if (entry) resolved.add(entry.id)
       else unresolved.push(query)
       continue
     }
@@ -89,9 +81,14 @@ export function resolveWords(db: ArtifactDatabase, queries: readonly WordQuery[]
       query.headword,
       query.reading
     )
-    if (candidates.length === 1) resolved.add(candidates[0].languageReferenceID)
+    if (candidates.length === 1) resolved.add(candidates[0].id)
     else if (candidates.length === 0) unresolved.push(query)
-    else ambiguous.push({ query, candidates })
+    else {
+      ambiguous.push({
+        query,
+        candidates: candidates.map(({ id, ...entry }) => ({ languageReferenceID: id, ...entry }))
+      })
+    }
   }
   return { languageReferenceIDs: [...resolved], ambiguous, unresolved }
 }
@@ -141,6 +138,7 @@ export function exportWordCards(
   return {
     format: wordCardFormat,
     languageData,
+    license: wordCardLicense,
     sources: wordCardSources,
     cards: readWordCards(db, kanji, languageReferenceIDs),
     ambiguous,

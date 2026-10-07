@@ -9,6 +9,13 @@ export interface WordCardSource {
 const ccBySa4 = 'CC BY-SA 4.0'
 const bsd3 = 'BSD-3-Clause'
 
+export const wordCardLicense = {
+  name: ccBySa4,
+  url: 'https://creativecommons.org/licenses/by-sa/4.0/',
+  statement:
+    'The cards adapt CC BY-SA 4.0 data (JMdict and KANJIDIC2, the JLPT vocabulary lists, and Jiten), so they are shared under CC BY-SA 4.0, with each source credited and its notice included.'
+} as const
+
 export const wordCardSources: readonly WordCardSource[] = [
   {
     name: 'JMdict and KANJIDIC2',

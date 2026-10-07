@@ -137,26 +137,25 @@ export function readWord(
   }
 }
 
-interface EntryIdentity {
+export interface EntryIdentity {
   id: string
   entSeq: number
   headword: string
   reading: string
+  summary: string
 }
 
-function entriesById(db: ArtifactDatabase, ids: readonly string[]): Map<string, EntryIdentity> {
+export function entriesById(
+  db: ArtifactDatabase,
+  ids: readonly string[]
+): Map<string, EntryIdentity> {
   if (ids.length === 0) return new Map()
-  const rows = db.all<{ id: string; ent_seq: number; headword: string; reading: string }>(
-    `SELECT lower(hex(id)) AS id, source_record_id AS ent_seq, headword, reading FROM entries
-     WHERE id IN (${ids.map(() => 'unhex(?)').join(', ')})`,
-    ids
+  const rows = db.all<EntryIdentity>(
+    `SELECT lower(hex(id)) AS id, source_record_id AS entSeq, headword, reading, summary
+     FROM entries WHERE id IN (SELECT unhex(value) FROM json_each(?))`,
+    [JSON.stringify(ids)]
   )
-  return new Map(
-    rows.map(row => [
-      row.id,
-      { id: row.id, entSeq: row.ent_seq, headword: row.headword, reading: row.reading }
-    ])
-  )
+  return new Map(rows.map(row => [row.id, row]))
 }
 
 export function slugsByEntSeq(

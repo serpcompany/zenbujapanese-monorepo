@@ -1,4 +1,7 @@
-import { readFileSync } from 'node:fs'
+import { spawnSync } from 'node:child_process'
+import { mkdtempSync, readdirSync, readFileSync, writeFileSync } from 'node:fs'
+import { tmpdir } from 'node:os'
+import { join } from 'node:path'
 import type { ArtifactDatabase } from '@zenbu/dictionary-core/artifact/database'
 import type { KanjiData } from '@zenbu/dictionary-core/artifact/kanji-data'
 import {
@@ -79,6 +82,68 @@ describe.runIf(artifactAvailable)('word cards on the app’s data', () => {
       { headword: 'ありえない語', reading: 'ありえないご' },
       { languageReferenceID: '0'.repeat(32) }
     ])
+  })
+
+  test('a kana word finds its kanji headword, and a form is found as the app normalizes it', () => {
+    const resolved = resolveWords(db, [
+      { headword: 'ありがとう', reading: 'ありがとう' },
+      { headword: 'Tシャツ', reading: 'ティーシャツ' }
+    ])
+    const entries = readWordCards(db, kanji, resolved.languageReferenceIDs)
+    expect(entries.map(card => [card.entSeq, card.headword])).toEqual([
+      [1586820, '有難う'],
+      [1000160, 'Ｔシャツ']
+    ])
+  })
+
+  test('an export lists each word once, in the list’s order, and reports a repeated miss once', () => {
+    const languageData = { release: 'test', file: 'LanguageReferenceData.sqlite3', sha256: 'abc' }
+    const missing = { headword: 'ありえない語', reading: 'ありえないご' }
+    const exported = exportWordCards(db, kanji, languageData, [
+      { headword: '見る', reading: 'みる' },
+      { headword: '要る', reading: 'いる' },
+      { languageReferenceID: miru },
+      missing,
+      missing
+    ])
+    expect(exported.cards.map(card => card.headword)).toEqual(['見る', '要る'])
+    expect(exported.unresolved).toEqual([missing])
+  })
+
+  test('a word UniDic doesn’t list has its pitch estimated from its two parts, and says so', () => {
+    const [card] = readWordCards(
+      db,
+      kanji,
+      resolveWords(db, [{ headword: '記者会見', reading: 'きしゃかいけん' }]).languageReferenceIDs
+    )
+    expect(card.pitch).toMatchObject({
+      estimated: true,
+      downstep: 3,
+      moraCount: 6,
+      source: 'UniDic 3.1.0 compound accent rule (C2)'
+    })
+  })
+
+  test('the command writes the cards and their notices, and fails when a word is missing', () => {
+    const folder = mkdtempSync(join(tmpdir(), 'word-cards-'))
+    const run = (list: string) => {
+      writeFileSync(join(folder, 'words.tsv'), list)
+      return spawnSync('node', ['--import', 'tsx', 'scripts/word-cards.ts', 'words.tsv', 'out'], {
+        cwd: new URL('../..', import.meta.url),
+        env: { ...process.env, INIT_CWD: folder },
+        encoding: 'utf8'
+      })
+    }
+    const complete = run(`見る\tみる\n${miru}\n`)
+    expect(complete.status, complete.stderr).toBe(0)
+    const exported = JSON.parse(readFileSync(join(folder, 'out/word-cards.json'), 'utf8'))
+    expect(exported.cards).toHaveLength(1)
+    expect(readdirSync(join(folder, 'out/notices')).sort()).toEqual(
+      exported.sources.map((source: { notice: string }) => source.notice).sort()
+    )
+    const incomplete = run('見る\tみる\nありえない語\tありえないご\n')
+    expect(incomplete.status).toBe(1)
+    expect(incomplete.stderr).toContain('Unresolved: ありえない語 ありえないご')
   })
 
   test('an export names its language data and the notice every source needs', () => {
