@@ -130,7 +130,10 @@ artifact for a request: before a thread reports ready, it builds the browse inde
 order by its first two kana and every category's words most used first, and answers the totals,
 the category counts, the kanji and ranked lists' summaries, and the browse sitemap, which it keeps
 (`DictionaryBrowse.warm`). A browse page then reads only its own words. The index holds about
-590,000 row IDs. The website's edge cache keeps answers for 10 minutes on top.
+590,000 row IDs. On a busy workstation, warming added about 6 seconds to a thread's start, and
+about 250 MB to its memory while it builds, of which it keeps about 40 MB; every browse route's
+first request then took at most 26 ms, where the totals took 1 second and the category counts 2
+before. The website's edge cache keeps answers for 10 minutes on top.
 
 Logs are one JSON object per line on stdout (errors on stderr): each request's method, route
 pattern, status, and time. Queries never appear in the logs.

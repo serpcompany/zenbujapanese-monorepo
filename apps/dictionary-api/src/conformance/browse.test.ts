@@ -2,7 +2,7 @@ import type { BrowseWord, DictionaryBrowse } from '@zenbu/dictionary-core/artifa
 import { browseCategories } from '@zenbu/dictionary-core/browse/categories'
 import { browsePageSize, rankedLists, rankedPages } from '@zenbu/dictionary-core/browse/lists'
 import { beforeAll, describe, expect, test } from 'vitest'
-import { artifactAvailable, browse } from './support'
+import { artifactAvailable, artifactDatabase, browse } from './support'
 
 const sitemapUrlLimit = 50_000
 
@@ -136,6 +136,42 @@ describe.runIf(artifactAvailable)('browsing the dictionary on the app’s data',
     expect(queries.filter(sql => !/\bIN \(/.test(sql))).toEqual([])
   })
 
+  test('the index lists a category and a two-kana group as their own queries would', async () => {
+    const db = await artifactDatabase()
+    const ids = (sql: string, params: string[]) =>
+      db.all<{ rowid: number }>(sql, params).map(row => row.rowid)
+    const onomatopoeia = ids(
+      `SELECT e.rowid AS rowid FROM entries e
+       LEFT JOIN tubelex.frequency_evidence t ON t.language_reference_id = e.id
+       WHERE EXISTS (SELECT 1 FROM json_each(e.senses_json) s, json_each(s.value, '$.usage') l
+         WHERE l.value = ?)
+       ORDER BY t.rank IS NULL, t.rank, e.reading, e.source_record_id`,
+      ['onomatopoeic']
+    )
+    const kaga = ids(
+      `SELECT e.rowid AS rowid FROM entries e WHERE substr(e.reading, 1, 2) = ?
+       ORDER BY e.reading, e.source_record_id`,
+      ['かが']
+    )
+    const listed = (words: readonly BrowseWord[]) => words.map(word => word.entSeq)
+    const entSeqs = (rowids: number[]) => {
+      const rows = db.all<{ rowid: number; ent_seq: number }>(
+        `SELECT rowid, source_record_id AS ent_seq FROM entries
+         WHERE rowid IN (SELECT value FROM json_each(?))`,
+        [JSON.stringify(rowids)]
+      )
+      const entSeq = new Map(rows.map(row => [row.rowid, row.ent_seq]))
+      return rowids.map(rowid => entSeq.get(rowid))
+    }
+    expect(listed(service.categoryWords('onomatopoeia', 1)?.words ?? [])).toEqual(
+      entSeqs(onomatopoeia.slice(0, browsePageSize))
+    )
+    expect(service.categoryWords('onomatopoeia', 1)?.total).toBe(onomatopoeia.length)
+    expect(listed(service.kanaWords('hiragana', 'かが', 1)?.words ?? [])).toEqual(
+      entSeqs(kaga.slice(0, browsePageSize))
+    )
+  })
+
   test('the browse sitemap fits in one file', () => {
     const sitemap = service.sitemap()
     const kanaPages = sitemap.kana.reduce(
@@ -143,7 +179,7 @@ describe.runIf(artifactAvailable)('browsing the dictionary on the app’s data',
       0
     )
     const listPages = [...sitemap.categories, ...sitemap.rankedLists].reduce(
-      (sum, { pages }) => sum + pages * 2,
+      (sum, { pages }) => sum + pages,
       0
     )
     expect(kanaPages + listPages + sitemap.kanjiLists.length).toBeLessThan(sitemapUrlLimit)

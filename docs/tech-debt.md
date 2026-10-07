@@ -48,6 +48,7 @@ it must pass it over ([`ci.md`](agents/ci.md), Weekly maintenance).
 | Debt | Why it matters | Issue | Size |
 | --- | --- | --- | --- |
 | No language-data release is published. The `language-data-release` environment has no R2 token, so every `Language data release` run on `main` stops before uploading. The bucket has no public domain, and releases record no core hash (`core_sha256` is `null`). | ADR 0006's shared, versioned release doesn't exist yet for any client. | #463 | medium |
+| `KanjiReferenceData.json` still holds KANJIDIC2's pre-2010 `jlpt` for each kanji, which nothing reads now that kanji details show Waller's level (#485, #614). | A client could show the old level again by mistake. Dropping the field changes the release's `zenbu.kanji-reference.v1` format, so it waits for a v2. | No issue yet | small |
 | The dictionary records no retired entries: `retired()` in `packages/dictionary-core/src/artifact/dictionary.ts` returns none. | A word that a new JMdict drops answers 404, rather than ADR 0007's 410, or 308 to its replacement. | #463 | medium |
 | The language-data sources, tools, and conformance suites live under `apps/ios`. | Every client depends on the iOS app's folders, which `language-data/release-inputs.json` names through its `roots`. | #469 | large |
 | The app bundles its own committed data rather than pinning a published release. | Once releases are published, nothing checks that the app holds the same files. | #473 | large |

@@ -230,7 +230,10 @@ records keyed by JMdict entry number.
 
 `DictionaryBrowse` (`artifact/browse.ts`) answers the browse routes
 ([`dictionary-api.md`](dictionary-api.md), Routes) with SQL of its own, since the app has no
-browse screens:
+browse screens. Its kana groups and categories come from one `BrowseIndex`
+(`artifact/browse-index.ts`), built in a few passes over the artifact; `warm()` builds it and
+keeps the totals, the category counts, and the sitemap, so the service calls it before a worker
+reports ready:
 
 - **Kana.** A word is under the script of its reading's first character: hiragana for
   U+3041–U+309F, katakana for anything else, so every entry is under one of the two. A kana's
@@ -240,7 +243,7 @@ browse screens:
 - **Categories** (`browse/categories.ts`) match the entry's parts of speech, or any sense's
   `usage`, `fields`, or `dialects` labels ([`apps/ios/Tools/README.md`](../../apps/ios/Tools/README.md),
   `jmdict_labels.py`), or JMdict's common marker. A category lists its words most used first (by
-  TUBELEX rank, then kana order, with unranked words after) or in kana order. Labels the website
+  TUBELEX rank, then kana order, with unranked words after), its only order. Labels the website
   leaves out (names, and vulgar, derogatory, sensitive, or X-rated words) have no category.
 - **Ranked lists** (`browse/lists.ts`) are TUBELEX, and the Wikipedia and Jiten lists in
   `RankedLists.sqlite3`, each to rank 10,000, 200 ranks to a page; a page lists the words ranked

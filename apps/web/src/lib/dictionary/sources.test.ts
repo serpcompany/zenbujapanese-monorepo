@@ -3,8 +3,9 @@ import { pageSources, type Source, sources, withShownData } from './sources'
 
 const names = (list: readonly Source[]) => list.map(source => source.name)
 
-const withoutStrokes = { strokeOrder: null }
-const withStrokes = { strokeOrder: { strokes: [] } }
+const withoutStrokes = { strokeOrder: null, stats: [] }
+const withStrokes = { strokeOrder: { strokes: [] }, stats: [] }
+const withJlpt = { strokeOrder: null, stats: [{ label: 'Strokes' }, { label: 'JLPT' }] }
 
 describe('withShownData, the credits for what a page shows', () => {
   test('adds nothing when the page shows no kanji details or search examples', () => {
@@ -23,6 +24,12 @@ describe('withShownData, the credits for what a page shows', () => {
       'RADKFILE',
       'Kanjium'
     ])
+  })
+
+  test('credits Waller’s JLPT kanji lists only when a shown kanji has a JLPT level', () => {
+    expect(names(withShownData(pageSources.search, { kanji: [withJlpt, withoutStrokes] }))).toEqual(
+      ['JMdict', 'KANJIDIC2', 'JLPT levels', 'TUBELEX', 'RADKFILE', 'Kanjium', 'JLPT kanji levels']
+    )
   })
 
   test('credits KanjiVG only when a shown kanji draws its stroke order', () => {

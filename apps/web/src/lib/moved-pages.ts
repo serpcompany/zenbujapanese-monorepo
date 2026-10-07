@@ -17,6 +17,10 @@ export const otherCategoryOrder: readonly { source: string; destination: string 
     destination: '/dictionary/browse/:category/'
   },
   {
+    source: '/dictionary/browse/:category/kana-order/1',
+    destination: '/dictionary/browse/:category/'
+  },
+  {
     source: '/dictionary/browse/:category/kana-order/:page',
     destination: '/dictionary/browse/:category/:page/'
   }

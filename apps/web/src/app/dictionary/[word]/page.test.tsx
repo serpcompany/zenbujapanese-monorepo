@@ -42,7 +42,8 @@ describe('the word page, read from the fixtures', () => {
       'Tatoeba',
       'RADKFILE',
       'KanjiVG',
-      'Kanjium'
+      'Kanjium',
+      'JLPT kanji levels'
     ])
     expect(credited(await renderWord('いる-1577980'))).toEqual([
       'JMdict',

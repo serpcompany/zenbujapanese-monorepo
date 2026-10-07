@@ -28,7 +28,6 @@ import {
   type WordLink,
   wordLinks
 } from './browse-words'
-import { LruCache } from './cache'
 import type { ArtifactDatabase } from './database'
 import type { KanjiData } from './kanji-data'
 
@@ -91,7 +90,7 @@ const firstJlptWordsShown = 5
 const isSingleCodePoint = (value: string) => Array.from(value).length === 1
 
 export class DictionaryBrowse {
-  private readonly lists: LruCache<string, number[]>
+  private readonly jlptWords = new Map<number, number[]>()
   private indexed: BrowseIndex | null = null
   private readonly kanaIndexes = new Map<KanaScript, KanaIndexResponse>()
   private summaryAnswer: BrowseSummaryResponse | null = null
@@ -101,17 +100,14 @@ export class DictionaryBrowse {
 
   constructor(
     private readonly db: ArtifactDatabase,
-    private readonly kanji: KanjiData,
-    cacheSize = 32
-  ) {
-    this.lists = new LruCache(cacheSize)
-  }
+    private readonly kanji: KanjiData
+  ) {}
 
-  private ordered(key: string, read: () => number[]): number[] {
-    const cached = this.lists.get(key)
+  private jlptLevel(level: number): number[] {
+    const cached = this.jlptWords.get(level)
     if (cached) return cached
-    const rowids = read()
-    this.lists.set(key, rowids)
+    const rowids = jlptRowids(this.db, level)
+    this.jlptWords.set(level, rowids)
     return rowids
   }
 
@@ -184,10 +180,7 @@ export class DictionaryBrowse {
   rankedWords(slug: string, page: number): BrowseWordsResponse | null {
     const jlpt = jlptList(slug)
     if (jlpt) {
-      return this.page(
-        this.ordered(`jlpt:${jlpt.level}`, () => jlptRowids(this.db, jlpt.level)),
-        page
-      )
+      return this.page(this.jlptLevel(jlpt.level), page)
     }
     const list = rankedList(slug)
     if (!list || page < 1 || page > rankedPages) return null
@@ -218,7 +211,7 @@ export class DictionaryBrowse {
         )
       })),
       jlpt: jlptLists.map(list => {
-        const rowids = this.ordered(`jlpt:${list.level}`, () => jlptRowids(this.db, list.level))
+        const rowids = this.jlptLevel(list.level)
         return {
           slug: list.slug,
           count: rowids.length,

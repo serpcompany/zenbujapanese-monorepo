@@ -52,10 +52,10 @@ function categoryMembers(category: BrowseCategory, members: Members): Set<number
   return sets.length === 1 ? sets[0] : new Set(sets.flatMap(set => [...set]))
 }
 
-function append<Key>(lists: Map<Key, number[]>, key: Key, rowid: number) {
+function append<Key, Value>(lists: Map<Key, Value[]>, key: Key, value: Value) {
   const list = lists.get(key)
-  if (list) list.push(rowid)
-  else lists.set(key, [rowid])
+  if (list) list.push(value)
+  else lists.set(key, [value])
 }
 
 const rowids = (rows: { rowid: number }[]) => rows.map(row => row.rowid)
@@ -88,15 +88,14 @@ export class BrowseIndex {
       )
     )
     const members = labelMembers(db)
-    const common = new Set(rowids(db.all('SELECT rowid FROM entries WHERE is_common = 1')))
+    const common = rowids(db.all('SELECT rowid FROM entries WHERE is_common = 1'))
+    const categoriesOf = new Map<number, string[]>()
     for (const category of browseCategories) {
       const listed = category.kind === 'common' ? common : categoryMembers(category, members)
-      if (listed.size > 0) {
-        this.byCategory.set(
-          category.slug,
-          mostUsed.filter(rowid => listed.has(rowid))
-        )
-      }
+      for (const rowid of listed) append(categoriesOf, rowid, category.slug)
+    }
+    for (const rowid of mostUsed) {
+      for (const slug of categoriesOf.get(rowid) ?? []) append(this.byCategory, slug, rowid)
     }
   }
 
@@ -117,6 +116,9 @@ export class BrowseIndex {
   }
 
   categoryCounts(): CategoryCount[] {
-    return [...this.byCategory].map(([slug, listed]) => ({ slug, count: listed.length }))
+    return browseCategories.flatMap(({ slug }) => {
+      const listed = this.byCategory.get(slug)
+      return listed ? [{ slug, count: listed.length }] : []
+    })
   }
 }

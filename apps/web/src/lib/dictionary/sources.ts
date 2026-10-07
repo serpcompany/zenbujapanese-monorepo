@@ -105,12 +105,18 @@ export const pageSources = {
 
 export function withShownData(
   base: readonly Source[],
-  shown: { kanji: readonly { strokeOrder: unknown }[]; examples?: boolean }
+  shown: {
+    kanji: readonly { strokeOrder: unknown; stats: readonly { label: string }[] }[]
+    examples?: boolean
+  }
 ): Source[] {
   const extra = [
     ...(shown.kanji.length > 0 ? [sources.kanjidic2, sources.radkfile] : []),
     ...(shown.kanji.some(kanji => kanji.strokeOrder) ? [sources.kanjivg] : []),
     ...(shown.kanji.length > 0 ? [sources.kanjium] : []),
+    ...(shown.kanji.some(kanji => kanji.stats.some(stat => stat.label === 'JLPT'))
+      ? [sources.jlptKanji]
+      : []),
     ...(shown.examples ? [sources.tatoeba] : [])
   ]
   return [

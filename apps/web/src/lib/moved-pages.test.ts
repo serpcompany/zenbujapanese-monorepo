@@ -81,6 +81,7 @@ describe('otherCategoryOrder, a category in kana order', () => {
   test.each([
     ['/dictionary/browse/onomatopoeia/kana-order/', '/dictionary/browse/onomatopoeia/'],
     ['/dictionary/browse/onomatopoeia/kana-order', '/dictionary/browse/onomatopoeia/'],
+    ['/dictionary/browse/ichidan-verbs/kana-order/1/', '/dictionary/browse/ichidan-verbs/'],
     ['/dictionary/browse/ichidan-verbs/kana-order/3/', '/dictionary/browse/ichidan-verbs/3/']
   ])('sends %s to %s, the category most used first', (from, to) => {
     expect(redirectAsNextMatches(from)).toBe(to)

@@ -705,8 +705,9 @@ the list; like the app, it finds a form's examples by its spelling alone.
 A kanji's details are what the app's Kanji Detail shows. They open in place from a word page's
 Kanji and Alternative kanji rows, and from a one-kanji search's KANJI row, and are in the page's
 HTML while closed. A kanji has no page of its own (ADR 0010). A page that shows a kanji's details
-credits KANJIDIC2, RADKFILE, KanjiVG when it draws stroke order, and Kanjium (see each page's
-Credits).
+credits KANJIDIC2, RADKFILE, KanjiVG when it draws stroke order, Kanjium, and Waller's JLPT kanji
+lists (CC BY) when a kanji shows a JLPT level (see each page's Credits; checked by
+`src/lib/dictionary/sources.test.ts`, "withShownData").
 
 **Header.** The kanji, then its metrics: strokes ("Stroke" for one), the grade when KANJIDIC2 has
 one, and the JLPT level when Jonathan Waller's kanji lists give one. JLPT reads as the app writes
