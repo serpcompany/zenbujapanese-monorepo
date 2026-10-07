@@ -39,8 +39,9 @@ as it did before them, rather than failing.
 **Browse.** `/dictionary/browse/` is titled "Browse the Japanese dictionary" and says how many
 entries the dictionary has. It has a card for hiragana and one for katakana, each with its kana
 and how many words it lists; one for the kanji lists, with the first grades, JLPT N5 and N4, and
-stroke counts; one for the frequency dictionaries, with the JLPT levels' word counts and the YouTube list's first
-10,000 ranks in bands of 1,000; one for each kind of category; and one for common words.
+stroke counts; one for the frequency dictionaries, with the JLPT levels' word counts and the
+YouTube list's first 10,000 ranks in bands of 1,000; one for each kind of category; and one for
+common words.
 
 - Source: #614 mockup "/dictionary/browse/".
 - Check: Browse spec, "the browse hub leads to each kind of list".
@@ -103,7 +104,10 @@ each with how many jōyō kanji have it.
 vocabulary lists, rather than the levels KANJIDIC2 records, as the mockups have it: the owner
 chose his lists. The JLPT has published no kanji list since 2010, and the kanji lists page and each
 JLPT list say the levels are estimates. Both credit his lists under CC BY, linking to them as the
-Internet Archive keeps them, since his site no longer resolves. N1 includes 247 jinmeiyō kanji.
+Internet Archive keeps them, since his site no longer resolves. N1 includes 247 jinmeiyō kanji, and
+his lists leave out 172 jōyō kanji, such as 分 and 可. A kanji's details still show KANJIDIC2's
+pre-2010 level (#485), so 628 of the 2,211 listed kanji show another level there: 日 is in the N5
+list, and its details say N4.
 
 - Source: the owner's answers on #614.
 - Check: Browse spec, "the JLPT kanji lists are Waller’s, credited under CC BY"; Browse service,

@@ -132,8 +132,8 @@ export function BrowseHub({
         <Panel label="Kanji">
           <PanelHeading title="Kanji" href={kanjiListsPath} />
           <p className="text-sm text-muted-foreground">
-            {formatCount(summary.kanji.joyo)} jōyō kanji by school grade, JLPT level, and stroke
-            count
+            {formatCount(summary.kanji.joyo)} jōyō kanji by school grade and stroke count, and kanji
+            by JLPT level
           </p>
           <Chips label="Kanji lists">
             {gradeLists.slice(0, 3).map(list => (

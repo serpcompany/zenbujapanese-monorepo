@@ -94,7 +94,7 @@ function JlptLevels({ hub }: { hub: KanjiHubResponse }) {
             key={list.slug}
             href={kanjiListPath(list.slug)}
             title={list.name}
-            preview={level.first.join('')}
+            preview={level.first.join(' ')}
             count={plural(level.count, 'kanji', 'kanji')}
           />
         ))}

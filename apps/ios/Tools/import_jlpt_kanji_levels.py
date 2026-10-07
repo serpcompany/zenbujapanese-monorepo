@@ -47,14 +47,20 @@ def listed_kanji(page: str) -> list[str]:
     return kanji
 
 
+def pinned(record_path: Path, file: dict[str, object]) -> Path:
+    path = record_path.parent / str(file["path"])
+    if path.stat().st_size != file["bytes"] or file_sha256(path) != file["sha256"]:
+        raise ValueError(f"{path.name}: size or SHA-256 doesn't match {record_path.name}")
+    return path
+
+
 def jlpt_kanji_levels(record_path: Path) -> tuple[dict[str, int], dict[str, object]]:
     record = json.loads(record_path.read_text(encoding="utf-8"))
+    pinned(record_path, record["license"]["evidence"])
     levels: dict[str, int] = {}
     counts: dict[str, int] = {}
     for file in record["files"]:
-        path = record_path.parent / file["path"]
-        if path.stat().st_size != file["bytes"] or file_sha256(path) != file["sha256"]:
-            raise ValueError(f"{path.name}: size or SHA-256 doesn't match {record_path.name}")
+        path = pinned(record_path, file)
         kanji = listed_kanji(path.read_text(encoding="utf-8"))
         if len(kanji) != file["kanji"] or len(set(kanji)) != len(kanji):
             raise ValueError(f"{path.name} lists {len(kanji)} kanji, not {file['kanji']} different ones")

@@ -10,7 +10,7 @@ KANJIDIC2_REPORT = GENERATED / "KANJIDIC2-2026-10-05.import.json"
 
 
 class JlptKanjiContractTests(unittest.TestCase):
-    def test_each_kanji_has_the_level_wallers_list_gives_it(self) -> None:
+    def test_each_level_holds_as_many_kanji_as_its_page_lists(self) -> None:
         record = json.loads(RECORD.read_text(encoding="utf-8"))
         reference = json.loads(KANJI_REFERENCE.read_text(encoding="utf-8"))
         levels = Counter(

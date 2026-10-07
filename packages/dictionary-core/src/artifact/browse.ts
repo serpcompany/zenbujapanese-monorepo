@@ -302,6 +302,7 @@ export class DictionaryBrowse {
       }))
     )
     const ranked = this.rankedLists()
+    const kanji = this.kanjiHub()
     return {
       kana,
       categories: this.categoryCounts().categories.map(({ slug, count }) => ({
@@ -315,11 +316,9 @@ export class DictionaryBrowse {
         ...ranked.jlpt.map(list => ({ slug: list.slug, pages: pageCount(list.count) }))
       ],
       kanjiLists: [
-        ...this.kanjiHub().lists.map(list => list.slug),
-        ...this.kanjiHub()
-          .jlpt.filter(list => list.count > 0)
-          .map(list => list.slug),
-        ...this.kanjiHub().strokes.map(({ strokes }) => strokeList(strokes).slug)
+        ...kanji.lists.map(list => list.slug),
+        ...kanji.jlpt.filter(list => list.count > 0).map(list => list.slug),
+        ...kanji.strokes.map(({ strokes }) => strokeList(strokes).slug)
       ]
     }
   }

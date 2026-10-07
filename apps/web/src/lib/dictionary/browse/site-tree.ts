@@ -56,8 +56,9 @@ export const dictionaryTree: TreeNode = {
           title: 'Kanji lists',
           path: kanjiListsPath,
           children: [
-            ...[...schoolLists, ...jlptKanjiLists].map(list => ({
-              title: list.name,
+            ...schoolLists.map(list => ({ title: list.name, path: kanjiListPath(list.slug) })),
+            ...jlptKanjiLists.map(list => ({
+              title: `${list.name} kanji`,
               path: kanjiListPath(list.slug)
             })),
             { title: 'By stroke count', path: strokeCountsPath }

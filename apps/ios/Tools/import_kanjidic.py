@@ -150,7 +150,6 @@ def import_snapshot(
             "dictionary-reference identifiers",
         ],
         "metadata_source_sha256": file_sha256(source),
-        "jlpt_kanji_importer_sha256": waller_report["importer_sha256"],
         "component_artifact_sha256": file_sha256(radical_artifact),
         **built_artifact(Path(__file__), output),
     }

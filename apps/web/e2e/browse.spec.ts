@@ -53,6 +53,9 @@ test.describe('browse pages', () => {
         browse(path)
       )
     }
+    await expect(
+      page.getByRole('list', { name: 'Kanji lists' }).getByRole('link', { name: 'JLPT N5' })
+    ).toHaveAttribute('href', browse('kanji/jlpt-n5/'))
     await page.getByRole('link', { name: 'Frequency dictionaries', exact: true }).click()
     await expect(page.getByRole('heading', { level: 1 })).toHaveText(
       'Japanese frequency dictionaries'
@@ -154,6 +157,9 @@ test.describe('browse pages', () => {
 
   test('the JLPT kanji lists are Waller’s, credited under CC BY', async ({ page }) => {
     await page.goto(browse('kanji/'))
+    await expect(page).toHaveTitle(
+      'Kanji lists by school grade, JLPT level, and stroke count | Zenbu Japanese'
+    )
     const levels = page.getByRole('region', { name: 'By JLPT level' })
     await expect(levels.getByRole('link')).toHaveCount(5)
     await expect(levels.getByRole('link', { name: /^JLPT N1/ })).toHaveAttribute(
@@ -221,6 +227,7 @@ test.describe('browse pages', () => {
       ['Kana charts', 'kana/'],
       ['Kanji lists', 'kanji/'],
       ['Grade 1', 'kanji/grade-1/'],
+      ['JLPT N5 kanji', 'kanji/jlpt-n5/'],
       ['Frequency dictionaries', 'frequency-dictionaries/'],
       ['Anime', 'frequency-dictionaries/anime/'],
       ['Parts of speech', 'parts-of-speech/'],

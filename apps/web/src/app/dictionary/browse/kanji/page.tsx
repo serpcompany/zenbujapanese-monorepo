@@ -7,8 +7,8 @@ export const dynamic = 'force-dynamic'
 
 export const metadata = dictionaryMetadata(
   kanjiListsPath,
-  'Kanji lists by school grade and stroke count',
-  'Every jōyō kanji by school grade and stroke count, and the jinmeiyō kanji used in names, each with its readings, stroke order, and words.'
+  'Kanji lists by school grade, JLPT level, and stroke count',
+  'Every jōyō kanji by school grade and stroke count, the jinmeiyō kanji used in names, and the kanji of each JLPT level, each with its readings, stroke order, and words.'
 )
 
 export default async function KanjiListsPage() {
