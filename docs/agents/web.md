@@ -352,7 +352,10 @@ Each value that differs by environment lives where the code that reads it runs:
   [Links that open the app](#links-that-open-the-app)). It isn't secret, but it is set like one,
   by hand, so it outlives every deploy, however it's run: `pnpm exec wrangler secret put
   APPLE_TEAM_ID --env <staging|production>`. A var in `wrangler.jsonc` would have to be
-  committed, and a `--var` on a deploy would drop it from the next deploy run without one.
+  committed, and a `--var` on a deploy would drop it from the next deploy run without one. Set it
+  to `W3GXL2NQQP`, the team of the backup developer account that holds the app's
+  `com.zenbujapanese.app` record (#616). When #616 transfers the app to the business account, the
+  team changes, and this setting with it.
 
 `SITE_ENV=production` is set in both the production Worker `vars` and the `deploy:production` build.
 Anything else is non-production: it sends `X-Robots-Tag: noindex` and a `robots.txt` that disallows
@@ -448,8 +451,8 @@ until #463 records retired entries.
 opens when it's installed (universal links, #568). The app claims `applinks:zenbujapanese.com`
 ([`ios.md`](ios.md), Links from the website), and Apple's CDN fetches the file from that host
 alone, so the file has to answer there with a 200, as `application/json`, and without a redirect,
-which Apple doesn't follow. It claims search, kanji, and word URLs, and leaves out the JSON
-routes that load more of a page; what each opens in the app is in the
+which Apple doesn't follow. It claims search and word URLs and the removed kanji URLs, and leaves
+out the JSON routes that load more of a page; what each opens in the app is in the
 [product docs](../../apps/web/docs/product/dictionary.md#urls-seo-and-indexing).
 
 `worker.ts` answers it before OpenNext, from `appleAppSiteAssociationResponse` in
@@ -459,7 +462,7 @@ extension, `.well-known` paths included, and redirects (308) to it, though Next.
 `retired.ts` covers it too, and `pnpm dev`, which runs Next.js alone, doesn't serve the file:
 check it in `pnpm preview`.
 
-The file names the app as `<APPLE_TEAM_ID>.com.zenbujapanese.dictionary`. The team ID is the
+The file names the app as `<APPLE_TEAM_ID>.com.zenbujapanese.app`. The team ID is the
 Worker's `APPLE_TEAM_ID` (Environment configuration, above); until it's set, or when it isn't
 ten capital letters and digits, the file answers 404, so no app claims the site's links, and a
 malformed one logs `apple_team_id_invalid`. Locally, put it in `.dev.vars` for `pnpm preview`;

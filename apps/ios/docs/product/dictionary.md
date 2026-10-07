@@ -133,11 +133,13 @@ open word sheet, and:
   decides the word whatever the slug says. A word the app's dictionary doesn't have searches the
   slug's text instead, or returns to the Search screen when the URL has no slug;
 - a search, `/dictionary/search/<query>/`, returns to the Search screen and searches the query;
-- a kanji, `/dictionary/kanji/<kanji>/`, opens that kanji's detail; and
+- a kanji, `/dictionary/kanji/<kanji>/`, opens the detail of that exact character. The website
+  removed these pages and redirects them to the kanji's search, but the app has a kanji detail to
+  open; and
 - any other zenbujapanese.com URL returns to the Search screen.
 
-Old URLs the website redirects open where it sends them: a word's conjugation pages open the word,
-and a search's Example Sentences page the search. iOS opens Zenbu only for the URLs the website's
+A word's old conjugation pages open the word, and a search's old Example Sentences page the
+search, as the website redirects them. iOS opens Zenbu only for the URLs the website's
 association file claims ([website product docs](../../../web/docs/product/dictionary.md#urls-seo-and-indexing));
 until the website has Zenbu's Apple team ID, links open the website.
 

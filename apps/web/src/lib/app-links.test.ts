@@ -16,7 +16,7 @@ describe('appleAppSiteAssociationResponse', () => {
       applinks: {
         details: [
           {
-            appIDs: ['ABCDE12345.com.zenbujapanese.dictionary'],
+            appIDs: ['ABCDE12345.com.zenbujapanese.app'],
             components: [
               { '/': '/dictionary/*.json', exclude: true },
               { '/': '/dictionary/search/?*' },
@@ -40,7 +40,7 @@ describe('appleAppSiteAssociationResponse', () => {
   test.each([
     'abcde12345',
     'ABCDE1234',
-    'ABCDE12345.com.zenbujapanese.dictionary',
+    'ABCDE12345.com.zenbujapanese.app',
     ' ABCDE12345'
   ])('is not found, and says why, when APPLE_TEAM_ID is %j, not a team ID', id => {
     const logged = vi.spyOn(console, 'log').mockImplementation(() => {})

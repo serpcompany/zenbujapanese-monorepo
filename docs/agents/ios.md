@@ -80,13 +80,14 @@ installed; install it again to renew it.
 
 ## Links from the website
 
-The app opens zenbujapanese.com's search, kanji, and word URLs as universal links (#568; what
-each opens is in the [product docs](../../apps/ios/docs/product/dictionary.md#links-from-zenbujapanesecom)).
+The app opens zenbujapanese.com's search and word URLs, and the kanji URLs the website removed,
+as universal links (#568; what each opens is in the [product docs](../../apps/ios/docs/product/dictionary.md#links-from-zenbujapanesecom)).
 `apps/ios/App/ZenbuJapanese.entitlements` claims `applinks:zenbujapanese.com`, and iOS opens a
 link in the app only once it has fetched the site's association file, through Apple's CDN, and
 found the app's ID in it ([`web.md`](web.md), Links that open the app). That takes two things
-only a person can do: enable Associated Domains for the App ID `com.zenbujapanese.dictionary` in
-the Apple Developer account, and set the website's `APPLE_TEAM_ID`.
+only a person can do: enable Associated Domains for the App ID `com.zenbujapanese.app` in the
+Apple Developer account that holds it, and set the website's `APPLE_TEAM_ID` to that account's
+team (`W3GXL2NQQP` until #616 moves the app to the business account).
 
 SwiftUI hands a universal link to `onOpenURL` in `SearchExperienceRootView`, and `WebsiteLink`
 (`WebsiteLink.swift`) reads it: the website's URL shapes, decoded one path segment at a time,

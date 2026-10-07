@@ -16,6 +16,7 @@ public struct SearchExperienceRootView: View {
   @State private var watchPath = NavigationPath()
   @State private var watchWordSheet = WordSheetPresentation()
   @State private var watchHistory = WatchHistory()
+  @State private var websiteLinkTask: Task<Void, Never>?
   @State private var kanjiScrollWordIDs: [KanjiCharacter: LanguageReferenceID] = [:]
   @State private var kanjiScrollElementIDs: [KanjiCharacter: KanjiElementID] = [:]
   @State private var kanjiElementScrollContributionIDs: [KanjiElementID: KanjiCharacter] = [:]
@@ -406,10 +407,13 @@ public struct SearchExperienceRootView: View {
   private func openWebsiteLink(_ url: URL) {
     selectedTab = .search
     dismissRecognizedWordSheet(if: true)
-    Task { @MainActor in
-      switch await WebsiteLink(url).route(using: lookupClient) {
+    websiteLinkTask?.cancel()
+    websiteLinkTask = Task { @MainActor in
+      let route = await WebsiteLink(url).route(using: lookupClient)
+      guard !Task.isCancelled else { return }
+      switch route {
       case .open(let route):
-        path.append(route)
+        push(route, in: .search)
       case .search(let text):
         path = []
         query = text

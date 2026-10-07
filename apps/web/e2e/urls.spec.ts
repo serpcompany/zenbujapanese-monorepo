@@ -68,9 +68,7 @@ test.describe('URLs', () => {
     expect(response.status()).toBe(200)
     expect(response.headers()['content-type']).toBe('application/json')
     const [app] = (await response.json()).applinks.details
-    expect(app.appIDs).toEqual([
-      expect.stringMatching(/^[A-Z0-9]{10}\.com\.zenbujapanese\.dictionary$/)
-    ])
+    expect(app.appIDs).toEqual([expect.stringMatching(/^[A-Z0-9]{10}\.com\.zenbujapanese\.app$/)])
     expect(app.components).toContainEqual({ '/': '/dictionary/*-*' })
   })
 
