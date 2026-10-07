@@ -8,24 +8,34 @@ export const metadata = pageMetadata('/legal/privacy/')
 export default function PrivacyPage() {
   const email = <a href={`mailto:${site.supportEmail}`}>{site.supportEmail}</a>
   return (
-    <PageShell title="Privacy Policy" updated="September 28, 2026">
+    <PageShell title="Privacy Policy" updated="October 6, 2026">
       <p>
-        This policy explains how we handle information in the {site.name} iPhone app and on
-        zenbujapanese.com.
+        This policy explains how we handle information in the {site.name} iPhone app, on
+        zenbujapanese.com, and in a Zenbu account, including when you link one to Tomodachi.
       </p>
 
       <h2>The short version</h2>
       <p>
-        The app does not collect or track data. It has no advertising, analytics, third-party
-        crash-reporting SDK, account, or cloud sync. The website uses privacy-friendly, cookieless
-        analytics to count visits.
+        The app works fully on your device without an account, and without one it doesn't collect
+        data. It never tracks you, and has no advertising, analytics, or third-party crash-reporting
+        SDK. If you create or link a Zenbu account, we keep your email, how you sign in, and the
+        known words and lists you sync on our servers, so your apps can share them, and you can
+        delete the account at any time. If you link it to Tomodachi, our companion app, Tomodachi
+        can read your lists and known words and mark words Known. The website uses privacy-friendly,
+        cookieless analytics to count visits.
       </p>
 
       <h2>Information in the app</h2>
       <p>
-        Recent searches, word notes, known words, and word lists are stored in the app's private
-        storage on your device and are not sent to {site.name}. Images you choose for Image Search
-        are processed on your device and discarded when you close them.
+        Your profile, recent searches, word notes, known words, word lists, and Media Library photos
+        are stored in the app's private storage on your device and are not sent to {site.name},
+        except what a Zenbu account syncs if you create or link one (see below). Your device's own
+        backups, such as iCloud Backup, can include them, under Apple's terms.
+      </p>
+      <p>
+        Images you choose for Image Search are processed on your device. Opening a word from one
+        keeps the image with that word in your Media Library, on your device; otherwise it is
+        discarded when you close it.
       </p>
       <p>
         Text recognition, translation, and pronunciation use Apple's Vision, Translation, and speech
@@ -43,6 +53,10 @@ export default function PrivacyPage() {
           cdn.zenbujapanese.com. Our hosting provider, Cloudflare, processes routine request
           information such as your IP address to deliver the file.
         </li>
+        <li>
+          <strong>Sign-in and sync</strong>, only if you create or link a Zenbu account, connect to
+          our account service at api.zenbujapanese.com, through Cloudflare.
+        </li>
       </ul>
 
       <h2>Permissions</h2>
@@ -50,6 +64,99 @@ export default function PrivacyPage() {
         The app asks for camera access only when you choose to take a photo. Photos and files are
         chosen through Apple's system pickers, which share only the item you select. You can change
         permissions in iPhone Settings.
+      </p>
+
+      <h2>Your Zenbu account</h2>
+      <p>
+        You never need a Zenbu account: everything in the app works without one, and while you're
+        signed out, our apps send nothing to our account service. If you create or link a Zenbu
+        account, the account service keeps:
+      </p>
+      <ul>
+        <li>
+          <strong>Your account:</strong> a Zenbu user ID; your email and whether it's verified; a
+          name and a username, both optional; the address of your profile picture, only if Apple or
+          Google sends one when you sign up; and when the account was created and last changed, with
+          its profile's version number.
+        </li>
+        <li>
+          <strong>How you sign in:</strong> for each way you sign in (Apple, Google, or a code we
+          email you), the provider and your account ID with it. We don't keep Apple's or Google's
+          own sign-in tokens. If you hide your email with Sign in with Apple, we get Apple's relay
+          address instead of yours.
+        </li>
+        <li>
+          <strong>Where you're signed in:</strong> a session for each device or browser you sign in
+          on, with its IP address and user agent (the name and version of the app or browser, and of
+          its operating system).
+        </li>
+        <li>
+          <strong>The study data you sync:</strong> your known words, each as the dictionary's ID
+          for the word or kanji with whether it's known; your lists' names, their order, and the
+          words in them; a record of each item's latest change; and the result of each sync request,
+          so that a retry is never applied twice.
+        </li>
+      </ul>
+      <p>
+        To sign you in, it also keeps the codes we email you, encrypted, and one-time sign-in
+        values, each for 10 minutes, and counts requests from each IP address for a few minutes to
+        stop abuse. Word notes, photos, recent searches, and settings aren't synced: they stay on
+        your device. We'll update this policy before an app syncs anything else.
+      </p>
+      <p>
+        We use this information only to sign you in, keep your apps in step, email you about signing
+        in, and keep the service secure. We email you from {email}, through Cloudflare, only to send
+        sign-in codes and to tell you when a way to sign in is added to or removed from your
+        account. Our servers' logs record each request's method, route, status, and timing, never
+        your email, your profile, a sign-in code or link, or a token.
+      </p>
+
+      <h2>Tomodachi</h2>
+      <p>
+        Tomodachi, our companion app for Mac and iPhone, works without an account. Its own study
+        progress syncs between your devices through your iCloud account, which Apple runs, not
+        through our servers. If you link your Zenbu account to Tomodachi, it signs in as described
+        above and can only:
+      </p>
+      <ul>
+        <li>read your lists;</li>
+        <li>read your known words;</li>
+        <li>mark words Known, but never clear a Known mark;</li>
+        <li>
+          fetch word cards from our dictionary service, and send it answers you type to split them
+          into words.
+        </li>
+      </ul>
+      <p>
+        The dictionary service uses what Tomodachi sends only to answer it: none of it is added to
+        your account, and our logs don't record it. Before another app, such as our browser
+        extensions, uses your account, we'll update this policy to say what it can do.
+      </p>
+
+      <h2>Where account data is kept</h2>
+      <p>
+        Your account and the data you sync are kept in a database on our API servers. Requests to
+        them pass through Cloudflare. The database is backed up each night to private Cloudflare R2
+        storage, and each backup is deleted after 30 days. These companies process account data for
+        us:
+      </p>
+      <ul>
+        <li>
+          <strong>Apple</strong>, when you use Sign in with Apple;
+        </li>
+        <li>
+          <strong>Google</strong>, when you sign in with Google;
+        </li>
+        <li>
+          <strong>Cloudflare</strong>, which carries traffic to our servers, sends our email, and
+          stores the backups;
+        </li>
+        <li>
+          <strong>the company that hosts our API servers</strong>, where the database runs.
+        </li>
+      </ul>
+      <p>
+        Apple and Google handle your sign-in with them under their own terms and privacy policies.
       </p>
 
       <h2>This website</h2>
@@ -71,17 +178,35 @@ export default function PrivacyPage() {
       <h2>Retention and deletion</h2>
       <p>
         You can delete searches, notes, known words, and lists inside the app. Uninstalling the app
-        removes its remaining data from your device.
+        removes its remaining data from your device, but doesn't delete your account.
       </p>
+      <p>If you have a Zenbu account, we keep:</p>
+      <ul>
+        <li>your account and the data you sync until you delete the account;</li>
+        <li>each session until you sign out of it, or 60 days after it was last used;</li>
+        <li>
+          sign-in codes and one-time sign-in values for 10 minutes, and request counts for a few
+          minutes;
+        </li>
+        <li>each sync request's result for 30 days;</li>
+        <li>each night's backup for 30 days.</li>
+      </ul>
+      <p>
+        You can delete your account in any of our apps that lets you create one. Deleting it removes
+        your account, its ways to sign in, and the data you synced from our database at once, and
+        the backups that still hold them are deleted within 30 days. Each device keeps its own data
+        and keeps working signed out.
+      </p>
+      <p>To get a copy of the data your account holds, email {email}.</p>
 
       <h2>Children</h2>
       <p>{site.name} is a general-audience reference and is not directed to children under 13.</p>
 
       <h2>Changes and contact</h2>
       <p>
-        We update this policy when the app or website changes how it handles information; the date
-        above marks the current version. Questions go to {email}. See also the{' '}
-        <Link href="/legal/terms/">Terms of Use</Link>.
+        We update this policy when our apps, the account service, or the website change how they
+        handle information; the date above marks the current version. Questions go to {email}. See
+        also the <Link href="/legal/terms/">Terms of Use</Link>.
       </p>
     </PageShell>
   )

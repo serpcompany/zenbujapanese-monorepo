@@ -25,6 +25,9 @@ Sentences pages that came before it redirect to the nearest of them. The shared 
 and the URL, indexing, and sitemap rules, apply to all of them.
 [Dictionary](dictionary.md) describes every behavior, page by page.
 
+The legal pages are under `/legal/`. [Privacy Policy](privacy.md) describes what
+`/legal/privacy/` says about the app, the website, and a Zenbu account, Tomodachi included.
+
 ## What defines the website's behavior
 
 The app's product documentation, [`apps/ios/docs/product/`](../../../ios/docs/product/index.md),
@@ -39,8 +42,9 @@ its app source and planned check, and is then built with its check in the same P
 
 ## How behavior is verified
 
-Each behavior in [Dictionary](dictionary.md) names its automated check, or says "No automated
-check yet (#511)". The checks come in five kinds:
+Each behavior in [Dictionary](dictionary.md) and [Privacy Policy](privacy.md) names its
+automated check, or says "No automated check yet" (#511 for the dictionary). The checks come in
+five kinds:
 
 - **App-recorded conformance suites** in `apps/ios/LanguageData/Conformance/`, recorded from the
   app on the iOS Simulator: `search-retrieval.json`, `search-results.json`, `example-search.json`,
