@@ -77,6 +77,16 @@ struct AccountRootView: View {
           }
         }
         .accessibilityIdentifier("account.lists")
+
+        Picker(selection: $translationHistory.retention) {
+          ForEach(HistoryRetention.allCases) { retention in
+            Text(retention.title).tag(retention)
+          }
+        } label: {
+          AccountRowLabel("Keep Translations", systemImage: "clock.fill", tint: .purple)
+        }
+        .pickerStyle(.menu)
+        .accessibilityIdentifier("account.keep-translations")
       }
 
       Section {
@@ -89,16 +99,6 @@ struct AccountRootView: View {
           AccountRowLabel("Frequency Dictionaries", systemImage: "chart.bar.fill", tint: .green)
         }
         .accessibilityIdentifier("account.frequency-dictionaries")
-
-        Picker(selection: $translationHistory.retention) {
-          ForEach(HistoryRetention.allCases) { retention in
-            Text(retention.title).tag(retention)
-          }
-        } label: {
-          AccountRowLabel("Keep Translations", systemImage: "clock.fill", tint: .purple)
-        }
-        .pickerStyle(.menu)
-        .accessibilityIdentifier("account.keep-translations")
       }
 
       Section {
