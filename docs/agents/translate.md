@@ -172,7 +172,7 @@ In the Simulator, with the harness:
 
 - **Text**, **Start**, then `Where can I buy a Suica card?`, shows **English →
   Japanese**, copy, speak, and linked Japanese; tapping a word closes the keyboard and opens Word
-  Detail at half height.
+  Detail at half height. **•••** → **Furigana** shows furigana over the Japanese.
 - The tab opens on Conversation, Listening, Text, and Document Upload; **Start** with Conversation shows the
   station conversation full screen, without the tab bar: an English card, then a wider gap and one
   Japanese turn of three cards whose audio waits (**N waiting for a pause**), each card turning
@@ -180,7 +180,8 @@ In the Simulator, with the harness:
   button that becomes a blue play while paused. **•••** switches to **Two Panes** (a dark Japanese
   pane over a light English one) and back, and turns on **Furigana**.
 - In History, a conversation's transcript has a speaker and a bookmark on each sentence;
-  bookmarking one lists it under **Bookmarked**.
+  bookmarking one lists it under **Bookmarked**. Its **•••** → **Furigana** shows furigana, and
+  the conversation and Text screens follow the same switch.
 - Opening a word's full entry shows the full-width session bar above the tab bar; another tab
   reads **Conversation still listening · Return**, which returns to the conversation.
 - Back shows **Leave this conversation?** from the Back button; **Save and Exit** returns home, and

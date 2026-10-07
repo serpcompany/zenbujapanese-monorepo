@@ -28,8 +28,15 @@ enum DocumentText {
 
   static func decode(_ data: Data) throws -> String {
     let hasByteOrderMark = data.starts(with: [0xFF, 0xFE]) || data.starts(with: [0xFE, 0xFF])
+    let onlyHalfWidthKatakana = data.allSatisfy { $0 < 0x80 || (0xA1...0xDF).contains($0) }
     let encodings: [String.Encoding] =
-      hasByteOrderMark ? [.utf16] : [.utf8, .japaneseEUC, .shiftJIS]
+      if hasByteOrderMark {
+        [.utf16]
+      } else if onlyHalfWidthKatakana {
+        [.utf8, .shiftJIS, .japaneseEUC]
+      } else {
+        [.utf8, .japaneseEUC, .shiftJIS]
+      }
     for encoding in encodings {
       if let text = String(data: data, encoding: encoding) { return text }
     }

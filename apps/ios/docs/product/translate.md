@@ -34,7 +34,7 @@ letters is English and is translated into Japanese. There is no swap button. The
 appears in the same card under a divider, with a label such as **English → Japanese** and
 buttons to copy and speak it; Japanese in it is underlined and tappable. An ✕ clears the text.
 If Apple's Japanese language isn't downloaded, the card offers **Download Japanese**, which shows
-Apple's download prompt. Its **•••** menu holds **Furigana**.
+Apple's download prompt. The typing screen's **•••** menu holds **Furigana**.
 
 ## Starting a live mode
 

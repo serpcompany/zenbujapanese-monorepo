@@ -29,6 +29,12 @@ struct DocumentTextTests {
     }
   }
 
+  @Test("a Shift-JIS file of half-width katakana isn't misread as EUC-JP kanji")
+  func halfWidthKatakana() throws {
+    let text = "ｶﾌﾞｼｷｶﾞｲｼｬ ﾔﾏﾀﾞ"
+    #expect(try DocumentText.decode(try #require(text.data(using: .shiftJIS))) == text)
+  }
+
   @Test("a long document is cut to the character limit")
   func longDocument() async throws {
     let url = folder.appending(path: "long.txt")
