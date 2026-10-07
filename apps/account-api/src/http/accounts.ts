@@ -170,17 +170,19 @@ const removeAccount = createRoute({
     200: json(z.object({ status: z.literal('deleted') }), 'Deleted.'),
     400: json(
       ErrorSchema,
-      '`bad_request`; `apple_authorization_needed`: the account signs in with Apple, so send a fresh authorization code; or `apple_authorization_invalid`: Apple refused it, so sign in with Apple again for a new one.'
+      "`bad_request`; `apple_authorization_needed`: the account signs in with Apple, so send a fresh authorization code; `apple_authorization_invalid`: Apple refused it, so sign in with Apple again for a new one; or `apple_account_mismatch`: it is another Apple ID's."
     ),
     401: unauthorized,
     403: json(
       ErrorSchema,
       "`insufficient_scope`: the app hasn't `account:delete`; or `sign_in_again`: the sign-in is over 10 minutes old."
     ),
+    413: tooLarge,
+    429: tooMany(requestsPerMinute.profile),
     500: failed,
     503: json(
       ErrorSchema,
-      "`apple_unavailable`: Apple didn't answer. Nothing was deleted; try again."
+      "`apple_unavailable`: revoking with Apple didn't finish, and nothing was deleted. The code may be used up: sign in with Apple again for a new one, and try again."
     )
   }
 })
@@ -226,10 +228,15 @@ const deletionAnswers = {
     'apple_authorization_invalid',
     'Apple refused that authorization code. Sign in with Apple again for a new one.'
   ],
+  apple_account_mismatch: [
+    400,
+    'apple_account_mismatch',
+    "That Sign in with Apple is another Apple ID's. Sign in with the Apple ID this account uses."
+  ],
   apple_unavailable: [
     503,
     'apple_unavailable',
-    "Apple didn't answer. Nothing was deleted; try again."
+    "Revoking with Apple didn't finish, and nothing was deleted. Sign in with Apple again for a new code, and try again."
   ]
 } as const
 
@@ -244,7 +251,7 @@ export function accountRoutes(
     scheme: 'bearer',
     bearerFormat: 'JWT',
     description:
-      "A 15-minute access token from GET /v1/auth/token, which takes the session token a sign-in returns, never the session token itself. It names the account (`sub`), the app (`azp`), and the app's scopes (`scope`): `profile` for /v1/me, and for sync `lists:read`, `lists:write`, `known:read`, `known:write`, and `known:mark`, which marks a word Known but never clears one. The dictionary service takes `dictionary:read`."
+      "A 15-minute access token from GET /v1/auth/token, which takes the session token a sign-in returns, never the session token itself. It names the account (`sub`), the app (`azp`), when the learner signed in (`auth_time`), and the app's scopes (`scope`): `account:delete` for DELETE /v1/me, `profile` for /v1/me, and for sync `lists:read`, `lists:write`, `known:read`, `known:write`, and `known:mark`, which marks a word Known but never clears one. The dictionary service takes `dictionary:read`."
   })
 
   app.openapi(health, async context =>

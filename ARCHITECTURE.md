@@ -68,7 +68,8 @@ saying where the code belongs:
   ([`docs/agents/account-api.md`](docs/agents/account-api.md), Code layout).
 - **The website**: `src/lib`, then components and hooks, then routes; only
   `src/lib/dictionary/data.ts` reads the service's client, apart from `retired.ts`, which
-  `worker.ts` runs before Next.js ([`docs/agents/web.md`](docs/agents/web.md), Code layout).
+  `worker.ts` runs before Next.js; the browse pages' data and the sitemaps ask the client
+  `data.ts` hands them ([`docs/agents/web.md`](docs/agents/web.md), Code layout).
 - **Across parts**: the core and the app's Swift change together, which `Search parity` checks
   ([`docs/agents/ci.md`](docs/agents/ci.md)); the website and the service share their row shapes
   through the core; no app imports another, and apps reach a shared package by its name.

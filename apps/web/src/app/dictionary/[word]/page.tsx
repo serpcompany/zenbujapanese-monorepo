@@ -3,7 +3,6 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 import { notFound, permanentRedirect } from 'next/navigation'
 import { ConjugationsSection } from '@/components/dictionary/conjugations'
-import { DictionaryBreadcrumbs } from '@/components/dictionary/dictionary-breadcrumbs'
 import { Disclosure } from '@/components/dictionary/disclosure'
 import { ExampleList } from '@/components/dictionary/example-list'
 import { FrequencySection } from '@/components/dictionary/frequency-section'
@@ -118,11 +117,14 @@ function AlternativeForms({ forms }: { forms: WordPageData['alternatives'] }) {
 export default async function WordPage({ params }: Props) {
   const word = await load(params)
   return (
-    <main className="mx-auto flex w-full max-w-2xl flex-col gap-4 px-4 pt-4 pb-6">
-      <DictionaryBreadcrumbs page={{ label: word.headword, path: word.path, lang: 'ja' }} />
-      <PageToolbar title={word.headword} shareText={word.shareText} />
+    <main className="mx-auto flex w-full max-w-3xl flex-col gap-4 px-4 pt-4 pb-6">
+      <PageToolbar
+        page={{ label: word.headword, path: word.path, lang: 'ja' }}
+        shareText={word.shareText}
+      />
 
       <WordHeader
+        headword={word.headword}
         ruby={word.ruby}
         reading={word.reading}
         pitch={word.pitch}

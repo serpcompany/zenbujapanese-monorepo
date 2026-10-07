@@ -1,7 +1,8 @@
 import { randomUUID } from 'node:crypto'
 import { afterEach, describe, expect, test, vi } from 'vitest'
 import { type Learner, useAccountService } from '../test/accounts'
-import { goodAppleCode } from '../test/identity-provider'
+import { appleCodeFor, misconfiguredAppleCode } from '../test/identity-provider'
+import { logged } from '../test/logged'
 import { appBundleIdentifier } from '../test/service'
 import { sessionToken, sha256 } from '../test/sign-in'
 
@@ -109,9 +110,25 @@ describe('DELETE /v1/me', () => {
     )
     expect((await accounts.me(learner.token)).status).toBe(200)
     expect(accounts.running.appleRevoked).toEqual([])
+
     expect(
-      await remove(learner, { confirm: true, appleAuthorizationCode: goodAppleCode })
+      await remove(learner, { confirm: true, appleAuthorizationCode: appleCodeFor('someone-else') })
+    ).toMatchObject({ status: 400, body: { error: { code: 'apple_account_mismatch' } } })
+    expect(accounts.running.appleRevoked).toEqual(['refresh-for-apple-code:someone-else'])
+
+    const lines = logged()
+    expect(
+      await remove(learner, { confirm: true, appleAuthorizationCode: misconfiguredAppleCode })
+    ).toMatchObject({ status: 503, body: { error: { code: 'apple_unavailable' } } })
+    expect(lines()).toContain('"appleError":"invalid_client"')
+    expect((await accounts.me(learner.token)).status).toBe(200)
+
+    expect(
+      await remove(learner, {
+        confirm: true,
+        appleAuthorizationCode: appleCodeFor('apple-deleting')
+      })
     ).toMatchObject({ status: 200 })
-    expect(accounts.running.appleRevoked).toEqual(['apple-refresh-token'])
+    expect(accounts.running.appleRevoked).toContain('refresh-for-apple-code:apple-deleting')
   })
 })

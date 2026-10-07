@@ -25,13 +25,11 @@ export function accountStore(db: Drizzle): AccountStore {
   return {
     profile: userId => readerOn(db, userId).currentProfile(),
 
-    async identityProviders(userId) {
-      const rows = await db
-        .select({ provider: userIdentities.providerId })
+    identities: userId =>
+      db
+        .select({ provider: userIdentities.providerId, subject: userIdentities.accountId })
         .from(userIdentities)
-        .where(eq(userIdentities.userId, userId))
-      return rows.map(row => row.provider)
-    },
+        .where(eq(userIdentities.userId, userId)),
 
     async deleteAccount(userId, email) {
       await db.transaction(async tx => {
