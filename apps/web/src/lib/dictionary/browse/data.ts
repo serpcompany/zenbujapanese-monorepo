@@ -1,7 +1,6 @@
 import type {
   BrowseWord,
   BrowseWordsResponse,
-  CategoryOrder,
   KanaInitialResponse,
   WordLink
 } from '@zenbu/dictionary-core/artifact/browse'
@@ -96,8 +95,8 @@ export const getCategoryCounts = cache(
   async () => (await required(browseService.categories())).data.categories
 )
 
-export const getCategoryWords = cache(async (slug: string, order: CategoryOrder, page: number) =>
-  wordsPage(await answer(browseService.categoryWords(slug, order, page)))
+export const getCategoryWords = cache(async (slug: string, page: number) =>
+  wordsPage(await answer(browseService.categoryWords(slug, page)))
 )
 
 export const getRankedLists = cache(async () => {

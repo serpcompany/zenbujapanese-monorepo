@@ -2,7 +2,7 @@ import { modifyRouteRegex } from 'next/dist/lib/redirect-status'
 import { getPathMatch } from 'next/dist/shared/lib/router/utils/path-match'
 import { prepareDestination } from 'next/dist/shared/lib/router/utils/prepare-destination'
 import { describe, expect, test } from 'vitest'
-import { movedPageResponse, removedDictionaryPages } from './moved-pages'
+import { movedPageResponse, otherCategoryOrder, removedDictionaryPages } from './moved-pages'
 
 describe('movedPageResponse', () => {
   test.each([
@@ -29,7 +29,7 @@ describe('movedPageResponse', () => {
 })
 
 function redirectAsNextMatches(pathname: string): string | null {
-  for (const { source, destination } of removedDictionaryPages) {
+  for (const { source, destination } of [...removedDictionaryPages, ...otherCategoryOrder]) {
     const params = getPathMatch(source, {
       strict: true,
       removeUnnamedParams: true,
@@ -73,6 +73,24 @@ describe('removedDictionaryPages, the pages the three page types replaced', () =
     '/dictionary/search/conjugations/',
     '/dictionary/search/conjugations/examples.json'
   ])('leave %s to the site', pathname => {
+    expect(redirectAsNextMatches(pathname)).toBeNull()
+  })
+})
+
+describe('otherCategoryOrder, a category in kana order', () => {
+  test.each([
+    ['/dictionary/browse/onomatopoeia/kana-order/', '/dictionary/browse/onomatopoeia/'],
+    ['/dictionary/browse/onomatopoeia/kana-order', '/dictionary/browse/onomatopoeia/'],
+    ['/dictionary/browse/ichidan-verbs/kana-order/3/', '/dictionary/browse/ichidan-verbs/3/']
+  ])('sends %s to %s, the category most used first', (from, to) => {
+    expect(redirectAsNextMatches(from)).toBe(to)
+  })
+
+  test.each([
+    '/dictionary/browse/onomatopoeia/',
+    '/dictionary/browse/onomatopoeia/2/',
+    '/dictionary/browse/kanji/grade-1/'
+  ])('leaves %s to the site', pathname => {
     expect(redirectAsNextMatches(pathname)).toBeNull()
   })
 })

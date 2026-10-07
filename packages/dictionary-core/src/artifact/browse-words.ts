@@ -18,7 +18,7 @@ export interface BrowseWord extends WordLink {
   rank: number | null
 }
 
-export type CategoryOrder = 'used' | 'kana'
+export type WordOrder = 'used' | 'kana'
 
 export interface Filter {
   where: string
@@ -34,12 +34,12 @@ interface EntryRecord {
   summary: string
 }
 
-const orderBy: Record<CategoryOrder, string> = {
+const orderBy: Record<WordOrder, string> = {
   used: 't.rank IS NULL, t.rank, e.reading, e.source_record_id',
   kana: 'e.reading, e.source_record_id'
 }
 
-export function orderedRowids(db: ArtifactDatabase, filter: Filter, order: CategoryOrder) {
+export function orderedRowids(db: ArtifactDatabase, filter: Filter, order: WordOrder) {
   const joinRanks =
     order === 'used'
       ? 'LEFT JOIN tubelex.frequency_evidence t ON t.language_reference_id = e.id'

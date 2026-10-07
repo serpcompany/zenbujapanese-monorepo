@@ -1,4 +1,3 @@
-import type { CategoryOrder } from '@zenbu/dictionary-core/artifact/browse'
 import { type BrowseCategory, commonWords } from '@zenbu/dictionary-core/browse/categories'
 import type { KanjiList } from '@zenbu/dictionary-core/browse/lists'
 import { type Source, sources } from '../sources'
@@ -66,18 +65,8 @@ function marking(category: BrowseCategory): string {
   }
 }
 
-export const orderNames: Record<CategoryOrder, string> = {
-  used: 'Most used',
-  kana: 'Kana order'
-}
-
-const orderPhrases: Record<CategoryOrder, string> = {
-  used: 'most used on YouTube first',
-  kana: 'in kana order'
-}
-
-export function categoryIntro(category: BrowseCategory, total: number, order: CategoryOrder) {
-  return `${plural(total, 'word')} JMdict ${marking(category)}, ${orderPhrases[order]}.`
+export function categoryIntro(category: BrowseCategory, total: number) {
+  return `${plural(total, 'word')} JMdict ${marking(category)}, most used on YouTube first.`
 }
 
 interface RankedListCopy {

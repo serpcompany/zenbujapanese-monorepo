@@ -1,9 +1,8 @@
-import type { CategoryOrder } from '@zenbu/dictionary-core/artifact/browse'
 import { browseCategory } from '@zenbu/dictionary-core/browse/categories'
 import type { Metadata } from 'next'
 import { notFound, permanentRedirect } from 'next/navigation'
 import { CategoryWords } from '@/components/dictionary/browse/category-pages'
-import { categoryHeading, categoryIntro, orderNames } from '@/lib/dictionary/browse/copy'
+import { categoryHeading, categoryIntro } from '@/lib/dictionary/browse/copy'
 import { getCategoryWords } from '@/lib/dictionary/browse/data'
 import { categoryPath, pageNumber } from '@/lib/dictionary/browse/paths'
 import { dictionaryMetadata } from '@/lib/dictionary/metadata'
@@ -11,60 +10,50 @@ import { dictionaryMetadata } from '@/lib/dictionary/metadata'
 type CategoryParams = { params: Promise<{ category: string }> }
 type PagedParams = { params: Promise<{ category: string; page: string }> }
 
-async function load(slug: string, order: CategoryOrder, page: number) {
+async function load(slug: string, page: number) {
   const category = browseCategory(slug)
-  const words = category ? await getCategoryWords(slug, order, page) : null
+  const words = category ? await getCategoryWords(slug, page) : null
   if (!category || !words) notFound()
-  return { category, words, order, page }
+  return { category, words, page }
 }
 
 type Loaded = Awaited<ReturnType<typeof load>>
 
-function metadata({ category, words, order, page }: Loaded): Metadata {
-  const ordered = order === 'kana' ? `, ${orderNames.kana.toLowerCase()}` : ''
+function metadata({ category, words, page }: Loaded): Metadata {
   const paged = page > 1 ? `, page ${page}` : ''
   return dictionaryMetadata(
-    categoryPath(category.slug, order, page),
-    `${categoryHeading(category)}${ordered}${paged}`,
-    categoryIntro(category, words.total, order)
+    categoryPath(category.slug, page),
+    `${categoryHeading(category)}${paged}`,
+    categoryIntro(category, words.total)
   )
 }
 
-async function paged(order: CategoryOrder, params: PagedParams['params']) {
+async function paged(params: PagedParams['params']) {
   const { category, page: segment } = await params
   const number = pageNumber(segment)
   if (!number || !browseCategory(category)) notFound()
-  if ('redirect' in number) permanentRedirect(categoryPath(category, order))
-  return load(category, order, number.page)
+  if ('redirect' in number) permanentRedirect(categoryPath(category))
+  return load(category, number.page)
 }
 
 const page = (loaded: Loaded) => (
-  <CategoryWords
-    category={loaded.category}
-    words={loaded.words}
-    order={loaded.order}
-    page={loaded.page}
-  />
+  <CategoryWords category={loaded.category} words={loaded.words} page={loaded.page} />
 )
 
-export function categoryRoute(order: CategoryOrder) {
-  return {
-    async generateMetadata({ params }: CategoryParams): Promise<Metadata> {
-      return metadata(await load((await params).category, order, 1))
-    },
-    async Page({ params }: CategoryParams) {
-      return page(await load((await params).category, order, 1))
-    }
+export const categoryRoute = {
+  async generateMetadata({ params }: CategoryParams): Promise<Metadata> {
+    return metadata(await load((await params).category, 1))
+  },
+  async Page({ params }: CategoryParams) {
+    return page(await load((await params).category, 1))
   }
 }
 
-export function categoryPagedRoute(order: CategoryOrder) {
-  return {
-    async generateMetadata({ params }: PagedParams): Promise<Metadata> {
-      return metadata(await paged(order, params))
-    },
-    async Page({ params }: PagedParams) {
-      return page(await paged(order, params))
-    }
+export const categoryPagedRoute = {
+  async generateMetadata({ params }: PagedParams): Promise<Metadata> {
+    return metadata(await paged(params))
+  },
+  async Page({ params }: PagedParams) {
+    return page(await paged(params))
   }
 }

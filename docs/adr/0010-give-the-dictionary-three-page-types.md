@@ -88,8 +88,8 @@ stays on those pages. They are:
   dictionaries and the five JLPT levels;
 - categories: `/dictionary/browse/parts-of-speech/`, `/dictionary/browse/usage/`, and
   `/dictionary/browse/subjects/`, and each category's words, such as
-  `/dictionary/browse/onomatopoeia/`, most used first, or in kana order at `…/kana-order/`, a page
-  at a time.
+  `/dictionary/browse/onomatopoeia/`, most used first, a page at a time (`…/kana-order/`
+  redirects there).
 
 `/sitemaps/browse.xml` lists them, and `apps/web/src/app/routes.test.ts` lists their routes with
 the others. The dictionary has these page types besides the three above; the rest of this

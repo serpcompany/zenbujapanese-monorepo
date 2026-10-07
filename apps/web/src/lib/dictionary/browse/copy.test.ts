@@ -54,12 +54,12 @@ describe('category copy', () => {
     expect(categoryHeading(category('kansai-dialect'))).toBe('Kansai dialect words')
   })
 
-  test('says how many words JMdict marks, and in what order', () => {
-    expect(categoryIntro(category('onomatopoeia'), 1_338, 'used')).toBe(
+  test('says how many words JMdict marks, most used first', () => {
+    expect(categoryIntro(category('onomatopoeia'), 1_338)).toBe(
       '1,338 words JMdict marks as onomatopoeic or mimetic, most used on YouTube first.'
     )
-    expect(categoryIntro(category('medicine'), 1, 'kana')).toBe(
-      '1 word JMdict marks as medicine terms, in kana order.'
+    expect(categoryIntro(category('medicine'), 1)).toBe(
+      '1 word JMdict marks as medicine terms, most used on YouTube first.'
     )
   })
 })

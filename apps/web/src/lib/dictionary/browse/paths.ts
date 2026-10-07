@@ -1,4 +1,3 @@
-import type { CategoryOrder } from '@zenbu/dictionary-core/artifact/browse'
 import type { CategoryKind } from '@zenbu/dictionary-core/browse/categories'
 import type { KanaScript } from '@zenbu/dictionary-core/browse/kana'
 import { maximumBrowsePage, rankPage } from '@zenbu/dictionary-core/browse/lists'
@@ -26,8 +25,7 @@ export const scriptPath = (script: KanaScript) => `${browsePath}${script}/`
 export const kanaPath = (script: KanaScript, kana: string, page = 1) =>
   withPage(`${scriptPath(script)}${encodeURIComponent(kana)}/`, page)
 
-export const categoryPath = (slug: string, order: CategoryOrder = 'used', page = 1) =>
-  withPage(`${browsePath}${slug}/${order === 'kana' ? 'kana-order/' : ''}`, page)
+export const categoryPath = (slug: string, page = 1) => withPage(`${browsePath}${slug}/`, page)
 
 export const rankedListPath = (slug: string, page = 1) =>
   withPage(`${frequencyDictionariesPath}${slug}/`, page)

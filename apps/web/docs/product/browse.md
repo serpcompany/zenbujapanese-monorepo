@@ -161,15 +161,19 @@ dialects), and `/dictionary/browse/subjects/` list their categories with how man
 
 **A category.** A category's page, such as `/dictionary/browse/onomatopoeia/`, says how many words
 JMdict marks with it and lists them most used on YouTube first, words YouTube doesn't rank last,
-200 to a page (`…/onomatopoeia/2/`). A tab lists them in kana order instead
-(`…/onomatopoeia/kana-order/`). Below are links to other categories. The categories are JMdict's
+200 to a page (`…/onomatopoeia/2/`). That is a category's only order: `…/kana-order/` and its
+pages redirect (308) to the same page most used first, and nothing links to them or lists them.
+Below are links to other categories. The categories are JMdict's
 parts of speech, usage labels, subject fields, and dialects, and its common words
 (`/dictionary/browse/common-words/`); names and vulgar, derogatory, or sensitive words have none.
 
 - Source: #614 mockup "/dictionary/browse/onomatopoeia/"; the decision on #614 that the importer
   keeps the labels.
-- Check: Browse spec, "a category lists its words most used first, a page at a time"; Browse
-  service, "a category lists the words JMdict labels with it, most used first".
+- Check: Browse spec, "a category lists its words most used first, a page at a time" and "a
+  list’s first page has no number, kana order redirects, and a page past the last is 404"; Browse
+  service, "a category lists the words JMdict labels with it, most used first";
+  `src/lib/moved-pages.test.ts`, "otherCategoryOrder"; `src/lib/dictionary/sitemaps.test.ts`, "the
+  browse sitemap lists every browse page".
 
 ## Site-wide
 

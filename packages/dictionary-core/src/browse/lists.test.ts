@@ -64,8 +64,6 @@ describe('browseService, the service paths the website asks', () => {
     expect(browseService.kanaWords('hiragana', 'かが', 2).path).toBe(
       `/v1/browse/kana/hiragana/${encodeURIComponent('か')}/${encodeURIComponent('かが')}?page=2`
     )
-    expect(browseService.categoryWords('nouns', 'kana', 3).path).toBe(
-      '/v1/browse/categories/nouns?order=kana&page=3'
-    )
+    expect(browseService.categoryWords('nouns', 3).path).toBe('/v1/browse/categories/nouns?page=3')
   })
 })

@@ -34,10 +34,9 @@ export function browseSitemapPaths(sitemap: BrowseSitemapResponse): string[] {
         )
       ]
     }),
-    ...sitemap.categories.flatMap(({ slug, pages: count }) => [
-      ...pages(count, page => categoryPath(slug, 'used', page)),
-      ...pages(count, page => categoryPath(slug, 'kana', page))
-    ]),
+    ...sitemap.categories.flatMap(({ slug, pages: count }) =>
+      pages(count, page => categoryPath(slug, page))
+    ),
     ...sitemap.rankedLists.flatMap(({ slug, pages: count }) =>
       pages(count, page => rankedListPath(slug, page))
     ),

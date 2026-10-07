@@ -107,7 +107,7 @@ more and logs the error.
 | `GET /v1/browse/kana/<script>/<kana>` | A kana's two-kana groups with their counts, the words read as that kana alone, and the kanas before and after it. |
 | `GET /v1/browse/kana/<script>/<kana>/<two kana>?page=` | 200 of the words whose reading starts with the two kana, in kana order. |
 | `GET /v1/browse/categories` | How many words each category lists (`packages/dictionary-core/src/browse/categories.ts`). |
-| `GET /v1/browse/categories/<slug>?order=&page=` | 200 of a category's words, most used on YouTube first (`used`, the default) or in kana order (`kana`). |
+| `GET /v1/browse/categories/<slug>?page=` | 200 of a category's words, most used on YouTube first, words it doesn't rank last. |
 | `GET /v1/browse/ranked` | Each ranked list's mapped and listed words and its top 6, and each JLPT level's words and its first 5. |
 | `GET /v1/browse/ranked/<slug>?page=` | A ranked list's words ranked 200 at a time, to rank 10,000, or a JLPT level's words (`jlpt-n5`…) in kana order. |
 | `GET /v1/browse/kanji` | Each school list's kanji, most frequent first; each JLPT level's kanji count and its first 5; and how many jōyō kanji have each stroke count. |

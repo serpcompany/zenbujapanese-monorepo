@@ -24,12 +24,12 @@ import { jlptRowids, rankedCounts, rankedRows } from './browse-ranked'
 import {
   type BrowseWord,
   browseWords,
-  type CategoryOrder,
   categoryFilter,
   type Filter,
   orderedRowids,
   scriptFilter,
   type WordLink,
+  type WordOrder,
   wordLinks
 } from './browse-words'
 import { LruCache } from './cache'
@@ -37,7 +37,7 @@ import type { ArtifactDatabase } from './database'
 import type { KanjiData } from './kanji-data'
 
 export type { KanjiHubResponse, KanjiListResponse } from './browse-kanji'
-export type { BrowseWord, CategoryOrder, WordLink } from './browse-words'
+export type { BrowseWord, WordLink } from './browse-words'
 
 export interface BrowseWordsResponse {
   total: number
@@ -122,7 +122,7 @@ export class DictionaryBrowse {
     return rowids
   }
 
-  private filtered(key: string, filter: Filter, order: CategoryOrder): number[] {
+  private filtered(key: string, filter: Filter, order: WordOrder): number[] {
     return this.ordered(key, () => orderedRowids(this.db, filter, order))
   }
 
@@ -189,14 +189,14 @@ export class DictionaryBrowse {
     return { categories: this.counts }
   }
 
-  private categoryRowids(slug: string, order: CategoryOrder): number[] | null {
+  private categoryRowids(slug: string): number[] | null {
     const category = browseCategory(slug)
     if (!category) return null
-    return this.filtered(`category:${slug}:${order}`, categoryFilter(category), order)
+    return this.filtered(`category:${slug}`, categoryFilter(category), 'used')
   }
 
-  categoryWords(slug: string, order: CategoryOrder, page: number): BrowseWordsResponse | null {
-    const rowids = this.categoryRowids(slug, order)
+  categoryWords(slug: string, page: number): BrowseWordsResponse | null {
+    const rowids = this.categoryRowids(slug)
     return rowids ? this.page(rowids, page) : null
   }
 
@@ -262,7 +262,7 @@ export class DictionaryBrowse {
     const [{ count: entries }] = this.db.all<{ count: number }>(
       'SELECT count(*) AS count FROM entries'
     )
-    const common = this.categoryRowids(commonWords.slug, 'used') ?? []
+    const common = this.categoryRowids(commonWords.slug) ?? []
     const hub = this.kanjiHub()
     const sizeOf = (slug: string) =>
       hub.lists.find(list => list.slug === slug)?.characters.length ?? 0

@@ -124,8 +124,8 @@ test.describe('browse pages', () => {
     await page.getByRole('link', { name: /^Ichidan verbs/ }).click()
     await expect(page).toHaveURL(browse('ichidan-verbs/'))
     await expect(page.getByRole('heading', { level: 1 })).toHaveText('Japanese ichidan verbs')
-    const order = page.getByRole('navigation', { name: 'Order' })
-    await expect(order.getByText('Most used')).toHaveAttribute('aria-current', 'page')
+    await expect(page.getByRole('main')).toContainText('most used on YouTube first')
+    await expect(page.getByRole('navigation', { name: 'Order' })).toHaveCount(0)
     await expect(page.locator('[data-section="words"]')).toContainText('てる')
     await page
       .getByRole('navigation', { name: 'Pages' })
@@ -133,12 +133,6 @@ test.describe('browse pages', () => {
       .click()
     await expect(page).toHaveURL(browse('ichidan-verbs/2/'))
     await expect(page).toHaveTitle('Japanese ichidan verbs, page 2 | Zenbu Japanese')
-    await page
-      .getByRole('navigation', { name: 'Order' })
-      .getByRole('link', { name: 'Kana order' })
-      .click()
-    await expect(page).toHaveURL(browse('ichidan-verbs/kana-order/'))
-    await expect(page.getByRole('heading', { level: 1 })).toHaveText('Japanese ichidan verbs')
   })
 
   test('the kanji lists open each kanji’s search page', async ({ page }) => {
@@ -249,13 +243,19 @@ test.describe('browse URLs', () => {
     )
   })
 
-  test('a list’s first page has no number, and a page past its last is 404', async ({
+  test('a list’s first page has no number, kana order redirects, and a page past the last is 404', async ({
     request,
     baseURL
   }) => {
-    const first = await request.get(browse('ichidan-verbs/1/'), { maxRedirects: 0 })
-    expect(first.status()).toBe(308)
-    expect(new URL(first.headers().location, baseURL).pathname).toBe(browse('ichidan-verbs/'))
+    for (const [from, to] of [
+      ['ichidan-verbs/1/', 'ichidan-verbs/'],
+      ['ichidan-verbs/kana-order/', 'ichidan-verbs/'],
+      ['ichidan-verbs/kana-order/2/', 'ichidan-verbs/2/']
+    ]) {
+      const response = await request.get(browse(from), { maxRedirects: 0 })
+      expect(response.status(), from).toBe(308)
+      expect(new URL(response.headers().location, baseURL).pathname).toBe(browse(to))
+    }
     for (const path of [
       browse('ichidan-verbs/9999/'),
       browse('ichidan-verbs/10001/'),

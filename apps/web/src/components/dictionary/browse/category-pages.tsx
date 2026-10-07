@@ -1,12 +1,6 @@
-import type { CategoryOrder } from '@zenbu/dictionary-core/artifact/browse'
 import { type BrowseCategory, browseCategory } from '@zenbu/dictionary-core/browse/categories'
 import Link from 'next/link'
-import {
-  BrowseHeading,
-  BrowsePage,
-  LinkTabs,
-  Pagination
-} from '@/components/dictionary/browse/browse-ui'
+import { BrowseHeading, BrowsePage, Pagination } from '@/components/dictionary/browse/browse-ui'
 import { DictionaryBreadcrumbs } from '@/components/dictionary/dictionary-breadcrumbs'
 import { SourceCredits } from '@/components/dictionary/source-credits'
 import { WordList } from '@/components/dictionary/word-row'
@@ -14,8 +8,7 @@ import {
   categoryHeading,
   categoryIntro,
   formatCount,
-  moreWaysToBrowse,
-  orderNames
+  moreWaysToBrowse
 } from '@/lib/dictionary/browse/copy'
 import type { BrowseWordsPage } from '@/lib/dictionary/browse/data'
 import {
@@ -53,12 +46,10 @@ function MoreWaysToBrowse({ current }: { current: string }) {
 export function CategoryWords({
   category,
   words,
-  order,
   page
 }: {
   category: BrowseCategory
   words: BrowseWordsPage
-  order: CategoryOrder
   page: number
 }) {
   const index = categoryIndexOf(category.kind)
@@ -74,22 +65,14 @@ export function CategoryWords({
         ]}
       />
       <BrowseHeading title={categoryHeading(category)}>
-        {categoryIntro(category, words.total, order)}
+        {categoryIntro(category, words.total)}
         {words.pages > 1 ? ` Page ${page} of ${words.pages}.` : ''}
       </BrowseHeading>
-      <LinkTabs
-        label="Order"
-        tabs={(['used', 'kana'] as const).map(each => ({
-          label: orderNames[each],
-          href: categoryPath(category.slug, each),
-          current: each === order
-        }))}
-      />
       <WordList words={words.words} section="words" />
       <Pagination
         page={page}
         pages={words.pages}
-        pathFor={number => categoryPath(category.slug, order, number)}
+        pathFor={number => categoryPath(category.slug, number)}
       />
       <MoreWaysToBrowse current={category.slug} />
       <SourceCredits sources={pageSources.browse} />

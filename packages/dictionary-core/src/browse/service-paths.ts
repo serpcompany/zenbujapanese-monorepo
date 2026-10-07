@@ -1,4 +1,3 @@
-import type { CategoryOrder } from '../artifact/browse'
 import type { KanaScript } from './kana'
 
 export type BrowseAnswer =
@@ -37,8 +36,8 @@ export const browseService = {
     )
   },
   categories: () => at('browseCategories', '/v1/browse/categories'),
-  categoryWords: (slug: string, order: CategoryOrder, page: number) =>
-    at('browseWords', `/v1/browse/categories/${segment(slug)}?order=${order}&page=${page}`),
+  categoryWords: (slug: string, page: number) =>
+    at('browseWords', `/v1/browse/categories/${segment(slug)}?page=${page}`),
   rankedLists: () => at('rankedLists', '/v1/browse/ranked'),
   rankedWords: (slug: string, page: number) =>
     at('browseWords', `/v1/browse/ranked/${segment(slug)}?page=${page}`),

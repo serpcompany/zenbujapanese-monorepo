@@ -56,8 +56,6 @@ const decidedRoutes = [
   'page /dictionary/browse/subjects',
   'page /dictionary/browse/[category]',
   'page /dictionary/browse/[category]/[page]',
-  'page /dictionary/browse/[category]/kana-order',
-  'page /dictionary/browse/[category]/kana-order/[page]',
   'data /dictionary/examples/[file]',
   'data /dictionary/search/[query]/examples.json',
   'data /dictionary/conjugations/[file]',

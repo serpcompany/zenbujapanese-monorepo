@@ -101,7 +101,7 @@ export function createPool(files: VerifiedFiles, size: number): Pool {
     kanaInitial: (script, initial) => call('kanaInitial', [script, initial]),
     kanaWords: (script, prefix, page) => call('kanaWords', [script, prefix, page]),
     browseCategories: () => call('browseCategories', []),
-    categoryWords: (slug, order, page) => call('categoryWords', [slug, order, page]),
+    categoryWords: (slug, page) => call('categoryWords', [slug, page]),
     rankedLists: () => call('rankedLists', []),
     rankedWords: (slug, page) => call('rankedWords', [slug, page]),
     kanjiHub: () => call('kanjiHub', []),

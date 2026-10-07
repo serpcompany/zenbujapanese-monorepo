@@ -104,13 +104,13 @@ describe('with a dictionary service', () => {
         `${site}/hiragana/%E3%81%8B%E3%81%8C/2/`,
         `${site}/katakana/%E3%82%AB/`,
         `${site}/onomatopoeia/`,
-        `${site}/onomatopoeia/kana-order/`,
         `${site}/frequency-dictionaries/anime/`,
         `${site}/frequency-dictionaries/anime/2/`,
         `${site}/kanji/grade-1/`
       ])
     )
-    expect(urls).toHaveLength(18)
+    expect(urls).toHaveLength(17)
+    expect(urls.filter(url => url.includes('kana-order'))).toEqual([])
   })
 
   test('a word sitemap streams its range of canonical, percent-encoded, escaped URLs', async () => {

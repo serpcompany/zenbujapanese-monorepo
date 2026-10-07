@@ -11,10 +11,7 @@ import {
 describe('browse URLs', () => {
   test('a list’s first page has no number, and later pages add theirs', () => {
     expect(categoryPath('onomatopoeia')).toBe('/dictionary/browse/onomatopoeia/')
-    expect(categoryPath('onomatopoeia', 'used', 2)).toBe('/dictionary/browse/onomatopoeia/2/')
-    expect(categoryPath('onomatopoeia', 'kana', 3)).toBe(
-      '/dictionary/browse/onomatopoeia/kana-order/3/'
-    )
+    expect(categoryPath('onomatopoeia', 2)).toBe('/dictionary/browse/onomatopoeia/2/')
     expect(rankedListPath('anime')).toBe('/dictionary/browse/frequency-dictionaries/anime/')
   })
 

@@ -47,7 +47,7 @@ describe.runIf(artifactAvailable)('browsing the dictionary on the app’s data',
   })
 
   test('a category lists the words JMdict labels with it, most used first', () => {
-    const words = service.categoryWords('onomatopoeia', 'used', 1)?.words ?? []
+    const words = service.categoryWords('onomatopoeia', 1)?.words ?? []
     expect(words.map(word => word.headword)).toContain('わくわく')
     const ranks = words.flatMap(word =>
       word.chips.flatMap(chip =>
@@ -57,8 +57,6 @@ describe.runIf(artifactAvailable)('browsing the dictionary on the app’s data',
       )
     )
     expect(ranks).toEqual([...ranks].sort((left, right) => left - right))
-    const kana = service.categoryWords('onomatopoeia', 'kana', 1)?.words ?? []
-    expect(isSorted(readings(kana))).toBe(true)
   })
 
   test('every category the core names has words, so no category page is empty', () => {
