@@ -1,17 +1,8 @@
 import { and, asc, eq, gt, lt, max, sql } from 'drizzle-orm'
 import type { AccountStore, LockedAccount } from '../domain/store'
 import type { Drizzle } from './database'
+import { profileColumns, readerOn, writerOn } from './entity-rows'
 import { syncChanges, syncMutations, users } from './schema'
-
-const profileColumns = {
-  id: users.id,
-  name: users.name,
-  username: users.username,
-  email: users.email,
-  version: users.version,
-  createdAt: users.createdAt,
-  updatedAt: users.updatedAt
-}
 
 const journalColumns = {
   sequence: syncChanges.sequence,
@@ -32,10 +23,9 @@ function takesTheUsername(error: unknown): boolean {
 
 export function accountStore(db: Drizzle): AccountStore {
   return {
-    async profile(userId) {
-      const [profile] = await db.select(profileColumns).from(users).where(eq(users.id, userId))
-      return profile ?? null
-    },
+    profile: userId => readerOn(db, userId).currentProfile(),
+
+    reader: userId => readerOn(db, userId),
 
     withLockedAccount(userId, work) {
       return db.transaction(async tx => {
@@ -46,6 +36,8 @@ export function accountStore(db: Drizzle): AccountStore {
           .for('update')
         if (!profile) return null
         const account: LockedAccount = {
+          ...readerOn(tx, userId),
+          ...writerOn(tx, userId),
           profile,
           async saveProfile(next, version) {
             try {

@@ -174,8 +174,26 @@ whether an email has an account.
 
 ## Profiles and sync
 
-The profile is the one entity that syncs for now; known words and lists come in #572. Its rules
-are in `src/domain`, so `PATCH /v1/me` and a sync mutation change it the same way.
+Four entities sync: the profile, known words, lists, and the words in each list (#572). Each has
+its own rule in `src/domain`, never blanket last-write-wins, and none needs a clock: a change says
+the version it was made to, and the rule decides what a stale one does. `PATCH /v1/me` and a sync
+mutation change the profile through the same rule.
+
+- **Known word** (`knownWord`, by item: a Language Reference ID, or `kanji:` and the kanji, as
+  the iOS app keys `word-knowledge.json`): `mark` and `clear` apply only at the word's current
+  version (0 for one never seen), and marking a known word or clearing one not known changes
+  nothing. So a mark made before the learner cleared the word loses to the clear, and a mark made
+  after seeing the clear wins, as #563's decision 4 says for Tomodachi. A clear that never saw a
+  later mark conflicts, and the learner sees the word Known again.
+- **List** (`list`, by its UUID): `create` with a name and a position, then `update` and `delete`
+  at the current version, so two renames conflict and the second gets the name as it is now.
+  Deleting a list takes its words with it, and its ID can't be used again.
+- **List word** (`listWord`, `<list>/<item>`): `add` always applies, and `remove` applies only at
+  the current version, so it removes only an add it saw: an add the remover never saw wins.
+- **Limits:** 500 lists an account and 5,000 words a list (`too_many_lists`, `list_full`); a
+  word added to a deleted or unknown list is rejected (`unknown_list`).
+- **Each keeps its history** as its version and a row that never goes away (a cleared word, a
+  deleted list, a removed list word), so a stale change always finds the version it lost to.
 
 - **A name** is 1 to 100 characters once trimmed, with runs of spaces made one and no control or
   invisible format characters, kept in Unicode NFC. A name given at sign-up, by the learner or by
@@ -220,7 +238,7 @@ are in `src/domain`, so `PATCH /v1/me` and a sync mutation change it the same wa
   or one past the end of the journal, as when an environment goes back to a database it left, is
   refused with `410 invalid_cursor` before anything applies. The client then syncs from no cursor
   and keeps what comes back. Changing the secret makes every client do that once.
-- **Limits:** 50 mutations, a 64 KB body, and 500 journal entries a request.
+- **Request limits:** 50 mutations, a 64 KB body, and 500 journal entries a request.
 
 ## Code layout
 
@@ -265,6 +283,8 @@ are in `src/db/schema.ts`:
 - `verifications`: the codes, encrypted, and the sign-in nonces;
 - `signing_keys`: the access tokens' keys, encrypted with `ACCOUNT_API_SECRET`;
 - `rate_limits`;
+- `known_words`, `word_lists`, and `list_words`: the synced known words, lists, and their words,
+  each with its version;
 - `sync_changes`: the journal, read by account and sequence;
 - `sync_mutations`: each sync mutation's result, by account and the client's mutation ID;
 - `sync_origin`: the OID of the database the service last started on, which tells it a restored

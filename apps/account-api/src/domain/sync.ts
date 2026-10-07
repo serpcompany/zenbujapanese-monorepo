@@ -1,30 +1,26 @@
 import { createHash } from 'node:crypto'
 import type { Cursors } from './cursor'
-import { type Profile, type Rejection, type RejectionCode, rejection } from './profile'
-import { updateProfile, usernameTaken } from './profile-update'
+import { type Change, type ClientMutation, type Entity, type Outcome, rejected } from './entities'
+import { knownWords } from './known-words'
+import { type Rejection, type RejectionCode, rejection } from './profile'
+import { profiles } from './profile-sync'
+import { usernameTaken } from './profile-update'
 import type {
   AccountStore,
+  EntityReader,
   EntityType,
   JournalEntry,
   LockedAccount,
   MutationRecord,
   RecordedMutation
 } from './store'
+import { listWords, wordLists } from './word-lists'
 
 export const syncLimits = {
   mutations: 50,
   changes: { standard: 100, most: 500 },
   resultsKeptDays: 30
 } as const
-
-export interface ClientMutation {
-  id: string
-  entity: string
-  operation: string
-  entityId?: string
-  baseVersion?: number
-  fields?: Record<string, unknown>
-}
 
 export interface SyncRequest {
   cursor?: string | null
@@ -34,16 +30,8 @@ export interface SyncRequest {
 
 export type MutationResult =
   | { id: string; status: 'applied'; version: number }
-  | { id: string; status: 'conflict'; version: number; current: Profile }
+  | { id: string; status: 'conflict'; version: number; current: Change }
   | { id: string; status: 'rejected'; error: Rejection }
-
-export interface Change {
-  entity: EntityType
-  entityId: string
-  operation: 'put'
-  version: number
-  data: Profile
-}
 
 export type SyncAnswer =
   | {
@@ -56,14 +44,11 @@ export type SyncAnswer =
   | { status: 'invalid_cursor' }
   | { status: 'no_account' }
 
-type Outcome =
-  | { status: 'applied'; version: number }
-  | { status: 'conflict'; current: Profile }
-  | { status: 'rejected'; rejection: Rejection }
-
-interface Entity {
-  operations: Record<string, (account: LockedAccount, mutation: ClientMutation) => Promise<Outcome>>
-  current(store: AccountStore, userId: string, entityId: string): Promise<Change | null>
+const entities: Record<EntityType, Entity> = {
+  profile: profiles,
+  knownWord: knownWords,
+  list: wordLists,
+  listWord: listWords
 }
 
 const unknownEntity = rejection('unknown_entity', 'This service syncs no entity of that type.')
@@ -72,14 +57,6 @@ const reused = rejection(
   'mutation_id_reused',
   'That mutation ID was already used for a different mutation. Give each mutation its own ID.'
 )
-const notTheAccount = rejection(
-  'invalid_mutation',
-  "A profile's entityId is the signed-in account's ID, or left out."
-)
-const noBaseVersion = rejection(
-  'invalid_mutation',
-  'Send baseVersion: the profile version the change was made to.'
-)
 
 const replayedMessages: Record<RejectionCode, string> = {
   invalid_fields: 'Its fields were invalid.',
@@ -87,37 +64,11 @@ const replayedMessages: Record<RejectionCode, string> = {
   unknown_entity: unknownEntity.message,
   unknown_operation: unknownOperation.message,
   invalid_mutation: 'The mutation was malformed.',
-  mutation_id_reused: reused.message
-}
-
-const entities: Record<EntityType, Entity> = {
-  profile: {
-    operations: {
-      async update(account, mutation) {
-        if (mutation.entityId !== undefined && mutation.entityId !== account.profile.id) {
-          return { status: 'rejected', rejection: notTheAccount }
-        }
-        if (mutation.baseVersion === undefined)
-          return { status: 'rejected', rejection: noBaseVersion }
-        const update = await updateProfile(account, mutation.baseVersion, mutation.fields ?? {})
-        if (update.status === 'conflict') return { status: 'conflict', current: update.profile }
-        if (update.status === 'rejected') return { status: 'rejected', rejection: update.rejection }
-        return { status: 'applied', version: update.profile.version }
-      }
-    },
-    async current(store, userId) {
-      const profile = await store.profile(userId)
-      return (
-        profile && {
-          entity: 'profile',
-          entityId: profile.id,
-          operation: 'put',
-          version: profile.version,
-          data: profile
-        }
-      )
-    }
-  }
+  mutation_id_reused: reused.message,
+  already_exists: 'An entity with that ID already exists, or did.',
+  unknown_list: 'That list is not in this account, or was deleted.',
+  too_many_lists: 'The account had too many lists.',
+  list_full: 'The list was full.'
 }
 
 const entityOf = (type: string): Entity | null =>
@@ -144,11 +95,11 @@ function requestSha256(mutation: ClientMutation): string {
 
 async function outcomeOf(account: LockedAccount, mutation: ClientMutation): Promise<Outcome> {
   const entity = entityOf(mutation.entity)
-  if (!entity) return { status: 'rejected', rejection: unknownEntity }
+  if (!entity) return rejected(unknownEntity)
   const operation = Object.hasOwn(entity.operations, mutation.operation)
     ? entity.operations[mutation.operation]
     : undefined
-  if (!operation) return { status: 'rejected', rejection: unknownOperation }
+  if (!operation) return rejected(unknownOperation)
   return operation(account, mutation)
 }
 
@@ -163,13 +114,17 @@ function resultOf(id: string, outcome: Outcome): MutationResult {
 const isRejectionCode = (code: string | null): code is RejectionCode =>
   code !== null && Object.hasOwn(replayedMessages, code)
 
-function replayed(record: RecordedMutation, account: LockedAccount): Outcome {
+async function replayed(record: RecordedMutation, account: LockedAccount): Promise<Outcome> {
   if (record.outcome === 'applied' && record.resultingServerVersion !== null) {
     return { status: 'applied', version: record.resultingServerVersion }
   }
-  if (record.outcome === 'conflict') return { status: 'conflict', current: account.profile }
+  const current =
+    record.outcome === 'conflict'
+      ? await entityOf(record.entityType)?.current(account, record.entityId ?? account.profile.id)
+      : null
+  if (current) return { status: 'conflict', current }
   const code = isRejectionCode(record.errorCode) ? record.errorCode : 'invalid_mutation'
-  return { status: 'rejected', rejection: rejection(code, replayedMessages[code]) }
+  return rejected(rejection(code, replayedMessages[code]))
 }
 
 function recordOf(mutation: ClientMutation, sha256: string, outcome: Outcome): MutationRecord {
@@ -197,9 +152,7 @@ function applyMutation(store: AccountStore, userId: string, mutation: ClientMuta
     if (recorded) {
       return resultOf(
         mutation.id,
-        recorded.requestSha256 === sha256
-          ? replayed(recorded, account)
-          : { status: 'rejected', rejection: reused }
+        recorded.requestSha256 === sha256 ? await replayed(recorded, account) : rejected(reused)
       )
     }
     const outcome = await outcomeOf(account, mutation)
@@ -209,11 +162,7 @@ function applyMutation(store: AccountStore, userId: string, mutation: ClientMuta
   })
 }
 
-async function changesIn(
-  store: AccountStore,
-  userId: string,
-  page: JournalEntry[]
-): Promise<Change[] | null> {
+async function changesIn(reader: EntityReader, page: JournalEntry[]): Promise<Change[] | null> {
   const seen = new Set<string>()
   const changes: Change[] = []
   for (const entry of page) {
@@ -221,7 +170,7 @@ async function changesIn(
     const entity = entityOf(entry.entityType)
     if (seen.has(key) || !entity) continue
     seen.add(key)
-    const change = await entity.current(store, userId, entry.entityId)
+    const change = await entity.current(reader, entry.entityId)
     if (!change) return null
     changes.push(change)
   }
@@ -242,7 +191,7 @@ export function syncer(store: AccountStore, cursors: Cursors) {
     const limit = request.limit ?? syncLimits.changes.standard
     const entries = await store.changesAfter(userId, after, limit + 1)
     const page = entries.slice(0, limit)
-    const changes = await changesIn(store, userId, page)
+    const changes = await changesIn(store.reader(userId), page)
     if (!changes) return { status: 'no_account' }
     const last = page.at(-1)
     return {

@@ -134,6 +134,12 @@ describe('the migrations', () => {
     expect(await fenceIfRestored(drizzle(original))).toBe('first start')
     expect(await fenceIfRestored(drizzle(original))).toBe('same database')
     await original.query("insert into users (id, name, email) values ('u1', '', 'u1@example.com')")
+    await original.query(
+      "insert into known_words (user_id, item_id, headword, reading, known, version) values ('u1', 'kanji:日', '日', 'にち', true, 1)"
+    )
+    await original.query(
+      "insert into word_lists (user_id, id, name, position, version) values ('u1', '00000000-0000-4000-8000-000000000001', 'Kept', 0, 1)"
+    )
     const backup = await original.dumpDataDir()
     await original.close()
 
@@ -161,6 +167,13 @@ describe('the migrations', () => {
     await new Promise(resolve => setTimeout(resolve, 5))
 
     const second = await restore()
+    const fenced = await second.copy.query<{ entity_type: string; entity_version: string }>(
+      'select entity_type, entity_version from sync_changes order by entity_type'
+    )
+    expect(fenced.rows.map(row => row.entity_type)).toEqual(['knownWord', 'list', 'profile'])
+    for (const row of fenced.rows) {
+      expect(Number(row.entity_version)).toBeGreaterThan(Date.now() - 60_000)
+    }
     for (const version of [firstVersion, firstVersion + 1]) {
       expect(
         await second.accounts.updateProfile('u1', version, { name: 'Sent again' })
@@ -170,10 +183,14 @@ describe('the migrations', () => {
       })
     }
     const caughtUp = answered(await second.accounts.sync('u1', { cursor }))
-    expect(caughtUp.changes).toEqual([
-      expect.objectContaining({ entity: 'profile', data: expect.objectContaining({ name: '' }) })
-    ])
-    expect(caughtUp.changes[0]?.version).toBeGreaterThan(firstVersion + 1)
+    expect(caughtUp.changes).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ entity: 'profile', data: expect.objectContaining({ name: '' }) })
+      ])
+    )
+    expect(caughtUp.changes.find(change => change.entity === 'profile')?.version).toBeGreaterThan(
+      firstVersion + 1
+    )
     await second.copy.close()
   })
 })

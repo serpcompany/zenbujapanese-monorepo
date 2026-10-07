@@ -62,6 +62,11 @@ export const ProfileConflictSchema = ErrorSchema.extend({ current: ProfileSchema
 
 const nameLike = /^[A-Za-z][A-Za-z0-9_-]{0,63}$/
 
+const syncBaseVersionSchema = z.int().min(0).openapi({
+  description:
+    'The version of the entity the change was made to, or 0 for one the client has never seen. If the entity has changed since, the change waits on its rule: see `operation`.'
+})
+
 const MutationSchema = z
   .object({
     id: z
@@ -71,23 +76,36 @@ const MutationSchema = z
         description:
           'A client-made ID, unique for each mutation, such as a UUID. Sending the same mutation again under its ID never applies it twice, and gets the same outcome: applied at the same version, a conflict with the entity as it is then, or a rejection with the same `error.code`. Reusing an ID for a different mutation is rejected with `mutation_id_reused`.'
       }),
-    entity: z
+    entity: z.string().regex(nameLike).openapi({
+      description:
+        '`profile`, `knownWord`, `list`, or `listWord`. Any other is rejected with `unknown_entity`, and the rest of the request still applies.'
+    }),
+    operation: z
       .string()
       .regex(nameLike)
-      .openapi({ description: 'The entity type. Only `profile` today; any other is rejected.' }),
-    operation: z.string().regex(nameLike).openapi({ description: 'For `profile`, only `update`.' }),
+      .openapi({
+        description: [
+          "- `profile`: `update` (`fields` name, username, or both; `baseVersion`). It applies only at the profile's current version.",
+          '- `knownWord`: `mark` (`fields` headword and reading) and `clear`, each with `baseVersion`. Either applies only if the word is still at `baseVersion`, so a mark made before the learner cleared the word loses to the clear, and one made after it wins. Marking a known word, or clearing one not known, is applied and changes nothing.',
+          '- `list`: `create` (`fields` name and position), `update` (`fields` name, position, or both; `baseVersion`), and `delete` (`baseVersion`). An update or delete applies only at the current version, so two renames conflict. Deleting a list takes its words with it.',
+          '- `listWord`: `add` (`fields` headword and reading) and `remove` (`baseVersion`). An add always applies. A remove applies only if it saw the latest add, so an add the remover never saw wins.'
+        ].join('\n')
+      }),
     entityId: z
       .string()
-      .regex(/^[\x21-\x7e]{1,200}$/)
+      .regex(/^[^\p{Cc}\p{Cf}\s]{1,200}$/u)
       .optional()
-      .openapi({ description: "For `profile`, the account's ID, or left out." }),
-    baseVersion: baseVersionSchema.optional(),
+      .openapi({
+        description:
+          "- `profile`: the account's ID, or left out.\n- `knownWord`: the item, a Language Reference ID (32 lowercase hex digits) or `kanji:` and one kanji.\n- `list`: its UUID, in lowercase.\n- `listWord`: the list's UUID, a slash, and the item: `<list>/<item>`."
+      }),
+    baseVersion: syncBaseVersionSchema.optional(),
     fields: z
       .record(z.string().max(64), z.union([z.string(), z.number(), z.boolean(), z.null()]))
       .optional()
       .openapi({
         description:
-          'For a `profile` update, `name`, `username`, or both, as in PATCH /v1/me. Each value is a string, number, boolean, or null.'
+          'What the operation sets, as `operation` says. Each value is a string, number, boolean, or null.'
       })
   })
   .openapi('Mutation')
@@ -123,6 +141,52 @@ export const SyncRequestSchema = z
   })
   .openapi('SyncRequest')
 
+const KnownWordSchema = z
+  .object({ itemId: z.string(), headword: z.string(), reading: z.string(), known: z.boolean() })
+  .openapi('KnownWord')
+
+const WordListSchema = z
+  .object({ id: z.string(), name: z.string(), position: z.int(), createdAt: z.iso.datetime() })
+  .openapi('WordList')
+
+const ListWordSchema = z
+  .object({
+    listId: z.string(),
+    itemId: z.string(),
+    headword: z.string(),
+    reading: z.string(),
+    addedAt: z.iso.datetime()
+  })
+  .openapi('ListWord')
+
+const put = <E extends string, D extends z.ZodType>(entity: E, data: D) =>
+  z.object({
+    entity: z.literal(entity),
+    entityId: z.string(),
+    operation: z.literal('put'),
+    version: z.int(),
+    data
+  })
+
+const ChangeSchema = z
+  .union([
+    put('profile', ProfileSchema),
+    put('knownWord', KnownWordSchema),
+    put('list', WordListSchema),
+    put('listWord', ListWordSchema),
+    z.object({
+      entity: z.enum(['knownWord', 'list', 'listWord']),
+      entityId: z.string(),
+      operation: z.literal('delete'),
+      version: z.int(),
+      data: z.null()
+    })
+  ])
+  .openapi('Change', {
+    description:
+      'An entity as it is now (`put`, with `data`), or gone (`delete`): a deleted list, a word removed from a list, or one never there. A cleared known word is a `put` with `known: false`.'
+  })
+
 const resultBase = { id: z.string() }
 
 const MutationResultSchema = z
@@ -132,7 +196,7 @@ const MutationResultSchema = z
       ...resultBase,
       status: z.literal('conflict'),
       version: z.int(),
-      current: ProfileSchema
+      current: ChangeSchema
     }),
     z.object({ ...resultBase, status: z.literal('rejected'), error: ErrorSchema.shape.error })
   ])
@@ -140,16 +204,6 @@ const MutationResultSchema = z
     description:
       '`applied`: the change is in, at `version`. `conflict`: the entity changed since `baseVersion`, so nothing changed; `current` is it as it is now. `rejected`: the change can never apply as sent; `error.code` says why. A result is final: to try again, send a new mutation with a new ID.'
   })
-
-const ChangeSchema = z
-  .object({
-    entity: z.literal('profile'),
-    entityId: z.string(),
-    operation: z.literal('put').openapi({ description: 'The entity as it is now is in `data`.' }),
-    version: z.int(),
-    data: ProfileSchema
-  })
-  .openapi('Change')
 
 export const SyncAnswerSchema = z
   .object({

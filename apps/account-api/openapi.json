@@ -216,7 +216,7 @@
                 "type": "integer"
               },
               "current": {
-                "$ref": "#/components/schemas/Profile"
+                "$ref": "#/components/schemas/Change"
               }
             },
             "required": [
@@ -265,37 +265,250 @@
         "description": "`applied`: the change is in, at `version`. `conflict`: the entity changed since `baseVersion`, so nothing changed; `current` is it as it is now. `rejected`: the change can never apply as sent; `error.code` says why. A result is final: to try again, send a new mutation with a new ID."
       },
       "Change": {
-        "type": "object",
-        "properties": {
-          "entity": {
-            "type": "string",
-            "enum": [
-              "profile"
+        "anyOf": [
+          {
+            "type": "object",
+            "properties": {
+              "entity": {
+                "type": "string",
+                "enum": [
+                  "profile"
+                ]
+              },
+              "entityId": {
+                "type": "string"
+              },
+              "operation": {
+                "type": "string",
+                "enum": [
+                  "put"
+                ]
+              },
+              "version": {
+                "type": "integer"
+              },
+              "data": {
+                "$ref": "#/components/schemas/Profile"
+              }
+            },
+            "required": [
+              "entity",
+              "entityId",
+              "operation",
+              "version",
+              "data"
             ]
           },
-          "entityId": {
+          {
+            "type": "object",
+            "properties": {
+              "entity": {
+                "type": "string",
+                "enum": [
+                  "knownWord"
+                ]
+              },
+              "entityId": {
+                "type": "string"
+              },
+              "operation": {
+                "type": "string",
+                "enum": [
+                  "put"
+                ]
+              },
+              "version": {
+                "type": "integer"
+              },
+              "data": {
+                "$ref": "#/components/schemas/KnownWord"
+              }
+            },
+            "required": [
+              "entity",
+              "entityId",
+              "operation",
+              "version",
+              "data"
+            ]
+          },
+          {
+            "type": "object",
+            "properties": {
+              "entity": {
+                "type": "string",
+                "enum": [
+                  "list"
+                ]
+              },
+              "entityId": {
+                "type": "string"
+              },
+              "operation": {
+                "type": "string",
+                "enum": [
+                  "put"
+                ]
+              },
+              "version": {
+                "type": "integer"
+              },
+              "data": {
+                "$ref": "#/components/schemas/WordList"
+              }
+            },
+            "required": [
+              "entity",
+              "entityId",
+              "operation",
+              "version",
+              "data"
+            ]
+          },
+          {
+            "type": "object",
+            "properties": {
+              "entity": {
+                "type": "string",
+                "enum": [
+                  "listWord"
+                ]
+              },
+              "entityId": {
+                "type": "string"
+              },
+              "operation": {
+                "type": "string",
+                "enum": [
+                  "put"
+                ]
+              },
+              "version": {
+                "type": "integer"
+              },
+              "data": {
+                "$ref": "#/components/schemas/ListWord"
+              }
+            },
+            "required": [
+              "entity",
+              "entityId",
+              "operation",
+              "version",
+              "data"
+            ]
+          },
+          {
+            "type": "object",
+            "properties": {
+              "entity": {
+                "type": "string",
+                "enum": [
+                  "knownWord",
+                  "list",
+                  "listWord"
+                ]
+              },
+              "entityId": {
+                "type": "string"
+              },
+              "operation": {
+                "type": "string",
+                "enum": [
+                  "delete"
+                ]
+              },
+              "version": {
+                "type": "integer"
+              },
+              "data": {
+                "type": "null"
+              }
+            },
+            "required": [
+              "entity",
+              "entityId",
+              "operation",
+              "version",
+              "data"
+            ]
+          }
+        ],
+        "description": "An entity as it is now (`put`, with `data`), or gone (`delete`): a deleted list, a word removed from a list, or one never there. A cleared known word is a `put` with `known: false`."
+      },
+      "KnownWord": {
+        "type": "object",
+        "properties": {
+          "itemId": {
             "type": "string"
           },
-          "operation": {
-            "type": "string",
-            "enum": [
-              "put"
-            ],
-            "description": "The entity as it is now is in `data`."
+          "headword": {
+            "type": "string"
           },
-          "version": {
-            "type": "integer"
+          "reading": {
+            "type": "string"
           },
-          "data": {
-            "$ref": "#/components/schemas/Profile"
+          "known": {
+            "type": "boolean"
           }
         },
         "required": [
-          "entity",
-          "entityId",
-          "operation",
-          "version",
-          "data"
+          "itemId",
+          "headword",
+          "reading",
+          "known"
+        ]
+      },
+      "WordList": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "position": {
+            "type": "integer"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "position",
+          "createdAt"
+        ]
+      },
+      "ListWord": {
+        "type": "object",
+        "properties": {
+          "listId": {
+            "type": "string"
+          },
+          "itemId": {
+            "type": "string"
+          },
+          "headword": {
+            "type": "string"
+          },
+          "reading": {
+            "type": "string"
+          },
+          "addedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "listId",
+          "itemId",
+          "headword",
+          "reading",
+          "addedAt"
         ]
       },
       "SyncRequest": {
@@ -337,22 +550,22 @@
           "entity": {
             "type": "string",
             "pattern": "^[A-Za-z][A-Za-z0-9_-]{0,63}$",
-            "description": "The entity type. Only `profile` today; any other is rejected."
+            "description": "`profile`, `knownWord`, `list`, or `listWord`. Any other is rejected with `unknown_entity`, and the rest of the request still applies."
           },
           "operation": {
             "type": "string",
             "pattern": "^[A-Za-z][A-Za-z0-9_-]{0,63}$",
-            "description": "For `profile`, only `update`."
+            "description": "- `profile`: `update` (`fields` name, username, or both; `baseVersion`). It applies only at the profile's current version.\n- `knownWord`: `mark` (`fields` headword and reading) and `clear`, each with `baseVersion`. Either applies only if the word is still at `baseVersion`, so a mark made before the learner cleared the word loses to the clear, and one made after it wins. Marking a known word, or clearing one not known, is applied and changes nothing.\n- `list`: `create` (`fields` name and position), `update` (`fields` name, position, or both; `baseVersion`), and `delete` (`baseVersion`). An update or delete applies only at the current version, so two renames conflict. Deleting a list takes its words with it.\n- `listWord`: `add` (`fields` headword and reading) and `remove` (`baseVersion`). An add always applies. A remove applies only if it saw the latest add, so an add the remover never saw wins."
           },
           "entityId": {
             "type": "string",
-            "pattern": "^[\\x21-\\x7e]{1,200}$",
-            "description": "For `profile`, the account's ID, or left out."
+            "pattern": "^[^\\p{Cc}\\p{Cf}\\s]{1,200}$/u",
+            "description": "- `profile`: the account's ID, or left out.\n- `knownWord`: the item, a Language Reference ID (32 lowercase hex digits) or `kanji:` and one kanji.\n- `list`: its UUID, in lowercase.\n- `listWord`: the list's UUID, a slash, and the item: `<list>/<item>`."
           },
           "baseVersion": {
             "type": "integer",
-            "minimum": 1,
-            "description": "The profile `version` this change was made to. If the profile has changed since, nothing is changed and the answer is a conflict with the current profile."
+            "minimum": 0,
+            "description": "The version of the entity the change was made to, or 0 for one the client has never seen. If the entity has changed since, the change waits on its rule: see `operation`."
           },
           "fields": {
             "type": "object",
@@ -372,7 +585,7 @@
                 }
               ]
             },
-            "description": "For a `profile` update, `name`, `username`, or both, as in PATCH /v1/me. Each value is a string, number, boolean, or null."
+            "description": "What the operation sets, as `operation` says. Each value is a string, number, boolean, or null."
           }
         },
         "required": [

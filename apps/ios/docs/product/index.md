@@ -146,6 +146,11 @@ decision 4). Once a learner is signed in to the same Zenbu account in this app a
 - Words Known in Zenbu aren't introduced to Tomo as new, though Tomo can still review them.
 - After the learner un-marks a word, Tomodachi marks it again only once the word climbs back to
   "knows it".
+- If the learner and Tomodachi change the same word before both have synced, the change made
+  after seeing the other wins: a mark Tomodachi made before it saw the learner's un-mark is
+  dropped, and an un-mark made before this device saw a newer mark shows the word Known again,
+  for the learner to un-mark again. The account service holds this rule (#572); this app's side
+  is #573.
 
 Built by:
 

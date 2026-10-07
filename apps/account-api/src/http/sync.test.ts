@@ -147,7 +147,11 @@ describe('POST /v1/sync', () => {
       id: 'conflict-0001',
       status: 'conflict',
       version: 2,
-      current: expect.objectContaining({ name: 'Changed on the Mac', version: 2 })
+      current: expect.objectContaining({
+        entity: 'profile',
+        version: 2,
+        data: expect.objectContaining({ name: 'Changed on the Mac', version: 2 })
+      })
     }
     expect(conflict.results).toEqual([expected])
     expect((await synced(learner, request)).results).toEqual([expected])
@@ -157,7 +161,7 @@ describe('POST /v1/sync', () => {
     const learner = await accounts.learner('rejects@example.com')
     const answer = await synced(learner, {
       mutations: [
-        { id: 'unknown-entity', entity: 'knownWord', operation: 'create', fields: {} },
+        { id: 'unknown-entity', entity: 'note', operation: 'create', fields: {} },
         { id: 'unknown-operation', entity: 'profile', operation: 'delete', baseVersion: 1 },
         { id: 'no-base-version', entity: 'profile', operation: 'update', fields: { name: 'X' } },
         {

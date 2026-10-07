@@ -2,8 +2,9 @@ import { createRoute, type OpenAPIHono, z } from '@hono/zod-openapi'
 import type { Context } from 'hono'
 import { createMiddleware } from 'hono/factory'
 import type { Accounts } from '../domain/accounts'
+import type { Change } from '../domain/entities'
 import type { Profile } from '../domain/profile'
-import type { Change, MutationResult } from '../domain/sync'
+import type { MutationResult } from '../domain/sync'
 import type { AccountEnv } from './env'
 import { errorBody } from './errors'
 import { requestsPerMinute } from './rate-limit'
@@ -66,10 +67,23 @@ const profileJson = (profile: Profile) => ({
   updatedAt: profile.updatedAt.toISOString()
 })
 
-const resultJson = (result: MutationResult) =>
-  result.status === 'conflict' ? { ...result, current: profileJson(result.current) } : result
+type Dated<T> = T extends null ? null : { [K in keyof T]: T[K] extends Date ? string : T[K] }
+type ChangeJson<C> = C extends Change ? Omit<C, 'data'> & { data: Dated<C['data']> } : never
 
-const changeJson = (change: Change) => ({ ...change, data: profileJson(change.data) })
+const datesIn = (data: object | null) =>
+  data &&
+  Object.fromEntries(
+    Object.entries(data).map(([key, value]) => [
+      key,
+      value instanceof Date ? value.toISOString() : value
+    ])
+  )
+
+const changeJson = (change: Change) =>
+  ({ ...change, data: datesIn(change.data) }) as ChangeJson<Change>
+
+const resultJson = (result: MutationResult) =>
+  result.status === 'conflict' ? { ...result, current: changeJson(result.current) } : result
 
 const health = createRoute({
   method: 'get',

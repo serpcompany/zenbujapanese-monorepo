@@ -141,6 +141,51 @@ export const syncMutations = pgTable(
   ]
 )
 
+export const knownWords = pgTable(
+  'known_words',
+  {
+    userId: owner(),
+    itemId: text('item_id').notNull(),
+    headword: text('headword').notNull(),
+    reading: text('reading').notNull(),
+    known: boolean('known').notNull(),
+    version: bigint('version', { mode: 'number' }).notNull(),
+    updatedAt: updated()
+  },
+  table => [primaryKey({ columns: [table.userId, table.itemId] })]
+)
+
+export const wordLists = pgTable(
+  'word_lists',
+  {
+    userId: owner(),
+    id: text('id').notNull(),
+    name: text('name').notNull(),
+    position: integer('position').notNull(),
+    deleted: boolean('deleted').notNull().default(false),
+    version: bigint('version', { mode: 'number' }).notNull(),
+    createdAt: created(),
+    updatedAt: updated()
+  },
+  table => [primaryKey({ columns: [table.userId, table.id] })]
+)
+
+export const listWords = pgTable(
+  'list_words',
+  {
+    userId: owner(),
+    listId: text('list_id').notNull(),
+    itemId: text('item_id').notNull(),
+    headword: text('headword').notNull(),
+    reading: text('reading').notNull(),
+    present: boolean('present').notNull(),
+    version: bigint('version', { mode: 'number' }).notNull(),
+    addedAt: moment('added_at').notNull().defaultNow(),
+    updatedAt: updated()
+  },
+  table => [primaryKey({ columns: [table.userId, table.listId, table.itemId] })]
+)
+
 export const syncOrigin = pgTable('sync_origin', {
   databaseOid: bigint('database_oid', { mode: 'number' }).primaryKey()
 })
