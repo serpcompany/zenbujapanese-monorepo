@@ -122,7 +122,7 @@ const listWord = (listId: string, itemId: string, operation: string, baseVersion
 })
 
 describe('lists', () => {
-  test('create, rename, move, and delete a list, each at its version; deleting takes its words', async () => {
+  test('create, rename, move, and delete a list, each at its version; deleting takes its words and its name', async () => {
     const learner = await accounts.learner('lists@example.com')
     const id = randomUUID()
     expect(
@@ -165,6 +165,9 @@ describe('lists', () => {
       ])
     )
     expect(changes.filter(change => change.entity === 'listWord')).toEqual([])
+    expect(
+      await accounts.running.service.rows(`select name, deleted from word_lists where id = '${id}'`)
+    ).toEqual([{ name: '', deleted: true }])
   })
 
   test('two renames from one version conflict: the second gets the name as it is now', async () => {
