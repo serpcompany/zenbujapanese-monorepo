@@ -12,7 +12,15 @@ screenshots:
       subtitle: Snap a menu, sign, or page and look up every word on it
     assets:
       screen: en-US/iphone-63/05-image-search-word.png
-  02-translate:
+  02-conversation:
+    template: templates-v2/single.html
+    variables:
+      tint: ink
+      headline: Talk it through,<br><em>live</em>
+      subtitle: Speak Japanese or English and hear each sentence translated
+    assets:
+      screen: en-US/iphone-63/17-translate-conversation.png
+  03-translate:
     template: templates-v2/duo.html
     variables:
       tint: white
@@ -21,7 +29,7 @@ screenshots:
     assets:
       back: en-US/iphone-63/06-image-search-photo.png
       front: en-US/iphone-63/07-image-search-translate.png
-  03-word:
+  04-word:
     template: templates-v2/word.html
     variables:
       tint: pink
@@ -29,7 +37,7 @@ screenshots:
       subtitle: Pitch accent, audio, and how common each word is
     assets:
       screen: en-US/iphone-63/08-word-detail-pitch.png
-  04-handwriting:
+  05-handwriting:
     template: templates-v2/handwriting.html
     variables:
       tint: ink
@@ -38,7 +46,7 @@ screenshots:
     assets:
       results: en-US/iphone-63/10-handwriting-results.png
       drawing: en-US/iphone-63/09-handwriting.png
-  05-kanji:
+  06-kanji:
     template: templates-v2/duo.html
     variables:
       tint: white
@@ -47,7 +55,7 @@ screenshots:
     assets:
       back: en-US/iphone-63/12-kanji-stroke-order.png
       front: en-US/iphone-63/11-kanji-detail.png
-  06-examples:
+  07-examples:
     template: templates-v2/single.html
     variables:
       tint: pink
@@ -55,7 +63,7 @@ screenshots:
       subtitle: Tap any word in a sentence to look it up
     assets:
       screen: en-US/iphone-63/13-example-sentences.png
-  07-conjugations:
+  08-conjugations:
     template: templates-v2/duo.html
     variables:
       tint: white
@@ -64,7 +72,7 @@ screenshots:
     assets:
       back: en-US/iphone-63/14-conjugations.png
       front: en-US/iphone-63/15-conjugation-form.png
-  08-no-account:
+  09-no-account:
     template: templates-v2/closing.html
     variables:
       tint: red
