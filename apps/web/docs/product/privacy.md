@@ -8,19 +8,19 @@ comes from, and the automated check that enforces it (see
 [How behavior is verified](index.md#how-behavior-is-verified)).
 
 What the page says about the account follows the account service as the owners designed it on
-#563 (decisions 1 to 6) and as #565, #566, #567, #570, #572, and #574 build it. No app signs in
-yet, so the page says the app has "no account or cloud sync yet", and says what happens "if you
-create or sign in to a Zenbu account" (or link one to Tomodachi), never that one exists today. The
-pull request that lets the app sign in (#573) changes the short version and the account section's
-"yet". When the service keeps something new, keeps it longer, sends email through another provider,
-or an app gets a new scope, change the page, its Effective date, this doc, and the
+#563 (decisions 1 to 6) and as #565, #566, #567, #570, #572, and #574 build it. The page never
+says whether an app signs in today, so it holds before and after the app's sign-in (#573) ships:
+everything in the app works without an account, and the page says what happens "if you create or
+sign in to a Zenbu account where our apps offer one" (or link one to Tomodachi). When the service
+keeps something new, keeps it longer, sends email through another provider, or an app gets a new
+scope, change the page, its Effective date, this doc, and the
 [App Store privacy labels](../app-store-privacy-labels.md) in the same pull request.
 
 ## Behaviors
 
-**The account's data.** The short version says the app collects nothing and has no account or
-cloud sync yet. The account section says the app doesn't offer accounts yet, that the apps send
-the account service nothing while signed out, and lists what a Zenbu account keeps:
+**The account's data.** The short version says the app collects nothing and works without an
+account. The account section says a learner never needs an account, that the apps send the account
+service nothing while signed out, and lists what a Zenbu account keeps:
 
 - the account: a Zenbu user ID, the email and whether it's verified, an optional name and
   username, a profile picture's address only if the provider sends one at sign-up, and when it
@@ -41,22 +41,24 @@ timing, never an email, a profile, a code or link, or a token.
 - Source: #563 decisions 1 and 2; #566 (sign-in), #567 (the profile and sync), #572 (known words
   and lists).
 - Check: `apps/web/e2e/privacy.spec.ts`, "names what a Zenbu account keeps, and that signed out the
-  apps send it nothing": the short version's "not yet", the four kinds of data, nothing sent signed
-  out, the encrypted codes, and what stays on the device. The email's uses and the logs: No
-  automated check yet.
+  apps send it nothing": the short version's "without an account", the four kinds of data, nothing
+  sent signed out, the encrypted codes, and what stays on the device. The email's uses and the
+  logs: No automated check yet.
 
 **Tomodachi.** The page names Tomodachi, the companion app for Mac and iPhone, and says it works
 without an account, keeps its own progress in the learner's iCloud, and that the policy covers what
 it does with a Zenbu account. Linked to one, it can only read the learner's lists and known words,
-mark words Known without ever clearing a mark, and fetch word cards and the segmentation of typed
+mark words Known without ever clearing a mark, delete the account when the learner asks and signs
+in again, and fetch word cards and the segmentation of typed
 answers from the dictionary service, which adds neither to the account and doesn't log them. The
 page says it will name what another app, or this website, can do before it lets the learner sign
 in.
 
-- Source: #563 decisions 4, 5, and 6; #570 (Tomodachi's scopes); #571.
+- Source: #563 decisions 4, 5, and 6; #570 (Tomodachi's scopes); #571; #574 (any app that
+  makes accounts deletes them).
 - Check: `apps/web/e2e/privacy.spec.ts`, "names Tomodachi and the only things it can do with the
   account": the section's statements, and its list of what Tomodachi can do, item for item, so a
-  fifth fails it.
+  sixth fails it.
 
 **Where it's kept, and who processes it.** The account's database is on the API servers, behind
 Cloudflare, and is backed up each night to private Cloudflare R2 storage, each backup deleted after
