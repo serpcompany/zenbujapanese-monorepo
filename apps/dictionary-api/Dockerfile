@@ -41,9 +41,9 @@ COPY apps/ios/Modules/Sources/SearchExperience/Resources/LanguageReferenceData.s
   apps/ios/Modules/Sources/SearchExperience/Resources/KanjiElementReferenceData.json \
   apps/ios/Modules/Sources/SearchExperience/Resources/LanguageTechnologyPackCatalog.json \
   resources/
-COPY language-data/release.json language-data/
 COPY --from=sudachi /sudachi sudachi
 COPY --from=build /service/node_modules node_modules
+COPY language-data/release.json language-data/
 COPY --from=build /repo/apps/dictionary-api/dist dist
 ARG RELEASE=unknown
 ENV DICTIONARY_API_RELEASE=${RELEASE}

@@ -3,7 +3,6 @@ import { segmentationFormat } from '@zenbu/dictionary-core/cards/segmentation'
 import { wordCardLicense, wordCardSources } from '@zenbu/dictionary-core/cards/sources'
 import { isLanguageReferenceId } from '@zenbu/dictionary-core/cards/word-list'
 import type { Context, Hono } from 'hono'
-import { errorFields, log } from './log'
 import type { RateLimit } from './rate-limit'
 import {
   AccountKeysUnavailable,
@@ -12,7 +11,9 @@ import {
   type ServiceInfo
 } from './service'
 
-export const appPaths = '/v1/apps'
+const appPaths = '/v1/apps'
+
+export const isAppPath = (path: string) => path.startsWith(`${appPaths}/`)
 
 export const maximumCardsPerRequest = 100
 
@@ -29,7 +30,7 @@ export interface AppAccess {
 
 export class AppError extends Error {
   constructor(
-    readonly status: 400 | 401 | 403 | 429 | 503,
+    readonly status: 400 | 401 | 403 | 404 | 429 | 500 | 503,
     readonly code: string,
     message: string
   ) {
@@ -51,13 +52,12 @@ async function cacheable(
 ) {
   const info = await service.info()
   const tag = `"${info.build}"`
+  const asked = context.req.header('if-none-match')
+  const unchanged = asked !== undefined && (asked.trim() === '*' || entityTags(asked).includes(tag))
+  const body = unchanged ? null : { ...(await answer(info)), languageData: info.languageData }
   context.header('Cache-Control', `private, max-age=${cachedFor}`)
   context.header('ETag', tag)
-  const asked = context.req.header('if-none-match')
-  if (asked && (asked.trim() === '*' || entityTags(asked).includes(tag))) {
-    return context.body(null, 304)
-  }
-  return context.json({ ...(await answer(info)), languageData: info.languageData })
+  return body ? context.json(body) : context.body(null, 304)
 }
 
 export function appRoutes(
@@ -78,7 +78,6 @@ export function appRoutes(
       caller = token ? await access.tokens(token) : null
     } catch (error) {
       if (error instanceof AccountKeysUnavailable) {
-        log('error', 'account keys unavailable', errorFields(error.cause ?? error))
         throw new AppError(503, 'unavailable', "The account service's keys couldn't be read")
       }
       throw error

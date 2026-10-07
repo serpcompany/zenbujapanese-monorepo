@@ -95,6 +95,7 @@
                   {
                     "group": [
                       "./app",
+                      "./app-routes",
                       "./server",
                       "./pool",
                       "./worker",
@@ -122,8 +123,8 @@
               "options": {
                 "patterns": [
                   {
-                    "group": ["./app", "./server", "hono", "hono/**", "@hono/**"],
-                    "message": "src/load.ts, src/worker.ts, and src/pool.ts run the dictionary in worker threads and know nothing of HTTP: src/app.ts is the HTTP layer, and src/server.ts wires the two together (docs/agents/dictionary-api.md, Code layout)."
+                    "group": ["./app", "./app-routes", "./server", "hono", "hono/**", "@hono/**"],
+                    "message": "src/load.ts, src/worker.ts, and src/pool.ts run the dictionary in worker threads and know nothing of HTTP: src/app.ts and src/app-routes.ts are the HTTP layer, and src/server.ts wires the two together (docs/agents/dictionary-api.md, Code layout)."
                   }
                 ]
               }

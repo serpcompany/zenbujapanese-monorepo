@@ -65,7 +65,7 @@ it in `.dev.vars` in `apps/web` (see [`web.md`](web.md), Dictionary).
 
 | Variable | Default | What it sets |
 | --- | --- | --- |
-| `DICTIONARY_API_TOKEN` | required | The bearer token every `/v1` request must carry, at least 16 characters. The website's Worker holds the same value. |
+| `DICTIONARY_API_TOKEN` | required | The bearer token every `/v1` request but the app routes' must carry, at least 16 characters. The website's Worker holds the same value. |
 | `PORT` | `8788` | The HTTP port. |
 | `DICTIONARY_RESOURCES` | the app's `Resources` | Where the app's files are. |
 | `SUDACHI_DICTIONARY` | `.sudachi/system_core.dic` | Sudachi's dictionary; empty turns sentence search off. |
@@ -76,7 +76,8 @@ it in `.dev.vars` in `apps/web` (see [`web.md`](web.md), Dictionary).
 | `ACCOUNT_JWKS_URL` | `<ACCOUNT_API_URL>/v1/auth/jwks` | Where the service reads the account service's signing keys. A slot reaches only nginx, so on the server this is a URL nginx answers with the account service's JWKS (Apps, below). It must answer `200` itself: the service follows no redirect. |
 | `APP_REQUESTS_PER_MINUTE` | `60` | How many app-route requests one account may make in a minute. |
 
-The build it reports (`X-Dictionary-Build` on every `/v1` answer, and `/healthz`) is the
+The build it reports (`X-Dictionary-Build` on every `/v1` answer but the app routes', and
+`/healthz`) is the
 artifact's SHA-256 prefix and the release: a new artifact or new code is a new build. It reports
 its contract too (`X-Dictionary-Contract` and `/healthz`): the number of its answers' shapes, from
 the core, which the website compares with its own ([`dictionary-core.md`](dictionary-core.md),
@@ -84,7 +85,8 @@ Rules).
 
 ## Routes
 
-Every `/v1` route needs `Authorization: Bearer <token>` and answers JSON; a query or form is one
+Every `/v1` route but the app routes (Apps, below) needs `Authorization: Bearer <token>` and
+answers JSON; a query or form is one
 URL-encoded path segment of at most 200 characters (`maximumQueryLength`, which the website
 checks too). The routes stay clear of `/v1/auth`, `/v1/me`, `/v1/sync`, and `/v1/health`, which the
 API host's nginx sends to the account service. A 404 means there's no such thing: no such word, kanji, or sitemap, a query without
@@ -96,7 +98,7 @@ more and logs the error.
 | Route | Answer |
 | --- | --- |
 | `GET /healthz` | No token. 503 while starting; then the build, contract, and features. |
-| `GET /v1/info` | The build, the artifact's name and SHA-256, the features, and `languageData`: the language-data release, its file, and its SHA-256. |
+| `GET /v1/info` | The build, the artifact's name and SHA-256, the features, and `languageData`: the language-data release and the SHA-256 of each file a word card is read from. |
 | `GET /v1/search/<query>` | The results screen. |
 | `GET /v1/search/<query>/examples?from=` | 25 of the examples the Example Sentences row opens, from `from`. |
 | `GET /v1/words/<ent_seq>` | A word page's rows, its slug, the slugs it links to, and which kanji have details (`kanjiPages`). |
@@ -123,8 +125,8 @@ more and logs the error.
 The routes under `/v1/apps` are for signed-in apps that don't bundle the language data, such as
 Tomodachi (#563, #571); they are the only routes an app calls. They take an account's access token
 and never the website's service token, which they refuse, and the website's routes refuse an
-account token. An error is `{ "error": { "code": "...", "message": "..." } }`, as the account
-service's are.
+account token. Every error under `/v1/apps`, a missing route's `404` and a failure's `500`
+included, is `{ "error": { "code": "...", "message": "..." } }`, as the account service's are.
 
 | Route | Answer |
 | --- | --- |
@@ -134,21 +136,23 @@ service's are.
 - **The token.** The account service's access token: an EdDSA JWT whose signature checks against
   the account service's JWKS, with `iss` and `aud` both `ACCOUNT_API_URL`, an `exp`, a `sub` (the
   account), an `azp` (the app), and `dictionary:read` in its space-separated `scope`. The service
-  keeps the keys while it runs (`jose`'s remote key set), so an account service that's down
-  doesn't refuse tokens it signed, and reads them again for a key it doesn't know at most every 30
-  seconds. No token, or one that fails any of that, is `401 unauthorized` with
-  `WWW-Authenticate: Bearer`; a token without the scope is `403 insufficient_scope`, whose
-  `WWW-Authenticate` names the scope; keys the service can't read are `503 unavailable`, logged as
-  `account keys unavailable`. The check is in `src/account-tokens.ts`; the service imports nothing
-  from the account service.
+  reads the keys (`jose`'s remote key set) again once they're ten minutes old, so a key the account
+  service drops stops working within ten minutes, and for a key it doesn't know at most every 30
+  seconds. While the account service is down, it keeps checking tokens with the keys it last read,
+  and tries again at most every 30 seconds, logging `account keys unavailable` once for each try.
+  No token, or one that fails any of that, is `401 unauthorized` with `WWW-Authenticate: Bearer`;
+  a token without the scope is `403 insufficient_scope`, whose `WWW-Authenticate` names the
+  scope; and a token signed by a key the service can't read is `503 unavailable`. The check is in
+  `src/account-tokens.ts`; the service imports nothing from the account service.
 - **Bounds.** At most 100 IDs and 200 characters (`400 bad_request` past them), and
   `APP_REQUESTS_PER_MINUTE` requests a minute for each account (`sub`), counted by each server
   process, after which a request is `429 rate_limited` with `Retry-After`.
-- **Caching.** An answer carries the language data's `release`, file, and SHA-256, and is
-  `Cache-Control: private, max-age=86400` with the build as its `ETag`. The build changes with each
-  deploy, so an app keeps an answer a day and then revalidates with `If-None-Match`; a matching
-  tag, strong or weak, is `304` before any work. Cards stay right while `languageData`'s `release`
-  and `sha256` do: an app fetches again when either changes.
+- **Caching.** An answer carries `languageData`, the language-data release and the SHA-256 of
+  each file a card is read from, and is `Cache-Control: private, max-age=86400` with the build as
+  its `ETag`; an error carries neither. The build changes with each deploy, so an app keeps an
+  answer a day and then revalidates with `If-None-Match`; a matching tag, strong or weak, is
+  `304` before any work. Cards stay right while `languageData` does: an app fetches again when
+  any of it changes.
 - **On the server.** A person makes the account service's JWKS reachable from the dictionary
   service's slots, which reach only nginx: an nginx location on the slots' network that proxies to
   the account service's `/v1/auth/jwks` and answers `200` itself. Then they add `ACCOUNT_API_URL`
@@ -205,7 +209,7 @@ says where the code belongs; tests may import anything.
 - The HTTP layer, `src/app.ts` and the app routes in `src/app-routes.ts`, answers from the
   `DictionaryService` that `src/server.ts` hands it, and reads nothing itself: no reader, no worker,
   no SQLite, no file. `src/server.ts` hands it the account-token check and the per-account limit
-  too, so it imports neither.
+  too, so it imports only their types.
 
 `src/server.ts` wires the three together and is imported by nothing. The service logs JSON lines
 through `log()` in `src/log.ts` (a level, a message naming the event, and fields), which the
@@ -283,7 +287,7 @@ counts it, but it can be reclaimed. It has a health check on `/healthz` and stop
 
 It holds one build of the data, so a new artifact is a new image. Its layers go from what changes
 least to what changes most: Kuromoji, the language data, Sudachi's dictionary, the installed
-packages, and last the bundled code. A code change so makes only a new top layer of a few MB,
+packages, the language-data release's name, and last the bundled code. A code change so makes only a new top layer of a few MB,
 which is all CI pushes and the server pulls; the language data's layers, about 1 GB, are built
 and moved only when the data changes. `scripts/build.mjs` bundles
 `src/server.ts` and `src/worker.ts`, with the core and Hono; Sudachi's native module stays outside

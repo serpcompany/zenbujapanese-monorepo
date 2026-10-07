@@ -28,7 +28,12 @@ afterEach(() => {
 })
 
 function app(
-  options: { limit?: number; keysAnswer?: () => Response | undefined; access?: boolean } = {}
+  options: {
+    limit?: number
+    keysAnswer?: () => Response | undefined
+    access?: boolean
+    failing?: boolean
+  } = {}
 ) {
   vi.spyOn(process.stdout, 'write').mockImplementation(() => true)
   vi.spyOn(process.stderr, 'write').mockImplementation(() => true)
@@ -36,6 +41,7 @@ function app(
     service: fakeService({
       wordCards: async ids => {
         answered++
+        if (options.failing) throw new Error('the worker exited')
         return ids.includes(miru) ? [card] : []
       },
       segment: async () => {
@@ -53,6 +59,14 @@ const get = (path: string, token?: string, headers: Record<string, string> = {})
   new Request(`http://localhost${path}`, {
     headers: { ...headers, ...(token ? { authorization: `Bearer ${token}` } : {}) }
   })
+
+const later = (milliseconds: number) =>
+  vi.useFakeTimers({ toFake: ['Date'], now: Date.now() + milliseconds })
+
+const keyFailuresLogged = () =>
+  vi
+    .mocked(process.stderr.write)
+    .mock.calls.filter(([line]) => String(line).includes('account keys unavailable')).length
 
 const errorCode = async (response: Response) => [
   response.status,
@@ -91,6 +105,20 @@ describe('word cards for a signed-in app', () => {
     }
     const other = await app().request(get(path, token, { 'if-none-match': '"other"' }))
     expect(other.status).toBe(200)
+  })
+
+  test('never lets an app cache a failure', async () => {
+    const response = await app({ failing: true }).request(
+      get(`/v1/apps/word-cards?ids=${miru}`, await accessToken())
+    )
+    expect(response.headers.get('cache-control')).toBeNull()
+    expect(response.headers.get('etag')).toBeNull()
+    expect(await errorCode(response)).toEqual([500, 'internal'])
+  })
+
+  test('answers a route it doesn’t have in the same error shape', async () => {
+    const response = await app().request(get('/v1/apps/word-lists', await accessToken()))
+    expect(await errorCode(response)).toEqual([404, 'not_found'])
   })
 
   test.each([
@@ -217,13 +245,51 @@ describe('an app’s access token', () => {
     const service = app({
       keysAnswer: () => (down ? new Response('down', { status: 502 }) : undefined)
     })
-    const token = await accessToken()
+    const token = await accessToken({}, { expires: '2h' })
     expect((await service.request(get(paths[0], token))).status).toBe(200)
     down = true
-    vi.useFakeTimers({ toFake: ['Date'], now: Date.now() + 11 * 60_000 })
+    later(60 * 60_000)
     const before = keys.keyFetches()
+    for (let attempt = 0; attempt < 3; attempt++) {
+      expect((await service.request(get(paths[0], token))).status).toBe(200)
+    }
+    expect(keys.keyFetches() - before).toBe(1)
+  })
+
+  test('stops trusting a key the account service drops, once its keys are ten minutes old', async () => {
+    let dropped = false
+    const service = app({ keysAnswer: () => (dropped ? Response.json({ keys: [] }) : undefined) })
+    const token = await accessToken()
     expect((await service.request(get(paths[0], token))).status).toBe(200)
-    expect(keys.keyFetches()).toBe(before)
+    dropped = true
+    later(11 * 60_000)
+    expect(await errorCode(await service.request(get(paths[0], token)))).toEqual([
+      401,
+      'unauthorized'
+    ])
+  })
+
+  test('while the account service is down, tries its keys at most every 30 seconds, and says so once', async () => {
+    let down = false
+    const service = app({
+      keysAnswer: () => (down ? new Response('down', { status: 502 }) : undefined)
+    })
+    expect((await service.request(get(paths[0], await accessToken()))).status).toBe(200)
+    down = true
+    later(31_000)
+    const unknown = await accessToken({}, { kid: 'next' })
+    const [fetched, logged] = [keys.keyFetches(), keyFailuresLogged()]
+    for (let attempt = 0; attempt < 3; attempt++) {
+      expect(await errorCode(await service.request(get(paths[0], unknown)))).toEqual([
+        503,
+        'unavailable'
+      ])
+    }
+    expect(keys.keyFetches() - fetched).toBe(1)
+    expect(keyFailuresLogged() - logged).toBe(1)
+    later(62_000)
+    await service.request(get(paths[0], unknown))
+    expect(keys.keyFetches() - fetched).toBe(2)
   })
 
   test('reloads the account service’s keys for a key it doesn’t know at most every 30 seconds', async () => {
