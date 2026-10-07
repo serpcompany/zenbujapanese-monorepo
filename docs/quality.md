@@ -101,7 +101,7 @@ A change is checked by hand in a browser with the `verify-web` skill
 
 | Area | Grade | Graded | Code | Tests | CI before merge | Docs | By hand |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| Account service | A | 2026-10-06 | `apps/account-api/src/`, `apps/account-api/migrations/` | `apps/account-api/src/config.test.ts`, the routes in `apps/account-api/src/http/app.test.ts`, and the migrations and the `pg` driver in `apps/account-api/src/db/`, on PGlite or, in CI, Postgres 18 | `Account API`, against Postgres 18; `Account API deploy` builds the image and checks that it migrates an empty database and answers | [`account-api.md`](agents/account-api.md), ADR 0011 | `pnpm dev` and its routes |
+| Account service | A | 2026-10-06 | `apps/account-api/src/`, `apps/account-api/migrations/` | `apps/account-api/src/config.test.ts`, the routes in `apps/account-api/src/http/app.test.ts`, and the migrations and the `pg` driver in `apps/account-api/src/db/`, on PGlite or, in CI, Postgres 18 | `Account API`, against Postgres 18; `Account API deploy` builds the image and checks that it migrates an empty database and answers | [`account-api.md`](agents/account-api.md), ADR 0012 | `pnpm dev` and its routes |
 | What the Node services share | A | 2026-10-06 | `packages/node-service/src/` | `packages/node-service/src/log.test.ts`, and `http.test.ts`: the request log, and a real server stopped with SIGTERM | `Account API`; `Dictionary API` runs the dictionary service's tests through it | [`dictionary-api.md`](agents/dictionary-api.md), Code layout | Through both services |
 
 - **Account service, A.** Its routes, configuration, migrations, and database driver are tested

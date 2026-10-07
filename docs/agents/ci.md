@@ -367,7 +367,7 @@ request's last run. The deployer and the backups script (`deploy/deployer.sh`,
 ## Account API deploy
 
 `.github/workflows/account-api-deploy.yml` ships the account service's Docker image
-(`apps/account-api/Dockerfile`, ADR 0011) as `Dictionary API deploy` ships the dictionary
+(`apps/account-api/Dockerfile`, ADR 0012) as `Dictionary API deploy` ships the dictionary
 service's, with the same three jobs, the same signing, the same `staging` and `production`
 environments, and the same rollback by `tag`. It runs on a push to `main` that changes what the
 image holds: the service, what the services share, and the package files it installs from (the
