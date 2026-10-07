@@ -20,7 +20,7 @@ extension TranslateMode {
 
   var startHint: String {
     self == .listening
-      ? String(localized: "Translates Japanese you hear into English.")
+      ? String(localized: "Translates the Japanese or English you hear.")
       : String(localized: "Speak Japanese or English. No need to pick a language first.")
   }
 }
@@ -61,9 +61,7 @@ struct FuriganaToggle: View {
 extension ConversationActivity {
   @MainActor func statusLine(in session: LiveConversation) -> String {
     switch self {
-    case .listening:
-      session.mode == .listening
-        ? String(localized: "Listening for Japanese") : String(localized: "Listening")
+    case .listening: String(localized: "Listening")
     case .hearing: String(localized: "Hearing speech")
     case .waiting(let count): String(localized: "\(count) waiting for a pause")
     case .translating: String(localized: "Translating")

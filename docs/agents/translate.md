@@ -162,8 +162,8 @@ The engine is checked on an iPhone without anyone speaking:
 
 Apple Translation doesn't run in the Simulator, so the live engine can't either. A Debug build
 launched with `ZENBU_TRANSLATE_SCRIPT=station` replaces the clients with a scripted station
-conversation (and TV announcements in Listening), fixture translations, silent playback, and a
-20-second silence prompt, so every screen can be checked:
+conversation (and TV announcements in Listening, in Japanese then English), fixture translations,
+silent playback, and a 20-second silence prompt, so every screen can be checked:
 
 ```sh
 SIMCTL_CHILD_ZENBU_TRANSLATE_SCRIPT=station xcrun simctl launch <udid> com.zenbujapanese.app
@@ -196,8 +196,9 @@ In the Simulator, with the harness:
   deletion there lowers the count and leaves the Translate tab's Translations without it. With
   a conversation live (start one, then switch to Account), it isn't listed, and transcripts have
   no speaker button.
-- **Listening** leads each card with English and plays as it goes. After 20 seconds of silence,
-  **Are you still there?** counts down and pauses with an alert offering **Resume**.
+- **Listening** leads each card with its translation (English for the Japanese announcements,
+  Japanese for the English one) and plays as it goes. After 20 seconds of silence, **Are you
+  still there?** counts down and pauses with an alert offering **Resume**.
 - While listening, the Simulator's screen doesn't auto-lock (Settings → Display & Brightness →
   Auto-Lock at 30 seconds); after a pause it locks as usual.
 - Sending the app home pauses with **Paused while you were away**; **Exit Without Saving** leaves

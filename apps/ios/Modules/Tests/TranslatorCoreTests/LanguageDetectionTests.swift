@@ -33,7 +33,7 @@ struct LanguageDetectionTests {
   func modeFamilies() {
     #expect(TranslateMode.conversation.canSwitchWithinSession(to: .textOnly))
     #expect(!TranslateMode.conversation.canSwitchWithinSession(to: .listening))
-    #expect(TranslateMode.listening.listensFor == [.japanese])
+    #expect(TranscriptionRequest(mode: .listening).languages == [.japanese, .english])
     #expect(TranslateMode.textOnly.playback == .never)
   }
 }

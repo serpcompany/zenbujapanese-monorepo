@@ -15,7 +15,7 @@ public struct TranscriptionRequest: Sendable, Equatable {
   }
 
   public init(mode: TranslateMode) {
-    self.init(languages: mode.listensFor, capture: mode.capture)
+    self.init(languages: SpokenLanguage.allCases, capture: mode.capture)
   }
 }
 

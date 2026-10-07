@@ -39,6 +39,7 @@ extension TranslateServices {
       Line(language: .japanese, text: "今夜までに雨は止み、明日は関東全域で晴れるでしょう。", translation: "The rain will stop by this evening, and tomorrow will be sunny across the Kanto region.", continuesTurn: false),
       Line(language: .japanese, text: "東京の最高気温は24度の予想です。", translation: "Highs in Tokyo will reach 24 degrees.", continuesTurn: true),
       Line(language: .japanese, text: "続いてスポーツです。", translation: "Next, the sports news.", continuesTurn: true),
+      Line(language: .english, text: "The next train to Shinjuku leaves from Track 3.", translation: "新宿行きの次の電車は3番線から発車します。", continuesTurn: false),
     ]
 
     static let typed: [String: String] = [
