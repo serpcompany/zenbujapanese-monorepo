@@ -290,11 +290,13 @@ else, and deletes only after a fresh sign-in.
   App Review requires; it keeps no Apple token otherwise. The website's Sign in with Apple popup
   names a return URL on the website, `<site>/account/`, and the website sends it as
   `appleRedirectUri`, which must be on one of `ACCOUNT_API_TRUSTED_ORIGINS` (`400 bad_request`);
-  without it, the website's code is taken as one Apple sent to `/v1/auth/callback/apple`. So the service needs Apple's key wherever Apple sign-in is set
-  up: it refuses to start without one, but at `localhost`, where it skips Apple. The answers:
+  without it, the website's code is taken as one Apple sent to `/v1/auth/callback/apple`. So the
+  service needs Apple's key wherever Apple sign-in is set up: it refuses to start without one, but
+  at `localhost`, where it skips Apple. The answers:
   - no code: `400 apple_authorization_needed`;
   - a code Apple has used or expired: `400 apple_authorization_invalid`;
-  - a code from another Apple ID: `400 apple_account_mismatch`, after revoking what it made;
+  - a code from another Apple ID: `400 apple_account_mismatch`, after revoking what it made,
+    unless another account signs in with that Apple ID, whose grant it leaves alone;
   - anything else, Apple down or refusing the key: `503 apple_unavailable`, with nothing deleted,
     and the key's refusal logged as an error. The code may be used up, so the app gets a new one
     by signing in with Apple again.

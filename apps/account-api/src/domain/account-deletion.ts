@@ -15,7 +15,8 @@ export interface AppleRevoker {
   revoke(
     authorization: { code: string; redirectUri?: string },
     clientId: string,
-    appleUserIds: readonly string[]
+    appleUserIds: readonly string[],
+    inUse: (appleUserId: string) => Promise<boolean>
   ): Promise<AppleRevocation>
 }
 
@@ -48,7 +49,12 @@ export function accountDeleter(store: AccountStore, apple: AppleRevoker, notices
     if (appleUserIds.length > 0 && apple.configured) {
       const { code, redirectUri } = authorization
       if (!code) return 'apple_authorization_needed'
-      const revoked = await apple.revoke({ code, redirectUri }, principal.clientId, appleUserIds)
+      const revoked = await apple.revoke(
+        { code, redirectUri },
+        principal.clientId,
+        appleUserIds,
+        subject => store.identityInUse('apple', subject)
+      )
       if (revoked === 'invalid') return 'apple_authorization_invalid'
       if (revoked === 'other_apple_id') return 'apple_account_mismatch'
       if (revoked === 'unavailable') return 'apple_unavailable'
