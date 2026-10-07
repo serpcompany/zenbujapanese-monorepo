@@ -66,19 +66,25 @@ struct CaptionCard: View {
 }
 
 extension View {
-  func captionCardRow(isActive: Bool) -> some View {
+  func captionCardRow(isActive: Bool, cornerRadius: CGFloat = 16, gapAbove: CGFloat = 0)
+    -> some View
+  {
     padding(.horizontal, 8)
+      .padding(.top, gapAbove)
       .listRowSeparator(.hidden)
-      .listRowBackground(CaptionCardBackground(isActive: isActive))
+      .listRowBackground(
+        CaptionCardBackground(isActive: isActive, cornerRadius: cornerRadius)
+          .padding(.top, gapAbove))
       .accessibilityAddTraits(isActive ? .isSelected : [])
   }
 }
 
 private struct CaptionCardBackground: View {
   let isActive: Bool
+  let cornerRadius: CGFloat
 
   var body: some View {
-    let shape = RoundedRectangle(cornerRadius: 16, style: .continuous)
+    let shape = RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
     shape
       .fill(isActive ? AnyShapeStyle(.tint.opacity(0.18)) : AnyShapeStyle(.fill.quaternary))
       .overlay { shape.strokeBorder(.tint, lineWidth: isActive ? 2.5 : 0) }
