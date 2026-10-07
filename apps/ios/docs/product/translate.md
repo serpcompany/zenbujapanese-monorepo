@@ -46,9 +46,8 @@ needs a connection once. Nothing stays on the home screen afterward.
 ## The conversation
 
 The conversation replaces the tab's home and fills the screen: the tab bar is hidden while it's
-open. The top bar has Back, the title **Japanese ⇄ English** (**Japanese → English** in
-Listening), and a **•••** menu with the layout (**Cards** or **Two Panes**) and **Furigana**. To
-change mode, leave and pick another option on the home.
+open. The top bar has only Back and a **•••** menu with the layout (**Cards** or **Two Panes**)
+and **Furigana**; there's no title. To change mode, leave and pick another option on the home.
 
 Along the bottom are the conversation's controls:
 

@@ -33,7 +33,6 @@ struct LiveConversationView: View {
     } message: {
       Text("Save its \(session.conversation.turnCountLabel) to History, or leave without saving.")
     }
-    .navigationTitle(session.mode.languagePair)
     .navigationBarTitleDisplayMode(.inline)
     .navigationBarBackButtonHidden()
     .toolbar {

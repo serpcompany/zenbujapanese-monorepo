@@ -28,13 +28,10 @@ final class ConversationWords {
   private func count(_ conversation: Conversation, analysis: JapaneseTextAnalysisClient) {
     guard !counting.contains(conversation.id) else { return }
     counting.insert(conversation.id)
-    let spoken = conversation.turns.filter { $0.language == .japanese }.flatMap(\.sentences)
+    let spoken = conversation.turns.filter { $0.language == .japanese }
+      .flatMap(\.sentences).map(\.text)
     Task {
-      var words: [LanguageReferenceID] = []
-      for sentence in spoken {
-        let tokens = await analysis.linkedTokens(sentence.text, SearchQuery(""), nil)
-        words += Comprehension.countedWords(in: tokens)
-      }
+      let words = await Comprehension.countedWords(in: spoken, analysis: analysis) ?? []
       counted[conversation.id] = Counted(updatedAt: conversation.updatedAt, words: words)
       counting.remove(conversation.id)
     }

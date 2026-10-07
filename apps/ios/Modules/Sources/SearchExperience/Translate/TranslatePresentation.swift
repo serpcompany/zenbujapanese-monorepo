@@ -18,10 +18,6 @@ extension TranslateMode {
     }
   }
 
-  var languagePair: String {
-    self == .listening ? String(localized: "Japanese → English") : String(localized: "Japanese ⇄ English")
-  }
-
   var startHint: String {
     self == .listening
       ? String(localized: "Translates Japanese you hear into English.")
