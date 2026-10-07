@@ -53,7 +53,7 @@ are sections of `ios.md`.
 - **Translate, C.** The engine and History are tested with fakes, and every screen runs in the
   Simulator on a scripted conversation. Main gap: nothing yet shows the on-device recognizers
   choosing Japanese or English correctly on real speech; that needs recordings and a device
-  (#624).
+  (#627).
 - **Image Search, C.** Recognition runs on real images. Main gap: Apple Translation doesn't run
   in the Simulator, and the on-device model runs only where the Simulator's runtime matches the
   Mac, so translation and Context are checked by hand, on a device.
