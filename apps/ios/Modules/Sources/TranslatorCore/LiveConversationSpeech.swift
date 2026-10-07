@@ -23,7 +23,6 @@ extension LiveConversation {
       }
     guard echoGuard.isEcho(text, at: now) else { return false }
     if isFinal {
-      finishUtteranceRequested = false
       liveSentence = nil
       cancelProvisionalTranslation()
       enqueuePlayback([])
@@ -46,7 +45,6 @@ extension LiveConversation {
   }
 
   private func receiveFinal(_ text: String, in language: SpokenLanguage, at now: Date) {
-    finishUtteranceRequested = false
     let provisional =
       liveSentence?.language == language ? liveSentence?.provisionalTranslation : nil
     liveSentence = nil
@@ -91,6 +89,7 @@ extension LiveConversation {
     let trimmed = translation?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
     if trimmed.isEmpty {
       untranslatedSentenceIDs.insert(id)
+      conversation.turns[location.turn].sentences[location.sentence].translation = nil
     } else {
       conversation.turns[location.turn].sentences[location.sentence].translation = trimmed
     }

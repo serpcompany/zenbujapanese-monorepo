@@ -60,7 +60,6 @@ public final class LiveConversation {
   var isDiscarded = false
   var hasLeft = false
 
-  @ObservationIgnored var finishUtteranceRequested = false
   @ObservationIgnored var provisionalInFlight = false
   @ObservationIgnored var micClosedForPlayback = false
   @ObservationIgnored var echoGuard = EchoGuard()
@@ -224,7 +223,6 @@ public final class LiveConversation {
     speakingSentenceID = nil
     speakingLanguage = nil
     micClosedForPlayback = false
-    finishUtteranceRequested = false
     echoGuard.reset()
     listenTask?.cancel()
     listenTask = nil
@@ -253,10 +251,10 @@ public final class LiveConversation {
       let tooLong = now.timeIntervalSince(startedAt) >= timing.longestTurn
       if paused || tooLong { closeOpenTurn() }
     }
-    if liveSentence != nil, !finishUtteranceRequested,
+    if liveSentence != nil,
       now.timeIntervalSince(lastVolatileChangeAt) >= timing.stalledSpeechPause
     {
-      finishUtteranceRequested = true
+      lastVolatileChangeAt = now
       Task { [clients] in await clients.transcription.finishUtterance() }
     }
     if isQuiet, now.timeIntervalSince(lastSpeechAt) >= timing.silenceBeforePrompt {

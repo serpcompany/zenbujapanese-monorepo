@@ -197,6 +197,23 @@ struct BilingualTranscriptMergerTests {
     #expect(!merger.isWaitingForCounterpart)
   }
 
+  @Test("a dropped late final takes its unfinished live text with it")
+  func lateFinalClearsLiveText() {
+    var merger = BilingualTranscriptMerger(languages: [.japanese, .english])
+    _ = merger.receive(
+      result(.english, "I want to go to Kyoto tomorrow.", confidence: 0.91, start: 58.9, end: 63.9),
+      at: start)
+    _ = merger.flush(at: start.addingTimeInterval(0.5))
+    #expect(
+      merger.receive(
+        result(.japanese, "Ianto Go", confidence: nil, final: false, start: 59.8, end: 64.6),
+        at: start.addingTimeInterval(0.6)) == [.volatile(.japanese, "Ianto Go")])
+    #expect(
+      merger.receive(
+        result(.japanese, "Ianto Go to Koo Tomorrow", confidence: 0.63, start: 59.8, end: 65.1),
+        at: start.addingTimeInterval(1)) == [.volatile(.japanese, "")])
+  }
+
   @Test("live text includes the sentences held for the pause")
   func liveTextIncludesHeldSentences() {
     var merger = BilingualTranscriptMerger(languages: [.japanese, .english])

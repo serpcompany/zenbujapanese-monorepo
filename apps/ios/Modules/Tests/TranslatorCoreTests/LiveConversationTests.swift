@@ -293,7 +293,7 @@ struct LiveConversationTests {
     #expect(harness.session.activity == .hearing)
   }
 
-  @Test("speech that stalls asks the recognizer to finish the sentence once")
+  @Test("speech that stalls asks the recognizer to finish the sentence, and again if it stays stuck")
   func stalledSpeechFinishesUtterance() async {
     let harness = ConversationHarness()
     await harness.startAndWaitForListening()
@@ -301,8 +301,10 @@ struct LiveConversationTests {
     harness.session.receive(.volatile(.japanese, "今日は"))
     await harness.pause(for: 2.6)
     await harness.pause(for: 1)
-
     #expect(harness.transcription.finishCount == 1)
+
+    await harness.pause(for: 2)
+    #expect(harness.transcription.finishCount == 2)
   }
 
   @Test("a sentence that can't be translated is marked and doesn't block the rest")

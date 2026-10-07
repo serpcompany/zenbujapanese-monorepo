@@ -101,12 +101,22 @@ final class SystemSpeechPlayer: NSObject, AVSpeechSynthesizerDelegate {
       TranslateDiagnostics.shared.note("speak \(language.rawValue) \(text)")
     #endif
     let spoken = utterance(text, in: language)
+    let limit = Self.speakingLimit(for: text, speed: speed)
+    let watchdog = Task {
+      try? await Task.sleep(for: limit)
+      if !Task.isCancelled { output.stop() }
+    }
     await withCheckedContinuation { continuation in
       let generation = output.begin(continuation)
       synthesizer.write(
         spoken,
         toBufferCallback: EchoCancelledPlayback.receiver(for: output, generation: generation))
     }
+    watchdog.cancel()
+  }
+
+  static func speakingLimit(for text: String, speed: Double) -> Duration {
+    .seconds(5 + Double(text.count) * 0.3 / max(speed, 0.5))
   }
 
   func speak(_ text: String, in language: SpokenLanguage) async {
@@ -119,7 +129,7 @@ final class SystemSpeechPlayer: NSObject, AVSpeechSynthesizerDelegate {
   }
 
   func stop() {
-    if synthesizer.isSpeaking { synthesizer.stopSpeaking(at: .immediate) }
+    synthesizer.stopSpeaking(at: .immediate)
     engineOutput?.stop()
     engineOutput = nil
     waiting?.continuation.resume()

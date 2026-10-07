@@ -96,8 +96,10 @@ public struct BilingualTranscriptMerger: Sendable {
     var result = result
     result.text = Self.cleaned(result.text)
     guard languages.count > 1 else { return passThrough(result) }
-    guard result.end > emittedThrough + Self.endTolerance else { return [] }
-    if result.isFinal, Self.mostlyBefore(emittedThrough, result) { return [] }
+    let isLate = result.end <= emittedThrough + Self.endTolerance
+    if isLate || (result.isFinal && Self.mostlyBefore(emittedThrough, result)) {
+      return result.isFinal ? dropLate(result.language) : []
+    }
     guard result.isFinal else {
       volatile[result.language] = result
       volatileHeardAt[result.language] = now
@@ -139,6 +141,13 @@ public struct BilingualTranscriptMerger: Sendable {
   static func isWorthTranslating(_ candidate: TranscriptCandidate) -> Bool {
     let letters = candidate.text.filter { $0.isLetter || $0.isNumber }.count
     return letters > 1 && (candidate.confidence ?? 1) >= minimumConfidence
+  }
+
+  private mutating func dropLate(_ language: SpokenLanguage) -> [TranscriptionEvent] {
+    guard volatile[language] != nil else { return [] }
+    volatile[language] = nil
+    volatileHeardAt[language] = nil
+    return bestLive()
   }
 
   private func passThrough(_ result: TranscriberResult) -> [TranscriptionEvent] {

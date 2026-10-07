@@ -31,7 +31,11 @@ final class EchoCancelledPlayback: @unchecked Sendable {
       return (previous, generation)
     }
     previous?.resume()
-    if player.engine?.isRunning == true, !player.isPlaying { player.play() }
+    guard player.engine?.isRunning == true else {
+      finish(current)
+      return current
+    }
+    if !player.isPlaying { player.play() }
     return current
   }
 

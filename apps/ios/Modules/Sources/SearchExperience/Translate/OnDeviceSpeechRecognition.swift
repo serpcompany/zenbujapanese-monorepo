@@ -105,23 +105,29 @@ actor OnDeviceTranscriber {
     self.heardContinuation = heardContinuation
     self.eventContinuation = eventContinuation
     gate.set(true)
+    var started: [LanguageAnalyzer] = []
     do {
       for (language, transcriber) in transcribers {
+        try ensureStillStarting(current)
         let analyzer = SpeechAnalyzer(
           modules: [transcriber],
           options: .init(priority: .userInitiated, modelRetention: .lingering))
         let (inputs, input) = AsyncStream.makeStream(of: AnalyzerInput.self)
-        analyzers.append(
-          LanguageAnalyzer(
-            language: language, analyzer: analyzer, input: input))
+        let entry = LanguageAnalyzer(language: language, analyzer: analyzer, input: input)
+        started.append(entry)
+        analyzers.append(entry)
         try await analyzer.prepareToAnalyze(in: format)
         try await analyzer.start(inputSequence: inputs)
       }
+      try ensureStillStarting(current)
     } catch {
-      if current == generation { await stop() }
+      guard current == generation else {
+        await cancel(started)
+        throw CancellationError()
+      }
+      await stop()
       throw TranslatorFailure.speechRecognitionUnavailable
     }
-    try ensureStillStarting(current)
     resultTasks.append(
       Task {
         for await audio in heard { await hear(audio) }
@@ -207,6 +213,15 @@ actor OnDeviceTranscriber {
     merger.reset()
     gate.set(true)
     AnalyzerAudioPipeline.releaseSession()
+  }
+
+  private func cancel(_ abandoned: [LanguageAnalyzer]) async {
+    let ids = Set(abandoned.map { ObjectIdentifier($0.analyzer) })
+    analyzers.removeAll { ids.contains(ObjectIdentifier($0.analyzer)) }
+    for entry in abandoned {
+      entry.input.finish()
+      await entry.analyzer.cancelAndFinishNow()
+    }
   }
 
   private func ensureStillStarting(_ startGeneration: Int) throws {

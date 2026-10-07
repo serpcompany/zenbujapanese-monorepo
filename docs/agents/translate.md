@@ -69,6 +69,8 @@ The tab is split across two Swift targets in `apps/ios/Modules`
   sound and cancels it from the microphone, so `SpeechPlaybackClient.reachesMicrophone` is false.
   `LiveConversation`'s `EchoGuard` backs this up: text that mostly repeats a translation spoken in
   the last 1.5 s is ignored. Playback doesn't start the next sentence while anyone is talking.
+  A spoken sentence that hasn't finished within 5 s plus 0.3 s per character (the engine stopped,
+  or the synthesizer never sent its last buffer) is stopped, so the playback queue can't hang.
 - When the sound does reach the microphone uncancelled (Listening on the iPhone's speaker, with
   no voice processing, or a typed result), the microphone still isn't stopped during playback:
   `setHearing(false)` feeds the analyzers silence instead, so their timeline stays continuous, and
