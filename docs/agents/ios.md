@@ -64,6 +64,9 @@ xcrun devicectl device install app --device <device-udid> \
   "/tmp/zenbu-dev/Build/Products/Debug-iphoneos/Zenbu Japanese.app"
 ```
 
+Zenbu Dev signs in to the account with Google or an emailed code, not with Apple (Account and sync,
+below).
+
 ### From a Mac the iPhone can't reach
 
 Remote Desktop doesn't pass an iPhone's USB connection through to a Mac, so Xcode on a cloud Mac
@@ -348,7 +351,12 @@ tests prove that model against the real service.
   Transport Security allows plain HTTP to an IP address.
 - **Apple.** `apps/ios/App/ZenbuJapanese.entitlements` asks for Sign in with Apple, which the App ID
   (`com.zenbujapanese.app`) needs in Apple Developer. The app asks the service for a nonce and gives
-  Apple its SHA-256 (`AppleSignIn.swift`).
+  Apple its SHA-256 (`AppleSignIn.swift`). Apple's token names the app's bundle ID, and the service
+  takes only the IDs in `apps/account-api/src/domain/clients.ts`, so a Zenbu Dev build
+  (`com.zenbujapanese.app.dev`) can't sign in with Apple. `ZENBU_BUNDLE_ID_SUFFIX` reaches the app as
+  `ZenbuBundleIDSuffix` in `apps/ios/App/Info.plist`; when it isn't empty, the sign-in sheet shows a
+  note in place of the Apple button, and deleting an Apple account says to use the App Store or
+  TestFlight app. Google and emailed codes work in Zenbu Dev.
 - **Google** needs no SDK: `ASWebAuthenticationSession` opens Google's OAuth for iOS with PKCE, the
   nonce, and the reversed client ID as the redirect, which the session catches itself, so no URL
   type is registered. The app exchanges the code at Google's token endpoint for the ID token. The

@@ -5,9 +5,11 @@ struct AccountServiceConfiguration: Sendable, Equatable {
   static let serviceURLKey = "ZenbuAccountServiceURL"
   static let serviceURLEnvironmentKey = "ZENBU_ACCOUNT_API_URL"
   static let googleClientIDKey = "ZenbuGoogleIOSClientID"
+  static let bundleIDSuffixKey = "ZenbuBundleIDSuffix"
 
   let serviceURL: URL
   let googleClientID: String?
+  var offersApple = true
 
   static func resolve(
     bundle: Bundle = .main,
@@ -23,9 +25,12 @@ struct AccountServiceConfiguration: Sendable, Equatable {
     else { return nil }
     let googleClientID = (bundle.object(forInfoDictionaryKey: googleClientIDKey) as? String)?
       .trimmingCharacters(in: .whitespacesAndNewlines)
+    let bundleIDSuffix = (bundle.object(forInfoDictionaryKey: bundleIDSuffixKey) as? String)?
+      .trimmingCharacters(in: .whitespacesAndNewlines)
     return AccountServiceConfiguration(
       serviceURL: serviceURL,
-      googleClientID: googleClientID?.isEmpty == false ? googleClientID : nil)
+      googleClientID: googleClientID?.isEmpty == false ? googleClientID : nil,
+      offersApple: bundleIDSuffix?.isEmpty ?? true)
   }
 
   private static func serviceURL(_ raw: String) -> URL? {

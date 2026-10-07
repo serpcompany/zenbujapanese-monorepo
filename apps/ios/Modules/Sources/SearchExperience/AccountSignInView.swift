@@ -20,12 +20,18 @@ struct AccountSignInView: View {
         }
 
         Section {
-          AppleSignInButton(type: .signIn) {
-            run { try await zenbuAccount.signInWithApple() }
+          if zenbuAccount.offersApple {
+            AppleSignInButton(type: .signIn) {
+              run { try await zenbuAccount.signInWithApple() }
+            }
+            .frame(height: 50)
+            .listRowInsets(EdgeInsets())
+            .listRowBackground(Color.clear)
+          } else {
+            Text(AccountMessage.appleUnavailableInDevBuild)
+              .foregroundStyle(.secondary)
+              .accessibilityIdentifier("account.sign-in.apple-unavailable")
           }
-          .frame(height: 50)
-          .listRowInsets(EdgeInsets())
-          .listRowBackground(Color.clear)
           if zenbuAccount.offersGoogle {
             GoogleSignInButton {
               run { try await zenbuAccount.signInWithGoogle() }

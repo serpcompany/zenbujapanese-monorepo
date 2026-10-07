@@ -10,6 +10,8 @@
 	<array>
 		<string>fetch</string>
 	</array>
+	<key>ZenbuBundleIDSuffix</key>
+	<string>$(ZENBU_BUNDLE_ID_SUFFIX)</string>
 	<key>ZenbuAccountServiceURL</key>
 	<string>$(ZENBU_ACCOUNT_API_URL)</string>
 	<key>ZenbuGoogleIOSClientID</key>

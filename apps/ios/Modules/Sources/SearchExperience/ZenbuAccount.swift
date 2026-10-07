@@ -37,6 +37,7 @@ final class ZenbuAccount {
 
   var account: SignedInAccount? { sync.account }
   var offersGoogle: Bool { configuration.googleClientID != nil }
+  var offersApple: Bool { configuration.offersApple }
 
   func sendEmailCode(to email: String) async throws {
     try await api.sendEmailCode(to: Self.normalized(email))

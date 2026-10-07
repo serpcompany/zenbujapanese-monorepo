@@ -149,6 +149,31 @@ struct AccountSignInTests {
         .googleClientID == nil)
   }
 
+  @Test("a Zenbu Dev build, whose bundle ID has a suffix, doesn't offer Sign in with Apple")
+  func devBuildsOfferNoApple() throws {
+    let builds = FileManager.default.temporaryDirectory
+      .appending(path: "account-bundles-\(UUID().uuidString)", directoryHint: .isDirectory)
+    defer { try? FileManager.default.removeItem(at: builds) }
+    func configuration(suffix: String) throws -> AccountServiceConfiguration? {
+      let bundleURL = builds.appending(path: "Build\(suffix).bundle", directoryHint: .isDirectory)
+      try FileManager.default.createDirectory(at: bundleURL, withIntermediateDirectories: true)
+      let info: [String: String] = [
+        "CFBundleIdentifier": "com.zenbujapanese.app\(suffix)",
+        AccountServiceConfiguration.serviceURLKey: "https://example.test",
+        AccountServiceConfiguration.bundleIDSuffixKey: suffix,
+      ]
+      try PropertyListSerialization.data(fromPropertyList: info, format: .xml, options: 0)
+        .write(to: bundleURL.appending(path: "Info.plist"))
+      let bundle = try #require(Bundle(url: bundleURL))
+      let defaults = try #require(UserDefaults(suiteName: "account-tests-\(UUID().uuidString)"))
+      return AccountServiceConfiguration.resolve(
+        bundle: bundle, defaults: defaults, environment: [:])
+    }
+
+    #expect(try configuration(suffix: "")?.offersApple == true)
+    #expect(try configuration(suffix: ".dev")?.offersApple == false)
+  }
+
   @Test("Google's request carries PKCE, the nonce, and the reversed client ID")
   func googleRequest() throws {
     let google = GoogleSignIn(
