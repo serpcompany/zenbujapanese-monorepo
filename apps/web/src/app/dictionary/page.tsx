@@ -1,6 +1,10 @@
+import { DictionaryHomeSections } from '@/components/dictionary/browse/home-sections'
 import { DictionaryBreadcrumbs } from '@/components/dictionary/dictionary-breadcrumbs'
 import { SearchForm } from '@/components/dictionary/search-form'
+import { getHomeBrowse } from '@/lib/dictionary/browse/data'
 import { dictionaryMetadata } from '@/lib/dictionary/metadata'
+
+export const dynamic = 'force-dynamic'
 
 export const metadata = dictionaryMetadata(
   '/dictionary/',
@@ -8,11 +12,12 @@ export const metadata = dictionaryMetadata(
   'Look up Japanese words and kanji in Japanese, kana, romaji, or English.'
 )
 
-export default function DictionaryPage() {
+export default async function DictionaryPage() {
+  const browse = await getHomeBrowse()
   return (
-    <main className="mx-auto flex w-full max-w-2xl flex-1 flex-col gap-4 px-4 pt-4 pb-6">
+    <main className="mx-auto flex w-full max-w-3xl flex-1 flex-col gap-4 px-4 pt-4 pb-16">
       <DictionaryBreadcrumbs />
-      <section className="flex flex-1 flex-col items-center justify-center gap-8 pt-10 pb-[12vh] text-center">
+      <section className="mx-auto flex min-h-[70svh] w-full max-w-2xl flex-col items-center justify-center gap-8 pt-10 pb-[12vh] text-center">
         <div className="flex flex-col items-center gap-4">
           <h1 className="text-4xl font-semibold tracking-tight text-balance sm:text-5xl">
             Japanese dictionary
@@ -26,6 +31,9 @@ export default function DictionaryPage() {
           <SearchForm autoFocus />
         </div>
       </section>
+      {browse ? (
+        <DictionaryHomeSections summary={browse.summary} hiragana={browse.hiragana} />
+      ) : null}
     </main>
   )
 }

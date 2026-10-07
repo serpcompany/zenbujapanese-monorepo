@@ -38,7 +38,7 @@ struct KanjiReferenceEntry: Codable, Hashable, Sendable {
   let strokeCount: Int
   let commonMiscounts: [Int]
   let grade: Int?
-  let jlpt: Int?
+  let wallerJlptLevel: Int?
   let frequencyRank: Int?
   let classicalRadicalNumber: Int?
   let meanings: [String]

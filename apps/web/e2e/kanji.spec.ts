@@ -1,5 +1,5 @@
 import type { Page } from '@playwright/test'
-import { expect, needed, test, word } from './test'
+import { expect, needed, sourcesToggle, test, word } from './test'
 
 const kanjiSearch = encodeURI('/dictionary/search/要/')
 const kanaOnly = word(1577980)
@@ -13,7 +13,10 @@ async function expectKanjiDetails(page: Page) {
   const main = page.getByRole('main')
   await expect(main.getByRole('button', { name: 'Show stroke order for 要' })).toBeVisible()
   await expect(main.getByRole('term')).toHaveText(['Strokes', 'Grade', 'JLPT'])
-  await expect(main.getByRole('definition')).toHaveText(['9', '4', 'N2'])
+  await expect(main.getByRole('definition')).toHaveText(['9', '4', 'N3'])
+  await expect(
+    main.getByRole('link', { name: 'JLPT kanji levels', includeHidden: true })
+  ).toBeAttached()
   await expect(main.getByText('need, main point, essence, pivot, key to')).toBeVisible()
   for (const part of ['Readings', 'Elements', 'Lists', 'Notes', 'Words']) {
     await expect(main.getByRole('heading', { level: 3, name: part })).toBeVisible()
@@ -62,6 +65,12 @@ test.describe('kanji details', () => {
   for (const { on, path } of rows) {
     test(`${on} credits KanjiVG and Kanjium for the kanji details`, async ({ page }) => {
       await page.goto(path)
+      const kanjiVG = page
+        .getByRole('main')
+        .getByRole('link', { name: 'KanjiVG', includeHidden: true })
+      await expect(kanjiVG).toBeAttached()
+      await expect(kanjiVG).toBeHidden()
+      await sourcesToggle(page).click()
       for (const source of ['KanjiVG', 'Kanjium']) {
         await expect(page.getByRole('main').getByRole('link', { name: source })).toBeVisible()
       }
@@ -71,6 +80,7 @@ test.describe('kanji details', () => {
   for (const path of ['/dictionary/search/iru/', kanaOnly.path]) {
     test(`${decodeURI(path)}, without kanji details, credits neither`, async ({ page }) => {
       await page.goto(path)
+      await sourcesToggle(page).click()
       await expect(page.getByRole('main').getByRole('link', { name: 'JMdict' })).toBeVisible()
       for (const source of ['KanjiVG', 'Kanjium']) {
         await expect(page.getByRole('main').getByRole('link', { name: source })).toHaveCount(0)

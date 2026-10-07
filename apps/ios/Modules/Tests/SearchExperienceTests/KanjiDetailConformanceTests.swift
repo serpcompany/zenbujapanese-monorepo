@@ -62,6 +62,7 @@ private struct KanjiDetailObserver {
     if let reference {
       observed.strokeCount = reference.strokeCount
       observed.grade = reference.grade
+      observed.jlpt = reference.stats.first { $0.identifier == "kanji-detail.jlpt" }?.value
       observed.meanings = reference.meanings
       observed.readings = reference.readings.map { reading in
         KanjiDetailCase.Reading(
@@ -104,6 +105,7 @@ private struct KanjiDetailCase: Codable {
   var hasReference: Bool?
   var strokeCount: Int?
   var grade: Int?
+  var jlpt: String?
   var meanings: [String]?
   var readings: [Reading]?
   var elements: [Element]?

@@ -35,6 +35,11 @@ struct CreditsView: View {
         credit: "Unofficial level estimates from Jonathan Waller's lists, matched to JMdict by stephenmk.",
         license: "CC BY-SA 4.0", project: "https://github.com/stephenmk/yomitan-jlpt-vocab")
       source(
+        "JLPT Kanji Levels",
+        credit: "Unofficial level estimates from Jonathan Waller's JLPT kanji lists (tanos.co.uk).",
+        license: "CC BY",
+        project: "https://web.archive.org/web/20200806005029/http://www.tanos.co.uk/jlpt/jlpt5/kanji/")
+      source(
         "TUBELEX", credit: "YouTube frequency data by Adam Nohejl and contributors.",
         license: "BSD-3-Clause", project: "https://github.com/naist-nlp/tubelex")
       source(

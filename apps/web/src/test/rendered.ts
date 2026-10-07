@@ -128,7 +128,6 @@ export interface RenderedExample {
   position: number
   words: RenderedExampleWord[]
   translation: string
-  credit: string
 }
 
 export function readRenderedExamples(html: string): RenderedExample[] {
@@ -143,12 +142,10 @@ export function readRenderedExamples(html: string): RenderedExample[] {
       marked: /class="[^"]*border-b-2/.test(element)
     }))
     const translation = item.match(/<p class="text-muted-foreground">([\s\S]*?)<\/p>/)?.[1] ?? ''
-    const credit = item.match(/<p class="text-xs text-muted-foreground">([\s\S]*?)<\/p>/)?.[1] ?? ''
     return {
       position: Number(value),
       words,
-      translation: visibleText(translation),
-      credit: visibleText(credit)
+      translation: visibleText(translation)
     }
   })
 }
