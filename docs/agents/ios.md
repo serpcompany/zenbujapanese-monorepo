@@ -47,6 +47,23 @@ or how fast it feels. The app needs iOS 26.0 or later, and the Sudachi cache abo
 4. If iOS asks, turn on Developer Mode under Settings → Privacy & Security → Developer Mode. With a
    free Apple ID, also trust it under Settings → General → VPN & Device Management.
 
+### Beside the TestFlight app
+
+To try unreleased work without replacing the TestFlight app, build it as **Zenbu Dev**. The
+target's bundle ID ends in `ZENBU_BUNDLE_ID_SUFFIX` and its name is `ZENBU_DISPLAY_NAME` (empty and
+`Zenbu Japanese` by default), so overriding them installs a separate app with its own data and
+leaves `project.pbxproj` alone. From `apps/ios`, with the phone's UDID from
+`xcrun devicectl list devices`:
+
+```sh
+xcodebuild -project ZenbuJapanese.xcodeproj -scheme ZenbuJapanese -configuration Debug \
+  -destination 'platform=iOS,id=<device-udid>' -derivedDataPath /tmp/zenbu-dev \
+  DEVELOPMENT_TEAM=<team-id> CODE_SIGN_STYLE=Automatic \
+  ZENBU_BUNDLE_ID_SUFFIX=.dev ZENBU_DISPLAY_NAME="Zenbu Dev" -allowProvisioningUpdates build
+xcrun devicectl device install app --device <device-udid> \
+  "/tmp/zenbu-dev/Build/Products/Debug-iphoneos/Zenbu Japanese.app"
+```
+
 ### From a Mac the iPhone can't reach
 
 Remote Desktop doesn't pass an iPhone's USB connection through to a Mac, so Xcode on a cloud Mac
@@ -108,6 +125,9 @@ xcodebuild -scheme ZenbuJapaneseModules \
   -destination 'platform=iOS Simulator,id=<booted-simulator-udid>' \
   ONLY_ACTIVE_ARCH=YES test
 ```
+
+The Translate tab has its own test target, `TranslatorCoreTests`, and its own guide,
+[`translate.md`](translate.md).
 
 `SearchConformanceTests` checks Search against the shared conformance suite in
 `apps/ios/LanguageData/Conformance/search-retrieval.json` (see ADR 0006). Only each result's

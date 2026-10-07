@@ -1,0 +1,58 @@
+import SwiftUI
+import TranslatorCore
+
+struct TranslateTabRoot: View {
+  let experience: TranslateExperience
+  let words: TranslateWordLinks
+  let isConversationOnScreen: Bool
+  let push: (TranslateRoute) -> Void
+
+  var body: some View {
+    Group {
+      if let session = experience.session {
+        LiveConversationView(
+          session: session, experience: experience, words: words,
+          isOnScreen: isConversationOnScreen)
+          .transition(.move(edge: .trailing))
+      } else {
+        TranslateHomeView(
+          experience: experience,
+          openHistory: { push(.history) },
+          openText: { push(.text($0)) }
+        )
+        .transition(.move(edge: .leading))
+      }
+    }
+    .animation(.smooth, value: experience.session == nil)
+    .modifier(TranslateDestinations(experience: experience, words: words))
+  }
+}
+
+struct TranslateDestinations: ViewModifier {
+  let experience: TranslateExperience
+  let words: TranslateWordLinks
+
+  func body(content: Content) -> some View {
+    content.navigationDestination(for: TranslateRoute.self) { route in
+      switch route {
+      case .text(let text):
+        TypedTranslationScreen(text: text, experience: experience, words: words)
+      case .history:
+        TranslateHistoryView(history: experience.history, transcript: transcriptActions)
+      case .conversation(let id):
+        TranslateConversationDetailView(
+          conversationID: id, history: experience.history, actions: transcriptActions)
+      }
+    }
+  }
+
+  private var transcriptActions: TranscriptActions {
+    TranscriptActions(
+      words: words, readingAids: experience.readingAids,
+      conversationWords: experience.conversationWords,
+      speak: experience.session == nil
+        ? { text, language in
+          Task { await experience.services.clients.playback.speak(text, language) }
+        } : nil)
+  }
+}

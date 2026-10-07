@@ -1,6 +1,6 @@
 # Player
 
-Player is the app's second tab. A learner watches a YouTube video with its Japanese
+Player is the app's third tab. A learner watches a YouTube video with its Japanese
 captions listed below the player as caption cards, and looks up any captioned word with the same
 dictionary sheet Image Search uses.
 
