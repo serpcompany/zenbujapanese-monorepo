@@ -28,7 +28,7 @@ export function ProfileForm({ api, tokens, profile, onChanged, onSignedOut }: Pr
   const [problem, setProblem] = useState<string | null>(null)
   const [notice, setNotice] = useState<string | null>(null)
 
-  if (profile.version !== shownVersion) {
+  if (profile.version > shownVersion) {
     setShownVersion(profile.version)
     setName(profile.name)
     setUsername(profile.username ?? '')

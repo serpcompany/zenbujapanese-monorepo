@@ -6,7 +6,8 @@ import { Button } from '@/components/ui/button'
 import { accessTokens } from '@/lib/account/access-tokens'
 import type { AccountSession } from '@/lib/account/answers'
 import { accountApi } from '@/lib/account/client'
-import { takeConfirming } from '@/lib/account/confirming'
+import { forgetConfirming } from '@/lib/account/confirming'
+import { afterGoogleConfirmation } from '@/lib/account/flows'
 import { isFresh, loadAccount, type SignedInAccount } from '@/lib/account/load'
 import { failureMessage, isSignedOut, returnedErrorMessage } from '@/lib/account/messages'
 import { accountPages } from '@/lib/account/pages'
@@ -56,6 +57,7 @@ export function AccountView({
   const tokens = useMemo(() => accessTokens(api), [api])
   const [view, setView] = useState<View>({ kind: 'loading' })
   const [signOutProblem, setSignOutProblem] = useState<string | null>(null)
+  const [confirmedHere, setConfirmedHere] = useState(0)
 
   const signedOut = useCallback(
     (notice: string | null) => {
@@ -67,24 +69,25 @@ export function AccountView({
   )
 
   const load = useCallback(async () => {
-    const confirming = takeConfirming()
     const loaded = await loadAccount(api, tokens)
-    if (loaded.kind === 'signed-out') return signedOut(null)
+    if (loaded.kind === 'signed-out') {
+      forgetConfirming()
+      return signedOut(null)
+    }
     if (loaded.kind === 'failed') {
       return setView({ kind: 'unreachable', problem: failureMessage(loaded.failure) })
     }
     rememberSignedIn(true)
     const { session } = loaded.account
-    const confirmedAnotherAccount = confirming !== null && confirming.userId !== session.userId
-    if (confirming && !confirmedAnotherAccount && confirming.token !== session.token) {
-      void api.revokeSession(confirming.token)
-    }
+    const confirmation = afterGoogleConfirmation(api, session)
+    if (confirmation === 'this-account') setConfirmedHere(Date.now())
     setView({
       kind: 'signed-in',
       account: loaded.account,
-      notice: confirmedAnotherAccount
-        ? `That Google account signs in to another Zenbu account, so this browser is now signed in to ${session.email}.`
-        : null
+      notice:
+        confirmation === 'another-account'
+          ? `That Google account signs in to another Zenbu account, so this browser is now signed in to ${session.email}.`
+          : null
     })
   }, [api, tokens, signedOut])
 
@@ -134,8 +137,10 @@ export function AccountView({
     tokens,
     settings,
     account,
-    freshNow: () => isFresh(account),
+    freshNow: () => isFresh(account, confirmedHere),
     onConfirmed: (session: AccountSession | null) => {
+      if (session && session.userId !== account.session.userId) return void load()
+      setConfirmedHere(Date.now())
       if (session) update(current => ({ ...current, session }))
     },
     onSignedOut: () => signedOut(null)

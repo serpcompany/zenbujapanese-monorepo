@@ -2,7 +2,7 @@ import { type AccountSession, isFields } from './answers'
 
 const storageKey = 'zenbu-confirming'
 
-export interface Confirming {
+interface Confirming {
   userId: string
   token: string
 }
@@ -15,14 +15,21 @@ export function rememberConfirming({ userId, token }: AccountSession): void {
   }
 }
 
-export function takeConfirming(): Confirming | null {
+export function confirmingFrom(): Confirming | null {
   try {
     const stored: unknown = JSON.parse(window.sessionStorage.getItem(storageKey) ?? 'null')
-    window.sessionStorage.removeItem(storageKey)
     return isFields(stored) && typeof stored.userId === 'string' && typeof stored.token === 'string'
       ? { userId: stored.userId, token: stored.token }
       : null
   } catch {
     return null
+  }
+}
+
+export function forgetConfirming(): void {
+  try {
+    window.sessionStorage.removeItem(storageKey)
+  } catch {
+    return
   }
 }

@@ -1,121 +1,51 @@
 import { afterEach, describe, expect, test, vi } from 'vitest'
-import type { AccountSettings } from '@/lib/account/settings'
-import { idTokenFor, jwtFor } from '@/test/account-answers'
+import { idTokenFor } from '@/test/account-answers'
 import {
   answer,
-  apiUrl,
   click,
   fill,
   refusal,
   render,
-  type ServiceCall,
-  settle,
   shows,
   stubAccountService,
   submit,
   unmount
 } from '@/test/account-page'
+import {
+  appleAnswering,
+  appleWay,
+  callTo,
+  confirmWithEmailCode,
+  email,
+  emailWay,
+  googleWay,
+  newAccess,
+  oldAccess,
+  profile,
+  settings,
+  signedIn
+} from '@/test/signed-in-account'
 import { AccountView } from './account-view'
 
 afterEach(unmount)
 
-const email = 'kana@example.com'
-const minutesAgo = (minutes: number) => new Date(Date.now() - minutes * 60_000).toISOString()
-const profile = {
-  id: 'u1',
-  name: 'Kana Fan',
-  username: 'kana_fan',
-  email,
-  version: 3,
-  createdAt: '2026-10-01T00:00:00.000Z',
-  updatedAt: '2026-10-01T00:00:00.000Z'
-}
-const oldAccess = jwtFor({ sub: 'u1' }, 'old')
-const newAccess = jwtFor({ sub: 'u1' }, 'new')
-const emailWay = { id: 'i1', providerId: 'email', accountId: email }
-const appleWay = { id: 'i2', providerId: 'apple', accountId: '001.apple' }
-const googleWay = { id: 'i3', providerId: 'google', accountId: '109' }
-
-const settings = (apple = false, google = false): AccountSettings => ({
-  apiUrl,
-  appleServicesId: apple ? 'com.zenbujapanese.web' : null,
-  google
-})
-
-function signedIn({
-  signedInMinutesAgo = 1,
-  ways = [emailWay],
-  more = {}
-}: {
-  signedInMinutesAgo?: number
-  ways?: object[]
-  more?: Parameters<typeof stubAccountService>[0]
-} = {}) {
-  return stubAccountService({
-    'GET /v1/auth/get-session': [
-      answer({
-        user: { id: 'u1', email },
-        session: { token: 'old-bare', createdAt: minutesAgo(signedInMinutesAgo) }
-      }),
-      answer({
-        user: { id: 'u1', email },
-        session: { token: 'new-bare', createdAt: minutesAgo(0) }
-      })
-    ],
-    'GET /v1/auth/token': [answer({ token: oldAccess }), answer({ token: newAccess })],
-    'GET /v1/me': answer(profile),
-    'GET /v1/auth/list-accounts': answer(ways),
-    'POST /v1/auth/email-otp/send-verification-otp': answer({ success: true }),
-    'POST /v1/auth/sign-in/email-otp': answer({ token: 'new-bare', user: { id: 'u1' } }),
-    'POST /v1/auth/revoke-session': answer({ status: true }),
-    'POST /v1/auth/sign-out': answer({ success: true }),
-    'DELETE /v1/me': answer({ status: 'deleted' }),
-    ...more
-  })
-}
-
-const callTo = (calls: ServiceCall[], route: string) => calls.filter(call => call.route === route)
-
-async function confirmWithEmailCode(container: HTMLElement) {
-  await shows(container, `We'll email a code to ${email}`)
-  await submit(container, 'Email me a code')
-  await shows(container, 'We sent a 6-digit code')
-  await fill(container, 'Code', '123456')
-  await submit(container, 'Confirm')
-}
-
-function appleAnswering(firstSub: string) {
-  const init = vi.fn()
-  const apple = { sub: firstSub, init }
-  vi.stubGlobal('AppleID', {
-    auth: {
-      init,
-      signIn: async () => ({
-        authorization: {
-          code: `apple-code-for-${apple.sub}`,
-          id_token: idTokenFor(apple.sub),
-          state: init.mock.lastCall?.[0]?.state
-        }
-      })
-    }
-  })
-  return apple
+async function askedToDelete(appleOffered = false) {
+  const page = render(<AccountView settings={settings(appleOffered)} returnedError={null} />)
+  await shows(page, `Signed in as ${email}`)
+  await click(page, 'Delete account')
+  await click(page, 'Delete my account')
+  return page
 }
 
 async function deletingAnAppleAccount(more: Parameters<typeof stubAccountService>[0] = {}) {
   const service = signedIn({
     ways: [appleWay],
     more: {
-      'POST /v1/auth/sign-in/nonce': answer({ nonce: 'n1', expiresIn: 600 }),
       'POST /v1/auth/sign-in/social': answer({ token: 'new-bare', user: { id: 'u1' } }),
       ...more
     }
   })
-  const page = render(<AccountView settings={settings(true)} returnedError={null} />)
-  await shows(page, `Signed in as ${email}`)
-  await click(page, 'Delete account')
-  await click(page, 'Delete my account')
-  return { ...service, page }
+  return { ...service, page: await askedToDelete(true) }
 }
 
 describe('the account page', () => {
@@ -216,10 +146,7 @@ describe('the account page', () => {
         'DELETE /v1/me': [refusal(403, 'sign_in_again'), answer({ status: 'deleted' })]
       }
     })
-    const page = render(<AccountView settings={settings()} returnedError={null} />)
-    await shows(page, `Signed in as ${email}`)
-    await click(page, 'Delete account')
-    await click(page, 'Delete my account')
+    const page = await askedToDelete()
     await shows(page, 'For your security, confirm it’s you first.')
     await confirmWithEmailCode(page)
     await shows(page, 'Your account is deleted.')
@@ -272,88 +199,6 @@ describe('the account page', () => {
     expect(page.textContent).not.toContain('Your account is deleted.')
   })
 
-  test('removes a way to sign in after asking, and after a fresh sign-in when the last is old', async () => {
-    const { calls } = signedIn({
-      signedInMinutesAgo: 20,
-      ways: [emailWay, googleWay],
-      more: { 'POST /v1/auth/unlink-account': answer({ status: true }) }
-    })
-    const page = render(<AccountView settings={settings()} returnedError={null} />)
-    await shows(page, `Signed in as ${email}`)
-    await click(page, 'Remove Google')
-    await shows(page, 'Stop signing in with Google?')
-    await click(page, 'Remove it')
-    await confirmWithEmailCode(page)
-    await settle()
-    await vi.waitFor(() =>
-      expect(callTo(calls, 'POST /v1/auth/unlink-account')[0]?.body).toEqual({ accountId: 'i3' })
-    )
-    await vi.waitFor(() => expect(callTo(calls, 'GET /v1/auth/list-accounts')).toHaveLength(2))
-  })
-
-  test('adds Google by sending the browser to Google, to come back to the account page', async () => {
-    const assign = vi.fn()
-    vi.stubGlobal('location', { ...window.location, origin: window.location.origin, assign })
-    const { calls } = signedIn({
-      more: {
-        'POST /v1/auth/link-social': answer({
-          url: 'https://accounts.google.com/x',
-          redirect: true
-        })
-      }
-    })
-    const page = render(<AccountView settings={settings(false, true)} returnedError={null} />)
-    await shows(page, `Signed in as ${email}`)
-    await click(page, 'Add Google')
-    const back = `${window.location.origin}/account/`
-    expect(callTo(calls, 'POST /v1/auth/link-social')[0]?.body).toEqual({
-      provider: 'google',
-      callbackURL: back,
-      errorCallbackURL: back
-    })
-    expect(assign).toHaveBeenCalledWith('https://accounts.google.com/x')
-  })
-
-  test("adds the account's own email as a way to sign in, with a code", async () => {
-    const { calls } = signedIn({ ways: [googleWay] })
-    const page = render(<AccountView settings={settings()} returnedError={null} />)
-    await shows(page, `Signed in as ${email}`)
-    expect(page.textContent).not.toContain('Remove')
-    await click(page, 'Add an email code')
-    await shows(page, `We'll email a code to ${email}`)
-    await submit(page, 'Email me a code')
-    await fill(page, 'Code', '123456')
-    await submit(page, 'Add it')
-    expect(callTo(calls, 'POST /v1/auth/sign-in/email-otp')[0]).toMatchObject({
-      credentials: 'include',
-      body: { email, otp: '123456' }
-    })
-    await vi.waitFor(() => expect(callTo(calls, 'GET /v1/auth/list-accounts')).toHaveLength(2))
-    expect(callTo(calls, 'POST /v1/auth/revoke-session')[0]?.body).toEqual({ token: 'old-bare' })
-  })
-
-  test('adds Apple with its popup, and stays signed in when Apple is refused on the way', async () => {
-    appleAnswering('001.apple')
-    const { calls } = signedIn({
-      more: {
-        'POST /v1/auth/sign-in/nonce': answer({ nonce: 'n1', expiresIn: 600 }),
-        'POST /v1/auth/link-social': [refusal(401, 'invalid_nonce'), answer({ status: true })]
-      }
-    })
-    const page = render(<AccountView settings={settings(true)} returnedError={null} />)
-    await shows(page, `Signed in as ${email}`)
-    await click(page, 'Add Apple')
-    await shows(page, 'That took too long. Try again.')
-    expect(page.textContent).toContain(`Signed in as ${email}`)
-    expect(window.localStorage.getItem('zenbu-signed-in')).toBe('yes')
-    await click(page, 'Add Apple')
-    expect(callTo(calls, 'POST /v1/auth/link-social')[1]?.body).toEqual({
-      provider: 'apple',
-      idToken: { token: idTokenFor('001.apple'), nonce: 'n1' }
-    })
-    await vi.waitFor(() => expect(callTo(calls, 'GET /v1/auth/list-accounts')).toHaveLength(2))
-  })
-
   test('keeps the learner signed in, and says so, when signing out fails', async () => {
     signedIn({ more: { 'POST /v1/auth/sign-out': refusal(500, 'internal') } })
     const page = render(<AccountView settings={settings()} returnedError={null} />)
@@ -384,5 +229,55 @@ describe('the account page', () => {
     await shows(page, `That Google account signs in to another Zenbu account`)
     expect(callTo(other.calls, 'POST /v1/auth/revoke-session')).toEqual([])
     expect(window.sessionStorage.getItem('zenbu-confirming')).toBeNull()
+  })
+
+  test('deletes nothing when the learner cancels while confirming is still finishing', async () => {
+    let finish: (response: Response) => void = () => {}
+    const { routes } = signedIn({
+      signedInMinutesAgo: 20,
+      more: {
+        'GET /v1/auth/get-session': [
+          answer({
+            user: { id: 'u1', email },
+            session: {
+              token: 'old-bare',
+              createdAt: new Date(Date.now() - 1_200_000).toISOString()
+            }
+          }),
+          () => new Promise<Response>(resolve => (finish = resolve))
+        ]
+      }
+    })
+    const page = await askedToDelete()
+    await confirmWithEmailCode(page)
+    await click(page, 'Cancel')
+    finish(
+      answer({
+        user: { id: 'u1', email },
+        session: { token: 'new-bare', createdAt: new Date().toISOString() }
+      })
+    )
+    await shows(page, 'Delete account')
+    await vi.waitFor(() => expect(routes()).toContain('POST /v1/auth/revoke-session'))
+    expect(routes()).not.toContain('DELETE /v1/me')
+  })
+
+  test('shows a newer profile the page reads, as after removing a way to sign in', async () => {
+    const newer = { ...profile, name: 'From the app', version: 5 }
+    signedIn({
+      ways: [emailWay, googleWay],
+      more: {
+        'GET /v1/me': [answer(profile), answer(newer)],
+        'POST /v1/auth/unlink-account': answer({ status: true })
+      }
+    })
+    const page = render(<AccountView settings={settings()} returnedError={null} />)
+    await shows(page, `Signed in as ${email}`)
+    expect(page.querySelector<HTMLInputElement>('#profile-name')?.value).toBe('Kana Fan')
+    await click(page, 'Remove Google')
+    await click(page, 'Remove it')
+    await vi.waitFor(() =>
+      expect(page.querySelector<HTMLInputElement>('#profile-name')?.value).toBe('From the app')
+    )
   })
 })

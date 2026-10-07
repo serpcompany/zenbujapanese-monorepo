@@ -27,7 +27,7 @@ interface SignInOptionsProps {
   googleReturn: { done: string; failed: string }
   refuseApple?: (authorization: AppleAuthorization) => string | null
   beforeGoogle?: () => void
-  onSignedIn: (apple: AppleCode | null) => void
+  onSignedIn: (apple: AppleCode | null) => void | Promise<void>
 }
 
 export function SignInOptions({
@@ -67,9 +67,9 @@ export function SignInOptions({
       nonce,
       name: authorization.name
     })
+    if (signedIn.ok) await onSignedIn({ code: authorization.code, returnUrl })
+    else setProblem(failureMessage(signedIn.failure))
     setBusy(false)
-    if (!signedIn.ok) return setProblem(failureMessage(signedIn.failure))
-    onSignedIn({ code: authorization.code, returnUrl })
   }
 
   async function withGoogle() {

@@ -2,7 +2,13 @@ import type { AccessTokens } from './access-tokens'
 import type { AccountSession } from './answers'
 import type { AppleCode } from './apple'
 import type { AccountApi, Failure } from './client'
+import { confirmingFrom, forgetConfirming } from './confirming'
 import { isSignedOut, needsFreshSignIn } from './messages'
+
+type Earlier = Pick<AccountSession, 'userId' | 'token'>
+
+const isEarlierSessionOf = (earlier: Earlier, current: AccountSession) =>
+  earlier.userId === current.userId && earlier.token !== current.token
 
 export async function afterSigningInAgain(
   api: AccountApi,
@@ -12,13 +18,28 @@ export async function afterSigningInAgain(
   tokens.forget()
   const session = await api.session()
   if (!session.ok || session.value === null) return null
-  if (session.value.token !== previous.token && session.value.userId === previous.userId) {
-    await api.revokeSession(previous.token)
-  }
+  if (isEarlierSessionOf(previous, session.value)) await api.revokeSession(previous.token)
   return session.value
 }
 
-export type Deletion =
+export async function stillSignedInAs(api: AccountApi, userId: string): Promise<boolean> {
+  const session = await api.session()
+  return session.ok && session.value?.userId === userId
+}
+
+export function afterGoogleConfirmation(
+  api: AccountApi,
+  session: AccountSession
+): 'none' | 'this-account' | 'another-account' {
+  const earlier = confirmingFrom()
+  forgetConfirming()
+  if (earlier === null) return 'none'
+  if (earlier.userId !== session.userId) return 'another-account'
+  if (isEarlierSessionOf(earlier, session)) void api.revokeSession(earlier.token)
+  return 'this-account'
+}
+
+type Deletion =
   | { kind: 'deleted' }
   | { kind: 'signed-out' }
   | { kind: 'confirm-first'; failure: Failure }

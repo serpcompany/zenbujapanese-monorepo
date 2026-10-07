@@ -5,18 +5,11 @@ on:
     paths:
       - apps/account-api/**
       - packages/node-service/**
-      - apps/web/src/app/login/**
-      - apps/web/src/app/register/**
-      - apps/web/src/app/forgot-password/**
-      - apps/web/src/app/account/**
-      - apps/web/src/components/account/**
-      - apps/web/src/hooks/**
-      - apps/web/src/lib/account/**
-      - apps/web/src/app/layout.tsx
-      - apps/web/src/components/site-footer.tsx
-      - apps/web/src/components/ui/**
+      - apps/web/src/**
       - apps/web/e2e/account-service.spec.ts
       - apps/web/e2e/test.ts
+      - apps/web/next.config.ts
+      - apps/web/package.json
       - apps/web/playwright.config.ts
       - apps/web/wrangler.jsonc
       - package.json

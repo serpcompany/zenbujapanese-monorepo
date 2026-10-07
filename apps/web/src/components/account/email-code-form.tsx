@@ -12,7 +12,7 @@ interface EmailCodeFormProps {
   email?: string
   sendLabel: string
   signInLabel: string
-  onSignedIn: () => void
+  onSignedIn: () => void | Promise<void>
 }
 
 export function EmailCodeForm({
@@ -48,9 +48,9 @@ export function EmailCodeForm({
     setBusy(true)
     setProblem(null)
     const signedIn = await api.signInWithCode(sentTo, code.trim())
+    if (signedIn.ok) await onSignedIn()
+    else setProblem(failureMessage(signedIn.failure))
     setBusy(false)
-    if (!signedIn.ok) return setProblem(failureMessage(signedIn.failure))
-    onSignedIn()
   }
 
   if (sentTo === null) {

@@ -59,7 +59,10 @@ nonce, and that Apple's script and window, and Google's page, come from those co
 `__Secure-zenbu.session_token` cookie, which keeps the learner signed in for 60 days from its last
 use or until they sign out or delete the account; the `__Secure-zenbu.state` cookie, for 5 minutes
 during a Google sign-in; both set by the account service for its own host, so the website's pages
-never read them; and the note in local storage that the browser signed in, for the footer.
+never read them; the note in local storage that the browser signed in, for the footer; and,
+while the learner confirms it's them with Google, the account they started from and their earlier
+session's ID in that tab's session storage, which the page sends to sign that session out when
+they come back.
 
 - Source: #468 ([Account pages](account.md)); Better Auth's cookies as the account service sets
   them ([`account-api.md`](../../../../docs/agents/account-api.md), Sign-in).

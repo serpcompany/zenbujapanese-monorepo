@@ -94,6 +94,8 @@ test.describe('privacy policy', () => {
       'sets them for api.zenbujapanese.com, so your browser sends them only there',
       "the website's pages can't read them",
       "a note in your browser's local storage that you signed in",
+      "while you confirm it's you with Google, it keeps in that tab's session storage",
+      'sign that earlier session out',
       'never sent to us'
     ])
   })

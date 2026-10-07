@@ -317,8 +317,9 @@ the account service ([`account-api.md`](account-api.md); the website's side of i
   `credentials: 'include'`. The service keeps the session in an HttpOnly cookie on its own host,
   which no page can read; the pages keep the 15-minute access token in memory
   (`src/lib/account/access-tokens.ts`), for the account they show only, and send it only to
-  `/v1/me`, without cookies. What takes more than one call, such as deleting the account or
-  signing in again, is in `src/lib/account/flows.ts`; the components make the single calls.
+  `/v1/me`, without cookies. Deleting the account, signing in again, coming back from a Google
+  confirmation, and checking the browser is still signed in to the account on the page are in
+  `src/lib/account/flows.ts`; the components make the other calls.
 - **Each answer's shape is checked where it enters** (`src/lib/account/answers.ts`), and the
   client (`src/lib/account/client.ts`) turns every answer into a value, a refusal with its code and
   `Retry-After`, a network failure, or an answer of another shape; `src/lib/account/messages.ts`
@@ -339,8 +340,9 @@ the account service ([`account-api.md`](account-api.md); the website's side of i
   page Apple's ID token and authorization code. Apple answers a popup only on a page of its return
   URL's origin, so the return URL is the site's own `/account/`, and deleting an Apple account
   sends it with the code (`appleRedirectUri`), for the service to take the code from Apple. The
-  script loads, and the nonce is fetched, when the learner points at or focuses an Apple button,
-  so the click opens the popup at once rather than after a request a popup blocker would count.
+  script loads, and the nonce is fetched, when the learner points at, focuses, or touches an Apple
+  button, and the next nonce right after each popup, so a click opens the popup at once rather than
+  after a request a popup blocker would count.
 - **Google** goes through the service: `POST /v1/auth/sign-in/social` (or `link-social`) names the
   page to come back to, and the browser goes to Google, then to the service's
   `/v1/auth/callback/google`, then back, with `?error=` on a failure.
@@ -350,7 +352,8 @@ the account service ([`account-api.md`](account-api.md); the website's side of i
   browser comes back from Google with Back, and `src/hooks/use-seems-signed-in.ts`, which reads
   the local-storage note behind the footer's Sign in or Account (`src/lib/account/signed-in.ts`).
   A confirmation through Google leaves the page, so `src/lib/account/confirming.ts` keeps the
-  account it left from in session storage, to sign its earlier session out on the way back.
+  account it left from in session storage, to sign its earlier session out on the way back; a
+  failed load keeps it for Try again, and coming back with Back drops it.
 
 To run them locally, run the account service ([`account-api.md`](account-api.md), Run it) with
 `ACCOUNT_API_TRUSTED_ORIGINS=http://localhost:3000,http://localhost:3100`; `pnpm dev` reads it at

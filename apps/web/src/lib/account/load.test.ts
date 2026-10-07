@@ -55,10 +55,11 @@ describe('loading the account page', () => {
     expect(await load(stubApi({ profile: refused(500) }))).toMatchObject({ kind: 'failed' })
   })
 
-  test('counts a sign-in from the last nine minutes as fresh', () => {
+  test("counts a sign-in, or a confirmation by this page's own clock, from the last nine minutes as fresh", () => {
     const account: SignedInAccount = { session, profile, identities: [] }
     const minute = 60_000
-    expect(isFresh(account, 8 * minute)).toBe(true)
-    expect(isFresh(account, 10 * minute)).toBe(false)
+    expect(isFresh(account, 0, 8 * minute)).toBe(true)
+    expect(isFresh(account, 0, 10 * minute)).toBe(false)
+    expect(isFresh(account, 5 * minute, 10 * minute)).toBe(true)
   })
 })

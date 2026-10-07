@@ -44,5 +44,5 @@ export const appleUsersOf = (account: SignedInAccount) =>
     .filter(identity => identity.provider === 'apple')
     .map(identity => identity.subject)
 
-export const isFresh = (account: SignedInAccount, now = Date.now()) =>
-  now - account.session.signedInAt < freshForMs
+export const isFresh = (account: SignedInAccount, confirmedHere: number, now = Date.now()) =>
+  now - Math.max(account.session.signedInAt, confirmedHere) < freshForMs

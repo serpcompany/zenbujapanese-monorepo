@@ -205,7 +205,10 @@ export default function PrivacyPage() {
       <p>
         The website also keeps a note in your browser's local storage that you signed in, so its
         footer links to your account. It holds nothing about you, is never sent to us, and goes when
-        you sign out.
+        you sign out. And while you confirm it's you with Google, it keeps in that tab's session
+        storage which account you started from and your earlier session's ID, so that when you come
+        back it can sign that earlier session out; it goes then, or when you come back without
+        signing in.
       </p>
 
       <h2>Support email</h2>

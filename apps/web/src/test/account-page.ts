@@ -16,7 +16,7 @@ export interface ServiceCall {
   body: Record<string, unknown> | undefined
 }
 
-type Answer = Response | ((call: ServiceCall) => Response)
+type Answer = Response | ((call: ServiceCall) => Response | Promise<Response>)
 
 export const answer = (body: unknown, status = 200, headers: Record<string, string> = {}) =>
   new Response(JSON.stringify(body), {
@@ -46,8 +46,7 @@ export function stubAccountService(routes: Record<string, Answer | Answer[]>) {
       const queue = queues.get(call.route) ?? []
       const next = queue.length > 1 ? queue.shift() : queue[0]
       if (!next) throw new TypeError(`No stub for ${call.route}`)
-      const response = typeof next === 'function' ? next(call) : next.clone()
-      return response
+      return typeof next === 'function' ? next(call) : next.clone()
     })
   )
   return { calls, routes: () => calls.map(call => call.route) }

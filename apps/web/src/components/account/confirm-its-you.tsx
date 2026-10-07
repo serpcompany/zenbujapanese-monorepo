@@ -1,11 +1,12 @@
 'use client'
 
+import { useEffect, useRef } from 'react'
 import { Button } from '@/components/ui/button'
 import type { AccessTokens } from '@/lib/account/access-tokens'
 import type { AccountSession } from '@/lib/account/answers'
 import { type AppleCode, appleUserOf } from '@/lib/account/apple'
 import type { AccountApi } from '@/lib/account/client'
-import { rememberConfirming } from '@/lib/account/confirming'
+import { forgetConfirming, rememberConfirming } from '@/lib/account/confirming'
 import { afterSigningInAgain } from '@/lib/account/flows'
 import { appleUsersOf, type SignedInAccount, signsInWith } from '@/lib/account/load'
 import { accountPages } from '@/lib/account/pages'
@@ -22,7 +23,11 @@ interface ConfirmItsYouProps {
   account: SignedInAccount
   appleOnly: boolean
   why: string
-  onConfirmed: (session: AccountSession | null, apple: AppleCode | null) => void
+  onConfirmed: (
+    session: AccountSession | null,
+    apple: AppleCode | null,
+    stillWanted: boolean
+  ) => void
   onCancel: () => void
 }
 
@@ -48,6 +53,15 @@ export function ConfirmItsYou({
     (ways.google && settings.google) ||
     ways.email
   const appleUsers = appleUsersOf(account)
+  const wanted = useRef(true)
+
+  useEffect(() => {
+    const backFromGoogle = (event: PageTransitionEvent) => {
+      if (event.persisted) forgetConfirming()
+    }
+    window.addEventListener('pageshow', backFromGoogle)
+    return () => window.removeEventListener('pageshow', backFromGoogle)
+  }, [])
 
   return (
     <section
@@ -70,7 +84,8 @@ export function ConfirmItsYou({
           }
           beforeGoogle={() => rememberConfirming(account.session)}
           onSignedIn={async apple => {
-            onConfirmed(await afterSigningInAgain(api, tokens, account.session), apple)
+            const session = await afterSigningInAgain(api, tokens, account.session)
+            onConfirmed(session, apple, wanted.current)
           }}
         />
       ) : (
@@ -79,7 +94,15 @@ export function ConfirmItsYou({
           instead.
         </p>
       )}
-      <Button type="button" variant="ghost" className="self-start" onClick={onCancel}>
+      <Button
+        type="button"
+        variant="ghost"
+        className="self-start"
+        onClick={() => {
+          wanted.current = false
+          onCancel()
+        }}
+      >
         Cancel
       </Button>
     </section>

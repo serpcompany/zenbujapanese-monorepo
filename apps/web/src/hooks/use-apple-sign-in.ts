@@ -31,6 +31,9 @@ export function useAppleSignIn(api: AccountApi, servicesId: string | null) {
     if (held && Date.now() - held.since < nonceGoodForMs) return held.preparation
     const preparation = prepareApple(api.nonce)
     preparing.current = { since: Date.now(), preparation }
+    void preparation.then(prepared => {
+      if (!prepared.ok && preparing.current?.preparation === preparation) preparing.current = null
+    })
     return preparation
   }, [api])
 

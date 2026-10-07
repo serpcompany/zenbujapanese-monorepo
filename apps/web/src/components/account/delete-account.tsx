@@ -122,9 +122,9 @@ export function DeleteAccount({
                 ? 'Your account signs in with Apple, so Apple confirms it’s you and we stop its access to your Apple ID.'
                 : 'Deleting needs a sign-in from the last few minutes.'
             }
-            onConfirmed={(session, apple) => {
+            onConfirmed={(session, apple, stillWanted) => {
               onConfirmed(session)
-              void remove(apple)
+              if (stillWanted) void remove(apple)
             }}
             onCancel={() => setStep('closed')}
           />

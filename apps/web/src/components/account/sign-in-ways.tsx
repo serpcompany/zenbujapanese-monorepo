@@ -7,7 +7,7 @@ import { useBusy } from '@/hooks/use-busy'
 import type { AccessTokens } from '@/lib/account/access-tokens'
 import type { AccountSession, Identity, Provider } from '@/lib/account/answers'
 import type { AccountApi, Result } from '@/lib/account/client'
-import { afterSigningInAgain } from '@/lib/account/flows'
+import { afterSigningInAgain, stillSignedInAs } from '@/lib/account/flows'
 import { type SignedInAccount, signsInWith } from '@/lib/account/load'
 import { failureMessage, isSignedOut, needsFreshSignIn } from '@/lib/account/messages'
 import { accountPages } from '@/lib/account/pages'
@@ -72,6 +72,14 @@ export function SignInWaysSection({
     setProblem(failureMessage(result.failure))
   }
 
+  async function signedInElsewhere() {
+    if (await stillSignedInAs(api, account.session.userId)) return false
+    setBusy(false)
+    setPending(null)
+    onChanged()
+    return true
+  }
+
   async function act(action: Pending, confirmed: boolean) {
     setPending(action)
     setProblem(null)
@@ -80,10 +88,12 @@ export function SignInWaysSection({
     if (!confirmed) return setConfirming(true)
     if (action.kind === 'remove') {
       setBusy(true)
+      if (await signedInElsewhere()) return
       return settle(await api.unlink(action.identity.id))
     }
     if (action.provider === 'google') {
       setBusy(true)
+      if (await signedInElsewhere()) return
       const back = `${window.location.origin}${accountPages.account.path}`
       const started = await api.startLinkingGoogle({ callbackURL: back, errorCallbackURL: back })
       if (started.ok) return window.location.assign(started.value)
@@ -96,6 +106,7 @@ export function SignInWaysSection({
         setBusy(false)
         return setProblem(outcome.message)
       }
+      if (await signedInElsewhere()) return
       return settle(
         await api.linkApple({
           idToken: outcome.authorization.idToken,
@@ -201,9 +212,10 @@ export function SignInWaysSection({
           account={account}
           appleOnly={false}
           why="Changing how you sign in needs a sign-in from the last few minutes."
-          onConfirmed={session => {
+          onConfirmed={(session, _apple, stillWanted) => {
             setConfirming(false)
             onConfirmed(session)
+            if (!stillWanted) return
             if (pending?.kind === 'add' && pending.provider === 'apple') {
               return setNotice('Confirmed. Now choose Add Apple again.')
             }

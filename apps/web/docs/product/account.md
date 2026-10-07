@@ -8,7 +8,9 @@ pages). The website doesn't sync known words or lists yet, and the word page's l
 still open the get-the-app prompt ([Dictionary](dictionary.md#word-page), Toolbar, and Lists and
 Notes), since signing in on the web doesn't make them work yet.
 
-Abbreviations: paths are under `apps/web/`. **Account spec** is `e2e/account.spec.ts`, the
+Abbreviations: paths are under `apps/web/`. **Ways tests** are
+`src/components/account/sign-in-ways.interaction.test.tsx`. **Account spec** is
+`e2e/account.spec.ts`, the
 browser tests at a desktop and a phone width, with a stand-in for the account service in the
 browser. **Account service spec** is `e2e/account-service.spec.ts`, which drives a learner
 through the pages against a real account service on its dev mailbox (`ZENBU_ACCOUNT_API=1`).
@@ -79,8 +81,9 @@ Google.
 
 **Sign in with Apple.** Offered where the Worker names a Services ID (`ACCOUNT_APPLE_SERVICES_ID`).
 The page loads Apple's Sign in with Apple JS when the learner points at, focuses, or touches the
-button, and asks the service for a nonce then, so the click opens Apple's popup at once; it gets
-the next nonce as soon as one is used, and a new one when the one it holds is nine minutes old. It
+button, and asks the service for a nonce then, so the click opens Apple's popup at once. It gets
+the next nonce right after each popup, and, when the one it holds is nine minutes old or couldn't
+be fetched, a new one at the next point, focus, touch, or click. It
 passes Apple the nonce's SHA-256 and the return URL `<site>/account/`, which Apple needs on the
 page's own origin for a popup. It signs in with Apple's ID token and the nonce, and, on a first
 sign-in, the name Apple hands the page. A closed popup says nothing; a blocked one says to allow
@@ -89,8 +92,9 @@ pop-ups; a nonce the service no longer knows says to try again.
 - Source: #468's decisions (Sign in with Apple JS in popup mode).
 - Check: `src/lib/account/apple.test.ts`; Sign-in form tests, "signs in with Apple's popup, passing
   the first sign-in's name"; Account page tests, "won't confirm with another Apple ID, and asks
-  again when Apple refuses the code" (the next nonce, ready before the next click). Apple itself:
-  not run; it takes no `localhost` return URL.
+  again when Apple refuses the code" (the next nonce, ready before the next click); Ways tests,
+  "gets Apple ready when the learner tabs to Add Apple, before the click". Apple itself: not run;
+  it takes no `localhost` return URL.
 
 **Sign in with Google.** Offered where `ACCOUNT_GOOGLE_SIGN_IN` is `on`. The page asks the service
 to start Google's sign-in and sends the browser to the page it names (only an `https` one). Google
@@ -136,41 +140,53 @@ which signs nothing in, only names the session to sign out after a fresh sign-in
 sends only what changed, with the profile's version; an empty username removes it. When the
 profile changed in another app first, the form shows it as it is now and says so; a taken username
 says to try another; another refusal shows the service's reason. When the page reads a newer
-profile, as after changing how the learner signs in, the form shows it.
+profile, as after changing how the learner signs in, the form shows it; an older one never
+replaces it.
 
 - Source: `PATCH /v1/me` ([`account-api.md`](../../../../docs/agents/account-api.md), Profiles and
   sync).
 - Check: Account page tests, "shows the profile as it is now when a change conflicts with one made
-  elsewhere"; Account service spec, which saves a name and username and reloads them.
+  elsewhere" and "shows a newer profile the page reads, as after removing a way to sign in";
+  Account service spec, which saves a name and username and reloads them.
 
 **Ways to sign in.** Each way the account signs in: Apple, Google, or "A code we email you" with
 its email. Each has Remove while there's more than one, which asks first ("Stop signing in with
 …? We'll email you that it was removed."). Add Apple, Add Google, and Add an email code appear for
 the ways the account lacks, where the site offers them; an email code adds the account's own
 email. Changing a way needs a sign-in from the last 10 minutes, so the page asks the learner to
-confirm it's you first when theirs is older, or when the service says so.
+confirm it's you first when theirs is older, or when the service says so. Before it changes a way,
+the page checks the browser is still signed in to the account it shows; signed in elsewhere since,
+as in another tab, it changes nothing and shows the account now signed in.
 
 - Source: the client guide (Signing in); `POST /v1/auth/link-social` and `unlink-account`.
-- Check: Account page tests, "removes a way to sign in after asking, and after a fresh sign-in
-  when the last is old", "adds Google by sending the browser to Google, to come back to the account
-  page", "adds the account's own email as a way to sign in, with a code", and "adds Apple with its
-  popup, and stays signed in when Apple is refused on the way".
+- Check: Ways tests, "removes a way to sign in after asking, and after a fresh sign-in when the
+  last is old", "adds Google by sending the browser to Google, to come back to the account page",
+  "adds the account's own email as a way to sign in, with a code", "adds Apple with its popup, and
+  stays signed in when Apple is refused on the way", and "changes nothing, and shows the account now
+  signed in, when another tab signed in elsewhere"; `src/lib/account/flows.test.ts`, "tells whether
+  the browser is still signed in to the account on the page".
 
 **Confirm it's you.** A fresh sign-in, with the ways the account has: Apple, Google, or a code to
 the account's own email. Apple must be the Apple ID the account uses: another is refused before
 it signs in. Confirming, or adding an email code, which signs in again too, signs this browser's
-earlier session out, and the page takes a new access token, which carries the new sign-in.
-Google's confirmation leaves the page and comes back to it; the page remembers the account it
-left from (in session storage) and, back on the same account, signs the earlier session out. If
-the Google account the learner chose signs in to another Zenbu account, the page says the browser
-is now signed in to that one, and changes nothing else.
+earlier session out, and the page takes a new access token, which carries the new sign-in. The
+page then counts itself fresh for nine minutes by its own clock, whatever the browser's clock says
+of the service's. Cancel while a confirmation is still finishing stops what it was for: nothing is
+deleted, removed, or added. Google's confirmation leaves the page and comes back to it; the page
+remembers the account it left from (in session storage) and, back on the same account, signs the
+earlier session out. If the Google account the learner chose signs in to another Zenbu account,
+the page says the browser is now signed in to that one, and changes nothing else. Coming back with
+the browser's Back button forgets it; a page that can't load the account keeps it for Try again.
 
 - Source: the client guide (Deleting the account: a sign-in from the last 10 minutes).
 - Check: Account page tests, "deletes after the learner confirms and, with a sign-in over nine
   minutes old, signs in again by code", "won't confirm with another Apple ID, and asks again when
-  Apple refuses the code", "adds the account's own email as a way to sign in, with a code", and
-  "after confirming with Google, signs the earlier session out, or says when Google's account is
-  another's".
+  Apple refuses the code", "after confirming with Google, signs the earlier session out, or says
+  when Google's account is another's", and "deletes nothing when the learner cancels while
+  confirming is still finishing"; Ways tests, "adds the account's own email as a way to sign in,
+  with a code", "adds Apple after confirming, whatever the browser clock says of the new sign-in",
+  and "confirming with Google remembers the account it leaves from, and forgets it back without
+  signing in"; `src/lib/account/flows.test.ts`.
 
 **Sign out.** Signs this browser out; the learner's other devices stay signed in. When the service
 can't sign it out, the page says so and stays signed in.
@@ -194,7 +210,8 @@ Deleted, the page says the account is gone from every Zenbu app and each device 
 data, signs the browser out, and the footer says Sign in again.
 
 - Source: #574; the client guide (Deleting the account).
-- Check: Account page tests, "deletes after the learner confirms and, with a sign-in over nine
+- Check: `src/lib/account/flows.test.ts`, "signs the browser out once deleted, and sorts each
+  refusal for the page"; Account page tests, "deletes after the learner confirms and, with a sign-in over nine
   minutes old, signs in again by code", "asks for a fresh sign-in when the service answers
   sign_in_again, though the page thought it fresh", "deletes an Apple account with Apple's code,
   after Apple signs it in again with the same Apple ID", and "won't confirm with another Apple ID,
