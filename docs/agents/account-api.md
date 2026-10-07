@@ -412,7 +412,7 @@ First set up what the services share: cosign, the deployer, and registry access
    - `GET /v1/health` answers on `https://account-api-staging.zenbujapanese.com` and
      `https://account-api.zenbujapanese.com`, in a browser.
    - A request from the iOS app, on the Simulator and on a device, reaches staging. If Bot Fight
-     Mode challenges it, the owners turn Bot Fight Mode off (ADR 0011), and this doc says so.
+     Mode challenges it, the owners turn Bot Fight Mode off (ADR 0012), and this doc says so.
    - Run the backup by hand (`sudo zenbujapanese-account-backups`), then restore it into a new
      database (Back up and restore, above).
    - On staging, each way signs in a new learner and an existing one: a code, Apple and Google in

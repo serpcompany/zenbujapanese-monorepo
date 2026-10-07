@@ -32,6 +32,9 @@ flowchart LR
     Dictionary --> Results["Words and meanings"]
     Vision --> Translation["Apple Translation"]
     Results --> Speech["AVFoundation speech"]
+    Voice["Spoken Japanese or English"] --> Recognition["Apple Speech recognition"]
+    Recognition --> Translation
+    Translation --> Speech
 ```
 
 | Capability | Technology | What it does | Current consumer | Canonical configuration or implementation |
@@ -43,6 +46,10 @@ flowchart LR
 | Interactive Japanese parsing | kuromoji.js through Apple JavaScriptCore on iOS, and the same files in a Node V8 context in the website's dictionary service | By default, finds word boundaries, dictionary forms, readings, parts of speech, unknown-word status, and text ranges for Image Search and linked Japanese text. A launch-environment switch retains Sudachi for local comparison. On the website, it links example sentences' words and finds a conjugated form's examples. | iOS, website | [`Package.swift`](../apps/ios/Modules/Package.swift), [`SearchExperienceRootView.swift`](../apps/ios/Modules/Sources/SearchExperience/SearchExperienceRootView.swift), [`KuromojiMorphologyClient.swift`](../apps/ios/Modules/Sources/SearchExperience/KuromojiMorphologyClient.swift), [`kuromoji.ts`](../apps/dictionary-api/src/kuromoji.ts) |
 | Video playback | WebKit with the YouTube IFrame Player API | Plays YouTube videos in the embedded player and reports playback time so captions follow along, and shows video search results in the app. | iOS | [`YouTubePlayer.swift`](../apps/ios/Modules/Sources/SearchExperience/YouTubePlayer.swift), [`VideoSearch.swift`](../apps/ios/Modules/Sources/SearchExperience/VideoSearch.swift) |
 | Japanese-to-English translation | Apple Translation | Translates recognized Japanese text, and Player captions YouTube does not translate, using Apple language assets. | iOS | [`NaturalTranslationClient.swift`](../apps/ios/Modules/Sources/SearchExperience/NaturalTranslationClient.swift) |
+| Live speech recognition | Apple Speech (SpeechAnalyzer and SpeechTranscriber) | Transcribes Japanese and English as they're spoken, one recognizer per language, using Apple language assets on the device. | iOS | [`OnDeviceSpeechRecognition.swift`](../apps/ios/Modules/Sources/SearchExperience/Translate/OnDeviceSpeechRecognition.swift) |
+| Conversation and typed translation | Apple Translation | Translates Translate's spoken sentences, typed text, and documents between Japanese and English, in either direction. | iOS | [`OnDeviceTranslation.swift`](../apps/ios/Modules/Sources/SearchExperience/Translate/OnDeviceTranslation.swift) |
+| Echo-cancelled conversation audio | AVFoundation (AVAudioEngine voice processing and AVSpeechSynthesizer) | Captures the microphone with echo cancellation and plays spoken translations through the same engine, so the microphone doesn't transcribe them. | iOS | [`AnalyzerAudioPipeline.swift`](../apps/ios/Modules/Sources/SearchExperience/Translate/AnalyzerAudioPipeline.swift), [`EchoCancelledPlayback.swift`](../apps/ios/Modules/Sources/SearchExperience/Translate/EchoCancelledPlayback.swift) |
+| Document text | PDFKit and Apple Vision | Reads a PDF's text, and recognizes the text of scanned pages and photos, for Translate's Document Upload. | iOS | [`DocumentText.swift`](../apps/ios/Modules/Sources/SearchExperience/Translate/DocumentText.swift) |
 | Japanese pronunciation | AVFoundation | Speaks Japanese words and example sentences with the system speech synthesizer. | iOS | [`SpeechSynthesisClient.swift`](../apps/ios/Modules/Sources/SearchExperience/SpeechSynthesisClient.swift) |
 | Camera, photo, and file import | PhotosUI and UIKit | Accepts images for Image Search and saved word encounters. | iOS | [`SearchExperience`](../apps/ios/Modules/Sources/SearchExperience/) |
 | Offline reference data | SQLite | Reads dictionary, example, stroke-diagram, and frequency databases on the device. | iOS | [`SearchExperience`](../apps/ios/Modules/Sources/SearchExperience/) |

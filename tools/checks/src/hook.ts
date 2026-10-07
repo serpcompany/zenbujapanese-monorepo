@@ -3,7 +3,8 @@ import { existsSync, readFileSync } from 'node:fs'
 import { isAbsolute, relative, resolve, sep } from 'node:path'
 import { findComments } from './comments/find'
 import { root } from './files'
-import { commentRule, secretRule, sizeRule } from './rules'
+import { checkLayers } from './layers'
+import { commentRule, layerRule, secretRule, sizeRule } from './rules'
 import { findSecrets } from './secrets'
 import { checkSizes } from './sizes'
 
@@ -28,6 +29,10 @@ for (const file of findComments([path]).found) {
 }
 const sizes = checkSizes([path]).filter(size => size.path === path)
 if (sizes.length) messages.push(...sizes.map(size => `${size.path}  ${size.problem}`), sizeRule)
+const layers = checkLayers([path])
+if (layers.length) {
+  messages.push(...layers.map(layer => `${layer.path}:${layer.line}  ${layer.problem}`), layerRule)
+}
 const secrets = await findSecrets([path])
 if (secrets.length) messages.push(...secrets, secretRule)
 

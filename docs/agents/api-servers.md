@@ -184,4 +184,4 @@ A person with root sets these up once. Each service then has its own steps
    host names, pointing at the server, and Authenticated Origin Pulls on (SSL/TLS → Origin Server),
    since the sites accept only Cloudflare's client certificate. The zone's Bot Fight Mode stays on
    and can't be skipped per host name. It challenges CI runners, so nothing in CI checks a deployed
-   service, and it may challenge the apps' requests (ADR 0011).
+   service, and it may challenge the apps' requests (ADR 0012).

@@ -11,9 +11,10 @@ struct LinkedJapaneseText: View {
   enum Presentation {
     case standard
     case compactNaturalFlow
+    case compactLinks
 
     var usesDedicatedWordSelector: Bool { self == .compactNaturalFlow }
-    var usesMinimumHitRegionHeight: Bool { !usesDedicatedWordSelector }
+    var usesMinimumHitRegionHeight: Bool { self == .standard }
   }
 
   @ScaledMetric(relativeTo: .body) private var lineSpacing: CGFloat = 3
