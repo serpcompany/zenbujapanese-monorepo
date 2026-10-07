@@ -325,11 +325,15 @@ the account service ([`account-api.md`](account-api.md); the website's side of i
   `Retry-After`, a network failure, or an answer of another shape; `src/lib/account/messages.ts`
   says each to the learner.
 - **Settings per environment**, Worker `vars` read per request (the pages are `force-dynamic`), in
-  `src/lib/account/settings.ts`:
+  `src/lib/account/settings.ts`. The footer is in static pages too, which are built once, so it
+  can't read a Worker var: `next.config.ts` reads the environment's `ACCOUNT_API_URL` from
+  `wrangler.jsonc` when it builds (`src/lib/account/availability.ts`, by `SITE_ENV`) and passes
+  `ZENBU_ACCOUNT_PAGES` (`open` or `closed`) to the build, which draws Sign in only where it's
+  `open`. A value set only in `.dev.vars` changes the pages, not the footer.
 
   | Var | What it does |
   | --- | --- |
-  | `ACCOUNT_API_URL` | The account service's origin: `http://localhost:8789` locally, `https://api-staging.zenbujapanese.com` on staging, and `https://api.zenbujapanese.com` in production. Empty, the pages say signing in isn't available. |
+  | `ACCOUNT_API_URL` | The account service's origin: `http://localhost:8789` locally and `https://api-staging.zenbujapanese.com` on staging. Production's is empty until its account service answers on `https://api.zenbujapanese.com`; then set it there. Empty, the pages say signing in isn't available, link to no other account page, and the footer has no Sign in. |
   | `ACCOUNT_APPLE_SERVICES_ID` | The Services ID Sign in with Apple JS signs in as: the first of the service's `APPLE_SERVICES_IDS`, the one the service takes the website's Apple codes as. Empty, the pages offer no Apple. |
   | `ACCOUNT_GOOGLE_SIGN_IN` | `on` offers Google, once the service has a Google web client. |
 
@@ -413,7 +417,8 @@ Each deployed environment reads its own dictionary service:
 - The GitHub environment's `DICTIONARY_API_URL` variable is the service's HTTPS origin, such as
   `https://dictionary.example.com`, with no path, since the site asks for `/v1/…` from it.
   `Web deploy` writes it over that environment's `DICTIONARY_API_URL` placeholder in
-  `wrangler.jsonc`.
+  `wrangler.jsonc`, the value right after the environment's `SITE_ENV`, on its line or the next
+  (`src/lib/dictionary-service-deploy.test.ts` runs the script on a copy).
 - The Worker's `DICTIONARY_API_TOKEN` secret is the token the service was started with. Set it by
   hand, and again to rotate it: `pnpm exec wrangler secret put DICTIONARY_API_TOKEN --env
   <staging|production>`.

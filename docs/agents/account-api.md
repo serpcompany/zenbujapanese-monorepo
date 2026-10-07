@@ -671,3 +671,6 @@ First set up what the services share: cosign, the deployer, and registry access
      deleted, which shows Apple takes the popup's code with its return URL. The same email through a
      second way is refused until it's linked. An access token from `GET /v1/auth/token` checks out
      against `GET /v1/auth/jwks`.
+   - Once production's service answers on `https://api.zenbujapanese.com`, open the website's
+     account pages there: set production's `ACCOUNT_API_URL` to it in `apps/web/wrangler.jsonc`,
+     run `pnpm cf-typegen`, and deploy production ([`web.md`](web.md), Account pages).

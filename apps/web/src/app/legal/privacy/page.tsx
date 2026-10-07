@@ -18,12 +18,12 @@ export default function PrivacyPage() {
       <p>
         The app does not collect or track data. It has no advertising, analytics, or third-party
         crash-reporting SDK, and no account or cloud sync yet: everything in it works on your
-        device. You can create or sign in to a Zenbu account on this website, and in the app once it
-        offers one: we keep your email, how you sign in, and the known words and lists you sync on
+        device. If you create or sign in to a Zenbu account, on this website or in the app once they
+        offer one, we keep your email, how you sign in, and the known words and lists you sync on
         our servers, so your apps can share them, and you can delete the account at any time. If you
         link it to Tomodachi, our companion app, Tomodachi can read your lists and known words and
         mark words Known. The website uses privacy-friendly, cookieless analytics to count visits,
-        and a cookie only to keep you signed in.
+        and, if you sign in on it, a cookie only to keep you signed in.
       </p>
 
       <h2>Information in the app</h2>
@@ -69,7 +69,7 @@ export default function PrivacyPage() {
 
       <h2>Your Zenbu account</h2>
       <p>
-        You can create or sign in to a Zenbu account on this website; the app doesn't offer one yet.
+        The app doesn't offer Zenbu accounts yet, and this website will offer them before it does.
         You'll never need one: everything in the app works without one, and while you're signed out,
         our apps send nothing to our account service. If you create or sign in to a Zenbu account,
         the account service keeps:
@@ -137,8 +137,9 @@ export default function PrivacyPage() {
 
       <h2>Your account on this website</h2>
       <p>
-        On zenbujapanese.com you can create or sign in to your Zenbu account with Apple, Google, or
-        a code we email you. Signed in, the website uses your account only to:
+        Once zenbujapanese.com offers sign-in, you can create or sign in to your Zenbu account there
+        with Apple, Google, or a code we email you. Signed in, the website uses your account only
+        to:
       </p>
       <ul>
         <li>show your email, and show and change your name and username;</li>
@@ -240,10 +241,10 @@ export default function PrivacyPage() {
         <li>each night's backup for 30 days.</li>
       </ul>
       <p>
-        You can delete your account on this website, or in any of our apps that lets you create one.
-        Deleting it removes your account, its ways to sign in, and the data you synced from our
-        database at once, and the backups that still hold them are deleted within 30 days. Each
-        device keeps its own data and keeps working signed out.
+        You can delete your account wherever you can create one: in our apps that offer accounts, or
+        on this website once it offers sign-in. Deleting it removes your account, its ways to sign
+        in, and the data you synced from our database at once, and the backups that still hold them
+        are deleted within 30 days. Each device keeps its own data and keeps working signed out.
       </p>
       <p>To get a copy of the data your account holds, email {email}.</p>
 

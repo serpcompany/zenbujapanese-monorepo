@@ -38,7 +38,7 @@ test.describe('privacy policy', () => {
     await expectNamed(page, 'The short version', [
       'does not collect or track data',
       'no account or cloud sync yet',
-      'create or sign in to a Zenbu account on this website, and in the app once it offers one',
+      'if you create or sign in to a Zenbu account, on this website or in the app once they offer one',
       'a cookie only to keep you signed in'
     ])
     await expect(listItems(page, 'How you sign in:')).toHaveText([
@@ -48,7 +48,7 @@ test.describe('privacy policy', () => {
       /^The study data you sync: your known words.*your lists' names, their order, and the words in them; a record of each item's latest change.*the result of each sync request/
     ])
     await expectNamed(page, 'Your Zenbu account', [
-      "on this website; the app doesn't offer one yet",
+      "the app doesn't offer Zenbu accounts yet, and this website will offer them before it does",
       'signed out, our apps send nothing to our account service',
       'encrypted copy of each code',
       "aren't synced: they stay on your device"
@@ -125,7 +125,8 @@ test.describe('privacy policy', () => {
       /^each night's backup for 30 days/
     ])
     await expectNamed(page, 'Retention and deletion', [
-      'delete your account on this website, or in any of our apps that lets you create one',
+      'delete your account wherever you can create one',
+      'on this website once it offers sign-in',
       'deleted within 30 days',
       'keeps working signed out'
     ])

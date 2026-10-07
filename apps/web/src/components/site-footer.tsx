@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import { AccountFooterLink } from '@/components/account/account-footer-link'
 import { SiteBrand } from '@/components/site-brand'
+import { accountPagesOpen } from '@/lib/account/availability'
 import { kanaChartsPath, kanjiListsPath } from '@/lib/dictionary/browse/paths'
 import { legalPages, pageFor, type SitePage } from '@/lib/pages'
 import { site } from '@/lib/site'
@@ -53,7 +54,7 @@ export function SiteFooter() {
                     </Link>
                   </li>
                 ))}
-                {column.account ? (
+                {column.account && accountPagesOpen() ? (
                   <li>
                     <AccountFooterLink className="hover:text-foreground" />
                   </li>

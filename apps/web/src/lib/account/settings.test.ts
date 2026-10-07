@@ -1,5 +1,6 @@
 import { readFileSync } from 'node:fs'
 import { describe, expect, test } from 'vitest'
+import { accountServiceIn } from './availability'
 import { accountSettingsFrom } from './settings'
 
 const wrangler = readFileSync(new URL('../../../wrangler.jsonc', import.meta.url), 'utf8')
@@ -29,12 +30,10 @@ describe("the website's account settings", () => {
     expect(accountSettingsFrom({ ACCOUNT_API_URL: 'https://api.zenbujapanese.com/v1' })).toBeNull()
   })
 
-  test("name each environment's account service on the API host", () => {
-    expect(wrangler).toMatch(
-      /"staging"[\s\S]*"ACCOUNT_API_URL": "https:\/\/api-staging\.zenbujapanese\.com"/
-    )
-    expect(wrangler).toMatch(
-      /"production"[\s\S]*"ACCOUNT_API_URL": "https:\/\/api\.zenbujapanese\.com"/
-    )
+  test("name staging's account service, and none yet for production, so its pages stay closed", () => {
+    expect(accountServiceIn(wrangler, 'staging')).toBe('https://api-staging.zenbujapanese.com')
+    expect(accountServiceIn(wrangler, 'production')).toBe('')
+    expect(accountServiceIn(wrangler, undefined)).toBe('http://localhost:8789')
+    expect(accountServiceIn(wrangler, 'preview')).toBe('')
   })
 })

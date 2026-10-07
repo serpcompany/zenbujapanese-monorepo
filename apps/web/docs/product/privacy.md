@@ -9,20 +9,23 @@ comes from, and the automated check that enforces it (see
 
 What the page says about the account follows the account service as the owners designed it on
 #563 (decisions 1 to 6) and as #565, #566, #567, #570, #572, and #574 build it, and the website's
-account pages (#468). The website signs in; the app doesn't yet, so the page says the app has "no
-account or cloud sync yet", and that a learner can create or sign in to an account on this
-website. The pull request that lets the app sign in (#573) changes the short version and the
-account section's "yet". When the service keeps something new, keeps it longer, sends email through another provider,
+account pages (#468). Neither signs in for everyone yet: the app doesn't offer accounts, and the
+website's account pages are open only where its environment names an account service (staging
+today, [Account pages](account.md#configuration)). So the page says the app has "no account or
+cloud sync yet", and says what happens "if you create or sign in to a Zenbu account, on this
+website or in the app once they offer one", never that one exists today. The pull request that
+lets the app sign in (#573) changes the short version and the account section's "yet", and the one
+that opens production's account pages changes what the page says of the website. When the service keeps something new, keeps it longer, sends email through another provider,
 or an app gets a new scope, change the page, its Effective date, this doc, and the
 [App Store privacy labels](../app-store-privacy-labels.md) in the same pull request.
 
 ## Behaviors
 
 **The account's data.** The short version says the app collects nothing and has no account or
-cloud sync yet, that a learner can make an account on this website, and that the website uses a
-cookie only to keep them signed in. The account section says the website offers accounts and the
-app doesn't yet, that the apps send the account service nothing while signed out, and lists what a
-Zenbu account keeps:
+cloud sync yet, what an account keeps if a learner makes one on the website or in the app once
+they offer one, and that the website uses a cookie only to keep a signed-in learner signed in. The
+account section says the app doesn't offer accounts yet and the website will first, that the apps
+send the account service nothing while signed out, and lists what a Zenbu account keeps:
 
 - the account: a Zenbu user ID, the email and whether it's verified, an optional name and
   username, a profile picture's address only if the provider sends one at sign-up, and when it
@@ -47,8 +50,9 @@ timing, never an email, a profile, a code or link, or a token.
   out, the encrypted codes, and what stays on the device. The email's uses and the logs: No
   automated check yet.
 
-**The website's account pages.** A section, "Your account on this website", lists what the
-website uses the account for, and only that: show the email and show and change the name and
+**The website's account pages.** A section, "Your account on this website", says that once the
+website offers sign-in, a learner signs in there with Apple, Google, or an emailed code, and lists
+what the website uses the account for, and only that: show the email and show and change the name and
 username; show how the learner signs in, and add or remove a way; sign out of this browser; delete
 the account. The website's pages hold that line, not its scopes: `zenbu-web` has the iOS app's
 scopes ([`account-clients.md`](../../../../docs/agents/account-clients.md), Your app). It says the
@@ -97,8 +101,9 @@ account and its synced data until it's deleted; a session until sign-out or the 
 working for 60 days after its last use and deleted within an hour of that; codes and nonces for 10
 minutes, deleted within an hour of that; request counts for a day after their last request; each
 sync request's result for 30 days, and until the next change synced after that; each backup for 30
-days. A learner deletes the account on the website or from any app that can make one, which
-removes the account, its ways to sign in, and its synced data at once; backups age out within 30 days, and each device keeps
+days. A learner deletes the account wherever they can make one (an app that offers accounts, or
+the website once it offers sign-in), which removes the account, its ways to sign in, and its
+synced data at once; backups age out within 30 days, and each device keeps
 its own data and works signed out. There's no export feature: a learner asks
 `support@zenbujapanese.com` for a copy (the owners confirm this on #575).
 

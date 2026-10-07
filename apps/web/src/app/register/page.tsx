@@ -28,14 +28,20 @@ export default async function RegisterPage({ searchParams }: PageProps<'/registe
       ) : (
         <AccountUnavailable />
       )}
-      <OtherAccountPages>
-        <p>
-          Already have an account? <Link href={accountPages.signIn.path}>Sign in</Link>
-        </p>
-        <p>
-          Read how we handle your account in the <Link href="/legal/privacy/">Privacy Policy</Link>.
-        </p>
-      </OtherAccountPages>
+      {settings ? (
+        <OtherAccountPages>
+          <p>
+            Already have an account? <Link href={accountPages.signIn.path}>Sign in</Link>
+          </p>
+          <p>
+            <Link href={accountPages.forgotPassword.path}>Can’t sign in?</Link>
+          </p>
+          <p>
+            Read how we handle your account in the{' '}
+            <Link href="/legal/privacy/">Privacy Policy</Link>.
+          </p>
+        </OtherAccountPages>
+      ) : null}
     </AccountPageShell>
   )
 }

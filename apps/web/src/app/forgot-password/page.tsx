@@ -24,12 +24,14 @@ export default async function ForgotPasswordPage() {
       ) : (
         <AccountUnavailable />
       )}
-      <OtherAccountPages>
-        <p>
-          Made your account with Apple or Google?{' '}
-          <Link href={accountPages.signIn.path}>Sign in that way</Link>.
-        </p>
-      </OtherAccountPages>
+      {settings ? (
+        <OtherAccountPages>
+          <p>
+            Made your account with Apple or Google?{' '}
+            <Link href={accountPages.signIn.path}>Sign in that way</Link>.
+          </p>
+        </OtherAccountPages>
+      ) : null}
     </AccountPageShell>
   )
 }

@@ -17,10 +17,16 @@ if ! grep -q '"DICTIONARY_API_TOKEN"' <<<"$secrets"; then
   exit 1
 fi
 
-placeholder="\"SITE_ENV\": \"$env\", \"DICTIONARY_API_URL\": \"DICTIONARY_API_URL\""
-grep -qF "$placeholder" wrangler.jsonc || {
+SITE="$env" ORIGIN="$url" node --input-type=module -e '
+  import { readFileSync, writeFileSync } from "node:fs"
+  const { SITE, ORIGIN } = process.env
+  const config = readFileSync("wrangler.jsonc", "utf8")
+  const named = "(\"SITE_ENV\":\\s*\"" + SITE + "\",\\s*\"DICTIONARY_API_URL\":\\s*)"
+  const placeholder = new RegExp(named + "\"DICTIONARY_API_URL\"")
+  if (!placeholder.test(config)) process.exit(1)
+  writeFileSync("wrangler.jsonc", config.replace(placeholder, (_, before) => before + JSON.stringify(ORIGIN)))
+' || {
   echo "::error::wrangler.jsonc has no DICTIONARY_API_URL placeholder for $env"
   exit 1
 }
-sed -i "s|\"SITE_ENV\": \"$env\", \"DICTIONARY_API_URL\": \"DICTIONARY_API_URL\"|\"SITE_ENV\": \"$env\", \"DICTIONARY_API_URL\": \"$url\"|" wrangler.jsonc
-grep -qF "\"SITE_ENV\": \"$env\", \"DICTIONARY_API_URL\": \"$url\"" wrangler.jsonc
+grep -qF "\"DICTIONARY_API_URL\": \"$url\"" wrangler.jsonc

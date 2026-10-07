@@ -28,14 +28,16 @@ export default async function SignInPage({ searchParams }: PageProps<'/login'>) 
       ) : (
         <AccountUnavailable />
       )}
-      <OtherAccountPages>
-        <p>
-          New here? <Link href={accountPages.register.path}>Create an account</Link>
-        </p>
-        <p>
-          <Link href={accountPages.forgotPassword.path}>Forgot your password?</Link>
-        </p>
-      </OtherAccountPages>
+      {settings ? (
+        <OtherAccountPages>
+          <p>
+            New here? <Link href={accountPages.register.path}>Create an account</Link>
+          </p>
+          <p>
+            <Link href={accountPages.forgotPassword.path}>Can’t sign in?</Link>
+          </p>
+        </OtherAccountPages>
+      ) : null}
     </AccountPageShell>
   )
 }

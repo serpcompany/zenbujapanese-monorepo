@@ -875,7 +875,8 @@ lucide has no brand icons, and #511 asked for a phone.
 **Footer.** The footer starts with the 全 mark and the site name, linking home, and the site's
 one-line description. Beside them on wide screens, and below them in two columns on phones, three
 labelled groups hold every link: Product (Dictionary, Browse by kana, Kanji by grade, Sources,
-Sitemap, and Sign in, or Account once signed in: [Account pages](account.md#pages)), Company
+Sitemap, and, where the account pages are open, Sign in, or Account once signed in:
+[Account pages](account.md#pages)), Company
 (About, Support, Contact), and Policies (Legal (`/legal/`), Privacy Policy, Terms of Use, DMCA
 Copyright Policy, Affiliate Disclosure). A rule, then the copyright line, ends it. The
 browse links follow the #614 mockup ([Browse pages](browse.md#site-wide)). Legal follows Contact,

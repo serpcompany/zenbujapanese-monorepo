@@ -1,6 +1,6 @@
 import { act } from 'react'
 import { afterEach, describe, expect, test, vi } from 'vitest'
-import { idTokenFor, jwtFor } from '@/test/account-answers'
+import { idTokenFor } from '@/test/account-answers'
 import {
   answer,
   click,
@@ -19,7 +19,6 @@ import {
   email,
   emailWay,
   googleWay,
-  profile,
   sessionAnswer,
   settings,
   signedIn,

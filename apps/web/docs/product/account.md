@@ -2,7 +2,9 @@
 
 zenbujapanese.com's account pages let a learner make, sign in to, see, change, and delete their
 Zenbu account (#468), against the account service ([`account-api.md`](../../../../docs/agents/account-api.md)).
-Signing in is passwordless: Apple, Google, or a code we email. The pages call the service from
+Signing in is passwordless: Apple, Google, or a code we email. The pages are open only where the
+environment names an account service: locally and on staging, not yet in production
+(Configuration, below). The pages call the service from
 the learner's browser, never from the Worker ([`web.md`](../../../../docs/agents/web.md), Account
 pages). The website doesn't sync known words or lists yet, and the word page's learner actions
 still open the get-the-app prompt ([Dictionary](dictionary.md#word-page), Toolbar, and Lists and
@@ -24,23 +26,31 @@ in a DOM with a stand-in for the service.
 **Four pages.** `/login/` (Sign in), `/register/` (Create your account), `/forgot-password/` (No
 password needed), and `/account/` (Your account), each with the site's header and footer. Each is
 `noindex, nofollow`, and no sitemap lists them: not `/sitemaps/pages.xml`, and not `/sitemap/`.
-Without an account service (no `ACCOUNT_API_URL`), each says signing in isn't available on this
-site yet.
+Without an account service (an empty `ACCOUNT_API_URL`, as in production today), each says signing
+in to a Zenbu account isn't available on this site yet, and links to no other account page.
 
-- Source: #468; #402's sitemap sheet.
+- Source: #468; #402's sitemap sheet. Closed in production because its account service doesn't
+  run yet ([`account-api.md`](../../../../docs/agents/account-api.md), Set up the server), and a
+  sign-in that can't work shouldn't show.
 - Check: Account spec, "/login/ is noindex, with the site's header and footer" (and each other
-  page), "no sitemap lists them"; `src/lib/account/pages.test.ts`; `src/app/routes.test.ts`.
+  page), "no sitemap lists them"; `src/app/account-pages.test.tsx`, "/login/ says signing in isn't
+  available, and links no account page, without an account service" (and each other page) and
+  "offer signing in, and lead to each other, with an account service";
+  `src/lib/account/pages.test.ts`; `src/app/routes.test.ts`.
 
-**Footer.** The footer's Product group ends with Sign in, which leads to `/login/`. In a browser
-that signed in on the site, it says Account and leads to `/account/`. The browser remembers that
+**Footer.** Where the account pages are open, the footer's Product group ends with Sign in, which
+leads to `/login/`; where they're closed, as in production today, it has no such link, so nothing
+links to the account pages. In a browser that signed in on the site, it says Account and leads to
+`/account/`. The browser remembers that
 in local storage (`zenbu-signed-in`), which the pages set on signing in and clear on signing out,
 on deleting the account, and when the account page finds no session. The server draws Sign in, so
 the page and its first render in the browser agree.
 
 - Source: #468 (one footer link; the header is Devin's).
 - Check: `src/components/site-footer.test.tsx`, "the footer groups every link under Product,
-  Company, and Policies" and "the footer leads to signing in, as the server draws it before the
-  browser knows"; Account spec, "the footer leads to signing in, and to the account once signed
+  Company, and Policies", "the footer leads to signing in, as the server draws it before the
+  browser knows", and "the footer leaves signing in out where the site's account pages are
+  closed"; Account spec, "the footer leads to signing in, and to the account once signed
   in".
 
 ## Signing in
@@ -48,7 +58,8 @@ the page and its first render in the browser agree.
 **Sign in and Create your account.** Both pages offer the same three ways: Sign in (or Sign up)
 with Apple, with Google, or "Email me a code". A new email gets a code that makes an account; an
 email that has one signs in to it. Create your account says so, and links to Sign in and the
-Privacy Policy; Sign in links to Create an account and "Forgot your password?". Signed in, the
+Privacy Policy; Sign in links to Create an account; both link "Can't sign in?" to
+`/forgot-password/`, since there's no password to forget. Signed in, the
 learner goes to `/account/`. A browser that already signed in sees "You're signed in. Go to your
 account." above the ways.
 
@@ -237,9 +248,15 @@ data, signs the browser out, and the footer says Sign in again.
 
 ## Configuration
 
-**Each environment's account service.** The Worker's `ACCOUNT_API_URL` names it: staging's
-`https://api-staging.zenbujapanese.com`, production's `https://api.zenbujapanese.com`, and
-`http://localhost:8789` locally. A value that isn't an origin turns signing in off and logs
-`account_service_url_invalid`.
+**Each environment's account service.** The Worker's `ACCOUNT_API_URL` names it:
+`https://api-staging.zenbujapanese.com` on staging, `http://localhost:8789` locally, and none yet
+in production, whose value is empty until its account service answers on `api.zenbujapanese.com`.
+An empty value closes the account pages; one that isn't an origin closes them too and logs
+`account_service_url_invalid`. The footer's link is drawn when the site is built, from the same
+value in `apps/web/wrangler.jsonc` for the environment being built, so it and the pages agree.
 
-- Check: `src/lib/account/settings.test.ts`.
+- Source: production's account service doesn't run yet
+  ([`account-api.md`](../../../../docs/agents/account-api.md), Set up the server).
+- Check: `src/lib/account/settings.test.ts`, "name staging's account service, and none yet for
+  production, so its pages stay closed"; `src/lib/dictionary-service-deploy.test.ts`, which also
+  checks production's value stays empty through `Web deploy`.

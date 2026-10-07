@@ -1,5 +1,5 @@
 import { renderToStaticMarkup } from 'react-dom/server'
-import { expect, test } from 'vitest'
+import { afterEach, beforeEach, expect, test, vi } from 'vitest'
 import { site } from '@/lib/site'
 import { SiteFooter } from './site-footer'
 
@@ -19,6 +19,9 @@ function columns(): [heading: string, links: string[]][] {
     ([, heading, list]) => [heading, links(list).map(([text]) => text)]
   )
 }
+
+beforeEach(() => vi.stubEnv('ZENBU_ACCOUNT_PAGES', 'open'))
+afterEach(() => vi.unstubAllEnvs())
 
 test('the footer links Legal after Contact, before the legal pages, as the #462 design does', () => {
   const footerLinks = links(footer())
@@ -44,6 +47,12 @@ test('the footer groups every link under Product, Company, and Policies', () => 
 
 test('the footer leads to signing in, as the server draws it before the browser knows', () => {
   expect(links(footer())).toContainEqual(['Sign in', '/login/'])
+})
+
+test("the footer leaves signing in out where the site's account pages are closed", () => {
+  vi.stubEnv('ZENBU_ACCOUNT_PAGES', 'closed')
+  expect(links(footer()).map(([text]) => text)).not.toContain('Sign in')
+  expect(footer()).not.toContain('/login/')
 })
 
 test("the footer's browse links open the kana charts and the kanji lists", () => {
