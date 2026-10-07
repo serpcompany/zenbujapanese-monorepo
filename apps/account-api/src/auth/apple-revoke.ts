@@ -10,7 +10,12 @@ const appleRevoke = 'https://appleid.apple.com/auth/revoke'
 const timeoutMs = 10_000
 
 type Credentials = { client_id: string; client_secret: string }
-type Grant = { refreshToken: string; owner: string | undefined }
+type Grant = { refreshToken: string; owner: string }
+
+const text = (answer: unknown, key: string) => {
+  const value = typeof answer === 'object' && answer !== null ? Reflect.get(answer, key) : undefined
+  return typeof value === 'string' ? value : undefined
+}
 
 const post = (url: string, fields: Record<string, string>) =>
   fetch(url, {
@@ -20,8 +25,8 @@ const post = (url: string, fields: Record<string, string>) =>
     signal: AbortSignal.timeout(timeoutMs)
   })
 
-function appleUserOf(idToken: unknown): string | undefined {
-  if (typeof idToken !== 'string') return undefined
+function appleUserOf(idToken: string | undefined): string | undefined {
+  if (idToken === undefined) return undefined
   try {
     return decodeJwt(idToken).sub
   } catch {
@@ -48,17 +53,26 @@ async function exchange(
       grant_type: 'authorization_code',
       ...(redirectUri ? { redirect_uri: redirectUri } : {})
     })
-    const answer = (await exchanged.json().catch(() => ({}))) as Record<string, unknown>
+    const answer: unknown = await exchanged.json().catch(() => null)
     if (!exchanged.ok) {
-      if (exchanged.status === 400 && answer.error === 'invalid_grant') return 'invalid'
+      const appleError = text(answer, 'error')
+      if (exchanged.status === 400 && appleError === 'invalid_grant') return 'invalid'
       log('error', "apple refused a deletion's code exchange", {
         status: exchanged.status,
-        appleError: typeof answer.error === 'string' ? answer.error : undefined
+        appleError
       })
       return 'unavailable'
     }
-    if (typeof answer.refresh_token !== 'string') return 'invalid'
-    return { refreshToken: answer.refresh_token, owner: appleUserOf(answer.id_token) }
+    const refreshToken = text(answer, 'refresh_token')
+    const owner = appleUserOf(text(answer, 'id_token'))
+    if (refreshToken === undefined || owner === undefined) {
+      log('error', "apple's code exchange named no refresh token or Apple ID", {
+        refreshToken: refreshToken !== undefined,
+        appleId: owner !== undefined
+      })
+      return 'unavailable'
+    }
+    return { refreshToken, owner }
   } catch (error) {
     return unreachable(error)
   }
@@ -101,8 +115,8 @@ export function appleRevoker(apple: AuthConfig['apple'], publicUrl: string): App
         web ? (redirectUri ?? `${publicUrl}/v1/auth/callback/apple`) : undefined
       )
       if (typeof grant === 'string') return grant
-      const ours = grant.owner !== undefined && appleUserIds.includes(grant.owner)
-      if (!ours && grant.owner !== undefined && (await inUse(grant.owner))) return 'other_apple_id'
+      const ours = appleUserIds.includes(grant.owner)
+      if (!ours && (await inUse(grant.owner))) return 'other_apple_id'
       const revoked = await revokeGrant(credentials, grant.refreshToken)
       if (revoked !== 'revoked') return revoked
       return ours ? 'revoked' : 'other_apple_id'

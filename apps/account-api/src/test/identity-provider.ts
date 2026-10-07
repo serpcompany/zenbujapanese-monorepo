@@ -6,6 +6,7 @@ const appleToken = 'https://appleid.apple.com/auth/token'
 const appleRevoke = 'https://appleid.apple.com/auth/revoke'
 export const appleCodeFor = (appleUserId: string) => `apple-code:${appleUserId}`
 export const misconfiguredAppleCode = 'invalid-client'
+export const appleCodeWithoutAppleId = 'no-id-token'
 const googleKeys = 'https://www.googleapis.com/oauth2/v3/certs'
 
 type Key = Awaited<ReturnType<typeof generateKeyPair>>['privateKey']
@@ -55,6 +56,7 @@ export async function standInForProviders() {
       })
       const code = fields.get('code') ?? ''
       if (code === misconfiguredAppleCode) return answer({ error: 'invalid_client' }, 400)
+      if (code === appleCodeWithoutAppleId) return answer({ refresh_token: `refresh-for-${code}` })
       if (!code.startsWith('apple-code:')) return answer({ error: 'invalid_grant' }, 400)
       const idToken = await apple.signer.sign({ sub: code.slice('apple-code:'.length) })
       return answer({ refresh_token: `refresh-for-${code}`, id_token: idToken })

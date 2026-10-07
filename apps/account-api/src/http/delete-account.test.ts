@@ -2,7 +2,11 @@ import { randomUUID } from 'node:crypto'
 import { decodeJwt } from 'jose'
 import { afterEach, describe, expect, test, vi } from 'vitest'
 import { type Learner, useAccountService } from '../test/accounts'
-import { appleCodeFor, misconfiguredAppleCode } from '../test/identity-provider'
+import {
+  appleCodeFor,
+  appleCodeWithoutAppleId,
+  misconfiguredAppleCode
+} from '../test/identity-provider'
 import { logged } from '../test/logged'
 import { appBundleIdentifier, publicUrl, websiteOrigin, websiteServicesId } from '../test/service'
 import { fromTheWebsite, sessionToken, sha256, websiteSession } from '../test/sign-in'
@@ -145,6 +149,11 @@ describe('DELETE /v1/me', () => {
       await remove(learner, { confirm: true, appleAuthorizationCode: misconfiguredAppleCode })
     ).toMatchObject({ status: 503, body: { error: { code: 'apple_unavailable' } } })
     expect(lines()).toContain('"appleError":"invalid_client"')
+    expect(
+      await remove(learner, { confirm: true, appleAuthorizationCode: appleCodeWithoutAppleId })
+    ).toMatchObject({ status: 503, body: { error: { code: 'apple_unavailable' } } })
+    expect(lines()).toContain('named no refresh token or Apple ID')
+    expect(accounts.running.appleRevoked).toEqual(['refresh-for-apple-code:someone-else'])
     expect((await accounts.me(learner.token)).status).toBe(200)
 
     expect(
