@@ -365,14 +365,8 @@ struct LiveConversationTests {
   @Test("pausing while a translation plays stops it and drops the rest of the queue")
   func pauseDuringPlayback() async {
     let harness = ConversationHarness()
-    await harness.startAndWaitForListening()
-    await harness.hear(.japanese, tokyo)
-    await harness.hear(.japanese, three)
-    harness.playback.holdsSpeech = true
+    await startPlayingTwoSentenceTurn(harness)
 
-    harness.time.advance(1.3)
-    harness.session.tick()
-    for _ in 0..<100 where harness.playback.spoken.isEmpty { await Task.yield() }
     harness.session.pause()
     await harness.session.settle()
 
@@ -384,14 +378,8 @@ struct LiveConversationTests {
   func muteDuringPlayback() async {
     let harness = ConversationHarness()
     harness.playback.reachesMicrophone = true
-    await harness.startAndWaitForListening()
-    await harness.hear(.japanese, tokyo)
-    await harness.hear(.japanese, three)
-    harness.playback.holdsSpeech = true
+    await startPlayingTwoSentenceTurn(harness)
 
-    harness.time.advance(1.3)
-    harness.session.tick()
-    for _ in 0..<100 where harness.playback.spoken.isEmpty { await Task.yield() }
     harness.session.switchMode(to: .textOnly)
     await harness.session.settle()
 
@@ -423,5 +411,13 @@ struct LiveConversationTests {
 
     let finals = harness.translator.calls.filter { $0.text == shibuya }
     #expect(finals.last?.contextCount == 1)
+  }
+
+  private func startPlayingTwoSentenceTurn(_ harness: ConversationHarness) async {
+    await harness.startAndWaitForListening()
+    await harness.hear(.japanese, tokyo)
+    await harness.hear(.japanese, three)
+    harness.playback.holdsSpeech = true
+    await harness.startSpeaking(count: 1)
   }
 }

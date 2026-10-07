@@ -29,7 +29,7 @@ struct ConversationPlaybackTests {
     let spoken = FakeTranslator.translation(of: tokyo, from: .japanese)
 
     await harness.hear(.japanese, tokyo)
-    await startSpeaking(harness, count: 1)
+    await harness.startSpeaking(count: 1)
     harness.session.receive(.volatile(.english, String(spoken.prefix(6))))
     #expect(harness.session.liveSentence == nil)
     harness.session.receive(.final(.english, spoken))
@@ -52,7 +52,7 @@ struct ConversationPlaybackTests {
 
     await harness.hear(.japanese, tokyo)
     await harness.hear(.japanese, stairs)
-    await startSpeaking(harness, count: 1)
+    await harness.startSpeaking(count: 1)
     harness.session.receive(.volatile(.english, "Excuse me"))
     harness.playback.finishSpeaking()
     await harness.session.settle()
@@ -99,11 +99,5 @@ struct ConversationPlaybackTests {
     #expect(sentence?.translation == nil)
     #expect(harness.session.untranslatedSentenceIDs.contains(try #require(sentence?.id)))
     #expect(harness.playback.spoken.isEmpty)
-  }
-
-  private func startSpeaking(_ harness: ConversationHarness, count: Int) async {
-    harness.time.advance(1.3)
-    harness.session.tick()
-    for _ in 0..<100 where harness.playback.spoken.count < count { await Task.yield() }
   }
 }
