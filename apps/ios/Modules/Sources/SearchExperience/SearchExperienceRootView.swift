@@ -9,7 +9,8 @@ public struct SearchExperienceRootView: View {
   @State private var selectedTab = SearchExperienceTab.search
   @State private var frequencyRefreshID = 0
   @State private var path: [SearchExperienceRoute] = []
-  @State private var accountPath: [AccountRoute] = []
+  @State private var accountPath = NavigationPath()
+  @State private var accountWordSheet = WordSheetPresentation()
   @State private var query = ""
   @State private var imageTextSessionStore = ImageTextSessionStore()
   @State private var imageWordSheet = WordSheetPresentation()
@@ -93,12 +94,7 @@ public struct SearchExperienceRootView: View {
       }
 
       Tab(value: SearchExperienceTab.account) {
-        AccountNavigationView(
-          path: $accountPath,
-          store: encounterMediaStore,
-          translationHistory: translateExperience.history,
-          openItem: openSavedItem
-        )
+        accountNavigation
       } label: {
         Label("Account", systemImage: "person.crop.circle")
           .accessibilityLabel("Account, personal content and settings")
@@ -147,12 +143,7 @@ public struct SearchExperienceRootView: View {
           path.append(.image(session.id))
         }
       )
-      .navigationDestination(for: SearchExperienceRoute.self) { route in
-        dictionaryDestination(route, in: .search)
-      }
-      .sheet(isPresented: imageWordSheet.isPresentedBinding) {
-        wordSheet(imageWordSheet, in: .search)
-      }
+      .modifier(dictionaryRoutes(in: .search, sheet: imageWordSheet))
     }
   }
 
@@ -256,12 +247,7 @@ public struct SearchExperienceRootView: View {
           }
         }
       }
-      .navigationDestination(for: SearchExperienceRoute.self) { route in
-        dictionaryDestination(route, in: .player)
-      }
-      .sheet(isPresented: watchWordSheet.isPresentedBinding) {
-        wordSheet(watchWordSheet, in: .player)
-      }
+      .modifier(dictionaryRoutes(in: .player, sheet: watchWordSheet))
     }
   }
 
@@ -269,19 +255,36 @@ public struct SearchExperienceRootView: View {
     NavigationStack(path: $translatePath) {
       TranslateTabRoot(
         experience: translateExperience,
-        words: TranslateWordLinks(
-          analysisClient: japaneseTextAnalysisClient,
-          open: { translateWordSheet.request = $0 }
-        ),
+        words: translateWords(opening: translateWordSheet),
         push: { translatePath.append($0) }
       )
-      .navigationDestination(for: SearchExperienceRoute.self) { route in
-        dictionaryDestination(route, in: .translate)
-      }
-      .sheet(isPresented: translateWordSheet.isPresentedBinding) {
-        wordSheet(translateWordSheet, in: .translate)
-      }
+      .modifier(dictionaryRoutes(in: .translate, sheet: translateWordSheet))
     }
+  }
+
+  private var accountNavigation: some View {
+    NavigationStack(path: $accountPath) {
+      AccountTabRoot(
+        store: encounterMediaStore,
+        translate: translateExperience,
+        words: translateWords(opening: accountWordSheet),
+        openItem: openSavedItem
+      )
+      .modifier(dictionaryRoutes(in: .account, sheet: accountWordSheet))
+    }
+  }
+
+  private func translateWords(opening sheet: WordSheetPresentation) -> TranslateWordLinks {
+    TranslateWordLinks(analysisClient: japaneseTextAnalysisClient, open: { sheet.request = $0 })
+  }
+
+  private func dictionaryRoutes(in stack: DictionaryStack, sheet: WordSheetPresentation)
+    -> DictionaryRoutes<some View, some View>
+  {
+    DictionaryRoutes(
+      sheet: sheet,
+      destination: { dictionaryDestination($0, in: stack) },
+      wordSheet: { wordSheet(sheet, in: stack) })
   }
 
   @ViewBuilder
@@ -315,6 +318,7 @@ public struct SearchExperienceRootView: View {
     case .search: searchPath.wrappedValue = path + [route]
     case .player: watchPath.append(route)
     case .translate: translatePath.append(route)
+    case .account: accountPath.append(route)
     }
   }
 
@@ -363,6 +367,7 @@ public struct SearchExperienceRootView: View {
     imageWordSheet.request = nil
     watchWordSheet.request = nil
     translateWordSheet.request = nil
+    accountWordSheet.request = nil
   }
 
   private var searchPath: Binding<[SearchExperienceRoute]> {
@@ -437,13 +442,20 @@ public struct SearchExperienceRootView: View {
   }
 
   private func openWordList(_ listID: UUID) {
-    selectedTab = .account
-    accountPath = [.wordLists, .wordList(listID)]
+    openInAccount(.wordList(listID), from: [.wordLists])
   }
 
   private func openFrequencyDictionaries() {
-    selectedTab = .account
-    accountPath = [.frequencyDictionaries]
+    openInAccount(.frequencyDictionaries, from: [])
+  }
+
+  private func openInAccount(_ route: AccountRoute, from parents: [AccountRoute]) {
+    if selectedTab == .account {
+      accountPath.append(route)
+    } else {
+      selectedTab = .account
+      accountPath = NavigationPath(parents + [route])
+    }
   }
 
   private func encounterMediaAttachment(for context: ImageWordContext?)
@@ -456,32 +468,6 @@ public struct SearchExperienceRootView: View {
     else { return nil }
     return EncounterMediaAttachment(name: asset.name, data: asset.data)
   }
-}
-
-struct ImageWordContext: Hashable {
-  let sessionID: UUID
-  let assetID: UUID
-}
-
-enum DictionaryStack {
-  case search
-  case player
-  case translate
-}
-
-enum PlayerRoute: Hashable {
-  case video(YouTubeVideoID)
-  case search(VideoSearch)
-}
-
-enum SearchExperienceRoute: Hashable {
-  case word(DictionaryEntry, ImageWordContext?)
-  case kanji(KanjiCharacter, DictionaryEntry?)
-  case kanjiElement(KanjiElementID)
-  case examples(SearchQuery, DictionaryEntry?, Bool)
-  case conjugations(DictionaryEntry, ConjugationTable)
-  case conjugatedForm(DictionaryEntry, ConjugationTable, ConjugatedForm, ConjugationMode)
-  case image(UUID)
 }
 
 private enum SearchExperienceTab: Hashable {

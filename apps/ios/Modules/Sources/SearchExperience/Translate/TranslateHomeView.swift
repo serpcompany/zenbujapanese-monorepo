@@ -24,7 +24,7 @@ struct TranslateHomeView: View {
     .navigationBarTitleDisplayMode(.inline)
     .toolbar {
       ToolbarItem(placement: .topBarTrailing) {
-        Button("History", systemImage: "clock.arrow.circlepath", action: openHistory)
+        Button("Translations", systemImage: "clock.arrow.circlepath", action: openHistory)
           .accessibilityIdentifier("translate.history")
       }
     }

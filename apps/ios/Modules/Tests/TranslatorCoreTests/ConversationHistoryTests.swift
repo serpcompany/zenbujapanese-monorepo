@@ -8,21 +8,14 @@ import Testing
 final class ConversationHistoryTests {
   private let directory = FileManager.default.temporaryDirectory
     .appending(path: "translate-history-tests-\(UUID().uuidString)", directoryHint: .isDirectory)
-  private let defaults: UserDefaults
-  private let suiteName = "translate-history-tests-\(UUID().uuidString)"
   private let today = Date(timeIntervalSince1970: 1_800_000_000)
-
-  init() {
-    defaults = UserDefaults(suiteName: suiteName)!
-  }
 
   deinit {
     try? FileManager.default.removeItem(at: directory)
-    UserDefaults().removePersistentDomain(forName: suiteName)
   }
 
   private func loadedHistory() async -> ConversationHistory {
-    let history = ConversationHistory(directory: directory, defaults: defaults) { [today] in today }
+    let history = ConversationHistory(directory: directory)
     await history.flush()
     return history
   }
@@ -60,6 +53,26 @@ final class ConversationHistoryTests {
     #expect(reloaded.bookmarks.first?.language == .english)
     reloaded.setBookmarked(false, sentence: sentence.id, in: saved.id)
     #expect(reloaded.bookmarks.isEmpty)
+  }
+
+  @Test("the live conversation is left out of saved, search, bookmarks, and Delete All")
+  func leavesOutLiveConversation() async {
+    let history = await loadedHistory()
+    let finished = conversation(daysAgo: 1)
+    let live = conversation(daysAgo: 0)
+    for conversation in [finished, live] { history.save(conversation) }
+    history.setBookmarked(true, sentence: live.turns[1].sentences[0].id, in: live.id)
+    history.liveConversationID = live.id
+
+    #expect(history.saved.map(\.id) == [finished.id])
+    #expect(history.search("東京駅").map(\.id) == [finished.id])
+    #expect(history.bookmarks.isEmpty)
+    history.deleteAll()
+    #expect(history.conversations.map(\.id) == [live.id])
+
+    history.liveConversationID = nil
+    #expect(history.saved.map(\.id) == [live.id])
+    #expect(history.bookmarks.map(\.conversationID) == [live.id])
   }
 
   @Test("a sentence saved before bookmarks existed reads as not bookmarked")
@@ -112,27 +125,6 @@ final class ConversationHistoryTests {
     await history.flush()
     #expect(history.conversations.isEmpty)
     #expect(await loadedHistory().conversations.isEmpty)
-  }
-
-  @Test("Keep History removes conversations older than the chosen period, now and at launch")
-  func retention() async {
-    let history = await loadedHistory()
-    let recent = conversation(daysAgo: 3)
-    let lastMonth = conversation(daysAgo: 45)
-    let lastYear = conversation(daysAgo: 400)
-    for conversation in [recent, lastMonth, lastYear] { history.save(conversation) }
-    #expect(history.expiredCount(under: .thirtyDays) == 2)
-    #expect(history.expiredCount(under: .oneYear) == 1)
-    #expect(history.expiredCount(under: .forever) == 0)
-
-    history.retention = .oneYear
-    await history.flush()
-    #expect(history.conversations.map(\.id) == [recent.id, lastMonth.id])
-
-    defaults.set(HistoryRetention.thirtyDays.rawValue, forKey: ConversationHistory.retentionKey)
-    let relaunched = await loadedHistory()
-    #expect(relaunched.retention == .thirtyDays)
-    #expect(relaunched.conversations.map(\.id) == [recent.id])
   }
 
   @Test("files this version can't read are skipped and left in place")
