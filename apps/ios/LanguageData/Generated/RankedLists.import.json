@@ -1,0 +1,51 @@
+{
+  "schema": "zenbu.ranked-lists-import.v1",
+  "importerSHA256": "b720bb569b83562491c3fdd28afd469f1f75ce60691698d6737b719a5b39e35c",
+  "languageDataSHA256": "290ca9d430454cafe77880d89c45500905ad168c825c71bb7676172afccf66f2",
+  "lists": [
+    {
+      "packID": "zenbu.wikipedia.written.ja.unidic-3.1",
+      "packVersion": "2022-10-20",
+      "mappingSHA256": "d6b32880509a0a033f97f476b833846cac609190f52edcf85d68fdd91de5b24e",
+      "mappedRows": 73453
+    },
+    {
+      "packID": "zenbu.jiten.tv-movies.ja.ordered-v2",
+      "packVersion": "2026-09-27",
+      "mappingSHA256": "def9405094dbae809b4dc081dab7250f9882f05be1123d33f777ae3a768b1983",
+      "mappedRows": 108209
+    },
+    {
+      "packID": "zenbu.jiten.anime.ja.ordered-v2",
+      "packVersion": "2026-09-27",
+      "mappingSHA256": "4006f78d315dab845dce8549dc7986db996921289a7d8dfa2565ea54e91c3fd3",
+      "mappedRows": 98264
+    },
+    {
+      "packID": "zenbu.jiten.manga.ja.ordered-v2",
+      "packVersion": "2026-09-27",
+      "mappingSHA256": "00eeab21e1b2dd3ae2a3b5dde7d31c61be7541a459e5e427aba999c5476ff77d",
+      "mappedRows": 105287
+    },
+    {
+      "packID": "zenbu.jiten.novels.ja.ordered-v2",
+      "packVersion": "2026-09-27",
+      "mappingSHA256": "38d3fe9d3a5ad0500662d58d7eee436722a498436cdde5e4c26530f82ec6b241",
+      "mappedRows": 140061
+    },
+    {
+      "packID": "zenbu.jiten.visual-novels.ja.ordered-v2",
+      "packVersion": "2026-09-27",
+      "mappingSHA256": "315085621b340af5caeb60aae438d1b08a3b421023402b27be882bfe01e6907f",
+      "mappedRows": 115109
+    },
+    {
+      "packID": "zenbu.jiten.video-games.ja.ordered-v2",
+      "packVersion": "2026-09-27",
+      "mappingSHA256": "9680e69b248b778bf1173f217144d14de4487fe6386943a54b3a0232f8c0d69e",
+      "mappedRows": 89254
+    }
+  ],
+  "artifactBytes": 19587072,
+  "artifactSHA256": "77ce1ed48381b7afccd7b97d0cbd807cc185979fd3354f6afddc8c20134e28a3"
+}

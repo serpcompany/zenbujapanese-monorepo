@@ -104,6 +104,7 @@ interface KanjiCase {
   strokeOrderStrokes?: number
   strokeCount?: number
   grade?: number
+  jlpt?: string
   meanings?: string[]
   readings?: { kind: string; value: string; words: SuiteWord[] }[]
   words?: SuiteWord[]
@@ -311,6 +312,7 @@ describe.runIf(artifactAvailable)('word and kanji detail conformance', () => {
       summary: word.summary
     })
     const elementRows = new Map(rows.elements.map(element => [element.glyph, element]))
+    const jlpt = detail.stats.find(stat => stat.label === 'JLPT')?.value
     const observed: Omit<KanjiCase, 'covers'> = {
       character: rows.kanji.character,
       codePoint: codePoint(rows.kanji.character),
@@ -318,6 +320,7 @@ describe.runIf(artifactAvailable)('word and kanji detail conformance', () => {
       hasReference: true,
       strokeCount: rows.kanji.strokeCount,
       ...(rows.kanji.grade === null ? {} : { grade: rows.kanji.grade }),
+      ...(jlpt === undefined ? {} : { jlpt }),
       meanings: detail.meanings,
       readings: detail.readings.map(({ kind, value, words }) => ({
         kind,

@@ -1,9 +1,9 @@
-import { PageList } from '@/components/page-list'
+import { SiteTree } from '@/components/site-tree'
+import { dictionaryTree, homeTree } from '@/lib/dictionary/browse/site-tree'
 import { pageMetadata } from '@/lib/metadata'
-import { sitePages } from '@/lib/pages'
 
 export const metadata = pageMetadata('/sitemap/')
 
 export default function HtmlSitemapPage() {
-  return <PageList title="Sitemap" pages={sitePages} />
+  return <SiteTree title="Sitemap" trees={[homeTree, dictionaryTree]} />
 }

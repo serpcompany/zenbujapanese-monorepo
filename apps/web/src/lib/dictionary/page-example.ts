@@ -6,7 +6,7 @@ export type Linked<T> = T & { path: string | null }
 
 export type PageExampleToken = Linked<ExampleToken>
 
-export interface PageExample extends Omit<Example, 'tokens'> {
+export interface PageExample extends Omit<Example, 'tokens' | 'japanese' | 'english'> {
   tokens: PageExampleToken[]
 }
 
@@ -30,7 +30,10 @@ export function serviceLinks(slugs: Slugs, kanjiPages: readonly string[]): Links
   }
 }
 
-export function pageExample(example: Example, links: Links): PageExample {
+export function pageExample(
+  { japanese: _japanese, english: _english, ...example }: Example,
+  links: Links
+): PageExample {
   return {
     ...example,
     tokens: example.tokens.map(token => ({
