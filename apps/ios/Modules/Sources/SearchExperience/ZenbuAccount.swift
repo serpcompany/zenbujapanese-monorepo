@@ -32,7 +32,7 @@ final class ZenbuAccount {
     sync = AccountSync(
       api: api, tokens: AccountTokens(api: api, storage: storage, now: now),
       wordKnowledge: wordKnowledge, wordLists: wordLists, fileURL: fileURL, now: now)
-    scheduler = AccountSyncScheduler(sync: sync)
+    scheduler = AccountSyncScheduler(sync: sync, now: now)
   }
 
   var account: SignedInAccount? { sync.account }
@@ -87,25 +87,47 @@ final class ZenbuAccount {
   }
 
   func deleteAccount(appleAuthorizationCode: String?) async throws {
-    try await sync.tokens.withAccessToken { [api] token in
-      try await api.deleteAccount(
-        accessToken: token, appleAuthorizationCode: appleAuthorizationCode)
+    do {
+      try await sync.tokens.withAccessToken { [api] token in
+        try await api.deleteAccount(
+          accessToken: token, appleAuthorizationCode: appleAuthorizationCode)
+      }
+    } catch AccountServiceError.unreachable {
+      guard try await accountIsGone() else { throw AccountServiceError.unreachable }
+    } catch AccountServiceError.sessionEnded {
+      sync.endSession(onItsOwn: true)
+      throw AccountServiceError.sessionEnded
     }
     scheduler.stop()
     sync.endSession()
   }
 
+  private func accountIsGone() async throws -> Bool {
+    guard let token = sync.tokens.sessionToken else { return true }
+    do {
+      _ = try await api.accessToken(sessionToken: token)
+      return false
+    } catch AccountServiceError.refused(status: 401, _, _, _) {
+      return true
+    }
+  }
+
   private func start(_ signIn: AccountSignIn) async {
     await sync.begin(signIn)
+    scheduler.stop()
     scheduler.syncNow()
   }
 
   private func resume(_ signIn: AccountSignIn) async throws {
+    let earlier = sync.tokens.sessionToken
     do {
       try sync.resume(signIn)
     } catch {
       try? await api.signOut(sessionToken: signIn.sessionToken)
       throw error
+    }
+    if let earlier, earlier != signIn.sessionToken {
+      try? await api.signOut(sessionToken: earlier)
     }
   }
 

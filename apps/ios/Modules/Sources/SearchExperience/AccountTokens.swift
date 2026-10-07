@@ -121,6 +121,7 @@ final class AccountTokens {
     } catch AccountServiceError.refused(status: 401, _, _, _) {
       throw AccountServiceError.sessionEnded
     }
+    guard storage.read() == session else { throw AccountServiceError.sessionEnded }
     accessToken = (token, AccessTokenClaims.expiry(of: token) ?? now() + Self.assumedLifetime)
     return token
   }

@@ -1,16 +1,9 @@
 import AuthenticationServices
-import CryptoKit
 import UIKit
 
 struct AppleSignInCredential: Sendable {
   let identityToken: String
   let authorizationCode: String
-}
-
-enum SignInNonce {
-  static func sha256(_ nonce: String) -> String {
-    SHA256.hash(data: Data(nonce.utf8)).map { String(format: "%02x", $0) }.joined()
-  }
 }
 
 @MainActor
@@ -22,12 +15,12 @@ final class AppleSignIn: NSObject, ASAuthorizationControllerDelegate,
 
   static func credential(nonce: String) async throws -> AppleSignInCredential {
     let signIn = AppleSignIn()
-    return try await signIn.perform(hashedNonce: SignInNonce.sha256(nonce))
+    return try await signIn.perform(hashedNonce: Data(nonce.utf8).sha256)
   }
 
   private func perform(hashedNonce: String) async throws -> AppleSignInCredential {
     let request = ASAuthorizationAppleIDProvider().createRequest()
-    request.requestedScopes = [.email, .fullName]
+    request.requestedScopes = [.email]
     request.nonce = hashedNonce
     let controller = ASAuthorizationController(authorizationRequests: [request])
     controller.delegate = self

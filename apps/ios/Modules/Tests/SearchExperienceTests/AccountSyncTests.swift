@@ -79,7 +79,9 @@ struct AccountSyncTests {
     fixture.markKnown(Fixture.taberu)
     try await fixture.signIn()
     fixture.account.scheduler.stop()
-    #expect(fixture.sync.lastFailure?.status == 500)
+    #expect(
+      fixture.sync.lastFailure
+        == .refused(status: 500, code: "internal", message: "internal", retryAfter: nil))
     try await fixture.syncNow()
 
     let syncs = fixture.server.requests(to: "POST /v1/sync").map(\.sync)
@@ -215,7 +217,8 @@ struct AccountSyncTests {
     #expect(SyncRetry.delay(after: offline, failures: 3, jitter: top) == 16)
     #expect(SyncRetry.delay(after: offline, failures: 3, jitter: bottom) == 8)
     #expect(SyncRetry.delay(after: offline, failures: 7, jitter: top) == 256)
-    #expect(SyncRetry.delay(after: offline, failures: 8, jitter: top) == nil)
+    #expect(SyncRetry.delay(after: offline, failures: 8, jitter: top) == 300)
+    #expect(SyncRetry.delay(after: CancellationError(), failures: 0, jitter: top) == nil)
     let busy = AccountServiceError.refused(status: 503, code: "x", message: "x", retryAfter: nil)
     #expect(SyncRetry.delay(after: busy, failures: 1, jitter: top) == 4)
     let bad = AccountServiceError.refused(
@@ -289,15 +292,8 @@ struct AccountSyncTests {
 
   @Test("signing in again as another account doesn't delete, and that session is signed out")
   func deleteNeedsTheSameAccount() async throws {
-    let fixture = Fixture()
-    fixture.serve()
-    await fixture.launch()
-    try await fixture.signIn()
-    fixture.server.respond { request in
-      request.route == "POST /v1/auth/sign-in/email-otp"
-        ? .json(200, Fixture.signedIn(as: "someone-else"), headers: ["set-auth-token": "other"])
-        : .json(200, ["success": true])
-    }
+    let fixture = try await Fixture.afterSignIn()
+    fixture.answerNextSignIn(as: "someone-else", sessionToken: "other")
 
     await #expect(throws: AccountServiceError.differentAccount) {
       try await fixture.account.confirmIdentity(email: "other@example.com", code: "111111")

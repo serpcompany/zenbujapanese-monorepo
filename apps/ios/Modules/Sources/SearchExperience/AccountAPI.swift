@@ -7,18 +7,6 @@ enum AccountServiceError: Error, Equatable, Sendable {
   case missingSessionToken
   case sessionEnded
   case differentAccount
-
-  var code: String? {
-    if case .refused(_, let code, _, _) = self { return code }
-    return nil
-  }
-
-  var status: Int? {
-    switch self {
-    case .refused(let status, _, _, _), .unreadableAnswer(let status): status
-    default: nil
-    }
-  }
 }
 
 enum AccountSignInProvider: String, Sendable {

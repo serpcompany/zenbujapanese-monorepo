@@ -119,6 +119,8 @@ struct DeleteAccountView: View {
               try await zenbuAccount.confirmIdentity(email: address, code: code)
               try await deleteAccount(appleAuthorizationCode: nil)
             })
+        } else if !zenbuAccount.offersGoogle {
+          Text("This account signs in only with Google, which this build of Zenbu can't use.")
         }
       }
     } header: {

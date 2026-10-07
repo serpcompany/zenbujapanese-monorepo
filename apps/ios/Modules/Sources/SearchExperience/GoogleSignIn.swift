@@ -34,7 +34,7 @@ struct GoogleSignIn: Sendable {
       URLQueryItem(name: "client_id", value: clientID),
       URLQueryItem(name: "redirect_uri", value: redirectURI),
       URLQueryItem(name: "response_type", value: "code"),
-      URLQueryItem(name: "scope", value: "openid email profile"),
+      URLQueryItem(name: "scope", value: "openid email"),
       URLQueryItem(name: "code_challenge", value: Self.challenge(for: verifier)),
       URLQueryItem(name: "code_challenge_method", value: "S256"),
       URLQueryItem(name: "nonce", value: nonce),

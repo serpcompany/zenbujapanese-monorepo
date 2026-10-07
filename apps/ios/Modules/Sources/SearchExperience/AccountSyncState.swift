@@ -44,12 +44,36 @@ struct SignedInAccount: Codable, Hashable, Sendable {
   let email: String
 }
 
+struct HeldListWord: Codable, Hashable, Sendable {
+  let key: SyncEntityKey
+  let version: Int
+  let membership: WordListMembership
+}
+
 struct AccountSyncState: Codable, Sendable, Equatable {
   var account: SignedInAccount?
   var cursor: String?
   var lastSyncedAt: Date?
   var queue: [QueuedSyncChange] = []
   var versions: [String: Int] = [:]
+  var heldWords: [HeldListWord] = []
+  var endedOnItsOwn = false
+
+  init(account: SignedInAccount? = nil, endedOnItsOwn: Bool = false) {
+    self.account = account
+    self.endedOnItsOwn = endedOnItsOwn
+  }
+
+  init(from decoder: Decoder) throws {
+    let container = try decoder.container(keyedBy: CodingKeys.self)
+    account = try container.decodeIfPresent(SignedInAccount.self, forKey: .account)
+    cursor = try container.decodeIfPresent(String.self, forKey: .cursor)
+    lastSyncedAt = try container.decodeIfPresent(Date.self, forKey: .lastSyncedAt)
+    queue = try container.decodeIfPresent([QueuedSyncChange].self, forKey: .queue) ?? []
+    versions = try container.decodeIfPresent([String: Int].self, forKey: .versions) ?? [:]
+    heldWords = try container.decodeIfPresent([HeldListWord].self, forKey: .heldWords) ?? []
+    endedOnItsOwn = try container.decodeIfPresent(Bool.self, forKey: .endedOnItsOwn) ?? false
+  }
 
   func version(of key: SyncEntityKey) -> Int {
     queue.last { $0.key == key }?.baseVersion ?? versions[key.stored] ?? 0
@@ -68,6 +92,12 @@ struct AccountSyncState: Codable, Sendable, Equatable {
   mutating func forgetWords(of listID: UUID) {
     let prefix = SyncEntityKey.listWord(listID: listID, storedID: "").stored
     versions = versions.filter { !$0.key.hasPrefix(prefix) }
+    heldWords.removeAll { $0.membership.listID == listID }
+  }
+
+  mutating func hold(_ word: HeldListWord) {
+    heldWords.removeAll { $0.key == word.key }
+    heldWords.append(word)
   }
 }
 

@@ -4,13 +4,13 @@ import Foundation
 enum SyncRetry {
   static let firstDelay: TimeInterval = 2
   static let longestDelay: TimeInterval = 5 * 60
-  static let mostFailures = 8
+  static let mostRetries = 10
 
   static func delay(
     after error: Error, failures: Int,
     jitter: (ClosedRange<Double>) -> Double = { Double.random(in: $0) }
   ) -> TimeInterval? {
-    guard failures < mostFailures, let error = error as? AccountServiceError else { return nil }
+    guard let error = error as? AccountServiceError else { return nil }
     switch error {
     case .unreachable:
       return backoff(failures: failures, jitter: jitter)
@@ -23,10 +23,15 @@ enum SyncRetry {
     }
   }
 
+  static func isRetryAfter(_ error: Error) -> Bool {
+    if case .refused(429, _, _, _) = error as? AccountServiceError { return true }
+    return false
+  }
+
   static func backoff(
     failures: Int, jitter: (ClosedRange<Double>) -> Double
   ) -> TimeInterval {
-    let ceiling = min(longestDelay, firstDelay * pow(2, Double(failures)))
+    let ceiling = min(longestDelay, firstDelay * pow(2, Double(min(failures, 16))))
     return jitter(ceiling / 2...ceiling)
   }
 }
@@ -34,38 +39,40 @@ enum SyncRetry {
 @MainActor
 final class AccountSyncScheduler {
   static let staleAfter: TimeInterval = 15 * 60
-  static let afterLocalChange: Duration = .seconds(1)
+  static let afterLocalChange: TimeInterval = 1
 
   private let sync: AccountSync
+  private let now: @MainActor () -> Date
   private var isForeground = true
   private var failures = 0
+  private(set) var waitUntil: Date?
+  private var waitIsRetryAfter = false
   private var waiting: Task<Void, Never>?
   private var running: Task<Void, Never>?
   private var runsAgain = false
 
-  init(sync: AccountSync) {
+  init(sync: AccountSync, now: @escaping @MainActor () -> Date = Date.init) {
     self.sync = sync
+    self.now = now
     sync.onLocalChange = { [weak self] in self?.syncSoon(after: Self.afterLocalChange) }
   }
 
   func appBecameActive() {
     isForeground = true
     Task {
-      await sync.flush()
-      if sync.isDue(staleAfter: Self.staleAfter) { syncNow() }
+      await sync.ready()
+      if sync.isDue(staleAfter: Self.staleAfter) { syncSoon(after: 0) }
     }
   }
 
   func appEnteredBackground() {
     isForeground = false
-    waiting?.cancel()
-    waiting = nil
+    cancelWaiting()
     requestBackgroundRefresh()
   }
 
   func syncNow() {
-    waiting?.cancel()
-    waiting = nil
+    cancelWaiting()
     guard running == nil else {
       runsAgain = true
       return
@@ -74,8 +81,11 @@ final class AccountSyncScheduler {
   }
 
   func refresh() async {
-    failures = 0
-    syncNow()
+    if !waitIsRetryAfter {
+      waitUntil = nil
+      failures = 0
+    }
+    syncSoon(after: 0)
     await settled()
   }
 
@@ -87,23 +97,42 @@ final class AccountSyncScheduler {
 
   func backgroundRefresh() async {
     isForeground = false
-    await refresh()
+    if remainingWait(atLeast: 0) == 0 {
+      await withTaskCancellationHandler {
+        syncNow()
+        await settled()
+      } onCancel: {
+        Task { @MainActor [weak self] in self?.running?.cancel() }
+      }
+    }
     requestBackgroundRefresh()
   }
 
   func stop() {
-    waiting?.cancel()
-    waiting = nil
+    cancelWaiting()
     failures = 0
+    waitUntil = nil
+    waitIsRetryAfter = false
   }
 
-  private func syncSoon(after delay: Duration) {
-    waiting?.cancel()
+  func remainingWait(atLeast seconds: TimeInterval) -> TimeInterval {
+    max(seconds, waitUntil.map { $0.timeIntervalSince(now()) } ?? 0)
+  }
+
+  private func syncSoon(after seconds: TimeInterval) {
+    let delay = remainingWait(atLeast: seconds)
+    guard delay > 0 else { return syncNow() }
+    cancelWaiting()
     waiting = Task { [weak self] in
-      try? await Task.sleep(for: delay)
+      try? await Task.sleep(for: .seconds(delay))
       guard !Task.isCancelled else { return }
       self?.syncNow()
     }
+  }
+
+  private func cancelWaiting() {
+    waiting?.cancel()
+    waiting = nil
   }
 
   private func drain() async {
@@ -112,7 +141,10 @@ final class AccountSyncScheduler {
       do {
         try await sync.sync()
         failures = 0
+        waitUntil = nil
+        waitIsRetryAfter = false
       } catch {
+        runsAgain = false
         retry(after: error)
       }
     } while runsAgain
@@ -120,11 +152,11 @@ final class AccountSyncScheduler {
   }
 
   private func retry(after error: Error) {
-    guard isForeground, let delay = SyncRetry.delay(after: error, failures: failures) else {
-      return
-    }
+    guard let delay = SyncRetry.delay(after: error, failures: failures) else { return }
     failures += 1
-    syncSoon(after: .seconds(delay))
+    waitUntil = now() + delay
+    waitIsRetryAfter = SyncRetry.isRetryAfter(error)
+    if isForeground, failures <= SyncRetry.mostRetries { syncSoon(after: delay) }
   }
 
   private func requestBackgroundRefresh() {

@@ -89,6 +89,22 @@ final class AccountFixture {
     }
   }
 
+  static func afterSignIn() async throws -> AccountFixture {
+    let fixture = AccountFixture()
+    fixture.serve()
+    await fixture.launch()
+    try await fixture.signIn()
+    return fixture
+  }
+
+  func answerNextSignIn(as userID: String, sessionToken: String) {
+    server.respond { request in
+      request.route == "POST /v1/auth/sign-in/email-otp"
+        ? .json(200, Self.signedIn(as: userID), headers: ["set-auth-token": sessionToken])
+        : .json(200, ["success": true])
+    }
+  }
+
   func signIn() async throws {
     try await account.signIn(email: Self.email, code: "123456")
     await account.scheduler.settled()

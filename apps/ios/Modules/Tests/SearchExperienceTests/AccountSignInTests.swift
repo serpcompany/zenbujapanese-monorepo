@@ -94,6 +94,8 @@ struct AccountSignInTests {
     #expect(fixture.sync.sessionEndedOnItsOwn)
     #expect(fixture.storage.read() == nil)
     #expect(fixture.wordKnowledge.isKnown(storedID: AccountFixture.taberu))
+    await fixture.launch()
+    #expect(fixture.sync.sessionEndedOnItsOwn)
   }
 
   @Test("a refused sign-in keeps the app signed out and says why")
@@ -161,12 +163,5 @@ struct AccountSignInTests {
     #expect(value("code_challenge_method") == "S256")
     #expect(value("code_challenge") == GoogleSignIn.challenge(for: attempt.verifier))
     #expect(value("state") == attempt.state)
-  }
-
-  @Test("Apple gets the nonce's SHA-256")
-  func appleNonce() {
-    #expect(
-      SignInNonce.sha256("abc")
-        == "ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad")
   }
 }

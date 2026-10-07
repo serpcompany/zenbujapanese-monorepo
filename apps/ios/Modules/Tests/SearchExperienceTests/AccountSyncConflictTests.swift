@@ -8,14 +8,6 @@ import Testing
 struct AccountSyncConflictTests {
   private typealias Fixture = AccountFixture
 
-  private func signedIn() async throws -> Fixture {
-    let fixture = Fixture()
-    fixture.serve()
-    await fixture.launch()
-    try await fixture.signIn()
-    return fixture
-  }
-
   private func answerFirst(
     _ fixture: Fixture, with result: @escaping @Sendable (StubSyncRequest.Mutation) -> [String: Any]
   ) {
@@ -30,7 +22,7 @@ struct AccountSyncConflictTests {
 
   @Test("a known word that changed elsewhere first takes the account's copy")
   func knownWordConflict() async throws {
-    let fixture = try await signedIn()
+    let fixture = try await Fixture.afterSignIn()
     fixture.markKnown(Fixture.taberu)
     answerFirst(fixture) {
       StubSync.conflict($0.id, StubSync.knownWord(Fixture.taberu, known: false, version: 3))
@@ -46,7 +38,7 @@ struct AccountSyncConflictTests {
 
   @Test("a rejected known word goes back to how it was")
   func knownWordRejected() async throws {
-    let fixture = try await signedIn()
+    let fixture = try await Fixture.afterSignIn()
     fixture.markKnown(Fixture.taberu)
     answerFirst(fixture) { StubSync.rejected($0.id, "invalid_mutation") }
     try await fixture.syncNow()
@@ -55,7 +47,7 @@ struct AccountSyncConflictTests {
 
   @Test("a rename that lost to another takes the list's name as it is now")
   func listConflict() async throws {
-    let fixture = try await signedIn()
+    let fixture = try await Fixture.afterSignIn()
     let favorites = fixture.favorites
     fixture.wordLists.renameList(favorites, to: "Mine")
     #expect(fixture.sync.state.queue.first?.fields == ["name": .string("Mine")])
@@ -69,7 +61,7 @@ struct AccountSyncConflictTests {
 
   @Test("a rejected list is removed, and a rejected rename is undone")
   func listRejected() async throws {
-    let fixture = try await signedIn()
+    let fixture = try await Fixture.afterSignIn()
     let anime = try #require(fixture.wordLists.createList(named: "Anime"))
     answerFirst(fixture) { StubSync.rejected($0.id, "too_many_lists") }
     try await fixture.syncNow()
@@ -83,7 +75,7 @@ struct AccountSyncConflictTests {
 
   @Test("a list deleted elsewhere is dropped with its words")
   func listDeletedElsewhere() async throws {
-    let fixture = try await signedIn()
+    let fixture = try await Fixture.afterSignIn()
     let favorites = fixture.favorites
     fixture.addMiru(to: favorites)
     try await fixture.syncNow()
@@ -100,7 +92,7 @@ struct AccountSyncConflictTests {
 
   @Test("deleting a list here sends one delete, and its words go with it")
   func listDeletedHere() async throws {
-    let fixture = try await signedIn()
+    let fixture = try await Fixture.afterSignIn()
     let favorites = fixture.favorites
     fixture.addMiru(to: favorites)
     fixture.wordLists.deleteList(favorites)
@@ -111,7 +103,7 @@ struct AccountSyncConflictTests {
 
   @Test("a word added to a list that's gone is taken back out")
   func listWordRejected() async throws {
-    let fixture = try await signedIn()
+    let fixture = try await Fixture.afterSignIn()
     let favorites = fixture.favorites
     fixture.addMiru(to: favorites)
     answerFirst(fixture) { StubSync.rejected($0.id, "unknown_list") }
@@ -121,7 +113,7 @@ struct AccountSyncConflictTests {
 
   @Test("removing a word someone else added again keeps it")
   func listWordRemoveConflict() async throws {
-    let fixture = try await signedIn()
+    let fixture = try await Fixture.afterSignIn()
     let favorites = fixture.favorites
     fixture.addMiru(to: favorites)
     try await fixture.syncNow()
@@ -136,7 +128,7 @@ struct AccountSyncConflictTests {
 
   @Test("the account's copy doesn't overwrite a change still waiting to be sent")
   func queuedChangeWins() async throws {
-    let fixture = try await signedIn()
+    let fixture = try await Fixture.afterSignIn()
     let calls = CallCount()
     fixture.serve { request in
       guard calls.next() == 1 else { return .offline }

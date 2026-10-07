@@ -5,15 +5,16 @@ import Observation
 @Observable
 final class AccountSync: LocalFileStore {
   static let mutationsPerRequest = 50
+  static let requestBytes = 48 * 1024
 
   private(set) var state = AccountSyncState()
   private(set) var isLoaded = false
   private(set) var isUnavailable = false
   private(set) var isSyncing = false
   private(set) var lastFailure: AccountServiceError?
-  private(set) var sessionEndedOnItsOwn = false
 
   var account: SignedInAccount? { state.account }
+  var sessionEndedOnItsOwn: Bool { state.endedOnItsOwn }
   var lastSyncedAt: Date? { state.lastSyncedAt }
   var queuedChangeCount: Int { state.queue.count }
 
@@ -25,6 +26,8 @@ final class AccountSync: LocalFileStore {
   @ObservationIgnored private let now: @MainActor () -> Date
   @ObservationIgnored let writes = LocalFileWriteQueue()
   @ObservationIgnored var onLocalChange: (() -> Void)?
+  @ObservationIgnored private var session = 0
+  @ObservationIgnored private var changesBeforeLoad: [SavedItemChange] = []
 
   init(
     api: AccountAPI,
@@ -57,6 +60,8 @@ final class AccountSync: LocalFileStore {
       } else if tokens.sessionToken == nil {
         endSession()
       }
+      changesBeforeLoad.forEach(record)
+      changesBeforeLoad = []
     }
     wordKnowledge.changeObserver = { [weak self] change in self?.record(change) }
     wordLists.changeObserver = { [weak self] change in self?.record(change) }
@@ -73,12 +78,16 @@ final class AccountSync: LocalFileStore {
     return now().timeIntervalSince(lastSyncedAt) > staleAfter
   }
 
-  func begin(_ signIn: AccountSignIn) async {
+  func ready() async {
     await flush()
     await wordKnowledge.flush()
     await wordLists.flush()
+  }
+
+  func begin(_ signIn: AccountSignIn) async {
+    await ready()
     tokens.replaceSession(with: signIn.sessionToken)
-    sessionEndedOnItsOwn = false
+    session += 1
     lastFailure = nil
     state = AccountSyncState(account: SignedInAccount(userID: signIn.userID, email: signIn.email))
     state.queue = uploads().map(\.upload)
@@ -91,25 +100,24 @@ final class AccountSync: LocalFileStore {
   }
 
   func endSession(onItsOwn: Bool = false) {
+    session += 1
     tokens.forgetSession()
-    state = AccountSyncState()
-    sessionEndedOnItsOwn = onItsOwn
+    state = AccountSyncState(endedOnItsOwn: onItsOwn)
     lastFailure = nil
     persist()
   }
 
   func sync() async throws {
-    await flush()
-    await wordKnowledge.flush()
-    await wordLists.flush()
-    guard canSync, !isSyncing, let account else { return }
+    await ready()
+    guard canSync, !isSyncing else { return }
     isSyncing = true
     defer { isSyncing = false }
+    let session = session
     do {
-      try await pull(for: account)
+      try await pull(in: session)
       lastFailure = nil
     } catch AccountServiceError.sessionEnded {
-      if self.account == account { endSession(onItsOwn: true) }
+      if self.session == session { endSession(onItsOwn: true) }
       throw AccountServiceError.sessionEnded
     } catch let failure as AccountServiceError {
       lastFailure = failure
@@ -124,7 +132,11 @@ final class AccountSync: LocalFileStore {
   }
 
   private func record(_ change: SavedItemChange) {
-    guard canSync else { return }
+    guard isLoaded else {
+      changesBeforeLoad.append(change)
+      return
+    }
+    guard !isUnavailable, account != nil else { return }
     state.queue.append(change.queued(in: state))
     persist()
     onLocalChange?()
@@ -145,17 +157,21 @@ final class AccountSync: LocalFileStore {
   private func nextBatch() -> [QueuedSyncChange] {
     var keys = Set<SyncEntityKey>()
     var batch: [QueuedSyncChange] = []
+    var bytes = 0
     for change in state.queue {
-      guard batch.count < Self.mutationsPerRequest, keys.insert(change.key).inserted else { break }
+      bytes += (try? JSONEncoder().encode(change.payload).count) ?? 0
+      guard batch.isEmpty || bytes <= Self.requestBytes, batch.count < Self.mutationsPerRequest,
+        keys.insert(change.key).inserted
+      else { break }
       batch.append(change)
     }
     return batch
   }
 
-  private func pull(for account: SignedInAccount) async throws {
-    var heldWords: [SyncChange] = []
+  private func pull(in session: Int) async throws {
     var hasMore = true
     while hasMore || !state.queue.isEmpty {
+      try Task.checkCancellation()
       let batch = nextBatch()
       let request = SyncRequestBody(cursor: state.cursor, mutations: batch.map(\.payload))
       let answer: SyncAnswer
@@ -164,30 +180,28 @@ final class AccountSync: LocalFileStore {
           try await api.sync(request, accessToken: token)
         }
       } catch AccountServiceError.refused(status: 410, _, _, _) where request.cursor != nil {
-        guard self.account == account else { return }
+        guard self.session == session else { return }
         state.cursor = nil
-        heldWords.removeAll()
+        state.heldWords = []
         persist()
         continue
       }
-      guard self.account == account else { return }
-      resolve(batch, with: answer.results, holding: &heldWords)
-      for change in answer.changes { apply(change, holding: &heldWords) }
+      guard self.session == session else { return }
+      resolve(batch, with: answer.results)
+      for change in answer.changes { apply(change) }
       await wordKnowledge.flush()
       await wordLists.flush()
+      guard self.session == session else { return }
       state.cursor = answer.cursor
       persist()
       hasMore = answer.hasMore
     }
-    var unplaced: [SyncChange] = []
-    for change in heldWords { apply(change, holding: &unplaced) }
+    placeHeldWords()
     state.lastSyncedAt = now()
     persist()
   }
 
-  private func resolve(
-    _ batch: [QueuedSyncChange], with results: [SyncResult], holding heldWords: inout [SyncChange]
-  ) {
+  private func resolve(_ batch: [QueuedSyncChange], with results: [SyncResult]) {
     let sent = Set(batch.map(\.id))
     state.queue.removeAll { sent.contains($0.id) }
     let outcomes = Dictionary(results.map { ($0.id, $0.outcome) }) { first, _ in first }
@@ -197,7 +211,7 @@ final class AccountSync: LocalFileStore {
         state.versions[change.key.stored] = version
         state.rebase(change.key, from: change.baseVersion, to: version)
       case .conflict(let current):
-        apply(current, holding: &heldWords)
+        apply(current)
       case .rejected:
         if !state.hasQueuedChange(to: change.key), let undo = change.undo { self.undo(undo) }
       case nil:
@@ -206,7 +220,7 @@ final class AccountSync: LocalFileStore {
     }
   }
 
-  private func apply(_ change: SyncChange, holding heldWords: inout [SyncChange]) {
+  private func apply(_ change: SyncChange) {
     guard !state.hasQueuedChange(to: change.key) else { return }
     switch change.payload {
     case .knownWord(let word):
@@ -221,34 +235,47 @@ final class AccountSync: LocalFileStore {
           updatedAt: list.createdAt))
     case .listWord(let word):
       guard let listID = UUID(uuidString: word.listId) else { return }
+      let membership = WordListMembership(
+        listID: listID, entryID: word.itemId, headword: word.headword, reading: word.reading,
+        addedAt: word.addedAt)
       guard wordLists.hasList(listID) else {
-        heldWords.append(change)
+        state.hold(HeldListWord(key: change.key, version: change.version, membership: membership))
         return
       }
-      wordLists.applySynced(
-        WordListMembership(
-          listID: listID, entryID: word.itemId, headword: word.headword, reading: word.reading,
-          addedAt: word.addedAt))
+      state.heldWords.removeAll { $0.key == change.key }
+      wordLists.applySynced(membership)
     case .gone:
-      removeLocally(change.key, holding: &heldWords)
+      removeLocally(change.key)
     case .unsynced:
       return
     }
     state.versions[change.key.stored] = change.version
   }
 
-  private func removeLocally(_ key: SyncEntityKey, holding heldWords: inout [SyncChange]) {
+  private func placeHeldWords() {
+    for held in state.heldWords
+    where wordLists.hasList(held.membership.listID) && !state.hasQueuedChange(to: held.key) {
+      wordLists.applySynced(held.membership)
+      state.versions[held.key.stored] = held.version
+    }
+    state.heldWords = []
+  }
+
+  private func removeLocally(_ key: SyncEntityKey) {
     switch key.entity {
     case SyncEntity.knownWord:
+      let record = wordKnowledge.records[key.entityID]
       wordKnowledge.applySynced(
-        KnownWordChange(storedID: key.entityID, headword: "", reading: "", known: false))
+        KnownWordChange(
+          storedID: key.entityID, headword: record?.headword ?? "", reading: record?.reading ?? "",
+          known: false))
     case SyncEntity.list:
       guard let listID = UUID(uuidString: key.entityID) else { return }
       wordLists.applySyncedRemoval(ofList: listID)
       state.forgetWords(of: listID)
-      heldWords.removeAll { $0.key.listWordParts?.listID == listID }
     case SyncEntity.listWord:
       guard let parts = key.listWordParts else { return }
+      state.heldWords.removeAll { $0.key == key }
       wordLists.applySyncedRemoval(of: parts.storedID, from: parts.listID)
     default:
       return
