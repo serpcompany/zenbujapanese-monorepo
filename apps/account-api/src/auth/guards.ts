@@ -1,12 +1,21 @@
 import type { BetterAuthPlugin } from 'better-auth'
 import { APIError, createAuthMiddleware, getSessionFromCtx } from 'better-auth/api'
+import type { Scope } from '../domain/clients'
 import type { Mailer } from '../email/mailer'
-import { requireSignInClient } from './clients'
+import { requireSignInClient, sessionClient } from './clients'
 import { emailProvider } from './identities'
 import { consumeNonce } from './nonce'
-import { offeredRoutes, route, routesNeedingAFreshSession, routesThatSendEmail } from './routes'
+import {
+  offeredRoutes,
+  route,
+  routeScopes,
+  routesNeedingAFreshSession,
+  routesThatSendEmail
+} from './routes'
 
 const freshSessionMinutes = 10
+const codesPerEmail = 5
+const codeWindowMs = 10 * 60 * 1000
 const linkingByRequest = new WeakMap<Request, string>()
 
 type AuthContext = Parameters<Parameters<typeof createAuthMiddleware>[0]>[0]
@@ -27,6 +36,48 @@ async function sessionOf(context: AuthContext) {
 async function freshSession(context: AuthContext) {
   const session = await sessionOf(context)
   return session && isFresh(session.session.createdAt) ? session : null
+}
+
+const insufficientScope = (scope: Scope) =>
+  new APIError('FORBIDDEN', {
+    code: 'INSUFFICIENT_SCOPE',
+    message: `This app's access to the account doesn't include ${scope}.`
+  })
+
+async function requireScope(context: AuthContext, scope: Scope): Promise<void> {
+  const session = await sessionOf(context)
+  if (session && !sessionClient(session.session)?.scopes.includes(scope)) {
+    throw insufficientScope(scope)
+  }
+}
+
+async function requireListedApp(context: AuthContext): Promise<void> {
+  const session = await sessionOf(context)
+  if (session && !sessionClient(session.session)) {
+    throw new APIError('UNAUTHORIZED', {
+      code: 'SIGN_IN_AGAIN',
+      message: 'This session belongs to no app the service lists. Sign in again.'
+    })
+  }
+}
+
+function codesSentPerEmail() {
+  const sent = new Map<string, number[]>()
+  return (email: unknown): boolean => {
+    const now = Date.now()
+    if (sent.size > 10_000) {
+      for (const [key, times] of sent) {
+        if (times.every(at => now - at >= codeWindowMs)) sent.delete(key)
+      }
+    }
+    const key = String(email ?? '')
+      .trim()
+      .toLowerCase()
+    const recent = (sent.get(key) ?? []).filter(at => now - at < codeWindowMs)
+    if (recent.length >= codesPerEmail) return false
+    sent.set(key, [...recent, now])
+    return true
+  }
 }
 
 async function requireFreshSession(context: AuthContext): Promise<void> {
@@ -61,11 +112,15 @@ async function requireNonce(context: AuthContext, idToken: { nonce?: unknown }):
 }
 
 function guardRequests(mailer: Mailer, trustedOrigins: readonly string[]) {
+  const mayCode = codesSentPerEmail()
   return createAuthMiddleware(async context => {
     const path = context.path
     if (!offeredRoutes.has(path)) {
       throw new APIError('NOT_FOUND', { code: 'NOT_FOUND', message: 'There is nothing here.' })
     }
+    const scope = routeScopes.get(path)
+    if (scope) await requireScope(context, scope)
+    if (path === route.accessToken) await requireListedApp(context)
     if (routesThatSendEmail.has(path) && !mailer.available) {
       throw new APIError('SERVICE_UNAVAILABLE', {
         code: 'EMAIL_UNAVAILABLE',
@@ -79,6 +134,12 @@ function guardRequests(mailer: Mailer, trustedOrigins: readonly string[]) {
         message: 'A code is sent only to sign in.'
       })
     }
+    if (path === route.sendCode && !mayCode(body.email)) {
+      throw new APIError('TOO_MANY_REQUESTS', {
+        code: 'TOO_MANY_REQUESTS',
+        message: `At most ${codesPerEmail} codes go to one email in ${codeWindowMs / 60_000} minutes. Try again later.`
+      })
+    }
     if (path === route.signInWithCode || path === route.signInWithProvider) {
       requireSignInClient(context.request?.headers ?? context.headers, path, body, trustedOrigins)
     }
@@ -89,6 +150,9 @@ function guardRequests(mailer: Mailer, trustedOrigins: readonly string[]) {
     }
     if (path === route.signInWithCode && context.request) {
       const session = await freshSession(context)
+      if (session && !sessionClient(session.session)?.scopes.includes('account')) {
+        throw insufficientScope('account')
+      }
       if (session) linkingByRequest.set(context.request, session.user.id)
     }
   })

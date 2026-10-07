@@ -126,4 +126,59 @@ describe("each app's access to an account", () => {
     const issued = await service.call('/v1/auth/token', { token: sessionToken(tomodachi) })
     expect(decodeJwt(String(issued.body?.token))).toMatchObject({ azp: 'tomodachi' })
   })
+
+  test("a Tomodachi session can't manage how the account signs in or where, nor read who it is", async () => {
+    const { service, as } = accounts.running
+    const signedIn = await as.withCode('tomo-manage@example.com', { client: 'tomodachi' })
+    const session = sessionToken(signedIn)
+    const refused = [
+      ['/v1/auth/list-accounts', undefined],
+      ['/v1/auth/list-sessions', undefined],
+      ['/v1/auth/get-session', undefined],
+      ['/v1/auth/unlink-account', { accountId: 'any' }],
+      ['/v1/auth/link-social', { provider: 'google', idToken: { token: 'x', nonce: 'y' } }],
+      ['/v1/auth/revoke-session', { token: 'any' }],
+      ['/v1/auth/revoke-sessions', {}],
+      ['/v1/auth/revoke-other-sessions', {}]
+    ] as const
+    for (const [path, body] of refused) {
+      expect(await service.call(path, { token: session, body }), path).toMatchObject({
+        status: 403,
+        body: { error: { code: 'insufficient_scope' } }
+      })
+    }
+    expect(
+      await as.withCode('tomo-manage-2@example.com', { session, client: 'tomodachi' })
+    ).toMatchObject({
+      status: 403,
+      body: { error: { code: 'insufficient_scope' } }
+    })
+    expect((await service.call('/v1/auth/token', { token: session })).status).toBe(200)
+    expect((await service.call('/v1/auth/sign-out', { token: session, body: {} })).status).toBe(200)
+  })
+
+  test('a session with no listed app gets no access token, and the app signs in again', async () => {
+    const { service, as } = accounts.running
+    const session = sessionToken(await as.withCode('no-app-session@example.com'))
+    await service.rows(
+      `update sessions set client_id = null where token = '${session.split('.')[0]}'`
+    )
+    expect(await service.call('/v1/auth/token', { token: session })).toMatchObject({
+      status: 401,
+      body: { error: { code: 'sign_in_again' } }
+    })
+  })
+
+  test('sends at most five codes to one email in ten minutes, from any address', async () => {
+    const { service } = accounts.running
+    const send = () =>
+      service.call('/v1/auth/email-otp/send-verification-otp', {
+        body: { email: 'Flooded@Example.com', type: 'sign-in' }
+      })
+    for (let sent = 0; sent < 5; sent++) expect((await send()).status).toBe(200)
+    expect(await send()).toMatchObject({
+      status: 429,
+      body: { error: { code: 'too_many_requests' } }
+    })
+  })
 })

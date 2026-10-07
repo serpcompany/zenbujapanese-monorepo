@@ -62,12 +62,10 @@ export function createApp(options: AppOptions) {
     maxAge: 600
   })
   for (const path of ['/v1/auth/*', '/v1/health', ...accountPaths]) app.use(path, crossOrigin)
+  const appLimit = perClientLimit(id => clientById(id)?.requestsPerMinute ?? 0)
   for (const path of accountPaths) {
     app.use(path, requireAccount(options.verifyAccessToken))
-    app.use(
-      path,
-      perClientLimit(id => clientById(id)?.requestsPerMinute ?? 0)
-    )
+    app.use(path, appLimit)
   }
   app.use('/v1/me', requireScope('profile'), perAccountLimit(requestsPerMinute.profile))
   app.use('/v1/sync', perAccountLimit(requestsPerMinute.sync))

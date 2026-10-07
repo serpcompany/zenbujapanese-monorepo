@@ -1,3 +1,5 @@
+import type { Scope } from '../domain/clients'
+
 export const authPath = '/v1/auth'
 
 export const route = {
@@ -27,3 +29,14 @@ export const routesNeedingAFreshSession: ReadonlySet<string> = new Set([
 ])
 
 export const routesThatSendEmail: ReadonlySet<string> = new Set([route.sendCode])
+
+export const routeScopes: ReadonlyMap<string, Scope> = new Map([
+  [route.linkProvider, 'account'],
+  [route.unlink, 'account'],
+  [route.identities, 'account'],
+  [route.sessions, 'account'],
+  [route.revokeSession, 'account'],
+  [route.revokeSessions, 'account'],
+  [route.revokeOtherSessions, 'account'],
+  [route.session, 'profile']
+])

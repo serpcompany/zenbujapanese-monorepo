@@ -24,14 +24,23 @@ setting ([`account-api.md`](account-api.md), Settings).
 
 | App | ID | Scopes |
 | --- | --- | --- |
-| Zenbu Japanese for iOS | `zenbu-ios` | `profile`, `lists:read`, `lists:write`, `known:read`, `known:write` |
+| Zenbu Japanese for iOS | `zenbu-ios` | `account`, `profile`, `lists:read`, `lists:write`, `known:read`, `known:write` |
 | zenbujapanese.com | `zenbu-web` | the same |
 | Tomodachi | `tomodachi` | `lists:read`, `known:read`, `known:mark`, `dictionary:read` |
 
+- `account` manages how the account signs in and where: linking and unlinking a way in, listing
+  the ways in, and listing or signing out sessions. `profile` reads and changes the profile, and
+  `GET /v1/auth/get-session`, which shows the email and name.
 - `known:mark` marks a word Known and never clears one: only the learner un-marks a word.
 - `dictionary:read` is for the dictionary service's routes for apps (#571).
-- An app is a public client: it holds no secret. Its scopes keep each app to what it needs; every
-  token is still only the signed-in learner's own account.
+- An app without a scope gets `403 insufficient_scope` from the route, or `not_allowed` for a sync
+  change, and sync never sends it the entities it can't read: Tomodachi never gets the profile.
+- **Scopes keep a cooperating app to what it needs; they don't stop a hostile one.** An app is a
+  public client with no secret, and names itself in a header, so a program can claim to be any
+  app. Every token is still only the signed-in learner's own account, so what's at stake is that
+  learner's own data in an app they chose, not anyone else's.
+- The cursor passes the entities an app can't read. When an app's scopes grow, sync once with no
+  cursor.
 
 ## Signing in
 
@@ -52,7 +61,9 @@ doesn't list, a sign-in is refused (`unknown_client`).
 
 A sign-in answers the learner, and the **session token** in the `set-auth-token` header. Keep it in
 the Keychain: it's the refresh token, good for 60 days from its last use. Send it only to
-`/v1/auth`. The same Apple account, Google account, or email signs in to the same Zenbu account in
+`/v1/auth`. An app with no `account` scope uses only the sign-in routes, `GET /v1/auth/token`, and
+`POST /v1/auth/sign-out`; the rest manage the account and need `account` or `profile`. At most five
+codes go to one email in 10 minutes (`429`). The same Apple account, Google account, or email signs in to the same Zenbu account in
 every app, as long as the account has that way in; an email that already has an account through
 another way is refused until the learner adds it there, signed in (`oauth_link_error`,
 `account_not_linked`).
@@ -62,7 +73,8 @@ another way is refused until the learner adds it there, signed in (`oauth_link_e
 `GET /v1/auth/token`, with the session token as `Authorization: Bearer`, answers a 15-minute access
 token. Send that, never the session token, to `/v1/me`, `/v1/sync`, and the dictionary service.
 Get a new one when it's about to expire or a request answers `401`. If `/v1/auth/token` answers
-`401`, the session is over: sign in again.
+`401` (`unauthorized`, or `sign_in_again` for a session that belongs to no listed app), the session
+is over: sign in again.
 
 The token names the account (`sub`), your app (`azp`), and its scopes (`scope`). A route your
 scopes don't cover answers `403 insufficient_scope`; a sync change they don't allow is rejected

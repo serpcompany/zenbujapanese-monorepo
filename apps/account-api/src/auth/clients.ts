@@ -14,7 +14,9 @@ function signInClient(
   const named = headers?.get(clientHeader)
   if (named) return clientById(named)
   const origin = headers?.get('origin')
-  return origin && trustedOrigins.includes(origin) ? webClient : null
+  if (!origin) return null
+  if (trustedOrigins.includes(origin)) return webClient
+  return clients.find(client => client.origins.includes(origin)) ?? null
 }
 
 const unknownClient = () =>
@@ -66,6 +68,10 @@ export function sessionClientHooks(trustedOrigins: readonly string[]) {
       }
     }
   } satisfies BetterAuthOptions['databaseHooks']
+}
+
+export function sessionClient(session: Record<string, unknown> | null | undefined) {
+  return clientById(typeof session?.clientId === 'string' ? session.clientId : null)
 }
 
 export function tokenClaims(clientId: unknown): Record<string, string> {

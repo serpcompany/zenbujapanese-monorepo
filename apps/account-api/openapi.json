@@ -1143,7 +1143,7 @@
             }
           },
           "429": {
-            "description": "`too_many_requests`.",
+            "description": "`too_many_requests`: five codes to one email, or from one address, in 10 minutes.",
             "content": {
               "application/json": {
                 "schema": {
@@ -1515,7 +1515,7 @@
             }
           },
           "403": {
-            "description": "`session_not_fresh`: sign in again first.",
+            "description": "`session_not_fresh`: sign in again first; or `insufficient_scope`: the session's app doesn't have `account`.",
             "content": {
               "application/json": {
                 "schema": {
@@ -1598,7 +1598,7 @@
             }
           },
           "403": {
-            "description": "`session_not_fresh`: sign in again first.",
+            "description": "`session_not_fresh`: sign in again first; or `insufficient_scope`: the session's app doesn't have `account`.",
             "content": {
               "application/json": {
                 "schema": {
@@ -1638,7 +1638,7 @@
             }
           },
           "401": {
-            "description": "`unauthorized`: the session is gone; sign in again.",
+            "description": "`unauthorized`: the session is gone, or `sign_in_again`: it belongs to no app the service lists. Sign in again.",
             "content": {
               "application/json": {
                 "schema": {
@@ -1724,6 +1724,16 @@
                 }
               }
             }
+          },
+          "403": {
+            "description": "`insufficient_scope`: the session's app doesn't have `profile`.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
           }
         }
       }
@@ -1803,6 +1813,16 @@
                 }
               }
             }
+          },
+          "403": {
+            "description": "`insufficient_scope`: the session's app doesn't have `account`.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
           }
         }
       }
@@ -1831,6 +1851,16 @@
           },
           "401": {
             "description": "`unauthorized`.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "`insufficient_scope`: the session's app doesn't have `account`.",
             "content": {
               "application/json": {
                 "schema": {
@@ -1900,6 +1930,16 @@
                 }
               }
             }
+          },
+          "403": {
+            "description": "`insufficient_scope`: the session's app doesn't have `account`.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
           }
         }
       }
@@ -1954,6 +1994,16 @@
                 }
               }
             }
+          },
+          "403": {
+            "description": "`insufficient_scope`: the session's app doesn't have `account`.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
           }
         }
       }
@@ -2001,6 +2051,16 @@
           },
           "401": {
             "description": "`unauthorized`.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "`insufficient_scope`: the session's app doesn't have `account`.",
             "content": {
               "application/json": {
                 "schema": {

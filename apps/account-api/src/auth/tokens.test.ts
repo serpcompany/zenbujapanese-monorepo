@@ -28,7 +28,7 @@ describe('access tokens', () => {
     expect(Object.keys(payload).sort()).toEqual(['aud', 'azp', 'exp', 'iat', 'iss', 'scope', 'sub'])
     expect(payload).toMatchObject({
       azp: 'zenbu-ios',
-      scope: 'profile lists:read lists:write known:read known:write'
+      scope: 'account profile lists:read lists:write known:read known:write'
     })
     expect(Number(payload.exp) - Number(payload.iat)).toBe(15 * 60)
 

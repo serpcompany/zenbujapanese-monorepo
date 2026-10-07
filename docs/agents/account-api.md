@@ -92,7 +92,11 @@ from one of the website's origins, or is refused (`unknown_client`); an Apple to
 another app's bundle ID is refused (`client_mismatch`). The session keeps its app (`client_id`),
 and its access tokens carry the app (`azp`) and its scopes (`scope`), cut to the scopes the app
 has now. `/v1/me` needs `profile` (`403 insufficient_scope`), and sync checks each change against
-the scopes and reads only the entities they allow. The apps' side, and how to add one, is the
+the scopes and reads only the entities they allow. The sign-in routes that manage the account
+(linking, unlinking, listing ways in and sessions, and signing sessions out) need the session's
+app to have `account`, and `get-session`, which shows the email and name, needs `profile`; a
+session whose app isn't listed gets no access token (`401 sign_in_again`). At most five sign-in
+codes go to one email in 10 minutes, from any address. The apps' side, and how to add one, is the
 [client guide](account-clients.md).
 
 `/v1/me` and `/v1/sync` take only an access token from `GET /v1/auth/token`, as
@@ -272,11 +276,13 @@ belongs; tests may import anything.
 - **`src/auth`** sets up Better Auth on the database and the mailer: its routes under
   `/v1/auth`, which are open (`routes.ts`), the guards that hold this doc's rules
   (`guards.ts`, a Better Auth plugin after `bearer`, so it sees the bearer session), the nonce
-  (`nonce.ts`), what an identity may hold (`identities.ts`), and the access-token check the other
-  routes use (`access-tokens.ts`). It imports nothing of the HTTP layer.
+  (`nonce.ts`), what an identity may hold (`identities.ts`), which app a sign-in is and what its
+  tokens carry (`clients.ts`), and the access-token check the other routes use
+  (`access-tokens.ts`). It imports nothing of the HTTP layer.
 - **`src/email`** sends a message, and imports neither sign-in, the database, nor HTTP.
-- **`src/domain`** holds the profile and sync rules: a profile's fields, versions and conflicts,
-  the cursor, and the results kept by mutation ID. It works through the store it's handed
+- **`src/domain`** holds the account's rules: the apps and their scopes (`clients.ts`), a
+  profile's fields, each synced entity's rule, versions and conflicts, the cursor, and the results
+  kept by mutation ID. It works through the store it's handed
   (`store.ts`), so it imports no other layer, nor Hono, nor a database driver.
 - **`src/db`** is the database layer: Drizzle ORM over `pg`, the schema, the migrations, and the
   store the domain works through (`accounts.ts`). It knows nothing of HTTP or sign-in.

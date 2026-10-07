@@ -90,6 +90,8 @@ const appSigningIn = z.object({
 })
 
 const refused = (codes: string) => json(ErrorSchema, codes)
+const needs = (scope: string) =>
+  refused(`\`insufficient_scope\`: the session's app doesn't have \`${scope}\`.`)
 const sessionToken = [{ sessionToken: [] }]
 
 export const signInRoutes = {
@@ -102,7 +104,9 @@ export const signInRoutes = {
     request: body(z.object({ email: z.email(), type: z.literal('sign-in') })),
     responses: {
       200: json(done('success'), 'Sent, or nothing to send.'),
-      429: refused('`too_many_requests`.'),
+      429: refused(
+        '`too_many_requests`: five codes to one email, or from one address, in 10 minutes.'
+      ),
       503: refused('`email_unavailable`: no email sender is set up.')
     }
   }),
@@ -189,7 +193,9 @@ export const signInRoutes = {
     responses: {
       200: json(z.looseObject({ status: z.literal(true) }), 'Added.'),
       401: refused('`unauthorized`.'),
-      403: refused('`session_not_fresh`: sign in again first.')
+      403: refused(
+        "`session_not_fresh`: sign in again first; or `insufficient_scope`: the session's app doesn't have `account`."
+      )
     }
   }),
   unlink: createRoute({
@@ -211,7 +217,9 @@ export const signInRoutes = {
       200: json(done('status'), 'Removed.'),
       400: refused('`failed_to_unlink_last_account`, or `account_not_found`.'),
       401: refused('`unauthorized`.'),
-      403: refused('`session_not_fresh`: sign in again first.')
+      403: refused(
+        "`session_not_fresh`: sign in again first; or `insufficient_scope`: the session's app doesn't have `account`."
+      )
     }
   }),
   accessToken: createRoute({
@@ -221,7 +229,9 @@ export const signInRoutes = {
     security: sessionToken,
     responses: {
       200: json(z.object({ token: z.string() }), 'An EdDSA JWT naming only the account (`sub`).'),
-      401: refused('`unauthorized`: the session is gone; sign in again.')
+      401: refused(
+        '`unauthorized`: the session is gone, or `sign_in_again`: it belongs to no app the service lists. Sign in again.'
+      )
     }
   }),
   keys: createRoute({
@@ -241,6 +251,7 @@ export const signInRoutes = {
     summary: 'The session the token names',
     security: sessionToken,
     responses: {
+      403: needs('profile'),
       200: json(
         z.object({ session: SessionSchema, user: SignedInUserSchema }).nullable(),
         'The session, or `null` with no valid one.'
@@ -261,6 +272,7 @@ export const signInRoutes = {
     summary: 'The ways this account signs in',
     security: sessionToken,
     responses: {
+      403: needs('account'),
       200: json(
         z.array(
           z
@@ -285,6 +297,7 @@ export const signInRoutes = {
     summary: 'Where this account is signed in',
     security: sessionToken,
     responses: {
+      403: needs('account'),
       200: json(z.array(SessionSchema), 'Each session.'),
       401: refused('`unauthorized`.')
     }
@@ -299,7 +312,11 @@ export const signInRoutes = {
         token: z.string().openapi({ description: "A session's `token` from list-sessions." })
       })
     ),
-    responses: { 200: json(done('status'), 'Signed out.'), 401: refused('`unauthorized`.') }
+    responses: {
+      403: needs('account'),
+      200: json(done('status'), 'Signed out.'),
+      401: refused('`unauthorized`.')
+    }
   }),
   revokeSessions: createRoute({
     method: 'post',
@@ -307,7 +324,11 @@ export const signInRoutes = {
     summary: 'Sign every session out, this one too',
     security: sessionToken,
     request: body(z.object({})),
-    responses: { 200: json(done('status'), 'Signed out.'), 401: refused('`unauthorized`.') }
+    responses: {
+      403: needs('account'),
+      200: json(done('status'), 'Signed out.'),
+      401: refused('`unauthorized`.')
+    }
   }),
   revokeOtherSessions: createRoute({
     method: 'post',
@@ -315,7 +336,11 @@ export const signInRoutes = {
     summary: 'Sign every other session out',
     security: sessionToken,
     request: body(z.object({})),
-    responses: { 200: json(done('status'), 'Signed out.'), 401: refused('`unauthorized`.') }
+    responses: {
+      403: needs('account'),
+      200: json(done('status'), 'Signed out.'),
+      401: refused('`unauthorized`.')
+    }
   })
 }
 

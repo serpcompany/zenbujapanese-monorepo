@@ -1,4 +1,5 @@
 export const scopes = [
+  'account',
   'profile',
   'lists:read',
   'lists:write',
@@ -15,11 +16,13 @@ export interface Client {
   name: string
   scopes: readonly Scope[]
   appleBundleIds: readonly string[]
+  origins: readonly string[]
   signsInOnTheWeb: boolean
   requestsPerMinute: number
 }
 
 const everythingZenbu: readonly Scope[] = [
+  'account',
   'profile',
   'lists:read',
   'lists:write',
@@ -33,6 +36,7 @@ export const clients: readonly Client[] = [
     name: 'Zenbu Japanese for iOS',
     scopes: everythingZenbu,
     appleBundleIds: ['com.zenbujapanese.app'],
+    origins: [],
     signsInOnTheWeb: false,
     requestsPerMinute: 30_000
   },
@@ -41,6 +45,7 @@ export const clients: readonly Client[] = [
     name: 'zenbujapanese.com',
     scopes: everythingZenbu,
     appleBundleIds: [],
+    origins: [],
     signsInOnTheWeb: true,
     requestsPerMinute: 30_000
   },
@@ -49,6 +54,7 @@ export const clients: readonly Client[] = [
     name: 'Tomodachi',
     scopes: ['lists:read', 'known:read', 'known:mark', 'dictionary:read'],
     appleBundleIds: ['com.zenbujapanese.tomodachi'],
+    origins: [],
     signsInOnTheWeb: false,
     requestsPerMinute: 30_000
   }
