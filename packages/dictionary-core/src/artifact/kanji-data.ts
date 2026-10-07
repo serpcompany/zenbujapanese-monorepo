@@ -11,6 +11,7 @@ export interface KanjiReferenceEntry {
   strokeCount: number
   grade: number | null
   jlpt: number | null
+  wallerJlptLevel: number | null
   frequencyRank: number | null
   meanings: string[]
   readings: KanjiReadingRow[]

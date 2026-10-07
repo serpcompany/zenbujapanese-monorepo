@@ -25,7 +25,11 @@ REPORTS = {
         "import_tool_sha256": "import_radicals.py",
         "shared_tooling_sha256": SHARED,
     },
-    "KANJIDIC2-*.import.json": {"import_tool_sha256": "import_kanjidic.py", "shared_tooling_sha256": SHARED},
+    "KANJIDIC2-*.import.json": {
+        "import_tool_sha256": "import_kanjidic.py",
+        "shared_tooling_sha256": SHARED,
+        "jlpt_kanji_importer_sha256": "import_jlpt_kanji_levels.py",
+    },
     "KanjiVG-*.import.json": {"import_tool_sha256": "import_kanjivg.py", "shared_tooling_sha256": SHARED},
     "Kanjium-*.import.json": {
         "importToolSha256": "import_kanji_elements.py",

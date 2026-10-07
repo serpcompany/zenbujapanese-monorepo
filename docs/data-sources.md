@@ -26,6 +26,7 @@ Licenses screen, and point the source record at that file instead of keeping a s
 | Kanji and handwriting | [KanjiVG](https://kanjivg.tagaini.net/) | Ordered vector paths for writing kanji. | iOS, Website |
 | Kanji and handwriting | [DaKanji](https://github.com/dariyooo/DaKanji-Single-Kanji-Recognition) | A model that predicts candidate Japanese characters from a completed drawing. | iOS |
 | Study levels | [JLPT vocabulary lists with JMdict IDs](https://github.com/stephenmk/yomitan-jlpt-vocab) | Unofficial JLPT level estimates (N5–N1) from Jonathan Waller's lists. | iOS, Website |
+| Study levels | [Jonathan Waller's JLPT kanji lists](https://web.archive.org/web/20200806005029/http://www.tanos.co.uk/jlpt/jlpt5/kanji/) | Unofficial JLPT level estimates (N5–N1) for 2,211 kanji, as the Internet Archive captured his site (CC BY). | iOS (bundled, not shown), Website (the JLPT kanji lists) |
 | Frequency data | [TUBELEX](https://github.com/naist-nlp/tubelex) | Japanese word frequency data from occurrences across YouTube. | iOS, Website |
 | Frequency data | [Wikipedia Word Frequency Clean](https://github.com/adno/wikipedia-word-frequency-clean) | Japanese word frequency data from occurrences across Wikipedia. | iOS, Website |
 | Frequency data | [Jiten](https://jiten.moe/frequency-dictionaries) | Optional domain frequency lists for TV and film, anime, manga, novels, visual novels, and video games, keyed by dictionary form and reading (CC BY-SA 4.0), downloaded on demand. | iOS, Website (the frequency dictionary pages rank words by them) |

@@ -108,6 +108,7 @@ def build_kanji(download: bool) -> None:
     kanjidic = only("KANJIDIC2-*.source.json")
     kanjium = only("Kanjium-*.source.json")
     kanjivg = only("KanjiVG-*.source.json")
+    waller_kanji = only("Kanji-JLPT-Waller-*.source.json")
     radical_sources = {source["identity"]: source for source in record(radicals)["sources"]}
     run(
         "import_radicals.py",
@@ -124,6 +125,7 @@ def build_kanji(download: bool) -> None:
         "--source-manifest", kanjidic,
         "--radical-artifact", RESOURCES / "RadicalReferenceData.json",
         "--radical-manifest", report(radicals),
+        "--jlpt-kanji-record", waller_kanji,
         "--output", RESOURCES / "KanjiReferenceData.json",
         "--import-manifest", report(kanjidic),
     )

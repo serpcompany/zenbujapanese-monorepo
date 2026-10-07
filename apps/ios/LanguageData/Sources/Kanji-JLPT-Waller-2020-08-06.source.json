@@ -1,0 +1,87 @@
+{
+  "schemaVersion": 1,
+  "identity": "Jonathan Waller's JLPT kanji lists",
+  "owner": "Jonathan Waller (tanos.co.uk)",
+  "description": "Estimated JLPT kanji levels (N5–N1) from Jonathan Waller's lists, the same author as the JLPT vocabulary lists. JLPT has published no official kanji list since 2010, so levels are study estimates, not an exam syllabus. tanos.co.uk no longer resolves, so each list is pinned as the Internet Archive captured it.",
+  "snapshot": "2020-08-06",
+  "retrievedAt": "2026-10-06",
+  "files": [
+    {
+      "level": 5,
+      "path": "Kanji-JLPT-Waller-2020-08-06/n5.html",
+      "originalURL": "http://www.tanos.co.uk/jlpt/jlpt5/kanji/",
+      "url": "https://web.archive.org/web/20200806005029id_/http://www.tanos.co.uk:80/jlpt/jlpt5/kanji/",
+      "waybackDigest": "U4HWDPYMUSNPZVIXMZ52M65G2FPO52VY",
+      "bytes": 46087,
+      "sha256": "07e03ec4b0fe8ec4141aae3713c141e43a03df2907f78bdef3a7641d9b561de9",
+      "kanji": 79
+    },
+    {
+      "level": 4,
+      "path": "Kanji-JLPT-Waller-2020-08-06/n4.html",
+      "originalURL": "http://www.tanos.co.uk/jlpt/jlpt4/kanji/",
+      "url": "https://web.archive.org/web/20200517131147id_/http://www.tanos.co.uk:80/jlpt/jlpt4/kanji/",
+      "waybackDigest": "FJL5EYFG4KFCH424UEQHETXIIEKE6DZ3",
+      "bytes": 83270,
+      "sha256": "7922a19751c304ff4d62e391fa72bb8f38b6cc3220f87e8c657bf0a6a966d873",
+      "kanji": 166
+    },
+    {
+      "level": 3,
+      "path": "Kanji-JLPT-Waller-2020-08-06/n3.html",
+      "originalURL": "http://www.tanos.co.uk/jlpt/jlpt3/kanji/",
+      "url": "https://web.archive.org/web/20200724122309id_/http://www.tanos.co.uk:80/jlpt/jlpt3/kanji/",
+      "waybackDigest": "7VBLZFFXVC4VY5AXDX2WEO4N6XYBB5B4",
+      "bytes": 172152,
+      "sha256": "db743d52580b36626270cfeb184552295654d2df7c6b7bfd9c2b9d7ceaee25ab",
+      "kanji": 367
+    },
+    {
+      "level": 2,
+      "path": "Kanji-JLPT-Waller-2020-08-06/n2.html",
+      "originalURL": "http://www.tanos.co.uk/jlpt/jlpt2/kanji/",
+      "url": "https://web.archive.org/web/20200726143733id_/http://www.tanos.co.uk:80/jlpt/jlpt2/kanji/",
+      "waybackDigest": "HVSPS5NOIMUUSOO3HAZGX7W3T5F5KSKS",
+      "bytes": 167019,
+      "sha256": "da462c435bbfd6ae12bf36c14d6638acfef7e28c7f17460b95f9f77a35eaad83",
+      "kanji": 367
+    },
+    {
+      "level": 1,
+      "path": "Kanji-JLPT-Waller-2020-08-06/n1.html",
+      "originalURL": "http://www.tanos.co.uk/jlpt/jlpt1/kanji/",
+      "url": "https://web.archive.org/web/20200731061258id_/http://www.tanos.co.uk:80/jlpt/jlpt1/kanji/",
+      "waybackDigest": "3FSTCHHTG446YUSQYVRUTTWLGNXOXDKK",
+      "bytes": 521400,
+      "sha256": "8a772e01fb54e32fc718070b1b3122d080c52125a1537a034b87be42c5932f67",
+      "kanji": 1232
+    }
+  ],
+  "completeness": "Each page holds its level's whole list in one table, without pagination, and states no count of its own. Each capture's SHA-1 matches the digest the Wayback Machine recorded for it (waybackDigest), every capture of a level from 2019 to 2020 has that same digest, and the cross-check below lists the same kanji.",
+  "crossCheck": {
+    "identity": "davidluzgouveia/kanji-data kanji.json, jlpt_new",
+    "source": "Its README names Jonathan Waller's JLPT Resources page as the source of jlpt_new.",
+    "url": "https://raw.githubusercontent.com/davidluzgouveia/kanji-data/00fd7079c3890f430759536f91aa5e854ec0ca4f/kanji.json",
+    "commit": "00fd7079c3890f430759536f91aa5e854ec0ca4f",
+    "bytes": 5508152,
+    "sha256": "561b72ea9df703c58fae0c68585812e172aaa7611d2fcee6719d55fd2dfd4fa4",
+    "license": "MIT",
+    "result": "The same 2,211 kanji at the same levels: 79, 166, 367, 367, and 1,232 from N5 to N1. It isn't imported."
+  },
+  "format": {
+    "encoding": "utf-8",
+    "table": "The page's table whose header row is Kanji, Onyomi, Kunyomi, English; the first cell of each row holds one kanji."
+  },
+  "license": {
+    "identifier": "CC-BY",
+    "attribution": "JLPT kanji lists by Jonathan Waller (tanos.co.uk)",
+    "statement": "Waller's sharing page licenses everything on the site that he doesn't sell under Creative Commons BY, asking for credit and a link to the site.",
+    "evidence": {
+      "path": "Kanji-JLPT-Waller-2020-08-06/sharing.html",
+      "url": "https://web.archive.org/web/20200804044449id_/https://www.tanos.co.uk/jlpt/sharing/",
+      "bytes": 13452,
+      "sha256": "ec041fa5ed97b59dd4d7d9749d4f3828049422a8da0404700ac12f64f32a8a56"
+    }
+  },
+  "mappingPolicy": "Each listed kanji is matched to its KANJIDIC2 entry by character and gets that level as wallerJlptLevel. A kanji the lists name that KANJIDIC2 lacks, or a page whose kanji count differs from its record, fails the import."
+}

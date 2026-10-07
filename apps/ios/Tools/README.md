@@ -176,6 +176,11 @@ commands; any other fails the import rather than entering the artifact.
 
 **`import_radicals.py`**, **`import_kanjidic.py`**, and **`import_kanji_elements.py`** normalize
 EDRDG's radical files, KANJIDIC2, and Kanjium into the kanji reference data, in that order.
+`import_kanjidic.py` also gives each kanji Jonathan Waller's JLPT level, `wallerJlptLevel`, which
+**`import_jlpt_kanji_levels.py`** reads from the Internet Archive's captures of his five kanji
+pages: the one table on each page whose header is Kanji, Onyomi, Kunyomi, English. A page whose
+size, SHA-256, or kanji count differs from its record, or a kanji KANJIDIC2 lacks, fails the
+import. The app reads the level without showing it; the website's JLPT kanji lists use it.
 
 **`publish_frequency_pack_sources.py`** uploads downloadable pack sources to the CDN bucket. It
 matches each file to manifests by byte count and SHA-256, never by name, uploads it to the key its
