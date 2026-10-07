@@ -40,7 +40,7 @@ enum TranslateStart: String, CaseIterable, Identifiable {
     case .conversation:
       String(localized: "Take turns speaking Japanese or English. Translations play out loud on your iPhone.")
     case .listening:
-      String(localized: "Hear Japanese around you, like a TV, a guide, or announcements, in English. Best with earphones.")
+      String(localized: "Translate the Japanese or English around you, like a TV, a guide, or announcements. Best with earphones.")
     case .text:
       String(localized: "Type or paste Japanese or English to translate it.")
     case .document:

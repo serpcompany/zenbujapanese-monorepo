@@ -11,7 +11,7 @@ All notable user-facing changes to Zenbu Japanese are recorded here.
   **Conversation**, two people take turns speaking either language with no language button. Each
   sentence appears as it's spoken with its translation under it, and the translation is spoken
   aloud once the speaker pauses while the microphone keeps listening. **Listening** translates
-  Japanese from a TV, a guide, or announcements. A conversation fills the screen, as cards or as
+  Japanese or English from a TV, a guide, or announcements. A conversation fills the screen, as cards or as
   **Two Panes** (Japanese over English), with buttons to mute spoken translations, change their
   speed, and pause; silence asks **Are you still there?** before pausing, and leaving the app
   pauses too. **Text** translates what you type or paste in whichever direction you wrote, and

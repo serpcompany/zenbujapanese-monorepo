@@ -5,10 +5,6 @@ public enum TranslateMode: String, Codable, Sendable, CaseIterable, Identifiable
 
   public var id: Self { self }
 
-  public var listensFor: [SpokenLanguage] {
-    self == .listening ? [.japanese] : [.japanese, .english]
-  }
-
   public var playback: TranslationPlayback {
     switch self {
     case .conversation: .afterEachTurn

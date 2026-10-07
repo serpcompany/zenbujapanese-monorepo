@@ -137,9 +137,9 @@ final class TranslateExperience {
       return
     }
     do {
-      if try await services.speechNeedsDownload(mode.listensFor) {
+      if try await services.speechNeedsDownload(SpokenLanguage.allCases) {
         preparation = .downloadingSpeech(0)
-        try await services.installSpeech(mode.listensFor) { [weak self] fraction in
+        try await services.installSpeech(SpokenLanguage.allCases) { [weak self] fraction in
           Task { @MainActor in self?.reportSpeechDownload(fraction) }
         }
       }
