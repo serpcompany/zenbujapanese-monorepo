@@ -1,15 +1,17 @@
 import SwiftUI
+import TranslatorCore
 @preconcurrency import Translation
 import UIKit
 
 struct AccountNavigationView: View {
   @Binding var path: [AccountRoute]
   let store: EncounterMediaStore
+  let translationHistory: ConversationHistory
   let openItem: (String, String, String) -> Void
 
   var body: some View {
     NavigationStack(path: $path) {
-      AccountRootView()
+      AccountRootView(translationHistory: translationHistory)
         .navigationDestination(for: AccountRoute.self) { route in
           switch route {
           case .profile:
@@ -37,6 +39,7 @@ struct AccountNavigationView: View {
 struct AccountRootView: View {
   @Environment(WordKnowledge.self) private var wordKnowledge
   @Environment(WordLists.self) private var wordLists
+  let translationHistory: ConversationHistory
 
   var body: some View {
     List {
@@ -74,6 +77,8 @@ struct AccountRootView: View {
           }
         }
         .accessibilityIdentifier("account.lists")
+
+        KeepTranslationsPicker(history: translationHistory)
       }
 
       Section {
@@ -117,7 +122,7 @@ struct AccountRootView: View {
   }
 }
 
-private struct AccountRowLabel: View {
+struct AccountRowLabel: View {
   let title: LocalizedStringKey
   let systemImage: String
   let tint: Color

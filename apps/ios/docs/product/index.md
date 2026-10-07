@@ -3,9 +3,11 @@
 This folder describes user-facing behavior that exists in the Zenbu Japanese iOS app.
 It is updated with the implementation and is not a roadmap or an ideas backlog.
 
-The app runs in portrait on iPhone. It has three tabs:
+The app runs in portrait on iPhone. It has four tabs:
 
 - **Search** opens the [Dictionary](dictionary.md) Product Experience.
+- **Translate** opens [Translate](translate.md), a Japanese and English conversation translator
+  that runs on the iPhone.
 - **Player** opens [Player](player.md), where a learner watches YouTube
   videos with linked Japanese captions.
 - **Account** opens personal content, preferences, language-resource management, support, and credits.
@@ -36,6 +38,8 @@ sign-in yet; the tab holds on-device content and preferences. It provides:
 - the Media Library;
 - Known Words;
 - Lists;
+- **Keep Translations**, how long Translate keeps saved conversations (30 Days, 1 Year, or
+  Forever). Choosing a shorter time that would delete conversations asks first, with how many;
 - Reading Aids: Furigana, Romaji, and Hide Furigana on Known Words; Word Meanings (a short
   meaning under each linked word the learner hasn't marked known); and Sentence Translations,
   with a translation language (English so far) and who translates Player captions — YouTube, or
