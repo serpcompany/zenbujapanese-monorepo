@@ -26,6 +26,7 @@ from jmdict_relationships import assign_note_identities, link_relationships
 IMPORT_TOOL_FILES = (
     "import_jmdict.py",
     "jmdict_entries.py",
+    "jmdict_labels.py",
     "jmdict_normalization.py",
     "jmdict_relationships.py",
 )
@@ -266,6 +267,8 @@ def import_snapshot(
                 "k_ele/ke_inf",
                 "r_ele/re_inf",
                 "sense/misc",
+                "sense/field",
+                "sense/dial",
                 "sense/s_inf",
                 "sense/xref",
                 "sense/gloss[@xml:lang='eng']",
@@ -283,6 +286,7 @@ def import_snapshot(
                 "provenance-free semantic fingerprint includes all display forms, meanings, senses, applicability, and gloss atom boundaries",
                 "semantically equivalent rows normalize to the lexicographically smallest opaque app-owned identity while retaining every sorted unique source provenance; ranking evidence remains unchanged",
                 "provider form and usage labels normalized to an app-owned presentation vocabulary",
+                "every JMdict usage, subject-field, and dialect entity code on a sense mapped explicitly to app-owned label identifiers; an unmapped code fails the import",
                 "cross-references resolved to app-owned linked entries",
                 "JMdict cross-reference form, reading, and target-sense qualifiers preserved; supplied readings require an exact target reading",
                 "human-reviewed app-owned word relationships resolved from a versioned editorial fact source",

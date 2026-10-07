@@ -33,16 +33,33 @@ function Ending({
   )
 }
 
+const readingClass = 'text-[0.45em] font-normal text-muted-foreground'
+
+function Reading({
+  text,
+  outsideText,
+  className = ''
+}: {
+  text: string
+  outsideText: boolean
+  className?: string
+}) {
+  if (!outsideText) return <span className={className}>{text}</span>
+  return <span data-reading={text} className={`before:content-[attr(data-reading)] ${className}`} />
+}
+
 export function HeadwordRuby({
   segments,
   className,
   highlightedEnding = '',
-  highlightsKanji = true
+  highlightsKanji = true,
+  readingsOutsideText = false
 }: {
   segments: RubySegment[]
   className?: string
   highlightedEnding?: string
   highlightsKanji?: boolean
+  readingsOutsideText?: boolean
 }) {
   const [selected, setSelected] = useState<Selected | null>(null)
   const surface = segments.map(segment => segment.text).join('')
@@ -67,7 +84,13 @@ export function HeadwordRuby({
           return (
             <ruby key={key}>
               {text}
-              <rt className="text-[0.45em] font-normal text-muted-foreground">{segment.reading}</rt>
+              <rt className={readingClass}>
+                {readingsOutsideText ? (
+                  <Reading text={segment.reading} outsideText />
+                ) : (
+                  segment.reading
+                )}
+              </rt>
             </ruby>
           )
         }
@@ -96,14 +119,14 @@ export function HeadwordRuby({
                 {character}
               </button>
             ))}
-            <rt className="text-[0.45em] font-normal text-muted-foreground">
+            <rt className={readingClass}>
               {readingParts.map(({ part, position }) => (
-                <span
+                <Reading
                   key={position}
+                  text={part}
+                  outsideText={readingsOutsideText}
                   className={`transition-colors motion-reduce:transition-none ${isSelected(position) ? accent : ''}`}
-                >
-                  {part}
-                </span>
+                />
               ))}
             </rt>
           </ruby>

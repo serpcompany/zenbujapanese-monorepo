@@ -16,7 +16,7 @@ permissions:
 
 env:
   LFS_FILES: apps/ios/**
-  LFS_SNAPSHOTS: apps/ios/LanguageData/Sources/JMdict_e-*.gz,apps/ios/LanguageData/Sources/Tatoeba-*/*,apps/ios/LanguageData/Sources/KANJIDIC2-*/*,apps/ios/LanguageData/Sources/EDRDG-radicals-*/*
+  LFS_SNAPSHOTS: apps/ios/LanguageData/Sources/JMdict_e-*.gz,apps/ios/LanguageData/Sources/Tatoeba-*/*,apps/ios/LanguageData/Sources/KANJIDIC2-*/*,apps/ios/LanguageData/Sources/EDRDG-radicals-*/*,apps/ios/LanguageData/Sources/Kanji-JLPT-Waller-*/*
 
 jobs:
   contracts:
