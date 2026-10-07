@@ -48,6 +48,13 @@ export const needed = word(1546640)
 export const sidewaysOverflow = (page: Page) =>
   page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth)
 
+export const accountPages = [
+  { path: '/login/', title: 'Sign in' },
+  { path: '/register/', title: 'Create your account' },
+  { path: '/forgot-password/', title: 'No password needed' },
+  { path: '/account/', title: 'Your account' }
+]
+
 export const footerAccountLink = (page: Page) =>
   page.getByRole('contentinfo').getByRole('link', { name: /^(Sign in|Account)$/ })
 

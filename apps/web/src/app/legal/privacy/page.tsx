@@ -23,7 +23,7 @@ export default function PrivacyPage() {
         our servers, so your apps can share them, and you can delete the account at any time. If you
         link it to Tomodachi, our companion app, Tomodachi can read your lists and known words and
         mark words Known. The website uses privacy-friendly, cookieless analytics to count visits,
-        and, if you sign in on it, a cookie only to keep you signed in.
+        and, if you sign in on it, only the cookies signing in needs.
       </p>
 
       <h2>Information in the app</h2>
@@ -137,8 +137,8 @@ export default function PrivacyPage() {
       <h2>Your account on this website</h2>
       <p>
         Once zenbujapanese.com offers sign-in, you can create or sign in to your Zenbu account there
-        with Apple, Google, or a code we email you. Signed in, the website uses your account only
-        to:
+        with a code we email you, and with Apple or Google where its sign-in page offers them.
+        Signed in, the website uses your account only to:
       </p>
       <ul>
         <li>show your email, and show and change your name and username;</li>

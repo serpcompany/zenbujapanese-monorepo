@@ -4,12 +4,12 @@ export const accountPages = {
   signIn: {
     path: '/login/',
     title: 'Sign in',
-    description: 'Sign in to your Zenbu account with Apple, Google, or a code we email you.'
+    description: 'Sign in to your Zenbu account. There is no password.'
   },
   register: {
     path: '/register/',
     title: 'Create your account',
-    description: 'Make a Zenbu account with Apple, Google, or your email. There is no password.'
+    description: 'Make a Zenbu account. There is no password.'
   },
   forgotPassword: {
     path: '/forgot-password/',

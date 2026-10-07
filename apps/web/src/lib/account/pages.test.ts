@@ -12,6 +12,12 @@ describe('the account pages', () => {
     }
   })
 
+  test('describe each page without naming Apple or Google, which a site offers only once set up', () => {
+    for (const { description } of Object.values(accountPages)) {
+      expect(description).not.toMatch(/Apple|Google/)
+    }
+  })
+
   test("read only a plain error code from where Google's sign-in comes back", () => {
     expect(returnedError({ error: 'account_not_linked' })).toBe('account_not_linked')
     expect(returnedError({ error: '<script>' })).toBeNull()

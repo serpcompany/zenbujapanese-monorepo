@@ -1,5 +1,13 @@
 import { execFileSync } from 'node:child_process'
-import { chmodSync, copyFileSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
+import {
+  chmodSync,
+  copyFileSync,
+  mkdirSync,
+  mkdtempSync,
+  readFileSync,
+  rmSync,
+  writeFileSync
+} from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { fileURLToPath } from 'node:url'
@@ -27,7 +35,16 @@ function deployedCopy() {
     })
   const vars = (environment: string) =>
     JSON.parse(readFileSync(join(folder, 'wrangler.jsonc'), 'utf8')).env[environment].vars
-  return { pointAt, vars }
+  const refusal = (environment: string, service: string) => {
+    try {
+      pointAt(environment, service)
+      return { stdout: '', stderr: '' }
+    } catch (error) {
+      const { stdout, stderr } = error as { stdout?: Buffer; stderr?: Buffer }
+      return { stdout: String(stdout), stderr: String(stderr) }
+    }
+  }
+  return { folder, pointAt, vars, refusal }
 }
 
 test("Web deploy points each environment's Worker at its own dictionary service", () => {
@@ -37,14 +54,19 @@ test("Web deploy points each environment's Worker at its own dictionary service"
   expect(deployed.vars('production').DICTIONARY_API_URL).toBe('DICTIONARY_API_URL')
   deployed.pointAt('production', 'https://dictionary.example.com')
   expect(deployed.vars('production').DICTIONARY_API_URL).toBe('https://dictionary.example.com')
-  expect(deployed.vars('production').ACCOUNT_API_URL).toBe('')
-  const refused = (() => {
-    try {
-      deployed.pointAt('production', 'https://again.example.com')
-      return ''
-    } catch (error) {
-      return String((error as { stdout?: Buffer }).stdout)
-    }
-  })()
-  expect(refused).toContain('no DICTIONARY_API_URL placeholder for production')
+  expect(deployed.refusal('production', 'https://again.example.com').stdout).toContain(
+    'no DICTIONARY_API_URL placeholder for production'
+  )
+})
+
+test("Web deploy says when it couldn't write wrangler.jsonc, rather than blaming the placeholder", () => {
+  const deployed = deployedCopy()
+  rmSync(join(deployed.folder, 'wrangler.jsonc'))
+  mkdirSync(join(deployed.folder, 'wrangler.jsonc'))
+  const refused = deployed.refusal('staging', 'https://dictionary-staging.example.com')
+  expect(refused.stdout).toContain(
+    "Couldn't write staging's DICTIONARY_API_URL into wrangler.jsonc"
+  )
+  expect(refused.stdout).not.toContain('placeholder')
+  expect(refused.stderr).toContain('EISDIR')
 })

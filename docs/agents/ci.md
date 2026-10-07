@@ -231,17 +231,21 @@ changed without regenerating the types fails here; then `pnpm check` ([`web.md`]
 `SITE_ENV=staging` and with `SITE_ENV=production`. `pnpm check` builds without `SITE_ENV`, but
 static pages and prerendering differ by environment, so a route that reads a binding at build time
 fails only in that environment's build. Neither build reaches the dictionary service: deployed
-pages read it only at request time. After each, it checks the prerendered `/about/` for the
-footer's Sign in link (`href="/login/"`): staging's has it, and production's mustn't while
-production's `ACCOUNT_API_URL` is empty ([`web.md`](web.md), Account pages); when production's
-account pages open, that step changes with them. Each step names `apps/web` as its working directory, rather
+pages read it only at request time. After staging's, it checks the prerendered `/about/` has the
+footer's Sign in link (`href="/login/"`), since staging's account pages are open
+([`web.md`](web.md), Account pages); the `e2e` job checks production's has none. Each step names `apps/web` as its working directory, rather
 than the jobs setting it as a default, because the dead-code check reads a step's working directory
 to find the scripts and binaries a step runs, and not a job's.
 
 Its `e2e` job runs the browser tests ([`web.md`](web.md), Run and verify) on the site as it
 deploys: it installs Chromium, builds with OpenNext without `SITE_ENV`, so the build reads the
 dictionary fixtures, and serves it in workerd with `opennextjs-cloudflare preview`. A test that
-fails is retried once, and Playwright reports one that passed on the retry as flaky. On a failure
+fails is retried once, and Playwright reports one that passed on the retry as flaky. Then it
+builds again as production deploys (`SITE_ENV=production`) and runs `e2e/account-closed.spec.ts`
+on that build, served with production's vars and no dictionary service: while production's
+`ACCOUNT_API_URL` is empty, each account page says signing in isn't available, and nothing links
+to one, the prerendered footer included. When production's account pages open, those two steps go
+with it ([`web.md`](web.md), Account pages). On a failure
 it uploads the report, traces, videos, and screenshots as the `playwright-report` artifact, kept
 for a week.
 

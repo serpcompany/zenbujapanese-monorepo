@@ -39,7 +39,7 @@ test.describe('privacy policy', () => {
       'does not collect or track data',
       'no account or cloud sync yet',
       'if you create or sign in to a Zenbu account, on this website or in the app once they offer one',
-      'a cookie only to keep you signed in'
+      'only the cookies signing in needs'
     ])
     await expect(listItems(page, 'How you sign in:')).toHaveText([
       /^Your account: a Zenbu user ID; your email and whether it's verified; a name and a username, both optional; the address of your profile picture/,
@@ -80,6 +80,7 @@ test.describe('privacy policy', () => {
       'delete your account.'
     ])
     await expectNamed(page, 'Your account on this website', [
+      'once zenbujapanese.com offers sign-in, you can create or sign in to your Zenbu account there with a code we email you, and with Apple or Google where its sign-in page offers them',
       "doesn't read or change your known words or lists yet",
       'only when you open your account page or start to sign in',
       'pointing at or tabbing to a Sign in with Apple button gets it ready',

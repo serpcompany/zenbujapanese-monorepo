@@ -14,16 +14,17 @@ website's account pages are open only where its environment names an account ser
 today, [Account pages](account.md#configuration)). So the page says the app has "no account or
 cloud sync yet", and says what happens "if you create or sign in to a Zenbu account, on this
 website or in the app once they offer one", never that one exists today, which stays true when
-production's account pages open. The pull request that lets the app sign in (#573) changes the
-short version and the account section's "yet". When the service keeps something new, keeps it longer, sends email through another provider,
-or an app gets a new scope, change the page, its Effective date, this doc, and the
+production's account pages open, with the email code alone or with Apple and Google too. The pull
+request that lets the app sign in (#573) changes the short version and the account section's
+"yet". When the service keeps something new, keeps it longer, sends email through another
+provider, or an app gets a new scope, change the page, its Effective date, this doc, and the
 [App Store privacy labels](../app-store-privacy-labels.md) in the same pull request.
 
 ## Behaviors
 
 **The account's data.** The short version says the app collects nothing and has no account or
 cloud sync yet, what an account keeps if a learner makes one on the website or in the app once
-they offer one, and that the website uses a cookie only to keep a signed-in learner signed in. The
+they offer one, and that signing in on the website sets only the cookies signing in needs. The
 account section says the app doesn't offer accounts yet, that the apps send the account service
 nothing while signed out, and lists what a Zenbu account keeps:
 
@@ -46,12 +47,13 @@ timing, never an email, a profile, a code or link, or a token.
 - Source: #563 decisions 1 and 2; #566 (sign-in), #567 (the profile and sync), #572 (known words
   and lists).
 - Check: `apps/web/e2e/privacy.spec.ts`, "names what a Zenbu account keeps, and that signed out the
-  apps send it nothing": the short version's "not yet", the four kinds of data, nothing sent signed
-  out, the encrypted codes, and what stays on the device. The email's uses and the logs: No
-  automated check yet.
+  apps send it nothing": the short version's "not yet" and its cookies, the four kinds of data,
+  nothing sent signed out, the encrypted codes, and what stays on the device. The email's uses and
+  the logs: No automated check yet.
 
 **The website's account pages.** A section, "Your account on this website", says that once the
-website offers sign-in, a learner signs in there with Apple, Google, or an emailed code, and lists
+website offers sign-in, a learner signs in there with an emailed code, and with Apple or Google
+where its sign-in page offers them, which stays true whichever ways production opens with, and lists
 what the website uses the account for, and only that: show the email and show and change the name and
 username; show how the learner signs in, and add or remove a way; sign out of this browser; delete
 the account. The website's pages hold that line, not its scopes: `zenbu-web` has the iOS app's
@@ -71,8 +73,8 @@ they come back.
 - Source: #468 ([Account pages](account.md)); Better Auth's cookies as the account service sets
   them ([`account-api.md`](../../../../docs/agents/account-api.md), Sign-in).
 - Check: `apps/web/e2e/privacy.spec.ts`, "names what the website can do with the account, and each
-  thing signing in keeps in the browser": the website's list, item for item, and the cookies, with
-  their names and lifetimes.
+  thing signing in keeps in the browser": the ways a learner signs in there, the website's list,
+  item for item, and the cookies, with their names and lifetimes.
 
 **Tomodachi.** The page names Tomodachi, the companion app for Mac and iPhone, and says it works
 without an account, keeps its own progress in the learner's iCloud, and that the policy covers what

@@ -330,7 +330,8 @@ the account service ([`account-api.md`](account-api.md); the website's side of i
   `wrangler.jsonc` when it builds (`src/lib/account/availability.ts`, by `SITE_ENV`) and passes
   `ZENBU_ACCOUNT_PAGES` (`open` or `closed`) to the build, which draws Sign in only where it's
   `open`. A value set only in `.dev.vars` changes the pages, not the footer. The `Web` workflow
-  checks each environment's build for the link ([`ci.md`](ci.md), Web).
+  checks staging's build has the link, and production's has none (Browser tests, below;
+  [`ci.md`](ci.md), Web).
 
   | Var | What it does |
   | --- | --- |
@@ -342,13 +343,17 @@ the account service ([`account-api.md`](account-api.md); the website's side of i
   ([`account-api.md`](account-api.md), Set up the server); then set these in `wrangler.jsonc` and
   run `pnpm cf-typegen`.
 
-  **Opening production's account pages**, once its account service answers on
-  `https://api.zenbujapanese.com`, is one pull request: set production's `ACCOUNT_API_URL` to it,
-  run `pnpm cf-typegen`, and change what pins it closed: the `Web` workflow's production footer
-  step, `src/lib/account/settings.test.ts` and `src/lib/dictionary-service-deploy.test.ts`, and the
-  product docs that say production's pages are closed ([Account pages](../../apps/web/docs/product/account.md),
+  **Opening production's account pages** waits for production's account service to answer on
+  `https://api.zenbujapanese.com`, trust `https://zenbujapanese.com`
+  (`ACCOUNT_API_TRUSTED_ORIGINS`), and email codes to everyone ([`account-api.md`](account-api.md),
+  Set up the server); Apple and Google can follow later. Then it's one pull request: set
+  production's `ACCOUNT_API_URL` to it, run `pnpm cf-typegen`, and change what pins it closed: the
+  `Web` workflow's two closed-pages steps and `e2e/account-closed.spec.ts`,
+  `src/lib/account/settings.test.ts`, and the product
+  docs that say production's pages are closed ([Account pages](../../apps/web/docs/product/account.md),
   the [index](../../apps/web/docs/product/index.md), and [Privacy Policy](../../apps/web/docs/product/privacy.md)).
-  The privacy policy's text stays true. `main` then deploys staging; production deploys when a
+  The privacy policy's text stays true with the email code alone: it offers Apple and Google only
+  "where its sign-in page offers them". `main` then deploys staging; production deploys when a
   person runs `Web deploy` by hand while `DEPLOY_PRODUCTION` is `false` (Environments and
   deploys, below).
 - **Apple** runs in Sign in with Apple JS's popup (`src/lib/account/apple.ts`), which hands the
@@ -390,6 +395,19 @@ ZENBU_ACCOUNT_API=1 pnpm test:e2e e2e/account-service.spec.ts --project desktop
 mailbox; the site reads its own `ACCOUNT_API_URL`. A run sends three codes, and the service sends
 at most five from one address in 10 minutes, so a second run within 10 minutes needs a new
 database, or `delete from rate_limits` in it.
+
+`e2e/account-closed.spec.ts` checks production's closed account pages and footer on the site built
+as production deploys, served in workerd with production's vars and no dictionary service, on port
+8797. It runs only when asked (`E2E_SITE_ENV=production`), and the `Web` workflow's `e2e` job runs
+it after the other browser tests:
+
+```sh
+SITE_ENV=production pnpm exec opennextjs-cloudflare build
+E2E_SITE_ENV=production pnpm exec playwright test e2e/account-closed.spec.ts
+```
+
+That build replaces the one the other browser tests use in workerd, so build again without
+`SITE_ENV` before running them there.
 
 ## Environments and deploys
 
@@ -474,9 +492,15 @@ everything. Analytics load only in production and only when their build-time IDs
 `Web deploy` workflow passes to the production build) and `NEXT_PUBLIC_CF_BEACON_TOKEN` (Cloudflare
 Web Analytics).
 
-Before merging a change to environment configuration, build without the variable and run the
-Worker with the target environment's `vars` (`pnpm exec opennextjs-cloudflare preview --env
-production`), then check the output. `scripts/smoke.sh <url> <staging|production>` asserts the
+Before merging a change to environment configuration, build the site as the target environment
+deploys and run the Worker with its `vars` (`SITE_ENV=production pnpm exec opennextjs-cloudflare
+build`, then `pnpm exec opennextjs-cloudflare preview --env production`), then check the output.
+Static pages, the footer's Sign in among them (Account pages, above), come from the build's
+`SITE_ENV`, so a build without it would show the local site's footer beside production's pages.
+Production's `DICTIONARY_API_URL` is a placeholder until `Web deploy` writes it (Dictionary
+service, above), and with it every page answers 500, so name no dictionary service
+(`--var DICTIONARY_API_URL: --var DICTIONARY_API_TOKEN:`), or a local one and its token in
+`.dev.vars`. `scripts/smoke.sh <url> <staging|production>` asserts the
 search-engine rules for each environment, so CI fails if production is hidden or staging is
 exposed.
 

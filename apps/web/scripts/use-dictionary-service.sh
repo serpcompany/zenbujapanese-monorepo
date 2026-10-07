@@ -17,17 +17,26 @@ if ! grep -q '"DICTIONARY_API_TOKEN"' <<<"$secrets"; then
   exit 1
 fi
 
+written=0
 SITE="$env" ORIGIN="$url" node --input-type=module -e '
   import { readFileSync, writeFileSync } from "node:fs"
   const { SITE, ORIGIN } = process.env
   const config = readFileSync("wrangler.jsonc", "utf8")
   const site = "(\"SITE_ENV\":\\s*\"" + SITE + "\",\\s*)"
   const placeholder = new RegExp(site + "\"DICTIONARY_API_URL\":\\s*\"DICTIONARY_API_URL\"")
-  if (!placeholder.test(config)) process.exit(1)
+  if (!placeholder.test(config)) process.exit(3)
   const service = "\"DICTIONARY_API_URL\": " + JSON.stringify(ORIGIN)
   writeFileSync("wrangler.jsonc", config.replace(placeholder, (_, before) => before + service))
-' || {
-  echo "::error::wrangler.jsonc has no DICTIONARY_API_URL placeholder for $env"
-  exit 1
-}
+' || written=$?
+case "$written" in
+  0) ;;
+  3)
+    echo "::error::wrangler.jsonc has no DICTIONARY_API_URL placeholder for $env"
+    exit 1
+    ;;
+  *)
+    echo "::error::Couldn't write $env's DICTIONARY_API_URL into wrangler.jsonc: node exited $written, with the error above"
+    exit 1
+    ;;
+esac
 grep -qF "\"DICTIONARY_API_URL\": \"$url\"" wrangler.jsonc

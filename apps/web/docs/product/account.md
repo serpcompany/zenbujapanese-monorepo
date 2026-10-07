@@ -16,6 +16,8 @@ Abbreviations: paths are under `apps/web/`. **Ways tests** are
 browser tests at a desktop and a phone width, with a stand-in for the account service in the
 browser. **Account service spec** is `e2e/account-service.spec.ts`, which drives a learner
 through the pages against a real account service on its dev mailbox (`ZENBU_ACCOUNT_API=1`).
+**Closed spec** is `e2e/account-closed.spec.ts`, which runs on the site built and served with
+production's settings (`E2E_SITE_ENV=production`).
 **Sign-in form tests** and **account page tests** are
 `src/components/account/sign-in-form.interaction.test.tsx` and
 `src/components/account/account-view.interaction.test.tsx`, which click through the components
@@ -26,6 +28,7 @@ in a DOM with a stand-in for the service.
 **Four pages.** `/login/` (Sign in), `/register/` (Create your account), `/forgot-password/` (No
 password needed), and `/account/` (Your account), each with the site's header and footer. Each is
 `noindex, nofollow`, and no sitemap lists them: not `/sitemaps/pages.xml`, and not `/sitemap/`.
+Their descriptions don't name Apple or Google, which a site offers only once they're set up.
 Without an account service (an empty `ACCOUNT_API_URL`, as in production today), each says signing
 in to a Zenbu account isn't available on this site yet, without the intro that describes signing
 in, and links to no other account page.
@@ -36,8 +39,9 @@ in, and links to no other account page.
 - Check: Account spec, "/login/ is noindex, with the site's header and footer" (and each other
   page), "no sitemap lists them"; `src/app/account-pages.test.tsx`, "/login/ says signing in isn't
   available, and links no account page, without an account service" (and each other page) and
-  "offer signing in, and lead to each other, with an account service";
-  `src/lib/account/pages.test.ts`; `src/app/routes.test.ts`.
+  "offer signing in, and lead to each other, with an account service"; Closed spec, "/login/
+  says signing in isn't available, links no account page, and stays noindex" (and each other
+  page); `src/lib/account/pages.test.ts` (the descriptions included); `src/app/routes.test.ts`.
 
 **Footer.** Where the account pages are open, the footer's Product group ends with Sign in, which
 leads to `/login/`; where they're closed, as in production today, it has no such link, so nothing
@@ -52,7 +56,7 @@ the page and its first render in the browser agree.
   Company, and Policies", "the footer leads to signing in, as the server draws it before the
   browser knows", and "the footer leaves signing in out where the site's account pages are
   closed"; Account spec, "the footer leads to signing in, and to the account once signed
-  in".
+  in"; Closed spec, "a page built ahead of time has no Sign in in its footer".
 
 ## Signing in
 
@@ -262,13 +266,15 @@ in production, whose value is empty until its account service answers on `api.ze
 An empty value closes the account pages; one that isn't an origin closes them too and logs
 `account_service_url_invalid`. The footer's link is drawn when the site is built, from the same
 value in `apps/web/wrangler.jsonc` for the environment being built, held to the same rule (an
-origin), so it and the pages agree. Opening production is in
+origin), so it and the pages agree in a build made as its environment deploys, with its
+`SITE_ENV`. A build without `SITE_ENV` draws the local site's footer, whichever Worker vars it then
+runs with. Opening production is in
 [`web.md`](../../../../docs/agents/web.md), Account pages.
 
 - Source: production's account service doesn't run yet
   ([`account-api.md`](../../../../docs/agents/account-api.md), Set up the server).
 - Check: `src/lib/account/settings.test.ts`, "name staging's account service, and none yet for
   production, so its pages stay closed" and "close the footer, as the pages, for a value that is
-  no origin"; `src/lib/dictionary-service-deploy.test.ts`, which also checks production's value
-  stays empty through `Web deploy`; the `Web` workflow's checks of each environment's build for the
-  footer's link ([`ci.md`](../../../../docs/agents/ci.md), Web).
+  no origin"; the `Web` workflow's check that staging's build links Sign in, and its run of the
+  Closed spec on a build made as production deploys ([`ci.md`](../../../../docs/agents/ci.md),
+  Web).

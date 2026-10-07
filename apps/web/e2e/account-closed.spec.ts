@@ -1,0 +1,52 @@
+import type { Page } from '@playwright/test'
+import { accountPages, expect, footerAccountLink, test } from './test'
+
+const anyAccountPage = accountPages.map(({ path }) => `a[href^="${path}"]`).join(', ')
+
+test.skip(
+  process.env.E2E_SITE_ENV !== 'production',
+  "Runs on the site built and served with production's settings: E2E_SITE_ENV=production (docs/agents/web.md, Account pages)"
+)
+
+async function offSite(page: Page) {
+  const origins: string[] = []
+  await page.route(
+    url => url.hostname !== 'localhost',
+    route => {
+      origins.push(new URL(route.request().url()).origin)
+      return route.abort()
+    }
+  )
+  return origins
+}
+
+test.describe("production's account pages, while its ACCOUNT_API_URL is empty", () => {
+  for (const { path, title } of accountPages) {
+    test(`${path} says signing in isn't available, links no account page, and stays noindex`, async ({
+      page
+    }) => {
+      const origins = await offSite(page)
+      await page.goto(path)
+      await expect(page.getByRole('heading', { level: 1, name: title })).toBeVisible()
+      await expect(page.getByRole('main')).toContainText(
+        'Signing in to a Zenbu account isn’t available on this site yet.'
+      )
+      await expect(page.getByRole('button', { name: 'Email me a code' })).toHaveCount(0)
+      await expect(page.locator('meta[name="robots"]')).toHaveAttribute(
+        'content',
+        'noindex, nofollow'
+      )
+      await expect(page.locator(anyAccountPage)).toHaveCount(0)
+      expect(origins).toEqual([])
+    })
+  }
+
+  test('a page built ahead of time has no Sign in in its footer', async ({ page }) => {
+    const origins = await offSite(page)
+    await page.goto('/about/')
+    await expect(page.getByRole('contentinfo').getByRole('link', { name: 'Sitemap' })).toBeVisible()
+    await expect(footerAccountLink(page)).toHaveCount(0)
+    await expect(page.locator(anyAccountPage)).toHaveCount(0)
+    expect(origins).toEqual([])
+  })
+})

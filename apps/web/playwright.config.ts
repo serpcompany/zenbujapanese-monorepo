@@ -1,7 +1,17 @@
 import { defineConfig, devices } from '@playwright/test'
 
-const onProductionBuild = process.env.E2E_SERVER === 'preview'
-const port = onProductionBuild ? 8787 : Number(process.env.E2E_PORT ?? 3100)
+const closedProduction = process.env.E2E_SITE_ENV === 'production'
+const onProductionBuild = process.env.E2E_SERVER === 'preview' || closedProduction
+const port = closedProduction
+  ? 8797
+  : onProductionBuild
+    ? 8787
+    : Number(process.env.E2E_PORT ?? 3100)
+const server = closedProduction
+  ? `pnpm exec opennextjs-cloudflare preview --env production --port ${port} --var DICTIONARY_API_URL: --var DICTIONARY_API_TOKEN:`
+  : onProductionBuild
+    ? `pnpm exec opennextjs-cloudflare preview --port ${port}`
+    : `pnpm exec next dev --port ${port}`
 const baseURL = process.env.E2E_BASE_URL ?? `http://localhost:${port}`
 const inCI = Boolean(process.env.CI)
 
@@ -27,9 +37,7 @@ export default defineConfig({
   webServer: process.env.E2E_BASE_URL
     ? undefined
     : {
-        command: onProductionBuild
-          ? `pnpm exec opennextjs-cloudflare preview --port ${port}`
-          : `pnpm exec next dev --port ${port}`,
+        command: server,
         env: { ZENBU_DICTIONARY_FIXTURES: '1' },
         url: `${baseURL}/`,
         reuseExistingServer: !inCI,

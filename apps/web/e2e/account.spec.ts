@@ -1,12 +1,5 @@
 import type { Page, Route } from '@playwright/test'
-import { expect, footerAccountLink, test } from './test'
-
-const accountPages = [
-  { path: '/login/', title: 'Sign in' },
-  { path: '/register/', title: 'Create your account' },
-  { path: '/forgot-password/', title: 'No password needed' },
-  { path: '/account/', title: 'Your account' }
-]
+import { accountPages, expect, footerAccountLink, test } from './test'
 
 const email = 'kana@example.com'
 const profile = {

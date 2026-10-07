@@ -53,13 +53,6 @@ jobs:
       - name: Build for production
         working-directory: apps/web
         run: SITE_ENV=production pnpm build
-      - name: Production's footer doesn't, while its account pages are closed
-        working-directory: apps/web
-        run: |
-          if grep -q 'href="/login/"' .next/server/app/about.html; then
-            echo "::error::The production build links /login/, but production's ACCOUNT_API_URL in wrangler.jsonc is empty, so its account pages are closed (docs/agents/web.md, Account pages)."
-            exit 1
-          fi
 
   e2e:
     runs-on: ubuntu-latest
@@ -86,6 +79,14 @@ jobs:
         env:
           E2E_SERVER: preview
         run: pnpm test:e2e
+      - name: Build the site as production deploys it
+        working-directory: apps/web
+        run: SITE_ENV=production pnpm exec opennextjs-cloudflare build
+      - name: Run the closed account pages' browser test on it, with production's vars
+        working-directory: apps/web
+        env:
+          E2E_SITE_ENV: production
+        run: pnpm exec playwright test e2e/account-closed.spec.ts
       - name: Keep the report
         if: failure()
         uses: actions/upload-artifact@v7
