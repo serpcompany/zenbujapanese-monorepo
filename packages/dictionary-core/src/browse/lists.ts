@@ -2,9 +2,31 @@ export const browsePageSize = 200
 
 export const rankedListLimit = 10_000
 
+export const rankBandSize = 1_000
+
+export const rankBands = rankedListLimit / rankBandSize
+
 export const maximumBrowsePage = 10_000
 
+export const minimumIndexedWords = 10
+
 export const pageCount = (total: number) => Math.max(1, Math.ceil(total / browsePageSize))
+
+export interface RankBand {
+  band: number
+  first: number
+  last: number
+}
+
+export const rankBand = (band: number): RankBand => ({
+  band,
+  first: (band - 1) * rankBandSize + 1,
+  last: band * rankBandSize
+})
+
+export const allRankBands: readonly RankBand[] = Array.from({ length: rankBands }, (_, index) =>
+  rankBand(index + 1)
+)
 
 type RankedListSource = { kind: 'tubelex' } | { kind: 'pack'; packId: string }
 
@@ -53,10 +75,6 @@ export const jlptLists: readonly JlptList[] = [5, 4, 3, 2, 1].map(level => ({
 export const rankedList = (slug: string) => rankedLists.find(list => list.slug === slug)
 
 export const jlptList = (slug: string) => jlptLists.find(list => list.slug === slug)
-
-export const rankPage = (rank: number) => Math.ceil(rank / browsePageSize)
-
-export const rankedPages = rankPage(rankedListLimit)
 
 export interface KanjiList {
   slug: string

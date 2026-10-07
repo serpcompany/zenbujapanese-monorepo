@@ -187,13 +187,15 @@ export function createApp({ service, token, ready }: AppOptions) {
 
   app.get('/v1/browse/categories', async context => context.json(await service.browseCategories()))
 
-  app.get('/v1/browse/categories/:slug', async context =>
-    found(
+  app.get('/v1/browse/categories/:slug', async context => {
+    const order = context.req.query('order') ?? 'used'
+    if (order !== 'used' && order !== 'kana') throw new BadRequest('order must be used or kana')
+    return found(
       context,
-      await service.categoryWords(context.req.param('slug'), page(context)),
+      await service.categoryWords(context.req.param('slug'), order, page(context)),
       'category'
     )
-  )
+  })
 
   app.get('/v1/browse/ranked', async context => context.json(await service.rankedLists()))
 

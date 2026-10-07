@@ -102,17 +102,17 @@ more and logs the error.
 | `GET /v1/sitemaps/words` | Each word sitemap's `ent_seq` range. |
 | `GET /v1/sitemaps/words/<n>?after=&limit=` | A sitemap's words after `after`, with their slugs. |
 | `GET /v1/retired` | Retired entries and their replacements; empty until #463. |
-| `GET /v1/browse` | The browse pages' totals: entries, each kana script's words, common words and the most used 24, the kanji lists' sizes and grade 1's kanji, and the JLPT levels' words. |
+| `GET /v1/browse` | The browse pages' totals: entries, each kana script's words, common words and the 24 most used content words among them (no particles, auxiliaries, conjunctions, copulas, or bare prefixes and suffixes), the kanji lists' sizes and grade 1's kanji, and the JLPT levels' words. |
 | `GET /v1/browse/kana/<script>` | `hiragana` or `katakana`: how many words start with each kana. |
 | `GET /v1/browse/kana/<script>/<kana>` | A kana's two-kana groups with their counts, the words read as that kana alone, and the kanas before and after it. |
 | `GET /v1/browse/kana/<script>/<kana>/<two kana>?page=` | 200 of the words whose reading starts with the two kana, in kana order. |
 | `GET /v1/browse/categories` | How many words each category lists (`packages/dictionary-core/src/browse/categories.ts`). |
-| `GET /v1/browse/categories/<slug>?page=` | 200 of a category's words, most used on YouTube first, words it doesn't rank last. |
+| `GET /v1/browse/categories/<slug>?order=&page=` | 200 of a category's words, each with the first meaning that carries the label. `order=used` (the default) lists the words whose first meaning carries it, then the others, each most used on YouTube first, and words YouTube doesn't rank last; `order=kana` lists them all in kana order. |
 | `GET /v1/browse/ranked` | Each ranked list's mapped and listed words and its top 6, and each JLPT level's words and its first 5. |
-| `GET /v1/browse/ranked/<slug>?page=` | A ranked list's words ranked 200 at a time, to rank 10,000, or a JLPT level's words (`jlpt-n5`…) in kana order. |
+| `GET /v1/browse/ranked/<slug>?page=` | A ranked list's words a band of 1,000 ranks at a time (`page` 1 is ranks 1 to 1,000, and so on to 10, ranks 9,001 to 10,000), or 200 of a JLPT level's words (`jlpt-n5`…) in kana order. |
 | `GET /v1/browse/kanji` | Each school list's kanji, most frequent first; each JLPT level's kanji count and its first 5; and how many jōyō kanji have each stroke count. |
-| `GET /v1/browse/kanji/<slug>` | A kanji list (`grade-1`…`grade-6`, `secondary-school`, `jinmeiyo`, `jlpt-n5`…`jlpt-n1`, `strokes-<n>`) with each kanji's first meaning. |
-| `GET /v1/sitemaps/browse` | What the browse sitemap lists: every kana and its groups' pages, each category's and list's pages, and the kanji lists. |
+| `GET /v1/browse/kanji/<slug>` | A kanji list (`grade-1`…`grade-6`, `secondary-school`, `jinmeiyo`, `jlpt-n5`…`jlpt-n1`, `strokes-<n>`) with each kanji's first meaning, or its base kanji's for a compatibility character KANJIDIC2 gives none. |
+| `GET /v1/sitemaps/browse` | What the browse sitemap needs: every kana and its two-kana groups, each category, JLPT level, and kanji list, with their word or kanji counts, and each ranked list's words in each band, so the website can leave out lists of fewer than 10. |
 
 ## How it runs
 

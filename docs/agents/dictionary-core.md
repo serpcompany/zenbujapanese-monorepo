@@ -231,28 +231,43 @@ records keyed by JMdict entry number.
 `DictionaryBrowse` (`artifact/browse.ts`) answers the browse routes
 ([`dictionary-api.md`](dictionary-api.md), Routes) with SQL of its own, since the app has no
 browse screens. Its kana groups and categories come from one `BrowseIndex`
-(`artifact/browse-index.ts`), built in a few passes over the artifact; `warm()` builds it and
-keeps the totals, the category counts, and the sitemap, so the service calls it before a worker
-reports ready:
+(`artifact/browse-index.ts`), built in a few passes over the artifact. `warm()` builds it, keeps
+the totals, the category counts, the ranked lists' counts, every kanji list, and the sitemap, and
+runs each statement a browse page asks once, so the service calls it before a worker reports
+ready and a page's first request prepares nothing:
 
 - **Kana.** A word is under the script of its reading's first character: hiragana for
   U+3041–U+309F, katakana for anything else, so every entry is under one of the two. A kana's
   page groups its words by their first two characters; a word read as the kana alone is listed on
   the kana's own page. Groups list their words in kana order (by reading, then JMdict entry
   number), 200 to a page (`browsePageSize`).
-- **Categories** (`browse/categories.ts`) match the entry's parts of speech, or any sense's
-  `usage`, `fields`, or `dialects` labels ([`apps/ios/Tools/README.md`](../../apps/ios/Tools/README.md),
-  `jmdict_labels.py`), or JMdict's common marker. A category lists its words most used first (by
-  TUBELEX rank, then kana order, with unranked words after), its only order. Labels the website
+- **Categories** (`browse/categories.ts`) match any sense's `partsOfSpeech`, `usage`, `fields`, or
+  `dialects` labels ([`apps/ios/Tools/README.md`](../../apps/ios/Tools/README.md),
+  `jmdict_labels.py`), or JMdict's common marker. A category's row shows the first sense that has
+  its label, so と under Nouns reads "promoted pawn", not "if, when". Most used first, a category
+  lists the words TUBELEX ranks whose first sense has the label, then those that have it only on a
+  later sense, each by TUBELEX rank, then the words TUBELEX doesn't rank, in kana order. TUBELEX
+  ranks a word by all its uses, so ranking a later sense's word among the first would put と at the
+  top of Nouns and 行く at the top of Slang. It also lists them in kana order. Labels the website
   leaves out (names, and vulgar, derogatory, sensitive, or X-rated words) have no category.
 - **Ranked lists** (`browse/lists.ts`) are TUBELEX, and the Wikipedia and Jiten lists in
-  `RankedLists.sqlite3`, each to rank 10,000, 200 ranks to a page; a page lists the words ranked
-  in its range, so ranks a source row maps to no entry leave gaps. The JLPT lists are the level
-  pack's words at each level, in kana order.
+  `RankedLists.sqlite3`, each to rank 10,000, in bands of 1,000 ranks (`rankBand`); a band lists
+  the words ranked in its range, so ranks a source row maps to no entry leave gaps. Wikipedia's and
+  Jiten's lists count spellings (Jiten's with readings) without naming the entry, and the app's
+  mapping (`FrequencyPackMappingV2.sql`) ranks a row only when it names one entry, so spellings
+  several entries share, such as に and は, have no rank there. The JLPT lists are the level pack's
+  words at each level, in kana order.
+- **Common words** on the dictionary home (`summary().commonWords`) are the 24 most used common
+  words that are content words (`browse/content-words.ts`): not ones whose first sense is a
+  particle, auxiliary, conjunction, or copula, nor ones that are only a prefix or suffix.
 - **Kanji lists** are KANJIDIC2's school grades 1 to 6, secondary school (grade 8), jinmeiyō
   (grades 9 and 10), the JLPT levels N5 to N1 (`wallerJlptLevel`, from Jonathan Waller's kanji
   lists, not KANJIDIC2's `jlpt`), and the jōyō kanji (grades 1 to 6 and 8) by stroke count, each
-  most frequent first by KANJIDIC2's newspaper frequency, then by code point.
+  most frequent first by KANJIDIC2's newspaper frequency, then by code point. Jinmeiyō holds 57
+  CJK compatibility characters, such as U+FA45 for 海; one KANJIDIC2 gives no meaning shows its
+  base kanji's.
+- **Thin lists.** The sitemap answer gives every list's word count, so the website can leave out
+  of `/sitemaps/browse.xml` the lists of fewer than `minimumIndexedWords` (10).
 
 ## Rows
 

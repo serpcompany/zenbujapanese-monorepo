@@ -32,7 +32,13 @@ function fakeService(overrides: Partial<DictionaryService> = {}): DictionaryServ
     rankedWords: async () => null,
     kanjiHub: async () => ({ lists: [], jlpt: [], strokes: [] }),
     kanjiList: async () => null,
-    browseSitemap: async () => ({ kana: [], categories: [], rankedLists: [], kanjiLists: [] }),
+    browseSitemap: async () => ({
+      kana: [],
+      categories: [],
+      rankedLists: [],
+      jlptLists: [],
+      kanjiLists: []
+    }),
     ...overrides
   }
 }
@@ -152,17 +158,20 @@ describe('routes', () => {
     expect(kanaWords).toHaveBeenCalledWith('hiragana', 'かが', 2)
   })
 
-  test('passes a category and its first page on by default', async () => {
+  test('passes a category, its order, and its first page on by default', async () => {
     const categoryWords = vi.fn(fakeService().categoryWords)
     const service = fakeService({ categoryWords })
     expect((await app(service).request(get('/v1/browse/categories/nouns'))).status).toBe(200)
-    expect(categoryWords).toHaveBeenCalledWith('nouns', 1)
-    await app(service).request(get('/v1/browse/categories/nouns?page=3'))
-    expect(categoryWords).toHaveBeenCalledWith('nouns', 3)
+    expect(categoryWords).toHaveBeenCalledWith('nouns', 'used', 1)
+    await app(service).request(get('/v1/browse/categories/nouns?order=kana&page=3'))
+    expect(categoryWords).toHaveBeenCalledWith('nouns', 'kana', 3)
   })
 
-  test('400s a page that is not a number', async () => {
-    expect((await app().request(get('/v1/browse/ranked/youtube?page=two'))).status).toBe(400)
+  test.each([
+    ['an order other than used or kana', '/v1/browse/categories/nouns?order=rank'],
+    ['a page that is not a number', '/v1/browse/ranked/youtube?page=two']
+  ])('400s %s', async (_, path) => {
+    expect((await app().request(get(path))).status).toBe(400)
   })
 
   test.each([
