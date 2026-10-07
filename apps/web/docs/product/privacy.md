@@ -104,9 +104,9 @@ account and its synced data until it's deleted; a session until sign-out or the 
 working for 60 days after its last use and deleted within an hour of that; codes and nonces for 10
 minutes, deleted within an hour of that; request counts for a day after their last request; each
 sync request's result for 30 days, and until the next change synced after that; each backup for 30
-days. A learner deletes the account wherever they can make one (an app that offers accounts, or
-the website once it offers sign-in), which removes the account, its ways to sign in, and its
-synced data at once; backups age out within 30 days, and each device keeps
+days. A learner deletes the account in any app that lets them make one, or on the website once it
+offers sign-in (and Apple too, for an account that signs in with Apple, since deleting it needs
+Apple's code), which removes the account, its ways to sign in, and its synced data at once; backups age out within 30 days, and each device keeps
 its own data and works signed out. There's no export feature: a learner asks
 `support@zenbujapanese.com` for a copy (the owners confirm this on #575).
 

@@ -8,10 +8,11 @@ test.skip(
   "Runs on the site built and served with production's settings: E2E_SITE_ENV=production (docs/agents/web.md, Account pages)"
 )
 
-async function offSite(page: Page) {
+async function offSite(page: Page, baseURL: string | undefined) {
+  const site = new URL(baseURL ?? 'http://localhost').origin
   const origins: string[] = []
   await page.route(
-    url => url.hostname !== 'localhost',
+    url => url.origin !== site,
     route => {
       origins.push(new URL(route.request().url()).origin)
       return route.abort()
@@ -23,9 +24,10 @@ async function offSite(page: Page) {
 test.describe("production's account pages, while its ACCOUNT_API_URL is empty", () => {
   for (const { path, title } of accountPages) {
     test(`${path} says signing in isn't available, links no account page, and stays noindex`, async ({
-      page
+      page,
+      baseURL
     }) => {
-      const origins = await offSite(page)
+      const origins = await offSite(page, baseURL)
       await page.goto(path)
       await expect(page.getByRole('heading', { level: 1, name: title })).toBeVisible()
       await expect(page.getByRole('main')).toContainText(
@@ -41,8 +43,8 @@ test.describe("production's account pages, while its ACCOUNT_API_URL is empty", 
     })
   }
 
-  test('a page built ahead of time has no Sign in in its footer', async ({ page }) => {
-    const origins = await offSite(page)
+  test('a page built ahead of time has no Sign in in its footer', async ({ page, baseURL }) => {
+    const origins = await offSite(page, baseURL)
     await page.goto('/about/')
     await expect(page.getByRole('contentinfo').getByRole('link', { name: 'Sitemap' })).toBeVisible()
     await expect(footerAccountLink(page)).toHaveCount(0)

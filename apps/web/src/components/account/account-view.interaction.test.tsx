@@ -206,6 +206,23 @@ describe('the account page', () => {
     expect(page.textContent).not.toContain('Your account is deleted.')
   })
 
+  test('says where to delete an Apple account when this site offers no Apple', async () => {
+    const { calls } = signedIn({
+      ways: [appleWay, emailWay],
+      more: { 'DELETE /v1/me': refusal(400, 'apple_authorization_needed') }
+    })
+    const page = await askedToDelete(false)
+    await shows(
+      page,
+      'Delete it in the Zenbu Japanese app or Tomodachi, where you sign in with Apple.'
+    )
+    expect(page.textContent).not.toContain('Continue with Apple')
+    expect(page.textContent).not.toContain('Your account is deleted.')
+    expect(callTo(calls, 'DELETE /v1/me')).toEqual([
+      expect.objectContaining({ body: { confirm: true } })
+    ])
+  })
+
   test('keeps the learner signed in, and says so, when signing out fails', async () => {
     signedIn({ more: { 'POST /v1/auth/sign-out': refusal(500, 'internal') } })
     const page = render(<AccountView settings={settings()} returnedError={null} />)

@@ -128,8 +128,8 @@ test.describe('privacy policy', () => {
       /^each night's backup for 30 days/
     ])
     await expectNamed(page, 'Retention and deletion', [
-      'delete your account wherever you can create one',
-      'on this website once it offers sign-in',
+      'delete your account in any of our apps that lets you create one',
+      'on this website once it offers sign-in (if your account signs in with Apple, once the website offers Apple too)',
       'deleted within 30 days',
       'keeps working signed out'
     ])

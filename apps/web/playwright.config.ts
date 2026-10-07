@@ -8,7 +8,7 @@ const port = closedProduction
     ? 8787
     : Number(process.env.E2E_PORT ?? 3100)
 const server = closedProduction
-  ? `pnpm exec opennextjs-cloudflare preview --env production --port ${port} --var DICTIONARY_API_URL: --var DICTIONARY_API_TOKEN:`
+  ? `./node_modules/.bin/wrangler dev --env production --port ${port} --env-file /dev/null --var DICTIONARY_API_URL: --var DICTIONARY_API_TOKEN:`
   : onProductionBuild
     ? `pnpm exec opennextjs-cloudflare preview --port ${port}`
     : `pnpm exec next dev --port ${port}`
@@ -17,6 +17,7 @@ const inCI = Boolean(process.env.CI)
 
 export default defineConfig({
   testDir: 'e2e',
+  ...(closedProduction ? { testMatch: 'account-closed.spec.ts' } : {}),
   outputDir: 'e2e/results',
   fullyParallel: true,
   forbidOnly: inCI,
@@ -40,7 +41,7 @@ export default defineConfig({
         command: server,
         env: { ZENBU_DICTIONARY_FIXTURES: '1' },
         url: `${baseURL}/`,
-        reuseExistingServer: !inCI,
+        reuseExistingServer: !inCI && !closedProduction,
         timeout: 240_000
       }
 })

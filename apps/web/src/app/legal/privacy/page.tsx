@@ -241,10 +241,11 @@ export default function PrivacyPage() {
         <li>each night's backup for 30 days.</li>
       </ul>
       <p>
-        You can delete your account wherever you can create one: in our apps that offer accounts, or
-        on this website once it offers sign-in. Deleting it removes your account, its ways to sign
-        in, and the data you synced from our database at once, and the backups that still hold them
-        are deleted within 30 days. Each device keeps its own data and keeps working signed out.
+        You can delete your account in any of our apps that lets you create one, and on this website
+        once it offers sign-in (if your account signs in with Apple, once the website offers Apple
+        too). Deleting it removes your account, its ways to sign in, and the data you synced from
+        our database at once, and the backups that still hold them are deleted within 30 days. Each
+        device keeps its own data and keeps working signed out.
       </p>
       <p>To get a copy of the data your account holds, email {email}.</p>
 

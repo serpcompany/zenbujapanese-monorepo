@@ -16,7 +16,7 @@ import { FormMessage } from './form-message'
 type Step = 'closed' | 'confirm' | 'confirm-identity' | 'deleting'
 
 const appleElsewhere =
-  'Your account signs in with Apple, which this site can’t confirm yet. Delete it in the Zenbu Japanese app.'
+  'Your account signs in with Apple, which this site can’t confirm yet. Delete it in the Zenbu Japanese app or Tomodachi, where you sign in with Apple.'
 
 interface DeleteAccountProps {
   api: AccountApi

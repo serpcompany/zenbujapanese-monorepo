@@ -348,10 +348,12 @@ the account service ([`account-api.md`](account-api.md); the website's side of i
   (`ACCOUNT_API_TRUSTED_ORIGINS`), and email codes to everyone ([`account-api.md`](account-api.md),
   Set up the server); Apple and Google can follow later. Then it's one pull request: set
   production's `ACCOUNT_API_URL` to it, run `pnpm cf-typegen`, and change what pins it closed: the
-  `Web` workflow's two closed-pages steps and `e2e/account-closed.spec.ts`,
-  `src/lib/account/settings.test.ts`, and the product
-  docs that say production's pages are closed ([Account pages](../../apps/web/docs/product/account.md),
-  the [index](../../apps/web/docs/product/index.md), and [Privacy Policy](../../apps/web/docs/product/privacy.md)).
+  `Web` workflow's two closed-pages steps, `e2e/account-closed.spec.ts` and its server in
+  `playwright.config.ts`, and `src/lib/account/settings.test.ts`; and the docs that say
+  production's pages are closed: the product docs ([Account pages](../../apps/web/docs/product/account.md),
+  the [index](../../apps/web/docs/product/index.md), and [Privacy Policy](../../apps/web/docs/product/privacy.md)),
+  this section and its closed-spec paragraph (below), [`ci.md`](ci.md) (Web),
+  [`docs/quality.md`](../quality.md) (Account pages), and the `browser-tests` skill.
   The privacy policy's text stays true with the email code alone: it offers Apple and Google only
   "where its sign-in page offers them". `main` then deploys staging; production deploys when a
   person runs `Web deploy` by hand while `DEPLOY_PRODUCTION` is `false` (Environments and
@@ -397,9 +399,10 @@ at most five from one address in 10 minutes, so a second run within 10 minutes n
 database, or `delete from rate_limits` in it.
 
 `e2e/account-closed.spec.ts` checks production's closed account pages and footer on the site built
-as production deploys, served in workerd with production's vars and no dictionary service, on port
-8797. It runs only when asked (`E2E_SITE_ENV=production`), and the `Web` workflow's `e2e` job runs
-it after the other browser tests:
+as production deploys, served by `wrangler dev --env production` on port 8797 with production's
+vars, no dictionary service, and `--env-file /dev/null`, so no `.dev.vars` or `.env` file can open
+the pages. It runs only when asked (`E2E_SITE_ENV=production`, which runs that spec alone), and the
+`Web` workflow's `e2e` job runs it after the other browser tests:
 
 ```sh
 SITE_ENV=production pnpm exec opennextjs-cloudflare build

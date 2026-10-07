@@ -245,7 +245,8 @@ account. Deleting then needs, as the client guide says:
   code the page sends with the return URL its popup named. The service revokes the website's Apple
   access with them. Apple refusing the code (`apple_authorization_invalid`), another Apple ID
   (`apple_account_mismatch`), or Apple not answering (`apple_unavailable`) deletes nothing and
-  offers Apple again. Where the site offers no Apple, it says to delete the account in the app.
+  offers Apple again. Where the site offers no Apple, it says to delete the account in the Zenbu
+  Japanese app or Tomodachi, where the learner signs in with Apple.
 
 Deleted, the page says the account is gone from every Zenbu app and each device keeps its own
 data, signs the browser out, and the footer says Sign in again.
@@ -255,8 +256,9 @@ data, signs the browser out, and the footer says Sign in again.
   refusal for the page"; Account page tests, "deletes after the learner confirms and, with a
   sign-in over nine minutes old, signs in again by code", "asks for a fresh sign-in when the service answers
   sign_in_again, though the page thought it fresh", "deletes an Apple account with Apple's code,
-  after Apple signs it in again with the same Apple ID", and "won't confirm with another Apple ID,
-  and asks again when Apple refuses the code"; Account service spec.
+  after Apple signs it in again with the same Apple ID", "won't confirm with another Apple ID,
+  and asks again when Apple refuses the code", and "says where to delete an Apple account when
+  this site offers no Apple"; Account service spec.
 
 ## Configuration
 
