@@ -1,4 +1,5 @@
 import { createRoute, type OpenAPIHono, z } from '@hono/zod-openapi'
+import { clients } from '../domain/clients'
 import type { AccountEnv } from './env'
 import { ErrorSchema } from './schemas'
 
@@ -78,6 +79,16 @@ const IdTokenSchema = z
 
 const provider = z.enum(['apple', 'google'])
 
+const appSigningIn = z.object({
+  'x-zenbu-client': z
+    .enum(clients.map(client => client.id) as [string, ...string[]])
+    .optional()
+    .openapi({
+      description:
+        "The app signing in: its access is the account's, limited to the app's scopes. A browser on one of the website's origins may leave it out."
+    })
+})
+
 const refused = (codes: string) => json(ErrorSchema, codes)
 const sessionToken = [{ sessionToken: [] }]
 
@@ -101,10 +112,13 @@ export const signInRoutes = {
     summary: 'Sign in with the emailed code',
     description:
       "Makes the account on the first sign-in. A `name` is used only then, held to the profile's name rule.",
-    request: body(z.object({ email: z.email(), otp: z.string(), name: z.string().optional() })),
+    request: {
+      ...body(z.object({ email: z.email(), otp: z.string(), name: z.string().optional() })),
+      headers: appSigningIn
+    },
     responses: {
       200: signedIn,
-      400: refused('`invalid_otp`, `otp_expired`, or `too_many_attempts`.'),
+      400: refused('`invalid_otp`, `otp_expired`, `too_many_attempts`, or `unknown_client`.'),
       403: refused(
         '`account_not_linked`: an Apple or Google account has this email; sign in that way, then add the email.'
       ),
@@ -129,13 +143,16 @@ export const signInRoutes = {
     summary: 'Sign in with Apple or Google',
     description:
       "With `idToken`, signs in with the token the device got, and makes the account on the first sign-in. Without it, starts the web sign-in, which comes back to GET /v1/auth/callback/{id}. A new account's email must be verified by the provider, and an email that already has an account is refused until the learner adds this way while signed in.",
-    request: body(
-      z.object({
-        provider,
-        idToken: IdTokenSchema.optional(),
-        callbackURL: z.string().optional()
-      })
-    ),
+    request: {
+      ...body(
+        z.object({
+          provider,
+          idToken: IdTokenSchema.optional(),
+          callbackURL: z.string().optional()
+        })
+      ),
+      headers: appSigningIn
+    },
     responses: {
       200: {
         ...signedIn,
@@ -147,9 +164,11 @@ export const signInRoutes = {
           'Signed in, or, without `idToken`, the provider page to send the browser to.'
         )
       },
-      400: refused('`nonce_required`, or a token that is invalid.'),
+      400: refused('`nonce_required`, `unknown_client`, or a token that is invalid.'),
       401: refused('`invalid_nonce`, or `invalid_token`.'),
-      403: refused('`email_not_verified`.'),
+      403: refused(
+        "`email_not_verified`, or `client_mismatch`: the Apple token was made for another app's bundle ID."
+      ),
       409: refused('`oauth_link_error`: that email has an account; add this way while signed in.')
     }
   }),

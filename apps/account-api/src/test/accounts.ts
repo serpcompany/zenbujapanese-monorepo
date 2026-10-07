@@ -9,15 +9,15 @@ export interface Learner {
 }
 
 export function useAccountService() {
-  const running = useSignInService()
+  const running = useSignInService({ providers: true })
   const call = (path: string, options: Parameters<typeof running.service.call>[1]) =>
     running.service.call(path, options)
 
   return {
     running,
     cursors: cursors(cursorKey(testSecret)),
-    async learner(email: string): Promise<Learner> {
-      const signedIn = await running.as.withCode(email)
+    async learner(email: string, client = 'zenbu-ios'): Promise<Learner> {
+      const signedIn = await running.as.withCode(email, { client })
       const session = sessionToken(signedIn)
       const issued = await call('/v1/auth/token', { token: session })
       return { userId: userIdOf(signedIn), session, token: String(issued.body?.token) }

@@ -86,13 +86,23 @@ Auth has more (passwords, changing or verifying an email, editing or deleting th
 `src/auth/routes.ts` lists the open ones, so every other answers `404 not_found`, including those a
 Better Auth upgrade adds. The profile changes through `/v1/me`, and deleting an account is #574's.
 
+**Apps and scopes.** Each app that signs in is listed in `src/domain/clients.ts`, with its scopes
+and its Apple bundle IDs (#570). A sign-in names its app in the `X-Zenbu-Client` header, or comes
+from one of the website's origins, or is refused (`unknown_client`); an Apple token made for
+another app's bundle ID is refused (`client_mismatch`). The session keeps its app (`client_id`),
+and its access tokens carry the app (`azp`) and its scopes (`scope`), cut to the scopes the app
+has now. `/v1/me` needs `profile` (`403 insufficient_scope`), and sync checks each change against
+the scopes and reads only the entities they allow. The apps' side, and how to add one, is the
+[client guide](account-clients.md).
+
 `/v1/me` and `/v1/sync` take only an access token from `GET /v1/auth/token`, as
 `Authorization: Bearer <token>`, checked against the service's own JWKS. They refuse the session
 token, so the long-lived token only ever goes to `/v1/auth`, and they answer every refusal alike:
 `401 unauthorized`, with `WWW-Authenticate: Bearer`. Their bodies, and those sent to `/v1/auth`,
 are at most 64 KB (`413 too_large`). Each account may send 60 requests a minute to `/v1/me` and
-120 to `/v1/sync` (`429 too_many_requests`, with `Retry-After`), counted in each slot's memory, so
-an app stuck in a loop, or a stolen access token, can't flood the service. A browser can call the
+120 to `/v1/sync` from each app, and each app 30,000 a minute from all its accounts together
+(`429 too_many_requests`, with `Retry-After`), counted in each slot's memory, so an app stuck in a
+loop, or a stolen access token, can't flood the service. A browser can call the
 service only from the origins in `ACCOUNT_API_TRUSTED_ORIGINS`: CORS names each one, never `*`.
 
 **The contract** for every route above is
@@ -287,7 +297,7 @@ are in `src/db/schema.ts`:
 - `users`: the account (Better Auth's random ID, its name and email, unique whatever its case,
   whether the email is verified, the username, unique, and the profile's version);
 - `user_identities`: each way an account signs in;
-- `sessions`: what an app or the website holds;
+- `sessions`: what an app or the website holds, and which app (`client_id`);
 - `verifications`: the codes, encrypted, and the sign-in nonces;
 - `signing_keys`: the access tokens' keys, encrypted with `ACCOUNT_API_SECRET`;
 - `rate_limits`;

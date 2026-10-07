@@ -58,15 +58,26 @@ export async function startService({ emailSender = true }: { emailSender?: boole
       body,
       token,
       method,
-      from
-    }: { body?: unknown; token?: string; method?: string; from?: string } = {}
+      from,
+      client = 'zenbu-ios',
+      headers = {}
+    }: {
+      body?: unknown
+      token?: string
+      method?: string
+      from?: string
+      client?: string | null
+      headers?: Record<string, string>
+    } = {}
   ) => {
     const response = await app.request(`${publicUrl}${path}`, {
       method: method ?? (body === undefined ? 'GET' : 'POST'),
       headers: {
         ...(body === undefined ? {} : { 'content-type': 'application/json' }),
         ...(token ? { authorization: `Bearer ${token}` } : {}),
-        'cf-connecting-ip': from ?? `10.${addresses++ % 250}.0.1`
+        'cf-connecting-ip': from ?? `10.${addresses++ % 250}.0.1`,
+        ...(client ? { 'x-zenbu-client': client } : {}),
+        ...headers
       },
       body: body === undefined ? undefined : JSON.stringify(body)
     })

@@ -6,11 +6,12 @@ import { cors } from 'hono/cors'
 import { HTTPException } from 'hono/http-exception'
 import { routePath } from 'hono/route'
 import type { Accounts } from '../domain/accounts'
+import { clientById, type Principal } from '../domain/clients'
 import { failureFields } from '../failure'
-import { accountRoutes, bodyLimitKb, requireAccount } from './accounts'
+import { accountRoutes, bodyLimitKb, requireAccount, requireScope } from './accounts'
 import type { AccountEnv } from './env'
 import { errorBody, errorCode, inErrorFormat } from './errors'
-import { perAccountLimit, requestsPerMinute } from './rate-limit'
+import { perAccountLimit, perClientLimit, requestsPerMinute } from './rate-limit'
 import { signInContract } from './sign-in-contract'
 
 interface AuthHandler {
@@ -26,7 +27,7 @@ export interface AppOptions {
   databaseReady(): Promise<boolean>
   auth: AuthHandler
   accounts: Accounts
-  verifyAccessToken(token: string): Promise<string | null>
+  verifyAccessToken(token: string): Promise<Principal | null>
   allowedOrigins: readonly string[]
   devMailbox: Mailbox | null
 }
@@ -56,13 +57,19 @@ export function createApp(options: AppOptions) {
     origin: origin => (options.allowedOrigins.includes(origin) ? origin : null),
     credentials: true,
     allowMethods: ['GET', 'POST', 'PATCH'],
-    allowHeaders: ['authorization', 'content-type'],
+    allowHeaders: ['authorization', 'content-type', 'x-zenbu-client'],
     exposeHeaders: ['set-auth-token'],
     maxAge: 600
   })
   for (const path of ['/v1/auth/*', '/v1/health', ...accountPaths]) app.use(path, crossOrigin)
-  for (const path of accountPaths) app.use(path, requireAccount(options.verifyAccessToken))
-  app.use('/v1/me', perAccountLimit(requestsPerMinute.profile))
+  for (const path of accountPaths) {
+    app.use(path, requireAccount(options.verifyAccessToken))
+    app.use(
+      path,
+      perClientLimit(id => clientById(id)?.requestsPerMinute ?? 0)
+    )
+  }
+  app.use('/v1/me', requireScope('profile'), perAccountLimit(requestsPerMinute.profile))
   app.use('/v1/sync', perAccountLimit(requestsPerMinute.sync))
   const limitedBody = bodyLimit({
     maxSize: bodyLimitKb * 1024,

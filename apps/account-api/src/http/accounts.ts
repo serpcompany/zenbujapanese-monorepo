@@ -2,6 +2,7 @@ import { createRoute, type OpenAPIHono, z } from '@hono/zod-openapi'
 import type { Context } from 'hono'
 import { createMiddleware } from 'hono/factory'
 import type { Accounts } from '../domain/accounts'
+import type { Principal, Scope } from '../domain/clients'
 import type { Change } from '../domain/entities'
 import type { Profile } from '../domain/profile'
 import type { MutationResult } from '../domain/sync'
@@ -25,6 +26,11 @@ const json = <T>(schema: T, description: string) => ({
   content: { 'application/json': { schema } },
   description
 })
+
+const noScope = json(
+  ErrorSchema,
+  "`insufficient_scope`: this app's access to the account doesn't include `profile`."
+)
 
 const unauthorized = json(
   ErrorSchema,
@@ -51,13 +57,26 @@ function refuse(context: Context) {
   return context.json(unauthorizedBody, 401, { 'WWW-Authenticate': 'Bearer' })
 }
 
-export function requireAccount(verifyAccessToken: (token: string) => Promise<string | null>) {
+export function requireAccount(verifyAccessToken: (token: string) => Promise<Principal | null>) {
   return createMiddleware<AccountEnv>(async (context, next) => {
     const token = /^bearer\s+(\S+)$/i.exec(context.req.header('authorization') ?? '')?.[1]
-    const userId = token ? await verifyAccessToken(token) : null
-    if (!userId) return refuse(context)
-    context.set('userId', userId)
+    const principal = token ? await verifyAccessToken(token) : null
+    if (!principal) return refuse(context)
+    context.set('userId', principal.userId)
+    context.set('clientId', principal.clientId)
+    context.set('scopes', principal.scopes)
     await next()
+  })
+}
+
+export function requireScope(scope: Scope) {
+  return createMiddleware<AccountEnv>(async (context, next) => {
+    if (context.get('scopes').has(scope)) return next()
+    return context.json(
+      errorBody('insufficient_scope', `This app's access to the account doesn't include ${scope}.`),
+      403,
+      { 'WWW-Authenticate': `Bearer error="insufficient_scope", scope="${scope}"` }
+    )
   })
 }
 
@@ -103,6 +122,7 @@ const readProfile = createRoute({
   responses: {
     200: json(ProfileSchema, 'The profile.'),
     401: unauthorized,
+    403: noScope,
     429: tooMany(requestsPerMinute.profile),
     500: failed
   }
@@ -122,6 +142,7 @@ const changeProfile = createRoute({
     200: json(ProfileSchema, 'The profile, as changed.'),
     400: json(ErrorSchema, '`bad_request`, or `invalid_fields`: a name or username out of bounds.'),
     401: unauthorized,
+    403: noScope,
     409: json(
       z.union([ProfileConflictSchema, ErrorSchema]),
       '`version_conflict`, with `current`: the profile changed since `baseVersion`. `username_taken`: another account has that username.'
@@ -166,7 +187,7 @@ export function accountRoutes(
     scheme: 'bearer',
     bearerFormat: 'JWT',
     description:
-      'A 15-minute access token from GET /v1/auth/token, which takes the session token a sign-in returns. Never the session token itself.'
+      "A 15-minute access token from GET /v1/auth/token, which takes the session token a sign-in returns, never the session token itself. It names the account (`sub`), the app (`azp`), and the app's scopes (`scope`): `profile` for /v1/me, and for sync `lists:read`, `lists:write`, `known:read`, `known:write`, and `known:mark`, which marks a word Known but never clears one. The dictionary service takes `dictionary:read`."
   })
 
   app.openapi(health, async context =>
@@ -204,7 +225,11 @@ export function accountRoutes(
   })
 
   app.openapi(sync, async context => {
-    const answer = await accounts.sync(context.get('userId'), context.req.valid('json'))
+    const answer = await accounts.sync(
+      context.get('userId'),
+      context.req.valid('json'),
+      context.get('scopes')
+    )
     if (answer.status === 'no_account') return refuse(context)
     if (answer.status === 'invalid_cursor') {
       return context.json(

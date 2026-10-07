@@ -1,0 +1,132 @@
+# Building an app on the Zenbu account
+
+How an app, such as the Zenbu iOS app or Tomodachi, signs a learner in to their Zenbu account and
+keeps its copy of their known words and lists in step. The contract is
+[`apps/account-api/openapi.json`](../../apps/account-api/openapi.json): every route, field, answer, and
+error code. This guide is the order to use them in, and the rules no schema shows. How the service
+works inside is [`account-api.md`](account-api.md).
+
+Every app stays local-first: everything works signed out and offline, the device's copy is what the
+app shows, and the account only carries changes between devices and apps (#374).
+
+## The host
+
+`https://api.zenbujapanese.com`, and `https://api-staging.zenbujapanese.com` for staging. Every
+route is under `/v1`. An error is `{ "error": { "code": "...", "message": "..." } }`: branch on
+`code`, show or log `message`.
+
+## Your app
+
+Each app is listed in the account service (`apps/account-api/src/domain/clients.ts`) with an ID
+and the scopes its tokens carry. To add one, add it there, with its Apple bundle IDs, in a pull
+request the owners review; a Google client ID for it goes in the service's `GOOGLE_CLIENT_IDS`
+setting ([`account-api.md`](account-api.md), Settings).
+
+| App | ID | Scopes |
+| --- | --- | --- |
+| Zenbu Japanese for iOS | `zenbu-ios` | `profile`, `lists:read`, `lists:write`, `known:read`, `known:write` |
+| zenbujapanese.com | `zenbu-web` | the same |
+| Tomodachi | `tomodachi` | `lists:read`, `known:read`, `known:mark`, `dictionary:read` |
+
+- `known:mark` marks a word Known and never clears one: only the learner un-marks a word.
+- `dictionary:read` is for the dictionary service's routes for apps (#571).
+- An app is a public client: it holds no secret. Its scopes keep each app to what it needs; every
+  token is still only the signed-in learner's own account.
+
+## Signing in
+
+Send `X-Zenbu-Client: <your app's ID>` with every sign-in. Without it, or with an ID the service
+doesn't list, a sign-in is refused (`unknown_client`).
+
+- **Sign in with Apple:**
+  1. `POST /v1/auth/sign-in/nonce` for a nonce.
+  2. Ask Apple, passing the nonce's SHA-256 as Apple's nonce.
+  3. `POST /v1/auth/sign-in/social` with `{ "provider": "apple", "idToken": { "token": "<Apple's
+     ID token>", "nonce": "<the nonce>" } }`.
+
+  A token made for another app's bundle ID is refused (`client_mismatch`).
+- **Google:** the same, with Google's ID token and the nonce itself.
+- **An emailed code:** `POST /v1/auth/email-otp/send-verification-otp` with
+  `{ "email": "...", "type": "sign-in" }`, then `POST /v1/auth/sign-in/email-otp` with the email
+  and the code.
+
+A sign-in answers the learner, and the **session token** in the `set-auth-token` header. Keep it in
+the Keychain: it's the refresh token, good for 60 days from its last use. Send it only to
+`/v1/auth`. The same Apple account, Google account, or email signs in to the same Zenbu account in
+every app, as long as the account has that way in; an email that already has an account through
+another way is refused until the learner adds it there, signed in (`oauth_link_error`,
+`account_not_linked`).
+
+## Access tokens
+
+`GET /v1/auth/token`, with the session token as `Authorization: Bearer`, answers a 15-minute access
+token. Send that, never the session token, to `/v1/me`, `/v1/sync`, and the dictionary service.
+Get a new one when it's about to expire or a request answers `401`. If `/v1/auth/token` answers
+`401`, the session is over: sign in again.
+
+The token names the account (`sub`), your app (`azp`), and its scopes (`scope`). A route your
+scopes don't cover answers `403 insufficient_scope`; a sync change they don't allow is rejected
+(`not_allowed`).
+
+## When to sync
+
+Never on a fixed timer (#374). Sync:
+
+- after a local change, when there's a connection;
+- on launch and on returning to the foreground, if there are queued changes or the last sync is
+  more than 15 minutes old (a setting in your app, not the API);
+- when the system grants background time, as a chance, not a schedule;
+- when the learner asks to refresh.
+
+On a network failure or a `5xx`, retry with exponential backoff and jitter, and stop retrying
+while the app is in the background. On `429`, wait the seconds `Retry-After` says. Keep the queue
+and the cursor across launches.
+
+## How to sync
+
+`POST /v1/sync` with the queued changes and the cursor from the last sync you applied, or none the
+first time:
+
+1. **Queue each change as it's made**, with:
+   - a new UUID as its `id`, kept with it;
+   - its `entity`, `operation`, and `entityId`;
+   - its `fields`;
+   - as `baseVersion`, the version of the entity your app had when the change was made: 0 for one
+     it never had from the server.
+
+   Apply it on the device at once.
+2. **Send up to 50** queued changes with the cursor. If the answer is lost, send the same request
+   again: each change applies once, by its `id`.
+3. **Each result is final:**
+   - `applied`: keep its `version` as the entity's version.
+   - `conflict`: the entity changed elsewhere first. Take `current`, the entity as it is now, over
+     your copy.
+   - `rejected`: undo the change on the device. To try something else, queue a new change with a
+     new `id`; never send a result's `id` again with a different change.
+4. **Apply each change in `changes`** over your copy, by entity and `entityId`: `put` is the
+   entity as it is now, `delete` is gone. Keep the `cursor`. While `hasMore` is true, sync again.
+   A list word can arrive a page before its list: hold it until `hasMore` is false.
+5. **On `410 invalid_cursor`**, sync again with no cursor, and take what comes back over your copy;
+   queued changes still go.
+
+### The rules, from your side
+
+- **Known words**, by item: a Language Reference ID, or `kanji:` and the kanji.
+  - `mark` and `clear` take the version your app had. If the word changed since, it's a conflict.
+  - Marking a known word, or clearing one not known, is applied and changes nothing.
+  - **Tomodachi:** mark a word the first time it reaches "knows it". If the mark conflicts because
+    the learner un-marked the word in Zenbu, don't send it again: mark it again only once the word
+    climbs back to "knows it" (#563, decision 4).
+- **Lists**, by UUID:
+  - A rename or move conflicts if the list changed since.
+  - A delete wins over everything done to the list since, and takes its words: when a list is
+    deleted, drop its words on the device.
+- **List words**, `<list>/<item>`:
+  - An add always applies.
+  - A remove applies only if your app had the latest add: an add from elsewhere wins.
+  - An add to a list that's gone is rejected (`unknown_list`): undo it.
+
+## Signing out
+
+`POST /v1/auth/sign-out` with the session token, then forget it and the cursor. Keep the device's
+copy: it's the learner's.

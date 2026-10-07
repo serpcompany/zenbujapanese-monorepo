@@ -59,9 +59,16 @@ async function setKnown(
 }
 
 export const knownWords: Entity = {
+  reads: 'known:read',
   operations: {
-    mark: (account, mutation) => setKnown(account, mutation, true),
-    clear: (account, mutation) => setKnown(account, mutation, false)
+    mark: {
+      needs: ['known:write', 'known:mark'],
+      apply: (account, mutation) => setKnown(account, mutation, true)
+    },
+    clear: {
+      needs: ['known:write'],
+      apply: (account, mutation) => setKnown(account, mutation, false)
+    }
   },
   async current(reader, entityId) {
     const itemId = itemIdOf(entityId) ?? entityId

@@ -29,10 +29,19 @@ function signIn(service: Service) {
     return code as string
   }
 
-  const withCode = async (email: string, { session }: { session?: string } = {}) =>
+  const withCode = async (
+    email: string,
+    {
+      session,
+      client,
+      headers
+    }: { session?: string; client?: string | null; headers?: Record<string, string> } = {}
+  ) =>
     service.call('/v1/auth/sign-in/email-otp', {
       body: { email, otp: await emailCode(email) },
-      token: session
+      token: session,
+      client,
+      headers
     })
 
   const nonce = async () => {

@@ -5,9 +5,12 @@ import pg from 'pg'
 import { afterAll, beforeAll, describe, expect, test, vi } from 'vitest'
 import { migrationsFolder as migrations } from '../config'
 import { createAccounts } from '../domain/accounts'
+import { scopes } from '../domain/clients'
 import { cursorKey, cursors } from '../domain/cursor'
 import { accountStore } from './accounts'
 import { migratePostgres, migrationLock, openPostgres } from './postgres'
+
+const everyScope = new Set(scopes)
 
 const realPostgres = process.env.ACCOUNT_API_TEST_DATABASE_URL ?? ''
 let url = realPostgres
@@ -90,7 +93,7 @@ describe('Postgres, through the driver the service runs', () => {
         fields: { username: id.slice(0, 30).replaceAll('-', '_') }
       }
       const answers = await Promise.all(
-        Array.from({ length: 6 }, () => accounts.sync(id, { mutations: [mutation] }))
+        Array.from({ length: 6 }, () => accounts.sync(id, { mutations: [mutation] }, everyScope))
       )
       for (const answer of answers) {
         expect(answer).toMatchObject({

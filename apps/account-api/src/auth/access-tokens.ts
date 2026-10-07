@@ -1,8 +1,9 @@
 import { createLocalJWKSet, errors, type JSONWebKeySet, jwtVerify } from 'jose'
+import { type Principal, principalOf } from '../domain/clients'
 
 const reloadAfterMs = 30_000
 
-export type AccessTokenVerifier = (token: string) => Promise<string | null>
+export type AccessTokenVerifier = (token: string) => Promise<Principal | null>
 
 export function accessTokenVerifier(
   publishedKeys: () => Promise<JSONWebKeySet>,
@@ -22,18 +23,20 @@ export function accessTokenVerifier(
     return keys
   }
 
-  const subjectOf = async (token: string, keySet: ReturnType<typeof createLocalJWKSet>) => {
+  const principalFrom = async (token: string, keySet: ReturnType<typeof createLocalJWKSet>) => {
     const { payload } = await jwtVerify(token, keySet, {
       issuer,
       audience: issuer,
       algorithms: ['EdDSA']
     })
-    return typeof payload.sub === 'string' && payload.sub !== '' ? payload.sub : null
+    return typeof payload.sub === 'string' && payload.sub !== ''
+      ? principalOf(payload.sub, payload.azp, payload.scope)
+      : null
   }
 
   return async token => {
     try {
-      return await subjectOf(token, await (keys ?? load()))
+      return await principalFrom(token, await (keys ?? load()))
     } catch (error) {
       if (!(error instanceof errors.JOSEError)) throw error
       if (!(error instanceof errors.JWKSNoMatchingKey) || Date.now() - loadedAt < reloadAfterMs) {
@@ -41,7 +44,7 @@ export function accessTokenVerifier(
       }
     }
     try {
-      return await subjectOf(token, await load())
+      return await principalFrom(token, await load())
     } catch (error) {
       if (error instanceof errors.JOSEError) return null
       throw error

@@ -68,6 +68,7 @@ export const sessions = pgTable(
     expiresAt: moment('expires_at').notNull(),
     ipAddress: text('ip_address'),
     userAgent: text('user_agent'),
+    clientId: text('client_id'),
     createdAt: created(),
     updatedAt: updated()
   },

@@ -21,7 +21,7 @@
         "type": "http",
         "scheme": "bearer",
         "bearerFormat": "JWT",
-        "description": "A 15-minute access token from GET /v1/auth/token, which takes the session token a sign-in returns. Never the session token itself."
+        "description": "A 15-minute access token from GET /v1/auth/token, which takes the session token a sign-in returns, never the session token itself. It names the account (`sub`), the app (`azp`), and the app's scopes (`scope`): `profile` for /v1/me, and for sync `lists:read`, `lists:write`, `known:read`, `known:write`, and `known:mark`, which marks a word Known but never clears one. The dictionary service takes `dictionary:read`."
       },
       "sessionToken": {
         "type": "http",
@@ -550,7 +550,7 @@
           "entity": {
             "type": "string",
             "pattern": "^[A-Za-z][A-Za-z0-9_-]{0,63}$",
-            "description": "`profile`, `knownWord`, `list`, or `listWord`. Any other is rejected with `unknown_entity`, and the rest of the request still applies."
+            "description": "`profile`, `knownWord`, `list`, or `listWord`. Any other is rejected with `unknown_entity`, and the rest of the request still applies. A change the app's scopes don't allow is rejected with `not_allowed`, and the app reads only the entities its scopes do."
           },
           "operation": {
             "type": "string",
@@ -856,6 +856,16 @@
               }
             }
           },
+          "403": {
+            "description": "`insufficient_scope`: this app's access to the account doesn't include `profile`.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
           "429": {
             "description": "`too_many_requests`: this account sent more than 60 requests here in the current minute. Wait the seconds `Retry-After` says.",
             "content": {
@@ -919,6 +929,16 @@
           },
           "401": {
             "description": "`unauthorized`: no access token, or one that is expired, forged, or for an account that no longer exists. Get a new one from GET /v1/auth/token.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "`insufficient_scope`: this app's access to the account doesn't include `profile`.",
             "content": {
               "application/json": {
                 "schema": {
@@ -1149,6 +1169,23 @@
       "post": {
         "summary": "Sign in with the emailed code",
         "description": "Makes the account on the first sign-in. A `name` is used only then, held to the profile's name rule.",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "enum": [
+                "zenbu-ios",
+                "zenbu-web",
+                "tomodachi"
+              ],
+              "description": "The app signing in: its access is the account's, limited to the app's scopes. A browser on one of the website's origins may leave it out."
+            },
+            "required": false,
+            "description": "The app signing in: its access is the account's, limited to the app's scopes. A browser on one of the website's origins may leave it out.",
+            "name": "x-zenbu-client",
+            "in": "header"
+          }
+        ],
         "requestBody": {
           "required": true,
           "content": {
@@ -1195,7 +1232,7 @@
             }
           },
           "400": {
-            "description": "`invalid_otp`, `otp_expired`, or `too_many_attempts`.",
+            "description": "`invalid_otp`, `otp_expired`, `too_many_attempts`, or `unknown_client`.",
             "content": {
               "application/json": {
                 "schema": {
@@ -1271,6 +1308,23 @@
       "post": {
         "summary": "Sign in with Apple or Google",
         "description": "With `idToken`, signs in with the token the device got, and makes the account on the first sign-in. Without it, starts the web sign-in, which comes back to GET /v1/auth/callback/{id}. A new account's email must be verified by the provider, and an email that already has an account is refused until the learner adds this way while signed in.",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "enum": [
+                "zenbu-ios",
+                "zenbu-web",
+                "tomodachi"
+              ],
+              "description": "The app signing in: its access is the account's, limited to the app's scopes. A browser on one of the website's origins may leave it out."
+            },
+            "required": false,
+            "description": "The app signing in: its access is the account's, limited to the app's scopes. A browser on one of the website's origins may leave it out.",
+            "name": "x-zenbu-client",
+            "in": "header"
+          }
+        ],
         "requestBody": {
           "required": true,
           "content": {
@@ -1326,7 +1380,7 @@
             }
           },
           "400": {
-            "description": "`nonce_required`, or a token that is invalid.",
+            "description": "`nonce_required`, `unknown_client`, or a token that is invalid.",
             "content": {
               "application/json": {
                 "schema": {
@@ -1346,7 +1400,7 @@
             }
           },
           "403": {
-            "description": "`email_not_verified`.",
+            "description": "`email_not_verified`, or `client_mismatch`: the Apple token was made for another app's bundle ID.",
             "content": {
               "application/json": {
                 "schema": {

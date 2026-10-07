@@ -1,6 +1,7 @@
 import type { BetterAuthPlugin } from 'better-auth'
 import { APIError, createAuthMiddleware, getSessionFromCtx } from 'better-auth/api'
 import type { Mailer } from '../email/mailer'
+import { requireSignInClient } from './clients'
 import { emailProvider } from './identities'
 import { consumeNonce } from './nonce'
 import { offeredRoutes, route, routesNeedingAFreshSession, routesThatSendEmail } from './routes'
@@ -59,7 +60,7 @@ async function requireNonce(context: AuthContext, idToken: { nonce?: unknown }):
   }
 }
 
-function guardRequests(mailer: Mailer) {
+function guardRequests(mailer: Mailer, trustedOrigins: readonly string[]) {
   return createAuthMiddleware(async context => {
     const path = context.path
     if (!offeredRoutes.has(path)) {
@@ -77,6 +78,9 @@ function guardRequests(mailer: Mailer) {
         code: 'SIGN_IN_ONLY',
         message: 'A code is sent only to sign in.'
       })
+    }
+    if (path === route.signInWithCode || path === route.signInWithProvider) {
+      requireSignInClient(context.request?.headers ?? context.headers, path, body, trustedOrigins)
     }
     if (routesNeedingAFreshSession.has(path)) await requireFreshSession(context)
     const idToken = idTokenOf(body)
@@ -117,11 +121,11 @@ function guardEmailSignIn() {
   })
 }
 
-export const signInGuards = (mailer: Mailer) =>
+export const signInGuards = (mailer: Mailer, trustedOrigins: readonly string[]) =>
   ({
     id: 'zenbu-sign-in-guards',
     hooks: {
-      before: [{ matcher: () => true, handler: guardRequests(mailer) }],
+      before: [{ matcher: () => true, handler: guardRequests(mailer, trustedOrigins) }],
       after: [{ matcher: () => true, handler: guardEmailSignIn() }]
     }
   }) satisfies BetterAuthPlugin

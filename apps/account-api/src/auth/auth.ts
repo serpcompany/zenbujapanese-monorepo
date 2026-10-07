@@ -5,10 +5,12 @@ import { bearer, emailOTP, jwt } from 'better-auth/plugins'
 import type { AuthConfig } from '../config'
 import type { Drizzle } from '../db/database'
 import { authSchema } from '../db/schema'
+import { clients } from '../domain/clients'
 import type { Mailer } from '../email/mailer'
 import { codeMinutes, signInCodeMessage } from '../email/sign-in-code'
 import { failureFields } from '../failure'
 import { appleClientSecret } from './apple'
+import { sessionClientHooks, tokenClaims } from './clients'
 import { signInGuards } from './guards'
 import { identityHooks } from './identities'
 import { signInNonce } from './nonce'
@@ -35,8 +37,11 @@ async function socialProviders(config: AuthConfig) {
             : '',
         appBundleIdentifier: apple.appBundleIdentifier,
         audience: [
-          ...apple.servicesIds,
-          ...(apple.appBundleIdentifier ? [apple.appBundleIdentifier] : [])
+          ...new Set([
+            ...apple.servicesIds,
+            ...(apple.appBundleIdentifier ? [apple.appBundleIdentifier] : []),
+            ...clients.flatMap(client => client.appleBundleIds)
+          ])
         ]
       }
     }),
@@ -52,7 +57,11 @@ export async function createAuth({ config, db, mailer }: AuthOptions) {
     secret: config.secret,
     trustedOrigins: config.trustedOrigins,
     database: drizzleAdapter(db, { provider: 'pg', schema: authSchema }),
-    session: { expiresIn: 60 * day, updateAge: day },
+    session: {
+      expiresIn: 60 * day,
+      updateAge: day,
+      additionalFields: { clientId: { type: 'string', required: false, input: false } }
+    },
     account: {
       encryptOAuthTokens: true,
       accountLinking: { enabled: true, disableImplicitLinking: true, allowDifferentEmails: true }
@@ -68,12 +77,17 @@ export async function createAuth({ config, db, mailer }: AuthOptions) {
           void mailer.send(signInCodeMessage(email, otp))
         }
       }),
-      jwt({ jwt: { expirationTime: '15m', definePayload: () => ({}) } }),
+      jwt({
+        jwt: {
+          expirationTime: '15m',
+          definePayload: ({ session }) => tokenClaims(session.clientId)
+        }
+      }),
       bearer({ requireSignature: true }),
       signInNonce(),
-      signInGuards(mailer)
+      signInGuards(mailer, config.trustedOrigins)
     ],
-    databaseHooks: identityHooks(mailer),
+    databaseHooks: { ...identityHooks(mailer), ...sessionClientHooks(config.trustedOrigins) },
     rateLimit: {
       enabled: true,
       storage: 'database',

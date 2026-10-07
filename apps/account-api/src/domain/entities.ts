@@ -1,3 +1,4 @@
+import type { Scope } from './clients'
 import { type Profile, type Rejection, rejection } from './profile'
 import type { EntityReader, EntityType, LockedAccount } from './store'
 
@@ -61,7 +62,8 @@ export type Outcome =
 type Operation = (account: LockedAccount, mutation: ClientMutation) => Promise<Outcome>
 
 export interface Entity {
-  operations: Record<string, Operation>
+  reads: Scope
+  operations: Record<string, { needs: readonly Scope[]; apply: Operation }>
   current(reader: EntityReader, entityId: string): Promise<Change | null>
 }
 

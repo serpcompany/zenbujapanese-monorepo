@@ -16,16 +16,20 @@ const asChange = (profile: Profile): Change => ({
 })
 
 export const profiles: Entity = {
+  reads: 'profile',
   operations: {
-    async update(account, mutation) {
-      if (mutation.entityId !== undefined && mutation.entityId !== account.profile.id) {
-        return rejected(notTheAccount)
+    update: {
+      needs: ['profile'],
+      async apply(account, mutation) {
+        if (mutation.entityId !== undefined && mutation.entityId !== account.profile.id) {
+          return rejected(notTheAccount)
+        }
+        if (mutation.baseVersion === undefined) return rejected(needsBaseVersion)
+        const update = await updateProfile(account, mutation.baseVersion, mutation.fields ?? {})
+        if (update.status === 'conflict') return conflict(asChange(update.profile))
+        if (update.status === 'rejected') return rejected(update.rejection)
+        return applied(update.profile.version)
       }
-      if (mutation.baseVersion === undefined) return rejected(needsBaseVersion)
-      const update = await updateProfile(account, mutation.baseVersion, mutation.fields ?? {})
-      if (update.status === 'conflict') return conflict(asChange(update.profile))
-      if (update.status === 'rejected') return rejected(update.rejection)
-      return applied(update.profile.version)
     }
   },
   async current(reader) {

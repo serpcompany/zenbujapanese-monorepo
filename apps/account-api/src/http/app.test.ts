@@ -1,6 +1,7 @@
 import { servedByAccountService, servedByEachServiceItself } from '@zenbu/node-service/api-host'
 import { HTTPException } from 'hono/http-exception'
 import { afterEach, describe, expect, test, vi } from 'vitest'
+import { scopes } from '../domain/clients'
 import { standIns } from '../test/app'
 import { type AppOptions, createApp } from './app'
 
@@ -75,7 +76,11 @@ describe('the account service', () => {
   test("hides a database error in sync from the caller, and says nothing of the learner's data", async () => {
     vi.spyOn(process.stderr, 'write').mockReturnValue(true)
     const service = app(up, {
-      verifyAccessToken: async () => 'user-1',
+      verifyAccessToken: async () => ({
+        userId: 'user-1',
+        clientId: 'zenbu-ios',
+        scopes: new Set(scopes)
+      }),
       accounts: {
         profile: async () => null,
         updateProfile: async () => null,
@@ -95,7 +100,13 @@ describe('the account service', () => {
   test('limits each account to 120 syncs and 60 profile requests a minute, alone', async () => {
     vi.useFakeTimers({ toFake: ['Date'] })
     vi.setSystemTime(new Date('2026-10-06T12:00:00.000Z'))
-    const service = app(up, { verifyAccessToken: async token => token })
+    const service = app(up, {
+      verifyAccessToken: async token => ({
+        userId: token,
+        clientId: 'zenbu-ios',
+        scopes: new Set(scopes)
+      })
+    })
     const send = (path: string, account: string) =>
       service.request(path, {
         method: path === '/v1/sync' ? 'POST' : 'GET',

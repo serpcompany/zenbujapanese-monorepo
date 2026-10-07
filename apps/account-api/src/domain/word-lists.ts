@@ -114,44 +114,56 @@ async function saveList(
   return applied(list.version)
 }
 
+const writes = ['lists:write'] as const
+
 export const wordLists: Entity = {
+  reads: 'lists:read',
   operations: {
-    async create(account, mutation) {
-      const id = listIdOf(mutation.entityId)
-      if (!id) return rejected(badList)
-      if (await account.wordList(id)) return rejected(taken)
-      if ((await account.wordListCount()) >= listLimits.lists) return rejected(tooMany)
-      const fields = mutation.fields ?? {}
-      if (!('name' in fields && 'position' in fields)) return rejected(badFields)
-      const checked = listFields(fields)
-      if (isRejection(checked)) return rejected(checked)
-      return saveList(account, { id, ...checked, deleted: false, version: 1 }, 'create')
-    },
-    async update(account, mutation) {
-      const id = listIdOf(mutation.entityId)
-      if (!id) return rejected(badList)
-      if (mutation.baseVersion === undefined) return rejected(needsBaseVersion)
-      const current = await account.wordList(id)
-      if (!current || current.deleted) {
-        return conflict(current ? listChange(current) : gone('list', id, 0))
+    create: {
+      needs: writes,
+      apply: async (account, mutation) => {
+        const id = listIdOf(mutation.entityId)
+        if (!id) return rejected(badList)
+        if (await account.wordList(id)) return rejected(taken)
+        if ((await account.wordListCount()) >= listLimits.lists) return rejected(tooMany)
+        const fields = mutation.fields ?? {}
+        if (!('name' in fields && 'position' in fields)) return rejected(badFields)
+        const checked = listFields(fields)
+        if (isRejection(checked)) return rejected(checked)
+        return saveList(account, { id, ...checked, deleted: false, version: 1 }, 'create')
       }
-      const checked = listFields(mutation.fields ?? {}, current)
-      if (isRejection(checked)) return rejected(checked)
-      if (checked.name === current.name && checked.position === current.position) {
-        return applied(current.version)
-      }
-      if (mutation.baseVersion !== current.version) return conflict(listChange(current))
-      const version = current.version + 1
-      return saveList(account, { id, ...checked, deleted: false, version }, 'update')
     },
-    async delete(account, mutation) {
-      const id = listIdOf(mutation.entityId)
-      if (!id) return rejected(badList)
-      const current = await account.wordList(id)
-      if (!current || current.deleted) return applied(current?.version ?? 0)
-      await account.dropListWords(id)
-      const version = current.version + 1
-      return saveList(account, { ...current, deleted: true, version }, 'delete')
+    update: {
+      needs: writes,
+      apply: async (account, mutation) => {
+        const id = listIdOf(mutation.entityId)
+        if (!id) return rejected(badList)
+        if (mutation.baseVersion === undefined) return rejected(needsBaseVersion)
+        const current = await account.wordList(id)
+        if (!current || current.deleted) {
+          return conflict(current ? listChange(current) : gone('list', id, 0))
+        }
+        const checked = listFields(mutation.fields ?? {}, current)
+        if (isRejection(checked)) return rejected(checked)
+        if (checked.name === current.name && checked.position === current.position) {
+          return applied(current.version)
+        }
+        if (mutation.baseVersion !== current.version) return conflict(listChange(current))
+        const version = current.version + 1
+        return saveList(account, { id, ...checked, deleted: false, version }, 'update')
+      }
+    },
+    delete: {
+      needs: writes,
+      apply: async (account, mutation) => {
+        const id = listIdOf(mutation.entityId)
+        if (!id) return rejected(badList)
+        const current = await account.wordList(id)
+        if (!current || current.deleted) return applied(current?.version ?? 0)
+        await account.dropListWords(id)
+        const version = current.version + 1
+        return saveList(account, { ...current, deleted: true, version }, 'delete')
+      }
     }
   },
   async current(reader, entityId) {
@@ -188,33 +200,40 @@ const listWordIdRejection = (mutation: ClientMutation) =>
   rejected(mutation.entityId?.includes(listWordSeparator) ? badItem : badListWord)
 
 export const listWords: Entity = {
+  reads: 'lists:read',
   operations: {
-    async add(account, mutation) {
-      const id = listWordIdOf(mutation.entityId)
-      if (!id) return listWordIdRejection(mutation)
-      const list = await account.wordList(id.list)
-      if (!list || list.deleted) return rejected(noList)
-      const current = await account.listWord(id.list, id.item)
-      if (current?.present) return applied(current.version)
-      if ((await account.listWordCount(id.list)) >= listLimits.wordsPerList) return rejected(full)
-      const text = itemText(mutation.fields ?? {})
-      if (isRejection(text)) return rejected(text)
-      const version = (current?.version ?? 0) + 1
-      return saveListWord(
-        account,
-        { listId: id.list, itemId: id.item, ...text, present: true, version },
-        'add'
-      )
+    add: {
+      needs: writes,
+      apply: async (account, mutation) => {
+        const id = listWordIdOf(mutation.entityId)
+        if (!id) return listWordIdRejection(mutation)
+        const list = await account.wordList(id.list)
+        if (!list || list.deleted) return rejected(noList)
+        const current = await account.listWord(id.list, id.item)
+        if (current?.present) return applied(current.version)
+        if ((await account.listWordCount(id.list)) >= listLimits.wordsPerList) return rejected(full)
+        const text = itemText(mutation.fields ?? {})
+        if (isRejection(text)) return rejected(text)
+        const version = (current?.version ?? 0) + 1
+        return saveListWord(
+          account,
+          { listId: id.list, itemId: id.item, ...text, present: true, version },
+          'add'
+        )
+      }
     },
-    async remove(account, mutation) {
-      const id = listWordIdOf(mutation.entityId)
-      if (!id) return listWordIdRejection(mutation)
-      if (mutation.baseVersion === undefined) return rejected(needsBaseVersion)
-      const current = await account.listWord(id.list, id.item)
-      if (!current?.present) return applied(current?.version ?? 0)
-      if (mutation.baseVersion !== current.version) return conflict(listWordChange(current))
-      const version = current.version + 1
-      return saveListWord(account, { ...current, present: false, version }, 'remove')
+    remove: {
+      needs: writes,
+      apply: async (account, mutation) => {
+        const id = listWordIdOf(mutation.entityId)
+        if (!id) return listWordIdRejection(mutation)
+        if (mutation.baseVersion === undefined) return rejected(needsBaseVersion)
+        const current = await account.listWord(id.list, id.item)
+        if (!current?.present) return applied(current?.version ?? 0)
+        if (mutation.baseVersion !== current.version) return conflict(listWordChange(current))
+        const version = current.version + 1
+        return saveListWord(account, { ...current, present: false, version }, 'remove')
+      }
     }
   },
   async current(reader, entityId) {

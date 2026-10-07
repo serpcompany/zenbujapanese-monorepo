@@ -78,7 +78,7 @@ const MutationSchema = z
       }),
     entity: z.string().regex(nameLike).openapi({
       description:
-        '`profile`, `knownWord`, `list`, or `listWord`. Any other is rejected with `unknown_entity`, and the rest of the request still applies.'
+        "`profile`, `knownWord`, `list`, or `listWord`. Any other is rejected with `unknown_entity`, and the rest of the request still applies. A change the app's scopes don't allow is rejected with `not_allowed`, and the app reads only the entities its scopes do."
     }),
     operation: z
       .string()

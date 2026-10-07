@@ -22,6 +22,13 @@
       "when": 1791336640553,
       "tag": "0002_journal_accounts",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1791342754319,
+      "tag": "0003_session_clients",
+      "breakpoints": true
     }
   ]
 }

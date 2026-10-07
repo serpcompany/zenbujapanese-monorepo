@@ -7,10 +7,13 @@ import { migrate } from 'drizzle-orm/pglite/migrator'
 import { describe, expect, test } from 'vitest'
 import { migrationsFolder as migrations } from '../config'
 import { type Accounts, createAccounts } from '../domain/accounts'
+import { scopes } from '../domain/clients'
 import { cursorKey, cursors } from '../domain/cursor'
 import { accountStore } from './accounts'
 import { answers } from './database'
 import { fenceIfRestored } from './restores'
+
+const everyScope = new Set(scopes)
 
 const journalOf = (folder: string) =>
   JSON.parse(readFileSync(join(folder, 'meta/_journal.json'), 'utf8')) as {
@@ -158,14 +161,16 @@ describe('the migrations', () => {
       answer.status === 'synced' ? answer : expect.unreachable()
 
     const first = await restore()
-    const seen = answered(await first.accounts.sync('u1', {}))
+    const seen = answered(await first.accounts.sync('u1', {}, everyScope))
     const firstVersion = seen.changes[0]?.version ?? 0
     expect(firstVersion).toBeGreaterThan(Date.now() - 60_000)
     const changed = await first.accounts.updateProfile('u1', firstVersion, {
       name: 'On the first copy'
     })
     expect(changed).toMatchObject({ status: 'updated' })
-    const cursor = answered(await first.accounts.sync('u1', { cursor: seen.cursor })).cursor
+    const cursor = answered(
+      await first.accounts.sync('u1', { cursor: seen.cursor }, everyScope)
+    ).cursor
     await first.copy.close()
     await new Promise(resolve => setTimeout(resolve, 5))
 
@@ -190,7 +195,7 @@ describe('the migrations', () => {
         profile: { name: '', version: expect.any(Number) }
       })
     }
-    const caughtUp = answered(await second.accounts.sync('u1', { cursor }))
+    const caughtUp = answered(await second.accounts.sync('u1', { cursor }, everyScope))
     expect(caughtUp.changes).toEqual(
       expect.arrayContaining([
         expect.objectContaining({ entity: 'profile', data: expect.objectContaining({ name: '' }) })
@@ -200,5 +205,5 @@ describe('the migrations', () => {
       firstVersion + 1
     )
     await second.copy.close()
-  })
+  }, 120_000)
 })

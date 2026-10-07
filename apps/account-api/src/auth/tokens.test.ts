@@ -16,7 +16,7 @@ describe('access tokens', () => {
     ])
   })
 
-  test('are short-lived, name only the learner, and verify through the JWKS', async () => {
+  test('are short-lived, name only the learner, the app, and its scopes, and verify through the JWKS', async () => {
     const signedIn = await running.as.withCode('token@example.com')
     const issued = await running.service.call('/v1/auth/token', { token: sessionToken(signedIn) })
     expect(issued.status).toBe(200)
@@ -25,7 +25,11 @@ describe('access tokens', () => {
     const jwks = createLocalJWKSet(keys.body as { keys: [] })
     const { payload } = await jwtVerify(token, jwks, { issuer: publicUrl, audience: publicUrl })
     expect(payload.sub).toBe(userIdOf(signedIn))
-    expect(Object.keys(payload).sort()).toEqual(['aud', 'exp', 'iat', 'iss', 'sub'])
+    expect(Object.keys(payload).sort()).toEqual(['aud', 'azp', 'exp', 'iat', 'iss', 'scope', 'sub'])
+    expect(payload).toMatchObject({
+      azp: 'zenbu-ios',
+      scope: 'profile lists:read lists:write known:read known:write'
+    })
     expect(Number(payload.exp) - Number(payload.iat)).toBe(15 * 60)
 
     const later = new Date((Number(payload.exp) + 1) * 1000)
