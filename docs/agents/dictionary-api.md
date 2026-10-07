@@ -124,11 +124,13 @@ read-only, checking it, its packs, and Kuromoji's pinned files as they load, and
 at a time: SQLite is synchronous, so a slow query holds only its own thread. Each call goes to the
 thread with the fewest in flight, and a thread that dies is replaced. Each thread keeps recent
 searches, word examples, a query's examples, kanji details, and word lookups in LRU caches, so a
-page's first request pays for a broad query and the rest don't. The browse routes read the
-artifact with plain scans, which take 0.1 to 0.8 seconds the first time (the category counts,
-every category at once, take the longest), and keep the ordered row IDs of the 32 most recent
-lists, and the totals, after that. The website's edge cache keeps
-answers for 10 minutes on top.
+page's first request pays for a broad query and the rest don't. The browse routes don't scan the
+artifact for a request: before a thread reports ready, it builds the browse index
+(`packages/dictionary-core/src/artifact/browse-index.ts`) in a few passes, every word in kana
+order by its first two kana and every category's words most used first, and answers the totals,
+the category counts, the kanji and ranked lists' summaries, and the browse sitemap, which it keeps
+(`DictionaryBrowse.warm`). A browse page then reads only its own words. The index holds about
+590,000 row IDs. The website's edge cache keeps answers for 10 minutes on top.
 
 Logs are one JSON object per line on stdout (errors on stderr): each request's method, route
 pattern, status, and time. Queries never appear in the logs.

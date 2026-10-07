@@ -13,7 +13,7 @@ import {
   rankedPages,
   strokeList
 } from '../browse/lists'
-import { type CategoryCount, categoryCounts } from './browse-counts'
+import { BrowseIndex, type CategoryCount, type KanaCount } from './browse-index'
 import {
   type KanjiHubResponse,
   type KanjiListResponse,
@@ -24,18 +24,15 @@ import { jlptRowids, rankedCounts, rankedRows } from './browse-ranked'
 import {
   type BrowseWord,
   browseWords,
-  categoryFilter,
-  type Filter,
-  orderedRowids,
   scriptFilter,
   type WordLink,
-  type WordOrder,
   wordLinks
 } from './browse-words'
 import { LruCache } from './cache'
 import type { ArtifactDatabase } from './database'
 import type { KanjiData } from './kanji-data'
 
+export type { KanaCount } from './browse-index'
 export type { KanjiHubResponse, KanjiListResponse } from './browse-kanji'
 export type { BrowseWord, WordLink } from './browse-words'
 
@@ -44,11 +41,6 @@ export interface BrowseWordsResponse {
   page: number
   pages: number
   words: BrowseWord[]
-}
-
-export interface KanaCount {
-  kana: string
-  count: number
 }
 
 export interface KanaIndexResponse {
@@ -100,11 +92,12 @@ const isSingleCodePoint = (value: string) => Array.from(value).length === 1
 
 export class DictionaryBrowse {
   private readonly lists: LruCache<string, number[]>
-  private counts: CategoryCount[] | null = null
+  private indexed: BrowseIndex | null = null
   private readonly kanaIndexes = new Map<KanaScript, KanaIndexResponse>()
   private summaryAnswer: BrowseSummaryResponse | null = null
   private rankedAnswer: RankedListsResponse | null = null
   private kanjiAnswer: KanjiHubResponse | null = null
+  private sitemapAnswer: BrowseSitemapResponse | null = null
 
   constructor(
     private readonly db: ArtifactDatabase,
@@ -122,8 +115,14 @@ export class DictionaryBrowse {
     return rowids
   }
 
-  private filtered(key: string, filter: Filter, order: WordOrder): number[] {
-    return this.ordered(key, () => orderedRowids(this.db, filter, order))
+  private index(): BrowseIndex {
+    this.indexed ??= new BrowseIndex(this.db)
+    return this.indexed
+  }
+
+  warm(): void {
+    this.summary()
+    this.sitemap()
   }
 
   private page(rowids: readonly number[], page: number): BrowseWordsResponse | null {
@@ -157,47 +156,29 @@ export class DictionaryBrowse {
     const { initials } = this.kanaIndex(script)
     const position = initials.findIndex(({ kana }) => kana === initial)
     if (position < 0) return null
-    const prefixes = this.db.all<KanaCount>(
-      `SELECT substr(e.reading, 1, 2) AS kana, count(*) AS count FROM entries e
-       WHERE substr(e.reading, 1, 1) = ? AND length(e.reading) > 1 GROUP BY kana ORDER BY kana`,
-      [initial]
-    )
-    const alone = this.filtered(
-      `reading:${initial}`,
-      { where: 'e.reading = ?', params: [initial] },
-      'kana'
-    )
+    const index = this.index()
     return {
       script,
       initial,
       total: initials[position].count,
       previous: initials[position - 1]?.kana ?? null,
       next: initials[position + 1]?.kana ?? null,
-      prefixes,
-      words: browseWords(this.db, alone)
+      prefixes: index.prefixesOf(initial),
+      words: browseWords(this.db, index.readAs(initial))
     }
   }
 
   kanaWords(script: KanaScript, prefix: string, page: number): BrowseWordsResponse | null {
     if (Array.from(prefix).length !== 2 || kanaScriptOf(prefix) !== script) return null
-    const filter = { where: 'substr(e.reading, 1, 2) = ?', params: [prefix] }
-    return this.page(this.filtered(`prefix:${prefix}`, filter, 'kana'), page)
+    return this.page(this.index().startingWith(prefix), page)
   }
 
   categoryCounts(): CategoryCountsResponse {
-    this.counts ??= categoryCounts(this.db)
-    return { categories: this.counts }
-  }
-
-  private categoryRowids(slug: string): number[] | null {
-    const category = browseCategory(slug)
-    if (!category) return null
-    return this.filtered(`category:${slug}`, categoryFilter(category), 'used')
+    return { categories: this.index().categoryCounts() }
   }
 
   categoryWords(slug: string, page: number): BrowseWordsResponse | null {
-    const rowids = this.categoryRowids(slug)
-    return rowids ? this.page(rowids, page) : null
+    return browseCategory(slug) ? this.page(this.index().category(slug), page) : null
   }
 
   rankedWords(slug: string, page: number): BrowseWordsResponse | null {
@@ -262,7 +243,7 @@ export class DictionaryBrowse {
     const [{ count: entries }] = this.db.all<{ count: number }>(
       'SELECT count(*) AS count FROM entries'
     )
-    const common = this.categoryRowids(commonWords.slug) ?? []
+    const common = this.index().category(commonWords.slug)
     const hub = this.kanjiHub()
     const sizeOf = (slug: string) =>
       hub.lists.find(list => list.slug === slug)?.characters.length ?? 0
@@ -287,23 +268,19 @@ export class DictionaryBrowse {
   }
 
   sitemap(): BrowseSitemapResponse {
-    const prefixes = new Map<string, { prefix: string; pages: number }[]>()
-    for (const { kana: prefix, count } of this.db.all<KanaCount>(
-      `SELECT substr(e.reading, 1, 2) AS kana, count(*) AS count FROM entries e
-       WHERE length(e.reading) > 1 GROUP BY kana ORDER BY kana`
-    )) {
-      const [initial] = Array.from(prefix)
-      prefixes.set(initial, [...(prefixes.get(initial) ?? []), { prefix, pages: pageCount(count) }])
-    }
+    if (this.sitemapAnswer) return this.sitemapAnswer
+    const index = this.index()
     const kana = kanaScripts.flatMap(script =>
       this.kanaIndex(script).initials.map(({ kana: initial }) => ({
         initial,
-        prefixes: prefixes.get(initial) ?? []
+        prefixes: index
+          .prefixesOf(initial)
+          .map(({ kana: prefix, count }) => ({ prefix, pages: pageCount(count) }))
       }))
     )
     const ranked = this.rankedLists()
     const kanji = this.kanjiHub()
-    return {
+    this.sitemapAnswer = {
       kana,
       categories: this.categoryCounts().categories.map(({ slug, count }) => ({
         slug,
@@ -321,5 +298,6 @@ export class DictionaryBrowse {
         ...kanji.strokes.map(({ strokes }) => strokeList(strokes).slug)
       ]
     }
+    return this.sitemapAnswer
   }
 }

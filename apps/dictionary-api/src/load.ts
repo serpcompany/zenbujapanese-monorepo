@@ -50,5 +50,6 @@ export function loadService(files: VerifiedFiles) {
     features: dictionary.features
   }
   const browse = new DictionaryBrowse(artifact.db, artifact.kanji)
+  browse.warm()
   return { service: inProcessService(dictionary, browse, info), close: artifact.close }
 }

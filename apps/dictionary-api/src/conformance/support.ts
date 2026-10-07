@@ -3,6 +3,7 @@ import { existsSync, readFileSync } from 'node:fs'
 import { join, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { DictionaryBrowse } from '@zenbu/dictionary-core/artifact/browse'
+import type { ArtifactDatabase } from '@zenbu/dictionary-core/artifact/database'
 import { Dictionary } from '@zenbu/dictionary-core/artifact/dictionary'
 import type { MorphologyAnalyzer } from '@zenbu/dictionary-core/search/search'
 import {
@@ -92,7 +93,15 @@ export async function artifactDatabase() {
   return (await open()).artifact.db
 }
 
-export async function browse(): Promise<DictionaryBrowse> {
+export async function browse(watch?: (sql: string) => void): Promise<DictionaryBrowse> {
   const { artifact } = await open()
-  return new DictionaryBrowse(artifact.db, artifact.kanji)
+  const db: ArtifactDatabase = watch
+    ? {
+        all(sql, params) {
+          watch(sql)
+          return artifact.db.all(sql, params)
+        }
+      }
+    : artifact.db
+  return new DictionaryBrowse(db, artifact.kanji)
 }

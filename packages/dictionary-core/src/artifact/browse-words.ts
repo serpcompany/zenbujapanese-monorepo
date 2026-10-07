@@ -1,4 +1,3 @@
-import { type BrowseCategory, senseLabelKeys } from '../browse/categories'
 import { hiraganaRange, type KanaScript } from '../browse/kana'
 import { type FrequencyResult, frequencyChips } from '../detail/frequency'
 import { type RubySegment, rubySegments } from '../detail/ruby'
@@ -18,9 +17,7 @@ export interface BrowseWord extends WordLink {
   rank: number | null
 }
 
-export type WordOrder = 'used' | 'kana'
-
-export interface Filter {
+interface Filter {
   where: string
   params: SqlValue[]
 }
@@ -32,46 +29,6 @@ interface EntryRecord {
   headword: string
   reading: string
   summary: string
-}
-
-const orderBy: Record<WordOrder, string> = {
-  used: 't.rank IS NULL, t.rank, e.reading, e.source_record_id',
-  kana: 'e.reading, e.source_record_id'
-}
-
-export function orderedRowids(db: ArtifactDatabase, filter: Filter, order: WordOrder) {
-  const joinRanks =
-    order === 'used'
-      ? 'LEFT JOIN tubelex.frequency_evidence t ON t.language_reference_id = e.id'
-      : ''
-  return db
-    .all<{ rowid: number }>(
-      `SELECT e.rowid AS rowid FROM entries e ${joinRanks} WHERE ${filter.where}
-       ORDER BY ${orderBy[order]}`,
-      filter.params
-    )
-    .map(row => row.rowid)
-}
-
-const quotedLabel = (label: string) => `%"${label}"%`
-
-const mentionsAny = (column: string, labels: readonly string[]) =>
-  `(${labels.map(() => `${column} LIKE ?`).join(' OR ')})`
-
-export function categoryFilter(category: BrowseCategory): Filter {
-  if (category.kind === 'common') return { where: 'e.is_common = 1', params: [] }
-  const mentioned = category.labels.map(quotedLabel)
-  if (category.kind === 'partOfSpeech') {
-    return { where: mentionsAny('e.parts_of_speech_json', category.labels), params: mentioned }
-  }
-  const key = senseLabelKeys[category.kind]
-  const placeholders = category.labels.map(() => '?').join(', ')
-  return {
-    where: `${mentionsAny('e.senses_json', category.labels)} AND EXISTS (SELECT 1
-      FROM json_each(e.senses_json) s, json_each(s.value, '$.${key}') l
-      WHERE l.value IN (${placeholders}))`,
-    params: [...mentioned, ...category.labels]
-  }
 }
 
 const inHiragana = 'substr(e.reading, 1, 1) BETWEEN ? AND ?'

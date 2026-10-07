@@ -117,6 +117,25 @@ describe.runIf(artifactAvailable)('browsing the dictionary on the app’s data',
     expect(service.sitemap().kanjiLists).toContain('jlpt-n1')
   })
 
+  test('once warm, the totals, the sitemap, and every list are ready, so a page reads only its words', async () => {
+    const queries: string[] = []
+    const warmed = await browse(sql => queries.push(sql))
+    warmed.warm()
+    queries.length = 0
+    warmed.summary()
+    warmed.sitemap()
+    warmed.categoryCounts()
+    warmed.kanaIndex('katakana')
+    warmed.rankedLists()
+    warmed.kanjiHub()
+    expect(queries).toEqual([])
+    warmed.kanaInitial('hiragana', 'か')
+    warmed.kanaWords('hiragana', 'かが', 1)
+    warmed.categoryWords('nouns', 3)
+    expect(queries.length).toBeGreaterThan(0)
+    expect(queries.filter(sql => !/\bIN \(/.test(sql))).toEqual([])
+  })
+
   test('the browse sitemap fits in one file', () => {
     const sitemap = service.sitemap()
     const kanaPages = sitemap.kana.reduce(
