@@ -32,7 +32,7 @@ export const clients: readonly Client[] = [
     id: 'zenbu-ios',
     name: 'Zenbu Japanese for iOS',
     scopes: everythingZenbu,
-    appleBundleIds: ['com.zenbujapanese.dictionary'],
+    appleBundleIds: ['com.zenbujapanese.app'],
     signsInOnTheWeb: false,
     requestsPerMinute: 30_000
   },

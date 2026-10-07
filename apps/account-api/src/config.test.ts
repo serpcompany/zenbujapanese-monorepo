@@ -85,11 +85,10 @@ describe('readConfig', () => {
 
   test("reads Apple: the app's bundle ID alone for the app, and a key for the web", () => {
     expect(
-      readConfig({ ...base, APPLE_APP_BUNDLE_IDENTIFIER: 'com.zenbujapanese.dictionary' }).auth
-        .apple
+      readConfig({ ...base, APPLE_APP_BUNDLE_IDENTIFIER: 'com.zenbujapanese.app' }).auth.apple
     ).toEqual({
       servicesIds: [],
-      appBundleIdentifier: 'com.zenbujapanese.dictionary',
+      appBundleIdentifier: 'com.zenbujapanese.app',
       signingKey: null
     })
     const web = readConfig({

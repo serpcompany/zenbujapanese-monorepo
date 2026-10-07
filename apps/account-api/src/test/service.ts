@@ -14,7 +14,7 @@ import { createApp } from '../http/app'
 export const publicUrl = 'http://localhost:8789'
 const trustedOrigin = 'http://localhost:3000'
 export const testSecret = 'test-only-secret-that-is-long-enough-for-better-auth'
-export const appBundleIdentifier = 'com.zenbujapanese.dictionary'
+export const appBundleIdentifier = 'com.zenbujapanese.app'
 export const googleClientIds = ['web.apps.googleusercontent.com', 'ios.apps.googleusercontent.com']
 
 const authConfig: AuthConfig = {

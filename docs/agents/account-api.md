@@ -525,9 +525,16 @@ First set up what the services share: cosign, the deployer, and registry access
      (`openssl rand -hex 32`), and, for the website (#468), `ACCOUNT_API_TRUSTED_ORIGINS`,
      `ACCOUNT_API_COOKIE_DOMAIN=zenbujapanese.com`, and on staging
      `ACCOUNT_API_COOKIE_PREFIX=zenbu-staging`.
-   - **Apple** (Apple Developer, on the team that owns the app's ID):
-     - Sign in with Apple on the iOS app's App ID (`com.zenbujapanese.dictionary`). The app needs
-       only this: set `APPLE_APP_BUNDLE_IDENTIFIER`.
+   - **Apple** (Apple Developer, on the team that owns the app's ID, `W3GXL2NQQP` while the app
+     ships from the backup account, #616):
+     - Sign in with Apple on the iOS app's App ID (`com.zenbujapanese.app`) and on Tomodachi's
+       (`com.zenbujapanese.tomodachi`). The apps need only this: set `APPLE_APP_BUNDLE_IDENTIFIER`
+       to the iOS app's ID; the service also takes every app's bundle ID from
+       `src/domain/clients.ts`.
+     - Apple's user ID for a learner is the same in every app of one team, so the iOS app and
+       Tomodachi must stay in one team for an Apple sign-in to reach one account. Moving an app to
+       another team (#616's transfer to the business account) changes its learners' Apple user
+       IDs: before it, plan Apple's user migration for Sign in with Apple, and move both apps.
      - For the website: a Services ID, whose return URL is
        `<ACCOUNT_API_URL>/v1/auth/callback/apple` (Apple takes no `localhost` return URL), and a
        Sign in with Apple key. Set `APPLE_SERVICES_IDS`, `APPLE_TEAM_ID`, `APPLE_KEY_ID`, and
