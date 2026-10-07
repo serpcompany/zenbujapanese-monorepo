@@ -17,13 +17,13 @@ export default function PrivacyPage() {
       <h2>The short version</h2>
       <p>
         The app does not collect or track data. It has no advertising, analytics, or third-party
-        crash-reporting SDK, and no account or cloud sync yet: everything in it works on your
-        device. If you create or sign in to a Zenbu account, on this website or in the app once they
-        offer one, we keep your email, how you sign in, and the known words and lists you sync on
-        our servers, so your apps can share them, and you can delete the account at any time. If you
-        link it to Tomodachi, our companion app, Tomodachi can read your lists and known words and
-        mark words Known. The website uses privacy-friendly, cookieless analytics to count visits,
-        and, if you sign in on it, only the cookies signing in needs.
+        crash-reporting SDK, and everything in it works on your device without an account. If you
+        create or sign in to a Zenbu account where our apps or this website offer one, we keep your
+        email, how you sign in, and the known words and lists you sync on our servers, so your apps
+        can share them, and you can delete the account at any time. If you link it to Tomodachi, our
+        companion app, Tomodachi can read your lists and known words, mark words Known, and delete
+        the account when you ask it to. The website uses privacy-friendly, cookieless analytics to
+        count visits, and, if you sign in on it, only the cookies signing in needs.
       </p>
 
       <h2>Information in the app</h2>
@@ -69,9 +69,9 @@ export default function PrivacyPage() {
 
       <h2>Your Zenbu account</h2>
       <p>
-        The app doesn't offer Zenbu accounts yet, and you'll never need one: everything in the app
-        works without one, and while you're signed out, our apps send nothing to our account
-        service. If you create or sign in to a Zenbu account, the account service keeps:
+        You'll never need a Zenbu account: everything in the app works without one, and while you're
+        signed out, our apps send nothing to our account service. If you create or sign in to a
+        Zenbu account, the account service keeps:
       </p>
       <ul>
         <li>
@@ -123,6 +123,7 @@ export default function PrivacyPage() {
         <li>read your lists;</li>
         <li>read your known words;</li>
         <li>mark words Known, but never clear a Known mark;</li>
+        <li>delete your account when you ask it to, after you sign in to it again;</li>
         <li>
           fetch word cards from our dictionary service, and send it answers you type to split them
           into words.

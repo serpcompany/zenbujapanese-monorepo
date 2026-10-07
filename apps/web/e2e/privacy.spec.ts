@@ -37,8 +37,9 @@ test.describe('privacy policy', () => {
   }) => {
     await expectNamed(page, 'The short version', [
       'does not collect or track data',
-      'no account or cloud sync yet',
-      'if you create or sign in to a Zenbu account, on this website or in the app once they offer one',
+      'everything in it works on your device without an account',
+      'if you create or sign in to a Zenbu account where our apps or this website offer one',
+      'delete the account when you ask it to',
       'only the cookies signing in needs'
     ])
     await expect(listItems(page, 'How you sign in:')).toHaveText([
@@ -48,7 +49,7 @@ test.describe('privacy policy', () => {
       /^The study data you sync: your known words.*your lists' names, their order, and the words in them; a record of each item's latest change.*the result of each sync request/
     ])
     await expectNamed(page, 'Your Zenbu account', [
-      "the app doesn't offer Zenbu accounts yet, and you'll never need one",
+      "You'll never need a Zenbu account",
       'signed out, our apps send nothing to our account service',
       'encrypted copy of each code',
       "aren't synced: they stay on your device"
@@ -66,6 +67,7 @@ test.describe('privacy policy', () => {
       'read your lists;',
       'read your known words;',
       'mark words Known, but never clear a Known mark;',
+      'delete your account when you ask it to, after you sign in to it again;',
       'fetch word cards from our dictionary service, and send it answers you type to split them into words.'
     ])
   })
