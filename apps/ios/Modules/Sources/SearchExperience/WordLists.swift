@@ -33,6 +33,7 @@ final class WordLists: LocalFileStore {
   var isReadOnly: Bool { readOnlyReason != nil }
   private(set) var lists: [WordList] = []
   private(set) var membershipsByList: [UUID: [WordListMembership]] = [:]
+  private(set) var movedListIDs: [UUID: UUID] = [:]
   @ObservationIgnored private let writer: WordListsWriter
   @ObservationIgnored let writes = LocalFileWriteQueue()
   @ObservationIgnored var changeObserver: ((SavedItemChange) -> Void)?
@@ -217,8 +218,18 @@ final class WordLists: LocalFileStore {
     }
     lists[index] = list
     membershipsByList[newID] = words
+    movedListIDs[listID] = newID
     persist()
     return (list, words)
+  }
+
+  func currentID(of listID: UUID) -> UUID {
+    var current = listID
+    var seen: Set<UUID> = [listID]
+    while let next = movedListIDs[current], seen.insert(next).inserted {
+      current = next
+    }
+    return current
   }
 
   func applySyncedRemoval(ofList listID: UUID) {

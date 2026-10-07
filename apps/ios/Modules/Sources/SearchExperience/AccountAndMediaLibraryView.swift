@@ -25,7 +25,7 @@ struct AccountNavigationView: View {
           case .wordLists:
             WordListsView()
           case .wordList(let listID):
-            WordListView(listID: listID) { openItem($0.entryID, $0.headword, $0.reading) }
+            WordListView(openedListID: listID) { openItem($0.entryID, $0.headword, $0.reading) }
           case .frequencyDictionaries:
             FrequencyDictionariesView(client: .live)
           case .credits:

@@ -69,6 +69,25 @@ final class WordListsTests {
     #expect(lists.lists.map(\.name) == ["Favorites", "Favorites"])
   }
 
+  @Test("a list that moves to a new ID can still be found by the ID it was opened with")
+  func openListFollowsItsID() async throws {
+    let lists = await loadedLists()
+    let opened = try #require(lists.lists.first).id
+    lists.addWord(taberu, headword: "食べる", reading: "たべる", to: opened)
+    let moved = UUID()
+    let newest = UUID()
+
+    lists.moveList(opened, to: moved)
+    #expect(lists.currentID(of: opened) == moved)
+    #expect(lists.words(in: lists.currentID(of: opened)).map(\.entryID) == [taberu.rawValue])
+
+    lists.moveList(moved, to: newest)
+    #expect(lists.currentID(of: opened) == newest)
+    #expect(lists.lists.first { $0.id == lists.currentID(of: opened) }?.name == "Favorites")
+    let other = UUID()
+    #expect(lists.currentID(of: other) == other)
+  }
+
   @Test("names hold at most 500 characters, with control characters made spaces")
   func nameLimits() async throws {
     let lists = await loadedLists()

@@ -361,7 +361,9 @@ tests prove that model against the real service.
   your side). A second phone's `create` of it is rejected `already_exists`, which the first upload
   never undoes: the account's copy comes down, and the phone's words still add. If that copy comes
   down deleted (`accountHadFavorites`), the phone keeps its list under a new ID and uploads it with
-  its words. Any other list the account deleted is deleted on the phone.
+  its words. Any other list the account deleted is deleted on the phone. A list screen open on
+  the old ID follows the list: `WordLists.moveList` records each move, and `WordListView` reads
+  its list through `WordLists.currentID(of:)`.
 - **A sync** sends up to 50 queued changes, at most 48 KB of them (the service takes 64 KB), and at
   most one per entity, so a second change to an entity goes after the first's result and is moved
   onto its version. An answer lost on the way is sent again unchanged. `applied` keeps the version;

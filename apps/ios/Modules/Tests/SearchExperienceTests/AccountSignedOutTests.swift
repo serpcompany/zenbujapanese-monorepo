@@ -212,6 +212,7 @@ struct AccountSignedOutTests {
     let kept = try #require(second.wordLists.lists.first)
     #expect(second.wordLists.lists.count == 1)
     #expect(kept.id != WordLists.favoritesID && kept.name == "Favorites")
+    #expect(second.wordLists.currentID(of: WordLists.favoritesID) == kept.id)
     #expect(second.wordLists.words(in: kept.id).map(\.entryID) == [Fixture.miru])
     #expect(service.liveKeys(for: Fixture.email, entity: "list") == [listKey(kept.id)])
     #expect(service.data(of: wordKey(kept.id, Fixture.miru), for: Fixture.email) != nil)
