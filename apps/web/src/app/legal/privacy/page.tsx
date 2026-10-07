@@ -8,7 +8,7 @@ export const metadata = pageMetadata('/legal/privacy/')
 export default function PrivacyPage() {
   const email = <a href={`mailto:${site.supportEmail}`}>{site.supportEmail}</a>
   return (
-    <PageShell title="Privacy Policy" updated="October 6, 2026">
+    <PageShell title="Privacy Policy" updated="October 7, 2026">
       <p>
         This policy explains how we handle information in the {site.name} iPhone app, on
         zenbujapanese.com, and in a Zenbu account, including when you link one to Tomodachi.
@@ -18,11 +18,12 @@ export default function PrivacyPage() {
       <p>
         The app does not collect or track data. It has no advertising, analytics, or third-party
         crash-reporting SDK, and no account or cloud sync yet: everything in it works on your
-        device. If you create or sign in to a Zenbu account once the app offers one, we keep your
-        email, how you sign in, and the known words and lists you sync on our servers, so your apps
-        can share them, and you can delete the account at any time. If you link it to Tomodachi, our
-        companion app, Tomodachi can read your lists and known words and mark words Known. The
-        website uses privacy-friendly, cookieless analytics to count visits.
+        device. You can create or sign in to a Zenbu account on this website, and in the app once it
+        offers one: we keep your email, how you sign in, and the known words and lists you sync on
+        our servers, so your apps can share them, and you can delete the account at any time. If you
+        link it to Tomodachi, our companion app, Tomodachi can read your lists and known words and
+        mark words Known. The website uses privacy-friendly, cookieless analytics to count visits,
+        and a cookie only to keep you signed in.
       </p>
 
       <h2>Information in the app</h2>
@@ -68,9 +69,10 @@ export default function PrivacyPage() {
 
       <h2>Your Zenbu account</h2>
       <p>
-        The app doesn't offer Zenbu accounts yet, and you'll never need one: everything in the app
-        works without one, and while you're signed out, our apps send nothing to our account
-        service. If you create or sign in to a Zenbu account, the account service keeps:
+        You can create or sign in to a Zenbu account on this website; the app doesn't offer one yet.
+        You'll never need one: everything in the app works without one, and while you're signed out,
+        our apps send nothing to our account service. If you create or sign in to a Zenbu account,
+        the account service keeps:
       </p>
       <ul>
         <li>
@@ -129,8 +131,28 @@ export default function PrivacyPage() {
       </ul>
       <p>
         The dictionary service uses what Tomodachi sends only to answer it: none of it is added to
-        your account, and the service's logs don't record it. Before another app or this website
-        lets you sign in to your account, we'll update this policy to say what it can do.
+        your account, and the service's logs don't record it. Before another app lets you sign in to
+        your account, we'll update this policy to say what it can do.
+      </p>
+
+      <h2>Your account on this website</h2>
+      <p>
+        On zenbujapanese.com you can create or sign in to your Zenbu account with Apple, Google, or
+        a code we email you. Signed in, the website can only:
+      </p>
+      <ul>
+        <li>show your email, and show and change your name and username;</li>
+        <li>show how you sign in, and add or remove a way to sign in;</li>
+        <li>sign you out of this browser;</li>
+        <li>delete your account.</li>
+      </ul>
+      <p>
+        It doesn't read or change your known words or lists yet; we'll update this policy before it
+        does. Its account pages connect from your browser to our account service at
+        api.zenbujapanese.com only when you open your account page or start signing in. If you
+        choose Apple, your browser loads Apple's Sign in with Apple script from Apple and opens
+        Apple's window; if you choose Google, your browser goes to Google and comes back through our
+        account service. Each handles that under its own terms and privacy policy.
       </p>
 
       <h2>Where account data is kept</h2>
@@ -162,6 +184,27 @@ export default function PrivacyPage() {
         Manager; if we add tags that use cookies, we will update this policy and ask for consent
         where the law requires it.
       </p>
+      <p>
+        Signing in on this website sets only the cookies signing in needs. Our account service sets
+        them for api.zenbujapanese.com, so your browser sends them only there, and the website's
+        pages can't read them:
+      </p>
+      <ul>
+        <li>
+          <strong>__Secure-zenbu.session_token</strong> keeps you signed in. It holds your session's
+          signed ID, and lasts 60 days from the last time you use it, or until you sign out or
+          delete your account.
+        </li>
+        <li>
+          <strong>__Secure-zenbu.state</strong>, only while you sign in with Google, ties Google's
+          answer to your browser. It lasts 5 minutes, and goes when you come back.
+        </li>
+      </ul>
+      <p>
+        The website also keeps a note in your browser's local storage that you signed in, so its
+        footer links to your account. It holds nothing about you, is never sent to us, and goes when
+        you sign out.
+      </p>
 
       <h2>Support email</h2>
       <p>
@@ -192,10 +235,10 @@ export default function PrivacyPage() {
         <li>each night's backup for 30 days.</li>
       </ul>
       <p>
-        You can delete your account in any of our apps that lets you create one. Deleting it removes
-        your account, its ways to sign in, and the data you synced from our database at once, and
-        the backups that still hold them are deleted within 30 days. Each device keeps its own data
-        and keeps working signed out.
+        You can delete your account on this website, or in any of our apps that lets you create one.
+        Deleting it removes your account, its ways to sign in, and the data you synced from our
+        database at once, and the backups that still hold them are deleted within 30 days. Each
+        device keeps its own data and keeps working signed out.
       </p>
       <p>To get a copy of the data your account holds, email {email}.</p>
 

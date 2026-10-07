@@ -38,7 +38,8 @@ test.describe('privacy policy', () => {
     await expectNamed(page, 'The short version', [
       'does not collect or track data',
       'no account or cloud sync yet',
-      'if you create or sign in to a Zenbu account once the app offers one'
+      'create or sign in to a Zenbu account on this website, and in the app once it offers one',
+      'a cookie only to keep you signed in'
     ])
     await expect(listItems(page, 'How you sign in:')).toHaveText([
       /^Your account: a Zenbu user ID; your email and whether it's verified; a name and a username, both optional; the address of your profile picture/,
@@ -47,7 +48,7 @@ test.describe('privacy policy', () => {
       /^The study data you sync: your known words.*your lists' names, their order, and the words in them; a record of each item's latest change.*the result of each sync request/
     ])
     await expectNamed(page, 'Your Zenbu account', [
-      "doesn't offer Zenbu accounts yet",
+      "on this website; the app doesn't offer one yet",
       'signed out, our apps send nothing to our account service',
       'encrypted copy of each code',
       "aren't synced: they stay on your device"
@@ -66,6 +67,33 @@ test.describe('privacy policy', () => {
       'read your known words;',
       'mark words Known, but never clear a Known mark;',
       'fetch word cards from our dictionary service, and send it answers you type to split them into words.'
+    ])
+  })
+
+  test('names what the website can do with the account, and each thing signing in keeps in the browser', async ({
+    page
+  }) => {
+    await expect(listItems(page, 'sign you out of this browser')).toHaveText([
+      'show your email, and show and change your name and username;',
+      'show how you sign in, and add or remove a way to sign in;',
+      'sign you out of this browser;',
+      'delete your account.'
+    ])
+    await expectNamed(page, 'Your account on this website', [
+      "doesn't read or change your known words or lists yet",
+      'only when you open your account page or start signing in',
+      "loads Apple's Sign in with Apple script from Apple",
+      'goes to Google and comes back through our account service'
+    ])
+    await expect(listItems(page, 'keeps you signed in')).toHaveText([
+      /^__Secure-zenbu\.session_token keeps you signed in\..*lasts 60 days from the last time you use it, or until you sign out or delete your account\.$/,
+      /^__Secure-zenbu\.state, only while you sign in with Google, .*lasts 5 minutes/
+    ])
+    await expectNamed(page, 'This website', [
+      'sets them for api.zenbujapanese.com, so your browser sends them only there',
+      "the website's pages can't read them",
+      "a note in your browser's local storage that you signed in",
+      'never sent to us'
     ])
   })
 
@@ -94,7 +122,7 @@ test.describe('privacy policy', () => {
       /^each night's backup for 30 days/
     ])
     await expectNamed(page, 'Retention and deletion', [
-      'delete your account in any of our apps that lets you create one',
+      'delete your account on this website, or in any of our apps that lets you create one',
       'deleted within 30 days',
       'keeps working signed out'
     ])
