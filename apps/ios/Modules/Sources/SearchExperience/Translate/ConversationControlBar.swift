@@ -26,7 +26,7 @@ struct ConversationControlBar: View {
 
   private var muteButton: some View {
     Button {
-      Task { await experience.switchMode(to: isMuted ? .conversation : .textOnly) }
+      session.switchMode(to: isMuted ? .conversation : .textOnly)
     } label: {
       Image(systemName: isMuted ? "speaker.slash.fill" : "speaker.wave.2.fill")
         .font(.title3)
@@ -95,7 +95,7 @@ struct ConversationControlBar: View {
       }
       .buttonStyle(.plain)
       .accessibilityLabel(isPaused ? "Resume" : "Pause")
-      .accessibilityValue(session.activity.statusLine(listeningFor: session.mode))
+      .accessibilityValue(session.activity.statusLine(in: session))
       .accessibilityIdentifier("translate.session.toggle")
     }
     .padding(.leading, 20)

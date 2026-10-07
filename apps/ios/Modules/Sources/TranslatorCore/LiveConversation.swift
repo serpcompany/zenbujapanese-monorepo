@@ -71,7 +71,7 @@ public final class LiveConversation {
   @ObservationIgnored var translationTasks: [UUID: Task<Void, Never>] = [:]
 
   let clients: TranslatorClients
-  let timing: ConversationTiming
+  public let timing: ConversationTiming
   let ticker: ConversationTicker
   let archive: (any ConversationArchiving)?
   let now: () -> Date

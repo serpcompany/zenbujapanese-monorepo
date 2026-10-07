@@ -111,16 +111,6 @@ final class TranslateExperience {
     self.session = nil
   }
 
-  func switchMode(to mode: TranslateMode) async {
-    guard let session, session.mode != mode else { return }
-    if session.mode.canSwitchWithinSession(to: mode) {
-      session.switchMode(to: mode)
-      return
-    }
-    await leave(saving: true)
-    await start(mode, offeringTranslationDownload: true)
-  }
-
   func sceneMovedToBackground() {
     session?.appMovedToBackground()
   }

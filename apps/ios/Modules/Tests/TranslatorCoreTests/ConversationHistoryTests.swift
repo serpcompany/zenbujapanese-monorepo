@@ -81,7 +81,6 @@ final class ConversationHistoryTests {
 
     let reloaded = await loadedHistory()
     #expect(reloaded.conversations == [newer, older])
-    #expect(reloaded.latest == newer)
   }
 
   @Test("saving again replaces the conversation rather than adding one")
@@ -122,6 +121,9 @@ final class ConversationHistoryTests {
     let lastMonth = conversation(daysAgo: 45)
     let lastYear = conversation(daysAgo: 400)
     for conversation in [recent, lastMonth, lastYear] { history.save(conversation) }
+    #expect(history.expiredCount(under: .thirtyDays) == 2)
+    #expect(history.expiredCount(under: .oneYear) == 1)
+    #expect(history.expiredCount(under: .forever) == 0)
 
     history.retention = .oneYear
     await history.flush()

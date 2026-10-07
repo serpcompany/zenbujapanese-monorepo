@@ -6,6 +6,8 @@ import UniformTypeIdentifiers
 enum DocumentText {
   static let readableTypes: [UTType] = [.pdf, .image, .plainText]
   static let scannedPageLimit = 10
+  static let characterLimit = 5_000
+  static let scannedPageLongestSide = 3_000.0
 
   static func read(_ url: URL) async throws -> String {
     let isScoped = url.startAccessingSecurityScopedResource()
@@ -17,11 +19,21 @@ enum DocumentText {
     } else if type.conforms(to: .image) {
       text = try await recognize(try await ImageTextAsset.loadCopy(from: url))
     } else {
-      text = try String(contentsOf: url, encoding: .utf8)
+      text = try decode(Data(contentsOf: url))
     }
     let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
     guard !trimmed.isEmpty else { throw DocumentTextError.noText }
-    return trimmed
+    return String(trimmed.prefix(characterLimit))
+  }
+
+  static func decode(_ data: Data) throws -> String {
+    let hasByteOrderMark = data.starts(with: [0xFF, 0xFE]) || data.starts(with: [0xFE, 0xFF])
+    let encodings: [String.Encoding] =
+      hasByteOrderMark ? [.utf16] : [.utf8, .shiftJIS, .japaneseEUC]
+    for encoding in encodings {
+      if let text = String(data: data, encoding: encoding) { return text }
+    }
+    throw DocumentTextError.noText
   }
 }
 
@@ -40,9 +52,12 @@ extension DocumentText {
 
   private static func render(_ page: PDFPage) -> Data? {
     let bounds = page.bounds(for: .mediaBox)
-    let scale = 2.0
+    guard bounds.width > 0, bounds.height > 0 else { return nil }
+    let scale = min(4, scannedPageLongestSide / max(bounds.width, bounds.height))
+    let format = UIGraphicsImageRendererFormat()
+    format.scale = 1
     let renderer = UIGraphicsImageRenderer(
-      size: CGSize(width: bounds.width * scale, height: bounds.height * scale))
+      size: CGSize(width: bounds.width * scale, height: bounds.height * scale), format: format)
     return renderer.pngData { context in
       UIColor.white.setFill()
       context.fill(CGRect(origin: .zero, size: context.format.bounds.size))

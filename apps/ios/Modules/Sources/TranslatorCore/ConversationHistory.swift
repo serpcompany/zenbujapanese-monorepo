@@ -61,8 +61,6 @@ public final class ConversationHistory: ConversationArchiving {
     }
   }
 
-  public var latest: Conversation? { conversations.first }
-
   public func conversation(_ id: UUID) -> Conversation? {
     conversations.first { $0.id == id }
   }
@@ -130,11 +128,17 @@ public final class ConversationHistory: ConversationArchiving {
     applyRetention()
   }
 
+  public func expiredCount(under retention: HistoryRetention) -> Int {
+    expired(under: retention).count
+  }
+
   private func applyRetention() {
-    guard let cutoff = retention.cutoff(before: now()) else { return }
-    for conversation in conversations where conversation.updatedAt < cutoff {
-      delete(conversation.id)
-    }
+    for conversation in expired(under: retention) { delete(conversation.id) }
+  }
+
+  private func expired(under retention: HistoryRetention) -> [Conversation] {
+    guard let cutoff = retention.cutoff(before: now()) else { return [] }
+    return conversations.filter { $0.updatedAt < cutoff }
   }
 
   private func sortNewestFirst() {

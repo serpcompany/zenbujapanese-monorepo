@@ -30,30 +30,29 @@ extension SpokenLanguage {
     self == .japanese ? String(localized: "Japanese") : String(localized: "English")
   }
 
-  var shortLabel: String {
-    self == .japanese ? "日本語" : "EN"
-  }
-
-  var directionLabel: String {
-    "\(shortLabel) → \(counterpart.shortLabel)"
-  }
-
   var translationDirection: String {
     "\(name) → \(counterpart.name)"
   }
 }
 
+extension ConversationTiming {
+  var silenceLength: String {
+    Duration.seconds(silenceBeforePrompt + promptCountdown)
+      .formatted(.units(allowed: [.minutes, .seconds], width: .wide))
+  }
+}
+
 extension ConversationActivity {
-  func statusLine(listeningFor mode: TranslateMode) -> String {
+  @MainActor func statusLine(in session: LiveConversation) -> String {
     switch self {
     case .listening:
-      mode == .listening
+      session.mode == .listening
         ? String(localized: "Listening for Japanese") : String(localized: "Listening")
     case .hearing: String(localized: "Hearing speech")
     case .waiting(let count): String(localized: "\(count) waiting for a pause")
     case .translating: String(localized: "Translating")
     case .speaking(let language): String(localized: "Speaking \(language.name)")
-    case .paused(.silence): String(localized: "Paused after 3 min of silence")
+    case .paused(.silence): String(localized: "Paused after \(session.timing.silenceLength) of silence")
     case .paused(.background): String(localized: "Paused while you were away")
     case .paused: String(localized: "Paused")
     case .failed: String(localized: "Listening stopped")
@@ -72,11 +71,6 @@ extension ConversationActivity {
     case .paused(.silence), .paused(.background), .failed: true
     default: false
     }
-  }
-
-  var isSpeaking: Bool {
-    if case .speaking = self { return true }
-    return false
   }
 }
 

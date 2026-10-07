@@ -182,7 +182,7 @@ struct ConversationStatusAlert: ViewModifier {
 
   private var title: String {
     switch activity {
-    case .paused(.silence): String(localized: "Paused after 3 minutes of silence")
+    case .paused(.silence): String(localized: "Paused after \(session.timing.silenceLength) of silence")
     case .paused(.background): String(localized: "Paused while you were away")
     case .failed: String(localized: "Listening stopped")
     default: String(localized: "Paused")

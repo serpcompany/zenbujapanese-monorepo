@@ -210,7 +210,6 @@ actor OnDeviceTranscriber {
     pauseTask = nil
     eventContinuation?.finish()
     eventContinuation = nil
-    merger.reset()
     gate.set(true)
     AnalyzerAudioPipeline.releaseSession()
   }

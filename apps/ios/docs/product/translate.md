@@ -23,7 +23,7 @@ is remembered.
 | **Conversation** | Two-way and live. Each turn is detected as Japanese or English. Translations play out loud, and the microphone keeps listening while they play, so someone who keeps talking isn't lost. A translation never starts while someone is talking. The speaker button silences them. |
 | **Listening** | One-way and live, for a TV, a guide, or announcements. Hears Japanese only, from a distance and without voice isolation. English leads each card, and each translation plays as soon as it's ready. With earphones the microphone keeps listening; on the iPhone's speaker it waits while each translation plays, so it doesn't hear itself. |
 | **Text** | Opens the typing screen, ready to type or paste. |
-| **Document Upload** | Opens the file picker for a PDF, a photo, or a text file. Its text opens on the typing screen, translated. A PDF's own text is used. A scanned PDF (its first 10 pages) or a photo is read with on-device text recognition. A file with no text shows **Couldn't read this document**. |
+| **Document Upload** | Opens the file picker for a PDF, a photo, or a text file. Its text opens on the typing screen, translated. A PDF's own text is used. A scanned PDF (its first 10 pages) or a photo is read with on-device text recognition. A text file can be UTF-8, UTF-16, Shift-JIS, or EUC-JP. Only the first 5,000 characters are translated. A file with no text shows **Couldn't read this document**. |
 
 ## Typing to translate
 
@@ -61,9 +61,10 @@ Along the bottom are the conversation's controls:
 VoiceOver reads what's happening (**Listening**, **Hearing speech**, **2 waiting for a pause**,
 **Speaking English**, **Paused**…). There is no stop button.
 
-Translate shows Japanese without furigana unless **Furigana** is on in the **•••** menu. That
-choice is Translate's own: Reading Aids still sets furigana for the rest of the app. Conversation
-text is one Dynamic Type size larger than the rest of the app.
+Translate shows Japanese without furigana unless **Furigana** is on in the **•••** menu, in
+conversations, transcripts, and typed or document translations alike. Translate keeps its own
+reading aids: the rest of the app's Reading Aids (furigana, romaji, word meanings) don't apply on
+the tab. Conversation text is one Dynamic Type size larger than the rest of the app.
 
 - **Cards.** Each sentence is a card with small corners, its source above a hairline and its
   translation below. Cards in one speaker's turn sit close together, and a new turn starts after a

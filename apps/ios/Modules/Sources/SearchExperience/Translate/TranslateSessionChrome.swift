@@ -19,6 +19,7 @@ struct TranslateSessionChrome: ViewModifier {
         if let session = experience.session, let deadline = session.silencePromptDeadline {
           StillThereCard(
             deadline: deadline,
+            timing: session.timing,
             keepListening: { session.keepListening() },
             pause: { session.pause() }
           )
@@ -26,6 +27,9 @@ struct TranslateSessionChrome: ViewModifier {
       }
       .onChange(of: scenePhase) { _, phase in
         if phase == .background { experience.sceneMovedToBackground() }
+      }
+      .onChange(of: experience.session?.isLive == true, initial: true) { _, isLive in
+        UIApplication.shared.isIdleTimerDisabled = isLive
       }
       .background { TranslationDownloadTask(experience: experience) }
   }
@@ -77,7 +81,7 @@ struct TranslateSessionAccessory: View {
 
   private var status: String {
     guard !isTranslateSelected else {
-      return session.activity.statusLine(listeningFor: session.mode)
+      return session.activity.statusLine(in: session)
     }
     return session.activity.isPaused
       ? String(localized: "Conversation paused · Return")
@@ -103,6 +107,7 @@ private struct TranslationDownloadTask: View {
 
 private struct StillThereCard: View {
   let deadline: Date
+  let timing: ConversationTiming
   let keepListening: () -> Void
   let pause: () -> Void
 
@@ -115,7 +120,7 @@ private struct StillThereCard: View {
         let remaining = max(0, deadline.timeIntervalSince(context.date))
         let seconds = Int(remaining.rounded(.up))
         VStack(spacing: 14) {
-          Gauge(value: remaining, in: 0...10) {
+          Gauge(value: remaining, in: 0...timing.promptCountdown) {
             EmptyView()
           } currentValueLabel: {
             Text("\(seconds)").font(.title2.weight(.bold).monospacedDigit())
@@ -127,7 +132,7 @@ private struct StillThereCard: View {
           Text("Are you still there?")
             .font(.headline)
           Text(
-            "No one has spoken for 3 minutes. The conversation pauses in \(seconds) seconds so the microphone doesn't keep listening."
+            "No one has spoken for \(timing.silenceLength). The conversation pauses in ^[\(seconds) second](inflect: true) so the microphone doesn't keep listening."
           )
           .font(.subheadline)
           .foregroundStyle(.secondary)

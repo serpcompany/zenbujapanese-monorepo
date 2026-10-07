@@ -20,6 +20,21 @@ struct DocumentTextTests {
     #expect(try await DocumentText.read(url) == "東京駅はどこですか？\nWhere is Tokyo Station?")
   }
 
+  @Test("a Japanese text file is read in UTF-16 or Shift-JIS too")
+  func japaneseEncodings() throws {
+    let text = "東京駅はどこですか？"
+    #expect(try DocumentText.decode(try #require(text.data(using: .utf16))) == text)
+    #expect(try DocumentText.decode(try #require(text.data(using: .shiftJIS))) == text)
+  }
+
+  @Test("a long document is cut to the character limit")
+  func longDocument() async throws {
+    let url = folder.appending(path: "long.txt")
+    try String(repeating: "駅", count: DocumentText.characterLimit + 100)
+      .write(to: url, atomically: true, encoding: .utf8)
+    #expect(try await DocumentText.read(url).count == DocumentText.characterLimit)
+  }
+
   @Test("a PDF's own text is used when it has some")
   func pdfWithText() async throws {
     let url = folder.appending(path: "notice.pdf")

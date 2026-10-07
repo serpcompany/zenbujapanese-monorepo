@@ -22,7 +22,7 @@ The tab is split across two Swift targets in `apps/ios/Modules`
   - `BilingualTranscriptMerger` turns two recognizers' results (Japanese and English, hearing the
     same audio) into one stream. It holds a final until the other recognizer's final arrives, for
     at least 0.4 s. It keeps holding while the other recognizer still has an unfinished sentence:
-    up to 1.5 s once that sentence stops changing, and up to 20 s while it's still changing,
+    up to 2 s once that sentence stops changing, and up to 20 s while it's still changing,
     because the person is still talking. Then it joins each recognizer's sentences, picks the
     language with `LanguageArbiter` (confidence plus how well the text's script matches the
     language), and drops the loser's late final. Live text shows the held sentences plus the
@@ -110,12 +110,15 @@ prompt, pause and resume, the background, leaving with and without saving, mutin
 translations, a stalled sentence, failures), conversation playback (echo-cancelled playback
 keeps listening, the app's own voice is ignored, playback waits while someone talks, a finished
 sentence keeps its live translation), the merger, the pause detector, typed-language detection,
-and History storage. Run it from `apps/ios/Modules`:
+and History storage. `SearchExperienceTests` covers what the app adds around it: reading a
+document's text (`DocumentTextTests`), each conversation's known-word share
+(`ConversationWordsTests`), and the spoken translation's time limit (`SystemSpeechPlayerTests`).
+Run them from `apps/ios/Modules`:
 
 ```sh
 xcodebuild -scheme ZenbuJapaneseModules \
   -destination 'platform=iOS Simulator,id=<booted-simulator-udid>' \
-  ONLY_ACTIVE_ARCH=YES -only-testing:TranslatorCoreTests test
+  ONLY_ACTIVE_ARCH=YES -only-testing:TranslatorCoreTests -only-testing:SearchExperienceTests test
 ```
 
 ## Tuned values
@@ -185,7 +188,7 @@ In the Simulator, with the harness:
 - Sending the app home pauses with **Paused while you were away**; **Exit Without Saving** leaves
   no file in `Translate Conversations`.
 
-On an iPhone, in a **Zenbu Dev** build ([`ios.md`](ios.md), Build and inspect) so the TestFlight
+On an iPhone, in a **Zenbu Dev** build ([`ios.md`](ios.md), Install on an iPhone) so the TestFlight
 app is untouched, with iPhone Mirroring closed (it silences the microphone), and without the
 harness:
 

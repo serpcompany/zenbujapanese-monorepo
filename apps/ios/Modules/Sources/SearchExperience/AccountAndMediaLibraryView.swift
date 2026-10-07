@@ -39,7 +39,7 @@ struct AccountNavigationView: View {
 struct AccountRootView: View {
   @Environment(WordKnowledge.self) private var wordKnowledge
   @Environment(WordLists.self) private var wordLists
-  @Bindable var translationHistory: ConversationHistory
+  let translationHistory: ConversationHistory
 
   var body: some View {
     List {
@@ -78,15 +78,7 @@ struct AccountRootView: View {
         }
         .accessibilityIdentifier("account.lists")
 
-        Picker(selection: $translationHistory.retention) {
-          ForEach(HistoryRetention.allCases) { retention in
-            Text(retention.title).tag(retention)
-          }
-        } label: {
-          AccountRowLabel("Keep Translations", systemImage: "clock.fill", tint: .purple)
-        }
-        .pickerStyle(.menu)
-        .accessibilityIdentifier("account.keep-translations")
+        KeepTranslationsPicker(history: translationHistory)
       }
 
       Section {
@@ -130,7 +122,7 @@ struct AccountRootView: View {
   }
 }
 
-private struct AccountRowLabel: View {
+struct AccountRowLabel: View {
   let title: LocalizedStringKey
   let systemImage: String
   let tint: Color

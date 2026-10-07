@@ -106,6 +106,7 @@ struct TypedTranslationScreen: View {
 
   var body: some View {
     TypedTranslationCard(text: $text, experience: experience, words: words)
+      .environment(experience.readingAids)
       .padding(.horizontal)
       .padding(.bottom, 12)
       .background(Color(uiColor: .systemBackground))

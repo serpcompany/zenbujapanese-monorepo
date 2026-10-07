@@ -120,13 +120,6 @@ public struct BilingualTranscriptMerger: Sendable {
     return emitFinal()
   }
 
-  public mutating func reset() {
-    volatile = [:]
-    volatileHeardAt = [:]
-    finals = [:]
-    firstFinalAt = nil
-  }
-
   static func mostlyBefore(_ time: TimeInterval, _ result: TranscriberResult) -> Bool {
     let length = result.end - result.start
     guard length > 0 else { return false }
