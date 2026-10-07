@@ -42,8 +42,8 @@ would send are at `http://localhost:8789/dev/mail` (Email, below).
 | `ACCOUNT_API_URL` | required | The API host's origin, such as `https://api.zenbujapanese.com`. Its access tokens name it as their issuer and audience. |
 | `ACCOUNT_API_SECRET` | required | At least 32 characters. It signs session tokens and encrypts the codes and the token-signing keys in the database. Changing it signs everyone out, and needs `delete from signing_keys` too, or no access token can be made. |
 | `ACCOUNT_API_TRUSTED_ORIGINS` | none | The website origins, comma-separated, that may sign in with a cookie, such as `https://zenbujapanese.com`. |
-| `ACCOUNT_API_COOKIE_DOMAIN` | none | The domain the session cookie is shared across, such as `zenbujapanese.com`, so the website on the zone's root reads it. |
-| `ACCOUNT_API_COOKIE_PREFIX` | `zenbu` | The start of the cookies' names. Staging sets `zenbu-staging`, so its cookies and production's, which share the domain, never overwrite each other. |
+| `ACCOUNT_API_COOKIE_DOMAIN` | none | A domain to share the session cookie across, such as `zenbujapanese.com`. Leave it unset: the website's pages call the service from the browser (#468), so the cookie stays on the API host, and the website's Worker and pages never get it. |
+| `ACCOUNT_API_COOKIE_PREFIX` | `zenbu` | The start of the cookies' names. Staging sets `zenbu-staging`, so its cookies and production's could never overwrite each other, even on a shared domain. |
 | `APPLE_APP_BUNDLE_IDENTIFIER` | off | Sign in with Apple in the app: the bundle ID its tokens name. The app needs nothing else. |
 | `APPLE_SERVICES_IDS`, `APPLE_TEAM_ID`, `APPLE_KEY_ID`, `APPLE_PRIVATE_KEY` | off | Sign in with Apple on the web: the Services IDs, and the team, key ID, and `.p8` key (with its newlines written as `\n`) the service makes Apple's client secret from each time it starts. The secret lasts 180 days, so a service that runs that long without a deploy is restarted. |
 | `GOOGLE_CLIENT_IDS`, `GOOGLE_CLIENT_SECRET` | off | Sign in with Google: the OAuth client IDs, comma-separated (the web client's and the iOS app's), and the web client's secret. |
@@ -68,7 +68,7 @@ which only the log records.
 | `GET /v1/me` | With an access token, the learner's profile: `id`, `name`, `username`, `email`, `version`, `createdAt`, and `updatedAt`. |
 | `PATCH /v1/me` | With an access token, changes the name, the username, or both: `{ "baseVersion": 3, "name": "...", "username": "..." }`. It answers `409 version_conflict`, with the profile as it is now in `current`, if the profile has moved past `baseVersion`, and `409 username_taken`. |
 | `POST /v1/sync` | With an access token, applies the device's changes and answers what changed after its cursor (Profiles and sync, below). |
-| `DELETE /v1/me` | With an access token from a sign-in in the last 10 minutes, deletes the account: `{ "confirm": true }`, and for an account that signs in with Apple, `"appleAuthorizationCode"` from that sign-in (Deleting an account, below). |
+| `DELETE /v1/me` | With an access token from a sign-in in the last 10 minutes, deletes the account: `{ "confirm": true }`, and for an account that signs in with Apple, `"appleAuthorizationCode"` from that sign-in, with the website's `"appleRedirectUri"` (Deleting an account, below). |
 | `POST /v1/auth/email-otp/send-verification-otp` | Emails a sign-in code: `{ "email": "...", "type": "sign-in" }`. It answers the same whether or not the email has an account. |
 | `POST /v1/auth/sign-in/email-otp` | Signs in with the code: `{ "email": "...", "otp": "123456" }`. |
 | `POST /v1/auth/sign-in/nonce` | A nonce for one Apple or Google sign-in: `{ "nonce": "...", "expiresIn": 600 }`. |
@@ -108,7 +108,8 @@ are at most 64 KB (`413 too_large`). Each account may send 60 requests a minute 
 120 to `/v1/sync` from each app, and each app 30,000 a minute from all its accounts together
 (`429 too_many_requests`, with `Retry-After`), counted in each slot's memory, so an app stuck in a
 loop, or a stolen access token, can't flood the service. A browser can call the
-service only from the origins in `ACCOUNT_API_TRUSTED_ORIGINS`: CORS names each one, never `*`.
+service only from the origins in `ACCOUNT_API_TRUSTED_ORIGINS`: CORS names each one, never `*`,
+and lets the page read `Retry-After` and Better Auth's `X-Retry-After`.
 
 **The contract** for every route above is
 [`apps/account-api/openapi.json`](../../apps/account-api/openapi.json), OpenAPI 3.1, and a test
@@ -132,8 +133,16 @@ from `GET /v1/auth/token` and to sign out. An access token is an EdDSA JWT that 
 (`sub`), the service (`iss` and `aud`, both `ACCOUNT_API_URL`), and when it expires, 15 minutes on:
 nothing else, so a service that receives one learns only the account's ID. Another service checks
 it against `GET /v1/auth/jwks`. Signing out ends the session, so its token gets no more access
-tokens. The website signs in the same way, but keeps the session in a cookie on
-`ACCOUNT_API_COOKIE_DOMAIN`, for the origins in `ACCOUNT_API_TRUSTED_ORIGINS`.
+tokens.
+
+**The website** signs in the same way from the learner's browser, on an origin in
+`ACCOUNT_API_TRUSTED_ORIGINS`, and its session stays in a cookie
+(`src/auth/website.test.ts`): `<prefix>.session_token`, with `__Secure-` in front over https,
+HttpOnly, `SameSite=Lax`, for 60 days from its last use, on the API host alone unless
+`ACCOUNT_API_COOKIE_DOMAIN` is set. A Google sign-in adds `<prefix>.state` for its 5 minutes. A
+sign-in from one of those origins answers no `set-auth-token`, so the page never holds the session
+token; the browser sends the cookie to `/v1/auth`, and the page sends its access token to `/v1/me`.
+The website's side is in the [client guide](account-clients.md#the-website).
 
 **Apple and Google, in the app.** The app asks this service for a nonce, gives it to Apple (as its
 SHA-256, as Apple asks) or Google, and sends the token it gets back with the nonce. Each nonce
@@ -273,9 +282,12 @@ else, and deletes only after a fresh sign-in.
 
 - **Apple.** An account that signs in with Apple sends the authorization code from that fresh Sign
   in with Apple. Before deleting anything, the service exchanges it at Apple for a refresh token,
-  as the app's bundle ID, or the website's Services ID with its return URL, checks that Apple's
-  answer names one of the account's Apple IDs, and revokes the token, as App Review requires; it
-  keeps no Apple token otherwise. So the service needs Apple's key wherever Apple sign-in is set
+  as the app's bundle ID, or as the website's Services ID with the return URL the code was made
+  for, checks that Apple's answer names one of the account's Apple IDs, and revokes the token, as
+  App Review requires; it keeps no Apple token otherwise. The website's Sign in with Apple popup
+  names a return URL on the website, `<site>/account/`, and the website sends it as
+  `appleRedirectUri`, which must be on one of `ACCOUNT_API_TRUSTED_ORIGINS` (`400 bad_request`);
+  without it, the website's code is taken as one Apple sent to `/v1/auth/callback/apple`. So the service needs Apple's key wherever Apple sign-in is set
   up: it refuses to start without one, but at `localhost`, where it skips Apple. The answers:
   - no code: `400 apple_authorization_needed`;
   - a code Apple has used or expired: `400 apple_authorization_invalid`;
@@ -561,9 +573,10 @@ First set up what the services share: cosign, the deployer, and registry access
    changes, so a setting added later takes effect within 5 minutes.
    - **The service:** `ACCOUNT_API_URL` (`https://api-staging.zenbujapanese.com` or
      `https://api.zenbujapanese.com`), a new `ACCOUNT_API_SECRET` for each environment
-     (`openssl rand -hex 32`), and, for the website (#468), `ACCOUNT_API_TRUSTED_ORIGINS`,
-     `ACCOUNT_API_COOKIE_DOMAIN=zenbujapanese.com`, and on staging
-     `ACCOUNT_API_COOKIE_PREFIX=zenbu-staging`.
+     (`openssl rand -hex 32`), and, for the website's account pages (#468),
+     `ACCOUNT_API_TRUSTED_ORIGINS`: `https://staging.zenbujapanese.com` on staging, and
+     `https://zenbujapanese.com` in production. Leave `ACCOUNT_API_COOKIE_DOMAIN` unset; staging
+     may still set `ACCOUNT_API_COOKIE_PREFIX=zenbu-staging`.
    - **Apple** (Apple Developer, on the team that owns the app's ID, `W3GXL2NQQP` while the app
      ships from the backup account, #616):
      - Sign in with Apple on the iOS app's App ID (`com.zenbujapanese.app`) and on Tomodachi's
@@ -576,16 +589,23 @@ First set up what the services share: cosign, the deployer, and registry access
        Tomodachi must stay in one team for an Apple sign-in to reach one account. Moving an app to
        another team (#616's transfer to the business account) changes its learners' Apple user
        IDs: before it, plan Apple's user migration for Sign in with Apple, and move both apps.
-     - For the website: a Services ID, whose return URL is
-       `<ACCOUNT_API_URL>/v1/auth/callback/apple` (Apple takes no `localhost` return URL), and a
-       Sign in with Apple key. Set `APPLE_SERVICES_IDS`, `APPLE_TEAM_ID`, `APPLE_KEY_ID`, and
-       `APPLE_PRIVATE_KEY`, the `.p8` file's text with its newlines written as `\n`.
+     - For the website: a Services ID, grouped with the iOS app's App ID, with Sign in with Apple
+       on. Its domains are the website's, `zenbujapanese.com` and `staging.zenbujapanese.com`, and
+       its return URLs the account page each signs in from, `https://zenbujapanese.com/account/`
+       and `https://staging.zenbujapanese.com/account/`, since Apple answers the website's popup
+       only on the return URL's origin; add `<ACCOUNT_API_URL>/v1/auth/callback/apple` too, for a
+       redirect sign-in. Apple takes no `localhost` return URL. Then a Sign in with Apple key. Set
+       `APPLE_SERVICES_IDS`, `APPLE_TEAM_ID`, `APPLE_KEY_ID`, and `APPLE_PRIVATE_KEY`, the `.p8`
+       file's text with its newlines written as `\n`, and the website's
+       `ACCOUNT_APPLE_SERVICES_ID` ([`web.md`](web.md), Account pages).
    - **Google** (Google Cloud, OAuth clients):
-     - a web client, whose redirect URI is `<ACCOUNT_API_URL>/v1/auth/callback/google`;
+     - a web client, whose redirect URIs are `https://api-staging.zenbujapanese.com/v1/auth/callback/google`
+       and `https://api.zenbujapanese.com/v1/auth/callback/google` (`<ACCOUNT_API_URL>/v1/auth/callback/google`);
      - an iOS client, for the app's bundle ID.
 
      Then set `GOOGLE_CLIENT_IDS` (the web client's, then the iOS client's) and
-     `GOOGLE_CLIENT_SECRET` (the web client's).
+     `GOOGLE_CLIENT_SECRET` (the web client's), and the website's `ACCOUNT_GOOGLE_SIGN_IN=on`
+     ([`web.md`](web.md), Account pages).
    - **Email**, as SERP's transactional email standard says:
      1. `support@zenbujapanese.com` receives mail before anything sends from it: Email Routing
         forwards it to `support+zenbujapanese@serp.co`.
@@ -642,6 +662,7 @@ First set up what the services share: cosign, the deployer, and registry access
    - Run the backup by hand (`sudo zenbujapanese-account-backups`), then restore it into a new
      database (Back up and restore, above).
    - On staging, each way signs in a new learner and an existing one: a code, Apple and Google in
-     the app, and Apple and Google on the website once #468 has its pages. The same email through a
+     the app, and Apple and Google on the website's account pages, where an Apple account is also
+     deleted, which shows Apple takes the popup's code with its return URL. The same email through a
      second way is refused until it's linked. An access token from `GET /v1/auth/token` checks out
      against `GET /v1/auth/jwks`.

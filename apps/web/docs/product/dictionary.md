@@ -578,7 +578,8 @@ summary, and opens its word page when it has one.
 **Lists and Notes.** Each section shows a prompt, Add to List or Add Note, that opens the
 get-the-app prompt. The app's ✓ Known capsule and encounter photo aren't shown.
 
-- Source: #462 (learner sections as get-the-app prompts until #468).
+- Source: #462 (learner sections as get-the-app prompts until #468); #468 leaves them, since
+  signing in on the web doesn't make them work yet ([Account pages](account.md)).
 - Check: No automated check yet (#511).
 
 **Examples.** A word lists the same examples, in the same order, as the app's Word Detail, up to
@@ -874,8 +875,9 @@ lucide has no brand icons, and #511 asked for a phone.
 **Footer.** The footer starts with the 全 mark and the site name, linking home, and the site's
 one-line description. Beside them on wide screens, and below them in two columns on phones, three
 labelled groups hold every link: Product (Dictionary, Browse by kana, Kanji by grade, Sources,
-Sitemap), Company (About, Support, Contact), and Policies (Legal (`/legal/`), Privacy Policy, Terms
-of Use, DMCA Copyright Policy, Affiliate Disclosure). A rule, then the copyright line, ends it. The
+Sitemap, and Sign in, or Account once signed in: [Account pages](account.md#pages)), Company
+(About, Support, Contact), and Policies (Legal (`/legal/`), Privacy Policy, Terms of Use, DMCA
+Copyright Policy, Affiliate Disclosure). A rule, then the copyright line, ends it. The
 browse links follow the #614 mockup ([Browse pages](browse.md#site-wide)). Legal follows Contact,
 as in the #462 design. The #462 mockup's footer lists only Contact, Legal, Privacy, Terms, Sources,
 and Sitemap. Whether the footer drops the other links is waiting on the owner's and Devin's

@@ -12,7 +12,7 @@ Routing only. Open the smallest source matching the task.
 - [`docs/technologies.md`](docs/technologies.md) — technology implementations, roles, and current consumers.
 - [`docs/data-sources.md`](docs/data-sources.md) — supplied information, source roles, and current consumers.
 - [`docs/agents/ios.md`](docs/agents/ios.md) — Xcode build and launch, installing on an iPhone, Simulator verification, and the current iOS test and CI boundary.
-- [`docs/agents/web.md`](docs/agents/web.md) — zenbujapanese.com: run, verify, the dictionary service it reads, environments, deploys, and sitemaps.
+- [`docs/agents/web.md`](docs/agents/web.md) — zenbujapanese.com: run, verify, the dictionary service it reads, the account pages, environments, deploys, and sitemaps.
 - [`docs/agents/dictionary-api.md`](docs/agents/dictionary-api.md) — the website's dictionary service: run, check, routes, the Docker image, and deploying it.
 - [`docs/agents/account-api.md`](docs/agents/account-api.md) — the account service: run, check, routes, its Postgres and migrations, the Docker image, deploying it, and backups.
 - [`docs/agents/account-clients.md`](docs/agents/account-clients.md) — building an app on the Zenbu account: its scopes, signing in, tokens, and when and how to sync.

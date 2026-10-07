@@ -8,7 +8,7 @@ layers apart. Each part's own doc has the detail; each rule here is enforced by 
 | Part | What it is | Its doc |
 | --- | --- | --- |
 | `apps/ios` | The iPhone app, in Swift. It reads the language data bundled with it, which its importers in `apps/ios/Tools` build. | [`docs/agents/ios.md`](docs/agents/ios.md) |
-| `apps/web` | zenbujapanese.com: Next.js on Cloudflare Workers through OpenNext. Its dictionary pages read the dictionary service. | [`docs/agents/web.md`](docs/agents/web.md) |
+| `apps/web` | zenbujapanese.com: Next.js on Cloudflare Workers through OpenNext. Its dictionary pages read the dictionary service; its account pages call the account service from the learner's browser. | [`docs/agents/web.md`](docs/agents/web.md) |
 | `apps/dictionary-api` | The dictionary service: Node, in a Docker image on serpcompany's server, answering the website's dictionary requests by running the shared core on the app's language data. | [`docs/agents/dictionary-api.md`](docs/agents/dictionary-api.md) |
 | `apps/account-api` | The account service: Node and Postgres on the same server, for Zenbu accounts, sign-in, and sync (ADR 0011). It signs learners in with Apple, Google, or an emailed code, through Better Auth, and issues the access tokens other services check. | [`docs/agents/account-api.md`](docs/agents/account-api.md) |
 | `packages/dictionary-core` | The shared TypeScript core: search, results, word and kanji detail, and examples, ported from the app's Swift. Every client is to run it (ADR 0008). | [`docs/agents/dictionary-core.md`](docs/agents/dictionary-core.md) |
@@ -32,6 +32,7 @@ flowchart LR
     Core --> Site
     Accounts["Account service image"] --> Server
     Server --- Postgres[("Postgres, on the server")]
+    Browser["Learner's browser, on the website's account pages"] -->|"session cookie, then access token"| Server
 ```
 
 The app's bundled data is the one source: the importers build it, the app bundles it, the service's
@@ -44,7 +45,9 @@ service's paths to it and the rest to the dictionary service, so they deploy apa
 ([`docs/agents/api-servers.md`](docs/agents/api-servers.md), The API host). The account service
 holds what learners keep across devices. Its Postgres database sits on the same
 server, on a network only the service's slots reach, and every app keeps its own copy and works
-offline (ADR 0011).
+offline (ADR 0011). The website's account pages call it from the learner's browser, not from the
+Worker, whose requests to the API host Bot Fight Mode challenges
+([`docs/agents/web.md`](docs/agents/web.md), Account pages).
 
 The dictionary service's answers are a contract, typed and numbered in the core (`DictionaryContract`,
 `dictionaryContract`). The site and the service deploy separately, in either order, so the site

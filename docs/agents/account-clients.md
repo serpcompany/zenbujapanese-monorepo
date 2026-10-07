@@ -68,6 +68,27 @@ every app, as long as the account has that way in; an email that already has an 
 another way is refused until the learner adds it there, signed in (`oauth_link_error`,
 `account_not_linked`).
 
+## The website
+
+zenbujapanese.com (`zenbu-web`) signs in from the learner's browser, on an origin the service
+trusts (`ACCOUNT_API_TRUSTED_ORIGINS`), and keeps no token of its own
+([`web.md`](web.md), Account pages):
+
+- **Every call to `/v1/auth`** is a `fetch` with `credentials: 'include'`. The session is the
+  service's HttpOnly cookie on its own host: a sign-in answers no `set-auth-token` to the website,
+  and the page never sees the session token. `GET /v1/auth/token` with the cookie answers the
+  access token, which the page keeps in memory and sends, without cookies, to `/v1/me`.
+- **Apple** runs in Sign in with Apple JS's popup, as the Services ID, with the nonce's SHA-256
+  and a return URL on the page's own origin, `<site>/account/`, since Apple answers a popup only
+  there. The page signs in with the ID token and the nonce, as an app does, and on a first sign-in
+  passes the name Apple hands it, as `idToken.user.name`.
+- **Google** goes through the service: `POST /v1/auth/sign-in/social` with `{ "provider":
+  "google", "callbackURL": "<page>", "errorCallbackURL": "<page>" }` answers the page to send the
+  browser to; Google comes back to `/v1/auth/callback/google`, which sets the cookie and sends the
+  browser to `callbackURL`, or to `errorCallbackURL` with `?error=<code>`. `link-social` adds Google
+  the same way.
+- **On `429`**, wait what `Retry-After`, or Better Auth's `X-Retry-After`, says.
+
 ## Access tokens
 
 `GET /v1/auth/token`, with the session token as `Authorization: Bearer`, answers a 15-minute access
@@ -147,7 +168,8 @@ Every app that signs in offers deleting the account (App Review guideline 5.1.1(
 2. If the account signs in with Apple, sign in with Apple, and keep the **authorization code**
    Apple gives with that sign-in.
 3. `DELETE /v1/me` with `{ "confirm": true }`, and `"appleAuthorizationCode"` for an Apple
-   account: the code from signing in with the Apple ID the account uses. The service revokes your
+   account: the code from signing in with the Apple ID the account uses. The website sends its
+   popup's return URL too, as `"appleRedirectUri"`. The service revokes your
    app's Apple access with it before deleting. `apple_authorization_needed`,
    `apple_authorization_invalid`, `apple_account_mismatch`, and `503 apple_unavailable` delete
    nothing: sign in with Apple again for a new code, and try again.

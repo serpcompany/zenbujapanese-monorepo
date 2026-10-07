@@ -1,10 +1,15 @@
 import Link from 'next/link'
+import { AccountFooterLink } from '@/components/account/account-footer-link'
 import { SiteBrand } from '@/components/site-brand'
 import { kanaChartsPath, kanjiListsPath } from '@/lib/dictionary/browse/paths'
 import { legalPages, pageFor, type SitePage } from '@/lib/pages'
 import { site } from '@/lib/site'
 
-const footerColumns: { heading: string; links: readonly Pick<SitePage, 'path' | 'title'>[] }[] = [
+const footerColumns: {
+  heading: string
+  links: readonly Pick<SitePage, 'path' | 'title'>[]
+  account?: true
+}[] = [
   {
     heading: 'Product',
     links: [
@@ -13,7 +18,8 @@ const footerColumns: { heading: string; links: readonly Pick<SitePage, 'path' | 
       { path: kanjiListsPath, title: 'Kanji by grade' },
       pageFor('/sources/'),
       pageFor('/sitemap/')
-    ]
+    ],
+    account: true
   },
   {
     heading: 'Company',
@@ -47,6 +53,11 @@ export function SiteFooter() {
                     </Link>
                   </li>
                 ))}
+                {column.account ? (
+                  <li>
+                    <AccountFooterLink className="hover:text-foreground" />
+                  </li>
+                ) : null}
               </ul>
             </nav>
           ))}

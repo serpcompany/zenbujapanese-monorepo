@@ -41,6 +41,7 @@ it must pass it over ([`ci.md`](agents/ci.md), Weekly maintenance).
 | --- | --- | --- | --- |
 | 4 of the 69 behaviors in `apps/web/docs/product/dictionary.md` have no automated check, and 12 more have a part without one, mostly layout and speech. | A change that breaks them passes CI. | #511 | medium |
 | The website lacks app behaviors that the product docs require, under Required, not built yet: Reading Aids, handwriting and radical input (#526), kanji element detail, and more. | The website is meant to show what the app shows; each difference without a decision on file is a bug. | #511 | large |
+| The website's Sign in with Apple and Google have run only against stand-ins: Apple takes no `localhost` return URL, and Google needs the owners' web client. Deleting an Apple account from the website, where the service takes the popup's code with its return URL, is first exercised on staging. | A mistake in Apple's popup, its return URL, or Google's redirect shows up only on staging. A browser test on staging would sign in with a test Apple ID and Google account. | No issue yet | medium |
 | Search result pages are in no sitemap. #463 dropped its precomputed search-sitemap query set after ADR 0009, and the route audit decides which search pages stay indexable at all. | Search engines find search pages only through links. | #544 | medium |
 
 ## Language data

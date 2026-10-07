@@ -30,13 +30,20 @@ test('the footer links Legal after Contact, before the legal pages, as the #462 
 
 test('the footer groups every link under Product, Company, and Policies', () => {
   expect(columns()).toEqual([
-    ['Product', ['Dictionary', 'Browse by kana', 'Kanji by grade', 'Sources', 'Sitemap']],
+    [
+      'Product',
+      ['Dictionary', 'Browse by kana', 'Kanji by grade', 'Sources', 'Sitemap', 'Sign in']
+    ],
     ['Company', ['About', 'Support', 'Contact']],
     [
       'Policies',
       ['Legal', 'Privacy Policy', 'Terms of Use', 'DMCA Copyright Policy', 'Affiliate Disclosure']
     ]
   ])
+})
+
+test('the footer leads to signing in, as the server draws it before the browser knows', () => {
+  expect(links(footer())).toContainEqual(['Sign in', '/login/'])
 })
 
 test("the footer's browse links open the kana charts and the kanji lists", () => {

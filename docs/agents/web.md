@@ -304,6 +304,70 @@ ZENBU_DICTIONARY_API=1 ZENBU_DICTIONARY_API_TOKEN=<token> pnpm exec vitest run s
 `smoke.sh` checks the deployed pages against the search-results suite's `iru` and `eat` cases, the
 example-search suite's `eat`, and the word-detail suite's 見る and 学校 at run time.
 
+## Account pages
+
+`/login/`, `/register/`, `/forgot-password/`, and `/account/` sign a learner in to their Zenbu
+account and manage it (#468; the [product docs](../../apps/web/docs/product/account.md)), against
+the account service ([`account-api.md`](account-api.md); the website's side of it is
+[`account-clients.md`](account-clients.md), The website).
+
+- **The learner's browser calls the service, never the Worker.** Bot Fight Mode challenges the
+  Worker's own requests to the API host (Dictionary service, below), so the Worker only renders
+  the pages, with the service's URL, and their components call the service with `fetch` and
+  `credentials: 'include'`. The service keeps the session in an HttpOnly cookie on its own host,
+  which no page can read; the pages keep the 15-minute access token in memory
+  (`src/lib/account/access-tokens.ts`) and send it only to `/v1/me`, without cookies.
+- **Each answer's shape is checked where it enters** (`src/lib/account/answers.ts`), and the
+  client (`src/lib/account/client.ts`) turns every answer into a value, a refusal with its code and
+  `Retry-After`, a network failure, or an answer of another shape; `src/lib/account/messages.ts`
+  says each to the learner.
+- **Settings per environment**, Worker `vars` read per request (the pages are `force-dynamic`), in
+  `src/lib/account/settings.ts`:
+
+  | Var | What it does |
+  | --- | --- |
+  | `ACCOUNT_API_URL` | The account service's origin: `http://localhost:8789` locally, `https://api-staging.zenbujapanese.com` on staging, and `https://api.zenbujapanese.com` in production. Empty, the pages say signing in isn't available. |
+  | `ACCOUNT_APPLE_SERVICES_ID` | The Services ID Sign in with Apple JS signs in as: one of the service's `APPLE_SERVICES_IDS`. Empty, the pages offer no Apple. |
+  | `ACCOUNT_GOOGLE_SIGN_IN` | `on` offers Google, once the service has a Google web client. |
+
+  Apple and Google are off on staging and production until the service has them
+  ([`account-api.md`](account-api.md), Set up the server); then set these in `wrangler.jsonc` and
+  run `pnpm cf-typegen`.
+- **Apple** runs in Sign in with Apple JS's popup (`src/lib/account/apple.ts`), which hands the
+  page Apple's ID token and authorization code. Apple answers a popup only on a page of its return
+  URL's origin, so the return URL is the site's own `/account/`, and deleting an Apple account
+  sends it with the code (`appleRedirectUri`), for the service to take the code from Apple. The
+  script loads, and the nonce is fetched, when the learner points at or focuses an Apple button,
+  so the click opens the popup at once rather than after a request a popup blocker would count.
+- **Google** goes through the service: `POST /v1/auth/sign-in/social` (or `link-social`) names the
+  page to come back to, and the browser goes to Google, then to the service's
+  `/v1/auth/callback/google`, then back, with `?error=` on a failure.
+- **Code:** the routes in `src/app/login/`, `src/app/register/`, `src/app/forgot-password/`, and
+  `src/app/account/`; the components in `src/components/account/`; the hooks
+  `src/hooks/use-apple-sign-in.ts` and `src/hooks/use-seems-signed-in.ts`, which reads the
+  local-storage note behind the footer's Sign in or Account (`src/lib/account/signed-in.ts`).
+
+To run them locally, run the account service ([`account-api.md`](account-api.md), Run it) with
+`ACCOUNT_API_TRUSTED_ORIGINS=http://localhost:3000,http://localhost:3100`; `pnpm dev` reads it at
+`http://localhost:8789`, and `ACCOUNT_API_URL` in `.dev.vars` names another. Its dev mailbox,
+`http://localhost:8789/dev/mail`, holds the codes.
+
+**Browser tests.** `e2e/account.spec.ts` stands in for the service in the browser, so it runs
+wherever the others do, CI's `Web` included. `e2e/account-service.spec.ts` drives a learner
+through registering, editing the profile, signing out, signing in again, and deleting the account
+with a fresh sign-in, against a real service and its dev mailbox. Like the dictionary's
+rendered-page gate, it runs only when asked (`ZENBU_ACCOUNT_API=1`), and the `Account API`
+workflow starts the service it checks and runs it ([`ci.md`](ci.md), Account API):
+
+```sh
+ZENBU_ACCOUNT_API=1 pnpm test:e2e e2e/account-service.spec.ts --project desktop
+```
+
+`ZENBU_ACCOUNT_API_URL` names a service elsewhere than `http://localhost:8789`, for reading its
+mailbox; the site reads its own `ACCOUNT_API_URL`. A run sends three codes, and the service sends
+at most five from one address in 10 minutes, so a second run within 10 minutes needs a new
+database, or `delete from rate_limits` in it.
+
 ## Environments and deploys
 
 | Environment | Worker | Domain |

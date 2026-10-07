@@ -7,9 +7,9 @@ which lists features the website must have but doesn't yet, with the check each 
 
 The website is a public mirror of the app's dictionary. Its pages show what the app's Search tab
 shows for the same word or kanji, laid out as the #462 designs chose: stock shadcn components in
-one column, with sections in the app's order. There is no sign-in yet, so actions that keep
-learner data (lists, notes, known words, photos) open a prompt to get the app. That prompt becomes
-a sign-in prompt once account pages (#468) exist.
+one column, with sections in the app's order. A learner can make and sign in to a Zenbu account
+on the site ([Account pages](account.md)), but the site doesn't sync yet, so actions that keep
+learner data (lists, notes, known words, photos) still open a prompt to get the app (#468).
 
 ## Pages
 
@@ -29,6 +29,10 @@ footer, and the URL, indexing, and sitemap rules, apply to all of them.
 [Dictionary](dictionary.md) describes every behavior, page by page, and [Browse pages](browse.md)
 the browse pages.
 
+The account pages, `/login/`, `/register/`, `/forgot-password/`, and `/account/`, sign a
+learner in to their Zenbu account and manage it; [Account pages](account.md) describes them. They
+are `noindex` and in no sitemap.
+
 The legal pages are under `/legal/`. [Privacy Policy](privacy.md) describes what
 `/legal/privacy/` says about the app, the website, and a Zenbu account, Tomodachi included.
 
@@ -46,8 +50,8 @@ its app source and planned check, and is then built with its check in the same P
 
 ## How behavior is verified
 
-Each behavior in [Dictionary](dictionary.md) and [Privacy Policy](privacy.md) names its
-automated check, or says "No automated check yet" (#511 for the dictionary). The checks come in
+Each behavior in [Dictionary](dictionary.md), [Account pages](account.md), and
+[Privacy Policy](privacy.md) names its automated check, or says "No automated check yet" (#511 for the dictionary). The checks come in
 five kinds:
 
 - **App-recorded conformance suites** in `apps/ios/LanguageData/Conformance/`, recorded from the

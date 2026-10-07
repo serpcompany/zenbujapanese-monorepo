@@ -1,0 +1,190 @@
+# Account pages
+
+zenbujapanese.com's account pages let a learner make, sign in to, see, change, and delete their
+Zenbu account (#468), against the account service ([`account-api.md`](../../../../docs/agents/account-api.md)).
+Signing in is passwordless: Apple, Google, or a code we email. The pages call the service from
+the learner's browser, never from the Worker ([`web.md`](../../../../docs/agents/web.md), Account
+pages). The website doesn't sync known words or lists yet, and the word page's learner actions
+still open the get-the-app prompt ([Dictionary](dictionary.md#word-page), Toolbar, and Lists and
+Notes), since signing in on the web doesn't make them work yet.
+
+Abbreviations: paths are under `apps/web/`. **Account spec** is `e2e/account.spec.ts`, the
+browser tests at a desktop and a phone width, with a stand-in for the account service in the
+browser. **Account service spec** is `e2e/account-service.spec.ts`, which drives a learner
+through the pages against a real account service on its dev mailbox (`ZENBU_ACCOUNT_API=1`).
+**Sign-in form tests** and **account page tests** are
+`src/components/account/sign-in-form.interaction.test.tsx` and
+`src/components/account/account-view.interaction.test.tsx`, which click through the components
+in a DOM with a stand-in for the service.
+
+## Pages
+
+**Four pages.** `/login/` (Sign in), `/register/` (Create your account), `/forgot-password/` (No
+password needed), and `/account/` (Your account), each with the site's header and footer. Each is
+`noindex, nofollow`, and no sitemap lists them: not `/sitemaps/pages.xml`, and not `/sitemap/`.
+Without an account service (no `ACCOUNT_API_URL`), each says signing in isn't available on this
+site yet.
+
+- Source: #468; #402's sitemap sheet.
+- Check: Account spec, "/login/ is noindex, with the site's header and footer" (and each other
+  page), "no sitemap lists them"; `src/lib/account/pages.test.ts`; `src/app/routes.test.ts`.
+
+**Footer.** The footer's Product group ends with Sign in, which leads to `/login/`. In a browser
+that signed in on the site, it says Account and leads to `/account/`. The browser remembers that
+in local storage (`zenbu-signed-in`), which the pages set on signing in and clear on signing out,
+on deleting the account, and when the account page finds no session. The server draws Sign in, so
+the page and its first render in the browser agree.
+
+- Source: #468 (one footer link; the header is Devin's).
+- Check: `src/components/site-footer.test.tsx`, "the footer groups every link under Product,
+  Company, and Policies" and "the footer leads to signing in, as the server draws it before the
+  browser knows"; Account spec, "the footer leads to signing in, and to the account once signed
+  in".
+
+## Signing in
+
+**Sign in and Create your account.** Both pages offer the same three ways: Sign in (or Sign up)
+with Apple, with Google, or "Email me a code". A new email gets a code that makes an account; an
+email that has one signs in to it. Create your account says so, and links to Sign in and the
+Privacy Policy; Sign in links to Create an account and "Forgot your password?". Signed in, the
+learner goes to `/account/`. A browser that already signed in sees "You're signed in. Go to your
+account." above the ways.
+
+- Source: #468's decisions (passwordless; `/register/` is the same flow, worded for making an
+  account).
+- Check: Sign-in form tests, "emails a code, signs in with it, and goes to the account page";
+  Account service spec, which registers from `/register/`.
+
+**The email code.** The learner enters their email, then the 6-digit code ("It works for 10
+minutes"), with "Send a new code" and "Use another email". A refusal says what to do:
+
+- a wrong code, an expired one, and too many wrong ones;
+- an email whose account signs in with Apple or Google: sign in that way, then add the email;
+- no email sender on the service: try again later;
+- `429`: how many seconds or minutes the service's `Retry-After` (or Better Auth's
+  `X-Retry-After`) names, or a few minutes when it names none.
+
+- Source: the client guide ([`account-clients.md`](../../../../docs/agents/account-clients.md),
+  Signing in); `src/lib/account/messages.ts`.
+- Check: Sign-in form tests, "says why a code was refused, and how long to wait after too many";
+  `src/lib/account/messages.test.ts`; `src/lib/account/client.test.ts`, "reads how long to wait
+  from Retry-After, or Better Auth's X-Retry-After".
+
+**No password needed.** `/forgot-password/` says Zenbu accounts have no password, so there's
+nothing to reset, and offers the email code; it links to Sign in for an account made with Apple or
+Google.
+
+- Source: #468's decisions.
+- Check: Account service spec, which signs in again from `/forgot-password/`.
+
+**Sign in with Apple.** Offered where the Worker names a Services ID (`ACCOUNT_APPLE_SERVICES_ID`).
+The page loads Apple's Sign in with Apple JS when the learner points at or focuses the button, and
+asks the service for a nonce then, so the click opens Apple's popup at once. It passes Apple the
+nonce's SHA-256 and the return URL `<site>/account/`, which Apple needs on the page's own origin
+for a popup. It signs in with Apple's ID token and the nonce, and, on a first sign-in, the name
+Apple hands the page. A closed popup says nothing; a blocked one says to allow pop-ups.
+
+- Source: #468's decisions (Sign in with Apple JS in popup mode).
+- Check: `src/lib/account/apple.test.ts`; Sign-in form tests, "signs in with Apple's popup, passing
+  the first sign-in's name". Apple itself: not run; it takes no `localhost` return URL.
+
+**Sign in with Google.** Offered where `ACCOUNT_GOOGLE_SIGN_IN` is `on`. The page asks the service
+to start Google's sign-in and sends the browser to the page it names (only an `https` one). Google
+comes back to the service, which sets the session and sends the browser on to `/account/`, or, on
+a failure, back to the page it started on with `?error=`, which the page names: an email that has
+an account another way, an unverified email, an account another Zenbu account uses, or a cancel.
+
+- Source: #468's decisions; Better Auth's web sign-in.
+- Check: Sign-in form tests, "sends the browser to Google, to come back to the account page, or
+  here on a failure" and "says what went wrong when Google's sign-in comes back with an error".
+  Google itself: not run.
+
+## Your account
+
+**Signed in, out, or unreachable.** `/account/` asks the service for the session in its cookie,
+then reads the profile with an access token and the ways to sign in. Signed in, it says "Signed in
+as" the email. With no session, it says "You're not signed in." and links Sign in and Create an
+account. When the service can't answer, it says so, with Try again.
+
+- Source: the client guide (Access tokens).
+- Check: Account page tests, "shows who is signed in, the profile, and the ways to sign in, reading
+  /v1/me with an access token only", "shows signed out, and forgets it was signed in, when there is
+  no session", "says it could not reach the account service, and tries again when asked"; Account
+  spec, "the account page says it can't reach it, and offers to try again".
+
+**Access tokens.** The page keeps its 15-minute access token in memory only, renews it a minute
+before it expires, and on a `401` gets one new token and asks again. When the service refuses a
+new token (`401`, `unauthorized` or `sign_in_again`), the page shows signed out. The session token
+stays in its HttpOnly cookie, on the account service's host: the page never sees it.
+
+- Source: the client guide (Access tokens); #468's security decisions.
+- Check: `src/lib/account/access-tokens.test.ts`; Account page tests, "gets a new access token once
+  when /v1/me answers 401"; `src/lib/account/load.test.ts`.
+
+**Profile.** Name and Username, with Save, and "Member since" the day the account was made. Save
+sends only what changed, with the profile's version; an empty username removes it. When the
+profile changed in another app first, the form shows it as it is now and says so; a taken username
+says to try another; another refusal shows the service's reason.
+
+- Source: `PATCH /v1/me` ([`account-api.md`](../../../../docs/agents/account-api.md), Profiles and
+  sync).
+- Check: Account page tests, "shows the profile as it is now when a change conflicts with one made
+  elsewhere"; Account service spec, which saves a name and username and reloads them.
+
+**Ways to sign in.** Each way the account signs in: Apple, Google, or "A code we email you" with
+its email. Each has Remove while there's more than one, which asks first ("Stop signing in with
+…? We'll email you that it was removed."). Add Apple, Add Google, and Add an email code appear for
+the ways the account lacks, where the site offers them; an email code adds the account's own
+email. Changing a way needs a sign-in from the last 10 minutes, so the page asks the learner to
+confirm it's you first when theirs is older, or when the service says so.
+
+- Source: the client guide (Signing in); `POST /v1/auth/link-social` and `unlink-account`.
+- Check: Account page tests, "removes a way to sign in after asking, and after a fresh sign-in
+  when the last is old", "adds Google by sending the browser to Google, to come back to the account
+  page", and "adds the account's own email as a way to sign in, with a code". Adding Apple: No
+  automated check yet.
+
+**Confirm it's you.** A fresh sign-in, with the ways the account has: Apple, Google, or a code to
+the account's own email. Apple must be the Apple ID the account uses: another is refused before
+it signs in. Confirming signs this browser's earlier session out, and the page takes a new access
+token, which carries the new sign-in. Google's confirmation leaves the page and comes back to it.
+
+- Source: the client guide (Deleting the account: a sign-in from the last 10 minutes).
+- Check: Account page tests, "deletes after the learner confirms and, with a sign-in over nine
+  minutes old, signs in again by code", "won't confirm with another Apple ID, and asks again when
+  Apple refuses the code".
+
+**Sign out.** Signs this browser out; the learner's other devices stay signed in.
+
+- Check: Account page tests, "signs out of this browser"; Account service spec.
+
+**Delete your account.** Says what deleting removes and that each device keeps its data. Delete
+account asks "Delete <email> and everything it synced?", with Delete my account and Keep my
+account. Deleting then needs, as the client guide says:
+
+- a sign-in from the last nine minutes, by the page's clock, or Confirm it's you first; and again
+  if the service answers `403 sign_in_again`;
+- for an account that signs in with Apple, Apple's popup, whose fresh sign-in and authorization
+  code the page sends with the return URL its popup named. The service revokes the website's Apple
+  access with them. Apple refusing the code (`apple_authorization_invalid`), another Apple ID
+  (`apple_account_mismatch`), or Apple not answering (`apple_unavailable`) deletes nothing and
+  offers Apple again. Where the site offers no Apple, it says to delete the account in the app.
+
+Deleted, the page says the account is gone from every Zenbu app and each device keeps its own
+data, signs the browser out, and the footer says Sign in again.
+
+- Source: #574; the client guide (Deleting the account).
+- Check: Account page tests, "deletes after the learner confirms and, with a sign-in over nine
+  minutes old, signs in again by code", "asks for a fresh sign-in when the service answers
+  sign_in_again, though the page thought it fresh", "deletes an Apple account with Apple's code,
+  after Apple signs it in again with the same Apple ID", and "won't confirm with another Apple ID,
+  and asks again when Apple refuses the code"; Account service spec.
+
+## Configuration
+
+**Each environment's account service.** The Worker's `ACCOUNT_API_URL` names it: staging's
+`https://api-staging.zenbujapanese.com`, production's `https://api.zenbujapanese.com`, and
+`http://localhost:8789` locally. A value that isn't an origin turns signing in off and logs
+`account_service_url_invalid`.
+
+- Check: `src/lib/account/settings.test.ts`.
