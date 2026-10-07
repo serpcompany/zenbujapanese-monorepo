@@ -19,6 +19,18 @@ struct Comprehension: Equatable, Sendable {
     }
   }
 
+  static func countedWords(
+    in lines: [String], analysis: JapaneseTextAnalysisClient
+  ) async -> [LanguageReferenceID]? {
+    var words: [LanguageReferenceID] = []
+    for line in lines {
+      let tokens = await analysis.linkedTokens(line, SearchQuery(""), nil)
+      guard !Task.isCancelled else { return nil }
+      words += countedWords(in: tokens)
+    }
+    return words
+  }
+
   init(knownCount: Int, totalCount: Int) {
     self.knownCount = knownCount
     self.totalCount = totalCount

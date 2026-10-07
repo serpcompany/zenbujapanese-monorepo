@@ -6,6 +6,20 @@ All notable user-facing changes to Zenbu Japanese are recorded here.
 
 ### Added
 
+- New **Translate** tab: a Japanese and English translator that runs entirely on the iPhone. Pick
+  **Conversation**, **Listening**, **Text**, or **Document Upload** and tap **Start**. In
+  **Conversation**, two people take turns speaking either language with no language button. Each
+  sentence appears as it's spoken with its translation under it, and the translation is spoken
+  aloud once the speaker pauses while the microphone keeps listening. **Listening** translates
+  Japanese or English from a TV, a guide, or announcements. A conversation fills the screen, as cards or as
+  **Two Panes** (Japanese over English), with buttons to mute spoken translations, change their
+  speed, and pause; silence asks **Are you still there?** before pausing, and leaving the app
+  pauses too. **Text** translates what you type or paste in whichever direction you wrote, and
+  **Document Upload** translates the text in a PDF, a photo, or a text file. Conversations are
+  saved to **Translations**, which shows how many of each one's words you know and has search, copy,
+  share, and delete; in a transcript each sentence can be replayed or bookmarked, and
+  **Bookmarked** lists them. **Account → Translations** opens it too.
+  Every Japanese word opens the dictionary at half height.
 - Image Search has four views: **Photo**, **Both** (the image above the Player's caption cards,
   with furigana and line translations), **Text** (the recognized Japanese as paragraph cards),
   and **Translate** (a natural translation, then context on what the text is and its idioms,

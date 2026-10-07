@@ -129,13 +129,9 @@ struct WatchSessionView: View {
 
   private func analyzeCaptionWords() async {
     let lines = captionTextIdentity
-    guard !lines.isEmpty else { return }
-    var words: [LanguageReferenceID] = []
-    for line in lines {
-      let tokens = await japaneseTextAnalysisClient.linkedTokens(line, SearchQuery(""), nil)
-      guard !Task.isCancelled else { return }
-      words += Comprehension.countedWords(in: tokens)
-    }
+    guard !lines.isEmpty,
+      let words = await Comprehension.countedWords(in: lines, analysis: japaneseTextAnalysisClient)
+    else { return }
     captionWords = words
   }
 
