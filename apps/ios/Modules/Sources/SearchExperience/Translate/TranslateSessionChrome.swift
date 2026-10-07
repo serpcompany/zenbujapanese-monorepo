@@ -2,6 +2,14 @@ import SwiftUI
 import Translation
 import TranslatorCore
 
+struct TranslateChromeLayout: Equatable {
+  let isSessionLive: Bool
+  let isConversationOnScreen: Bool
+
+  var showsSessionBar: Bool { isSessionLive && !isConversationOnScreen }
+  var tabBar: Visibility { isConversationOnScreen ? .hidden : .visible }
+}
+
 struct TranslateSessionChrome: ViewModifier {
   let experience: TranslateExperience
   let isTranslateSelected: Bool
@@ -10,7 +18,9 @@ struct TranslateSessionChrome: ViewModifier {
   @Environment(\.scenePhase) private var scenePhase
 
   private var showsSessionBar: Bool {
-    experience.session != nil && !isConversationOnScreen
+    TranslateChromeLayout(
+      isSessionLive: experience.session != nil, isConversationOnScreen: isConversationOnScreen
+    ).showsSessionBar
   }
 
   func body(content: Content) -> some View {
