@@ -68,15 +68,18 @@ header_has_dictionary() {
 eventually 'the header links to the dictionary and has no search' \
   'the header is missing the Dictionary link, or has a search' header_has_dictionary
 header_marks_dictionary() {
-  grep -oE '<a [^>]*>Dictionary</a>' <<<"$(body /dictionary/)" | grep 'href="/dictionary/"' |
-    grep -q 'aria-current="page"'
+  local header
+  header="$(body /dictionary/ | tr -d '\n' | grep -oE '<header[^>]*>.*</header>')"
+  grep -qE '<button [^>]*aria-current="true"[^>]*>Dictionary' <<<"$header" &&
+    grep -oE '<a [^>]*href="/dictionary/"[^>]*>' <<<"$header" | grep -q 'aria-current="page"'
 }
 eventually 'the header marks Dictionary current on the dictionary home' \
   'the header does not mark Dictionary current on the dictionary home' header_marks_dictionary
-footer_has_legal() {
-  grep -qE '<footer[^>]*>.*href="/legal/"[^>]*>Legal</a>' <<<"$(body / | tr -d '\n')"
+footer_has_privacy_policy() {
+  grep -qE '<footer[^>]*>.*href="/legal/privacy/"[^>]*>Privacy Policy</a>' <<<"$(body / | tr -d '\n')"
 }
-eventually 'the footer links Legal' 'the footer is missing the Legal link' footer_has_legal
+eventually 'the footer links the Privacy Policy' 'the footer is missing the Privacy Policy link' \
+  footer_has_privacy_policy
 
 word=/dictionary/%E8%A6%8B%E3%82%8B-1259290/
 kanji_search=/dictionary/search/%E8%A6%8B/
