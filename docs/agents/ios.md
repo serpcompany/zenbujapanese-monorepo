@@ -540,6 +540,29 @@ Then enter the App Store privacy labels for the build that ships it, and change 
 description in `apps/ios/metadata/version/1.0/en-US.json`, which says the app has no cloud sync
 ([`app-store-privacy-labels.md`](../../apps/web/docs/app-store-privacy-labels.md)).
 
+What a person sets up first, once, in Apple Developer on the team that holds the app
+(`W3GXL2NQQP` while #616 is open), and in Google Cloud:
+
+- **The App ID** `com.zenbujapanese.app` (Certificates, Identifiers & Profiles → Identifiers):
+  Sign in with Apple, enabled as a primary App ID, and Associated Domains. Xcode's automatic
+  signing then makes new profiles at the next archive; until the capabilities are on, an archive
+  fails to sign. Zenbu Dev's `com.zenbujapanese.app.dev` needs both too, since it shares the
+  entitlements, though the service takes no Apple sign-in from it.
+- **Google:** the iOS OAuth client for `com.zenbujapanese.app`
+  ([`account-api.md`](account-api.md), Set up the server, step 3). Its client ID goes in
+  `ZENBU_GOOGLE_IOS_CLIENT_ID`, in both of the app target's configurations in
+  `apps/ios/ZenbuJapanese.xcodeproj/project.pbxproj`, in a pull request, and in the service's
+  `GOOGLE_CLIENT_IDS`. Without it the app offers Apple and a code only.
+
+**A TestFlight build.** In a pull request, raise `CURRENT_PROJECT_VERSION` in both of the app
+target's configurations (and `MARKETING_VERSION` for a new version), as "Prepare build 20 of
+1.0.1 for TestFlight" did. From `main` after it merges, in Xcode: the `ZenbuJapanese` scheme,
+**Any iOS Device (arm64)**, Product → Archive, signed by the team above; then Organizer →
+Distribute App → App Store Connect → Upload. App Store Connect lists the build under TestFlight
+once it's processed, about 15 minutes later; answer its export compliance question and add the
+testers. Check it on a device from TestFlight: Account shows **Sign In to Sync** only when the
+build names a service, and signing in with Apple, Google, and a code reaches it.
+
 ## Image Search and Apple Intelligence
 
 `ImageTextRecognitionClient` uses Swift Vision's `RecognizeTextRequest`, which reads vertical
