@@ -296,4 +296,22 @@ struct AccountSignedOutTests {
     #expect(phone.wordLists.lists.first { $0.id == drama.id }?.name == "Drama")
     #expect(service.data(of: listKey(drama.id), for: Fixture.email)?["name"] as? String == "Drama")
   }
+
+  @Test("two phones show lists that share a place in the same order, by the account's dates and IDs")
+  func listsSharingAPlaceKeepOneOrder() async throws {
+    let (service, phone, pad) = await Fixture.twoPhones()
+    let drama = try #require(phone.wordLists.createList(named: "Drama"))
+    try await phone.signIn()
+    changeElsewhere(service, list: drama.id, "update", fields: ["position": .number(0)])
+    try await pad.signIn()
+    try await phone.syncNow()
+
+    let accountDate = try #require(
+      try? Date.ISO8601FormatStyle(includingFractionalSeconds: true).parse(
+        "2026-10-06T10:00:00.000Z"))
+    #expect(phone.wordLists.lists.map(\.position) == [0, 0])
+    #expect(phone.wordLists.lists.map(\.id) == pad.wordLists.lists.map(\.id))
+    #expect(phone.wordLists.lists.allSatisfy { $0.createdAt == accountDate })
+    #expect(pad.wordLists.lists.allSatisfy { $0.createdAt == accountDate })
+  }
 }

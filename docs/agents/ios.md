@@ -474,6 +474,9 @@ tests prove that model against the real service.
   its words. Any other list the account deleted is deleted on the phone. A list screen open on
   the old ID follows the list: `WordLists.moveList` records each move, and `WordListView` reads
   its list through `WordLists.currentID(of:)`.
+- **List order.** Lists sort by position, then by `createdAt`, then by ID, and a pulled list takes
+  the account's `createdAt`, so lists that share a position, as when a first upload sends one into
+  a place the account already used, show in the same order on every device.
 - **A sync** sends up to 50 queued changes, at most 48 KB of them (the service takes 64 KB), and at
   most one per entity, so a second change to an entity goes after the first's result and is moved
   onto its version. An answer lost on the way is sent again unchanged. `applied` keeps the version;

@@ -5,7 +5,7 @@ struct WordList: Codable, Hashable, Identifiable, Sendable {
   let id: UUID
   var name: String
   var position: Int
-  let createdAt: Date
+  var createdAt: Date
   var updatedAt: Date
 }
 
@@ -181,9 +181,13 @@ final class WordLists: LocalFileStore {
   func applySynced(_ list: WordList) {
     guard canChange else { return }
     if let index = lists.firstIndex(where: { $0.id == list.id }) {
-      guard lists[index].name != list.name || lists[index].position != list.position else { return }
+      guard
+        lists[index].name != list.name || lists[index].position != list.position
+          || lists[index].createdAt != list.createdAt
+      else { return }
       lists[index].name = list.name
       lists[index].position = list.position
+      lists[index].createdAt = list.createdAt
       lists[index].updatedAt = Date()
     } else {
       lists.append(list)
@@ -264,7 +268,9 @@ final class WordLists: LocalFileStore {
   }
 
   private static func ordered(_ lists: some Sequence<WordList>) -> [WordList] {
-    lists.sorted { ($0.position, $0.createdAt) < ($1.position, $1.createdAt) }
+    lists.sorted {
+      ($0.position, $0.createdAt, $0.id.uuidString) < ($1.position, $1.createdAt, $1.id.uuidString)
+    }
   }
 
   private static func grouped(

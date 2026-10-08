@@ -112,7 +112,8 @@ and Zenbu app ([Zenbu account and sync](#zenbu-account-and-sync)). Words and kan
 (see [Dictionary](dictionary.md)).
 
 The Account row shows how many lists there are. Lists shows every list in the learner's order
-with its word count. A learner can create a list, swipe a list to rename or delete it (a list
+with its word count; two lists in one place, as after signing in on a second phone, show in the
+same order on every device. A learner can create a list, swipe a list to rename or delete it (a list
 that has words asks first), and open a list. In Edit, the learner drags lists to reorder them and
 taps a list to rename it. Names are trimmed, can't be
 empty, hold at most 500 characters (control characters become spaces), and may repeat. A list shows its words most recently added first, with the **✓ Known** capsule on known words; the learner can search
