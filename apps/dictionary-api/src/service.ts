@@ -21,12 +21,25 @@ import type {
   WordResponse,
   WordSitemap
 } from '@zenbu/dictionary-core/artifact/dictionary'
+import type { LanguageDataVersion } from '@zenbu/dictionary-core/artifact/word-cards'
 import type { CategoryOrder } from '@zenbu/dictionary-core/browse/categories'
 import type { KanaScript } from '@zenbu/dictionary-core/browse/kana'
+import type { WordCard } from '@zenbu/dictionary-core/cards/card'
+import type { SegmentedToken } from '@zenbu/dictionary-core/cards/segmentation'
+
+interface AppCaller {
+  account: string
+  scopes: ReadonlySet<string>
+}
+
+export type AccountTokens = (token: string) => Promise<AppCaller | null>
+
+export class AccountKeysUnavailable extends Error {}
 
 export interface ServiceInfo {
   build: string
   artifact: { name: string; sha256: string }
+  languageData: LanguageDataVersion
   features: { sentenceSearch: boolean }
 }
 
@@ -56,6 +69,8 @@ export interface DictionaryService {
   kanjiHub(): Promise<KanjiHubResponse>
   kanjiList(slug: string): Promise<KanjiListResponse | null>
   browseSitemap(): Promise<BrowseSitemapResponse>
+  wordCards(languageReferenceIDs: string[]): Promise<WordCard[]>
+  segment(text: string): Promise<SegmentedToken[]>
 }
 
 export type ServiceMethod = keyof DictionaryService
@@ -89,6 +104,8 @@ export function inProcessService(
     rankedWords: async (slug, page) => browse.rankedWords(slug, page),
     kanjiHub: async () => browse.kanjiHub(),
     kanjiList: async slug => browse.kanjiList(slug),
-    browseSitemap: async () => browse.sitemap()
+    browseSitemap: async () => browse.sitemap(),
+    wordCards: async ids => dictionary.wordCards(ids),
+    segment: async text => dictionary.segment(text)
   }
 }

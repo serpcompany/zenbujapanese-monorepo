@@ -12,6 +12,7 @@ import { logRequests } from '@zenbu/node-service/http'
 import { errorFields, log } from '@zenbu/node-service/log'
 import { type Context, Hono } from 'hono'
 import { routePath } from 'hono/route'
+import { type AppAccess, AppError, appErrorAnswer, appRoutes, isAppPath } from './app-routes'
 import type { DictionaryService } from './service'
 
 const maximumSitemapWordsPerRequest = 10_000
@@ -44,9 +45,10 @@ export interface AppOptions {
   service: DictionaryService
   token: string
   ready(): boolean
+  access?: AppAccess | null
 }
 
-export function createApp({ service, token, ready }: AppOptions) {
+export function createApp({ service, token, ready, access = null }: AppOptions) {
   const app = new Hono()
 
   app.use(logRequests())
@@ -63,6 +65,7 @@ export function createApp({ service, token, ready }: AppOptions) {
   })
 
   app.use('/v1/*', async (context, next) => {
+    if (isAppPath(context.req.path)) return next()
     if (!tokenMatches(context.req.header('authorization'), token)) {
       return context.json({ error: 'unauthorized' }, 401)
     }
@@ -205,12 +208,25 @@ export function createApp({ service, token, ready }: AppOptions) {
 
   app.get('/v1/sitemaps/browse', async context => context.json(await service.browseSitemap()))
 
-  app.notFound(context => context.json({ error: 'not found' }, 404))
+  appRoutes(app, { service, ready, access })
+
+  app.notFound(context =>
+    isAppPath(context.req.path)
+      ? appErrorAnswer(context, new AppError(404, 'not_found', 'There is no such app route'))
+      : context.json({ error: 'not found' }, 404)
+  )
 
   app.onError((error, context) => {
+    if (error instanceof AppError) return appErrorAnswer(context, error)
     if (error instanceof BadRequest) return context.json({ error: error.message }, 400)
     if (error instanceof NotFound) return context.json({ error: error.message }, 404)
     log('error', 'request failed', { route: routePath(context), ...errorFields(error) })
+    if (isAppPath(context.req.path)) {
+      return appErrorAnswer(
+        context,
+        new AppError(500, 'internal', 'The dictionary failed to answer')
+      )
+    }
     return context.json({ error: 'internal error' }, 500)
   })
 
