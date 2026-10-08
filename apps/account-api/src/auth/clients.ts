@@ -14,9 +14,7 @@ function signInClient(
   const named = headers?.get(clientHeader)
   if (named) return clientById(named)
   const origin = headers?.get('origin')
-  if (!origin) return null
-  if (trustedOrigins.includes(origin)) return webClient
-  return clients.find(client => client.origins.includes(origin)) ?? null
+  return origin && trustedOrigins.includes(origin) ? webClient : null
 }
 
 const unknownClient = () =>

@@ -68,6 +68,7 @@ export interface ApiDocument {
 export interface ReferenceSource {
   document: string
   regenerate: string
+  contract?: string
   guide?: { title: string; path: string }
 }
 
@@ -219,10 +220,13 @@ function header(document: ApiDocument, source: ReferenceSource): string[] {
         `How a client uses these routes, in order, is the [${source.guide.title}](${source.guide.path}).`
       ]
     : []
+  const change = source.contract
+    ? `after changing a route, change its contract in ${code(source.contract)} too, then run`
+    : 'after changing a route, run'
   return [
     `# ${document.info.title}`,
     '',
-    `Written from [${code(source.document)}](${toRoot}${source.document}), the contract's version ${document.info.version}, by ${code('packages/node-service/src/api-reference.ts')}, and a test fails when the two differ. Don't edit it by hand: after changing a route, run ${code('pnpm test -u')} in ${code(source.regenerate)}, and commit both files.`,
+    `Written from [${code(source.document)}](${toRoot}${source.document}), the contract's version ${document.info.version}, by ${code('packages/node-service/src/api-reference.ts')}, and a test fails when the two differ. Don't edit it by hand: ${change} ${code('pnpm test -u')} in ${code(source.regenerate)}, and commit both files.`,
     ...(guide.length ? ['', ...guide] : []),
     '',
     ...(document.info.description ? [document.info.description, ''] : [])

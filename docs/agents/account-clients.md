@@ -56,7 +56,7 @@ Cloud ([`account-api.md`](account-api.md), Set up the server):
 
 1. **Its entry** in `apps/account-api/src/domain/clients.ts`: an `id` (lowercase, sent as
    `X-Zenbu-Client`), its `name`, the fewest `scopes` it needs, its Apple bundle IDs
-   (`appleBundleIds`), no `origins`, `signsInOnTheWeb: false`, and `requestsPerMinute` (30,000, as
+   (`appleBundleIds`), `signsInOnTheWeb: false`, and `requestsPerMinute` (30,000, as
    the others), with a row in the table above. The service ships with the next `Account API
    deploy`; until then a sign-in naming it is refused `unknown_client`.
 2. **Sign in with Apple:** its App ID, in the same Apple Developer team as the iOS app
@@ -143,7 +143,7 @@ the Keychain: it's the refresh token, good for 60 days from its last use. Send i
 `POST /v1/auth/sign-out`; the rest manage the account and need `account` or `profile`. At most five
 codes go to one email in 10 minutes. Each address Cloudflare sees may also ask for five codes and
 try ten in 10 minutes, ask for 30 nonces and make 20 Apple or Google sign-ins a minute, and send
-100 other requests to `/v1/auth` a minute. Past any of them the answer is `429`, with
+at most 100 other requests to `/v1/auth` a minute, fewer to some of Better Auth's routes. Past any of them the answer is `429`, with
 `Retry-After`: wait that many seconds. The same
 Apple account, Google account, or email signs in to the same Zenbu account in
 every app, as long as the account has that way in; an email that already has an account through
@@ -311,7 +311,8 @@ The reference's [Sync entities](../api/account-api.md#sync-entities) gives each 
 scopes each operation needs, its fields with their bounds, whether it reads `baseVersion`, and an
 example. The bounds of a request:
 
-- **50 mutations** and **64 KB** at most (`413 too_large`: send fewer). Each mutation's `id` is 8
+- **50 mutations** at most (`400 bad_request` past them), and a body of **64 KB** at most
+  (`413 too_large`): send fewer at a time. Each mutation's `id` is 8
   to 64 letters, digits, `-`, or `_`, unique in the request (`400 bad_request` otherwise); its
   `entityId` at most 200 characters, with no spaces or control characters; its `fields` names at
   most 64 characters, and their values strings, numbers, booleans, or null.
@@ -359,7 +360,7 @@ Every error names a `code`, and the reference lists the codes each route answers
 | `403 email_not_verified`, `client_mismatch`, `400 unknown_client` | A sign-in this app can't make; `unknown_client` is a missing or unlisted `X-Zenbu-Client`. |
 | `409 version_conflict` | Take `current`, show it, and let the learner try again. |
 | `410 invalid_cursor` | Sync again with no cursor. |
-| `413 too_large` | Send fewer mutations. |
+| `413 too_large` | The body is over 64 KB: send fewer mutations at a time. |
 | `429 too_many_requests` | Wait the seconds `Retry-After` says, whatever started the request. |
 | `500 internal`, a network failure, an answer that isn't JSON | Retry with exponential backoff and jitter, in the foreground. |
 | `503 apple_unavailable` | Nothing was deleted: sign in with Apple again for a new code, and try again (Deleting the account). |
@@ -373,10 +374,12 @@ reference lists them under [Rejected mutations](../api/account-api.md#rejected-m
 
 The service answers CORS only for the origins in its `ACCOUNT_API_TRUSTED_ORIGINS`, which are the
 website's (`https://zenbujapanese.com`, and `https://staging.zenbujapanese.com` on staging), with
-credentials, never `*`. A page on another origin can't call it, and a sign-in from one of those
-origins is the website's (`zenbu-web`) unless it names another app. So a new web app needs a change
-to the service first: its origin in that setting and in its entry's `origins`, and a decision
-about whether it keeps a cookie session as the website does. Apps on a device aren't held to CORS.
+credentials, never `*`. A page on another origin can't call it. A sign-in from one of those
+origins is the website's (`zenbu-web`) unless it names another app in `X-Zenbu-Client`, and a
+redirect sign-in (Apple's or Google's page, back to `/v1/auth/callback/<provider>`) is always the
+website's. So a new web app needs a change to the service first: its origin in that setting, its
+sign-ins naming it in `X-Zenbu-Client`, ID-token sign-ins only, and a decision about how it keeps
+its session. Apps on a device aren't held to CORS.
 
 ## Deleting the account
 
