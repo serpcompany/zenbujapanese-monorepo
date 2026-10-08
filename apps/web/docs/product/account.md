@@ -45,7 +45,7 @@ other account page, and asks the account service nothing.
   says signing in isn't available, links no account page, and stays noindex" (and each other
   page); `src/lib/account/pages.test.ts` (the descriptions included); `src/app/routes.test.ts`.
 
-**Footer.** Where the account pages are open, the footer's Product group ends with Sign in, which
+**Footer.** Where the account pages are open, the footer's Products group ends with Sign in, which
 leads to `/login/`; where they're closed, as in production today, it has no such link, so nothing
 links to the account pages. In a browser that signed in on the site, it says Account and leads to
 `/account/`. The browser remembers that
@@ -54,8 +54,8 @@ on deleting the account, and when the account page finds no session. The server 
 the page and its first render in the browser agree.
 
 - Source: #468, so the pages can be reached; the header is unchanged.
-- Check: `src/components/site-footer.test.tsx`, "the footer groups every link under Product,
-  Company, and Policies", "the footer leads to signing in, as the server draws it before the
+- Check: `src/components/site-footer.test.tsx`, "the footer groups its links under Products,
+  Tools, Company, and Legal", "the footer leads to signing in, as the server draws it before the
   browser knows", and "the footer leaves signing in out where the site's account pages are
   closed"; Account spec, "the footer leads to signing in, and to the account once signed
   in"; Closed spec, "a page built ahead of time has no Sign in in its footer".

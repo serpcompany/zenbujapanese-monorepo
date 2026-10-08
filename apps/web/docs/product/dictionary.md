@@ -74,7 +74,7 @@ column too. The browse pages under `/dictionary/browse/` are wider, as their moc
 **Searching.** A search runs when the learner submits the box, not as they type. The box submits
 to `/dictionary/search/?q=<query>`, which redirects (308) to the query's own results page. The
 results page keeps its box under the breadcrumbs, filled with the query; word pages have no box,
-and reach search through the header's Dictionary link (#561). The app searches as the learner
+and reach search through the header's Dictionary menu (#561). The app searches as the learner
 types; the website searches on Enter so that each search is its own page.
 
 - Source: #466 (search on Enter, not as you type).
@@ -838,61 +838,133 @@ Detail in the app, so its row doesn't open.
 
 ## Header, footer, and site-wide
 
-**Header.** The 全 mark and the site name link home; on a screen narrower than 360 pixels the name
-is left to screen readers so the row fits. The header has no search: the Dictionary link leads to
-the dictionary home, whose box searches (#561). On wide screens the nav links Dictionary, About,
-and Support beside the name, and Get the app sits at the right. On phones a menu button (lucide
-`Menu`) beside Get the app opens a sheet from the right, titled with the site name, that lists the
-same three links with the current one marked. Following a link, its close button (lucide `X`),
-going back or forward, or widening the window past the phone layout closes it.
+**Header.** The 全 mark and the site name link home. From 1024 pixels the header shows the mark
+and name, the Dictionary, Tools, Products, and Company menus, then Log in and Get the app at the
+right. Below 1024 pixels it shows only the mark, with the name left to screen readers, and a menu
+button (lucide `Menu`). The header has no search and no email address: the Dictionary menu leads to
+the dictionary home, whose box searches (#561).
 
-- Source: #462 design; #484; #561 (no search in the header, the phone menu).
-- Check: `src/components/site-header.test.tsx`, "the header on %s has no search, and a menu button
-  for phones"; `apps/web/e2e/site.spec.ts`, "the header has no search, and its Dictionary link
-  leads to the search box", "the header leads to About and marks it current" (the nav on desktop,
-  the menu on phones), "the header fits a 320-pixel phone, with the site name left to screen
-  readers", "the phone menu closes when the browser goes back, and stays closed going forward", and
-  "the phone menu closes when the window widens, and stays closed when it narrows"; smoke "the
-  header links to the dictionary and has no search"; `apps/web/e2e/layout.spec.ts`, which checks
-  that no page scrolls sideways at either width.
+- Source: #648 decision and mockups (Header switch); #650; #561 (no search in the header).
+- Check: `src/components/site-header.test.tsx`, "below 1024 pixels the header has a menu button,
+  and from 1024 the menus" and "the header on %s has no search and no email address";
+  `apps/web/e2e/site.spec.ts`, "the header has the name, four menus, Log in, and Get the app, and no
+  search" and "the header shows only the logo and the menu button, and fits a 320-pixel phone";
+  smoke "the header links to the dictionary and has no search"; `apps/web/e2e/layout.spec.ts`,
+  which checks that no page scrolls sideways at either width.
 
-**Current section.** The nav marks the section the page is in: in the foreground color on a muted
-background, where the others are muted text (#561, after the #462 design's Dictionary). Every page
-under `/dictionary/` (search results and word pages) is in Dictionary; `/about/` and `/support/`
-are their own. Home, the legal pages, and the other pages are in none. Screen readers hear the
-link as the current page on the section's own page (`aria-current="page"`) and as current on the
-pages under it (`aria-current="true"`).
+**Menus.** Dictionary, Tools, and Products are mega menus: a featured card, three columns, and a
+footer line with a link. Company is a plain dropdown.
 
-- Source: #462 design; `components/site-nav.tsx`.
-- Check: `src/components/site-header.test.tsx`, "the header nav marks the current section, as the
-  #462 design does", which renders the header for dictionary, About, Support, and other paths;
-  smoke "the header marks Dictionary current on the dictionary home".
+- **Dictionary:** a card with the App Store search screenshot that opens the dictionary home; Kana
+  (Hiragana, Katakana), Word lists (JLPT vocabulary, which opens N5, and Frequency lists), and
+  Kanji and grammar (Kanji by grade, Parts of speech); then Browse everything (`/dictionary/browse/`).
+- **Tools:** a card drawn with kana that leads to all tools; Reference (Dictionary, Kana charts),
+  Lists (Kanji lists, Frequency lists), and Converters (Hiragana to Katakana, Romaji to Kana, Kanji
+  to Furigana); then All free tools.
+- **Products:** a card with the App Store word screenshot for Zenbu Japanese for iPhone, with Get
+  the app; Apps (Zenbu Japanese for iPhone, Browser extension), Free (Zenbu Japanese Dictionary,
+  Free tools), and Learn (Reference guides, Courses); then All products.
+- **Company:** About, Sources, Support, Contact, and Legal.
 
-**Get the app.** The button leads with a phone icon (lucide `Smartphone`), then "Get the app". It
-leads to the home page until the App Store link is known. The #462 mockup draws the Apple logo;
-lucide has no brand icons, and #511 asked for a phone.
+A menu opens on click, hover, Enter, or Space, and closes on a second click, a click outside it,
+Escape (focus goes back to its button), or following one of its links. Tab moves into the open menu.
+Every menu link is in the page's HTML while the menu is closed, so search engines see them. The
+menus sit under their buttons, as shadcn's navigation menu places them, and slide to stay inside the
+window.
 
-- Source: #462 design; #511 (the phone icon).
-- Check: `src/components/site-header.test.tsx`, "the Get the app button leads with a phone icon".
+- Source: #648 decision and mockups (Header switch); #650.
+- Check: `src/components/site-header.test.tsx`, "the Dictionary menu leads to the dictionary and its
+  browse pages", "the Tools menu leads to the reference pages, and its planned pages are
+  placeholders", "the Products menu leads to the web dictionary, and its planned pages are
+  placeholders", and "the Company menu leads to About, Sources, Support, Contact, and Legal";
+  `apps/web/e2e/site.spec.ts`, for each menu, "the … menu opens and closes with a click", "the …
+  menu opens with the keyboard and Escape closes it", and "a link in the … menu opens its page and
+  closes the menu", and "every link in the header menus opens a page the site has, with no
+  redirect" and "the Dictionary menu leads to the search box".
+
+**Placeholder links.** The pages the menus, footer, and [homepage](home.md) name that don't exist
+yet, and the outside addresses that aren't known yet, link to `#` for now: All free tools and Free
+tools (`/tools/`),
+the three converters, Zenbu Japanese for iPhone (its product page, which #652 builds at
+`/products/zenbu-japanese-for-iphone/`), Browser extension, Reference guides, Courses, All products
+(`/products/`, also #652), Log in (`/login/`), Get the app (the App Store), and the ten social
+accounts. #650 asked for menu items to appear only once their page exists; the owner chose to show
+them now as `#` placeholders instead (#648). Every one is in one list, `linkTargets` in
+`src/lib/site.ts`, named for what it stands for, and its links carry `data-link-target` with its id.
+A browser test lists every `#` link the site renders and fails on one that isn't in that list, so
+none reaches production unnoticed; replacing a placeholder means giving its entry the real address,
+or linking the page directly once it exists.
+
+- Source: #648 decision (placeholder links), and the owner's decision on #650 (show planned items
+  as placeholders).
+- Check: `apps/web/e2e/placeholders.spec.ts`, "every # link the site renders is a placeholder listed
+  in src/lib/site.ts", which visits every page in `src/lib/pages.ts` and a search, word, and browse
+  page at both widths, with the phone menu open, and prints the placeholders it found;
+  `apps/web/e2e/site.spec.ts`, "the planned pages in the Tools and Products menus are # placeholders
+  for now".
+
+**Current section.** The menu button of the section the page is in is in the foreground color on a
+muted background, where the others are muted text, and screen readers hear it as current
+(`aria-current="true"`): every page under `/dictionary/` is in Dictionary, and About, Sources,
+Support, Contact, and the legal pages are in Company. Home and the sitemap are in none. In the open
+menu and in the phone menu, the link to the page itself is marked as the current page
+(`aria-current="page"`).
+
+- Source: #462 design; #650.
+- Check: `src/components/site-header.test.tsx`, "the header marks the section the page is in";
+  `apps/web/e2e/site.spec.ts`, "the header marks the section the page is in, and the page in its
+  menu" and "the drawer marks the current page, and closes with its close button"; smoke "the
+  header marks Dictionary current on the dictionary home".
+
+**Phone menu.** Below 1024 pixels the menu button opens a sheet from the right, titled with the site
+name, that holds the four menus as groups that open and close (one at a time), the current
+section's group open, then Log in and Get the app. A mega menu's group lists its columns' links,
+with the Dictionary group led by Search. A group opens and closes with a click, Enter, or Space.
+Following a link, its close button (lucide `X`), Escape, going back or forward, or widening the
+window to 1024 pixels closes the sheet.
+
+- Source: #648 decision and mockups (Phone width); #650; #561 (the phone menu).
+- Check: `apps/web/e2e/site.spec.ts`, "the drawer holds the menus as groups, then Log in and Get
+  the app", "a drawer group opens and closes with a click, and its link opens the page", "the drawer
+  opens and its groups toggle with the keyboard, and Escape closes it", "following Log in or Get the
+  app in the drawer closes it", "the drawer closes when the
+  browser goes back, and stays closed going forward", and "the drawer closes when the window reaches
+  1024 pixels, and stays closed when it narrows".
+
+**Get the app and Log in.** Get the app leads with a phone icon (lucide `Smartphone`); it opens the
+App Store link, a placeholder until that address is known, and is the same button in the header,
+the phone menu, and the prompt that actions needing the app open; following it closes the phone
+menu or the prompt. Log in opens the login page's placeholder; there is no signed-in avatar menu
+until accounts exist (#468).
+
+- Source: #648 decision; #650; #511 (the phone icon).
+- Check: `src/components/site-header.test.tsx`, "from 1024 pixels Log in and Get the app end the
+  header, at their links in src/lib/site.ts" and "the Get the app button leads with a phone icon";
+  `apps/web/e2e/word.spec.ts`, "opens the More actions menu with the app's actions".
 
 **Footer.** The footer starts with the 全 mark and the site name, linking home, and the site's
-one-line description. Beside them on wide screens, and below them in two columns on phones, three
-labelled groups hold every link: Product (Dictionary, Browse by kana, Kanji by grade, Sources,
-Sitemap, and, where the account pages are open, Sign in, or Account once signed in:
-[Account pages](account.md#pages)), Company
-(About, Support, Contact), and Policies (Legal (`/legal/`), Privacy Policy, Terms of Use, DMCA
-Copyright Policy, Affiliate Disclosure). A rule, then the copyright line, ends it. The
-browse links follow the #614 mockup ([Browse pages](browse.md#site-wide)). Legal follows Contact,
-as in the #462 design. The #462 mockup's footer lists only Contact, Legal, Privacy, Terms, Sources,
-and Sitemap. Whether the footer drops the other links is waiting on the owner's and Devin's
-decision (#511); until then it keeps them.
+one-line description. Four labelled columns follow: Products (Zenbu Japanese for iPhone,
+Dictionary, and, where the account pages are open, Sign in, or Account once signed in:
+[Account pages](account.md#pages)), Tools (Kana charts, Kanji lists, Frequency lists, All tools),
+Company (About, Support, Contact, Sources), and Legal (Privacy Policy, Terms of Use, DMCA, Affiliate
+Disclosure). From 768
+pixels the brand and the columns sit side by side; on phones they stack into one column. Below
+them, after a rule, a row of plain social icons with no boxes, each named "Zenbu Japanese on" its
+network: YouTube, X, Instagram, TikTok, Discord, Reddit, Threads, Bluesky, LinkedIn, and Facebook,
+five to a row on phones. Each is the brand's own mark, drawn as inline SVG in the text color: Simple
+Icons' paths (CC0), and for LinkedIn, which Simple Icons doesn't carry, a trace of the In bug from
+LinkedIn's brand downloads (`components/social-links.tsx`). The copyright line and Sitemap end it. The legal
+index (`/legal/`) is in the Company menu rather than the footer.
 
-- Source: #462 design (Contact, Legal, Privacy, Terms, Sources, Sitemap); #561 (the groups).
-- Check: `src/components/site-footer.test.tsx`, "the footer links Legal after Contact, before the
-  legal pages, as the #462 design does", "the footer groups every link under Product, Company, and
-  Policies", and "the footer leads with the brand linking home and its tagline, and ends with the
-  copyright"; `apps/web/e2e/site.spec.ts`, "the footer groups its links under Product, Company, and
-  Policies"; smoke "the footer links Legal".
+- Source: #648 decision and mockups (footer); #650; #614 (the browse links).
+- Check: `src/components/site-footer.test.tsx`, "the footer groups its links under Products, Tools,
+  Company, and Legal", "the footer stacks its columns into one on phones, and lays them side by side
+  from 768 pixels", "the footer leads with the brand linking home and its tagline", "a row of plain
+  brand icons, five to a row on phones, links each account in src/lib/site.ts", and "the footer ends
+  with the copyright and the Sitemap"; `apps/web/e2e/site.spec.ts`, "the footer groups its links
+  under Products, Tools, Company, and Legal, then ends with the copyright and Sitemap", "the footer
+  lays its columns side by side from 768 pixels, and stacks them on phones", and "the footer shows
+  plain social icons, five to a row on phones"; smoke "the footer links the Privacy Policy".
 
 **Reading Aids.** The website has no Reading Aids settings yet. It shows what the app shows with
 its defaults: headwords and linked example words have furigana, examples show their translation,

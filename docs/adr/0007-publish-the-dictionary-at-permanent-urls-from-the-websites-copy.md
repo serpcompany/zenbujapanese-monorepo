@@ -56,7 +56,7 @@ still to be chosen.)
 
 ## The website publishes; it is not a lookup service
 
-ADR 0006 says no client sends dictionary lookups to a server. The apps still don't. ([ADR 0013](0013-let-signed-in-apps-fetch-word-cards-from-the-dictionary-service.md)
+ADR 0006 says no client sends dictionary lookups to a server. The apps still don't. ([ADR 0014](0014-let-signed-in-apps-fetch-word-cards-from-the-dictionary-service.md)
 lets a signed-in app without the data ask the dictionary service for word cards, never the
 website.) The website
 is a publisher: its server reads its own D1 copy of the artifact to render pages, and no app
@@ -65,7 +65,7 @@ record of which version is loaded, and the website never writes to it at runtime
 [ADR 0009](0009-serve-the-websites-dictionary-from-a-service-running-the-shared-core.md)
 replaces the D1 copy with a service that reads one pinned artifact version itself; the
 website is still a publisher that no app queries. Accounts and
-learner data live in the backend and are reached only through its `/v1` API. ([ADR 0012](0012-run-accounts-and-sync-in-their-own-service-on-the-api-servers.md) makes the
+learner data live in the backend and are reached only through its `/v1` API. ([ADR 0013](0013-run-accounts-and-sync-in-their-own-service-on-the-api-servers.md) makes the
 backend its own service, `apps/account-api/`.)
 
 The discussion is in [issue 461](https://github.com/serpcompany/zenbujapanese-monorepo/issues/461).

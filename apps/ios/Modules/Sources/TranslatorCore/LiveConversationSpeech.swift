@@ -37,16 +37,18 @@ extension LiveConversation {
       return
     }
     lastVolatileChangeAt = now
-    let provisional =
-      liveSentence?.language == language ? liveSentence?.provisionalTranslation : nil
+    let kept = liveSentence?.language == language ? liveSentence : nil
     liveSentence = LiveSentence(
-      language: language, text: text, provisionalTranslation: provisional)
+      language: language, text: text, provisionalTranslation: kept?.provisionalTranslation,
+      provisionalSource: kept?.provisionalSource)
     requestProvisionalTranslation()
   }
 
   private func receiveFinal(_ text: String, in language: SpokenLanguage, at now: Date) {
-    let provisional =
-      liveSentence?.language == language ? liveSentence?.provisionalTranslation : nil
+    let provisional = liveSentence.flatMap { live in
+      live.language == language && Self.covers(text, live.provisionalSource ?? "")
+        ? live.provisionalTranslation : nil
+    }
     liveSentence = nil
     cancelProvisionalTranslation()
     guard !text.isEmpty else {
@@ -64,6 +66,12 @@ extension LiveConversation {
     conversation.turns[conversation.turns.count - 1].sentences.append(sentence)
     translate(sentence, from: language)
     enqueuePlayback(mode.playback == .asTranslated ? [sentence.id] : [])
+  }
+
+  static let coveredShare = 0.95
+
+  static func covers(_ final: String, _ translated: String) -> Bool {
+    Double(final.count) >= Double(translated.count) * coveredShare
   }
 
   func closeOpenTurn() {
@@ -134,6 +142,7 @@ extension LiveConversation {
       provisionalInFlight = false
       if let translation, liveSentence?.language == requested.language {
         liveSentence?.provisionalTranslation = translation
+        liveSentence?.provisionalSource = requested.text
       }
       if let current = liveSentence, current.text != requested.text {
         requestProvisionalTranslation()
