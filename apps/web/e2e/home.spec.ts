@@ -1,0 +1,140 @@
+import type { Page } from '@playwright/test'
+import {
+  appExtras,
+  appFeatures,
+  exampleSearches,
+  homeTitle,
+  openDataSources,
+  webTools
+} from '../src/lib/home'
+import { pageFor } from '../src/lib/pages'
+import { linkTo, site } from '../src/lib/site'
+import { expect, test } from './test'
+
+const main = (page: Page) => page.getByRole('main')
+
+const region = (page: Page, name: RegExp) => main(page).getByRole('region', { name })
+
+test.describe('homepage', () => {
+  test('is titled, described, and its own canonical URL', async ({ page }) => {
+    await page.goto('/')
+    await expect(page).toHaveTitle(homeTitle)
+    await expect(page.locator('meta[name="description"]')).toHaveAttribute(
+      'content',
+      pageFor('/').description
+    )
+    await expect(page.locator('link[rel="canonical"]')).toHaveAttribute('href', `${site.url}/`)
+  })
+
+  test('the hero leads with the app, with Get the app and Search the dictionary', async ({
+    page
+  }) => {
+    await page.goto('/')
+    const hero = region(page, /^Understand the Japanese you meet$/)
+    await expect(hero.getByRole('heading', { level: 1 })).toHaveText(
+      'Understand the Japanese you meet'
+    )
+    const appStore = linkTo('app-store')
+    const getTheApp = hero.getByRole('button', { name: 'Get the app' })
+    await expect(getTheApp).toHaveAttribute('href', appStore.href)
+    await expect(getTheApp).toHaveAttribute('data-link-target', 'app-store')
+    await expect(hero.getByRole('img')).toHaveCount(2)
+    await hero.getByRole('link', { name: 'Search the dictionary' }).click()
+    await expect(page).toHaveURL('/dictionary/')
+    await expect(page.getByRole('heading', { level: 1, name: 'Japanese dictionary' })).toBeVisible()
+  })
+
+  test('the Try the dictionary box opens the search page', async ({ page }) => {
+    await page.goto('/')
+    const tryIt = region(page, /^Try the dictionary$/)
+    await tryIt.getByRole('textbox', { name: 'Search Japanese or English' }).fill('iru')
+    await tryIt.getByRole('button', { name: 'Search' }).click()
+    await expect(page).toHaveURL('/dictionary/search/iru/')
+    await expect(page.getByText('6 words for iru')).toBeVisible()
+  })
+
+  test('each example search opens its search page', async ({ page }) => {
+    await page.goto('/')
+    const examples = region(page, /^Try the dictionary$/).getByRole('list', { name: 'Try' })
+    await expect(examples.getByRole('link')).toHaveText(
+      exampleSearches.map(example => example.query)
+    )
+    for (const example of exampleSearches) {
+      await expect(examples.getByRole('link', { name: example.query })).toHaveAttribute(
+        'href',
+        example.path
+      )
+    }
+    await examples.getByRole('link', { name: 'taberu' }).click()
+    await expect(page).toHaveURL('/dictionary/search/taberu/')
+    await expect(page.getByRole('main').getByRole('textbox')).toHaveValue('taberu')
+  })
+
+  test('shows the four features, then the four more things in the app', async ({ page }) => {
+    await page.goto('/')
+    await expect(
+      region(page, /^One app for reading, writing, and talking$/).getByRole('heading', {
+        level: 3
+      })
+    ).toHaveText(appFeatures.map(feature => feature.title))
+    await expect(
+      region(page, /^Also in the app\. For everything after the lookup\.$/).getByRole('heading', {
+        level: 3
+      })
+    ).toHaveText(Object.values(appExtras).map(extra => extra.title))
+  })
+
+  test('tapping a kanji in 弱肉強食 moves the highlight to its part of the reading', async ({
+    page
+  }) => {
+    await page.goto('/')
+    const extras = region(page, /^Also in the app\./)
+    const niku = extras.getByRole('button', { name: '肉, にく' })
+    const kyou = extras.getByRole('button', { name: '強, きょう' })
+    await expect(niku).toHaveAttribute('aria-pressed', 'true')
+    await kyou.click()
+    await expect(kyou).toHaveAttribute('aria-pressed', 'true')
+    await expect(niku).toHaveAttribute('aria-pressed', 'false')
+  })
+
+  test('the free web tools link to pages the site has, with no redirect', async ({
+    page,
+    request
+  }) => {
+    await page.goto('/')
+    const tools = region(page, /^Free on the web\./).getByRole('list', { name: 'Free tools' })
+    const links = tools.getByRole('link')
+    await expect(links).toHaveText(webTools.map(tool => new RegExp(`^${tool.title}`)))
+    for (const tool of webTools) {
+      const link = tools.getByRole('link', { name: new RegExp(`^${tool.title}`) })
+      await expect(link).toHaveAttribute('href', tool.href)
+      expect((await request.get(tool.href, { maxRedirects: 0 })).status(), tool.href).toBe(200)
+    }
+    await tools.getByRole('link', { name: /^Kanji lists/ }).click()
+    await expect(page).toHaveURL('/dictionary/browse/kanji/')
+  })
+
+  test('the closing block credits the open data, then offers the app', async ({ page }) => {
+    await page.goto('/')
+    const closing = region(page, /^Your Japanese stays yours\./)
+    await expect(closing.getByRole('heading', { level: 3 })).toHaveText([
+      'Works offline',
+      'No account, no ads',
+      'Built on open data',
+      'Zenbu Japanese for iPhone'
+    ])
+    const licences = closing.getByRole('definition')
+    await expect(closing.getByRole('term')).toHaveText(openDataSources.map(source => source.name))
+    await expect(licences).toHaveText(openDataSources.map(source => source.license.name))
+    await expect(closing.getByRole('button', { name: 'Get the app' })).toHaveAttribute(
+      'data-link-target',
+      'app-store'
+    )
+    await expect(closing.getByRole('link', { name: 'All products' })).toHaveAttribute(
+      'data-link-target',
+      'products'
+    )
+    await closing.getByRole('link', { name: 'Sources' }).click()
+    await expect(page).toHaveURL('/sources/')
+  })
+})

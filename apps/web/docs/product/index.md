@@ -13,6 +13,8 @@ a sign-in prompt once account pages (#468) exist.
 
 ## Pages
 
+- **Homepage**, `/`: the iPhone app first, then the web dictionary's search box and free tools
+  ([Homepage](home.md)).
 - **Dictionary home**, `/dictionary/`: a search box.
 - **Search results**, `/dictionary/search/<query>/`: the words, and the kanji, a query finds,
   with the kanji's details, and an English search's example sentences.
