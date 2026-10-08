@@ -1,9 +1,11 @@
 import { runService, serveUntilStopped } from '@zenbu/node-service/http'
 import { errorFields, log } from '@zenbu/node-service/log'
+import { accountTokens } from './account-tokens'
 import { createApp } from './app'
 import { readConfig } from './config'
 import { verifyFiles } from './load'
 import { createPool } from './pool'
+import { perMinute } from './rate-limit'
 
 async function main() {
   const config = readConfig()
@@ -18,7 +20,11 @@ async function main() {
   const app = createApp({
     service: pool,
     token: config.token,
-    ready: () => pool.readyCount() === config.workers
+    ready: () => pool.readyCount() === config.workers,
+    access: config.apps && {
+      tokens: accountTokens(config.apps),
+      limit: perMinute(config.apps.requestsPerMinute)
+    }
   })
   serveUntilStopped({
     fetch: app.fetch,

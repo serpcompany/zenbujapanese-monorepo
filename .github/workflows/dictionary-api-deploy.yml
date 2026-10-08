@@ -15,6 +15,7 @@ on:
       - apps/ios/Modules/Sources/SearchExperience/Resources/Kanji*ReferenceData.json
       - apps/ios/Modules/Sources/SearchExperience/Resources/LanguageTechnologyPackCatalog.json
       - apps/ios/Modules/Sources/SearchExperience/Resources/Kuromoji/**
+      - language-data/release.json
       - .github/workflows/dictionary-api-deploy.yml
       - '!**/*.test.ts'
       - '!apps/dictionary-api/src/conformance/**'
@@ -32,6 +33,7 @@ on:
       - apps/ios/Modules/Sources/SearchExperience/Resources/Kanji*ReferenceData.json
       - apps/ios/Modules/Sources/SearchExperience/Resources/LanguageTechnologyPackCatalog.json
       - apps/ios/Modules/Sources/SearchExperience/Resources/Kuromoji/**
+      - language-data/release.json
       - .github/workflows/dictionary-api-deploy.yml
       - '!**/*.test.ts'
       - '!apps/dictionary-api/src/conformance/**'

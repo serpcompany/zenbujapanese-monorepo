@@ -1,13 +1,9 @@
 import type { ConjugationRow, Conjugations } from './conjugation'
 import type { FrequencyDetails } from './frequency'
 import type { PitchAccent } from './pitch'
-import type { RubySegment } from './ruby'
+import { type FuriganaSegment, furiganaSegments } from './ruby'
 
-export interface SuiteFurigana {
-  base: string
-  reading?: string
-  kanjiReadings?: string[]
-}
+export type SuiteFurigana = FuriganaSegment
 
 export interface SuitePitchGraph {
   morae: string[]
@@ -75,13 +71,7 @@ export function suiteConjugations(conjugations: Conjugations, summary: string): 
   }
 }
 
-export function suiteFurigana(ruby: readonly RubySegment[]): SuiteFurigana[] {
-  return ruby.map(({ text, reading, kanjiReadings }) => ({
-    base: text,
-    ...(reading === undefined ? {} : { reading }),
-    ...(kanjiReadings === undefined ? {} : { kanjiReadings })
-  }))
-}
+export const suiteFurigana = furiganaSegments
 
 const suitePoint = (point: { x: number; high: boolean }) => ({
   x: Math.round(point.x * 100),

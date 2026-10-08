@@ -1,4 +1,5 @@
 import type { FrequencyRow } from '../detail/rows'
+import { listedIds } from './database'
 
 function evidenceQueries(idsIn: string, params: string[]) {
   return {
@@ -15,7 +16,7 @@ export function frequencyQueries(ids: readonly string[]) {
 }
 
 export function listedFrequencyQueries(ids: readonly string[]) {
-  return evidenceQueries('SELECT unhex(value) FROM json_each(?)', [JSON.stringify(ids)])
+  return evidenceQueries(listedIds, [JSON.stringify(ids)])
 }
 
 export function frequencyByEntry(

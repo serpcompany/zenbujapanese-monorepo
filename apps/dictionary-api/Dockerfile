@@ -28,6 +28,7 @@ LABEL org.opencontainers.image.source="https://github.com/serpcompany/zenbujapan
 ENV NODE_ENV=production \
   PORT=8788 \
   DICTIONARY_RESOURCES=/service/resources \
+  LANGUAGE_DATA_RELEASE_FILE=/service/language-data/release.json \
   SUDACHI_DICTIONARY=/service/sudachi/system_core.dic
 WORKDIR /service
 COPY apps/ios/Modules/Sources/SearchExperience/Resources/Kuromoji resources/Kuromoji
@@ -44,6 +45,7 @@ COPY apps/ios/Modules/Sources/SearchExperience/Resources/LanguageReferenceData.s
   resources/
 COPY --from=sudachi /sudachi sudachi
 COPY --from=build /service/node_modules node_modules
+COPY language-data/release.json language-data/
 COPY --from=build /repo/apps/dictionary-api/dist dist
 ARG RELEASE=unknown
 ENV DICTIONARY_API_RELEASE=${RELEASE}

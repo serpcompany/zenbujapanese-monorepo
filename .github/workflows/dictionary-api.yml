@@ -6,6 +6,7 @@ on:
       - apps/dictionary-api/**
       - packages/dictionary-core/**
       - packages/node-service/**
+      - docs/api/dictionary-api.md
       - apps/web/src/lib/dictionary/**
       - apps/web/src/components/dictionary/**
       - apps/web/src/test/**
@@ -15,6 +16,7 @@ on:
       - pnpm-workspace.yaml
       - apps/ios/LanguageData/Conformance/**
       - apps/ios/Modules/Sources/SearchExperience/Resources/**
+      - language-data/release.json
       - .github/workflows/dictionary-api.yml
   push:
     branches: [main]
