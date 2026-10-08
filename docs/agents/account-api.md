@@ -97,7 +97,9 @@ the scopes and reads only the entities they allow. The sign-in routes that manag
 (linking, unlinking, listing ways in and sessions, and signing sessions out) need the session's
 app to have `account`, and `get-session`, which shows the email and name, needs `profile`; a
 session whose app isn't listed gets no access token (`401 sign_in_again`). At most five sign-in
-codes go to one email in 10 minutes, from any address. The apps' side, and how to add one, is the
+codes go to one email in 10 minutes, from any address, counting only codes sent; the next gets
+`429 too_many_requests` with `Retry-After` and `X-Retry-After`, the seconds until one ages out. The
+apps' side, and how to add one, is the
 [client guide](account-clients.md).
 
 `/v1/me` and `/v1/sync` take only an access token from `GET /v1/auth/token`, as
@@ -129,9 +131,10 @@ the answer's body is the same token unsigned, which the service refuses, so a co
 database's session rows can't be used either. The session token lasts 60 days from its last use,
 and the app sends it as `Authorization: Bearer <token>` to this service only, to get access tokens
 from `GET /v1/auth/token` and to sign out. An access token is an EdDSA JWT that names the account
-(`sub`), the service (`iss` and `aud`, both `ACCOUNT_API_URL`), and when it expires, 15 minutes on:
-nothing else, so a service that receives one learns only the account's ID. Another service checks
-it against `GET /v1/auth/jwks`. Signing out ends the session, so its token gets no more access
+(`sub`), the service (`iss` and `aud`, both `ACCOUNT_API_URL`), the app and its scopes (`azp` and
+`scope`), when the learner signed in (`auth_time`), and when it expires, 15 minutes on. It holds no
+email or profile, so a service that receives one learns only the account's ID, its app, and its
+scopes. Another service checks it against `GET /v1/auth/jwks`. Signing out ends the session, so its token gets no more access
 tokens. The website signs in the same way, but keeps the session in a cookie on
 `ACCOUNT_API_COOKIE_DOMAIN`, for the origins in `ACCOUNT_API_TRUSTED_ORIGINS`.
 

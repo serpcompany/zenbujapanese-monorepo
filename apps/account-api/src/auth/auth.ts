@@ -11,7 +11,7 @@ import { codeMinutes, signInCodeMessage } from '../email/sign-in-code'
 import { failureFields } from '../failure'
 import { appleClientSecret } from './apple'
 import { sessionClientHooks, tokenClaims } from './clients'
-import { signInGuards } from './guards'
+import { codesPerEmailCounter, signInGuards } from './guards'
 import { identityHooks } from './identities'
 import { signInNonce } from './nonce'
 import { authPath, route } from './routes'
@@ -50,6 +50,7 @@ async function socialProviders(config: AuthConfig) {
 }
 
 export async function createAuth({ config, db, mailer }: AuthOptions) {
+  const codes = codesPerEmailCounter()
   return betterAuth({
     appName: 'Zenbu Japanese',
     baseURL: config.publicUrl,
@@ -74,6 +75,7 @@ export async function createAuth({ config, db, mailer }: AuthOptions) {
         allowedAttempts: 5,
         storeOTP: 'encrypted',
         async sendVerificationOTP({ email, otp }) {
+          codes.sent(email)
           void mailer.send(signInCodeMessage(email, otp))
         }
       }),
@@ -85,7 +87,7 @@ export async function createAuth({ config, db, mailer }: AuthOptions) {
       }),
       bearer({ requireSignature: true }),
       signInNonce(),
-      signInGuards(mailer, config.trustedOrigins)
+      signInGuards(mailer, config.trustedOrigins, codes)
     ],
     databaseHooks: { ...identityHooks(mailer), ...sessionClientHooks(config.trustedOrigins) },
     rateLimit: {

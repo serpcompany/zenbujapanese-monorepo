@@ -63,7 +63,8 @@ A sign-in answers the learner, and the **session token** in the `set-auth-token`
 the Keychain: it's the refresh token, good for 60 days from its last use. Send it only to
 `/v1/auth`. An app with no `account` scope uses only the sign-in routes, `GET /v1/auth/token`, and
 `POST /v1/auth/sign-out`; the rest manage the account and need `account` or `profile`. At most five
-codes go to one email in 10 minutes (`429`). The same Apple account, Google account, or email signs in to the same Zenbu account in
+codes go to one email in 10 minutes (`429`, with `Retry-After`: wait that many seconds). The same
+Apple account, Google account, or email signs in to the same Zenbu account in
 every app, as long as the account has that way in; an email that already has an account through
 another way is refused until the learner adds it there, signed in (`oauth_link_error`,
 `account_not_linked`).
