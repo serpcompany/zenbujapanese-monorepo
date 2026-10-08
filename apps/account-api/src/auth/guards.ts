@@ -109,11 +109,7 @@ function idTokenOf(body: Record<string, unknown>): { nonce?: unknown } | null {
   return typeof idToken === 'object' && idToken !== null ? (idToken as { nonce?: unknown }) : null
 }
 
-async function requireNonce(
-  context: AuthContext,
-  idToken: { nonce?: unknown },
-  take: TakeVerification
-): Promise<void> {
+async function requireNonce(idToken: { nonce?: unknown }, take: TakeVerification): Promise<void> {
   const nonce = typeof idToken.nonce === 'string' ? idToken.nonce : ''
   if (nonce === '') {
     throw new APIError('BAD_REQUEST', {
@@ -173,7 +169,7 @@ function guardRequests(
     if (routesNeedingAFreshSession.has(path)) await requireFreshSession(context)
     const idToken = idTokenOf(body)
     if ((path === route.signInWithProvider || path === route.linkProvider) && idToken) {
-      await requireNonce(context, idToken, take)
+      await requireNonce(idToken, take)
     }
     if (path === route.signInWithCode && context.request) {
       const session = await freshSession(context)
