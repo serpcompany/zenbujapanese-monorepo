@@ -16,15 +16,16 @@ import { createMailer } from '../email/mailer'
 import { createApp } from '../http/app'
 
 export const publicUrl = 'http://localhost:8789'
-const trustedOrigin = 'http://localhost:3000'
 export const testSecret = 'test-only-secret-that-is-long-enough-for-better-auth'
 export const appBundleIdentifier = 'com.zenbujapanese.app'
+export const websiteServicesId = 'com.zenbujapanese.web'
+export const websiteOrigin = 'http://localhost:3000'
 export const googleClientIds = ['web.apps.googleusercontent.com', 'ios.apps.googleusercontent.com']
 
 const authConfig: AuthConfig = {
   publicUrl,
   secret: testSecret,
-  trustedOrigins: [trustedOrigin],
+  trustedOrigins: [websiteOrigin],
   cookieDomain: undefined,
   cookiePrefix: 'zenbu-test',
   apple: { servicesIds: [], appBundleIdentifier, signingKey: null },
@@ -48,7 +49,11 @@ export async function startService({
   const config: AuthConfig = appleKey
     ? {
         ...authConfig,
-        apple: { servicesIds: [], appBundleIdentifier, signingKey: await appleSigningKey() }
+        apple: {
+          servicesIds: [websiteServicesId],
+          appBundleIdentifier,
+          signingKey: await appleSigningKey()
+        }
       }
     : authConfig
   const client = new PGlite()

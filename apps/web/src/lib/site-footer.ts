@@ -8,13 +8,18 @@ import { iphoneAppTitle, pageLinkTo } from '@/lib/site-menus'
 
 type FooterLink = LinkTo & { title: string }
 
-export const footerColumns: readonly { heading: string; links: readonly FooterLink[] }[] = [
+export const footerColumns: readonly {
+  heading: string
+  links: readonly FooterLink[]
+  account?: true
+}[] = [
   {
     heading: 'Products',
     links: [
       { title: iphoneAppTitle, ...linkTo('iphone-app') },
       pageLinkTo('/dictionary/', 'Dictionary')
-    ]
+    ],
+    account: true
   },
   {
     heading: 'Tools',

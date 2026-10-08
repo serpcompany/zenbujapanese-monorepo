@@ -68,6 +68,10 @@ export const DeleteAccountSchema = z
     appleAuthorizationCode: z.string().min(1).max(4096).optional().openapi({
       description:
         "From a fresh Sign in with Apple, for an account that signs in with Apple. It's used once, to revoke the app's access with Apple."
+    }),
+    appleRedirectUri: z.url().max(2048).optional().openapi({
+      description:
+        "The website only: the return URL its Sign in with Apple popup named, which Apple needs again to take the code. It must be on one of the website's origins. Without it, the website's code is taken as one Apple sent to GET /v1/auth/callback/apple."
     })
   })
   .openapi('DeleteAccount')

@@ -1,6 +1,8 @@
 import Link from 'next/link'
+import { AccountFooterLink } from '@/components/account/account-footer-link'
 import { SiteBrand } from '@/components/site-brand'
 import { SocialLinks } from '@/components/social-links'
+import { accountPagesOpen } from '@/lib/account/availability'
 import { site } from '@/lib/site'
 import { footerColumns } from '@/lib/site-footer'
 
@@ -30,6 +32,11 @@ export function SiteFooter() {
                     </Link>
                   </li>
                 ))}
+                {column.account && accountPagesOpen() ? (
+                  <li>
+                    <AccountFooterLink className="hover:text-foreground" />
+                  </li>
+                ) : null}
               </ul>
             </nav>
           ))}

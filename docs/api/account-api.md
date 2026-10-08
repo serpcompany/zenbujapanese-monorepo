@@ -112,11 +112,12 @@ Deletes the account, its ways to sign in, its sessions, and everything it synced
 
 - `confirm` (`true`, required): The learner confirmed in the app.
 - `appleAuthorizationCode` (string, optional, 1 to 4,096 characters): From a fresh Sign in with Apple, for an account that signs in with Apple. It's used once, to revoke the app's access with Apple.
+- `appleRedirectUri` (string (uri), optional, at most 2,048 characters): The website only: the return URL its Sign in with Apple popup named, which Apple needs again to take the code. It must be on one of the website's origins. Without it, the website's code is taken as one Apple sent to GET /v1/auth/callback/apple.
 
 **Answers:**
 
 - **200**, { status: `"deleted"` }: Deleted.
-- **400** `bad_request`: The body is not JSON, or not this shape.
+- **400** `bad_request`: The body is not JSON, or not this shape, or its `appleRedirectUri` is on none of the website's origins.
 - **400** `apple_authorization_needed`: This account signs in with Apple: send the authorization code from a fresh Sign in with Apple.
 - **400** `apple_authorization_invalid`: Apple refused that authorization code. Sign in with Apple again for a new one.
 - **400** `apple_account_mismatch`: That Sign in with Apple is another Apple ID's. Sign in with the Apple ID this account uses.
@@ -239,7 +240,8 @@ With `idToken`, signs in with the token the device got, and makes the account on
 
 - `provider` (`"apple"` or `"google"`, required)
 - `idToken` ([`IdToken`](#idtoken), optional)
-- `callbackURL` (string, optional)
+- `callbackURL` (string, optional): The website's page the browser comes back to from Google, on one of the website's origins.
+- `errorCallbackURL` (string, optional): Where it comes back instead when signing in fails, with `?error=` and a code, such as `account_not_linked`, `account_already_linked_to_different_user`, `access_denied`, `state_mismatch`, or `EMAIL_NOT_VERIFIED`, which may come in capitals, so compare it ignoring case and treat any other as a failed sign-in. A missing state, or a callback reused or reloaded, ends at GET /v1/auth/error instead, a JSON `404 not_found`.
 
 **Answers:**
 
@@ -277,18 +279,20 @@ Where Apple's or Google's web sign-in comes back.
 
 Add Apple or Google as another way to sign in.
 
-Needs a sign-in from the last 10 minutes. The account email is told.
+Needs a sign-in from the last 10 minutes. The account email is told. Without `idToken`, the website starts Google's sign-in, which comes back to `callbackURL` with the way added.
 
 **Auth:** `sessionToken` with `account`.
 
 **Body** (JSON, required):
 
 - `provider` (`"apple"` or `"google"`, required)
-- `idToken` ([`IdToken`](#idtoken), required)
+- `idToken` ([`IdToken`](#idtoken), optional)
+- `callbackURL` (string, optional): The website's page the browser comes back to from Google, on one of the website's origins.
+- `errorCallbackURL` (string, optional): Where it comes back instead when signing in fails, with `?error=` and a code, such as `account_not_linked`, `account_already_linked_to_different_user`, `access_denied`, `state_mismatch`, or `EMAIL_NOT_VERIFIED`, which may come in capitals, so compare it ignoring case and treat any other as a failed sign-in. A missing state, or a callback reused or reloaded, ends at GET /v1/auth/error instead, a JSON `404 not_found`.
 
 **Answers:**
 
-- **200**, { status: `true` }: Added.
+- **200**, { status: `true` } or [`WebSignIn`](#websignin): Added, or, without `idToken`, the provider page to send the browser to.
 - **400** `validation_error`: A field is missing, or of the wrong type; `message` names it.
 - **401** `unauthorized`: No session, or one that has ended: sign in again.
 - **401** `invalid_nonce`: The nonce is unknown, already used, or over 10 minutes old. Ask for a new one.
@@ -740,6 +744,7 @@ The profile changed since `baseVersion`. `current` is the profile as it is now.
 
 - `confirm` (`true`, required): The learner confirmed in the app.
 - `appleAuthorizationCode` (string, optional, 1 to 4,096 characters): From a fresh Sign in with Apple, for an account that signs in with Apple. It's used once, to revoke the app's access with Apple.
+- `appleRedirectUri` (string (uri), optional, at most 2,048 characters): The website only: the return URL its Sign in with Apple popup named, which Apple needs again to take the code. It must be on one of the website's origins. Without it, the website's code is taken as one Apple sent to GET /v1/auth/callback/apple.
 
 ### SyncAnswer
 
@@ -876,6 +881,10 @@ Who signed in. GET /v1/me has the profile, with the username and version.
 
 - `token` (string, required): The ID token Sign in with Apple or Google gave the device.
 - `nonce` (string, required): The nonce from POST /v1/auth/sign-in/nonce, passed to Apple or Google.
+- `user` (object, optional): The name Sign in with Apple JS hands the website on the learner's first sign-in. Apple's token has none, so it names a new account.
+  - `name` (object, optional)
+    - `firstName` (string, optional)
+    - `lastName` (string, optional)
 
 ### Session
 

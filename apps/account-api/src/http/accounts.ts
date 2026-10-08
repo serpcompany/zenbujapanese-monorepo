@@ -192,6 +192,9 @@ const deletionAnswers = {
   ]
 } as const
 
+const onTheWebsite = (uri: string, websiteOrigins: readonly string[]) =>
+  websiteOrigins.includes(new URL(uri).origin)
+
 const deletionRefusals = (status: number) =>
   Object.fromEntries(
     Object.values(deletionAnswers)
@@ -211,7 +214,11 @@ const removeAccount = createRoute({
   },
   responses: {
     200: json(z.object({ status: z.literal('deleted') }), 'Deleted.'),
-    400: refusal({ ...malformed, ...deletionRefusals(400) }),
+    400: refusal({
+      bad_request:
+        "The body is not JSON, or not this shape, or its `appleRedirectUri` is on none of the website's origins.",
+      ...deletionRefusals(400)
+    }),
     401: unauthorized,
     403: refusal({ ...noScope('account:delete'), ...deletionRefusals(403) }),
     413: tooLarge,
@@ -249,7 +256,8 @@ export function accountRoutes(
   app: OpenAPIHono<AccountEnv>,
   accounts: Accounts,
   deleteAccount: DeleteAccount,
-  databaseReady: () => Promise<boolean>
+  databaseReady: () => Promise<boolean>,
+  websiteOrigins: readonly string[]
 ) {
   app.openAPIRegistry.register('Error', ErrorSchema)
   for (const [name, schema] of syncFieldSchemas) app.openAPIRegistry.register(name, schema)
@@ -296,6 +304,13 @@ export function accountRoutes(
   })
 
   app.openapi(removeAccount, async context => {
+    const { appleAuthorizationCode, appleRedirectUri } = context.req.valid('json')
+    if (appleRedirectUri !== undefined && !onTheWebsite(appleRedirectUri, websiteOrigins)) {
+      return context.json(
+        errorBody('bad_request', "appleRedirectUri must be on one of the website's origins."),
+        400
+      )
+    }
     const deletion = await deleteAccount(
       {
         userId: context.get('userId'),
@@ -303,7 +318,7 @@ export function accountRoutes(
         scopes: context.get('scopes'),
         signedInAt: context.get('signedInAt')
       },
-      context.req.valid('json').appleAuthorizationCode
+      { code: appleAuthorizationCode, redirectUri: appleRedirectUri }
     )
     if (deletion === 'deleted') return context.json({ status: 'deleted' as const }, 200)
     const [status, code, message] = deletionAnswers[deletion]

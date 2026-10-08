@@ -2,7 +2,7 @@ import { randomUUID } from 'node:crypto'
 import { decodeJwt } from 'jose'
 import { describe, expect, test } from 'vitest'
 import { useAccountService } from '../test/accounts'
-import { sessionToken, sha256 } from '../test/sign-in'
+import { fromTheWebsite, sessionToken, sha256, websiteSession } from '../test/sign-in'
 
 const accounts = useAccountService()
 
@@ -90,14 +90,12 @@ describe("each app's access to an account", () => {
         body: { error: { code: 'unknown_client' } }
       })
     }
-    const web = await as.withCode('web-app@example.com', {
-      client: null,
-      headers: { origin: 'http://localhost:3000' }
-    })
+    const web = await as.withCode('web-app@example.com', fromTheWebsite())
     expect(web.status).toBe(200)
-    const issued = await accounts.running.service.call('/v1/auth/token', {
-      token: sessionToken(web)
-    })
+    const issued = await accounts.running.service.call(
+      '/v1/auth/token',
+      fromTheWebsite(websiteSession(web))
+    )
     expect(decodeJwt(String(issued.body?.token))).toMatchObject({ azp: 'zenbu-web' })
   })
 
