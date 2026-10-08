@@ -85,8 +85,10 @@ final class AccountSync: LocalFileStore {
 
   var canSync: Bool {
     isLoaded && !isUnavailable && account != nil && wordKnowledge.canChange
-      && wordLists.canChange && translations.isLoaded && !translations.bookmarksAreReadOnly
+      && wordLists.canChange && translations.isLoaded && !waitsForUnreadableBookmarks
   }
+
+  var waitsForUnreadableBookmarks: Bool { translations.bookmarksAreReadOnly }
 
   func isDue(staleAfter: TimeInterval) -> Bool {
     guard canSync else { return false }
@@ -276,6 +278,7 @@ final class AccountSync: LocalFileStore {
       case .rejected(let code):
         if code == Self.unknownEntity {
           state.syncedEntities.removeAll { $0 == change.key.entity }
+          state.queue.removeAll { $0.key.entity == change.key.entity }
         } else if change.undo == nil, change.key == AccountSyncState.favoritesKey,
           code == "already_exists"
         {

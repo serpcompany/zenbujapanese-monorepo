@@ -165,7 +165,40 @@ struct AccountSyncBookmarkTests {
     try Data(#"{"version":2,"bookmarks":[]}"#.utf8).write(to: folder.appending(path: "bookmarks.json"))
     await fixture.launch()
     #expect(fixture.translations.bookmarksAreReadOnly)
+    #expect(fixture.sync.waitsForUnreadableBookmarks)
     #expect(!fixture.sync.canSync)
+  }
+
+  @Test("a pulled bookmark whose ID isn't its change's is left out")
+  func refusesMismatchedIDs() async throws {
+    let fixture = try await Fixture.afterSignIn()
+    let listed = UUID()
+    fixture.serve { _ in
+      var change = StubSync.bookmark(listed, text: "合わない。", version: 1)
+      change["entityId"] = UUID().uuidString.lowercased()
+      return StubSync.answer(changes: [change], cursor: "c2")
+    }
+    try await fixture.syncNow()
+    #expect(fixture.translations.bookmarks.isEmpty)
+  }
+
+  @Test("bookmarks the service doesn't know yet stay bookmarked, and go no further this launch")
+  func olderServiceKeepsBookmarks() async throws {
+    let fixture = try await Fixture.afterSignIn()
+    let sent = fixture.server.requests(to: "POST /v1/sync").count
+    fixture.serve { request in
+      StubSync.answer(
+        results: request.mutations.map { StubSync.rejected($0.id, "unknown_entity") }, cursor: "c2")
+    }
+    let saved = conversation(in: fixture)
+    let first = bookmarkFirst(of: saved, in: fixture)
+    fixture.translations.setBookmarked(false, sentence: first, in: saved.id)
+    fixture.translations.setBookmarked(true, sentence: first, in: saved.id)
+    try await fixture.syncNow()
+
+    #expect(fixture.translations.bookmarks.map(\.id) == [first])
+    #expect(fixture.sync.state.queue.isEmpty)
+    #expect(fixture.server.requests(to: "POST /v1/sync").count == sent + 1)
   }
 
   @Test("a phone that synced before bookmarks did uploads them once, from no cursor")

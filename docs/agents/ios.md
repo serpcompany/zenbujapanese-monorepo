@@ -44,7 +44,8 @@ or how fast it feels. The app needs iOS 26.0 or later, and the Sudachi cache abo
    change it to one of your own, such as `com.<you>.zenbujapanese`. A Personal Team can't sign
    Associated Domains or Sign in with Apple either, so also remove those capabilities
    ([Links from the website](#links-from-the-website), [Account and sync](#account-and-sync)).
-   Without Sign in with Apple, sign in with Google or an emailed code. The project sets no team, so picking one
+   Such a build still shows the Apple button, which fails; sign in with an emailed code, or with
+   Google in a build given its client ID. The project sets no team, so picking one
    edits `project.pbxproj`; don't commit that edit, a bundle ID change, or the removed capabilities.
 3. Choose the iPhone as the run destination and run.
 4. If iOS asks, turn on Developer Mode under Settings → Privacy & Security → Developer Mode. With a
@@ -437,8 +438,9 @@ tests prove that model against the real service.
   that signed in before its app synced an entity, such as watch history, queues that entity's items
   at version 0 on its launch's first sync, and syncs from no cursor, since its cursor passed that
   entity's changes. A change the service rejects as `unknown_entity`, from a service older than the
-  app, isn't undone: its entity is marked not uploaded, so the next launch's first sync uploads it
-  again, once.
+  app, isn't undone: its entity is marked not uploaded and its other queued changes are dropped, so
+  the phone stops sending them, and each launch's first sync uploads that entity again, from no
+  cursor, until the service knows it.
 - **Watch history.** `WatchHistory` (`WatchHistory.swift`, in `UserDefaults` under
   `watch.recent-videos.v1`) reports each `record` and swipe removal through `changeObserver`, and
   takes the account's copies through `applySynced`, which report nothing. It keeps the 50 newest
@@ -462,8 +464,9 @@ tests prove that model against the real service.
   conversations folder, which `ConversationHistory.bookmarks` lists beside the conversations' own,
   newest first, each sentence once. Its writes merge, so a pull of many writes the file about once.
   Sync waits for the history to load, and stops, as for an unreadable lists file, while that file
-  can't be read (`bookmarksAreReadOnly`); the cursor is saved only after the history's writes
-  finish.
+  can't be read (`bookmarksAreReadOnly`), for whatever reason, until the next launch reads it;
+  Zenbu Account says so and disables **Sync Now** (`waitsForUnreadableBookmarks`). The cursor is
+  saved only after the history's writes finish.
 - **Favorites** has one ID in every app ([`account-clients.md`](account-clients.md), The rules, from
   your side). A second phone's `create` of it is rejected `already_exists`, which the first upload
   never undoes: the account's copy comes down, and the phone's words still add. If that copy comes
@@ -507,11 +510,13 @@ service's sync rules, so two installs can share one account: changes made while 
 to the same account, another account starting over, and two phones ending with one Favorites.
 `AccountSyncWatchHistoryTests` covers Recent's first upload, a newer watch replacing an unsent one,
 pulled videos kept to the newest 50, removals both ways, a watch that lost to a removal, a
-rejected watch, a phone catching up on watch history, old videos' dates, the kept versions'
-bound, bad pulled IDs, and two phones through `FakeAccountService`. `AccountSyncBookmarkTests`
-covers the first upload sending each bookmarked sentence and nothing else said, the queue, a
-bookmark from another device listed on its own and removed, an un-bookmark that lost to a newer
-bookmark, a rejected bookmark, deleting a conversation, catching up, and two phones.
+rejected watch, a phone catching up on watch history, a service that doesn't know watch history
+yet, old videos' dates, the kept versions' bound, bad pulled IDs, and two phones through
+`FakeAccountService`. `AccountSyncBookmarkTests` covers the first upload sending each bookmarked
+sentence and nothing else said, the queue, a bookmark from another device listed on its own and
+removed, an un-bookmark that lost to a newer bookmark, a rejected bookmark, deleting a
+conversation, an unreadable synced bookmarks file pausing sync, a pulled ID that isn't its
+change's, a service that doesn't know bookmarks yet, catching up, and two phones.
 
 ### Opening sign-in in the App Store build
 

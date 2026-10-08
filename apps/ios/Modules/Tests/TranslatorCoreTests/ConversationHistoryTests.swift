@@ -246,6 +246,18 @@ final class ConversationHistoryTests {
     #expect(Set(removed) == Set(saved.turns.map(\.sentences[0].id)))
   }
 
+  @Test("many bookmarks from other devices at once are all kept across a relaunch")
+  func keepsManySyncedBookmarks() async {
+    let history = await loadedHistory()
+    let pulled = (0..<300).map { shared("文\($0)", minutesAgo: Double($0)) }
+    pulled.forEach(history.applySynced)
+    history.applySyncedRemoval(ofBookmark: pulled[0].id)
+    await history.flush()
+    let reloaded = await loadedHistory()
+    #expect(reloaded.sharedOnly.count == 299)
+    #expect(reloaded.bookmarks.first?.sentence.text == "文1")
+  }
+
   @Test("a sentence bookmarked in a conversation here and kept alone is listed once")
   func listsASentenceOnce() async {
     let history = await loadedHistory()

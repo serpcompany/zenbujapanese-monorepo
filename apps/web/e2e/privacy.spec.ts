@@ -80,11 +80,14 @@ test.describe('privacy policy', () => {
     await expectNamed(page, 'Your Zenbu account', [
       'the Translate sentences you bookmark, each with its text and its translation, which language it was said in, and when you bookmarked it',
       'may be what someone else said, but only sentences you bookmark, never a whole conversation',
-      'for a bookmark you removed, only its ID'
+      'for a bookmark you removed, only its ID',
+      'for one bookmarked before the app synced bookmarks, when it was said',
+      'with a one-way fingerprint of what the request sent'
     ])
     await expectNamed(page, 'Information in the app', [
       "the conversation's text and its translations stay on your device until you delete them, and are never sent to us",
-      'only the ones you bookmark leave your device'
+      'only the ones you bookmark leave your device',
+      'the sentences you bookmark, before or after signing in, sync to it'
     ])
   })
 

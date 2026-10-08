@@ -211,7 +211,9 @@ again a few times, waiting longer each time, only while the app is open.
 
 **Zenbu Account** shows the email, when the last sync was (or that one is running), how many
 changes are waiting, and a note when the last sync failed, with **Sync Now**, **Sign Out**, and
-**Delete Account…**.
+**Delete Account…**. If the bookmarks synced from other devices can't be read at launch, such as
+before the device's first unlock, nothing syncs until Zenbu is reopened, so none are lost, and
+Zenbu Account says so.
 
 **Signing out** asks first, then forgets the sign-in on this phone and keeps everything: known
 words, lists, Recent, Translations, notes, and media stay, and every feature works. Changes made while signed out, such

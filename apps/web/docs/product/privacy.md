@@ -138,12 +138,13 @@ learner bookmarks, before or after signing in, syncs with its translation; it ma
 else said, so only bookmarked sentences leave the device. Permissions name the microphone beside the camera.
 
 - Source: the app's [Translate](../../../ios/docs/product/translate.md) docs ("Nothing anyone
-  says is sent to a server", but a bookmarked sentence while signed in; "Conversations are stored
+  says is sent to a server", but a bookmarked sentence once the learner signs in; "Conversations are stored
   only on the device, one file each, and never sync") and its microphone permission (#624).
 - Check: `apps/web/e2e/privacy.spec.ts`, "names Translate's microphone, and keeps its
   conversations on the device": both sections' statements; and "names the Translate sentences a
-  learner bookmarks, and keeps conversations on the device": what a bookmark keeps, that it may be
-  someone else's words, and that only bookmarked sentences leave the device.
+  learner bookmarks, and keeps conversations on the device": what a bookmark keeps (an old one's
+  time being when it was said), that it may be someone else's words, that only bookmarked sentences
+  leave the device, those made before signing in too, and the sync result's fingerprint.
 
 **The rest of the policy.** The app's on-device data names the profile, Player's watch history,
 and the Media Library's photos, and says an Image Search image is kept in the Media Library once a word is opened from it,
