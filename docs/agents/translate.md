@@ -100,7 +100,8 @@ The tab is split across three Swift targets in `apps/ios/Modules`
   began made the Japanese recognizer invent a low-confidence `はい`. That became a turn, and its
   spoken "Yes" muted the microphone again, so the app looped on itself every 2 s (#637). For the
   same reason `BilingualRecognizer` finalizes nothing, at a pause or a stalled sentence, while the
-  audio it's fed is muted; a pause found then is checked again once the microphone is back.
+  audio it's fed is muted; a pause found then stays pending, and is checked once the microphone is
+  back, unless someone has started talking by then.
 - Apple's two recognizers end sentences differently. English ends a sentence by itself about
   0.5–1 s after a pause. Japanese holds its sentence until the next speech begins, even across
   English speech, and left open through a long stretch of English it loses the start of the

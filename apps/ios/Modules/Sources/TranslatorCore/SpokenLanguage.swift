@@ -17,7 +17,7 @@ public enum SpokenLanguage: String, Codable, Sendable, CaseIterable, Hashable {
   }
 
   static let sentenceEnds: Set<Character> = [".", "?", "!", "。", "？", "！"]
-  static let japaneseSentenceEnds: Set<Character> = ["。", "？", "！"]
+  static let japaneseSentenceEnds: Set<Character> = ["。", "？", "！", "?", "!"]
 
   func sentences(in results: [String]) -> [String] {
     var sentences: [String] = []

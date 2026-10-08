@@ -288,6 +288,7 @@ struct BilingualTranscriptMergerTests {
       ),
       (.japanese, ["はい、", "三時に会いましょう。"], ["はい、三時に会いましょう。"]),
       (.japanese, ["明日は 3.5キロ走ります。"], ["明日は 3.5キロ走ります。"]),
+      (.japanese, ["大丈夫?はい。"], ["大丈夫?", "はい。"]),
       (.english, ["Thank you.", "See you there."], ["Thank you.", "See you there."]),
       (.english, ["Please meet me", "at Shibuya Station."], ["Please meet me at Shibuya Station."]),
       (.english, ["Oh, Dr. Keeney, I hope you enjoyed it."], ["Oh, Dr. Keeney, I hope you enjoyed it."]),
@@ -317,6 +318,23 @@ struct BilingualTranscriptMergerTests {
       merger.receive(
         result(.english, "Thank you.", confidence: 0.9, start: 43.92, end: 45.48),
         at: start.addingTimeInterval(11)) == [.final(.english, "Thank you.")])
+  }
+
+  @Test("a quick reply after the shown sentence isn't measured against the other language's guess")
+  func replyAfterShownSpeech() {
+    var merger = BilingualTranscriptMerger(languages: [.japanese, .english])
+    _ = merger.receive(
+      result(.japanese, "はい、3時に会いましょう。", confidence: 0.8, start: 32.1, end: 34.8), at: start)
+    _ = merger.receive(
+      result(.english, "Hi, Sanjini, my show.", confidence: 0.3, start: 31.9, end: 36),
+      at: start.addingTimeInterval(0.1))
+    #expect(merger.flush(at: start.addingTimeInterval(0.6)) == [.final(.japanese, "はい、3時に会いましょう。")])
+    _ = merger.receive(
+      result(.japanese, "", confidence: nil, start: 35.2, end: 37), at: start.addingTimeInterval(2))
+    #expect(
+      merger.receive(
+        result(.english, "Okay, see you.", confidence: 0.5, start: 35.2, end: 37),
+        at: start.addingTimeInterval(2)) == [.final(.english, "Okay, see you.")])
   }
 
   @Test("one language passes straight through")
