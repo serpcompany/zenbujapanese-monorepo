@@ -1,9 +1,10 @@
 import Foundation
 
 struct Options {
-  static let defaultScript = URL(filePath: #filePath)
+  static let packageRoot = URL(filePath: #filePath)
     .deletingLastPathComponent().deletingLastPathComponent().deletingLastPathComponent()
-    .appending(path: "Scripts/fixture-pairs-monologue.json")
+  static let defaultScript = packageRoot.appending(path: "Scripts/fixture-pairs-monologue.json")
+  static let defaultRecordings = packageRoot.appending(path: "Recordings")
 
   var script = defaultScript
   var output = FileManager.default.temporaryDirectory.appending(
@@ -23,7 +24,13 @@ struct Options {
       default: recordings.append(URL(filePath: argument))
       }
     }
-    guard !recordings.isEmpty else { throw ReplayFailure.invalidArguments("no recording folder") }
+    if recordings.isEmpty { recordings = try Self.committedRecordings() }
+  }
+
+  private static func committedRecordings() throws -> [URL] {
+    let folders = try FileManager.default.contentsOfDirectory(
+      at: defaultRecordings, includingPropertiesForKeys: nil)
+    return folders.filter { $0.hasDirectoryPath }.sorted { $0.path < $1.path }
   }
 
   private static func value(of flag: String, from remaining: inout ArraySlice<String>) throws
@@ -83,7 +90,7 @@ do {
   }
 } catch ReplayFailure.invalidArguments(let reason) {
   print("translate-replay: \(reason)")
-  print("Usage: translate-replay [--script file.json] [--out folder] recording-folder...")
+  print("Usage: translate-replay [--script file.json] [--out folder] [recording-folder...]")
   exit(2)
 } catch {
   print("translate-replay: \(error)")

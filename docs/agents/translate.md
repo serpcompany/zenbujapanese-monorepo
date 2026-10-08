@@ -200,18 +200,21 @@ Translation, and scores the conversation against the script that was spoken. Use
 engine change on real audio without a phone or a speaker.
 
 - **Recordings** are the folders a Debug build writes to `Library/Caches/TranslateDiagnostics/`
-  (Device rig, step 4); the tool reads each folder's `heard.wav`. They aren't in this repository:
-  they're Apple's system voices, or people's.
+  (Device rig, step 4); the tool reads each folder's `heard.wav`. The device rig's three runs from
+  2026-10-07 are in `Recordings/` (Git LFS). The 13:23 run is clipped, so its monologue garbles
+  on the phone and the Mac alike. Add a recording by copying its `heard.wav` into a new folder
+  there.
 - **Scripts** say what was spoken, line by line (`Scripts/fixture-pairs-monologue.json` is the
   device rig's: the #627 fixture, five English pairs, and a fast Japanese monologue). `heard` gives
   a line the way a perfect recognizer writes it, with digits, when it differs from what `say` reads.
 - **Run** it from `apps/ios/Tools/TranslateReplay`:
 
   ```sh
-  swift run translate-replay --out /tmp/replay <recording folder> <recording folder>
+  swift run translate-replay --out /tmp/replay
   ```
 
-  `--script` picks another script. Each recording gets a folder under `--out` with its
+  With no recording folder named, it replays every folder in `Recordings/`. `--script` picks
+  another script. Each recording gets a folder under `--out` with its
   `result.json`, and a timestamped folder inside with the replay's `events.log` and `heard.wav`.
   It exits 1 if any recording fails, and needs a debug build (`swift run`'s default), since its
   timings come from the Debug diagnostics.

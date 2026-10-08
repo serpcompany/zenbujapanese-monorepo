@@ -54,7 +54,7 @@ are sections of `ios.md`.
   Simulator on a scripted conversation. The on-device recognizers were checked on an iPhone with
   a scripted conversation (#627), and `translate-replay` runs the app's recognizer and engine on
   recordings from it, on a Mac. Main gap: that check is local only, on three recordings of
-  synthesized voices; CI has neither the recordings nor the speech models (#640).
+  synthesized voices; CI has no speech models to run it (#640).
 - **Image Search, C.** Recognition runs on real images. Main gap: Apple Translation doesn't run
   in the Simulator, and the on-device model runs only where the Simulator's runtime matches the
   Mac, so translation and Context are checked by hand, on a device.

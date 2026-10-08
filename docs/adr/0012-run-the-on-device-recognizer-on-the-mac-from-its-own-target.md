@@ -39,5 +39,5 @@ which kept every adapter there.
   package scheme `ZenbuJapaneseModules-Package`.
 - `pnpm verify layers` (`tools/checks/src/layers.ts`) keeps `TranslatorOnDevice` free of SwiftUI,
   UIKit, and `SearchExperience`.
-- The replay is a local check. It needs the Mac's speech models and the recordings, which aren't in
-  this repository, so CI doesn't run it.
+- The replay is a local check. It needs the Mac's speech models, which CI's runners don't have,
+  so CI runs only its scoring tests. Its recordings are in this repository, in Git LFS.
