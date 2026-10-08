@@ -1088,8 +1088,8 @@ production's.
   `src/app/dictionary/service.json/route.test.ts`; search pages:
   `src/lib/dictionary/results/links.test.ts`, "isIndexable".
 
-**Sitemaps.** `robots.txt` names the sitemap index, `/sitemap-index.xml` (and `/sitemap.xml`, the
-same document), in every environment. The index lists files at the site's root, each named for
+**Sitemaps.** `robots.txt` names the sitemap index, `/sitemap-index.xml`, in every environment, and
+`/sitemap.xml` redirects (308) to it. The index lists files at the site's root, each named for
 its group: `/sitemap-pages.xml`, which lists the dictionary home and the browse home; the word
 sitemaps, `/sitemap-words.xml`, `/sitemap-words-2.xml`, and on, with every word page's canonical
 URL; and the four browse sitemaps, `/sitemap-kana.xml`, `/sitemap-categories.xml`,
@@ -1105,7 +1105,7 @@ only dictionary sitemaps (ADR 0010, amended for #614). Search pages aren't in an
   browse sitemap, and nothing else" and "with SITE_ENV=… a request to … lists sitemaps on …";
   `src/lib/sitemap.test.ts`, "sitemap files sit at the root, named for their group";
   `src/lib/robots.test.ts`; `apps/web/e2e/sitemaps.spec.ts`; `apps/web/e2e/urls.spec.ts`, the old
-  sitemaps' one-hop redirects, with and without a slash; smoke "$index lists the pages, word, and browse sitemaps on …, and no other" (for `/sitemap-index.xml` and `/sitemap.xml`), "word sitemap lists 1 to
+  sitemaps' one-hop redirects, with and without a slash; smoke "$index lists the pages, word, and browse sitemaps on …, and no other" and `308 /sitemap.xml -> /sitemap-index.xml`, "word sitemap lists 1 to
   50,000 canonical URLs", "robots.txt lists the sitemap index", and `404 /sitemaps/kanji.xml`.
 
 **Structured data.** Each dictionary page carries `BreadcrumbList` structured data for its trail.

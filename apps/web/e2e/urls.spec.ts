@@ -28,6 +28,7 @@ test.describe('URLs', () => {
     ['/sitemaps/dictionary/1.xml', '/sitemap-words.xml'],
     ['/sitemaps/dictionary/2.xml', '/sitemap-words-2.xml'],
     ['/sitemap-pages.xml/', '/sitemap-pages.xml'],
+    ['/sitemap.xml', '/sitemap-index.xml'],
     ['/sitemaps/pages.xml/', '/sitemap-pages.xml', true],
     ['/sitemaps/dictionary/2.xml/', '/sitemap-words-2.xml', true]
   ] as const) {

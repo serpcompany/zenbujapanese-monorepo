@@ -60,6 +60,8 @@ describe('sitemap files sit at the root, named for their group', () => {
   })
 
   test.each([
+    ['/sitemap.xml', '/sitemap-index.xml'],
+    ['/sitemap.xml/', '/sitemap-index.xml'],
     ['/sitemaps/pages.xml', '/sitemap-pages.xml'],
     ['/sitemaps/dictionary/1.xml', '/sitemap-words.xml'],
     ['/sitemaps/dictionary/2.xml', '/sitemap-words-2.xml'],

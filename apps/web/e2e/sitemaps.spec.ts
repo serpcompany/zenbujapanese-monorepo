@@ -16,7 +16,7 @@ test.describe('sitemaps', () => {
     expect(robots).toContain(`\nSitemap: ${new URL(baseURL ?? '').origin}/sitemap-index.xml\n`)
   })
 
-  for (const index of ['/sitemap-index.xml', '/sitemap.xml']) {
+  for (const index of ['/sitemap-index.xml']) {
     test(`${index} lists sitemap-<group>.xml files at the root of this origin`, async ({
       request,
       baseURL
