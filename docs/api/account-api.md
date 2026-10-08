@@ -627,7 +627,7 @@ Fields ([`WordFields`](#wordfields)):
 
 ### Entity `watchedVideo`
 
-A video the learner watched in the iOS app's Player. The account keeps the 50 most recently watched, and remembers its latest 100 removals.
+A video the learner watched in the iOS app's Player. The account keeps the 50 most recently watched, and remembers the latest 100 videos it removed or pruned.
 
 - **ID** (`entityId`): The YouTube video ID: 11 letters, digits, `-`, or `_`.
 - **Read with:** `watch:read`

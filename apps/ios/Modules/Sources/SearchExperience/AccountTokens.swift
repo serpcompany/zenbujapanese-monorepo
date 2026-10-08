@@ -114,15 +114,18 @@ final class AccountTokens {
   }
 
   private func refreshedAccessToken() async throws -> String {
-    guard let session = storage.read() else { throw AccountServiceError.sessionEnded }
-    let token: String
-    do {
-      token = try await api.accessToken(sessionToken: session)
-    } catch AccountServiceError.refused(status: 401, _, _, _) {
-      throw AccountServiceError.sessionEnded
+    while true {
+      guard let session = storage.read() else { throw AccountServiceError.sessionEnded }
+      let token: String
+      do {
+        token = try await api.accessToken(sessionToken: session)
+      } catch AccountServiceError.refused(status: 401, _, _, _) {
+        guard storage.read() != session else { throw AccountServiceError.sessionEnded }
+        continue
+      }
+      guard storage.read() == session else { continue }
+      accessToken = (token, AccessTokenClaims.expiry(of: token) ?? now() + Self.assumedLifetime)
+      return token
     }
-    guard storage.read() == session else { throw AccountServiceError.sessionEnded }
-    accessToken = (token, AccessTokenClaims.expiry(of: token) ?? now() + Self.assumedLifetime)
-    return token
   }
 }

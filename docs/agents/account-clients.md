@@ -421,7 +421,7 @@ What the iOS app's Player lists under Recent, as `watchedVideo`, by YouTube vide
 - **`remove`, when the learner removes a video, always applies.** A watch of a removed video
   applies only at the removal's version: one made before the device saw the removal conflicts,
   and `current` is the delete. Take it. Watching it again afterwards brings it back. Keep a removed
-  video's version while the account remembers the removal (its latest 100).
+  video's version while the account remembers it: the latest 100 videos removed or pruned.
 - **The account keeps the 50 latest by `watchedAt`.** A watch past that removes the oldest, which
   comes down as a `delete`; drop it. Keep 50 on the device the same way, by `watchedAt`, so a
   device that missed an old prune still shows what the account has. Don't send a `remove` for one

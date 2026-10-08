@@ -4,6 +4,20 @@ import UIKit
 struct AppleSignInCredential: Sendable {
   let identityToken: String
   let authorizationCode: String
+  var name: AppleSignInName? = nil
+}
+
+struct AppleSignInName: Sendable, Equatable {
+  let firstName: String?
+  let lastName: String?
+
+  init?(_ components: PersonNameComponents?) {
+    let first = components?.givenName.flatMap { $0.isEmpty ? nil : $0 }
+    let last = components?.familyName.flatMap { $0.isEmpty ? nil : $0 }
+    guard first != nil || last != nil else { return nil }
+    firstName = first
+    lastName = last
+  }
 }
 
 @MainActor
@@ -20,7 +34,7 @@ final class AppleSignIn: NSObject, ASAuthorizationControllerDelegate,
 
   private func perform(hashedNonce: String) async throws -> AppleSignInCredential {
     let request = ASAuthorizationAppleIDProvider().createRequest()
-    request.requestedScopes = [.email]
+    request.requestedScopes = [.email, .fullName]
     request.nonce = hashedNonce
     let controller = ASAuthorizationController(authorizationRequests: [request])
     controller.delegate = self
@@ -43,7 +57,11 @@ final class AppleSignIn: NSObject, ASAuthorizationControllerDelegate,
       finish(.failure(ASAuthorizationError(.failed)))
       return
     }
-    finish(.success(AppleSignInCredential(identityToken: token, authorizationCode: code)))
+    finish(
+      .success(
+        AppleSignInCredential(
+          identityToken: token, authorizationCode: code,
+          name: AppleSignInName(credential.fullName))))
   }
 
   func authorizationController(

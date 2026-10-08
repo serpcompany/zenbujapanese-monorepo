@@ -91,7 +91,7 @@ struct DeleteAccountView: View {
   private func signIn(_ methods: Set<String>) -> some View {
     Section {
       if methods.contains(AccountSignInProvider.apple.rawValue), !zenbuAccount.offersApple {
-        Text(AccountMessage.appleUnavailableInDevBuild)
+        Text(AccountMessage.appleDeletionUnavailableInDevBuild)
           .foregroundStyle(.secondary)
       } else if methods.contains(AccountSignInProvider.apple.rawValue) {
         AppleSignInButton(type: .continue) {

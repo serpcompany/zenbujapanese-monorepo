@@ -375,7 +375,7 @@ nothing (Account and sync, below).
 ## Account and sync
 
 The app signs in to the account service and syncs known words, lists, watch history, and
-Translate's bookmarked sentences exactly as the client guide says ([`account-clients.md`](account-clients.md)), as `zenbu-ios`. The code is in
+Translate's bookmarked sentences as the client guide says ([`account-clients.md`](account-clients.md)), as `zenbu-ios`. The code is in
 `SearchExperience`: `ZenbuAccount.swift` (sign-in, signing out, deleting),
 `AccountServiceConfiguration.swift`, `AccountAPI.swift` and `AccountSyncModels.swift` (the routes and
 their answers), `AccountTokens.swift`, `AccountSync.swift` and `AccountSyncState.swift` (the queue
@@ -399,9 +399,13 @@ tests prove that model against the real service.
   Transport Security allows plain HTTP to an IP address.
 - **Apple.** `apps/ios/App/ZenbuJapanese.entitlements` asks for Sign in with Apple, which the App ID
   (`com.zenbujapanese.app`) needs in Apple Developer. The app asks the service for a nonce and gives
-  Apple its SHA-256 (`AppleSignIn.swift`). Apple's token names the app's bundle ID, and the service
-  takes only the IDs in `apps/account-api/src/domain/clients.ts`, so a Zenbu Dev build
-  (`com.zenbujapanese.app.dev`) can't sign in with Apple. `ZENBU_BUNDLE_ID_SUFFIX` reaches the app as
+  Apple its SHA-256 (`AppleSignIn.swift`), asking for the email and the name; Apple gives the name
+  only on a learner's first sign-in, and the app sends it then as `idToken.user.name`, so a new
+  account has one. Apple's token names the app's bundle ID, and the service takes only the bundle
+  IDs in `apps/account-api/src/domain/clients.ts`, its `APPLE_APP_BUNDLE_IDENTIFIER`, and its
+  website Services IDs, so a Zenbu Dev build (`com.zenbujapanese.app.dev`) can't sign in with
+  Apple. The app shows the Apple button whenever the build isn't Zenbu Dev, whatever the service
+  has set up: a service without Apple answers its sign-in `404 provider_not_found`. `ZENBU_BUNDLE_ID_SUFFIX` reaches the app as
   `ZenbuBundleIDSuffix` in `apps/ios/App/Info.plist`; when it isn't empty, the sign-in sheet shows a
   note in place of the Apple button, and deleting an Apple account says to use the App Store or
   TestFlight app. Google and emailed codes work in Zenbu Dev.
@@ -548,20 +552,32 @@ What a person sets up first, once, in Apple Developer on the team that holds the
   signing then makes new profiles at the next archive; until the capabilities are on, an archive
   fails to sign. Zenbu Dev's `com.zenbujapanese.app.dev` needs both too, since it shares the
   entitlements, though the service takes no Apple sign-in from it.
+- **The service's Apple settings:** the Sign in with Apple key and every `APPLE_*` setting
+  ([`account-api.md`](account-api.md), Set up the server, step 3), before a build with the Apple
+  button reaches testers.
 - **Google:** the iOS OAuth client for `com.zenbujapanese.app`
   ([`account-api.md`](account-api.md), Set up the server, step 3). Its client ID goes in
   `ZENBU_GOOGLE_IOS_CLIENT_ID`, in both of the app target's configurations in
   `apps/ios/ZenbuJapanese.xcodeproj/project.pbxproj`, in a pull request, and in the service's
   `GOOGLE_CLIENT_IDS`. Without it the app offers Apple and a code only.
 
-**A TestFlight build.** In a pull request, raise `CURRENT_PROJECT_VERSION` in both of the app
-target's configurations (and `MARKETING_VERSION` for a new version), as "Prepare build 20 of
-1.0.1 for TestFlight" did. From `main` after it merges, in Xcode: the `ZenbuJapanese` scheme,
-**Any iOS Device (arm64)**, Product → Archive, signed by the team above; then Organizer →
-Distribute App → App Store Connect → Upload. App Store Connect lists the build under TestFlight
-once it's processed, about 15 minutes later; answer its export compliance question and add the
-testers. Check it on a device from TestFlight: Account shows **Sign In to Sync** only when the
-build names a service, and signing in with Apple, Google, and a code reaches it.
+**A TestFlight build:**
+
+1. In a pull request, raise `CURRENT_PROJECT_VERSION` in both of the app target's configurations
+   (and `MARKETING_VERSION` for a new version), as "Prepare build 20 of 1.0.1 for TestFlight" did,
+   and merge it.
+2. On a Mac with a checkout of `main`, open `apps/ios/ZenbuJapanese.xcodeproj`, and under the
+   ZenbuJapanese target's **Signing & Capabilities** pick the team `W3GXL2NQQP` (the project sets
+   none). That edits `project.pbxproj`: don't commit it, as Install on an iPhone says.
+3. Pick the `ZenbuJapanese` scheme and **Any iOS Device (arm64)**, then Product → Archive.
+4. In the Organizer: Distribute App → App Store Connect → Upload.
+5. In App Store Connect, the build appears under TestFlight once it's processed, about 15 minutes
+   later, with no export compliance question (both configurations set
+   `ITSAppUsesNonExemptEncryption` to `NO`); add the testers.
+
+Check it on a device from TestFlight. A build from today's `main` names no account service in
+Release, so Account has no **Sign In to Sync** row; once the pull request above names production's
+service, signing in with Apple, Google, and a code reaches it.
 
 ## Image Search and Apple Intelligence
 
@@ -702,7 +718,9 @@ against a real service:
   Simulator signed in to the same account. Make a list with `curl`, tap **Sync Now**, and see it.
   Delete the account: the app is signed out and still has its known words and lists.
 - **On a device, against staging:** Sign in with Apple and with Google, and delete an account that
-  signs in with Apple. The Simulator can't show these: Apple's sign-in needs the App ID's
+  signs in with Apple. A first Sign in with Apple, with an Apple ID that never signed in to the
+  app's team, makes an account with the name Apple shares (`GET /v1/me`, or the website's
+  account page). The Simulator can't show these: Apple's sign-in needs the App ID's
   capability and a signed build, and Google needs the iOS client ID.
 
 ## Player manual checks

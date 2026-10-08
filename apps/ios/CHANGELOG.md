@@ -11,6 +11,7 @@ All notable user-facing changes to Zenbu Japanese are recorded here.
   Zenbu syncs after each change, when it opens, and when you tap **Sync Now**. Everything still
   works signed out and offline, and signing out keeps everything on your iPhone; changes you make
   while signed out sync when you sign back in to the same account. **Favorites** is one list on all your devices.
+  A new account made with Apple takes the name you share with Apple.
 - Signed in, Player's **Recent** videos are the same on all your devices: a video you watch on one
   appears on the others with how far you got, and one you remove is removed everywhere.
 - Signed in, the sentences you bookmark in **Translations** are the same on all your devices, each

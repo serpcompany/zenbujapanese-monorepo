@@ -195,4 +195,55 @@ struct AccountSignInTests {
     #expect(value("code_challenge") == GoogleSignIn.challenge(for: attempt.verifier))
     #expect(value("state") == attempt.state)
   }
+
+  @Test("a session confirmed while a refresh is on its way is kept, and refreshed in its turn")
+  func sessionConfirmedDuringRefresh() async throws {
+    let server = StubAccountServer()
+    let storage = MemorySessionTokenStorage("earlier.signed")
+    let expiry = Date().addingTimeInterval(15 * 60)
+    server.respond { request in
+      if request.header("Authorization") == "Bearer earlier.signed" {
+        storage.save("confirmed.signed")
+        return .json(200, ["token": StubTokens.access(expiresAt: expiry, subject: "earlier")])
+      }
+      return .json(200, ["token": StubTokens.access(expiresAt: expiry, subject: "confirmed")])
+    }
+    let tokens = AccountTokens(
+      api: AccountAPI(baseURL: server.baseURL, session: server.session), storage: storage)
+
+    let token = try await tokens.validAccessToken()
+
+    #expect(token == StubTokens.access(expiresAt: expiry, subject: "confirmed"))
+    #expect(storage.read() == "confirmed.signed")
+    #expect(server.requests(to: "GET /v1/auth/token").count == 2)
+  }
+
+  @Test("Apple's name on a first sign-in goes with its token, and nothing when Apple gives none")
+  func appleNameOnFirstSignIn() async throws {
+    let server = StubAccountServer()
+    server.respond { _ in
+      .json(
+        200, ["token": "bare", "user": ["id": "learner-1", "email": "learner@example.com"]],
+        headers: ["set-auth-token": "session.signed"])
+    }
+    let api = AccountAPI(baseURL: server.baseURL, session: server.session)
+    var components = PersonNameComponents()
+    components.givenName = "Kana"
+    components.familyName = ""
+
+    _ = try await api.signIn(
+      provider: .apple, idToken: "apple-token", nonce: "nonce-1",
+      name: AppleSignInName(components))
+    _ = try await api.signIn(
+      provider: .apple, idToken: "apple-token", nonce: "nonce-2",
+      name: AppleSignInName(PersonNameComponents()))
+
+    let sent = server.requests(to: "POST /v1/auth/sign-in/social").map {
+      $0.json["idToken"] as? [String: Any] ?? [:]
+    }
+    let user = try #require(sent.first?["user"] as? [String: Any])
+    #expect(user["name"] as? [String: String] == ["firstName": "Kana"])
+    #expect(sent.last?["user"] == nil)
+    #expect(sent.last?["nonce"] as? String == "nonce-2")
+  }
 }

@@ -146,7 +146,7 @@ final class ZenbuAccount {
     let nonce = try await api.signInNonce()
     let credential = try await AppleSignIn.credential(nonce: nonce)
     let signIn = try await api.signIn(
-      provider: .apple, idToken: credential.identityToken, nonce: nonce)
+      provider: .apple, idToken: credential.identityToken, nonce: nonce, name: credential.name)
     return (signIn, credential.authorizationCode)
   }
 

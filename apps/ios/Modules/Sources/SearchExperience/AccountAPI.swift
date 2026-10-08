@@ -52,8 +52,16 @@ struct AccountAPI: Sendable {
 
   private struct SocialSignIn: Encodable {
     struct IDToken: Encodable {
+      struct User: Encodable {
+        struct Name: Encodable {
+          let firstName: String?
+          let lastName: String?
+        }
+        let name: Name
+      }
       let token: String
       let nonce: String
+      let user: User?
     }
     let provider: String
     let idToken: IDToken
@@ -88,10 +96,14 @@ struct AccountAPI: Sendable {
   }
 
   func signIn(
-    provider: AccountSignInProvider, idToken: String, nonce: String
+    provider: AccountSignInProvider, idToken: String, nonce: String,
+    name: AppleSignInName? = nil
   ) async throws -> AccountSignIn {
+    let user = name.map {
+      SocialSignIn.IDToken.User(name: .init(firstName: $0.firstName, lastName: $0.lastName))
+    }
     let body = SocialSignIn(
-      provider: provider.rawValue, idToken: .init(token: idToken, nonce: nonce))
+      provider: provider.rawValue, idToken: .init(token: idToken, nonce: nonce, user: user))
     return try signedIn(await send("POST", "v1/auth/sign-in/social", body: json(body)))
   }
 

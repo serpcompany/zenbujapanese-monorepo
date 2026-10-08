@@ -196,7 +196,7 @@ export const syncEntityRules: Readonly<Record<EntityType, EntityRule>> = {
     }
   },
   watchedVideo: {
-    rule: `A video the learner watched in the iOS app's Player. The account keeps the ${watchLimits.videos} most recently watched, and remembers its latest ${watchLimits.goneKept} removals.`,
+    rule: `A video the learner watched in the iOS app's Player. The account keeps the ${watchLimits.videos} most recently watched, and remembers the latest ${watchLimits.goneKept} videos it removed or pruned.`,
     entityId: 'The YouTube video ID: 11 letters, digits, `-`, or `_`.',
     data: 'WatchedVideo',
     operations: {

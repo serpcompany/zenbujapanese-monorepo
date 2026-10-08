@@ -7,6 +7,11 @@ enum AccountMessage {
       "Sign in with Apple isn't available in this development build. Use an emailed code, or the App Store or TestFlight app."
   )
 
+  static let appleDeletionUnavailableInDevBuild = String(
+    localized:
+      "This account signs in with Apple, and deleting it needs Sign in with Apple, which this development build doesn't have. Delete it from the App Store or TestFlight app."
+  )
+
   static func text(for error: Error) -> String? {
     if error is CancellationError { return nil }
     if case GoogleSignInError.refused(let reason) = error, reason == "not_configured" {

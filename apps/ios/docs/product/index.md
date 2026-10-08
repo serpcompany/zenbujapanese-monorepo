@@ -164,7 +164,9 @@ What doesn't sync, and why:
 **Signing in.** **Sign In to Sync** opens a sheet with **Sign in with Apple**, **Sign in with
 Google** (only in builds given a Google client ID), and an emailed code: the learner enters their
 email, taps **Email Me a Code**, and enters the 6-digit code. A refused sign-in says why, such as a
-wrong or expired code, or an email whose account signs in with Apple or Google. Signed in, the
+wrong or expired code, or an email whose account signs in with Apple or Google. Sign in with Apple
+asks for the learner's name and email; a new account takes the name Apple shares on the first
+sign-in, which the website's account page shows and lets the learner change. Signed in, the
 Account row shows **Zenbu Account** and the email.
 
 **The first sync.** When this phone signs in to an account other than the one it last signed out
@@ -233,7 +235,8 @@ A signed-in learner can delete their Zenbu account from **Zenbu Account → Dele
   device and app) and that this phone keeps its data. **Delete Account…** asks to confirm.
 - The learner signs in again: with **Sign in with Apple** if the account uses Apple, otherwise with
   Google or an emailed code to the account's email. Signing in to a different account deletes
-  nothing.
+  nothing. A development build (Zenbu Dev) can't sign in with Apple, so for an account that uses
+  Apple it says to delete it from the App Store or TestFlight app.
 - The account and everything it synced are then deleted through the account service
   ([`docs/agents/account-clients.md`](../../../../docs/agents/account-clients.md), Deleting the
   account). If Apple refuses or doesn't answer, nothing is deleted, and the learner signs in with
