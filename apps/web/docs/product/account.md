@@ -298,18 +298,18 @@ data, signs the browser out, and the footer says Sign in again.
 `https://api-staging.zenbujapanese.com` on staging, `http://localhost:8789` locally, and none yet
 in production, whose value is empty until its account service answers on `api.zenbujapanese.com`.
 An empty value closes the account pages; one that isn't an origin closes them too and logs
-`account_service_url_invalid`. The footer's link is drawn when the site is built, from the same
-value in `apps/web/wrangler.jsonc` for the environment being built, held to the same rule (an
-origin), so it and the pages agree in a build made as its environment deploys, with its
-`SITE_ENV`. A build without `SITE_ENV` draws the local site's footer, whichever Worker vars it then
-runs with. Opening production is in
+`account_service_url_invalid`. The footer's Sign in and the header's Log in get their address
+when the site is built, from the same value in `apps/web/wrangler.jsonc` for the environment being
+built, held to the same rule (an origin), so they and the pages agree in a build made as its
+environment deploys, with its `SITE_ENV`. A build without `SITE_ENV` draws the local site's header
+and footer, whichever Worker vars it then runs with. Opening production is in
 [`web.md`](../../../../docs/agents/web.md), Account pages.
 
 - Source: production's account service doesn't run yet
   ([`account-api.md`](../../../../docs/agents/account-api.md), Set up the server).
 - Check: `src/lib/account/settings.test.ts`, "name staging's account service, and none yet for
   production, so its pages stay closed" and "close the footer, as the pages, for a value that is
-  no origin"; the `Web` workflow's check that staging's build links Sign in, and its run of the
+  no origin"; the `Web` workflow's check that staging's build links Log in and Sign in, and its run of the
   Closed spec on a build made as production deploys ([`ci.md`](../../../../docs/agents/ci.md),
   Web).
 

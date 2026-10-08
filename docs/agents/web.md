@@ -61,9 +61,11 @@ lists every child sitemap and each child sitemap lists the new URLs.
   and their server. Dev assertions wait 15 seconds, since `next dev` compiles each route on first
   use; the production build keeps Playwright's 5, and runs on one worker, as one workerd process
   renders every page. It sets `ZENBU_ACCOUNT_PAGES` for the tests as `next.config.ts` does for the
-  build (Account pages, below), so the `placeholderLinks` the tests import list Log in only where
-  the build's account pages are closed. `apps/web/e2e/test.ts` holds the console check and the
-  fixture helpers every spec imports.
+  build (Account pages, below), from the run's `SITE_ENV`, or `production` with
+  `E2E_SITE_ENV=production`, so the `placeholderLinks` the tests import list Log in only where the
+  build's account pages are closed. Run the tests with the `SITE_ENV` the build had, or
+  `placeholders.spec.ts` reads the wrong list. `apps/web/e2e/test.ts` holds the console check and
+  the fixture helpers every spec imports.
 - `apps/web/vitest.config.ts` has two projects: `*.interaction.test.tsx` run in happy-dom, the
   other tests in Node. Both set `__NEXT_TRAILING_SLASH`, so `next/link` draws links with their
   trailing slash, as the build does with `trailingSlash`.
@@ -364,7 +366,7 @@ the account service ([`account-api.md`](account-api.md); the website's side of i
 
   | Var | What it does |
   | --- | --- |
-  | `ACCOUNT_API_URL` | The account service's origin: `http://localhost:8789` locally and `https://api-staging.zenbujapanese.com` on staging. Production's is empty until its account service answers on `https://api.zenbujapanese.com` (opening it, below). Empty, the pages say signing in isn't available, link to no other account page, and the footer has no Sign in. |
+  | `ACCOUNT_API_URL` | The account service's origin: `http://localhost:8789` locally and `https://api-staging.zenbujapanese.com` on staging. Production's is empty until its account service answers on `https://api.zenbujapanese.com` (opening it, below). Empty, the pages say signing in isn't available, link to no other account page, the footer has no Sign in, and the header's Log in stays `#`. |
   | `ACCOUNT_APPLE_SERVICES_ID` | The Services ID Sign in with Apple JS signs in as: the first of the service's `APPLE_SERVICES_IDS`, the one the service takes the website's Apple codes as. Empty, the pages offer no Apple. |
   | `ACCOUNT_GOOGLE_SIGN_IN` | `on` offers Google, once the service has a Google web client. |
 
@@ -388,9 +390,13 @@ the account service ([`account-api.md`](account-api.md); the website's side of i
   `playwright.config.ts`, the closed-run flag in `e2e/server.ts` and `e2e/test.ts`, and
   `src/lib/account/settings.test.ts`; and the docs that say
   production's pages are closed: the product docs ([Account pages](../../apps/web/docs/product/account.md),
-  the [index](../../apps/web/docs/product/index.md), and [Privacy Policy](../../apps/web/docs/product/privacy.md)),
+  the [index](../../apps/web/docs/product/index.md), [Privacy Policy](../../apps/web/docs/product/privacy.md),
+  and [Dictionary](../../apps/web/docs/product/dictionary.md)'s Placeholder links and Get the app
+  and Log in, where Log in stays `#` in production),
   this section and its closed-spec paragraph (below), [`ci.md`](ci.md) (Web),
-  [`docs/quality.md`](../quality.md) (Account pages), and the `browser-tests` skill.
+  [`docs/quality.md`](../quality.md) (Account pages, and Header and footer's placeholders),
+  [`docs/tech-debt.md`](../tech-debt.md)'s placeholder row, which counts Log in in production, and
+  the `browser-tests` skill.
   The privacy policy's text stays true with the email code alone: it offers Apple and Google only
   "where its sign-in page offers them". `main` then deploys staging; production deploys when a
   person runs `Web deploy` by hand while `DEPLOY_PRODUCTION` is `false` (Environments and
@@ -538,8 +544,9 @@ Web Analytics).
 Before merging a change to environment configuration, build the site as the target environment
 deploys and run the Worker with its `vars` (`SITE_ENV=production pnpm exec opennextjs-cloudflare
 build`, then `pnpm exec opennextjs-cloudflare preview --env production`), then check the output.
-Static pages, the header's Log in and the footer's Sign in among them (Account pages, above), come from the build's
-`SITE_ENV`, so a build without it would show the local site's footer beside production's pages.
+Static pages, the header's Log in and the footer's Sign in among them (Account pages, above), come
+from the build's `SITE_ENV`, so a build without it would show the local site's header and footer
+beside production's pages.
 Production's `DICTIONARY_API_URL` is a placeholder until `Web deploy` writes it (Dictionary
 service, above), and with it every page answers 500, so name no dictionary service
 (`--var DICTIONARY_API_URL: --var DICTIONARY_API_TOKEN:`). `preview` also reads `.dev.vars`, and a
