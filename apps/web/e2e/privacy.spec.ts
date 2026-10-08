@@ -49,7 +49,7 @@ test.describe('privacy policy', () => {
     await expect(listAfter(page, 'The short version')).toHaveText([
       /works without an account/,
       /we keep your email, how you sign in, and the study data you sync/,
-      /don't sell your information or use it for ads/,
+      /^The app has no ads, analytics, or tracking\.$/,
       /companies help us run the service/,
       /see, export, correct, or delete your data, and delete your account/
     ])

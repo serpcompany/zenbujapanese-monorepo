@@ -78,7 +78,7 @@ export default function PrivacyPage() {
           If you create a Zenbu account, we keep your email, how you sign in, and the study data you
           sync, so your devices stay in step.
         </li>
-        <li>We don't sell your information or use it for ads, and the app doesn't track you.</li>
+        <li>The app has no ads, analytics, or tracking.</li>
         <li>
           A few companies help us run the service, such as Cloudflare, which carries our traffic,
           and useSend, which sends our email.

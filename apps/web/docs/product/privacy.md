@@ -27,12 +27,13 @@ desktop and a phone width.
 ## Sections
 
 **The short version.** Five points: the app works without an account and keeps what the learner
-does on the device; an account keeps the email, how they sign in, and the study data they sync; we
-don't sell their information or use it for ads, and the app doesn't track them; a few companies
+does on the device; an account keeps the email, how they sign in, and the study data they sync; the
+app has no ads, analytics, or tracking; a few companies
 help run the service, Cloudflare and useSend among them; and they can see, export, correct, or
 delete their data, and delete the account.
 
-- Source: #681.
+- Source: #681; the [App Store privacy labels](../app-store-privacy-labels.md) (no analytics or
+  crash-reporting SDK, and no tracking).
 - Check: Privacy spec, "opens with a short version in five points".
 
 **Who we are.** TSMC LLC, doing business as Zenbu Japanese, in the United States, as the
