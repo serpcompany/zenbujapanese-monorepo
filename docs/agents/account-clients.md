@@ -195,11 +195,11 @@ trusts (`ACCOUNT_API_TRUSTED_ORIGINS`), and keeps no token of its own
   "google", "callbackURL": "<page>", "errorCallbackURL": "<page>" }` answers the page to send the
   browser to; Google comes back to `/v1/auth/callback/google`, which sets the cookie and sends the
   browser to `callbackURL`, or to `errorCallbackURL` with `?error=<code>`. `link-social` adds Google
-  the same way. The codes are `account_not_linked` (the email has an account another way),
+  the same way. The codes include `account_not_linked` (the email has an account another way),
   `account_already_linked_to_different_user` (that Google account belongs to another Zenbu
-  account), `access_denied` (the learner cancelled at Google), `state_mismatch` (the sign-in
-  started in another browser or tab), and `EMAIL_NOT_VERIFIED`, which comes in capitals, so compare
-  ignoring case. A missing state, or a callback reused or reloaded, ends at `/v1/auth/error`, a
+  account), `access_denied` (the learner cancelled at Google), `state_mismatch` (the sign-in took
+  over 5 minutes, or started in another browser or tab), and `EMAIL_NOT_VERIFIED`, which comes in
+  capitals, so compare ignoring case; treat any other code as a failed sign-in, to try again. A missing state, or a callback reused or reloaded, ends at `/v1/auth/error`, a
   JSON `404 not_found` the browser shows: the page can't catch it.
 - **On `429`**, wait what `Retry-After` says.
 
