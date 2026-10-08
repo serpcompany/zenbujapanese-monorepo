@@ -47,7 +47,9 @@ export const legalPages = sitePages.filter(
   page => page.path.startsWith('/legal/') && page.path !== '/legal/'
 )
 
-export function pageFor(path: (typeof sitePages)[number]['path']): SitePage {
+export type SitePath = (typeof sitePages)[number]['path']
+
+export function pageFor(path: SitePath): SitePage {
   const page = sitePages.find(candidate => candidate.path === path)
   if (!page) throw new Error(`Unknown page: ${path}`)
   return page

@@ -1,7 +1,7 @@
 import type { Metadata } from 'next'
-import { pageFor, type sitePages } from './pages'
+import { pageFor, type SitePath } from './pages'
 
-export function pageMetadata(path: (typeof sitePages)[number]['path']): Metadata {
+export function pageMetadata(path: SitePath): Metadata {
   const page = pageFor(path)
   return {
     title: page.title,
