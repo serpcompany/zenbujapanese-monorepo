@@ -29,7 +29,7 @@ test.describe('the tools index', () => {
   }) => {
     await page.goto('/tools/')
     await expect(main(page).getByRole('heading', { level: 1 })).toHaveText(
-      'Free Japanese converters'
+      'Online tools for learning Japanese'
     )
     await expect(
       main(page).getByRole('list', { name: 'Converters' }).getByRole('heading', { level: 3 })

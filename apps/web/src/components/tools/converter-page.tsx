@@ -21,10 +21,7 @@ export function ConverterPage({ converter }: { converter: ConverterContent }) {
       <BrowseHeading title={converter.name}>{converter.lead}</BrowseHeading>
       <div className="flex flex-col gap-3">
         <Converter slug={converter.slug} />
-        <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
-          <p className="text-sm text-muted-foreground">
-            It runs in your browser, so nothing you type is sent anywhere.
-          </p>
+        <div className="flex justify-end">
           <ArrowLink href={counterpart.path}>{counterpart.name}</ArrowLink>
         </div>
       </div>

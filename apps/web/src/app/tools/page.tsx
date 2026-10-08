@@ -11,14 +11,11 @@ export const metadata = sitePageMetadata(toolsIndex)
 export default function ToolsPage() {
   return (
     <BrowsePage>
-      <BrowseHeading title="Free Japanese converters">
-        Convert between hiragana, katakana, and romaji, and fix half-width text. Free, in your
-        browser, with nothing to install.
+      <BrowseHeading title="Online tools for learning Japanese">
+        Convert between hiragana, katakana, and romaji, browse kana and kanji charts, and look up
+        words. Free, in your browser, with nothing to install.
       </BrowseHeading>
-      <ToolSection
-        title="Converters"
-        line="Switch between scripts. Everything runs in your browser."
-      >
+      <ToolSection title="Converters">
         <CardGrid label="Converters">
           {converters.map(converter => (
             <li key={converter.slug}>
@@ -27,7 +24,7 @@ export default function ToolsPage() {
           ))}
         </CardGrid>
       </ToolSection>
-      <ToolSection title="Dictionary and reference" line="The same dictionary as the Zenbu app.">
+      <ToolSection title="Dictionary and reference">
         <CardGrid label="Dictionary and reference">
           {referenceTools.map(tool => (
             <li key={tool.href}>

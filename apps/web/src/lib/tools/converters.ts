@@ -157,7 +157,7 @@ export function converterFor(slug: ConverterSlug): Converter {
 
 export const toolsIndex = {
   path: toolsPath,
-  title: 'Free Japanese converters and tools',
+  title: 'Online tools for learning Japanese',
   description:
     'Convert between hiragana, katakana, and romaji, fix half-width text, and browse kana and kanji charts. Free, in your browser.'
 } as const satisfies SitePage

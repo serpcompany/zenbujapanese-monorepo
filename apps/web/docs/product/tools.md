@@ -8,8 +8,7 @@ button, and the pages are built from stock shadcn components, as the owner's UI 
 Kanji to Furigana, which needs the dictionary service, is #691, and stays a placeholder until
 then.
 
-The converters run entirely in the browser: nothing typed is sent anywhere, and the pages say so
-under the converter.
+The converters run entirely in the browser: nothing typed is sent anywhere.
 
 Abbreviations: Web paths are under `apps/web/`. **Tools spec** is `e2e/tools.spec.ts`, the browser
 tests of these pages at a desktop and a phone width. **Page test** is
@@ -27,7 +26,7 @@ headings (`src/components/tools/tool-reference.tsx`).
 
 ## Tools index
 
-**Layout.** The heading Free Japanese converters and a line about them; then Converters, six cards
+**Layout.** The heading Online tools for learning Japanese and a line about them; then Converters, six cards
 (one per converter, each with its mark, name, a line, and a sample it converts, such as こーひー →
 コーヒー); then Dictionary and reference, six cards that open existing pages (Dictionary, Hiragana
 chart, Katakana chart, Kanji lists, Frequency lists, and Word categories, which is the browse
@@ -46,8 +45,7 @@ headings.
 ## Converter pages
 
 **Layout.** In this order: a breadcrumb (Tools, then the converter); the converter's name and a
-line about it; the converter, with a line under it saying nothing typed is sent anywhere and a link
-to the other direction's page (Katakana to Hiragana → on Hiragana to Katakana); How it works; on the
+line about it; the converter, with a link under it to the other direction's page (Katakana to Hiragana → on Hiragana to Katakana); How it works; on the
 romaji pages Typing tips or Spelling rules, and on the width pages What changes; the conversion
 table; Questions; Related tools, three other converters as the index's cards, with All tools → as
 the product page's More from Zenbu has All products, leaving out the other direction, which is
@@ -210,8 +208,8 @@ and the same questions as FAQ structured data (`FAQPage` JSON-LD).
 
 ## Site-wide
 
-**Titles, descriptions, canonical URLs, and indexing.** The index is "Free Japanese converters and
-tools | Zenbu Japanese" and each converter "<Name> Converter | Zenbu Japanese", each with its own
+**Titles, descriptions, canonical URLs, and indexing.** The index is "Online tools for learning
+Japanese | Zenbu Japanese" and each converter "<Name> Converter | Zenbu Japanese", each with its own
 description and canonical URL, from `src/lib/tools/converters.ts`. All are indexed: no page carries
 a robots meta tag. `/sitemap-tools.xml`, which the sitemap index lists, holds them, as does the
 HTML sitemap (`/sitemap/`), under the tools index. A converter name the site doesn't have is 404,
