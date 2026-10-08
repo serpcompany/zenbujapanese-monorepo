@@ -1,25 +1,45 @@
+import { ArrowRightIcon } from 'lucide-react'
+import Link from 'next/link'
 import type { ReactNode } from 'react'
-import { cn } from '@/lib/utils'
+
+export function ArrowLink({
+  href,
+  target,
+  children
+}: {
+  href: string
+  target?: string
+  children: string
+}) {
+  return (
+    <Link
+      href={href}
+      data-link-target={target}
+      className="inline-flex items-center gap-1 text-sm font-medium hover:underline"
+    >
+      {children}
+      <ArrowRightIcon aria-hidden="true" className="size-4" />
+    </Link>
+  )
+}
 
 export function ToolSection({
   title,
   line,
   aside,
-  children,
-  className
+  children
 }: {
   title: string
   line?: ReactNode
   aside?: ReactNode
   children: ReactNode
-  className?: string
 }) {
   return (
-    <section className={cn('flex flex-col gap-4', className)}>
-      <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
+    <section className="flex flex-col gap-4">
+      <div className="flex flex-wrap items-end justify-between gap-x-4 gap-y-1">
         <div className="flex min-w-0 flex-col gap-1">
-          <h2 className="text-xl font-semibold">{title}</h2>
-          {line ? <p className="text-pretty text-muted-foreground">{line}</p> : null}
+          <h2 className="text-lg font-semibold tracking-tight">{title}</h2>
+          {line ? <p className="max-w-3xl text-pretty text-muted-foreground">{line}</p> : null}
         </div>
         {aside}
       </div>

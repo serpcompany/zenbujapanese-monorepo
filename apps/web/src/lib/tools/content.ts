@@ -3,11 +3,17 @@ import type { ConverterPair } from './converters'
 import type { ConverterSlug } from './paths'
 import type { WidthOptions } from './width'
 
-export type Phrase = string | { japanese: string } | { latin: string }
+export type Phrase = string | { japanese: string } | { latin: string } | { typed: string }
 export type RichText = readonly Phrase[]
 
 const phraseText = (phrase: Phrase) =>
-  typeof phrase === 'string' ? phrase : 'japanese' in phrase ? phrase.japanese : phrase.latin
+  typeof phrase === 'string'
+    ? phrase
+    : 'japanese' in phrase
+      ? phrase.japanese
+      : 'typed' in phrase
+        ? phrase.typed
+        : phrase.latin
 
 export const plainText = (text: RichText) => text.map(phraseText).join('')
 
@@ -23,6 +29,7 @@ export function withKeys(text: RichText) {
 
 const ja = (japanese: string) => ({ japanese })
 const latin = (text: string) => ({ latin: text })
+const typed = (text: string) => ({ typed: text })
 
 export const howItWorks: Record<ConverterSlug, readonly RichText[]> = {
   'hiragana-to-katakana': [
@@ -76,18 +83,18 @@ export const howItWorks: Record<ConverterSlug, readonly RichText[]> = {
   'romaji-to-kana': [
     [
       'Type Japanese sounds in Latin letters and each syllable turns into kana as soon as it’s complete: ',
-      latin('ka'),
+      typed('ka'),
       ' becomes ',
       ja('か'),
       ', ',
-      latin('kya'),
+      typed('kya'),
       ' becomes ',
       ja('きゃ'),
       '. Letters that can’t start a syllable yet wait for the next one.'
     ],
     [
       'Choose hiragana for Japanese words and katakana for words from other languages. A hyphen types the long mark, so ',
-      latin('ko-hi-'),
+      typed('ko-hi-'),
       ' becomes ',
       ja('コーヒー'),
       ' in katakana.'
@@ -307,8 +314,8 @@ export const widthRows: readonly WidthRow[] = [
   { kind: 'Punctuation', half: '｡､｢｣', full: '。、「」', change: 'symbolsAndSpaces' },
   {
     kind: 'Space',
-    half: ' ',
-    full: '　',
+    half: 'A B',
+    full: 'A　B',
     change: 'symbolsAndSpaces',
     note: 'A narrow space becomes a wide one.'
   },

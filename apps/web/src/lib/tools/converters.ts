@@ -137,7 +137,7 @@ export const converters: readonly Converter[] = [
     lead: 'Turn full-width katakana, letters, and numbers into half-width, for systems that only take narrow characters.',
     card: {
       line: 'Shrink full-width katakana, letters, and numbers.',
-      mark: 'A',
+      mark: 'ｶﾅ',
       sample: 'ＡＢＣ'
     },
     sample: 'ヤマダ　タロウ　サマ。ＡＢＣ－１２３',

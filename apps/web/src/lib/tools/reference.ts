@@ -71,28 +71,11 @@ function kanaRow(kana: string): KanaRow {
   }
 }
 
-interface KanaChartCell {
-  position: number
-  row: KanaRow | null
-}
+const rowsOf = (chart: readonly ChartRow[]) =>
+  chart.flatMap(row => row.cells.flatMap(cell => (cell ? [kanaRow(cell.kana)] : [])))
 
-const inPlace = (rows: readonly (KanaRow | null)[]): KanaChartCell[] =>
-  rows.map((row, position) => ({ position, row }))
-
-const chart = (rows: readonly ChartRow[]) =>
-  inPlace(rows.flatMap(row => row.cells.map(cell => (cell ? kanaRow(cell.kana) : null))))
-
-const rowsOf = (cells: readonly KanaChartCell[]) =>
-  cells.flatMap(cell => (cell.row ? [cell.row] : []))
-
-const basicChart = chart(gojuonRows)
-
-const markChart = chart(dakuonRows)
-
-const combinationChart = inPlace(
-  ['き', 'し', 'ち', 'に', 'ひ', 'み', 'り', 'ぎ', 'じ', 'び', 'ぴ'].flatMap(kana =>
-    ['ゃ', 'ゅ', 'ょ'].map(small => kanaRow(kana + small))
-  )
+const combinationRows = ['き', 'し', 'ち', 'に', 'ひ', 'み', 'り', 'ぎ', 'じ', 'び', 'ぴ'].flatMap(
+  kana => ['ゃ', 'ゅ', 'ょ'].map(small => kanaRow(kana + small))
 )
 
 const smallRows = Array.from('ぁぃぅぇぉゃゅょっゎ', kanaRow)
@@ -126,35 +109,9 @@ export interface KanaGroup {
 }
 
 export const kanaGroups: readonly KanaGroup[] = [
-  { id: 'basic', label: 'Basic', rows: rowsOf(basicChart) },
-  { id: 'marks', label: 'With marks', rows: rowsOf(markChart) },
-  { id: 'combinations', label: 'Combinations', rows: rowsOf(combinationChart) },
+  { id: 'basic', label: 'Basic', rows: rowsOf(gojuonRows) },
+  { id: 'marks', label: 'With marks', rows: rowsOf(dakuonRows) },
+  { id: 'combinations', label: 'Combinations', rows: combinationRows },
   { id: 'small', label: 'Small kana', rows: smallRows },
   { id: 'extended', label: 'Katakana only', rows: extendedRows }
-]
-
-export interface KanaChartTab {
-  id: Extract<KanaGroupId, 'basic' | 'marks' | 'combinations'>
-  label: string
-  note: string
-  cells: readonly KanaChartCell[]
-  columns: 3 | 5
-}
-
-export const kanaChartTabs: readonly KanaChartTab[] = [
-  { id: 'basic', label: 'Basic', note: 'The 46 basic kana.', cells: basicChart, columns: 5 },
-  {
-    id: 'marks',
-    label: 'With marks',
-    note: 'Two small strokes (゛) or a circle (゜) change the sound.',
-    cells: markChart,
-    columns: 5
-  },
-  {
-    id: 'combinations',
-    label: 'Combinations',
-    note: 'A small ゃ, ゅ, or ょ joins the kana before it.',
-    cells: combinationChart,
-    columns: 3
-  }
 ]

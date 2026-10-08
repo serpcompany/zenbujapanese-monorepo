@@ -6,7 +6,6 @@ import { expect, onPhone, test } from './test'
 
 const main = (page: Page) => page.getByRole('main')
 const box = (page: Page, name: string) => main(page).getByRole('textbox', { name, exact: true })
-const rows = (page: Page) => main(page).getByRole('group', { name: 'Rows' })
 
 async function typeAndSee(
   page: Page,
@@ -154,33 +153,32 @@ test.describe('a converter page', () => {
       .toBe('ＡＢＣ　カタカナ')
   })
 
-  test('the conversion table’s filter shows one group, and All brings back the rest', async ({
+  test('the conversion table shows one group at a time in tabs, every row in the page', async ({
     page
   }) => {
     await page.goto('/tools/kana-to-romaji/')
-    const group = (name: string) =>
-      main(page).getByRole('region', { name: new RegExp(`^${name} \\d+$`) })
-    await expect(main(page).getByRole('table')).toHaveCount(5)
+    const rows = main(page).getByRole('tablist', { name: 'Rows' })
+    const table = (name: string) => main(page).getByRole('table', { name: new RegExp(`^${name},`) })
+    await expect(rows.getByRole('tab')).toHaveText([
+      'Basic',
+      'With marks',
+      'Combinations',
+      'Small kana',
+      'Katakana only'
+    ])
+    await expect(table('Basic')).toBeVisible()
+    await expect(main(page).locator('tbody tr')).toHaveCount(131 + 6)
+    const smallKana = rows.getByRole('tab', { name: 'Small kana' })
     await expect(async () => {
-      await rows(page).getByRole('button', { name: 'Small kana' }).click()
-      await expect(group('Basic')).toBeHidden({ timeout: 1_000 })
+      await smallKana.click()
+      await expect(smallKana).toHaveAttribute('aria-selected', 'true', { timeout: 1_000 })
     }).toPass({ timeout: 15_000 })
-    await expect(group('Small kana')).toBeVisible()
-    await expect(group('Small kana').getByRole('cell', { name: 'xtsu, xtu, ltu' })).toBeVisible()
-    await rows(page).getByRole('button', { name: 'All', exact: true }).click()
-    await expect(group('Basic')).toBeVisible()
-    await expect(group('Katakana only')).toBeVisible()
-  })
-
-  test('the kana chart’s tabs show each chart', async ({ page }) => {
-    await page.goto('/tools/hiragana-to-katakana/')
-    const combinations = main(page).getByRole('tab', { name: 'Combinations' })
-    await expect(async () => {
-      await combinations.click()
-      await expect(combinations).toHaveAttribute('aria-selected', 'true', { timeout: 1_000 })
-    }).toPass({ timeout: 15_000 })
-    await expect(main(page).getByRole('list', { name: 'Combinations kana' })).toBeVisible()
-    await expect(main(page).getByRole('list', { name: 'Basic kana' })).toBeHidden()
+    await expect(table('Basic')).toBeHidden()
+    await expect(table('Small kana').getByRole('cell', { name: 'xtsu, xtu, ltu' })).toBeVisible()
+    await expect(main(page).getByRole('link', { name: /^Full kana charts/ })).toHaveAttribute(
+      'href',
+      '/dictionary/browse/kana/'
+    )
   })
 
   test('a question opens to its answer', async ({ page }) => {
@@ -196,7 +194,7 @@ test.describe('a converter page', () => {
     await expect(answer).toBeVisible()
   })
 
-  test('related tools lead to their pages', async ({ page }) => {
+  test('related tools lead to their pages, and All tools to the index', async ({ page }) => {
     await page.goto('/tools/half-width-to-full-width/')
     const related = main(page).getByRole('list', { name: 'Related tools' })
     for (const slug of converterFor('half-width-to-full-width').related) {
@@ -206,6 +204,8 @@ test.describe('a converter page', () => {
         converter.path
       )
     }
+    await main(page).getByRole('link', { name: 'All tools' }).click()
+    await expect(page).toHaveURL('/tools/')
   })
 })
 

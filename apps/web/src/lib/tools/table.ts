@@ -6,7 +6,7 @@ import { fullToHalf, type WidthOptions } from './width'
 
 interface TableColumn {
   heading: string
-  quiet?: true
+  wraps?: true
 }
 
 interface TableCell {
@@ -39,9 +39,9 @@ const japanese = (heading: string, text: (row: KanaRow) => string): Column => ({
   cell: row => ({ text: text(row), lang: 'ja' })
 })
 
-const latin = (heading: string, text: (row: KanaRow) => string, quiet?: true): Column => ({
+const latin = (heading: string, text: (row: KanaRow) => string, wraps?: true): Column => ({
   heading,
-  ...(quiet ? { quiet } : {}),
+  ...(wraps ? { wraps } : {}),
   cell: row => ({ text: text(row), lang: 'ja-Latn' })
 })
 
@@ -82,7 +82,7 @@ export function conversionTable(slug: ConverterSlug): ConversionTable {
   const columns = columnsOf[slug]
   return {
     line: lines[pair],
-    columns: columns.map(({ heading, quiet }) => ({ heading, ...(quiet ? { quiet } : {}) })),
+    columns: columns.map(({ heading, wraps }) => ({ heading, ...(wraps ? { wraps } : {}) })),
     groups: kanaGroups.map(group => ({
       id: group.id,
       label: groupLabel(pair, group.id, group.label),

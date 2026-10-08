@@ -191,10 +191,11 @@ drawing's furigana keeps its drawn size.
   tests beside them, which the browser runs, so nothing typed leaves it. Each converter keeps its
   two boxes as one edit, the box last typed in and its text (`bothSides` in
   `src/lib/tools/convert.ts`), and works out the other box from it, so the box being typed in is
-  never rewritten. The pages use stock shadcn components (`table`, `checkbox`, `label`,
-  `textarea`, `toggle-group`, `tabs`, and `accordion`, added with the shadcn CLI), trimmed only of
-  exports nothing uses, as the dead-code check asks. The Questions accordion is
-  `src/components/question-list.tsx`, which the product page shares.
+  never rewritten. The pages are stock shadcn components, as the owner's UI rules ask (#696): `card`, `table`,
+  `tabs`, `checkbox` with `label`, `textarea`, `toggle-group`, `kbd`, and `accordion`, through
+  `src/components/question-list.tsx`, which the product page shares. Each conversion table group is
+  a tab whose panel stays mounted, so all 131 rows are in the HTML. A `Kbd` on the muted grey sits
+  in a `muted-surface` wrapper, which keeps its text at 4.5:1 (Theme, above).
 - The scripts in `apps/web/scripts/` read a command's output whole before searching it:
   `curl | grep -q` fails under `pipefail` when grep exits early. Their `.shellcheckrc` turns off
   ShellCheck's SC2329: `smoke.sh`'s checks are functions that `eventually` calls by name, which

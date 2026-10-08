@@ -36,7 +36,7 @@ export function ProductQuestions({ questions }: { questions: readonly Question[]
   return (
     <div className="flex flex-col items-center gap-6">
       <h2 className={sectionTitleClassName}>Questions</h2>
-      <QuestionList questions={questions} openFirst className="text-left" />
+      <QuestionList questions={questions} openFirst className="max-w-2xl text-left" />
     </div>
   )
 }

@@ -3,8 +3,8 @@
 import { CopyIcon } from 'lucide-react'
 import { type ReactNode, type Ref, useEffect, useId, useRef, useState } from 'react'
 import { Button } from '@/components/ui/button'
+import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
-import { cn } from '@/lib/utils'
 
 const copyStatusShown = 2_000
 
@@ -37,9 +37,7 @@ export function ConverterBox({
   onType,
   placeholder,
   fieldRef,
-  actions,
-  className,
-  fieldClassName
+  actions
 }: {
   label: string
   lang: string
@@ -48,16 +46,12 @@ export function ConverterBox({
   placeholder: string
   fieldRef?: Ref<HTMLTextAreaElement>
   actions?: ReactNode
-  className?: string
-  fieldClassName?: string
 }) {
   const id = useId()
   const { status, copy } = useCopy()
   return (
-    <div className={cn('flex flex-col gap-2 p-4', className)}>
-      <label htmlFor={id} className="text-sm font-medium text-muted-foreground">
-        {label}
-      </label>
+    <div className="flex flex-col gap-2">
+      <Label htmlFor={id}>{label}</Label>
       <Textarea
         ref={fieldRef}
         id={id}
@@ -69,10 +63,9 @@ export function ConverterBox({
         autoCapitalize="off"
         autoCorrect="off"
         autoComplete="off"
-        className={cn('min-h-24', fieldClassName)}
       />
-      <div className="flex flex-wrap items-center justify-between gap-2 text-sm text-muted-foreground">
-        <span>{characterCount(text)}</span>
+      <div className="flex flex-wrap items-center justify-between gap-2 text-sm">
+        <span className="text-muted-foreground">{characterCount(text)}</span>
         <div className="flex flex-wrap items-center justify-end gap-2">
           <output>{status}</output>
           {actions}

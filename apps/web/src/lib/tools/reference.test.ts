@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'vitest'
 import { kanaToRomaji } from './kana-to-romaji'
-import { kanaChartTabs, kanaGroups } from './reference'
+import { kanaGroups } from './reference'
 import { romajiToKana } from './romaji-to-kana'
 
 const everyRow = kanaGroups.flatMap(group => group.rows)
@@ -58,23 +58,6 @@ describe('the kana reference', () => {
       'thi',
       'dhi',
       'who'
-    ])
-  })
-
-  test('lays the basic chart out in rows of five, with gaps where a kana is missing', () => {
-    const [basic] = kanaChartTabs
-    expect(basic.cells.map(cell => cell.position)).toEqual([...Array(55).keys()])
-    expect(basic.cells.slice(35, 40).map(cell => cell.row?.kana ?? null)).toEqual([
-      'や',
-      null,
-      'ゆ',
-      null,
-      'よ'
-    ])
-    expect(kanaChartTabs.map(tab => [tab.label, tab.cells.length, tab.columns])).toEqual([
-      ['Basic', 55, 5],
-      ['With marks', 25, 5],
-      ['Combinations', 33, 3]
     ])
   })
 })

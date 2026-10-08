@@ -4,15 +4,14 @@ import {
   kanjiListsPath,
   scriptPath
 } from '@/lib/dictionary/browse/paths'
-import type { MenuSymbol } from '@/lib/site-menus'
-
-export type ToolMark = { glyph: string } | { symbol: MenuSymbol }
+import type { ProductMark } from '@/lib/products/catalog'
+import { site } from '@/lib/site'
 
 export interface ReferenceTool {
   title: string
   line: string
   href: string
-  mark: ToolMark
+  mark: ProductMark
 }
 
 export const referenceTools: readonly ReferenceTool[] = [
@@ -20,19 +19,19 @@ export const referenceTools: readonly ReferenceTool[] = [
     title: 'Dictionary',
     line: 'Words and kanji, searched in Japanese, kana, romaji, or English.',
     href: '/dictionary/',
-    mark: { symbol: 'search' }
+    mark: { glyph: site.mark, solid: true }
   },
   {
     title: 'Hiragana chart',
     line: 'Every hiragana, with common words for each.',
     href: scriptPath('hiragana'),
-    mark: { glyph: 'あ' }
+    mark: { glyph: 'ひ' }
   },
   {
     title: 'Katakana chart',
     line: 'Every katakana, with common words for each.',
     href: scriptPath('katakana'),
-    mark: { glyph: 'ア' }
+    mark: { glyph: 'ヒ' }
   },
   {
     title: 'Kanji lists',
@@ -50,6 +49,6 @@ export const referenceTools: readonly ReferenceTool[] = [
     title: 'Word categories',
     line: 'Words by part of speech, usage label, and subject.',
     href: browsePath,
-    mark: { symbol: 'tag' }
+    mark: { symbol: 'book' }
   }
 ]

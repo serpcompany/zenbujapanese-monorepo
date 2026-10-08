@@ -1,6 +1,6 @@
 import { renderToStaticMarkup } from 'react-dom/server'
 import { describe, expect, test } from 'vitest'
-import { questions } from '@/lib/tools/content'
+import { questions, spellingRules, typingTips, widthRows } from '@/lib/tools/content'
 import { converterFor, converters } from '@/lib/tools/converters'
 import { ConverterPage } from './converter-page'
 
@@ -23,29 +23,20 @@ function structuredData(html: string) {
   return json ? JSON.parse(json) : null
 }
 
+const referenceRows: Record<(typeof converters)[number]['pair'], (slug: string) => number> = {
+  kana: () => 0,
+  romaji: slug => (slug === 'romaji-to-kana' ? typingTips.length : spellingRules.length),
+  width: () => widthRows.length
+}
+
 describe('a converter page’s HTML', () => {
   test.each(
-    converters.filter(converter => converter.pair !== 'width').map(converter => converter.slug)
-  )('%s holds every row of its conversion table, with no group hidden', slug => {
+    converters.map(converter => converter.slug)
+  )('%s holds every row of its conversion table, a tab per group, the ones not shown hidden', slug => {
     const html = page(slug)
-    expect(conversionTableRows(html)).toBe(131)
-    expect(html).not.toMatch(/<section[^>]*hidden=""[^>]*>\s*<h3/)
-  })
-
-  test.each([
-    'half-width-to-full-width',
-    'full-width-to-half-width'
-  ] as const)('%s holds every row of its conversion table, beside its width table', slug => {
-    expect(conversionTableRows(page(slug))).toBe(131 + 7)
-  })
-
-  test('the kana pages hold all three kana charts, the ones not shown hidden', () => {
-    const html = page('hiragana-to-katakana')
-    for (const label of ['Basic kana', 'With marks kana', 'Combinations kana']) {
-      expect(html).toContain(`aria-label="${label}"`)
-    }
-    expect(tabPanels(html).map(panel => panel.hidden)).toEqual([false, true, true])
-    expect(html).toContain('きゃ')
+    const { pair } = converterFor(slug)
+    expect(conversionTableRows(html)).toBe(131 + referenceRows[pair](slug))
+    expect(tabPanels(html).map(panel => panel.hidden)).toEqual([false, true, true, true, true])
   })
 
   test('the questions are in the page with their answers, and as FAQ structured data', () => {
@@ -66,12 +57,13 @@ describe('a converter page’s HTML', () => {
     expect(page('full-width-to-half-width')).toContain('What changes')
   })
 
-  test('the page links its other direction once, and related tools to theirs', () => {
+  test('the page links its other direction once, related tools to theirs, and all the tools', () => {
     const html = page('half-width-to-full-width')
     expect(html.match(/href="\/tools\/full-width-to-half-width\/"/g)).toHaveLength(1)
     expect(html).toContain('Full-width to Half-width')
     for (const slug of converterFor('half-width-to-full-width').related) {
       expect(html).toContain(`href="/tools/${slug}/"`)
     }
+    expect(html).toMatch(/<a [^>]*href="\/tools\/"[^>]*>All tools/)
   })
 })
