@@ -143,5 +143,5 @@ export const kanaGroups: readonly KanaGroup[] = [
     chart: combinationChart
   },
   { id: 'small', tab: 'Small', label: 'Small kana', rows: smallRows },
-  { id: 'extended', tab: 'Extra', label: 'Katakana only', rows: extendedRows }
+  { id: 'extended', tab: 'Katakana', label: 'Katakana only', rows: extendedRows }
 ]

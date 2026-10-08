@@ -28,7 +28,7 @@ describe('the conversion table', () => {
     expect(groups.map(each => [each.tab, each.label, each.count, entriesOf(each).length])).toEqual(
       kanaGroups.map(each => [each.tab, each.label, each.rows.length, each.rows.length])
     )
-    expect(groups.map(each => each.tab)).toEqual(['Basic', 'Marks', 'Combos', 'Small', 'Extra'])
+    expect(groups.map(each => each.tab)).toEqual(['Basic', 'Marks', 'Combos', 'Small', 'Katakana'])
   })
 
   test('lays Basic and Marks out as a chart by vowel, with gaps, and Combos by ya, yu, and yo', () => {

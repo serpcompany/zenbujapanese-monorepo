@@ -159,7 +159,13 @@ test.describe('a converter page', () => {
     await page.goto('/tools/kana-to-romaji/')
     const groups = main(page).getByRole('tablist', { name: 'Kana groups' })
     const table = (name: string) => main(page).getByRole('table', { name: new RegExp(`^${name},`) })
-    await expect(groups.getByRole('tab')).toHaveText(['Basic', 'Marks', 'Combos', 'Small', 'Extra'])
+    await expect(groups.getByRole('tab')).toHaveText([
+      'Basic',
+      'Marks',
+      'Combos',
+      'Small',
+      'Katakana'
+    ])
     await expect(table('Basic')).toBeVisible()
     await expect(table('Basic').getByRole('cell', { name: 'か カ ka' })).toBeVisible()
     await expect(main(page).locator('[data-kana]')).toHaveCount(131)

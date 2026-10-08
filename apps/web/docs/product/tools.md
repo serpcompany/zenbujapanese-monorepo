@@ -31,8 +31,8 @@ headings (`src/components/tools/tool-reference.tsx`).
 (one per converter, each with its mark, name, a line, and a sample it converts, such as こーひー →
 コーヒー); then Dictionary and reference, six cards that open existing pages (Dictionary, Hiragana
 chart, Katakana chart, Kanji lists, Frequency lists, and Word categories, which is the browse
-home); then a card for the app, its title and line beside Get the app, which opens the iPhone app's
-page. The cards are stock `Card` parts (`CardHeader`, `CardTitle`, `CardDescription`,
+home); then a card for the app, its title and line beside Get the app (under them on phones), which
+opens the iPhone app's page. The cards are stock `Card` parts (`CardHeader`, `CardTitle`, `CardDescription`,
 `CardContent`) with the products catalog's mark tile and its hover, and no two share a mark. They
 are one column on phones, two from 768 pixels, and three from 1024, as the product page's are. The
 page is laid out as the browse pages are (`BrowsePage` and `BrowseHeading`), with their section
@@ -51,7 +51,8 @@ to the other direction's page (Katakana to Hiragana → on Hiragana to Katakana)
 romaji pages Typing tips or Spelling rules, and on the width pages What changes; the conversion
 table; Questions; Related tools, three other converters as the index's cards, with All tools → as
 the product page's More from Zenbu has All products, leaving out the other direction, which is
-already linked; and a card for the app, its title and line beside Dictionary and Get the app. The
+already linked; and a card for the app, its title and line beside Dictionary and Get the app (under
+them on phones). The
 converter pages show no kana chart of their own: the conversion table links the full kana charts.
 
 - Source: the owner's decision on #579 (Converter page: stacked), and the owner's change that
@@ -91,8 +92,8 @@ top box.
 
 **Options.** Romaji to Kana writes hiragana or katakana (a stock toggle group labelled Write in),
 which sets the kana box's script when romaji is typed; typed kana of either script turn into romaji.
-The width converters choose what changes, in one row labelled Change that wraps on phones, with a
-stock checkbox and label for each: Katakana, Letters and numbers, and Symbols and spaces, all on at
+The width converters choose what changes, under the label Change, in one row that wraps on phones,
+with a stock checkbox and label for each: Katakana, Letters and numbers, and Symbols and spaces, all on at
 first; a kind left off stays as it is, both ways. The others have
 none, and Kana to Romaji writes hiragana when romaji is typed in its bottom box. There is no
 long-vowel option yet.
@@ -173,7 +174,7 @@ the conversion table lists, is what the converters do.
   spelling it lists types its kana".
 
 **Conversion table.** Every one of the 131 kana is in the HTML, one group at a time in stock tabs
-with short names, Basic, Marks, Combos, Small, and Extra, so the tabs fit a phone; each panel names
+with short names, Basic, Marks, Combos, Small, and Katakana, so the tabs fit a phone; each panel names
 its group in full with its count: Basic (46), With marks (25), Combinations (33), Small kana (10),
 and Katakana only (17, Extended katakana on the width pages). The tabs' panels stay in the page while
 hidden. Basic and With marks are charts in a stock table, a row for each consonant (a, ka, sa, and

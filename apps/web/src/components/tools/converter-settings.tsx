@@ -53,23 +53,22 @@ export function ScriptSetting({ options, onChange }: SettingProps) {
 export function WidthSettings({ options, onChange }: SettingProps) {
   const id = useId()
   return (
-    <fieldset className="flex flex-wrap items-center gap-x-4 gap-y-2">
-      <legend className="sr-only">Change</legend>
-      <span aria-hidden="true" className="text-sm font-medium">
-        Change
-      </span>
-      {widthChanges.map(change => (
-        <div key={change.value} className="flex items-center gap-2">
-          <Checkbox
-            id={`${id}-${change.value}`}
-            checked={options.widths[change.value]}
-            onCheckedChange={checked =>
-              onChange({ ...options, widths: { ...options.widths, [change.value]: checked } })
-            }
-          />
-          <Label htmlFor={`${id}-${change.value}`}>{change.label}</Label>
-        </div>
-      ))}
+    <fieldset>
+      <legend className="mb-2 text-sm font-medium">Change</legend>
+      <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
+        {widthChanges.map(change => (
+          <div key={change.value} className="flex items-center gap-2">
+            <Checkbox
+              id={`${id}-${change.value}`}
+              checked={options.widths[change.value]}
+              onCheckedChange={checked =>
+                onChange({ ...options, widths: { ...options.widths, [change.value]: checked } })
+              }
+            />
+            <Label htmlFor={`${id}-${change.value}`}>{change.label}</Label>
+          </div>
+        ))}
+      </div>
     </fieldset>
   )
 }
