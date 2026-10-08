@@ -53,16 +53,16 @@ export async function appStoreRelease(
 ): Promise<AppStoreRelease | null> {
   const key = new Request(appStoreLookupUrl, { method: 'GET' })
   const cache = edgeCache()
-  const hit = await cache?.match(key)
-  if (hit) return readAppStoreLookup(await hit.json())
   try {
+    const hit = await cache?.match(key)
+    if (hit) return readAppStoreLookup(await hit.json())
     const text = await askApple(fetcher)
     const answer: unknown = JSON.parse(text)
     await cache?.put(key, kept(text, lookupCacheSeconds))
     return readAppStoreLookup(answer)
   } catch (error) {
     log('warn', 'app_store_lookup_failed', errorFields(error))
-    await cache?.put(key, kept(nothingFound, failureCacheSeconds))
+    await cache?.put(key, kept(nothingFound, failureCacheSeconds)).catch(() => undefined)
     return null
   }
 }

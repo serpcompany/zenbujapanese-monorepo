@@ -81,6 +81,17 @@ describe('asking Apple', () => {
     })
   })
 
+  test('finds nothing, rather than failing the page, when the edge cache fails', async () => {
+    const broken = async () => {
+      throw new Error('cache unavailable')
+    }
+    vi.stubGlobal('caches', { default: { match: broken, put: broken } })
+    expect(await appStoreRelease(async () => Response.json(liveApp))).toBeNull()
+    expect(warnings()).toEqual([
+      expect.objectContaining({ level: 'warn', message: 'app_store_lookup_failed' })
+    ])
+  })
+
   test('finds nothing, without a warning, while the app is not on the store', async () => {
     expect(await appStoreRelease(async () => Response.json({ resultCount: 0, results: [] }))).toBe(
       null
