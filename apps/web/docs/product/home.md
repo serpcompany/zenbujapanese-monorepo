@@ -20,7 +20,7 @@ dictionary**, which opens `/dictionary/`. Under them, the fine print reads only 
 Beside the text (below it on phones) are two App Store screenshots, overlapped: the search results
 for taberu and the word page for 大丈夫. Get the app is the header's button (`GetAppButton`), so it
 opens the same link target in `linkTargets` (`src/lib/site.ts`): the iPhone app's page,
-`/products/zenbu-japanese-for-iphone/` ([Products pages](products.md)).
+`/products/zenbu-japanese-app/` ([Products pages](products.md)).
 
 - Source: #651; #648 decision and mockups (Home, hero A); #668 (Works offline only).
 - Check: Home spec, "the hero leads with the app, with Get the app and Search the dictionary".

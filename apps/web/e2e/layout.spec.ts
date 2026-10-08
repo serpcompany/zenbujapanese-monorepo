@@ -8,7 +8,7 @@ const pages = [
   needed.path,
   '/legal/privacy/',
   '/products/',
-  '/products/zenbu-japanese-for-iphone/'
+  '/products/zenbu-japanese-app/'
 ]
 
 const opened = [

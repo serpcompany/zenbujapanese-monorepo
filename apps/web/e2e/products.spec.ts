@@ -128,7 +128,7 @@ test.describe('the products catalog', () => {
     await catalog(page)
       .getByRole('link', { name: `Learn more about ${featuredApp.title}` })
       .click()
-    await expect(page).toHaveURL(/\/products\/zenbu-japanese-for-iphone\/$/)
+    await expect(page).toHaveURL(/\/products\/zenbu-japanese-app\/$/)
   })
 
   test('a free tool’s card opens its page, and a coming-soon card is not a link', async ({

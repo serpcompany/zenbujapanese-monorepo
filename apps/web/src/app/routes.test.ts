@@ -29,7 +29,7 @@ const decidedRoutes = [
   'page /sources',
   'page /sitemap',
   'page /products',
-  'page /products/zenbu-japanese-for-iphone',
+  'page /products/zenbu-japanese-app',
   'page /legal',
   'page /legal/privacy',
   'page /legal/terms',

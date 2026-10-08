@@ -4,7 +4,7 @@ import { featuredApp, productById } from '@/lib/products/catalog'
 import type { ProductDemo, ProductPoint, ProductQuestion } from '@/lib/products/product-page'
 
 export const iphoneAppPage = {
-  path: '/products/zenbu-japanese-for-iphone/' satisfies SitePath,
+  path: '/products/zenbu-japanese-app/' satisfies SitePath,
   title: featuredApp.title,
   name: 'Zenbu Japanese',
   subtitle: 'Japanese dictionary and translator for iPhone',

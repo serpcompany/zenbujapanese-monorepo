@@ -23,7 +23,7 @@ export const sitePages = [
       'Zenbu Japanese apps and free tools for reading, writing, and speaking Japanese, all built on one dictionary.'
   },
   {
-    path: '/products/zenbu-japanese-for-iphone/',
+    path: '/products/zenbu-japanese-app/',
     title: 'Zenbu Japanese for iPhone',
     description:
       'An offline Japanese dictionary for iPhone with Image Search, handwriting, a live conversation translator, and YouTube with linked captions.'

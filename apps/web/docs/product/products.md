@@ -1,10 +1,10 @@
 # Products pages
 
 The products catalog, `/products/`, lists everything Zenbu makes or plans, and each product has a
-page under `/products/<name>/`. The first is the iPhone app's,
-`/products/zenbu-japanese-for-iphone/`. Both follow the #648 mockups (Products page and Product
-page) and the owner's decisions on #652: the product page's address, and planned products shown
-as Coming soon rather than hidden. Every claim about the app comes from the app's product docs
+page under `/products/<name>/`. The first is the iPhone app's, `/products/zenbu-japanese-app/`.
+Both follow the #648 mockups (Products page and Product page), the owner's decision on #652 to
+show planned products as Coming soon rather than hide them, and the owner's decision on #673 for
+the product page's address. Every claim about the app comes from the app's product docs
 ([`apps/ios/docs/product/`](../../../ios/docs/product/index.md)), and the screenshots are the App
 Store set (`apps/ios/screenshots/app-store/en-US/iphone-63/`), shown as rounded screens without a
 device frame (`src/components/app-screenshot.tsx`).
@@ -172,7 +172,7 @@ that it's built on open data, since accounts and sync are coming (#468, #574), a
 its description.
 
 - Source: #668.
-- Check: Claims spec, "/products/zenbu-japanese-for-iphone/ makes none".
+- Check: Claims spec, "/products/zenbu-japanese-app/ makes none".
 
 ## Site-wide
 
@@ -188,6 +188,19 @@ same title and description, with the site's name, type, and locale (`siteOpenGra
 - Check: Product page spec, "… has its title, description, and canonical URL" for each page;
   `src/app/routes.test.ts`.
 
+**The app page's address.** The app's page is `/products/zenbu-japanese-app/`: the address names
+no platform, so an Android version can share the page, and `-app` keeps it apart from the brand,
+the web dictionary, and the extension. The header, footer, catalog, and every Get the app link to
+it through the `iphone-app` entry in `linkTargets` (`src/lib/site.ts`), and the HTML sitemap
+through `homeTree` (`src/lib/dictionary/browse/site-tree.ts`), whose paths must be pages in
+`src/lib/pages.ts`. Its earlier address, `/products/zenbu-japanese-for-iphone/`, was only ever on
+staging, so it has no redirect: it is 404, and no page names it.
+
+- Source: the owner's decision on #673.
+- Check: Product page spec, "/products/zenbu-japanese-for-iphone/ is 404" and "no page links to
+  it"; `e2e/sitemaps.spec.ts`, "the pages sitemap writes the homepage as the origin and every other
+  page with its slash" (the sitemap lists `src/lib/pages.ts`'s paths).
+
 **Layout.** Neither page scrolls sideways at a desktop or a phone width.
 
-- Check: `e2e/layout.spec.ts`, for `/products/` and `/products/zenbu-japanese-for-iphone/`.
+- Check: `e2e/layout.spec.ts`, for `/products/` and `/products/zenbu-japanese-app/`.
