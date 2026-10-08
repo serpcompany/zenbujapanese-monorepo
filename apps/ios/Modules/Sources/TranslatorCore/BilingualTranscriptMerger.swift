@@ -170,14 +170,17 @@ public struct BilingualTranscriptMerger: Sendable {
       guard let results = finals[language], !results.isEmpty else { return nil }
       return candidate(language, from: results, live: nil)
     }
-    emittedThrough = finals.values.flatMap { $0.map(\.end) }.max() ?? emittedThrough
+    let held = finals
+    let end = finals.values.flatMap { $0.map(\.end) }.max()
     finals = [:]
     firstFinalAt = nil
-    volatile = volatile.filter { $0.value.end > emittedThrough + Self.endTolerance }
-    guard let winner = LanguageArbiter.best(candidates), Self.isWorthTranslating(winner) else {
+    guard let winner = LanguageArbiter.best(candidates.filter(Self.isWorthTranslating)) else {
       return [.final(languages[0], "")]
     }
-    return [.final(winner.language, winner.text)]
+    emittedThrough = end ?? emittedThrough
+    volatile = volatile.filter { $0.value.end > emittedThrough + Self.endTolerance }
+    let texts = (held[winner.language] ?? []).map(\.text).filter { !$0.isEmpty }
+    return winner.language.sentences(in: texts).map { .final(winner.language, $0) }
   }
 
   private func candidate(

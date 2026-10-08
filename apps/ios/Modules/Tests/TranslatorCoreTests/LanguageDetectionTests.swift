@@ -177,7 +177,7 @@ struct BilingualTranscriptMergerTests {
     #expect(
       merger.receive(
         result(.english, "See you there.", confidence: 0.9, end: 2), at: start.addingTimeInterval(1.4))
-        == [.final(.english, "Thank you. See you there.")])
+        == [.final(.english, "Thank you."), .final(.english, "See you there.")])
   }
 
   @Test("a late final that mostly covers speech already emitted is dropped")
@@ -250,6 +250,49 @@ struct BilingualTranscriptMergerTests {
     #expect(
       listening.receive(result(.japanese, text, confidence: confidence, end: 1), at: start)
         == [.final(.japanese, "")])
+  }
+
+  @Test("a confident one-letter guess doesn't take a real sentence's place")
+  func oneLetterGuessLosesToARealSentence() {
+    var merger = BilingualTranscriptMerger(languages: [.japanese, .english])
+    _ = merger.receive(result(.japanese, "あ", confidence: 0.98, end: 1.5), at: start)
+    #expect(
+      merger.receive(result(.english, "Thank you.", confidence: 0.9, end: 1.5), at: start)
+        == [.final(.english, "Thank you.")])
+  }
+
+  @Test("a guess too doubtful to translate doesn't make the real sentence after it late")
+  func doubtfulGuessKeepsTheRealSentence() {
+    var merger = BilingualTranscriptMerger(languages: [.japanese, .english])
+    _ = merger.receive(
+      result(.japanese, "今日は東京駅に行きます。", confidence: nil, final: false, start: 0, end: 8.8),
+      at: start)
+    _ = merger.receive(
+      result(.english, "Go back, Tokyo making ikimas.", confidence: 0.27, start: 6, end: 8.76),
+      at: start.addingTimeInterval(0.9))
+    #expect(merger.flush(at: start.addingTimeInterval(2.1)) == [.final(.japanese, "")])
+    _ = merger.receive(
+      result(.japanese, "今日は東京駅に行きます。", confidence: 0.86, start: 6, end: 11.22),
+      at: start.addingTimeInterval(2.8))
+    #expect(
+      merger.flush(at: start.addingTimeInterval(3.3))
+        == [.final(.japanese, "今日は東京駅に行きます。")])
+  }
+
+  @Test(
+    "each sentence is its own final, so it's translated and played as soon as it's ready",
+    arguments: [
+      (
+        SpokenLanguage.japanese, ["明日は朝 8時に新宿駅で待ち合わせします。吉祥寺に行きます。その後"],
+        ["明日は朝 8時に新宿駅で待ち合わせします。", "吉祥寺に行きます。", "その後"]
+      ),
+      (.japanese, ["はい、", "三時に会いましょう。"], ["はい、三時に会いましょう。"]),
+      (.english, ["Thank you.", "See you there."], ["Thank you.", "See you there."]),
+      (.english, ["Please meet me", "at Shibuya Station."], ["Please meet me at Shibuya Station."]),
+      (.english, ["Oh, Dr. Keeney, I hope you enjoyed it."], ["Oh, Dr. Keeney, I hope you enjoyed it."]),
+    ])
+  func sentences(language: SpokenLanguage, results: [String], expected: [String]) {
+    #expect(language.sentences(in: results) == expected)
   }
 
   @Test("one language passes straight through")

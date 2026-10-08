@@ -16,6 +16,35 @@ public enum SpokenLanguage: String, Codable, Sendable, CaseIterable, Hashable {
     sentences.joined(separator: self == .japanese ? "" : " ")
   }
 
+  static let sentenceEnds: Set<Character> = [".", "?", "!", "。", "？", "！"]
+
+  func sentences(in results: [String]) -> [String] {
+    var sentences: [String] = []
+    for piece in results.flatMap(splitAtSentenceEnds) {
+      if let last = sentences.last, !(last.last.map(Self.sentenceEnds.contains) ?? false) {
+        sentences[sentences.count - 1] = joined([last, piece])
+      } else {
+        sentences.append(piece)
+      }
+    }
+    return sentences
+  }
+
+  private func splitAtSentenceEnds(_ text: String) -> [String] {
+    guard self == .japanese else { return [text] }
+    var pieces: [String] = []
+    var current = ""
+    for character in text {
+      current.append(character)
+      if Self.sentenceEnds.contains(character) {
+        pieces.append(current.trimmingCharacters(in: .whitespaces))
+        current = ""
+      }
+    }
+    let rest = current.trimmingCharacters(in: .whitespaces)
+    return rest.isEmpty ? pieces : pieces + [rest]
+  }
+
   public static func detect(in text: String) -> SpokenLanguage? {
     var hasLatinLetter = false
     for scalar in text.unicodeScalars {
