@@ -61,22 +61,36 @@ async function requireListedApp(context: AuthContext): Promise<void> {
   }
 }
 
-function codesSentPerEmail() {
+export interface CodesPerEmail {
+  secondsToWait(email: unknown): number
+  sent(email: unknown): void
+}
+
+export function codesPerEmailCounter(): CodesPerEmail {
   const sent = new Map<string, number[]>()
-  return (email: unknown): boolean => {
-    const now = Date.now()
-    if (sent.size > 10_000) {
-      for (const [key, times] of sent) {
-        if (times.every(at => now - at >= codeWindowMs)) sent.delete(key)
-      }
-    }
-    const key = String(email ?? '')
+  const keyOf = (email: unknown) =>
+    String(email ?? '')
       .trim()
       .toLowerCase()
-    const recent = (sent.get(key) ?? []).filter(at => now - at < codeWindowMs)
-    if (recent.length >= codesPerEmail) return false
-    sent.set(key, [...recent, now])
-    return true
+  const recentTo = (key: string, now: number) =>
+    (sent.get(key) ?? []).filter(at => now - at < codeWindowMs)
+  return {
+    secondsToWait(email) {
+      const now = Date.now()
+      const recent = recentTo(keyOf(email), now)
+      if (recent.length < codesPerEmail) return 0
+      return Math.max(1, Math.ceil((Math.min(...recent) + codeWindowMs - now) / 1000))
+    },
+    sent(email) {
+      const now = Date.now()
+      if (sent.size > 10_000) {
+        for (const [key, times] of sent) {
+          if (times.every(at => now - at >= codeWindowMs)) sent.delete(key)
+        }
+      }
+      const key = keyOf(email)
+      sent.set(key, [...recentTo(key, now), now])
+    }
   }
 }
 
@@ -111,8 +125,7 @@ async function requireNonce(context: AuthContext, idToken: { nonce?: unknown }):
   }
 }
 
-function guardRequests(mailer: Mailer, trustedOrigins: readonly string[]) {
-  const mayCode = codesSentPerEmail()
+function guardRequests(mailer: Mailer, trustedOrigins: readonly string[], codes: CodesPerEmail) {
   return createAuthMiddleware(async context => {
     const path = context.path
     if (!offeredRoutes.has(path)) {
@@ -134,11 +147,16 @@ function guardRequests(mailer: Mailer, trustedOrigins: readonly string[]) {
         message: 'A code is sent only to sign in.'
       })
     }
-    if (path === route.sendCode && !mayCode(body.email)) {
-      throw new APIError('TOO_MANY_REQUESTS', {
-        code: 'TOO_MANY_REQUESTS',
-        message: `At most ${codesPerEmail} codes go to one email in ${codeWindowMs / 60_000} minutes. Try again later.`
-      })
+    const wait = path === route.sendCode ? codes.secondsToWait(body.email) : 0
+    if (wait > 0) {
+      throw new APIError(
+        'TOO_MANY_REQUESTS',
+        {
+          code: 'TOO_MANY_REQUESTS',
+          message: `At most ${codesPerEmail} codes go to one email in ${codeWindowMs / 60_000} minutes. Try again later.`
+        },
+        { 'Retry-After': String(wait), 'X-Retry-After': String(wait) }
+      )
     }
     if (path === route.signInWithCode || path === route.signInWithProvider) {
       requireSignInClient(context.request?.headers ?? context.headers, path, body, trustedOrigins)
@@ -185,11 +203,15 @@ function guardEmailSignIn() {
   })
 }
 
-export const signInGuards = (mailer: Mailer, trustedOrigins: readonly string[]) =>
+export const signInGuards = (
+  mailer: Mailer,
+  trustedOrigins: readonly string[],
+  codes: CodesPerEmail
+) =>
   ({
     id: 'zenbu-sign-in-guards',
     hooks: {
-      before: [{ matcher: () => true, handler: guardRequests(mailer, trustedOrigins) }],
+      before: [{ matcher: () => true, handler: guardRequests(mailer, trustedOrigins, codes) }],
       after: [{ matcher: () => true, handler: guardEmailSignIn() }]
     }
   }) satisfies BetterAuthPlugin
