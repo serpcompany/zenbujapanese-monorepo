@@ -2,7 +2,7 @@
   "name": "@zenbu/node-service",
   "version": "0.0.0",
   "private": true,
-  "description": "What the Node services on the API servers share: JSON-line logs, request logs, and a server that stops cleanly.",
+  "description": "What the Node services on the API servers share: JSON-line logs, request logs, a server that stops cleanly, and the writer of their API references.",
   "type": "module",
   "exports": {
     "./*": "./src/*.ts"

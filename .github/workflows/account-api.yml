@@ -5,6 +5,7 @@ on:
     paths:
       - apps/account-api/**
       - packages/node-service/**
+      - docs/api/account-api.md
       - package.json
       - pnpm-lock.yaml
       - pnpm-workspace.yaml

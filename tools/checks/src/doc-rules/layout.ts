@@ -2,6 +2,7 @@ const rootDocs = new Set(['AGENTS.md', 'ARCHITECTURE.md', 'CONTEXT.md', 'README.
 const docsEntries = new Set([
   'adr',
   'agents',
+  'api',
   'data-sources.md',
   'quality.md',
   'tech-debt.md',
@@ -9,7 +10,7 @@ const docsEntries = new Set([
 ])
 
 export const layoutAdvice =
-  "isn't where docs go: how an area works goes in docs/agents/<area>.md, a decision in docs/adr/, and a product's behavior in apps/<app>/docs/product/ (AGENTS.md). A new top-level doc goes in tools/checks/src/doc-rules/layout.ts first"
+  "isn't where docs go: how an area works goes in docs/agents/<area>.md, a decision in docs/adr/, a service's generated API reference in docs/api/, and a product's behavior in apps/<app>/docs/product/ (AGENTS.md). A new top-level doc goes in tools/checks/src/doc-rules/layout.ts first"
 
 export function outOfLayout(path: string): boolean {
   if (!path.includes('/')) return !rootDocs.has(path)

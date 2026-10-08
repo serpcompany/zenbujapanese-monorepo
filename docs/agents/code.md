@@ -131,9 +131,13 @@ The docs are the map agents work from, so they stay correct and reachable:
   `README.md`, and files under `.claude/` and `.github/` are entry points. A link to a folder
   reaches the Markdown files directly in it.
 - Docs live where `AGENTS.md` routes: the root holds only `AGENTS.md`, `ARCHITECTURE.md`,
-  `CONTEXT.md`, `README.md`, and `CLAUDE.md`, and `docs/` only `adr/`, `agents/`, and its four
-  records. How an area works goes in `docs/agents/<area>.md`, a decision in `docs/adr/`, and a
-  product's behavior in `apps/<app>/docs/product/`. `AGENTS.md` only routes, in at most 120 lines.
+  `CONTEXT.md`, `README.md`, and `CLAUDE.md`, and `docs/` only `adr/`, `agents/`, `api/`, and its
+  four records. How an area works goes in `docs/agents/<area>.md`, a decision in `docs/adr/`, a
+  service's API reference in `docs/api/`, and a product's behavior in `apps/<app>/docs/product/`.
+  `AGENTS.md` only routes, in at most 120 lines.
+- A service's API reference, `docs/api/<service>.md`, is written from its OpenAPI document by
+  `packages/node-service/src/api-reference.ts`, and the service's tests fail when either file
+  differs from what they write: change the routes, then run `pnpm test -u` in the service.
 - Each skill under `.claude/skills/` has frontmatter naming it for its folder, with a description
   of at most 1,024 characters, and is listed in the Skills table below.
 

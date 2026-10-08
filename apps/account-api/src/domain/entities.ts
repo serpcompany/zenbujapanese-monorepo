@@ -100,6 +100,8 @@ export const badItem = rejection(
   'An item is a Language Reference ID (32 lowercase hex digits) or `kanji:` and one kanji.'
 )
 
+export const itemTextLength = 200
+
 export function itemText(
   fields: Record<string, unknown>
 ): { headword: string; reading: string } | Rejection {
@@ -107,7 +109,7 @@ export function itemText(
     if (typeof value !== 'string') return null
     const normalized = value.normalize('NFC').trim()
     const length = [...normalized].length
-    return length >= least && length <= 200 && !controlCharacters.test(normalized)
+    return length >= least && length <= itemTextLength && !controlCharacters.test(normalized)
       ? normalized
       : null
   }
@@ -116,7 +118,7 @@ export function itemText(
   if (headword === null || reading === null) {
     return rejection(
       'invalid_fields',
-      'headword is 1 to 200 characters and reading at most 200, with no control characters.'
+      `headword is 1 to ${itemTextLength} characters and reading at most ${itemTextLength}, with no control characters.`
     )
   }
   return { headword, reading }
