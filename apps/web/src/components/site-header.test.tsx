@@ -109,7 +109,7 @@ describe("the header's menus are in the page's HTML, with the current page marke
       placeholder('courses'),
       listed('products')
     ])
-    expect(listed('iphone-app')[0]).toBe('/products/zenbu-japanese-for-iphone/')
+    expect(listed('iphone-app')[0]).toBe('/products/zenbu-japanese-app/')
     expect(listed('products')[0]).toBe('/products/')
   })
 
@@ -164,7 +164,7 @@ test('from 1024 pixels Log in and Get the app end the header, Get the app openin
   }
   expect(attribute(buttons[0][0], 'href')).toBe(login.href)
   expect(buttons[0][1]).toBe('Log in')
-  expect(attribute(buttons[1][0], 'href')).toBe('/products/zenbu-japanese-for-iphone/')
+  expect(attribute(buttons[1][0], 'href')).toBe('/products/zenbu-japanese-app/')
 })
 
 test('the Get the app button leads with a phone icon', () => {
