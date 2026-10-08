@@ -94,11 +94,11 @@ export const appAreasWith = (videos: readonly AppVideo[]): readonly AppArea[] =>
   {
     id: 'lists',
     name: 'Lists',
-    pitch: 'Keep the words you meet, in the order that helps you.',
+    pitch: 'Keep the words you meet, and mark the ones you know.',
     features: [
-      'Save words to your own lists',
-      'Mark the words you know, and the app can hide their furigana as you read',
-      'Equally good matches come first by the frequency list you choose: JLPT, YouTube, anime, manga, novels, and more',
+      'Save words and kanji to your own lists',
+      'Hide the furigana on words you’ve marked known, in example sentences and captions',
+      'Among equally good search matches, the frequency lists you choose set the order: JLPT, YouTube, anime, manga, novels, and more',
       'Tap a kanji to see which part of the reading belongs to it'
     ],
     media: [

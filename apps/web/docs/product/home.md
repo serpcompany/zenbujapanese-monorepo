@@ -131,10 +131,10 @@ Every claim on the page is one the app's product docs make:
 | Furigana, pitch accent, conjugations with meanings, kanji readings and stroke order, example sentences | `dictionary.md`, Dictionary and kanji details |
 | Translate: two people, either language in any order, shown as it's spoken, read aloud after a pause; Listening for a TV, a guide, or announcements; on the iPhone after a one-time download | `translate.md` |
 | Player: paste a link or search YouTube, captions under the video that follow it, tap a word to pause and open it, repeat a line, step line by line, 0.5× | `player.md` |
-| Lists, Known Words, and hiding furigana on known words | `index.md`, Account |
+| Lists, Known Words, and hiding furigana on known words in example sentences and captions | `index.md`, Account; `dictionary.md`, Dictionary and kanji details; `player.md`, Watching |
 | Frequency packs order equally good matches, in the order the learner chooses | `dictionary.md`, Search; `index.md`, Account (Frequency Dictionaries) |
 | Tap a kanji to see which part of the reading belongs to it | `index.md`, Furigana kanji highlight |
-| Lists' pitch: keep the words you meet (lists, known words), in the order that helps you (the frequency packs, in the learner's order) | `index.md`, Account (Lists, Known Words, Frequency Dictionaries) |
+| Lists: keep the words you meet, saving words and kanji to your own lists, and mark the ones you know | `index.md`, Account (Lists, Known Words); `dictionary.md`, Dictionary and kanji details (Mark as Known, Add to List) |
 | No account, no ads; lists, notes, known words, and saved conversations stay on the device | `index.md`, Account (Lists, Known Words); `dictionary.md`, Dictionary and kanji details (notes); `translate.md`, Translations; the Privacy Policy |
 
 Outside the closing block, the page doesn't say the app needs no account, that anything stays on
