@@ -14,7 +14,7 @@ with `pnpm install --frozen-lockfile`.
 | `Repository` | `.github/workflows/repository.yml` | Every pull request |
 | `Code review` | `.github/workflows/code-review.yml` | Every pull request that isn't a draft |
 | `Claude` | `.github/workflows/claude.yml` | `@claude` in an issue, a pull request comment, a review, or a review comment |
-| `Weekly maintenance` | `.github/workflows/maintenance.yml` | Mondays at 14:00 UTC; by hand, every job or one |
+| `Weekly maintenance` | `.github/workflows/maintenance.yml` | Fridays at 14:00 UTC; by hand, every job or one |
 | `Web` | `.github/workflows/web.yml` | Pull requests that change the site or the core |
 | `Web deploy` | `.github/workflows/web-deploy.yml` | Pushes to `main` that change the site or the core; by hand |
 | `Dictionary core` | `.github/workflows/dictionary-core.yml` | Pull requests that change the core |
@@ -153,7 +153,7 @@ file matches `main`'s.
 
 ## Weekly maintenance
 
-`.github/workflows/maintenance.yml` runs every Monday, and by hand from the Actions tab, where
+`.github/workflows/maintenance.yml` runs every Friday, and by hand from the Actions tab, where
 "Which job to run" picks one job or all of them. Each job starts from `pnpm maintenance:report`
 (`tools/checks/src/report.ts`), a Markdown report built only from the repository: the checks'
 failures; the docs whose named or linked files changed after the doc was last edited; the rows of
