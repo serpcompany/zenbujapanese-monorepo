@@ -997,10 +997,12 @@ and there is no romaji and no word meanings under example words. The settings ar
 **Phone layout.** Every page fits a 360-pixel phone. No text is smaller than 12 pixels: furigana
 is 0.45 of its word's size, as in the app, but never under 12 pixels, so it spreads a short word
 a little rather than shrink. The homepage's drawings of the app are pictures, like its
-screenshots, and keep their drawn size. Nothing is wider than the screen, no text is cut off by
-its box (a line clamped with an ellipsis, and a carousel's screens beyond its edge, are meant to
-be), and a grid of kana, kanji, or links keeps each cell at least 44 pixels wide. Each tap target
-is at least 24 by 24 pixels (WCAG 2.2, 2.5.8), as the homepage showcase's dots now are.
+screenshots: their text keeps its drawn size, and the showcase's and Free on the web's drawings
+keep their furigana's too. Nothing is wider than the screen, no text is cut off by its box (a line
+clamped with an ellipsis, and a carousel's screens beyond its edge, are meant to be), and a grid
+of kana, kanji, or links keeps each cell at least 44 pixels wide. Tap targets meet WCAG 2.2's
+2.5.8: 24 by 24 pixels, or spaced so a 24-pixel circle around each touches no other; the
+homepage showcase's dots are 24 by 24.
 
 - Source: #682 (the owner's review on a phone).
 - Check: `apps/web/e2e/phone-layout.spec.ts`, "… fits a 360px phone", on every page type in

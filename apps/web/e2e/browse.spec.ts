@@ -128,7 +128,7 @@ test.describe('browse pages', () => {
     expect(ka?.[line]).toBeGreaterThan(vowels[0]?.[line] ?? 0)
     const heading = page.getByRole('heading', { name: /^Dakuon and handakuon/ })
     expect(await linesOfText(heading.locator('[lang="ja"]'))).toEqual([
-      { text: '濁音・半濁音', lines: 1 }
+      { text: '濁音・半濁音', oneLine: true }
     ])
   })
 

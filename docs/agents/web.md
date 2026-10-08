@@ -78,8 +78,9 @@ homepage's area tabs. Add a page type there when one ships, and both of these co
   `E2E_BASE_URL`, such as the production build.
 
 Furigana takes the `furigana` utility in `apps/web/src/app/globals.css`: 0.45 of its word's size,
-but never under 12 pixels. The homepage's drawings set the `drawing` utility on their frame, which
-drops that floor so their furigana keeps its drawn size.
+but never under 12 pixels. The homepage's drawings in the showcase and Free on the web set the
+`drawing` utility on their frame (`previewPanel` in `apps/web/src/components/home/home-styles.ts`,
+and the Player's phone), which drops that floor so their furigana keeps its drawn size.
 
 ### How the build and checks are set up
 

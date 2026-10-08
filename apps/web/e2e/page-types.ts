@@ -1,4 +1,5 @@
 import type { Page } from '@playwright/test'
+import { appAreas } from '../src/lib/app-areas'
 import { sitePages } from '../src/lib/pages'
 import { expect, needed } from './test'
 
@@ -14,7 +15,7 @@ const japanese = (path: string) => encodeURI(path)
 
 export const missingPage: PageType = { name: 'Page not found', path: '/no-such-page/' }
 
-const showcaseTabs = { tabs: ['Image Search', 'Translate', 'Player', 'Lists'] }
+const showcaseTabs = { tabs: appAreas.slice(1).map(({ name }) => name) }
 
 export const pageTypes: PageType[] = [
   ...sitePages.map(({ title, path }) => ({

@@ -138,7 +138,7 @@ test.describe('kanji details', () => {
     await expect(words.first()).toBeVisible()
     const headwords = await linesOfText(words.locator('[lang="ja"]'))
     expect(headwords.length).toBeGreaterThan(10)
-    expect(headwords).toEqual(headwords.map(({ text }) => ({ text, lines: 1 })))
+    expect(headwords).toEqual(headwords.map(({ text }) => ({ text, oneLine: true })))
   })
 
   test("Lists and Notes open the get-the-app prompt, as a word page's do", async ({ page }) => {

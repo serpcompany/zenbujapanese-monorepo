@@ -65,7 +65,7 @@ test.describe('word page', () => {
     await expect(examples(page)).toHaveCount(25)
     const words = await linesOfText(examples(page).locator('p[lang="ja"] [lang="ja"]'))
     expect(words.length).toBeGreaterThan(100)
-    expect(words.filter(({ lines }) => lines > 1)).toEqual([])
+    expect(words.filter(({ oneLine }) => !oneLine)).toEqual([])
   })
 
   test('credits no single example, and keeps its Sources closed until opened', async ({ page }) => {

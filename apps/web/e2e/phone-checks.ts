@@ -2,7 +2,7 @@ import type { Locator, Page } from '@playwright/test'
 
 export const phoneLimits = { smallestText: 12, narrowestGridCell: 44 }
 
-export interface PhoneLayoutProblems {
+interface PhoneLayoutProblems {
   smallText: string[]
   outsideTheViewport: string[]
   clippedText: string[]
@@ -118,8 +118,8 @@ export const linesOfText = (elements: Locator) =>
         range.selectNodeContents(text)
         bottoms.push(...[...range.getClientRects()].map(box => box.bottom))
       }
-      const lineHeight = Number.parseFloat(getComputedStyle(element).fontSize)
-      const lines = Math.max(...bottoms) - Math.min(...bottoms) < lineHeight / 2 ? 1 : 2
-      return { text: element.textContent, lines }
+      const fontSize = Number.parseFloat(getComputedStyle(element).fontSize)
+      const oneLine = Math.max(...bottoms) - Math.min(...bottoms) < fontSize / 2
+      return { text: element.textContent, oneLine }
     })
   )
