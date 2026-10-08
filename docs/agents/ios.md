@@ -528,7 +528,8 @@ one pull request:
 - and say so here, in Which service (above), and in the product docs' Account
   ([`index.md`](../../apps/ios/docs/product/index.md#account)).
 
-Then enter the App Store privacy labels for the build that ships it
+Then enter the App Store privacy labels for the build that ships it, and change the listing's
+description in `apps/ios/metadata/version/1.0/en-US.json`, which says the app has no cloud sync
 ([`app-store-privacy-labels.md`](../../apps/web/docs/app-store-privacy-labels.md)).
 
 ## Image Search and Apple Intelligence
