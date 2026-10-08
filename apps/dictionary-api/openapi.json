@@ -1,0 +1,1048 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "Zenbu dictionary service's routes for apps",
+    "version": "1",
+    "description": "Word cards and segmentation for a signed-in app that doesn't bundle the language data, such as Tomodachi (ADR 0013). They're the only dictionary routes an app calls; the website's own routes take its service token and are in docs/agents/dictionary-api.md.\n\n- **Errors** are `{ \"error\": { \"code\": \"...\", \"message\": \"...\" } }`, a missing route's `404 not_found` included. Branch on `code`.\n- **Caching.** Each answer carries `languageData`, and is `Cache-Control: private, max-age=86400` with the build as its `ETag`. Keep it a day, then revalidate with `If-None-Match`; a `304` means it holds. Key what you keep on all of `languageData`, and fetch again when any of it changes. An error is never cached.\n- **Browsers.** The routes send no CORS headers: an app calls them from a device, not a web page."
+  },
+  "servers": [
+    {
+      "url": "https://api.zenbujapanese.com",
+      "description": "Production"
+    },
+    {
+      "url": "https://api-staging.zenbujapanese.com",
+      "description": "Staging"
+    }
+  ],
+  "components": {
+    "securitySchemes": {
+      "accessToken": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT",
+        "description": "An access token from the account service's GET /v1/auth/token, on the same host, with `dictionary:read` in its `scope`: an EdDSA JWT whose `iss` and `aud` are that host. The service checks it against the account service's JWKS. Never the website's service token."
+      }
+    },
+    "schemas": {
+      "WordCardsAnswer": {
+        "type": "object",
+        "properties": {
+          "format": {
+            "type": "string",
+            "enum": [
+              "zenbu.word-cards.v1"
+            ]
+          },
+          "license": {
+            "type": "object",
+            "properties": {
+              "name": {
+                "type": "string"
+              },
+              "url": {
+                "type": "string"
+              },
+              "statement": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "name",
+              "url",
+              "statement"
+            ],
+            "description": "The license the cards are shared under, and a statement to show with them."
+          },
+          "sources": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/WordCardSource"
+            }
+          },
+          "cards": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/WordCard"
+            },
+            "description": "A card for each ID with an entry, in the order asked, each once."
+          },
+          "missing": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "The IDs no entry has, lowercased."
+          },
+          "languageData": {
+            "$ref": "#/components/schemas/LanguageData"
+          }
+        },
+        "required": [
+          "format",
+          "license",
+          "sources",
+          "cards",
+          "missing",
+          "languageData"
+        ]
+      },
+      "WordCardSource": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "supplies": {
+            "type": "string"
+          },
+          "license": {
+            "type": "string"
+          },
+          "url": {
+            "type": "string"
+          },
+          "notice": {
+            "type": "string",
+            "description": "A notice's file name in the language-data release."
+          }
+        },
+        "required": [
+          "name",
+          "supplies",
+          "license",
+          "url",
+          "notice"
+        ]
+      },
+      "WordCard": {
+        "type": "object",
+        "properties": {
+          "languageReferenceID": {
+            "type": "string",
+            "description": "The entry, in lowercase hex."
+          },
+          "entSeq": {
+            "type": "integer",
+            "description": "Its JMdict entry number."
+          },
+          "headword": {
+            "type": "string"
+          },
+          "reading": {
+            "type": "string"
+          },
+          "furigana": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "base": {
+                  "type": "string"
+                },
+                "reading": {
+                  "type": "string"
+                },
+                "kanjiReadings": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                }
+              },
+              "required": [
+                "base"
+              ]
+            }
+          },
+          "pitch": {
+            "type": [
+              "object",
+              "null"
+            ],
+            "properties": {
+              "downstep": {
+                "type": "integer",
+                "description": "0 for flat."
+              },
+              "moraCount": {
+                "type": "integer"
+              },
+              "morae": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "levels": {
+                "type": "string",
+                "description": "`H` or `L` for each of `morae`."
+              },
+              "particle": {
+                "type": "string",
+                "enum": [
+                  "H",
+                  "L"
+                ]
+              },
+              "estimated": {
+                "type": "boolean"
+              },
+              "source": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "downstep",
+              "moraCount",
+              "morae",
+              "levels",
+              "particle",
+              "estimated",
+              "source"
+            ]
+          },
+          "partOfSpeech": {
+            "type": "string"
+          },
+          "meanings": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "meaning": {
+                  "type": "string"
+                },
+                "notes": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                "partsOfSpeech": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                }
+              },
+              "required": [
+                "meaning",
+                "notes",
+                "partsOfSpeech"
+              ]
+            }
+          },
+          "jlpt": {
+            "type": [
+              "object",
+              "null"
+            ],
+            "properties": {
+              "source": {
+                "type": "string",
+                "description": "The chip's label, such as `JLPT` or `YouTube`."
+              },
+              "value": {
+                "type": "string",
+                "description": "What the chip shows, such as `N5`, `1,234`, or `No rank`."
+              },
+              "tier": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "enum": [
+                  "veryCommon",
+                  "common",
+                  "moderate",
+                  "uncommon",
+                  "rare",
+                  null
+                ],
+                "description": "How common the rank makes the word, or `null` with no rank."
+              },
+              "spokenTier": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "description": "The tier in words, for a screen reader, or `null`."
+              },
+              "level": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 5
+              }
+            },
+            "required": [
+              "source",
+              "value",
+              "tier",
+              "spokenTier",
+              "level"
+            ]
+          },
+          "frequency": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "source": {
+                  "type": "string",
+                  "description": "The chip's label, such as `JLPT` or `YouTube`."
+                },
+                "value": {
+                  "type": "string",
+                  "description": "What the chip shows, such as `N5`, `1,234`, or `No rank`."
+                },
+                "tier": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "enum": [
+                    "veryCommon",
+                    "common",
+                    "moderate",
+                    "uncommon",
+                    "rare",
+                    null
+                  ],
+                  "description": "How common the rank makes the word, or `null` with no rank."
+                },
+                "spokenTier": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "description": "The tier in words, for a screen reader, or `null`."
+                },
+                "list": {
+                  "type": "string",
+                  "description": "The ranked list's slug, such as `youtube`."
+                },
+                "rank": {
+                  "type": [
+                    "integer",
+                    "null"
+                  ]
+                }
+              },
+              "required": [
+                "source",
+                "value",
+                "tier",
+                "spokenTier",
+                "list",
+                "rank"
+              ]
+            }
+          }
+        },
+        "required": [
+          "languageReferenceID",
+          "entSeq",
+          "headword",
+          "reading",
+          "furigana",
+          "pitch",
+          "partOfSpeech",
+          "meanings",
+          "jlpt",
+          "frequency"
+        ],
+        "description": "One word as the app shows it (`zenbu.word-cards.v1`, language-data/word-cards.md, A card)."
+      },
+      "LanguageData": {
+        "type": "object",
+        "properties": {
+          "release": {
+            "type": "string",
+            "description": "The language-data release, such as `2026.10.1`."
+          },
+          "files": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            },
+            "description": "The SHA-256 of each file a card is read from, by file name."
+          }
+        },
+        "required": [
+          "release",
+          "files"
+        ],
+        "description": "Which language data answered. Key a cache on all of it: a field that changes means fetch again."
+      },
+      "SegmentationAnswer": {
+        "type": "object",
+        "properties": {
+          "format": {
+            "type": "string",
+            "enum": [
+              "zenbu.segmentation.v1"
+            ]
+          },
+          "text": {
+            "type": "string",
+            "description": "The text, as sent."
+          },
+          "tokens": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SegmentedToken"
+            }
+          },
+          "languageData": {
+            "$ref": "#/components/schemas/LanguageData"
+          }
+        },
+        "required": [
+          "format",
+          "text",
+          "tokens",
+          "languageData"
+        ]
+      },
+      "SegmentedToken": {
+        "type": "object",
+        "properties": {
+          "text": {
+            "type": "string"
+          },
+          "reading": {
+            "type": "string",
+            "description": "In hiragana, when the token has kanji."
+          },
+          "dictionaryForm": {
+            "type": "string",
+            "description": "When it differs from `text`."
+          },
+          "languageReferenceID": {
+            "type": "string",
+            "description": "The entry, when the token is one word."
+          },
+          "candidates": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "The entries it may be, when it may be several."
+          }
+        },
+        "required": [
+          "text"
+        ]
+      }
+    },
+    "parameters": {}
+  },
+  "paths": {
+    "/v1/apps/word-cards": {
+      "get": {
+        "summary": "Word cards for the words an app asks for",
+        "description": "The cards for up to 100 Language Reference IDs, in the format an app's baked cards use, with the license and sources to show, and the IDs no entry has.",
+        "security": [
+          {
+            "accessToken": [
+              "dictionary:read"
+            ]
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "description": "1 to 100 Language Reference IDs (32 hex digits, in either case), comma-separated. One asked twice is answered once.",
+              "example": "7f490a9c9c0da94f4e9474f4efe74be1"
+            },
+            "required": true,
+            "description": "1 to 100 Language Reference IDs (32 hex digits, in either case), comma-separated. One asked twice is answered once.",
+            "name": "ids",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "description": "The `ETag` of the copy the app keeps; a match answers `304`."
+            },
+            "required": false,
+            "description": "The `ETag` of the copy the app keeps; a match answers `304`.",
+            "name": "if-none-match",
+            "in": "header"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The cards.",
+            "headers": {
+              "ETag": {
+                "description": "The service's build, quoted. Send it back as `If-None-Match` to revalidate.",
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "Cache-Control": {
+                "description": "`private, max-age=86400`: keep the answer a day, then revalidate.",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WordCardsAnswer"
+                }
+              }
+            }
+          },
+          "304": {
+            "description": "`If-None-Match` named this build: the copy the app has still holds.",
+            "headers": {
+              "ETag": {
+                "description": "The service's build, quoted. Send it back as `If-None-Match` to revalidate.",
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "Cache-Control": {
+                "description": "`private, max-age=86400`: keep the answer a day, then revalidate.",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "`bad_request`: `ids` names no word, more than 100, or something that isn't a Language Reference ID.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "enum": [
+                            "bad_request"
+                          ]
+                        },
+                        "message": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "`unauthorized`: No access token, or one that's expired, forged, or not the account service's. Get a new one from GET /v1/auth/token, and send the request once more.",
+            "headers": {
+              "WWW-Authenticate": {
+                "description": "`Bearer`.",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "enum": [
+                            "unauthorized"
+                          ]
+                        },
+                        "message": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ]
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "`insufficient_scope`: The app's token has no `dictionary:read`. Don't retry.",
+            "headers": {
+              "WWW-Authenticate": {
+                "description": "Names the scope: `scope=\"dictionary:read\"`.",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "enum": [
+                            "insufficient_scope"
+                          ]
+                        },
+                        "message": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ]
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "`rate_limited`: This account sent more than its requests a minute (60 unless the service is set otherwise).",
+            "headers": {
+              "Retry-After": {
+                "description": "The seconds to wait.",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "enum": [
+                            "rate_limited"
+                          ]
+                        },
+                        "message": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ]
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "`internal`: The dictionary failed to answer. Retry with backoff.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "enum": [
+                            "internal"
+                          ]
+                        },
+                        "message": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ]
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "`unavailable`: The service can't check account tokens yet, or can't read the account service's keys. Retry with backoff. `starting`: The dictionary is still loading. Retry with backoff.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "enum": [
+                            "unavailable",
+                            "starting"
+                          ]
+                        },
+                        "message": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/apps/segmentation": {
+      "get": {
+        "summary": "A text split into words, as the app links captions and example sentences",
+        "description": "Each token with its reading, its dictionary form, and the entry it is, or the entries it may be.",
+        "security": [
+          {
+            "accessToken": [
+              "dictionary:read"
+            ]
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "description": "1 to 200 characters, not all blank, URL-encoded.",
+              "example": "猫を見る"
+            },
+            "required": true,
+            "description": "1 to 200 characters, not all blank, URL-encoded.",
+            "name": "text",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "description": "The `ETag` of the copy the app keeps; a match answers `304`."
+            },
+            "required": false,
+            "description": "The `ETag` of the copy the app keeps; a match answers `304`.",
+            "name": "if-none-match",
+            "in": "header"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The tokens.",
+            "headers": {
+              "ETag": {
+                "description": "The service's build, quoted. Send it back as `If-None-Match` to revalidate.",
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "Cache-Control": {
+                "description": "`private, max-age=86400`: keep the answer a day, then revalidate.",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SegmentationAnswer"
+                }
+              }
+            }
+          },
+          "304": {
+            "description": "`If-None-Match` named this build: the copy the app has still holds.",
+            "headers": {
+              "ETag": {
+                "description": "The service's build, quoted. Send it back as `If-None-Match` to revalidate.",
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "Cache-Control": {
+                "description": "`private, max-age=86400`: keep the answer a day, then revalidate.",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "`bad_request`: `text` is blank, or over 200 characters.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "enum": [
+                            "bad_request"
+                          ]
+                        },
+                        "message": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "`unauthorized`: No access token, or one that's expired, forged, or not the account service's. Get a new one from GET /v1/auth/token, and send the request once more.",
+            "headers": {
+              "WWW-Authenticate": {
+                "description": "`Bearer`.",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "enum": [
+                            "unauthorized"
+                          ]
+                        },
+                        "message": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ]
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "`insufficient_scope`: The app's token has no `dictionary:read`. Don't retry.",
+            "headers": {
+              "WWW-Authenticate": {
+                "description": "Names the scope: `scope=\"dictionary:read\"`.",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "enum": [
+                            "insufficient_scope"
+                          ]
+                        },
+                        "message": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ]
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "`rate_limited`: This account sent more than its requests a minute (60 unless the service is set otherwise).",
+            "headers": {
+              "Retry-After": {
+                "description": "The seconds to wait.",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "enum": [
+                            "rate_limited"
+                          ]
+                        },
+                        "message": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ]
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "`internal`: The dictionary failed to answer. Retry with backoff.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "enum": [
+                            "internal"
+                          ]
+                        },
+                        "message": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ]
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "`unavailable`: The service can't check account tokens yet, or can't read the account service's keys. Retry with backoff. `starting`: The dictionary is still loading. Retry with backoff.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "enum": [
+                            "unavailable",
+                            "starting"
+                          ]
+                        },
+                        "message": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "webhooks": {}
+}

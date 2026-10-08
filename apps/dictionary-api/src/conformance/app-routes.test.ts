@@ -7,6 +7,7 @@ import { beforeAll, describe, expect, test, vi } from 'vitest'
 import { createApp } from '../app'
 import { inProcessService } from '../service'
 import { type TestAccountKeys, testAccountKeys } from './account-keys'
+import { SegmentationAnswerSchema, WordCardsAnswerSchema } from './app-contract'
 import { expectCardsAsRecorded } from './cards'
 import { artifactAvailable, browse, dictionary, readSuite, requirePinnedArtifacts } from './support'
 
@@ -72,7 +73,12 @@ describe.runIf(artifactAvailable)('the app routes on the app’s data', () => {
       })
     )
     expect(response.status, path).toBe(200)
-    return (await response.json()) as Answer & { languageData: typeof languageData }
+    const body = await response.json()
+    const contract = path.startsWith('/v1/apps/word-cards')
+      ? WordCardsAnswerSchema
+      : SegmentationAnswerSchema
+    expect(contract.safeParse(body).error?.issues ?? [], path).toEqual([])
+    return body as Answer & { languageData: typeof languageData }
   }
 
   test('word cards hold what the word-detail suite records for each of its words', async () => {

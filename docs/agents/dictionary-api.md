@@ -127,6 +127,10 @@ Tomodachi (#563, #571); they are the only routes an app calls. They take an acco
 and never the website's service token, which they refuse, and the website's routes refuse an
 account token. Every error under `/v1/apps`, a missing route's `404` and a failure's `500`
 included, is `{ "error": { "code": "...", "message": "..." } }`, as the account service's are.
+Their contract is [`apps/dictionary-api/openapi.json`](../../apps/dictionary-api/openapi.json),
+and its readable form the [API reference](../api/dictionary-api.md): each route's parameters,
+answers, headers, and error codes, and every field of a card and a token. An app's side is the
+[client guide](account-clients.md#word-cards).
 
 | Route | Answer |
 | --- | --- |
@@ -153,11 +157,19 @@ included, is `{ "error": { "code": "...", "message": "..." } }`, as the account 
   answer a day and then revalidates with `If-None-Match`; a matching tag, strong or weak, is
   `304` before any work. Cards stay right while `languageData` does: an app fetches again when
   any of it changes.
+- **The contract.** The routes are plain Hono, so their contract is declared beside their tests,
+  in `src/conformance/app-contract.ts`, with `@hono/zod-openapi` (a dev dependency, never in the
+  image). `src/openapi.test.ts` writes `openapi.json` and the API reference and fails when either
+  differs (`pnpm test -u` writes them again), holds each answer's schema to the core's own types
+  (`WordCard`, `SegmentedToken`, `WordCardSource`, and `LanguageDataVersion`) at compile time,
+  holds the documented routes to the ones the app answers, and checks each error code a route
+  answers is the one declared for its status. On the app's data, every word card and segmentation
+  answer the conformance suite asks for is checked against its schema.
 - **On the server.** A person makes the account service's JWKS reachable from the dictionary
-  service's slots, which reach only nginx: an nginx location on the slots' network that proxies to
-  the account service's `/v1/auth/jwks` and answers `200` itself. Then they add `ACCOUNT_API_URL`
-  and `ACCOUNT_JWKS_URL` to each environment's settings (Set up the server, step 1). Until then the
-  app routes answer 503.
+  service's slots, which reach only nginx: an nginx site on the slots' network that proxies to
+  the account service's `/v1/auth/jwks` and answers `200` itself (Set up the server, step 2). Then
+  they add `ACCOUNT_API_URL` and `ACCOUNT_JWKS_URL` to each environment's settings (Set up the
+  server, step 1). Until then the app routes answer 503.
 
 ## How it runs
 
@@ -370,15 +382,70 @@ need about 1.5 GB of memory between them, and 5 GB of disk for images. Then, as 
    Set each environment's Worker to its token ([`web.md`](web.md), Dictionary service).
 
    **The app routes.** Once the account service runs in an environment and nginx answers its JWKS
-   on the slots' network (Apps), add both to that environment's file. A slot reads the file when
-   it starts, so the next deploy takes them up:
+   on the slots' network (step 2), add both to that environment's file. The deployer deploys an
+   environment again when its file changes, so the slots take them up within 5 minutes:
    ```sh
-   printf 'ACCOUNT_API_URL=%s\nACCOUNT_JWKS_URL=%s\n' "$account_url" "$jwks_url" |
-     sudo tee -a /etc/zenbujapanese-dictionary-api/$environment.env >/dev/null
+   printf 'ACCOUNT_API_URL=%s\nACCOUNT_JWKS_URL=%s\n' \
+     https://api-staging.zenbujapanese.com http://nginx:8790/staging/v1/auth/jwks |
+     sudo tee -a /etc/zenbujapanese-dictionary-api/staging.env >/dev/null
+   printf 'ACCOUNT_API_URL=%s\nACCOUNT_JWKS_URL=%s\n' \
+     https://api.zenbujapanese.com http://nginx:8790/production/v1/auth/jwks |
+     sudo tee -a /etc/zenbujapanese-dictionary-api/production.env >/dev/null
    ```
+   `ACCOUNT_API_URL` must be exactly the account service's own `ACCOUNT_API_URL`, the `iss` and
+   `aud` of its tokens. A malformed one stops the service from starting: the running slot keeps
+   serving, but the deployer records the failure, and that environment deploys nothing until the
+   file is fixed, so read `journalctl -t zenbujapanese-dictionary-api --since -10min` after
+   editing it. It worked when `/v1/apps/word-cards` answers `401 unauthorized`, not
+   `503 unavailable`, to a request without a token, and an app's access token gets cards.
 2. **nginx.** The nginx repository holds `nginx/dictionary-api-staging.zenbujapanese.com.conf` and
    `nginx/dictionary-api.zenbujapanese.com.conf` ([`api-servers.md`](api-servers.md), Set up the
    server, step 4).
+
+   **The account service's keys, for the app routes.** A slot reaches only nginx, so nginx serves
+   the account service's JWKS on the slots' network, on a port the server doesn't publish. Add
+   `nginx/zenbujapanese-jwks.conf` to the nginx repository, pull it on the server, and check and
+   reload nginx as for any site:
+   ```nginx
+   server {
+           listen 8790;
+           server_name nginx;
+
+           resolver 127.0.0.11 valid=5s ipv6=off;
+
+           location = /staging/v1/auth/jwks {
+                   set $account "zenbujapanese-account-api-staging";
+                   proxy_http_version 1.1;
+                   proxy_set_header Connection "";
+                   proxy_set_header Host api-staging.zenbujapanese.com;
+                   proxy_connect_timeout 2s;
+                   proxy_next_upstream error timeout http_502 http_503;
+                   proxy_next_upstream_tries 2;
+                   proxy_pass http://$account:8789/v1/auth/jwks;
+           }
+
+           location = /production/v1/auth/jwks {
+                   set $account "zenbujapanese-account-api-production";
+                   proxy_http_version 1.1;
+                   proxy_set_header Connection "";
+                   proxy_set_header Host api.zenbujapanese.com;
+                   proxy_connect_timeout 2s;
+                   proxy_next_upstream error timeout http_502 http_503;
+                   proxy_next_upstream_tries 2;
+                   proxy_pass http://$account:8789/v1/auth/jwks;
+           }
+
+           location / {
+                   return 404;
+           }
+   }
+   ```
+   It worked when a dictionary slot reads the keys:
+   ```sh
+   slot="$(docker ps --filter label=zenbujapanese.dictionary-api.environment=staging --format '{{.Names}}' | head -n 1)"
+   docker exec "$slot" node -e "fetch('http://nginx:8790/staging/v1/auth/jwks').then(r => r.text()).then(console.log)"
+   ```
+   prints `{"keys":[…]}` with an `EdDSA` key.
 
    **The slots' network.** Create it, internal, and connect the running nginx to it:
    ```sh

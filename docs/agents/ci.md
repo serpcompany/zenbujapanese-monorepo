@@ -278,7 +278,8 @@ the core. Those tests need no data: the app-recorded suites run through the core
 ## Dictionary API
 
 `.github/workflows/dictionary-api.yml` checks the dictionary service on pull requests that change
-the service, the core, what the services share (`packages/node-service/`), the website's
+the service, the core, what the services share (`packages/node-service/`), its API reference
+(`docs/api/dictionary-api.md`, which its tests write), the website's
 dictionary code (`apps/web/src/lib/dictionary/`,
 `apps/web/src/components/dictionary/`, `apps/web/src/test/`, `apps/web/vitest.config.ts`), the conformance suites
 (`apps/ios/LanguageData/Conformance/`), the app's resources

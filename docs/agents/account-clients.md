@@ -222,7 +222,10 @@ are the learner's to fix; the reference lists each field's bounds.
 
 An app with `dictionary:read`, such as Tomodachi, can ask the dictionary service for word cards
 and segmentation, on the same host: send the access token, as to `/v1/me`. They're the only
-dictionary routes an app calls (ADR 0013).
+dictionary routes an app calls (ADR 0013). Their contract is
+[`apps/dictionary-api/openapi.json`](../../apps/dictionary-api/openapi.json), and its readable form
+the [dictionary API reference](../api/dictionary-api.md): every field of a card and a token, and
+every answer.
 
 - `GET /v1/apps/word-cards?ids=<id>,<id>` answers the cards for 1 to 100 Language Reference IDs,
   in the format an app's baked cards use (`zenbu.word-cards.v1`,
@@ -230,15 +233,45 @@ dictionary routes an app calls (ADR 0013).
   `sources` to show, and lists the IDs it has no entry for in `missing`.
 - `GET /v1/apps/segmentation?text=<text>` splits 1 to 200 characters into words: each token's
   `text`, its `reading` when it has kanji, its `dictionaryForm`, and its `languageReferenceID`,
-  or `candidates` when it may be one of several words.
+  or `candidates` when it may be one of several words. URL-encode the text.
 
-Each answer names the language data in `languageData`: its `release` and each file's SHA-256.
-Keep what you get, keyed by all of `languageData`, and fetch again when any of it changes. An
-answer may be cached for a day; after that, send its `ETag` in `If-None-Match`, and a `304` means
-it still holds. Errors take the usual shape: `401` means get a new access token,
-`403 insufficient_scope` means the app isn't allowed (don't retry), `429` means wait
-`Retry-After` seconds (each account gets 60 requests a minute), and `503` means retry with
-backoff.
+```http
+GET /v1/apps/word-cards?ids=7f490a9c9c0da94f4e9474f4efe74be1 HTTP/1.1
+Host: api.zenbujapanese.com
+Authorization: Bearer <access token>
+```
+
+```http
+HTTP/1.1 200 OK
+Cache-Control: private, max-age=86400
+ETag: "<the service's build>"
+
+{
+  "format": "zenbu.word-cards.v1",
+  "license": { "name": "CC BY-SA 4.0", "url": "…", "statement": "…" },
+  "sources": [{ "name": "JMdict and KANJIDIC2", "supplies": "…", "license": "…", "url": "…", "notice": "EDRDG-ATTRIBUTION.md" }],
+  "cards": [{ "languageReferenceID": "7f490a9c9c0da94f4e9474f4efe74be1", "entSeq": 1259290, "headword": "見る", "reading": "みる", "…": "…" }],
+  "missing": [],
+  "languageData": { "release": "2026.10.1", "files": { "LanguageReferenceData.sqlite3": "<SHA-256>", "…": "…" } }
+}
+```
+
+- **Caching.** Keep what you get, keyed by all of `languageData`, and fetch again when any of it
+  changes. An answer may be used for a day (`Cache-Control: private, max-age=86400`); after that,
+  send its `ETag` in `If-None-Match`, and a `304` means it still holds. The `ETag` is the
+  service's build, so it changes with each deploy, even when the cards don't: compare
+  `languageData` before replacing what you keep.
+- **The token** must be from the same environment's account service as the host you ask: a
+  staging token is `401` in production.
+- **Errors** take the usual shape:
+  - `401 unauthorized`: get a new access token and send the request once more;
+  - `403 insufficient_scope`: the app isn't allowed, so don't retry;
+  - `400 bad_request`: a malformed `ids` or `text`, a bug to fix;
+  - `429 rate_limited` (not `too_many_requests`, as the account service says): wait the seconds
+    `Retry-After` says; each account gets 60 requests a minute, across both routes;
+  - `503 unavailable` or `starting`, `500 internal`, or a network failure: retry with backoff, and
+    keep showing the cards you have.
+- **Not from a browser.** The routes send no CORS headers, so a web page can't call them.
 
 ## When to sync
 
