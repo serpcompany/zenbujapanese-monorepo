@@ -3,7 +3,7 @@
 zenbujapanese.com's account pages let a learner make, sign in to, see, change, and delete their
 Zenbu account (#468), against the account service ([`account-api.md`](../../../../docs/agents/account-api.md)).
 Signing in is passwordless: a code we email, and Apple and Google where the site has them set up
-(`ACCOUNT_APPLE_SERVICES_ID` and `ACCOUNT_GOOGLE_SIGN_IN`; staging and production have neither
+(`ACCOUNT_APPLE_SERVICES_ID` and `ACCOUNT_GOOGLE_SIGN_IN`; staging has both, production neither
 yet). The pages are open only where the
 environment names an account service: locally and on staging, not yet in production
 (Configuration, below). The pages call the service from
@@ -301,3 +301,14 @@ runs with. Opening production is in
   no origin"; the `Web` workflow's check that staging's build links Sign in, and its run of the
   Closed spec on a build made as production deploys ([`ci.md`](../../../../docs/agents/ci.md),
   Web).
+
+**Apple and Google in each environment.** Staging offers both: its Worker names the Services ID
+`com.zenbujapanese.web` and turns Google on, since staging's account service has Apple's key and
+Google's web client. Production offers neither until its account pages open, and the local site
+neither, since Apple takes no `localhost` return URL and Google's web client returns only to the
+deployed services.
+
+- Source: the account service's staging settings
+  ([`account-api.md`](../../../../docs/agents/account-api.md), Set up the server).
+- Check: `src/lib/account/settings.test.ts`, "offer Apple and Google on staging, and neither in
+  production nor locally".
