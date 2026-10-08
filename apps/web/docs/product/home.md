@@ -69,22 +69,32 @@ browser drawn around the search page for taberu, with 食べる's word card in f
 - Source: #651; #648 mockups and their notes (only pages that exist today).
 - Check: Home spec, "the free web tools link to pages the site has, with no redirect".
 
-**Closing.** A dark block: "Your Japanese stays yours." and three promises, each with a small
-preview: Works offline (峠 looked up in airplane mode), No account, no ads (lists, notes, known
-words, and saved conversations stay on the iPhone), and Built on open data: JMdict, KANJIDIC2,
-Tatoeba, KanjiVG, JLPT levels, and TUBELEX, each linking to its project and its licence, from
-`pageSources.home` in `src/lib/dictionary/sources.ts`, so the page credits the JMdict and
-frequency data its previews show, and a link to `/sources/`. In each card and promise the heading
-comes first in the page, and the preview is drawn above it.
-Then the app, Zenbu Japanese for iPhone, with Get the app, which opens the iPhone app's page, and
-All products, which opens `/products/`.
+**Page end.** The page ends with one card, then the footer, after shadcnstudio's CTA 16, on a
+light band (a slightly darker band in dark mode) with a rule above it. The card is white (the card
+colour in dark mode) with rounded corners. On the left: the heading "Everything you need to read
+Japanese, in one app.", the line "Dictionary, Image Search, Translate, and Player on your iPhone.",
+and Get the app, the site's button with its phone icon, which opens the iPhone app's page
+(`/products/zenbu-japanese-for-iphone/`) through the `iphone-app` entry in `linkTargets`, as the
+header's does. On the right, a tilted two-column collage of cards, one per part of the app
+(Dictionary, Image Search, Translate, Conjugations, Kanji, and Pitch accent, from
+`src/lib/app-parts.ts`), each an App Store screenshot crop, a name, a line, and Learn more; it
+bleeds off the card's top and bottom edges, is drawn for the eye only (hidden from screen readers,
+and nothing in it is a link), and the card is at most 20rem tall. On phones the collage is a band
+about 9rem tall across the top of the card, with the copy below it. Under the card, a Sources
+disclosure credits the open data the page's previews show (`pageSources.home` in
+`src/lib/dictionary/sources.ts`: JMdict, KANJIDIC2, Tatoeba, KanjiVG, JLPT levels, and TUBELEX), as
+the dictionary pages credit theirs. The dark "Your Japanese stays yours" block, with its offline,
+no-account, and open-data promises, is gone.
 
-- Source: #651; #648 mockups; the Privacy Policy (no account and no advertising).
-- Check: Home spec, "the closing block credits the open data, then offers the app".
+- Source: #664 and its mockups (v50, Page end 16); the owner's choice of the site's Get the app
+  button over Apple's App Store badge.
+- Check: Home spec, "the page ends with one card: its heading, a line, and Get the app, then the
+  footer" (the card's height from 1024 pixels, the collage's place at both widths, the Sources
+  credits, and Get the app's page).
 
 **Placeholders.** All free tools links to `#` through `linkTargets`, like the header's
-([Dictionary](dictionary.md#header-footer-and-site-wide), Placeholder links). Get the app and All
-products link to their pages through the same entries.
+([Dictionary](dictionary.md#header-footer-and-site-wide), Placeholder links). Get the app links to
+its page through the same entries.
 
 - Source: the owner's decision on #650 (show planned items as placeholders); #652 (the products
   pages).
@@ -105,6 +115,7 @@ Every claim on the page is one the app's product docs make:
 | Lists, Known Words, and hiding furigana on known words | `index.md`, Account |
 | Frequency packs order equally good matches, in the order the learner chooses | `dictionary.md`, Search; `index.md`, Account (Frequency Dictionaries) |
 | Tap a kanji to split its reading | `index.md`, Furigana kanji highlight |
+| Pitch accent: hear how a word is said (the page end's collage) | `dictionary.md`, Dictionary and kanji details (the pitch capsule's speaker) |
 | No account, no ads; lists, notes, known words, and saved conversations stay on the device | `index.md`, Account (Lists, Known Words); `dictionary.md`, Dictionary and kanji details (notes); `translate.md`, Translations; the Privacy Policy |
 
 ## Page
@@ -122,7 +133,7 @@ locale (`siteOpenGraph` in `src/lib/metadata.ts`). It is indexed, as every page 
   name …, the homepage with no slash".
 
 **Width.** The page's sections are at most 1,024 pixels wide (`max-w-5xl`), as the header is, with
-the Free on the web band and the closing block running the window's full width. No width scrolls
+the Free on the web band and the page end's band running the window's full width. No width scrolls
 sideways.
 
 - Source: #648 mockups (Width switch).

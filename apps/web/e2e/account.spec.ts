@@ -1,5 +1,13 @@
 import { signedOutService, standInForTheAccountService } from './account-stand-in'
-import { accountPages, expect, footerAccountLink, headerLogIn, test } from './test'
+import {
+  accountButton,
+  accountPages,
+  expect,
+  footerAccountLink,
+  headerLogIn,
+  onPhone,
+  test
+} from './test'
 
 const email = 'kana@example.com'
 const profile = {
@@ -48,7 +56,9 @@ test.describe('account pages', () => {
     }
   })
 
-  test('the footer leads to signing in, and to the account once signed in', async ({ page }) => {
+  test('the footer leads to signing in, and to the account once signed in, as the header shows the initials', async ({
+    page
+  }) => {
     await standInForTheAccountService(page, {
       'POST /v1/auth/email-otp/send-verification-otp': { success: true },
       'POST /v1/auth/sign-in/email-otp': { token: 'bare', user: { id: 'u1' } },
@@ -71,9 +81,12 @@ test.describe('account pages', () => {
     await expect(page.getByText(`Signed in as ${email}`)).toBeVisible()
     await expect(footerAccountLink(page)).toHaveText('Account')
     await expect(footerAccountLink(page)).toHaveAttribute('href', '/account/')
+    if (!onPhone()) await expect(accountButton(page)).toHaveText(/^KF/)
   })
 
-  test("the header's Log in, or the drawer's on phones, opens the login page", async ({ page }) => {
+  test("the account menu's Log in, or the drawer's on phones, opens the login page", async ({
+    page
+  }) => {
     await standInForTheAccountService(page, signedOutService)
     await page.goto('/about/')
     const logIn = await headerLogIn(page)

@@ -11,7 +11,7 @@ export const pageEnd = {
   line: 'Dictionary, Image Search, Translate, and Player on your iPhone.'
 }
 
-export const appParts: readonly AppPart[] = [
+const appParts: readonly AppPart[] = [
   {
     name: 'Dictionary',
     line: 'Every word, fully explained',

@@ -45,7 +45,7 @@ const accountService = accountServiceIn(
 const nextConfig: NextConfig = {
   env: {
     ZENBU_ACCOUNT_PAGES: accountService ? 'open' : 'closed',
-    ZENBU_ACCOUNT_API_URL: accountService ?? ''
+    ZENBU_ACCOUNT_SERVICE: accountService ?? ''
   },
   trailingSlash: true,
   transpilePackages: ['@zenbu/dictionary-core'],

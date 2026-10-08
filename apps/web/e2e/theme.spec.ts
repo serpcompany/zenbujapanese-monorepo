@@ -67,15 +67,22 @@ test.describe('theme', () => {
     if (onPhone()) {
       await menuButton(page).focus()
       await page.keyboard.press('Enter')
+      await expect(phoneMenu(page)).toBeVisible()
       await phoneMenu(page).getByRole('button', { name: 'Theme' }).focus()
     } else {
       await accountButton(page).focus()
     }
     await page.keyboard.press('Enter')
+    const choices = onPhone() ? page.getByRole('menu', { name: 'Theme' }) : accountMenu(page)
+    await expect(choices).toBeVisible()
     await page.keyboard.press('End')
+    await expect(choices.getByRole('menuitemradio', { name: 'System' })).toBeFocused()
     await page.keyboard.press('ArrowUp')
+    await expect(choices.getByRole('menuitemradio', { name: 'Dark' })).toBeFocused()
     await page.keyboard.press('Enter')
     await expect(root(page)).toHaveClass(/\bdark\b/)
+    if (onPhone()) await expect(choices).toBeHidden()
+    else await expect(choices.getByRole('menuitemradio', { name: 'Dark' })).toBeChecked()
   })
 
   test.describe('before the page’s scripts run', () => {

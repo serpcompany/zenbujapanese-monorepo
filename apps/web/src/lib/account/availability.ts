@@ -19,4 +19,4 @@ export const accountPagesFor = (wrangler: string, siteEnv: string | undefined) =
 export const accountPagesOpen = () => process.env.ZENBU_ACCOUNT_PAGES === 'open'
 
 export const builtAccountService = () =>
-  accountPagesOpen() ? process.env.ZENBU_ACCOUNT_API_URL || null : null
+  accountPagesOpen() ? process.env.ZENBU_ACCOUNT_SERVICE || null : null
