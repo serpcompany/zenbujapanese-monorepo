@@ -871,8 +871,8 @@ window.
 - Source: #648 decision and mockups (Header switch); #650.
 - Check: `src/components/site-header.test.tsx`, "the Dictionary menu leads to the dictionary and its
   browse pages", "the Tools menu leads to the reference pages, and its planned pages are
-  placeholders", "the Products menu leads to the web dictionary, and its planned pages are
-  placeholders", and "the Company menu leads to About, Sources, Support, Contact, and Legal";
+  placeholders", "the Products menu leads to the products pages and the web dictionary, and its
+  planned pages are placeholders", and "the Company menu leads to About, Sources, Support, Contact, and Legal";
   `apps/web/e2e/site.spec.ts`, for each menu, "the … menu opens and closes with a click", "the …
   menu opens with the keyboard and Escape closes it", and "a link in the … menu opens its page and
   closes the menu", and "every link in the header menus opens a page the site has, with no
@@ -880,12 +880,13 @@ window.
 
 **Placeholder links.** The pages the menus, footer, and [homepage](home.md) name that don't exist
 yet, and the outside addresses that aren't known yet, link to `#` for now: All free tools and Free
-tools (`/tools/`),
-the three converters, Zenbu Japanese for iPhone (its product page, which #652 builds at
-`/products/zenbu-japanese-for-iphone/`), Browser extension, Reference guides, Courses, All products
-(`/products/`, also #652), Log in (`/login/`), Get the app (the App Store), and the ten social
-accounts. #650 asked for menu items to appear only once their page exists; the owner chose to show
-them now as `#` placeholders instead (#648). Every one is in one list, `linkTargets` in
+tools (`/tools/`), the three converters, Browser extension, Reference guides, Courses, Log in
+(`/login/`), the App Store (the Get the app on the product page and on the catalog's iPhone app
+card), the ten social accounts, and See all videos (`/videos/`), which shows only once the product
+page has videos. Zenbu Japanese for iPhone and All products now open their pages,
+`/products/zenbu-japanese-for-iphone/` and `/products/` ([Products pages](products.md)), from the
+same entries. #650 asked for menu items to appear only once their page exists; the owner chose to
+show them now as `#` placeholders instead (#648). Every one is in one list, `linkTargets` in
 `src/lib/site.ts`, named for what it stands for, and its links carry `data-link-target` with its id.
 A browser test lists every `#` link the site renders and fails on one that isn't in that list, so
 none reaches production unnoticed; replacing a placeholder means giving its entry the real address,
@@ -897,7 +898,7 @@ or linking the page directly once it exists.
   in src/lib/site.ts", which visits every page in `src/lib/pages.ts` and a search, word, and browse
   page at both widths, with the phone menu open, and prints the placeholders it found;
   `apps/web/e2e/site.spec.ts`, "the planned pages in the Tools and Products menus are # placeholders
-  for now".
+  for now, and All products opens the catalog".
 
 **Current section.** The menu button of the section the page is in is in the foreground color on a
 muted background, where the others are muted text, and screen readers hear it as current
@@ -928,14 +929,17 @@ window to 1024 pixels closes the sheet.
   1024 pixels, and stays closed when it narrows".
 
 **Get the app and Log in.** Get the app leads with a phone icon (lucide `Smartphone`); it opens the
-App Store link, a placeholder until that address is known, and is the same button in the header,
-the phone menu, and the prompt that actions needing the app open; following it closes the phone
-menu or the prompt. Log in opens the login page's placeholder; there is no signed-in avatar menu
+iPhone app's page (`/products/zenbu-japanese-for-iphone/`), whose own Get the app opens the App
+Store link, a placeholder until that address is known. It is the same button in the header, the
+phone menu, and the prompt that actions needing the app open; following it closes the phone menu
+or the prompt. Log in opens the login page's placeholder; there is no signed-in avatar menu
 until accounts exist (#468).
 
-- Source: #648 decision; #650; #511 (the phone icon).
+- Source: #648 decision and the Product page mockup's note (Get the app opens the product page);
+  #650; #652; #511 (the phone icon).
 - Check: `src/components/site-header.test.tsx`, "from 1024 pixels Log in and Get the app end the
-  header, at their links in src/lib/site.ts" and "the Get the app button leads with a phone icon";
+  header, Get the app opening the iPhone app’s page" and "the Get the app button leads with a phone
+  icon"; `apps/web/e2e/product-page.spec.ts`, "the header’s Get the app opens this page";
   `apps/web/e2e/word.spec.ts`, "opens the More actions menu with the app's actions".
 
 **Footer.** The footer starts with the 全 mark and the site name, linking home, and the site's
