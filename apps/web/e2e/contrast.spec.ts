@@ -1,11 +1,6 @@
-import type { Page } from '@playwright/test'
 import { axeFailures } from './axe'
 import { checkEachView, testEachPageType } from './page-types'
-import { expect, onPhone, sourcesToggle, test } from './test'
-
-async function openSources(page: Page) {
-  if (await sourcesToggle(page).count()) await sourcesToggle(page).click()
-}
+import { expect, onPhone, test } from './test'
 
 for (const theme of ['light', 'dark'] as const) {
   test.describe(`${theme} theme`, () => {
@@ -25,7 +20,7 @@ for (const theme of ['light', 'dark'] as const) {
               `${view}: text below WCAG AA contrast`
             ).toEqual([])
           },
-          { views: view => onPhone() && view.overlay === true, prepare: openSources }
+          view => onPhone() && view.overlay === true
         )
       }
     )

@@ -3,7 +3,7 @@ import { appAreas } from '../src/lib/app-areas'
 import { sitePages } from '../src/lib/pages'
 import { siteMenus } from '../src/lib/site-menus'
 import { signedOutService, standInForTheAccountService } from './account-stand-in'
-import { accountPages, expect, menuButton, needed, phoneMenu, test } from './test'
+import { accountPages, expect, menuButton, needed, phoneMenu, sourcesToggle, test } from './test'
 
 export interface PageView {
   name: string
@@ -38,13 +38,14 @@ async function settle(page: Page) {
 }
 
 const clickBeforeHydrationIsLost = { timeout: 1_000 }
+const untilItTakes = { timeout: 15_000 }
 
 async function expand(page: Page, name: string) {
   const button = page.getByRole('button', { name, exact: true })
   await expect(async () => {
     if ((await button.getAttribute('aria-expanded')) !== 'true') await button.click()
     await expect(button).toHaveAttribute('aria-expanded', 'true', clickBeforeHydrationIsLost)
-  }).toPass()
+  }).toPass(untilItTakes)
   await settle(page)
 }
 
@@ -66,7 +67,7 @@ const phoneMenuViews: PageView[] = [
       await expect(async () => {
         if (!(await phoneMenu(page).isVisible())) await menuButton(page).click()
         await expect(phoneMenu(page)).toBeVisible(clickBeforeHydrationIsLost)
-      }).toPass()
+      }).toPass(untilItTakes)
       await settle(page)
     }
   },
@@ -124,23 +125,18 @@ export async function openPageType(page: Page, { path, open = [] }: PageType) {
   await standInForTheAccountService(page, signedOutService)
   await page.goto(path)
   for (const name of open) await expand(page, name)
-  await expect(page.getByText('Loading examples')).toHaveCount(0)
+  await expect(page.getByText(/^Loading (examples|your account)/)).toHaveCount(0)
   await settle(page)
-}
-
-interface CheckOptions {
-  views?: (view: PageView) => boolean
-  prepare?: (page: Page) => Promise<void>
 }
 
 export async function checkEachView(
   page: Page,
   pageType: PageType,
   check: (view: string) => Promise<void>,
-  { views = () => true, prepare }: CheckOptions = {}
+  views: (view: PageView) => boolean = () => true
 ) {
   await openPageType(page, pageType)
-  await prepare?.(page)
+  if (await sourcesToggle(page).count()) await sourcesToggle(page).click()
   await check(pageType.name)
   for (const view of (pageType.views ?? []).filter(views)) {
     await view.show(page)

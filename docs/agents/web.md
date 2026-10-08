@@ -55,9 +55,10 @@ lists every child sitemap and each child sitemap lists the new URLs.
 `apps/web/e2e/page-types.ts` lists one page of every type (the static pages, the account pages,
 search, a word, kanji details, every browse family, and a missing page) with what to open on each,
 and the views to check beyond it: each homepage area, and on About the phone menu and each of its
-groups. `openPageType` stands in for the account service (signed out) and waits for animations to
-end; `checkEachView` opens a page type and runs a check on it and each view, and `testEachPageType`
-declares a test for every page type and the missing page. Add a page type there when one ships,
+groups. `openPageType` stands in for the account service (signed out), and waits until the account
+page and a word's examples have loaded and animations have ended; `checkEachView` opens a page
+type, opens Sources, and runs a check on it and each view, and `testEachPageType` declares a test
+for every page type and the missing page. Add a page type there when one ships,
 and these cover it (#682):
 
 - **The phone checks**, `apps/web/e2e/phone-layout.spec.ts`, run with the other browser tests, in
@@ -70,8 +71,8 @@ and these cover it (#682):
   collage) is a picture, as a screenshot's is, so it may be small or cropped; a line clamped with
   an ellipsis, and a carousel's screens past its edge, are meant to be cut off. Each failure names
   the element and its text: `pnpm test:e2e e2e/phone-layout.spec.ts --project phone`.
-- **The contrast check**, `apps/web/e2e/contrast.spec.ts` (#664), opens Sources and runs axe's
-  `color-contrast` on every page type in both themes at both widths, and on phones on the phone
+- **The contrast check**, `apps/web/e2e/contrast.spec.ts` (#664), runs axe's `color-contrast` on
+  every page type in both themes at both widths, and on phones on the phone
   menu and each of its groups; it doesn't open the homepage's other areas (`docs/tech-debt.md`).
   Both checks call axe through `apps/web/e2e/axe.ts`.
 - **The phone gallery**, `apps/web/e2e/gallery.spec.ts`, runs only when asked: it captures every
