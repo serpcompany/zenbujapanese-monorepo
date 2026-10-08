@@ -3,10 +3,9 @@
 zenbujapanese.com's account pages let a learner make, sign in to, see, change, and delete their
 Zenbu account (#468), against the account service ([`account-api.md`](../../../../docs/agents/account-api.md)).
 Signing in is passwordless: a code we email, and Apple and Google where the site has them set up
-(`ACCOUNT_APPLE_SERVICES_ID` and `ACCOUNT_GOOGLE_SIGN_IN`; staging has both, production neither
-yet). The pages are open only where the
-environment names an account service: locally and on staging, not yet in production
-(Configuration, below). The pages call the service from
+(`ACCOUNT_APPLE_SERVICES_ID` and `ACCOUNT_GOOGLE_SIGN_IN`; staging and production have both).
+The pages are open only where the environment names an account service: locally, on staging, and
+in production (#688; Configuration, below). The pages call the service from
 the learner's browser, never from the Worker ([`web.md`](../../../../docs/agents/web.md), Account
 pages). The website doesn't sync known words or lists yet, and the word page's learner actions
 still open the get-the-app prompt ([Dictionary](dictionary.md#word-page), Toolbar, and Lists and
@@ -18,8 +17,6 @@ Abbreviations: paths are under `apps/web/`. **Ways tests** are
 browser tests at a desktop and a phone width, with a stand-in for the account service in the
 browser. **Account service spec** is `e2e/account-service.spec.ts`, which drives a learner
 through the pages against a real account service on its dev mailbox (`ZENBU_ACCOUNT_API=1`).
-**Closed spec** is `e2e/account-closed.spec.ts`, which runs on the site built and served with
-production's settings (`E2E_SITE_ENV=production`).
 **Sign-in form tests** and **account page tests** are
 `src/components/account/sign-in-form.interaction.test.tsx` and
 `src/components/account/account-view.interaction.test.tsx`, which click through the components
@@ -31,27 +28,28 @@ in a DOM with a stand-in for the service.
 password needed), and `/account/` (Your account), each with the site's header and footer. Each is
 `noindex, nofollow`, and no sitemap lists them: not `/sitemaps/pages.xml`, and not `/sitemap/`.
 Their descriptions don't name Apple or Google, which a site offers only once they're set up.
-Without an account service (an empty `ACCOUNT_API_URL`, as in production today), each says signing
-in to a Zenbu account isn't available on this site yet, without the page's intro, links to no
-other account page, and asks the account service nothing.
+Without an account service (an empty `ACCOUNT_API_URL`, or one that isn't an origin), each says
+signing in to a Zenbu account isn't available on this site yet, without the page's intro, links to
+no other account page, and asks the account service nothing. Every environment names one today
+(Configuration, below).
 
-- Source: #468, whose #402 sitemap sheet lists the four pages. Closed in production because its
-  account service doesn't run yet ([`account-api.md`](../../../../docs/agents/account-api.md), Set
-  up the server), and a sign-in that can't work shouldn't show.
+- Source: #468, whose #402 sitemap sheet lists the four pages. Closed without an account service,
+  since a sign-in that can't work shouldn't show; production's were closed until its account
+  service answered, and opened then (#688;
+  [`account-api.md`](../../../../docs/agents/account-api.md), Set up the server).
 - Check: Account spec, "/login/ is noindex, with the site's header and footer" (and each other
   page), "no sitemap lists them"; `src/app/account-pages.test.tsx`, "/login/ says signing in isn't
   available, and links no account page, without an account service" (and each other page) and
-  "offer signing in, and lead to each other, with an account service"; Closed spec, "/login/
-  says signing in isn't available, links no account page, and stays noindex" (and each other
-  page); `src/lib/account/pages.test.ts` (the descriptions included); `src/app/routes.test.ts`.
+  "offer signing in, and lead to each other, with an account service";
+  `src/lib/account/pages.test.ts` (the descriptions included); `src/app/routes.test.ts`.
 
 **Log in, the account menu, and the footer.** Where the account pages are open, Log in and
 Create an account in the header's account menu (Log in in the phone menu below 1024 pixels) open
 `/login/` and `/register/`, and the footer's Products group ends with Sign in, which leads to
 `/login/` too. They take their addresses from the `login` and `register` entries in `linkTargets`
 (`src/lib/site.ts`), which the build points at the pages only where they're open
-(`ZENBU_ACCOUNT_PAGES`, [`web.md`](../../../../docs/agents/web.md), Account pages). Where they're
-closed, as in production today, Log in and Create an account stay `#` placeholders
+(`ZENBU_ACCOUNT_PAGES`, [`web.md`](../../../../docs/agents/web.md), Account pages), as they are on
+staging and in production. Where they're closed, Log in and Create an account stay `#` placeholders
 ([Dictionary](dictionary.md#header-footer-and-site-wide), Placeholder links) and the footer has
 no Sign in, so nothing links to the account pages. In a browser that signed in on the site, the
 footer says Account and leads to `/account/`; the header's account button shows the learner's
@@ -86,9 +84,9 @@ draws Sign in and the signed-out button, so the page and its first render in the
   footer leads to signing in, and to the account once signed in, as the header shows the
   initials"; `e2e/header.spec.ts`, "signed in, the menu
   leads to the account, then the theme, then Sign out, by keyboard" and "signing out from the menu
-  on the account page shows it signed out, with no reload"; Closed spec, "the account
-  menu's Log in and Create an account, and the drawer's Log in on phones, stay # placeholders" and
-  "a page built ahead of time has no Sign in in its footer".
+  on the account page shows it signed out, with no reload"; the `Web` workflow's checks that
+  staging's and production's builds have the footer's Sign in, leading to `/login/`
+  ([`ci.md`](../../../../docs/agents/ci.md), Web).
 
 ## Signing in
 
@@ -314,31 +312,28 @@ data, signs the browser out, and the footer says Sign in again.
 ## Configuration
 
 **Each environment's account service.** The Worker's `ACCOUNT_API_URL` names it:
-`https://api-staging.zenbujapanese.com` on staging, `http://localhost:8789` locally, and none yet
-in production, whose value is empty until its account service answers on `api.zenbujapanese.com`.
-An empty value closes the account pages; one that isn't an origin closes them too and logs
-`account_service_url_invalid`. The footer's Sign in, the account menu's Log in and Create an
+`https://api.zenbujapanese.com` in production, `https://api-staging.zenbujapanese.com` on staging,
+and `http://localhost:8789` locally. An empty value closes the account pages; one that isn't an
+origin closes them too and logs `account_service_url_invalid`. The footer's Sign in, the account menu's Log in and Create an
 account, and the service its Sign out calls get their addresses when the site is built, from the same value in `apps/web/wrangler.jsonc` for the environment being
 built, held to the same rule (an origin), so they and the pages agree in a build made as its
 environment deploys, with its `SITE_ENV`. A build without `SITE_ENV` draws the local site's header
-and footer, whichever Worker vars it then runs with. Opening production is in
-[`web.md`](../../../../docs/agents/web.md), Account pages.
+and footer, whichever Worker vars it then runs with.
 
-- Source: production's account service doesn't run yet
+- Source: each environment's account service
+  ([`account-api.md`](../../../../docs/agents/account-api.md), Set up the server); production's
+  answers on `https://api.zenbujapanese.com` (#688).
+- Check: `src/lib/account/settings.test.ts`, "name staging's and production's account services, so
+  both open their pages" and "close the footer, as the pages, for a value that is no origin"; the
+  `Web` workflow's checks that staging's and production's builds have the footer's Sign in,
+  leading to `/login/` ([`ci.md`](../../../../docs/agents/ci.md), Web).
+
+**Apple and Google in each environment.** Staging and production offer both: each Worker names
+the Services ID `com.zenbujapanese.web` and turns Google on, since each environment's account
+service has Apple's key and Google's web client. The local site offers neither, since Apple takes
+no `localhost` return URL and Google's web client returns only to the deployed services.
+
+- Source: the account service's settings for each environment
   ([`account-api.md`](../../../../docs/agents/account-api.md), Set up the server).
-- Check: `src/lib/account/settings.test.ts`, "name staging's account service, and none yet for
-  production, so its pages stay closed" and "close the footer, as the pages, for a value that is
-  no origin"; the `Web` workflow's check that staging's build links Log in and Sign in, and its run of the
-  Closed spec on a build made as production deploys ([`ci.md`](../../../../docs/agents/ci.md),
-  Web).
-
-**Apple and Google in each environment.** Staging offers both: its Worker names the Services ID
-`com.zenbujapanese.web` and turns Google on, since staging's account service has Apple's key and
-Google's web client. Production offers neither until its account pages open, and the local site
-neither, since Apple takes no `localhost` return URL and Google's web client returns only to the
-deployed services.
-
-- Source: the account service's staging settings
-  ([`account-api.md`](../../../../docs/agents/account-api.md), Set up the server).
-- Check: `src/lib/account/settings.test.ts`, "offer Apple and Google on staging, and neither in
-  production nor locally".
+- Check: `src/lib/account/settings.test.ts`, "offer Apple and Google on staging and in production,
+  and neither locally".

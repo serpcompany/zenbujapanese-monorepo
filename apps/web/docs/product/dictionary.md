@@ -956,13 +956,14 @@ window.
 **Placeholder links.** The pages the menus, footer, and [homepage](home.md) name that don't exist
 yet, and the outside addresses that aren't known yet, link to `#` for now: All free tools and Free
 tools (`/tools/`), the three converters, Browser extension, Reference guides, Courses, Log in
-(`/login/`) and Create an account (`/register/`) where the site's account pages are closed, as in
-production today, the App Store (the
+(`/login/`) and Create an account (`/register/`) in a build whose account pages are closed, the
+App Store (the
 Get the app on the product page and on the catalog's iPhone app card), the ten social accounts, and
 See all videos (`/videos/`), which shows only once the product page has videos. Zenbu Japanese for
 iPhone and All products now open their pages, `/products/zenbu-japanese-app/` and
 `/products/` ([Products pages](products.md)), from the same entries; so do Log in and Create an
-account where the account pages are open, as on staging ([Account pages](account.md#pages)), the
+account where the account pages are open, as on staging and in production
+([Account pages](account.md#pages)), the
 build choosing their addresses as it does the footer's Sign in. #650 asked for menu items to appear only once their page
 exists; the owner chose to show them now as `#` placeholders instead (#648). Every one is in one
 list, `linkTargets` in
@@ -1022,19 +1023,18 @@ iPhone app's page (`/products/zenbu-japanese-app/`), whose own Get the app opens
 Store link, a placeholder until that address is known. It is the same button in the header, the
 phone menu, and the prompt that actions needing the app open; following it closes the phone menu
 or the prompt. Log in, in the account menu from 1024 pixels and in the phone menu below, opens the
-login page, `/login/`, where the account pages are open, as on staging, and is a `#` placeholder
-where they're closed, as in production today ([Account pages](account.md#pages)).
+login page, `/login/`, where the account pages are open, as on staging and in production, and is
+a `#` placeholder in a build where they're closed ([Account pages](account.md#pages)).
 
 - Source: #648 decision and the Product page mockup's note (Get the app opens the product page);
   #650; #652; #511 (the phone icon); #468 (the login page); #664 (Log in moves into the account
-  menu).
+  menu); #688 (production's account pages open).
 - Check: `src/components/site-header.test.tsx`, "from 1024 pixels Get the app and the account
   button end the header, Get the app opening the iPhone app’s page" and "the Get the app button
   leads with a phone icon"; `src/lib/site.test.ts`, "%s opens its page in a build whose account
   pages are open, and isn't a placeholder" and "%s stays a # placeholder in a build whose account
   pages are closed"; `apps/web/e2e/account.spec.ts`, "the account menu's Log in, or the drawer's on phones, opens
-  the login page"; `apps/web/e2e/account-closed.spec.ts`, "the account menu's Log in and Create an
-  account, and the drawer's Log in on phones, stay # placeholders"; `apps/web/e2e/product-page.spec.ts`, "the header’s Get the app
+  the login page"; `apps/web/e2e/product-page.spec.ts`, "the header’s Get the app
   opens this page"; `apps/web/e2e/word.spec.ts`, "opens the More actions menu with the app's
   actions".
 

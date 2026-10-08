@@ -531,8 +531,8 @@ change's, a service that doesn't know bookmarks yet, catching up, and two phones
 
 ### Opening sign-in in the App Store build
 
-Release builds name no account service, the way the website keeps production's account pages
-closed ([`web.md`](web.md), Account pages). Opening sign-in waits for production's account service:
+Release builds name no account service, though the website's production account pages are open
+([`web.md`](web.md), Account pages). Opening sign-in waits for production's account service:
 `https://api.zenbujapanese.com/v1/health` answers `{"status":"ok"}` in a browser, with Apple and
 email codes set up for everyone ([`account-api.md`](account-api.md), Set up the server). Then it's
 one pull request:

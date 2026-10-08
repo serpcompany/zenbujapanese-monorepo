@@ -4,7 +4,7 @@ import { fixtureSearchOrder, fixtureWordRows } from '@zenbu/dictionary-core/fixt
 
 export { expect }
 
-export { onClosedProduction, onProductionBuild } from './server'
+export { onProductionBuild } from './server'
 
 export const test = base.extend<{ allowedConsoleErrors: RegExp[]; consoleErrors: string[] }>({
   allowedConsoleErrors: [[], { option: true }],

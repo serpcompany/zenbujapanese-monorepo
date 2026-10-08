@@ -105,11 +105,10 @@ drawing's furigana keeps its drawn size.
   and their server. Dev assertions wait 15 seconds, since `next dev` compiles each route on first
   use; the production build keeps Playwright's 5, and runs on one worker, as one workerd process
   renders every page. It sets `ZENBU_ACCOUNT_PAGES` for the tests as `next.config.ts` does for the
-  build (Account pages, below), from the run's `SITE_ENV`, or `production` with
-  `E2E_SITE_ENV=production`, so the `placeholderLinks` the tests import list Log in only where the
-  build's account pages are closed. Run the tests with the `SITE_ENV` the build had, or
-  `placeholders.spec.ts` reads the wrong list. `apps/web/e2e/test.ts` holds the console check and
-  the fixture helpers every spec imports; `apps/web/e2e/account-stand-in.ts` answers the account
+  build (Account pages, below), from the run's `SITE_ENV`, so the `placeholderLinks` the tests
+  import list Log in only where the build's account pages are closed. Run the tests with the
+  `SITE_ENV` the build had, or `placeholders.spec.ts` reads the wrong list. `apps/web/e2e/test.ts`
+  holds the console check and the fixture helpers every spec imports; `apps/web/e2e/account-stand-in.ts` answers the account
   service's routes in the browser, and marks a browser signed in, for the specs that need it.
   `apps/web/e2e/contrast.spec.ts` runs axe's colour-contrast rule (`@axe-core/playwright`) on
   every page type in `apps/web/e2e/page-types.ts`, in the light and dark themes (Phone layout,
@@ -447,47 +446,28 @@ the account service ([`account-api.md`](account-api.md); the website's side of i
   `/register/` rather than `#`, only where it's `open`. It passes the origin itself as
   `ZENBU_ACCOUNT_SERVICE`, which the account menu's Sign out calls (`builtAccountService` in
   `src/lib/account/availability.ts`, nothing where the pages are closed). A value set only in
-  `.dev.vars` changes the pages, not the header or footer. The `Web` workflow checks staging's
-  build links signing in, and production's has no link to it, its Log in still `#` (Browser
-  tests, below; [`ci.md`](ci.md), Web).
+  `.dev.vars` changes the pages, not the header or footer. The `Web` workflow checks that
+  staging's and production's builds link signing in from the footer ([`ci.md`](ci.md), Web).
 
   | Var | What it does |
   | --- | --- |
-  | `ACCOUNT_API_URL` | The account service's origin: `http://localhost:8789` locally and `https://api-staging.zenbujapanese.com` on staging. Production's is empty until its account service answers on `https://api.zenbujapanese.com` (opening it, below). Empty, the pages say signing in isn't available, link to no other account page, the footer has no Sign in, and the account menu's Log in and Create an account stay `#`. |
+  | `ACCOUNT_API_URL` | The account service's origin: `http://localhost:8789` locally, `https://api-staging.zenbujapanese.com` on staging, and `https://api.zenbujapanese.com` in production. Empty, the pages say signing in isn't available, link to no other account page, the footer has no Sign in, and the account menu's Log in and Create an account stay `#`. |
   | `ACCOUNT_APPLE_SERVICES_ID` | The Services ID Sign in with Apple JS signs in as: the first of the service's `APPLE_SERVICES_IDS`, the one the service takes the website's Apple codes as. Empty, the pages offer no Apple. |
   | `ACCOUNT_GOOGLE_SIGN_IN` | `on` offers Google, once the service has a Google web client. |
 
-  Apple and Google are on for staging, whose account service has Apple's key and Google's web
-  client ([`account-api.md`](account-api.md), Set up the server): under `env.staging.vars`,
+  Apple and Google are on for staging and production, whose account services have Apple's key and
+  Google's web client ([`account-api.md`](account-api.md), Set up the server): under
+  `env.staging.vars` and `env.production.vars`,
   `"ACCOUNT_APPLE_SERVICES_ID": "com.zenbujapanese.web"`, the first of the service's
   `APPLE_SERVICES_IDS`, and `"ACCOUNT_GOOGLE_SIGN_IN": "on"`. The local site has neither, since
   Apple takes no `localhost` return URL and Google's web client returns only to the deployed
-  services. Production's stay empty until its pages open; then set them under
-  `env.production.vars` and run `pnpm cf-typegen`, in a pull request that also updates what then
-  stops being true: "production neither yet" in the product docs'
-  [Account pages](../../apps/web/docs/product/account.md), `src/lib/account/settings.test.ts`, and
-  "Production's stay empty" here.
+  services.
 
-  **Opening production's account pages** waits for production's account service to answer on
-  `https://api.zenbujapanese.com`, trust `https://zenbujapanese.com`
-  (`ACCOUNT_API_TRUSTED_ORIGINS`), and email codes to everyone ([`account-api.md`](account-api.md),
-  Set up the server); Apple and Google can follow later. Then it's one pull request: set
-  production's `ACCOUNT_API_URL` to it, run `pnpm cf-typegen`, and change what pins it closed: the
-  `Web` workflow's two closed-pages steps, `e2e/account-closed.spec.ts`, its server in
-  `playwright.config.ts`, the closed-run flag in `e2e/server.ts` and `e2e/test.ts`, and
-  `src/lib/account/settings.test.ts`; and the docs that say
-  production's pages are closed: the product docs ([Account pages](../../apps/web/docs/product/account.md),
-  the [index](../../apps/web/docs/product/index.md), [Privacy Policy](../../apps/web/docs/product/privacy.md),
-  and [Dictionary](../../apps/web/docs/product/dictionary.md)'s Placeholder links and Get the app
-  and Log in, where Log in stays `#` in production),
-  this section and its closed-spec paragraph (below), [`ci.md`](ci.md) (Web),
-  [`docs/quality.md`](../quality.md) (Account pages, and Header and footer's placeholders),
-  [`docs/tech-debt.md`](../tech-debt.md)'s placeholder row, which counts Log in in production, and
-  the `browser-tests` skill.
-  The privacy policy's text stays true with the email code alone: Apple and Google sign the learner
-  in only "if you choose them", where the website "offers sign-in". `main` then deploys staging; production deploys when a
-  person runs `Web deploy` by hand while `DEPLOY_PRODUCTION` is `false` (Environments and
-  deploys, below).
+  Production's account pages are open (#688), against `https://api.zenbujapanese.com`,
+  once it answered and trusted `https://zenbujapanese.com` (`ACCOUNT_API_TRUSTED_ORIGINS`;
+  [`account-api.md`](account-api.md), Set up the server). Production still deploys only when a
+  person runs `Web deploy` by hand while `DEPLOY_PRODUCTION` is `false` (Environments and deploys,
+  below).
 - **Apple** runs in Sign in with Apple JS's popup (`src/lib/account/apple.ts`), which hands the
   page Apple's ID token and authorization code. Apple answers a popup only on a page of its return
   URL's origin, so the return URL is the site's own `/account/`, and deleting an Apple account
@@ -528,23 +508,6 @@ ZENBU_ACCOUNT_API=1 pnpm test:e2e e2e/account-service.spec.ts --project desktop
 mailbox; the site reads its own `ACCOUNT_API_URL`. A run sends three codes, and the service sends
 at most five from one address in 10 minutes, so a second run within 10 minutes needs a new
 database, or `delete from rate_limits` in it.
-
-`e2e/account-closed.spec.ts` checks production's closed account pages, Log in, and footer on the
-site built as production deploys (`SITE_ENV=production`, and a test Google Tag Manager ID, as `Web
-deploy` passes the real one), served by `wrangler dev --env production` on port 8797 with production's
-vars, no dictionary service, and `--env-file /dev/null`, so no `.dev.vars` or `.env` file can open
-the pages. It answers every request off the site with an empty response, Tag Manager's included,
-so nothing leaves the machine, and fails on any request to the account service. It runs only when
-asked (`E2E_SITE_ENV=production`, which runs that spec alone), and the
-`Web` workflow's `e2e` job runs it after the other browser tests:
-
-```sh
-SITE_ENV=production NEXT_PUBLIC_GTM_ID=GTM-TEST000 pnpm exec opennextjs-cloudflare build
-E2E_SITE_ENV=production pnpm exec playwright test
-```
-
-That build replaces the one the other browser tests use in workerd, so build again without
-`SITE_ENV` before running them there.
 
 ## Environments and deploys
 
@@ -653,9 +616,9 @@ beside production's pages.
 Production's `DICTIONARY_API_URL` is a placeholder until `Web deploy` writes it (Dictionary
 service, above), and with it every page answers 500, so name no dictionary service
 (`--var DICTIONARY_API_URL: --var DICTIONARY_API_TOKEN:`). `preview` also reads `.dev.vars`, and a
-local `ACCOUNT_API_URL` there opens production's account pages, so move it aside first, or serve
-the build with `wrangler dev --env production --env-file /dev/null`, as the closed account spec
-does (Account pages, above). `scripts/smoke.sh <url> <staging|production>` asserts the
+local `ACCOUNT_API_URL` there points production's account pages at another account service, so
+move it aside first, or serve the build with `wrangler dev --env production --env-file /dev/null`.
+`scripts/smoke.sh <url> <staging|production>` asserts the
 search-engine rules for each environment, so CI fails if production is hidden or staging is
 exposed.
 
