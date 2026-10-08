@@ -145,8 +145,9 @@ Back from Google with the browser's Back button, the buttons work again.
 ## Your account
 
 **Signed in, out, or unreachable.** `/account/`'s intro says "See your profile and how you sign
-in, change your profile, or delete your account.", which holds where the site offers only the
-emailed code and the ways can't change. It asks the service for the session in its cookie,
+in, change your profile, or delete your account.", which holds for every account, including one
+whose only way is the emailed code on a site that offers nothing else, whose ways can't change. It
+asks the service for the session in its cookie,
 then reads the profile with an access token and the ways to sign in. Signed in, it says "Signed in
 as" the email. With no session, it says "You're not signed in." and links Sign in and Create an
 account. When the service can't answer, it says so, with Try again.
