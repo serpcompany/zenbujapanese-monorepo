@@ -15,12 +15,12 @@ import {
   NavigationMenuList,
   NavigationMenuTrigger
 } from '@/components/ui/navigation-menu'
+import type { LinkTo } from '@/lib/site'
 import {
   isCurrentPage,
   isCurrentSection,
   type LinkMenu,
   type MegaMenu,
-  type MenuHref,
   type MenuLink,
   siteMenus
 } from '@/lib/site-menus'
@@ -31,7 +31,7 @@ function NavLink({
   className,
   children
 }: {
-  to: MenuHref
+  to: LinkTo
   className?: string
   children: ReactNode
 }) {
@@ -111,7 +111,7 @@ function MegaMenuPanel({ menu }: { menu: MegaMenu }) {
     <div className="grid w-[min(56rem,calc(100vw-2.5rem))] grid-cols-[15rem_repeat(3,minmax(0,1fr))] gap-4 p-3">
       <NavLink
         to={feature}
-        className="flex-col items-stretch gap-2.5 overflow-hidden bg-muted p-4 hover:bg-muted focus:bg-muted data-active:bg-muted"
+        className="flex-col items-stretch gap-2.5 overflow-hidden bg-muted p-4 hover:bg-foreground/8 focus:bg-foreground/8 data-active:bg-muted data-active:hover:bg-foreground/8 data-active:focus:bg-foreground/8"
       >
         <FeatureArt art={feature.art} />
         <span className="text-[15px] font-semibold">{feature.title}</span>

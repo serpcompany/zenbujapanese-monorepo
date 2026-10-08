@@ -3,22 +3,17 @@ import {
   kanaChartsPath,
   kanjiListsPath
 } from '@/lib/dictionary/browse/paths'
-import { pageFor } from '@/lib/pages'
-import { iphoneAppTitle, type MenuHref, placeholderFor } from '@/lib/site-menus'
+import { type LinkTo, linkTo } from '@/lib/site'
+import { iphoneAppTitle, pageLinkTo } from '@/lib/site-menus'
 
-type FooterLink = MenuHref & { title: string }
-
-const page = (path: Parameters<typeof pageFor>[0], title?: string): FooterLink => ({
-  title: title ?? pageFor(path).title,
-  href: path
-})
+type FooterLink = LinkTo & { title: string }
 
 export const footerColumns: readonly { heading: string; links: readonly FooterLink[] }[] = [
   {
     heading: 'Products',
     links: [
-      { title: iphoneAppTitle, ...placeholderFor('iphone-app') },
-      page('/dictionary/', 'Dictionary')
+      { title: iphoneAppTitle, ...linkTo('iphone-app') },
+      pageLinkTo('/dictionary/', 'Dictionary')
     ]
   },
   {
@@ -27,20 +22,25 @@ export const footerColumns: readonly { heading: string; links: readonly FooterLi
       { title: 'Kana charts', href: kanaChartsPath },
       { title: 'Kanji lists', href: kanjiListsPath },
       { title: 'Frequency lists', href: frequencyDictionariesPath },
-      { title: 'All tools', ...placeholderFor('tools') }
+      { title: 'All tools', ...linkTo('tools') }
     ]
   },
   {
     heading: 'Company',
-    links: [page('/about/'), page('/support/'), page('/contact/'), page('/sources/')]
+    links: [
+      pageLinkTo('/about/'),
+      pageLinkTo('/support/'),
+      pageLinkTo('/contact/'),
+      pageLinkTo('/sources/')
+    ]
   },
   {
     heading: 'Legal',
     links: [
-      page('/legal/privacy/'),
-      page('/legal/terms/'),
-      page('/legal/dmca/', 'DMCA'),
-      page('/legal/affiliate-disclosure/')
+      pageLinkTo('/legal/privacy/'),
+      pageLinkTo('/legal/terms/'),
+      pageLinkTo('/legal/dmca/', 'DMCA'),
+      pageLinkTo('/legal/affiliate-disclosure/')
     ]
   }
 ]

@@ -66,15 +66,13 @@ export type SocialLink = Extract<(typeof linkTargets)[number], { kind: 'social' 
 
 export const socialLinks = linkTargets.filter((link): link is SocialLink => link.kind === 'social')
 
-export function linkTarget(id: LinkTargetId): LinkTarget {
+export type LinkTo = { href: string; target?: LinkTargetId }
+
+export function linkTo(id: LinkTargetId): LinkTo {
   const link = linkTargets.find(candidate => candidate.id === id)
   if (!link) throw new Error(`Unknown link target: ${id}`)
-  return link
+  return { href: link.href, target: id }
 }
-
-export const appStoreLink = linkTarget('app-store')
-
-export const loginLink = linkTarget('login')
 
 export const placeholderLinks: readonly LinkTarget[] = linkTargets.filter(
   link => link.href === placeholderHref

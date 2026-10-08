@@ -7,8 +7,8 @@ import {
   kanjiListsPath,
   scriptPath
 } from '@/lib/dictionary/browse/paths'
-import { pageFor } from '@/lib/pages'
-import { type LinkTargetId, linkTarget, site } from '@/lib/site'
+import { pageFor, type SitePath } from '@/lib/pages'
+import { type LinkTo, linkTo, site } from '@/lib/site'
 
 export type MenuSymbol =
   | 'search'
@@ -24,9 +24,7 @@ export type MenuSymbol =
   | 'play'
   | 'phone'
 
-export type MenuHref = { href: string; target?: LinkTargetId }
-
-export type MenuLink = MenuHref & {
+export type MenuLink = LinkTo & {
   title: string
   description: string
   mark: { glyph: string; solid?: true } | { symbol: MenuSymbol } | { image: string }
@@ -37,7 +35,7 @@ export type MegaMenu = {
   label: string
   section: string
   lead?: MenuLink
-  feature: MenuHref & {
+  feature: LinkTo & {
     title: string
     description: string
     action: string
@@ -45,7 +43,7 @@ export type MegaMenu = {
     art: { screenshot: string } | { kana: string }
   }
   columns: { heading: string; links: MenuLink[] }[]
-  footer: MenuHref & { note: string; title: string }
+  footer: LinkTo & { note: string; title: string }
 }
 
 export type LinkMenu = {
@@ -56,10 +54,7 @@ export type LinkMenu = {
 
 export type SiteMenu = MegaMenu | LinkMenu
 
-export const placeholderFor = (id: LinkTargetId): MenuHref => ({
-  href: linkTarget(id).href,
-  target: id
-})
+export const pageLinkTo = (path: SitePath, title = pageFor(path).title) => ({ title, href: path })
 
 const dictionaryLink: MenuLink = {
   title: 'Dictionary',
@@ -156,7 +151,7 @@ const toolsMenu: MegaMenu = {
     action: 'See all tools',
     symbol: 'grid',
     art: { kana: 'あいうえおかきくけこ' },
-    ...placeholderFor('tools')
+    ...linkTo('tools')
   },
   columns: [
     {
@@ -195,19 +190,19 @@ const toolsMenu: MegaMenu = {
           title: 'Hiragana to Katakana',
           description: 'Convert as you type',
           mark: { symbol: 'swap' },
-          ...placeholderFor('hiragana-to-katakana')
+          ...linkTo('hiragana-to-katakana')
         },
         {
           title: 'Romaji to Kana',
           description: 'Type kana on any keyboard',
           mark: { symbol: 'type' },
-          ...placeholderFor('romaji-to-kana')
+          ...linkTo('romaji-to-kana')
         },
         {
           title: 'Kanji to Furigana',
           description: 'Readings above any text',
           mark: { symbol: 'book' },
-          ...placeholderFor('kanji-to-furigana')
+          ...linkTo('kanji-to-furigana')
         }
       ]
     }
@@ -215,7 +210,7 @@ const toolsMenu: MegaMenu = {
   footer: {
     note: 'Free, in your browser, from the app’s dictionary.',
     title: 'All free tools',
-    ...placeholderFor('tools')
+    ...linkTo('tools')
   }
 }
 
@@ -231,7 +226,7 @@ const productsMenu: MegaMenu = {
     action: 'Get the app',
     symbol: 'phone',
     art: { screenshot: '/screenshots/word-detail.webp' },
-    ...placeholderFor('iphone-app')
+    ...linkTo('iphone-app')
   },
   columns: [
     {
@@ -241,13 +236,13 @@ const productsMenu: MegaMenu = {
           title: iphoneAppTitle,
           description: 'Dictionary, Image Search, Translate, Player',
           mark: { image: '/app-icon.webp' },
-          ...placeholderFor('iphone-app')
+          ...linkTo('iphone-app')
         },
         {
           title: 'Browser extension',
           description: 'Look up Japanese on any web page',
           mark: { symbol: 'puzzle' },
-          ...placeholderFor('browser-extension')
+          ...linkTo('browser-extension')
         }
       ]
     },
@@ -264,7 +259,7 @@ const productsMenu: MegaMenu = {
           title: 'Free tools',
           description: 'Kana, kanji, and frequency lists',
           mark: { symbol: 'grid' },
-          ...placeholderFor('tools')
+          ...linkTo('tools')
         }
       ]
     },
@@ -275,13 +270,13 @@ const productsMenu: MegaMenu = {
           title: 'Reference guides',
           description: 'Printable sheets',
           mark: { symbol: 'file' },
-          ...placeholderFor('reference-guides')
+          ...linkTo('reference-guides')
         },
         {
           title: 'Courses',
           description: 'Lessons built from real clips',
           mark: { symbol: 'play' },
-          ...placeholderFor('courses')
+          ...linkTo('courses')
         }
       ]
     }
@@ -289,17 +284,16 @@ const productsMenu: MegaMenu = {
   footer: {
     note: 'Apps, extensions, free tools, guides, and courses.',
     title: 'All products',
-    ...placeholderFor('products')
+    ...linkTo('products')
   }
 }
 
 const companyMenu: LinkMenu = {
   kind: 'links',
   label: 'Company',
-  links: (['/about/', '/sources/', '/support/', '/contact/', '/legal/'] as const).map(path => ({
-    title: pageFor(path).title,
-    href: path
-  }))
+  links: (['/about/', '/sources/', '/support/', '/contact/', '/legal/'] as const).map(path =>
+    pageLinkTo(path)
+  )
 }
 
 export const siteMenus: readonly SiteMenu[] = [dictionaryMenu, toolsMenu, productsMenu, companyMenu]

@@ -921,18 +921,21 @@ window to 1024 pixels closes the sheet.
 - Source: #648 decision and mockups (Phone width); #650; #561 (the phone menu).
 - Check: `apps/web/e2e/site.spec.ts`, "the drawer holds the menus as groups, then Log in and Get
   the app", "a drawer group opens and closes with a click, and its link opens the page", "the drawer
-  opens and its groups toggle with the keyboard, and Escape closes it", "the drawer closes when the
+  opens and its groups toggle with the keyboard, and Escape closes it", "following Log in or Get the
+  app in the drawer closes it", "the drawer closes when the
   browser goes back, and stays closed going forward", and "the drawer closes when the window reaches
   1024 pixels, and stays closed when it narrows".
 
 **Get the app and Log in.** Get the app leads with a phone icon (lucide `Smartphone`); it opens the
 App Store link, a placeholder until that address is known, and is the same button in the header,
-the phone menu, and the prompt that actions needing the app open. Log in opens the login page's
-placeholder; there is no signed-in avatar menu until accounts exist (#468).
+the phone menu, and the prompt that actions needing the app open; following it closes the phone
+menu or the prompt. Log in opens the login page's placeholder; there is no signed-in avatar menu
+until accounts exist (#468).
 
 - Source: #648 decision; #650; #511 (the phone icon).
 - Check: `src/components/site-header.test.tsx`, "from 1024 pixels Log in and Get the app end the
-  header, at their links in src/lib/site.ts" and "the Get the app button leads with a phone icon".
+  header, at their links in src/lib/site.ts" and "the Get the app button leads with a phone icon";
+  `apps/web/e2e/word.spec.ts`, "opens the More actions menu with the app's actions".
 
 **Footer.** The footer starts with the 全 mark and the site name, linking home, and the site's
 one-line description. Four labelled columns follow: Products (Zenbu Japanese for iPhone,

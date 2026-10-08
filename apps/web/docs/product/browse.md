@@ -246,8 +246,11 @@ header's Dictionary and Tools menus lead to the kana, kanji, frequency, and cate
 - Source: #614 mockup "Footer + /sitemap/ (changed)"; #648 decision and mockups (the footer's
   columns).
 - Check: `src/components/site-footer.test.tsx`, "the footer groups its links under Products, Tools,
-  Company, and Legal"; `e2e/site.spec.ts`, "the footer groups its links under Products, Tools,
-  Company, and Legal, then ends with the copyright and Sitemap".
+  Company, and Legal"; `src/components/site-header.test.tsx`, "the Dictionary menu leads to the
+  dictionary and its browse pages" and "the Tools menu leads to the reference pages, and its planned
+  pages are placeholders"; `e2e/site.spec.ts`, "the footer groups its links under Products, Tools,
+  Company, and Legal, then ends with the copyright and Sitemap" and "every link in the header menus
+  opens a page the site has, with no redirect".
 
 **Width.** A browse page is one column, at most 1,024 pixels wide (`max-w-5xl`), as the mockups
 are, so the kana charts and the kanji grids fit a row; on a phone it fills the screen's width.

@@ -116,8 +116,13 @@ export function SiteMenu() {
           </Accordion>
         </nav>
         <DrawerFooter className="border-t">
-          <LogInButton variant="outline" size="lg" className="w-full" />
-          <GetAppButton size="lg" className="w-full" />
+          <LogInButton
+            variant="outline"
+            size="lg"
+            className="w-full"
+            onClick={() => setOpen(false)}
+          />
+          <GetAppButton size="lg" className="w-full" onClick={() => setOpen(false)} />
         </DrawerFooter>
       </DrawerContent>
     </Drawer>

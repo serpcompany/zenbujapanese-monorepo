@@ -1,12 +1,15 @@
 import { renderToStaticMarkup } from 'react-dom/server'
 import { beforeEach, describe, expect, test, vi } from 'vitest'
-import { appStoreLink, loginLink, placeholderHref } from '@/lib/site'
+import { linkTo, placeholderHref } from '@/lib/site'
 import { SiteHeader } from './site-header'
 
 const navigation = vi.hoisted(() => ({ pathname: '/' }))
 vi.mock('next/navigation', () => ({ usePathname: () => navigation.pathname }))
 
 const sections = ['Dictionary', 'Tools', 'Products', 'Company']
+
+const appStore = linkTo('app-store')
+const login = linkTo('login')
 
 function header(pathname: string): string {
   navigation.pathname = pathname
@@ -146,15 +149,15 @@ function headerButtons(html: string): [attributes: string, content: string][] {
 test('from 1024 pixels Log in and Get the app end the header, at their links in src/lib/site.ts', () => {
   const buttons = headerButtons(header('/dictionary/'))
   expect(buttons.map(([attributes]) => attribute(attributes, 'data-link-target'))).toEqual([
-    loginLink.id,
-    appStoreLink.id
+    login.target,
+    appStore.target
   ])
   for (const [attributes] of buttons) {
     expect(attributes.match(/class="([^"]*)"/)?.[1].split(' ')).toContain('max-lg:hidden')
   }
-  expect(attribute(buttons[0][0], 'href')).toBe(loginLink.href)
+  expect(attribute(buttons[0][0], 'href')).toBe(login.href)
   expect(buttons[0][1]).toBe('Log in')
-  expect(attribute(buttons[1][0], 'href')).toBe(appStoreLink.href)
+  expect(attribute(buttons[1][0], 'href')).toBe(appStore.href)
 })
 
 test('the Get the app button leads with a phone icon', () => {

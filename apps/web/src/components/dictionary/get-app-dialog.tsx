@@ -31,7 +31,7 @@ export function GetAppDialog({
 }) {
   const wide = useMediaQuery('(min-width: 768px)')
   const title = `${action ?? ''} works in the app`
-  const getApp = <GetAppButton />
+  const getApp = <GetAppButton onClick={() => onOpenChange(false)} />
   if (wide) {
     return (
       <Dialog open={action !== null} onOpenChange={onOpenChange}>

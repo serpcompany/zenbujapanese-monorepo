@@ -242,6 +242,16 @@ test.describe('site header below 1024 pixels', () => {
     await expect(menuButton(page)).toBeFocused()
   })
 
+  test('following Log in or Get the app in the drawer closes it', async ({ page }) => {
+    await page.goto('/about/')
+    for (const name of ['Log in', 'Get the app']) {
+      await menuButton(page).click()
+      await expect(phoneMenu(page)).toBeVisible()
+      await phoneMenu(page).getByRole('button', { name }).click()
+      await expect(phoneMenu(page)).toBeHidden()
+    }
+  })
+
   test('the drawer marks the current page, and closes with its close button', async ({ page }) => {
     await page.goto('/support/')
     await menuButton(page).click()

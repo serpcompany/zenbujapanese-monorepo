@@ -1,32 +1,44 @@
 import { SmartphoneIcon } from 'lucide-react'
 import Link from 'next/link'
-import type { ComponentProps } from 'react'
+import type { ComponentProps, ReactNode } from 'react'
 import { Button } from '@/components/ui/button'
-import { appStoreLink, loginLink } from '@/lib/site'
+import { type LinkTargetId, linkTo } from '@/lib/site'
 
-type ActionProps = Pick<ComponentProps<typeof Button>, 'className' | 'size' | 'variant'>
+type ActionProps = Pick<ComponentProps<typeof Button>, 'className' | 'size' | 'variant'> & {
+  onClick?: () => void
+}
 
-export function GetAppButton(props: ActionProps) {
+function LinkTargetButton({
+  target,
+  onClick,
+  children,
+  ...props
+}: ActionProps & { target: LinkTargetId; children: ReactNode }) {
+  const link = linkTo(target)
   return (
     <Button
       {...props}
       nativeButton={false}
-      render={<Link href={appStoreLink.href} data-link-target={appStoreLink.id} />}
+      render={<Link href={link.href} data-link-target={link.target} onClick={onClick} />}
     >
+      {children}
+    </Button>
+  )
+}
+
+export function GetAppButton(props: ActionProps) {
+  return (
+    <LinkTargetButton target="app-store" {...props}>
       <SmartphoneIcon data-icon="inline-start" aria-hidden="true" />
       Get the app
-    </Button>
+    </LinkTargetButton>
   )
 }
 
 export function LogInButton(props: ActionProps) {
   return (
-    <Button
-      {...props}
-      nativeButton={false}
-      render={<Link href={loginLink.href} data-link-target={loginLink.id} />}
-    >
+    <LinkTargetButton target="login" {...props}>
       Log in
-    </Button>
+    </LinkTargetButton>
   )
 }
