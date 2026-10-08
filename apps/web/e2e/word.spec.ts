@@ -106,7 +106,7 @@ test.describe('word page', () => {
     const prompt = page.getByRole('dialog', { name: 'Add to List works in the app' })
     await expect(prompt.getByRole('button', { name: 'Get the app' })).toBeVisible()
     await expect(prompt).toContainText(
-      'add notes and photos in the Zenbu app. Saving them on this website comes later.'
+      'add notes and photos in the Zenbu app. This website doesn’t save these yet.'
     )
   })
 

@@ -47,7 +47,10 @@ function waitFor(seconds: number): string {
   return `${minutes} minute${minutes === 1 ? '' : 's'}`
 }
 
-export function failureMessage(failure: Failure): string {
+const signsInElsewhere =
+  'This email’s account signs in with Apple or Google, which this site doesn’t offer yet. Sign in that way in the app you made the account in.'
+
+export function failureMessage(failure: Failure, appleOrGoogleHere = true): string {
   if (failure.kind === 'offline') {
     return 'We couldn’t reach your Zenbu account. Check your connection and try again.'
   }
@@ -57,6 +60,7 @@ export function failureMessage(failure: Failure): string {
       ? `Too many tries. Try again in ${waitFor(failure.retryAfter)}.`
       : 'Too many tries. Wait a few minutes, then try again.'
   }
+  if (failure.code === 'account_not_linked' && !appleOrGoogleHere) return signsInElsewhere
   const known = refusals[failure.code]
   if (known) return known
   return failure.status >= 500 || failure.message === '' ? somethingWentWrong : failure.message

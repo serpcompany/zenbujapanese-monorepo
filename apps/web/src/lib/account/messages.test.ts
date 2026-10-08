@@ -24,6 +24,15 @@ describe('what the account pages say when the account service refuses', () => {
     expect(failureMessage(failure)).toContain(says)
   })
 
+  test('says an Apple or Google account signs in elsewhere when this site offers neither', () => {
+    const notLinked = refused(403, 'account_not_linked')
+    expect(failureMessage(notLinked)).toContain('then add your email on your account page')
+    expect(failureMessage(notLinked, false)).toBe(
+      'This email’s account signs in with Apple or Google, which this site doesn’t offer yet. Sign in that way in the app you made the account in.'
+    )
+    expect(failureMessage(refused(400, 'invalid_otp'), false)).toContain('That code isn’t right')
+  })
+
   test('says how long to wait after a 429, when the service says', () => {
     expect(failureMessage(refused(429, 'too_many_requests', { retryAfter: 1 }))).toBe(
       'Too many tries. Try again in 1 second.'

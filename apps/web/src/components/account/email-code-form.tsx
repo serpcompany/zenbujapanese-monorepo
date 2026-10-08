@@ -15,6 +15,7 @@ interface EmailCodeFormProps {
   onSignedIn: () => void | Promise<void>
   mayVerify?: () => boolean
   onRefusal?: (failure: Failure) => boolean
+  appleOrGoogleHere?: boolean
 }
 
 export function EmailCodeForm({
@@ -24,7 +25,8 @@ export function EmailCodeForm({
   signInLabel,
   onSignedIn,
   mayVerify,
-  onRefusal
+  onRefusal,
+  appleOrGoogleHere = true
 }: EmailCodeFormProps) {
   const id = useId()
   const [email, setEmail] = useState(fixedEmail ?? '')
@@ -41,7 +43,7 @@ export function EmailCodeForm({
     setProblem(null)
     const sent = await api.sendCode(to)
     setBusy(false)
-    if (!sent.ok) return setProblem(failureMessage(sent.failure))
+    if (!sent.ok) return setProblem(failureMessage(sent.failure, appleOrGoogleHere))
     setSentTo(to)
     setCode('')
   }
@@ -53,7 +55,9 @@ export function EmailCodeForm({
     setProblem(null)
     const signedIn = await api.signInWithCode(sentTo, code.trim())
     if (signedIn.ok) await onSignedIn()
-    else if (!onRefusal?.(signedIn.failure)) setProblem(failureMessage(signedIn.failure))
+    else if (!onRefusal?.(signedIn.failure)) {
+      setProblem(failureMessage(signedIn.failure, appleOrGoogleHere))
+    }
     setBusy(false)
   }
 

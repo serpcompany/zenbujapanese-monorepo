@@ -59,6 +59,31 @@ describe('signing in on the website', () => {
     expect(page.querySelector('a[href="/account/"]')?.textContent).toBe('Go to your account')
   })
 
+  test('sends an Apple or Google account to sign in that way, here only where the site offers it', async () => {
+    for (const [settings, says] of [
+      [everything, 'Sign in that way, then add your email on your account page.'],
+      [
+        emailOnly,
+        'which this site doesn’t offer yet. Sign in that way in the app you made the account in.'
+      ]
+    ] as const) {
+      stubAccountService({
+        'POST /v1/auth/email-otp/send-verification-otp': answer({ success: true }),
+        'POST /v1/auth/sign-in/email-otp': refusal(403, 'account_not_linked')
+      })
+      const page = render(
+        <SignInForm settings={settings} purpose="email-only" returnedError={null} />
+      )
+      await fill(page, 'Email', email)
+      await submit(page, 'Email me a code')
+      await fill(page, 'Code', '123456')
+      await submit(page, 'Sign in')
+      await shows(page, says)
+      unmount()
+    }
+    expect(push).not.toHaveBeenCalled()
+  })
+
   test('says why a code was refused, and how long to wait after too many', async () => {
     stubAccountService({
       'POST /v1/auth/email-otp/send-verification-otp': [

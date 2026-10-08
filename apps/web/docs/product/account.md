@@ -86,13 +86,16 @@ minutes"), with "Send a new code" and "Use another email". A refusal says what t
 
 - a wrong code, an expired one, and too many wrong ones;
 - an email whose account signs in with Apple or Google: sign in that way, then add the email;
+  where the site offers neither, that it doesn't offer them yet, so sign in that way in the app
+  the account was made in;
 - no email sender on the service: try again later;
 - `429`: how many seconds or minutes the service's `Retry-After` (or Better Auth's
   `X-Retry-After`) names, or a few minutes when it names none.
 
 - Source: the client guide ([`account-clients.md`](../../../../docs/agents/account-clients.md),
   Signing in); `src/lib/account/messages.ts`.
-- Check: Sign-in form tests, "says why a code was refused, and how long to wait after too many";
+- Check: Sign-in form tests, "says why a code was refused, and how long to wait after too many"
+  and "sends an Apple or Google account to sign in that way, here only where the site offers it";
   `src/lib/account/messages.test.ts`; `src/lib/account/client.test.ts`, "reads how long to wait
   from Retry-After, or Better Auth's X-Retry-After".
 
