@@ -18,8 +18,8 @@ meet", a line on what the app does, then two buttons: **Get the app** and **Sear
 dictionary**, which opens `/dictionary/`. Under them: No account, No ads, and Your words stay on
 your iPhone. Beside the text (below it on phones) are two App Store screenshots, overlapped: the
 search results for taberu and the word page for 大丈夫. Get the app is the header's button
-(`GetAppButton`), so it opens the same link target, the App Store's placeholder in `linkTargets`
-(`src/lib/site.ts`), until that address is known.
+(`GetAppButton`), so it opens the same link target in `linkTargets` (`src/lib/site.ts`): the
+iPhone app's page, `/products/zenbu-japanese-for-iphone/` ([Products pages](products.md)).
 
 - Source: #651; #648 decision and mockups (Home, hero A).
 - Check: Home spec, "the hero leads with the app, with Get the app and Search the dictionary".
@@ -76,16 +76,18 @@ Tatoeba, KanjiVG, JLPT levels, and TUBELEX, each linking to its project and its 
 `pageSources.home` in `src/lib/dictionary/sources.ts`, so the page credits the JMdict and
 frequency data its previews show, and a link to `/sources/`. In each card and promise the heading
 comes first in the page, and the preview is drawn above it.
-Then the app, Zenbu Japanese for iPhone, with Get the app and All products, the products index's
-placeholder.
+Then the app, Zenbu Japanese for iPhone, with Get the app, which opens the iPhone app's page, and
+All products, which opens `/products/`.
 
 - Source: #651; #648 mockups; the Privacy Policy (no account and no advertising).
 - Check: Home spec, "the closing block credits the open data, then offers the app".
 
-**Placeholders.** Get the app, All free tools, and All products link to `#` through `linkTargets`,
-like the header's ([Dictionary](dictionary.md#header-footer-and-site-wide), Placeholder links).
+**Placeholders.** All free tools links to `#` through `linkTargets`, like the header's
+([Dictionary](dictionary.md#header-footer-and-site-wide), Placeholder links). Get the app and All
+products link to their pages through the same entries.
 
-- Source: the owner's decision on #650 (show planned items as placeholders).
+- Source: the owner's decision on #650 (show planned items as placeholders); #652 (the products
+  pages).
 - Check: `e2e/placeholders.spec.ts`, which visits `/` at both widths.
 
 ## Claims

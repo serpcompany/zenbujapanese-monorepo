@@ -30,6 +30,7 @@ Licenses screen, and point the source record at that file instead of keeping a s
 | Frequency data | [TUBELEX](https://github.com/naist-nlp/tubelex) | Japanese word frequency data from occurrences across YouTube. | iOS, Website |
 | Frequency data | [Wikipedia Word Frequency Clean](https://github.com/adno/wikipedia-word-frequency-clean) | Japanese word frequency data from occurrences across Wikipedia. | iOS, Website |
 | Frequency data | [Jiten](https://jiten.moe/frequency-dictionaries) | Optional domain frequency lists for TV and film, anime, manga, novels, visual novels, and video games, keyed by dictionary form and reading (CC BY-SA 4.0), downloaded on demand. | iOS, Website (the frequency dictionary pages rank words by them) |
+| App releases | [Apple's App Store lookup](https://performance-partners.apple.com/search-api) | The live app's version and minimum iOS version, from `itunes.apple.com/lookup` by bundle ID, kept for a day. Nothing the app shows, so it needs no app credit. | Website (the iPhone app's product page) |
 | Video captions | [YouTube](https://www.youtube.com/) | Japanese captions for the video a learner opens in Player, and YouTube's English translation of them, fetched when the video opens and not stored. | iOS |
 | Unverified app-owned data | [`Zenbu Word Relationships`](../apps/ios/LanguageData/Sources/Zenbu-Word-Relationships-v1.json) | Two uncited relationships between dictionary entries. No source or reviewer is recorded, so the file is pending a separate removal decision. | iOS |
 

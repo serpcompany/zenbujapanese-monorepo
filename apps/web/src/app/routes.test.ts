@@ -29,6 +29,8 @@ const decidedRoutes = [
   'page /support',
   'page /sources',
   'page /sitemap',
+  'page /products',
+  'page /products/zenbu-japanese-for-iphone',
   'page /legal',
   'page /legal/privacy',
   'page /legal/terms',
@@ -74,6 +76,6 @@ const decidedRoutes = [
 test('the site serves only the pages and data routes that have been decided', () => {
   expect(
     servedRoutes().sort(),
-    'Every page and data route is decided (docs/adr/0010-give-the-dictionary-three-page-types.md, #544, #614): the dictionary has its home, search, and word pages, and the browse pages that link to them, and what the app drills into lives on the word page. A new page or route needs an owner decision recorded first; then add it here.'
+    'Every page and data route is decided (docs/adr/0010-give-the-dictionary-three-page-types.md, #544, #614, and #648 for the products pages): the dictionary has its home, search, and word pages, and the browse pages that link to them, and what the app drills into lives on the word page. A new page or route needs an owner decision recorded first; then add it here.'
   ).toEqual([...decidedRoutes].sort())
 })

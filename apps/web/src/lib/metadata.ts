@@ -10,6 +10,6 @@ export function pageMetadata(path: SitePath): Metadata {
     title: page.title,
     description: page.description,
     alternates: { canonical: path },
-    openGraph: { title: page.title, description: page.description, url: path }
+    openGraph: { ...siteOpenGraph, title: page.title, description: page.description, url: path }
   }
 }

@@ -33,10 +33,10 @@ test.describe('homepage', () => {
     await expect(hero.getByRole('heading', { level: 1 })).toHaveText(
       'Understand the Japanese you meet'
     )
-    const appStore = linkTo('app-store')
+    const productPage = linkTo('iphone-app')
     const getTheApp = hero.getByRole('button', { name: 'Get the app' })
-    await expect(getTheApp).toHaveAttribute('href', appStore.href)
-    await expect(getTheApp).toHaveAttribute('data-link-target', 'app-store')
+    await expect(getTheApp).toHaveAttribute('href', productPage.href)
+    await expect(getTheApp).toHaveAttribute('data-link-target', 'iphone-app')
     await expect(hero.getByRole('img')).toHaveCount(2)
     await hero.getByRole('link', { name: 'Search the dictionary' }).click()
     await expect(page).toHaveURL('/dictionary/')
@@ -127,7 +127,7 @@ test.describe('homepage', () => {
     await expect(licences).toHaveText(pageSources.home.map(source => source.license.name))
     await expect(closing.getByRole('button', { name: 'Get the app' })).toHaveAttribute(
       'data-link-target',
-      'app-store'
+      'iphone-app'
     )
     await expect(closing.getByRole('link', { name: 'All products' })).toHaveAttribute(
       'data-link-target',

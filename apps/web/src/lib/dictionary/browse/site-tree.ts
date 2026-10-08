@@ -31,6 +31,7 @@ const page = (path: SitePath): TreeNode => ({ title: pageFor(path).title, path }
 export const homeTree: TreeNode = {
   ...page('/'),
   children: [
+    { ...page('/products/'), children: [page('/products/zenbu-japanese-for-iphone/')] },
     page('/about/'),
     page('/support/'),
     page('/contact/'),

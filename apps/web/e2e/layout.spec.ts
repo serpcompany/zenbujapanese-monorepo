@@ -6,7 +6,9 @@ const pages = [
   '/dictionary/search/iru/',
   encodeURI('/dictionary/search/要/'),
   needed.path,
-  '/legal/privacy/'
+  '/legal/privacy/',
+  '/products/',
+  '/products/zenbu-japanese-for-iphone/'
 ]
 
 const opened = [
