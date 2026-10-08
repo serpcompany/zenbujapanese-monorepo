@@ -111,11 +111,11 @@ export function KanjiDetails({ kanji }: { kanji: KanjiDetailsData }) {
             {kanji.words.map(word => (
               <li key={word.entSeq} className="flex items-baseline gap-3 py-2 first:pt-0 last:pb-0">
                 {word.path ? (
-                  <Link href={word.path} className="underline-offset-4 hover:underline">
+                  <Link href={word.path} className="shrink-0 underline-offset-4 hover:underline">
                     <RubyText segments={word.ruby} className="text-xl" />
                   </Link>
                 ) : (
-                  <RubyText segments={word.ruby} className="text-xl" />
+                  <RubyText segments={word.ruby} className="shrink-0 text-xl" />
                 )}
                 <span className="ml-auto text-right text-muted-foreground">{word.summary}</span>
               </li>

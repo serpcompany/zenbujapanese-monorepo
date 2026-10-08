@@ -12,10 +12,6 @@ const count = new Intl.NumberFormat('en-US')
 
 export const formatCount = (value: number) => count.format(value)
 
-const compact = new Intl.NumberFormat('en-US', { notation: 'compact' })
-
-export const compactCount = (value: number) => compact.format(value)
-
 export const plural = (value: number, one: string, many = `${one}s`) =>
   `${formatCount(value)} ${value === 1 ? one : many}`
 

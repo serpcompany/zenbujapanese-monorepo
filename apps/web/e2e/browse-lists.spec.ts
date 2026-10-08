@@ -21,7 +21,7 @@ test.describe('category lists', () => {
     await expect(page.locator('[data-section="words"]')).toContainText('てる')
     await page
       .getByRole('navigation', { name: 'Pages' })
-      .getByRole('link', { name: '2', exact: true })
+      .getByRole('link', { name: 'Next →' })
       .click()
     await expect(page).toHaveURL(browse('ichidan-verbs/2/'))
     await expect(page).toHaveTitle('Japanese ichidan verbs, page 2 | Zenbu Japanese')
@@ -110,7 +110,26 @@ test.describe('frequency dictionaries', () => {
     await expect(page.getByRole('heading', { level: 1 })).toHaveText('JLPT N5 vocabulary')
     await expect(page.getByRole('main')).toContainText('in kana order, page 1 of')
     await expect(
-      page.getByRole('navigation', { name: 'Pages' }).getByRole('link', { name: '2', exact: true })
+      page.getByRole('navigation', { name: 'Pages' }).getByRole('link', { name: 'Next →' })
     ).toHaveAttribute('href', browse('frequency-dictionaries/jlpt/n5/2/'))
+  })
+})
+
+const pageLinkHeight = 44
+
+test.describe('page links', () => {
+  test('a long list links the pages around the current one, and on a phone fits one row', async ({
+    page
+  }, testInfo) => {
+    const onPhone = testInfo.project.name === 'phone'
+    if (onPhone) await page.setViewportSize({ width: 360, height: 800 })
+    await page.goto(browse('ichidan-verbs/2/'))
+    const pages = page.getByRole('navigation', { name: 'Pages' })
+    await expect(pages.getByRole('link')).toHaveText(
+      onPhone ? ['← Previous', '1', '20', 'Next →'] : ['← Previous', '1', '3', '4', '20', 'Next →']
+    )
+    await expect(pages.getByText('2', { exact: true })).toHaveAttribute('aria-current', 'page')
+    const twoRows = 2 * pageLinkHeight
+    expect((await pages.boundingBox())?.height).toBeLessThan(twoRows)
   })
 })

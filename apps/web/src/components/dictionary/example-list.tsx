@@ -6,15 +6,17 @@ import { LoadMoreFooter, useLoadMore } from '@/components/dictionary/load-more'
 import { PronounceButton } from '@/components/dictionary/pronounce-button'
 import { RubyText } from '@/components/dictionary/ruby-text'
 import type { PageExample, PageExampleToken } from '@/lib/dictionary/page-example'
+import { cn } from '@/lib/utils'
 
 const linkClass = 'underline-offset-4 hover:text-muted-foreground'
 
 function Token({ token }: { token: PageExampleToken }) {
-  const className = token.isPageWord
-    ? 'mr-0.5 border-b-2 border-foreground font-medium'
-    : token.link
-      ? 'mr-0.5 border-b border-border'
-      : undefined
+  const className = cn(
+    'whitespace-nowrap',
+    token.isPageWord
+      ? 'mr-0.5 border-b-2 border-foreground font-medium'
+      : token.link && 'mr-0.5 border-b border-border'
+  )
   const text = <RubyText segments={token.ruby} className={className} pageWord={token.isPageWord} />
   if (!token.path || !token.link) return text
   const title =

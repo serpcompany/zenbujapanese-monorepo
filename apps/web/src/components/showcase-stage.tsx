@@ -80,7 +80,7 @@ function StageDots({
           aria-current={inView(index) || undefined}
           tabIndex={-1}
           onClick={() => onPick(index)}
-          className="group/dot grid h-6 min-w-4 place-items-center rounded-full px-0.5 outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
+          className="group/dot grid h-6 min-w-6 place-items-center rounded-full px-0.5 outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
         >
           <span
             className={cn(

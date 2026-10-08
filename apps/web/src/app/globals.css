@@ -138,3 +138,11 @@
     -webkit-line-clamp: calc(2 + 998 * max(0, sign(1rem - 16px * 23 / 17)));
   }
 }
+
+@utility furigana {
+  font-size: max(0.45em, var(--smallest-furigana, 0.75rem));
+}
+
+@utility drawing {
+  --smallest-furigana: 0px;
+}

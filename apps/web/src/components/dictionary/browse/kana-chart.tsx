@@ -5,7 +5,6 @@ import Link from 'next/link'
 export interface KanaTile {
   href: string | null
   note?: string
-  shortNote?: string
   label?: string
 }
 
@@ -30,7 +29,7 @@ export function KanaChart({
       aria-label={label}
       lang="ja"
       className={cn(
-        'grid grid-flow-col grid-rows-5 gap-1 [grid-auto-columns:minmax(0,1fr)] sm:gap-1.5',
+        'grid grid-cols-5 gap-1.5 sm:auto-cols-fr sm:grid-flow-col sm:grid-rows-5 sm:grid-cols-none',
         className
       )}
     >
@@ -48,12 +47,8 @@ export function KanaChart({
               {cell.kana}
             </span>
             {shown.note ? (
-              <span
-                lang="en"
-                className="text-[10px] text-muted-foreground tabular-nums sm:text-[11px]"
-              >
-                <span className="sm:hidden">{shown.shortNote ?? shown.note}</span>
-                <span className="max-sm:hidden">{shown.note}</span>
+              <span lang="en" className="text-xs text-muted-foreground tabular-nums">
+                {shown.note}
               </span>
             ) : null}
           </>

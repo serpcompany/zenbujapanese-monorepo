@@ -1,6 +1,7 @@
 import { cn } from 'cn'
 import Link from 'next/link'
 import type { ReactNode } from 'react'
+import { type PageNumber, pageNumbers } from '@/lib/dictionary/browse/pagination'
 
 export function BrowsePage({ children }: { children: ReactNode }) {
   return (
@@ -160,7 +161,8 @@ export function LinkTabs({
   )
 }
 
-const pageWindow = 2
+const gapClass = ({ wide, phone }: PageNumber['gapBefore']) =>
+  wide && phone ? '' : wide ? 'max-sm:hidden' : 'sm:hidden'
 
 export function Pagination({
   page,
@@ -174,20 +176,19 @@ export function Pagination({
   label?: string
 }) {
   if (pages <= 1) return null
-  const shown = [...new Set([1, ...windowAround(page, pages), pages])]
   const box =
     'inline-flex h-11 min-w-11 items-center justify-center rounded-lg border px-3 text-sm tabular-nums'
   return (
     <nav aria-label={label} className="flex flex-wrap items-center gap-2">
       {page > 1 ? (
         <Link href={pathFor(page - 1)} className={cn(box, 'hover:bg-muted')} rel="prev">
-          ← Previous
+          ← <span className="max-sm:sr-only">Previous</span>
         </Link>
       ) : null}
-      {shown.map((number, index) => (
+      {pageNumbers(page, pages).map(({ number, onPhone, gapBefore }) => (
         <span key={number} className="contents">
-          {index > 0 && number - shown[index - 1] > 1 ? (
-            <span className="text-muted-foreground">…</span>
+          {gapBefore.wide || gapBefore.phone ? (
+            <span className={cn('text-muted-foreground', gapClass(gapBefore))}>…</span>
           ) : null}
           {number === page ? (
             <span
@@ -197,7 +198,10 @@ export function Pagination({
               {number}
             </span>
           ) : (
-            <Link href={pathFor(number)} className={cn(box, 'hover:bg-muted')}>
+            <Link
+              href={pathFor(number)}
+              className={cn(box, 'hover:bg-muted', !onPhone && 'max-sm:hidden')}
+            >
               {number}
             </Link>
           )}
@@ -205,15 +209,9 @@ export function Pagination({
       ))}
       {page < pages ? (
         <Link href={pathFor(page + 1)} className={cn(box, 'hover:bg-muted')} rel="next">
-          Next →
+          <span className="max-sm:sr-only">Next</span> →
         </Link>
       ) : null}
     </nav>
   )
-}
-
-function windowAround(page: number, pages: number): number[] {
-  const first = Math.max(1, page - pageWindow)
-  const last = Math.min(pages, page + pageWindow)
-  return Array.from({ length: last - first + 1 }, (_, index) => first + index)
 }

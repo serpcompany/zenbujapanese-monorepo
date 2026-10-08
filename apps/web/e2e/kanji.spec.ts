@@ -1,4 +1,5 @@
 import type { Page } from '@playwright/test'
+import { linesOfText } from './phone-checks'
 import { expect, needed, sourcesToggle, test, word } from './test'
 
 const kanjiSearch = encodeURI('/dictionary/search/要/')
@@ -121,6 +122,23 @@ test.describe('kanji details', () => {
     expect(await page.evaluate(() => navigator.clipboard.readText())).toBe(
       new URL(kanjiSearch, baseURL).href
     )
+  })
+
+  test("on a phone, each of 要's words keeps its headword on one line", async ({
+    page
+  }, testInfo) => {
+    test.skip(testInfo.project.name !== 'phone', 'A phone-width layout')
+    await page.setViewportSize({ width: 360, height: 800 })
+    await openKanji(page, rows[0])
+    const words = page
+      .locator('[data-kanji-details="要"] section', {
+        has: page.getByRole('heading', { level: 3, name: 'Words' })
+      })
+      .getByRole('listitem')
+    await expect(words.first()).toBeVisible()
+    const headwords = await linesOfText(words.locator('[lang="ja"]'))
+    expect(headwords.length).toBeGreaterThan(10)
+    expect(headwords).toEqual(headwords.map(({ text }) => ({ text, lines: 1 })))
   })
 
   test("Lists and Notes open the get-the-app prompt, as a word page's do", async ({ page }) => {

@@ -333,7 +333,8 @@ resolves by its own forms, and one the app can't resolve to one entry opens a se
 dictionary form. Words with one entry have furigana. The words that make up an occurrence of the
 query are marked with the thicker underline; the app accents them in color. The app lists a
 sentence's words in a Words menu beside it; the website links them inline in the sentence, as the
-#462 design's examples do.
+#462 design's examples do. A sentence breaks onto a new line only between its words, so no word
+is split across two lines (#682).
 
 - Source: `LinkedJapaneseText.swift` and `JapaneseExampleRowContent`'s `.dedicated` presentation
   in `ExampleSentencesView.swift` (`ExampleSentencesScreen.queryScalarRanges`);
@@ -343,7 +344,8 @@ sentence's words in a Words menu beside it; the website links them inline in the
   sentences of each query; `search-examples.test.tsx` (each word, its mark, and furigana over
   linked kanji, in the ES cases, and "sits at #examples, titled with its count, and shows each
   one"); `data.test.ts`, "a search’s examples read the service, and load more for the same build"
-  (each word linked by the slugs the service names).
+  (each word linked by the slugs the service names); `apps/web/e2e/word.spec.ts`, "on a phone, an
+  example sentence breaks only between its words".
 
 **Translation, speaker, and credits.** Each sentence shows its translation and a speaker, as a
 word page's examples do. No sentence is credited on its own: the page's Sources list credits
@@ -823,12 +825,14 @@ prompts a word page has: Add to List and Add Note, each opening the get-the-app 
   page's do".
 
 **Words.** The app's 24 words containing the kanji, in the app's order, each with furigana and its
-summary, opening its word page.
+summary, opening its word page. A word keeps its headword on one line, and its summary wraps
+beside it (#682).
 
 - Source: `entries(containingKanji:)` in `LookupClient.swift`; `KanjiDetailView.swift`;
   `KanjiWordsSection` in `KanjiDetailSections.swift`.
 - Check: KD `words`; `packages/dictionary-core/src/detail/kanji.test.ts`, "lists the app’s 24 words
-  for 要, in its order"; the conformance test checks every listed word links to its page.
+  for 要, in its order"; the conformance test checks every listed word links to its page;
+  `apps/web/e2e/kanji.spec.ts`, "on a phone, each of 要's words keeps its headword on one line".
 
 **々 and other characters without a kanji screen.** 々 has no kanji details, as it has no Kanji
 Detail in the app, so its row doesn't open.
@@ -989,6 +993,19 @@ and there is no romaji and no word meanings under example words. The settings ar
 
 - Source: App docs index, Account (Reading Aids); `ReadingAidPreferences.swift` (the defaults).
 - Check: No automated check yet (#511).
+
+**Phone layout.** Every page fits a 360-pixel phone. No text is smaller than 12 pixels: furigana
+is 0.45 of its word's size, as in the app, but never under 12 pixels, so it spreads a short word
+a little rather than shrink. The homepage's drawings of the app are pictures, like its
+screenshots, and keep their drawn size. Nothing is wider than the screen, no text is cut off by
+its box (a line clamped with an ellipsis, and a carousel's screens beyond its edge, are meant to
+be), and a grid of kana, kanji, or links keeps each cell at least 44 pixels wide. Each tap target
+is at least 24 by 24 pixels (WCAG 2.2, 2.5.8), as the homepage showcase's dots now are.
+
+- Source: #682 (the owner's review on a phone).
+- Check: `apps/web/e2e/phone-layout.spec.ts`, "… fits a 360px phone", on every page type in
+  `apps/web/e2e/page-types.ts`, each homepage area, and a missing page. Tap targets: No automated
+  check yet.
 
 **App links.** The shipped iOS app and its App Store metadata link to `/privacy` and `/support`, so
 both keep working. `/privacy` redirects (308) to `/legal/privacy/` in one hop, with its query, as

@@ -1,4 +1,4 @@
-export const previewPanel = 'rounded-lg bg-background ring-1 ring-foreground/10'
+export const previewPanel = 'drawing rounded-lg bg-background ring-1 ring-foreground/10'
 
 export const previewLabel =
   'text-[0.6875rem] font-semibold tracking-wider text-muted-foreground uppercase'
