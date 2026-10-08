@@ -469,7 +469,10 @@ standard. They are hand-written route handlers built on `src/lib/sitemap.ts`, re
   look there by default. The index lists each child sitemap, never another index.
 - Each child sitemap is a file at the site's root named for its group: `/sitemap-pages.xml`, then
   the dictionary's. A child holds at most 50,000 URLs; a group that outgrows one file adds
-  `-2`, `-3`, and so on (`/sitemap-words-2.xml`). Add a new group's sitemap to `childSitemaps`.
+  `-2`, `-3`, and so on (`/sitemap-words-2.xml`). Add a new group's sitemap to `childSitemaps`
+  in `src/lib/sitemap.ts`, or, for a group the dictionary service answers, to
+  `dictionarySitemapPaths` in `src/lib/dictionary/sitemaps.ts` with its rewrite in
+  `src/lib/dictionary/sitemap-files.ts`, as the word and browse sitemaps are.
   Static pages are listed once, in `src/lib/pages.ts`, which also feeds the HTML sitemap at
   `/sitemap`.
 - Every URL is written on the origin `servedOrigin()` in `src/lib/site.ts` names: the
@@ -496,8 +499,7 @@ has a dictionary service, staging and production, not local fixtures, so the ind
 request (`force-dynamic`, as does `/sitemap.xml`): a build can't reach the service, so
 prerendering would fail the build or freeze an index without them. `/dictionary/`, the search box
 and the browse sections below it, is listed in `src/lib/pages.ts`, and the pages sitemap also
-lists the browse hubs (`browseHubPaths`: the browse home, the kana charts, both scripts, the kanji
-lists, the frequency dictionaries, and the three category indexes; `src/lib/pages-sitemap.ts`):
+lists the browse home beside it (`browseHomePath`, in `src/lib/pages-sitemap.ts`):
 
 - `/sitemap-words.xml`, `/sitemap-words-2.xml`, and so on: every word page's canonical URL under
   its slug, percent-encoded, 50,000 to a file in `ent_seq` order (five files for 218,382 words).
@@ -511,7 +513,10 @@ lists, the frequency dictionaries, and the three category indexes; `src/lib/page
   lists (`src/lib/dictionary/browse/sitemap.ts`), about 5,300 URLs in all:
   `/sitemap-kana.xml` (hiragana and katakana lists, about 3,200), `/sitemap-categories.xml`
   (about 1,900), `/sitemap-frequency-lists.xml` (ranked bands and JLPT vocabulary, about 120), and
-  `/sitemap-kanji-lists.xml` (about 30). Each is far under 50,000, so none has a second file.
+  `/sitemap-kanji-lists.xml` (about 30). Each hub leads its kind's file (the kana charts and both
+  scripts, the category indexes, the frequency dictionaries, the kanji lists), so a hub is listed
+  only when the service answers, as its page needs. Each is far under 50,000, so none has a
+  second file.
   `next.config.ts` rewrites them to the route `src/app/sitemaps/browse/[file]`, as the word
   sitemaps are, and the four read one cached answer from the service.
 
@@ -519,7 +524,9 @@ Those are the only dictionary sitemaps (ADR 0010, amended for #614): the kanji a
 sitemaps went with their pages.
 
 They're kept in the Worker's edge cache (the Cache API) under the dictionary build the service
-names, so they change with the build, within the 10 minutes its answers stay cached. Cloudflare
+names, so they change with the build, within the 10 minutes its answers stay cached. The key
+names the dictionary build, not the site's, so a site deploy that changes what a sitemap lists
+shows within the hour its answer is kept (`xmlResponse`'s `max-age`). Cloudflare
 doesn't cache a Worker's responses on its own, and `pnpm dev` has no such cache.
 
 ## Retired word URLs

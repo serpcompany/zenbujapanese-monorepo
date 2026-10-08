@@ -107,12 +107,12 @@ const browseGroupFiles = [
 const site = `${local}/dictionary/browse`
 
 const browsePagesByGroup: Record<BrowseSitemapGroup, RegExp> = {
-  kana: new RegExp(`^${site}/(hiragana|katakana)/[^/]+/(\\d+/)?$`),
+  kana: new RegExp(`^${site}/(kana|hiragana|katakana)/([^/]+/)?(\\d+/)?$`),
   categories: new RegExp(
-    `^${site}/(?!hiragana/|katakana/|kanji/|frequency-dictionaries/)[a-z-]+/(\\d+/)?$`
+    `^${site}/(?!kana/|hiragana/|katakana/|kanji/|frequency-dictionaries/)[a-z-]+/(\\d+/)?$`
   ),
-  'frequency-lists': new RegExp(`^${site}/frequency-dictionaries/.+/$`),
-  'kanji-lists': new RegExp(`^${site}/kanji/[^/]+/$`)
+  'frequency-lists': new RegExp(`^${site}/frequency-dictionaries/(.+/)?$`),
+  'kanji-lists': new RegExp(`^${site}/kanji/([^/]+/)?$`)
 }
 
 async function browseUrls(group: string) {
@@ -156,6 +156,7 @@ describe('with a dictionary service', () => {
       'kanji-lists'
     )
     expect(locs((await kanji?.text()) ?? '')).toEqual([
+      `${listed}/dictionary/browse/kanji/`,
       `${listed}/dictionary/browse/kanji/grade-1/`
     ])
   })
@@ -179,6 +180,14 @@ describe('with a dictionary service', () => {
     const urls = (await Promise.all(browseSitemapGroups.map(browseUrls))).flat()
     expect(urls).toEqual(
       expect.arrayContaining([
+        `${site}/kana/`,
+        `${site}/hiragana/`,
+        `${site}/katakana/`,
+        `${site}/kanji/`,
+        `${site}/frequency-dictionaries/`,
+        `${site}/parts-of-speech/`,
+        `${site}/usage/`,
+        `${site}/subjects/`,
         `${site}/hiragana/%E3%81%8B/`,
         `${site}/hiragana/%E3%81%8B%E3%81%8C/`,
         `${site}/hiragana/%E3%81%8B%E3%81%8C/2/`,
@@ -192,7 +201,7 @@ describe('with a dictionary service', () => {
         `${site}/kanji/grade-1/`
       ])
     )
-    expect(urls).toHaveLength(18)
+    expect(urls).toHaveLength(26)
     expect(new Set(urls).size).toBe(urls.length)
     for (const thin of [
       'kana-order',

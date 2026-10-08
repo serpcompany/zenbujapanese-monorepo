@@ -21,33 +21,34 @@ const pages = (count: number, pathFor: (page: number) => string) =>
 
 const indexed = ({ count }: { count: number }) => count >= minimumIndexedWords
 
-export const browseHubPaths = [
-  browsePath,
-  kanaChartsPath,
-  scriptPath('hiragana'),
-  scriptPath('katakana'),
-  kanjiListsPath,
-  frequencyDictionariesPath,
-  ...Object.values(categoryIndexes).map(index => index.path)
-]
+export const browseHomePath = browsePath
 
 export function browseSitemapPaths(
   sitemap: BrowseSitemapResponse
 ): Record<BrowseSitemapGroup, string[]> {
   return {
-    kana: sitemap.kana.flatMap(initial => {
-      const script = kanaScriptOf(initial.initial)
-      return [
-        ...(indexed(initial) ? [kanaPath(script, initial.initial)] : []),
-        ...initial.prefixes
-          .filter(indexed)
-          .flatMap(({ kana, count }) => pages(count, page => kanaPath(script, kana, page)))
-      ]
-    }),
-    categories: sitemap.categories
-      .filter(indexed)
-      .flatMap(({ slug, count }) => pages(count, page => categoryPath(slug, 'used', page))),
+    kana: [
+      kanaChartsPath,
+      scriptPath('hiragana'),
+      scriptPath('katakana'),
+      ...sitemap.kana.flatMap(initial => {
+        const script = kanaScriptOf(initial.initial)
+        return [
+          ...(indexed(initial) ? [kanaPath(script, initial.initial)] : []),
+          ...initial.prefixes
+            .filter(indexed)
+            .flatMap(({ kana, count }) => pages(count, page => kanaPath(script, kana, page)))
+        ]
+      })
+    ],
+    categories: [
+      ...Object.values(categoryIndexes).map(index => index.path),
+      ...sitemap.categories
+        .filter(indexed)
+        .flatMap(({ slug, count }) => pages(count, page => categoryPath(slug, 'used', page)))
+    ],
     'frequency-lists': [
+      frequencyDictionariesPath,
       ...sitemap.rankedLists.flatMap(({ slug, bands }) =>
         bands.flatMap((count, index) => (indexed({ count }) ? [rankBandPath(slug, index + 1)] : []))
       ),
@@ -56,6 +57,9 @@ export function browseSitemapPaths(
         return level === undefined ? [] : pages(count, page => jlptVocabularyPath(level, page))
       })
     ],
-    'kanji-lists': sitemap.kanjiLists.filter(indexed).map(({ slug }) => kanjiListPath(slug))
+    'kanji-lists': [
+      kanjiListsPath,
+      ...sitemap.kanjiLists.filter(indexed).map(({ slug }) => kanjiListPath(slug))
+    ]
   }
 }

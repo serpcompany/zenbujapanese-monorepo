@@ -1072,7 +1072,7 @@ production's.
 
 **Sitemaps.** `robots.txt` names the sitemap index, `/sitemap-index.xml` (and `/sitemap.xml`, the
 same document), in every environment. The index lists files at the site's root, each named for
-its group: `/sitemap-pages.xml`, which lists the dictionary home and the browse hubs; the word
+its group: `/sitemap-pages.xml`, which lists the dictionary home and the browse home; the word
 sitemaps, `/sitemap-words.xml`, `/sitemap-words-2.xml`, and on, with every word page's canonical
 URL; and the four browse sitemaps, `/sitemap-kana.xml`, `/sitemap-categories.xml`,
 `/sitemap-frequency-lists.xml`, and `/sitemap-kanji-lists.xml` ([Browse pages](browse.md#site-wide)). Every URL
