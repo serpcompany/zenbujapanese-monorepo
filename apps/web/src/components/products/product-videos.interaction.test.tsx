@@ -1,8 +1,7 @@
 import { act } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, expect, test } from 'vitest'
-import { appScreenshots } from '@/lib/app-screenshots'
-import type { AppVideo } from '@/lib/videos'
+import { sampleVideo } from '@/test/sample-video'
 import { ProductVideos } from './product-videos'
 
 declare global {
@@ -25,12 +24,6 @@ const happyDOM = (
     }
   }
 ).happyDOM
-
-const sample: AppVideo = {
-  youtubeId: 'not-a-real-video-id',
-  title: 'A sample video',
-  thumbnail: appScreenshots.imageSearch
-}
 
 let container: HTMLDivElement
 let root: Root
@@ -61,17 +54,17 @@ const youtubeAddresses = () =>
     .filter(address => /youtube|ytimg/.test(address))
 
 test('a video shows our own thumbnail and asks YouTube for nothing until it is played', async () => {
-  act(() => root.render(<ProductVideos videos={[sample]} />))
+  act(() => root.render(<ProductVideos videos={[sampleVideo]} />))
   await happyDOM.waitUntilComplete()
   expect(requested).toEqual([])
   expect(container.querySelector('iframe')).toBeNull()
   expect(container.querySelector('script')).toBeNull()
   expect(youtubeAddresses()).toEqual([])
-  expect(container.querySelector('img')?.getAttribute('src')).toBe(sample.thumbnail.src)
+  expect(container.querySelector('img')?.getAttribute('src')).toBe(sampleVideo.thumbnail.src)
 })
 
 test('playing a video loads the privacy-enhanced YouTube player in its place', async () => {
-  act(() => root.render(<ProductVideos videos={[sample]} />))
+  act(() => root.render(<ProductVideos videos={[sampleVideo]} />))
   const play = container.querySelector<HTMLButtonElement>(
     'button[aria-label="Play A sample video"]'
   )

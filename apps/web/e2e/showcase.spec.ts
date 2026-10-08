@@ -123,6 +123,23 @@ test.describe('area showcase', () => {
     }
   })
 
+  test('choosing an area doesn’t move the page below the showcase', async ({ page }) => {
+    await page.goto('/')
+    const next = page.getByRole('main').getByRole('region', { name: /^Free on the web\./ })
+    const nextTop = async () =>
+      page.evaluate(
+        element => element.getBoundingClientRect().top + window.scrollY,
+        await next.elementHandle()
+      )
+    const tops = []
+    for (const area of appAreas) {
+      await areaTab(page, area.name).click()
+      await expect(areaTab(page, area.name)).toHaveAttribute('aria-selected', 'true')
+      tops.push(await nextTop())
+    }
+    expect(new Set(tops).size, `The next section's top on each tab: ${tops.join(', ')}`).toBe(1)
+  })
+
   test('tapping a kanji in 弱肉強食 moves the highlight to its part of the reading', async ({
     page
   }) => {

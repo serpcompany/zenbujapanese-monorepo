@@ -135,7 +135,7 @@ export function ShowcaseStage({
               className={cn(
                 'flex basis-auto md:pl-6',
                 item.shape === 'phone' &&
-                  'group-data-[paged=true]/stage:basis-[calc((100%-4rem)/2)] md:group-data-[paged=true]/stage:basis-[calc((100%-4.5rem)/3)]',
+                  'group-data-[paged=true]/stage:basis-[min(calc((100%-4rem)/2),11rem)] md:group-data-[paged=true]/stage:basis-[min(calc((100%-4.5rem)/3),13.25rem)] lg:group-data-[paged=true]/stage:basis-[calc((100%-4.5rem)/3)]',
                 item.shape === 'card' && 'self-stretch'
               )}
             >

@@ -53,12 +53,14 @@ list of screens on the stage:
   弱肉強食, live: 肉 starts highlighted, and tapping another kanji moves the highlight to it and its
   part of the reading, as on a word page ([Dictionary](dictionary.md#word-page)).
 
-When an area's screens don't all fit, the stage shows three at a time from 768 pixels and two
-below; the next one peeks in at the right edge, faded, and arrows at the stage's edges and one dot
-per screen page through them, a screen at a time; on a touch screen they also swipe. The dots of
-the screens in view are current. The arrows are in the keyboard's tab order and the dots aren't,
-so the stage adds one or two stops before the tabs. Nothing moves on its own, and a video playing
-in an area stops when another area is chosen. The tabs are stock shadcn tabs: arrow keys, Home, and
+When an area's screens don't all fit, the next one peeks in at the right edge, faded, and arrows at
+the stage's edges and one dot per screen page through them, a screen at a time; on a touch screen
+they also swipe. From 1,024 pixels three screenshots fit at a time, cropped at the stage's foot as
+in the mockups. Narrower, each is sized to show whole, which is two at a time on a phone and three
+or four on a tablet; a phone shows one Lists preview at a time. The dots of the screens in view are
+current. The arrows are in the keyboard's tab order and the dots aren't; anything inside a screen
+that takes focus, such as the 弱肉強食 kanji or a video's Play button, is too. Nothing moves on its
+own, and a video playing in an area stops when another area is chosen. The tabs are stock shadcn tabs: arrow keys, Home, and
 End move between them and choose the area. Below 640 pixels the tabs fill the bar, each an icon
 above its name, so all five fit a phone; from 640 pixels they are a pill bar, each an icon beside
 its name. The server renders every area's tab, text, and screens; a tab only shows its area and
@@ -71,7 +73,8 @@ homepage's are in `src/lib/app-areas.ts`.
   Dictionaries, Furigana kanji highlight).
 - Check: Showcase spec (`e2e/showcase.spec.ts`), "each tab shows its own area", "the tabs work by
   keyboard", "the arrows and dots page through the Dictionary screens, and the next one peeks in",
-  "nothing advances on its own", "every area fits the window, with all five tabs in view", "tapping
+  "nothing advances on its own", "every area fits the window, with all five tabs in view",
+  "choosing an area doesn’t move the page below the showcase", "tapping
   a kanji in 弱肉強食 moves the highlight to its part of the reading", and, without JavaScript,
   "every area's text and screens are in the server HTML"; `src/components/home/home-areas.test.tsx`
   (the Player's video card only with videos, and nothing from YouTube before a click);

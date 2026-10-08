@@ -20,7 +20,8 @@ function AreaCaption({ area }: { area: ShowcaseArea }) {
     <TabsContent
       value={area.id}
       keepMounted
-      className="col-start-1 row-start-1 flex flex-col items-center gap-4.5 rounded-lg text-center text-base focus-visible:ring-3 focus-visible:ring-ring/50 data-hidden:invisible data-hidden:flex!"
+      hidden={false}
+      className="col-start-1 row-start-1 flex flex-col items-center gap-4.5 rounded-lg text-center text-base focus-visible:ring-3 focus-visible:ring-ring/50 data-hidden:invisible"
     >
       <h3 className="text-xl leading-tight font-semibold tracking-tight text-balance md:text-[1.375rem]">
         {area.pitch}
