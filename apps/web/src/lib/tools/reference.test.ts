@@ -35,10 +35,30 @@ describe('the kana reference', () => {
 
   test('every other spelling it lists types its kana', () => {
     const typed = everyRow.flatMap(row =>
-      (row.also?.split(', ') ?? []).map(spelling => [row.kana, romajiToKana(spelling)])
+      row.otherSpellings.map(spelling => [row.kana, romajiToKana(spelling)])
     )
     expect(typed.length).toBeGreaterThan(30)
     for (const [kana, result] of typed) expect(result).toBe(kana)
+  })
+
+  test('every kana has a spelling that types it, and its other typed spellings type it too', () => {
+    for (const row of everyRow) {
+      expect(row.typed, row.kana).not.toBe('')
+      for (const spelling of [row.typed, ...row.alsoTyped]) {
+        expect(romajiToKana(spelling), spelling).toBe(row.kana)
+      }
+    }
+    const typedFor = (kana: string) => everyRow.find(row => row.kana === kana)?.typed
+    expect(['を', 'ぢ', 'づ', 'ぁ', 'っ', 'てぃ', 'でぃ', 'うぉ'].map(typedFor)).toEqual([
+      'wo',
+      'di',
+      'du',
+      'xa',
+      'xtsu',
+      'thi',
+      'dhi',
+      'who'
+    ])
   })
 
   test('lays the basic chart out in rows of five, with gaps where a kana is missing', () => {

@@ -5,6 +5,7 @@ describe('romaji to kana', () => {
   test.each([
     ['konnichiwa', 'こんにちわ'],
     ["kin'en", 'きんえん'],
+    ['kinen', 'きねん'],
     ['kin’en', 'きんえん'],
     ['kinnen', 'きんねん'],
     ['kitte', 'きって'],
@@ -44,6 +45,18 @@ describe('romaji to kana', () => {
     ['fa', 'ふぁ'],
     ['vu', 'ゔ']
   ])('takes the other common spelling %s for %s', (romaji, kana) => {
+    expect(romajiToKana(romaji)).toBe(kana)
+  })
+
+  test.each([
+    ['mootsaruto', 'もおつぁると'],
+    ['dyuetto', 'でゅえっと'],
+    ['fyuujon', 'ふゅうじょん'],
+    ['kwarutetto', 'くぁるてっと'],
+    ['twu', 'とぅ'],
+    ['who', 'うぉ'],
+    ['sammai', 'さんまい']
+  ])('reads the loanword spelling or m before m in %s as %s', (romaji, kana) => {
     expect(romajiToKana(romaji)).toBe(kana)
   })
 

@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest'
-import { convert, defaultConverterOptions } from './convert'
+import { bothSides, convert, defaultConverterOptions } from './convert'
 import { converterFor, converters, toolPages } from './converters'
 import { converterSlugs } from './paths'
 
@@ -16,7 +16,7 @@ describe('the converters', () => {
     expect(converters.map(converter => converter.slug)).toEqual([...converterSlugs])
   })
 
-  test('each one’s swap leads to the other direction, which swaps back', () => {
+  test('each one’s other direction is the converter the other way round', () => {
     for (const converter of converters) {
       const other = converterFor(converter.reverse)
       expect(other.reverse).toBe(converter.slug)
@@ -25,11 +25,11 @@ describe('the converters', () => {
     }
   })
 
-  test('each one relates three others, its other direction first', () => {
+  test('each one relates three others, leaving out itself and its other direction, which it links on its own', () => {
     for (const converter of converters) {
       expect(converter.related).toHaveLength(3)
-      expect(converter.related[0]).toBe(converter.reverse)
       expect(converter.related).not.toContain(converter.slug)
+      expect(converter.related).not.toContain(converter.reverse)
       expect(new Set(converter.related).size).toBe(3)
     }
   })
@@ -55,6 +55,47 @@ describe('converting', () => {
   ] as const)('%s turns its card’s sample %s into %s', (slug, sample, result) => {
     expect(converterFor(slug).card.sample).toBe(sample)
     expect(convert(slug, sample)).toBe(result)
+  })
+
+  test('reads text in its composed form, as typed or pasted from anywhere', () => {
+    const decomposed = 'カ\u3099ッコウ'
+    expect(convert('kana-to-romaji', decomposed)).toBe('gakkou')
+    expect(convert('full-width-to-half-width', decomposed)).toBe('ｶﾞｯｺｳ')
+    expect(convert('romaji-to-kana', 'To\u0304kyo\u0304')).toBe('とうきょう')
+  })
+
+  test('typing in either box fills the other, and keeps what was typed as it is', () => {
+    const options = defaultConverterOptions
+    expect(bothSides('hiragana-to-katakana', { side: 'from', text: 'すし' }, options)).toEqual({
+      from: 'すし',
+      to: 'スシ'
+    })
+    expect(bothSides('hiragana-to-katakana', { side: 'to', text: 'ラーメン' }, options)).toEqual({
+      from: 'らーめん',
+      to: 'ラーメン'
+    })
+    expect(bothSides('romaji-to-kana', { side: 'to', text: 'きって' }, options)).toEqual({
+      from: 'kitte',
+      to: 'きって'
+    })
+    expect(bothSides('kana-to-romaji', { side: 'to', text: 'Kitte' }, options)).toEqual({
+      from: 'きって',
+      to: 'Kitte'
+    })
+  })
+
+  test('the options apply in both directions', () => {
+    const katakana = { ...defaultConverterOptions, script: 'katakana' } as const
+    expect(bothSides('romaji-to-kana', { side: 'from', text: 'ko-hi-' }, katakana).to).toBe(
+      'コーヒー'
+    )
+    const lettersOnly = {
+      ...defaultConverterOptions,
+      widths: { katakana: false, lettersAndNumbers: true, symbolsAndSpaces: false }
+    }
+    expect(
+      bothSides('half-width-to-full-width', { side: 'to', text: 'ＡＢＣ　カナ' }, lettersOnly).from
+    ).toBe('ABC　カナ')
   })
 
   test('romaji to kana writes the script chosen', () => {

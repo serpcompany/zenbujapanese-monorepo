@@ -1,4 +1,5 @@
 import type { KanaScript } from '@zenbu/dictionary-core/browse/kana'
+import { converterFor } from './converters'
 import { toHiragana, toKatakana } from './kana'
 import { kanaToRomaji } from './kana-to-romaji'
 import type { ConverterSlug } from './paths'
@@ -28,4 +29,16 @@ export const convert = (
   slug: ConverterSlug,
   text: string,
   options: ConverterOptions = defaultConverterOptions
-) => conversions[slug](text, options)
+) => conversions[slug](text.normalize('NFC'), options)
+
+type Side = 'from' | 'to'
+
+export interface Edit {
+  side: Side
+  text: string
+}
+
+export function bothSides(slug: ConverterSlug, edit: Edit, options: ConverterOptions) {
+  if (edit.side === 'from') return { from: edit.text, to: convert(slug, edit.text, options) }
+  return { from: convert(converterFor(slug).reverse, edit.text, options), to: edit.text }
+}

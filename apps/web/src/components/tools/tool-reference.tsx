@@ -4,11 +4,17 @@ import { Fragment } from 'react'
 import { KanaChartTabs } from '@/components/tools/kana-chart-tabs'
 import { Japanese, Latin } from '@/components/tools/rich-text'
 import { ToolSection } from '@/components/tools/tool-section'
-import { cellPadding, ToolTable } from '@/components/tools/tool-table'
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow
+} from '@/components/ui/table'
 import { kanaChartsPath } from '@/lib/dictionary/browse/paths'
 import { type SpellingRule, spellingRules, typingTips, widthRows } from '@/lib/tools/content'
 import type { Converter } from '@/lib/tools/converters'
-import { cn } from '@/lib/utils'
 
 function Example({ from, to, typed }: { from: string; to: string; typed: boolean }) {
   return typed ? (
@@ -93,28 +99,35 @@ function Sample({ children }: { children: string }) {
 function WidthReference() {
   return (
     <ToolSection title="What changes" line="Each kind of character, in both widths.">
-      <ToolTable headings={['Character', 'Half-width', 'Full-width']} className="max-w-3xl">
-        <tbody>
-          {widthRows.map(row => (
-            <tr key={row.kind} className="border-t">
-              <th scope="row" className={cn(cellPadding, 'py-2.5 align-top font-medium')}>
-                {row.kind}
-                {row.note ? (
-                  <span className="block text-sm font-normal text-muted-foreground">
-                    {row.note}
-                  </span>
-                ) : null}
-              </th>
-              <td className={cn(cellPadding, 'py-2.5 align-top text-lg')}>
-                <Sample>{row.half}</Sample>
-              </td>
-              <td className={cn(cellPadding, 'py-2.5 align-top text-lg')}>
-                <Sample>{row.full}</Sample>
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </ToolTable>
+      <div className="max-w-2xl">
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>Character</TableHead>
+              <TableHead>Half-width</TableHead>
+              <TableHead>Full-width</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {widthRows.map(row => (
+              <TableRow key={row.kind}>
+                <TableCell className="whitespace-normal">
+                  <span className="font-medium">{row.kind}</span>
+                  {row.note ? (
+                    <span className="block text-muted-foreground">{row.note}</span>
+                  ) : null}
+                </TableCell>
+                <TableCell>
+                  <Sample>{row.half}</Sample>
+                </TableCell>
+                <TableCell>
+                  <Sample>{row.full}</Sample>
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </div>
     </ToolSection>
   )
 }

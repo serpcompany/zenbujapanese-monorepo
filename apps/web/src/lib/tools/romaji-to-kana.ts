@@ -47,10 +47,25 @@ const otherSpellings: readonly Spelling[] = [
   ['zyo', 'じょ'],
   ['zye', 'じぇ'],
   ['dya', 'ぢゃ'],
-  ['dyu', 'ぢゅ'],
   ['dyo', 'ぢょ'],
+  ['dyu', 'でゅ'],
+  ['dhu', 'でゅ'],
   ['thi', 'てぃ'],
   ['dhi', 'でぃ'],
+  ['twu', 'とぅ'],
+  ['dwu', 'どぅ'],
+  ['tsa', 'つぁ'],
+  ['tsi', 'つぃ'],
+  ['tse', 'つぇ'],
+  ['tso', 'つぉ'],
+  ['fyu', 'ふゅ'],
+  ['kwa', 'くぁ'],
+  ['kwi', 'くぃ'],
+  ['kwe', 'くぇ'],
+  ['kwo', 'くぉ'],
+  ['gwa', 'ぐぁ'],
+  ['who', 'うぉ'],
+  ['wu', 'う'],
   ['fa', 'ふぁ'],
   ['fi', 'ふぃ'],
   ['fe', 'ふぇ'],
@@ -109,7 +124,7 @@ const macronVowels: Record<string, string> = {
 }
 
 const apostrophes = ["'", '’']
-const labials = ['b', 'p']
+const closedLips = ['b', 'm', 'p']
 const doublingConsonant = /[bcdfghjkmpqrstvwxyz]/
 
 function spellOutMacrons(text: string, script: KanaScript) {
@@ -155,7 +170,7 @@ function nextStep(lower: string, original: string, at: number): Step {
   if (letter === '-') return { kana: 'ー', length: 1 }
   const n = letter === 'n' ? syllabicN(lower, at) : null
   if (n) return n
-  if (letter === 'm' && labials.includes(lower[at + 1])) return { kana: 'ん', length: 1 }
+  if (letter === 'm' && closedLips.includes(lower[at + 1])) return { kana: 'ん', length: 1 }
   if (doublesNextConsonant(lower, at)) return { kana: 'っ', length: 1 }
   return longestSyllable(lower, at) ?? { kana: original[at], length: 1 }
 }

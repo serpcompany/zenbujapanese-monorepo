@@ -46,7 +46,7 @@ export const converters: readonly Converter[] = [
     tries: ['こーひー', 'すまほ', 'ぱーてぃー'],
     input: 'japanese',
     output: 'japanese',
-    related: ['katakana-to-hiragana', 'romaji-to-kana', 'half-width-to-full-width']
+    related: ['romaji-to-kana', 'kana-to-romaji', 'half-width-to-full-width']
   }),
   converter({
     slug: 'katakana-to-hiragana',
@@ -62,7 +62,7 @@ export const converters: readonly Converter[] = [
     tries: ['トウキョウ', 'アリガトウ', 'ラーメン'],
     input: 'japanese',
     output: 'japanese',
-    related: ['hiragana-to-katakana', 'kana-to-romaji', 'full-width-to-half-width']
+    related: ['kana-to-romaji', 'romaji-to-kana', 'full-width-to-half-width']
   }),
   converter({
     slug: 'romaji-to-kana',
@@ -83,7 +83,7 @@ export const converters: readonly Converter[] = [
     input: 'romaji',
     output: 'japanese',
     setting: 'script',
-    related: ['kana-to-romaji', 'hiragana-to-katakana', 'half-width-to-full-width']
+    related: ['hiragana-to-katakana', 'katakana-to-hiragana', 'half-width-to-full-width']
   }),
   converter({
     slug: 'kana-to-romaji',
@@ -103,7 +103,7 @@ export const converters: readonly Converter[] = [
     tries: ['きって', 'きんえん', 'コーヒー', 'とうきょう'],
     input: 'japanese',
     output: 'romaji',
-    related: ['romaji-to-kana', 'katakana-to-hiragana', 'full-width-to-half-width']
+    related: ['katakana-to-hiragana', 'hiragana-to-katakana', 'full-width-to-half-width']
   }),
   converter({
     slug: 'half-width-to-full-width',
@@ -124,7 +124,7 @@ export const converters: readonly Converter[] = [
     input: 'japanese',
     output: 'japanese',
     setting: 'widths',
-    related: ['full-width-to-half-width', 'hiragana-to-katakana', 'romaji-to-kana']
+    related: ['hiragana-to-katakana', 'katakana-to-hiragana', 'romaji-to-kana']
   }),
   converter({
     slug: 'full-width-to-half-width',
@@ -145,7 +145,7 @@ export const converters: readonly Converter[] = [
     input: 'japanese',
     output: 'japanese',
     setting: 'widths',
-    related: ['half-width-to-full-width', 'katakana-to-hiragana', 'kana-to-romaji']
+    related: ['katakana-to-hiragana', 'hiragana-to-katakana', 'kana-to-romaji']
   })
 ]
 

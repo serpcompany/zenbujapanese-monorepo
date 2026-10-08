@@ -19,12 +19,6 @@ export interface ProductDemo {
   screenshot: AppScreenshot
 }
 
-export interface ProductQuestion {
-  question: string
-  answer: string
-  link?: { title: string; href: string }
-}
-
 export interface ProductPoint {
   symbol: ProductPageSymbol
   title: string

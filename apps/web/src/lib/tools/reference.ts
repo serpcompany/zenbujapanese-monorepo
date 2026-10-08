@@ -1,53 +1,74 @@
+import {
+  type KanaRow as ChartRow,
+  dakuonRows,
+  gojuonRows
+} from '@zenbu/dictionary-core/browse/kana'
 import { kanaToRomaji } from './kana-to-romaji'
+import { romajiToKana } from './romaji-to-kana'
 
 export interface KanaRow {
   kana: string
   romaji: string
-  also?: string
+  romajiInWords?: true
+  typed: string
+  alsoTyped: readonly string[]
+  otherSpellings: readonly string[]
 }
 
-const otherTyping: Readonly<Record<string, string>> = {
-  し: 'si',
-  ち: 'ti',
-  つ: 'tu',
-  ふ: 'hu',
-  を: 'wo',
-  ん: 'nn',
-  じ: 'zi',
-  ぢ: 'di',
-  づ: 'du',
-  しゃ: 'sya',
-  しゅ: 'syu',
-  しょ: 'syo',
-  ちゃ: 'tya, cya',
-  ちゅ: 'tyu, cyu',
-  ちょ: 'tyo, cyo',
-  じゃ: 'jya, zya',
-  じゅ: 'jyu, zyu',
-  じょ: 'jyo, zyo',
-  ぁ: 'xa, la',
-  ぃ: 'xi, li',
-  ぅ: 'xu, lu',
-  ぇ: 'xe, le',
-  ぉ: 'xo, lo',
-  ゃ: 'xya, lya',
-  ゅ: 'xyu, lyu',
-  ょ: 'xyo, lyo',
-  っ: 'xtu, ltu',
-  ゎ: 'xwa, lwa',
-  てぃ: 'thi',
-  でぃ: 'dhi',
-  しぇ: 'sye',
-  ちぇ: 'tye',
-  じぇ: 'zye'
+const otherTyping: Readonly<Record<string, readonly string[]>> = {
+  し: ['si'],
+  ち: ['ti'],
+  つ: ['tu'],
+  ふ: ['hu'],
+  を: ['wo'],
+  ん: ['nn'],
+  じ: ['zi'],
+  ぢ: ['di'],
+  づ: ['du'],
+  しゃ: ['sya'],
+  しゅ: ['syu'],
+  しょ: ['syo'],
+  ちゃ: ['tya', 'cya'],
+  ちゅ: ['tyu', 'cyu'],
+  ちょ: ['tyo', 'cyo'],
+  じゃ: ['jya', 'zya'],
+  じゅ: ['jyu', 'zyu'],
+  じょ: ['jyo', 'zyo'],
+  ぁ: ['xa', 'la'],
+  ぃ: ['xi', 'li'],
+  ぅ: ['xu', 'lu'],
+  ぇ: ['xe', 'le'],
+  ぉ: ['xo', 'lo'],
+  ゃ: ['xya', 'lya'],
+  ゅ: ['xyu', 'lyu'],
+  ょ: ['xyo', 'lyo'],
+  っ: ['xtsu', 'xtu', 'ltu'],
+  ゎ: ['xwa', 'lwa'],
+  てぃ: ['thi'],
+  でぃ: ['dhi'],
+  うぉ: ['who'],
+  しぇ: ['sye'],
+  ちぇ: ['tye'],
+  じぇ: ['zye']
 }
 
-const spellingOfSmallTsu = 'doubles the next consonant'
+const smallTsu = 'っ'
+const smallTsuInWords = 'doubled consonant'
 
 function kanaRow(kana: string): KanaRow {
-  const romaji = kana === 'っ' ? spellingOfSmallTsu : kanaToRomaji(kana)
-  const also = otherTyping[kana]
-  return also ? { kana, romaji, also } : { kana, romaji }
+  const otherSpellings = otherTyping[kana] ?? []
+  const romaji = kana === smallTsu ? smallTsuInWords : kanaToRomaji(kana)
+  const [typed = '', ...alsoTyped] = [romaji, ...otherSpellings].filter(
+    spelling => romajiToKana(spelling) === kana
+  )
+  return {
+    kana,
+    romaji,
+    ...(kana === smallTsu ? { romajiInWords: true } : {}),
+    typed,
+    alsoTyped,
+    otherSpellings
+  }
 }
 
 interface KanaChartCell {
@@ -58,27 +79,15 @@ interface KanaChartCell {
 const inPlace = (rows: readonly (KanaRow | null)[]): KanaChartCell[] =>
   rows.map((row, position) => ({ position, row }))
 
-const chart = (rows: readonly string[]) =>
-  inPlace(rows.flatMap(row => Array.from(row, kana => (kana === '_' ? null : kanaRow(kana)))))
+const chart = (rows: readonly ChartRow[]) =>
+  inPlace(rows.flatMap(row => row.cells.map(cell => (cell ? kanaRow(cell.kana) : null))))
 
 const rowsOf = (cells: readonly KanaChartCell[]) =>
   cells.flatMap(cell => (cell.row ? [cell.row] : []))
 
-const basicChart = chart([
-  'あいうえお',
-  'かきくけこ',
-  'さしすせそ',
-  'たちつてと',
-  'なにぬねの',
-  'はひふへほ',
-  'まみむめも',
-  'や_ゆ_よ',
-  'らりるれろ',
-  'わ___を',
-  'ん____'
-])
+const basicChart = chart(gojuonRows)
 
-const markChart = chart(['がぎぐげご', 'ざじずぜぞ', 'だぢづでど', 'ばびぶべぼ', 'ぱぴぷぺぽ'])
+const markChart = chart(dakuonRows)
 
 const combinationChart = inPlace(
   ['き', 'し', 'ち', 'に', 'ひ', 'み', 'り', 'ぎ', 'じ', 'び', 'ぴ'].flatMap(kana =>

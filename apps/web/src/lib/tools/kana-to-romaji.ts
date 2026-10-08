@@ -53,6 +53,19 @@ const hepburnSpellings: readonly Spelling[] = [
   ['we', 'うぇ'],
   ['wo', 'うぉ'],
   ['ye', 'いぇ'],
+  ['tsa', 'つぁ'],
+  ['tsi', 'つぃ'],
+  ['tse', 'つぇ'],
+  ['tso', 'つぉ'],
+  ['dyu', 'でゅ'],
+  ['fyu', 'ふゅ'],
+  ['kwa', 'くぁ'],
+  ['kwi', 'くぃ'],
+  ['kwe', 'くぇ'],
+  ['kwo', 'くぉ'],
+  ['gwa', 'ぐぁ'],
+  ['i', 'ゐ'],
+  ['e', 'ゑ'],
   ['va', 'ゔぁ'],
   ['vi', 'ゔぃ'],
   ['ve', 'ゔぇ'],
@@ -97,19 +110,23 @@ function spellingOf(text: string, at: number, romajiSoFar: string) {
   return spellingAt(text, at)
 }
 
+const smallTsuAlone = 'xtsu'
+
 export function kanaToRomaji(input: string): string {
   const text = toHiragana(input)
   let romaji = ''
   let doubleNext = false
   for (let at = 0; at < text.length; ) {
     if (text[at] === 'っ') {
-      doubleNext = true
+      const next = spellingOf(text, at + 1, romaji)
+      doubleNext = next !== null && doubledStart(next.romaji) !== ''
+      if (!doubleNext) romaji += smallTsuAlone
       at += 1
       continue
     }
     const spelling = spellingOf(text, at, romaji)
     if (spelling && doubleNext) romaji += doubledStart(spelling.romaji)
-    romaji += spelling?.romaji ?? text[at]
+    romaji += spelling?.romaji ?? input[at]
     at += spelling?.length ?? 1
     doubleNext = false
   }

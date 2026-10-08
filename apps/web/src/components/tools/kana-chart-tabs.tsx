@@ -20,9 +20,9 @@ function KanaTile({ row, shows }: { row: KanaRow; shows: KanaChartShows }) {
       <span lang="ja-Latn" className="font-mono text-xs text-muted-foreground">
         {row.romaji}
       </span>
-      {shows === 'other spellings' && row.also ? (
+      {shows === 'other spellings' && row.otherSpellings.length ? (
         <span lang="en" className="text-xs text-muted-foreground">
-          or {row.also}
+          or <span lang="ja-Latn">{row.otherSpellings.join(', ')}</span>
         </span>
       ) : null}
     </li>
@@ -52,7 +52,7 @@ export function KanaChartTabs({ shows }: { shows: KanaChartShows }) {
     <Tabs defaultValue={kanaChartTabs[0].id} className="max-w-3xl gap-4">
       <TabsList aria-label="Kana chart">
         {kanaChartTabs.map(tab => (
-          <TabsTrigger key={tab.id} value={tab.id} className="px-3">
+          <TabsTrigger key={tab.id} value={tab.id}>
             {tab.label}
           </TabsTrigger>
         ))}

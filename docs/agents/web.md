@@ -187,14 +187,14 @@ drawing's furigana keeps its drawn size.
   converters, and the page answers any other name with `notFound()`. It leaves `dynamicParams` on:
   the site's OpenNext build has no incremental cache, so with `dynamicParams = false` the Worker
   answers 404 even for the prerendered converters (`next dev` serves them, so only the production
-  build shows it). The converters' logic and
-  copy are in `src/lib/tools/`, pure functions with tests beside them, which the browser runs, so
-  nothing typed leaves it. `src/app/tools/layout.tsx` holds what was typed in each converter
-  (`ConverterTextsProvider` in `src/components/tools/converter-texts.tsx`), and stays mounted
-  while the learner moves between tools pages. The swap button is a `next/link` to the other
-  direction with `scroll={false}`, whose `onNavigate` writes the result as that converter's text,
-  so the swap is a client-side navigation that keeps the scroll and carries the text over, and
-  Back finds the earlier text where it was.
+  build shows it). The converters' logic and copy are in `src/lib/tools/`, pure functions with
+  tests beside them, which the browser runs, so nothing typed leaves it. Each converter keeps its
+  two boxes as one edit, the box last typed in and its text (`bothSides` in
+  `src/lib/tools/convert.ts`), and works out the other box from it, so the box being typed in is
+  never rewritten. The pages use stock shadcn components (`table`, `checkbox`, `label`,
+  `textarea`, `toggle-group`, `tabs`, and `accordion`, added with the shadcn CLI), trimmed only of
+  exports nothing uses, as the dead-code check asks. The Questions accordion is
+  `src/components/question-list.tsx`, which the product page shares.
 - The scripts in `apps/web/scripts/` read a command's output whole before searching it:
   `curl | grep -q` fails under `pipefail` when grep exits early. Their `.shellcheckrc` turns off
   ShellCheck's SC2329: `smoke.sh`'s checks are functions that `eventually` calls by name, which
@@ -691,7 +691,9 @@ standard. They are hand-written route handlers built on `src/lib/sitemap.ts`, re
   `dictionarySitemapPaths` in `src/lib/dictionary/sitemaps.ts` with its rewrite in
   `src/lib/dictionary/sitemap-files.ts`, as the word and browse sitemaps are.
   Static pages are listed once, in `src/lib/pages.ts`, which also feeds the HTML sitemap at
-  `/sitemap`.
+  `/sitemap`; the tools pages are listed in `toolPages` (`src/lib/tools/converters.ts`), which
+  feeds `/sitemap-tools.xml`, and the HTML sitemap reads them through `toolsTree`
+  (`src/lib/dictionary/browse/site-tree.ts`).
 - Every URL is written on the origin `servedOrigin()` in `src/lib/site.ts` names: the
   environment's canonical host on staging and production (so staging's sitemaps list
   `https://staging.zenbujapanese.com/…`, even when CI asks through workers.dev), and the address

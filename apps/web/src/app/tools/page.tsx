@@ -1,5 +1,6 @@
+import { BrowseHeading, BrowsePage } from '@/components/dictionary/browse/browse-ui'
 import { CardGrid, ConverterCard, ToolCard } from '@/components/tools/tool-cards'
-import { ToolSection, ToolsHeading, toolsPageClassName } from '@/components/tools/tool-section'
+import { ToolSection } from '@/components/tools/tool-section'
 import { ToolsAppCard } from '@/components/tools/tools-app-card'
 import { sitePageMetadata } from '@/lib/metadata'
 import { converters, toolsIndex } from '@/lib/tools/converters'
@@ -9,11 +10,11 @@ export const metadata = sitePageMetadata(toolsIndex)
 
 export default function ToolsPage() {
   return (
-    <main className={toolsPageClassName}>
-      <ToolsHeading
-        title="Free Japanese converters"
-        lead="Convert between hiragana, katakana, and romaji, and fix half-width text. Free, in your browser, with nothing to install."
-      />
+    <BrowsePage>
+      <BrowseHeading title="Free Japanese converters">
+        Convert between hiragana, katakana, and romaji, and fix half-width text. Free, in your
+        browser, with nothing to install.
+      </BrowseHeading>
       <ToolSection
         title="Converters"
         line="Switch between scripts. Everything runs in your browser."
@@ -39,6 +40,6 @@ export default function ToolsPage() {
         title="Reading Japanese on paper or a screen?"
         line="The iPhone app reads it from a photo."
       />
-    </main>
+    </BrowsePage>
   )
 }

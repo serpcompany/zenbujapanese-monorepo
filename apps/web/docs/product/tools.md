@@ -2,9 +2,11 @@
 
 The tools index, `/tools/`, and six converters, each at `/tools/<name>/`: Hiragana to Katakana,
 Katakana to Hiragana, Romaji to Kana, Kana to Romaji, Half-width to Full-width, and Full-width to
-Half-width. They follow the owner's decisions on #579 (2026-10-09) and the prototype linked there,
-whose copy is a first draft that #690 dials in. Kanji to Furigana, which needs the dictionary
-service, is #691, and stays a placeholder until then.
+Half-width. They follow the owner's decisions on #579 (2026-10-09), the prototype linked there,
+and the owner's later changes: both boxes of a converter are editable, in place of the swap
+button, and the pages use stock shadcn components. The copy is a first draft that #690 dials in.
+Kanji to Furigana, which needs the dictionary service, is #691, and stays a placeholder until
+then.
 
 The converters run entirely in the browser: nothing typed is sent anywhere, and the pages say so
 under the converter.
@@ -13,8 +15,14 @@ Abbreviations: Web paths are under `apps/web/`. **Tools spec** is `e2e/tools.spe
 tests of these pages at a desktop and a phone width. **Page test** is
 `src/components/tools/converter-page.test.tsx`, which renders each converter page to HTML, and
 **Converter test** is `src/components/tools/converter.interaction.test.tsx`. The converters' logic
-is in `src/lib/tools/`, each with its unit tests beside it, and the pages' copy in
-`src/lib/tools/converters.ts` and `src/lib/tools/content.ts`.
+is in `src/lib/tools/`, each with its unit tests beside it. The copy is mostly in
+`src/lib/tools/converters.ts` (names, leads, descriptions, cards, samples, and Try examples) and
+`src/lib/tools/content.ts` (How it works, questions, typing tips, spelling rules, and the width
+table); the rest is in the components that show it: the index's headings and app card
+(`src/app/tools/page.tsx`), the privacy line and the app card under each converter
+(`src/components/tools/converter-page.tsx`), the option labels
+(`src/components/tools/converter-settings.tsx`), and the boxes' placeholders and Copy statuses
+(`src/components/tools/converter.tsx` and `converter-box.tsx`).
 
 ## Tools index
 
@@ -23,7 +31,8 @@ is in `src/lib/tools/`, each with its unit tests beside it, and the pages' copy 
 コーヒー); then Dictionary and reference, six cards that open existing pages (Dictionary, Hiragana
 chart, Katakana chart, Kanji lists, Frequency lists, and Word categories, which is the browse
 home); then a card for the app, with Get the app, which opens the iPhone app's page. Cards are one
-column on phones, two from 640 pixels, and three from 1024.
+column on phones, two from 640 pixels, and three from 1024. The page is laid out as the browse
+pages are (`BrowsePage` and `BrowseHeading`).
 
 - Source: the owner's decision on #579 (Index: cards).
 - Check: Tools spec, "lists the six converters, then the dictionary and reference pages, then the
@@ -32,50 +41,65 @@ column on phones, two from 640 pixels, and three from 1024.
 
 ## Converter pages
 
-**Layout.** Stacked, in this order: a breadcrumb (Tools, then the converter); the converter's name
-and a line about it; the converter; How it works; the reference; the conversion table; Questions;
-Related tools, three other converters, the other direction first; and a card for the app, with
-Dictionary and Get the app.
+**Layout.** In this order: a breadcrumb (Tools, then the converter); the converter's name and a
+line about it; the converter, with a line under it saying nothing typed is sent anywhere and a link
+to the other direction's page (Katakana to Hiragana → on Hiragana to Katakana); How it works; the
+reference; the conversion table; Questions; Related tools, three other converters, leaving out the
+other direction, which is already linked; and a card for the app, with Dictionary and Get the app.
 
-- Source: the owner's decision on #579 (Converter page: stacked).
-- Check: Page test, "the swap links to the other direction, and related tools to theirs"; Tools
-  spec, "related tools lead to their pages"; `src/lib/tools/converters.test.ts`, "each one relates
-  three others, its other direction first".
+- Source: the owner's decision on #579 (Converter page: stacked), and the owner's change that
+  replaced the swap button with a link to the other direction.
+- Check: Tools spec, "each page links the other direction under its converter" and "related tools
+  lead to their pages"; Page test, "the page links its other direction once, and related tools to
+  theirs"; `src/lib/tools/converters.test.ts`, "each one relates three others, leaving out itself
+  and its other direction, which it links on its own".
 
-**The converter.** A bar names the direction (Hiragana ⇄ Katakana) with the swap button between
-the two, and the options at its end. Below it, the input, which starts with a sample, its
-character count, and Clear, which empties it and puts the cursor in it; then the larger result,
-which converts as you type and says "The result shows here." while the input is empty, with Copy,
-which copies the result and says Copied (or, where the browser won't copy, to select the text);
-then Try, whose examples fill the input.
+**The converter.** A bar names the direction (Hiragana → Katakana), with the options at its end.
+Below it are two boxes, both editable: the top one in the page's "from" script (romaji on Romaji to
+Kana, kana on Kana to Romaji) and the bottom one, a little larger, in its "to" script. Each has its
+label, its character count, and its own Copy, which copies that box and says Copied (or, where the
+browser won't copy, to select the text). The top box also has Clear, which empties both boxes and
+puts the cursor in the top one. Then Try, whose examples fill the top box.
 
-- Source: the owner's decision on #579; the prototype.
-- Check: Tools spec, "converts as you type, counts the characters, and clears", "a Try example
-  fills the input", and "Copy copies the result and says so"; Converter test, "starts with its
-  sample, and converts what is typed as it is typed", "Clear empties the input and says where the
-  result will show", "a Try example becomes the input", "Copy puts the result on the clipboard and
-  says so", and "says how to copy by hand when the browser won’t".
+- Source: the owner's decision on #579; the owner's change to two editable boxes.
+- Check: Tools spec, "converts as you type, counts the characters, and Clear empties both boxes",
+  "a Try example fills the top box", and "each box’s Copy copies its text and says so"; Converter
+  test, "starts with its sample, and converts what is typed in the top box into the bottom one",
+  "Clear empties both boxes", "a Try example fills the top box", "each box’s Copy puts its own text
+  on the clipboard and says so", and "says how to copy by hand when the browser won’t".
 
-**Swap.** The swap button links to the other direction's page. Following it moves there without
-loading the page again, keeps the scroll where it was, and carries the result over as the new
-input. Each converter keeps what was typed in it while the learner stays under `/tools/`
-(`src/app/tools/layout.tsx` holds it), so Back brings the earlier input back; a page loaded afresh
-starts with its sample.
+**Two ways.** Typing in the top box converts into the bottom one as you type, and typing in the
+bottom box converts into the top one, through the other direction's converter. Only the other box
+changes: the box being typed in keeps exactly what was typed. The page starts with a sample in the
+top box.
 
-- Source: the owner's decision on #579 (one page per direction, each with a swap button, like
-  tableconvert.com's).
-- Check: Tools spec, "swapping opens the other direction without reloading, keeps the scroll, and
-  carries the result over".
+- Source: the owner's change to two editable boxes.
+- Check: Tools spec, "typing in the bottom box fills the top one, and the bottom keeps exactly what
+  was typed"; Converter test, "converts what is typed in the bottom box into the top one, keeping
+  the bottom as typed"; `src/lib/tools/converters.test.ts`, "typing in either box fills the other,
+  and keeps what was typed as it is".
 
-**Options.** Romaji to Kana writes hiragana or katakana (Write in). The width converters choose
-what changes: Katakana, Letters and numbers, and Symbols and spaces, all on at first; a kind left
-off stays as it is. The others have none. There is no long-vowel option yet.
+**Options.** Romaji to Kana writes hiragana or katakana (Write in, a toggle group), which sets the
+kana box's script when romaji is typed; typed kana of either script turn into romaji. The width
+converters choose what changes, with a checkbox for each: Katakana, Letters and numbers, and
+Symbols and spaces, all on at first; a kind left off stays as it is, both ways. The others have
+none, and Kana to Romaji writes hiragana when romaji is typed in its bottom box. There is no
+long-vowel option yet.
 
-- Source: the owner's decision on #579 (Options; no long-vowel option yet).
+- Source: the owner's decision on #579 (Options; no long-vowel option yet); the owner's change
+  (the options work both ways).
 - Check: Tools spec, "romaji to kana writes hiragana, or katakana when it is chosen" and "the width
-  options choose what changes"; Converter test, "romaji to kana writes katakana once Katakana is
-  chosen" and "a width option left off keeps that kind of character as it is";
+  options choose what changes, both ways"; Converter test, "romaji to kana writes katakana once
+  Katakana is chosen" and "a width option left off keeps that kind of character as it is, both
+  ways"; `src/lib/tools/converters.test.ts`, "the options apply in both directions";
   `src/lib/tools/width.test.ts`, "with … off, that kind stays as it is", both ways.
+
+**What is converted.** Text is read in its composed form first (Unicode NFC), so a kana and a
+separate combining sound mark, as in some macOS file names and PDFs, read as the one kana, and a
+combining macron as ō.
+
+- Check: `src/lib/tools/converters.test.ts`, "reads text in its composed form, as typed or pasted
+  from anywhere".
 
 **Hiragana and katakana.** Each kana becomes its partner in the other script, small kana and the
 iteration marks ゝゞ and ヽヾ included; ゔ becomes ヴ, and ヷ to ヺ, which have no hiragana, stay.
@@ -84,25 +108,33 @@ The long mark ー, kanji, letters, and punctuation stay as they are.
 - Check: `src/lib/tools/kana.test.ts`.
 
 **Romaji to kana.** Hepburn, with the other common spellings: si, ti, tu, hu, zi, sya, tya, jya,
-and the like; x or l before a small kana (xa, la, xtu, ltsu, xya); nn or n' (or n’) for ん before
-a vowel or y, and n alone before a consonant or at the end; a doubled consonant, or t before ch,
-for っ; m before b or p for ん; a hyphen for ー; and . , [ ] ? ! ~ for 。、「」？！〜. A vowel with a
-macron is spelled long (ō is おう, or オー in katakana). Capitals read as lowercase, and anything it
-can't read stays as it was, so a consonant waits for its vowel.
+and the like; x or l before a small kana (xa, la, xtu, ltsu, xya); n for ん before a consonant or
+at the end, where nn works too, and n' (or n’) before a vowel or y, since n before a vowel starts
+the な row (kinen is きねん, kin'en きんえん); a doubled consonant, or t before ch, for っ; m before
+b, m, or p for ん (shimbun, sammai); a hyphen for ー; the loanword spellings tsa, tsi, tse, tso, dyu
+(でゅ), fyu, kwa, gwa, twu, dwu, and who; and . , [ ] ? ! ~ for 。、「」？！〜. A vowel with a macron is
+spelled long (ō is おう, or オー in katakana). Capitals read as lowercase, and anything it can't
+read stays as it was, so a consonant waits for its vowel.
 
 - Source: the owner's decision on #579 (Romanization).
 - Check: `src/lib/tools/romaji-to-kana.test.ts`, among them konnichiwa → こんにちわ, kin'en →
-  きんえん, kitte → きって, matcha → まっちゃ, ko-hi- → コーヒー in katakana, shinbun and shimbun →
-  しんぶん, onna → おんな, and a trailing n → ん.
+  きんえん, kinen → きねん, kitte → きって, matcha → まっちゃ, ko-hi- → コーヒー in katakana,
+  shinbun and shimbun → しんぶん, sammai → さんまい, onna → おんな, mootsaruto → もおつぁると, and a
+  trailing n → ん.
 
 **Kana to romaji.** Hepburn: し shi, つ tsu, ふ fu, じ and ぢ ji, づ zu, を o; っ doubles the next
-consonant (tch before ch); ん before a vowel or y is n'. Long vowels are spelled as written, and ー
-repeats the vowel before it. Katakana works the same way; kanji, letters, and numbers stay, and
-Japanese punctuation becomes its Latin form.
+consonant (tch before ch), and one with no consonant after it (あっ, or っ at the end) is xtsu, so
+the romaji turns back into the same kana; ん before a vowel or y is n'. Long vowels are spelled as
+written, and ー repeats the vowel before it. The loanword combinations are spelled as loanwords
+are: ツァ tsa, デュ dyu, フュ fyu, クァ kwa. Katakana works the same way; kanji, letters, numbers,
+and any kana it has no spelling for stay as they were typed, and Japanese punctuation becomes its
+Latin form.
 
 - Source: the owner's decision on #579 (Romanization; long vowels as written).
 - Check: `src/lib/tools/kana-to-romaji.test.ts`, among them きって → kitte, まっちゃ → matcha,
-  きんえん → kin'en, しんよう → shin'you, コーヒー → koohii, and とうきょう → toukyou.
+  きんえん → kin'en, しんよう → shin'you, コーヒー → koohii, とうきょう → toukyou, モーツァルト →
+  mootsaruto, "a small っ with no consonant after it is spelled xtsu, so it converts back", and
+  "keeps a kana it has no spelling for in the script it was typed in".
 
 **Half-width and full-width.** Half-width katakana become full-width, a kana and its separate
 voiced or semi-voiced mark joining into one (ｶﾞ → ガ); letters and numbers, ASCII symbols, the
@@ -117,11 +149,13 @@ two. Hiragana and kanji have no half-width form, and kana without one (ヮ, ヵ,
 - Check: No automated check yet; the copy is #690's.
 
 **Reference.** The kana pages show a kana chart, hiragana with its katakana and romaji, and the
-romaji pages one with romaji and its other spellings, each in three tabs, Basic, With marks, and
-Combinations, with every tab's chart in the HTML and the ones not chosen hidden; it links to the
-full kana charts (`/dictionary/browse/kana/`). Romaji to Kana adds Typing tips and Kana to Romaji
-Spelling rules. The width pages instead show What changes: each kind of character in both widths.
-Every example in these, and every other spelling the charts list, is what the converters do.
+romaji pages one with romaji and its other spellings, each in the stock tabs Basic, With marks, and
+Combinations, with every tab's chart in the HTML and the ones not chosen hidden; the Basic and With
+marks charts are laid out from the dictionary core's kana rows (`gojuonRows` and `dakuonRows`),
+with Hepburn romaji. It links to the full kana charts (`/dictionary/browse/kana/`). Romaji to Kana
+adds Typing tips and Kana to Romaji Spelling rules. The width pages instead show What changes, a
+stock table of each kind of character in both widths. Every example in these, and every other
+spelling the charts list, is what the converters do.
 
 - Source: the owner's decision on #579 (the reference).
 - Check: Tools spec, "the kana chart’s tabs show each chart"; Page test, "the kana pages hold all
@@ -131,39 +165,46 @@ Every example in these, and every other spelling the charts list, is what the co
   table converts both ways with its option alone"; `src/lib/tools/reference.test.ts`, "every other
   spelling it lists types its kana".
 
-**Conversion table.** Every one of the 131 rows is in the HTML, grouped as Basic (46), With marks
-(25), Combinations (33), Small kana (10), and Katakana only (17, Extended katakana on the width
-pages), with its columns in the page's direction (Romaji, Hiragana, Katakana, and Also typed as on
-Romaji to Kana, for example). A filter shows one group or All; it only hides the others.
+**Conversion table.** Every one of the 131 rows is in the HTML, as one compact stock table per
+group, Basic (46), With marks (25), Combinations (33), Small kana (10), and Katakana only (17,
+Extended katakana on the width pages), set side by side in columns on wider screens. Its columns
+run in the page's direction. On Romaji to Kana, the first column is a spelling that types the row's
+kana on that page (wo for を, di for ぢ, xa for ぁ, xtsu for っ, who for うぉ), with the other
+spellings that type it after; elsewhere the romaji is the Hepburn spelling, and っ's is "doubled
+consonant". A stock toggle group shows one group or All; it only hides the others.
 
-- Source: the owner's decision on #579 (the conversion table).
+- Source: the owner's decision on #579 (the conversion table); the owner's UI rules (stock table at
+  its default density, groups side by side).
 - Check: Page test, "… holds every row of its conversion table, with no group hidden" for each
-  converter; `src/lib/tools/table.test.ts`; Tools spec, "the conversion table’s filter shows one
-  group, and All brings back the rest".
+  converter; `src/lib/tools/table.test.ts`, "every row of Romaji to Kana’s table types the kana
+  beside it, and so does each other spelling"; `src/lib/tools/reference.test.ts`, "every kana has a
+  spelling that types it, and its other typed spellings type it too"; Tools spec, "the conversion
+  table’s filter shows one group, and All brings back the rest".
 
-**Questions.** Three questions per pair of converters that open and close, every answer in the HTML
-while closed, and the same questions as FAQ structured data (`FAQPage` JSON-LD).
+**Questions.** Three questions per pair of converters, in the stock accordion the product page uses
+(`src/components/question-list.tsx`, all closed at first), every answer in the HTML while closed,
+and the same questions as FAQ structured data (`FAQPage` JSON-LD).
 
 - Source: the owner's decision on #579 (Questions stay, with FAQ structured data).
 - Check: Page test, "the questions are in the page with their answers, and as FAQ structured data";
   Tools spec, "a question opens to its answer" and "… has its title, description, canonical URL, and
-  structured data"; `src/lib/tools/content.test.ts`, "the questions become FAQ structured data,
-  each answer in full".
+  structured data"; `src/lib/questions.test.ts`.
 
 ## Site-wide
 
-**Titles, descriptions, and canonical URLs.** The index is "Free Japanese converters and tools |
-Zenbu Japanese" and each converter "<Name> Converter | Zenbu Japanese", each with its own
-description and canonical URL, from `src/lib/tools/converters.ts`. All are indexed, and
-`/sitemap-tools.xml`, which the sitemap index lists, holds them, as does the HTML sitemap
-(`/sitemap/`), under the tools index. A converter name the site doesn't have is 404.
+**Titles, descriptions, canonical URLs, and indexing.** The index is "Free Japanese converters and
+tools | Zenbu Japanese" and each converter "<Name> Converter | Zenbu Japanese", each with its own
+description and canonical URL, from `src/lib/tools/converters.ts`. All are indexed: no page carries
+a robots meta tag. `/sitemap-tools.xml`, which the sitemap index lists, holds them, as does the
+HTML sitemap (`/sitemap/`), under the tools index. A converter name the site doesn't have is 404,
+and not indexed.
 
 - Source: the owner's decision on #579 (all pages indexed and in the sitemap); the SERP XML
   sitemaps standard (`sitemap-tools.xml` for tool pages).
 - Check: Tools spec, "… has its title, description, canonical URL, and structured data" for each
-  page, and "the HTML sitemap lists the tools index and every converter"; `e2e/sitemaps.spec.ts`,
-  "the tools sitemap lists the tools index and every converter, each with its slash";
-  `src/lib/sitemap.test.ts`; `src/app/routes.test.ts`.
+  page, "a converter name the site doesn’t have is 404", and "the HTML sitemap lists the tools
+  index and every converter"; `e2e/sitemaps.spec.ts`, "the tools sitemap lists the tools index and
+  every converter, each with its slash"; `src/lib/sitemap.test.ts`; `src/app/routes.test.ts`.
 
 **Links to the tools.** The header's Tools menu (All free tools, and its Hiragana to Katakana and
 Romaji to Kana), the Products menu's Free tools, the footer's All tools, the homepage's All free

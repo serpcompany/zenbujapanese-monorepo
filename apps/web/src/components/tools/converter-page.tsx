@@ -1,3 +1,6 @@
+import { ArrowRightIcon } from 'lucide-react'
+import Link from 'next/link'
+import { BrowseHeading, BrowsePage } from '@/components/dictionary/browse/browse-ui'
 import { SectionBreadcrumbs } from '@/components/section-breadcrumbs'
 import { ConversionTable } from '@/components/tools/conversion-table'
 import { Converter } from '@/components/tools/converter'
@@ -5,27 +8,32 @@ import { RichTextView } from '@/components/tools/rich-text'
 import { CardGrid, ConverterCard } from '@/components/tools/tool-cards'
 import { ToolQuestions } from '@/components/tools/tool-questions'
 import { ToolReference } from '@/components/tools/tool-reference'
-import { ToolSection, ToolsHeading, toolsPageClassName } from '@/components/tools/tool-section'
+import { ToolSection } from '@/components/tools/tool-section'
 import { ToolsAppCard } from '@/components/tools/tools-app-card'
 import { linkTo } from '@/lib/site'
 import { howItWorks, plainText, questions } from '@/lib/tools/content'
-import type { Converter as ConverterContent } from '@/lib/tools/converters'
+import { type Converter as ConverterContent, converterFor } from '@/lib/tools/converters'
 
 export function ConverterPage({ converter }: { converter: ConverterContent }) {
+  const counterpart = converterFor(converter.reverse)
   return (
-    <main className={toolsPageClassName}>
-      <div className="flex flex-col gap-4">
-        <SectionBreadcrumbs
-          section={{ title: 'Tools', ...linkTo('tools') }}
-          page={converter.name}
-        />
-        <ToolsHeading title={converter.name} lead={converter.lead} />
-      </div>
+    <BrowsePage>
+      <SectionBreadcrumbs section={{ title: 'Tools', ...linkTo('tools') }} page={converter.name} />
+      <BrowseHeading title={converter.name}>{converter.lead}</BrowseHeading>
       <div className="flex flex-col gap-3">
         <Converter slug={converter.slug} />
-        <p className="text-sm text-muted-foreground">
-          It runs in your browser, so nothing you type is sent anywhere.
-        </p>
+        <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2 text-sm">
+          <p className="text-muted-foreground">
+            It runs in your browser, so nothing you type is sent anywhere.
+          </p>
+          <Link
+            href={counterpart.path}
+            className="inline-flex items-center gap-1 font-medium hover:underline"
+          >
+            {counterpart.name}
+            <ArrowRightIcon aria-hidden="true" className="size-4" />
+          </Link>
+        </div>
       </div>
       <ToolSection title="How it works" className="max-w-2xl">
         {howItWorks[converter.slug].map(paragraph => (
@@ -54,6 +62,6 @@ export function ConverterPage({ converter }: { converter: ConverterContent }) {
         line="Search it in the dictionary, or read it from a photo with the app."
         withDictionary
       />
-    </main>
+    </BrowsePage>
   )
 }

@@ -4,16 +4,20 @@ import type { ConverterSlug } from './paths'
 import { type KanaGroupId, type KanaRow, kanaGroups } from './reference'
 import { fullToHalf, type WidthOptions } from './width'
 
-export interface TableColumn {
+interface TableColumn {
   heading: string
-  writing: 'japanese' | 'latin'
   quiet?: true
+}
+
+interface TableCell {
+  text: string
+  lang: 'ja' | 'ja-Latn' | 'en'
 }
 
 interface TableGroup {
   id: KanaGroupId
   label: string
-  rows: readonly (readonly string[])[]
+  rows: readonly (readonly TableCell[])[]
 }
 
 export interface ConversionTable {
@@ -28,33 +32,38 @@ const katakanaOnly: WidthOptions = {
   symbolsAndSpaces: false
 }
 
-type Column = TableColumn & { cell: (row: KanaRow) => string }
+type Column = TableColumn & { cell: (row: KanaRow) => TableCell }
 
-const japanese = (heading: string, cell: Column['cell']): Column => ({
+const japanese = (heading: string, text: (row: KanaRow) => string): Column => ({
   heading,
-  writing: 'japanese',
-  cell
+  cell: row => ({ text: text(row), lang: 'ja' })
+})
+
+const latin = (heading: string, text: (row: KanaRow) => string, quiet?: true): Column => ({
+  heading,
+  ...(quiet ? { quiet } : {}),
+  cell: row => ({ text: text(row), lang: 'ja-Latn' })
 })
 
 const hiragana = japanese('Hiragana', row => row.kana)
 const katakana = japanese('Katakana', row => toKatakana(row.kana))
 const fullWidth = japanese('Full-width', row => toKatakana(row.kana))
 const halfWidth = japanese('Half-width', row => fullToHalf(toKatakana(row.kana), katakanaOnly))
-const romaji: Column = { heading: 'Romaji', writing: 'latin', cell: row => row.romaji }
-const otherSpellings = (heading: string): Column => ({
-  heading,
-  writing: 'latin',
-  quiet: true,
-  cell: row => row.also ?? ''
-})
+const hepburn: Column = {
+  heading: 'Romaji',
+  cell: row => ({ text: row.romaji, lang: row.romajiInWords ? 'en' : 'ja-Latn' })
+}
+const typed = latin('Romaji', row => row.typed)
+const alsoTyped = latin('Also typed as', row => row.alsoTyped.join(', '), true)
+const otherSpellings = latin('Other spellings', row => row.otherSpellings.join(', '), true)
 
 const columnsOf: Record<ConverterSlug, readonly Column[]> = {
-  'hiragana-to-katakana': [hiragana, katakana, romaji],
-  'katakana-to-hiragana': [katakana, hiragana, romaji],
-  'romaji-to-kana': [romaji, hiragana, katakana, otherSpellings('Also typed as')],
-  'kana-to-romaji': [hiragana, katakana, romaji, otherSpellings('Other spellings')],
-  'half-width-to-full-width': [halfWidth, fullWidth, romaji],
-  'full-width-to-half-width': [fullWidth, halfWidth, romaji]
+  'hiragana-to-katakana': [hiragana, katakana, hepburn],
+  'katakana-to-hiragana': [katakana, hiragana, hepburn],
+  'romaji-to-kana': [typed, hiragana, katakana, alsoTyped],
+  'kana-to-romaji': [hiragana, katakana, hepburn, otherSpellings],
+  'half-width-to-full-width': [halfWidth, fullWidth, hepburn],
+  'full-width-to-half-width': [fullWidth, halfWidth, hepburn]
 }
 
 export const tableRowCount = kanaGroups.reduce((count, group) => count + group.rows.length, 0)
@@ -73,11 +82,7 @@ export function conversionTable(slug: ConverterSlug): ConversionTable {
   const columns = columnsOf[slug]
   return {
     line: lines[pair],
-    columns: columns.map(({ heading, writing, quiet }) => ({
-      heading,
-      writing,
-      ...(quiet ? { quiet } : {})
-    })),
+    columns: columns.map(({ heading, quiet }) => ({ heading, ...(quiet ? { quiet } : {}) })),
     groups: kanaGroups.map(group => ({
       id: group.id,
       label: groupLabel(pair, group.id, group.label),

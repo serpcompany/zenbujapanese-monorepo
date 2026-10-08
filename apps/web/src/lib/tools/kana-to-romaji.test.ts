@@ -1,5 +1,6 @@
 import { describe, expect, test } from 'vitest'
 import { kanaToRomaji } from './kana-to-romaji'
+import { romajiToKana } from './romaji-to-kana'
 
 describe('kana to romaji, in Hepburn', () => {
   test.each([
@@ -38,8 +39,24 @@ describe('kana to romaji, in Hepburn', () => {
     expect(kanaToRomaji('コーヒー・ティー')).toBe('koohii tii')
   })
 
-  test('a small っ before something that isn’t a consonant doubles nothing', () => {
-    expect(kanaToRomaji('あっ')).toBe('a')
-    expect(kanaToRomaji('えっ？')).toBe('e?')
+  test('a small っ with no consonant after it is spelled xtsu, so it converts back', () => {
+    expect(kanaToRomaji('あっ')).toBe('axtsu')
+    expect(kanaToRomaji('えっ？')).toBe('extsu?')
+    expect(kanaToRomaji('っ')).toBe('xtsu')
+    for (const kana of ['あっ', 'っ', 'っあ', 'えっ？']) {
+      expect(romajiToKana(kanaToRomaji(kana))).toBe(kana)
+    }
+  })
+
+  test('spells the common loanword combinations', () => {
+    expect(kanaToRomaji('モーツァルト')).toBe('mootsaruto')
+    expect(kanaToRomaji('デュエット')).toBe('dyuetto')
+    expect(kanaToRomaji('フュージョン')).toBe('fyuujon')
+    expect(kanaToRomaji('クァルテット')).toBe('kwarutetto')
+  })
+
+  test('keeps a kana it has no spelling for in the script it was typed in', () => {
+    expect(kanaToRomaji('ヽヾ')).toBe('ヽヾ')
+    expect(kanaToRomaji('ヱビス')).toBe('ebisu')
   })
 })

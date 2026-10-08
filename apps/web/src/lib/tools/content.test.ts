@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest'
-import { faqStructuredData, questions, spellingRules, typingTips, widthRows } from './content'
+import { spellingRules, typingTips, widthRows } from './content'
 import { kanaToRomaji } from './kana-to-romaji'
 import { romajiToKana } from './romaji-to-kana'
 import { everyWidthChange, fullToHalf, halfToFull, type WidthOptions } from './width'
@@ -31,19 +31,5 @@ describe('the reference copy matches what the converters do', () => {
       expect(halfToFull(row.half, options), row.kind).toBe(row.full)
       expect(fullToHalf(row.full, options), row.kind).toBe(row.half)
     }
-  })
-})
-
-test('the questions become FAQ structured data, each answer in full', () => {
-  expect(faqStructuredData(questions.width.slice(0, 1))).toEqual({
-    '@context': 'https://schema.org',
-    '@type': 'FAQPage',
-    mainEntity: [
-      {
-        '@type': 'Question',
-        name: 'What is half-width katakana?',
-        acceptedAnswer: { '@type': 'Answer', text: questions.width[0].answer }
-      }
-    ]
   })
 })

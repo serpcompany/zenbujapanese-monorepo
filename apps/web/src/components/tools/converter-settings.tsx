@@ -4,6 +4,7 @@ import type { KanaScript } from '@zenbu/dictionary-core/browse/kana'
 import { useId } from 'react'
 import { ChoiceToggles } from '@/components/tools/choice-toggles'
 import { Checkbox } from '@/components/ui/checkbox'
+import { Label } from '@/components/ui/label'
 import type { ConverterOptions } from '@/lib/tools/convert'
 import type { ConverterSetting } from '@/lib/tools/converters'
 import type { WidthOptions } from '@/lib/tools/width'
@@ -45,14 +46,10 @@ export function ConverterSettings({
     )
   }
   return (
-    <fieldset className="flex flex-wrap items-center gap-x-4 gap-y-2 text-sm">
+    <fieldset className="flex flex-wrap items-center gap-x-4 gap-y-2">
       <legend className="sr-only">What changes</legend>
       {widthChanges.map(change => (
-        <label
-          key={change.value}
-          htmlFor={`${checkbox}-${change.value}`}
-          className="flex min-h-6 items-center gap-2"
-        >
+        <div key={change.value} className="flex items-center gap-2">
           <Checkbox
             id={`${checkbox}-${change.value}`}
             checked={options.widths[change.value]}
@@ -60,8 +57,8 @@ export function ConverterSettings({
               onChange({ ...options, widths: { ...options.widths, [change.value]: checked } })
             }
           />
-          {change.label}
-        </label>
+          <Label htmlFor={`${checkbox}-${change.value}`}>{change.label}</Label>
+        </div>
       ))}
     </fieldset>
   )

@@ -1,3 +1,4 @@
+import type { Question } from '@/lib/questions'
 import type { ConverterPair } from './converters'
 import type { ConverterSlug } from './paths'
 import type { WidthOptions } from './width'
@@ -162,11 +163,6 @@ export const howItWorks: Record<ConverterSlug, readonly RichText[]> = {
   ]
 }
 
-export interface Question {
-  question: string
-  answer: string
-}
-
 export const questions: Record<ConverterPair, readonly Question[]> = {
   kana: [
     {
@@ -189,7 +185,7 @@ export const questions: Record<ConverterPair, readonly Question[]> = {
     {
       question: 'How do I type ん?',
       answer:
-        'Type n before a consonant or at the end of a word. Before a vowel or y, type nn or n’ so it isn’t read as な or にゃ: kin’en gives きんえん.'
+        'Type n before a consonant or at the end of a word, where nn works too. Before a vowel or y, type n’ so it isn’t read as な or にゃ: kin’en gives きんえん, while kinen gives きねん.'
     },
     {
       question: 'How do I type a small っ?',
@@ -219,16 +215,6 @@ export const questions: Record<ConverterPair, readonly Question[]> = {
   ]
 }
 
-export const faqStructuredData = (list: readonly Question[]) => ({
-  '@context': 'https://schema.org',
-  '@type': 'FAQPage',
-  mainEntity: list.map(({ question, answer }) => ({
-    '@type': 'Question',
-    name: question,
-    acceptedAnswer: { '@type': 'Answer', text: answer }
-  }))
-})
-
 export interface SpellingRule {
   label: string
   rule: string
@@ -239,10 +225,10 @@ export interface SpellingRule {
 export const typingTips: readonly SpellingRule[] = [
   {
     label: 'ん',
-    rule: 'n, or nn or n’ before a vowel or y',
+    rule: 'n before a consonant or at the end, where nn works too; n’ before a vowel or y',
     examples: [
-      ["kin'en", 'きんえん'],
-      ['onna', 'おんな']
+      ['onna', 'おんな'],
+      ["kin'en", 'きんえん']
     ]
   },
   { label: 'ん before b or p', rule: 'm works too', examples: [['shimbun', 'しんぶん']] },

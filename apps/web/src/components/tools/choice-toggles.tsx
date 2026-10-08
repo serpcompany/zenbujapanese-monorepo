@@ -1,7 +1,6 @@
 'use client'
 
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group'
-import { cn } from '@/lib/utils'
 
 export function ChoiceToggles<Choice extends string>({
   label,
@@ -26,14 +25,10 @@ export function ChoiceToggles<Choice extends string>({
       }}
       variant="outline"
       size="sm"
-      className={cn('flex-wrap', className)}
+      className={className}
     >
       {choices.map(choice => (
-        <ToggleGroupItem
-          key={choice.value}
-          value={choice.value}
-          className="rounded-full px-3 aria-pressed:border-primary aria-pressed:bg-primary aria-pressed:text-primary-foreground aria-pressed:hover:bg-primary/80 aria-pressed:hover:text-primary-foreground"
-        >
+        <ToggleGroupItem key={choice.value} value={choice.value}>
           {choice.label}
         </ToggleGroupItem>
       ))}

@@ -3,21 +3,20 @@ import { describe, expect, test } from 'vitest'
 import { questions } from '@/lib/tools/content'
 import { converterFor, converters } from '@/lib/tools/converters'
 import { ConverterPage } from './converter-page'
-import { ConverterTextsProvider } from './converter-texts'
 
-function page(slug: (typeof converters)[number]['slug']) {
-  return renderToStaticMarkup(
-    <ConverterTextsProvider>
-      <ConverterPage converter={converterFor(slug)} />
-    </ConverterTextsProvider>
-  )
-}
+const page = (slug: (typeof converters)[number]['slug']) =>
+  renderToStaticMarkup(<ConverterPage converter={converterFor(slug)} />)
 
-const tableRows = (html: string) =>
+const conversionTableRows = (html: string) =>
   [...html.matchAll(/<tbody[^>]*>([\s\S]*?)<\/tbody>/g)]
-    .filter(([, body]) => body.includes('scope="rowgroup"'))
     .map(([, body]) => body.match(/<tr /g)?.length ?? 0)
-    .reduce((total, rows) => total + rows - 1, 0)
+    .reduce((total, rows) => total + rows, 0)
+
+const tabPanels = (html: string) =>
+  [...html.matchAll(/<div ([^>]*role="tabpanel"[^>]*)>/g)].map(([, attributes]) => ({
+    label: attributes.match(/aria-labelledby="([^"]+)"/)?.[1],
+    hidden: /\shidden=""/.test(` ${attributes}`)
+  }))
 
 function structuredData(html: string) {
   const json = html.match(/<script type="application\/ld\+json">([\s\S]*?)<\/script>/)?.[1]
@@ -26,11 +25,18 @@ function structuredData(html: string) {
 
 describe('a converter page’s HTML', () => {
   test.each(
-    converters.map(converter => converter.slug)
+    converters.filter(converter => converter.pair !== 'width').map(converter => converter.slug)
   )('%s holds every row of its conversion table, with no group hidden', slug => {
     const html = page(slug)
-    expect(tableRows(html)).toBe(131)
-    expect(html).not.toMatch(/<tbody[^>]*hidden/)
+    expect(conversionTableRows(html)).toBe(131)
+    expect(html).not.toMatch(/<section[^>]*hidden=""[^>]*>\s*<h3/)
+  })
+
+  test.each([
+    'half-width-to-full-width',
+    'full-width-to-half-width'
+  ] as const)('%s holds every row of its conversion table, beside its width table', slug => {
+    expect(conversionTableRows(page(slug))).toBe(131 + 7)
   })
 
   test('the kana pages hold all three kana charts, the ones not shown hidden', () => {
@@ -38,6 +44,7 @@ describe('a converter page’s HTML', () => {
     for (const label of ['Basic kana', 'With marks kana', 'Combinations kana']) {
       expect(html).toContain(`aria-label="${label}"`)
     }
+    expect(tabPanels(html).map(panel => panel.hidden)).toEqual([false, true, true])
     expect(html).toContain('きゃ')
   })
 
@@ -59,10 +66,10 @@ describe('a converter page’s HTML', () => {
     expect(page('full-width-to-half-width')).toContain('What changes')
   })
 
-  test('the swap links to the other direction, and related tools to theirs', () => {
+  test('the page links its other direction once, and related tools to theirs', () => {
     const html = page('half-width-to-full-width')
-    expect(html).toContain('href="/tools/full-width-to-half-width/"')
-    expect(html).toContain('aria-label="Switch to Full-width to Half-width"')
+    expect(html.match(/href="\/tools\/full-width-to-half-width\/"/g)).toHaveLength(1)
+    expect(html).toContain('Full-width to Half-width')
     for (const slug of converterFor('half-width-to-full-width').related) {
       expect(html).toContain(`href="/tools/${slug}/"`)
     }
