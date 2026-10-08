@@ -58,13 +58,22 @@ export const accountPages = [
 export const footerAccountLink = (page: Page) =>
   page.getByRole('contentinfo').getByRole('link', { name: /^(Sign in|Account)$/ })
 
+export const onPhone = () => test.info().project.name === 'phone'
+
+export const accountButton = (page: Page) =>
+  page.getByRole('banner').getByRole('button', { name: /^Account/ })
+
+export const accountMenu = (page: Page) => page.getByRole('menu', { name: /^Account/ })
+
+export const phoneMenu = (page: Page) => page.getByRole('dialog', { name: 'Zenbu Japanese' })
+
 export async function headerLogIn(page: Page) {
-  const banner = page.getByRole('banner')
-  if (test.info().project.name !== 'phone') return banner.getByRole('button', { name: 'Log in' })
-  await banner.getByRole('button', { name: 'Menu' }).click()
-  return page
-    .getByRole('dialog', { name: 'Zenbu Japanese' })
-    .getByRole('button', { name: 'Log in' })
+  if (!onPhone()) {
+    await accountButton(page).click()
+    return accountMenu(page).getByRole('menuitem', { name: 'Log in' })
+  }
+  await page.getByRole('banner').getByRole('button', { name: 'Menu' }).click()
+  return phoneMenu(page).getByRole('button', { name: 'Log in' })
 }
 
 export const sourcesToggle = (page: Page) =>

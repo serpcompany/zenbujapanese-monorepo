@@ -31,7 +31,7 @@ function useSelectedSlide(api: CarouselApi) {
 function DemoSlide({ demo, first }: { demo: ProductDemo; first: boolean }) {
   const Icon = productSymbols[demo.symbol]
   return (
-    <div className="grid h-full items-center gap-6 overflow-hidden rounded-2xl bg-muted px-6 pt-8 text-left md:grid-cols-2 md:gap-8 md:px-10 md:pt-10">
+    <div className="muted-surface grid h-full items-center gap-6 overflow-hidden rounded-2xl bg-muted px-6 pt-8 text-left md:grid-cols-2 md:gap-8 md:px-10 md:pt-10">
       <div className="flex flex-col gap-2.5 md:pb-10">
         <p className="inline-flex items-center gap-1.5 text-[13px] font-medium text-muted-foreground">
           <Icon aria-hidden="true" className="size-4" />

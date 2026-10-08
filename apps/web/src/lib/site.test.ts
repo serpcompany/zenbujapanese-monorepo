@@ -41,16 +41,25 @@ async function siteWhereAccountPagesAre(state: 'open' | 'closed') {
   return import('./site')
 }
 
-describe('the Log in target', () => {
-  test("Log in opens /login/ in a build whose account pages are open, and isn't a placeholder", async () => {
+const accountTargets = [
+  ['Log in', 'login', '/login/'],
+  ['Create an account', 'register', '/register/']
+] as const
+
+describe('the Log in and Create an account targets', () => {
+  test.each(
+    accountTargets
+  )("%s opens its page in a build whose account pages are open, and isn't a placeholder", async (_, id, path) => {
     const { linkTo, placeholderLinks } = await siteWhereAccountPagesAre('open')
-    expect(linkTo('login')).toEqual({ href: '/login/', target: 'login' })
-    expect(placeholderLinks.map(link => link.id)).not.toContain('login')
+    expect(linkTo(id)).toEqual({ href: path, target: id })
+    expect(placeholderLinks.map(link => link.id)).not.toContain(id)
   })
 
-  test('Log in stays a # placeholder in a build whose account pages are closed', async () => {
+  test.each(
+    accountTargets
+  )('%s stays a # placeholder in a build whose account pages are closed', async (_, id) => {
     const { linkTo, placeholderLinks } = await siteWhereAccountPagesAre('closed')
-    expect(linkTo('login')).toEqual({ href: '#', target: 'login' })
-    expect(placeholderLinks.map(link => link.id)).toContain('login')
+    expect(linkTo(id)).toEqual({ href: '#', target: id })
+    expect(placeholderLinks.map(link => link.id)).toContain(id)
   })
 })

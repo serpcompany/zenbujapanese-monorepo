@@ -34,7 +34,7 @@ export function SocialLinks() {
             href={link.href}
             data-link-target={link.id}
             title={link.name}
-            className="flex h-11 items-center justify-center rounded-lg text-muted-foreground hover:bg-muted hover:text-foreground md:size-9"
+            className="flex h-11 items-center justify-center rounded-lg text-muted-foreground hover:bg-background hover:text-foreground md:size-9"
           >
             <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" className="size-5">
               <path d={brandPaths[link.id]} />

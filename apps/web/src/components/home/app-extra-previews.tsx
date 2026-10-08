@@ -62,7 +62,7 @@ export function ListPreview() {
           >
             <RubyText segments={word.ruby} className="text-[1.0625rem] leading-[1.9]" />
             {word.known ? (
-              <Badge className="bg-green-500/15 text-green-700">
+              <Badge className="bg-green-500/15 text-green-800 dark:text-green-400">
                 <CheckIcon data-icon="inline-start" className="stroke-3" />
                 Known
               </Badge>

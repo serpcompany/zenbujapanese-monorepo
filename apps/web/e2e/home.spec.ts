@@ -1,9 +1,10 @@
 import type { Page } from '@playwright/test'
+import { pageEnd } from '../src/lib/app-parts'
 import { pageSources } from '../src/lib/dictionary/sources'
 import { appExtras, appFeatures, exampleSearches, homeTitle, webTools } from '../src/lib/home'
 import { pageFor } from '../src/lib/pages'
 import { linkTo, productionOrigin, site } from '../src/lib/site'
-import { expect, test } from './test'
+import { expect, sourcesToggle, test } from './test'
 
 const main = (page: Page) => page.getByRole('main')
 
@@ -121,27 +122,32 @@ test.describe('homepage', () => {
     await expect(page).toHaveURL('/dictionary/browse/kanji/')
   })
 
-  test('the closing block credits the open data, then offers the app', async ({ page }) => {
+  test('the page ends with one card: its heading, a line, and Get the app, then the footer', async ({
+    page
+  }) => {
     await page.goto('/')
-    const closing = region(page, /^Your Japanese stays yours\./)
-    await expect(closing.getByRole('heading', { level: 3 })).toHaveText([
-      'Works offline',
-      'No account, no ads',
-      'Built on open data',
-      'Zenbu Japanese for iPhone'
-    ])
-    const licences = closing.getByRole('definition')
-    await expect(closing.getByRole('term')).toHaveText(pageSources.home.map(source => source.name))
-    await expect(licences).toHaveText(pageSources.home.map(source => source.license.name))
-    await expect(closing.getByRole('button', { name: 'Get the app' })).toHaveAttribute(
-      'data-link-target',
-      'iphone-app'
-    )
-    await expect(closing.getByRole('link', { name: 'All products' })).toHaveAttribute(
-      'data-link-target',
-      'products'
-    )
-    await closing.getByRole('link', { name: 'Sources' }).click()
-    await expect(page).toHaveURL('/sources/')
+    await expect(main(page).getByText('Your Japanese stays yours')).toHaveCount(0)
+    const end = region(page, new RegExp(`^${pageEnd.title}$`))
+    await expect(end.getByRole('heading', { level: 2 })).toHaveText(pageEnd.title)
+    await expect(end.getByText(pageEnd.line)).toBeVisible()
+    const getTheApp = end.getByRole('button', { name: 'Get the app' })
+    await expect(getTheApp).toHaveAttribute('href', linkTo('iphone-app').href)
+    await expect(getTheApp).toHaveAttribute('data-link-target', 'iphone-app')
+    await expect(main(page).getByRole('region').last()).toHaveAccessibleName(pageEnd.title)
+    const card = await end.getByRole('heading', { level: 2 }).evaluate(heading => {
+      const box = (element: Element | null) => element?.getBoundingClientRect().toJSON()
+      const card = heading.parentElement?.parentElement ?? null
+      return { card: box(card), collage: box(card?.lastElementChild ?? null) }
+    })
+    if (test.info().project.name === 'phone') {
+      expect(card.collage.bottom).toBeLessThanOrEqual(card.card.top + 9 * 16 + 1)
+    } else {
+      expect(card.card.height).toBeLessThanOrEqual(20 * 16)
+      expect(card.collage.left).toBeGreaterThan(card.card.left + card.card.width / 3)
+    }
+    await sourcesToggle(page).click()
+    await expect(end.getByRole('link', { name: pageSources.home[0]?.name })).toBeVisible()
+    await getTheApp.click()
+    await expect(page).toHaveURL(linkTo('iphone-app').href)
   })
 })

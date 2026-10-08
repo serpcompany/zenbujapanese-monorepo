@@ -26,7 +26,7 @@ function ExtraCard({
         <h3 className="text-base font-semibold tracking-tight">{title}</h3>
         <p className="text-[0.9375rem] leading-relaxed text-muted-foreground">{body}</p>
       </div>
-      <div className="order-first flex min-h-52 flex-1 items-center justify-center border-b bg-muted px-5 py-6">
+      <div className="muted-surface order-first flex min-h-52 flex-1 items-center justify-center border-b bg-muted px-5 py-6">
         {children}
       </div>
     </Card>

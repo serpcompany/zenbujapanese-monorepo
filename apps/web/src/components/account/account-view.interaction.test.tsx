@@ -96,14 +96,17 @@ describe('the account page', () => {
     ])
     expect(callTo(calls, 'GET /v1/auth/get-session')[0]?.credentials).toBe('include')
     expect(window.localStorage.getItem('zenbu-signed-in')).toBe('yes')
+    expect(window.localStorage.getItem('zenbu-initials')).toBe('KF')
   })
 
   test('shows signed out, and forgets it was signed in, when there is no session', async () => {
     window.localStorage.setItem('zenbu-signed-in', 'yes')
+    window.localStorage.setItem('zenbu-initials', 'KF')
     stubAccountService({ 'GET /v1/auth/get-session': answer(null) })
     const page = render(<AccountView settings={settings()} returnedError={null} />)
     await shows(page, 'You’re not signed in.')
     expect(window.localStorage.getItem('zenbu-signed-in')).toBeNull()
+    expect(window.localStorage.getItem('zenbu-initials')).toBeNull()
   })
 
   test('gets a new access token once when /v1/me answers 401', async () => {

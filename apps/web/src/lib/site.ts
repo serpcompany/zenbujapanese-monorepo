@@ -55,6 +55,12 @@ const linkTargets = [
     name: 'Log in page, /login/',
     href: accountPagesOpen() ? accountPages.signIn.path : placeholderHref
   },
+  {
+    id: 'register',
+    kind: 'page',
+    name: 'Create an account page, /register/',
+    href: accountPagesOpen() ? accountPages.register.path : placeholderHref
+  },
   { id: 'app-store', kind: 'store', name: 'App Store listing', href: placeholderHref },
   { id: 'youtube', kind: 'social', name: 'YouTube', href: placeholderHref },
   { id: 'x', kind: 'social', name: 'X', href: placeholderHref },

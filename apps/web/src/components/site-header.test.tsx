@@ -9,7 +9,6 @@ vi.mock('next/navigation', () => ({ usePathname: () => navigation.pathname }))
 const sections = ['Dictionary', 'Tools', 'Products', 'Company']
 
 const productPage = linkTo('iphone-app')
-const login = linkTo('login')
 
 function header(pathname: string): string {
   navigation.pathname = pathname
@@ -153,22 +152,35 @@ function headerButtons(html: string): [attributes: string, content: string][] {
   )
 }
 
-test('from 1024 pixels Log in and Get the app end the header, Get the app opening the iPhone app’s page', () => {
-  const buttons = headerButtons(header('/dictionary/'))
+const classesOf = (attributes: string) => attributes.match(/class="([^"]*)"/)?.[1].split(' ')
+
+test('from 1024 pixels Get the app and the account button end the header, Get the app opening the iPhone app’s page', () => {
+  const html = header('/dictionary/')
+  const buttons = headerButtons(html)
   expect(buttons.map(([attributes]) => attribute(attributes, 'data-link-target'))).toEqual([
-    login.target,
     productPage.target
   ])
-  for (const [attributes] of buttons) {
-    expect(attributes.match(/class="([^"]*)"/)?.[1].split(' ')).toContain('max-lg:hidden')
-  }
-  expect(attribute(buttons[0][0], 'href')).toBe(login.href)
-  expect(buttons[0][1]).toBe('Log in')
-  expect(attribute(buttons[1][0], 'href')).toBe('/products/zenbu-japanese-for-iphone/')
+  const [getTheApp = ''] = buttons[0] ?? []
+  expect(attribute(getTheApp, 'href')).toBe('/products/zenbu-japanese-for-iphone/')
+  expect(classesOf(getTheApp)).toContain('max-lg:hidden')
+  const [, account = '', content = ''] =
+    html.match(/<button ([^>]*aria-haspopup="menu"[^>]*)>([\s\S]*?)<\/button>/) ?? []
+  expect(classesOf(account)).toEqual(expect.arrayContaining(['rounded-full', 'max-lg:hidden']))
+  expect(content).toMatch(/^<svg [^>]*class="lucide lucide-user-round[ "]/)
+  expect(content).toContain('<span class="sr-only">Account</span>')
+  expect(html.indexOf(getTheApp)).toBeLessThan(html.indexOf(account))
+  expect(html).not.toContain('>Log in<')
+})
+
+test('the header stays pinned to the top as the page scrolls', () => {
+  const [, attributes = ''] = header('/').match(/<header ([^>]*)>/) ?? []
+  expect(classesOf(attributes)).toEqual(
+    expect.arrayContaining(['sticky', 'top-0', 'bg-background'])
+  )
 })
 
 test('the Get the app button leads with a phone icon', () => {
-  const [, content = ''] = headerButtons(header('/dictionary/'))[1] ?? []
+  const [, content = ''] = headerButtons(header('/dictionary/'))[0] ?? []
   expect(content).toMatch(
     /^<svg [^>]*class="lucide lucide-smartphone[^"]*"[^>]*data-icon="inline-start"/
   )

@@ -7,12 +7,12 @@ import { accessTokens } from '@/lib/account/access-tokens'
 import type { AccountSession } from '@/lib/account/answers'
 import { accountApi } from '@/lib/account/client'
 import { forgetConfirming } from '@/lib/account/confirming'
-import { afterGoogleConfirmation } from '@/lib/account/flows'
+import { afterGoogleConfirmation, signOutOfThisBrowser } from '@/lib/account/flows'
 import { isFresh, loadAccount, type SignedInAccount } from '@/lib/account/load'
-import { failureMessage, isSignedOut, returnedErrorMessage } from '@/lib/account/messages'
+import { failureMessage, returnedErrorMessage } from '@/lib/account/messages'
 import { accountPages } from '@/lib/account/pages'
 import type { AccountSettings } from '@/lib/account/settings'
-import { rememberSignedIn } from '@/lib/account/signed-in'
+import { initialsOf, rememberSignedIn } from '@/lib/account/signed-in'
 import { DeleteAccount } from './delete-account'
 import { FormMessage, Notice } from './form-message'
 import { ProfileForm } from './profile-form'
@@ -94,7 +94,6 @@ export function AccountView({
     if (loaded.kind === 'failed') {
       return setView({ kind: 'unreachable', problem: failureMessage(loaded.failure) })
     }
-    rememberSignedIn(true)
     const { session } = loaded.account
     const confirmation = afterGoogleConfirmation(api, session)
     if (confirmation === 'this-account') setConfirmedHere(Date.now())
@@ -116,6 +115,14 @@ export function AccountView({
   useEffect(() => {
     void load()
   }, [load])
+
+  const shownInitials =
+    view.kind === 'signed-in'
+      ? initialsOf(view.account.profile.name, view.account.profile.email)
+      : null
+  useEffect(() => {
+    if (shownInitials !== null) rememberSignedIn(true, shownInitials)
+  }, [shownInitials])
 
   if (view.kind === 'loading') return <Notice>Loading your account…</Notice>
   if (view.kind === 'unreachable') {
@@ -193,11 +200,9 @@ export function AccountView({
           className="self-start"
           onClick={async () => {
             setSignOutProblem(null)
-            const signedOutHere = await api.signOut()
-            if (signedOutHere.ok || isSignedOut(signedOutHere.failure)) {
-              return signedOut('You’re signed out.')
-            }
-            setSignOutProblem(failureMessage(signedOutHere.failure))
+            const problem = await signOutOfThisBrowser(api)
+            if (problem === null) return signedOut('You’re signed out.')
+            setSignOutProblem(failureMessage(problem))
           }}
         >
           Sign out

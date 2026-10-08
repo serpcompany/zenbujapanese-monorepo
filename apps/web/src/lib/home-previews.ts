@@ -90,10 +90,3 @@ export const searchPreview = {
     meanings: ['to eat', 'to live on (e.g. a salary), to live off, to subsist on']
   }
 }
-
-export const offlinePreview = {
-  ...word('峠', 'とうげ'),
-  meaning: '(mountain) pass, highest point on a mountain road, ridge'
-}
-
-export const storedOnDevice = ['Lists', 'Notes', 'Known Words', 'Translations']

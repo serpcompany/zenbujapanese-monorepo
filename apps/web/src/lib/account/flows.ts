@@ -10,6 +10,11 @@ type Earlier = Pick<AccountSession, 'userId' | 'token'>
 const isEarlierSessionOf = (earlier: Earlier, current: AccountSession) =>
   earlier.userId === current.userId && earlier.token !== current.token
 
+export async function signOutOfThisBrowser(api: AccountApi): Promise<Failure | null> {
+  const signedOut = await api.signOut()
+  return signedOut.ok || isSignedOut(signedOut.failure) ? null : signedOut.failure
+}
+
 export async function afterSigningInAgain(
   api: AccountApi,
   tokens: AccessTokens,

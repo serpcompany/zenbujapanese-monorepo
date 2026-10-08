@@ -1,7 +1,6 @@
 import type { Page } from '@playwright/test'
-import { expect, needed, sidewaysOverflow, test } from './test'
+import { accountButton, expect, needed, onPhone, phoneMenu, sidewaysOverflow, test } from './test'
 
-const onPhone = () => test.info().project.name === 'phone'
 const desktopOnly = () => test.skip(onPhone(), 'The menus open from the header from 1024 pixels')
 const phoneOnly = () => test.skip(!onPhone(), 'Below 1024 pixels the header has a menu button')
 
@@ -9,7 +8,6 @@ const mainNav = (page: Page) => page.getByRole('navigation', { name: 'Main' })
 const trigger = (page: Page, name: string) =>
   mainNav(page).getByRole('button', { name, exact: true })
 const menuButton = (page: Page) => page.getByRole('banner').getByRole('button', { name: 'Menu' })
-const phoneMenu = (page: Page) => page.getByRole('dialog', { name: 'Zenbu Japanese' })
 
 const menus = [
   {
@@ -47,7 +45,7 @@ const outsideTheMenus = { x: 8, y: 600 }
 test.describe('site header from 1024 pixels', () => {
   test.beforeEach(desktopOnly)
 
-  test('the header has the name, four menus, Log in, and Get the app, and no search', async ({
+  test('the header has the name, four menus, Get the app, and the account button, and no search', async ({
     page
   }) => {
     await page.goto(needed.path)
@@ -58,8 +56,9 @@ test.describe('site header from 1024 pixels', () => {
       'absolute'
     )
     await expect(mainNav(page).getByRole('button')).toHaveText(menus.map(menu => menu.name))
-    await expect(banner.getByRole('button', { name: 'Log in' })).toBeVisible()
     await expect(banner.getByRole('button', { name: 'Get the app' })).toBeVisible()
+    await expect(accountButton(page)).toBeVisible()
+    await expect(banner.getByRole('button', { name: 'Log in' })).toHaveCount(0)
     await expect(menuButton(page)).toBeHidden()
     await expect(banner.getByRole('search')).toHaveCount(0)
     await expect(banner.getByRole('textbox')).toHaveCount(0)
@@ -191,16 +190,27 @@ test.describe('site header below 1024 pixels', () => {
     )
     await expect(mainNav(page)).toBeHidden()
     await expect(banner.getByRole('button', { name: 'Get the app' })).toBeHidden()
-    await expect(banner.getByRole('button', { name: 'Log in' })).toBeHidden()
+    await expect(accountButton(page)).toBeHidden()
     await expect(menuButton(page)).toBeInViewport({ ratio: 1 })
     expect(await sidewaysOverflow(page), 'The page scrolls sideways').toBeLessThanOrEqual(0)
   })
 
-  test('the drawer holds the menus as groups, then Log in and Get the app', async ({ page }) => {
+  test('the drawer has the theme beside Close, then the menus as groups, then Log in and Get the app', async ({
+    page
+  }) => {
     await page.goto('/legal/terms/')
     await menuButton(page).click()
     const menu = phoneMenu(page)
     await expect(menu).toBeVisible()
+    const theme = menu.getByRole('button', { name: 'Theme' })
+    const close = menu.getByRole('button', { name: 'Close' })
+    await expect(close).toBeInViewport({ ratio: 1 })
+    await expect
+      .poll(() => menu.evaluate(drawer => drawer.getAnimations({ subtree: true }).length))
+      .toBe(0)
+    const [themeBox, closeBox] = [await theme.boundingBox(), await close.boundingBox()]
+    expect(themeBox?.y).toBe(closeBox?.y)
+    expect((themeBox?.x ?? 0) + (themeBox?.width ?? 0)).toBeLessThanOrEqual(closeBox?.x ?? 0)
     const groups = menu.getByRole('navigation', { name: 'Sections' }).getByRole('button')
     await expect(groups).toHaveText(menus.map(group => group.name))
     await expect(groups.nth(3)).toHaveAttribute('aria-expanded', 'true')
