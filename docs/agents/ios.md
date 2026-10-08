@@ -121,7 +121,7 @@ Simulator. Run it from
 `apps/ios/Modules` with:
 
 ```sh
-xcodebuild -scheme ZenbuJapaneseModules \
+xcodebuild -scheme ZenbuJapaneseModules-Package \
   -destination 'platform=iOS Simulator,id=<booted-simulator-udid>' \
   ONLY_ACTIVE_ARCH=YES test
 ```

@@ -56,8 +56,9 @@ saying where the code belongs:
   `data.ts` hands them ([`docs/agents/web.md`](docs/agents/web.md), Code layout).
 - **The app**: `TranslatorCore`, the Translate tab's engine, imports only Foundation, Observation,
   and OSLog (`tools/checks/src/layers.ts`), and can't import the app's `SearchExperience` target;
-  the app supplies its speech, translation, and playback clients
-  ([`docs/agents/translate.md`](docs/agents/translate.md)).
+  the app supplies its speech, translation, and playback clients. `TranslatorOnDevice`, the
+  recognizer and translation adapters the Mac's replay check shares, adds only AVFoundation,
+  Speech, and Translation ([`docs/agents/translate.md`](docs/agents/translate.md)).
 - **Across parts**: the core and the app's Swift change together, which `Search parity` checks
   ([`docs/agents/ci.md`](docs/agents/ci.md)); the website and the service share their row shapes
   through the core.

@@ -1,6 +1,6 @@
 import AVFoundation
-import Speech
 import TranslatorCore
+import TranslatorOnDevice
 
 final class MicrophoneGate: @unchecked Sendable {
   private let lock = NSLock()
@@ -56,46 +56,15 @@ final class AnalyzerBufferConverter: @unchecked Sendable {
   }
 }
 
-struct HeardAudio: Sendable {
-  var level: Float?
-  var duration: TimeInterval
-}
-
 enum AnalyzerAudioPipeline {
   static func tap(
-    converter: AnalyzerBufferConverter,
-    gate: MicrophoneGate,
-    inputs: [AsyncStream<AnalyzerInput>.Continuation],
-    heard: AsyncStream<HeardAudio>.Continuation
+    converter: AnalyzerBufferConverter, gate: MicrophoneGate, feed: RecognizerFeed
   ) -> AVAudioNodeTapBlock {
     { buffer, _ in
       let isOpen = gate.isOpen
       guard let converted = converter.convert(buffer, silenced: !isOpen) else { return }
-      #if DEBUG
-        TranslateDiagnostics.shared.record(converted)
-      #endif
-      for (index, input) in inputs.enumerated() {
-        guard let own = index == 0 ? converted : copy(of: converted) else { continue }
-        input.yield(AnalyzerInput(buffer: own))
-      }
-      heard.yield(
-        HeardAudio(
-          level: isOpen ? level(of: buffer) : nil,
-          duration: Double(converted.frameLength) / converted.format.sampleRate))
+      feed.hear(converted, level: isOpen ? level(of: buffer) : nil)
     }
-  }
-
-  static func copy(of buffer: AVAudioPCMBuffer) -> AVAudioPCMBuffer? {
-    guard let copy = AVAudioPCMBuffer(pcmFormat: buffer.format, frameCapacity: buffer.frameLength)
-    else { return nil }
-    copy.frameLength = buffer.frameLength
-    let source = UnsafeMutableAudioBufferListPointer(buffer.mutableAudioBufferList)
-    let target = UnsafeMutableAudioBufferListPointer(copy.mutableAudioBufferList)
-    for (from, to) in zip(source, target) {
-      guard let data = from.mData, let destination = to.mData else { continue }
-      memcpy(destination, data, Int(min(from.mDataByteSize, to.mDataByteSize)))
-    }
-    return copy
   }
 
   static func level(of buffer: AVAudioPCMBuffer) -> Float? {
