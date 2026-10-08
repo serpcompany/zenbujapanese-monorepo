@@ -43,13 +43,13 @@ export const isRejection = (value: unknown): value is Rejection =>
   typeof value === 'object' && value !== null && 'code' in value && 'message' in value
 
 export function normalizeName(raw: unknown): string | Rejection {
-  if (typeof raw !== 'string') return rejection('invalid_fields', 'name must be a string.')
+  if (typeof raw !== 'string') return rejection('invalid_fields', 'A name must be text.')
   const name = raw.normalize('NFC').trim().replace(/\s+/gu, ' ')
   const length = [...name].length
   if (length === 0 || length > profileLimits.nameLength || controlCharacters.test(name)) {
     return rejection(
       'invalid_fields',
-      `name must be 1 to ${profileLimits.nameLength} characters, with no control characters.`
+      `A name is 1 to ${profileLimits.nameLength} characters, with no control characters.`
     )
   }
   return name
@@ -58,12 +58,12 @@ export function normalizeName(raw: unknown): string | Rejection {
 export function normalizeUsername(raw: unknown): string | null | Rejection {
   if (raw === null) return null
   if (typeof raw !== 'string')
-    return rejection('invalid_fields', 'username must be a string or null.')
+    return rejection('invalid_fields', 'A username must be text, or null to remove it.')
   const username = raw.normalize('NFKC').trim().toLowerCase()
   if (!usernamePattern.test(username)) {
     return rejection(
       'invalid_fields',
-      `username must be ${min} to ${max} letters a to z, digits, or underscores.`
+      `A username is ${min} to ${max} letters a to z, digits, or underscores.`
     )
   }
   return username
