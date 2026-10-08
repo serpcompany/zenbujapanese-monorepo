@@ -3,7 +3,6 @@ import { kanaScriptOf } from '@zenbu/dictionary-core/browse/kana'
 import { jlptList, minimumIndexedWords, pageCount } from '@zenbu/dictionary-core/browse/lists'
 import type { BrowseSitemapGroup } from '../sitemap-files'
 import {
-  browsePath,
   categoryIndexes,
   categoryPath,
   frequencyDictionariesPath,
