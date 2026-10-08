@@ -1,8 +1,8 @@
-import { serve } from '@hono/node-server'
+import { runService, serveUntilStopped } from '@zenbu/node-service/http'
+import { errorFields, log } from '@zenbu/node-service/log'
 import { createApp } from './app'
 import { readConfig } from './config'
 import { verifyFiles } from './load'
-import { errorFields, log } from './log'
 import { createPool } from './pool'
 
 async function main() {
@@ -20,9 +20,12 @@ async function main() {
     token: config.token,
     ready: () => pool.readyCount() === config.workers
   })
-  const server = serve({ fetch: app.fetch, port: config.port }, ({ port }) =>
-    log('info', 'listening', { port, workers: config.workers, release: config.release })
-  )
+  serveUntilStopped({
+    fetch: app.fetch,
+    port: config.port,
+    listening: { workers: config.workers, release: config.release },
+    close: () => pool.close()
+  })
   pool.ready.then(
     () => log('info', 'ready', { ms: Math.round(performance.now() - started) }),
     error => {
@@ -30,15 +33,6 @@ async function main() {
       process.exit(1)
     }
   )
-  const stop = (signal: string) => {
-    log('info', 'stopping', { signal })
-    server.close(() => void pool.close().then(() => process.exit(0)))
-  }
-  process.on('SIGTERM', () => stop('SIGTERM'))
-  process.on('SIGINT', () => stop('SIGINT'))
 }
 
-main().catch(error => {
-  log('error', 'failed to start', errorFields(error))
-  process.exit(1)
-})
+runService(main)

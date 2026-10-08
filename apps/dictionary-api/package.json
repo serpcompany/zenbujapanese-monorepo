@@ -17,9 +17,9 @@
     "check": "pnpm lint && pnpm typecheck && pnpm test && pnpm build"
   },
   "dependencies": {
-    "@hono/node-server": "^2.1.3",
     "@nikkei/napi-sudachi": "0.12.0",
     "@zenbu/dictionary-core": "workspace:*",
+    "@zenbu/node-service": "workspace:*",
     "hono": "^4.13.11"
   },
   "devDependencies": {

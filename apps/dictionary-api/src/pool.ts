@@ -1,6 +1,6 @@
 import { Worker } from 'node:worker_threads'
+import { log } from '@zenbu/node-service/log'
 import type { VerifiedFiles } from './load'
-import { log } from './log'
 import type { DictionaryService, ServiceMethod } from './service'
 import type { Call, Reply } from './worker'
 

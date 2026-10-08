@@ -1,0 +1,9 @@
+**
+!package.json
+!pnpm-lock.yaml
+!pnpm-workspace.yaml
+!packages/node-service/**
+!apps/account-api/**
+**/node_modules
+apps/account-api/dist
+apps/account-api/.env

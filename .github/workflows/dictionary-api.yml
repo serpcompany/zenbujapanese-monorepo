@@ -5,6 +5,7 @@ on:
     paths:
       - apps/dictionary-api/**
       - packages/dictionary-core/**
+      - packages/node-service/**
       - apps/web/src/lib/dictionary/**
       - apps/web/src/components/dictionary/**
       - apps/web/src/test/**
@@ -40,10 +41,10 @@ jobs:
     timeout-minutes: 5
     steps:
       - uses: actions/checkout@v5
-      - name: ShellCheck the deploy scripts
+      - name: ShellCheck the deployer
         run: >-
           docker run --rm -v "$PWD:/mnt" -w /mnt koalaman/shellcheck:v0.11.0
-          apps/dictionary-api/deploy/deployer.sh
+          deploy/deployer.sh
 
   check:
     runs-on: ubuntu-latest

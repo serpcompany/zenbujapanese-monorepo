@@ -19,7 +19,7 @@ export interface DocProblem {
 }
 
 const repositoryPath =
-  /^(apps|packages|tools|docs|language-data|assets|\.github|\.claude)\/[\w.@[\]()/-]*$/
+  /^(apps|packages|tools|deploy|docs|language-data|assets|\.github|\.claude)\/[\w.@[\]()/-]*$/
 
 function blankFencedCode(text: string): string {
   let inFence = false
