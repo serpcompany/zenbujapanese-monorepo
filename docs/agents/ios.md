@@ -41,8 +41,10 @@ or how fast it feels. The app needs iOS 26.0 or later, and the Sudachi cache abo
    team under the ZenbuJapanese target's **Signing & Capabilities**. On the Apple Developer team
    that publishes the app (the backup account's, while #616 is open), keep the bundle ID. A free
    Apple ID (a Personal Team) can't use `com.zenbujapanese.app`, which that team registered:
-   change it to one of your own, such as `com.<you>.zenbujapanese`. The project sets no team, so
-   picking one edits `project.pbxproj`; don't commit that edit, or a bundle ID change.
+   change it to one of your own, such as `com.<you>.zenbujapanese`. A Personal Team can't sign
+   Associated Domains either, so also remove that capability
+   ([Links from the website](#links-from-the-website)). The project sets no team, so picking one
+   edits `project.pbxproj`; don't commit that edit, a bundle ID change, or the removed capability.
 3. Choose the iPhone as the run destination and run.
 4. If iOS asks, turn on Developer Mode under Settings → Privacy & Security → Developer Mode. With a
    free Apple ID, also trust it under Settings → General → VPN & Device Management.
@@ -95,6 +97,44 @@ is plugged into, whether it runs Windows, macOS, or Linux.
 
 A free Apple ID's install stops opening after 7 days, and an Apple ID can keep at most 3 such apps
 installed; install it again to renew it.
+
+## Links from the website
+
+The app opens zenbujapanese.com's search and word URLs, and the kanji URLs the website removed,
+as universal links (#568; what each opens is in the [product docs](../../apps/ios/docs/product/dictionary.md#links-from-zenbujapanesecom)).
+`apps/ios/App/ZenbuJapanese.entitlements` claims `applinks:zenbujapanese.com`, and iOS opens a
+link in the app only once it has fetched the site's association file, through Apple's CDN, and
+found the app's ID in it ([`web.md`](web.md), Links that open the app). That takes two things
+only a person can do: enable Associated Domains for the App ID `com.zenbujapanese.app` in the
+Apple Developer account that holds it, and set the website's `APPLE_TEAM_ID` to that account's
+team (`W3GXL2NQQP` until #616 moves the app to the business account).
+
+SwiftUI hands a universal link to `onOpenURL` in `WebsiteLinkOpening` (`WebsiteLinkOpening.swift`),
+which `SearchExperienceRootView` applies. It switches to Search from any tab, Translate included,
+and `WebsiteLinkRoute.apply` puts the route on Search's stack. `WebsiteLink`
+(`WebsiteLink.swift`) reads it: the website's URL shapes, decoded one path segment at a time,
+and the Language Reference ID of a word URL's JMdict entry number, derived as
+`apps/ios/Tools/jmdict_normalization.py` does (the first 16 bytes of the SHA-256 of
+`edrdg.jmdict`, a NUL, and the number). It reads only the host and path, so a URL with any
+scheme and the host `zenbujapanese.com` routes the same way.
+
+Check it with `WebsiteLinkTests`. The Simulator sends an `https` link to Safari until the
+association file is live, which would also load the site, so to see a link land in the app
+before then, build without the entitlement and with a URL scheme that is never committed, and
+open the same URL under that scheme:
+
+```sh
+plutil -create xml1 /tmp/link-check.plist
+plutil -insert CFBundleURLTypes -json '[{"CFBundleURLSchemes":["zenbu-check"]}]' /tmp/link-check.plist
+xcodebuild -project apps/ios/ZenbuJapanese.xcodeproj -scheme ZenbuJapanese \
+  -destination 'platform=iOS Simulator,id=<udid>' ONLY_ACTIVE_ARCH=YES ARCHS=arm64 \
+  INFOPLIST_FILE=/tmp/link-check.plist CODE_SIGN_ENTITLEMENTS= build
+xcrun simctl openurl <udid> 'zenbu-check://zenbujapanese.com/dictionary/見る-1259290/'
+```
+
+Once the file is live, check it on a device: tapping
+`https://zenbujapanese.com/dictionary/見る-1259290/` in Notes or Messages opens 見る's Word
+Detail, and the same link opens the website on a device without the app.
 
 ## Interactive parsing comparison harness
 

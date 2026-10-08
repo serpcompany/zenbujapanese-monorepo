@@ -56,6 +56,13 @@ compares the service's number with its own and logs a mismatch rather than refus
 fails a shape change that doesn't raise the number
 ([`docs/agents/dictionary-core.md`](docs/agents/dictionary-core.md), Rules).
 
+The app and the website also meet at links: on an iPhone with the app, a dictionary URL opens in
+the app (universal links). The app reads the website's URLs (`WebsiteLink.swift`), and the
+website's association file names the app's bundle ID (`apps/web/src/lib/app-links.ts`). No check
+ties the two: word URLs are permanent (ADR 0007), and the bundle ID changes only with the app's
+App Store record (#616), when the file changes with it
+([`docs/agents/web.md`](docs/agents/web.md), Links that open the app).
+
 ## Layers
 
 Imports point one way inside each part, and a lint rule rejects the other direction with a message

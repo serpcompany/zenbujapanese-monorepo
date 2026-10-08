@@ -70,6 +70,13 @@ public struct SearchExperienceRootView: View {
       .environment(wordKnowledge)
       .environment(wordLists)
       .environment(zenbuAccount)
+      .modifier(
+        WebsiteLinkOpening(
+          lookupClient: lookupClient, searchPath: searchPath, query: $query,
+          showSearch: {
+            selectedTab = .search
+            dismissRecognizedWordSheet(if: true)
+          }))
       .onChange(of: scenePhase, initial: true) { _, phase in
         switch phase {
         case .active:

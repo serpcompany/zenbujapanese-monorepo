@@ -19,6 +19,8 @@ All notable user-facing changes to Zenbu Japanese are recorded here.
 - Delete your Zenbu account from **Account → Zenbu Account → Delete Account…**, after signing in
   again. The account and everything it synced are deleted; your iPhone keeps its known words,
   lists, notes, and media.
+- Links to zenbujapanese.com's words, searches, and kanji, such as Tomodachi's **Open in Zenbu**,
+  open in Zenbu: a word opens its page, a search searches, and a kanji opens its detail.
 - New **Translate** tab: a Japanese and English translator that runs entirely on the iPhone. Pick
   **Conversation**, **Listening**, **Text**, or **Document Upload** and tap **Start**. In
   **Conversation**, two people take turns speaking either language with no language button. Each
