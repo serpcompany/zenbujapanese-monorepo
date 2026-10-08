@@ -93,6 +93,7 @@ struct SearchExperienceRootView: View {
           .accessibilityIdentifier("tab.account")
       }
     }
+    .tabViewStyle(.sidebarAdaptable)
     .scrollEdgeEffectStyle(.hard, for: .bottom)
     .modifier(
       TranslateSessionChrome(

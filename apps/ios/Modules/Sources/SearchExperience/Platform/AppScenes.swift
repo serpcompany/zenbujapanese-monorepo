@@ -11,6 +11,7 @@ public struct ZenbuJapaneseScenes: Scene {
     WindowGroup {
       SearchExperienceRootView()
         .appEnvironment(readingAids: readingAids, profile: profile)
+        .appWindowMinimumSize()
     }
     .appWindowDefaults()
     .onChange(of: scenePhase, initial: true) { _, phase in
@@ -22,11 +23,22 @@ public struct ZenbuJapaneseScenes: Scene {
 extension Scene {
   fileprivate func appWindowDefaults() -> some Scene {
     #if os(macOS)
-      self
+      defaultSize(width: AppWindow.defaultSize.width, height: AppWindow.defaultSize.height)
+        .windowResizability(.contentMinSize)
     #else
       backgroundTask(.appRefresh(AccountBackgroundSync.taskIdentifier)) {
         await AccountBackgroundSync.run()
       }
+    #endif
+  }
+}
+
+extension View {
+  fileprivate func appWindowMinimumSize() -> some View {
+    #if os(macOS)
+      frame(minWidth: AppWindow.minimumSize.width, minHeight: AppWindow.minimumSize.height)
+    #else
+      self
     #endif
   }
 }
