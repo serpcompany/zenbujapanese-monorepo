@@ -1,4 +1,3 @@
-import { type AppScreenshot, appScreenshots } from '@/lib/app-screenshots'
 import { normalizeSearchQuery, searchPath } from '@/lib/dictionary/urls'
 import { drawerLinks, type MegaMenu, type SiteMenu, siteMenus } from '@/lib/site-menus'
 
@@ -17,59 +16,65 @@ export const exampleSearches = [
   exampleSearch('to persevere')
 ]
 
-export type AppFeatureId = 'image-search' | 'handwriting' | 'dictionary' | 'translate'
+export type AppAreaId = 'dictionary' | 'image-search' | 'translate' | 'player'
 
-export interface AppFeature {
-  id: AppFeatureId
+export interface AppArea {
+  id: AppAreaId
   name: string
-  title: string
-  body: string
-  screenshot: AppScreenshot
-  shows: 'top' | 'bottom'
+  pitch: string
+  features: readonly string[]
 }
 
-export const appFeatures: readonly AppFeature[] = [
-  {
-    id: 'image-search',
-    name: 'Image Search',
-    title: 'Point at Japanese. Tap any word.',
-    body: 'Take a photo of a menu, a sign, or a page from a book, or choose one you already have. Zenbu reads the Japanese, across or down the page, and any word you tap opens in the dictionary. Switch to Translate for the whole passage.',
-    screenshot: appScreenshots.imageSearch,
-    shows: 'top'
-  },
-  {
-    id: 'handwriting',
-    name: 'Handwriting',
-    title: 'Draw a kanji you can’t type',
-    body: 'Write it in any stroke order: Zenbu reads the finished shape and lists the kanji it could be. Or find it by its radicals.',
-    screenshot: appScreenshots.handwriting,
-    shows: 'bottom'
-  },
+export const appAreas: readonly AppArea[] = [
   {
     id: 'dictionary',
     name: 'Dictionary',
-    title: 'Every word, fully explained',
-    body: 'Furigana and pitch accent, and how common a word is, from JLPT levels to YouTube and anime. Every conjugation with what it means, each kanji with its readings and stroke order, and example sentences.',
-    screenshot: appScreenshots.conjugations,
-    shows: 'top'
+    pitch: 'Every word, fully explained, with no connection needed.',
+    features: [
+      'Search in Japanese, romaji, or English, conjugated forms included.',
+      'Draw a kanji in any stroke order, or find it by its radicals.',
+      'Furigana and pitch accent, and every conjugation with what it means.',
+      'Each kanji’s readings and stroke order, and real example sentences.'
+    ]
+  },
+  {
+    id: 'image-search',
+    name: 'Image Search',
+    pitch: 'Point at Japanese, then tap any word.',
+    features: [
+      'Take a photo, or choose one from your library or your files.',
+      'Reads text across or down the page, even with English around it.',
+      'Tap a word to open it in the dictionary, with the photo still in view.',
+      'Switch to Translate for the whole passage, paragraph by paragraph.'
+    ]
   },
   {
     id: 'translate',
     name: 'Translate',
-    title: 'Talk it through, live',
-    body: 'Two people share one iPhone and speak Japanese or English, in any order. What each says appears as it’s spoken, with its translation under it, and the translation is read aloud when they pause. It all runs on the iPhone, so after a one-time download it works without a connection.',
-    screenshot: appScreenshots.translate,
-    shows: 'top'
+    pitch: 'Talk it through, live, in Japanese and English.',
+    features: [
+      'Two people share one iPhone and speak either language, in any order.',
+      'What each says appears as it’s spoken, and its translation is read aloud after a pause.',
+      'Listening mode follows a TV, a guide, or announcements.',
+      'It all runs on the iPhone, so after a one-time download it works offline.'
+    ]
+  },
+  {
+    id: 'player',
+    name: 'Player',
+    pitch: 'Watch YouTube in Japanese, and tap any word in its captions.',
+    features: [
+      'Paste a link, or search YouTube from the app.',
+      'The Japanese captions sit under the video and follow it as it plays.',
+      'Tap a word to pause the video and open the word in the dictionary.',
+      'Repeat a line, step through one line at a time, or slow down to 0.5×.'
+    ]
   }
 ]
 
-export type AppExtraId = 'player' | 'lists' | 'frequency' | 'furigana'
+export type AppExtraId = 'lists' | 'frequency' | 'furigana'
 
 export const appExtras: Record<AppExtraId, { title: string; body: string }> = {
-  player: {
-    title: 'Watch YouTube in Japanese',
-    body: 'The Japanese captions sit under the video, and every word in them opens the dictionary. Paste a link, or search YouTube from the app.'
-  },
   lists: {
     title: 'Lists and Known Words',
     body: 'Save words to your own lists. Mark the ones you know, and the app can hide their furigana as you read.'

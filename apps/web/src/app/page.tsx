@@ -1,7 +1,7 @@
 import type { Metadata } from 'next'
 import { HomeAppExtras } from '@/components/home/home-app-extras'
+import { HomeAreas } from '@/components/home/home-areas'
 import { HomeClosing } from '@/components/home/home-closing'
-import { HomeFeatures } from '@/components/home/home-features'
 import { HomeHero } from '@/components/home/home-hero'
 import { HomeWebTools } from '@/components/home/home-web-tools'
 import { TryDictionary } from '@/components/home/try-dictionary'
@@ -23,7 +23,7 @@ export default function HomePage() {
     <main className="flex flex-col">
       <HomeHero />
       <TryDictionary />
-      <HomeFeatures />
+      <HomeAreas />
       <HomeAppExtras />
       <HomeWebTools />
       <HomeClosing />

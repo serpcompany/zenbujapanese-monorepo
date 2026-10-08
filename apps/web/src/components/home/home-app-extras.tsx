@@ -2,8 +2,7 @@ import type { ReactNode } from 'react'
 import {
   FrequencyPreview,
   FuriganaPreview,
-  ListPreview,
-  PlayerPreview
+  ListPreview
 } from '@/components/home/app-extra-previews'
 import { SectionHeading } from '@/components/home/section-heading'
 import { Card } from '@/components/ui/card'
@@ -46,16 +45,13 @@ export function HomeAppExtras() {
         className="mb-9"
       />
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-        <ExtraCard id="player" className="md:col-span-2">
-          <PlayerPreview />
-        </ExtraCard>
-        <ExtraCard id="lists" className="lg:col-start-3 lg:row-span-2 lg:row-start-1">
+        <ExtraCard id="lists" className="md:row-span-2 lg:row-span-1">
           <ListPreview />
         </ExtraCard>
         <ExtraCard id="frequency">
           <FrequencyPreview />
         </ExtraCard>
-        <ExtraCard id="furigana" className="md:col-span-2 lg:col-span-1">
+        <ExtraCard id="furigana">
           <FuriganaPreview />
         </ExtraCard>
       </div>
