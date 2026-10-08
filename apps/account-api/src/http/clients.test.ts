@@ -9,15 +9,8 @@ const accounts = useAccountService()
 const word = (n: number) => n.toString(16).padStart(32, '0')
 const text = { headword: '見る', reading: 'みる' }
 
-type Result = { status: string; error?: { code: string } }
-
-async function send(token: string, ...mutations: Record<string, unknown>[]) {
-  const answer = await accounts.sync(token, {
-    mutations: mutations.map(mutation => ({ id: randomUUID(), ...mutation }))
-  })
-  expect(answer.status, JSON.stringify(answer.body)).toBe(200)
-  return answer.body as unknown as { results: Result[]; changes: { entity: string }[] }
-}
+const send = (token: string, ...mutations: Record<string, unknown>[]) =>
+  accounts.mutate(token, ...mutations)
 
 describe("each app's access to an account", () => {
   test('a Tomodachi token names the app and only its scopes', async () => {
@@ -80,6 +73,57 @@ describe("each app's access to an account", () => {
       expect(refused.headers.get('www-authenticate')).toContain('scope="profile"')
     }
     expect((await accounts.me(zenbu.token)).body).toMatchObject({ name: '' })
+  })
+
+  test('only the iOS app reads and changes watch history and Translate bookmarks: the website and Tomodachi never see them', async () => {
+    const email = 'app-only-scopes@example.com'
+    const zenbu = await accounts.learner(email)
+    const bookmark = randomUUID()
+    const appOnly = [
+      {
+        entity: 'watchedVideo',
+        operation: 'watch',
+        entityId: 'dQw4w9WgXcQ',
+        baseVersion: 0,
+        fields: { watchedAt: '2026-10-01T12:00:00Z' }
+      },
+      {
+        entity: 'bookmarkedSentence',
+        operation: 'add',
+        entityId: bookmark,
+        fields: {
+          text: 'はい。',
+          translation: 'Yes.',
+          language: 'ja',
+          bookmarkedAt: '2026-10-01T12:00:00Z'
+        }
+      }
+    ]
+    expect((await send(zenbu.token, ...appOnly)).results).toMatchObject([
+      { status: 'applied' },
+      { status: 'applied' }
+    ])
+    expect(decodeJwt(zenbu.token).scope).toContain(
+      'watch:read watch:write translations:read translations:write'
+    )
+    for (const client of ['tomodachi', 'zenbu-web']) {
+      const other = await accounts.learner(email, client)
+      expect(other.userId).toBe(zenbu.userId)
+      expect(String(decodeJwt(other.token).scope)).not.toMatch(/watch:|translations:/)
+      const answer = await send(
+        other.token,
+        ...appOnly,
+        { entity: 'watchedVideo', operation: 'remove', entityId: 'dQw4w9WgXcQ' },
+        { entity: 'bookmarkedSentence', operation: 'remove', entityId: bookmark, baseVersion: 1 }
+      )
+      expect(
+        answer.results.map(result => result.error?.code),
+        client
+      ).toEqual(['not_allowed', 'not_allowed', 'not_allowed', 'not_allowed'])
+      const entities = answer.changes.map(change => change.entity)
+      expect(entities, client).not.toContain('watchedVideo')
+      expect(entities, client).not.toContain('bookmarkedSentence')
+    }
   })
 
   test('a sign-in names its app, or comes from the website', async () => {

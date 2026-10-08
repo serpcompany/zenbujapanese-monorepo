@@ -1,6 +1,12 @@
 import type { EditableProfile, Profile, RejectionCode } from './profile'
 
-export type EntityType = 'profile' | 'knownWord' | 'list' | 'listWord'
+export type EntityType =
+  | 'profile'
+  | 'knownWord'
+  | 'list'
+  | 'listWord'
+  | 'watchedVideo'
+  | 'bookmarkedSentence'
 
 export interface JournalEntry {
   sequence: number
@@ -40,6 +46,32 @@ export interface ListWord {
   updatedAt: Date
 }
 
+type WatchStatus = 'watched' | 'removed' | 'pruned'
+
+export interface WatchedVideo {
+  videoId: string
+  title: string | null
+  author: string | null
+  duration: number | null
+  position: number | null
+  comprehension: number | null
+  watchedAt: Date | null
+  status: WatchStatus
+  version: number
+  updatedAt: Date
+}
+
+export interface Bookmark {
+  id: string
+  text: string | null
+  translation: string | null
+  language: string | null
+  bookmarkedAt: Date | null
+  present: boolean
+  version: number
+  updatedAt: Date
+}
+
 type MutationOutcome = 'applied' | 'conflict' | 'rejected'
 
 export interface MutationRecord {
@@ -63,6 +95,8 @@ export interface EntityReader {
   knownWord(itemId: string): Promise<KnownWord | null>
   wordList(listId: string): Promise<WordList | null>
   listWord(listId: string, itemId: string): Promise<ListWord | null>
+  watchedVideo(videoId: string): Promise<WatchedVideo | null>
+  bookmark(id: string): Promise<Bookmark | null>
 }
 
 export interface LockedAccount extends EntityReader {
@@ -74,6 +108,12 @@ export interface LockedAccount extends EntityReader {
   listWordCount(listId: string): Promise<number>
   saveListWord(word: Omit<ListWord, 'addedAt' | 'updatedAt'>): Promise<void>
   dropListWords(listId: string): Promise<void>
+  saveWatchedVideo(video: Omit<WatchedVideo, 'updatedAt'>): Promise<void>
+  watchedVideoCount(): Promise<number>
+  oldestWatchedVideo(): Promise<WatchedVideo | null>
+  forgetWatchedVideos(kept: number): Promise<void>
+  saveBookmark(bookmark: Omit<Bookmark, 'updatedAt'>): Promise<void>
+  bookmarkCount(): Promise<number>
   journal(entry: Omit<JournalEntry, 'sequence'>): Promise<void>
   recordedMutation(clientMutationId: string): Promise<RecordedMutation | null>
   recordMutation(record: MutationRecord): Promise<void>

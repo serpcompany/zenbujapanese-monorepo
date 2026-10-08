@@ -7,6 +7,10 @@ export const scopes = [
   'known:read',
   'known:write',
   'known:mark',
+  'watch:read',
+  'watch:write',
+  'translations:read',
+  'translations:write',
   'dictionary:read'
 ] as const
 
@@ -21,7 +25,7 @@ export interface Client {
   requestsPerMinute: number
 }
 
-const everythingZenbu: readonly Scope[] = [
+const studyData: readonly Scope[] = [
   'account',
   'account:delete',
   'profile',
@@ -31,11 +35,18 @@ const everythingZenbu: readonly Scope[] = [
   'known:write'
 ]
 
+const appOnly: readonly Scope[] = [
+  'watch:read',
+  'watch:write',
+  'translations:read',
+  'translations:write'
+]
+
 export const clients: readonly Client[] = [
   {
     id: 'zenbu-ios',
     name: 'Zenbu Japanese for iOS',
-    scopes: everythingZenbu,
+    scopes: [...studyData, ...appOnly],
     appleBundleIds: ['com.zenbujapanese.app'],
     signsInOnTheWeb: false,
     requestsPerMinute: 30_000
@@ -43,7 +54,7 @@ export const clients: readonly Client[] = [
   {
     id: 'zenbu-web',
     name: 'zenbujapanese.com',
-    scopes: everythingZenbu,
+    scopes: studyData,
     appleBundleIds: [],
     signsInOnTheWeb: true,
     requestsPerMinute: 30_000
