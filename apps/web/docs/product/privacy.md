@@ -27,20 +27,23 @@ desktop and a phone width.
 ## Sections
 
 **The short version.** Five points: the app works without an account and keeps what the learner
-does on the device; an account keeps the email, how they sign in, and the study data they sync; the
-app has no ads, analytics, or tracking; a few companies
-help run the service, Cloudflare and useSend among them; and they can see, export, correct, or
-delete their data, and delete the account.
+does on the device; an account keeps the email, how they sign in, and the study data they sync; we
+don't sell or share personal information, and the app (not the website, which counts visits) has
+no ads, analytics, or tracking; a few companies help run the service, Cloudflare and useSend among
+them; and they can see, export, correct, or delete their data, and delete the account.
 
-- Source: #681; the [App Store privacy labels](../app-store-privacy-labels.md) (no analytics or
-  crash-reporting SDK, and no tracking).
+- Source: #681; the owner's answers on #683 (no sale or sharing); the
+  [App Store privacy labels](../app-store-privacy-labels.md) (no analytics or crash-reporting SDK,
+  and no tracking).
 - Check: Privacy spec, "opens with a short version in five points".
 
-**Who we are.** TSMC LLC, doing business as Zenbu Japanese, in the United States, as the
-[Terms of Use](../../src/app/legal/terms/page.tsx) name it, and `support@zenbujapanese.com` for
-anything about the learner's data.
+**Who we are.** TSMC LLC, doing business as Zenbu Japanese, with its postal address and phone
+number, and `support@zenbujapanese.com` for anything about the learner's data. The company's
+details are `company` in `src/lib/company.ts`, which the DMCA page's designated agent uses too, so
+there's one copy. Neither page names an EU representative.
 
-- Source: the Terms of Use; #681 (GDPR Article 13's identity and contact).
+- Source: the [Terms of Use](../../src/app/legal/terms/page.tsx); the DMCA page's company details,
+  as the owner pointed to on #683; #681 (GDPR Article 13's identity and contact).
 - Check: Privacy spec, "says who we are and how to reach us".
 
 **On your device.** A learner never needs an account. The app keeps the profile, searches, notes,
@@ -91,18 +94,26 @@ can use the account.
   or this website offer one", what doesn't sync). The email's uses, the website's and Tomodachi's
   lines: No automated check yet.
 
-**Who else handles your information.** Cloudflare (this website, downloads, requests to the
-servers, and the backups), useSend (email), the company that hosts the servers the database runs
-on (unnamed), Apple and Google (sign-in, when chosen), and YouTube (Player). These companies may
-process information in the United States and other countries. The website counts visits with
-Cloudflare Web Analytics, without cookies, and may load Google Tag Manager, with the promise to
-update the page and ask for consent before adding tags that use cookies.
+**Who else handles your information.** The section opens by saying we don't sell or share
+personal information, then lists who handles it for us: Cloudflare (this website, downloads,
+requests to the servers, the backups, and forwarding the support address's email, through Email
+Routing), useSend (email, which keeps copies of what it sends), Lambda, Inc. (Lambda Labs, in the
+United States, the machines the account database runs on), Ahrefs (Ahrefs Web Analytics, which
+counts the website's visits without cookies), Google (Google Tag Manager, which loads Ahrefs'
+script, the support mailbox, on Google Workspace, and sign-in with Google), Apple (sign-in with
+Apple), and YouTube (Player). These companies may process information in the United States and
+other countries; the page names no particular safeguard. Adding anything to Google Tag Manager
+that uses cookies means updating the page and asking for consent where the law requires it.
 
 - Source: #563 decisions 1 to 3; #565 (the backups on R2); the owners' choice of useSend on
-  2026-10-07 ([`account-api.md`](../../../../docs/agents/account-api.md), Email); `src/components/analytics.tsx`
-  and [`web.md`](../../../../docs/agents/web.md) (analytics only in production).
+  2026-10-07 ([`account-api.md`](../../../../docs/agents/account-api.md), Email); the owner's
+  answers on #683, dated October 8, 2026 (production's Google Tag Manager container,
+  `GTM-MCNL5QH4`, has one tag, a Custom HTML tag loading Ahrefs Web Analytics; production runs no
+  Cloudflare Web Analytics beacon; the server host; the support mailbox; useSend's copies); and
+  `src/components/analytics.tsx` and [`web.md`](../../../../docs/agents/web.md) (analytics only
+  in production).
 - Check: Privacy spec, "names who else handles the information": the list, item for item, and
-  the transfer and analytics lines.
+  the no-sale, transfer, and consent lines.
 
 **How long we keep it.** The second table: the account and study data until it's deleted; sessions
 until sign-out, or 60 days after their last use; sign-in codes 10 minutes; request counts by IP
@@ -123,21 +134,24 @@ service; support email on the legitimate interest in answering.
 
 **Your rights.** See and export (by email to support, since there's no export feature; the owners
 confirm this on #575), correct (the name and username on the website where it offers sign-in,
-since the app's profile is its own, or by email), delete (in any
+since the app's profile is its own; the email or anything else by email to support, which can
+change an account's email by hand), delete (in any
 app that makes accounts, or on the website where the learner can sign in to the account; it
 removes the account and its synced data at once, backups within 30 days, and each device keeps its
 own data), and object or restrict. The page says using these rights changes nothing for the
 learner, and that they can complain to their data protection authority.
 
-- Source: #574 (deletion); #575 (a copy by email); #681 (GDPR Articles 13(2)(b) and (d), and the
-  CCPA's rights).
+- Source: #574 (deletion); #575 (a copy by email); the owner's answers on #683 (support corrects
+  an email by hand); #681 (GDPR Articles 13(2)(b) and (d), and the CCPA's rights).
 - Check: Privacy spec, "names the rights to see, export, correct, and delete, and to complain".
 
 **Children, changes, and contact.** Zenbu Japanese is a general-audience reference, not directed
-to children under 13. The page is updated when the apps, services, or website change how they
+to children under 13, and an account we learn belongs to a child under 13 is deleted. The page is
+updated when the apps, services, or website change how they
 handle information, and the Effective date marks the current version. Questions go to the support
 email, and the page links the Terms of Use.
 
-- Source: the policy of September 28, 2026.
+- Source: the policy of September 28, 2026; the owner's answers on #683 (13, and deleting a
+  child's account).
 - Check: Privacy spec, "covers children and changes, with the date of this version";
   `e2e/layout.spec.ts`, "/legal/privacy/ fits the window, with the site's header and footer".

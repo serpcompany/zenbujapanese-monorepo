@@ -598,7 +598,10 @@ structured data URL is written on; local development writes production's. A buil
 everything. Analytics load only in production and only when their build-time IDs are set:
 `NEXT_PUBLIC_GTM_ID` (Google Tag Manager, a `production` GitHub environment variable that the
 `Web deploy` workflow passes to the production build) and `NEXT_PUBLIC_CF_BEACON_TOKEN` (Cloudflare
-Web Analytics).
+Web Analytics, which production doesn't set). Production's container, `GTM-MCNL5QH4`, holds one
+tag, a Custom HTML tag that loads Ahrefs Web Analytics, which uses no cookies; the
+[Privacy Policy](../../apps/web/docs/product/privacy.md) names Ahrefs and Google for it, so a tag
+added there, or the Cloudflare beacon turned on, changes the policy in the same step.
 
 Before merging a change to environment configuration, build the site as the target environment
 deploys and run the Worker with its `vars` (`SITE_ENV=production pnpm exec opennextjs-cloudflare
