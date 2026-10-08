@@ -1,4 +1,4 @@
-import { GetAppButton } from '@/components/get-app-button'
+import { GetAppButton, LogInButton } from '@/components/site-actions'
 import { SiteBrand } from '@/components/site-brand'
 import { SiteMenu } from '@/components/site-menu'
 import { SiteNav } from '@/components/site-nav'
@@ -10,6 +10,7 @@ export function SiteHeader() {
         <SiteBrand nameClassName="max-lg:sr-only" />
         <SiteNav />
         <div className="ml-auto flex shrink-0 items-center gap-2">
+          <LogInButton variant="ghost" size="lg" className="max-lg:hidden" />
           <GetAppButton size="lg" className="max-lg:hidden" />
           <SiteMenu />
         </div>

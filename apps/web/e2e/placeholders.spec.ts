@@ -16,7 +16,7 @@ async function placeholdersOn(page: Page) {
   return page
     .locator(`a[href="${placeholderHref}"]`)
     .evaluateAll(anchors =>
-      anchors.map(anchor => anchor.getAttribute('data-outside-link') ?? anchor.outerHTML)
+      anchors.map(anchor => anchor.getAttribute('data-link-target') ?? anchor.outerHTML)
     )
 }
 
@@ -42,7 +42,7 @@ test('every # link the site renders is a placeholder listed in src/lib/site.ts',
   }
   expect(
     unlisted,
-    'A link points at "#" without being in outsideLinks in src/lib/site.ts. Give it its real address, or add it to that list and render it with data-outside-link.'
+    'A link points at "#" without being in linkTargets in src/lib/site.ts. Give it its real address, or add it to that list and render it with data-link-target.'
   ).toEqual([])
   const report = [...found].map(([id, paths]) => `${listedNames.get(id)} (${paths.size} pages)`)
   test.info().annotations.push({ type: 'Placeholder links', description: report.join(', ') })

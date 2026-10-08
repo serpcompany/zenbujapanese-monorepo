@@ -1,11 +1,11 @@
 'use client'
 
-import { ArrowRightIcon, SearchIcon } from 'lucide-react'
+import { ArrowRightIcon } from 'lucide-react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { type ReactNode, useId } from 'react'
-import { menuItemClassName, SiteMenuItem } from '@/components/site-menu-item'
+import { menuItemClassName, menuSymbols, SiteMenuItem } from '@/components/site-menu-item'
 import { buttonVariants } from '@/components/ui/button'
 import {
   NavigationMenu,
@@ -20,26 +20,27 @@ import {
   isCurrentSection,
   type LinkMenu,
   type MegaMenu,
+  type MenuHref,
   type MenuLink,
   siteMenus
 } from '@/lib/site-menus'
 import { cn } from '@/lib/utils'
 
 function NavLink({
-  path,
+  to,
   className,
   children
 }: {
-  path: string
+  to: MenuHref
   className?: string
   children: ReactNode
 }) {
   return (
     <NavigationMenuLink
       closeOnClick
-      active={isCurrentPage(path, usePathname())}
+      active={isCurrentPage(to.href, usePathname())}
       className={className}
-      render={<Link href={path} />}
+      render={<Link href={to.href} data-link-target={to.target} />}
     >
       {children}
     </NavigationMenuLink>
@@ -58,8 +59,8 @@ function MenuColumn({ heading, links }: { heading: string; links: MenuLink[] }) 
       </p>
       <ul aria-labelledby={headingId} className="flex flex-col gap-0.5">
         {links.map(link => (
-          <li key={link.path}>
-            <NavLink path={link.path} className={menuItemClassName}>
+          <li key={link.title}>
+            <NavLink to={link} className={menuItemClassName}>
               <SiteMenuItem link={link} />
             </NavLink>
           </li>
@@ -69,30 +70,56 @@ function MenuColumn({ heading, links }: { heading: string; links: MenuLink[] }) 
   )
 }
 
+function FeatureArt({ art }: { art: MegaMenu['feature']['art'] }) {
+  const className = '-mx-4 -mt-4 mb-1 flex h-30 justify-center overflow-hidden bg-foreground/5'
+  if ('kana' in art) {
+    return (
+      <span
+        lang="ja"
+        aria-hidden="true"
+        className={cn(className, 'grid grid-cols-[repeat(5,1.75rem)] content-center gap-1.5')}
+      >
+        {[...art.kana].map(kana => (
+          <span
+            key={kana}
+            className="grid h-7 place-items-center rounded-md bg-background text-sm ring-1 ring-foreground/10"
+          >
+            {kana}
+          </span>
+        ))}
+      </span>
+    )
+  }
+  return (
+    <span className={cn(className, 'pt-4')}>
+      <Image
+        src={art.screenshot}
+        alt=""
+        width={112}
+        height={124}
+        unoptimized
+        className="h-auto w-28 self-start rounded-t-[15px] ring-1 ring-foreground/10"
+      />
+    </span>
+  )
+}
+
 function MegaMenuPanel({ menu }: { menu: MegaMenu }) {
-  const { entry, feature, footer } = menu
+  const { feature, footer } = menu
+  const ActionIcon = menuSymbols[feature.symbol]
   return (
     <div className="grid w-[min(56rem,calc(100vw-2.5rem))] grid-cols-[15rem_repeat(3,minmax(0,1fr))] gap-4 p-3">
       <NavLink
-        path={entry.path}
+        to={feature}
         className="flex-col items-stretch gap-2.5 overflow-hidden bg-muted p-4 hover:bg-muted focus:bg-muted data-active:bg-muted"
       >
-        <span className="-mx-4 -mt-4 mb-1 flex h-30 justify-center overflow-hidden bg-foreground/5 pt-4">
-          <Image
-            src={feature.screenshot}
-            alt=""
-            width={112}
-            height={124}
-            unoptimized
-            className="h-auto w-28 self-start rounded-t-[15px] ring-1 ring-foreground/10"
-          />
-        </span>
+        <FeatureArt art={feature.art} />
         <span className="text-[15px] font-semibold">{feature.title}</span>
         <span className="text-[13px] leading-snug text-muted-foreground">
           {feature.description}
         </span>
         <span className={cn(buttonVariants({ size: 'lg' }), 'mt-1 self-start')}>
-          <SearchIcon data-icon="inline-start" aria-hidden="true" />
+          <ActionIcon data-icon="inline-start" aria-hidden="true" />
           {feature.action}
         </span>
       </NavLink>
@@ -101,7 +128,7 @@ function MegaMenuPanel({ menu }: { menu: MegaMenu }) {
       ))}
       <div className="col-span-full flex flex-wrap items-center justify-between gap-2 border-t px-2 pt-3 text-[13px]">
         <span className="text-muted-foreground">{footer.note}</span>
-        <NavLink path={footer.path} className="gap-1 px-2 py-1 text-[13px] font-medium">
+        <NavLink to={footer} className="gap-1 px-2 py-1 text-[13px] font-medium">
           {footer.title}
           <ArrowRightIcon aria-hidden="true" />
         </NavLink>
@@ -114,8 +141,8 @@ function LinkMenuPanel({ menu }: { menu: LinkMenu }) {
   return (
     <ul aria-label={menu.label} className="flex w-48 flex-col gap-0.5 p-1">
       {menu.links.map(link => (
-        <li key={link.path}>
-          <NavLink path={link.path} className="px-3">
+        <li key={link.href}>
+          <NavLink to={link} className="px-3">
             {link.title}
           </NavLink>
         </li>

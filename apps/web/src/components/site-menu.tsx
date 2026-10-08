@@ -4,7 +4,7 @@ import { MenuIcon, XIcon } from 'lucide-react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { useState } from 'react'
-import { GetAppButton } from '@/components/get-app-button'
+import { GetAppButton, LogInButton } from '@/components/site-actions'
 import { menuItemClassName, SiteMenuItem } from '@/components/site-menu-item'
 import {
   Accordion,
@@ -61,10 +61,11 @@ function GroupLinks({
   return (
     <ul className="flex flex-col gap-0.5">
       {links.map(link => (
-        <li key={link.path}>
+        <li key={link.title}>
           <Link
-            href={link.path}
-            aria-current={isCurrentPage(link.path, pathname) ? 'page' : undefined}
+            href={link.href}
+            data-link-target={'target' in link ? link.target : undefined}
+            aria-current={isCurrentPage(link.href, pathname) ? 'page' : undefined}
             onClick={onNavigate}
             className={cn(
               linkClassName,
@@ -115,6 +116,7 @@ export function SiteMenu() {
           </Accordion>
         </nav>
         <DrawerFooter className="border-t">
+          <LogInButton variant="outline" size="lg" className="w-full" />
           <GetAppButton size="lg" className="w-full" />
         </DrawerFooter>
       </DrawerContent>

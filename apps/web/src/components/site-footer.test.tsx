@@ -1,31 +1,41 @@
 import { renderToStaticMarkup } from 'react-dom/server'
 import { expect, test } from 'vitest'
-import { site, socialLinks } from '@/lib/site'
+import { placeholderHref, site, socialLinks } from '@/lib/site'
 import { SiteFooter } from './site-footer'
 
 const footer = () => renderToStaticMarkup(<SiteFooter />)
 
-function columns(): [heading: string, links: [text: string, href: string][]][] {
+type FooterLink = [text: string, href: string, target?: string]
+
+function columns(): [heading: string, links: FooterLink[]][] {
   return [...footer().matchAll(/<nav [^>]*><h2 [^>]*>([^<]+)<\/h2>([\s\S]*?)<\/nav>/g)].map(
     ([, heading, list]) => [
       heading,
-      [...list.matchAll(/<a [^>]*href="([^"]+)"[^>]*>([^<]+)<\/a>/g)].map(([, href, text]) => [
-        text,
-        href
-      ])
+      [...list.matchAll(/<a ([^>]*)>([^<]+)<\/a>/g)].map(([, attributes, text]) => {
+        const href = attributes.match(/href="([^"]+)"/)?.[1] ?? ''
+        const target = attributes.match(/data-link-target="([^"]+)"/)?.[1]
+        return target ? [text, href, target] : [text, href]
+      })
     ]
   )
 }
 
 test('the footer groups its links under Products, Tools, Company, and Legal', () => {
   expect(columns()).toEqual([
-    ['Products', [['Dictionary', '/dictionary/']]],
+    [
+      'Products',
+      [
+        ['Zenbu Japanese for iPhone', placeholderHref, 'iphone-app'],
+        ['Dictionary', '/dictionary/']
+      ]
+    ],
     [
       'Tools',
       [
         ['Kana charts', '/dictionary/browse/kana/'],
         ['Kanji lists', '/dictionary/browse/kanji/'],
-        ['Frequency lists', '/dictionary/browse/frequency-dictionaries/']
+        ['Frequency lists', '/dictionary/browse/frequency-dictionaries/'],
+        ['All tools', placeholderHref, 'tools']
       ]
     ],
     [
@@ -78,7 +88,7 @@ test('a row of plain social icons, five to a row on phones, links each account i
   )
   for (const [index, [, attributes, content]] of links.entries()) {
     expect(attributes).toContain(`href="${socialLinks[index].href}"`)
-    expect(attributes).toContain(`data-outside-link="${socialLinks[index].id}"`)
+    expect(attributes).toContain(`data-link-target="${socialLinks[index].id}"`)
     expect(content).toMatch(/^<svg [^>]*aria-hidden="true"/)
   }
 })

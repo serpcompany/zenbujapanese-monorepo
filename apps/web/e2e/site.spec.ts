@@ -15,32 +15,50 @@ const menus = [
   {
     name: 'Dictionary',
     first: /^Japanese dictionary/,
+    column: 'Kana',
     link: /^Hiragana/,
-    path: /\/dictionary\/browse\/hiragana\/$/,
-    panel: (page: Page) => page.locator('body')
+    path: /\/dictionary\/browse\/hiragana\/$/
   },
   {
-    name: 'Company',
-    first: /^About$/,
-    link: /^Sources$/,
-    path: /\/sources\/$/,
-    panel: (page: Page) => page.getByRole('list', { name: 'Company' })
-  }
+    name: 'Tools',
+    first: /^Free Japanese tools/,
+    column: 'Reference',
+    link: /^Kana charts/,
+    path: /\/dictionary\/browse\/kana\/$/
+  },
+  {
+    name: 'Products',
+    first: /^Zenbu Japanese for iPhone.*Get the app$/,
+    column: 'Free',
+    link: /^Zenbu Japanese Dictionary/,
+    path: /\/dictionary\/$/
+  },
+  { name: 'Company', first: /^About$/, column: 'Company', link: /^Sources$/, path: /\/sources\/$/ }
 ] as const
+
+const firstLink = (page: Page, menu: (typeof menus)[number]) =>
+  (menu.name === 'Company' ? page.getByRole('list', { name: menu.column }) : page).getByRole(
+    'link',
+    { name: menu.first }
+  )
 
 const outsideTheMenus = { x: 8, y: 600 }
 
 test.describe('site header from 1024 pixels', () => {
   test.beforeEach(desktopOnly)
 
-  test('the header has the name, the Dictionary and Company menus, and Get the app, and no search', async ({
+  test('the header has the name, four menus, Log in, and Get the app, and no search', async ({
     page
   }) => {
     await page.goto(needed.path)
     const banner = page.getByRole('banner')
     await expect(banner.getByRole('link', { name: 'Zenbu Japanese' })).toBeVisible()
-    await expect(banner.getByText('Zenbu Japanese')).not.toHaveCSS('position', 'absolute')
-    await expect(mainNav(page).getByRole('button')).toHaveText(['Dictionary', 'Company'])
+    await expect(banner.getByText('Zenbu Japanese', { exact: true })).not.toHaveCSS(
+      'position',
+      'absolute'
+    )
+    await expect(mainNav(page).getByRole('button')).toHaveText(menus.map(menu => menu.name))
+    await expect(banner.getByRole('button', { name: 'Log in' })).toBeVisible()
     await expect(banner.getByRole('button', { name: 'Get the app' })).toBeVisible()
     await expect(menuButton(page)).toBeHidden()
     await expect(banner.getByRole('search')).toHaveCount(0)
@@ -53,10 +71,10 @@ test.describe('site header from 1024 pixels', () => {
       const button = trigger(page, menu.name)
       await button.click()
       await expect(button).toHaveAttribute('aria-expanded', 'true')
-      await expect(menu.panel(page).getByRole('link', { name: menu.first })).toBeVisible()
+      await expect(firstLink(page, menu)).toBeVisible()
       await button.click()
       await expect(button).toHaveAttribute('aria-expanded', 'false')
-      await expect(menu.panel(page).getByRole('link', { name: menu.first })).toBeHidden()
+      await expect(firstLink(page, menu)).toBeHidden()
       await button.click()
       await page.mouse.click(outsideTheMenus.x, outsideTheMenus.y)
       await expect(button).toHaveAttribute('aria-expanded', 'false')
@@ -69,20 +87,23 @@ test.describe('site header from 1024 pixels', () => {
       await page.keyboard.press('Enter')
       await expect(button).toHaveAttribute('aria-expanded', 'true')
       await page.keyboard.press('Tab')
-      await expect(menu.panel(page).getByRole('link', { name: menu.first })).toBeFocused()
+      await expect(firstLink(page, menu)).toBeFocused()
       await page.keyboard.press('Escape')
       await expect(button).toHaveAttribute('aria-expanded', 'false')
       await expect(button).toBeFocused()
       await page.keyboard.press('Space')
       await expect(button).toHaveAttribute('aria-expanded', 'true')
       await page.keyboard.press('Escape')
-      await expect(menu.panel(page).getByRole('link', { name: menu.first })).toBeHidden()
+      await expect(firstLink(page, menu)).toBeHidden()
     })
 
     test(`a link in the ${menu.name} menu opens its page and closes the menu`, async ({ page }) => {
       await page.goto('/legal/terms/')
       await trigger(page, menu.name).click()
-      await menu.panel(page).getByRole('link', { name: menu.link }).click()
+      await page
+        .getByRole('list', { name: menu.column })
+        .getByRole('link', { name: menu.link })
+        .click()
       await expect(page).toHaveURL(menu.path)
       await expect(trigger(page, menu.name)).toHaveAttribute('aria-expanded', 'false')
     })
@@ -101,6 +122,26 @@ test.describe('site header from 1024 pixels', () => {
     for (const href of new Set(hrefs)) {
       expect((await request.get(href, { maxRedirects: 0 })).status(), href).toBe(200)
     }
+  })
+
+  test('the planned pages in the Tools and Products menus are # placeholders for now', async ({
+    page
+  }) => {
+    await page.goto('/about/')
+    await trigger(page, 'Tools').click()
+    const converters = page.getByRole('list', { name: 'Converters' }).getByRole('link')
+    await expect(converters).toHaveText([
+      /^Hiragana to Katakana/,
+      /^Romaji to Kana/,
+      /^Kanji to Furigana/
+    ])
+    for (const converter of await converters.all()) {
+      await expect(converter).toHaveAttribute('href', '#')
+    }
+    await expect(page.getByRole('link', { name: /^All free tools/ })).toHaveAttribute('href', '#')
+    await page.keyboard.press('Escape')
+    await trigger(page, 'Products').click()
+    await expect(page.getByRole('link', { name: /^All products/ })).toHaveAttribute('href', '#')
   })
 
   test('the Dictionary menu leads to the search box', async ({ page }) => {
@@ -139,22 +180,27 @@ test.describe('site header below 1024 pixels', () => {
     await page.goto(needed.path)
     const banner = page.getByRole('banner')
     await expect(banner.getByRole('link', { name: 'Zenbu Japanese' })).toBeInViewport({ ratio: 1 })
-    await expect(banner.getByText('Zenbu Japanese')).toHaveCSS('position', 'absolute')
+    await expect(banner.getByText('Zenbu Japanese', { exact: true })).toHaveCSS(
+      'position',
+      'absolute'
+    )
     await expect(mainNav(page)).toBeHidden()
     await expect(banner.getByRole('button', { name: 'Get the app' })).toBeHidden()
+    await expect(banner.getByRole('button', { name: 'Log in' })).toBeHidden()
     await expect(menuButton(page)).toBeInViewport({ ratio: 1 })
     expect(await sidewaysOverflow(page), 'The page scrolls sideways').toBeLessThanOrEqual(0)
   })
 
-  test('the drawer holds the menus as groups, then Get the app', async ({ page }) => {
+  test('the drawer holds the menus as groups, then Log in and Get the app', async ({ page }) => {
     await page.goto('/legal/terms/')
     await menuButton(page).click()
     const menu = phoneMenu(page)
     await expect(menu).toBeVisible()
     const groups = menu.getByRole('navigation', { name: 'Sections' }).getByRole('button')
-    await expect(groups).toHaveText(['Dictionary', 'Company'])
-    await expect(groups.nth(1)).toHaveAttribute('aria-expanded', 'true')
+    await expect(groups).toHaveText(menus.map(group => group.name))
+    await expect(groups.nth(3)).toHaveAttribute('aria-expanded', 'true')
     await expect(menu.getByRole('link', { name: 'Legal', exact: true })).toBeVisible()
+    await expect(menu.getByRole('button', { name: 'Log in' })).toBeVisible()
     await expect(menu.getByRole('button', { name: 'Get the app' })).toBeVisible()
   })
 
@@ -245,8 +291,8 @@ test.describe('site header below 1024 pixels', () => {
 })
 
 const footerColumns = [
-  ['Products', ['Dictionary']],
-  ['Tools', ['Kana charts', 'Kanji lists', 'Frequency lists']],
+  ['Products', ['Zenbu Japanese for iPhone', 'Dictionary']],
+  ['Tools', ['Kana charts', 'Kanji lists', 'Frequency lists', 'All tools']],
   ['Company', ['About', 'Support', 'Contact', 'Sources']],
   ['Legal', ['Privacy Policy', 'Terms of Use', 'DMCA', 'Affiliate Disclosure']]
 ] as const

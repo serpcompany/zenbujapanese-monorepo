@@ -1,33 +1,41 @@
 import { renderToStaticMarkup } from 'react-dom/server'
 import { beforeEach, describe, expect, test, vi } from 'vitest'
-import { appStoreLink } from '@/lib/site'
+import { appStoreLink, loginLink, placeholderHref } from '@/lib/site'
 import { SiteHeader } from './site-header'
 
 const navigation = vi.hoisted(() => ({ pathname: '/' }))
 vi.mock('next/navigation', () => ({ usePathname: () => navigation.pathname }))
+
+const sections = ['Dictionary', 'Tools', 'Products', 'Company']
 
 function header(pathname: string): string {
   navigation.pathname = pathname
   return renderToStaticMarkup(<SiteHeader />)
 }
 
+const attribute = (attributes: string, name: string) =>
+  attributes.match(new RegExp(`${name}="([^"]+)"`))?.[1] ?? null
+
 function triggers(html: string): [label: string, current: string | null][] {
   return [
     ...html.matchAll(/<button ([^>]*data-slot="navigation-menu-trigger"[^>]*)>([^<]+)</g)
-  ].map(([, attributes, label]) => [
-    label.trim(),
-    attributes.match(/aria-current="([^"]+)"/)?.[1] ?? null
-  ])
+  ].map(([, attributes, label]) => [label.trim(), attribute(attributes, 'aria-current')])
 }
 
-function menuLinks(html: string): [href: string, current: string | null][] {
+type MenuLink = [href: string | null, target: string | null, current: string | null]
+
+function menuLinks(html: string): MenuLink[] {
   return [...html.matchAll(/<a ([^>]*data-slot="navigation-menu-link"[^>]*)>/g)].map(
     ([, attributes]) => [
-      attributes.match(/href="([^"]+)"/)?.[1] ?? '',
-      attributes.match(/aria-current="([^"]+)"/)?.[1] ?? null
+      attribute(attributes, 'href'),
+      attribute(attributes, 'data-link-target'),
+      attribute(attributes, 'aria-current')
     ]
   )
 }
+
+const page = (href: string): MenuLink => [href, null, null]
+const placeholder = (target: string): MenuLink => [placeholderHref, target, null]
 
 describe('the header marks the section the page is in', () => {
   beforeEach(() => {
@@ -44,10 +52,9 @@ describe('the header marks the section the page is in', () => {
     ['/sources/', 'Company'],
     ['/legal/privacy/', 'Company']
   ])('%s is in %s', (path, section) => {
-    expect(triggers(header(path))).toEqual([
-      ['Dictionary', section === 'Dictionary' ? 'true' : null],
-      ['Company', section === 'Company' ? 'true' : null]
-    ])
+    expect(triggers(header(path))).toEqual(
+      sections.map(label => [label, label === section ? 'true' : null])
+    )
   })
 
   test.each(['/', '/sitemap/', '/dictionaryx/'])('%s is in none', path => {
@@ -58,24 +65,51 @@ describe('the header marks the section the page is in', () => {
 describe("the header's menus are in the page's HTML, with the current page marked", () => {
   test('the Dictionary menu leads to the dictionary and its browse pages', () => {
     expect(menuLinks(header('/')).slice(0, 8)).toEqual([
-      ['/dictionary/', null],
-      ['/dictionary/browse/hiragana/', null],
-      ['/dictionary/browse/katakana/', null],
-      ['/dictionary/browse/frequency-dictionaries/jlpt/n5/', null],
-      ['/dictionary/browse/frequency-dictionaries/', null],
-      ['/dictionary/browse/kanji/', null],
-      ['/dictionary/browse/parts-of-speech/', null],
-      ['/dictionary/browse/', null]
+      page('/dictionary/'),
+      page('/dictionary/browse/hiragana/'),
+      page('/dictionary/browse/katakana/'),
+      page('/dictionary/browse/frequency-dictionaries/jlpt/n5/'),
+      page('/dictionary/browse/frequency-dictionaries/'),
+      page('/dictionary/browse/kanji/'),
+      page('/dictionary/browse/parts-of-speech/'),
+      page('/dictionary/browse/')
+    ])
+  })
+
+  test('the Tools menu leads to the reference pages, and its planned pages are placeholders', () => {
+    expect(menuLinks(header('/')).slice(8, 17)).toEqual([
+      placeholder('tools'),
+      page('/dictionary/'),
+      page('/dictionary/browse/kana/'),
+      page('/dictionary/browse/kanji/'),
+      page('/dictionary/browse/frequency-dictionaries/'),
+      placeholder('hiragana-to-katakana'),
+      placeholder('romaji-to-kana'),
+      placeholder('kanji-to-furigana'),
+      placeholder('tools')
+    ])
+  })
+
+  test('the Products menu leads to the web dictionary, and its planned pages are placeholders', () => {
+    expect(menuLinks(header('/')).slice(17, 25)).toEqual([
+      placeholder('iphone-app'),
+      placeholder('iphone-app'),
+      placeholder('browser-extension'),
+      page('/dictionary/'),
+      placeholder('tools'),
+      placeholder('reference-guides'),
+      placeholder('courses'),
+      placeholder('products')
     ])
   })
 
   test('the Company menu leads to About, Sources, Support, Contact, and Legal', () => {
-    expect(menuLinks(header('/support/')).slice(8)).toEqual([
-      ['/about/', null],
-      ['/sources/', null],
-      ['/support/', 'page'],
-      ['/contact/', null],
-      ['/legal/', null]
+    expect(menuLinks(header('/support/')).slice(25)).toEqual([
+      page('/about/'),
+      page('/sources/'),
+      ['/support/', null, 'page'],
+      page('/contact/'),
+      page('/legal/')
     ])
   })
 
@@ -91,7 +125,7 @@ describe("the header's menus are in the page's HTML, with the current page marke
   })
 })
 
-test('below 1024 pixels the header has a menu button, and from 1024 the menus and Get the app', () => {
+test('below 1024 pixels the header has a menu button, and from 1024 the menus', () => {
   const html = header('/')
   const menu = html.match(/<button [^>]*aria-label="Menu"[^>]*>/)?.[0] ?? ''
   expect(menu).toContain('aria-haspopup="dialog"')
@@ -103,13 +137,28 @@ test('below 1024 pixels the header has a menu button, and from 1024 the menus an
   expect(name.split(' ')).toContain('max-lg:sr-only')
 })
 
-test('the Get the app button leads with a phone icon, to the App Store link in src/lib/site.ts', () => {
-  const html = header('/dictionary/')
-  const [, attributes = '', content = ''] =
-    html.match(/<a ([^>]*data-slot="button"[^>]*)>([\s\S]*?)<\/a>/) ?? []
-  expect(attributes).toContain(`href="${appStoreLink.href}"`)
-  expect(attributes).toContain(`data-outside-link="${appStoreLink.id}"`)
-  expect(attributes.match(/class="([^"]*)"/)?.[1].split(' ')).toContain('max-lg:hidden')
+function headerButtons(html: string): [attributes: string, content: string][] {
+  return [...html.matchAll(/<a ([^>]*data-slot="button"[^>]*)>([\s\S]*?)<\/a>/g)].map(
+    ([, attributes, content]) => [attributes, content]
+  )
+}
+
+test('from 1024 pixels Log in and Get the app end the header, at their links in src/lib/site.ts', () => {
+  const buttons = headerButtons(header('/dictionary/'))
+  expect(buttons.map(([attributes]) => attribute(attributes, 'data-link-target'))).toEqual([
+    loginLink.id,
+    appStoreLink.id
+  ])
+  for (const [attributes] of buttons) {
+    expect(attributes.match(/class="([^"]*)"/)?.[1].split(' ')).toContain('max-lg:hidden')
+  }
+  expect(attribute(buttons[0][0], 'href')).toBe(loginLink.href)
+  expect(buttons[0][1]).toBe('Log in')
+  expect(attribute(buttons[1][0], 'href')).toBe(appStoreLink.href)
+})
+
+test('the Get the app button leads with a phone icon', () => {
+  const [, content = ''] = headerButtons(header('/dictionary/'))[1] ?? []
   expect(content).toMatch(
     /^<svg [^>]*class="lucide lucide-smartphone[^"]*"[^>]*data-icon="inline-start"/
   )

@@ -1,6 +1,6 @@
 'use client'
 
-import { GetAppButton } from '@/components/get-app-button'
+import { GetAppButton } from '@/components/site-actions'
 import {
   Dialog,
   DialogContent,

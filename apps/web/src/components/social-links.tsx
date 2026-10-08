@@ -38,7 +38,7 @@ export function SocialLinks() {
           <li key={link.id}>
             <a
               href={link.href}
-              data-outside-link={link.id}
+              data-link-target={link.id}
               aria-label={`${site.name} on ${link.name}`}
               title={link.name}
               className="flex h-11 items-center justify-center rounded-lg text-muted-foreground hover:bg-muted hover:text-foreground md:size-9"

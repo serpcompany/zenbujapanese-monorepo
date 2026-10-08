@@ -65,6 +65,13 @@ lists every child sitemap and each child sitemap lists the new URLs.
 - `apps/web/vitest.config.ts` has two projects: `*.interaction.test.tsx` run in happy-dom, the
   other tests in Node. Both set `__NEXT_TRAILING_SLASH`, so `next/link` draws links with their
   trailing slash, as the build does with `trailingSlash`.
+- A link whose page or address doesn't exist yet points at `#`, and is listed once, by what it
+  stands for, in `linkTargets` in `apps/web/src/lib/site.ts`; its links carry `data-link-target`.
+  `apps/web/e2e/placeholders.spec.ts` fails on any other `#` link and prints the listed ones
+  ([product docs](../../apps/web/docs/product/dictionary.md#header-footer-and-site-wide),
+  Placeholder links). When a page ships, link it directly and drop its entry.
+- `apps/web/public/` holds the header's images (App Store screenshot crops and the app icon).
+  `next/image` renders them `unoptimized`, since the site sets up no image optimization on Workers.
 - `apps/web/biome.json` allows `dangerouslySetInnerHTML` only in
   `apps/web/src/components/dictionary/dictionary-breadcrumbs.tsx`, for its `BreadcrumbList`
   JSON-LD, which escapes `<` so the JSON can't close its script tag (the Next.js JSON-LD guide).

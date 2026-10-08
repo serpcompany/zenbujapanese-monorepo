@@ -43,6 +43,7 @@ it must pass it over ([`ci.md`](agents/ci.md), Weekly maintenance).
 | --- | --- | --- | --- |
 | 4 of the 69 behaviors in `apps/web/docs/product/dictionary.md` have no automated check, and 12 more have a part without one, mostly layout and speech. | A change that breaks them passes CI. | #511 | medium |
 | The website lacks app behaviors that the product docs require, under Required, not built yet: Reading Aids, handwriting and radical input (#526), kanji element detail, and more. | The website is meant to show what the app shows; each difference without a decision on file is a bug. | #511 | large |
+| The header, footer, and Get the app buttons link 21 placeholders to `#` (`linkTargets` in `apps/web/src/lib/site.ts`): pages not built yet (the tools index and its three converters, the products index, the iPhone app's product page, the browser extension, reference guides, courses, and login), the App Store, and ten social accounts. The owner chose to show them before their pages exist (#650). | A learner who follows one stays on the page. `apps/web/e2e/placeholders.spec.ts` lists them on every run, and fails on a `#` link that isn't in the list. | #652 (products), #579 (tools), #468 (login); No issue yet for the App Store and social accounts | medium |
 | Search result pages are in no sitemap. #463 dropped its precomputed search-sitemap query set after ADR 0009, and the route audit decides which search pages stay indexable at all. | Search engines find search pages only through links. | #544 | medium |
 
 ## Language data

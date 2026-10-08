@@ -9,15 +9,45 @@ export const site = {
 
 export const placeholderHref = '#'
 
-type OutsideLink = {
+type LinkTarget = {
   id: string
-  kind: 'app' | 'social'
+  kind: 'page' | 'store' | 'social'
   name: string
   href: string
 }
 
-const outsideLinks = [
-  { id: 'app-store', kind: 'app', name: 'App Store', href: placeholderHref },
+const linkTargets = [
+  { id: 'tools', kind: 'page', name: 'Tools index, /tools/', href: placeholderHref },
+  {
+    id: 'hiragana-to-katakana',
+    kind: 'page',
+    name: 'Hiragana to Katakana converter',
+    href: placeholderHref
+  },
+  { id: 'romaji-to-kana', kind: 'page', name: 'Romaji to Kana converter', href: placeholderHref },
+  {
+    id: 'kanji-to-furigana',
+    kind: 'page',
+    name: 'Kanji to Furigana converter',
+    href: placeholderHref
+  },
+  { id: 'products', kind: 'page', name: 'Products index, /products/', href: placeholderHref },
+  {
+    id: 'iphone-app',
+    kind: 'page',
+    name: 'Zenbu Japanese for iPhone product page, /products/zenbu-japanese-for-iphone/',
+    href: placeholderHref
+  },
+  {
+    id: 'browser-extension',
+    kind: 'page',
+    name: 'Browser extension product page',
+    href: placeholderHref
+  },
+  { id: 'reference-guides', kind: 'page', name: 'Reference guides', href: placeholderHref },
+  { id: 'courses', kind: 'page', name: 'Courses', href: placeholderHref },
+  { id: 'login', kind: 'page', name: 'Log in page, /login/', href: placeholderHref },
+  { id: 'app-store', kind: 'store', name: 'App Store listing', href: placeholderHref },
   { id: 'youtube', kind: 'social', name: 'YouTube', href: placeholderHref },
   { id: 'x', kind: 'social', name: 'X', href: placeholderHref },
   { id: 'instagram', kind: 'social', name: 'Instagram', href: placeholderHref },
@@ -28,23 +58,25 @@ const outsideLinks = [
   { id: 'bluesky', kind: 'social', name: 'Bluesky', href: placeholderHref },
   { id: 'linkedin', kind: 'social', name: 'LinkedIn', href: placeholderHref },
   { id: 'facebook', kind: 'social', name: 'Facebook', href: placeholderHref }
-] as const satisfies readonly OutsideLink[]
+] as const satisfies readonly LinkTarget[]
 
-export type OutsideLinkId = (typeof outsideLinks)[number]['id']
+export type LinkTargetId = (typeof linkTargets)[number]['id']
 
-export type SocialLink = Extract<(typeof outsideLinks)[number], { kind: 'social' }>
+export type SocialLink = Extract<(typeof linkTargets)[number], { kind: 'social' }>
 
-export const socialLinks = outsideLinks.filter((link): link is SocialLink => link.kind === 'social')
+export const socialLinks = linkTargets.filter((link): link is SocialLink => link.kind === 'social')
 
-function outsideLinkFor(id: OutsideLinkId) {
-  const link = outsideLinks.find(candidate => candidate.id === id)
-  if (!link) throw new Error(`Unknown outside link: ${id}`)
+export function linkTarget(id: LinkTargetId): LinkTarget {
+  const link = linkTargets.find(candidate => candidate.id === id)
+  if (!link) throw new Error(`Unknown link target: ${id}`)
   return link
 }
 
-export const appStoreLink = outsideLinkFor('app-store')
+export const appStoreLink = linkTarget('app-store')
 
-export const placeholderLinks: readonly OutsideLink[] = outsideLinks.filter(
+export const loginLink = linkTarget('login')
+
+export const placeholderLinks: readonly LinkTarget[] = linkTargets.filter(
   link => link.href === placeholderHref
 )
 

@@ -20,8 +20,12 @@ export function SiteFooter() {
               </h2>
               <ul className="mt-3 flex flex-col gap-2 text-muted-foreground">
                 {column.links.map(link => (
-                  <li key={link.path}>
-                    <Link href={link.path} className="hover:text-foreground">
+                  <li key={link.title}>
+                    <Link
+                      href={link.href}
+                      data-link-target={link.target}
+                      className="hover:text-foreground"
+                    >
                       {link.title}
                     </Link>
                   </li>
