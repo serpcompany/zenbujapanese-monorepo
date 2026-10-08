@@ -53,6 +53,9 @@ jobs:
       - name: Build for production
         working-directory: apps/web
         run: SITE_ENV=production pnpm build
+      - name: Production's footer links signing in
+        working-directory: apps/web
+        run: grep -q 'href="/login/">Sign in<' .next/server/app/about.html
 
   e2e:
     runs-on: ubuntu-latest
@@ -79,17 +82,6 @@ jobs:
         env:
           E2E_SERVER: preview
         run: pnpm test:e2e
-      - name: Build the site as production deploys it, with a test Tag Manager ID
-        working-directory: apps/web
-        env:
-          SITE_ENV: production
-          NEXT_PUBLIC_GTM_ID: GTM-TEST000
-        run: pnpm exec opennextjs-cloudflare build
-      - name: Run the closed account pages' browser test on it, with production's vars
-        working-directory: apps/web
-        env:
-          E2E_SITE_ENV: production
-        run: pnpm exec playwright test
       - name: Keep the report
         if: failure()
         uses: actions/upload-artifact@v7

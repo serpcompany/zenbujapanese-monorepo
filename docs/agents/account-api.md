@@ -864,5 +864,4 @@ this order; each step says how to check it worked.
      against `GET /v1/auth/jwks`. A learner who hid their email from Apple gets the notice of a way
      in added at their relay address.
    - Once production's service answers on `https://api.zenbujapanese.com`, open the website's
-     account pages there ([`web.md`](web.md), Account pages, Opening production's account
-     pages).
+     account pages there (#688; [`web.md`](web.md), Account pages).

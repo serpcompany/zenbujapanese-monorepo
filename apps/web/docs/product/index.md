@@ -8,8 +8,8 @@ which lists features the website must have but doesn't yet, with the check each 
 The website is a public mirror of the app's dictionary. Its pages show what the app's Search tab
 shows for the same word or kanji, laid out as the #462 designs chose: stock shadcn components in
 one column, with sections in the app's order. The site has account pages ([Account
-pages](account.md)), open where an environment names an account service (staging today, not yet
-production), but it doesn't sync, so actions that keep learner data (lists, notes, known words,
+pages](account.md)), open where an environment names an account service (staging and production),
+but it doesn't sync, so actions that keep learner data (lists, notes, known words,
 photos) still open a prompt to get the app (#468).
 
 ## Pages
@@ -36,7 +36,8 @@ the browse pages, and [Products pages](products.md) the catalog and the product 
 
 The account pages, `/login/`, `/register/`, `/forgot-password/`, and `/account/`, sign a
 learner in to their Zenbu account and manage it; [Account pages](account.md) describes them. They
-are `noindex` and in no sitemap, and where they're closed, nothing links to them.
+are `noindex` and in no sitemap, and where they're closed, in a build whose environment names no
+account service, nothing links to them.
 
 The legal pages are under `/legal/`. [Privacy Policy](privacy.md) describes what
 `/legal/privacy/` says about the app, Tomodachi, the website, and a Zenbu account, and what the
@@ -74,11 +75,9 @@ five kinds:
 - **Browser tests** (Playwright) in `apps/web/e2e/`, which open the site on the dictionary fixtures
   at a desktop and a phone width, and click through it as a reader does. The `Web` workflow runs
   them on the production build; [`docs/agents/web.md`](../../../../docs/agents/web.md) says how to
-  run them locally. The account pages' are in three kinds: `e2e/account.spec.ts`, with a stand-in
-  for the account service, runs with the rest; `e2e/account-service.spec.ts` runs against a real
-  one, in the `Account API` workflow; and `e2e/account-closed.spec.ts` runs, in the `Web`
-  workflow, on a build made as production deploys, whose account pages are closed
-  ([Account pages](account.md)).
+  run them locally. The account pages' are in two kinds: `e2e/account.spec.ts`, with a stand-in
+  for the account service, runs with the rest; and `e2e/account-service.spec.ts` runs against a
+  real one, in the `Account API` workflow ([Account pages](account.md)).
 - **Smoke checks** in `apps/web/scripts/smoke.sh`, run against staging and production after each
   deploy. Each is named here by the message it prints.
 

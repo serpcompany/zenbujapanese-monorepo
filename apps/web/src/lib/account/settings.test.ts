@@ -31,25 +31,26 @@ describe("the website's account settings", () => {
     expect(accountSettingsFrom({ ACCOUNT_API_URL: 'https://api.zenbujapanese.com/v1' })).toBeNull()
   })
 
-  test("name staging's account service, and none yet for production, so its pages stay closed", () => {
+  test("name staging's and production's account services, so both open their pages", () => {
     expect(accountServiceIn(wrangler, 'staging')).toBe('https://api-staging.zenbujapanese.com')
-    expect(accountServiceIn(wrangler, 'production')).toBeNull()
+    expect(accountServiceIn(wrangler, 'production')).toBe('https://api.zenbujapanese.com')
     expect(accountServiceIn(wrangler, undefined)).toBe('http://localhost:8789')
     expect(accountServiceIn(wrangler, 'preview')).toBeNull()
     expect(accountPagesFor(wrangler, 'staging')).toBe('open')
-    expect(accountPagesFor(wrangler, 'production')).toBe('closed')
+    expect(accountPagesFor(wrangler, 'production')).toBe('open')
     expect(accountPagesFor(wrangler, undefined)).toBe('open')
   })
 
-  test('offer Apple and Google on staging, and neither in production nor locally', () => {
+  test('offer Apple and Google on staging and in production, and neither locally', () => {
     expect(accountSettingsFrom(config.env.staging.vars)).toEqual({
       apiUrl: 'https://api-staging.zenbujapanese.com',
       appleServicesId: 'com.zenbujapanese.web',
       google: true
     })
-    expect(config.env.production.vars).toMatchObject({
-      ACCOUNT_APPLE_SERVICES_ID: '',
-      ACCOUNT_GOOGLE_SIGN_IN: ''
+    expect(accountSettingsFrom(config.env.production.vars)).toEqual({
+      apiUrl: 'https://api.zenbujapanese.com',
+      appleServicesId: 'com.zenbujapanese.web',
+      google: true
     })
     expect(accountSettingsFrom(config.vars)).toMatchObject({ appleServicesId: null, google: false })
   })

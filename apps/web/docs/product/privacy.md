@@ -14,8 +14,9 @@ sections, with two tables, for what an account keeps and how long. Cookie names,
 sign-in mechanics, field-by-field lists, per-timer retention, and Tomodachi's permission list are
 condensed into categories or one line each. The page never says whether an app or the website
 signs in today: everything in the app works without an account, and the page says what happens
-"if you create or sign in to a Zenbu account where our apps or this website offer one", so it holds
-before and after sign-in opens in the app (#573) and on production's website. When the service
+"if you create or sign in to a Zenbu account where our apps or this website offer one", so it held
+when production's website opened sign-in (#688), and holds before and after sign-in
+opens in the app (#573). When the service
 keeps something new, keeps it longer, sends email through another provider, or an app gets a new
 scope, change the page, its Effective date, this doc, and the
 [App Store privacy labels](../app-store-privacy-labels.md) in the same pull request. The owner
