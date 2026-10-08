@@ -11,6 +11,7 @@ public struct LiveSentence: Sendable, Equatable {
   public var language: SpokenLanguage
   public var text: String
   public var provisionalTranslation: String?
+  var provisionalSource: String?
 }
 
 public enum PauseReason: Sendable, Equatable {

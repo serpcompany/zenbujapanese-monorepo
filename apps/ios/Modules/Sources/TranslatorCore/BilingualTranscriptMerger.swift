@@ -77,6 +77,7 @@ public struct BilingualTranscriptMerger: Sendable {
   static let holdLimit: TimeInterval = 20
   static let minimumConfidence = 0.4
   static let alreadyEmittedShare = 0.5
+  static let confidenceOverShownSpeech = 0.55
 
   public let languages: [SpokenLanguage]
   private var volatile: [SpokenLanguage: TranscriberResult] = [:]
@@ -84,6 +85,7 @@ public struct BilingualTranscriptMerger: Sendable {
   private var finals: [SpokenLanguage: [TranscriberResult]] = [:]
   private var firstFinalAt: Date?
   private var emittedThrough: TimeInterval = -.infinity
+  private var shownThrough: TimeInterval = -.infinity
 
   public init(languages: [SpokenLanguage]) {
     self.languages = languages
@@ -97,7 +99,7 @@ public struct BilingualTranscriptMerger: Sendable {
     result.text = Self.cleaned(result.text)
     guard languages.count > 1 else { return passThrough(result) }
     let isLate = result.end <= emittedThrough + Self.endTolerance
-    if isLate || (result.isFinal && Self.mostlyBefore(emittedThrough, result)) {
+    if isLate || (result.isFinal && repeatsShownSpeech(result)) {
       return result.isFinal ? dropLate(result.language) : []
     }
     guard result.isFinal else {
@@ -118,6 +120,12 @@ public struct BilingualTranscriptMerger: Sendable {
       return []
     }
     return emitFinal()
+  }
+
+  private func repeatsShownSpeech(_ result: TranscriberResult) -> Bool {
+    let startsInShownSpeech = result.start < shownThrough - Self.endTolerance
+    let doubtful = (result.confidence ?? 1) < Self.confidenceOverShownSpeech
+    return Self.mostlyBefore(emittedThrough, result) || (startsInShownSpeech && doubtful)
   }
 
   static func mostlyBefore(_ time: TimeInterval, _ result: TranscriberResult) -> Bool {
@@ -170,14 +178,19 @@ public struct BilingualTranscriptMerger: Sendable {
       guard let results = finals[language], !results.isEmpty else { return nil }
       return candidate(language, from: results, live: nil)
     }
-    emittedThrough = finals.values.flatMap { $0.map(\.end) }.max() ?? emittedThrough
+    let held = finals
+    let end = finals.values.flatMap { $0.map(\.end) }.max()
     finals = [:]
     firstFinalAt = nil
-    volatile = volatile.filter { $0.value.end > emittedThrough + Self.endTolerance }
-    guard let winner = LanguageArbiter.best(candidates), Self.isWorthTranslating(winner) else {
+    guard let winner = LanguageArbiter.best(candidates.filter(Self.isWorthTranslating)) else {
       return [.final(languages[0], "")]
     }
-    return [.final(winner.language, winner.text)]
+    emittedThrough = end ?? emittedThrough
+    volatile = volatile.filter { $0.value.end > emittedThrough + Self.endTolerance }
+    let shown = held[winner.language] ?? []
+    shownThrough = shown.map(\.end).max() ?? shownThrough
+    let texts = shown.map(\.text).filter { !$0.isEmpty }
+    return winner.language.sentences(in: texts).map { .final(winner.language, $0) }
   }
 
   private func candidate(

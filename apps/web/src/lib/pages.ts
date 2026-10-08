@@ -5,7 +5,12 @@ export type SitePage = {
 }
 
 export const sitePages = [
-  { path: '/', title: 'Home', description: 'Zenbu Japanese dictionary and translator.' },
+  {
+    path: '/',
+    title: 'Home',
+    description:
+      'Look up Japanese words offline, read menus and signs with your camera, draw kanji you can’t type, and translate conversations on iPhone. Free on the web too.'
+  },
   {
     path: '/dictionary/',
     title: 'Japanese dictionary',
@@ -47,7 +52,9 @@ export const legalPages = sitePages.filter(
   page => page.path.startsWith('/legal/') && page.path !== '/legal/'
 )
 
-export function pageFor(path: (typeof sitePages)[number]['path']): SitePage {
+export type SitePath = (typeof sitePages)[number]['path']
+
+export function pageFor(path: SitePath): SitePage {
   const page = sitePages.find(candidate => candidate.path === path)
   if (!page) throw new Error(`Unknown page: ${path}`)
   return page

@@ -7,7 +7,7 @@ layers apart. Each part's own doc has the detail; each rule here is enforced by 
 
 | Part | What it is | Its doc |
 | --- | --- | --- |
-| `apps/ios` | The iPhone app, in Swift. It reads the language data bundled with it, which its importers in `apps/ios/Tools` build. | [`docs/agents/ios.md`](docs/agents/ios.md) |
+| `apps/ios` | The iPhone app, in Swift. It reads the language data bundled with it, which its importers in `apps/ios/Tools` build. `apps/ios/Tools/TranslateReplay` replays recorded Translate audio on a Mac. | [`docs/agents/ios.md`](docs/agents/ios.md) |
 | `apps/web` | zenbujapanese.com: Next.js on Cloudflare Workers through OpenNext. Its dictionary pages read the dictionary service. | [`docs/agents/web.md`](docs/agents/web.md) |
 | `apps/dictionary-api` | The dictionary service: Node, in a Docker image on serpcompany's server, answering the website's dictionary requests by running the shared core on the app's language data. | [`docs/agents/dictionary-api.md`](docs/agents/dictionary-api.md) |
 | `apps/account-api` | The account service: Node and Postgres on the same server, for Zenbu accounts, sign-in, and sync (ADR 0012). It signs learners in with Apple, Google, or an emailed code, through Better Auth, and issues the access tokens other services check. | [`docs/agents/account-api.md`](docs/agents/account-api.md) |
@@ -71,8 +71,9 @@ saying where the code belongs:
   `data.ts` hands them ([`docs/agents/web.md`](docs/agents/web.md), Code layout).
 - **The app**: `TranslatorCore`, the Translate tab's engine, imports only Foundation, Observation,
   and OSLog (`tools/checks/src/layers.ts`), and can't import the app's `SearchExperience` target;
-  the app supplies its speech, translation, and playback clients
-  ([`docs/agents/translate.md`](docs/agents/translate.md)).
+  the app supplies its speech, translation, and playback clients. `TranslatorOnDevice`, the
+  recognizer and translation adapters the Mac's replay check shares, adds only AVFoundation,
+  Speech, and Translation ([`docs/agents/translate.md`](docs/agents/translate.md)).
 - **Across parts**: the core and the app's Swift change together, which `Search parity` checks
   ([`docs/agents/ci.md`](docs/agents/ci.md)); the website and the service share their row shapes
   through the core; no app imports another, and apps reach a shared package by its name.
