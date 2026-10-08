@@ -1,16 +1,23 @@
 import { spawnSync } from 'node:child_process'
-import { mkdtempSync, readFileSync, rmSync } from 'node:fs'
+import { existsSync, mkdtempSync, readFileSync, rmSync } from 'node:fs'
 import { createRequire } from 'node:module'
 import { tmpdir } from 'node:os'
-import { dirname, join } from 'node:path'
-import { classify, type Language, root } from './files'
+import { dirname, extname, join } from 'node:path'
+import { classify, extensionsOf, type Language, root } from './files'
 
 const minimumTokens = 50
 const minimumLines = 5
 
-const scannedLanguages: ReadonlySet<Language> = new Set(['typescript', 'swift', 'python', 'shell'])
-const jscpdFormats = 'typescript,swift,python,bash'
-const jscpdExtensions = 'typescript:ts,tsx,mts,cts,js,jsx,mjs,cjs'
+const jscpdFormatsByLanguage = new Map<Language, string>([
+  ['typescript', 'typescript'],
+  ['swift', 'swift'],
+  ['python', 'python'],
+  ['shell', 'bash']
+])
+const jscpdFormats = [...jscpdFormatsByLanguage.values()].join(',')
+const jscpdExtensions = [...jscpdFormatsByLanguage]
+  .map(([language, format]) => `${format}:${extensionsOf(language).join(',')}`)
+  .join(';')
 
 interface Location {
   name: string
@@ -34,7 +41,11 @@ export interface Duplicate {
 function scannedFiles(files: readonly string[]): string[] {
   return files.filter(path => {
     const kind = classify(path)
-    return kind.kind === 'code' && scannedLanguages.has(kind.language)
+    return (
+      kind.kind === 'code' &&
+      jscpdFormatsByLanguage.has(kind.language) &&
+      extensionsOf(kind.language).includes(extname(path).slice(1).toLowerCase())
+    )
   })
 }
 
@@ -105,7 +116,13 @@ export function findDuplicates(files: readonly string[]): Duplicate[] {
     if (run.status !== 0) {
       throw new Error(`jscpd failed: ${`${run.stdout}${run.stderr}`.trim()}`)
     }
-    return readClones(readFileSync(join(output, 'jscpd-report.json'), 'utf8'))
+    const report = join(output, 'jscpd-report.json')
+    if (!existsSync(report)) {
+      throw new Error(
+        `jscpd read none of the ${scanned.length} files it was given, so its formats no longer match files.ts: see duplicates.ts`
+      )
+    }
+    return readClones(readFileSync(report, 'utf8'))
   } finally {
     rmSync(output, { recursive: true, force: true })
   }

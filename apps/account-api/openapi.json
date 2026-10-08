@@ -1,0 +1,4272 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "Zenbu account service",
+    "version": "1",
+    "description": "Accounts, sign-in, profiles, and sync for every Zenbu app (ADR 0013). Sign-in is Better Auth's, under /v1/auth; a test holds each of its answers to this contract.\n\n- **Errors.** Every error is `{ \"error\": { \"code\": \"...\", \"message\": \"...\" } }`. Branch on `code`, which is stable; `message` is for people and may change. A route may answer a code it doesn't list here, such as one from a Better Auth upgrade: handle it by its status.\n- **Apps.** A sign-in names its app in `X-Zenbu-Client`, unless it comes from one of the website's origins; the app decides the scopes its tokens carry.\n- **Bodies** are JSON, at most 64 KB (`413 too_large`).\n- **Rate limits** answer `429 too_many_requests` with `Retry-After`, in seconds (Better Auth's also with `X-Retry-After`).\n- **Browsers** may call the service only from the website's origins, with credentials; CORS lets the page read `Retry-After` and `X-Retry-After`."
+  },
+  "servers": [
+    {
+      "url": "https://api.zenbujapanese.com",
+      "description": "Production"
+    },
+    {
+      "url": "https://api-staging.zenbujapanese.com",
+      "description": "Staging"
+    }
+  ],
+  "components": {
+    "securitySchemes": {
+      "accessToken": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT",
+        "description": "A 15-minute access token from GET /v1/auth/token, which takes the session token a sign-in returns, never the session token itself. It names the account (`sub`), the app (`azp`), when the learner signed in (`auth_time`), and the app's scopes (`scope`, space-separated). Each route names the scope it needs, and each sync operation its own, in `x-sync-entities`. The dictionary service's routes for apps take `dictionary:read`."
+      },
+      "sessionToken": {
+        "type": "http",
+        "scheme": "bearer",
+        "description": "The signed session token from a sign-in's `set-auth-token` header. Send it only to /v1/auth."
+      }
+    },
+    "schemas": {
+      "Error": {
+        "type": "object",
+        "properties": {
+          "error": {
+            "type": "object",
+            "properties": {
+              "code": {
+                "type": "string",
+                "example": "unauthorized"
+              },
+              "message": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "code",
+              "message"
+            ]
+          }
+        },
+        "required": [
+          "error"
+        ],
+        "description": "Every error. `code` is stable and machine-readable; `message` is for people and may change."
+      },
+      "ProfileUpdateFields": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "1 to 100 characters once trimmed, with runs of spaces made one, kept in Unicode NFC, and no control or invisible format characters."
+          },
+          "username": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "3 to 30 letters a to z, digits, or underscores after Unicode NFKC, trimming, and lowercasing, unique across accounts; `null` removes it."
+          }
+        },
+        "additionalProperties": false
+      },
+      "WordFields": {
+        "type": "object",
+        "properties": {
+          "headword": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200,
+            "description": "The word as the app shows it, kept in Unicode NFC and trimmed, with no control characters."
+          },
+          "reading": {
+            "type": "string",
+            "maxLength": 200,
+            "description": "Its reading, held as `headword` is. Empty when left out."
+          }
+        },
+        "required": [
+          "headword"
+        ]
+      },
+      "ListCreateFields": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "1 to 500 characters once trimmed; control characters become spaces."
+          },
+          "position": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 100000,
+            "description": "Where the list sorts among the account's lists, lowest first."
+          }
+        },
+        "required": [
+          "name",
+          "position"
+        ],
+        "additionalProperties": false
+      },
+      "ListUpdateFields": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "1 to 500 characters once trimmed; control characters become spaces."
+          },
+          "position": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 100000,
+            "description": "Where the list sorts among the account's lists, lowest first."
+          }
+        },
+        "additionalProperties": false
+      },
+      "Profile": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "The Zenbu user ID. It never changes."
+          },
+          "name": {
+            "type": "string"
+          },
+          "username": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "email": {
+            "type": "string",
+            "description": "The account's email. It can't be changed here."
+          },
+          "version": {
+            "type": "integer",
+            "minimum": 1,
+            "description": "The profile revision. It goes up by one with each change, and jumps to the time in milliseconds when the service starts on a restored backup; send it back as `baseVersion` to change the profile."
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "username",
+          "email",
+          "version",
+          "createdAt",
+          "updatedAt"
+        ]
+      },
+      "ProfileConflict": {
+        "type": "object",
+        "properties": {
+          "error": {
+            "type": "object",
+            "properties": {
+              "code": {
+                "type": "string",
+                "enum": [
+                  "version_conflict"
+                ]
+              },
+              "message": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "code",
+              "message"
+            ]
+          },
+          "current": {
+            "$ref": "#/components/schemas/Profile"
+          }
+        },
+        "required": [
+          "error",
+          "current"
+        ],
+        "description": "The profile changed since `baseVersion`. `current` is the profile as it is now."
+      },
+      "ProfilePatch": {
+        "type": "object",
+        "properties": {
+          "baseVersion": {
+            "type": "integer",
+            "minimum": 1,
+            "description": "The profile `version` this change was made to. If the profile has changed since, nothing is changed and the answer is a conflict with the current profile."
+          },
+          "name": {
+            "type": "string",
+            "description": "1 to 100 characters once trimmed, with runs of spaces made one and no control characters. Stored in Unicode NFC."
+          },
+          "username": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "3 to 30 letters a to z, digits, or underscores, unique across accounts. It's normalized first (Unicode NFKC, trimmed, lowercased), so `Kana_Fan` is `kana_fan`. `null` removes it."
+          }
+        },
+        "required": [
+          "baseVersion"
+        ],
+        "additionalProperties": false
+      },
+      "DeleteAccount": {
+        "type": "object",
+        "properties": {
+          "confirm": {
+            "type": "boolean",
+            "enum": [
+              true
+            ],
+            "description": "The learner confirmed in the app."
+          },
+          "appleAuthorizationCode": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 4096,
+            "description": "From a fresh Sign in with Apple, for an account that signs in with Apple. It's used once, to revoke the app's access with Apple."
+          },
+          "appleRedirectUri": {
+            "type": "string",
+            "maxLength": 2048,
+            "format": "uri",
+            "description": "The website only: the return URL its Sign in with Apple popup named, which Apple needs again to take the code. It must be on one of the website's origins. Without it, the website's code is taken as one Apple sent to GET /v1/auth/callback/apple."
+          }
+        },
+        "required": [
+          "confirm"
+        ],
+        "additionalProperties": false
+      },
+      "SyncAnswer": {
+        "type": "object",
+        "properties": {
+          "results": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/MutationResult"
+            },
+            "description": "One per mutation, in order."
+          },
+          "changes": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Change"
+            },
+            "description": "The entities that changed after the cursor, each once, as they are now, including the ones this request changed. On a page, lists come before their words, but a word can come on an earlier page than its list: hold it until the sync reaches `hasMore: false`."
+          },
+          "cursor": {
+            "type": "string",
+            "description": "Opaque, and at most 200 characters. Keep it once the changes are applied, and send it next time."
+          },
+          "hasMore": {
+            "type": "boolean",
+            "description": "More changes are waiting: sync again with the new cursor."
+          }
+        },
+        "required": [
+          "results",
+          "changes",
+          "cursor",
+          "hasMore"
+        ]
+      },
+      "MutationResult": {
+        "oneOf": [
+          {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string"
+              },
+              "status": {
+                "type": "string",
+                "enum": [
+                  "applied"
+                ]
+              },
+              "version": {
+                "type": "integer"
+              }
+            },
+            "required": [
+              "id",
+              "status",
+              "version"
+            ]
+          },
+          {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string"
+              },
+              "status": {
+                "type": "string",
+                "enum": [
+                  "conflict"
+                ]
+              },
+              "version": {
+                "type": "integer"
+              },
+              "current": {
+                "$ref": "#/components/schemas/Change"
+              }
+            },
+            "required": [
+              "id",
+              "status",
+              "version",
+              "current"
+            ]
+          },
+          {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string"
+              },
+              "status": {
+                "type": "string",
+                "enum": [
+                  "rejected"
+                ]
+              },
+              "error": {
+                "type": "object",
+                "properties": {
+                  "code": {
+                    "type": "string",
+                    "enum": [
+                      "invalid_fields",
+                      "username_taken",
+                      "unknown_entity",
+                      "unknown_operation",
+                      "invalid_mutation",
+                      "mutation_id_reused",
+                      "already_exists",
+                      "unknown_list",
+                      "too_many_lists",
+                      "list_full",
+                      "not_allowed"
+                    ]
+                  },
+                  "message": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "code",
+                  "message"
+                ]
+              }
+            },
+            "required": [
+              "id",
+              "status",
+              "error"
+            ]
+          }
+        ],
+        "description": "`applied`: the change is in, at `version`. `conflict`: the entity changed since `baseVersion`, so nothing changed; `current` is it as it is now. `rejected`: the change can never apply as sent; `error.code` says why. A result is final: to try again, send a new mutation with a new ID."
+      },
+      "Change": {
+        "anyOf": [
+          {
+            "type": "object",
+            "properties": {
+              "entity": {
+                "type": "string",
+                "enum": [
+                  "profile"
+                ]
+              },
+              "entityId": {
+                "type": "string"
+              },
+              "operation": {
+                "type": "string",
+                "enum": [
+                  "put"
+                ]
+              },
+              "version": {
+                "type": "integer"
+              },
+              "data": {
+                "$ref": "#/components/schemas/Profile"
+              }
+            },
+            "required": [
+              "entity",
+              "entityId",
+              "operation",
+              "version",
+              "data"
+            ]
+          },
+          {
+            "type": "object",
+            "properties": {
+              "entity": {
+                "type": "string",
+                "enum": [
+                  "knownWord"
+                ]
+              },
+              "entityId": {
+                "type": "string"
+              },
+              "operation": {
+                "type": "string",
+                "enum": [
+                  "put"
+                ]
+              },
+              "version": {
+                "type": "integer"
+              },
+              "data": {
+                "$ref": "#/components/schemas/KnownWord"
+              }
+            },
+            "required": [
+              "entity",
+              "entityId",
+              "operation",
+              "version",
+              "data"
+            ]
+          },
+          {
+            "type": "object",
+            "properties": {
+              "entity": {
+                "type": "string",
+                "enum": [
+                  "list"
+                ]
+              },
+              "entityId": {
+                "type": "string"
+              },
+              "operation": {
+                "type": "string",
+                "enum": [
+                  "put"
+                ]
+              },
+              "version": {
+                "type": "integer"
+              },
+              "data": {
+                "$ref": "#/components/schemas/WordList"
+              }
+            },
+            "required": [
+              "entity",
+              "entityId",
+              "operation",
+              "version",
+              "data"
+            ]
+          },
+          {
+            "type": "object",
+            "properties": {
+              "entity": {
+                "type": "string",
+                "enum": [
+                  "listWord"
+                ]
+              },
+              "entityId": {
+                "type": "string"
+              },
+              "operation": {
+                "type": "string",
+                "enum": [
+                  "put"
+                ]
+              },
+              "version": {
+                "type": "integer"
+              },
+              "data": {
+                "$ref": "#/components/schemas/ListWord"
+              }
+            },
+            "required": [
+              "entity",
+              "entityId",
+              "operation",
+              "version",
+              "data"
+            ]
+          },
+          {
+            "type": "object",
+            "properties": {
+              "entity": {
+                "type": "string",
+                "enum": [
+                  "knownWord",
+                  "list",
+                  "listWord"
+                ]
+              },
+              "entityId": {
+                "type": "string"
+              },
+              "operation": {
+                "type": "string",
+                "enum": [
+                  "delete"
+                ]
+              },
+              "version": {
+                "type": "integer"
+              },
+              "data": {
+                "type": "null"
+              }
+            },
+            "required": [
+              "entity",
+              "entityId",
+              "operation",
+              "version",
+              "data"
+            ]
+          }
+        ],
+        "description": "An entity as it is now (`put`, with `data`), or gone (`delete`): a deleted list, a word removed from a list, or one never there. A cleared known word is a `put` with `known: false`."
+      },
+      "KnownWord": {
+        "type": "object",
+        "properties": {
+          "itemId": {
+            "type": "string"
+          },
+          "headword": {
+            "type": "string"
+          },
+          "reading": {
+            "type": "string"
+          },
+          "known": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "itemId",
+          "headword",
+          "reading",
+          "known"
+        ]
+      },
+      "WordList": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "position": {
+            "type": "integer"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "position",
+          "createdAt"
+        ]
+      },
+      "ListWord": {
+        "type": "object",
+        "properties": {
+          "listId": {
+            "type": "string"
+          },
+          "itemId": {
+            "type": "string"
+          },
+          "headword": {
+            "type": "string"
+          },
+          "reading": {
+            "type": "string"
+          },
+          "addedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "listId",
+          "itemId",
+          "headword",
+          "reading",
+          "addedAt"
+        ]
+      },
+      "SyncRequest": {
+        "type": "object",
+        "properties": {
+          "cursor": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "minLength": 1,
+            "maxLength": 200,
+            "description": "The `cursor` from the last answer whose changes the client applied. Leave it out, or send null, to start from the beginning."
+          },
+          "limit": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 500,
+            "description": "The most journal entries to read this time. Default 100."
+          },
+          "mutations": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Mutation"
+            },
+            "maxItems": 50,
+            "description": "Up to 50 changes made on the device, applied in order before the changes are read."
+          }
+        }
+      },
+      "Mutation": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "pattern": "^[A-Za-z0-9_-]{8,64}$",
+            "description": "A client-made ID, unique for each mutation, such as a UUID. Sending the same mutation again under its ID never applies it twice, and gets the same outcome: applied at the same version, a conflict with the entity as it is then, or a rejection with the same `error.code`. Reusing an ID for a different mutation is rejected with `mutation_id_reused`."
+          },
+          "entity": {
+            "type": "string",
+            "pattern": "^[A-Za-z][A-Za-z0-9_-]{0,63}$",
+            "description": "`profile`, `knownWord`, `list`, `listWord`. Any other is rejected with `unknown_entity`, and the rest of the request still applies. A change the app's scopes don't allow is rejected with `not_allowed`, and the app reads only the entities its scopes do."
+          },
+          "operation": {
+            "type": "string",
+            "pattern": "^[A-Za-z][A-Za-z0-9_-]{0,63}$",
+            "description": "One of the entity's operations, in `x-sync-entities`, with the scopes each needs, the fields it takes, and whether it reads `baseVersion`. Any other is rejected with `unknown_operation`."
+          },
+          "entityId": {
+            "type": "string",
+            "pattern": "^[^\\p{Cc}\\p{Cf}\\s]{1,200}$",
+            "description": "- `profile`: The account's ID, or left out.\n- `knownWord`: The item: a Language Reference ID (32 lowercase hex digits), or `kanji:` and one kanji, kept in Unicode NFC.\n- `list`: Its UUID, in either case; answers name it in lowercase.\n- `listWord`: The list's UUID, a slash, and the item: `<list>/<item>`."
+          },
+          "baseVersion": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "The version of the entity the change was made to, or 0 for one the client has never seen. If the entity has changed since, what happens is the operation's rule, in `x-sync-entities`, which also says which operations read it."
+          },
+          "fields": {
+            "type": "object",
+            "additionalProperties": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "boolean"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "description": "What the operation sets: the operation's fields, in `x-sync-entities`. Each value is a string, number, boolean, or null."
+          }
+        },
+        "required": [
+          "id",
+          "entity",
+          "operation"
+        ],
+        "description": "One change made on the device. `x-sync-entities` holds each entity and its operations, and `x-sync-rejections` each code a rejected result can carry.",
+        "x-sync-entities": {
+          "profile": {
+            "description": "The account's name and username. `PATCH /v1/me` changes them by the same rule; the email doesn't change here.",
+            "entityId": "The account's ID, or left out.",
+            "read": "profile",
+            "data": {
+              "$ref": "#/components/schemas/Profile"
+            },
+            "operations": {
+              "update": {
+                "scopes": [
+                  "profile"
+                ],
+                "baseVersion": true,
+                "description": "Name, username, or both. It applies only at the profile's current version, or conflicts with the profile as it is now; sending the current values again is applied and changes nothing.",
+                "fields": {
+                  "$ref": "#/components/schemas/ProfileUpdateFields"
+                },
+                "example": {
+                  "id": "6f1c0e7a-3b5d-4c2e-9a8f-000000000001",
+                  "entity": "profile",
+                  "operation": "update",
+                  "baseVersion": 1,
+                  "fields": {
+                    "name": "Kana Fan",
+                    "username": "kana_fan"
+                  }
+                }
+              }
+            }
+          },
+          "knownWord": {
+            "description": "Whether the learner knows a word or a kanji. A cleared word stays, as a `put` with `known: false`.",
+            "entityId": "The item: a Language Reference ID (32 lowercase hex digits), or `kanji:` and one kanji, kept in Unicode NFC.",
+            "read": "known:read",
+            "data": {
+              "$ref": "#/components/schemas/KnownWord"
+            },
+            "operations": {
+              "mark": {
+                "scopes": [
+                  "known:write",
+                  "known:mark"
+                ],
+                "baseVersion": true,
+                "description": "It applies only if the word is still at `baseVersion` (0 for one the account never had), so a mark made before the learner cleared the word loses to the clear, and one made after seeing it wins. Marking a known word is applied and changes nothing.",
+                "fields": {
+                  "$ref": "#/components/schemas/WordFields"
+                },
+                "example": {
+                  "id": "6f1c0e7a-3b5d-4c2e-9a8f-000000000002",
+                  "entity": "knownWord",
+                  "operation": "mark",
+                  "entityId": "9d2e4f6a8b0c1d3e5f7a9b1c3d5e7f90",
+                  "baseVersion": 0,
+                  "fields": {
+                    "headword": "見る",
+                    "reading": "みる"
+                  }
+                }
+              },
+              "clear": {
+                "scopes": [
+                  "known:write"
+                ],
+                "baseVersion": true,
+                "description": "It applies only at the word's current version: a clear that never saw a later mark conflicts, and the word stays known. Clearing a word not known is applied and changes nothing.",
+                "example": {
+                  "id": "6f1c0e7a-3b5d-4c2e-9a8f-000000000003",
+                  "entity": "knownWord",
+                  "operation": "clear",
+                  "entityId": "9d2e4f6a8b0c1d3e5f7a9b1c3d5e7f90",
+                  "baseVersion": 1
+                }
+              }
+            }
+          },
+          "list": {
+            "description": "A word list. An account holds at most 500, and a deleted list's ID can't be used again.",
+            "entityId": "Its UUID, in either case; answers name it in lowercase.",
+            "read": "lists:read",
+            "data": {
+              "$ref": "#/components/schemas/WordList"
+            },
+            "operations": {
+              "create": {
+                "scopes": [
+                  "lists:write"
+                ],
+                "baseVersion": false,
+                "description": "Rejected `already_exists` if the account has or had a list with that ID, and `too_many_lists` past 500.",
+                "fields": {
+                  "$ref": "#/components/schemas/ListCreateFields"
+                },
+                "example": {
+                  "id": "6f1c0e7a-3b5d-4c2e-9a8f-000000000004",
+                  "entity": "list",
+                  "operation": "create",
+                  "entityId": "3b7f2c9e-5d1a-4e8b-9c6f-0a2d4e6f8b1c",
+                  "fields": {
+                    "name": "Food",
+                    "position": 0
+                  }
+                }
+              },
+              "update": {
+                "scopes": [
+                  "lists:write"
+                ],
+                "baseVersion": true,
+                "description": "A rename, a move, or both. It applies only at the current version, so two renames conflict and the second gets the list as it is now; one that already matches the list is applied. An update of a deleted list conflicts with the `delete`.",
+                "fields": {
+                  "$ref": "#/components/schemas/ListUpdateFields"
+                },
+                "example": {
+                  "id": "6f1c0e7a-3b5d-4c2e-9a8f-000000000005",
+                  "entity": "list",
+                  "operation": "update",
+                  "entityId": "3b7f2c9e-5d1a-4e8b-9c6f-0a2d4e6f8b1c",
+                  "baseVersion": 1,
+                  "fields": {
+                    "name": "Food and drink"
+                  }
+                }
+              },
+              "delete": {
+                "scopes": [
+                  "lists:write"
+                ],
+                "baseVersion": false,
+                "description": "It always applies, wins over everything done to the list since, renames and words added elsewhere too, and takes the list's words with it: drop them on the device.",
+                "example": {
+                  "id": "6f1c0e7a-3b5d-4c2e-9a8f-000000000006",
+                  "entity": "list",
+                  "operation": "delete",
+                  "entityId": "3b7f2c9e-5d1a-4e8b-9c6f-0a2d4e6f8b1c"
+                }
+              }
+            }
+          },
+          "listWord": {
+            "description": "A word in a list. A list holds at most 5,000.",
+            "entityId": "The list's UUID, a slash, and the item: `<list>/<item>`.",
+            "read": "lists:read",
+            "data": {
+              "$ref": "#/components/schemas/ListWord"
+            },
+            "operations": {
+              "add": {
+                "scopes": [
+                  "lists:write"
+                ],
+                "baseVersion": false,
+                "description": "It always applies to a list the account has. To a deleted or unknown list it's rejected `unknown_list`, and past 5,000 words `list_full`. Adding a word the list has is applied and changes nothing.",
+                "fields": {
+                  "$ref": "#/components/schemas/WordFields"
+                },
+                "example": {
+                  "id": "6f1c0e7a-3b5d-4c2e-9a8f-000000000007",
+                  "entity": "listWord",
+                  "operation": "add",
+                  "entityId": "3b7f2c9e-5d1a-4e8b-9c6f-0a2d4e6f8b1c/9d2e4f6a8b0c1d3e5f7a9b1c3d5e7f90",
+                  "fields": {
+                    "headword": "見る",
+                    "reading": "みる"
+                  }
+                }
+              },
+              "remove": {
+                "scopes": [
+                  "lists:write"
+                ],
+                "baseVersion": true,
+                "description": "It applies only at the word's current version, so it removes only an add it saw: an add the remover never saw wins, and the remove conflicts. Removing a word the list hasn't is applied.",
+                "example": {
+                  "id": "6f1c0e7a-3b5d-4c2e-9a8f-000000000008",
+                  "entity": "listWord",
+                  "operation": "remove",
+                  "entityId": "3b7f2c9e-5d1a-4e8b-9c6f-0a2d4e6f8b1c/9d2e4f6a8b0c1d3e5f7a9b1c3d5e7f90",
+                  "baseVersion": 1
+                }
+              }
+            }
+          }
+        },
+        "x-sync-rejections": {
+          "invalid_fields": "A field is missing, isn't one the operation takes, or is out of bounds.",
+          "username_taken": "Another account has that username.",
+          "unknown_entity": "The service syncs no such entity, as when it is older than the app. Keep the change, and send the entity again once the service knows it.",
+          "unknown_operation": "The entity has no such operation.",
+          "invalid_mutation": "`entityId` isn't in the entity's form, or `baseVersion` is missing from an operation that reads it.",
+          "mutation_id_reused": "The ID was used for a different mutation. Give each mutation its own.",
+          "already_exists": "The account has, or had, a list with that ID.",
+          "unknown_list": "The list word's list isn't in the account, or was deleted.",
+          "too_many_lists": "The account has 500 lists.",
+          "list_full": "The list has 5,000 words.",
+          "not_allowed": "The app's scopes don't include the operation's."
+        }
+      },
+      "SignIn": {
+        "type": "object",
+        "properties": {
+          "token": {
+            "type": "string",
+            "description": "The session's bare token. Keep the signed one from the `set-auth-token` header instead: it is the refresh token."
+          },
+          "user": {
+            "$ref": "#/components/schemas/SignedInUser"
+          }
+        },
+        "required": [
+          "token",
+          "user"
+        ],
+        "additionalProperties": {}
+      },
+      "SignedInUser": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "email": {
+            "type": "string"
+          },
+          "emailVerified": {
+            "type": "boolean"
+          },
+          "image": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "email",
+          "emailVerified",
+          "image",
+          "createdAt",
+          "updatedAt"
+        ],
+        "additionalProperties": {},
+        "description": "Who signed in. GET /v1/me has the profile, with the username and version."
+      },
+      "WebSignIn": {
+        "type": "object",
+        "properties": {
+          "url": {
+            "type": "string",
+            "format": "uri"
+          },
+          "redirect": {
+            "type": "boolean",
+            "enum": [
+              true
+            ]
+          }
+        },
+        "required": [
+          "url",
+          "redirect"
+        ]
+      },
+      "IdToken": {
+        "type": "object",
+        "properties": {
+          "token": {
+            "type": "string",
+            "description": "The ID token Sign in with Apple or Google gave the device."
+          },
+          "nonce": {
+            "type": "string",
+            "description": "The nonce from POST /v1/auth/sign-in/nonce, passed to Apple or Google."
+          },
+          "user": {
+            "type": "object",
+            "properties": {
+              "name": {
+                "type": "object",
+                "properties": {
+                  "firstName": {
+                    "type": "string"
+                  },
+                  "lastName": {
+                    "type": "string"
+                  }
+                }
+              }
+            },
+            "description": "The name Sign in with Apple JS hands the website on the learner's first sign-in. Apple's token has none, so it names a new account."
+          }
+        },
+        "required": [
+          "token",
+          "nonce"
+        ]
+      },
+      "Session": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "userId": {
+            "type": "string"
+          },
+          "token": {
+            "type": "string",
+            "description": "The session's bare token, which names it to POST /v1/auth/revoke-session. It signs nothing in: only the signed one in `set-auth-token` does."
+          },
+          "expiresAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "ipAddress": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "userAgent": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "userId",
+          "token",
+          "expiresAt",
+          "createdAt",
+          "updatedAt",
+          "ipAddress",
+          "userAgent"
+        ],
+        "additionalProperties": {}
+      },
+      "Identity": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "providerId": {
+            "type": "string",
+            "description": "`apple`, `google`, or `email`."
+          },
+          "accountId": {
+            "type": "string"
+          },
+          "userId": {
+            "type": "string"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "id",
+          "providerId",
+          "accountId",
+          "userId",
+          "createdAt",
+          "updatedAt"
+        ],
+        "additionalProperties": {}
+      }
+    },
+    "parameters": {}
+  },
+  "paths": {
+    "/v1/health": {
+      "get": {
+        "summary": "Whether the service can answer",
+        "responses": {
+          "200": {
+            "description": "It can.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": {
+                      "type": "string",
+                      "enum": [
+                        "ok"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "status"
+                  ]
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Its database doesn't answer.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": {
+                      "type": "string",
+                      "enum": [
+                        "unavailable"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "status"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/me": {
+      "get": {
+        "summary": "The signed-in account's profile",
+        "security": [
+          {
+            "accessToken": [
+              "profile"
+            ]
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The profile.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Profile"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "`unauthorized`: No access token, or one that is expired, forged, or for an account that no longer exists. Get a new one from GET /v1/auth/token.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "enum": [
+                            "unauthorized"
+                          ]
+                        },
+                        "message": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ]
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "`insufficient_scope`: This app's access to the account doesn't include `profile`.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "enum": [
+                            "insufficient_scope"
+                          ]
+                        },
+                        "message": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ]
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "`too_many_requests`: This account sent more than 60 requests here from this app in the current minute, or the app more than its limit from all its accounts together. Wait the seconds `Retry-After` says.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "enum": [
+                            "too_many_requests"
+                          ]
+                        },
+                        "message": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ]
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "`internal`: The service failed, and nothing says why. Try again later, backing off.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "enum": [
+                            "internal"
+                          ]
+                        },
+                        "message": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      },
+      "patch": {
+        "summary": "Change the signed-in account's name or username",
+        "description": "Optimistic concurrency: send the `version` last seen as `baseVersion`. The change goes through only if the profile is still at that version, and then its version goes up by one and it appears in /v1/sync. Sending the current values again changes nothing.",
+        "security": [
+          {
+            "accessToken": [
+              "profile"
+            ]
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ProfilePatch"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "The profile, as changed.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Profile"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "`bad_request`: The body is not JSON, or not this shape. `invalid_fields`: A name or username out of bounds, or neither sent.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "enum": [
+                            "bad_request",
+                            "invalid_fields"
+                          ]
+                        },
+                        "message": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "`unauthorized`: No access token, or one that is expired, forged, or for an account that no longer exists. Get a new one from GET /v1/auth/token.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "enum": [
+                            "unauthorized"
+                          ]
+                        },
+                        "message": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ]
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "`insufficient_scope`: This app's access to the account doesn't include `profile`.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "enum": [
+                            "insufficient_scope"
+                          ]
+                        },
+                        "message": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ]
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "`version_conflict`: The profile changed since `baseVersion`, and nothing changed. `current` is the profile as it is now. `username_taken`: Another account has that username.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/ProfileConflict"
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "error": {
+                          "type": "object",
+                          "properties": {
+                            "code": {
+                              "type": "string",
+                              "enum": [
+                                "username_taken"
+                              ]
+                            },
+                            "message": {
+                              "type": "string"
+                            }
+                          },
+                          "required": [
+                            "code",
+                            "message"
+                          ]
+                        }
+                      },
+                      "required": [
+                        "error"
+                      ]
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "413": {
+            "description": "`too_large`: The body is over 64 KB.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "enum": [
+                            "too_large"
+                          ]
+                        },
+                        "message": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ]
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "`too_many_requests`: This account sent more than 60 requests here from this app in the current minute, or the app more than its limit from all its accounts together. Wait the seconds `Retry-After` says.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "enum": [
+                            "too_many_requests"
+                          ]
+                        },
+                        "message": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ]
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "`internal`: The service failed, and nothing says why. Try again later, backing off.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "enum": [
+                            "internal"
+                          ]
+                        },
+                        "message": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "summary": "Delete the signed-in account",
+        "description": "Deletes the account, its ways to sign in, its sessions, and everything it synced, at once; backups age out within 30 days, and the account's email is told. It needs `account:delete`, and a sign-in from the last 10 minutes, so the app asks the learner to sign in again first. An account that signs in with Apple sends a fresh Sign in with Apple authorization code from that sign-in, which the service uses to revoke the app's access with Apple. Each device keeps its own data and works signed out.",
+        "security": [
+          {
+            "accessToken": [
+              "account:delete"
+            ]
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DeleteAccount"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Deleted.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": {
+                      "type": "string",
+                      "enum": [
+                        "deleted"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "status"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "`bad_request`: The body is not JSON, or not this shape, or its `appleRedirectUri` is on none of the website's origins. `apple_authorization_needed`: This account signs in with Apple: send the authorization code from a fresh Sign in with Apple. `apple_authorization_invalid`: Apple refused that authorization code. Sign in with Apple again for a new one. `apple_account_mismatch`: That Sign in with Apple is another Apple ID's. Sign in with the Apple ID this account uses.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "enum": [
+                            "bad_request",
+                            "apple_authorization_needed",
+                            "apple_authorization_invalid",
+                            "apple_account_mismatch"
+                          ]
+                        },
+                        "message": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "`unauthorized`: No access token, or one that is expired, forged, or for an account that no longer exists. Get a new one from GET /v1/auth/token.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "enum": [
+                            "unauthorized"
+                          ]
+                        },
+                        "message": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ]
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "`insufficient_scope`: This app's access to the account doesn't include `account:delete`. `sign_in_again`: Deleting the account needs a sign-in from the last 10 minutes. Sign in again first.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "enum": [
+                            "insufficient_scope",
+                            "sign_in_again"
+                          ]
+                        },
+                        "message": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ]
+                }
+              }
+            }
+          },
+          "413": {
+            "description": "`too_large`: The body is over 64 KB.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "enum": [
+                            "too_large"
+                          ]
+                        },
+                        "message": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ]
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "`too_many_requests`: This account sent more than 60 requests here from this app in the current minute, or the app more than its limit from all its accounts together. Wait the seconds `Retry-After` says.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "enum": [
+                            "too_many_requests"
+                          ]
+                        },
+                        "message": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ]
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "`internal`: The service failed, and nothing says why. Try again later, backing off.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "enum": [
+                            "internal"
+                          ]
+                        },
+                        "message": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ]
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "`apple_unavailable`: Revoking with Apple didn't finish, and nothing was deleted. Sign in with Apple again for a new code, and try again.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "enum": [
+                            "apple_unavailable"
+                          ]
+                        },
+                        "message": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/sync": {
+      "post": {
+        "summary": "Send the changes made on the device, and get the changes made elsewhere",
+        "description": "Applies `mutations` in order, then answers with the changes after `cursor`. Every mutation is idempotent by its ID, so a request can be sent again after a lost answer. Each answer holds at most `limit` journal entries; while `hasMore` is true, sync again with the new cursor. Results and changes are bounded by the request limits.",
+        "security": [
+          {
+            "accessToken": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SyncRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "The results and the changes.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SyncAnswer"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "`bad_request`: The body is not JSON, or not this shape.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "enum": [
+                            "bad_request"
+                          ]
+                        },
+                        "message": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "`unauthorized`: No access token, or one that is expired, forged, or for an account that no longer exists. Get a new one from GET /v1/auth/token.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "enum": [
+                            "unauthorized"
+                          ]
+                        },
+                        "message": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ]
+                }
+              }
+            }
+          },
+          "410": {
+            "description": "`invalid_cursor`: The cursor isn't one this service gave this account, or is past what it holds, as after a restore. Nothing was applied. Sync again with no cursor, and keep what comes back.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "enum": [
+                            "invalid_cursor"
+                          ]
+                        },
+                        "message": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ]
+                }
+              }
+            }
+          },
+          "413": {
+            "description": "`too_large`: The body is over 64 KB.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "enum": [
+                            "too_large"
+                          ]
+                        },
+                        "message": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ]
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "`too_many_requests`: This account sent more than 120 requests here from this app in the current minute, or the app more than its limit from all its accounts together. Wait the seconds `Retry-After` says.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "enum": [
+                            "too_many_requests"
+                          ]
+                        },
+                        "message": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ]
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "`internal`: The service failed, and nothing says why. The mutations before the failure stand: send the same request again later, backing off, and those answer as before.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "enum": [
+                            "internal"
+                          ]
+                        },
+                        "message": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/auth/email-otp/send-verification-otp": {
+      "post": {
+        "summary": "Email a sign-in code",
+        "description": "Answers the same whether or not the email has an account. Five codes per address in 10 minutes.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "email": {
+                    "type": "string",
+                    "format": "email"
+                  },
+                  "type": {
+                    "type": "string",
+                    "enum": [
+                      "sign-in"
+                    ]
+                  }
+                },
+                "required": [
+                  "email",
+                  "type"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Sent, or nothing to send.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "enum": [
+                        true
+                      ]
+                    }
+                  },
+                  "required": [
+                    "success"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "`validation_error`: A field is missing, or of the wrong type; `message` names it. `invalid_email`: `email` isn't an email address. `sign_in_only`: `type` isn't `sign-in`: a code is sent only to sign in.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "enum": [
+                            "validation_error",
+                            "invalid_email",
+                            "sign_in_only"
+                          ]
+                        },
+                        "message": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ]
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "`too_many_requests`: Five codes went to this email in the last 10 minutes, or too many came from this address. Wait the seconds `Retry-After` (or `X-Retry-After`) says.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "enum": [
+                            "too_many_requests"
+                          ]
+                        },
+                        "message": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ]
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "`email_unavailable`: No email sender is set up.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "enum": [
+                            "email_unavailable"
+                          ]
+                        },
+                        "message": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/auth/sign-in/email-otp": {
+      "post": {
+        "summary": "Sign in with the emailed code",
+        "description": "Makes the account on the first sign-in. A `name` is used only then, held to the profile's name rule. Sent with a session from the last 10 minutes, as `Authorization: Bearer`, it adds the email as a way in to that session's account instead, which needs the session's app to have `account`; the account's email is told.",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "enum": [
+                "zenbu-ios",
+                "zenbu-web",
+                "tomodachi"
+              ],
+              "description": "The app signing in: its access is the account's, limited to the app's scopes. A browser on one of the website's origins may leave it out."
+            },
+            "required": false,
+            "description": "The app signing in: its access is the account's, limited to the app's scopes. A browser on one of the website's origins may leave it out.",
+            "name": "x-zenbu-client",
+            "in": "header"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "email": {
+                    "type": "string",
+                    "format": "email"
+                  },
+                  "otp": {
+                    "type": "string"
+                  },
+                  "name": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "email",
+                  "otp"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Signed in.",
+            "headers": {
+              "set-auth-token": {
+                "description": "The signed session token: the refresh token, good for 60 days from its last use. Send it as `Authorization: Bearer` to GET /v1/auth/token for an access token.",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SignIn"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "`validation_error`: A field is missing, or of the wrong type; `message` names it. `invalid_otp`: The code is wrong, or was used. `otp_expired`: The code is over 10 minutes old. Ask for a new one. `unknown_client`: No `X-Zenbu-Client`, or one the service doesn't list, from outside the website's origins.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "enum": [
+                            "validation_error",
+                            "invalid_otp",
+                            "otp_expired",
+                            "unknown_client"
+                          ]
+                        },
+                        "message": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ]
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "`account_not_linked`: An Apple or Google account has this email: sign in that way, then add the email. `too_many_attempts`: Five wrong guesses used the code up. Ask for a new one. `insufficient_scope`: The session's app doesn't have `account`.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "enum": [
+                            "account_not_linked",
+                            "too_many_attempts",
+                            "insufficient_scope"
+                          ]
+                        },
+                        "message": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ]
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "`too_many_requests`: Too many requests from this address. Wait the seconds `Retry-After` (or `X-Retry-After`) says.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "enum": [
+                            "too_many_requests"
+                          ]
+                        },
+                        "message": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/auth/sign-in/nonce": {
+      "post": {
+        "summary": "A nonce for one Apple or Google sign-in",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {}
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Pass `nonce` to Apple or Google; it works once, within `expiresIn` seconds.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "nonce": {
+                      "type": "string"
+                    },
+                    "expiresIn": {
+                      "type": "integer"
+                    }
+                  },
+                  "required": [
+                    "nonce",
+                    "expiresIn"
+                  ]
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "`too_many_requests`: Too many requests from this address. Wait the seconds `Retry-After` (or `X-Retry-After`) says.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "enum": [
+                            "too_many_requests"
+                          ]
+                        },
+                        "message": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/auth/sign-in/social": {
+      "post": {
+        "summary": "Sign in with Apple or Google",
+        "description": "With `idToken`, signs in with the token the device got, and makes the account on the first sign-in. Without it, starts the web sign-in, which comes back to GET /v1/auth/callback/{id}. A new account's email must be verified by the provider, and an email that already has an account is refused until the learner adds this way while signed in.",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "enum": [
+                "zenbu-ios",
+                "zenbu-web",
+                "tomodachi"
+              ],
+              "description": "The app signing in: its access is the account's, limited to the app's scopes. A browser on one of the website's origins may leave it out."
+            },
+            "required": false,
+            "description": "The app signing in: its access is the account's, limited to the app's scopes. A browser on one of the website's origins may leave it out.",
+            "name": "x-zenbu-client",
+            "in": "header"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "provider": {
+                    "type": "string",
+                    "enum": [
+                      "apple",
+                      "google"
+                    ]
+                  },
+                  "idToken": {
+                    "$ref": "#/components/schemas/IdToken"
+                  },
+                  "callbackURL": {
+                    "type": "string",
+                    "description": "The website's page the browser comes back to from Google, on one of the website's origins."
+                  },
+                  "errorCallbackURL": {
+                    "type": "string",
+                    "description": "Where it comes back instead when signing in fails, with `?error=` and a code, such as `account_not_linked`, `account_already_linked_to_different_user`, `access_denied`, `state_mismatch`, or `EMAIL_NOT_VERIFIED`, which may come in capitals, so compare it ignoring case and treat any other as a failed sign-in. A missing state, or a callback reused or reloaded, ends at GET /v1/auth/error instead, a JSON `404 not_found`."
+                  }
+                },
+                "required": [
+                  "provider"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Signed in, or, without `idToken`, the provider page to send the browser to.",
+            "headers": {
+              "set-auth-token": {
+                "description": "The signed session token: the refresh token, good for 60 days from its last use. Send it as `Authorization: Bearer` to GET /v1/auth/token for an access token.",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/SignIn"
+                    },
+                    {
+                      "$ref": "#/components/schemas/WebSignIn"
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "`validation_error`: A field is missing, or of the wrong type; `message` names it. `nonce_required`: `idToken` has no `nonce`. `unknown_client`: No `X-Zenbu-Client`, or one the service doesn't list, from outside the website's origins.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "enum": [
+                            "validation_error",
+                            "nonce_required",
+                            "unknown_client"
+                          ]
+                        },
+                        "message": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "`invalid_nonce`: The nonce is unknown, already used, or over 10 minutes old. Ask for a new one. `invalid_token`: Apple's or Google's token is malformed, expired, over an hour old, signed by another key or issuer, made for another app, or made for another nonce. `oauth_link_error`: That email has an account through another way in: sign in that way, then add this one.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "enum": [
+                            "invalid_nonce",
+                            "invalid_token",
+                            "oauth_link_error"
+                          ]
+                        },
+                        "message": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ]
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "`email_not_verified`: The provider hasn't verified the email, so it can't make an account. `client_mismatch`: The Apple token was made for another app's bundle ID.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "enum": [
+                            "email_not_verified",
+                            "client_mismatch"
+                          ]
+                        },
+                        "message": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ]
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "`provider_not_found`: `provider` is neither `apple` nor `google`, or isn't set up here.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "enum": [
+                            "provider_not_found"
+                          ]
+                        },
+                        "message": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ]
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "`too_many_requests`: Too many requests from this address. Wait the seconds `Retry-After` (or `X-Retry-After`) says.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "enum": [
+                            "too_many_requests"
+                          ]
+                        },
+                        "message": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/auth/callback/{id}": {
+      "get": {
+        "summary": "Where Apple's or Google's web sign-in comes back",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "enum": [
+                "apple",
+                "google"
+              ]
+            },
+            "required": true,
+            "name": "id",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "302": {
+            "description": "On to the `callbackURL` the sign-in started with."
+          }
+        }
+      }
+    },
+    "/v1/auth/link-social": {
+      "post": {
+        "summary": "Add Apple or Google as another way to sign in",
+        "description": "Needs a sign-in from the last 10 minutes. The account email is told. Without `idToken`, the website starts Google's sign-in, which comes back to `callbackURL` with the way added.",
+        "security": [
+          {
+            "sessionToken": [
+              "account"
+            ]
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "provider": {
+                    "type": "string",
+                    "enum": [
+                      "apple",
+                      "google"
+                    ]
+                  },
+                  "idToken": {
+                    "$ref": "#/components/schemas/IdToken"
+                  },
+                  "callbackURL": {
+                    "type": "string",
+                    "description": "The website's page the browser comes back to from Google, on one of the website's origins."
+                  },
+                  "errorCallbackURL": {
+                    "type": "string",
+                    "description": "Where it comes back instead when signing in fails, with `?error=` and a code, such as `account_not_linked`, `account_already_linked_to_different_user`, `access_denied`, `state_mismatch`, or `EMAIL_NOT_VERIFIED`, which may come in capitals, so compare it ignoring case and treat any other as a failed sign-in. A missing state, or a callback reused or reloaded, ends at GET /v1/auth/error instead, a JSON `404 not_found`."
+                  }
+                },
+                "required": [
+                  "provider"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Added, or, without `idToken`, the provider page to send the browser to.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "anyOf": [
+                    {
+                      "type": "object",
+                      "properties": {
+                        "status": {
+                          "type": "boolean",
+                          "enum": [
+                            true
+                          ]
+                        }
+                      },
+                      "required": [
+                        "status"
+                      ],
+                      "additionalProperties": {}
+                    },
+                    {
+                      "$ref": "#/components/schemas/WebSignIn"
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "`validation_error`: A field is missing, or of the wrong type; `message` names it.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "enum": [
+                            "validation_error"
+                          ]
+                        },
+                        "message": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "`unauthorized`: No session, or one that has ended: sign in again. `invalid_nonce`: The nonce is unknown, already used, or over 10 minutes old. Ask for a new one. `invalid_token`: Apple's or Google's token is malformed, expired, over an hour old, signed by another key or issuer, made for another app, or made for another nonce.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "enum": [
+                            "unauthorized",
+                            "invalid_nonce",
+                            "invalid_token"
+                          ]
+                        },
+                        "message": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ]
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "`session_not_fresh`: The session is over 10 minutes old: sign the learner in again first. `insufficient_scope`: The session's app doesn't have `account`.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "enum": [
+                            "session_not_fresh",
+                            "insufficient_scope"
+                          ]
+                        },
+                        "message": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ]
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "`too_many_requests`: Too many requests from this address. Wait the seconds `Retry-After` (or `X-Retry-After`) says.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "enum": [
+                            "too_many_requests"
+                          ]
+                        },
+                        "message": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/auth/unlink-account": {
+      "post": {
+        "summary": "Remove a way to sign in",
+        "description": "Needs a sign-in from the last 10 minutes. The last way never goes. The account's email is told.",
+        "security": [
+          {
+            "sessionToken": [
+              "account"
+            ]
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "accountId": {
+                    "type": "string",
+                    "description": "The way in's `id` from GET /v1/auth/list-accounts, not its provider's subject."
+                  }
+                },
+                "required": [
+                  "accountId"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Removed.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": {
+                      "type": "boolean",
+                      "enum": [
+                        true
+                      ]
+                    }
+                  },
+                  "required": [
+                    "status"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "`validation_error`: A field is missing, or of the wrong type; `message` names it. `failed_to_unlink_last_account`: It's the account's last way in, or the account has no way in with that `id`. `account_not_found`: The account has no way in with that `id`.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "enum": [
+                            "validation_error",
+                            "failed_to_unlink_last_account",
+                            "account_not_found"
+                          ]
+                        },
+                        "message": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "`unauthorized`: No session, or one that has ended: sign in again.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "enum": [
+                            "unauthorized"
+                          ]
+                        },
+                        "message": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ]
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "`session_not_fresh`: The session is over 10 minutes old: sign the learner in again first. `insufficient_scope`: The session's app doesn't have `account`.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "enum": [
+                            "session_not_fresh",
+                            "insufficient_scope"
+                          ]
+                        },
+                        "message": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ]
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "`too_many_requests`: Too many requests from this address. Wait the seconds `Retry-After` (or `X-Retry-After`) says.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "enum": [
+                            "too_many_requests"
+                          ]
+                        },
+                        "message": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/auth/token": {
+      "get": {
+        "summary": "A 15-minute access token for /v1/me, /v1/sync, and the other services",
+        "security": [
+          {
+            "sessionToken": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "An EdDSA JWT naming the account (`sub`), the app (`azp`), its scopes (`scope`), and the sign-in (`auth_time`), good for 15 minutes (`exp`).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "token": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "token"
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "`unauthorized`: No session, or one that has ended: sign in again. `sign_in_again`: The session belongs to no app the service lists. Sign in again.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "enum": [
+                            "unauthorized",
+                            "sign_in_again"
+                          ]
+                        },
+                        "message": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ]
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "`too_many_requests`: Too many requests from this address. Wait the seconds `Retry-After` (or `X-Retry-After`) says.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "enum": [
+                            "too_many_requests"
+                          ]
+                        },
+                        "message": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/auth/jwks": {
+      "get": {
+        "summary": "The keys an access token is checked with",
+        "responses": {
+          "200": {
+            "description": "A JWKS.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "keys": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "kid": {
+                            "type": "string"
+                          },
+                          "alg": {
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "kid",
+                          "alg"
+                        ],
+                        "additionalProperties": {}
+                      }
+                    }
+                  },
+                  "required": [
+                    "keys"
+                  ]
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "`too_many_requests`: Too many requests from this address. Wait the seconds `Retry-After` (or `X-Retry-After`) says.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "enum": [
+                            "too_many_requests"
+                          ]
+                        },
+                        "message": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/auth/get-session": {
+      "get": {
+        "summary": "The session the token names",
+        "security": [
+          {
+            "sessionToken": [
+              "profile"
+            ]
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The session, or `null` with no valid one.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": [
+                    "object",
+                    "null"
+                  ],
+                  "properties": {
+                    "session": {
+                      "$ref": "#/components/schemas/Session"
+                    },
+                    "user": {
+                      "$ref": "#/components/schemas/SignedInUser"
+                    }
+                  },
+                  "required": [
+                    "session",
+                    "user"
+                  ]
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "`insufficient_scope`: The session's app doesn't have `profile`.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "enum": [
+                            "insufficient_scope"
+                          ]
+                        },
+                        "message": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ]
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "`too_many_requests`: Too many requests from this address. Wait the seconds `Retry-After` (or `X-Retry-After`) says.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "enum": [
+                            "too_many_requests"
+                          ]
+                        },
+                        "message": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/auth/sign-out": {
+      "post": {
+        "summary": "End this session",
+        "security": [
+          {
+            "sessionToken": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {}
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Signed out, or there was no session.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "enum": [
+                        true
+                      ]
+                    }
+                  },
+                  "required": [
+                    "success"
+                  ]
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "`too_many_requests`: Too many requests from this address. Wait the seconds `Retry-After` (or `X-Retry-After`) says.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "enum": [
+                            "too_many_requests"
+                          ]
+                        },
+                        "message": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/auth/list-accounts": {
+      "get": {
+        "summary": "The ways this account signs in",
+        "security": [
+          {
+            "sessionToken": [
+              "account"
+            ]
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Each way in.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Identity"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "`unauthorized`: No session, or one that has ended: sign in again.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "enum": [
+                            "unauthorized"
+                          ]
+                        },
+                        "message": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ]
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "`insufficient_scope`: The session's app doesn't have `account`.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "enum": [
+                            "insufficient_scope"
+                          ]
+                        },
+                        "message": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ]
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "`too_many_requests`: Too many requests from this address. Wait the seconds `Retry-After` (or `X-Retry-After`) says.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "enum": [
+                            "too_many_requests"
+                          ]
+                        },
+                        "message": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/auth/list-sessions": {
+      "get": {
+        "summary": "Where this account is signed in",
+        "security": [
+          {
+            "sessionToken": [
+              "account"
+            ]
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Each session.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Session"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "`unauthorized`: No session, or one that has ended: sign in again.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "enum": [
+                            "unauthorized"
+                          ]
+                        },
+                        "message": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ]
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "`insufficient_scope`: The session's app doesn't have `account`.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "enum": [
+                            "insufficient_scope"
+                          ]
+                        },
+                        "message": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ]
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "`too_many_requests`: Too many requests from this address. Wait the seconds `Retry-After` (or `X-Retry-After`) says.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "enum": [
+                            "too_many_requests"
+                          ]
+                        },
+                        "message": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/auth/revoke-session": {
+      "post": {
+        "summary": "Sign one session out",
+        "security": [
+          {
+            "sessionToken": [
+              "account"
+            ]
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "token": {
+                    "type": "string",
+                    "description": "A session's `token` from list-sessions."
+                  }
+                },
+                "required": [
+                  "token"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Signed out.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": {
+                      "type": "boolean",
+                      "enum": [
+                        true
+                      ]
+                    }
+                  },
+                  "required": [
+                    "status"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "`validation_error`: A field is missing, or of the wrong type; `message` names it.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "enum": [
+                            "validation_error"
+                          ]
+                        },
+                        "message": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "`unauthorized`: No session, or one that has ended: sign in again.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "enum": [
+                            "unauthorized"
+                          ]
+                        },
+                        "message": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ]
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "`insufficient_scope`: The session's app doesn't have `account`.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "enum": [
+                            "insufficient_scope"
+                          ]
+                        },
+                        "message": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ]
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "`too_many_requests`: Too many requests from this address. Wait the seconds `Retry-After` (or `X-Retry-After`) says.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "enum": [
+                            "too_many_requests"
+                          ]
+                        },
+                        "message": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/auth/revoke-sessions": {
+      "post": {
+        "summary": "Sign every session out, this one too",
+        "security": [
+          {
+            "sessionToken": [
+              "account"
+            ]
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {}
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Signed out.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": {
+                      "type": "boolean",
+                      "enum": [
+                        true
+                      ]
+                    }
+                  },
+                  "required": [
+                    "status"
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "`unauthorized`: No session, or one that has ended: sign in again.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "enum": [
+                            "unauthorized"
+                          ]
+                        },
+                        "message": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ]
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "`insufficient_scope`: The session's app doesn't have `account`.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "enum": [
+                            "insufficient_scope"
+                          ]
+                        },
+                        "message": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ]
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "`too_many_requests`: Too many requests from this address. Wait the seconds `Retry-After` (or `X-Retry-After`) says.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "enum": [
+                            "too_many_requests"
+                          ]
+                        },
+                        "message": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/auth/revoke-other-sessions": {
+      "post": {
+        "summary": "Sign every other session out",
+        "security": [
+          {
+            "sessionToken": [
+              "account"
+            ]
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {}
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Signed out.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": {
+                      "type": "boolean",
+                      "enum": [
+                        true
+                      ]
+                    }
+                  },
+                  "required": [
+                    "status"
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "`unauthorized`: No session, or one that has ended: sign in again.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "enum": [
+                            "unauthorized"
+                          ]
+                        },
+                        "message": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ]
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "`insufficient_scope`: The session's app doesn't have `account`.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "enum": [
+                            "insufficient_scope"
+                          ]
+                        },
+                        "message": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ]
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "`too_many_requests`: Too many requests from this address. Wait the seconds `Retry-After` (or `X-Retry-After`) says.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "enum": [
+                            "too_many_requests"
+                          ]
+                        },
+                        "message": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "webhooks": {}
+}

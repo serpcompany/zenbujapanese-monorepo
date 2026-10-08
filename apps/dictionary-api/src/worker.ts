@@ -1,6 +1,6 @@
 import { parentPort, workerData } from 'node:worker_threads'
+import { errorFields, log } from '@zenbu/node-service/log'
 import { loadService, type VerifiedFiles } from './load'
-import { errorFields, log } from './log'
 import type { ServiceMethod } from './service'
 
 export interface Call {

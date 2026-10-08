@@ -1,7 +1,7 @@
 import { defaultFrequencyPacks, frequencyChips } from '@zenbu/dictionary-core/detail/frequency'
 import { type RubySegment, rubySegments } from '@zenbu/dictionary-core/detail/ruby'
 import { searchPath } from '@/lib/dictionary/urls'
-import { site } from '@/lib/site'
+import { productionOrigin } from '@/lib/site'
 
 const word = (headword: string, reading: string) => ({
   headword,
@@ -73,7 +73,7 @@ export const furiganaPreview: {
 }
 
 export const searchPreview = {
-  address: `${new URL(site.url).host}${searchPath(taberuQuery)}`,
+  address: `${new URL(productionOrigin).host}${searchPath(taberuQuery)}`,
   query: taberuQuery,
   links: ['View 50+ Example Sentences', 'Search for「たべる」'],
   results: [

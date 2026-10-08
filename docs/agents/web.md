@@ -18,7 +18,10 @@ The website follows these SERP engineering standards:
   other form redirects (308) to it. `src/lib/pages.ts` is the single list of static page paths.
   Next.js redirects `/robots.txt/` to `/robots.txt` itself, but OpenNext skips it, so
   `next.config.ts` repeats that redirect, with a rule of its own for a top-level file, since
-  OpenNext can't fill an empty path parameter.
+  OpenNext can't fill an empty path parameter. The homepage is written as the origin, without a
+  slash (`https://zenbujapanese.com`): see Sitemaps.
+- [XML sitemaps](https://github.com/serpcompany/serp/blob/main/docs/engineering/websites/features/xml-sitemaps.md):
+  `/sitemap-index.xml` lists `sitemap-<group>.xml` files at the site's root (see Sitemaps).
 
 Before writing Next.js code, read the relevant guide in `node_modules/next/dist/docs/`; this
 Next.js version differs from older releases (see `apps/web/AGENTS.md`).
@@ -60,8 +63,12 @@ lists every child sitemap and each child sitemap lists the new URLs.
 - `apps/web/playwright.config.ts` names the browser tests' two projects, `desktop` and `phone`,
   and their server. Dev assertions wait 15 seconds, since `next dev` compiles each route on first
   use; the production build keeps Playwright's 5, and runs on one worker, as one workerd process
-  renders every page. `apps/web/e2e/test.ts` holds the console check and the fixture helpers every
-  spec imports.
+  renders every page. It sets `ZENBU_ACCOUNT_PAGES` for the tests as `next.config.ts` does for the
+  build (Account pages, below), from the run's `SITE_ENV`, or `production` with
+  `E2E_SITE_ENV=production`, so the `placeholderLinks` the tests import list Log in only where the
+  build's account pages are closed. Run the tests with the `SITE_ENV` the build had, or
+  `placeholders.spec.ts` reads the wrong list. `apps/web/e2e/test.ts` holds the console check and
+  the fixture helpers every spec imports.
 - `apps/web/vitest.config.ts` has two projects: `*.interaction.test.tsx` run in happy-dom, the
   other tests in Node. Both set `__NEXT_TRAILING_SLASH`, so `next/link` draws links with their
   trailing slash, as the build does with `trailingSlash`.
@@ -70,7 +77,8 @@ lists every child sitemap and each child sitemap lists the new URLs.
   `apps/web/e2e/placeholders.spec.ts` fails on any other `#` link and prints the listed ones
   ([product docs](../../apps/web/docs/product/dictionary.md#header-footer-and-site-wide),
   Placeholder links). When a page ships, give its entry the page's path, as the products pages'
-  entries have, so every link to it changes at once, or link it directly and drop the entry.
+  entries have, so every link to it changes at once, or link it directly and drop the entry. Log
+  in's entry has `/login/` only in a build whose account pages are open (Account pages, below).
 - `apps/web/public/` holds the header's images (App Store screenshot crops and the app icon), a
   larger app icon (`app-icon-192.webp`) and, in `apps/web/public/screenshots/app-store/`, whole App
   Store screenshots for the homepage and the products pages, each named for its file in
@@ -282,7 +290,7 @@ is cut to its first 20 words. Any other browse page is a 404 there.
 and `…/1/` redirects to it; a ranked list's page is a band of 1,000 ranks (`…/anime/1001-2000/`),
 and its name links to the first band; a JLPT level is `…/jlpt/n5/`; and a category's kana order is
 `…/<category>/kana-order/`. A list of fewer than 10 words, and a category's kana order, are
-`noindex, follow` (`dictionaryMetadata`'s `index`) and left out of `/sitemaps/browse.xml`. No
+`noindex, follow` (`dictionaryMetadata`'s `index`) and left out of `/sitemap-browse.xml`. No
 browse page links to a URL that redirects (`e2e/browse-links.spec.ts` follows every link). The
 hiragana and katakana routes, and each category's four, are one line each over the route helpers
 beside them (`kana-routes.tsx`, `category-routes.tsx`, `frequency-dictionaries/list-routes.tsx`). Pages without parameters that read the service are
@@ -328,6 +336,131 @@ ZENBU_DICTIONARY_API=1 ZENBU_DICTIONARY_API_TOKEN=<token> pnpm exec vitest run s
 `smoke.sh` checks the deployed pages against the search-results suite's `iru` and `eat` cases, the
 example-search suite's `eat`, and the word-detail suite's 見る and 学校 at run time.
 
+## Account pages
+
+`/login/`, `/register/`, `/forgot-password/`, and `/account/` sign a learner in to their Zenbu
+account and manage it (#468; the [product docs](../../apps/web/docs/product/account.md)), against
+the account service ([`account-api.md`](account-api.md); the website's side of it is
+[`account-clients.md`](account-clients.md), The website).
+
+- **The learner's browser calls the service, never the Worker.** Bot Fight Mode challenges the
+  Worker's own requests to the API host (Dictionary service, below), so the Worker only renders
+  the pages, with the service's URL, and their components call the service with `fetch` and
+  `credentials: 'include'`. The service keeps the session in an HttpOnly cookie on its own host,
+  which no page can read; the pages keep the 15-minute access token in memory
+  (`src/lib/account/access-tokens.ts`), for the account they show only, and send it only to
+  `/v1/me`, without cookies. Deleting the account, signing in again, coming back from a Google
+  confirmation, and checking the browser is still signed in to the account on the page are in
+  `src/lib/account/flows.ts`; the components make the other calls.
+- **Each answer's shape is checked where it enters** (`src/lib/account/answers.ts`), and the
+  client (`src/lib/account/client.ts`) turns every answer into a value, a refusal with its code and
+  `Retry-After`, a network failure, or an answer of another shape; `src/lib/account/messages.ts`
+  says each to the learner.
+- **Settings per environment**, Worker `vars` read per request (the pages are `force-dynamic`), in
+  `src/lib/account/settings.ts`. The header and footer are in static pages too, which are built
+  once, so they can't read a Worker var: `next.config.ts` reads the environment's
+  `ACCOUNT_API_URL` from `wrangler.jsonc` when it builds (`src/lib/account/availability.ts`, by
+  `SITE_ENV`) and passes `ZENBU_ACCOUNT_PAGES` (`open` or `closed`) to the build, which draws the
+  footer's Sign in, and points the `login` entry in `linkTargets` (`src/lib/site.ts`), the
+  header's Log in, at `/login/` rather than `#`, only where it's `open`. A value set only in
+  `.dev.vars` changes the pages, not the header or footer. The `Web` workflow checks staging's
+  build links signing in, and production's has no link to it, its Log in still `#` (Browser
+  tests, below; [`ci.md`](ci.md), Web).
+
+  | Var | What it does |
+  | --- | --- |
+  | `ACCOUNT_API_URL` | The account service's origin: `http://localhost:8789` locally and `https://api-staging.zenbujapanese.com` on staging. Production's is empty until its account service answers on `https://api.zenbujapanese.com` (opening it, below). Empty, the pages say signing in isn't available, link to no other account page, the footer has no Sign in, and the header's Log in stays `#`. |
+  | `ACCOUNT_APPLE_SERVICES_ID` | The Services ID Sign in with Apple JS signs in as: the first of the service's `APPLE_SERVICES_IDS`, the one the service takes the website's Apple codes as. Empty, the pages offer no Apple. |
+  | `ACCOUNT_GOOGLE_SIGN_IN` | `on` offers Google, once the service has a Google web client. |
+
+  Apple and Google are on for staging, whose account service has Apple's key and Google's web
+  client ([`account-api.md`](account-api.md), Set up the server): under `env.staging.vars`,
+  `"ACCOUNT_APPLE_SERVICES_ID": "com.zenbujapanese.web"`, the first of the service's
+  `APPLE_SERVICES_IDS`, and `"ACCOUNT_GOOGLE_SIGN_IN": "on"`. The local site has neither, since
+  Apple takes no `localhost` return URL and Google's web client returns only to the deployed
+  services. Production's stay empty until its pages open; then set them under
+  `env.production.vars` and run `pnpm cf-typegen`, in a pull request that also updates what then
+  stops being true: "production neither yet" in the product docs'
+  [Account pages](../../apps/web/docs/product/account.md), `src/lib/account/settings.test.ts`, and
+  "Production's stay empty" here.
+
+  **Opening production's account pages** waits for production's account service to answer on
+  `https://api.zenbujapanese.com`, trust `https://zenbujapanese.com`
+  (`ACCOUNT_API_TRUSTED_ORIGINS`), and email codes to everyone ([`account-api.md`](account-api.md),
+  Set up the server); Apple and Google can follow later. Then it's one pull request: set
+  production's `ACCOUNT_API_URL` to it, run `pnpm cf-typegen`, and change what pins it closed: the
+  `Web` workflow's two closed-pages steps, `e2e/account-closed.spec.ts`, its server in
+  `playwright.config.ts`, the closed-run flag in `e2e/server.ts` and `e2e/test.ts`, and
+  `src/lib/account/settings.test.ts`; and the docs that say
+  production's pages are closed: the product docs ([Account pages](../../apps/web/docs/product/account.md),
+  the [index](../../apps/web/docs/product/index.md), [Privacy Policy](../../apps/web/docs/product/privacy.md),
+  and [Dictionary](../../apps/web/docs/product/dictionary.md)'s Placeholder links and Get the app
+  and Log in, where Log in stays `#` in production),
+  this section and its closed-spec paragraph (below), [`ci.md`](ci.md) (Web),
+  [`docs/quality.md`](../quality.md) (Account pages, and Header and footer's placeholders),
+  [`docs/tech-debt.md`](../tech-debt.md)'s placeholder row, which counts Log in in production, and
+  the `browser-tests` skill.
+  The privacy policy's text stays true with the email code alone: it offers Apple and Google only
+  "where its sign-in page offers them". `main` then deploys staging; production deploys when a
+  person runs `Web deploy` by hand while `DEPLOY_PRODUCTION` is `false` (Environments and
+  deploys, below).
+- **Apple** runs in Sign in with Apple JS's popup (`src/lib/account/apple.ts`), which hands the
+  page Apple's ID token and authorization code. Apple answers a popup only on a page of its return
+  URL's origin, so the return URL is the site's own `/account/`, and deleting an Apple account
+  sends it with the code (`appleRedirectUri`), for the service to take the code from Apple. The
+  script loads, and the nonce is fetched, when the learner points at, focuses, or touches an Apple
+  button, and the next nonce right after each popup, so a click opens the popup at once rather than
+  after a request a popup blocker would count.
+- **Google** goes through the service: `POST /v1/auth/sign-in/social` (or `link-social`) names the
+  page to come back to, and the browser goes to Google, then to the service's
+  `/v1/auth/callback/google`, then back, with `?error=` on a failure.
+- **Code:** the routes in `src/app/login/`, `src/app/register/`, `src/app/forgot-password/`, and
+  `src/app/account/`; the components in `src/components/account/`; the hooks
+  `src/hooks/use-apple-sign-in.ts`, `src/hooks/use-busy.ts`, which frees the buttons when the
+  browser comes back from Google with Back, and `src/hooks/use-seems-signed-in.ts`, which reads
+  the local-storage note behind the footer's Sign in or Account (`src/lib/account/signed-in.ts`).
+  A confirmation through Google leaves the page, so `src/lib/account/confirming.ts` keeps the
+  account it left from in session storage, to sign its earlier session out on the way back; a
+  failed load keeps it for Try again, and coming back with Back drops it.
+
+To run them locally, run the account service ([`account-api.md`](account-api.md), Run it) with
+`ACCOUNT_API_TRUSTED_ORIGINS=http://localhost:3000,http://localhost:3100`; `pnpm dev` reads it at
+`http://localhost:8789`, and `ACCOUNT_API_URL` in `.dev.vars` names another. Its dev mailbox,
+`http://localhost:8789/dev/mail`, holds the codes.
+
+**Browser tests.** `e2e/account.spec.ts` stands in for the service in the browser, so it runs
+wherever the others do, CI's `Web` included. `e2e/account-service.spec.ts` drives a learner
+through registering, editing the profile, signing out, signing in again, and deleting the account
+with a fresh sign-in, against a real service and its dev mailbox. Like the dictionary's
+rendered-page gate, it runs only when asked (`ZENBU_ACCOUNT_API=1`), and the `Account API`
+workflow starts the service it checks and runs it ([`ci.md`](ci.md), Account API):
+
+```sh
+ZENBU_ACCOUNT_API=1 pnpm test:e2e e2e/account-service.spec.ts --project desktop
+```
+
+`ZENBU_ACCOUNT_API_URL` names a service elsewhere than `http://localhost:8789`, for reading its
+mailbox; the site reads its own `ACCOUNT_API_URL`. A run sends three codes, and the service sends
+at most five from one address in 10 minutes, so a second run within 10 minutes needs a new
+database, or `delete from rate_limits` in it.
+
+`e2e/account-closed.spec.ts` checks production's closed account pages, Log in, and footer on the
+site built as production deploys (`SITE_ENV=production`, and a test Google Tag Manager ID, as `Web
+deploy` passes the real one), served by `wrangler dev --env production` on port 8797 with production's
+vars, no dictionary service, and `--env-file /dev/null`, so no `.dev.vars` or `.env` file can open
+the pages. It answers every request off the site with an empty response, Tag Manager's included,
+so nothing leaves the machine, and fails on any request to the account service. It runs only when
+asked (`E2E_SITE_ENV=production`, which runs that spec alone), and the
+`Web` workflow's `e2e` job runs it after the other browser tests:
+
+```sh
+SITE_ENV=production NEXT_PUBLIC_GTM_ID=GTM-TEST000 pnpm exec opennextjs-cloudflare build
+E2E_SITE_ENV=production pnpm exec playwright test
+```
+
+That build replaces the one the other browser tests use in workerd, so build again without
+`SITE_ENV` before running them there.
+
 ## Environments and deploys
 
 | Environment | Worker | Domain |
@@ -365,7 +498,8 @@ Each deployed environment reads its own dictionary service:
 - The GitHub environment's `DICTIONARY_API_URL` variable is the service's HTTPS origin, such as
   `https://dictionary.example.com`, with no path, since the site asks for `/v1/…` from it.
   `Web deploy` writes it over that environment's `DICTIONARY_API_URL` placeholder in
-  `wrangler.jsonc`.
+  `wrangler.jsonc`, the value right after the environment's `SITE_ENV`, on its line or the next
+  (`src/lib/dictionary-service-deploy.test.ts` runs the script on a copy).
 - The Worker's `DICTIONARY_API_TOKEN` secret is the token the service was started with. Set it by
   hand, and again to rotate it: `pnpm exec wrangler secret put DICTIONARY_API_TOKEN --env
   <staging|production>`.
@@ -398,21 +532,34 @@ Each value that differs by environment lives where the code that reads it runs:
 
 - **Worker `vars` in `wrangler.jsonc`**, per environment, for anything rendered on request. OpenNext
   renders routes such as `robots.txt` inside the Worker, where build-time variables are absent.
-- **The build**, for static pages and `next.config` headers, which are rendered once at build
-  time. `deploy:production` sets these.
+- **The build**, for static pages and `next.config` headers and redirects, which are rendered
+  once at build time. `deploy:staging` and `deploy:production` set these.
 - **`wrangler secret put --env <env>`** for secrets. **`.dev.vars`** holds local values only and is
   never committed.
 
-`SITE_ENV=production` is set in both the production Worker `vars` and the `deploy:production` build.
-Anything else is non-production: it sends `X-Robots-Tag: noindex` and a `robots.txt` that disallows
+`SITE_ENV` is set in both the Worker `vars` and the build of each deployed environment
+(`deploy:staging` and `deploy:production`). It also names the environment's origin, its canonical
+host (`siteOrigin()` in `src/lib/site.ts`), which every canonical tag, Open Graph URL, and
+structured data URL is written on; local development writes production's. A build whose
+`SITE_ENV` isn't `production` sends workers.dev to staging (`next.config.ts`). Anything but
+`SITE_ENV=production` is non-production: it sends `X-Robots-Tag: noindex` and a `robots.txt` that disallows
 everything. Analytics load only in production and only when their build-time IDs are set:
 `NEXT_PUBLIC_GTM_ID` (Google Tag Manager, a `production` GitHub environment variable that the
 `Web deploy` workflow passes to the production build) and `NEXT_PUBLIC_CF_BEACON_TOKEN` (Cloudflare
 Web Analytics).
 
-Before merging a change to environment configuration, build without the variable and run the
-Worker with the target environment's `vars` (`pnpm exec opennextjs-cloudflare preview --env
-production`), then check the output. `scripts/smoke.sh <url> <staging|production>` asserts the
+Before merging a change to environment configuration, build the site as the target environment
+deploys and run the Worker with its `vars` (`SITE_ENV=production pnpm exec opennextjs-cloudflare
+build`, then `pnpm exec opennextjs-cloudflare preview --env production`), then check the output.
+Static pages, the header's Log in and the footer's Sign in among them (Account pages, above), come
+from the build's `SITE_ENV`, so a build without it would show the local site's header and footer
+beside production's pages.
+Production's `DICTIONARY_API_URL` is a placeholder until `Web deploy` writes it (Dictionary
+service, above), and with it every page answers 500, so name no dictionary service
+(`--var DICTIONARY_API_URL: --var DICTIONARY_API_TOKEN:`). `preview` also reads `.dev.vars`, and a
+local `ACCOUNT_API_URL` there opens production's account pages, so move it aside first, or serve
+the build with `wrangler dev --env production --env-file /dev/null`, as the closed account spec
+does (Account pages, above). `scripts/smoke.sh <url> <staging|production>` asserts the
 search-engine rules for each environment, so CI fails if production is hidden or staging is
 exposed.
 
@@ -453,25 +600,49 @@ and `dmca@zenbujapanese.com` to `dmca+zenbujapanese@serp.co`.
 
 ## Sitemaps
 
-Sitemaps are hand-written route handlers built on `src/lib/sitemap.ts`. `/sitemap-index.xml` is
-the index (`/sitemap.xml` serves the same document) and lists every child sitemap under
-`/sitemaps/`. A child sitemap holds at most 50,000 URLs. Add a new section's sitemap to
-`childSitemaps`. Static pages are listed once, in `src/lib/pages.ts`, which also feeds the HTML
-sitemap at `/sitemap`.
+Sitemaps follow the SERP [XML sitemaps](https://github.com/serpcompany/serp/blob/main/docs/engineering/websites/features/xml-sitemaps.md)
+standard. They are hand-written route handlers built on `src/lib/sitemap.ts`, rendered per request:
+
+- `/robots.txt` (`src/lib/robots.ts`) names `/sitemap-index.xml` in every environment, including
+  staging, which disallows crawling: site audits such as Ahrefs find sitemaps through it.
+- `/sitemap-index.xml` is the index, and `/sitemap.xml` serves the same document for crawlers that
+  look there by default. The index lists each child sitemap, never another index.
+- Each child sitemap is a file at the site's root named for its group: `/sitemap-pages.xml`, then
+  the dictionary's. A child holds at most 50,000 URLs; a group that outgrows one file adds
+  `-2`, `-3`, and so on (`/sitemap-words-2.xml`). Add a new group's sitemap to `childSitemaps`.
+  Static pages are listed once, in `src/lib/pages.ts`, which also feeds the HTML sitemap at
+  `/sitemap`.
+- Every URL is written on the origin `servedOrigin()` in `src/lib/site.ts` names: the
+  environment's canonical host on staging and production (so staging's sitemaps list
+  `https://staging.zenbujapanese.com/…`, even when CI asks through workers.dev), and the address
+  the site is served at locally (`http://localhost:3000/…`). The homepage is the origin itself,
+  with no slash (`absoluteUrl('/')`), as in its canonical tag and `og:url`: Next.js adds a slash to
+  a metadata URL for `/` under `trailingSlash`, so the homepage writes those two tags itself
+  (`src/components/origin-canonical.tsx`), React moves them into the head, and `pageMetadata`
+  doesn't take `/`.
+- The sitemaps that moved to the root in #663 redirect (308) in one hop from where they were,
+  with or without a slash (`movedSitemaps` in `src/lib/sitemap.ts` and `movedDictionarySitemaps`
+  in `src/lib/dictionary/sitemap-files.ts`, which `next.config.ts` lists before its file rules):
+  `/sitemaps/pages.xml`, `/sitemaps/browse.xml`, and `/sitemaps/dictionary/<n>.xml`.
+  `src/lib/sitemap-index.ts` puts the index together.
 
 The dictionary's sitemaps (`src/lib/dictionary/sitemaps.ts`, ADR 0007) exist wherever the site
 has a dictionary service, staging and production, not local fixtures, so the index renders per
-request (`force-dynamic`, as does `/sitemap.xml`, which crawlers look for by default): a build
-can't reach the service, so prerendering would fail the build or freeze an index without them.
-`/dictionary/`, the search box and the browse sections below it, is listed in `src/lib/pages.ts`:
+request (`force-dynamic`, as does `/sitemap.xml`): a build can't reach the service, so
+prerendering would fail the build or freeze an index without them. `/dictionary/`, the search box
+and the browse sections below it, is listed in `src/lib/pages.ts`:
 
-- `/sitemaps/dictionary/<n>.xml`: every word page's canonical URL under its slug,
-  percent-encoded, 50,000 to a file in `ent_seq` order (five files for 218,382 words). The
-  service works out each file's `ent_seq` range once, and the site streams a file's words from it
-  10,000 at a time (`urlSetStream`), so a file never sits whole in memory; a failure mid-stream
-  errors the response rather than ending it early.
-- `/sitemaps/browse.xml`: every indexed browse page, built from what the service's
+- `/sitemap-words.xml`, `/sitemap-words-2.xml`, and so on: every word page's canonical URL under
+  its slug, percent-encoded, 50,000 to a file in `ent_seq` order (five files for 218,382 words).
+  A route can't have a parameter inside its file name, so `next.config.ts` rewrites these
+  (`dictionarySitemapFiles` in `src/lib/dictionary/sitemap-files.ts`, which imports no `@/`
+  path) to the route `src/app/sitemaps/dictionary/[file]`,
+  whose own URLs redirect back to them. The service works out each file's `ent_seq` range once,
+  and the site streams a file's words from it 10,000 at a time (`urlSetStream`), so a file never
+  sits whole in memory; a failure mid-stream errors the response rather than ending it early.
+- `/sitemap-browse.xml`: every indexed browse page, built from what the service's
   `/v1/sitemaps/browse` lists (`src/lib/dictionary/browse/sitemap.ts`), about 5,300 URLs.
+
 Those are the only dictionary sitemaps (ADR 0010, amended for #614): the kanji and conjugations
 sitemaps went with their pages.
 

@@ -1,4 +1,5 @@
-import { afterEach, describe, expect, test, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
+import { sitemapIndexResponse } from '../sitemap-index'
 import { dictionaryService } from './data'
 import {
   browseSitemapResponse,
@@ -71,11 +72,17 @@ function fakeService(count: number, perSitemap: number) {
   }
 }
 
-const request = (path: string) => new Request(`https://staging.zenbujapanese.com${path}`)
+const local = 'http://localhost:3100'
+const request = (path: string, origin = local) => new Request(`${origin}${path}`)
 const locs = (xml: string) => [...xml.matchAll(/<loc>([^<]+)<\/loc>/g)].map(match => match[1])
+
+beforeEach(() => {
+  vi.stubEnv('SITE_ENV', '')
+})
 
 afterEach(() => {
   vi.clearAllMocks()
+  vi.unstubAllEnvs()
 })
 
 describe('without a dictionary service (local fixtures)', () => {
@@ -83,7 +90,9 @@ describe('without a dictionary service (local fixtures)', () => {
     vi.mocked(dictionaryService).mockResolvedValue(null)
     expect(await dictionarySitemapPaths()).toEqual([])
     expect(await wordSitemapResponse(request('/sitemaps/dictionary/1.xml'), 1)).toBeNull()
-    expect(await browseSitemapResponse(request('/sitemaps/browse.xml'))).toBeNull()
+    expect(await browseSitemapResponse(request('/sitemap-browse.xml'))).toBeNull()
+    const index = await sitemapIndexResponse(request('/sitemap-index.xml'))
+    expect(locs(await index.text())).toEqual([`${local}/sitemap-pages.xml`])
   })
 })
 
@@ -91,18 +100,42 @@ describe('with a dictionary service', () => {
   test('the index lists every word sitemap and the browse sitemap, and nothing else', async () => {
     vi.mocked(dictionaryService).mockResolvedValue(fakeService(5, 2) as never)
     expect(await dictionarySitemapPaths()).toEqual([
-      '/sitemaps/dictionary/1.xml',
-      '/sitemaps/dictionary/2.xml',
-      '/sitemaps/dictionary/3.xml',
-      '/sitemaps/browse.xml'
+      '/sitemap-words.xml',
+      '/sitemap-words-2.xml',
+      '/sitemap-words-3.xml',
+      '/sitemap-browse.xml'
     ])
+  })
+
+  test.each([
+    [
+      'staging',
+      'https://zenbujapanese-web-staging.example.workers.dev',
+      'https://staging.zenbujapanese.com'
+    ],
+    ['production', 'https://zenbujapanese.com', 'https://zenbujapanese.com'],
+    ['', local, local]
+  ])('with SITE_ENV=%j, a request to %s lists sitemaps on %s', async (env, origin, listed) => {
+    vi.stubEnv('SITE_ENV', env)
+    vi.mocked(dictionaryService).mockResolvedValue(fakeService(3, 2) as never)
+    const index = await sitemapIndexResponse(request('/sitemap-index.xml', origin))
+    expect(locs(await index.text())).toEqual([
+      `${listed}/sitemap-pages.xml`,
+      `${listed}/sitemap-words.xml`,
+      `${listed}/sitemap-words-2.xml`,
+      `${listed}/sitemap-browse.xml`
+    ])
+    const words = await wordSitemapResponse(request('/sitemaps/dictionary/1.xml', origin), 1)
+    expect(locs((await words?.text()) ?? '')[0]).toBe(`${listed}/dictionary/%E8%A6%8B%E3%82%8B-1/`)
+    const browse = await browseSitemapResponse(request('/sitemap-browse.xml', origin))
+    expect(locs((await browse?.text()) ?? '')[0]).toBe(`${listed}/dictionary/browse/`)
   })
 
   test('the browse sitemap lists every browse page with 10 words or more, each once', async () => {
     vi.mocked(dictionaryService).mockResolvedValue(fakeService(5, 2) as never)
-    const response = await browseSitemapResponse(request('/sitemaps/browse.xml'))
+    const response = await browseSitemapResponse(request('/sitemap-browse.xml'))
     const urls = locs((await response?.text()) ?? '')
-    const site = 'https://zenbujapanese.com/dictionary/browse'
+    const site = `${local}/dictionary/browse`
     expect(urls).toEqual(
       expect.arrayContaining([
         `${site}/`,
@@ -154,9 +187,9 @@ describe('with a dictionary service', () => {
     expect(xml.endsWith('</urlset>')).toBe(true)
     const urls = locs(xml)
     expect(urls).toHaveLength(20_000)
-    expect(urls[0]).toBe('https://zenbujapanese.com/dictionary/%E8%A6%8B%E3%82%8B-1/')
-    expect(urls[1]).toBe('https://zenbujapanese.com/dictionary/w&amp;2-2/')
-    expect(urls.at(-1)).toBe('https://zenbujapanese.com/dictionary/w&amp;20000-20000/')
+    expect(urls[0]).toBe(`${local}/dictionary/%E8%A6%8B%E3%82%8B-1/`)
+    expect(urls[1]).toBe(`${local}/dictionary/w&amp;2-2/`)
+    expect(urls.at(-1)).toBe(`${local}/dictionary/w&amp;20000-20000/`)
     expect(service.sitemapWords).toHaveBeenCalledTimes(3)
     expect(service.sitemapWords).toHaveBeenNthCalledWith(2, 1, 10_000, 10_000)
 

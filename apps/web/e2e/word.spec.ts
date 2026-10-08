@@ -104,6 +104,9 @@ test.describe('word page', () => {
     }
     await menu.getByRole('menuitem', { name: 'Add to List…' }).click()
     const prompt = page.getByRole('dialog', { name: 'Add to List works in the app' })
+    await expect(prompt).toContainText(
+      'add notes and photos in the Zenbu app. Saving lists and known words on this website comes later.'
+    )
     await prompt.getByRole('button', { name: 'Get the app' }).click()
     await expect(prompt).toBeHidden()
     await expect(page).toHaveURL(/\/products\/zenbu-japanese-for-iphone\/$/)

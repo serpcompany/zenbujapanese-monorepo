@@ -306,7 +306,7 @@ test.describe('site header below 1024 pixels', () => {
 })
 
 const footerColumns = [
-  ['Products', ['Zenbu Japanese for iPhone', 'Dictionary']],
+  ['Products', ['Zenbu Japanese for iPhone', 'Dictionary', 'Sign in']],
   ['Tools', ['Kana charts', 'Kanji lists', 'Frequency lists', 'All tools']],
   ['Company', ['About', 'Support', 'Contact', 'Sources']],
   ['Legal', ['Privacy Policy', 'Terms of Use', 'DMCA', 'Affiliate Disclosure']]

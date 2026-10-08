@@ -46,6 +46,47 @@ test.each([
   expect(findDuplicates([first, second])).toHaveLength(1)
 })
 
+const repeatedIn: Record<string, string> = {
+  sh: `check() {
+  local environment="$1" image reference release running container current=""
+  if [ ! -r "$config_dir/$environment.env" ]; then
+    log "$environment: skipped; it isn't set up on this server"
+    return 0
+  fi
+  image="$(docker image inspect --format '{{.Id}}' "$repository:$environment")" || return 1
+  release="$(release_of "$image")"
+  echo "$release $reference $running $container $current"
+}
+`,
+  py: `def rows(database, query, limit):
+    cursor = database.execute(query, (limit,))
+    result = []
+    for row in cursor.fetchall():
+        if row[0] is None:
+            continue
+        result.append({"id": row[0], "title": row[1].strip(), "reading": row[2]})
+    result.sort(key=lambda item: (item["title"], item["id"]))
+    return result[:limit]
+`,
+  swift: `func rows(_ items: [Item], limit: Int) -> [Item] {
+    var seen = Set<Int>()
+    var kept: [Item] = []
+    for item in items {
+        if seen.contains(item.id) { continue }
+        seen.insert(item.id)
+        kept.append(Item(id: item.id, title: item.title.trimmed, reading: item.reading))
+    }
+    return Array(kept.sorted { $0.title < $1.title }.prefix(limit))
+}
+`
+}
+
+test.each(Object.keys(repeatedIn))('finds a block repeated across .%s files', extension => {
+  const first = file(`first.${extension}`, repeatedIn[extension])
+  const second = file(`second.${extension}`, repeatedIn[extension])
+  expect(findDuplicates([first, second])).toHaveLength(1)
+})
+
 test('passes code that says each thing once', () => {
   const only = file('only.ts', repeated('uniqueRows'))
   const other = file('other.ts', 'export const greeting = (name: string) => `Hello, ${name}`\n')
