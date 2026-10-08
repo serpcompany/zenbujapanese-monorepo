@@ -18,7 +18,7 @@ import {
 import { isRejection, type Rejection, rejection } from './profile'
 import type { ListWord, LockedAccount, WordList } from './store'
 
-const listLimits = {
+export const listLimits = {
   lists: 500,
   wordsPerList: 5000,
   position: 100_000,

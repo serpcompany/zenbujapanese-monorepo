@@ -147,7 +147,8 @@ test.describe('privacy policy', () => {
       'If you sign in with Apple or Google, that company signs you in under its own terms'
     ])
     await expect(listItems(page, 'hosts our API servers')).toHaveText([
-      /^Cloudflare, which carries traffic to our servers, sends our email, and stores the backups/,
+      /^Cloudflare, which carries traffic to our servers and stores the backups/,
+      /^useSend, which sends our email, and so gets your email address and each message we send you/,
       /^the company that hosts our API servers/
     ])
   })

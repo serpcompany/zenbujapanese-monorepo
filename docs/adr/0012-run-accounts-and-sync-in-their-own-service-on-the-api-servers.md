@@ -62,7 +62,8 @@ service checks both itself. The rest of the standard holds, including:
 - staging sends only to test recipients;
 - nothing logs a recipient, a code, or a link.
 
-The sender sits behind one function, so moving to useSend is a configuration change.
+The sender sits behind one function, so moving to useSend is a configuration change, and on
+2026-10-07 the owners made it (Amendment: email through useSend, below).
 
 ## Why
 
@@ -85,8 +86,7 @@ Cost didn't decide it. Sync is light: an active learner reads about 1,000 rows a
   in a later release, as issue 374's planning notes of 2026-09-28 say. Backups leave the server
   nightly, and a restore is tried before launch (issue 565).
 - **A way out to the internet.** The service fetches Apple's and Google's signing keys and calls
-  Email Service, so its slots can't be as closed as the dictionary service's, which reach only
-  nginx.
+  useSend, so its slots can't be as closed as the dictionary service's, which reach only nginx.
 - **Bot Fight Mode.** It's on for the zone, can't be skipped on the free plan, and "may challenge
   API or mobile app traffic". It stays on until it actually blocks an app, and then the owners turn
   it off. The first request from the iOS app to staging checks this.
@@ -114,3 +114,14 @@ The owners decided this on 2026-10-06, on
 and [issue 477](https://github.com/serpcompany/zenbujapanese-monorepo/issues/477). Issues 565 and
 566, which build it, hold the details above that the decisions leave to them. This decision amends
 ADR 0006 and ADR 0007.
+
+## Amendment: email through useSend
+
+On 2026-10-07 the owners moved the sign-in email from Cloudflare Email Service to useSend: "the
+plan is updated to use usesend like serplists does". The service sends the codes and the account's
+notices through useSend's hosted API (`https://app.usesend.com/api/v1/emails`) with an API key
+(`ACCOUNT_API_EMAIL=usesend`), in staging and production, as serplists.com does, from the same
+`Zenbu Japanese <support@zenbujapanese.com>`, on a sending domain useSend verifies. Cloudflare
+Email Service isn't used; the service still supports it, as a configuration. An API key restricts
+neither the sender nor the recipients, so the service checks both itself, as before, and the rest
+of the standard holds as above.

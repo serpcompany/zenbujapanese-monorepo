@@ -106,8 +106,10 @@ page says it will name what another app can do before it lets the learner sign i
 
 **Where it's kept, and who processes it.** The account's database is on the API servers, behind
 Cloudflare, and is backed up each night to private Cloudflare R2 storage, each backup deleted after
-30 days. The processors are Cloudflare (traffic, email, and backups) and the company that hosts the
-API servers, which the page doesn't name. Apple and Google sign the learner in under their own
+30 days. The processors are Cloudflare (traffic and backups), useSend (email, so it gets the
+learner's email address and each message), and the company that hosts the API servers, which the
+page doesn't name. The email goes through useSend since the owners' decision of 2026-10-07: "the
+plan is updated to use usesend like serplists does". Apple and Google sign the learner in under their own
 terms and send only what the account section lists.
 
 - Source: #563 decisions 1 to 3; #565 (the service and its backups).

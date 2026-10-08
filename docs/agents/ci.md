@@ -363,10 +363,11 @@ rollback's comes from an image the run pulled. The whole deploy is in
 ## Account API
 
 `.github/workflows/account-api.yml` checks the account service on pull requests that change it,
-what the services share (`packages/node-service/`), or what the website's account pages are built
-from (`apps/web/src/`, the browser test against the service with `apps/web/e2e/test.ts` and
-`apps/web/playwright.config.ts`, and the site's `next.config.ts`, `package.json`, and
-`wrangler.jsonc`), and by hand. A new push cancels the pull
+what the services share (`packages/node-service/`), its API reference (`docs/api/account-api.md`,
+which its tests write), or what the website's account pages are built from (`apps/web/src/`, the
+browser test against the service with `apps/web/e2e/test.ts` and `apps/web/playwright.config.ts`,
+and the site's `next.config.ts`, `package.json`, and `wrangler.jsonc`), and by hand. A new push
+cancels the pull
 request's last run. The deployer and the backups script (`deploy/deployer.sh`,
 `apps/account-api/deploy/backups.sh`) are ShellChecked by `Repository`'s `pnpm verify`.
 

@@ -129,7 +129,7 @@ export default function PrivacyPage() {
       </p>
       <p>
         We use this information only to sign you in, keep your apps in step, email you about signing
-        in, and keep the service secure. We email you from {email}, through Cloudflare, only to send
+        in, and keep the service secure. We email you from {email}, through useSend, only to send
         sign-in codes and to tell you when a way to sign in is added to or removed from your
         account. The account service's logs record each request's method, route, status, and timing,
         never your email, your profile, a sign-in code or link, or a token.
@@ -190,8 +190,11 @@ export default function PrivacyPage() {
       </p>
       <ul>
         <li>
-          <strong>Cloudflare</strong>, which carries traffic to our servers, sends our email, and
-          stores the backups;
+          <strong>Cloudflare</strong>, which carries traffic to our servers and stores the backups;
+        </li>
+        <li>
+          <strong>useSend</strong>, which sends our email, and so gets your email address and each
+          message we send you;
         </li>
         <li>
           <strong>the company that hosts our API servers</strong>, where the database runs.

@@ -341,7 +341,10 @@ the account service ([`account-api.md`](account-api.md); the website's side of i
 
   Apple and Google are off on staging and production until the service has them
   ([`account-api.md`](account-api.md), Set up the server); then set these in `wrangler.jsonc` and
-  run `pnpm cf-typegen`.
+  run `pnpm cf-typegen`, in a pull request. For staging, under `env.staging.vars`:
+  `"ACCOUNT_APPLE_SERVICES_ID": "<the Services ID, the first of the service's APPLE_SERVICES_IDS>"`
+  and `"ACCOUNT_GOOGLE_SIGN_IN": "on"`; production's are under `env.production.vars`, once its
+  pages open. Merging deploys staging, and the sign-in page then offers both.
 
   **Opening production's account pages** waits for production's account service to answer on
   `https://api.zenbujapanese.com`, trust `https://zenbujapanese.com`
