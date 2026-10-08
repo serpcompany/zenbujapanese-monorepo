@@ -52,6 +52,13 @@ describe('signing in on the website', () => {
     expect(calls.map(call => call.credentials)).toEqual(['include', 'include'])
   })
 
+  test('tells a browser that already signed in where its account is', async () => {
+    window.localStorage.setItem('zenbu-signed-in', 'yes')
+    const page = render(<SignInForm settings={emailOnly} purpose="sign-in" returnedError={null} />)
+    await shows(page, 'You’re signed in. Go to your account.')
+    expect(page.querySelector('a[href="/account/"]')?.textContent).toBe('Go to your account')
+  })
+
   test('says why a code was refused, and how long to wait after too many', async () => {
     stubAccountService({
       'POST /v1/auth/email-otp/send-verification-otp': [
@@ -65,7 +72,7 @@ describe('signing in on the website', () => {
     await submit(page, 'Email me a code')
     await fill(page, 'Code', '000000')
     await submit(page, 'Sign in')
-    await shows(page, "That code isn't right")
+    await shows(page, 'That code isn’t right')
     await click(page, 'Send a new code')
     await shows(page, 'Too many tries. Wait a few minutes, then try again.')
     expect(push).not.toHaveBeenCalled()

@@ -40,7 +40,7 @@ export function SignInForm({
     <div className="flex flex-col gap-4">
       {signedIn ? (
         <output className="block rounded-lg bg-muted px-3 py-2 text-sm">
-          You're signed in. <Link href={accountPages.account.path}>Go to your account</Link>.
+          You’re signed in. <Link href={accountPages.account.path}>Go to your account</Link>.
         </output>
       ) : null}
       <FormMessage problem={returnedError ? returnedErrorMessage(returnedError) : null} />

@@ -4,21 +4,21 @@ import { failureMessage, isSignedOut, needsFreshSignIn, returnedErrorMessage } f
 
 describe('what the account pages say when the account service refuses', () => {
   test.each([
-    [refused(400, 'invalid_otp'), "That code isn't right"],
+    [refused(400, 'invalid_otp'), 'That code isn’t right'],
     [refused(400, 'otp_expired'), 'That code has expired'],
     [refused(403, 'too_many_attempts'), 'Too many wrong codes'],
     [refused(403, 'account_not_linked'), 'signs in with Apple or Google'],
     [refused(401, 'oauth_link_error'), 'An account already uses that email'],
-    [refused(503, 'email_unavailable'), "isn't available right now"],
+    [refused(503, 'email_unavailable'), 'isn’t available right now'],
     [refused(401, 'invalid_nonce'), 'That took too long'],
     [refused(403, 'sign_in_again'), 'confirm it’s you'],
     [refused(400, 'failed_to_unlink_last_account'), 'your only way to sign in'],
     [refused(409, 'username_taken'), 'username is taken'],
-    [refused(400, 'apple_authorization_invalid'), "Apple didn't accept that"],
+    [refused(400, 'apple_authorization_invalid'), 'Apple didn’t accept that'],
     [refused(400, 'apple_account_mismatch'), 'a different one'],
     [refused(503, 'apple_unavailable'), 'nothing was deleted'],
     [refused(500, 'internal'), 'Something went wrong on our side'],
-    [{ kind: 'offline' } as const, "We couldn't reach your Zenbu account"],
+    [{ kind: 'offline' } as const, 'We couldn’t reach your Zenbu account'],
     [{ kind: 'unexpected', status: 200 } as const, 'Something went wrong']
   ])('%o', (failure, says) => {
     expect(failureMessage(failure)).toContain(says)
@@ -38,15 +38,19 @@ describe('what the account pages say when the account service refuses', () => {
 
   test("shows the service's own message for a refusal it doesn't name, such as a field's rule", () => {
     expect(
-      failureMessage(refused(400, 'invalid_fields', { message: 'username: 3 to 30 letters' }))
-    ).toBe('username: 3 to 30 letters')
+      failureMessage(
+        refused(400, 'invalid_fields', {
+          message: 'A username is 3 to 30 letters a to z, digits, or underscores.'
+        })
+      )
+    ).toBe('A username is 3 to 30 letters a to z, digits, or underscores.')
   })
 
   test("names what went wrong when Google's sign-in comes back with an error", () => {
     expect(returnedErrorMessage('account_not_linked')).toContain('Sign in the way you made it')
     expect(returnedErrorMessage('ACCESS_DENIED')).toBe('Signing in with Google was cancelled.')
     expect(returnedErrorMessage('state_mismatch')).toBe(
-      "Signing in with Google didn't work. Try again."
+      'Signing in with Google didn’t work. Try again.'
     )
   })
 

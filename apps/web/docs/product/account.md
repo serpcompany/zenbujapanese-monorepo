@@ -74,7 +74,8 @@ account." above the ways.
 - Source: #477 and ADR 0012 (Apple, Google, and an emailed code, through the account service);
   #468 (the #402 sitemap sheet lists `/register/`), here the same flow, worded for making an
   account.
-- Check: Sign-in form tests, "emails a code, signs in with it, and goes to the account page";
+- Check: Sign-in form tests, "emails a code, signs in with it, and goes to the account page" and
+  "tells a browser that already signed in where its account is";
   `src/app/account-pages.test.tsx`, "offer signing in, and lead to each other, with an account
   service" (the links, "Can't sign in?" and the Privacy Policy included); Account spec, "Sign
   in's \"Can't sign in?\" leads to signing in by email code"; Account service spec, which
@@ -96,12 +97,15 @@ minutes"), with "Send a new code" and "Use another email". A refusal says what t
   from Retry-After, or Better Auth's X-Retry-After".
 
 **No password needed.** `/forgot-password/` says Zenbu accounts have no password, so there's
-nothing to reset, and offers the email code; it links to Sign in for an account made with Apple or
-Google.
+nothing to reset, and offers the email code. Where the site offers Apple or Google, it links to
+Sign in for an account made that way, naming only the ones it offers ("Made your account with
+Apple?"); where it offers neither, it has no such line.
 
 - Source: #468 (the #402 sitemap sheet lists `/forgot-password/`); accounts have no password
   (ADR 0012).
-- Check: Account service spec, which signs in again from `/forgot-password/`.
+- Check: `src/app/account-pages.test.tsx`, "/forgot-password/ points to Sign in only for the
+  ways the site offers, naming them" (neither, Apple, Google, and both); Account service spec,
+  which signs in again from `/forgot-password/`.
 
 **Sign in with Apple.** Offered where the Worker names a Services ID (`ACCOUNT_APPLE_SERVICES_ID`).
 The page loads Apple's Sign in with Apple JS when the learner points at, focuses, or touches the
@@ -163,7 +167,8 @@ which signs nothing in, only names the session to sign out after a fresh sign-in
   page tests, "gets a new access token once when /v1/me answers 401";
   `src/lib/account/load.test.ts`.
 
-**Profile.** Name and Username, with Save, and "Member since" the day the account was made. Save
+**Profile.** Name and Username, with Save, and "Member since" the day the account was made. The
+username's hint gives the service's rule: "3 to 30 letters a to z, digits, or underscores". Save
 sends only what changed, with the profile's version; an empty username removes it. When the
 profile changed in another app first, the form shows it as it is now and says so; a taken username
 says to try another; another refusal shows the service's reason. When the page reads a newer
@@ -172,8 +177,9 @@ account never replaces it, and another account's always does.
 
 - Source: `PATCH /v1/me` ([`account-api.md`](../../../../docs/agents/account-api.md), Profiles and
   sync).
-- Check: Account page tests, "shows the profile as it is now when a change conflicts with one made
-  elsewhere" and "shows a newer profile the page reads, as after removing a way to sign in";
+- Check: Account page tests, "shows who is signed in, the profile, and the ways to sign in,
+  reading /v1/me with an access token only" (the hint), "shows the profile as it is now when a
+  change conflicts with one made elsewhere", and "shows a newer profile the page reads, as after removing a way to sign in";
   Account service spec, which saves a name and username and reloads them.
 
 **Ways to sign in.** Each way the account signs in: Apple, Google, or "A code we email you" with

@@ -83,7 +83,7 @@ test('a learner registers with an emailed code, edits the account, signs out, si
   await expect(page.getByText(`Delete ${email} and everything it synced?`)).toBeVisible()
   await page.getByRole('button', { name: 'Delete my account' }).click()
   const confirm = page.getByRole('region', { name: 'Confirm it’s you' })
-  await expect(confirm).toContainText(`We'll email a code to ${email}`)
+  await expect(confirm).toContainText(`We’ll email a code to ${email}`)
   await enterEmailedCode(page, request, email, 'Confirm')
   await expect(page.getByText('Your account is deleted.')).toBeVisible()
   await expect(footerAccountLink(page)).toHaveText('Sign in')

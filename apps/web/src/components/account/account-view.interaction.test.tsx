@@ -62,6 +62,9 @@ describe('the account page', () => {
     await shows(page, `Signed in as ${email}`)
     expect(page.querySelector<HTMLInputElement>('#profile-name')?.value).toBe('Kana Fan')
     expect(page.querySelector<HTMLInputElement>('#profile-username')?.value).toBe('kana_fan')
+    expect(page.querySelector('#profile-username-rule')?.textContent).toBe(
+      '3 to 30 letters a to z, digits, or underscores. Leave it empty for none.'
+    )
     expect(page.textContent).toContain(`A code we email you (${email})`)
     expect(page.textContent).toContain('Member since October 1, 2026')
     expect(callTo(calls, 'GET /v1/me')).toEqual([
@@ -94,7 +97,7 @@ describe('the account page', () => {
   test('says it could not reach the account service, and tries again when asked', async () => {
     vi.stubGlobal('fetch', vi.fn().mockRejectedValue(new TypeError('Failed to fetch')))
     const page = render(<AccountView settings={settings()} returnedError={null} />)
-    await shows(page, "We couldn't reach your Zenbu account")
+    await shows(page, 'We couldn’t reach your Zenbu account')
     signedIn()
     await click(page, 'Try again')
     await shows(page, `Signed in as ${email}`)
@@ -201,7 +204,7 @@ describe('the account page', () => {
 
     apple.sub = '001.apple'
     await click(page, 'Continue with Apple')
-    await shows(page, "Apple didn't accept that. Continue with Apple again.")
+    await shows(page, 'Apple didn’t accept that. Continue with Apple again.')
     expect(page.textContent).toContain('Continue with Apple')
     expect(page.textContent).not.toContain('Your account is deleted.')
   })

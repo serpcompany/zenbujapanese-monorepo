@@ -53,4 +53,20 @@ describe('the account pages', () => {
     expect(register).toContain('Can’t sign in?')
     expect(register).toContain('href="/legal/privacy/"')
   })
+
+  test('/forgot-password/ points to Sign in only for the ways the site offers, naming them', async () => {
+    for (const [appleServicesId, google, line] of [
+      [null, false, null],
+      ['com.zenbujapanese.web', false, 'Made your account with Apple?'],
+      [null, true, 'Made your account with Google?'],
+      ['com.zenbujapanese.web', true, 'Made your account with Apple or Google?']
+    ] as const) {
+      settings.current = { apiUrl: 'https://api.example.com', appleServicesId, google }
+      const html = renderToStaticMarkup(await pages['/forgot-password/']())
+      expect(html).toContain('Email me a code')
+      const offered = /Made your account with [^?]+\?/.exec(html)?.[0] ?? null
+      expect(offered).toBe(line)
+      expect(accountLinks(html)).toEqual(line ? ['/login/'] : [])
+    }
+  })
 })

@@ -108,7 +108,7 @@ test.describe('account pages', () => {
     test("the account page says it can't reach it, and offers to try again", async ({ page }) => {
       await standInForTheAccountService(page, {})
       await page.goto('/account/')
-      await expect(page.getByText("We couldn't reach your Zenbu account")).toBeVisible()
+      await expect(page.getByText('We couldn’t reach your Zenbu account')).toBeVisible()
       await expect(page.getByRole('button', { name: 'Try again' })).toBeVisible()
     })
   })

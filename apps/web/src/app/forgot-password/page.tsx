@@ -6,14 +6,23 @@ import {
 } from '@/components/account/account-page-shell'
 import { SignInForm } from '@/components/account/sign-in-form'
 import { accountMetadata, accountPages } from '@/lib/account/pages'
-import { accountSettings } from '@/lib/account/settings'
+import { type AccountSettings, accountSettings } from '@/lib/account/settings'
 
 export const dynamic = 'force-dynamic'
 
 export const metadata = accountMetadata('forgotPassword')
 
+function otherWaysIn(settings: AccountSettings | null): string | null {
+  const ways = [
+    settings?.appleServicesId ? 'Apple' : null,
+    settings?.google ? 'Google' : null
+  ].filter(way => way !== null)
+  return ways.length > 0 ? ways.join(' or ') : null
+}
+
 export default async function ForgotPasswordPage() {
   const settings = await accountSettings()
+  const otherWays = otherWaysIn(settings)
   return (
     <AccountPageShell
       title={accountPages.forgotPassword.title}
@@ -28,10 +37,10 @@ export default async function ForgotPasswordPage() {
       ) : (
         <AccountUnavailable />
       )}
-      {settings ? (
+      {otherWays ? (
         <OtherAccountPages>
           <p>
-            Made your account with Apple or Google?{' '}
+            Made your account with {otherWays}?{' '}
             <Link href={accountPages.signIn.path}>Sign in that way</Link>.
           </p>
         </OtherAccountPages>

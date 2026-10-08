@@ -62,7 +62,7 @@ export function EmailCodeForm({
       <form className="flex flex-col gap-3" onSubmit={send}>
         {fixedEmail ? (
           <p className="text-sm text-muted-foreground">
-            We'll email a code to <strong className="text-foreground">{fixedEmail}</strong>.
+            We’ll email a code to <strong className="text-foreground">{fixedEmail}</strong>.
           </p>
         ) : (
           <div className="flex flex-col gap-1.5">
