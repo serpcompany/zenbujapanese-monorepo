@@ -1,7 +1,7 @@
 # Privacy Policy
 
-`/legal/privacy/` is the privacy policy for the Zenbu Japanese iPhone app, the website, and the
-Zenbu account, including Tomodachi's use of it. The shipped app and its App Store listing reach it
+`/legal/privacy/` is the privacy policy for the Zenbu Japanese iPhone app, Tomodachi for iPhone
+and Mac, the website, and the Zenbu account. The shipped apps and their App Store listings reach it
 through `/privacy` ([App links](dictionary.md#header-footer-and-site-wide)). Its text is
 `apps/web/src/app/legal/privacy/page.tsx`. Each behavior below says what the page says, where it
 comes from, and the automated check that enforces it (see
@@ -9,7 +9,7 @@ comes from, and the automated check that enforces it (see
 
 Since #681 the page says what a privacy policy has to, in plain language, and leaves out how the
 services work: App Store Review Guideline 5.1.1, GDPR Article 13, and the CCPA's notice
-requirements set what it covers. It is a short version of five points, then about 1,000 words in
+requirements set what it covers. It is a short version of five points, then about 1,100 words in
 sections, with two tables, for what an account keeps and how long. Cookie names, browser storage,
 sign-in mechanics, field-by-field lists, per-timer retention, and Tomodachi's permission list are
 condensed into categories or one line each. The page never says whether an app or the website
@@ -21,8 +21,8 @@ scope, change the page, its Effective date, this doc, and the
 [App Store privacy labels](../app-store-privacy-labels.md) in the same pull request. The owner
 approves the text before it merges, since it is legal copy.
 
-Abbreviations: **Privacy spec** is `apps/web/e2e/privacy.spec.ts`, the page's browser tests at a
-desktop and a phone width.
+Abbreviations: **Privacy spec** is `apps/web/e2e/privacy.spec.ts`, the browser tests of this page
+and of the support page's Tomodachi line, at a desktop and a phone width.
 
 ## Sections
 
@@ -77,22 +77,45 @@ The account service emails only sign-in codes, a way to sign in added or removed
 confirmation. Where the website offers sign-in, the account there changes the name and username,
 manages how the learner signs in, signs out, and deletes the account, and doesn't read study data
 yet; signing in uses cookies only to sign in and stay signed in, and the website remembers the
-theme and that the learner is signed in. Tomodachi works without an account and keeps its progress
-in the learner's iCloud; linked, it can read lists and known words, mark words Known, and delete
-the account when asked, and looks words up in the dictionary service, which keeps none of it. The
-page says it will change before an app or the website syncs anything else, or before another app
-can use the account.
+theme and that the learner is signed in. The page says it will change before an app or the website
+syncs anything else.
 
 - Source: [`account-api.md`](../../../../docs/agents/account-api.md) (Sign-in, Email, Profiles and
-  sync); [`account-clients.md`](../../../../docs/agents/account-clients.md) (Your app: each app's
-  scopes; The website); the app's
+  sync); [`account-clients.md`](../../../../docs/agents/account-clients.md) (The website); the app's
   [Zenbu account and sync](../../../ios/docs/product/index.md#zenbu-account-and-sync) docs;
-  [Account pages](account.md); the
-  [App Store privacy labels](../app-store-privacy-labels.md) (Tomodachi's iCloud).
+  [Account pages](account.md).
 - Check: Privacy spec, "names each kind of data an account keeps, and why", and "says what stays on
   the device, and that the app works without an account" (nothing sent signed out, "where our apps
-  or this website offer one", what doesn't sync). The email's uses, the website's and Tomodachi's
-  lines: No automated check yet.
+  or this website offer one", what doesn't sync). The email's uses and the website's lines: No
+  automated check yet.
+
+**Tomodachi.** Its own section, `/legal/privacy/#tomodachi`, which the support page links to.
+Tomodachi needs no account or sign-in. It saves the learner's progress (Tomo, its words, and their
+answers) on the device and syncs it through their own iCloud, in their CloudKit private database,
+under Apple's terms; we run no server for it and can't see that progress. Its reminders are
+notifications it schedules on the device, not push notifications from us; it has no ads,
+analytics, or tracking, and doesn't use the microphone or speech recognition. The Mac app works the
+same way, and opens at login only if the learner turns that on. Linked to a Zenbu account, it can
+read lists and known words, mark words Known, and delete the account when asked, and it looks
+words up in the dictionary service, which keeps none of it. The page says it will change before
+another app can use the account. The heading lands below the pinned header, since the page's root
+has a 64-pixel scroll padding (`scroll-pt-16` in `src/app/layout.tsx`).
+
+The support page (`/support/`) says Tomodachi's help goes to the same support address and links
+this section, and both pages' descriptions name Tomodachi. Both fit a 320-pixel and a 390-pixel
+phone without scrolling sideways, in light and dark.
+
+- Source: #686; [tomodachi-app#105](https://github.com/serpcompany/tomodachi-app/issues/105), which
+  lists what's true of the current build for App Store Review Guideline 5.1.1, since Tomodachi's App
+  Store records and About screen link to `/privacy` and `/support`; its iPhone and Mac `Info.plist`,
+  which ask for no microphone or speech recognition;
+  [`account-clients.md`](../../../../docs/agents/account-clients.md) (Your app: each app's scopes);
+  the [App Store privacy labels](../app-store-privacy-labels.md) (Tomodachi's iCloud).
+- Check: Privacy spec, "/legal/privacy/#tomodachi opens on what the policy says about Tomodachi"
+  (each fact, the heading below the header, and the description), "the support page sends Tomodachi
+  help to the support address, and links its section" (the line, the link landing on the section,
+  and the description), and "… fits a 320px phone, in light and dark" and "… fits a 390px phone, in
+  light and dark", for both pages; smoke "the privacy policy and support page cover Tomodachi".
 
 **Who else handles your information.** The section opens by saying we don't sell or share
 personal information, then lists who handles it for us: Cloudflare (this website, downloads,

@@ -29,14 +29,18 @@ export const sitePages = [
       'An offline Japanese dictionary for iPhone with Image Search, handwriting, a live conversation translator, and YouTube with linked captions.'
   },
   { path: '/about/', title: 'About', description: 'About Zenbu Japanese.' },
-  { path: '/support/', title: 'Support', description: 'Get help with Zenbu Japanese.' },
+  {
+    path: '/support/',
+    title: 'Support',
+    description: 'Get help with Zenbu Japanese and Tomodachi.'
+  },
   { path: '/contact/', title: 'Contact', description: 'Contact the Zenbu Japanese team.' },
   { path: '/legal/', title: 'Legal', description: 'Zenbu Japanese legal policies.' },
   {
     path: '/legal/privacy/',
     title: 'Privacy Policy',
     description:
-      'How Zenbu Japanese handles information in its apps, on this website, and in a Zenbu account.'
+      'How Zenbu Japanese handles information in its apps, Tomodachi included, on this website, and in a Zenbu account.'
   },
   {
     path: '/legal/terms/',
