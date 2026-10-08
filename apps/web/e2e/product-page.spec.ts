@@ -1,7 +1,8 @@
 import type { Locator, Page } from '@playwright/test'
 import { pageFor } from '../src/lib/pages'
+import { pagesSitemapPaths } from '../src/lib/pages-sitemap'
 import { iphoneAppPage } from '../src/lib/products/zenbu-japanese-for-iphone'
-import { expect, test } from './test'
+import { expect, needed, test } from './test'
 
 const path = iphoneAppPage.path
 const demos = iphoneAppPage.demos
@@ -186,4 +187,29 @@ test.describe('the products pages’ metadata', () => {
       )
     })
   }
+})
+
+test.describe('the app page’s old address', () => {
+  const oldAddress = '/products/zenbu-japanese-for-iphone'
+
+  test.beforeEach(({ browserName: _ }, testInfo) => {
+    test.skip(
+      testInfo.project.name !== 'desktop',
+      'A status and a page’s HTML are the same at every width'
+    )
+  })
+
+  test(`${oldAddress}/ is 404`, async ({ request }) => {
+    expect((await request.get(`${oldAddress}/`, { maxRedirects: 0 })).status()).toBe(404)
+  })
+
+  test('no page links to it', async ({ request }) => {
+    test.setTimeout(120_000)
+    const pages = [...pagesSitemapPaths, '/dictionary/search/iru/', needed.path]
+    const responses = await Promise.all(pages.map(url => request.get(url)))
+    for (const [index, response] of responses.entries()) {
+      expect(response.status(), pages[index]).toBe(200)
+      expect(await response.text(), pages[index]).not.toContain(oldAddress)
+    }
+  })
 })

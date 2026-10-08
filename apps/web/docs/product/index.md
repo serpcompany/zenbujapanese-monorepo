@@ -26,7 +26,7 @@ photos) still open a prompt to get the app (#468).
 - **Browse pages**, under `/dictionary/browse/`: lists of words by kana, category, and frequency,
   and of kanji, linking to the word and search pages.
 - **Products**, `/products/`: a catalog of the apps, free tools, guides, and courses, with search
-  and type filters, and the iPhone app's page, `/products/zenbu-japanese-for-iphone/`.
+  and type filters, and the iPhone app's page, `/products/zenbu-japanese-app/`.
 
 The dictionary has these page types (ADR 0010, amended for #614); the kanji, conjugation, and
 Example Sentences pages that came before it redirect to the nearest of them. The shared header and
