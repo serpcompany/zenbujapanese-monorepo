@@ -1022,7 +1022,7 @@ Who signed in. GET /v1/me has the profile, with the username and version.
 
 - `token` (string, required): The ID token Sign in with Apple or Google gave the device.
 - `nonce` (string, required): The nonce from POST /v1/auth/sign-in/nonce, passed to Apple or Google.
-- `user` (object, optional): The name Apple gives an app or the website on the learner's first sign-in, and never again. Apple's token has none, so it names a new account.
+- `user` (object, optional): The name Apple gives an app or the website only on the learner's first sign-in to it. Apple's token has none, so it names a new account.
   - `name` (object, optional)
     - `firstName` (string, optional)
     - `lastName` (string, optional)

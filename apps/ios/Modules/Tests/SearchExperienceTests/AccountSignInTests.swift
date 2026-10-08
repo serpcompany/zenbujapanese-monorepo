@@ -198,48 +198,54 @@ struct AccountSignInTests {
 
   @Test(
     "a session confirmed while a refresh is on its way is kept, and refreshed in its turn",
-    arguments: [200, 401])
+    .timeLimit(.minutes(1)), arguments: [200, 401])
   func sessionConfirmedDuringRefresh(earlierAnswers status: Int) async throws {
     let server = StubAccountServer()
     let storage = MemorySessionTokenStorage("earlier.signed")
+    let confirmed = DispatchSemaphore(value: 0)
     let earlier = Date(timeIntervalSince1970: 1_900_000_000)
-    let confirmed = earlier.addingTimeInterval(60)
+    let renewed = earlier.addingTimeInterval(60)
     server.respond { request in
-      if request.header("Authorization") == "Bearer earlier.signed" {
-        storage.save("confirmed.signed")
-        return status == 401
-          ? .error(401, "unauthorized")
-          : .json(200, ["token": StubTokens.access(expiresAt: earlier)])
+      guard request.header("Authorization") == "Bearer earlier.signed" else {
+        return .json(200, ["token": StubTokens.access(expiresAt: renewed)])
       }
-      return .json(200, ["token": StubTokens.access(expiresAt: confirmed)])
+      _ = confirmed.wait(timeout: .now() + 30)
+      return status == 401
+        ? .error(401, "unauthorized")
+        : .json(200, ["token": StubTokens.access(expiresAt: earlier)])
     }
     let tokens = AccountTokens(
       api: AccountAPI(baseURL: server.baseURL, session: server.session), storage: storage)
 
-    let token = try await tokens.validAccessToken()
+    let refresh = Task { try await tokens.validAccessToken() }
+    try await firstTokenRequest(to: server)
+    tokens.confirmSession(with: "confirmed.signed")
+    confirmed.signal()
 
-    #expect(AccessTokenClaims.expiry(of: token) == confirmed)
+    #expect(AccessTokenClaims.expiry(of: try await refresh.value) == renewed)
     #expect(storage.read() == "confirmed.signed")
     #expect(server.requests(to: "GET /v1/auth/token").count == 2)
   }
 
-  @Test("a refresh on its way across a sign-out and another sign-in ends, and sends nothing for it")
+  @Test(
+    "a refresh on its way across a sign-out and another sign-in ends, and sends nothing for it",
+    .timeLimit(.minutes(1)))
   func refreshAcrossAnotherSignIn() async throws {
     let server = StubAccountServer()
     let storage = MemorySessionTokenStorage("first.signed")
     let swapped = DispatchSemaphore(value: 0)
     let expiry = Date().addingTimeInterval(15 * 60)
     server.respond { request in
-      if request.header("Authorization") == "Bearer first.signed" { swapped.wait() }
+      if request.header("Authorization") == "Bearer first.signed" {
+        _ = swapped.wait(timeout: .now() + 30)
+      }
       return .json(200, ["token": StubTokens.access(expiresAt: expiry)])
     }
     let tokens = AccountTokens(
       api: AccountAPI(baseURL: server.baseURL, session: server.session), storage: storage)
 
     let refresh = Task { try await tokens.validAccessToken() }
-    while server.requests(to: "GET /v1/auth/token").isEmpty {
-      try await Task.sleep(for: .milliseconds(5))
-    }
+    try await firstTokenRequest(to: server)
     tokens.forgetSession()
     tokens.replaceSession(with: "other.signed")
     swapped.signal()
@@ -250,6 +256,39 @@ struct AccountSignInTests {
         $0.header("Authorization") == "Bearer first.signed"
       })
     #expect(storage.read() == "other.signed")
+  }
+
+  @Test("a request refused across a sign-out and another sign-in isn't sent again for it")
+  func unauthorizedAcrossAnotherSignIn() async throws {
+    let server = StubAccountServer()
+    let storage = MemorySessionTokenStorage("first.signed")
+    server.respond { _ in
+      .json(200, ["token": StubTokens.access(expiresAt: Date().addingTimeInterval(15 * 60))])
+    }
+    let tokens = AccountTokens(
+      api: AccountAPI(baseURL: server.baseURL, session: server.session), storage: storage)
+    var calls = 0
+
+    await #expect(throws: AccountServiceError.sessionEnded) {
+      try await tokens.withAccessToken { @MainActor _ in
+        calls += 1
+        tokens.forgetSession()
+        tokens.replaceSession(with: "other.signed")
+        throw AccountServiceError.refused(
+          status: 401, code: "unauthorized", message: "unauthorized", retryAfter: nil)
+      }
+    }
+    #expect(calls == 1)
+    #expect(
+      server.requests(to: "GET /v1/auth/token").allSatisfy {
+        $0.header("Authorization") == "Bearer first.signed"
+      })
+  }
+
+  private func firstTokenRequest(to server: StubAccountServer) async throws {
+    while server.requests(to: "GET /v1/auth/token").isEmpty {
+      try await Task.sleep(for: .milliseconds(5))
+    }
   }
 
   @Test("Apple's name on a first sign-in goes with its token, and nothing when Apple gives none")

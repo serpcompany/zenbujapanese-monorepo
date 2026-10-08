@@ -73,7 +73,7 @@ final class AccountTokens {
   private let storage: any SessionTokenStorage
   private let now: @MainActor () -> Date
   private var accessToken: (token: String, expiresAt: Date)?
-  private var signedIn = 0
+  private var signIns = 0
 
   init(
     api: AccountAPI, storage: any SessionTokenStorage,
@@ -89,7 +89,7 @@ final class AccountTokens {
   func replaceSession(with token: String) {
     storage.save(token)
     accessToken = nil
-    signedIn += 1
+    signIns += 1
   }
 
   func confirmSession(with token: String) {
@@ -100,7 +100,7 @@ final class AccountTokens {
   func forgetSession() {
     storage.delete()
     accessToken = nil
-    signedIn += 1
+    signIns += 1
   }
 
   func validAccessToken() async throws -> String {
@@ -113,30 +113,32 @@ final class AccountTokens {
   func withAccessToken<Value: Sendable>(
     _ call: (String) async throws -> Value
   ) async throws -> Value {
+    let signIn = signIns
     do {
       return try await call(try await validAccessToken())
     } catch AccountServiceError.refused(status: 401, _, _, _) {
+      guard signIns == signIn else { throw AccountServiceError.sessionEnded }
       accessToken = nil
       return try await call(try await refreshedAccessToken())
     }
   }
 
   private func refreshedAccessToken() async throws -> String {
-    let signIn = signedIn
+    let signIn = signIns
     while true {
-      guard signedIn == signIn, let session = storage.read() else {
+      guard signIns == signIn, let session = storage.read() else {
         throw AccountServiceError.sessionEnded
       }
       let token: String
       do {
         token = try await api.accessToken(sessionToken: session)
       } catch AccountServiceError.refused(status: 401, _, _, _) {
-        guard signedIn == signIn, storage.read() != session else {
+        guard signIns == signIn, storage.read() != session else {
           throw AccountServiceError.sessionEnded
         }
         continue
       }
-      guard signedIn == signIn, storage.read() == session else { continue }
+      guard signIns == signIn, storage.read() == session else { continue }
       accessToken = (token, AccessTokenClaims.expiry(of: token) ?? now() + Self.assumedLifetime)
       return token
     }

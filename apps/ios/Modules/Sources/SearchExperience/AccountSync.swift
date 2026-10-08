@@ -149,7 +149,8 @@ final class AccountSync: LocalFileStore {
       try await pull(in: session)
       lastFailure = nil
     } catch AccountServiceError.sessionEnded {
-      if self.session == session { endSession(onItsOwn: true) }
+      guard self.session == session else { return }
+      endSession(onItsOwn: true)
       throw AccountServiceError.sessionEnded
     } catch let failure as AccountServiceError {
       lastFailure = failure

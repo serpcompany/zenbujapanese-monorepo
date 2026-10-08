@@ -76,7 +76,7 @@ const IdTokenSchema = z
       .optional()
       .openapi({
         description:
-          "The name Apple gives an app or the website on the learner's first sign-in, and never again. Apple's token has none, so it names a new account."
+          "The name Apple gives an app or the website only on the learner's first sign-in to it. Apple's token has none, so it names a new account."
       })
   })
   .openapi('IdToken')
