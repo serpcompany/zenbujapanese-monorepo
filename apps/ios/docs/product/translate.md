@@ -81,9 +81,10 @@ the tab. Conversation text is one Dynamic Type size larger than the rest of the 
   its provisional translation grows in the other. Each pane follows its newest line. The layout
   chosen in **•••** is remembered.
 - **Long speech.** A speaker who keeps talking stays one turn. Its text is held until they pause,
-  then shows as one or more cards. The audio waits (**3 waiting for a pause**) and plays in order
-  about 2 seconds after the speaker stops. A turn that runs for 30 seconds without a pause plays
-  what's waiting anyway.
+  then shows as one card per sentence. The audio waits (**3 waiting for a pause**) and plays in
+  order, starting about 2 seconds after the speaker stops: each sentence plays as soon as its own
+  translation is ready, so a long monologue doesn't wait for the whole of it. A turn that runs for
+  30 seconds without a pause plays what's waiting anyway.
 - **Scrolling.** The list follows the newest text. Scrolling up stops following and shows
   **Jump to Latest**.
 - **Elsewhere in the app.** On a word's full entry opened from the conversation, where the tab

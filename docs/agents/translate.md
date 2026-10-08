@@ -24,11 +24,15 @@ The tab is split across three Swift targets in `apps/ios/Modules`
     same audio) into one stream. It holds a final until the other recognizer's final arrives, for
     at least 0.4 s. It keeps holding while the other recognizer still has an unfinished sentence:
     up to 2 s once that sentence stops changing, and up to 20 s while it's still changing,
-    because the person is still talking. Then it joins each recognizer's sentences, picks the
+    because the person is still talking. Then it joins each recognizer's sentences and picks the
     language with `LanguageArbiter` (confidence plus how well the text's script matches the
-    language), and drops the loser's late final. Live text shows the held sentences plus the
-    unfinished one. Leading punctuation is trimmed. A winner with one letter, or with a confidence
-    below 0.4, becomes an empty final, which clears the live text without adding a sentence.
+    language), among the guesses worth translating: one letter, or a confidence below 0.4, never
+    competes. If none is worth translating, it sends an empty final, which clears the live text
+    without adding a sentence and doesn't count that speech as shown. Otherwise it sends the
+    winner one sentence at a time (Japanese split at 。？！, English as the recognizer's own
+    sentences), so each is translated and played as soon as it's ready. A loser's late final is
+    dropped, and so is a final below 0.55 confidence that starts inside speech already shown.
+    Live text shows the held sentences plus the unfinished one. Leading punctuation is trimmed.
   - `SpeechPauseDetector` finds the end of speech from the microphone's loudness: a level three
     times the room's noise floor is voice, and 0.6 s without voice is a pause. Muted audio counts
     as silence and leaves the noise floor alone.
@@ -97,10 +101,17 @@ The tab is split across three Swift targets in `apps/ios/Modules`
   spoken "Yes" muted the microphone again, so the app looped on itself every 2 s (#637).
 - Apple's two recognizers end sentences differently. English ends a sentence by itself about
   0.5–1 s after a pause. Japanese holds its sentence until the next speech begins, even across
-  English speech. So at each pause `BilingualRecognizer` finalizes only the Japanese analyzer
-  (`finishedAtPauses`), and only when it has an unfinished sentence. Finalizing the English
-  analyzer garbles the sentence spoken right after it ("Then Osaka on Friday." became `....`),
-  which is why each language has its own analyzer.
+  English speech, and left open through a long stretch of English it loses the start of the
+  next Japanese. So at every pause `BilingualRecognizer` finalizes the Japanese analyzer, through
+  0.3 s after the voice ended so speech that has resumed stays in the next sentence. If its text
+  was still changing, it checks again every 0.3 s while the room stays quiet, up to five times.
+  It finalizes only the Japanese analyzer
+  (`finishedAtPauses`). Finalizing the English analyzer garbles the sentence spoken right after
+  it ("Then Osaka on Friday." became `....`), which is why each language has its own analyzer.
+- A sentence whose text stops changing is finished early only when the room is quiet: Apple's
+  Japanese recognizer can go 2–3 s without a new result in fast speech, and finishing it then
+  cut a monologue and lost its words. While someone is talking, a sentence is finished only after
+  5 s without a change.
 - A turn closes only when nobody is talking: no live sentence in either language, and
   `turnEndPause` since the last result. A wrong-language guess that becomes a turn closes the
   real one and mutes the microphone while the person is still speaking. Ducking of other audio
@@ -153,7 +164,9 @@ These were tuned on 2026-10-07 on an iPhone 17 Pro Max. A Mac played the #627 fi
 | Arbiter weights | `LanguageArbiter.score` | confidence × 100 + script × 100 (unchanged) | The measured margins are wide. Japanese speech: Japanese 0.81–1.0 against English 0.04–0.45. English speech: English 0.59–0.97 against Japanese 0.5–0.75, which loses on script. |
 | Pause | `SpeechPauseDetector` | 0.6 s below 3 × the noise floor | Owll splits sentences at about 0.5 s. |
 | Pause confirmation | `BilingualRecognizer.pauseConfirmation` | 0.3 s | Japanese is finalized only if its text stopped changing. A loudness dip inside fast speech no longer cuts it. |
-| Stalled sentence | `BilingualRecognizer.stalledSentence` | 2 s | Only a recognizer that has really stopped is finalized. Finalizing both every time the shown text paused chopped the monologue. |
+| Stalled sentence | `BilingualRecognizer.stalledSentence`, `abandonedSentence` | 2 s once the room is quiet for 0.6 s; 5 s while someone is talking | Only a recognizer that has really stopped is finalized. Finalizing during fast speech chopped the monologue and lost its words (2026-10-08, recorded-audio check). |
+| Pause re-checks | `BilingualRecognizer.pauseChecks`, `pauseMargin` | 5 checks, 0.3 s apart; finalized through 0.3 s after the voice ended | A pause whose Japanese text was still catching up was skipped, and the sentence waited for the stall timer; the late Japanese final then lost to an English guess. |
+| Doubtful guess over shown speech | `BilingualTranscriptMerger.confidenceOverShownSpeech` | 0.55 | The English recognizer's "Hi" (0.40) for the end of 「はい、3時」 became its own turn. Its junk measured 0.30–0.51 on the recordings; real English 0.59 and up. |
 | Turn-end pause | `ConversationTiming.turnEndPause` | 0.8 s (was 1.2) | Translations start 1.4–2.3 s after the speaker stops (was 2.3–5.4 s). Owll takes about 1.7–2 s. |
 | Echo guard | `EchoGuard` | 1.5 s, 60 % letter-pair overlap | A backstop if voice processing lets the app's own voice through. |
 
@@ -162,7 +175,7 @@ These were tuned on 2026-10-07 on an iPhone 17 Pro Max. A Mac played the #627 fi
 The engine is checked on an iPhone without anyone speaking:
 
 1. Install a Zenbu Dev Debug build ([`ios.md`](ios.md), Install on an iPhone) and start a Conversation on the phone.
-2. Make fixtures with `say -v Kyoko -o j1.aiff "今日は東京駅に行きます。"` and `say -v Samantha`, and play them beside the phone with `afplay`. Leave enough time after each one for the translation to play.
+2. Make fixtures with `say -v Kyoko -o j1.aiff "今日は東京駅に行きます。"` and `say -v Samantha`, and play them beside the phone with `afplay`. Leave enough time after each one for the translation to play. Keep the Mac quiet enough that the recording doesn't clip: one of the 2026-10-07 runs reached full scale hundreds of times in the monologue, and both the phone and the Mac garbled the same words of it.
 3. Watch with `xcrun devicectl device capture screenshot --device <udid> --destination shot.png`. This works over Wi-Fi. `capture screen-record` doesn't, and iPhone Mirroring silences the microphone.
 4. Read the result with `xcrun devicectl device copy from --device <udid> --domain-type appDataContainer --domain-identifier com.zenbujapanese.app.dev --source "<path>" --destination <file>`:
    - the conversation: `Library/Application Support/Zenbu Japanese/Translate Conversations/<id>.json`;
