@@ -218,9 +218,11 @@ describe("each app's access to an account", () => {
         body: { email: 'Flooded@Example.com', type: 'sign-in' }
       })
     for (let sent = 0; sent < 5; sent++) expect((await send()).status).toBe(200)
-    expect(await send()).toMatchObject({
-      status: 429,
-      body: { error: { code: 'too_many_requests' } }
-    })
+    const refused = await send()
+    expect(refused).toMatchObject({ status: 429, body: { error: { code: 'too_many_requests' } } })
+    const wait = Number(refused.headers.get('retry-after'))
+    expect(wait).toBeGreaterThan(590)
+    expect(wait).toBeLessThanOrEqual(600)
+    expect(refused.headers.get('x-retry-after')).toBe(String(wait))
   })
 })
