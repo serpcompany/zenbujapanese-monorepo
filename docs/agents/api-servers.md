@@ -260,11 +260,13 @@ A person with root sets these up once. Each service then has its own steps
    package public (Package settings → Change visibility). Check the token at once, before any
    environment uses it, by pulling with it alone:
    ```sh
-   sudo sh -c '. /etc/zenbujapanese-account-api/registry.env && export DOCKER_CONFIG="$(mktemp -d)" &&
+   sudo service="$service" sh -c '. "/etc/zenbujapanese-$service/registry.env" &&
+     export DOCKER_CONFIG="$(mktemp -d)" &&
      printf %s "$GHCR_TOKEN" | docker login ghcr.io --username "$GHCR_USERNAME" --password-stdin &&
-     docker pull ghcr.io/serpcompany/zenbujapanese-account-api:staging; rm -rf "$DOCKER_CONFIG"'
+     docker pull "ghcr.io/serpcompany/zenbujapanese-$service:staging"; rm -rf "$DOCKER_CONFIG"'
    ```
-   It worked when the pull finishes. Later, a journal line `couldn't read <image>:<environment>
+   It worked when the pull finishes. The `:staging` tag exists once the service's deploy workflow
+   has run on `main`. Later, a journal line `couldn't read <image>:<environment>
    from the registry` means the token failed, or that the environment's tag doesn't exist yet:
    `:production` exists only once a deploy workflow has run its `production` job, which a run by
    hand does, so until then production's line appears every run and changes nothing.
