@@ -888,7 +888,9 @@ tools (`/tools/`),
 the three converters, Zenbu Japanese for iPhone (its product page, which #652 builds at
 `/products/zenbu-japanese-for-iphone/`), Browser extension, Reference guides, Courses, All products
 (`/products/`, also #652), Log in (`/login/`), Get the app (the App Store), and the ten social
-accounts. #650 asked for menu items to appear only once their page exists; the owner chose to show
+accounts. The login page now exists, open where the site's account pages are
+([Account pages](account.md#pages)), but Log in keeps its placeholder until the header links it.
+#650 asked for menu items to appear only once their page exists; the owner chose to show
 them now as `#` placeholders instead (#648). Every one is in one list, `linkTargets` in
 `src/lib/site.ts`, named for what it stands for, and its links carry `data-link-target` with its id.
 A browser test lists every `#` link the site renders and fails on one that isn't in that list, so
@@ -934,8 +936,9 @@ window to 1024 pixels closes the sheet.
 **Get the app and Log in.** Get the app leads with a phone icon (lucide `Smartphone`); it opens the
 App Store link, a placeholder until that address is known, and is the same button in the header,
 the phone menu, and the prompt that actions needing the app open; following it closes the phone
-menu or the prompt. Log in opens the login page's placeholder; there is no signed-in avatar menu
-until accounts exist (#468).
+menu or the prompt. Log in opens the login page's placeholder, not `/login/`: where the account
+pages are open, the footer's Sign in leads there ([Account pages](account.md#pages)). The header
+has no signed-in avatar menu.
 
 - Source: #648 decision; #650; #511 (the phone icon).
 - Check: `src/components/site-header.test.tsx`, "from 1024 pixels Log in and Get the app end the
