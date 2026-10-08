@@ -291,12 +291,19 @@ URL.
   flag", which follows every link on the browse pages the fixtures hold;
   `src/lib/dictionary/urls.test.ts`, "a kanji links to the search page of its normalized form".
 
-**Browse sitemap.** `/sitemap-browse.xml` lists every indexed browse page once, and the sitemap
-index lists it wherever the site has a dictionary service.
+**Browse sitemaps.** Every indexed browse page is in exactly one sitemap, by kind:
+`/sitemap-kana.xml` (the hiragana and katakana lists), `/sitemap-categories.xml`,
+`/sitemap-frequency-lists.xml` (ranked bands and JLPT vocabulary), and `/sitemap-kanji-lists.xml`.
+The browse hubs (the browse home, kana charts, both scripts, kanji lists, frequency dictionaries,
+and the category indexes) are in `/sitemap-pages.xml`. The sitemap index lists the four wherever
+the site has a dictionary service.
 
-- Source: #614 mockup "Footer + /sitemap/ (changed)" (`/sitemaps/browse.xml` in
-  `/sitemap-index.xml`); #663 moved it to the root.
-- Check: `src/lib/dictionary/sitemaps.test.ts`, "the browse sitemap lists every browse page with
-  10 words or more, each once"; Browse service, "the browse sitemap fits in one file"; Browse
+- Source: #614 mockup "Footer + /sitemap/ (changed)" (one `/sitemaps/browse.xml` in
+  `/sitemap-index.xml`); #663 moved the sitemaps to the root and split this one by kind, as the
+  SERP XML sitemaps standard asks.
+- Check: `src/lib/dictionary/sitemaps.test.ts`, "the browse sitemaps list every browse page with
+  10 words or more, each once" and "the … sitemap lists only its own kind of browse page";
+  `src/lib/sitemap.test.ts`, "the … browse sitemap is …"; `apps/web/e2e/sitemaps.spec.ts`, the
+  pages sitemap's hubs; Browse service, "the browse sitemap fits in one file"; Browse
   categories service, "the categories under 10 words are the thin ones the sitemap leaves out".
 

@@ -5,7 +5,12 @@ import { absoluteUrl, servedOrigin, siteOrigin } from '@/lib/site'
 import { type SitemapEntry, urlSetStream, urlSetXml, xmlResponse } from '@/lib/sitemap'
 import { browseSitemapPaths } from './browse/sitemap'
 import { dictionaryService } from './data'
-import { browseSitemapPath, wordSitemapPath } from './sitemap-files'
+import {
+  browseSitemapGroups,
+  browseSitemapPath,
+  isBrowseSitemapGroup,
+  wordSitemapPath
+} from './sitemap-files'
 
 const wordsPerQuery = 10_000
 
@@ -13,17 +18,23 @@ export async function dictionarySitemapPaths(): Promise<string[]> {
   const api = await dictionaryService()
   if (!api) return []
   const sitemaps = (await api.wordSitemaps()).data
-  return [...sitemaps.map(sitemap => wordSitemapPath(sitemap.number)), browseSitemapPath]
+  return [
+    ...sitemaps.map(sitemap => wordSitemapPath(sitemap.number)),
+    ...browseSitemapGroups.map(browseSitemapPath)
+  ]
 }
 
-export async function browseSitemapResponse(request: Request) {
+export async function browseSitemapResponse(request: Request, group: string) {
+  if (!isBrowseSitemapGroup(group)) return null
   const api = await dictionaryService()
   const found = api ? await api.browse(browseService.sitemap()) : null
   if (!found) return null
   const origin = servedOrigin(request)
   return cachedForBuild(request, found.build, () =>
     xmlResponse(
-      urlSetXml(browseSitemapPaths(found.data).map(path => ({ url: absoluteUrl(path, origin) })))
+      urlSetXml(
+        browseSitemapPaths(found.data)[group].map(path => ({ url: absoluteUrl(path, origin) }))
+      )
     )
   )
 }

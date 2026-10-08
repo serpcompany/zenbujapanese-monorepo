@@ -23,7 +23,6 @@ test.describe('URLs', () => {
     ['/support', '/support/'],
     ['/robots.txt/', '/robots.txt'],
     ['/sitemaps/pages.xml', '/sitemap-pages.xml'],
-    ['/sitemaps/browse.xml', '/sitemap-browse.xml'],
     ['/sitemaps/dictionary/1.xml', '/sitemap-words.xml'],
     ['/sitemaps/dictionary/2.xml', '/sitemap-words-2.xml'],
     ['/sitemap-pages.xml/', '/sitemap-pages.xml'],
@@ -74,7 +73,9 @@ test.describe('URLs', () => {
     '/dictionary/999999999/',
     '/dictionary/0/',
     '/sitemaps/kanji.xml',
-    '/sitemaps/conjugations.xml'
+    '/sitemaps/conjugations.xml',
+    '/sitemaps/browse.xml',
+    '/sitemap-browse.xml'
   ]) {
     test(`${decodeURI(path)} is 404`, async ({ request }) => {
       expect((await request.get(path, { maxRedirects: 0 })).status()).toBe(404)

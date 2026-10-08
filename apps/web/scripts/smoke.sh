@@ -370,8 +370,11 @@ lists_word_sitemaps_only() {
   locs="$(body "$index" | grep -oE '<loc>[^<]+</loc>' || true)"
   grep -qxF "<loc>$canonical/sitemap-words.xml</loc>" <<<"$locs" &&
     grep -qxF "<loc>$canonical/sitemap-pages.xml</loc>" <<<"$locs" &&
-    grep -qxF "<loc>$canonical/sitemap-browse.xml</loc>" <<<"$locs" &&
-    ! grep -vqE "^<loc>${canonical//./\\.}/sitemap-(pages|browse|words(-[0-9]+)?)\\.xml</loc>$" <<<"$locs"
+    grep -qxF "<loc>$canonical/sitemap-kana.xml</loc>" <<<"$locs" &&
+    grep -qxF "<loc>$canonical/sitemap-categories.xml</loc>" <<<"$locs" &&
+    grep -qxF "<loc>$canonical/sitemap-frequency-lists.xml</loc>" <<<"$locs" &&
+    grep -qxF "<loc>$canonical/sitemap-kanji-lists.xml</loc>" <<<"$locs" &&
+    ! grep -vqE "^<loc>${canonical//./\\.}/sitemap-(pages|kana|categories|frequency-lists|kanji-lists|words(-[0-9]+)?)\\.xml</loc>$" <<<"$locs"
 }
 for index in /sitemap-index.xml /sitemap.xml; do
   eventually "$index lists the pages, word, and browse sitemaps on $canonical, and no other" \
@@ -387,7 +390,10 @@ eventually 'sitemap index lists unslashed .xml files' 'sitemap index has a non-c
   index_lists_files
 expect /sitemap-words.xml 200
 expect /sitemap-words-2.xml 200
-expect /sitemap-browse.xml 200
+for path in /sitemap-kana.xml /sitemap-categories.xml /sitemap-frequency-lists.xml /sitemap-kanji-lists.xml; do
+  expect "$path" 200
+done
+expect /sitemap-browse.xml 404
 expect_redirect /sitemaps/dictionary/2.xml /sitemap-words-2.xml
 word_count=0
 word_sitemap_is_canonical() {

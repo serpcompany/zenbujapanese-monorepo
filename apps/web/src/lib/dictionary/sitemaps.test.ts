@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 import { sitemapIndexResponse } from '../sitemap-index'
 import { dictionaryService } from './data'
+import { type BrowseSitemapGroup, browseSitemapGroups } from './sitemap-files'
 import {
   browseSitemapResponse,
   dictionarySitemapPaths,
@@ -90,20 +91,43 @@ describe('without a dictionary service (local fixtures)', () => {
     vi.mocked(dictionaryService).mockResolvedValue(null)
     expect(await dictionarySitemapPaths()).toEqual([])
     expect(await wordSitemapResponse(request('/sitemaps/dictionary/1.xml'), 1)).toBeNull()
-    expect(await browseSitemapResponse(request('/sitemap-browse.xml'))).toBeNull()
+    expect(await browseSitemapResponse(request('/sitemap-kana.xml'), 'kana')).toBeNull()
     const index = await sitemapIndexResponse(request('/sitemap-index.xml'))
     expect(locs(await index.text())).toEqual([`${local}/sitemap-pages.xml`])
   })
 })
 
+const browseGroupFiles = [
+  '/sitemap-kana.xml',
+  '/sitemap-categories.xml',
+  '/sitemap-frequency-lists.xml',
+  '/sitemap-kanji-lists.xml'
+]
+
+const site = `${local}/dictionary/browse`
+
+const browsePagesByGroup: Record<BrowseSitemapGroup, RegExp> = {
+  kana: new RegExp(`^${site}/(hiragana|katakana)/[^/]+/(\\d+/)?$`),
+  categories: new RegExp(
+    `^${site}/(?!hiragana/|katakana/|kanji/|frequency-dictionaries/)[a-z-]+/(\\d+/)?$`
+  ),
+  'frequency-lists': new RegExp(`^${site}/frequency-dictionaries/.+/$`),
+  'kanji-lists': new RegExp(`^${site}/kanji/[^/]+/$`)
+}
+
+async function browseUrls(group: string) {
+  const response = await browseSitemapResponse(request(`/sitemap-${group}.xml`), group)
+  return locs((await response?.text()) ?? '')
+}
+
 describe('with a dictionary service', () => {
-  test('the index lists every word sitemap and the browse sitemap, and nothing else', async () => {
+  test('the index lists every word sitemap and each browse sitemap, and nothing else', async () => {
     vi.mocked(dictionaryService).mockResolvedValue(fakeService(5, 2) as never)
     expect(await dictionarySitemapPaths()).toEqual([
       '/sitemap-words.xml',
       '/sitemap-words-2.xml',
       '/sitemap-words-3.xml',
-      '/sitemap-browse.xml'
+      ...browseGroupFiles
     ])
   })
 
@@ -123,30 +147,38 @@ describe('with a dictionary service', () => {
       `${listed}/sitemap-pages.xml`,
       `${listed}/sitemap-words.xml`,
       `${listed}/sitemap-words-2.xml`,
-      `${listed}/sitemap-browse.xml`
+      ...browseGroupFiles.map(path => `${listed}${path}`)
     ])
     const words = await wordSitemapResponse(request('/sitemaps/dictionary/1.xml', origin), 1)
     expect(locs((await words?.text()) ?? '')[0]).toBe(`${listed}/dictionary/%E8%A6%8B%E3%82%8B-1/`)
-    const browse = await browseSitemapResponse(request('/sitemap-browse.xml', origin))
-    expect(locs((await browse?.text()) ?? '')[0]).toBe(`${listed}/dictionary/browse/`)
+    const kanji = await browseSitemapResponse(
+      request('/sitemap-kanji-lists.xml', origin),
+      'kanji-lists'
+    )
+    expect(locs((await kanji?.text()) ?? '')).toEqual([
+      `${listed}/dictionary/browse/kanji/grade-1/`
+    ])
   })
 
-  test('the browse sitemap lists every browse page with 10 words or more, each once', async () => {
+  test.each(
+    browseSitemapGroups.map(group => [group])
+  )('the %s sitemap lists only its own kind of browse page', async group => {
     vi.mocked(dictionaryService).mockResolvedValue(fakeService(5, 2) as never)
-    const response = await browseSitemapResponse(request('/sitemap-browse.xml'))
-    const urls = locs((await response?.text()) ?? '')
-    const site = `${local}/dictionary/browse`
+    const urls = await browseUrls(group)
+    expect(urls.length).toBeGreaterThan(0)
+    expect(urls.filter(url => !browsePagesByGroup[group].test(url))).toEqual([])
+  })
+
+  test('an unknown browse sitemap is not there', async () => {
+    vi.mocked(dictionaryService).mockResolvedValue(fakeService(5, 2) as never)
+    expect(await browseSitemapResponse(request('/sitemap-browse.xml'), 'browse')).toBeNull()
+  })
+
+  test('the browse sitemaps list every browse page with 10 words or more, each once', async () => {
+    vi.mocked(dictionaryService).mockResolvedValue(fakeService(5, 2) as never)
+    const urls = (await Promise.all(browseSitemapGroups.map(browseUrls))).flat()
     expect(urls).toEqual(
       expect.arrayContaining([
-        `${site}/`,
-        `${site}/kana/`,
-        `${site}/hiragana/`,
-        `${site}/katakana/`,
-        `${site}/kanji/`,
-        `${site}/frequency-dictionaries/`,
-        `${site}/parts-of-speech/`,
-        `${site}/usage/`,
-        `${site}/subjects/`,
         `${site}/hiragana/%E3%81%8B/`,
         `${site}/hiragana/%E3%81%8B%E3%81%8C/`,
         `${site}/hiragana/%E3%81%8B%E3%81%8C/2/`,
@@ -160,7 +192,7 @@ describe('with a dictionary service', () => {
         `${site}/kanji/grade-1/`
       ])
     )
-    expect(urls).toHaveLength(27)
+    expect(urls).toHaveLength(18)
     expect(new Set(urls).size).toBe(urls.length)
     for (const thin of [
       'kana-order',

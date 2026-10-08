@@ -1,4 +1,4 @@
-import { sitePages } from '../src/lib/pages'
+import { pagesSitemapPaths } from '../src/lib/pages-sitemap'
 import { expect, test } from './test'
 
 const locs = (xml: string) => [...xml.matchAll(/<loc>([^<]+)<\/loc>/g)].map(match => match[1])
@@ -27,7 +27,7 @@ test.describe('sitemaps', () => {
       const listed = locs(await response.text())
       expect(listed).toContain(`${origin}/sitemap-pages.xml`)
       for (const url of listed)
-        expect(url).toMatch(new RegExp(`^${origin}/sitemap-[a-z]+(-[0-9]+)?\\.xml$`))
+        expect(url).toMatch(new RegExp(`^${origin}/sitemap-[a-z]+(-[a-z]+)*(-[0-9]+)?\\.xml$`))
     })
   }
 
@@ -38,7 +38,7 @@ test.describe('sitemaps', () => {
     const origin = new URL(baseURL ?? '').origin
     const listed = locs(await (await request.get('/sitemap-pages.xml')).text())
     expect(listed).toEqual(
-      sitePages.map(page => (page.path === '/' ? origin : `${origin}${page.path}`))
+      pagesSitemapPaths.map(path => (path === '/' ? origin : `${origin}${path}`))
     )
   })
 })
