@@ -1,5 +1,7 @@
 import { expect, needed, onProductionBuild, test } from './test'
 
+const answeredByWorker = 'worker.ts answers it before Next.js, and next dev runs Next.js alone'
+
 test.describe('URLs', () => {
   test.beforeEach(({ browserName: _ }, testInfo) => {
     test.skip(
@@ -23,7 +25,6 @@ test.describe('URLs', () => {
     ['/support', '/support/'],
     ['/robots.txt/', '/robots.txt'],
     ['/sitemaps/pages.xml', '/sitemap-pages.xml'],
-    ['/sitemaps/browse.xml', '/sitemap-browse.xml'],
     ['/sitemaps/dictionary/1.xml', '/sitemap-words.xml'],
     ['/sitemaps/dictionary/2.xml', '/sitemap-words-2.xml'],
     ['/sitemap-pages.xml/', '/sitemap-pages.xml'],
@@ -48,10 +49,7 @@ test.describe('URLs', () => {
 
   for (const from of ['/privacy', '/privacy/', '/privacy?from=app']) {
     test(`${from} redirects to the privacy policy in one hop`, async ({ request, baseURL }) => {
-      test.skip(
-        !onProductionBuild,
-        'worker.ts answers it before Next.js, and next dev runs Next.js alone'
-      )
+      test.skip(!onProductionBuild, answeredByWorker)
       const response = await request.get(from, { maxRedirects: 0 })
       expect(response.status()).toBe(308)
       const location = new URL(response.headers().location, baseURL)
@@ -70,11 +68,27 @@ test.describe('URLs', () => {
     })
   }
 
+  test('/.well-known/apple-app-site-association is JSON where Apple asks, claiming dictionary links for the app', async ({
+    request
+  }) => {
+    test.skip(!onProductionBuild, answeredByWorker)
+    const response = await request.get('/.well-known/apple-app-site-association', {
+      maxRedirects: 0
+    })
+    expect(response.status()).toBe(200)
+    expect(response.headers()['content-type']).toBe('application/json')
+    const [app] = (await response.json()).applinks.details
+    expect(app.appIDs).toEqual([expect.stringMatching(/^[A-Z0-9]{10}\.com\.zenbujapanese\.app$/)])
+    expect(app.components).toContainEqual({ '/': '/dictionary/*-*' })
+  })
+
   for (const path of [
     '/dictionary/999999999/',
     '/dictionary/0/',
     '/sitemaps/kanji.xml',
-    '/sitemaps/conjugations.xml'
+    '/sitemaps/conjugations.xml',
+    '/sitemaps/browse.xml',
+    '/sitemap-browse.xml'
   ]) {
     test(`${decodeURI(path)} is 404`, async ({ request }) => {
       expect((await request.get(path, { maxRedirects: 0 })).status()).toBe(404)

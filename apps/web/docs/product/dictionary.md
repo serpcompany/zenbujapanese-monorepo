@@ -1090,27 +1090,45 @@ production's.
 
 **Sitemaps.** `robots.txt` names the sitemap index, `/sitemap-index.xml` (and `/sitemap.xml`, the
 same document), in every environment. The index lists files at the site's root, each named for
-its group: `/sitemap-pages.xml`, which lists the dictionary home; the word sitemaps,
-`/sitemap-words.xml`, `/sitemap-words-2.xml`, and on, with every word page's canonical URL; and
-`/sitemap-browse.xml`, with every browse page's ([Browse pages](browse.md#site-wide)). Every URL
+its group: `/sitemap-pages.xml`, which lists the dictionary home and the browse home; the word
+sitemaps, `/sitemap-words.xml`, `/sitemap-words-2.xml`, and on, with every word page's canonical
+URL; and the four browse sitemaps, `/sitemap-kana.xml`, `/sitemap-categories.xml`,
+`/sitemap-frequency-lists.xml`, and `/sitemap-kanji-lists.xml` ([Browse pages](browse.md#site-wide)). Every URL
 in them is on the environment's own host, so staging's name `https://staging.zenbujapanese.com`,
-and the homepage is the origin with no slash. The old `/sitemaps/pages.xml`,
-`/sitemaps/browse.xml`, and `/sitemaps/dictionary/<n>.xml` redirect (308) to them. Those are the
+and the homepage is the origin with no slash. The old `/sitemaps/pages.xml` and
+`/sitemaps/dictionary/<n>.xml` redirect (308) to them; the one browse sitemap, `/sitemaps/browse.xml`
+(later `/sitemap-browse.xml`), is gone (404), since only the index ever listed it. Those are the
 only dictionary sitemaps (ADR 0010, amended for #614). Search pages aren't in any sitemap yet.
 
 - Source: ADR 0007; #465; ADR 0010; #663 (the SERP XML sitemaps standard).
-- Check: `src/lib/dictionary/sitemaps.test.ts`, "the index lists every word sitemap and the
+- Check: `src/lib/dictionary/sitemaps.test.ts`, "the index lists every word sitemap and each
   browse sitemap, and nothing else" and "with SITE_ENV=… a request to … lists sitemaps on …";
   `src/lib/sitemap.test.ts`, "sitemap files sit at the root, named for their group";
   `src/lib/robots.test.ts`; `apps/web/e2e/sitemaps.spec.ts`; `apps/web/e2e/urls.spec.ts`, the old
-  sitemaps' one-hop redirects, with and without a slash; smoke "$index lists the pages and word sitemaps, and no kanji or
-  conjugations sitemap" (for `/sitemap-index.xml` and `/sitemap.xml`), "word sitemap lists 1 to
+  sitemaps' one-hop redirects, with and without a slash; smoke "$index lists the pages, word, and browse sitemaps on …, and no other" (for `/sitemap-index.xml` and `/sitemap.xml`), "word sitemap lists 1 to
   50,000 canonical URLs", "robots.txt lists the sitemap index", and `404 /sitemaps/kanji.xml`.
 
 **Structured data.** Each dictionary page carries `BreadcrumbList` structured data for its trail.
 
 - Source: #484.
 - Check: No automated check yet (#511).
+
+**Opening a link in the app.** On an iPhone with the Zenbu app installed, a search or word URL,
+or a removed kanji URL, opens in the app (the [app's product docs](../../../ios/docs/product/dictionary.md#links-from-zenbujapanesecom)
+say where), and without it, on the website, which redirects a kanji URL to the kanji's search.
+`/.well-known/apple-app-site-association` says so: it names the app,
+`<team ID>.com.zenbujapanese.app`, and claims `/dictionary/search/?*`,
+`/dictionary/kanji/?*`, and `/dictionary/*-*`, after excluding `/dictionary/*.json`, the JSON
+routes that load more of a page. The pattern can't say that a word URL ends in digits, so any
+other dictionary path with a dash, which the website answers 404, opens the app's Search screen.
+The dictionary home and the site's other pages stay on the website. The file answers 200 as
+`application/json` at that exact path, without a redirect, and 404 until the site has the Apple
+team ID (`APPLE_TEAM_ID`, set by a person), so nothing claims the site's links before then.
+
+- Source: #568, part of #563 (Tomodachi's "Open in Zenbu").
+- Check: `src/lib/app-links.test.ts`, "appleAppSiteAssociationResponse"; `apps/web/e2e/urls.spec.ts`,
+  "/.well-known/apple-app-site-association is JSON where Apple asks, claiming dictionary links for
+  the app", on the production build. That iOS then opens the app is checked on a device.
 
 ## Required, not built yet (#511)
 

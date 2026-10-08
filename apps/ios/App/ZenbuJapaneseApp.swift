@@ -7,5 +7,8 @@ struct ZenbuJapaneseApp: App {
     WindowGroup {
       SearchExperienceRootView()
     }
+    .backgroundTask(.appRefresh(AccountBackgroundSync.taskIdentifier)) {
+      await AccountBackgroundSync.run()
+    }
   }
 }

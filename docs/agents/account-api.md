@@ -218,9 +218,11 @@ whether an email has an account.
 
 ## Profiles and sync
 
-Four entities sync: the profile, known words, lists, and the words in each list (#572). Each has
-its own rule in `src/domain`, never blanket last-write-wins, and none needs a clock: a change says
-the version it was made to, and the rule decides what a stale one does. `PATCH /v1/me` and a sync
+Six entities sync: the profile, known words, lists, and the words in each list (#572), and, from
+the iOS app, the videos the learner watched in its Player and the Translate sentences they
+bookmarked. Each has its own rule in `src/domain`, never
+blanket last-write-wins, and none needs a clock to settle a conflict: a change says the version it
+was made to, and the rule decides what a stale one does. `PATCH /v1/me` and a sync
 mutation change the profile through the same rule.
 
 - **Known word** (`knownWord`, by item: a Language Reference ID, or `kanji:` and the kanji in
@@ -238,8 +240,42 @@ mutation change the profile through the same rule.
   list's words with it, and its ID can't be used again.
 - **List word** (`listWord`, `<list>/<item>`): `add` always applies, and `remove` applies only at
   the current version, so it removes only an add it saw: an add the remover never saw wins.
+- **Watched video** (`watchedVideo`, by its YouTube video ID, `src/domain/watch-history.ts`):
+  `watch` sends `watchedAt` (an ISO 8601 time from 2000 on, by the app's clock; one after the
+  service's time is taken as the service's) and any of the title, the channel (`author`), the
+  duration, the position (both in seconds, 0 to 10,000,000), and the comprehension (0 to 1). A
+  title or channel is cut to 200 characters, with control characters made spaces, and a blank one
+  is left out, so nothing the app makes is refused. A watch of a video the account has applies at
+  any version. The watch with the later `watchedAt` sets the place: an older watch that arrives
+  late, from a device that was offline or uploading what it had, only fills in fields the account
+  doesn't have, and a field a watch leaves out keeps its value. This is the one rule that reads an
+  app's clock, and only to order one learner's own watches. `remove` always applies, a pruned
+  video too, and a watch of a removed video applies only at the removal's version, so a position
+  sent by a device that hadn't seen the removal loses to it, and watching it again after seeing it
+  brings it back.
+- **Watch history stays bounded.** An account keeps the 50 videos with the latest `watchedAt`, as
+  the app's Recent does: a watch past that prunes the oldest, never refuses the new one, and the
+  prune syncs as a delete. A watch of a pruned video applies at any version, since the learner
+  didn't remove it. A removed or pruned video's row keeps only its ID, its version, and when it
+  was removed or pruned, and the account remembers the latest 100 of them by that time: older ones
+  are forgotten with their journal rows, so the table and its journal hold at most 150 rows an
+  account (the mutation results, kept 30 days as for every entity, name the videos too). A device
+  that missed a forgotten prune still ends with the 50 newest, since it keeps 50 by `watchedAt`
+  too. One that missed a forgotten removal keeps that video until newer ones push it out, and a
+  watch it sends for it brings it back, at version 1, since the account no longer knows it was
+  removed.
+- **Bookmarked sentence** (`bookmarkedSentence`, by the sentence's UUID, in either case,
+  answered in lowercase, `src/domain/bookmarks.ts`): one sentence the learner bookmarked in
+  Translate, never the conversation around it. `add` sends its `text` (cut to 2,000 characters),
+  its `translation` (cut to 4,000, or null), its `language` (`ja` or `en`), and `bookmarkedAt` (the
+  app's time, from 2000 on; the iOS app sends when the sentence was said for one bookmarked before
+  it synced bookmarks); control characters become spaces, and nothing else is taken, the
+  conversation's ID included. Like a list word, an add always applies, and adding one the account
+  has changes nothing; `remove` applies only at the current version, so an add the remover never
+  saw wins. A removed bookmark's row keeps only its ID and version, none of what was said.
 - **Limits:** 500 lists an account and 5,000 words a list (`too_many_lists`, `list_full`); a
-  word added to a deleted or unknown list is rejected (`unknown_list`).
+  word added to a deleted or unknown list is rejected (`unknown_list`); 2,000 bookmarked sentences
+  an account (`too_many_bookmarks`).
 - **Each keeps its history** as its version and a row that stays (a cleared word, a deleted list,
   a removed list word), so a stale change finds the version it lost to. A deleted list's words are
   deleted with it, and its row keeps no name.
@@ -318,7 +354,8 @@ else, and deletes only after a fresh sign-in.
     and the key's refusal logged as an error. The code may be used up, so the app gets a new one
     by signing in with Apple again.
 - **What goes:** the account's row, and with it, by cascade, its ways to sign in, its sessions,
-  its synced profile, known words, lists, and list words, its journal, and its mutation results;
+  its synced profile, known words, lists, list words, watched videos, and bookmarked sentences,
+  its journal, and its mutation results;
   and any sign-in code waiting for its email. Its access tokens stop working at `/v1/me` and
   `/v1/sync` at once (the account is gone), and expire within 15 minutes everywhere else. The
   account's email is told. Backups that hold it are deleted within 30 days (Back up and
@@ -377,6 +414,9 @@ are in `src/db/schema.ts`:
 - `rate_limits`;
 - `known_words`, `word_lists`, and `list_words`: the synced known words, lists, and their words,
   each with its version;
+- `watched_videos`: the watch history, each video with its version and whether it's watched,
+  removed, or pruned;
+- `translation_bookmarks`: the bookmarked Translate sentences, each with its version;
 - `sync_changes`: the journal, read by account and sequence;
 - `sync_mutations`: each sync mutation's result, by account and the client's mutation ID;
 - `sync_origin`: the OID of the database the service last started on, which tells it a restored
@@ -442,6 +482,18 @@ way and call the routes with their access tokens. They show:
   a repeat sign-in leaving the profile; a deleted account refused at both routes; a batch that
   fails partway, sent again; and each account's rate limits.
 
+`src/http/shared-state.test.ts` holds known words and lists to their rules, and
+`src/http/watch-history.test.ts` watched videos: fields a watch leaves out kept, the later watch
+setting the place and an older one only filling in, a time from the future taken as now, a removal
+winning over a watch that hadn't seen it, the 51st video pruning the oldest as a delete, a removal
+of a pruned video sticking, the latest 100 removals remembered, and the refused and cut fields;
+and `src/http/bookmarks.test.ts` bookmarked sentences: an add and a repeat, a remove keeping none
+of what was said, an add the remover never saw winning, the 2,000 cap, and the refused and cut
+fields. Both run two or three `SyncClient`s (`src/test/sync-client.ts`, the iOS
+app's client in TypeScript) through offline changes on each until they hold the same state as a
+new device. `src/http/clients.test.ts` holds each app to its scopes: only `zenbu-ios` reads or
+changes watch history and bookmarks.
+
 The domain's own tests (`src/domain/`) cover the name and username rules and the cursor;
 `src/db/database.test.ts` covers the journal's trigger and backfill, the sync tables' rules, and
 fencing two restored copies of one backup; and
@@ -451,7 +503,8 @@ checks each route's scope, `src/http/sync-entities.test.ts` sends each documente
 the contract. In CI, and when
 `ACCOUNT_API_TEST_DATABASE_URL` names a real Postgres database, `src/db/postgres.test.ts` also
 sends eight changes to one account at once through the `pg` pool, and one mutation six times at
-once: one change goes through, and the mutation applies once.
+once: one change goes through, and the mutation applies once. It also watches eight videos at once
+on an account holding 48, which keeps the 50 newest.
 
 ## Ship it
 
