@@ -25,8 +25,18 @@ struct SearchImageImport: ViewModifier {
           .accessibilityIdentifier("image-source.photo-library")
         Button("Files") { showsFileImporter = true }
           .accessibilityIdentifier("image-source.files")
+        if Pasteboard.offersImagePaste {
+          Button("Paste Image") { pasteImage() }
+            .accessibilityIdentifier("image-source.paste")
+        }
         Button("Cancel", role: .cancel) {}
       }
+      .dropDestination(for: SelectedImageTextPhoto.self) { items, _ in
+        guard !items.isEmpty else { return false }
+        openImageText(items.prefix(8).map(\.asset))
+        return true
+      }
+      .importsImagesFromDevices { assets in openImageText(assets) }
       .sheet(item: $presentedImageSource) { source in
         switch source {
         case .camera:
@@ -132,6 +142,18 @@ struct SearchImageImport: ViewModifier {
         presentImageImportAlert(.cameraRestricted)
       }
       imageImportTask = nil
+    }
+  }
+
+  private func pasteImage() {
+    if let file = Pasteboard.imageFile {
+      importImages(.success([file]))
+    } else if let data = Pasteboard.imageData,
+      let asset = ImageTextAsset(pastedImageData: data, name: "Pasted Image.jpg")
+    {
+      openImageText([asset])
+    } else {
+      presentImageImportAlert(.importFailure("The clipboard doesn't hold an image."))
     }
   }
 

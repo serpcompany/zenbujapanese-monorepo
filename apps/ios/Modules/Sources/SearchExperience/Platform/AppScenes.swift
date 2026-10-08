@@ -3,6 +3,7 @@ import SwiftUI
 public struct ZenbuJapaneseScenes: Scene {
   @State private var readingAids = ReadingAidPreferences()
   @State private var profile = UserProfile()
+  @State private var commands = AppCommandRouter()
   @Environment(\.scenePhase) private var scenePhase
 
   public init() {}
@@ -11,12 +12,20 @@ public struct ZenbuJapaneseScenes: Scene {
     WindowGroup {
       SearchExperienceRootView()
         .appEnvironment(readingAids: readingAids, profile: profile)
+        .environment(commands)
         .appWindowMinimumSize()
     }
+    .commands { AppCommands(router: commands) }
     .appWindowDefaults()
     .onChange(of: scenePhase, initial: true) { _, phase in
       AppLifecycle.sceneChanged(to: phase)
     }
+    #if os(macOS)
+      Settings {
+        AppSettingsView()
+          .appEnvironment(readingAids: readingAids, profile: profile)
+      }
+    #endif
   }
 }
 
@@ -25,6 +34,7 @@ extension Scene {
     #if os(macOS)
       defaultSize(width: AppWindow.defaultSize.width, height: AppWindow.defaultSize.height)
         .windowResizability(.contentMinSize)
+        .commands { ImportFromDevicesCommands() }
     #else
       backgroundTask(.appRefresh(AccountBackgroundSync.taskIdentifier)) {
         await AccountBackgroundSync.run()

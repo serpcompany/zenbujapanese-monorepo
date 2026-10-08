@@ -2,6 +2,8 @@ import SwiftUI
 
 struct SearchExperienceRootView: View {
   @State private var selectedTab = SearchExperienceTab.search
+  @State private var searchFocusRequest = 0
+  @State private var imageSearchRequest = 0
   @State private var frequencyRefreshID = 0
   @State private var path: [SearchExperienceRoute] = []
   @State private var accountPath = NavigationPath()
@@ -66,29 +68,51 @@ struct SearchExperienceRootView: View {
             selectedTab = .search
             dismissRecognizedWordSheet(if: true)
           }))
+      .modifier(AppCommandHandling(perform: perform))
+  }
+
+  private func perform(_ command: AppCommand) {
+    switch command {
+    case .select(let tab):
+      selectedTab = tab
+    case .findInDictionary:
+      showSearchRoot()
+      Task { searchFocusRequest += 1 }
+    case .searchImage:
+      showSearchRoot()
+      Task { imageSearchRequest += 1 }
+    }
+  }
+
+  private func showSearchRoot() {
+    selectedTab = .search
+    path = []
   }
 
   private var appTabs: some View {
     TabView(selection: $selectedTab) {
-      Tab("Search", systemImage: "magnifyingglass", value: SearchExperienceTab.search) {
+      Tab(value: SearchExperienceTab.search) {
         searchNavigation
+      } label: {
+        tabLabel(.search)
       }
 
-      Tab("Translate", systemImage: "translate", value: SearchExperienceTab.translate) {
+      Tab(value: SearchExperienceTab.translate) {
         translateNavigation
+      } label: {
+        tabLabel(.translate)
       }
 
-      Tab(
-        "Player", systemImage: "play.rectangle",
-        value: SearchExperienceTab.watchAndListen
-      ) {
+      Tab(value: SearchExperienceTab.watchAndListen) {
         watchNavigation
+      } label: {
+        tabLabel(.watchAndListen)
       }
 
       Tab(value: SearchExperienceTab.account) {
         accountNavigation
       } label: {
-        Label("Account", systemImage: "person.crop.circle")
+        tabLabel(.account)
           .accessibilityLabel("Account, personal content and settings")
           .accessibilityIdentifier("tab.account")
       }
@@ -130,6 +154,8 @@ struct SearchExperienceRootView: View {
         exampleSentenceClient: exampleSentenceClient,
         frequencyCapability: .live,
         frequencyRefreshID: frequencyRefreshID,
+        focusRequest: searchFocusRequest,
+        imageSearchRequest: imageSearchRequest,
         openImageText: { assets in
           let session = ImageTextSession(assets: assets)
           imageTextSessionStore.insert(session)
@@ -270,6 +296,10 @@ struct SearchExperienceRootView: View {
       )
       .modifier(dictionaryRoutes(in: .account, sheet: accountWordSheet))
     }
+  }
+
+  private func tabLabel(_ tab: SearchExperienceTab) -> Label<Text, Image> {
+    Label(tab.title, systemImage: tab.systemImage)
   }
 
   private func translateWords(opening sheet: WordSheetPresentation) -> TranslateWordLinks {
@@ -466,11 +496,4 @@ struct SearchExperienceRootView: View {
     else { return nil }
     return EncounterMediaAttachment(name: asset.name, data: asset.data)
   }
-}
-
-private enum SearchExperienceTab: Hashable {
-  case search
-  case translate
-  case watchAndListen
-  case account
 }

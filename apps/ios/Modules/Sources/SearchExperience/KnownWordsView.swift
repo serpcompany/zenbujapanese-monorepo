@@ -69,7 +69,7 @@ struct KnownWordsView: View {
               }
               .foregroundStyle(.primary)
               .accessibilityIdentifier("known-words.item.\(record.entryID)")
-              .swipeActions {
+              .rowActions {
                 if !wordKnowledge.isReadOnly {
                   Button("Mark as Unknown", systemImage: "xmark.circle") {
                     wordKnowledge.setStatus(.unknown, for: record)

@@ -28,7 +28,7 @@ struct WatchAndListenView: View {
               }
               .tint(.primary)
               .listRowInsets(EdgeInsets(top: 12, leading: 12, bottom: 12, trailing: 12))
-              .swipeActions {
+              .rowActions {
                 Button("Remove", systemImage: "trash", role: .destructive) {
                   history.remove(video)
                 }

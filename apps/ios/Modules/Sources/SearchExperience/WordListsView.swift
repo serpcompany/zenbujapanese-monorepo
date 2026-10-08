@@ -155,7 +155,7 @@ struct WordListsView: View {
       namePrompt = .rename(list)
     }
     .accessibilityIdentifier("word-lists.list.\(list.id)")
-    .swipeActions(allowsFullSwipe: false) {
+    .rowActions(allowsFullSwipe: false) {
       if !wordLists.isReadOnly {
         Button("Delete", systemImage: "trash") {
           if wordLists.wordCount(in: list.id) == 0 {
@@ -300,7 +300,7 @@ struct WordListView: View {
       }
     }
     .accessibilityIdentifier("word-list.item.\(word.entryID)")
-    .swipeActions {
+    .rowActions {
       if !wordLists.isReadOnly {
         Button("Remove", systemImage: "minus.circle", role: .destructive) {
           wordLists.remove(storedID: word.entryID, from: listID)

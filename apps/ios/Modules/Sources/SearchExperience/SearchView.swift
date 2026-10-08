@@ -10,6 +10,8 @@ struct SearchView: View {
   let exampleSentenceClient: ExampleSentenceClient
   let frequencyCapability: FrequencyCapability
   let frequencyRefreshID: Int
+  let focusRequest: Int
+  let imageSearchRequest: Int
   let openImageText: ([ImageTextAsset]) -> Void
   @State private var results = LookupSearchResults.empty
   @State private var presentationState = SearchPresentationState.idle
@@ -99,6 +101,8 @@ struct SearchView: View {
     .task(id: taskID) {
       await search(taskID)
     }
+    .onChange(of: focusRequest) { selectInputMode(.keyboard) }
+    .onChange(of: imageSearchRequest) { showsImageSources = true }
   }
 
   @ViewBuilder

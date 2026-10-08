@@ -268,7 +268,7 @@ enum AccountRoute: Hashable {
   case credits
 }
 
-private struct ReadingAidSettingsView: View {
+struct ReadingAidSettingsView: View {
   @Environment(ReadingAidPreferences.self) private var preferences
   @State private var appleTranslation: NaturalTranslationAvailability?
   @State private var downloadRequest: TranslationSession.Configuration?
@@ -375,7 +375,7 @@ struct MediaLibraryView: View {
               EncounterMediaRow(item: item, store: store)
             }
             .accessibilityIdentifier("media-library.item.\(item.id)")
-            .swipeActions {
+            .rowActions {
               Button("Delete", role: .destructive) {
                 delete(item.id)
               }

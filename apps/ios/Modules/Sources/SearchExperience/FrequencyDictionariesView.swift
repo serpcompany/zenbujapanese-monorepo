@@ -85,7 +85,7 @@ struct FrequencyDictionariesView: View {
     }
     .accessibilityElement(children: .contain)
     .accessibilityIdentifier("frequency-pack.row.\(pack.id.rawValue)")
-    .swipeActions(edge: .trailing) {
+    .rowActions(edge: .trailing) {
       if pack.availableActions.contains(.remove) {
         Button("Remove", systemImage: "trash", role: .destructive) {
           perform(pack.id) { try await client.remove(pack.id) }

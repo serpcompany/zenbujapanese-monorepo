@@ -117,3 +117,19 @@ extension ToolbarItemPlacement {
     #endif
   }
 }
+
+extension View {
+  func rowActions<Actions: View>(
+    edge: HorizontalEdge = .trailing,
+    allowsFullSwipe: Bool = true,
+    @ViewBuilder actions: () -> Actions
+  ) -> some View {
+    #if os(macOS)
+      let buttons = actions()
+      return swipeActions(edge: edge, allowsFullSwipe: allowsFullSwipe) { buttons }
+        .contextMenu { buttons }
+    #else
+      swipeActions(edge: edge, allowsFullSwipe: allowsFullSwipe, content: actions)
+    #endif
+  }
+}
