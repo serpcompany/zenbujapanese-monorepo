@@ -4,6 +4,7 @@ import { linkTo } from '@/lib/site'
 import {
   featuredApp,
   featuredAppSearchText,
+  productById,
   productFilterFrom,
   productFilterPath,
   productFilters,
@@ -82,13 +83,13 @@ test('the iPhone app’s page is a site page, and the menus, footer, and catalog
 test('a product without a page of its own is coming soon, and the others link to the site', () => {
   expect(products.filter(product => !product.href).map(product => product.id)).toEqual([
     'browser-extension',
-    'converters',
     'kana-chart-pdf',
     'verb-conjugations-pdf',
     'jlpt-n5-kanji-pdf',
     'real-clips-course'
   ])
   for (const product of products.filter(product => product.href)) {
-    expect(product.href).toMatch(/^\/dictionary\/(browse\/[a-z-]+\/)?$/)
+    expect(product.href).toMatch(/^\/(dictionary\/(browse\/[a-z-]+\/)?|tools\/)$/)
   }
+  expect(productById('converters').href).toBe('/tools/')
 })

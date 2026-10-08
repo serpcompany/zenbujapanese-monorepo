@@ -1,5 +1,6 @@
 import { accountPagesOpen } from './account/availability'
 import { accountPages } from './account/pages'
+import { converterPath, toolsPath } from './tools/paths'
 
 export const site = {
   name: 'Zenbu Japanese',
@@ -19,14 +20,19 @@ type LinkTarget = {
 }
 
 const linkTargets = [
-  { id: 'tools', kind: 'page', name: 'Tools index, /tools/', href: placeholderHref },
+  { id: 'tools', kind: 'page', name: 'Tools index, /tools/', href: toolsPath },
   {
     id: 'hiragana-to-katakana',
     kind: 'page',
     name: 'Hiragana to Katakana converter',
-    href: placeholderHref
+    href: converterPath('hiragana-to-katakana')
   },
-  { id: 'romaji-to-kana', kind: 'page', name: 'Romaji to Kana converter', href: placeholderHref },
+  {
+    id: 'romaji-to-kana',
+    kind: 'page',
+    name: 'Romaji to Kana converter',
+    href: converterPath('romaji-to-kana')
+  },
   {
     id: 'kanji-to-furigana',
     kind: 'page',

@@ -15,7 +15,8 @@ The website follows these SERP engineering standards:
 - [Environment configuration](https://github.com/serpcompany/serp/blob/main/docs/engineering/standards/environment-configuration.md)
 - [URL trailing slash](https://github.com/serpcompany/serp/blob/main/docs/engineering/standards/url-trailing-slash.md):
   pages end with a slash (`/about/`); files never do (`/robots.txt`, `/sitemap-index.xml`). The
-  other form redirects (308) to it. `src/lib/pages.ts` is the single list of static page paths.
+  other form redirects (308) to it. `src/lib/pages.ts` is the single list of static page paths,
+  apart from the tools pages, which `toolPages` in `src/lib/tools/converters.ts` lists.
   Next.js redirects `/robots.txt/` to `/robots.txt` itself, but OpenNext skips it, so
   `next.config.ts` repeats that redirect, with a rule of its own for a top-level file, since
   OpenNext can't fill an empty path parameter. The homepage is written as the origin, without a
@@ -53,7 +54,8 @@ lists every child sitemap and each child sitemap lists the new URLs.
 ### Phone layout
 
 `apps/web/e2e/page-types.ts` lists one page of every type (the static pages, the account pages,
-search, a word, kanji details, every browse family, and a missing page) with what to open on each,
+the tools pages, search, a word, kanji details, every browse family, and a missing page) with what
+to open on each,
 and the views to check beyond it: each homepage area, and on About the phone menu and each of its
 groups. `openPageType` stands in for the account service (signed out), and waits until the account
 page and a word's examples have loaded and animations have ended; `checkEachView` opens a page
@@ -177,8 +179,22 @@ drawing's furigana keeps its drawn size.
   says the screens overflow, and before it loads, when an area has more than three. A video is the
   product page's `VideoCard`; a hidden area's screens mount again, so a playing video stops.
 - `apps/web/biome.json` allows `dangerouslySetInnerHTML` only in
-  `apps/web/src/components/dictionary/dictionary-breadcrumbs.tsx`, for its `BreadcrumbList`
-  JSON-LD, which escapes `<` so the JSON can't close its script tag (the Next.js JSON-LD guide).
+  `apps/web/src/components/json-ld.tsx`, which writes structured data (the dictionary breadcrumbs'
+  `BreadcrumbList` and the converter pages' `FAQPage`) and escapes `<` so the JSON can't close its
+  script tag (the Next.js JSON-LD guide).
+- The tools pages ([product docs](../../apps/web/docs/product/tools.md)): `/tools/` and the six
+  converters, `src/app/tools/[tool]/page.tsx`, are static: `generateStaticParams` lists the
+  converters, and the page answers any other name with `notFound()`. It leaves `dynamicParams` on:
+  the site's OpenNext build has no incremental cache, so with `dynamicParams = false` the Worker
+  answers 404 even for the prerendered converters (`next dev` serves them, so only the production
+  build shows it). The converters' logic and
+  copy are in `src/lib/tools/`, pure functions with tests beside them, which the browser runs, so
+  nothing typed leaves it. `src/app/tools/layout.tsx` holds what was typed in each converter
+  (`ConverterTextsProvider` in `src/components/tools/converter-texts.tsx`), and stays mounted
+  while the learner moves between tools pages. The swap button is a `next/link` to the other
+  direction with `scroll={false}`, whose `onNavigate` writes the result as that converter's text,
+  so the swap is a client-side navigation that keeps the scroll and carries the text over, and
+  Back finds the earlier text where it was.
 - The scripts in `apps/web/scripts/` read a command's output whole before searching it:
   `curl | grep -q` fails under `pipefail` when grep exits early. Their `.shellcheckrc` turns off
   ShellCheck's SC2329: `smoke.sh`'s checks are functions that `eventually` calls by name, which
@@ -667,8 +683,9 @@ standard. They are hand-written route handlers built on `src/lib/sitemap.ts`, re
 - `/sitemap-index.xml` is the index. `/sitemap.xml`, where crawlers and site audits look by
   default, redirects (308) to it (`movedSitemaps`), so the index has one address. The index lists
   each child sitemap, never another index.
-- Each child sitemap is a file at the site's root named for its group: `/sitemap-pages.xml`, then
-  the dictionary's. A child holds at most 50,000 URLs; a group that outgrows one file adds
+- Each child sitemap is a file at the site's root named for its group: `/sitemap-pages.xml`,
+  `/sitemap-tools.xml` (the tools pages, `toolPages` in `src/lib/tools/converters.ts`), then the
+  dictionary's. A child holds at most 50,000 URLs; a group that outgrows one file adds
   `-2`, `-3`, and so on (`/sitemap-words-2.xml`). Add a new group's sitemap to `childSitemaps`
   in `src/lib/sitemap.ts`, or, for a group the dictionary service answers, to
   `dictionarySitemapPaths` in `src/lib/dictionary/sitemaps.ts` with its rewrite in

@@ -33,7 +33,8 @@ two-column list of what it includes, Get the app, and Learn more.
 reference guides (Kana chart PDF, Verb conjugations PDF, and JLPT N5 kanji PDF); and the course,
 Japanese from real clips (#623). Each card shows its icon, name, a Free or Coming soon badge, a
 line about it, and its facts and type. A free tool's card opens its page: the dictionary home,
-and the kana, kanji, and frequency browse pages. A planned product is a Coming soon card that
+the kana, kanji, and frequency browse pages, and, for Converters, the tools index (`/tools/`,
+[Tools pages](tools.md)). A planned product is a Coming soon card that
 isn't a link, so it adds no `#` link (the owner's decision on #652). The iPhone app's Get the app
 is the App Store placeholder, and Learn more opens its page.
 

@@ -58,7 +58,7 @@
       }
     },
     {
-      "includes": ["src/components/dictionary/dictionary-breadcrumbs.tsx"],
+      "includes": ["src/components/json-ld.tsx"],
       "linter": {
         "rules": {
           "security": {

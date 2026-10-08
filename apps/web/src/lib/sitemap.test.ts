@@ -13,7 +13,7 @@ const moved = [...movedSitemaps, ...movedDictionarySitemaps]
 describe('sitemaps', () => {
   it('lists child sitemaps as absolute URLs on the origin it is given', () => {
     expect(sitemapIndexXml(childSitemaps, 'https://staging.zenbujapanese.com')).toBe(
-      '<?xml version="1.0" encoding="UTF-8"?><sitemapindex xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"><sitemap><loc>https://staging.zenbujapanese.com/sitemap-pages.xml</loc></sitemap></sitemapindex>'
+      '<?xml version="1.0" encoding="UTF-8"?><sitemapindex xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"><sitemap><loc>https://staging.zenbujapanese.com/sitemap-pages.xml</loc></sitemap><sitemap><loc>https://staging.zenbujapanese.com/sitemap-tools.xml</loc></sitemap></sitemapindex>'
     )
   })
 

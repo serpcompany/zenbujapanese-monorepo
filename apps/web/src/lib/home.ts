@@ -1,4 +1,5 @@
 import { normalizeSearchQuery, searchPath } from '@/lib/dictionary/urls'
+import { placeholderHref } from '@/lib/site'
 import { drawerLinks, type MegaMenu, type SiteMenu, siteMenus } from '@/lib/site-menus'
 
 export const homeTitle = 'Zenbu Japanese: Japanese Dictionary and Translator for iPhone'
@@ -22,4 +23,4 @@ const isToolsMenu = (menu: SiteMenu): menu is MegaMenu =>
 export const webTools = siteMenus
   .filter(isToolsMenu)
   .flatMap(menu => drawerLinks(menu))
-  .filter(link => link.target === undefined)
+  .filter(link => link.href !== placeholderHref)

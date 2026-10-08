@@ -1,4 +1,5 @@
 import { pagesSitemapPaths } from '../src/lib/pages-sitemap'
+import { toolPages } from '../src/lib/tools/converters'
 import { expect, test } from './test'
 
 const locs = (xml: string) => [...xml.matchAll(/<loc>([^<]+)<\/loc>/g)].map(match => match[1])
@@ -26,6 +27,7 @@ test.describe('sitemaps', () => {
       const origin = new URL(baseURL ?? '').origin
       const listed = locs(await response.text())
       expect(listed).toContain(`${origin}/sitemap-pages.xml`)
+      expect(listed).toContain(`${origin}/sitemap-tools.xml`)
       for (const url of listed)
         expect(url).toMatch(new RegExp(`^${origin}/sitemap-[a-z]+(-[a-z]+)*(-[0-9]+)?\\.xml$`))
     })
@@ -40,5 +42,14 @@ test.describe('sitemaps', () => {
     expect(listed).toEqual(
       pagesSitemapPaths.map(path => (path === '/' ? origin : `${origin}${path}`))
     )
+  })
+
+  test('the tools sitemap lists the tools index and every converter, each with its slash', async ({
+    request,
+    baseURL
+  }) => {
+    const origin = new URL(baseURL ?? '').origin
+    const listed = locs(await (await request.get('/sitemap-tools.xml')).text())
+    expect(listed).toEqual(toolPages.map(page => `${origin}${page.path}`))
   })
 })

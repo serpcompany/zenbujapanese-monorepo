@@ -1,3 +1,4 @@
+import { toolPages } from '../src/lib/tools/converters'
 import { openPageType, pageTypes } from './page-types'
 import { expect, needed, sidewaysOverflow, test } from './test'
 
@@ -9,7 +10,8 @@ const pages = [
   needed.path,
   '/legal/privacy/',
   '/products/',
-  '/products/zenbu-japanese-app/'
+  '/products/zenbu-japanese-app/',
+  ...toolPages.map(page => page.path)
 ]
 
 test.describe('layout', () => {
