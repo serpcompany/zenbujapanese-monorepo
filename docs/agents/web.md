@@ -69,9 +69,20 @@ lists every child sitemap and each child sitemap lists the new URLs.
   stands for, in `linkTargets` in `apps/web/src/lib/site.ts`; its links carry `data-link-target`.
   `apps/web/e2e/placeholders.spec.ts` fails on any other `#` link and prints the listed ones
   ([product docs](../../apps/web/docs/product/dictionary.md#header-footer-and-site-wide),
-  Placeholder links). When a page ships, link it directly and drop its entry.
-- `apps/web/public/` holds the header's images (App Store screenshot crops and the app icon).
+  Placeholder links). When a page ships, give its entry the page's path, as the products pages'
+  entries have, so every link to it changes at once, or link it directly and drop the entry.
+- `apps/web/public/` holds the site's images: the header's App Store screenshot crops and the app
+  icon, a larger icon (`app-icon-192.webp`), and App Store screenshots at 600 pixels wide in
+  `public/screenshots/app-store/`, converted with `cwebp -q 80 -resize 600 0` from
+  `apps/ios/screenshots/app-store/en-US/iphone-63/` and listed in `src/lib/app-screenshots.ts`.
   `next/image` renders them `unoptimized`, since the site sets up no image optimization on Workers.
+- The products pages ([product docs](../../apps/web/docs/product/products.md)): `/products/` is
+  static, and its filters read `?type=` with `useSearchParams` inside a `Suspense` whose fallback
+  is the unfiltered catalog, so the built HTML holds every product and the browser hides the rest.
+  A filter moves the address with `history.pushState`, which Next.js's router follows, so it never
+  asks the server. The iPhone app's page is `force-dynamic`: it reads the App Store lookup
+  (`src/lib/app-store.ts`), which the Worker keeps in its edge cache (the Cache API) for a day,
+  and leaves the version and minimum iOS out when Apple fails or lists no app.
 - `apps/web/biome.json` allows `dangerouslySetInnerHTML` only in
   `apps/web/src/components/dictionary/dictionary-breadcrumbs.tsx`, for its `BreadcrumbList`
   JSON-LD, which escapes `<` so the JSON can't close its script tag (the Next.js JSON-LD guide).

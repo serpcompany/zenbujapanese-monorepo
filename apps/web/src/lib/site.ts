@@ -31,12 +31,12 @@ const linkTargets = [
     name: 'Kanji to Furigana converter',
     href: placeholderHref
   },
-  { id: 'products', kind: 'page', name: 'Products index, /products/', href: placeholderHref },
+  { id: 'products', kind: 'page', name: 'Products index', href: '/products/' },
   {
     id: 'iphone-app',
     kind: 'page',
-    name: 'Zenbu Japanese for iPhone product page, /products/zenbu-japanese-for-iphone/',
-    href: placeholderHref
+    name: 'Zenbu Japanese for iPhone product page',
+    href: '/products/zenbu-japanese-for-iphone/'
   },
   {
     id: 'browser-extension',

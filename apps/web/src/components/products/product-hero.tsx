@@ -1,0 +1,84 @@
+import Image from 'next/image'
+import Link from 'next/link'
+import { FeatureDemo } from '@/components/products/feature-demo'
+import { ProductFacts } from '@/components/products/product-facts'
+import { AppStoreButton } from '@/components/site-actions'
+import {
+  Breadcrumb,
+  BreadcrumbItem,
+  BreadcrumbLink,
+  BreadcrumbList,
+  BreadcrumbPage,
+  BreadcrumbSeparator
+} from '@/components/ui/breadcrumb'
+import type { AppStoreRelease } from '@/lib/app-store'
+import type { ProductDemo } from '@/lib/products/zenbu-japanese-for-iphone'
+import { linkTo } from '@/lib/site'
+
+export interface ProductHeroContent {
+  title: string
+  name: string
+  subtitle: string
+  lead: string
+  icon: string
+  facts: { platform: string; account: string }
+  demos: readonly ProductDemo[]
+}
+
+function ProductBreadcrumbs({ title }: { title: string }) {
+  const products = linkTo('products')
+  return (
+    <Breadcrumb>
+      <BreadcrumbList className="justify-center">
+        <BreadcrumbItem>
+          <BreadcrumbLink render={<Link href={products.href} data-link-target={products.target} />}>
+            Products
+          </BreadcrumbLink>
+        </BreadcrumbItem>
+        <BreadcrumbSeparator />
+        <BreadcrumbItem>
+          <BreadcrumbPage>{title}</BreadcrumbPage>
+        </BreadcrumbItem>
+      </BreadcrumbList>
+    </Breadcrumb>
+  )
+}
+
+export function ProductHero({
+  product,
+  release
+}: {
+  product: ProductHeroContent
+  release: AppStoreRelease | null
+}) {
+  return (
+    <section className="mx-auto flex w-full max-w-5xl flex-col items-center gap-4.5 px-4 pt-8 pb-12 text-center md:px-5 md:pt-10 md:pb-16">
+      <ProductBreadcrumbs title={product.title} />
+      <Image
+        src={product.icon}
+        alt=""
+        width={72}
+        height={72}
+        unoptimized
+        loading="eager"
+        className="mt-2 size-18 rounded-[22.5%] shadow-[0_12px_28px_-12px_oklch(0_0_0/0.35)] ring-1 ring-foreground/10"
+      />
+      <h1 className="text-4xl font-semibold tracking-tight text-balance md:text-5xl lg:text-[3.25rem]">
+        {product.name}
+      </h1>
+      <p className="-mt-2 text-[15px] text-muted-foreground">{product.subtitle}</p>
+      <p className="max-w-xl text-lg leading-relaxed text-pretty text-muted-foreground">
+        {product.lead}
+      </p>
+      <AppStoreButton size="lg" className="h-11 px-4.5 text-[15px]" />
+      <div className="mt-6 w-full max-w-3xl">
+        <FeatureDemo demos={product.demos} />
+      </div>
+      <ProductFacts
+        platform={product.facts.platform}
+        account={product.facts.account}
+        release={release}
+      />
+    </section>
+  )
+}

@@ -8,7 +8,7 @@ vi.mock('next/navigation', () => ({ usePathname: () => navigation.pathname }))
 
 const sections = ['Dictionary', 'Tools', 'Products', 'Company']
 
-const appStore = linkTo('app-store')
+const productPage = linkTo('iphone-app')
 const login = linkTo('login')
 
 function header(pathname: string): string {
@@ -39,6 +39,11 @@ function menuLinks(html: string): MenuLink[] {
 
 const page = (href: string): MenuLink => [href, null, null]
 const placeholder = (target: string): MenuLink => [placeholderHref, target, null]
+const listed = (target: Parameters<typeof linkTo>[0]): MenuLink => [
+  linkTo(target).href,
+  target,
+  null
+]
 
 describe('the header marks the section the page is in', () => {
   beforeEach(() => {
@@ -93,17 +98,19 @@ describe("the header's menus are in the page's HTML, with the current page marke
     ])
   })
 
-  test('the Products menu leads to the web dictionary, and its planned pages are placeholders', () => {
+  test('the Products menu leads to the products pages and the web dictionary, and its planned pages are placeholders', () => {
     expect(menuLinks(header('/')).slice(17, 25)).toEqual([
-      placeholder('iphone-app'),
-      placeholder('iphone-app'),
+      listed('iphone-app'),
+      listed('iphone-app'),
       placeholder('browser-extension'),
       page('/dictionary/'),
       placeholder('tools'),
       placeholder('reference-guides'),
       placeholder('courses'),
-      placeholder('products')
+      listed('products')
     ])
+    expect(listed('iphone-app')[0]).toBe('/products/zenbu-japanese-for-iphone/')
+    expect(listed('products')[0]).toBe('/products/')
   })
 
   test('the Company menu leads to About, Sources, Support, Contact, and Legal', () => {
@@ -146,18 +153,18 @@ function headerButtons(html: string): [attributes: string, content: string][] {
   )
 }
 
-test('from 1024 pixels Log in and Get the app end the header, at their links in src/lib/site.ts', () => {
+test('from 1024 pixels Log in and Get the app end the header, Get the app opening the iPhone app’s page', () => {
   const buttons = headerButtons(header('/dictionary/'))
   expect(buttons.map(([attributes]) => attribute(attributes, 'data-link-target'))).toEqual([
     login.target,
-    appStore.target
+    productPage.target
   ])
   for (const [attributes] of buttons) {
     expect(attributes.match(/class="([^"]*)"/)?.[1].split(' ')).toContain('max-lg:hidden')
   }
   expect(attribute(buttons[0][0], 'href')).toBe(login.href)
   expect(buttons[0][1]).toBe('Log in')
-  expect(attribute(buttons[1][0], 'href')).toBe(appStore.href)
+  expect(attribute(buttons[1][0], 'href')).toBe('/products/zenbu-japanese-for-iphone/')
 })
 
 test('the Get the app button leads with a phone icon', () => {

@@ -23,6 +23,7 @@
     "@zenbu/dictionary-core": "workspace:*",
     "class-variance-authority": "^0.7.1",
     "cn": "^0.4.0",
+    "embla-carousel-react": "^8.6.0",
     "lucide-react": "^1.48.0",
     "next": "16.3.6",
     "next-themes": "^0.4.6",

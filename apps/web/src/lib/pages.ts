@@ -11,6 +11,18 @@ export const sitePages = [
     title: 'Japanese dictionary',
     description: 'Look up Japanese words and kanji in Japanese, kana, romaji, or English.'
   },
+  {
+    path: '/products/',
+    title: 'Products',
+    description:
+      'Zenbu Japanese apps and free tools for reading, writing, and speaking Japanese, all built on one dictionary.'
+  },
+  {
+    path: '/products/zenbu-japanese-for-iphone/',
+    title: 'Zenbu Japanese for iPhone',
+    description:
+      'An offline Japanese dictionary for iPhone with Image Search, handwriting, a live conversation translator, and YouTube with linked captions. No account needed.'
+  },
   { path: '/about/', title: 'About', description: 'About Zenbu Japanese.' },
   { path: '/support/', title: 'Support', description: 'Get help with Zenbu Japanese.' },
   { path: '/contact/', title: 'Contact', description: 'Contact the Zenbu Japanese team.' },
