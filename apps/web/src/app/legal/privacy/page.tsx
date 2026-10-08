@@ -1,5 +1,6 @@
 import Link from 'next/link'
 import { PageShell } from '@/components/page-shell'
+import { company } from '@/lib/company'
 import { pageMetadata } from '@/lib/metadata'
 import { site } from '@/lib/site'
 
@@ -78,7 +79,10 @@ export default function PrivacyPage() {
           If you create a Zenbu account, we keep your email, how you sign in, and the study data you
           sync, so your devices stay in step.
         </li>
-        <li>The app has no ads, analytics, or tracking.</li>
+        <li>
+          We don't sell or share your personal information, and the app has no ads, analytics, or
+          tracking.
+        </li>
         <li>
           A few companies help us run the service, such as Cloudflare, which carries our traffic,
           and useSend, which sends our email.
@@ -90,8 +94,9 @@ export default function PrivacyPage() {
 
       <h2>Who we are</h2>
       <p>
-        {site.name} is provided by TSMC LLC, doing business as {site.name} ("we"), in the United
-        States. For anything about your data, email <Mail />.
+        {site.name} is provided by {company.name}, doing business as {site.name} ("we"),{' '}
+        {company.street}, {company.city}, {company.country}. For anything about your data, email{' '}
+        <Mail />, or call {company.phone}.
       </p>
 
       <h2>On your device</h2>
@@ -149,32 +154,43 @@ export default function PrivacyPage() {
       </p>
 
       <h2>Who else handles your information</h2>
+      <p>
+        We don't sell or share your personal information. These companies handle it for us, under
+        their own terms:
+      </p>
       <ul>
         <li>
           <strong>Cloudflare</strong> hosts this website, delivers our downloads, carries requests
-          to our servers, and stores our backups. It processes routine request details, such as IP
-          addresses.
+          to our servers, stores our backups, and forwards email sent to our support address. It
+          processes routine request details, such as IP addresses.
         </li>
         <li>
           <strong>useSend</strong> sends our email, so it gets your email address and the messages
-          we send you.
+          we send you, and keeps copies of them.
         </li>
         <li>
-          <strong>The company that hosts our servers</strong> provides the machines our account
-          database runs on.
+          <strong>Lambda, Inc.</strong> (Lambda Labs), in the United States, provides the machines
+          our account database runs on.
         </li>
         <li>
-          <strong>Apple and Google</strong> sign you in, if you choose them, under their own terms.
+          <strong>Ahrefs</strong> counts visits to this website with Ahrefs Web Analytics, which
+          uses no cookies.
+        </li>
+        <li>
+          <strong>Google</strong> serves Google Tag Manager, which loads Ahrefs Web Analytics on
+          this website, hosts our support mailbox, and signs you in if you choose Google.
+        </li>
+        <li>
+          <strong>Apple</strong> signs you in if you choose Apple.
         </li>
         <li>
           <strong>YouTube</strong> receives your requests when you use Player.
         </li>
       </ul>
-      <p>These companies may process information in the United States and other countries.</p>
       <p>
-        On this website we count visits with Cloudflare Web Analytics, which uses no cookies. The
-        website may also load Google Tag Manager; if we add tags that use cookies, we'll update this
-        policy and ask for consent where the law requires it.
+        These companies may process information in the United States and other countries. If we add
+        anything to Google Tag Manager that uses cookies, we'll update this policy and ask for
+        consent where the law requires it.
       </p>
 
       <h2>How long we keep it</h2>
@@ -201,7 +217,7 @@ export default function PrivacyPage() {
         </li>
         <li>
           <strong>Correct.</strong> Change your name and username on this website where it offers
-          sign-in, or email us to correct anything else.
+          sign-in. For your email or anything else, email us and we'll correct it.
         </li>
         <li>
           <strong>Delete.</strong> Delete your account in any of our apps that lets you create one,
@@ -219,7 +235,10 @@ export default function PrivacyPage() {
       </p>
 
       <h2>Children</h2>
-      <p>{site.name} is a general-audience reference and is not directed to children under 13.</p>
+      <p>
+        {site.name} is a general-audience reference and is not directed to children under 13. If we
+        learn that an account belongs to a child under 13, we delete it.
+      </p>
 
       <h2>Changes and contact</h2>
       <p>

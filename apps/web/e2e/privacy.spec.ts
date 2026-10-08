@@ -1,4 +1,5 @@
 import type { Page } from '@playwright/test'
+import { company } from '../src/lib/company'
 import { expect, test } from './test'
 
 async function sectionText(page: Page, heading: string) {
@@ -28,7 +29,7 @@ const sectionHeading = (page: Page, heading: string) =>
 
 const listAfter = (page: Page, heading: string) =>
   sectionHeading(page, heading)
-    .locator('xpath=following-sibling::*[1][self::ul]')
+    .locator('xpath=following-sibling::*[self::ul or self::h2][1][self::ul]')
     .getByRole('listitem')
 
 const tableRows = (page: Page, column: string) =>
@@ -49,14 +50,19 @@ test.describe('privacy policy', () => {
     await expect(listAfter(page, 'The short version')).toHaveText([
       /works without an account/,
       /we keep your email, how you sign in, and the study data you sync/,
-      /^The app has no ads, analytics, or tracking\.$/,
+      /^We don't sell or share your personal information, and the app has no ads, analytics, or tracking\.$/,
       /companies help us run the service/,
       /see, export, correct, or delete your data, and delete your account/
     ])
   })
 
   test('says who we are and how to reach us', async ({ page }) => {
-    await expectNamed(page, 'Who we are', ['provided by TSMC LLC', 'support@zenbujapanese.com'])
+    await expectNamed(page, 'Who we are', [
+      `provided by ${company.name}`,
+      `${company.street}, ${company.city}, ${company.country}`,
+      'support@zenbujapanese.com',
+      company.phone
+    ])
     await expect(
       sectionHeading(page, 'Who we are')
         .locator('xpath=following-sibling::*[1][self::p]')
@@ -95,15 +101,17 @@ test.describe('privacy policy', () => {
 
   test('names who else handles the information', async ({ page }) => {
     await expect(listAfter(page, 'Who else handles your information')).toHaveText([
-      /^Cloudflare hosts this website, delivers our downloads, carries requests to our servers, and stores our backups/,
-      /^useSend sends our email, so it gets your email address/,
-      /^The company that hosts our servers provides the machines our account database runs on/,
-      /^Apple and Google sign you in, if you choose them/,
+      /^Cloudflare hosts this website, delivers our downloads, carries requests to our servers, stores our backups, and forwards email sent to our support address/,
+      /^useSend sends our email, so it gets your email address and the messages we send you, and keeps copies of them/,
+      /^Lambda, Inc\. \(Lambda Labs\), in the United States, provides the machines our account database runs on/,
+      /^Ahrefs counts visits to this website with Ahrefs Web Analytics, which uses no cookies/,
+      /^Google serves Google Tag Manager, which loads Ahrefs Web Analytics on this website, hosts our support mailbox, and signs you in if you choose Google/,
+      /^Apple signs you in if you choose Apple/,
       /^YouTube receives your requests when you use Player/
     ])
     await expectNamed(page, 'Who else handles your information', [
+      "We don't sell or share your personal information",
       'may process information in the United States and other countries',
-      'Cloudflare Web Analytics, which uses no cookies',
       'ask for consent where the law requires it'
     ])
   })
@@ -138,13 +146,17 @@ test.describe('privacy policy', () => {
       /^Object or restrict\. Ask us to stop or limit/
     ])
     await expectNamed(page, 'Your rights', [
+      "email us and we'll correct it",
       "won't treat you differently for using these rights",
       'complain to your data protection authority'
     ])
   })
 
   test('covers children and changes, with the date of this version', async ({ page }) => {
-    await expectNamed(page, 'Children', ['not directed to children under 13'])
+    await expectNamed(page, 'Children', [
+      'not directed to children under 13',
+      'If we learn that an account belongs to a child under 13, we delete it'
+    ])
     await expectNamed(page, 'Changes and contact', ['the date above marks the current version'])
     await expect(
       page.getByRole('main').getByText(/^Effective [A-Z][a-z]+ \d{1,2}, \d{4}$/)
