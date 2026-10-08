@@ -1,3 +1,4 @@
+import { openPageType } from './page-types'
 import { expect, needed, sidewaysOverflow, test } from './test'
 
 const pages = [
@@ -42,13 +43,7 @@ test.describe('layout', () => {
 
   for (const { path, shown, open } of opened) {
     test(`${decodeURI(path)} fits the window with ${shown} open`, async ({ page }) => {
-      await page.goto(path)
-      for (const name of open) {
-        const button = page.getByRole('button', { name, exact: true })
-        await button.click()
-        await expect(button).toHaveAttribute('aria-expanded', 'true')
-      }
-      await expect(page.getByText('Loading examples')).toHaveCount(0)
+      await openPageType(page, { name: shown, path, open })
       expect(await sidewaysOverflow(page), 'The page scrolls sideways').toBeLessThanOrEqual(0)
     })
   }
