@@ -21,8 +21,8 @@ scope, change the page, its Effective date, this doc, and the
 [App Store privacy labels](../app-store-privacy-labels.md) in the same pull request. The owner
 approves the text before it merges, since it is legal copy.
 
-Abbreviations: **Privacy spec** is `apps/web/e2e/privacy.spec.ts`, the page's browser tests at a
-desktop and a phone width.
+Abbreviations: **Privacy spec** is `apps/web/e2e/privacy.spec.ts`, the browser tests of this page
+and of the support page's Tomodachi line, at a desktop and a phone width.
 
 ## Sections
 

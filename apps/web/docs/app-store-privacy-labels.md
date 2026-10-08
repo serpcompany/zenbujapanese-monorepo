@@ -104,7 +104,8 @@ It uses no microphone or speech recognition: its answers are choices, and neithe
 
 Tomodachi's owners also answer for what isn't the account's:
 
-- **Its conversation AI** goes to the provider and key the learner sets in Settings → AI. If
-  Tomodachi ships with a provider of ours, what it sends is collected by a third-party partner
-  (User Content), and both these labels and the Privacy Policy need it.
+- **Its conversation AI**, which only Debug builds have today (its architecture doc), goes to the
+  provider and key the learner sets in Settings → AI. If Tomodachi ships with a provider of ours,
+  what it sends is collected by a third-party partner (User Content), and both these labels and
+  the Privacy Policy need it.
 - **Analytics or crash reporting**, if it adds any.

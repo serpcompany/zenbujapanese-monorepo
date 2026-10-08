@@ -171,16 +171,15 @@ const description = (page: Page) => page.locator('meta[name="description"]')
 async function expectTomodachiBelowTheHeader(page: Page) {
   const heading = sectionHeading(page, 'Tomodachi')
   await expect(heading).toBeInViewport()
+  const gapBelowTheHeader = async () => {
+    const [header, title] = await Promise.all([
+      page.getByRole('banner').boundingBox(),
+      heading.boundingBox()
+    ])
+    return header && title ? title.y - (header.y + header.height) : Number.NEGATIVE_INFINITY
+  }
   await expect
-    .poll(
-      () =>
-        heading.evaluate(
-          element =>
-            element.getBoundingClientRect().top -
-            (document.querySelector('header')?.getBoundingClientRect().bottom ?? 0)
-        ),
-      { message: 'The pinned header covers the Tomodachi heading' }
-    )
+    .poll(gapBelowTheHeader, { message: 'The pinned header covers the Tomodachi heading' })
     .toBeGreaterThanOrEqual(0)
 }
 
@@ -194,15 +193,16 @@ test.describe('Tomodachi in the privacy policy and on the support page', () => {
       'works without an account or sign-in',
       'Tomo, its words, and your answers',
       'syncs it through your own iCloud, in your private CloudKit database',
-      "We run no server for Tomodachi and can't see your progress",
+      "We run no server for it and can't see that progress",
       'notifications it schedules on your device, not push notifications from us',
       'no ads, analytics, or tracking',
       "doesn't use the microphone or speech recognition",
       'The Mac app works the same way',
-      'opens when you log in only if you turn that on',
+      'opens when you log in to your Mac only if you turn that on',
       'If you link your Zenbu account to it',
       "our dictionary service, which doesn't keep what it sends"
     ])
+    expect(await sectionText(page, 'Your Zenbu account')).not.toContain('Tomodachi')
     await expect(description(page)).toHaveAttribute('content', /Tomodachi/)
   })
 

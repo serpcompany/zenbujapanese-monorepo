@@ -150,13 +150,14 @@ export default function PrivacyPage() {
       <p>
         Tomodachi, our companion app, works without an account or sign-in. It saves your progress
         (Tomo, its words, and your answers) on your device and syncs it through your own iCloud, in
-        your private CloudKit database, under Apple's terms. We run no server for Tomodachi and
-        can't see your progress.
+        your private CloudKit database, under Apple's terms. We run no server for it and can't see
+        that progress.
       </p>
       <p>
         Its reminders are notifications it schedules on your device, not push notifications from us.
         It has no ads, analytics, or tracking, and doesn't use the microphone or speech recognition.
-        The Mac app works the same way, and opens when you log in only if you turn that on.
+        The Mac app works the same way, and opens when you log in to your Mac only if you turn that
+        on.
       </p>
       <p>
         If you link your Zenbu account to it, it can read your lists and known words, mark words
