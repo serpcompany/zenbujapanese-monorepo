@@ -1,7 +1,7 @@
 # Building an app on the Zenbu account
 
 How an app, such as the Zenbu iOS app or Tomodachi, signs a learner in to their Zenbu account and
-keeps its copy of their known words and lists in step. The contract is
+keeps its copy of their known words, lists, and other study data in step. The contract is
 [`apps/account-api/openapi.json`](../../apps/account-api/openapi.json), OpenAPI 3.1, and its
 readable form is the [API reference](../api/account-api.md): every route with its auth and scopes,
 every field with its type and bounds, every answer and error code, and each synced entity's
@@ -33,14 +33,18 @@ setting ([`account-api.md`](account-api.md), Settings).
 
 | App | ID | Scopes |
 | --- | --- | --- |
-| Zenbu Japanese for iOS | `zenbu-ios` | `account`, `account:delete`, `profile`, `lists:read`, `lists:write`, `known:read`, `known:write` |
-| zenbujapanese.com | `zenbu-web` | the same |
+| Zenbu Japanese for iOS | `zenbu-ios` | `account`, `account:delete`, `profile`, `lists:read`, `lists:write`, `known:read`, `known:write`, `watch:read`, `watch:write`, `translations:read`, `translations:write` |
+| zenbujapanese.com | `zenbu-web` | the same, without `watch:*` and `translations:*` |
 | Tomodachi | `tomodachi` | `account:delete`, `lists:read`, `known:read`, `known:mark`, `dictionary:read` |
 
 - `account` manages how the account signs in and where: linking and unlinking a way in, listing
   the ways in, and listing or signing out sessions. `profile` reads and changes the profile, and
   `GET /v1/auth/get-session`, which shows the email and name.
 - `known:mark` marks a word Known and never clears one: only the learner un-marks a word.
+- `watch:read` and `watch:write` read and change the videos the learner watched in the iOS app's
+  Player ([Watch history](#watch-history)), and `translations:read` and `translations:write` the
+  sentences they bookmarked in its Translate tab ([Translate bookmarks](#translate-bookmarks)).
+  Only the iOS app has them: no other app shows them, so none gets them, least privilege.
 - `dictionary:read` is for the dictionary service's routes for apps (#571).
 - An app without a scope gets `403 insufficient_scope` from the route, or `not_allowed` for a sync
   change, and sync never sends it the entities it can't read: Tomodachi never gets the profile.
@@ -290,11 +294,18 @@ first time:
    - `applied`: keep its `version` as the entity's version.
    - `conflict`: the entity changed elsewhere first. Take `current`, the entity as it is now, over
      your copy.
-   - `rejected`: undo the change on the device. To try something else, queue a new change with a
-     new `id`; never send a result's `id` again with a different change.
+   - `rejected`: undo the change on the device, unless it was part of the first upload (below),
+     or the code is `unknown_entity`: the service is older than your app, so keep the change, stop
+     sending that entity's changes, and upload it again later, as a first upload.
+     To try something else, queue a new change with a new `id`; never send a result's `id` again
+     with a different change.
 4. **Apply each change in `changes`** over your copy, by entity and `entityId`: `put` is the
    entity as it is now, `delete` is gone. Keep the `cursor`. While `hasMore` is true, sync again.
-   A list word can arrive a page before its list: hold it until `hasMore` is false.
+   A list word can arrive a page before its list: hold it until `hasMore` is false. An entity
+   with a change still queued keeps the device's copy for now: hold the account's copy until that
+   change's result. A conflict's `current` replaces it. If the change is applied at a newer
+   version, the account's copy of that comes in `changes`; if it's applied at the held copy's
+   version (it changed nothing), or rejected, take the held copy.
 5. **On `410 invalid_cursor`**, sync again with no cursor, and take what comes back over your copy;
    queued changes still go.
 
@@ -357,6 +368,15 @@ example. The bounds of a request:
   **A `500`** may have applied the mutations before the failure: send the same request again,
   backing off, and those answer as before.
 
+**The first upload.** The first time a device syncs to an account, queue what the device has:
+each known word as a `mark`, each list as a `create`, each list word as an `add`, each watched
+video as a `watch`, and each bookmarked sentence as an `add`, all at base version 0, then sync with
+no cursor. A device that already synced
+before its app could sync an entity uploads that entity's items the same way, once, and syncs
+again with no cursor, since its cursor passed that entity's changes. The device had these before the account did, so a rejection
+of one undoes nothing on the device: a list the account already has is rejected `already_exists`,
+and the account's copy comes down.
+
 ### The rules, from your side
 
 - **The profile**, by the account's ID (or none): `update` with `name`, `username`, or both, at
@@ -372,10 +392,57 @@ example. The bounds of a request:
   - A rename or move conflicts if the list changed since.
   - A delete wins over everything done to the list since, and takes its words: when a list is
     deleted, drop its words on the device.
+  - **Favorites has one ID in every app: `2177c773-9e88-410f-9348-6cefaebe0a93`.** An app that
+    starts learners with a Favorites list gives it this ID, so every device's Favorites is one list
+    in the account (lists are the account's own, so the ID can't collide with another learner's).
+    On a second device, its `create` is rejected (`already_exists`): keep the list, take the
+    account's copy as it comes down, and its words' adds still apply. If the account's copy comes
+    down deleted, the device's Favorites never belonged to it: keep it and its words as a new list,
+    under a new ID, rather than dropping them, even though an `add` to the deleted list was
+    rejected (`unknown_list`). Any other list the account deleted is deleted on the device. The
+    iOS app moves an older install's Favorites to this ID before its first upload.
 - **List words**, `<list>/<item>`:
   - An add always applies.
   - A remove applies only if your app had the latest add: an add from elsewhere wins.
   - An add to a list that's gone is rejected (`unknown_list`): undo it.
+
+### Watch history
+
+What the iOS app's Player lists under Recent, as `watchedVideo`, by YouTube video ID. It needs
+`watch:read` and `watch:write`.
+
+- **Send the whole video with each `watch`:** `watchedAt`, when the learner last watched it, and
+  whatever the device knows of `title`, `author` (the channel), `duration` and `position` (seconds),
+  and `comprehension` (0 to 1). A field left out keeps the account's value, and the account keeps
+  the later `watchedAt`. Send a watch each time one of them changes; while one is queued and not
+  yet sent, a newer watch of the same video can replace it.
+- **A watch of a video the account has always applies,** whatever its base version. The watch
+  with the later `watchedAt` sets the place; an older one that arrives late only fills in fields
+  the account lacks. So use the device's clock for `watchedAt`, and a time from 2000 on.
+- **`remove`, when the learner removes a video, always applies.** A watch of a removed video
+  applies only at the removal's version: one made before the device saw the removal conflicts,
+  and `current` is the delete. Take it. Watching it again afterwards brings it back. Keep a removed
+  video's version while the account remembers it: the latest 100 videos removed or pruned.
+- **The account keeps the 50 latest by `watchedAt`.** A watch past that removes the oldest, which
+  comes down as a `delete`; drop it. Keep 50 on the device the same way, by `watchedAt`, so a
+  device that missed an old prune still shows what the account has. Don't send a `remove` for one
+  your device drops for being past 50.
+- **Order** the list by `watchedAt`, newest first.
+
+### Translate bookmarks
+
+The sentences the learner bookmarked in the iOS app's Translate tab, as `bookmarkedSentence`, by
+the sentence's UUID. It needs `translations:read` and `translations:write`.
+
+- **Send only the bookmarked sentence:** its `text`, its `translation` (or null), its `language`
+  (`ja` or `en`), and `bookmarkedAt`. Never the conversation, its ID, or any sentence the learner
+  didn't bookmark: conversations hold other people's words, and stay on the device.
+- **An add always applies.** Un-bookmarking sends a `remove` at the version your app had, which
+  conflicts if the sentence was bookmarked again elsewhere since: take `current`, and show it
+  bookmarked. Deleting a conversation un-bookmarks its sentences, so send a `remove` for each.
+- **A bookmark from another device** names a sentence whose conversation may not be on this one:
+  show it on its own, with its translation.
+- **At most 2,000** an account (`too_many_bookmarks`): undo the add.
 
 ## Errors
 
@@ -448,5 +515,11 @@ lost, ask `GET /v1/auth/token`: a `401` means the account is gone.
 
 ## Signing out
 
-`POST /v1/auth/sign-out` with the session token, then forget it and the cursor. Keep the device's
-copy: it's the learner's.
+`POST /v1/auth/sign-out` with the session token, then forget it. Keep the device's copy: it's the
+learner's.
+
+An app may also keep its queue, cursor, and entity versions for the account it signed out of (the
+sign-in's user ID), and keep queuing changes, with their base versions, while signed out, as the
+iOS app does. When the same account signs in again, sync from them: the changes apply by the usual
+rules. When another account signs in, drop them, and send that account the device's copy as a
+first upload.

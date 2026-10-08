@@ -223,9 +223,10 @@ struct WordListView: View {
   @State private var selection = Set<String>()
   @State private var namePrompt: WordListNamePrompt?
   @State private var confirmsDeletion = false
-  let listID: UUID
+  let openedListID: UUID
   let openWord: (WordListMembership) -> Void
 
+  private var listID: UUID { wordLists.currentID(of: openedListID) }
   private var list: WordList? { wordLists.lists.first { $0.id == listID } }
   private var isSelecting: Bool { editMode.isEditing }
 

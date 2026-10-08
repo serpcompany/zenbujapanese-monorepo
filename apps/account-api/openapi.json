@@ -127,6 +127,81 @@
         },
         "additionalProperties": false
       },
+      "WatchFields": {
+        "type": "object",
+        "properties": {
+          "watchedAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "ISO 8601, from 2000 on, by the device's clock; a time after the service's is taken as the service's."
+          },
+          "title": {
+            "type": "string",
+            "description": "Cut to 200 characters; control characters become spaces, and an empty one is left out."
+          },
+          "author": {
+            "type": "string",
+            "description": "The channel, held as `title` is."
+          },
+          "duration": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 10000000,
+            "description": "The video's length, in seconds."
+          },
+          "position": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 10000000,
+            "description": "Where the learner was, in seconds."
+          },
+          "comprehension": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1,
+            "description": "The share of the captions' words the learner knows."
+          }
+        },
+        "required": [
+          "watchedAt"
+        ],
+        "additionalProperties": false
+      },
+      "BookmarkFields": {
+        "type": "object",
+        "properties": {
+          "text": {
+            "type": "string",
+            "description": "The sentence as it was said: not blank, cut to 2,000 characters, with control characters made spaces."
+          },
+          "translation": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Its translation, cut to 4,000 characters, or null; null when left out."
+          },
+          "language": {
+            "type": "string",
+            "enum": [
+              "ja",
+              "en"
+            ],
+            "description": "The language it was said in."
+          },
+          "bookmarkedAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "ISO 8601, from 2000 on, by the device's clock; a time after the service's is taken as the service's."
+          }
+        },
+        "required": [
+          "text",
+          "language",
+          "bookmarkedAt"
+        ],
+        "additionalProperties": false
+      },
       "Profile": {
         "type": "object",
         "properties": {
@@ -366,6 +441,7 @@
                       "unknown_list",
                       "too_many_lists",
                       "list_full",
+                      "too_many_bookmarks",
                       "not_allowed"
                     ]
                   },
@@ -528,9 +604,77 @@
               "entity": {
                 "type": "string",
                 "enum": [
+                  "watchedVideo"
+                ]
+              },
+              "entityId": {
+                "type": "string"
+              },
+              "operation": {
+                "type": "string",
+                "enum": [
+                  "put"
+                ]
+              },
+              "version": {
+                "type": "integer"
+              },
+              "data": {
+                "$ref": "#/components/schemas/WatchedVideo"
+              }
+            },
+            "required": [
+              "entity",
+              "entityId",
+              "operation",
+              "version",
+              "data"
+            ]
+          },
+          {
+            "type": "object",
+            "properties": {
+              "entity": {
+                "type": "string",
+                "enum": [
+                  "bookmarkedSentence"
+                ]
+              },
+              "entityId": {
+                "type": "string"
+              },
+              "operation": {
+                "type": "string",
+                "enum": [
+                  "put"
+                ]
+              },
+              "version": {
+                "type": "integer"
+              },
+              "data": {
+                "$ref": "#/components/schemas/BookmarkedSentence"
+              }
+            },
+            "required": [
+              "entity",
+              "entityId",
+              "operation",
+              "version",
+              "data"
+            ]
+          },
+          {
+            "type": "object",
+            "properties": {
+              "entity": {
+                "type": "string",
+                "enum": [
                   "knownWord",
                   "list",
-                  "listWord"
+                  "listWord",
+                  "watchedVideo",
+                  "bookmarkedSentence"
                 ]
               },
               "entityId": {
@@ -558,7 +702,7 @@
             ]
           }
         ],
-        "description": "An entity as it is now (`put`, with `data`), or gone (`delete`): a deleted list, a word removed from a list, or one never there. A cleared known word is a `put` with `known: false`."
+        "description": "An entity as it is now (`put`, with `data`), or gone (`delete`): a deleted list, a word removed from a list, a video removed or past the newest the account keeps, a bookmark removed, or one never there. A cleared known word is a `put` with `known: false`."
       },
       "KnownWord": {
         "type": "object",
@@ -635,6 +779,102 @@
           "addedAt"
         ]
       },
+      "WatchedVideo": {
+        "type": "object",
+        "properties": {
+          "videoId": {
+            "type": "string"
+          },
+          "title": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "At most 200 characters: a longer one is cut, and control characters become spaces."
+          },
+          "author": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "The channel, held as title is."
+          },
+          "duration": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "description": "Seconds."
+          },
+          "position": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "description": "Seconds: where the learner was."
+          },
+          "comprehension": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "description": "The share of the captions' words the learner knows, 0 to 1."
+          },
+          "watchedAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When the learner last watched it, as the app said; a time after the service's is taken as the service's."
+          }
+        },
+        "required": [
+          "videoId",
+          "title",
+          "author",
+          "duration",
+          "position",
+          "comprehension",
+          "watchedAt"
+        ]
+      },
+      "BookmarkedSentence": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "text": {
+            "type": "string",
+            "description": "The sentence as it was said, at most 2000 characters: a longer one is cut, and control characters become spaces."
+          },
+          "translation": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Its translation, at most 4000 characters, or null."
+          },
+          "language": {
+            "type": "string",
+            "enum": [
+              "ja",
+              "en"
+            ],
+            "description": "The language the sentence was said in."
+          },
+          "bookmarkedAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When the learner bookmarked it, as the app said; a time after the service's is taken as the service's."
+          }
+        },
+        "required": [
+          "id",
+          "text",
+          "translation",
+          "language",
+          "bookmarkedAt"
+        ]
+      },
       "SyncRequest": {
         "type": "object",
         "properties": {
@@ -674,7 +914,7 @@
           "entity": {
             "type": "string",
             "pattern": "^[A-Za-z][A-Za-z0-9_-]{0,63}$",
-            "description": "`profile`, `knownWord`, `list`, `listWord`. Any other is rejected with `unknown_entity`, and the rest of the request still applies. A change the app's scopes don't allow is rejected with `not_allowed`, and the app reads only the entities its scopes do."
+            "description": "`profile`, `knownWord`, `list`, `listWord`, `watchedVideo`, `bookmarkedSentence`. Any other is rejected with `unknown_entity`, and the rest of the request still applies. A change the app's scopes don't allow is rejected with `not_allowed`, and the app reads only the entities its scopes do."
           },
           "operation": {
             "type": "string",
@@ -684,7 +924,7 @@
           "entityId": {
             "type": "string",
             "pattern": "^[^\\p{Cc}\\p{Cf}\\s]{1,200}$",
-            "description": "- `profile`: The account's ID, or left out.\n- `knownWord`: The item: a Language Reference ID (32 lowercase hex digits), or `kanji:` and one kanji, kept in Unicode NFC.\n- `list`: Its UUID, in either case; answers name it in lowercase.\n- `listWord`: The list's UUID, a slash, and the item: `<list>/<item>`."
+            "description": "- `profile`: The account's ID, or left out.\n- `knownWord`: The item: a Language Reference ID (32 lowercase hex digits), or `kanji:` and one kanji, kept in Unicode NFC.\n- `list`: Its UUID, in either case; answers name it in lowercase.\n- `listWord`: The list's UUID, a slash, and the item: `<list>/<item>`.\n- `watchedVideo`: The YouTube video ID: 11 letters, digits, `-`, or `_`.\n- `bookmarkedSentence`: The sentence's UUID, in either case; answers name it in lowercase."
           },
           "baseVersion": {
             "type": "integer",
@@ -901,6 +1141,100 @@
                 }
               }
             }
+          },
+          "watchedVideo": {
+            "description": "A video the learner watched in the iOS app's Player. The account keeps the 50 most recently watched, and remembers the latest 100 videos it removed or pruned.",
+            "entityId": "The YouTube video ID: 11 letters, digits, `-`, or `_`.",
+            "read": "watch:read",
+            "data": {
+              "$ref": "#/components/schemas/WatchedVideo"
+            },
+            "operations": {
+              "watch": {
+                "scopes": [
+                  "watch:write"
+                ],
+                "baseVersion": true,
+                "description": "Send the whole video each time. A watch of a video the account has applies whatever its base version: the one with the later `watchedAt` sets the fields it sends, an older one sent late only fills fields the account lacks, and a field left out keeps the account's. A watch of a video the learner removed applies only at the removal's version, so one made before seeing the removal conflicts with the `delete`. A watch past the 50 newest prunes the oldest, which syncs as a `delete`.",
+                "fields": {
+                  "$ref": "#/components/schemas/WatchFields"
+                },
+                "example": {
+                  "id": "6f1c0e7a-3b5d-4c2e-9a8f-000000000009",
+                  "entity": "watchedVideo",
+                  "operation": "watch",
+                  "entityId": "a1B2c3D4e5F",
+                  "baseVersion": 0,
+                  "fields": {
+                    "watchedAt": "2026-10-07T03:17:00Z",
+                    "title": "日本語の勉強",
+                    "author": "Zenbu",
+                    "duration": 212,
+                    "position": 30.5,
+                    "comprehension": 0.42
+                  }
+                }
+              },
+              "remove": {
+                "scopes": [
+                  "watch:write"
+                ],
+                "baseVersion": false,
+                "description": "The learner removed the video. It always applies; removing one the account has not is applied and changes nothing.",
+                "example": {
+                  "id": "6f1c0e7a-3b5d-4c2e-9a8f-00000000000a",
+                  "entity": "watchedVideo",
+                  "operation": "remove",
+                  "entityId": "a1B2c3D4e5F"
+                }
+              }
+            }
+          },
+          "bookmarkedSentence": {
+            "description": "A sentence the learner bookmarked in the iOS app's Translate tab, alone: never its conversation. An account holds at most 2,000.",
+            "entityId": "The sentence's UUID, in either case; answers name it in lowercase.",
+            "read": "translations:read",
+            "data": {
+              "$ref": "#/components/schemas/BookmarkedSentence"
+            },
+            "operations": {
+              "add": {
+                "scopes": [
+                  "translations:write"
+                ],
+                "baseVersion": false,
+                "description": "It always applies; adding one the account has changes nothing, and past 2,000 it's rejected `too_many_bookmarks`.",
+                "fields": {
+                  "$ref": "#/components/schemas/BookmarkFields"
+                },
+                "example": {
+                  "id": "6f1c0e7a-3b5d-4c2e-9a8f-00000000000b",
+                  "entity": "bookmarkedSentence",
+                  "operation": "add",
+                  "entityId": "5e8d1c2b-7a6f-4d3e-8b9c-0f1e2d3c4b5a",
+                  "fields": {
+                    "text": "駅はどこですか",
+                    "translation": "Where is the station?",
+                    "language": "ja",
+                    "bookmarkedAt": "2026-10-07T03:20:00Z"
+                  }
+                }
+              },
+              "remove": {
+                "scopes": [
+                  "translations:write"
+                ],
+                "baseVersion": true,
+                "description": "It applies only at the bookmark's current version, so it removes only an add it saw: an add the remover never saw wins, and the remove conflicts. Removing one the account hasn't is applied.",
+                "example": {
+                  "id": "6f1c0e7a-3b5d-4c2e-9a8f-00000000000c",
+                  "entity": "bookmarkedSentence",
+                  "operation": "remove",
+                  "entityId": "5e8d1c2b-7a6f-4d3e-8b9c-0f1e2d3c4b5a",
+                  "baseVersion": 1
+                }
+              }
+            }
           }
         },
         "x-sync-rejections": {
@@ -914,6 +1248,7 @@
           "unknown_list": "The list word's list isn't in the account, or was deleted.",
           "too_many_lists": "The account has 500 lists.",
           "list_full": "The list has 5,000 words.",
+          "too_many_bookmarks": "The account has 2,000 bookmarked sentences.",
           "not_allowed": "The app's scopes don't include the operation's."
         }
       },
@@ -1021,7 +1356,7 @@
                 }
               }
             },
-            "description": "The name Sign in with Apple JS hands the website on the learner's first sign-in. Apple's token has none, so it names a new account."
+            "description": "The name Apple gives an app or the website only on the learner's first sign-in to it. Apple's token has none, so it names a new account."
           }
         },
         "required": [

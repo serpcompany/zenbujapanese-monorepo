@@ -420,8 +420,9 @@ jobs:
   Git LFS file under `apps/ios` but the archived source snapshots (`LFS_SNAPSHOTS`), which only a
   rebuild reads, and the recorded-audio check's recordings (`LFS_RECORDINGS`): they check the bundled packs and indexes against their pinned sources, import
   reports, and the bundled dictionary, and that each import report records the current hash of
-  the tool that wrote it ([`ios.md`](ios.md)). Its LFS cache is keyed on the pointers
-  of the LFS patterns it fetches.
+  the tool that wrote it ([`ios.md`](ios.md)). It also checks that Release builds name no account
+  service yet ([`ios.md`](ios.md), Opening sign-in in the App Store build). Its LFS cache is keyed
+  on the pointers of the LFS patterns it fetches.
 - `swift` runs `SearchExperienceTests` and `TranslatorCoreTests` with `xcodebuild` on the first iPhone Simulator of the
   newest iOS runtime, then the recorded-audio check's scoring tests with `swift test` (the replay
   itself needs the Mac's speech models, which the runner doesn't have, so it stays a local check,

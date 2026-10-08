@@ -14,10 +14,17 @@ final class ConversationHistoryTests {
     try? FileManager.default.removeItem(at: directory)
   }
 
-  private func loadedHistory() async -> ConversationHistory {
-    let history = ConversationHistory(directory: directory)
+  private func loadedHistory(at now: Date? = nil) async -> ConversationHistory {
+    let today = today
+    let history = ConversationHistory(directory: directory, now: { now ?? today })
     await history.flush()
     return history
+  }
+
+  private func shared(_ text: String, minutesAgo: Double) -> SharedBookmark {
+    SharedBookmark(
+      id: UUID(), text: text, translation: "Elsewhere.", language: .japanese,
+      bookmarkedAt: today.addingTimeInterval(-minutesAgo * 60))
   }
 
   private func conversation(daysAgo: Int, saying text: String = "今日は東京駅に行きます。")
@@ -160,5 +167,136 @@ final class ConversationHistoryTests {
     #expect(
       station.transcript
         == "今日は東京駅に行きます。\nI'm going to Tokyo Station today.\n\nGreat.\nいいですね。")
+  }
+
+  @Test("bookmarking reports the sentence and when, and un-bookmarking reports it removed")
+  func reportsBookmarks() async {
+    let history = await loadedHistory()
+    var changes: [BookmarkChange] = []
+    history.bookmarkObserver = { changes.append($0) }
+    let saved = conversation(daysAgo: 1)
+    history.save(saved)
+    let sentence = saved.turns[0].sentences[0]
+
+    history.setBookmarked(true, sentence: sentence.id, in: saved.id)
+    history.setBookmarked(true, sentence: sentence.id, in: saved.id)
+    history.setBookmarked(false, sentence: sentence.id, in: saved.id)
+
+    let bookmark = SharedBookmark(
+      id: sentence.id, text: sentence.text, translation: sentence.translation,
+      language: .japanese, bookmarkedAt: today)
+    #expect(changes == [.added(bookmark), .removed(bookmark)])
+    #expect(history.conversation(saved.id)?.sentences.first?.bookmarkedAt == nil)
+  }
+
+  @Test("a bookmark from another device is listed alone, survives a relaunch, and can be removed")
+  func bookmarkWithoutItsConversation() async {
+    let history = await loadedHistory()
+    let elsewhere = shared("向こうで言ったこと。", minutesAgo: 5)
+    history.applySynced(elsewhere)
+    await history.flush()
+
+    let reloaded = await loadedHistory()
+    var changes: [BookmarkChange] = []
+    reloaded.bookmarkObserver = { changes.append($0) }
+    #expect(reloaded.bookmarks.map(\.conversationID) == [nil])
+    #expect(reloaded.bookmarks.map(\.shared) == [elsewhere])
+    #expect(reloaded.bookmarks.first?.sentence.isBookmarked == true)
+
+    reloaded.setBookmarked(false, sentence: elsewhere.id, in: nil)
+    #expect(reloaded.bookmarks.isEmpty)
+    #expect(changes == [.removed(elsewhere)])
+    await reloaded.flush()
+    #expect(await loadedHistory().bookmarks.isEmpty)
+  }
+
+  @Test("a bookmark from another device for a sentence here marks it, and a removal clears it")
+  func bookmarkForASentenceHere() async {
+    let history = await loadedHistory()
+    var changes: [BookmarkChange] = []
+    history.bookmarkObserver = { changes.append($0) }
+    let saved = conversation(daysAgo: 0)
+    history.save(saved)
+    let sentence = saved.turns[1].sentences[0]
+    let bookmark = SharedBookmark(
+      id: sentence.id, text: sentence.text, translation: sentence.translation,
+      language: .english, bookmarkedAt: today)
+
+    history.applySynced(bookmark)
+    #expect(history.bookmarks.map(\.conversationID) == [saved.id])
+    #expect(history.sharedOnly.isEmpty)
+    history.applySyncedRemoval(ofBookmark: sentence.id)
+    #expect(history.bookmarks.isEmpty)
+    #expect(changes.isEmpty)
+  }
+
+  @Test("deleting a conversation reports each of its bookmarks removed")
+  func deletingRemovesBookmarks() async {
+    let history = await loadedHistory()
+    let saved = conversation(daysAgo: 0)
+    history.save(saved)
+    for turn in saved.turns {
+      history.setBookmarked(true, sentence: turn.sentences[0].id, in: saved.id)
+    }
+    var removed: [UUID] = []
+    history.bookmarkObserver = { change in
+      if case .removed(let bookmark) = change { removed.append(bookmark.id) }
+    }
+    history.delete(saved.id)
+    #expect(Set(removed) == Set(saved.turns.map(\.sentences[0].id)))
+  }
+
+  @Test("many bookmarks from other devices at once are all kept across a relaunch")
+  func keepsManySyncedBookmarks() async {
+    let history = await loadedHistory()
+    let pulled = (0..<300).map { shared("文\($0)", minutesAgo: Double($0)) }
+    pulled.forEach(history.applySynced)
+    history.applySyncedRemoval(ofBookmark: pulled[0].id)
+    await history.flush()
+    let reloaded = await loadedHistory()
+    #expect(reloaded.sharedOnly.count == 299)
+    #expect(reloaded.bookmarks.first?.sentence.text == "文1")
+  }
+
+  @Test("a sentence bookmarked in a conversation here and kept alone is listed once")
+  func listsASentenceOnce() async {
+    let history = await loadedHistory()
+    var saved = conversation(daysAgo: 0)
+    let sentence = saved.turns[0].sentences[0]
+    history.applySynced(
+      SharedBookmark(
+        id: sentence.id, text: sentence.text, translation: sentence.translation,
+        language: .japanese, bookmarkedAt: today))
+    saved.turns[0].sentences[0].isBookmarked = true
+    history.save(saved)
+    #expect(history.bookmarks.map(\.conversationID) == [saved.id])
+  }
+
+  @Test("bookmarks are listed newest first, from conversations and alone")
+  func bookmarkOrder() async {
+    let history = await loadedHistory(at: today.addingTimeInterval(-10 * 60))
+    let saved = conversation(daysAgo: 0)
+    history.save(saved)
+    history.setBookmarked(true, sentence: saved.turns[0].sentences[0].id, in: saved.id)
+    history.applySynced(shared("新しい", minutesAgo: 1))
+    history.applySynced(shared("古い", minutesAgo: 60))
+    #expect(history.bookmarks.map(\.sentence.text) == ["新しい", "今日は東京駅に行きます。", "古い"])
+  }
+
+  @Test("a synced bookmarks file this version can't read is left in place")
+  func keepsUnreadableBookmarks() async throws {
+    let folder = directory.appending(path: "Synced Bookmarks", directoryHint: .isDirectory)
+    try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
+    let file = folder.appending(path: "bookmarks.json")
+    let newer = Data(#"{"version":2,"bookmarks":[]}"#.utf8)
+    try newer.write(to: file)
+
+    let history = await loadedHistory()
+    #expect(history.bookmarksAreReadOnly)
+    history.applySynced(shared("上書きしない", minutesAgo: 0))
+    await history.flush()
+
+    #expect(try Data(contentsOf: file) == newer)
+    #expect(await loadedHistory().conversations.isEmpty)
   }
 }

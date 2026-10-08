@@ -33,6 +33,24 @@ interface ListWordData {
   addedAt: Date
 }
 
+interface WatchedVideoData {
+  videoId: string
+  title: string | null
+  author: string | null
+  duration: number | null
+  position: number | null
+  comprehension: number | null
+  watchedAt: Date
+}
+
+interface BookmarkData {
+  id: string
+  text: string
+  translation: string | null
+  language: 'ja' | 'en'
+  bookmarkedAt: Date
+}
+
 interface Put<E extends EntityType, D> {
   entity: E
   entityId: string
@@ -46,6 +64,8 @@ export type Change =
   | Put<'knownWord', KnownWordData>
   | Put<'list', WordListData>
   | Put<'listWord', ListWordData>
+  | Put<'watchedVideo', WatchedVideoData>
+  | Put<'bookmarkedSentence', BookmarkData>
   | {
       entity: Exclude<EntityType, 'profile'>
       entityId: string
@@ -82,6 +102,30 @@ export const needsBaseVersion = rejection(
 const languageReferenceId = /^[0-9a-f]{32}$/
 const kanjiItem = /^kanji:\p{Script=Han}$/u
 const controlCharacters = /\p{Cc}|\p{Cf}|\p{Cs}/u
+
+const uuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+
+export const uuidOf = (raw: string | undefined) =>
+  raw && uuid.test(raw) ? raw.toLowerCase() : null
+
+const isoMoment = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d{1,9})?(Z|[+-]\d{2}:\d{2})$/
+
+const earliestMoment = new Date('2000-01-01T00:00:00Z')
+
+export function momentOf(raw: unknown): Date | null {
+  if (typeof raw !== 'string' || !isoMoment.test(raw)) return null
+  const moment = new Date(raw)
+  if (Number.isNaN(moment.getTime()) || moment < earliestMoment) return null
+  const now = new Date()
+  return moment > now ? now : moment
+}
+
+export const plainText = (raw: string) =>
+  raw
+    .replace(/\p{Cs}/gu, '\uFFFD')
+    .replace(/\p{Cc}/gu, ' ')
+    .normalize('NFC')
+    .trim()
 
 const isItemId = (id: string) => languageReferenceId.test(id) || kanjiItem.test(id)
 

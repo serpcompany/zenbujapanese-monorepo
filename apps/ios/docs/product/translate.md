@@ -6,7 +6,10 @@ translation appears under it, and after they pause the translation is spoken alo
 Japanese word on the tab opens the same dictionary sheet the Player uses.
 
 Everything runs on the iPhone: Apple's speech recognition, Apple Translation, and the system
-voice. Nothing is sent to a server, and nothing costs money. The first conversation downloads
+voice. Nothing anyone says is sent to a server, and nothing costs money. The one thing that leaves
+the iPhone is a sentence the learner bookmarks, once they sign in to a Zenbu account (bookmarks
+made before signing in go then too): that sentence and its translation sync to their other devices
+([Translations](#translations)), and nothing else of the conversation does. The first conversation downloads
 Apple's Japanese and English speech recognition and translation once, with progress shown above
 the Start button; after that, Translate works without a connection. There is no Online
 engine yet, so there is no Online/Offline switch and no cost or model details.
@@ -117,7 +120,7 @@ first sentence and a line such as **Today, 09:12 · 6 turns · 82% known**. The 
 share of the Japanese that was spoken, particles aside, made of words marked known, counted the
 way the Player counts captions; it updates as words are marked known, and a conversation with no
 Japanese spoken shows none. The transcript's header shows it too. **All** and **Bookmarked** at the
-top switch to the bookmarked sentences, each with its translation. Search, in the toolbar, matches the
+top switch to the bookmarked sentences, newest bookmark first, each with its translation. Search, in the toolbar, matches the
 Japanese or the English. Long-pressing a row offers **Copy**, **Share**, and **Delete**; the
 **•••** menu offers **Delete All…**. Deleting a conversation, or all of them, asks first, and
 there's no swipe to delete. Conversations are kept until they're deleted. **Translations** in
@@ -130,7 +133,20 @@ button that plays its translation again, at the conversation's speech speed, and
 **•••** menu offers **Furigana**, **Copy Transcript**, **Share**, and **Delete Conversation**.
 
 A conversation is saved after every translated sentence, so closing the app loses nothing; **Exit
-Without Saving** deletes it. Conversations are stored only on the device, one file each.
+Without Saving** deletes it. Conversations are stored only on the device, one file each, and never
+sync.
+
+**Bookmarks on every device.** Signed in to a Zenbu account, the learner's bookmarked sentences
+are the same on every device running this app ([Zenbu account and
+sync](index.md#zenbu-account-and-sync)). Only a bookmarked sentence syncs: its text, its
+translation, which language it was said in, and when it was bookmarked; never the conversation
+around it, or any sentence that isn't bookmarked. A sentence bookmarked on another device is listed
+under **Bookmarked** here even though its conversation isn't on this iPhone: it shows on its own, the
+sentence and its translation, with the same speaker and bookmark buttons, and there's no
+conversation to open. Un-bookmarking a sentence, here or anywhere, un-bookmarks it everywhere, and
+deleting a conversation un-bookmarks its sentences everywhere too. Bookmarks synced from other
+devices are kept in a small file of their own beside the conversations, and nothing else from those
+devices is.
 Browsing Translations never turns on the microphone.
 
 ## Looking up words

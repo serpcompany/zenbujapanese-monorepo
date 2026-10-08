@@ -1,6 +1,8 @@
 import { z } from '@hono/zod-openapi'
+import { bookmarkLimits } from '../domain/bookmarks'
 import { profileLimits } from '../domain/profile'
 import { syncLimits } from '../domain/sync'
+import { watchLimits } from '../domain/watch-history'
 import { errorObject } from './refusals'
 import {
   entityIdsText,
@@ -181,6 +183,51 @@ const ListWordSchema = z
   })
   .openapi('ListWord')
 
+const WatchedVideoSchema = z
+  .object({
+    videoId: z.string(),
+    title: z
+      .string()
+      .nullable()
+      .openapi({
+        description: `At most ${watchLimits.textLength} characters: a longer one is cut, and control characters become spaces.`
+      }),
+    author: z.string().nullable().openapi({ description: 'The channel, held as title is.' }),
+    duration: z.number().nullable().openapi({ description: 'Seconds.' }),
+    position: z.number().nullable().openapi({ description: 'Seconds: where the learner was.' }),
+    comprehension: z
+      .number()
+      .nullable()
+      .openapi({ description: "The share of the captions' words the learner knows, 0 to 1." }),
+    watchedAt: z.iso.datetime().openapi({
+      description:
+        "When the learner last watched it, as the app said; a time after the service's is taken as the service's."
+    })
+  })
+  .openapi('WatchedVideo')
+
+const BookmarkSchema = z
+  .object({
+    id: z.string(),
+    text: z.string().openapi({
+      description: `The sentence as it was said, at most ${bookmarkLimits.textLength} characters: a longer one is cut, and control characters become spaces.`
+    }),
+    translation: z
+      .string()
+      .nullable()
+      .openapi({
+        description: `Its translation, at most ${bookmarkLimits.translationLength} characters, or null.`
+      }),
+    language: z
+      .enum(['ja', 'en'])
+      .openapi({ description: 'The language the sentence was said in.' }),
+    bookmarkedAt: z.iso.datetime().openapi({
+      description:
+        "When the learner bookmarked it, as the app said; a time after the service's is taken as the service's."
+    })
+  })
+  .openapi('BookmarkedSentence')
+
 const put = <E extends string, D extends z.ZodType>(entity: E, data: D) =>
   z.object({
     entity: z.literal(entity),
@@ -196,8 +243,10 @@ const ChangeSchema = z
     put('knownWord', KnownWordSchema),
     put('list', WordListSchema),
     put('listWord', ListWordSchema),
+    put('watchedVideo', WatchedVideoSchema),
+    put('bookmarkedSentence', BookmarkSchema),
     z.object({
-      entity: z.enum(['knownWord', 'list', 'listWord']),
+      entity: z.enum(['knownWord', 'list', 'listWord', 'watchedVideo', 'bookmarkedSentence']),
       entityId: z.string(),
       operation: z.literal('delete'),
       version: z.int(),
@@ -206,7 +255,7 @@ const ChangeSchema = z
   ])
   .openapi('Change', {
     description:
-      'An entity as it is now (`put`, with `data`), or gone (`delete`): a deleted list, a word removed from a list, or one never there. A cleared known word is a `put` with `known: false`.'
+      'An entity as it is now (`put`, with `data`), or gone (`delete`): a deleted list, a word removed from a list, a video removed or past the newest the account keeps, a bookmark removed, or one never there. A cleared known word is a `put` with `known: false`.'
   })
 
 const resultBase = { id: z.string() }
