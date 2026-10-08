@@ -12,6 +12,7 @@ public actor BilingualRecognizer {
   static let pauseConfirmation: Duration = .milliseconds(300)
   static let pauseChecks = 5
   static let pauseMargin: TimeInterval = 0.3
+  static let idleBeforeReset: TimeInterval = 5
   static let finishedAtPauses: Set<SpokenLanguage> = [.japanese]
 
   private var generation = 0
@@ -19,8 +20,10 @@ public actor BilingualRecognizer {
   private var unfinished: Set<SpokenLanguage> = []
   private var liveText: [SpokenLanguage: String] = [:]
   private var liveTextChangedAt: [SpokenLanguage: Date] = [:]
+  private var lastResultAt: [SpokenLanguage: Date] = [:]
   private var merger = BilingualTranscriptMerger(languages: [])
   private var pauses = SpeechPauseDetector()
+  private var isMuted = false
   #if DEBUG
     private var hasHeardAudio = false
   #endif
@@ -48,6 +51,7 @@ public actor BilingualRecognizer {
       of: TranscriptionEvent.self, throwing: (any Error).self)
     merger = BilingualTranscriptMerger(languages: languages)
     pauses = SpeechPauseDetector()
+    isMuted = false
     #if DEBUG
       hasHeardAudio = false
       TranslateDiagnostics.shared.begin()
@@ -103,6 +107,7 @@ public actor BilingualRecognizer {
 
   public func finishUtterance() async {
     let now = Date.now
+    guard !isMuted else { return }
     for analyzer in analyzers where unfinished.contains(analyzer.language) {
       let unchanged = now.timeIntervalSince(liveTextChangedAt[analyzer.language] ?? .distantPast)
       guard pauses.finishesStalledSentence(unchangedFor: unchanged) else { continue }
@@ -122,6 +127,7 @@ public actor BilingualRecognizer {
     unfinished = []
     liveText = [:]
     liveTextChangedAt = [:]
+    lastResultAt = [:]
     for task in resultTasks { task.cancel() }
     resultTasks = []
     flushTask?.cancel()
@@ -162,6 +168,7 @@ public actor BilingualRecognizer {
       if !hasHeardAudio { TranslateDiagnostics.shared.note("audio starts") }
       hasHeardAudio = true
     #endif
+    isMuted = audio.level == nil
     guard let voiceEnd = pauses.hear(level: audio.level, duration: audio.duration) else { return }
     pauseTask?.cancel()
     pauseTask = Task { await finishPausedSentences(after: voiceEnd) }
@@ -174,9 +181,12 @@ public actor BilingualRecognizer {
     #if DEBUG
       TranslateDiagnostics.shared.note(String(format: "pause after voice at %.2f", voiceEnd))
     #endif
-    var pending = Self.finishedAtPauses
+    let idle = Self.finishedAtPauses.filter {
+      Date.now.timeIntervalSince(lastResultAt[$0] ?? .distantPast) >= Self.idleBeforeReset
+    }
+    var pending = Self.finishedAtPauses.intersection(unfinished).union(idle)
     for _ in 0..<Self.pauseChecks where !pending.isEmpty {
-      for analyzer in analyzers where pending.contains(analyzer.language) {
+      for analyzer in analyzers where pending.contains(analyzer.language) && !isMuted {
         guard (liveTextChangedAt[analyzer.language] ?? .distantPast) <= since else {
           #if DEBUG
             TranslateDiagnostics.shared.note("pause not confirmed by \(analyzer.language.rawValue)")
@@ -200,6 +210,7 @@ public actor BilingualRecognizer {
     _ result: SpeechTranscriber.Result, from language: SpokenLanguage, startedAs session: Int
   ) {
     guard session == generation else { return }
+    lastResultAt[language] = .now
     let text = String(result.text.characters)
     if result.isFinal || text.isEmpty {
       unfinished.remove(language)

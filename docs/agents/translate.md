@@ -98,12 +98,16 @@ The tab is split across three Swift targets in `apps/ios/Modules`
   `setHearing(false)` feeds the analyzers silence instead, so their timeline stays continuous, and
   voice processing's echo cancellation stays on. It doesn't finalize: finalizing as the silence
   began made the Japanese recognizer invent a low-confidence `はい`. That became a turn, and its
-  spoken "Yes" muted the microphone again, so the app looped on itself every 2 s (#637).
+  spoken "Yes" muted the microphone again, so the app looped on itself every 2 s (#637). For the
+  same reason `BilingualRecognizer` finalizes nothing, at a pause or a stalled sentence, while the
+  audio it's fed is muted; a pause found then is checked again once the microphone is back.
 - Apple's two recognizers end sentences differently. English ends a sentence by itself about
   0.5–1 s after a pause. Japanese holds its sentence until the next speech begins, even across
   English speech, and left open through a long stretch of English it loses the start of the
-  next Japanese. So at every pause `BilingualRecognizer` finalizes the Japanese analyzer, through
-  0.3 s after the voice ended so speech that has resumed stays in the next sentence. If its text
+  next Japanese. So at a pause `BilingualRecognizer` finalizes the Japanese analyzer when it has an
+  unfinished sentence, or when it has had no result for 5 s (finalizing it at every pause cut the
+  start of the app's own voice into a phantom 「はい。」), through 0.3 s after the voice ended so
+  speech that has resumed stays in the next sentence. If its text
   was still changing, it checks again every 0.3 s while the room stays quiet, up to four more
   times.
   It finalizes only the Japanese analyzer
@@ -168,6 +172,7 @@ These were tuned on 2026-10-07 on an iPhone 17 Pro Max. A Mac played the #627 fi
 | Pause | `SpeechPauseDetector` | 0.6 s below 3 × the noise floor | Owll splits sentences at about 0.5 s. |
 | Pause confirmation | `BilingualRecognizer.pauseConfirmation` | 0.3 s | Japanese is finalized only if its text stopped changing. A loudness dip inside fast speech no longer cuts it. |
 | Stalled sentence | `SpeechPauseDetector.stalledSentence`, `abandonedSentence` | 2 s once the room is quiet for 0.6 s; 5 s while someone is talking | Only a recognizer that has really stopped is finalized. Finalizing during fast speech chopped the monologue and lost its words (2026-10-08, recorded-audio check). |
+| Idle reset | `BilingualRecognizer.idleBeforeReset` | 5 s without a Japanese result | Left open from 118.7 s through the English pairs, the Japanese analyzer lost the start of the monologue at 155 s (problem 1 on #640). |
 | Pause re-checks | `BilingualRecognizer.pauseChecks`, `pauseMargin` | 5 checks, 0.3 s apart; finalized through 0.3 s after the voice ended | A pause whose Japanese text was still catching up was skipped, and the sentence waited for the stall timer; the late Japanese final then lost to an English guess. |
 | Doubtful guess over shown speech | `BilingualTranscriptMerger.confidenceOverShownSpeech` | 0.55 | The English recognizer's "Hi" (0.40) for the end of 「はい、3時」 became its own turn. Its junk measured 0.30–0.51 on the recordings; real English 0.59 and up. |
 | Turn-end pause | `ConversationTiming.turnEndPause` | 0.8 s (was 1.2) | Translations start 1.4–2.3 s after the speaker stops (was 2.3–5.4 s). Owll takes about 1.7–2 s. |
