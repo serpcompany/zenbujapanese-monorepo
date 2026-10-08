@@ -230,11 +230,13 @@ struct AccountSignInTests {
     let server = StubAccountServer()
     let storage = MemorySessionTokenStorage("first.signed")
     let swapped = DispatchSemaphore(value: 0)
-    let expiry = Date().addingTimeInterval(15 * 60)
+    let expiry = Date(timeIntervalSince1970: 1_900_000_000)
+    let other = expiry.addingTimeInterval(60)
     server.respond { request in
-      if request.header("Authorization") == "Bearer first.signed" {
-        _ = swapped.wait(timeout: .now() + 30)
+      guard request.header("Authorization") == "Bearer first.signed" else {
+        return .json(200, ["token": StubTokens.access(expiresAt: other)])
       }
+      _ = swapped.wait(timeout: .now() + 30)
       return .json(200, ["token": StubTokens.access(expiresAt: expiry)])
     }
     let (tokens, refresh) = try await refreshHeld(at: server, storage: storage)
@@ -248,6 +250,40 @@ struct AccountSignInTests {
         $0.header("Authorization") == "Bearer first.signed"
       })
     #expect(storage.read() == "other.signed")
+    #expect(AccessTokenClaims.expiry(of: try await tokens.validAccessToken()) == other)
+  }
+
+  @Test(
+    "a sync held across a sign-out and another sign-in ends quietly, leaving the new sign-in",
+    .timeLimit(.minutes(1)))
+  func syncAcrossAnotherSignIn() async throws {
+    let fixture = try await AccountFixture.afterSignIn()
+    fixture.now += 15 * 60
+    let held = DispatchSemaphore(value: 0)
+    let expiry = fixture.now + 15 * 60
+    fixture.server.respond { request in
+      if request.route == "GET /v1/auth/token" {
+        _ = held.wait(timeout: .now() + 30)
+        return .json(200, ["token": StubTokens.access(expiresAt: expiry)])
+      }
+      return StubSync.answer(cursor: "cursor-2")
+    }
+    let asked = fixture.server.requests(to: "GET /v1/auth/token").count
+
+    let sync = Task { try await fixture.sync.sync() }
+    while fixture.server.requests(to: "GET /v1/auth/token").count == asked {
+      try await Task.sleep(for: .milliseconds(5))
+    }
+    fixture.sync.endSession()
+    await fixture.sync.begin(
+      AccountSignIn(
+        sessionToken: "session-2.signed", userID: "learner-2", email: "second@example.com"))
+    held.signal()
+
+    try await sync.value
+    #expect(fixture.sync.account?.userID == "learner-2")
+    #expect(fixture.storage.read() == "session-2.signed")
+    #expect(!fixture.sync.sessionEndedOnItsOwn)
   }
 
   @Test("a request refused across a sign-out and another sign-in isn't sent again for it")
