@@ -1,6 +1,6 @@
 import type { z } from '@hono/zod-openapi'
 import { describe, expect, test } from 'vitest'
-import { authPath, offeredRoutes } from '../auth/routes'
+import { authPath, offeredRoutes, routeScopes } from '../auth/routes'
 import { sessionToken, useSignInService } from '../test/sign-in'
 import { signInRoutes } from './sign-in-contract'
 
@@ -30,6 +30,15 @@ describe("sign-in's contract", () => {
       route.path.replace(authPath, '').replace(/\{(\w+)\}/g, ':$1')
     )
     expect(documented.sort()).toEqual([...offeredRoutes].sort())
+  })
+
+  test('names the scope each sign-in route checks', () => {
+    for (const route of Object.values(signInRoutes)) {
+      const path = route.path.replace(authPath, '').replace(/\{(\w+)\}/g, ':$1')
+      const declared = 'security' in route ? route.security.flatMap(each => each.sessionToken) : []
+      const checked = routeScopes.get(path)
+      expect(declared, route.path).toEqual(checked ? [checked] : [])
+    }
   })
 
   test('matches what each route answers', async () => {

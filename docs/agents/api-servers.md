@@ -25,18 +25,75 @@ check its routes against it: every account route is on the list, and no dictiona
 new route that would land on the wrong service fails a test. nginx's sites hold the same list, so
 a change to it is made in both, in the nginx repository too. Each environment's site sends the
 account paths to the account service's alias and the rest to the dictionary service's, with
-nginx's resolver and failover as for every slot (Set up the server, step 4):
+nginx's resolver and failover as for every slot (Set up the server, step 4).
+
+The sites are `nginx/api-staging.zenbujapanese.com.conf` and `nginx/api.zenbujapanese.com.conf` in
+the nginx repository (serpcompany/nginx, proposed on its branch `add-zenbujapanese-api-host`, which
+also adds the account service's slots' network to its `docker-compose.yml`). They're the
+dictionary service's sites with a second location. Staging's, which production's repeats with
+`api.zenbujapanese.com` and the `-production` aliases:
 
 ```nginx
-location ~ ^/v1/(auth|me|sync|health)(/|$) {
-    set $account zenbujapanese-account-api-staging:8789;
-    proxy_pass http://$account;
+server {
+        listen 80;
+        listen [::]:80;
+        server_name api-staging.zenbujapanese.com;
+
+        return 301 https://api-staging.zenbujapanese.com$request_uri;
 }
-location / {
-    set $dictionary zenbujapanese-dictionary-api-staging:8788;
-    proxy_pass http://$dictionary;
+
+server {
+        listen 443 ssl http2;
+        listen [::]:443 ssl http2;
+        ssl_certificate /etc/ssl/zenbujapanese_com_cert.pem;
+        ssl_certificate_key /etc/ssl/zenbujapanese_com_key.pem;
+        ssl_client_certificate /etc/ssl/cloudflare.crt;
+        ssl_verify_client on;
+
+        server_name api-staging.zenbujapanese.com;
+
+        resolver 127.0.0.11 valid=5s ipv6=off;
+        set $account "zenbujapanese-account-api-staging";
+        set $dictionary "zenbujapanese-dictionary-api-staging";
+
+        location ~ ^/v1/(auth|me|sync|health)(/|$) {
+                proxy_http_version 1.1;
+                proxy_set_header Connection "";
+                proxy_set_header Host $host;
+                proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+                proxy_set_header X-Real-IP $remote_addr;
+                proxy_connect_timeout 2s;
+                proxy_read_timeout 60s;
+                proxy_next_upstream error timeout http_502 http_503;
+                proxy_next_upstream_tries 2;
+                proxy_pass http://$account:8789;
+        }
+
+        location / {
+                proxy_http_version 1.1;
+                proxy_set_header Connection "";
+                proxy_set_header Host $host;
+                proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+                proxy_set_header X-Real-IP $remote_addr;
+                proxy_connect_timeout 2s;
+                proxy_read_timeout 60s;
+                proxy_next_upstream error timeout http_502 http_503;
+                proxy_next_upstream_tries 2;
+                proxy_pass http://$dictionary:8788;
+        }
 }
 ```
+
+- `ssl_client_certificate` and `ssl_verify_client on` take only Cloudflare's client certificate
+  (Authenticated Origin Pulls), so a request that skips Cloudflare gets `400` from nginx, and the
+  `CF-Connecting-IP` the account service counts by is always Cloudflare's.
+- `resolver … valid=5s` with the alias in a variable makes nginx look the alias up every 5
+  seconds, so it finds the new slot after a deploy without a reload, and
+  `proxy_next_upstream … http_502 http_503` with two tries sends a request a slot can't answer to
+  the other.
+- The nginx repository's dictionary sites also keep a `location = /v1/sitemaps/conjugations` that
+  doesn't fail over on a `503`; the dictionary service no longer has that route (it answers
+  `404`), so the API host's sites leave it out.
 
 The dictionary service also keeps its own host (`dictionary-api.zenbujapanese.com`), which the
 website's Worker reads; it can move to the API host by changing `DICTIONARY_API_URL`. The two
@@ -58,7 +115,7 @@ What differs by service is in the table at the top of the script:
 | --- | --- | --- |
 | Image | `ghcr.io/serpcompany/zenbujapanese-dictionary-api` | `ghcr.io/serpcompany/zenbujapanese-account-api` |
 | Signed by | `.github/workflows/dictionary-api-deploy.yml` on `main` | `.github/workflows/account-api-deploy.yml` on `main` |
-| Slots' network | `zenbujapanese-dictionary-api`, internal: a slot reaches nginx and nothing else, since the service parses untrusted input with native code (Sudachi, SQLite) | `zenbujapanese-account-api`, not internal: the service calls Apple, Google, and Email Service |
+| Slots' network | `zenbujapanese-dictionary-api`, internal: a slot reaches nginx and nothing else, since the service parses untrusted input with native code (Sudachi, SQLite) | `zenbujapanese-account-api`, not internal: the service calls Apple, Google, and useSend |
 | Private networks | none | `zenbujapanese-account-db`, internal, which holds only Postgres |
 | Limits | 4 GB of memory, 4 CPUs, 512 processes | 512 MB of memory, 1 CPU, 256 processes |
 | Its release | `DICTIONARY_API_RELEASE`; `/healthz` answers it at the end of `build` | `ACCOUNT_API_RELEASE`; `/healthz` answers it as `release` |
@@ -177,10 +234,14 @@ A person with root sets these up once. Each service then has its own steps
    ```
 3. **Registry access.** The first push of each service's image creates its package in the
    serpcompany organization (github.com/orgs/serpcompany/packages), private, as new packages are,
-   and the image's `org.opencontainers.image.source` label links it to this repository. The
-   deployer pulls it with a GitHub token (classic) with only the `read:packages` scope, authorized
-   for the organization's SSO if it has one, which it reads from a root-only file in the
-   service's folder on every run:
+   and the image's `org.opencontainers.image.source` label links it to this repository, whose
+   readers may pull it. The deployer pulls it with a GitHub token (classic) with only the
+   `read:packages` scope, which it reads from a root-only file in the service's folder on every
+   run. Make the token as a GitHub user who can read this repository: Settings → Developer
+   settings → Personal access tokens → Tokens (classic) → Generate new token (classic), a note
+   such as "zenbujapanese deployer", an expiry with a reminder to replace it, and `read:packages`
+   alone; then, if the organization uses SSO, Configure SSO → Authorize for serpcompany. One token
+   serves both services; write it to each service's folder:
    ```sh
    service=account-api
    sudo install -d -m 700 /etc/zenbujapanese-$service
@@ -195,25 +256,42 @@ A person with root sets these up once. Each service then has its own steps
    login stays on the server. Replace the file to change the token. If the token expires or its
    account loses access, the deployer's journal says it couldn't read the tag from the registry.
    Without the file it pulls without a login, which works once an organization owner makes the
-   package public (Package settings → Change visibility).
+   package public (Package settings → Change visibility). It worked when, after the next run,
+   `journalctl -t zenbujapanese-<service> --since -10min` shows no `couldn't read the tag` line.
 4. **nginx.** The nginx repository holds each environment's site for each service, with:
    - the `zenbujapanese.com` Cloudflare origin certificate (`nginx_certs/zenbujapanese_com_cert.pem`
      and `_key.pem`) and Cloudflare's client certificate, as the other sites have;
    - the network alias, resolved every 5 seconds;
    - failover to the other slot.
 
-   Adding a site is the one change nginx ever needs: pull it on the server, then check and reload
-   nginx, which keeps the container and every other site running:
+   Adding a site is the one change nginx ever needs: merge it in the nginx repository, `git pull`
+   in the repository's clone on the server (the folder that holds its `docker-compose.yml`, whose
+   `./nginx/` is the container's `/etc/nginx/conf.d/`), then check and reload nginx, which keeps
+   the container and every other site running:
    ```sh
    docker exec nginx nginx -t && docker exec nginx nginx -s reload
    ```
+   A new external network in `docker-compose.yml` must exist before the next `docker compose up`,
+   so create each slots' network (each service's Set up the server) before pulling the change
+   that names it.
    A staging host name has one level (`api-staging.zenbujapanese.com`), since the origin
    certificate covers `*.zenbujapanese.com` alone. Connecting nginx to a service's slots' network
    adds a second network: nginx keeps `web_network` and every other site, and doesn't restart. The
    nginx repository's `docker-compose.yml` lists each slots' network for nginx too (as an external
    network), so a recreated nginx joins them all.
-5. **Cloudflare**, in the `zenbujapanese.com` zone: a proxied DNS record for each service's two
-   host names, pointing at the server, and Authenticated Origin Pulls on (SSL/TLS → Origin Server),
-   since the sites accept only Cloudflare's client certificate. The zone's Bot Fight Mode stays on
-   and can't be skipped per host name. It challenges CI runners, so nothing in CI checks a deployed
-   service, and it may challenge the apps' requests (ADR 0012).
+5. **Cloudflare**, in the `zenbujapanese.com` zone:
+   - **DNS** (DNS → Records → Add record): for each host name, such as `api` and `api-staging`, a
+     record of the same type and content as `dictionary-api`'s, the server's address, with Proxy
+     status **Proxied**. A host name already there needs nothing.
+   - **Authenticated Origin Pulls** (SSL/TLS → Origin Server → Authenticated Origin Pulls): on,
+     since the sites accept only Cloudflare's client certificate. The SSL/TLS mode stays Full
+     (strict), which the origin certificate allows.
+
+   It worked when `https://api-staging.zenbujapanese.com/healthz` answers in a browser, and a
+   request straight to the server's address, skipping Cloudflare
+   (`curl -k --resolve api-staging.zenbujapanese.com:443:<server address> https://api-staging.zenbujapanese.com/healthz`),
+   gets nginx's `400 No required SSL certificate was sent`.
+
+   The zone's Bot Fight Mode stays on and can't be skipped per host name. It challenges CI
+   runners, so nothing in CI checks a deployed service, and it may challenge the apps' requests
+   (ADR 0012).

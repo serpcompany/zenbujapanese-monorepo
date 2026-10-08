@@ -1,6 +1,13 @@
 import { z } from '@hono/zod-openapi'
 import { profileLimits } from '../domain/profile'
 import { syncLimits } from '../domain/sync'
+import { errorObject } from './refusals'
+import {
+  entityIdsText,
+  rejectionMeanings,
+  syncEntitiesExtension,
+  syncedEntityNames
+} from './sync-entities'
 
 const { min, max } = profileLimits.usernameLength
 
@@ -65,16 +72,17 @@ export const DeleteAccountSchema = z
   })
   .openapi('DeleteAccount')
 
-export const ProfileConflictSchema = ErrorSchema.extend({ current: ProfileSchema }).openapi(
-  'ProfileConflict',
-  { description: 'The profile changed since `baseVersion`. `current` is the profile as it is now.' }
-)
+export const ProfileConflictSchema = z
+  .object({ error: errorObject(['version_conflict']), current: ProfileSchema })
+  .openapi('ProfileConflict', {
+    description: 'The profile changed since `baseVersion`. `current` is the profile as it is now.'
+  })
 
 const nameLike = /^[A-Za-z][A-Za-z0-9_-]{0,63}$/
 
 const syncBaseVersionSchema = z.int().min(0).openapi({
   description:
-    'The version of the entity the change was made to, or 0 for one the client has never seen. If the entity has changed since, the change waits on its rule: see `operation`.'
+    "The version of the entity the change was made to, or 0 for one the client has never seen. If the entity has changed since, what happens is the operation's rule, in `x-sync-entities`, which also says which operations read it."
 })
 
 const MutationSchema = z
@@ -86,29 +94,23 @@ const MutationSchema = z
         description:
           'A client-made ID, unique for each mutation, such as a UUID. Sending the same mutation again under its ID never applies it twice, and gets the same outcome: applied at the same version, a conflict with the entity as it is then, or a rejection with the same `error.code`. Reusing an ID for a different mutation is rejected with `mutation_id_reused`.'
       }),
-    entity: z.string().regex(nameLike).openapi({
-      description:
-        "`profile`, `knownWord`, `list`, or `listWord`. Any other is rejected with `unknown_entity`, and the rest of the request still applies. A change the app's scopes don't allow is rejected with `not_allowed`, and the app reads only the entities its scopes do."
-    }),
-    operation: z
+    entity: z
       .string()
       .regex(nameLike)
       .openapi({
-        description: [
-          "- `profile`: `update` (`fields` name, username, or both; `baseVersion`). It applies only at the profile's current version.",
-          '- `knownWord`: `mark` (`fields` headword and reading) and `clear`, each with `baseVersion`. Either applies only if the word is still at `baseVersion`, so a mark made before the learner cleared the word loses to the clear, and one made after it wins. Marking a known word, or clearing one not known, is applied and changes nothing.',
-          '- `list`: `create` (`fields` name and position), `update` (`fields` name, position, or both; `baseVersion`), and `delete`. An update applies only at the current version, so two renames conflict; one that already matches the list is applied. A delete wins over everything done to the list since, renames and words added elsewhere too, and takes its words with it. A list name is 1 to 500 characters once trimmed; control characters become spaces.',
-          '- `listWord`: `add` (`fields` headword and reading) and `remove` (`baseVersion`). An add always applies. A remove applies only if it saw the latest add, so an add the remover never saw wins.'
-        ].join('\n')
+        description: `${syncedEntityNames.map(name => `\`${name}\``).join(', ')}. Any other is rejected with \`unknown_entity\`, and the rest of the request still applies. A change the app's scopes don't allow is rejected with \`not_allowed\`, and the app reads only the entities its scopes do.`
       }),
+    operation: z.string().regex(nameLike).openapi({
+      description:
+        "One of the entity's operations, in `x-sync-entities`, with the scopes each needs, the fields it takes, and whether it reads `baseVersion`. Any other is rejected with `unknown_operation`."
+    }),
     entityId: z
       .string()
       .regex(/^[^\p{Cc}\p{Cf}\s]{1,200}$/u)
       .optional()
       .openapi({
         pattern: '^[^\\p{Cc}\\p{Cf}\\s]{1,200}$',
-        description:
-          "- `profile`: the account's ID, or left out.\n- `knownWord`: the item, a Language Reference ID (32 lowercase hex digits) or `kanji:` and one kanji, which is stored in Unicode NFC.\n- `list`: its UUID, in either case; answers name it in lowercase.\n- `listWord`: the list's UUID, a slash, and the item: `<list>/<item>`."
+        description: entityIdsText
       }),
     baseVersion: syncBaseVersionSchema.optional(),
     fields: z
@@ -116,10 +118,15 @@ const MutationSchema = z
       .optional()
       .openapi({
         description:
-          'What the operation sets, as `operation` says. Each value is a string, number, boolean, or null.'
+          "What the operation sets: the operation's fields, in `x-sync-entities`. Each value is a string, number, boolean, or null."
       })
   })
-  .openapi('Mutation')
+  .openapi('Mutation', {
+    description:
+      'One change made on the device. `x-sync-entities` holds each entity and its operations, and `x-sync-rejections` each code a rejected result can carry.',
+    'x-sync-entities': syncEntitiesExtension,
+    'x-sync-rejections': rejectionMeanings
+  })
 
 export const SyncRequestSchema = z
   .object({
@@ -209,7 +216,11 @@ const MutationResultSchema = z
       version: z.int(),
       current: ChangeSchema
     }),
-    z.object({ ...resultBase, status: z.literal('rejected'), error: ErrorSchema.shape.error })
+    z.object({
+      ...resultBase,
+      status: z.literal('rejected'),
+      error: errorObject(Object.keys(rejectionMeanings))
+    })
   ])
   .openapi('MutationResult', {
     description:

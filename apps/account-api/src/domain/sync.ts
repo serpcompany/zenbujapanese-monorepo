@@ -45,7 +45,7 @@ export type SyncAnswer =
   | { status: 'invalid_cursor' }
   | { status: 'no_account' }
 
-const entities: Record<EntityType, Entity> = {
+export const syncedEntities: Readonly<Record<EntityType, Entity>> = {
   profile: profiles,
   knownWord: knownWords,
   list: wordLists,
@@ -79,7 +79,7 @@ const notAllowed = rejection(
 )
 
 const entityOf = (type: string): Entity | null =>
-  Object.hasOwn(entities, type) ? entities[type as EntityType] : null
+  Object.hasOwn(syncedEntities, type) ? syncedEntities[type as EntityType] : null
 
 function canonical(value: unknown): unknown {
   if (Array.isArray(value)) return value.map(canonical)

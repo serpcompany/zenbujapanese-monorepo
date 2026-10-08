@@ -10,6 +10,7 @@ import type { MutationResult } from '../domain/sync'
 import type { AccountEnv } from './env'
 import { errorBody } from './errors'
 import { requestsPerMinute } from './rate-limit'
+import { json, meaningsText, refusal, refusalSchema } from './refusals'
 import {
   DeleteAccountSchema,
   ErrorSchema,
@@ -19,36 +20,30 @@ import {
   SyncAnswerSchema,
   SyncRequestSchema
 } from './schemas'
+import { syncFieldSchemas } from './sync-entities'
 
 export const bodyLimitKb = 64
 
-const security = [{ accessToken: [] }]
+const needs = (...scopes: Scope[]) => [{ accessToken: scopes }]
 
-const json = <T>(schema: T, description: string) => ({
-  content: { 'application/json': { schema } },
-  description
+const noScope = (scope: Scope) => ({
+  insufficient_scope: `This app's access to the account doesn't include \`${scope}\`.`
 })
 
-const noScope = json(
-  ErrorSchema,
-  "`insufficient_scope`: this app's access to the account doesn't include `profile`."
-)
-
-const unauthorized = json(
-  ErrorSchema,
-  '`unauthorized`: no access token, or one that is expired, forged, or for an account that no longer exists. Get a new one from GET /v1/auth/token.'
-)
-const tooLarge = json(ErrorSchema, `\`too_large\`: the body is over ${bodyLimitKb} KB.`)
-const malformed = json(ErrorSchema, '`bad_request`: the body is not JSON, or not this shape.')
+const unauthorized = refusal({
+  unauthorized:
+    'No access token, or one that is expired, forged, or for an account that no longer exists. Get a new one from GET /v1/auth/token.'
+})
+const tooLarge = refusal({ too_large: `The body is over ${bodyLimitKb} KB.` })
+const malformed = { bad_request: 'The body is not JSON, or not this shape.' }
 const tooMany = (perMinute: number) =>
-  json(
-    ErrorSchema,
-    `\`too_many_requests\`: this account sent more than ${perMinute} requests here in the current minute. Wait the seconds \`Retry-After\` says.`
-  )
-const failed = json(
-  ErrorSchema,
-  '`internal`: the service failed, and nothing says why. Try again later, backing off. In a sync, the mutations before the failure stand, and sending the request again answers them as before.'
-)
+  refusal({
+    too_many_requests: `This account sent more than ${perMinute} requests here from this app in the current minute, or the app more than its limit from all its accounts together. Wait the seconds \`Retry-After\` says.`
+  })
+const failed = refusal({
+  internal:
+    'The service failed, and nothing says why. Try again later, backing off. In a sync, the mutations before the failure stand, and sending the request again answers them as before.'
+})
 
 const unauthorizedBody = errorBody(
   'unauthorized',
@@ -107,6 +102,8 @@ const changeJson = (change: Change) =>
 const resultJson = (result: MutationResult) =>
   result.status === 'conflict' ? { ...result, current: changeJson(result.current) } : result
 
+const usernameTaken = { username_taken: 'Another account has that username.' }
+
 const health = createRoute({
   method: 'get',
   path: '/v1/health',
@@ -121,11 +118,11 @@ const readProfile = createRoute({
   method: 'get',
   path: '/v1/me',
   summary: "The signed-in account's profile",
-  security,
+  security: needs('profile'),
   responses: {
     200: json(ProfileSchema, 'The profile.'),
     401: unauthorized,
-    403: noScope,
+    403: refusal(noScope('profile')),
     429: tooMany(requestsPerMinute.profile),
     500: failed
   }
@@ -137,76 +134,28 @@ const changeProfile = createRoute({
   summary: "Change the signed-in account's name or username",
   description:
     'Optimistic concurrency: send the `version` last seen as `baseVersion`. The change goes through only if the profile is still at that version, and then its version goes up by one and it appears in /v1/sync. Sending the current values again changes nothing.',
-  security,
+  security: needs('profile'),
   request: {
     body: { content: { 'application/json': { schema: ProfilePatchSchema } }, required: true }
   },
   responses: {
     200: json(ProfileSchema, 'The profile, as changed.'),
-    400: json(ErrorSchema, '`bad_request`, or `invalid_fields`: a name or username out of bounds.'),
+    400: refusal({
+      ...malformed,
+      invalid_fields: 'A name or username out of bounds, or neither sent.'
+    }),
     401: unauthorized,
-    403: noScope,
+    403: refusal(noScope('profile')),
     409: json(
-      z.union([ProfileConflictSchema, ErrorSchema]),
-      '`version_conflict`, with `current`: the profile changed since `baseVersion`. `username_taken`: another account has that username.'
+      z.union([ProfileConflictSchema, refusalSchema(usernameTaken)]),
+      meaningsText({
+        version_conflict:
+          'The profile changed since `baseVersion`, and nothing changed. `current` is the profile as it is now.',
+        ...usernameTaken
+      })
     ),
     413: tooLarge,
     429: tooMany(requestsPerMinute.profile),
-    500: failed
-  }
-})
-
-const removeAccount = createRoute({
-  method: 'delete',
-  path: '/v1/me',
-  summary: 'Delete the signed-in account',
-  description:
-    "Deletes the account, its ways to sign in, its sessions, and everything it synced, at once; backups age out within 30 days, and the account's email is told. It needs `account:delete`, and a sign-in from the last 10 minutes, so the app asks the learner to sign in again first. An account that signs in with Apple sends a fresh Sign in with Apple authorization code from that sign-in, which the service uses to revoke the app's access with Apple. Each device keeps its own data and works signed out.",
-  security,
-  request: {
-    body: { content: { 'application/json': { schema: DeleteAccountSchema } }, required: true }
-  },
-  responses: {
-    200: json(z.object({ status: z.literal('deleted') }), 'Deleted.'),
-    400: json(
-      ErrorSchema,
-      "`bad_request`; `apple_authorization_needed`: the account signs in with Apple, so send a fresh authorization code; `apple_authorization_invalid`: Apple refused it, so sign in with Apple again for a new one; or `apple_account_mismatch`: it is another Apple ID's."
-    ),
-    401: unauthorized,
-    403: json(
-      ErrorSchema,
-      "`insufficient_scope`: the app hasn't `account:delete`; or `sign_in_again`: the sign-in is over 10 minutes old."
-    ),
-    413: tooLarge,
-    429: tooMany(requestsPerMinute.profile),
-    500: failed,
-    503: json(
-      ErrorSchema,
-      "`apple_unavailable`: revoking with Apple didn't finish, and nothing was deleted. The code may be used up: sign in with Apple again for a new one, and try again."
-    )
-  }
-})
-
-const sync = createRoute({
-  method: 'post',
-  path: '/v1/sync',
-  summary: 'Send the changes made on the device, and get the changes made elsewhere',
-  description:
-    'Applies `mutations` in order, then answers with the changes after `cursor`. Every mutation is idempotent by its ID, so a request can be sent again after a lost answer. Each answer holds at most `limit` journal entries; while `hasMore` is true, sync again with the new cursor. Results and changes are bounded by the request limits.',
-  security,
-  request: {
-    body: { content: { 'application/json': { schema: SyncRequestSchema } }, required: true }
-  },
-  responses: {
-    200: json(SyncAnswerSchema, 'The results and the changes.'),
-    400: malformed,
-    401: unauthorized,
-    410: json(
-      ErrorSchema,
-      "`invalid_cursor`: the cursor isn't one this service gave this account, or is past what it holds, as after a restore. Nothing was applied. Sync again with no cursor, and keep what comes back."
-    ),
-    413: tooLarge,
-    429: tooMany(requestsPerMinute.sync),
     500: failed
   }
 })
@@ -240,18 +189,73 @@ const deletionAnswers = {
   ]
 } as const
 
+const deletionRefusals = (status: number) =>
+  Object.fromEntries(
+    Object.values(deletionAnswers)
+      .filter(([answered]) => answered === status)
+      .map(([, code, message]) => [code, message])
+  )
+
+const removeAccount = createRoute({
+  method: 'delete',
+  path: '/v1/me',
+  summary: 'Delete the signed-in account',
+  description:
+    "Deletes the account, its ways to sign in, its sessions, and everything it synced, at once; backups age out within 30 days, and the account's email is told. It needs `account:delete`, and a sign-in from the last 10 minutes, so the app asks the learner to sign in again first. An account that signs in with Apple sends a fresh Sign in with Apple authorization code from that sign-in, which the service uses to revoke the app's access with Apple. Each device keeps its own data and works signed out.",
+  security: needs('account:delete'),
+  request: {
+    body: { content: { 'application/json': { schema: DeleteAccountSchema } }, required: true }
+  },
+  responses: {
+    200: json(z.object({ status: z.literal('deleted') }), 'Deleted.'),
+    400: refusal({ ...malformed, ...deletionRefusals(400) }),
+    401: unauthorized,
+    403: refusal({ ...noScope('account:delete'), ...deletionRefusals(403) }),
+    413: tooLarge,
+    429: tooMany(requestsPerMinute.profile),
+    500: failed,
+    503: refusal(deletionRefusals(503))
+  }
+})
+
+const sync = createRoute({
+  method: 'post',
+  path: '/v1/sync',
+  summary: 'Send the changes made on the device, and get the changes made elsewhere',
+  description:
+    'Applies `mutations` in order, then answers with the changes after `cursor`. Every mutation is idempotent by its ID, so a request can be sent again after a lost answer. Each answer holds at most `limit` journal entries; while `hasMore` is true, sync again with the new cursor. Results and changes are bounded by the request limits.',
+  security: needs(),
+  request: {
+    body: { content: { 'application/json': { schema: SyncRequestSchema } }, required: true }
+  },
+  responses: {
+    200: json(SyncAnswerSchema, 'The results and the changes.'),
+    400: refusal(malformed),
+    401: unauthorized,
+    410: refusal({
+      invalid_cursor:
+        "The cursor isn't one this service gave this account, or is past what it holds, as after a restore. Nothing was applied. Sync again with no cursor, and keep what comes back."
+    }),
+    413: tooLarge,
+    429: tooMany(requestsPerMinute.sync),
+    500: failed
+  }
+})
+
 export function accountRoutes(
   app: OpenAPIHono<AccountEnv>,
   accounts: Accounts,
   deleteAccount: DeleteAccount,
   databaseReady: () => Promise<boolean>
 ) {
+  app.openAPIRegistry.register('Error', ErrorSchema)
+  for (const [name, schema] of syncFieldSchemas) app.openAPIRegistry.register(name, schema)
   app.openAPIRegistry.registerComponent('securitySchemes', 'accessToken', {
     type: 'http',
     scheme: 'bearer',
     bearerFormat: 'JWT',
     description:
-      "A 15-minute access token from GET /v1/auth/token, which takes the session token a sign-in returns, never the session token itself. It names the account (`sub`), the app (`azp`), when the learner signed in (`auth_time`), and the app's scopes (`scope`): `account:delete` for DELETE /v1/me, `profile` for /v1/me, and for sync `lists:read`, `lists:write`, `known:read`, `known:write`, and `known:mark`, which marks a word Known but never clears one. The dictionary service takes `dictionary:read`."
+      "A 15-minute access token from GET /v1/auth/token, which takes the session token a sign-in returns, never the session token itself. It names the account (`sub`), the app (`azp`), when the learner signed in (`auth_time`), and the app's scopes (`scope`, space-separated). Each route names the scope it needs, and each sync operation its own, in `x-sync-entities`. The dictionary service's routes for apps take `dictionary:read`."
   })
 
   app.openapi(health, async context =>
