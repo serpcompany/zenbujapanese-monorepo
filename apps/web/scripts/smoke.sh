@@ -94,6 +94,13 @@ footer_has_privacy_policy() {
 }
 eventually 'the footer links the Privacy Policy' 'the footer is missing the Privacy Policy link' \
   footer_has_privacy_policy
+policies_cover_tomodachi() {
+  grep -q 'id="tomodachi"' <<<"$(body /legal/privacy/)" &&
+    grep -q 'href="/legal/privacy/#tomodachi"' <<<"$(body /support/)"
+}
+eventually 'the privacy policy and support page cover Tomodachi' \
+  'the privacy policy has no Tomodachi section, or the support page no link to it' \
+  policies_cover_tomodachi
 
 word=/dictionary/%E8%A6%8B%E3%82%8B-1259290/
 kanji_search=/dictionary/search/%E8%A6%8B/

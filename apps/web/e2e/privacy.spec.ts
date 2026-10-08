@@ -1,6 +1,6 @@
 import type { Page } from '@playwright/test'
 import { company } from '../src/lib/company'
-import { expect, test } from './test'
+import { expect, sidewaysOverflow, test } from './test'
 
 async function sectionText(page: Page, heading: string) {
   const title = page
@@ -161,5 +161,81 @@ test.describe('privacy policy', () => {
     await expect(
       page.getByRole('main').getByText(/^Effective [A-Z][a-z]+ \d{1,2}, \d{4}$/)
     ).toBeVisible()
+  })
+})
+
+const tomodachiSection = '/legal/privacy/#tomodachi'
+
+const description = (page: Page) => page.locator('meta[name="description"]')
+
+async function expectTomodachiBelowTheHeader(page: Page) {
+  const heading = sectionHeading(page, 'Tomodachi')
+  await expect(heading).toBeInViewport()
+  await expect
+    .poll(
+      () =>
+        heading.evaluate(
+          element =>
+            element.getBoundingClientRect().top -
+            (document.querySelector('header')?.getBoundingClientRect().bottom ?? 0)
+        ),
+      { message: 'The pinned header covers the Tomodachi heading' }
+    )
+    .toBeGreaterThanOrEqual(0)
+}
+
+test.describe('Tomodachi in the privacy policy and on the support page', () => {
+  test('/legal/privacy/#tomodachi opens on what the policy says about Tomodachi', async ({
+    page
+  }) => {
+    await page.goto(tomodachiSection)
+    await expectTomodachiBelowTheHeader(page)
+    await expectNamed(page, 'Tomodachi', [
+      'works without an account or sign-in',
+      'Tomo, its words, and your answers',
+      'syncs it through your own iCloud, in your private CloudKit database',
+      "We run no server for Tomodachi and can't see your progress",
+      'notifications it schedules on your device, not push notifications from us',
+      'no ads, analytics, or tracking',
+      "doesn't use the microphone or speech recognition",
+      'The Mac app works the same way',
+      'opens when you log in only if you turn that on',
+      'If you link your Zenbu account to it',
+      "our dictionary service, which doesn't keep what it sends"
+    ])
+    await expect(description(page)).toHaveAttribute('content', /Tomodachi/)
+  })
+
+  test('the support page sends Tomodachi help to the support address, and links its section', async ({
+    page
+  }) => {
+    await page.goto('/support/')
+    await expect(description(page)).toHaveAttribute('content', /Tomodachi/)
+    const main = page.getByRole('main')
+    await expect(main.getByText(/^For help with Tomodachi, email the same address\./)).toBeVisible()
+    await main.getByRole('link', { name: 'how Tomodachi handles your information' }).click()
+    await expect(page).toHaveURL(/\/legal\/privacy\/#tomodachi$/)
+    await expectTomodachiBelowTheHeader(page)
+  })
+
+  test.describe('on the narrowest phones', () => {
+    test.skip(({ isMobile }) => !isMobile, 'Only a phone is this narrow')
+
+    for (const width of [320, 390]) {
+      for (const path of ['/legal/privacy/', '/support/']) {
+        test(`${path} fits a ${width}px phone, in light and dark`, async ({ page }) => {
+          await page.setViewportSize({ width, height: 800 })
+          for (const colorScheme of ['light', 'dark'] as const) {
+            await page.emulateMedia({ colorScheme })
+            await page.goto(path)
+            await expect(page.getByRole('heading', { level: 1 })).toBeVisible()
+            expect(
+              await sidewaysOverflow(page),
+              `The page scrolls sideways in ${colorScheme}`
+            ).toBeLessThanOrEqual(0)
+          }
+        })
+      }
+    }
   })
 })

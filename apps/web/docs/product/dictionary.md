@@ -1095,11 +1095,13 @@ are 24 by 24. The same holds in the phone menu, with each of its groups open.
   and each of its groups, and a missing page, with axe's `target-size` rule for the tap
   targets.
 
-**App links.** The shipped iOS app and its App Store metadata link to `/privacy` and `/support`, so
-both keep working. `/privacy` redirects (308) to `/legal/privacy/` in one hop, with its query, as
+**App links.** The shipped iOS app, Tomodachi, and their App Store metadata link to `/privacy` and
+`/support`, so both keep working. `/privacy` redirects (308) to `/legal/privacy/` in one hop, with its query, as
 does `/privacy/`; `/support` redirects to `/support/`, as every page without its slash does.
 
-- Source: the shipped app's links; the one hop found by the browser tests.
+- Source: the shipped apps' links (Tomodachi's in
+  [tomodachi-app#105](https://github.com/serpcompany/tomodachi-app/issues/105)); the one hop found
+  by the browser tests.
 - Check: `src/lib/moved-pages.test.ts`; `apps/web/e2e/urls.spec.ts`, "/privacy redirects to the
   privacy policy in one hop" (on the production build) and "/support redirects to /support/ in one
   hop"; smoke `308 /privacy -> /legal/privacy/`.

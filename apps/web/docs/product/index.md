@@ -39,7 +39,8 @@ learner in to their Zenbu account and manage it; [Account pages](account.md) des
 are `noindex` and in no sitemap, and where they're closed, nothing links to them.
 
 The legal pages are under `/legal/`. [Privacy Policy](privacy.md) describes what
-`/legal/privacy/` says about the app, the website, and a Zenbu account, Tomodachi included.
+`/legal/privacy/` says about the app, Tomodachi, the website, and a Zenbu account, and what the
+support page says about Tomodachi.
 
 ## What defines the website's behavior
 

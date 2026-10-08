@@ -91,14 +91,16 @@ Its privacy manifest lists the same five types, the way the Zenbu app's does.
 
 Not collected:
 
-- its own progress, which syncs through the learner's private iCloud database, which only the
-  learner's devices read;
-- spoken answers, which it recognizes on the device;
+- its own progress (Tomo, its words, and the learner's answers), which syncs through the learner's
+  private iCloud database, which only the learner's devices read;
 - once the dictionary service answers them (#571), word-card and segmentation requests, which it
   answers without keeping.
 
-The first two are as Tomodachi works today, in its
+The first is as Tomodachi works today, in its
 [architecture doc](https://github.com/serpcompany/tomodachi-app/blob/main/docs/architecture.md).
+It uses no microphone or speech recognition: its answers are choices, and neither app's
+`Info.plist` asks for either
+([tomodachi-app#105](https://github.com/serpcompany/tomodachi-app/issues/105)).
 
 Tomodachi's owners also answer for what isn't the account's:
 

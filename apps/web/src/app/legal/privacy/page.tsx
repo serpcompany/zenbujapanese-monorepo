@@ -66,10 +66,10 @@ function Mail() {
 
 export default function PrivacyPage() {
   return (
-    <PageShell title="Privacy Policy" updated="October 8, 2026">
+    <PageShell title="Privacy Policy" updated="October 9, 2026">
       <p>
-        This policy covers the {site.name} iPhone app, zenbujapanese.com, and your Zenbu account,
-        including when you link it to Tomodachi.
+        This policy covers the {site.name} iPhone app, Tomodachi for iPhone and Mac,
+        zenbujapanese.com, and your Zenbu account.
       </p>
 
       <h2>The short version</h2>
@@ -145,12 +145,24 @@ export default function PrivacyPage() {
         sign you in and keep you signed in, and the website remembers your theme and that you're
         signed in.
       </p>
+
+      <h2 id="tomodachi">Tomodachi</h2>
       <p>
-        Tomodachi, our companion app, works without an account and keeps its own progress in your
-        iCloud, not on our servers. If you link your account to it, it can read your lists and known
-        words, mark words Known, and delete your account when you ask, and it looks words up in our
-        dictionary service, which doesn't keep what it sends. Before another app can use your
-        account, we'll update this policy.
+        Tomodachi, our companion app, works without an account or sign-in. It saves your progress
+        (Tomo, its words, and your answers) on your device and syncs it through your own iCloud, in
+        your private CloudKit database, under Apple's terms. We run no server for Tomodachi and
+        can't see your progress.
+      </p>
+      <p>
+        Its reminders are notifications it schedules on your device, not push notifications from us.
+        It has no ads, analytics, or tracking, and doesn't use the microphone or speech recognition.
+        The Mac app works the same way, and opens when you log in only if you turn that on.
+      </p>
+      <p>
+        If you link your Zenbu account to it, it can read your lists and known words, mark words
+        Known, and delete your account when you ask, and it looks words up in our dictionary
+        service, which doesn't keep what it sends. Before another app can use your account, we'll
+        update this policy.
       </p>
 
       <h2>Who else handles your information</h2>
