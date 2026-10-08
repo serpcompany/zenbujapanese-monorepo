@@ -47,9 +47,9 @@ would send are at `http://localhost:8789/dev/mail` (Email, below).
 | `APPLE_APP_BUNDLE_IDENTIFIER` | off | Sign in with Apple in the app: the bundle ID its tokens name. The app needs nothing else. |
 | `APPLE_SERVICES_IDS`, `APPLE_TEAM_ID`, `APPLE_KEY_ID`, `APPLE_PRIVATE_KEY` | off | Sign in with Apple on the web: the Services IDs, and the team, key ID, and `.p8` key (with its newlines written as `\n`) the service makes Apple's client secret from each time it starts. The secret lasts 180 days, so a service that runs that long without a deploy is restarted. |
 | `GOOGLE_CLIENT_IDS`, `GOOGLE_CLIENT_SECRET` | off | Sign in with Google: the OAuth client IDs, comma-separated (the web client's and the iOS app's), and the web client's secret. |
-| `ACCOUNT_API_EMAIL` | off | Who sends the codes: `cloudflare`, `usesend`, or, on a local run only, `dev-mailbox`. Off, asking for a code answers `503 email_unavailable`. |
+| `ACCOUNT_API_EMAIL` | off | Who sends the codes: `usesend`, as staging and production do; `cloudflare`, which works but isn't used; or, on a local run only, `dev-mailbox`. Off, asking for a code answers `503 email_unavailable`. |
+| `USESEND_API_KEY` | | For `usesend`: a useSend API key that sends from `zenbujapanese.com`. |
 | `CLOUDFLARE_ACCOUNT_ID`, `CLOUDFLARE_EMAIL_TOKEN` | | For `cloudflare`: the account, and an API token that may only send email. |
-| `USESEND_API_KEY` | | For `usesend`. |
 | `EMAIL_FROM` | `Zenbu Japanese <support@zenbujapanese.com>` | The sender, which is also where replies go. Any address but `support@zenbujapanese.com` is refused. |
 | `EMAIL_ALLOWED_RECIPIENTS` | required to send | Who may be emailed: on staging, the testers, comma-separated (addresses, or domains as `@example.com`); in production, `everyone`. With `cloudflare` or `usesend` and nothing here, the service doesn't start, so staging never emails a stranger. |
 | `PORT` | `8789` | The port it listens on. |
@@ -114,12 +114,22 @@ service only from the origins in `ACCOUNT_API_TRUSTED_ORIGINS`: CORS names each 
 and lets the page read `Retry-After` and Better Auth's `X-Retry-After`.
 
 **The contract** for every route above is
-[`apps/account-api/openapi.json`](../../apps/account-api/openapi.json), OpenAPI 3.1, and a test
-writes the file and fails when it differs: after changing a route, run `pnpm test -u` and commit
-the new file with its diff.
+[`apps/account-api/openapi.json`](../../apps/account-api/openapi.json), OpenAPI 3.1, and its
+readable form is the [API reference](../api/account-api.md), which
+`packages/node-service/src/api-reference.ts` writes from it. A test writes each file and fails when
+it differs: after changing a route, run `pnpm test -u` and commit both files with their diff.
 
 - `/v1/health`, `/v1/me`, and `/v1/sync` are declared with `@hono/zod-openapi`, so the schemas
   that check each request are the ones the contract shows.
+- Each route names the scope it needs (its `security`), and each error answer the codes it can
+  carry (an `enum`), with what each means, from `src/http/refusals.ts`. A test calls each route
+  with a token that lacks its scope, and with one that has only that scope.
+- Sync's entities are `x-sync-entities` on the `Mutation` schema (`src/http/sync-entities.ts`):
+  each entity's ID, read scope, and data, and each operation's scopes (from the domain), fields,
+  whether it reads `baseVersion`, and an example. `x-sync-rejections` holds every code a rejected
+  mutation can carry. A test holds the entities and operations to the domain's, sends every
+  example to the service, which applies each, and sends each operation that reads `baseVersion`
+  without it, which is refused.
 - Sign-in's routes are Better Auth's, declared in `src/http/sign-in-contract.ts`. A test holds the
   list to `src/auth/routes.ts`, and calls each route to check its answer against what's
   declared.
@@ -186,11 +196,14 @@ The codes are sent as SERP's
 [transactional email standard](https://github.com/serpcompany/serp/blob/main/docs/engineering/standards/transactional-email.md)
 says (ADR 0012), by `src/email/mailer.ts`, the one function that sends:
 
-- **Through Cloudflare Email Service's REST API**, from `EMAIL_FROM`, with no other `Reply-To`.
-  `ACCOUNT_API_EMAIL=usesend` sends through useSend instead, with nothing else changed.
+- **Through useSend's hosted API** (`https://app.usesend.com/api/v1/emails`), as serplists.com
+  sends, from `EMAIL_FROM`, with no other `Reply-To`, in staging and production. The owners chose
+  it on 2026-10-07: "the plan is updated to use usesend like serplists does"
+  ([ADR 0012](../adr/0012-run-accounts-and-sync-in-their-own-service-on-the-api-servers.md),
+  Amendment). `ACCOUNT_API_EMAIL=cloudflare` sends through Cloudflare Email Service's REST API
+  instead, with nothing else changed; it still works, but isn't used.
 - **From the support address only.** `EMAIL_FROM` is refused unless it's
-  `support@zenbujapanese.com`, which the REST API's token can't enforce the way a Worker binding
-  does.
+  `support@zenbujapanese.com`, which an API key can't enforce the way a Worker binding does.
 - **Staging sends only to its test recipients.** `EMAIL_ALLOWED_RECIPIENTS` names them, and the
   service won't start with a sender and no list; production sets `everyone`.
 - **A local run never sends.** With `dev-mailbox`, a message is kept in memory and shown at
@@ -323,7 +336,8 @@ in a subfolder is held to them too ([`code.md`](code.md), Checks). Each says whe
 belongs; tests may import anything.
 
 - **`src/http`** is the HTTP layer, in Hono, with `/v1/me` and `/v1/sync` declared for the
-  contract (`accounts.ts`, `schemas.ts`). It answers from what `src/server.ts` hands it (the
+  contract (`accounts.ts`, `schemas.ts`), their refusals (`refusals.ts`), and sync's entities as
+  the contract shows them (`sync-entities.ts`). It answers from what `src/server.ts` hands it (the
   database's state, the sign-in handler, the access-token check, the account rules, and the dev
   mailbox), and imports none of them but the domain.
 - **`src/auth`** sets up Better Auth on the database and the mailer: its routes under
@@ -430,8 +444,10 @@ way and call the routes with their access tokens. They show:
 The domain's own tests (`src/domain/`) cover the name and username rules and the cursor;
 `src/db/database.test.ts` covers the journal's trigger and backfill, the sync tables' rules, and
 fencing two restored copies of one backup; and
-`src/http/openapi.test.ts` keeps `openapi.json` in step with the routes, and
-`src/http/sign-in-contract.test.ts` holds each sign-in answer to it. In CI, and when
+`src/http/openapi.test.ts` keeps `openapi.json` and the API reference in step with the routes and
+checks each route's scope, `src/http/sync-entities.test.ts` sends each documented sync example, and
+`src/http/sign-in-contract.test.ts` holds each sign-in answer, and each sign-in route's scope, to
+the contract. In CI, and when
 `ACCOUNT_API_TEST_DATABASE_URL` names a real Postgres database, `src/db/postgres.test.ts` also
 sends eight changes to one account at once through the `pg` pool, and one mutation six times at
 once: one change goes through, and the mutation applies once.
@@ -539,20 +555,31 @@ An environment that isn't set up is skipped.
 
 ## Set up the server
 
-First set up what the services share: cosign, the deployer, and registry access
-([`api-servers.md`](api-servers.md), Set up the server). Then, as root:
+First set up what the services share: cosign, the deployer, and the registry token, with
+`service=account-api` ([`api-servers.md`](api-servers.md), Set up the server). Then, as root, in
+this order; each step says how to check it worked.
 
-1. **Postgres 18**, alone on an internal network, so only the service's slots reach it:
+1. **Postgres 18**, alone on an internal network, so only the service's slots reach it. Its data
+   lives in a host folder, `/home/daftadmin/data/zenbu-account-api`, mounted at
+   `/var/lib/postgresql`: the Postgres 18 image keeps its data (`PGDATA`) in
+   `/var/lib/postgresql/18/docker` and runs as uid 999, so the folder is made owned by 999. The
+   deployer and `backups.sh` find the database by its container name alone, so the folder can
+   move without changing them.
    ```sh
    sudo install -d -m 700 /etc/zenbujapanese-account-db
    printf 'POSTGRES_PASSWORD=%s\n' "$(openssl rand -hex 24)" |
      sudo tee /etc/zenbujapanese-account-db/postgres.env >/dev/null
    sudo chmod 600 /etc/zenbujapanese-account-db/postgres.env
+   sudo install -d -o 999 -g 999 -m 700 /home/daftadmin/data/zenbu-account-api
    docker network create --internal zenbujapanese-account-db
    docker run -d --name zenbujapanese-account-db --restart unless-stopped \
-     --network zenbujapanese-account-db --volume zenbujapanese-account-db:/var/lib/postgresql \
+     --network zenbujapanese-account-db \
+     --volume /home/daftadmin/data/zenbu-account-api:/var/lib/postgresql \
      --env-file /etc/zenbujapanese-account-db/postgres.env --memory 1g --shm-size 256m postgres:18
+   until docker exec zenbujapanese-account-db pg_isready --username postgres; do sleep 2; done
    ```
+   It worked when `pg_isready` says `accepting connections` and
+   `sudo ls /home/daftadmin/data/zenbu-account-api/18/docker` lists `PG_VERSION`.
 2. **A role and a database for each environment**, each owning only its own, and each
    environment's file, `/etc/zenbujapanese-account-api/<environment>.env`, which names them. The
    SQL goes in on stdin, so the password never shows in a process listing, and nothing is created
@@ -576,76 +603,172 @@ First set up what the services share: cosign, the deployer, and registry access
    done
    unset password
    ```
+   It worked when `docker exec zenbujapanese-account-db psql --username postgres --command '\l'`
+   lists `account_staging` and `account_production`, each owned by its role. The deployer now
+   deploys an environment once its image's tag names one, so finish step 3 before the first
+   deploy (step 7): without `ACCOUNT_API_URL` and `ACCOUNT_API_SECRET` the service doesn't start.
 3. **Sign-in's settings**, in each environment's file (the settings table, above). An environment
    without its file isn't deployed, and the deployer deploys an environment again when its file
    changes, so a setting added later takes effect within 5 minutes.
+
+   Each file is Docker's env file: one `NAME=value` a line, with no quotes (Docker keeps them as
+   part of the value), no `export`, no spaces around `=`, and no line breaks in a value. Edit it
+   with `sudoedit /etc/zenbujapanese-account-api/staging.env`. When every step below is done,
+   staging's file holds:
+
+   ```sh
+   DATABASE_URL=<as step 2 wrote it>
+   ACCOUNT_API_URL=https://api-staging.zenbujapanese.com
+   ACCOUNT_API_SECRET=<openssl rand -hex 32>
+   ACCOUNT_API_TRUSTED_ORIGINS=https://staging.zenbujapanese.com
+   ACCOUNT_API_COOKIE_PREFIX=zenbu-staging
+   APPLE_APP_BUNDLE_IDENTIFIER=com.zenbujapanese.app
+   APPLE_SERVICES_IDS=<the website's Services ID>
+   APPLE_TEAM_ID=W3GXL2NQQP
+   APPLE_KEY_ID=<the Sign in with Apple key's ID>
+   APPLE_PRIVATE_KEY=<the .p8 file on one line, each line break written as \n>
+   GOOGLE_CLIENT_IDS=<web client ID>,<iOS app's client ID>,<Tomodachi's client ID>
+   GOOGLE_CLIENT_SECRET=<the web client's secret>
+   ACCOUNT_API_EMAIL=usesend
+   USESEND_API_KEY=<the useSend API key>
+   EMAIL_ALLOWED_RECIPIENTS=<the testers' addresses, or @domain, comma-separated>
+   ```
+
+   Production's file is the same but for `account_production` and its password,
+   `ACCOUNT_API_URL=https://api.zenbujapanese.com`, its own `ACCOUNT_API_SECRET`,
+   `ACCOUNT_API_TRUSTED_ORIGINS=https://zenbujapanese.com`, no `ACCOUNT_API_COOKIE_PREFIX`, and
+   `EMAIL_ALLOWED_RECIPIENTS=everyone`. Leave `ACCOUNT_API_COOKIE_DOMAIN`, `EMAIL_FROM`, `PORT`, and
+   `ACCOUNT_API_RELEASE` unset. Add the key's line without pasting the key into the terminal:
+   ```sh
+   printf 'APPLE_PRIVATE_KEY=%s\n' "$(awk '{printf "%s\\n", $0}' AuthKey_<key id>.p8)" |
+     sudo tee -a /etc/zenbujapanese-account-api/staging.env >/dev/null
+   ```
+   Apple and Google can come later; the service runs without them, and the apps hide what it can't
+   do. After each edit, `journalctl -t zenbujapanese-account-api --since -10min` shows the deploy
+   it made, or why the service didn't start.
+
    - **The service:** `ACCOUNT_API_URL` (`https://api-staging.zenbujapanese.com` or
      `https://api.zenbujapanese.com`), a new `ACCOUNT_API_SECRET` for each environment
      (`openssl rand -hex 32`), and, for the website's account pages (#468),
      `ACCOUNT_API_TRUSTED_ORIGINS`: `https://staging.zenbujapanese.com` on staging, and
-     `https://zenbujapanese.com` in production. Leave `ACCOUNT_API_COOKIE_DOMAIN` unset; staging
-     may still set `ACCOUNT_API_COOKIE_PREFIX=zenbu-staging`.
-   - **Apple** (Apple Developer, on the team that owns the app's ID, `W3GXL2NQQP` while the app
-     ships from the backup account, #616):
-     - Sign in with Apple on the iOS app's App ID (`com.zenbujapanese.app`) and on Tomodachi's
-       (`com.zenbujapanese.tomodachi`). Set `APPLE_APP_BUNDLE_IDENTIFIER` to the iOS app's ID; the
-       service also takes every app's bundle ID from `src/domain/clients.ts`.
-     - A Sign in with Apple key, enabled for those App IDs, as `APPLE_TEAM_ID`, `APPLE_KEY_ID`, and
-       `APPLE_PRIVATE_KEY`: deleting an account revokes its Apple sign-in with it (Deleting an
-       account), so the service won't start with Apple and without the key, but at `localhost`.
+     `https://zenbujapanese.com` in production. Leave `ACCOUNT_API_COOKIE_DOMAIN` unset, so the
+     session cookie stays on the API host; staging may still set
+     `ACCOUNT_API_COOKIE_PREFIX=zenbu-staging`.
+   - **Apple** (Apple Developer, Certificates, Identifiers & Profiles, on the team that owns the
+     app's ID, `W3GXL2NQQP` while the app ships from the backup account, #616):
+     - **The App IDs.** Identifiers → `com.zenbujapanese.app` → Capabilities → Sign in with Apple →
+       Edit → **Enable as a primary App ID** → Save. Then the same for Tomodachi's,
+       `com.zenbujapanese.tomodachi`, choosing **Group with an existing primary App ID** and
+       `com.zenbujapanese.app`, so a learner who allowed one app isn't asked again by the other.
+       Set `APPLE_APP_BUNDLE_IDENTIFIER` to the iOS app's ID; the service also takes every app's
+       bundle ID from `src/domain/clients.ts`. Regenerate each app's provisioning profiles after
+       turning the capability on ([`ios.md`](ios.md)).
+     - **The key.** Keys → + → a name such as "Zenbu Sign in with Apple" → Sign in with Apple →
+       Configure → primary App ID `com.zenbujapanese.app` → Save → Continue → Register →
+       Download. The `.p8` downloads once only: keep it in the owners' password manager. Its Key
+       ID is on the key's page, and the team ID at the top right. Set `APPLE_TEAM_ID`,
+       `APPLE_KEY_ID`, and `APPLE_PRIVATE_KEY`: deleting an account revokes its Apple sign-in with
+       it (Deleting an account), so the service won't start with Apple and without the key, but at
+       `localhost`. The service makes Apple's client secret from the key each time it starts, and
+       the secret lasts 180 days, so restart a service that runs that long without a deploy.
+     - **Private email relay.** A learner may hide their email from Apple, which then gives an
+       `@privaterelay.appleid.com` address that takes mail only from senders the team registered.
+       Services → Sign in with Apple for Email Communication → Configure → + → add the domain
+       `zenbujapanese.com`, the subdomain useSend's SPF record is on (such as
+       `mail.zenbujapanese.com`, if its records name one), and the address
+       `support@zenbujapanese.com` → Register. Apple checks each domain's SPF, so do this after
+       useSend has verified the domain (Email, below). Without it,
+       a learner who hides their email gets no codes and no notices.
      - Apple's user ID for a learner is the same in every app of one team, so the iOS app and
        Tomodachi must stay in one team for an Apple sign-in to reach one account. Moving an app to
        another team (#616's transfer to the business account) changes its learners' Apple user
        IDs: before it, plan Apple's user migration for Sign in with Apple, and move both apps.
-     - For the website: a Services ID, grouped with the iOS app's App ID, with Sign in with Apple
-       on. Its domains are the website's, `zenbujapanese.com` and `staging.zenbujapanese.com`, and
-       its return URLs the account page each signs in from, `https://zenbujapanese.com/account/`
-       and `https://staging.zenbujapanese.com/account/`, since Apple answers the website's popup
-       only on the return URL's origin; add `<ACCOUNT_API_URL>/v1/auth/callback/apple` too, for a
-       redirect sign-in. Apple takes no `localhost` return URL. Then a Sign in with Apple key. Set
-       `APPLE_SERVICES_IDS`, `APPLE_TEAM_ID`, `APPLE_KEY_ID`, and `APPLE_PRIVATE_KEY`, the `.p8`
-       file's text with its newlines written as `\n`, and the website's
-       `ACCOUNT_APPLE_SERVICES_ID` ([`web.md`](web.md), Account pages).
-   - **Google** (Google Cloud, OAuth clients):
-     - a web client, whose redirect URIs are `https://api-staging.zenbujapanese.com/v1/auth/callback/google`
-       and `https://api.zenbujapanese.com/v1/auth/callback/google` (`<ACCOUNT_API_URL>/v1/auth/callback/google`);
-     - an iOS client, for the app's bundle ID.
+     - **For the website: a Services ID.** Identifiers → + → Services IDs → Continue, with a
+       description such as "Zenbu Japanese website" and an identifier such as
+       `com.zenbujapanese.web` → Register. Open it, turn on Sign in with Apple → Configure, with
+       `com.zenbujapanese.app` as its primary App ID. Its domains are the website's and the API
+       host's: `zenbujapanese.com`, `staging.zenbujapanese.com`, `api.zenbujapanese.com`, and
+       `api-staging.zenbujapanese.com`. Its return URLs are the account page each site signs in
+       from, `https://zenbujapanese.com/account/` and
+       `https://staging.zenbujapanese.com/account/`, since Apple answers the website's popup only
+       on the return URL's origin, and `<ACCOUNT_API_URL>/v1/auth/callback/apple` for each
+       environment, for a redirect sign-in. Apple takes no `localhost` return URL. Save, then
+       Continue and Save on the Services ID. The same key serves it. Set `APPLE_SERVICES_IDS` to
+       its identifier, `APPLE_TEAM_ID`, `APPLE_KEY_ID`, and `APPLE_PRIVATE_KEY`, the `.p8` file's
+       text with its newlines written as `\n`, and the website's `ACCOUNT_APPLE_SERVICES_ID`
+       ([`web.md`](web.md), Account pages).
+   - **Google** (Google Cloud console, the project that holds Zenbu's OAuth clients):
+     1. **The consent screen** (Google Auth Platform → Branding): the app name "Zenbu Japanese", the
+        support email `support@zenbujapanese.com`, the home page `https://zenbujapanese.com`, the
+        privacy policy `https://zenbujapanese.com/legal/privacy/`, and `zenbujapanese.com` as an
+        authorized domain. Data Access: only `openid`, `email`, and `profile`, which need no
+        review. Audience: External, then **Publish app**, since a project left in Testing signs in
+        only its listed test users.
+     2. **The clients** (Clients → Create client):
+        - a web client, whose redirect URIs are
+          `https://api-staging.zenbujapanese.com/v1/auth/callback/google` and
+          `https://api.zenbujapanese.com/v1/auth/callback/google`
+          (`<ACCOUNT_API_URL>/v1/auth/callback/google`);
+        - an iOS client, for the app's bundle ID (`com.zenbujapanese.app`), and one for
+          Tomodachi's.
 
-     Then set `GOOGLE_CLIENT_IDS` (the web client's, then the iOS client's) and
-     `GOOGLE_CLIENT_SECRET` (the web client's), and the website's `ACCOUNT_GOOGLE_SIGN_IN=on`
-     ([`web.md`](web.md), Account pages).
-   - **Email**, as SERP's transactional email standard says:
-     1. `support@zenbujapanese.com` receives mail before anything sends from it: Email Routing
-        forwards it to `support+zenbujapanese@serp.co`.
-     2. Onboard `zenbujapanese.com` in Cloudflare (Compute → Email Service → Email Sending), which
-        adds its SPF, DKIM, DMARC, and bounce records and needs the Workers Paid plan.
-     3. Make an API token that may only send email.
-     4. Set `ACCOUNT_API_EMAIL=cloudflare`, `CLOUDFLARE_ACCOUNT_ID`, `CLOUDFLARE_EMAIL_TOKEN`,
-        and `EMAIL_ALLOWED_RECIPIENTS`: the testers on staging, `everyone` in production.
+     Then set `GOOGLE_CLIENT_IDS` (the web client's, then the iOS clients') and
+     `GOOGLE_CLIENT_SECRET` (the web client's), the iOS client's ID in the app's
+     `ZENBU_GOOGLE_IOS_CLIENT_ID` build setting ([`ios.md`](ios.md), Account and sync), and the
+     website's `ACCOUNT_GOOGLE_SIGN_IN=on` ([`web.md`](web.md), Account pages).
+   - **Email**, as SERP's transactional email standard says, through useSend, as serplists.com
+     sends (Email, above):
+     1. **The sending domain.** In useSend (`https://app.usesend.com`, the team serplists.com
+        sends from), Domains → Add domain → `zenbujapanese.com`. Add each DNS record it lists in
+        Cloudflare (`zenbujapanese.com` → DNS → Records), as **DNS only**, not proxied, then Verify
+        in useSend, and wait until the domain shows as verified.
+     2. **Replies are read.** `support@zenbujapanese.com` receives mail before anything sends from
+        it: Email Routing (`zenbujapanese.com` → Email → Email Routing → Routing rules) forwards it
+        to `support+zenbujapanese@serp.co`, a verified destination ([`web.md`](web.md), Canonical
+        hosts, says it does). Check the rule is there and on.
+     3. **An API key.** In useSend, API Keys → Create, with sending access only, and limited to
+        `zenbujapanese.com` if useSend offers it. It shows the key once. One key may serve both
+        environments, or one each.
+     4. **The settings.** `ACCOUNT_API_EMAIL=usesend`, `USESEND_API_KEY`, and
+        `EMAIL_ALLOWED_RECIPIENTS`: the testers on staging, `everyone` in production.
 
-     On Workers Paid, Email Sending includes 3,000 emails a month for the whole account, then
-     costs $0.35 per 1,000; sends to the account's verified destination addresses are free.
+     `ACCOUNT_API_EMAIL=cloudflare`, with `CLOUDFLARE_ACCOUNT_ID` and `CLOUDFLARE_EMAIL_TOKEN`,
+     still works, through Cloudflare Email Service, but isn't the plan.
 
-     The first code staging sends shows whether Email Service takes the sender's name with its
-     address (`Zenbu Japanese <support@zenbujapanese.com>`); if it doesn't, set `EMAIL_FROM` to the
+     The first code staging sends shows whether useSend takes the sender's name with its address
+     (`Zenbu Japanese <support@zenbujapanese.com>`); if it doesn't, set `EMAIL_FROM` to the
      address alone.
 4. **nginx.** The API host's sites, `nginx/api-staging.zenbujapanese.com.conf` and
    `nginx/api.zenbujapanese.com.conf` in the nginx repository, send the account service's paths to
-   the environment's alias on port 8789 ([`api-servers.md`](api-servers.md), The API host).
+   the environment's alias on port 8789 ([`api-servers.md`](api-servers.md), The API host, which
+   gives the site).
 
    **The slots' network.** Create it, not internal, since the service calls Apple, Google, and
-   Email Service, and connect the running nginx to it:
+   useSend, and connect the running nginx to it, before pulling the sites, since the nginx
+   repository's `docker-compose.yml` names it:
    ```sh
    docker network create zenbujapanese-account-api
    docker network connect zenbujapanese-account-api nginx
    ```
+   It worked when `docker network inspect zenbujapanese-account-api --format '{{.Internal}}'` says
+   `false` and `docker inspect nginx --format '{{json .NetworkSettings.Networks}}'` names it.
 5. **Cloudflare**: proxied DNS records for `api.zenbujapanese.com` and
-   `api-staging.zenbujapanese.com` ([`api-servers.md`](api-servers.md), Set up the server, step
-   5).
+   `api-staging.zenbujapanese.com`, and Authenticated Origin Pulls ([`api-servers.md`](api-servers.md),
+   Set up the server, step 5).
 6. **Backups.**
-   - The AWS CLI v2, from AWS's installer.
-   - An R2 bucket, `zenbujapanese-account-backups`, private, with a lifecycle rule that deletes
-     objects after 30 days, and an R2 API token with Object Read & Write on that bucket alone.
+   - The AWS CLI v2, from AWS's installer:
+     ```sh
+     curl -fsSLo awscliv2.zip https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip
+     unzip -q awscliv2.zip && sudo ./aws/install && rm -rf aws awscliv2.zip
+     aws --version
+     ```
+   - An R2 bucket (Cloudflare dashboard → R2 Object Storage → Create bucket):
+     `zenbujapanese-account-backups`, Standard storage, no public access or custom domain. In its
+     Settings → Object lifecycle rules, add a rule that deletes objects 30 days after they're
+     uploaded.
+   - An R2 API token (R2 Object Storage → Manage API tokens → Create Account API token): Object
+     Read & Write, applied to that bucket alone. It shows an Access Key ID and a Secret Access
+     Key once; the S3 endpoint is `https://<account id>.r2.cloudflarestorage.com`.
    - The script and its settings:
    ```sh
    sudo install -m 755 apps/account-api/deploy/backups.sh /usr/local/bin/zenbujapanese-account-backups
@@ -659,21 +782,27 @@ First set up what the services share: cosign, the deployer, and registry access
      sudo tee /etc/cron.d/zenbujapanese-account-backups >/dev/null
    sudo chmod 644 /etc/cron.d/zenbujapanese-account-backups
    ```
+   Reinstall the script the same way after it changes.
 7. **The first deploy.** Run the workflow by hand (Actions → Account API deploy → Run workflow); the
    deployer starts each image within 5 minutes of its tag moving. Then, before anything relies on
    it:
-   - `GET /v1/health` answers on `https://api-staging.zenbujapanese.com` and
+   - `docker ps --filter label=zenbujapanese.account-api.slot` shows one slot for each
+     environment, and `journalctl -t zenbujapanese-account-api` shows each deployed.
+   - `GET /v1/health` answers `{"status":"ok"}` on `https://api-staging.zenbujapanese.com` and
      `https://api.zenbujapanese.com`, in a browser, and a dictionary route answers on the same
-     host.
+     host: `/healthz` names the dictionary build.
+   - `GET /v1/auth/jwks` answers one key, `"alg":"EdDSA"`.
    - A request from the iOS app, on the Simulator and on a device, reaches staging. If Bot Fight
      Mode challenges it, the owners turn Bot Fight Mode off (ADR 0012), and this doc says so.
    - Run the backup by hand (`sudo zenbujapanese-account-backups`), then restore it into a new
-     database (Back up and restore, above).
+     database (Back up and restore, above). `journalctl -t zenbujapanese-account-backups` shows
+     both, and the bucket holds `staging/<time>.dump` and `production/<time>.dump`.
    - On staging, each way signs in a new learner and an existing one: a code, Apple and Google in
      the app, and Apple and Google on the website's account pages, where an Apple account is also
      deleted, which shows Apple takes the popup's code with its return URL. The same email through a
      second way is refused until it's linked. An access token from `GET /v1/auth/token` checks out
-     against `GET /v1/auth/jwks`.
+     against `GET /v1/auth/jwks`. A learner who hid their email from Apple gets the notice of a way
+     in added at their relay address.
    - Once production's service answers on `https://api.zenbujapanese.com`, open the website's
      account pages there ([`web.md`](web.md), Account pages, Opening production's account
      pages).

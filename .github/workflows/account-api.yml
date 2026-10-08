@@ -12,6 +12,7 @@ on:
       - apps/web/package.json
       - apps/web/playwright.config.ts
       - apps/web/wrangler.jsonc
+      - docs/api/account-api.md
       - package.json
       - pnpm-lock.yaml
       - pnpm-workspace.yaml
