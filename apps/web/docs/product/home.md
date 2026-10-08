@@ -74,7 +74,8 @@ homepage's are in `src/lib/app-areas.ts`.
 - Check: Showcase spec (`e2e/showcase.spec.ts`), "each tab shows its own area", "the tabs work by
   keyboard", "the arrows and dots page through the Dictionary screens, and the next one peeks in",
   "nothing advances on its own", "every area fits the window, with all five tabs in view",
-  "choosing an area doesn’t move the page below the showcase", "tapping
+  "choosing an area doesn’t move the page below the showcase", "at 412, 700, and 900 pixels each
+  Dictionary screen in view shows whole", "tapping
   a kanji in 弱肉強食 moves the highlight to its part of the reading", and, without JavaScript,
   "every area's text and screens are in the server HTML"; `src/components/home/home-areas.test.tsx`
   (the Player's video card only with videos, and nothing from YouTube before a click);

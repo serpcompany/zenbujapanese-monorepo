@@ -126,11 +126,8 @@ test.describe('area showcase', () => {
   test('choosing an area doesn’t move the page below the showcase', async ({ page }) => {
     await page.goto('/')
     const next = page.getByRole('main').getByRole('region', { name: /^Free on the web\./ })
-    const nextTop = async () =>
-      page.evaluate(
-        element => element.getBoundingClientRect().top + window.scrollY,
-        await next.elementHandle()
-      )
+    const nextTop = () =>
+      next.evaluate(element => element.getBoundingClientRect().top + window.scrollY)
     const tops = []
     for (const area of appAreas) {
       await areaTab(page, area.name).click()
@@ -139,6 +136,24 @@ test.describe('area showcase', () => {
     }
     expect(new Set(tops).size, `The next section's top on each tab: ${tops.join(', ')}`).toBe(1)
   })
+
+  for (const width of [412, 700, 900]) {
+    test(`at ${width} pixels each Dictionary screen in view shows whole`, async ({ page }) => {
+      await page.setViewportSize({ width, height: 1000 })
+      await page.goto('/')
+      const stage = showcase(page).getByRole('region', { name: dictionary.name })
+      await expect(stage.getByRole('button', { name: 'Next screens' })).toBeEnabled()
+      const cropped = await stage.evaluate(element => {
+        const edge = element.getBoundingClientRect()
+        return [...element.querySelectorAll('img')]
+          .map(image => ({ alt: image.alt, box: image.getBoundingClientRect() }))
+          .filter(({ box }) => box.left >= edge.left && box.right <= edge.right)
+          .filter(({ box }) => box.bottom > edge.bottom)
+          .map(({ alt }) => alt)
+      })
+      expect(cropped).toEqual([])
+    })
+  }
 
   test('tapping a kanji in 弱肉強食 moves the highlight to its part of the reading', async ({
     page
