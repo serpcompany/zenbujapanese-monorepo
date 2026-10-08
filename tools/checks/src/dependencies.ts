@@ -52,7 +52,7 @@ const coreByName = {
   name: 'core-by-package-name',
   severity: 'error',
   comment:
-    'Apps reach the shared core through its package name, @zenbu/dictionary-core, never a relative path into packages/ (ARCHITECTURE.md, Layers).',
+    'Apps reach a shared package through its name, such as @zenbu/dictionary-core or @zenbu/node-service, never a relative path into packages/ (ARCHITECTURE.md, Layers).',
   from: {},
   to: { path: '^\\.\\./\\.\\./packages/', dependencyTypes: ['local'] }
 } satisfies IForbiddenRuleType
@@ -73,6 +73,11 @@ const web: Part = {
       'web-never-imports-the-service',
       'dictionary-api',
       'The website reaches the dictionary service only over HTTP, through src/lib/dictionary/api.ts, and shares row shapes through the core (ARCHITECTURE.md, Layers).'
+    ),
+    neverImports(
+      'web-never-imports-the-account-service',
+      'account-api',
+      'The website reaches the account service only over HTTP, through its /v1 API (ARCHITECTURE.md, Layers).'
     ),
     {
       name: 'worker-runs-before-nextjs',
@@ -129,7 +134,103 @@ const service: Part = {
       'service-never-imports-the-website',
       'web',
       'The dictionary service knows nothing of the website: they share row shapes through the core, and the website calls the service over HTTP (ARCHITECTURE.md, Layers).'
+    ),
+    neverImports(
+      'service-never-imports-the-account-service',
+      'account-api',
+      'The dictionary service checks an account only through the account service, over HTTP and its JWKS (ADR 0013), never by importing it (ARCHITECTURE.md, Layers).'
     )
+  ]
+}
+
+const accountTestCode = '(\\.test\\.ts$|^src/test/)'
+
+const account: Part = {
+  folder: 'apps/account-api',
+  sources: ['src', 'scripts'],
+  testCode: accountTestCode,
+  rules: [
+    reachableFrom(['^src/server\\.ts$'], accountTestCode),
+    runtimeImportsNoDevDependency('^src/', accountTestCode),
+    coreByName,
+    neverImports(
+      'account-service-never-imports-another-app',
+      '(web|dictionary-api)',
+      'The account service knows nothing of the website or the dictionary service: they call it over HTTP (ARCHITECTURE.md, Layers).'
+    ),
+    {
+      name: 'account-http-never-reaches-the-database',
+      severity: 'error',
+      comment:
+        'src/http is the HTTP layer: it answers from what src/server.ts hands it, through the domain, and never touches the database (docs/agents/account-api.md, Code layout). Put database code in src/db.',
+      from: { path: '^src/http/', pathNot: accountTestCode },
+      to: {
+        path: ['^src/(db|auth|email)/', '(^|/)node_modules/(pg|drizzle-orm|better-auth)/']
+      }
+    },
+    {
+      name: 'account-domain-builds-on-no-layer',
+      severity: 'error',
+      comment:
+        'src/domain holds the account and sync rules, which the HTTP and database layers build on, so it imports neither, nor Hono, nor a database driver (docs/agents/account-api.md, Code layout). Take what a rule needs as a parameter.',
+      from: { path: '^src/domain/', pathNot: accountTestCode },
+      to: {
+        path: [
+          '^src/(http|db)/',
+          '^src/server\\.ts$',
+          '(^|/)node_modules/(pg|drizzle-orm|hono|@hono)/'
+        ]
+      }
+    },
+    {
+      name: 'account-email-sends-and-nothing-more',
+      severity: 'error',
+      comment:
+        'src/email sends a message and nothing more: sign-in uses it, so it imports neither sign-in, the database, nor HTTP (docs/agents/account-api.md, Code layout).',
+      from: { path: '^src/email/', pathNot: accountTestCode },
+      to: {
+        path: [
+          '^src/(http|db|auth|domain)/',
+          '^src/server\\.ts$',
+          '(^|/)node_modules/(pg|drizzle-orm|better-auth|hono|@hono)/'
+        ]
+      }
+    },
+    {
+      name: 'account-sign-in-knows-no-http',
+      severity: 'error',
+      comment:
+        'src/auth sets up sign-in on the database and the mailer; src/server.ts hands its handler to the HTTP layer, so it knows nothing of HTTP (docs/agents/account-api.md, Code layout).',
+      from: { path: '^src/auth/', pathNot: accountTestCode },
+      to: { path: ['^src/http/', '^src/server\\.ts$', '(^|/)node_modules/(hono|@hono)/'] }
+    },
+    {
+      name: 'account-database-knows-no-http',
+      severity: 'error',
+      comment:
+        'src/db is the database layer: the HTTP layer builds on it through src/server.ts, so it knows nothing of HTTP (docs/agents/account-api.md, Code layout).',
+      from: { path: '^src/db/', pathNot: accountTestCode },
+      to: { path: ['^src/http/', '^src/server\\.ts$', '(^|/)node_modules/(hono|@hono)/'] }
+    }
+  ]
+}
+
+const nodeServiceTestCode = '(\\.test\\.ts$|^src/test/)'
+
+const nodeService: Part = {
+  folder: 'packages/node-service',
+  sources: ['src'],
+  testCode: nodeServiceTestCode,
+  rules: [
+    runtimeImportsNoDevDependency('^src/', nodeServiceTestCode),
+    {
+      name: 'node-service-imports-no-app',
+      severity: 'error',
+      comment:
+        'What the Node services share imports none of them and no repository tool (ARCHITECTURE.md, Layers). Pass what it needs in as a parameter.',
+      from: {},
+      to: { path: '^\\.\\./\\.\\./(apps|tools)/' }
+    }
   ]
 }
 
@@ -171,7 +272,7 @@ const checks: Part = {
   rules: [reachableFrom(['^src/(cli|hook|report|fix-branch)\\.ts$'], checksTestCode)]
 }
 
-export const parts: readonly Part[] = [web, service, core, checks]
+export const parts: readonly Part[] = [web, service, account, core, nodeService, checks]
 
 function sharedRules(part: Part): IForbiddenRuleType[] {
   return [

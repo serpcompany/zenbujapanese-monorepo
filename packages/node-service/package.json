@@ -1,0 +1,32 @@
+{
+  "name": "@zenbu/node-service",
+  "version": "0.0.0",
+  "private": true,
+  "description": "What the Node services on the API servers share: JSON-line logs, request logs, and a server that stops cleanly.",
+  "type": "module",
+  "exports": {
+    "./*": "./src/*.ts"
+  },
+  "scripts": {
+    "format": "biome format --write",
+    "lint": "biome check",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "check": "pnpm lint && pnpm typecheck && pnpm test"
+  },
+  "dependencies": {
+    "@hono/node-server": "^2.1.3",
+    "hono": "^4.13.11"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "2.4.2",
+    "@types/node": "^22.20.4",
+    "tsx": "^4.23.15",
+    "typescript": "^5.9.3",
+    "vitest": "^5.0.2"
+  },
+  "packageManager": "pnpm@10.17.0",
+  "engines": {
+    "node": ">=22.12.0"
+  }
+}

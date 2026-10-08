@@ -192,4 +192,10 @@ struct ConversationHarness {
       await Task.yield()
     }
   }
+
+  func startSpeaking(count: Int) async {
+    time.advance(1.3)
+    session.tick()
+    for _ in 0..<100 where playback.spoken.count < count { await Task.yield() }
+  }
 }

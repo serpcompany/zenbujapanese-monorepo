@@ -156,7 +156,7 @@ included, is `{ "error": { "code": "...", "message": "..." } }`, as the account 
 - **On the server.** A person makes the account service's JWKS reachable from the dictionary
   service's slots, which reach only nginx: an nginx location on the slots' network that proxies to
   the account service's `/v1/auth/jwks` and answers `200` itself. Then they add `ACCOUNT_API_URL`
-  and `ACCOUNT_JWKS_URL` to each environment's settings (Set up the server, step 3). Until then the
+  and `ACCOUNT_JWKS_URL` to each environment's settings (Set up the server, step 1). Until then the
   app routes answer 503.
 
 ## How it runs
@@ -201,7 +201,7 @@ the app's SQL.
 says where the code belongs; tests may import anything.
 
 - The readers (`src/artifact.ts`, `src/kuromoji.ts`, `src/sudachi.ts`, and `src/account-tokens.ts`,
-  which reads the account service's keys) and the shared modules (`src/config.ts`, `src/log.ts`,
+  which reads the account service's keys) and the shared modules (`src/config.ts`,
   `src/rate-limit.ts`, `src/service.ts`, the `DictionaryService` interface) are the bottom layer.
   They import neither of the others, nor Hono.
 - The worker layer (`src/load.ts`, `src/worker.ts`, `src/pool.ts`) runs the dictionary in worker
@@ -211,10 +211,11 @@ says where the code belongs; tests may import anything.
   no SQLite, no file. `src/server.ts` hands it the account-token check and the per-account limit
   too, so it imports only their types.
 
-`src/server.ts` wires the three together and is imported by nothing. The service logs JSON lines
-through `log()` in `src/log.ts` (a level, a message naming the event, and fields), which the
-server's journal and Docker keep; nothing else calls `console`, which Biome's
-`noRestrictedGlobals` enforces outside tests. The scripts in `apps/dictionary-api/scripts/` print
+`src/server.ts` wires the three together and is imported by nothing. What the Node services share
+comes from `packages/node-service` (`@zenbu/node-service`): `log()`, which writes JSON lines (a
+level, a message naming the event, and fields) that the server's journal and Docker keep; the
+request log, which names a route by its pattern; and the server that stops cleanly on SIGTERM.
+Nothing else calls `console`, which Biome's `noRestrictedGlobals` enforces outside tests. The scripts in `apps/dictionary-api/scripts/` print
 progress to a person, so they may.
 
 ## Check it
@@ -298,7 +299,8 @@ copies, so a file the image needs goes in both.
 ### How a deploy works
 
 `.github/workflows/dictionary-api-deploy.yml` runs on a push to `main` that changes what the image
-holds (the service, the core, the lockfile, or the app's files it copies), and by hand:
+holds (the service, the core, what the services share, the lockfile, or the app's files it
+copies), and by hand:
 
 1. **`image`** builds the image, starts it, and checks that `/healthz` names this commit's release
    and that a search, a word, a kanji, and a search's examples answer with a token (and `/v1/info`
@@ -310,75 +312,26 @@ holds (the service, the core, the lockfile, or the app's files it copies), and b
    `DEPLOY_PRODUCTION` set to `false` stops at staging, as for the website; a run by hand still
    deploys production.
 
-GitHub holds no access to the server: all the workflow can do is publish an image and move a tag.
-The workflow doesn't wait to see the server deploy it: Bot Fight Mode on the zone challenges CI
-runners, both when they ask the service and when the website's Worker asks it for them, whatever
-headers they send, so nothing in CI can see which build the service runs. The server's journal
-says what it deployed (below), and so do the service's `/healthz` and the website's
-`/dictionary/service.json` in a browser. Nothing confirms staging before production either, so
-with `DEPLOY_PRODUCTION` set to `false`, a person checks staging, then runs production by hand.
+The server's deployer verifies the signature and swaps the image into the environment's slots
+([`api-servers.md`](api-servers.md), The deployer). GitHub holds no access to the server: all the
+workflow can do is publish an image and move a tag. The workflow doesn't wait to see the server
+deploy it: Bot Fight Mode on the zone challenges CI runners, both when they ask the service and
+when the website's Worker asks it for them, whatever headers they send, so nothing in CI can see
+which build the service runs. The server's journal says what it deployed, and so do the service's
+`/healthz` and the website's `/dictionary/service.json` in a browser. Nothing confirms staging
+before production either, so with `DEPLOY_PRODUCTION` set to `false`, a person checks staging, then
+runs production by hand.
 
-**Only main's images run.** Anyone who can push to the package can push an image and move a tag,
-including a workflow run from any branch, so the tag alone decides nothing. The `staging` job signs
-the digest keylessly: cosign gets a certificate for the run's GitHub identity, which names this
-workflow and the branch it ran from, and records the signature in Sigstore's public transparency
-log. The `staging` environment only accepts `main`, and the deployer runs an image only when
-`cosign verify` finds a signature from
-`.github/workflows/dictionary-api-deploy.yml@refs/heads/main`, so an image a branch pushed never
-runs. A rollback signs its image again only after checking that main signed it before.
-
-On the server, cron runs `deploy/deployer.sh` as root every 5 minutes. It asks the registry which
-image each tag names (`docker pull`, which fetches only the tag's manifest unless it names a new
-image), and when one changed, deploys it. It takes no input and reads no environment variable, so
-changing what it does takes root on the server; a change to the script in this repository reaches
-the server only when someone installs it there. Each environment runs in one of two slots on the
-`zenbujapanese-dictionary-api` Docker network, both answering to the environment's network alias
-(`zenbujapanese-dictionary-api-staging` or `-production`). That network is internal and holds only
-the slots and the server's nginx, which is on `web_network` too: a slot reaches nginx and nothing
-else, neither the server's other containers nor the internet, since the service parses untrusted
-input with native code (Sudachi, SQLite). nginx, which fronts the server's other sites too
-(serpcompany's nginx repository), resolves the alias every 5 seconds and sends a request one slot
-can't answer, because it's stopped, to the other. The deployer deploys nothing while the network is
-missing, isn't internal, or doesn't have nginx on it, since a slot there couldn't serve. A deploy
-starts the new image in the free slot without the alias, so nginx sends it nothing while it
-starts; waits until its `/healthz` names the image's release (each check may take 3 seconds, and
-the whole wait 3 minutes); gives it the alias, by reconnecting it to the network, since Docker
-can't add an alias to a connected container; waits 10 seconds more, past nginx's 5-second resolver
-cache, so nginx has seen it; then stops the old one. That's about 20 seconds, with no request
-dropped and nginx never reloaded. A new image that doesn't come up is removed, the old one keeps
-serving, and that image isn't tried again until the tag moves (below). Every container is capped
-(4 GB of memory, 4 CPUs, 512 processes, 30 MB of logs) and runs as user 1000 (the node image's
-`node`), whatever the image says, with no capabilities and a read-only file system; an image that
-declares a volume is refused, and a removed container's volumes go with it. So no image can starve
-the server's other services or change the server. The deployer touches only the containers it
-started, by the ID Docker gave it, and this repository's images, and never nginx.
-
-A few details keep a deploy safe. Runs take a lock in `/run`, where only root can create one, since
-a deploy can outlast 5 minutes; a run that finds it taken logs that and skips. Each run keeps the
-registry login and the IDs of the containers it starts in a folder only root can open, removed when
-the run ends. A deploy first removes the environment's stopped slot containers, freeing their
-slots, and treats any container with a slot's name as taking it. It runs the new container by its
-image's digest, the one cosign verified, and gives it a restart policy only once it answers, so a
-crash shows at once rather than as a restart loop. The old slot gets SIGTERM and 30 seconds to
-finish its requests. A run that finds the tag's image in a slot a deploy was cut short on finishes
-the deploy: once it answers as the tag's release, it gets the alias and the restart policy, and the
-other slot stops; one that doesn't answer is removed, unless it has the alias, since it's serving.
-After a deploy, the deployer removes this repository's images that no slot uses, except the ones
-the deploy replaced, which a rollback deploys again, and the ones the tags name. It removes an
-image by its references in this repository, so an image another repository also names stays, and
-it lists every image rather than filtering them by reference, since `--filter reference=` leaves
-out an image pulled by digest alone.
+The `staging` job signs keylessly: cosign gets a certificate for the run's GitHub identity, which
+names this workflow and the branch it ran from. The `staging` environment only accepts `main`, so
+an image a branch pushed never runs. A rollback signs its image again only after checking that
+main signed it before.
 
 - **Roll back** by running the workflow by hand with `tag` set to the version to go back to, such
   as `sha-0123456789ab`: it moves the tags to that image without building.
-- **See what runs** on the server: `docker ps --filter label=zenbujapanese.dictionary-api.slot`,
-  and what the deployer did: `journalctl -t zenbujapanese-dictionary-api`. It logs every run that
-  skips something: an environment that isn't set up, an image main didn't sign, an image that
-  failed before, and a run that found an earlier one still deploying.
-- **Retry a failed image.** An image that didn't come up is recorded, with when and why, in
-  `/var/lib/zenbujapanese-dictionary-api/failed-<environment>`, and skipped until the tag moves.
-  When it failed for a reason that wasn't the image's (the server restarting Docker mid-deploy),
-  delete that file to try it again on the next run.
+- **See what runs and retry a failed image** as [`api-servers.md`](api-servers.md) says, with
+  `zenbujapanese.dictionary-api.slot`, `journalctl -t zenbujapanese-dictionary-api`, and
+  `/var/lib/zenbujapanese-dictionary-api/`.
 - **Production's first switch.** Run this workflow by hand, which moves `:production`. Within
   about 5 minutes, the deployer starts production: wait until
   `https://dictionary-api.zenbujapanese.com/healthz` answers 200 with the new build, in a browser.
@@ -399,31 +352,11 @@ out an image pulled by digest alone.
 
 ### Set up the server
 
-Staging and production share one server: the Linux x86-64 server whose nginx container, on the
-`web_network` Docker network, fronts serpcompany's other sites through Cloudflare. The slots run on
-a network of their own that nginx joins as well (step 4). The two
-services need about 1.5 GB of memory between them, and 5 GB of disk for images. A person with root sets it up once:
+First set up what the services share: cosign, the deployer, and registry access
+([`api-servers.md`](api-servers.md), Set up the server). The dictionary service's two environments
+need about 1.5 GB of memory between them, and 5 GB of disk for images. Then, as root:
 
-1. **cosign**, which the deployer verifies each image's signature with: the version the workflow
-   signs with, checked against its release's SHA-256 (for an arm64 server, `cosign-linux-arm64`
-   and `c5d324e091826b0d7a78eb16fef316450b4eb9aaec045611c08ba06f5e73220a`). The server needs
-   outbound HTTPS to Sigstore (`tuf-repo-cdn.sigstore.dev`) for its trust root:
-   ```sh
-   curl -fsSLo cosign https://github.com/sigstore/cosign/releases/download/v3.1.3/cosign-linux-amd64
-   echo '4629c757b7618056f8ddd7e2625ae9fdd94c0372a65049520bc7d9df9efc7f71  cosign' | sha256sum --check
-   sudo install -m 755 cosign /usr/local/bin/cosign && rm cosign
-   ```
-   Without it, the deployer deploys nothing, and says so.
-2. **The deployer**, from `deploy/deployer.sh`, run every 5 minutes and stopped after 25. It needs
-   `logger`, `flock`, and `timeout`, which Ubuntu and Debian have:
-   ```sh
-   sudo install -m 755 deployer.sh /usr/local/bin/zenbujapanese-dictionary-api-deployer
-   echo '*/5 * * * * root timeout 25m /usr/local/bin/zenbujapanese-dictionary-api-deployer >/dev/null 2>&1' |
-     sudo tee /etc/cron.d/zenbujapanese-dictionary-api >/dev/null
-   sudo chmod 644 /etc/cron.d/zenbujapanese-dictionary-api
-   ```
-   Reinstall it this way after changing it; nothing else updates it.
-3. **Each environment's token**, which its service reads when it starts. An environment without
+1. **Each environment's token**, which its service reads when it starts. An environment without
    its file isn't deployed. Staging runs one worker thread, production two:
    ```sh
    sudo install -d -m 700 /etc/zenbujapanese-dictionary-api
@@ -443,62 +376,26 @@ services need about 1.5 GB of memory between them, and 5 GB of disk for images. 
    printf 'ACCOUNT_API_URL=%s\nACCOUNT_JWKS_URL=%s\n' "$account_url" "$jwks_url" |
      sudo tee -a /etc/zenbujapanese-dictionary-api/$environment.env >/dev/null
    ```
-4. **nginx.** The nginx repository holds each environment's site,
-   `nginx/dictionary-api-staging.zenbujapanese.com.conf` and
-   `nginx/dictionary-api.zenbujapanese.com.conf`: the `zenbujapanese.com` Cloudflare origin
-   certificate (`nginx_certs/zenbujapanese_com_cert.pem` and `_key.pem`) and Cloudflare's client
-   certificate, as the other sites have, the network alias resolved every 5 seconds, and failover
-   to the other slot. Adding them is the one change nginx ever needs: pull them on the server, then
-   check and reload it, which keeps the container and every other site running:
-   ```sh
-   docker exec nginx nginx -t && docker exec nginx nginx -s reload
-   ```
-   A staging host name has one level (`dictionary-api-staging.zenbujapanese.com`), since the
-   origin certificate covers `*.zenbujapanese.com` alone.
+2. **nginx.** The nginx repository holds `nginx/dictionary-api-staging.zenbujapanese.com.conf` and
+   `nginx/dictionary-api.zenbujapanese.com.conf` ([`api-servers.md`](api-servers.md), Set up the
+   server, step 4).
 
-   **The slots' network.** Create it, internal, and connect the running nginx to it. Connecting
-   adds a second network: nginx keeps `web_network` and every other site, and doesn't restart.
+   **The slots' network.** Create it, internal, and connect the running nginx to it:
    ```sh
    docker network create --internal zenbujapanese-dictionary-api
    docker network connect zenbujapanese-dictionary-api nginx
    ```
-   The nginx repository's `docker-compose.yml` lists it for nginx too (as an external network), so a
-   recreated nginx joins both. Docker's DNS still resolves the other sites' containers on
-   `web_network`, and the slots' aliases on the slots' network.
-5. **Cloudflare**, in the `zenbujapanese.com` zone: proxied DNS records for
-   `dictionary-api.zenbujapanese.com` and `dictionary-api-staging.zenbujapanese.com`, pointing at
-   the server, and Authenticated Origin Pulls on (SSL/TLS → Origin Server), since the sites accept
-   only Cloudflare's client certificate. The zone's Bot Fight Mode, which stays on and can't be
-   skipped per host name, challenges CI runners, and the website's Worker too when a runner sets
-   it off, so CI doesn't check the service (How a deploy works, above).
-6. **The GitHub environments**, which hold only each service's URL:
+   Docker's DNS still resolves the other sites' containers on `web_network`, and the slots'
+   aliases on the slots' network.
+3. **Cloudflare**: proxied DNS records for `dictionary-api.zenbujapanese.com` and
+   `dictionary-api-staging.zenbujapanese.com` ([`api-servers.md`](api-servers.md), Set up the
+   server, step 5). Bot Fight Mode challenges the website's Worker too when a runner sets it off,
+   so CI doesn't check the service (How a deploy works, above).
+4. **The GitHub environments**, which hold only each service's URL:
    ```sh
    gh variable set DICTIONARY_API_URL --env staging --body https://dictionary-api-staging.zenbujapanese.com
    gh variable set DICTIONARY_API_URL --env production --body https://dictionary-api.zenbujapanese.com
    ```
-7. **The first deploy.** Run the workflow by hand (Actions → Dictionary API deploy → Run
+5. **The first deploy.** Run the workflow by hand (Actions → Dictionary API deploy → Run
    workflow); the deployer starts each image within 5 minutes of its tag moving. Then run
    `Web deploy`. For production, see its first switch, above.
-
-The workflow's first push creates the image's package in the serpcompany organization
-(github.com/orgs/serpcompany/packages), private, as new packages are, and the image's
-`org.opencontainers.image.source` label links it to this repository. The deployer pulls it with a
-GitHub token (classic) with only the `read:packages` scope, authorized for the organization's SSO
-if it has one, which it reads from a root-only file on every run:
-
-```sh
-read -rsp 'Token: ' token && echo
-printf 'GHCR_USERNAME=%s\nGHCR_TOKEN=%s\n' <github user> "$token" |
-  sudo tee /etc/zenbujapanese-dictionary-api/registry.env >/dev/null
-sudo chmod 600 /etc/zenbujapanese-dictionary-api/registry.env
-unset token
-```
-
-`read -s` takes the token without echoing it, so it stays out of the terminal and the shell's
-history.
-
-It logs in for that run only, from a folder only root can open that's removed when the run ends,
-so no login stays on the server. Replace the file to change the token. If the token expires or
-its account loses access, the deployer's journal says it couldn't read the tag from the registry.
-Without the file it pulls without a login, which works once an organization owner makes the
-package public (Package settings → Change visibility).

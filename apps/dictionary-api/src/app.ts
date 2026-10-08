@@ -8,10 +8,11 @@ import { categoryOrders, isCategoryOrder } from '@zenbu/dictionary-core/browse/c
 import { isKanaScript, type KanaScript } from '@zenbu/dictionary-core/browse/kana'
 import { maximumBrowsePage } from '@zenbu/dictionary-core/browse/lists'
 import { examplesPerPage } from '@zenbu/dictionary-core/detail/examples'
+import { logRequests } from '@zenbu/node-service/http'
+import { errorFields, log } from '@zenbu/node-service/log'
 import { type Context, Hono } from 'hono'
 import { routePath } from 'hono/route'
 import { type AppAccess, AppError, appErrorAnswer, appRoutes, isAppPath } from './app-routes'
-import { errorFields, log } from './log'
 import type { DictionaryService } from './service'
 
 const maximumSitemapWordsPerRequest = 10_000
@@ -50,16 +51,7 @@ export interface AppOptions {
 export function createApp({ service, token, ready, access = null }: AppOptions) {
   const app = new Hono()
 
-  app.use(async (context, next) => {
-    const started = performance.now()
-    await next()
-    log('info', 'request', {
-      method: context.req.method,
-      route: routePath(context),
-      status: context.res.status,
-      ms: Math.round(performance.now() - started)
-    })
-  })
+  app.use(logRequests())
 
   app.get('/healthz', async context => {
     if (!ready()) return context.json({ status: 'starting' }, 503)

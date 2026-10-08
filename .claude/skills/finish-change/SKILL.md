@@ -21,8 +21,8 @@ or add an exception to pass it. A rule that really can't be met goes to the pers
   adds and a regression test for a bug it fixes (the `browser-tests` skill). Then use the
   `verify-web` skill, and keep what it showed (the pages, snapshots, and screenshots) for the pull
   request.
-- A dictionary service change: run it as `docs/agents/dictionary-api.md` says, and call the routes
-  the change touches.
+- A dictionary or account service change: run it as `docs/agents/dictionary-api.md` or
+  `docs/agents/account-api.md` says, and call the routes the change touches.
 - A Swift change: this machine may not build it (`docs/agents/ios.md`). Say so in the pull request
   rather than claiming it works.
 

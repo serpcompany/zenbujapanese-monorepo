@@ -8,7 +8,8 @@ Every Zenbu client, including iOS, the website, and the browser extension, uses 
 language data. A build pipeline converts the sources into versioned, platform-neutral SQLite
 artifacts. Each artifact has a manifest giving its schema version and SHA-256. Clients download
 an artifact and query it locally. No client sends dictionary lookups to a server, so clients
-keep working offline. The website publishes pages from its own copy and is not a lookup service
+keep working offline. ([ADR 0013](0013-let-signed-in-apps-fetch-word-cards-from-the-dictionary-service.md) lets a signed-in app without the data fetch word cards and
+segmentation from the dictionary service; every app that bundles the data still queries it locally.) The website publishes pages from its own copy and is not a lookup service
 ([ADR 0007](0007-publish-the-dictionary-at-permanent-urls-from-the-websites-copy.md)). Data versions are independent of app versions: each client declares the
 schema versions it can read.
 
@@ -58,4 +59,4 @@ The discussion and reviewer answers are in
 [issue 377](https://github.com/serpcompany/zenbujapanese-monorepo/issues/377). This decision
 refines [ADR 0001](0001-keep-language-data-and-tools-replaceable.md) and
 [ADR 0005](0005-keep-a-lightweight-product-family-monorepo.md). It does not choose the sync
-backend, the artifact's exact schema, or the tokenizer.
+backend ([ADR 0012](0012-run-accounts-and-sync-in-their-own-service-on-the-api-servers.md) does), the artifact's exact schema, or the tokenizer.

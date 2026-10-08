@@ -8,7 +8,8 @@ The website's dictionary pages get their data from a Node service, `apps/diction
 runs the shared TypeScript core (`packages/dictionary-core/`) against the language-data artifact
 the app bundles. The service supplies every capability the core has: Sudachi for sentence search,
 the app's Kuromoji for text analysis at request time, and the full example-sentence indexes. The
-website stays on Cloudflare Workers and calls the service; for now, only the website may. The
+website stays on Cloudflare Workers and calls the service; for now, only the website may.
+([ADR 0013](0013-let-signed-in-apps-fetch-word-cards-from-the-dictionary-service.md) lets signed-in apps call its word-card and segmentation routes too.) The
 service ships as one Docker image holding a pinned artifact version, so it runs on a VM, bare
 metal, or Cloudflare Containers; the host is chosen separately.
 

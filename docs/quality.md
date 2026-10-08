@@ -97,6 +97,21 @@ A change is checked by hand in a browser with the `verify-web` skill
   free of any runtime all run before merge. Main gap: the Swift it ports still exists, and nothing
   checks before merge that the Swift still agrees (#481).
 
+## Account service
+
+| Area | Grade | Graded | Code | Tests | CI before merge | Docs | By hand |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| Account service | A | 2026-10-06 | `apps/account-api/src/`, `apps/account-api/migrations/` | `apps/account-api/src/config.test.ts`; the routes in `apps/account-api/src/http/app.test.ts`; sign-in in `apps/account-api/src/auth/` (codes, providers, linking, tokens, and the open routes), the whole service on PGlite with stand-ins for Apple's and Google's keys; `/v1/me` and `/v1/sync` in `apps/account-api/src/http/` (access, apps and their scopes, profiles, known words and lists, conflicts, the journal, cursors, retries, bounds, rate limits, and the logs), and the OpenAPI contract against the routes and every sign-in answer; the profile and cursor rules in `apps/account-api/src/domain/`; the mailer in `apps/account-api/src/email/`; and the migrations, the schema's rules, the journal's trigger, and the `pg` driver in `apps/account-api/src/db/`, on PGlite or, in CI, Postgres 18, where changes made at once to one account are raced | `Account API`, against Postgres 18; `Account API deploy` builds the image and checks that it migrates an empty database, answers, and publishes a signing key | [`account-api.md`](agents/account-api.md), ADR 0012 | `pnpm dev` with the dev mailbox, and its routes |
+| What the Node services share | A | 2026-10-06 | `packages/node-service/src/` | `packages/node-service/src/log.test.ts`, and `http.test.ts`: the request log, and a real server stopped with SIGTERM | `Account API`; `Dictionary API` runs the dictionary service's tests through it | [`dictionary-api.md`](agents/dictionary-api.md), Code layout | Through both services |
+
+- **Account service, A.** Sign-in, its tokens and refusals, profiles and sync, the mailer, the
+  routes and their contract, configuration, migrations, and database driver are tested on every
+  pull request that changes them, with the driver and the races against a real Postgres, and the
+  image is checked before it ships. Main gaps: Apple's and Google's real keys and Email Service are
+  first used on staging; it hasn't run on the server (#565's, #566's, and #567's server steps); and
+  no app syncs with it yet (#573).
+- **What the Node services share, A.** Small, and tested on its own and through both services.
+
 ## Language data
 
 | Area | Grade | Graded | Code | Tests | CI before merge | Docs | By hand |
@@ -117,15 +132,16 @@ A change is checked by hand in a browser with the `verify-web` skill
 
 | Area | Grade | Graded | Code | Tests | CI before merge | Docs | By hand |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| Website and service deploys | C | 2026-10-06 | `.github/workflows/web-deploy.yml`, `.github/workflows/dictionary-api-deploy.yml`, `apps/web/scripts/`, `apps/dictionary-api/deploy/`, `apps/dictionary-api/Dockerfile` | `apps/web/scripts/smoke.sh` after each deploy, where staging's run gates production, though from CI it skips its dictionary checks; the image check in `Dictionary API deploy`; `apps/web/scripts/wait-for-dictionary-service.sh`, which ships the service's image before the site | The image check, and ShellCheck and actionlint in `Repository`. `Web deploy` and `Dictionary API deploy` run after merge | [`web.md`](agents/web.md), Environments and deploys; [`dictionary-api.md`](agents/dictionary-api.md), Ship it | `verify-web` on staging; the server's deployer was checked by hand on staging |
+| Website and service deploys | C | 2026-10-06 | `.github/workflows/web-deploy.yml`, `.github/workflows/dictionary-api-deploy.yml`, `.github/workflows/account-api-deploy.yml`, `apps/web/scripts/`, `deploy/`, `apps/account-api/deploy/`, `apps/dictionary-api/Dockerfile`, `apps/account-api/Dockerfile` | `apps/web/scripts/smoke.sh` after each deploy, where staging's run gates production, though from CI it skips its dictionary checks; the image checks in `Dictionary API deploy` and `Account API deploy`; `apps/web/scripts/wait-for-dictionary-service.sh`, which ships the service's image before the site | The image checks, ShellCheck on the deployer and the backups, and actionlint in `Repository`. The deploy workflows run after merge | [`web.md`](agents/web.md), Environments and deploys; [`api-servers.md`](agents/api-servers.md); [`dictionary-api.md`](agents/dictionary-api.md) and [`account-api.md`](agents/account-api.md), Ship it | `verify-web` on staging; the dictionary service's earlier deployer was checked by hand on staging |
 | iOS releases | D | 2026-09-30 | None | None | None | None: no doc says how a build reaches TestFlight or the App Store | Outside the repository |
 
 - **Website and service deploys, C.** The image is checked and signed before it's published, and
   the server runs only images main signed. But Bot Fight Mode challenges CI runners, so nothing in
   CI sees the server deploy, and the smoke test skips its dictionary checks there. Main gaps: no
   alert when a deploy fails on the server (#542); a change to the deploy path is first exercised
-  on `main`; and the server runs whichever `apps/dictionary-api/deploy/deployer.sh` someone last
-  installed, which nothing compares with the repository's.
+  on `main`; the server runs whichever `deploy/deployer.sh` someone last installed, which nothing
+  compares with the repository's; and the deployer, now shared by both services, and the account
+  backups have no tests and haven't run on the server yet.
 - **iOS releases, D.** Nothing in the repository builds, checks, or documents a release. Main
   gap: #381.
 

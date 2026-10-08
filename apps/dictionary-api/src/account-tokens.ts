@@ -1,3 +1,4 @@
+import { errorFields, log } from '@zenbu/node-service/log'
 import {
   createLocalJWKSet,
   createRemoteJWKSet,
@@ -7,7 +8,6 @@ import {
   type JWTVerifyGetKey,
   jwtVerify
 } from 'jose'
-import { errorFields, log } from './log'
 import { AccountKeysUnavailable, type AccountTokens } from './service'
 
 const reloadCooldown = 30_000

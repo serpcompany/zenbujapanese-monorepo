@@ -11,6 +11,14 @@ pre-commit:
       root: apps/dictionary-api/
       glob: "*.{ts,js,mjs,cjs,json,jsonc}"
       run: pnpm --silent --filter zenbujapanese-dictionary-api lint --no-errors-on-unmatched --files-ignore-unknown=true {staged_files}
+    account-api:
+      root: apps/account-api/
+      glob: "*.{ts,js,mjs,cjs,json,jsonc}"
+      run: pnpm --silent --filter zenbujapanese-account-api lint --no-errors-on-unmatched --files-ignore-unknown=true {staged_files}
+    node-service:
+      root: packages/node-service/
+      glob: "*.{ts,js,mjs,cjs,json,jsonc}"
+      run: pnpm --silent --filter @zenbu/node-service lint --no-errors-on-unmatched --files-ignore-unknown=true {staged_files}
     dictionary-core:
       root: packages/dictionary-core/
       glob: "*.{ts,js,mjs,cjs,json,jsonc}"
