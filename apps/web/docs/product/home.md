@@ -6,22 +6,23 @@ shadcn styles, and #651. Each behavior below says what the page does, where it c
 automated check that enforces it (see [How behavior is verified](index.md#how-behavior-is-verified)).
 
 Abbreviations: **Home spec** is `apps/web/e2e/home.spec.ts`, the homepage's browser tests at a
-desktop and a phone width. **App docs** is [`apps/ios/docs/product/`](../../../ios/docs/product/index.md).
-Web paths are under `apps/web/`. The page's sections, with their headings and lines, are in
-`src/components/home/`; the example searches are in `src/lib/home.ts`, the app's areas in
-`src/lib/app-areas.ts`, and the data the drawn previews use in `src/lib/home-previews.ts`.
+desktop and a phone width, and **Claims spec** is `apps/web/e2e/claims.spec.ts`. **App docs** is
+[`apps/ios/docs/product/`](../../../ios/docs/product/index.md). Web paths are under `apps/web/`.
+The page's sections, with their headings and lines, are in `src/components/home/`; the example
+searches are in `src/lib/home.ts`, the app's areas in `src/lib/app-areas.ts`, and the data the
+drawn previews use in `src/lib/home-previews.ts`.
 
 ## Sections
 
 **Hero.** A badge, "For iPhone · Offline dictionary", the heading "Understand the Japanese you
 meet", a line on what the app does, then two buttons: **Get the app** and **Search the
-dictionary**, which opens `/dictionary/`. Under them: No account, No ads, and Your words stay on
-your iPhone. Beside the text (below it on phones) are two App Store screenshots, overlapped: the
-search results for taberu and the word page for 大丈夫. Get the app is the header's button
-(`GetAppButton`), so it opens the same link target in `linkTargets` (`src/lib/site.ts`): the
-iPhone app's page, `/products/zenbu-japanese-for-iphone/` ([Products pages](products.md)).
+dictionary**, which opens `/dictionary/`. Under them, the fine print reads only Works offline.
+Beside the text (below it on phones) are two App Store screenshots, overlapped: the search results
+for taberu and the word page for 大丈夫. Get the app is the header's button (`GetAppButton`), so it
+opens the same link target in `linkTargets` (`src/lib/site.ts`): the iPhone app's page,
+`/products/zenbu-japanese-for-iphone/` ([Products pages](products.md)).
 
-- Source: #651; #648 decision and mockups (Home, hero A).
+- Source: #651; #648 decision and mockups (Home, hero A); #668 (Works offline only).
 - Check: Home spec, "the hero leads with the app, with Get the app and Search the dictionary".
 
 **Try the dictionary.** A card with the dictionary's search box, the same form as `/dictionary/`'s
@@ -45,8 +46,8 @@ list of screens on the stage:
 - Translate: a conversation.
 - Player: a drawing of the Player from real app data (the Tatoeba sentences おはようございます。 and
   今日は天気がいいですね。 as caption cards with their times, the second being spoken with 天気
-  tapped, its word sheet open, and the known-words line from the app docs' example, 73% 38 of 52 words known), then
-  each video in `appVideos` (`src/lib/videos.ts`), as the product page's click-to-load card:
+  tapped, its word sheet open, and the known-words line from the app docs' example, 73% 38 of 52
+  words known), then each video in `appVideos` (`src/lib/videos.ts`), as the product page's click-to-load card:
   nothing from YouTube loads before it's played. There are no videos yet, so the drawing is alone.
 - Lists: the Favorites list from the App Store screenshot, with 美味しい and 大丈夫 known; the
   frequency packs, JLPT Levels and YouTube first, and 食べる's JLPT N5 and YouTube 165 chips; and
@@ -60,8 +61,8 @@ in the mockups. Narrower, each is sized to show whole, which is two at a time on
 or four on a tablet; a phone shows one Lists preview at a time. The dots of the screens in view are
 current. The arrows are in the keyboard's tab order and the dots aren't; anything inside a screen
 that takes focus, such as the 弱肉強食 kanji or a video's Play button, is too. Nothing moves on its
-own, and a video playing in an area stops when another area is chosen. The tabs are stock shadcn tabs: arrow keys, Home, and
-End move between them and choose the area. Below 640 pixels the tabs fill the bar, each an icon
+own, and a video playing in an area stops when another area is chosen. The tabs are stock shadcn
+tabs: arrow keys, Home, and End move between them and choose the area. Below 640 pixels the tabs fill the bar, each an icon
 above its name, so all five fit a phone; from 640 pixels they are a pill bar, each an icon beside
 its name. The server renders every area's tab, text, and screens; a tab only shows its area and
 hides the others, which keep their place, so the page doesn't move when the area changes. The
@@ -75,8 +76,8 @@ homepage's are in `src/lib/app-areas.ts`.
   keyboard", "the arrows and dots page through the Dictionary screens, and the next one peeks in",
   "nothing advances on its own", "every area fits the window, with all five tabs in view",
   "choosing an area doesn’t move the page below the showcase", "at 412, 700, and 900 pixels each
-  Dictionary screen in view shows whole", "tapping
-  a kanji in 弱肉強食 moves the highlight to its part of the reading", and, without JavaScript,
+  Dictionary screen in view shows whole", "tapping a kanji in 弱肉強食 moves the highlight to its
+  part of the reading", and, without JavaScript,
   "every area's text and screens are in the server HTML"; `src/components/home/home-areas.test.tsx`
   (the Player's video card only with videos, and nothing from YouTube before a click);
   `src/components/area-showcase.interaction.test.tsx`, "a video playing in an area stops when
@@ -84,14 +85,16 @@ homepage's are in `src/lib/app-areas.ts`.
   `src/lib/home-previews.test.ts`, "the homepage draws 食べる as the dictionary has it", against the
   dictionary fixtures. The other words, and the drawings' look: No automated check yet.
 
-**Free on the web.** The web tools that exist today, each opening its page: the Tools menu's
-links that aren't placeholders, with the menu's descriptions and marks
-(`src/lib/site-menus.ts`), so a converter joins the list when its page ships. Today they are
-Dictionary (`/dictionary/`), Kana charts, Kanji lists, and Frequency lists (under
-`/dictionary/browse/`). Then All free tools, the tools index's placeholder. Beside them is a
-browser drawn around the search page for taberu, with 食べる's word card in front of it.
+**Free on the web.** A line: no download, and every word has its own page. Then the web tools
+that exist today, each opening its page: the Tools menu's links that aren't placeholders, with
+the menu's descriptions and marks (`src/lib/site-menus.ts`), so a converter joins the list when
+its page ships. Today they are Dictionary (`/dictionary/`), Kana charts, Kanji lists, and
+Frequency lists (under `/dictionary/browse/`). Then All free tools, the tools index's
+placeholder. Beside them is a browser drawn around the search page for taberu, with 食べる's word
+card in front of it.
 
-- Source: #651; #648 mockups and their notes (only pages that exist today).
+- Source: #651; #648 mockups and their notes (only pages that exist today); #668 (the line
+  drops "and no account").
 - Check: Home spec, "the free web tools link to pages the site has, with no redirect".
 
 **Closing.** A dark block: "Your Japanese stays yours." and three promises, each with a small
@@ -121,7 +124,7 @@ Every claim on the page is one the app's product docs make:
 
 | Claim | App docs |
 | --- | --- |
-| Look up any word offline; the dictionary is on your iPhone | `dictionary.md`, opening (bundled data) |
+| Works offline; look up any word offline; the dictionary is on your iPhone | `dictionary.md`, opening (bundled data) |
 | Image Search: a photo, the library, or a file; text across or down the page, even with English around it; tap a word and the photo stays in view; Translate for the whole passage | `dictionary.md`, Search and Image Search |
 | Handwriting reads the finished shape in any stroke order; radicals | `dictionary.md`, Search |
 | Search in Japanese, romaji, or English, conjugated forms included | `dictionary.md`, Search |
@@ -133,6 +136,13 @@ Every claim on the page is one the app's product docs make:
 | Tap a kanji to see which part of the reading belongs to it | `index.md`, Furigana kanji highlight |
 | Lists' pitch: keep the words you meet (lists, known words), in the order that helps you (the frequency packs, in the learner's order) | `index.md`, Account (Lists, Known Words, Frequency Dictionaries) |
 | No account, no ads; lists, notes, known words, and saved conversations stay on the device | `index.md`, Account (Lists, Known Words); `dictionary.md`, Dictionary and kanji details (notes); `translate.md`, Translations; the Privacy Policy |
+
+Outside the closing block, the page doesn't say the app needs no account, that anything stays on
+the iPhone, or that it's built on open data, since accounts and sync are coming (#468, #574), and
+neither does its description.
+
+- Source: #668.
+- Check: Claims spec, "the homepage makes none above its closing block".
 
 ## Page
 

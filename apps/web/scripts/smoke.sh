@@ -376,11 +376,11 @@ lists_word_sitemaps_only() {
     grep -qxF "<loc>$canonical/sitemap-kanji-lists.xml</loc>" <<<"$locs" &&
     ! grep -vqE "^<loc>${canonical//./\\.}/sitemap-(pages|kana|categories|frequency-lists|kanji-lists|words(-[0-9]+)?)\\.xml</loc>$" <<<"$locs"
 }
-for index in /sitemap-index.xml /sitemap.xml; do
-  eventually "$index lists the pages, word, and browse sitemaps on $canonical, and no other" \
-    "$index is missing the pages, word, or browse sitemaps, lists another, or names another host" \
-    lists_word_sitemaps_only
-done
+index=/sitemap-index.xml
+eventually "$index lists the pages, word, and browse sitemaps on $canonical, and no other" \
+  "$index is missing the pages, word, or browse sitemaps, lists another, or names another host" \
+  lists_word_sitemaps_only
+expect_redirect /sitemap.xml /sitemap-index.xml
 index_lists_files() {
   local locs
   locs="$(body /sitemap-index.xml | grep -oE '<loc>[^<]+</loc>' || true)"

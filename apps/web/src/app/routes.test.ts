@@ -70,7 +70,6 @@ const decidedRoutes = [
   'data /dictionary/service.json',
   'data /robots.txt',
   'data /sitemap-index.xml',
-  'data /sitemap.xml',
   'data /sitemap-pages.xml',
   'data /sitemaps/dictionary/[file]',
   'data /sitemaps/browse/[file]'
