@@ -955,7 +955,7 @@ tools (`/tools/`), the three converters, Browser extension, Reference guides, Co
 production today, the App Store (the
 Get the app on the product page and on the catalog's iPhone app card), the ten social accounts, and
 See all videos (`/videos/`), which shows only once the product page has videos. Zenbu Japanese for
-iPhone and All products now open their pages, `/products/zenbu-japanese-for-iphone/` and
+iPhone and All products now open their pages, `/products/zenbu-japanese-app/` and
 `/products/` ([Products pages](products.md)), from the same entries; so do Log in and Create an
 account where the account pages are open, as on staging ([Account pages](account.md#pages)), the
 build choosing their addresses as it does the footer's Sign in. #650 asked for menu items to appear only once their page
@@ -1009,7 +1009,7 @@ widening the window to 1024 pixels closes the sheet; choosing a theme keeps it o
   1024 pixels, and stays closed when it narrows".
 
 **Get the app and Log in.** Get the app leads with a phone icon (lucide `Smartphone`); it opens the
-iPhone app's page (`/products/zenbu-japanese-for-iphone/`), whose own Get the app opens the App
+iPhone app's page (`/products/zenbu-japanese-app/`), whose own Get the app opens the App
 Store link, a placeholder until that address is known. It is the same button in the header, the
 phone menu, and the prompt that actions needing the app open; following it closes the phone menu
 or the prompt. Log in, in the account menu from 1024 pixels and in the phone menu below, opens the

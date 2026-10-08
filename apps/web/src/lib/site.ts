@@ -38,7 +38,7 @@ const linkTargets = [
     id: 'iphone-app',
     kind: 'page',
     name: 'Zenbu Japanese for iPhone product page',
-    href: '/products/zenbu-japanese-for-iphone/'
+    href: '/products/zenbu-japanese-app/'
   },
   {
     id: 'browser-extension',

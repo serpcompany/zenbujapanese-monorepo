@@ -108,7 +108,7 @@ describe("the header's menus are in the page's HTML, with the current page marke
       placeholder('courses'),
       listed('products')
     ])
-    expect(listed('iphone-app')[0]).toBe('/products/zenbu-japanese-for-iphone/')
+    expect(listed('iphone-app')[0]).toBe('/products/zenbu-japanese-app/')
     expect(listed('products')[0]).toBe('/products/')
   })
 
@@ -161,7 +161,7 @@ test('from 1024 pixels Get the app and the account button end the header, Get th
     productPage.target
   ])
   const [getTheApp = ''] = buttons[0] ?? []
-  expect(attribute(getTheApp, 'href')).toBe('/products/zenbu-japanese-for-iphone/')
+  expect(attribute(getTheApp, 'href')).toBe('/products/zenbu-japanese-app/')
   expect(classesOf(getTheApp)).toContain('max-lg:hidden')
   const [, account = '', content = ''] =
     html.match(/<button ([^>]*aria-haspopup="menu"[^>]*)>([\s\S]*?)<\/button>/) ?? []

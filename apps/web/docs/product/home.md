@@ -20,7 +20,7 @@ dictionary**, which opens `/dictionary/`. Under them, the fine print reads only 
 Beside the text (below it on phones) are two App Store screenshots, overlapped: the search results
 for taberu and the word page for 大丈夫. Get the app is the header's button (`GetAppButton`), so it
 opens the same link target in `linkTargets` (`src/lib/site.ts`): the iPhone app's page,
-`/products/zenbu-japanese-for-iphone/` ([Products pages](products.md)).
+`/products/zenbu-japanese-app/` ([Products pages](products.md)).
 
 - Source: #651; #648 decision and mockups (Home, hero A); #668 (Works offline only).
 - Check: Home spec, "the hero leads with the app, with Get the app and Search the dictionary".
@@ -77,7 +77,7 @@ light band (a slightly darker band in dark mode) with a rule above it. The card 
 colour in dark mode) with rounded corners. On the left: the heading "Everything you need to read
 Japanese, in one app.", the line "Dictionary, Image Search, Translate, and Player on your iPhone.",
 and Get the app, the site's button with its phone icon, which opens the iPhone app's page
-(`/products/zenbu-japanese-for-iphone/`) through the `iphone-app` entry in `linkTargets`, as the
+(`/products/zenbu-japanese-app/`) through the `iphone-app` entry in `linkTargets`, as the
 header's does. On the right, a tilted two-column collage of cards, one per part of the app
 (Dictionary, Image Search, Translate, Conjugations, Kanji, and Pitch accent, from
 `src/lib/app-parts.ts`), each an App Store screenshot crop, a name, a line, and Learn more; it
