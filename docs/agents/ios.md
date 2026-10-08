@@ -392,7 +392,7 @@ tests prove that model against the real service.
   Account has no **Sign In to Sync** row, and nothing is queued: the stores' observers are only
   set by the account, and a phone that never signed in queues nothing anyway.
   `apps/ios/Tools/tests/test_account_service_settings.py` pins Release empty and Debug on staging,
-  in the `iOS` workflow's `contracts` job. For a service on the Mac ([`account-api.md`](account-api.md), Run it), launch with
+  with Google's iOS client in Debug only, in the `iOS` workflow's `contracts` job. For a service on the Mac ([`account-api.md`](account-api.md), Run it), launch with
   the argument `-ZenbuAccountServiceURL http://127.0.0.1:8789` or the environment variable
   `ZENBU_ACCOUNT_API_URL`, or build with `ZENBU_ACCOUNT_API_URL=http://127.0.0.1:8789` so every
   launch, a background one too, uses it. The Simulator reaches the Mac's `127.0.0.1`, and App
@@ -412,9 +412,13 @@ tests prove that model against the real service.
 - **Google** needs no SDK: `ASWebAuthenticationSession` opens Google's OAuth for iOS with PKCE, the
   nonce, and the reversed client ID as the redirect, which the session catches itself, so no URL
   type is registered. The app exchanges the code at Google's token endpoint for the ID token. The
-  build setting `ZENBU_GOOGLE_IOS_CLIENT_ID` is the iOS OAuth client's ID, which isn't secret; it's
-  empty in the repository, and without it the Google button isn't shown. The same ID goes in the
-  service's `GOOGLE_CLIENT_IDS`.
+  build setting `ZENBU_GOOGLE_IOS_CLIENT_ID` fills `ZenbuGoogleIOSClientID` in
+  `apps/ios/App/Info.plist` with the iOS OAuth client's ID, which isn't secret: `881343714137-8v279fqjrkk1qeg18opnqbac41jteoqq.apps.googleusercontent.com`
+  in Debug, Zenbu Dev included, and empty in Release, like `ZENBU_ACCOUNT_API_URL`, until sign-in
+  opens in the App Store build (below). Without it the Google button isn't shown. Its reversed
+  form, `com.googleusercontent.apps.881343714137-8v279fqjrkk1qeg18opnqbac41jteoqq`, is the
+  redirect's scheme (`GoogleSignIn.redirectScheme`). The same ID is in staging's and production's
+  `GOOGLE_CLIENT_IDS`, after the web client's.
 - **Tokens.** The signed session token (`set-auth-token`) is kept in the Keychain (service
   `com.zenbujapanese.app.account`, readable after the first unlock, on this device only), and sent
   only to `/v1/auth`. The 15-minute access token stays in memory, refreshed within a minute of its
@@ -533,10 +537,10 @@ closed ([`web.md`](web.md), Account pages). Opening sign-in waits for production
 email codes set up for everyone ([`account-api.md`](account-api.md), Set up the server). Then it's
 one pull request:
 
-- set Release's `ZENBU_ACCOUNT_API_URL` to `https://api.zenbujapanese.com` in
-  `apps/ios/ZenbuJapanese.xcodeproj/project.pbxproj`;
-- change `test_release_builds_name_no_account_service_until_production_answers` in
-  `apps/ios/Tools/tests/test_account_service_settings.py` to expect it;
+- set Release's `ZENBU_ACCOUNT_API_URL` to `https://api.zenbujapanese.com`, and its
+  `ZENBU_GOOGLE_IOS_CLIENT_ID` to Debug's, in `apps/ios/ZenbuJapanese.xcodeproj/project.pbxproj`;
+- change `test_release_builds_offer_no_sign_in_until_production_answers` in
+  `apps/ios/Tools/tests/test_account_service_settings.py` to expect them;
 - and say so here, in Which service (above), and in the product docs' Account
   ([`index.md`](../../apps/ios/docs/product/index.md#account)).
 
@@ -556,10 +560,10 @@ What a person sets up first, once, in Apple Developer on the team that holds the
   ([`account-api.md`](account-api.md), Set up the server, step 3), before a build with the Apple
   button reaches testers.
 - **Google:** the iOS OAuth client for `com.zenbujapanese.app`
-  ([`account-api.md`](account-api.md), Set up the server, step 3). Its client ID goes in
-  `ZENBU_GOOGLE_IOS_CLIENT_ID`, in both of the app target's configurations in
-  `apps/ios/ZenbuJapanese.xcodeproj/project.pbxproj`, in a pull request, and in the service's
-  `GOOGLE_CLIENT_IDS`. Without it the app offers Apple and a code only.
+  ([`account-api.md`](account-api.md), Set up the server, step 3). Its client ID is Debug's
+  `ZENBU_GOOGLE_IOS_CLIENT_ID` in `apps/ios/ZenbuJapanese.xcodeproj/project.pbxproj` and in the
+  service's `GOOGLE_CLIENT_IDS`; Release's gets it when sign-in opens in the App Store build
+  (below). Without it the app offers Apple and a code only.
 
 **A TestFlight build:**
 
@@ -720,8 +724,8 @@ against a real service:
 - **On a device, against staging:** Sign in with Apple and with Google, and delete an account that
   signs in with Apple. A first Sign in with Apple, with an Apple ID that never signed in to the
   app's team, makes an account with the name Apple shares (`GET /v1/me`, or the website's
-  account page). The Simulator can't show these: Apple's sign-in needs the App ID's
-  capability and a signed build, and Google needs the iOS client ID.
+  account page). The Simulator can't show Apple's sign-in, which needs the App ID's capability and
+  a signed build.
 
 ## Player manual checks
 

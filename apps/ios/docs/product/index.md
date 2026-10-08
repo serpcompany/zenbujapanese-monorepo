@@ -162,7 +162,8 @@ What doesn't sync, and why:
 - **The profile on Account**, which is this phone's own.
 
 **Signing in.** **Sign In to Sync** opens a sheet with **Sign in with Apple**, **Sign in with
-Google** (only in builds given a Google client ID), and an emailed code: the learner enters their
+Google** (only in builds given a Google client ID: Debug builds, against staging, until sign-in
+opens in the App Store build), and an emailed code: the learner enters their
 email, taps **Email Me a Code**, and enters the 6-digit code. A refused sign-in says why, such as a
 wrong or expired code, or an email whose account signs in with Apple or Google. Sign in with Apple
 asks for the learner's name and email; a new account takes the name Apple shares on the first
