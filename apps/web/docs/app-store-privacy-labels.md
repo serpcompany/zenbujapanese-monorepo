@@ -43,24 +43,38 @@ Every other type is not collected. The ones a reviewer may ask about:
   picture's address (Other Data Types).
 - **Search History**: no. Searches stay on the device, and the dictionary service answers
   Tomodachi's word-card and segmentation requests without keeping them.
-- **Usage Data and Diagnostics**: no. The services' request logs hold each request's method,
-  route, status, and timing, and nothing the learner sent or that identifies them. The API host's
+- **Usage Data and Diagnostics**: no, but for the Zenbu app's Product Interaction (below). The
+  services' request logs hold each request's method, route, status, and timing, and nothing the
+  learner sent or that identifies them. The API host's
   nginx access log is configured outside this repository: if it keeps IP addresses or full URLs,
   answer Other Diagnostic Data under Data Not Linked to You, or turn it off.
 - **Customer Support**: no. Support is by email, outside the apps.
 
 ## The Zenbu Japanese app
 
-All five types above. Its Other User Content is the known words and lists it syncs. It has no
-analytics or crash-reporting SDK.
+All five types above, and two more for the watch history it syncs from its Player, which only it
+reads and changes (`watch:read` and `watch:write`):
+
+| Apple's data type | What the account keeps | Purpose | Linked to the user | Used for tracking |
+| --- | --- | --- | --- | --- |
+| Browsing History | The 50 YouTube videos the learner most recently watched in the app: each video's ID, title, channel, and length, and when they last watched it; the IDs of up to 100 they removed or that fell past the 50, with when; and, for 30 days, the result of each change the app sent, naming the video and when. | App Functionality | Yes | No |
+| Usage Data → Product Interaction | For each of those videos, where the learner stopped and the share of its captions' words they know. | App Functionality | Yes | No |
+
+The App Store then also shows Browsing History and Usage Data under Data Linked to You. Its Other
+User Content is the known words and lists it syncs, and the Translate sentences the learner
+bookmarks: each one's text and translation, its language, and when it was bookmarked (or said, for
+one bookmarked before the app synced bookmarks), which may be
+what someone nearby said. It never sends a conversation, or a sentence the learner didn't bookmark,
+and it keeps no audio, so it collects no Audio Data. It has no analytics or crash-reporting SDK.
 
 When the build with sign-in ships (#573), change these with the labels:
 
 - **The privacy manifest**, `apps/ios/App/PrivacyInfo.xcprivacy`: add one dictionary per type to
   the `NSPrivacyCollectedDataTypes` array. Each has the keys `NSPrivacyCollectedDataType` (the
   type: `NSPrivacyCollectedDataTypeEmailAddress`, `NSPrivacyCollectedDataTypeName`,
-  `NSPrivacyCollectedDataTypeUserID`, `NSPrivacyCollectedDataTypeOtherUserContent`, or
-  `NSPrivacyCollectedDataTypeOtherDataTypes`), `NSPrivacyCollectedDataTypeLinked` (true),
+  `NSPrivacyCollectedDataTypeUserID`, `NSPrivacyCollectedDataTypeOtherUserContent`,
+  `NSPrivacyCollectedDataTypeOtherDataTypes`, `NSPrivacyCollectedDataTypeBrowsingHistory`, or
+  `NSPrivacyCollectedDataTypeProductInteraction`), `NSPrivacyCollectedDataTypeLinked` (true),
   `NSPrivacyCollectedDataTypeTracking` (false), and `NSPrivacyCollectedDataTypePurposes` (an array
   holding `NSPrivacyCollectedDataTypePurposeAppFunctionality`).
 - **The listing's description**, in `apps/ios/metadata/version/1.0/en-US.json`, which says the

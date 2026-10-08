@@ -370,8 +370,11 @@ lists_word_sitemaps_only() {
   locs="$(body "$index" | grep -oE '<loc>[^<]+</loc>' || true)"
   grep -qxF "<loc>$canonical/sitemap-words.xml</loc>" <<<"$locs" &&
     grep -qxF "<loc>$canonical/sitemap-pages.xml</loc>" <<<"$locs" &&
-    grep -qxF "<loc>$canonical/sitemap-browse.xml</loc>" <<<"$locs" &&
-    ! grep -vqE "^<loc>${canonical//./\\.}/sitemap-(pages|browse|words(-[0-9]+)?)\\.xml</loc>$" <<<"$locs"
+    grep -qxF "<loc>$canonical/sitemap-kana.xml</loc>" <<<"$locs" &&
+    grep -qxF "<loc>$canonical/sitemap-categories.xml</loc>" <<<"$locs" &&
+    grep -qxF "<loc>$canonical/sitemap-frequency-lists.xml</loc>" <<<"$locs" &&
+    grep -qxF "<loc>$canonical/sitemap-kanji-lists.xml</loc>" <<<"$locs" &&
+    ! grep -vqE "^<loc>${canonical//./\\.}/sitemap-(pages|kana|categories|frequency-lists|kanji-lists|words(-[0-9]+)?)\\.xml</loc>$" <<<"$locs"
 }
 for index in /sitemap-index.xml /sitemap.xml; do
   eventually "$index lists the pages, word, and browse sitemaps on $canonical, and no other" \
@@ -387,7 +390,20 @@ eventually 'sitemap index lists unslashed .xml files' 'sitemap index has a non-c
   index_lists_files
 expect /sitemap-words.xml 200
 expect /sitemap-words-2.xml 200
-expect /sitemap-browse.xml 200
+for browse_sitemap_and_hubs in kana:3 categories:3 frequency-lists:1 kanji-lists:1; do
+  browse_sitemap="/sitemap-${browse_sitemap_and_hubs%:*}.xml"
+  browse_hubs="${browse_sitemap_and_hubs#*:}"
+  browse_sitemap_is_canonical() {
+    local locs
+    locs="$(body "$browse_sitemap" | grep -oE '<loc>[^<]+</loc>' || true)"
+    [ "$(grep -c . <<<"$locs" || true)" -gt "$browse_hubs" ] &&
+      ! LC_ALL=C grep -vqE "^<loc>${canonical//./\\.}/dictionary/browse/[!-~]+/</loc>$" <<<"$locs"
+  }
+  eventually "$browse_sitemap lists browse pages on $canonical" \
+    "$browse_sitemap lists no list beyond its hubs, or another host or a non-canonical URL" \
+    browse_sitemap_is_canonical
+done
+expect /sitemap-browse.xml 404
 expect_redirect /sitemaps/dictionary/2.xml /sitemap-words-2.xml
 word_count=0
 word_sitemap_is_canonical() {

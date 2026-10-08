@@ -625,6 +625,98 @@ Fields ([`WordFields`](#wordfields)):
 }
 ```
 
+### Entity `watchedVideo`
+
+A video the learner watched in the iOS app's Player. The account keeps the 50 most recently watched, and remembers the latest 100 videos it removed or pruned.
+
+- **ID** (`entityId`): The YouTube video ID: 11 letters, digits, `-`, or `_`.
+- **Read with:** `watch:read`
+- **As it is now** (a `put`'s `data`): [`WatchedVideo`](#watchedvideo)
+
+**`watch`**, with `watch:write`; `baseVersion` required. Send the whole video each time. A watch of a video the account has applies whatever its base version: the one with the later `watchedAt` sets the fields it sends, an older one sent late only fills fields the account lacks, and a field left out keeps the account's. A watch of a video the learner removed applies only at the removal's version, so one made before seeing the removal conflicts with the `delete`. A watch past the 50 newest prunes the oldest, which syncs as a `delete`.
+
+Fields ([`WatchFields`](#watchfields)), and no others:
+
+- `watchedAt` (string (date-time), required): ISO 8601, from 2000 on, by the device's clock; a time after the service's is taken as the service's.
+- `title` (string, optional): Cut to 200 characters; control characters become spaces, and an empty one is left out.
+- `author` (string, optional): The channel, held as `title` is.
+- `duration` (number, optional, 0 to 10,000,000): The video's length, in seconds.
+- `position` (number, optional, 0 to 10,000,000): Where the learner was, in seconds.
+- `comprehension` (number, optional, 0 to 1): The share of the captions' words the learner knows.
+
+```json
+{
+  "id": "6f1c0e7a-3b5d-4c2e-9a8f-000000000009",
+  "entity": "watchedVideo",
+  "operation": "watch",
+  "entityId": "a1B2c3D4e5F",
+  "baseVersion": 0,
+  "fields": {
+    "watchedAt": "2026-10-07T03:17:00Z",
+    "title": "日本語の勉強",
+    "author": "Zenbu",
+    "duration": 212,
+    "position": 30.5,
+    "comprehension": 0.42
+  }
+}
+```
+
+**`remove`**, with `watch:write`; `baseVersion` not read. The learner removed the video. It always applies; removing one the account has not is applied and changes nothing.
+
+```json
+{
+  "id": "6f1c0e7a-3b5d-4c2e-9a8f-00000000000a",
+  "entity": "watchedVideo",
+  "operation": "remove",
+  "entityId": "a1B2c3D4e5F"
+}
+```
+
+### Entity `bookmarkedSentence`
+
+A sentence the learner bookmarked in the iOS app's Translate tab, alone: never its conversation. An account holds at most 2,000.
+
+- **ID** (`entityId`): The sentence's UUID, in either case; answers name it in lowercase.
+- **Read with:** `translations:read`
+- **As it is now** (a `put`'s `data`): [`BookmarkedSentence`](#bookmarkedsentence)
+
+**`add`**, with `translations:write`; `baseVersion` not read. It always applies; adding one the account has changes nothing, and past 2,000 it's rejected `too_many_bookmarks`.
+
+Fields ([`BookmarkFields`](#bookmarkfields)), and no others:
+
+- `text` (string, required): The sentence as it was said: not blank, cut to 2,000 characters, with control characters made spaces.
+- `translation` (string or null, optional): Its translation, cut to 4,000 characters, or null; null when left out.
+- `language` (`"ja"` or `"en"`, required): The language it was said in.
+- `bookmarkedAt` (string (date-time), required): ISO 8601, from 2000 on, by the device's clock; a time after the service's is taken as the service's.
+
+```json
+{
+  "id": "6f1c0e7a-3b5d-4c2e-9a8f-00000000000b",
+  "entity": "bookmarkedSentence",
+  "operation": "add",
+  "entityId": "5e8d1c2b-7a6f-4d3e-8b9c-0f1e2d3c4b5a",
+  "fields": {
+    "text": "駅はどこですか",
+    "translation": "Where is the station?",
+    "language": "ja",
+    "bookmarkedAt": "2026-10-07T03:20:00Z"
+  }
+}
+```
+
+**`remove`**, with `translations:write`; `baseVersion` required. It applies only at the bookmark's current version, so it removes only an add it saw: an add the remover never saw wins, and the remove conflicts. Removing one the account hasn't is applied.
+
+```json
+{
+  "id": "6f1c0e7a-3b5d-4c2e-9a8f-00000000000c",
+  "entity": "bookmarkedSentence",
+  "operation": "remove",
+  "entityId": "5e8d1c2b-7a6f-4d3e-8b9c-0f1e2d3c4b5a",
+  "baseVersion": 1
+}
+```
+
 ### Rejected mutations
 
 A `rejected` result's `error.code`. A rejection is final for that mutation ID.
@@ -641,6 +733,7 @@ A `rejected` result's `error.code`. A rejection is final for that mutation ID.
 | `unknown_list` | The list word's list isn't in the account, or was deleted. |
 | `too_many_lists` | The account has 500 lists. |
 | `list_full` | The list has 5,000 words. |
+| `too_many_bookmarks` | The account has 2,000 bookmarked sentences. |
 | `not_allowed` | The app's scopes don't include the operation's. |
 
 ## Error codes
@@ -715,6 +808,22 @@ Every error. `code` is stable and machine-readable; `message` is for people and 
 - `name` (string, optional): 1 to 500 characters once trimmed; control characters become spaces.
 - `position` (integer, optional, 0 to 100,000): Where the list sorts among the account's lists, lowest first.
 
+### WatchFields
+
+- `watchedAt` (string (date-time), required): ISO 8601, from 2000 on, by the device's clock; a time after the service's is taken as the service's.
+- `title` (string, optional): Cut to 200 characters; control characters become spaces, and an empty one is left out.
+- `author` (string, optional): The channel, held as `title` is.
+- `duration` (number, optional, 0 to 10,000,000): The video's length, in seconds.
+- `position` (number, optional, 0 to 10,000,000): Where the learner was, in seconds.
+- `comprehension` (number, optional, 0 to 1): The share of the captions' words the learner knows.
+
+### BookmarkFields
+
+- `text` (string, required): The sentence as it was said: not blank, cut to 2,000 characters, with control characters made spaces.
+- `translation` (string or null, optional): Its translation, cut to 4,000 characters, or null; null when left out.
+- `language` (`"ja"` or `"en"`, required): The language it was said in.
+- `bookmarkedAt` (string (date-time), required): ISO 8601, from 2000 on, by the device's clock; a time after the service's is taken as the service's.
+
 ### Profile
 
 - `id` (string, required): The Zenbu user ID. It never changes.
@@ -772,12 +881,12 @@ One of:
   - `id` (string, required)
   - `status` (`"rejected"`, required)
   - `error` (object, required)
-    - `code` (`"invalid_fields"`, `"username_taken"`, `"unknown_entity"`, `"unknown_operation"`, `"invalid_mutation"`, `"mutation_id_reused"`, `"already_exists"`, `"unknown_list"`, `"too_many_lists"`, `"list_full"`, or `"not_allowed"`, required)
+    - `code` (`"invalid_fields"`, `"username_taken"`, `"unknown_entity"`, `"unknown_operation"`, `"invalid_mutation"`, `"mutation_id_reused"`, `"already_exists"`, `"unknown_list"`, `"too_many_lists"`, `"list_full"`, `"too_many_bookmarks"`, or `"not_allowed"`, required)
     - `message` (string, required)
 
 ### Change
 
-An entity as it is now (`put`, with `data`), or gone (`delete`): a deleted list, a word removed from a list, or one never there. A cleared known word is a `put` with `known: false`.
+An entity as it is now (`put`, with `data`), or gone (`delete`): a deleted list, a word removed from a list, a video removed or past the newest the account keeps, a bookmark removed, or one never there. A cleared known word is a `put` with `known: false`.
 
 One of:
 
@@ -805,8 +914,20 @@ One of:
   - `operation` (`"put"`, required)
   - `version` (integer, required)
   - `data` ([`ListWord`](#listword), required)
+- `entity` `"watchedVideo"`, `operation` `"put"`
+  - `entity` (`"watchedVideo"`, required)
+  - `entityId` (string, required)
+  - `operation` (`"put"`, required)
+  - `version` (integer, required)
+  - `data` ([`WatchedVideo`](#watchedvideo), required)
+- `entity` `"bookmarkedSentence"`, `operation` `"put"`
+  - `entity` (`"bookmarkedSentence"`, required)
+  - `entityId` (string, required)
+  - `operation` (`"put"`, required)
+  - `version` (integer, required)
+  - `data` ([`BookmarkedSentence`](#bookmarkedsentence), required)
 - `operation` `"delete"`
-  - `entity` (`"knownWord"`, `"list"`, or `"listWord"`, required)
+  - `entity` (`"knownWord"`, `"list"`, `"listWord"`, `"watchedVideo"`, or `"bookmarkedSentence"`, required)
   - `entityId` (string, required)
   - `operation` (`"delete"`, required)
   - `version` (integer, required)
@@ -834,6 +955,24 @@ One of:
 - `reading` (string, required)
 - `addedAt` (string (date-time), required)
 
+### WatchedVideo
+
+- `videoId` (string, required)
+- `title` (string or null, required): At most 200 characters: a longer one is cut, and control characters become spaces.
+- `author` (string or null, required): The channel, held as title is.
+- `duration` (number or null, required): Seconds.
+- `position` (number or null, required): Seconds: where the learner was.
+- `comprehension` (number or null, required): The share of the captions' words the learner knows, 0 to 1.
+- `watchedAt` (string (date-time), required): When the learner last watched it, as the app said; a time after the service's is taken as the service's.
+
+### BookmarkedSentence
+
+- `id` (string, required)
+- `text` (string, required): The sentence as it was said, at most 2000 characters: a longer one is cut, and control characters become spaces.
+- `translation` (string or null, required): Its translation, at most 4000 characters, or null.
+- `language` (`"ja"` or `"en"`, required): The language the sentence was said in.
+- `bookmarkedAt` (string (date-time), required): When the learner bookmarked it, as the app said; a time after the service's is taken as the service's.
+
 ### SyncRequest
 
 - `cursor` (string or null, optional, 1 to 200 characters): The `cursor` from the last answer whose changes the client applied. Leave it out, or send null, to start from the beginning.
@@ -845,13 +984,15 @@ One of:
 One change made on the device. `x-sync-entities` holds each entity and its operations, and `x-sync-rejections` each code a rejected result can carry.
 
 - `id` (string, required, matching `^[A-Za-z0-9_-]{8,64}$`): A client-made ID, unique for each mutation, such as a UUID. Sending the same mutation again under its ID never applies it twice, and gets the same outcome: applied at the same version, a conflict with the entity as it is then, or a rejection with the same `error.code`. Reusing an ID for a different mutation is rejected with `mutation_id_reused`.
-- `entity` (string, required, matching `^[A-Za-z][A-Za-z0-9_-]{0,63}$`): `profile`, `knownWord`, `list`, `listWord`. Any other is rejected with `unknown_entity`, and the rest of the request still applies. A change the app's scopes don't allow is rejected with `not_allowed`, and the app reads only the entities its scopes do.
+- `entity` (string, required, matching `^[A-Za-z][A-Za-z0-9_-]{0,63}$`): `profile`, `knownWord`, `list`, `listWord`, `watchedVideo`, `bookmarkedSentence`. Any other is rejected with `unknown_entity`, and the rest of the request still applies. A change the app's scopes don't allow is rejected with `not_allowed`, and the app reads only the entities its scopes do.
 - `operation` (string, required, matching `^[A-Za-z][A-Za-z0-9_-]{0,63}$`): One of the entity's operations, in `x-sync-entities`, with the scopes each needs, the fields it takes, and whether it reads `baseVersion`. Any other is rejected with `unknown_operation`.
 - `entityId` (string, optional, matching `^[^\p{Cc}\p{Cf}\s]{1,200}$`):
   - `profile`: The account's ID, or left out.
   - `knownWord`: The item: a Language Reference ID (32 lowercase hex digits), or `kanji:` and one kanji, kept in Unicode NFC.
   - `list`: Its UUID, in either case; answers name it in lowercase.
   - `listWord`: The list's UUID, a slash, and the item: `<list>/<item>`.
+  - `watchedVideo`: The YouTube video ID: 11 letters, digits, `-`, or `_`.
+  - `bookmarkedSentence`: The sentence's UUID, in either case; answers name it in lowercase.
 - `baseVersion` (integer, optional, at least 0): The version of the entity the change was made to, or 0 for one the client has never seen. If the entity has changed since, what happens is the operation's rule, in `x-sync-entities`, which also says which operations read it.
 - `fields` (map to string, number, boolean, or null, optional): What the operation sets: the operation's fields, in `x-sync-entities`. Each value is a string, number, boolean, or null.
 
@@ -881,7 +1022,7 @@ Who signed in. GET /v1/me has the profile, with the username and version.
 
 - `token` (string, required): The ID token Sign in with Apple or Google gave the device.
 - `nonce` (string, required): The nonce from POST /v1/auth/sign-in/nonce, passed to Apple or Google.
-- `user` (object, optional): The name Sign in with Apple JS hands the website on the learner's first sign-in. Apple's token has none, so it names a new account.
+- `user` (object, optional): The name Apple gives an app or the website only on the learner's first sign-in to it. Apple's token has none, so it names a new account.
   - `name` (object, optional)
     - `firstName` (string, optional)
     - `lastName` (string, optional)

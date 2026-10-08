@@ -11,11 +11,7 @@ const text = { headword: '見る', reading: 'みる' }
 type Result = { id: string; status: string; version?: number; current?: Record<string, unknown> }
 
 async function send(learner: Learner, ...mutations: Record<string, unknown>[]) {
-  const answer = await accounts.sync(learner.token, {
-    mutations: mutations.map(mutation => ({ id: randomUUID(), ...mutation }))
-  })
-  expect(answer.status, JSON.stringify(answer.body)).toBe(200)
-  return (answer.body as unknown as { results: Result[] }).results
+  return (await accounts.mutate(learner.token, ...mutations)).results
 }
 
 const mark = (itemId: string, baseVersion: number) => ({

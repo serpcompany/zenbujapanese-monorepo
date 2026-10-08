@@ -111,4 +111,59 @@ describe('Postgres, through the driver the service runs', () => {
       await database.close()
     }
   )
+
+  test.skipIf(realPostgres === '')(
+    'keeps an account to its newest 50 videos when several are watched at once',
+    async () => {
+      await migratePostgres(url, migrations)
+      const database = openPostgres(url)
+      const raw = new pg.Client({ connectionString: url })
+      await raw.connect()
+      const id = `watch-race-${randomUUID()}`
+      await raw.query('insert into users (id, name, email) values ($1, $2, $3)', [
+        id,
+        '',
+        `${id}@example.com`
+      ])
+      await raw.query(
+        "insert into watched_videos (user_id, video_id, watched_at, status, version) select $1, 'race' || lpad(n::text, 7, '0'), timestamptz '2026-10-01T00:00:00Z' + n * interval '1 second', 'watched', 1 from generate_series(0, 47) as n",
+        [id]
+      )
+      const accounts = createAccounts(accountStore(database.db), cursors(cursorKey('test')))
+      const watched = (n: number) => ({
+        id: `watch-at-once-${n}`,
+        entity: 'watchedVideo',
+        operation: 'watch',
+        entityId: `race${String(n).padStart(7, '0')}`,
+        baseVersion: 0,
+        fields: { watchedAt: new Date(Date.UTC(2026, 9, 1) + n * 1000).toISOString() }
+      })
+      const answers = await Promise.all(
+        Array.from({ length: 8 }, (_, n) =>
+          accounts.sync(id, { mutations: [watched(n + 48)] }, everyScope)
+        )
+      )
+      for (const answer of answers) {
+        expect(answer).toMatchObject({ status: 'synced', results: [{ status: 'applied' }] })
+      }
+      const kept = await raw.query(
+        "select video_id from watched_videos where user_id = $1 and status = 'watched' order by video_id",
+        [id]
+      )
+      expect(kept.rows.map(row => row.video_id)).toEqual(
+        Array.from({ length: 50 }, (_, n) => `race${String(n + 6).padStart(7, '0')}`)
+      )
+      const journal = await raw.query(
+        "select operation, count(*)::int as n from sync_changes where user_id = $1 and entity_type = 'watchedVideo' group by operation order by operation",
+        [id]
+      )
+      expect(journal.rows).toEqual([
+        { operation: 'prune', n: 6 },
+        { operation: 'watch', n: 8 }
+      ])
+      await raw.query('delete from users where id = $1', [id])
+      await raw.end()
+      await database.close()
+    }
+  )
 })

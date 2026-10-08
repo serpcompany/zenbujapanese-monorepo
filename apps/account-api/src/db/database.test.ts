@@ -147,6 +147,12 @@ describe('the migrations', () => {
     await original.query(
       "insert into list_words (user_id, list_id, item_id, headword, reading, present, version) values ('u1', '00000000-0000-4000-8000-000000000001', 'kanji:日', '日', 'にち', true, 1)"
     )
+    await original.query(
+      "insert into watched_videos (user_id, video_id, watched_at, status, version) values ('u1', 'dQw4w9WgXcQ', now(), 'watched', 1)"
+    )
+    await original.query(
+      "insert into translation_bookmarks (user_id, id, text, language, bookmarked_at, present, version) values ('u1', '00000000-0000-4000-8000-000000000002', 'はい。', 'ja', now(), true, 1)"
+    )
     const backup = await original.dumpDataDir()
     await original.close()
 
@@ -180,10 +186,12 @@ describe('the migrations', () => {
       'select entity_type, entity_version from sync_changes order by entity_type'
     )
     expect(fenced.rows.map(row => row.entity_type)).toEqual([
+      'bookmarkedSentence',
       'knownWord',
       'list',
       'listWord',
-      'profile'
+      'profile',
+      'watchedVideo'
     ])
     for (const row of fenced.rows) {
       expect(Number(row.entity_version)).toBeGreaterThan(Date.now() - 60_000)
