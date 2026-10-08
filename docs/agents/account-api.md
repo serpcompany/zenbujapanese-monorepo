@@ -173,7 +173,8 @@ kept.
 guesses. **Rate limits**, kept in the database so they outlast a deploy, count by the address
 Cloudflare reports (`CF-Connecting-IP`): five codes sent and ten tried per 10 minutes, 30 nonces
 and twenty Apple or Google sign-ins a minute, Better Auth's own tighter limits on some routes, and
-100 requests a minute to the rest. Only Cloudflare can set that header for a request that reaches
+100 requests a minute to the rest. Each answers `429 too_many_requests` with `Retry-After`: Better
+Auth sends only `X-Retry-After`, so the service copies it (`src/http/errors.ts`). Only Cloudflare can set `CF-Connecting-IP` for a request that reaches
 the service, since nginx takes only Cloudflare's client certificate (Authenticated Origin Pulls,
 [`api-servers.md`](api-servers.md)). A request without it counts in one bucket shared by every
 such request.
@@ -588,9 +589,11 @@ this order; each step says how to check it worked.
    unset password
    ```
    It worked when `docker exec zenbujapanese-account-db psql --username postgres --command '\l'`
-   lists `account_staging` and `account_production`, each owned by its role. The deployer now
-   deploys an environment once its image's tag names one, so finish step 3 before the first
-   deploy (step 7): without `ACCOUNT_API_URL` and `ACCOUNT_API_SECRET` the service doesn't start.
+   lists `account_staging` and `account_production`, each owned by its role. The deployer deploys
+   nothing until the slots' network exists (step 4), and then deploys staging at once, whose
+   `:staging` image `Account API deploy` published, so finish step 3 first: without
+   `ACCOUNT_API_URL` and `ACCOUNT_API_SECRET` the service doesn't start. A deploy that fails is
+   tried again when the file changes.
 3. **Sign-in's settings**, in each environment's file (the settings table, above). An environment
    without its file isn't deployed, and the deployer deploys an environment again when its file
    changes, so a setting added later takes effect within 5 minutes.
@@ -627,8 +630,11 @@ this order; each step says how to check it worked.
    printf 'APPLE_PRIVATE_KEY=%s\n' "$(awk '{printf "%s\\n", $0}' AuthKey_<key id>.p8)" |
      sudo tee -a /etc/zenbujapanese-account-api/staging.env >/dev/null
    ```
-   Apple and Google can come later; the service runs without them, and the apps hide what it can't
-   do. After each edit, `journalctl -t zenbujapanese-account-api --since -10min` shows the deploy
+   Google can come later: leave out its two lines. So can Apple, but only all of it: leave out
+   every `APPLE_*` line until the key exists, since the service won't start with
+   `APPLE_APP_BUNDLE_IDENTIFIER` or `APPLE_SERVICES_IDS` and no key. Without Apple, the iOS app
+   still shows its Apple button, which answers `404 provider_not_found`, so turn Apple on before
+   a build that signs in reaches testers. After each edit, `journalctl -t zenbujapanese-account-api --since -10min` shows the deploy
    it made, or why the service didn't start.
 
    - **The service:** `ACCOUNT_API_URL` (`https://api-staging.zenbujapanese.com` or
@@ -750,7 +756,8 @@ this order; each step says how to check it worked.
      sudo tee /etc/cron.d/zenbujapanese-account-backups >/dev/null
    sudo chmod 644 /etc/cron.d/zenbujapanese-account-backups
    ```
-   Reinstall the script the same way after it changes.
+   The script comes from a checkout of `main` (copy `apps/account-api/deploy/backups.sh` to the
+   server, as for the deployer). Reinstall it the same way after it changes.
 7. **The first deploy.** Run the workflow by hand (Actions → Account API deploy → Run workflow); the
    deployer starts each image within 5 minutes of its tag moving. Then, before anything relies on
    it:

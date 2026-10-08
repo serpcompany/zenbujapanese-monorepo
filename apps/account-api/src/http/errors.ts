@@ -25,7 +25,22 @@ function isErrorBody(body: unknown): body is ErrorBody {
   return typeof error === 'object' && error !== null
 }
 
-export async function inErrorFormat(response: Response): Promise<Response> {
+function withRetryAfter(response: Response): Response {
+  const wait = response.headers.get('x-retry-after')
+  if (response.status !== 429 || wait === null || response.headers.has('retry-after')) {
+    return response
+  }
+  const headers = new Headers(response.headers)
+  headers.set('retry-after', wait)
+  return new Response(response.body, {
+    status: response.status,
+    statusText: response.statusText,
+    headers
+  })
+}
+
+export async function inErrorFormat(answered: Response): Promise<Response> {
+  const response = withRetryAfter(answered)
   if (response.status < 400) return response
   const json = response.headers.get('content-type')?.includes('application/json') ?? false
   const body: unknown = json
