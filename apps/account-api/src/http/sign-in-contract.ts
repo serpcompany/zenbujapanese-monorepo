@@ -68,9 +68,31 @@ const IdTokenSchema = z
       .openapi({ description: 'The ID token Sign in with Apple or Google gave the device.' }),
     nonce: z.string().openapi({
       description: 'The nonce from POST /v1/auth/sign-in/nonce, passed to Apple or Google.'
-    })
+    }),
+    user: z
+      .object({
+        name: z.object({ firstName: z.string(), lastName: z.string() }).partial().optional()
+      })
+      .optional()
+      .openapi({
+        description:
+          "The name Sign in with Apple JS hands the website on the learner's first sign-in. Apple's token has none, so it names a new account."
+      })
   })
   .openapi('IdToken')
+
+const webReturn = {
+  callbackURL: z.string().optional().openapi({
+    description:
+      "The website's page the browser comes back to from Google, on one of the website's origins."
+  }),
+  errorCallbackURL: z.string().optional().openapi({
+    description:
+      'Where it comes back instead when signing in fails, with `?error=` and a code, such as `account_not_linked`, `account_already_linked_to_different_user`, `access_denied`, `state_mismatch`, or `EMAIL_NOT_VERIFIED`, which may come in capitals, so compare it ignoring case and treat any other as a failed sign-in. A missing state, or a callback reused or reloaded, ends at GET /v1/auth/error instead, a JSON `404 not_found`.'
+  })
+}
+
+const WebSignInSchema = z.object({ url: z.url(), redirect: z.literal(true) }).openapi('WebSignIn')
 
 const provider = z.enum(['apple', 'google'])
 
@@ -188,7 +210,7 @@ export const signInRoutes = {
         z.object({
           provider,
           idToken: IdTokenSchema.optional(),
-          callbackURL: z.string().optional()
+          ...webReturn
         })
       ),
       headers: appSigningIn
@@ -197,10 +219,7 @@ export const signInRoutes = {
       200: {
         ...signedIn,
         ...json(
-          z.union([
-            SignInSchema,
-            z.object({ url: z.url(), redirect: z.literal(true) }).openapi('WebSignIn')
-          ]),
+          z.union([SignInSchema, WebSignInSchema]),
           'Signed in, or, without `idToken`, the provider page to send the browser to.'
         )
       },
@@ -236,11 +255,15 @@ export const signInRoutes = {
     method: 'post',
     path: '/v1/auth/link-social',
     summary: 'Add Apple or Google as another way to sign in',
-    description: 'Needs a sign-in from the last 10 minutes. The account email is told.',
+    description:
+      "Needs a sign-in from the last 10 minutes. The account email is told. Without `idToken`, the website starts Google's sign-in, which comes back to `callbackURL` with the way added.",
     security: sessionToken('account'),
-    request: body(z.object({ provider, idToken: IdTokenSchema })),
+    request: body(z.object({ provider, idToken: IdTokenSchema.optional(), ...webReturn })),
     responses: {
-      200: json(z.looseObject({ status: z.literal(true) }), 'Added.'),
+      200: json(
+        z.union([z.looseObject({ status: z.literal(true) }), WebSignInSchema]),
+        'Added, or, without `idToken`, the provider page to send the browser to.'
+      ),
       400: refusal(malformed),
       401: refusal({ ...signedOut, ...badNonce, ...badToken }),
       403: refusal({ ...notFresh, ...noScope('account') }),

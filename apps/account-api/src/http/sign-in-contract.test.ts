@@ -81,6 +81,13 @@ describe("sign-in's contract", () => {
       linkNonce
     )
     await holds(signInRoutes.linkProvider, as.link(session, 'google', linking, linkNonce))
+    await holds(
+      signInRoutes.linkProvider,
+      call('/v1/auth/link-social', {
+        token: session,
+        body: { provider: 'google', callbackURL: '/', errorCallbackURL: '/' }
+      })
+    )
     const identities = await call('/v1/auth/list-accounts', { token: session })
     await holds(signInRoutes.identities, Promise.resolve(identities))
     const linked = (identities.body as unknown as { id: string; providerId: string }[]).find(

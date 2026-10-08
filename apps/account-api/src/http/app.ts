@@ -42,6 +42,17 @@ function isLocal(url: string): boolean {
 
 const accountPaths = ['/v1/me', '/v1/sync'] as const
 
+function forTheWebsite(response: Response): Response {
+  const headers = new Headers(response.headers)
+  headers.delete('set-auth-token')
+  if (response.status >= 400) headers.delete('set-cookie')
+  return new Response(response.body, {
+    status: response.status,
+    statusText: response.statusText,
+    headers
+  })
+}
+
 export function createApp(options: AppOptions) {
   const { release, databaseReady, auth, devMailbox } = options
   const app = new OpenAPIHono<AccountEnv>({
@@ -60,7 +71,7 @@ export function createApp(options: AppOptions) {
     credentials: true,
     allowMethods: ['GET', 'POST', 'PATCH', 'DELETE'],
     allowHeaders: ['authorization', 'content-type', 'x-zenbu-client'],
-    exposeHeaders: ['set-auth-token'],
+    exposeHeaders: ['retry-after', 'x-retry-after'],
     maxAge: 600
   })
   for (const path of ['/v1/auth/*', '/v1/health', ...accountPaths]) app.use(path, crossOrigin)
@@ -86,12 +97,14 @@ export function createApp(options: AppOptions) {
       : context.json({ status: 'unavailable', release }, 503)
   )
 
-  accountRoutes(app, options.accounts, options.deleteAccount, databaseReady)
+  accountRoutes(app, options.accounts, options.deleteAccount, databaseReady, options.allowedOrigins)
   signInContract(app)
 
-  app.on(['GET', 'POST'], '/v1/auth/*', async context =>
-    inErrorFormat(await auth.handler(context.req.raw))
-  )
+  app.on(['GET', 'POST'], '/v1/auth/*', async context => {
+    const answer = await inErrorFormat(await auth.handler(context.req.raw))
+    const origin = context.req.header('origin')
+    return origin && options.allowedOrigins.includes(origin) ? forTheWebsite(answer) : answer
+  })
 
   app.get('/dev/mail', context => {
     if (devMailbox === null || !isLocal(context.req.url)) return context.notFound()

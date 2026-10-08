@@ -1,12 +1,28 @@
 import { createHash } from 'node:crypto'
 import { afterAll, beforeAll, expect, vi } from 'vitest'
 import { claims, type IdentityProvider, standInForProviders } from './identity-provider'
-import { type Service, startService } from './service'
+import { type Service, startService, websiteOrigin } from './service'
 
 type Provider = 'apple' | 'google'
 type Answer = Awaited<ReturnType<Service['call']>>
 
 export const sessionToken = (answer: Answer) => answer.headers.get('set-auth-token') ?? ''
+export const websiteCookie = 'zenbu-test.session_token'
+
+export function setCookie(headers: Headers, name: string) {
+  const line = headers.getSetCookie().find(each => each.startsWith(`${name}=`))
+  if (!line) return null
+  const [pair = '', ...attributes] = line.split(';').map(part => part.trim())
+  return { value: pair.slice(name.length + 1), attributes: attributes.map(a => a.toLowerCase()) }
+}
+
+export const websiteSession = (answer: Answer) =>
+  setCookie(answer.headers, websiteCookie)?.value ?? ''
+
+export const fromTheWebsite = (session?: string) => ({
+  client: null,
+  headers: { origin: websiteOrigin, ...(session ? { cookie: `${websiteCookie}=${session}` } : {}) }
+})
 export const userIdOf = (answer: Answer) => String((answer.body?.user as { id?: string })?.id)
 export const sha256 = (text: string) => createHash('sha256').update(text).digest('hex')
 
@@ -108,6 +124,7 @@ export function useSignInService(
     apple: IdentityProvider
     google: IdentityProvider
     appleRevoked: string[]
+    appleExchanges: { clientId: string | null; redirectUri: string | null }[]
   }
   beforeAll(async () => {
     if (options.providers) Object.assign(running, await standInForProviders())

@@ -30,14 +30,24 @@ option after it as a file filter.
   server already on that port. `E2E_BASE_URL=<url>` runs against a server you started instead.
 - **In CI** (`Web`, the `e2e` job) it runs on the production build in workerd, where the Worker's
   redirects and headers behave as deployed: `pnpm exec opennextjs-cloudflare build`, then
-  `E2E_SERVER=preview pnpm test:e2e`. OpenNext can't build on Windows; there, run that in a Linux
-  container, such as `mcr.microsoft.com/playwright`, at the version in `apps/web/package.json`.
+  `E2E_SERVER=preview pnpm test:e2e`. Then it builds a second time, as production deploys
+  (`SITE_ENV=production NEXT_PUBLIC_GTM_ID=GTM-TEST000 pnpm exec opennextjs-cloudflare build`), and
+  runs only `e2e/account-closed.spec.ts` on that build (`E2E_SITE_ENV=production pnpm exec
+  playwright test`),
+  served by `wrangler dev --env production` on port 8797 with production's vars, no dictionary
+  service, and `--env-file /dev/null`, so no `.dev.vars` or `.env` file applies. It checks
+  production's account pages stay closed while its `ACCOUNT_API_URL` is empty
+  (`docs/agents/web.md`, Account pages). OpenNext can't build on Windows; there, run that in a
+  Linux container, such as `mcr.microsoft.com/playwright`, at the version in
+  `apps/web/package.json`.
 - **On the production build locally**, build first, without `SITE_ENV`, as CI does:
   `pnpm exec opennextjs-cloudflare build && E2E_SERVER=preview pnpm test:e2e`. The tests load the
   build in `.open-next/`, not the source, so refuse to run them on a build older than your last
   change, or on one a deploy made with `SITE_ENV` set: it tests other code, and its pass means
-  nothing. Playwright also reuses a server already on port 8787, so stop a preview you started
-  earlier first. This lists what changed since the last build; rebuild when it lists anything, or
+  nothing. That includes the `SITE_ENV=production` build the closed spec needs: after running it,
+  build again without `SITE_ENV` before `E2E_SERVER=preview pnpm test:e2e`, or the suite runs on
+  production's build. Playwright also reuses a server already on port 8787, so stop a preview you
+  started earlier first; the closed run never reuses one. This lists what changed since the last build; rebuild when it lists anything, or
   when it says `.open-next/worker.js` is missing:
 
   ```bash

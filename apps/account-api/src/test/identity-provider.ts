@@ -42,13 +42,19 @@ export async function standInForProviders() {
       headers: { 'content-type': 'application/json' }
     })
   const appleRevoked: string[] = []
+  const appleExchanges: { clientId: string | null; redirectUri: string | null }[] = []
   const form = (init?: RequestInit) => new URLSearchParams(String(init?.body ?? ''))
   vi.spyOn(globalThis, 'fetch').mockImplementation(async (input, init) => {
     const url = input instanceof Request ? input.url : String(input)
     if (url.startsWith(appleKeys)) return answer(apple.keys)
     if (url.startsWith(googleKeys)) return answer(google.keys)
     if (url === appleToken) {
-      const code = form(init).get('code') ?? ''
+      const fields = form(init)
+      appleExchanges.push({
+        clientId: fields.get('client_id'),
+        redirectUri: fields.get('redirect_uri')
+      })
+      const code = fields.get('code') ?? ''
       if (code === misconfiguredAppleCode) return answer({ error: 'invalid_client' }, 400)
       if (code === appleCodeWithoutAppleId) return answer({ refresh_token: `refresh-for-${code}` })
       if (!code.startsWith('apple-code:')) return answer({ error: 'invalid_grant' }, 400)
@@ -61,7 +67,7 @@ export async function standInForProviders() {
     }
     return realFetch(input, init)
   })
-  return { apple: apple.signer, google: google.signer, appleRevoked }
+  return { apple: apple.signer, google: google.signer, appleRevoked, appleExchanges }
 }
 
 export function claims(
