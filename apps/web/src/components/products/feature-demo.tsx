@@ -44,7 +44,7 @@ function DemoSlide({ demo, first }: { demo: ProductDemo; first: boolean }) {
         <AppScreenshot
           screenshot={demo.screenshot}
           eager={first}
-          className="w-56 self-start md:w-64"
+          className="w-56 shrink-0 self-start md:w-64"
         />
       </div>
     </div>

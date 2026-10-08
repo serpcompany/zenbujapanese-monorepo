@@ -1,29 +1,29 @@
 import Image from 'next/image'
-import { appScreenshotSize, type AppScreenshot as Screenshot } from '@/lib/app-screenshots'
+import type { AppScreenshot as Screenshot } from '@/lib/app-screenshots'
 import { cn } from '@/lib/utils'
 
 export function AppScreenshot({
   screenshot,
-  decorative = false,
+  className,
   eager = false,
-  className
+  decorative = false
 }: {
   screenshot: Screenshot
-  decorative?: boolean
-  eager?: boolean
   className?: string
+  eager?: boolean
+  decorative?: boolean
 }) {
   return (
     <Image
       src={screenshot.src}
       alt={decorative ? '' : screenshot.alt}
-      width={appScreenshotSize.width}
-      height={appScreenshotSize.height}
+      width={screenshot.width}
+      height={screenshot.height}
       unoptimized
       loading={eager ? 'eager' : 'lazy'}
       draggable={false}
       className={cn(
-        'block h-auto w-full shrink-0 rounded-[13.7%/6.3%] bg-background shadow-[0_2px_4px_oklch(0_0_0/0.06),0_24px_48px_-18px_oklch(0_0_0/0.3)] ring-1 ring-foreground/10',
+        'h-auto rounded-[13.7%/6.3%] bg-background shadow-[0_2px_4px_rgb(0_0_0/0.06),0_24px_48px_-18px_rgb(0_0_0/0.3)] ring-1 ring-foreground/10',
         className
       )}
     />

@@ -78,6 +78,7 @@ test.describe('the Zenbu Japanese for iPhone page', () => {
 
   test('each of the demo’s dots opens its feature and marks itself current', async ({ page }) => {
     await page.goto(path)
+    await expect(demo(page).getByRole('button', { name: 'Next feature' })).toBeEnabled()
     const dots = demo(page).getByRole('button', {
       name: new RegExp(`^(${demos.map(item => item.label).join('|')})$`)
     })
@@ -177,6 +178,14 @@ test.describe('the products pages’ metadata', () => {
       await expect(page.locator('link[rel="canonical"]')).toHaveAttribute(
         'href',
         `https://zenbujapanese.com${canonical}`
+      )
+      await expect(page.locator('meta[property="og:title"]')).toHaveAttribute(
+        'content',
+        title.replace(' | Zenbu Japanese', '')
+      )
+      await expect(page.locator('meta[property="og:site_name"]')).toHaveAttribute(
+        'content',
+        'Zenbu Japanese'
       )
     })
   }

@@ -1,27 +1,44 @@
 export interface AppScreenshot {
   src: string
   alt: string
+  width: number
+  height: number
 }
-
-export const appScreenshotSize = { width: 600, height: 1305 } as const
 
 const appStoreScreenshot = (file: string, alt: string): AppScreenshot => ({
   src: `/screenshots/app-store/${file}.webp`,
-  alt
+  alt,
+  width: 600,
+  height: 1305
 })
 
 export const appScreenshots = {
-  searchResults: appStoreScreenshot('search-results', 'Search results for taberu'),
+  searchResults: appStoreScreenshot(
+    '01-search-results',
+    'Search results for taberu in the app: 食べる, to eat, then 食べるラー油'
+  ),
   wordDetail: appStoreScreenshot(
-    'word-detail-pitch',
-    'The word page for 大丈夫, with its pitch accent and meanings'
+    '08-word-detail-pitch',
+    'The app’s word page for 大丈夫, with its pitch accent, meanings, and frequency'
   ),
   imageSearch: appStoreScreenshot(
-    'image-search-word',
-    'Image Search on a ramen menu, with 醤油 open from the photo'
+    '05-image-search-word',
+    'Image Search reading a ramen menu in the app, with 醤油, soy sauce, open'
   ),
-  handwriting: appStoreScreenshot('handwriting', 'Drawing 峠 by hand'),
-  kanjiDetail: appStoreScreenshot('kanji-detail', 'Kanji details for 峠'),
-  conjugations: appStoreScreenshot('conjugations', 'Conjugations of 頑張る'),
-  translate: appStoreScreenshot('translate-conversation', 'A live conversation in Translate')
+  handwriting: appStoreScreenshot(
+    '09-handwriting',
+    'The kanji 峠 drawn by hand in the app, with the kanji it could be above it'
+  ),
+  kanjiDetail: appStoreScreenshot(
+    '11-kanji-detail',
+    'The app’s kanji details for 峠, mountain pass, with its strokes, school grade, and JLPT level'
+  ),
+  conjugations: appStoreScreenshot(
+    '14-conjugations',
+    'The app’s conjugation table for 頑張る, to persevere, with each ending highlighted'
+  ),
+  translate: appStoreScreenshot(
+    '17-translate-conversation',
+    'A conversation in the app’s Translate tab, asking the way to Tokyo Station in English and Japanese'
+  )
 } as const satisfies Record<string, AppScreenshot>

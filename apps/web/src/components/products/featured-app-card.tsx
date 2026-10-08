@@ -7,6 +7,7 @@ import { Badge } from '@/components/ui/badge'
 import { buttonVariants } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
 import { featuredApp } from '@/lib/products/catalog'
+import { cn } from '@/lib/utils'
 
 export function FeaturedAppCard({ hidden }: { hidden?: boolean }) {
   return (
@@ -61,7 +62,7 @@ export function FeaturedAppCard({ hidden }: { hidden?: boolean }) {
           <AppScreenshot
             key={screenshot.src}
             screenshot={screenshot}
-            className={index === 0 ? 'w-40 self-start md:w-44' : 'mt-9 w-40 self-start md:w-44'}
+            className={cn('w-40 shrink-0 self-start md:w-44', index > 0 && 'mt-9')}
           />
         ))}
       </div>

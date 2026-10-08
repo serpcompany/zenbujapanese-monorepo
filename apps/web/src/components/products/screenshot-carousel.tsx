@@ -48,7 +48,7 @@ export function ScreenshotCarousel({
               className="basis-auto pl-6"
             >
               <figure className="flex w-44 flex-col items-center gap-3.5 md:w-50">
-                <AppScreenshot screenshot={screenshot} />
+                <AppScreenshot screenshot={screenshot} className="block w-full" />
                 <figcaption className="text-center text-sm font-medium text-balance">
                   {caption}
                 </figcaption>

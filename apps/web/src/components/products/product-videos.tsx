@@ -41,7 +41,7 @@ function VideoCard({ video }: { video: AppVideo }) {
           className="group/video relative block aspect-video w-full overflow-hidden rounded-lg bg-neutral-900 ring-1 ring-foreground/10 outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
         >
           <span className="absolute top-[14%] left-1/2 w-1/3 -translate-x-1/2 -rotate-4">
-            <AppScreenshot screenshot={video.thumbnail} decorative />
+            <AppScreenshot screenshot={video.thumbnail} decorative className="block w-full" />
           </span>
           <span className="absolute bottom-2 left-2 grid size-8 place-items-center rounded-full bg-white text-neutral-950 shadow-lg transition-transform group-hover/video:scale-110">
             <PlayIcon aria-hidden="true" className="ml-0.5 size-4 fill-current" />

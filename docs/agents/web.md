@@ -71,10 +71,12 @@ lists every child sitemap and each child sitemap lists the new URLs.
   ([product docs](../../apps/web/docs/product/dictionary.md#header-footer-and-site-wide),
   Placeholder links). When a page ships, give its entry the page's path, as the products pages'
   entries have, so every link to it changes at once, or link it directly and drop the entry.
-- `apps/web/public/` holds the site's images: the header's App Store screenshot crops and the app
-  icon, a larger icon (`app-icon-192.webp`), and App Store screenshots at 600 pixels wide in
-  `public/screenshots/app-store/`, converted with `cwebp -q 80 -resize 600 0` from
-  `apps/ios/screenshots/app-store/en-US/iphone-63/` and listed in `src/lib/app-screenshots.ts`.
+- `apps/web/public/` holds the header's images (App Store screenshot crops and the app icon), a
+  larger app icon (`app-icon-192.webp`) and, in `apps/web/public/screenshots/app-store/`, whole App
+  Store screenshots for the homepage and the products pages, each named for its file in
+  `apps/ios/screenshots/app-store/en-US/iphone-63/` and made with `cwebp -q 80 -resize 600 0`.
+  `apps/web/src/lib/app-screenshots.ts` lists them with their alt text, and
+  `apps/web/src/components/app-screenshot.tsx` draws one without a device frame.
   `next/image` renders them `unoptimized`, since the site sets up no image optimization on Workers.
 - The products pages ([product docs](../../apps/web/docs/product/products.md)): `/products/` is
   static, and its filters read `?type=` with `useSearchParams` inside a `Suspense` whose fallback

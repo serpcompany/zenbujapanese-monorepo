@@ -5,7 +5,12 @@ export type SitePage = {
 }
 
 export const sitePages = [
-  { path: '/', title: 'Home', description: 'Zenbu Japanese dictionary and translator.' },
+  {
+    path: '/',
+    title: 'Home',
+    description:
+      'Look up Japanese words offline, read menus and signs with your camera, draw kanji you can’t type, and translate conversations on iPhone. Free on the web too.'
+  },
   {
     path: '/dictionary/',
     title: 'Japanese dictionary',

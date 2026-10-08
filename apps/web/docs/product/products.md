@@ -170,7 +170,9 @@ dictionary, the browser extension, and kana charts as catalog cards, with All pr
 
 **Titles, descriptions, and canonical URLs.** `/products/` is "Products | Zenbu Japanese" and the
 iPhone app's page "Zenbu Japanese for iPhone: Japanese Dictionary & Translator", each with its
-description from `src/lib/pages.ts` and its own canonical URL. Both are in `src/lib/pages.ts`, so
+description from `src/lib/pages.ts` and its own canonical URL. Their Open Graph tags carry the
+same title and description, with the site's name, type, and locale (`siteOpenGraph` in
+`src/lib/metadata.ts`, which `pageMetadata` adds to every page it describes). Both are in `src/lib/pages.ts`, so
 `/sitemaps/pages.xml` lists them, and the HTML sitemap lists them under Home
 (`homeTree` in `src/lib/dictionary/browse/site-tree.ts`).
 
