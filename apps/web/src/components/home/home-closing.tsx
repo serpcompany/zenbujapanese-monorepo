@@ -39,8 +39,8 @@ function ClosingPromise({
   return (
     <li className="flex min-w-0 flex-col gap-2 border-t py-7 first:border-t-0 md:border-t-0 md:border-l md:px-6 md:pt-8 md:pb-2 md:first:border-l-0 md:first:pl-0">
       <h3 className="text-[1.0625rem] font-semibold tracking-tight">{title}</h3>
-      <p className="text-[0.9375rem] leading-relaxed text-muted-foreground">{children}</p>
       <div className="order-first mb-3 flex min-h-34 items-center md:min-h-56">{preview}</div>
+      <p className="text-[0.9375rem] leading-relaxed text-muted-foreground">{children}</p>
     </li>
   )
 }

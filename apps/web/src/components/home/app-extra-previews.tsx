@@ -1,5 +1,4 @@
 import { CheckIcon, GripVerticalIcon, PlayIcon, PointerIcon } from 'lucide-react'
-import { accent } from '@/components/dictionary/accent'
 import { FrequencyBadges } from '@/components/dictionary/frequency'
 import { HeadwordRuby } from '@/components/dictionary/headword-ruby'
 import { RubyText } from '@/components/dictionary/ruby-text'
@@ -25,13 +24,7 @@ export function PlayerPreview() {
         <div className={cn(previewPanel, 'bg-blue-600/5 px-3 py-2.5 ring-[1.5px] ring-blue-600')}>
           <p lang="ja">
             {caption.words.map(word => (
-              <span
-                key={word}
-                className={cn(
-                  'mx-px border-b-[1.5px] border-foreground/35',
-                  word === open.headword && cn(accent, 'border-current')
-                )}
-              >
+              <span key={word} className="mx-px border-b-[1.5px] border-foreground/35">
                 {word}
               </span>
             ))}

@@ -18,15 +18,17 @@ const ichidanVerbs = fixtureBrowseAnswers['/v1/browse/categories/ichidan-verbs?p
 const taberu = ichidanVerbs.words.find(word => word.headword === '食べる')
 
 describe('the homepage draws 食べる as the dictionary has it', () => {
-  test.each([
-    ['the frequency card', frequencyPreview.word],
-    ['the search preview’s first result', searchPreview.results[0]]
-  ])('%s', (_, shown) => {
-    expect(taberu).toBeDefined()
-    expect({ ruby: shown.ruby, meaning: shown.meaning, chips: shown.chips }).toEqual({
-      ruby: taberu?.ruby,
-      meaning: taberu?.summary,
-      chips: taberu?.chips
-    })
+  test('in the frequency card and the search preview’s first result', () => {
+    expect(searchPreview.results[0]).toBe(frequencyPreview.word)
+    expect({
+      ruby: frequencyPreview.word.ruby,
+      meaning: frequencyPreview.word.meaning,
+      chips: frequencyPreview.word.chips
+    }).toEqual({ ruby: taberu?.ruby, meaning: taberu?.summary, chips: taberu?.chips })
+  })
+
+  test('in the search preview’s word card', () => {
+    const { ruby, meanings } = searchPreview.open
+    expect({ ruby, meaning: meanings[0] }).toEqual({ ruby: taberu?.ruby, meaning: taberu?.summary })
   })
 })
