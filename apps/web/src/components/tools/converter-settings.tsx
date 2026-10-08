@@ -6,7 +6,6 @@ import { Checkbox } from '@/components/ui/checkbox'
 import { Label } from '@/components/ui/label'
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group'
 import type { ConverterOptions } from '@/lib/tools/convert'
-import type { ConverterSetting } from '@/lib/tools/converters'
 import type { WidthOptions } from '@/lib/tools/width'
 
 const scripts: readonly { value: KanaScript; label: string }[] = [
@@ -20,43 +19,45 @@ const widthChanges: readonly { value: keyof WidthOptions; label: string }[] = [
   { value: 'symbolsAndSpaces', label: 'Symbols and spaces' }
 ]
 
-export function ConverterSettings({
-  setting,
-  options,
-  onChange
-}: {
-  setting: ConverterSetting
+interface SettingProps {
   options: ConverterOptions
   onChange: (options: ConverterOptions) => void
-}) {
-  const id = useId()
-  if (setting === 'script') {
-    return (
-      <div className="flex flex-col items-end gap-2">
-        <span id={`${id}-write-in`} className="text-sm font-medium">
-          Write in
-        </span>
-        <ToggleGroup
-          aria-labelledby={`${id}-write-in`}
-          value={[options.script]}
-          onValueChange={values => {
-            const script = scripts.find(choice => choice.value === values[0])
-            if (script) onChange({ ...options, script: script.value })
-          }}
-          variant="outline"
-        >
-          {scripts.map(script => (
-            <ToggleGroupItem key={script.value} value={script.value}>
-              {script.label}
-            </ToggleGroupItem>
-          ))}
-        </ToggleGroup>
-      </div>
-    )
-  }
+}
+
+export function ScriptSetting({ options, onChange }: SettingProps) {
+  const label = useId()
   return (
-    <fieldset className="flex flex-col gap-2">
-      <legend className="mb-2 text-sm font-medium">Change</legend>
+    <div className="flex flex-col items-end gap-2">
+      <span id={label} className="text-sm font-medium">
+        Write in
+      </span>
+      <ToggleGroup
+        aria-labelledby={label}
+        value={[options.script]}
+        onValueChange={values => {
+          const script = scripts.find(choice => choice.value === values[0])
+          if (script) onChange({ ...options, script: script.value })
+        }}
+        variant="outline"
+      >
+        {scripts.map(script => (
+          <ToggleGroupItem key={script.value} value={script.value}>
+            {script.label}
+          </ToggleGroupItem>
+        ))}
+      </ToggleGroup>
+    </div>
+  )
+}
+
+export function WidthSettings({ options, onChange }: SettingProps) {
+  const id = useId()
+  return (
+    <fieldset className="flex flex-wrap items-center gap-x-4 gap-y-2">
+      <legend className="sr-only">Change</legend>
+      <span aria-hidden="true" className="text-sm font-medium">
+        Change
+      </span>
       {widthChanges.map(change => (
         <div key={change.value} className="flex items-center gap-2">
           <Checkbox

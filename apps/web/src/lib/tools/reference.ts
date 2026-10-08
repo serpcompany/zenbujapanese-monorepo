@@ -71,12 +71,34 @@ function kanaRow(kana: string): KanaRow {
   }
 }
 
-const rowsOf = (chart: readonly ChartRow[]) =>
-  chart.flatMap(row => row.cells.flatMap(cell => (cell ? [kanaRow(cell.kana)] : [])))
+interface KanaChart {
+  headings: readonly string[]
+  rows: readonly { label: string; cells: readonly (KanaRow | null)[] }[]
+}
 
-const combinationRows = ['き', 'し', 'ち', 'に', 'ひ', 'み', 'り', 'ぎ', 'じ', 'び', 'ぴ'].flatMap(
-  kana => ['ゃ', 'ゅ', 'ょ'].map(small => kanaRow(kana + small))
-)
+const vowelHeadings = ['a', 'i', 'u', 'e', 'o']
+
+const chartOf = (rows: readonly ChartRow[]): KanaChart => ({
+  headings: vowelHeadings,
+  rows: rows.map(row => ({
+    label: kanaToRomaji(row.cells.find(cell => cell !== null)?.kana ?? ''),
+    cells: row.cells.map(cell => (cell ? kanaRow(cell.kana) : null))
+  }))
+})
+
+const combinationChart: KanaChart = {
+  headings: ['ya', 'yu', 'yo'],
+  rows: ['き', 'し', 'ち', 'に', 'ひ', 'み', 'り', 'ぎ', 'じ', 'び', 'ぴ'].map(kana => ({
+    label: kanaToRomaji(kana),
+    cells: ['ゃ', 'ゅ', 'ょ'].map(small => kanaRow(kana + small))
+  }))
+}
+
+const rowsOf = (chart: KanaChart) =>
+  chart.rows.flatMap(row => row.cells.flatMap(cell => (cell ? [cell] : [])))
+
+const basicChart = chartOf(gojuonRows)
+const markChart = chartOf(dakuonRows)
 
 const smallRows = Array.from('ぁぃぅぇぉゃゅょっゎ', kanaRow)
 
@@ -104,14 +126,22 @@ export type KanaGroupId = 'basic' | 'marks' | 'combinations' | 'small' | 'extend
 
 export interface KanaGroup {
   id: KanaGroupId
+  tab: string
   label: string
   rows: readonly KanaRow[]
+  chart?: KanaChart
 }
 
 export const kanaGroups: readonly KanaGroup[] = [
-  { id: 'basic', label: 'Basic', rows: rowsOf(gojuonRows) },
-  { id: 'marks', label: 'With marks', rows: rowsOf(dakuonRows) },
-  { id: 'combinations', label: 'Combinations', rows: combinationRows },
-  { id: 'small', label: 'Small kana', rows: smallRows },
-  { id: 'extended', label: 'Katakana only', rows: extendedRows }
+  { id: 'basic', tab: 'Basic', label: 'Basic', rows: rowsOf(basicChart), chart: basicChart },
+  { id: 'marks', tab: 'Marks', label: 'With marks', rows: rowsOf(markChart), chart: markChart },
+  {
+    id: 'combinations',
+    tab: 'Combos',
+    label: 'Combinations',
+    rows: rowsOf(combinationChart),
+    chart: combinationChart
+  },
+  { id: 'small', tab: 'Small', label: 'Small kana', rows: smallRows },
+  { id: 'extended', tab: 'Extra', label: 'Katakana only', rows: extendedRows }
 ]

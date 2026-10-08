@@ -2,7 +2,7 @@
 
 import { useRef, useState } from 'react'
 import { ConverterBox } from '@/components/tools/converter-box'
-import { ConverterSettings } from '@/components/tools/converter-settings'
+import { ScriptSetting, WidthSettings } from '@/components/tools/converter-settings'
 import { Button } from '@/components/ui/button'
 import {
   Card,
@@ -31,17 +31,16 @@ export function Converter({ slug }: { slug: ConverterSlug }) {
           <h2>Type in either box</h2>
         </CardTitle>
         <CardDescription>The other box converts as you type.</CardDescription>
-        {converter.setting ? (
+        {converter.setting === 'script' ? (
           <CardAction>
-            <ConverterSettings
-              setting={converter.setting}
-              options={options}
-              onChange={setOptions}
-            />
+            <ScriptSetting options={options} onChange={setOptions} />
           </CardAction>
         ) : null}
       </CardHeader>
       <CardContent className="flex flex-col gap-6">
+        {converter.setting === 'widths' ? (
+          <WidthSettings options={options} onChange={setOptions} />
+        ) : null}
         <ConverterBox
           label={converter.from}
           lang={languageOf[converter.input]}

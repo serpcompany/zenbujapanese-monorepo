@@ -162,7 +162,8 @@ HTML while closed; the last says the web dictionary has the app's entries, and w
 only in the app, and links to the dictionary. The offline dictionary's "more than
 200,000 words" is the app's own dictionary, which the site's word pages are built from (218,382
 words, [`docs/agents/web.md`](../../../../docs/agents/web.md), Sitemaps). More from Zenbu shows the
-dictionary, the browser extension, and kana charts as catalog cards, with All products.
+dictionary, the browser extension, and kana charts as catalog cards, with All products. The
+questions are the stock accordion (`src/components/question-list.tsx`), as the tools pages' are.
 
 - Source: #648 mockups (Product page); the app's product docs for every claim.
 - Check: Product page spec, "lists what’s inside and the questions, the first one open" and "More

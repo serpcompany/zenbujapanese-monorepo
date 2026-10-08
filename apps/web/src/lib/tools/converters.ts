@@ -5,7 +5,7 @@ export type ConverterPair = 'kana' | 'romaji' | 'width'
 export type Writing = 'japanese' | 'romaji'
 
 export const languageOf: Record<Writing, string> = { japanese: 'ja', romaji: 'ja-Latn' }
-export type ConverterSetting = 'script' | 'widths'
+type ConverterSetting = 'script' | 'widths'
 
 export interface Converter extends SitePage {
   slug: ConverterSlug

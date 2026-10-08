@@ -31,11 +31,12 @@ headings (`src/components/tools/tool-reference.tsx`).
 (one per converter, each with its mark, name, a line, and a sample it converts, such as こーひー →
 コーヒー); then Dictionary and reference, six cards that open existing pages (Dictionary, Hiragana
 chart, Katakana chart, Kanji lists, Frequency lists, and Word categories, which is the browse
-home); then a card for the app, with Get the app, which opens the iPhone app's page. The cards are
-stock `Card` parts (`CardHeader`, `CardTitle`, `CardDescription`, `CardContent`) with the products
-catalog's mark tile, and no two share a mark. They are one column on phones, two from 768 pixels,
-and three from 1024, as the product page's are. The page is laid out as the browse pages are
-(`BrowsePage` and `BrowseHeading`), and its section headings are the products pages'.
+home); then a card for the app, its title and line beside Get the app, which opens the iPhone app's
+page. The cards are stock `Card` parts (`CardHeader`, `CardTitle`, `CardDescription`,
+`CardContent`) with the products catalog's mark tile and its hover, and no two share a mark. They
+are one column on phones, two from 768 pixels, and three from 1024, as the product page's are. The
+page is laid out as the browse pages are (`BrowsePage` and `BrowseHeading`), with their section
+headings.
 
 - Source: the owner's decision on #579 (Index: cards).
 - Check: Tools spec, "lists the six converters, then the dictionary and reference pages, then the
@@ -48,10 +49,10 @@ and three from 1024, as the product page's are. The page is laid out as the brow
 line about it; the converter, with a line under it saying nothing typed is sent anywhere and a link
 to the other direction's page (Katakana to Hiragana → on Hiragana to Katakana); How it works; on the
 romaji pages Typing tips or Spelling rules, and on the width pages What changes; the conversion
-table; Questions; Related tools, three other converters as the index's cards, under a heading like
-the product page's More from Zenbu with All tools →, leaving out the other direction, which is
-already linked; and a card for the app, with Dictionary and Get the app. The converter pages show no
-kana chart of their own: the conversion table links the full kana charts.
+table; Questions; Related tools, three other converters as the index's cards, with All tools → as
+the product page's More from Zenbu has All products, leaving out the other direction, which is
+already linked; and a card for the app, its title and line beside Dictionary and Get the app. The
+converter pages show no kana chart of their own: the conversion table links the full kana charts.
 
 - Source: the owner's decision on #579 (Converter page: stacked), and the owner's change that
   replaced the swap button with a link to the other direction.
@@ -61,13 +62,14 @@ kana chart of their own: the conversion table links the full kana charts.
   and its other direction, which it links on its own".
 
 **The converter.** A stock card: its header says Type in either box, and that the other box converts
-as you type, with the page's options, if it has any, at its end (`CardAction`). Its content is two
-boxes, both editable, each a stock `Label` and `Textarea` of the same size: the top one in the
-page's "from" script (romaji on Romaji to Kana, kana on Kana to Romaji) and the bottom one in its
-"to" script. Each has its character count, the only muted text, and its own Copy, which copies
-that box and says Copied (or, where the browser won't copy, to select the text). The top box also
-has Clear, which empties both boxes and puts the cursor in the top one. The card's footer is Try,
-whose examples fill the top box. Every button is the stock default size.
+as you type, with Romaji to Kana's Write in at its end (`CardAction`). Its content starts, on the
+width pages, with the row of width options, and then has two boxes, both editable, each a stock
+`Label` and `Textarea` of the same size: the top one in the page's "from" script (romaji on Romaji to
+Kana, kana on Kana to Romaji) and the bottom one in its "to" script. Each has its character count,
+the only muted text, and its own Copy, which copies that box and says Copied (or, where the browser
+won't copy, to select the text). The top box also has Clear, which empties both boxes and puts the
+cursor in the top one. The card's footer is Try, whose examples fill the top box. Every button is
+the stock default size.
 
 - Source: the owner's decision on #579; the owner's change to two editable boxes.
 - Check: Tools spec, "converts as you type, counts the characters, and Clear empties both boxes",
@@ -89,8 +91,9 @@ top box.
 
 **Options.** Romaji to Kana writes hiragana or katakana (a stock toggle group labelled Write in),
 which sets the kana box's script when romaji is typed; typed kana of either script turn into romaji.
-The width converters choose what changes, under the label Change, with a stock checkbox and label
-for each: Katakana, Letters and numbers, and Symbols and spaces, all on at first; a kind left off stays as it is, both ways. The others have
+The width converters choose what changes, in one row labelled Change that wraps on phones, with a
+stock checkbox and label for each: Katakana, Letters and numbers, and Symbols and spaces, all on at
+first; a kind left off stays as it is, both ways. The others have
 none, and Kana to Romaji writes hiragana when romaji is typed in its bottom box. There is no
 long-vowel option yet.
 
@@ -169,25 +172,31 @@ the conversion table lists, is what the converters do.
   table converts both ways with its option alone"; `src/lib/tools/reference.test.ts`, "every other
   spelling it lists types its kana".
 
-**Conversion table.** Every one of the 131 rows is in the HTML, one group at a time in stock tabs:
-Basic (46), With marks (25), Combinations (33), Small kana (10), and Katakana only (17, Extended
-katakana on the width pages). The tabs' panels stay in the page while hidden, so every row is in
-the HTML, and each group is a stock table at its default density, sized to its content; on a
-phone the tabs scroll sideways inside their bar, and nothing else does. The basic kana and those
-with marks follow the dictionary core's kana rows (`gojuonRows` and `dakuonRows`). Its columns run
-in the page's direction. On Romaji to Kana, the first column is a spelling that types the row's kana
-on that page (wo for を, di for ぢ, xa for ぁ, xtsu for っ, who for うぉ), with the other spellings
-that type it after; elsewhere the romaji is the Hepburn spelling, and っ's is "doubled consonant",
-whose cell wraps, as the other spellings' do. The section links the full kana charts
-(`/dictionary/browse/kana/`).
+**Conversion table.** Every one of the 131 kana is in the HTML, one group at a time in stock tabs
+with short names, Basic, Marks, Combos, Small, and Extra, so the tabs fit a phone; each panel names
+its group in full with its count: Basic (46), With marks (25), Combinations (33), Small kana (10),
+and Katakana only (17, Extended katakana on the width pages). The tabs' panels stay in the page while
+hidden. Basic and With marks are charts in a stock table, a row for each consonant (a, ka, sa, and
+on, as the dictionary core's `gojuonRows` and `dakuonRows` lay them out) by the columns a, i, u, e,
+and o, with empty cells where there is no kana (yi, ye, wu); Combinations is a row for each kana by
+ya, yu, and yo. Each cell holds the page's pair, in its direction (か カ on Hiragana to Katakana, ｶ
+カ on Half-width to Full-width), over its romaji. Small kana and Katakana only are lists, a row for
+each kana. Each table is at its default density and sized to its content. On Romaji to Kana, the
+romaji are spellings that type the kana on that page (wo for を, di for ぢ, xa for ぁ, xtsu for っ,
+who for うぉ), with the other spellings that type it after; on Kana to Romaji, the Hepburn spelling
+and the other spellings; elsewhere the Hepburn spelling, and っ's is "doubled consonant", whose cell
+wraps. The section links the full kana charts (`/dictionary/browse/kana/`).
 
-- Source: the owner's decision on #579 (the conversion table); the owner's UI rules (stock table at
-  its default density, one group at a time in tabs).
-- Check: `src/lib/tools/table.test.ts`, "every row of Romaji to Kana’s table types the kana
-  beside it, and so does each other spelling"; `src/lib/tools/reference.test.ts`, "every kana has a
+- Source: the owner's decision on #579 (the conversion table); the owner's UI rules and their
+  reviews (stock table at its default density, one group at a time in tabs with short names, and
+  chart-shaped tables).
+- Check: `src/lib/tools/table.test.ts`, "has every one of the 131 kana, in five groups with short
+  tab names", "lays Basic and Marks out as a chart by vowel, with gaps, and Combos by ya, yu, and
+  yo", "each page’s pair runs in its direction", and "every spelling on Romaji to Kana types the
+  kana it sits beside"; `src/lib/tools/reference.test.ts`, "every kana has a
   spelling that types it, and its other typed spellings type it too"; Page test, "… holds every row
   of its conversion table, a tab per group, the ones not shown hidden"; Tools spec, "the conversion
-  table shows one group at a time in tabs, every row in the page".
+  table shows one group at a time in tabs, every kana in the page".
 
 **Questions.** Three questions per pair of converters, in the stock accordion the product page uses
 (`src/components/question-list.tsx`, all closed at first), every answer in the HTML while closed,

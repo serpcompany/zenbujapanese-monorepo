@@ -7,7 +7,9 @@ import { ConverterPage } from './converter-page'
 const page = (slug: (typeof converters)[number]['slug']) =>
   renderToStaticMarkup(<ConverterPage converter={converterFor(slug)} />)
 
-const conversionTableRows = (html: string) =>
+const kanaInTheTable = (html: string) => html.match(/data-kana="/g)?.length ?? 0
+
+const tableRows = (html: string) =>
   [...html.matchAll(/<tbody[^>]*>([\s\S]*?)<\/tbody>/g)]
     .map(([, body]) => body.match(/<tr /g)?.length ?? 0)
     .reduce((total, rows) => total + rows, 0)
@@ -35,7 +37,8 @@ describe('a converter page’s HTML', () => {
   )('%s holds every row of its conversion table, a tab per group, the ones not shown hidden', slug => {
     const html = page(slug)
     const { pair } = converterFor(slug)
-    expect(conversionTableRows(html)).toBe(131 + referenceRows[pair](slug))
+    expect(kanaInTheTable(html)).toBe(131)
+    expect(tableRows(html)).toBe(11 + 5 + 11 + 10 + 17 + referenceRows[pair](slug))
     expect(tabPanels(html).map(panel => panel.hidden)).toEqual([false, true, true, true, true])
   })
 

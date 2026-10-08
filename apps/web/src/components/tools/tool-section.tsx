@@ -38,7 +38,7 @@ export function ToolSection({
     <section className="flex flex-col gap-4">
       <div className="flex flex-wrap items-end justify-between gap-x-4 gap-y-1">
         <div className="flex min-w-0 flex-col gap-1">
-          <h2 className="text-lg font-semibold tracking-tight">{title}</h2>
+          <h2 className="text-xl font-semibold">{title}</h2>
           {line ? <p className="max-w-3xl text-pretty text-muted-foreground">{line}</p> : null}
         </div>
         {aside}

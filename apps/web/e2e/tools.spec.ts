@@ -153,25 +153,20 @@ test.describe('a converter page', () => {
       .toBe('ＡＢＣ　カタカナ')
   })
 
-  test('the conversion table shows one group at a time in tabs, every row in the page', async ({
+  test('the conversion table shows one group at a time in tabs, every kana in the page', async ({
     page
   }) => {
     await page.goto('/tools/kana-to-romaji/')
-    const rows = main(page).getByRole('tablist', { name: 'Rows' })
+    const groups = main(page).getByRole('tablist', { name: 'Kana groups' })
     const table = (name: string) => main(page).getByRole('table', { name: new RegExp(`^${name},`) })
-    await expect(rows.getByRole('tab')).toHaveText([
-      'Basic',
-      'With marks',
-      'Combinations',
-      'Small kana',
-      'Katakana only'
-    ])
+    await expect(groups.getByRole('tab')).toHaveText(['Basic', 'Marks', 'Combos', 'Small', 'Extra'])
     await expect(table('Basic')).toBeVisible()
-    await expect(main(page).locator('tbody tr')).toHaveCount(131 + 6)
-    const smallKana = rows.getByRole('tab', { name: 'Small kana' })
+    await expect(table('Basic').getByRole('cell', { name: 'か カ ka' })).toBeVisible()
+    await expect(main(page).locator('[data-kana]')).toHaveCount(131)
+    const small = groups.getByRole('tab', { name: 'Small' })
     await expect(async () => {
-      await smallKana.click()
-      await expect(smallKana).toHaveAttribute('aria-selected', 'true', { timeout: 1_000 })
+      await small.click()
+      await expect(small).toHaveAttribute('aria-selected', 'true', { timeout: 1_000 })
     }).toPass({ timeout: 15_000 })
     await expect(table('Basic')).toBeHidden()
     await expect(table('Small kana').getByRole('cell', { name: 'xtsu, xtu, ltu' })).toBeVisible()

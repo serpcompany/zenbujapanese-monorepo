@@ -21,7 +21,7 @@ export function ToolCard({
   children?: ReactNode
 }) {
   return (
-    <Card className="relative h-full">
+    <Card className="relative h-full hover:bg-muted/40">
       <CardHeader>
         <CardTitle className="flex items-center gap-2.5">
           <ProductMarkTile mark={mark} />
