@@ -71,48 +71,6 @@ enum AccountMessage {
   }
 }
 
-struct AppleSignInButton: UIViewRepresentable {
-  @Environment(\.colorScheme) private var colorScheme
-  let type: ASAuthorizationAppleIDButton.ButtonType
-  let action: () -> Void
-
-  func makeCoordinator() -> Coordinator { Coordinator() }
-
-  func makeUIView(context: Context) -> UIView {
-    UIView()
-  }
-
-  func updateUIView(_ container: UIView, context: Context) {
-    let style: ASAuthorizationAppleIDButton.Style = colorScheme == .dark ? .white : .black
-    context.coordinator.action = action
-    guard context.coordinator.style != style else { return }
-    context.coordinator.style = style
-    container.subviews.forEach { $0.removeFromSuperview() }
-    let button = ASAuthorizationAppleIDButton(
-      authorizationButtonType: type, authorizationButtonStyle: style)
-    button.cornerRadius = 10
-    button.translatesAutoresizingMaskIntoConstraints = false
-    button.addTarget(
-      context.coordinator, action: #selector(Coordinator.tapped), for: .touchUpInside)
-    button.accessibilityIdentifier = "account.sign-in.apple"
-    container.addSubview(button)
-    NSLayoutConstraint.activate([
-      button.leadingAnchor.constraint(equalTo: container.leadingAnchor),
-      button.trailingAnchor.constraint(equalTo: container.trailingAnchor),
-      button.topAnchor.constraint(equalTo: container.topAnchor),
-      button.bottomAnchor.constraint(equalTo: container.bottomAnchor),
-    ])
-  }
-
-  @MainActor
-  final class Coordinator: NSObject {
-    var action: () -> Void = {}
-    var style: ASAuthorizationAppleIDButton.Style?
-
-    @objc func tapped() { action() }
-  }
-}
-
 struct GoogleSignInButton: View {
   let action: () -> Void
 
@@ -141,8 +99,7 @@ struct EmailCodeForm: View {
   var body: some View {
     TextField("Email", text: $email)
       .textContentType(.emailAddress)
-      .keyboardType(.emailAddress)
-      .textInputAutocapitalization(.never)
+      .textEntry(.email)
       .autocorrectionDisabled()
       .disabled(emailIsFixed)
       .accessibilityIdentifier("account.email")
@@ -158,7 +115,7 @@ struct EmailCodeForm: View {
     if let codeSentTo {
       TextField("6-digit code", text: $code)
         .textContentType(.oneTimeCode)
-        .keyboardType(.numberPad)
+        .textEntry(.number)
         .accessibilityIdentifier("account.code")
       Button(submitTitle) {
         let entered = code

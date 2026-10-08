@@ -165,7 +165,7 @@ private struct StrokeDrawingGrid: View {
   var body: some View {
     GeometryReader { geometry in
       ZStack {
-        Color(uiColor: .systemBackground)
+        SystemColor.background
         StrokeGridLines()
           .stroke(
             .secondary,

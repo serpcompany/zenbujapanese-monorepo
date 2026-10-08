@@ -1,5 +1,4 @@
 import SwiftUI
-import UIKit
 
 struct RecognizedWordSheetRequest: Identifiable {
   let id: String
@@ -66,7 +65,7 @@ struct RecognizedWordSheet<EntryContent: View>: View {
     .presentationDetents([.medium, .large], selection: $detent)
     .presentationBackgroundInteraction(.enabled(upThrough: .medium))
     .presentationDragIndicator(.visible)
-    .presentationBackground(Color(uiColor: .systemBackground))
+    .presentationBackground(SystemColor.background)
     .accessibilityIdentifier("recognized-word-sheet")
   }
 
@@ -83,9 +82,9 @@ struct RecognizedWordSheet<EntryContent: View>: View {
         description: Text("Zenbu recognized “\(request.surface)” but found no matching entry.")
       )
       .navigationTitle("Dictionary")
-      .navigationBarTitleDisplayMode(.inline)
+      .inlineNavigationTitle()
       .toolbar {
-        ToolbarItem(placement: .topBarLeading) { closeButton }
+        ToolbarItem(placement: .barLeading) { closeButton }
       }
       .accessibilityIdentifier("recognized-word-sheet.unavailable")
     }
@@ -108,10 +107,10 @@ struct RecognizedWordSheet<EntryContent: View>: View {
         ?? [:]
     }
     .toolbar {
-      ToolbarItem(placement: .topBarLeading) { closeButton }
+      ToolbarItem(placement: .barLeading) { closeButton }
     }
     .navigationTitle("Choose “\(request.surface)”")
-    .navigationBarTitleDisplayMode(.inline)
+    .inlineNavigationTitle()
     .navigationDestination(for: DictionaryEntry.self) { entry in
       presentedEntry(entry)
     }
@@ -127,7 +126,7 @@ struct RecognizedWordSheet<EntryContent: View>: View {
     entryContent(entry, request.encounterMedia)
       .toolbar(removing: .title)
       .toolbar {
-        ToolbarItemGroup(placement: .topBarLeading) {
+        ToolbarItemGroup(placement: .barLeading) {
           closeButton
           Button("Open Full Entry", systemImage: "arrow.up.left.and.arrow.down.right") {
             openFullEntry(entry)

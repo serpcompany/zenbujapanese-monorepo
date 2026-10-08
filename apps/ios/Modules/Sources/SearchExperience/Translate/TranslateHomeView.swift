@@ -1,6 +1,5 @@
 import SwiftUI
 import TranslatorCore
-import UIKit
 
 struct TranslateHomeView: View {
   @Bindable var experience: TranslateExperience
@@ -19,11 +18,11 @@ struct TranslateHomeView: View {
       .padding(.bottom, 24)
     }
     .safeAreaInset(edge: .bottom) { startButton }
-    .background(Color(uiColor: .systemBackground))
+    .background(SystemColor.background)
     .navigationTitle("Translate")
-    .navigationBarTitleDisplayMode(.inline)
+    .inlineNavigationTitle()
     .toolbar {
-      ToolbarItem(placement: .topBarTrailing) {
+      ToolbarItem(placement: .barTrailing) {
         Button("Translations", systemImage: "clock.arrow.circlepath", action: openHistory)
           .accessibilityIdentifier("translate.history")
       }
@@ -109,11 +108,11 @@ struct TypedTranslationScreen: View {
       .environment(experience.readingAids)
       .padding(.horizontal)
       .padding(.bottom, 12)
-      .background(Color(uiColor: .systemBackground))
+      .background(SystemColor.background)
       .navigationTitle("Text")
-      .navigationBarTitleDisplayMode(.inline)
+      .inlineNavigationTitle()
       .toolbar {
-        ToolbarItem(placement: .topBarTrailing) {
+        ToolbarItem(placement: .barTrailing) {
           Menu("Options", systemImage: "ellipsis") {
             FuriganaToggle(readingAids: experience.readingAids)
           }
@@ -134,7 +133,7 @@ private struct StartProblemAlert: ViewModifier {
       switch problem {
       case .microphoneDenied:
         Button("Open Settings") {
-          if let url = URL(string: UIApplication.openSettingsURLString) { openURL(url) }
+          if let url = SystemSettings.url(for: .microphone) { openURL(url) }
         }
         Button("Cancel", role: .cancel) {}
       case .translationUnavailable:
@@ -173,7 +172,7 @@ private struct StartProblemAlert: ViewModifier {
           "Japanese and English speech recognition need a one-time download over the internet. Try again when you're online."
       )
     case .translationUnavailable:
-      String(localized: "Translate runs on this iPhone with Apple's Japanese and English languages.")
+      String(localized: "Translate runs on this \(ThisDevice.name) with Apple's Japanese and English languages.")
     }
   }
 }

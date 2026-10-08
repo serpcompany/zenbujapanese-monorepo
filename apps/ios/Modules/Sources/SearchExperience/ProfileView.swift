@@ -8,7 +8,7 @@ struct ProfileAvatar: View {
   var body: some View {
     Group {
       if let photo = profile.photo {
-        Image(uiImage: photo)
+        Image(decorative: photo, scale: 1)
           .resizable()
           .scaledToFill()
       } else if !profile.initials.isEmpty {
@@ -83,7 +83,7 @@ struct ProfileView: View {
         LabeledContent("Name") {
           TextField("Name", text: $name, prompt: Text("Your Name"))
             .textContentType(.name)
-            .textInputAutocapitalization(.words)
+            .textEntry(.capitalizedWords)
             .focused($focusedField, equals: .name)
             .multilineTextAlignment(.trailing)
             .accessibilityIdentifier("profile.name")
@@ -91,7 +91,7 @@ struct ProfileView: View {
         LabeledContent("Username") {
           TextField("Username", text: $username, prompt: Text("username"))
             .textContentType(.username)
-            .textInputAutocapitalization(.never)
+            .textEntry(.uncapitalized)
             .autocorrectionDisabled()
             .focused($focusedField, equals: .username)
             .multilineTextAlignment(.trailing)
@@ -100,8 +100,7 @@ struct ProfileView: View {
         LabeledContent("Email") {
           TextField("Email", text: $email, prompt: Text(verbatim: "name@example.com"))
             .textContentType(.emailAddress)
-            .keyboardType(.emailAddress)
-            .textInputAutocapitalization(.never)
+            .textEntry(.email)
             .autocorrectionDisabled()
             .focused($focusedField, equals: .email)
             .onChange(of: email) { showsEmailError = false }
@@ -121,7 +120,7 @@ struct ProfileView: View {
     }
     .accessibilityIdentifier("profile.form")
     .navigationTitle("Profile")
-    .navigationBarTitleDisplayMode(.inline)
+    .inlineNavigationTitle()
     .onAppear {
       name = profile.name
       username = profile.username

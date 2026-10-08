@@ -1,7 +1,6 @@
 import SwiftUI
 import TranslatorCore
 @preconcurrency import Translation
-import UIKit
 
 struct AccountTabRoot: View {
   let store: EncounterMediaStore
@@ -118,7 +117,7 @@ struct AccountRootView: View {
         .accessibilityIdentifier("account.credits")
       }
     }
-    .listSectionSpacing(.compact)
+    .compactSectionSpacing()
     .accessibilityIdentifier("account.list")
     .navigationTitle("Account")
   }
@@ -214,8 +213,8 @@ private struct AccountAboutHeader: View {
       : AnyLayout(HStackLayout(spacing: 12))
     VStack(alignment: .leading, spacing: 12) {
       layout {
-        if let icon = AppBundleInfo.icon {
-          Image(uiImage: icon)
+        if let icon = AppIcon.image {
+          icon
             .resizable()
             .frame(width: 56, height: 56)
             .clipShape(.rect(cornerRadius: 13))
@@ -255,16 +254,6 @@ private enum AppBundleInfo {
   static var version: String? {
     Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String
   }
-
-  static let icon: UIImage? = {
-    guard
-      let icons = Bundle.main.object(forInfoDictionaryKey: "CFBundleIcons") as? [String: Any],
-      let primary = icons["CFBundlePrimaryIcon"] as? [String: Any]
-    else { return nil }
-    let names = (primary["CFBundleIconFiles"] as? [String] ?? []).reversed()
-      + [primary["CFBundleIconName"] as? String].compactMap { $0 }
-    return names.lazy.compactMap { UIImage(named: $0) }.first
-  }()
 }
 
 enum AccountRoute: Hashable {
@@ -338,7 +327,7 @@ private struct ReadingAidSettingsView: View {
     }
     .accessibilityIdentifier("reading-aids.form")
     .navigationTitle("Reading Aids")
-    .navigationBarTitleDisplayMode(.inline)
+    .inlineNavigationTitle()
   }
 }
 
@@ -409,14 +398,14 @@ struct MediaLibraryView: View {
 }
 
 private struct EncounterMediaRow: View {
-  @State private var image: UIImage?
+  @State private var image: Image?
   let item: EncounterMediaSummary
   let store: EncounterMediaStore
 
   var body: some View {
     HStack(spacing: 12) {
       if let image {
-        Image(uiImage: image)
+        image
           .resizable()
           .scaledToFill()
           .frame(width: 72, height: 72)
@@ -440,7 +429,7 @@ private struct EncounterMediaRow: View {
       }
     }
     .task(id: item.id) {
-      image = await store.media(item.id).flatMap { UIImage(data: $0.data) }
+      image = await store.media(item.id).flatMap { Image(imageData: $0.data) }
     }
   }
 
@@ -459,9 +448,9 @@ private struct EncounterMediaDetail: View {
 
   var body: some View {
     List {
-      if let media, let image = UIImage(data: media.data) {
+      if let media, let image = Image(imageData: media.data) {
         Section {
-          Image(uiImage: image)
+          image
             .resizable()
             .scaledToFit()
         }
@@ -478,7 +467,7 @@ private struct EncounterMediaDetail: View {
       }
     }
     .navigationTitle(item.name)
-    .navigationBarTitleDisplayMode(.inline)
+    .inlineNavigationTitle()
     .task(id: item.id) { media = await store.media(item.id) }
   }
 }

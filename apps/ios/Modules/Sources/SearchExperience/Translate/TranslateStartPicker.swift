@@ -59,7 +59,7 @@ private struct StartOption: View {
       .background(
         isSelected
           ? AnyShapeStyle(.tint.opacity(0.18))
-          : AnyShapeStyle(Color(uiColor: .secondarySystemBackground)))
+          : AnyShapeStyle(SystemColor.secondaryBackground))
       .contentShape(.rect)
     }
     .buttonStyle(.plain)

@@ -41,11 +41,11 @@ struct ConjugationsView: View {
         }
       }
     }
-    .listStyle(.insetGrouped)
-    .listSectionSpacing(.compact)
+    .groupedList()
+    .compactSectionSpacing()
     .accessibilityIdentifier("conjugations.screen")
     .navigationTitle("Conjugations")
-    .navigationBarTitleDisplayMode(.inline)
+    .inlineNavigationTitle()
   }
 }
 
@@ -162,9 +162,9 @@ struct ConjugatedFormView: View {
         openWord: openWord
       )
     }
-    .listSectionSpacing(.compact)
+    .compactSectionSpacing()
     .navigationTitle(presentation.title)
-    .navigationBarTitleDisplayMode(.inline)
+    .inlineNavigationTitle()
     .accessibilityIdentifier("conjugations.form.\(form.id.rawValue)")
     .task(id: form) {
       examples = await form.examples(

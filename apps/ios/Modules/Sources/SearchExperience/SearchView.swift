@@ -75,7 +75,7 @@ struct SearchView: View {
     .navigationTitle("Search")
     .toolbar {
       if showsRecentSearchActions {
-        ToolbarItem(placement: .topBarTrailing) {
+        ToolbarItem(placement: .barTrailing) {
           Menu {
             Button(role: .destructive) {
               isConfirmingClearAll = true

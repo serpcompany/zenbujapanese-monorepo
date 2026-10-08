@@ -17,7 +17,7 @@ struct SearchBar: View {
           .foregroundStyle(.secondary)
 
         searchTextField
-          .textInputAutocapitalization(.never)
+          .textEntry(.uncapitalized)
           .autocorrectionDisabled()
           .submitLabel(.search)
           .focused(isFocused)

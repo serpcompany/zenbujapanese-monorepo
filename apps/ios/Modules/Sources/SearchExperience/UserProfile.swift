@@ -1,7 +1,7 @@
+import CoreGraphics
 import Foundation
 import ImageIO
 import Observation
-import UIKit
 
 @MainActor
 @Observable
@@ -26,7 +26,7 @@ final class UserProfile {
   var email = "" {
     didSet { persist() }
   }
-  private(set) var photo: UIImage?
+  private(set) var photo: CGImage?
 
   var isEmpty: Bool {
     name.isEmpty && username.isEmpty && email.isEmpty && photo == nil
@@ -41,7 +41,7 @@ final class UserProfile {
     self.defaults = defaults
     self.photoURL = photoURL
     if let data = try? Data(contentsOf: photoURL) {
-      photo = UIImage(data: data)
+      photo = ImageCoding.image(from: data)
     }
     guard
       let data = defaults.data(forKey: Self.storageKey),
@@ -54,9 +54,9 @@ final class UserProfile {
 
   func setPhoto(_ data: Data) async {
     let url = photoURL
-    let scaled = await Task.detached(priority: .userInitiated) { () -> UIImage? in
+    let scaled = await Task.detached(priority: .userInitiated) { () -> CGImage? in
       guard let scaled = Self.squareThumbnail(from: data),
-        let jpeg = scaled.jpegData(compressionQuality: 0.85)
+        let jpeg = ImageCoding.jpegData(scaled, quality: 0.85)
       else { return nil }
       try? FileManager.default.createDirectory(
         at: url.deletingLastPathComponent(),
@@ -98,26 +98,21 @@ final class UserProfile {
     defaults.set(data, forKey: Self.storageKey)
   }
 
-  private nonisolated static func squareThumbnail(from data: Data) -> UIImage? {
-    let options: [CFString: Any] = [
-      kCGImageSourceCreateThumbnailFromImageAlways: true,
-      kCGImageSourceCreateThumbnailWithTransform: true,
-      kCGImageSourceThumbnailMaxPixelSize: photoDimension * 4,
-    ]
+  nonisolated static func squareThumbnail(from data: Data) -> CGImage? {
     guard
       let source = CGImageSourceCreateWithData(data as CFData, nil),
-      let cgImage = CGImageSourceCreateThumbnailAtIndex(source, 0, options as CFDictionary)
+      let image = ImageCoding.thumbnail(from: source, maxPixelSize: Int(photoDimension * 4))
     else { return nil }
-    let image = UIImage(cgImage: cgImage)
-    let side = min(image.size.width, image.size.height)
-    let scale = photoDimension / side
-    let size = CGSize(width: photoDimension, height: photoDimension)
-    let drawSize = CGSize(width: image.size.width * scale, height: image.size.height * scale)
-    let origin = CGPoint(x: (size.width - drawSize.width) / 2, y: (size.height - drawSize.height) / 2)
-    let format = UIGraphicsImageRendererFormat()
-    format.scale = 1
-    return UIGraphicsImageRenderer(size: size, format: format).image { _ in
-      image.draw(in: CGRect(origin: origin, size: drawSize))
+    let width = CGFloat(image.width)
+    let height = CGFloat(image.height)
+    let scale = photoDimension / min(width, height)
+    let drawSize = CGSize(width: width * scale, height: height * scale)
+    let origin = CGPoint(
+      x: (photoDimension - drawSize.width) / 2, y: (photoDimension - drawSize.height) / 2)
+    let side = Int(photoDimension)
+    return ImageCoding.drawing(width: side, height: side) { context in
+      context.interpolationQuality = .high
+      context.draw(image, in: CGRect(origin: origin, size: drawSize))
     }
   }
 

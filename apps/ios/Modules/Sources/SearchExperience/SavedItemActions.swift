@@ -1,7 +1,6 @@
 import CoreTransferable
 import PhotosUI
 import SwiftUI
-import UIKit
 import UniformTypeIdentifiers
 
 @MainActor
@@ -96,7 +95,7 @@ final class SavedItemPhotos {
   }
 
   var displayable: [EncounterMedia] {
-    media.filter { UIImage(data: $0.data) != nil }
+    media.filter { Image(imageData: $0.data) != nil }
   }
 
   func load(_ item: SavedItem, saving initial: EncounterMediaAttachment? = nil) async {
@@ -187,7 +186,7 @@ extension View {
     showsListPicker: Binding<Bool>
   ) -> some View {
     toolbar {
-      ToolbarItemGroup(placement: .topBarTrailing) {
+      ToolbarItemGroup(placement: .barTrailing) {
         if notes.isEditing {
           Button("Done", action: notes.finishEditing)
             .font(.body.weight(.semibold))
@@ -260,7 +259,9 @@ struct SavedItemMenu: View {
       }
       Section {
         Button("Add Note", systemImage: "square.and.pencil", action: addNote)
-        Button("Take Photo", systemImage: "camera", action: photos.presentCamera)
+        if CameraCapture.isOffered {
+          Button("Take Photo", systemImage: "camera", action: photos.presentCamera)
+        }
         Button("Choose Photo", systemImage: "photo.on.rectangle") {
           photos.showsPhotoPicker = true
         }

@@ -43,7 +43,7 @@ struct RadicalInputView: View {
                     .background(
                       selectedRadicals.contains(radical.id)
                         ? ZenbuTheme.radicalSelection
-                        : Color(uiColor: .secondarySystemFill),
+                        : SystemColor.secondaryFill,
                       in: RoundedRectangle(cornerRadius: 5)
                     )
                     .foregroundStyle(

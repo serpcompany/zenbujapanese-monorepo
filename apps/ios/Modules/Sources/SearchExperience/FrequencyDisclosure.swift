@@ -109,7 +109,7 @@ struct FrequencyDisclosureView: View {
       }
       .accessibilityIdentifier("frequency-detail.list")
       .navigationTitle("Frequency Details")
-      .navigationBarTitleDisplayMode(.inline)
+      .inlineNavigationTitle()
       .toolbar {
         ToolbarItem(placement: .confirmationAction) {
           Button("Done", action: dismiss.callAsFunction)

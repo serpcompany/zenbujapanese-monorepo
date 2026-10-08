@@ -17,8 +17,10 @@ struct SearchImageImport: ViewModifier {
   func body(content: Content) -> some View {
     content
       .confirmationDialog("Image Search", isPresented: $showsImageSources) {
-        Button("Take Photo") { presentCamera() }
-          .accessibilityIdentifier("image-source.camera")
+        if CameraCapture.isOffered {
+          Button("Take Photo") { presentCamera() }
+            .accessibilityIdentifier("image-source.camera")
+        }
         Button("Photo Library") { presentPhotoLibrary() }
           .accessibilityIdentifier("image-source.photo-library")
         Button("Files") { showsFileImporter = true }

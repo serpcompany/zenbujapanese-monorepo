@@ -25,9 +25,8 @@ struct LiveConversationView: View {
       .frame(maxHeight: .infinity)
       ConversationControlBar(session: session, experience: experience)
     }
-    .toolbar(
-      TranslateChromeLayout(isSessionLive: true, isConversationOnScreen: isOnScreen).tabBar,
-      for: .tabBar)
+    .tabBarVisibility(
+      TranslateChromeLayout(isSessionLive: true, isConversationOnScreen: isOnScreen).tabBar)
     .modifier(ConversationStatusAlert(session: session))
     .alert("Leave this conversation?", isPresented: $isConfirmingExit) {
       Button("Save and Exit") { leave(saving: true) }
@@ -36,14 +35,14 @@ struct LiveConversationView: View {
     } message: {
       Text("Save its \(session.conversation.turnCountLabel) to Translations, or leave without saving.")
     }
-    .navigationBarTitleDisplayMode(.inline)
+    .inlineNavigationTitle()
     .navigationBarBackButtonHidden()
     .toolbar {
-      ToolbarItem(placement: .topBarLeading) {
+      ToolbarItem(placement: .barLeading) {
         Button("Back", systemImage: "chevron.backward", action: requestExit)
           .accessibilityIdentifier("translate.conversation.back")
       }
-      ToolbarItem(placement: .topBarTrailing) { optionsMenu }
+      ToolbarItem(placement: .barTrailing) { optionsMenu }
     }
     .onChange(of: isConfirmingExit) { _, isConfirming in
       guard !isConfirming, experience.session === session, session.status == .paused(.leaving)

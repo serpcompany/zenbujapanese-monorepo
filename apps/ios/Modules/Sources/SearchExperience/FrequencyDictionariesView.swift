@@ -36,10 +36,10 @@ struct FrequencyDictionariesView: View {
       }
     }
     .navigationTitle("Frequency Dictionaries")
-    .navigationBarTitleDisplayMode(.inline)
+    .inlineNavigationTitle()
     .toolbar {
       if (snapshot?.enabledPackIDs.count ?? 0) > 1 {
-        EditButton()
+        ListEditButton()
           .accessibilityIdentifier("frequency-packs.reorder")
       }
     }
@@ -233,7 +233,7 @@ private struct FrequencyPackDetailView: View {
         }
       }
       .navigationTitle(pack.manifest.displayName)
-      .navigationBarTitleDisplayMode(.inline)
+      .inlineNavigationTitle()
       .toolbar {
         ToolbarItem(placement: .confirmationAction) {
           Button("Done", action: dismiss.callAsFunction)

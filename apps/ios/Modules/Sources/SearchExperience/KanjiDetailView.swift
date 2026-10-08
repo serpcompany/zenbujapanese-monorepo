@@ -142,7 +142,7 @@ struct KanjiDetailView: View {
           KanjiWordsSection(entries: orderedRelatedWords)
         }
       }
-      .listStyle(.insetGrouped)
+      .groupedList()
       .accessibilityIdentifier("kanji-detail.screen")
       .onAppear {
         restorePreservedWordPosition(in: relatedWords)
@@ -161,7 +161,7 @@ struct KanjiDetailView: View {
       }
     }
     .navigationTitle(character.rawValue)
-    .navigationBarTitleDisplayMode(.inline)
+    .inlineNavigationTitle()
     .savedItemActions(
       for: item, identifierPrefix: "kanji-detail", shareText: shareText, notes: notes,
       photos: photos, showsListPicker: $showsListPicker)

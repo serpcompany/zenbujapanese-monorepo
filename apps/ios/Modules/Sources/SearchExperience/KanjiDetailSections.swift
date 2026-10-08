@@ -286,7 +286,7 @@ struct KanjiStrokeOrderSheet: View {
     NavigationStack {
       KanjiStrokeOrderView(diagram: diagram)
         .navigationTitle("Stroke Order")
-        .navigationBarTitleDisplayMode(.inline)
+        .inlineNavigationTitle()
         .toolbar {
           ToolbarItem(placement: .cancellationAction) {
             Button("Close", action: dismiss.callAsFunction)

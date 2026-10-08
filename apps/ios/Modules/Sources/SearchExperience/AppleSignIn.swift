@@ -1,5 +1,4 @@
 import AuthenticationServices
-import UIKit
 
 struct AppleSignInCredential: Sendable {
   let identityToken: String

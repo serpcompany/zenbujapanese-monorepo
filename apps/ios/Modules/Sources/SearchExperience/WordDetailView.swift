@@ -158,7 +158,7 @@ struct WordDetailView: View {
           openWord: openWord
         )
       }
-      .listStyle(.insetGrouped)
+      .groupedList()
       .scrollDismissesKeyboard(.immediately)
       .accessibilityIdentifier("word-detail.screen")
       .onChange(of: notes.editingNoteID) { _, noteID in
@@ -171,7 +171,7 @@ struct WordDetailView: View {
       }
     }
     .navigationTitle(entry.headword)
-    .navigationBarTitleDisplayMode(.inline)
+    .inlineNavigationTitle()
     .savedItemActions(
       for: item, identifierPrefix: "word-detail", shareText: shareText, notes: notes,
       photos: photos, showsListPicker: $showsListPicker)

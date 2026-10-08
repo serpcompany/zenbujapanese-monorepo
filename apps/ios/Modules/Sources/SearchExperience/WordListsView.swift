@@ -55,7 +55,7 @@ struct WordListPickerView: View {
         }
       }
       .navigationTitle("Add to List")
-      .navigationBarTitleDisplayMode(.inline)
+      .inlineNavigationTitle()
       .toolbar {
         ToolbarItem(placement: .confirmationAction) {
           Button("Done") { dismiss() }
@@ -83,9 +83,9 @@ struct WordListsView: View {
       .navigationTitle("Lists")
       .toolbar {
         if wordLists.canChange {
-          ToolbarItemGroup(placement: .topBarTrailing) {
+          ToolbarItemGroup(placement: .barTrailing) {
             if !wordLists.lists.isEmpty {
-              EditButton()
+              ListEditButton()
                 .accessibilityIdentifier("word-lists.edit")
             }
             Button("New List", systemImage: "plus") { namePrompt = .create }
@@ -186,13 +186,13 @@ struct WordListsView: View {
 }
 
 private struct WordListIndexRow: View {
-  @Environment(\.editMode) private var editMode
+  @Environment(\.isEditingList) private var isEditingList
   let list: WordList
   let count: Int
   let rename: () -> Void
 
   var body: some View {
-    if editMode?.wrappedValue.isEditing == true {
+    if isEditingList {
       Button(action: rename) {
         label
       }
@@ -219,7 +219,7 @@ struct WordListView: View {
   @Environment(WordKnowledge.self) private var wordKnowledge
   @Environment(\.dismiss) private var dismiss
   @State private var searchText = ""
-  @State private var editMode = EditMode.inactive
+  @State private var editMode = ListEditMode.inactive
   @State private var selection = Set<String>()
   @State private var namePrompt: WordListNamePrompt?
   @State private var confirmsDeletion = false
@@ -235,7 +235,7 @@ struct WordListView: View {
       .navigationTitle(list?.name ?? "")
       .toolbar { toolbar }
       .navigationBarBackButtonHidden(isSelecting)
-      .environment(\.editMode, $editMode)
+      .listEditMode($editMode)
       .onChange(of: isSelecting) {
         if !isSelecting { selection = [] }
       }
@@ -313,14 +313,14 @@ struct WordListView: View {
   @ToolbarContentBuilder
   private var toolbar: some ToolbarContent {
     if isSelecting {
-      ToolbarItem(placement: .topBarLeading) {
+      ToolbarItem(placement: .barLeading) {
         let allSelected = !filteredWords.isEmpty && selectedWords.count == filteredWords.count
         Button(allSelected ? "Deselect All" : "Select All") {
           selection = allSelected ? [] : Set(filteredWords.map(\.entryID))
         }
         .accessibilityIdentifier("word-list.select-all")
       }
-      ToolbarItemGroup(placement: .topBarTrailing) {
+      ToolbarItemGroup(placement: .barTrailing) {
         Button("Remove", role: .destructive, action: removeSelected)
           .disabled(selectedWords.isEmpty)
           .accessibilityIdentifier("word-list.remove-selected")
@@ -329,7 +329,7 @@ struct WordListView: View {
           .accessibilityIdentifier("word-list.done-selecting")
       }
     } else if wordLists.canChange, let list {
-      ToolbarItem(placement: .topBarTrailing) {
+      ToolbarItem(placement: .barTrailing) {
         Menu {
           Button("Rename List", systemImage: "pencil") { namePrompt = .rename(list) }
             .accessibilityIdentifier("word-list.rename")

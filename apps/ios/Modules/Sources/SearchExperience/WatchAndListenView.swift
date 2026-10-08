@@ -39,18 +39,17 @@ struct WatchAndListenView: View {
             }
           }
         }
-        .listSectionSpacing(12)
-        .listStyle(.insetGrouped)
+        .sectionSpacing(12)
+        .groupedList()
       }
     }
     .navigationTitle("Player")
     .searchable(
       text: $query,
-      placement: .navigationBarDrawer(displayMode: .always),
+      placement: .alwaysShown,
       prompt: "Search \(searchProvider.name) or paste a link"
     )
-    .keyboardType(.webSearch)
-    .textInputAutocapitalization(.never)
+    .textEntry(.webSearch)
     .autocorrectionDisabled()
     .onSubmit(of: .search, submit)
   }

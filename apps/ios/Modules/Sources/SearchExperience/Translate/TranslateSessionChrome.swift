@@ -39,16 +39,15 @@ struct TranslateSessionChrome: ViewModifier {
         if phase == .background { experience.sceneMovedToBackground() }
       }
       .onChange(of: experience.session?.isLive == true, initial: true) { _, isLive in
-        UIApplication.shared.isIdleTimerDisabled = isLive
+        ScreenAwake.keepAwake(isLive)
       }
       .background { TranslationDownloadTask(experience: experience) }
   }
 
-  @ViewBuilder
   private func withAccessory(_ content: Content) -> some View {
-    if #available(iOS 26.1, *) {
-      content.tabViewBottomAccessory(isEnabled: showsSessionBar) { accessory }
-    } else {
+    content.bottomAccessory(isEnabled: showsSessionBar) {
+      accessory
+    } fallback: { content in
       content.safeAreaInset(edge: .bottom) {
         if showsSessionBar {
           accessory

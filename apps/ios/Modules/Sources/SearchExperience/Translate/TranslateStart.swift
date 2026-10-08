@@ -38,7 +38,7 @@ enum TranslateStart: String, CaseIterable, Identifiable {
   var summary: String {
     switch self {
     case .conversation:
-      String(localized: "Take turns speaking Japanese or English. Translations play out loud on your iPhone.")
+      String(localized: "Take turns speaking Japanese or English. Translations play out loud on your \(ThisDevice.name).")
     case .listening:
       String(localized: "Translate the Japanese or English around you, like a TV, a guide, or announcements. Best with earphones.")
     case .text:

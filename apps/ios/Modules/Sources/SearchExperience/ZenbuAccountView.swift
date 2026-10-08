@@ -60,7 +60,7 @@ struct ZenbuAccountView: View {
           Button("Sign Out") { confirmsSignOut = true }
             .accessibilityIdentifier("zenbu-account.sign-out")
         } footer: {
-          Text("Signing out keeps your known words, lists, watch history, translations, notes, and media on this iPhone.")
+          Text("Signing out keeps your known words, lists, watch history, translations, notes, and media on this \(ThisDevice.name).")
         }
         Section {
           Button("Delete Account…", role: .destructive) { deletes = true }
@@ -68,7 +68,7 @@ struct ZenbuAccountView: View {
         }
       } else {
         Section {
-          Text("You're signed out. Everything stays on this iPhone.")
+          Text("You're signed out. Everything stays on this \(ThisDevice.name).")
         }
       }
     }
@@ -84,7 +84,7 @@ struct ZenbuAccountView: View {
       }
     } message: {
       Text(
-        "Your known words, lists, watch history, and translations stay on this iPhone. Changes you make while signed out sync when you sign in to this account again."
+        "Your known words, lists, watch history, and translations stay on this \(ThisDevice.name). Changes you make while signed out sync when you sign in to this account again."
       )
     }
     .sheet(isPresented: $deletes) {
@@ -111,7 +111,7 @@ struct ZenbuAccountView: View {
       }
       if zenbuAccount.sync.waitsForUnreadableBookmarks {
         Text(
-          "Zenbu couldn't read the bookmarks synced to this iPhone, so syncing is paused. Reopen Zenbu to try again."
+          "Zenbu couldn't read the bookmarks synced to this \(ThisDevice.name), so syncing is paused. Reopen Zenbu to try again."
         )
         .foregroundStyle(.secondary)
         .accessibilityIdentifier("zenbu-account.bookmarks-unreadable")
@@ -128,7 +128,7 @@ struct ZenbuAccountView: View {
       .accessibilityIdentifier("zenbu-account.sync-now")
     } footer: {
       Text(
-        "Zenbu syncs your known words, lists, watch history, and bookmarked translations after each change and when it opens. They also stay on this iPhone, and work offline."
+        "Zenbu syncs your known words, lists, watch history, and bookmarked translations after each change and when it opens. They also stay on this \(ThisDevice.name), and work offline."
       )
     }
   }

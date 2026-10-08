@@ -52,9 +52,9 @@ struct WatchSessionView: View {
       captions
     }
     .navigationTitle("Player")
-    .navigationBarTitleDisplayMode(.inline)
+    .inlineNavigationTitle()
     .toolbar {
-      ToolbarItem(placement: .topBarTrailing) { playerMenu }
+      ToolbarItem(placement: .barTrailing) { playerMenu }
     }
     .task(id: videoID) {
       history.record(videoID)
@@ -252,7 +252,7 @@ struct WatchSessionView: View {
           } label: {
             Image(systemName: player.isPlaying ? "pause.fill" : "play.fill")
               .font(.callout.weight(.semibold))
-              .foregroundStyle(Color(uiColor: .systemBackground))
+              .foregroundStyle(SystemColor.background)
               .contentTransition(.symbolEffect(.replace))
               .frame(width: 36, height: 36)
               .background(.primary, in: .circle)
@@ -275,7 +275,7 @@ struct WatchSessionView: View {
     .buttonStyle(.borderless)
     .padding(.horizontal, 16)
     .padding(.bottom, 2)
-    .background(Color(uiColor: .secondarySystemBackground))
+    .background(SystemColor.secondaryBackground)
     .disabled(player.state != .ready)
   }
 

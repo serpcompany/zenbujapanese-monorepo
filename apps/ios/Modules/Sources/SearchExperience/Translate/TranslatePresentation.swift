@@ -94,9 +94,9 @@ extension TranslatorFailure {
     case .microphoneDenied:
       String(localized: "Translate needs the microphone to hear the conversation. Turn it on in Settings.")
     case .speechRecognitionUnavailable:
-      String(localized: "Speech recognition isn't available on this iPhone right now. Try again in a moment.")
+      String(localized: "Speech recognition isn't available on this \(ThisDevice.name) right now. Try again in a moment.")
     case .translationUnavailable:
-      String(localized: "On-device translation isn't ready. Download Japanese in Settings › Apps › Translate.")
+      String(localized: "On-device translation isn't ready. Download Japanese in \(ThisDevice.translationLanguagesSettings).")
     case .audioUnavailable:
       String(localized: "The microphone couldn't start. Close other apps that are recording and try again.")
     case .interrupted:
