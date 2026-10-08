@@ -241,7 +241,7 @@ With `idToken`, signs in with the token the device got, and makes the account on
 - `provider` (`"apple"` or `"google"`, required)
 - `idToken` ([`IdToken`](#idtoken), optional)
 - `callbackURL` (string, optional): The website's page the browser comes back to from Google, on one of the website's origins.
-- `errorCallbackURL` (string, optional): Where it comes back instead when signing in fails, with `?error=` and a code such as `account_not_linked`.
+- `errorCallbackURL` (string, optional): Where it comes back instead when signing in fails, with `?error=` and a code: `account_not_linked`, `account_already_linked_to_different_user`, `access_denied`, `state_mismatch`, or `EMAIL_NOT_VERIFIED`, in either case, so compare it ignoring case. A missing state, or a callback reused or reloaded, ends at GET /v1/auth/error instead, a JSON `404 not_found`.
 
 **Answers:**
 
@@ -288,7 +288,7 @@ Needs a sign-in from the last 10 minutes. The account email is told. Without `id
 - `provider` (`"apple"` or `"google"`, required)
 - `idToken` ([`IdToken`](#idtoken), optional)
 - `callbackURL` (string, optional): The website's page the browser comes back to from Google, on one of the website's origins.
-- `errorCallbackURL` (string, optional): Where it comes back instead when signing in fails, with `?error=` and a code such as `account_not_linked`.
+- `errorCallbackURL` (string, optional): Where it comes back instead when signing in fails, with `?error=` and a code: `account_not_linked`, `account_already_linked_to_different_user`, `access_denied`, `state_mismatch`, or `EMAIL_NOT_VERIFIED`, in either case, so compare it ignoring case. A missing state, or a callback reused or reloaded, ends at GET /v1/auth/error instead, a JSON `404 not_found`.
 
 **Answers:**
 

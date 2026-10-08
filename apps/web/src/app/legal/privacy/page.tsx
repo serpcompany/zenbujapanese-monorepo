@@ -109,16 +109,18 @@ export default function PrivacyPage() {
       </ul>
       <p>
         To sign you in, it also keeps an encrypted copy of each code we email you and one-time
-        sign-in values, each for 10 minutes, and counts requests from each IP address for a few
-        minutes to stop abuse. Word notes, photos, recent searches, and settings aren't synced: they
-        stay on your device. We'll update this policy before an app syncs anything else.
+        sign-in values, each for 10 minutes, and counts requests from each IP address over a few
+        minutes to stop abuse, keeping each count for a day. Word notes, photos, recent searches,
+        and settings aren't synced: they stay on your device. We'll update this policy before an app
+        syncs anything else.
       </p>
       <p>
         We use this information only to sign you in, keep your apps in step, email you about signing
         in, and keep the service secure. We email you from {email}, through useSend, only to send
-        sign-in codes and to tell you when a way to sign in is added to or removed from your
-        account. The account service's logs record each request's method, route, status, and timing,
-        never your email, your profile, a sign-in code or link, or a token.
+        sign-in codes, to tell you when a way to sign in is added to or removed from your account,
+        and to confirm that your account was deleted. The account service's logs record each
+        request's method, route, status, and timing, never your email, your profile, a sign-in code
+        or link, or a token.
       </p>
 
       <h2>Tomodachi</h2>
