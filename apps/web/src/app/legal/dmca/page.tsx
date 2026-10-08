@@ -1,4 +1,5 @@
 import { PageShell } from '@/components/page-shell'
+import { company } from '@/lib/company'
 import { pageMetadata } from '@/lib/metadata'
 import { site } from '@/lib/site'
 
@@ -19,13 +20,13 @@ export default function DmcaPage() {
       <address className="not-italic">
         {site.name}
         <br />
-        TSMC LLC
+        {company.name}
         <br />
-        1095 Sugarview Drive STE 500
+        {company.street}
         <br />
-        Sheridan, WY 82801
+        {company.city}
         <br />
-        Phone: 323-628-8306
+        Phone: {company.phone}
         <br />
         Email: <a href={`mailto:${dmcaEmail}`}>{dmcaEmail}</a>
       </address>

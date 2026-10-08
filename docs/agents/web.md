@@ -484,8 +484,8 @@ the account service ([`account-api.md`](account-api.md); the website's side of i
   [`docs/quality.md`](../quality.md) (Account pages, and Header and footer's placeholders),
   [`docs/tech-debt.md`](../tech-debt.md)'s placeholder row, which counts Log in in production, and
   the `browser-tests` skill.
-  The privacy policy's text stays true with the email code alone: it offers Apple and Google only
-  "where its sign-in page offers them". `main` then deploys staging; production deploys when a
+  The privacy policy's text stays true with the email code alone: Apple and Google sign the learner
+  in only "if you choose them", where the website "offers sign-in". `main` then deploys staging; production deploys when a
   person runs `Web deploy` by hand while `DEPLOY_PRODUCTION` is `false` (Environments and
   deploys, below).
 - **Apple** runs in Sign in with Apple JS's popup (`src/lib/account/apple.ts`), which hands the
@@ -639,7 +639,10 @@ structured data URL is written on; local development writes production's. A buil
 everything. Analytics load only in production and only when their build-time IDs are set:
 `NEXT_PUBLIC_GTM_ID` (Google Tag Manager, a `production` GitHub environment variable that the
 `Web deploy` workflow passes to the production build) and `NEXT_PUBLIC_CF_BEACON_TOKEN` (Cloudflare
-Web Analytics).
+Web Analytics, which production doesn't set). Production's container, `GTM-MCNL5QH4`, holds one
+tag, a Custom HTML tag that loads Ahrefs Web Analytics, which uses no cookies; the
+[Privacy Policy](../../apps/web/docs/product/privacy.md) names Ahrefs and Google for it, so a tag
+added there, or the Cloudflare beacon turned on, changes the policy in the same step.
 
 Before merging a change to environment configuration, build the site as the target environment
 deploys and run the Worker with its `vars` (`SITE_ENV=production pnpm exec opennextjs-cloudflare
