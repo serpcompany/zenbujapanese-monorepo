@@ -1,8 +1,8 @@
 import { PlayIcon } from 'lucide-react'
 import Image from 'next/image'
 import Link from 'next/link'
+import type { ReactNode } from 'react'
 import { FeatureDemo } from '@/components/products/feature-demo'
-import { ProductFacts } from '@/components/products/product-facts'
 import { AppStoreButton } from '@/components/site-actions'
 import {
   Breadcrumb,
@@ -13,8 +13,7 @@ import {
   BreadcrumbSeparator
 } from '@/components/ui/breadcrumb'
 import { buttonVariants } from '@/components/ui/button'
-import type { AppStoreRelease } from '@/lib/app-store'
-import type { ProductDemo } from '@/lib/products/zenbu-japanese-for-iphone'
+import type { ProductDemo } from '@/lib/products/product-page'
 import { linkTo } from '@/lib/site'
 import { cn } from '@/lib/utils'
 import { videosSectionId } from '@/lib/videos'
@@ -25,7 +24,6 @@ export interface ProductHeroContent {
   subtitle: string
   lead: string
   icon: string
-  facts: { platform: string; account: string }
   demos: readonly ProductDemo[]
 }
 
@@ -52,11 +50,11 @@ const heroButtonClassName = 'h-11 px-4.5 text-[15px]'
 
 export function ProductHero({
   product,
-  release,
+  facts,
   hasVideos
 }: {
   product: ProductHeroContent
-  release: AppStoreRelease | null
+  facts: ReactNode
   hasVideos: boolean
 }) {
   return (
@@ -93,11 +91,7 @@ export function ProductHero({
       <div className="mt-6 w-full max-w-3xl">
         <FeatureDemo demos={product.demos} />
       </div>
-      <ProductFacts
-        platform={product.facts.platform}
-        account={product.facts.account}
-        release={release}
-      />
+      {facts}
     </section>
   )
 }

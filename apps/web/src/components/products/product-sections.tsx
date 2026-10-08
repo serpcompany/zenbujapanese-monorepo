@@ -3,6 +3,7 @@ import Link from 'next/link'
 import type { ReactNode } from 'react'
 import { ProductCard } from '@/components/products/product-card'
 import { productSymbols } from '@/components/products/product-symbols'
+import { sectionTitleClassName } from '@/components/products/section-title'
 import {
   Accordion,
   AccordionContent,
@@ -10,20 +11,8 @@ import {
   AccordionTrigger
 } from '@/components/ui/accordion'
 import type { Product } from '@/lib/products/catalog'
-import type { ProductPoint, ProductQuestion } from '@/lib/products/zenbu-japanese-for-iphone'
+import type { ProductPoint, ProductQuestion } from '@/lib/products/product-page'
 import { linkTo } from '@/lib/site'
-
-export const sectionTitleClassName =
-  'text-2xl font-semibold tracking-tight text-balance md:text-3xl'
-
-export function SectionTitle({ title, aside }: { title: string; aside?: string }) {
-  return (
-    <h2 className={sectionTitleClassName}>
-      {aside ? `${title} ` : title}
-      {aside ? <span className="text-muted-foreground">{aside}</span> : null}
-    </h2>
-  )
-}
 
 export function ProductPoints({ points }: { points: readonly ProductPoint[] }) {
   return (

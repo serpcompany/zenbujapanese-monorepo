@@ -20,7 +20,7 @@ import {
   UserXIcon
 } from 'lucide-react'
 import type { ProductSymbol } from '@/lib/products/catalog'
-import type { ProductPageSymbol } from '@/lib/products/zenbu-japanese-for-iphone'
+import type { ProductPageSymbol } from '@/lib/products/product-page'
 
 export const productSymbols: Record<ProductSymbol | ProductPageSymbol, LucideIcon> = {
   puzzle: PuzzleIcon,

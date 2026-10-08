@@ -1,40 +1,7 @@
-import { type AppScreenshot, appScreenshots } from '@/lib/app-screenshots'
+import { appScreenshots } from '@/lib/app-screenshots'
 import type { SitePath } from '@/lib/pages'
 import { featuredApp, productById } from '@/lib/products/catalog'
-
-export type ProductPageSymbol =
-  | 'search'
-  | 'camera'
-  | 'pen'
-  | 'book'
-  | 'languages'
-  | 'tv'
-  | 'list'
-  | 'chart'
-  | 'type'
-  | 'user-x'
-  | 'phone'
-  | 'check'
-
-export interface ProductDemo {
-  symbol: ProductPageSymbol
-  label: string
-  title: string
-  description: string
-  screenshot: AppScreenshot
-}
-
-export interface ProductQuestion {
-  question: string
-  answer: string
-  link?: { title: string; href: string }
-}
-
-export interface ProductPoint {
-  symbol: ProductPageSymbol
-  title: string
-  description: string
-}
+import type { ProductDemo, ProductPoint, ProductQuestion } from '@/lib/products/product-page'
 
 export const iphoneAppPage = {
   path: '/products/zenbu-japanese-for-iphone/' satisfies SitePath,
@@ -169,7 +136,8 @@ export const iphoneAppPage = {
     },
     {
       question: 'Is the web dictionary the same?',
-      answer: 'Yes. The dictionary on this site shows the same entries as the app’s Search tab.',
+      answer:
+        'It has the same entries as the app’s Search tab, free in your browser. Image Search, handwriting, Translate, and Player are in the app.',
       link: { title: 'Search the dictionary', href: '/dictionary/' }
     }
   ] satisfies ProductQuestion[],

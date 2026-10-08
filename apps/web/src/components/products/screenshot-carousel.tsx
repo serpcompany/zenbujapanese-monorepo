@@ -1,7 +1,7 @@
 'use client'
 
 import { AppScreenshot } from '@/components/app-screenshot'
-import { sectionTitleClassName } from '@/components/products/product-sections'
+import { sectionTitleClassName } from '@/components/products/section-title'
 import {
   Carousel,
   CarouselContent,

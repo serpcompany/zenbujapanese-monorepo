@@ -97,10 +97,13 @@ describe('asking Apple', () => {
     ],
     ['Apple answers with an error', async () => new Response('Busy', { status: 503 })],
     ['Apple answers with something other than JSON', async () => new Response('<html>')]
-  ])('finds nothing when %s, logs a warning, and keeps nothing', async (_, fetcher) => {
+  ])('finds nothing when %s, logs a warning, and asks again only after five minutes', async (_, failure) => {
     const kept = keptAnswers()
+    const fetcher = vi.fn<Fetcher>(failure)
     expect(await appStoreRelease(fetcher)).toBeNull()
-    expect(kept.size).toBe(0)
+    expect(await appStoreRelease(fetcher)).toBeNull()
+    expect(fetcher).toHaveBeenCalledTimes(1)
+    expect(kept.get(appStoreLookupUrl)?.headers.get('Cache-Control')).toBe('public, max-age=300')
     expect(warnings()).toEqual([
       expect.objectContaining({ level: 'warn', message: 'app_store_lookup_failed' })
     ])

@@ -93,8 +93,10 @@ note).
 line, and its App Store screenshot, side by side from 768 pixels and stacked on phones. The five
 are Search, Image Search, Handwriting, Conjugations, and Translate. Previous and next arrows step
 through them, wrapping from the last to the first; a dot for each, named for its feature, opens
-it and is marked current; and a count says which it is (2 / 5). Only the shown feature is in the
-accessibility tree. It is the shadcn carousel (Embla), so a swipe or the arrow keys also move it.
+it and is marked current, each with a 24-pixel target; and a count says which it is (2 / 5), and
+is announced as it changes. Only the shown feature is in the accessibility tree, under a heading,
+Features, for screen readers. It is the shadcn carousel (Embla), so a swipe moves it, and so do
+the arrow keys while one of its controls has focus.
 
 - Source: #648 mockups (Product page, Hero: centered + demo).
 - Check: Product page spec, "the demo shows one feature at a time, and its arrows step through
@@ -104,9 +106,12 @@ accessibility tree. It is the shadcn carousel (Embla), so a swipe or the arrow k
 page. Between them, Requires (iOS … or later) and Version come from Apple's App Store lookup
 (`https://itunes.apple.com/lookup?bundleId=com.zenbujapanese.app`), so they match what's live on
 the App Store, not TestFlight. The page renders per request, and the Worker keeps Apple's answer
-in its edge cache for a day (`src/lib/app-store.ts`). When Apple can't be reached, answers with an
-error, or lists no app, as before the app is on the store, those two facts are left out and the
-row shows the other two; a failure logs `app_store_lookup_failed`.
+in its edge cache for a day (`src/lib/app-store.ts`). The row streams in after the rest of the
+page, which shows Platform and Account until Apple answers, so a slow lookup (at most 3 seconds)
+never holds the page back. When Apple can't be reached, answers with an error, or lists no app, as
+before the app is on the store, those two facts are left out and the row shows the other two; a
+failure logs `app_store_lookup_failed`, and is kept for 5 minutes, so the next views don't wait on
+Apple again.
 
 - Source: #648 decision; the owner's decision on #652 (cached for a day, left out when Apple can't
   be reached or returns nothing).
@@ -150,7 +155,10 @@ features (Offline dictionary, Image Search, Handwriting, Translate, Player, List
 Frequency dictionaries, and Furigana kanji highlight), four to a row from 1024 pixels. Private by
 default, on a band, lists No account, Stays on your iPhone, Translate on the device, and No ads.
 Questions is centered: four questions that open and close, the first open, with every answer in
-the page's HTML while closed; the last links to the dictionary. More from Zenbu shows the
+the page's HTML while closed; the last says the web dictionary has the app's entries, and which
+features are only in the app, and links to the dictionary. The offline dictionary's "more than
+200,000 words" is the app's own dictionary, which the site's word pages are built from (218,382
+words, [`docs/agents/web.md`](../../../../docs/agents/web.md), Sitemaps). More from Zenbu shows the
 dictionary, the browser extension, and kana charts as catalog cards, with All products.
 
 - Source: #648 mockups (Product page); the app's product docs for every claim; the privacy policy
@@ -163,7 +171,8 @@ dictionary, the browser extension, and kana charts as catalog cards, with All pr
 **Titles, descriptions, and canonical URLs.** `/products/` is "Products | Zenbu Japanese" and the
 iPhone app's page "Zenbu Japanese for iPhone: Japanese Dictionary & Translator", each with its
 description from `src/lib/pages.ts` and its own canonical URL. Both are in `src/lib/pages.ts`, so
-the pages sitemap and the HTML sitemap list them.
+`/sitemaps/pages.xml` lists them, and the HTML sitemap lists them under Home
+(`homeTree` in `src/lib/dictionary/browse/site-tree.ts`).
 
 - Source: #652.
 - Check: Product page spec, "… has its title, description, and canonical URL" for each page;

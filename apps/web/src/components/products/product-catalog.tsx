@@ -24,8 +24,6 @@ import {
 } from '@/lib/products/catalog'
 import { cn } from '@/lib/utils'
 
-const searchLabel = 'Search products'
-
 function useShortcutToFocus(key: string) {
   const target = useRef<HTMLInputElement>(null)
   useEffect(() => {
@@ -41,6 +39,8 @@ function useShortcutToFocus(key: string) {
   return target
 }
 
+const useFilterAtAddress = () => productFilterFrom(useSearchParams().get(productTypeParameter))
+
 const opensElsewhere = (event: MouseEvent) =>
   event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey
 
@@ -48,7 +48,7 @@ function FilterLinks({ current }: { current: ProductFilter }) {
   const choose = (event: MouseEvent<HTMLAnchorElement>, filter: ProductFilter) => {
     if (opensElsewhere(event)) return
     event.preventDefault()
-    window.history.pushState(null, '', productFilterPath(filter))
+    if (filter !== current) window.history.pushState(null, '', productFilterPath(filter))
   }
   return (
     <nav aria-label="Product types">
@@ -74,6 +74,10 @@ function FilterLinks({ current }: { current: ProductFilter }) {
   )
 }
 
+function FilterLinksAtAddress() {
+  return <FilterLinks current={useFilterAtAddress()} />
+}
+
 function CatalogSearch({ query, onChange }: { query: string; onChange: (query: string) => void }) {
   const input = useShortcutToFocus('k')
   return (
@@ -88,7 +92,7 @@ function CatalogSearch({ query, onChange }: { query: string; onChange: (query: s
           value={query}
           onChange={event => onChange(event.target.value)}
           placeholder="Search products…"
-          aria-label={searchLabel}
+          aria-label="Search products"
           aria-keyshortcuts="Meta+K Control+K"
           className="text-[15px] [&::-webkit-search-cancel-button]:hidden"
         />
@@ -103,8 +107,9 @@ function CatalogSearch({ query, onChange }: { query: string; onChange: (query: s
   )
 }
 
-function CatalogView({ filter, intro }: { filter: ProductFilter; intro: ReactNode }) {
-  const [query, setQuery] = useState('')
+type ResultsProps = { query: string; onClear: () => void }
+
+function CatalogResults({ filter, query, onClear }: ResultsProps & { filter: ProductFilter }) {
   const heading = productFilterFor(filter)
   const appShown = productShown(
     { type: featuredApp.type, searchText: featuredAppSearchText },
@@ -116,52 +121,55 @@ function CatalogView({ filter, intro }: { filter: ProductFilter; intro: ReactNod
   )
   const count = shown.filter(Boolean).length + (appShown ? 1 : 0)
   return (
-    <>
-      <header className="flex w-full flex-col items-center gap-4.5">
-        {intro}
-        <CatalogSearch query={query} onChange={setQuery} />
-        <FilterLinks current={filter} />
-      </header>
-      <section aria-labelledby="catalog-heading" className="flex w-full flex-col gap-4 text-left">
-        <div className="flex flex-col gap-1">
-          <h2 id="catalog-heading" className="text-lg font-semibold tracking-tight">
-            {heading.title}
-          </h2>
-          <p className="text-[15px] text-muted-foreground">{heading.description}</p>
-        </div>
-        <output className="sr-only">{count === 1 ? '1 product' : `${count} products`}</output>
-        <div hidden={count === 0} className="grid gap-4 md:grid-cols-2">
-          <FeaturedAppCard hidden={!appShown} />
-          {products.map((product, index) => (
-            <ProductCard key={product.id} product={product} hidden={!shown[index]} />
-          ))}
-        </div>
-        {count === 0 ? (
-          <Empty className="border border-dashed py-12">
-            <EmptyHeader>
-              <EmptyTitle className="font-normal text-muted-foreground">
-                No products match “{query}”.
-              </EmptyTitle>
-            </EmptyHeader>
-            <Button variant="outline" size="lg" onClick={() => setQuery('')}>
-              Clear search
-            </Button>
-          </Empty>
-        ) : null}
-      </section>
-    </>
+    <section aria-labelledby="catalog-heading" className="flex w-full flex-col gap-4 text-left">
+      <div className="flex flex-col gap-1">
+        <h2 id="catalog-heading" className="text-lg font-semibold tracking-tight">
+          {heading.title}
+        </h2>
+        <p className="text-[15px] text-muted-foreground">{heading.description}</p>
+      </div>
+      <output className="sr-only">{count === 1 ? '1 product' : `${count} products`}</output>
+      <div hidden={count === 0} className="grid gap-4 md:grid-cols-2">
+        <FeaturedAppCard hidden={!appShown} />
+        {products.map((product, index) => (
+          <ProductCard key={product.id} product={product} hidden={!shown[index]} />
+        ))}
+      </div>
+      {count === 0 ? (
+        <Empty className="border border-dashed py-12">
+          <EmptyHeader>
+            <EmptyTitle className="font-normal text-muted-foreground">
+              No products match “{query}”.
+            </EmptyTitle>
+          </EmptyHeader>
+          <Button variant="outline" size="lg" onClick={onClear}>
+            Clear search
+          </Button>
+        </Empty>
+      ) : null}
+    </section>
   )
 }
 
-function CatalogAtAddress({ intro }: { intro: ReactNode }) {
-  const filter = productFilterFrom(useSearchParams().get(productTypeParameter))
-  return <CatalogView filter={filter} intro={intro} />
+function CatalogResultsAtAddress(props: ResultsProps) {
+  return <CatalogResults filter={useFilterAtAddress()} {...props} />
 }
 
 export function ProductCatalog({ children }: { children: ReactNode }) {
+  const [query, setQuery] = useState('')
+  const results = { query, onClear: () => setQuery('') }
   return (
-    <Suspense fallback={<CatalogView filter="all" intro={children} />}>
-      <CatalogAtAddress intro={children} />
-    </Suspense>
+    <>
+      <header className="flex w-full flex-col items-center gap-4.5">
+        {children}
+        <CatalogSearch query={query} onChange={setQuery} />
+        <Suspense fallback={<FilterLinks current="all" />}>
+          <FilterLinksAtAddress />
+        </Suspense>
+      </header>
+      <Suspense fallback={<CatalogResults filter="all" {...results} />}>
+        <CatalogResultsAtAddress {...results} />
+      </Suspense>
+    </>
   )
 }

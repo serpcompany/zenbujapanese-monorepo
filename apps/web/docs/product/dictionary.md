@@ -881,7 +881,8 @@ window.
 **Placeholder links.** The pages the menus and footer name that don't exist yet, and the outside
 addresses that aren't known yet, link to `#` for now: All free tools and Free tools (`/tools/`),
 the three converters, Browser extension, Reference guides, Courses, Log in (`/login/`), the App
-Store (the product page's Get the app), the ten social accounts, and See all videos (`/videos/`),
+Store (the Get the app on the product page and on the catalog's iPhone app card), the ten social
+accounts, and See all videos (`/videos/`),
 which shows only once the product page has videos. Zenbu Japanese for iPhone
 and All products now open their pages, `/products/zenbu-japanese-for-iphone/` and `/products/`
 ([Products pages](products.md)), from the same entries. #650 asked for menu items to appear only once their page exists; the owner chose to show

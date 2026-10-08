@@ -82,7 +82,9 @@ lists every child sitemap and each child sitemap lists the new URLs.
   A filter moves the address with `history.pushState`, which Next.js's router follows, so it never
   asks the server. The iPhone app's page is `force-dynamic`: it reads the App Store lookup
   (`src/lib/app-store.ts`), which the Worker keeps in its edge cache (the Cache API) for a day,
-  and leaves the version and minimum iOS out when Apple fails or lists no app. Its Watch it work
+  keeps a failure for 5 minutes, and leaves the version and minimum iOS out when Apple fails or
+  lists no app. The facts row streams in its own `Suspense`, so the lookup never holds back the
+  rest of the page. Its Watch it work
   section renders only when `appVideos` in `src/lib/videos.ts` lists videos, and a video's
   privacy-enhanced YouTube player (`youtube-nocookie.com`) mounts only when it's clicked.
 - `apps/web/biome.json` allows `dangerouslySetInnerHTML` only in
@@ -484,7 +486,8 @@ before OpenNext's worker and passes every other request on (`src/lib/dictionary/
 asks the service for the retired entries once per isolate (a release retires a few hundred at
 most), wherever the site has a service; when the service can't list them, the request goes on to
 the app, which answers 404, or fails while the service fails. `worker.ts` bundles `retired.ts`
-and what it imports (`api.ts`, `urls.ts`, and `src/lib/log.ts`) outside Next.js, so they import
-no Next.js module and no `@/` path, which a Biome rule in `apps/web/biome.json` enforces.
+and what it imports (`api.ts`, `urls.ts`, `src/lib/edge-cache.ts`, and `src/lib/log.ts`) outside
+Next.js, so they import no Next.js module and no `@/` path, which a Biome rule in
+`apps/web/biome.json` enforces.
 `pnpm dev` runs Next.js alone, so check retired URLs in `pnpm preview`. The service lists none
 until #463 records retired entries.

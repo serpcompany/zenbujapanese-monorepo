@@ -82,4 +82,5 @@ test('playing a video loads the privacy-enhanced YouTube player in its place', a
   expect(container.querySelector('iframe')?.getAttribute('src')).toBe(player)
   expect(container.querySelector('iframe')?.getAttribute('title')).toBe('A sample video')
   expect(container.querySelector('button[aria-label="Play A sample video"]')).toBeNull()
+  expect(document.activeElement).toBe(container.querySelector('iframe'))
 })

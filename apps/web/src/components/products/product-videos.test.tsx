@@ -14,7 +14,7 @@ const sample: AppVideo = {
 }
 
 const hero = (hasVideos: boolean) =>
-  renderToStaticMarkup(<ProductHero product={iphoneAppPage} release={null} hasVideos={hasVideos} />)
+  renderToStaticMarkup(<ProductHero product={iphoneAppPage} facts={null} hasVideos={hasVideos} />)
 
 test('there are no videos yet, so the page has no video section and no Watch demo', () => {
   expect(appVideos).toEqual([])

@@ -11,7 +11,7 @@ import {
   CarouselNext,
   CarouselPrevious
 } from '@/components/ui/carousel'
-import type { ProductDemo } from '@/lib/products/zenbu-japanese-for-iphone'
+import type { ProductDemo } from '@/lib/products/product-page'
 import { cn } from '@/lib/utils'
 
 function useSelectedSlide(api: CarouselApi) {
@@ -58,9 +58,12 @@ export function FeatureDemo({ demos }: { demos: readonly ProductDemo[] }) {
     <Carousel
       setApi={setApi}
       opts={{ loop: true }}
-      aria-label="Features"
+      aria-labelledby="features-heading"
       className="flex w-full min-w-0 flex-col gap-4"
     >
+      <h2 id="features-heading" className="sr-only">
+        Features
+      </h2>
       <CarouselContent>
         {demos.map((demo, index) => (
           <CarouselItem
@@ -79,7 +82,7 @@ export function FeatureDemo({ demos }: { demos: readonly ProductDemo[] }) {
           className="static translate-none rounded-lg"
           aria-label="Previous feature"
         />
-        <div className="flex items-center gap-1.5">
+        <div className="flex items-center">
           {demos.map((demo, index) => (
             <button
               key={demo.label}
@@ -87,14 +90,21 @@ export function FeatureDemo({ demos }: { demos: readonly ProductDemo[] }) {
               aria-label={demo.label}
               aria-current={index === selected}
               onClick={() => api?.scrollTo(index)}
-              className={cn(
-                'h-2 w-2 rounded-full bg-foreground/20 transition-[width,background-color] outline-none focus-visible:ring-3 focus-visible:ring-ring/50',
-                index === selected && 'w-6 bg-foreground'
-              )}
-            />
+              className="group/dot grid h-6 min-w-6 place-items-center rounded-full px-0.75 outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
+            >
+              <span
+                className={cn(
+                  'h-2 w-2 rounded-full bg-foreground/20 transition-[width,background-color] group-hover/dot:bg-foreground/40',
+                  index === selected && 'w-6 bg-foreground group-hover/dot:bg-foreground'
+                )}
+              />
+            </button>
           ))}
         </div>
-        <span className="min-w-10 text-center text-[13px] text-muted-foreground tabular-nums">
+        <span
+          aria-live="polite"
+          className="min-w-10 text-center text-[13px] text-muted-foreground tabular-nums"
+        >
           {selected + 1} / {demos.length}
         </span>
         <CarouselNext

@@ -4,7 +4,7 @@ import { ArrowRightIcon, PlayIcon } from 'lucide-react'
 import Link from 'next/link'
 import { useState } from 'react'
 import { AppScreenshot } from '@/components/app-screenshot'
-import { sectionTitleClassName } from '@/components/products/product-sections'
+import { sectionTitleClassName } from '@/components/products/section-title'
 import { buttonVariants } from '@/components/ui/button'
 import {
   Carousel,
@@ -25,6 +25,7 @@ function VideoCard({ video }: { video: AppVideo }) {
     <div className="flex w-72 flex-col gap-2 md:w-80">
       {playing ? (
         <iframe
+          ref={player => player?.focus()}
           src={youtubeEmbedUrl(video.youtubeId)}
           title={video.title}
           allow={youtubePlayerFeatures}

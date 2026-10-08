@@ -1,10 +1,13 @@
+import { edgeCache } from './edge-cache'
 import { errorFields, log } from './log'
 
 const appBundleId = 'com.zenbujapanese.app'
 export const appStoreLookupUrl = `https://itunes.apple.com/lookup?bundleId=${appBundleId}`
 
 const lookupCacheSeconds = 24 * 60 * 60
+const failureCacheSeconds = 5 * 60
 const lookupTimeoutMilliseconds = 3_000
+const nothingFound = 'null'
 
 export interface AppStoreRelease {
   version: string
@@ -28,15 +31,7 @@ export function readAppStoreLookup(answer: unknown): AppStoreRelease | null {
     : null
 }
 
-function edgeCache(): Cache | undefined {
-  return (globalThis as { caches?: { default?: Cache } }).caches?.default
-}
-
-async function lookupAnswer(fetcher: Fetch): Promise<unknown> {
-  const key = new Request(appStoreLookupUrl, { method: 'GET' })
-  const cache = edgeCache()
-  const kept = await cache?.match(key)
-  if (kept) return kept.json()
+async function askApple(fetcher: Fetch): Promise<string> {
   const response = await fetcher(
     new Request(appStoreLookupUrl, {
       headers: { Accept: 'application/json' },
@@ -45,27 +40,29 @@ async function lookupAnswer(fetcher: Fetch): Promise<unknown> {
   )
   if (!response.ok)
     throw new AppStoreLookupError(`The App Store lookup answered ${response.status}`)
-  const text = await response.text()
-  const answer: unknown = JSON.parse(text)
-  await cache?.put(
-    key,
-    new Response(text, {
-      headers: {
-        'Content-Type': 'application/json',
-        'Cache-Control': `public, max-age=${lookupCacheSeconds}`
-      }
-    })
-  )
-  return answer
+  return response.text()
 }
+
+const kept = (body: string, seconds: number) =>
+  new Response(body, {
+    headers: { 'Content-Type': 'application/json', 'Cache-Control': `public, max-age=${seconds}` }
+  })
 
 export async function appStoreRelease(
   fetcher: Fetch = request => fetch(request)
 ): Promise<AppStoreRelease | null> {
+  const key = new Request(appStoreLookupUrl, { method: 'GET' })
+  const cache = edgeCache()
+  const hit = await cache?.match(key)
+  if (hit) return readAppStoreLookup(await hit.json())
   try {
-    return readAppStoreLookup(await lookupAnswer(fetcher))
+    const text = await askApple(fetcher)
+    const answer: unknown = JSON.parse(text)
+    await cache?.put(key, kept(text, lookupCacheSeconds))
+    return readAppStoreLookup(answer)
   } catch (error) {
     log('warn', 'app_store_lookup_failed', errorFields(error))
+    await cache?.put(key, kept(nothingFound, failureCacheSeconds))
     return null
   }
 }

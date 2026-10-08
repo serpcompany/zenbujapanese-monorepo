@@ -1,14 +1,16 @@
 import type { Metadata } from 'next'
+import { Suspense } from 'react'
+import { ProductFacts } from '@/components/products/product-facts'
 import { ProductHero } from '@/components/products/product-hero'
 import {
   MoreProducts,
   ProductBand,
   ProductPoints,
-  ProductQuestions,
-  SectionTitle
+  ProductQuestions
 } from '@/components/products/product-sections'
 import { ProductVideos } from '@/components/products/product-videos'
 import { ScreenshotCarousel } from '@/components/products/screenshot-carousel'
+import { SectionTitle } from '@/components/products/section-title'
 import { appStoreRelease } from '@/lib/app-store'
 import { pageMetadata } from '@/lib/metadata'
 import { iphoneAppPage } from '@/lib/products/zenbu-japanese-for-iphone'
@@ -27,11 +29,22 @@ export const metadata: Metadata = {
 
 const block = 'mx-auto flex w-full max-w-5xl flex-col gap-6 px-4 md:px-5'
 
-export default async function ZenbuJapaneseForIphonePage() {
-  const release = await appStoreRelease()
+async function FactsFromAppStore() {
+  return <ProductFacts {...iphoneAppPage.facts} release={await appStoreRelease()} />
+}
+
+export default function ZenbuJapaneseForIphonePage() {
   return (
     <main className="flex w-full flex-col pb-16">
-      <ProductHero product={iphoneAppPage} release={release} hasVideos={appVideos.length > 0} />
+      <ProductHero
+        product={iphoneAppPage}
+        hasVideos={appVideos.length > 0}
+        facts={
+          <Suspense fallback={<ProductFacts {...iphoneAppPage.facts} release={null} />}>
+            <FactsFromAppStore />
+          </Suspense>
+        }
+      />
       <ProductBand>
         <div className={block}>
           <ScreenshotCarousel title="See it in action." screenshots={iphoneAppPage.screenshots} />
