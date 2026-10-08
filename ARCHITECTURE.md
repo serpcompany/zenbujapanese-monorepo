@@ -45,7 +45,7 @@ service's paths to it and the rest to the dictionary service, so they deploy apa
 ([`docs/agents/api-servers.md`](docs/agents/api-servers.md), The API host). The account service
 holds what learners keep across devices. Its Postgres database sits on the same
 server, on a network only the service's slots reach, and every app keeps its own copy and works
-offline (ADR 0012). The website's account pages call it from the learner's browser, not from the
+offline (ADR 0013). The website's account pages call it from the learner's browser, not from the
 Worker, whose requests to the API host Bot Fight Mode challenges
 ([`docs/agents/web.md`](docs/agents/web.md), Account pages).
 
