@@ -1,5 +1,4 @@
 import type { Metadata } from 'next'
-import { HomeAppExtras } from '@/components/home/home-app-extras'
 import { HomeAreas } from '@/components/home/home-areas'
 import { HomeClosing } from '@/components/home/home-closing'
 import { HomeHero } from '@/components/home/home-hero'
@@ -25,7 +24,6 @@ export default function HomePage() {
       <HomeHero />
       <TryDictionary />
       <HomeAreas />
-      <HomeAppExtras />
       <HomeWebTools />
       <HomeClosing />
     </main>

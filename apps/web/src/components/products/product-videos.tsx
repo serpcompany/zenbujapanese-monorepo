@@ -14,15 +14,16 @@ import {
   CarouselPrevious
 } from '@/components/ui/carousel'
 import { linkTo } from '@/lib/site'
+import { cn } from '@/lib/utils'
 import { type AppVideo, videosSectionId, youtubeEmbedUrl } from '@/lib/videos'
 
 const youtubePlayerFeatures =
   'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share'
 
-function VideoCard({ video }: { video: AppVideo }) {
+export function VideoCard({ video, className }: { video: AppVideo; className?: string }) {
   const [playing, setPlaying] = useState(false)
   return (
-    <div className="flex w-72 flex-col gap-2 md:w-80">
+    <div className={cn('flex w-72 flex-col gap-2 md:w-80', className)}>
       {playing ? (
         <iframe
           ref={player => player?.focus()}

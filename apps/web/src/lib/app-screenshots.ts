@@ -21,9 +21,17 @@ export const appScreenshots = {
     '08-word-detail-pitch',
     'The app’s word page for 大丈夫, with its pitch accent, meanings, and frequency'
   ),
+  imageSearchPhoto: appStoreScreenshot(
+    '06-image-search-photo',
+    'Image Search in the app reading a shop’s note to its customers, with every word underlined'
+  ),
   imageSearch: appStoreScreenshot(
     '05-image-search-word',
     'Image Search reading a ramen menu in the app, with 醤油, soy sauce, open'
+  ),
+  imageSearchTranslate: appStoreScreenshot(
+    '07-image-search-translate',
+    'The shop’s note translated in the app paragraph by paragraph, with the idiom 急がば回れ explained'
   ),
   handwriting: appStoreScreenshot(
     '09-handwriting',
