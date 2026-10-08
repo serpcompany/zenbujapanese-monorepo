@@ -269,7 +269,7 @@ export function appRoutesDocument() {
       title: "Zenbu dictionary service's routes for apps",
       version: '1',
       description: [
-        "Word cards and segmentation for a signed-in app that doesn't bundle the language data, such as Tomodachi (ADR 0013). They're the only dictionary routes an app calls; the website's own routes take its service token and are in docs/agents/dictionary-api.md.",
+        "Word cards and segmentation for a signed-in app that doesn't bundle the language data, such as Tomodachi (ADR 0014). They're the only dictionary routes an app calls; the website's own routes take its service token and are in docs/agents/dictionary-api.md.",
         '',
         '- **Errors** are `{ "error": { "code": "...", "message": "..." } }`, a missing route\'s `404 not_found` included. Branch on `code`.',
         '- **Caching.** Each answer carries `languageData`, and is `Cache-Control: private, max-age=86400` with the build as its `ETag`. Keep it a day, then revalidate with `If-None-Match`; a `304` means it holds. Key what you keep on all of `languageData`, and fetch again when any of it changes. An error is never cached.',

@@ -226,7 +226,7 @@ are the learner's to fix; the reference lists each field's bounds.
 
 An app with `dictionary:read`, such as Tomodachi, can ask the dictionary service for word cards
 and segmentation, on the same host: send the access token, as to `/v1/me`. They're the only
-dictionary routes an app calls (ADR 0013). Their contract is
+dictionary routes an app calls (ADR 0014). Their contract is
 [`apps/dictionary-api/openapi.json`](../../apps/dictionary-api/openapi.json), and its readable form
 the [dictionary API reference](../api/dictionary-api.md): every field of a card and a token, and
 every answer.
