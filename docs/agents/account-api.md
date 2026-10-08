@@ -2,7 +2,7 @@
 
 `apps/account-api` is where Zenbu accounts, sign-in, and sync run: a Node service with its own
 Postgres database, beside the dictionary service on the API servers
-([ADR 0012](../adr/0012-run-accounts-and-sync-in-their-own-service-on-the-api-servers.md)). It signs
+([ADR 0013](../adr/0013-run-accounts-and-sync-in-their-own-service-on-the-api-servers.md)). It signs
 learners in with Apple, Google, or a code sent by email, through Better Auth, and issues the tokens
 the apps and other services use. Signed-in apps read and change the learner's profile at
 `/v1/me`, and keep their copies in step with `/v1/sync`
@@ -156,7 +156,7 @@ checked against the provider's keys, issuer, audience (`APPLE_APP_BUNDLE_IDENTIF
 account is made only for an email the provider has verified. The providers' own tokens aren't
 kept.
 
-**One account per email, and no account taken over by one** (#374, ADR 0012):
+**One account per email, and no account taken over by one** (#374, ADR 0013):
 
 - The Zenbu user ID is the identity. Each way the learner signs in is a row in `user_identities`,
   unique by provider and subject: `apple` or `google` and the token's `sub`, or `email` and the
@@ -183,12 +183,12 @@ such request.
 
 The codes are sent as SERP's
 [transactional email standard](https://github.com/serpcompany/serp/blob/main/docs/engineering/standards/transactional-email.md)
-says (ADR 0012), by `src/email/mailer.ts`, the one function that sends:
+says (ADR 0013), by `src/email/mailer.ts`, the one function that sends:
 
 - **Through useSend's hosted API** (`https://app.usesend.com/api/v1/emails`), as serplists.com
   sends, from `EMAIL_FROM`, with no other `Reply-To`, in staging and production. The owners chose
   it on 2026-10-07: "the plan is updated to use usesend like serplists does"
-  ([ADR 0012](../adr/0012-run-accounts-and-sync-in-their-own-service-on-the-api-servers.md),
+  ([ADR 0013](../adr/0013-run-accounts-and-sync-in-their-own-service-on-the-api-servers.md),
   Amendment). `ACCOUNT_API_EMAIL=cloudflare` sends through Cloudflare Email Service's REST API
   instead, with nothing else changed; it still works, but isn't used.
 - **From the support address only.** `EMAIL_FROM` is refused unless it's
@@ -768,7 +768,7 @@ this order; each step says how to check it worked.
      host: `/healthz` names the dictionary build.
    - `GET /v1/auth/jwks` answers one key, `"alg":"EdDSA"`.
    - A request from the iOS app, on the Simulator and on a device, reaches staging. If Bot Fight
-     Mode challenges it, the owners turn Bot Fight Mode off (ADR 0012), and this doc says so.
+     Mode challenges it, the owners turn Bot Fight Mode off (ADR 0013), and this doc says so.
    - Run the backup by hand (`sudo zenbujapanese-account-backups`), then restore it into a new
      database (Back up and restore, above). `journalctl -t zenbujapanese-account-backups` shows
      both, and the bucket holds `staging/<time>.dump` and `production/<time>.dump`.

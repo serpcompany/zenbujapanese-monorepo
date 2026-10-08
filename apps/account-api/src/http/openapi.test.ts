@@ -12,7 +12,7 @@ const document = app.getOpenAPI31Document({
     title: 'Zenbu account service',
     version: '1',
     description: [
-      "Accounts, sign-in, profiles, and sync for every Zenbu app (ADR 0012). Sign-in is Better Auth's, under /v1/auth; a test holds each of its answers to this contract.",
+      "Accounts, sign-in, profiles, and sync for every Zenbu app (ADR 0013). Sign-in is Better Auth's, under /v1/auth; a test holds each of its answers to this contract.",
       '',
       '- **Errors.** Every error is `{ "error": { "code": "...", "message": "..." } }`. Branch on `code`, which is stable; `message` is for people and may change. A route may answer a code it doesn\'t list here, such as one from a Better Auth upgrade: handle it by its status.',
       "- **Apps.** A sign-in names its app in `X-Zenbu-Client`, unless it comes from one of the website's origins; the app decides the scopes its tokens carry.",

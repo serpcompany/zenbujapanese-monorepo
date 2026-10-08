@@ -14,7 +14,7 @@ setting up the server. Each service's doc covers its image, its workflow, and it
 ## The API host
 
 Clients reach both services at one host, `api.zenbujapanese.com`, and `api-staging.zenbujapanese.com`
-for staging (ADR 0012). nginx sends a request by its path:
+for staging (ADR 0013). nginx sends a request by its path:
 
 - `/v1/auth`, `/v1/me`, `/v1/sync`, and `/v1/health`, and anything under them, to the account
   service;
@@ -305,4 +305,4 @@ A person with root sets these up once. Each service then has its own steps
 
    The zone's Bot Fight Mode stays on and can't be skipped per host name. It challenges CI
    runners, so nothing in CI checks a deployed service, and it may challenge the apps' requests
-   (ADR 0012).
+   (ADR 0013).
