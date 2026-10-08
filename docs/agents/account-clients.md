@@ -82,7 +82,12 @@ doesn't list, a sign-in is refused (`unknown_client`).
   3. `POST /v1/auth/sign-in/social` with `{ "provider": "apple", "idToken": { "token": "<Apple's
      ID token>", "nonce": "<the nonce>" } }`.
 
-  A token made for another app's bundle ID is refused (`client_mismatch`).
+  A token made for another app's bundle ID is refused (`client_mismatch`). Apple's token holds no
+  name, and Apple hands the app the learner's name only on their first sign-in
+  (`ASAuthorizationAppleIDCredential.fullName`): send it then as
+  `"idToken": { "token": "…", "nonce": "…", "user": { "name": { "firstName": "Kana", "lastName": "Fan" } } }`,
+  so a new account has a name. Keep the credential's `authorizationCode` only while deleting the
+  account (Deleting the account, below).
 - **Google:** the same, with `"provider": "google"`, Google's ID token, and the nonce itself
   (not hashed) as the `nonce` the app gives Google. The token's audience is the app's Google client
   ID, which must be in the service's `GOOGLE_CLIENT_IDS`, so the iOS client's ID, not the web
@@ -391,7 +396,9 @@ reference lists them under [Rejected mutations](../api/account-api.md#rejected-m
 
 The service answers CORS only for the origins in its `ACCOUNT_API_TRUSTED_ORIGINS`, which are the
 website's (`https://zenbujapanese.com`, and `https://staging.zenbujapanese.com` on staging), with
-credentials, never `*`. A page on another origin can't call it, and a sign-in from one of those
+credentials, never `*`: it allows `GET`, `POST`, `PATCH`, and `DELETE` with the `Authorization`,
+`Content-Type`, and `X-Zenbu-Client` headers, lets the page read `Retry-After` and `X-Retry-After`,
+and lets a browser keep its preflight for 10 minutes. A page on another origin can't call it, and a sign-in from one of those
 origins is the website's (`zenbu-web`) unless it names another app. So a new web app needs a change
 to the service first: its origin in that setting and in its entry's `origins`, and a decision
 about whether it keeps a cookie session as the website does. Apps on a device aren't held to CORS.
