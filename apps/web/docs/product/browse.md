@@ -291,11 +291,11 @@ URL.
   flag", which follows every link on the browse pages the fixtures hold;
   `src/lib/dictionary/urls.test.ts`, "a kanji links to the search page of its normalized form".
 
-**Browse sitemap.** `/sitemaps/browse.xml` lists every indexed browse page once, and the sitemap
+**Browse sitemap.** `/sitemap-browse.xml` lists every indexed browse page once, and the sitemap
 index lists it wherever the site has a dictionary service.
 
 - Source: #614 mockup "Footer + /sitemap/ (changed)" (`/sitemaps/browse.xml` in
-  `/sitemap-index.xml`).
+  `/sitemap-index.xml`); #663 moved it to the root.
 - Check: `src/lib/dictionary/sitemaps.test.ts`, "the browse sitemap lists every browse page with
   10 words or more, each once"; Browse service, "the browse sitemap fits in one file"; Browse
   categories service, "the categories under 10 words are the thin ones the sitemap leaves out".

@@ -79,6 +79,22 @@ describe('signing in with an Apple or Google ID token', () => {
     expect(replayed).toMatchObject({ status: 401, body: { error: { code: 'invalid_nonce' } } })
   })
 
+  test('takes a nonce once when two sign-ins send it at the same moment', async () => {
+    const nonce = await running.as.nonce()
+    const token = await running.as.idToken(
+      running.google,
+      googleClientIds[0],
+      'google-race',
+      'race@example.com',
+      nonce
+    )
+    const answers = await Promise.all([
+      running.as.withIdToken('google', token, nonce),
+      running.as.withIdToken('google', token, nonce)
+    ])
+    expect(answers.map(answer => answer.status).sort()).toEqual([200, 401])
+  })
+
   test.each<[string, (nonce: string) => Promise<string>]>([
     [
       'expired',

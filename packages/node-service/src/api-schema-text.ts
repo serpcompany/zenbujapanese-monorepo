@@ -161,5 +161,8 @@ export function fieldList(schema: Schema, depth = 0): string[] {
 }
 
 export function cell(text: string): string {
-  return text.replace(/\s*\n\s*/g, ' ').replace(/\|/g, '\\|')
+  return text
+    .replace(/\s*\n\s*/g, ' ')
+    .replace(/\\/g, '\\\\')
+    .replace(/\|/g, '\\|')
 }

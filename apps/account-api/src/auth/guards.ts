@@ -4,7 +4,7 @@ import type { Scope } from '../domain/clients'
 import type { Mailer } from '../email/mailer'
 import { requireSignInClient, sessionClient } from './clients'
 import { emailProvider } from './identities'
-import { consumeNonce } from './nonce'
+import { consumeNonce, type TakeVerification } from './nonce'
 import {
   offeredRoutes,
   route,
@@ -109,7 +109,7 @@ function idTokenOf(body: Record<string, unknown>): { nonce?: unknown } | null {
   return typeof idToken === 'object' && idToken !== null ? (idToken as { nonce?: unknown }) : null
 }
 
-async function requireNonce(context: AuthContext, idToken: { nonce?: unknown }): Promise<void> {
+async function requireNonce(idToken: { nonce?: unknown }, take: TakeVerification): Promise<void> {
   const nonce = typeof idToken.nonce === 'string' ? idToken.nonce : ''
   if (nonce === '') {
     throw new APIError('BAD_REQUEST', {
@@ -117,7 +117,7 @@ async function requireNonce(context: AuthContext, idToken: { nonce?: unknown }):
       message: `Ask for a nonce (POST /v1/auth${route.nonce}), pass it to Apple or Google, then send it here with their token.`
     })
   }
-  if (!(await consumeNonce(context.context.internalAdapter, nonce))) {
+  if (!(await consumeNonce(take, nonce))) {
     throw new APIError('UNAUTHORIZED', {
       code: 'INVALID_NONCE',
       message: 'The nonce is unknown, already used, or expired. Ask for a new one.'
@@ -125,7 +125,12 @@ async function requireNonce(context: AuthContext, idToken: { nonce?: unknown }):
   }
 }
 
-function guardRequests(mailer: Mailer, trustedOrigins: readonly string[], codes: CodesPerEmail) {
+function guardRequests(
+  mailer: Mailer,
+  trustedOrigins: readonly string[],
+  codes: CodesPerEmail,
+  take: TakeVerification
+) {
   return createAuthMiddleware(async context => {
     const path = context.path
     if (!offeredRoutes.has(path)) {
@@ -164,7 +169,7 @@ function guardRequests(mailer: Mailer, trustedOrigins: readonly string[], codes:
     if (routesNeedingAFreshSession.has(path)) await requireFreshSession(context)
     const idToken = idTokenOf(body)
     if ((path === route.signInWithProvider || path === route.linkProvider) && idToken) {
-      await requireNonce(context, idToken)
+      await requireNonce(idToken, take)
     }
     if (path === route.signInWithCode && context.request) {
       const session = await freshSession(context)
@@ -206,12 +211,15 @@ function guardEmailSignIn() {
 export const signInGuards = (
   mailer: Mailer,
   trustedOrigins: readonly string[],
-  codes: CodesPerEmail
+  codes: CodesPerEmail,
+  take: TakeVerification
 ) =>
   ({
     id: 'zenbu-sign-in-guards',
     hooks: {
-      before: [{ matcher: () => true, handler: guardRequests(mailer, trustedOrigins, codes) }],
+      before: [
+        { matcher: () => true, handler: guardRequests(mailer, trustedOrigins, codes, take) }
+      ],
       after: [{ matcher: () => true, handler: guardEmailSignIn() }]
     }
   }) satisfies BetterAuthPlugin

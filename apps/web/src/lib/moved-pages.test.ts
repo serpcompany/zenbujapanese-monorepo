@@ -1,7 +1,5 @@
-import { modifyRouteRegex } from 'next/dist/lib/redirect-status'
-import { getPathMatch } from 'next/dist/shared/lib/router/utils/path-match'
-import { prepareDestination } from 'next/dist/shared/lib/router/utils/prepare-destination'
 import { describe, expect, test } from 'vitest'
+import { routeAsNextMatches } from '@/test/next-routes'
 import { movedPageResponse, removedDictionaryPages } from './moved-pages'
 
 describe('movedPageResponse', () => {
@@ -28,21 +26,6 @@ describe('movedPageResponse', () => {
   })
 })
 
-function redirectAsNextMatches(pathname: string): string | null {
-  for (const { source, destination } of removedDictionaryPages) {
-    const params = getPathMatch(source, {
-      strict: true,
-      removeUnnamedParams: true,
-      regexModifier: regex => modifyRouteRegex(regex, ['/_next'])
-    })(pathname)
-    if (params) {
-      return prepareDestination({ appendParamsToQuery: false, destination, params, query: {} })
-        .parsedDestination.pathname
-    }
-  }
-  return null
-}
-
 const miru = '/dictionary/%E8%A6%8B%E3%82%8B-1259290/'
 
 describe('removedDictionaryPages, the pages the three page types replaced', () => {
@@ -59,7 +42,7 @@ describe('removedDictionaryPages, the pages the three page types replaced', () =
     ],
     ['/dictionary/search/a%2Fb/examples/', '/dictionary/search/a%2Fb/']
   ])('send %s to %s', (from, to) => {
-    expect(redirectAsNextMatches(from)).toBe(to)
+    expect(routeAsNextMatches(removedDictionaryPages, from)).toBe(to)
   })
 
   test.each([
@@ -73,6 +56,6 @@ describe('removedDictionaryPages, the pages the three page types replaced', () =
     '/dictionary/search/conjugations/',
     '/dictionary/search/conjugations/examples.json'
   ])('leave %s to the site', pathname => {
-    expect(redirectAsNextMatches(pathname)).toBeNull()
+    expect(routeAsNextMatches(removedDictionaryPages, pathname)).toBeNull()
   })
 })

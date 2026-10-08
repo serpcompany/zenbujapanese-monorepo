@@ -10,7 +10,10 @@ test.describe('URLs', () => {
     )
   })
 
-  for (const [from, to] of [
+  const slashedFileRedirectNote =
+    'next dev strips a file URL’s slash first, in a redirect of its own, which OpenNext skips'
+
+  for (const [from, to, productionBuildOnly] of [
     ['/dictionary/1546640/', needed.path],
     [encodeURI('/dictionary/要らない-1546640/'), needed.path],
     ['/dictionary/search/IRU/', '/dictionary/search/iru/'],
@@ -20,12 +23,20 @@ test.describe('URLs', () => {
     [`${needed.path}conjugations/polite/te-form/`, needed.path],
     ['/dictionary/search/iru/examples/', '/dictionary/search/iru/'],
     ['/support', '/support/'],
-    ['/robots.txt/', '/robots.txt']
-  ]) {
+    ['/robots.txt/', '/robots.txt'],
+    ['/sitemaps/pages.xml', '/sitemap-pages.xml'],
+    ['/sitemaps/browse.xml', '/sitemap-browse.xml'],
+    ['/sitemaps/dictionary/1.xml', '/sitemap-words.xml'],
+    ['/sitemaps/dictionary/2.xml', '/sitemap-words-2.xml'],
+    ['/sitemap-pages.xml/', '/sitemap-pages.xml'],
+    ['/sitemaps/pages.xml/', '/sitemap-pages.xml', true],
+    ['/sitemaps/dictionary/2.xml/', '/sitemap-words-2.xml', true]
+  ] as const) {
     test(`${decodeURI(from)} redirects to ${decodeURI(to)} in one hop`, async ({
       request,
       baseURL
     }) => {
+      test.skip(Boolean(productionBuildOnly) && !onProductionBuild, slashedFileRedirectNote)
       const response = await request.get(from, { maxRedirects: 0 })
       expect(response.status()).toBe(308)
       expect(new URL(response.headers().location, baseURL).pathname).toBe(to)

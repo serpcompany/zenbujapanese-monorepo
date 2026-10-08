@@ -6,22 +6,11 @@ import { route } from './routes'
 const nonceMinutes = 10
 const nonceIdentifier = (nonce: string) => `sign-in-nonce:${nonce}`
 
-interface VerificationStore {
-  createVerificationValue(data: {
-    identifier: string
-    value: string
-    expiresAt: Date
-  }): Promise<unknown>
-  findVerificationValue(identifier: string): Promise<{ expiresAt: Date } | null>
-  deleteVerificationByIdentifier(identifier: string): Promise<void>
-}
+export type TakeVerification = (identifier: string) => Promise<Date | null>
 
-export async function consumeNonce(store: VerificationStore, nonce: string): Promise<boolean> {
-  const identifier = nonceIdentifier(nonce)
-  const found = await store.findVerificationValue(identifier)
-  if (!found) return false
-  await store.deleteVerificationByIdentifier(identifier)
-  return new Date(found.expiresAt) > new Date()
+export async function consumeNonce(take: TakeVerification, nonce: string): Promise<boolean> {
+  const expiresAt = await take(nonceIdentifier(nonce))
+  return expiresAt !== null && new Date(expiresAt) > new Date()
 }
 
 export const signInNonce = () =>
