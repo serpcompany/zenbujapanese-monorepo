@@ -45,20 +45,31 @@ other account page, and asks the account service nothing.
   says signing in isn't available, links no account page, and stays noindex" (and each other
   page); `src/lib/account/pages.test.ts` (the descriptions included); `src/app/routes.test.ts`.
 
-**Footer.** Where the account pages are open, the footer's Products group ends with Sign in, which
-leads to `/login/`; where they're closed, as in production today, it has no such link, so nothing
-links to the account pages. In a browser that signed in on the site, it says Account and leads to
-`/account/`. The browser remembers that
+**Log in and the footer.** Where the account pages are open, the header's Log in (in the phone
+menu below 1024 pixels) opens `/login/`, and the footer's Products group ends with Sign in, which
+leads there too. Both take their address from the `login` entry in `linkTargets`
+(`src/lib/site.ts`), which the build points at `/login/` only where the pages are open
+(`ZENBU_ACCOUNT_PAGES`, [`web.md`](../../../../docs/agents/web.md), Account pages). Where they're
+closed, as in production today, Log in stays a `#` placeholder
+([Dictionary](dictionary.md#header-footer-and-site-wide), Placeholder links) and the footer has
+no Sign in, so nothing links to the account pages. In a browser that signed in on the site, the
+footer says Account and leads to `/account/`; the header's Log in doesn't change. The browser
+remembers that
 in local storage (`zenbu-signed-in`), which the pages set on signing in and clear on signing out,
 on deleting the account, and when the account page finds no session. The server draws Sign in, so
 the page and its first render in the browser agree.
 
-- Source: #468, so the pages can be reached; the header is unchanged.
-- Check: `src/components/site-footer.test.tsx`, "the footer groups its links under Products,
+- Source: #468, so the pages can be reached; the header's Log in, a placeholder until the login
+  page existed (#648, #650), keeps its place and wording.
+- Check: `src/lib/site.test.ts`, "Log in opens /login/ in a build whose account pages are open,
+  and isn't a placeholder" and "Log in stays a # placeholder in a build whose account pages are
+  closed"; `src/components/site-footer.test.tsx`, "the footer groups its links under Products,
   Tools, Company, and Legal", "the footer leads to signing in, as the server draws it before the
   browser knows", and "the footer leaves signing in out where the site's account pages are
-  closed"; Account spec, "the footer leads to signing in, and to the account once signed
-  in"; Closed spec, "a page built ahead of time has no Sign in in its footer".
+  closed"; Account spec, "the header's Log in, or the drawer's on phones, opens the login page"
+  and "the footer leads to signing in, and to the account once signed in"; Closed spec, "the
+  header's Log in, and the drawer's on phones, stays a # placeholder" and "a page built ahead of
+  time has no Sign in in its footer".
 
 ## Signing in
 

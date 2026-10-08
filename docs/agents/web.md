@@ -60,8 +60,10 @@ lists every child sitemap and each child sitemap lists the new URLs.
 - `apps/web/playwright.config.ts` names the browser tests' two projects, `desktop` and `phone`,
   and their server. Dev assertions wait 15 seconds, since `next dev` compiles each route on first
   use; the production build keeps Playwright's 5, and runs on one worker, as one workerd process
-  renders every page. `apps/web/e2e/test.ts` holds the console check and the fixture helpers every
-  spec imports.
+  renders every page. It sets `ZENBU_ACCOUNT_PAGES` for the tests as `next.config.ts` does for the
+  build (Account pages, below), so the `placeholderLinks` the tests import list Log in only where
+  the build's account pages are closed. `apps/web/e2e/test.ts` holds the console check and the
+  fixture helpers every spec imports.
 - `apps/web/vitest.config.ts` has two projects: `*.interaction.test.tsx` run in happy-dom, the
   other tests in Node. Both set `__NEXT_TRAILING_SLASH`, so `next/link` draws links with their
   trailing slash, as the build does with `trailingSlash`.
@@ -70,7 +72,8 @@ lists every child sitemap and each child sitemap lists the new URLs.
   `apps/web/e2e/placeholders.spec.ts` fails on any other `#` link and prints the listed ones
   ([product docs](../../apps/web/docs/product/dictionary.md#header-footer-and-site-wide),
   Placeholder links). When a page ships, give its entry the page's path, as the products pages'
-  entries have, so every link to it changes at once, or link it directly and drop the entry.
+  entries have, so every link to it changes at once, or link it directly and drop the entry. Log
+  in's entry has `/login/` only in a build whose account pages are open (Account pages, below).
 - `apps/web/public/` holds the header's images (App Store screenshot crops and the app icon), a
   larger app icon (`app-icon-192.webp`) and, in `apps/web/public/screenshots/app-store/`, whole App
   Store screenshots for the homepage and the products pages, each named for its file in
@@ -349,13 +352,15 @@ the account service ([`account-api.md`](account-api.md); the website's side of i
   `Retry-After`, a network failure, or an answer of another shape; `src/lib/account/messages.ts`
   says each to the learner.
 - **Settings per environment**, Worker `vars` read per request (the pages are `force-dynamic`), in
-  `src/lib/account/settings.ts`. The footer is in static pages too, which are built once, so it
-  can't read a Worker var: `next.config.ts` reads the environment's `ACCOUNT_API_URL` from
-  `wrangler.jsonc` when it builds (`src/lib/account/availability.ts`, by `SITE_ENV`) and passes
-  `ZENBU_ACCOUNT_PAGES` (`open` or `closed`) to the build, which draws Sign in only where it's
-  `open`. A value set only in `.dev.vars` changes the pages, not the footer. The `Web` workflow
-  checks staging's build has the link, and production's has none (Browser tests, below;
-  [`ci.md`](ci.md), Web).
+  `src/lib/account/settings.ts`. The header and footer are in static pages too, which are built
+  once, so they can't read a Worker var: `next.config.ts` reads the environment's
+  `ACCOUNT_API_URL` from `wrangler.jsonc` when it builds (`src/lib/account/availability.ts`, by
+  `SITE_ENV`) and passes `ZENBU_ACCOUNT_PAGES` (`open` or `closed`) to the build, which draws the
+  footer's Sign in, and points the `login` entry in `linkTargets` (`src/lib/site.ts`), the
+  header's Log in, at `/login/` rather than `#`, only where it's `open`. A value set only in
+  `.dev.vars` changes the pages, not the header or footer. The `Web` workflow checks staging's
+  build links signing in, and production's has no link to it, its Log in still `#` (Browser
+  tests, below; [`ci.md`](ci.md), Web).
 
   | Var | What it does |
   | --- | --- |
@@ -430,9 +435,9 @@ mailbox; the site reads its own `ACCOUNT_API_URL`. A run sends three codes, and 
 at most five from one address in 10 minutes, so a second run within 10 minutes needs a new
 database, or `delete from rate_limits` in it.
 
-`e2e/account-closed.spec.ts` checks production's closed account pages and footer on the site built
-as production deploys (`SITE_ENV=production`, and a test Google Tag Manager ID, as `Web deploy`
-passes the real one), served by `wrangler dev --env production` on port 8797 with production's
+`e2e/account-closed.spec.ts` checks production's closed account pages, Log in, and footer on the
+site built as production deploys (`SITE_ENV=production`, and a test Google Tag Manager ID, as `Web
+deploy` passes the real one), served by `wrangler dev --env production` on port 8797 with production's
 vars, no dictionary service, and `--env-file /dev/null`, so no `.dev.vars` or `.env` file can open
 the pages. It answers every request off the site with an empty response, Tag Manager's included,
 so nothing leaves the machine, and fails on any request to the account service. It runs only when
@@ -533,7 +538,7 @@ Web Analytics).
 Before merging a change to environment configuration, build the site as the target environment
 deploys and run the Worker with its `vars` (`SITE_ENV=production pnpm exec opennextjs-cloudflare
 build`, then `pnpm exec opennextjs-cloudflare preview --env production`), then check the output.
-Static pages, the footer's Sign in among them (Account pages, above), come from the build's
+Static pages, the header's Log in and the footer's Sign in among them (Account pages, above), come from the build's
 `SITE_ENV`, so a build without it would show the local site's footer beside production's pages.
 Production's `DICTIONARY_API_URL` is a placeholder until `Web deploy` writes it (Dictionary
 service, above), and with it every page answers 500, so name no dictionary service

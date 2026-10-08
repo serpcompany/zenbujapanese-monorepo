@@ -1,5 +1,13 @@
+import { readFileSync } from 'node:fs'
+import { join } from 'node:path'
 import { defineConfig, devices } from '@playwright/test'
 import { onClosedProduction, onProductionBuild } from './e2e/server'
+import { accountPagesFor } from './src/lib/account/availability'
+
+process.env.ZENBU_ACCOUNT_PAGES = accountPagesFor(
+  readFileSync(join(__dirname, 'wrangler.jsonc'), 'utf8'),
+  onClosedProduction ? 'production' : process.env.SITE_ENV
+)
 
 const port = onClosedProduction
   ? 8797
