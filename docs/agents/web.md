@@ -443,8 +443,8 @@ the account service ([`account-api.md`](account-api.md); the website's side of i
   [`docs/quality.md`](../quality.md) (Account pages, and Header and footer's placeholders),
   [`docs/tech-debt.md`](../tech-debt.md)'s placeholder row, which counts Log in in production, and
   the `browser-tests` skill.
-  The privacy policy's text stays true with the email code alone: it offers Apple and Google only
-  "where its sign-in page offers them". `main` then deploys staging; production deploys when a
+  The privacy policy's text stays true with the email code alone: Apple and Google sign the learner
+  in only "if you choose them", where the website "offers sign-in". `main` then deploys staging; production deploys when a
   person runs `Web deploy` by hand while `DEPLOY_PRODUCTION` is `false` (Environments and
   deploys, below).
 - **Apple** runs in Sign in with Apple JS's popup (`src/lib/account/apple.ts`), which hands the
