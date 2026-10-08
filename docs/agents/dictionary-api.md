@@ -118,7 +118,7 @@ more and logs the error.
 | `GET /v1/browse/ranked/<slug>?page=` | A ranked list's words a band of 1,000 ranks at a time (`page` 1 is ranks 1 to 1,000, and so on to 10, ranks 9,001 to 10,000), or 200 of a JLPT level's words (`jlpt-n5`…) in kana order. |
 | `GET /v1/browse/kanji` | Each school list's kanji, most frequent first; each JLPT level's kanji count and its first 5; and how many jōyō kanji have each stroke count. |
 | `GET /v1/browse/kanji/<slug>` | A kanji list (`grade-1`…`grade-6`, `secondary-school`, `jinmeiyo`, `jlpt-n5`…`jlpt-n1`, `strokes-<n>`) with each kanji's first meaning, or its base kanji's for a compatibility character KANJIDIC2 gives none. |
-| `GET /v1/sitemaps/browse` | What the browse sitemap needs: every kana and its two-kana groups, each category, JLPT level, and kanji list, with their word or kanji counts, and each ranked list's words in each band, so the website can leave out lists of fewer than 10. |
+| `GET /v1/sitemaps/browse` | What the browse sitemaps need: every kana and its two-kana groups, each category, JLPT level, and kanji list, with their word or kanji counts, and each ranked list's words in each band, so the website can leave out lists of fewer than 10. |
 
 ### Apps
 
@@ -188,7 +188,7 @@ artifact for a request: before a thread reports ready, it builds the browse inde
 (`packages/dictionary-core/src/artifact/browse-index.ts`) in a few passes, every word in kana
 order by its first two kana and every category's words in both its orders, keeps the totals, the
 category counts, the kanji and ranked lists' summaries and counts, every kanji list, and the
-browse sitemap, and runs each statement a browse page asks once (`DictionaryBrowse.warm`). A
+browse sitemaps' answer, and runs each statement a browse page asks once (`DictionaryBrowse.warm`). A
 browse page then reads only its own words, with statements already prepared. The index holds
 about 960,000 row IDs, the categories' as 32-bit arrays. On 2026-10-07, with two threads on this
 workstation (load average 5 over the last minute, falling from 180 over fifteen), each thread was

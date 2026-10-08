@@ -216,7 +216,7 @@ words have none.
   otherwise lead its list with the count of its other meanings: と (a particle, 4th on YouTube)
   led Nouns, 行く led Slang, and な led Kansai dialect. Now Nouns starts with 事, 様, and 方,
   Slang with コス and キモイ, and Kansai dialect with ねん, ほんま, and はる.
-- Kana order is for browsing, so it isn't indexed (`noindex, follow`) and the browse sitemap
+- Kana order is for browsing, so it isn't indexed (`noindex, follow`) and the categories sitemap
   leaves it out: search engines see each category once.
 
 - Source: #614 mockup "/dictionary/browse/onomatopoeia/" (its intro, and its "Most used" and
@@ -291,12 +291,22 @@ URL.
   flag", which follows every link on the browse pages the fixtures hold;
   `src/lib/dictionary/urls.test.ts`, "a kanji links to the search page of its normalized form".
 
-**Browse sitemap.** `/sitemap-browse.xml` lists every indexed browse page once, and the sitemap
-index lists it wherever the site has a dictionary service.
+**Browse sitemaps.** Every indexed browse page is in exactly one sitemap, by kind:
+`/sitemap-kana.xml` (the hiragana and katakana lists), `/sitemap-categories.xml`,
+`/sitemap-frequency-lists.xml` (ranked bands and JLPT vocabulary), and `/sitemap-kanji-lists.xml`.
+Each hub leads its kind's sitemap: the kana charts and both scripts lead the kana sitemap, the
+three category indexes the categories sitemap, the frequency dictionaries the frequency lists
+sitemap, and the kanji lists the kanji lists sitemap. The browse home is in `/sitemap-pages.xml`,
+beside `/dictionary/`. The sitemap index lists the four wherever the site has a dictionary
+service.
 
-- Source: #614 mockup "Footer + /sitemap/ (changed)" (`/sitemaps/browse.xml` in
-  `/sitemap-index.xml`); #663 moved it to the root.
-- Check: `src/lib/dictionary/sitemaps.test.ts`, "the browse sitemap lists every browse page with
-  10 words or more, each once"; Browse service, "the browse sitemap fits in one file"; Browse
-  categories service, "the categories under 10 words are the thin ones the sitemap leaves out".
+- Source: #614 mockup "Footer + /sitemap/ (changed)" (one `/sitemaps/browse.xml` in
+  `/sitemap-index.xml`); #663 moved the sitemaps to the root and split this one by kind, as the
+  SERP XML sitemaps standard asks.
+- Check: `src/lib/dictionary/sitemaps.test.ts`, "the browse sitemaps list every browse page with
+  10 words or more, each once" and "the … sitemap lists only its own kind of browse page";
+  `src/lib/sitemap.test.ts`, "the … browse sitemap is …"; `apps/web/e2e/sitemaps.spec.ts`, the
+  pages sitemap's browse home; Browse service, "the browse sitemap fits in one file" (all four
+  together stay under one file's 50,000 URLs, so each does); Browse categories service, "the
+  categories under 10 words are the thin ones the sitemap leaves out".
 

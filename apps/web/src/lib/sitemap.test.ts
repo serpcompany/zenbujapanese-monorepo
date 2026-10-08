@@ -1,6 +1,7 @@
 import { describe, expect, it, test } from 'vitest'
 import { routeAsNextMatches } from '@/test/next-routes'
 import {
+  browseSitemapPath,
   dictionarySitemapFiles,
   movedDictionarySitemaps,
   wordSitemapPath
@@ -38,24 +39,36 @@ describe('sitemap files sit at the root, named for their group', () => {
   })
 
   test.each([
+    ['kana', '/sitemap-kana.xml'],
+    ['categories', '/sitemap-categories.xml'],
+    ['frequency-lists', '/sitemap-frequency-lists.xml'],
+    ['kanji-lists', '/sitemap-kanji-lists.xml']
+  ] as const)('the %s browse sitemap is %s', (group, path) => {
+    expect(browseSitemapPath(group)).toBe(path)
+    expect(routeAsNextMatches(dictionarySitemapFiles, path)).toBe(`/sitemaps/browse/${group}.xml`)
+  })
+
+  test.each([
+    '/sitemap-browse.xml',
     '/sitemap-words-1.xml',
     '/sitemap-words-0.xml',
     '/sitemap-words-02.xml',
     '/sitemap-words-x.xml',
     '/sitemap-pages.xml'
-  ])('%s is no word sitemap', path => {
+  ])('%s is no dictionary sitemap', path => {
     expect(routeAsNextMatches(dictionarySitemapFiles, path)).toBeNull()
   })
 
   test.each([
     ['/sitemaps/pages.xml', '/sitemap-pages.xml'],
-    ['/sitemaps/browse.xml', '/sitemap-browse.xml'],
     ['/sitemaps/dictionary/1.xml', '/sitemap-words.xml'],
     ['/sitemaps/dictionary/2.xml', '/sitemap-words-2.xml'],
     ['/sitemaps/dictionary/15.xml', '/sitemap-words-15.xml'],
     ['/sitemaps/pages.xml/', '/sitemap-pages.xml'],
     ['/sitemaps/dictionary/1.xml/', '/sitemap-words.xml'],
-    ['/sitemaps/dictionary/2.xml/', '/sitemap-words-2.xml']
+    ['/sitemaps/dictionary/2.xml/', '/sitemap-words-2.xml'],
+    ['/sitemaps/browse/kana.xml', '/sitemap-kana.xml'],
+    ['/sitemaps/browse/kanji-lists.xml/', '/sitemap-kanji-lists.xml']
   ])('the old %s redirects to %s', (from, to) => {
     expect(routeAsNextMatches(moved, from)).toBe(to)
   })
@@ -63,7 +76,9 @@ describe('sitemap files sit at the root, named for their group', () => {
   test.each([
     '/sitemaps/kanji.xml',
     '/sitemaps/conjugations.xml',
-    '/sitemaps/dictionary/0.xml'
+    '/sitemaps/dictionary/0.xml',
+    '/sitemaps/browse.xml',
+    '/sitemaps/browse/browse.xml'
   ])('%s stays gone', path => {
     expect(routeAsNextMatches(moved, path)).toBeNull()
   })
