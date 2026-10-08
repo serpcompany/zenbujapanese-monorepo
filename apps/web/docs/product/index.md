@@ -7,9 +7,10 @@ which lists features the website must have but doesn't yet, with the check each 
 
 The website is a public mirror of the app's dictionary. Its pages show what the app's Search tab
 shows for the same word or kanji, laid out as the #462 designs chose: stock shadcn components in
-one column, with sections in the app's order. There is no sign-in yet, so actions that keep
-learner data (lists, notes, known words, photos) open a prompt to get the app. That prompt becomes
-a sign-in prompt once account pages (#468) exist.
+one column, with sections in the app's order. The site has account pages ([Account
+pages](account.md)), open where an environment names an account service (staging today, not yet
+production), but it doesn't sync, so actions that keep learner data (lists, notes, known words,
+photos) still open a prompt to get the app (#468).
 
 ## Pages
 
@@ -33,6 +34,13 @@ footer, and the URL, indexing, and sitemap rules, apply to all of them.
 [Dictionary](dictionary.md) describes every behavior, page by page, [Browse pages](browse.md)
 the browse pages, and [Products pages](products.md) the catalog and the product page.
 
+The account pages, `/login/`, `/register/`, `/forgot-password/`, and `/account/`, sign a
+learner in to their Zenbu account and manage it; [Account pages](account.md) describes them. They
+are `noindex` and in no sitemap, and where they're closed, nothing links to them.
+
+The legal pages are under `/legal/`. [Privacy Policy](privacy.md) describes what
+`/legal/privacy/` says about the app, the website, and a Zenbu account, Tomodachi included.
+
 ## What defines the website's behavior
 
 The app's product documentation, [`apps/ios/docs/product/`](../../../ios/docs/product/index.md),
@@ -47,8 +55,9 @@ its app source and planned check, and is then built with its check in the same P
 
 ## How behavior is verified
 
-Each behavior in [Dictionary](dictionary.md) names its automated check, or says "No automated
-check yet (#511)". The checks come in five kinds:
+Each behavior in [Dictionary](dictionary.md), [Account pages](account.md), and
+[Privacy Policy](privacy.md) names its automated check, or says "No automated check yet" (#511 for the dictionary). The checks come in
+five kinds:
 
 - **App-recorded conformance suites** in `apps/ios/LanguageData/Conformance/`, recorded from the
   app on the iOS Simulator: `search-retrieval.json`, `search-results.json`, `example-search.json`,
@@ -64,7 +73,11 @@ check yet (#511)". The checks come in five kinds:
 - **Browser tests** (Playwright) in `apps/web/e2e/`, which open the site on the dictionary fixtures
   at a desktop and a phone width, and click through it as a reader does. The `Web` workflow runs
   them on the production build; [`docs/agents/web.md`](../../../../docs/agents/web.md) says how to
-  run them locally.
+  run them locally. The account pages' are in three kinds: `e2e/account.spec.ts`, with a stand-in
+  for the account service, runs with the rest; `e2e/account-service.spec.ts` runs against a real
+  one, in the `Account API` workflow; and `e2e/account-closed.spec.ts` runs, in the `Web`
+  workflow, on a build made as production deploys, whose account pages are closed
+  ([Account pages](account.md)).
 - **Smoke checks** in `apps/web/scripts/smoke.sh`, run against staging and production after each
   deploy. Each is named here by the message it prints.
 

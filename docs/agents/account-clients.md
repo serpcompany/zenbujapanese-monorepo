@@ -83,7 +83,12 @@ doesn't list, a sign-in is refused (`unknown_client`).
   3. `POST /v1/auth/sign-in/social` with `{ "provider": "apple", "idToken": { "token": "<Apple's
      ID token>", "nonce": "<the nonce>" } }`.
 
-  A token made for another app's bundle ID is refused (`client_mismatch`).
+  A token made for another app's bundle ID is refused (`client_mismatch`). Apple's token holds no
+  name, and Apple hands the app the learner's name only on their first sign-in
+  (`ASAuthorizationAppleIDCredential.fullName`): send it then as
+  `"idToken": { "token": "…", "nonce": "…", "user": { "name": { "firstName": "Kana", "lastName": "Fan" } } }`,
+  so a new account has a name. Keep the credential's `authorizationCode` only while deleting the
+  account (Deleting the account, below).
 - **Google:** the same, with `"provider": "google"`, Google's ID token, and the nonce itself
   (not hashed) as the `nonce` the app gives Google. The token's audience is the app's Google client
   ID, which must be in the service's `GOOGLE_CLIENT_IDS`, so the iOS client's ID, not the web
@@ -168,6 +173,36 @@ email is told of each:
 Signing in without an ID token (`POST /v1/auth/sign-in/social` with only `provider` and
 `callbackURL`) is the website's redirect sign-in: whatever starts it, the session it makes is the
 website's (`zenbu-web`). An app signs in with an ID token.
+
+## The website
+
+zenbujapanese.com (`zenbu-web`) signs in from the learner's browser, on an origin the service
+trusts (`ACCOUNT_API_TRUSTED_ORIGINS`), and keeps no token of its own
+([`web.md`](web.md), Account pages):
+
+- **Every call to `/v1/auth`** is a `fetch` with `credentials: 'include'`. The session is the
+  service's HttpOnly cookie on its own host: a sign-in answers no `set-auth-token` to the website,
+  so the page never holds the signed session token. `GET /v1/auth/get-session` shows it the
+  session's bare `token`, which signs nothing in; the page sends it only to
+  `POST /v1/auth/revoke-session`, to sign this browser's earlier session out after a fresh sign-in.
+  `GET /v1/auth/token` with the cookie answers the access token, which the page keeps in memory
+  and sends, without cookies, to `/v1/me`.
+- **Apple** runs in Sign in with Apple JS's popup, as the Services ID, with the nonce's SHA-256
+  and a return URL on the page's own origin, `<site>/account/`, since Apple answers a popup only
+  there. The page signs in with the ID token and the nonce, as an app does, and on a first sign-in
+  passes the name Apple hands it, as `idToken.user.name`.
+- **Google** goes through the service: `POST /v1/auth/sign-in/social` with `{ "provider":
+  "google", "callbackURL": "<page>", "errorCallbackURL": "<page>" }` answers the page to send the
+  browser to; Google comes back to `/v1/auth/callback/google`, which sets the cookie and sends the
+  browser to `callbackURL`, or to `errorCallbackURL` with `?error=<code>`. `link-social` adds Google
+  the same way. The codes include `account_not_linked` (the email has an account another way),
+  `account_already_linked_to_different_user` (that Google account belongs to another Zenbu
+  account), `access_denied` (the learner cancelled at Google), `state_mismatch` (the sign-in took
+  over 5 minutes, or started in another browser or tab), and `EMAIL_NOT_VERIFIED`, which may come
+  in capitals, so compare ignoring case; treat any other code as a failed sign-in, to try again.
+  A missing state, or a callback reused or reloaded, ends at `/v1/auth/error`, a JSON
+  `404 not_found` the browser shows: the page can't catch it.
+- **On `429`**, wait what `Retry-After` says.
 
 ## Access tokens
 
@@ -430,12 +465,16 @@ reference lists them under [Rejected mutations](../api/account-api.md#rejected-m
 
 The service answers CORS only for the origins in its `ACCOUNT_API_TRUSTED_ORIGINS`, which are the
 website's (`https://zenbujapanese.com`, and `https://staging.zenbujapanese.com` on staging), with
-credentials, never `*`. A page on another origin can't call it. A sign-in from one of those
-origins is the website's (`zenbu-web`) unless it names another app in `X-Zenbu-Client`, and a
-redirect sign-in (Apple's or Google's page, back to `/v1/auth/callback/<provider>`) is always the
-website's. So a new web app needs a change to the service first: its origin in that setting, its
-sign-ins naming it in `X-Zenbu-Client`, ID-token sign-ins only, and a decision about how it keeps
-its session. Apps on a device aren't held to CORS.
+credentials, never `*`: it allows `GET`, `POST`, `PATCH`, and `DELETE` with the `Authorization`,
+`Content-Type`, and `X-Zenbu-Client` headers, lets the page read `Retry-After` and `X-Retry-After`,
+and lets a browser keep its preflight for 10 minutes. A page on another origin can't call it. A
+sign-in from one of those origins is the website's (`zenbu-web`) unless it names another app in
+`X-Zenbu-Client`, and a redirect sign-in (Apple's or Google's page, back to
+`/v1/auth/callback/<provider>`) is always the website's. Every answer to those origins leaves out
+`set-auth-token`, so a page there keeps the cookie session, as the website does. So a new web app
+needs a change to the service first: its origin in that setting, its sign-ins naming it in
+`X-Zenbu-Client`, ID-token sign-ins only, and a decision about whether a cookie session suits it.
+Apps on a device aren't held to CORS.
 
 ## Deleting the account
 
@@ -449,7 +488,8 @@ Every app that signs in offers deleting the account (App Review guideline 5.1.1(
    Apple account answers `400 apple_authorization_needed`, so it then signs in with Apple and
    sends the code. If the fresh sign-in in step 1 was Apple's, send its code at once.
 3. `DELETE /v1/me` with `{ "confirm": true }`, and `"appleAuthorizationCode"` for an Apple
-   account: the code from signing in with the Apple ID the account uses. The service revokes your
+   account: the code from signing in with the Apple ID the account uses. The website sends its
+   popup's return URL too, as `"appleRedirectUri"`. The service revokes your
    app's Apple access with it before deleting. `apple_authorization_needed`,
    `apple_authorization_invalid`, `apple_account_mismatch`, and `503 apple_unavailable` delete
    nothing: sign in with Apple again for a new code, and try again.

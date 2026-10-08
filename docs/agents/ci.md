@@ -231,14 +231,24 @@ changed without regenerating the types fails here; then `pnpm check` ([`web.md`]
 `SITE_ENV=staging` and with `SITE_ENV=production`. `pnpm check` builds without `SITE_ENV`, but
 static pages and prerendering differ by environment, so a route that reads a binding at build time
 fails only in that environment's build. Neither build reaches the dictionary service: deployed
-pages read it only at request time. Each step names `apps/web` as its working directory, rather
+pages read it only at request time. After staging's, it checks the prerendered `/about/` has the
+header's Log in and the footer's Sign in linking `/login/`, since staging's account pages are open
+([`web.md`](web.md), Account pages); the `e2e` job checks production's has none. Each step names `apps/web` as its working directory, rather
 than the jobs setting it as a default, because the dead-code check reads a step's working directory
 to find the scripts and binaries a step runs, and not a job's.
 
 Its `e2e` job runs the browser tests ([`web.md`](web.md), Run and verify) on the site as it
 deploys: it installs Chromium, builds with OpenNext without `SITE_ENV`, so the build reads the
 dictionary fixtures, and serves it in workerd with `opennextjs-cloudflare preview`. A test that
-fails is retried once, and Playwright reports one that passed on the retry as flaky. On a failure
+fails is retried once, and Playwright reports one that passed on the retry as flaky. Then it
+builds again as production deploys (`SITE_ENV=production`, with a test `NEXT_PUBLIC_GTM_ID`,
+since `Web deploy` passes the real one) and runs `e2e/account-closed.spec.ts`
+on that build, served by `wrangler dev` with production's vars, no dictionary service, and no
+`.dev.vars` or `.env` file: while production's
+`ACCOUNT_API_URL` is empty, each account page says signing in isn't available and asks the
+account service nothing, and nothing links to one, the header's Log in (still `#`) and the
+prerendered footer included. When production's account pages open, those two steps go
+with it ([`web.md`](web.md), Account pages). On a failure
 it uploads the report, traces, videos, and screenshots as the `playwright-report` artifact, kept
 for a week.
 
@@ -357,8 +367,11 @@ rollback's comes from an image the run pulled. The whole deploy is in
 ## Account API
 
 `.github/workflows/account-api.yml` checks the account service on pull requests that change it,
-what the services share (`packages/node-service/`), or its API reference
-(`docs/api/account-api.md`, which its tests write), and by hand. A new push cancels the pull
+what the services share (`packages/node-service/`), its API reference (`docs/api/account-api.md`,
+which its tests write), or what the website's account pages are built from (`apps/web/src/`, the
+browser test against the service with `apps/web/e2e/test.ts` and `apps/web/playwright.config.ts`,
+and the site's `next.config.ts`, `package.json`, and `wrangler.jsonc`), and by hand. A new push
+cancels the pull
 request's last run. The deployer and the backups script (`deploy/deployer.sh`,
 `apps/account-api/deploy/backups.sh`) are ShellChecked by `Repository`'s `pnpm verify`.
 
@@ -367,6 +380,17 @@ request's last run. The deployer and the backups script (`deploy/deployer.sh`,
   tests at it, so the migrations and the `pg` driver run against the Postgres the server runs,
   including two migrations started at once. The container trusts any connection and lives only as
   long as the job, so it has no password. See [`account-api.md`](account-api.md), Check it.
+- **`website`** starts the service from its source on a Postgres 18 container, with the dev
+  mailbox and the website's local origin, then runs the website's browser test against it
+  (`apps/web/e2e/account-service.spec.ts`, on `next dev`, at the desktop width): a learner
+  registers with an emailed code, edits the profile, signs out, signs in again, and deletes the
+  account after a fresh sign-in ([`web.md`](web.md), Account pages). The `Web` workflow can't run
+  it, with no service, so it runs here, as `Dictionary API` runs the website's rendered-page gate
+  against the service it builds. It doesn't retry a failed run, as the `Web` workflow does: the
+  service sends five codes from one address in 10 minutes, and a run sends three.
+  `ACCOUNT_API_SECRET` is a CI-only value. On a failure it prints
+  the service's log and keeps the test's trace, video, and screenshot as `account-pages-report`
+  for a week.
 
 ## Account API deploy
 

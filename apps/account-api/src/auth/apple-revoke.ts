@@ -97,7 +97,7 @@ export function appleRevoker(apple: AuthConfig['apple'], publicUrl: string): App
   const key = apple?.signingKey ?? null
   return {
     configured: key !== null,
-    async revoke(authorizationCode, clientId, appleUserIds, inUse): Promise<AppleRevocation> {
+    async revoke({ code, redirectUri }, clientId, appleUserIds, inUse): Promise<AppleRevocation> {
       const app = clientById(clientId)
       const web = app?.signsInOnTheWeb ?? false
       const appleClientId = web ? apple?.servicesIds[0] : app?.appleBundleIds[0]
@@ -111,8 +111,8 @@ export function appleRevoker(apple: AuthConfig['apple'], publicUrl: string): App
       }
       const grant = await exchange(
         credentials,
-        authorizationCode,
-        web ? `${publicUrl}/v1/auth/callback/apple` : undefined
+        code,
+        web ? (redirectUri ?? `${publicUrl}/v1/auth/callback/apple`) : undefined
       )
       if (typeof grant === 'string') return grant
       const ours = appleUserIds.includes(grant.owner)

@@ -1,3 +1,6 @@
+import { accountPagesOpen } from './account/availability'
+import { accountPages } from './account/pages'
+
 export const site = {
   name: 'Zenbu Japanese',
   mark: '全',
@@ -46,7 +49,12 @@ const linkTargets = [
   { id: 'reference-guides', kind: 'page', name: 'Reference guides', href: placeholderHref },
   { id: 'courses', kind: 'page', name: 'Courses', href: placeholderHref },
   { id: 'videos', kind: 'page', name: 'Videos index, /videos/', href: placeholderHref },
-  { id: 'login', kind: 'page', name: 'Log in page, /login/', href: placeholderHref },
+  {
+    id: 'login',
+    kind: 'page',
+    name: 'Log in page, /login/',
+    href: accountPagesOpen() ? accountPages.signIn.path : placeholderHref
+  },
   { id: 'app-store', kind: 'store', name: 'App Store listing', href: placeholderHref },
   { id: 'youtube', kind: 'social', name: 'YouTube', href: placeholderHref },
   { id: 'x', kind: 'social', name: 'X', href: placeholderHref },

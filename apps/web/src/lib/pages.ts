@@ -35,7 +35,8 @@ export const sitePages = [
   {
     path: '/legal/privacy/',
     title: 'Privacy Policy',
-    description: 'How Zenbu Japanese handles information in the app and on this website.'
+    description:
+      'How Zenbu Japanese handles information in its apps, on this website, and in a Zenbu account.'
   },
   {
     path: '/legal/terms/',

@@ -9,18 +9,35 @@
     "directory": ".open-next/assets"
   },
   "observability": { "enabled": true },
-  "vars": { "DICTIONARY_API_URL": "" },
+  "vars": {
+    "DICTIONARY_API_URL": "",
+    "ACCOUNT_API_URL": "http://localhost:8789",
+    "ACCOUNT_APPLE_SERVICES_ID": "",
+    "ACCOUNT_GOOGLE_SIGN_IN": ""
+  },
   "upload_source_maps": true,
   "services": [{ "binding": "WORKER_SELF_REFERENCE", "service": "zenbujapanese-web" }],
   "env": {
     "staging": {
-      "vars": { "SITE_ENV": "staging", "DICTIONARY_API_URL": "DICTIONARY_API_URL" },
+      "vars": {
+        "SITE_ENV": "staging",
+        "DICTIONARY_API_URL": "DICTIONARY_API_URL",
+        "ACCOUNT_API_URL": "https://api-staging.zenbujapanese.com",
+        "ACCOUNT_APPLE_SERVICES_ID": "com.zenbujapanese.web",
+        "ACCOUNT_GOOGLE_SIGN_IN": "on"
+      },
       "workers_dev": true,
       "routes": [{ "pattern": "staging.zenbujapanese.com", "custom_domain": true }],
       "services": [{ "binding": "WORKER_SELF_REFERENCE", "service": "zenbujapanese-web-staging" }]
     },
     "production": {
-      "vars": { "SITE_ENV": "production", "DICTIONARY_API_URL": "DICTIONARY_API_URL" },
+      "vars": {
+        "SITE_ENV": "production",
+        "DICTIONARY_API_URL": "DICTIONARY_API_URL",
+        "ACCOUNT_API_URL": "",
+        "ACCOUNT_APPLE_SERVICES_ID": "",
+        "ACCOUNT_GOOGLE_SIGN_IN": ""
+      },
       "workers_dev": true,
       "routes": [
         { "pattern": "zenbujapanese.com", "custom_domain": true },
