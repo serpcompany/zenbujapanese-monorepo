@@ -26,7 +26,7 @@ export const sitePages = [
     path: '/products/zenbu-japanese-for-iphone/',
     title: 'Zenbu Japanese for iPhone',
     description:
-      'An offline Japanese dictionary for iPhone with Image Search, handwriting, a live conversation translator, and YouTube with linked captions. No account needed.'
+      'An offline Japanese dictionary for iPhone with Image Search, handwriting, a live conversation translator, and YouTube with linked captions.'
   },
   { path: '/about/', title: 'About', description: 'About Zenbu Japanese.' },
   { path: '/support/', title: 'Support', description: 'Get help with Zenbu Japanese.' },

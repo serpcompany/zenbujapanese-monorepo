@@ -10,9 +10,6 @@ export type ProductPageSymbol =
   | 'list'
   | 'chart'
   | 'type'
-  | 'user-x'
-  | 'phone'
-  | 'check'
 
 export interface ProductDemo {
   symbol: ProductPageSymbol

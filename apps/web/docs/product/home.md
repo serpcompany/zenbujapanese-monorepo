@@ -6,22 +6,23 @@ shadcn styles, and #651. Each behavior below says what the page does, where it c
 automated check that enforces it (see [How behavior is verified](index.md#how-behavior-is-verified)).
 
 Abbreviations: **Home spec** is `apps/web/e2e/home.spec.ts`, the homepage's browser tests at a
-desktop and a phone width. **App docs** is [`apps/ios/docs/product/`](../../../ios/docs/product/index.md).
-Web paths are under `apps/web/`. The page's sections, with their headings and lines, are in
-`src/components/home/`; the features, the app's extras, the example searches, and the data the
-previews draw are in `src/lib/home.ts` and `src/lib/home-previews.ts`.
+desktop and a phone width, and **Claims spec** is `apps/web/e2e/claims.spec.ts`. **App docs** is
+[`apps/ios/docs/product/`](../../../ios/docs/product/index.md). Web paths are under `apps/web/`.
+The page's sections, with their headings and lines, are in `src/components/home/`; the features,
+the app's extras, the example searches, and the data the previews draw are in `src/lib/home.ts`
+and `src/lib/home-previews.ts`.
 
 ## Sections
 
 **Hero.** A badge, "For iPhone · Offline dictionary", the heading "Understand the Japanese you
 meet", a line on what the app does, then two buttons: **Get the app** and **Search the
-dictionary**, which opens `/dictionary/`. Under them: No account, No ads, and Your words stay on
-your iPhone. Beside the text (below it on phones) are two App Store screenshots, overlapped: the
-search results for taberu and the word page for 大丈夫. Get the app is the header's button
-(`GetAppButton`), so it opens the same link target in `linkTargets` (`src/lib/site.ts`): the
-iPhone app's page, `/products/zenbu-japanese-for-iphone/` ([Products pages](products.md)).
+dictionary**, which opens `/dictionary/`. Under them, the fine print reads only Works offline.
+Beside the text (below it on phones) are two App Store screenshots, overlapped: the search results
+for taberu and the word page for 大丈夫. Get the app is the header's button (`GetAppButton`), so it
+opens the same link target in `linkTargets` (`src/lib/site.ts`): the iPhone app's page,
+`/products/zenbu-japanese-for-iphone/` ([Products pages](products.md)).
 
-- Source: #651; #648 decision and mockups (Home, hero A).
+- Source: #651; #648 decision and mockups (Home, hero A); #668 (Works offline only).
 - Check: Home spec, "the hero leads with the app, with Get the app and Search the dictionary".
 
 **Try the dictionary.** A card with the dictionary's search box, the same form as `/dictionary/`'s
@@ -59,14 +60,16 @@ list card two rows tall.
   "the homepage draws 食べる as the dictionary has it", against the dictionary fixtures. The other
   words, and the previews' look: No automated check yet.
 
-**Free on the web.** The web tools that exist today, each opening its page: the Tools menu's
-links that aren't placeholders, with the menu's descriptions and marks
-(`src/lib/site-menus.ts`), so a converter joins the list when its page ships. Today they are
-Dictionary (`/dictionary/`), Kana charts, Kanji lists, and Frequency lists (under
-`/dictionary/browse/`). Then All free tools, the tools index's placeholder. Beside them is a
-browser drawn around the search page for taberu, with 食べる's word card in front of it.
+**Free on the web.** A line: no download, and every word has its own page. Then the web tools
+that exist today, each opening its page: the Tools menu's links that aren't placeholders, with
+the menu's descriptions and marks (`src/lib/site-menus.ts`), so a converter joins the list when
+its page ships. Today they are Dictionary (`/dictionary/`), Kana charts, Kanji lists, and
+Frequency lists (under `/dictionary/browse/`). Then All free tools, the tools index's
+placeholder. Beside them is a browser drawn around the search page for taberu, with 食べる's word
+card in front of it.
 
-- Source: #651; #648 mockups and their notes (only pages that exist today).
+- Source: #651; #648 mockups and their notes (only pages that exist today); #668 (the line
+  drops "and no account").
 - Check: Home spec, "the free web tools link to pages the site has, with no redirect".
 
 **Page end.** The page ends with one card, then the footer, after shadcnstudio's CTA 16, on a
@@ -106,7 +109,7 @@ Every claim on the page is one the app's product docs make:
 
 | Claim | App docs |
 | --- | --- |
-| Look up any word offline; the dictionary is on your iPhone | `dictionary.md`, opening (bundled data) |
+| Works offline; look up any word offline; the dictionary is on your iPhone | `dictionary.md`, opening (bundled data) |
 | Image Search: camera or photos, text across or down the page, tap a word, Translate view | `dictionary.md`, Image Search |
 | Handwriting reads the finished shape in any stroke order; radicals | `dictionary.md`, Search |
 | Furigana, pitch accent, frequency, conjugations with meanings, kanji readings and stroke order, examples | `dictionary.md`, Dictionary and kanji details |
@@ -116,7 +119,13 @@ Every claim on the page is one the app's product docs make:
 | Frequency packs order equally good matches, in the order the learner chooses | `dictionary.md`, Search; `index.md`, Account (Frequency Dictionaries) |
 | Tap a kanji to split its reading | `index.md`, Furigana kanji highlight |
 | Pitch accent: hear how a word is said (the page end's collage) | `dictionary.md`, Dictionary and kanji details (the pitch capsule's speaker) |
-| No account, no ads; lists, notes, known words, and saved conversations stay on the device | `index.md`, Account (Lists, Known Words); `dictionary.md`, Dictionary and kanji details (notes); `translate.md`, Translations; the Privacy Policy |
+
+The page doesn't say the app needs no account, that anything stays on the iPhone, or that it's
+built on open data, since accounts and sync are coming (#468, #574), and neither does its
+description.
+
+- Source: #668; #664 (the closing block, which made those claims, is gone).
+- Check: Claims spec, "/ makes none".
 
 ## Page
 

@@ -1,0 +1,183 @@
+import { spawnSync } from 'node:child_process'
+import { createHash } from 'node:crypto'
+import { mkdtempSync, readdirSync, readFileSync, writeFileSync } from 'node:fs'
+import { tmpdir } from 'node:os'
+import { join } from 'node:path'
+import type { ArtifactDatabase } from '@zenbu/dictionary-core/artifact/database'
+import type { KanjiData } from '@zenbu/dictionary-core/artifact/kanji-data'
+import {
+  exportWordCards,
+  readWordCards,
+  resolveWords,
+  wordCardInputs
+} from '@zenbu/dictionary-core/artifact/word-cards'
+import { rankedLists } from '@zenbu/dictionary-core/browse/lists'
+import type { RecordedWord } from '@zenbu/dictionary-core/cards/suite'
+import { beforeAll, describe, expect, test } from 'vitest'
+import { expectCardsAsRecorded } from './cards'
+import {
+  artifactAvailable,
+  artifactDatabase,
+  artifactKanji,
+  readSuite,
+  requirePinnedArtifacts,
+  resources
+} from './support'
+
+const wordSuite = readSuite<{
+  artifacts: { name: string; sha256: string }[]
+  cases: (RecordedWord & { covers: string })[]
+}>('word-detail')
+
+const miru = '7f490a9c9c0da94f4e9474f4efe74be1'
+
+describe.runIf(artifactAvailable)('word cards on the app’s data', () => {
+  let db: ArtifactDatabase
+  let kanji: KanjiData
+
+  beforeAll(async () => {
+    requirePinnedArtifacts(wordSuite.artifacts)
+    db = await artifactDatabase()
+    kanji = await artifactKanji()
+  })
+
+  test('a card for each word the word-detail suite records holds what it records', () => {
+    const cards = readWordCards(
+      db,
+      kanji,
+      wordSuite.cases.map(word => word.languageReferenceID)
+    )
+    expectCardsAsRecorded(cards, wordSuite.cases)
+  })
+
+  test('each ranked list’s chip is the word’s rank in that list', () => {
+    const [card] = readWordCards(db, kanji, [miru])
+    for (const list of rankedLists) {
+      if (list.source.kind !== 'pack') continue
+      const [row] = db.all<{ rank: number }>(
+        `SELECT r.rank FROM ranked.ranked_evidence r
+         JOIN ranked.ranked_lists l ON l.list_id = r.list_id AND l.pack_id = ?
+         WHERE r.language_reference_id = unhex(?)`,
+        [list.source.packId, miru]
+      )
+      expect(card.frequency.find(chip => chip.list === list.slug)?.rank, list.slug).toBe(
+        row?.rank ?? null
+      )
+    }
+  })
+
+  test('a headword and reading resolve to one entry, or are reported ambiguous or unresolved', () => {
+    const resolved = resolveWords(db, [
+      { headword: '見る', reading: 'みる' },
+      { languageReferenceID: miru.toUpperCase() },
+      { headword: 'それ', reading: 'それ' },
+      { headword: 'ありえない語', reading: 'ありえないご' },
+      { languageReferenceID: '0'.repeat(32) }
+    ])
+    expect(resolved.languageReferenceIDs).toEqual([miru])
+    expect(resolved.ambiguous.map(({ candidates }) => candidates.map(c => c.entSeq))).toEqual([
+      [1006970, 2216210]
+    ])
+    expect(resolved.unresolved).toEqual([
+      { headword: 'ありえない語', reading: 'ありえないご' },
+      { languageReferenceID: '0'.repeat(32) }
+    ])
+  })
+
+  test('entries the app shows as one word resolve to the one it keeps', () => {
+    const resolved = resolveWords(db, [{ headword: '閻魔', reading: 'えんま' }])
+    expect(resolved.ambiguous).toEqual([])
+    expect(resolved.languageReferenceIDs).toEqual(['176f4e451cc248ec386ac35f98801f36'])
+  })
+
+  test('a kana word finds its kanji headword, and a form is found as the app normalizes it', () => {
+    const resolved = resolveWords(db, [
+      { headword: 'ありがとう', reading: 'ありがとう' },
+      { headword: 'Tシャツ', reading: 'ティーシャツ' }
+    ])
+    const entries = readWordCards(db, kanji, resolved.languageReferenceIDs)
+    expect(entries.map(card => [card.entSeq, card.headword])).toEqual([
+      [1586820, '有難う'],
+      [1000160, 'Ｔシャツ']
+    ])
+  })
+
+  test('an export lists each word once, in the list’s order, and reports a repeated miss once', () => {
+    const languageData = { release: 'test', files: { 'LanguageReferenceData.sqlite3': 'abc' } }
+    const missing = { headword: 'ありえない語', reading: 'ありえないご' }
+    const exported = exportWordCards(db, kanji, languageData, [
+      { headword: '見る', reading: 'みる' },
+      { headword: '要る', reading: 'いる' },
+      { languageReferenceID: miru },
+      missing,
+      missing
+    ])
+    expect(exported.cards.map(card => card.headword)).toEqual(['見る', '要る'])
+    expect(exported.unresolved).toEqual([missing])
+  })
+
+  test('a word UniDic doesn’t list has its pitch estimated from its two parts, and says so', () => {
+    const [card] = readWordCards(
+      db,
+      kanji,
+      resolveWords(db, [{ headword: '記者会見', reading: 'きしゃかいけん' }]).languageReferenceIDs
+    )
+    expect(card.pitch).toMatchObject({
+      estimated: true,
+      downstep: 3,
+      moraCount: 6,
+      source: 'UniDic 3.1.0 compound accent rule (C2)'
+    })
+  })
+
+  test('the command writes the cards and their notices, and fails when a word is missing', () => {
+    const folder = mkdtempSync(join(tmpdir(), 'word-cards-'))
+    const run = (list: string) => {
+      writeFileSync(join(folder, 'words.tsv'), list)
+      return spawnSync('node', ['--import', 'tsx', 'scripts/word-cards.ts', 'words.tsv', 'out'], {
+        cwd: new URL('../..', import.meta.url),
+        env: { ...process.env, INIT_CWD: folder },
+        encoding: 'utf8'
+      })
+    }
+    const complete = run(`見る\tみる\n${miru}\n`)
+    expect(complete.status, complete.stderr).toBe(0)
+    const exported = JSON.parse(readFileSync(join(folder, 'out/word-cards.json'), 'utf8'))
+    expect(exported.cards).toHaveLength(1)
+    expect(exported.languageData.files).toEqual(
+      Object.fromEntries(
+        wordCardInputs.map(name => [
+          name,
+          createHash('sha256')
+            .update(readFileSync(join(resources, name)))
+            .digest('hex')
+        ])
+      )
+    )
+    expect(readdirSync(join(folder, 'out/notices')).sort()).toEqual(
+      exported.sources.map((source: { notice: string }) => source.notice).sort()
+    )
+    const incomplete = run('見る\tみる\nありえない語\tありえないご\n')
+    expect(incomplete.status).toBe(1)
+    expect(incomplete.stderr).toContain('Unresolved: ありえない語 ありえないご')
+  })
+
+  test('an export names its language data and the notice every source needs', () => {
+    const languageData = { release: 'test', files: { 'LanguageReferenceData.sqlite3': 'abc' } }
+    const exported = exportWordCards(db, kanji, languageData, [
+      { headword: '見る', reading: 'みる' }
+    ])
+    expect(exported).toMatchObject({ format: 'zenbu.word-cards.v1', languageData })
+    expect(exported.cards.map(card => card.languageReferenceID)).toEqual([miru])
+    const inputs = JSON.parse(
+      readFileSync(
+        new URL('../../../../language-data/release-inputs.json', import.meta.url),
+        'utf8'
+      )
+    ) as { files: { name: string }[] }
+    const released = new Set(inputs.files.map(file => file.name))
+    expect(
+      exported.sources.map(source => source.notice).filter(name => !released.has(name))
+    ).toEqual([])
+  })
+})

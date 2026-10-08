@@ -17,6 +17,7 @@
 !apps/ios/Modules/Sources/SearchExperience/Resources/KanjiElementReferenceData.json
 !apps/ios/Modules/Sources/SearchExperience/Resources/LanguageTechnologyPackCatalog.json
 !apps/ios/Modules/Sources/SearchExperience/Resources/Kuromoji/**
+!language-data/release.json
 **/node_modules
 apps/dictionary-api/dist
 apps/dictionary-api/.sudachi

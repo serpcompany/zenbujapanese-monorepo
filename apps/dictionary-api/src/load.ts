@@ -1,6 +1,8 @@
+import { readFile } from 'node:fs/promises'
 import { join } from 'node:path'
 import { DictionaryBrowse } from '@zenbu/dictionary-core/artifact/browse'
 import { Dictionary } from '@zenbu/dictionary-core/artifact/dictionary'
+import { wordCardInputs } from '@zenbu/dictionary-core/artifact/word-cards'
 import { artifactFile, fileSha256, openArtifact } from './artifact'
 import { loadKuromoji } from './kuromoji'
 import { inProcessService, type ServiceInfo } from './service'
@@ -9,19 +11,31 @@ import { loadSudachi, prepareSudachi, sudachiContract } from './sudachi'
 export interface VerifiedFiles {
   resources: string
   artifactSha256: string
+  languageDataRelease: string
+  languageDataFiles: Record<string, string>
   sudachiDictionary: string | null
   release: string
 }
 
 export async function verifyFiles(options: {
   resources: string
+  languageDataRelease: string
   sudachiDictionary: string | null
   release: string
 }): Promise<VerifiedFiles> {
-  const [artifactSha256, sudachiSha256] = await Promise.all([
-    fileSha256(join(options.resources, artifactFile)),
+  const { release: languageDataRelease } = JSON.parse(
+    await readFile(options.languageDataRelease, 'utf8')
+  ) as { release: string }
+  const [inputs, sudachiSha256] = await Promise.all([
+    Promise.all(
+      wordCardInputs.map(
+        async name => [name, await fileSha256(join(options.resources, name))] as const
+      )
+    ),
     options.sudachiDictionary ? fileSha256(options.sudachiDictionary) : Promise.resolve(null)
   ])
+  const languageDataFiles: Record<string, string> = Object.fromEntries(inputs)
+  const artifactSha256 = languageDataFiles[artifactFile]
   if (options.sudachiDictionary && sudachiSha256 !== null) {
     const contract = sudachiContract(options.resources)
     if (sudachiSha256 !== contract.installedSHA256) {
@@ -32,7 +46,7 @@ export async function verifyFiles(options: {
     }
     prepareSudachi(contract, options.sudachiDictionary)
   }
-  return { ...options, artifactSha256 }
+  return { ...options, artifactSha256, languageDataRelease, languageDataFiles }
 }
 
 export function loadService(files: VerifiedFiles) {
@@ -47,6 +61,7 @@ export function loadService(files: VerifiedFiles) {
   const info: ServiceInfo = {
     build: `${files.artifactSha256.slice(0, 12)}-${files.release}`,
     artifact: { name: artifactFile, sha256: files.artifactSha256 },
+    languageData: { release: files.languageDataRelease, files: files.languageDataFiles },
     features: dictionary.features
   }
   const browse = new DictionaryBrowse(artifact.db, artifact.kanji)

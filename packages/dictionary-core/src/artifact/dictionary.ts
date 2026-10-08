@@ -1,3 +1,5 @@
+import type { WordCard } from '../cards/card'
+import type { SegmentedToken } from '../cards/segmentation'
 import { examplesPerPage } from '../detail/examples'
 import type { FormExampleRows, KanjiRows, WordExampleRows, WordRows } from '../detail/rows'
 import { wordSlug } from '../detail/slug'
@@ -23,12 +25,14 @@ import { readKanji } from './kanji'
 import type { KanjiData } from './kanji-data'
 import { formLookup } from './lookup'
 import { primaryExamplesEntry, resultsExampleCount, resultsExamples } from './search-examples'
+import { readWordCards } from './word-cards'
 import {
   conjugatedFormExamples,
   type ExamplesEntry,
   exampleCount,
   exampleLinkEntSeqs,
   exampleRows,
+  segmentText,
   wordExampleRows
 } from './word-examples'
 import { canonicalEntryId, jmdictSource, readWord, slugsByEntSeq } from './words'
@@ -398,5 +402,13 @@ export class Dictionary {
 
   retired(): Record<number, number | null> {
     return {}
+  }
+
+  wordCards(languageReferenceIDs: readonly string[]): WordCard[] {
+    return readWordCards(this.db, this.kanjiData, languageReferenceIDs)
+  }
+
+  segment(text: string): SegmentedToken[] {
+    return segmentText(this.db, text, this.linking)
   }
 }
