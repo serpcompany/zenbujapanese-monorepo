@@ -4,8 +4,8 @@ The rules every change in this repository follows, whatever the language, and th
 enforce them. Each rule is checked mechanically, and each check's failure says how to fix it.
 
 Before opening a pull request, run `pnpm check` from the repository root: `pnpm verify`, then each
-package's `pnpm check` (`apps/web`, `apps/dictionary-api`, `packages/dictionary-core`,
-`tools/checks`), one after another. A change to `language-data` also runs the pipeline's tests
+package's `pnpm check` (`apps/web`, `apps/dictionary-api`, `apps/account-api`,
+`packages/dictionary-core`, `packages/node-service`, `tools/checks`), one after another. A change to `language-data` also runs the pipeline's tests
 ([`language-data/README.md`](../../language-data/README.md)). A change is done when these pass and
 the docs say what changed: the product docs for a behavior (in the same pull request), the area's
 doc for how it works. A website change also passes `pnpm test:e2e` in `apps/web`, with a browser test for any
@@ -90,12 +90,13 @@ to, with the rules in
 
 - No import cycles, type-only ones included.
 - Production code never imports a test or test support (`apps/web/src/test/`,
-  `apps/dictionary-api/src/conformance/`), or a devDependency for more than its types.
-- Every module in `apps/web`, `apps/dictionary-api`, and `tools/checks` is reachable from an entry
-  point: a route or `worker.ts`, the service's server and workers, the checks' commands. Code only
-  tests use lives beside them.
-- The core imports no Node built-in, package, app, or tool; apps reach it by its package name; the
-  website and the service never import each other.
+  `apps/dictionary-api/src/conformance/`, `packages/node-service/src/test/`), or a devDependency for
+  more than its types.
+- Every module in `apps/web`, `apps/dictionary-api`, `apps/account-api`, and `tools/checks` is
+  reachable from an entry point: a route or `worker.ts`, each service's server (and the dictionary
+  service's workers), the checks' commands. Code only tests use lives beside them.
+- The core imports no Node built-in, package, app, or tool; apps reach a shared package by its
+  name; no app imports another; and what the Node services share imports none of them.
 - The website's layers by resolved path, and nothing `worker.ts` reaches loads Next.js or React.
 
 ## Secrets
@@ -130,9 +131,13 @@ The docs are the map agents work from, so they stay correct and reachable:
   `README.md`, and files under `.claude/` and `.github/` are entry points. A link to a folder
   reaches the Markdown files directly in it.
 - Docs live where `AGENTS.md` routes: the root holds only `AGENTS.md`, `ARCHITECTURE.md`,
-  `CONTEXT.md`, `README.md`, and `CLAUDE.md`, and `docs/` only `adr/`, `agents/`, and its four
-  records. How an area works goes in `docs/agents/<area>.md`, a decision in `docs/adr/`, and a
-  product's behavior in `apps/<app>/docs/product/`. `AGENTS.md` only routes, in at most 120 lines.
+  `CONTEXT.md`, `README.md`, and `CLAUDE.md`, and `docs/` only `adr/`, `agents/`, `api/`, and its
+  four records. How an area works goes in `docs/agents/<area>.md`, a decision in `docs/adr/`, a
+  service's API reference in `docs/api/`, and a product's behavior in `apps/<app>/docs/product/`.
+  `AGENTS.md` only routes, in at most 120 lines.
+- A service's API reference, `docs/api/<service>.md`, is written from its OpenAPI document by
+  `packages/node-service/src/api-reference.ts`, and the service's tests fail when either file
+  differs from what they write: change the routes, then run `pnpm test -u` in the service.
 - Each skill under `.claude/skills/` has frontmatter naming it for its folder, with a description
   of at most 1,024 characters, and is listed in the Skills table below.
 

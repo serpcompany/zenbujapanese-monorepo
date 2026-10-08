@@ -391,7 +391,10 @@ has no title row above the header card. Share sends the headword, its reading, a
 meanings, as the app's does, through the browser's share sheet; without one it copies the link.
 The menu lists Mark as Known, Add to List…, Add Note, Add Photo, Open in App, and Copy Link. The
 learner actions and Open in App open the get-the-app prompt, a dialog on wide screens and a drawer
-on phones. Open in App doesn't open the app yet (#467). Copy Link copies the page URL and shows
+on phones. The prompt says lists, Known, notes, and photos are in the Zenbu app, and that saving
+lists and known words on this website comes later, which holds whether or not the site's account
+pages are open ([Account pages](account.md)); it promises nothing for notes and photos, which stay
+on the device ([Privacy Policy](privacy.md)). Open in App doesn't open the app yet (#467). Copy Link copies the page URL and shows
 "Link copied". There is no back button; the breadcrumbs replace it.
 
 - Source: App docs, Dictionary and kanji details (Share and the ••• menu); `SavedItemActions.swift`;
@@ -578,7 +581,8 @@ summary, and opens its word page when it has one.
 **Lists and Notes.** Each section shows a prompt, Add to List or Add Note, that opens the
 get-the-app prompt. The app's ✓ Known capsule and encounter photo aren't shown.
 
-- Source: #462 (learner sections as get-the-app prompts until #468).
+- Source: #462 (learner sections as get-the-app prompts until #468); #468 leaves them, since
+  signing in on the web doesn't make them work yet ([Account pages](account.md)).
 - Check: No automated check yet (#511).
 
 **Examples.** A word lists the same examples, in the same order, as the app's Word Detail, up to
@@ -881,12 +885,15 @@ window.
 **Placeholder links.** The pages the menus, footer, and [homepage](home.md) name that don't exist
 yet, and the outside addresses that aren't known yet, link to `#` for now: All free tools and Free
 tools (`/tools/`), the three converters, Browser extension, Reference guides, Courses, Log in
-(`/login/`), the App Store (the Get the app on the product page and on the catalog's iPhone app
-card), the ten social accounts, and See all videos (`/videos/`), which shows only once the product
-page has videos. Zenbu Japanese for iPhone and All products now open their pages,
-`/products/zenbu-japanese-for-iphone/` and `/products/` ([Products pages](products.md)), from the
-same entries. #650 asked for menu items to appear only once their page exists; the owner chose to
-show them now as `#` placeholders instead (#648). Every one is in one list, `linkTargets` in
+(`/login/`) where the site's account pages are closed, as in production today, the App Store (the
+Get the app on the product page and on the catalog's iPhone app card), the ten social accounts, and
+See all videos (`/videos/`), which shows only once the product page has videos. Zenbu Japanese for
+iPhone and All products now open their pages, `/products/zenbu-japanese-for-iphone/` and
+`/products/` ([Products pages](products.md)), from the same entries; so does Log in where the
+account pages are open, as on staging ([Account pages](account.md#pages)), the build choosing its
+address as it does the footer's Sign in. #650 asked for menu items to appear only once their page
+exists; the owner chose to show them now as `#` placeholders instead (#648). Every one is in one
+list, `linkTargets` in
 `src/lib/site.ts`, named for what it stands for, and its links carry `data-link-target` with its id.
 A browser test lists every `#` link the site renders and fails on one that isn't in that list, so
 none reaches production unnoticed; replacing a placeholder means giving its entry the real address,
@@ -898,7 +905,9 @@ or linking the page directly once it exists.
   in src/lib/site.ts", which visits every page in `src/lib/pages.ts` and a search, word, and browse
   page at both widths, with the phone menu open, and prints the placeholders it found;
   `apps/web/e2e/site.spec.ts`, "the planned pages in the Tools and Products menus are # placeholders
-  for now, and All products opens the catalog".
+  for now, and All products opens the catalog"; `src/lib/site.test.ts`, "Log in opens /login/ in a
+  build whose account pages are open, and isn't a placeholder" and "Log in stays a # placeholder in
+  a build whose account pages are closed".
 
 **Current section.** The menu button of the section the page is in is in the foreground color on a
 muted background, where the others are muted text, and screen readers hear it as current
@@ -932,20 +941,29 @@ window to 1024 pixels closes the sheet.
 iPhone app's page (`/products/zenbu-japanese-for-iphone/`), whose own Get the app opens the App
 Store link, a placeholder until that address is known. It is the same button in the header, the
 phone menu, and the prompt that actions needing the app open; following it closes the phone menu
-or the prompt. Log in opens the login page's placeholder; there is no signed-in avatar menu
-until accounts exist (#468).
+or the prompt. Log in opens the login page, `/login/`, where the account pages are open, as on
+staging, and is a `#` placeholder where they're closed, as in production today
+([Account pages](account.md#pages)), in the header and the phone menu alike. The header has no
+signed-in avatar menu.
 
 - Source: #648 decision and the Product page mockup's note (Get the app opens the product page);
-  #650; #652; #511 (the phone icon).
+  #650; #652; #511 (the phone icon); #468 (the login page).
 - Check: `src/components/site-header.test.tsx`, "from 1024 pixels Log in and Get the app end the
   header, Get the app opening the iPhone app’s page" and "the Get the app button leads with a phone
-  icon"; `apps/web/e2e/product-page.spec.ts`, "the header’s Get the app opens this page";
-  `apps/web/e2e/word.spec.ts`, "opens the More actions menu with the app's actions".
+  icon"; `src/lib/site.test.ts`, "Log in opens /login/ in a build whose account pages are open, and
+  isn't a placeholder" and "Log in stays a # placeholder in a build whose account pages are
+  closed"; `apps/web/e2e/account.spec.ts`, "the header's Log in, or the drawer's on phones, opens
+  the login page"; `apps/web/e2e/account-closed.spec.ts`, "the header's Log in, and the drawer's on
+  phones, stays a # placeholder"; `apps/web/e2e/product-page.spec.ts`, "the header’s Get the app
+  opens this page"; `apps/web/e2e/word.spec.ts`, "opens the More actions menu with the app's
+  actions".
 
 **Footer.** The footer starts with the 全 mark and the site name, linking home, and the site's
 one-line description. Four labelled columns follow: Products (Zenbu Japanese for iPhone,
-Dictionary), Tools (Kana charts, Kanji lists, Frequency lists, All tools), Company (About, Support,
-Contact, Sources), and Legal (Privacy Policy, Terms of Use, DMCA, Affiliate Disclosure). From 768
+Dictionary, and, where the account pages are open, Sign in, or Account once signed in:
+[Account pages](account.md#pages)), Tools (Kana charts, Kanji lists, Frequency lists, All tools),
+Company (About, Support, Contact, Sources), and Legal (Privacy Policy, Terms of Use, DMCA, Affiliate
+Disclosure). From 768
 pixels the brand and the columns sit side by side; on phones they stack into one column. Below
 them, after a rule, a row of plain social icons with no boxes, each named "Zenbu Japanese on" its
 network: YouTube, X, Instagram, TikTok, Discord, Reddit, Threads, Bluesky, LinkedIn, and Facebook,
@@ -1056,7 +1074,10 @@ search that finds nothing or only example sentences, `/dictionary/search/` itsel
 that load examples into a page (a word's, a search's, and a conjugated form's), and
 `/dictionary/service.json` (whether the site reaches its dictionary service, for CI) are
 `noindex`. Only production is indexed at all; staging sends `X-Robots-Tag: noindex` and disallows
-crawling (see [`docs/agents/web.md`](../../../../docs/agents/web.md)).
+crawling (see [`docs/agents/web.md`](../../../../docs/agents/web.md)). Staging and production write
+their canonical URLs on their own host: staging's canonical tags name
+`https://staging.zenbujapanese.com` (smoke "canonical tags name …"); local development writes
+production's.
 
 - Source: #465; #466; the owner's decision of 2026-09-29 (a new dictionary page is indexed unless
   the SEO review takes it out); ADR 0010 (a kanji's details keep the rule the kanji page had).
@@ -1067,16 +1088,24 @@ crawling (see [`docs/agents/web.md`](../../../../docs/agents/web.md)).
   `src/app/dictionary/service.json/route.test.ts`; search pages:
   `src/lib/dictionary/results/links.test.ts`, "isIndexable".
 
-**Sitemaps.** The pages sitemap lists the dictionary home. The sitemap index also lists the word
-sitemaps, with every word page's canonical URL, and the browse sitemap, with every browse page's
-([Browse pages](browse.md#site-wide)). Those are the only dictionary sitemaps (ADR 0010, amended
-for #614). Search pages aren't in any sitemap yet.
+**Sitemaps.** `robots.txt` names the sitemap index, `/sitemap-index.xml` (and `/sitemap.xml`, the
+same document), in every environment. The index lists files at the site's root, each named for
+its group: `/sitemap-pages.xml`, which lists the dictionary home; the word sitemaps,
+`/sitemap-words.xml`, `/sitemap-words-2.xml`, and on, with every word page's canonical URL; and
+`/sitemap-browse.xml`, with every browse page's ([Browse pages](browse.md#site-wide)). Every URL
+in them is on the environment's own host, so staging's name `https://staging.zenbujapanese.com`,
+and the homepage is the origin with no slash. The old `/sitemaps/pages.xml`,
+`/sitemaps/browse.xml`, and `/sitemaps/dictionary/<n>.xml` redirect (308) to them. Those are the
+only dictionary sitemaps (ADR 0010, amended for #614). Search pages aren't in any sitemap yet.
 
-- Source: ADR 0007; #465; ADR 0010.
+- Source: ADR 0007; #465; ADR 0010; #663 (the SERP XML sitemaps standard).
 - Check: `src/lib/dictionary/sitemaps.test.ts`, "the index lists every word sitemap and the
-  browse sitemap, and nothing else"; smoke "$index lists the pages and word sitemaps, and no kanji or conjugations sitemap"
-  (for `/sitemap-index.xml` and `/sitemap.xml`), "word sitemap lists 1 to 50,000 canonical URLs",
-  and `404 /sitemaps/kanji.xml`.
+  browse sitemap, and nothing else" and "with SITE_ENV=… a request to … lists sitemaps on …";
+  `src/lib/sitemap.test.ts`, "sitemap files sit at the root, named for their group";
+  `src/lib/robots.test.ts`; `apps/web/e2e/sitemaps.spec.ts`; `apps/web/e2e/urls.spec.ts`, the old
+  sitemaps' one-hop redirects, with and without a slash; smoke "$index lists the pages and word sitemaps, and no kanji or
+  conjugations sitemap" (for `/sitemap-index.xml` and `/sitemap.xml`), "word sitemap lists 1 to
+  50,000 canonical URLs", "robots.txt lists the sitemap index", and `404 /sitemaps/kanji.xml`.
 
 **Structured data.** Each dictionary page carries `BreadcrumbList` structured data for its trail.
 

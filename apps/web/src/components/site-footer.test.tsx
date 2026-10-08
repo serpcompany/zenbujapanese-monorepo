@@ -1,5 +1,5 @@
 import { renderToStaticMarkup } from 'react-dom/server'
-import { expect, test } from 'vitest'
+import { afterEach, beforeEach, expect, test, vi } from 'vitest'
 import { placeholderHref, site, socialLinks } from '@/lib/site'
 import { SiteFooter } from './site-footer'
 
@@ -20,13 +20,18 @@ function columns(): [heading: string, links: FooterLink[]][] {
   )
 }
 
+vi.hoisted(() => vi.stubEnv('ZENBU_ACCOUNT_PAGES', 'open'))
+beforeEach(() => vi.stubEnv('ZENBU_ACCOUNT_PAGES', 'open'))
+afterEach(() => vi.unstubAllEnvs())
+
 test('the footer groups its links under Products, Tools, Company, and Legal', () => {
   expect(columns()).toEqual([
     [
       'Products',
       [
         ['Zenbu Japanese for iPhone', '/products/zenbu-japanese-for-iphone/', 'iphone-app'],
-        ['Dictionary', '/dictionary/']
+        ['Dictionary', '/dictionary/'],
+        ['Sign in', '/login/', 'login']
       ]
     ],
     [
@@ -57,6 +62,19 @@ test('the footer groups its links under Products, Tools, Company, and Legal', ()
       ]
     ]
   ])
+})
+
+test('the footer leads to signing in, as the server draws it before the browser knows', () => {
+  expect(columns()[0]).toEqual([
+    'Products',
+    expect.arrayContaining([['Sign in', '/login/', 'login']])
+  ])
+})
+
+test("the footer leaves signing in out where the site's account pages are closed", () => {
+  vi.stubEnv('ZENBU_ACCOUNT_PAGES', 'closed')
+  expect(columns().flatMap(([, links]) => links.map(([text]) => text))).not.toContain('Sign in')
+  expect(footer()).not.toContain('/login/')
 })
 
 test('the footer stacks its columns into one on phones, and lays them side by side from 768 pixels', () => {

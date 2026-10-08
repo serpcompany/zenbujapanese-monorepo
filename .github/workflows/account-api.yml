@@ -1,0 +1,119 @@
+name: Account API
+
+on:
+  pull_request:
+    paths:
+      - apps/account-api/**
+      - packages/node-service/**
+      - apps/web/src/**
+      - apps/web/e2e/account-service.spec.ts
+      - apps/web/e2e/test.ts
+      - apps/web/next.config.ts
+      - apps/web/package.json
+      - apps/web/playwright.config.ts
+      - apps/web/wrangler.jsonc
+      - docs/api/account-api.md
+      - package.json
+      - pnpm-lock.yaml
+      - pnpm-workspace.yaml
+      - .github/workflows/account-api.yml
+  workflow_dispatch:
+
+concurrency:
+  group: account-api-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    services:
+      postgres:
+        image: postgres:18
+        env:
+          POSTGRES_USER: account
+          POSTGRES_DB: account
+          POSTGRES_HOST_AUTH_METHOD: trust
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready --username account" --health-interval 2s --health-timeout 5s
+          --health-retries 30
+    env:
+      ACCOUNT_API_TEST_DATABASE_URL: postgres://account@localhost:5432/account
+    steps:
+      - uses: actions/checkout@v5
+      - uses: pnpm/action-setup@v6
+        with:
+          package_json_file: package.json
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: pnpm
+          cache-dependency-path: pnpm-lock.yaml
+      - run: pnpm install --frozen-lockfile
+      - name: Check what the services share
+        run: pnpm --filter @zenbu/node-service check
+      - name: Check the service, against Postgres 18
+        working-directory: apps/account-api
+        run: pnpm check
+
+  website:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    services:
+      postgres:
+        image: postgres:18
+        env:
+          POSTGRES_USER: account
+          POSTGRES_DB: account
+          POSTGRES_HOST_AUTH_METHOD: trust
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready --username account" --health-interval 2s --health-timeout 5s
+          --health-retries 30
+    steps:
+      - uses: actions/checkout@v5
+      - uses: pnpm/action-setup@v6
+        with:
+          package_json_file: package.json
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: pnpm
+          cache-dependency-path: pnpm-lock.yaml
+      - run: pnpm install --frozen-lockfile
+      - name: Install Chromium
+        working-directory: apps/web
+        run: pnpm exec playwright install --with-deps chromium
+      - name: Start the service, with the dev mailbox, for the website on port 3100
+        working-directory: apps/account-api
+        env:
+          DATABASE_URL: postgres://account@localhost:5432/account
+          ACCOUNT_API_URL: http://localhost:8789
+          ACCOUNT_API_SECRET: ci-only-account-api-secret-for-the-website-browser-tests
+          ACCOUNT_API_EMAIL: dev-mailbox
+          ACCOUNT_API_TRUSTED_ORIGINS: http://localhost:3100
+        run: |
+          node --import tsx src/server.ts > service.log 2>&1 &
+          curl -fsS --retry 60 --retry-delay 2 --retry-connrefused --retry-all-errors \
+            http://localhost:8789/healthz
+      - name: Sign a learner up, out, and in again, and delete the account, on the website
+        working-directory: apps/web
+        env:
+          ZENBU_ACCOUNT_API: '1'
+        run: pnpm exec playwright test e2e/account-service.spec.ts --project desktop --retries 0
+      - name: Show the service's log
+        if: failure()
+        run: cat apps/account-api/service.log || true
+      - name: Keep the report
+        if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: account-pages-report
+          path: apps/web/e2e/results
+          retention-days: 7

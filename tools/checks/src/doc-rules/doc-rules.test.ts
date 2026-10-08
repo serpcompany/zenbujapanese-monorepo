@@ -82,6 +82,7 @@ describe('layout', () => {
   test('keep docs where AGENTS.md routes', () => {
     expect(outOfLayout('CONTEXT.md')).toBe(false)
     expect(outOfLayout('docs/agents/web.md')).toBe(false)
+    expect(outOfLayout('docs/api/account-api.md')).toBe(false)
     expect(outOfLayout('apps/web/docs/product/index.md')).toBe(false)
     expect(outOfLayout('NOTES.md')).toBe(true)
     expect(outOfLayout('docs/plans/next.md')).toBe(true)

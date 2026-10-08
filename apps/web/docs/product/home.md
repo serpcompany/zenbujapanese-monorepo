@@ -111,11 +111,15 @@ Every claim on the page is one the app's product docs make:
 
 **Title, description, and canonical.** The page is titled "Zenbu Japanese: Japanese Dictionary
 and Translator for iPhone", described by `/`'s entry in `src/lib/pages.ts`, and its own canonical
-URL. Its Open Graph tags carry the same title and description, with the site's name, type, and
+URL, written as the origin with no slash (`https://zenbujapanese.com`, and
+`https://staging.zenbujapanese.com` on staging), as its `og:url` and the pages sitemap write it.
+Its Open Graph tags carry the same title and description, with the site's name, type, and
 locale (`siteOpenGraph` in `src/lib/metadata.ts`). It is indexed, as every page is in production.
 
-- Source: #651.
-- Check: Home spec, "is titled, described, shared as the site, and its own canonical URL".
+- Source: #651; #663 (the SERP URL trailing-slash standard's homepage rule).
+- Check: Home spec, "is titled, described, shared as the site, and its own canonical URL";
+  `src/components/origin-canonical.test.tsx` (each environment's origin); smoke "canonical tags
+  name …, the homepage with no slash".
 
 **Width.** The page's sections are at most 1,024 pixels wide (`max-w-5xl`), as the header is, with
 the Free on the web band and the closing block running the window's full width. No width scrolls

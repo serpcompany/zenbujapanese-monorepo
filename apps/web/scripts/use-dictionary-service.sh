@@ -17,10 +17,27 @@ if ! grep -q '"DICTIONARY_API_TOKEN"' <<<"$secrets"; then
   exit 1
 fi
 
-placeholder="\"SITE_ENV\": \"$env\", \"DICTIONARY_API_URL\": \"DICTIONARY_API_URL\""
-grep -qF "$placeholder" wrangler.jsonc || {
-  echo "::error::wrangler.jsonc has no DICTIONARY_API_URL placeholder for $env"
-  exit 1
-}
-sed -i "s|\"SITE_ENV\": \"$env\", \"DICTIONARY_API_URL\": \"DICTIONARY_API_URL\"|\"SITE_ENV\": \"$env\", \"DICTIONARY_API_URL\": \"$url\"|" wrangler.jsonc
-grep -qF "\"SITE_ENV\": \"$env\", \"DICTIONARY_API_URL\": \"$url\"" wrangler.jsonc
+no_placeholder=3
+written=0
+SITE="$env" ORIGIN="$url" NO_PLACEHOLDER="$no_placeholder" node --input-type=module -e '
+  import { readFileSync, writeFileSync } from "node:fs"
+  const { SITE, ORIGIN, NO_PLACEHOLDER } = process.env
+  const config = readFileSync("wrangler.jsonc", "utf8")
+  const site = "(\"SITE_ENV\":\\s*\"" + SITE + "\",\\s*)"
+  const placeholder = new RegExp(site + "\"DICTIONARY_API_URL\":\\s*\"DICTIONARY_API_URL\"")
+  if (!placeholder.test(config)) process.exit(Number(NO_PLACEHOLDER))
+  const service = "\"DICTIONARY_API_URL\": " + JSON.stringify(ORIGIN)
+  writeFileSync("wrangler.jsonc", config.replace(placeholder, (_, before) => before + service))
+' || written=$?
+case "$written" in
+  0) ;;
+  "$no_placeholder")
+    echo "::error::wrangler.jsonc has no DICTIONARY_API_URL placeholder for $env"
+    exit 1
+    ;;
+  *)
+    echo "::error::Couldn't update wrangler.jsonc with $env's DICTIONARY_API_URL: node exited $written, with the error above"
+    exit 1
+    ;;
+esac
+grep -qF "\"DICTIONARY_API_URL\": \"$url\"" wrangler.jsonc

@@ -6,17 +6,19 @@ import { SiteFooter } from '@/components/site-footer'
 import { SiteHeader } from '@/components/site-header'
 import { Toaster } from '@/components/ui/sonner'
 import { siteOpenGraph } from '@/lib/metadata'
-import { site } from '@/lib/site'
+import { site, siteOrigin } from '@/lib/site'
 import './globals.css'
 
 const geistSans = Geist({ variable: '--font-sans', subsets: ['latin'] })
 const geistMono = Geist_Mono({ variable: '--font-geist-mono', subsets: ['latin'] })
 
-export const metadata: Metadata = {
-  metadataBase: new URL(site.url),
-  title: { default: site.name, template: `%s | ${site.name}` },
-  description: site.description,
-  openGraph: siteOpenGraph
+export function generateMetadata(): Metadata {
+  return {
+    metadataBase: new URL(siteOrigin()),
+    title: { default: site.name, template: `%s | ${site.name}` },
+    description: site.description,
+    openGraph: siteOpenGraph
+  }
 }
 
 export default function RootLayout({ children }: LayoutProps<'/'>) {
