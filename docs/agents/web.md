@@ -344,7 +344,10 @@ the account service ([`account-api.md`](account-api.md); the website's side of i
   run `pnpm cf-typegen`, in a pull request. For staging, under `env.staging.vars`:
   `"ACCOUNT_APPLE_SERVICES_ID": "<the Services ID, the first of the service's APPLE_SERVICES_IDS>"`
   and `"ACCOUNT_GOOGLE_SIGN_IN": "on"`; production's are under `env.production.vars`, once its
-  pages open. Merging deploys staging, and the sign-in page then offers both.
+  pages open. Merging deploys staging, and the sign-in page then offers both. The same pull
+  request updates what then stops being true: "staging and production have neither yet" in the
+  product docs' [Account pages](../../apps/web/docs/product/account.md), and "Apple and Google are
+  off on staging" here.
 
   **Opening production's account pages** waits for production's account service to answer on
   `https://api.zenbujapanese.com`, trust `https://zenbujapanese.com`

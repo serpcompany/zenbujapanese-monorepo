@@ -130,6 +130,17 @@ describe('the API reference', () => {
     expect(reference).toContain('- `token` (http, bearer): A token.')
   })
 
+  test('names the file to change when the contract is declared apart from the routes', () => {
+    const declared = apiReference(document, {
+      document: 'apps/example/openapi.json',
+      regenerate: 'apps/example',
+      contract: 'apps/example/src/contract.ts'
+    })
+    expect(declared).toContain(
+      "Don't edit it by hand: after changing a route, change its contract in `apps/example/src/contract.ts` too, then run `pnpm test -u` in `apps/example`"
+    )
+  })
+
   test('lists each route with its auth, parameters, body, and each answer and code', () => {
     expect(reference).toContain(
       '| [`PATCH /v1/things/{id}`](#patch-v1thingsid) | `token` with `things:write` | Change a thing |'

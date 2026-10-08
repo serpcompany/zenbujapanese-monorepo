@@ -52,7 +52,9 @@ test.describe('privacy policy', () => {
       "You'll never need a Zenbu account",
       'signed out, our apps send nothing to our account service',
       'encrypted copy of each code',
-      "aren't synced: they stay on your device"
+      'keeping each count for a day',
+      "aren't synced: they stay on your device",
+      'and to confirm that your account was deleted'
     ])
   })
 

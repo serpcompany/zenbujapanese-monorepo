@@ -46,9 +46,9 @@ send the account service nothing while signed out, and lists what a Zenbu accoun
   request.
 
 It also says the codes are kept encrypted, and nonces too, for 10 minutes, with request counts by
-IP address for a few minutes; that notes, photos, recent searches, and settings stay on the device;
-what the account's email is used for (codes, and a notice when a way to sign in is added or
-removed); and that the account service's logs hold each request's method, route, status, and
+IP address taken over a few minutes and kept for a day; that notes, photos, recent searches, and
+settings stay on the device; what the account's email is used for (codes, a notice when a way to
+sign in is added or removed, and a confirmation that the account was deleted); and that the account service's logs hold each request's method, route, status, and
 timing, never an email, a profile, a code or link, or a token.
 
 - Source: #563 decisions 1 and 2; #566 (sign-in), #567 (the profile and sync), #572 (known words
