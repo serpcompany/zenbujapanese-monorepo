@@ -124,6 +124,27 @@ row fades at its right edge. It is the same shadcn carousel as the demo.
 - Check: Product page spec, "the screenshot carousel scrolls with its arrows, from the first
   screenshot to the last".
 
+**Watch it work.** The section appears once videos exist: there are none yet, so today the page
+has no Watch it work section and the hero no Watch demo button, and neither leaves a link or a
+heading behind. The videos are one list, `appVideos` in `src/lib/videos.ts`: each a YouTube ID,
+a title, and a thumbnail hosted on this site (an App Store screenshot for now). With videos, the
+section follows Private by default: a centered heading, then the video cards on the same shadcn
+carousel as the screenshots, fading at its right edge, with previous and next arrows either side
+of See all videos, which is the `/videos/` placeholder until that page exists; the hero's Watch demo, beside Get the app, leads to the section. A card shows
+only its thumbnail and title, and nothing from YouTube loads (no player, thumbnail, or script)
+until it's clicked; the click puts YouTube's privacy-enhanced player
+(`https://www.youtube-nocookie.com/embed/<id>`) in the card's place, playing.
+
+- Source: #648 mockups (Product page, Watch it work, after Raycast's video row); the owner's
+  decision on #652 (the section appears only when there are videos, with none yet).
+- Check: `src/components/products/product-videos.test.tsx`, "there are no videos yet, so the page
+  has no video section and no Watch demo" and "with videos, Watch it work lists them and links to
+  all videos, and Watch demo leads there"; `src/components/products/product-videos.interaction.test.tsx`,
+  with a sample video, "a video shows our own thumbnail and asks YouTube for nothing until it is
+  played" and "playing a video loads the privacy-enhanced YouTube player in its place"; Product
+  page spec, "with no videos yet, the page has no Watch it work and no Watch demo, and asks
+  YouTube for nothing".
+
 **What's inside, Private by default, Questions, and More from Zenbu.** What's inside lists eight
 features (Offline dictionary, Image Search, Handwriting, Translate, Player, Lists and Known Words,
 Frequency dictionaries, and Furigana kanji highlight), four to a row from 1024 pixels. Private by

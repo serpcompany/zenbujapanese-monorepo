@@ -133,6 +133,23 @@ test.describe('the Zenbu Japanese for iPhone page', () => {
     await expect(page).toHaveURL(/\/dictionary\/$/)
   })
 
+  test('with no videos yet, the page has no Watch it work and no Watch demo, and asks YouTube for nothing', async ({
+    page
+  }) => {
+    const youtube: string[] = []
+    page.on('request', request => {
+      if (/youtube|ytimg|googlevideo/.test(request.url())) youtube.push(request.url())
+    })
+    await page.goto(path)
+    const main = page.getByRole('main')
+    await expect(main.getByRole('heading', { level: 1 })).toBeVisible()
+    await expect(main.getByRole('heading', { name: 'Watch it work.' })).toHaveCount(0)
+    await expect(main.getByRole('link', { name: 'Watch demo' })).toHaveCount(0)
+    await expect(main.getByRole('link', { name: /See all videos/ })).toHaveCount(0)
+    await page.getByRole('contentinfo').scrollIntoViewIfNeeded()
+    expect(youtube).toEqual([])
+  })
+
   test('More from Zenbu leads to the other products and the catalog', async ({ page }) => {
     await page.goto(path)
     const main = page.getByRole('main')

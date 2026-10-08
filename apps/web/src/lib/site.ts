@@ -46,6 +46,7 @@ const linkTargets = [
   },
   { id: 'reference-guides', kind: 'page', name: 'Reference guides', href: placeholderHref },
   { id: 'courses', kind: 'page', name: 'Courses', href: placeholderHref },
+  { id: 'videos', kind: 'page', name: 'Videos index, /videos/', href: placeholderHref },
   { id: 'login', kind: 'page', name: 'Log in page, /login/', href: placeholderHref },
   { id: 'app-store', kind: 'store', name: 'App Store listing', href: placeholderHref },
   { id: 'youtube', kind: 'social', name: 'YouTube', href: placeholderHref },

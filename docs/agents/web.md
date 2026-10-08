@@ -82,7 +82,9 @@ lists every child sitemap and each child sitemap lists the new URLs.
   A filter moves the address with `history.pushState`, which Next.js's router follows, so it never
   asks the server. The iPhone app's page is `force-dynamic`: it reads the App Store lookup
   (`src/lib/app-store.ts`), which the Worker keeps in its edge cache (the Cache API) for a day,
-  and leaves the version and minimum iOS out when Apple fails or lists no app.
+  and leaves the version and minimum iOS out when Apple fails or lists no app. Its Watch it work
+  section renders only when `appVideos` in `src/lib/videos.ts` lists videos, and a video's
+  privacy-enhanced YouTube player (`youtube-nocookie.com`) mounts only when it's clicked.
 - `apps/web/biome.json` allows `dangerouslySetInnerHTML` only in
   `apps/web/src/components/dictionary/dictionary-breadcrumbs.tsx`, for its `BreadcrumbList`
   JSON-LD, which escapes `<` so the JSON can't close its script tag (the Next.js JSON-LD guide).

@@ -7,10 +7,12 @@ import {
   ProductQuestions,
   SectionTitle
 } from '@/components/products/product-sections'
+import { ProductVideos } from '@/components/products/product-videos'
 import { ScreenshotCarousel } from '@/components/products/screenshot-carousel'
 import { appStoreRelease } from '@/lib/app-store'
 import { pageMetadata } from '@/lib/metadata'
 import { iphoneAppPage } from '@/lib/products/zenbu-japanese-for-iphone'
+import { appVideos } from '@/lib/videos'
 
 export const dynamic = 'force-dynamic'
 
@@ -29,7 +31,7 @@ export default async function ZenbuJapaneseForIphonePage() {
   const release = await appStoreRelease()
   return (
     <main className="flex w-full flex-col pb-16">
-      <ProductHero product={iphoneAppPage} release={release} />
+      <ProductHero product={iphoneAppPage} release={release} hasVideos={appVideos.length > 0} />
       <ProductBand>
         <div className={block}>
           <ScreenshotCarousel title="See it in action." screenshots={iphoneAppPage.screenshots} />
@@ -45,6 +47,7 @@ export default async function ZenbuJapaneseForIphonePage() {
           <ProductPoints points={iphoneAppPage.promises} />
         </div>
       </ProductBand>
+      <ProductVideos videos={appVideos} />
       <section className={`${block} py-12 md:py-16`}>
         <ProductQuestions questions={iphoneAppPage.questions} />
       </section>

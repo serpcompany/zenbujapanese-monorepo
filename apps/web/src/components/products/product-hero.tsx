@@ -1,3 +1,4 @@
+import { PlayIcon } from 'lucide-react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { FeatureDemo } from '@/components/products/feature-demo'
@@ -11,9 +12,12 @@ import {
   BreadcrumbPage,
   BreadcrumbSeparator
 } from '@/components/ui/breadcrumb'
+import { buttonVariants } from '@/components/ui/button'
 import type { AppStoreRelease } from '@/lib/app-store'
 import type { ProductDemo } from '@/lib/products/zenbu-japanese-for-iphone'
 import { linkTo } from '@/lib/site'
+import { cn } from '@/lib/utils'
+import { videosSectionId } from '@/lib/videos'
 
 export interface ProductHeroContent {
   title: string
@@ -44,12 +48,16 @@ function ProductBreadcrumbs({ title }: { title: string }) {
   )
 }
 
+const heroButtonClassName = 'h-11 px-4.5 text-[15px]'
+
 export function ProductHero({
   product,
-  release
+  release,
+  hasVideos
 }: {
   product: ProductHeroContent
   release: AppStoreRelease | null
+  hasVideos: boolean
 }) {
   return (
     <section className="mx-auto flex w-full max-w-5xl flex-col items-center gap-4.5 px-4 pt-8 pb-12 text-center md:px-5 md:pt-10 md:pb-16">
@@ -70,7 +78,18 @@ export function ProductHero({
       <p className="max-w-xl text-lg leading-relaxed text-pretty text-muted-foreground">
         {product.lead}
       </p>
-      <AppStoreButton size="lg" className="h-11 px-4.5 text-[15px]" />
+      <div className="flex flex-wrap justify-center gap-2">
+        <AppStoreButton size="lg" className={heroButtonClassName} />
+        {hasVideos ? (
+          <a
+            href={`#${videosSectionId}`}
+            className={cn(buttonVariants({ variant: 'outline', size: 'lg' }), heroButtonClassName)}
+          >
+            <PlayIcon data-icon="inline-start" aria-hidden="true" />
+            Watch demo
+          </a>
+        ) : null}
+      </div>
       <div className="mt-6 w-full max-w-3xl">
         <FeatureDemo demos={product.demos} />
       </div>
