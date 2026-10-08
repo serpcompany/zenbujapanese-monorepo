@@ -1,36 +1,35 @@
 import { getCloudflareContext } from '@opennextjs/cloudflare'
 import { browseService } from '@zenbu/dictionary-core/browse/service-paths'
 import { edgeCache } from '@/lib/edge-cache'
-import { absoluteUrl } from '@/lib/site'
+import { absoluteUrl, servedOrigin, siteOrigin } from '@/lib/site'
 import { type SitemapEntry, urlSetStream, urlSetXml, xmlResponse } from '@/lib/sitemap'
 import { browseSitemapPaths } from './browse/sitemap'
 import { dictionaryService } from './data'
+import { browseSitemapPath, wordSitemapPath } from './sitemap-files'
 
 const wordsPerQuery = 10_000
-
-const browseSitemapPath = '/sitemaps/browse.xml'
 
 export async function dictionarySitemapPaths(): Promise<string[]> {
   const api = await dictionaryService()
   if (!api) return []
   const sitemaps = (await api.wordSitemaps()).data
-  return [
-    ...sitemaps.map(sitemap => `/sitemaps/dictionary/${sitemap.number}.xml`),
-    browseSitemapPath
-  ]
+  return [...sitemaps.map(sitemap => wordSitemapPath(sitemap.number)), browseSitemapPath]
 }
 
 export async function browseSitemapResponse(request: Request) {
   const api = await dictionaryService()
   const found = api ? await api.browse(browseService.sitemap()) : null
   if (!found) return null
+  const origin = servedOrigin(request)
   return cachedForBuild(request, found.build, () =>
-    xmlResponse(urlSetXml(browseSitemapPaths(found.data).map(path => ({ url: absoluteUrl(path) }))))
+    xmlResponse(
+      urlSetXml(browseSitemapPaths(found.data).map(path => ({ url: absoluteUrl(path, origin) })))
+    )
   )
 }
 
-export const wordUrl = (entSeq: number, slug: string) =>
-  absoluteUrl(encodeURI(`/dictionary/${slug}-${entSeq}/`))
+export const wordUrl = (entSeq: number, slug: string, origin = siteOrigin()) =>
+  absoluteUrl(encodeURI(`/dictionary/${slug}-${entSeq}/`), origin)
 
 export async function wordSitemapResponse(request: Request, number: number) {
   const api = await dictionaryService()
@@ -38,12 +37,13 @@ export async function wordSitemapResponse(request: Request, number: number) {
   const sitemaps = await api.wordSitemaps()
   const range = sitemaps.data.find(sitemap => sitemap.number === number)
   if (!range) return null
+  const origin = servedOrigin(request)
   async function* pages(): AsyncGenerator<SitemapEntry[]> {
     let after = range ? range.firstEntSeq - 1 : 0
     for (;;) {
       const rows = (await api?.sitemapWords(number, after, wordsPerQuery))?.data ?? []
       if (rows.length === 0) return
-      yield rows.map(row => ({ url: wordUrl(row.entSeq, row.slug) }))
+      yield rows.map(row => ({ url: wordUrl(row.entSeq, row.slug, origin) }))
       after = rows[rows.length - 1].entSeq
     }
   }

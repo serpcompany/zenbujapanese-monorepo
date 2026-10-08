@@ -15,11 +15,21 @@ function lastmod(date: Date | undefined) {
   return date ? `<lastmod>${date.toISOString()}</lastmod>` : ''
 }
 
-export const childSitemaps = ['/sitemaps/pages.xml'] as const
+export const childSitemaps = ['/sitemap-pages.xml'] as const
 
-export function sitemapIndexXml(paths: readonly string[]) {
+export type PathRule = { source: string; destination: string }
+
+export function withSlashedSources(rules: readonly PathRule[]): PathRule[] {
+  return rules.flatMap(rule => [rule, { ...rule, source: `${rule.source}/` }])
+}
+
+export const movedSitemaps = withSlashedSources([
+  { source: '/sitemaps/pages.xml', destination: '/sitemap-pages.xml' }
+])
+
+export function sitemapIndexXml(paths: readonly string[], origin: string) {
   const items = paths
-    .map(path => `<sitemap><loc>${escapeXml(absoluteUrl(path))}</loc></sitemap>`)
+    .map(path => `<sitemap><loc>${escapeXml(absoluteUrl(path, origin))}</loc></sitemap>`)
     .join('')
   return `<?xml version="1.0" encoding="UTF-8"?><sitemapindex xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">${items}</sitemapindex>`
 }

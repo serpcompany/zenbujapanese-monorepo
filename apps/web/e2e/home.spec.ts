@@ -2,7 +2,7 @@ import type { Page } from '@playwright/test'
 import { pageSources } from '../src/lib/dictionary/sources'
 import { appExtras, appFeatures, exampleSearches, homeTitle, webTools } from '../src/lib/home'
 import { pageFor } from '../src/lib/pages'
-import { linkTo, site } from '../src/lib/site'
+import { linkTo, productionOrigin, site } from '../src/lib/site'
 import { expect, test } from './test'
 
 const main = (page: Page) => page.getByRole('main')
@@ -17,7 +17,15 @@ test.describe('homepage', () => {
       'content',
       pageFor('/').description
     )
-    await expect(page.locator('link[rel="canonical"]')).toHaveAttribute('href', `${site.url}/`)
+    await expect(page.locator('link[rel="canonical"]')).toHaveCount(1)
+    await expect(page.locator('head link[rel="canonical"]')).toHaveAttribute(
+      'href',
+      productionOrigin
+    )
+    await expect(page.locator('head meta[property="og:url"]')).toHaveAttribute(
+      'content',
+      productionOrigin
+    )
     await expect(page.locator('meta[property="og:title"]')).toHaveAttribute('content', homeTitle)
     await expect(page.locator('meta[property="og:site_name"]')).toHaveAttribute(
       'content',

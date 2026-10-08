@@ -107,7 +107,10 @@ const document: ApiDocument = {
             }
           }
         },
-        'x-sync-rejections': { too_many_things: 'The account has too many.' }
+        'x-sync-rejections': {
+          too_many_things: 'The account has too many.',
+          bad_path: 'A path such as a|b or C:\\ is refused.'
+        }
       }
     }
   }
@@ -174,6 +177,7 @@ describe('the API reference', () => {
     expect(reference).toContain('Fields ([`Thing`](#thing)):')
     expect(reference).toContain('"operation": "rename"')
     expect(reference).toContain('| `too_many_things` | The account has too many. |')
+    expect(reference).toContain('| `bad_path` | A path such as a\\|b or C:\\\\ is refused. |')
     expect(reference).toContain(
       '| `too_long` | 400 | [`PATCH /v1/things/{id}`](#patch-v1thingsid) |'
     )

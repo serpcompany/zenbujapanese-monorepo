@@ -7,8 +7,7 @@ const appFolder = fileURLToPath(new URL('.', import.meta.url))
 
 const routeFiles: Record<string, (route: string) => string> = {
   'page.tsx': route => `page ${route}`,
-  'route.ts': route => `data ${route}`,
-  'robots.ts': () => 'data /robots.txt'
+  'route.ts': route => `data ${route}`
 }
 
 function servedRoutes(folder = appFolder): string[] {
@@ -72,14 +71,14 @@ const decidedRoutes = [
   'data /robots.txt',
   'data /sitemap-index.xml',
   'data /sitemap.xml',
-  'data /sitemaps/pages.xml',
-  'data /sitemaps/dictionary/[file]',
-  'data /sitemaps/browse.xml'
+  'data /sitemap-pages.xml',
+  'data /sitemap-browse.xml',
+  'data /sitemaps/dictionary/[file]'
 ]
 
 test('the site serves only the pages and data routes that have been decided', () => {
   expect(
     servedRoutes().sort(),
-    'Every page and data route is decided (docs/adr/0010-give-the-dictionary-three-page-types.md, #544, #614, and #648 for the products pages; the account pages, #468): the dictionary has its home, search, and word pages, and the browse pages that link to them, and what the app drills into lives on the word page. A new page or route needs an owner decision recorded first; then add it here.'
+    'Every page and data route is decided (docs/adr/0010-give-the-dictionary-three-page-types.md, #544, #614, #648 for the products pages, #663 for the sitemap files, and #468 for the account pages): the dictionary has its home, search, and word pages, and the browse pages that link to them, and what the app drills into lives on the word page. A new page or route needs an owner decision recorded first; then add it here.'
   ).toEqual([...decidedRoutes].sort())
 })

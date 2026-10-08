@@ -5,6 +5,7 @@ import { bearer, emailOTP, jwt } from 'better-auth/plugins'
 import type { AuthConfig } from '../config'
 import type { Drizzle } from '../db/database'
 import { authSchema } from '../db/schema'
+import { takeVerification } from '../db/verifications'
 import { clients } from '../domain/clients'
 import type { Mailer } from '../email/mailer'
 import { codeMinutes, signInCodeMessage } from '../email/sign-in-code'
@@ -87,7 +88,9 @@ export async function createAuth({ config, db, mailer }: AuthOptions) {
       }),
       bearer({ requireSignature: true }),
       signInNonce(),
-      signInGuards(mailer, config.trustedOrigins, codes)
+      signInGuards(mailer, config.trustedOrigins, codes, identifier =>
+        takeVerification(db, identifier)
+      )
     ],
     databaseHooks: { ...identityHooks(mailer), ...sessionClientHooks(config.trustedOrigins) },
     rateLimit: {
