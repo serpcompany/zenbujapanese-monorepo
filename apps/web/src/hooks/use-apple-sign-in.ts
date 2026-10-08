@@ -17,8 +17,8 @@ export type AppleOutcome =
 
 const popupMessages = {
   cancelled: null,
-  blocked: "Your browser blocked Apple's window. Allow pop-ups for this site, then try again.",
-  failed: "Signing in with Apple didn't work. Try again."
+  blocked: 'Your browser blocked Apple’s window. Allow pop-ups for this site, then try again.',
+  failed: 'Signing in with Apple didn’t work. Try again.'
 } as const
 
 const nonceGoodForMs = 9 * 60_000
@@ -46,7 +46,7 @@ export function useAppleSignIn(api: AccountApi, servicesId: string | null) {
         ok: false,
         message: preparation.failure
           ? failureMessage(preparation.failure)
-          : "We couldn't load Sign in with Apple. Check your connection, or use another way."
+          : 'We couldn’t load Sign in with Apple. Check your connection, or use another way.'
       }
     }
     const { auth, nonce, nonceHash } = preparation.prepared

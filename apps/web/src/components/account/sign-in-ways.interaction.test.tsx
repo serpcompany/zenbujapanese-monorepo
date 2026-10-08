@@ -91,7 +91,7 @@ describe('the ways to sign in, on the account page', () => {
     await shows(page, `Signed in as ${email}`)
     expect(page.textContent).not.toContain('Remove')
     await click(page, 'Add an email code')
-    await shows(page, `We'll email a code to ${email}`)
+    await shows(page, `We’ll email a code to ${email}`)
     await submit(page, 'Email me a code')
     await fill(page, 'Code', '123456')
     await submit(page, 'Add it')

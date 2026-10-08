@@ -1,5 +1,6 @@
 import { afterEach, describe, expect, test, vi } from 'vitest'
 import { accessTokens } from '@/lib/account/access-tokens'
+import type { Identity } from '@/lib/account/answers'
 import { accountApi } from '@/lib/account/client'
 import { idTokenFor, jwtFor } from '@/test/account-answers'
 import {
@@ -55,6 +56,29 @@ async function deletingAnAppleAccount(more: Parameters<typeof stubAccountService
   return { ...service, page: await askedToDelete(true) }
 }
 
+function confirmingWith(
+  identity: Omit<Identity, 'id'>,
+  onConfirmed: Parameters<typeof ConfirmItsYou>[0]['onConfirmed'] = () => undefined
+) {
+  const api = accountApi(apiUrl)
+  return render(
+    <ConfirmItsYou
+      api={api}
+      tokens={accessTokens(api)}
+      settings={settings()}
+      account={{
+        session: { userId: 'u1', email, signedInAt: 0, token: 'old-bare' },
+        profile,
+        identities: [{ id: 'i1', ...identity }]
+      }}
+      appleOnly={false}
+      why="Deleting needs a sign-in from the last few minutes."
+      onConfirmed={onConfirmed}
+      onCancel={() => undefined}
+    />
+  )
+}
+
 describe('the account page', () => {
   test('shows who is signed in, the profile, and the ways to sign in, reading /v1/me with an access token only', async () => {
     const { calls } = signedIn({ ways: [emailWay, appleWay] })
@@ -62,6 +86,9 @@ describe('the account page', () => {
     await shows(page, `Signed in as ${email}`)
     expect(page.querySelector<HTMLInputElement>('#profile-name')?.value).toBe('Kana Fan')
     expect(page.querySelector<HTMLInputElement>('#profile-username')?.value).toBe('kana_fan')
+    expect(page.querySelector('#profile-username-rule')?.textContent).toBe(
+      '3 to 30 letters a to z, digits, or underscores. Leave it empty for none.'
+    )
     expect(page.textContent).toContain(`A code we email you (${email})`)
     expect(page.textContent).toContain('Member since October 1, 2026')
     expect(callTo(calls, 'GET /v1/me')).toEqual([
@@ -94,7 +121,7 @@ describe('the account page', () => {
   test('says it could not reach the account service, and tries again when asked', async () => {
     vi.stubGlobal('fetch', vi.fn().mockRejectedValue(new TypeError('Failed to fetch')))
     const page = render(<AccountView settings={settings()} returnedError={null} />)
-    await shows(page, "We couldn't reach your Zenbu account")
+    await shows(page, 'We couldn’t reach your Zenbu account')
     signedIn()
     await click(page, 'Try again')
     await shows(page, `Signed in as ${email}`)
@@ -201,7 +228,7 @@ describe('the account page', () => {
 
     apple.sub = '001.apple'
     await click(page, 'Continue with Apple')
-    await shows(page, "Apple didn't accept that. Continue with Apple again.")
+    await shows(page, 'Apple didn’t accept that. Continue with Apple again.')
     expect(page.textContent).toContain('Continue with Apple')
     expect(page.textContent).not.toContain('Your account is deleted.')
   })
@@ -307,24 +334,8 @@ describe('the account page', () => {
         'GET /v1/auth/get-session': sessionAnswer('u9', 'their-bare', 0, 'someone@example.com')
       }
     })
-    const api = accountApi(apiUrl)
     const onConfirmed = vi.fn()
-    const page = render(
-      <ConfirmItsYou
-        api={api}
-        tokens={accessTokens(api)}
-        settings={settings()}
-        account={{
-          session: { userId: 'u1', email, signedInAt: 0, token: 'old-bare' },
-          profile,
-          identities: [{ id: 'i1', provider: 'email', subject: email }]
-        }}
-        appleOnly={false}
-        why="Deleting needs a sign-in from the last few minutes."
-        onConfirmed={onConfirmed}
-        onCancel={() => undefined}
-      />
-    )
+    const page = confirmingWith({ provider: 'email', subject: email }, onConfirmed)
     await confirmWithEmailCode(page)
     await vi.waitFor(() =>
       expect(onConfirmed).toHaveBeenCalledWith(
@@ -333,6 +344,17 @@ describe('the account page', () => {
         false
       )
     )
+  })
+
+  test("says it can't confirm an account whose ways this site offers none of", async () => {
+    signedIn({ ways: [appleWay] })
+    const page = confirmingWith({ provider: 'apple', subject: '001.apple' })
+    await shows(
+      page,
+      'This site can’t confirm it’s you the way your account signs in, so it can’t make this change here yet.'
+    )
+    expect(page.textContent).not.toContain('Zenbu Japanese app')
+    expect(page.textContent).not.toContain('Email me a code')
   })
 
   test('deletes nothing when the learner cancels while confirming is still finishing', async () => {

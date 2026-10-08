@@ -4,7 +4,7 @@ import { type FormEvent, useId, useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import type { AccountApi, Failure } from '@/lib/account/client'
-import { failureMessage } from '@/lib/account/messages'
+import { failureMessage, type ProvidersHere } from '@/lib/account/messages'
 import { FormMessage } from './form-message'
 
 interface EmailCodeFormProps {
@@ -15,6 +15,7 @@ interface EmailCodeFormProps {
   onSignedIn: () => void | Promise<void>
   mayVerify?: () => boolean
   onRefusal?: (failure: Failure) => boolean
+  providersHere?: ProvidersHere
 }
 
 export function EmailCodeForm({
@@ -24,7 +25,8 @@ export function EmailCodeForm({
   signInLabel,
   onSignedIn,
   mayVerify,
-  onRefusal
+  onRefusal,
+  providersHere
 }: EmailCodeFormProps) {
   const id = useId()
   const [email, setEmail] = useState(fixedEmail ?? '')
@@ -41,7 +43,7 @@ export function EmailCodeForm({
     setProblem(null)
     const sent = await api.sendCode(to)
     setBusy(false)
-    if (!sent.ok) return setProblem(failureMessage(sent.failure))
+    if (!sent.ok) return setProblem(failureMessage(sent.failure, providersHere))
     setSentTo(to)
     setCode('')
   }
@@ -53,7 +55,9 @@ export function EmailCodeForm({
     setProblem(null)
     const signedIn = await api.signInWithCode(sentTo, code.trim())
     if (signedIn.ok) await onSignedIn()
-    else if (!onRefusal?.(signedIn.failure)) setProblem(failureMessage(signedIn.failure))
+    else if (!onRefusal?.(signedIn.failure)) {
+      setProblem(failureMessage(signedIn.failure, providersHere))
+    }
     setBusy(false)
   }
 
@@ -62,7 +66,7 @@ export function EmailCodeForm({
       <form className="flex flex-col gap-3" onSubmit={send}>
         {fixedEmail ? (
           <p className="text-sm text-muted-foreground">
-            We'll email a code to <strong className="text-foreground">{fixedEmail}</strong>.
+            We’ll email a code to <strong className="text-foreground">{fixedEmail}</strong>.
           </p>
         ) : (
           <div className="flex flex-col gap-1.5">

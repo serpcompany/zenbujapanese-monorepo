@@ -96,7 +96,7 @@ export function ProfileForm({ api, tokens, profile, onChanged, onSignedOut }: Pr
             onChange={event => setUsername(event.target.value)}
           />
           <p id="profile-username-rule" className="text-xs text-muted-foreground">
-            3 to 30 letters, digits, or underscores. Leave it empty for none.
+            3 to 30 letters a to z, digits, or underscores. Leave it empty for none.
           </p>
         </div>
         <FormMessage problem={problem} />

@@ -13,7 +13,9 @@ export default async function AccountPage({ searchParams }: PageProps<'/account'
     <AccountPageShell
       title={accountPages.account.title}
       intro={
-        settings ? 'Your Zenbu account works in the Zenbu Japanese app and on this site.' : null
+        settings
+          ? 'See your profile and how you sign in, change your profile, or delete your account.'
+          : null
       }
     >
       {settings ? (

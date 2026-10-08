@@ -391,7 +391,10 @@ has no title row above the header card. Share sends the headword, its reading, a
 meanings, as the app's does, through the browser's share sheet; without one it copies the link.
 The menu lists Mark as Known, Add to List…, Add Note, Add Photo, Open in App, and Copy Link. The
 learner actions and Open in App open the get-the-app prompt, a dialog on wide screens and a drawer
-on phones. Open in App doesn't open the app yet (#467). Copy Link copies the page URL and shows
+on phones. The prompt says lists, Known, notes, and photos are in the Zenbu app, and that saving
+lists and known words on this website comes later, which holds whether or not the site's account
+pages are open ([Account pages](account.md)); it promises nothing for notes and photos, which stay
+on the device ([Privacy Policy](privacy.md)). Open in App doesn't open the app yet (#467). Copy Link copies the page URL and shows
 "Link copied". There is no back button; the breadcrumbs replace it.
 
 - Source: App docs, Dictionary and kanji details (Share and the ••• menu); `SavedItemActions.swift`;

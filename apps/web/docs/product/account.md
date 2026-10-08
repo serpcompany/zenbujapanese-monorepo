@@ -32,8 +32,8 @@ password needed), and `/account/` (Your account), each with the site's header an
 `noindex, nofollow`, and no sitemap lists them: not `/sitemaps/pages.xml`, and not `/sitemap/`.
 Their descriptions don't name Apple or Google, which a site offers only once they're set up.
 Without an account service (an empty `ACCOUNT_API_URL`, as in production today), each says signing
-in to a Zenbu account isn't available on this site yet, without the intro that describes signing
-in, links to no other account page, and asks the account service nothing.
+in to a Zenbu account isn't available on this site yet, without the page's intro, links to no
+other account page, and asks the account service nothing.
 
 - Source: #468, whose #402 sitemap sheet lists the four pages. Closed in production because its
   account service doesn't run yet ([`account-api.md`](../../../../docs/agents/account-api.md), Set
@@ -74,7 +74,8 @@ account." above the ways.
 - Source: #477 and ADR 0012 (Apple, Google, and an emailed code, through the account service);
   #468 (the #402 sitemap sheet lists `/register/`), here the same flow, worded for making an
   account.
-- Check: Sign-in form tests, "emails a code, signs in with it, and goes to the account page";
+- Check: Sign-in form tests, "emails a code, signs in with it, and goes to the account page" and
+  "tells a browser that already signed in where its account is";
   `src/app/account-pages.test.tsx`, "offer signing in, and lead to each other, with an account
   service" (the links, "Can't sign in?" and the Privacy Policy included); Account spec, "Sign
   in's \"Can't sign in?\" leads to signing in by email code"; Account service spec, which
@@ -84,24 +85,32 @@ account." above the ways.
 minutes"), with "Send a new code" and "Use another email". A refusal says what to do:
 
 - a wrong code, an expired one, and too many wrong ones;
-- an email whose account signs in with Apple or Google: sign in that way, then add the email;
+- an email whose account signs in with Apple or Google: sign in that way, then add the email.
+  The service doesn't say which, so where the site offers only one, it says to sign in with that
+  one if it's the one, and that the site doesn't offer the other yet; where it offers neither,
+  that it doesn't offer them yet, so the learner can't sign in to it here for now;
 - no email sender on the service: try again later;
 - `429`: how many seconds or minutes the service's `Retry-After` (or Better Auth's
   `X-Retry-After`) names, or a few minutes when it names none.
 
 - Source: the client guide ([`account-clients.md`](../../../../docs/agents/account-clients.md),
   Signing in); `src/lib/account/messages.ts`.
-- Check: Sign-in form tests, "says why a code was refused, and how long to wait after too many";
-  `src/lib/account/messages.test.ts`; `src/lib/account/client.test.ts`, "reads how long to wait
+- Check: Sign-in form tests, "says why a code was refused, and how long to wait after too many"
+  and "sends an Apple or Google account to sign in that way, here only where the site offers it";
+  `src/lib/account/messages.test.ts`, "sends an Apple or Google account to sign in only a way this
+  site offers", and its other tests; `src/lib/account/client.test.ts`, "reads how long to wait
   from Retry-After, or Better Auth's X-Retry-After".
 
 **No password needed.** `/forgot-password/` says Zenbu accounts have no password, so there's
-nothing to reset, and offers the email code; it links to Sign in for an account made with Apple or
-Google.
+nothing to reset, and offers the email code. Where the site offers Apple or Google, it links to
+Sign in for an account made that way, naming only the ones it offers ("Made your account with
+Apple?"); where it offers neither, it has no such line.
 
 - Source: #468 (the #402 sitemap sheet lists `/forgot-password/`); accounts have no password
   (ADR 0012).
-- Check: Account service spec, which signs in again from `/forgot-password/`.
+- Check: `src/app/account-pages.test.tsx`, "/forgot-password/ points to Sign in only for the
+  ways the site offers, naming them" (neither, Apple, Google, and both); Account service spec,
+  which signs in again from `/forgot-password/`.
 
 **Sign in with Apple.** Offered where the Worker names a Services ID (`ACCOUNT_APPLE_SERVICES_ID`).
 The page loads Apple's Sign in with Apple JS when the learner points at, focuses, or touches the
@@ -135,7 +144,10 @@ Back from Google with the browser's Back button, the buttons work again.
 
 ## Your account
 
-**Signed in, out, or unreachable.** `/account/` asks the service for the session in its cookie,
+**Signed in, out, or unreachable.** `/account/`'s intro says "See your profile and how you sign
+in, change your profile, or delete your account.", which holds for every account, including one
+whose only way is the emailed code on a site that offers nothing else, whose ways can't change. It
+asks the service for the session in its cookie,
 then reads the profile with an access token and the ways to sign in. Signed in, it says "Signed in
 as" the email. With no session, it says "You're not signed in." and links Sign in and Create an
 account. When the service can't answer, it says so, with Try again.
@@ -144,7 +156,9 @@ account. When the service can't answer, it says so, with Try again.
 - Check: Account page tests, "shows who is signed in, the profile, and the ways to sign in, reading
   /v1/me with an access token only", "shows signed out, and forgets it was signed in, when there is
   no session", "says it could not reach the account service, and tries again when asked"; Account
-  spec, "the account page says it can't reach it, and offers to try again".
+  spec, "the account page says it can't reach it, and offers to try again";
+  `src/app/account-pages.test.tsx`, "offer signing in, and lead to each other, with an account
+  service" (the intro).
 
 **Access tokens.** The page keeps its 15-minute access token in memory only, renews it a minute
 before it expires, and on a `401` gets one new token and asks again. It takes a token only for the
@@ -163,7 +177,8 @@ which signs nothing in, only names the session to sign out after a fresh sign-in
   page tests, "gets a new access token once when /v1/me answers 401";
   `src/lib/account/load.test.ts`.
 
-**Profile.** Name and Username, with Save, and "Member since" the day the account was made. Save
+**Profile.** Name and Username, with Save, and "Member since" the day the account was made. The
+username's hint gives the service's rule: "3 to 30 letters a to z, digits, or underscores". Save
 sends only what changed, with the profile's version; an empty username removes it. When the
 profile changed in another app first, the form shows it as it is now and says so; a taken username
 says to try another; another refusal shows the service's reason. When the page reads a newer
@@ -172,8 +187,9 @@ account never replaces it, and another account's always does.
 
 - Source: `PATCH /v1/me` ([`account-api.md`](../../../../docs/agents/account-api.md), Profiles and
   sync).
-- Check: Account page tests, "shows the profile as it is now when a change conflicts with one made
-  elsewhere" and "shows a newer profile the page reads, as after removing a way to sign in";
+- Check: Account page tests, "shows who is signed in, the profile, and the ways to sign in,
+  reading /v1/me with an access token only" (the hint), "shows the profile as it is now when a
+  change conflicts with one made elsewhere", and "shows a newer profile the page reads, as after removing a way to sign in";
   Account service spec, which saves a name and username and reloads them.
 
 **Ways to sign in.** Each way the account signs in: Apple, Google, or "A code we email you" with
@@ -201,7 +217,8 @@ it's you; the code typed is dropped, and a new one is sent after.
   browser is still signed in to the account on the page".
 
 **Confirm it's you.** A fresh sign-in, with the ways the account has: Apple, Google, or a code to
-the account's own email. Apple must be the Apple ID the account uses: another is refused before
+the account's own email. Where the site offers none of them, it says it can't confirm it's you, so
+it can't make the change here yet. Apple must be the Apple ID the account uses: another is refused before
 it signs in. Confirming, or adding an email code, which signs in again too, signs this browser's
 earlier session out, and the page takes a new access token, which carries the new sign-in. The
 page then counts itself fresh for nine minutes by its own clock, whatever the browser's clock says
@@ -224,7 +241,8 @@ the browser's Back button forgets it; a page that can't load the account keeps i
   when Google's account is another's", "says plainly when confirming with Google made a new
   account", "counts no confirmation when Google's sign-in didn't happen,
   as back from a failed one", "deletes nothing when the learner cancels while confirming is still
-  finishing", "goes on with nothing when confirming lands the browser in another account", and
+  finishing", "goes on with nothing when confirming lands the browser in another account", "says
+  it can't confirm an account whose ways this site offers none of", and
   "closes Delete when confirming lands the browser in another account"; Ways
   tests, "adds the account's own email as a way to sign in,
   with a code", "adds Apple after confirming, whatever the browser clock says of the new sign-in",

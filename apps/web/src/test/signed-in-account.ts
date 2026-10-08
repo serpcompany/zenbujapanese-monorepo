@@ -82,7 +82,7 @@ export const callTo = (calls: ServiceCall[], route: string) =>
   calls.filter(call => call.route === route)
 
 export async function confirmWithEmailCode(container: HTMLElement) {
-  await shows(container, `We'll email a code to ${email}`)
+  await shows(container, `We’ll email a code to ${email}`)
   await submit(container, 'Email me a code')
   await shows(container, 'We sent a 6-digit code')
   await fill(container, 'Code', '123456')
