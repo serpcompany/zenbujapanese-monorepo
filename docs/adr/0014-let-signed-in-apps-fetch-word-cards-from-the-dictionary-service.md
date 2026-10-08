@@ -21,7 +21,7 @@ dictionary service when the learner is signed in.
 The word-card and segmentation routes are the only ones an app may call. The service accepts the
 app's access token, verified through the account service's JWKS, with a dictionary scope
 ([issue 570](https://github.com/serpcompany/zenbujapanese-monorepo/issues/570),
-[ADR 0012](0012-run-accounts-and-sync-in-their-own-service-on-the-api-servers.md)). No app ever
+[ADR 0013](0013-run-accounts-and-sync-in-their-own-service-on-the-api-servers.md)). No app ever
 holds the website's service token. Each answer names the language data's version, so a cache knows
 when to fetch again.
 
@@ -42,7 +42,7 @@ when to fetch again.
 - **A second kind of caller.** The service gets batch-size, text-length, and per-account rate
   limits.
 - **Bot Fight Mode.** It may challenge an app's requests to the dictionary service, as it may the
-  account service's (ADR 0012).
+  account service's (ADR 0013).
 - **A second output to keep stable.** Word cards are a versioned format, checked against what the
   word-detail suite records.
 

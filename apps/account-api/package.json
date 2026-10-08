@@ -2,7 +2,7 @@
   "name": "zenbujapanese-account-api",
   "version": "0.1.0",
   "private": true,
-  "description": "Zenbu accounts, sign-in, and sync: a Node service with Postgres on the API servers (ADR 0012).",
+  "description": "Zenbu accounts, sign-in, and sync: a Node service with Postgres on the API servers (ADR 0013).",
   "type": "module",
   "scripts": {
     "dev": "node --env-file-if-exists=.env --watch --import tsx src/server.ts",

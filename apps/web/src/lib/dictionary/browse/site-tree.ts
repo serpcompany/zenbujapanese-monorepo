@@ -5,7 +5,7 @@ import {
   rankedLists,
   schoolLists
 } from '@zenbu/dictionary-core/browse/lists'
-import { legalPages, pageFor, type sitePages } from '../../pages'
+import { legalPages, pageFor, type SitePath } from '../../pages'
 import {
   browsePath,
   categoryIndexes,
@@ -19,8 +19,6 @@ import {
   scriptPath,
   strokeCountsPath
 } from './paths'
-
-type SitePath = (typeof sitePages)[number]['path']
 
 export interface TreeNode {
   title: string

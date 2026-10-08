@@ -6,6 +6,10 @@ The Python tools here build the app's bundled language data, in
 ([its README](../LanguageData/Sources/README.md)). The website's dictionary service reads the same
 files ([`dictionary-api.md`](../../../docs/agents/dictionary-api.md)).
 
+`TranslateReplay/` is a separate Swift package, not a data tool: it replays recorded iPhone audio
+through the Translate tab's recognizer on a Mac
+([`translate.md`](../../../docs/agents/translate.md), Recorded-audio check).
+
 ## Rebuild everything
 
 ```sh

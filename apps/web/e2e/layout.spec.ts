@@ -31,7 +31,9 @@ test.describe('layout', () => {
       await expect(
         page.getByRole('banner').getByRole('link', { name: 'Zenbu Japanese' })
       ).toBeVisible()
-      await expect(page.getByRole('contentinfo').getByRole('link', { name: 'Legal' })).toBeVisible()
+      await expect(
+        page.getByRole('contentinfo').getByRole('link', { name: 'Privacy Policy' })
+      ).toBeVisible()
       expect(await sidewaysOverflow(page), 'The page scrolls sideways').toBeLessThanOrEqual(0)
     })
   }

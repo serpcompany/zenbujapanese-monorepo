@@ -138,7 +138,7 @@ const service: Part = {
     neverImports(
       'service-never-imports-the-account-service',
       'account-api',
-      'The dictionary service checks an account only through the account service, over HTTP and its JWKS (ADR 0013), never by importing it (ARCHITECTURE.md, Layers).'
+      'The dictionary service checks an account only through the account service, over HTTP and its JWKS (ADR 0014), never by importing it (ARCHITECTURE.md, Layers).'
     )
   ]
 }

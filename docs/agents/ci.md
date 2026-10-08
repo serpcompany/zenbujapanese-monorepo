@@ -371,7 +371,7 @@ request's last run. The deployer and the backups script (`deploy/deployer.sh`,
 ## Account API deploy
 
 `.github/workflows/account-api-deploy.yml` ships the account service's Docker image
-(`apps/account-api/Dockerfile`, ADR 0012) as `Dictionary API deploy` ships the dictionary
+(`apps/account-api/Dockerfile`, ADR 0013) as `Dictionary API deploy` ships the dictionary
 service's, with the same three jobs, the same signing, the same `staging` and `production`
 environments, and the same rollback by `tag`. It runs on a push to `main` that changes what the
 image holds: the service, what the services share, and the package files it installs from (the
@@ -397,12 +397,14 @@ jobs:
 
 - `contracts` runs the data tools' contract tests (`apps/ios/Tools/tests/`) on Linux, with every
   Git LFS file under `apps/ios` but the archived source snapshots (`LFS_SNAPSHOTS`), which only a
-  rebuild reads: they check the bundled packs and indexes against their pinned sources, import
+  rebuild reads, and the recorded-audio check's recordings (`LFS_RECORDINGS`): they check the bundled packs and indexes against their pinned sources, import
   reports, and the bundled dictionary, and that each import report records the current hash of
   the tool that wrote it ([`ios.md`](ios.md)). Its LFS cache is keyed on the pointers
   of the LFS patterns it fetches.
 - `swift` runs `SearchExperienceTests` and `TranslatorCoreTests` with `xcodebuild` on the first iPhone Simulator of the
-  newest iOS runtime, on `macos-26` (Xcode 26, for the iOS 26 SDK the package needs; arm64, which
+  newest iOS runtime, then the recorded-audio check's scoring tests with `swift test` (the replay
+  itself needs the Mac's speech models, which the runner doesn't have, so it stays a local check,
+  [`translate.md`](translate.md)), on `macos-26` (Xcode 26, for the iOS 26 SDK the package needs; arm64, which
   the `sudachi-swift` binary needs). A macOS minute costs about ten times a Linux one, so it runs
   only when the repository variable `IOS_SWIFT_TESTS` is `on`, or when the workflow is run by
   hand. Turning it on is the owners' decision.

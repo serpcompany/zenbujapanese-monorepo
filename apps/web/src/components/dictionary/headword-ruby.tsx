@@ -3,8 +3,7 @@
 import type { RubySegment } from '@zenbu/dictionary-core/detail/ruby'
 import { graphemes } from '@zenbu/dictionary-core/detail/text'
 import { useState } from 'react'
-
-export const accent = 'text-blue-600 dark:text-blue-400'
+import { accent } from './accent'
 
 interface Selected {
   segment: number
@@ -53,15 +52,17 @@ export function HeadwordRuby({
   className,
   highlightedEnding = '',
   highlightsKanji = true,
-  readingsOutsideText = false
+  readingsOutsideText = false,
+  initiallySelected = null
 }: {
   segments: RubySegment[]
   className?: string
   highlightedEnding?: string
   highlightsKanji?: boolean
   readingsOutsideText?: boolean
+  initiallySelected?: Selected | null
 }) {
-  const [selected, setSelected] = useState<Selected | null>(null)
+  const [selected, setSelected] = useState<Selected | null>(initiallySelected)
   const surface = segments.map(segment => segment.text).join('')
   const length = graphemes(surface).length
   const endingStart = surface.endsWith(highlightedEnding)

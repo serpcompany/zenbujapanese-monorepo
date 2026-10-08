@@ -133,6 +133,7 @@ const proseAndData = new Set([
   '.sqlite3',
   '.mlmodel',
   '.bin',
+  '.wav',
   '.dic',
   '.gitkeep'
 ])

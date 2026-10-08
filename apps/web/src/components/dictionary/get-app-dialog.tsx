@@ -1,7 +1,6 @@
 'use client'
 
-import Link from 'next/link'
-import { Button } from '@/components/ui/button'
+import { GetAppButton } from '@/components/site-actions'
 import {
   Dialog,
   DialogContent,
@@ -19,7 +18,6 @@ import {
   DrawerTitle
 } from '@/components/ui/drawer'
 import { useMediaQuery } from '@/hooks/use-media-query'
-import { site } from '@/lib/site'
 
 const description =
   'Save words to lists, mark them known, and add notes and photos in the Zenbu app. Signing in on the web comes later.'
@@ -33,11 +31,7 @@ export function GetAppDialog({
 }) {
   const wide = useMediaQuery('(min-width: 768px)')
   const title = `${action ?? ''} works in the app`
-  const getApp = (
-    <Button nativeButton={false} render={<Link href={site.appUrl} />}>
-      Get the app
-    </Button>
-  )
+  const getApp = <GetAppButton onClick={() => onOpenChange(false)} />
   if (wide) {
     return (
       <Dialog open={action !== null} onOpenChange={onOpenChange}>

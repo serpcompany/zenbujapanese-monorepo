@@ -239,13 +239,18 @@ fit, rather than overlapping; a shorter one stays on one line and truncates its 
 - Check: Browse spec, "a kana’s page lists its two-kana groups and leads to their words" and "a
   long breadcrumb trail wraps rather than overlapping".
 
-**Footer.** The footer's Product group links Browse by kana and Kanji by grade after Dictionary
-([Dictionary](dictionary.md#header-footer-and-site-wide), Footer).
+**Footer.** The footer's Tools column links Kana charts, Kanji lists, and Frequency lists, and the
+header's Dictionary and Tools menus lead to the kana, kanji, frequency, and category pages
+([Dictionary](dictionary.md#header-footer-and-site-wide), Menus and Footer).
 
-- Source: #614 mockup "Footer + /sitemap/ (changed)"; #561 (the groups).
-- Check: `src/components/site-footer.test.tsx`, "the footer groups every link under Product,
-  Company, and Policies" and "the footer's browse links open the kana charts and the kanji lists";
-  `e2e/site.spec.ts`, "the footer groups its links under Product, Company, and Policies".
+- Source: #614 mockup "Footer + /sitemap/ (changed)"; #648 decision and mockups (the footer's
+  columns).
+- Check: `src/components/site-footer.test.tsx`, "the footer groups its links under Products, Tools,
+  Company, and Legal"; `src/components/site-header.test.tsx`, "the Dictionary menu leads to the
+  dictionary and its browse pages" and "the Tools menu leads to the reference pages, and its planned
+  pages are placeholders"; `e2e/site.spec.ts`, "the footer groups its links under Products, Tools,
+  Company, and Legal, then ends with the copyright and Sitemap" and "every link in the header menus
+  opens a page the site has, with no redirect".
 
 **Width.** A browse page is one column, at most 1,024 pixels wide (`max-w-5xl`), as the mockups
 are, so the kana charts and the kanji grids fit a row; on a phone it fills the screen's width.
