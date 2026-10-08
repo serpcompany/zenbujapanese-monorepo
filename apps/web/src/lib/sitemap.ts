@@ -24,6 +24,7 @@ export function withSlashedSources(rules: readonly PathRule[]): PathRule[] {
 }
 
 export const movedSitemaps = withSlashedSources([
+  { source: '/sitemap.xml', destination: '/sitemap-index.xml' },
   { source: '/sitemaps/pages.xml', destination: '/sitemap-pages.xml' }
 ])
 

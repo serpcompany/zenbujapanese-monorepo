@@ -648,8 +648,9 @@ standard. They are hand-written route handlers built on `src/lib/sitemap.ts`, re
 
 - `/robots.txt` (`src/lib/robots.ts`) names `/sitemap-index.xml` in every environment, including
   staging, which disallows crawling: site audits such as Ahrefs find sitemaps through it.
-- `/sitemap-index.xml` is the index, and `/sitemap.xml` serves the same document for crawlers that
-  look there by default. The index lists each child sitemap, never another index.
+- `/sitemap-index.xml` is the index. `/sitemap.xml`, where crawlers and site audits look by
+  default, redirects (308) to it (`movedSitemaps`), so the index has one address. The index lists
+  each child sitemap, never another index.
 - Each child sitemap is a file at the site's root named for its group: `/sitemap-pages.xml`, then
   the dictionary's. A child holds at most 50,000 URLs; a group that outgrows one file adds
   `-2`, `-3`, and so on (`/sitemap-words-2.xml`). Add a new group's sitemap to `childSitemaps`
@@ -679,7 +680,7 @@ standard. They are hand-written route handlers built on `src/lib/sitemap.ts`, re
 
 The dictionary's sitemaps (`src/lib/dictionary/sitemaps.ts`, ADR 0007) exist wherever the site
 has a dictionary service, staging and production, not local fixtures, so the index renders per
-request (`force-dynamic`, as does `/sitemap.xml`): a build can't reach the service, so
+request (`force-dynamic`): a build can't reach the service, so
 prerendering would fail the build or freeze an index without them. `/dictionary/`, the search box
 and the browse sections below it, is listed in `src/lib/pages.ts`, and the pages sitemap also
 lists the browse home beside it (`src/lib/pages-sitemap.ts`), a section landing page as
