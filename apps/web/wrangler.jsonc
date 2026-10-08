@@ -23,8 +23,8 @@
         "SITE_ENV": "staging",
         "DICTIONARY_API_URL": "DICTIONARY_API_URL",
         "ACCOUNT_API_URL": "https://api-staging.zenbujapanese.com",
-        "ACCOUNT_APPLE_SERVICES_ID": "",
-        "ACCOUNT_GOOGLE_SIGN_IN": ""
+        "ACCOUNT_APPLE_SERVICES_ID": "com.zenbujapanese.web",
+        "ACCOUNT_GOOGLE_SIGN_IN": "on"
       },
       "workers_dev": true,
       "routes": [{ "pattern": "staging.zenbujapanese.com", "custom_domain": true }],

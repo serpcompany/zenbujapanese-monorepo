@@ -65,6 +65,17 @@ lists every child sitemap and each child sitemap lists the new URLs.
 - `apps/web/vitest.config.ts` has two projects: `*.interaction.test.tsx` run in happy-dom, the
   other tests in Node. Both set `__NEXT_TRAILING_SLASH`, so `next/link` draws links with their
   trailing slash, as the build does with `trailingSlash`.
+- A link whose page or address doesn't exist yet points at `#`, and is listed once, by what it
+  stands for, in `linkTargets` in `apps/web/src/lib/site.ts`; its links carry `data-link-target`.
+  `apps/web/e2e/placeholders.spec.ts` fails on any other `#` link and prints the listed ones
+  ([product docs](../../apps/web/docs/product/dictionary.md#header-footer-and-site-wide),
+  Placeholder links). When a page ships, link it directly and drop its entry.
+- `apps/web/public/` holds the header's images (App Store screenshot crops and the app icon) and,
+  in `apps/web/public/screenshots/app-store/`, whole App Store screenshots for the homepage, each
+  named for its file in `apps/ios/screenshots/app-store/en-US/iphone-63/` and made with
+  `cwebp -q 80 -resize 600 0`. `apps/web/src/lib/app-screenshots.ts` lists them with their alt
+  text, and `apps/web/src/components/app-screenshot.tsx` draws one without a device frame.
+  `next/image` renders them `unoptimized`, since the site sets up no image optimization on Workers.
 - `apps/web/biome.json` allows `dangerouslySetInnerHTML` only in
   `apps/web/src/components/dictionary/dictionary-breadcrumbs.tsx`, for its `BreadcrumbList`
   JSON-LD, which escapes `<` so the JSON can't close its script tag (the Next.js JSON-LD guide).
@@ -339,15 +350,16 @@ the account service ([`account-api.md`](account-api.md); the website's side of i
   | `ACCOUNT_APPLE_SERVICES_ID` | The Services ID Sign in with Apple JS signs in as: the first of the service's `APPLE_SERVICES_IDS`, the one the service takes the website's Apple codes as. Empty, the pages offer no Apple. |
   | `ACCOUNT_GOOGLE_SIGN_IN` | `on` offers Google, once the service has a Google web client. |
 
-  Apple and Google are off on staging and production until the service has them
-  ([`account-api.md`](account-api.md), Set up the server); then set these in `wrangler.jsonc` and
-  run `pnpm cf-typegen`, in a pull request. For staging, under `env.staging.vars`:
-  `"ACCOUNT_APPLE_SERVICES_ID": "<the Services ID, the first of the service's APPLE_SERVICES_IDS>"`
-  and `"ACCOUNT_GOOGLE_SIGN_IN": "on"`; production's are under `env.production.vars`, once its
-  pages open. Merging deploys staging, and the sign-in page then offers both. The same pull
-  request updates what then stops being true: "staging and production have neither yet" in the
-  product docs' [Account pages](../../apps/web/docs/product/account.md), and "Apple and Google are
-  off on staging" here.
+  Apple and Google are on for staging, whose account service has Apple's key and Google's web
+  client ([`account-api.md`](account-api.md), Set up the server): under `env.staging.vars`,
+  `"ACCOUNT_APPLE_SERVICES_ID": "com.zenbujapanese.web"`, the first of the service's
+  `APPLE_SERVICES_IDS`, and `"ACCOUNT_GOOGLE_SIGN_IN": "on"`. The local site has neither, since
+  Apple takes no `localhost` return URL and Google's web client returns only to the deployed
+  services. Production's stay empty until its pages open; then set them under
+  `env.production.vars` and run `pnpm cf-typegen`, in a pull request that also updates what then
+  stops being true: "production neither yet" in the product docs'
+  [Account pages](../../apps/web/docs/product/account.md), `src/lib/account/settings.test.ts`, and
+  "Production's stay empty" here.
 
   **Opening production's account pages** waits for production's account service to answer on
   `https://api.zenbujapanese.com`, trust `https://zenbujapanese.com`

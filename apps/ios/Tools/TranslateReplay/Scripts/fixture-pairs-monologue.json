@@ -1,0 +1,49 @@
+{
+  "mode": "conversation",
+  "minimumRecall": 0.8,
+  "lines": [
+    { "language": "ja", "say": "今日は東京駅に行きます。" },
+    {
+      "language": "en",
+      "say": "Please meet me at Shibuya Station at three o'clock.",
+      "heard": "Please meet me at Shibuya Station at 3 o'clock."
+    },
+    { "language": "ja", "say": "はい、三時に会いましょう。", "heard": "はい、3時に会いましょう。" },
+    { "language": "en", "say": "Thank you. See you there." },
+    { "language": "en", "say": "I want to go to Kyoto tomorrow." },
+    { "language": "en", "say": "Then Osaka on Friday." },
+    { "language": "en", "say": "My sister lives in Nagoya." },
+    { "language": "en", "say": "She works at a bakery." },
+    { "language": "en", "say": "The museum opens at nine.", "heard": "The museum opens at 9." },
+    { "language": "en", "say": "Tickets cost twelve dollars.", "heard": "Tickets cost $12." },
+    { "language": "en", "say": "We should bring umbrellas." },
+    { "language": "en", "say": "It might rain tonight." },
+    { "language": "en", "say": "I lost my train ticket." },
+    { "language": "en", "say": "Where can I buy another one?" },
+    {
+      "language": "ja",
+      "say": "明日は朝八時に新宿駅で待ち合わせして、まず中央線で吉祥寺に行きます。",
+      "heard": "明日は朝8時に新宿駅で待ち合わせして、まず中央線で吉祥寺に行きます。"
+    },
+    {
+      "language": "ja",
+      "say": "吉祥寺では井の頭公園を散歩して、十一時ごろにカフェでコーヒーを飲みましょう。",
+      "heard": "吉祥寺では井の頭公園を散歩して、11時ごろにカフェでコーヒーを飲みましょう。"
+    },
+    {
+      "language": "ja",
+      "say": "そのあと電車で渋谷に戻って、午後一時に友達とラーメンを食べる予定です。",
+      "heard": "その後電車で渋谷に戻って、午後1時に友達とラーメンを食べる予定です。"
+    },
+    {
+      "language": "ja",
+      "say": "三時からは原宿で買い物をして、夕方五時には東京タワーに行きたいと思っています。",
+      "heard": "3時からは原宿で買い物をして、夕方5時には東京タワーに行きたいと思っています。"
+    },
+    {
+      "language": "ja",
+      "say": "夜は七時に銀座のお寿司屋さんを予約してあるので、遅れないように気をつけてください。",
+      "heard": "夜は7時に銀座のお寿司屋さんを予約してあるので、遅れないように気をつけてください。"
+    }
+  ]
+}

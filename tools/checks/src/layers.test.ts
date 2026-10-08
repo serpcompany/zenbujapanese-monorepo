@@ -43,3 +43,14 @@ test('leaves files outside a layer alone', () => {
 test('checks the real TranslatorCore sources', () => {
   expect(checkLayers([core])).toEqual([])
 })
+
+test('keeps the on-device adapters free of the app and its screens', () => {
+  const onDevice = 'apps/ios/Modules/Sources/TranslatorOnDevice/BilingualRecognizer.swift'
+  const problems = checkLayers(
+    [onDevice],
+    swiftLayers,
+    source('import Speech\nimport TranslatorCore\nimport SwiftUI\nimport SearchExperience\n')
+  )
+  expect(problems.map(problem => problem.line)).toEqual([3, 4])
+  expect(checkLayers([onDevice])).toEqual([])
+})

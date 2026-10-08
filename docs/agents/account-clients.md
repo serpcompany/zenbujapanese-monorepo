@@ -22,7 +22,7 @@ Staging and production are separate: an account, a session, or an access token f
 nothing to the other, so a build talks to one host for everything, the dictionary service's app
 routes included. Cloudflare's Bot Fight Mode is on for the zone, so a request from a data center,
 such as a CI runner, may get a challenge page instead of an answer, and so, rarely, may an app's
-(ADR 0012): treat an answer that isn't JSON as a network failure.
+(ADR 0013): treat an answer that isn't JSON as a network failure.
 
 ## Your app
 

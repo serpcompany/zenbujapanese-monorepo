@@ -167,7 +167,7 @@ Simulator. Run it from
 `apps/ios/Modules` with:
 
 ```sh
-xcodebuild -scheme ZenbuJapaneseModules \
+xcodebuild -scheme ZenbuJapaneseModules-Package \
   -destination 'platform=iOS Simulator,id=<booted-simulator-udid>' \
   ONLY_ACTIVE_ARCH=YES test
 ```
@@ -243,9 +243,9 @@ the website does isn't recorded yet: sentence search (Discovered Words, above). 
 checks it with its own test (`sentence-search.test.ts`) until a suite records it.
 
 The `iOS` workflow ([`ci.md`](ci.md), iOS) runs the data tools' contract tests on pull requests
-that change `apps/ios`, and `SearchExperienceTests` on a macOS runner only once the owners turn
-that on. Until then, run `SearchExperienceTests` on a Mac, and verify ordinary app changes by also
-building, launching, and inspecting the real app.
+that change `apps/ios`, and `SearchExperienceTests`, `TranslatorCoreTests`, and the recorded-audio
+check's scoring tests on a macOS runner only once the owners turn that on. Until then, run them on
+a Mac, and verify ordinary app changes by also building, launching, and inspecting the real app.
 
 Frequency-pack selection has one repo-local Python contract test. Run
 `python3 -m unittest discover -s apps/ios/Tools/tests -p test_frequency_pack_runtime_contract.py` to verify

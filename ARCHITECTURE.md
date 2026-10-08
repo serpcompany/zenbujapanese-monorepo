@@ -7,10 +7,10 @@ layers apart. Each part's own doc has the detail; each rule here is enforced by 
 
 | Part | What it is | Its doc |
 | --- | --- | --- |
-| `apps/ios` | The iPhone app, in Swift. It reads the language data bundled with it, which its importers in `apps/ios/Tools` build, and signs in to the account service to sync known words, lists, watch history, and bookmarked translations. | [`docs/agents/ios.md`](docs/agents/ios.md) |
+| `apps/ios` | The iPhone app, in Swift. It reads the language data bundled with it, which its importers in `apps/ios/Tools` build, and signs in to the account service to sync known words, lists, watch history, and bookmarked translations. `apps/ios/Tools/TranslateReplay` replays recorded Translate audio on a Mac. | [`docs/agents/ios.md`](docs/agents/ios.md) |
 | `apps/web` | zenbujapanese.com: Next.js on Cloudflare Workers through OpenNext. Its dictionary pages read the dictionary service; its account pages call the account service from the learner's browser. | [`docs/agents/web.md`](docs/agents/web.md) |
 | `apps/dictionary-api` | The dictionary service: Node, in a Docker image on serpcompany's server, answering the website's dictionary requests by running the shared core on the app's language data. | [`docs/agents/dictionary-api.md`](docs/agents/dictionary-api.md) |
-| `apps/account-api` | The account service: Node and Postgres on the same server, for Zenbu accounts, sign-in, and sync (ADR 0012). It signs learners in with Apple, Google, or an emailed code, through Better Auth, and issues the access tokens other services check. | [`docs/agents/account-api.md`](docs/agents/account-api.md) |
+| `apps/account-api` | The account service: Node and Postgres on the same server, for Zenbu accounts, sign-in, and sync (ADR 0013). It signs learners in with Apple, Google, or an emailed code, through Better Auth, and issues the access tokens other services check. | [`docs/agents/account-api.md`](docs/agents/account-api.md) |
 | `packages/dictionary-core` | The shared TypeScript core: search, results, word and kanji detail, and examples, ported from the app's Swift. Every client is to run it (ADR 0008). | [`docs/agents/dictionary-core.md`](docs/agents/dictionary-core.md) |
 | `packages/node-service` | What the two Node services share: JSON-line logs, the request log, a server that stops cleanly, and the writer of their API references (`docs/api/`). | [`docs/agents/dictionary-api.md`](docs/agents/dictionary-api.md), Code layout |
 | `deploy` | The API servers' deployer, which swaps each service's signed image into its slots. | [`docs/agents/api-servers.md`](docs/agents/api-servers.md) |
@@ -46,7 +46,7 @@ service's paths to it and the rest to the dictionary service, so they deploy apa
 ([`docs/agents/api-servers.md`](docs/agents/api-servers.md), The API host). The account service
 holds what learners keep across devices. Its Postgres database sits on the same
 server, on a network only the service's slots reach, and every app keeps its own copy and works
-offline (ADR 0012). The website's account pages call it from the learner's browser, not from the
+offline (ADR 0013). The website's account pages call it from the learner's browser, not from the
 Worker, whose requests to the API host Bot Fight Mode challenges
 ([`docs/agents/web.md`](docs/agents/web.md), Account pages).
 
@@ -82,8 +82,9 @@ saying where the code belongs:
   `data.ts` hands them ([`docs/agents/web.md`](docs/agents/web.md), Code layout).
 - **The app**: `TranslatorCore`, the Translate tab's engine, imports only Foundation, Observation,
   and OSLog (`tools/checks/src/layers.ts`), and can't import the app's `SearchExperience` target;
-  the app supplies its speech, translation, and playback clients
-  ([`docs/agents/translate.md`](docs/agents/translate.md)).
+  the app supplies its speech, translation, and playback clients. `TranslatorOnDevice`, the
+  recognizer and translation adapters the Mac's replay check shares, adds only AVFoundation,
+  Speech, and Translation ([`docs/agents/translate.md`](docs/agents/translate.md)).
 - **Across parts**: the core and the app's Swift change together, which `Search parity` checks
   ([`docs/agents/ci.md`](docs/agents/ci.md)); the website and the service share their row shapes
   through the core; no app imports another, and apps reach a shared package by its name.

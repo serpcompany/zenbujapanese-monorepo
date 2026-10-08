@@ -4,6 +4,7 @@ import { accountPagesFor, accountServiceIn } from './availability'
 import { accountSettingsFrom } from './settings'
 
 const wrangler = readFileSync(new URL('../../../wrangler.jsonc', import.meta.url), 'utf8')
+const config = JSON.parse(wrangler)
 
 describe("the website's account settings", () => {
   test('read the account service, and whether Apple and Google are offered, from the Worker vars', () => {
@@ -38,6 +39,19 @@ describe("the website's account settings", () => {
     expect(accountPagesFor(wrangler, 'staging')).toBe('open')
     expect(accountPagesFor(wrangler, 'production')).toBe('closed')
     expect(accountPagesFor(wrangler, undefined)).toBe('open')
+  })
+
+  test('offer Apple and Google on staging, and neither in production nor locally', () => {
+    expect(accountSettingsFrom(config.env.staging.vars)).toEqual({
+      apiUrl: 'https://api-staging.zenbujapanese.com',
+      appleServicesId: 'com.zenbujapanese.web',
+      google: true
+    })
+    expect(config.env.production.vars).toMatchObject({
+      ACCOUNT_APPLE_SERVICES_ID: '',
+      ACCOUNT_GOOGLE_SIGN_IN: ''
+    })
+    expect(accountSettingsFrom(config.vars)).toMatchObject({ appleServicesId: null, google: false })
   })
 
   test('close the footer, as the pages, for a value that is no origin', () => {

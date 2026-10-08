@@ -75,8 +75,9 @@ the tab. Conversation text is one Dynamic Type size larger than the rest of the 
   wider gap; there are no language labels. The sentence being heard has a tinted fill and an
   accent outline, grows as it's recognized, and shows a provisional translation in italics. Once
   the speaker finishes the sentence, the card keeps that translation until the final one replaces
-  it, so a long sentence never goes back to **Translating…**. A card turns active again while its
-  translation is spoken.
+  it, so a long sentence never goes back to **Translating…**. When what was heard splits into
+  several sentences, each card shows **Translating…** until its own translation arrives, since
+  the provisional one covered them all. A card turns active again while its translation is spoken.
 - **Two Panes.** Japanese fills a dark pane on top and English a light pane below, as in Owll
   Translator. Each pane holds the whole conversation in its language: what was said in it and
   the translation of what was said in the other. The newest line is bold, earlier lines are dimmed,
@@ -84,9 +85,10 @@ the tab. Conversation text is one Dynamic Type size larger than the rest of the 
   its provisional translation grows in the other. Each pane follows its newest line. The layout
   chosen in **•••** is remembered.
 - **Long speech.** A speaker who keeps talking stays one turn. Its text is held until they pause,
-  then shows as one or more cards. The audio waits (**3 waiting for a pause**) and plays in order
-  about 2 seconds after the speaker stops. A turn that runs for 30 seconds without a pause plays
-  what's waiting anyway.
+  then shows as one card per sentence. The audio waits (**3 waiting for a pause**) and plays in
+  order, starting about 2 seconds after the speaker stops: each sentence plays as soon as its own
+  translation is ready, so a long monologue doesn't wait for the whole of it. A turn that runs for
+  30 seconds without a pause plays what's waiting anyway.
 - **Scrolling.** The list follows the newest text. Scrolling up stops following and shows
   **Jump to Latest**.
 - **Elsewhere in the app.** On a word's full entry opened from the conversation, where the tab

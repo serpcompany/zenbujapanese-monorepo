@@ -4,9 +4,10 @@ import PackageDescription
 
 let package = Package(
   name: "ZenbuJapaneseModules",
-  platforms: [.iOS(.v26)],
+  platforms: [.iOS(.v26), .macOS(.v26)],
   products: [
-    .library(name: "SearchExperience", targets: ["SearchExperience"])
+    .library(name: "SearchExperience", targets: ["SearchExperience"]),
+    .library(name: "TranslatorOnDevice", targets: ["TranslatorCore", "TranslatorOnDevice"]),
   ],
   dependencies: [
     .package(
@@ -20,6 +21,7 @@ let package = Package(
   ],
   targets: [
     .target(name: "TranslatorCore"),
+    .target(name: "TranslatorOnDevice", dependencies: ["TranslatorCore"]),
     .testTarget(
       name: "TranslatorCoreTests",
       dependencies: ["TranslatorCore"]
@@ -28,6 +30,7 @@ let package = Package(
       name: "SearchExperience",
       dependencies: [
         "TranslatorCore",
+        "TranslatorOnDevice",
         .product(name: "Sudachi", package: "sudachi-swift"),
         .product(name: "ZIPFoundation", package: "ZIPFoundation"),
       ],

@@ -1,20 +1,32 @@
 import type { Metadata } from 'next'
-import Link from 'next/link'
-import { PageShell } from '@/components/page-shell'
-import { site } from '@/lib/site'
+import { HomeAppExtras } from '@/components/home/home-app-extras'
+import { HomeClosing } from '@/components/home/home-closing'
+import { HomeFeatures } from '@/components/home/home-features'
+import { HomeHero } from '@/components/home/home-hero'
+import { HomeWebTools } from '@/components/home/home-web-tools'
+import { TryDictionary } from '@/components/home/try-dictionary'
+import { homeTitle } from '@/lib/home'
+import { siteOpenGraph } from '@/lib/metadata'
+import { pageFor } from '@/lib/pages'
+
+const { description } = pageFor('/')
 
 export const metadata: Metadata = {
-  title: { absolute: `${site.name}: Japanese Dictionary & Translator` },
-  alternates: { canonical: '/' }
+  title: { absolute: homeTitle },
+  description,
+  alternates: { canonical: '/' },
+  openGraph: { ...siteOpenGraph, title: homeTitle, description, url: '/' }
 }
 
 export default function HomePage() {
   return (
-    <PageShell title={site.name}>
-      <p>{site.description}</p>
-      <p>
-        <Link href="/support/">Get support</Link>
-      </p>
-    </PageShell>
+    <main className="flex flex-col">
+      <HomeHero />
+      <TryDictionary />
+      <HomeFeatures />
+      <HomeAppExtras />
+      <HomeWebTools />
+      <HomeClosing />
+    </main>
   )
 }

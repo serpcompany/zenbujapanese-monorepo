@@ -3,7 +3,7 @@
 zenbujapanese.com's account pages let a learner make, sign in to, see, change, and delete their
 Zenbu account (#468), against the account service ([`account-api.md`](../../../../docs/agents/account-api.md)).
 Signing in is passwordless: a code we email, and Apple and Google where the site has them set up
-(`ACCOUNT_APPLE_SERVICES_ID` and `ACCOUNT_GOOGLE_SIGN_IN`; staging and production have neither
+(`ACCOUNT_APPLE_SERVICES_ID` and `ACCOUNT_GOOGLE_SIGN_IN`; staging has both, production neither
 yet). The pages are open only where the
 environment names an account service: locally and on staging, not yet in production
 (Configuration, below). The pages call the service from
@@ -45,7 +45,7 @@ other account page, and asks the account service nothing.
   says signing in isn't available, links no account page, and stays noindex" (and each other
   page); `src/lib/account/pages.test.ts` (the descriptions included); `src/app/routes.test.ts`.
 
-**Footer.** Where the account pages are open, the footer's Product group ends with Sign in, which
+**Footer.** Where the account pages are open, the footer's Products group ends with Sign in, which
 leads to `/login/`; where they're closed, as in production today, it has no such link, so nothing
 links to the account pages. In a browser that signed in on the site, it says Account and leads to
 `/account/`. The browser remembers that
@@ -54,8 +54,8 @@ on deleting the account, and when the account page finds no session. The server 
 the page and its first render in the browser agree.
 
 - Source: #468, so the pages can be reached; the header is unchanged.
-- Check: `src/components/site-footer.test.tsx`, "the footer groups every link under Product,
-  Company, and Policies", "the footer leads to signing in, as the server draws it before the
+- Check: `src/components/site-footer.test.tsx`, "the footer groups its links under Products,
+  Tools, Company, and Legal", "the footer leads to signing in, as the server draws it before the
   browser knows", and "the footer leaves signing in out where the site's account pages are
   closed"; Account spec, "the footer leads to signing in, and to the account once signed
   in"; Closed spec, "a page built ahead of time has no Sign in in its footer".
@@ -71,7 +71,7 @@ Privacy Policy; Sign in links to Create an account; both link "Can't sign in?" t
 learner goes to `/account/`. A browser that already signed in sees "You're signed in. Go to your
 account." above the ways.
 
-- Source: #477 and ADR 0012 (Apple, Google, and an emailed code, through the account service);
+- Source: #477 and ADR 0013 (Apple, Google, and an emailed code, through the account service);
   #468 (the #402 sitemap sheet lists `/register/`), here the same flow, worded for making an
   account.
 - Check: Sign-in form tests, "emails a code, signs in with it, and goes to the account page" and
@@ -107,7 +107,7 @@ Sign in for an account made that way, naming only the ones it offers ("Made your
 Apple?"); where it offers neither, it has no such line.
 
 - Source: #468 (the #402 sitemap sheet lists `/forgot-password/`); accounts have no password
-  (ADR 0012).
+  (ADR 0013).
 - Check: `src/app/account-pages.test.tsx`, "/forgot-password/ points to Sign in only for the
   ways the site offers, naming them" (neither, Apple, Google, and both); Account service spec,
   which signs in again from `/forgot-password/`.
@@ -122,7 +122,7 @@ page's own origin for a popup. It signs in with Apple's ID token and the nonce, 
 sign-in, the name Apple hands the page. A closed popup says nothing; a blocked one says to allow
 pop-ups; a nonce the service no longer knows says to try again.
 
-- Source: ADR 0012; the popup is how the page gets Apple's code for deleting an Apple account
+- Source: ADR 0013; the popup is how the page gets Apple's code for deleting an Apple account
   ([`web.md`](../../../../docs/agents/web.md), Account pages).
 - Check: `src/lib/account/apple.test.ts`; Sign-in form tests, "signs in with Apple's popup, passing
   the first sign-in's name"; Account page tests, "won't confirm with another Apple ID, and asks
@@ -137,7 +137,7 @@ a failure, back to the page it started on with `?error=`, which the page names: 
 an account another way, an unverified email, an account another Zenbu account uses, or a cancel.
 Back from Google with the browser's Back button, the buttons work again.
 
-- Source: ADR 0012; Better Auth's web sign-in.
+- Source: ADR 0013; Better Auth's web sign-in.
 - Check: Sign-in form tests, "sends the browser to Google, to come back to the account page, or
   here on a failure" and "says what went wrong when Google's sign-in comes back with an error".
   Google itself: not run.
@@ -301,3 +301,14 @@ runs with. Opening production is in
   no origin"; the `Web` workflow's check that staging's build links Sign in, and its run of the
   Closed spec on a build made as production deploys ([`ci.md`](../../../../docs/agents/ci.md),
   Web).
+
+**Apple and Google in each environment.** Staging offers both: its Worker names the Services ID
+`com.zenbujapanese.web` and turns Google on, since staging's account service has Apple's key and
+Google's web client. Production offers neither until its account pages open, and the local site
+neither, since Apple takes no `localhost` return URL and Google's web client returns only to the
+deployed services.
+
+- Source: the account service's staging settings
+  ([`account-api.md`](../../../../docs/agents/account-api.md), Set up the server).
+- Check: `src/lib/account/settings.test.ts`, "offer Apple and Google on staging, and neither in
+  production nor locally".

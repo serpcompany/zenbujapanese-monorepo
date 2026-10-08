@@ -6,8 +6,9 @@ rest of the translator, including an Online engine, is the epic #624.
 
 ## Code layout
 
-The tab is split across two Swift targets in `apps/ios/Modules`
-([ADR 0011](../adr/0011-keep-the-translators-engine-in-its-own-swift-target.md)):
+The tab is split across three Swift targets in `apps/ios/Modules`
+([ADR 0011](../adr/0011-keep-the-translators-engine-in-its-own-swift-target.md),
+[ADR 0012](../adr/0012-run-the-on-device-recognizer-on-the-mac-from-its-own-target.md)):
 
 - **`TranslatorCore`** (`apps/ios/Modules/Sources/TranslatorCore/`) holds everything that decides
   what happens during a conversation and in History, with no SwiftUI and no Apple speech or
@@ -23,11 +24,15 @@ The tab is split across two Swift targets in `apps/ios/Modules`
     same audio) into one stream. It holds a final until the other recognizer's final arrives, for
     at least 0.4 s. It keeps holding while the other recognizer still has an unfinished sentence:
     up to 2 s once that sentence stops changing, and up to 20 s while it's still changing,
-    because the person is still talking. Then it joins each recognizer's sentences, picks the
+    because the person is still talking. Then it joins each recognizer's sentences and picks the
     language with `LanguageArbiter` (confidence plus how well the text's script matches the
-    language), and drops the loser's late final. Live text shows the held sentences plus the
-    unfinished one. Leading punctuation is trimmed. A winner with one letter, or with a confidence
-    below 0.4, becomes an empty final, which clears the live text without adding a sentence.
+    language), among the guesses worth translating: one letter, or a confidence below 0.4, never
+    competes. If none is worth translating, it sends an empty final, which clears the live text
+    without adding a sentence and doesn't count that speech as shown. Otherwise it sends the
+    winner one sentence at a time (Japanese split at 。？！, English as the recognizer's own
+    sentences), so each is translated and played as soon as it's ready. A loser's late final is
+    dropped, and so is a final below 0.55 confidence that starts inside speech already shown.
+    Live text shows the held sentences plus the unfinished one. Leading punctuation is trimmed.
   - `SpeechPauseDetector` finds the end of speech from the microphone's loudness: a level three
     times the room's noise floor is voice, and 0.6 s without voice is a pause. Muted audio counts
     as silence and leaves the noise floor alone.
@@ -42,12 +47,22 @@ The tab is split across two Swift targets in `apps/ios/Modules`
     (`SharedBookmarks.swift`), which is left in place, and not written, if it can't be read
     (`bookmarksAreReadOnly`, which stops the account's sync). The
     account side is in [`ios.md`](ios.md), Account and sync.
+- **`TranslatorOnDevice`** (`apps/ios/Modules/Sources/TranslatorOnDevice/`) holds the Apple
+  adapters that don't need the microphone or the screen, and builds for iOS and macOS so the Mac
+  can replay recordings through them (Recorded-audio check, below):
+  - `BilingualRecognizer`, an actor running one `SpeechAnalyzer` per language, each with that
+    language's `SpeechTranscriber`, fed copies of the same audio through a `RecognizerFeed`. It
+    finds pauses, finalizes sentences, and feeds `BilingualTranscriptMerger`.
+  - `OnDeviceSpeechAssets` (the speech downloads), `SentenceTranslationClient.onDevice` (Apple
+    Translation, one `TranslationSession` per sentence), and the Debug-only
+    `TranslateDiagnostics`.
+  - `pnpm verify layers` keeps it to Foundation, AVFoundation, Speech, Translation, and
+    `TranslatorCore`.
 - **`SearchExperience`** (`apps/ios/Modules/Sources/SearchExperience/Translate/`) holds the screens
-  and the Apple adapters: `OnDeviceTranscriber` (an actor running `AVAudioEngine` into one
-  `SpeechAnalyzer` per language, each with that language's `SpeechTranscriber`, fed copies of the
-  same audio), `OnDeviceTranslation` (Apple
-  Translation, one `TranslationSession` per sentence), `SystemSpeechPlayer`
-  (`AVSpeechSynthesizer`), and `TranslateExperience`, which owns the session, History, the
+  and the rest of the adapters: `OnDeviceTranscriber` (an actor running `AVAudioEngine`, voice
+  processing, and the audio session, and feeding the microphone to a `BilingualRecognizer`),
+  `OnDeviceTranslation` (Apple Translation's availability and download prompt),
+  `SystemSpeechPlayer` (`AVSpeechSynthesizer`), and `TranslateExperience`, which owns the session, History, the
   remembered mode, and the start checks (microphone, Apple Translation, speech assets), which
   are on-device-specific and change when an Online engine arrives. The home is
   `TranslateHomeView`: the four `TranslateStart` options (`TranslateStartPicker`) and Start. Text
@@ -92,13 +107,28 @@ to open.
   `setHearing(false)` feeds the analyzers silence instead, so their timeline stays continuous, and
   voice processing's echo cancellation stays on. It doesn't finalize: finalizing as the silence
   began made the Japanese recognizer invent a low-confidence `はい`. That became a turn, and its
-  spoken "Yes" muted the microphone again, so the app looped on itself every 2 s (#637).
+  spoken "Yes" muted the microphone again, so the app looped on itself every 2 s (#637). For the
+  same reason `BilingualRecognizer` finalizes nothing, at a pause or a stalled sentence, while the
+  audio it's fed is muted; a pause found then stays pending, and is checked once the microphone is
+  back, unless someone has started talking by then.
 - Apple's two recognizers end sentences differently. English ends a sentence by itself about
   0.5–1 s after a pause. Japanese holds its sentence until the next speech begins, even across
-  English speech. So at each pause `OnDeviceTranscriber` finalizes only the Japanese analyzer
-  (`finishedAtPauses`), and only when it has an unfinished sentence. Finalizing the English
-  analyzer garbles the sentence spoken right after it ("Then Osaka on Friday." became `....`),
-  which is why each language has its own analyzer.
+  English speech, and left open through a long stretch of English it loses the start of the
+  next Japanese. So at a pause `BilingualRecognizer` finalizes the Japanese analyzer when it has an
+  unfinished sentence, or when it has had no result for 5 s (finalizing it at every pause cut the
+  start of the app's own voice into a phantom 「はい。」), through 0.3 s after the voice ended so
+  speech that has resumed stays in the next sentence. If its text
+  was still changing, it checks again every 0.3 s while the room stays quiet, up to four more
+  times.
+  It finalizes only the Japanese analyzer
+  (`finishedAtPauses`). Finalizing the English analyzer garbles the sentence spoken right after
+  it ("Then Osaka on Friday." became `....`), which is why each language has its own analyzer.
+- A sentence whose text stops changing is finished early only when the room is quiet
+  (`SpeechPauseDetector.finishesStalledSentence`): Apple's Japanese recognizer can go 2–3 s
+  without a new result in fast speech, and finishing it then cut a monologue and lost its words.
+  `LiveConversation` asks every 2.5 s of unchanged live text; the recognizer finishes a sentence
+  unchanged for 2 s once the room has been quiet for 0.6 s, and while someone is talking, only
+  after 5 s.
 - A turn closes only when nobody is talking: no live sentence in either language, and
   `turnEndPause` since the last result. A wrong-language guess that becomes a turn closes the
   real one and mutes the microphone while the person is still speaking. Ducking of other audio
@@ -107,9 +137,9 @@ to open.
   rather than cached; `.translationTask`'s action is a `nonisolated` method for the same reason.
 - `translationTask` is the only way to show Apple's download prompt, so `TranslateExperience`
   sets `translationDownload` and a hidden view runs `prepareTranslation()`.
-- `OnDeviceTranscriber` numbers each start; a `stop()` that lands while a start is still awaiting
-  the analyzer makes that start give up, so a quick Resume then Pause can't leave the microphone
-  on. After a media-services reset it builds a new `AVAudioEngine`, and `SystemSpeechPlayer` a new
+- `OnDeviceTranscriber` and `BilingualRecognizer` number each start; a `stop()` that lands while a
+  start is still awaiting the analyzer makes that start give up, so a quick Resume then Pause can't
+  leave the microphone on. After a media-services reset it builds a new `AVAudioEngine`, and `SystemSpeechPlayer` a new
   synthesizer, since the old ones no longer work.
 - A conversation that has been left refuses to start again, so a dialog closing late can't revive
   it.
@@ -133,7 +163,7 @@ document's text (`DocumentTextTests`), each conversation's known-word share
 Run them from `apps/ios/Modules`:
 
 ```sh
-xcodebuild -scheme ZenbuJapaneseModules \
+xcodebuild -scheme ZenbuJapaneseModules-Package \
   -destination 'platform=iOS Simulator,id=<booted-simulator-udid>' \
   ONLY_ACTIVE_ARCH=YES -only-testing:TranslatorCoreTests -only-testing:SearchExperienceTests test
 ```
@@ -151,8 +181,11 @@ These were tuned on 2026-10-07 on an iPhone 17 Pro Max. A Mac played the #627 fi
 | Already-emitted share | `BilingualTranscriptMerger.alreadyEmittedShare` | 0.5 | A late Japanese final over English that was already shown ("Ianto Go to Koo Tomorrow") is dropped. |
 | Arbiter weights | `LanguageArbiter.score` | confidence × 100 + script × 100 (unchanged) | The measured margins are wide. Japanese speech: Japanese 0.81–1.0 against English 0.04–0.45. English speech: English 0.59–0.97 against Japanese 0.5–0.75, which loses on script. |
 | Pause | `SpeechPauseDetector` | 0.6 s below 3 × the noise floor | Owll splits sentences at about 0.5 s. |
-| Pause confirmation | `OnDeviceTranscriber.pauseConfirmation` | 0.3 s | Japanese is finalized only if its text stopped changing. A loudness dip inside fast speech no longer cuts it. |
-| Stalled sentence | `OnDeviceTranscriber.stalledSentence` | 2 s | Only a recognizer that has really stopped is finalized. Finalizing both every time the shown text paused chopped the monologue. |
+| Pause confirmation | `BilingualRecognizer.pauseConfirmation` | 0.3 s | Japanese is finalized only if its text stopped changing. A loudness dip inside fast speech no longer cuts it. |
+| Stalled sentence | `SpeechPauseDetector.stalledSentence`, `abandonedSentence` | 2 s once the room is quiet for 0.6 s; 5 s while someone is talking | Only a recognizer that has really stopped is finalized. Finalizing during fast speech chopped the monologue and lost its words (2026-10-08, recorded-audio check). |
+| Idle reset | `BilingualRecognizer.idleBeforeReset` | 5 s without a Japanese result | Left open from 118.7 s through the English pairs, the Japanese analyzer lost the start of the monologue at 155 s (problem 1 on #640). |
+| Pause re-checks | `BilingualRecognizer.pauseChecks`, `pauseMargin` | 5 checks, 0.3 s apart; finalized through 0.3 s after the voice ended | A pause whose Japanese text was still catching up was skipped, and the sentence waited for the stall timer; the late Japanese final then lost to an English guess. |
+| Doubtful guess over shown speech | `BilingualTranscriptMerger.confidenceOverShownSpeech` | 0.55 | The English recognizer's "Hi" (0.40) for the end of 「はい、3時」 became its own turn. Its junk measured 0.30–0.51 on the recordings; real English 0.59 and up. |
 | Turn-end pause | `ConversationTiming.turnEndPause` | 0.8 s (was 1.2) | Translations start 1.4–2.3 s after the speaker stops (was 2.3–5.4 s). Owll takes about 1.7–2 s. |
 | Echo guard | `EchoGuard` | 1.5 s, 60 % letter-pair overlap | A backstop if voice processing lets the app's own voice through. |
 
@@ -161,12 +194,56 @@ These were tuned on 2026-10-07 on an iPhone 17 Pro Max. A Mac played the #627 fi
 The engine is checked on an iPhone without anyone speaking:
 
 1. Install a Zenbu Dev Debug build ([`ios.md`](ios.md), Install on an iPhone) and start a Conversation on the phone.
-2. Make fixtures with `say -v Kyoko -o j1.aiff "今日は東京駅に行きます。"` and `say -v Samantha`, and play them beside the phone with `afplay`. Leave enough time after each one for the translation to play.
+2. Make fixtures with `say -v Kyoko -o j1.aiff "今日は東京駅に行きます。"` and `say -v Samantha`, and play them beside the phone with `afplay`. Leave enough time after each one for the translation to play. Keep the Mac quiet enough that the recording doesn't clip: one of the 2026-10-07 runs reached full scale hundreds of times in the monologue, and both the phone and the Mac garbled the same words of it.
 3. Watch with `xcrun devicectl device capture screenshot --device <udid> --destination shot.png`. This works over Wi-Fi. `capture screen-record` doesn't, and iPhone Mirroring silences the microphone.
 4. Read the result with `xcrun devicectl device copy from --device <udid> --domain-type appDataContainer --domain-identifier com.zenbujapanese.app.dev --source "<path>" --destination <file>`:
    - the conversation: `Library/Application Support/Zenbu Japanese/Translate Conversations/<id>.json`;
-   - Debug diagnostics (`TranslateDiagnostics`): `Library/Caches/TranslateDiagnostics/<time>/`. `events.log` has every recognizer result, pause, finalize, and spoken translation, and `heard.wav` has the audio the recognizers heard.
+   - Debug diagnostics (`TranslateDiagnostics`): `Library/Caches/TranslateDiagnostics/<time>/`. `events.log` has every recognizer result, pause, finalize, and spoken translation, and `heard.wav` has the audio the recognizers heard, which the Recorded-audio check replays.
 5. To compare with another app, have the owner screen-record it. iOS records no microphone audio while an app holds the microphone, so read timing from the video.
+
+## Recorded-audio check
+
+`translate-replay` (`apps/ios/Tools/TranslateReplay/`, [ADR 0012](../adr/0012-run-the-on-device-recognizer-on-the-mac-from-its-own-target.md))
+plays what an iPhone heard back through the app's own `BilingualRecognizer`,
+`BilingualTranscriptMerger`, and `LiveConversation` on the Mac, with Apple's recognizers and Apple
+Translation, and scores the conversation against the script that was spoken. Use it to try an
+engine change on real audio without a phone or a speaker.
+
+- **Recordings** are the folders a Debug build writes to `Library/Caches/TranslateDiagnostics/`
+  (Device rig, step 4); the tool reads each folder's `heard.wav`. The device rig's three runs from
+  2026-10-07 are in `Recordings/` (Git LFS). The 13:23 run is clipped, so its monologue garbles
+  on the phone and the Mac alike. Add a recording by copying its `heard.wav` into a new folder
+  there.
+- **Scripts** say what was spoken, line by line (`Scripts/fixture-pairs-monologue.json` is the
+  device rig's: the #627 fixture, five English pairs, and a fast Japanese monologue). `heard` gives
+  a line the way a perfect recognizer writes it, with digits, when it differs from what `say` reads.
+- **Run** it from `apps/ios/Tools/TranslateReplay`:
+
+  ```sh
+  swift run translate-replay --out /tmp/replay
+  ```
+
+  With no recording folder named, it replays every folder in `Recordings/`. `--script` picks
+  another script. Each recording gets a folder under `--out` with its
+  `result.json`, and a timestamped folder inside with the replay's `events.log` and `heard.wav`.
+  It exits 1 if any recording fails, and needs a debug build (`swift run`'s default), since its
+  timings come from the Debug diagnostics.
+- **Real time, one at a time.** Each recording is fed in 100 ms pieces at the pace it was heard,
+  then 4 s of quiet room noise, as the microphone would go on hearing, so a 4-minute conversation
+  takes 4 minutes. An all-zero piece is the phone's muted microphone, and is fed as muted. Recordings run one after another: three at once
+  share the Mac's speech service, and the Japanese recognizer then stops sending results for up to
+  8 s, which the phone doesn't do. Alone, its longest silence in the monologue is 2.5–2.8 s, against
+  1.9 s on an iPhone 17 Pro Max.
+- **The report** gives each script line's recall (the share of its letters heard, in order), each
+  turn's sentences, with a **phantom** for one that is mostly not in the script, the turn languages,
+  and the seconds from the end of speech to each turn's first playback. A recording passes when
+  every line reaches the script's `minimumRecall`, no sentence is a phantom or in the wrong
+  language, and the turn languages follow the script.
+- **Runs vary.** The Mac's recognizers don't return exactly the same results twice, so compare a
+  change over more than one run of each recording.
+- The Mac's speech models must be installed. The tool reserves them, as the app does before a
+  conversation; without that, macOS reports them as not installed.
+- `swift test` in the same folder runs the scoring's unit tests.
 
 ## Simulator harness
 
