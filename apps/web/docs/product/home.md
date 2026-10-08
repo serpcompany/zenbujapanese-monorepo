@@ -41,9 +41,10 @@ screenshot sit side by side, the screenshot's side alternating; on phones the te
 - Check: Home spec, "shows the four features, then the four more things in the app". The
   alternating layout: No automated check yet.
 
-**Also in the app.** Four cards, each with a preview drawn in HTML from real app data: Watch
-YouTube in Japanese (two caption lines from Tatoeba, おはようございます。 and 今日は天気がいいですね。,
-with 天気 open), Lists and Known Words (the Favorites list from the App Store screenshot, with
+**Also in the app.** Four cards, each a heading and a line under a preview drawn in HTML from real
+app data: Watch YouTube in Japanese (the Tatoeba sentence 今日は天気がいいですね。 as the caption
+being spoken, each word underlined as the app splits it, and 天気's word sheet open), Lists and
+Known Words (the Favorites list from the App Store screenshot, with
 美味しい and 大丈夫 known), Frequency dictionaries (the app's packs, JLPT Levels and YouTube first,
 and 食べる's JLPT N5 and YouTube 165 chips), and Tap a kanji to split its reading (弱肉強食, as the
 app splits it). The last is live: 肉 starts highlighted, and tapping another kanji moves the
@@ -70,9 +71,11 @@ browser drawn around the search page for taberu, with 食べる's word card in f
 
 **Closing.** A dark block: "Your Japanese stays yours." and three promises, each with a small
 preview: Works offline (峠 looked up in airplane mode), No account, no ads (lists, notes, known
-words, and saved conversations stay on the iPhone), and Built on open data (JMdict, KANJIDIC2,
-Tatoeba, and KanjiVG with their licences, from `pageSources.home` in
-`src/lib/dictionary/sources.ts`, the list the Sources page credits, and a link to `/sources/`).
+words, and saved conversations stay on the iPhone), and Built on open data: JMdict, KANJIDIC2,
+Tatoeba, KanjiVG, JLPT levels, and TUBELEX, each linking to its project and its licence, from
+`pageSources.home` in `src/lib/dictionary/sources.ts`, so the page credits the JMdict and
+frequency data its previews show, and a link to `/sources/`. In each card and promise the heading
+comes first in the page, and the preview is drawn above it.
 Then the app, Zenbu Japanese for iPhone, with Get the app and All products, the products index's
 placeholder.
 

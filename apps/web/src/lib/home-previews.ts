@@ -17,20 +17,19 @@ const taberuChips = frequencyChips([
   { pack: 'tubelex', rank: 165 }
 ])
 
+const taberuResult = { ...taberu, meaning: 'to eat', chips: taberuChips }
+
 export const playerPreview = {
-  earlier: { japanese: 'おはようございます。', english: 'Good morning!' },
-  current: {
-    words: [
-      { text: '今日', linked: true },
-      { text: 'は' },
-      { text: '天気', linked: true, open: true },
-      { text: 'が' },
-      { text: 'いい', linked: true },
-      { text: 'ですね。' }
-    ],
+  caption: {
+    words: ['今日', 'は', '天気', 'が', 'いいです', 'ね'],
+    end: '。',
     english: 'The weather is nice today.'
   },
-  open: { ...word('天気', 'てんき'), meaning: 'weather' }
+  open: {
+    ...word('天気', 'てんき'),
+    partOfSpeech: 'Noun',
+    meanings: ['weather', 'fair weather, fine weather']
+  }
 }
 
 export const listPreview = {
@@ -56,7 +55,7 @@ export const frequencyPreview = {
     'Visual Novels',
     'Video Games'
   ],
-  word: { ...taberu, meaning: 'to eat', chips: taberuChips }
+  word: taberuResult
 }
 
 export const furiganaPreview: {
@@ -78,7 +77,7 @@ export const searchPreview = {
   query: taberuQuery,
   links: ['View 50+ Example Sentences', 'Search for「たべる」'],
   results: [
-    { ...taberu, meaning: 'to eat', chips: taberuChips },
+    taberuResult,
     {
       ...word('食べるラー油', 'たべるラーゆ'),
       meaning: 'chili oil mixed with chopped garlic, onions, etc.',

@@ -1,25 +1,16 @@
 import { CheckIcon, GripVerticalIcon, PlayIcon, PointerIcon } from 'lucide-react'
-import type { ReactNode } from 'react'
 import { accent } from '@/components/dictionary/accent'
 import { FrequencyBadges } from '@/components/dictionary/frequency'
 import { HeadwordRuby } from '@/components/dictionary/headword-ruby'
 import { RubyText } from '@/components/dictionary/ruby-text'
+import { previewLabel, previewPanel, raisedPreview } from '@/components/home/home-styles'
+import { WordPreview } from '@/components/home/word-preview'
 import { Badge } from '@/components/ui/badge'
 import { frequencyPreview, furiganaPreview, listPreview, playerPreview } from '@/lib/home-previews'
 import { cn } from '@/lib/utils'
 
-export const previewPanel = 'rounded-lg bg-background ring-1 ring-foreground/10'
-
-const raised = 'shadow-[0_14px_30px_-18px_rgb(0_0_0/0.3)]'
-
-function CaptionCard({ className, children }: { className?: string; children: ReactNode }) {
-  return <div className={cn(previewPanel, 'px-3 py-2.5', className)}>{children}</div>
-}
-
-const english = 'text-[0.8125rem] text-muted-foreground'
-
 export function PlayerPreview() {
-  const { earlier, current, open } = playerPreview
+  const { caption, open } = playerPreview
   return (
     <div aria-hidden="true" className="grid w-full max-w-160 items-center gap-3.5 md:grid-cols-2">
       <div className="relative grid aspect-video place-items-center overflow-hidden rounded-lg bg-neutral-800 shadow-[0_12px_28px_-14px_rgb(0_0_0/0.4)]">
@@ -31,39 +22,30 @@ export function PlayerPreview() {
         </span>
       </div>
       <div className="flex min-w-0 flex-col gap-2">
-        <CaptionCard className="opacity-55">
-          <p lang="ja">{earlier.japanese}</p>
-          <p className={english}>{earlier.english}</p>
-        </CaptionCard>
-        <CaptionCard className="relative ring-[1.5px] ring-foreground">
+        <div className={cn(previewPanel, 'bg-blue-600/5 px-3 py-2.5 ring-[1.5px] ring-blue-600')}>
           <p lang="ja">
-            {current.words.map(word =>
-              word.linked ? (
-                <span
-                  key={word.text}
-                  className={cn(
-                    'border-b border-dashed border-foreground/35',
-                    word.open && cn(accent, 'border-b-2 border-solid border-current')
-                  )}
-                >
-                  {word.text}
-                </span>
-              ) : (
-                word.text
-              )
-            )}
+            {caption.words.map(word => (
+              <span
+                key={word}
+                className={cn(
+                  'mx-px border-b-[1.5px] border-foreground/35',
+                  word === open.headword && cn(accent, 'border-current')
+                )}
+              >
+                {word}
+              </span>
+            ))}
+            {caption.end}
           </p>
-          <p className={english}>{current.english}</p>
-          <div
-            className={cn(
-              'dark absolute -top-9 right-2.5 flex max-w-[calc(100%-1.25rem)] items-baseline gap-2 overflow-hidden rounded-md bg-background px-2.5 py-1 text-xs whitespace-nowrap text-foreground',
-              raised
-            )}
-          >
-            <RubyText segments={open.ruby} className="text-[0.9375rem] font-medium" />
-            <span className="truncate">{open.meaning}</span>
-          </div>
-        </CaptionCard>
+          <p className="text-[0.8125rem] text-muted-foreground">{caption.english}</p>
+        </div>
+        <WordPreview
+          word={open}
+          className={cn(
+            raisedPreview,
+            'rounded-b-none pt-2 before:mx-auto before:mb-1 before:h-1 before:w-8 before:rounded-full before:bg-foreground/15'
+          )}
+        />
       </div>
     </div>
   )
@@ -71,7 +53,10 @@ export function PlayerPreview() {
 
 export function ListPreview() {
   return (
-    <div aria-hidden="true" className={cn(previewPanel, raised, 'w-full max-w-68 overflow-hidden')}>
+    <div
+      aria-hidden="true"
+      className={cn(previewPanel, raisedPreview, 'w-full max-w-68 overflow-hidden')}
+    >
       <div className="flex items-baseline justify-between px-3.5 pt-3 pb-2">
         <span className="text-lg font-semibold tracking-tight">{listPreview.name}</span>
         <span className="text-xs text-muted-foreground">{listPreview.words.length} words</span>
@@ -101,9 +86,7 @@ export function FrequencyPreview() {
   return (
     <div aria-hidden="true" className="flex w-full max-w-68 flex-col gap-3">
       <div className={cn(previewPanel, 'overflow-hidden text-sm')}>
-        <p className="px-3 pt-2 pb-1 text-[0.6875rem] font-semibold tracking-wider text-muted-foreground uppercase">
-          Enabled
-        </p>
+        <p className={cn(previewLabel, 'px-3 pt-2 pb-1')}>Enabled</p>
         {enabled.map((name, index) => (
           <p key={name} className="flex items-center gap-2.5 border-t px-3 py-2 font-medium">
             <span className="grid size-5 place-items-center rounded-full bg-muted text-[0.6875rem] tabular-nums">

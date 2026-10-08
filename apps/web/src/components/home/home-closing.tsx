@@ -3,7 +3,7 @@ import Image from 'next/image'
 import Link from 'next/link'
 import type { ReactNode } from 'react'
 import { RubyText } from '@/components/dictionary/ruby-text'
-import { callToAction } from '@/components/home/home-hero'
+import { callToAction } from '@/components/home/home-styles'
 import { SectionHeading } from '@/components/home/section-heading'
 import { GetAppButton } from '@/components/site-actions'
 import { buttonVariants } from '@/components/ui/button'
@@ -38,9 +38,9 @@ function ClosingPromise({
 }) {
   return (
     <li className="flex min-w-0 flex-col gap-2 border-t py-7 first:border-t-0 md:border-t-0 md:border-l md:px-6 md:pt-8 md:pb-2 md:first:border-l-0 md:first:pl-0">
-      <div className="flex min-h-34 items-center">{preview}</div>
-      <h3 className="mt-3 text-[1.0625rem] font-semibold tracking-tight">{title}</h3>
+      <h3 className="text-[1.0625rem] font-semibold tracking-tight">{title}</h3>
       <p className="text-[0.9375rem] leading-relaxed text-muted-foreground">{children}</p>
+      <div className="order-first mb-3 flex min-h-34 items-center md:min-h-56">{preview}</div>
     </li>
   )
 }
@@ -75,13 +75,27 @@ function StoredPreview() {
   )
 }
 
+const creditLink = 'underline-offset-3 hover:underline'
+
 function SourcesPreview() {
   return (
     <dl aria-label="Licences" className={cn(panel, 'grid grid-cols-[auto_1fr] gap-x-4 gap-y-1.5')}>
       {pageSources.home.map(source => (
         <div key={source.name} className="contents">
-          <dt className="font-medium">{source.name}</dt>
-          <dd className="text-xs leading-5 text-muted-foreground">{source.license.name}</dd>
+          <dt className="font-medium">
+            <a href={source.url} className={creditLink}>
+              {source.name}
+            </a>
+          </dt>
+          <dd className="text-xs leading-5 text-muted-foreground">
+            {source.license.url ? (
+              <a href={source.license.url} className={creditLink}>
+                {source.license.name}
+              </a>
+            ) : (
+              source.license.name
+            )}
+          </dd>
         </div>
       ))}
     </dl>
@@ -107,7 +121,8 @@ export function HomeClosing() {
             nothing to sign up for.
           </ClosingPromise>
           <ClosingPromise title="Built on open data" preview={<SourcesPreview />}>
-            Words, kanji, and sentences come from open projects, each credited on the{' '}
+            Words, kanji, sentences, and word frequencies come from open projects, each credited on
+            the{' '}
             <Link href="/sources/" className="text-foreground underline underline-offset-3">
               Sources
             </Link>{' '}

@@ -1,13 +1,12 @@
 import { ChevronRightIcon } from 'lucide-react'
 import { FrequencyBadges } from '@/components/dictionary/frequency'
 import { RubyText } from '@/components/dictionary/ruby-text'
-import { previewPanel } from '@/components/home/app-extra-previews'
+import { previewLabel, previewPanel } from '@/components/home/home-styles'
+import { WordPreview } from '@/components/home/word-preview'
 import { searchPreview } from '@/lib/home-previews'
 import { site } from '@/lib/site'
 import { siteMenus } from '@/lib/site-menus'
 import { cn } from '@/lib/utils'
-
-const sectionLabel = 'text-[0.6875rem] font-semibold tracking-wider text-muted-foreground uppercase'
 
 const previewNav = siteMenus.filter(menu => menu.kind === 'mega').map(menu => menu.label)
 
@@ -71,7 +70,7 @@ function SearchPage() {
           <ChevronRightIcon className="size-3.5 text-muted-foreground" />
         </div>
       ))}
-      <p className={cn(sectionLabel, 'mt-1')}>Results</p>
+      <p className={cn(previewLabel, 'mt-1')}>Results</p>
       {searchPreview.results.map(result => (
         <div key={result.headword} className="flex flex-col gap-0.5 border-t pt-2">
           <RubyText segments={result.ruby} className="text-lg leading-[1.7] font-medium" />
@@ -79,29 +78,6 @@ function SearchPage() {
           <FrequencyBadges frequency={result.chips} />
         </div>
       ))}
-    </div>
-  )
-}
-
-function WordCard() {
-  const { ruby, partOfSpeech, meanings } = searchPreview.open
-  return (
-    <div
-      className={cn(
-        previewPanel,
-        'absolute right-0 bottom-0 flex w-[min(17rem,78%)] flex-col gap-1.5 rounded-xl px-4 py-3.5 shadow-[0_24px_48px_-20px_rgb(0_0_0/0.4)] md:-right-4'
-      )}
-    >
-      <div className="flex flex-wrap items-baseline justify-between gap-2">
-        <RubyText segments={ruby} className="text-2xl leading-[1.7] font-medium" />
-        <span className="text-xs text-muted-foreground">{partOfSpeech}</span>
-      </div>
-      <p className={sectionLabel}>Meaning</p>
-      <ol className="flex list-decimal flex-col gap-1 pl-4.5 text-[0.8125rem]">
-        {meanings.map(meaning => (
-          <li key={meaning}>{meaning}</li>
-        ))}
-      </ol>
     </div>
   )
 }
@@ -119,7 +95,10 @@ export function WebSearchPreview() {
         <SiteBar />
         <SearchPage />
       </div>
-      <WordCard />
+      <WordPreview
+        word={searchPreview.open}
+        className="absolute right-0 bottom-0 w-[min(17rem,78%)] rounded-xl shadow-[0_24px_48px_-20px_rgb(0_0_0/0.4)] md:-right-4"
+      />
     </div>
   )
 }
