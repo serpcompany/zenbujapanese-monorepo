@@ -149,17 +149,22 @@ struct AccountSignInTests {
         .googleClientID == nil)
   }
 
-  @Test("a Zenbu Dev build, whose bundle ID has a suffix, doesn't offer Sign in with Apple")
-  func devBuildsOfferNoApple() throws {
+  @Test(
+    "a Zenbu Dev build doesn't offer Sign in with Apple, and a build naming no service, as Release does, offers no sign-in"
+  )
+  func buildsWithoutAppleOrAService() throws {
     let builds = FileManager.default.temporaryDirectory
       .appending(path: "account-bundles-\(UUID().uuidString)", directoryHint: .isDirectory)
     defer { try? FileManager.default.removeItem(at: builds) }
-    func configuration(suffix: String) throws -> AccountServiceConfiguration? {
-      let bundleURL = builds.appending(path: "Build\(suffix).bundle", directoryHint: .isDirectory)
+    func configuration(suffix: String, service: String = "https://example.test") throws
+      -> AccountServiceConfiguration?
+    {
+      let bundleURL = builds.appending(
+        path: "Build\(suffix)\(service.isEmpty ? "-no-service" : "").bundle", directoryHint: .isDirectory)
       try FileManager.default.createDirectory(at: bundleURL, withIntermediateDirectories: true)
       let info: [String: String] = [
         "CFBundleIdentifier": "com.zenbujapanese.app\(suffix)",
-        AccountServiceConfiguration.serviceURLKey: "https://example.test",
+        AccountServiceConfiguration.serviceURLKey: service,
         AccountServiceConfiguration.bundleIDSuffixKey: suffix,
       ]
       try PropertyListSerialization.data(fromPropertyList: info, format: .xml, options: 0)
@@ -172,6 +177,7 @@ struct AccountSignInTests {
 
     #expect(try configuration(suffix: "")?.offersApple == true)
     #expect(try configuration(suffix: ".dev")?.offersApple == false)
+    #expect(try configuration(suffix: "", service: "") == nil)
   }
 
   @Test("Google's request carries PKCE, the nonce, and the reversed client ID")

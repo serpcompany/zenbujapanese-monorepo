@@ -201,7 +201,7 @@
 				SDKROOT = iphoneos;
 				SWIFT_VERSION = 6.0;
 				TARGETED_DEVICE_FAMILY = 1;
-				ZENBU_ACCOUNT_API_URL = "https://api.zenbujapanese.com";
+				ZENBU_ACCOUNT_API_URL = "";
 				ZENBU_GOOGLE_IOS_CLIENT_ID = "";
 			};
 			name = Release;

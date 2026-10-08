@@ -39,7 +39,9 @@ lists, Player's watch history, and Translate's bookmarked sentences. It provides
 
 - a profile card with the learner's photo, name, and username;
 - the Zenbu account: **Sign In to Sync**, or, signed in, **Zenbu Account** with the account's email
-  ([Zenbu account and sync](#zenbu-account-and-sync));
+  ([Zenbu account and sync](#zenbu-account-and-sync)). TestFlight and App Store builds don't show
+  it until the Zenbu account service runs in production; until then nothing syncs, and everything
+  else works as it does signed out;
 - the Media Library;
 - Known Words;
 - Lists;

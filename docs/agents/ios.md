@@ -343,8 +343,13 @@ and how results and changes apply), `AccountSyncScheduler.swift` and `AccountBac
 tests prove that model against the real service.
 
 - **Which service.** The build setting `ZENBU_ACCOUNT_API_URL` fills `ZenbuAccountServiceURL` in
-  `apps/ios/App/Info.plist`: staging (`https://api-staging.zenbujapanese.com`) in Debug, production
-  in Release. For a service on the Mac ([`account-api.md`](account-api.md), Run it), launch with
+  `apps/ios/App/Info.plist`: staging (`https://api-staging.zenbujapanese.com`) in Debug, Zenbu Dev
+  included, and none in Release, so a TestFlight or App Store build offers no sign-in until
+  production's service answers (Opening sign-in in the App Store build, below). With no service,
+  Account has no **Sign In to Sync** row, and nothing is queued: the stores' observers are only
+  set by the account, and a phone that never signed in queues nothing anyway.
+  `apps/ios/Tools/tests/test_account_service_settings.py` pins Release empty and Debug on staging,
+  in the `iOS` workflow's `contracts` job. For a service on the Mac ([`account-api.md`](account-api.md), Run it), launch with
   the argument `-ZenbuAccountServiceURL http://127.0.0.1:8789` or the environment variable
   `ZENBU_ACCOUNT_API_URL`, or build with `ZENBU_ACCOUNT_API_URL=http://127.0.0.1:8789` so every
   launch, a background one too, uses it. The Simulator reaches the Mac's `127.0.0.1`, and App
@@ -462,6 +467,24 @@ bound, bad pulled IDs, and two phones through `FakeAccountService`. `AccountSync
 covers the first upload sending each bookmarked sentence and nothing else said, the queue, a
 bookmark from another device listed on its own and removed, an un-bookmark that lost to a newer
 bookmark, a rejected bookmark, deleting a conversation, catching up, and two phones.
+
+### Opening sign-in in the App Store build
+
+Release builds name no account service, the way the website keeps production's account pages
+closed ([`web.md`](web.md), Account pages). Opening sign-in waits for production's account service:
+`https://api.zenbujapanese.com/v1/health` answers `{"status":"ok"}` in a browser, with Apple and
+email codes set up for everyone ([`account-api.md`](account-api.md), Set up the server). Then it's
+one pull request:
+
+- set Release's `ZENBU_ACCOUNT_API_URL` to `https://api.zenbujapanese.com` in
+  `apps/ios/ZenbuJapanese.xcodeproj/project.pbxproj`;
+- change `test_release_builds_name_no_account_service_until_production_answers` in
+  `apps/ios/Tools/tests/test_account_service_settings.py` to expect it;
+- and say so here, in Which service (above), and in the product docs' Account
+  ([`index.md`](../../apps/ios/docs/product/index.md#account)).
+
+Then enter the App Store privacy labels for the build that ships it
+([`app-store-privacy-labels.md`](../../apps/web/docs/app-store-privacy-labels.md)).
 
 ## Image Search and Apple Intelligence
 
