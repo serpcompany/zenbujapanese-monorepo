@@ -140,7 +140,9 @@ first time:
    - `applied`: keep its `version` as the entity's version.
    - `conflict`: the entity changed elsewhere first. Take `current`, the entity as it is now, over
      your copy.
-   - `rejected`: undo the change on the device, unless it was part of the first upload (below).
+   - `rejected`: undo the change on the device, unless it was part of the first upload (below),
+     or the code is `unknown_entity`: the service is older than your app, so keep the change and
+     upload that entity again later, as a first upload.
      To try something else, queue a new change with a new `id`; never send a result's `id` again
      with a different change.
 4. **Apply each change in `changes`** over your copy, by entity and `entityId`: `put` is the

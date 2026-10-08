@@ -190,6 +190,29 @@ struct AccountSyncWatchHistoryTests {
     #expect(fixture.server.requests(to: "POST /v1/sync").last?.sync.cursor == "cursor-1")
   }
 
+  @Test("a watch the service doesn't know yet stays on the phone, and goes again after a relaunch")
+  func olderServiceKeepsTheWatch() async throws {
+    let fixture = try await Fixture.afterSignIn()
+    fixture.serve { request in
+      StubSync.answer(
+        results: request.mutations.map { StubSync.rejected($0.id, "unknown_entity") }, cursor: "c2")
+    }
+    fixture.watch(ramen)
+    try await fixture.syncNow()
+    #expect(fixture.watchHistory.videos.map(\.videoID) == [ramen])
+    #expect(!fixture.sync.state.syncedEntities.contains(SyncEntity.watchedVideo))
+    try await fixture.syncNow()
+    #expect(fixture.server.requests(to: "POST /v1/sync").last?.sync.mutations.isEmpty == true)
+
+    fixture.serve()
+    await fixture.launch()
+    try await fixture.syncNow()
+    let caughtUp = try #require(fixture.server.requests(to: "POST /v1/sync").last?.sync)
+    #expect(caughtUp.cursor == nil)
+    #expect(caughtUp.mutations.map(\.entityId) == [ramen])
+    #expect(fixture.sync.state.syncedEntities == SyncEntity.uploaded)
+  }
+
   @Test("a watch on one phone and a removal on another reach both")
   func twoPhones() async throws {
     let server = StubAccountServer()

@@ -5,6 +5,7 @@ import Observation
 @Observable
 final class AccountSync: LocalFileStore {
   static let mutationsPerRequest = 50
+  static let unknownEntity = "unknown_entity"
   static let requestBytes = 48 * 1024
 
   private(set) var state = AccountSyncState()
@@ -28,6 +29,7 @@ final class AccountSync: LocalFileStore {
   @ObservationIgnored let writes = LocalFileWriteQueue()
   @ObservationIgnored var onLocalChange: (() -> Void)?
   @ObservationIgnored private var session = 0
+  @ObservationIgnored private var caughtUpThisLaunch = false
   @ObservationIgnored private var changesBeforeLoad: [SavedItemChange] = []
 
   init(
@@ -175,6 +177,8 @@ final class AccountSync: LocalFileStore {
   }
 
   private func catchUpOnNewEntities() {
+    guard !caughtUpThisLaunch else { return }
+    caughtUpThisLaunch = true
     let missing = Set(SyncEntity.uploaded).subtracting(state.syncedEntities)
     guard !missing.isEmpty else { return }
     state.queue += uploads().map(\.upload).filter { missing.contains($0.key.entity) }
@@ -255,7 +259,9 @@ final class AccountSync: LocalFileStore {
       case .conflict(let current):
         apply(current)
       case .rejected(let code):
-        if change.undo == nil, change.key == AccountSyncState.favoritesKey,
+        if code == Self.unknownEntity {
+          state.syncedEntities.removeAll { $0 == change.key.entity }
+        } else if change.undo == nil, change.key == AccountSyncState.favoritesKey,
           code == "already_exists"
         {
           state.accountHadFavorites = true

@@ -388,8 +388,10 @@ tests prove that model against the real service.
 - **Entities added later.** `account-sync.json` names the entities the account's first upload
   covered (`syncedEntities`; a file without it covered known words, lists, and list words). A phone
   that signed in before its app synced an entity, such as watch history, queues that entity's items
-  at version 0 on its next sync, and syncs from no cursor, since its cursor passed that entity's
-  changes.
+  at version 0 on its launch's first sync, and syncs from no cursor, since its cursor passed that
+  entity's changes. A change the service rejects as `unknown_entity`, from a service older than the
+  app, isn't undone: its entity is marked not uploaded, so the next launch's first sync uploads it
+  again, once.
 - **Watch history.** `WatchHistory` (`WatchHistory.swift`, in `UserDefaults` under
   `watch.recent-videos.v1`) reports each `record` and swipe removal through `changeObserver`, and
   takes the account's copies through `applySynced`, which report nothing. It keeps the 50 newest
