@@ -18,7 +18,10 @@ The website follows these SERP engineering standards:
   other form redirects (308) to it. `src/lib/pages.ts` is the single list of static page paths.
   Next.js redirects `/robots.txt/` to `/robots.txt` itself, but OpenNext skips it, so
   `next.config.ts` repeats that redirect, with a rule of its own for a top-level file, since
-  OpenNext can't fill an empty path parameter.
+  OpenNext can't fill an empty path parameter. The homepage is written as the origin, without a
+  slash (`https://zenbujapanese.com`): see Sitemaps.
+- [XML sitemaps](https://github.com/serpcompany/serp/blob/main/docs/engineering/websites/features/xml-sitemaps.md):
+  `/sitemap-index.xml` lists `sitemap-<group>.xml` files at the site's root (see Sitemaps).
 
 Before writing Next.js code, read the relevant guide in `node_modules/next/dist/docs/`; this
 Next.js version differs from older releases (see `apps/web/AGENTS.md`).
@@ -282,7 +285,7 @@ is cut to its first 20 words. Any other browse page is a 404 there.
 and `…/1/` redirects to it; a ranked list's page is a band of 1,000 ranks (`…/anime/1001-2000/`),
 and its name links to the first band; a JLPT level is `…/jlpt/n5/`; and a category's kana order is
 `…/<category>/kana-order/`. A list of fewer than 10 words, and a category's kana order, are
-`noindex, follow` (`dictionaryMetadata`'s `index`) and left out of `/sitemaps/browse.xml`. No
+`noindex, follow` (`dictionaryMetadata`'s `index`) and left out of `/sitemap-browse.xml`. No
 browse page links to a URL that redirects (`e2e/browse-links.spec.ts` follows every link). The
 hiragana and katakana routes, and each category's four, are one line each over the route helpers
 beside them (`kana-routes.tsx`, `category-routes.tsx`, `frequency-dictionaries/list-routes.tsx`). Pages without parameters that read the service are
@@ -398,13 +401,17 @@ Each value that differs by environment lives where the code that reads it runs:
 
 - **Worker `vars` in `wrangler.jsonc`**, per environment, for anything rendered on request. OpenNext
   renders routes such as `robots.txt` inside the Worker, where build-time variables are absent.
-- **The build**, for static pages and `next.config` headers, which are rendered once at build
-  time. `deploy:production` sets these.
+- **The build**, for static pages and `next.config` headers and redirects, which are rendered
+  once at build time. `deploy:staging` and `deploy:production` set these.
 - **`wrangler secret put --env <env>`** for secrets. **`.dev.vars`** holds local values only and is
   never committed.
 
-`SITE_ENV=production` is set in both the production Worker `vars` and the `deploy:production` build.
-Anything else is non-production: it sends `X-Robots-Tag: noindex` and a `robots.txt` that disallows
+`SITE_ENV` is set in both the Worker `vars` and the build of each deployed environment
+(`deploy:staging` and `deploy:production`). It also names the environment's origin, its canonical
+host (`siteOrigin()` in `src/lib/site.ts`), which every canonical tag, Open Graph URL, and
+structured data URL is written on; local development writes production's. A build whose
+`SITE_ENV` isn't `production` sends workers.dev to staging (`next.config.ts`). Anything but
+`SITE_ENV=production` is non-production: it sends `X-Robots-Tag: noindex` and a `robots.txt` that disallows
 everything. Analytics load only in production and only when their build-time IDs are set:
 `NEXT_PUBLIC_GTM_ID` (Google Tag Manager, a `production` GitHub environment variable that the
 `Web deploy` workflow passes to the production build) and `NEXT_PUBLIC_CF_BEACON_TOKEN` (Cloudflare
@@ -453,25 +460,49 @@ and `dmca@zenbujapanese.com` to `dmca+zenbujapanese@serp.co`.
 
 ## Sitemaps
 
-Sitemaps are hand-written route handlers built on `src/lib/sitemap.ts`. `/sitemap-index.xml` is
-the index (`/sitemap.xml` serves the same document) and lists every child sitemap under
-`/sitemaps/`. A child sitemap holds at most 50,000 URLs. Add a new section's sitemap to
-`childSitemaps`. Static pages are listed once, in `src/lib/pages.ts`, which also feeds the HTML
-sitemap at `/sitemap`.
+Sitemaps follow the SERP [XML sitemaps](https://github.com/serpcompany/serp/blob/main/docs/engineering/websites/features/xml-sitemaps.md)
+standard. They are hand-written route handlers built on `src/lib/sitemap.ts`, rendered per request:
+
+- `/robots.txt` (`src/lib/robots.ts`) names `/sitemap-index.xml` in every environment, including
+  staging, which disallows crawling: site audits such as Ahrefs find sitemaps through it.
+- `/sitemap-index.xml` is the index, and `/sitemap.xml` serves the same document for crawlers that
+  look there by default. The index lists each child sitemap, never another index.
+- Each child sitemap is a file at the site's root named for its group: `/sitemap-pages.xml`, then
+  the dictionary's. A child holds at most 50,000 URLs; a group that outgrows one file adds
+  `-2`, `-3`, and so on (`/sitemap-words-2.xml`). Add a new group's sitemap to `childSitemaps`.
+  Static pages are listed once, in `src/lib/pages.ts`, which also feeds the HTML sitemap at
+  `/sitemap`.
+- Every URL is written on the origin `servedOrigin()` in `src/lib/site.ts` names: the
+  environment's canonical host on staging and production (so staging's sitemaps list
+  `https://staging.zenbujapanese.com/…`, even when CI asks through workers.dev), and the address
+  the site is served at locally (`http://localhost:3000/…`). The homepage is the origin itself,
+  with no slash (`absoluteUrl('/')`), as in its canonical tag and `og:url`: Next.js adds a slash to
+  a metadata URL for `/` under `trailingSlash`, so the homepage writes those two tags itself
+  (`src/components/origin-canonical.tsx`), React moves them into the head, and `pageMetadata`
+  doesn't take `/`.
+- The sitemaps that moved to the root in #663 redirect (308) in one hop from where they were,
+  with or without a slash (`movedSitemaps` in `src/lib/sitemap.ts` and `movedDictionarySitemaps`
+  in `src/lib/dictionary/sitemap-files.ts`, which `next.config.ts` lists before its file rules):
+  `/sitemaps/pages.xml`, `/sitemaps/browse.xml`, and `/sitemaps/dictionary/<n>.xml`.
+  `src/lib/sitemap-index.ts` puts the index together.
 
 The dictionary's sitemaps (`src/lib/dictionary/sitemaps.ts`, ADR 0007) exist wherever the site
 has a dictionary service, staging and production, not local fixtures, so the index renders per
-request (`force-dynamic`, as does `/sitemap.xml`, which crawlers look for by default): a build
-can't reach the service, so prerendering would fail the build or freeze an index without them.
-`/dictionary/`, the search box and the browse sections below it, is listed in `src/lib/pages.ts`:
+request (`force-dynamic`, as does `/sitemap.xml`): a build can't reach the service, so
+prerendering would fail the build or freeze an index without them. `/dictionary/`, the search box
+and the browse sections below it, is listed in `src/lib/pages.ts`:
 
-- `/sitemaps/dictionary/<n>.xml`: every word page's canonical URL under its slug,
-  percent-encoded, 50,000 to a file in `ent_seq` order (five files for 218,382 words). The
-  service works out each file's `ent_seq` range once, and the site streams a file's words from it
-  10,000 at a time (`urlSetStream`), so a file never sits whole in memory; a failure mid-stream
-  errors the response rather than ending it early.
-- `/sitemaps/browse.xml`: every indexed browse page, built from what the service's
+- `/sitemap-words.xml`, `/sitemap-words-2.xml`, and so on: every word page's canonical URL under
+  its slug, percent-encoded, 50,000 to a file in `ent_seq` order (five files for 218,382 words).
+  A route can't have a parameter inside its file name, so `next.config.ts` rewrites these
+  (`dictionarySitemapFiles` in `src/lib/dictionary/sitemap-files.ts`, which imports no `@/`
+  path) to the route `src/app/sitemaps/dictionary/[file]`,
+  whose own URLs redirect back to them. The service works out each file's `ent_seq` range once,
+  and the site streams a file's words from it 10,000 at a time (`urlSetStream`), so a file never
+  sits whole in memory; a failure mid-stream errors the response rather than ending it early.
+- `/sitemap-browse.xml`: every indexed browse page, built from what the service's
   `/v1/sitemaps/browse` lists (`src/lib/dictionary/browse/sitemap.ts`), about 5,300 URLs.
+
 Those are the only dictionary sitemaps (ADR 0010, amended for #614): the kanji and conjugations
 sitemaps went with their pages.
 

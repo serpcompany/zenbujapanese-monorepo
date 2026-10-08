@@ -2,8 +2,10 @@ import { join } from 'node:path'
 import { initOpenNextCloudflareForDev } from '@opennextjs/cloudflare'
 import type { NextConfig } from 'next'
 import type { Redirect } from 'next/dist/lib/load-custom-routes'
+import { dictionarySitemapFiles, movedDictionarySitemaps } from './src/lib/dictionary/sitemap-files'
 import { movedPages, removedDictionaryPages } from './src/lib/moved-pages'
-import { isProductionSite } from './src/lib/site'
+import { isProductionSite, productionOrigin, stagingOrigin } from './src/lib/site'
+import { movedSitemaps } from './src/lib/sitemap'
 
 const wwwHost = { type: 'host', value: 'www.zenbujapanese.com' } as const
 
@@ -38,12 +40,14 @@ const nextConfig: NextConfig = {
   transpilePackages: ['@zenbu/dictionary-core'],
   turbopack: { root: join(process.cwd(), '../..') },
   async redirects() {
-    const canonicalOrigin = isProductionSite()
-      ? 'https://zenbujapanese.com'
-      : 'https://staging.zenbujapanese.com'
     return [
-      ...redirectHostTo(canonicalOrigin, [workersDevHost], [smokeTest]),
-      ...redirectHostTo('https://zenbujapanese.com', [wwwHost]),
+      ...redirectHostTo(
+        isProductionSite() ? productionOrigin : stagingOrigin,
+        [workersDevHost],
+        [smokeTest]
+      ),
+      ...redirectHostTo(productionOrigin, [wwwHost]),
+      ...[...movedSitemaps, ...movedDictionarySitemaps].map(rule => ({ ...rule, permanent: true })),
       {
         source: '/:file([^/]+\\.\\w+)/',
         destination: '/:file',
@@ -61,6 +65,9 @@ const nextConfig: NextConfig = {
       })),
       ...removedDictionaryPages.map(rule => ({ ...rule, permanent: true }))
     ]
+  },
+  async rewrites() {
+    return [...dictionarySitemapFiles]
   },
   async headers() {
     if (isProductionSite()) return []

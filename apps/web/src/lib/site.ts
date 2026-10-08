@@ -3,7 +3,6 @@ export const site = {
   mark: '全',
   description:
     'An offline-first Japanese dictionary, image-text reader, and translator for iPhone.',
-  url: 'https://zenbujapanese.com',
   supportEmail: 'support@zenbujapanese.com'
 } as const
 
@@ -79,6 +78,14 @@ export const placeholderLinks: readonly LinkTarget[] = linkTargets.filter(
   link => link.href === placeholderHref
 )
 
+const deployedOrigins = {
+  production: 'https://zenbujapanese.com',
+  staging: 'https://staging.zenbujapanese.com'
+} as const
+
+export const productionOrigin = deployedOrigins.production
+export const stagingOrigin = deployedOrigins.staging
+
 export function isProductionSite() {
   return process.env.SITE_ENV === 'production'
 }
@@ -87,6 +94,14 @@ export function isDeployedSite() {
   return process.env.SITE_ENV === 'staging' || process.env.SITE_ENV === 'production'
 }
 
-export function absoluteUrl(path: string) {
-  return new URL(path, site.url).toString()
+export function siteOrigin(): string {
+  return process.env.SITE_ENV === 'staging' ? stagingOrigin : productionOrigin
+}
+
+export function servedOrigin(request: Request) {
+  return isDeployedSite() ? siteOrigin() : new URL(request.url).origin
+}
+
+export function absoluteUrl(path: string, origin = siteOrigin()) {
+  return path === '/' ? origin : new URL(path, origin).toString()
 }

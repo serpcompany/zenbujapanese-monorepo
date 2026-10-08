@@ -44,21 +44,35 @@ expect_redirect() {
   if [ "$got" = "308 $base$want" ]; then pass "308 $path -> $want"; else fail "$path gave '$got' (want 308 -> $want)"; fi
 }
 
-for path in / /support/ /legal/privacy/ /sitemaps/pages.xml /robots.txt; do
+for path in / /support/ /legal/privacy/ /sitemap-pages.xml /robots.txt; do
   expect "$path" 200
 done
 expect_redirect /support /support/
 expect_redirect /robots.txt/ /robots.txt
-expect_redirect /sitemaps/pages.xml/ /sitemaps/pages.xml
+expect_redirect /sitemap-pages.xml/ /sitemap-pages.xml
+expect_redirect /sitemaps/pages.xml /sitemap-pages.xml
 
 pages_list_pages() {
-  local locs
-  locs="$(body /sitemaps/pages.xml | grep -oE '<loc>[^<]+</loc>' || true)"
-  [ -n "$locs" ] && ! grep -vqE '/</loc>$' <<<"$locs"
+  local locs pages
+  locs="$(body /sitemap-pages.xml | grep -oE '<loc>[^<]+</loc>' || true)"
+  pages="$(grep -vxF "<loc>$canonical</loc>" <<<"$locs" || true)"
+  grep -qxF "<loc>$canonical</loc>" <<<"$locs" && [ -n "$pages" ] &&
+    ! grep -vqE "^<loc>${canonical//./\\.}/[^<]*/</loc>$" <<<"$pages"
 }
-eventually 'pages sitemap lists slashed page URLs' 'pages sitemap has a non-canonical URL' \
-  pages_list_pages
+eventually "pages sitemap lists the homepage as $canonical and slashed pages on it" \
+  'pages sitemap has a non-canonical URL, or another host' pages_list_pages
 expect_redirect /privacy /legal/privacy/
+
+canonicals_name_host() {
+  local home about
+  home="$(body /)"
+  about="$(body /about/)"
+  grep -qF "<link rel=\"canonical\" href=\"$canonical\"/>" <<<"$home" &&
+    grep -qF "<meta property=\"og:url\" content=\"$canonical\"/>" <<<"$home" &&
+    grep -qF "<link rel=\"canonical\" href=\"$canonical/about/\"/>" <<<"$about"
+}
+eventually "canonical tags name $canonical, the homepage with no slash" \
+  "a canonical tag names another host, or the homepage's has a slash" canonicals_name_host
 
 header_has_dictionary() {
   local header
@@ -354,13 +368,14 @@ expect /dictionary/999999999/ 404
 lists_word_sitemaps_only() {
   local locs
   locs="$(body "$index" | grep -oE '<loc>[^<]+</loc>' || true)"
-  grep -q '<loc>https://zenbujapanese.com/sitemaps/dictionary/1.xml</loc>' <<<"$locs" &&
-    grep -q '<loc>https://zenbujapanese.com/sitemaps/pages.xml</loc>' <<<"$locs" &&
-    ! grep -vqE '^<loc>https://zenbujapanese\.com/sitemaps/(pages|dictionary/[0-9]+)\.xml</loc>$' <<<"$locs"
+  grep -qxF "<loc>$canonical/sitemap-words.xml</loc>" <<<"$locs" &&
+    grep -qxF "<loc>$canonical/sitemap-pages.xml</loc>" <<<"$locs" &&
+    grep -qxF "<loc>$canonical/sitemap-browse.xml</loc>" <<<"$locs" &&
+    ! grep -vqE "^<loc>${canonical//./\\.}/sitemap-(pages|browse|words(-[0-9]+)?)\\.xml</loc>$" <<<"$locs"
 }
 for index in /sitemap-index.xml /sitemap.xml; do
-  eventually "$index lists the pages and word sitemaps, and no kanji or conjugations sitemap" \
-    "$index is missing the pages or word sitemaps, or lists another, such as kanji or conjugations" \
+  eventually "$index lists the pages, word, and browse sitemaps on $canonical, and no other" \
+    "$index is missing the pages, word, or browse sitemaps, lists another, or names another host" \
     lists_word_sitemaps_only
 done
 index_lists_files() {
@@ -370,14 +385,17 @@ index_lists_files() {
 }
 eventually 'sitemap index lists unslashed .xml files' 'sitemap index has a non-canonical URL' \
   index_lists_files
-expect /sitemaps/dictionary/1.xml 200
+expect /sitemap-words.xml 200
+expect /sitemap-words-2.xml 200
+expect /sitemap-browse.xml 200
+expect_redirect /sitemaps/dictionary/2.xml /sitemap-words-2.xml
 word_count=0
 word_sitemap_is_canonical() {
   local locs
-  locs="$(body /sitemaps/dictionary/1.xml | grep -oE '<loc>[^<]+</loc>' || true)"
+  locs="$(body /sitemap-words.xml | grep -oE '<loc>[^<]+</loc>' || true)"
   word_count="$(grep -c . <<<"$locs" || true)"
   [ "$word_count" -ge 1 ] && [ "$word_count" -le 50000 ] &&
-    ! LC_ALL=C grep -vqE '^<loc>https://zenbujapanese\.com/dictionary/[!-~]+-[0-9]+/</loc>$' <<<"$locs"
+    ! LC_ALL=C grep -vqE "^<loc>${canonical//./\\.}/dictionary/[!-~]+-[0-9]+/</loc>$" <<<"$locs"
 }
 eventually 'word sitemap lists 1 to 50,000 canonical URLs' \
   'word sitemap has no URLs, more than 50,000, or a non-canonical one' word_sitemap_is_canonical
@@ -392,16 +410,16 @@ fi
 
 robots_tag() { curl -sI "${smoke[@]}" "$base$1" | tr -d '\r' | grep -i '^x-robots-tag:' || true; }
 robots() { body /robots.txt; }
+lists_index() { grep -qxF "Sitemap: $canonical/sitemap-index.xml" <<<"$(robots)"; }
+eventually 'robots.txt lists the sitemap index' 'robots.txt is missing the sitemap index' lists_index
 
 if [ "$env" = production ]; then
-  for path in / "$word" "$kanji_search" "$eat" /sitemap-index.xml /sitemaps/dictionary/1.xml; do
+  for path in / "$word" "$kanji_search" "$eat" /sitemap-index.xml /sitemap-words.xml; do
     has_no_robots_tag() { [ -z "$(robots_tag "$path")" ]; }
     eventually "no X-Robots-Tag on $path" "unexpected X-Robots-Tag on $path" has_no_robots_tag
   done
   allows_crawling() { grep -q '^Allow: /$' <<<"$(robots)"; }
   eventually 'robots.txt allows crawling' 'robots.txt does not allow crawling' allows_crawling
-  lists_index() { grep -q '^Sitemap: https://zenbujapanese.com/sitemap-index.xml$' <<<"$(robots)"; }
-  eventually 'robots.txt lists the sitemap index' 'robots.txt is missing the sitemap index' lists_index
 else
   disallows_crawling() { grep -q '^Disallow: /$' <<<"$(robots)"; }
   eventually 'robots.txt disallows crawling' 'robots.txt allows crawling' disallows_crawling

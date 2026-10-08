@@ -1056,7 +1056,10 @@ search that finds nothing or only example sentences, `/dictionary/search/` itsel
 that load examples into a page (a word's, a search's, and a conjugated form's), and
 `/dictionary/service.json` (whether the site reaches its dictionary service, for CI) are
 `noindex`. Only production is indexed at all; staging sends `X-Robots-Tag: noindex` and disallows
-crawling (see [`docs/agents/web.md`](../../../../docs/agents/web.md)).
+crawling (see [`docs/agents/web.md`](../../../../docs/agents/web.md)). Staging and production write
+their canonical URLs on their own host: staging's canonical tags name
+`https://staging.zenbujapanese.com` (smoke "canonical tags name …"); local development writes
+production's.
 
 - Source: #465; #466; the owner's decision of 2026-09-29 (a new dictionary page is indexed unless
   the SEO review takes it out); ADR 0010 (a kanji's details keep the rule the kanji page had).
@@ -1067,16 +1070,24 @@ crawling (see [`docs/agents/web.md`](../../../../docs/agents/web.md)).
   `src/app/dictionary/service.json/route.test.ts`; search pages:
   `src/lib/dictionary/results/links.test.ts`, "isIndexable".
 
-**Sitemaps.** The pages sitemap lists the dictionary home. The sitemap index also lists the word
-sitemaps, with every word page's canonical URL, and the browse sitemap, with every browse page's
-([Browse pages](browse.md#site-wide)). Those are the only dictionary sitemaps (ADR 0010, amended
-for #614). Search pages aren't in any sitemap yet.
+**Sitemaps.** `robots.txt` names the sitemap index, `/sitemap-index.xml` (and `/sitemap.xml`, the
+same document), in every environment. The index lists files at the site's root, each named for
+its group: `/sitemap-pages.xml`, which lists the dictionary home; the word sitemaps,
+`/sitemap-words.xml`, `/sitemap-words-2.xml`, and on, with every word page's canonical URL; and
+`/sitemap-browse.xml`, with every browse page's ([Browse pages](browse.md#site-wide)). Every URL
+in them is on the environment's own host, so staging's name `https://staging.zenbujapanese.com`,
+and the homepage is the origin with no slash. The old `/sitemaps/pages.xml`,
+`/sitemaps/browse.xml`, and `/sitemaps/dictionary/<n>.xml` redirect (308) to them. Those are the
+only dictionary sitemaps (ADR 0010, amended for #614). Search pages aren't in any sitemap yet.
 
-- Source: ADR 0007; #465; ADR 0010.
+- Source: ADR 0007; #465; ADR 0010; #663 (the SERP XML sitemaps standard).
 - Check: `src/lib/dictionary/sitemaps.test.ts`, "the index lists every word sitemap and the
-  browse sitemap, and nothing else"; smoke "$index lists the pages and word sitemaps, and no kanji or conjugations sitemap"
-  (for `/sitemap-index.xml` and `/sitemap.xml`), "word sitemap lists 1 to 50,000 canonical URLs",
-  and `404 /sitemaps/kanji.xml`.
+  browse sitemap, and nothing else" and "with SITE_ENV=… a request to … lists sitemaps on …";
+  `src/lib/sitemap.test.ts`, "sitemap files sit at the root, named for their group";
+  `src/lib/robots.test.ts`; `apps/web/e2e/sitemaps.spec.ts`; `apps/web/e2e/urls.spec.ts`, the old
+  sitemaps' one-hop redirects, with and without a slash; smoke "$index lists the pages and word sitemaps, and no kanji or
+  conjugations sitemap" (for `/sitemap-index.xml` and `/sitemap.xml`), "word sitemap lists 1 to
+  50,000 canonical URLs", "robots.txt lists the sitemap index", and `404 /sitemaps/kanji.xml`.
 
 **Structured data.** Each dictionary page carries `BreadcrumbList` structured data for its trail.
 
