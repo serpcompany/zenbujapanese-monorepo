@@ -295,6 +295,29 @@ struct BilingualTranscriptMergerTests {
     #expect(language.sentences(in: results) == expected)
   }
 
+  @Test("a doubtful second guess at speech already shown in the other language is dropped")
+  func doubtfulGuessAtShownSpeech() {
+    var merger = BilingualTranscriptMerger(languages: [.japanese, .english])
+    _ = merger.receive(
+      result(.english, "Hi, Sanjini.", confidence: 0.41, start: 31.92, end: 33.42), at: start)
+    _ = merger.receive(
+      result(.japanese, "はい 3時", confidence: 0.8, start: 32.1, end: 34.8),
+      at: start.addingTimeInterval(1.1))
+    #expect(merger.flush(at: start.addingTimeInterval(1.6)) == [.final(.japanese, "はい 3時")])
+    #expect(
+      merger.receive(
+        result(.english, "Hi", confidence: 0.4, start: 33.42, end: 36.42),
+        at: start.addingTimeInterval(2.8)
+      ).isEmpty)
+    #expect(merger.flush(at: start.addingTimeInterval(3.3)).isEmpty)
+    _ = merger.receive(
+      result(.japanese, "", confidence: nil, start: 43.8, end: 45.5), at: start.addingTimeInterval(11))
+    #expect(
+      merger.receive(
+        result(.english, "Thank you.", confidence: 0.9, start: 43.92, end: 45.48),
+        at: start.addingTimeInterval(11)) == [.final(.english, "Thank you.")])
+  }
+
   @Test("one language passes straight through")
   func singleLanguage() {
     var merger = BilingualTranscriptMerger(languages: [.japanese])

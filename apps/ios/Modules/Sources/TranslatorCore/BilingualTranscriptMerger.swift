@@ -77,6 +77,7 @@ public struct BilingualTranscriptMerger: Sendable {
   static let holdLimit: TimeInterval = 20
   static let minimumConfidence = 0.4
   static let alreadyEmittedShare = 0.5
+  static let confidenceOverShownSpeech = 0.55
 
   public let languages: [SpokenLanguage]
   private var volatile: [SpokenLanguage: TranscriberResult] = [:]
@@ -97,7 +98,7 @@ public struct BilingualTranscriptMerger: Sendable {
     result.text = Self.cleaned(result.text)
     guard languages.count > 1 else { return passThrough(result) }
     let isLate = result.end <= emittedThrough + Self.endTolerance
-    if isLate || (result.isFinal && Self.mostlyBefore(emittedThrough, result)) {
+    if isLate || (result.isFinal && repeatsShownSpeech(result)) {
       return result.isFinal ? dropLate(result.language) : []
     }
     guard result.isFinal else {
@@ -118,6 +119,12 @@ public struct BilingualTranscriptMerger: Sendable {
       return []
     }
     return emitFinal()
+  }
+
+  private func repeatsShownSpeech(_ result: TranscriberResult) -> Bool {
+    let startsInShownSpeech = result.start < emittedThrough - Self.endTolerance
+    let doubtful = (result.confidence ?? 1) < Self.confidenceOverShownSpeech
+    return Self.mostlyBefore(emittedThrough, result) || (startsInShownSpeech && doubtful)
   }
 
   static func mostlyBefore(_ time: TimeInterval, _ result: TranscriberResult) -> Bool {
