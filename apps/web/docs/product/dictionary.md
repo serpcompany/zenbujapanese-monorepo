@@ -918,9 +918,10 @@ themes; text on the muted grey (the footer, the product page's demo, the homepag
   it changes", "the choice survives a reload, whatever the operating system says", "the choice
   changes by keyboard, in the account menu or, on phones, the drawer", and "a saved choice is
   already applied, so the page never shows the other theme first"; `apps/web/e2e/contrast.spec.ts`,
-  which runs axe's colour-contrast rule on every page in `src/lib/pages.ts`, the account pages, and
-  search, word (its conjugation form and kanji open), and browse pages, in both themes, at both
-  widths.
+  which runs axe's colour-contrast rule on every page type in `apps/web/e2e/page-types.ts` (every
+  page in `src/lib/pages.ts`, the account pages, search, a word with its conjugation form and kanji
+  open, kanji details, every kind of browse page, and a missing page), in both themes, at both
+  widths, and on phones on the phone menu and each of its groups.
 
 **Menus.** Dictionary, Tools, and Products are mega menus: a featured card, three columns, and a
 footer line with a link. Company is a plain dropdown.

@@ -95,8 +95,8 @@ Playwright printed.
   redirect; check redirects and statuses with `request.get(path, { maxRedirects: 0 })`, on
   `desktop` only.
 - A behavior in `apps/web/docs/product/` with a browser test names it in its entry's Check line.
-- A new kind of page goes in `apps/web/e2e/page-types.ts`, which the phone checks and the phone
-  gallery read (`docs/agents/web.md`, Phone layout).
+- A new kind of page goes in `apps/web/e2e/page-types.ts`, which the phone checks, the contrast
+  check, and the phone gallery read (`docs/agents/web.md`, Phone layout).
 
 ## 4. A regression test for a bug
 

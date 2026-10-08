@@ -78,9 +78,10 @@ for (const theme of themes) {
         await openPageType(page, shot.pageType)
         for (const view of shot.views) await view.show(page)
         await page.evaluate(() => document.fonts.ready)
+        await page.mouse.move(0, 0)
         await page.screenshot({
           path: join(folder, fileFor(index, shot, theme)),
-          fullPage: true,
+          fullPage: !shot.views.at(-1)?.overlay,
           caret: 'initial'
         })
         writeFileSync(join(folder, 'index.html'), galleryPage(baseURL ?? ''))

@@ -3,11 +3,12 @@ import { appAreas } from '../src/lib/app-areas'
 import { sitePages } from '../src/lib/pages'
 import { siteMenus } from '../src/lib/site-menus'
 import { signedOutService, standInForTheAccountService } from './account-stand-in'
-import { accountPages, expect, menuButton, needed, phoneMenu, sourcesToggle } from './test'
+import { accountPages, expect, menuButton, needed, phoneMenu, test } from './test'
 
 export interface PageView {
   name: string
   show: (page: Page) => Promise<void>
+  overlay?: boolean
 }
 
 export interface PageType {
@@ -36,10 +37,14 @@ async function settle(page: Page) {
   await expect.poll(() => runningFiniteAnimations(page)).toBe(0)
 }
 
+const clickBeforeHydrationIsLost = { timeout: 1_000 }
+
 async function expand(page: Page, name: string) {
   const button = page.getByRole('button', { name, exact: true })
-  if ((await button.getAttribute('aria-expanded')) !== 'true') await button.click()
-  await expect(button).toHaveAttribute('aria-expanded', 'true')
+  await expect(async () => {
+    if ((await button.getAttribute('aria-expanded')) !== 'true') await button.click()
+    await expect(button).toHaveAttribute('aria-expanded', 'true', clickBeforeHydrationIsLost)
+  }).toPass()
   await settle(page)
 }
 
@@ -56,14 +61,18 @@ const showcaseArea = (name: string): PageView => ({
 const phoneMenuViews: PageView[] = [
   {
     name: 'Phone menu',
+    overlay: true,
     show: async page => {
-      await menuButton(page).click()
-      await expect(phoneMenu(page)).toBeVisible()
+      await expect(async () => {
+        if (!(await phoneMenu(page).isVisible())) await menuButton(page).click()
+        await expect(phoneMenu(page)).toBeVisible(clickBeforeHydrationIsLost)
+      }).toPass()
       await settle(page)
     }
   },
   ...siteMenus.map(({ label }) => ({
     name: `Phone menu, ${label}`,
+    overlay: true,
     show: (page: Page) => expand(page, label)
   }))
 ]
@@ -115,8 +124,37 @@ export async function openPageType(page: Page, { path, open = [] }: PageType) {
   await standInForTheAccountService(page, signedOutService)
   await page.goto(path)
   for (const name of open) await expand(page, name)
-  await page.waitForLoadState('networkidle')
-  if (await sourcesToggle(page).count()) await sourcesToggle(page).click()
   await expect(page.getByText('Loading examples')).toHaveCount(0)
   await settle(page)
+}
+
+interface CheckOptions {
+  views?: (view: PageView) => boolean
+  prepare?: (page: Page) => Promise<void>
+}
+
+export async function checkEachView(
+  page: Page,
+  pageType: PageType,
+  check: (view: string) => Promise<void>,
+  { views = () => true, prepare }: CheckOptions = {}
+) {
+  await openPageType(page, pageType)
+  await prepare?.(page)
+  await check(pageType.name)
+  for (const view of (pageType.views ?? []).filter(views)) {
+    await view.show(page)
+    await check(`${pageType.name}, ${view.name}`)
+  }
+}
+
+export function testEachPageType(
+  title: (pageType: PageType) => string,
+  body: (page: Page, pageType: PageType) => Promise<void>
+) {
+  for (const pageType of pageTypes) test(title(pageType), ({ page }) => body(page, pageType))
+  test.describe('a missing page', () => {
+    test.use({ allowedConsoleErrors: [/status of 404/] })
+    test(title(missingPage), ({ page }) => body(page, missingPage))
+  })
 }

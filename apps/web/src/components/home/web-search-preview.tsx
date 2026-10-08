@@ -84,7 +84,7 @@ function SearchPage() {
 
 export function WebSearchPreview() {
   return (
-    <div aria-hidden="true" className="@container relative min-w-0 pb-12">
+    <div aria-hidden="true" data-drawing className="@container relative min-w-0 pb-12">
       <div
         className={cn(
           previewPanel,

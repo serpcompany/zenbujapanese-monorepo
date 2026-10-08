@@ -1,6 +1,6 @@
 import type { Page } from '@playwright/test'
 import { axeFailures } from './axe'
-import { missingPage, openPageType, type PageType, pageTypes } from './page-types'
+import { checkEachView, testEachPageType } from './page-types'
 import { phoneLayoutProblems, phoneLimits } from './phone-checks'
 import { expect, test } from './test'
 
@@ -30,29 +30,10 @@ async function expectToFitAPhone(page: Page, view: string) {
     .toEqual([])
 }
 
-async function checkPageType(page: Page, pageType: PageType) {
-  await openPageType(page, pageType)
-  await expectToFitAPhone(page, pageType.name)
-  for (const view of pageType.views ?? []) {
-    await view.show(page)
-    await expectToFitAPhone(page, `${pageType.name}, ${view.name}`)
-  }
-}
-
 test.describe('phone layout', () => {
-  for (const pageType of pageTypes) {
-    test(`${pageType.name}, ${decodeURI(pageType.path)}, fits a ${narrowestPhone.width}px phone`, async ({
-      page
-    }) => {
-      await checkPageType(page, pageType)
-    })
-  }
-
-  test.describe('a missing page', () => {
-    test.use({ allowedConsoleErrors: [/status of 404/] })
-
-    test(`fits a ${narrowestPhone.width}px phone`, async ({ page }) => {
-      await checkPageType(page, missingPage)
-    })
-  })
+  testEachPageType(
+    pageType =>
+      `${pageType.name}, ${decodeURI(pageType.path)}, fits a ${narrowestPhone.width}px phone`,
+    (page, pageType) => checkEachView(page, pageType, view => expectToFitAPhone(page, view))
+  )
 })

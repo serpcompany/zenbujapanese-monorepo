@@ -31,6 +31,7 @@ function findPhoneLayoutProblems(limits: typeof phoneLimits): PhoneLayoutProblem
   }
   const onlyForScreenReaders = (element: Element) =>
     [element, ...ancestors(element)].some(box => {
+      if (getComputedStyle(box).display === 'contents') return false
       const edges = box.getBoundingClientRect()
       return edges.width <= 1 && edges.height <= 1
     })
@@ -45,7 +46,7 @@ function findPhoneLayoutProblems(limits: typeof phoneLimits): PhoneLayoutProblem
     if (boxes.length) texts.push({ element, boxes })
   }
 
-  const inADrawing = (element: Element) => element.closest('[aria-hidden="true"]') !== null
+  const inADrawing = (element: Element) => element.closest('[data-drawing]') !== null
   const smallText = texts.flatMap(({ element }) => {
     if (inADrawing(element)) return []
     const size = Number.parseFloat(getComputedStyle(element).fontSize)
