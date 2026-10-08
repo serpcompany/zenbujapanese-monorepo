@@ -737,7 +737,7 @@
                   "$ref": "#/components/schemas/ProfileUpdateFields"
                 },
                 "example": {
-                  "id": "6f1c0e7a-3b5d-4c2e-9a8f-1d2e3f4a5b6c",
+                  "id": "6f1c0e7a-3b5d-4c2e-9a8f-000000000001",
                   "entity": "profile",
                   "operation": "update",
                   "baseVersion": 1,
@@ -768,7 +768,7 @@
                   "$ref": "#/components/schemas/WordFields"
                 },
                 "example": {
-                  "id": "6f1c0e7a-3b5d-4c2e-9a8f-1d2e3f4a5b6c",
+                  "id": "6f1c0e7a-3b5d-4c2e-9a8f-000000000002",
                   "entity": "knownWord",
                   "operation": "mark",
                   "entityId": "9d2e4f6a8b0c1d3e5f7a9b1c3d5e7f90",
@@ -786,7 +786,7 @@
                 "baseVersion": true,
                 "description": "It applies only at the word's current version: a clear that never saw a later mark conflicts, and the word stays known. Clearing a word not known is applied and changes nothing.",
                 "example": {
-                  "id": "6f1c0e7a-3b5d-4c2e-9a8f-1d2e3f4a5b6c",
+                  "id": "6f1c0e7a-3b5d-4c2e-9a8f-000000000003",
                   "entity": "knownWord",
                   "operation": "clear",
                   "entityId": "9d2e4f6a8b0c1d3e5f7a9b1c3d5e7f90",
@@ -813,7 +813,7 @@
                   "$ref": "#/components/schemas/ListCreateFields"
                 },
                 "example": {
-                  "id": "6f1c0e7a-3b5d-4c2e-9a8f-1d2e3f4a5b6c",
+                  "id": "6f1c0e7a-3b5d-4c2e-9a8f-000000000004",
                   "entity": "list",
                   "operation": "create",
                   "entityId": "3b7f2c9e-5d1a-4e8b-9c6f-0a2d4e6f8b1c",
@@ -833,7 +833,7 @@
                   "$ref": "#/components/schemas/ListUpdateFields"
                 },
                 "example": {
-                  "id": "6f1c0e7a-3b5d-4c2e-9a8f-1d2e3f4a5b6c",
+                  "id": "6f1c0e7a-3b5d-4c2e-9a8f-000000000005",
                   "entity": "list",
                   "operation": "update",
                   "entityId": "3b7f2c9e-5d1a-4e8b-9c6f-0a2d4e6f8b1c",
@@ -850,7 +850,7 @@
                 "baseVersion": false,
                 "description": "It always applies, wins over everything done to the list since, renames and words added elsewhere too, and takes the list's words with it: drop them on the device.",
                 "example": {
-                  "id": "6f1c0e7a-3b5d-4c2e-9a8f-1d2e3f4a5b6c",
+                  "id": "6f1c0e7a-3b5d-4c2e-9a8f-000000000006",
                   "entity": "list",
                   "operation": "delete",
                   "entityId": "3b7f2c9e-5d1a-4e8b-9c6f-0a2d4e6f8b1c"
@@ -876,7 +876,7 @@
                   "$ref": "#/components/schemas/WordFields"
                 },
                 "example": {
-                  "id": "6f1c0e7a-3b5d-4c2e-9a8f-1d2e3f4a5b6c",
+                  "id": "6f1c0e7a-3b5d-4c2e-9a8f-000000000007",
                   "entity": "listWord",
                   "operation": "add",
                   "entityId": "3b7f2c9e-5d1a-4e8b-9c6f-0a2d4e6f8b1c/9d2e4f6a8b0c1d3e5f7a9b1c3d5e7f90",
@@ -893,7 +893,7 @@
                 "baseVersion": true,
                 "description": "It applies only at the word's current version, so it removes only an add it saw: an add the remover never saw wins, and the remove conflicts. Removing a word the list hasn't is applied.",
                 "example": {
-                  "id": "6f1c0e7a-3b5d-4c2e-9a8f-1d2e3f4a5b6c",
+                  "id": "6f1c0e7a-3b5d-4c2e-9a8f-000000000008",
                   "entity": "listWord",
                   "operation": "remove",
                   "entityId": "3b7f2c9e-5d1a-4e8b-9c6f-0a2d4e6f8b1c/9d2e4f6a8b0c1d3e5f7a9b1c3d5e7f90",
@@ -1288,7 +1288,7 @@
             }
           },
           "500": {
-            "description": "`internal`: The service failed, and nothing says why. Try again later, backing off. In a sync, the mutations before the failure stand, and sending the request again answers them as before.",
+            "description": "`internal`: The service failed, and nothing says why. Try again later, backing off.",
             "content": {
               "application/json": {
                 "schema": {
@@ -1560,7 +1560,7 @@
             }
           },
           "500": {
-            "description": "`internal`: The service failed, and nothing says why. Try again later, backing off. In a sync, the mutations before the failure stand, and sending the request again answers them as before.",
+            "description": "`internal`: The service failed, and nothing says why. Try again later, backing off.",
             "content": {
               "application/json": {
                 "schema": {
@@ -1806,7 +1806,7 @@
             }
           },
           "500": {
-            "description": "`internal`: The service failed, and nothing says why. Try again later, backing off. In a sync, the mutations before the failure stand, and sending the request again answers them as before.",
+            "description": "`internal`: The service failed, and nothing says why. Try again later, backing off.",
             "content": {
               "application/json": {
                 "schema": {
@@ -2070,7 +2070,7 @@
             }
           },
           "500": {
-            "description": "`internal`: The service failed, and nothing says why. Try again later, backing off. In a sync, the mutations before the failure stand, and sending the request again answers them as before.",
+            "description": "`internal`: The service failed, and nothing says why. The mutations before the failure stand: send the same request again later, backing off, and those answer as before.",
             "content": {
               "application/json": {
                 "schema": {

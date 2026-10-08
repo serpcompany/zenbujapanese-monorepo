@@ -41,8 +41,11 @@ const tooMany = (perMinute: number) =>
     too_many_requests: `This account sent more than ${perMinute} requests here from this app in the current minute, or the app more than its limit from all its accounts together. Wait the seconds \`Retry-After\` says.`
   })
 const failed = refusal({
+  internal: 'The service failed, and nothing says why. Try again later, backing off.'
+})
+const failedSync = refusal({
   internal:
-    'The service failed, and nothing says why. Try again later, backing off. In a sync, the mutations before the failure stand, and sending the request again answers them as before.'
+    'The service failed, and nothing says why. The mutations before the failure stand: send the same request again later, backing off, and those answer as before.'
 })
 
 const unauthorizedBody = errorBody(
@@ -245,7 +248,7 @@ const sync = createRoute({
     }),
     413: tooLarge,
     429: tooMany(requestsPerMinute.sync),
-    500: failed
+    500: failedSync
   }
 })
 

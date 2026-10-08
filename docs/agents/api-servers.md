@@ -213,7 +213,8 @@ A person with root sets these up once. Each service then has its own steps
    ```
    Without it, the deployer deploys nothing, and says so.
 2. **The deployer**, from `deploy/deployer.sh`, run every 5 minutes and stopped after 25. It needs
-   `logger`, `flock`, and `timeout`, which Ubuntu and Debian have:
+   `logger`, `flock`, and `timeout`, which Ubuntu and Debian have. Copy the script from a checkout
+   of `main` to the server, such as `scp deploy/deployer.sh <server>:`, then, in that folder:
    ```sh
    sudo install -m 755 deployer.sh /usr/local/bin/zenbujapanese-deployer
    echo '*/5 * * * * root timeout 25m /usr/local/bin/zenbujapanese-deployer >/dev/null 2>&1' |
@@ -256,8 +257,17 @@ A person with root sets these up once. Each service then has its own steps
    login stays on the server. Replace the file to change the token. If the token expires or its
    account loses access, the deployer's journal says it couldn't read the tag from the registry.
    Without the file it pulls without a login, which works once an organization owner makes the
-   package public (Package settings → Change visibility). It worked when, after the next run,
-   `journalctl -t zenbujapanese-<service> --since -10min` shows no `couldn't read the tag` line.
+   package public (Package settings → Change visibility). Check the token at once, before any
+   environment uses it, by pulling with it alone:
+   ```sh
+   sudo sh -c '. /etc/zenbujapanese-account-api/registry.env && export DOCKER_CONFIG="$(mktemp -d)" &&
+     printf %s "$GHCR_TOKEN" | docker login ghcr.io --username "$GHCR_USERNAME" --password-stdin &&
+     docker pull ghcr.io/serpcompany/zenbujapanese-account-api:staging; rm -rf "$DOCKER_CONFIG"'
+   ```
+   It worked when the pull finishes. Later, a journal line `couldn't read <image>:<environment>
+   from the registry` means the token failed, or that the environment's tag doesn't exist yet:
+   `:production` exists only once a deploy workflow has run its `production` job, which a run by
+   hand does, so until then production's line appears every run and changes nothing.
 4. **nginx.** The nginx repository holds each environment's site for each service, with:
    - the `zenbujapanese.com` Cloudflare origin certificate (`nginx_certs/zenbujapanese_com_cert.pem`
      and `_key.pem`) and Cloudflare's client certificate, as the other sites have;

@@ -133,6 +133,22 @@ describe('the account service', () => {
     vi.useRealTimers()
   })
 
+  test("gives Better Auth's own 429 the Retry-After every other 429 carries", async () => {
+    const limited = await app(up, {
+      auth: {
+        handler: async () =>
+          Response.json(
+            { message: 'Too many requests. Please try again later.' },
+            { status: 429, headers: { 'X-Retry-After': '42' } }
+          )
+      }
+    }).request('/v1/auth/sign-in/nonce', { method: 'POST', body: '{}' })
+    expect(limited.status).toBe(429)
+    expect(limited.headers.get('retry-after')).toBe('42')
+    expect(limited.headers.get('x-retry-after')).toBe('42')
+    expect(await limited.json()).toMatchObject({ error: { code: 'too_many_requests' } })
+  })
+
   test('refuses a body over 64 KB to sign-in, as to the other routes', async () => {
     const response = await app(up).request('/v1/auth/sign-in/email-otp', {
       method: 'POST',
