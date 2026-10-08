@@ -37,8 +37,7 @@ test.describe('the Zenbu Japanese for iPhone page', () => {
     await expect(getApp).toHaveAttribute('data-link-target', 'app-store')
     const facts = main.locator('dt')
     await expect(facts.first()).toHaveText('Platform')
-    await expect(facts.last()).toHaveText('Account')
-    expect(['Platform,Account', 'Platform,Requires,Version,Account']).toContain(
+    expect(['Platform', 'Platform,Requires,Version']).toContain(
       (await facts.allTextContents()).join()
     )
   })
@@ -112,12 +111,10 @@ test.describe('the Zenbu Japanese for iPhone page', () => {
     await expect(next).toBeEnabled()
   })
 
-  test('lists what’s inside, the privacy promises, and the questions, the first one open', async ({
-    page
-  }) => {
+  test('lists what’s inside and the questions, the first one open', async ({ page }) => {
     await page.goto(path)
     const main = page.getByRole('main')
-    for (const point of [...iphoneAppPage.features, ...iphoneAppPage.promises]) {
+    for (const point of iphoneAppPage.features) {
       await expect(
         main.getByRole('heading', { level: 3, name: point.title, exact: true }).first()
       ).toBeVisible()

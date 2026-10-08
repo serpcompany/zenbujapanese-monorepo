@@ -8,8 +8,6 @@ import { buttonVariants } from '@/components/ui/button'
 import { appScreenshots } from '@/lib/app-screenshots'
 import { cn } from '@/lib/utils'
 
-const promises = ['No account', 'No ads', 'Your words stay on your iPhone']
-
 function HeroScreenshots() {
   return (
     <div className="relative mx-auto aspect-[1/1.34] w-full max-w-76 md:max-w-88 lg:max-w-100">
@@ -58,14 +56,10 @@ export function HomeHero() {
             Search the dictionary
           </Link>
         </div>
-        <ul className="flex flex-wrap gap-x-4 gap-y-1 text-[0.8125rem] text-muted-foreground">
-          {promises.map(promise => (
-            <li key={promise} className="inline-flex items-center gap-1.5">
-              <CheckIcon aria-hidden="true" className="size-3.5" />
-              {promise}
-            </li>
-          ))}
-        </ul>
+        <p className="inline-flex items-center gap-1.5 text-[0.8125rem] text-muted-foreground">
+          <CheckIcon aria-hidden="true" className="size-3.5" />
+          Works offline
+        </p>
       </div>
       <HeroScreenshots />
     </section>

@@ -11,8 +11,9 @@ device frame (`src/components/app-screenshot.tsx`).
 
 Abbreviations: Web paths are under `apps/web/`. **Products spec** and **Product page spec** are
 `e2e/products.spec.ts` and `e2e/product-page.spec.ts`, the browser tests of these pages at a
-desktop and a phone width. The catalog's data is in `src/lib/products/catalog.ts`, and the iPhone
-app's page's in `src/lib/products/zenbu-japanese-for-iphone.ts`.
+desktop and a phone width, and **Claims spec** is `e2e/claims.spec.ts`. The catalog's data is in
+`src/lib/products/catalog.ts`, and the iPhone app's page's in
+`src/lib/products/zenbu-japanese-for-iphone.ts`.
 
 ## Products catalog
 
@@ -102,19 +103,19 @@ the arrow keys while one of its controls has focus.
 - Check: Product page spec, "the demo shows one feature at a time, and its arrows step through
   them" and "each of the demo’s dots opens its feature and marks itself current".
 
-**Facts.** A row under the demo: Platform (iPhone) and Account (Not needed) are written on the
-page. Between them, Requires (iOS … or later) and Version come from Apple's App Store lookup
+**Facts.** A row under the demo: Platform (iPhone) is written on the page. After it, Requires (iOS
+… or later) and Version come from Apple's App Store lookup
 (`https://itunes.apple.com/lookup?bundleId=com.zenbujapanese.app`), so they match what's live on
-the App Store, not TestFlight. The page renders per request, and the Worker keeps Apple's answer
-in its edge cache for a day (`src/lib/app-store.ts`). The row streams in after the rest of the
-page, which shows Platform and Account until Apple answers, so a slow lookup (at most 3 seconds)
-never holds the page back. When Apple can't be reached, answers with an error, or lists no app, as
-before the app is on the store, those two facts are left out and the row shows the other two; a
-failure logs `app_store_lookup_failed`, and is kept for 5 minutes, so the next views don't wait on
-Apple again.
+the App Store, not TestFlight: two to a row on phones, and all three in one row from 768 pixels.
+The page renders per request, and the Worker keeps Apple's answer in its edge cache for a day
+(`src/lib/app-store.ts`). The row streams in after the rest of the page, which shows Platform
+until Apple answers, so a slow lookup (at most 3 seconds) never holds the page back. When Apple
+can't be reached, answers with an error, or lists no app, as before the app is on the store, those
+two facts are left out and the row shows Platform alone; a failure logs `app_store_lookup_failed`,
+and is kept for 5 minutes, so the next views don't wait on Apple again.
 
 - Source: #648 decision; the owner's decision on #652 (cached for a day, left out when Apple can't
-  be reached or returns nothing).
+  be reached or returns nothing); #668 (no Account fact).
 - Check: `src/lib/app-store.test.ts` ("reading the App Store lookup" and "asking Apple");
   `src/components/products/product-facts.test.tsx`, "the facts row adds the version and minimum
   iOS that Apple’s lookup gives" and "the facts row leaves out the version and minimum iOS when
@@ -133,7 +134,7 @@ row fades at its right edge. It is the same shadcn carousel as the demo.
 has no Watch it work section and the hero no Watch demo button, and neither leaves a link or a
 heading behind. The videos are one list, `appVideos` in `src/lib/videos.ts`: each a YouTube ID,
 a title, and a thumbnail hosted on this site (an App Store screenshot for now). With videos, the
-section follows Private by default: a centered heading, then the video cards on the same shadcn
+section follows What's inside: a centered heading, then the video cards on the same shadcn
 carousel as the screenshots, fading at its right edge, with previous and next arrows either side
 of See all videos, which is the `/videos/` placeholder until that page exists; the hero's Watch demo, beside Get the app, leads to the section. A card shows
 only its thumbnail and title, and nothing from YouTube loads (no player, thumbnail, or script)
@@ -150,21 +151,27 @@ until it's clicked; the click puts YouTube's privacy-enhanced player
   page spec, "with no videos yet, the page has no Watch it work and no Watch demo, and asks
   YouTube for nothing".
 
-**What's inside, Private by default, Questions, and More from Zenbu.** What's inside lists eight
-features (Offline dictionary, Image Search, Handwriting, Translate, Player, Lists and Known Words,
-Frequency dictionaries, and Furigana kanji highlight), four to a row from 1024 pixels. Private by
-default, on a band, lists No account, Stays on your iPhone, Translate on the device, and No ads.
-Questions is centered: four questions that open and close, the first open, with every answer in
-the page's HTML while closed; the last says the web dictionary has the app's entries, and which
-features are only in the app, and links to the dictionary. The offline dictionary's "more than
+**What's inside, Questions, and More from Zenbu.** What's inside lists eight features (Offline
+dictionary, Image Search, Handwriting, Translate, Player, Lists and Known Words, Frequency
+dictionaries, and Furigana kanji highlight), four to a row from 1024 pixels. Questions is
+centered: three questions that open and close (Does it work offline?, Which frequency lists does
+it use?, and Is the web dictionary the same?), the first open, with every answer in the page's
+HTML while closed; the last says the web dictionary has the app's entries, and which features are
+only in the app, and links to the dictionary. The offline dictionary's "more than
 200,000 words" is the app's own dictionary, which the site's word pages are built from (218,382
 words, [`docs/agents/web.md`](../../../../docs/agents/web.md), Sitemaps). More from Zenbu shows the
 dictionary, the browser extension, and kana charts as catalog cards, with All products.
 
-- Source: #648 mockups (Product page); the app's product docs for every claim; the privacy policy
-  for No ads.
-- Check: Product page spec, "lists what’s inside, the privacy promises, and the questions, the
-  first one open" and "More from Zenbu leads to the other products and the catalog".
+- Source: #648 mockups (Product page); the app's product docs for every claim.
+- Check: Product page spec, "lists what’s inside and the questions, the first one open" and "More
+  from Zenbu leads to the other products and the catalog".
+
+**Claims.** The page doesn't say the app needs no account, that anything stays on the iPhone, or
+that it's built on open data, since accounts and sync are coming (#468, #574), and neither does
+its description.
+
+- Source: #668.
+- Check: Claims spec, "the iPhone app’s page makes none".
 
 ## Site-wide
 

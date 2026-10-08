@@ -22,8 +22,8 @@ export function HomeWebTools() {
             aside="The app’s dictionary, in your browser."
           />
           <p className="text-[1.0625rem] leading-relaxed text-pretty text-muted-foreground">
-            No download and no account. Every word has its own page, with readings, pitch accent,
-            conjugations, kanji, and example sentences.
+            No download. Every word has its own page, with readings, pitch accent, conjugations,
+            kanji, and example sentences.
           </p>
           <Card className="w-full gap-0 py-0">
             <ul aria-label="Free tools" className="divide-y">

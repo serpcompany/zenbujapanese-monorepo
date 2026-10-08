@@ -10,7 +10,7 @@ export const iphoneAppPage = {
   subtitle: 'Japanese dictionary and translator for iPhone',
   lead: 'Look up any word offline, read Japanese from photos, draw kanji you can’t type, and talk through conversations in Japanese and English.',
   icon: featuredApp.icon,
-  facts: { platform: 'iPhone', account: 'Not needed' },
+  facts: { platform: 'iPhone' },
   demos: [
     {
       symbol: 'search',
@@ -101,33 +101,11 @@ export const iphoneAppPage = {
       description: 'Tap a kanji to see which part of the reading belongs to it.'
     }
   ] satisfies ProductPoint[],
-  promises: [
-    {
-      symbol: 'user-x',
-      title: 'No account',
-      description: 'Open the app and start looking words up.'
-    },
-    {
-      symbol: 'phone',
-      title: 'Stays on your iPhone',
-      description: 'Lists, notes, known words, and photos are stored on the device.'
-    },
-    {
-      symbol: 'languages',
-      title: 'Translate on the device',
-      description: 'Speech and translation run on the iPhone, with nothing sent to a server.'
-    },
-    { symbol: 'check', title: 'No ads', description: 'Nothing between you and the dictionary.' }
-  ] satisfies ProductPoint[],
   questions: [
     {
       question: 'Does it work offline?',
       answer:
         'The dictionary always does. Translate downloads Apple’s Japanese and English speech recognition and translation once, then works without a connection. Player needs one for YouTube.'
-    },
-    {
-      question: 'Do I need an account?',
-      answer: 'No. Your lists, notes, known words, and photos stay on your iPhone.'
     },
     {
       question: 'Which frequency lists does it use?',
