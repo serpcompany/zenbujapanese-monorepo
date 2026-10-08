@@ -83,17 +83,15 @@ header's does. On the right, a tilted two-column collage of cards, one per part 
 `src/lib/app-parts.ts`), each an App Store screenshot crop, a name, a line, and Learn more; it
 bleeds off the card's top and bottom edges, is drawn for the eye only (hidden from screen readers,
 and nothing in it is a link), and the card is at most 20rem tall. On phones the collage is a band
-about 9rem tall across the top of the card, with the copy below it. Under the card, a Sources
-disclosure credits the open data the page's previews show (`pageSources.home` in
-`src/lib/dictionary/sources.ts`: JMdict, KANJIDIC2, Tatoeba, KanjiVG, JLPT levels, and TUBELEX), as
-the dictionary pages credit theirs. The dark "Your Japanese stays yours" block, with its offline,
-no-account, and open-data promises, is gone.
+about 9rem tall across the top of the card, with the copy below it. The page has no Sources
+disclosure: the owner keeps that only on word pages. The dark "Your Japanese stays yours" block,
+with its offline, no-account, and open-data promises and its credits, is gone.
 
-- Source: #664 and its mockups (v50, Page end 16); the owner's choice of the site's Get the app
-  button over Apple's App Store badge.
+- Source: #664 and its mockups (v50, Page end 16); the owner's choices of the site's Get the app
+  button over Apple's App Store badge, and of no Sources disclosure on the homepage.
 - Check: Home spec, "the page ends with one card: its heading, a line, and Get the app, then the
-  footer" (the card's height from 1024 pixels, the collage's place at both widths, the Sources
-  credits, and Get the app's page).
+  footer" (Get the app inside the card at 768 and 1,280 pixels, its height from 768, the collage's
+  place at both widths, no Sources disclosure, and Get the app's page).
 
 **Placeholders.** All free tools links to `#` through `linkTargets`, like the header's
 ([Dictionary](dictionary.md#header-footer-and-site-wide), Placeholder links). Get the app links to

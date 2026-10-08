@@ -1,6 +1,5 @@
 import type { Page } from '@playwright/test'
 import { pageEnd } from '../src/lib/app-parts'
-import { pageSources } from '../src/lib/dictionary/sources'
 import { appExtras, appFeatures, exampleSearches, homeTitle, webTools } from '../src/lib/home'
 import { pageFor } from '../src/lib/pages'
 import { linkTo, productionOrigin, site } from '../src/lib/site'
@@ -160,8 +159,7 @@ test.describe('homepage', () => {
         expect(collage.left).toBeGreaterThan(card.left + card.width / 3)
       }
     }
-    await sourcesToggle(page).click()
-    await expect(end.getByRole('link', { name: pageSources.home[0]?.name })).toBeVisible()
+    await expect(sourcesToggle(page)).toHaveCount(0)
     await getTheApp.click()
     await expect(page).toHaveURL(linkTo('iphone-app').href)
   })

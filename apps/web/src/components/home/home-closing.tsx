@@ -1,9 +1,7 @@
 import Image from 'next/image'
-import { SourceCredits } from '@/components/dictionary/source-credits'
 import { callToAction } from '@/components/home/home-styles'
 import { GetAppButton } from '@/components/site-actions'
 import { type AppPart, collageColumns, pageEnd } from '@/lib/app-parts'
-import { pageSources } from '@/lib/dictionary/sources'
 
 function PartCard({ part }: { part: AppPart }) {
   return (
@@ -53,7 +51,7 @@ function AppCollage() {
 export function HomeClosing() {
   return (
     <section aria-labelledby="page-end-title" className="border-t bg-muted/50 dark:bg-muted/30">
-      <div className="mx-auto flex w-full max-w-5xl flex-col gap-6 px-4 py-14 md:px-5 md:py-20">
+      <div className="mx-auto w-full max-w-5xl px-4 py-14 md:px-5 md:py-20">
         <div className="flex flex-col overflow-hidden rounded-2xl bg-card ring-1 ring-foreground/10 md:grid md:max-h-80 md:grid-cols-2 md:px-12 md:py-10">
           <div className="flex flex-col items-start gap-3.5 p-6 md:self-center md:p-0">
             <h2
@@ -67,7 +65,6 @@ export function HomeClosing() {
           </div>
           <AppCollage />
         </div>
-        <SourceCredits sources={pageSources.home} />
       </div>
     </section>
   )
