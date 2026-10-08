@@ -65,14 +65,19 @@ it in `.dev.vars` in `apps/web` (see [`web.md`](web.md), Dictionary).
 
 | Variable | Default | What it sets |
 | --- | --- | --- |
-| `DICTIONARY_API_TOKEN` | required | The bearer token every `/v1` request must carry, at least 16 characters. The website's Worker holds the same value. |
+| `DICTIONARY_API_TOKEN` | required | The bearer token every `/v1` request but the app routes' must carry, at least 16 characters. The website's Worker holds the same value. |
 | `PORT` | `8788` | The HTTP port. |
 | `DICTIONARY_RESOURCES` | the app's `Resources` | Where the app's files are. |
 | `SUDACHI_DICTIONARY` | `.sudachi/system_core.dic` | Sudachi's dictionary; empty turns sentence search off. |
 | `DICTIONARY_API_WORKERS` | CPU cores, at most 4 | How many worker threads answer requests. |
 | `DICTIONARY_API_RELEASE` | `local` | A name for this build of the code, such as its commit. |
+| `LANGUAGE_DATA_RELEASE_FILE` | `language-data/release.json` | The language-data release the files belong to, which the app routes name (the image copies it to `/service/language-data/release.json`). |
+| `ACCOUNT_API_URL` | none | The account service's public URL, such as `https://api.zenbujapanese.com`: an app token's `iss` and `aud` must be exactly this. Unset, the app routes answer 503. |
+| `ACCOUNT_JWKS_URL` | `<ACCOUNT_API_URL>/v1/auth/jwks` | Where the service reads the account service's signing keys. A slot reaches only nginx, so on the server this is a URL nginx answers with the account service's JWKS (Apps, below). It must answer `200` itself: the service follows no redirect. |
+| `APP_REQUESTS_PER_MINUTE` | `60` | How many app-route requests one account may make in a minute. |
 
-The build it reports (`X-Dictionary-Build` on every `/v1` answer, and `/healthz`) is the
+The build it reports (`X-Dictionary-Build` on every `/v1` answer but the app routes', and
+`/healthz`) is the
 artifact's SHA-256 prefix and the release: a new artifact or new code is a new build. It reports
 its contract too (`X-Dictionary-Contract` and `/healthz`): the number of its answers' shapes, from
 the core, which the website compares with its own ([`dictionary-core.md`](dictionary-core.md),
@@ -80,7 +85,8 @@ Rules).
 
 ## Routes
 
-Every `/v1` route needs `Authorization: Bearer <token>` and answers JSON; a query or form is one
+Every `/v1` route but the app routes (Apps, below) needs `Authorization: Bearer <token>` and
+answers JSON; a query or form is one
 URL-encoded path segment of at most 200 characters (`maximumQueryLength`, which the website
 checks too). The routes stay clear of `/v1/auth`, `/v1/me`, `/v1/sync`, and `/v1/health`, which the
 API host's nginx sends to the account service. A 404 means there's no such thing: no such word, kanji, or sitemap, a query without
@@ -92,7 +98,7 @@ more and logs the error.
 | Route | Answer |
 | --- | --- |
 | `GET /healthz` | No token. 503 while starting; then the build, contract, and features. |
-| `GET /v1/info` | The build, the artifact's name and SHA-256, and the features. |
+| `GET /v1/info` | The build, the artifact's name and SHA-256, the features, and `languageData`: the language-data release and the SHA-256 of each file a word card is read from. |
 | `GET /v1/search/<query>` | The results screen. |
 | `GET /v1/search/<query>/examples?from=` | 25 of the examples the Example Sentences row opens, from `from`. |
 | `GET /v1/words/<ent_seq>` | A word page's rows, its slug, the slugs it links to, and which kanji have details (`kanjiPages`). |
@@ -113,6 +119,59 @@ more and logs the error.
 | `GET /v1/browse/kanji` | Each school list's kanji, most frequent first; each JLPT level's kanji count and its first 5; and how many jōyō kanji have each stroke count. |
 | `GET /v1/browse/kanji/<slug>` | A kanji list (`grade-1`…`grade-6`, `secondary-school`, `jinmeiyo`, `jlpt-n5`…`jlpt-n1`, `strokes-<n>`) with each kanji's first meaning, or its base kanji's for a compatibility character KANJIDIC2 gives none. |
 | `GET /v1/sitemaps/browse` | What the browse sitemaps need: every kana and its two-kana groups, each category, JLPT level, and kanji list, with their word or kanji counts, and each ranked list's words in each band, so the website can leave out lists of fewer than 10. |
+
+### Apps
+
+The routes under `/v1/apps` are for signed-in apps that don't bundle the language data, such as
+Tomodachi (#563, #571); they are the only routes an app calls. They take an account's access token
+and never the website's service token, which they refuse, and the website's routes refuse an
+account token. Every error under `/v1/apps`, a missing route's `404` and a failure's `500`
+included, is `{ "error": { "code": "...", "message": "..." } }`, as the account service's are.
+Their contract is [`apps/dictionary-api/openapi.json`](../../apps/dictionary-api/openapi.json),
+and its readable form the [API reference](../api/dictionary-api.md): each route's parameters,
+answers, headers, and error codes, and every field of a card and a token. An app's side is the
+[client guide](account-clients.md#word-cards).
+
+| Route | Answer |
+| --- | --- |
+| `GET /v1/apps/word-cards?ids=<id>,<id>` | The word cards for 1 to 100 Language Reference IDs, counted as sent (`zenbu.word-cards.v1`, [`language-data/word-cards.md`](../../language-data/word-cards.md)), in the order asked, each once: `format`, `license`, `sources` (each source's notice), `cards`, `missing` (the IDs no entry has), and `languageData`. |
+| `GET /v1/apps/segmentation?text=` | A text of 1 to 200 characters split into words, as the app links captions and example sentences (`zenbu.segmentation.v1`): `format`, `text`, and `tokens`, each with its `text`, its `reading` in hiragana when it has kanji, its `dictionaryForm` when that differs, and its `languageReferenceID` when it's one word, or `candidates` when it may be several; and `languageData`. |
+
+- **The token.** The account service's access token: an EdDSA JWT whose signature checks against
+  the account service's JWKS, with `iss` and `aud` both `ACCOUNT_API_URL`, an `exp`, a `sub` (the
+  account), an `azp` (the app), and `dictionary:read` in its space-separated `scope`. The service
+  reads the keys (`jose`'s remote key set) again once they're ten minutes old, so a key the account
+  service drops stops working within ten minutes, and for a key it doesn't know at most every 30
+  seconds. While the account service is down, it keeps checking tokens with the keys it last read,
+  and tries again at most every 30 seconds, logging `account keys unavailable` once for each try.
+  No token, or one that fails any of that but the scope, is `401 unauthorized` with
+  `WWW-Authenticate: Bearer`; a token without the scope is `403 insufficient_scope`, whose `WWW-Authenticate` names the
+  scope; and a token signed by a key the service can't read is `503 unavailable`. The check is in
+  `src/account-tokens.ts`; the service imports nothing from the account service.
+- **Bounds.** At most 100 IDs, counted as sent, so one sent twice counts twice, and 200
+  characters (`400 bad_request` past them), and
+  `APP_REQUESTS_PER_MINUTE` requests a minute for each account (`sub`), counted by each server
+  process, after which a request is `429 rate_limited` with `Retry-After`.
+- **Caching.** An answer carries `languageData`, the language-data release and the SHA-256 of
+  each file a card is read from, and is `Cache-Control: private, max-age=86400` with the build as
+  its `ETag`; an error carries neither. The build changes with each deploy, so an app keeps an
+  answer a day and then revalidates with `If-None-Match`; a matching tag, strong or weak, is
+  `304` before any work. Cards stay right while `languageData` does: an app fetches again when
+  any of it changes.
+- **The contract.** The routes are plain Hono, so their contract is declared beside their tests,
+  in `src/conformance/app-contract.ts`, with `@hono/zod-openapi` (a dev dependency, never in the
+  image). `src/openapi.test.ts` writes `openapi.json` and the API reference and fails when either
+  differs (`pnpm test -u` writes them again), holds each answer's schema to the core's own types
+  (`WordCard`, `SegmentedToken`, `WordCardSource`, and `LanguageDataVersion`) at compile time,
+  holds the documented routes to the ones the app answers, and checks each error code a route
+  answers is the one declared for its status. On the app's data, every word card and segmentation
+  answer the conformance suite asks for is checked against its schema.
+- **On the server.** A person makes the account service's JWKS reachable from the dictionary
+  service's slots, which reach only nginx: an nginx site on a port the server doesn't publish
+  that proxies to the account service's `/v1/auth/jwks`, so the slots read it straight, without a
+  redirect (Set up the server, step 2). Then
+  they add `ACCOUNT_API_URL` and `ACCOUNT_JWKS_URL` to each environment's settings (Set up the
+  server, step 1). Until then the app routes answer 503.
 
 ## How it runs
 
@@ -155,13 +214,16 @@ the app's SQL.
 `noRestrictedImports` enforces each rule (`apps/dictionary-api/biome.json`), with a message that
 says where the code belongs; tests may import anything.
 
-- The readers (`src/artifact.ts`, `src/kuromoji.ts`, `src/sudachi.ts`) and the shared modules
-  (`src/config.ts`, `src/service.ts`, the `DictionaryService` interface) are the bottom layer.
+- The readers (`src/artifact.ts`, `src/kuromoji.ts`, `src/sudachi.ts`, and `src/account-tokens.ts`,
+  which reads the account service's keys) and the shared modules (`src/config.ts`,
+  `src/rate-limit.ts`, `src/service.ts`, the `DictionaryService` interface) are the bottom layer.
   They import neither of the others, nor Hono.
 - The worker layer (`src/load.ts`, `src/worker.ts`, `src/pool.ts`) runs the dictionary in worker
   threads, and knows nothing of HTTP.
-- The HTTP layer, `src/app.ts`, answers from the `DictionaryService` that `src/server.ts` hands it,
-  and reads nothing itself: no reader, no worker, no SQLite, no file.
+- The HTTP layer, `src/app.ts` and the app routes in `src/app-routes.ts`, answers from the
+  `DictionaryService` that `src/server.ts` hands it, and reads nothing itself: no reader, no worker,
+  no SQLite, no file. `src/server.ts` hands it the account-token check and the per-account limit
+  too, so it imports only their types.
 
 `src/server.ts` wires the three together and is imported by nothing. What the Node services share
 comes from `packages/node-service` (`@zenbu/node-service`): `log()`, which writes JSON lines (a
@@ -211,6 +273,12 @@ service answers with reads them from the app's files (or the `Resources` folder 
 shapes can't drift from what staging and production render. It writes one row per line, so a
 regenerated fixture diffs by row.
 
+`pnpm word-cards <word list> <output folder>` exports word cards for an app that ships them, such
+as Tomodachi: the format, the word list, and what an export holds are in
+[`language-data/word-cards.md`](../../language-data/word-cards.md). It reads the app's files, the
+release ID in `language-data/release.json`, and the notices `language-data/release-inputs.json`
+names.
+
 ## Ship it
 
 The service ships as one Docker image holding the bundled code, the app's files it reads, and
@@ -234,7 +302,7 @@ counts it, but it can be reclaimed. It has a health check on `/healthz` and stop
 
 It holds one build of the data, so a new artifact is a new image. Its layers go from what changes
 least to what changes most: Kuromoji, the language data, Sudachi's dictionary, the installed
-packages, and last the bundled code. A code change so makes only a new top layer of a few MB,
+packages, the language-data release's name, and last the bundled code. A code change so makes only a new top layer of a few MB,
 which is all CI pushes and the server pulls; the language data's layers, about 1 GB, are built
 and moved only when the data changes. `scripts/build.mjs` bundles
 `src/server.ts` and `src/worker.ts`, with the core and Hono; Sudachi's native module stays outside
@@ -314,10 +382,76 @@ need about 1.5 GB of memory between them, and 5 GB of disk for images. Then, as 
    done
    ```
    Set each environment's Worker to its token ([`web.md`](web.md), Dictionary service).
+
+   **The app routes.** Once the account service runs in an environment and nginx answers its JWKS
+   to the slots (step 2), add both to that environment's file. The deployer deploys an
+   environment again within 5 minutes when its file changes, but only for a slot it started with
+   the settings label: a slot an earlier deployer started has none, counts as current, and takes
+   the settings up only with the next image. See which it is first:
+   ```sh
+   docker ps --filter label=zenbujapanese.dictionary-api.slot --format '{{.Names}}' |
+     xargs -r -n 1 docker inspect --format '{{.Name}} {{index .Config.Labels "zenbujapanese.dictionary-api.settings"}}'
+   ```
+   A slot whose label is empty or `<no value>` waits for the next `Dictionary API deploy`, such as
+   the one merging this change runs. Then add the settings:
+   ```sh
+   printf 'ACCOUNT_API_URL=%s\nACCOUNT_JWKS_URL=%s\n' \
+     https://api-staging.zenbujapanese.com http://nginx:8790/staging/v1/auth/jwks |
+     sudo tee -a /etc/zenbujapanese-dictionary-api/staging.env >/dev/null
+   printf 'ACCOUNT_API_URL=%s\nACCOUNT_JWKS_URL=%s\n' \
+     https://api.zenbujapanese.com http://nginx:8790/production/v1/auth/jwks |
+     sudo tee -a /etc/zenbujapanese-dictionary-api/production.env >/dev/null
+   ```
+   `ACCOUNT_API_URL` must be exactly the account service's own `ACCOUNT_API_URL`, the `iss` and
+   `aud` of its tokens. A malformed one stops the service from starting, once a deploy reads the
+   file (at once for a labelled slot, at the next image otherwise): the running slot keeps
+   serving, but the deployer records the failure, and that environment deploys nothing until the
+   file is fixed, so read `journalctl -t zenbujapanese-dictionary-api --since -10min` after
+   editing it. It worked when `/v1/apps/word-cards` answers `401 unauthorized`, not
+   `503 unavailable`, to a request without a token, and an app's access token gets cards.
 2. **nginx.** The nginx repository holds `nginx/dictionary-api-staging.zenbujapanese.com.conf` and
    `nginx/dictionary-api.zenbujapanese.com.conf` ([`api-servers.md`](api-servers.md), Set up the
    server, step 4).
 
+   **The account service's keys, for the app routes.** A slot reaches only nginx, so nginx serves
+   the account service's JWKS on port 8790. nginx answers that port on every network it joins,
+   `web_network` too, but the server doesn't publish it, and the keys are public anyway. Add
+   `nginx/zenbujapanese-jwks.conf` to the nginx repository, pull it on the server, and check and
+   reload nginx as for any site:
+   ```nginx
+   server {
+           listen 8790;
+           server_name nginx;
+
+           resolver 127.0.0.11 valid=5s ipv6=off;
+
+           location = /staging/v1/auth/jwks {
+                   set $account "zenbujapanese-account-api-staging";
+                   proxy_http_version 1.1;
+                   proxy_set_header Connection "";
+                   proxy_set_header Host api-staging.zenbujapanese.com;
+                   proxy_connect_timeout 2s;
+                   proxy_next_upstream error timeout http_502 http_503;
+                   proxy_next_upstream_tries 2;
+                   proxy_pass http://$account:8789/v1/auth/jwks;
+           }
+
+           location = /production/v1/auth/jwks {
+                   set $account "zenbujapanese-account-api-production";
+                   proxy_http_version 1.1;
+                   proxy_set_header Connection "";
+                   proxy_set_header Host api.zenbujapanese.com;
+                   proxy_connect_timeout 2s;
+                   proxy_next_upstream error timeout http_502 http_503;
+                   proxy_next_upstream_tries 2;
+                   proxy_pass http://$account:8789/v1/auth/jwks;
+           }
+
+           location / {
+                   return 404;
+           }
+   }
+   ```
    **The slots' network.** Create it, internal, and connect the running nginx to it:
    ```sh
    docker network create --internal zenbujapanese-dictionary-api
@@ -325,6 +459,14 @@ need about 1.5 GB of memory between them, and 5 GB of disk for images. Then, as 
    ```
    Docker's DNS still resolves the other sites' containers on `web_network`, and the slots'
    aliases on the slots' network.
+
+   Once a slot runs on it, check that it reads the account service's keys through the JWKS site
+   (on a fresh server, after the first deploy, step 5, since `docker exec` needs a slot):
+   ```sh
+   slot="$(docker ps --filter label=zenbujapanese.dictionary-api.environment=staging --format '{{.Names}}' | head -n 1)"
+   docker exec "$slot" node -e "fetch('http://nginx:8790/staging/v1/auth/jwks').then(r => r.text()).then(console.log)"
+   ```
+   prints `{"keys":[…]}` with an `EdDSA` key.
 3. **Cloudflare**: proxied DNS records for `dictionary-api.zenbujapanese.com` and
    `dictionary-api-staging.zenbujapanese.com` ([`api-servers.md`](api-servers.md), Set up the
    server, step 5). Bot Fight Mode challenges the website's Worker too when a runner sets it off,

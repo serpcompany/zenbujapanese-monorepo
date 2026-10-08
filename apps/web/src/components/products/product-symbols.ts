@@ -3,7 +3,6 @@ import {
   BookOpenIcon,
   CameraIcon,
   ChartColumnIcon,
-  CheckIcon,
   FileTextIcon,
   GlobeIcon,
   LanguagesIcon,
@@ -14,10 +13,8 @@ import {
   PlayIcon,
   PuzzleIcon,
   SearchIcon,
-  SmartphoneIcon,
   TvIcon,
-  TypeIcon,
-  UserXIcon
+  TypeIcon
 } from 'lucide-react'
 import type { ProductSymbol } from '@/lib/products/catalog'
 import type { ProductPageSymbol } from '@/lib/products/product-page'
@@ -37,8 +34,5 @@ export const productSymbols: Record<ProductSymbol | ProductPageSymbol, LucideIco
   camera: CameraIcon,
   pen: PenLineIcon,
   languages: LanguagesIcon,
-  list: ListIcon,
-  'user-x': UserXIcon,
-  phone: SmartphoneIcon,
-  check: CheckIcon
+  list: ListIcon
 }

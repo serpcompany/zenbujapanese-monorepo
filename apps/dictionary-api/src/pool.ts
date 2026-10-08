@@ -106,6 +106,8 @@ export function createPool(files: VerifiedFiles, size: number): Pool {
     rankedWords: (slug, page) => call('rankedWords', [slug, page]),
     kanjiHub: () => call('kanjiHub', []),
     kanjiList: slug => call('kanjiList', [slug]),
-    browseSitemap: () => call('browseSitemap', [])
+    browseSitemap: () => call('browseSitemap', []),
+    wordCards: ids => call('wordCards', [ids]),
+    segment: text => call('segment', [text])
   }
 }

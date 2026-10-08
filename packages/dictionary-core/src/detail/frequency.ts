@@ -98,22 +98,20 @@ export const tierLabels: Record<FrequencyTier, string> = {
 
 const formatRank = new Intl.NumberFormat('en-US')
 
+export function levelResult(source: string, level: number): FrequencyResult {
+  return { source, value: `N${level}`, tier: tierForLevel(level), spokenTier: null }
+}
+
+export function rankResult(source: string, rank: number): FrequencyResult {
+  const tier = tierForRank(rank)
+  return { source, value: formatRank.format(rank), tier, spokenTier: tierLabels[tier] }
+}
+
 export function frequencyResults(rows: readonly FrequencyRow[]): FrequencyResult[] {
   return defaultFrequencyPacks.map(({ pack, shortName, kind }) => {
     const row = rows.find(candidate => candidate.pack === pack)
-    if (row?.pack === 'jlpt') {
-      const tier = tierForLevel(row.level)
-      return { source: shortName, value: `N${row.level}`, tier, spokenTier: null }
-    }
-    if (row?.pack === 'tubelex') {
-      const tier = tierForRank(row.rank)
-      return {
-        source: shortName,
-        value: formatRank.format(row.rank),
-        tier,
-        spokenTier: tierLabels[tier]
-      }
-    }
+    if (row?.pack === 'jlpt') return levelResult(shortName, row.level)
+    if (row?.pack === 'tubelex') return rankResult(shortName, row.rank)
     return {
       source: shortName,
       value: kind === 'level' ? 'Not listed' : 'No rank',

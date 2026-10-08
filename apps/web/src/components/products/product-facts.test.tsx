@@ -22,8 +22,7 @@ test('the facts row adds the version and minimum iOS that Apple’s lookup gives
   expect(await factsWhenApple(async () => Response.json(lookup))).toEqual([
     ['Platform', 'iPhone'],
     ['Requires', 'iOS 26.0 or later'],
-    ['Version', '1.0.1'],
-    ['Account', 'Not needed']
+    ['Version', '1.0.1']
   ])
 })
 
@@ -36,8 +35,5 @@ test.each<[string, (request: Request) => Promise<Response>]>([
   ],
   ['Apple returns nothing', async () => Response.json({ resultCount: 0, results: [] })]
 ])('the facts row leaves out the version and minimum iOS when %s', async (_, answers) => {
-  expect(await factsWhenApple(answers)).toEqual([
-    ['Platform', 'iPhone'],
-    ['Account', 'Not needed']
-  ])
+  expect(await factsWhenApple(answers)).toEqual([['Platform', 'iPhone']])
 })

@@ -33,6 +33,7 @@ type RankedListSource = { kind: 'tubelex' } | { kind: 'pack'; packId: string }
 export interface RankedList {
   slug: string
   name: string
+  chip: string
   source: RankedListSource
 }
 
@@ -42,18 +43,29 @@ const jitenPack = (name: string) => ({
 })
 
 export const rankedLists: readonly RankedList[] = [
-  { slug: 'youtube', name: 'YouTube', source: { kind: 'tubelex' } },
+  { slug: 'youtube', name: 'YouTube', chip: 'YouTube', source: { kind: 'tubelex' } },
   {
     slug: 'wikipedia',
     name: 'Wikipedia',
+    chip: 'Wikipedia',
     source: { kind: 'pack', packId: 'zenbu.wikipedia.written.ja.unidic-3.1' }
   },
-  { slug: 'tv-and-movies', name: 'TV and movies', source: jitenPack('tv-movies') },
-  { slug: 'anime', name: 'Anime', source: jitenPack('anime') },
-  { slug: 'manga', name: 'Manga', source: jitenPack('manga') },
-  { slug: 'novels', name: 'Novels', source: jitenPack('novels') },
-  { slug: 'visual-novels', name: 'Visual novels', source: jitenPack('visual-novels') },
-  { slug: 'video-games', name: 'Video games', source: jitenPack('video-games') }
+  {
+    slug: 'tv-and-movies',
+    name: 'TV and movies',
+    chip: 'TV & Movies',
+    source: jitenPack('tv-movies')
+  },
+  { slug: 'anime', name: 'Anime', chip: 'Anime', source: jitenPack('anime') },
+  { slug: 'manga', name: 'Manga', chip: 'Manga', source: jitenPack('manga') },
+  { slug: 'novels', name: 'Novels', chip: 'Novels', source: jitenPack('novels') },
+  {
+    slug: 'visual-novels',
+    name: 'Visual novels',
+    chip: 'Visual Novels',
+    source: jitenPack('visual-novels')
+  },
+  { slug: 'video-games', name: 'Video games', chip: 'Games', source: jitenPack('video-games') }
 ]
 
 export const rankedPackIds = rankedLists.flatMap(({ source }) =>
