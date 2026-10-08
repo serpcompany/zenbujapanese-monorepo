@@ -1,40 +1,18 @@
-import type { Page, Route } from '@playwright/test'
-import { accountPages, expect, footerAccountLink, headerLogIn, test } from './test'
-
-const email = 'kana@example.com'
-const profile = {
-  id: 'u1',
-  name: 'Kana Fan',
-  username: null,
+import {
   email,
-  version: 1,
-  createdAt: '2026-10-01T00:00:00.000Z',
-  updatedAt: '2026-10-01T00:00:00.000Z'
-}
-
-type Answers = Record<string, unknown>
-
-const accessTokenFor = (sub: string) =>
-  `head.${Buffer.from(JSON.stringify({ sub })).toString('base64url')}.sig`
-
-async function standInForTheAccountService(page: Page, answers: Answers) {
-  await page.route('**/v1/**', async (route: Route) => {
-    const request = route.request()
-    const origin = (await request.headerValue('origin')) ?? '*'
-    const cors = {
-      'access-control-allow-origin': origin,
-      'access-control-allow-credentials': 'true',
-      'access-control-allow-headers': 'authorization, content-type, x-zenbu-client',
-      'access-control-allow-methods': 'GET, POST, PATCH, DELETE'
-    }
-    if (request.method() === 'OPTIONS') return route.fulfill({ status: 204, headers: cors })
-    const key = `${request.method()} ${new URL(request.url()).pathname}`
-    if (!(key in answers)) return route.abort()
-    return route.fulfill({ status: 200, headers: cors, json: answers[key] })
-  })
-}
-
-const signedOutService: Answers = { 'GET /v1/auth/get-session': null }
+  signedInService,
+  signedOutService,
+  standInForTheAccountService
+} from './account-stand-in'
+import {
+  accountButton,
+  accountPages,
+  expect,
+  footerAccountLink,
+  headerLogIn,
+  onPhone,
+  test
+} from './test'
 
 test.describe('account pages', () => {
   for (const { path, title } of accountPages) {
@@ -69,17 +47,13 @@ test.describe('account pages', () => {
     }
   })
 
-  test('the footer leads to signing in, and to the account once signed in', async ({ page }) => {
+  test('the footer leads to signing in, and to the account once signed in, as the header shows the initials', async ({
+    page
+  }) => {
     await standInForTheAccountService(page, {
       'POST /v1/auth/email-otp/send-verification-otp': { success: true },
       'POST /v1/auth/sign-in/email-otp': { token: 'bare', user: { id: 'u1' } },
-      'GET /v1/auth/get-session': {
-        user: { id: 'u1', email },
-        session: { token: 'bare', createdAt: new Date().toISOString() }
-      },
-      'GET /v1/auth/token': { token: accessTokenFor(profile.id) },
-      'GET /v1/me': profile,
-      'GET /v1/auth/list-accounts': [{ id: 'i1', providerId: 'email', accountId: email }]
+      ...signedInService
     })
     await page.goto('/')
     await expect(footerAccountLink(page)).toHaveText('Sign in')
@@ -92,9 +66,12 @@ test.describe('account pages', () => {
     await expect(page.getByText(`Signed in as ${email}`)).toBeVisible()
     await expect(footerAccountLink(page)).toHaveText('Account')
     await expect(footerAccountLink(page)).toHaveAttribute('href', '/account/')
+    if (!onPhone()) await expect(accountButton(page)).toHaveText(/^KF/)
   })
 
-  test("the header's Log in, or the drawer's on phones, opens the login page", async ({ page }) => {
+  test("the account menu's Log in, or the drawer's on phones, opens the login page", async ({
+    page
+  }) => {
     await standInForTheAccountService(page, signedOutService)
     await page.goto('/about/')
     const logIn = await headerLogIn(page)

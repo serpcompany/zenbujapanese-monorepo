@@ -1,7 +1,7 @@
 import { describe, expect, test, vi } from 'vitest'
 import { refusedResult, stubAccountApi as stubApi } from '@/test/account-answers'
 import { accessTokens } from './access-tokens'
-import { afterSigningInAgain, deleteTheAccount, signedInAs } from './flows'
+import { afterSigningInAgain, deleteTheAccount, signedInAs, signOutOfThisBrowser } from './flows'
 
 const previous = { userId: 'u1', email: 'kana@example.com', signedInAt: 0, token: 'old-bare' }
 
@@ -35,6 +35,17 @@ describe('signing in again on the account page', () => {
       kind: 'failed',
       failure: { kind: 'offline' }
     })
+  })
+})
+
+test('signing out of this browser counts a session already gone as signed out, and keeps any other failure', async () => {
+  const signOut = (answer: unknown) => signOutOfThisBrowser(stubApi({ signOut: answer }))
+  expect(await signOut({ ok: true, value: true })).toBeNull()
+  expect(await signOut(refusedResult(401, 'unauthorized'))).toBeNull()
+  expect(await signOut({ ok: false, failure: { kind: 'offline' } })).toEqual({ kind: 'offline' })
+  expect(await signOut(refusedResult(500, 'internal'))).toMatchObject({
+    kind: 'refused',
+    status: 500
   })
 })
 

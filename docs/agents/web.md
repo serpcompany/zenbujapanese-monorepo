@@ -68,7 +68,11 @@ lists every child sitemap and each child sitemap lists the new URLs.
   `E2E_SITE_ENV=production`, so the `placeholderLinks` the tests import list Log in only where the
   build's account pages are closed. Run the tests with the `SITE_ENV` the build had, or
   `placeholders.spec.ts` reads the wrong list. `apps/web/e2e/test.ts` holds the console check and
-  the fixture helpers every spec imports.
+  the fixture helpers every spec imports; `apps/web/e2e/account-stand-in.ts` answers the account
+  service's routes in the browser, and marks a browser signed in, for the specs that need it.
+  `apps/web/e2e/contrast.spec.ts` runs axe's colour-contrast rule (`@axe-core/playwright`) on
+  every static page, the account pages, and search, word, and browse pages, in the light and dark
+  themes.
 - `apps/web/vitest.config.ts` has two projects: `*.interaction.test.tsx` run in happy-dom, the
   other tests in Node. Both set `__NEXT_TRAILING_SLASH`, so `next/link` draws links with their
   trailing slash, as the build does with `trailingSlash`.
@@ -78,7 +82,8 @@ lists every child sitemap and each child sitemap lists the new URLs.
   ([product docs](../../apps/web/docs/product/dictionary.md#header-footer-and-site-wide),
   Placeholder links). When a page ships, give its entry the page's path, as the products pages'
   entries have, so every link to it changes at once, or link it directly and drop the entry. Log
-  in's entry has `/login/` only in a build whose account pages are open (Account pages, below).
+  in's and Create an account's entries have `/login/` and `/register/` only in a build whose
+  account pages are open (Account pages, below).
 - `apps/web/public/` holds the header's images (App Store screenshot crops and the app icon), a
   larger app icon (`app-icon-192.webp`) and, in `apps/web/public/screenshots/app-store/`, whole App
   Store screenshots for the homepage and the products pages, each named for its file in
@@ -86,6 +91,31 @@ lists every child sitemap and each child sitemap lists the new URLs.
   `apps/web/src/lib/app-screenshots.ts` lists them with their alt text, and
   `apps/web/src/components/app-screenshot.tsx` draws one without a device frame.
   `next/image` renders them `unoptimized`, since the site sets up no image optimization on Workers.
+  It also holds copies of the brand's web files from `assets/brand/`: `favicon.ico`, the 16 and 32
+  pixel PNGs, `apple-touch-icon.png`, `site.webmanifest` with its icons in `icons/`, and
+  `zenbu-icon-flat-vector.svg`, the logo in the header, phone menu, and footer
+  (`src/components/site-brand.tsx`) and the SVG favicon. `siteIcons` and `siteManifest` in
+  `src/lib/metadata.ts` name them in every page's head; copy a file again when the brand's
+  changes.
+- The theme ([product docs](../../apps/web/docs/product/dictionary.md#header-footer-and-site-wide),
+  Theme): `next-themes`' `ThemeProvider`, wrapped in `src/components/theme-provider.tsx` and
+  placed in `src/app/layout.tsx`, puts `light` or `dark` on `<html>` (which carries
+  `suppressHydrationWarning`, since its script changes the class before React hydrates), from the
+  choice in local storage (`theme`) or the system's, and its inline script does that before the
+  page paints. The wrapper gives the script `type="text/plain"` once in the browser, as the Next.js
+  guide on preventing a flash before hydration does, so React doesn't warn about a script it renders
+  there, and `data-cfasync="false"`, so Cloudflare's Rocket Loader never defers it. That script is a function `next-themes` turns into a
+  string, so `apps/web/wrangler.jsonc` sets `keep_names` to `false`: with esbuild's default, the
+  Worker's bundle adds `__name` calls to it that the browser doesn't have, and it fails with
+  `ReferenceError: __name is not defined` (OpenNext's
+  [keep names](https://opennext.js.org/cloudflare/howtos/keep_names) how-to). The browser tests
+  run on the Worker build in CI, so the theme tests catch it. The site's toasts read the same
+  theme. Colours come only
+  from the shadcn tokens in `src/app/globals.css`, with `.dark` redefining them; text on the muted
+  grey takes the `muted-surface` utility, which swaps in `--muted-surface-foreground`, a darker grey
+  in light mode, since stock `muted-foreground` on `muted` is 4.35:1. The account menu
+  (`src/components/account-menu.tsx`) and the phone menu's theme button (`ModeToggle` in
+  `src/components/mode-toggle.tsx`) set it.
 - The products pages ([product docs](../../apps/web/docs/product/products.md)): `/products/` is
   static, and its filters read `?type=` with `useSearchParams` inside a `Suspense` whose fallback
   is the unfiltered catalog, so the built HTML holds every product and the browser hides the rest.
@@ -359,7 +389,8 @@ the account service ([`account-api.md`](account-api.md); the website's side of i
   which no page can read; the pages keep the 15-minute access token in memory
   (`src/lib/account/access-tokens.ts`), for the account they show only, and send it only to
   `/v1/me`, without cookies. Deleting the account, signing in again, coming back from a Google
-  confirmation, and checking the browser is still signed in to the account on the page are in
+  confirmation, checking the browser is still signed in to the account on the page, and signing
+  out from the header's account menu (from any page, with the address the build names) are in
   `src/lib/account/flows.ts`; the components make the other calls.
 - **Each answer's shape is checked where it enters** (`src/lib/account/answers.ts`), and the
   client (`src/lib/account/client.ts`) turns every answer into a value, a refusal with its code and
@@ -370,15 +401,18 @@ the account service ([`account-api.md`](account-api.md); the website's side of i
   once, so they can't read a Worker var: `next.config.ts` reads the environment's
   `ACCOUNT_API_URL` from `wrangler.jsonc` when it builds (`src/lib/account/availability.ts`, by
   `SITE_ENV`) and passes `ZENBU_ACCOUNT_PAGES` (`open` or `closed`) to the build, which draws the
-  footer's Sign in, and points the `login` entry in `linkTargets` (`src/lib/site.ts`), the
-  header's Log in, at `/login/` rather than `#`, only where it's `open`. A value set only in
+  footer's Sign in, and points the `login` and `register` entries in `linkTargets`
+  (`src/lib/site.ts`), the account menu's Log in and Create an account, at `/login/` and
+  `/register/` rather than `#`, only where it's `open`. It passes the origin itself as
+  `ZENBU_ACCOUNT_SERVICE`, which the account menu's Sign out calls (`builtAccountService` in
+  `src/lib/account/availability.ts`, nothing where the pages are closed). A value set only in
   `.dev.vars` changes the pages, not the header or footer. The `Web` workflow checks staging's
   build links signing in, and production's has no link to it, its Log in still `#` (Browser
   tests, below; [`ci.md`](ci.md), Web).
 
   | Var | What it does |
   | --- | --- |
-  | `ACCOUNT_API_URL` | The account service's origin: `http://localhost:8789` locally and `https://api-staging.zenbujapanese.com` on staging. Production's is empty until its account service answers on `https://api.zenbujapanese.com` (opening it, below). Empty, the pages say signing in isn't available, link to no other account page, the footer has no Sign in, and the header's Log in stays `#`. |
+  | `ACCOUNT_API_URL` | The account service's origin: `http://localhost:8789` locally and `https://api-staging.zenbujapanese.com` on staging. Production's is empty until its account service answers on `https://api.zenbujapanese.com` (opening it, below). Empty, the pages say signing in isn't available, link to no other account page, the footer has no Sign in, and the account menu's Log in and Create an account stay `#`. |
   | `ACCOUNT_APPLE_SERVICES_ID` | The Services ID Sign in with Apple JS signs in as: the first of the service's `APPLE_SERVICES_IDS`, the one the service takes the website's Apple codes as. Empty, the pages offer no Apple. |
   | `ACCOUNT_GOOGLE_SIGN_IN` | `on` offers Google, once the service has a Google web client. |
 
@@ -427,7 +461,8 @@ the account service ([`account-api.md`](account-api.md); the website's side of i
   `src/app/account/`; the components in `src/components/account/`; the hooks
   `src/hooks/use-apple-sign-in.ts`, `src/hooks/use-busy.ts`, which frees the buttons when the
   browser comes back from Google with Back, and `src/hooks/use-seems-signed-in.ts`, which reads
-  the local-storage note behind the footer's Sign in or Account (`src/lib/account/signed-in.ts`).
+  the local-storage notes behind the footer's Sign in or Account and the account button's initials
+  (`src/lib/account/signed-in.ts`; the account page writes the initials as it shows the account).
   A confirmation through Google leaves the page, so `src/lib/account/confirming.ts` keeps the
   account it left from in session storage, to sign its earlier session out on the way back; a
   failed load keeps it for Try again, and coming back with Back drops it.
@@ -568,7 +603,7 @@ Web Analytics).
 Before merging a change to environment configuration, build the site as the target environment
 deploys and run the Worker with its `vars` (`SITE_ENV=production pnpm exec opennextjs-cloudflare
 build`, then `pnpm exec opennextjs-cloudflare preview --env production`), then check the output.
-Static pages, the header's Log in and the footer's Sign in among them (Account pages, above), come
+Static pages, the footer's Sign in among them, and the account menu's links (Account pages, above), come
 from the build's `SITE_ENV`, so a build without it would show the local site's header and footer
 beside production's pages.
 Production's `DICTIONARY_API_URL` is a placeholder until `Web deploy` writes it (Dictionary

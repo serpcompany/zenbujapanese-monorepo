@@ -72,20 +72,23 @@ the account. The website's pages hold that line, not its scopes: `zenbu-web` has
 scopes but watch history's and bookmarks', which it never gets
 ([`account-clients.md`](../../../../docs/agents/account-clients.md), Your app). It says the
 website doesn't read or change known words or lists yet, and can't read the watch history or
-the bookmarks, that its pages connect from the browser to
-the account service only when the learner opens the account page or starts to sign in, that
+the bookmarks, that the website connects from the browser to the account service only when the
+learner opens the account page, starts to sign in, or chooses Sign out in the account menu, that
 pointing at or tabbing to Sign in with Apple loads Apple's script and asks the service for a
 nonce, and that Apple's script and window, and Google's page, come from those companies. The website section names each thing signing in keeps in the browser: the
 `__Secure-zenbu.session_token` cookie, which keeps the learner signed in for 60 days from its last
 use or until they sign out or delete the account; the `__Secure-zenbu.state` cookie, for 5 minutes
 during a Google sign-in; both set by the account service for its own host, so the website's pages
-never read them; the note in local storage that the browser signed in, for the footer; and,
+never read them; the note in local storage that the browser signed in, with the learner's
+initials, for the header and footer, never sent to the account service; the theme the learner
+chose, also in local storage, which holds nothing about them; and,
 while the learner confirms it's them with Google, the account they started from and their earlier
 session's ID in that tab's session storage, which the page sends to sign that session out when
 they come back.
 
 - Source: #468 ([Account pages](account.md)); Better Auth's cookies as the account service sets
-  them ([`account-api.md`](../../../../docs/agents/account-api.md), Sign-in).
+  them ([`account-api.md`](../../../../docs/agents/account-api.md), Sign-in); #664 (the account
+  menu's Sign out, the initials, and the theme), dated October 8, 2026.
 - Check: `apps/web/e2e/privacy.spec.ts`, "names what the website can do with the account, and each
   thing signing in keeps in the browser": the ways a learner signs in there, the website's list,
   item for item, and the cookies, with their names and lifetimes.

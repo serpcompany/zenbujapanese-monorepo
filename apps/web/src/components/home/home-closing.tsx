@@ -1,161 +1,69 @@
-import { PlaneIcon, SmartphoneIcon } from 'lucide-react'
 import Image from 'next/image'
-import Link from 'next/link'
-import type { ReactNode } from 'react'
-import { RubyText } from '@/components/dictionary/ruby-text'
 import { callToAction } from '@/components/home/home-styles'
-import { SectionHeading } from '@/components/home/section-heading'
 import { GetAppButton } from '@/components/site-actions'
-import { buttonVariants } from '@/components/ui/button'
-import { pageSources } from '@/lib/dictionary/sources'
-import { offlinePreview, storedOnDevice } from '@/lib/home-previews'
-import { linkTo } from '@/lib/site'
-import { iphoneAppTitle } from '@/lib/site-menus'
-import { cn } from '@/lib/utils'
+import { type AppPart, collageColumns, pageEnd } from '@/lib/app-parts'
 
-const allProducts = linkTo('products')
-
-const panel =
-  'flex w-full max-w-76 flex-col gap-2.5 rounded-lg bg-card px-4 py-3.5 text-[0.8125rem] ring-1 ring-border'
-
-function PanelTitle({ icon, children }: { icon: ReactNode; children: ReactNode }) {
+function PartCard({ part }: { part: AppPart }) {
   return (
-    <p className="flex items-center gap-2 font-medium [&_svg]:size-3.5 [&_svg]:text-muted-foreground">
-      {icon}
-      {children}
-    </p>
-  )
-}
-
-function ClosingPromise({
-  title,
-  preview,
-  children
-}: {
-  title: string
-  preview: ReactNode
-  children: ReactNode
-}) {
-  return (
-    <li className="flex min-w-0 flex-col gap-2 border-t py-7 first:border-t-0 md:border-t-0 md:border-l md:px-6 md:pt-8 md:pb-2 md:first:border-l-0 md:first:pl-0">
-      <h3 className="text-[1.0625rem] font-semibold tracking-tight">{title}</h3>
-      <div className="order-first mb-3 flex min-h-34 items-center md:min-h-56">{preview}</div>
-      <p className="text-[0.9375rem] leading-relaxed text-muted-foreground">{children}</p>
-    </li>
-  )
-}
-
-function OfflinePreview() {
-  return (
-    <div aria-hidden="true" className={panel}>
-      <PanelTitle icon={<PlaneIcon />}>Airplane mode</PanelTitle>
-      <div className="flex flex-col gap-0.5 border-t pt-2.5 text-muted-foreground">
-        <RubyText
-          segments={offlinePreview.ruby}
-          className="text-xl leading-[1.6] font-medium text-foreground"
+    <div className="flex w-48 flex-col gap-1 rounded-xl bg-card p-2 pb-3 shadow-[0_18px_36px_-20px_rgb(0_0_0/0.35)] ring-1 ring-foreground/10">
+      <div className="mb-1.5 flex h-30 justify-center overflow-hidden rounded-lg bg-muted">
+        <Image
+          src={part.screenshot.src}
+          alt=""
+          width={part.screenshot.width}
+          height={part.screenshot.height}
+          unoptimized
+          draggable={false}
+          className="-mt-13 h-auto w-30 shrink-0 self-start rounded-[13.7%/6.3%] ring-1 ring-foreground/10"
         />
-        {offlinePreview.meaning}
       </div>
+      <span className="px-1 text-sm font-semibold">{part.name}</span>
+      <span className="px-1 text-xs text-muted-foreground">{part.line}</span>
+      <span className="mt-2 grid h-7 place-items-center rounded-md bg-muted text-xs font-medium">
+        Learn more
+      </span>
     </div>
   )
 }
 
-function StoredPreview() {
+function AppCollage() {
   return (
-    <div aria-hidden="true" className={panel}>
-      <PanelTitle icon={<SmartphoneIcon />}>Stored on this iPhone</PanelTitle>
-      <div className="grid grid-cols-2 gap-px overflow-hidden rounded-md bg-border">
-        {storedOnDevice.map(item => (
-          <span key={item} className="bg-background px-2.5 py-2">
-            {item}
-          </span>
+    <div
+      aria-hidden="true"
+      className="relative order-first h-36 overflow-hidden border-b bg-muted/40 md:order-none md:-my-10 md:-mr-12 md:h-auto md:border-b-0 md:bg-transparent"
+    >
+      <div className="absolute top-1/2 left-1/2 flex -translate-x-1/2 -translate-y-[48%] scale-60 rotate-12 gap-4 md:-translate-x-[45%] md:-translate-y-1/2 md:scale-100">
+        {collageColumns.map((column, columnIndex) => (
+          <div
+            key={column[0]?.name}
+            className={columnIndex ? 'mt-20 flex flex-col gap-4' : 'flex flex-col gap-4'}
+          >
+            {column.map((part, index) => (
+              <PartCard key={`${part.name}-${index}`} part={part} />
+            ))}
+          </div>
         ))}
       </div>
     </div>
   )
 }
 
-const creditLink = 'underline-offset-3 hover:underline'
-
-function SourcesPreview() {
-  return (
-    <dl aria-label="Licences" className={cn(panel, 'grid grid-cols-[auto_1fr] gap-x-4 gap-y-1.5')}>
-      {pageSources.home.map(source => (
-        <div key={source.name} className="contents">
-          <dt className="font-medium">
-            <a href={source.url} className={creditLink}>
-              {source.name}
-            </a>
-          </dt>
-          <dd className="text-xs leading-5 text-muted-foreground">
-            {source.license.url ? (
-              <a href={source.license.url} className={creditLink}>
-                {source.license.name}
-              </a>
-            ) : (
-              source.license.name
-            )}
-          </dd>
-        </div>
-      ))}
-    </dl>
-  )
-}
-
 export function HomeClosing() {
   return (
-    <section aria-labelledby="closing-title" className="dark bg-background text-foreground">
-      <div className="mx-auto w-full max-w-5xl px-4 pt-16 pb-12 md:px-5 md:pt-20 md:pb-14">
-        <SectionHeading
-          id="closing-title"
-          title="Your Japanese stays yours."
-          aside="On your iPhone, from open data."
-          className="max-w-none"
-        />
-        <ul className="mt-10 grid border-t md:grid-cols-3">
-          <ClosingPromise title="Works offline" preview={<OfflinePreview />}>
-            The dictionary is on your iPhone, so lookups work on a plane or underground.
-          </ClosingPromise>
-          <ClosingPromise title="No account, no ads" preview={<StoredPreview />}>
-            Your lists, notes, known words, and saved conversations stay on your iPhone. There’s
-            nothing to sign up for.
-          </ClosingPromise>
-          <ClosingPromise title="Built on open data" preview={<SourcesPreview />}>
-            Words, kanji, sentences, and word frequencies come from open projects, each credited on
-            the{' '}
-            <Link href="/sources/" className="text-foreground underline underline-offset-3">
-              Sources
-            </Link>{' '}
-            page.
-          </ClosingPromise>
-        </ul>
-        <div className="mt-4 grid items-center gap-6 border-t pt-8 md:mt-10 md:grid-cols-[minmax(0,1fr)_auto]">
-          <div className="flex items-center gap-4">
-            <Image
-              src="/app-icon.webp"
-              alt=""
-              width={48}
-              height={48}
-              unoptimized
-              className="size-12 shrink-0 rounded-[22.5%] ring-1 ring-border"
-            />
-            <div>
-              <h3 className="text-xl font-semibold tracking-tight">{iphoneAppTitle}</h3>
-              <p className="text-[0.9375rem] text-muted-foreground">
-                Dictionary, Image Search, Translate, and Player in one app.
-              </p>
-            </div>
-          </div>
-          <div className="flex flex-wrap gap-2">
-            <GetAppButton size="lg" className={callToAction} />
-            <Link
-              href={allProducts.href}
-              data-link-target={allProducts.target}
-              className={cn(buttonVariants({ variant: 'outline', size: 'lg' }), callToAction)}
+    <section aria-labelledby="page-end-title" className="border-t bg-muted/50 dark:bg-muted/30">
+      <div className="mx-auto w-full max-w-5xl px-4 py-14 md:px-5 md:py-20">
+        <div className="flex flex-col overflow-hidden rounded-2xl bg-card ring-1 ring-foreground/10 md:grid md:max-h-80 md:grid-cols-2 md:px-12 md:py-10">
+          <div className="flex flex-col items-start gap-3.5 p-6 md:self-center md:p-0">
+            <h2
+              id="page-end-title"
+              className="max-w-120 text-[1.625rem] leading-tight font-semibold tracking-tight text-balance md:text-[2rem]"
             >
-              All products
-            </Link>
+              {pageEnd.title}
+            </h2>
+            <p className="text-muted-foreground">{pageEnd.line}</p>
+            <GetAppButton size="lg" className={callToAction} />
           </div>
+          <AppCollage />
         </div>
       </div>
     </section>

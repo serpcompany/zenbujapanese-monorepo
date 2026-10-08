@@ -1,7 +1,9 @@
+import { act } from 'react'
 import { afterEach, describe, expect, test, vi } from 'vitest'
 import { accessTokens } from '@/lib/account/access-tokens'
 import type { Identity } from '@/lib/account/answers'
 import { accountApi } from '@/lib/account/client'
+import { rememberSignedIn } from '@/lib/account/signed-in'
 import { idTokenFor, jwtFor } from '@/test/account-answers'
 import {
   answer,
@@ -96,12 +98,43 @@ describe('the account page', () => {
     ])
     expect(callTo(calls, 'GET /v1/auth/get-session')[0]?.credentials).toBe('include')
     expect(window.localStorage.getItem('zenbu-signed-in')).toBe('yes')
+    expect(window.localStorage.getItem('zenbu-initials')).toBe('KF')
   })
 
   test('shows signed out, and forgets it was signed in, when there is no session', async () => {
     window.localStorage.setItem('zenbu-signed-in', 'yes')
+    window.localStorage.setItem('zenbu-initials', 'KF')
     stubAccountService({ 'GET /v1/auth/get-session': answer(null) })
     const page = render(<AccountView settings={settings()} returnedError={null} />)
+    await shows(page, 'You’re not signed in.')
+    expect(window.localStorage.getItem('zenbu-signed-in')).toBeNull()
+    expect(window.localStorage.getItem('zenbu-initials')).toBeNull()
+  })
+
+  const signOutsElsewhere = {
+    'the account menu': () => rememberSignedIn(false),
+    'another tab': () => {
+      window.localStorage.removeItem('zenbu-signed-in')
+      window.dispatchEvent(new StorageEvent('storage', { key: 'zenbu-signed-in' }))
+    }
+  }
+
+  test.each(
+    Object.entries(signOutsElsewhere)
+  )('shows signed out when this browser signs out from %s, without asking the service', async (_, signOut) => {
+    const { calls } = signedIn()
+    const page = render(<AccountView settings={settings()} returnedError={null} />)
+    await shows(page, `Signed in as ${email}`)
+    await act(async () => signOut())
+    await shows(page, 'You’re not signed in.')
+    expect(window.localStorage.getItem('zenbu-signed-in')).toBeNull()
+    expect(callTo(calls, 'POST /v1/auth/sign-out')).toEqual([])
+  })
+
+  test('shows signed out when the browser signs out while the account is still loading', async () => {
+    signedIn()
+    const page = render(<AccountView settings={settings()} returnedError={null} />)
+    await act(async () => rememberSignedIn(false))
     await shows(page, 'You’re not signed in.')
     expect(window.localStorage.getItem('zenbu-signed-in')).toBeNull()
   })

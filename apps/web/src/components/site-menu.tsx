@@ -4,7 +4,10 @@ import { MenuIcon, XIcon } from 'lucide-react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { useState } from 'react'
-import { GetAppButton, LogInButton } from '@/components/site-actions'
+import { DrawerAccountButton } from '@/components/account-menu'
+import { ModeToggle } from '@/components/mode-toggle'
+import { GetAppButton } from '@/components/site-actions'
+import { SiteLogo } from '@/components/site-brand'
 import { menuItemClassName, SiteMenuItem } from '@/components/site-menu-item'
 import {
   Accordion,
@@ -94,12 +97,16 @@ export function SiteMenu() {
       </DrawerTrigger>
       <DrawerContent>
         <DrawerHeader className="flex-row items-center justify-between border-b py-2.5">
-          <DrawerTitle>{site.name}</DrawerTitle>
-          <DrawerClose
-            render={<Button variant="ghost" size="icon-lg" className="-mr-2" aria-label="Close" />}
-          >
-            <XIcon aria-hidden="true" />
-          </DrawerClose>
+          <DrawerTitle className="flex items-center gap-2">
+            <SiteLogo />
+            {site.name}
+          </DrawerTitle>
+          <div className="-mr-2 flex items-center gap-1">
+            <ModeToggle />
+            <DrawerClose render={<Button variant="ghost" size="icon-lg" aria-label="Close" />}>
+              <XIcon aria-hidden="true" />
+            </DrawerClose>
+          </div>
         </DrawerHeader>
         <nav aria-label="Sections" className="min-h-0 flex-1 overflow-y-auto px-4">
           <Accordion key={current?.label} defaultValue={current ? [current.label] : []}>
@@ -116,12 +123,7 @@ export function SiteMenu() {
           </Accordion>
         </nav>
         <DrawerFooter className="border-t">
-          <LogInButton
-            variant="outline"
-            size="lg"
-            className="w-full"
-            onClick={() => setOpen(false)}
-          />
+          <DrawerAccountButton onClick={() => setOpen(false)} />
           <GetAppButton size="lg" className="w-full" onClick={() => setOpen(false)} />
         </DrawerFooter>
       </DrawerContent>

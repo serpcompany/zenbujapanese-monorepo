@@ -26,16 +26,7 @@ function expectNoDroppedClaim(texts: readonly string[]) {
 }
 
 test.describe('no account, local-only, or open-data claims', () => {
-  test('the homepage makes none above its closing block', async ({ page }) => {
-    await page.goto('/')
-    const sections = page
-      .getByRole('main')
-      .getByRole('region', { name: /^(?!Your Japanese stays yours)/ })
-    await expect(sections.first()).toBeVisible()
-    expectNoDroppedClaim([...(await sections.allTextContents()), ...(await descriptions(page))])
-  })
-
-  for (const path of [iphoneAppPage.path, '/about/']) {
+  for (const path of ['/', iphoneAppPage.path, '/about/']) {
     test(`${path} makes none`, async ({ page }) => {
       await page.goto(path)
       const main = page.getByRole('main')

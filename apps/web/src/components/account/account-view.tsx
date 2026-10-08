@@ -1,18 +1,23 @@
 'use client'
 
 import Link from 'next/link'
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { accessTokens } from '@/lib/account/access-tokens'
 import type { AccountSession } from '@/lib/account/answers'
 import { accountApi } from '@/lib/account/client'
 import { forgetConfirming } from '@/lib/account/confirming'
-import { afterGoogleConfirmation } from '@/lib/account/flows'
+import { afterGoogleConfirmation, signOutOfThisBrowser } from '@/lib/account/flows'
 import { isFresh, loadAccount, type SignedInAccount } from '@/lib/account/load'
-import { failureMessage, isSignedOut, returnedErrorMessage } from '@/lib/account/messages'
+import { failureMessage, returnedErrorMessage } from '@/lib/account/messages'
 import { accountPages } from '@/lib/account/pages'
 import type { AccountSettings } from '@/lib/account/settings'
-import { rememberSignedIn } from '@/lib/account/signed-in'
+import {
+  initialsOf,
+  onSignedInChange,
+  rememberSignedIn,
+  seemsSignedIn
+} from '@/lib/account/signed-in'
 import { DeleteAccount } from './delete-account'
 import { FormMessage, Notice } from './form-message'
 import { ProfileForm } from './profile-form'
@@ -75,6 +80,7 @@ export function AccountView({
   const [view, setView] = useState<View>({ kind: 'loading' })
   const [signOutProblem, setSignOutProblem] = useState<string | null>(null)
   const [confirmedHere, setConfirmedHere] = useState(0)
+  const signOutsHere = useRef(0)
 
   const signedOut = useCallback(
     (notice: string | null) => {
@@ -86,15 +92,15 @@ export function AccountView({
   )
 
   const load = useCallback(async () => {
+    const signOutsBefore = signOutsHere.current
     const loaded = await loadAccount(api, tokens)
-    if (loaded.kind === 'signed-out') {
+    if (loaded.kind === 'signed-out' || signOutsHere.current !== signOutsBefore) {
       forgetConfirming()
       return signedOut(null)
     }
     if (loaded.kind === 'failed') {
       return setView({ kind: 'unreachable', problem: failureMessage(loaded.failure) })
     }
-    rememberSignedIn(true)
     const { session } = loaded.account
     const confirmation = afterGoogleConfirmation(api, session)
     if (confirmation === 'this-account') setConfirmedHere(Date.now())
@@ -113,9 +119,32 @@ export function AccountView({
     []
   )
 
+  useEffect(
+    () =>
+      onSignedInChange(() => {
+        if (!seemsSignedIn()) signOutsHere.current += 1
+      }),
+    []
+  )
+
   useEffect(() => {
     void load()
   }, [load])
+
+  const shownInitials =
+    view.kind === 'signed-in'
+      ? initialsOf(view.account.profile.name, view.account.profile.email)
+      : null
+  useEffect(() => {
+    if (shownInitials === null) return
+    rememberSignedIn(true, shownInitials)
+    const stopFollowing = onSignedInChange(() => {
+      if (seemsSignedIn()) return
+      stopFollowing()
+      signedOut(null)
+    })
+    return stopFollowing
+  }, [shownInitials, signedOut])
 
   if (view.kind === 'loading') return <Notice>Loading your account…</Notice>
   if (view.kind === 'unreachable') {
@@ -193,11 +222,9 @@ export function AccountView({
           className="self-start"
           onClick={async () => {
             setSignOutProblem(null)
-            const signedOutHere = await api.signOut()
-            if (signedOutHere.ok || isSignedOut(signedOutHere.failure)) {
-              return signedOut('You’re signed out.')
-            }
-            setSignOutProblem(failureMessage(signedOutHere.failure))
+            const problem = await signOutOfThisBrowser(api)
+            if (problem === null) return signedOut('You’re signed out.')
+            setSignOutProblem(failureMessage(problem))
           }}
         >
           Sign out

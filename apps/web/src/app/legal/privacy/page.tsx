@@ -8,7 +8,7 @@ export const metadata = pageMetadata('/legal/privacy/')
 export default function PrivacyPage() {
   const email = <a href={`mailto:${site.supportEmail}`}>{site.supportEmail}</a>
   return (
-    <PageShell title="Privacy Policy" updated="October 7, 2026">
+    <PageShell title="Privacy Policy" updated="October 8, 2026">
       <p>
         This policy explains how we handle information in the {site.name} iPhone app, on
         zenbujapanese.com, and in a Zenbu account, including when you link one to Tomodachi.
@@ -174,13 +174,14 @@ export default function PrivacyPage() {
       </ul>
       <p>
         It doesn't read or change your known words or lists yet; we'll update this policy before it
-        does. It can't read your watch history or the sentences you bookmark. Its account pages
-        connect from your browser to our account service at api.zenbujapanese.com only when you open
-        your account page or start to sign in. Pointing at or tabbing to a Sign in with Apple button
-        gets it ready: your browser loads Apple's Sign in with Apple script from Apple and asks our
-        account service for a one-time sign-in value. Choosing Apple opens Apple's window; if you
-        choose Google, your browser goes to Google and comes back through our account service. Each
-        handles that under its own terms and privacy policy.
+        does. It can't read your watch history or the sentences you bookmark. The website connects
+        from your browser to our account service at api.zenbujapanese.com only when you open your
+        account page, start to sign in, or choose Sign out in its account menu. Pointing at or
+        tabbing to a Sign in with Apple button gets it ready: your browser loads Apple's Sign in
+        with Apple script from Apple and asks our account service for a one-time sign-in value.
+        Choosing Apple opens Apple's window; if you choose Google, your browser goes to Google and
+        comes back through our account service. Each handles that under its own terms and privacy
+        policy.
       </p>
 
       <h2>Where account data is kept</h2>
@@ -232,12 +233,13 @@ export default function PrivacyPage() {
         </li>
       </ul>
       <p>
-        The website also keeps a note in your browser's local storage that you signed in, so its
-        footer links to your account. It holds nothing about you, is never sent to us, and goes when
-        you sign out. And while you confirm it's you with Google, it keeps in that tab's session
-        storage which account you started from and your earlier session's ID, so that when you come
-        back it can sign that earlier session out; it goes then, or when you come back without
-        signing in.
+        The website also keeps a note in your browser's local storage that you signed in, with your
+        initials, so its header and footer show your account. It is never sent to us, and goes when
+        you sign out. It keeps there too whether you chose the light, dark, or system theme, which
+        holds nothing about you and is never sent to us. And while you confirm it's you with Google,
+        it keeps in that tab's session storage which account you started from and your earlier
+        session's ID, so that when you come back it can sign that earlier session out; it goes then,
+        or when you come back without signing in.
       </p>
 
       <h2>Support email</h2>

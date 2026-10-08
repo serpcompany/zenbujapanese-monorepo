@@ -838,19 +838,85 @@ Detail in the app, so its row doesn't open.
 
 ## Header, footer, and site-wide
 
-**Header.** The 全 mark and the site name link home. From 1024 pixels the header shows the mark
-and name, the Dictionary, Tools, Products, and Company menus, then Log in and Get the app at the
-right. Below 1024 pixels it shows only the mark, with the name left to screen readers, and a menu
-button (lucide `Menu`). The header has no search and no email address: the Dictionary menu leads to
-the dictionary home, whose box searches (#561).
+**Header.** The logo and the site name link home. From 1024 pixels the header shows the logo and
+name, the Dictionary, Tools, Products, and Company menus, then exactly two things at the right: Get
+the app and the round account button (Account menu, below). Below
+1024 pixels it shows only the logo, with the name left to screen readers, and a menu button (lucide
+`Menu`). The header has no search and no email address: the Dictionary menu leads to the
+dictionary home, whose box searches (#561). It stays pinned to the top of the window while the page
+scrolls, on the page's background with its bottom rule, and a link to a heading on the page (such
+as a word's `#conjugations`) stops below it.
 
-- Source: #648 decision and mockups (Header switch); #650; #561 (no search in the header).
+- Source: #648 decision and mockups (Header switch); #650; #561 (no search in the header); #664
+  and its mockups (v50, Header actions A: pinned, two items).
 - Check: `src/components/site-header.test.tsx`, "below 1024 pixels the header has a menu button,
-  and from 1024 the menus" and "the header on %s has no search and no email address";
-  `apps/web/e2e/site.spec.ts`, "the header has the name, four menus, Log in, and Get the app, and no
-  search" and "the header shows only the logo and the menu button, and fits a 320-pixel phone";
-  smoke "the header links to the dictionary and has no search"; `apps/web/e2e/layout.spec.ts`,
-  which checks that no page scrolls sideways at either width.
+  and from 1024 the menus", "the header on %s has no search and no email address", and "the header
+  stays pinned to the top as the page scrolls"; `apps/web/e2e/site.spec.ts`, "the header has the
+  name, four menus, Get the app, and the account button, and no search" and "the header shows only
+  the logo and the menu button, and fits a 320-pixel phone"; `apps/web/e2e/header.spec.ts`, "stays
+  pinned to the top while the page scrolls"; smoke "the header links to the dictionary and has no
+  search"; `apps/web/e2e/layout.spec.ts`, which checks that no page scrolls sideways at either
+  width.
+
+**Logo and icons.** The header, the phone menu, and the footer show the Zenbu mark,
+`assets/brand/vector/zenbu-icon-flat-vector.svg` (served as `/zenbu-icon-flat-vector.svg`), in its
+own colours in both themes, beside the site name. The favicon (`favicon.ico`, the SVG mark, and 16
+and 32 pixel PNGs), the Apple touch icon, and the web app manifest (`site.webmanifest`, with its
+192 and 512 pixel icons, plain and maskable, under `/icons/`) are copies of the files in
+`assets/brand/web/`, named in every page's head (`siteIcons` and `siteManifest` in
+`src/lib/metadata.ts`).
+
+- Source: #664.
+- Check: No automated check yet; checked by hand with `verify-web`.
+
+**Account menu.** From 1024 pixels the round account button ends the header. Signed out it shows a
+person (lucide `UserRound`) and is named "Account"; in a browser that signed in on the site, it
+shows the learner's initials (from their name, or their email's first letter) and is named
+"Account, signed in". The button keeps its size, so Get the app and the button stay in the same
+places either way. Its menu, signed out, holds Log in and Create an account (the `login` and
+`register` entries in `linkTargets`: `/login/` and `/register/` where the account pages are open,
+`#` placeholders where they're closed); signed in, Your account (`/account/`), then Sign out, which
+signs this browser out through the account service; an account page open in the browser, in this
+tab or another, then shows signed out ([Account pages](account.md#your-account)). A sign-out the
+service refuses, or can't be reached for, shows a toast with the reason and stays signed in. Both
+end with the Theme row (Theme, below). It opens with a click, Enter, Space, or the Up and Down
+keys; Up, Down, Home, and End move through its items, the Theme row's three icons among them, Enter
+follows one, and Escape closes it and returns focus to the button. The
+server draws it signed out, as it draws the footer's Sign in; the browser then reads the note it
+keeps when signed in ([Account pages](account.md#pages)).
+
+- Source: #664 and its mockups (v50, Header actions A); #468 (the account pages).
+- Check: `src/components/site-header.test.tsx`, "from 1024 pixels Get the app and the account
+  button end the header, Get the app opening the iPhone app’s page"; `apps/web/e2e/header.spec.ts`,
+  "Get the app and the account button keep their places signed out and signed in", "signed out,
+  the menu offers Log in and Create an account, then the theme, by keyboard", and "signed in, the
+  menu leads to the account, then the theme, then Sign out, by keyboard", "signing out from the
+  menu on the account page shows it signed out, with no reload", and "says so, and stays signed
+  in" (when the service can't sign the browser out); `apps/web/e2e/account.spec.ts`, "the footer leads to signing in, and to the account once signed
+  in, as the header shows the initials"; `src/lib/account/flows.test.ts`, "signing out of this
+  browser counts a session already gone as signed out, and keeps any other failure";
+  `src/lib/account/signed-in.test.ts`.
+
+**Theme.** Light, Dark, and System, with System the default: the site follows the operating
+system's setting, as it changes, until the learner chooses. The choice is kept in the browser's
+local storage (`theme`), so it holds across pages and visits on that device. From 1024 pixels the
+choice is the account menu's Theme row, three icons (lucide `Sun`, `Moon`, `Monitor`) whose
+current one is marked, which stays open as the theme changes; below 1024 pixels it is the phone
+menu's Theme button beside Close (shadcn's mode toggle: a sun that turns into a moon), whose menu
+lists the three with the current one ticked and closes on a choice. A script in the page's HTML
+applies the saved choice before anything is drawn, so a page never shows the other theme first
+(next-themes, which the site's toasts already read). Every page uses the stock shadcn tokens in both
+themes; text on the muted grey (the footer, the product page's demo, the homepage's previews) uses
+`muted-surface` (`src/app/globals.css`), a slightly darker grey in light mode, so it keeps 4.5:1.
+
+- Source: #664 and its mockups (v50, Theme switch).
+- Check: `apps/web/e2e/theme.spec.ts`, "System is the default, and follows the operating system as
+  it changes", "the choice survives a reload, whatever the operating system says", "the choice
+  changes by keyboard, in the account menu or, on phones, the drawer", and "a saved choice is
+  already applied, so the page never shows the other theme first"; `apps/web/e2e/contrast.spec.ts`,
+  which runs axe's colour-contrast rule on every page in `src/lib/pages.ts`, the account pages, and
+  search, word (its conjugation form and kanji open), and browse pages, in both themes, at both
+  widths.
 
 **Menus.** Dictionary, Tools, and Products are mega menus: a featured card, three columns, and a
 footer line with a link. Company is a plain dropdown.
@@ -885,13 +951,14 @@ window.
 **Placeholder links.** The pages the menus, footer, and [homepage](home.md) name that don't exist
 yet, and the outside addresses that aren't known yet, link to `#` for now: All free tools and Free
 tools (`/tools/`), the three converters, Browser extension, Reference guides, Courses, Log in
-(`/login/`) where the site's account pages are closed, as in production today, the App Store (the
+(`/login/`) and Create an account (`/register/`) where the site's account pages are closed, as in
+production today, the App Store (the
 Get the app on the product page and on the catalog's iPhone app card), the ten social accounts, and
 See all videos (`/videos/`), which shows only once the product page has videos. Zenbu Japanese for
 iPhone and All products now open their pages, `/products/zenbu-japanese-app/` and
-`/products/` ([Products pages](products.md)), from the same entries; so does Log in where the
-account pages are open, as on staging ([Account pages](account.md#pages)), the build choosing its
-address as it does the footer's Sign in. #650 asked for menu items to appear only once their page
+`/products/` ([Products pages](products.md)), from the same entries; so do Log in and Create an
+account where the account pages are open, as on staging ([Account pages](account.md#pages)), the
+build choosing their addresses as it does the footer's Sign in. #650 asked for menu items to appear only once their page
 exists; the owner chose to show them now as `#` placeholders instead (#648). Every one is in one
 list, `linkTargets` in
 `src/lib/site.ts`, named for what it stands for, and its links carry `data-link-target` with its id.
@@ -903,11 +970,12 @@ or linking the page directly once it exists.
   as placeholders).
 - Check: `apps/web/e2e/placeholders.spec.ts`, "every # link the site renders is a placeholder listed
   in src/lib/site.ts", which visits every page in `src/lib/pages.ts` and a search, word, and browse
-  page at both widths, with the phone menu open, and prints the placeholders it found;
-  `apps/web/e2e/site.spec.ts`, "the planned pages in the Tools and Products menus are # placeholders
-  for now, and All products opens the catalog"; `src/lib/site.test.ts`, "Log in opens /login/ in a
-  build whose account pages are open, and isn't a placeholder" and "Log in stays a # placeholder in
-  a build whose account pages are closed".
+  page at both widths, with the account menu open from 1024 pixels and the phone menu open below,
+  and prints the placeholders it found; `apps/web/e2e/site.spec.ts`, "the planned pages in the
+  Tools and Products menus are # placeholders for now, and All products opens the catalog";
+  `src/lib/site.test.ts`, "%s opens its page in a build whose account pages are open, and isn't a
+  placeholder" and "%s stays a # placeholder in a build whose account pages are closed", for Log in
+  and Create an account.
 
 **Current section.** The menu button of the section the page is in is in the foreground color on a
 muted background, where the others are muted text, and screen readers hear it as current
@@ -922,16 +990,19 @@ menu and in the phone menu, the link to the page itself is marked as the current
   menu" and "the drawer marks the current page, and closes with its close button"; smoke "the
   header marks Dictionary current on the dictionary home".
 
-**Phone menu.** Below 1024 pixels the menu button opens a sheet from the right, titled with the site
-name, that holds the four menus as groups that open and close (one at a time), the current
-section's group open, then Log in and Get the app. A mega menu's group lists its columns' links,
-with the Dictionary group led by Search. A group opens and closes with a click, Enter, or Space.
-Following a link, its close button (lucide `X`), Escape, going back or forward, or widening the
-window to 1024 pixels closes the sheet.
+**Phone menu.** Below 1024 pixels the menu button opens a sheet from the right, titled with the logo
+and the site name, with the Theme button beside its close button (Theme, above). It holds the four
+menus as groups that open and close (one at a time), the current section's group open, then Log
+in, or Your account in a browser that signed in, and Get the app. A mega menu's group lists its
+columns' links, with the Dictionary group led by Search. A group opens and closes with a click,
+Enter, or Space. Following a link, its close button (lucide `X`), Escape, going back or forward, or
+widening the window to 1024 pixels closes the sheet; choosing a theme keeps it open.
 
-- Source: #648 decision and mockups (Phone width); #650; #561 (the phone menu).
-- Check: `apps/web/e2e/site.spec.ts`, "the drawer holds the menus as groups, then Log in and Get
-  the app", "a drawer group opens and closes with a click, and its link opens the page", "the drawer
+- Source: #648 decision and mockups (Phone width); #650; #561 (the phone menu); #664 (the theme
+  beside Close, and the profile in Log in's place).
+- Check: `apps/web/e2e/site.spec.ts`, "the drawer has the theme beside Close, then the menus as
+  groups, then Log in and Get the app", "a drawer group opens and closes with a click, and its link
+  opens the page", "the drawer
   opens and its groups toggle with the keyboard, and Escape closes it", "following Log in or Get the
   app in the drawer closes it", "the drawer closes when the
   browser goes back, and stays closed going forward", and "the drawer closes when the window reaches
@@ -941,25 +1012,28 @@ window to 1024 pixels closes the sheet.
 iPhone app's page (`/products/zenbu-japanese-app/`), whose own Get the app opens the App
 Store link, a placeholder until that address is known. It is the same button in the header, the
 phone menu, and the prompt that actions needing the app open; following it closes the phone menu
-or the prompt. Log in opens the login page, `/login/`, where the account pages are open, as on
-staging, and is a `#` placeholder where they're closed, as in production today
-([Account pages](account.md#pages)), in the header and the phone menu alike. The header has no
-signed-in avatar menu.
+or the prompt. Log in, in the account menu from 1024 pixels and in the phone menu below, opens the
+login page, `/login/`, where the account pages are open, as on staging, and is a `#` placeholder
+where they're closed, as in production today ([Account pages](account.md#pages)).
 
 - Source: #648 decision and the Product page mockup's note (Get the app opens the product page);
-  #650; #652; #511 (the phone icon); #468 (the login page).
-- Check: `src/components/site-header.test.tsx`, "from 1024 pixels Log in and Get the app end the
-  header, Get the app opening the iPhone app’s page" and "the Get the app button leads with a phone
-  icon"; `src/lib/site.test.ts`, "Log in opens /login/ in a build whose account pages are open, and
-  isn't a placeholder" and "Log in stays a # placeholder in a build whose account pages are
-  closed"; `apps/web/e2e/account.spec.ts`, "the header's Log in, or the drawer's on phones, opens
-  the login page"; `apps/web/e2e/account-closed.spec.ts`, "the header's Log in, and the drawer's on
-  phones, stays a # placeholder"; `apps/web/e2e/product-page.spec.ts`, "the header’s Get the app
+  #650; #652; #511 (the phone icon); #468 (the login page); #664 (Log in moves into the account
+  menu).
+- Check: `src/components/site-header.test.tsx`, "from 1024 pixels Get the app and the account
+  button end the header, Get the app opening the iPhone app’s page" and "the Get the app button
+  leads with a phone icon"; `src/lib/site.test.ts`, "%s opens its page in a build whose account
+  pages are open, and isn't a placeholder" and "%s stays a # placeholder in a build whose account
+  pages are closed"; `apps/web/e2e/account.spec.ts`, "the account menu's Log in, or the drawer's on phones, opens
+  the login page"; `apps/web/e2e/account-closed.spec.ts`, "the account menu's Log in and Create an
+  account, and the drawer's Log in on phones, stay # placeholders"; `apps/web/e2e/product-page.spec.ts`, "the header’s Get the app
   opens this page"; `apps/web/e2e/word.spec.ts`, "opens the More actions menu with the app's
   actions".
 
-**Footer.** The footer starts with the 全 mark and the site name, linking home, and the site's
-one-line description. Four labelled columns follow: Products (Zenbu Japanese for iPhone,
+**Footer.** The footer sits on the muted grey in light mode (`bg-muted`) and a slightly lighter
+grey than the page in dark mode, after a rule, so the page, the homepage's closing card, and the
+footer read as three areas; its secondary text is the `muted-surface` grey, at 4.5:1 or more in
+both themes (Theme, above). It has no theme toggle. It starts with the logo and the site name,
+linking home, and the site's one-line description. Four labelled columns follow: Products (Zenbu Japanese for iPhone,
 Dictionary, and, where the account pages are open, Sign in, or Account once signed in:
 [Account pages](account.md#pages)), Tools (Kana charts, Kanji lists, Frequency lists, All tools),
 Company (About, Support, Contact, Sources), and Legal (Privacy Policy, Terms of Use, DMCA, Affiliate
@@ -967,20 +1041,26 @@ Disclosure). From 768
 pixels the brand and the columns sit side by side; on phones they stack into one column. Below
 them, after a rule, a row of plain social icons with no boxes, each named "Zenbu Japanese on" its
 network: YouTube, X, Instagram, TikTok, Discord, Reddit, Threads, Bluesky, LinkedIn, and Facebook,
-five to a row on phones. Each is the brand's own mark, drawn as inline SVG in the text color: Simple
+in one row at every width. On phones the ten share the row evenly, each an 18-pixel mark in a tap
+target at least 24 pixels across (WCAG 2.5.8), so they fit a 360-pixel phone without scrolling
+sideways; from 768 pixels each is a 20-pixel mark in a 36-pixel target. Each is the brand's own mark, drawn as inline SVG in the text color: Simple
 Icons' paths (CC0), and for LinkedIn, which Simple Icons doesn't carry, a trace of the In bug from
 LinkedIn's brand downloads (`components/social-links.tsx`). The copyright line and Sitemap end it. The legal
 index (`/legal/`) is in the Company menu rather than the footer.
 
-- Source: #648 decision and mockups (footer); #650; #614 (the browse links).
-- Check: `src/components/site-footer.test.tsx`, "the footer groups its links under Products, Tools,
+- Source: #648 decision and mockups (footer); #650; #614 (the browse links); #664 (the background
+  and the text's contrast); the owner's feedback on #679 (one compact row of icons on phones, in
+  place of the mockup's two rows of five).
+- Check: `apps/web/e2e/contrast.spec.ts` (the footer's contrast, on every page in both themes);
+  `src/components/site-footer.test.tsx`, "the footer groups its links under Products, Tools,
   Company, and Legal", "the footer stacks its columns into one on phones, and lays them side by side
-  from 768 pixels", "the footer leads with the brand linking home and its tagline", "a row of plain
-  brand icons, five to a row on phones, links each account in src/lib/site.ts", and "the footer ends
+  from 768 pixels", "the footer leads with the brand linking home and its tagline", "one row of plain
+  brand icons, all ten on phones, links each account in src/lib/site.ts", and "the footer ends
   with the copyright and the Sitemap"; `apps/web/e2e/site.spec.ts`, "the footer groups its links
   under Products, Tools, Company, and Legal, then ends with the copyright and Sitemap", "the footer
   lays its columns side by side from 768 pixels, and stacks them on phones", and "the footer shows
-  plain social icons, five to a row on phones"; smoke "the footer links the Privacy Policy".
+  all ten social icons in one row, with tap targets of 24 pixels or more" (at 360 pixels on
+  phones); smoke "the footer links the Privacy Policy".
 
 **Reading Aids.** The website has no Reading Aids settings yet. It shows what the app shows with
 its defaults: headwords and linked example words have furigana, examples show their translation,
