@@ -60,7 +60,7 @@ struct ZenbuAccountView: View {
           Button("Sign Out") { confirmsSignOut = true }
             .accessibilityIdentifier("zenbu-account.sign-out")
         } footer: {
-          Text("Signing out keeps your known words, lists, notes, and media on this iPhone.")
+          Text("Signing out keeps your known words, lists, watch history, notes, and media on this iPhone.")
         }
         Section {
           Button("Delete Account…", role: .destructive) { deletes = true }
