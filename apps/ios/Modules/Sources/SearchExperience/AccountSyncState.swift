@@ -102,7 +102,9 @@ struct AccountCopy: Codable, Hashable, Sendable {
           author: video.author, duration: video.duration, position: video.position,
           watchedAt: video.watchedAt))
     case .bookmark(let bookmark):
-      guard let shared = bookmark.shared else { return nil }
+      guard let shared = bookmark.shared,
+        shared.id.uuidString.lowercased() == change.key.entityID.lowercased()
+      else { return nil }
       value = .bookmark(shared)
     case .gone:
       value = .gone

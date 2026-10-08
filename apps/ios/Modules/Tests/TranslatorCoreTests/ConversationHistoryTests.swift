@@ -246,6 +246,20 @@ final class ConversationHistoryTests {
     #expect(Set(removed) == Set(saved.turns.map(\.sentences[0].id)))
   }
 
+  @Test("a sentence bookmarked in a conversation here and kept alone is listed once")
+  func listsASentenceOnce() async {
+    let history = await loadedHistory()
+    var saved = conversation(daysAgo: 0)
+    let sentence = saved.turns[0].sentences[0]
+    history.applySynced(
+      SharedBookmark(
+        id: sentence.id, text: sentence.text, translation: sentence.translation,
+        language: .japanese, bookmarkedAt: today))
+    saved.turns[0].sentences[0].isBookmarked = true
+    history.save(saved)
+    #expect(history.bookmarks.map(\.conversationID) == [saved.id])
+  }
+
   @Test("bookmarks are listed newest first, from conversations and alone")
   func bookmarkOrder() async {
     let history = await loadedHistory(at: today.addingTimeInterval(-10 * 60))
@@ -266,6 +280,7 @@ final class ConversationHistoryTests {
     try newer.write(to: file)
 
     let history = await loadedHistory()
+    #expect(history.bookmarksAreReadOnly)
     history.applySynced(shared("上書きしない", minutesAgo: 0))
     await history.flush()
 

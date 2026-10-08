@@ -418,7 +418,10 @@ tests prove that model against the real service.
   through `applySynced` and `applySyncedRemoval(ofBookmark:)`: a sentence in a conversation on this
   phone is marked there, and any other is kept in `Synced Bookmarks/bookmarks.json`, inside the
   conversations folder, which `ConversationHistory.bookmarks` lists beside the conversations' own,
-  newest first. Sync waits for the history to load.
+  newest first, each sentence once. Its writes merge, so a pull of many writes the file about once.
+  Sync waits for the history to load, and stops, as for an unreadable lists file, while that file
+  can't be read (`bookmarksAreReadOnly`); the cursor is saved only after the history's writes
+  finish.
 - **Favorites** has one ID in every app ([`account-clients.md`](account-clients.md), The rules, from
   your side). A second phone's `create` of it is rejected `already_exists`, which the first upload
   never undoes: the account's copy comes down, and the phone's words still add. If that copy comes

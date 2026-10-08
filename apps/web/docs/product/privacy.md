@@ -37,11 +37,13 @@ send the account service nothing while signed out, and lists what a Zenbu accoun
   order, and words), the iPhone app's watch history (the 50 most recently watched YouTube videos,
   each with its video ID, title, channel, length, where the learner stopped, the share of its
   captions they know, and when they last watched it), the iPhone app's bookmarked Translate
-  sentences (each one's text and translation, its language, and when it was bookmarked, which may
+  sentences (each one's text and translation, its language, and when it was bookmarked, or said
+  for one bookmarked before the app synced bookmarks, which may
   be what someone else said, but only sentences the learner bookmarks, never a conversation), a
   record of each item's latest change, deletions included (a removed or pruned video keeps only its
   video ID and when it went, for the latest 100, and a removed bookmark only its ID), and each sync
-  request's result, which names the item it changed and when.
+  request's result, which names the item it changed and when, with a one-way fingerprint of the
+  request.
 
 It also says the codes are kept encrypted, and nonces too, for 10 minutes, with request counts by
 IP address for a few minutes; that notes, photos, recent searches, and settings stay on the device;
@@ -131,9 +133,9 @@ its own data and works signed out. There's no export feature: a learner asks
 **Translate.** The app's on-device data names Translate's conversations, and says Translate uses the
 microphone only while a conversation or Listening runs, hears whoever speaks nearby, recognizes and
 translates speech on the device, and keeps no audio: a conversation's text and translations stay on
-the device until the learner deletes them, and are never sent to Zenbu. Signed in, a sentence the
-learner bookmarks syncs with its translation; it may be what someone else said, so only bookmarked
-sentences leave the device. Permissions name the microphone beside the camera.
+the device until the learner deletes them, and are never sent to Zenbu. Once they sign in, a sentence the
+learner bookmarks, before or after signing in, syncs with its translation; it may be what someone
+else said, so only bookmarked sentences leave the device. Permissions name the microphone beside the camera.
 
 - Source: the app's [Translate](../../../ios/docs/product/translate.md) docs ("Nothing anyone
   says is sent to a server", but a bookmarked sentence while signed in; "Conversations are stored

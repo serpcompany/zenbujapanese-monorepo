@@ -206,7 +206,8 @@ again a few times, waiting longer each time, only while the app is open.
   another device that pushes one past 50 removes it here too.
 - A sentence un-bookmarked on one device is un-bookmarked everywhere, unless another device
   bookmarked it again since without this one hearing; then it stays bookmarked. The account holds
-  at most 2,000 bookmarks; past that, a new bookmark is taken back off.
+  at most 2,000 bookmarks; past that, a new bookmark is taken back off, and bookmarks a first sync
+  can't fit stay on the phone without syncing.
 
 **Zenbu Account** shows the email, when the last sync was (or that one is running), how many
 changes are waiting, and a note when the last sync failed, with **Sync Now**, **Sign Out**, and

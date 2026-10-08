@@ -85,7 +85,7 @@ final class AccountSync: LocalFileStore {
 
   var canSync: Bool {
     isLoaded && !isUnavailable && account != nil && wordKnowledge.canChange
-      && wordLists.canChange && translations.isLoaded
+      && wordLists.canChange && translations.isLoaded && !translations.bookmarksAreReadOnly
   }
 
   func isDue(staleAfter: TimeInterval) -> Bool {
@@ -241,6 +241,7 @@ final class AccountSync: LocalFileStore {
       for change in answer.changes { apply(change) }
       await wordKnowledge.flush()
       await wordLists.flush()
+      await translations.flush()
       guard self.session == session else { return }
       state.cursor = answer.cursor
       persist()

@@ -45,10 +45,10 @@ export default function PrivacyPage() {
         Translate listens through the microphone only while a conversation or Listening is running,
         and hears whoever is speaking nearby. Their speech is recognized and translated on your
         device, and no audio is kept: the conversation's text and its translations stay on your
-        device until you delete them, and are never sent to us. If you're signed in to a Zenbu
-        account, a sentence you bookmark syncs to it with its translation (see below), so your other
-        devices show it; a sentence can be something someone else said, so only the ones you
-        bookmark leave your device.
+        device until you delete them, and are never sent to us. If you sign in to a Zenbu account,
+        the sentences you bookmark, before or after signing in, sync to it with their translations
+        (see below), so your other devices show them; a sentence can be something someone else said,
+        so only the ones you bookmark leave your device.
       </p>
       <p>
         Text recognition, translation, and pronunciation use Apple's Vision, Translation, and speech
@@ -111,13 +111,14 @@ export default function PrivacyPage() {
           in its Player, each with its YouTube video ID, title, and channel, its length, where you
           stopped, how much of its captions you know, and when you last watched it; from the iPhone
           app, the Translate sentences you bookmark, each with its text and its translation, which
-          language it was said in, and when you bookmarked it, which may be what someone else said,
-          but only sentences you bookmark, never a whole conversation; a record of each item's
-          latest change, including a deletion, so your other devices follow it, which for a video
-          you removed from your history, or one past the 50, keeps only its YouTube video ID and
-          when it went, for the latest 100, and for a bookmark you removed, only its ID; and the
-          result of each sync request, which names the item it changed and when, so that a retry is
-          never applied twice.
+          language it was said in, and when you bookmarked it (or, for one bookmarked before the app
+          synced bookmarks, when it was said), which may be what someone else said, but only
+          sentences you bookmark, never a whole conversation; a record of each item's latest change,
+          including a deletion, so your other devices follow it, which for a video you removed from
+          your history, or one past the 50, keeps only its YouTube video ID and when it went, for
+          the latest 100, and for a bookmark you removed, only its ID; and the result of each sync
+          request, which names the item it changed and when, with a one-way fingerprint of what the
+          request sent, so that a retry is never applied twice.
         </li>
       </ul>
       <p>

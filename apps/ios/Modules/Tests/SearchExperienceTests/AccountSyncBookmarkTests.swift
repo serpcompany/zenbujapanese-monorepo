@@ -156,6 +156,18 @@ struct AccountSyncBookmarkTests {
     #expect(fixture.queuedOperations == ["bookmarkedSentence remove \(id.uuidString.lowercased())"])
   }
 
+  @Test("a synced bookmarks file this version can't read stops sync, rather than losing bookmarks")
+  func unreadableBookmarksStopSync() async throws {
+    let fixture = try await Fixture.afterSignIn()
+    #expect(fixture.sync.canSync)
+    let folder = fixture.directory.appending(path: "Translate Conversations/Synced Bookmarks")
+    try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
+    try Data(#"{"version":2,"bookmarks":[]}"#.utf8).write(to: folder.appending(path: "bookmarks.json"))
+    await fixture.launch()
+    #expect(fixture.translations.bookmarksAreReadOnly)
+    #expect(!fixture.sync.canSync)
+  }
+
   @Test("a phone that synced before bookmarks did uploads them once, from no cursor")
   func catchesUpOnBookmarks() async throws {
     let (_, caughtUp) = try await Fixture.caughtUp(

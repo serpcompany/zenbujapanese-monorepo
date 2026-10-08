@@ -7,9 +7,9 @@ Japanese word on the tab opens the same dictionary sheet the Player uses.
 
 Everything runs on the iPhone: Apple's speech recognition, Apple Translation, and the system
 voice. Nothing anyone says is sent to a server, and nothing costs money. The one thing that leaves
-the iPhone is a sentence the learner bookmarks while signed in to a Zenbu account: that sentence and
-its translation sync to their other devices ([Translations](#translations)), and nothing else of the
-conversation does. The first conversation downloads
+the iPhone is a sentence the learner bookmarks, once they sign in to a Zenbu account (bookmarks
+made before signing in go then too): that sentence and its translation sync to their other devices
+([Translations](#translations)), and nothing else of the conversation does. The first conversation downloads
 Apple's Japanese and English speech recognition and translation once, with progress shown above
 the Start button; after that, Translate works without a connection. There is no Online
 engine yet, so there is no Online/Offline switch and no cost or model details.

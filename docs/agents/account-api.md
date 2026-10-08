@@ -251,7 +251,8 @@ mutation change the profile through the same rule.
   answered in lowercase, `src/domain/bookmarks.ts`): one sentence the learner bookmarked in
   Translate, never the conversation around it. `add` sends its `text` (cut to 2,000 characters),
   its `translation` (cut to 4,000, or null), its `language` (`ja` or `en`), and `bookmarkedAt` (the
-  app's time, from 2000 on); control characters become spaces, and nothing else is taken, the
+  app's time, from 2000 on; the iOS app sends when the sentence was said for one bookmarked before
+  it synced bookmarks); control characters become spaces, and nothing else is taken, the
   conversation's ID included. Like a list word, an add always applies, and adding one the account
   has changes nothing; `remove` applies only at the current version, so an add the remover never
   saw wins. A removed bookmark's row keeps only its ID and version, none of what was said.

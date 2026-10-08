@@ -16,6 +16,7 @@ public final class ConversationHistory: ConversationArchiving {
   public private(set) var conversations: [Conversation] = []
   public private(set) var sharedOnly: [SharedBookmark] = []
   public private(set) var isLoaded = false
+  public private(set) var bookmarksAreReadOnly = false
   public var liveConversationID: UUID?
   @ObservationIgnored public var bookmarkObserver: ((BookmarkChange) -> Void)?
 
@@ -24,6 +25,7 @@ public final class ConversationHistory: ConversationArchiving {
   @ObservationIgnored private let now: @MainActor () -> Date
   @ObservationIgnored private var removedBeforeLoad: Set<UUID> = []
   @ObservationIgnored private var lastWrite: Task<Void, Never>?
+  @ObservationIgnored private var sharedOnlyWriteQueued = false
 
   public init(
     directory: URL = ConversationHistory.defaultDirectory,
@@ -56,7 +58,9 @@ public final class ConversationHistory: ConversationArchiving {
   }
 
   public var bookmarks: [BookmarkedSentence] {
-    (saved.flatMap(\.bookmarks) + sharedOnly.map(\.listed))
+    let inConversations = saved.flatMap(\.bookmarks)
+    let listed = Set(inConversations.map(\.id))
+    return (inConversations + sharedOnly.filter { !listed.contains($0.id) }.map(\.listed))
       .sorted { $0.bookmarkedAt > $1.bookmarkedAt }
   }
 
@@ -153,8 +157,17 @@ public final class ConversationHistory: ConversationArchiving {
   }
 
   private func saveSharedOnly() {
-    let bookmarks = sharedOnly
-    enqueue { [bookmarkFile] in await bookmarkFile.write(bookmarks) }
+    guard !sharedOnlyWriteQueued else { return }
+    sharedOnlyWriteQueued = true
+    enqueue { [weak self, bookmarkFile] in
+      guard let bookmarks = await self?.sharedOnlyToWrite() else { return }
+      await bookmarkFile.write(bookmarks)
+    }
+  }
+
+  private func sharedOnlyToWrite() -> [SharedBookmark] {
+    sharedOnlyWriteQueued = false
+    return sharedOnly
   }
 
   private func finishLoading(_ loaded: [Conversation], shared: SharedBookmarksLoad) {
@@ -162,7 +175,10 @@ public final class ConversationHistory: ConversationArchiving {
     conversations.append(
       contentsOf: loaded.filter { !current.contains($0.id) && !removedBeforeLoad.contains($0.id) })
     sortNewestFirst()
-    if case .loaded(let bookmarks) = shared { sharedOnly = bookmarks }
+    switch shared {
+    case .loaded(let bookmarks): sharedOnly = bookmarks
+    case .keptAside: bookmarksAreReadOnly = true
+    }
     removedBeforeLoad = []
     isLoaded = true
   }

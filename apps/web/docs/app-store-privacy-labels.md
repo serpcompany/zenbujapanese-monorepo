@@ -62,7 +62,8 @@ reads and changes (`watch:read` and `watch:write`):
 
 The App Store then also shows Browsing History and Usage Data under Data Linked to You. Its Other
 User Content is the known words and lists it syncs, and the Translate sentences the learner
-bookmarks: each one's text and translation, its language, and when it was bookmarked, which may be
+bookmarks: each one's text and translation, its language, and when it was bookmarked (or said, for
+one bookmarked before the app synced bookmarks), which may be
 what someone nearby said. It never sends a conversation, or a sentence the learner didn't bookmark,
 and it keeps no audio, so it collects no Audio Data. It has no analytics or crash-reporting SDK.
 

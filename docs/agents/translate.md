@@ -39,7 +39,8 @@ The tab is split across two Swift targets in `apps/ios/Modules`
     `SharedBookmark`: the sentence's text, translation, language, and `bookmarkedAt`, and never its
     conversation), and takes the account's through `applySynced`. A bookmark whose sentence isn't
     in a conversation here is kept in `Synced Bookmarks/bookmarks.json` in that folder
-    (`SharedBookmarks.swift`), which is left in place, and not written, if it can't be read. The
+    (`SharedBookmarks.swift`), which is left in place, and not written, if it can't be read
+    (`bookmarksAreReadOnly`, which stops the account's sync). The
     account side is in [`ios.md`](ios.md), Account and sync.
 - **`SearchExperience`** (`apps/ios/Modules/Sources/SearchExperience/Translate/`) holds the screens
   and the Apple adapters: `OnDeviceTranscriber` (an actor running `AVAudioEngine` into one
