@@ -94,8 +94,8 @@ export function ConfirmItsYou({
         />
       ) : (
         <p className="text-sm">
-          This site can’t confirm it’s you the way your account signs in. Use the Zenbu Japanese app
-          instead.
+          This site can’t confirm it’s you the way your account signs in, so it can’t make this
+          change here yet.
         </p>
       )}
       <Button

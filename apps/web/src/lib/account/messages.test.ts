@@ -30,13 +30,13 @@ describe('what the account pages say when the account service refuses', () => {
       'This email’s account signs in with Apple or Google. Sign in that way, then add your email on your account page.'
     )
     expect(failureMessage(notLinked, { apple: false, google: false })).toBe(
-      'This email’s account signs in with Apple or Google, which this site doesn’t offer yet. Sign in that way in the app you made the account in.'
+      'This email’s account signs in with Apple or Google, which this site doesn’t offer yet, so you can’t sign in to it here for now.'
     )
     expect(failureMessage(notLinked, { apple: false, google: true })).toBe(
-      'This email’s account signs in with Apple or Google. If it’s Google, sign in with Google here, then add your email on your account page; if not, sign in in the app you made the account in.'
+      'This email’s account signs in with Apple or Google. If it’s Google, sign in with Google, then add your email on your account page. This site doesn’t offer Apple yet.'
     )
     expect(failureMessage(notLinked, { apple: true, google: false })).toContain(
-      'If it’s Apple, sign in with Apple here'
+      'If it’s Apple, sign in with Apple, then add your email on your account page. This site doesn’t offer Google yet.'
     )
     expect(failureMessage(refused(400, 'invalid_otp'), { apple: false, google: false })).toContain(
       'That code isn’t right'

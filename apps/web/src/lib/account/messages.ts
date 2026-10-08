@@ -57,11 +57,11 @@ const everyProvider: ProvidersHere = { apple: true, google: true }
 
 function signsInWithAProvider(here: ProvidersHere): string {
   if (here.apple && here.google) return notLinked
-  const offered = here.apple ? 'Apple' : here.google ? 'Google' : null
-  if (offered === null) {
-    return 'This email’s account signs in with Apple or Google, which this site doesn’t offer yet. Sign in that way in the app you made the account in.'
+  if (!here.apple && !here.google) {
+    return 'This email’s account signs in with Apple or Google, which this site doesn’t offer yet, so you can’t sign in to it here for now.'
   }
-  return `This email’s account signs in with Apple or Google. If it’s ${offered}, sign in with ${offered} here, then add your email on your account page; if not, sign in in the app you made the account in.`
+  const [offered, missing] = here.apple ? ['Apple', 'Google'] : ['Google', 'Apple']
+  return `This email’s account signs in with Apple or Google. If it’s ${offered}, sign in with ${offered}, then add your email on your account page. This site doesn’t offer ${missing} yet.`
 }
 
 export function failureMessage(failure: Failure, here: ProvidersHere = everyProvider): string {

@@ -12,7 +12,9 @@ export default async function AccountPage({ searchParams }: PageProps<'/account'
   return (
     <AccountPageShell
       title={accountPages.account.title}
-      intro={settings ? 'The same Zenbu account signs in here and in our apps.' : null}
+      intro={
+        settings ? 'See and change your profile and how you sign in, or delete your account.' : null
+      }
     >
       {settings ? (
         <AccountView settings={settings} returnedError={returnedError(await searchParams)} />

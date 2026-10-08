@@ -62,9 +62,10 @@ describe('signing in on the website', () => {
   test('sends an Apple or Google account to sign in that way, here only where the site offers it', async () => {
     for (const [settings, says] of [
       [everything, 'Sign in that way, then add your email on your account page.'],
+      [emailOnly, 'which this site doesn’t offer yet, so you can’t sign in to it here for now.'],
       [
-        emailOnly,
-        'which this site doesn’t offer yet. Sign in that way in the app you made the account in.'
+        { ...emailOnly, appleServicesId: 'com.zenbujapanese.web' },
+        'This site doesn’t offer Google yet.'
       ]
     ] as const) {
       stubAccountService({

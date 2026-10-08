@@ -338,6 +338,33 @@ describe('the account page', () => {
     )
   })
 
+  test('says it can’t confirm an account whose ways this site offers none of', async () => {
+    signedIn({ ways: [appleWay] })
+    const api = accountApi(apiUrl)
+    const page = render(
+      <ConfirmItsYou
+        api={api}
+        tokens={accessTokens(api)}
+        settings={settings()}
+        account={{
+          session: { userId: 'u1', email, signedInAt: 0, token: 'old-bare' },
+          profile,
+          identities: [{ id: 'i1', provider: 'apple', subject: '001.apple' }]
+        }}
+        appleOnly={false}
+        why="Deleting needs a sign-in from the last few minutes."
+        onConfirmed={() => undefined}
+        onCancel={() => undefined}
+      />
+    )
+    await shows(
+      page,
+      'This site can’t confirm it’s you the way your account signs in, so it can’t make this change here yet.'
+    )
+    expect(page.textContent).not.toContain('Zenbu Japanese app')
+    expect(page.textContent).not.toContain('Email me a code')
+  })
+
   test('deletes nothing when the learner cancels while confirming is still finishing', async () => {
     let finish: (response: Response) => void = () => {}
     const { routes } = signedIn({

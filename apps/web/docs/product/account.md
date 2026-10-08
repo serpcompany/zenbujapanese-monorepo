@@ -87,8 +87,8 @@ minutes"), with "Send a new code" and "Use another email". A refusal says what t
 - a wrong code, an expired one, and too many wrong ones;
 - an email whose account signs in with Apple or Google: sign in that way, then add the email.
   The service doesn't say which, so where the site offers only one, it says to sign in with that
-  one here if it's the one, or else in the app the account was made in; where it offers neither,
-  that it doesn't offer them yet, so sign in that way in that app;
+  one if it's the one, and that the site doesn't offer the other yet; where it offers neither,
+  that it doesn't offer them yet, so the learner can't sign in to it here for now;
 - no email sender on the service: try again later;
 - `429`: how many seconds or minutes the service's `Retry-After` (or Better Auth's
   `X-Retry-After`) names, or a few minutes when it names none.
@@ -98,8 +98,7 @@ minutes"), with "Send a new code" and "Use another email". A refusal says what t
 - Check: Sign-in form tests, "says why a code was refused, and how long to wait after too many"
   and "sends an Apple or Google account to sign in that way, here only where the site offers it";
   `src/lib/account/messages.test.ts`, "sends an Apple or Google account to sign in only a way this
-  site offers";
-  `src/lib/account/messages.test.ts`; `src/lib/account/client.test.ts`, "reads how long to wait
+  site offers", and its other tests; `src/lib/account/client.test.ts`, "reads how long to wait
   from Retry-After, or Better Auth's X-Retry-After".
 
 **No password needed.** `/forgot-password/` says Zenbu accounts have no password, so there's
@@ -213,7 +212,8 @@ it's you; the code typed is dropped, and a new one is sent after.
   browser is still signed in to the account on the page".
 
 **Confirm it's you.** A fresh sign-in, with the ways the account has: Apple, Google, or a code to
-the account's own email. Apple must be the Apple ID the account uses: another is refused before
+the account's own email. Where the site offers none of them, it says it can't confirm it's you, so
+it can't make the change here yet. Apple must be the Apple ID the account uses: another is refused before
 it signs in. Confirming, or adding an email code, which signs in again too, signs this browser's
 earlier session out, and the page takes a new access token, which carries the new sign-in. The
 page then counts itself fresh for nine minutes by its own clock, whatever the browser's clock says
@@ -236,7 +236,8 @@ the browser's Back button forgets it; a page that can't load the account keeps i
   when Google's account is another's", "says plainly when confirming with Google made a new
   account", "counts no confirmation when Google's sign-in didn't happen,
   as back from a failed one", "deletes nothing when the learner cancels while confirming is still
-  finishing", "goes on with nothing when confirming lands the browser in another account", and
+  finishing", "goes on with nothing when confirming lands the browser in another account", "says
+  it can't confirm an account whose ways this site offers none of", and
   "closes Delete when confirming lands the browser in another account"; Ways
   tests, "adds the account's own email as a way to sign in,
   with a code", "adds Apple after confirming, whatever the browser clock says of the new sign-in",
