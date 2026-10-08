@@ -21,7 +21,8 @@ error is `{ "error": { "code": "...", "message": "..." } }`: branch on `code`, s
 Staging and production are separate: an account, a session, or an access token from one means
 nothing to the other, so a build talks to one host for everything, the dictionary service's app
 routes included. Cloudflare's Bot Fight Mode is on for the zone, so a request from a data center,
-such as a CI runner, may get a challenge page instead of an answer; one from a device doesn't.
+such as a CI runner, may get a challenge page instead of an answer, and so, rarely, may an app's
+(ADR 0012): treat an answer that isn't JSON as a network failure.
 
 ## Your app
 
@@ -140,7 +141,10 @@ A sign-in answers the learner, and the **session token** in the `set-auth-token`
 the Keychain: it's the refresh token, good for 60 days from its last use. Send it only to
 `/v1/auth`. An app with no `account` scope uses only the sign-in routes, `GET /v1/auth/token`, and
 `POST /v1/auth/sign-out`; the rest manage the account and need `account` or `profile`. At most five
-codes go to one email in 10 minutes (`429`, with `Retry-After`: wait that many seconds). The same
+codes go to one email in 10 minutes. Each address Cloudflare sees may also ask for five codes and
+try ten in 10 minutes, ask for 30 nonces and make 20 Apple or Google sign-ins a minute, and send
+100 other requests to `/v1/auth` a minute. Past any of them the answer is `429`, with
+`Retry-After`: wait that many seconds. The same
 Apple account, Google account, or email signs in to the same Zenbu account in
 every app, as long as the account has that way in; an email that already has an account through
 another way is refused until the learner adds it there, signed in (`401 oauth_link_error`,
@@ -411,8 +415,10 @@ Every error names a `code`, and the reference lists the codes each route answers
 | `409 version_conflict` | Take `current`, show it, and let the learner try again. |
 | `410 invalid_cursor` | Sync again with no cursor. |
 | `413 too_large` | Send fewer mutations. |
-| `429 too_many_requests` | Wait the seconds `Retry-After` says (or Better Auth's `X-Retry-After`), whatever started the request. |
-| `500 internal`, `503`, a network failure | Retry with exponential backoff and jitter, in the foreground. |
+| `429 too_many_requests` | Wait the seconds `Retry-After` says, whatever started the request. |
+| `500 internal`, a network failure, an answer that isn't JSON | Retry with exponential backoff and jitter, in the foreground. |
+| `503 apple_unavailable` | Nothing was deleted: sign in with Apple again for a new code, and try again (Deleting the account). |
+| `503 email_unavailable` | The service sends no email here: offer Apple or Google, and don't retry the code. |
 | A code not listed | Act on its status as above. A newer service, or Better Auth, may add one. |
 
 A rejected sync mutation carries its own code in its result, never as the answer's status: the
@@ -434,7 +440,10 @@ Every app that signs in offers deleting the account (App Review guideline 5.1.1(
 1. Ask the learner to confirm, and to sign in again: deleting needs a sign-in from the last 10
    minutes (`403 sign_in_again`).
 2. If the account signs in with Apple, sign in with Apple, and keep the **authorization code**
-   Apple gives with that sign-in.
+   Apple gives with that sign-in. An app with `account` knows from `GET /v1/auth/list-accounts`
+   (a `providerId` of `apple`). One without it, such as Tomodachi, sends step 3 without a code: an
+   Apple account answers `400 apple_authorization_needed`, so it then signs in with Apple and
+   sends the code. If the fresh sign-in in step 1 was Apple's, send its code at once.
 3. `DELETE /v1/me` with `{ "confirm": true }`, and `"appleAuthorizationCode"` for an Apple
    account: the code from signing in with the Apple ID the account uses. The service revokes your
    app's Apple access with it before deleting. `apple_authorization_needed`,
