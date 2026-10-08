@@ -106,13 +106,14 @@ the arrow keys while one of its controls has focus.
 **Facts.** A row under the demo: Platform (iPhone) is written on the page. After it, Requires (iOS
 … or later) and Version come from Apple's App Store lookup
 (`https://itunes.apple.com/lookup?bundleId=com.zenbujapanese.app`), so they match what's live on
-the App Store, not TestFlight: two to a row on phones, and all three in one row from 768 pixels.
-The page renders per request, and the Worker keeps Apple's answer in its edge cache for a day
-(`src/lib/app-store.ts`). The row streams in after the rest of the page, which shows Platform
-until Apple answers, so a slow lookup (at most 3 seconds) never holds the page back. When Apple
-can't be reached, answers with an error, or lists no app, as before the app is on the store, those
-two facts are left out and the row shows Platform alone; a failure logs `app_store_lookup_failed`,
-and is kept for 5 minutes, so the next views don't wait on Apple again.
+the App Store, not TestFlight: two to a row on phones, with Version centered under them, and all
+three in one row from 768 pixels. The page renders per request, and the Worker keeps Apple's
+answer in its edge cache for a day (`src/lib/app-store.ts`). The row streams in after the rest of
+the page, which shows Platform until Apple answers, so a slow lookup (at most 3 seconds) never
+holds the page back. When Apple can't be reached, answers with an error, or lists no app, as before
+the app is on the store, those two facts are left out and the row shows Platform alone, centered;
+a failure logs `app_store_lookup_failed`, and is kept for 5 minutes, so the next views don't wait
+on Apple again.
 
 - Source: #648 decision; the owner's decision on #652 (cached for a day, left out when Apple can't
   be reached or returns nothing); #668 (no Account fact).
@@ -171,7 +172,7 @@ that it's built on open data, since accounts and sync are coming (#468, #574), a
 its description.
 
 - Source: #668.
-- Check: Claims spec, "the iPhone app’s page makes none".
+- Check: Claims spec, "/products/zenbu-japanese-for-iphone/ makes none".
 
 ## Site-wide
 

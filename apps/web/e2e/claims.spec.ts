@@ -6,9 +6,9 @@ const droppedClaims = [
   /no account/i,
   /need an account/i,
   /nothing to sign up for/i,
-  /stays? on (your|the) (iPhone|device)/i,
+  /(stays?|stored) on (this|your|the) (iPhone|device)/i,
   /private by default/i,
-  /built on open data/i
+  /open data/i
 ]
 
 async function descriptions(page: Page) {
@@ -35,10 +35,12 @@ test.describe('no account, local-only, or open-data claims', () => {
     expectNoDroppedClaim([...(await sections.allTextContents()), ...(await descriptions(page))])
   })
 
-  test('the iPhone app’s page makes none', async ({ page }) => {
-    await page.goto(iphoneAppPage.path)
-    const main = page.getByRole('main')
-    await expect(main.getByRole('heading', { level: 1 })).toBeVisible()
-    expectNoDroppedClaim([(await main.textContent()) ?? '', ...(await descriptions(page))])
-  })
+  for (const path of [iphoneAppPage.path, '/about/']) {
+    test(`${path} makes none`, async ({ page }) => {
+      await page.goto(path)
+      const main = page.getByRole('main')
+      await expect(main.getByRole('heading', { level: 1 })).toBeVisible()
+      expectNoDroppedClaim([(await main.textContent()) ?? '', ...(await descriptions(page))])
+    })
+  }
 })

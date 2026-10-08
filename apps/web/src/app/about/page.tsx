@@ -9,8 +9,7 @@ export default function AboutPage() {
     <PageShell title="About">
       <p>
         {site.name} helps learners understand the Japanese they meet: typed, photographed,
-        handwritten, or heard in a video. Its dictionary works offline, and your words, notes, and
-        lists stay on your device.
+        handwritten, or heard in a video. Its dictionary works offline.
       </p>
     </PageShell>
   )
