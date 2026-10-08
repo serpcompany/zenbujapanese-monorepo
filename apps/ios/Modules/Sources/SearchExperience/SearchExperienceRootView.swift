@@ -1,12 +1,6 @@
 import SwiftUI
 
-public struct SearchExperienceRootView: View {
-  @State private var readingAidPreferences = ReadingAidPreferences()
-  @State private var userProfile = UserProfile()
-  private let wordKnowledge = WordKnowledge.shared
-  private let wordLists = WordLists.shared
-  private let zenbuAccount = ZenbuAccount.shared
-  @Environment(\.scenePhase) private var scenePhase
+struct SearchExperienceRootView: View {
   @State private var selectedTab = SearchExperienceTab.search
   @State private var frequencyRefreshID = 0
   @State private var path: [SearchExperienceRoute] = []
@@ -41,7 +35,7 @@ public struct SearchExperienceRootView: View {
   private let imageTextExplanationClient: ImageTextExplanationClient
   private let imageTextClipboardClient: ImageTextClipboardClient
 
-  public init() {
+  init() {
     lookupClient = .live
     exampleSentenceClient = .live
     let morphologyClient: JapaneseMorphologyClient =
@@ -63,13 +57,8 @@ public struct SearchExperienceRootView: View {
     imageTextClipboardClient = .live
   }
 
-  public var body: some View {
+  var body: some View {
     appTabs
-      .environment(readingAidPreferences)
-      .environment(userProfile)
-      .environment(wordKnowledge)
-      .environment(wordLists)
-      .environment(zenbuAccount)
       .modifier(
         WebsiteLinkOpening(
           lookupClient: lookupClient, searchPath: searchPath, query: $query,
@@ -77,18 +66,6 @@ public struct SearchExperienceRootView: View {
             selectedTab = .search
             dismissRecognizedWordSheet(if: true)
           }))
-      .onChange(of: scenePhase, initial: true) { _, phase in
-        switch phase {
-        case .active:
-          wordKnowledge.saveIfNeeded()
-          wordLists.saveIfNeeded()
-          zenbuAccount?.scheduler.appBecameActive()
-        case .background:
-          zenbuAccount?.scheduler.appEnteredBackground()
-        default:
-          break
-        }
-      }
   }
 
   private var appTabs: some View {
