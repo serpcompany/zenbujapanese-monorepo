@@ -98,10 +98,13 @@ lists every child sitemap and each child sitemap lists the new URLs.
   `src/lib/metadata.ts` name them in every page's head; copy a file again when the brand's
   changes.
 - The theme ([product docs](../../apps/web/docs/product/dictionary.md#header-footer-and-site-wide),
-  Theme): `next-themes`' `ThemeProvider` in `src/app/layout.tsx` puts `light` or `dark` on
-  `<html>` (which carries `suppressHydrationWarning`, since its script changes the class before
-  React hydrates), from the choice in local storage (`theme`) or the system's, and its inline
-  script does that before the page paints. That script is a function `next-themes` turns into a
+  Theme): `next-themes`' `ThemeProvider`, wrapped in `src/components/theme-provider.tsx` and
+  placed in `src/app/layout.tsx`, puts `light` or `dark` on `<html>` (which carries
+  `suppressHydrationWarning`, since its script changes the class before React hydrates), from the
+  choice in local storage (`theme`) or the system's, and its inline script does that before the
+  page paints. The wrapper gives the script `type="text/plain"` once in the browser, as the Next.js
+  guide on preventing a flash before hydration does, so React doesn't warn about a script it renders
+  there, and `data-cfasync="false"`, so Cloudflare's Rocket Loader never defers it. That script is a function `next-themes` turns into a
   string, so `apps/web/wrangler.jsonc` sets `keep_names` to `false`: with esbuild's default, the
   Worker's bundle adds `__name` calls to it that the browser doesn't have, and it fails with
   `ReferenceError: __name is not defined` (OpenNext's
