@@ -1,14 +1,13 @@
 import AVFoundation
 import Translation
 import TranslatorCore
+import TranslatorOnDevice
 
 enum OnDeviceTranslation {
-  static func locale(_ language: SpokenLanguage) -> Locale.Language {
-    Locale.Language(identifier: language.rawValue)
-  }
-
   static var downloadConfiguration: TranslationSession.Configuration {
-    TranslationSession.Configuration(source: locale(.japanese), target: locale(.english))
+    TranslationSession.Configuration(
+      source: SpokenLanguage.japanese.translationLanguage,
+      target: SpokenLanguage.english.translationLanguage)
   }
 
   static func availability() async -> NaturalTranslationAvailability {
@@ -16,21 +15,11 @@ enum OnDeviceTranslation {
     var statuses: [LanguageAvailability.Status] = []
     for language in SpokenLanguage.allCases {
       statuses.append(
-        await availability.status(from: locale(language), to: locale(language.counterpart)))
+        await availability.status(
+          from: language.translationLanguage, to: language.counterpart.translationLanguage))
     }
     if statuses.contains(.unsupported) { return .unsupported }
     return statuses.allSatisfy { $0 == .installed } ? .installed : .downloadable
-  }
-
-  static let client = SentenceTranslationClient { text, language, _ in
-    let session = TranslationSession(
-      installedSource: locale(language), target: locale(language.counterpart))
-    guard await session.isReady else { throw TranslatorFailure.translationUnavailable }
-    do {
-      return try await session.translate(text).targetText
-    } catch {
-      throw TranslatorFailure.translationUnavailable
-    }
   }
 }
 
@@ -174,7 +163,7 @@ struct TranslateServices: Sendable {
         setHearing: { await OnDeviceTranscriber.shared.setHearing($0) },
         stop: { await OnDeviceTranscriber.shared.stop() }
       ),
-      translation: OnDeviceTranslation.client,
+      translation: .onDevice,
       playback: SystemSpeechPlayer.client
     ),
     requestMicrophone: { await AVAudioApplication.requestRecordPermission() },

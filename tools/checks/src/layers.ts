@@ -11,6 +11,10 @@ export const swiftLayers: readonly SwiftLayer[] = [
   {
     folder: 'apps/ios/Modules/Sources/TranslatorCore/',
     allowedImports: ['Foundation', 'Observation', 'OSLog']
+  },
+  {
+    folder: 'apps/ios/Modules/Sources/TranslatorOnDevice/',
+    allowedImports: ['Foundation', 'AVFoundation', 'Speech', 'Translation', 'TranslatorCore']
   }
 ]
 
