@@ -134,7 +134,7 @@ answers, headers, and error codes, and every field of a card and a token. An app
 
 | Route | Answer |
 | --- | --- |
-| `GET /v1/apps/word-cards?ids=<id>,<id>` | The word cards for 1 to 100 Language Reference IDs (`zenbu.word-cards.v1`, [`language-data/word-cards.md`](../../language-data/word-cards.md)), in the order asked, each once: `format`, `license`, `sources` (each source's notice), `cards`, `missing` (the IDs no entry has), and `languageData`. |
+| `GET /v1/apps/word-cards?ids=<id>,<id>` | The word cards for 1 to 100 Language Reference IDs, counted as sent (`zenbu.word-cards.v1`, [`language-data/word-cards.md`](../../language-data/word-cards.md)), in the order asked, each once: `format`, `license`, `sources` (each source's notice), `cards`, `missing` (the IDs no entry has), and `languageData`. |
 | `GET /v1/apps/segmentation?text=` | A text of 1 to 200 characters split into words, as the app links captions and example sentences (`zenbu.segmentation.v1`): `format`, `text`, and `tokens`, each with its `text`, its `reading` in hiragana when it has kanji, its `dictionaryForm` when that differs, and its `languageReferenceID` when it's one word, or `candidates` when it may be several; and `languageData`. |
 
 - **The token.** The account service's access token: an EdDSA JWT whose signature checks against
@@ -144,11 +144,12 @@ answers, headers, and error codes, and every field of a card and a token. An app
   service drops stops working within ten minutes, and for a key it doesn't know at most every 30
   seconds. While the account service is down, it keeps checking tokens with the keys it last read,
   and tries again at most every 30 seconds, logging `account keys unavailable` once for each try.
-  No token, or one that fails any of that, is `401 unauthorized` with `WWW-Authenticate: Bearer`;
-  a token without the scope is `403 insufficient_scope`, whose `WWW-Authenticate` names the
+  No token, or one that fails any of that but the scope, is `401 unauthorized` with
+  `WWW-Authenticate: Bearer`; a token without the scope is `403 insufficient_scope`, whose `WWW-Authenticate` names the
   scope; and a token signed by a key the service can't read is `503 unavailable`. The check is in
   `src/account-tokens.ts`; the service imports nothing from the account service.
-- **Bounds.** At most 100 IDs and 200 characters (`400 bad_request` past them), and
+- **Bounds.** At most 100 IDs, counted as sent, so one sent twice counts twice, and 200
+  characters (`400 bad_request` past them), and
   `APP_REQUESTS_PER_MINUTE` requests a minute for each account (`sub`), counted by each server
   process, after which a request is `429 rate_limited` with `Retry-After`.
 - **Caching.** An answer carries `languageData`, the language-data release and the SHA-256 of
@@ -166,8 +167,9 @@ answers, headers, and error codes, and every field of a card and a token. An app
   answers is the one declared for its status. On the app's data, every word card and segmentation
   answer the conformance suite asks for is checked against its schema.
 - **On the server.** A person makes the account service's JWKS reachable from the dictionary
-  service's slots, which reach only nginx: an nginx site on the slots' network that proxies to
-  the account service's `/v1/auth/jwks` and answers `200` itself (Set up the server, step 2). Then
+  service's slots, which reach only nginx: an nginx site on a port the server doesn't publish
+  that proxies to the account service's `/v1/auth/jwks`, so the slots read it straight, without a
+  redirect (Set up the server, step 2). Then
   they add `ACCOUNT_API_URL` and `ACCOUNT_JWKS_URL` to each environment's settings (Set up the
   server, step 1). Until then the app routes answer 503.
 
@@ -382,8 +384,16 @@ need about 1.5 GB of memory between them, and 5 GB of disk for images. Then, as 
    Set each environment's Worker to its token ([`web.md`](web.md), Dictionary service).
 
    **The app routes.** Once the account service runs in an environment and nginx answers its JWKS
-   on the slots' network (step 2), add both to that environment's file. The deployer deploys an
-   environment again when its file changes, so the slots take them up within 5 minutes:
+   to the slots (step 2), add both to that environment's file. The deployer deploys an
+   environment again within 5 minutes when its file changes, but only for a slot it started with
+   the settings label: a slot an earlier deployer started has none, counts as current, and takes
+   the settings up only with the next image. See which it is first:
+   ```sh
+   docker ps --filter label=zenbujapanese.dictionary-api.slot --format '{{.Names}}' |
+     xargs -r -n 1 docker inspect --format '{{.Name}} {{index .Config.Labels "zenbujapanese.dictionary-api.settings"}}'
+   ```
+   A slot with an empty label waits for the next `Dictionary API deploy`, such as the one merging
+   this change runs. Then add the settings:
    ```sh
    printf 'ACCOUNT_API_URL=%s\nACCOUNT_JWKS_URL=%s\n' \
      https://api-staging.zenbujapanese.com http://nginx:8790/staging/v1/auth/jwks |
@@ -393,7 +403,8 @@ need about 1.5 GB of memory between them, and 5 GB of disk for images. Then, as 
      sudo tee -a /etc/zenbujapanese-dictionary-api/production.env >/dev/null
    ```
    `ACCOUNT_API_URL` must be exactly the account service's own `ACCOUNT_API_URL`, the `iss` and
-   `aud` of its tokens. A malformed one stops the service from starting: the running slot keeps
+   `aud` of its tokens. A malformed one stops the service from starting, once a deploy reads the
+   file (at once for a labelled slot, at the next image otherwise): the running slot keeps
    serving, but the deployer records the failure, and that environment deploys nothing until the
    file is fixed, so read `journalctl -t zenbujapanese-dictionary-api --since -10min` after
    editing it. It worked when `/v1/apps/word-cards` answers `401 unauthorized`, not
@@ -403,7 +414,8 @@ need about 1.5 GB of memory between them, and 5 GB of disk for images. Then, as 
    server, step 4).
 
    **The account service's keys, for the app routes.** A slot reaches only nginx, so nginx serves
-   the account service's JWKS on the slots' network, on a port the server doesn't publish. Add
+   the account service's JWKS on port 8790. nginx answers that port on every network it joins,
+   `web_network` too, but the server doesn't publish it, and the keys are public anyway. Add
    `nginx/zenbujapanese-jwks.conf` to the nginx repository, pull it on the server, and check and
    reload nginx as for any site:
    ```nginx
@@ -440,13 +452,6 @@ need about 1.5 GB of memory between them, and 5 GB of disk for images. Then, as 
            }
    }
    ```
-   It worked when a dictionary slot reads the keys:
-   ```sh
-   slot="$(docker ps --filter label=zenbujapanese.dictionary-api.environment=staging --format '{{.Names}}' | head -n 1)"
-   docker exec "$slot" node -e "fetch('http://nginx:8790/staging/v1/auth/jwks').then(r => r.text()).then(console.log)"
-   ```
-   prints `{"keys":[…]}` with an `EdDSA` key.
-
    **The slots' network.** Create it, internal, and connect the running nginx to it:
    ```sh
    docker network create --internal zenbujapanese-dictionary-api
@@ -454,6 +459,14 @@ need about 1.5 GB of memory between them, and 5 GB of disk for images. Then, as 
    ```
    Docker's DNS still resolves the other sites' containers on `web_network`, and the slots'
    aliases on the slots' network.
+
+   Once a slot runs on it, check that it reads the account service's keys through the JWKS site
+   (on a fresh server, after the first deploy, step 5, since `docker exec` needs a slot):
+   ```sh
+   slot="$(docker ps --filter label=zenbujapanese.dictionary-api.environment=staging --format '{{.Names}}' | head -n 1)"
+   docker exec "$slot" node -e "fetch('http://nginx:8790/staging/v1/auth/jwks').then(r => r.text()).then(console.log)"
+   ```
+   prints `{"keys":[…]}` with an `EdDSA` key.
 3. **Cloudflare**: proxied DNS records for `dictionary-api.zenbujapanese.com` and
    `dictionary-api-staging.zenbujapanese.com` ([`api-servers.md`](api-servers.md), Set up the
    server, step 5). Bot Fight Mode challenges the website's Worker too when a runner sets it off,

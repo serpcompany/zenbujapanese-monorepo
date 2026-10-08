@@ -1,6 +1,6 @@
 # Zenbu dictionary service's routes for apps
 
-Written from [`apps/dictionary-api/openapi.json`](../../apps/dictionary-api/openapi.json), the contract's version 1, by `packages/node-service/src/api-reference.ts`, and a test fails when the two differ. Don't edit it by hand: after changing a route, run `pnpm test -u` in `apps/dictionary-api`, and commit both files.
+Written from [`apps/dictionary-api/openapi.json`](../../apps/dictionary-api/openapi.json), the contract's version 1, by `packages/node-service/src/api-reference.ts`, and a test fails when the two differ. Don't edit it by hand: after changing a route, change its contract in `apps/dictionary-api/src/conformance/app-contract.ts` too, then run `pnpm test -u` in `apps/dictionary-api`, and commit both files.
 
 How a client uses these routes, in order, is the [client guide](../agents/account-clients.md#word-cards).
 
@@ -40,7 +40,7 @@ The cards for up to 100 Language Reference IDs, in the format an app's baked car
 
 **Query parameters:**
 
-- `ids` (string, required): 1 to 100 Language Reference IDs (32 hex digits, in either case), comma-separated. One asked twice is answered once.
+- `ids` (string, required): 1 to 100 Language Reference IDs (32 hex digits, in either case), comma-separated, counted as sent: one asked twice counts twice, and is answered once.
 
 **Answers:**
 
@@ -195,6 +195,6 @@ Which language data answered. Key a cache on all of it: a field that changes mea
 
 - `text` (string, required)
 - `reading` (string, optional): In hiragana, when the token has kanji.
-- `dictionaryForm` (string, optional): When it differs from `text`.
+- `dictionaryForm` (string, optional): Its dictionary form, sent only when it differs from `text`.
 - `languageReferenceID` (string, optional): The entry, when the token is one word.
 - `candidates` (array of string, optional): The entries it may be, when it may be several.

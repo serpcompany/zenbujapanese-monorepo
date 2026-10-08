@@ -231,12 +231,13 @@ dictionary routes an app calls (ADR 0013). Their contract is
 the [dictionary API reference](../api/dictionary-api.md): every field of a card and a token, and
 every answer.
 
-- `GET /v1/apps/word-cards?ids=<id>,<id>` answers the cards for 1 to 100 Language Reference IDs,
-  in the format an app's baked cards use (`zenbu.word-cards.v1`,
+- `GET /v1/apps/word-cards?ids=<id>,<id>` answers the cards for 1 to 100 Language Reference IDs
+  (counted as sent, so drop repeats first), in the format an app's baked cards use (`zenbu.word-cards.v1`,
   [`language-data/word-cards.md`](../../language-data/word-cards.md)), with the `license` and the
   `sources` to show, and lists the IDs it has no entry for in `missing`.
 - `GET /v1/apps/segmentation?text=<text>` splits 1 to 200 characters into words: each token's
-  `text`, its `reading` when it has kanji, its `dictionaryForm`, and its `languageReferenceID`,
+  `text`, its `reading` when it has kanji, its `dictionaryForm` when that differs, and its
+  `languageReferenceID`,
   or `candidates` when it may be one of several words. URL-encode the text.
 
 ```http

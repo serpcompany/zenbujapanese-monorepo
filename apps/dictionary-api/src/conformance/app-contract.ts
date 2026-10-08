@@ -1,4 +1,5 @@
 import { createRoute, OpenAPIHono, z } from '@hono/zod-openapi'
+import { wordCardFormat } from '@zenbu/dictionary-core/cards/card'
 import { segmentationFormat } from '@zenbu/dictionary-core/cards/segmentation'
 import { maximumCardsPerRequest, maximumSegmentedLength } from '../app-routes'
 
@@ -90,9 +91,9 @@ export const WordCardSourceSchema = z
   .openapi('WordCardSource')
 
 export const WordCardsAnswerSchema = z
-  .object({
-    format: z.literal('zenbu.word-cards.v1'),
-    license: z.object({ name: z.string(), url: z.string(), statement: z.string() }).openapi({
+  .strictObject({
+    format: z.literal(wordCardFormat),
+    license: z.strictObject({ name: z.string(), url: z.string(), statement: z.string() }).openapi({
       description: 'The license the cards are shared under, and a statement to show with them.'
     }),
     sources: z.array(WordCardSourceSchema),
@@ -111,7 +112,10 @@ export const SegmentedTokenSchema = z
       .string()
       .optional()
       .openapi({ description: 'In hiragana, when the token has kanji.' }),
-    dictionaryForm: z.string().optional().openapi({ description: 'When it differs from `text`.' }),
+    dictionaryForm: z
+      .string()
+      .optional()
+      .openapi({ description: 'Its dictionary form, sent only when it differs from `text`.' }),
     languageReferenceID: z
       .string()
       .optional()
@@ -124,7 +128,7 @@ export const SegmentedTokenSchema = z
   .openapi('SegmentedToken')
 
 export const SegmentationAnswerSchema = z
-  .object({
+  .strictObject({
     format: z.literal(segmentationFormat),
     text: z.string().openapi({ description: 'The text, as sent.' }),
     tokens: z.array(SegmentedTokenSchema),
@@ -213,7 +217,7 @@ const appRouteContracts = {
     request: {
       query: z.object({
         ids: z.string().openapi({
-          description: `1 to ${maximumCardsPerRequest} Language Reference IDs (32 hex digits, in either case), comma-separated. One asked twice is answered once.`,
+          description: `1 to ${maximumCardsPerRequest} Language Reference IDs (32 hex digits, in either case), comma-separated, counted as sent: one asked twice counts twice, and is answered once.`,
           example: '7f490a9c9c0da94f4e9474f4efe74be1'
         })
       }),

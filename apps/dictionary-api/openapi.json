@@ -52,6 +52,7 @@
               "url",
               "statement"
             ],
+            "additionalProperties": false,
             "description": "The license the cards are shared under, and a statement to show with them."
           },
           "sources": {
@@ -85,7 +86,8 @@
           "cards",
           "missing",
           "languageData"
-        ]
+        ],
+        "additionalProperties": false
       },
       "WordCardSource": {
         "type": "object",
@@ -403,7 +405,8 @@
           "text",
           "tokens",
           "languageData"
-        ]
+        ],
+        "additionalProperties": false
       },
       "SegmentedToken": {
         "type": "object",
@@ -417,7 +420,7 @@
           },
           "dictionaryForm": {
             "type": "string",
-            "description": "When it differs from `text`."
+            "description": "Its dictionary form, sent only when it differs from `text`."
           },
           "languageReferenceID": {
             "type": "string",
@@ -454,11 +457,11 @@
           {
             "schema": {
               "type": "string",
-              "description": "1 to 100 Language Reference IDs (32 hex digits, in either case), comma-separated. One asked twice is answered once.",
+              "description": "1 to 100 Language Reference IDs (32 hex digits, in either case), comma-separated, counted as sent: one asked twice counts twice, and is answered once.",
               "example": "7f490a9c9c0da94f4e9474f4efe74be1"
             },
             "required": true,
-            "description": "1 to 100 Language Reference IDs (32 hex digits, in either case), comma-separated. One asked twice is answered once.",
+            "description": "1 to 100 Language Reference IDs (32 hex digits, in either case), comma-separated, counted as sent: one asked twice counts twice, and is answered once.",
             "name": "ids",
             "in": "query"
           },

@@ -64,6 +64,7 @@ describe("the app routes' OpenAPI contract", () => {
     const reference = apiReference(document as ApiDocument, {
       document: 'apps/dictionary-api/openapi.json',
       regenerate: 'apps/dictionary-api',
+      contract: 'apps/dictionary-api/src/conformance/app-contract.ts',
       guide: { title: 'client guide', path: '../agents/account-clients.md#word-cards' }
     })
     await expect(reference).toMatchFileSnapshot('../../../docs/api/dictionary-api.md')
@@ -76,63 +77,68 @@ describe("the app routes' OpenAPI contract", () => {
     expectTypeOf<z.infer<typeof LanguageDataSchema>>().toEqualTypeOf<LanguageDataVersion>()
   })
 
-  test('documents exactly the app routes the service answers', () => {
+  test('documents exactly the app routes the service answers, with their methods', () => {
     const answered = app()
-      .routes.filter(route => route.method === 'GET' && route.path.startsWith('/v1/apps/'))
-      .map(route => route.path)
-    expect(Object.keys(document.paths ?? {}).sort()).toEqual([...new Set(answered)].sort())
+      .routes.filter(route => route.method !== 'ALL' && route.path.startsWith('/v1/apps/'))
+      .map(route => `${route.method} ${route.path}`)
+    const documented = Object.entries(document.paths ?? {}).flatMap(([path, item]) =>
+      Object.keys(item ?? {}).map(method => `${method.toUpperCase()} ${path}`)
+    )
+    expect(documented.sort()).toEqual([...new Set(answered)].sort())
   })
 
-  test.each<[string, string, () => Promise<Response>]>([
-    ['no token', 'unauthorized', async () => app().request('/v1/apps/word-cards?ids=x')],
-    [
-      'a token without the scope',
-      'insufficient_scope',
-      async () =>
-        app().request('/v1/apps/word-cards?ids=x', {
-          headers: { authorization: `Bearer ${await keys.accessToken({ scope: 'lists:read' })}` }
-        })
-    ],
-    [
-      'a malformed ID',
-      'bad_request',
-      async () =>
-        app().request('/v1/apps/word-cards?ids=x', {
-          headers: { authorization: `Bearer ${await keys.accessToken()}` }
-        })
-    ],
-    [
-      'an account over its limit',
-      'rate_limited',
-      async () =>
-        app({ access: keys.access({ limit: 0 }) }).request('/v1/apps/word-cards?ids=x', {
-          headers: { authorization: `Bearer ${await keys.accessToken()}` }
-        })
-    ],
-    [
-      'no account settings',
-      'unavailable',
-      async () => app({ access: null }).request('/v1/apps/word-cards?ids=x')
-    ],
-    [
-      'a dictionary still loading',
-      'starting',
-      async () =>
-        app({ ready: false }).request('/v1/apps/word-cards?ids=x', {
-          headers: { authorization: `Bearer ${await keys.accessToken()}` }
-        })
-    ],
-    [
-      'a failing dictionary',
-      'internal',
-      async () =>
-        app({ failing: true }).request(`/v1/apps/word-cards?ids=${'a'.repeat(32)}`, {
-          headers: { authorization: `Bearer ${await keys.accessToken()}` }
-        })
-    ]
-  ])('declares the code it answers %s with', async (_, code, request) => {
-    const response = await request()
+  const cards = '/v1/apps/word-cards?ids=x'
+  test.each<{
+    name: string
+    code: string
+    path: string
+    token?: Record<string, unknown> | null
+    options?: () => Parameters<typeof app>[0]
+  }>([
+    { name: 'no token', code: 'unauthorized', path: cards, token: null },
+    {
+      name: 'a token without the scope',
+      code: 'insufficient_scope',
+      path: cards,
+      token: { scope: 'lists:read' }
+    },
+    { name: 'a malformed ID', code: 'bad_request', path: cards },
+    {
+      name: 'a blank text to segment',
+      code: 'bad_request',
+      path: '/v1/apps/segmentation?text=%20'
+    },
+    {
+      name: 'an account over its limit',
+      code: 'rate_limited',
+      path: cards,
+      options: () => ({ access: keys.access({ limit: 0 }) })
+    },
+    {
+      name: 'no account settings',
+      code: 'unavailable',
+      path: cards,
+      options: () => ({ access: null })
+    },
+    {
+      name: 'a dictionary still loading',
+      code: 'starting',
+      path: cards,
+      options: () => ({ ready: false })
+    },
+    {
+      name: 'a failing dictionary',
+      code: 'internal',
+      path: `/v1/apps/word-cards?ids=${'a'.repeat(32)}`,
+      options: () => ({ failing: true })
+    }
+  ])('declares the code it answers $name with', async ({ code, path, token = {}, options }) => {
+    const headers: Record<string, string> =
+      token === null ? {} : { authorization: `Bearer ${await keys.accessToken(token)}` }
+    const response = await app(options?.()).request(path, { headers })
     expect(await answered(response)).toBe(code)
-    expect(declaredCodes('/v1/apps/word-cards', response.status)).toContain(code)
+    expect(declaredCodes(new URL(path, 'http://localhost').pathname, response.status)).toContain(
+      code
+    )
   })
 })
