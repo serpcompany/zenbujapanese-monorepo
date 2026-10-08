@@ -89,6 +89,8 @@ private let script = Script(
        4.30 speak en I'm going to Tokyo Station today.
        6.10 pause after voice at 5.10
        6.20 speak en It's a nice day.
+       7.40 en F 5.20-7.30 c=0.12 , Tokyo, Tabani.
+       8.10 speak en It's a nice day, again.
        9.20 pause after voice at 8.00
        9.30 en F 6.10-8.40 c=0.92 Yes.
       10.00 speak ja はい。

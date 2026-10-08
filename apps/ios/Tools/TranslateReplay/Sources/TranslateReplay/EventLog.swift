@@ -32,9 +32,14 @@ enum EventLog {
     return delays
   }
 
+  static let translatableConfidence = 0.4
+
   private static func isSentence(_ event: String) -> Bool {
     let fields = event.split(separator: " ", maxSplits: 4)
-    return fields.count == 5 && fields[1] == "F" && ["ja", "en"].contains(fields[0])
+    guard fields.count == 5, fields[1] == "F", ["ja", "en"].contains(fields[0]),
+      let confidence = Double(fields[3].dropFirst(2))
+    else { return false }
+    return confidence >= translatableConfidence
   }
 }
 
