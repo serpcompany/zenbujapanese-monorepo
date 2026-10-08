@@ -346,7 +346,7 @@ describe('the account page', () => {
     )
   })
 
-  test('says it can’t confirm an account whose ways this site offers none of', async () => {
+  test("says it can't confirm an account whose ways this site offers none of", async () => {
     signedIn({ ways: [appleWay] })
     const page = confirmingWith({ provider: 'apple', subject: '001.apple' })
     await shows(

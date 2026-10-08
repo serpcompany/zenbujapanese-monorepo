@@ -32,8 +32,8 @@ password needed), and `/account/` (Your account), each with the site's header an
 `noindex, nofollow`, and no sitemap lists them: not `/sitemaps/pages.xml`, and not `/sitemap/`.
 Their descriptions don't name Apple or Google, which a site offers only once they're set up.
 Without an account service (an empty `ACCOUNT_API_URL`, as in production today), each says signing
-in to a Zenbu account isn't available on this site yet, without the intro that describes signing
-in, links to no other account page, and asks the account service nothing.
+in to a Zenbu account isn't available on this site yet, without the page's intro, links to no
+other account page, and asks the account service nothing.
 
 - Source: #468, whose #402 sitemap sheet lists the four pages. Closed in production because its
   account service doesn't run yet ([`account-api.md`](../../../../docs/agents/account-api.md), Set
@@ -144,7 +144,9 @@ Back from Google with the browser's Back button, the buttons work again.
 
 ## Your account
 
-**Signed in, out, or unreachable.** `/account/` asks the service for the session in its cookie,
+**Signed in, out, or unreachable.** `/account/`'s intro says "See your profile and how you sign
+in, change your profile, or delete your account.", which holds where the site offers only the
+emailed code and the ways can't change. It asks the service for the session in its cookie,
 then reads the profile with an access token and the ways to sign in. Signed in, it says "Signed in
 as" the email. With no session, it says "You're not signed in." and links Sign in and Create an
 account. When the service can't answer, it says so, with Try again.
@@ -153,7 +155,9 @@ account. When the service can't answer, it says so, with Try again.
 - Check: Account page tests, "shows who is signed in, the profile, and the ways to sign in, reading
   /v1/me with an access token only", "shows signed out, and forgets it was signed in, when there is
   no session", "says it could not reach the account service, and tries again when asked"; Account
-  spec, "the account page says it can't reach it, and offers to try again".
+  spec, "the account page says it can't reach it, and offers to try again";
+  `src/app/account-pages.test.tsx`, "offer signing in, and lead to each other, with an account
+  service" (the intro).
 
 **Access tokens.** The page keeps its 15-minute access token in memory only, renews it a minute
 before it expires, and on a `401` gets one new token and asks again. It takes a token only for the

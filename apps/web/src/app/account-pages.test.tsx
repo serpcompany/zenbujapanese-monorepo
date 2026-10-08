@@ -37,7 +37,7 @@ describe('the account pages', () => {
     expect(html).toContain('isn’t available on this site yet')
     expect(html).not.toContain('Email me a code')
     expect(html).not.toContain('a code')
-    expect(html).not.toContain('See and change your profile')
+    expect(html).not.toContain('See your profile')
     expect(accountLinks(html)).toEqual([])
   })
 
@@ -53,7 +53,7 @@ describe('the account pages', () => {
     expect(register).toContain('Can’t sign in?')
     expect(register).toContain('href="/legal/privacy/"')
     expect(renderToStaticMarkup(await pages['/account/']())).toContain(
-      'See and change your profile and how you sign in, or delete your account.'
+      'See your profile and how you sign in, change your profile, or delete your account.'
     )
   })
 
