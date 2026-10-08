@@ -392,8 +392,8 @@ need about 1.5 GB of memory between them, and 5 GB of disk for images. Then, as 
    docker ps --filter label=zenbujapanese.dictionary-api.slot --format '{{.Names}}' |
      xargs -r -n 1 docker inspect --format '{{.Name}} {{index .Config.Labels "zenbujapanese.dictionary-api.settings"}}'
    ```
-   A slot with an empty label waits for the next `Dictionary API deploy`, such as the one merging
-   this change runs. Then add the settings:
+   A slot whose label is empty or `<no value>` waits for the next `Dictionary API deploy`, such as
+   the one merging this change runs. Then add the settings:
    ```sh
    printf 'ACCOUNT_API_URL=%s\nACCOUNT_JWKS_URL=%s\n' \
      https://api-staging.zenbujapanese.com http://nginx:8790/staging/v1/auth/jwks |
