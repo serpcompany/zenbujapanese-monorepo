@@ -939,16 +939,18 @@ one-line description. Four labelled columns follow: Products (Zenbu Japanese for
 Dictionary), Tools (Kana charts, Kanji lists, Frequency lists, All tools), Company (About, Support,
 Contact, Sources), and Legal (Privacy Policy, Terms of Use, DMCA, Affiliate Disclosure). From 768
 pixels the brand and the columns sit side by side; on phones they stack into one column. Below
-them, after a rule, a row of plain social icons (Tabler's brand icons, with no boxes), each named
-"Zenbu Japanese on" its network: YouTube, X, Instagram, TikTok, Discord, Reddit, Threads, Bluesky,
-LinkedIn, and Facebook, five to a row on phones. The copyright line and Sitemap end it. The legal
+them, after a rule, a row of plain social icons with no boxes, each named "Zenbu Japanese on" its
+network: YouTube, X, Instagram, TikTok, Discord, Reddit, Threads, Bluesky, LinkedIn, and Facebook,
+five to a row on phones. Each is the brand's own mark, drawn as inline SVG in the text color: Simple
+Icons' paths (CC0), and for LinkedIn, which Simple Icons doesn't carry, a trace of the In bug from
+LinkedIn's brand downloads (`components/social-links.tsx`). The copyright line and Sitemap end it. The legal
 index (`/legal/`) is in the Company menu rather than the footer.
 
 - Source: #648 decision and mockups (footer); #650; #614 (the browse links).
 - Check: `src/components/site-footer.test.tsx`, "the footer groups its links under Products, Tools,
   Company, and Legal", "the footer stacks its columns into one on phones, and lays them side by side
   from 768 pixels", "the footer leads with the brand linking home and its tagline", "a row of plain
-  social icons, five to a row on phones, links each account in src/lib/site.ts", and "the footer ends
+  brand icons, five to a row on phones, links each account in src/lib/site.ts", and "the footer ends
   with the copyright and the Sitemap"; `apps/web/e2e/site.spec.ts`, "the footer groups its links
   under Products, Tools, Company, and Legal, then ends with the copyright and Sitemap", "the footer
   lays its columns side by side from 768 pixels, and stacks them on phones", and "the footer shows

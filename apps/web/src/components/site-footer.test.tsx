@@ -76,20 +76,23 @@ test('the footer leads with the brand linking home and its tagline', () => {
   expect(html).toContain(site.description)
 })
 
-test('a row of plain social icons, five to a row on phones, links each account in src/lib/site.ts', () => {
+const brandIcon =
+  /^<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" class="size-5"><path d="[^"]+"><\/path><\/svg>/
+
+test('a row of plain brand icons, five to a row on phones, links each account in src/lib/site.ts', () => {
   const html = footer()
   const list = html.match(
     /<ul aria-label="Zenbu Japanese elsewhere" class="([^"]*)">([\s\S]*?)<\/ul>/
   )
   expect(list?.[1].split(' ')).toEqual(expect.arrayContaining(['grid', 'grid-cols-5']))
   const links = [...(list?.[2] ?? '').matchAll(/<a ([^>]*)>([\s\S]*?)<\/a>/g)]
-  expect(links.map(([, attributes]) => attributes.match(/aria-label="([^"]+)"/)?.[1])).toEqual(
-    socialLinks.map(link => `${site.name} on ${link.name}`)
-  )
+  expect(
+    links.map(([, , content]) => content.match(/<span class="sr-only">([^<]+)</)?.[1])
+  ).toEqual(socialLinks.map(link => `${site.name} on ${link.name}`))
   for (const [index, [, attributes, content]] of links.entries()) {
     expect(attributes).toContain(`href="${socialLinks[index].href}"`)
     expect(attributes).toContain(`data-link-target="${socialLinks[index].id}"`)
-    expect(content).toMatch(/^<svg [^>]*aria-hidden="true"/)
+    expect(content).toMatch(brandIcon)
   }
 })
 
