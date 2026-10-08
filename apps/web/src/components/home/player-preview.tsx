@@ -16,10 +16,10 @@ const { time, known, previous, caption, open } = playerPreview
 
 const captionCard = 'relative rounded-[0.8em] px-[0.8em] pt-[0.6em] pb-[0.65em]'
 
-function CaptionTime({ start }: { start: string }) {
+function CaptionTime({ time }: { time: string }) {
   return (
     <span className="absolute top-[0.55em] right-[0.8em] text-[0.65em] text-muted-foreground tabular-nums">
-      {start}
+      {time}
     </span>
   )
 }
@@ -63,7 +63,7 @@ function Captions() {
   return (
     <div className="flex flex-col gap-[0.5em] p-[0.9em]">
       <div className={cn(captionCard, 'bg-muted opacity-60')}>
-        <CaptionTime start={previous.start} />
+        <CaptionTime time={previous.time} />
         <p lang="ja" className="text-[1.1em]">
           {previous.text}
         </p>
@@ -75,7 +75,7 @@ function Captions() {
           'bg-blue-600/5 ring-[0.12em] ring-blue-600 dark:bg-blue-400/10 dark:ring-blue-400'
         )}
       >
-        <CaptionTime start={caption.start} />
+        <CaptionTime time={caption.time} />
         <p lang="ja" className="text-[1.1em]">
           {caption.words.map(word => (
             <span

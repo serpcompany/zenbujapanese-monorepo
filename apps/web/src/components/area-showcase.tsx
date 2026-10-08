@@ -62,7 +62,7 @@ export function AreaShowcase({ label, areas }: { label: string; areas: readonly 
             value={area.id}
             className={cn(
               'h-auto min-w-0 flex-col gap-1 rounded-lg px-1 py-2 text-xs leading-tight whitespace-normal',
-              'sm:h-10 sm:flex-none sm:flex-row sm:gap-2 sm:rounded-full sm:px-4 sm:py-0 sm:text-[0.9375rem] sm:whitespace-nowrap'
+              'sm:h-10 sm:flex-none sm:flex-row sm:gap-2 sm:rounded-full sm:px-3 sm:py-0 md:px-4 sm:text-[0.9375rem] sm:whitespace-nowrap'
             )}
           >
             {area.icon}

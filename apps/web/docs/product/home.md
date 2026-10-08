@@ -44,8 +44,8 @@ list of screens on the stage:
   translated.
 - Translate: a conversation.
 - Player: a drawing of the Player from real app data (the Tatoeba sentences おはようございます。 and
-  今日は天気がいいですね。 as caption cards, the second being spoken with 天気 tapped, its word sheet
-  open, and the known-words line from the app docs' example, 73% 38 of 52 words known), then
+  今日は天気がいいですね。 as caption cards with their times, the second being spoken with 天気
+  tapped, its word sheet open, and the known-words line from the app docs' example, 73% 38 of 52 words known), then
   each video in `appVideos` (`src/lib/videos.ts`), as the product page's click-to-load card:
   nothing from YouTube loads before it's played. There are no videos yet, so the drawing is alone.
 - Lists: the Favorites list from the App Store screenshot, with 美味しい and 大丈夫 known; the
@@ -53,10 +53,12 @@ list of screens on the stage:
   弱肉強食, live: 肉 starts highlighted, and tapping another kanji moves the highlight to it and its
   part of the reading, as on a word page ([Dictionary](dictionary.md#word-page)).
 
-The stage fits three screens from 768 pixels and two below. When an area has more, the next one
-peeks in at the right edge, faded, and arrows at the stage's edges and one dot per screen page
-through them, a screen at a time; on a touch screen they also swipe. The dots of the screens in
-view are current. Nothing moves on its own. The tabs are stock shadcn tabs: arrow keys, Home, and
+When an area's screens don't all fit, the stage shows three at a time from 768 pixels and two
+below; the next one peeks in at the right edge, faded, and arrows at the stage's edges and one dot
+per screen page through them, a screen at a time; on a touch screen they also swipe. The dots of
+the screens in view are current. The arrows are in the keyboard's tab order and the dots aren't,
+so the stage adds one or two stops before the tabs. Nothing moves on its own, and a video playing
+in an area stops when another area is chosen. The tabs are stock shadcn tabs: arrow keys, Home, and
 End move between them and choose the area. Below 640 pixels the tabs fill the bar, each an icon
 above its name, so all five fit a phone; from 640 pixels they are a pill bar, each an icon beside
 its name. The server renders every area's tab, text, and screens; a tab only shows its area and
@@ -73,6 +75,8 @@ homepage's are in `src/lib/app-areas.ts`.
   a kanji in 弱肉強食 moves the highlight to its part of the reading", and, without JavaScript,
   "every area's text and screens are in the server HTML"; `src/components/home/home-areas.test.tsx`
   (the Player's video card only with videos, and nothing from YouTube before a click);
+  `src/components/area-showcase.interaction.test.tsx`, "a video playing in an area stops when
+  another area is chosen";
   `src/lib/home-previews.test.ts`, "the homepage draws 食べる as the dictionary has it", against the
   dictionary fixtures. The other words, and the drawings' look: No automated check yet.
 
@@ -91,7 +95,7 @@ preview: Works offline (峠 looked up in airplane mode), No account, no ads (lis
 words, and saved conversations stay on the iPhone), and Built on open data: JMdict, KANJIDIC2,
 Tatoeba, KanjiVG, JLPT levels, and TUBELEX, each linking to its project and its licence, from
 `pageSources.home` in `src/lib/dictionary/sources.ts`, so the page credits the JMdict and
-frequency data its previews show, and a link to `/sources/`. In each card and promise the heading
+frequency data its previews show, and a link to `/sources/`. In each promise the heading
 comes first in the page, and the preview is drawn above it.
 Then the app, Zenbu Japanese for iPhone, with Get the app, which opens the iPhone app's page, and
 All products, which opens `/products/`.
@@ -123,6 +127,7 @@ Every claim on the page is one the app's product docs make:
 | Lists, Known Words, and hiding furigana on known words | `index.md`, Account |
 | Frequency packs order equally good matches, in the order the learner chooses | `dictionary.md`, Search; `index.md`, Account (Frequency Dictionaries) |
 | Tap a kanji to see which part of the reading belongs to it | `index.md`, Furigana kanji highlight |
+| Lists' pitch: keep the words you meet (lists, known words), in the order that helps you (the frequency packs, in the learner's order) | `index.md`, Account (Lists, Known Words, Frequency Dictionaries) |
 | No account, no ads; lists, notes, known words, and saved conversations stay on the device | `index.md`, Account (Lists, Known Words); `dictionary.md`, Dictionary and kanji details (notes); `translate.md`, Translations; the Privacy Policy |
 
 ## Page

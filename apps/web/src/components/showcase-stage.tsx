@@ -78,6 +78,7 @@ function StageDots({
           type="button"
           aria-label={item.label}
           aria-current={inView(index) || undefined}
+          tabIndex={-1}
           onClick={() => onPick(index)}
           className="group/dot grid h-6 min-w-4 place-items-center rounded-full px-0.5 outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
         >
@@ -138,7 +139,9 @@ export function ShowcaseStage({
                 item.shape === 'card' && 'self-stretch'
               )}
             >
-              <div className={mediaFrame(item, index, media.length)}>{item.content}</div>
+              <div key={String(shown)} className={mediaFrame(item, index, media.length)}>
+                {item.content}
+              </div>
             </CarouselItem>
           ))}
         </CarouselContent>

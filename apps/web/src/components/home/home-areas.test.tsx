@@ -1,15 +1,9 @@
 import { renderToStaticMarkup } from 'react-dom/server'
 import { expect, test } from 'vitest'
 import { appAreas, appAreasWith } from '@/lib/app-areas'
-import { appScreenshots } from '@/lib/app-screenshots'
-import { type AppVideo, appVideos } from '@/lib/videos'
+import { appVideos } from '@/lib/videos'
+import { sampleVideo } from '@/test/sample-video'
 import { HomeAreas } from './home-areas'
-
-const sample: AppVideo = {
-  youtubeId: 'not-a-real-video-id',
-  title: 'A sample video',
-  thumbnail: appScreenshots.handwriting
-}
 
 const playerMedia = (areas: typeof appAreas) =>
   areas.find(area => area.id === 'player')?.media.map(item => item.kind)
@@ -21,7 +15,7 @@ test('there are no videos yet, so the Player area shows only its drawn preview',
 })
 
 test('with videos, the Player area adds each one, and nothing loads from YouTube before a click', () => {
-  const areas = appAreasWith([sample])
+  const areas = appAreasWith([sampleVideo])
   expect(playerMedia(areas)).toEqual(['drawn', 'video'])
   const html = renderToStaticMarkup(<HomeAreas areas={areas} />)
   expect(html).toContain('aria-label="Play A sample video"')

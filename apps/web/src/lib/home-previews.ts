@@ -22,9 +22,9 @@ const taberuResult = { ...taberu, meaning: 'to eat', chips: taberuChips }
 export const playerPreview = {
   time: { elapsed: '0:42', total: '3:15' },
   known: { words: 38, of: 52 },
-  previous: { text: 'おはようございます。', english: 'Good morning!', start: '0:37' },
+  previous: { text: 'おはようございます。', english: 'Good morning!', time: '0:37–0:40' },
   caption: {
-    start: '0:40',
+    time: '0:40–0:44',
     words: ['今日', 'は', '天気', 'が', 'いいです', 'ね'],
     end: '。',
     english: 'The weather is nice today.'
