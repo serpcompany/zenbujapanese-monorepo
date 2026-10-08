@@ -1,3 +1,4 @@
+import { linesOfText } from './phone-checks'
 import { expect, needed, sourcesToggle, test } from './test'
 
 const browse = (path = '') => `/dictionary/browse/${path}`
@@ -99,6 +100,36 @@ test.describe('browse pages', () => {
       kana('hiragana', 'っ')
     )
     await expect(page.getByRole('navigation', { name: 'Script' })).toContainText('Katakana')
+  })
+
+  test('a chart reads あいうえお down a column, and across a row on a phone', async ({
+    page
+  }, testInfo) => {
+    const onPhone = testInfo.project.name === 'phone'
+    if (onPhone) await page.setViewportSize({ width: 360, height: 800 })
+    await page.goto(browse('hiragana/'))
+    const firstSix = page
+      .getByRole('list', { name: 'Gojūon' })
+      .getByRole('link', { name: /^[あいうえおか], / })
+    await expect(firstSix).toHaveCount(6)
+    const boxes = await firstSix.evaluateAll(links =>
+      links.map(link => {
+        const box = link.getBoundingClientRect()
+        return { across: Math.round(box.left), down: Math.round(box.top) }
+      })
+    )
+    const [vowels, ka] = [boxes.slice(0, 5), boxes[5]]
+    const line = onPhone ? 'down' : 'across'
+    const along = onPhone ? 'across' : 'down'
+    expect(new Set(vowels.map(box => box[line])).size).toBe(1)
+    expect(vowels.map(box => box[along])).toEqual(
+      vowels.map(box => box[along]).sort((a, b) => a - b)
+    )
+    expect(ka?.[line]).toBeGreaterThan(vowels[0]?.[line] ?? 0)
+    const heading = page.getByRole('heading', { name: /^Dakuon and handakuon/ })
+    expect(await linesOfText(heading.locator('[lang="ja"]'))).toEqual([
+      { text: '濁音・半濁音', oneLine: true }
+    ])
   })
 
   test('a kana’s page lists its two-kana groups and leads to their words', async ({ page }) => {

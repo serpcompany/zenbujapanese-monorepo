@@ -21,7 +21,7 @@ export function RubyText({
         segment.reading ? (
           <ruby key={segment.key}>
             {segment.text}
-            <rt className="text-[0.45em] font-normal text-muted-foreground">{segment.reading}</rt>
+            <rt className="furigana font-normal text-muted-foreground">{segment.reading}</rt>
           </ruby>
         ) : (
           <span key={segment.key}>{segment.text}</span>

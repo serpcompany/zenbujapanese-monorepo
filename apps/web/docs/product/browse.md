@@ -63,6 +63,17 @@ home. Each chart links to its script's page with how many words it lists.
 - Source: #614 mockup "/dictionary/browse/kana/".
 - Check: Browse spec, "the kana charts show each kana’s romaji and open its page".
 
+**Charts on a phone.** Every kana chart, here, on the hub, on the dictionary home, and on a
+script's page, reads down from 640 pixels, a column for each consonant (あいうえお down the first),
+as the mockups draw it. Narrower, it reads across, five kana to a row (あいうえお, then かきくけこ),
+so each tile stays wide enough to tap and read rather than squeezing 11 columns into a phone. A
+script's page shows each kana's count in full at every width, and the chart's Japanese name stays
+on one line.
+
+- Source: #682 (the owner flagged the gojūon chart's 11 columns at 390 pixels).
+- Check: Browse spec, "a chart reads あいうえお down a column, and across a row on a phone";
+  `apps/web/e2e/phone-layout.spec.ts` (each chart's cells at least 44 pixels wide).
+
 **A script's kana.** `/dictionary/browse/hiragana/` and `/dictionary/browse/katakana/` show the
 same charts with how many words start with each kana, and tabs for the two scripts. A kana no
 word starts with is left blank. The kana a reading can start with that the charts don't hold
@@ -228,6 +239,15 @@ words have none.
   "kana order lists the same words by reading", and "the index lists a category as its own query
   would"; `src/lib/dictionary/browse/copy.test.ts`, "every category has its own one- or
   two-sentence intro".
+
+**Page links.** A list longer than a page links its first and last pages, the two pages either
+side of the current one, and ← Previous and Next →. On a phone, below 640 pixels, it links only
+the first, current, and last pages, and Previous and Next show only their arrows (screen readers
+still hear the words), so the links fit one row.
+
+- Source: #682.
+- Check: Browse lists spec, "a long list links the pages around the current one, and on a phone
+  fits one row"; `src/lib/dictionary/browse/pagination.test.ts`.
 
 ## Site-wide
 

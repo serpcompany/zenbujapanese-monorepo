@@ -26,6 +26,9 @@ const inCI = Boolean(process.env.CI)
 export default defineConfig({
   testDir: 'e2e',
   ...(onClosedProduction ? { testMatch: 'account-closed.spec.ts' } : {}),
+  ...(process.env.E2E_GALLERY
+    ? { testMatch: 'gallery.spec.ts' }
+    : { testIgnore: 'gallery.spec.ts' }),
   outputDir: 'e2e/results',
   fullyParallel: true,
   forbidOnly: inCI,

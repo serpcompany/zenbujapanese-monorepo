@@ -32,7 +32,7 @@ function Ending({
   )
 }
 
-const readingClass = 'text-[0.45em] font-normal text-muted-foreground'
+const readingClass = 'furigana font-normal text-muted-foreground'
 
 function Reading({
   text,

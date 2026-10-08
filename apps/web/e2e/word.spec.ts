@@ -1,4 +1,5 @@
 import type { Page } from '@playwright/test'
+import { linesOfText } from './phone-checks'
 import { expect, needed, sourcesToggle, test } from './test'
 
 const examples = (page: Page) =>
@@ -54,6 +55,17 @@ test.describe('word page', () => {
     await page.getByRole('button', { name: 'Load more examples' }).scrollIntoViewIfNeeded()
     await expect(examples(page)).toHaveCount(50)
     await expect(page.getByRole('button', { name: 'Load more examples' })).toHaveCount(0)
+  })
+
+  test('on a phone, an example sentence breaks only between its words', async ({
+    page
+  }, testInfo) => {
+    test.skip(testInfo.project.name !== 'phone', 'A phone-width layout')
+    await page.setViewportSize({ width: 360, height: 800 })
+    await expect(examples(page)).toHaveCount(25)
+    const words = await linesOfText(examples(page).locator('p[lang="ja"] [lang="ja"]'))
+    expect(words.length).toBeGreaterThan(100)
+    expect(words.filter(({ oneLine }) => !oneLine)).toEqual([])
   })
 
   test('credits no single example, and keeps its Sources closed until opened', async ({ page }) => {

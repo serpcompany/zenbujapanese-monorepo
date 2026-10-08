@@ -59,8 +59,8 @@ the stage's edges and one dot per screen page through them, a screen at a time; 
 they also swipe. From 1,024 pixels three screenshots fit at a time, cropped at the stage's foot as
 in the mockups. Narrower, each is sized to show whole, which is two at a time on a phone and three
 or four on a tablet; a phone shows one Lists preview at a time. The dots of the screens in view are
-current. The arrows are in the keyboard's tab order and the dots aren't; anything inside a screen
-that takes focus, such as the 弱肉強食 kanji or a video's Play button, is too. Nothing moves on its
+current. Each dot is a 24-pixel tap target, though it draws smaller (#682). The arrows are in
+the keyboard's tab order and the dots aren't; anything inside a screen that takes focus, such as the 弱肉強食 kanji or a video's Play button, is too. Nothing moves on its
 own, and a video playing in an area stops when another area is chosen. The tabs are stock shadcn
 tabs: arrow keys, Home, and End move between them and choose the area. Below 640 pixels the tabs fill the bar, each an icon
 above its name, so all five fit a phone; from 640 pixels they are a pill bar, each an icon beside
@@ -83,7 +83,8 @@ homepage's are in `src/lib/app-areas.ts`.
   `src/components/area-showcase.interaction.test.tsx`, "a video playing in an area stops when
   another area is chosen";
   `src/lib/home-previews.test.ts`, "the homepage draws 食べる as the dictionary has it", against the
-  dictionary fixtures. The other words, and the drawings' look: No automated check yet.
+  dictionary fixtures; the dots' size: `e2e/phone-layout.spec.ts` (axe's `target-size`). The other
+  words, and the drawings' look: No automated check yet.
 
 **Free on the web.** A line: no download, and every word has its own page. Then the web tools
 that exist today, each opening its page: the Tools menu's links that aren't placeholders, with

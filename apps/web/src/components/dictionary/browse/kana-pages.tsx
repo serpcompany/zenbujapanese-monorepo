@@ -20,7 +20,7 @@ import { KanaChart } from '@/components/dictionary/browse/kana-chart'
 import { DictionaryBreadcrumbs } from '@/components/dictionary/dictionary-breadcrumbs'
 import { SourceCredits } from '@/components/dictionary/source-credits'
 import { WordList } from '@/components/dictionary/word-row'
-import { compactCount, formatCount, plural } from '@/lib/dictionary/browse/copy'
+import { formatCount, plural } from '@/lib/dictionary/browse/copy'
 import type { BrowseWordsPage, KanaInitialPage } from '@/lib/dictionary/browse/data'
 import { browsePath, kanaChartsPath, kanaPath, scriptPath } from '@/lib/dictionary/browse/paths'
 import { pageSources, sources } from '@/lib/dictionary/sources'
@@ -72,7 +72,6 @@ function CountChart({
           ? {
               href: kanaPath(script, cell.kana),
               note: formatCount(count),
-              shortNote: compactCount(count),
               label: `${cell.kana}, ${plural(count, 'word')}`
             }
           : null
@@ -100,7 +99,7 @@ export function ScriptIndex({ index, heading }: { index: KanaIndexResponse; head
       <section className="flex flex-col gap-3">
         <h2 className="text-xl font-semibold">
           Gojūon{' '}
-          <span lang="ja" className="font-normal text-muted-foreground">
+          <span lang="ja" className="font-normal whitespace-nowrap text-muted-foreground">
             五十音
           </span>
         </h2>
@@ -109,7 +108,7 @@ export function ScriptIndex({ index, heading }: { index: KanaIndexResponse; head
       <section className="flex flex-col gap-3">
         <h2 className="text-xl font-semibold">
           Dakuon and handakuon{' '}
-          <span lang="ja" className="font-normal text-muted-foreground">
+          <span lang="ja" className="font-normal whitespace-nowrap text-muted-foreground">
             濁音・半濁音
           </span>
         </h2>

@@ -11,6 +11,7 @@ export function ListPreview() {
   return (
     <div
       aria-hidden="true"
+      data-drawing
       className={cn(previewPanel, raisedPreview, 'w-full max-w-68 overflow-hidden')}
     >
       <div className="flex items-baseline justify-between px-3.5 pt-3 pb-2">
@@ -40,7 +41,7 @@ export function ListPreview() {
 export function FrequencyPreview() {
   const { enabled, available, word } = frequencyPreview
   return (
-    <div aria-hidden="true" className="flex w-full max-w-68 flex-col gap-3">
+    <div aria-hidden="true" data-drawing className="flex w-full max-w-68 flex-col gap-3">
       <div className={cn(previewPanel, 'overflow-hidden text-sm')}>
         <p className={cn(previewLabel, 'px-3 pt-2 pb-1')}>Enabled</p>
         {enabled.map((name, index) => (

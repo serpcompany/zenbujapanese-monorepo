@@ -30,6 +30,7 @@ function AppCollage() {
   return (
     <div
       aria-hidden="true"
+      data-drawing
       className="relative order-first h-36 overflow-hidden border-b bg-muted/40 md:order-none md:-my-10 md:-mr-12 md:h-auto md:border-b-0 md:bg-transparent"
     >
       <div className="absolute top-1/2 left-1/2 flex -translate-x-1/2 -translate-y-[48%] scale-60 rotate-12 gap-4 md:-translate-x-[45%] md:-translate-y-1/2 md:scale-100">

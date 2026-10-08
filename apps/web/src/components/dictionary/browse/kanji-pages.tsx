@@ -180,7 +180,7 @@ export function KanjiHubPage({ hub, joyo }: { hub: KanjiHubResponse; joyo: numbe
                 className="flex min-h-14 flex-col items-center justify-center rounded-lg border hover:bg-muted"
               >
                 <span className="font-semibold">{strokes}</span>
-                <span className="text-[11px] text-muted-foreground">{formatCount(count)}</span>
+                <span className="text-xs text-muted-foreground">{formatCount(count)}</span>
               </Link>
             </li>
           ))}

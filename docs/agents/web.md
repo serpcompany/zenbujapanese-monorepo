@@ -50,6 +50,47 @@ Next.js version differs from older releases (see `apps/web/AGENTS.md`).
 After changing routes, open the changed pages in `pnpm preview` and confirm `/sitemap-index.xml`
 lists every child sitemap and each child sitemap lists the new URLs.
 
+### Phone layout
+
+`apps/web/e2e/page-types.ts` lists one page of every type (the static pages, the account pages,
+search, a word, kanji details, every browse family, and a missing page) with what to open on each,
+and the views to check beyond it: each homepage area, and on About the phone menu and each of its
+groups. `openPageType` stands in for the account service (signed out), and waits until the account
+page and a word's examples have loaded and animations have ended; `checkEachView` opens a page
+type, opens Sources, and runs a check on it and each view, and `testEachPageType` declares a test
+for every page type and the missing page. Add a page type there when one ships,
+and these cover it (#682):
+
+- **The phone checks**, `apps/web/e2e/phone-layout.spec.ts`, run with the other browser tests, in
+  the `phone` project at 360 pixels, on every page type and view, and fail on: text under 12
+  pixels; an element past the screen's edge that no ancestor clips; text cut off by a box that
+  hides its overflow; a list laid out as a grid with a cell of text under 44 pixels wide; and a tap
+  target axe's `target-size` rule (WCAG 2.2, 2.5.8) fails or can't clear. The limits and the layout
+  checks are in `apps/web/e2e/phone-checks.ts`. Text for screen readers only is left out. Text
+  inside a drawing marked `data-drawing` (the homepage's drawings of the app, and the page end's
+  collage) is a picture, as a screenshot's is, so it may be small or cropped; a line clamped with
+  an ellipsis, and a carousel's screens past its edge, are meant to be cut off. Each failure names
+  the element and its text: `pnpm test:e2e e2e/phone-layout.spec.ts --project phone`.
+- **The contrast check**, `apps/web/e2e/contrast.spec.ts` (#664), runs axe's `color-contrast` on
+  every page type in both themes at both widths, and on phones on the phone
+  menu and each of its groups; it doesn't open the homepage's other areas (`docs/tech-debt.md`).
+  Both checks call axe through `apps/web/e2e/axe.ts`.
+- **The phone gallery**, `apps/web/e2e/gallery.spec.ts`, runs only when asked: it captures every
+  page type and view at 390 pixels, in light and dark, into one page for a person to review.
+  `playwright.config.ts` leaves it out of every other run. Write it under `tmp/` at the repository
+  root, which git ignores, then open `index.html` there:
+
+  ```sh
+  E2E_GALLERY=../../tmp/phone-gallery pnpm test:e2e --project phone
+  ```
+
+  It runs on `next dev` on the fixtures as the other tests do, or on any running site with
+  `E2E_BASE_URL`, such as the production build.
+
+Furigana takes the `furigana` utility in `apps/web/src/app/globals.css`: 0.45 of its word's size,
+but never under 12 pixels. A drawing's frame carries `data-drawing`, which drops that floor, so a
+drawing's furigana keeps its drawn size.
+
 ### How the build and checks are set up
 
 - Next.js compiles the core's TypeScript source with the site (`transpilePackages` in
@@ -71,8 +112,8 @@ lists every child sitemap and each child sitemap lists the new URLs.
   the fixture helpers every spec imports; `apps/web/e2e/account-stand-in.ts` answers the account
   service's routes in the browser, and marks a browser signed in, for the specs that need it.
   `apps/web/e2e/contrast.spec.ts` runs axe's colour-contrast rule (`@axe-core/playwright`) on
-  every static page, the account pages, and search, word, and browse pages, in the light and dark
-  themes.
+  every page type in `apps/web/e2e/page-types.ts`, in the light and dark themes (Phone layout,
+  above).
 - `apps/web/vitest.config.ts` has two projects: `*.interaction.test.tsx` run in happy-dom, the
   other tests in Node. Both set `__NEXT_TRAILING_SLASH`, so `next/link` draws links with their
   trailing slash, as the build does with `trailingSlash`.
