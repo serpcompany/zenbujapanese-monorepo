@@ -213,6 +213,30 @@ names the event (`dictionary_service_unreachable`), and fields. Workers Logs kee
 else calls `console`, which Biome's `noRestrictedGlobals` enforces outside tests, so every line an
 agent reads there has the same shape.
 
+### UI components
+
+The site is stock shadcn/ui (style `base-nova`, base colour neutral, `apps/web/components.json`),
+so every page looks like one design system:
+
+- **Use the stock component.** A table is `Table`, a filter or a set of views is `Tabs` or
+  `ToggleGroup`, a check box is `Checkbox` with `Label`, a text box is `Input` or `Textarea`, a
+  question list is `Accordion`, and an action is `Button`. Add one that's missing with the shadcn
+  CLI (`pnpm dlx shadcn@latest add <name>` in `apps/web`), and keep it as the CLI wrote it,
+  removing only exports nothing uses, which the dead-code check requires. Never hand-roll a pill,
+  chip, segmented control, table, or check box that a stock component covers.
+- **Don't restyle it.** A `className` on a stock component may lay it out (width, grid placement,
+  margin), but not change its size, padding, radius, border, colour, type size, or density. Use its
+  variants and sizes instead. Colours come only from the theme tokens (Code layout, above), never a
+  literal or an arbitrary Tailwind value.
+- **Match the pages that exist.** Page width, headings, lead text, section spacing, cards, and the
+  breadcrumb follow `/products/` and the browse pages; reuse their components rather than drawing
+  new ones. Size a table to its content at the stock density, not stretched across the page.
+- **A prototype sets the structure and the words, not the styling.** Build a mockup's sections from
+  the stock components, never from its CSS.
+
+Before a pull request that changes how pages look, the `finish-change` skill has a fresh agent
+review the pages against these rules (Review the UI with fresh eyes).
+
 ## Dictionary
 
 Every search, word, kanji, example, sitemap, and retired entry comes from the dictionary service,
