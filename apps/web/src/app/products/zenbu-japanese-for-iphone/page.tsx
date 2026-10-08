@@ -54,12 +54,6 @@ export default function ZenbuJapaneseForIphonePage() {
         <SectionTitle title="What’s inside." aside="Four tabs, one dictionary." />
         <ProductPoints points={iphoneAppPage.features} />
       </section>
-      <ProductBand>
-        <div className={block}>
-          <SectionTitle title="Private by default." aside="Nothing to sign up for." />
-          <ProductPoints points={iphoneAppPage.promises} />
-        </div>
-      </ProductBand>
       <ProductVideos videos={appVideos} />
       <section className={`${block} py-12 md:py-16`}>
         <ProductQuestions questions={iphoneAppPage.questions} />

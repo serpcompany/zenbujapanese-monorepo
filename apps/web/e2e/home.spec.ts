@@ -46,6 +46,7 @@ test.describe('homepage', () => {
     await expect(getTheApp).toHaveAttribute('href', productPage.href)
     await expect(getTheApp).toHaveAttribute('data-link-target', 'iphone-app')
     await expect(hero.getByRole('img')).toHaveCount(2)
+    await expect(hero.getByText('Works offline', { exact: true })).toBeVisible()
     await hero.getByRole('link', { name: 'Search the dictionary' }).click()
     await expect(page).toHaveURL('/dictionary/')
     await expect(page.getByRole('heading', { level: 1, name: 'Japanese dictionary' })).toBeVisible()
