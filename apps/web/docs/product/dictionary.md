@@ -878,8 +878,9 @@ window.
   closes the menu", and "every link in the header menus opens a page the site has, with no
   redirect" and "the Dictionary menu leads to the search box".
 
-**Placeholder links.** The pages the menus and footer name that don't exist yet, and the outside
-addresses that aren't known yet, link to `#` for now: All free tools and Free tools (`/tools/`),
+**Placeholder links.** The pages the menus, footer, and [homepage](home.md) name that don't exist
+yet, and the outside addresses that aren't known yet, link to `#` for now: All free tools and Free
+tools (`/tools/`),
 the three converters, Zenbu Japanese for iPhone (its product page, which #652 builds at
 `/products/zenbu-japanese-for-iphone/`), Browser extension, Reference guides, Courses, All products
 (`/products/`, also #652), Log in (`/login/`), Get the app (the App Store), and the ten social
