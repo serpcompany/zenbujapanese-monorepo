@@ -84,6 +84,29 @@ struct ConversationPlaybackTests {
         == FakeTranslator.translation(of: finished, from: .japanese))
   }
 
+  @Test("sentences split from a longer live text wait for their own translations")
+  func splitSentencesDontTakeTheLiveTranslation() async {
+    let harness = ConversationHarness()
+    await harness.startAndWaitForListening()
+    let first = "明日は八時に新宿駅で待ち合わせします。"
+    let second = "吉祥寺に行きます。"
+
+    harness.session.receive(.volatile(.japanese, first + second))
+    await harness.session.settle()
+    harness.translator.holdsTranslations = true
+    harness.session.receive(.final(.japanese, first))
+    harness.session.receive(.final(.japanese, second))
+
+    #expect(harness.session.conversation.turns.last?.sentences.map(\.translation) == [nil, nil])
+    harness.translator.release()
+    await harness.session.settle()
+    #expect(
+      harness.session.conversation.turns.last?.sentences.map(\.translation) == [
+        FakeTranslator.translation(of: first, from: .japanese),
+        FakeTranslator.translation(of: second, from: .japanese),
+      ])
+  }
+
   @Test("a sentence whose final translation fails drops its live translation and isn't spoken")
   func failedTranslationDropsProvisional() async throws {
     let harness = ConversationHarness()

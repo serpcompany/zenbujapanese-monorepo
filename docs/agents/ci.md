@@ -360,7 +360,9 @@ jobs:
   the tool that wrote it ([`ios.md`](ios.md)). Its LFS cache is keyed on the pointers
   of the LFS patterns it fetches.
 - `swift` runs `SearchExperienceTests` and `TranslatorCoreTests` with `xcodebuild` on the first iPhone Simulator of the
-  newest iOS runtime, on `macos-26` (Xcode 26, for the iOS 26 SDK the package needs; arm64, which
+  newest iOS runtime, then the recorded-audio check's scoring tests with `swift test` (the replay
+  itself needs recordings and speech models, so it stays a local check,
+  [`translate.md`](translate.md)), on `macos-26` (Xcode 26, for the iOS 26 SDK the package needs; arm64, which
   the `sudachi-swift` binary needs). A macOS minute costs about ten times a Linux one, so it runs
   only when the repository variable `IOS_SWIFT_TESTS` is `on`, or when the workflow is run by
   hand. Turning it on is the owners' decision.

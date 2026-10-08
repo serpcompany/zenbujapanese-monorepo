@@ -7,7 +7,12 @@ struct Script: Decodable, Sendable {
   var lines: [ScriptLine]
 
   static func load(from url: URL) throws -> Script {
-    try JSONDecoder().decode(Script.self, from: Data(contentsOf: url))
+    let script = try JSONDecoder().decode(Script.self, from: Data(contentsOf: url))
+    guard !script.lines.isEmpty else { throw ReplayFailure.invalidScript("has no lines") }
+    guard (0...1).contains(script.minimumRecall) else {
+      throw ReplayFailure.invalidScript("needs a minimumRecall between 0 and 1")
+    }
+    return script
   }
 }
 

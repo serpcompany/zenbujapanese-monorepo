@@ -64,4 +64,16 @@ struct SpeechPauseDetectorTests {
     _ = hear(&detector, 0.002, for: 1.5)
     #expect(abs(detector.quietFor - 1.5) < 0.01)
   }
+
+  @Test("a stalled sentence is finished after 2 s once the room is quiet, and after 5 s while someone talks")
+  func stalledSentence() {
+    var detector = SpeechPauseDetector()
+    _ = hear(&detector, 0.002, for: 1)
+    _ = hear(&detector, 0.05, for: 1)
+    #expect(!detector.finishesStalledSentence(unchangedFor: 3))
+    #expect(detector.finishesStalledSentence(unchangedFor: 5))
+    _ = hear(&detector, 0.002, for: 0.7)
+    #expect(!detector.finishesStalledSentence(unchangedFor: 1.9))
+    #expect(detector.finishesStalledSentence(unchangedFor: 2))
+  }
 }

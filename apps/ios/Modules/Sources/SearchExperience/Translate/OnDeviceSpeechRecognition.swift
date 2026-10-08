@@ -23,10 +23,7 @@ actor OnDeviceTranscriber {
     capture = request.capture
     gate.set(true)
     let session = try await recognizer.start(request.languages)
-    guard current == generation else {
-      await recognizer.stop()
-      throw CancellationError()
-    }
+    guard current == generation else { throw CancellationError() }
     feed = session.feed
     do {
       try startAudio()

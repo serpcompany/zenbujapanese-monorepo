@@ -2,6 +2,8 @@ import Foundation
 
 public struct SpeechPauseDetector: Sendable {
   public static let minimumPause: TimeInterval = 0.6
+  static let stalledSentence: TimeInterval = 2
+  static let abandonedSentence: TimeInterval = 5
   static let speechAboveFloor: Float = 3
   static let quietestSpeech: Float = 0.001
   static let floorFall: Float = 0.5
@@ -15,6 +17,10 @@ public struct SpeechPauseDetector: Sendable {
   public init() {}
 
   public var quietFor: TimeInterval { position - lastVoice }
+
+  public func finishesStalledSentence(unchangedFor unchanged: TimeInterval) -> Bool {
+    unchanged >= (quietFor >= Self.minimumPause ? Self.stalledSentence : Self.abandonedSentence)
+  }
 
   public mutating func hear(level: Float?, duration: TimeInterval) -> TimeInterval? {
     position += duration

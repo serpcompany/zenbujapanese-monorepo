@@ -7,7 +7,7 @@ layers apart. Each part's own doc has the detail; each rule here is enforced by 
 
 | Part | What it is | Its doc |
 | --- | --- | --- |
-| `apps/ios` | The iPhone app, in Swift. It reads the language data bundled with it, which its importers in `apps/ios/Tools` build. | [`docs/agents/ios.md`](docs/agents/ios.md) |
+| `apps/ios` | The iPhone app, in Swift. It reads the language data bundled with it, which its importers in `apps/ios/Tools` build. `apps/ios/Tools/TranslateReplay` replays recorded Translate audio on a Mac. | [`docs/agents/ios.md`](docs/agents/ios.md) |
 | `apps/web` | zenbujapanese.com: Next.js on Cloudflare Workers through OpenNext. Its dictionary pages read the dictionary service. | [`docs/agents/web.md`](docs/agents/web.md) |
 | `apps/dictionary-api` | The dictionary service: Node, in a Docker image on serpcompany's server, answering the website's dictionary requests by running the shared core on the app's language data. | [`docs/agents/dictionary-api.md`](docs/agents/dictionary-api.md) |
 | `packages/dictionary-core` | The shared TypeScript core: search, results, word and kanji detail, and examples, ported from the app's Swift. Every client is to run it (ADR 0008). | [`docs/agents/dictionary-core.md`](docs/agents/dictionary-core.md) |

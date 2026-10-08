@@ -63,15 +63,8 @@ enum AnalyzerAudioPipeline {
     { buffer, _ in
       let isOpen = gate.isOpen
       guard let converted = converter.convert(buffer, silenced: !isOpen) else { return }
-      feed.hear(converted, level: isOpen ? level(of: buffer) : nil)
+      feed.hear(converted, level: isOpen ? RecognizerFeed.level(of: buffer) : nil)
     }
-  }
-
-  static func level(of buffer: AVAudioPCMBuffer) -> Float? {
-    guard let samples = buffer.floatChannelData?[0], buffer.frameLength > 0 else { return nil }
-    var sum: Float = 0
-    for index in 0..<Int(buffer.frameLength) { sum += samples[index] * samples[index] }
-    return (sum / Float(buffer.frameLength)).squareRoot()
   }
 
   static func configureSession(for capture: CaptureProfile) throws {

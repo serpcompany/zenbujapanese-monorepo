@@ -11,16 +11,28 @@ struct Options {
   var recordings: [URL] = []
   var isChild = false
 
-  init(_ arguments: [String]) {
+  init(_ arguments: [String]) throws {
     var remaining = arguments[...]
     while let argument = remaining.popFirst() {
       switch argument {
-      case "--script": remaining.popFirst().map { script = URL(filePath: $0) }
-      case "--out": remaining.popFirst().map { output = URL(filePath: $0) }
+      case "--script": script = URL(filePath: try Self.value(of: argument, from: &remaining))
+      case "--out": output = URL(filePath: try Self.value(of: argument, from: &remaining))
       case "--child": isChild = true
+      case let flag where flag.hasPrefix("--"):
+        throw ReplayFailure.invalidArguments("unknown option \(flag)")
       default: recordings.append(URL(filePath: argument))
       }
     }
+    guard !recordings.isEmpty else { throw ReplayFailure.invalidArguments("no recording folder") }
+  }
+
+  private static func value(of flag: String, from remaining: inout ArraySlice<String>) throws
+    -> String
+  {
+    guard let value = remaining.popFirst(), !value.hasPrefix("--") else {
+      throw ReplayFailure.invalidArguments("\(flag) needs a value")
+    }
+    return value
   }
 }
 
@@ -58,17 +70,21 @@ func replayAll(_ options: Options) async throws -> Bool {
   return results.allSatisfy(\.score.passes)
 }
 
-let options = Options(Array(CommandLine.arguments.dropFirst()))
-guard !options.recordings.isEmpty else {
-  print("Usage: translate-replay [--script file.json] [--out folder] recording-folder...")
+#if !DEBUG
+  print("translate-replay: build it for debugging (swift run's default); its timings come from Debug diagnostics")
   exit(2)
-}
+#endif
 do {
+  let options = try Options(Array(CommandLine.arguments.dropFirst()))
   if options.isChild {
     try await replayOne(options)
   } else {
     exit(try await replayAll(options) ? 0 : 1)
   }
+} catch ReplayFailure.invalidArguments(let reason) {
+  print("translate-replay: \(reason)")
+  print("Usage: translate-replay [--script file.json] [--out folder] recording-folder...")
+  exit(2)
 } catch {
   print("translate-replay: \(error)")
   exit(1)

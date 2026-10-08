@@ -35,7 +35,7 @@ enum Replay {
           let session = try await recognizer.start(request.languages)
           Task {
             do {
-              try await audio.play(into: session.feed)
+              try await audio.play(into: session.feed, thenQuietFor: tail)
               outcome.yield(.played)
             } catch {
               outcome.yield(.failed(String(describing: error)))
@@ -58,10 +58,12 @@ enum Replay {
       archive: nil)
     conversation.start()
     for await result in outcomes {
-      if case .failed(let reason) = result { throw ReplayFailure.childFailed(reason) }
+      if case .failed(let reason) = result { throw ReplayFailure.audioFailed(reason) }
       break
     }
-    try await Task.sleep(for: tail)
+    if case .failed(let failure) = conversation.status {
+      throw ReplayFailure.conversationFailed(failure)
+    }
     await conversation.leave(saving: true)
     let turns = conversation.conversation.turns.map { turn in
       turn.sentences.map { HeardSentence(language: turn.language, text: $0.text) }

@@ -72,8 +72,9 @@ the tab. Conversation text is one Dynamic Type size larger than the rest of the 
   wider gap; there are no language labels. The sentence being heard has a tinted fill and an
   accent outline, grows as it's recognized, and shows a provisional translation in italics. Once
   the speaker finishes the sentence, the card keeps that translation until the final one replaces
-  it, so a long sentence never goes back to **Translating…**. A card turns active again while its
-  translation is spoken.
+  it, so a long sentence never goes back to **Translating…**. When what was heard splits into
+  several sentences, each card shows **Translating…** until its own translation arrives, since
+  the provisional one covered them all. A card turns active again while its translation is spoken.
 - **Two Panes.** Japanese fills a dark pane on top and English a light pane below, as in Owll
   Translator. Each pane holds the whole conversation in its language: what was said in it and
   the translation of what was said in the other. The newest line is bold, earlier lines are dimmed,

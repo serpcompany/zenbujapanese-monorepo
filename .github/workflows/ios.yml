@@ -72,3 +72,6 @@ jobs:
           xcodebuild -scheme ZenbuJapaneseModules-Package \
             -destination "platform=iOS Simulator,id=$SIMULATOR" \
             ONLY_ACTIVE_ARCH=YES test
+      - name: Run the recorded-audio check's scoring tests
+        working-directory: apps/ios/Tools/TranslateReplay
+        run: swift test

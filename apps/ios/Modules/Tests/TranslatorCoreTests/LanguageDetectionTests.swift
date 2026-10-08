@@ -287,6 +287,7 @@ struct BilingualTranscriptMergerTests {
         ["明日は朝 8時に新宿駅で待ち合わせします。", "吉祥寺に行きます。", "その後"]
       ),
       (.japanese, ["はい、", "三時に会いましょう。"], ["はい、三時に会いましょう。"]),
+      (.japanese, ["明日は 3.5キロ走ります。"], ["明日は 3.5キロ走ります。"]),
       (.english, ["Thank you.", "See you there."], ["Thank you.", "See you there."]),
       (.english, ["Please meet me", "at Shibuya Station."], ["Please meet me at Shibuya Station."]),
       (.english, ["Oh, Dr. Keeney, I hope you enjoyed it."], ["Oh, Dr. Keeney, I hope you enjoyed it."]),

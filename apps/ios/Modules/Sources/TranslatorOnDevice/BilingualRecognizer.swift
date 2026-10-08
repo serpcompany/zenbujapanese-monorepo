@@ -9,8 +9,6 @@ private struct LanguageAnalyzer {
 }
 
 public actor BilingualRecognizer {
-  static let stalledSentence: TimeInterval = 2
-  static let abandonedSentence: TimeInterval = 5
   static let pauseConfirmation: Duration = .milliseconds(300)
   static let pauseChecks = 5
   static let pauseMargin: TimeInterval = 0.3
@@ -23,7 +21,9 @@ public actor BilingualRecognizer {
   private var liveTextChangedAt: [SpokenLanguage: Date] = [:]
   private var merger = BilingualTranscriptMerger(languages: [])
   private var pauses = SpeechPauseDetector()
-  private var hasHeardAudio = false
+  #if DEBUG
+    private var hasHeardAudio = false
+  #endif
   private var heardContinuation: AsyncStream<HeardAudio>.Continuation?
   private var eventContinuation: AsyncThrowingStream<TranscriptionEvent, any Error>.Continuation?
   private var resultTasks: [Task<Void, Never>] = []
@@ -48,8 +48,8 @@ public actor BilingualRecognizer {
       of: TranscriptionEvent.self, throwing: (any Error).self)
     merger = BilingualTranscriptMerger(languages: languages)
     pauses = SpeechPauseDetector()
-    hasHeardAudio = false
     #if DEBUG
+      hasHeardAudio = false
       TranslateDiagnostics.shared.begin()
       TranslateDiagnostics.shared.note("start \(languages.map(\.rawValue)) \(format)")
     #endif
@@ -87,9 +87,11 @@ public actor BilingualRecognizer {
       resultTasks.append(
         Task {
           do {
-            for try await result in transcriber.results { receive(result, from: language) }
+            for try await result in transcriber.results {
+              receive(result, from: language, startedAs: current)
+            }
           } catch {
-            fail(.speechRecognitionUnavailable)
+            if current == generation { fail(.speechRecognitionUnavailable) }
           }
         })
     }
@@ -101,12 +103,9 @@ public actor BilingualRecognizer {
 
   public func finishUtterance() async {
     let now = Date.now
-    let stalledAfter =
-      pauses.quietFor < SpeechPauseDetector.minimumPause
-      ? Self.abandonedSentence : Self.stalledSentence
     for analyzer in analyzers where unfinished.contains(analyzer.language) {
       let unchanged = now.timeIntervalSince(liveTextChangedAt[analyzer.language] ?? .distantPast)
-      guard unchanged >= stalledAfter else { continue }
+      guard pauses.finishesStalledSentence(unchangedFor: unchanged) else { continue }
       #if DEBUG
         TranslateDiagnostics.shared.note("finish stalled \(analyzer.language.rawValue)")
       #endif
@@ -123,13 +122,6 @@ public actor BilingualRecognizer {
     unfinished = []
     liveText = [:]
     liveTextChangedAt = [:]
-    #if DEBUG
-      TranslateDiagnostics.shared.end()
-    #endif
-    for analyzer in running {
-      analyzer.input.finish()
-      await analyzer.analyzer.cancelAndFinishNow()
-    }
     for task in resultTasks { task.cancel() }
     resultTasks = []
     flushTask?.cancel()
@@ -138,6 +130,13 @@ public actor BilingualRecognizer {
     pauseTask = nil
     eventContinuation?.finish()
     eventContinuation = nil
+    #if DEBUG
+      TranslateDiagnostics.shared.end()
+    #endif
+    for analyzer in running {
+      analyzer.input.finish()
+      await analyzer.analyzer.cancelAndFinishNow()
+    }
   }
 
   public func fail(_ failure: TranslatorFailure) {
@@ -161,8 +160,8 @@ public actor BilingualRecognizer {
   private func hear(_ audio: HeardAudio) async {
     #if DEBUG
       if !hasHeardAudio { TranslateDiagnostics.shared.note("audio starts") }
+      hasHeardAudio = true
     #endif
-    hasHeardAudio = true
     guard let voiceEnd = pauses.hear(level: audio.level, duration: audio.duration) else { return }
     pauseTask?.cancel()
     pauseTask = Task { await finishPausedSentences(after: voiceEnd) }
@@ -197,7 +196,10 @@ public actor BilingualRecognizer {
     }
   }
 
-  private func receive(_ result: SpeechTranscriber.Result, from language: SpokenLanguage) {
+  private func receive(
+    _ result: SpeechTranscriber.Result, from language: SpokenLanguage, startedAs session: Int
+  ) {
+    guard session == generation else { return }
     let text = String(result.text.characters)
     if result.isFinal || text.isEmpty {
       unfinished.remove(language)

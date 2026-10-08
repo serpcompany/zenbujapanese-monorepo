@@ -104,14 +104,17 @@ The tab is split across three Swift targets in `apps/ios/Modules`
   English speech, and left open through a long stretch of English it loses the start of the
   next Japanese. So at every pause `BilingualRecognizer` finalizes the Japanese analyzer, through
   0.3 s after the voice ended so speech that has resumed stays in the next sentence. If its text
-  was still changing, it checks again every 0.3 s while the room stays quiet, up to five times.
+  was still changing, it checks again every 0.3 s while the room stays quiet, up to four more
+  times.
   It finalizes only the Japanese analyzer
   (`finishedAtPauses`). Finalizing the English analyzer garbles the sentence spoken right after
   it ("Then Osaka on Friday." became `....`), which is why each language has its own analyzer.
-- A sentence whose text stops changing is finished early only when the room is quiet: Apple's
-  Japanese recognizer can go 2–3 s without a new result in fast speech, and finishing it then
-  cut a monologue and lost its words. While someone is talking, a sentence is finished only after
-  5 s without a change.
+- A sentence whose text stops changing is finished early only when the room is quiet
+  (`SpeechPauseDetector.finishesStalledSentence`): Apple's Japanese recognizer can go 2–3 s
+  without a new result in fast speech, and finishing it then cut a monologue and lost its words.
+  `LiveConversation` asks every 2.5 s of unchanged live text; the recognizer finishes a sentence
+  unchanged for 2 s once the room has been quiet for 0.6 s, and while someone is talking, only
+  after 5 s.
 - A turn closes only when nobody is talking: no live sentence in either language, and
   `turnEndPause` since the last result. A wrong-language guess that becomes a turn closes the
   real one and mutes the microphone while the person is still speaking. Ducking of other audio
@@ -164,7 +167,7 @@ These were tuned on 2026-10-07 on an iPhone 17 Pro Max. A Mac played the #627 fi
 | Arbiter weights | `LanguageArbiter.score` | confidence × 100 + script × 100 (unchanged) | The measured margins are wide. Japanese speech: Japanese 0.81–1.0 against English 0.04–0.45. English speech: English 0.59–0.97 against Japanese 0.5–0.75, which loses on script. |
 | Pause | `SpeechPauseDetector` | 0.6 s below 3 × the noise floor | Owll splits sentences at about 0.5 s. |
 | Pause confirmation | `BilingualRecognizer.pauseConfirmation` | 0.3 s | Japanese is finalized only if its text stopped changing. A loudness dip inside fast speech no longer cuts it. |
-| Stalled sentence | `BilingualRecognizer.stalledSentence`, `abandonedSentence` | 2 s once the room is quiet for 0.6 s; 5 s while someone is talking | Only a recognizer that has really stopped is finalized. Finalizing during fast speech chopped the monologue and lost its words (2026-10-08, recorded-audio check). |
+| Stalled sentence | `SpeechPauseDetector.stalledSentence`, `abandonedSentence` | 2 s once the room is quiet for 0.6 s; 5 s while someone is talking | Only a recognizer that has really stopped is finalized. Finalizing during fast speech chopped the monologue and lost its words (2026-10-08, recorded-audio check). |
 | Pause re-checks | `BilingualRecognizer.pauseChecks`, `pauseMargin` | 5 checks, 0.3 s apart; finalized through 0.3 s after the voice ended | A pause whose Japanese text was still catching up was skipped, and the sentence waited for the stall timer; the late Japanese final then lost to an English guess. |
 | Doubtful guess over shown speech | `BilingualTranscriptMerger.confidenceOverShownSpeech` | 0.55 | The English recognizer's "Hi" (0.40) for the end of 「はい、3時」 became its own turn. Its junk measured 0.30–0.51 on the recordings; real English 0.59 and up. |
 | Turn-end pause | `ConversationTiming.turnEndPause` | 0.8 s (was 1.2) | Translations start 1.4–2.3 s after the speaker stops (was 2.3–5.4 s). Owll takes about 1.7–2 s. |
@@ -202,10 +205,13 @@ engine change on real audio without a phone or a speaker.
   swift run translate-replay --out /tmp/replay <recording folder> <recording folder>
   ```
 
-  `--script` picks another script. Each replay's `events.log`, `heard.wav`, and `result.json` go
-  in its own folder under `--out`. It exits 1 if any recording fails.
+  `--script` picks another script. Each recording gets a folder under `--out` with its
+  `result.json`, and a timestamped folder inside with the replay's `events.log` and `heard.wav`.
+  It exits 1 if any recording fails, and needs a debug build (`swift run`'s default), since its
+  timings come from the Debug diagnostics.
 - **Real time, one at a time.** Each recording is fed in 100 ms pieces at the pace it was heard,
-  so a 4-minute conversation takes 4 minutes. Recordings run one after another: three at once
+  then 4 s of quiet room noise, as the microphone would go on hearing, so a 4-minute conversation
+  takes 4 minutes. An all-zero piece is the phone's muted microphone, and is fed as muted. Recordings run one after another: three at once
   share the Mac's speech service, and the Japanese recognizer then stops sending results for up to
   8 s, which the phone doesn't do. Alone, its longest silence in the monologue is 2.5–2.8 s, against
   1.9 s on an iPhone 17 Pro Max.

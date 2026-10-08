@@ -17,6 +17,7 @@ public enum SpokenLanguage: String, Codable, Sendable, CaseIterable, Hashable {
   }
 
   static let sentenceEnds: Set<Character> = [".", "?", "!", "。", "？", "！"]
+  static let japaneseSentenceEnds: Set<Character> = ["。", "？", "！"]
 
   func sentences(in results: [String]) -> [String] {
     var sentences: [String] = []
@@ -36,7 +37,7 @@ public enum SpokenLanguage: String, Codable, Sendable, CaseIterable, Hashable {
     var current = ""
     for character in text {
       current.append(character)
-      if Self.sentenceEnds.contains(character) {
+      if Self.japaneseSentenceEnds.contains(character) {
         pieces.append(current.trimmingCharacters(in: .whitespaces))
         current = ""
       }

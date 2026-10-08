@@ -85,6 +85,7 @@ public struct BilingualTranscriptMerger: Sendable {
   private var finals: [SpokenLanguage: [TranscriberResult]] = [:]
   private var firstFinalAt: Date?
   private var emittedThrough: TimeInterval = -.infinity
+  private var shownThrough: TimeInterval = -.infinity
 
   public init(languages: [SpokenLanguage]) {
     self.languages = languages
@@ -122,7 +123,7 @@ public struct BilingualTranscriptMerger: Sendable {
   }
 
   private func repeatsShownSpeech(_ result: TranscriberResult) -> Bool {
-    let startsInShownSpeech = result.start < emittedThrough - Self.endTolerance
+    let startsInShownSpeech = result.start < shownThrough - Self.endTolerance
     let doubtful = (result.confidence ?? 1) < Self.confidenceOverShownSpeech
     return Self.mostlyBefore(emittedThrough, result) || (startsInShownSpeech && doubtful)
   }
@@ -186,7 +187,9 @@ public struct BilingualTranscriptMerger: Sendable {
     }
     emittedThrough = end ?? emittedThrough
     volatile = volatile.filter { $0.value.end > emittedThrough + Self.endTolerance }
-    let texts = (held[winner.language] ?? []).map(\.text).filter { !$0.isEmpty }
+    let shown = held[winner.language] ?? []
+    shownThrough = shown.map(\.end).max() ?? shownThrough
+    let texts = shown.map(\.text).filter { !$0.isEmpty }
     return winner.language.sentences(in: texts).map { .final(winner.language, $0) }
   }
 

@@ -24,6 +24,23 @@ public struct RecognizerFeed: @unchecked Sendable {
       HeardAudio(level: level, duration: Double(buffer.frameLength) / buffer.format.sampleRate))
   }
 
+  public static func level(of buffer: AVAudioPCMBuffer) -> Float? {
+    let count = Int(buffer.frameLength)
+    guard count > 0 else { return nil }
+    var sum: Float = 0
+    if let samples = buffer.floatChannelData?[0] {
+      for index in 0..<count { sum += samples[index] * samples[index] }
+    } else if let samples = buffer.int16ChannelData?[0] {
+      for index in 0..<count {
+        let sample = Float(samples[index]) / Float(Int16.max)
+        sum += sample * sample
+      }
+    } else {
+      return nil
+    }
+    return (sum / Float(count)).squareRoot()
+  }
+
   static func copy(of buffer: AVAudioPCMBuffer) -> AVAudioPCMBuffer? {
     guard let copy = AVAudioPCMBuffer(pcmFormat: buffer.format, frameCapacity: buffer.frameLength)
     else { return nil }
