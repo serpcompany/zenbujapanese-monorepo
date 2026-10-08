@@ -42,9 +42,10 @@ or how fast it feels. The app needs iOS 26.0 or later, and the Sudachi cache abo
    that publishes the app (the backup account's, while #616 is open), keep the bundle ID. A free
    Apple ID (a Personal Team) can't use `com.zenbujapanese.app`, which that team registered:
    change it to one of your own, such as `com.<you>.zenbujapanese`. A Personal Team can't sign
-   Associated Domains either, so also remove that capability
-   ([Links from the website](#links-from-the-website)). The project sets no team, so picking one
-   edits `project.pbxproj`; don't commit that edit, a bundle ID change, or the removed capability.
+   Associated Domains or Sign in with Apple either, so also remove those capabilities
+   ([Links from the website](#links-from-the-website), [Account and sync](#account-and-sync)).
+   Without Sign in with Apple, sign in with Google or an emailed code. The project sets no team, so picking one
+   edits `project.pbxproj`; don't commit that edit, a bundle ID change, or the removed capabilities.
 3. Choose the iPhone as the run destination and run.
 4. If iOS asks, turn on Developer Mode under Settings → Privacy & Security → Developer Mode. With a
    free Apple ID, also trust it under Settings → General → VPN & Device Management.
@@ -120,11 +121,12 @@ scheme and the host `zenbujapanese.com` routes the same way.
 
 Check it with `WebsiteLinkTests`. The Simulator sends an `https` link to Safari until the
 association file is live, which would also load the site, so to see a link land in the app
-before then, build without the entitlement and with a URL scheme that is never committed, and
-open the same URL under that scheme:
+before then, build without the entitlements and with a URL scheme that is never committed, added
+to a copy of the app's `Info.plist` so the account service's settings stay, and open the same URL
+under that scheme:
 
 ```sh
-plutil -create xml1 /tmp/link-check.plist
+cp apps/ios/App/Info.plist /tmp/link-check.plist
 plutil -insert CFBundleURLTypes -json '[{"CFBundleURLSchemes":["zenbu-check"]}]' /tmp/link-check.plist
 xcodebuild -project apps/ios/ZenbuJapanese.xcodeproj -scheme ZenbuJapanese \
   -destination 'platform=iOS Simulator,id=<udid>' ONLY_ACTIVE_ARCH=YES ARCHS=arm64 \
