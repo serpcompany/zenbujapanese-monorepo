@@ -84,10 +84,13 @@ private let script = Script(
   let log = """
        0.00 start ["ja", "en"]
        0.50 audio starts
+       3.10 ja F 0.20-2.50 c=0.81 今日は東京駅に行きます。
        3.40 pause after voice at 2.00
        4.30 speak en I'm going to Tokyo Station today.
-       6.10 speak en It's a nice day.
+       6.10 pause after voice at 5.10
+       6.20 speak en It's a nice day.
        9.20 pause after voice at 8.00
+       9.30 en F 6.10-8.40 c=0.92 Yes.
       10.00 speak ja はい。
     """
 
