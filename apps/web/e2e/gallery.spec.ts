@@ -64,7 +64,8 @@ for (const theme of themes) {
         await page.evaluate(() => document.fonts.ready)
         await page.screenshot({
           path: join(folder, fileFor(index, pageType, theme)),
-          fullPage: true
+          fullPage: true,
+          caret: 'initial'
         })
         writeFileSync(join(folder, 'index.html'), galleryPage(baseURL ?? ''))
       })
