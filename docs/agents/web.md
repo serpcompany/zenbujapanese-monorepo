@@ -226,8 +226,9 @@ so every page looks like one design system:
   chip, segmented control, table, or check box that a stock component covers.
 - **Don't restyle it.** A `className` on a stock component may lay it out (width, grid placement,
   margin), but not change its size, padding, radius, border, colour, type size, or density. Use its
-  variants and sizes instead. Colours come only from the theme tokens (Code layout, above), never a
-  literal or an arbitrary Tailwind value.
+  variants and sizes instead. Colours come only from the shadcn tokens in `src/app/globals.css`,
+  through their Tailwind classes (`bg-background`, `text-muted-foreground`, `border-border`, and
+  the rest), never a literal or an arbitrary Tailwind value.
 - **Match the pages that exist.** Page width, headings, lead text, section spacing, cards, and the
   breadcrumb follow `/products/` and the browse pages; reuse their components rather than drawing
   new ones. Size a table to its content at the stock density, not stretched across the page.
