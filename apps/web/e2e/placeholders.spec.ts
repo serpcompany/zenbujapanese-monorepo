@@ -1,7 +1,16 @@
-import type { Page } from '@playwright/test'
+import type { Locator, Page } from '@playwright/test'
 import { sitePages } from '../src/lib/pages'
 import { placeholderHref, placeholderLinks } from '../src/lib/site'
-import { expect, needed, test } from './test'
+import {
+  accountButton,
+  accountMenu,
+  expect,
+  menuButton,
+  needed,
+  onPhone,
+  phoneMenu,
+  test
+} from './test'
 
 const pagesToCheck = [
   ...sitePages.map(page => page.path),
@@ -12,7 +21,7 @@ const pagesToCheck = [
 
 const listedNames = new Map(placeholderLinks.map(link => [link.id, link.name]))
 
-async function placeholdersOn(page: Page) {
+async function placeholdersOn(page: Page | Locator) {
   return page
     .locator(`a[href="${placeholderHref}"]`)
     .evaluateAll(anchors =>
@@ -21,11 +30,8 @@ async function placeholdersOn(page: Page) {
 }
 
 async function placeholdersInPhoneMenu(page: Page) {
-  await page.getByRole('banner').getByRole('button', { name: 'Menu' }).click()
-  const groups = page
-    .getByRole('dialog', { name: 'Zenbu Japanese' })
-    .getByRole('navigation', { name: 'Sections' })
-    .getByRole('button')
+  await menuButton(page).click()
+  const groups = phoneMenu(page).getByRole('navigation', { name: 'Sections' }).getByRole('button')
   await expect(groups.first()).toBeVisible()
   const links: string[] = []
   for (const group of await groups.all()) {
@@ -36,16 +42,24 @@ async function placeholdersInPhoneMenu(page: Page) {
   return links
 }
 
+async function placeholdersWithTheAccountMenu(page: Page) {
+  const onThePage = await placeholdersOn(page)
+  await accountButton(page).click()
+  await expect(accountMenu(page)).toBeVisible()
+  return [...onThePage, ...(await placeholdersOn(accountMenu(page)))]
+}
+
 test('every # link the site renders is a placeholder listed in src/lib/site.ts', async ({
   page
 }) => {
   test.setTimeout(300_000)
-  const onPhone = test.info().project.name === 'phone'
   const found = new Map<string, Set<string>>()
   const unlisted: string[] = []
   for (const path of pagesToCheck) {
     await page.goto(path)
-    const links = onPhone ? await placeholdersInPhoneMenu(page) : await placeholdersOn(page)
+    const links = onPhone()
+      ? await placeholdersInPhoneMenu(page)
+      : await placeholdersWithTheAccountMenu(page)
     for (const link of links) {
       if (!listedNames.has(link)) unlisted.push(`${path}: ${link}`)
       else found.set(link, (found.get(link) ?? new Set()).add(path))

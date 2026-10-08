@@ -35,6 +35,7 @@ const emailOnly: AccountSettings = { apiUrl, appleServicesId: null, google: fals
 
 describe('signing in on the website', () => {
   test('emails a code, signs in with it, and goes to the account page', async () => {
+    window.localStorage.setItem('zenbu-initials', 'XY')
     const { calls } = stubAccountService({
       'POST /v1/auth/email-otp/send-verification-otp': answer({ success: true }),
       'POST /v1/auth/sign-in/email-otp': answer({ token: 'bare', user: { id: 'u1' } })
@@ -49,6 +50,7 @@ describe('signing in on the website', () => {
     await submit(page, 'Create account')
     expect(push).toHaveBeenCalledWith('/account/')
     expect(window.localStorage.getItem('zenbu-signed-in')).toBe('yes')
+    expect(window.localStorage.getItem('zenbu-initials')).toBeNull()
     expect(calls.map(call => call.credentials)).toEqual(['include', 'include'])
   })
 

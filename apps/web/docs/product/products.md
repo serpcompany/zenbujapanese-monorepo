@@ -87,8 +87,8 @@ note).
 - Source: #648 mockups (Product page, Hero: centered + demo) and their notes; #652.
 - Check: Product page spec, "leads with the app, its Get the app button to the App Store
   placeholder, and the facts" and "the header’s Get the app opens this page";
-  `src/components/site-header.test.tsx`, "from 1024 pixels Log in and Get the app end the
-  header, Get the app opening the iPhone app’s page".
+  `src/components/site-header.test.tsx`, "from 1024 pixels Get the app and the account button
+  end the header, Get the app opening the iPhone app’s page".
 
 **Demo.** Under the hero, a panel shows one feature at a time: its icon and name, a heading, a
 line, and its App Store screenshot, side by side from 768 pixels and stacked on phones. The five

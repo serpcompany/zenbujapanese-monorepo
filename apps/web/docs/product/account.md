@@ -45,31 +45,50 @@ other account page, and asks the account service nothing.
   says signing in isn't available, links no account page, and stays noindex" (and each other
   page); `src/lib/account/pages.test.ts` (the descriptions included); `src/app/routes.test.ts`.
 
-**Log in and the footer.** Where the account pages are open, the header's Log in (in the phone
-menu below 1024 pixels) opens `/login/`, and the footer's Products group ends with Sign in, which
-leads there too. Both take their address from the `login` entry in `linkTargets`
-(`src/lib/site.ts`), which the build points at `/login/` only where the pages are open
+**Log in, the account menu, and the footer.** Where the account pages are open, Log in and
+Create an account in the header's account menu (Log in in the phone menu below 1024 pixels) open
+`/login/` and `/register/`, and the footer's Products group ends with Sign in, which leads to
+`/login/` too. They take their addresses from the `login` and `register` entries in `linkTargets`
+(`src/lib/site.ts`), which the build points at the pages only where they're open
 (`ZENBU_ACCOUNT_PAGES`, [`web.md`](../../../../docs/agents/web.md), Account pages). Where they're
-closed, as in production today, Log in stays a `#` placeholder
+closed, as in production today, Log in and Create an account stay `#` placeholders
 ([Dictionary](dictionary.md#header-footer-and-site-wide), Placeholder links) and the footer has
 no Sign in, so nothing links to the account pages. In a browser that signed in on the site, the
-footer says Account and leads to `/account/`; the header's Log in doesn't change. The browser
-remembers that
-in local storage (`zenbu-signed-in`), which the pages set on signing in and clear on signing out,
-on deleting the account, and when the account page finds no session. The server draws Sign in, so
-the page and its first render in the browser agree.
+footer says Account and leads to `/account/`; the header's account button shows the learner's
+initials, its menu leads to Your account (`/account/`) and ends with Sign out, which signs this
+browser out through the account service (the address the build names, `ZENBU_ACCOUNT_SERVICE`),
+and the phone menu has Your account in Log in's place
+([Dictionary](dictionary.md#header-footer-and-site-wide), Account menu). The browser remembers
+that in local storage: `zenbu-signed-in`, and `zenbu-initials`, the initials of the name the
+account page shows (or its email's first letter), which the account page sets as it shows the
+account, after a sign-in or a change to the name; a sign-in clears the initials of any account
+before it until the account page shows the new one. Both go on signing out (here or from the
+account menu), on deleting the account, and when the account page finds no session. The account
+page follows the note: when the browser signs out from the account menu, or in another tab, it
+shows signed out without asking the service, and an account it was still loading then shows signed
+out too. The server
+draws Sign in and the signed-out button, so the page and its first render in the browser agree.
 
-- Source: #468, so the pages can be reached; the header's Log in, a placeholder until the login
-  page existed (#648, #650), keeps its place and wording.
-- Check: `src/lib/site.test.ts`, "Log in opens /login/ in a build whose account pages are open,
-  and isn't a placeholder" and "Log in stays a # placeholder in a build whose account pages are
-  closed"; `src/components/site-footer.test.tsx`, "the footer groups its links under Products,
-  Tools, Company, and Legal", "the footer leads to signing in, as the server draws it before the
-  browser knows", and "the footer leaves signing in out where the site's account pages are
-  closed"; Account spec, "the header's Log in, or the drawer's on phones, opens the login page"
-  and "the footer leads to signing in, and to the account once signed in"; Closed spec, "the
-  header's Log in, and the drawer's on phones, stays a # placeholder" and "a page built ahead of
-  time has no Sign in in its footer".
+- Source: #468, so the pages can be reached; #664 (the account menu, the initials, and Sign out in
+  the header).
+- Check: `src/lib/site.test.ts`, "%s opens its page in a build whose account pages are open, and
+  isn't a placeholder" and "%s stays a # placeholder in a build whose account pages are closed",
+  for Log in and Create an account; `src/components/site-footer.test.tsx`, "the footer groups its
+  links under Products, Tools, Company, and Legal", "the footer leads to signing in, as the server
+  draws it before the browser knows", and "the footer leaves signing in out where the site's
+  account pages are closed"; Account page tests, "shows who is signed in, the profile, and the ways
+  to sign in, reading /v1/me with an access token only" (the initials), "shows signed out, and
+  forgets it was signed in, when there is no session", "shows signed out when this browser signs
+  out from %s, without asking the service" (the account menu and another tab), and "shows signed
+  out when the browser signs out while the account is still loading"; Sign-in form tests, "emails a
+  code, signs in with it, and goes to the account page" (the earlier initials cleared); Account
+  spec, "the account menu's Log in, or the drawer's on phones, opens the login page" and "the
+  footer leads to signing in, and to the account once signed in, as the header shows the
+  initials"; `e2e/header.spec.ts`, "signed in, the menu
+  leads to the account, then the theme, then Sign out, by keyboard" and "signing out from the menu
+  on the account page shows it signed out, with no reload"; Closed spec, "the account
+  menu's Log in and Create an account, and the drawer's Log in on phones, stay # placeholders" and
+  "a page built ahead of time has no Sign in in its footer".
 
 ## Signing in
 
@@ -298,8 +317,8 @@ data, signs the browser out, and the footer says Sign in again.
 `https://api-staging.zenbujapanese.com` on staging, `http://localhost:8789` locally, and none yet
 in production, whose value is empty until its account service answers on `api.zenbujapanese.com`.
 An empty value closes the account pages; one that isn't an origin closes them too and logs
-`account_service_url_invalid`. The footer's Sign in and the header's Log in get their address
-when the site is built, from the same value in `apps/web/wrangler.jsonc` for the environment being
+`account_service_url_invalid`. The footer's Sign in, the account menu's Log in and Create an
+account, and the service its Sign out calls get their addresses when the site is built, from the same value in `apps/web/wrangler.jsonc` for the environment being
 built, held to the same rule (an origin), so they and the pages agree in a build made as its
 environment deploys, with its `SITE_ENV`. A build without `SITE_ENV` draws the local site's header
 and footer, whichever Worker vars it then runs with. Opening production is in

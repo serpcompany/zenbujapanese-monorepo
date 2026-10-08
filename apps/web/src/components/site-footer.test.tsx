@@ -95,14 +95,14 @@ test('the footer leads with the brand linking home and its tagline', () => {
 })
 
 const brandIcon =
-  /^<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" class="size-5"><path d="[^"]+"><\/path><\/svg>/
+  /^<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" class="size-4.5 md:size-5"><path d="[^"]+"><\/path><\/svg>/
 
-test('a row of plain brand icons, five to a row on phones, links each account in src/lib/site.ts', () => {
+test('one row of plain brand icons, all ten on phones, links each account in src/lib/site.ts', () => {
   const html = footer()
   const list = html.match(
     /<ul aria-label="Zenbu Japanese elsewhere" class="([^"]*)">([\s\S]*?)<\/ul>/
   )
-  expect(list?.[1].split(' ')).toEqual(expect.arrayContaining(['grid', 'grid-cols-5']))
+  expect(list?.[1].split(' ')).toEqual(expect.arrayContaining(['grid', 'grid-cols-10']))
   const links = [...(list?.[2] ?? '').matchAll(/<a ([^>]*)>([\s\S]*?)<\/a>/g)]
   expect(
     links.map(([, , content]) => content.match(/<span class="sr-only">([^<]+)</)?.[1])

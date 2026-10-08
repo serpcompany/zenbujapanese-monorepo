@@ -17,3 +17,6 @@ export const accountPagesFor = (wrangler: string, siteEnv: string | undefined) =
   accountServiceIn(wrangler, siteEnv) ? 'open' : 'closed'
 
 export const accountPagesOpen = () => process.env.ZENBU_ACCOUNT_PAGES === 'open'
+
+export const builtAccountService = () =>
+  accountPagesOpen() ? process.env.ZENBU_ACCOUNT_SERVICE || null : null

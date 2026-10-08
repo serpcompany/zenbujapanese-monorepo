@@ -121,7 +121,7 @@ test.describe('privacy policy', () => {
     await expectNamed(page, 'Your account on this website', [
       'once zenbujapanese.com offers sign-in, you can create or sign in to your Zenbu account there with a code we email you, and with Apple or Google where its sign-in page offers them',
       "doesn't read or change your known words or lists yet",
-      'only when you open your account page or start to sign in',
+      'only when you open your account page, start to sign in, or choose Sign out in its account menu',
       'pointing at or tabbing to a Sign in with Apple button gets it ready',
       "loads Apple's Sign in with Apple script from Apple",
       'goes to Google and comes back through our account service'
@@ -133,7 +133,8 @@ test.describe('privacy policy', () => {
     await expectNamed(page, 'This website', [
       'sets them for api.zenbujapanese.com, so your browser sends them only there',
       "the website's pages can't read them",
-      "a note in your browser's local storage that you signed in",
+      "a note in your browser's local storage that you signed in, with your initials",
+      'whether you chose the light, dark, or system theme, which holds nothing about you',
       "while you confirm it's you with Google, it keeps in that tab's session storage",
       'sign that earlier session out',
       'never sent to us'

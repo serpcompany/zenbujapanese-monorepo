@@ -1,10 +1,12 @@
 import type { Page } from '@playwright/test'
 import {
+  accountMenu,
   accountPages,
   expect,
   footerAccountLink,
   headerLogIn,
   onClosedProduction,
+  onPhone,
   test
 } from './test'
 
@@ -57,7 +59,7 @@ test.describe("production's account pages, while its ACCOUNT_API_URL is empty", 
     })
   }
 
-  test("the header's Log in, and the drawer's on phones, stays a # placeholder", async ({
+  test("the account menu's Log in and Create an account, and the drawer's Log in on phones, stay # placeholders", async ({
     page,
     baseURL
   }) => {
@@ -66,6 +68,11 @@ test.describe("production's account pages, while its ACCOUNT_API_URL is empty", 
     const logIn = await headerLogIn(page)
     await expect(logIn).toHaveAttribute('href', '#')
     await expect(logIn).toHaveAttribute('data-link-target', 'login')
+    if (!onPhone()) {
+      const register = accountMenu(page).getByRole('menuitem', { name: 'Create an account' })
+      await expect(register).toHaveAttribute('href', '#')
+      await expect(register).toHaveAttribute('data-link-target', 'register')
+    }
     await page.waitForLoadState('networkidle')
     expect(requests).toEqual([])
   })

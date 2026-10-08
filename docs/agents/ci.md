@@ -232,8 +232,10 @@ changed without regenerating the types fails here; then `pnpm check` ([`web.md`]
 static pages and prerendering differ by environment, so a route that reads a binding at build time
 fails only in that environment's build. Neither build reaches the dictionary service: deployed
 pages read it only at request time. After staging's, it checks the prerendered `/about/` has the
-header's Log in and the footer's Sign in linking `/login/`, since staging's account pages are open
-([`web.md`](web.md), Account pages); the `e2e` job checks production's has none. Each step names `apps/web` as its working directory, rather
+footer's Sign in linking `/login/`, since staging's account pages are open
+([`web.md`](web.md), Account pages); the header's Log in is in the account menu, which the browser
+draws, so `src/lib/site.test.ts` checks its address with the account pages open and closed. The `e2e` job checks
+production's has none. Each step names `apps/web` as its working directory, rather
 than the jobs setting it as a default, because the dead-code check reads a step's working directory
 to find the scripts and binaries a step runs, and not a job's.
 
@@ -246,8 +248,8 @@ since `Web deploy` passes the real one) and runs `e2e/account-closed.spec.ts`
 on that build, served by `wrangler dev` with production's vars, no dictionary service, and no
 `.dev.vars` or `.env` file: while production's
 `ACCOUNT_API_URL` is empty, each account page says signing in isn't available and asks the
-account service nothing, and nothing links to one, the header's Log in (still `#`) and the
-prerendered footer included. When production's account pages open, those two steps go
+account service nothing, and nothing links to one, the account menu's Log in and Create an
+account (still `#`) and the prerendered footer included. When production's account pages open, those two steps go
 with it ([`web.md`](web.md), Account pages). On a failure
 it uploads the report, traces, videos, and screenshots as the `playwright-report` artifact, kept
 for a week.

@@ -4,6 +4,7 @@
   "main": "worker.ts",
   "compatibility_date": "2026-09-28",
   "compatibility_flags": ["nodejs_compat", "global_fetch_strictly_public"],
+  "keep_names": false,
   "assets": {
     "binding": "ASSETS",
     "directory": ".open-next/assets"

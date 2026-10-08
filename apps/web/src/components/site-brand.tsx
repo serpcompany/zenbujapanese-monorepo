@@ -1,6 +1,20 @@
+import Image from 'next/image'
 import Link from 'next/link'
 import { site } from '@/lib/site'
 import { cn } from '@/lib/utils'
+
+export function SiteLogo() {
+  return (
+    <Image
+      src="/zenbu-icon-flat-vector.svg"
+      alt=""
+      width={30}
+      height={30}
+      unoptimized
+      className="size-7.5 shrink-0"
+    />
+  )
+}
 
 export function SiteBrand({
   className,
@@ -11,13 +25,7 @@ export function SiteBrand({
 }) {
   return (
     <Link href="/" className={cn('flex shrink-0 items-center gap-2 font-medium', className)}>
-      <span
-        lang="ja"
-        aria-hidden="true"
-        className="grid size-7 place-items-center rounded-md bg-primary text-[15px] text-primary-foreground"
-      >
-        {site.mark}
-      </span>
+      <SiteLogo />
       <span className={nameClassName}>{site.name}</span>
     </Link>
   )
