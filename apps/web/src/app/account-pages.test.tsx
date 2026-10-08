@@ -37,7 +37,7 @@ describe('the account pages', () => {
     expect(html).toContain('isn’t available on this site yet')
     expect(html).not.toContain('Email me a code')
     expect(html).not.toContain('a code')
-    expect(html).not.toContain('works in the Zenbu Japanese app')
+    expect(html).not.toContain('The same Zenbu account signs in here')
     expect(accountLinks(html)).toEqual([])
   })
 

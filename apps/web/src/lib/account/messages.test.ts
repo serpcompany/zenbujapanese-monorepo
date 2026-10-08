@@ -24,13 +24,23 @@ describe('what the account pages say when the account service refuses', () => {
     expect(failureMessage(failure)).toContain(says)
   })
 
-  test('says an Apple or Google account signs in elsewhere when this site offers neither', () => {
+  test('sends an Apple or Google account to sign in only a way this site offers', () => {
     const notLinked = refused(403, 'account_not_linked')
-    expect(failureMessage(notLinked)).toContain('then add your email on your account page')
-    expect(failureMessage(notLinked, false)).toBe(
+    expect(failureMessage(notLinked)).toBe(
+      'This email’s account signs in with Apple or Google. Sign in that way, then add your email on your account page.'
+    )
+    expect(failureMessage(notLinked, { apple: false, google: false })).toBe(
       'This email’s account signs in with Apple or Google, which this site doesn’t offer yet. Sign in that way in the app you made the account in.'
     )
-    expect(failureMessage(refused(400, 'invalid_otp'), false)).toContain('That code isn’t right')
+    expect(failureMessage(notLinked, { apple: false, google: true })).toBe(
+      'This email’s account signs in with Apple or Google. If it’s Google, sign in with Google here, then add your email on your account page; if not, sign in in the app you made the account in.'
+    )
+    expect(failureMessage(notLinked, { apple: true, google: false })).toContain(
+      'If it’s Apple, sign in with Apple here'
+    )
+    expect(failureMessage(refused(400, 'invalid_otp'), { apple: false, google: false })).toContain(
+      'That code isn’t right'
+    )
   })
 
   test('says how long to wait after a 429, when the service says', () => {

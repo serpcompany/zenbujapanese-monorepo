@@ -123,7 +123,7 @@ export function SignInOptions({
           email={email}
           sendLabel={emailLabels.send}
           signInLabel={emailLabels.signIn}
-          appleOrGoogleHere={settings.appleServicesId !== null || settings.google}
+          providersHere={{ apple: settings.appleServicesId !== null, google: settings.google }}
           onSignedIn={() => onSignedIn(null)}
         />
       ) : null}

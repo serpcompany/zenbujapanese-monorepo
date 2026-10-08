@@ -5,6 +5,8 @@ const confirmFirst = 'For your security, confirm it’s you first.'
 const anotherAccount = 'That account already signs in to another Zenbu account.'
 const linkedElsewhere =
   'An account already uses that email. Sign in the way you made it, then add this way on your account page.'
+const notLinked =
+  'This email’s account signs in with Apple or Google. Sign in that way, then add your email on your account page.'
 const unverified =
   'That Apple or Google account’s email isn’t verified, so it can’t make an account.'
 
@@ -12,8 +14,7 @@ const refusals: Record<string, string> = {
   invalid_otp: 'That code isn’t right. Check it and try again, or send a new one.',
   otp_expired: 'That code has expired. Send a new one.',
   too_many_attempts: 'Too many wrong codes. Send a new one.',
-  account_not_linked:
-    'This email’s account signs in with Apple or Google. Sign in that way, then add your email on your account page.',
+  account_not_linked: notLinked,
   oauth_link_error: linkedElsewhere,
   email_not_verified: unverified,
   email_unavailable: 'Signing in with an email code isn’t available right now. Try again later.',
@@ -47,10 +48,23 @@ function waitFor(seconds: number): string {
   return `${minutes} minute${minutes === 1 ? '' : 's'}`
 }
 
-const signsInElsewhere =
-  'This email’s account signs in with Apple or Google, which this site doesn’t offer yet. Sign in that way in the app you made the account in.'
+export interface ProvidersHere {
+  apple: boolean
+  google: boolean
+}
 
-export function failureMessage(failure: Failure, appleOrGoogleHere = true): string {
+const everyProvider: ProvidersHere = { apple: true, google: true }
+
+function signsInWithAProvider(here: ProvidersHere): string {
+  if (here.apple && here.google) return notLinked
+  const offered = here.apple ? 'Apple' : here.google ? 'Google' : null
+  if (offered === null) {
+    return 'This email’s account signs in with Apple or Google, which this site doesn’t offer yet. Sign in that way in the app you made the account in.'
+  }
+  return `This email’s account signs in with Apple or Google. If it’s ${offered}, sign in with ${offered} here, then add your email on your account page; if not, sign in in the app you made the account in.`
+}
+
+export function failureMessage(failure: Failure, here: ProvidersHere = everyProvider): string {
   if (failure.kind === 'offline') {
     return 'We couldn’t reach your Zenbu account. Check your connection and try again.'
   }
@@ -60,7 +74,7 @@ export function failureMessage(failure: Failure, appleOrGoogleHere = true): stri
       ? `Too many tries. Try again in ${waitFor(failure.retryAfter)}.`
       : 'Too many tries. Wait a few minutes, then try again.'
   }
-  if (failure.code === 'account_not_linked' && !appleOrGoogleHere) return signsInElsewhere
+  if (failure.code === 'account_not_linked') return signsInWithAProvider(here)
   const known = refusals[failure.code]
   if (known) return known
   return failure.status >= 500 || failure.message === '' ? somethingWentWrong : failure.message

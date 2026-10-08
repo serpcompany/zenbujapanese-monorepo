@@ -4,7 +4,7 @@ import { type FormEvent, useId, useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import type { AccountApi, Failure } from '@/lib/account/client'
-import { failureMessage } from '@/lib/account/messages'
+import { failureMessage, type ProvidersHere } from '@/lib/account/messages'
 import { FormMessage } from './form-message'
 
 interface EmailCodeFormProps {
@@ -15,7 +15,7 @@ interface EmailCodeFormProps {
   onSignedIn: () => void | Promise<void>
   mayVerify?: () => boolean
   onRefusal?: (failure: Failure) => boolean
-  appleOrGoogleHere?: boolean
+  providersHere?: ProvidersHere
 }
 
 export function EmailCodeForm({
@@ -26,7 +26,7 @@ export function EmailCodeForm({
   onSignedIn,
   mayVerify,
   onRefusal,
-  appleOrGoogleHere = true
+  providersHere
 }: EmailCodeFormProps) {
   const id = useId()
   const [email, setEmail] = useState(fixedEmail ?? '')
@@ -43,7 +43,7 @@ export function EmailCodeForm({
     setProblem(null)
     const sent = await api.sendCode(to)
     setBusy(false)
-    if (!sent.ok) return setProblem(failureMessage(sent.failure, appleOrGoogleHere))
+    if (!sent.ok) return setProblem(failureMessage(sent.failure, providersHere))
     setSentTo(to)
     setCode('')
   }
@@ -56,7 +56,7 @@ export function EmailCodeForm({
     const signedIn = await api.signInWithCode(sentTo, code.trim())
     if (signedIn.ok) await onSignedIn()
     else if (!onRefusal?.(signedIn.failure)) {
-      setProblem(failureMessage(signedIn.failure, appleOrGoogleHere))
+      setProblem(failureMessage(signedIn.failure, providersHere))
     }
     setBusy(false)
   }

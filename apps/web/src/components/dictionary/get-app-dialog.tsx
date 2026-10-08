@@ -22,7 +22,7 @@ import { useMediaQuery } from '@/hooks/use-media-query'
 import { site } from '@/lib/site'
 
 const description =
-  'Save words to lists, mark them known, and add notes and photos in the Zenbu app. This website doesn’t save these yet.'
+  'Save words to lists, mark them known, and add notes and photos in the Zenbu app. Saving lists and known words on this website comes later.'
 
 export function GetAppDialog({
   action,
