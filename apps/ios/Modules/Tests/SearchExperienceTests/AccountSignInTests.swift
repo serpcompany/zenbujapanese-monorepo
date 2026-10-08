@@ -214,11 +214,7 @@ struct AccountSignInTests {
         ? .error(401, "unauthorized")
         : .json(200, ["token": StubTokens.access(expiresAt: earlier)])
     }
-    let tokens = AccountTokens(
-      api: AccountAPI(baseURL: server.baseURL, session: server.session), storage: storage)
-
-    let refresh = Task { try await tokens.validAccessToken() }
-    try await firstTokenRequest(to: server)
+    let (tokens, refresh) = try await refreshHeld(at: server, storage: storage)
     tokens.confirmSession(with: "confirmed.signed")
     confirmed.signal()
 
@@ -241,11 +237,7 @@ struct AccountSignInTests {
       }
       return .json(200, ["token": StubTokens.access(expiresAt: expiry)])
     }
-    let tokens = AccountTokens(
-      api: AccountAPI(baseURL: server.baseURL, session: server.session), storage: storage)
-
-    let refresh = Task { try await tokens.validAccessToken() }
-    try await firstTokenRequest(to: server)
+    let (tokens, refresh) = try await refreshHeld(at: server, storage: storage)
     tokens.forgetSession()
     tokens.replaceSession(with: "other.signed")
     swapped.signal()
@@ -285,10 +277,16 @@ struct AccountSignInTests {
       })
   }
 
-  private func firstTokenRequest(to server: StubAccountServer) async throws {
+  private func refreshHeld(
+    at server: StubAccountServer, storage: MemorySessionTokenStorage
+  ) async throws -> (AccountTokens, Task<String, Error>) {
+    let tokens = AccountTokens(
+      api: AccountAPI(baseURL: server.baseURL, session: server.session), storage: storage)
+    let refresh = Task { try await tokens.validAccessToken() }
     while server.requests(to: "GET /v1/auth/token").isEmpty {
       try await Task.sleep(for: .milliseconds(5))
     }
+    return (tokens, refresh)
   }
 
   @Test("Apple's name on a first sign-in goes with its token, and nothing when Apple gives none")
