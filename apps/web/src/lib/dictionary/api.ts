@@ -5,6 +5,7 @@ import {
   dictionaryContractHeader
 } from '@zenbu/dictionary-core/artifact/contract'
 import type { BrowseAnswer, BrowsePath } from '@zenbu/dictionary-core/browse/service-paths'
+import { edgeCache } from '../edge-cache'
 import { log } from '../log'
 
 export interface DictionaryApiEnvironment {
@@ -28,7 +29,7 @@ function answeredBy(response: Response): number {
 }
 
 async function cachedGet(fetcher: Fetch, url: string, token: string): Promise<Response> {
-  const cache = (globalThis as { caches?: { default?: Cache } }).caches?.default
+  const cache = edgeCache()
   const key = new URL(url)
   key.searchParams.set('contract', String(dictionaryContract))
   const tokenlessKey = new Request(key.toString(), { method: 'GET' })

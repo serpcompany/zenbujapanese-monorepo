@@ -69,13 +69,26 @@ lists every child sitemap and each child sitemap lists the new URLs.
   stands for, in `linkTargets` in `apps/web/src/lib/site.ts`; its links carry `data-link-target`.
   `apps/web/e2e/placeholders.spec.ts` fails on any other `#` link and prints the listed ones
   ([product docs](../../apps/web/docs/product/dictionary.md#header-footer-and-site-wide),
-  Placeholder links). When a page ships, link it directly and drop its entry.
-- `apps/web/public/` holds the header's images (App Store screenshot crops and the app icon) and,
-  in `apps/web/public/screenshots/app-store/`, whole App Store screenshots for the homepage, each
-  named for its file in `apps/ios/screenshots/app-store/en-US/iphone-63/` and made with
-  `cwebp -q 80 -resize 600 0`. `apps/web/src/lib/app-screenshots.ts` lists them with their alt
-  text, and `apps/web/src/components/app-screenshot.tsx` draws one without a device frame.
+  Placeholder links). When a page ships, give its entry the page's path, as the products pages'
+  entries have, so every link to it changes at once, or link it directly and drop the entry.
+- `apps/web/public/` holds the header's images (App Store screenshot crops and the app icon), a
+  larger app icon (`app-icon-192.webp`) and, in `apps/web/public/screenshots/app-store/`, whole App
+  Store screenshots for the homepage and the products pages, each named for its file in
+  `apps/ios/screenshots/app-store/en-US/iphone-63/` and made with `cwebp -q 80 -resize 600 0`.
+  `apps/web/src/lib/app-screenshots.ts` lists them with their alt text, and
+  `apps/web/src/components/app-screenshot.tsx` draws one without a device frame.
   `next/image` renders them `unoptimized`, since the site sets up no image optimization on Workers.
+- The products pages ([product docs](../../apps/web/docs/product/products.md)): `/products/` is
+  static, and its filters read `?type=` with `useSearchParams` inside a `Suspense` whose fallback
+  is the unfiltered catalog, so the built HTML holds every product and the browser hides the rest.
+  A filter moves the address with `history.pushState`, which Next.js's router follows, so it never
+  asks the server. The iPhone app's page is `force-dynamic`: it reads the App Store lookup
+  (`src/lib/app-store.ts`), which the Worker keeps in its edge cache (the Cache API) for a day,
+  keeps a failure for 5 minutes, and leaves the version and minimum iOS out when Apple fails or
+  lists no app. The facts row streams in its own `Suspense`, so the lookup never holds back the
+  rest of the page. Its Watch it work
+  section renders only when `appVideos` in `src/lib/videos.ts` lists videos, and a video's
+  privacy-enhanced YouTube player (`youtube-nocookie.com`) mounts only when it's clicked.
 - `apps/web/biome.json` allows `dangerouslySetInnerHTML` only in
   `apps/web/src/components/dictionary/dictionary-breadcrumbs.tsx`, for its `BreadcrumbList`
   JSON-LD, which escapes `<` so the JSON can't close its script tag (the Next.js JSON-LD guide).
@@ -603,7 +616,8 @@ before OpenNext's worker and passes every other request on (`src/lib/dictionary/
 asks the service for the retired entries once per isolate (a release retires a few hundred at
 most), wherever the site has a service; when the service can't list them, the request goes on to
 the app, which answers 404, or fails while the service fails. `worker.ts` bundles `retired.ts`
-and what it imports (`api.ts`, `urls.ts`, and `src/lib/log.ts`) outside Next.js, so they import
-no Next.js module and no `@/` path, which a Biome rule in `apps/web/biome.json` enforces.
+and what it imports (`api.ts`, `urls.ts`, `src/lib/edge-cache.ts`, and `src/lib/log.ts`) outside
+Next.js, so they import no Next.js module and no `@/` path, which a Biome rule in
+`apps/web/biome.json` enforces.
 `pnpm dev` runs Next.js alone, so check retired URLs in `pnpm preview`. The service lists none
 until #463 records retired entries.

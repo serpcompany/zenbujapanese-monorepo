@@ -28,7 +28,7 @@ test('the footer groups its links under Products, Tools, Company, and Legal', ()
     [
       'Products',
       [
-        ['Zenbu Japanese for iPhone', placeholderHref, 'iphone-app'],
+        ['Zenbu Japanese for iPhone', '/products/zenbu-japanese-for-iphone/', 'iphone-app'],
         ['Dictionary', '/dictionary/'],
         ['Sign in', '/login/']
       ]

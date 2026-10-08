@@ -29,6 +29,10 @@ export const appScreenshots = {
     '09-handwriting',
     'The kanji 峠 drawn by hand in the app, with the kanji it could be above it'
   ),
+  kanjiDetail: appStoreScreenshot(
+    '11-kanji-detail',
+    'The app’s kanji details for 峠, mountain pass, with its strokes, school grade, and JLPT level'
+  ),
   conjugations: appStoreScreenshot(
     '14-conjugations',
     'The app’s conjugation table for 頑張る, to persevere, with each ending highlighted'
