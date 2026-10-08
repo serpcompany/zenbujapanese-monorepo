@@ -1,4 +1,5 @@
 import { accountPagesOpen } from './account/availability'
+import { accountPages } from './account/pages'
 
 export const site = {
   name: 'Zenbu Japanese',
@@ -53,7 +54,7 @@ const linkTargets = [
     id: 'login',
     kind: 'page',
     name: 'Log in page, /login/',
-    href: accountPagesOpen() ? '/login/' : placeholderHref
+    href: accountPagesOpen() ? accountPages.signIn.path : placeholderHref
   },
   { id: 'app-store', kind: 'store', name: 'App Store listing', href: placeholderHref },
   { id: 'youtube', kind: 'social', name: 'YouTube', href: placeholderHref },
