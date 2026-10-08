@@ -1,7 +1,7 @@
 'use client'
 
 import Link from 'next/link'
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { accessTokens } from '@/lib/account/access-tokens'
 import type { AccountSession } from '@/lib/account/answers'
@@ -80,6 +80,7 @@ export function AccountView({
   const [view, setView] = useState<View>({ kind: 'loading' })
   const [signOutProblem, setSignOutProblem] = useState<string | null>(null)
   const [confirmedHere, setConfirmedHere] = useState(0)
+  const signOutsHere = useRef(0)
 
   const signedOut = useCallback(
     (notice: string | null) => {
@@ -91,8 +92,9 @@ export function AccountView({
   )
 
   const load = useCallback(async () => {
+    const signOutsBefore = signOutsHere.current
     const loaded = await loadAccount(api, tokens)
-    if (loaded.kind === 'signed-out') {
+    if (loaded.kind === 'signed-out' || signOutsHere.current !== signOutsBefore) {
       forgetConfirming()
       return signedOut(null)
     }
@@ -114,6 +116,14 @@ export function AccountView({
       setView(current =>
         current.kind === 'signed-in' ? { ...current, account: change(current.account) } : current
       ),
+    []
+  )
+
+  useEffect(
+    () =>
+      onSignedInChange(() => {
+        if (!seemsSignedIn()) signOutsHere.current += 1
+      }),
     []
   )
 

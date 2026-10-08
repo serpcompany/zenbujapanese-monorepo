@@ -111,14 +111,32 @@ describe('the account page', () => {
     expect(window.localStorage.getItem('zenbu-initials')).toBeNull()
   })
 
-  test('shows signed out when this browser signs out elsewhere, as from the account menu', async () => {
+  const signOutsElsewhere = {
+    'the account menu': () => rememberSignedIn(false),
+    'another tab': () => {
+      window.localStorage.removeItem('zenbu-signed-in')
+      window.dispatchEvent(new StorageEvent('storage', { key: 'zenbu-signed-in' }))
+    }
+  }
+
+  test.each(
+    Object.entries(signOutsElsewhere)
+  )('shows signed out when this browser signs out from %s, without asking the service', async (_, signOut) => {
     const { calls } = signedIn()
     const page = render(<AccountView settings={settings()} returnedError={null} />)
     await shows(page, `Signed in as ${email}`)
-    await act(async () => rememberSignedIn(false))
+    await act(async () => signOut())
     await shows(page, 'You’re not signed in.')
     expect(window.localStorage.getItem('zenbu-signed-in')).toBeNull()
     expect(callTo(calls, 'POST /v1/auth/sign-out')).toEqual([])
+  })
+
+  test('shows signed out when the browser signs out while the account is still loading', async () => {
+    signedIn()
+    const page = render(<AccountView settings={settings()} returnedError={null} />)
+    await act(async () => rememberSignedIn(false))
+    await shows(page, 'You’re not signed in.')
+    expect(window.localStorage.getItem('zenbu-signed-in')).toBeNull()
   })
 
   test('gets a new access token once when /v1/me answers 401', async () => {

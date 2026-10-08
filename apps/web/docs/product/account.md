@@ -65,7 +65,8 @@ account, after a sign-in or a change to the name; a sign-in clears the initials 
 before it until the account page shows the new one. Both go on signing out (here or from the
 account menu), on deleting the account, and when the account page finds no session. The account
 page follows the note: when the browser signs out from the account menu, or in another tab, it
-shows signed out without asking the service. The server
+shows signed out without asking the service, and an account it was still loading then shows signed
+out too. The server
 draws Sign in and the signed-out button, so the page and its first render in the browser agree.
 
 - Source: #468, so the pages can be reached; #664 (the account menu, the initials, and Sign out in
@@ -76,12 +77,14 @@ draws Sign in and the signed-out button, so the page and its first render in the
   links under Products, Tools, Company, and Legal", "the footer leads to signing in, as the server
   draws it before the browser knows", and "the footer leaves signing in out where the site's
   account pages are closed"; Account page tests, "shows who is signed in, the profile, and the ways
-  to sign in, reading /v1/me with an access token only" (the initials) and "shows signed out, and
-  forgets it was signed in, when there is no session", and "shows signed out when this browser
-  signs out elsewhere, as from the account menu"; Sign-in form tests, "emails a code, signs in with
-  it, and goes to the account page" (the earlier initials cleared); Account spec, "the account menu's Log in, or
-  the drawer's on phones, opens the login page" and "the footer leads to signing in, and to the account
-  once signed in, as the header shows the initials"; `e2e/header.spec.ts`, "signed in, the menu
+  to sign in, reading /v1/me with an access token only" (the initials), "shows signed out, and
+  forgets it was signed in, when there is no session", "shows signed out when this browser signs
+  out from %s, without asking the service" (the account menu and another tab), and "shows signed
+  out when the browser signs out while the account is still loading"; Sign-in form tests, "emails a
+  code, signs in with it, and goes to the account page" (the earlier initials cleared); Account
+  spec, "the account menu's Log in, or the drawer's on phones, opens the login page" and "the
+  footer leads to signing in, and to the account once signed in, as the header shows the
+  initials"; `e2e/header.spec.ts`, "signed in, the menu
   leads to the account, then the theme, then Sign out, by keyboard" and "signing out from the menu
   on the account page shows it signed out, with no reload"; Closed spec, "the account
   menu's Log in and Create an account, and the drawer's Log in on phones, stay # placeholders" and
