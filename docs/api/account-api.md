@@ -71,7 +71,7 @@ The signed-in account's profile.
 - **401** `unauthorized`: No access token, or one that is expired, forged, or for an account that no longer exists. Get a new one from GET /v1/auth/token.
 - **403** `insufficient_scope`: This app's access to the account doesn't include `profile`.
 - **429** `too_many_requests`: This account sent more than 60 requests here from this app in the current minute, or the app more than its limit from all its accounts together. Wait the seconds `Retry-After` says.
-- **500** `internal`: The service failed, and nothing says why. Try again later, backing off. In a sync, the mutations before the failure stand, and sending the request again answers them as before.
+- **500** `internal`: The service failed, and nothing says why. Try again later, backing off.
 
 ### `PATCH /v1/me`
 
@@ -98,7 +98,7 @@ Optimistic concurrency: send the `version` last seen as `baseVersion`. The chang
 - **409** `username_taken`: Another account has that username.
 - **413** `too_large`: The body is over 64 KB.
 - **429** `too_many_requests`: This account sent more than 60 requests here from this app in the current minute, or the app more than its limit from all its accounts together. Wait the seconds `Retry-After` says.
-- **500** `internal`: The service failed, and nothing says why. Try again later, backing off. In a sync, the mutations before the failure stand, and sending the request again answers them as before.
+- **500** `internal`: The service failed, and nothing says why. Try again later, backing off.
 
 ### `DELETE /v1/me`
 
@@ -126,7 +126,7 @@ Deletes the account, its ways to sign in, its sessions, and everything it synced
 - **403** `sign_in_again`: Deleting the account needs a sign-in from the last 10 minutes. Sign in again first.
 - **413** `too_large`: The body is over 64 KB.
 - **429** `too_many_requests`: This account sent more than 60 requests here from this app in the current minute, or the app more than its limit from all its accounts together. Wait the seconds `Retry-After` says.
-- **500** `internal`: The service failed, and nothing says why. Try again later, backing off. In a sync, the mutations before the failure stand, and sending the request again answers them as before.
+- **500** `internal`: The service failed, and nothing says why. Try again later, backing off.
 - **503** `apple_unavailable`: Revoking with Apple didn't finish, and nothing was deleted. Sign in with Apple again for a new code, and try again.
 
 ### `POST /v1/sync`
@@ -151,7 +151,7 @@ Applies `mutations` in order, then answers with the changes after `cursor`. Ever
 - **410** `invalid_cursor`: The cursor isn't one this service gave this account, or is past what it holds, as after a restore. Nothing was applied. Sync again with no cursor, and keep what comes back.
 - **413** `too_large`: The body is over 64 KB.
 - **429** `too_many_requests`: This account sent more than 120 requests here from this app in the current minute, or the app more than its limit from all its accounts together. Wait the seconds `Retry-After` says.
-- **500** `internal`: The service failed, and nothing says why. Try again later, backing off. In a sync, the mutations before the failure stand, and sending the request again answers them as before.
+- **500** `internal`: The service failed, and nothing says why. The mutations before the failure stand: send the same request again later, backing off, and those answer as before.
 
 ### `POST /v1/auth/email-otp/send-verification-otp`
 
@@ -474,7 +474,7 @@ Fields ([`ProfileUpdateFields`](#profileupdatefields)), and no others:
 
 ```json
 {
-  "id": "6f1c0e7a-3b5d-4c2e-9a8f-1d2e3f4a5b6c",
+  "id": "6f1c0e7a-3b5d-4c2e-9a8f-000000000001",
   "entity": "profile",
   "operation": "update",
   "baseVersion": 1,
@@ -502,7 +502,7 @@ Fields ([`WordFields`](#wordfields)):
 
 ```json
 {
-  "id": "6f1c0e7a-3b5d-4c2e-9a8f-1d2e3f4a5b6c",
+  "id": "6f1c0e7a-3b5d-4c2e-9a8f-000000000002",
   "entity": "knownWord",
   "operation": "mark",
   "entityId": "9d2e4f6a8b0c1d3e5f7a9b1c3d5e7f90",
@@ -518,7 +518,7 @@ Fields ([`WordFields`](#wordfields)):
 
 ```json
 {
-  "id": "6f1c0e7a-3b5d-4c2e-9a8f-1d2e3f4a5b6c",
+  "id": "6f1c0e7a-3b5d-4c2e-9a8f-000000000003",
   "entity": "knownWord",
   "operation": "clear",
   "entityId": "9d2e4f6a8b0c1d3e5f7a9b1c3d5e7f90",
@@ -543,7 +543,7 @@ Fields ([`ListCreateFields`](#listcreatefields)), and no others:
 
 ```json
 {
-  "id": "6f1c0e7a-3b5d-4c2e-9a8f-1d2e3f4a5b6c",
+  "id": "6f1c0e7a-3b5d-4c2e-9a8f-000000000004",
   "entity": "list",
   "operation": "create",
   "entityId": "3b7f2c9e-5d1a-4e8b-9c6f-0a2d4e6f8b1c",
@@ -563,7 +563,7 @@ Fields ([`ListUpdateFields`](#listupdatefields)), and no others:
 
 ```json
 {
-  "id": "6f1c0e7a-3b5d-4c2e-9a8f-1d2e3f4a5b6c",
+  "id": "6f1c0e7a-3b5d-4c2e-9a8f-000000000005",
   "entity": "list",
   "operation": "update",
   "entityId": "3b7f2c9e-5d1a-4e8b-9c6f-0a2d4e6f8b1c",
@@ -578,7 +578,7 @@ Fields ([`ListUpdateFields`](#listupdatefields)), and no others:
 
 ```json
 {
-  "id": "6f1c0e7a-3b5d-4c2e-9a8f-1d2e3f4a5b6c",
+  "id": "6f1c0e7a-3b5d-4c2e-9a8f-000000000006",
   "entity": "list",
   "operation": "delete",
   "entityId": "3b7f2c9e-5d1a-4e8b-9c6f-0a2d4e6f8b1c"
@@ -602,7 +602,7 @@ Fields ([`WordFields`](#wordfields)):
 
 ```json
 {
-  "id": "6f1c0e7a-3b5d-4c2e-9a8f-1d2e3f4a5b6c",
+  "id": "6f1c0e7a-3b5d-4c2e-9a8f-000000000007",
   "entity": "listWord",
   "operation": "add",
   "entityId": "3b7f2c9e-5d1a-4e8b-9c6f-0a2d4e6f8b1c/9d2e4f6a8b0c1d3e5f7a9b1c3d5e7f90",
@@ -617,7 +617,7 @@ Fields ([`WordFields`](#wordfields)):
 
 ```json
 {
-  "id": "6f1c0e7a-3b5d-4c2e-9a8f-1d2e3f4a5b6c",
+  "id": "6f1c0e7a-3b5d-4c2e-9a8f-000000000008",
   "entity": "listWord",
   "operation": "remove",
   "entityId": "3b7f2c9e-5d1a-4e8b-9c6f-0a2d4e6f8b1c/9d2e4f6a8b0c1d3e5f7a9b1c3d5e7f90",
@@ -646,7 +646,7 @@ Fields ([`WatchFields`](#watchfields)), and no others:
 
 ```json
 {
-  "id": "6f1c0e7a-3b5d-4c2e-9a8f-1d2e3f4a5b6c",
+  "id": "6f1c0e7a-3b5d-4c2e-9a8f-000000000009",
   "entity": "watchedVideo",
   "operation": "watch",
   "entityId": "a1B2c3D4e5F",
@@ -666,7 +666,7 @@ Fields ([`WatchFields`](#watchfields)), and no others:
 
 ```json
 {
-  "id": "6f1c0e7a-3b5d-4c2e-9a8f-1d2e3f4a5b6c",
+  "id": "6f1c0e7a-3b5d-4c2e-9a8f-00000000000a",
   "entity": "watchedVideo",
   "operation": "remove",
   "entityId": "a1B2c3D4e5F"
@@ -692,7 +692,7 @@ Fields ([`BookmarkFields`](#bookmarkfields)), and no others:
 
 ```json
 {
-  "id": "6f1c0e7a-3b5d-4c2e-9a8f-1d2e3f4a5b6c",
+  "id": "6f1c0e7a-3b5d-4c2e-9a8f-00000000000b",
   "entity": "bookmarkedSentence",
   "operation": "add",
   "entityId": "5e8d1c2b-7a6f-4d3e-8b9c-0f1e2d3c4b5a",
@@ -709,7 +709,7 @@ Fields ([`BookmarkFields`](#bookmarkfields)), and no others:
 
 ```json
 {
-  "id": "6f1c0e7a-3b5d-4c2e-9a8f-1d2e3f4a5b6c",
+  "id": "6f1c0e7a-3b5d-4c2e-9a8f-00000000000c",
   "entity": "bookmarkedSentence",
   "operation": "remove",
   "entityId": "5e8d1c2b-7a6f-4d3e-8b9c-0f1e2d3c4b5a",

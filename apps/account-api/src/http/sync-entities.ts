@@ -271,7 +271,14 @@ export const rejectionMeanings: Readonly<Record<RejectionCode, string>> = {
 
 const ref = (name: string) => ({ $ref: `#/components/schemas/${name}` })
 
-const exampleId = '6f1c0e7a-3b5d-4c2e-9a8f-1d2e3f4a5b6c'
+const exampleIds = new Map(
+  (Object.entries(syncEntityRules) as [EntityType, EntityRule][])
+    .flatMap(([entity, rule]) => Object.keys(rule.operations).map(name => `${entity}.${name}`))
+    .map((key, index) => [
+      key,
+      `6f1c0e7a-3b5d-4c2e-9a8f-${(index + 1).toString(16).padStart(12, '0')}`
+    ])
+)
 
 function operations(entity: EntityType, rules: EntityRule['operations']) {
   return Object.fromEntries(
@@ -282,7 +289,12 @@ function operations(entity: EntityType, rules: EntityRule['operations']) {
         baseVersion: rule.baseVersion,
         description: rule.rule,
         ...(rule.fields ? { fields: ref(rule.fields) } : {}),
-        example: { id: exampleId, entity, operation: name, ...rule.example }
+        example: {
+          id: exampleIds.get(`${entity}.${name}`),
+          entity,
+          operation: name,
+          ...rule.example
+        }
       }
     ])
   )
