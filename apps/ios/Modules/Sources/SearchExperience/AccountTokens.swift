@@ -73,6 +73,7 @@ final class AccountTokens {
   private let storage: any SessionTokenStorage
   private let now: @MainActor () -> Date
   private var accessToken: (token: String, expiresAt: Date)?
+  private var signedIn = 0
 
   init(
     api: AccountAPI, storage: any SessionTokenStorage,
@@ -88,11 +89,18 @@ final class AccountTokens {
   func replaceSession(with token: String) {
     storage.save(token)
     accessToken = nil
+    signedIn += 1
+  }
+
+  func confirmSession(with token: String) {
+    storage.save(token)
+    accessToken = nil
   }
 
   func forgetSession() {
     storage.delete()
     accessToken = nil
+    signedIn += 1
   }
 
   func validAccessToken() async throws -> String {
@@ -114,16 +122,21 @@ final class AccountTokens {
   }
 
   private func refreshedAccessToken() async throws -> String {
+    let signIn = signedIn
     while true {
-      guard let session = storage.read() else { throw AccountServiceError.sessionEnded }
+      guard signedIn == signIn, let session = storage.read() else {
+        throw AccountServiceError.sessionEnded
+      }
       let token: String
       do {
         token = try await api.accessToken(sessionToken: session)
       } catch AccountServiceError.refused(status: 401, _, _, _) {
-        guard storage.read() != session else { throw AccountServiceError.sessionEnded }
+        guard signedIn == signIn, storage.read() != session else {
+          throw AccountServiceError.sessionEnded
+        }
         continue
       }
-      guard storage.read() == session else { continue }
+      guard signedIn == signIn, storage.read() == session else { continue }
       accessToken = (token, AccessTokenClaims.expiry(of: token) ?? now() + Self.assumedLifetime)
       return token
     }

@@ -119,7 +119,7 @@ final class AccountSync: LocalFileStore {
 
   func confirm(_ signIn: AccountSignIn) throws {
     guard signIn.userID == account?.userID else { throw AccountServiceError.differentAccount }
-    tokens.replaceSession(with: signIn.sessionToken)
+    tokens.confirmSession(with: signIn.sessionToken)
   }
 
   func endSession(onItsOwn: Bool = false) {
