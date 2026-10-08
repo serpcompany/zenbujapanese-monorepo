@@ -10,13 +10,17 @@ public struct SpeechPauseDetector: Sendable {
   private var noiseFloor: Float?
   private var position: TimeInterval = 0
   private var lastVoiceEnd: TimeInterval?
+  private var lastVoice: TimeInterval = 0
 
   public init() {}
+
+  public var quietFor: TimeInterval { position - lastVoice }
 
   public mutating func hear(level: Float?, duration: TimeInterval) -> TimeInterval? {
     position += duration
     if let level, isSpeech(level) {
       lastVoiceEnd = position
+      lastVoice = position
       return nil
     }
     guard let voiceEnd = lastVoiceEnd, position - voiceEnd >= Self.minimumPause else { return nil }

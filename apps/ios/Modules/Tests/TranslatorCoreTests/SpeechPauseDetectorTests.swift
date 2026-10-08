@@ -54,4 +54,14 @@ struct SpeechPauseDetectorTests {
     _ = hear(&detector, 0.05, for: 1)
     #expect(hear(&detector, 0.002, for: 1).count == 1)
   }
+
+  @Test("it knows how long the room has been quiet, through a pause and after it")
+  func quietFor() {
+    var detector = SpeechPauseDetector()
+    _ = hear(&detector, 0.002, for: 1)
+    _ = hear(&detector, 0.05, for: 1)
+    #expect(detector.quietFor < 0.01)
+    _ = hear(&detector, 0.002, for: 1.5)
+    #expect(abs(detector.quietFor - 1.5) < 0.01)
+  }
 }

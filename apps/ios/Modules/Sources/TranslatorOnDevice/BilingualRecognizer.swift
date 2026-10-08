@@ -10,7 +10,10 @@ private struct LanguageAnalyzer {
 
 public actor BilingualRecognizer {
   static let stalledSentence: TimeInterval = 2
+  static let abandonedSentence: TimeInterval = 5
   static let pauseConfirmation: Duration = .milliseconds(300)
+  static let pauseChecks = 5
+  static let pauseMargin: TimeInterval = 0.3
   static let finishedAtPauses: Set<SpokenLanguage> = [.japanese]
 
   private var generation = 0
@@ -98,9 +101,12 @@ public actor BilingualRecognizer {
 
   public func finishUtterance() async {
     let now = Date.now
+    let stalledAfter =
+      pauses.quietFor < SpeechPauseDetector.minimumPause
+      ? Self.abandonedSentence : Self.stalledSentence
     for analyzer in analyzers where unfinished.contains(analyzer.language) {
-      let quiet = now.timeIntervalSince(liveTextChangedAt[analyzer.language] ?? .distantPast)
-      guard quiet >= Self.stalledSentence else { continue }
+      let unchanged = now.timeIntervalSince(liveTextChangedAt[analyzer.language] ?? .distantPast)
+      guard unchanged >= stalledAfter else { continue }
       #if DEBUG
         TranslateDiagnostics.shared.note("finish stalled \(analyzer.language.rawValue)")
       #endif
@@ -158,31 +164,36 @@ public actor BilingualRecognizer {
     #endif
     hasHeardAudio = true
     guard let voiceEnd = pauses.hear(level: audio.level, duration: audio.duration) else { return }
-    let detectedAt = Date.now
     pauseTask?.cancel()
-    pauseTask = Task {
-      try? await Task.sleep(for: Self.pauseConfirmation)
-      guard !Task.isCancelled else { return }
-      await finishPausedSentences(after: voiceEnd, detectedAt: detectedAt)
-    }
+    pauseTask = Task { await finishPausedSentences(after: voiceEnd) }
   }
 
-  private func finishPausedSentences(after voiceEnd: TimeInterval, detectedAt: Date) async {
+  private func finishPausedSentences(after voiceEnd: TimeInterval) async {
+    var since = Date.now
+    try? await Task.sleep(for: Self.pauseConfirmation)
+    guard !Task.isCancelled else { return }
     #if DEBUG
       TranslateDiagnostics.shared.note(String(format: "pause after voice at %.2f", voiceEnd))
     #endif
-    for analyzer in analyzers
-    where Self.finishedAtPauses.contains(analyzer.language) && unfinished.contains(analyzer.language) {
-      guard (liveTextChangedAt[analyzer.language] ?? .distantPast) <= detectedAt else {
+    var pending = Self.finishedAtPauses
+    for _ in 0..<Self.pauseChecks where !pending.isEmpty {
+      for analyzer in analyzers where pending.contains(analyzer.language) {
+        guard (liveTextChangedAt[analyzer.language] ?? .distantPast) <= since else {
+          #if DEBUG
+            TranslateDiagnostics.shared.note("pause not confirmed by \(analyzer.language.rawValue)")
+          #endif
+          continue
+        }
+        pending.remove(analyzer.language)
         #if DEBUG
-          TranslateDiagnostics.shared.note("pause not confirmed by \(analyzer.language.rawValue)")
+          TranslateDiagnostics.shared.note("finalize \(analyzer.language.rawValue)")
         #endif
-        continue
+        try? await analyzer.analyzer.finalize(
+          through: CMTime(seconds: voiceEnd + Self.pauseMargin, preferredTimescale: 1000))
       }
-      #if DEBUG
-        TranslateDiagnostics.shared.note("finalize \(analyzer.language.rawValue)")
-      #endif
-      try? await analyzer.analyzer.finalize(through: nil)
+      since = Date.now
+      try? await Task.sleep(for: Self.pauseConfirmation)
+      guard !Task.isCancelled, pauses.quietFor >= SpeechPauseDetector.minimumPause else { return }
     }
   }
 
