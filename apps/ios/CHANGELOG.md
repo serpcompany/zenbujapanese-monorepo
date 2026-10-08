@@ -13,6 +13,9 @@ All notable user-facing changes to Zenbu Japanese are recorded here.
   while signed out sync when you sign back in to the same account. **Favorites** is one list on all your devices.
 - Signed in, Player's **Recent** videos are the same on all your devices: a video you watch on one
   appears on the others with how far you got, and one you remove is removed everywhere.
+- Signed in, the sentences you bookmark in **Translations** are the same on all your devices, each
+  with its translation, even where its conversation isn't. Only bookmarked sentences sync;
+  conversations stay on the iPhone they were recorded on.
 - Delete your Zenbu account from **Account → Zenbu Account → Delete Account…**, after signing in
   again. The account and everything it synced are deleted; your iPhone keeps its known words,
   lists, notes, and media.

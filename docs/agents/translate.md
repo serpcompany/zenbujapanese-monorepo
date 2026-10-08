@@ -34,7 +34,13 @@ The tab is split across two Swift targets in `apps/ios/Modules`
   - `ConversationHistory` saves each conversation as its own JSON file in
     `Application Support/Zenbu Japanese/Translate Conversations/`, so saving after every sentence
     rewrites one small file. A file this version can't read, or one from a newer version, is
-    skipped and left in place.
+    skipped and left in place. It's shared (`ConversationHistory.shared`) so the account can sync
+    bookmarks: it reports each bookmark change (`bookmarkObserver`, `BookmarkChange`, with a
+    `SharedBookmark`: the sentence's text, translation, language, and `bookmarkedAt`, and never its
+    conversation), and takes the account's through `applySynced`. A bookmark whose sentence isn't
+    in a conversation here is kept in `Synced Bookmarks/bookmarks.json` in that folder
+    (`SharedBookmarks.swift`), which is left in place, and not written, if it can't be read. The
+    account side is in [`ios.md`](ios.md), Account and sync.
 - **`SearchExperience`** (`apps/ios/Modules/Sources/SearchExperience/Translate/`) holds the screens
   and the Apple adapters: `OnDeviceTranscriber` (an actor running `AVAudioEngine` into one
   `SpeechAnalyzer` per language, each with that language's `SpeechTranscriber`, fed copies of the
@@ -61,7 +67,9 @@ The tab is split across two Swift targets in `apps/ios/Modules`
   timer and pause) along the bottom; `TwoPaneConversationView` is its second layout. The layout,
   the speech speed, and Translate's own `ReadingAidPreferences` (furigana off by default, stored
   under `translate.reading-aids.v1`) live on `TranslateExperience`. Bookmarks are a field on
-  `TranslatedSentence`, and `ConversationHistory.bookmarks` lists them.
+  `TranslatedSentence`, with when it was bookmarked, and `ConversationHistory.bookmarks` lists
+them with the synced ones, newest first; a synced one has no conversation, so its card has nothing
+to open.
 
 ## Rules that aren't obvious
 
@@ -117,7 +125,8 @@ prompt, pause and resume, the background, leaving with and without saving, mutin
 translations, a stalled sentence, failures), conversation playback (echo-cancelled playback
 keeps listening, the app's own voice is ignored, playback waits while someone talks, a finished
 sentence keeps its live translation), the merger, the pause detector, typed-language detection,
-and History storage. `SearchExperienceTests` covers what the app adds around it: reading a
+and History storage, bookmarks and the synced ones included. `SearchExperienceTests` covers what
+the app adds around it: reading a
 document's text (`DocumentTextTests`), each conversation's known-word share
 (`ConversationWordsTests`), and the spoken translation's time limit (`SystemSpeechPlayerTests`).
 Run them from `apps/ios/Modules`:

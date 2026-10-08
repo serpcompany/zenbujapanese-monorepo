@@ -1,4 +1,5 @@
 import Foundation
+import TranslatorCore
 
 enum SavedItemChange: Sendable {
   case known(KnownWordChange)
@@ -9,6 +10,8 @@ enum SavedItemChange: Sendable {
   case wordRemoved(WordListMembership)
   case videoWatched(WatchedVideo, previous: WatchedVideo?)
   case videoRemoved(WatchedVideo)
+  case bookmarkAdded(SharedBookmark)
+  case bookmarkRemoved(SharedBookmark)
 }
 
 struct KnownWordChange: Codable, Hashable, Sendable {
@@ -26,6 +29,8 @@ enum SyncUndo: Codable, Hashable, Sendable {
   case restoreWord(WordListMembership)
   case removeVideo(String)
   case restoreVideo(WatchedVideo)
+  case removeBookmark(UUID)
+  case restoreBookmark(SharedBookmark)
 }
 
 struct QueuedSyncChange: Codable, Hashable, Sendable, Identifiable {
@@ -60,6 +65,7 @@ struct AccountCopy: Codable, Hashable, Sendable {
     case list(WordList)
     case listWord(WordListMembership)
     case watchedVideo(WatchedVideo)
+    case bookmark(SharedBookmark)
     case gone
   }
 
@@ -95,6 +101,9 @@ struct AccountCopy: Codable, Hashable, Sendable {
           videoID: video.videoId, title: video.title, comprehension: video.comprehension,
           author: video.author, duration: video.duration, position: video.position,
           watchedAt: video.watchedAt))
+    case .bookmark(let bookmark):
+      guard let shared = bookmark.shared else { return nil }
+      value = .bookmark(shared)
     case .gone:
       value = .gone
     case .unsynced:
@@ -177,7 +186,7 @@ struct AccountSyncState: Codable, Sendable, Equatable {
       queue[earlier] = previous.merging(change)
       return
     case (SyncEntity.list, "update", "delete"), (SyncEntity.knownWord, _, _),
-      (SyncEntity.listWord, _, _):
+      (SyncEntity.listWord, _, _), (SyncEntity.bookmarkedSentence, _, _):
       queue.remove(at: earlier)
     default:
       break
@@ -312,6 +321,14 @@ extension SavedItemChange {
     case .videoRemoved(let video):
       return Self.queued(
         Self.key(video: video.videoID), "remove", state, fields: nil, undo: .restoreVideo(video))
+    case .bookmarkAdded(let bookmark):
+      return Self.queued(
+        Self.key(bookmark: bookmark.id), "add", state, fields: Self.fields(of: bookmark),
+        undo: .removeBookmark(bookmark.id))
+    case .bookmarkRemoved(let bookmark):
+      return Self.queued(
+        Self.key(bookmark: bookmark.id), "remove", state, fields: nil,
+        undo: .restoreBookmark(bookmark))
     }
   }
 
@@ -330,11 +347,25 @@ extension SavedItemChange {
     SyncEntityKey(entity: SyncEntity.watchedVideo, entityID: videoID)
   }
 
-  private static func fields(of video: WatchedVideo) -> [String: SyncFieldValue] {
-    var fields: [String: SyncFieldValue] = [
-      "watchedAt": .string(
-        Date.ISO8601FormatStyle(includingFractionalSeconds: true).format(video.watchedAt ?? Date()))
+  private static func key(bookmark id: UUID) -> SyncEntityKey {
+    SyncEntityKey(entity: SyncEntity.bookmarkedSentence, entityID: id.uuidString.lowercased())
+  }
+
+  private static func moment(_ date: Date) -> SyncFieldValue {
+    .string(Date.ISO8601FormatStyle(includingFractionalSeconds: true).format(date))
+  }
+
+  private static func fields(of bookmark: SharedBookmark) -> [String: SyncFieldValue] {
+    [
+      "text": .string(bookmark.text),
+      "translation": bookmark.translation.map(SyncFieldValue.string) ?? .null,
+      "language": .string(bookmark.language.rawValue),
+      "bookmarkedAt": moment(bookmark.bookmarkedAt),
     ]
+  }
+
+  private static func fields(of video: WatchedVideo) -> [String: SyncFieldValue] {
+    var fields: [String: SyncFieldValue] = ["watchedAt": moment(video.watchedAt ?? Date())]
     for (name, text) in [("title", video.title), ("author", video.author)] {
       if let text, !text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
         fields[name] = .string(text)

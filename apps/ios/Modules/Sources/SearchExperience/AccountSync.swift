@@ -1,5 +1,6 @@
 import Foundation
 import Observation
+import TranslatorCore
 
 @MainActor
 @Observable
@@ -24,6 +25,7 @@ final class AccountSync: LocalFileStore {
   @ObservationIgnored private let wordKnowledge: WordKnowledge
   @ObservationIgnored private let wordLists: WordLists
   @ObservationIgnored private let watchHistory: WatchHistory
+  @ObservationIgnored private let translations: ConversationHistory
   @ObservationIgnored private let file: AccountSyncStateFile
   @ObservationIgnored private let now: @MainActor () -> Date
   @ObservationIgnored let writes = LocalFileWriteQueue()
@@ -38,6 +40,7 @@ final class AccountSync: LocalFileStore {
     wordKnowledge: WordKnowledge,
     wordLists: WordLists,
     watchHistory: WatchHistory,
+    translations: ConversationHistory,
     fileURL: URL = AccountSync.defaultFileURL,
     now: @escaping @MainActor () -> Date = Date.init
   ) {
@@ -46,6 +49,7 @@ final class AccountSync: LocalFileStore {
     self.wordKnowledge = wordKnowledge
     self.wordLists = wordLists
     self.watchHistory = watchHistory
+    self.translations = translations
     self.now = now
     let file = AccountSyncStateFile(fileURL: fileURL)
     self.file = file
@@ -71,11 +75,17 @@ final class AccountSync: LocalFileStore {
     wordKnowledge.changeObserver = { [weak self] change in self?.record(change) }
     wordLists.changeObserver = { [weak self] change in self?.record(change) }
     watchHistory.changeObserver = { [weak self] change in self?.record(change) }
+    translations.bookmarkObserver = { [weak self] change in
+      switch change {
+      case .added(let bookmark): self?.record(.bookmarkAdded(bookmark))
+      case .removed(let bookmark): self?.record(.bookmarkRemoved(bookmark))
+      }
+    }
   }
 
   var canSync: Bool {
     isLoaded && !isUnavailable && account != nil && wordKnowledge.canChange
-      && wordLists.canChange
+      && wordLists.canChange && translations.isLoaded
   }
 
   func isDue(staleAfter: TimeInterval) -> Bool {
@@ -88,6 +98,7 @@ final class AccountSync: LocalFileStore {
     await flush()
     await wordKnowledge.flush()
     await wordLists.flush()
+    await translations.flush()
   }
 
   func begin(_ signIn: AccountSignIn) async {
@@ -173,7 +184,10 @@ final class AccountSync: LocalFileStore {
     let videos = watchHistory.videos.reversed().map {
       SavedItemChange.videoWatched($0, previous: nil)
     }
-    return marks + lists + words + videos
+    let bookmarks = translations.bookmarks.reversed().map {
+      SavedItemChange.bookmarkAdded($0.shared)
+    }
+    return marks + lists + words + videos + bookmarks
   }
 
   private func catchUpOnNewEntities() {
@@ -299,6 +313,8 @@ final class AccountSync: LocalFileStore {
       wordLists.applySynced(membership)
     case .watchedVideo(let video):
       watchHistory.applySynced(video)
+    case .bookmark(let bookmark):
+      translations.applySynced(bookmark)
     case .gone:
       removeLocally(copy.key)
     }
@@ -338,6 +354,9 @@ final class AccountSync: LocalFileStore {
       wordLists.applySyncedRemoval(of: parts.storedID, from: parts.listID)
     case SyncEntity.watchedVideo:
       watchHistory.applySyncedRemoval(of: key.entityID)
+    case SyncEntity.bookmarkedSentence:
+      guard let id = UUID(uuidString: key.entityID) else { return }
+      translations.applySyncedRemoval(ofBookmark: id)
     default:
       return
     }
@@ -365,6 +384,10 @@ final class AccountSync: LocalFileStore {
       watchHistory.applySyncedRemoval(of: videoID)
     case .restoreVideo(let video):
       watchHistory.applySynced(video)
+    case .removeBookmark(let id):
+      translations.applySyncedRemoval(ofBookmark: id)
+    case .restoreBookmark(let bookmark):
+      translations.applySynced(bookmark)
     }
   }
 

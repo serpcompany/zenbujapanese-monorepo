@@ -1,4 +1,5 @@
 import Foundation
+import TranslatorCore
 
 @testable import SearchExperience
 
@@ -31,6 +32,7 @@ final class AccountFixture {
   private(set) var wordKnowledge: WordKnowledge!
   private(set) var wordLists: WordLists!
   private(set) var watchHistory: WatchHistory!
+  private(set) var translations: ConversationHistory!
   private(set) var account: ZenbuAccount!
 
   var sync: AccountSync { account.sync }
@@ -51,10 +53,13 @@ final class AccountFixture {
     wordLists = WordLists(fileURL: directory.appending(path: "word-lists.json"))
     watchHistory = WatchHistory(
       defaults: UserDefaults(suiteName: defaultsSuite) ?? .standard, now: { [unowned self] in now })
+    translations = ConversationHistory(
+      directory: directory.appending(path: "Translate Conversations"),
+      now: { [unowned self] in now })
     account = ZenbuAccount(
       configuration: AccountServiceConfiguration(serviceURL: server.baseURL, googleClientID: nil),
       session: server.session, storage: storage, wordKnowledge: wordKnowledge,
-      wordLists: wordLists, watchHistory: watchHistory,
+      wordLists: wordLists, watchHistory: watchHistory, translations: translations,
       fileURL: directory.appending(path: "account-sync.json"), now: { [unowned self] in now })
     sync.onLocalChange = nil
     await settle()
@@ -63,6 +68,7 @@ final class AccountFixture {
   func settle() async {
     await wordKnowledge.flush()
     await wordLists.flush()
+    await translations.flush()
     await sync.flush()
   }
 
@@ -142,6 +148,42 @@ final class AccountFixture {
   func addMiru(to listID: UUID) {
     wordLists.addWord(
       LanguageReferenceID(rawValue: Self.miru), headword: "見る", reading: "みる", to: listID)
+  }
+
+  static func twoPhones() async -> (
+    service: FakeAccountService, phone: AccountFixture, pad: AccountFixture
+  ) {
+    let server = StubAccountServer()
+    let service = FakeAccountService(on: server)
+    let phone = AccountFixture(server: server)
+    let pad = AccountFixture(server: server)
+    await phone.launch()
+    await pad.launch()
+    return (service, phone, pad)
+  }
+
+  static func caughtUp(
+    from syncedEntities: [String]?, after prepare: (AccountFixture) -> Void
+  ) async throws -> (fixture: AccountFixture, request: StubSyncRequest) {
+    let fixture = AccountFixture()
+    fixture.serve()
+    await fixture.launch()
+    prepare(fixture)
+    try await fixture.signIn()
+    try await fixture.storeSyncedEntities(syncedEntities)
+    await fixture.launch()
+    try await fixture.syncNow()
+    return (fixture, fixture.server.requests(to: "POST /v1/sync").last?.sync ?? StubSyncRequest())
+  }
+
+  private func storeSyncedEntities(_ entities: [String]?) async throws {
+    await settle()
+    let file = directory.appending(path: "account-sync.json")
+    var stored = try JSONSerialization.jsonObject(with: Data(contentsOf: file)) as? [String: Any]
+    var state = stored?["state"] as? [String: Any]
+    state?["syncedEntities"] = entities
+    stored?["state"] = state
+    try JSONSerialization.data(withJSONObject: stored ?? [:]).write(to: file)
   }
 
   func watch(_ videoID: String, title: String = "日本の朝ごはん", position: TimeInterval? = nil) {

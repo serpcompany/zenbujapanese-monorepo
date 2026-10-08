@@ -164,24 +164,8 @@ struct AccountSyncWatchHistoryTests {
 
   @Test("a phone that synced before watch history did uploads Recent once, from no cursor")
   func catchesUpOnWatchHistory() async throws {
-    let fixture = Fixture()
-    fixture.serve()
-    await fixture.launch()
-    fixture.watch(ramen)
-    try await fixture.signIn()
-    await fixture.settle()
-    let file = fixture.directory.appending(path: "account-sync.json")
-    var stored = try #require(
-      try JSONSerialization.jsonObject(with: Data(contentsOf: file)) as? [String: Any])
-    var state = try #require(stored["state"] as? [String: Any])
-    state["syncedEntities"] = nil
-    stored["state"] = state
-    try JSONSerialization.data(withJSONObject: stored).write(to: file)
-
-    await fixture.launch()
-    try await fixture.syncNow()
-
-    let caughtUp = try #require(fixture.server.requests(to: "POST /v1/sync").last?.sync)
+    let ramen = ramen
+    let (fixture, caughtUp) = try await Fixture.caughtUp(from: nil) { $0.watch(ramen) }
     #expect(caughtUp.cursor == nil)
     #expect(caughtUp.mutations.map { "\($0.entity) \($0.operation)" } == ["watchedVideo watch"])
     #expect(fixture.sync.state.syncedEntities == SyncEntity.uploaded)
@@ -215,12 +199,7 @@ struct AccountSyncWatchHistoryTests {
 
   @Test("a watch on one phone and a removal on another reach both")
   func twoPhones() async throws {
-    let server = StubAccountServer()
-    let service = FakeAccountService(on: server)
-    let phone = Fixture(server: server)
-    let pad = Fixture(server: server)
-    await phone.launch()
-    await pad.launch()
+    let (service, phone, pad) = await Fixture.twoPhones()
     phone.watch(ramen, position: 30)
     try await phone.signIn()
     try await pad.signIn()

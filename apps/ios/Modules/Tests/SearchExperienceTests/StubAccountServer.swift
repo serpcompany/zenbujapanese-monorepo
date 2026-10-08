@@ -233,6 +233,16 @@ enum StubSync {
       ])
   }
 
+  static func bookmark(_ id: UUID, text: String, version: Int) -> [String: Any] {
+    let entityID = id.uuidString.lowercased()
+    return put(
+      "bookmarkedSentence", entityID, version,
+      [
+        "id": entityID, "text": text, "translation": "Said elsewhere.", "language": "ja",
+        "bookmarkedAt": "2026-10-06T10:00:00.000Z",
+      ])
+  }
+
   static func gone(_ entity: String, _ entityID: String, version: Int) -> [String: Any] {
     [
       "entity": entity, "entityId": entityID, "operation": "delete", "version": version,

@@ -43,6 +43,14 @@ interface WatchedVideoData {
   watchedAt: Date
 }
 
+interface BookmarkData {
+  id: string
+  text: string
+  translation: string | null
+  language: 'ja' | 'en'
+  bookmarkedAt: Date
+}
+
 interface Put<E extends EntityType, D> {
   entity: E
   entityId: string
@@ -57,6 +65,7 @@ export type Change =
   | Put<'list', WordListData>
   | Put<'listWord', ListWordData>
   | Put<'watchedVideo', WatchedVideoData>
+  | Put<'bookmarkedSentence', BookmarkData>
   | {
       entity: Exclude<EntityType, 'profile'>
       entityId: string
@@ -93,6 +102,11 @@ export const needsBaseVersion = rejection(
 const languageReferenceId = /^[0-9a-f]{32}$/
 const kanjiItem = /^kanji:\p{Script=Han}$/u
 const controlCharacters = /\p{Cc}|\p{Cf}|\p{Cs}/u
+
+const uuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+
+export const uuidOf = (raw: string | undefined) =>
+  raw && uuid.test(raw) ? raw.toLowerCase() : null
 
 const isoMoment = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d{1,9})?(Z|[+-]\d{2}:\d{2})$/
 

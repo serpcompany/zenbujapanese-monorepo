@@ -24,8 +24,8 @@ setting ([`account-api.md`](account-api.md), Settings).
 
 | App | ID | Scopes |
 | --- | --- | --- |
-| Zenbu Japanese for iOS | `zenbu-ios` | `account`, `account:delete`, `profile`, `lists:read`, `lists:write`, `known:read`, `known:write`, `watch:read`, `watch:write` |
-| zenbujapanese.com | `zenbu-web` | the same, but `watch:read` and `watch:write` |
+| Zenbu Japanese for iOS | `zenbu-ios` | `account`, `account:delete`, `profile`, `lists:read`, `lists:write`, `known:read`, `known:write`, `watch:read`, `watch:write`, `translations:read`, `translations:write` |
+| zenbujapanese.com | `zenbu-web` | the same, but `watch:*` and `translations:*` |
 | Tomodachi | `tomodachi` | `account:delete`, `lists:read`, `known:read`, `known:mark`, `dictionary:read` |
 
 - `account` manages how the account signs in and where: linking and unlinking a way in, listing
@@ -33,8 +33,9 @@ setting ([`account-api.md`](account-api.md), Settings).
   `GET /v1/auth/get-session`, which shows the email and name.
 - `known:mark` marks a word Known and never clears one: only the learner un-marks a word.
 - `watch:read` and `watch:write` read and change the videos the learner watched in the iOS app's
-  Player ([Watch history](#watch-history)). Only the iOS app has them: no other app shows them,
-  so none gets them, least privilege.
+  Player ([Watch history](#watch-history)), and `translations:read` and `translations:write` the
+  sentences they bookmarked in its Translate tab ([Translate bookmarks](#translate-bookmarks)).
+  Only the iOS app has them: no other app shows them, so none gets them, least privilege.
 - `dictionary:read` is for the dictionary service's routes for apps (#571).
 - An app without a scope gets `403 insufficient_scope` from the route, or `not_allowed` for a sync
   change, and sync never sends it the entities it can't read: Tomodachi never gets the profile.
@@ -156,8 +157,9 @@ first time:
    queued changes still go.
 
 **The first upload.** The first time a device syncs to an account, queue what the device has:
-each known word as a `mark`, each list as a `create`, each list word as an `add`, and each watched
-video as a `watch`, all at base version 0, then sync with no cursor. A device that already synced
+each known word as a `mark`, each list as a `create`, each list word as an `add`, each watched
+video as a `watch`, and each bookmarked sentence as an `add`, all at base version 0, then sync with
+no cursor. A device that already synced
 before its app could sync an entity uploads that entity's items the same way, once, and syncs
 again with no cursor, since its cursor passed that entity's changes. The device had these before the account did, so a rejection
 of one undoes nothing on the device: a list the account already has is rejected `already_exists`,
@@ -211,6 +213,21 @@ What the iOS app's Player lists under Recent, as `watchedVideo`, by YouTube vide
   device that missed an old prune still shows what the account has. Don't send a `remove` for one
   your device drops for being past 50.
 - **Order** the list by `watchedAt`, newest first.
+
+### Translate bookmarks
+
+The sentences the learner bookmarked in the iOS app's Translate tab, as `bookmarkedSentence`, by
+the sentence's UUID. It needs `translations:read` and `translations:write`.
+
+- **Send only the bookmarked sentence:** its `text`, its `translation` (or null), its `language`
+  (`ja` or `en`), and `bookmarkedAt`. Never the conversation, its ID, or any sentence the learner
+  didn't bookmark: conversations hold other people's words, and stay on the device.
+- **An add always applies.** Un-bookmarking sends a `remove` at the version your app had, which
+  conflicts if the sentence was bookmarked again elsewhere since: take `current`, and show it
+  bookmarked. Deleting a conversation un-bookmarks its sentences, so send a `remove` for each.
+- **A bookmark from another device** names a sentence whose conversation may not be on this one:
+  show it on its own, with its translation.
+- **At most 2,000** an account (`too_many_bookmarks`): undo the add.
 
 ## Deleting the account
 

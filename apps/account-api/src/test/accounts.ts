@@ -39,6 +39,16 @@ export function useAccountService(options: { appleKey?: boolean } = {}) {
     running.service.call(path, options)
   const sync = (token: string, body: Record<string, unknown> = {}) =>
     call('/v1/sync', { token, body })
+  const mutate = async (
+    token: string,
+    ...mutations: Record<string, unknown>[]
+  ): Promise<SyncedAnswer> => {
+    const answer = await sync(token, {
+      mutations: mutations.map(mutation => ({ id: randomUUID(), ...mutation }))
+    })
+    expect(answer.status, JSON.stringify(answer.body)).toBe(200)
+    return answer.body as unknown as SyncedAnswer
+  }
 
   return {
     running,
@@ -53,12 +63,10 @@ export function useAccountService(options: { appleKey?: boolean } = {}) {
     changeMe: (token: string, body: Record<string, unknown>) =>
       call('/v1/me', { token, body, method: 'PATCH' }),
     sync,
-    async mutate(token: string, ...mutations: Record<string, unknown>[]): Promise<SyncedAnswer> {
-      const answer = await sync(token, {
-        mutations: mutations.map(mutation => ({ id: randomUUID(), ...mutation }))
-      })
-      expect(answer.status, JSON.stringify(answer.body)).toBe(200)
-      return answer.body as unknown as SyncedAnswer
-    }
+    mutate,
+    results: async (learner: Learner, ...mutations: Record<string, unknown>[]) =>
+      (await mutate(learner.token, ...mutations)).results,
+    changesOf: async (learner: Learner, entity: string) =>
+      (await mutate(learner.token)).changes.filter(change => change.entity === entity)
   }
 }

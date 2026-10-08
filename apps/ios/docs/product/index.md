@@ -35,7 +35,7 @@ sentences and captions — a tap opens the word, whose headword then offers the 
 
 Account is a supporting navigation area rather than a separate Product Experience. The tab holds
 on-device content and preferences, and signing in to a Zenbu account, which syncs known words,
-lists, and Player's watch history. It provides:
+lists, Player's watch history, and Translate's bookmarked sentences. It provides:
 
 - a profile card with the learner's photo, name, and username;
 - the Zenbu account: **Sign In to Sync**, or, signed in, **Zenbu Account** with the account's email
@@ -142,8 +142,9 @@ or publishing destination.
 ### Zenbu account and sync
 
 A learner can sign in to their Zenbu account from Account, to keep their known words and lists the
-same on every device and Zenbu app they sign in to (#573), and Player's Recent videos the same on
-every device running this app ([Player](player.md#opening-a-video)). Zenbu works the same signed
+same on every device and Zenbu app they sign in to (#573), and Player's Recent videos and
+Translate's bookmarked sentences the same on every device running this app
+([Player](player.md#opening-a-video), [Translate](translate.md#translations)). Zenbu works the same signed
 out and offline: everything stays on the phone, and the phone's copy is what the app shows.
 
 What doesn't sync, and why:
@@ -152,6 +153,8 @@ What doesn't sync, and why:
   hash of a word's meanings, which changes when the dictionary does, and the notes the app has
   already saved need moving to the new key first.
 - **Media Library photos**, which need file storage the account service doesn't have.
+- **Translate conversations**, which hold other people's words: only the sentences the learner
+  bookmarks sync, each on its own.
 - **Settings**, such as Reading Aids, which stay with each device.
 - **The profile on Account**, which is this phone's own.
 
@@ -163,8 +166,9 @@ Account row shows **Zenbu Account** and the email.
 
 **The first sync.** When this phone signs in to an account other than the one it last signed out
 of, the app sends the account everything on the phone: every known word, every list, every list's
-words, and Recent's videos, then brings down everything the account already has. A phone that
-signed in before the app synced watch history sends its Recent once, after updating. The same Apple ID, Google account, or email reaches the same
+words, Recent's videos, and bookmarked sentences, then brings down everything the account already
+has. A phone that signed in before the app synced watch history or bookmarks sends them once, after
+updating. The same Apple ID, Google account, or email reaches the same
 account in every app.
 
 **Favorites is one list.** Every device's and app's Favorites is the same list in the account, so
@@ -174,7 +178,7 @@ before it could sign in joins it the same way, if its oldest list is still named
 Favorites was deleted in the account, a phone signing in keeps its own Favorites, with its words,
 as a new list.
 
-**When it syncs.** After each change to a known word, a list, or Recent, when the app opens or returns to
+**When it syncs.** After each change to a known word, a list, Recent, or a bookmark, when the app opens or returns to
 the foreground with changes waiting or a last sync over 15 minutes ago, when iOS gives it time in
 the background, and when the learner taps **Sync Now** on Zenbu Account. Never on a timer. Offline,
 changes wait on the phone, in order, across relaunches, and go when it's back; a failed sync tries
@@ -198,13 +202,16 @@ again a few times, waiting longer each time, only while the app is open.
   hadn't heard of the removal, updated its place since; watching it again brings it back.
 - The account keeps the 50 most recently watched videos, as Recent does; a video watched on
   another device that pushes one past 50 removes it here too.
+- A sentence un-bookmarked on one device is un-bookmarked everywhere, unless another device
+  bookmarked it again since without this one hearing; then it stays bookmarked. The account holds
+  at most 2,000 bookmarks; past that, a new bookmark is taken back off.
 
 **Zenbu Account** shows the email, when the last sync was (or that one is running), how many
 changes are waiting, and a note when the last sync failed, with **Sync Now**, **Sign Out**, and
 **Delete Account…**.
 
 **Signing out** asks first, then forgets the sign-in on this phone and keeps everything: known
-words, lists, Recent, notes, and media stay, and every feature works. Changes made while signed out, such
+words, lists, Recent, Translations, notes, and media stay, and every feature works. Changes made while signed out, such
 as an un-marked word, a deleted list, a removed word, or a rename, are kept in order (each word,
 list word, and list as just its latest change), and go to the account when the learner signs in to
 the same account again, by the account's rules: a change made elsewhere first wins. Signing in to a different account instead sends that account everything on the phone, as
@@ -226,7 +233,7 @@ A signed-in learner can delete their Zenbu account from **Zenbu Account → Dele
   account). If Apple refuses or doesn't answer, nothing is deleted, and the learner signs in with
   Apple again to try again.
 - Afterwards the app is signed out and keeps everything on the phone: Known Words, lists,
-  Recent, notes, and media stay, and every feature works. Signing in again makes a new account, which gets
+  Recent, Translations and their bookmarks, notes, and media stay, and every feature works. Signing in again makes a new account, which gets
   everything on the phone, as a first sync does.
 
 ## Required, not built yet (#563)

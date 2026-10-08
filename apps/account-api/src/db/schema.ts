@@ -206,6 +206,22 @@ export const watchedVideos = pgTable(
   table => [primaryKey({ columns: [table.userId, table.videoId] })]
 )
 
+export const translationBookmarks = pgTable(
+  'translation_bookmarks',
+  {
+    userId: owner(),
+    id: text('id').notNull(),
+    text: text('text'),
+    translation: text('translation'),
+    language: text('language'),
+    bookmarkedAt: moment('bookmarked_at'),
+    present: boolean('present').notNull(),
+    version: bigint('version', { mode: 'number' }).notNull(),
+    updatedAt: updated()
+  },
+  table => [primaryKey({ columns: [table.userId, table.id] })]
+)
+
 export const syncOrigin = pgTable('sync_origin', {
   databaseOid: bigint('database_oid', { mode: 'number' }).primaryKey()
 })

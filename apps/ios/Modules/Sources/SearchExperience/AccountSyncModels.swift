@@ -1,4 +1,5 @@
 import Foundation
+import TranslatorCore
 
 enum SyncFieldValue: Codable, Hashable, Sendable {
   case string(String)
@@ -39,9 +40,10 @@ enum SyncEntity {
   static let list = "list"
   static let listWord = "listWord"
   static let watchedVideo = "watchedVideo"
+  static let bookmarkedSentence = "bookmarkedSentence"
 
   static let firstSynced = [knownWord, list, listWord]
-  static let uploaded = firstSynced + [watchedVideo]
+  static let uploaded = firstSynced + [watchedVideo, bookmarkedSentence]
 }
 
 struct SyncEntityKey: Codable, Hashable, Sendable {
@@ -111,12 +113,30 @@ struct SyncedWatchedVideo: Decodable, Sendable {
   let watchedAt: Date
 }
 
+struct SyncedBookmark: Decodable, Sendable {
+  let id: String
+  let text: String
+  let translation: String?
+  let language: String
+  let bookmarkedAt: Date
+
+  var shared: SharedBookmark? {
+    guard let id = UUID(uuidString: id), let language = SpokenLanguage(rawValue: language) else {
+      return nil
+    }
+    return SharedBookmark(
+      id: id, text: text, translation: translation, language: language,
+      bookmarkedAt: bookmarkedAt)
+  }
+}
+
 struct SyncChange: Decodable, Sendable {
   enum Payload: Sendable {
     case knownWord(SyncedKnownWord)
     case list(SyncedList)
     case listWord(SyncedListWord)
     case watchedVideo(SyncedWatchedVideo)
+    case bookmark(SyncedBookmark)
     case gone
     case unsynced
   }
@@ -148,6 +168,8 @@ struct SyncChange: Decodable, Sendable {
       payload = .listWord(try container.decode(SyncedListWord.self, forKey: .data))
     case SyncEntity.watchedVideo:
       payload = .watchedVideo(try container.decode(SyncedWatchedVideo.self, forKey: .data))
+    case SyncEntity.bookmarkedSentence:
+      payload = .bookmark(try container.decode(SyncedBookmark.self, forKey: .data))
     default:
       payload = .unsynced
     }

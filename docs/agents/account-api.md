@@ -201,8 +201,9 @@ whether an email has an account.
 
 ## Profiles and sync
 
-Five entities sync: the profile, known words, lists, and the words in each list (#572), and the
-videos the learner watched in the iOS app's Player. Each has its own rule in `src/domain`, never
+Six entities sync: the profile, known words, lists, and the words in each list (#572), and, from
+the iOS app, the videos the learner watched in its Player and the Translate sentences they
+bookmarked. Each has its own rule in `src/domain`, never
 blanket last-write-wins, and none needs a clock to settle a conflict: a change says the version it
 was made to, and the rule decides what a stale one does. `PATCH /v1/me` and a sync
 mutation change the profile through the same rule.
@@ -246,8 +247,17 @@ mutation change the profile through the same rule.
   too. One that missed a forgotten removal keeps that video until newer ones push it out, and a
   watch it sends for it brings it back, at version 1, since the account no longer knows it was
   removed.
+- **Bookmarked sentence** (`bookmarkedSentence`, by the sentence's UUID, in either case,
+  answered in lowercase, `src/domain/bookmarks.ts`): one sentence the learner bookmarked in
+  Translate, never the conversation around it. `add` sends its `text` (cut to 2,000 characters),
+  its `translation` (cut to 4,000, or null), its `language` (`ja` or `en`), and `bookmarkedAt` (the
+  app's time, from 2000 on); control characters become spaces, and nothing else is taken, the
+  conversation's ID included. Like a list word, an add always applies, and adding one the account
+  has changes nothing; `remove` applies only at the current version, so an add the remover never
+  saw wins. A removed bookmark's row keeps only its ID and version, none of what was said.
 - **Limits:** 500 lists an account and 5,000 words a list (`too_many_lists`, `list_full`); a
-  word added to a deleted or unknown list is rejected (`unknown_list`).
+  word added to a deleted or unknown list is rejected (`unknown_list`); 2,000 bookmarked sentences
+  an account (`too_many_bookmarks`).
 - **Each keeps its history** as its version and a row that stays (a cleared word, a deleted list,
   a removed list word), so a stale change finds the version it lost to. A deleted list's words are
   deleted with it, and its row keeps no name.
@@ -326,8 +336,8 @@ else, and deletes only after a fresh sign-in.
     and the key's refusal logged as an error. The code may be used up, so the app gets a new one
     by signing in with Apple again.
 - **What goes:** the account's row, and with it, by cascade, its ways to sign in, its sessions,
-  its synced profile, known words, lists, list words, and watched videos, its journal, and its
-  mutation results;
+  its synced profile, known words, lists, list words, watched videos, and bookmarked sentences,
+  its journal, and its mutation results;
   and any sign-in code waiting for its email. Its access tokens stop working at `/v1/me` and
   `/v1/sync` at once (the account is gone), and expire within 15 minutes everywhere else. The
   account's email is told. Backups that hold it are deleted within 30 days (Back up and
@@ -387,6 +397,7 @@ are in `src/db/schema.ts`:
   each with its version;
 - `watched_videos`: the watch history, each video with its version and whether it's watched,
   removed, or pruned;
+- `translation_bookmarks`: the bookmarked Translate sentences, each with its version;
 - `sync_changes`: the journal, read by account and sequence;
 - `sync_mutations`: each sync mutation's result, by account and the client's mutation ID;
 - `sync_origin`: the OID of the database the service last started on, which tells it a restored
@@ -456,9 +467,13 @@ way and call the routes with their access tokens. They show:
 `src/http/watch-history.test.ts` watched videos: fields a watch leaves out kept, the later watch
 setting the place and an older one only filling in, a time from the future taken as now, a removal
 winning over a watch that hadn't seen it, the 51st video pruning the oldest as a delete, a removal
-of a pruned video sticking, the latest 100 removals remembered, and the refused and cut fields. Both run two or three `SyncClient`s (`src/test/sync-client.ts`, the iOS
+of a pruned video sticking, the latest 100 removals remembered, and the refused and cut fields;
+and `src/http/bookmarks.test.ts` bookmarked sentences: an add and a repeat, a remove keeping none
+of what was said, an add the remover never saw winning, the 2,000 cap, and the refused and cut
+fields. Both run two or three `SyncClient`s (`src/test/sync-client.ts`, the iOS
 app's client in TypeScript) through offline changes on each until they hold the same state as a
-new device. `src/http/clients.test.ts` holds each app to its scopes, watch history included.
+new device. `src/http/clients.test.ts` holds each app to its scopes: only `zenbu-ios` reads or
+changes watch history and bookmarks.
 
 The domain's own tests (`src/domain/`) cover the name and username rules and the cursor;
 `src/db/database.test.ts` covers the journal's trigger and backfill, the sync tables' rules, and

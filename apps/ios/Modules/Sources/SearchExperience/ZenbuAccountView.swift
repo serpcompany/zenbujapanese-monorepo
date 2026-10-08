@@ -38,7 +38,7 @@ struct ZenbuAccountRow: View {
   private var signedOutNote: String {
     zenbuAccount.sync.sessionEndedOnItsOwn
       ? String(localized: "You were signed out. Sign in again to keep syncing.")
-      : String(localized: "Known words, lists, and watch history, on all your devices")
+      : String(localized: "Known words, lists, watch history, and bookmarks, on all your devices")
   }
 }
 
@@ -60,7 +60,7 @@ struct ZenbuAccountView: View {
           Button("Sign Out") { confirmsSignOut = true }
             .accessibilityIdentifier("zenbu-account.sign-out")
         } footer: {
-          Text("Signing out keeps your known words, lists, watch history, notes, and media on this iPhone.")
+          Text("Signing out keeps your known words, lists, watch history, translations, notes, and media on this iPhone.")
         }
         Section {
           Button("Delete Account…", role: .destructive) { deletes = true }
@@ -84,7 +84,7 @@ struct ZenbuAccountView: View {
       }
     } message: {
       Text(
-        "Your known words, lists, and watch history stay on this iPhone. Changes you make while signed out sync when you sign in to this account again."
+        "Your known words, lists, watch history, and translations stay on this iPhone. Changes you make while signed out sync when you sign in to this account again."
       )
     }
     .sheet(isPresented: $deletes) {
@@ -122,7 +122,7 @@ struct ZenbuAccountView: View {
       .accessibilityIdentifier("zenbu-account.sync-now")
     } footer: {
       Text(
-        "Zenbu syncs your known words, lists, and watch history after each change and when it opens. They also stay on this iPhone, and work offline."
+        "Zenbu syncs your known words, lists, watch history, and bookmarked translations after each change and when it opens. They also stay on this iPhone, and work offline."
       )
     }
   }

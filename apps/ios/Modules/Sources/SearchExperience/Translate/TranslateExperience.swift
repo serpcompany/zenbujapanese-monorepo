@@ -79,7 +79,7 @@ final class TranslateExperience {
   }
 
   static func live() -> TranslateExperience {
-    TranslateExperience(services: .forThisLaunch, history: ConversationHistory())
+    TranslateExperience(services: .forThisLaunch, history: .shared)
   }
 
   var isPreparing: Bool { preparation != nil }

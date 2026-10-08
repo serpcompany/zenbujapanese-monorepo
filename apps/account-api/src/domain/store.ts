@@ -1,6 +1,12 @@
 import type { EditableProfile, Profile, RejectionCode } from './profile'
 
-export type EntityType = 'profile' | 'knownWord' | 'list' | 'listWord' | 'watchedVideo'
+export type EntityType =
+  | 'profile'
+  | 'knownWord'
+  | 'list'
+  | 'listWord'
+  | 'watchedVideo'
+  | 'bookmarkedSentence'
 
 export interface JournalEntry {
   sequence: number
@@ -55,6 +61,17 @@ export interface WatchedVideo {
   updatedAt: Date
 }
 
+export interface Bookmark {
+  id: string
+  text: string | null
+  translation: string | null
+  language: string | null
+  bookmarkedAt: Date | null
+  present: boolean
+  version: number
+  updatedAt: Date
+}
+
 type MutationOutcome = 'applied' | 'conflict' | 'rejected'
 
 export interface MutationRecord {
@@ -79,6 +96,7 @@ export interface EntityReader {
   wordList(listId: string): Promise<WordList | null>
   listWord(listId: string, itemId: string): Promise<ListWord | null>
   watchedVideo(videoId: string): Promise<WatchedVideo | null>
+  bookmark(id: string): Promise<Bookmark | null>
 }
 
 export interface LockedAccount extends EntityReader {
@@ -94,6 +112,8 @@ export interface LockedAccount extends EntityReader {
   watchedVideoCount(): Promise<number>
   oldestWatchedVideo(): Promise<WatchedVideo | null>
   forgetWatchedVideos(kept: number): Promise<void>
+  saveBookmark(bookmark: Omit<Bookmark, 'updatedAt'>): Promise<void>
+  bookmarkCount(): Promise<number>
   journal(entry: Omit<JournalEntry, 'sequence'>): Promise<void>
   recordedMutation(clientMutationId: string): Promise<RecordedMutation | null>
   recordMutation(record: MutationRecord): Promise<void>

@@ -9,6 +9,8 @@ export const scopes = [
   'known:mark',
   'watch:read',
   'watch:write',
+  'translations:read',
+  'translations:write',
   'dictionary:read'
 ] as const
 
@@ -34,7 +36,12 @@ const studyData: readonly Scope[] = [
   'known:write'
 ]
 
-const appOnly: readonly Scope[] = ['watch:read', 'watch:write']
+const appOnly: readonly Scope[] = [
+  'watch:read',
+  'watch:write',
+  'translations:read',
+  'translations:write'
+]
 
 export const clients: readonly Client[] = [
   {

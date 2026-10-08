@@ -1,5 +1,6 @@
 import Foundation
 import Observation
+import TranslatorCore
 
 @MainActor
 @Observable
@@ -8,7 +9,7 @@ final class ZenbuAccount {
     ZenbuAccount(
       configuration: $0, session: AccountAPI.urlSession(),
       storage: KeychainSessionTokenStorage(), wordKnowledge: .shared, wordLists: .shared,
-      watchHistory: .shared)
+      watchHistory: .shared, translations: .shared)
   }
 
   let configuration: AccountServiceConfiguration
@@ -24,6 +25,7 @@ final class ZenbuAccount {
     wordKnowledge: WordKnowledge,
     wordLists: WordLists,
     watchHistory: WatchHistory,
+    translations: ConversationHistory,
     fileURL: URL = AccountSync.defaultFileURL,
     now: @escaping @MainActor () -> Date = Date.init
   ) {
@@ -34,7 +36,7 @@ final class ZenbuAccount {
     sync = AccountSync(
       api: api, tokens: AccountTokens(api: api, storage: storage, now: now),
       wordKnowledge: wordKnowledge, wordLists: wordLists, watchHistory: watchHistory,
-      fileURL: fileURL, now: now)
+      translations: translations, fileURL: fileURL, now: now)
     scheduler = AccountSyncScheduler(sync: sync, now: now)
   }
 

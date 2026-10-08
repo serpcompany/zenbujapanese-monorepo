@@ -29,6 +29,7 @@ export type RejectionCode =
   | 'unknown_list'
   | 'too_many_lists'
   | 'list_full'
+  | 'too_many_bookmarks'
   | 'not_allowed'
 
 export const profileLimits = { nameLength: 100, usernameLength: { min: 3, max: 30 } } as const

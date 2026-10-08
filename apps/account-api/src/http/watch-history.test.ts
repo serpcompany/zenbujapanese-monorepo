@@ -20,15 +20,8 @@ const remove = (videoId: string) => ({
   entityId: videoId
 })
 
-async function results(learner: Learner, ...mutations: Record<string, unknown>[]) {
-  return (await accounts.mutate(learner.token, ...mutations)).results
-}
-
-async function changesOf(learner: Learner) {
-  return (await accounts.mutate(learner.token)).changes.filter(
-    change => change.entity === 'watchedVideo'
-  )
-}
+const results = accounts.results
+const changesOf = (learner: Learner) => accounts.changesOf(learner, 'watchedVideo')
 
 const rows = (sql: string) => accounts.running.service.rows(sql)
 

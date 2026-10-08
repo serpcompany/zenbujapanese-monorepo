@@ -60,7 +60,7 @@ test.describe('privacy policy', () => {
     page
   }) => {
     await expectNamed(page, 'The short version', [
-      'the known words, lists, and watch history you sync'
+      'the known words, lists, watch history, and bookmarked translations you sync'
     ])
     await expectNamed(page, 'Your Zenbu account', [
       'from the iPhone app, your watch history: the 50 YouTube videos you most recently watched in its Player',
@@ -69,7 +69,23 @@ test.describe('privacy policy', () => {
       'the result of each sync request, which names the item it changed and when'
     ])
     await expectNamed(page, 'Information in the app', ["Player's watch history"])
-    await expectNamed(page, 'Your account on this website', ["It can't read your watch history"])
+    await expectNamed(page, 'Your account on this website', [
+      "It can't read your watch history or the sentences you bookmark"
+    ])
+  })
+
+  test('names the Translate sentences a learner bookmarks, and keeps conversations on the device', async ({
+    page
+  }) => {
+    await expectNamed(page, 'Your Zenbu account', [
+      'the Translate sentences you bookmark, each with its text and its translation, which language it was said in, and when you bookmarked it',
+      'may be what someone else said, but only sentences you bookmark, never a whole conversation',
+      'for a bookmark you removed, only its ID'
+    ])
+    await expectNamed(page, 'Information in the app', [
+      "the conversation's text and its translations stay on your device until you delete them, and are never sent to us",
+      'only the ones you bookmark leave your device'
+    ])
   })
 
   test('names Tomodachi and the only things it can do with the account', async ({ page }) => {

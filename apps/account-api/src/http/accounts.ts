@@ -255,7 +255,7 @@ export function accountRoutes(
     scheme: 'bearer',
     bearerFormat: 'JWT',
     description:
-      "A 15-minute access token from GET /v1/auth/token, which takes the session token a sign-in returns, never the session token itself. It names the account (`sub`), the app (`azp`), when the learner signed in (`auth_time`), and the app's scopes (`scope`): `account:delete` for DELETE /v1/me, `profile` for /v1/me, and for sync `lists:read`, `lists:write`, `known:read`, `known:write`, `known:mark`, which marks a word Known but never clears one, and `watch:read` and `watch:write`, for the videos the learner watched. The dictionary service takes `dictionary:read`."
+      "A 15-minute access token from GET /v1/auth/token, which takes the session token a sign-in returns, never the session token itself. It names the account (`sub`), the app (`azp`), when the learner signed in (`auth_time`), and the app's scopes (`scope`): `account:delete` for DELETE /v1/me, `profile` for /v1/me, and for sync `lists:read`, `lists:write`, `known:read`, `known:write`, `known:mark`, which marks a word Known but never clears one, `watch:read` and `watch:write`, for the videos the learner watched, and `translations:read` and `translations:write`, for the Translate sentences they bookmarked. The dictionary service takes `dictionary:read`."
   })
 
   app.openapi(health, async context =>

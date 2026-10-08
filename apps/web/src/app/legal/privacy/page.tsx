@@ -20,11 +20,12 @@ export default function PrivacyPage() {
         has no advertising, analytics, or third-party crash-reporting SDK, and everything in it
         works on your device without an account. If you create or sign in to a Zenbu account where
         our apps or this website offer one, we keep your email, how you sign in, and the known
-        words, lists, and watch history you sync on our servers, so your devices and apps can share
-        them, and you can delete the account at any time. If you link it to Tomodachi, our companion
-        app, Tomodachi can read your lists and known words, mark words Known, and delete the account
-        when you ask it to. The website uses privacy-friendly, cookieless analytics to count visits,
-        and, if you sign in on it, only the cookies signing in needs.
+        words, lists, watch history, and bookmarked translations you sync on our servers, so your
+        devices and apps can share them, and you can delete the account at any time. If you link it
+        to Tomodachi, our companion app, Tomodachi can read your lists and known words, mark words
+        Known, and delete the account when you ask it to. The website uses privacy-friendly,
+        cookieless analytics to count visits, and, if you sign in on it, only the cookies signing in
+        needs.
       </p>
 
       <h2>Information in the app</h2>
@@ -43,8 +44,11 @@ export default function PrivacyPage() {
       <p>
         Translate listens through the microphone only while a conversation or Listening is running,
         and hears whoever is speaking nearby. Their speech is recognized and translated on your
-        device, and no audio is kept: the conversation's text, its translations, and the sentences
-        you bookmark stay on your device until you delete them.
+        device, and no audio is kept: the conversation's text and its translations stay on your
+        device until you delete them, and are never sent to us. If you're signed in to a Zenbu
+        account, a sentence you bookmark syncs to it with its translation (see below), so your other
+        devices show it; a sentence can be something someone else said, so only the ones you
+        bookmark leave your device.
       </p>
       <p>
         Text recognition, translation, and pronunciation use Apple's Vision, Translation, and speech
@@ -105,11 +109,15 @@ export default function PrivacyPage() {
           they are and whether each is known; your lists' names, their order, and the words in them;
           from the iPhone app, your watch history: the 50 YouTube videos you most recently watched
           in its Player, each with its YouTube video ID, title, and channel, its length, where you
-          stopped, how much of its captions you know, and when you last watched it; a record of each
-          item's latest change, including a deletion, so your other devices follow it, which for a
-          video you removed from your history, or one past the 50, keeps only its YouTube video ID
-          and when it went, for the latest 100; and the result of each sync request, which names the
-          item it changed and when, so that a retry is never applied twice.
+          stopped, how much of its captions you know, and when you last watched it; from the iPhone
+          app, the Translate sentences you bookmark, each with its text and its translation, which
+          language it was said in, and when you bookmarked it, which may be what someone else said,
+          but only sentences you bookmark, never a whole conversation; a record of each item's
+          latest change, including a deletion, so your other devices follow it, which for a video
+          you removed from your history, or one past the 50, keeps only its YouTube video ID and
+          when it went, for the latest 100, and for a bookmark you removed, only its ID; and the
+          result of each sync request, which names the item it changed and when, so that a retry is
+          never applied twice.
         </li>
       </ul>
       <p>
@@ -163,13 +171,13 @@ export default function PrivacyPage() {
       </ul>
       <p>
         It doesn't read or change your known words or lists yet; we'll update this policy before it
-        does. It can't read your watch history. Its account pages connect from your browser to our
-        account service at api.zenbujapanese.com only when you open your account page or start to
-        sign in. Pointing at or tabbing to a Sign in with Apple button gets it ready: your browser
-        loads Apple's Sign in with Apple script from Apple and asks our account service for a
-        one-time sign-in value. Choosing Apple opens Apple's window; if you choose Google, your
-        browser goes to Google and comes back through our account service. Each handles that under
-        its own terms and privacy policy.
+        does. It can't read your watch history or the sentences you bookmark. Its account pages
+        connect from your browser to our account service at api.zenbujapanese.com only when you open
+        your account page or start to sign in. Pointing at or tabbing to a Sign in with Apple button
+        gets it ready: your browser loads Apple's Sign in with Apple script from Apple and asks our
+        account service for a one-time sign-in value. Choosing Apple opens Apple's window; if you
+        choose Google, your browser goes to Google and comes back through our account service. Each
+        handles that under its own terms and privacy policy.
       </p>
 
       <h2>Where account data is kept</h2>

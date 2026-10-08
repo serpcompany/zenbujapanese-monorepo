@@ -331,8 +331,8 @@ nothing (Account and sync, below).
 
 ## Account and sync
 
-The app signs in to the account service and syncs known words, lists, and watch history exactly
-as the client guide says ([`account-clients.md`](account-clients.md)), as `zenbu-ios`. The code is in
+The app signs in to the account service and syncs known words, lists, watch history, and
+Translate's bookmarked sentences exactly as the client guide says ([`account-clients.md`](account-clients.md)), as `zenbu-ios`. The code is in
 `SearchExperience`: `ZenbuAccount.swift` (sign-in, signing out, deleting),
 `AccountServiceConfiguration.swift`, `AccountAPI.swift` and `AccountSyncModels.swift` (the routes and
 their answers), `AccountTokens.swift`, `AccountSync.swift` and `AccountSyncState.swift` (the queue
@@ -383,8 +383,8 @@ tests prove that model against the real service.
   signed out. Nothing queued before signing out is merged, since it may have been sent.
   Signing in to the same user ID picks them up and syncs from the kept cursor. Signing in to any other account drops them, moves Favorites to its shared ID
   (`WordLists.favoritesID`, from the oldest list if it's still named Favorites), and queues the
-  phone's marks, lists, list words, and Recent videos at version 0 before the first sync. Deleting
-  the account drops everything.
+  phone's marks, lists, list words, Recent videos, and bookmarked sentences at version 0 before the
+  first sync. Deleting the account drops everything.
 - **Entities added later.** `account-sync.json` names the entities the account's first upload
   covered (`syncedEntities`; a file without it covered known words, lists, and list words). A phone
   that signed in before its app synced an entity, such as watch history, queues that entity's items
@@ -405,6 +405,15 @@ tests prove that model against the real service.
   arrive, and as it closes. A pulled video whose ID isn't a YouTube video ID, or isn't the
   change's, is left out. The file keeps a removed or pruned video's version for the latest 100
   (`goneVideos`), as the account remembers its latest 100.
+- **Translate bookmarks.** `ConversationHistory.shared` (in `TranslatorCore`) reports each bookmark
+  and un-bookmark through `bookmarkObserver`, with the sentence's text, translation, language, and
+  `bookmarkedAt`, and never the conversation; deleting a conversation reports its bookmarks
+  removed. `AccountSync`, in `SearchExperience`, turns those into `bookmarkedSentence` changes, so
+  `TranslatorCore` still imports nothing of the app's (ADR 0011). The account's copies come in
+  through `applySynced` and `applySyncedRemoval(ofBookmark:)`: a sentence in a conversation on this
+  phone is marked there, and any other is kept in `Synced Bookmarks/bookmarks.json`, inside the
+  conversations folder, which `ConversationHistory.bookmarks` lists beside the conversations' own,
+  newest first. Sync waits for the history to load.
 - **Favorites** has one ID in every app ([`account-clients.md`](account-clients.md), The rules, from
   your side). A second phone's `create` of it is rejected `already_exists`, which the first upload
   never undoes: the account's copy comes down, and the phone's words still add. If that copy comes
@@ -439,7 +448,7 @@ tests prove that model against the real service.
   code. If the answer is lost, the app asks `/v1/auth/token`: a `401` means the account is gone.
 
 `AccountSignInTests`, `AccountSyncTests`, `AccountSyncConflictTests`, `AccountSyncRecoveryTests`,
-`AccountSyncWatchHistoryTests`, and `AccountSignedOutTests` run the client against a stub server (`StubAccountServer`, a `URLProtocol`):
+`AccountSyncWatchHistoryTests`, `AccountSyncBookmarkTests`, and `AccountSignedOutTests` run the client against a stub server (`StubAccountServer`, a `URLProtocol`):
 sign-in, tokens and their refresh, the queue and cursor across a relaunch, retries under the same
 mutation IDs, each entity's conflicts and rejections, order and paging, list words held across a
 failed page, the request size, `410`, `429` and backoff, and signing out and deleting, which keep
@@ -449,7 +458,10 @@ to the same account, another account starting over, and two phones ending with o
 `AccountSyncWatchHistoryTests` covers Recent's first upload, a newer watch replacing an unsent one,
 pulled videos kept to the newest 50, removals both ways, a watch that lost to a removal, a
 rejected watch, a phone catching up on watch history, old videos' dates, the kept versions'
-bound, bad pulled IDs, and two phones through `FakeAccountService`.
+bound, bad pulled IDs, and two phones through `FakeAccountService`. `AccountSyncBookmarkTests`
+covers the first upload sending each bookmarked sentence and nothing else said, the queue, a
+bookmark from another device listed on its own and removed, an un-bookmark that lost to a newer
+bookmark, a rejected bookmark, deleting a conversation, catching up, and two phones.
 
 ## Image Search and Apple Intelligence
 

@@ -61,7 +61,10 @@ reads and changes (`watch:read` and `watch:write`):
 | Usage Data → Product Interaction | For each of those videos, where the learner stopped and the share of its captions' words they know. | App Functionality | Yes | No |
 
 The App Store then also shows Browsing History and Usage Data under Data Linked to You. Its Other
-User Content is the known words and lists it syncs. It has no analytics or crash-reporting SDK.
+User Content is the known words and lists it syncs, and the Translate sentences the learner
+bookmarks: each one's text and translation, its language, and when it was bookmarked, which may be
+what someone nearby said. It never sends a conversation, or a sentence the learner didn't bookmark,
+and it keeps no audio, so it collects no Audio Data. It has no analytics or crash-reporting SDK.
 
 When the build with sign-in ships (#573), change these with the labels:
 
