@@ -994,8 +994,9 @@ menu and in the phone menu, the link to the page itself is marked as the current
   menu" and "the drawer marks the current page, and closes with its close button"; smoke "the
   header marks Dictionary current on the dictionary home".
 
-**Phone menu.** Below 1024 pixels the menu button opens a sheet from the right, titled with the logo
-and the site name, with the Theme button beside its close button (Theme, above). It holds the four
+**Phone menu.** Below 1024 pixels the menu button opens a sheet from the right, nine-tenths of the
+screen's width and at most 384 pixels (#682: at three-quarters, a 360-pixel phone left its items'
+lines a word or two long), titled with the logo and the site name, with the Theme button beside its close button (Theme, above). It holds the four
 menus as groups that open and close (one at a time), the current section's group open, then Log
 in, or Your account in a browser that signed in, and Get the app. A mega menu's group lists its
 columns' links, with the Dictionary group led by Search. A group opens and closes with a click,
@@ -1010,7 +1011,10 @@ widening the window to 1024 pixels closes the sheet; choosing a theme keeps it o
   opens and its groups toggle with the keyboard, and Escape closes it", "following Log in or Get the
   app in the drawer closes it", "the drawer closes when the
   browser goes back, and stays closed going forward", and "the drawer closes when the window reaches
-  1024 pixels, and stays closed when it narrows".
+  1024 pixels, and stays closed when it narrows"; `apps/web/e2e/phone-layout.spec.ts`, "About,
+  /about/, fits a 360px phone" (the open menu and each group, Phone layout below); its width:
+  `apps/web/e2e/site.spec.ts`, "at 360 pixels the drawer is 324 wide" and "at 768 pixels the drawer
+  is 384 wide".
 
 **Get the app and Log in.** Get the app leads with a phone icon (lucide `Smartphone`); it opens the
 iPhone app's page (`/products/zenbu-japanese-app/`), whose own Get the app opens the App
@@ -1077,17 +1081,18 @@ and there is no romaji and no word meanings under example words. The settings ar
 **Phone layout.** Every page fits a 360-pixel phone. No text is smaller than 12 pixels: furigana
 is 0.45 of its word's size, as in the app, but never under 12 pixels, so it spreads a short word
 a little rather than shrink. The homepage's drawings of the app are pictures, like its
-screenshots: their text keeps its drawn size, and the showcase's and Free on the web's drawings
-keep their furigana's too. Nothing is wider than the screen, no text is cut off by its box (a line
-clamped with an ellipsis, and a carousel's screens beyond its edge, are meant to be), and a grid
-of kana, kanji, or links keeps each cell at least 44 pixels wide. Tap targets meet WCAG 2.2's
-2.5.8: 24 by 24 pixels, or spaced so a 24-pixel circle around each touches no other; the
-homepage showcase's dots are 24 by 24.
+screenshots, and keep their drawn size, and may crop their text, as the page end's collage does.
+Nothing is wider than the screen, no text is cut off by its box (a line clamped with an ellipsis,
+and a carousel's screens beyond its edge, are meant to be), and a grid of kana, kanji, or links
+keeps each cell with text at least 44 pixels wide. Tap targets meet WCAG 2.2's 2.5.8: 24 by 24
+pixels, or spaced so a 24-pixel circle around each touches no other; the homepage showcase's dots
+are 24 by 24. The same holds in the phone menu, with each of its groups open.
 
 - Source: #682 (the owner's review on a phone).
 - Check: `apps/web/e2e/phone-layout.spec.ts`, "… fits a 360px phone", on every page type in
-  `apps/web/e2e/page-types.ts`, each homepage area, and a missing page. Tap targets: No automated
-  check yet.
+  `apps/web/e2e/page-types.ts` (the account pages among them), each homepage area, the phone menu
+  and each of its groups, and a missing page, with axe's `target-size` rule for the tap
+  targets.
 
 **App links.** The shipped iOS app and its App Store metadata link to `/privacy` and `/support`, so
 both keep working. `/privacy` redirects (308) to `/legal/privacy/` in one hop, with its query, as

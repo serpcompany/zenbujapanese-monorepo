@@ -227,6 +227,21 @@ test.describe('site header below 1024 pixels', () => {
     await expect(menu.getByRole('button', { name: 'Get the app' })).toBeVisible()
   })
 
+  for (const [width, drawerWidth] of [
+    [360, 324],
+    [768, 384]
+  ]) {
+    test(`at ${width} pixels the drawer is ${drawerWidth} wide`, async ({ page }) => {
+      await page.setViewportSize({ width, height: 800 })
+      await page.goto('/about/')
+      await menuButton(page).click()
+      await expect(phoneMenu(page)).toBeInViewport({ ratio: 1 })
+      await expect
+        .poll(async () => Math.round((await phoneMenu(page).boundingBox())?.width ?? 0))
+        .toBe(drawerWidth)
+    })
+  }
+
   test('a drawer group opens and closes with a click, and its link opens the page', async ({
     page
   }) => {

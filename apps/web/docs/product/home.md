@@ -83,8 +83,8 @@ homepage's are in `src/lib/app-areas.ts`.
   `src/components/area-showcase.interaction.test.tsx`, "a video playing in an area stops when
   another area is chosen";
   `src/lib/home-previews.test.ts`, "the homepage draws 食べる as the dictionary has it", against the
-  dictionary fixtures. The other words, the drawings' look, and the dots' size: No automated check
-  yet.
+  dictionary fixtures; the dots' size: `e2e/phone-layout.spec.ts` (axe's `target-size`). The other
+  words, and the drawings' look: No automated check yet.
 
 **Free on the web.** A line: no download, and every word has its own page. Then the web tools
 that exist today, each opening its page: the Tools menu's links that aren't placeholders, with

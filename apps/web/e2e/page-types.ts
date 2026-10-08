@@ -1,28 +1,83 @@
 import type { Page } from '@playwright/test'
 import { appAreas } from '../src/lib/app-areas'
 import { sitePages } from '../src/lib/pages'
-import { expect, needed } from './test'
+import { siteMenus } from '../src/lib/site-menus'
+import { signedOutService, standInForTheAccountService } from './account-stand-in'
+import { accountPages, expect, menuButton, needed, phoneMenu, sourcesToggle } from './test'
+
+export interface PageView {
+  name: string
+  show: (page: Page) => Promise<void>
+}
 
 export interface PageType {
   name: string
   path: string
   open?: string[]
-  tabs?: string[]
+  views?: PageView[]
 }
 
 const browse = (path = '') => `/dictionary/browse/${path}`
 const japanese = (path: string) => encodeURI(path)
 
+const runningFiniteAnimations = (page: Page) =>
+  page.evaluate(
+    () =>
+      document
+        .getAnimations()
+        .filter(
+          animation =>
+            animation.playState === 'running' &&
+            animation.effect?.getComputedTiming().endTime !== Number.POSITIVE_INFINITY
+        ).length
+  )
+
+async function settle(page: Page) {
+  await expect.poll(() => runningFiniteAnimations(page)).toBe(0)
+}
+
+async function expand(page: Page, name: string) {
+  const button = page.getByRole('button', { name, exact: true })
+  if ((await button.getAttribute('aria-expanded')) !== 'true') await button.click()
+  await expect(button).toHaveAttribute('aria-expanded', 'true')
+  await settle(page)
+}
+
+const showcaseArea = (name: string): PageView => ({
+  name,
+  show: async page => {
+    const tab = page.getByRole('tab', { name, exact: true })
+    await tab.click()
+    await expect(tab).toHaveAttribute('aria-selected', 'true')
+    await settle(page)
+  }
+})
+
+const phoneMenuViews: PageView[] = [
+  {
+    name: 'Phone menu',
+    show: async page => {
+      await menuButton(page).click()
+      await expect(phoneMenu(page)).toBeVisible()
+      await settle(page)
+    }
+  },
+  ...siteMenus.map(({ label }) => ({
+    name: `Phone menu, ${label}`,
+    show: (page: Page) => expand(page, label)
+  }))
+]
+
+const viewsOf: Record<string, PageView[]> = {
+  '/': appAreas.slice(1).map(({ name }) => showcaseArea(name)),
+  '/about/': phoneMenuViews
+}
+
 export const missingPage: PageType = { name: 'Page not found', path: '/no-such-page/' }
 
-const showcaseTabs = { tabs: appAreas.slice(1).map(({ name }) => name) }
-
 export const pageTypes: PageType[] = [
-  ...sitePages.map(({ title, path }) => ({
-    name: title,
-    path,
-    ...(path === '/' ? showcaseTabs : {})
-  })),
+  ...sitePages.map(({ title, path }) => ({ name: title, path, views: viewsOf[path] })),
+  ...accountPages.map(({ title, path }) => ({ name: title, path })),
   { name: 'Search', path: '/dictionary/search/' },
   { name: 'Search results', path: '/dictionary/search/iru/' },
   {
@@ -57,17 +112,11 @@ export const pageTypes: PageType[] = [
 ]
 
 export async function openPageType(page: Page, { path, open = [] }: PageType) {
+  await standInForTheAccountService(page, signedOutService)
   await page.goto(path)
-  for (const name of open) {
-    const button = page.getByRole('button', { name, exact: true })
-    await button.click()
-    await expect(button).toHaveAttribute('aria-expanded', 'true')
-  }
+  for (const name of open) await expand(page, name)
+  await page.waitForLoadState('networkidle')
+  if (await sourcesToggle(page).count()) await sourcesToggle(page).click()
   await expect(page.getByText('Loading examples')).toHaveCount(0)
-}
-
-export async function selectTab(page: Page, name: string) {
-  const tab = page.getByRole('tab', { name, exact: true })
-  await tab.click()
-  await expect(tab).toHaveAttribute('aria-selected', 'true')
+  await settle(page)
 }

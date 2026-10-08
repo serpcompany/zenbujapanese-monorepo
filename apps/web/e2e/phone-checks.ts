@@ -29,12 +29,18 @@ function findPhoneLayoutProblems(limits: typeof phoneLimits): PhoneLayoutProblem
     range.selectNodeContents(node)
     return [...range.getClientRects()].filter(box => box.width > 1 && box.height > 1)
   }
+  const onlyForScreenReaders = (element: Element) =>
+    [element, ...ancestors(element)].some(box => {
+      const edges = box.getBoundingClientRect()
+      return edges.width <= 1 && edges.height <= 1
+    })
   const texts: { element: Element; boxes: DOMRect[] }[] = []
   const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT)
   for (let node = walker.nextNode(); node; node = walker.nextNode()) {
     const element = node.parentElement
     if (!element || !node.textContent?.trim()) continue
     if (!element.checkVisibility({ opacityProperty: true, visibilityProperty: true })) continue
+    if (onlyForScreenReaders(element)) continue
     const boxes = visibleBoxes(node)
     if (boxes.length) texts.push({ element, boxes })
   }
@@ -68,7 +74,6 @@ function findPhoneLayoutProblems(limits: typeof phoneLimits): PhoneLayoutProblem
       const style = getComputedStyle(box)
       if (meantToCut(box, style)) return null
       const edges = box.getBoundingClientRect()
-      if (edges.width <= 1 && edges.height <= 1) return null
       const across = cuts.includes(style.overflowX)
       const down = cuts.includes(style.overflowY)
       const outside = (text: DOMRect) =>
@@ -79,15 +84,18 @@ function findPhoneLayoutProblems(limits: typeof phoneLimits): PhoneLayoutProblem
     return null
   }
   const clippedText = texts.flatMap(({ element, boxes }) => {
+    if (inADrawing(element)) return []
     const box = cutBy(element, boxes)
     return box ? [`${describe(element)} is cut off by ${describe(box)}`] : []
   })
 
+  const textElements = texts.map(({ element }) => element)
+  const showsText = (cell: Element) => textElements.some(element => cell.contains(element))
   const lists = [...document.querySelectorAll('ul, ol, [role="list"], [role="grid"]')]
   const narrowGridCells = lists.flatMap(list => {
     if (!getComputedStyle(list).display.endsWith('grid') || !list.checkVisibility()) return []
     const widths = [...list.children]
-      .filter(cell => cell.textContent?.trim())
+      .filter(showsText)
       .map(cell => cell.getBoundingClientRect().width)
       .filter(width => width > 0)
     const narrowest = Math.min(...widths)

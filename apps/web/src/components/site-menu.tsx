@@ -95,7 +95,7 @@ export function SiteMenu() {
       >
         <MenuIcon aria-hidden="true" />
       </DrawerTrigger>
-      <DrawerContent>
+      <DrawerContent className="w-[min(90%,24rem)]">
         <DrawerHeader className="flex-row items-center justify-between border-b py-2.5">
           <DrawerTitle className="flex items-center gap-2">
             <SiteLogo />

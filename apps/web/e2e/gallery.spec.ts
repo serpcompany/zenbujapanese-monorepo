@@ -1,12 +1,26 @@
 import { writeFileSync } from 'node:fs'
 import { join, resolve } from 'node:path'
-import { missingPage, openPageType, type PageType, pageTypes } from './page-types'
+import { missingPage, openPageType, type PageType, type PageView, pageTypes } from './page-types'
 import { test } from './test'
 
 const folder = resolve(process.env.E2E_GALLERY ?? '')
 const themes = ['light', 'dark'] as const
 const galleryWidth = 390
-const shown = [...pageTypes, missingPage]
+
+interface Shot {
+  name: string
+  pageType: PageType
+  views: PageView[]
+}
+
+const shots: Shot[] = [...pageTypes, missingPage].flatMap(pageType => [
+  { name: pageType.name, pageType, views: [] },
+  ...(pageType.views ?? []).map((view, index, views) => ({
+    name: `${pageType.name}, ${view.name}`,
+    pageType,
+    views: views.slice(0, index + 1)
+  }))
+])
 
 test.skip(({ isMobile }) => !isMobile, 'The gallery is of phones')
 test.use({
@@ -15,23 +29,24 @@ test.use({
   allowedConsoleErrors: [/status of 404/]
 })
 
-const fileFor = (index: number, { name }: PageType, theme: string) =>
+const fileFor = (index: number, { name }: Shot, theme: string) =>
   `${String(index + 1).padStart(2, '0')}-${name.toLowerCase().replace(/[^a-z0-9]+/g, '-')}-${theme}.png`
 
 const escaped = (text: string) =>
   text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;')
 
 function galleryPage(baseURL: string) {
-  const sections = shown.map((pageType, index) => {
+  const sections = shots.map((shot, index) => {
     const figures = themes.map(
       theme => `<figure><figcaption>${theme}</figcaption>
-<a href="${fileFor(index, pageType, theme)}"><img src="${fileFor(index, pageType, theme)}" alt="${escaped(`${pageType.name}, ${theme}`)}" loading="lazy" width="${galleryWidth}"></a></figure>`
+<a href="${fileFor(index, shot, theme)}"><img src="${fileFor(index, shot, theme)}" alt="${escaped(`${shot.name}, ${theme}`)}" loading="lazy" width="${galleryWidth}"></a></figure>`
     )
-    return `<section id="page-${index + 1}"><h2>${index + 1}. ${escaped(pageType.name)}</h2>
-<p><a href="${escaped(baseURL + pageType.path)}">${escaped(decodeURI(pageType.path))}</a></p>
+    const { path } = shot.pageType
+    return `<section id="page-${index + 1}"><h2>${index + 1}. ${escaped(shot.name)}</h2>
+<p><a href="${escaped(baseURL + path)}">${escaped(decodeURI(path))}</a></p>
 <div class="shots">${figures.join('\n')}</div></section>`
   })
-  const contents = shown
+  const contents = shots
     .map(({ name }, index) => `<li><a href="#page-${index + 1}">${escaped(name)}</a></li>`)
     .join('')
   return `<!doctype html>
@@ -58,12 +73,13 @@ for (const theme of themes) {
   test.describe(`${theme} theme`, () => {
     test.use({ colorScheme: theme })
 
-    for (const [index, pageType] of shown.entries()) {
-      test(`captures ${pageType.name}`, async ({ page, baseURL }) => {
-        await openPageType(page, pageType)
+    for (const [index, shot] of shots.entries()) {
+      test(`captures ${shot.name}`, async ({ page, baseURL }) => {
+        await openPageType(page, shot.pageType)
+        for (const view of shot.views) await view.show(page)
         await page.evaluate(() => document.fonts.ready)
         await page.screenshot({
-          path: join(folder, fileFor(index, pageType, theme)),
+          path: join(folder, fileFor(index, shot, theme)),
           fullPage: true,
           caret: 'initial'
         })

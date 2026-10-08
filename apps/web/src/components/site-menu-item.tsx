@@ -73,7 +73,9 @@ export function SiteMenuItem({ link }: { link: MenuLink }) {
       <MenuMark mark={link.mark} />
       <span className="flex min-w-0 flex-col gap-0.5">
         <span className="font-medium">{link.title}</span>
-        <span className="text-[13px] leading-snug text-muted-foreground">{link.description}</span>
+        <span className="text-[13px] leading-snug text-pretty text-muted-foreground">
+          {link.description}
+        </span>
       </span>
     </>
   )
