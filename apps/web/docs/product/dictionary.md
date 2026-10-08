@@ -876,10 +876,12 @@ shows the learner's initials (from their name, or their email's first letter) an
 places either way. Its menu, signed out, holds Log in and Create an account (the `login` and
 `register` entries in `linkTargets`: `/login/` and `/register/` where the account pages are open,
 `#` placeholders where they're closed); signed in, Your account (`/account/`), then Sign out, which
-signs this browser out through the account service and, on the account page, reloads it. A
-sign-out the service refuses shows a toast with the reason. Both end with the Theme row (Theme,
-below). It opens with a click, Enter, Space, or the arrow keys; the arrow keys, Home, and End move
-through its items, Enter follows one, and Escape closes it and returns focus to the button. The
+signs this browser out through the account service; an account page open in the browser, in this
+tab or another, then shows signed out ([Account pages](account.md#your-account)). A sign-out the
+service refuses, or can't be reached for, shows a toast with the reason and stays signed in. Both
+end with the Theme row (Theme, below). It opens with a click, Enter, Space, or the Up and Down
+keys; Up, Down, Home, and End move through its items, the Theme row's three icons among them, Enter
+follows one, and Escape closes it and returns focus to the button. The
 server draws it signed out, as it draws the footer's Sign in; the browser then reads the note it
 keeps when signed in ([Account pages](account.md#pages)).
 
@@ -888,8 +890,9 @@ keeps when signed in ([Account pages](account.md#pages)).
   button end the header, Get the app opening the iPhone app’s page"; `apps/web/e2e/header.spec.ts`,
   "Get the app and the account button keep their places signed out and signed in", "signed out,
   the menu offers Log in and Create an account, then the theme, by keyboard", and "signed in, the
-  menu leads to the account, then the theme, then Sign out, by keyboard";
-  `apps/web/e2e/account.spec.ts`, "the footer leads to signing in, and to the account once signed
+  menu leads to the account, then the theme, then Sign out, by keyboard", "signing out from the
+  menu on the account page shows it signed out, with no reload", and "says so, and stays signed
+  in" (when the service can't sign the browser out); `apps/web/e2e/account.spec.ts`, "the footer leads to signing in, and to the account once signed
   in, as the header shows the initials"; `src/lib/account/flows.test.ts`, "signing out of this
   browser counts a session already gone as signed out, and keeps any other failure";
   `src/lib/account/signed-in.test.ts`.

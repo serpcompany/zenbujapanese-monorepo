@@ -12,7 +12,12 @@ import { isFresh, loadAccount, type SignedInAccount } from '@/lib/account/load'
 import { failureMessage, returnedErrorMessage } from '@/lib/account/messages'
 import { accountPages } from '@/lib/account/pages'
 import type { AccountSettings } from '@/lib/account/settings'
-import { initialsOf, rememberSignedIn } from '@/lib/account/signed-in'
+import {
+  initialsOf,
+  onSignedInChange,
+  rememberSignedIn,
+  seemsSignedIn
+} from '@/lib/account/signed-in'
 import { DeleteAccount } from './delete-account'
 import { FormMessage, Notice } from './form-message'
 import { ProfileForm } from './profile-form'
@@ -121,8 +126,15 @@ export function AccountView({
       ? initialsOf(view.account.profile.name, view.account.profile.email)
       : null
   useEffect(() => {
-    if (shownInitials !== null) rememberSignedIn(true, shownInitials)
-  }, [shownInitials])
+    if (shownInitials === null) return
+    rememberSignedIn(true, shownInitials)
+    const stopFollowing = onSignedInChange(() => {
+      if (seemsSignedIn()) return
+      stopFollowing()
+      signedOut(null)
+    })
+    return stopFollowing
+  }, [shownInitials, signedOut])
 
   if (view.kind === 'loading') return <Notice>Loading your account…</Notice>
   if (view.kind === 'unreachable') {

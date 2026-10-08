@@ -67,12 +67,15 @@ export const accountMenu = (page: Page) => page.getByRole('menu', { name: /^Acco
 
 export const phoneMenu = (page: Page) => page.getByRole('dialog', { name: 'Zenbu Japanese' })
 
+export const menuButton = (page: Page) =>
+  page.getByRole('banner').getByRole('button', { name: 'Menu' })
+
 export async function headerLogIn(page: Page) {
   if (!onPhone()) {
     await accountButton(page).click()
     return accountMenu(page).getByRole('menuitem', { name: 'Log in' })
   }
-  await page.getByRole('banner').getByRole('button', { name: 'Menu' }).click()
+  await menuButton(page).click()
   return phoneMenu(page).getByRole('button', { name: 'Log in' })
 }
 

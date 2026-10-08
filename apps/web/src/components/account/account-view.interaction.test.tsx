@@ -1,7 +1,9 @@
+import { act } from 'react'
 import { afterEach, describe, expect, test, vi } from 'vitest'
 import { accessTokens } from '@/lib/account/access-tokens'
 import type { Identity } from '@/lib/account/answers'
 import { accountApi } from '@/lib/account/client'
+import { rememberSignedIn } from '@/lib/account/signed-in'
 import { idTokenFor, jwtFor } from '@/test/account-answers'
 import {
   answer,
@@ -107,6 +109,16 @@ describe('the account page', () => {
     await shows(page, 'You’re not signed in.')
     expect(window.localStorage.getItem('zenbu-signed-in')).toBeNull()
     expect(window.localStorage.getItem('zenbu-initials')).toBeNull()
+  })
+
+  test('shows signed out when this browser signs out elsewhere, as from the account menu', async () => {
+    const { calls } = signedIn()
+    const page = render(<AccountView settings={settings()} returnedError={null} />)
+    await shows(page, `Signed in as ${email}`)
+    await act(async () => rememberSignedIn(false))
+    await shows(page, 'You’re not signed in.')
+    expect(window.localStorage.getItem('zenbu-signed-in')).toBeNull()
+    expect(callTo(calls, 'POST /v1/auth/sign-out')).toEqual([])
   })
 
   test('gets a new access token once when /v1/me answers 401', async () => {

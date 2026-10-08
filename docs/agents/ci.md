@@ -234,7 +234,7 @@ fails only in that environment's build. Neither build reaches the dictionary ser
 pages read it only at request time. After staging's, it checks the prerendered `/about/` has the
 footer's Sign in linking `/login/`, since staging's account pages are open
 ([`web.md`](web.md), Account pages); the header's Log in is in the account menu, which the browser
-draws, so `src/lib/site.test.ts` checks its address for each build. The `e2e` job checks
+draws, so `src/lib/site.test.ts` checks its address with the account pages open and closed. The `e2e` job checks
 production's has none. Each step names `apps/web` as its working directory, rather
 than the jobs setting it as a default, because the dead-code check reads a step's working directory
 to find the scripts and binaries a step runs, and not a job's.

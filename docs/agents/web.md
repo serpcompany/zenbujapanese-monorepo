@@ -377,7 +377,8 @@ the account service ([`account-api.md`](account-api.md); the website's side of i
   which no page can read; the pages keep the 15-minute access token in memory
   (`src/lib/account/access-tokens.ts`), for the account they show only, and send it only to
   `/v1/me`, without cookies. Deleting the account, signing in again, coming back from a Google
-  confirmation, and checking the browser is still signed in to the account on the page are in
+  confirmation, checking the browser is still signed in to the account on the page, and signing
+  out from the header's account menu (from any page, with the address the build names) are in
   `src/lib/account/flows.ts`; the components make the other calls.
 - **Each answer's shape is checked where it enters** (`src/lib/account/answers.ts`), and the
   client (`src/lib/account/client.ts`) turns every answer into a value, a refusal with its code and

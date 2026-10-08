@@ -1,6 +1,6 @@
 import type { Page, Route } from '@playwright/test'
 
-export type Answers = Record<string, unknown>
+type Answers = Record<string, unknown>
 
 export async function standInForTheAccountService(page: Page, answers: Answers) {
   await page.route('**/v1/**', async (route: Route) => {
@@ -20,6 +20,31 @@ export async function standInForTheAccountService(page: Page, answers: Answers) 
 }
 
 export const signedOutService: Answers = { 'GET /v1/auth/get-session': null }
+
+export const email = 'kana@example.com'
+
+const profile = {
+  id: 'u1',
+  name: 'Kana Fan',
+  username: null,
+  email,
+  version: 1,
+  createdAt: '2026-10-01T00:00:00.000Z',
+  updatedAt: '2026-10-01T00:00:00.000Z'
+}
+
+const accessTokenFor = (sub: string) =>
+  `head.${Buffer.from(JSON.stringify({ sub })).toString('base64url')}.sig`
+
+export const signedInService: Answers = {
+  'GET /v1/auth/get-session': {
+    user: { id: profile.id, email },
+    session: { token: 'bare', createdAt: new Date().toISOString() }
+  },
+  'GET /v1/auth/token': { token: accessTokenFor(profile.id) },
+  'GET /v1/me': profile,
+  'GET /v1/auth/list-accounts': [{ id: 'i1', providerId: 'email', accountId: email }]
+}
 
 export async function seemSignedIn(page: Page, initials: string) {
   await page.addInitScript(shown => {

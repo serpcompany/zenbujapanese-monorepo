@@ -1,9 +1,9 @@
 import type { Metadata } from 'next'
 import { Geist, Geist_Mono } from 'next/font/google'
-import { ThemeProvider } from 'next-themes'
 import { Analytics } from '@/components/analytics'
 import { SiteFooter } from '@/components/site-footer'
 import { SiteHeader } from '@/components/site-header'
+import { ThemeProvider } from '@/components/theme-provider'
 import { Toaster } from '@/components/ui/sonner'
 import { siteIcons, siteManifest, siteOpenGraph } from '@/lib/metadata'
 import { site, siteOrigin } from '@/lib/site'
@@ -31,7 +31,7 @@ export default function RootLayout({ children }: LayoutProps<'/'>) {
       suppressHydrationWarning
     >
       <body className="flex min-h-full flex-col">
-        <ThemeProvider attribute="class" disableTransitionOnChange>
+        <ThemeProvider>
           <SiteHeader />
           {children}
           <SiteFooter />

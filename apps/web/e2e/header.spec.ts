@@ -1,5 +1,10 @@
 import type { Page } from '@playwright/test'
-import { seemSignedIn, standInForTheAccountService } from './account-stand-in'
+import {
+  email,
+  seemSignedIn,
+  signedInService,
+  standInForTheAccountService
+} from './account-stand-in'
 import { accountButton, accountMenu, expect, needed, onPhone, test } from './test'
 
 const getTheApp = (page: Page) =>
@@ -88,5 +93,39 @@ test.describe('the account menu from 1024 pixels', () => {
     await expect(menu).toBeHidden()
     await expect(accountButton(page)).toHaveAccessibleName('Account')
     expect(await page.evaluate(() => window.localStorage.getItem('zenbu-signed-in'))).toBeNull()
+  })
+
+  test('signing out from the menu on the account page shows it signed out, with no reload', async ({
+    page
+  }) => {
+    await standInForTheAccountService(page, {
+      ...signedInService,
+      'POST /v1/auth/sign-out': { success: true }
+    })
+    await page.goto('/account/')
+    await expect(page.getByText(`Signed in as ${email}`)).toBeVisible()
+    await expect(accountButton(page)).toHaveText(/^KF/)
+    await page.evaluate(() => {
+      document.documentElement.dataset.sameDocument = 'yes'
+    })
+    await accountButton(page).click()
+    await accountMenu(page).getByRole('menuitem', { name: 'Sign out' }).click()
+    await expect(page.getByText('You’re not signed in.')).toBeVisible()
+    await expect(accountButton(page)).toHaveAccessibleName('Account')
+    await expect(page.locator('html')).toHaveAttribute('data-same-document', 'yes')
+  })
+
+  test.describe('when the account service can’t sign the browser out', () => {
+    test.use({ allowedConsoleErrors: [/Failed to load resource/] })
+
+    test('says so, and stays signed in', async ({ page }) => {
+      await standInForTheAccountService(page, {})
+      await seemSignedIn(page, 'KF')
+      await page.goto('/about/')
+      await accountButton(page).click()
+      await accountMenu(page).getByRole('menuitem', { name: 'Sign out' }).click()
+      await expect(page.getByText('We couldn’t reach your Zenbu account')).toBeVisible()
+      await expect(accountButton(page)).toHaveAccessibleName('Account, signed in')
+    })
   })
 })

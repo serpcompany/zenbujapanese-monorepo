@@ -61,8 +61,11 @@ and the phone menu has Your account in Log in's place
 ([Dictionary](dictionary.md#header-footer-and-site-wide), Account menu). The browser remembers
 that in local storage: `zenbu-signed-in`, and `zenbu-initials`, the initials of the name the
 account page shows (or its email's first letter), which the account page sets as it shows the
-account, after a sign-in or a change to the name, and which go on signing out (here or from the
-account menu), on deleting the account, and when the account page finds no session. The server
+account, after a sign-in or a change to the name; a sign-in clears the initials of any account
+before it until the account page shows the new one. Both go on signing out (here or from the
+account menu), on deleting the account, and when the account page finds no session. The account
+page follows the note: when the browser signs out from the account menu, or in another tab, it
+shows signed out without asking the service. The server
 draws Sign in and the signed-out button, so the page and its first render in the browser agree.
 
 - Source: #468, so the pages can be reached; #664 (the account menu, the initials, and Sign out in
@@ -74,10 +77,13 @@ draws Sign in and the signed-out button, so the page and its first render in the
   draws it before the browser knows", and "the footer leaves signing in out where the site's
   account pages are closed"; Account page tests, "shows who is signed in, the profile, and the ways
   to sign in, reading /v1/me with an access token only" (the initials) and "shows signed out, and
-  forgets it was signed in, when there is no session"; Account spec, "the account menu's Log in, or
+  forgets it was signed in, when there is no session", and "shows signed out when this browser
+  signs out elsewhere, as from the account menu"; Sign-in form tests, "emails a code, signs in with
+  it, and goes to the account page" (the earlier initials cleared); Account spec, "the account menu's Log in, or
   the drawer's on phones, opens the login page" and "the footer leads to signing in, and to the account
   once signed in, as the header shows the initials"; `e2e/header.spec.ts`, "signed in, the menu
-  leads to the account, then the theme, then Sign out, by keyboard"; Closed spec, "the account
+  leads to the account, then the theme, then Sign out, by keyboard" and "signing out from the menu
+  on the account page shows it signed out, with no reload"; Closed spec, "the account
   menu's Log in and Create an account, and the drawer's Log in on phones, stay # placeholders" and
   "a page built ahead of time has no Sign in in its footer".
 

@@ -1,9 +1,11 @@
 import type { AccessTokens } from './access-tokens'
 import type { AccountSession } from './answers'
 import type { AppleCode } from './apple'
-import type { AccountApi, Failure } from './client'
+import { builtAccountService } from './availability'
+import { type AccountApi, accountApi, type Failure } from './client'
 import { confirmingFrom, forgetConfirming } from './confirming'
 import { isSignedOut, needsFreshSignIn } from './messages'
+import { rememberSignedIn } from './signed-in'
 
 type Earlier = Pick<AccountSession, 'userId' | 'token'>
 
@@ -13,6 +15,14 @@ const isEarlierSessionOf = (earlier: Earlier, current: AccountSession) =>
 export async function signOutOfThisBrowser(api: AccountApi): Promise<Failure | null> {
   const signedOut = await api.signOut()
   return signedOut.ok || isSignedOut(signedOut.failure) ? null : signedOut.failure
+}
+
+export async function signOutFromTheAccountMenu(): Promise<Failure | null> {
+  const service = builtAccountService()
+  if (!service) return null
+  const problem = await signOutOfThisBrowser(accountApi(service))
+  if (problem === null) rememberSignedIn(false)
+  return problem
 }
 
 export async function afterSigningInAgain(

@@ -1,11 +1,9 @@
 import type { Page } from '@playwright/test'
-import { accountButton, accountMenu, expect, onPhone, phoneMenu, test } from './test'
+import { accountButton, accountMenu, expect, menuButton, onPhone, phoneMenu, test } from './test'
 
 type Theme = 'Light' | 'Dark' | 'System'
 
 const root = (page: Page) => page.locator('html')
-
-const menuButton = (page: Page) => page.getByRole('banner').getByRole('button', { name: 'Menu' })
 
 async function openTheThemeChoices(page: Page) {
   if (onPhone()) {

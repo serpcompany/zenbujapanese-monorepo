@@ -86,7 +86,7 @@ A change is checked by hand in a browser with the `verify-web` skill
 
 - **Dictionary pages, B.** What each page shows is held to the app's recorded suites before
   merge, every behavior names its check, and the browser tests drive the pages as a learner does.
-  Main gap: 10 of the 74 behaviors have no automated check, 12 more have a part without one (mostly
+  Main gap: 11 of the 77 behaviors have no automated check, 12 more have a part without one (mostly
   layout, sheets, and speech), the browser tests see only the fixtures' 12 words and the browse
   answers exported beside them, and some app behaviors aren't built yet (#511).
 - **Account pages, B.** Every behavior names its check, the components run against a stand-in

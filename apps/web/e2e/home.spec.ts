@@ -4,7 +4,7 @@ import { pageSources } from '../src/lib/dictionary/sources'
 import { appExtras, appFeatures, exampleSearches, homeTitle, webTools } from '../src/lib/home'
 import { pageFor } from '../src/lib/pages'
 import { linkTo, productionOrigin, site } from '../src/lib/site'
-import { expect, sourcesToggle, test } from './test'
+import { expect, onPhone, sourcesToggle, test } from './test'
 
 const main = (page: Page) => page.getByRole('main')
 
@@ -135,16 +135,30 @@ test.describe('homepage', () => {
     await expect(getTheApp).toHaveAttribute('href', linkTo('iphone-app').href)
     await expect(getTheApp).toHaveAttribute('data-link-target', 'iphone-app')
     await expect(main(page).getByRole('region').last()).toHaveAccessibleName(pageEnd.title)
-    const card = await end.getByRole('heading', { level: 2 }).evaluate(heading => {
-      const box = (element: Element | null) => element?.getBoundingClientRect().toJSON()
-      const card = heading.parentElement?.parentElement ?? null
-      return { card: box(card), collage: box(card?.lastElementChild ?? null) }
-    })
-    if (test.info().project.name === 'phone') {
-      expect(card.collage.bottom).toBeLessThanOrEqual(card.card.top + 9 * 16 + 1)
-    } else {
-      expect(card.card.height).toBeLessThanOrEqual(20 * 16)
-      expect(card.collage.left).toBeGreaterThan(card.card.left + card.card.width / 3)
+    const measure = () =>
+      end.getByRole('heading', { level: 2 }).evaluate(heading => {
+        const box = (element: Element | null | undefined) =>
+          element?.getBoundingClientRect().toJSON()
+        const card = heading.parentElement?.parentElement
+        return {
+          card: box(card),
+          collage: box(card?.lastElementChild),
+          button: box(card?.querySelector('[data-link-target="iphone-app"]'))
+        }
+      })
+    const widths = onPhone() ? [page.viewportSize()?.width ?? 0] : [768, 1280]
+    for (const width of widths) {
+      if (!onPhone()) await page.setViewportSize({ width, height: 900 })
+      const { card, collage, button } = await measure()
+      expect(button.bottom, `Get the app fits in the card at ${width} pixels`).toBeLessThanOrEqual(
+        card.bottom
+      )
+      if (onPhone()) {
+        expect(collage.bottom).toBeLessThanOrEqual(card.top + 9 * 16 + 1)
+      } else {
+        expect(card.height).toBeLessThanOrEqual(20 * 16)
+        expect(collage.left).toBeGreaterThan(card.left + card.width / 3)
+      }
     }
     await sourcesToggle(page).click()
     await expect(end.getByRole('link', { name: pageSources.home[0]?.name })).toBeVisible()

@@ -1,4 +1,9 @@
-import { signedOutService, standInForTheAccountService } from './account-stand-in'
+import {
+  email,
+  signedInService,
+  signedOutService,
+  standInForTheAccountService
+} from './account-stand-in'
 import {
   accountButton,
   accountPages,
@@ -8,20 +13,6 @@ import {
   onPhone,
   test
 } from './test'
-
-const email = 'kana@example.com'
-const profile = {
-  id: 'u1',
-  name: 'Kana Fan',
-  username: null,
-  email,
-  version: 1,
-  createdAt: '2026-10-01T00:00:00.000Z',
-  updatedAt: '2026-10-01T00:00:00.000Z'
-}
-
-const accessTokenFor = (sub: string) =>
-  `head.${Buffer.from(JSON.stringify({ sub })).toString('base64url')}.sig`
 
 test.describe('account pages', () => {
   for (const { path, title } of accountPages) {
@@ -62,13 +53,7 @@ test.describe('account pages', () => {
     await standInForTheAccountService(page, {
       'POST /v1/auth/email-otp/send-verification-otp': { success: true },
       'POST /v1/auth/sign-in/email-otp': { token: 'bare', user: { id: 'u1' } },
-      'GET /v1/auth/get-session': {
-        user: { id: 'u1', email },
-        session: { token: 'bare', createdAt: new Date().toISOString() }
-      },
-      'GET /v1/auth/token': { token: accessTokenFor(profile.id) },
-      'GET /v1/me': profile,
-      'GET /v1/auth/list-accounts': [{ id: 'i1', providerId: 'email', accountId: email }]
+      ...signedInService
     })
     await page.goto('/')
     await expect(footerAccountLink(page)).toHaveText('Sign in')

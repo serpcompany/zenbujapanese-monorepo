@@ -8,7 +8,6 @@ import {
   UserRoundPlusIcon
 } from 'lucide-react'
 import Link from 'next/link'
-import { usePathname } from 'next/navigation'
 import { toast } from 'sonner'
 import { ThemeMenuRow } from '@/components/mode-toggle'
 import { LogInButton } from '@/components/site-actions'
@@ -22,11 +21,9 @@ import {
 } from '@/components/ui/dropdown-menu'
 import { useSignedInInitials } from '@/hooks/use-seems-signed-in'
 import { builtAccountService } from '@/lib/account/availability'
-import { accountApi } from '@/lib/account/client'
-import { signOutOfThisBrowser } from '@/lib/account/flows'
+import { signOutFromTheAccountMenu } from '@/lib/account/flows'
 import { failureMessage } from '@/lib/account/messages'
 import { accountPages } from '@/lib/account/pages'
-import { rememberSignedIn } from '@/lib/account/signed-in'
 import { type LinkTo, linkTo } from '@/lib/site'
 import { cn } from '@/lib/utils'
 
@@ -35,13 +32,9 @@ function useSignedInHere(): string | null {
   return builtAccountService() ? initials : null
 }
 
-async function signOut(pathname: string) {
-  const service = builtAccountService()
-  if (!service) return
-  const problem = await signOutOfThisBrowser(accountApi(service))
-  if (problem) return void toast.error(failureMessage(problem))
-  rememberSignedIn(false)
-  if (pathname === accountPages.account.path) window.location.reload()
+async function signOut() {
+  const problem = await signOutFromTheAccountMenu()
+  if (problem) toast.error(failureMessage(problem))
 }
 
 function MenuLink({ to, icon: Icon, title }: { to: LinkTo; icon: LucideIcon; title: string }) {
@@ -65,7 +58,6 @@ function AccountMark({ initials }: { initials: string | null }) {
 
 export function AccountMenu({ className }: { className?: string }) {
   const initials = useSignedInHere()
-  const pathname = usePathname()
   const signedIn = initials !== null
   return (
     <DropdownMenu>
@@ -95,7 +87,7 @@ export function AccountMenu({ className }: { className?: string }) {
         {signedIn ? (
           <>
             <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={() => void signOut(pathname)}>
+            <DropdownMenuItem onClick={() => void signOut()}>
               <LogOutIcon aria-hidden="true" />
               Sign out
             </DropdownMenuItem>

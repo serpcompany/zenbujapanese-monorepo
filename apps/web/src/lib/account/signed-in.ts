@@ -14,8 +14,12 @@ export function seemsSignedIn(): boolean {
   return stored(storageKey) === 'yes'
 }
 
+const mostInitials = 2
+
 export function signedInInitials(): string | null {
-  return seemsSignedIn() ? (stored(initialsKey) ?? '') : null
+  if (!seemsSignedIn()) return null
+  const initials = stored(initialsKey) ?? ''
+  return Array.from(initials).length <= mostInitials ? initials : ''
 }
 
 export function initialsOf(name: string, email: string): string {
@@ -30,7 +34,8 @@ export function rememberSignedIn(signedIn: boolean, initials?: string): void {
   try {
     if (signedIn) {
       window.localStorage.setItem(storageKey, 'yes')
-      if (initials !== undefined) window.localStorage.setItem(initialsKey, initials)
+      if (initials === undefined) window.localStorage.removeItem(initialsKey)
+      else window.localStorage.setItem(initialsKey, initials)
     } else {
       window.localStorage.removeItem(storageKey)
       window.localStorage.removeItem(initialsKey)

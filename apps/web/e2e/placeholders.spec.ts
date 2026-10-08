@@ -1,7 +1,16 @@
 import type { Locator, Page } from '@playwright/test'
 import { sitePages } from '../src/lib/pages'
 import { placeholderHref, placeholderLinks } from '../src/lib/site'
-import { accountButton, accountMenu, expect, needed, test } from './test'
+import {
+  accountButton,
+  accountMenu,
+  expect,
+  menuButton,
+  needed,
+  onPhone,
+  phoneMenu,
+  test
+} from './test'
 
 const pagesToCheck = [
   ...sitePages.map(page => page.path),
@@ -21,11 +30,8 @@ async function placeholdersOn(page: Page | Locator) {
 }
 
 async function placeholdersInPhoneMenu(page: Page) {
-  await page.getByRole('banner').getByRole('button', { name: 'Menu' }).click()
-  const groups = page
-    .getByRole('dialog', { name: 'Zenbu Japanese' })
-    .getByRole('navigation', { name: 'Sections' })
-    .getByRole('button')
+  await menuButton(page).click()
+  const groups = phoneMenu(page).getByRole('navigation', { name: 'Sections' }).getByRole('button')
   await expect(groups.first()).toBeVisible()
   const links: string[] = []
   for (const group of await groups.all()) {
@@ -47,12 +53,11 @@ test('every # link the site renders is a placeholder listed in src/lib/site.ts',
   page
 }) => {
   test.setTimeout(300_000)
-  const onPhone = test.info().project.name === 'phone'
   const found = new Map<string, Set<string>>()
   const unlisted: string[] = []
   for (const path of pagesToCheck) {
     await page.goto(path)
-    const links = onPhone
+    const links = onPhone()
       ? await placeholdersInPhoneMenu(page)
       : await placeholdersWithTheAccountMenu(page)
     for (const link of links) {

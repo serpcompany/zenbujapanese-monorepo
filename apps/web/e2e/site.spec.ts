@@ -1,5 +1,14 @@
 import type { Page } from '@playwright/test'
-import { accountButton, expect, needed, onPhone, phoneMenu, sidewaysOverflow, test } from './test'
+import {
+  accountButton,
+  expect,
+  menuButton,
+  needed,
+  onPhone,
+  phoneMenu,
+  sidewaysOverflow,
+  test
+} from './test'
 
 const desktopOnly = () => test.skip(onPhone(), 'The menus open from the header from 1024 pixels')
 const phoneOnly = () => test.skip(!onPhone(), 'Below 1024 pixels the header has a menu button')
@@ -7,7 +16,6 @@ const phoneOnly = () => test.skip(!onPhone(), 'Below 1024 pixels the header has 
 const mainNav = (page: Page) => page.getByRole('navigation', { name: 'Main' })
 const trigger = (page: Page, name: string) =>
   mainNav(page).getByRole('button', { name, exact: true })
-const menuButton = (page: Page) => page.getByRole('banner').getByRole('button', { name: 'Menu' })
 
 const menus = [
   {
