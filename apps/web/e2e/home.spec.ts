@@ -1,6 +1,6 @@
 import type { Page } from '@playwright/test'
 import { pageEnd } from '../src/lib/app-parts'
-import { appExtras, appFeatures, exampleSearches, homeTitle, webTools } from '../src/lib/home'
+import { exampleSearches, homeTitle, webTools } from '../src/lib/home'
 import { pageFor } from '../src/lib/pages'
 import { linkTo, productionOrigin, site } from '../src/lib/site'
 import { expect, onPhone, sourcesToggle, test } from './test'
@@ -76,33 +76,6 @@ test.describe('homepage', () => {
     await examples.getByRole('link', { name: 'taberu' }).click()
     await expect(page).toHaveURL('/dictionary/search/taberu/')
     await expect(page.getByRole('main').getByRole('textbox')).toHaveValue('taberu')
-  })
-
-  test('shows the four features, then the four more things in the app', async ({ page }) => {
-    await page.goto('/')
-    await expect(
-      region(page, /^One app for reading, writing, and talking$/).getByRole('heading', {
-        level: 3
-      })
-    ).toHaveText(appFeatures.map(feature => feature.title))
-    await expect(
-      region(page, /^Also in the app\. For everything after the lookup\.$/).getByRole('heading', {
-        level: 3
-      })
-    ).toHaveText(Object.values(appExtras).map(extra => extra.title))
-  })
-
-  test('tapping a kanji in 弱肉強食 moves the highlight to its part of the reading', async ({
-    page
-  }) => {
-    await page.goto('/')
-    const extras = region(page, /^Also in the app\./)
-    const niku = extras.getByRole('button', { name: '肉, にく' })
-    const kyou = extras.getByRole('button', { name: '強, きょう' })
-    await expect(niku).toHaveAttribute('aria-pressed', 'true')
-    await kyou.click()
-    await expect(kyou).toHaveAttribute('aria-pressed', 'true')
-    await expect(niku).toHaveAttribute('aria-pressed', 'false')
   })
 
   test('the free web tools link to pages the site has, with no redirect', async ({

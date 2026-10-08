@@ -127,6 +127,15 @@ lists every child sitemap and each child sitemap lists the new URLs.
   rest of the page. Its Watch it work
   section renders only when `appVideos` in `src/lib/videos.ts` lists videos, and a video's
   privacy-enhanced YouTube player (`youtube-nocookie.com`) mounts only when it's clicked.
+- The homepage's area showcase ([product docs](../../apps/web/docs/product/home.md), Area
+  showcase) is `apps/web/src/components/area-showcase.tsx`, which takes any list of areas, so
+  another page can pass its own. Its tab panels are the stock tabs' `keepMounted` panels, stacked in
+  one grid cell and hidden with `visibility`, so every area is in the server HTML and the tallest
+  sets the height; each passes `hidden={false}`, since Tailwind's base `[hidden]` rule is
+  `!important` and would take a hidden panel out of the layout. Each area's screens are a stock carousel (Embla,
+  `apps/web/src/components/showcase-stage.tsx`); its arrows, dots, and fade show only when Embla
+  says the screens overflow, and before it loads, when an area has more than three. A video is the
+  product page's `VideoCard`; a hidden area's screens mount again, so a playing video stops.
 - `apps/web/biome.json` allows `dangerouslySetInnerHTML` only in
   `apps/web/src/components/dictionary/dictionary-breadcrumbs.tsx`, for its `BreadcrumbList`
   JSON-LD, which escapes `<` so the JSON can't close its script tag (the Next.js JSON-LD guide).

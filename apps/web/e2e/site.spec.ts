@@ -361,18 +361,30 @@ test.describe('site footer', () => {
     else expect(new Set(lefts).size).toBe(footerColumns.length)
   })
 
-  test('the footer shows plain social icons, five to a row on phones', async ({ page }) => {
+  test('the footer shows all ten social icons in one row, with tap targets of 24 pixels or more', async ({
+    page
+  }) => {
+    if (onPhone()) await page.setViewportSize({ width: 360, height: 740 })
     await page.goto('/')
     const icons = page.getByRole('contentinfo').getByRole('link', { name: /^Zenbu Japanese on / })
     await expect(icons).toHaveCount(10)
     const boxes = await icons.evaluateAll(links =>
       links.map(link => {
-        const { x, y } = link.getBoundingClientRect()
-        return { x: Math.round(x), y: Math.round(y) }
+        const target = link.getBoundingClientRect()
+        const glyph = link.querySelector('svg')?.getBoundingClientRect()
+        return {
+          y: Math.round(target.y),
+          width: target.width,
+          height: target.height,
+          glyph: glyph?.width ?? 0
+        }
       })
     )
-    const rows = new Set(boxes.map(box => box.y)).size
-    expect(rows).toBe(onPhone() ? 2 : 1)
-    if (onPhone()) expect(boxes[5].x).toBe(boxes[0].x)
+    expect(new Set(boxes.map(box => box.y)).size).toBe(1)
+    for (const box of boxes) {
+      expect(Math.min(box.width, box.height)).toBeGreaterThanOrEqual(24)
+      expect(box.glyph).toBe(onPhone() ? 18 : 20)
+    }
+    expect(await sidewaysOverflow(page), 'The page scrolls sideways').toBeLessThanOrEqual(0)
   })
 })

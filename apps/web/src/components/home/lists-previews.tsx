@@ -1,48 +1,11 @@
-import { CheckIcon, GripVerticalIcon, PlayIcon, PointerIcon } from 'lucide-react'
+import { CheckIcon, GripVerticalIcon, PointerIcon } from 'lucide-react'
 import { FrequencyBadges } from '@/components/dictionary/frequency'
 import { HeadwordRuby } from '@/components/dictionary/headword-ruby'
 import { RubyText } from '@/components/dictionary/ruby-text'
 import { previewLabel, previewPanel, raisedPreview } from '@/components/home/home-styles'
-import { WordPreview } from '@/components/home/word-preview'
 import { Badge } from '@/components/ui/badge'
-import { frequencyPreview, furiganaPreview, listPreview, playerPreview } from '@/lib/home-previews'
+import { frequencyPreview, furiganaPreview, listPreview } from '@/lib/home-previews'
 import { cn } from '@/lib/utils'
-
-export function PlayerPreview() {
-  const { caption, open } = playerPreview
-  return (
-    <div aria-hidden="true" className="grid w-full max-w-160 items-center gap-3.5 md:grid-cols-2">
-      <div className="relative grid aspect-video place-items-center overflow-hidden rounded-lg bg-neutral-800 shadow-[0_12px_28px_-14px_rgb(0_0_0/0.4)]">
-        <span className="grid size-12 place-items-center rounded-full bg-white/15 text-white">
-          <PlayIcon className="ml-0.5 size-5 fill-current" />
-        </span>
-        <span className="absolute inset-x-0 bottom-0 h-1 bg-white/20">
-          <span className="block h-full w-[28%] bg-red-600" />
-        </span>
-      </div>
-      <div className="flex min-w-0 flex-col gap-2">
-        <div className={cn(previewPanel, 'bg-blue-600/5 px-3 py-2.5 ring-[1.5px] ring-blue-600')}>
-          <p lang="ja">
-            {caption.words.map(word => (
-              <span key={word} className="mx-px border-b-[1.5px] border-foreground/35">
-                {word}
-              </span>
-            ))}
-            {caption.end}
-          </p>
-          <p className="text-[0.8125rem] text-muted-foreground">{caption.english}</p>
-        </div>
-        <WordPreview
-          word={open}
-          className={cn(
-            raisedPreview,
-            'rounded-b-none pt-2 before:mx-auto before:mb-1 before:h-1 before:w-8 before:rounded-full before:bg-foreground/15'
-          )}
-        />
-      </div>
-    </div>
-  )
-}
 
 export function ListPreview() {
   return (
