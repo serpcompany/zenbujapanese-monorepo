@@ -1,8 +1,10 @@
 import { z } from '@hono/zod-openapi'
+import { bookmarkLimits } from '../domain/bookmarks'
 import { itemTextLength } from '../domain/entities'
 import { profileLimits, type RejectionCode } from '../domain/profile'
 import type { EntityType } from '../domain/store'
 import { syncedEntities } from '../domain/sync'
+import { watchLimits } from '../domain/watch-history'
 import { listLimits } from '../domain/word-lists'
 
 interface OperationRule {
@@ -65,14 +67,56 @@ const ListUpdateFields = z.strictObject({
   position: listPosition.optional()
 })
 
+const moment = z.iso.datetime({ offset: true }).openapi({
+  description:
+    "ISO 8601, from 2000 on, by the device's clock; a time after the service's is taken as the service's."
+})
+const seconds = z.number().min(0).max(watchLimits.seconds)
+const shortText = z.string().openapi({
+  description: `Cut to ${watchLimits.textLength} characters; control characters become spaces, and an empty one is left out.`
+})
+
+const WatchFields = z.strictObject({
+  watchedAt: moment,
+  title: shortText.optional(),
+  author: shortText.optional().openapi({ description: 'The channel, held as `title` is.' }),
+  duration: seconds.optional().openapi({ description: "The video's length, in seconds." }),
+  position: seconds.optional().openapi({ description: 'Where the learner was, in seconds.' }),
+  comprehension: z
+    .number()
+    .min(0)
+    .max(1)
+    .optional()
+    .openapi({ description: "The share of the captions' words the learner knows." })
+})
+
+const BookmarkFields = z.strictObject({
+  text: z.string().openapi({
+    description: `The sentence as it was said: not blank, cut to ${count(bookmarkLimits.textLength)} characters, with control characters made spaces.`
+  }),
+  translation: z
+    .string()
+    .nullable()
+    .optional()
+    .openapi({
+      description: `Its translation, cut to ${count(bookmarkLimits.translationLength)} characters, or null; null when left out.`
+    }),
+  language: z.enum(['ja', 'en']).openapi({ description: 'The language it was said in.' }),
+  bookmarkedAt: moment
+})
+
 export const syncFieldSchemas: readonly (readonly [string, z.ZodType])[] = [
   ['ProfileUpdateFields', ProfileFields],
   ['WordFields', ItemFields],
   ['ListCreateFields', ListFields],
-  ['ListUpdateFields', ListUpdateFields]
+  ['ListUpdateFields', ListUpdateFields],
+  ['WatchFields', WatchFields],
+  ['BookmarkFields', BookmarkFields]
 ]
 
 const listId = '3b7f2c9e-5d1a-4e8b-9c6f-0a2d4e6f8b1c'
+const videoId = 'a1B2c3D4e5F'
+const sentenceId = '5e8d1c2b-7a6f-4d3e-8b9c-0f1e2d3c4b5a'
 const itemId = '9d2e4f6a8b0c1d3e5f7a9b1c3d5e7f90'
 const word = { headword: '見る', reading: 'みる' }
 
@@ -150,6 +194,61 @@ export const syncEntityRules: Readonly<Record<EntityType, EntityRule>> = {
         example: { entityId: `${listId}/${itemId}`, baseVersion: 1 }
       }
     }
+  },
+  watchedVideo: {
+    rule: `A video the learner watched in the iOS app's Player. The account keeps the ${watchLimits.videos} most recently watched, and remembers the latest ${watchLimits.goneKept} videos it removed or pruned.`,
+    entityId: 'The YouTube video ID: 11 letters, digits, `-`, or `_`.',
+    data: 'WatchedVideo',
+    operations: {
+      watch: {
+        baseVersion: true,
+        rule: `Send the whole video each time. A watch of a video the account has applies whatever its base version: the one with the later \`watchedAt\` sets the fields it sends, an older one sent late only fills fields the account lacks, and a field left out keeps the account's. A watch of a video the learner removed applies only at the removal's version, so one made before seeing the removal conflicts with the \`delete\`. A watch past the ${watchLimits.videos} newest prunes the oldest, which syncs as a \`delete\`.`,
+        fields: 'WatchFields',
+        example: {
+          entityId: videoId,
+          baseVersion: 0,
+          fields: {
+            watchedAt: '2026-10-07T03:17:00Z',
+            title: '日本語の勉強',
+            author: 'Zenbu',
+            duration: 212,
+            position: 30.5,
+            comprehension: 0.42
+          }
+        }
+      },
+      remove: {
+        baseVersion: false,
+        rule: 'The learner removed the video. It always applies; removing one the account has not is applied and changes nothing.',
+        example: { entityId: videoId }
+      }
+    }
+  },
+  bookmarkedSentence: {
+    rule: `A sentence the learner bookmarked in the iOS app's Translate tab, alone: never its conversation. An account holds at most ${count(bookmarkLimits.bookmarks)}.`,
+    entityId: "The sentence's UUID, in either case; answers name it in lowercase.",
+    data: 'BookmarkedSentence',
+    operations: {
+      add: {
+        baseVersion: false,
+        rule: `It always applies; adding one the account has changes nothing, and past ${count(bookmarkLimits.bookmarks)} it's rejected \`too_many_bookmarks\`.`,
+        fields: 'BookmarkFields',
+        example: {
+          entityId: sentenceId,
+          fields: {
+            text: '駅はどこですか',
+            translation: 'Where is the station?',
+            language: 'ja',
+            bookmarkedAt: '2026-10-07T03:20:00Z'
+          }
+        }
+      },
+      remove: {
+        baseVersion: true,
+        rule: "It applies only at the bookmark's current version, so it removes only an add it saw: an add the remover never saw wins, and the remove conflicts. Removing one the account hasn't is applied.",
+        example: { entityId: sentenceId, baseVersion: 1 }
+      }
+    }
   }
 }
 
@@ -166,6 +265,7 @@ export const rejectionMeanings: Readonly<Record<RejectionCode, string>> = {
   unknown_list: "The list word's list isn't in the account, or was deleted.",
   too_many_lists: `The account has ${count(listLimits.lists)} lists.`,
   list_full: `The list has ${count(listLimits.wordsPerList)} words.`,
+  too_many_bookmarks: `The account has ${count(bookmarkLimits.bookmarks)} bookmarked sentences.`,
   not_allowed: "The app's scopes don't include the operation's."
 }
 

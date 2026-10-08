@@ -26,6 +26,7 @@ final class WordListsTests {
   func seedsFavorites() async {
     let lists = await loadedLists()
     #expect(lists.lists.map(\.name) == ["Favorites"])
+    #expect(lists.lists.map(\.id) == [WordLists.favoritesID])
 
     let reloaded = await loadedLists()
     #expect(reloaded.lists.map(\.id) == lists.lists.map(\.id))
@@ -66,6 +67,35 @@ final class WordListsTests {
     let second = try #require(lists.createList(named: "Favorites"))
     lists.renameList(second.id, to: " \n")
     #expect(lists.lists.map(\.name) == ["Favorites", "Favorites"])
+  }
+
+  @Test("a list that moves to a new ID can still be found by the ID it was opened with")
+  func openListFollowsItsID() async throws {
+    let lists = await loadedLists()
+    let opened = try #require(lists.lists.first).id
+    lists.addWord(taberu, headword: "食べる", reading: "たべる", to: opened)
+    let moved = UUID()
+    let newest = UUID()
+
+    lists.moveList(opened, to: moved)
+    #expect(lists.currentID(of: opened) == moved)
+    #expect(lists.words(in: lists.currentID(of: opened)).map(\.entryID) == [taberu.rawValue])
+
+    lists.moveList(moved, to: newest)
+    #expect(lists.currentID(of: opened) == newest)
+    #expect(lists.lists.first { $0.id == lists.currentID(of: opened) }?.name == "Favorites")
+    let other = UUID()
+    #expect(lists.currentID(of: other) == other)
+  }
+
+  @Test("names hold at most 500 characters, with control characters made spaces")
+  func nameLimits() async throws {
+    let lists = await loadedLists()
+    let long = try #require(lists.createList(named: String(repeating: "語", count: 600)))
+    #expect(long.name.unicodeScalars.count == WordLists.longestName)
+    let tabbed = try #require(lists.createList(named: "Anime\tS1\u{7}"))
+    #expect(tabbed.name == "Anime S1")
+    #expect(lists.createList(named: "\u{7}\u{8}") == nil)
   }
 
   @Test("adding and removing words survive a reload, most recently added first")

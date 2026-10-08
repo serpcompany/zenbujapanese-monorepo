@@ -7,7 +7,7 @@ layers apart. Each part's own doc has the detail; each rule here is enforced by 
 
 | Part | What it is | Its doc |
 | --- | --- | --- |
-| `apps/ios` | The iPhone app, in Swift. It reads the language data bundled with it, which its importers in `apps/ios/Tools` build. `apps/ios/Tools/TranslateReplay` replays recorded Translate audio on a Mac. | [`docs/agents/ios.md`](docs/agents/ios.md) |
+| `apps/ios` | The iPhone app, in Swift. It reads the language data bundled with it, which its importers in `apps/ios/Tools` build, and signs in to the account service to sync known words, lists, watch history, and bookmarked translations. `apps/ios/Tools/TranslateReplay` replays recorded Translate audio on a Mac. | [`docs/agents/ios.md`](docs/agents/ios.md) |
 | `apps/web` | zenbujapanese.com: Next.js on Cloudflare Workers through OpenNext. Its dictionary pages read the dictionary service; its account pages call the account service from the learner's browser. | [`docs/agents/web.md`](docs/agents/web.md) |
 | `apps/dictionary-api` | The dictionary service: Node, in a Docker image on serpcompany's server, answering the website's dictionary requests by running the shared core on the app's language data. | [`docs/agents/dictionary-api.md`](docs/agents/dictionary-api.md) |
 | `apps/account-api` | The account service: Node and Postgres on the same server, for Zenbu accounts, sign-in, and sync (ADR 0013). It signs learners in with Apple, Google, or an emailed code, through Better Auth, and issues the access tokens other services check. | [`docs/agents/account-api.md`](docs/agents/account-api.md) |
@@ -34,6 +34,7 @@ flowchart LR
     Core -->|"word-cards command"| Cards[("Baked word cards")]
     Cards --> Apps
     Accounts["Account service image"] --> Server
+    App -->|"sign-in and sync, through Cloudflare"| Server
     Server --- Postgres[("Postgres, on the server")]
     Browser["Learner's browser, on the website's account pages"] -->|"session cookie, then access token"| Server
 ```
@@ -59,6 +60,13 @@ The dictionary service's answers are a contract, typed and numbered in the core 
 compares the service's number with its own and logs a mismatch rather than refusing it; a test
 fails a shape change that doesn't raise the number
 ([`docs/agents/dictionary-core.md`](docs/agents/dictionary-core.md), Rules).
+
+The app and the website also meet at links: on an iPhone with the app, a dictionary URL opens in
+the app (universal links). The app reads the website's URLs (`WebsiteLink.swift`), and the
+website's association file names the app's bundle ID (`apps/web/src/lib/app-links.ts`). No check
+ties the two: word URLs are permanent (ADR 0007), and the bundle ID changes only with the app's
+App Store record (#616), when the file changes with it
+([`docs/agents/web.md`](docs/agents/web.md), Links that open the app).
 
 ## Layers
 

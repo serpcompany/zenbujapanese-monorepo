@@ -14,7 +14,12 @@ dictionary sheet Image Search uses.
   to 75%, green from 75%), its length, and a red bar for how far the learner watched, then the
   title and channel. Swiping a card reveals **Remove**. With no videos yet, the tab explains what it
   does.
-- Recently watched videos are stored only on the device.
+- Recently watched videos are stored on the device, the 50 most recently watched. While the
+  learner is signed in to their Zenbu account, Recent is the same on every device signed in to it
+  ([Zenbu account and sync](index.md#zenbu-account-and-sync)): a video watched on one appears on
+  the others in its place by when it was watched, with how far the learner got and its
+  comprehension, and one removed on one is removed on all. Only this app syncs it; the website
+  and other Zenbu apps don't see it.
 
 ## Watching
 
@@ -72,4 +77,4 @@ the player shows **Video Unavailable**.
 Creator-made Japanese captions are used before automatic ones. Sound descriptions such as [音楽] are
 removed, and lines with nothing else are dropped, so songs show only their lyrics. A video without
 Japanese captions shows **No Japanese Captions**. Captions and translations come from YouTube each
-time a video opens and are not stored.
+time a video opens and are not stored or synced.

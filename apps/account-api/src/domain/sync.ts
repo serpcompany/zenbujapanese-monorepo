@@ -1,4 +1,5 @@
 import { createHash } from 'node:crypto'
+import { bookmarks } from './bookmarks'
 import type { Scope } from './clients'
 import type { Cursors } from './cursor'
 import { type Change, type ClientMutation, type Entity, type Outcome, rejected } from './entities'
@@ -15,6 +16,7 @@ import type {
   MutationRecord,
   RecordedMutation
 } from './store'
+import { watchHistory } from './watch-history'
 import { listWords, wordLists } from './word-lists'
 
 export const syncLimits = {
@@ -49,7 +51,9 @@ export const syncedEntities: Readonly<Record<EntityType, Entity>> = {
   profile: profiles,
   knownWord: knownWords,
   list: wordLists,
-  listWord: listWords
+  listWord: listWords,
+  watchedVideo: watchHistory,
+  bookmarkedSentence: bookmarks
 }
 
 const unknownEntity = rejection('unknown_entity', 'This service syncs no entity of that type.')
@@ -70,6 +74,7 @@ const replayedMessages: Record<RejectionCode, string> = {
   unknown_list: 'That list is not in this account, or was deleted.',
   too_many_lists: 'The account had too many lists.',
   list_full: 'The list was full.',
+  too_many_bookmarks: 'The account had too many bookmarked sentences.',
   not_allowed: 'This app may not make that change.'
 }
 

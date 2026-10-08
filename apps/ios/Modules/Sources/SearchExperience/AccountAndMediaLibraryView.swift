@@ -15,6 +15,8 @@ struct AccountTabRoot: View {
         switch route {
         case .profile:
           ProfileView()
+        case .zenbuAccount:
+          ZenbuAccountView()
         case .readingAids:
           ReadingAidSettingsView()
         case .mediaLibrary:
@@ -24,7 +26,7 @@ struct AccountTabRoot: View {
         case .wordLists:
           WordListsView()
         case .wordList(let listID):
-          WordListView(listID: listID) { openItem($0.entryID, $0.headword, $0.reading) }
+          WordListView(openedListID: listID) { openItem($0.entryID, $0.headword, $0.reading) }
         case .frequencyDictionaries:
           FrequencyDictionariesView(client: .live)
         case .credits:
@@ -38,6 +40,7 @@ struct AccountTabRoot: View {
 struct AccountRootView: View {
   @Environment(WordKnowledge.self) private var wordKnowledge
   @Environment(WordLists.self) private var wordLists
+  @Environment(ZenbuAccount.self) private var zenbuAccount: ZenbuAccount?
   let translationHistory: ConversationHistory
 
   var body: some View {
@@ -47,6 +50,9 @@ struct AccountRootView: View {
           ProfileCardRow()
         }
         .accessibilityIdentifier("account.profile")
+        if zenbuAccount != nil {
+          ZenbuAccountRow()
+        }
       }
 
       Section {
@@ -120,20 +126,31 @@ struct AccountRootView: View {
 
 struct AccountRowLabel: View {
   let title: LocalizedStringKey
+  let subtitle: String?
   let systemImage: String
   let tint: Color
   @ScaledMetric(relativeTo: .body) private var tileSize = 30
   @ScaledMetric(relativeTo: .body) private var symbolSize = 15
 
-  init(_ title: LocalizedStringKey, systemImage: String, tint: Color) {
+  init(
+    _ title: LocalizedStringKey, subtitle: String? = nil, systemImage: String, tint: Color
+  ) {
     self.title = title
+    self.subtitle = subtitle
     self.systemImage = systemImage
     self.tint = tint
   }
 
   var body: some View {
     Label {
-      Text(title)
+      VStack(alignment: .leading, spacing: 2) {
+        Text(title)
+        if let subtitle {
+          Text(subtitle)
+            .font(.footnote)
+            .foregroundStyle(.secondary)
+        }
+      }
     } icon: {
       Image(systemName: systemImage)
         .font(.system(size: symbolSize, weight: .semibold))
@@ -252,6 +269,7 @@ private enum AppBundleInfo {
 
 enum AccountRoute: Hashable {
   case profile
+  case zenbuAccount
   case readingAids
   case mediaLibrary
   case knownWords

@@ -20,7 +20,7 @@ struct TranscriptActions {
 struct TranscriptSentence: View {
   let sentence: TranslatedSentence
   let language: SpokenLanguage
-  let conversationID: UUID
+  let conversationID: UUID?
   let history: ConversationHistory
   let actions: TranscriptActions
 

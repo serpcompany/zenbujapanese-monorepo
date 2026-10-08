@@ -6,6 +6,22 @@ All notable user-facing changes to Zenbu Japanese are recorded here.
 
 ### Added
 
+- Sign in to a Zenbu account from **Account → Sign In to Sync**, with Apple, Google, or a code
+  sent by email, to keep your known words and lists the same on all your devices and Zenbu apps.
+  Zenbu syncs after each change, when it opens, and when you tap **Sync Now**. Everything still
+  works signed out and offline, and signing out keeps everything on your iPhone; changes you make
+  while signed out sync when you sign back in to the same account. **Favorites** is one list on all your devices.
+  A new account made with Apple takes the name you share with Apple.
+- Signed in, Player's **Recent** videos are the same on all your devices: a video you watch on one
+  appears on the others with how far you got, and one you remove is removed everywhere.
+- Signed in, the sentences you bookmark in **Translations** are the same on all your devices, each
+  with its translation, even where its conversation isn't. Only bookmarked sentences sync;
+  conversations stay on the iPhone they were recorded on.
+- Delete your Zenbu account from **Account → Zenbu Account → Delete Account…**, after signing in
+  again. The account and everything it synced are deleted; your iPhone keeps its known words,
+  lists, notes, and media.
+- Links to zenbujapanese.com's words, searches, and kanji, such as Tomodachi's **Open in Zenbu**,
+  open in Zenbu: a word opens its page, a search searches, and a kanji opens its detail.
 - New **Translate** tab: a Japanese and English translator that runs entirely on the iPhone. Pick
   **Conversation**, **Listening**, **Text**, or **Document Upload** and tap **Start**. In
   **Conversation**, two people take turns speaking either language with no language button. Each
@@ -41,11 +57,11 @@ All notable user-facing changes to Zenbu Japanese are recorded here.
 - Mark words as **Known**. Swipe a Search result or long-press it, or use the **•••** menu on a
   word's page. Known words show a green **✓ Known** capsule in Search and on the word's page,
   and **Account → Known Words** lists them with a count, search, and swipe to mark unknown.
-  Known words are stored only on your device.
+  Known words are stored on your device.
 - Save words to your own **Lists**. Use **Add to List…** in the **•••** menu on a word's page
   to add it to any list or a new one; the word's page lists them above Notes. **Account → Lists** starts with **Favorites** and lets you
   create, rename (swipe, or tap a list in Edit), reorder, and delete lists, and search a list, swipe a word out of it, or select several words to remove. Lists
-  are stored only on your device.
+  are stored on your device.
 - Share a word from its page: the headword, reading, and meanings are shared as text.
 - New optional frequency dictionaries built from openly licensed Jiten lists (CC BY-SA 4.0):
   **TV & Movies**, **Anime**, **Manga**, **Novels**, **Visual Novels**, and **Video Games**.

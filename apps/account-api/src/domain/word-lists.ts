@@ -11,7 +11,9 @@ import {
   listWordEntityId,
   listWordSeparator,
   needsBaseVersion,
-  rejected
+  plainText,
+  rejected,
+  uuidOf
 } from './entities'
 import { isRejection, type Rejection, rejection } from './profile'
 import type { ListWord, LockedAccount, WordList } from './store'
@@ -23,7 +25,6 @@ export const listLimits = {
   nameLength: 500
 } as const
 
-const uuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
 const badList = rejection('invalid_mutation', "A list's entityId is its UUID.")
 const badListWord = rejection(
   'invalid_mutation',
@@ -38,7 +39,7 @@ const badFields = rejection(
   `A list has a name of 1 to ${listLimits.nameLength} characters once trimmed, and a position, a whole number from 0 to ${listLimits.position}. Only those change.`
 )
 
-const listIdOf = (raw: string | undefined) => (raw && uuid.test(raw) ? raw.toLowerCase() : null)
+const listIdOf = uuidOf
 
 const listChange = (list: WordList): Change =>
   list.deleted
@@ -70,11 +71,7 @@ const listWordChange = (word: ListWord): Change =>
 
 function listName(raw: unknown): string | null {
   if (typeof raw !== 'string') return null
-  const name = raw
-    .replace(/\p{Cs}/gu, '\uFFFD')
-    .replace(/\p{Cc}/gu, ' ')
-    .normalize('NFC')
-    .trim()
+  const name = plainText(raw)
   const length = [...name].length
   return length > 0 && length <= listLimits.nameLength ? name : null
 }
