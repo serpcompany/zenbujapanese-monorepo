@@ -3,18 +3,17 @@ import Image from 'next/image'
 import Link from 'next/link'
 import type { ReactNode } from 'react'
 import { RubyText } from '@/components/dictionary/ruby-text'
+import { callToAction } from '@/components/home/home-hero'
 import { SectionHeading } from '@/components/home/section-heading'
 import { GetAppButton } from '@/components/site-actions'
 import { buttonVariants } from '@/components/ui/button'
-import { openDataSources } from '@/lib/home'
+import { pageSources } from '@/lib/dictionary/sources'
 import { offlinePreview, storedOnDevice } from '@/lib/home-previews'
 import { linkTo } from '@/lib/site'
 import { iphoneAppTitle } from '@/lib/site-menus'
 import { cn } from '@/lib/utils'
 
 const allProducts = linkTo('products')
-
-const closingButton = 'h-11 px-4.5 text-[0.9375rem]'
 
 const panel =
   'flex w-full max-w-76 flex-col gap-2.5 rounded-lg bg-card px-4 py-3.5 text-[0.8125rem] ring-1 ring-border'
@@ -79,7 +78,7 @@ function StoredPreview() {
 function SourcesPreview() {
   return (
     <dl aria-label="Licences" className={cn(panel, 'grid grid-cols-[auto_1fr] gap-x-4 gap-y-1.5')}>
-      {openDataSources.map(source => (
+      {pageSources.home.map(source => (
         <div key={source.name} className="contents">
           <dt className="font-medium">{source.name}</dt>
           <dd className="text-xs leading-5 text-muted-foreground">{source.license.name}</dd>
@@ -104,8 +103,8 @@ export function HomeClosing() {
             The dictionary is on your iPhone, so lookups work on a plane or underground.
           </ClosingPromise>
           <ClosingPromise title="No account, no ads" preview={<StoredPreview />}>
-            Your lists, notes, known words, and photos stay on your iPhone. There’s nothing to sign
-            up for.
+            Your lists, notes, known words, and saved conversations stay on your iPhone. There’s
+            nothing to sign up for.
           </ClosingPromise>
           <ClosingPromise title="Built on open data" preview={<SourcesPreview />}>
             Words, kanji, and sentences come from open projects, each credited on the{' '}
@@ -133,11 +132,11 @@ export function HomeClosing() {
             </div>
           </div>
           <div className="flex flex-wrap gap-2">
-            <GetAppButton size="lg" className={closingButton} />
+            <GetAppButton size="lg" className={callToAction} />
             <Link
               href={allProducts.href}
               data-link-target={allProducts.target}
-              className={cn(buttonVariants({ variant: 'outline', size: 'lg' }), closingButton)}
+              className={cn(buttonVariants({ variant: 'outline', size: 'lg' }), callToAction)}
             >
               All products
             </Link>

@@ -10,7 +10,7 @@ import { appScreenshots } from '@/lib/app-screenshots'
 import { exampleSearches } from '@/lib/home'
 import { cn } from '@/lib/utils'
 
-const heroButton = 'h-11 px-4.5 text-[0.9375rem]'
+export const callToAction = 'h-11 px-4.5 text-[0.9375rem]'
 
 const promises = ['No account', 'No ads', 'Your words stay on your iPhone']
 
@@ -53,10 +53,10 @@ export function HomeHero() {
           talk through a conversation in Japanese and English, all on your iPhone.
         </p>
         <div className="flex flex-wrap gap-2">
-          <GetAppButton size="lg" className={heroButton} />
+          <GetAppButton size="lg" className={callToAction} />
           <Link
             href="/dictionary/"
-            className={cn(buttonVariants({ variant: 'outline', size: 'lg' }), heroButton)}
+            className={cn(buttonVariants({ variant: 'outline', size: 'lg' }), callToAction)}
           >
             <SearchIcon data-icon="inline-start" aria-hidden="true" />
             Search the dictionary

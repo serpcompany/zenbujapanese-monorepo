@@ -5,6 +5,7 @@ import { HomeFeatures } from '@/components/home/home-features'
 import { HomeHero, TryDictionary } from '@/components/home/home-hero'
 import { HomeWebTools } from '@/components/home/home-web-tools'
 import { homeTitle } from '@/lib/home'
+import { siteOpenGraph } from '@/lib/metadata'
 import { pageFor } from '@/lib/pages'
 
 const { description } = pageFor('/')
@@ -13,7 +14,7 @@ export const metadata: Metadata = {
   title: { absolute: homeTitle },
   description,
   alternates: { canonical: '/' },
-  openGraph: { title: homeTitle, description, url: '/' }
+  openGraph: { ...siteOpenGraph, title: homeTitle, description, url: '/' }
 }
 
 export default function HomePage() {

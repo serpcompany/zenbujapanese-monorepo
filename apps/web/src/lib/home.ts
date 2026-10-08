@@ -1,16 +1,10 @@
 import { type AppScreenshot, appScreenshots } from '@/lib/app-screenshots'
-import {
-  frequencyDictionariesPath,
-  kanaChartsPath,
-  kanjiListsPath
-} from '@/lib/dictionary/browse/paths'
-import { type Source, sources } from '@/lib/dictionary/sources'
 import { normalizeSearchQuery, searchPath } from '@/lib/dictionary/urls'
-import type { MenuSymbol } from '@/lib/site-menus'
+import { drawerLinks, type MegaMenu, type SiteMenu, siteMenus } from '@/lib/site-menus'
 
 export const homeTitle = 'Zenbu Japanese: Japanese Dictionary and Translator for iPhone'
 
-const exampleSearch = (query: string, lang: 'ja' | 'en') => ({
+const exampleSearch = (query: string, lang?: 'ja' | 'ja-Latn') => ({
   query,
   lang,
   path: searchPath(normalizeSearchQuery(query))
@@ -18,9 +12,9 @@ const exampleSearch = (query: string, lang: 'ja' | 'en') => ({
 
 export const exampleSearches = [
   exampleSearch('大丈夫', 'ja'),
-  exampleSearch('taberu', 'en'),
+  exampleSearch('taberu', 'ja-Latn'),
   exampleSearch('峠', 'ja'),
-  exampleSearch('to persevere', 'en')
+  exampleSearch('to persevere')
 ]
 
 export type AppFeatureId = 'image-search' | 'handwriting' | 'dictionary' | 'translate'
@@ -82,7 +76,7 @@ export const appExtras: Record<AppExtraId, { title: string; body: string }> = {
   },
   frequency: {
     title: 'Frequency dictionaries',
-    body: 'Order results by JLPT level, or by how often a word comes up on YouTube, in anime, manga, novels, and more. You choose which comes first.'
+    body: 'Among equally good matches, the most common words come first: by JLPT level, or by how often a word comes up on YouTube, in anime, manga, novels, and more. You choose which list leads.'
   },
   furigana: {
     title: 'Tap a kanji to split its reading',
@@ -90,43 +84,10 @@ export const appExtras: Record<AppExtraId, { title: string; body: string }> = {
   }
 }
 
-interface WebTool {
-  title: string
-  description: string
-  href: string
-  symbol: MenuSymbol
-}
+const isToolsMenu = (menu: SiteMenu): menu is MegaMenu =>
+  menu.kind === 'mega' && menu.label === 'Tools'
 
-export const webTools: readonly WebTool[] = [
-  {
-    title: 'Dictionary',
-    description: 'Search in Japanese, kana, romaji, or English',
-    href: '/dictionary/',
-    symbol: 'search'
-  },
-  {
-    title: 'Kana charts',
-    description: 'Hiragana and katakana, with words for each kana',
-    href: kanaChartsPath,
-    symbol: 'type'
-  },
-  {
-    title: 'Kanji lists',
-    description: 'By school grade, JLPT level, and stroke count',
-    href: kanjiListsPath,
-    symbol: 'grid'
-  },
-  {
-    title: 'Frequency lists',
-    description: 'JLPT levels, and the top words on YouTube, in anime, and more',
-    href: frequencyDictionariesPath,
-    symbol: 'chart'
-  }
-]
-
-export const openDataSources: readonly Source[] = [
-  sources.jmdict,
-  sources.kanjidic2,
-  sources.tatoeba,
-  sources.kanjivg
-]
+export const webTools = siteMenus
+  .filter(isToolsMenu)
+  .flatMap(menu => drawerLinks(menu))
+  .filter(link => link.target === undefined)

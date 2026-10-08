@@ -1,12 +1,6 @@
 import type { Page } from '@playwright/test'
-import {
-  appExtras,
-  appFeatures,
-  exampleSearches,
-  homeTitle,
-  openDataSources,
-  webTools
-} from '../src/lib/home'
+import { pageSources } from '../src/lib/dictionary/sources'
+import { appExtras, appFeatures, exampleSearches, homeTitle, webTools } from '../src/lib/home'
 import { pageFor } from '../src/lib/pages'
 import { linkTo, site } from '../src/lib/site'
 import { expect, test } from './test'
@@ -16,7 +10,7 @@ const main = (page: Page) => page.getByRole('main')
 const region = (page: Page, name: RegExp) => main(page).getByRole('region', { name })
 
 test.describe('homepage', () => {
-  test('is titled, described, and its own canonical URL', async ({ page }) => {
+  test('is titled, described, shared as the site, and its own canonical URL', async ({ page }) => {
     await page.goto('/')
     await expect(page).toHaveTitle(homeTitle)
     await expect(page.locator('meta[name="description"]')).toHaveAttribute(
@@ -24,6 +18,11 @@ test.describe('homepage', () => {
       pageFor('/').description
     )
     await expect(page.locator('link[rel="canonical"]')).toHaveAttribute('href', `${site.url}/`)
+    await expect(page.locator('meta[property="og:title"]')).toHaveAttribute('content', homeTitle)
+    await expect(page.locator('meta[property="og:site_name"]')).toHaveAttribute(
+      'content',
+      site.name
+    )
   })
 
   test('the hero leads with the app, with Get the app and Search the dictionary', async ({
@@ -124,8 +123,8 @@ test.describe('homepage', () => {
       'Zenbu Japanese for iPhone'
     ])
     const licences = closing.getByRole('definition')
-    await expect(closing.getByRole('term')).toHaveText(openDataSources.map(source => source.name))
-    await expect(licences).toHaveText(openDataSources.map(source => source.license.name))
+    await expect(closing.getByRole('term')).toHaveText(pageSources.home.map(source => source.name))
+    await expect(licences).toHaveText(pageSources.home.map(source => source.license.name))
     await expect(closing.getByRole('button', { name: 'Get the app' })).toHaveAttribute(
       'data-link-target',
       'app-store'

@@ -100,7 +100,8 @@ export const pageSources = {
   browse: [sources.jmdict, ...defaultFrequency],
   kanji: [sources.kanjidic2],
   kanjiLevels: [sources.kanjidic2, sources.jlptKanji],
-  frequency: [sources.jmdict, ...defaultFrequency, sources.wikipedia, sources.jiten]
+  frequency: [sources.jmdict, ...defaultFrequency, sources.wikipedia, sources.jiten],
+  home: [sources.jmdict, sources.kanjidic2, sources.tatoeba, sources.kanjivg]
 }
 
 export function withShownData(

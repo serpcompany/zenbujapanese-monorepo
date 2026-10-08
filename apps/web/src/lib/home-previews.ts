@@ -1,5 +1,7 @@
 import { defaultFrequencyPacks, frequencyChips } from '@zenbu/dictionary-core/detail/frequency'
 import { type RubySegment, rubySegments } from '@zenbu/dictionary-core/detail/ruby'
+import { searchPath } from '@/lib/dictionary/urls'
+import { site } from '@/lib/site'
 
 const word = (headword: string, reading: string) => ({
   headword,
@@ -7,6 +9,8 @@ const word = (headword: string, reading: string) => ({
 })
 
 const taberu = word('食べる', 'たべる')
+
+const taberuQuery = 'taberu'
 
 const taberuChips = frequencyChips([
   { pack: 'jlpt', level: 5 },
@@ -70,8 +74,8 @@ export const furiganaPreview: {
 }
 
 export const searchPreview = {
-  address: 'zenbujapanese.com/dictionary/search/taberu/',
-  query: 'taberu',
+  address: `${new URL(site.url).host}${searchPath(taberuQuery)}`,
+  query: taberuQuery,
   links: ['View 50+ Example Sentences', 'Search for「たべる」'],
   results: [
     { ...taberu, meaning: 'to eat', chips: taberuChips },
@@ -93,4 +97,4 @@ export const offlinePreview = {
   meaning: '(mountain) pass, highest point on a mountain road, ridge'
 }
 
-export const storedOnDevice = ['Lists', 'Notes', 'Known Words', 'Photos']
+export const storedOnDevice = ['Lists', 'Notes', 'Known Words', 'Translations']

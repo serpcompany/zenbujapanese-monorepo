@@ -7,8 +7,9 @@ automated check that enforces it (see [How behavior is verified](index.md#how-be
 
 Abbreviations: **Home spec** is `apps/web/e2e/home.spec.ts`, the homepage's browser tests at a
 desktop and a phone width. **App docs** is [`apps/ios/docs/product/`](../../../ios/docs/product/index.md).
-Web paths are under `apps/web/`. The page's copy and the data its previews draw are in
-`src/lib/home.ts` and `src/lib/home-previews.ts`, and its sections in `src/components/home/`.
+Web paths are under `apps/web/`. The page's sections, with their headings and lines, are in
+`src/components/home/`; the features, the app's extras, the example searches, and the data the
+previews draw are in `src/lib/home.ts` and `src/lib/home-previews.ts`.
 
 ## Sections
 
@@ -53,21 +54,25 @@ list card two rows tall.
 - Source: #651; #648 mockups; App docs index (Furigana kanji highlight, Lists, Known Words,
   Frequency Dictionaries), `player.md`.
 - Check: Home spec, "shows the four features, then the four more things in the app" and "tapping a
-  kanji in 弱肉強食 moves the highlight to its part of the reading". The previews' look: No
-  automated check yet.
+  kanji in 弱肉強食 moves the highlight to its part of the reading"; `src/lib/home-previews.test.ts`,
+  "the homepage draws 食べる as the dictionary has it", against the dictionary fixtures. The other
+  words, and the previews' look: No automated check yet.
 
-**Free on the web.** The web tools that exist today, each opening its page: Dictionary
-(`/dictionary/`), Kana charts, Kanji lists, and Frequency lists (under `/dictionary/browse/`),
-then All free tools, the tools index's placeholder. Beside them is a browser drawn around the
-search page for taberu, with 食べる's word card in front of it.
+**Free on the web.** The web tools that exist today, each opening its page: the Tools menu's
+links that aren't placeholders, with the menu's descriptions and marks
+(`src/lib/site-menus.ts`), so a converter joins the list when its page ships. Today they are
+Dictionary (`/dictionary/`), Kana charts, Kanji lists, and Frequency lists (under
+`/dictionary/browse/`). Then All free tools, the tools index's placeholder. Beside them is a
+browser drawn around the search page for taberu, with 食べる's word card in front of it.
 
 - Source: #651; #648 mockups and their notes (only pages that exist today).
 - Check: Home spec, "the free web tools link to pages the site has, with no redirect".
 
 **Closing.** A dark block: "Your Japanese stays yours." and three promises, each with a small
-preview: Works offline (峠 looked up in airplane mode), No account, no ads (what stays on the
-iPhone), and Built on open data (JMdict, KANJIDIC2, Tatoeba, and KanjiVG with their licences,
-read from the Sources page's list, `src/lib/dictionary/sources.ts`, and a link to `/sources/`).
+preview: Works offline (峠 looked up in airplane mode), No account, no ads (lists, notes, known
+words, and saved conversations stay on the iPhone), and Built on open data (JMdict, KANJIDIC2,
+Tatoeba, and KanjiVG with their licences, from `pageSources.home` in
+`src/lib/dictionary/sources.ts`, the list the Sources page credits, and a link to `/sources/`).
 Then the app, Zenbu Japanese for iPhone, with Get the app and All products, the products index's
 placeholder.
 
@@ -93,18 +98,19 @@ Every claim on the page is one the app's product docs make:
 | Translate: two people, either language in any order, spoken aloud after a pause, on the iPhone after a one-time download | `translate.md` |
 | Player: captions under the video, words open the dictionary, paste a link or search YouTube | `player.md` |
 | Lists, Known Words, and hiding furigana on known words | `index.md`, Account |
-| Frequency packs and their order | `index.md`, Account (Frequency Dictionaries) |
+| Frequency packs order equally good matches, in the order the learner chooses | `dictionary.md`, Search; `index.md`, Account (Frequency Dictionaries) |
 | Tap a kanji to split its reading | `index.md`, Furigana kanji highlight |
-| No account, no ads; lists, notes, known words, and photos stay on the device | `index.md`, Account; the Privacy Policy |
+| No account, no ads; lists, notes, known words, and saved conversations stay on the device | `index.md`, Account (Lists, Known Words); `dictionary.md`, Dictionary and kanji details (notes); `translate.md`, Translations; the Privacy Policy |
 
 ## Page
 
 **Title, description, and canonical.** The page is titled "Zenbu Japanese: Japanese Dictionary
 and Translator for iPhone", described by `/`'s entry in `src/lib/pages.ts`, and its own canonical
-URL. It is indexed, as every page is in production.
+URL. Its Open Graph tags carry the same title and description, with the site's name, type, and
+locale (`siteOpenGraph` in `src/lib/metadata.ts`). It is indexed, as every page is in production.
 
 - Source: #651.
-- Check: Home spec, "is titled, described, and its own canonical URL".
+- Check: Home spec, "is titled, described, shared as the site, and its own canonical URL".
 
 **Width.** The page's sections are at most 1,024 pixels wide (`max-w-5xl`), as the header is, with
 the Free on the web band and the closing block running the window's full width. No width scrolls
