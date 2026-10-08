@@ -499,7 +499,8 @@ has a dictionary service, staging and production, not local fixtures, so the ind
 request (`force-dynamic`, as does `/sitemap.xml`): a build can't reach the service, so
 prerendering would fail the build or freeze an index without them. `/dictionary/`, the search box
 and the browse sections below it, is listed in `src/lib/pages.ts`, and the pages sitemap also
-lists the browse home beside it (`browseHomePath`, in `src/lib/pages-sitemap.ts`):
+lists the browse home beside it (`src/lib/pages-sitemap.ts`), a section landing page as
+`/dictionary/` is:
 
 - `/sitemap-words.xml`, `/sitemap-words-2.xml`, and so on: every word page's canonical URL under
   its slug, percent-encoded, 50,000 to a file in `ent_seq` order (five files for 218,382 words).

@@ -390,15 +390,18 @@ eventually 'sitemap index lists unslashed .xml files' 'sitemap index has a non-c
   index_lists_files
 expect /sitemap-words.xml 200
 expect /sitemap-words-2.xml 200
-for browse_sitemap in /sitemap-kana.xml /sitemap-categories.xml /sitemap-frequency-lists.xml /sitemap-kanji-lists.xml; do
+for browse_sitemap_and_hubs in kana:3 categories:3 frequency-lists:1 kanji-lists:1; do
+  browse_sitemap="/sitemap-${browse_sitemap_and_hubs%:*}.xml"
+  browse_hubs="${browse_sitemap_and_hubs#*:}"
   browse_sitemap_is_canonical() {
     local locs
     locs="$(body "$browse_sitemap" | grep -oE '<loc>[^<]+</loc>' || true)"
-    [ -n "$locs" ] &&
+    [ "$(grep -c . <<<"$locs" || true)" -gt "$browse_hubs" ] &&
       ! LC_ALL=C grep -vqE "^<loc>${canonical//./\\.}/dictionary/browse/[!-~]+/</loc>$" <<<"$locs"
   }
   eventually "$browse_sitemap lists browse pages on $canonical" \
-    "$browse_sitemap is empty, or lists another host or a non-canonical URL" browse_sitemap_is_canonical
+    "$browse_sitemap lists no list beyond its hubs, or another host or a non-canonical URL" \
+    browse_sitemap_is_canonical
 done
 expect /sitemap-browse.xml 404
 expect_redirect /sitemaps/dictionary/2.xml /sitemap-words-2.xml

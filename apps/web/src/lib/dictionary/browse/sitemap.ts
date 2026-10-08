@@ -21,8 +21,6 @@ const pages = (count: number, pathFor: (page: number) => string) =>
 
 const indexed = ({ count }: { count: number }) => count >= minimumIndexedWords
 
-export const browseHomePath = browsePath
-
 export function browseSitemapPaths(
   sitemap: BrowseSitemapResponse
 ): Record<BrowseSitemapGroup, string[]> {
