@@ -4,7 +4,7 @@ import { site } from './site'
 
 export const siteOpenGraph = { siteName: site.name, type: 'website', locale: 'en_US' } as const
 
-export function pageMetadata(path: SitePath): Metadata {
+export function pageMetadata(path: Exclude<SitePath, '/'>): Metadata {
   const page = pageFor(path)
   return {
     title: page.title,

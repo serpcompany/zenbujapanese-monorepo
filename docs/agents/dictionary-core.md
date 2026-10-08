@@ -267,7 +267,7 @@ ready and a page's first request prepares nothing:
   CJK compatibility characters, such as U+FA45 for 海; one KANJIDIC2 gives no meaning shows its
   base kanji's.
 - **Thin lists.** The sitemap answer gives every list's word count, so the website can leave out
-  of `/sitemaps/browse.xml` the lists of fewer than `minimumIndexedWords` (10).
+  of `/sitemap-browse.xml` the lists of fewer than `minimumIndexedWords` (10).
 
 ## Rows
 
