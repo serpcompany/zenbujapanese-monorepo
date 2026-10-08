@@ -1,3 +1,5 @@
+import { accountPagesOpen } from './account/availability'
+
 export const site = {
   name: 'Zenbu Japanese',
   mark: '全',
@@ -31,12 +33,12 @@ const linkTargets = [
     name: 'Kanji to Furigana converter',
     href: placeholderHref
   },
-  { id: 'products', kind: 'page', name: 'Products index, /products/', href: placeholderHref },
+  { id: 'products', kind: 'page', name: 'Products index', href: '/products/' },
   {
     id: 'iphone-app',
     kind: 'page',
-    name: 'Zenbu Japanese for iPhone product page, /products/zenbu-japanese-for-iphone/',
-    href: placeholderHref
+    name: 'Zenbu Japanese for iPhone product page',
+    href: '/products/zenbu-japanese-for-iphone/'
   },
   {
     id: 'browser-extension',
@@ -46,7 +48,13 @@ const linkTargets = [
   },
   { id: 'reference-guides', kind: 'page', name: 'Reference guides', href: placeholderHref },
   { id: 'courses', kind: 'page', name: 'Courses', href: placeholderHref },
-  { id: 'login', kind: 'page', name: 'Log in page, /login/', href: placeholderHref },
+  { id: 'videos', kind: 'page', name: 'Videos index, /videos/', href: placeholderHref },
+  {
+    id: 'login',
+    kind: 'page',
+    name: 'Log in page, /login/',
+    href: accountPagesOpen() ? '/login/' : placeholderHref
+  },
   { id: 'app-store', kind: 'store', name: 'App Store listing', href: placeholderHref },
   { id: 'youtube', kind: 'social', name: 'YouTube', href: placeholderHref },
   { id: 'x', kind: 'social', name: 'X', href: placeholderHref },

@@ -1,5 +1,6 @@
 import { getCloudflareContext } from '@opennextjs/cloudflare'
 import { browseService } from '@zenbu/dictionary-core/browse/service-paths'
+import { edgeCache } from '@/lib/edge-cache'
 import { absoluteUrl } from '@/lib/site'
 import { type SitemapEntry, urlSetStream, urlSetXml, xmlResponse } from '@/lib/sitemap'
 import { browseSitemapPaths } from './browse/sitemap'
@@ -54,7 +55,7 @@ async function cachedForBuild(
   build: string,
   render: () => Response | Promise<Response>
 ): Promise<Response> {
-  const cache = (globalThis as { caches?: { default?: Cache } }).caches?.default
+  const cache = edgeCache()
   if (!cache) return render()
   const url = new URL(request.url)
   url.search = `?build=${encodeURIComponent(build)}`

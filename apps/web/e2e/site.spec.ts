@@ -124,7 +124,7 @@ test.describe('site header from 1024 pixels', () => {
     }
   })
 
-  test('the planned pages in the Tools and Products menus are # placeholders for now', async ({
+  test('the planned pages in the Tools and Products menus are # placeholders for now, and All products opens the catalog', async ({
     page
   }) => {
     await page.goto('/about/')
@@ -141,7 +141,12 @@ test.describe('site header from 1024 pixels', () => {
     await expect(page.getByRole('link', { name: /^All free tools/ })).toHaveAttribute('href', '#')
     await page.keyboard.press('Escape')
     await trigger(page, 'Products').click()
-    await expect(page.getByRole('link', { name: /^All products/ })).toHaveAttribute('href', '#')
+    for (const planned of [/^Browser extension/, /^Reference guides/, /^Courses/]) {
+      await expect(page.getByRole('link', { name: planned })).toHaveAttribute('href', '#')
+    }
+    await page.getByRole('link', { name: /^All products/ }).click()
+    await expect(page).toHaveURL(/\/products\/$/)
+    await expect(page.getByRole('heading', { level: 1, name: 'Products' })).toBeVisible()
   })
 
   test('the Dictionary menu leads to the search box', async ({ page }) => {

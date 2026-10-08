@@ -20,6 +20,7 @@ function columns(): [heading: string, links: FooterLink[]][] {
   )
 }
 
+vi.hoisted(() => vi.stubEnv('ZENBU_ACCOUNT_PAGES', 'open'))
 beforeEach(() => vi.stubEnv('ZENBU_ACCOUNT_PAGES', 'open'))
 afterEach(() => vi.unstubAllEnvs())
 
@@ -28,9 +29,9 @@ test('the footer groups its links under Products, Tools, Company, and Legal', ()
     [
       'Products',
       [
-        ['Zenbu Japanese for iPhone', placeholderHref, 'iphone-app'],
+        ['Zenbu Japanese for iPhone', '/products/zenbu-japanese-for-iphone/', 'iphone-app'],
         ['Dictionary', '/dictionary/'],
-        ['Sign in', '/login/']
+        ['Sign in', '/login/', 'login']
       ]
     ],
     [
@@ -64,7 +65,10 @@ test('the footer groups its links under Products, Tools, Company, and Legal', ()
 })
 
 test('the footer leads to signing in, as the server draws it before the browser knows', () => {
-  expect(columns()[0]).toEqual(['Products', expect.arrayContaining([['Sign in', '/login/']])])
+  expect(columns()[0]).toEqual([
+    'Products',
+    expect.arrayContaining([['Sign in', '/login/', 'login']])
+  ])
 })
 
 test("the footer leaves signing in out where the site's account pages are closed", () => {

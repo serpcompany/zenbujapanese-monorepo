@@ -26,13 +26,21 @@ function LinkTargetButton({
   )
 }
 
-export function GetAppButton(props: ActionProps) {
+function GetTheApp({ target, ...props }: ActionProps & { target: LinkTargetId }) {
   return (
-    <LinkTargetButton target="app-store" {...props}>
+    <LinkTargetButton target={target} {...props}>
       <SmartphoneIcon data-icon="inline-start" aria-hidden="true" />
       Get the app
     </LinkTargetButton>
   )
+}
+
+export function GetAppButton(props: ActionProps) {
+  return <GetTheApp target="iphone-app" {...props} />
+}
+
+export function AppStoreButton(props: ActionProps) {
+  return <GetTheApp target="app-store" {...props} />
 }
 
 export function LogInButton(props: ActionProps) {

@@ -1,5 +1,5 @@
 import type { Page, Route } from '@playwright/test'
-import { accountPages, expect, footerAccountLink, test } from './test'
+import { accountPages, expect, footerAccountLink, headerLogIn, test } from './test'
 
 const email = 'kana@example.com'
 const profile = {
@@ -92,6 +92,16 @@ test.describe('account pages', () => {
     await expect(page.getByText(`Signed in as ${email}`)).toBeVisible()
     await expect(footerAccountLink(page)).toHaveText('Account')
     await expect(footerAccountLink(page)).toHaveAttribute('href', '/account/')
+  })
+
+  test("the header's Log in, or the drawer's on phones, opens the login page", async ({ page }) => {
+    await standInForTheAccountService(page, signedOutService)
+    await page.goto('/about/')
+    const logIn = await headerLogIn(page)
+    await expect(logIn).toHaveAttribute('data-link-target', 'login')
+    await logIn.click()
+    await expect(page).toHaveURL(/\/login\/$/)
+    await expect(page.getByRole('heading', { level: 1, name: 'Sign in' })).toBeVisible()
   })
 
   test('Sign in\'s "Can\'t sign in?" leads to signing in by email code', async ({ page }) => {

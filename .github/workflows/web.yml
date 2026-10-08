@@ -47,9 +47,11 @@ jobs:
       - name: Build for staging
         working-directory: apps/web
         run: SITE_ENV=staging pnpm build
-      - name: Staging's footer links signing in
+      - name: Staging's header and footer link signing in
         working-directory: apps/web
-        run: grep -q 'href="/login/"' .next/server/app/about.html
+        run: |
+          grep -q 'href="/login/">Log in<' .next/server/app/about.html
+          grep -q 'href="/login/">Sign in<' .next/server/app/about.html
       - name: Build for production
         working-directory: apps/web
         run: SITE_ENV=production pnpm build

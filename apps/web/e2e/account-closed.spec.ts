@@ -1,5 +1,12 @@
 import type { Page } from '@playwright/test'
-import { accountPages, expect, footerAccountLink, onClosedProduction, test } from './test'
+import {
+  accountPages,
+  expect,
+  footerAccountLink,
+  headerLogIn,
+  onClosedProduction,
+  test
+} from './test'
 
 const anyAccountPage = accountPages.map(({ path }) => `a[href^="${path}"]`).join(', ')
 
@@ -49,6 +56,19 @@ test.describe("production's account pages, while its ACCOUNT_API_URL is empty", 
       expect(requests).toEqual([])
     })
   }
+
+  test("the header's Log in, and the drawer's on phones, stays a # placeholder", async ({
+    page,
+    baseURL
+  }) => {
+    const requests = await requestsToTheAccountService(page, baseURL)
+    await page.goto('/about/')
+    const logIn = await headerLogIn(page)
+    await expect(logIn).toHaveAttribute('href', '#')
+    await expect(logIn).toHaveAttribute('data-link-target', 'login')
+    await page.waitForLoadState('networkidle')
+    expect(requests).toEqual([])
+  })
 
   test('a page built ahead of time has no Sign in in its footer', async ({ page, baseURL }) => {
     const requests = await requestsToTheAccountService(page, baseURL)

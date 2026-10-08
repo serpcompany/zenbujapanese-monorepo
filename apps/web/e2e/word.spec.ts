@@ -109,6 +109,7 @@ test.describe('word page', () => {
     )
     await prompt.getByRole('button', { name: 'Get the app' }).click()
     await expect(prompt).toBeHidden()
+    await expect(page).toHaveURL(/\/products\/zenbu-japanese-for-iphone\/$/)
   })
 
   test('copies the link from the More actions menu', async ({ page, context, baseURL }) => {

@@ -25,12 +25,14 @@ photos) still open a prompt to get the app (#468).
 
 - **Browse pages**, under `/dictionary/browse/`: lists of words by kana, category, and frequency,
   and of kanji, linking to the word and search pages.
+- **Products**, `/products/`: a catalog of the apps, free tools, guides, and courses, with search
+  and type filters, and the iPhone app's page, `/products/zenbu-japanese-for-iphone/`.
 
 The dictionary has these page types (ADR 0010, amended for #614); the kanji, conjugation, and
 Example Sentences pages that came before it redirect to the nearest of them. The shared header and
 footer, and the URL, indexing, and sitemap rules, apply to all of them.
-[Dictionary](dictionary.md) describes every behavior, page by page, and [Browse pages](browse.md)
-the browse pages.
+[Dictionary](dictionary.md) describes every behavior, page by page, [Browse pages](browse.md)
+the browse pages, and [Products pages](products.md) the catalog and the product page.
 
 The account pages, `/login/`, `/register/`, `/forgot-password/`, and `/account/`, sign a
 learner in to their Zenbu account and manage it; [Account pages](account.md) describes them. They
