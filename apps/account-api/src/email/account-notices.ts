@@ -39,7 +39,7 @@ export function accountDeletedMessage(to: string): Message {
     to,
     subject: 'Your Zenbu Japanese account was deleted',
     text: [
-      'Your Zenbu Japanese account is deleted, with the known words and lists it kept in step between your apps.',
+      'Your Zenbu Japanese account is deleted, with everything it kept in step between your apps.',
       '',
       'Each app keeps what is on its device and works signed out. Backups that still hold the account are deleted within 30 days.',
       '',

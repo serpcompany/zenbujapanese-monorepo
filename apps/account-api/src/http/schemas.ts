@@ -106,6 +106,7 @@ const MutationSchema = z
       .regex(/^[^\p{Cc}\p{Cf}\s]{1,200}$/u)
       .optional()
       .openapi({
+        pattern: '^[^\\p{Cc}\\p{Cf}\\s]{1,200}$',
         description:
           "- `profile`: the account's ID, or left out.\n- `knownWord`: the item, a Language Reference ID (32 lowercase hex digits) or `kanji:` and one kanji, which is stored in Unicode NFC.\n- `list`: its UUID, in either case; answers name it in lowercase.\n- `listWord`: the list's UUID, a slash, and the item: `<list>/<item>`."
       }),
