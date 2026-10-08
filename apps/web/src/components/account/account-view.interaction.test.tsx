@@ -1,5 +1,6 @@
 import { afterEach, describe, expect, test, vi } from 'vitest'
 import { accessTokens } from '@/lib/account/access-tokens'
+import type { Identity } from '@/lib/account/answers'
 import { accountApi } from '@/lib/account/client'
 import { idTokenFor, jwtFor } from '@/test/account-answers'
 import {
@@ -53,6 +54,29 @@ async function deletingAnAppleAccount(more: Parameters<typeof stubAccountService
     }
   })
   return { ...service, page: await askedToDelete(true) }
+}
+
+function confirmingWith(
+  identity: Omit<Identity, 'id'>,
+  onConfirmed: Parameters<typeof ConfirmItsYou>[0]['onConfirmed'] = () => undefined
+) {
+  const api = accountApi(apiUrl)
+  return render(
+    <ConfirmItsYou
+      api={api}
+      tokens={accessTokens(api)}
+      settings={settings()}
+      account={{
+        session: { userId: 'u1', email, signedInAt: 0, token: 'old-bare' },
+        profile,
+        identities: [{ id: 'i1', ...identity }]
+      }}
+      appleOnly={false}
+      why="Deleting needs a sign-in from the last few minutes."
+      onConfirmed={onConfirmed}
+      onCancel={() => undefined}
+    />
+  )
 }
 
 describe('the account page', () => {
@@ -310,24 +334,8 @@ describe('the account page', () => {
         'GET /v1/auth/get-session': sessionAnswer('u9', 'their-bare', 0, 'someone@example.com')
       }
     })
-    const api = accountApi(apiUrl)
     const onConfirmed = vi.fn()
-    const page = render(
-      <ConfirmItsYou
-        api={api}
-        tokens={accessTokens(api)}
-        settings={settings()}
-        account={{
-          session: { userId: 'u1', email, signedInAt: 0, token: 'old-bare' },
-          profile,
-          identities: [{ id: 'i1', provider: 'email', subject: email }]
-        }}
-        appleOnly={false}
-        why="Deleting needs a sign-in from the last few minutes."
-        onConfirmed={onConfirmed}
-        onCancel={() => undefined}
-      />
-    )
+    const page = confirmingWith({ provider: 'email', subject: email }, onConfirmed)
     await confirmWithEmailCode(page)
     await vi.waitFor(() =>
       expect(onConfirmed).toHaveBeenCalledWith(
@@ -340,23 +348,7 @@ describe('the account page', () => {
 
   test('says it can’t confirm an account whose ways this site offers none of', async () => {
     signedIn({ ways: [appleWay] })
-    const api = accountApi(apiUrl)
-    const page = render(
-      <ConfirmItsYou
-        api={api}
-        tokens={accessTokens(api)}
-        settings={settings()}
-        account={{
-          session: { userId: 'u1', email, signedInAt: 0, token: 'old-bare' },
-          profile,
-          identities: [{ id: 'i1', provider: 'apple', subject: '001.apple' }]
-        }}
-        appleOnly={false}
-        why="Deleting needs a sign-in from the last few minutes."
-        onConfirmed={() => undefined}
-        onCancel={() => undefined}
-      />
-    )
+    const page = confirmingWith({ provider: 'apple', subject: '001.apple' })
     await shows(
       page,
       'This site can’t confirm it’s you the way your account signs in, so it can’t make this change here yet.'
