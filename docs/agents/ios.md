@@ -698,11 +698,24 @@ When changing Search results or frequency dictionaries, also check in the Simula
 - With a pack made unreadable in a debug container, results stay listed and the footer names
   the unavailable dictionary.
 - Rapidly submitting `quiet`, `miru`, then `いる` leaves only `いる` results.
-- **•••** → **Sort By** on `dog`, `いる`, and `miru`: each dictionary in both directions moves
+- The **Sorted by …** row on `dog`, `いる`, and `miru`: each dictionary in both directions moves
   that dictionary's chip first and puts the words it doesn't rank last; **Known Words** moves a
-  word marked known by swiping at once. A **Sorted by …** row shows above the words until
-  **Reset**. The choice survives relaunching the app, and disabling the
+  word marked known by swiping at once. The row names the order, and **Default** in its menu
+  returns to the Default order. The choice survives relaunching the app, and disabling the
   chosen dictionary under **Account → Frequency Dictionaries** returns Search to **Default**.
+
+When changing Search's top bar or the shared field in `SearchField.swift`, also check:
+
+- on **Recent**, the **Search** title and its **•••** (**Clear Recent Searches**) show above the
+  field; tapping the field slides it to the top with **X** beside it, as on Player;
+- submitting, a recent search, the reading refinement, a handwriting candidate, and a radical
+  candidate each put the keyboard away with the query in the field and **X** beside it;
+- **X** returns to **Recent** with an empty field; the clear button inside the field clears the
+  text and keeps typing;
+- results start with **Sorted by Default**, which opens the Sort menu, then Example Sentences;
+- a website search link ([Links from the website](#links-from-the-website)) shows its query in
+  the field; and
+- Player's field looks and behaves the same.
 
 ## Image Search manual checks
 

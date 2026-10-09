@@ -23,6 +23,16 @@ struct SearchResultsView: View {
       isKnown: wordKnowledge.isKnown
     )
     List {
+      if SearchResultsScreen.isSortable(results, entries: presentedEntries) {
+        Section {
+          SearchResultsMenu(
+            sort: chosenSort(dictionaries: dictionaries ?? []), appliedSort: appliedSort,
+            dictionaries: dictionaries ?? [])
+          .listRowSeparator(.hidden, edges: .top)
+          .alignmentGuide(.listRowSeparatorLeading) { _ in 0 }
+        }
+      }
+
       if exampleCount > 0 {
         Section {
           NavigationLink(
@@ -62,13 +72,6 @@ struct SearchResultsView: View {
         }
       case .ranked(let kanji, let entries):
         Section {
-          if let status = appliedSort.status(dictionaries: dictionaries ?? []) {
-            SearchResultsStatusRow(
-              text: status, systemImage: "arrow.up.arrow.down", actionTitle: "Reset",
-              action: { chosenSort(dictionaries: dictionaries ?? []).wrappedValue = .relevance }
-            )
-            .accessibilityIdentifier("search.sort-status")
-          }
           if let kanji {
             KanjiPrimaryRow(
               character: kanji,
@@ -97,15 +100,6 @@ struct SearchResultsView: View {
     .listStyle(.plain)
     .id(query)
     .accessibilityIdentifier("search.results")
-    .toolbar {
-      if SearchResultsScreen.isSortable(results, entries: presentedEntries) {
-        ToolbarItem(placement: .topBarTrailing) {
-          SearchResultsMenu(
-            sort: chosenSort(dictionaries: dictionaries ?? []), appliedSort: appliedSort,
-            dictionaries: dictionaries ?? [])
-        }
-      }
-    }
     .onChange(of: dictionaries) { _, newDictionaries in
       if SearchResultSortOrdering.forgetsChoice(sort, dictionaries: newDictionaries) {
         sort = .relevance
