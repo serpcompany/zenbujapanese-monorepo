@@ -1,10 +1,22 @@
 import ImageIO
+import PhotosUI
 import SwiftUI
 import UIKit
 import UniformTypeIdentifiers
 
+typealias ImagePickerCompletion = @MainActor @Sendable (Result<ImageTextAsset?, Error>) -> Void
+
+@MainActor
+class ImagePickerCoordinator: NSObject {
+  let completion: ImagePickerCompletion
+
+  init(completion: @escaping ImagePickerCompletion) {
+    self.completion = completion
+  }
+}
+
 struct ImageCameraPicker: UIViewControllerRepresentable {
-  let completion: @MainActor @Sendable (Result<ImageTextAsset?, Error>) -> Void
+  let completion: ImagePickerCompletion
 
   func makeCoordinator() -> Coordinator {
     Coordinator(completion: completion)
@@ -22,15 +34,9 @@ struct ImageCameraPicker: UIViewControllerRepresentable {
 
   func updateUIViewController(_ uiViewController: UIImagePickerController, context: Context) {}
 
-  @MainActor
-  final class Coordinator: NSObject, UIImagePickerControllerDelegate, UINavigationControllerDelegate
+  final class Coordinator: ImagePickerCoordinator, UIImagePickerControllerDelegate,
+    UINavigationControllerDelegate
   {
-    let completion: @MainActor @Sendable (Result<ImageTextAsset?, Error>) -> Void
-
-    init(completion: @escaping @MainActor @Sendable (Result<ImageTextAsset?, Error>) -> Void) {
-      self.completion = completion
-    }
-
     func imagePickerControllerDidCancel(_ picker: UIImagePickerController) {
       completion(.success(nil))
     }
@@ -46,6 +52,43 @@ struct ImageCameraPicker: UIViewControllerRepresentable {
         return
       }
       completion(.success(asset))
+    }
+  }
+}
+
+struct ImagePhotoLibraryPicker: UIViewControllerRepresentable {
+  let completion: ImagePickerCompletion
+
+  func makeCoordinator() -> Coordinator {
+    Coordinator(completion: completion)
+  }
+
+  func makeUIViewController(context: Context) -> PHPickerViewController {
+    var configuration = PHPickerConfiguration()
+    configuration.filter = .images
+    configuration.selectionLimit = 1
+    let picker = PHPickerViewController(configuration: configuration)
+    picker.delegate = context.coordinator
+    return picker
+  }
+
+  func updateUIViewController(_ uiViewController: PHPickerViewController, context: Context) {}
+
+  final class Coordinator: ImagePickerCoordinator, PHPickerViewControllerDelegate {
+    func picker(_ picker: PHPickerViewController, didFinishPicking results: [PHPickerResult]) {
+      guard let provider = results.first?.itemProvider else {
+        completion(.success(nil))
+        return
+      }
+      let completion = completion
+      provider.loadFileRepresentation(forTypeIdentifier: UTType.image.identifier) { url, _ in
+        let asset = url.flatMap {
+          ImageTextAsset(photoLibraryImageAt: $0, name: $0.lastPathComponent)
+        }
+        Task { @MainActor in
+          completion(asset.map { .success($0) } ?? .failure(ImageSourcePickerError.unreadableImage))
+        }
+      }
     }
   }
 }

@@ -6,6 +6,9 @@ struct TranslateHomeView: View {
   @Bindable var experience: TranslateExperience
   let openHistory: () -> Void
   let openText: (String) -> Void
+  let cameraAuthorizationClient: CameraAuthorizationClient
+  let openImageText: ([ImageTextAsset]) -> Void
+  @State private var requestedImageSource: ImageTextSource?
   @State private var isChoosingDocument = false
   @State private var isReadingDocument = false
   @State private var unreadableDocument = false
@@ -34,6 +37,13 @@ struct TranslateHomeView: View {
       Task { await read(url) }
     }
     .modifier(StartProblemAlert(experience: experience))
+    .modifier(
+      ImageTextImport(
+        requestedSource: $requestedImageSource,
+        cameraAuthorizationClient: cameraAuthorizationClient,
+        openImageText: openImageText
+      )
+    )
     .alert("Couldn't read this document", isPresented: $unreadableDocument) {
       Button("OK", role: .cancel) {}
     } message: {
@@ -51,6 +61,8 @@ struct TranslateHomeView: View {
       openText("")
     case .document:
       isChoosingDocument = true
+    case .camera:
+      break
     }
   }
 
@@ -72,16 +84,18 @@ struct TranslateHomeView: View {
           .foregroundStyle(.secondary)
           .accessibilityIdentifier("translate.preparing")
       }
-      Button(action: start) {
-        Group {
-          if isBusy {
-            ProgressView()
-          } else {
-            Text("Start")
+      Group {
+        if experience.preferredStart == .camera {
+          Menu {
+            ImageTextSourceButtons(requestedSource: $requestedImageSource)
+          } label: {
+            startLabel
           }
+          .menuStyle(.button)
+          .menuOrder(.fixed)
+        } else {
+          Button(action: start) { startLabel }
         }
-        .font(.headline)
-        .padding(.horizontal, 28)
       }
       .buttonStyle(.borderedProminent)
       .buttonBorderShape(.capsule)
@@ -90,6 +104,18 @@ struct TranslateHomeView: View {
       .accessibilityIdentifier("translate.start")
     }
     .padding(.bottom, 8)
+  }
+
+  private var startLabel: some View {
+    Group {
+      if isBusy {
+        ProgressView()
+      } else {
+        Text("Start")
+      }
+    }
+    .font(.headline)
+    .padding(.horizontal, 28)
   }
 }
 

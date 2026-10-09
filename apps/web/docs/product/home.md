@@ -134,7 +134,7 @@ Every claim on the page is one the app's product docs make:
 | Claim | App docs |
 | --- | --- |
 | Works offline; look up any word offline; the dictionary is on your iPhone | `dictionary.md`, opening (bundled data) |
-| Image Search: a photo, the library, or a file; text across or down the page, even with English around it; tap a word and the photo stays in view; Translate for the whole passage | `dictionary.md`, Search and Image Search |
+| Image Search: a photo, the library, or a file; text across or down the page, even with English around it; tap a word and the photo stays in view; Translate for the whole passage | `translate.md`, Image Search |
 | Handwriting reads the finished shape in any stroke order; radicals | `dictionary.md`, Search |
 | Search in Japanese, romaji, or English, conjugated forms included | `dictionary.md`, Search |
 | Furigana, pitch accent, conjugations with meanings, kanji readings and stroke order, example sentences | `dictionary.md`, Dictionary and kanji details |

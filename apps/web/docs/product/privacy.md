@@ -59,7 +59,7 @@ requests, its caption translations included, go to YouTube, and optional diction
 through Cloudflare.
 
 - Source: the app's [Account](../../../ios/docs/product/index.md#account),
-  [Image Search](../../../ios/docs/product/dictionary.md#image-search), and
+  [Image Search](../../../ios/docs/product/translate.md#image-search), and
   [Translate](../../../ios/docs/product/translate.md) docs ("Nothing anyone says is sent to a
   server"; conversations "never sync"); [Player](../../../ios/docs/product/player.md).
 - Check: Privacy spec, "says what stays on the device, and that the app works without an account".
