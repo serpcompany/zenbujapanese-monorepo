@@ -4,6 +4,12 @@ All notable user-facing changes to Zenbu Japanese are recorded here.
 
 ## Unreleased
 
+### Added
+
+- Sort search results from the **•••** menu: **Sort By** a frequency dictionary, most or least
+  common first (JLPT by level), or by your known words, known or unknown first. Your choice stays
+  across launches and applies to Japanese, English, and romaji searches.
+
 ### Fixed
 
 - English searches put the common word first: `dog` shows 犬 first and `water` shows 水, where rarer

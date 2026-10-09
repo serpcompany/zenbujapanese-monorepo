@@ -7,7 +7,9 @@ decided the app must have but doesn't yet.
 
 The app runs in portrait on iPhone. It has four tabs:
 
-- **Search** opens the [Dictionary](dictionary.md) Product Experience.
+- **Search** opens the [Dictionary](dictionary.md) Product Experience. Its results can be
+  re-sorted by a frequency dictionary or by known words from the **•••** menu
+  ([Sorting results](dictionary.md#sorting-results)).
 - **Translate** opens [Translate](translate.md), a Japanese and English conversation translator
   that runs on the iPhone.
 - **Player** opens [Player](player.md), where a learner watches YouTube
@@ -80,7 +82,8 @@ presents levels as unofficial study estimates.
 
 The screen lists one row per pack in three sections. **Enabled** holds packs that are
 switched on, in priority order; Edit reorders them. Ranks appear in this order, and Search
-sorts by the first pack, breaking ties with each next pack. A word the first pack doesn't rank
+sorts by the first pack, breaking ties with each next pack, unless the learner sorts by one pack
+from Search's **Sort By** menu ([Sorting results](dictionary.md#sorting-results)). A word the first pack doesn't rank
 places by how common the next pack that ranks it says it is (家, which YouTube doesn't rank, places
 by its JLPT N5 level), rather than after every ranked word. **Installed** holds downloaded packs that are switched off, and
 **Available** offers a download button for each remaining pack. A row's subtitle shows its

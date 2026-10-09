@@ -73,6 +73,10 @@ enum SearchResultsScreen {
     return .none
   }
 
+  static func isSortable(_ results: LookupSearchResults, entries: [DictionaryEntry]) -> Bool {
+    results.presentation != .discoveredWords && !entries.isEmpty
+  }
+
   static func rankedCount(query: SearchQuery, entries: [DictionaryEntry]) -> Int {
     entries.count + (query.isSingleKanji ? 1 : 0)
   }

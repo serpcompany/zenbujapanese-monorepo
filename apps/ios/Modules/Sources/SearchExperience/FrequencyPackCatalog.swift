@@ -6,6 +6,10 @@ struct FrequencyPackID: Codable, Hashable, RawRepresentable, Sendable {
   init(rawValue: String) {
     self.rawValue = rawValue
   }
+
+  var family: String {
+    rawValue.split(separator: ".").prefix(3).joined(separator: ".")
+  }
 }
 
 struct FrequencyPackCatalog: Codable, Equatable, Sendable {

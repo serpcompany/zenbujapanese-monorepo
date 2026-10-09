@@ -192,7 +192,10 @@ dictionaries (JLPT, then TUBELEX), each with its Language Reference ID, ent_seq,
 reading, summary, frequency chips (dictionary, value, tier), match group, and retrieval position;
 the kanji row; the Example Sentences and reading-refinement rows; the frequency notice; and the
 No Dictionary Matches state. It pins the SHA-256 of every bundled artifact it reads and the
-dictionaries a fresh install enables. Recent searches and known words don't change the list. The suite covers queries that match
+dictionaries a fresh install enables. It records the **Default** order: the learner's Sort By
+choice (`SearchResultSortOrdering` in `SearchResultSort.swift`) re-sorts these rows in the view
+afterwards, and `SearchResultSortTests` covers it. Recent searches and known words don't change
+the recorded list. The suite covers queries that match
 directly, deinflected queries (食べた, 見ない), romaji and English queries, wildcards (`t*`, `^t*`), and queries with no
 matches that aren't Japanese. It doesn't cover Japanese queries with no direct match or
 Discovered Words: Search splits those into words with the Sudachi dictionary the app bundles,
@@ -687,6 +690,10 @@ When changing Search results or frequency dictionaries, also check in the Simula
 - With a pack made unreadable in a debug container, results stay listed and the footer names
   the unavailable dictionary.
 - Rapidly submitting `quiet`, `miru`, then `いる` leaves only `いる` results.
+- **•••** → **Sort By** on `dog`, `いる`, and `miru`: each dictionary in both directions moves
+  that dictionary's chip first and puts the words it doesn't rank last; **Known Words** moves a
+  word marked known by swiping at once. The choice survives relaunching the app, and disabling the
+  chosen dictionary under **Account → Frequency Dictionaries** returns Search to **Default**.
 
 ## Image Search manual checks
 
