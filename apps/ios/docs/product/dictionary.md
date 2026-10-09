@@ -12,7 +12,7 @@ A learner can search in Japanese or English using:
   direction don't matter; or
 - radical selection.
 
-Image Search, for Japanese in a photo, is Translate's **Camera** option
+Image Search, for Japanese in a photo, is Translate's **Image** option
 ([Image Search](translate.md#image-search)).
 
 Japanese, English, and romaji searches show one **Results** list. Stronger matches come first;

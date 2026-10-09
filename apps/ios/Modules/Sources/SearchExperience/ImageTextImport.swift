@@ -1,47 +1,8 @@
 import SwiftUI
-import UniformTypeIdentifiers
 
-enum ImageTextSource: CaseIterable, Identifiable {
+enum ImageTextSource {
   case camera
   case photoLibrary
-  case files
-
-  var id: Self { self }
-
-  var title: String {
-    switch self {
-    case .camera: "Take Photo"
-    case .photoLibrary: "Photo Library"
-    case .files: "Files"
-    }
-  }
-
-  var systemImage: String {
-    switch self {
-    case .camera: "camera"
-    case .photoLibrary: "photo.on.rectangle"
-    case .files: "folder"
-    }
-  }
-
-  var accessibilityIdentifier: String {
-    switch self {
-    case .camera: "image-source.camera"
-    case .photoLibrary: "image-source.photo-library"
-    case .files: "image-source.files"
-    }
-  }
-}
-
-struct ImageTextSourceButtons: View {
-  @Binding var requestedSource: ImageTextSource?
-
-  var body: some View {
-    ForEach(ImageTextSource.allCases) { source in
-      Button(source.title, systemImage: source.systemImage) { requestedSource = source }
-        .accessibilityIdentifier(source.accessibilityIdentifier)
-    }
-  }
 }
 
 struct ImageTextImport: ViewModifier {
@@ -50,7 +11,6 @@ struct ImageTextImport: ViewModifier {
   let openImageText: ([ImageTextAsset]) -> Void
   @State private var showsCamera = false
   @State private var showsPhotoLibrary = false
-  @State private var showsFileImporter = false
   @State private var assetsAwaitingPicker: [ImageTextAsset]?
   @State private var imageImportAlert: ImageImportAlert?
   @State private var isShowingImageImportAlert = false
@@ -64,11 +24,7 @@ struct ImageTextImport: ViewModifier {
         switch source {
         case .camera: presentCamera()
         case .photoLibrary: presentPhotoLibrary()
-        case .files: showsFileImporter = true
         }
-      }
-      .onChange(of: showsFileImporter) { _, shown in
-        if !shown { openAssetsAwaitingPicker() }
       }
       .sheet(isPresented: $showsCamera, onDismiss: openAssetsAwaitingPicker) {
         ImageCameraPicker { result in
@@ -84,13 +40,6 @@ struct ImageTextImport: ViewModifier {
         }
         .ignoresSafeArea()
       }
-      .fileImporter(
-        isPresented: $showsFileImporter,
-        allowedContentTypes: [.image],
-        allowsMultipleSelection: true,
-        onCompletion: importImages,
-        onCancellation: {}
-      )
       .alert(
         imageImportAlert?.title ?? "",
         isPresented: $isShowingImageImportAlert,
@@ -109,38 +58,6 @@ struct ImageTextImport: ViewModifier {
         imageImportTask?.cancel()
         imageImportTask = nil
       }
-  }
-
-  private func importImages(_ result: Result<[URL], Error>) {
-    guard case .success(let urls) = result else {
-      if case .failure(let error) = result,
-        error is CancellationError || (error as? CocoaError)?.code == .userCancelled
-      {
-        return
-      }
-      presentImageImportAlert(.importFailure("The Files selection could not be read."))
-      return
-    }
-    guard !urls.isEmpty else { return }
-    imageImportTask?.cancel()
-    imageImportTask = Task {
-      var assets: [ImageTextAsset] = []
-      for url in urls.prefix(8) {
-        guard !Task.isCancelled else { return }
-        let accessed = url.startAccessingSecurityScopedResource()
-        defer { if accessed { url.stopAccessingSecurityScopedResource() } }
-        if let asset = try? await ImageTextAsset.loadCopy(from: url) {
-          assets.append(asset)
-        }
-      }
-      guard !Task.isCancelled else { return }
-      guard !assets.isEmpty else {
-        presentImageImportAlert(.importFailure("The selected files are not supported images."))
-        return
-      }
-      open(assets)
-      imageImportTask = nil
-    }
   }
 
   private func presentCamera() {
@@ -186,7 +103,7 @@ struct ImageTextImport: ViewModifier {
     }
   }
 
-  private var isPickerShown: Bool { showsCamera || showsPhotoLibrary || showsFileImporter }
+  private var isPickerShown: Bool { showsCamera || showsPhotoLibrary }
 
   private func openAssetsAwaitingPicker() {
     guard !isPickerShown, let assets = assetsAwaitingPicker else { return }

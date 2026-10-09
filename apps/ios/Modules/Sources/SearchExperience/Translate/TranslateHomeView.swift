@@ -9,20 +9,35 @@ struct TranslateHomeView: View {
   let cameraAuthorizationClient: CameraAuthorizationClient
   let openImageText: ([ImageTextAsset]) -> Void
   @State private var requestedImageSource: ImageTextSource?
+  @State private var choosesPhotoSource = false
+  @State private var chosenPhotoSource: ImageTextSource?
+  @State private var startingMode: TranslateStart?
   @State private var isChoosingDocument = false
   @State private var isReadingDocument = false
   @State private var unreadableDocument = false
 
   var body: some View {
-    ScrollView {
-      VStack(spacing: 16) {
-        TranslateStartPicker(selection: $experience.preferredStart)
+    List {
+      Section {
+        TranslateHomeHeader()
       }
-      .padding(.horizontal)
-      .padding(.bottom, 24)
+      Section {
+        ForEach(TranslateStart.spokenRows) { option in row(option) }
+      } header: {
+        Text("Spoken")
+      } footer: {
+        if let preparation = experience.preparation {
+          Text(preparation.label)
+            .accessibilityIdentifier("translate.preparing")
+        }
+      }
+      Section("Written") {
+        ForEach(TranslateStart.writtenRows) { option in row(option) }
+      }
     }
-    .safeAreaInset(edge: .bottom) { startButton }
-    .background(Color(uiColor: .systemBackground))
+    .listSectionSpacing(.compact)
+    .contentMargins(.top, 4, for: .scrollContent)
+    .disabled(isBusy)
     .navigationTitle("Translate")
     .navigationBarTitleDisplayMode(.inline)
     .toolbar {
@@ -44,25 +59,66 @@ struct TranslateHomeView: View {
         openImageText: openImageText
       )
     )
+    .alert("Image", isPresented: $choosesPhotoSource) {
+      Button("Take Photo") { chosenPhotoSource = .camera }
+        .accessibilityIdentifier("translate.image.take-photo")
+      Button("Photo Library") { chosenPhotoSource = .photoLibrary }
+        .accessibilityIdentifier("translate.image.photo-library")
+      Button("Cancel", role: .cancel) {}
+    } message: {
+      Text("Then tap any word to look it up.")
+    }
+    .onChange(of: choosesPhotoSource) { _, shown in
+      guard !shown, let source = chosenPhotoSource else { return }
+      chosenPhotoSource = nil
+      requestedImageSource = source
+    }
     .alert("Couldn't read this document", isPresented: $unreadableDocument) {
       Button("OK", role: .cancel) {}
     } message: {
-      Text("Choose a PDF, a photo, or a text file with Japanese or English text in it.")
+      Text("Choose a PDF or a text file with Japanese or English text in it.")
     }
   }
 
   private var isBusy: Bool { experience.isPreparing || isReadingDocument }
 
-  private func start() {
-    switch experience.preferredStart {
-    case .conversation, .listening:
-      Task { await experience.start() }
-    case .text:
-      openText("")
-    case .document:
-      isChoosingDocument = true
-    case .camera:
-      break
+  private func row(_ option: TranslateStart) -> some View {
+    Button {
+      start(option)
+    } label: {
+      rowLabel(option)
+    }
+    .tint(.primary)
+    .accessibilityIdentifier("translate.start.\(option.rawValue)")
+  }
+
+  private func rowLabel(_ option: TranslateStart) -> some View {
+    HStack {
+      SettingsRowLabel(
+        LocalizedStringKey(option.title), systemImage: option.systemImage, tint: option.tint)
+      Spacer()
+      if isBusy, startingMode == option {
+        ProgressView()
+      } else {
+        Image(systemName: "chevron.forward")
+          .font(.footnote.weight(.semibold))
+          .foregroundStyle(.tertiary)
+      }
+    }
+    .contentShape(.rect)
+  }
+
+  private func start(_ option: TranslateStart) {
+    startingMode = option
+    if let mode = option.liveMode {
+      Task { await experience.start(mode) }
+      return
+    }
+    switch option {
+    case .text: openText("")
+    case .document: isChoosingDocument = true
+    case .image: choosesPhotoSource = true
+    case .conversation, .listening: break
     }
   }
 
@@ -75,47 +131,26 @@ struct TranslateHomeView: View {
       unreadableDocument = true
     }
   }
+}
 
-  private var startButton: some View {
-    VStack(spacing: 8) {
-      if let preparation = experience.preparation {
-        Text(preparation.label)
-          .font(.subheadline)
-          .foregroundStyle(.secondary)
-          .accessibilityIdentifier("translate.preparing")
-      }
-      Group {
-        if experience.preferredStart == .camera {
-          Menu {
-            ImageTextSourceButtons(requestedSource: $requestedImageSource)
-          } label: {
-            startLabel
-          }
-          .menuStyle(.button)
-          .menuOrder(.fixed)
-        } else {
-          Button(action: start) { startLabel }
-        }
-      }
-      .buttonStyle(.borderedProminent)
-      .buttonBorderShape(.capsule)
-      .controlSize(.large)
-      .disabled(isBusy)
-      .accessibilityIdentifier("translate.start")
-    }
-    .padding(.bottom, 8)
-  }
+private struct TranslateHomeHeader: View {
+  @ScaledMetric(relativeTo: .largeTitle) private var tileSize = 48
 
-  private var startLabel: some View {
-    Group {
-      if isBusy {
-        ProgressView()
-      } else {
-        Text("Start")
-      }
+  var body: some View {
+    VStack(alignment: .leading, spacing: 6) {
+      Image(systemName: "translate")
+        .font(.system(size: tileSize * 0.5, weight: .semibold))
+        .foregroundStyle(.white)
+        .frame(width: tileSize, height: tileSize)
+        .background(Color.blue.gradient, in: .rect(cornerRadius: tileSize * 0.23))
+        .accessibilityHidden(true)
+      Text("Translate")
+        .font(.title2.bold())
+      Text("Japanese and English, on your iPhone.")
+        .foregroundStyle(.secondary)
+        .lineLimit(1)
     }
-    .font(.headline)
-    .padding(.horizontal, 28)
+    .padding(.vertical, 2)
   }
 }
 

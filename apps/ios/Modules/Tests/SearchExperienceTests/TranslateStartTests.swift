@@ -1,23 +1,23 @@
 import Testing
+import TranslatorCore
 
 @testable import SearchExperience
 
 @Suite("Translate's home options")
 struct TranslateStartTests {
-  @Test("Camera is the fifth option, after Document Upload")
-  func cameraFollowsDocumentUpload() {
-    #expect(TranslateStart.allCases == [.conversation, .listening, .text, .document, .camera])
+  @Test("the home lists Spoken, then Written, each option once")
+  func sections() {
+    #expect(TranslateStart.spokenRows == [.conversation, .listening])
+    #expect(TranslateStart.writtenRows == [.image, .text, .document])
+    let listed = TranslateStart.spokenRows + TranslateStart.writtenRows
+    #expect(listed.count == TranslateStart.allCases.count)
+    #expect(Set(listed) == Set(TranslateStart.allCases))
   }
 
-  @Test("Camera isn't a live mode, and is named and drawn as a camera")
-  func cameraIsNotLive() {
-    #expect(TranslateStart.camera.liveMode == nil)
-    #expect(TranslateStart.camera.title == "Camera")
-    #expect(TranslateStart.camera.systemImage == "camera")
-  }
-
-  @Test("a remembered Camera choice reads back as Camera")
-  func rememberedCameraChoice() {
-    #expect(TranslateStart(rawValue: TranslateStart.camera.rawValue) == .camera)
+  @Test("only Conversation and Listen start a live mode")
+  func liveModes() {
+    #expect(TranslateStart.conversation.liveMode == .conversation)
+    #expect(TranslateStart.listening.liveMode == .listening)
+    #expect(TranslateStart.writtenRows.allSatisfy { $0.liveMode == nil })
   }
 }

@@ -4,7 +4,7 @@ import UIKit
 import UniformTypeIdentifiers
 
 enum DocumentText {
-  static let readableTypes: [UTType] = [.pdf, .image, .plainText]
+  static let readableTypes: [UTType] = [.pdf, .plainText]
   static let scannedPageLimit = 10
   static let characterLimit = 5_000
   static let scannedPageLongestSide = 3_000.0

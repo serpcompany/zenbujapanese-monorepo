@@ -12,7 +12,7 @@ struct ZenbuAccountRow: View {
             Text(account.email)
               .lineLimit(1)
           } label: {
-            AccountRowLabel(
+            SettingsRowLabel(
               "Zenbu Account", systemImage: "arrow.triangle.2.circlepath", tint: .purple)
           }
         }
@@ -21,7 +21,7 @@ struct ZenbuAccountRow: View {
         Button {
           showsSignIn = true
         } label: {
-          AccountRowLabel(
+          SettingsRowLabel(
             "Sign In to Sync", subtitle: signedOutNote,
             systemImage: "person.crop.circle.badge.checkmark", tint: .purple)
         }

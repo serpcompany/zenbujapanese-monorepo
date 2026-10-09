@@ -63,15 +63,18 @@ The tab is split across three Swift targets in `apps/ios/Modules`
   processing, and the audio session, and feeding the microphone to a `BilingualRecognizer`),
   `OnDeviceTranslation` (Apple Translation's availability and download prompt),
   `SystemSpeechPlayer` (`AVSpeechSynthesizer`), and `TranslateExperience`, which owns the session, History, the
-  remembered mode, and the start checks (microphone, Apple Translation, speech assets), which
+  start checks (microphone, Apple Translation, speech assets), which
   are on-device-specific and change when an Online engine arrives. The home is
-  `TranslateHomeView`: the five `TranslateStart` options (`TranslateStartPicker`) and Start. Camera
-  makes Start a menu of `ImageTextSource`s, and `ImageTextImport` (on the home) opens the camera, the
-  photo library, or Files, then pushes Image Search (`ImageTextFlowView`, the `.image` route) onto
-  the Translate stack. Text
-  pushes `TypedTranslationScreen` with `TypedTranslationCard`; Document Upload reads the file with
-  `DocumentText` (PDFKit, then Vision text recognition for scanned pages and photos) and pushes
-  the same screen with its text. Muting a conversation still switches it to the internal Text
+  `TranslateHomeView`, a grouped `List` with a header card and the five `TranslateStart` options
+  (`TranslateStart.spokenRows`, then `TranslateStart.writtenRows`) as rows of `SettingsRowLabel`,
+  the row Account uses; a row opens its mode directly. Image shows an alert of Take Photo and
+  Photo Library, and `ImageTextImport` opens that picker once the alert has closed, then pushes
+  Image Search (`ImageTextFlowView`, the `.image` route) onto the Translate stack once the picker
+  has closed. Text
+  pushes `TypedTranslationScreen` with `TypedTranslationCard`; Document reads a PDF or text file
+  with `DocumentText` (PDFKit, then Vision text recognition for scanned pages) and pushes the same
+  screen with its
+  text. Muting a conversation still switches it to the internal Text
   Only mode, which the Translations screen labels Conversation. `TranslateDestinations` pushes
   the Translations screen, its transcripts, and Text for both the Translate tab and Account
   (Account → Translations), and `ConversationHistory.saved` leaves out the conversation still live.
@@ -265,12 +268,12 @@ Release builds don't contain the harness.
 
 In the Simulator, with the harness:
 
-- **Text**, **Start**, then `Where can I buy a Suica card?`, shows **English →
+- **Text**, then `Where can I buy a Suica card?`, shows **English →
   Japanese**, copy, speak, and linked Japanese; tapping a word closes the keyboard and opens Word
   Detail at half height. **•••** → **Furigana** shows furigana over the Japanese.
-- The tab opens on Conversation, Listening, Text, Document Upload, and Camera; **Start** with Camera
-  offers Files, Photo Library, and Take Photo, and a library image opens Image Search. **Start**
-  with Conversation shows the
+- The tab opens on a header card, then Spoken (Conversation, Listen) and Written (Image, Text,
+  Document), all without scrolling; **Image** shows an alert with Take Photo and Photo Library,
+  and a library photo opens Image Search (Take Photo needs an iPhone). **Conversation** shows the
   station conversation full screen, without the tab bar: an English card, then a wider gap and one
   Japanese turn of three cards whose audio waits (**N waiting for a pause**), each card turning
   active while it plays. Along the bottom are the speaker, − 1.0× +, and the red timer with a pause
@@ -288,7 +291,7 @@ In the Simulator, with the harness:
   deletion there lowers the count and leaves the Translate tab's Translations without it. With
   a conversation live (start one, then switch to Account), it isn't listed, and transcripts have
   no speaker button.
-- **Listening** leads each card with its translation (English for the Japanese announcements,
+- **Listen** leads each card with its translation (English for the Japanese announcements,
   Japanese for the English one) and plays as it goes. After 20 seconds of silence, **Are you
   still there?** counts down and pauses with an alert offering **Resume**.
 - While listening, the Simulator's screen doesn't auto-lock (Settings → Display & Brightness →
