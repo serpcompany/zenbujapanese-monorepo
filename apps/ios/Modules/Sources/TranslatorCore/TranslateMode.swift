@@ -2,6 +2,19 @@ public enum TranslateMode: String, Codable, Sendable, CaseIterable, Identifiable
   case conversation
   case listening
 
+  static let savedWhileMuted = "textOnly"
+
+  public init(from decoder: any Decoder) throws {
+    let container = try decoder.singleValueContainer()
+    let rawValue = try container.decode(String.self)
+    guard let mode = rawValue == Self.savedWhileMuted ? .conversation : Self(rawValue: rawValue)
+    else {
+      throw DecodingError.dataCorruptedError(
+        in: container, debugDescription: "Unknown Translate mode \(rawValue)")
+    }
+    self = mode
+  }
+
   public var id: Self { self }
 
   public var playback: TranslationPlayback {

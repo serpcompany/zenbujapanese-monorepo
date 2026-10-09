@@ -17,7 +17,9 @@ The tab is split across three Swift targets in `apps/ios/Modules`
     translations, held audio, the turn-end pause (0.8 s), the 30-second cutoff, the silence prompt
     (170 s, then 10 s), pause, resume, the background, and leaving. Times are in
     `ConversationTiming`. Its mode (`TranslateMode`: Conversation or Listening) is fixed for the
-    session; muting (`setMuted`) only silences playback, so a muted session keeps its mode.
+    session; muting (`setMuted`) only silences playback, so a muted session keeps its mode. A
+    conversation saved muted when muting was its own mode, stored as `textOnly`, reads as
+    Conversation.
   - It reaches the outside only through `TranscriptionClient`, `SentenceTranslationClient`, and
     `SpeechPlaybackClient` (`TranslatorClients.swift`), structs of closures like the app's other
     clients, so an Online engine is another set of clients, not a change to the engine.
