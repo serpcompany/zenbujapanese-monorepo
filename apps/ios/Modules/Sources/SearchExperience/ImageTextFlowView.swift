@@ -11,7 +11,8 @@ struct ImageTextFlowView: View {
   let textAnalysisClient: JapaneseTextAnalysisClient
   let translationClient: NaturalTranslationClient
   let clipboardClient: ImageTextClipboardClient
-  let close: () -> Void
+  let endSession: () -> Void
+  @Environment(\.dismiss) private var dismiss
 
   init(
     session: ImageTextSession,
@@ -21,7 +22,7 @@ struct ImageTextFlowView: View {
     explanationClient: ImageTextExplanationClient,
     clipboardClient: ImageTextClipboardClient,
     presentedWord: Binding<RecognizedWordSheetRequest?>,
-    close: @escaping () -> Void
+    endSession: @escaping () -> Void
   ) {
     _model = State(
       initialValue: ImageTextFlowModel(
@@ -35,7 +36,7 @@ struct ImageTextFlowView: View {
     self.textAnalysisClient = textAnalysisClient
     self.translationClient = translationClient
     self.clipboardClient = clipboardClient
-    self.close = close
+    self.endSession = endSession
   }
 
   var body: some View {
@@ -68,7 +69,10 @@ struct ImageTextFlowView: View {
     .navigationBarBackButtonHidden(true)
     .toolbar {
       ToolbarItem(placement: .cancellationAction) {
-        Button(action: close) {
+        Button {
+          dismiss()
+          endSession()
+        } label: {
           Image(systemName: "xmark")
         }
         .accessibilityLabel("Close")

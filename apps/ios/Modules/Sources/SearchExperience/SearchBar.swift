@@ -6,7 +6,6 @@ struct SearchBar: View {
   var isFocused: FocusState<Bool>.Binding
   let isInputActive: Bool
   let activateKeyboard: () -> Void
-  let openImageSource: () -> Void
   let cancel: () -> Void
   let submitQuery: (SearchQuery) -> Void
 
@@ -50,16 +49,6 @@ struct SearchBar: View {
       .padding(.horizontal, 10)
       .frame(minHeight: 44)
       .background(.fill.tertiary, in: RoundedRectangle(cornerRadius: 9))
-
-      Button(action: openImageSource) {
-        Image(systemName: "camera")
-          .font(.title3)
-          .frame(width: 44, height: 44)
-          .contentShape(Rectangle())
-      }
-      .buttonStyle(.plain)
-      .accessibilityLabel("Image Search")
-      .accessibilityIdentifier("search.image-source")
 
       if isInputActive {
         Button("Cancel", action: cancel)

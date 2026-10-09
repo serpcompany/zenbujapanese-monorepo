@@ -10,8 +10,14 @@ All notable user-facing changes to Zenbu Japanese are recorded here.
   common first (JLPT by level), or by your known words, known or unknown first. Your choice stays
   across launches and applies to Japanese, English, and romaji searches.
 
+### Changed
+
+- Image Search moved from Search's camera button to Translate: choose **Camera** on Translate's
+  home, then **Start** to take a photo or pick one, and tap any word to look it up.
+
 ### Fixed
 
+- Choosing **Photo Library** or **Files** for Image Search opens the picker again.
 - English searches put the common word first: `dog` shows 犬 first and `water` shows 水, where rarer
   words whose meaning was exactly the query used to come ahead of them.
 

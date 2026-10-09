@@ -11,15 +11,12 @@ public struct SearchExperienceRootView: View {
   @State private var frequencyRefreshID = 0
   @State private var path: [SearchExperienceRoute] = []
   @State private var accountPath = NavigationPath()
-  @State private var accountWordSheet = WordSheetPresentation()
   @State private var query = ""
   @State private var imageTextSessionStore = ImageTextSessionStore()
-  @State private var imageWordSheet = WordSheetPresentation()
+  @State private var wordSheets = DictionaryWordSheets()
   @State private var watchPath = NavigationPath()
-  @State private var watchWordSheet = WordSheetPresentation()
   private let watchHistory = WatchHistory.shared
   @State private var translatePath = NavigationPath()
-  @State private var translateWordSheet = WordSheetPresentation()
   @State private var translateExperience = TranslateExperience.live()
   @State private var kanjiScrollWordIDs: [KanjiCharacter: LanguageReferenceID] = [:]
   @State private var kanjiScrollElementIDs: [KanjiCharacter: KanjiElementID] = [:]
@@ -147,18 +144,12 @@ public struct SearchExperienceRootView: View {
         lookupClient: lookupClient,
         recentSearchStore: recentSearchStore,
         handwritingRecognitionClient: handwritingRecognitionClient,
-        cameraAuthorizationClient: cameraAuthorizationClient,
         radicalLookupClient: .live,
         exampleSentenceClient: exampleSentenceClient,
         frequencyCapability: .live,
-        frequencyRefreshID: frequencyRefreshID,
-        openImageText: { assets in
-          let session = ImageTextSession(assets: assets)
-          imageTextSessionStore.insert(session)
-          path.append(.image(session.id))
-        }
+        frequencyRefreshID: frequencyRefreshID
       )
-      .modifier(dictionaryRoutes(in: .search, sheet: imageWordSheet))
+      .modifier(dictionaryRoutes(in: .search))
     }
   }
 
@@ -228,9 +219,9 @@ public struct SearchExperienceRootView: View {
           translationClient: naturalTranslationClient,
           explanationClient: imageTextExplanationClient,
           clipboardClient: imageTextClipboardClient,
-          presentedWord: imageWordSheet.requestBinding,
-          close: {
-            if path.last == .image(sessionID) { path.removeLast() }
+          presentedWord: wordSheets[stack]?.requestBinding ?? .constant(nil),
+          endSession: {
+            wordSheets[stack]?.request = nil
             imageTextSessionStore.remove(sessionID)
           }
         )
@@ -254,7 +245,7 @@ public struct SearchExperienceRootView: View {
             history: watchHistory,
             captionClient: .live,
             japaneseTextAnalysisClient: japaneseTextAnalysisClient,
-            presentedWord: watchWordSheet.requestBinding
+            presentedWord: wordSheets.player.requestBinding
           )
         case .search(let search):
           VideoSearchView(search: search) { videoID in
@@ -262,7 +253,7 @@ public struct SearchExperienceRootView: View {
           }
         }
       }
-      .modifier(dictionaryRoutes(in: .player, sheet: watchWordSheet))
+      .modifier(dictionaryRoutes(in: .player))
     }
   }
 
@@ -270,11 +261,17 @@ public struct SearchExperienceRootView: View {
     NavigationStack(path: $translatePath) {
       TranslateTabRoot(
         experience: translateExperience,
-        words: translateWords(opening: translateWordSheet),
+        words: translateWords(opening: wordSheets.translate),
         isConversationOnScreen: isConversationOnScreen,
-        push: { translatePath.append($0) }
+        push: { translatePath.append($0) },
+        cameraAuthorizationClient: cameraAuthorizationClient,
+        openImageText: { assets in
+          let session = ImageTextSession(assets: assets)
+          imageTextSessionStore.insert(session)
+          translatePath.append(SearchExperienceRoute.image(session.id))
+        }
       )
-      .modifier(dictionaryRoutes(in: .translate, sheet: translateWordSheet))
+      .modifier(dictionaryRoutes(in: .translate))
     }
   }
 
@@ -287,10 +284,10 @@ public struct SearchExperienceRootView: View {
       AccountTabRoot(
         store: encounterMediaStore,
         translate: translateExperience,
-        words: translateWords(opening: accountWordSheet),
+        words: translateWords(opening: wordSheets.account),
         openItem: openSavedItem
       )
-      .modifier(dictionaryRoutes(in: .account, sheet: accountWordSheet))
+      .modifier(dictionaryRoutes(in: .account))
     }
   }
 
@@ -298,24 +295,23 @@ public struct SearchExperienceRootView: View {
     TranslateWordLinks(analysisClient: japaneseTextAnalysisClient, open: { sheet.request = $0 })
   }
 
-  private func dictionaryRoutes(in stack: DictionaryStack, sheet: WordSheetPresentation)
+  private func dictionaryRoutes(in stack: DictionaryStack)
     -> DictionaryRoutes<some View, some View>
   {
     DictionaryRoutes(
-      sheet: sheet,
+      sheet: wordSheets[stack],
       destination: { dictionaryDestination($0, in: stack) },
-      wordSheet: { wordSheet(sheet, in: stack) })
+      wordSheet: { wordSheet(wordSheets[stack], in: stack) })
   }
 
   @ViewBuilder
-  private func wordSheet(_ presentation: WordSheetPresentation, in stack: DictionaryStack)
+  private func wordSheet(_ presentation: WordSheetPresentation?, in stack: DictionaryStack)
     -> some View
   {
-    @Bindable var presentation = presentation
-    if let request = presentation.displayedRequest {
+    if let presentation, let request = presentation.displayedRequest {
       RecognizedWordSheet(
         request: request,
-        detent: $presentation.detent,
+        detent: Bindable(presentation).detent,
         openFullEntry: { entry in openFullEntry(entry, in: stack) }
       ) { entry, encounterMedia in
         wordDetailView(
@@ -384,10 +380,7 @@ public struct SearchExperienceRootView: View {
 
   private func dismissRecognizedWordSheet(if shouldDismiss: Bool) {
     guard shouldDismiss else { return }
-    imageWordSheet.request = nil
-    watchWordSheet.request = nil
-    translateWordSheet.request = nil
-    accountWordSheet.request = nil
+    for stack in DictionaryStack.allCases { wordSheets[stack]?.request = nil }
   }
 
   private var searchPath: Binding<[SearchExperienceRoute]> {

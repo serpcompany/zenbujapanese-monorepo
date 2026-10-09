@@ -16,8 +16,8 @@ engine yet, so there is no Online/Offline switch and no cost or model details.
 
 ## The tab's home
 
-The tab opens on four ways to translate. It has a small **Translate** title with a
-**Translations** button (a clock), an illustration of the selected option, the four options listed with a description each,
+The tab opens on five ways to translate. It has a small **Translate** title with a
+**Translations** button (a clock), an illustration of the selected option, the five options listed with a description each,
 and **Start** above the tab bar. The selected option is tinted with a checkmark, and the choice
 is remembered.
 
@@ -27,6 +27,7 @@ is remembered.
 | **Listening** | One-way and live, for a TV, a guide, or announcements. Hears Japanese and English, each sentence detected as either, from a distance and without voice isolation. The translation leads each card (English under Japanese speech, Japanese under English), and each translation plays as soon as it's ready. With earphones the microphone keeps listening; on the iPhone's speaker it waits while each translation plays, so it doesn't hear itself. |
 | **Text** | Opens the typing screen, ready to type or paste. |
 | **Document Upload** | Opens the file picker for a PDF, a photo, or a text file. Its text opens on the typing screen, translated. A PDF's own text is used. A scanned PDF (its first 10 pages) or a photo is read with on-device text recognition. A text file can be UTF-8, UTF-16, Shift-JIS, or EUC-JP. Only the first 5,000 characters are translated. A file with no text shows **Couldn't read this document**. |
+| **Camera** | Offers **Take Photo**, **Photo Library**, and **Files**, then opens the images in [Image Search](#image-search), where tapping a word looks it up. |
 
 ## Typing to translate
 
@@ -155,3 +156,57 @@ Every Japanese word in the cards, saved Translations, and typed results is under
 at half height, as in the Player; particles and punctuation aren't linked. **Open Full Entry**
 opens the word inside the tab it was tapped in: Translate, or Account from Account →
 **Translations**. Looking a word up doesn't pause listening.
+
+## Image Search
+
+Translate's **Camera** option opens Image Search: **Start** offers **Take Photo**, **Photo
+Library**, and **Files**, and the chosen images open on the Image Search screen. Image Search
+recognizes Japanese text in one or more selected images. It reads both
+horizontal and vertical (縦書き) Japanese; vertical columns are read top to bottom, right to
+left, and English elsewhere in the image does not hide the Japanese.
+
+A segmented control switches between four views, and Image Search remembers the last one
+(**Both** at first). The toolbar is the same in every view: a close button and a **•••** menu
+with **Copy Text**, **Share Image**, and **Show Words on Image**, which shows or hides the word
+marks on the image.
+
+- **Photo** shows the image, aligned to the top, with every recognized word marked in the
+  accent color. Words in vertical lines are tinted chips that alternate shade down each
+  column; words in horizontal lines are underlined.
+- **Both** fits the same marked, tappable image at the top and lists each recognized Japanese
+  line below it in the Player's caption cards, with furigana, word underlines, and the line's
+  translation. The first card's line is outlined on the image; tapping a card outlines its
+  line, and tapping a word on the image scrolls the cards to its line.
+- **Text** shows the recognized Japanese as paragraphs in the same caption cards, one text
+  size larger. Lines that wrap, such as book columns, are joined; list items and lines that
+  end a sentence stay separate.
+- **Translate** has two sections. **Translation** shows each paragraph with its natural
+  translation. **Context** says in a few sentences what the text is and what it's for, then
+  lists idioms, proverbs, and set expressions inside longer text with their dictionary
+  meanings; each opens its Word Detail. An idiom that is a whole paragraph, as in a list of
+  proverbs, isn't repeated there, since Translation already gives its meaning.
+
+Translation uses Apple Translation, preparing Apple's language resources first when needed.
+Where Apple Translation isn't available, Apple Intelligence's on-device model translates
+instead, and the Translate view says so. Both and Text show line and paragraph translations under their
+cards, following the Translations reading-aid preference, as soon as translation is ready
+without a download; choosing Translate starts a download when one is needed.
+
+Context needs Apple Intelligence; when it's off or still downloading, the Translate view says so, and on
+devices that can't run it the section is hidden. The on-device model only picks idioms and
+describes the text. Idioms are shown only when they're dictionary entries, with the
+dictionary's meaning, and those meanings are given to the model whenever it translates or
+describes the text, because on its own it misreads idioms word by word.
+
+Tapping a word in any view opens its Word Detail in a half-height sheet that can be dragged to
+full height, as in the Player. The view behind stays usable, so tapping another word switches
+the sheet, and nothing behind it moves when a word opens. A word with several possible entries opens a
+**Choose** list that uses Search's result rows, and one with none shows a no-entry state. The
+sheet's top bar has a close button and **Open Full Entry**, which continues to the normal
+full-screen dictionary route in the Translate tab. Words use the same
+Kuromoji parser family as the Zenbu browser extension and other linked Japanese in the app.
+
+A learner can also copy the recognized text and share the selected source image.
+
+The Image Search session itself is temporary. Opening a recognized word associates the
+source image with that word as Encounter Media, which then appears in the Media Library.

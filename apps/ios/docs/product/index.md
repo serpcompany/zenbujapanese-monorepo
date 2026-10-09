@@ -11,7 +11,8 @@ The app runs in portrait on iPhone. It has four tabs:
   re-sorted by a frequency dictionary or by known words from the **•••** menu
   ([Sorting results](dictionary.md#sorting-results)).
 - **Translate** opens [Translate](translate.md), a Japanese and English conversation translator
-  that runs on the iPhone.
+  that runs on the iPhone, and Image Search, which reads Japanese in a photo
+  ([Image Search](translate.md#image-search)).
 - **Player** opens [Player](player.md), where a learner watches YouTube
   videos with linked Japanese captions.
 - **Account** opens personal content, preferences, language-resource management, support, and credits.
