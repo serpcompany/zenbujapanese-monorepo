@@ -8,7 +8,7 @@ The app in `apps/ios` builds for iPhone, iPad, and the Mac from one app target a
 package, as a native SwiftUI app on each: not Mac Catalyst, and not the iPhone app running
 "Designed for iPhone" on a Mac.
 
-- **One bundle ID, one App Store record.** Every platform ships as `com.zenbujapanese.app`, with
+- **One bundle ID, one App Store record.** Every platform ships as `com.zenbujapanese.dictionary`, with
   universal purchase: a learner who has it on one device has it on the others.
 - **The Mac is Apple silicon only, on macOS 26.** iPhone and iPad stay on iOS 26.
 - **Sync goes through the Zenbu account** (ADR 0013), the same as between two iPhones. There is no

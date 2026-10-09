@@ -35,7 +35,7 @@ class AppPlatformTests(unittest.TestCase):
             self.assertEqual(build_setting(settings, "SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD"), "NO")
             self.assertEqual(
                 build_setting(settings, "PRODUCT_BUNDLE_IDENTIFIER"),
-                "com.zenbujapanese.app$(ZENBU_BUNDLE_ID_SUFFIX)",
+                "com.zenbujapanese.dictionary$(ZENBU_BUNDLE_ID_SUFFIX)",
             )
 
     def test_the_mac_build_is_apple_silicon_only_on_macos_26(self) -> None:
@@ -64,9 +64,8 @@ class AppPlatformTests(unittest.TestCase):
             for key in ("NSMicrophoneUsageDescription", "NSCameraUsageDescription"):
                 self.assertNotIn("iPhone", build_setting(settings, f"INFOPLIST_KEY_{key}"), key)
 
-    def test_no_team_or_signing_identity_is_committed(self) -> None:
+    def test_no_profile_or_mac_signing_identity_is_committed(self) -> None:
         project = PROJECT.read_text(encoding="utf-8")
-        self.assertNotIn("DEVELOPMENT_TEAM", project)
         self.assertNotIn("PROVISIONING_PROFILE", project)
         self.assertNotIn("CODE_SIGN_IDENTITY[sdk=macosx*]", project)
 

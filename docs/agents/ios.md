@@ -88,14 +88,14 @@ xcodebuild -project apps/ios/ZenbuJapanese.xcodeproj -scheme ZenbuJapanese -conf
 open "/tmp/zenbu-mac/Build/Products/Debug/Zenbu Japanese.app"
 ```
 
-In Xcode, pick **My Mac** as the destination; a team under **Signing & Capabilities** signs it
-with every entitlement (don't commit the team, as Install on an iPhone says). Such a local build
-shows the Apple button, which fails without the entitlement; sign in with Google or a code. Its
-session token can't go into the data protection keychain without a team, so it signs in again at
-each launch (Account and sync, Tokens). The Mac app runs in the App Sandbox, so what it keeps on
-the iPhone under the app's `Library` is under
-`~/Library/Containers/com.zenbujapanese.app/Data/Library/` on the Mac, and Zenbu Dev's under
-`com.zenbujapanese.app.dev`.
+In Xcode, pick **My Mac** as the destination: on a Mac signed in to TSMC LLC's team, the
+project's team signs it with every entitlement ([The App Store record](#the-app-store-record)).
+A build signed to run locally shows the Apple button, which fails without the entitlement; sign
+in with Google or a code. Its session token can't go into the data protection keychain without a
+team, so it signs in again at each launch (Account and sync, Tokens). The Mac app runs in the App
+Sandbox, so what it keeps on the iPhone under the app's `Library` is under
+`~/Library/Containers/com.zenbujapanese.dictionary/Data/Library/` on the Mac, and Zenbu Dev's
+under `com.zenbujapanese.dictionary.dev`.
 
 ### Test on the Mac
 
@@ -110,10 +110,11 @@ tests are slow on a virtual Mac (about two minutes each).
 
 ### Releasing on iPad and the Mac
 
-What a person does once, on the team that holds the app: turn on the Mac platform for the App ID
-`com.zenbujapanese.app` (and `.dev`) with Sign in with Apple and Associated Domains, so automatic
-signing makes macOS profiles; add the macOS platform to the App Store record, which keeps one
-record with universal purchase; and add iPad and Mac screenshots. A Mac build is archived with
+What a person does once, on TSMC LLC's team (`847HR8U8D9`): turn on the Mac platform for the App
+ID `com.zenbujapanese.dictionary` (and `.dev`) with Sign in with Apple and Associated Domains, so
+automatic signing makes macOS profiles; add the macOS platform to the App Store record
+([The App Store record](#the-app-store-record)), which keeps one record with universal purchase;
+and add iPad and Mac screenshots. A Mac build is archived with
 **Any Mac (Apple Silicon)** and uploaded the same way as the iPhone's.
 
 ### iPad and Mac checks
