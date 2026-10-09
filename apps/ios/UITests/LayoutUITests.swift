@@ -6,15 +6,16 @@ final class LayoutUITests: ZenbuUITestCase {
     switch device {
     case .phone:
       TestDevice.turn(landscape: true)
-      let window = app.windows.firstMatch.frame
-      XCTAssertGreaterThan(window.height, window.width, "the iPhone stays portrait")
+      RunLoop.current.run(until: Date.now.addingTimeInterval(3))
+      XCTAssertFalse(isLandscape(app), "the iPhone stays portrait")
       assertEveryTabFits(in: app)
       TestDevice.turn(landscape: false)
     case .pad:
       for landscape in [false, true] {
         TestDevice.turn(landscape: landscape)
-        let window = app.windows.firstMatch.frame
-        XCTAssertEqual(window.width > window.height, landscape, "the iPad turns every way")
+        let turned = NSPredicate { _, _ in self.isLandscape(app) == landscape }
+        expectation(for: turned, evaluatedWith: nil)
+        waitForExpectations(timeout: Self.patience)
         assertEveryTabFits(in: app)
       }
       TestDevice.turn(landscape: false)
@@ -28,6 +29,11 @@ final class LayoutUITests: ZenbuUITestCase {
       XCTAssertEqual(window.height, 560, accuracy: 30, "and 560 tall")
       assertEveryTabFits(in: app)
     }
+  }
+
+  private func isLandscape(_ app: XCUIApplication) -> Bool {
+    let window = app.windows.firstMatch.frame
+    return window.width > window.height
   }
 
   private func assertEveryTabFits(in app: XCUIApplication) {
