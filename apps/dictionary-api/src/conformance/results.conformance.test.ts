@@ -4,7 +4,7 @@ import type { SearchResultsScreen } from '@zenbu/dictionary-core/results/results
 import {
   EvidenceLane,
   FormRelation,
-  GlossRelation,
+  isLaterSense,
   type Rank
 } from '@zenbu/dictionary-core/search/rank'
 import { beforeAll, describe, expect, test } from 'vitest'
@@ -65,8 +65,10 @@ function describeMatch(sourceOrder: number, rank: Rank): string {
   const match =
     rank.kind === 'japanese'
       ? `japanese ${name(FormRelation, rank.relation)}`
-      : `english ${name(EvidenceLane, rank.lane)} corroboration=${rank.corroborationRank} ` +
-        `romaji=${rank.romajiSpecificityRank} sense=${rank.senseOrder} ${name(GlossRelation, rank.relation)}`
+      : `english ${name(EvidenceLane, rank.lane)} romaji=${rank.romajiSpecificityRank}` +
+        (rank.lane === EvidenceLane.strongGloss
+          ? ` sense=${isLaterSense(rank) ? 'later' : 'first'}`
+          : '')
   return `source=${sourceOrder} ${match}`
 }
 

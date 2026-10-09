@@ -3,36 +3,96 @@ import Testing
 
 @Suite("Search result relevance and frequency ordering")
 struct SearchResultOrderingTests {
-  @Test("original English fallback is preserved while final relevance remains primary")
-  func originalEnglishFallbackAndFinalRelevance() {
-    let prioritizedExact = englishRank(priorityPresence: 0, relation: .exactGloss)
-    let prioritizedQualified = englishRank(priorityPresence: 0, relation: .qualifiedGloss)
-    let unprioritizedExact = englishRank(priorityPresence: 1, relation: .exactGloss)
+  @Test("a first meaning with a note in parentheses is as direct as an exact one, so frequency decides")
+  func notedFirstMeaningMatchesExactFirstMeaning() async throws {
+    let dog = try await LookupClient.live.search(SearchQuery("dog"))
+    let notedInu = try #require(dog.entries.first { $0.headword == "犬" })
+    let exactWanko = try #require(dog.entries.first { $0.headword == "ワン子" })
+    let mention = try #require(dog.entries.first { $0.headword == "子犬" })
+    #expect(dog.relevance(for: notedInu) == dog.relevance(for: exactWanko))
+    #expect(dog.relevance(for: exactWanko) < dog.relevance(for: mention))
 
-    let sorted = [prioritizedQualified, unprioritizedExact, prioritizedExact].sorted()
+    let noted = englishRank(priorityPresence: 0, fingerprint: "inu")
+    let exact = englishRank(priorityPresence: 1, fingerprint: "wanko")
 
-    #expect(prioritizedQualified < unprioritizedExact)
-    #expect(
-      sorted == [prioritizedExact, prioritizedQualified, unprioritizedExact]
-    )
-
-    let qualified = DictionaryEntry.fixture(
-      id: "00000000000000000000000000000004", headword: "qualified")
-    let exact = DictionaryEntry.fixture(id: "00000000000000000000000000000005", headword: "exact")
+    let inu = DictionaryEntry.fixture(id: "00000000000000000000000000000004", headword: "犬")
+    let wanko = DictionaryEntry.fixture(id: "00000000000000000000000000000005", headword: "ワン子")
     let results = LookupSearchResults(
       items: [
-        fixtureEnglishItem(entry: qualified, rank: prioritizedQualified, fallbackOrder: 0),
-        fixtureEnglishItem(entry: exact, rank: unprioritizedExact, fallbackOrder: 1),
+        fixtureEnglishItem(entry: wanko, rank: exact, fallbackOrder: 0),
+        fixtureEnglishItem(entry: inu, rank: noted, fallbackOrder: 1),
       ]
     )
     let evidence: [LanguageReferenceID: FrequencyLookupResult] = [
-      qualified.id: .evidence(fixtureEvidence(id: qualified.id, rank: 1)),
-      exact.id: .evidence(fixtureEvidence(id: exact.id, rank: 50_000)),
+      inu.id: .evidence(fixtureEvidence(id: inu.id, rank: 1_071)),
+      wanko.id: .evidence(fixtureEvidence(id: wanko.id, rank: 16_303)),
     ]
     #expect(
       SearchResultFrequencyOrdering.ordered(results, ranks: evidence.mapValues { [$0] }).map(\.id)
-        == [exact.id, qualified.id]
+        == [inu.id, wanko.id]
     )
+  }
+
+  @Test("a later meaning and a mention stay below every first meaning, whatever their frequency")
+  func laterMeaningsAndMentionsStayBelow() {
+    let first = englishRank(priorityPresence: 1, fingerprint: "first")
+    let later = englishRank(priorityPresence: 0, senseOrder: 3, fingerprint: "later")
+    let mention = englishRank(lane: .tokenGloss, priorityPresence: 0, fingerprint: "mention")
+    #expect(first.presentationRank < later.presentationRank)
+    #expect(later.presentationRank < mention.presentationRank)
+    #expect(
+      englishRank(priorityPresence: 0, senseOrder: 1, fingerprint: "a").presentationRank
+        == englishRank(priorityPresence: 0, senseOrder: 4, fingerprint: "b").presentationRank)
+
+    let a = DictionaryEntry.fixture(id: "00000000000000000000000000000001", headword: "甲")
+    let b = DictionaryEntry.fixture(id: "00000000000000000000000000000002", headword: "乙")
+    let c = DictionaryEntry.fixture(id: "00000000000000000000000000000003", headword: "丙")
+    let results = LookupSearchResults(
+      items: [
+        fixtureEnglishItem(entry: c, rank: mention, fallbackOrder: 0),
+        fixtureEnglishItem(entry: b, rank: later, fallbackOrder: 1),
+        fixtureEnglishItem(entry: a, rank: first, fallbackOrder: 2),
+      ]
+    )
+    let evidence: [LanguageReferenceID: FrequencyLookupResult] = [
+      a.id: .evidence(fixtureEvidence(id: a.id, rank: 50_000)),
+      b.id: .evidence(fixtureEvidence(id: b.id, rank: 2)),
+      c.id: .evidence(fixtureEvidence(id: c.id, rank: 1)),
+    ]
+    #expect(
+      SearchResultFrequencyOrdering.ordered(results, ranks: evidence.mapValues { [$0] }).map(\.id)
+        == [a.id, b.id, c.id]
+    )
+  }
+
+  @Test(
+    "a meaning counts as the query only when its note in parentheses runs to the end",
+    arguments: [
+      ("dog", "dog (Canis (lupus) familiaris)", DictionaryMatch.GlossRelation.qualifiedGloss),
+      ("dog", "dog", .exactGloss),
+      ("see", "to see (a doctor)", .qualifiedInfinitive),
+      ("to", "to (take out and) show", .glossToken),
+      ("to", "to (nearly) drown", .glossToken),
+      ("dog", "dog (pejorative) days", .glossToken),
+      ("soft", "soft (and fluffy) (e.g. bed, bread, baked potato)", .qualifiedGloss),
+      ("tamagotchi", "tamagotchi (handheld digital pet) (trademark)", .qualifiedGloss),
+      ("dog", "dog (a) days (b)", .glossToken),
+    ])
+  func noteMustEndTheMeaning(
+    query: String, gloss: String, expected: DictionaryMatch.GlossRelation
+  ) throws {
+    let token = try LanguageReferenceData.glossTokenPattern(query)
+    #expect(
+      LanguageReferenceData.glossRelation(query: query, gloss: gloss, token: token) == expected)
+  }
+
+  @Test("without frequency, priority marks lead and romaji that resembles the query only breaks ties")
+  func romajiCorroborationOnlyBreaksTies() {
+    let marked = englishRank(priorityPresence: 0, corroboration: 1, fingerprint: "marked")
+    let corroborated = englishRank(priorityPresence: 1, corroboration: 0, fingerprint: "doggu")
+    let plain = englishRank(priorityPresence: 1, corroboration: 1, fingerprint: "plain")
+    #expect(corroborated.presentationRank == plain.presentationRank)
+    #expect([plain, corroborated, marked].sorted() == [marked, corroborated, plain])
   }
 
   @Test("legacy best-match rank is preserved for radical result bounds")
@@ -303,20 +363,22 @@ struct SearchResultOrderingTests {
 }
 
 private func englishRank(
+  lane: DictionaryMatch.EvidenceLane = .strongGloss,
   priorityPresence: Int,
-  relation: DictionaryMatch.GlossRelation
+  senseOrder: Int = 0,
+  corroboration: Int = 1,
+  fingerprint: String
 ) -> EnglishDictionaryRank {
   EnglishDictionaryRank(
-    lane: .strongGloss,
-    corroborationRank: 0,
+    lane: lane,
+    corroborationRank: corroboration,
     romajiSpecificityRank: 0,
-    senseOrder: 0,
+    senseOrder: senseOrder,
     priorityPresenceRank: priorityPresence,
-    relation: relation,
     priorityProfile: .unmarked,
     glossOrder: 0,
     headwordLength: 1,
-    semanticFingerprint: "fixture-\(priorityPresence)-\(relation.rawValue)"
+    semanticFingerprint: fingerprint
   )
 }
 

@@ -305,6 +305,16 @@ set. An exact dictionary form stays first (した is 下 and 舌 before する),
 by chain length, so a direct conjugation (まけたら → 負ける) outranks a longer chain, then prefix
 and contains matches. Radical searches keep only the leading lexical-rank group.
 
+An English query's match groups (`EnglishDictionaryPresentationRank`) are the evidence lane, the
+romaji specificity for romaji-only matches, and whether a strong gloss is in a later sense; the
+frequency re-sort reorders within a group, so 犬's "dog (Canis (lupus) familiaris)" competes with
+ワン子's "dog" on frequency (#701). `glossRelation` counts notes in parentheses only when they run to
+the end of the gloss (`endsInNote`), so "soft (and fluffy) (e.g. bed)" is "soft" and "to (take
+out and) show" is a mention of "to". Within a group,
+`EnglishDictionaryRank` breaks ties by JMdict priority, sense, gloss order, romaji corroboration,
+headword length, and fingerprint. `EnglishSearchCommonWordTests` checks the common word leads
+dog, water, cat, eat, and house on the bundled data, independent of the recorded suites.
+
 `JapaneseDeinflector` rewrites suffixes in chains: after the first rule, a rule applies only when
 its input classes include the class the previous one produced (ない is an i-adjective, so
 なかった → ない → the base). Its candidates are hypotheses, kept only when an entry with that exact
@@ -587,6 +597,12 @@ bottom to 1320 × 2868.
 4. In App Store Connect, the build appears under TestFlight once it's processed, about 15 minutes
    later, with no export compliance question (both configurations set
    `ITSAppUsesNonExemptEncryption` to `NO`); add the testers.
+
+Before submitting a version, open it in App Store Connect and check **Version Release**: choose
+**Manually release this version** unless it should go live on approval.
+`asc versions create --release-type MANUAL` left 2.0.0 on automatic release, so it went live as
+soon as App Review approved it; `asc versions list --app 6800229215 --output json` shows each
+version's `releaseType`.
 
 Check it on a device from TestFlight: signing in with Apple, Google, and a code reaches
 production's service, a change syncs to a second device, and deleting the account works.

@@ -20,7 +20,6 @@ const strongGloss: Rank = {
   romajiSpecificityRank: 0,
   senseOrder: 0,
   priorityPresenceRank: 0,
-  relation: 0,
   priorityProfile: { primaryMask: 0, secondaryMask: 0, newsFrequencyBand: null },
   glossOrder: 0,
   headwordLength: 2,

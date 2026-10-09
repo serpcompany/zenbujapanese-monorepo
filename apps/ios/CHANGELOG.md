@@ -4,6 +4,13 @@ All notable user-facing changes to Zenbu Japanese are recorded here.
 
 ## Unreleased
 
+### Fixed
+
+- English searches put the common word first: `dog` shows 犬 first and `water` shows 水, where rarer
+  words whose meaning was exactly the query used to come ahead of them.
+
+## [2.0.0] - 2026-10-09
+
 ### Added
 
 - Sign in to a Zenbu account from **Account → Sign In to Sync**, with Apple, Google, or a code

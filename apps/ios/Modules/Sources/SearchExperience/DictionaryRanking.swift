@@ -105,54 +105,39 @@ struct DictionaryMatch: Hashable, Sendable {
   let displayedFormPriority: LanguageReferencePriorityProfile
 }
 
-protocol EnglishPlacementRank {
-  var lane: DictionaryMatch.EvidenceLane { get }
-  var corroborationRank: Int { get }
-  var romajiSpecificityRank: Int { get }
-  var senseOrder: Int { get }
-}
-
-extension EnglishPlacementRank {
-  var englishPlacement: (DictionaryMatch.EvidenceLane, Int, Int, Int) {
-    (lane, corroborationRank, romajiSpecificityRank, senseOrder)
-  }
-}
-
-struct EnglishDictionaryRank: Comparable, Sendable, EnglishPlacementRank {
+struct EnglishDictionaryRank: Comparable, Sendable {
   let lane: DictionaryMatch.EvidenceLane
   let corroborationRank: Int
   let romajiSpecificityRank: Int
   let senseOrder: Int
   let priorityPresenceRank: Int
-  let relation: DictionaryMatch.GlossRelation
   let priorityProfile: LanguageReferencePriorityProfile
   let glossOrder: Int
   let headwordLength: Int
   let semanticFingerprint: String
 
-  var presentationRank: DictionaryPresentationRank {
-    .english(
-      EnglishDictionaryPresentationRank(
-        lane: lane,
-        corroborationRank: corroborationRank,
-        romajiSpecificityRank: romajiSpecificityRank,
-        senseOrder: senseOrder,
-        relation: relation
-      )
+  var placement: EnglishDictionaryPresentationRank {
+    EnglishDictionaryPresentationRank(
+      lane: lane,
+      romajiSpecificityRank: romajiSpecificityRank,
+      isLaterSense: lane == .strongGloss && senseOrder > 0
     )
   }
 
+  var presentationRank: DictionaryPresentationRank { .english(placement) }
+
   static func < (lhs: Self, rhs: Self) -> Bool {
-    if lhs.englishPlacement != rhs.englishPlacement {
-      return lhs.englishPlacement < rhs.englishPlacement
-    }
+    if lhs.placement != rhs.placement { return lhs.placement < rhs.placement }
     if lhs.priorityPresenceRank != rhs.priorityPresenceRank {
       return lhs.priorityPresenceRank < rhs.priorityPresenceRank
     }
-    if lhs.relation != rhs.relation { return lhs.relation < rhs.relation }
     if lhs.priorityProfile < rhs.priorityProfile { return true }
     if rhs.priorityProfile < lhs.priorityProfile { return false }
+    if lhs.senseOrder != rhs.senseOrder { return lhs.senseOrder < rhs.senseOrder }
     if lhs.glossOrder != rhs.glossOrder { return lhs.glossOrder < rhs.glossOrder }
+    if lhs.corroborationRank != rhs.corroborationRank {
+      return lhs.corroborationRank < rhs.corroborationRank
+    }
     if lhs.headwordLength != rhs.headwordLength { return lhs.headwordLength < rhs.headwordLength }
     return lhs.semanticFingerprint < rhs.semanticFingerprint
   }
@@ -203,18 +188,14 @@ enum DictionaryPresentationRank: Equatable, Sendable, Comparable {
   }
 }
 
-struct EnglishDictionaryPresentationRank: Equatable, Sendable, Comparable, EnglishPlacementRank {
+struct EnglishDictionaryPresentationRank: Equatable, Sendable, Comparable {
   let lane: DictionaryMatch.EvidenceLane
-  let corroborationRank: Int
   let romajiSpecificityRank: Int
-  let senseOrder: Int
-  let relation: DictionaryMatch.GlossRelation
+  let isLaterSense: Bool
 
   static func < (lhs: Self, rhs: Self) -> Bool {
-    if lhs.englishPlacement != rhs.englishPlacement {
-      return lhs.englishPlacement < rhs.englishPlacement
-    }
-    return lhs.relation < rhs.relation
+    (lhs.lane, lhs.romajiSpecificityRank, lhs.isLaterSense ? 1 : 0)
+      < (rhs.lane, rhs.romajiSpecificityRank, rhs.isLaterSense ? 1 : 0)
   }
 }
 
@@ -233,14 +214,12 @@ enum DictionaryLegacyPresentationRank: Equatable, Sendable {
   static func == (lhs: Self, rhs: Self) -> Bool {
     switch (lhs, rhs) {
     case let (.english(left), .english(right)):
-      return left.lane == right.lane
-        && left.corroborationRank == right.corroborationRank
-        && left.romajiSpecificityRank == right.romajiSpecificityRank
-        && left.senseOrder == right.senseOrder
+      return left.placement == right.placement
         && left.priorityPresenceRank == right.priorityPresenceRank
-        && left.relation == right.relation
         && left.priorityProfile == right.priorityProfile
+        && left.senseOrder == right.senseOrder
         && left.glossOrder == right.glossOrder
+        && left.corroborationRank == right.corroborationRank
     case let (.japanese(left), .japanese(right)):
       return left.relation == right.relation
         && left.priorityProfile == right.priorityProfile
