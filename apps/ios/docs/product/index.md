@@ -8,8 +8,10 @@ decided the app must have but doesn't yet.
 The app runs in portrait on iPhone. It has four tabs:
 
 - **Search** opens the [Dictionary](dictionary.md) Product Experience. Its results can be
-  re-sorted by a frequency dictionary or by known words from the **Sorted by** row at their top
-  ([Sorting results](dictionary.md#sorting-results)).
+  re-sorted by a frequency dictionary or by known words, and filtered to hide known words or to
+  the words chosen dictionaries rank, from the **Sorted by** row at their top
+  ([Sorting results](dictionary.md#sorting-results),
+  [Filtering results](dictionary.md#filtering-results)).
 - **Translate** opens [Translate](translate.md), a Japanese and English conversation translator
   that runs on the iPhone, and Image Search, which reads Japanese in a photo
   ([Image Search](translate.md#image-search)).

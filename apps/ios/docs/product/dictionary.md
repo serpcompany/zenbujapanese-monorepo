@@ -31,8 +31,8 @@ button while it has text.
   clears the text.
 - **Results.** Submitting, or picking a recent search, the reading refinement, or a handwriting
   or radical candidate, puts the keyboard away and keeps the query in the field at the top, with
-  **X** beside it. The first row of the results names the order and opens Sort
-  ([Sorting results](#sorting-results)).
+  **X** beside it. The first row of the results names the order and opens Sort and Filter
+  ([Sorting results](#sorting-results), [Filtering results](#filtering-results)).
 - **X** clears the query and returns to Recent.
 
 ### Handwriting and Radicals
@@ -133,6 +133,33 @@ sort shows as Default and returns once the ranks load. If the chosen dictionary 
 removed, Search goes back to Default. The Kanji row, Example Sentences, the reading refinement, and Discovered Words keep their
 places; when there are no word rows to sort (only Discovered Words, or only a single kanji's
 Kanji row), the row isn't shown.
+
+### Filtering results
+
+The **Sorted by** row's menu has **Filter** under **Sort By**, with the current filter underneath:
+**All Words**, **Unknown Words**, **Unknown, in JLPT**, **In JLPT, YouTube**. While a filter is on,
+the row adds how many after the order, as in **Sorted by Default · 2 filters**. **Filter** opens
+checkmark items, any number checked at once, and stays open while they're toggled:
+
+- **Show All Words**, at the top while any filter is on, unchecks everything.
+- **Hide Known Words.** Checked, only the words the learner doesn't know yet show; unchecked,
+  known status doesn't filter. Marking a word known or unknown moves it out of or into the list
+  at once.
+- **In <dictionary>**, one for each enabled frequency dictionary by the name Sort By uses. With
+  any checked, a word shows when at least one of them ranks it (JLPT at any level); with none,
+  dictionaries don't filter.
+
+The two combine: **Hide Known Words** with **In JLPT** shows the unknown words JLPT lists.
+Filtering keeps the chosen sort. When it hides words, a row under **Sorted by** says how many
+(**3 words hidden by filter**) beside a **Clear Filter** button; when it hides every word, the
+list shows **No Words Match Your Filter** with the count and **Clear Filter**.
+
+Changing the filter updates the visible results without searching again and announces how many
+words show to VoiceOver. The filter is kept on the device across launches and applies to
+Japanese, English, and romaji searches. While ranks are loading, or if frequency data can't be
+read, only **Hide Known Words** applies and the dictionaries come back once the ranks load. A
+dictionary that's disabled or removed drops out of the filter, and the rest of it stays. The
+Kanji row, Example Sentences, the reading refinement, and Discovered Words are never filtered.
 
 ## Dictionary and kanji details
 
