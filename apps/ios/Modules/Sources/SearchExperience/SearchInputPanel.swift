@@ -184,7 +184,8 @@ private struct SearchCandidateTile: View {
       }
       .padding(.horizontal, 4)
       .frame(maxWidth: .infinity, minHeight: height)
-      .searchInputGlass(in: .rect(cornerRadius: 14))
+      .background(Color(uiColor: .secondarySystemFill), in: .rect(cornerRadius: 8))
+      .contentShape(.rect(cornerRadius: 8))
     }
     .buttonStyle(.plain)
     .accessibilityLabel(meaning.map { "\(candidate), \($0)" } ?? candidate)

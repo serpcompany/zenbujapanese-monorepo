@@ -41,7 +41,8 @@ Tapping the pencil or the grid slides up a full-height sheet over the search fie
 bar, with a grabber at the top: drag it down to close it. Drawing on the pad never drags the
 sheet. The same two buttons stay at its bottom left, in the same place as on the search screen,
 with the current one highlighted, so the other mode is one tap away. Both panels share one gray
-background and glass candidate tiles and buttons (white in light mode).
+background, flat candidate tiles in the same fill as the radical squares, and glass buttons
+(white in light mode).
 
 - **Handwriting.** A white drawing pad sits at the top, with candidate tiles below it:
   five to a row, each with the kanji's first meaning. Three rows show and more scroll. **Undo**,
