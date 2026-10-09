@@ -6,6 +6,7 @@ struct SearchView: View {
   let lookupClient: LookupClient
   let recentSearchStore: RecentSearchStore
   let handwritingRecognitionClient: HandwritingRecognitionClient
+  let kanjiLookupClient: KanjiLookupClient
   let radicalLookupClient: RadicalLookupClient
   let exampleSentenceClient: ExampleSentenceClient
   let frequencyCapability: FrequencyCapability
@@ -21,6 +22,7 @@ struct SearchView: View {
   @State private var recentSearchRefreshID = 0
   @State private var recentSearches: [SearchQuery] = []
   @State private var isSearchPresented = false
+  @State private var inputPanelMode = SearchInputMode.handwriting
   @FocusState private var isSearchFocused: Bool
 
   var body: some View {
@@ -37,19 +39,23 @@ struct SearchView: View {
 
   private var searchScreen: some View {
     let taskID = searchTaskID
-    return VStack(spacing: 0) {
-      presentedContent
-
-      inputModeAccessory
-    }
-    .safeAreaInset(edge: .bottom, spacing: 0) {
-      if inputMode == .radicals {
-        RadicalInputView(
-          query: $query,
-          lookupClient: radicalLookupClient,
-          selectMode: selectInputMode,
-          submit: submitRadicalQuery
-        )
+    return presentedContent
+    .frame(maxWidth: .infinity, maxHeight: .infinity)
+    .fullScreenCover(isPresented: inputPanelPresentation, onDismiss: focusKeyboardIfChosen) {
+      NavigationStack {
+        inputPanelContent
+          .toolbar {
+            ToolbarItem(placement: .principal) {
+              Picker("Search input", selection: inputModeScope) { inputModeOptions }
+                .pickerStyle(.segmented)
+            }
+            ToolbarItem(placement: .topBarTrailing) {
+              Button("Close", systemImage: "xmark", role: .close) {
+                inputMode = .inactive
+              }
+            }
+          }
+          .navigationBarTitleDisplayMode(.inline)
       }
     }
     .navigationTitle("Search")
@@ -59,6 +65,7 @@ struct SearchView: View {
       prompt: Text(dynamicTypeSize >= .xxLarge ? "Search" : "Search Japanese or English"),
       submit: submitTypedQuery
     )
+    .searchScopes(inputModeScope, activation: .onSearchPresentation) { inputModeOptions }
     .searchFocused($isSearchFocused)
     .onChange(of: isSearchFocused) { _, focused in
       if focused { inputMode = .keyboard }
@@ -151,31 +158,45 @@ struct SearchView: View {
         Text("Try another Japanese or English Search query.")
       }
       .accessibilityIdentifier("search.no-results")
-
-    case .specializedInput:
-      Color.clear
     }
   }
 
   @ViewBuilder
-  private var inputModeAccessory: some View {
-    switch inputMode {
-    case .keyboard where isSearchFocused:
-      SearchInputModePicker(
-        selectedMode: .keyboard,
-        selectMode: selectInputMode
+  private var inputModeOptions: some View {
+    Text("Keyboard").tag(SearchInputMode.keyboard)
+    Text("Handwriting").tag(SearchInputMode.handwriting)
+    Text("Radicals").tag(SearchInputMode.radicals)
+  }
+
+  private var inputPanelPresentation: Binding<Bool> {
+    Binding(
+      get: { inputMode == .handwriting || inputMode == .radicals },
+      set: { presented in
+        if !presented, inputMode == .handwriting || inputMode == .radicals {
+          inputMode = .inactive
+        }
+      })
+  }
+
+  private func focusKeyboardIfChosen() {
+    if inputMode == .keyboard { isSearchFocused = true }
+  }
+
+  @ViewBuilder
+  private var inputPanelContent: some View {
+    if inputPanelMode == .radicals {
+      RadicalInputView(
+        query: $query,
+        lookupClient: radicalLookupClient,
+        submit: submitRadicalQuery
       )
-    case .handwriting:
+    } else {
       HandwritingInputView(
         query: $query,
         recognitionClient: handwritingRecognitionClient,
-        selectMode: selectInputMode,
+        kanjiLookupClient: kanjiLookupClient,
         submit: submitComposedQuery
       )
-    case .radicals:
-      EmptyView()
-    default:
-      EmptyView()
     }
   }
 
@@ -233,6 +254,12 @@ struct SearchView: View {
     }
   }
 
+  private var inputModeScope: Binding<SearchInputMode> {
+    Binding(
+      get: { inputMode == .inactive ? .keyboard : inputMode },
+      set: { selectInputMode($0) })
+  }
+
   private var searchQuery: SearchQuery {
     SearchQuery(query)
   }
@@ -241,17 +268,12 @@ struct SearchView: View {
     SearchTaskID(query: query, retryID: retryID)
   }
 
-  private var showsRecentSearches: Bool {
-    searchQuery.isEmpty && (inputMode == .inactive || inputMode == .keyboard)
-  }
-
   private var showsRecentSearchActions: Bool {
     resolvedPresentationState == .idle && !recentSearches.isEmpty
   }
 
   private var resolvedPresentationState: SearchPresentationState {
-    guard searchQuery.isEmpty else { return presentationState }
-    return showsRecentSearches ? .idle : .specializedInput
+    searchQuery.isEmpty ? .idle : presentationState
   }
 
   private func clearRecentSearches() {
@@ -278,6 +300,7 @@ struct SearchView: View {
 
   private func selectInputMode(_ mode: SearchInputMode) {
     sparseRadicalQuery = nil
+    if mode == .handwriting || mode == .radicals { inputPanelMode = mode }
     inputMode = mode
     isSearchFocused = mode == .keyboard
   }
@@ -320,7 +343,6 @@ private struct SearchTaskID: Hashable {
 
 private enum SearchPresentationState: Equatable {
   case idle
-  case specializedInput
   case loading
   case results
   case noResults

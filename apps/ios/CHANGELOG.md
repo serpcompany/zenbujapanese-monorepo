@@ -24,6 +24,9 @@ All notable user-facing changes to Zenbu Japanese are recorded here.
 - Search's top bar matches Player's: a small title and the same search field, which slides up
   while you type and keeps your query after a search, with **X** to go back to your recent
   searches.
+- Handwriting and Radicals open full screen, with the Keyboard / Handwriting / Radicals switcher
+  staying in one place. Handwriting shows bigger candidates with their meanings and has **Undo**;
+  both have the same **Clear** button.
 
 ### Removed
 
@@ -32,6 +35,7 @@ All notable user-facing changes to Zenbu Japanese are recorded here.
 
 ### Fixed
 
+- Radicals no longer draws over the search results.
 - Choosing **Photo Library** for Image Search opens the picker again.
 - English searches put the common word first: `dog` shows 犬 first and `water` shows 水, where rarer
   words whose meaning was exactly the query used to come ahead of them.
