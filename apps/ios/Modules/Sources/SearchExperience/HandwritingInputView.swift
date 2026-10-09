@@ -59,10 +59,10 @@ struct HandwritingInputView: View {
         ProgressView().controlSize(.small)
         Text("Recognizing…")
       case .noCandidates:
-        Text("No candidates yet. Add a stroke or clear and try again.")
+        Text("No candidates yet. Add a stroke, or undo and try again.")
           .accessibilityIdentifier("handwriting.no-candidates")
       case .failed:
-        Text("Recognition unavailable. Clear and try again.")
+        Text("Recognition unavailable. Undo and try again.")
           .accessibilityIdentifier("handwriting.failure")
       }
     }
