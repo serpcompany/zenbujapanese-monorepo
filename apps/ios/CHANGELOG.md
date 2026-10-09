@@ -6,6 +6,15 @@ All notable user-facing changes to Zenbu Japanese are recorded here.
 
 ### Added
 
+- Zenbu Japanese runs on iPad and on Macs with Apple silicon, as the same app: get it once and
+  sign in to the same Zenbu account to keep your known words, lists, Recent videos, and bookmarks
+  the same everywhere. On iPad it turns every way and runs beside other apps; on iPad and the Mac
+  the tabs become a sidebar. On the Mac, Settings (⌘,) holds your account and preferences, ⌘F
+  goes to Search, ⌘⇧I opens Translate's **Camera** to search an image, and ⌘1 to ⌘4 switch tabs.
+  On the Mac, **Camera** pastes an image, and a photo taken on your iPhone with Continuity Camera
+  opens in Image Search; on every device, drag images onto the window to open them there.
+  Right-click a list, a known word, a Recent video, or a frequency dictionary on the Mac for what
+  a swipe does on the iPhone.
 - Sort search results from the **•••** menu: **Sort By** a frequency dictionary, most or least
   common first (JLPT by level), or by your known words, known or unknown first. Your choice stays
   across launches and applies to Japanese, English, and romaji searches.
@@ -17,6 +26,13 @@ All notable user-facing changes to Zenbu Japanese are recorded here.
 
 ### Fixed
 
+- Player's **Recent**, word notes, the Media Library, and the profile are no longer written over
+  when Zenbu can't read what was saved: a copy is kept on your device, and each keeps everything
+  it can read. A photo you delete is still deleted, within 30 days if a kept copy names it.
+- In the half-height word sheet in Player, Image Search, and Translate, a word's **Kanji** and its
+  part of speech (which opens its conjugations) now open, in the tab you're in.
+- When a newer version of Zenbu saved the bookmarks synced to your device, Zenbu Account now says
+  to update Zenbu instead of reopening it.
 - Choosing **Photo Library** or **Files** for Image Search opens the picker again.
 - English searches put the common word first: `dog` shows 犬 first and `water` shows 水, where rarer
   words whose meaning was exactly the query used to come ahead of them.
@@ -25,15 +41,6 @@ All notable user-facing changes to Zenbu Japanese are recorded here.
 
 ### Added
 
-- Zenbu Japanese runs on iPad and on Macs with Apple silicon, as the same app: get it once and
-  sign in to the same Zenbu account to keep your known words, lists, Recent videos, and bookmarks
-  the same everywhere. On iPad it turns every way and runs beside other apps; on iPad and the Mac
-  the tabs become a sidebar. On the Mac, Settings (⌘,) holds your account and preferences, ⌘F
-  goes to Search, ⌘⇧I opens Translate's **Camera** to search an image, and ⌘1 to ⌘4 switch tabs.
-  On the Mac, **Camera** pastes an image, and a photo taken on your iPhone with Continuity Camera
-  opens in Image Search; on every device, drag images onto the window to open them there.
-  Right-click a list, a known word, a Recent video, or a frequency dictionary on the Mac for what
-  a swipe does on the iPhone.
 - Sign in to a Zenbu account from **Account → Sign In to Sync**, with Apple, Google, or a code
   sent by email, to keep your known words and lists the same on all your devices and Zenbu apps.
   Zenbu syncs after each change, when it opens, and when you tap **Sync Now**. Everything still
@@ -105,13 +112,6 @@ All notable user-facing changes to Zenbu Japanese are recorded here.
 
 ### Fixed
 
-- Player's **Recent**, word notes, the Media Library, and the profile are no longer written over
-  when Zenbu can't read what was saved: a copy is kept on your device, and each keeps everything
-  it can read. A photo you delete is still deleted, within 30 days if a kept copy names it.
-- In the half-height word sheet in Player, Image Search, and Translate, a word's **Kanji** and its
-  part of speech (which opens its conjugations) now open, in the tab you're in.
-- When a newer version of Zenbu saved the bookmarks synced to your device, Zenbu Account now says
-  to update Zenbu instead of reopening it.
 - About 1,260 more words now show a YouTube rank, including common ones whose spelling belongs to
   more than one dictionary word, such as 事 (こと), 時 (とき), 年 (ねん), 上 (うえ), and 先生
   (せんせい). About 100 words, such as 色 and 猫, now take a better YouTube rank from their usual
