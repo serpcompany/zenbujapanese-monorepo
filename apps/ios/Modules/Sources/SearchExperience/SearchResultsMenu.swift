@@ -4,16 +4,12 @@ struct SearchResultsMenu: View {
   @Binding var sort: SearchResultSort
   let appliedSort: SearchResultSort
   @Binding var filter: SearchResultFilter
-  let appliedFilter: SearchResultFilter
   let dictionaries: [FrequencyPackDisclosure]
-
-  private static let filterTitle = "Filter"
 
   var body: some View {
     Menu {
-      sortKeyPicker
-      orderPicker
-      filterPickers
+      sortPicker
+      filterPicker
     } label: {
       HStack(spacing: 4) {
         Label(status, systemImage: "arrow.up.arrow.down")
@@ -30,82 +26,33 @@ struct SearchResultsMenu: View {
 
   private var status: String {
     let sortStatus = appliedSort.status(dictionaries: dictionaries)
-    return appliedFilter.statusSuffix.map { "\(sortStatus) · \($0)" } ?? sortStatus
+    return filter.statusSuffix.map { "\(sortStatus) · \($0)" } ?? sortStatus
   }
 
-  @ViewBuilder
-  private var filterPickers: some View {
-    Section {
-      Picker(selection: wordsBinding) {
-        ForEach(KnownWordFilter.allCases, id: \.self) { Text($0.title).tag($0) }
-      } label: {
-        Text(Self.filterTitle)
-        Text("Words")
-      }
-      .pickerStyle(.menu)
-      .accessibilityIdentifier("search.filter.words")
-    }
-    Section {
-      Picker(selection: dictionaryBinding) {
-        Text(SearchResultFilter.allTitle).tag(String?.none)
-        ForEach(dictionaries, id: \.id) { dictionary in
-          Text(dictionary.sortName).tag(Optional(dictionary.id.family))
-        }
-      } label: {
-        Text(Self.filterTitle)
-        Text("Frequency Dictionaries")
-      }
-      .pickerStyle(.menu)
-      .accessibilityIdentifier("search.filter.dictionary")
-    }
-  }
-
-  private var wordsBinding: Binding<KnownWordFilter> {
-    Binding(get: { appliedFilter.words }, set: { filter.words = $0 })
-  }
-
-  private var dictionaryBinding: Binding<String?> {
-    Binding(get: { appliedFilter.dictionaryFamily }, set: { filter.dictionaryFamily = $0 })
-  }
-
-  private var sortKeyPicker: some View {
-    Picker(
-      "Sort By",
-      selection: Binding(
-        get: { appliedSort.key },
-        set: { key in
-          if key != appliedSort.key { sort = key.initialSort }
-        })
-    ) {
-      Text(SearchResultSort.relevanceTitle).tag(SearchResultSortKey.relevance)
+  private var sortPicker: some View {
+    Picker(selection: Binding(get: { appliedSort }, set: { sort = $0 })) {
+      Text(SearchResultSort.relevanceTitle).tag(SearchResultSort.relevance)
       ForEach(dictionaries, id: \.id) { dictionary in
-        Text(dictionary.sortName).tag(SearchResultSortKey.frequency(family: dictionary.id.family))
+        Text(dictionary.sortName).tag(SearchResultSort.frequency(family: dictionary.id.family))
       }
-      Text(SearchResultSort.knownWordsTitle).tag(SearchResultSortKey.knownWords)
+      Text(SearchResultSort.knownWordsTitle).tag(SearchResultSort.knownWords)
+    } label: {
+      Text("Sort By")
+      Text(appliedSort.summary(dictionaries: dictionaries))
     }
-    .pickerStyle(.inline)
-    .labelsVisibility(.visible)
+    .pickerStyle(.menu)
+    .accessibilityIdentifier("search.sort-by")
   }
 
-  @ViewBuilder
-  private var orderPicker: some View {
-    switch appliedSort {
-    case .relevance:
-      EmptyView()
-    case .frequency(let family, let direction):
-      Picker(
-        "Order",
-        selection: Binding(get: { direction }, set: { sort = .frequency(family: family, $0) })
-      ) {
-        ForEach(FrequencySortDirection.allCases, id: \.self) { Text($0.title).tag($0) }
-      }
-      .pickerStyle(.inline)
-    case .knownWords(let direction):
-      Picker("Order", selection: Binding(get: { direction }, set: { sort = .knownWords($0) })) {
-        ForEach(KnownWordSortDirection.allCases, id: \.self) { Text($0.title).tag($0) }
-      }
-      .pickerStyle(.inline)
+  private var filterPicker: some View {
+    Picker(selection: $filter) {
+      ForEach(SearchResultFilter.allCases, id: \.self) { Text($0.title).tag($0) }
+    } label: {
+      Text("Filter")
+      Text("Words")
     }
+    .pickerStyle(.menu)
+    .accessibilityIdentifier("search.filter.words")
   }
 }
 

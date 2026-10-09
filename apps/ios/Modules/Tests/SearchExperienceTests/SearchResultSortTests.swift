@@ -5,8 +5,8 @@ import Testing
 struct SearchResultSortTests: SearchResultFixture {
   private var defaultOrder: [DictionaryEntry] { [first, second, third, fourth, fifth] }
 
-  @Test("each rank dictionary orders every result by its own rank, in both directions")
-  func rankDictionariesOrderBothWays() throws {
+  @Test("each rank dictionary orders every result by its own rank, most common first")
+  func rankDictionariesOrderMostCommonFirst() throws {
     let catalog = try FrequencyPackCatalog.bundled().packs.map(\.disclosure)
     let rankDictionaries = catalog.filter { $0.kind == .rank }
     #expect(rankDictionaries.count >= 7)
@@ -14,19 +14,14 @@ struct SearchResultSortTests: SearchResultFixture {
       let ranks = ranks(
         in: catalog, sorted: dictionary,
         values: [first.id: 500, third.id: 20, fourth.id: 500, fifth.id: 9_000])
-      let family = dictionary.id.family
       #expect(
-        ordered(.frequency(family: family, .mostCommonFirst), ranks)
+        ordered(.frequency(family: dictionary.id.family), ranks)
           == ids(third, first, fourth, fifth, second),
-        "\(dictionary.displayName) most common first")
-      #expect(
-        ordered(.frequency(family: family, .leastCommonFirst), ranks)
-          == ids(fifth, first, fourth, third, second),
-        "\(dictionary.displayName) least common first")
+        "\(dictionary.displayName)")
     }
   }
 
-  @Test("JLPT orders N5 first when most common first and N1 first when least common first")
+  @Test("JLPT orders N5 first and N1 last")
   func jlptOrdersByLevel() throws {
     let catalog = try FrequencyPackCatalog.bundled().packs.map(\.disclosure)
     let jlpt = try #require(catalog.first { $0.kind == .level })
@@ -37,32 +32,23 @@ struct SearchResultSortTests: SearchResultFixture {
         fourth.id: JLPTLevel.n3.rawValue, fifth.id: JLPTLevel.n1.rawValue,
       ])
     #expect(
-      ordered(.frequency(family: jlpt.id.family, .mostCommonFirst), ranks)
+      ordered(.frequency(family: jlpt.id.family), ranks)
         == ids(third, first, fourth, fifth, second))
-    #expect(
-      ordered(.frequency(family: jlpt.id.family, .leastCommonFirst), ranks)
-        == ids(fifth, first, fourth, third, second))
   }
 
-  @Test("known first and unknown first keep the default order within each group")
-  func knownWordsOrderBothWays() {
-    let known: Set = [first.id, fourth.id]
+  @Test("Known Words puts known words first and keeps the default order within each group")
+  func knownWordsFirst() {
     #expect(
-      ordered(.knownWords(.knownFirst), [:], known: known)
+      ordered(.knownWords, [:], known: [first.id, fourth.id])
         == ids(first, fourth, second, third, fifth))
-    #expect(
-      ordered(.knownWords(.unknownFirst), [:], known: known)
-        == ids(second, third, fifth, first, fourth))
   }
 
-  @Test("words the chosen dictionary doesn't rank go last, in default order, in both directions")
+  @Test("words the chosen dictionary doesn't rank go last, in default order")
   func wordsWithoutDataGoLast() {
     let ranks = ranks(in: [youTube], sorted: youTube, values: [third.id: 40, fifth.id: 10])
-    for direction in FrequencySortDirection.allCases {
-      #expect(
-        Array(ordered(.frequency(family: youTube.id.family, direction), ranks).suffix(3))
-          == ids(first, second, fourth))
-    }
+    #expect(
+      ordered(.frequency(family: youTube.id.family), ranks)
+        == ids(fifth, third, first, second, fourth))
   }
 
   @Test("ties keep their default order")
@@ -70,11 +56,7 @@ struct SearchResultSortTests: SearchResultFixture {
     let ranks = ranks(
       in: [youTube], sorted: youTube,
       values: Dictionary(uniqueKeysWithValues: defaultOrder.map { ($0.id, 7) }))
-    for direction in FrequencySortDirection.allCases {
-      #expect(
-        ordered(.frequency(family: youTube.id.family, direction), ranks)
-          == defaultOrder.map(\.id))
-    }
+    #expect(ordered(.frequency(family: youTube.id.family), ranks) == defaultOrder.map(\.id))
   }
 
   @Test("Default keeps the order it is given")
@@ -84,20 +66,18 @@ struct SearchResultSortTests: SearchResultFixture {
 
   @Test("a disabled or removed dictionary falls back to Default and the choice is forgotten")
   func disabledDictionaryFallsBack() {
-    let byAnime = SearchResultSort.frequency(family: anime.id.family, .mostCommonFirst)
+    let byAnime = SearchResultSort.frequency(family: anime.id.family)
     #expect(SearchResultSortOrdering.applied(byAnime, dictionaries: [jlpt]) == .relevance)
     #expect(SearchResultSortOrdering.forgetsChoice(byAnime, dictionaries: [jlpt]))
     #expect(SearchResultSortOrdering.applied(byAnime, dictionaries: [jlpt, anime]) == byAnime)
     #expect(!SearchResultSortOrdering.forgetsChoice(byAnime, dictionaries: [jlpt, anime]))
-    #expect(
-      SearchResultSortOrdering.applied(.knownWords(.unknownFirst), dictionaries: [])
-        == .knownWords(.unknownFirst))
-    #expect(!SearchResultSortOrdering.forgetsChoice(.knownWords(.unknownFirst), dictionaries: []))
+    #expect(SearchResultSortOrdering.applied(.knownWords, dictionaries: []) == .knownWords)
+    #expect(!SearchResultSortOrdering.forgetsChoice(.knownWords, dictionaries: []))
   }
 
   @Test("while ranks load or can't be read, a dictionary sort shows Default and is kept")
   func unknownDictionariesKeepChoice() {
-    let byAnime = SearchResultSort.frequency(family: anime.id.family, .leastCommonFirst)
+    let byAnime = SearchResultSort.frequency(family: anime.id.family)
     #expect(SearchResultSortOrdering.applied(byAnime, dictionaries: nil) == .relevance)
     #expect(!SearchResultSortOrdering.forgetsChoice(byAnime, dictionaries: nil))
   }
@@ -106,7 +86,7 @@ struct SearchResultSortTests: SearchResultFixture {
   func rebuiltPackKeepsSort() {
     let rebuilt = FrequencyPackDisclosure.fixture(
       id: "zenbu.jiten.anime.ja.ordered-v3", displayName: "Anime")
-    let byAnime = SearchResultSort.frequency(family: "zenbu.jiten.anime", .leastCommonFirst)
+    let byAnime = SearchResultSort.frequency(family: "zenbu.jiten.anime")
     #expect(SearchResultSortOrdering.applied(byAnime, dictionaries: [rebuilt]) == byAnime)
   }
 
@@ -130,10 +110,9 @@ struct SearchResultSortTests: SearchResultFixture {
     ]
     #expect(
       SearchResultSortOrdering.chipRanks(
-        entryRanks, for: .frequency(family: anime.id.family, .mostCommonFirst)
+        entryRanks, for: .frequency(family: anime.id.family)
       )?.compactMap(\.pack) == [anime, jlpt, youTube])
-    #expect(
-      SearchResultSortOrdering.chipRanks(entryRanks, for: .knownWords(.knownFirst)) == entryRanks)
+    #expect(SearchResultSortOrdering.chipRanks(entryRanks, for: .knownWords) == entryRanks)
     #expect(SearchResultSortOrdering.chipRanks(entryRanks, for: .relevance) == entryRanks)
   }
 
@@ -141,36 +120,33 @@ struct SearchResultSortTests: SearchResultFixture {
     "the choice is stored as text that reads back as the same choice",
     arguments: [
       SearchResultSort.relevance,
-      .frequency(family: "zenbu.tubelex.youtube", .mostCommonFirst),
-      .frequency(family: "zenbu.jlpt.waller", .leastCommonFirst),
-      .knownWords(.knownFirst),
-      .knownWords(.unknownFirst),
+      .frequency(family: "zenbu.tubelex.youtube"),
+      .knownWords,
     ])
   func storedChoiceRoundTrips(sort: SearchResultSort) {
     #expect(SearchResultSort(rawValue: sort.rawValue) == sort)
   }
 
   @Test(
-    "stored text that isn't a choice is ignored, so Search starts at Default",
-    arguments: ["", "frequency", "frequency|zenbu.jlpt.waller|sideways", "known-words|maybe", "x"])
+    "stored text that isn't a choice, including one with a direction, is ignored",
+    arguments: [
+      "", "frequency", "frequency|zenbu.jlpt.waller|least-common-first",
+      "known-words|unknown-first", "x",
+    ])
   func unreadableStoredChoiceIsIgnored(rawValue: String) {
     #expect(SearchResultSort(rawValue: rawValue) == nil)
   }
 
   @Test("the menu and the list name the order unless it's Default, and VoiceOver hears it")
   func summaryAndAnnouncement() {
-    let byYouTube = SearchResultSort.frequency(family: youTube.id.family, .mostCommonFirst)
-    let byJLPT = SearchResultSort.frequency(family: jlpt.id.family, .leastCommonFirst)
+    let byYouTube = SearchResultSort.frequency(family: youTube.id.family)
     #expect(SearchResultSort.relevance.summary(dictionaries: []) == "Default")
-    #expect(byYouTube.summary(dictionaries: [youTube]) == "YouTube, Most Common")
-    #expect(byJLPT.summary(dictionaries: [jlpt]) == "JLPT, Least Common")
-    #expect(
-      SearchResultSort.knownWords(.unknownFirst).summary(dictionaries: [])
-        == "Known Words, Unknown First")
-    #expect(
-      byYouTube.announcement(dictionaries: [youTube]) == "Sorted by YouTube, most common first")
+    #expect(byYouTube.summary(dictionaries: [youTube]) == "YouTube")
+    #expect(SearchResultSort.knownWords.summary(dictionaries: []) == "Known Words")
+    #expect(byYouTube.announcement(dictionaries: [youTube]) == "Sorted by YouTube")
+    #expect(SearchResultSort.knownWords.announcement(dictionaries: []) == "Sorted by known words")
     #expect(SearchResultSort.relevance.status(dictionaries: [youTube]) == "Sorted by Default")
-    #expect(byYouTube.status(dictionaries: [youTube]) == "Sorted by YouTube, Most Common")
+    #expect(byYouTube.status(dictionaries: [youTube]) == "Sorted by YouTube")
   }
 
   private func ordered(
