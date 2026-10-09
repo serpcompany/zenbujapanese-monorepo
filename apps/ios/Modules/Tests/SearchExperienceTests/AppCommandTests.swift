@@ -31,6 +31,19 @@ struct AppCommandTests {
     #expect(router.activeWindow == nil)
   }
 
+  @Test("closing the last open window leaves none open")
+  func lastWindow() {
+    let router = AppCommandRouter()
+    let first = UUID()
+    let second = UUID()
+    router.windowOpened(first)
+    router.windowOpened(second)
+    router.windowClosed(first)
+    #expect(router.hasOpenWindows)
+    router.windowClosed(second)
+    #expect(!router.hasOpenWindows)
+  }
+
   @Test("closing a window that wasn't active keeps the active one")
   func closingAnotherWindow() {
     let router = AppCommandRouter()

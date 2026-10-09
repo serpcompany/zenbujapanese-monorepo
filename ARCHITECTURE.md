@@ -86,7 +86,8 @@ saying where the code belongs:
   `worker.ts` runs before Next.js; the browse pages' data and the sitemaps ask the client
   `data.ts` hands them ([`docs/agents/web.md`](docs/agents/web.md), Code layout).
 - **The app**: only `SearchExperience/Platform/` may use `#if os(...)`, UIKit, AppKit, or an API
-  that iPhone, iPad, or the Mac lacks; everything else in the package and the app target calls its
+  that iPhone, iPad, or the Mac lacks; everything else in the package, its tests, and the app
+  target calls its
   adapters (`tools/checks/src/layers.ts`, [`docs/agents/ios.md`](docs/agents/ios.md), iPad and
   Mac). `TranslatorCore`, the Translate tab's engine, imports only Foundation, Observation,
   and OSLog, and can't import the app's `SearchExperience` target;

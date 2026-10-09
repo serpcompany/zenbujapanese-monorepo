@@ -16,15 +16,9 @@ struct DecodedImage {
       guard let source = CGImageSourceCreateWithData(data as CFData, nil),
         let decoded = CGImageSourceCreateImageAtIndex(source, 0, nil)
       else { return nil }
-      let properties = CGImageSourceCopyPropertiesAtIndex(source, 0, nil) as? [CFString: Any]
-      let exif = (properties?[kCGImagePropertyOrientation] as? UInt32)
-        .flatMap(CGImagePropertyOrientation.init(rawValue:))
-      let orientation = Image.Orientation(exif ?? .up)
-      image = Image(decorative: decoded, scale: 1, orientation: orientation)
-      let width = CGFloat(decoded.width)
-      let height = CGFloat(decoded.height)
-      size = orientation.isQuarterTurn
-        ? CGSize(width: height, height: width) : CGSize(width: width, height: height)
+      let orientation = ImageCoding.orientation(of: source)
+      image = Image(decorative: decoded, scale: 1, orientation: Image.Orientation(orientation))
+      size = ImageCoding.orientedSize(decoded, orientation: orientation)
     #else
       guard let decoded = UIImage(data: data) else { return nil }
       image = Image(uiImage: decoded)
@@ -47,10 +41,6 @@ struct DecodedImage {
         case .right: .right
         case .rightMirrored: .rightMirrored
         }
-    }
-
-    fileprivate var isQuarterTurn: Bool {
-      [.left, .leftMirrored, .right, .rightMirrored].contains(self)
     }
   }
 #endif

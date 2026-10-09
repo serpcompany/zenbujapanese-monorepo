@@ -58,12 +58,20 @@ struct AppCommandRequest: Equatable {
 final class AppCommandRouter {
   private(set) var activeWindow: UUID?
   private(set) var request: AppCommandRequest?
+  private var openWindows: Set<UUID> = []
+
+  var hasOpenWindows: Bool { !openWindows.isEmpty }
+
+  func windowOpened(_ window: UUID) {
+    openWindows.insert(window)
+  }
 
   func windowBecameActive(_ window: UUID) {
     activeWindow = window
   }
 
   func windowClosed(_ window: UUID) {
+    openWindows.remove(window)
     if activeWindow == window { activeWindow = nil }
   }
 
@@ -75,12 +83,14 @@ final class AppCommandRouter {
 
 struct AppCommandHandling: ViewModifier {
   @Environment(AppCommandRouter.self) private var router
+  @Environment(TranslateExperience.self) private var translate
   @Environment(\.appearsActive) private var appearsActive
   @State private var window = UUID()
   let perform: (AppCommand) -> Void
 
   func body(content: Content) -> some View {
     content
+      .onAppear { router.windowOpened(window) }
       .onChange(of: appearsActive, initial: true) { _, isActive in
         if isActive { router.windowBecameActive(window) }
       }
@@ -88,7 +98,10 @@ struct AppCommandHandling: ViewModifier {
         guard let request, request.window == window else { return }
         perform(request.command)
       }
-      .onDisappear { router.windowClosed(window) }
+      .onDisappear {
+        router.windowClosed(window)
+        if !router.hasOpenWindows { AppLifecycle.lastWindowClosed(translate: translate) }
+      }
   }
 }
 

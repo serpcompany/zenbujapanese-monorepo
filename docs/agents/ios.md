@@ -45,9 +45,9 @@ extension that feature code calls: `DecodedImage` and `Image(imageData:)`, `Colo
 the modifiers in `PlatformModifiers.swift` (`.inlineNavigationTitle()`, `.groupedList()`,
 `.textEntry(_:)`, `.barLeading` and `.barTrailing`, `.bottomAccessory`, `.rowActions`, and the
 rest). `pnpm verify layers` refuses a platform condition, UIKit, AppKit, or an iPhone-only API it
-knows anywhere else in `apps/ios/Modules/Sources/` or `apps/ios/App/`, and names the adapter to
-use (`tools/checks/src/layers.ts`), so feature code stays the same on every platform even while CI
-builds only for the iPhone. Image data stays `Data` or `CGImage` in models (`ImageCoding.swift`
+knows anywhere else in `apps/ios/Modules/Sources/`, `apps/ios/Modules/Tests/`, or `apps/ios/App/`,
+and names the adapter to use (`tools/checks/src/layers.ts`), so feature code stays the same on
+every platform even while nothing builds for the Mac before merge. Image data stays `Data` or `CGImage` in models (`ImageCoding.swift`
 encodes and draws without UIKit).
 
 The app target is `ZenbuJapaneseApp.swift`, one line: `ZenbuJapaneseScenes`

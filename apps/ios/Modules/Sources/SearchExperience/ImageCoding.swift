@@ -6,11 +6,32 @@ import UniformTypeIdentifiers
 enum ImageCoding {
   static func image(from data: Data) -> CGImage? {
     guard let source = CGImageSourceCreateWithData(data as CFData, nil),
-      let properties = CGImageSourceCopyPropertiesAtIndex(source, 0, nil) as? [CFString: Any],
+      let size = pixelSize(of: source)
+    else { return nil }
+    return thumbnail(from: source, maxPixelSize: max(size.width, size.height))
+  }
+
+  static func pixelSize(of source: CGImageSource) -> (width: Int, height: Int)? {
+    guard let properties = CGImageSourceCopyPropertiesAtIndex(source, 0, nil) as? [CFString: Any],
       let width = properties[kCGImagePropertyPixelWidth] as? Int,
       let height = properties[kCGImagePropertyPixelHeight] as? Int
     else { return nil }
-    return thumbnail(from: source, maxPixelSize: max(width, height))
+    return (width, height)
+  }
+
+  static func orientation(of source: CGImageSource) -> CGImagePropertyOrientation {
+    let properties = CGImageSourceCopyPropertiesAtIndex(source, 0, nil) as? [CFString: Any]
+    let rawValue = (properties?[kCGImagePropertyOrientation] as? NSNumber)?.uint32Value ?? 1
+    return CGImagePropertyOrientation(rawValue: rawValue) ?? .up
+  }
+
+  static func orientedSize(_ image: CGImage, orientation: CGImagePropertyOrientation) -> CGSize {
+    switch orientation {
+    case .left, .leftMirrored, .right, .rightMirrored:
+      CGSize(width: image.height, height: image.width)
+    default:
+      CGSize(width: image.width, height: image.height)
+    }
   }
 
   static func thumbnail(from source: CGImageSource, maxPixelSize: Int) -> CGImage? {

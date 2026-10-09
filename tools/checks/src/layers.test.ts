@@ -96,16 +96,17 @@ test('allows the adapters by name and conditions that are not about the platform
   expect(checkLayers([feature], swiftLayers, source(text))).toEqual([])
 })
 
-test('checks the app target as well as the package', () => {
+test('checks the app target and the tests as well as the package', () => {
   const app = 'apps/ios/App/ZenbuJapaneseApp.swift'
+  const tests = 'apps/ios/Modules/Tests/SearchExperienceTests/DocumentTextTests.swift'
   expect(checkLayers([app], swiftLayers, source('#if os(iOS)\n#endif\n'))).toHaveLength(1)
+  expect(checkLayers([tests], swiftLayers, source('import UIKit\n'))).toHaveLength(1)
 })
 
 test('checks the real app sources', () => {
   const sources = repositoryFiles().filter(
     path =>
-      path.endsWith('.swift') &&
-      (path.startsWith('apps/ios/Modules/Sources/') || path.startsWith('apps/ios/App/'))
+      path.endsWith('.swift') && swiftPlatforms.sharedCode.some(folder => path.startsWith(folder))
   )
   expect(sources.some(path => path.startsWith(swiftPlatforms.adapters))).toBe(true)
   expect(checkLayers(sources)).toEqual([])

@@ -52,7 +52,7 @@ and messages that name the device say iPad or Mac, such as "Everything stays on 
   its details, and deleting a Media Library image. Search results, recent searches, and
   Translations already open a menu on long-press, which is right-click on the Mac.
 - **Translate on the Mac** uses the Mac's microphone and speakers, and keeps the display awake
-  while it listens. With two windows on iPad or the Mac, there's one conversation, shown in
+  while it listens. Closing the last window pauses a live conversation, as leaving the app does. With two windows on iPad or the Mac, there's one conversation, shown in
   whichever window has Translate open, with the session bar in the others. Without voice isolation (Listening), the Mac assumes its speakers reach the
   microphone, so it stops hearing while a translation plays, even with headphones.
 - **Syncing on the Mac** happens while Zenbu is open: when it opens or becomes active, after each

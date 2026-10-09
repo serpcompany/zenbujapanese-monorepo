@@ -52,10 +52,7 @@ struct ImageTextAsset: Identifiable, Sendable {
   }
 
   static func hasReadableDimensions(_ source: CGImageSource) -> Bool {
-    guard let properties = CGImageSourceCopyPropertiesAtIndex(source, 0, nil) as? [CFString: Any],
-      let width = properties[kCGImagePropertyPixelWidth] as? Int,
-      let height = properties[kCGImagePropertyPixelHeight] as? Int
-    else { return false }
+    guard let (width, height) = ImageCoding.pixelSize(of: source) else { return false }
     return width > 0 && height > 0 && width <= 12_000 && height <= 12_000
       && width * height <= 40_000_000
   }

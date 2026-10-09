@@ -34,7 +34,7 @@ const adapter = 'an adapter in SearchExperience/Platform/'
 
 export const swiftPlatforms: SwiftPlatforms = {
   adapters: 'apps/ios/Modules/Sources/SearchExperience/Platform/',
-  sharedCode: ['apps/ios/Modules/Sources/', 'apps/ios/App/'],
+  sharedCode: ['apps/ios/Modules/Sources/', 'apps/ios/Modules/Tests/', 'apps/ios/App/'],
   apis: [
     {
       pattern: /^\s*#(?:if|elseif)\b.*\b(?:os|canImport|targetEnvironment)\s*\(/,
