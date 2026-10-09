@@ -5,6 +5,7 @@ enum LaunchHarness {
   static let cameraImageKey = "ZENBU_CAMERA_IMAGE"
   static let signInStandInKey = "ZENBU_SIGN_IN_STAND_IN"
   static let youTubeStandInKey = "ZENBU_YOUTUBE_STAND_IN"
+  static let accountStandInKey = "ZENBU_ACCOUNT_STAND_IN"
   static let uiTestBundleSuffix = ".uitests"
   static let savedStateFolders = ["Zenbu Japanese", "FrequencyPacks", "Profile"]
 
@@ -50,6 +51,17 @@ enum LaunchHarness {
         return callback
       })
   #endif
+
+  static var accountSession: URLSession? {
+    #if DEBUG
+      guard ProcessInfo.processInfo.environment[accountStandInKey] == "1" else { return nil }
+      let configuration = URLSessionConfiguration.ephemeral
+      configuration.protocolClasses = [StandInAccountService.self]
+      return AccountAPI.urlSession(configuration)
+    #else
+      nil
+    #endif
+  }
 
   static var youTubeFetch: YouTubeFetch? {
     #if DEBUG
@@ -128,6 +140,7 @@ enum LaunchHarness {
       guard erasesSavedState(environment: ProcessInfo.processInfo.environment, bundleID: bundleID)
       else { return }
       if let bundleID { UserDefaults.standard.removePersistentDomain(forName: bundleID) }
+      KeychainSessionTokenStorage().delete()
       for folder in savedStateFolders {
         try? FileManager.default.removeItem(
           at: URL.applicationSupportDirectory.appending(path: folder, directoryHint: .isDirectory))

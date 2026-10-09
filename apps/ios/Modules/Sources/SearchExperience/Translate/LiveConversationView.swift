@@ -68,11 +68,12 @@ struct LiveConversationView: View {
       }
       .listStyle(.plain)
       .contentMargins(.top, 8, for: .scrollContent)
-      .onScrollGeometryChange(for: Bool.self) { geometry in
-        geometry.contentOffset.y + geometry.containerSize.height
-          >= geometry.contentSize.height - 60
-      } action: { _, isNearBottom in
-        isFollowingLatest = isNearBottom
+      .onScrollGeometryChange(for: ConversationScrollPosition.self) { geometry in
+        ConversationScrollPosition(
+          offset: geometry.contentOffset.y, visibleHeight: geometry.containerSize.height,
+          contentHeight: geometry.contentSize.height)
+      } action: { earlier, position in
+        isFollowingLatest = position.keepsFollowing(isFollowingLatest, after: earlier)
       }
       .onChange(of: contentVersion) {
         guard isFollowingLatest else { return }

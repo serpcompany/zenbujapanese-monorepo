@@ -26,6 +26,15 @@ final class SearchResultsUITests: ZenbuUITestCase {
     waitUntilGone(find("recent-search.0", in: app))
   }
 
+  func testARecentSearchIsRemovedFromItsMenu() {
+    let app = launch()
+    search("japan", in: app)
+    tap(labeled("Clear text", in: app))
+    openContextMenu(on: find("recent-search.0", in: app))
+    tap(app.buttons["Remove from Recent"].firstMatch)
+    waitUntilGone(find("recent-search.0", in: app))
+  }
+
   func testAWordOffersItsExampleSentences() {
     let app = launch()
     search("miru", in: app)

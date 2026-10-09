@@ -34,6 +34,9 @@ final class AccountUITests: ZenbuUITestCase {
     open(.account, in: app)
     tap(find("account.profile", in: app))
     type("Ada Lovelace", into: waitFor(find("profile.name", in: app)))
+    type("not an address", into: waitFor(find("profile.email", in: app)))
+    tap(find("profile.name", in: app))
+    waitFor(labeled("Enter a valid email address, like name@example.com.", in: app))
     goBack(in: app)
     let card = waitFor(find("account.profile", in: app))
     let named = NSPredicate(format: "label CONTAINS 'Ada Lovelace'")
@@ -74,7 +77,10 @@ final class AccountUITests: ZenbuUITestCase {
     waitFor(find("frequency-packs.list", in: app))
     let packs = app.descendants(matching: .any)
       .matching(NSPredicate(format: "identifier BEGINSWITH 'frequency-pack.row.'"))
-    XCTAssertGreaterThanOrEqual(packs.count, 2, "JLPT Levels and YouTube come with the app")
+    XCTAssertGreaterThanOrEqual(packs.count, 9, "every pack in the catalog has a row")
+    let downloads = app.descendants(matching: .any)
+      .matching(NSPredicate(format: "identifier BEGINSWITH 'frequency-pack.download.'"))
+    XCTAssertEqual(downloads.count, 7, "Available offers each optional pack's download")
   }
 
   func testTranslationsAndCreditsOpenFromAccount() {
@@ -86,4 +92,36 @@ final class AccountUITests: ZenbuUITestCase {
     tap(reveal(find("account.credits", in: app), in: app))
     waitFor(find("credits.list", in: app))
   }
+
+  func testAFrequencyDictionaryShowsItsDetailsAndTurnsOff() {
+    let app = launch()
+    open(.account, in: app)
+    tap(reveal(find("account.frequency-dictionaries", in: app), in: app))
+    revealRowActions(on: find("frequency-pack.row.\(Self.jlpt)", in: app))
+    tap(find("frequency-pack.details.\(Self.jlpt)", in: app))
+    waitFor(find("frequency-pack.detail", in: app))
+    tap(app.buttons["Done"].firstMatch)
+    let toggle = waitFor(find("frequency-pack.toggle.\(Self.youTube)", in: app))
+    XCTAssertEqual("\(toggle.value ?? "")", "1")
+    flip(toggle)
+    expectation(for: Self.switchedOff, evaluatedWith: toggle)
+    waitForExpectations(timeout: Self.patience)
+  }
+
+  func testTurningFuriganaOffShowsTheReadingUnderTheHeadword() {
+    let app = launch()
+    open(.account, in: app)
+    tap(reveal(find("account.reading-aids", in: app), in: app))
+    let furigana = waitFor(find("reading-aids.show-furigana", in: app))
+    flip(furigana)
+    expectation(for: Self.switchedOff, evaluatedWith: furigana)
+    waitForExpectations(timeout: Self.patience)
+    search("japan", in: app)
+    tap(find("result.japan", in: app))
+    waitFor(find("word-detail.identity-reading", in: app))
+  }
+
+  static let switchedOff = NSPredicate(format: "value == '0' OR value == 0")
+  static let jlpt = "zenbu.jlpt.waller.levels"
+  static let youTube = "zenbu.tubelex.youtube.ja.unidic-3.1"
 }

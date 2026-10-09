@@ -36,14 +36,9 @@ describe('the iOS workflow', () => {
     const app = '-scheme ZenbuJapanese '
     const uiTestBuild = 'ZENBU_BUNDLE_ID_SUFFIX=.uitests'
     for (const simulator of ['$SIMULATOR', '$IPAD_SIMULATOR']) {
-      expect(
-        runsCommand(
-          ' CODE_SIGNING_ALLOWED=NO test',
-          app,
-          uiTestBuild,
-          `platform=iOS Simulator,id=${simulator}`
-        )
-      ).toBe(true)
+      expect(runsCommand(' test', app, uiTestBuild, `platform=iOS Simulator,id=${simulator}`)).toBe(
+        true
+      )
     }
     expect(
       runsCommand(' CODE_SIGN_ENTITLEMENTS= test', app, uiTestBuild, 'platform=macOS,arch=arm64')

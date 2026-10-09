@@ -12,10 +12,11 @@ class ZenbuUITestCase: XCTestCase {
 
   var device: TestDevice.Kind { TestDevice.kind }
 
-  func launch(_ environment: [String: String] = [:]) -> XCUIApplication {
+  func launch(_ environment: [String: String] = [:], arguments: [String] = []) -> XCUIApplication {
     continueAfterFailure = false
     TestDevice.turn(landscape: false)
     let app = XCUIApplication()
+    app.launchArguments = arguments
     app.launchEnvironment = [
       "ZENBU_UI_TEST_FRESH": "1",
       "ZENBU_ACCOUNT_API_URL": Self.offlineAccountService,
@@ -68,7 +69,7 @@ class ZenbuUITestCase: XCTestCase {
   ) {
     waitFor(element, file: file, line: line)
     if Self.controls.contains(element.elementType) {
-      XCTAssertTrue(element.isHittable, "\(element) can't be reached", file: file, line: line)
+      XCTAssertTrue(isReachable(element, in: app), "\(element) can't be reached", file: file, line: line)
     }
     let window = app.windows.firstMatch.frame
     let frame = element.frame
@@ -82,6 +83,37 @@ class ZenbuUITestCase: XCTestCase {
     XCTAssertTrue(
       window.insetBy(dx: -1, dy: -1).contains(frame),
       "\(element) at \(frame) is clipped by the window at \(window)", file: file, line: line)
+  }
+
+  func isReachable(
+    _ element: XCUIElement, in app: XCUIApplication, within container: XCUIElement? = nil
+  ) -> Bool {
+    guard element.exists else { return false }
+    let frame = element.frame
+    var bounds = (container ?? app.windows.firstMatch).frame
+    if container != nil {
+      bounds.origin.y += bounds.height * 0.15
+      bounds.size.height *= 0.85
+    }
+    return !frame.isEmpty && bounds.contains(CGPoint(x: frame.midX, y: frame.midY))
+  }
+
+  func firstReachable(
+    _ queries: [XCUIElementQuery], in app: XCUIApplication, file: StaticString = #filePath,
+    line: UInt = #line
+  ) -> XCUIElement {
+    let deadline = Date.now.addingTimeInterval(Self.patience)
+    while Date.now < deadline {
+      for query in queries {
+        if let found = query.allElementsBoundByIndex.first(where: { isReachable($0, in: app) }) {
+          return found
+        }
+      }
+      RunLoop.current.run(until: Date.now.addingTimeInterval(0.5))
+    }
+    add(XCTAttachment(string: app.debugDescription))
+    XCTFail("nothing in \(queries) could be reached", file: file, line: line)
+    return queries[0].firstMatch
   }
 
   func tap(_ element: XCUIElement, file: StaticString = #filePath, line: UInt = #line) {

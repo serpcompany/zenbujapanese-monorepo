@@ -21,6 +21,14 @@ enum TestDevice {
     #endif
   }
 
+  static var largestTextArguments: [String] {
+    #if os(macOS)
+      []
+    #else
+      ["-UIPreferredContentSizeCategoryName", "UICTContentSizeCategoryAccessibilityXXXL"]
+    #endif
+  }
+
   @MainActor static func turn(landscape: Bool) {
     #if os(iOS)
       XCUIDevice.shared.orientation = landscape ? .landscapeLeft : .portrait

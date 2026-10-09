@@ -91,8 +91,9 @@ query is empty. A learner can repeat a search, remove one by swiping or long-pre
 from the **•••** menu, which offers **Clear Recent Searches** while recent searches are listed. Result headings scroll
 with the results instead of staying pinned over them.
 
-Check: UI `SearchUITests.testASearchIsListedUnderRecentAndRunsAgain` and
-`SearchResultsUITests.testClearingRecentSearchesEmptiesTheList`.
+Check: UI `SearchUITests.testASearchIsListedUnderRecentAndRunsAgain`,
+`SearchResultsUITests.testARecentSearchIsRemovedFromItsMenu` (long-press, or right-click on the
+Mac), and `SearchResultsUITests.testClearingRecentSearchesEmptiesTheList`.
 
 ### Sorting results
 
@@ -166,7 +167,8 @@ modifiers in sentence case without repeating "verb", for example "Godan verb (in
 
 Check: the recorded `WordDetailConformanceTests` (furigana, pitch, and the part of speech);
 package `PitchAccentTests`, `CompoundPitchTests`, and `PartOfSpeechFormatterTests`; UI
-`WordDetailUITests.testTappingAKanjiInTheHeadwordHighlightsItsReading`.
+`WordDetailUITests.testTappingAKanjiInTheHeadwordHighlightsItsReading` and
+`AccountUITests.testTurningFuriganaOffShowsTheReadingUnderTheHeadword`.
 
 The conjugation table starts with the word, its reading and meaning, its word class, and a
 one-line rule for how that class conjugates. A Plain/Polite control switches register when both
@@ -220,8 +222,8 @@ creates the list, and adds the word to it, and Done closes the sheet. A **Lists*
 Notes names every list holding the word, each opening that list in Account, followed by
 **Add to List**, which opens the same sheet. Search results don't show which lists a word is in.
 
-Check: UI `WordDetailUITests.testAddToListPutsTheWordInFavoritesAndANewList`; package
-`WordListsTests`.
+Check: UI `WordDetailUITests.testAddToListPutsTheWordInFavoritesAndANewList` (the sheet, New List,
+the Lists section, and a list opening in Account); package `WordListsTests`.
 
 A learner can write notes for a word and associate photos with it. Notes and associated
 photos persist on the device. If saved notes can't be read, a copy is kept on the device rather

@@ -66,10 +66,6 @@ final class StubAccountServer: @unchecked Sendable {
     Self.lock.withLock { Self.servers[host] = self }
   }
 
-  deinit {
-    Self.lock.withLock { Self.servers[host] = nil }
-  }
-
   var baseURL: URL { URL(string: "https://\(host)")! }
 
   var session: URLSession {
@@ -112,7 +108,7 @@ final class StubURLProtocol: URLProtocol {
     }
     let stub = StubRequest(
       method: request.httpMethod ?? "GET", path: url.path(),
-      headers: request.allHTTPHeaderFields ?? [:], body: Self.body(of: request))
+      headers: request.allHTTPHeaderFields ?? [:], body: request.bodyData)
     switch server.reply(to: stub) {
     case .offline:
       client?.urlProtocol(self, didFailWithError: URLError(.notConnectedToInternet))
@@ -126,21 +122,6 @@ final class StubURLProtocol: URLProtocol {
   }
 
   override func stopLoading() {}
-
-  private static func body(of request: URLRequest) -> Data {
-    if let body = request.httpBody { return body }
-    guard let stream = request.httpBodyStream else { return Data() }
-    stream.open()
-    defer { stream.close() }
-    var data = Data()
-    var buffer = [UInt8](repeating: 0, count: 4096)
-    while stream.hasBytesAvailable {
-      let count = stream.read(&buffer, maxLength: buffer.count)
-      guard count > 0 else { break }
-      data.append(buffer, count: count)
-    }
-    return data
-  }
 }
 
 final class MemorySessionTokenStorage: SessionTokenStorage, @unchecked Sendable {

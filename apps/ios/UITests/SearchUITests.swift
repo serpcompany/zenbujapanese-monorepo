@@ -55,9 +55,10 @@ final class SearchUITests: ZenbuUITestCase {
     let app = launch()
     open(.search, in: app)
     tap(find("search.field", in: app))
-    tap(labeled("Handwriting", in: app))
+    let modes = find("search.input.mode", in: app)
+    choose("Handwriting", in: modes)
     assertOnScreen(find("handwriting.canvas", in: app), in: app)
-    tap(labeled("Radicals", in: app))
+    choose("Radicals", in: modes)
     assertOnScreen(find("radical.grid", in: app), in: app)
   }
 

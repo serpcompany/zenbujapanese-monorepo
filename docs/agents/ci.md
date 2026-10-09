@@ -426,9 +426,9 @@ jobs:
   and `TranslatorCoreTests` with `xcodebuild` on the first iPhone Simulator and the first iPad
   Simulator of the newest iOS runtime and on the Mac; then, after filling the Sudachi build cache
   (cached by the catalog's hash), the app's UI tests (`ZenbuJapaneseUITests`), which build the app
-  as `com.zenbujapanese.dictionary.uitests` and drive it on the same iPhone and iPad Simulators,
-  unsigned (`CODE_SIGNING_ALLOWED=NO`), and on the Mac, signed to run locally, after turning on
-  Automation Mode, which the Mac's UI tests need (`automationmodetool`). So a change that breaks
+  as `com.zenbujapanese.dictionary.uitests` and drive it on the same iPhone and iPad Simulators
+  and on the Mac, each signed to run locally (no team needed), after turning on Automation Mode
+  for the Mac, which its UI tests need (`automationmodetool`). So a change that breaks
   the app on one of them fails ([`ios.md`](ios.md), Tests on every platform). Last
   come the recorded-audio check's scoring tests with `swift test` (the replay
   itself needs the Mac's speech models, which the runner doesn't have, so it stays a local check,

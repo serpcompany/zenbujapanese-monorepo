@@ -99,14 +99,12 @@ jobs:
         run: |
           xcodebuild -project apps/ios/ZenbuJapanese.xcodeproj -scheme ZenbuJapanese \
             -destination "platform=iOS Simulator,id=$SIMULATOR" \
-            ONLY_ACTIVE_ARCH=YES ARCHS=arm64 ZENBU_BUNDLE_ID_SUFFIX=.uitests \
-            CODE_SIGNING_ALLOWED=NO test
+            ONLY_ACTIVE_ARCH=YES ARCHS=arm64 ZENBU_BUNDLE_ID_SUFFIX=.uitests test
       - name: Run the app's UI tests on the iPad Simulator
         run: |
           xcodebuild -project apps/ios/ZenbuJapanese.xcodeproj -scheme ZenbuJapanese \
             -destination "platform=iOS Simulator,id=$IPAD_SIMULATOR" \
-            ONLY_ACTIVE_ARCH=YES ARCHS=arm64 ZENBU_BUNDLE_ID_SUFFIX=.uitests \
-            CODE_SIGNING_ALLOWED=NO test
+            ONLY_ACTIVE_ARCH=YES ARCHS=arm64 ZENBU_BUNDLE_ID_SUFFIX=.uitests test
       - name: Let UI tests drive the Mac
         run: sudo automationmodetool enable-automationmode-without-authentication
       - name: Run the app's UI tests on the Mac

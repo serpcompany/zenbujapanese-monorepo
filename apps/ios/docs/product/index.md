@@ -65,13 +65,16 @@ and messages that name the device say iPad or Mac, such as "Everything stays on 
   the Mac `KeyboardAndWindowUITests.testANewWindowTakesTheShortcutsWhileTheFirstKeepsItsTab`;
   package `AppCommandTests` (window sizes).
 - **Menus and keyboard shortcuts**, on the Mac and with a hardware keyboard: **Find in
-  Dictionary** (⌘F) goes to Search and puts the cursor in its field, **Search an Image…** (⌘⇧I)
+  Dictionary** (⌘F on the Mac) goes to Search and puts the cursor in its field; on iPad, iPadOS
+  keeps ⌘F for its own Find, so Find in Dictionary is in the menu bar without a working shortcut.
+  **Search an Image…** (⌘⇧I)
   goes back to Translate's first screen, chooses its **Camera** option when no conversation is
   running, and offers Image Search's sources, and ⌘1 to ⌘4 switch to Search, Translate, Player,
   and Account.
   With two windows open, a shortcut acts in the one used last. A website link opens in an open
   window rather than a new one.
-  Check: iPad and Mac, UI `KeyboardAndWindowUITests` (⌘1 to ⌘4, ⌘F, ⌘⇧I, and a second window);
+  Check: iPad and Mac, UI `KeyboardAndWindowUITests` (⌘1 to ⌘4, ⌘⇧I, and on the Mac ⌘F and a
+  second window);
   package `AppCommandTests` (each command's shortcut, and the window it reaches). A link from
   another app is by hand; `WebsiteLinkTests` checks where it goes.
 - **Settings on the Mac.** **Zenbu Japanese → Settings…** (⌘,) opens a Settings window with
@@ -195,7 +198,8 @@ version can't read is kept aside rather than written over, and Profile starts em
 
 Check: package `UserProfileTests` (the field rules, saving on leaving, a reload, and an unreadable
 profile) and `PlatformAdapterTests` (the photo's 512-point square); UI
-`AccountUITests.testTheProfileKeepsANameAndShowsItOnTheCard`.
+`AccountUITests.testTheProfileKeepsANameAndShowsItOnTheCard` (the name on the card, and an
+invalid email's error).
 
 Frequency Dictionaries includes JLPT Levels and YouTube (TUBELEX) in the app and offers
 seven optional packs: Japanese Wikipedia, plus TV & Movies, Anime, Manga, Novels, Visual Novels,
@@ -215,11 +219,11 @@ presents levels as unofficial study estimates.
 Check: package `FrequencyPackLifecycleTests`, `SearchResultOrderingTests`, and
 `SearchFrequencyChipTests`; contract `test_frequency_pack_runtime_contract.py` (each pack's
 pinned source, ranks, and the YouTube spellings); UI `AccountUITests.testReadingAidsAndFrequencyDictionariesOpen`
-(JLPT Levels and YouTube listed). Downloading an optional pack needs the network: by hand, with
+(a row for every pack, and a download for each of the seven optional ones). Downloading an optional pack needs the network: by hand, with
 `FrequencyPackLifecycleTests` installing one from a local file.
 
 The screen lists one row per pack in three sections. **Enabled** holds packs that are
-switched on, in priority order; Edit reorders them. Ranks appear in this order, and Search
+switched on, in priority order; Edit reorders them (on the Mac, they're dragged directly). Ranks appear in this order, and Search
 sorts by the first pack, breaking ties with each next pack, unless the learner sorts by one pack
 from Search's **Sort By** menu ([Sorting results](dictionary.md#sorting-results)). A word the first pack doesn't rank
 places by how common the next pack that ranks it says it is (家, which YouTube doesn't rank, places
@@ -231,7 +235,9 @@ becomes the only enabled one. An update that adds a bundled pack, such as JLPT L
 it once at the top of the learner's list; disabling it afterward is remembered.
 
 Check: package `FrequencyPackLifecycleTests` (enabling, ordering, disabling, removing, and the
-upgrades) and `SearchResultOrderingTests` (a word the first pack doesn't rank).
+upgrades) and `SearchResultOrderingTests` (a word the first pack doesn't rank); UI
+`AccountUITests.testAFrequencyDictionaryShowsItsDetailsAndTurnsOff` (a row's Details, by swipe or
+right-click, and its switch).
 
 ### Known Words
 
@@ -263,15 +269,15 @@ The Account row shows how many lists there are. Lists shows every list in the le
 with its word count; two lists in one place, as after signing in on a second phone, show in the
 same order on every device. A learner can create a list, swipe a list to rename or delete it (a list
 that has words asks first), and open a list. In Edit, the learner drags lists to reorder them and
-taps a list to rename it. Names are trimmed, can't be
+taps a list to rename it; the Mac has no Edit, and its lists are dragged into order directly. Names are trimmed, can't be
 empty, hold at most 500 characters (control characters become spaces), and may repeat. A list shows its words most recently added first, with the **✓ Known** capsule on known words; the learner can search
 it by headword or reading, swipe a word to remove it from that list, or open its word page, found
 the same way as in Known Words. Its **•••** menu renames the
 list, deletes it (asking first when it has words), or selects words: while selecting, the top bar
 offers Select All, Remove, and Done. Deleting a list removes its words from that list only.
 
-Check: package `WordListsTests` and `SavedKanjiTests`; UI `ListsUITests` (making, renaming, and
-deleting a list) and `AccountUITests.testKnownWordsAndTheMediaLibraryStartEmptyAndListsStartWithFavorites`
+Check: package `WordListsTests` and `SavedKanjiTests`; UI `ListsUITests` (making, renaming,
+deleting, and dragging a list into order) and `AccountUITests.testKnownWordsAndTheMediaLibraryStartEmptyAndListsStartWithFavorites`
 (Favorites at first).
 
 A word's page also names the lists holding it; tapping one opens that list here.
@@ -359,8 +365,10 @@ Account row shows **Zenbu Account** and the email.
 Check: package `AccountProviderSignInTests` (Apple's and Google's sign-in, with only their sheets
 stood in: the nonce, PKCE, the token exchange, the account's answer, and the session; a closed
 sheet; a refused token) and `AccountSignInTests` (emailed codes, tokens, refused sign-ins); UI
-`AccountUITests.testSignInOffersAppleGoogleAndACodeAndSaysWhenTheServiceCantBeReached`. A real
-Apple or Google sign-in is by hand ([Account manual checks](../../../../docs/agents/ios.md#account-manual-checks)).
+`AccountUITests.testSignInOffersAppleGoogleAndACodeAndSaysWhenTheServiceCantBeReached` and
+`AccountSignedInUITests.testSigningInWithAppleShowsTheZenbuAccountAndSyncs` (iPhone and iPad,
+with the account service and Apple's sheet stood in, and the session kept in the Keychain across a
+relaunch); package `KeychainSessionTokenStorageTests` (iPhone and iPad). A real Apple or Google sign-in is by hand ([Account manual checks](../../../../docs/agents/ios.md#account-manual-checks)).
 
 **The first sync.** When this phone signs in to an account other than the one it last signed out
 of, the app sends the account everything on the phone: every known word, every list, every list's
@@ -423,7 +431,9 @@ Zenbu Account says so; if a newer version of Zenbu saved them, nothing syncs unt
 updated, and Zenbu Account says to update it.
 
 Check: package `AccountSyncTests`, `AccountSyncRecoveryTests`, and `AccountSyncBookmarkTests`
-(the unreadable and newer bookmarks messages).
+(the unreadable and newer bookmarks messages); UI
+`AccountSignedInUITests.testSigningInWithAppleShowsTheZenbuAccountAndSyncs` (iPhone and iPad:
+the email, Sync Now, and the last sync).
 
 **Signing out** asks first, then forgets the sign-in on this phone and keeps everything: known
 words, lists, Recent, Translations, notes, and media stay, and every feature works. Changes made while signed out, such
@@ -433,7 +443,8 @@ the same account again, by the account's rules: a change made elsewhere first wi
 a first sync does. If the account ends the session itself, such as after the account is deleted
 from another app, the app signs out the same way, and the Account row says so.
 
-Check: package `AccountSignedOutTests` and `AccountSignInTests` (a session the service ended).
+Check: package `AccountSignedOutTests` and `AccountSignInTests` (a session the service ended); UI
+`AccountSignedInUITests.testSigningOutAsksFirstAndKeepsTheLearnersWords` (iPhone and iPad).
 
 ### Deleting the account
 
@@ -455,7 +466,9 @@ A signed-in learner can delete their Zenbu account from **Zenbu Account → Dele
   everything on the phone, as a first sync does.
 
 Check: package `AccountSyncTests` and `AccountSyncRecoveryTests` (signing in again, a refused or
-lost deletion, and the phone keeping its data) and `AccountSignedOutTests` (starting over).
+lost deletion, and the phone keeping its data) and `AccountSignedOutTests` (starting over); UI
+`AccountSignedInUITests.testDeletingTheAccountSignsInAgainThenLeavesTheAppSignedOut` (iPhone and
+iPad).
 
 ## Required, not built yet (#563)
 

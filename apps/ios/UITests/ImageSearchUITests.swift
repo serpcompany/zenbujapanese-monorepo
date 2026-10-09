@@ -12,6 +12,13 @@ final class ImageSearchUITests: ZenbuUITestCase {
     assertOnScreen(find("word-detail.screen", in: app), in: app)
   }
 
+  func testAWordSheetsKanjiOpensItsPageOnTranslate() throws {
+    let app = try openFixtureImage()
+    openKanji("本", fromWordIdentifiedBy: "image-text.region.", in: app)
+    goBack(in: app)
+    waitFor(find("image-text.mode", in: app))
+  }
+
   private func assertSheetPlacement(_ sheet: XCUIElement, in app: XCUIApplication) {
     let window = app.windows.firstMatch.frame
     let frame = sheet.frame
@@ -35,10 +42,10 @@ final class ImageSearchUITests: ZenbuUITestCase {
 
   func testTheViewsShowTheRecognizedText() throws {
     let app = try openFixtureImage()
-    let mode = waitFor(find("image-text.mode", in: app))
-    mode.buttons["Text"].tap()
+    let mode = find("image-text.mode", in: app)
+    choose("Text", in: mode)
     assertOnScreen(find("image-text.reader", in: app), in: app)
-    mode.buttons["Photo"].tap()
+    choose("Photo", in: mode)
     waitFor(firstElement(identifiedBy: "image-text.region.", in: app))
     tap(find("image-text.more", in: app))
     waitFor(find("image-text.copy-text", in: app))

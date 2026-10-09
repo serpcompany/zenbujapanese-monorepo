@@ -19,6 +19,9 @@ final class LayoutUITests: ZenbuUITestCase {
       }
       TestDevice.turn(landscape: false)
     case .mac:
+      let opened = app.windows.firstMatch.frame
+      XCTAssertEqual(opened.width, 1180, accuracy: 2, "a Mac window opens 1180 wide")
+      XCTAssertEqual(opened.height, 820, accuracy: 30, "and 820 tall")
       shrinkWindow(in: app)
       let window = app.windows.firstMatch.frame
       XCTAssertEqual(window.width, 760, accuracy: 2, "the Mac window stops at 760 wide")
@@ -35,14 +38,5 @@ final class LayoutUITests: ZenbuUITestCase {
     }
     open(.translate, in: app)
     assertOnScreen(find("translate.history", in: app), in: app)
-  }
-
-  private func shrinkWindow(in app: XCUIApplication) {
-    let window = app.windows.firstMatch
-    let corner = window.coordinate(withNormalizedOffset: CGVector(dx: 1, dy: 1))
-      .withOffset(CGVector(dx: -3, dy: -3))
-    let target = window.coordinate(withNormalizedOffset: CGVector(dx: 0, dy: 0))
-      .withOffset(CGVector(dx: 50, dy: 50))
-    corner.press(forDuration: 0.3, thenDragTo: target)
   }
 }

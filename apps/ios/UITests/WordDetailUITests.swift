@@ -12,7 +12,7 @@ final class WordDetailUITests: ZenbuUITestCase {
     open(.account, in: app)
     tap(find("account.known-words", in: app))
     waitFor(firstElement(identifiedBy: "known-words.item.", in: app))
-    open(.search, in: app)
+    tabItem(.search, in: app).tap()
     tap(find("word-detail.more-menu", in: app))
     waitFor(find("word-detail.mark-unknown", in: app))
   }
@@ -33,12 +33,14 @@ final class WordDetailUITests: ZenbuUITestCase {
       .matching(NSPredicate(format: "identifier BEGINSWITH 'word-detail.list.'"))
     expectation(for: NSPredicate(format: "count == 2"), evaluatedWith: lists)
     waitForExpectations(timeout: Self.patience)
+    tap(lists.matching(NSPredicate(format: "label CONTAINS 'Favorites'")).firstMatch)
+    waitFor(firstElement(identifiedBy: "word-list.item.", in: app))
   }
 
   func testANoteIsKeptOnTheWord() {
     let app = openJapan()
     tap(find("word-detail.more-menu", in: app))
-    tap(app.buttons["Add Note"])
+    tap(app.buttons["Add Note"].firstMatch)
     type("the country, not the language", into: waitFor(find("word-note.editor", in: app)))
     tap(find("word-note.done", in: app))
     waitFor(labeled("the country, not the language", in: app))

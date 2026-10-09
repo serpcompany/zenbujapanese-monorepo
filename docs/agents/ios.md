@@ -143,8 +143,9 @@ stops with "Timed out while enabling automation mode". The CI job does this on i
 The UI tests launch the app with Debug-only harnesses (`LaunchHarness.swift`; Release builds
 don't contain them), so they need no network, account, camera, or microphone:
 
-- `ZENBU_UI_TEST_FRESH=1` erases the app's saved state before anything loads (its defaults and
-  its `Zenbu Japanese`, `FrequencyPacks`, and `Profile` folders), only in a `.uitests` build.
+- `ZENBU_UI_TEST_FRESH=1` erases the app's saved state before anything loads (its defaults, its
+  session token in the Keychain, and its `Zenbu Japanese`, `FrequencyPacks`, and `Profile`
+  folders), only in a `.uitests` build.
 - `ZENBU_ACCOUNT_API_URL=http://127.0.0.1:9` points the account at a closed port, for the
   offline states.
 - `ZENBU_CAMERA_IMAGE=<path>` stands in for the camera: **Take Photo** returns that image, which
@@ -153,6 +154,11 @@ don't contain them), so they need no network, account, camera, or microphone:
 - `ZENBU_SIGN_IN_STAND_IN=1` stands in for Apple's sign-in sheet and Google's web sign-in, and
   offers Apple in a `.uitests` build; the nonce, the account client, and the session after them
   run as they would.
+- `ZENBU_ACCOUNT_STAND_IN=1` answers the account's requests inside the app
+  (`StandInAccountService`, on the account's own `URLSession`): sign-in, tokens, sync, signing
+  out, and deleting, so the signed-in screens run without a service. The session token goes to
+  the real Keychain, so these tests are skipped on the Mac, where a build signed to run locally
+  has no keychain access group; a build signed with the team keeps it.
 - `ZENBU_TRANSLATE_SCRIPT=station` is the Translate harness ([`translate.md`](translate.md),
   Simulator harness).
 - `ZENBU_YOUTUBE_STAND_IN=<json>` stands in for YouTube: the player page loads a local player
@@ -164,6 +170,9 @@ The tests share `ZenbuUITestCase` and `AppTab`; what differs between the devices
 `TestDevice` (`apps/ios/UITests/Platform/`, the one place `pnpm verify layers` lets UI tests name
 a platform), and each test checks its device's side rather than skipping it. A behavior one device
 lacks, such as the Mac's Settings window or menus on an iPhone, is skipped there with the reason.
+A failing test keeps screenshots rather than a screen recording (the scheme's
+`preferredScreenCaptureFormat`): recording every test kept a busy Mac's video encoder running and
+slowed the app until XCUITest's queries timed out.
 
 ### Releasing on iPad and the Mac
 

@@ -26,7 +26,7 @@ final class PlayerWatchUITests: ZenbuUITestCase {
     for rate in ["0.5×", "0.75×", "1×", "1.25×", "1.5×"] {
       waitFor(app.buttons[rate])
     }
-    app.buttons["1.25×"].tap()
+    firstReachable([app.buttons.matching(identifier: "1.25×")], in: app).tap()
     assertOnScreen(find("watch.scrubber", in: app), in: app)
   }
 
@@ -35,6 +35,13 @@ final class PlayerWatchUITests: ZenbuUITestCase {
     tap(firstElement(identifiedBy: "watch.cue.0.", in: app))
     tap(find("recognized-word-sheet.open-full-entry", in: app))
     assertOnScreen(find("word-detail.screen", in: app), in: app)
+    goBack(in: app)
+    waitFor(find("watch.captions", in: app))
+  }
+
+  func testAWordSheetsKanjiOpensItsPageInsidePlayer() {
+    let app = openVideo()
+    openKanji("本", fromWordIdentifiedBy: "watch.cue.0.", in: app)
     goBack(in: app)
     waitFor(find("watch.captions", in: app))
   }

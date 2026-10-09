@@ -27,26 +27,27 @@ enum AppTab: String, CaseIterable {
 
 extension ZenbuUITestCase {
   func tabItem(_ tab: AppTab, in app: XCUIApplication) -> XCUIElement {
-    let label = NSPredicate(format: "label BEGINSWITH %@", tab.rawValue)
-    let candidates = [
-      app.tabBars.buttons.matching(label).firstMatch,
-      app.outlines.cells.matching(label).firstMatch,
-      app.outlines.staticTexts.matching(label).firstMatch,
-      app.collectionViews.cells.matching(label).firstMatch,
-      app.collectionViews.buttons.matching(label).firstMatch,
-    ]
-    let deadline = Date.now.addingTimeInterval(Self.patience)
-    while Date.now < deadline {
-      if let found = candidates.first(where: { $0.exists && $0.isHittable }) { return found }
-      RunLoop.current.run(until: Date.now.addingTimeInterval(0.5))
-    }
-    XCTFail("no tab item for \(tab.rawValue)")
-    return candidates[0]
+    let label = NSPredicate(
+      format: "label == %@ OR label BEGINSWITH %@", tab.rawValue, tab.rawValue + ",")
+    return firstReachable(
+      [
+        app.tabBars.buttons.matching(label),
+        app.descendants(matching: .tab).matching(label),
+        app.outlines.cells.matching(label),
+        app.outlines.staticTexts.matching(label),
+        app.collectionViews.cells.matching(label),
+        app.collectionViews.buttons.matching(label),
+        app.buttons.matching(label),
+      ], in: app)
   }
 
   func open(_ tab: AppTab, in app: XCUIApplication) {
-    tabItem(tab, in: app).tap()
-    waitFor(find(tab.rootIdentifier, in: app))
+    let root = find(tab.rootIdentifier, in: app)
+    for _ in 0..<3 {
+      tabItem(tab, in: app).tap()
+      if root.waitForExistence(timeout: Self.patience / 3) { return }
+    }
+    waitFor(root)
   }
 
   func shortcut(_ key: String, _ modifiers: XCUIElement.KeyModifierFlags = .command, in app: XCUIApplication) {

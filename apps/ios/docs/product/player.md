@@ -71,9 +71,12 @@ player is by hand; the UI tests stand in for it with a local player that answers
   kanji, the conjugations, a related word, or a word in an example) close the sheet and open the
   page inside Player, so Back returns to the video. The same goes for the word sheet in Image
   Search and Translate, in their own tabs.
-  Check: UI `PlayerWatchUITests.testAWordInACaptionOpensItsEntryInsidePlayer`, `ImageSearchUITests`,
-  and `ConversationUITests.testAWordsFullEntryShowsTheSessionBarThatReturns` (the same sheet in
-  Image Search and Translate); package `WordSheetPresentationTests` and `PlayerReadingAidTests`.
+  Check: UI `PlayerWatchUITests.testAWordInACaptionOpensItsEntryInsidePlayer` and
+  `testAWordSheetsKanjiOpensItsPageInsidePlayer`; the same sheet in Image Search
+  (`ImageSearchUITests.testAWordSheetsKanjiOpensItsPageOnTranslate`) and Translate
+  (`ConversationUITests.testAWordsFullEntryShowsTheSessionBarThatReturns` and
+  `testAWordSheetsConjugationsAndKanjiOpenTheirPagesInTranslate`); package
+  `WordSheetPresentationTests` and `PlayerReadingAidTests`.
 - **Translations.** With Sentence Translations on, each card shows a translation beneath the
   Japanese. By default YouTube's translation is used, and Apple Translation fills lines it leaves
   out. Choosing Apple in Reading Aids translates every line on the device instead, so each

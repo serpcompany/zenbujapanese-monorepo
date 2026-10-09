@@ -3,7 +3,7 @@ import XCTest
 final class KeyboardAndWindowUITests: ZenbuUITestCase {
   func testTheTabShortcutsSwitchTabs() throws {
     try XCTSkipIf(device == .phone, "the iPhone has no menus or keyboard shortcuts")
-    let app = launch()
+    let app = launchAndTouch()
     for tab in [AppTab.translate, .player, .account, .search] {
       shortcut(tab.shortcut, in: app)
       waitFor(find(tab.rootIdentifier, in: app))
@@ -11,8 +11,9 @@ final class KeyboardAndWindowUITests: ZenbuUITestCase {
   }
 
   func testFindInDictionaryPutsTheCursorInSearch() throws {
-    try XCTSkipIf(device == .phone, "the iPhone has no menus or keyboard shortcuts")
-    let app = launch()
+    try XCTSkipUnless(
+      device == .mac, "iPadOS keeps ⌘F for its own Find, so it doesn't reach Find in Dictionary")
+    let app = launchAndTouch()
     open(.account, in: app)
     shortcut("f", in: app)
     waitFor(find("search.field", in: app))
@@ -22,7 +23,7 @@ final class KeyboardAndWindowUITests: ZenbuUITestCase {
 
   func testSearchAnImageGoesToTranslatesCameraAndOffersItsSources() throws {
     try XCTSkipIf(device == .phone, "the iPhone has no menus or keyboard shortcuts")
-    let app = launch()
+    let app = launchAndTouch()
     shortcut("i", [.command, .shift], in: app)
     waitFor(find("image-source.photo-library", in: app))
     waitFor(find("image-source.files", in: app))
@@ -59,5 +60,13 @@ final class KeyboardAndWindowUITests: ZenbuUITestCase {
     expectation(for: NSPredicate(format: "count == 1"), evaluatedWith: starts)
     waitForExpectations(timeout: Self.patience)
     XCTAssertEqual(fields.count, 1, "the first window stays on Search")
+  }
+
+  private func launchAndTouch() -> XCUIApplication {
+    let app = launch()
+    tabItem(.search, in: app).tap()
+    app.typeKey(XCUIKeyboardKey.escape.rawValue, modifierFlags: [])
+    RunLoop.current.run(until: Date.now.addingTimeInterval(1))
+    return app
   }
 }

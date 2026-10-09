@@ -48,6 +48,9 @@ final class TranslateUITests: ZenbuUITestCase {
     let word = waitFor(firstElement(identifiedBy: "translate.typed.result.", in: app))
     word.tap()
     waitFor(find("recognized-word-sheet", in: app))
+    tap(find("recognized-word-sheet.done", in: app))
+    tap(find("translate.typed.clear", in: app))
+    waitUntilGone(find("translate.typed.direction", in: app))
   }
 
   func testAConversationRunsFullScreenAndIsSavedToTranslations() {
@@ -58,7 +61,7 @@ final class TranslateUITests: ZenbuUITestCase {
     assertOnScreen(find("translate.live", in: app), in: app)
     waitFor(firstElement(identifiedBy: "translate.sentence.", in: app))
     if device == .phone {
-      XCTAssertFalse(app.tabBars.firstMatch.isHittable, "the conversation hides the tab bar")
+      XCTAssertFalse(isReachable(app.tabBars.firstMatch, in: app), "the conversation hides the tab bar")
     }
     tap(find("translate.conversation.back", in: app))
     tap(app.buttons["Save and Exit"])

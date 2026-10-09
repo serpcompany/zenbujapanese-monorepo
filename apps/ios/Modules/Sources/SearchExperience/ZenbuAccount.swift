@@ -16,7 +16,7 @@ struct SignInProviders: Sendable {
 final class ZenbuAccount {
   static let shared: ZenbuAccount? = AccountServiceConfiguration.resolve().map {
     ZenbuAccount(
-      configuration: $0, session: AccountAPI.urlSession(),
+      configuration: $0, session: LaunchHarness.accountSession ?? AccountAPI.urlSession(),
       storage: KeychainSessionTokenStorage(), wordKnowledge: .shared, wordLists: .shared,
       watchHistory: .shared, translations: .shared,
       providers: LaunchHarness.signInProviders ?? .system)

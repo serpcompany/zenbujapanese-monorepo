@@ -66,7 +66,7 @@ If Apple's Japanese language isn't downloaded, the card offers **Download Japane
 Apple's download prompt. The typing screen's **•••** menu holds **Furigana**.
 
 Check: UI `TranslateUITests.testTypedTextIsTranslatedWithItsDirection` (the direction, Copy, Speak,
-and a tappable word); package `LanguageDetectionTests` (which text is Japanese).
+a tappable word, and ✕); package `LanguageDetectionTests` (which text is Japanese).
 
 ## Starting a live mode
 
@@ -129,18 +129,21 @@ Check: package `PlayerReadingAidTests` (Translate's furigana is its own setting,
   order, starting about 2 seconds after the speaker stops: each sentence plays as soon as its own
   translation is ready, so a long monologue doesn't wait for the whole of it. A turn that runs for
   30 seconds without a pause plays what's waiting anyway.
-- **Scrolling.** The list follows the newest text. Scrolling up stops following and shows
-  **Jump to Latest**.
+- **Scrolling.** The list follows the newest text, however tall a new line is at the learner's
+  text size. Only scrolling up stops following and shows **Jump to Latest**, which returns to the
+  newest line and follows it again.
 - **Elsewhere in the app.** On a word's full entry opened from the conversation, where the tab
   bar is back, a full-width bar above the tab bar shows the timer and button with a status line,
   reading **Conversation still listening · Return** or **Conversation paused · Return** on other
   tabs; tapping it returns to the conversation.
 
 Check: package `LiveConversationTests`, `BilingualTranscriptMergerTests`, and
-`ConversationPlaybackTests` (cards, provisional translations, long speech, and playback) and
-`TranslateChromeLayoutTests` (the session bar); UI `ConversationUITests.testTwoPanesHoldEachLanguage`
-and `testAWordsFullEntryShowsTheSessionBarThatReturns`. **Jump to Latest** needs a conversation
-taller than the screen: by hand with the harness.
+`ConversationPlaybackTests` (cards, provisional translations, long speech, and playback),
+`TranslateChromeLayoutTests` (the session bar), and `ConversationScrollPositionTests` (following
+the newest line until the learner scrolls up); UI `ConversationUITests.testTwoPanesHoldEachLanguage`,
+`testAWordsFullEntryShowsTheSessionBarThatReturns`, and `testScrollingBackOffersJumpToLatest`
+(with the largest text, or the Mac's smallest window, so the conversation is taller than the
+screen).
 
 ## Pausing and leaving
 
@@ -186,6 +189,8 @@ button that plays its translation again, at the conversation's speech speed, and
 
 Check: package `ConversationHistoryTests` and `ConversationWordsTests`; UI
 `ConversationUITests.testABookmarkedSentenceIsListedUnderBookmarked`,
+`ConversationUITests.testADeletedConversationLeavesTranslations` (long-press, or right-click on the
+Mac, then Delete, which asks first),
 `TranslateUITests.testTranslationsStartsEmpty`, and `AccountUITests.testTranslationsAndCreditsOpenFromAccount`.
 
 A conversation is saved after every translated sentence, so closing the app loses nothing; **Exit
@@ -217,9 +222,10 @@ at half height, as in the Player; particles and punctuation aren't linked. **Ope
 opens the word inside the tab it was tapped in: Translate, or Account from Account →
 **Translations**. Looking a word up doesn't pause listening.
 
-Check: UI `TranslateUITests.testTypedTextIsTranslatedWithItsDirection` and
-`ConversationUITests.testAWordsFullEntryShowsTheSessionBarThatReturns`; package
-`WordSheetPresentationTests`.
+Check: UI `TranslateUITests.testTypedTextIsTranslatedWithItsDirection`,
+`ConversationUITests.testAWordsFullEntryShowsTheSessionBarThatReturns`, and
+`ConversationUITests.testAWordSheetsConjugationsAndKanjiOpenTheirPagesInTranslate` (the sheet's
+part-of-speech and kanji rows open their pages in Translate); package `WordSheetPresentationTests`.
 
 ## Image Search
 
@@ -299,7 +305,8 @@ full-screen dictionary route in the Translate tab. Words use the same
 Kuromoji parser family as the Zenbu browser extension and other linked Japanese in the app.
 
 Check: UI `ImageSearchUITests.testAnImageOpensImageSearchOnTranslateAndAWordOpensItsEntry`
-(where each device places the sheet, and Open Full Entry); package `WordSheetPresentationTests` and
+(where each device places the sheet, and Open Full Entry) and
+`testAWordSheetsKanjiOpensItsPageOnTranslate`; package `WordSheetPresentationTests` and
 `LinkedWordResolutionTests`.
 
 A learner can also copy the recognized text and share the selected source image.
