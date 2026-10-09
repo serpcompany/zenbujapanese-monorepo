@@ -75,7 +75,6 @@ const eat: SearchResultItem = {
     romajiSpecificityRank: 0,
     senseOrder: 0,
     priorityPresenceRank: 0,
-    relation: 0,
     priorityProfile: { primaryMask: 3, secondaryMask: 0, newsFrequencyBand: 2 },
     glossOrder: 0,
     headwordLength: 3,
