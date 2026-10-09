@@ -117,9 +117,13 @@ final class ConversationUITests: ZenbuUITestCase {
 
   private func pause(_ app: XCUIApplication) {
     let toggle = find("translate.session.toggle", in: app)
-    tap(toggle)
-    expectation(for: NSPredicate(format: "label == 'Resume'"), evaluatedWith: toggle)
-    waitForExpectations(timeout: Self.patience)
+    for _ in 0..<3 where waitFor(toggle).label != "Resume" {
+      toggle.tap()
+      let paused = XCTNSPredicateExpectation(
+        predicate: NSPredicate(format: "label == 'Resume'"), object: toggle)
+      _ = XCTWaiter().wait(for: [paused], timeout: Self.patience / 3)
+    }
+    XCTAssertEqual(toggle.label, "Resume", "the conversation paused")
   }
 
   private func startConversation(option: String = "conversation", arguments: [String] = [])

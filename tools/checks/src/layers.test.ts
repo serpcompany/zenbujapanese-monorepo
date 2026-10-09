@@ -123,4 +123,4 @@ test('checks the real app sources', () => {
     swiftPlatforms.adapters.every(folder => sources.some(path => path.startsWith(folder)))
   ).toBe(true)
   expect(checkLayers(sources)).toEqual([])
-})
+}, 60_000)

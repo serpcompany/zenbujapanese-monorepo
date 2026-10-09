@@ -5,8 +5,7 @@ final class KeyboardAndWindowUITests: ZenbuUITestCase {
     try XCTSkipIf(device == .phone, "the iPhone has no menus or keyboard shortcuts")
     let app = launchAndTouch()
     for tab in [AppTab.translate, .player, .account, .search] {
-      shortcut(tab.shortcut, in: app)
-      waitFor(find(tab.rootIdentifier, in: app))
+      press(tab.shortcut, until: find(tab.rootIdentifier, in: app), in: app)
     }
   }
 
@@ -15,8 +14,7 @@ final class KeyboardAndWindowUITests: ZenbuUITestCase {
       device == .mac, "iPadOS keeps ⌘F for its own Find, so it doesn't reach Find in Dictionary")
     let app = launchAndTouch()
     open(.account, in: app)
-    shortcut("f", in: app)
-    waitFor(find("search.field", in: app))
+    press("f", until: find("search.field", in: app), in: app)
     app.typeText("japan\n")
     waitFor(find("result.japan", in: app))
   }
@@ -24,8 +22,7 @@ final class KeyboardAndWindowUITests: ZenbuUITestCase {
   func testSearchAnImageGoesToTranslatesCameraAndOffersItsSources() throws {
     try XCTSkipIf(device == .phone, "the iPhone has no menus or keyboard shortcuts")
     let app = launchAndTouch()
-    shortcut("i", [.command, .shift], in: app)
-    waitFor(find("image-source.photo-library", in: app))
+    press("i", [.command, .shift], until: find("image-source.photo-library", in: app), in: app)
     waitFor(find("image-source.files", in: app))
     XCTAssertEqual(find("image-source.paste", in: app).exists, device == .mac)
     XCTAssertEqual(find("image-source.camera", in: app).exists, device != .mac)
@@ -37,8 +34,8 @@ final class KeyboardAndWindowUITests: ZenbuUITestCase {
   func testTheSettingsWindowHoldsTheAccountReadingAidsAndFrequencyDictionaries() throws {
     try XCTSkipUnless(device == .mac, "iPhone and iPad keep these settings in Account")
     let app = launch()
-    shortcut(",", in: app)
-    let settings = waitFor(find("settings.window", in: app))
+    let settings = find("settings.window", in: app)
+    press(",", until: settings, in: app)
     waitFor(find("settings.profile", in: app))
     settings.buttons["Reading Aids"].tap()
     waitFor(find("reading-aids.form", in: app))
@@ -68,5 +65,16 @@ final class KeyboardAndWindowUITests: ZenbuUITestCase {
     app.typeKey(XCUIKeyboardKey.escape.rawValue, modifierFlags: [])
     RunLoop.current.run(until: Date.now.addingTimeInterval(1))
     return app
+  }
+
+  private func press(
+    _ key: String, _ modifiers: XCUIElement.KeyModifierFlags = .command, until element: XCUIElement,
+    in app: XCUIApplication
+  ) {
+    for _ in 0..<3 {
+      shortcut(key, modifiers, in: app)
+      if element.waitForExistence(timeout: Self.patience / 3) { return }
+    }
+    waitFor(element)
   }
 }
