@@ -21,17 +21,17 @@ Search's top bar is Player's: a small, centered **Search** title above the same 
 with the prompt **Search Japanese or English** (**Search** at the largest text sizes) and a clear
 button while it has text.
 
-- **Recent.** With nothing searched, the bar shows the title and, while recent searches are
-  listed, the **•••** menu with **Clear Recent Searches**.
-- **Typing.** Tapping the field slides the screen up: the title bar slides away, the field moves
-  to the top, and an **X** appears beside it. The **Keyboard**, **Handwriting**, and **Radicals**
-  picker sits above the keyboard, and the field stays at the top while handwriting or radicals
-  are open. **X** puts the input away and keeps what's typed; the clear button inside the field
-  clears the text.
-- **Results.** Submitting, picking a recent search, a handwriting or radical candidate, or the
-  reading refinement slides the screen back down with the query still in the field. The bar shows
-  **<** (read as Back by VoiceOver), the title, and the results **•••** menu. **<** clears the
-  query and returns to Recent.
+- **Recent.** With nothing searched, the title bar's **•••** menu offers **Clear Recent
+  Searches** while recent searches are listed.
+- **Typing.** Tapping the field slides the screen up as Player's does: the title bar slides away,
+  the field moves to the top, and an **X** appears beside it. The **Keyboard**, **Handwriting**,
+  and **Radicals** picker sits above the keyboard. The clear button inside the field clears the
+  text.
+- **Results.** Submitting, or picking a recent search, the reading refinement, or a handwriting
+  or radical candidate, puts the keyboard away and keeps the query in the field at the top, with
+  **X** beside it. The first row of the results names the order and opens Sort
+  ([Sorting results](#sorting-results)).
+- **X** clears the query and returns to Recent.
 
 Japanese, English, and romaji searches show one **Results** list. Stronger matches come first;
 among equally good matches, the enabled frequency dictionaries decide the order, in the
@@ -83,12 +83,12 @@ with the results instead of staying pinned over them.
 
 ### Sorting results
 
-While results are showing, the **•••** menu has **Sort By**, with the current order under it
-(**Default**, **YouTube, Most Common**, **Known Words, Unknown First**). Like Notes' Sort By, it
-opens a menu with **Default**, one item for each enabled frequency dictionary by its name (JLPT,
-YouTube, Japanese Wikipedia, TV & Movies, Anime, Manga, Novels, Visual Novels, Video Games), and
-**Known Words**, one checked at a time. When a dictionary or Known Words is checked, an
-**Order** section lists its two directions; choosing a new one starts with the first.
+While results are showing, their first row, above Example Sentences, names the order: **Sorted
+by Default**, **Sorted by YouTube, Most Common**, **Sorted by Known Words, Unknown First**. Tapping
+it opens a menu with **Default**, one item for each enabled frequency dictionary by its name
+(JLPT, YouTube, Japanese Wikipedia, TV & Movies, Anime, Manga, Novels, Visual Novels, Video
+Games), and **Known Words**, one checked at a time. When a dictionary or Known Words is checked,
+an **Order** section lists its two directions; choosing a new one starts with the first.
 
 - **Default** is the order described above.
 - **A dictionary**, **Most Common First** or **Least Common First**, orders every matching word
@@ -100,16 +100,13 @@ YouTube, Japanese Wikipedia, TV & Movies, Anime, Manga, Novels, Visual Novels, V
 A word the chosen dictionary doesn't rank goes after the ranked words in both directions. Ties,
 and the words without a rank, keep their Default order.
 
-While the order isn't Default, a row above the words says so (**Sorted by YouTube, Least
-Common**) with a **Reset** button that returns to Default; at Default there's no row.
-
 Switching re-sorts the visible results without searching again and announces the new order to
 VoiceOver. The choice is kept on the device across launches and applies to Japanese, English,
 and romaji searches. While ranks are loading, or if frequency data can't be read, a dictionary
 sort shows as Default and returns once the ranks load. If the chosen dictionary is disabled or
 removed, Search goes back to Default. The Kanji row, Example Sentences, the reading refinement, and Discovered Words keep their
 places; when there are no word rows to sort (only Discovered Words, or only a single kanji's
-Kanji row), the menu isn't shown.
+Kanji row), the row isn't shown.
 
 ## Dictionary and kanji details
 

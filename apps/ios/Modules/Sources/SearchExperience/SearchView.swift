@@ -54,7 +54,7 @@ struct SearchView: View {
     }
     .navigationTitle("Search")
     .searchField(
-      keeping: $query,
+      text: $query,
       isPresented: $isSearchPresented,
       prompt: Text(dynamicTypeSize >= .xxLarge ? "Search" : "Search Japanese or English"),
       submit: submitTypedQuery
@@ -67,12 +67,6 @@ struct SearchView: View {
       if !presented { inputMode = .inactive }
     }
     .toolbar {
-      if !searchQuery.isEmpty {
-        ToolbarItem(placement: .topBarLeading) {
-          Button("Back", systemImage: "chevron.backward", action: returnToRecentSearches)
-            .accessibilityIdentifier("search.back")
-        }
-      }
       if showsRecentSearchActions {
         ToolbarItem(placement: .topBarTrailing) {
           SearchActionsMenu {
@@ -86,7 +80,8 @@ struct SearchView: View {
         }
       }
     }
-    .onChange(of: query) { _, _ in
+    .onChange(of: query) { _, newQuery in
+      if !SearchQuery(newQuery).isEmpty, !isSearchPresented { showResultsInField() }
       settledSearchTaskID = nil
       results = .empty
       exampleCount = 0
@@ -267,17 +262,11 @@ struct SearchView: View {
   }
 
   private func selectRefinement(_ refinement: SearchRefinement) {
-    sparseRadicalQuery = nil
-    query = refinement.query.value
-    deactivateInput()
-    recordRecentSearch(refinement.query)
+    completeSubmission(refinement.query)
   }
 
   private func selectRecentSearch(_ recentSearch: SearchQuery) {
-    sparseRadicalQuery = nil
-    query = recentSearch.value
-    deactivateInput()
-    recordRecentSearch(recentSearch)
+    completeSubmission(recentSearch)
   }
 
   private func recordRecentSearch(_ recentSearch: SearchQuery) {
@@ -294,39 +283,33 @@ struct SearchView: View {
   }
 
   private func submitComposedQuery(_ submittedQuery: SearchQuery) {
-    sparseRadicalQuery = nil
-    query = submittedQuery.value
-    recordRecentSearch(submittedQuery)
-    deactivateInput()
+    completeSubmission(submittedQuery)
   }
 
   private func submitRadicalQuery(_ submittedQuery: SearchQuery) {
-    sparseRadicalQuery = submittedQuery
-    query = submittedQuery.value
-    recordRecentSearch(submittedQuery)
-    deactivateInput()
+    completeSubmission(submittedQuery, sparseRadical: true)
   }
 
   private func submitTypedQuery() {
-    sparseRadicalQuery = nil
     completeSubmission(SearchQuery(query))
   }
 
-  private func returnToRecentSearches() {
-    sparseRadicalQuery = nil
-    query = ""
-  }
-
-  private func completeSubmission(_ submittedQuery: SearchQuery) {
+  private func completeSubmission(_ submittedQuery: SearchQuery, sparseRadical: Bool = false) {
+    sparseRadicalQuery = sparseRadical ? submittedQuery : nil
     query = submittedQuery.value
     recordRecentSearch(submittedQuery)
-    deactivateInput()
+    showResultsInField()
   }
 
-  private func deactivateInput() {
+  private func showResultsInField() {
     isSearchFocused = false
     inputMode = .inactive
-    isSearchPresented = false
+    guard !isSearchPresented else { return }
+    isSearchPresented = true
+    Task { @MainActor in
+      isSearchFocused = false
+      inputMode = .inactive
+    }
   }
 }
 

@@ -182,7 +182,7 @@ struct SearchResultSortTests {
         == "Known Words, Unknown First")
     #expect(
       byYouTube.announcement(dictionaries: [youTube]) == "Sorted by YouTube, most common first")
-    #expect(SearchResultSort.relevance.status(dictionaries: [youTube]) == nil)
+    #expect(SearchResultSort.relevance.status(dictionaries: [youTube]) == "Sorted by Default")
     #expect(byYouTube.status(dictionaries: [youTube]) == "Sorted by YouTube, Most Common")
   }
 

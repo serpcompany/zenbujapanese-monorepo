@@ -6,16 +6,21 @@ struct SearchResultsMenu: View {
   let dictionaries: [FrequencyPackDisclosure]
 
   var body: some View {
-    SearchActionsMenu {
-      Menu {
-        sortKeyPicker
-        orderPicker
-      } label: {
-        Label("Sort By", systemImage: "arrow.up.arrow.down")
-        Text(appliedSort.summary(dictionaries: dictionaries))
+    Menu {
+      sortKeyPicker
+      orderPicker
+    } label: {
+      HStack(spacing: 4) {
+        Label(appliedSort.status(dictionaries: dictionaries), systemImage: "arrow.up.arrow.down")
+        Image(systemName: "chevron.down")
+          .imageScale(.small)
+          .accessibilityHidden(true)
       }
-      .accessibilityIdentifier("search.sort-menu")
+      .font(.footnote)
+      .foregroundStyle(.secondary)
     }
+    .buttonStyle(.plain)
+    .accessibilityIdentifier("search.sort-menu")
   }
 
   private var sortKeyPicker: some View {
@@ -68,24 +73,5 @@ struct SearchActionsMenu<Content: View>: View {
       Label("Search Actions", systemImage: "ellipsis")
     }
     .accessibilityIdentifier("search.actions-menu")
-  }
-}
-
-struct SearchResultsStatusRow: View {
-  let text: String
-  let systemImage: String
-  let actionTitle: String
-  let action: () -> Void
-
-  var body: some View {
-    HStack {
-      Label(text, systemImage: systemImage)
-        .foregroundStyle(.secondary)
-      Spacer()
-      Button(actionTitle, action: action)
-        .buttonStyle(.borderless)
-    }
-    .font(.footnote)
-    .listRowSeparator(.hidden)
   }
 }

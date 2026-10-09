@@ -6,9 +6,10 @@ All notable user-facing changes to Zenbu Japanese are recorded here.
 
 ### Added
 
-- Sort search results from the **•••** menu: **Sort By** a frequency dictionary, most or least
-  common first (JLPT by level), or by your known words, known or unknown first. Your choice stays
-  across launches and applies to Japanese, English, and romaji searches.
+- Sort search results from the **Sorted by** row at the top of the results: a frequency
+  dictionary, most or least common first (JLPT by level), or your known words, known or unknown
+  first. Your choice stays across launches and applies to Japanese, English, and romaji
+  searches.
 - Translate's **Listen** has the speaker button too: mute spoken translations while the
   translated cards keep coming.
 
@@ -21,7 +22,7 @@ All notable user-facing changes to Zenbu Japanese are recorded here.
   **Document** opens PDFs and text files.
 - Image Search can open up to 8 photos from your library at once.
 - Search's top bar matches Player's: a small title and the same search field, which slides up
-  while you type. After a search the field keeps your query, and **<** goes back to your recent
+  while you type and keeps your query after a search, with **X** to go back to your recent
   searches.
 
 ### Removed
