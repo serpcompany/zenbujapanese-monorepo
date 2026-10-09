@@ -598,6 +598,12 @@ bottom to 1320 × 2868.
    later, with no export compliance question (both configurations set
    `ITSAppUsesNonExemptEncryption` to `NO`); add the testers.
 
+Before submitting a version, open it in App Store Connect and check **Version Release**: choose
+**Manually release this version** unless it should go live on approval.
+`asc versions create --release-type MANUAL` left 2.0.0 on automatic release, so it went live as
+soon as App Review approved it; `asc versions list --app 6800229215 --output json` shows each
+version's `releaseType`.
+
 Check it on a device from TestFlight: signing in with Apple, Google, and a code reaches
 production's service, a change syncs to a second device, and deleting the account works.
 
