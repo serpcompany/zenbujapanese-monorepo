@@ -7,6 +7,8 @@ struct SearchResultsMenu: View {
   let appliedFilter: SearchResultFilter
   let dictionaries: [FrequencyPackDisclosure]
 
+  private static let filterTitle = "Filter"
+
   var body: some View {
     Menu {
       sortKeyPicker
@@ -33,12 +35,12 @@ struct SearchResultsMenu: View {
 
   @ViewBuilder
   private var filterPickers: some View {
-    Section("Filter") {
+    Section {
       Picker(selection: wordsBinding) {
         ForEach(KnownWordFilter.allCases, id: \.self) { Text($0.title).tag($0) }
       } label: {
+        Text(Self.filterTitle)
         Text("Words")
-        Text(appliedFilter.words.title)
       }
       .pickerStyle(.menu)
       .accessibilityIdentifier("search.filter.words")
@@ -50,17 +52,12 @@ struct SearchResultsMenu: View {
           Text(dictionary.sortName).tag(Optional(dictionary.id.family))
         }
       } label: {
+        Text(Self.filterTitle)
         Text("Frequency Dictionaries")
-        Text(dictionaryTitle)
       }
       .pickerStyle(.menu)
       .accessibilityIdentifier("search.filter.dictionary")
     }
-  }
-
-  private var dictionaryTitle: String {
-    dictionaries.first { $0.id.family == appliedFilter.dictionaryFamily }?.sortName
-      ?? SearchResultFilter.allTitle
   }
 
   private var wordsBinding: Binding<KnownWordFilter> {

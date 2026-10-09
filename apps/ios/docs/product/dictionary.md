@@ -136,13 +136,13 @@ Kanji row), the row isn't shown.
 
 ### Filtering results
 
-Under **Sort By** and the order, the **Sorted by** row's menu has a **Filter** heading over two
-rows, each naming its current choice underneath and opening a list that picks one:
+Under **Sort By** and the order, the **Sorted by** row's menu has two **Filter** rows, named
+underneath for what they filter. Each opens a list that picks one, with the current choice checked:
 
-- **Words:** **All**, **Known**, or **Unknown**. Marking a word known or unknown moves it out of or
-  into the list at once.
-- **Frequency Dictionaries:** **All**, or one enabled frequency dictionary by the name Sort By
-  uses, which shows only the words it ranks (JLPT at any level).
+- **Filter · Words:** **All**, **Known**, or **Unknown**. Marking a word known or unknown moves it
+  out of or into the list at once.
+- **Filter · Frequency Dictionaries:** **All**, or one enabled frequency dictionary by the name
+  Sort By uses, which shows only the words it ranks (JLPT at any level).
 
 The two combine: **Unknown** with **JLPT** shows the unknown words JLPT lists. While a filter
 is on, the **Sorted by** row adds how many after the order, as in **Sorted by Default · 2
