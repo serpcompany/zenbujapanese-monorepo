@@ -48,7 +48,7 @@ actor WordNoteStorage {
   }
 
   private func notes() -> [String: [LearnerWordNote]] {
-    guard let data = defaults.data(forKey: storageKey) else { return [:] }
+    guard let data = defaults.storedData(forKey: storageKey) else { return [:] }
     let stored = try? JSONDecoder().decode(
       [String: LossyDecodable<[LossyDecodable<LearnerWordNote>]>].self, from: data)
     let words = stored?.compactMapValues(\.value) ?? [:]

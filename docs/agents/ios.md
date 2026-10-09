@@ -89,7 +89,10 @@ open "/tmp/zenbu-mac/Build/Products/Debug/Zenbu Japanese.app"
 ```
 
 In Xcode, pick **My Mac** as the destination: on a Mac signed in to TSMC LLC's team, the
-project's team signs it with every entitlement ([The App Store record](#the-app-store-record)).
+project's team should sign it with every entitlement ([The App Store record](#the-app-store-record)),
+once the App ID has the Mac platform (Releasing on iPad and the Mac, below). No Mac build has
+been signed with the team yet, so the first one also checks that the project's
+`CODE_SIGN_IDENTITY` (`iPhone Developer`) signs the Mac too.
 A build signed to run locally shows the Apple button, which fails without the entitlement; sign
 in with Google or a code. Its session token can't go into the data protection keychain without a
 team, so it signs in again at each launch (Account and sync, Tokens). The Mac app runs in the App
@@ -472,7 +475,8 @@ The stores in `UserDefaults` that hold records, Player's Recent (`WatchHistory`)
 Library's `index.json` (`EncounterMediaStorage`) follow the same rule without a version: what
 doesn't decode is copied aside, a value under `<key>.unreadable-<time>-<id>` or a file beside it
 (`UnreadableCopy`, which keeps the copy it just made and the newest 2 before it, and makes no
-copy of bytes a copy already holds), and the store carries on, still writable, from the records
+copy of bytes a copy already holds; a value that isn't data at all is kept aside the same way,
+`storedData(forKey:)`), and the store carries on, still writable, from the records
 it could read (each video, note, and Media Library record; the profile is one record, so it
 starts empty). A Media Library index that can't be opened or copied aside is neither read nor
 written until it can be.
@@ -480,7 +484,8 @@ written until it can be.
 The Media Library deletes only images the learner deleted. When a kept copy of the index names
 the photo, or a copy can't be read, `deleteImage` records its ID and when in
 `deferred-deletions.json` (`DeferredImageDeletions`), as it does an image it couldn't remove.
-Once a launch, after the index reads, `retryDeferredDeletions` drops the IDs the index names
+Once a launch, after the index reads (at the latest when the root view's launch task calls
+`deleteImagesDue`), `retryDeferredDeletions` drops the IDs the index names
 again, by a media record or an encounter, without deleting their images, and deletes each other
 recorded image that no kept copy names, or that has waited 30 days (`longestWait`) whatever a
 kept copy names, so a deleted photo is gone within 30 days (the
@@ -488,7 +493,8 @@ kept copy names, so a deleted photo is gone within 30 days (the
 app). It does nothing while a kept copy can't be read, and writes the list only when
 it changed. `save` takes a photo saved again off the list once the index is written. A kept copy
 or a damaged list names an ID only as a whole run of 64 lowercase hex digits in its bytes
-(`DeferredImageDeletions.mediaIDs`). Only a missing list reads as empty: a damaged one is copied
+(`DeferredImageDeletions.mediaIDs`), and a list's names that aren't such an ID are dropped as it
+loads, so no name reaches a file outside the folder. Only a missing list reads as empty: a damaged one is copied
 aside and its IDs recovered, dated again, and one that can't be read or written records and
 retries nothing until the next launch, so a photo deleted then keeps its image, and its ID is
 logged. The store takes its copy step as `keepCopy` and its clock as `now`, so
@@ -710,6 +716,13 @@ Connect requires: each scaled to 1320 × 2870 with Lanczos and cropped a pixel a
 bottom to 1320 × 2868.
 
 **A TestFlight build:**
+
+Every archive is also an iPad app (ADR 0015), and an archive for **Any Mac** a Mac app. App Store
+Connect won't submit a version that runs on iPad without 13-inch iPad screenshots, App Review
+checks it on iPad, and a later version can't drop iPad once one has shipped with it. So before
+submitting the first version built after iPad and the Mac came in, add the iPad (and, for a Mac
+build, the Mac) platform's screenshots and set up the record (Releasing on iPad and the Mac,
+above), and say so in What's New.
 
 1. In a pull request, raise `CURRENT_PROJECT_VERSION` in both of the app target's configurations,
    as "Prepare build 20 of 1.0.1 for TestFlight" did, and merge it. For a new version, raise

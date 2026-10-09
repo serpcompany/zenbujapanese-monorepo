@@ -188,6 +188,35 @@ struct DeferredImageDeletionsTests {
     #expect(!fixture.hasDeferredList)
   }
 
+  @Test("a launch deletes the images that are due without the Media Library being opened")
+  func deletesDueImagesAtLaunch() async throws {
+    defer { fixture.remove() }
+    _ = try await fixture.deletedWhileAKeptCopyNamesIt()
+    try fixture.removeKeptCopies()
+
+    await fixture.launch().deleteImagesDue()
+
+    #expect(!fixture.keepsImage(of: fixture.photo))
+    #expect(!fixture.hasDeferredList)
+  }
+
+  @Test("a listed name that isn't a photo's ID is dropped, and deletes nothing")
+  func dropsNamesThatArentIDs() async throws {
+    defer { fixture.remove() }
+    await fixture.launch().save(fixture.photo, for: fixture.word)
+    let outside = fixture.directory.deletingLastPathComponent()
+      .appending(path: "\(UUID().uuidString).image")
+    try Data([7]).write(to: outside)
+    defer { try? FileManager.default.removeItem(at: outside) }
+    let escape = "../\(outside.deletingPathExtension().lastPathComponent)"
+    try fixture.writeDeferred([escape: MediaLibraryFixture.firstDay])
+
+    _ = await fixture.launch(onDay: 31).library()
+
+    #expect(FileManager.default.fileExists(atPath: outside.path))
+    #expect(!fixture.hasDeferredList)
+  }
+
   @Test("a launch with nothing to delete leaves the list as it is")
   func leavesAnUnchangedList() async throws {
     defer { fixture.remove() }

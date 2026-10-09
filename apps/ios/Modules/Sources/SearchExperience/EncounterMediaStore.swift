@@ -196,6 +196,11 @@ actor EncounterMediaStorage {
     deleteImage(mediaID)
   }
 
+  func deleteImagesDue() {
+    prepareIfNeeded()
+    _ = index()
+  }
+
   private func deleteImage(_ mediaID: String) {
     if let kept = keptCopiesNames(), !kept.contains(mediaID), removeImage(mediaID) { return }
     deferredDeletions.add(mediaID)

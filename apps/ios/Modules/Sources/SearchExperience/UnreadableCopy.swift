@@ -60,3 +60,12 @@ enum UnreadableCopy {
     Array(earlier.sorted { name($0) < name($1) }.dropLast(earlierKept))
   }
 }
+
+extension UserDefaults {
+  func storedData(forKey key: String) -> Data? {
+    guard let value = object(forKey: key) else { return nil }
+    if let data = value as? Data { return data }
+    UnreadableCopy.keep(key, in: self)
+    return nil
+  }
+}

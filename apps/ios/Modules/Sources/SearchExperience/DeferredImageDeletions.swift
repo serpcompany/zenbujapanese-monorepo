@@ -45,7 +45,9 @@ final class DeferredImageDeletions {
       return unavailable("Couldn't read the deferred image deletions")
     }
     if let list = try? JSONDecoder.localStore.decode([String: Date].self, from: data) {
-      return list
+      let mediaIDs = list.filter { Self.isMediaID($0.key) }
+      guard mediaIDs.count < list.count else { return list }
+      return save(mediaIDs) ? mediaIDs : nil
     }
     guard (try? keepCopy(fileURL)) != nil else {
       return unavailable("Couldn't keep aside damaged deferred image deletions")
@@ -76,6 +78,10 @@ final class DeferredImageDeletions {
       data.split { !isLowercaseHexDigit($0) }
         .filter { $0.count == mediaIDLength }
         .map { String(decoding: $0, as: UTF8.self) })
+  }
+
+  private static func isMediaID(_ name: String) -> Bool {
+    name.utf8.count == mediaIDLength && name.utf8.allSatisfy(isLowercaseHexDigit)
   }
 
   private static func isLowercaseHexDigit(_ byte: UInt8) -> Bool {

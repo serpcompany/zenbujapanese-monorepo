@@ -5,9 +5,11 @@ import Testing
 
 extension UserDefaults {
   func keptCopies(of key: String) -> [Data] {
-    dictionaryRepresentation()
-      .filter { $0.key.hasPrefix("\(key).unreadable-") }
-      .compactMap { $0.value as? Data }
+    keptValues(of: key).compactMap { $0 as? Data }
+  }
+
+  func keptValues(of key: String) -> [Any] {
+    dictionaryRepresentation().filter { $0.key.hasPrefix("\(key).unreadable-") }.map(\.value)
   }
 }
 
@@ -91,6 +93,29 @@ struct UnreadableCopyTests {
       .appending(path: "unreadable-copy-tests-\(UUID().uuidString)", directoryHint: .isDirectory)
     try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
     return directory
+  }
+
+  @Test("a saved value that isn't data is kept aside by Recent, word notes, and the profile")
+  func keepsValuesThatArentData() async throws {
+    let temporary = try TemporaryDefaults()
+    let suite = temporary.suite
+    let keys = ["watch.recent-videos.v1", "lookup.word-notes.v4", "user-profile.v1"]
+    for key in keys { temporary.defaults.set("not data", forKey: key) }
+
+    let notes = WordNoteStorage(defaults: try #require(UserDefaults(suiteName: suite)))
+    #expect(await notes.load(WordNoteID(rawValue: "taberu-note")).isEmpty)
+    try await MainActor.run {
+      let defaults = try #require(UserDefaults(suiteName: suite))
+      #expect(WatchHistory(defaults: defaults).videos.isEmpty)
+      let photoURL = FileManager.default.temporaryDirectory.appending(path: "\(suite).jpg")
+      #expect(UserProfile(defaults: defaults, photoURL: photoURL).isEmpty)
+    }
+
+    for key in keys {
+      let kept = temporary.defaults.keptValues(of: key).compactMap { $0 as? String }
+      #expect(kept == ["not data"], "\(key)")
+      #expect(temporary.defaults.object(forKey: key) == nil, "\(key)")
+    }
   }
 
   @Test("a file is copied beside itself, and at most three copies are kept")

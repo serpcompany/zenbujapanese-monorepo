@@ -60,7 +60,7 @@ final class WatchHistory {
   }
 
   private static func readable(in defaults: UserDefaults) -> ([WatchedVideo], lostSome: Bool) {
-    guard let data = defaults.data(forKey: storageKey) else { return ([], false) }
+    guard let data = defaults.storedData(forKey: storageKey) else { return ([], false) }
     let stored = try? JSONDecoder().decode([LossyDecodable<WatchedVideo>].self, from: data)
     let videos = stored?.compactMap(\.value) ?? []
     guard videos.count != stored?.count else { return (videos, false) }
