@@ -24,14 +24,35 @@ button while it has text.
 - **Recent.** With nothing searched, the title bar's **•••** menu offers **Clear Recent
   Searches** while recent searches are listed.
 - **Typing.** Tapping the field slides the screen up as Player's does: the title bar slides away,
-  the field moves to the top, and an **X** appears beside it. The **Keyboard**, **Handwriting**,
-  and **Radicals** picker sits above the keyboard. The clear button inside the field clears the
-  text.
+  the field moves to the top, and an **X** appears beside it. Under the field, a **Keyboard**,
+  **Handwriting**, **Radicals** switcher stays in one place. The clear button inside the field
+  clears the text.
 - **Results.** Submitting, or picking a recent search, the reading refinement, or a handwriting
   or radical candidate, puts the keyboard away and keeps the query in the field at the top, with
   **X** beside it. The first row of the results names the order and opens Sort
   ([Sorting results](#sorting-results)).
 - **X** clears the query and returns to Recent.
+
+### Handwriting and Radicals
+
+Choosing **Handwriting** or **Radicals** slides a full-screen panel over the search field and the
+tab bar. Its top has the same switcher and an **X** that closes it; **Keyboard** returns to the
+search field with the keyboard up. Both panels share one gray background, glass candidate tiles
+and buttons (white in light mode), and a **Clear** button at the bottom right.
+
+- **Handwriting.** A white drawing pad sits under the switcher, with candidate tiles below it:
+  five to a row, each with the kanji's first meaning. Three rows show and more scroll. **Undo**
+  removes the last stroke and recognizes the rest again; **Clear** erases the drawing. Before
+  there are candidates, text shows under the pad only while recognizing, when nothing matches,
+  or when recognition fails.
+- **Radicals.** A white strip at the top lists the kanji that contain every selected radical,
+  or says **Select one or more radicals**. Below it, the radicals scroll under pinned stroke-count
+  headers, and radicals that can't combine with the selection are hidden. **Clear** is dimmed
+  until a radical is selected.
+
+A handwriting candidate is added to the end of the query, so drawing one character after another
+builds a word; a radical candidate replaces the query. Either way the panel closes and the results
+show, with the query in the field. In dark mode the strip and pad are black.
 
 Japanese, English, and romaji searches show one **Results** list. Stronger matches come first;
 among equally good matches, the enabled frequency dictionaries decide the order, in the

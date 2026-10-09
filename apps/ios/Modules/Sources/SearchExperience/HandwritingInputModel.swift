@@ -55,6 +55,16 @@ final class HandwritingInputModel {
     recognitionState = .idle
   }
 
+  func undoStroke() {
+    guard !strokes.isEmpty else { return }
+    strokes.removeLast()
+    if strokes.isEmpty {
+      eraseDrawing()
+    } else {
+      recognize(HandwritingSample(strokes: strokes))
+    }
+  }
+
   func acceptCandidate() {
     recognitionTask?.cancel()
     recognitionTask = nil

@@ -144,6 +144,7 @@ public struct SearchExperienceRootView: View {
         lookupClient: lookupClient,
         recentSearchStore: recentSearchStore,
         handwritingRecognitionClient: handwritingRecognitionClient,
+        kanjiLookupClient: kanjiLookupClient,
         radicalLookupClient: .live,
         exampleSentenceClient: exampleSentenceClient,
         frequencyCapability: .live,
