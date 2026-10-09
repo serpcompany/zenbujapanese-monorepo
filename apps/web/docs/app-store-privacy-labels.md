@@ -4,9 +4,9 @@ The answers to enter under App Privacy in App Store Connect for the Zenbu Japane
 Tomodachi, once each can sign in to a Zenbu account. They follow what the
 [Privacy Policy](product/privacy.md) says a Zenbu account keeps, and change with it.
 
-Until a build that signs in is submitted, each app's current answer, Data Not Collected, stays
-true. Enter these with that build: the Zenbu app's sign-in (#573), and Tomodachi's linking
-([tomodachi-app#28](https://github.com/serpcompany/tomodachi-app/issues/28)).
+Enter them with the first build that signs in: the Zenbu app's 2.0.0 (#573, #616), and
+Tomodachi's linking ([tomodachi-app#28](https://github.com/serpcompany/tomodachi-app/issues/28)).
+Until then, an app's current answer, Data Not Collected, stays true.
 
 ## How Apple asks
 
@@ -67,18 +67,18 @@ one bookmarked before the app synced bookmarks), which may be
 what someone nearby said. It never sends a conversation, or a sentence the learner didn't bookmark,
 and it keeps no audio, so it collects no Audio Data. It has no analytics or crash-reporting SDK.
 
-When the build with sign-in ships (#573), change these with the labels:
+Its privacy manifest, `apps/ios/App/PrivacyInfo.xcprivacy`, lists the same seven types, and the
+listing's description, in `apps/ios/metadata/version/1.0/en-US.json`, says what syncs. Change them
+with the labels:
 
-- **The privacy manifest**, `apps/ios/App/PrivacyInfo.xcprivacy`: add one dictionary per type to
-  the `NSPrivacyCollectedDataTypes` array. Each has the keys `NSPrivacyCollectedDataType` (the
+- **The privacy manifest**: one dictionary per type in the `NSPrivacyCollectedDataTypes` array. Each has the keys `NSPrivacyCollectedDataType` (the
   type: `NSPrivacyCollectedDataTypeEmailAddress`, `NSPrivacyCollectedDataTypeName`,
   `NSPrivacyCollectedDataTypeUserID`, `NSPrivacyCollectedDataTypeOtherUserContent`,
   `NSPrivacyCollectedDataTypeOtherDataTypes`, `NSPrivacyCollectedDataTypeBrowsingHistory`, or
   `NSPrivacyCollectedDataTypeProductInteraction`), `NSPrivacyCollectedDataTypeLinked` (true),
   `NSPrivacyCollectedDataTypeTracking` (false), and `NSPrivacyCollectedDataTypePurposes` (an array
   holding `NSPrivacyCollectedDataTypePurposeAppFunctionality`).
-- **The listing's description**, in `apps/ios/metadata/version/1.0/en-US.json`, which says the
-  app has no cloud sync.
+- **The listing's description**, which names what the account syncs.
 
 ## Tomodachi
 

@@ -39,9 +39,8 @@ lists, Player's watch history, and Translate's bookmarked sentences. It provides
 
 - a profile card with the learner's photo, name, and username;
 - the Zenbu account: **Sign In to Sync**, or, signed in, **Zenbu Account** with the account's email
-  ([Zenbu account and sync](#zenbu-account-and-sync)). TestFlight and App Store builds don't show
-  it until the Zenbu account service runs in production; until then nothing syncs, and everything
-  else works as it does signed out;
+  ([Zenbu account and sync](#zenbu-account-and-sync)), against production's account service in
+  TestFlight and App Store builds and staging's in Debug builds;
 - the Media Library;
 - Known Words;
 - Lists;
@@ -162,8 +161,7 @@ What doesn't sync, and why:
 - **The profile on Account**, which is this phone's own.
 
 **Signing in.** **Sign In to Sync** opens a sheet with **Sign in with Apple**, **Sign in with
-Google** (only in builds given a Google client ID: Debug builds, against staging, until sign-in
-opens in the App Store build), and an emailed code: the learner enters their
+Google** (in builds given a Google client ID, which every build is), and an emailed code: the learner enters their
 email, taps **Email Me a Code**, and enters the 6-digit code. A refused sign-in says why, such as a
 wrong or expired code, or an email whose account signs in with Apple or Google. Sign in with Apple
 asks for the learner's name and email; a new account takes the name Apple shares on the first

@@ -30,11 +30,13 @@ def setting(settings: str, key: str) -> str:
 
 
 class AccountServiceSettingsTests(unittest.TestCase):
-    def test_release_builds_offer_no_sign_in_until_production_answers(self) -> None:
+    def test_release_builds_sign_in_to_production_with_the_ios_client(self) -> None:
         releases = app_settings("Release")
         self.assertEqual(len(releases), 1)
-        self.assertEqual(setting(releases[0], "ZENBU_ACCOUNT_API_URL"), "")
-        self.assertEqual(setting(releases[0], "ZENBU_GOOGLE_IOS_CLIENT_ID"), "")
+        self.assertEqual(
+            setting(releases[0], "ZENBU_ACCOUNT_API_URL"), "https://api.zenbujapanese.com"
+        )
+        self.assertEqual(setting(releases[0], "ZENBU_GOOGLE_IOS_CLIENT_ID"), GOOGLE_IOS_CLIENT_ID)
 
     def test_debug_builds_and_zenbu_dev_use_staging(self) -> None:
         debugs = app_settings("Debug")

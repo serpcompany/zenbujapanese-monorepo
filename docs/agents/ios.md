@@ -389,12 +389,12 @@ tests prove that model against the real service.
 
 - **Which service.** The build setting `ZENBU_ACCOUNT_API_URL` fills `ZenbuAccountServiceURL` in
   `apps/ios/App/Info.plist`: staging (`https://api-staging.zenbujapanese.com`) in Debug, Zenbu Dev
-  included, and none in Release, so a TestFlight or App Store build offers no sign-in until
-  production's service answers (Opening sign-in in the App Store build, below). With no service,
-  Account has no **Sign In to Sync** row, and nothing is queued: the stores' observers are only
-  set by the account, and a phone that never signed in queues nothing anyway.
-  `apps/ios/Tools/tests/test_account_service_settings.py` pins Release empty and Debug on staging,
-  with Google's iOS client in Debug only, in the `iOS` workflow's `contracts` job. For a service on the Mac ([`account-api.md`](account-api.md), Run it), launch with
+  included, and production (`https://api.zenbujapanese.com`) in Release, so a TestFlight or App
+  Store build signs in to production (Sign-in in the App Store build, below). A build naming no
+  service has no **Sign In to Sync** row on Account, and queues nothing: the stores' observers are
+  only set by the account, and a phone that never signed in queues nothing anyway.
+  `apps/ios/Tools/tests/test_account_service_settings.py` pins Release on production and Debug on
+  staging, each with Google's iOS client, in the `iOS` workflow's `contracts` job. For a service on the Mac ([`account-api.md`](account-api.md), Run it), launch with
   the argument `-ZenbuAccountServiceURL http://127.0.0.1:8789` or the environment variable
   `ZENBU_ACCOUNT_API_URL`, or build with `ZENBU_ACCOUNT_API_URL=http://127.0.0.1:8789` so every
   launch, a background one too, uses it. The Simulator reaches the Mac's `127.0.0.1`, and App
@@ -416,8 +416,7 @@ tests prove that model against the real service.
   type is registered. The app exchanges the code at Google's token endpoint for the ID token. The
   build setting `ZENBU_GOOGLE_IOS_CLIENT_ID` fills `ZenbuGoogleIOSClientID` in
   `apps/ios/App/Info.plist` with the iOS OAuth client's ID, which isn't secret: `881343714137-8v279fqjrkk1qeg18opnqbac41jteoqq.apps.googleusercontent.com`
-  in Debug, Zenbu Dev included, and empty in Release, like `ZENBU_ACCOUNT_API_URL`, until sign-in
-  opens in the App Store build (below). Without it the Google button isn't shown. Its reversed
+  in both configurations. Without it the Google button isn't shown. Its reversed
   form, `com.googleusercontent.apps.881343714137-8v279fqjrkk1qeg18opnqbac41jteoqq`, is the
   redirect's scheme (`GoogleSignIn.redirectScheme`). The same ID is in staging's and production's
   `GOOGLE_CLIENT_IDS`, after the web client's.
@@ -531,26 +530,15 @@ removed, an un-bookmark that lost to a newer bookmark, a rejected bookmark, dele
 conversation, an unreadable synced bookmarks file pausing sync, a pulled ID that isn't its
 change's, a service that doesn't know bookmarks yet, catching up, and two phones.
 
-### Opening sign-in in the App Store build
+### Sign-in in the App Store build
 
-Release builds name no account service, though the website's production account pages are open
-([`web.md`](web.md), Account pages). Opening sign-in waits for production's account service:
-`https://api.zenbujapanese.com/v1/health` answers `{"status":"ok"}` in a browser, with Apple, on
-TSMC LLC's key, and email codes set up for everyone ([`account-api.md`](account-api.md), Set up
-the server, Moving from the backup team). Until the service holds TSMC LLC's key, Apple refuses
-the client secret it makes for `com.zenbujapanese.dictionary`, so deleting an account made with
-Apple answers `503 apple_unavailable`, and App Review requires deleting to work. Then it's one
-pull request:
-
-- set Release's `ZENBU_ACCOUNT_API_URL` to `https://api.zenbujapanese.com`, and its
-  `ZENBU_GOOGLE_IOS_CLIENT_ID` to Debug's, in `apps/ios/ZenbuJapanese.xcodeproj/project.pbxproj`;
-- change `test_release_builds_offer_no_sign_in_until_production_answers` in
-  `apps/ios/Tools/tests/test_account_service_settings.py` to expect them;
-- and say so here, in Which service (above), and in the product docs' Account
-  ([`index.md`](../../apps/ios/docs/product/index.md#account)).
-
-Then enter the App Store privacy labels for the build that ships it, and change the listing's
-description in `apps/ios/metadata/version/1.0/en-US.json`, which says the app has no cloud sync
+Release builds sign in to production's account service with Apple, Google, and emailed codes, from
+2.0.0 (#616). That needs production's service holding TSMC LLC's Sign in with Apple key
+([`account-api.md`](account-api.md), Set up the server, Moving from the backup team): with
+another team's key, Apple refuses the client secret it makes for `com.zenbujapanese.dictionary`,
+so deleting an account made with Apple answers `503 apple_unavailable`, and App Review requires
+deleting to work. The privacy manifest (`apps/ios/App/PrivacyInfo.xcprivacy`) lists what the
+account collects, and the App Store privacy labels match it
 ([`app-store-privacy-labels.md`](../../apps/web/docs/app-store-privacy-labels.md)).
 
 What a person sets up first, once, in Apple Developer on the team that holds the app (TSMC LLC,
@@ -580,6 +568,13 @@ rebuilt app went to review first from a backup account (team `W3GXL2NQQP`, bundl
 `com.zenbujapanese.app`, record 6819885342, never released), while TSMC LLC's account was being
 converted to a business account; nothing ships from it.
 
+The listing is `apps/ios/metadata/` (the name and subtitle in `app-info/`, the description, What's
+New, keywords, and promotional text in `version/1.0/`), and its screenshots are
+`apps/ios/screenshots/app-store/en-US/iphone-63-marketing-v2/`, made with koubou from
+`koubou-v2.yaml`, and the same shots at 6.9" in `iphone-69-marketing-v2/`, which App Store
+Connect requires: each scaled to 1320 × 2870 with Lanczos and cropped a pixel at the top and
+bottom to 1320 × 2868.
+
 **A TestFlight build:**
 
 1. In a pull request, raise `CURRENT_PROJECT_VERSION` in both of the app target's configurations,
@@ -593,9 +588,8 @@ converted to a business account; nothing ships from it.
    later, with no export compliance question (both configurations set
    `ITSAppUsesNonExemptEncryption` to `NO`); add the testers.
 
-Check it on a device from TestFlight. A build from today's `main` names no account service in
-Release, so Account has no **Sign In to Sync** row; once the pull request above names production's
-service, signing in with Apple, Google, and a code reaches it.
+Check it on a device from TestFlight: signing in with Apple, Google, and a code reaches
+production's service, a change syncs to a second device, and deleting the account works.
 
 ## Image Search and Apple Intelligence
 
@@ -656,9 +650,10 @@ previews stay still.
   animated stroke, and the pitch downstep. Everything else uses SwiftUI's system styles.
 - Account's support and privacy URLs (`AccountAndMediaLibraryView.swift`) match the App Store
   listing's in `apps/ios/metadata/`; change both together.
-- The privacy manifest (`apps/ios/App/PrivacyInfo.xcprivacy`) declares no collected data, which
-  stays true until the app signs in (#573). The app's data, the App Store privacy labels, and the
-  manifest change together, as the
+- The privacy manifest (`apps/ios/App/PrivacyInfo.xcprivacy`) declares what the Zenbu account
+  collects: email, name, user IDs, synced user content, session data, watch history, and where a
+  video was stopped. The app's data, the App Store privacy labels, and the manifest change
+  together, as the
   [App Store privacy labels](../../apps/web/docs/app-store-privacy-labels.md) say.
 - `CreditsView` links the documentation of each EDRDG file (JMdict, KANJIDIC2, RADKFILE), as the
   EDRDG licence requires.
