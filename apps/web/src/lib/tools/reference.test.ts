@@ -10,8 +10,8 @@ describe('the kana reference', () => {
     expect(kanaGroups.map(group => [group.label, entriesIn(group).length])).toEqual([
       ['Basic', 46],
       ['With marks', 25],
-      ['Combinations', 33],
       ['Small kana', 10],
+      ['Combinations', 33],
       ['Katakana only', 17]
     ])
     expect(everyRow).toHaveLength(131)

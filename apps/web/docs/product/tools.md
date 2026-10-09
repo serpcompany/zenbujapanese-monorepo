@@ -177,31 +177,33 @@ panel): a tile for each kana, laid out like the real chart and filling the width
 consonant by the rows a, i, u, e, and o from 640 pixels, and a row for each consonant on phones,
 with gaps where there is no kana (yi, ye, wu). Each tile shows the page's pair, in its direction
 (あ ア on Hiragana to Katakana, ｶ カ on Half-width to Full-width), with the romaji small under it,
-and is not a link. Every one of the 131 kana is in the HTML, one group at a time in stock tabs with
-short names, Basic, Marks, Combos, Small, and Katakana, so the tabs fit a phone; each panel names its
-group in full with its count: Basic (46), With marks (25), Combinations (33), Small kana (10), and
-Katakana only (17, Extended katakana on the width pages). The tabs' panels stay in the page while
-hidden. Basic and With marks are the dictionary core's `gojuonRows` and `dakuonRows`;
-Combinations has a column for each kana by ya, yu, and yo; Small kana puts each small kana where its
-full-size one is (っ under u, ゃ, ゅ, and ょ as や's column); and Katakana only has a column for each
-consonant (v, f, w, t, d, sh, ch, j). Every group's tiles are as wide as Basic's, and a pair too wide
-for its tile, such as きゃ キャ, breaks between its two kana. On Romaji to Kana, the romaji are
-spellings that type the kana on that page (wo for を, di for ぢ, xa for ぁ, xtsu for っ, who for
-うぉ), with the other spellings that type it after; on Kana to Romaji, the Hepburn spelling and the
-other spellings; elsewhere the Hepburn spelling, and っ's is "doubled consonant". The section links
-the full kana charts (`/dictionary/browse/kana/`).
+and is not a link. Every one of the 131 kana is in the HTML, in three stock tabs with short names,
+Basic, Combos, and Katakana, whose panels stay in the page while hidden. Each group is headed by its
+name and count. Basic holds Basic (46), the dictionary core's `gojuonRows`, and under it, as the
+browse pages put dakuon under gojūon, With marks (25, `dakuonRows`) and Small kana (10) side by side
+from 640 pixels, each small kana where its full-size one is (っ under u, ゃ, ゅ, and ょ as や's
+column). Combos holds Combinations (33), a column for each kana by ya, yu, and yo. Katakana holds
+Katakana only (17, Extended katakana on the width pages), a column for each consonant (v, f, w, t,
+d, sh, ch, j). Every group's tiles are as wide as Basic's. From 640 pixels a two-kana sound's pair
+takes two lines (きゃ over キャ), and on phones one. On the width pages, ヮ, which has no half-width
+form, is drawn dashed and says so to screen readers. On Romaji to Kana, the romaji are spellings
+that type the kana on that page (wo for を, di for ぢ, xa for ぁ, xtsu for っ, who for うぉ), with
+the other spellings that type it after; on Kana to Romaji, the Hepburn spelling and the other
+spellings; elsewhere the Hepburn spelling, and っ's is "double". The section's line describes the
+chart in either direction, and the section links the full kana charts (`/dictionary/browse/kana/`).
 
 - Source: the owner's decision on #579 (the conversion table), and the owner's change to the site's
-  kana chart in place of a table; the owner's UI rules and their reviews (one group at a time in
-  tabs with short names).
-- Check: `src/lib/tools/chart.test.ts`, "has every one of the 131 kana, in five groups with short tab
+  kana chart in place of a table; the owner's UI rules and their reviews (groups in tabs with short
+  names, and no block left alone with empty space beside it).
+- Check: `src/lib/tools/chart.test.ts`, "has every one of the 131 kana, in three tabs with short
   names", "lays each group out like the kana chart, a sound in each place and gaps where there is
   none", "each page’s pair runs in its direction, with the romaji under it", "every spelling on
-  Romaji to Kana types the kana it sits under", and "the small っ reads as a doubled consonant, and
-  on Kana to Romaji as its typed spellings"; `src/lib/tools/reference.test.ts`, "every kana has a
-  spelling that types it, and its other typed spellings type it too"; Page test, "… holds every kana
-  of its conversion chart, a tab per group, the ones not shown hidden"; Tools spec, "the conversion
-  chart shows one group at a time in tabs, every kana in the page".
+  Romaji to Kana types the kana it sits under", "the small っ reads as double, and on Kana to Romaji
+  gives its typed spellings", and "only the width pages have a kana with no other form, the small
+  ヮ"; `src/lib/tools/reference.test.ts`, "every kana has a spelling that types it, and its other
+  typed spellings type it too"; Page test, "… holds every kana of its conversion chart in three
+  tabs, the ones not shown hidden"; Tools spec, "the conversion chart shows its groups in tabs, every
+  kana in the page".
 
 **Questions.** Three questions per pair of converters, in the stock accordion the product page uses
 (`src/components/question-list.tsx`, all closed at first), every answer in the HTML while closed,

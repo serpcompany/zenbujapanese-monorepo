@@ -36,12 +36,12 @@ const referenceRows: Record<(typeof converters)[number]['pair'], (slug: string) 
 describe('a converter page’s HTML', () => {
   test.each(
     converters.map(converter => converter.slug)
-  )('%s holds every kana of its conversion chart, a tab per group, the ones not shown hidden', slug => {
+  )('%s holds every kana of its conversion chart in three tabs, the ones not shown hidden', slug => {
     const html = page(slug)
     const { pair } = converterFor(slug)
     expect(kanaInTheChart(html)).toBe(131)
     expect(tableRows(html)).toBe(referenceRows[pair](slug))
-    expect(hiddenPanels(html)).toEqual([false, true, true, true, true])
+    expect(hiddenPanels(html)).toEqual([false, true, true])
   })
 
   test('the questions are in the page with their answers, and as FAQ structured data', () => {

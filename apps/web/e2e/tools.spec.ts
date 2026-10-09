@@ -153,7 +153,7 @@ test.describe('a converter page', () => {
       .toBe('ＡＢＣ　カタカナ')
   })
 
-  test('the conversion chart shows one group at a time in tabs, every kana in the page', async ({
+  test('the conversion chart shows its groups in tabs, every kana in the page', async ({
     page
   }) => {
     await page.goto('/tools/kana-to-romaji/')
@@ -163,22 +163,18 @@ test.describe('a converter page', () => {
       chart(name)
         .getByRole('listitem')
         .filter({ has: page.getByText(pair, { exact: true }) })
-    await expect(groups.getByRole('tab')).toHaveText([
-      'Basic',
-      'Marks',
-      'Combos',
-      'Small',
-      'Katakana'
-    ])
+    await expect(groups.getByRole('tab')).toHaveText(['Basic', 'Combos', 'Katakana'])
     await expect(tile('Basic', 'か カ')).toHaveText('か カka')
+    await expect(tile('With marks', 'が ガ')).toHaveText('が ガga')
+    await expect(tile('Small kana', 'っ ッ')).toHaveText('っ ッxtsu, xtu, ltu')
     await expect(main(page).locator('[role="tabpanel"] li:not([aria-hidden])')).toHaveCount(131)
-    const small = groups.getByRole('tab', { name: 'Small' })
+    const combinations = groups.getByRole('tab', { name: 'Combos' })
     await expect(async () => {
-      await small.click()
-      await expect(small).toHaveAttribute('aria-selected', 'true', { timeout: 1_000 })
+      await combinations.click()
+      await expect(combinations).toHaveAttribute('aria-selected', 'true', { timeout: 1_000 })
     }).toPass({ timeout: 15_000 })
     await expect(chart('Basic')).toBeHidden()
-    await expect(tile('Small kana', 'っ ッ')).toHaveText('っ ッxtsu, xtu, ltu')
+    await expect(chart('Combinations').getByRole('listitem').first()).toHaveText('きゃ キャkya')
     await expect(main(page).getByRole('link', { name: /^Full kana charts/ })).toHaveAttribute(
       'href',
       '/dictionary/browse/kana/'

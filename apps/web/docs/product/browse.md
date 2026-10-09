@@ -66,7 +66,9 @@ home. Each chart links to its script's page with how many words it lists.
 **Charts on a phone.** Every kana chart, here, on the hub, on the dictionary home, and on a
 script's page, reads down from 640 pixels, a column for each consonant (あいうえお down the first),
 as the mockups draw it. Narrower, it reads across, five kana to a row (あいうえお, then かきくけこ),
-so each tile stays wide enough to tap and read rather than squeezing 11 columns into a phone. A
+so each tile stays wide enough to tap and read rather than squeezing 11 columns into a phone. The
+charts with romaji keep their kana at the phone size up to 1024 pixels, where the 11 columns are
+narrowest, and draw them a size larger from there. A
 script's page shows each kana's count in full at every width, and the chart's Japanese name stays
 on one line.
 

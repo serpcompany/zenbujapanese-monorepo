@@ -53,7 +53,7 @@ export function KanaChart({
         )
         const contents = (
           <>
-            <span className={large ? 'text-xl leading-none sm:text-2xl' : 'text-lg leading-none'}>
+            <span className={large ? 'text-xl leading-none lg:text-2xl' : 'text-lg leading-none'}>
               {cell.kana}
             </span>
             {shown.note ? (

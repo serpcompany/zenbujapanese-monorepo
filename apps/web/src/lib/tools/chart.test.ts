@@ -4,8 +4,10 @@ import type { ConverterSlug } from './paths'
 import { entriesIn, kanaGroups } from './reference'
 import { romajiToKana } from './romaji-to-kana'
 
+const groupsOf = (slug: ConverterSlug) => conversionChart(slug).tabs.flatMap(tab => tab.groups)
+
 const group = (slug: ConverterSlug, id: ChartGroup['id']) => {
-  const found = conversionChart(slug).groups.find(candidate => candidate.id === id)
+  const found = groupsOf(slug).find(candidate => candidate.id === id)
   if (!found) throw new Error(`No ${id} group`)
   return found
 }
@@ -17,15 +19,25 @@ const tilesOf = (chartGroup: ChartGroup) =>
   chartGroup.rows.flatMap(row => row.cells.flatMap(cell => (cell ? [cell] : [])))
 
 describe('the conversion chart', () => {
-  test('has every one of the 131 kana, in five groups with short tab names', () => {
+  test('has every one of the 131 kana, in three tabs with short names', () => {
     expect(chartKanaCount).toBe(131)
-    const groups = conversionChart('hiragana-to-katakana').groups
-    expect(groups.map(each => [each.tab, each.label, each.count, tilesOf(each).length])).toEqual([
-      ['Basic', 'Basic', 46, 46],
-      ['Marks', 'With marks', 25, 25],
-      ['Combos', 'Combinations', 33, 33],
-      ['Small', 'Small kana', 10, 10],
-      ['Katakana', 'Katakana only', 17, 17]
+    const { tabs } = conversionChart('hiragana-to-katakana')
+    expect(
+      tabs.map(tab => [
+        tab.tab,
+        tab.groups.map(each => [each.label, each.count, tilesOf(each).length])
+      ])
+    ).toEqual([
+      [
+        'Basic',
+        [
+          ['Basic', 46, 46],
+          ['With marks', 25, 25],
+          ['Small kana', 10, 10]
+        ]
+      ],
+      ['Combos', [['Combinations', 33, 33]]],
+      ['Katakana', [['Katakana only', 17, 17]]]
     ])
   })
 
@@ -37,9 +49,9 @@ describe('the conversion chart', () => {
     expect(basic[10]).toEqual(['ん ン', null, null, null, null])
     expect(group('hiragana-to-katakana', 'combinations').sounds).toBe(3)
     expect(columns('hiragana-to-katakana', 'combinations')[1]).toEqual([
-      'しゃ シャ',
-      'しゅ シュ',
-      'しょ ショ'
+      'しゃ\nシャ',
+      'しゅ\nシュ',
+      'しょ\nショ'
     ])
     expect(columns('hiragana-to-katakana', 'small')).toEqual([
       ['ぁ ァ', 'ぃ ィ', 'ぅ ゥ', 'ぇ ェ', 'ぉ ォ'],
@@ -48,8 +60,8 @@ describe('the conversion chart', () => {
       ['ゎ ヮ', null, null, null, null]
     ])
     expect(columns('katakana-to-hiragana', 'extended').slice(0, 2)).toEqual([
-      ['ヴァ ゔぁ', 'ヴィ ゔぃ', 'ヴ ゔ', 'ヴェ ゔぇ', 'ヴォ ゔぉ'],
-      ['ファ ふぁ', 'フィ ふぃ', null, 'フェ ふぇ', 'フォ ふぉ']
+      ['ヴァ\nゔぁ', 'ヴィ\nゔぃ', 'ヴ ゔ', 'ヴェ\nゔぇ', 'ヴォ\nゔぉ'],
+      ['ファ\nふぁ', 'フィ\nふぃ', null, 'フェ\nふぇ', 'フォ\nふぉ']
     ])
   })
 
@@ -65,23 +77,27 @@ describe('the conversion chart', () => {
   })
 
   test('every spelling on Romaji to Kana types the kana it sits under', () => {
-    const groups = conversionChart('romaji-to-kana').groups
-    const pairs = groups.flatMap((each, index) =>
-      tilesOf(each).map((tile, at) => ({
-        kana: entriesIn(kanaGroups[index])[at].kana,
-        romaji: tile.romaji
-      }))
-    )
+    const chartGroups = groupsOf('romaji-to-kana')
+    const pairs = chartGroups.flatMap(each => {
+      const entries = kanaGroups.filter(kanaGroup => kanaGroup.id === each.id).flatMap(entriesIn)
+      return tilesOf(each).map((tile, at) => ({ kana: entries[at].kana, romaji: tile.romaji }))
+    })
     expect(pairs).toHaveLength(131)
     for (const { kana, romaji } of pairs) {
       for (const spelling of romaji.split(', ')) expect(romajiToKana(spelling), spelling).toBe(kana)
     }
   })
 
-  test('the small っ reads as a doubled consonant, and on Kana to Romaji as its typed spellings', () => {
+  test('the small っ reads as double, and on Kana to Romaji gives its typed spellings', () => {
     const smallTsu = (slug: ConverterSlug) => group(slug, 'small').rows[1].cells[2]?.romaji
-    expect(smallTsu('hiragana-to-katakana')).toBe('doubled consonant')
+    expect(smallTsu('hiragana-to-katakana')).toBe('double')
     expect(smallTsu('kana-to-romaji')).toBe('xtsu, xtu, ltu')
+  })
+
+  test('only the width pages have a kana with no other form, the small ヮ', () => {
+    expect(group('half-width-to-full-width', 'small').unchanged).toEqual(['ヮ ヮ'])
+    expect(groupsOf('full-width-to-half-width').flatMap(each => each.unchanged)).toEqual(['ヮ ヮ'])
+    expect(groupsOf('hiragana-to-katakana').flatMap(each => each.unchanged)).toEqual([])
   })
 
   test('the width pages call the last group extended katakana', () => {

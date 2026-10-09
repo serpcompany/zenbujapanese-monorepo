@@ -195,7 +195,7 @@ drawing's furigana keeps its drawn size.
   `tabs`, `checkbox` with `label`, `textarea`, `toggle-group`, `kbd`, and `accordion`, through
   `src/components/question-list.tsx`, which the product page shares. The conversion chart is the
   browse pages' `KanaChart` (`src/components/dictionary/browse/kana-chart.tsx`), its tiles holding
-  each page's pair, one group to a tab whose panel stays mounted, so all 131 kana are in the HTML. A `Kbd` on the muted grey sits
+  each page's pair, in tabs whose panels stay mounted, so all 131 kana are in the HTML. A `Kbd` on the muted grey sits
   in a `muted-surface` wrapper, which keeps its text at 4.5:1 (Theme, above).
 - The scripts in `apps/web/scripts/` read a command's output whole before searching it:
   `curl | grep -q` fails under `pipefail` when grep exits early. Their `.shellcheckrc` turns off

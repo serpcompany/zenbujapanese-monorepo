@@ -13,17 +13,24 @@ import { fullToHalf, type WidthOptions } from './width'
 
 export interface ChartGroup {
   id: KanaGroupId
-  tab: string
   label: string
   count: number
   sounds: KanaGroup['sounds']
   rows: readonly KanaRow[]
+  unchanged: readonly string[]
 }
 
-interface ConversionChart {
-  line: string
+interface ChartTab {
+  id: KanaGroupId
+  tab: string
   groups: readonly ChartGroup[]
 }
+
+const tabs: readonly { id: KanaGroupId; tab: string; groups: readonly KanaGroupId[] }[] = [
+  { id: 'basic', tab: 'Basic', groups: ['basic', 'marks', 'small'] },
+  { id: 'combinations', tab: 'Combos', groups: ['combinations'] },
+  { id: 'extended', tab: 'Katakana', groups: ['extended'] }
+]
 
 const katakanaOnly: WidthOptions = {
   katakana: true,
@@ -57,35 +64,47 @@ export const chartKanaCount = kanaGroups.reduce(
 )
 
 const lines: Record<ConverterPair, string> = {
-  kana: `Every hiragana with its katakana partner and romaji, ${chartKanaCount} in all.`,
-  romaji: `Every kana with its Hepburn spelling and the other spellings people type, ${chartKanaCount} in all.`,
+  kana: `Every kana in hiragana and katakana, with its romaji, ${chartKanaCount} in all.`,
+  romaji: `Every kana with the romaji that spell it, ${chartKanaCount} in all.`,
   width: `Every katakana in both widths, ${chartKanaCount} in all. Hiragana has no half-width form.`
 }
 
 const groupLabel = (pair: ConverterPair, group: KanaGroup) =>
   pair === 'width' && group.id === 'extended' ? 'Extended katakana' : group.label
 
-export function conversionChart(slug: ConverterSlug): ConversionChart {
+const pairOf = (slug: ConverterSlug, entry: KanaEntry) =>
+  pairs[slug].map(script => script(entry)).join(entry.kana.length > 1 ? '\n' : ' ')
+
+const isUnchanged = (slug: ConverterSlug, entry: KanaEntry) =>
+  new Set(pairs[slug].map(script => script(entry))).size === 1
+
+function chartGroup(slug: ConverterSlug, group: KanaGroup): ChartGroup {
   const { pair } = converterFor(slug)
   return {
-    line: lines[pair],
-    groups: kanaGroups.map(group => ({
-      id: group.id,
-      tab: group.tab,
-      label: groupLabel(pair, group),
-      count: entriesIn(group).length,
-      sounds: group.sounds,
-      rows: group.rows.map(row => ({
-        consonant: row.consonant,
-        cells: row.cells.map(entry =>
-          entry
-            ? {
-                kana: pairs[slug].map(script => script(entry)).join(' '),
-                romaji: spellings(slug, entry).join(', ')
-              }
-            : null
-        )
-      }))
+    id: group.id,
+    label: groupLabel(pair, group),
+    count: entriesIn(group).length,
+    sounds: group.sounds,
+    rows: group.rows.map(row => ({
+      consonant: row.consonant,
+      cells: row.cells.map(entry =>
+        entry ? { kana: pairOf(slug, entry), romaji: spellings(slug, entry).join(', ') } : null
+      )
+    })),
+    unchanged: entriesIn(group)
+      .filter(entry => isUnchanged(slug, entry))
+      .map(entry => pairOf(slug, entry))
+  }
+}
+
+export function conversionChart(slug: ConverterSlug): { line: string; tabs: ChartTab[] } {
+  const groups = new Map(kanaGroups.map(group => [group.id, chartGroup(slug, group)]))
+  return {
+    line: lines[converterFor(slug).pair],
+    tabs: tabs.map(({ id, tab, groups: ids }) => ({
+      id,
+      tab,
+      groups: ids.flatMap(each => groups.get(each) ?? [])
     }))
   }
 }
