@@ -39,13 +39,13 @@ and messages that name the device say iPad or Mac, such as "Everything stays on 
   iPhone. On the Mac it opens as a sheet over the window, so the page behind waits until the sheet
   is closed; on an iPad in full width it opens as a centered sheet.
 - **Image Search on the Mac.** Image Search offers **Photo Library**, **Files**, and **Paste
-  Image**, which takes an image or an image file from the clipboard. There's no **Take Photo**,
+  Image**, which takes an image, or up to 8 copied image files, from the clipboard. There's no **Take Photo**,
   here or in a word's **•••** menu: macOS has no camera screen an app can show. A photo comes from
   an iPhone or iPad instead: with Search showing, **File → Import from iPhone or iPad → Take
   Photo** (Continuity Camera) opens the photo in Image Search. Several images are paged by
   swiping sideways or with the dots under them.
 - **Dragging images.** On every device, an image dragged onto Search opens it in Image Search,
-  up to 8 at a time.
+  up to 8 at a time, with the same limits as **Files**.
 - **Right-click on the Mac.** A row whose actions are behind a swipe on the iPhone also shows
   them on right-click: renaming or deleting a list, removing a word from a list, marking a word
   unknown, removing a video from Recent, updating or removing a frequency dictionary or showing

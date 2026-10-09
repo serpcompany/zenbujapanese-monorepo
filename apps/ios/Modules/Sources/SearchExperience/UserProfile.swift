@@ -98,7 +98,7 @@ final class UserProfile {
     defaults.set(data, forKey: Self.storageKey)
   }
 
-  nonisolated static func squareThumbnail(from data: Data) -> CGImage? {
+  private nonisolated static func squareThumbnail(from data: Data) -> CGImage? {
     guard
       let source = CGImageSourceCreateWithData(data as CFData, nil),
       let image = ImageCoding.thumbnail(from: source, maxPixelSize: Int(photoDimension * 4))

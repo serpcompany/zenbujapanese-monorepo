@@ -8,7 +8,7 @@ import UniformTypeIdentifiers
 #endif
 
 enum PastedImage: Sendable {
-  case file(URL)
+  case files([URL])
   case data(Data)
 }
 
@@ -32,10 +32,15 @@ enum Pasteboard {
         board.readObjects(forClasses: [NSURL.self], options: [.urlReadingFileURLsOnly: true])
         as? [URL] ?? []
       guard files.isEmpty else {
-        return files.first { UTType(filenameExtension: $0.pathExtension)?.conforms(to: .image) == true }
-          .map(PastedImage.file)
+        let images = files.filter {
+          UTType(filenameExtension: $0.pathExtension)?.conforms(to: .image) == true
+        }
+        return images.isEmpty ? nil : .files(images)
       }
-      return (board.data(forType: .png) ?? board.data(forType: .tiff)).map(PastedImage.data)
+      let data =
+        board.data(forType: .png) ?? board.data(forType: .tiff)
+        ?? NSImage(pasteboard: board)?.tiffRepresentation
+      return data.map(PastedImage.data)
     }
   #else
     static let offersImagePaste = false

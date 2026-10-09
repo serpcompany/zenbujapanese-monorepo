@@ -92,7 +92,7 @@ extension TranslatorFailure {
   var message: String {
     switch self {
     case .microphoneDenied:
-      String(localized: "Translate needs the microphone to hear the conversation. Turn it on in Settings.")
+      String(localized: "Translate needs the microphone to hear the conversation. Turn it on in \(ThisDevice.settingsApp).")
     case .speechRecognitionUnavailable:
       String(localized: "Speech recognition isn't available on this \(ThisDevice.name) right now. Try again in a moment.")
     case .translationUnavailable:

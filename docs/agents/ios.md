@@ -51,7 +51,8 @@ builds only for the iPhone. Image data stays `Data` or `CGImage` in models (`Ima
 encodes and draws without UIKit).
 
 The app target is `ZenbuJapaneseApp.swift`, one line: `ZenbuJapaneseScenes`
-(`Platform/AppScenes.swift`) holds the window, the Reading Aids and profile every window shares,
+(`Platform/AppScenes.swift`, in `Platform/` because a Settings scene can only be added with
+`#if os(macOS)` in the scene's body) holds the window, the Reading Aids and profile every window shares,
 the scene's lifecycle, the iPhone and iPad background sync task, and on the Mac the window sizes
 (`AppWindow`), the Settings scene (`AppSettingsView`), and Continuity Camera's menu. Menu
 commands (`AppCommands`) go through `AppCommandRouter` to the window that was last active

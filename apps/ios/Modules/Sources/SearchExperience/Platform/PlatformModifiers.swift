@@ -100,6 +100,14 @@ extension SearchFieldPlacement {
   }
 }
 
+enum TabBarLayout {
+  #if os(macOS)
+    static let bottomClearance: CGFloat = 12
+  #else
+    static let bottomClearance: CGFloat = 60
+  #endif
+}
+
 extension ToolbarItemPlacement {
   static var barLeading: ToolbarItemPlacement {
     #if os(macOS)
@@ -120,16 +128,15 @@ extension ToolbarItemPlacement {
 
 extension View {
   func rowActions<Actions: View>(
-    edge: HorizontalEdge = .trailing,
     allowsFullSwipe: Bool = true,
     @ViewBuilder actions: () -> Actions
   ) -> some View {
     #if os(macOS)
       let buttons = actions()
-      return swipeActions(edge: edge, allowsFullSwipe: allowsFullSwipe) { buttons }
+      return swipeActions(allowsFullSwipe: allowsFullSwipe) { buttons }
         .contextMenu { buttons }
     #else
-      swipeActions(edge: edge, allowsFullSwipe: allowsFullSwipe, content: actions)
+      swipeActions(allowsFullSwipe: allowsFullSwipe, content: actions)
     #endif
   }
 

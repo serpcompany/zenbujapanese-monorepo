@@ -1,5 +1,6 @@
 import Foundation
 import ImageIO
+import UniformTypeIdentifiers
 import Observation
 
 struct ImageTextAsset: Identifiable, Sendable {
@@ -16,24 +17,37 @@ struct ImageTextAsset: Identifiable, Sendable {
   static func loadCopy(from url: URL) async throws -> ImageTextAsset {
     let worker = Task.detached(priority: .userInitiated) {
       try Task.checkCancellation()
-      let attributes = try FileManager.default.attributesOfItem(atPath: url.path)
-      let byteCount = attributes[.size] as? Int ?? 0
-      guard byteCount > 0, byteCount <= 12 * 1_024 * 1_024 else {
-        throw ImageTextAssetError.unsupportedSize
-      }
-      let data = try Data(contentsOf: url)
-      guard let source = CGImageSourceCreateWithData(data as CFData, nil),
-        ImageTextAsset.hasReadableDimensions(source)
-      else {
-        throw ImageTextAssetError.unsupportedDimensions
-      }
+      let asset = try readCopy(from: url)
       try Task.checkCancellation()
-      return ImageTextAsset(name: url.lastPathComponent, data: data)
+      return asset
     }
     return try await withTaskCancellationHandler {
       try await worker.value
     } onCancel: {
       worker.cancel()
+    }
+  }
+
+  static func readCopy(from url: URL) throws -> ImageTextAsset {
+    let attributes = try FileManager.default.attributesOfItem(atPath: url.path)
+    let byteCount = attributes[.size] as? Int ?? 0
+    guard byteCount > 0, byteCount <= 12 * 1_024 * 1_024 else {
+      throw ImageTextAssetError.unsupportedSize
+    }
+    let data = try Data(contentsOf: url)
+    guard let source = CGImageSourceCreateWithData(data as CFData, nil),
+      hasReadableDimensions(source)
+    else {
+      throw ImageTextAssetError.unsupportedDimensions
+    }
+    return ImageTextAsset(name: url.lastPathComponent, data: data)
+  }
+
+  static func dropped(_ provider: NSItemProvider) async -> ImageTextAsset? {
+    await withCheckedContinuation { continuation in
+      _ = provider.loadFileRepresentation(for: .image, openInPlace: false) { url, _, _ in
+        continuation.resume(returning: url.flatMap { try? readCopy(from: $0) })
+      }
     }
   }
 

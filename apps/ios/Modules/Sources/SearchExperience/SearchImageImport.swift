@@ -31,9 +31,9 @@ struct SearchImageImport: ViewModifier {
         }
         Button("Cancel", role: .cancel) {}
       }
-      .dropDestination(for: SelectedImageTextPhoto.self) { items, _ in
-        guard !items.isEmpty else { return false }
-        openImageText(items.prefix(8).map(\.asset))
+      .onDrop(of: [.image], isTargeted: nil) { providers in
+        guard !providers.isEmpty else { return false }
+        importDroppedImages(Array(providers.prefix(8)))
         return true
       }
       .importsImagesFromDevices { assets in openImageText(assets) }
@@ -145,9 +145,26 @@ struct SearchImageImport: ViewModifier {
     }
   }
 
+  private func importDroppedImages(_ providers: [NSItemProvider]) {
+    imageImportTask?.cancel()
+    imageImportTask = Task {
+      var assets: [ImageTextAsset] = []
+      for provider in providers {
+        if let asset = await ImageTextAsset.dropped(provider) { assets.append(asset) }
+      }
+      guard !Task.isCancelled else { return }
+      if assets.isEmpty {
+        presentImageImportAlert(.importFailure("The dropped files are not supported images."))
+      } else {
+        openImageText(assets)
+      }
+      imageImportTask = nil
+    }
+  }
+
   private func pasteImage() {
     switch Pasteboard.image {
-    case .file(let file): importImages(.success([file]))
+    case .files(let files): importImages(.success(files))
     case .data(let data): importPastedImage(data)
     case nil: presentImageImportAlert(.importFailure("The clipboard doesn't hold an image."))
     }

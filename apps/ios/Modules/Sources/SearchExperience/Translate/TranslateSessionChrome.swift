@@ -50,7 +50,7 @@ struct TranslateSessionChrome: ViewModifier {
             .padding(.vertical, 8)
             .glassEffect(.regular, in: .capsule)
             .padding(.horizontal)
-            .padding(.bottom, 60)
+            .padding(.bottom, TabBarLayout.bottomClearance)
         }
       }
     }

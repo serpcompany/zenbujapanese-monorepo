@@ -76,8 +76,10 @@ The tab is split across three Swift targets in `apps/ios/Modules`
   `SearchExperienceRootView` adds the tab, its navigation stack, and the word sheets for it and
   Account, and `TranslateSessionChrome` adds the session
   bar for other tabs (`TranslateSessionAccessory`, a tab bar accessory through `.bottomAccessory`,
-  hidden while the conversation is on screen), the silence prompt, the background pause, and
-  `ScreenAwake` (the screen stays on while a session is live) to the whole `TabView`.
+  hidden while the conversation is on screen), the silence prompt, and `ScreenAwake` (the screen
+  stays on while a session is live) to the whole `TabView`. Every window shares one
+  `TranslateExperience`, made by the scene (`ZenbuJapaneseScenes`), which also pauses a live
+  conversation when the app goes to the background (`AppLifecycle.sceneChanged`).
   `TranslateChromeLayout` decides both bars: the tab bar hides only while the conversation itself
   is on screen, and the session bar shows exactly when it doesn't, so a screen pushed over a live
   conversation has both. The conversation itself puts `ConversationControlBar` (mute, speech speed,

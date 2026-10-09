@@ -17,6 +17,14 @@ enum ThisDevice {
     #endif
   }()
 
+  static let settingsApp: String = {
+    #if os(macOS)
+      String(localized: "System Settings")
+    #else
+      String(localized: "Settings")
+    #endif
+  }()
+
   static let updateGesture: String = {
     #if os(macOS)
       String(localized: "right-click")

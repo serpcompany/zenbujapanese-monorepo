@@ -57,6 +57,24 @@ struct PlatformAdapterTests {
     #expect(ImageTextAsset(pastedImageData: Data("text".utf8), name: "Pasted Image") == nil)
   }
 
+  @Test("a dropped image is read with the limits Files applies")
+  func droppedImage() async throws {
+    let folder = FileManager.default.temporaryDirectory
+      .appending(path: "dropped-\(UUID().uuidString)", directoryHint: .isDirectory)
+    try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
+    defer { try? FileManager.default.removeItem(at: folder) }
+    let sign = folder.appending(path: "sign.png")
+    try pngData(width: 300, height: 200).write(to: sign)
+    let banner = folder.appending(path: "banner.png")
+    try pngData(width: 12_001, height: 1).write(to: banner)
+
+    let signProvider = try #require(NSItemProvider(contentsOf: sign))
+    let bannerProvider = try #require(NSItemProvider(contentsOf: banner))
+    let asset = try #require(await ImageTextAsset.dropped(signProvider))
+    #expect(asset.data == (try Data(contentsOf: sign)))
+    #expect(await ImageTextAsset.dropped(bannerProvider) == nil)
+  }
+
   @MainActor
   @Test("a profile photo is cropped to a 512-point square and survives a reload")
   func profilePhoto() async throws {

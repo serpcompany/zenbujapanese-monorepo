@@ -75,6 +75,7 @@ struct SearchExperienceRootView: View {
     switch command {
     case .select(let tab):
       selectedTab = tab
+      dismissRecognizedWordSheet(if: true)
     case .findInDictionary:
       showSearchRoot()
       Task { searchFocusRequest += 1 }
