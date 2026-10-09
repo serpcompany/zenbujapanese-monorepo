@@ -85,6 +85,13 @@ All notable user-facing changes to Zenbu Japanese are recorded here.
 
 ### Fixed
 
+- Player's **Recent**, word notes, the Media Library, and the profile are no longer written over
+  when Zenbu can't read what was saved: a copy is kept on your device, and each keeps everything
+  it can read. A photo you delete is still deleted, within 30 days if a kept copy names it.
+- In the half-height word sheet in Player, Image Search, and Translate, a word's **Kanji** and its
+  part of speech (which opens its conjugations) now open, in the tab you're in.
+- When a newer version of Zenbu saved the bookmarks synced to your device, Zenbu Account now says
+  to update Zenbu instead of reopening it.
 - About 1,260 more words now show a YouTube rank, including common ones whose spelling belongs to
   more than one dictionary word, such as 事 (こと), 時 (とき), 年 (ねん), 上 (うえ), and 先生
   (せんせい). About 100 words, such as 色 and 猫, now take a better YouTube rank from their usual

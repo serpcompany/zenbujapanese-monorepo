@@ -461,10 +461,38 @@ Known words (`WordKnowledge.swift`) and word lists (`WordLists.swift`) each keep
 JSON file through `LocalJSONFile`, loaded once off the main actor and rewritten in full, with
 dates in milliseconds since 1970. `LocalFileWriteQueue` runs the load and then each write in
 order, so a write never races the load. A file this version can't read in full is copied aside
-(the newest few copies are kept) before its readable records replace it, and records decode one
-at a time (`LossyDecodable`), so one bad record doesn't lose the rest. A file from a newer
-version, or one that can't be read at launch (before the device's first unlock), is never written
-over; the store is read-only instead.
+(`UnreadableCopy`) before its readable records replace it, and records decode one at a time
+(`LossyDecodable`), so one bad record doesn't lose the rest. A file from a newer version, or one
+that can't be read at launch (before the device's first unlock), is never written over; the store
+is read-only instead.
+
+The stores in `UserDefaults` that hold records, Player's Recent (`WatchHistory`), word notes
+(`WordNoteStorage`, under `lookup.word-notes.v4`), and the profile (`UserProfile`), and the Media
+Library's `index.json` (`EncounterMediaStorage`) follow the same rule without a version: what
+doesn't decode is copied aside, a value under `<key>.unreadable-<time>-<id>` or a file beside it
+(`UnreadableCopy`, which keeps the copy it just made and the newest 2 before it, and makes no
+copy of bytes a copy already holds), and the store carries on, still writable, from the records
+it could read (each video, note, and Media Library record; the profile is one record, so it
+starts empty). A Media Library index that can't be opened or copied aside is neither read nor
+written until it can be.
+
+The Media Library deletes only images the learner deleted. When a kept copy of the index names
+the photo, or a copy can't be read, `deleteImage` records its ID and when in
+`deferred-deletions.json` (`DeferredImageDeletions`), as it does an image it couldn't remove.
+Once a launch, after the index reads, `retryDeferredDeletions` drops the IDs the index names
+again, by a media record or an encounter, without deleting their images, and deletes each other
+recorded image that no kept copy names, or that has waited 30 days (`longestWait`) whatever a
+kept copy names, so a deleted photo is gone within 30 days (the
+[Privacy Policy](../../apps/web/docs/product/privacy.md) keeps data until it's deleted in the
+app). It does nothing while a kept copy can't be read, and writes the list only when
+it changed. `save` takes a photo saved again off the list once the index is written. A kept copy
+or a damaged list names an ID only as a whole run of 64 lowercase hex digits in its bytes
+(`DeferredImageDeletions.mediaIDs`). Only a missing list reads as empty: a damaged one is copied
+aside and its IDs recovered, dated again, and one that can't be read or written records and
+retries nothing until the next launch, so a photo deleted then keeps its image, and its ID is
+logged. The store takes its copy step as `keepCopy` and its clock as `now`, so
+`EncounterMediaStorageTests` and `DeferredImageDeletionsTests` can make a copy fail and move the
+days on.
 
 Both files are at version 2, which added kanji; a version 1 app would read kanji as words, so it
 opens a version 2 file read-only. A word is keyed by its Language Reference ID and a kanji by
@@ -576,8 +604,10 @@ tests prove that model against the real service.
   conversations folder, which `ConversationHistory.bookmarks` lists beside the conversations' own,
   newest first, each sentence once. Its writes merge, so a pull of many writes the file about once.
   Sync waits for the history to load, and stops, as for an unreadable lists file, while that file
-  can't be read (`bookmarksAreReadOnly`), for whatever reason, until the next launch reads it;
-  Zenbu Account says so and disables **Sync Now** (`waitsForUnreadableBookmarks`). The cursor is
+  can't be read (`bookmarksProblem`), for whatever reason, until the next launch reads it; Zenbu
+  Account says so, to update Zenbu when a newer version saved it (`SharedBookmarksProblem`,
+  `AccountMessage.syncPaused`) and to reopen it otherwise, and disables **Sync Now**
+  (`waitsForUnreadableBookmarks`). The cursor is
   saved only after the history's writes finish.
 - **Favorites** has one ID in every app ([`account-clients.md`](account-clients.md), The rules, from
   your side). A second phone's `create` of it is rejected `already_exists`, which the first upload
@@ -872,6 +902,7 @@ With each video, check that:
   video opens it in Player.
 - English lines appear beneath the Japanese, and the tab bar stays visible while watching.
 - Tapping a word pauses the video and opens the word sheet at half height; **Open Full Entry**
-  opens the word inside Player, and Back returns to the video.
+  opens the word inside Player, and Back returns to the video. In the sheet, a kanji and the
+  part of speech (for a verb or adjective) close it and open their pages inside Player too.
 - A video without Japanese captions shows **No Japanese Captions**, and one that disallows
   embedding shows **Video Unavailable**.

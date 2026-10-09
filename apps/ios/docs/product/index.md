@@ -114,7 +114,9 @@ username, and email in place. Each field saves when the learner leaves it. A use
 lowercase `a–z`, digits, `_`, and `.`, drops a leading `@`, and is capped at 30 characters; names
 in any script belong in the name. An email must be a single valid address or empty; an invalid
 one shows an error and is not saved. Without a photo, the card shows the name's initials. The
-profile is stored only on the device and is not synced to the Zenbu account.
+profile is stored only on the device and is not synced to the Zenbu account. A saved profile this
+version can't read is kept aside rather than written over, and Profile starts empty
+([Saved data that can't be read](#saved-data-that-cant-be-read)).
 
 Frequency Dictionaries includes JLPT Levels and YouTube (TUBELEX) in the app and offers
 seven optional packs: Japanese Wikipedia, plus TV & Movies, Anime, Manga, Novels, Visual Novels,
@@ -194,6 +196,22 @@ These images are stored locally and participate in normal system-managed device 
 Media Library is not currently a general file store, import system, analysis tool, sync service,
 or publishing destination.
 
+Deleting a photo, or removing it from its last word, deletes its image at once, unless a copy of
+the index kept aside (below) names the photo, or one can't be read. Then the image goes at a
+later launch, once no kept copy names it, and at most 30 days after it was deleted even if one
+still does; while a kept copy can't be read, such as before the device's first unlock, it waits.
+If Zenbu can't record the deletion, as on a full device, that image stays. An image the learner
+didn't delete is never deleted.
+
+### Saved data that can't be read
+
+Player's Recent, word notes, the Media Library's index, and the profile keep what a learner saved
+when this version of Zenbu can't read it, as Known Words and Lists do: the saved data is copied
+aside on the device (the newest three copies of each are kept) rather than written over, each
+keeps every video, note, or photo it can read, and new changes save as before. A profile that
+can't be read starts empty. If the Media Library's index can't be opened or copied aside, the
+Media Library shows nothing and saves nothing until it can, rather than write over it.
+
 ### Zenbu account and sync
 
 A learner can sign in to their Zenbu account from Account, to keep their known words and lists the
@@ -268,7 +286,8 @@ again a few times, waiting longer each time, only while the app is open.
 changes are waiting, and a note when the last sync failed, with **Sync Now**, **Sign Out**, and
 **Delete Account…**. If the bookmarks synced from other devices can't be read at launch, such as
 before the device's first unlock, nothing syncs until Zenbu is reopened, so none are lost, and
-Zenbu Account says so.
+Zenbu Account says so; if a newer version of Zenbu saved them, nothing syncs until Zenbu is
+updated, and Zenbu Account says to update it.
 
 **Signing out** asks first, then forgets the sign-in on this phone and keeps everything: known
 words, lists, Recent, Translations, notes, and media stay, and every feature works. Changes made while signed out, such

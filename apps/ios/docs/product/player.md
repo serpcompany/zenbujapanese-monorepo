@@ -19,7 +19,9 @@ dictionary sheet Image Search uses.
   ([Zenbu account and sync](index.md#zenbu-account-and-sync)): a video watched on one appears on
   the others in its place by when it was watched, with how far the learner got and its
   comprehension, and one removed on one is removed on all. Only this app syncs it; the website
-  and other Zenbu apps don't see it.
+  and other Zenbu apps don't see it. If a saved video can't be read, Recent keeps a copy of what
+  was saved on the device rather than writing over it, keeps every video it can read, and keeps
+  syncing ([Saved data that can't be read](index.md#saved-data-that-cant-be-read)).
 
 ## Watching
 
@@ -49,8 +51,10 @@ the player shows **Video Unavailable**.
   the video and opens its Word Detail in a sheet at half height, below the video. A word with
   several possible entries, such as で, opens the same sheet listing them to choose from. The
   video and controls stay usable; the sheet can be pulled up to full height. **Open Full
-  Entry**, the expand button beside the word, and any link that leaves the sheet open the
-  dictionary page inside Player, so Back returns to the video.
+  Entry**, the expand button beside the word, and the sheet's links to other dictionary pages (a
+  kanji, the conjugations, a related word, or a word in an example) close the sheet and open the
+  page inside Player, so Back returns to the video. The same goes for the word sheet in Image
+  Search and Translate, in their own tabs.
 - **Translations.** With Sentence Translations on, each card shows a translation beneath the
   Japanese. By default YouTube's translation is used, and Apple Translation fills lines it leaves
   out. Choosing Apple in Reading Aids translates every line on the device instead, so each
