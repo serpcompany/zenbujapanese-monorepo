@@ -26,12 +26,39 @@ const displayedFormProfileJoin = `LEFT JOIN form_priority_profiles p
 const hasSearchTerms = (value: string) => /[\p{L}\p{M}\p{N}]/u.test(value)
 const escapeRegExp = (value: string) => value.replace(/[\\^$.*+?()[\]{}|/]/g, '\\$&')
 
-function glossRelation(query: string, gloss: string, token: RegExp): number | null {
+export const glossToken = (query: string) =>
+  new RegExp(`(?:^|[^a-z])${escapeRegExp(query)}(?:$|[^a-z])`, 'u')
+
+function closingParenthesis(note: string): number | null {
+  let depth = 0
+  for (let index = 0; index < note.length; index++) {
+    if (note[index] === '(') depth++
+    if (note[index] === ')') {
+      depth--
+      if (depth === 0) return index
+    }
+  }
+  return null
+}
+
+function endsInNote(gloss: string, phrase: string): boolean {
+  if (!gloss.startsWith(`${phrase} (`)) return false
+  let notes = gloss.slice(phrase.length + 1)
+  for (let close = closingParenthesis(notes); close !== null; close = closingParenthesis(notes)) {
+    notes = notes.slice(close + 1)
+    if (notes === '') return true
+    if (!notes.startsWith(' (')) return false
+    notes = notes.slice(1)
+  }
+  return false
+}
+
+export function glossRelation(query: string, gloss: string, token: RegExp): number | null {
   const value = normalizeQuery(gloss)
   if (value === query) return GlossRelation.exactGloss
-  if (value.startsWith(`${query} (`)) return GlossRelation.qualifiedGloss
+  if (endsInNote(value, query)) return GlossRelation.qualifiedGloss
   if (value === `to ${query}`) return GlossRelation.exactInfinitive
-  if (value.startsWith(`to ${query} (`)) return GlossRelation.qualifiedInfinitive
+  if (endsInNote(value, `to ${query}`)) return GlossRelation.qualifiedInfinitive
   return token.test(value) ? GlossRelation.glossToken : null
 }
 
@@ -85,7 +112,6 @@ export async function rankedEnglish(
         corroborationRank: 0,
         romajiSpecificityRank: romajiRelation,
         senseOrder: 0,
-        relation: GlossRelation.glossToken,
         glossOrder: 0,
         ...shared
       }
@@ -114,7 +140,6 @@ export async function rankedEnglish(
       corroborationRank: corroborated ? 0 : 1,
       romajiSpecificityRank: 0,
       senseOrder: selectedGloss.senseOrder,
-      relation: selectedGloss.relation,
       glossOrder: selectedGloss.glossOrder,
       ...shared
     }
@@ -198,7 +223,7 @@ async function glossEvidence(
        WHERE dictionary_gloss_fts MATCH ?`,
     [match]
   )
-  const token = new RegExp(`(?:^|[^a-z])${escapeRegExp(query)}(?:$|[^a-z])`, 'u')
+  const token = glossToken(query)
   const result = new Map<string, GlossEvidence[]>()
   for (const row of rows) {
     const senseWrittenForms: string[] = JSON.parse(row.written_forms)

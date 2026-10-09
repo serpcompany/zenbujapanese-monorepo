@@ -44,7 +44,6 @@ extension LanguageReferenceData {
             romajiSpecificityRank: romaji.rawValue,
             senseOrder: 0,
             priorityPresenceRank: match.displayedFormPriority.isMarked ? 0 : 1,
-            relation: .glossToken,
             priorityProfile: match.displayedFormPriority,
             glossOrder: 0,
             headwordLength: entry.headword.count,
@@ -76,7 +75,6 @@ extension LanguageReferenceData {
         romajiSpecificityRank: 0,
         senseOrder: selectedGloss.senseOrder,
         priorityPresenceRank: match.displayedFormPriority.isMarked ? 0 : 1,
-        relation: selectedGloss.relation,
         priorityProfile: match.displayedFormPriority,
         glossOrder: selectedGloss.glossOrder,
         headwordLength: entry.headword.count,
@@ -166,21 +164,45 @@ extension LanguageReferenceData {
     return result.mapValues { $0.sorted() }
   }
 
-  private static func glossTokenPattern(_ query: String) throws -> NSRegularExpression {
+  static func glossTokenPattern(_ query: String) throws -> NSRegularExpression {
     let escaped = NSRegularExpression.escapedPattern(for: query)
     return try NSRegularExpression(pattern: "(?:^|[^a-z])\(escaped)(?:$|[^a-z])")
   }
 
-  private static func glossRelation(
+  static func glossRelation(
     query: String, gloss: String, token: NSRegularExpression
   ) -> DictionaryMatch.GlossRelation? {
     let value = SearchQuery(gloss).value
     if value == query { return .exactGloss }
-    if value.hasPrefix("\(query) (") { return .qualifiedGloss }
+    if endsInNote(value, after: query) { return .qualifiedGloss }
     if value == "to \(query)" { return .exactInfinitive }
-    if value.hasPrefix("to \(query) (") { return .qualifiedInfinitive }
+    if endsInNote(value, after: "to \(query)") { return .qualifiedInfinitive }
     let range = NSRange(value.startIndex..., in: value)
     return token.firstMatch(in: value, range: range) != nil ? .glossToken : nil
+  }
+
+  private static func endsInNote(_ gloss: String, after phrase: String) -> Bool {
+    guard gloss.hasPrefix("\(phrase) (") else { return false }
+    var notes = gloss.dropFirst(phrase.count + 1)
+    while let close = closingParenthesis(of: notes) {
+      notes = notes[notes.index(after: close)...]
+      if notes.isEmpty { return true }
+      guard notes.hasPrefix(" (") else { return false }
+      notes = notes.dropFirst()
+    }
+    return false
+  }
+
+  private static func closingParenthesis(of note: Substring) -> Substring.Index? {
+    var depth = 0
+    for index in note.indices {
+      if note[index] == "(" { depth += 1 }
+      if note[index] == ")" {
+        depth -= 1
+        if depth == 0 { return index }
+      }
+    }
+    return nil
   }
 
   private static func hasSearchTerms(_ value: String) -> Bool {

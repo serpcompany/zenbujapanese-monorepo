@@ -77,6 +77,8 @@ All notable user-facing changes to Zenbu Japanese are recorded here.
 
 ### Fixed
 
+- English searches put the common word first: `dog` shows 犬 first and `water` shows 水, where rarer
+  words whose meaning was exactly the query used to come ahead of them.
 - About 1,260 more words now show a YouTube rank, including common ones whose spelling belongs to
   more than one dictionary word, such as 事 (こと), 時 (とき), 年 (ねん), 上 (うえ), and 先生
   (せんせい). About 100 words, such as 色 and 猫, now take a better YouTube rank from their usual

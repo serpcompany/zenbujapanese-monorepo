@@ -78,7 +78,7 @@ the app-recorded suites (`apps/ios/LanguageData/Conformance/`) check the port ag
 | `search/search.ts` | `searchUncached`, `searchOnce`, and `japaneseDeinflectedSources` in `LookupClient.swift`: the order in which a query tries its searches, from the reading refinement through deinflection to the analyzed segments. Results come back in dictionary order, before the frequency re-sort, as the suite pins them (ADR 0006). |
 | `search/database.ts` | `SearchFormKind`, `decodeEntry`, and `priorityProfile` in `LookupDatabase.swift`, with the entry columns its candidate queries select. `withParametersTruncatedAtNul` reads parameters as the app binds them ([Matching the Swift](#matching-the-swift), Bound text). |
 | `search/japanese.ts` | `rankedJapanese` in `LookupJapaneseRanking.swift`, with `japaneseCandidateSQL` and `exactJapaneseCandidateSQL`. |
-| `search/english.ts` | `rankedEnglish`, `glossEvidence`, `romajiEvidence`, `glossRelation`, `glossEvidencePrecedes`, `glossTokenPattern`, and `hasSearchTerms` in `LookupEnglishRanking.swift`, with `asciiCandidateSQL` and `exactASCIICandidateSQL`. |
+| `search/english.ts` | `rankedEnglish`, `glossEvidence`, `romajiEvidence`, `glossRelation`, `endsInNote`, `closingParenthesis`, `glossEvidencePrecedes`, `glossTokenPattern` (`glossToken`), and `hasSearchTerms` in `LookupEnglishRanking.swift`, with `asciiCandidateSQL` and `exactASCIICandidateSQL`. |
 | `search/ranked-entries.ts` | `RankedDictionaryEntry` and `deduplicated` in `LookupRankedEntries.swift`. |
 | `search/composition.ts` | `LookupSearchResults` (`composing`, and `empty` as `noResults`) and `LookupSearchResultItem` in `DictionaryEntry.swift`, and `resultItems` in `LookupRankedEntries.swift`. |
 | `search/query.ts` | `SearchQuery.swift` |
@@ -148,6 +148,11 @@ the app-recorded suites (`apps/ios/LanguageData/Conformance/`) check the port ag
   Reference ID and takes the JMdict entry number from that same entry, so the two always name one
   entry. `rank` orders entries and sets the leading lexical group (the app's legacy rank);
   `presentationRank` is the coarse rank shown, the group's strongest after merging.
+- An English query's match groups are, strongest first: a strong gloss (the query, or "to" and
+  the query, with or without notes in parentheses that end it) in the first sense; one in a later
+  sense; a gloss that mentions the query; a romaji-only match, by exact, prefix, then contains.
+  The frequency re-sort orders within a group, and `compareEnglishRanks` breaks ties by JMdict
+  priority, sense, gloss order, romaji corroboration, headword length, and fingerprint (#701).
 - An English query matches a sense restricted to some written forms or readings (JMdict's stagk
   and stagr) only when the entry is shown with one of them.
 - `literalQuery` is the app's literal query policy: `mondai` searches as `monday`.

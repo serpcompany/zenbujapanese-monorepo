@@ -19,6 +19,20 @@ learner's priority order (see [Frequency Dictionaries](index.md#account)). Frequ
 result the query did not match or lifts an incidental match above a direct one. English rows
 show the meaning that matched.
 
+An English query groups its matches, strongest first:
+
+1. words whose first meaning is the query, with or without notes in parentheses that end the
+   meaning ("dog", "dog (Canis familiaris)", and "soft (and fluffy) (e.g. bed)" count; "to (take
+   out and) show" isn't "to"), or, for a verb, "to" and the query;
+2. words where a later meaning is the query;
+3. words whose meanings mention it ("hot dog");
+4. words that match only by romaji: an exact romaji match, then one that starts with the query,
+   then one that contains it, each its own group.
+
+Within each group the more common word comes first, so `dog` leads with 犬 and `water` with 水.
+Words the frequency dictionaries don't rank follow, JMdict's common words first, then the earlier
+meaning; romaji that resembles the query (ドッグ for `dog`) only breaks a tie.
+
 Each row shows compact chips such as `JLPT N3` or `YouTube 812`: one for the first enabled
 dictionary, which orders the results (a dash when it doesn't rank the word), then one for each
 other dictionary that ranks it. JLPT shows only when it lists the word. At accessibility text

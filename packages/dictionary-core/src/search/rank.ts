@@ -65,7 +65,6 @@ export interface EnglishRank {
   romajiSpecificityRank: number
   senseOrder: number
   priorityPresenceRank: number
-  relation: number
   priorityProfile: PriorityProfile
   glossOrder: number
   headwordLength: number
@@ -91,20 +90,23 @@ function firstDifference(...differences: (() => number)[]): number {
   return 0
 }
 
+export const isLaterSense = (rank: EnglishRank) =>
+  rank.lane === EvidenceLane.strongGloss && rank.senseOrder > 0
+
 const englishPlacement = (lhs: EnglishRank, rhs: EnglishRank) => [
   () => lhs.lane - rhs.lane,
-  () => lhs.corroborationRank - rhs.corroborationRank,
   () => lhs.romajiSpecificityRank - rhs.romajiSpecificityRank,
-  () => lhs.senseOrder - rhs.senseOrder
+  () => Number(isLaterSense(lhs)) - Number(isLaterSense(rhs))
 ]
 
 export function compareEnglishRanks(lhs: EnglishRank, rhs: EnglishRank): number {
   return firstDifference(
     ...englishPlacement(lhs, rhs),
     () => lhs.priorityPresenceRank - rhs.priorityPresenceRank,
-    () => lhs.relation - rhs.relation,
     () => compareProfiles(lhs.priorityProfile, rhs.priorityProfile),
+    () => lhs.senseOrder - rhs.senseOrder,
     () => lhs.glossOrder - rhs.glossOrder,
+    () => lhs.corroborationRank - rhs.corroborationRank,
     () => lhs.headwordLength - rhs.headwordLength,
     () => compareStrings(lhs.semanticFingerprint, rhs.semanticFingerprint)
   )
@@ -122,7 +124,7 @@ export function compareJapaneseRanks(lhs: JapaneseRank, rhs: JapaneseRank): numb
 
 export function comparePresentationRanks(lhs: Rank, rhs: Rank): number {
   if (lhs.kind === 'english' && rhs.kind === 'english') {
-    return firstDifference(...englishPlacement(lhs, rhs), () => lhs.relation - rhs.relation)
+    return firstDifference(...englishPlacement(lhs, rhs))
   }
   if (lhs.kind === 'japanese' && rhs.kind === 'japanese') return lhs.relation - rhs.relation
   return lhs.kind === 'english' ? -1 : 1
@@ -131,14 +133,12 @@ export function comparePresentationRanks(lhs: Rank, rhs: Rank): number {
 export function sameLexicalGroup(lhs: Rank, rhs: Rank): boolean {
   if (lhs.kind === 'english' && rhs.kind === 'english') {
     return (
-      lhs.lane === rhs.lane &&
-      lhs.corroborationRank === rhs.corroborationRank &&
-      lhs.romajiSpecificityRank === rhs.romajiSpecificityRank &&
-      lhs.senseOrder === rhs.senseOrder &&
+      firstDifference(...englishPlacement(lhs, rhs)) === 0 &&
       lhs.priorityPresenceRank === rhs.priorityPresenceRank &&
-      lhs.relation === rhs.relation &&
       profilesEqual(lhs.priorityProfile, rhs.priorityProfile) &&
-      lhs.glossOrder === rhs.glossOrder
+      lhs.senseOrder === rhs.senseOrder &&
+      lhs.glossOrder === rhs.glossOrder &&
+      lhs.corroborationRank === rhs.corroborationRank
     )
   }
   if (lhs.kind === 'japanese' && rhs.kind === 'japanese') {

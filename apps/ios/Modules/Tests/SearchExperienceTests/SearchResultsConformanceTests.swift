@@ -245,8 +245,8 @@ private struct SearchResultsObserver {
       switch relevance.matchRank {
       case .japanese(let rank): "japanese \(rank.relation)"
       case .english(let rank):
-        "english \(rank.lane) corroboration=\(rank.corroborationRank) "
-          + "romaji=\(rank.romajiSpecificityRank) sense=\(rank.senseOrder) \(rank.relation)"
+        "english \(rank.lane) romaji=\(rank.romajiSpecificityRank)"
+          + (rank.lane == .strongGloss ? " sense=\(rank.isLaterSense ? "later" : "first")" : "")
       }
     return "source=\(relevance.sourceOrder) \(match)"
   }

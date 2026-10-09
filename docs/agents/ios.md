@@ -305,6 +305,16 @@ set. An exact dictionary form stays first (した is 下 and 舌 before する),
 by chain length, so a direct conjugation (まけたら → 負ける) outranks a longer chain, then prefix
 and contains matches. Radical searches keep only the leading lexical-rank group.
 
+An English query's match groups (`EnglishDictionaryPresentationRank`) are the evidence lane, the
+romaji specificity for romaji-only matches, and whether a strong gloss is in a later sense; the
+frequency re-sort reorders within a group, so 犬's "dog (Canis (lupus) familiaris)" competes with
+ワン子's "dog" on frequency (#701). `glossRelation` counts notes in parentheses only when they run to
+the end of the gloss (`endsInNote`), so "soft (and fluffy) (e.g. bed)" is "soft" and "to (take
+out and) show" is a mention of "to". Within a group,
+`EnglishDictionaryRank` breaks ties by JMdict priority, sense, gloss order, romaji corroboration,
+headword length, and fingerprint. `EnglishSearchCommonWordTests` checks the common word leads
+dog, water, cat, eat, and house on the bundled data, independent of the recorded suites.
+
 `JapaneseDeinflector` rewrites suffixes in chains: after the first rule, a rule applies only when
 its input classes include the class the previous one produced (ない is an i-adjective, so
 なかった → ない → the base). Its candidates are hypotheses, kept only when an entry with that exact
