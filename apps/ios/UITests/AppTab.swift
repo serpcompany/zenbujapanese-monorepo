@@ -38,7 +38,8 @@ extension ZenbuUITestCase {
         app.collectionViews.cells.matching(label),
         app.collectionViews.buttons.matching(label),
         app.buttons.matching(label),
-      ], in: app)
+      ], in: app
+    ).element
   }
 
   func open(_ tab: AppTab, in app: XCUIApplication) {

@@ -97,10 +97,13 @@ Along the bottom are the conversation's controls:
   button is a red pause while listening and a blue play while paused.
 
 VoiceOver reads what's happening (**Listening**, **Hearing speech**, **2 waiting for a pause**,
-**Speaking English**, **Paused**…). There is no stop button.
+**Speaking English**, **Paused**…). There is no stop button. The controls keep their default size
+at larger text sizes, so they stay on screen on every iPhone; pressing and holding one shows it
+larger, as a tab bar does.
 
-Check: UI `ConversationUITests.testTheControlsMutePauseAndResume`; package `LiveConversationTests`
-(muting, pausing, and the timer) and `SystemSpeechPlayerTests` (the speed).
+Check: UI `ConversationUITests.testTheControlsMutePauseAndResume` and
+`testScrollingBackOffersJumpToLatest` (every control on screen at the largest text size); package
+`LiveConversationTests` (muting, pausing, and the timer) and `SystemSpeechPlayerTests` (the speed).
 
 Translate shows Japanese without furigana unless **Furigana** is on. One setting covers
 conversations, transcripts, and typed or document translations, and each of those screens has it

@@ -35,6 +35,7 @@ struct ConversationControlBar: View {
     }
     .buttonStyle(.plain)
     .glassEffect(.regular.interactive(), in: .circle)
+    .accessibilityShowsLargeContentViewer()
     .accessibilityLabel(isMuted ? "Play Translations Aloud" : "Mute Translations")
     .accessibilityIdentifier("translate.session.mute")
   }
@@ -69,6 +70,7 @@ struct ConversationControlBar: View {
         .contentShape(.rect)
     }
     .buttonStyle(.plain)
+    .accessibilityShowsLargeContentViewer()
     .accessibilityLabel(title)
     .accessibilityIdentifier(identifier)
   }
@@ -87,6 +89,7 @@ struct ConversationControlBar: View {
           .contentShape(.rect)
       }
       .buttonStyle(.plain)
+      .accessibilityShowsLargeContentViewer()
       .accessibilityLabel(isPaused ? "Resume" : "Pause")
       .accessibilityValue(session.activity.statusLine(in: session))
       .accessibilityIdentifier("translate.session.toggle")

@@ -26,7 +26,7 @@ final class PlayerWatchUITests: ZenbuUITestCase {
     for rate in ["0.5×", "0.75×", "1×", "1.25×", "1.5×"] {
       waitFor(app.buttons[rate])
     }
-    firstReachable([app.buttons.matching(identifier: "1.25×")], in: app).tap()
+    tapWhereReachable([app.buttons.matching(identifier: "1.25×")], in: app)
     assertOnScreen(find("watch.scrubber", in: app), in: app)
   }
 

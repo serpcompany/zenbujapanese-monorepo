@@ -28,6 +28,8 @@ All notable user-facing changes to Zenbu Japanese are recorded here.
 
 - A conversation in Translate keeps following the newest line at larger text sizes, and stops
   only when you scroll up; a tall new line used to stop it and show **Jump to Latest** on its own.
+- At larger text sizes, a conversation's controls stay on screen on iPhone, where the pause button
+  could be pushed off the edge; press and hold one to see it larger.
 - VoiceOver says which kanji is selected when you tap one in a headword to see its part of the
   furigana.
 - Player's **Recent**, word notes, the Media Library, and the profile are no longer written over

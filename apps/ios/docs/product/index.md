@@ -368,7 +368,7 @@ sheet; a refused token) and `AccountSignInTests` (emailed codes, tokens, refused
 `AccountUITests.testSignInOffersAppleGoogleAndACodeAndSaysWhenTheServiceCantBeReached` and
 `AccountSignedInUITests.testSigningInWithAppleShowsTheZenbuAccountAndSyncs` (iPhone and iPad,
 with the account service and Apple's sheet stood in, and the session kept in the Keychain across a
-relaunch); package `KeychainSessionTokenStorageTests` (iPhone and iPad). A real Apple or Google sign-in is by hand ([Account manual checks](../../../../docs/agents/ios.md#account-manual-checks)).
+relaunch, which only the app can do: a package test process has no keychain access group). A real Apple or Google sign-in is by hand ([Account manual checks](../../../../docs/agents/ios.md#account-manual-checks)).
 
 **The first sync.** When this phone signs in to an account other than the one it last signed out
 of, the app sends the account everything on the phone: every known word, every list, every list's

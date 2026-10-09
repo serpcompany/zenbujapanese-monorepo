@@ -24,6 +24,7 @@ struct LiveConversationView: View {
       .environment(experience.readingAids)
       .frame(maxHeight: .infinity)
       ConversationControlBar(session: session, experience: experience)
+        .dynamicTypeSize(...DynamicTypeSize.large)
     }
     .tabBarVisibility(
       TranslateChromeLayout(isSessionLive: true, isConversationOnScreen: isOnScreen).tabBar)

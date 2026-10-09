@@ -31,8 +31,7 @@ final class WordDetailUITests: ZenbuUITestCase {
     tap(find("word-list-picker.done", in: app))
     let lists = app.descendants(matching: .any)
       .matching(NSPredicate(format: "identifier BEGINSWITH 'word-detail.list.'"))
-    expectation(for: NSPredicate(format: "count == 2"), evaluatedWith: lists)
-    waitForExpectations(timeout: Self.patience)
+    reveal(lists.matching(NSPredicate(format: "label CONTAINS 'Countries'")).firstMatch, in: app)
     tap(lists.matching(NSPredicate(format: "label CONTAINS 'Favorites'")).firstMatch)
     waitFor(firstElement(identifiedBy: "word-list.item.", in: app))
   }

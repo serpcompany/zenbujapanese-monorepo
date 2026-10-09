@@ -89,6 +89,9 @@ final class ConversationUITests: ZenbuUITestCase {
 
   func testScrollingBackOffersJumpToLatest() {
     let app = startConversation(arguments: TestDevice.largestTextArguments)
+    for control in ["mute", "slower", "faster", "toggle"] {
+      assertOnScreen(find("translate.session.\(control)", in: app), in: app)
+    }
     waitFor(word(containing: "ありがとう", identifiedBy: "translate.sentence.", in: app))
     pause(app)
     if device == .mac {

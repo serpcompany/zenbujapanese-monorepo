@@ -88,32 +88,47 @@ class ZenbuUITestCase: XCTestCase {
   func isReachable(
     _ element: XCUIElement, in app: XCUIApplication, within container: XCUIElement? = nil
   ) -> Bool {
-    guard element.exists else { return false }
+    reachableFrame(of: element, in: app, within: container) != nil
+  }
+
+  func reachableFrame(
+    of element: XCUIElement, in app: XCUIApplication, within container: XCUIElement? = nil
+  ) -> CGRect? {
+    guard element.exists else { return nil }
     let frame = element.frame
     var bounds = (container ?? app.windows.firstMatch).frame
     if container != nil {
       bounds.origin.y += bounds.height * 0.15
       bounds.size.height *= 0.85
     }
-    return !frame.isEmpty && bounds.contains(CGPoint(x: frame.midX, y: frame.midY))
+    return !frame.isEmpty && bounds.contains(CGPoint(x: frame.midX, y: frame.midY)) ? frame : nil
   }
 
+  @discardableResult
   func firstReachable(
     _ queries: [XCUIElementQuery], in app: XCUIApplication, file: StaticString = #filePath,
     line: UInt = #line
-  ) -> XCUIElement {
+  ) -> (element: XCUIElement, frame: CGRect) {
     let deadline = Date.now.addingTimeInterval(Self.patience)
     while Date.now < deadline {
       for query in queries {
-        if let found = query.allElementsBoundByIndex.first(where: { isReachable($0, in: app) }) {
-          return found
+        for element in query.allElementsBoundByIndex {
+          if let frame = reachableFrame(of: element, in: app) { return (element, frame) }
         }
       }
       RunLoop.current.run(until: Date.now.addingTimeInterval(0.5))
     }
     add(XCTAttachment(string: app.debugDescription))
     XCTFail("nothing in \(queries) could be reached", file: file, line: line)
-    return queries[0].firstMatch
+    return (queries[0].firstMatch, .zero)
+  }
+
+  func tapWhereReachable(_ queries: [XCUIElementQuery], in app: XCUIApplication) {
+    let frame = firstReachable(queries, in: app).frame
+    let window = app.windows.firstMatch
+    let origin = window.frame.origin
+    window.coordinate(withNormalizedOffset: .zero)
+      .withOffset(CGVector(dx: frame.midX - origin.x, dy: frame.midY - origin.y)).tap()
   }
 
   func tap(_ element: XCUIElement, file: StaticString = #filePath, line: UInt = #line) {
