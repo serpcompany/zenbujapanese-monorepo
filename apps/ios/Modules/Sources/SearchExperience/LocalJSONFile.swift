@@ -44,7 +44,7 @@ actor LocalJSONFile {
     self.currentVersion = currentVersion
     self.description = description
     logger = Logger(
-      subsystem: Bundle.main.bundleIdentifier ?? "com.zenbujapanese.app",
+      subsystem: Bundle.main.bundleIdentifier ?? "com.zenbujapanese.dictionary",
       category: logCategory)
   }
 

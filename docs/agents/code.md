@@ -173,5 +173,5 @@ guides.
 | --- | --- |
 | [`browser-tests`](../../.claude/skills/browser-tests/SKILL.md) | Run, debug, and add the website's Playwright tests, and read a failure from its trace and the server's log lines |
 | [`verify-web`](../../.claude/skills/verify-web/SKILL.md) | Check a website change in a real browser, on `next dev`, the production build, or staging, and measure speed on the preview |
-| [`finish-change`](../../.claude/skills/finish-change/SKILL.md) | Take a change to ready for a pull request: every check, a fresh review, the records, and the description |
+| [`finish-change`](../../.claude/skills/finish-change/SKILL.md) | Take a change to ready for a pull request: every check, a fresh review of the diff and of a website change's pages, the records, and the description |
 | [`pr-review`](../../.claude/skills/pr-review/SKILL.md) | Review a pull request; the `Code review` workflow runs it on every push, then posts its summary to one comment it edits by id |

@@ -230,7 +230,7 @@ describe('the account page', () => {
     const returnUrl = `${window.location.origin}/account/`
     expect(init).toHaveBeenCalledWith(
       expect.objectContaining({
-        clientId: 'com.zenbujapanese.web',
+        clientId: 'com.zenbujapanese.website',
         redirectURI: returnUrl,
         usePopup: true
       })

@@ -105,7 +105,7 @@ the arrow keys while one of its controls has focus.
 
 **Facts.** A row under the demo: Platform (iPhone) is written on the page. After it, Requires (iOS
 … or later) and Version come from Apple's App Store lookup
-(`https://itunes.apple.com/lookup?bundleId=com.zenbujapanese.app`), so they match what's live on
+(`https://itunes.apple.com/lookup?bundleId=com.zenbujapanese.dictionary`), so they match what's live on
 the App Store, not TestFlight: two to a row on phones, with Version centered under them, and all
 three in one row from 768 pixels. The page renders per request, and the Worker keeps Apple's
 answer in its edge cache for a day (`src/lib/app-store.ts`). The row streams in after the rest of
@@ -168,7 +168,7 @@ dictionary, the browser extension, and kana charts as catalog cards, with All pr
   from Zenbu leads to the other products and the catalog".
 
 **Claims.** The page doesn't say the app needs no account, that anything stays on the iPhone, or
-that it's built on open data, since accounts and sync are coming (#468, #574), and neither does
+that it's built on open data, since a Zenbu account syncs (#468, #574), and neither does
 its description.
 
 - Source: #668.

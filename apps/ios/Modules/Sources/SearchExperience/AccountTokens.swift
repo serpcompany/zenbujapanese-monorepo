@@ -8,7 +8,7 @@ protocol SessionTokenStorage: Sendable {
 }
 
 struct KeychainSessionTokenStorage: SessionTokenStorage {
-  static let service = "com.zenbujapanese.app.account"
+  static let service = "com.zenbujapanese.dictionary.account"
   static let account = "session-token"
 
   private var query: [String: Any] {

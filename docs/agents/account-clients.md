@@ -64,8 +64,8 @@ Cloud ([`account-api.md`](account-api.md), Set up the server):
    the others), with a row in the table above. The service ships with the next `Account API
    deploy`; until then a sign-in naming it is refused `unknown_client`.
 2. **Sign in with Apple:** its App ID, in the same Apple Developer team as the iOS app
-   (`W3GXL2NQQP` while #616 is open), with Sign in with Apple on, grouped with
-   `com.zenbujapanese.app` as its primary App ID, so the service's one key covers it and a learner's
+   (TSMC LLC's, `847HR8U8D9`), with Sign in with Apple on, grouped with
+   `com.zenbujapanese.dictionary` as its primary App ID, so the service's one key covers it and a learner's
    Apple user ID is the same in every app. A Mac build with its own bundle ID needs that ID listed
    and grouped too; one sharing the iOS build's bundle ID needs nothing more.
 3. **Google:** an OAuth client of type iOS for its bundle ID (a Mac build with the same bundle ID

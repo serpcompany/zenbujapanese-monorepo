@@ -72,12 +72,3 @@ screenshots:
     assets:
       back: en-US/iphone-63/14-conjugations.png
       front: en-US/iphone-63/15-conjugation-form.png
-  09-no-account:
-    template: templates-v2/closing.html
-    variables:
-      tint: red
-      headline: No account.<br>No ads.
-      subtitle: Your lists, notes, and known words stay on your iPhone
-      badges: <span>Offline dictionary</span><span>No analytics</span>
-    assets:
-      screen: en-US/iphone-63/16-lists.png

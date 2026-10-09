@@ -213,6 +213,31 @@ names the event (`dictionary_service_unreachable`), and fields. Workers Logs kee
 else calls `console`, which Biome's `noRestrictedGlobals` enforces outside tests, so every line an
 agent reads there has the same shape.
 
+### UI components
+
+The site is stock shadcn/ui (style `base-nova`, base colour neutral, `apps/web/components.json`),
+so every page looks like one design system:
+
+- **Use the stock component.** A table is `Table`, a filter or a set of views is `Tabs` or
+  `ToggleGroup`, a check box is `Checkbox` with `Label`, a text box is `Input` or `Textarea`, a
+  question list is `Accordion`, and an action is `Button`. Add one that's missing with the shadcn
+  CLI (`pnpm dlx shadcn@latest add <name>` in `apps/web`), and keep it as the CLI wrote it,
+  removing only exports nothing uses, which the dead-code check requires. Never hand-roll a pill,
+  chip, segmented control, table, or check box that a stock component covers.
+- **Don't restyle it.** A `className` on a stock component may lay it out (width, grid placement,
+  margin), but not change its size, padding, radius, border, colour, type size, or density. Use its
+  variants and sizes instead. Colours come only from the shadcn tokens in `src/app/globals.css`,
+  through their Tailwind classes (`bg-background`, `text-muted-foreground`, `border-border`, and
+  the rest), never a literal or an arbitrary Tailwind value.
+- **Match the pages that exist.** Page width, headings, lead text, section spacing, cards, and the
+  breadcrumb follow `/products/` and the browse pages; reuse their components rather than drawing
+  new ones. Size a table to its content at the stock density, not stretched across the page.
+- **A prototype sets the structure and the words, not the styling.** Build a mockup's sections from
+  the stock components, never from its CSS.
+
+Before a pull request that changes how pages look, the `finish-change` skill has a fresh agent
+review the pages against these rules (Review the UI with fresh eyes).
+
 ## Dictionary
 
 Every search, word, kanji, example, sitemap, and retired entry comes from the dictionary service,
@@ -458,7 +483,7 @@ the account service ([`account-api.md`](account-api.md); the website's side of i
   Apple and Google are on for staging and production, whose account services have Apple's key and
   Google's web client ([`account-api.md`](account-api.md), Set up the server): under
   `env.staging.vars` and `env.production.vars`,
-  `"ACCOUNT_APPLE_SERVICES_ID": "com.zenbujapanese.web"`, the first of the service's
+  `"ACCOUNT_APPLE_SERVICES_ID": "com.zenbujapanese.website"`, the first of the service's
   `APPLE_SERVICES_IDS`, and `"ACCOUNT_GOOGLE_SIGN_IN": "on"`. The local site has neither, since
   Apple takes no `localhost` return URL and Google's web client returns only to the deployed
   services.
@@ -589,9 +614,9 @@ Each value that differs by environment lives where the code that reads it runs:
   by hand, so it outlives every deploy, however it's run: `pnpm exec wrangler secret put
   APPLE_TEAM_ID --env <staging|production>`. A var in `wrangler.jsonc` would have to be
   committed, and a `--var` on a deploy would drop it from the next deploy run without one. Set it
-  to `W3GXL2NQQP`, the team of the backup developer account that holds the app's
-  `com.zenbujapanese.app` record (#616). When #616 transfers the app to the business account, the
-  team changes, and this setting with it.
+  to `847HR8U8D9`, TSMC LLC's team, which holds the app's `com.zenbujapanese.dictionary` record
+  (#616). Until it's changed from the backup team's `W3GXL2NQQP`, where the app first went to
+  review, the association file names an app that doesn't exist, so no app opens the site's links.
 
 `SITE_ENV` is set in both the Worker `vars` and the build of each deployed environment
 (`deploy:staging` and `deploy:production`). It also names the environment's origin, its canonical
@@ -762,7 +787,7 @@ extension, `.well-known` paths included, and redirects (308) to it, though Next.
 `retired.ts` covers it too, and `pnpm dev`, which runs Next.js alone, doesn't serve the file:
 check it in `pnpm preview`.
 
-The file names the app as `<APPLE_TEAM_ID>.com.zenbujapanese.app`. The team ID is the
+The file names the app as `<APPLE_TEAM_ID>.com.zenbujapanese.dictionary`. The team ID is the
 Worker's `APPLE_TEAM_ID` (Environment configuration, above); until it's set, or when it isn't
 ten capital letters and digits, the file answers 404, so no app claims the site's links, and a
 malformed one logs `apple_team_id_invalid`. Locally, put it in `.dev.vars` for `pnpm preview`;

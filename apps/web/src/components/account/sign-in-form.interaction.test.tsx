@@ -28,7 +28,7 @@ afterEach(() => {
 const email = 'kana@example.com'
 const everything: AccountSettings = {
   apiUrl,
-  appleServicesId: 'com.zenbujapanese.web',
+  appleServicesId: 'com.zenbujapanese.website',
   google: true
 }
 const emailOnly: AccountSettings = { apiUrl, appleServicesId: null, google: false }
@@ -66,7 +66,7 @@ describe('signing in on the website', () => {
       [everything, 'Sign in that way, then add your email on your account page.'],
       [emailOnly, 'which this site doesn’t offer yet, so you can’t sign in to it here for now.'],
       [
-        { ...emailOnly, appleServicesId: 'com.zenbujapanese.web' },
+        { ...emailOnly, appleServicesId: 'com.zenbujapanese.website' },
         'This site doesn’t offer Google yet.'
       ]
     ] as const) {

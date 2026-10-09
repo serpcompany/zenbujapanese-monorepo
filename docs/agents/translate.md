@@ -207,7 +207,7 @@ The engine is checked on an iPhone without anyone speaking:
 1. Install a Zenbu Dev Debug build ([`ios.md`](ios.md), Install on an iPhone) and start a Conversation on the phone.
 2. Make fixtures with `say -v Kyoko -o j1.aiff "今日は東京駅に行きます。"` and `say -v Samantha`, and play them beside the phone with `afplay`. Leave enough time after each one for the translation to play. Keep the Mac quiet enough that the recording doesn't clip: one of the 2026-10-07 runs reached full scale hundreds of times in the monologue, and both the phone and the Mac garbled the same words of it.
 3. Watch with `xcrun devicectl device capture screenshot --device <udid> --destination shot.png`. This works over Wi-Fi. `capture screen-record` doesn't, and iPhone Mirroring silences the microphone.
-4. Read the result with `xcrun devicectl device copy from --device <udid> --domain-type appDataContainer --domain-identifier com.zenbujapanese.app.dev --source "<path>" --destination <file>`:
+4. Read the result with `xcrun devicectl device copy from --device <udid> --domain-type appDataContainer --domain-identifier com.zenbujapanese.dictionary.dev --source "<path>" --destination <file>`:
    - the conversation: `Library/Application Support/Zenbu Japanese/Translate Conversations/<id>.json`;
    - Debug diagnostics (`TranslateDiagnostics`): `Library/Caches/TranslateDiagnostics/<time>/`. `events.log` has every recognizer result, pause, finalize, and spoken translation, and `heard.wav` has the audio the recognizers heard, which the Recorded-audio check replays.
 5. To compare with another app, have the owner screen-record it. iOS records no microphone audio while an app holds the microphone, so read timing from the video.
@@ -264,7 +264,7 @@ conversation (and TV announcements in Listening, in Japanese then English), fixt
 silent playback, and a 20-second silence prompt, so every screen can be checked:
 
 ```sh
-SIMCTL_CHILD_ZENBU_TRANSLATE_SCRIPT=station xcrun simctl launch <udid> com.zenbujapanese.app
+SIMCTL_CHILD_ZENBU_TRANSLATE_SCRIPT=station xcrun simctl launch <udid> com.zenbujapanese.dictionary
 ```
 
 Release builds don't contain the harness.

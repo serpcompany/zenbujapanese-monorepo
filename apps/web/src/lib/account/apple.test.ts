@@ -28,12 +28,12 @@ describe('Sign in with Apple on the website', () => {
       user: { name: { firstName: 'Kana', lastName: 'Fan' }, email: 'kana@example.com' }
     }))
     const popup = await signInWithApplePopup(apple.auth, {
-      clientId: 'com.zenbujapanese.web',
+      clientId: 'com.zenbujapanese.website',
       nonceHash: 'hash',
       redirectURI: appleReturnUrl('https://zenbujapanese.com')
     })
     expect(apple.config()).toMatchObject({
-      clientId: 'com.zenbujapanese.web',
+      clientId: 'com.zenbujapanese.website',
       scope: 'name email',
       redirectURI: 'https://zenbujapanese.com/account/',
       nonce: 'hash',

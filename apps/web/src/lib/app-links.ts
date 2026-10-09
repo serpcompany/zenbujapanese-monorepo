@@ -1,7 +1,7 @@
 import { log } from './log'
 
 const associationPath = '/.well-known/apple-app-site-association'
-const iosAppBundleId = 'com.zenbujapanese.app'
+export const iosAppBundleId = 'com.zenbujapanese.dictionary'
 const appleTeamIdPattern = /^[A-Z0-9]{10}$/
 
 const dataRoutes = { '/': '/dictionary/*.json', exclude: true }

@@ -150,7 +150,7 @@ struct AccountSignInTests {
   }
 
   @Test(
-    "a Zenbu Dev build doesn't offer Sign in with Apple, and a build naming no service, as Release does, offers no sign-in"
+    "a Zenbu Dev build doesn't offer Sign in with Apple, and a build naming no service offers no sign-in"
   )
   func buildsWithoutAppleOrAService() throws {
     let builds = FileManager.default.temporaryDirectory
@@ -163,7 +163,7 @@ struct AccountSignInTests {
         path: "Build\(suffix)\(service.isEmpty ? "-no-service" : "").bundle", directoryHint: .isDirectory)
       try FileManager.default.createDirectory(at: bundleURL, withIntermediateDirectories: true)
       let info: [String: String] = [
-        "CFBundleIdentifier": "com.zenbujapanese.app\(suffix)",
+        "CFBundleIdentifier": "com.zenbujapanese.dictionary\(suffix)",
         AccountServiceConfiguration.serviceURLKey: service,
         AccountServiceConfiguration.bundleIDSuffixKey: suffix,
       ]

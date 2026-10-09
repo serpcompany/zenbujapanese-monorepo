@@ -1224,7 +1224,7 @@ only dictionary sitemaps (ADR 0010, amended for #614). Search pages aren't in an
 or a removed kanji URL, opens in the app (the [app's product docs](../../../ios/docs/product/dictionary.md#links-from-zenbujapanesecom)
 say where), and without it, on the website, which redirects a kanji URL to the kanji's search.
 `/.well-known/apple-app-site-association` says so: it names the app,
-`<team ID>.com.zenbujapanese.app`, and claims `/dictionary/search/?*`,
+`<team ID>.com.zenbujapanese.dictionary`, and claims `/dictionary/search/?*`,
 `/dictionary/kanji/?*`, and `/dictionary/*-*`, after excluding `/dictionary/*.json`, the JSON
 routes that load more of a page. The pattern can't say that a word URL ends in digits, so any
 other dictionary path with a dash, which the website answers 404, opens the app's Search screen.
