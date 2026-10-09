@@ -555,8 +555,8 @@ What a person sets up first, once, in Apple Developer on the team that holds the
 - **Google:** the iOS OAuth client for `com.zenbujapanese.dictionary`
   ([`account-api.md`](account-api.md), Set up the server, step 3). Its client ID is Debug's
   `ZENBU_GOOGLE_IOS_CLIENT_ID` in `apps/ios/ZenbuJapanese.xcodeproj/project.pbxproj` and in the
-  service's `GOOGLE_CLIENT_IDS`; Release's gets it when sign-in opens in the App Store build
-  (below). Without it the app offers Apple and a code only.
+  service's `GOOGLE_CLIENT_IDS`, and Release's too. Without it the app offers Apple and a code
+  only.
 
 ### The App Store record
 
@@ -651,8 +651,8 @@ previews stay still.
 - Account's support and privacy URLs (`AccountAndMediaLibraryView.swift`) match the App Store
   listing's in `apps/ios/metadata/`; change both together.
 - The privacy manifest (`apps/ios/App/PrivacyInfo.xcprivacy`) declares what the Zenbu account
-  collects: email, name, user IDs, synced user content, session data, watch history, and where a
-  video was stopped. The app's data, the App Store privacy labels, and the manifest change
+  collects: email, name, user IDs, synced user content, session data and a profile picture's
+  address, watch history, and where each video was stopped with the share of its words known. The app's data, the App Store privacy labels, and the manifest change
   together, as the
   [App Store privacy labels](../../apps/web/docs/app-store-privacy-labels.md) say.
 - `CreditsView` links the documentation of each EDRDG file (JMdict, KANJIDIC2, RADKFILE), as the

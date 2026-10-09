@@ -147,7 +147,7 @@ Every claim on the page is one the app's product docs make:
 | Pitch accent: hear how a word is said (the page end's collage) | `dictionary.md`, Dictionary and kanji details (the pitch capsule's speaker) |
 
 The page doesn't say the app needs no account, that anything stays on the iPhone, or that it's
-built on open data, since accounts and sync are coming (#468, #574), and neither does its
+built on open data, since a Zenbu account syncs (#468, #574), and neither does its
 description.
 
 - Source: #668; #664 (the closing block, which made those claims, is gone).

@@ -168,7 +168,7 @@ dictionary, the browser extension, and kana charts as catalog cards, with All pr
   from Zenbu leads to the other products and the catalog".
 
 **Claims.** The page doesn't say the app needs no account, that anything stays on the iPhone, or
-that it's built on open data, since accounts and sync are coming (#468, #574), and neither does
+that it's built on open data, since a Zenbu account syncs (#468, #574), and neither does
 its description.
 
 - Source: #668.

@@ -152,7 +152,8 @@ A change is checked by hand in a browser with the `verify-web` skill
   pull request that changes them, with the driver and the races against a real Postgres, and the
   image is checked before it ships. Main gaps: Apple's and Google's real keys and useSend are
   first used on staging, the website's Apple deletion with them; it hasn't run on the server
-  (#565's, #566's, and #567's server steps); and no app syncs with it yet (#573).
+  (#565's, #566's, and #567's server steps); and the iOS app syncs with it from Debug builds on
+  staging, and from 2.0.0's TestFlight and App Store builds in production (#573, #616).
 - **What the Node services share, A.** Small, and tested on its own and through both services.
 
 ## Language data
