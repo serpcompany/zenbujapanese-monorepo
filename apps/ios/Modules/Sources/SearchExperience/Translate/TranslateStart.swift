@@ -6,6 +6,7 @@ enum TranslateStart: String, CaseIterable, Identifiable {
   case listening
   case text
   case document
+  case camera
 
   var id: Self { self }
 
@@ -13,7 +14,7 @@ enum TranslateStart: String, CaseIterable, Identifiable {
     switch self {
     case .conversation: .conversation
     case .listening: .listening
-    case .text, .document: nil
+    case .text, .document, .camera: nil
     }
   }
 
@@ -23,6 +24,7 @@ enum TranslateStart: String, CaseIterable, Identifiable {
     case .listening: String(localized: "Listening")
     case .text: String(localized: "Text")
     case .document: String(localized: "Document Upload")
+    case .camera: String(localized: "Camera")
     }
   }
 
@@ -32,6 +34,7 @@ enum TranslateStart: String, CaseIterable, Identifiable {
     case .listening: "ear"
     case .text: "keyboard"
     case .document: "doc.text"
+    case .camera: "camera"
     }
   }
 
@@ -45,6 +48,12 @@ enum TranslateStart: String, CaseIterable, Identifiable {
       String(localized: "Type or paste Japanese or English to translate it.")
     case .document:
       String(localized: "Translate the text in a PDF, a photo, or a text file.")
+    case .camera where CameraCapture.isOffered:
+      String(
+        localized:
+          "Point the camera at Japanese, or pick photos, and tap any word to look it up.")
+    case .camera:
+      String(localized: "Pick, paste, or drop a photo of Japanese, and tap any word to look it up.")
     }
   }
 
@@ -54,6 +63,7 @@ enum TranslateStart: String, CaseIterable, Identifiable {
     case .listening: "ear.badge.waveform"
     case .text: "character.cursor.ibeam"
     case .document: "doc.text.fill"
+    case .camera: "camera.viewfinder"
     }
   }
 }

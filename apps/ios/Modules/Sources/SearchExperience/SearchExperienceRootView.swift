@@ -3,23 +3,19 @@ import SwiftUI
 struct SearchExperienceRootView: View {
   @State private var selectedTab = SearchExperienceTab.search
   @State private var searchFocusRequest = 0
-  @State private var imageSearchRequest = 0
+  @State private var requestedImageSource: ImageTextSource?
+  @State private var showsImageSources = false
   @State private var frequencyRefreshID = 0
   @State private var path: [SearchExperienceRoute] = []
   @State private var accountPath = NavigationPath()
-  @State private var accountWordSheet = WordSheetPresentation()
   @State private var query = ""
   @State private var imageTextSessionStore = ImageTextSessionStore()
-  @State private var imageWordSheet = WordSheetPresentation()
+  @State private var wordSheets = DictionaryWordSheets()
   @State private var watchPath = NavigationPath()
-  @State private var watchWordSheet = WordSheetPresentation()
   private let watchHistory = WatchHistory.shared
   @State private var translatePath = NavigationPath()
-  @State private var translateWordSheet = WordSheetPresentation()
   @Environment(TranslateExperience.self) private var translateExperience
-  @State private var kanjiScrollWordIDs: [KanjiCharacter: LanguageReferenceID] = [:]
-  @State private var kanjiScrollElementIDs: [KanjiCharacter: KanjiElementID] = [:]
-  @State private var kanjiElementScrollContributionIDs: [KanjiElementID: KanjiCharacter] = [:]
+  @State private var kanjiScroll = KanjiScrollMemory()
   private let lookupClient: LookupClient
   private let exampleSentenceClient: ExampleSentenceClient
   private let japaneseTextAnalysisClient: JapaneseTextAnalysisClient
@@ -62,6 +58,11 @@ struct SearchExperienceRootView: View {
   var body: some View {
     appTabs
       .modifier(
+        ImageTextImport(
+          requestedSource: $requestedImageSource, showsSources: $showsImageSources,
+          cameraAuthorizationClient: cameraAuthorizationClient, openImageText: openImageText)
+      )
+      .modifier(
         WebsiteLinkOpening(
           lookupClient: lookupClient, searchPath: searchPath, query: $query,
           showSearch: {
@@ -80,16 +81,28 @@ struct SearchExperienceRootView: View {
       showSearchRoot()
       Task { searchFocusRequest += 1 }
     case .searchImage:
-      showSearchRoot()
-      Task { imageSearchRequest += 1 }
+      showTranslate()
+      if translateExperience.session == nil { translateExperience.preferredStart = .camera }
+      Task { showsImageSources = true }
     }
   }
 
   private func showSearchRoot() {
     selectedTab = .search
-    for case .image(let session) in path { imageTextSessionStore.remove(session) }
     path = []
     dismissRecognizedWordSheet(if: true)
+  }
+
+  private func showTranslate() {
+    selectedTab = .translate
+    dismissRecognizedWordSheet(if: true)
+  }
+
+  private func openImageText(_ assets: [ImageTextAsset]) {
+    let session = ImageTextSession(assets: assets)
+    imageTextSessionStore.insert(session)
+    showTranslate()
+    translatePath.append(SearchExperienceRoute.image(session.id))
   }
 
   private var appTabs: some View {
@@ -152,20 +165,13 @@ struct SearchExperienceRootView: View {
         lookupClient: lookupClient,
         recentSearchStore: recentSearchStore,
         handwritingRecognitionClient: handwritingRecognitionClient,
-        cameraAuthorizationClient: cameraAuthorizationClient,
         radicalLookupClient: .live,
         exampleSentenceClient: exampleSentenceClient,
         frequencyCapability: .live,
         frequencyRefreshID: frequencyRefreshID,
-        focusRequest: searchFocusRequest,
-        imageSearchRequest: imageSearchRequest,
-        openImageText: { assets in
-          let session = ImageTextSession(assets: assets)
-          imageTextSessionStore.insert(session)
-          path.append(.image(session.id))
-        }
+        focusRequest: searchFocusRequest
       )
-      .modifier(dictionaryRoutes(in: .search, sheet: imageWordSheet))
+      .modifier(dictionaryRoutes(in: .search))
     }
   }
 
@@ -192,15 +198,15 @@ struct SearchExperienceRootView: View {
         wordNoteStore: .live,
         encounterMediaStore: encounterMediaStore,
         cameraAuthorizationClient: cameraAuthorizationClient,
-        preservedWordID: kanjiScrollWordIDs[character],
-        preservedElementID: kanjiScrollElementIDs[character],
+        preservedWordID: kanjiScroll.wordIDs[character],
+        preservedElementID: kanjiScroll.elementIDs[character],
         openList: openWordList
       )
     case .kanjiElement(let id):
       KanjiElementDetailView(
         elementID: id,
         lookupClient: kanjiElementLookupClient,
-        preservedContribution: kanjiElementScrollContributionIDs[id]
+        preservedContribution: kanjiScroll.contributions[id]
       )
     case .examples(let query, let highlightedEntry, let usesEntryExamples):
       ExampleSentencesView(
@@ -235,9 +241,9 @@ struct SearchExperienceRootView: View {
           translationClient: naturalTranslationClient,
           explanationClient: imageTextExplanationClient,
           clipboardClient: imageTextClipboardClient,
-          presentedWord: imageWordSheet.requestBinding,
-          close: {
-            if path.last == .image(sessionID) { path.removeLast() }
+          presentedWord: wordSheets[stack]?.requestBinding ?? .constant(nil),
+          endSession: {
+            wordSheets[stack]?.request = nil
             imageTextSessionStore.remove(sessionID)
           }
         )
@@ -261,7 +267,7 @@ struct SearchExperienceRootView: View {
             history: watchHistory,
             captionClient: .live,
             japaneseTextAnalysisClient: japaneseTextAnalysisClient,
-            presentedWord: watchWordSheet.requestBinding
+            presentedWord: wordSheets.player.requestBinding
           )
         case .search(let search):
           VideoSearchView(search: search) { videoID in
@@ -269,7 +275,7 @@ struct SearchExperienceRootView: View {
           }
         }
       }
-      .modifier(dictionaryRoutes(in: .player, sheet: watchWordSheet))
+      .modifier(dictionaryRoutes(in: .player))
     }
   }
 
@@ -277,11 +283,12 @@ struct SearchExperienceRootView: View {
     NavigationStack(path: $translatePath) {
       TranslateTabRoot(
         experience: translateExperience,
-        words: translateWords(opening: translateWordSheet),
+        words: translateWords(opening: wordSheets.translate),
         isConversationOnScreen: isConversationOnScreen,
-        push: { translatePath.append($0) }
+        push: { translatePath.append($0) },
+        requestedImageSource: $requestedImageSource
       )
-      .modifier(dictionaryRoutes(in: .translate, sheet: translateWordSheet))
+      .modifier(dictionaryRoutes(in: .translate))
     }
   }
 
@@ -294,10 +301,10 @@ struct SearchExperienceRootView: View {
       AccountTabRoot(
         store: encounterMediaStore,
         translate: translateExperience,
-        words: translateWords(opening: accountWordSheet),
+        words: translateWords(opening: wordSheets.account),
         openItem: openSavedItem
       )
-      .modifier(dictionaryRoutes(in: .account, sheet: accountWordSheet))
+      .modifier(dictionaryRoutes(in: .account))
     }
   }
 
@@ -305,24 +312,23 @@ struct SearchExperienceRootView: View {
     TranslateWordLinks(analysisClient: japaneseTextAnalysisClient, open: { sheet.request = $0 })
   }
 
-  private func dictionaryRoutes(in stack: DictionaryStack, sheet: WordSheetPresentation)
+  private func dictionaryRoutes(in stack: DictionaryStack)
     -> DictionaryRoutes<some View, some View>
   {
     DictionaryRoutes(
-      sheet: sheet,
+      sheet: wordSheets[stack],
       destination: { dictionaryDestination($0, in: stack) },
-      wordSheet: { wordSheet(sheet, in: stack) })
+      wordSheet: { wordSheet(wordSheets[stack], in: stack) })
   }
 
   @ViewBuilder
-  private func wordSheet(_ presentation: WordSheetPresentation, in stack: DictionaryStack)
+  private func wordSheet(_ presentation: WordSheetPresentation?, in stack: DictionaryStack)
     -> some View
   {
-    @Bindable var presentation = presentation
-    if let request = presentation.displayedRequest {
+    if let presentation, let request = presentation.displayedRequest {
       RecognizedWordSheet(
         request: request,
-        detent: $presentation.detent,
+        detent: Bindable(presentation).detent,
         openFullEntry: { open(.word($0, nil), in: stack, leavingSheet: true) }
       ) { entry, encounterMedia in
         wordDetailView(
@@ -390,10 +396,7 @@ struct SearchExperienceRootView: View {
 
   private func dismissRecognizedWordSheet(if shouldDismiss: Bool) {
     guard shouldDismiss else { return }
-    imageWordSheet.request = nil
-    watchWordSheet.request = nil
-    translateWordSheet.request = nil
-    accountWordSheet.request = nil
+    for stack in DictionaryStack.allCases { wordSheets[stack]?.request = nil }
   }
 
   private var searchPath: Binding<[SearchExperienceRoute]> {
@@ -401,30 +404,9 @@ struct SearchExperienceRootView: View {
       path
     } set: { newPath in
       if newPath.count > path.count {
-        preserveKanjiContext(from: path.last, to: newPath.last)
-        if case .kanji(let character, _) = newPath.last {
-          kanjiScrollWordIDs[character] = nil
-        }
+        kanjiScroll.remember(leaving: path.last, for: newPath.last)
       }
       path = newPath
-    }
-  }
-
-  private func preserveKanjiContext(
-    from origin: SearchExperienceRoute?,
-    to destination: SearchExperienceRoute?
-  ) {
-    switch (origin, destination) {
-    case (.kanji(let character, _), .word(let entry, _)):
-      kanjiScrollWordIDs[character] = entry.id
-      kanjiScrollElementIDs[character] = nil
-    case (.kanji(let character, _), .kanjiElement(let elementID)):
-      kanjiScrollElementIDs[character] = elementID
-      kanjiScrollWordIDs[character] = nil
-    case (.kanjiElement(let elementID), .kanji(let character, _)):
-      kanjiElementScrollContributionIDs[elementID] = character
-    default:
-      break
     }
   }
 

@@ -1,6 +1,17 @@
 import Foundation
 import ImageIO
 
+typealias ImagePickerCompletion = @MainActor @Sendable (Result<ImageTextAsset?, Error>) -> Void
+
+@MainActor
+class ImagePickerCoordinator: NSObject {
+  let completion: ImagePickerCompletion
+
+  init(completion: @escaping ImagePickerCompletion) {
+    self.completion = completion
+  }
+}
+
 extension ImageTextAsset {
   init?(photoLibraryImageAt url: URL, name: String) {
     guard

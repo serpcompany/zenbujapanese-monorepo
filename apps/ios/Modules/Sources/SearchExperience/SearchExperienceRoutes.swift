@@ -5,11 +5,27 @@ struct ImageWordContext: Hashable {
   let assetID: UUID
 }
 
-enum DictionaryStack {
+enum DictionaryStack: CaseIterable {
   case search
   case player
   case translate
   case account
+}
+
+@MainActor
+struct DictionaryWordSheets {
+  let player = WordSheetPresentation()
+  let translate = WordSheetPresentation()
+  let account = WordSheetPresentation()
+
+  subscript(stack: DictionaryStack) -> WordSheetPresentation? {
+    switch stack {
+    case .search: nil
+    case .player: player
+    case .translate: translate
+    case .account: account
+    }
+  }
 }
 
 enum PlayerRoute: Hashable {
@@ -28,13 +44,13 @@ enum SearchExperienceRoute: Hashable {
 }
 
 struct DictionaryRoutes<Destination: View, WordSheet: View>: ViewModifier {
-  let sheet: WordSheetPresentation
+  let sheet: WordSheetPresentation?
   let destination: (SearchExperienceRoute) -> Destination
   let wordSheet: () -> WordSheet
 
   func body(content: Content) -> some View {
     content
       .navigationDestination(for: SearchExperienceRoute.self, destination: destination)
-      .sheet(isPresented: sheet.isPresentedBinding, content: wordSheet)
+      .sheet(isPresented: sheet?.isPresentedBinding ?? .constant(false), content: wordSheet)
   }
 }

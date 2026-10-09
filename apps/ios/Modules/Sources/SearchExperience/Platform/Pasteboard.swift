@@ -24,7 +24,7 @@ enum Pasteboard {
   }
 
   #if os(macOS)
-    static let offersImagePaste = true
+    nonisolated static let offersImagePaste = true
 
     static var image: PastedImage? {
       let board = NSPasteboard.general
@@ -43,7 +43,7 @@ enum Pasteboard {
       return data.map(PastedImage.data)
     }
   #else
-    static let offersImagePaste = false
+    nonisolated static let offersImagePaste = false
     static let image: PastedImage? = nil
   #endif
 }

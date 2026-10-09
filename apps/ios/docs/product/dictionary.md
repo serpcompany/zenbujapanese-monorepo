@@ -9,10 +9,11 @@ A learner can search in Japanese or English using:
 
 - the keyboard;
 - handwriting recognition, which reads the finished drawing's shape, so stroke order and
-  direction don't matter;
-- radical selection; or
-- Image Search using the camera, Photo Library, or an image file, and on the Mac a pasted image
-  or Continuity Camera instead of the camera ([iPad and Mac](index.md#ipad-and-mac)).
+  direction don't matter; or
+- radical selection.
+
+Image Search, for Japanese in a photo, is Translate's **Camera** option
+([Image Search](translate.md#image-search)).
 
 Japanese, English, and romaji searches show one **Results** list. Stronger matches come first;
 among equally good matches, the enabled frequency dictionaries decide the order, in the
@@ -203,54 +204,3 @@ until the website has Zenbu's Apple team ID, links open the website.
   for how each URL reads and what it opens, against the bundled dictionary. That iOS hands a
   tapped link to Zenbu is checked on a device.
 
-## Image Search
-
-Image Search recognizes Japanese text in one or more selected images. It reads both
-horizontal and vertical (縦書き) Japanese; vertical columns are read top to bottom, right to
-left, and English elsewhere in the image does not hide the Japanese.
-
-A segmented control switches between four views, and Image Search remembers the last one
-(**Both** at first). The toolbar is the same in every view: a close button and a **•••** menu
-with **Copy Text**, **Share Image**, and **Show Words on Image**, which shows or hides the word
-marks on the image.
-
-- **Photo** shows the image, aligned to the top, with every recognized word marked in the
-  accent color. Words in vertical lines are tinted chips that alternate shade down each
-  column; words in horizontal lines are underlined.
-- **Both** fits the same marked, tappable image at the top and lists each recognized Japanese
-  line below it in the Player's caption cards, with furigana, word underlines, and the line's
-  translation. The first card's line is outlined on the image; tapping a card outlines its
-  line, and tapping a word on the image scrolls the cards to its line.
-- **Text** shows the recognized Japanese as paragraphs in the same caption cards, one text
-  size larger. Lines that wrap, such as book columns, are joined; list items and lines that
-  end a sentence stay separate.
-- **Translate** has two sections. **Translation** shows each paragraph with its natural
-  translation. **Context** says in a few sentences what the text is and what it's for, then
-  lists idioms, proverbs, and set expressions inside longer text with their dictionary
-  meanings; each opens its Word Detail. An idiom that is a whole paragraph, as in a list of
-  proverbs, isn't repeated there, since Translation already gives its meaning.
-
-Translation uses Apple Translation, preparing Apple's language resources first when needed.
-Where Apple Translation isn't available, Apple Intelligence's on-device model translates
-instead, and Translate says so. Both and Text show line and paragraph translations under their
-cards, following the Translations reading-aid preference, as soon as translation is ready
-without a download; choosing Translate starts a download when one is needed.
-
-Context needs Apple Intelligence; when it's off or still downloading, Translate says so, and on
-devices that can't run it the section is hidden. The on-device model only picks idioms and
-describes the text. Idioms are shown only when they're dictionary entries, with the
-dictionary's meaning, and those meanings are given to the model whenever it translates or
-describes the text, because on its own it misreads idioms word by word.
-
-Tapping a word in any view opens its Word Detail in a half-height sheet that can be dragged to
-full height, as in the Player. The view behind stays usable, so tapping another word switches
-the sheet, and nothing behind it moves when a word opens. A word with several possible entries opens a
-**Choose** list that uses Search's result rows, and one with none shows a no-entry state. The
-sheet's top bar has a close button and **Open Full Entry**, which continues to the normal
-full-screen dictionary route in the tab the sheet was opened from. Words use the same
-Kuromoji parser family as the Zenbu browser extension and other linked Japanese in the app.
-
-A learner can also copy the recognized text and share the selected source image.
-
-The Image Search session itself is temporary. Opening a recognized word associates the
-source image with that word as Encounter Media, which then appears in the Media Library.

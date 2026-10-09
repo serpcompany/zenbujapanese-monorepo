@@ -13,7 +13,8 @@ Macs with Apple silicon and macOS 26, as one app with one App Store record
   re-sorted by a frequency dictionary or by known words from the **•••** menu
   ([Sorting results](dictionary.md#sorting-results)).
 - **Translate** opens [Translate](translate.md), a Japanese and English conversation translator
-  that runs on the device.
+  that runs on the device, and Image Search, which reads Japanese in a photo
+  ([Image Search](translate.md#image-search)).
 - **Player** opens [Player](player.md), where a learner watches YouTube
   videos with linked Japanese captions.
 - **Account** opens personal content, preferences, language-resource management, support, and credits.
@@ -30,7 +31,8 @@ and messages that name the device say iPad or Mac, such as "Everything stays on 
   made smaller than 760 by 560, and File → New Window opens another.
 - **Menus and keyboard shortcuts**, on the Mac and with a hardware keyboard: **Find in
   Dictionary** (⌘F) goes to Search and puts the cursor in its field, **Search an Image…** (⌘⇧I)
-  opens Image Search's sources, and ⌘1 to ⌘4 switch to Search, Translate, Player, and Account.
+  goes to Translate, chooses its **Camera** option when no conversation is running, and offers
+  Image Search's sources, and ⌘1 to ⌘4 switch to Search, Translate, Player, and Account.
   With two windows open, a shortcut acts in the one used last. A website link opens in an open
   window rather than a new one.
 - **Settings on the Mac.** **Zenbu Japanese → Settings…** (⌘,) opens a Settings window with
@@ -40,14 +42,15 @@ and messages that name the device say iPad or Mac, such as "Everything stays on 
 - **The word sheet.** A word tapped in Image Search, Player, or Translate opens at half height on
   iPhone. On the Mac it opens as a sheet over the window, so the page behind waits until the sheet
   is closed; on an iPad in full width it opens as a centered sheet.
-- **Image Search on the Mac.** Image Search offers **Photo Library**, **Files**, and **Paste
-  Image**, which takes an image, or up to 8 copied image files, from the clipboard. There's no **Take Photo**,
+- **Image Search on the Mac.** Translate's **Camera** option offers **Photo Library**,
+  **Files**, and **Paste Image**, which takes an image, or up to 8 copied image files, from the
+  clipboard, and its description doesn't mention pointing a camera. There's no **Take Photo**,
   here or in a word's **•••** menu: macOS has no camera screen an app can show. A photo comes from
-  an iPhone or iPad instead: with Search showing, **File → Import from iPhone or iPad → Take
-  Photo** (Continuity Camera) opens the photo in Image Search. Several images are paged by
+  an iPhone or iPad instead: from any tab, **File → Import from iPhone or iPad → Take Photo**
+  (Continuity Camera) opens the photo in Image Search on Translate. Several images are paged by
   swiping sideways or with the dots under them.
-- **Dragging images.** On every device, an image dragged onto Search opens it in Image Search,
-  up to 8 at a time, with the same limits as **Files**.
+- **Dragging images.** On every device, an image dragged onto the window, in any tab, opens it
+  in Image Search on Translate, up to 8 at a time, with the same limits as **Files**.
 - **Right-click on the Mac.** A row whose actions are behind a swipe on the iPhone also shows
   them on right-click: renaming or deleting a list, removing a word from a list, marking a word
   unknown, removing a video from Recent, updating or removing a frequency dictionary or showing
@@ -60,8 +63,8 @@ and messages that name the device say iPad or Mac, such as "Everything stays on 
 - **Syncing on the Mac** happens while Zenbu is open: when it opens or becomes active, after each
   change, and on **Sync Now**. The Mac has no background refresh, so a closed app doesn't sync.
 
-Checked by `PlatformAdapterTests` (images, colors, dropped images' limits, the Settings links, and
-the device's name), `AppCommandTests` (which window a command reaches, the last window closing,
+Checked by `PlatformAdapterTests` (images, colors, dropped images' limits, the image sources each
+device offers, the Settings links, and the device's name), `AppCommandTests` (which window a command reaches, the last window closing,
 the tabs' shortcuts, and window sizes), `TranslateWindowTests` (closing the last window while
 Translate starts),
 `apps/ios/Tools/tests/test_app_platforms.py` (the platforms, orientations, sandbox, privacy

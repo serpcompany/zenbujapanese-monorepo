@@ -40,7 +40,8 @@ Every `#if os(...)`, every `UIKit` and `AppKit` import, and every API only one p
 in `apps/ios/Modules/Sources/SearchExperience/Platform/`, behind a small adapter or view
 extension that feature code calls: `DecodedImage` and `Image(imageData:)`, `Color.adaptive` and
 `SystemColor`, `Pasteboard`, `SystemSettings`, `ScreenAwake`, `ConversationAudioSession`,
-`WebViewRepresentable`, `PagedView`, `CameraCapture` and `ImageCameraPicker`, `BackgroundRefresh`,
+`WebViewRepresentable`, `PagedView`, `CameraCapture` and `ImageCameraPicker`,
+`ImagePhotoLibraryPicker`, `importsImagesFromDevices`, `BackgroundRefresh`,
 `keyWindowAnchor`, `AppleSignInButton`, `ListEditButton` and `ListEditMode`, `ThisDevice`, and
 the modifiers in `PlatformModifiers.swift` (`.inlineNavigationTitle()`, `.groupedList()`,
 `.textEntry(_:)`, `.barLeading` and `.barTrailing`, `.bottomAccessory`, `.rowActions`, and the
@@ -128,8 +129,10 @@ section lists, also check:
 - On an iPad Simulator, in portrait and landscape: the tabs at the top open into a sidebar, every
   tab opens, and the app runs beside another app in Split View.
 - On the Mac: the four tabs in the sidebar; ⌘F, ⌘⇧I, and ⌘1 to ⌘4; **Settings…** shows the profile,
-  the account, Reading Aids, and Frequency Dictionaries; Image Search's **Paste Image** opens a
-  copied image; an image dragged onto Search opens it; right-clicking a list in Account → Lists
+  the account, Reading Aids, and Frequency Dictionaries; ⌘⇧I goes to Translate's **Camera** and
+  offers Photo Library, Files, and Paste Image, and each opens its picker or Image Search; the
+  Camera option's **Start** offers the same three; **Paste Image** opens a copied image in Image
+  Search on Translate; an image dragged onto any tab opens it there; right-clicking a list in Account → Lists
   offers Rename and Delete; a name changed in **Settings…** → Profile shows in a window's Account
   → Profile, even after leaving that window's Name field untouched, and isn't written back.
 
@@ -812,6 +815,20 @@ previews stay still.
 - The word sheet (`WordSheetPresentation` in `RecognizedWordSheet.swift`) swaps the word inside a
   `sheet(isPresented:)`: with `sheet(item:)`, each new word dismissed and re-presented the sheet,
   which reopened at full height.
+- Image Search's sources open from a `Menu` (`ImageTextSourceButtons`, listing
+  `ImageTextSource.offered`), not a `confirmationDialog`: on the iOS 27 Simulator a picker
+  presented from a dialog's button never appeared, while a menu runs its action after it closes.
+  ⌘⇧I is the exception: a menu can't be opened from code, so its chooser is a dialog with the
+  same buttons. It works on the Mac; on an iPad with a keyboard under iOS 27 it's unchecked, and
+  Translate's **Camera** **Start** behind it offers the same sources.
+- `ImageTextImport` modifies `SearchExperienceRootView`, the window, not Translate's home, so an
+  image dropped onto any tab, Continuity Camera's import, and ⌘⇧I reach it; the home's menu sets
+  its requested source. It pushes Image Search onto Translate's stack only once its picker has
+  finished closing (the sheets' `onDismiss`, the file importer's binding turning false), so the
+  photo library is a `PHPickerViewController` in a sheet (`ImagePhotoLibraryPicker`, an adapter,
+  since it's a UIKit view controller on iOS and an AppKit one on the Mac) rather than
+  `photosPicker`, whose binding turns false while it is still closing. Pushed any earlier, Image
+  Search loses its title and shows a Back button beside its own close button.
 - Image Search's Translate view starts from `.task(id: model.selectedPage)`, because a neighboring
   page's view appears before `selectPage` runs, and `selectPage` cancels what the old page started.
 - Lists' swipe actions allow no full swipe, and Delete has no destructive role, so a list is never
@@ -862,7 +879,7 @@ When changing Search results or frequency dictionaries, also check in the Simula
 `Modules/Tests/SearchExperienceTests/Fixtures/ImageText`: vertical Japanese (a book-page photo,
 a proverb list, and a panel with an English subtitle) and a horizontal control. When changing
 text recognition, also open one vertical and one horizontal image in the Simulator's Image
-Search and check:
+Search (**Translate → Camera → Start**, then Photo Library or Files) and check:
 
 - every view has the same toolbar: close, and a **•••** menu;
 - **Photo** shows blue chips down vertical columns and underlines under horizontal lines, and

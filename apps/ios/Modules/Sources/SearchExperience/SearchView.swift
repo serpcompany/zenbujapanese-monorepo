@@ -5,14 +5,11 @@ struct SearchView: View {
   let lookupClient: LookupClient
   let recentSearchStore: RecentSearchStore
   let handwritingRecognitionClient: HandwritingRecognitionClient
-  let cameraAuthorizationClient: CameraAuthorizationClient
   let radicalLookupClient: RadicalLookupClient
   let exampleSentenceClient: ExampleSentenceClient
   let frequencyCapability: FrequencyCapability
   let frequencyRefreshID: Int
   let focusRequest: Int
-  let imageSearchRequest: Int
-  let openImageText: ([ImageTextAsset]) -> Void
   @State private var results = LookupSearchResults.empty
   @State private var presentationState = SearchPresentationState.idle
   @State private var retryID = 0
@@ -20,7 +17,6 @@ struct SearchView: View {
   @State private var inputMode = SearchInputMode.inactive
   @State private var sparseRadicalQuery: SearchQuery?
   @State private var exampleCount = 0
-  @State private var showsImageSources = false
   @State private var isConfirmingClearAll = false
   @State private var recentSearchRefreshID = 0
   @State private var recentSearches: [SearchQuery] = []
@@ -28,13 +24,6 @@ struct SearchView: View {
 
   var body: some View {
     searchScreen
-      .modifier(
-        SearchImageImport(
-          showsImageSources: $showsImageSources,
-          cameraAuthorizationClient: cameraAuthorizationClient,
-          openImageText: openImageText
-        )
-      )
       .alert("Clear Recent Searches?", isPresented: $isConfirmingClearAll) {
         Button("Cancel", role: .cancel) {}
         Button("Clear All", role: .destructive) {
@@ -53,7 +42,6 @@ struct SearchView: View {
         isFocused: $isSearchFocused,
         isInputActive: inputMode != .inactive,
         activateKeyboard: { inputMode = .keyboard },
-        openImageSource: { showsImageSources = true },
         cancel: deactivateInput
       ) { submittedQuery in
         sparseRadicalQuery = nil
@@ -99,7 +87,6 @@ struct SearchView: View {
       await search(taskID)
     }
     .onChange(of: focusRequest) { selectInputMode(.keyboard) }
-    .onChange(of: imageSearchRequest) { showsImageSources = true }
   }
 
   @ViewBuilder

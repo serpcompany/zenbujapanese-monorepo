@@ -8,17 +8,17 @@ import UniformTypeIdentifiers
 @MainActor
 enum CameraCapture {
   #if os(macOS)
-    static let isOffered = false
+    nonisolated static let isOffered = false
     static let isAvailable = false
   #else
-    static let isOffered = true
+    nonisolated static let isOffered = true
     static var isAvailable: Bool { UIImagePickerController.isSourceTypeAvailable(.camera) }
   #endif
 }
 
 #if os(macOS)
   struct ImageCameraPicker: View {
-    let completion: @MainActor @Sendable (Result<ImageTextAsset?, Error>) -> Void
+    let completion: ImagePickerCompletion
 
     var body: some View {
       Color.clear.onAppear { completion(.success(nil)) }
@@ -26,7 +26,7 @@ enum CameraCapture {
   }
 #else
   struct ImageCameraPicker: UIViewControllerRepresentable {
-    let completion: @MainActor @Sendable (Result<ImageTextAsset?, Error>) -> Void
+    let completion: ImagePickerCompletion
 
     func makeCoordinator() -> Coordinator {
       Coordinator(completion: completion)
@@ -44,16 +44,9 @@ enum CameraCapture {
 
     func updateUIViewController(_ uiViewController: UIImagePickerController, context: Context) {}
 
-    @MainActor
-    final class Coordinator: NSObject, UIImagePickerControllerDelegate,
+    final class Coordinator: ImagePickerCoordinator, UIImagePickerControllerDelegate,
       UINavigationControllerDelegate
     {
-      let completion: @MainActor @Sendable (Result<ImageTextAsset?, Error>) -> Void
-
-      init(completion: @escaping @MainActor @Sendable (Result<ImageTextAsset?, Error>) -> Void) {
-        self.completion = completion
-      }
-
       func imagePickerControllerDidCancel(_ picker: UIImagePickerController) {
         completion(.success(nil))
       }

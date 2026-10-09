@@ -102,6 +102,15 @@ struct PlatformAdapterTests {
     #expect(SystemSettings.url(for: .microphone) != nil)
   }
 
+  @Test("Image Search offers Take Photo on iPhone and iPad, and Paste Image in its place on the Mac")
+  func imageSources() {
+    let isMac = ThisDevice.name == "Mac"
+    let expected: [ImageTextSource] =
+      isMac ? [.photoLibrary, .files, .paste] : [.camera, .photoLibrary, .files]
+    #expect(ImageTextSource.offered == expected)
+    #expect(TranslateStart.camera.summary.contains("camera") == !isMac)
+  }
+
   @Test("the device is named for the platform it runs on")
   func deviceName() {
     #expect(["iPhone", "iPad", "Mac"].contains(ThisDevice.name))

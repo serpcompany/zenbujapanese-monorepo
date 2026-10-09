@@ -10,8 +10,14 @@ All notable user-facing changes to Zenbu Japanese are recorded here.
   common first (JLPT by level), or by your known words, known or unknown first. Your choice stays
   across launches and applies to Japanese, English, and romaji searches.
 
+### Changed
+
+- Image Search moved from Search's camera button to Translate: choose **Camera** on Translate's
+  home, then **Start** to take a photo or pick one, and tap any word to look it up.
+
 ### Fixed
 
+- Choosing **Photo Library** or **Files** for Image Search opens the picker again.
 - English searches put the common word first: `dog` shows 犬 first and `water` shows 水, where rarer
   words whose meaning was exactly the query used to come ahead of them.
 
@@ -23,10 +29,11 @@ All notable user-facing changes to Zenbu Japanese are recorded here.
   sign in to the same Zenbu account to keep your known words, lists, Recent videos, and bookmarks
   the same everywhere. On iPad it turns every way and runs beside other apps; on iPad and the Mac
   the tabs become a sidebar. On the Mac, Settings (⌘,) holds your account and preferences, ⌘F
-  goes to Search, ⌘⇧I searches an image, and ⌘1 to ⌘4 switch tabs. Image Search on the Mac
-  pastes an image or takes a photo from your iPhone with Continuity Camera, and you can drag
-  images onto Search on every device. Right-click a list, a known word, a Recent video, or a
-  frequency dictionary on the Mac for what a swipe does on the iPhone.
+  goes to Search, ⌘⇧I opens Translate's **Camera** to search an image, and ⌘1 to ⌘4 switch tabs.
+  On the Mac, **Camera** pastes an image, and a photo taken on your iPhone with Continuity Camera
+  opens in Image Search; on every device, drag images onto the window to open them there.
+  Right-click a list, a known word, a Recent video, or a frequency dictionary on the Mac for what
+  a swipe does on the iPhone.
 - Sign in to a Zenbu account from **Account → Sign In to Sync**, with Apple, Google, or a code
   sent by email, to keep your known words and lists the same on all your devices and Zenbu apps.
   Zenbu syncs after each change, when it opens, and when you tap **Sync Now**. Everything still
