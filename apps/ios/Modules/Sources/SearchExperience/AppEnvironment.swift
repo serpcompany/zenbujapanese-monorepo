@@ -13,7 +13,7 @@ extension View {
 enum AppLifecycle {
   @MainActor
   static func lastWindowClosed(translate: TranslateExperience) {
-    translate.sceneMovedToBackground()
+    translate.lastWindowClosed()
     ScreenAwake.keepAwake(false)
   }
 

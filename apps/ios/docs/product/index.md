@@ -58,8 +58,10 @@ and messages that name the device say iPad or Mac, such as "Everything stays on 
 - **Syncing on the Mac** happens while Zenbu is open: when it opens or becomes active, after each
   change, and on **Sync Now**. The Mac has no background refresh, so a closed app doesn't sync.
 
-Checked by `PlatformAdapterTests` (images, colors, the Settings links, and the device's name),
-`AppCommandTests` (which window a command reaches, the tabs' shortcuts, and window sizes),
+Checked by `PlatformAdapterTests` (images, colors, dropped images' limits, the Settings links, and
+the device's name), `AppCommandTests` (which window a command reaches, the last window closing,
+the tabs' shortcuts, and window sizes), `TranslateWindowTests` (closing the last window while
+Translate starts),
 `apps/ios/Tools/tests/test_app_platforms.py` (the platforms, orientations, sandbox, privacy
 strings, entitlements, and Mac icon), and `pnpm verify layers` (no iPhone-only API outside the
 adapters), and by hand on an iPad Simulator and the Mac ([iPad and Mac

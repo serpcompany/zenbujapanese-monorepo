@@ -79,7 +79,9 @@ The tab is split across three Swift targets in `apps/ios/Modules`
   hidden while the conversation is on screen), the silence prompt, and `ScreenAwake` (the screen
   stays on while a session is live) to the whole `TabView`. Every window shares one
   `TranslateExperience`, made by the scene (`ZenbuJapaneseScenes`), which also pauses a live
-  conversation when the app goes to the background (`AppLifecycle.sceneChanged`).
+  conversation when the app goes to the background (`AppLifecycle.sceneChanged`), and when its last
+  window closes (`AppLifecycle.lastWindowClosed`), which also drops a start still waiting on the
+  microphone or a download (`TranslateExperience.lastWindowClosed`).
   `TranslateChromeLayout` decides both bars: the tab bar hides only while the conversation itself
   is on screen, and the session bar shows exactly when it doesn't, so a screen pushed over a live
   conversation has both. The conversation itself puts `ConversationControlBar` (mute, speech speed,

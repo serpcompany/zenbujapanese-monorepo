@@ -87,6 +87,7 @@ struct SearchExperienceRootView: View {
 
   private func showSearchRoot() {
     selectedTab = .search
+    for case .image(let session) in path { imageTextSessionStore.remove(session) }
     path = []
     dismissRecognizedWordSheet(if: true)
   }

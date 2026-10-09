@@ -59,7 +59,9 @@ commands (`AppCommands`) go through `AppCommandRouter` to the window that was la
 (`AppCommandHandling`, from `appearsActive`): SwiftUI's focused values reached the menu only
 from a view with keyboard focus, so ⌘F did nothing in a window where nothing had focus yet. The
 scene also shares one `TranslateExperience` between windows, since they share the one microphone,
-and pauses a conversation when the whole app goes to the background; and it lets an open window
+and pauses a conversation, or drops one still starting, when the whole app goes to the background
+or its last window closes (`AppLifecycle`, with `AppCommandRouter` counting open windows); and it
+lets an open window
 take a website link (`handlesExternalEvents`), where the Mac would otherwise open a new window
 for each.
 

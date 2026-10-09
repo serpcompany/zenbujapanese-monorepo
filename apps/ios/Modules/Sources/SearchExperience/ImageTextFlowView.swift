@@ -355,7 +355,8 @@ struct ImageTextFlowView: View {
       EmptyView()
     case .unavailable(.appleIntelligenceNotEnabled):
       contextSection {
-        contextMessage("Turn on Apple Intelligence in Settings to see what this text is about.")
+        contextMessage(
+          "Turn on Apple Intelligence in \(ThisDevice.settingsApp) to see what this text is about.")
       }
     case .unavailable(.modelNotReady):
       contextSection {

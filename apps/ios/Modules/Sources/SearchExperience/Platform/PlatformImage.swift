@@ -17,7 +17,8 @@ struct DecodedImage {
         let decoded = CGImageSourceCreateImageAtIndex(source, 0, nil)
       else { return nil }
       let orientation = ImageCoding.orientation(of: source)
-      image = Image(decorative: decoded, scale: 1, orientation: Image.Orientation(orientation))
+      image = Image(
+        decoded, scale: 1, orientation: Image.Orientation(orientation), label: Text(verbatim: ""))
       size = ImageCoding.orientedSize(decoded, orientation: orientation)
     #else
       guard let decoded = UIImage(data: data) else { return nil }
