@@ -12,10 +12,7 @@ final class LayoutUITests: ZenbuUITestCase {
       TestDevice.turn(landscape: false)
     case .pad:
       for landscape in [false, true] {
-        TestDevice.turn(landscape: landscape)
-        let turned = NSPredicate { _, _ in self.isLandscape(app) == landscape }
-        expectation(for: turned, evaluatedWith: nil)
-        waitForExpectations(timeout: Self.patience)
+        turn(app, landscape: landscape)
         assertEveryTabFits(in: app)
       }
       TestDevice.turn(landscape: false)
@@ -29,6 +26,17 @@ final class LayoutUITests: ZenbuUITestCase {
       XCTAssertEqual(window.height, 560, accuracy: 30, "and 560 tall")
       assertEveryTabFits(in: app)
     }
+  }
+
+  private func turn(_ app: XCUIApplication, landscape: Bool) {
+    for attempt in 0..<3 {
+      if attempt > 0 { TestDevice.turn(landscape: !landscape) }
+      TestDevice.turn(landscape: landscape)
+      let turned = XCTNSPredicateExpectation(
+        predicate: NSPredicate { _, _ in self.isLandscape(app) == landscape }, object: nil)
+      if XCTWaiter().wait(for: [turned], timeout: Self.patience / 3) == .completed { return }
+    }
+    XCTFail("the iPad never turned \(landscape ? "landscape" : "portrait")")
   }
 
   private func isLandscape(_ app: XCUIApplication) -> Bool {

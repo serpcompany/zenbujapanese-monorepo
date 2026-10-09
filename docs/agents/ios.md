@@ -172,7 +172,10 @@ a platform), and each test checks its device's side rather than skipping it. A b
 lacks, such as the Mac's Settings window or menus on an iPhone, is skipped there with the reason.
 A failing test keeps screenshots rather than a screen recording (the scheme's
 `preferredScreenCaptureFormat`): recording every test kept a busy Mac's video encoder running and
-slowed the app until XCUITest's queries timed out.
+slowed the app until XCUITest's queries timed out. On a busy Mac a tab tap, a shortcut, the
+conversation's pause, or a Simulator rotation sometimes doesn't take; the tests repeat one only
+while what it should bring hasn't appeared (`open`, `press`, `pause`, `LayoutUITests.turn`), so a
+repeat can't undo it.
 
 ### Releasing on iPad and the Mac
 

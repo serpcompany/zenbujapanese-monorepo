@@ -31,7 +31,10 @@ enum TestDevice {
 
   @MainActor static func turn(landscape: Bool) {
     #if os(iOS)
-      XCUIDevice.shared.orientation = landscape ? .landscapeLeft : .portrait
+      let orientation: UIDeviceOrientation = landscape ? .landscapeLeft : .portrait
+      if XCUIDevice.shared.orientation != orientation {
+        XCUIDevice.shared.orientation = orientation
+      }
     #endif
   }
 
