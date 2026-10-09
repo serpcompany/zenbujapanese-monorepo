@@ -49,7 +49,7 @@ struct SearchResultsMenu: View {
       ForEach(SearchResultFilter.allCases, id: \.self) { Text($0.title).tag($0) }
     } label: {
       Text("Filter")
-      Text("Words")
+      Text(filter.title)
     }
     .pickerStyle(.menu)
     .accessibilityIdentifier("search.filter.words")

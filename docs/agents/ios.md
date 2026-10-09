@@ -709,9 +709,9 @@ When changing Search results or frequency dictionaries, also check in the Simula
   word marked known by swiping at once. The row names the order, and **Default** in its menu
   returns to the Default order. The choice survives relaunching the app, and disabling the
   chosen dictionary under **Account → Frequency Dictionaries** returns Search to **Default**.
-- The menu shows only **Sort By** (naming the order) and **Filter · Words**. **Sort By** lists
+- The menu shows only **Sort By** and **Filter**, each naming its current choice underneath. **Sort By** lists
   the sorts with no direction to choose.
-- **Filter · Words** on `dog`, `いる`, and `miru`: **Known** leaves only known words and
+- **Filter** on `dog`, `いる`, and `miru`: **Known** leaves only known words and
   **Unknown** only the rest, in the chosen order; the **Sorted by** row shows **· 1 filter** and no
   other row appears; a filter that hides every word shows **No Words Match Your Filter**; marking a
   word known from its long-press menu drops it at once while **Unknown** is chosen. The filter

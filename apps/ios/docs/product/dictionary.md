@@ -137,7 +137,7 @@ Kanji row), the row isn't shown.
 
 ### Filtering results
 
-The **Sorted by** row's menu has a **Filter** row, labeled **Words** underneath, under **Sort By**.
+The **Sorted by** row's menu has a **Filter** row, naming its current choice underneath, under **Sort By**.
 It opens **All**, **Known**, and **Unknown**, one checked at a time: **Known** shows only known
 words and **Unknown** only the words not yet known. Marking a word known or unknown moves it out
 of or into the list at once. Enabling and disabling frequency dictionaries happens under
