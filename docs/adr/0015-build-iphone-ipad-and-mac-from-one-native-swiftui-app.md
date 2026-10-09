@@ -61,9 +61,10 @@ package, as a native SwiftUI app on each: not Mac Catalyst, and not the iPhone a
 
 ## Consequences
 
-- No CI job builds the app itself. Once the owners turn on the macOS runner (`IOS_SWIFT_TESTS`,
-  [`docs/agents/ci.md`](../agents/ci.md)), the package's tests run on an iPhone Simulator and the
-  package and its tests build for the Mac. Until then a Mac build is checked by hand
+- CI builds the app for iPad and the Mac only on the opt-in macOS runner (`IOS_SWIFT_TESTS`,
+  [`docs/agents/ci.md`](../agents/ci.md)): there the package's tests run on an iPhone Simulator,
+  the package and its tests build for the Mac, and the app builds for an iPad Simulator and the
+  Mac. The owners keep it off for the runner's cost, so until then a Mac build is checked by hand
   ([`docs/agents/ios.md`](../agents/ios.md)), and `pnpm verify layers` catches the iPhone-only
   APIs it knows.
 - The Mac app runs in the App Sandbox, with only what it uses: the microphone (Translate),

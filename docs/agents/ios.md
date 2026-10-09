@@ -47,7 +47,7 @@ the modifiers in `PlatformModifiers.swift` (`.inlineNavigationTitle()`, `.groupe
 rest). `pnpm verify layers` refuses a platform condition, UIKit, AppKit, or an iPhone-only API it
 knows anywhere else in `apps/ios/Modules/Sources/`, `apps/ios/Modules/Tests/`, or `apps/ios/App/`,
 and names the adapter to use (`tools/checks/src/layers.ts`), so feature code stays the same on
-every platform even while nothing builds for the Mac before merge. Image data stays `Data` or `CGImage` in models (`ImageCoding.swift`
+every platform while CI's iPad and Mac builds are off ([`ci.md`](ci.md), iOS). Image data stays `Data` or `CGImage` in models (`ImageCoding.swift`
 encodes and draws without UIKit).
 
 The app target is `ZenbuJapaneseApp.swift`, one line: `ZenbuJapaneseScenes`
@@ -347,8 +347,9 @@ checks it with its own test (`sentence-search.test.ts`) until a suite records it
 
 The `iOS` workflow ([`ci.md`](ci.md), iOS) runs the data tools' contract tests on pull requests
 that change `apps/ios`, and `SearchExperienceTests`, `TranslatorCoreTests`, and the recorded-audio
-check's scoring tests on a macOS runner only once the owners turn that on. Until then, run them on
-a Mac, and verify ordinary app changes by also building, launching, and inspecting the real app.
+check's scoring tests on a macOS runner, with the app built for an iPad Simulator and the Mac,
+only once the owners turn that on. Until then, run them on a Mac, and verify ordinary app changes
+by also building, launching, and inspecting the real app.
 
 Frequency-pack selection has one repo-local Python contract test. Run
 `python3 -m unittest discover -s apps/ios/Tools/tests -p test_frequency_pack_runtime_contract.py` to verify
