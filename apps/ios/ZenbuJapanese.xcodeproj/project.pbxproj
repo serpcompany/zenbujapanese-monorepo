@@ -21,7 +21,26 @@
 		B2D15A10E4B85E9C93E4D7F2 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		C5730A0000000000000000A1 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		C5730A0000000000000000A2 /* ZenbuJapanese.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = ZenbuJapanese.entitlements; sourceTree = "<group>"; };
+		C5730B0000000000000000B1 /* ZenbuJapaneseUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = ZenbuJapaneseUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
+
+/* Begin PBXContainerItemProxy section */
+		C5730B0000000000000000B6 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = DE54BDCD4DF440D8324A14C7 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 5CD4552D207F8AC0D2D15CD6;
+			remoteInfo = ZenbuJapanese;
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXFileSystemSynchronizedRootGroup section */
+		C5730B0000000000000000B2 /* UITests */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = UITests;
+			sourceTree = "<group>";
+		};
+/* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
 		F38B6861CA6A9754CF93F50B /* Frameworks */ = {
@@ -29,6 +48,13 @@
 			buildActionMask = 2147483647;
 			files = (
 				E1FD0205CD84132DCB314678 /* SearchExperience in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		C5730B0000000000000000B4 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -47,6 +73,7 @@
 			isa = PBXGroup;
 			children = (
 				0BB4AC5EE8C0DBD544F1CE40 /* ZenbuJapanese.app */,
+				C5730B0000000000000000B1 /* ZenbuJapaneseUITests.xctest */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -57,6 +84,7 @@
 				9DF55C21A8674721DB56F09F /* App */,
 				0D9EF723FB60C0407E450D3E /* Packages */,
 				4A0C8C2271C037859685316D /* Products */,
+				C5730B0000000000000000B2 /* UITests */,
 			);
 			sourceTree = "<group>";
 		};
@@ -96,6 +124,27 @@
 			productReference = 0BB4AC5EE8C0DBD544F1CE40 /* ZenbuJapanese.app */;
 			productType = "com.apple.product-type.application";
 		};
+		C5730B0000000000000000B8 /* ZenbuJapaneseUITests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = C5730B0000000000000000BB /* Build configuration list for PBXNativeTarget "ZenbuJapaneseUITests" */;
+			buildPhases = (
+				C5730B0000000000000000B3 /* Sources */,
+				C5730B0000000000000000B4 /* Frameworks */,
+				C5730B0000000000000000B5 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				C5730B0000000000000000B7 /* PBXTargetDependency */,
+			);
+			fileSystemSynchronizedGroups = (
+				C5730B0000000000000000B2 /* UITests */,
+			);
+			name = ZenbuJapaneseUITests;
+			productName = ZenbuJapaneseUITests;
+			productReference = C5730B0000000000000000B1 /* ZenbuJapaneseUITests.xctest */;
+			productType = "com.apple.product-type.bundle.ui-testing";
+		};
 /* End PBXNativeTarget section */
 
 /* Begin PBXProject section */
@@ -105,6 +154,9 @@
 				BuildIndependentTargetsInParallel = YES;
 				LastUpgradeCheck = 1430;
 				TargetAttributes = {
+					C5730B0000000000000000B8 = {
+						TestTargetID = 5CD4552D207F8AC0D2D15CD6;
+					};
 				};
 			};
 			buildConfigurationList = 97B2AC49734AFE2BBEF5FB5F /* Build configuration list for PBXProject "ZenbuJapanese" */;
@@ -125,6 +177,7 @@
 			projectRoot = "";
 			targets = (
 				5CD4552D207F8AC0D2D15CD6 /* ZenbuJapanese */,
+				C5730B0000000000000000B8 /* ZenbuJapaneseUITests */,
 			);
 		};
 /* End PBXProject section */
@@ -136,6 +189,13 @@
 			files = (
 				A1C04F09D3A74D8B82D3C6E1 /* Assets.xcassets in Resources */,
 				48A12CB415EF48F78F16871A /* PrivacyInfo.xcprivacy in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		C5730B0000000000000000B5 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -170,7 +230,22 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		C5730B0000000000000000B3 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		C5730B0000000000000000B7 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 5CD4552D207F8AC0D2D15CD6 /* ZenbuJapanese */;
+			targetProxy = C5730B0000000000000000B6 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
 
 /* Begin XCBuildConfiguration section */
 		25190180A86666276E995B60 /* Release */ = {
@@ -392,6 +467,58 @@
 			};
 			name = Debug;
 		};
+		C5730B0000000000000000B9 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				GENERATE_INFOPLIST_FILE = YES;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@loader_path/Frameworks",
+				);
+				"LD_RUNPATH_SEARCH_PATHS[sdk=macosx*]" = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+					"@loader_path/../Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.zenbujapanese.dictionary.uitests.runner;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = auto;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator macosx";
+				SUPPORTS_MACCATALYST = NO;
+				SWIFT_VERSION = 6.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_TARGET_NAME = ZenbuJapanese;
+				"ARCHS[sdk=macosx*]" = arm64;
+			};
+			name = Debug;
+		};
+		C5730B0000000000000000BA /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				GENERATE_INFOPLIST_FILE = YES;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@loader_path/Frameworks",
+				);
+				"LD_RUNPATH_SEARCH_PATHS[sdk=macosx*]" = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+					"@loader_path/../Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.zenbujapanese.dictionary.uitests.runner;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = auto;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator macosx";
+				SUPPORTS_MACCATALYST = NO;
+				SWIFT_VERSION = 6.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_TARGET_NAME = ZenbuJapanese;
+				"ARCHS[sdk=macosx*]" = arm64;
+			};
+			name = Release;
+		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
@@ -409,6 +536,15 @@
 			buildConfigurations = (
 				F965802A2122DF568F3563A7 /* Debug */,
 				31FFACF69CF88F89569076F1 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		C5730B0000000000000000BB /* Build configuration list for PBXNativeTarget "ZenbuJapaneseUITests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				C5730B0000000000000000B9 /* Debug */,
+				C5730B0000000000000000BA /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Debug;

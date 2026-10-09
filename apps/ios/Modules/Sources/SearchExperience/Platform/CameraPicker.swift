@@ -12,7 +12,9 @@ enum CameraCapture {
     static let isAvailable = false
   #else
     nonisolated static let isOffered = true
-    static var isAvailable: Bool { UIImagePickerController.isSourceTypeAvailable(.camera) }
+    static var isAvailable: Bool {
+      LaunchHarness.cameraImageURL != nil || UIImagePickerController.isSourceTypeAvailable(.camera)
+    }
   #endif
 }
 
@@ -25,7 +27,23 @@ enum CameraCapture {
     }
   }
 #else
-  struct ImageCameraPicker: UIViewControllerRepresentable {
+  struct ImageCameraPicker: View {
+    let completion: ImagePickerCompletion
+
+    var body: some View {
+      if let standIn = LaunchHarness.cameraImageURL {
+        Color.clear.onAppear {
+          completion(
+            ImageTextAsset(cameraImageAt: standIn).map { .success($0) }
+              ?? .failure(ImageSourcePickerError.unreadableImage))
+        }
+      } else {
+        SystemCameraPicker(completion: completion)
+      }
+    }
+  }
+
+  private struct SystemCameraPicker: UIViewControllerRepresentable {
     let completion: ImagePickerCompletion
 
     func makeCoordinator() -> Coordinator {
@@ -70,6 +88,11 @@ enum CameraCapture {
     init?(cameraImage: UIImage) {
       guard let data = cameraImage.imageTextData else { return nil }
       self.init(name: "Camera Capture.jpg", data: data)
+    }
+
+    fileprivate init?(cameraImageAt url: URL) {
+      guard let image = UIImage(contentsOfFile: url.path) else { return nil }
+      self.init(cameraImage: image)
     }
   }
 

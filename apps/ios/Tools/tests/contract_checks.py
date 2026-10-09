@@ -22,7 +22,7 @@ def app_build_settings(name: str = "") -> list[str]:
         found["settings"]
         for found in BUILD_CONFIGURATION.finditer(PROJECT.read_text(encoding="utf-8"))
         if (not name or found["name"] == name)
-        and "PRODUCT_BUNDLE_IDENTIFIER" in found["settings"]
+        and "INFOPLIST_FILE = App/Info.plist;" in found["settings"]
     ]
 
 

@@ -127,7 +127,7 @@ struct LiveConversationTests {
     #expect(harness.transcription.hearing.isEmpty)
   }
 
-  @Test("Listening hears only Japanese, plays each translation as it arrives, and never closes the microphone")
+  @Test("Listening hears Japanese and English, plays each translation as it arrives, and never closes the microphone")
   func listeningPlaysImmediately() async {
     let harness = ConversationHarness(mode: .listening)
     await harness.startAndWaitForListening()
@@ -136,7 +136,13 @@ struct LiveConversationTests {
     #expect(harness.playback.spoken.count == 1)
     await harness.hear(.japanese, "東京の最高気温は24度の予想です。")
     #expect(harness.playback.spoken.count == 2)
+    let train = "The next train to Shinjuku leaves from Track 3."
+    await harness.hear(.english, train)
+    #expect(
+      harness.playback.spoken.last
+        == .init(text: FakeTranslator.translation(of: train, from: .english), language: .japanese))
 
+    #expect(harness.transcription.requests.first?.languages == [.japanese, .english])
     #expect(harness.transcription.requests.first == TranscriptionRequest(mode: .listening))
     #expect(harness.transcription.requests.first?.capture == .distantSound)
     #expect(harness.transcription.hearing.isEmpty)

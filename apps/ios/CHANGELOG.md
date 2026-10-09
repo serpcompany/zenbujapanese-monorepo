@@ -26,6 +26,8 @@ All notable user-facing changes to Zenbu Japanese are recorded here.
 
 ### Fixed
 
+- VoiceOver says which kanji is selected when you tap one in a headword to see its part of the
+  furigana.
 - Player's **Recent**, word notes, the Media Library, and the profile are no longer written over
   when Zenbu can't read what was saved: a copy is kept on your device, and each keeps everything
   it can read. A photo you delete is still deleted, within 30 days if a kept copy names it.

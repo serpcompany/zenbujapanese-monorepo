@@ -3,9 +3,10 @@ import plistlib
 import re
 import unittest
 
-from contract_checks import PROJECT, ROOT, app_build_settings, build_setting
+from contract_checks import BUILD_CONFIGURATION, PROJECT, ROOT, app_build_settings, build_setting
 
 ENTITLEMENTS = ROOT / "apps/ios/App/ZenbuJapanese.entitlements"
+SCHEME = ROOT / "apps/ios/ZenbuJapanese.xcodeproj/xcshareddata/xcschemes/ZenbuJapanese.xcscheme"
 ICON = ROOT / "apps/ios/App/Assets.xcassets/AppIcon.appiconset/Contents.json"
 IPAD_ORIENTATIONS = {
     "UIInterfaceOrientationPortrait",
@@ -87,6 +88,24 @@ class AppPlatformTests(unittest.TestCase):
         self.assertEqual(mac, {(size, scale) for size in sizes for scale in ("1x", "2x")})
         for image in images:
             self.assertTrue((ICON.parent / image["filename"]).is_file(), image["filename"])
+
+    def test_the_ui_tests_drive_the_app_on_iphone_ipad_and_the_mac(self) -> None:
+        project = PROJECT.read_text(encoding="utf-8")
+        configurations = [
+            found["settings"]
+            for found in BUILD_CONFIGURATION.finditer(project)
+            if "TEST_TARGET_NAME = ZenbuJapanese;" in found["settings"]
+        ]
+        self.assertEqual(len(configurations), 2)
+        for settings in configurations:
+            self.assertEqual(
+                build_setting(settings, "SUPPORTED_PLATFORMS"), "iphoneos iphonesimulator macosx"
+            )
+            self.assertEqual(build_setting(settings, "TARGETED_DEVICE_FAMILY"), "1,2")
+            self.assertEqual(build_setting(settings, "DEVELOPMENT_TEAM"), "<not set>")
+        self.assertIn('productType = "com.apple.product-type.bundle.ui-testing";', project)
+        scheme = SCHEME.read_text(encoding="utf-8")
+        self.assertIn('BuildableName = "ZenbuJapaneseUITests.xctest"', scheme)
 
 
 if __name__ == "__main__":

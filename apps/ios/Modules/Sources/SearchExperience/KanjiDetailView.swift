@@ -54,12 +54,7 @@ struct KanjiDetailView: View {
   }
 
   private var shareText: String {
-    guard let reference else { return character.rawValue }
-    let readings = reference.readings.map(\.value).joined(separator: "、")
-    let heading = readings.isEmpty ? character.rawValue : "\(character.rawValue)【\(readings)】"
-    return [heading, reference.meanings.joined(separator: ", ")]
-      .filter { !$0.isEmpty }
-      .joined(separator: "\n")
+    KanjiReferenceEntry.shareText(for: character, reference: reference)
   }
 
   var body: some View {

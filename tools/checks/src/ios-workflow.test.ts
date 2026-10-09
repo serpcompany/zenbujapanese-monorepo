@@ -22,17 +22,32 @@ describe('the iOS workflow', () => {
     )
   })
 
-  test('tests the package on an iPhone Simulator and builds it and its tests for the Mac', () => {
+  test('tests the package on an iPhone Simulator, an iPad Simulator, and the Mac', () => {
     const packageScheme = '-scheme ZenbuJapaneseModules-Package'
     expect(runsCommand(' test', packageScheme, 'platform=iOS Simulator,id=$SIMULATOR')).toBe(true)
-    expect(runsCommand(' build-for-testing', packageScheme, 'platform=macOS,arch=arm64')).toBe(true)
+    expect(runsCommand(' test', packageScheme, 'platform=iOS Simulator,id=$IPAD_SIMULATOR')).toBe(
+      true
+    )
+    expect(runsCommand(' test', packageScheme, 'platform=macOS,arch=arm64')).toBe(true)
+    expect(runs.some(run => run.includes('print("IPAD_SIMULATOR=" + pads[0]["udid"])'))).toBe(true)
   })
 
-  test('builds the app, unsigned, for an iPad Simulator and for the Mac', () => {
+  test("runs the app's UI tests on an iPhone Simulator, an iPad Simulator, and the Mac", () => {
     const app = '-scheme ZenbuJapanese '
-    const unsigned = ' CODE_SIGNING_ALLOWED=NO build'
-    expect(runsCommand(unsigned, app, 'platform=iOS Simulator,id=$IPAD_SIMULATOR')).toBe(true)
-    expect(runsCommand(unsigned, app, 'platform=macOS,arch=arm64')).toBe(true)
-    expect(runs.some(run => run.includes('print("IPAD_SIMULATOR=" + pads[0]["udid"])'))).toBe(true)
+    const uiTestBuild = 'ZENBU_BUNDLE_ID_SUFFIX=.uitests'
+    for (const simulator of ['$SIMULATOR', '$IPAD_SIMULATOR']) {
+      expect(
+        runsCommand(
+          ' CODE_SIGNING_ALLOWED=NO test',
+          app,
+          uiTestBuild,
+          `platform=iOS Simulator,id=${simulator}`
+        )
+      ).toBe(true)
+    }
+    expect(
+      runsCommand(' CODE_SIGN_ENTITLEMENTS= test', app, uiTestBuild, 'platform=macOS,arch=arm64')
+    ).toBe(true)
+    expect(runs).toContain('sudo automationmodetool enable-automationmode-without-authentication')
   })
 })

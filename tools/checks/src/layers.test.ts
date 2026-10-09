@@ -103,11 +103,24 @@ test('checks the app target and the tests as well as the package', () => {
   expect(checkLayers([tests], swiftLayers, source('import UIKit\n'))).toHaveLength(1)
 })
 
+test("keeps the UI tests' platform conditions in their own Platform folder", () => {
+  const uiTest = 'apps/ios/UITests/SearchUITests.swift'
+  const uiAdapters = 'apps/ios/UITests/Platform/TestDevice.swift'
+  const text =
+    '#if os(iOS)\n  XCUIDevice.shared.orientation = UIDeviceOrientation.portrait\n#endif\n'
+  expect(checkLayers([uiAdapters], swiftLayers, source(text))).toEqual([])
+  const problems = checkLayers([uiTest], swiftLayers, source(text))
+  expect(problems.map(problem => problem.line)).toEqual([1, 2])
+  expect(problems[0]?.problem).toContain('outside apps/ios/UITests/Platform/, use a helper there')
+})
+
 test('checks the real app sources', () => {
   const sources = repositoryFiles().filter(
     path =>
       path.endsWith('.swift') && swiftPlatforms.sharedCode.some(folder => path.startsWith(folder))
   )
-  expect(sources.some(path => path.startsWith(swiftPlatforms.adapters))).toBe(true)
+  expect(
+    swiftPlatforms.adapters.every(folder => sources.some(path => path.startsWith(folder)))
+  ).toBe(true)
   expect(checkLayers(sources)).toEqual([])
 })

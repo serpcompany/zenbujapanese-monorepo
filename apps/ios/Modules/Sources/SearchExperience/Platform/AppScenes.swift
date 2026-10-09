@@ -1,13 +1,18 @@
 import SwiftUI
 
 public struct ZenbuJapaneseScenes: Scene {
-  @State private var readingAids = ReadingAidPreferences()
-  @State private var profile = UserProfile()
+  @State private var readingAids: ReadingAidPreferences
+  @State private var profile: UserProfile
   @State private var commands = AppCommandRouter()
-  @State private var translate = TranslateExperience.live()
+  @State private var translate: TranslateExperience
   @Environment(\.scenePhase) private var scenePhase
 
-  public init() {}
+  public init() {
+    LaunchHarness.prepare()
+    _readingAids = State(initialValue: ReadingAidPreferences())
+    _profile = State(initialValue: UserProfile())
+    _translate = State(initialValue: TranslateExperience.live())
+  }
 
   public var body: some Scene {
     WindowGroup {

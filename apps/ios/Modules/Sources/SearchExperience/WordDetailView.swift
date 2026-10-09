@@ -65,12 +65,7 @@ struct WordDetailView: View {
 
   private var item: SavedItem { .word(entry) }
 
-  private var shareText: String {
-    let heading = entry.reading == entry.headword
-      ? entry.headword : "\(entry.headword)【\(entry.reading)】"
-    let meanings = entry.senses.enumerated().map { "\($0.offset + 1). \($0.element.meaning)" }
-    return ([heading] + meanings).joined(separator: "\n")
-  }
+  private var shareText: String { entry.shareText }
 
   var body: some View {
     ScrollViewReader { proxy in

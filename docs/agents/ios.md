@@ -101,16 +101,69 @@ Sandbox, so what it keeps on the iPhone under the app's `Library` is under
 `~/Library/Containers/com.zenbujapanese.dictionary/Data/Library/` on the Mac, and Zenbu Dev's
 under `com.zenbujapanese.dictionary.dev`.
 
-### Test on the Mac
+### Tests on every platform
 
-The package's tests run on the Mac too, from `apps/ios/Modules`, without a Simulator:
+Every suite runs on the iPhone Simulator, an iPad Simulator, and the Mac, as the `iOS` workflow's
+`swift` job does ([`ci.md`](ci.md), iOS). Give each Simulator its own named device (the UI tests
+erase their app's data on it), such as an iPhone 17 Pro Max and an iPad Pro 13-inch (M5) made with
+`xcrun simctl create`.
+
+**The package's tests**, `SearchExperienceTests` and `TranslatorCoreTests`, from `apps/ios/Modules`:
 
 ```sh
+xcodebuild -scheme ZenbuJapaneseModules-Package \
+  -destination 'platform=iOS Simulator,id=<iphone-or-ipad-udid>' ONLY_ACTIVE_ARCH=YES test
 xcodebuild -scheme ZenbuJapaneseModules-Package -destination 'platform=macOS,arch=arm64' test
 ```
 
-They run against the Mac's own Vision, Speech, and Foundation Models, so the image recognition
-tests are slow on a virtual Mac (about two minutes each).
+On the Mac they run against its own Vision, Speech, and Foundation Models, so the image
+recognition tests are slow on a virtual Mac (about two minutes each). No test there names a
+platform: a test of something that differs reads `ThisDevice` and checks that device's side
+(`PlatformAdapterTests`). Two tests need Apple Intelligence and are skipped without it
+(`ImageTextExplanationTests`), as on a virtual Mac.
+
+**The UI tests**, `ZenbuJapaneseUITests` (`apps/ios/UITests/`), drive the built app through every
+tab. They're the `ZenbuJapanese` scheme's tests, built with `ZENBU_BUNDLE_ID_SUFFIX=.uitests`, so
+the app under test is `com.zenbujapanese.dictionary.uitests`, apart from any Zenbu on the device
+or Mac, and its saved data is the only data they erase. From the repository root:
+
+```sh
+xcodebuild -project apps/ios/ZenbuJapanese.xcodeproj -scheme ZenbuJapanese \
+  -destination 'platform=iOS Simulator,id=<iphone-or-ipad-udid>' ONLY_ACTIVE_ARCH=YES ARCHS=arm64 \
+  ZENBU_BUNDLE_ID_SUFFIX=.uitests test
+xcodebuild -project apps/ios/ZenbuJapanese.xcodeproj -scheme ZenbuJapanese \
+  -destination 'platform=macOS,arch=arm64' ZENBU_BUNDLE_ID_SUFFIX=.uitests \
+  CODE_SIGN_IDENTITY=- CODE_SIGN_ENTITLEMENTS= test
+```
+
+A Mac runs UI tests only in Automation Mode, which an administrator turns on once with
+`sudo automationmodetool enable-automationmode-without-authentication`; without it the runner
+stops with "Timed out while enabling automation mode". The CI job does this on its runner.
+
+The UI tests launch the app with Debug-only harnesses (`LaunchHarness.swift`; Release builds
+don't contain them), so they need no network, account, camera, or microphone:
+
+- `ZENBU_UI_TEST_FRESH=1` erases the app's saved state before anything loads (its defaults and
+  its `Zenbu Japanese`, `FrequencyPacks`, and `Profile` folders), only in a `.uitests` build.
+- `ZENBU_ACCOUNT_API_URL=http://127.0.0.1:9` points the account at a closed port, for the
+  offline states.
+- `ZENBU_CAMERA_IMAGE=<path>` stands in for the camera: **Take Photo** returns that image, which
+  goes through the camera picker's own conversion, the import checks, recognition, and Image
+  Search, as a photo would.
+- `ZENBU_SIGN_IN_STAND_IN=1` stands in for Apple's sign-in sheet and Google's web sign-in, and
+  offers Apple in a `.uitests` build; the nonce, the account client, and the session after them
+  run as they would.
+- `ZENBU_TRANSLATE_SCRIPT=station` is the Translate harness ([`translate.md`](translate.md),
+  Simulator harness).
+- `ZENBU_YOUTUBE_STAND_IN=<json>` stands in for YouTube: the player page loads a local player
+  that answers the IFrame API's calls (play, pause, seek, speed, and its time), and the captions
+  come from the JSON's player response and timed text, through the same parsing, track choice,
+  and pairing as YouTube's (`YouTubeFetch`, `YouTubeStandInTests`).
+
+The tests share `ZenbuUITestCase` and `AppTab`; what differs between the devices they ask
+`TestDevice` (`apps/ios/UITests/Platform/`, the one place `pnpm verify layers` lets UI tests name
+a platform), and each test checks its device's side rather than skipping it. A behavior one device
+lacks, such as the Mac's Settings window or menus on an iPhone, is skipped there with the reason.
 
 ### Releasing on iPad and the Mac
 
@@ -123,18 +176,11 @@ and add iPad and Mac screenshots. A Mac build is archived with
 
 ### iPad and Mac checks
 
-When changing the tab shell, a platform adapter, or anything the product docs' iPad and Mac
-section lists, also check:
-
-- On an iPad Simulator, in portrait and landscape: the tabs at the top open into a sidebar, every
-  tab opens, and the app runs beside another app in Split View.
-- On the Mac: the four tabs in the sidebar; ⌘F, ⌘⇧I, and ⌘1 to ⌘4; **Settings…** shows the profile,
-  the account, Reading Aids, and Frequency Dictionaries; ⌘⇧I goes to Translate's **Camera** and
-  offers Photo Library, Files, and Paste Image, and each opens its picker or Image Search; the
-  Camera option's **Start** offers the same three; **Paste Image** opens a copied image in Image
-  Search on Translate; an image dragged onto any tab opens it there; right-clicking a list in Account → Lists
-  offers Rename and Delete; a name changed in **Settings…** → Profile shows in a window's Account
-  → Profile, even after leaving that window's Name field untouched, and isn't written back.
+The UI tests cover the tab shell and sidebar, every tab at the iPad's two orientations and the
+Mac's smallest window, the menu commands and their shortcuts, the Settings window, a second Mac
+window, and Image Search's sources and Paste Image. What they can't drive, check by hand when
+changing it: the app beside another app in Split View on iPad, an image dragged in from another
+app, and **File → Import from iPhone or iPad** with a real iPhone.
 
 ## Install on an iPhone
 
@@ -282,8 +328,8 @@ xcodebuild -scheme ZenbuJapaneseModules-Package \
 ```
 
 The Translate tab has its own test target, `TranslatorCoreTests`, and its own guide,
-[`translate.md`](translate.md). Both targets also run on the Mac ([Test on the
-Mac](#test-on-the-mac)).
+[`translate.md`](translate.md). Both targets also run on an iPad Simulator and the Mac, and the
+app's UI tests on all three ([Tests on every platform](#tests-on-every-platform)).
 
 `SearchConformanceTests` checks Search against the shared conformance suite in
 `apps/ios/LanguageData/Conformance/search-retrieval.json` (see ADR 0006). Only each result's
@@ -356,10 +402,10 @@ the website does isn't recorded yet: sentence search (Discovered Words, above). 
 checks it with its own test (`sentence-search.test.ts`) until a suite records it.
 
 The `iOS` workflow ([`ci.md`](ci.md), iOS) runs the data tools' contract tests on pull requests
-that change `apps/ios`, and `SearchExperienceTests`, `TranslatorCoreTests`, and the recorded-audio
-check's scoring tests on a macOS runner, with the app built for an iPad Simulator and the Mac,
-only once the owners turn that on. Until then, run them on a Mac, and verify ordinary app changes
-by also building, launching, and inspecting the real app.
+that change `apps/ios`, and, on a macOS runner, `SearchExperienceTests` and `TranslatorCoreTests`
+on an iPhone Simulator, an iPad Simulator, and the Mac, the app's UI tests on all three, and the
+recorded-audio check's scoring tests, only once the owners turn that on. Until then, run them on a
+Mac ([Tests on every platform](#tests-on-every-platform)).
 
 Frequency-pack selection has one repo-local Python contract test. Run
 `python3 -m unittest discover -s apps/ios/Tools/tests -p test_frequency_pack_runtime_contract.py` to verify

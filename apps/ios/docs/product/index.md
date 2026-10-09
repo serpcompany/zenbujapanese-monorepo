@@ -19,6 +19,37 @@ Macs with Apple silicon and macOS 26, as one app with one App Store record
   videos with linked Japanese captions.
 - **Account** opens personal content, preferences, language-resource management, support, and credits.
 
+Check: UI `NavigationUITests.testEveryTabOpensItsScreenWithItsMainControlsOnScreen` and
+`testTheTabShellListsEveryTabInOrder`; package `AppCommandTests` (the tabs' order, symbols, and
+shortcuts).
+
+## How behavior is verified
+
+Each behavior here ends with a **Check** naming the automated tests that prove it. Four kinds run:
+
+- **Package tests** (`apps/ios/Modules/Tests/`), `SearchExperienceTests` and `TranslatorCoreTests`,
+  named by type, such as `SearchResultSortTests`. They run on an iPhone Simulator, an iPad
+  Simulator, and the Mac, so a package test checks all three.
+- **UI tests** (`apps/ios/UITests/`), `ZenbuJapaneseUITests`, which drive the built app on the
+  same three, named as class and test, such as `SearchUITests.testAQueryWithNoMatchesSaysSo`. They
+  use stand-ins only at the edge: an image for the camera, a sheet's answer for Apple's and
+  Google's sign-in, the Translate harness's script for the microphone, a local player and fixture
+  captions for YouTube, and a closed port for the offline account
+  ([`ios.md`](../../../../docs/agents/ios.md#tests-on-every-platform)).
+- **Contract tests** (`apps/ios/Tools/tests/`), which check the project settings and the bundled
+  data, the same for every platform.
+- **The recorded-audio check** (`translate-replay`), which plays recorded speech through the real
+  recognizers and Apple Translation on a Mac with Apple's speech models
+  ([`translate.md`](../../../../docs/agents/translate.md#recorded-audio-check)).
+
+A check covers iPhone, iPad, and the Mac unless it names devices; a behavior that only some
+devices have says which. A UI test that checks a device's own side, such as **Take Photo** on
+iPhone and iPad and **Paste Image** on the Mac, runs on all three. **By hand** marks what no test
+can drive, with the automated check that comes closest: a real Apple or Google sign-in, a real
+camera, live speech into a microphone, YouTube's own player and results page, the system's photo
+and file pickers, and what iOS or macOS does outside the app (Split View, dragging from another
+app, Continuity Camera, opening a link from another app).
+
 ## iPad and Mac
 
 Every tab and screen is the same on iPhone, iPad, and Mac, except for what this section lists.
@@ -29,6 +60,10 @@ and messages that name the device say iPad or Mac, such as "Everything stays on 
 - **The tabs.** iPhone has its tab bar. iPad shows the tabs at the top, and they open into a
   sidebar; the Mac lists them in a sidebar. A Mac window opens at 1180 by 820 points, can't be
   made smaller than 760 by 560, and File → New Window opens another.
+  Check: UI `NavigationUITests.testTheTabShellListsEveryTabInOrder` and
+  `testWideScreensListTheTabsInASidebar`, `LayoutUITests` (the Mac at its smallest window), and on
+  the Mac `KeyboardAndWindowUITests.testANewWindowTakesTheShortcutsWhileTheFirstKeepsItsTab`;
+  package `AppCommandTests` (window sizes).
 - **Menus and keyboard shortcuts**, on the Mac and with a hardware keyboard: **Find in
   Dictionary** (⌘F) goes to Search and puts the cursor in its field, **Search an Image…** (⌘⇧I)
   goes back to Translate's first screen, chooses its **Camera** option when no conversation is
@@ -36,13 +71,21 @@ and messages that name the device say iPad or Mac, such as "Everything stays on 
   and Account.
   With two windows open, a shortcut acts in the one used last. A website link opens in an open
   window rather than a new one.
+  Check: iPad and Mac, UI `KeyboardAndWindowUITests` (⌘1 to ⌘4, ⌘F, ⌘⇧I, and a second window);
+  package `AppCommandTests` (each command's shortcut, and the window it reaches). A link from
+  another app is by hand; `WebsiteLinkTests` checks where it goes.
 - **Settings on the Mac.** **Zenbu Japanese → Settings…** (⌘,) opens a Settings window with
   the profile and the Zenbu account, Reading Aids, and Frequency Dictionaries. They stay in Account
   too, and both show the same settings; a change to Frequency Dictionaries re-sorts Search the
   next time Search is opened.
+  Check: Mac, UI `KeyboardAndWindowUITests.testTheSettingsWindowHoldsTheAccountReadingAidsAndFrequencyDictionaries`;
+  package `AppCommandTests` (its panes and size), `UserProfileTests` (a field changed in another
+  window), and `FrequencyPackLifecycleTests`.
 - **The word sheet.** A word tapped in Image Search, Player, or Translate opens at half height on
   iPhone. On the Mac it opens as a sheet over the window, so the page behind waits until the sheet
   is closed; on an iPad in full width it opens as a centered sheet.
+  Check: UI `ImageSearchUITests.testAnImageOpensImageSearchOnTranslateAndAWordOpensItsEntry`
+  (where each device places it); package `WordSheetPresentationTests`.
 - **Image Search on the Mac.** Translate's **Camera** option offers **Photo Library**,
   **Files**, and **Paste Image**, which takes an image, or up to 8 copied image files, from the
   clipboard, and its description doesn't mention pointing a camera. There's no **Take Photo**,
@@ -50,28 +93,40 @@ and messages that name the device say iPad or Mac, such as "Everything stays on 
   an iPhone or iPad instead: from any tab, **File → Import from iPhone or iPad → Take Photo**
   (Continuity Camera) opens the photo in Image Search on Translate. Several images are paged by
   swiping sideways or with the dots under them.
+  Check: UI `TranslateUITests.testCameraOffersThisDevicesImageSources`,
+  `WordDetailUITests.testTheMenuOffersThisDevicesActionsAndMarksTheWordKnown` (no **Take Photo**
+  on the Mac), and `ImageSearchUITests` (a pasted image on the Mac); package `PlatformAdapterTests`
+  (the sources, the Camera option's description, pasted images and files). Continuity Camera with
+  a real iPhone is by hand; it hands over a photo the way **Paste Image** reads one.
 - **Dragging images.** On every device, an image dragged onto the window, in any tab, opens it
   in Image Search on Translate, up to 8 at a time, with the same limits as **Files**.
+  Check: package `PlatformAdapterTests` (a dropped image's limits). Dragging from another app is
+  by hand.
 - **Right-click on the Mac.** A row whose actions are behind a swipe on the iPhone also shows
   them on right-click: renaming or deleting a list, removing a word from a list, marking a word
   unknown, removing a video from Recent, updating or removing a frequency dictionary or showing
   its details, and deleting a Media Library image. Search results, recent searches, and
   Translations already open a menu on long-press, which is right-click on the Mac.
+  Check: UI `ListsUITests` (renaming and deleting a list), `SavedWordsUITests` (marking a word
+  unknown and deleting a Media Library image), and `SearchUITests.testMarkingAResultKnownShowsTheKnownCapsule`,
+  each by swipe on iPhone and iPad and right-click on the Mac.
 - **Translate on the Mac** uses the Mac's microphone and speakers, and keeps the display awake
   while it listens. Closing the last window pauses a live conversation, as leaving the app does. With two windows on iPad or the Mac, there's one conversation, shown in
   whichever window has Translate open, with the session bar in the others. Without voice isolation (Listening), the Mac assumes its speakers reach the
   microphone, so it stops hearing while a translation plays, even with headphones.
+  Check: package `PlatformAdapterTests` (the Mac's speakers reach its microphone),
+  `TranslateWindowTests`, and `LiveConversationTests` (Listening on a speaker); UI
+  `ConversationUITests.testLeavingTheAppPausesTheConversation` (closing the Mac's window). The
+  microphone itself is by hand ([Translate](translate.md#how-translate-is-checked)).
 - **Syncing on the Mac** happens while Zenbu is open: when it opens or becomes active, after each
   change, and on **Sync Now**. The Mac has no background refresh, so a closed app doesn't sync.
+  Check: package `AccountSyncTests` and `AccountSyncRecoveryTests` (when it syncs).
 
-Checked by `PlatformAdapterTests` (images, colors, dropped images' limits, the image sources each
-device offers, the Settings links, and the device's name), `AppCommandTests` (which window a command reaches, the last window closing,
-the tabs' shortcuts, and window sizes), `TranslateWindowTests` (closing the last window while
-Translate starts),
-`apps/ios/Tools/tests/test_app_platforms.py` (the platforms, orientations, sandbox, privacy
-strings, entitlements, and Mac icon), and `pnpm verify layers` (no iPhone-only API outside the
-adapters), and by hand on an iPad Simulator and the Mac ([iPad and Mac
-checks](../../../../docs/agents/ios.md#ipad-and-mac-checks)).
+Also checked by contract `test_app_platforms.py` (the platforms, orientations, sandbox, privacy
+strings, entitlements, the Mac icon, and the UI tests' platforms), `pnpm verify layers` (no
+iPhone-only API outside the adapters), and UI `LayoutUITests` (every tab fits the iPhone in
+portrait, the iPad in both orientations, and the Mac's smallest window). By hand: the iPad beside
+another app ([iPad and Mac checks](../../../../docs/agents/ios.md#ipad-and-mac-checks)).
 
 ## Furigana kanji highlight
 
@@ -80,15 +135,22 @@ the reading belongs to it: the kanji and its kana turn the accent color (肉 and
 Tapping it again, or tapping another kanji, moves or clears the highlight. The word keeps its
 compact furigana; nothing is spaced apart.
 
+Check: UI `WordDetailUITests.testTappingAKanjiInTheHeadwordHighlightsItsReading`.
+
 The split comes from each kanji's own readings, including the sound changes compounds make
 (学校 is がっ・こう, 人々 is ひと・びと), and appears only when those readings split the word's
 reading exactly one way. Words read as a whole, such as 大人 (おとな) or 今日 (きょう), have no
 per-kanji highlight.
 
+Check: package `KanjiReadingSplitterTests` and the recorded `WordDetailConformanceTests`.
+
 It works on any furigana that isn't itself a tap target: Word Detail and conjugation headwords,
 conjugation tables, and Media Library words. Where tapping a word already opens it — Search
 results, Known Words and list rows, a kanji's word list, Related Words, and linked words in
 sentences and captions — a tap opens the word, whose headword then offers the highlight.
+
+Check: the recorded `WordDetailConformanceTests` (each conjugation's headword split); UI
+`SearchUITests.testAnEnglishSearchListsTheWordAndOpensItsDetail` (a result row opens the word).
 
 ## Account
 
@@ -113,7 +175,14 @@ lists, Player's watch history, and Translate's bookmarked sentences. It provides
 - the app's name, version, and description, followed by Help & Support and the Privacy Policy,
   which open the Zenbu website, and source credits and attributions.
 
+Check: UI `AccountUITests.testAccountListsEveryArea`, `testReadingAidsAndFrequencyDictionariesOpen`,
+and `testTranslationsAndCreditsOpenFromAccount`; contract `test_account_service_settings.py`
+(production in TestFlight and App Store builds, staging in Debug); package `PlayerReadingAidTests`
+and `WordMeaningTests` (the Reading Aids preferences).
+
 Rows use Settings-style tinted icon tiles in grouped cards without section headings.
+
+Check: UI `LayoutUITests` (Account's rows on screen at each size).
 
 The profile card opens Profile, where a learner adds or changes a photo and edits their name,
 username, and email in place. Each field saves when the learner leaves it. A username keeps only
@@ -123,6 +192,10 @@ one shows an error and is not saved. Without a photo, the card shows the name's 
 profile is stored only on the device and is not synced to the Zenbu account. A saved profile this
 version can't read is kept aside rather than written over, and Profile starts empty
 ([Saved data that can't be read](#saved-data-that-cant-be-read)).
+
+Check: package `UserProfileTests` (the field rules, saving on leaving, a reload, and an unreadable
+profile) and `PlatformAdapterTests` (the photo's 512-point square); UI
+`AccountUITests.testTheProfileKeepsANameAndShowsItOnTheCard`.
 
 Frequency Dictionaries includes JLPT Levels and YouTube (TUBELEX) in the app and offers
 seven optional packs: Japanese Wikipedia, plus TV & Movies, Anime, Manga, Novels, Visual Novels,
@@ -139,6 +212,12 @@ enables JLPT Levels first and YouTube second. JLPT Levels marks words with an es
 level from Jonathan Waller's lists; JLPT publishes no official vocabulary list, so the app
 presents levels as unofficial study estimates.
 
+Check: package `FrequencyPackLifecycleTests`, `SearchResultOrderingTests`, and
+`SearchFrequencyChipTests`; contract `test_frequency_pack_runtime_contract.py` (each pack's
+pinned source, ranks, and the YouTube spellings); UI `AccountUITests.testReadingAidsAndFrequencyDictionariesOpen`
+(JLPT Levels and YouTube listed). Downloading an optional pack needs the network: by hand, with
+`FrequencyPackLifecycleTests` installing one from a local file.
+
 The screen lists one row per pack in three sections. **Enabled** holds packs that are
 switched on, in priority order; Edit reorders them. Ranks appear in this order, and Search
 sorts by the first pack, breaking ties with each next pack, unless the learner sorts by one pack
@@ -150,6 +229,9 @@ domain and size, or a download failure. Swiping a row reveals Details and Remove
 when a newer version exists. When the app upgrades from the single active pack, that pack
 becomes the only enabled one. An update that adds a bundled pack, such as JLPT Levels, enables
 it once at the top of the learner's list; disabling it afterward is remembered.
+
+Check: package `FrequencyPackLifecycleTests` (enabling, ordering, disabling, removing, and the
+upgrades) and `SearchResultOrderingTests` (a word the first pack doesn't rank).
 
 ### Known Words
 
@@ -163,6 +245,11 @@ came from a newer version of Zenbu, or a damaged file couldn't be kept aside, th
 can't be changed, and Known Words and the Mark as Known button say so. If the file exists but
 can't be read at launch, such as before the device's first unlock, nothing is shown or saved over
 it, and Known Words asks the learner to reopen Zenbu.
+
+Check: package `WordKnowledgeTests` and `SavedKanjiTests`; UI
+`SavedWordsUITests.testAKnownWordIsListedAndCanBeMarkedUnknownThere`,
+`WordDetailUITests.testTheMenuOffersThisDevicesActionsAndMarksTheWordKnown`, and
+`AccountUITests.testKnownWordsAndTheMediaLibraryStartEmptyAndListsStartWithFavorites` (empty).
 
 ### Lists
 
@@ -183,7 +270,13 @@ the same way as in Known Words. Its **•••** menu renames the
 list, deletes it (asking first when it has words), or selects words: while selecting, the top bar
 offers Select All, Remove, and Done. Deleting a list removes its words from that list only.
 
+Check: package `WordListsTests` and `SavedKanjiTests`; UI `ListsUITests` (making, renaming, and
+deleting a list) and `AccountUITests.testKnownWordsAndTheMediaLibraryStartEmptyAndListsStartWithFavorites`
+(Favorites at first).
+
 A word's page also names the lists holding it; tapping one opens that list here.
+
+Check: UI `WordDetailUITests.testAddToListPutsTheWordInFavoritesAndANewList`.
 
 Lists are stored on the device, keyed by each entry's stable identifier, and sync through the Zenbu
 account while the learner is signed in. Like Known Words,
@@ -192,12 +285,17 @@ but can't be changed, and Lists and the list picker say so. A lists file that ca
 launch is left untouched, Favorites is not created over it, and Lists asks the learner to reopen
 Zenbu.
 
+Check: package `WordListsTests` (newer, damaged, and unreadable files).
+
 ### Media Library
 
 The current Media Library works like a small saved-photo album. It contains images associated
 with words through Image Search or Word Detail. Each image appears once with all of its
 associated words, even when several words share it. A learner can view an image, remove its
 association from one word, or delete the image and all of its word associations.
+
+Check: UI `SavedWordsUITests.testAnImagesWordKeepsTheImageInTheMediaLibraryUntilItsDeleted` and
+`AccountUITests` (empty at first); package `EncounterMediaStorageTests`.
 
 These images are stored locally and participate in normal system-managed device backup. The
 Media Library is not currently a general file store, import system, analysis tool, sync service,
@@ -213,6 +311,8 @@ If Zenbu can't record the deletion, as on a full device, that image stays. Zenbu
 only after the learner deletes its photo, or removes the photo from the last word the Media
 Library shows it with.
 
+Check: package `DeferredImageDeletionsTests` and `EncounterMediaStorageTests`.
+
 ### Saved data that can't be read
 
 Player's Recent, word notes, the Media Library's index, and the profile keep what a learner saved
@@ -222,6 +322,9 @@ keeps every video, note, or photo it can read, and new changes save as before. A
 can't be read starts empty. If the Media Library's index can't be opened or copied aside, the
 Media Library shows nothing and saves nothing until it can, rather than write over it.
 
+Check: package `UnreadableCopyTests`, `WordNoteStorageTests`, `UserProfileTests`,
+`EncounterMediaStorageTests`, and `AccountSyncWatchHistoryTests`.
+
 ### Zenbu account and sync
 
 A learner can sign in to their Zenbu account from Account, to keep their known words and lists the
@@ -229,6 +332,10 @@ same on every device and Zenbu app they sign in to (#573), and Player's Recent v
 Translate's bookmarked sentences the same on every device running this app
 ([Player](player.md#opening-a-video), [Translate](translate.md#translations)). Zenbu works the same signed
 out and offline: everything stays on the phone, and the phone's copy is what the app shows.
+
+Check: package `AccountSyncTests`, `AccountSyncConflictTests`, `AccountSyncRecoveryTests`,
+`AccountSignedOutTests`, `AccountSyncWatchHistoryTests`, and `AccountSyncBookmarkTests`, against a
+stand-in account service; UI `AccountUITests` (offline, the app signed out).
 
 What doesn't sync, and why:
 
@@ -249,12 +356,21 @@ asks for the learner's name and email; a new account takes the name Apple shares
 sign-in, which the website's account page shows and lets the learner change. Signed in, the
 Account row shows **Zenbu Account** and the email.
 
+Check: package `AccountProviderSignInTests` (Apple's and Google's sign-in, with only their sheets
+stood in: the nonce, PKCE, the token exchange, the account's answer, and the session; a closed
+sheet; a refused token) and `AccountSignInTests` (emailed codes, tokens, refused sign-ins); UI
+`AccountUITests.testSignInOffersAppleGoogleAndACodeAndSaysWhenTheServiceCantBeReached`. A real
+Apple or Google sign-in is by hand ([Account manual checks](../../../../docs/agents/ios.md#account-manual-checks)).
+
 **The first sync.** When this phone signs in to an account other than the one it last signed out
 of, the app sends the account everything on the phone: every known word, every list, every list's
 words, Recent's videos, and bookmarked sentences, then brings down everything the account already
 has. A phone that signed in before the app synced watch history or bookmarks sends them once, after
 updating. The same Apple ID, Google account, or email reaches the same
 account in every app.
+
+Check: package `AccountSyncTests` and `AccountSignedOutTests` (the first sync, and catching up on
+watch history and bookmarks).
 
 **Favorites is one list.** Every device's and app's Favorites is the same list in the account, so
 signing in on a second phone puts that phone's Favorites words into the account's Favorites, under
@@ -263,11 +379,15 @@ before it could sign in joins it the same way, if its oldest list is still named
 Favorites was deleted in the account, a phone signing in keeps its own Favorites, with its words,
 as a new list.
 
+Check: package `AccountSignedOutTests`.
+
 **When it syncs.** After each change to a known word, a list, Recent, or a bookmark, when the app opens or returns to
 the foreground with changes waiting or a last sync over 15 minutes ago, when iOS gives it time in
 the background, and when the learner taps **Sync Now** on Zenbu Account. Never on a timer. Offline,
 changes wait on the phone, in order, across relaunches, and go when it's back; a failed sync tries
 again a few times, waiting longer each time, only while the app is open.
+
+Check: package `AccountSyncTests` and `AccountSyncRecoveryTests`.
 
 **When the same thing changed elsewhere.** Each kind of change follows the account's rule
 ([`docs/agents/account-clients.md`](../../../../docs/agents/account-clients.md), The rules):
@@ -292,12 +412,18 @@ again a few times, waiting longer each time, only while the app is open.
   at most 2,000 bookmarks; past that, a new bookmark is taken back off, and bookmarks a first sync
   can't fit stay on the phone without syncing.
 
+Check: package `AccountSyncConflictTests`, `AccountSyncWatchHistoryTests`, and
+`AccountSyncBookmarkTests`.
+
 **Zenbu Account** shows the email, when the last sync was (or that one is running), how many
 changes are waiting, and a note when the last sync failed, with **Sync Now**, **Sign Out**, and
 **Delete Account…**. If the bookmarks synced from other devices can't be read at launch, such as
 before the device's first unlock, nothing syncs until Zenbu is reopened, so none are lost, and
 Zenbu Account says so; if a newer version of Zenbu saved them, nothing syncs until Zenbu is
 updated, and Zenbu Account says to update it.
+
+Check: package `AccountSyncTests`, `AccountSyncRecoveryTests`, and `AccountSyncBookmarkTests`
+(the unreadable and newer bookmarks messages).
 
 **Signing out** asks first, then forgets the sign-in on this phone and keeps everything: known
 words, lists, Recent, Translations, notes, and media stay, and every feature works. Changes made while signed out, such
@@ -306,6 +432,8 @@ list word, and list as just its latest change), and go to the account when the l
 the same account again, by the account's rules: a change made elsewhere first wins. Signing in to a different account instead sends that account everything on the phone, as
 a first sync does. If the account ends the session itself, such as after the account is deleted
 from another app, the app signs out the same way, and the Account row says so.
+
+Check: package `AccountSignedOutTests` and `AccountSignInTests` (a session the service ended).
 
 ### Deleting the account
 
@@ -325,6 +453,9 @@ A signed-in learner can delete their Zenbu account from **Zenbu Account → Dele
 - Afterwards the app is signed out and keeps everything on the phone: Known Words, lists,
   Recent, Translations and their bookmarks, notes, and media stay, and every feature works. Signing in again makes a new account, which gets
   everything on the phone, as a first sync does.
+
+Check: package `AccountSyncTests` and `AccountSyncRecoveryTests` (signing in again, a refused or
+lost deletion, and the phone keeping its data) and `AccountSignedOutTests` (starting over).
 
 ## Required, not built yet (#563)
 

@@ -15,7 +15,8 @@ struct CameraAuthorizationClient: Sendable {
 
   static let live = CameraAuthorizationClient(
     state: {
-      switch AVCaptureDevice.authorizationStatus(for: .video) {
+      guard LaunchHarness.cameraImageURL == nil else { return CameraAuthorizationState.authorized }
+      return switch AVCaptureDevice.authorizationStatus(for: .video) {
       case .authorized: .authorized
       case .notDetermined: .notDetermined
       case .denied: .denied

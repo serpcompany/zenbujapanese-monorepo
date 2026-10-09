@@ -122,6 +122,7 @@ struct YouTubePlayerView: WebViewRepresentable {
   }
 
   private static let origin = URL(string: "https://zenbujapanese.com")!
+  private static let youTubeScript = #"<script src="https://www.youtube.com/iframe_api"></script>"#
 
   private static func html(_ videoID: YouTubeVideoID) -> String {
     """
@@ -162,7 +163,7 @@ struct YouTubePlayerView: WebViewRepresentable {
       });
     }
     </script>
-    <script src="https://www.youtube.com/iframe_api"></script>
+    \(LaunchHarness.youTubePlayerScript ?? youTubeScript)
     </body></html>
     """
   }

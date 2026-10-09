@@ -2,6 +2,15 @@ import Foundation
 import Observation
 import TranslatorCore
 
+struct SignInProviders: Sendable {
+  var appleAuthorization: @MainActor @Sendable (_ hashedNonce: String) async throws -> AppleSignInCredential
+  var webSignIn: @MainActor @Sendable (_ url: URL, _ callbackScheme: String) async throws -> URL
+
+  static let system = SignInProviders(
+    appleAuthorization: { try await AppleSignIn.authorize(hashedNonce: $0) },
+    webSignIn: { try await WebSignInPresenter().callback(for: $0, scheme: $1) })
+}
+
 @MainActor
 @Observable
 final class ZenbuAccount {
@@ -9,7 +18,8 @@ final class ZenbuAccount {
     ZenbuAccount(
       configuration: $0, session: AccountAPI.urlSession(),
       storage: KeychainSessionTokenStorage(), wordKnowledge: .shared, wordLists: .shared,
-      watchHistory: .shared, translations: .shared)
+      watchHistory: .shared, translations: .shared,
+      providers: LaunchHarness.signInProviders ?? .system)
   }
 
   let configuration: AccountServiceConfiguration
@@ -17,6 +27,7 @@ final class ZenbuAccount {
   @ObservationIgnored let scheduler: AccountSyncScheduler
   @ObservationIgnored private let api: AccountAPI
   @ObservationIgnored private let session: URLSession
+  @ObservationIgnored private let providers: SignInProviders
 
   init(
     configuration: AccountServiceConfiguration,
@@ -27,12 +38,14 @@ final class ZenbuAccount {
     watchHistory: WatchHistory,
     translations: ConversationHistory,
     fileURL: URL = AccountSync.defaultFileURL,
+    providers: SignInProviders = .system,
     now: @escaping @MainActor () -> Date = Date.init
   ) {
     let api = AccountAPI(baseURL: configuration.serviceURL, session: session)
     self.configuration = configuration
     self.api = api
     self.session = session
+    self.providers = providers
     sync = AccountSync(
       api: api, tokens: AccountTokens(api: api, storage: storage, now: now),
       wordKnowledge: wordKnowledge, wordLists: wordLists, watchHistory: watchHistory,
@@ -144,7 +157,8 @@ final class ZenbuAccount {
 
   private func appleSignIn() async throws -> (signIn: AccountSignIn, authorizationCode: String) {
     let nonce = try await api.signInNonce()
-    let credential = try await AppleSignIn.credential(nonce: nonce)
+    let credential = try await AppleSignIn.credential(
+      nonce: nonce, authorize: providers.appleAuthorization)
     let signIn = try await api.signIn(
       provider: .apple, idToken: credential.identityToken, nonce: nonce, name: credential.name)
     return (signIn, credential.authorizationCode)
@@ -157,8 +171,7 @@ final class ZenbuAccount {
     let google = GoogleSignIn(clientID: clientID, session: session)
     let nonce = try await api.signInNonce()
     let attempt = google.attempt(nonce: nonce)
-    let callback = try await WebSignInPresenter().callback(
-      for: attempt.url, scheme: google.redirectScheme)
+    let callback = try await providers.webSignIn(attempt.url, google.redirectScheme)
     let idToken = try await google.idToken(from: callback, for: attempt)
     return try await api.signIn(provider: .google, idToken: idToken, nonce: nonce)
   }

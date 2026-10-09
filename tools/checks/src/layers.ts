@@ -25,7 +25,7 @@ interface PlatformAPI {
 }
 
 export interface SwiftPlatforms {
-  adapters: string
+  adapters: readonly string[]
   sharedCode: readonly string[]
   apis: readonly PlatformAPI[]
 }
@@ -33,8 +33,13 @@ export interface SwiftPlatforms {
 const adapter = 'an adapter in SearchExperience/Platform/'
 
 export const swiftPlatforms: SwiftPlatforms = {
-  adapters: 'apps/ios/Modules/Sources/SearchExperience/Platform/',
-  sharedCode: ['apps/ios/Modules/Sources/', 'apps/ios/Modules/Tests/', 'apps/ios/App/'],
+  adapters: ['apps/ios/Modules/Sources/SearchExperience/Platform/', 'apps/ios/UITests/Platform/'],
+  sharedCode: [
+    'apps/ios/Modules/Sources/',
+    'apps/ios/Modules/Tests/',
+    'apps/ios/App/',
+    'apps/ios/UITests/'
+  ],
   apis: [
     {
       pattern: /^\s*#(?:if|elseif)\b.*\b(?:os|canImport|targetEnvironment)\s*\(/,
@@ -132,7 +137,15 @@ function importProblems(path: string, text: string, layer: SwiftLayer): LayerPro
   })
 }
 
+const appPart = (folder: string) => folder.split('/').slice(0, 3).join('/')
+
+function adaptersFor(path: string, platforms: SwiftPlatforms): string {
+  const [packageAdapters, ...others] = platforms.adapters
+  return others.find(folder => path.startsWith(appPart(folder))) ?? packageAdapters ?? ''
+}
+
 function platformProblems(path: string, text: string, platforms: SwiftPlatforms): LayerProblem[] {
+  const adapters = adaptersFor(path, platforms)
   return text.split('\n').flatMap((line, index) => {
     const api = platforms.apis.find(each => each.pattern.test(line))
     if (!api) return []
@@ -140,7 +153,7 @@ function platformProblems(path: string, text: string, platforms: SwiftPlatforms)
       {
         path,
         line: index + 1,
-        problem: `uses ${api.name}, which differs between iPhone, iPad, and Mac; outside ${platforms.adapters}, use ${api.use}`
+        problem: `uses ${api.name}, which differs between iPhone, iPad, and Mac; outside ${adapters}, use ${adapters === platforms.adapters[0] ? api.use : 'a helper there'}`
       }
     ]
   })
@@ -156,7 +169,7 @@ export function checkLayers(
     const layer = layers.find(each => path.startsWith(each.folder))
     const sharedAcrossPlatforms =
       platforms.sharedCode.some(folder => path.startsWith(folder)) &&
-      !path.startsWith(platforms.adapters)
+      !platforms.adapters.some(folder => path.startsWith(folder))
     if (!layer && !sharedAcrossPlatforms) return []
     const text = read(path)
     return [

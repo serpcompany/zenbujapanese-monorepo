@@ -26,9 +26,15 @@ final class AppleSignIn: NSObject, ASAuthorizationControllerDelegate,
   private var continuation: CheckedContinuation<AppleSignInCredential, Error>?
   private var controller: ASAuthorizationController?
 
-  static func credential(nonce: String) async throws -> AppleSignInCredential {
-    let signIn = AppleSignIn()
-    return try await signIn.perform(hashedNonce: Data(nonce.utf8).sha256)
+  static func credential(
+    nonce: String,
+    authorize: @MainActor (_ hashedNonce: String) async throws -> AppleSignInCredential
+  ) async throws -> AppleSignInCredential {
+    try await authorize(Data(nonce.utf8).sha256)
+  }
+
+  static func authorize(hashedNonce: String) async throws -> AppleSignInCredential {
+    try await AppleSignIn().perform(hashedNonce: hashedNonce)
   }
 
   private func perform(hashedNonce: String) async throws -> AppleSignInCredential {

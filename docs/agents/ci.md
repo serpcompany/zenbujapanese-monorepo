@@ -422,22 +422,24 @@ jobs:
   ([`ios.md`](ios.md), Sign-in in the App Store build), and the app's iPhone, iPad, and Mac
   settings (`test_app_platforms.py`: platforms, orientations, the Mac's sandbox and icon, privacy
   strings, and entitlements). Its LFS cache is keyed on the pointers of the LFS patterns it fetches.
-- `swift` runs `SearchExperienceTests` and `TranslatorCoreTests` with `xcodebuild` on the first iPhone Simulator of the
-  newest iOS runtime and builds the package and its tests for the Mac. It then fills the Sudachi
-  build cache (cached by the catalog's hash) and builds the app itself, unsigned
-  (`CODE_SIGNING_ALLOWED=NO`), for the first iPad Simulator of that runtime and for the Mac, so a
-  change that breaks only the iPad or Mac build fails ([`ios.md`](ios.md), iPad and Mac). The
-  package's tests don't run on the Mac there: on a virtual Mac its image recognition tests take
-  about two minutes each, and the job would run the whole suite twice on the dearest runner. Last
+- `swift` runs the app's tests on all three platforms, one after another: `SearchExperienceTests`
+  and `TranslatorCoreTests` with `xcodebuild` on the first iPhone Simulator and the first iPad
+  Simulator of the newest iOS runtime and on the Mac; then, after filling the Sudachi build cache
+  (cached by the catalog's hash), the app's UI tests (`ZenbuJapaneseUITests`), which build the app
+  as `com.zenbujapanese.dictionary.uitests` and drive it on the same iPhone and iPad Simulators,
+  unsigned (`CODE_SIGNING_ALLOWED=NO`), and on the Mac, signed to run locally, after turning on
+  Automation Mode, which the Mac's UI tests need (`automationmodetool`). So a change that breaks
+  the app on one of them fails ([`ios.md`](ios.md), Tests on every platform). Last
   come the recorded-audio check's scoring tests with `swift test` (the replay
   itself needs the Mac's speech models, which the runner doesn't have, so it stays a local check,
   [`translate.md`](translate.md)), on `macos-26` (Xcode 26, for the iOS 26 SDK the package needs; arm64, which
-  the `sudachi-swift` binary needs). A macOS minute costs about ten times a Linux one, so it runs
+  the `sudachi-swift` binary needs), with up to 4 hours for all of it. A macOS minute costs about
+  ten times a Linux one, so it runs
   only when the repository variable `IOS_SWIFT_TESTS` is `on`, or when the workflow is run by
   hand. Turning it on is the owners' decision, and they keep it off for the runner's cost, so until
-  then nothing builds the app for iPad or the Mac before merge.
+  then nothing tests the app on iPad or the Mac before merge.
   `tools/checks/src/ios-workflow.test.ts` pins both jobs: `contracts` on every pull request,
-  `swift` only when it's turned on, and what `swift` tests and builds.
+  `swift` only when it's turned on, and that it runs every suite on every platform.
 
 ## Search parity
 

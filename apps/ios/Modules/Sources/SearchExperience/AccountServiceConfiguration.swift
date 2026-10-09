@@ -30,7 +30,8 @@ struct AccountServiceConfiguration: Sendable, Equatable {
     return AccountServiceConfiguration(
       serviceURL: serviceURL,
       googleClientID: googleClientID?.isEmpty == false ? googleClientID : nil,
-      offersApple: bundleIDSuffix?.isEmpty ?? true)
+      offersApple: bundleIDSuffix?.isEmpty ?? true
+        || LaunchHarness.standsInForSignIn(environment))
   }
 
   private static func serviceURL(_ raw: String) -> URL? {

@@ -56,12 +56,13 @@ final class StubAccountServer: @unchecked Sendable {
   private static let lock = NSLock()
   nonisolated(unsafe) private static var servers: [String: StubAccountServer] = [:]
 
-  let host = "stub-\(UUID().uuidString.lowercased()).test"
+  let host: String
   private let lock = NSLock()
   private var handler: @Sendable (StubRequest) -> StubReply = { _ in .error(404, "not_found") }
   private var received: [StubRequest] = []
 
-  init() {
+  init(host: String = "stub-\(UUID().uuidString.lowercased()).test") {
+    self.host = host
     Self.lock.withLock { Self.servers[host] = self }
   }
 

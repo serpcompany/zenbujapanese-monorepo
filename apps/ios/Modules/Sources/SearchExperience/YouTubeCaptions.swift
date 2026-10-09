@@ -349,27 +349,44 @@ extension String {
 struct YouTubeCaptionClient: Sendable {
   var captions: @Sendable (YouTubeVideoID) async throws -> YouTubeVideoCaptions
 
-  static let live = YouTubeCaptionClient { videoID in
-    let (title, author, tracks) = try await YouTubeCaptionParsing.tracks(
-      fromPlayerResponse: playerResponse(for: videoID))
-    guard let track = YouTubeCaptionParsing.japaneseTrack(in: tracks) else {
-      throw YouTubeCaptionError.noJapaneseCaptions
-    }
-    let cues = try YouTubeCaptionParsing.cues(
-      fromTimedText: try await timedText(track.baseURL), joiner: "")
-    guard !cues.isEmpty else { throw YouTubeCaptionError.noJapaneseCaptions }
-    var paired = cues
-    if track.isTranslatable,
-      let data = try? await timedText(track.baseURL, translatedTo: "en"),
-      let translations = try? YouTubeCaptionParsing.translationSentences(fromTimedText: data)
-    {
-      paired = YouTubeCaptionParsing.pairing(cues, with: translations)
-    }
-    return YouTubeVideoCaptions(
-      title: title, cues: paired, isAutomatic: track.isAutomatic, author: author)
+  static let live = YouTubeCaptionClient(fetching: LaunchHarness.youTubeFetch ?? .network)
+
+  init(captions: @escaping @Sendable (YouTubeVideoID) async throws -> YouTubeVideoCaptions) {
+    self.captions = captions
   }
 
-  private static func playerResponse(for videoID: YouTubeVideoID) async throws -> Data {
+  init(fetching fetch: YouTubeFetch) {
+    captions = { videoID in
+      let (title, author, tracks) = try YouTubeCaptionParsing.tracks(
+        fromPlayerResponse: try await fetch.playerResponse(videoID))
+      guard let track = YouTubeCaptionParsing.japaneseTrack(in: tracks) else {
+        throw YouTubeCaptionError.noJapaneseCaptions
+      }
+      let cues = try YouTubeCaptionParsing.cues(
+        fromTimedText: try await fetch.timedText(track.baseURL, nil), joiner: "")
+      guard !cues.isEmpty else { throw YouTubeCaptionError.noJapaneseCaptions }
+      var paired = cues
+      if track.isTranslatable,
+        let data = try? await fetch.timedText(track.baseURL, "en"),
+        let translations = try? YouTubeCaptionParsing.translationSentences(fromTimedText: data)
+      {
+        paired = YouTubeCaptionParsing.pairing(cues, with: translations)
+      }
+      return YouTubeVideoCaptions(
+        title: title, cues: paired, isAutomatic: track.isAutomatic, author: author)
+    }
+  }
+}
+
+struct YouTubeFetch: Sendable {
+  var playerResponse: @Sendable (YouTubeVideoID) async throws -> Data
+  var timedText: @Sendable (_ baseURL: URL, _ translatedTo: String?) async throws -> Data
+
+  static let network = YouTubeFetch(
+    playerResponse: { try await networkPlayerResponse(for: $0) },
+    timedText: { try await networkTimedText($0, translatedTo: $1) })
+
+  private static func networkPlayerResponse(for videoID: YouTubeVideoID) async throws -> Data {
     var request = URLRequest(url: URL(string: "https://www.youtube.com/youtubei/v1/player")!)
     request.httpMethod = "POST"
     request.setValue("application/json", forHTTPHeaderField: "Content-Type")
@@ -384,7 +401,7 @@ struct YouTubeCaptionClient: Sendable {
     return data
   }
 
-  private static func timedText(_ baseURL: URL, translatedTo language: String? = nil)
+  private static func networkTimedText(_ baseURL: URL, translatedTo language: String?)
     async throws -> Data
   {
     guard var components = URLComponents(url: baseURL, resolvingAgainstBaseURL: false) else {
