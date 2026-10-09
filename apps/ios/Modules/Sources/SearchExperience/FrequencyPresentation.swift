@@ -53,6 +53,7 @@ struct FrequencyPresentationModel: Equatable, Sendable {
 
   init(result: FrequencyLookupResult) {
     self.result = result
+    pack = result.pack
     switch result {
     case .evidence(let evidence):
       let formattedRank = evidence.rank.formatted(.number.locale(Locale(identifier: "en_US")))
@@ -62,7 +63,6 @@ struct FrequencyPresentationModel: Equatable, Sendable {
       inlineAccessibilityLabel =
         "\(evidence.pack.shortName) frequency rank \(evidence.rank), "
         + "\(FrequencyTier(rank: evidence.rank).label). Double tap for details."
-      pack = evidence.pack
       rankText = "#\(formattedRank)"
       percentileText = evidence.topPercentDisplay
       levelText = nil
@@ -74,7 +74,6 @@ struct FrequencyPresentationModel: Equatable, Sendable {
       inlineText = evidence.level.label
       inlineAccessibilityLabel =
         "\(evidence.pack.shortName) level \(evidence.level.label). Double tap for details."
-      pack = evidence.pack
       rankText = nil
       percentileText = nil
       levelText = evidence.level.label
@@ -84,7 +83,6 @@ struct FrequencyPresentationModel: Equatable, Sendable {
       packName = pack.shortName
       tier = nil
       inlineText = "—"
-      self.pack = pack
       rankText = nil
       percentileText = nil
       levelText = nil
@@ -106,7 +104,6 @@ struct FrequencyPresentationModel: Equatable, Sendable {
       tier = nil
       inlineText = "—"
       inlineAccessibilityLabel = "\(packName) rank unavailable. Double tap for details."
-      pack = unavailable.pack
       rankText = nil
       percentileText = nil
       levelText = nil

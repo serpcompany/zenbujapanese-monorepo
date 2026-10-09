@@ -9,10 +9,19 @@ struct SearchResultsView: View {
   let frequencyRefreshID: Int
   let selectRefinement: (SearchRefinement) -> Void
   @State private var frequencyLoadState = SearchFrequencyLoadState()
+  @AppStorage(SearchResultSort.storageKey) private var sort = SearchResultSort.relevance
+  @Environment(WordKnowledge.self) private var wordKnowledge
 
   var body: some View {
-    let orderedEntries = SearchResultFrequencyOrdering.ordered(
-      results, entries: presentedEntries, ranks: frequencyLoadState.results)
+    let dictionaries = SearchResultSortOrdering.dictionaries(in: frequencyLoadState.results)
+    let appliedSort = SearchResultSortOrdering.applied(sort, dictionaries: dictionaries)
+    let orderedEntries = SearchResultSortOrdering.ordered(
+      SearchResultFrequencyOrdering.ordered(
+        results, entries: presentedEntries, ranks: frequencyLoadState.results),
+      by: appliedSort,
+      ranks: frequencyLoadState.results,
+      isKnown: wordKnowledge.isKnown
+    )
     List {
       if exampleCount > 0 {
         Section {
@@ -47,10 +56,19 @@ struct SearchResultsView: View {
       case .discoveredWords(let entries):
         Section {
           SearchListHeading(LocalizedStringKey(SearchResultsScreen.discoveredWordsHeading))
-          resultRows(entries) { .discovered(position: $0 + 1, count: entries.count) }
+          resultRows(entries, sort: .relevance) {
+            .discovered(position: $0 + 1, count: entries.count)
+          }
         }
       case .ranked(let kanji, let entries):
         Section {
+          if let status = appliedSort.status(dictionaries: dictionaries ?? []) {
+            SearchResultsStatusRow(
+              text: status, systemImage: "arrow.up.arrow.down", actionTitle: "Reset",
+              action: { chosenSort(dictionaries: dictionaries ?? []).wrappedValue = .relevance }
+            )
+            .accessibilityIdentifier("search.sort-status")
+          }
           if let kanji {
             KanjiPrimaryRow(
               character: kanji,
@@ -58,7 +76,7 @@ struct SearchResultsView: View {
               resultCount: SearchResultsScreen.rankedCount(query: query, entries: entries)
             )
           }
-          resultRows(entries) { index in
+          resultRows(entries, sort: appliedSort) { index in
             .result(
               position: index + (kanji == nil ? 1 : 2),
               count: SearchResultsScreen.rankedCount(query: query, entries: entries)
@@ -79,6 +97,20 @@ struct SearchResultsView: View {
     .listStyle(.plain)
     .id(query)
     .accessibilityIdentifier("search.results")
+    .toolbar {
+      if SearchResultsScreen.isSortable(results, entries: presentedEntries) {
+        ToolbarItem(placement: .topBarTrailing) {
+          SearchResultsMenu(
+            sort: chosenSort(dictionaries: dictionaries ?? []), appliedSort: appliedSort,
+            dictionaries: dictionaries ?? [])
+        }
+      }
+    }
+    .onChange(of: dictionaries) { _, newDictionaries in
+      if SearchResultSortOrdering.forgetsChoice(sort, dictionaries: newDictionaries) {
+        sort = .relevance
+      }
+    }
     .task(id: frequencyTaskID) {
       let requestID = frequencyTaskID
       frequencyLoadState.begin(requestID)
@@ -101,17 +133,30 @@ struct SearchResultsView: View {
   }
 
   private func resultRows(
-    _ entries: [DictionaryEntry], rank: @escaping (Int) -> ResultRank
+    _ entries: [DictionaryEntry], sort: SearchResultSort,
+    rank: @escaping (Int) -> ResultRank
   ) -> some View {
     ForEach(entries.enumerated(), id: \.element.id) { index, entry in
       ResultRow(
         entry: entry,
         summary: results.displaySummary(for: entry),
-        frequencyRanks: frequencyLoadState.results[entry.id],
+        frequencyRanks: SearchResultSortOrdering.chipRanks(
+          frequencyLoadState.results[entry.id], for: sort),
         rank: rank(index),
         link: SearchExperienceRoute.word(entry, nil)
       )
     }
+  }
+
+  private func chosenSort(dictionaries: [FrequencyPackDisclosure]) -> Binding<SearchResultSort> {
+    Binding(
+      get: { sort },
+      set: { newSort in
+        guard newSort != sort else { return }
+        withAnimation { sort = newSort }
+        AccessibilityNotification.Announcement(newSort.announcement(dictionaries: dictionaries))
+          .post()
+      })
   }
 
   private var primaryKanjiEntry: DictionaryEntry? {
