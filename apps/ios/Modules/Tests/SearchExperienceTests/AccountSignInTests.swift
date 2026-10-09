@@ -163,7 +163,7 @@ struct AccountSignInTests {
         path: "Build\(suffix)\(service.isEmpty ? "-no-service" : "").bundle", directoryHint: .isDirectory)
       try FileManager.default.createDirectory(at: bundleURL, withIntermediateDirectories: true)
       let info: [String: String] = [
-        "CFBundleIdentifier": "com.zenbujapanese.app\(suffix)",
+        "CFBundleIdentifier": "com.zenbujapanese.dictionary\(suffix)",
         AccountServiceConfiguration.serviceURLKey: service,
         AccountServiceConfiguration.bundleIDSuffixKey: suffix,
       ]

@@ -24,7 +24,7 @@
         "SITE_ENV": "staging",
         "DICTIONARY_API_URL": "DICTIONARY_API_URL",
         "ACCOUNT_API_URL": "https://api-staging.zenbujapanese.com",
-        "ACCOUNT_APPLE_SERVICES_ID": "com.zenbujapanese.web",
+        "ACCOUNT_APPLE_SERVICES_ID": "com.zenbujapanese.website",
         "ACCOUNT_GOOGLE_SIGN_IN": "on"
       },
       "workers_dev": true,
@@ -36,7 +36,7 @@
         "SITE_ENV": "production",
         "DICTIONARY_API_URL": "DICTIONARY_API_URL",
         "ACCOUNT_API_URL": "https://api.zenbujapanese.com",
-        "ACCOUNT_APPLE_SERVICES_ID": "com.zenbujapanese.web",
+        "ACCOUNT_APPLE_SERVICES_ID": "com.zenbujapanese.website",
         "ACCOUNT_GOOGLE_SIGN_IN": "on"
       },
       "workers_dev": true,

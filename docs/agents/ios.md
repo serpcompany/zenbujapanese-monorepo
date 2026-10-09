@@ -37,16 +37,18 @@ or how fast it feels. The app needs iOS 26.0 or later, and the Sudachi cache abo
 ### From the Mac the iPhone is connected to
 
 1. Connect the iPhone by USB, or pair it over the same Wi-Fi, and tap **Trust** on it.
-2. Open `apps/ios/ZenbuJapanese.xcodeproj`, sign in under Xcode → Settings → Accounts, and pick a
-   team under the ZenbuJapanese target's **Signing & Capabilities**. On the Apple Developer team
-   that publishes the app (the backup account's, while #616 is open), keep the bundle ID. A free
-   Apple ID (a Personal Team) can't use `com.zenbujapanese.app`, which that team registered:
-   change it to one of your own, such as `com.<you>.zenbujapanese`. A Personal Team can't sign
-   Associated Domains or Sign in with Apple either, so also remove those capabilities
+2. Open `apps/ios/ZenbuJapanese.xcodeproj` and sign in under Xcode → Settings → Accounts. The
+   ZenbuJapanese target signs with the team that publishes the app, TSMC LLC's `847HR8U8D9`, and
+   the bundle ID that team registered, `com.zenbujapanese.dictionary` (The App Store record,
+   below). With
+   any other Apple ID, such as a free one (a Personal Team), pick your team under the target's
+   **Signing & Capabilities** and change the bundle ID to one of your own, such as
+   `com.<you>.zenbujapanese`. A Personal Team can't sign Associated Domains or Sign in with Apple
+   either, so also remove those capabilities
    ([Links from the website](#links-from-the-website), [Account and sync](#account-and-sync)).
    Such a build still shows the Apple button, which fails; sign in with an emailed code, or with
-   Google in a build given its client ID. The project sets no team, so picking one
-   edits `project.pbxproj`; don't commit that edit, a bundle ID change, or the removed capabilities.
+   Google in a build given its client ID. Don't commit the team, the bundle ID change, or the
+   removed capabilities.
 3. Choose the iPhone as the run destination and run.
 4. If iOS asks, turn on Developer Mode under Settings → Privacy & Security → Developer Mode. With a
    free Apple ID, also trust it under Settings → General → VPN & Device Management.
@@ -62,7 +64,7 @@ leaves `project.pbxproj` alone. From `apps/ios`, with the phone's UDID from
 ```sh
 xcodebuild -project ZenbuJapanese.xcodeproj -scheme ZenbuJapanese -configuration Debug \
   -destination 'platform=iOS,id=<device-udid>' -derivedDataPath /tmp/zenbu-dev \
-  DEVELOPMENT_TEAM=<team-id> CODE_SIGN_STYLE=Automatic \
+  CODE_SIGN_STYLE=Automatic \
   ZENBU_BUNDLE_ID_SUFFIX=.dev ZENBU_DISPLAY_NAME="Zenbu Dev" -allowProvisioningUpdates build
 xcrun devicectl device install app --device <device-udid> \
   "/tmp/zenbu-dev/Build/Products/Debug-iphoneos/Zenbu Japanese.app"
@@ -107,9 +109,9 @@ as universal links (#568; what each opens is in the [product docs](../../apps/io
 `apps/ios/App/ZenbuJapanese.entitlements` claims `applinks:zenbujapanese.com`, and iOS opens a
 link in the app only once it has fetched the site's association file, through Apple's CDN, and
 found the app's ID in it ([`web.md`](web.md), Links that open the app). That takes two things
-only a person can do: enable Associated Domains for the App ID `com.zenbujapanese.app` in the
-Apple Developer account that holds it, and set the website's `APPLE_TEAM_ID` to that account's
-team (`W3GXL2NQQP` until #616 moves the app to the business account).
+only a person can do: enable Associated Domains for the App ID `com.zenbujapanese.dictionary` in
+the Apple Developer team that holds it, TSMC LLC's, and set the website's `APPLE_TEAM_ID` to that
+team, `847HR8U8D9`.
 
 SwiftUI hands a universal link to `onOpenURL` in `WebsiteLinkOpening` (`WebsiteLinkOpening.swift`),
 which `SearchExperienceRootView` applies. It switches to Search from any tab, Translate included,
@@ -398,12 +400,12 @@ tests prove that model against the real service.
   launch, a background one too, uses it. The Simulator reaches the Mac's `127.0.0.1`, and App
   Transport Security allows plain HTTP to an IP address.
 - **Apple.** `apps/ios/App/ZenbuJapanese.entitlements` asks for Sign in with Apple, which the App ID
-  (`com.zenbujapanese.app`) needs in Apple Developer. The app asks the service for a nonce and gives
+  (`com.zenbujapanese.dictionary`) needs in Apple Developer. The app asks the service for a nonce and gives
   Apple its SHA-256 (`AppleSignIn.swift`), asking for the email and the name; Apple gives the name
   only on a learner's first sign-in, and the app sends it then as `idToken.user.name`, so a new
   account has one. Apple's token names the app's bundle ID, and the service takes only the bundle
   IDs in `apps/account-api/src/domain/clients.ts`, its `APPLE_APP_BUNDLE_IDENTIFIER`, and its
-  website Services IDs, so a Zenbu Dev build (`com.zenbujapanese.app.dev`) can't sign in with
+  website Services IDs, so a Zenbu Dev build (`com.zenbujapanese.dictionary.dev`) can't sign in with
   Apple. The app shows the Apple button whenever the build isn't Zenbu Dev, whatever the service
   has set up: a service without Apple answers its sign-in `404 provider_not_found`. `ZENBU_BUNDLE_ID_SUFFIX` reaches the app as
   `ZenbuBundleIDSuffix` in `apps/ios/App/Info.plist`; when it isn't empty, the sign-in sheet shows a
@@ -420,7 +422,7 @@ tests prove that model against the real service.
   redirect's scheme (`GoogleSignIn.redirectScheme`). The same ID is in staging's and production's
   `GOOGLE_CLIENT_IDS`, after the web client's.
 - **Tokens.** The signed session token (`set-auth-token`) is kept in the Keychain (service
-  `com.zenbujapanese.app.account`, readable after the first unlock, on this device only), and sent
+  `com.zenbujapanese.dictionary.account`, readable after the first unlock, on this device only), and sent
   only to `/v1/auth`. The 15-minute access token stays in memory, refreshed within a minute of its
   `exp` or after a `401`; when `/v1/auth/token` answers `401`, the app signs out and keeps its data.
   The `URLSession` keeps no cookies. A session token in the Keychain without `account-sync.json`
@@ -500,7 +502,7 @@ tests prove that model against the real service.
   it was on the way.
 - **When.** `AccountSyncScheduler` syncs a second after a local change, on becoming active (once
   the files have loaded) when changes are queued or the last sync is over 15 minutes old, in a
-  `BGAppRefreshTask` (`com.zenbujapanese.app.account-sync`, scheduled 15 minutes out on going to the
+  `BGAppRefreshTask` (`com.zenbujapanese.dictionary.account-sync`, scheduled 15 minutes out on going to the
   background, and stopped when iOS ends it), and on **Sync Now**. Never on a timer. A network
   failure or `5xx` waits 2 seconds, doubling up to 5 minutes, at half to all of that at random, and
   retries by itself at most 10 times, only in the foreground; a local change or becoming active
@@ -533,9 +535,12 @@ change's, a service that doesn't know bookmarks yet, catching up, and two phones
 
 Release builds name no account service, though the website's production account pages are open
 ([`web.md`](web.md), Account pages). Opening sign-in waits for production's account service:
-`https://api.zenbujapanese.com/v1/health` answers `{"status":"ok"}` in a browser, with Apple and
-email codes set up for everyone ([`account-api.md`](account-api.md), Set up the server). Then it's
-one pull request:
+`https://api.zenbujapanese.com/v1/health` answers `{"status":"ok"}` in a browser, with Apple, on
+TSMC LLC's key, and email codes set up for everyone ([`account-api.md`](account-api.md), Set up
+the server, Moving from the backup team). Until the service holds TSMC LLC's key, Apple refuses
+the client secret it makes for `com.zenbujapanese.dictionary`, so deleting an account made with
+Apple answers `503 apple_unavailable`, and App Review requires deleting to work. Then it's one
+pull request:
 
 - set Release's `ZENBU_ACCOUNT_API_URL` to `https://api.zenbujapanese.com`, and its
   `ZENBU_GOOGLE_IOS_CLIENT_ID` to Debug's, in `apps/ios/ZenbuJapanese.xcodeproj/project.pbxproj`;
@@ -548,34 +553,43 @@ Then enter the App Store privacy labels for the build that ships it, and change 
 description in `apps/ios/metadata/version/1.0/en-US.json`, which says the app has no cloud sync
 ([`app-store-privacy-labels.md`](../../apps/web/docs/app-store-privacy-labels.md)).
 
-What a person sets up first, once, in Apple Developer on the team that holds the app
-(`W3GXL2NQQP` while #616 is open), and in Google Cloud:
+What a person sets up first, once, in Apple Developer on the team that holds the app (TSMC LLC,
+`847HR8U8D9`), and in Google Cloud:
 
-- **The App ID** `com.zenbujapanese.app` (Certificates, Identifiers & Profiles → Identifiers):
-  Sign in with Apple, enabled as a primary App ID, and Associated Domains. Xcode's automatic
-  signing then makes new profiles at the next archive; until the capabilities are on, an archive
-  fails to sign. Zenbu Dev's `com.zenbujapanese.app.dev` needs both too, since it shares the
-  entitlements, though the service takes no Apple sign-in from it.
+- **The App ID** `com.zenbujapanese.dictionary` (Certificates, Identifiers & Profiles →
+  Identifiers): Sign in with Apple, enabled as a primary App ID, and Associated Domains. Xcode's
+  automatic signing then makes new profiles at the next archive; until the capabilities are on, an
+  archive fails to sign. Zenbu Dev's `com.zenbujapanese.dictionary.dev` needs both too, since it
+  shares the entitlements, though the service takes no Apple sign-in from it.
 - **The service's Apple settings:** the Sign in with Apple key and every `APPLE_*` setting
   ([`account-api.md`](account-api.md), Set up the server, step 3), before a build with the Apple
   button reaches testers.
-- **Google:** the iOS OAuth client for `com.zenbujapanese.app`
+- **Google:** the iOS OAuth client for `com.zenbujapanese.dictionary`
   ([`account-api.md`](account-api.md), Set up the server, step 3). Its client ID is Debug's
   `ZENBU_GOOGLE_IOS_CLIENT_ID` in `apps/ios/ZenbuJapanese.xcodeproj/project.pbxproj` and in the
   service's `GOOGLE_CLIENT_IDS`; Release's gets it when sign-in opens in the App Store build
   (below). Without it the app offers Apple and a code only.
 
+### The App Store record
+
+The app is TSMC LLC's App Store record "Zenbu Japanese" (Apple ID 6800229215, bundle ID
+`com.zenbujapanese.dictionary`, team `847HR8U8D9`), the record 1.0 shipped on, so 2.0.0 is an
+update to 1.0 (#616). The project sets that team and bundle ID in
+both configurations, and `apps/ios/Tools/tests/test_account_service_settings.py` pins them. The
+rebuilt app went to review first from a backup account (team `W3GXL2NQQP`, bundle ID
+`com.zenbujapanese.app`, record 6819885342, never released), while TSMC LLC's account was being
+converted to a business account; nothing ships from it.
+
 **A TestFlight build:**
 
-1. In a pull request, raise `CURRENT_PROJECT_VERSION` in both of the app target's configurations
-   (and `MARKETING_VERSION` for a new version), as "Prepare build 20 of 1.0.1 for TestFlight" did,
-   and merge it.
-2. On a Mac with a checkout of `main`, open `apps/ios/ZenbuJapanese.xcodeproj`, and under the
-   ZenbuJapanese target's **Signing & Capabilities** pick the team `W3GXL2NQQP` (the project sets
-   none). That edits `project.pbxproj`: don't commit it, as Install on an iPhone says.
-3. Pick the `ZenbuJapanese` scheme and **Any iOS Device (arm64)**, then Product → Archive.
-4. In the Organizer: Distribute App → App Store Connect → Upload.
-5. In App Store Connect, the build appears under TestFlight once it's processed, about 15 minutes
+1. In a pull request, raise `CURRENT_PROJECT_VERSION` in both of the app target's configurations,
+   as "Prepare build 20 of 1.0.1 for TestFlight" did, and merge it. For a new version, raise
+   `MARKETING_VERSION` instead and set `CURRENT_PROJECT_VERSION` back to 1.
+2. On a Mac signed in to TSMC LLC's team under Xcode → Settings → Accounts, with a checkout of
+   `main`, open `apps/ios/ZenbuJapanese.xcodeproj`, pick the `ZenbuJapanese` scheme and **Any iOS
+   Device (arm64)**, then Product → Archive.
+3. In the Organizer: Distribute App → App Store Connect → Upload.
+4. In App Store Connect, the build appears under TestFlight once it's processed, about 15 minutes
    later, with no export compliance question (both configurations set
    `ITSAppUsesNonExemptEncryption` to `NO`); add the testers.
 
