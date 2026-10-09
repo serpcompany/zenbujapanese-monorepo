@@ -97,20 +97,24 @@ actor EncounterMediaStorage {
   private let directory: URL
   private let legacyDirectory: URL?
   private let indexURL: URL
-  private let deferredDeletionsURL: URL
   private let keepCopy: @Sendable (URL) throws -> Void
+  private let now: @Sendable () -> Date
+  private let deferredDeletions: DeferredImageDeletions
   private var didPrepare = false
   private var didRetryDeferredDeletions = false
 
   init(
     directory: URL, legacyDirectory: URL? = nil,
-    keepCopy: @escaping @Sendable (URL) throws -> Void = { _ = try UnreadableCopy.keep(file: $0) }
+    keepCopy: @escaping @Sendable (URL) throws -> Void = { _ = try UnreadableCopy.keep(file: $0) },
+    now: @escaping @Sendable () -> Date = Date.init
   ) {
     self.directory = directory
     self.legacyDirectory = legacyDirectory
     self.keepCopy = keepCopy
+    self.now = now
     indexURL = directory.appending(path: "index.json")
-    deferredDeletionsURL = directory.appending(path: "deferred-deletions.json")
+    deferredDeletions = DeferredImageDeletions(
+      fileURL: directory.appending(path: "deferred-deletions.json"), keepCopy: keepCopy, now: now)
   }
 
   func encounters(for word: EncounterWordReference) -> [EncounterMedia] {
@@ -144,7 +148,8 @@ actor EncounterMediaStorage {
     }
     current.encounters.removeAll { $0.word.id == word.id && $0.mediaID == mediaID }
     current.encounters.append(EncounterRecord(word: word, mediaID: mediaID, savedAt: now))
-    _ = write(current)
+    guard write(current) else { return }
+    deferredDeletions.remove(mediaID)
   }
 
   func remove(_ word: EncounterWordReference, mediaID: String) {
@@ -192,48 +197,47 @@ actor EncounterMediaStorage {
   }
 
   private func deleteImage(_ mediaID: String) {
-    guard let kept = keptCopiesNames(), !kept.contains(mediaID) else {
-      saveDeferredDeletions(deferredDeletions().union([mediaID]))
-      return
-    }
-    try? FileManager.default.removeItem(at: blobURL(mediaID))
+    if let kept = keptCopiesNames(), !kept.contains(mediaID), removeImage(mediaID) { return }
+    deferredDeletions.add(mediaID)
   }
 
   private func retryDeferredDeletions(named index: Index) {
     guard !didRetryDeferredDeletions else { return }
     didRetryDeferredDeletions = true
-    let deferred = deferredDeletions()
-    guard !deferred.isEmpty, let kept = keptCopiesNames() else { return }
+    guard let waiting = deferredDeletions.load(), !waiting.isEmpty, let kept = keptCopiesNames()
+    else { return }
     let named = Set(index.media.keys).union(index.encounters.map(\.mediaID))
-    var waiting = deferred
-    for mediaID in deferred where named.contains(mediaID) || !kept.contains(mediaID) {
-      if !named.contains(mediaID) { try? FileManager.default.removeItem(at: blobURL(mediaID)) }
-      waiting.remove(mediaID)
+    let today = now()
+    var stillWaiting = waiting
+    for (mediaID, deferredAt) in waiting {
+      let waitIsOver = today.timeIntervalSince(deferredAt) >= DeferredImageDeletions.longestWait
+      if named.contains(mediaID)
+        || ((waitIsOver || !kept.contains(mediaID)) && removeImage(mediaID))
+      {
+        stillWaiting[mediaID] = nil
+      }
     }
-    saveDeferredDeletions(waiting)
+    if stillWaiting.count < waiting.count { deferredDeletions.save(stillWaiting) }
+  }
+
+  private func removeImage(_ mediaID: String) -> Bool {
+    do {
+      try FileManager.default.removeItem(at: blobURL(mediaID))
+      return true
+    } catch CocoaError.fileNoSuchFile {
+      return true
+    } catch {
+      return false
+    }
   }
 
   private func keptCopiesNames() -> Set<String>? {
     var names: Set<String> = []
     for copy in UnreadableCopy.copies(of: indexURL) {
       guard let data = try? Data(contentsOf: copy) else { return nil }
-      names.formUnion(String(decoding: data, as: UTF8.self).split(separator: "\"").map(String.init))
+      names.formUnion(DeferredImageDeletions.mediaIDs(in: data))
     }
     return names
-  }
-
-  private func deferredDeletions() -> Set<String> {
-    guard let data = try? Data(contentsOf: deferredDeletionsURL) else { return [] }
-    return Set((try? JSONDecoder().decode([String].self, from: data)) ?? [])
-  }
-
-  private func saveDeferredDeletions(_ mediaIDs: Set<String>) {
-    guard !mediaIDs.isEmpty else {
-      try? FileManager.default.removeItem(at: deferredDeletionsURL)
-      return
-    }
-    guard let data = try? JSONEncoder().encode(mediaIDs.sorted()) else { return }
-    try? data.write(to: deferredDeletionsURL, options: .atomic)
   }
 
   private func prepareIfNeeded() {
