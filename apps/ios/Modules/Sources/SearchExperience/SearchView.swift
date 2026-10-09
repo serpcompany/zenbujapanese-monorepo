@@ -1,6 +1,7 @@
 import SwiftUI
 
 struct SearchView: View {
+  @Environment(\.dynamicTypeSize) private var dynamicTypeSize
   @Binding var query: String
   let lookupClient: LookupClient
   let recentSearchStore: RecentSearchStore
@@ -19,6 +20,7 @@ struct SearchView: View {
   @State private var isConfirmingClearAll = false
   @State private var recentSearchRefreshID = 0
   @State private var recentSearches: [SearchQuery] = []
+  @State private var isSearchPresented = false
   @FocusState private var isSearchFocused: Bool
 
   var body: some View {
@@ -36,17 +38,6 @@ struct SearchView: View {
   private var searchScreen: some View {
     let taskID = searchTaskID
     return VStack(spacing: 0) {
-      SearchBar(
-        query: $query,
-        isFocused: $isSearchFocused,
-        isInputActive: inputMode != .inactive,
-        activateKeyboard: { inputMode = .keyboard },
-        cancel: deactivateInput
-      ) { submittedQuery in
-        sparseRadicalQuery = nil
-        completeSubmission(submittedQuery)
-      }
-
       presentedContent
 
       inputModeAccessory
@@ -62,7 +53,26 @@ struct SearchView: View {
       }
     }
     .navigationTitle("Search")
+    .searchField(
+      keeping: $query,
+      isPresented: $isSearchPresented,
+      prompt: Text(dynamicTypeSize >= .xxLarge ? "Search" : "Search Japanese or English"),
+      submit: submitTypedQuery
+    )
+    .searchFocused($isSearchFocused)
+    .onChange(of: isSearchFocused) { _, focused in
+      if focused { inputMode = .keyboard }
+    }
+    .onChange(of: isSearchPresented) { _, presented in
+      if !presented { inputMode = .inactive }
+    }
     .toolbar {
+      if !searchQuery.isEmpty {
+        ToolbarItem(placement: .topBarLeading) {
+          Button("Back", systemImage: "chevron.backward", action: returnToRecentSearches)
+            .accessibilityIdentifier("search.back")
+        }
+      }
       if showsRecentSearchActions {
         ToolbarItem(placement: .topBarTrailing) {
           SearchActionsMenu {
@@ -294,8 +304,17 @@ struct SearchView: View {
     sparseRadicalQuery = submittedQuery
     query = submittedQuery.value
     recordRecentSearch(submittedQuery)
-    isSearchFocused = false
-    inputMode = .inactive
+    deactivateInput()
+  }
+
+  private func submitTypedQuery() {
+    sparseRadicalQuery = nil
+    completeSubmission(SearchQuery(query))
+  }
+
+  private func returnToRecentSearches() {
+    sparseRadicalQuery = nil
+    query = ""
   }
 
   private func completeSubmission(_ submittedQuery: SearchQuery) {
@@ -307,6 +326,7 @@ struct SearchView: View {
   private func deactivateInput() {
     isSearchFocused = false
     inputMode = .inactive
+    isSearchPresented = false
   }
 }
 

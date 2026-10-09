@@ -15,6 +15,24 @@ A learner can search in Japanese or English using:
 Image Search, for Japanese in a photo, is Translate's **Image** option
 ([Image Search](translate.md#image-search)).
 
+### Top bar
+
+Search's top bar is Player's: a small, centered **Search** title above the same search field,
+with the prompt **Search Japanese or English** (**Search** at the largest text sizes) and a clear
+button while it has text.
+
+- **Recent.** With nothing searched, the bar shows the title and, while recent searches are
+  listed, the **•••** menu with **Clear Recent Searches**.
+- **Typing.** Tapping the field slides the screen up: the title bar slides away, the field moves
+  to the top, and an **X** appears beside it. The **Keyboard**, **Handwriting**, and **Radicals**
+  picker sits above the keyboard, and the field stays at the top while handwriting or radicals
+  are open. **X** puts the input away and keeps what's typed; the clear button inside the field
+  clears the text.
+- **Results.** Submitting, picking a recent search, a handwriting or radical candidate, or the
+  reading refinement slides the screen back down with the query still in the field. The bar shows
+  **<** (read as Back by VoiceOver), the title, and the results **•••** menu. **<** clears the
+  query and returns to Recent.
+
 Japanese, English, and romaji searches show one **Results** list. Stronger matches come first;
 among equally good matches, the enabled frequency dictionaries decide the order, in the
 learner's priority order (see [Frequency Dictionaries](index.md#account)). Frequency never adds a

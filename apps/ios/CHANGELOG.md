@@ -20,6 +20,9 @@ All notable user-facing changes to Zenbu Japanese are recorded here.
   **Written** (Image, Text, Document). Tapping a row opens it, with no Start button.
   **Document** opens PDFs and text files.
 - Image Search can open up to 8 photos from your library at once.
+- Search's top bar matches Player's: a small title and the same search field, which slides up
+  while you type. After a search the field keeps your query, and **<** goes back to your recent
+  searches.
 
 ### Removed
 

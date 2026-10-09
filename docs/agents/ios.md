@@ -704,6 +704,16 @@ When changing Search results or frequency dictionaries, also check in the Simula
   **Reset**. The choice survives relaunching the app, and disabling the
   chosen dictionary under **Account → Frequency Dictionaries** returns Search to **Default**.
 
+When changing Search's top bar or the shared field in `SearchField.swift`, also check:
+
+- typing `cat` then **X** keeps `cat` in the field with its results, **<**, and **•••**;
+  clearing the field (the clear button, or backspacing) then **X** returns to **Recent**;
+- submitting, a recent search, the reading refinement, a handwriting candidate, and a radical
+  candidate each slide the field back down with the query in it;
+- **<** returns to **Recent** with an empty field;
+- a website search link ([Links from the website](#links-from-the-website)) shows its query in the field; and
+- Player's field looks and moves the same.
+
 ## Image Search manual checks
 
 `ImageTextRecognitionTests` run Vision on the images in
