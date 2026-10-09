@@ -23,11 +23,7 @@ extension View {
         Task { @MainActor in
           var assets: [ImageTextAsset] = []
           for provider in providers {
-            if let data = await Self.imageData(from: provider),
-              let asset = ImageTextAsset(pastedImageData: data, name: "Continuity Camera.jpg")
-            {
-              assets.append(asset)
-            }
+            if let asset = await Self.asset(from: provider) { assets.append(asset) }
           }
           if !assets.isEmpty { open(assets) }
         }
@@ -35,10 +31,13 @@ extension View {
       }
     }
 
-    private static func imageData(from provider: NSItemProvider) async -> Data? {
+    private static func asset(from provider: NSItemProvider) async -> ImageTextAsset? {
       await withCheckedContinuation { continuation in
         _ = provider.loadDataRepresentation(for: .image) { data, _ in
-          continuation.resume(returning: data)
+          continuation.resume(
+            returning: data.flatMap {
+              ImageTextAsset(pastedImageData: $0, name: "Continuity Camera.jpg")
+            })
         }
       }
     }

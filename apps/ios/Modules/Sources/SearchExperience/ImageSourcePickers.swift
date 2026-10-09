@@ -20,6 +20,7 @@ extension ImageTextAsset {
         data as CFData,
         [kCGImageSourceShouldCache: false] as CFDictionary
       ),
+      Self.hasReadableDimensions(source),
       let normalized = Self.normalizedPhotoData(from: source)
     else { return nil }
     self.init(name: name, data: normalized)

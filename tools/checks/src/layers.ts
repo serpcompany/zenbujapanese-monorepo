@@ -49,7 +49,7 @@ export const swiftPlatforms: SwiftPlatforms = {
     { pattern: /\bUI[A-Z][A-Za-z]+\b/, name: 'a UIKit type', use: adapter },
     {
       pattern:
-        /\bNS(?:Image|Color|Pasteboard|Workspace|Application|View|ViewRepresentable|Window)\b/,
+        /\bNS(?:Image|Color|Pasteboard|Workspace|Application|View|ViewRepresentable|ViewController|ViewControllerRepresentable|Window|Font|Event|Screen|Alert|OpenPanel|SavePanel|Menu|MenuItem|HostingView|HostingController|TextView|TextField|Button|Cursor|Responder|Appearance|BitmapImageRep|SharingService|StatusBar|Sound)\b/,
       name: 'an AppKit type',
       use: adapter
     },

@@ -61,7 +61,8 @@ package, as a native SwiftUI app on each: not Mac Catalyst, and not the iPhone a
 
 ## Consequences
 
-- CI builds the app for iPhone only until the owners turn on the macOS runner (`IOS_SWIFT_TESTS`,
+- No CI job builds the app itself, and the package is built and tested only for the iPhone, and
+  for the Mac, once the owners turn on the macOS runner (`IOS_SWIFT_TESTS`,
   [`docs/agents/ci.md`](../agents/ci.md)). Until then a Mac build is checked by hand
   ([`docs/agents/ios.md`](../agents/ios.md)), and `pnpm verify layers` catches the iPhone-only
   APIs it knows.

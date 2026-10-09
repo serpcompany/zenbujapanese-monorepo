@@ -4,6 +4,7 @@ public struct ZenbuJapaneseScenes: Scene {
   @State private var readingAids = ReadingAidPreferences()
   @State private var profile = UserProfile()
   @State private var commands = AppCommandRouter()
+  @State private var translate = TranslateExperience.live()
   @Environment(\.scenePhase) private var scenePhase
 
   public init() {}
@@ -13,12 +14,14 @@ public struct ZenbuJapaneseScenes: Scene {
       SearchExperienceRootView()
         .appEnvironment(readingAids: readingAids, profile: profile)
         .environment(commands)
+        .environment(translate)
+        .handlesExternalEvents(preferring: ["*"], allowing: ["*"])
         .appWindowMinimumSize()
     }
     .commands { AppCommands(router: commands) }
     .appWindowDefaults()
     .onChange(of: scenePhase, initial: true) { _, phase in
-      AppLifecycle.sceneChanged(to: phase)
+      AppLifecycle.sceneChanged(to: phase, translate: translate)
     }
     #if os(macOS)
       Settings {

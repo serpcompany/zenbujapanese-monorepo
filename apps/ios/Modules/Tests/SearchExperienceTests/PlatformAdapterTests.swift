@@ -9,6 +9,7 @@ import UniformTypeIdentifiers
 
 @Suite("Platform adapters")
 struct PlatformAdapterTests {
+  @MainActor
   @Test("an adaptive color resolves to its light and dark values")
   func adaptiveColor() {
     let color = Color.adaptive(
@@ -29,7 +30,7 @@ struct PlatformAdapterTests {
     #expect(Image(imageData: Data()) == nil)
   }
 
-  @Test("a photo's orientation is applied when it's decoded, as UIImage did")
+  @Test("a photo's orientation is applied when it's decoded, for display and for storage")
   func orientation() throws {
     let image = try #require(solidImage(width: 60, height: 20))
     let data = NSMutableData()
@@ -42,6 +43,7 @@ struct PlatformAdapterTests {
     let decoded = try #require(ImageCoding.image(from: data as Data))
     #expect(decoded.width == 20)
     #expect(decoded.height == 60)
+    #expect(DecodedImage(data: data as Data)?.size == CGSize(width: 20, height: 60))
   }
 
   @Test("a pasted image is stored as a JPEG no larger than Image Search reads")

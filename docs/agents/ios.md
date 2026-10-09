@@ -56,7 +56,11 @@ the scene's lifecycle, the iPhone and iPad background sync task, and on the Mac 
 (`AppWindow`), the Settings scene (`AppSettingsView`), and Continuity Camera's menu. Menu
 commands (`AppCommands`) go through `AppCommandRouter` to the window that was last active
 (`AppCommandHandling`, from `appearsActive`): SwiftUI's focused values reached the menu only
-from a view with keyboard focus, so ⌘F did nothing in a window where nothing had focus yet.
+from a view with keyboard focus, so ⌘F did nothing in a window where nothing had focus yet. The
+scene also shares one `TranslateExperience` between windows, since they share the one microphone,
+and pauses a conversation when the whole app goes to the background; and it lets an open window
+take a website link (`handlesExternalEvents`), where the Mac would otherwise open a new window
+for each.
 
 ### Build and run for iPad
 
@@ -83,10 +87,12 @@ open "/tmp/zenbu-mac/Build/Products/Debug/Zenbu Japanese.app"
 
 In Xcode, pick **My Mac** as the destination; a team under **Signing & Capabilities** signs it
 with every entitlement (don't commit the team, as Install on an iPhone says). Such a local build
-shows the Apple button, which fails without the entitlement; sign in with Google or a code. The
-Mac app runs in the App Sandbox, so its files are in
-`~/Library/Containers/com.zenbujapanese.app/Data/Library/Application Support/Zenbu Japanese/`,
-and Zenbu Dev's under `com.zenbujapanese.app.dev`.
+shows the Apple button, which fails without the entitlement; sign in with Google or a code. Its
+session token can't go into the data protection keychain without a team, so it signs in again at
+each launch (Account and sync, Tokens). The Mac app runs in the App Sandbox, so what it keeps on
+the iPhone under the app's `Library` is under
+`~/Library/Containers/com.zenbujapanese.app/Data/Library/` on the Mac, and Zenbu Dev's under
+`com.zenbujapanese.app.dev`.
 
 ### Test on the Mac
 
@@ -511,7 +517,9 @@ tests prove that model against the real service.
   redirect's scheme (`GoogleSignIn.redirectScheme`). The same ID is in staging's and production's
   `GOOGLE_CLIENT_IDS`, after the web client's.
 - **Tokens.** The signed session token (`set-auth-token`) is kept in the Keychain (service
-  `com.zenbujapanese.app.account`, readable after the first unlock, on this device only), and sent
+  `com.zenbujapanese.app.account`, readable after the first unlock, on this device only; on the
+  Mac, the data protection keychain, as on iPhone and iPad, which only a build signed with a team
+  can use), and sent
   only to `/v1/auth`. The 15-minute access token stays in memory, refreshed within a minute of its
   `exp` or after a `401`; when `/v1/auth/token` answers `401`, the app signs out and keeps its data.
   The `URLSession` keeps no cookies. A session token in the Keychain without `account-sync.json`

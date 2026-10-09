@@ -16,7 +16,7 @@ struct SearchExperienceRootView: View {
   private let watchHistory = WatchHistory.shared
   @State private var translatePath = NavigationPath()
   @State private var translateWordSheet = WordSheetPresentation()
-  @State private var translateExperience = TranslateExperience.live()
+  @Environment(TranslateExperience.self) private var translateExperience
   @State private var kanjiScrollWordIDs: [KanjiCharacter: LanguageReferenceID] = [:]
   @State private var kanjiScrollElementIDs: [KanjiCharacter: KanjiElementID] = [:]
   @State private var kanjiElementScrollContributionIDs: [KanjiElementID: KanjiCharacter] = [:]
@@ -87,6 +87,7 @@ struct SearchExperienceRootView: View {
   private func showSearchRoot() {
     selectedTab = .search
     path = []
+    dismissRecognizedWordSheet(if: true)
   }
 
   private var appTabs: some View {
@@ -94,25 +95,25 @@ struct SearchExperienceRootView: View {
       Tab(value: SearchExperienceTab.search) {
         searchNavigation
       } label: {
-        tabLabel(.search)
+        SearchExperienceTab.search.label
       }
 
       Tab(value: SearchExperienceTab.translate) {
         translateNavigation
       } label: {
-        tabLabel(.translate)
+        SearchExperienceTab.translate.label
       }
 
       Tab(value: SearchExperienceTab.watchAndListen) {
         watchNavigation
       } label: {
-        tabLabel(.watchAndListen)
+        SearchExperienceTab.watchAndListen.label
       }
 
       Tab(value: SearchExperienceTab.account) {
         accountNavigation
       } label: {
-        tabLabel(.account)
+        SearchExperienceTab.account.label
           .accessibilityLabel("Account, personal content and settings")
           .accessibilityIdentifier("tab.account")
       }
@@ -296,10 +297,6 @@ struct SearchExperienceRootView: View {
       )
       .modifier(dictionaryRoutes(in: .account, sheet: accountWordSheet))
     }
-  }
-
-  private func tabLabel(_ tab: SearchExperienceTab) -> Label<Text, Image> {
-    Label(tab.title, systemImage: tab.systemImage)
   }
 
   private func translateWords(opening sheet: WordSheetPresentation) -> TranslateWordLinks {

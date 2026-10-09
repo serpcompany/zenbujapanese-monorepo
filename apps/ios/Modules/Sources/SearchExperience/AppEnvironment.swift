@@ -12,13 +12,14 @@ extension View {
 
 enum AppLifecycle {
   @MainActor
-  static func sceneChanged(to phase: ScenePhase) {
+  static func sceneChanged(to phase: ScenePhase, translate: TranslateExperience) {
     switch phase {
     case .active:
       WordKnowledge.shared.saveIfNeeded()
       WordLists.shared.saveIfNeeded()
       ZenbuAccount.shared?.scheduler.appBecameActive()
     case .background:
+      translate.sceneMovedToBackground()
       ZenbuAccount.shared?.scheduler.appEnteredBackground()
     default:
       break

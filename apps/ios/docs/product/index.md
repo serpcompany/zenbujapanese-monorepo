@@ -26,19 +26,24 @@ and messages that name the device say iPad or Mac, such as "Everything stays on 
 - **The tabs.** iPhone has its tab bar. iPad shows the tabs at the top, and they open into a
   sidebar; the Mac lists them in a sidebar. A Mac window opens at 1180 by 820 points, can't be
   made smaller than 760 by 560, and File → New Window opens another.
-- **Menus and keyboard shortcuts**, on the Mac and on an iPad with a keyboard: **Find in
+- **Menus and keyboard shortcuts**, on the Mac and with a hardware keyboard: **Find in
   Dictionary** (⌘F) goes to Search and puts the cursor in its field, **Search an Image…** (⌘⇧I)
   opens Image Search's sources, and ⌘1 to ⌘4 switch to Search, Translate, Player, and Account.
-  With two windows open, a shortcut acts in the one in front.
+  With two windows open, a shortcut acts in the one used last. A website link opens in an open
+  window rather than a new one.
 - **Settings on the Mac.** **Zenbu Japanese → Settings…** (⌘,) opens a Settings window with
   the profile and the Zenbu account, Reading Aids, and Frequency Dictionaries. They stay in Account
-  too, and both show the same settings.
+  too, and both show the same settings; a change to Frequency Dictionaries re-sorts Search the
+  next time Search is opened.
+- **The word sheet.** A word tapped in Image Search, Player, or Translate opens at half height on
+  iPhone. On the Mac it opens as a sheet over the window, so the page behind waits until the sheet
+  is closed; on an iPad in full width it opens as a centered sheet.
 - **Image Search on the Mac.** Image Search offers **Photo Library**, **Files**, and **Paste
   Image**, which takes an image or an image file from the clipboard. There's no **Take Photo**,
   here or in a word's **•••** menu: macOS has no camera screen an app can show. A photo comes from
-  an iPhone or iPad instead, through **File → Import from iPhone or iPad → Take Photo**
-  (Continuity Camera), which opens it in Image Search. Several images are paged by swiping
-  sideways or with the dots under them.
+  an iPhone or iPad instead: with Search showing, **File → Import from iPhone or iPad → Take
+  Photo** (Continuity Camera) opens the photo in Image Search. Several images are paged by
+  swiping sideways or with the dots under them.
 - **Dragging images.** On every device, an image dragged onto Search opens it in Image Search,
   up to 8 at a time.
 - **Right-click on the Mac.** A row whose actions are behind a swipe on the iPhone also shows
@@ -47,7 +52,8 @@ and messages that name the device say iPad or Mac, such as "Everything stays on 
   its details, and deleting a Media Library image. Search results, recent searches, and
   Translations already open a menu on long-press, which is right-click on the Mac.
 - **Translate on the Mac** uses the Mac's microphone and speakers, and keeps the display awake
-  while it listens. Without voice isolation (Listening), the Mac assumes its speakers reach the
+  while it listens. With two windows on iPad or the Mac, there's one conversation, shown in
+  whichever window has Translate open, with the session bar in the others. Without voice isolation (Listening), the Mac assumes its speakers reach the
   microphone, so it stops hearing while a translation plays, even with headphones.
 - **Syncing on the Mac** happens while Zenbu is open: when it opens or becomes active, after each
   change, and on **Sync Now**. The Mac has no background refresh, so a closed app doesn't sync.

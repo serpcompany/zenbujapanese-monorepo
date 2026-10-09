@@ -15,7 +15,6 @@ struct TranslateSessionChrome: ViewModifier {
   let isTranslateSelected: Bool
   let isConversationOnScreen: Bool
   let returnToTranslate: () -> Void
-  @Environment(\.scenePhase) private var scenePhase
 
   private var showsSessionBar: Bool {
     TranslateChromeLayout(
@@ -34,9 +33,6 @@ struct TranslateSessionChrome: ViewModifier {
             pause: { session.pause() }
           )
         }
-      }
-      .onChange(of: scenePhase) { _, phase in
-        if phase == .background { experience.sceneMovedToBackground() }
       }
       .onChange(of: experience.session?.isLive == true, initial: true) { _, isLive in
         ScreenAwake.keepAwake(isLive)

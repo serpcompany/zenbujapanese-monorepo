@@ -146,14 +146,26 @@ struct SearchImageImport: ViewModifier {
   }
 
   private func pasteImage() {
-    if let file = Pasteboard.imageFile {
-      importImages(.success([file]))
-    } else if let data = Pasteboard.imageData,
-      let asset = ImageTextAsset(pastedImageData: data, name: "Pasted Image.jpg")
-    {
-      openImageText([asset])
-    } else {
-      presentImageImportAlert(.importFailure("The clipboard doesn't hold an image."))
+    switch Pasteboard.image {
+    case .file(let file): importImages(.success([file]))
+    case .data(let data): importPastedImage(data)
+    case nil: presentImageImportAlert(.importFailure("The clipboard doesn't hold an image."))
+    }
+  }
+
+  private func importPastedImage(_ data: Data) {
+    imageImportTask?.cancel()
+    imageImportTask = Task {
+      let asset = await Task.detached(priority: .userInitiated) {
+        ImageTextAsset(pastedImageData: data, name: "Pasted Image.jpg")
+      }.value
+      guard !Task.isCancelled else { return }
+      if let asset {
+        openImageText([asset])
+      } else {
+        presentImageImportAlert(.importFailure("The pasted image could not be read."))
+      }
+      imageImportTask = nil
     }
   }
 

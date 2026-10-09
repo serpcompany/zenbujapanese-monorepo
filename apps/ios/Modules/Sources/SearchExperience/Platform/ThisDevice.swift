@@ -17,6 +17,14 @@ enum ThisDevice {
     #endif
   }()
 
+  static let updateGesture: String = {
+    #if os(macOS)
+      String(localized: "right-click")
+    #else
+      String(localized: "swipe right")
+    #endif
+  }()
+
   #if os(iOS)
     private static var modelIdentifier: String {
       if let simulated = ProcessInfo.processInfo.environment["SIMULATOR_MODEL_IDENTIFIER"] {

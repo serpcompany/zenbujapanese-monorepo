@@ -83,9 +83,11 @@ test('refuses UIKit and AppKit types that SwiftUI reaches without an import', ()
   const problems = checkLayers(
     [feature],
     swiftLayers,
-    source('let color = Color(uiColor: UIColor.red)\nlet image = NSImage(data: data)\n')
+    source(
+      'let color = Color(uiColor: UIColor.red)\nlet image = NSImage(data: data)\nlet font = NSFont.systemFont(ofSize: 12)\nlet range = NSRange(location: 0, length: 1)\n'
+    )
   )
-  expect(problems.map(problem => problem.line)).toEqual([1, 2])
+  expect(problems.map(problem => problem.line)).toEqual([1, 2, 3])
 })
 
 test('allows the adapters by name and conditions that are not about the platform', () => {

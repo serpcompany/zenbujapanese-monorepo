@@ -23,11 +23,7 @@ struct ImageTextAsset: Identifiable, Sendable {
       }
       let data = try Data(contentsOf: url)
       guard let source = CGImageSourceCreateWithData(data as CFData, nil),
-        let properties = CGImageSourceCopyPropertiesAtIndex(source, 0, nil) as? [CFString: Any],
-        let width = properties[kCGImagePropertyPixelWidth] as? Int,
-        let height = properties[kCGImagePropertyPixelHeight] as? Int,
-        width > 0, height > 0, width <= 12_000, height <= 12_000,
-        width * height <= 40_000_000
+        ImageTextAsset.hasReadableDimensions(source)
       else {
         throw ImageTextAssetError.unsupportedDimensions
       }
@@ -39,6 +35,15 @@ struct ImageTextAsset: Identifiable, Sendable {
     } onCancel: {
       worker.cancel()
     }
+  }
+
+  static func hasReadableDimensions(_ source: CGImageSource) -> Bool {
+    guard let properties = CGImageSourceCopyPropertiesAtIndex(source, 0, nil) as? [CFString: Any],
+      let width = properties[kCGImagePropertyPixelWidth] as? Int,
+      let height = properties[kCGImagePropertyPixelHeight] as? Int
+    else { return false }
+    return width > 0 && height > 0 && width <= 12_000 && height <= 12_000
+      && width * height <= 40_000_000
   }
 }
 

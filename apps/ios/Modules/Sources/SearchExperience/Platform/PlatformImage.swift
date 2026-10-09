@@ -1,3 +1,4 @@
+import ImageIO
 import SwiftUI
 
 #if os(macOS)
@@ -12,15 +13,47 @@ struct DecodedImage {
 
   init?(data: Data) {
     #if os(macOS)
-      guard let decoded = NSImage(data: data) else { return nil }
-      image = Image(nsImage: decoded)
+      guard let source = CGImageSourceCreateWithData(data as CFData, nil),
+        let decoded = CGImageSourceCreateImageAtIndex(source, 0, nil)
+      else { return nil }
+      let properties = CGImageSourceCopyPropertiesAtIndex(source, 0, nil) as? [CFString: Any]
+      let exif = (properties?[kCGImagePropertyOrientation] as? UInt32)
+        .flatMap(CGImagePropertyOrientation.init(rawValue:))
+      let orientation = Image.Orientation(exif ?? .up)
+      image = Image(decorative: decoded, scale: 1, orientation: orientation)
+      let width = CGFloat(decoded.width)
+      let height = CGFloat(decoded.height)
+      size = orientation.isQuarterTurn
+        ? CGSize(width: height, height: width) : CGSize(width: width, height: height)
     #else
       guard let decoded = UIImage(data: data) else { return nil }
       image = Image(uiImage: decoded)
+      size = decoded.size
     #endif
-    size = decoded.size
   }
 }
+
+#if os(macOS)
+  extension Image.Orientation {
+    fileprivate init(_ exif: CGImagePropertyOrientation) {
+      self =
+        switch exif {
+        case .up: .up
+        case .upMirrored: .upMirrored
+        case .down: .down
+        case .downMirrored: .downMirrored
+        case .left: .left
+        case .leftMirrored: .leftMirrored
+        case .right: .right
+        case .rightMirrored: .rightMirrored
+        }
+    }
+
+    fileprivate var isQuarterTurn: Bool {
+      [.left, .leftMirrored, .right, .rightMirrored].contains(self)
+    }
+  }
+#endif
 
 extension Image {
   init?(imageData data: Data) {

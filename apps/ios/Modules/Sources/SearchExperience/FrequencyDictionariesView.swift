@@ -114,7 +114,7 @@ struct FrequencyDictionariesView: View {
         .foregroundStyle(.red)
         .accessibilityIdentifier("frequency-pack.failure.\(pack.id.rawValue)")
     } else if pack.updateAvailable {
-      Text("Update available · swipe right to download")
+      Text("Update available · \(ThisDevice.updateGesture) to download")
         .foregroundStyle(.tint)
     } else {
       Text(pack.detailSummary)

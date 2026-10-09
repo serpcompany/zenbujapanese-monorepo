@@ -27,6 +27,10 @@ enum SearchExperienceTab: Hashable, CaseIterable, Identifiable {
     }
   }
 
+  var label: Label<Text, Image> {
+    Label(title, systemImage: systemImage)
+  }
+
   var shortcut: KeyEquivalent {
     switch self {
     case .search: "1"
