@@ -1,5 +1,6 @@
 import json
 import plistlib
+import re
 import unittest
 
 from contract_checks import PROJECT, ROOT, app_build_settings, build_setting
@@ -17,7 +18,6 @@ MAC_SANDBOX = {
     "ENABLE_HARDENED_RUNTIME": "YES",
     "ENABLE_OUTGOING_NETWORK_CONNECTIONS": "YES",
     "ENABLE_RESOURCE_ACCESS_AUDIO_INPUT": "YES",
-    "ENABLE_RESOURCE_ACCESS_CAMERA": "YES",
     "ENABLE_USER_SELECTED_FILES": "readonly",
 }
 
@@ -44,10 +44,14 @@ class AppPlatformTests(unittest.TestCase):
         for settings in app_build_settings():
             self.assertEqual(build_setting(settings, "ARCHS[sdk=macosx*]"), "arm64")
 
-    def test_the_mac_build_runs_in_the_app_sandbox(self) -> None:
+    def test_the_mac_build_runs_in_the_app_sandbox_with_only_what_it_uses(self) -> None:
         for settings in app_build_settings():
-            for key, value in MAC_SANDBOX.items():
-                self.assertEqual(build_setting(settings, f"{key}[sdk=macosx*]"), value, key)
+            granted = {
+                key.removesuffix("[sdk=macosx*]"): value
+                for key, value in re.findall(r'^\s*"?(\w+\[sdk=macosx\*\])"? = (\w+);$', settings, re.MULTILINE)
+                if key.startswith("ENABLE_")
+            }
+            self.assertEqual(granted, MAC_SANDBOX)
 
     def test_iphone_stays_portrait_and_ipad_turns_every_way(self) -> None:
         for settings in app_build_settings():

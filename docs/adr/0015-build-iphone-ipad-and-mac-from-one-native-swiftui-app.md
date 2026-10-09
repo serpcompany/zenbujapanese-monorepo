@@ -66,8 +66,10 @@ package, as a native SwiftUI app on each: not Mac Catalyst, and not the iPhone a
   package and its tests build for the Mac. Until then a Mac build is checked by hand
   ([`docs/agents/ios.md`](../agents/ios.md)), and `pnpm verify layers` catches the iPhone-only
   APIs it knows.
-- The Mac app runs in the App Sandbox, with the microphone, the camera, outgoing connections, and
-  files the learner picks. It has no `BGAppRefreshTask`, so it syncs while it's open.
+- The Mac app runs in the App Sandbox, with only what it uses: the microphone (Translate),
+  outgoing connections, and files the learner picks. It never captures from a camera itself;
+  Continuity Camera hands it a photo taken on an iPhone or iPad, which needs no camera access. It
+  has no `BGAppRefreshTask`, so it syncs while it's open.
 - Releasing it needs a person: the Mac platform added to the App Store record, macOS provisioning
   for the App ID's Sign in with Apple and Associated Domains, Mac and iPad screenshots, and App
   Review for both.

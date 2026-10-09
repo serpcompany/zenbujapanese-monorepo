@@ -216,7 +216,6 @@
 				"ENABLE_HARDENED_RUNTIME[sdk=macosx*]" = YES;
 				"ENABLE_OUTGOING_NETWORK_CONNECTIONS[sdk=macosx*]" = YES;
 				"ENABLE_RESOURCE_ACCESS_AUDIO_INPUT[sdk=macosx*]" = YES;
-				"ENABLE_RESOURCE_ACCESS_CAMERA[sdk=macosx*]" = YES;
 				"ENABLE_USER_SELECTED_FILES[sdk=macosx*]" = readonly;
 				ZENBU_ACCOUNT_API_URL = "https://api.zenbujapanese.com";
 				ZENBU_GOOGLE_IOS_CLIENT_ID = 881343714137-8v279fqjrkk1qeg18opnqbac41jteoqq.apps.googleusercontent.com;
@@ -323,7 +322,6 @@
 				"ENABLE_HARDENED_RUNTIME[sdk=macosx*]" = YES;
 				"ENABLE_OUTGOING_NETWORK_CONNECTIONS[sdk=macosx*]" = YES;
 				"ENABLE_RESOURCE_ACCESS_AUDIO_INPUT[sdk=macosx*]" = YES;
-				"ENABLE_RESOURCE_ACCESS_CAMERA[sdk=macosx*]" = YES;
 				"ENABLE_USER_SELECTED_FILES[sdk=macosx*]" = readonly;
 				ZENBU_ACCOUNT_API_URL = "https://api-staging.zenbujapanese.com";
 				ZENBU_GOOGLE_IOS_CLIENT_ID = 881343714137-8v279fqjrkk1qeg18opnqbac41jteoqq.apps.googleusercontent.com;
