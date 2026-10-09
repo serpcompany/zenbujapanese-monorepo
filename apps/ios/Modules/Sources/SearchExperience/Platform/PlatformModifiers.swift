@@ -132,4 +132,23 @@ extension View {
       swipeActions(edge: edge, allowsFullSwipe: allowsFullSwipe, content: actions)
     #endif
   }
+
+  func rowActions<Leading: View, Trailing: View>(
+    @ViewBuilder leading: () -> Leading,
+    @ViewBuilder trailing: () -> Trailing
+  ) -> some View {
+    let leadingButtons = leading()
+    let trailingButtons = trailing()
+    #if os(macOS)
+      return swipeActions(edge: .trailing) { trailingButtons }
+        .swipeActions(edge: .leading) { leadingButtons }
+        .contextMenu {
+          leadingButtons
+          trailingButtons
+        }
+    #else
+      return swipeActions(edge: .trailing) { trailingButtons }
+        .swipeActions(edge: .leading) { leadingButtons }
+    #endif
+  }
 }

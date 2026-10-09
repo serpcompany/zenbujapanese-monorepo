@@ -85,7 +85,15 @@ struct FrequencyDictionariesView: View {
     }
     .accessibilityElement(children: .contain)
     .accessibilityIdentifier("frequency-pack.row.\(pack.id.rawValue)")
-    .rowActions(edge: .trailing) {
+    .rowActions {
+      if pack.availableActions.contains(.update) {
+        Button("Update", systemImage: "arrow.down.circle") {
+          perform(pack.id) { try await client.download(pack.id) }
+        }
+        .tint(.accentColor)
+        .accessibilityIdentifier("frequency-pack.update.\(pack.id.rawValue)")
+      }
+    } trailing: {
       if pack.availableActions.contains(.remove) {
         Button("Remove", systemImage: "trash", role: .destructive) {
           perform(pack.id) { try await client.remove(pack.id) }
@@ -96,15 +104,6 @@ struct FrequencyDictionariesView: View {
         detailPack = pack
       }
       .accessibilityIdentifier("frequency-pack.details.\(pack.id.rawValue)")
-    }
-    .swipeActions(edge: .leading) {
-      if pack.availableActions.contains(.update) {
-        Button("Update", systemImage: "arrow.down.circle") {
-          perform(pack.id) { try await client.download(pack.id) }
-        }
-        .tint(.accentColor)
-        .accessibilityIdentifier("frequency-pack.update.\(pack.id.rawValue)")
-      }
     }
   }
 
