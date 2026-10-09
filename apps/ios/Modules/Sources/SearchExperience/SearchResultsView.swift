@@ -37,11 +37,6 @@ struct SearchResultsView: View {
             dictionaries: dictionaries ?? [])
           .listRowSeparator(.hidden, edges: .top)
           .alignmentGuide(.listRowSeparatorLeading) { _ in 0 }
-          if hiddenCount > 0, !shownEntries.isEmpty {
-            SearchResultsFilterStatusRow(hiddenCount: hiddenCount) {
-              chosenFilter.wrappedValue = .none
-            }
-          }
         }
       }
 
@@ -128,7 +123,7 @@ struct SearchResultsView: View {
         sort = .relevance
       }
       if let newDictionaries,
-        SearchResultFiltering.forgetsDictionaries(filter, dictionaries: newDictionaries)
+        SearchResultFiltering.forgetsDictionary(filter, dictionaries: newDictionaries)
       {
         filter = filter.keeping(newDictionaries)
       }
