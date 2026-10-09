@@ -82,6 +82,7 @@ struct SearchExperienceRootView: View {
       Task { searchFocusRequest += 1 }
     case .searchImage:
       showTranslate()
+      translatePath = NavigationPath()
       if translateExperience.session == nil { translateExperience.preferredStart = .camera }
       Task { showsImageSources = true }
     }
@@ -289,6 +290,9 @@ struct SearchExperienceRootView: View {
         requestedImageSource: $requestedImageSource
       )
       .modifier(dictionaryRoutes(in: .translate))
+    }
+    .onChange(of: translatePath.isEmpty) { _, isEmpty in
+      if isEmpty { imageTextSessionStore.removeAll() }
     }
   }
 

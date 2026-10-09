@@ -111,10 +111,39 @@ struct PlatformAdapterTests {
     #expect(TranslateStart.camera.summary.contains("camera") == !isMac)
   }
 
-  @Test("the device is named for the platform it runs on")
+  @Test("the device is named for the device it runs on, with the Settings app and gesture it has")
   func deviceName() {
-    #expect(["iPhone", "iPad", "Mac"].contains(ThisDevice.name))
-    #expect(!ThisDevice.translationLanguagesSettings.isEmpty)
+    let simulated = ProcessInfo.processInfo.environment["SIMULATOR_MODEL_IDENTIFIER"]
+    let expected = simulated.map { $0.hasPrefix("iPad") ? "iPad" : "iPhone" } ?? "Mac"
+    let isMac = expected == "Mac"
+    #expect(ThisDevice.name == expected)
+    #expect(ThisDevice.settingsApp == (isMac ? "System Settings" : "Settings"))
+    #expect(ThisDevice.updateGesture == (isMac ? "right-click" : "swipe right"))
+    #expect(ThisDevice.translationLanguagesSettings.hasPrefix(ThisDevice.settingsApp))
+  }
+
+  @Test("Paste Image takes copied image files over image data, and nothing when no file is an image")
+  func pastedImageChoice() {
+    let photo = URL(filePath: "/tmp/sign.png")
+    let notes = URL(filePath: "/tmp/notes.txt")
+    let data = Data("png".utf8)
+    #expect(PastedImage.choosing(files: [notes, photo], data: data) == .files([photo]))
+    #expect(PastedImage.choosing(files: [notes], data: data) == nil)
+    #expect(PastedImage.choosing(files: [], data: data) == .data(data))
+    #expect(PastedImage.choosing(files: [], data: nil) == nil)
+  }
+
+  @Test("Translate watches the audio session on iPhone and iPad, and on the Mac hears its speakers")
+  func conversationAudio() {
+    let observers = ConversationAudioSession.observeInterruptions(
+      interrupted: {}, mediaServicesReset: {})
+    defer { observers.forEach(NotificationCenter.default.removeObserver) }
+    if ThisDevice.name == "Mac" {
+      #expect(observers.isEmpty)
+      #expect(ConversationAudioSession.outputReachesMicrophone())
+    } else {
+      #expect(observers.count == 2)
+    }
   }
 
   private func environment(_ scheme: ColorScheme) -> EnvironmentValues {

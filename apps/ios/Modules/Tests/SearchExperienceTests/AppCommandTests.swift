@@ -71,10 +71,31 @@ struct AppCommandTests {
     #expect(tabs.map(\.shortcut.character) == ["1", "2", "3", "4"])
   }
 
+  @Test("the menus offer Find in Dictionary (⌘F), Search an Image… (⌘⇧I), and each tab (⌘1 to ⌘4)")
+  func menuItems() {
+    #expect(AppMenuItem.editing.map(\.command) == [.findInDictionary, .searchImage])
+    #expect(
+      AppMenuItem.editing.map(\.shortcut) == [
+        KeyboardShortcut("f"), KeyboardShortcut("i", modifiers: [.command, .shift]),
+      ])
+    #expect(AppMenuItem.tabs.map(\.command) == SearchExperienceTab.allCases.map(AppCommand.select))
+    #expect(AppMenuItem.tabs.map(\.shortcut.key.character) == ["1", "2", "3", "4"])
+    #expect(AppMenuItem.tabs.allSatisfy { $0.shortcut.modifiers == .command })
+  }
+
+  @Test("the Settings window holds Account, Reading Aids, and Frequency Dictionaries, in that order")
+  func settingsPanes() {
+    #expect(AppSettingsPane.allCases == [.account, .readingAids, .frequencyDictionaries])
+    #expect(Set(AppSettingsPane.allCases.map(\.systemImage)).count == AppSettingsPane.allCases.count)
+  }
+
   @Test("the Mac window opens larger than its minimum, and Settings fits inside it")
   func windowSizes() {
     #expect(AppWindow.defaultSize.width > AppWindow.minimumSize.width)
     #expect(AppWindow.defaultSize.height > AppWindow.minimumSize.height)
     #expect(AppWindow.settingsSize.width < AppWindow.minimumSize.width)
+    #expect(AppWindow.photoPickerSize.width < AppWindow.minimumSize.width)
+    #expect(AppWindow.photoPickerSize.height < AppWindow.minimumSize.height)
+    #expect(AppWindow.imageSourcesSize.height < AppWindow.minimumSize.height)
   }
 }

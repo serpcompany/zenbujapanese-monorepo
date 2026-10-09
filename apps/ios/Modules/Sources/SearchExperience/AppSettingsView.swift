@@ -1,22 +1,51 @@
 import SwiftUI
 
+enum AppSettingsPane: CaseIterable, Identifiable {
+  case account
+  case readingAids
+  case frequencyDictionaries
+
+  var id: Self { self }
+
+  var title: LocalizedStringKey {
+    switch self {
+    case .account: "Account"
+    case .readingAids: "Reading Aids"
+    case .frequencyDictionaries: "Frequency Dictionaries"
+    }
+  }
+
+  var systemImage: String {
+    switch self {
+    case .account: "person.crop.circle"
+    case .readingAids: "character.book.closed"
+    case .frequencyDictionaries: "chart.bar"
+    }
+  }
+}
+
 struct AppSettingsView: View {
   var body: some View {
     TabView {
-      Tab("Account", systemImage: "person.crop.circle") {
-        NavigationStack { AccountSettingsPane() }
-      }
-      Tab("Reading Aids", systemImage: "character.book.closed") {
-        NavigationStack { ReadingAidSettingsView() }
-      }
-      Tab("Frequency Dictionaries", systemImage: "chart.bar") {
-        NavigationStack { FrequencyDictionariesView(client: .live) }
+      ForEach(AppSettingsPane.allCases) { pane in
+        Tab(pane.title, systemImage: pane.systemImage) {
+          NavigationStack { content(of: pane) }
+        }
       }
     }
     .frame(
       minWidth: AppWindow.settingsSize.width, idealWidth: AppWindow.settingsSize.width,
       minHeight: AppWindow.settingsSize.height, idealHeight: AppWindow.settingsSize.height)
     .accessibilityIdentifier("settings.window")
+  }
+
+  @ViewBuilder
+  private func content(of pane: AppSettingsPane) -> some View {
+    switch pane {
+    case .account: AccountSettingsPane()
+    case .readingAids: ReadingAidSettingsView()
+    case .frequencyDictionaries: FrequencyDictionariesView(client: .live)
+    }
   }
 }
 

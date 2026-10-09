@@ -7,9 +7,19 @@ import UniformTypeIdentifiers
   import UIKit
 #endif
 
-enum PastedImage: Sendable {
+enum PastedImage: Sendable, Equatable {
   case files([URL])
   case data(Data)
+
+  static func choosing(files: [URL], data: @autoclosure () -> Data?) -> PastedImage? {
+    guard files.isEmpty else {
+      let images = files.filter {
+        UTType(filenameExtension: $0.pathExtension)?.conforms(to: .image) == true
+      }
+      return images.isEmpty ? nil : .files(images)
+    }
+    return data().map(PastedImage.data)
+  }
 }
 
 @MainActor
@@ -31,16 +41,10 @@ enum Pasteboard {
       let files =
         board.readObjects(forClasses: [NSURL.self], options: [.urlReadingFileURLsOnly: true])
         as? [URL] ?? []
-      guard files.isEmpty else {
-        let images = files.filter {
-          UTType(filenameExtension: $0.pathExtension)?.conforms(to: .image) == true
-        }
-        return images.isEmpty ? nil : .files(images)
-      }
-      let data =
-        board.data(forType: .png) ?? board.data(forType: .tiff)
-        ?? NSImage(pasteboard: board)?.tiffRepresentation
-      return data.map(PastedImage.data)
+      return PastedImage.choosing(
+        files: files,
+        data: board.data(forType: .png) ?? board.data(forType: .tiff)
+          ?? NSImage(pasteboard: board)?.tiffRepresentation)
     }
   #else
     nonisolated static let offersImagePaste = false

@@ -818,12 +818,13 @@ previews stay still.
 - Image Search's sources open from a `Menu` (`ImageTextSourceButtons`, listing
   `ImageTextSource.offered`), not a `confirmationDialog`: on the iOS 27 Simulator a picker
   presented from a dialog's button never appeared, while a menu runs its action after it closes.
-  ⌘⇧I is the exception: a menu can't be opened from code, so its chooser is a dialog with the
-  same buttons. It works on the Mac; on an iPad with a keyboard under iOS 27 it's unchecked, and
-  Translate's **Camera** **Start** behind it offers the same sources.
+  ⌘⇧I can't open a menu from code, so its chooser is a small sheet with the same buttons
+  (`ImageTextSourceChooser`), and the picker opens from that sheet's `onDismiss`, once it has
+  closed, as the photo picker's push does.
 - `ImageTextImport` modifies `SearchExperienceRootView`, the window, not Translate's home, so an
   image dropped onto any tab, Continuity Camera's import, and ⌘⇧I reach it; the home's menu sets
-  its requested source. It pushes Image Search onto Translate's stack only once its picker has
+  its requested source. Image Search sessions live only on Translate's stack, and all of them are
+  dropped whenever that stack empties, however it was popped. It pushes Image Search onto Translate's stack only once its picker has
   finished closing (the sheets' `onDismiss`, the file importer's binding turning false), so the
   photo library is a `PHPickerViewController` in a sheet (`ImagePhotoLibraryPicker`, an adapter,
   since it's a UIKit view controller on iOS and an AppKit one on the Mac) rather than

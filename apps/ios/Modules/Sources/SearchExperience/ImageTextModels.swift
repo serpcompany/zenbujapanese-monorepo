@@ -80,6 +80,7 @@ final class ImageTextSessionStore {
   func insert(_ session: ImageTextSession) { sessions[session.id] = session }
   func session(_ id: UUID) -> ImageTextSession? { sessions[id] }
   func remove(_ id: UUID) { sessions[id] = nil }
+  func removeAll() { sessions = [:] }
 }
 
 enum ImageTextAssetError: Error {

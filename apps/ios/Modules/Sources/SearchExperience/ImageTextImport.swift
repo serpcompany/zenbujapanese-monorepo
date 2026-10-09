@@ -63,6 +63,7 @@ struct ImageTextImport: ViewModifier {
   @Binding var showsSources: Bool
   let cameraAuthorizationClient: CameraAuthorizationClient
   let openImageText: ([ImageTextAsset]) -> Void
+  @State private var chosenSource: ImageTextSource?
   @State private var showsCamera = false
   @State private var showsPhotoLibrary = false
   @State private var showsFileImporter = false
@@ -73,9 +74,8 @@ struct ImageTextImport: ViewModifier {
 
   func body(content: Content) -> some View {
     content
-      .confirmationDialog("Image Search", isPresented: $showsSources) {
-        ImageTextSourceButtons(requestedSource: $requestedSource)
-        Button("Cancel", role: .cancel) {}
+      .sheet(isPresented: $showsSources, onDismiss: requestChosenSource) {
+        ImageTextSourceChooser(chosenSource: $chosenSource)
       }
       .onDrop(of: [.image], isTargeted: nil) { providers in
         guard !providers.isEmpty else { return false }
@@ -255,6 +255,12 @@ struct ImageTextImport: ViewModifier {
 
   private var isPickerShown: Bool { showsCamera || showsPhotoLibrary || showsFileImporter }
 
+  private func requestChosenSource() {
+    guard let chosenSource else { return }
+    self.chosenSource = nil
+    requestedSource = chosenSource
+  }
+
   private func openAssetsAwaitingPicker() {
     guard !isPickerShown, let assets = assetsAwaitingPicker else { return }
     assetsAwaitingPicker = nil
@@ -272,6 +278,29 @@ struct ImageTextImport: ViewModifier {
   private func presentImageImportAlert(_ alert: ImageImportAlert) {
     imageImportAlert = alert
     isShowingImageImportAlert = true
+  }
+}
+
+private struct ImageTextSourceChooser: View {
+  @Binding var chosenSource: ImageTextSource?
+  @Environment(\.dismiss) private var dismiss
+
+  var body: some View {
+    List {
+      Section("Image Search") {
+        ImageTextSourceButtons(requestedSource: $chosenSource)
+      }
+      Section {
+        Button("Cancel", role: .cancel) { dismiss() }
+          .keyboardShortcut(.cancelAction)
+          .accessibilityIdentifier("image-source.cancel")
+      }
+    }
+    .frame(minWidth: AppWindow.imageSourcesSize.width, minHeight: AppWindow.imageSourcesSize.height)
+    .presentationDetents([.medium])
+    .onChange(of: chosenSource) { _, source in
+      if source != nil { dismiss() }
+    }
   }
 }
 

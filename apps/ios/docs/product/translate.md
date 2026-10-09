@@ -167,8 +167,9 @@ Translate tab. Other ways in open the same screen there, from any tab:
 
 - an image dragged onto the window, on every device, up to 8 at a time, with the same limits as
   **Files**;
-- on the Mac and with a hardware keyboard, **Search an Image…** (⌘⇧I), which goes to Translate,
-  chooses **Camera** when no conversation is running, and offers the same sources;
+- on the Mac and with a hardware keyboard, **Search an Image…** (⌘⇧I), which goes back to
+  Translate's first screen, chooses **Camera** when no conversation is running, and offers the
+  same sources;
 - on the Mac, **Paste Image** in place of **Take Photo**, which macOS can't show, and a photo
   taken on an iPhone or iPad through **File → Import from iPhone or iPad**
   ([iPad and Mac](index.md#ipad-and-mac)).

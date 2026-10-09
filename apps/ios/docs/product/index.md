@@ -31,8 +31,9 @@ and messages that name the device say iPad or Mac, such as "Everything stays on 
   made smaller than 760 by 560, and File → New Window opens another.
 - **Menus and keyboard shortcuts**, on the Mac and with a hardware keyboard: **Find in
   Dictionary** (⌘F) goes to Search and puts the cursor in its field, **Search an Image…** (⌘⇧I)
-  goes to Translate, chooses its **Camera** option when no conversation is running, and offers
-  Image Search's sources, and ⌘1 to ⌘4 switch to Search, Translate, Player, and Account.
+  goes back to Translate's first screen, chooses its **Camera** option when no conversation is
+  running, and offers Image Search's sources, and ⌘1 to ⌘4 switch to Search, Translate, Player,
+  and Account.
   With two windows open, a shortcut acts in the one used last. A website link opens in an open
   window rather than a new one.
 - **Settings on the Mac.** **Zenbu Japanese → Settings…** (⌘,) opens a Settings window with

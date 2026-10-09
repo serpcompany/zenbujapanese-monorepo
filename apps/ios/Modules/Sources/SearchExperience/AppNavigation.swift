@@ -41,7 +41,7 @@ enum SearchExperienceTab: Hashable, CaseIterable, Identifiable {
   }
 }
 
-enum AppCommand: Equatable, Sendable {
+enum AppCommand: Hashable, Sendable {
   case select(SearchExperienceTab)
   case findInDictionary
   case searchImage
@@ -105,23 +105,48 @@ struct AppCommandHandling: ViewModifier {
   }
 }
 
+struct AppMenuItem: Identifiable {
+  let title: LocalizedStringKey
+  let command: AppCommand
+  let shortcut: KeyboardShortcut
+
+  var id: AppCommand { command }
+
+  static var editing: [AppMenuItem] {
+    [
+      AppMenuItem(
+        title: "Find in Dictionary", command: .findInDictionary, shortcut: KeyboardShortcut("f")),
+      AppMenuItem(
+        title: "Search an Image…", command: .searchImage,
+        shortcut: KeyboardShortcut("i", modifiers: [.command, .shift])),
+    ]
+  }
+
+  static var tabs: [AppMenuItem] {
+    SearchExperienceTab.allCases.map { tab in
+      AppMenuItem(title: tab.title, command: .select(tab), shortcut: KeyboardShortcut(tab.shortcut))
+    }
+  }
+}
+
 struct AppCommands: Commands {
   let router: AppCommandRouter
 
   var body: some Commands {
     CommandGroup(before: .textEditing) {
-      Button("Find in Dictionary") { router.send(.findInDictionary) }
-        .keyboardShortcut("f")
-      Button("Search an Image…") { router.send(.searchImage) }
-        .keyboardShortcut("i", modifiers: [.command, .shift])
+      buttons(for: AppMenuItem.editing)
       Divider()
     }
     CommandGroup(before: .toolbar) {
-      ForEach(SearchExperienceTab.allCases) { tab in
-        Button(tab.title) { router.send(.select(tab)) }
-          .keyboardShortcut(tab.shortcut)
-      }
+      buttons(for: AppMenuItem.tabs)
       Divider()
+    }
+  }
+
+  private func buttons(for items: [AppMenuItem]) -> some View {
+    ForEach(items) { item in
+      Button(item.title) { router.send(item.command) }
+        .keyboardShortcut(item.shortcut)
     }
   }
 }
