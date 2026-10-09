@@ -193,9 +193,9 @@ drawing's furigana keeps its drawn size.
   `src/lib/tools/convert.ts`), and works out the other box from it, so the box being typed in is
   never rewritten. The pages are stock shadcn components, as the owner's UI rules ask (#696): `card`, `table`,
   `tabs`, `checkbox` with `label`, `textarea`, `toggle-group`, `kbd`, and `accordion`, through
-  `src/components/question-list.tsx`, which the product page shares. Each conversion table group is
-  a tab whose panel stays mounted, so all 131 kana are in the HTML; Basic, With marks, and
-  Combinations are charts (`KanaChart` in `src/lib/tools/reference.ts`). A `Kbd` on the muted grey sits
+  `src/components/question-list.tsx`, which the product page shares. The conversion chart is the
+  browse pages' `KanaChart` (`src/components/dictionary/browse/kana-chart.tsx`), its tiles holding
+  each page's pair, one group to a tab whose panel stays mounted, so all 131 kana are in the HTML. A `Kbd` on the muted grey sits
   in a `muted-surface` wrapper, which keeps its text at 4.5:1 (Theme, above).
 - The scripts in `apps/web/scripts/` read a command's output whole before searching it:
   `curl | grep -q` fails under `pipefail` when grep exits early. Their `.shellcheckrc` turns off

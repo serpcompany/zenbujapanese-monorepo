@@ -1,6 +1,6 @@
 import { BrowseHeading, BrowsePage } from '@/components/dictionary/browse/browse-ui'
 import { SectionBreadcrumbs } from '@/components/section-breadcrumbs'
-import { ConversionTable } from '@/components/tools/conversion-table'
+import { ConversionChart } from '@/components/tools/conversion-chart'
 import { Converter } from '@/components/tools/converter'
 import { RichTextView } from '@/components/tools/rich-text'
 import { CardGrid, ConverterCard } from '@/components/tools/tool-cards'
@@ -33,7 +33,7 @@ export function ConverterPage({ converter }: { converter: ConverterContent }) {
         ))}
       </ToolSection>
       <ToolReference converter={converter} />
-      <ConversionTable slug={converter.slug} />
+      <ConversionChart slug={converter.slug} />
       <ToolQuestions questions={questions[converter.pair]} />
       <ToolSection
         title="Related tools"

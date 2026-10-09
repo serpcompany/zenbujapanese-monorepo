@@ -1,12 +1,8 @@
-import {
-  type KanaRow as ChartRow,
-  dakuonRows,
-  gojuonRows
-} from '@zenbu/dictionary-core/browse/kana'
+import { type KanaRow as CoreRow, dakuonRows, gojuonRows } from '@zenbu/dictionary-core/browse/kana'
 import { kanaToRomaji } from './kana-to-romaji'
 import { romajiToKana } from './romaji-to-kana'
 
-export interface KanaRow {
+export interface KanaEntry {
   kana: string
   romaji: string
   romajiInWords?: true
@@ -55,7 +51,7 @@ const otherTyping: Readonly<Record<string, readonly string[]>> = {
 const smallTsu = 'っ'
 const smallTsuInWords = 'doubled consonant'
 
-function kanaRow(kana: string): KanaRow {
+function kanaEntry(kana: string): KanaEntry {
   const otherSpellings = otherTyping[kana] ?? []
   const romaji = kana === smallTsu ? smallTsuInWords : kanaToRomaji(kana)
   const [typed = '', ...alsoTyped] = [romaji, ...otherSpellings].filter(
@@ -71,56 +67,43 @@ function kanaRow(kana: string): KanaRow {
   }
 }
 
-interface KanaChart {
-  headings: readonly string[]
-  rows: readonly { label: string; cells: readonly (KanaRow | null)[] }[]
+interface KanaChartRow {
+  consonant: string
+  cells: readonly (KanaEntry | null)[]
 }
 
-const vowelHeadings = ['a', 'i', 'u', 'e', 'o']
-
-const chartOf = (rows: readonly ChartRow[]): KanaChart => ({
-  headings: vowelHeadings,
-  rows: rows.map(row => ({
-    label: kanaToRomaji(row.cells.find(cell => cell !== null)?.kana ?? ''),
-    cells: row.cells.map(cell => (cell ? kanaRow(cell.kana) : null))
+const fromCore = (rows: readonly CoreRow[]): KanaChartRow[] =>
+  rows.map(({ consonant, cells }) => ({
+    consonant,
+    cells: cells.map(cell => (cell ? kanaEntry(cell.kana) : null))
   }))
-})
 
-const combinationChart: KanaChart = {
-  headings: ['ya', 'yu', 'yo'],
-  rows: ['き', 'し', 'ち', 'に', 'ひ', 'み', 'り', 'ぎ', 'じ', 'び', 'ぴ'].map(kana => ({
-    label: kanaToRomaji(kana),
-    cells: ['ゃ', 'ゅ', 'ょ'].map(small => kanaRow(kana + small))
-  }))
-}
+const gap = '_'
 
-const rowsOf = (chart: KanaChart) =>
-  chart.rows.flatMap(row => row.cells.flatMap(cell => (cell ? [cell] : [])))
+const chartRows = (rows: readonly string[]): KanaChartRow[] =>
+  rows.map(row => {
+    const cells = row.split(' ').map(kana => (kana === gap ? null : kanaEntry(kana)))
+    return { consonant: cells.find(cell => cell !== null)?.romaji ?? '', cells }
+  })
 
-const basicChart = chartOf(gojuonRows)
-const markChart = chartOf(dakuonRows)
+const combinationRows = chartRows(
+  ['き', 'し', 'ち', 'に', 'ひ', 'み', 'り', 'ぎ', 'じ', 'び', 'ぴ'].map(kana =>
+    ['ゃ', 'ゅ', 'ょ'].map(small => kana + small).join(' ')
+  )
+)
 
-const smallRows = Array.from('ぁぃぅぇぉゃゅょっゎ', kanaRow)
+const smallRows = chartRows(['ぁ ぃ ぅ ぇ ぉ', '_ _ っ _ _', 'ゃ _ ゅ _ ょ', 'ゎ _ _ _ _'])
 
-const extendedRows = [
-  'ゔ',
-  'ふぁ',
-  'ふぃ',
-  'ふぇ',
-  'ふぉ',
-  'てぃ',
-  'でぃ',
-  'うぃ',
-  'うぇ',
-  'うぉ',
-  'しぇ',
-  'ちぇ',
-  'じぇ',
-  'ゔぁ',
-  'ゔぃ',
-  'ゔぇ',
-  'ゔぉ'
-].map(kanaRow)
+const extendedRows = chartRows([
+  'ゔぁ ゔぃ ゔ ゔぇ ゔぉ',
+  'ふぁ ふぃ _ ふぇ ふぉ',
+  '_ うぃ _ うぇ うぉ',
+  '_ てぃ _ _ _',
+  '_ でぃ _ _ _',
+  '_ _ _ しぇ _',
+  '_ _ _ ちぇ _',
+  '_ _ _ じぇ _'
+])
 
 export type KanaGroupId = 'basic' | 'marks' | 'combinations' | 'small' | 'extended'
 
@@ -128,20 +111,23 @@ export interface KanaGroup {
   id: KanaGroupId
   tab: string
   label: string
-  rows: readonly KanaRow[]
-  chart?: KanaChart
+  sounds: 3 | 5
+  rows: readonly KanaChartRow[]
 }
 
 export const kanaGroups: readonly KanaGroup[] = [
-  { id: 'basic', tab: 'Basic', label: 'Basic', rows: rowsOf(basicChart), chart: basicChart },
-  { id: 'marks', tab: 'Marks', label: 'With marks', rows: rowsOf(markChart), chart: markChart },
+  { id: 'basic', tab: 'Basic', label: 'Basic', sounds: 5, rows: fromCore(gojuonRows) },
+  { id: 'marks', tab: 'Marks', label: 'With marks', sounds: 5, rows: fromCore(dakuonRows) },
   {
     id: 'combinations',
     tab: 'Combos',
     label: 'Combinations',
-    rows: rowsOf(combinationChart),
-    chart: combinationChart
+    sounds: 3,
+    rows: combinationRows
   },
-  { id: 'small', tab: 'Small', label: 'Small kana', rows: smallRows },
-  { id: 'extended', tab: 'Katakana', label: 'Katakana only', rows: extendedRows }
+  { id: 'small', tab: 'Small', label: 'Small kana', sounds: 5, rows: smallRows },
+  { id: 'extended', tab: 'Katakana', label: 'Katakana only', sounds: 5, rows: extendedRows }
 ]
+
+export const entriesIn = (group: KanaGroup): KanaEntry[] =>
+  group.rows.flatMap(row => row.cells.flatMap(cell => (cell ? [cell] : [])))

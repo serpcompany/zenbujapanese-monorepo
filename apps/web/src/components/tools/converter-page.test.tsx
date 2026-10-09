@@ -7,18 +7,20 @@ import { ConverterPage } from './converter-page'
 const page = (slug: (typeof converters)[number]['slug']) =>
   renderToStaticMarkup(<ConverterPage converter={converterFor(slug)} />)
 
-const kanaInTheTable = (html: string) => html.match(/data-kana="/g)?.length ?? 0
+const kanaInTheChart = (html: string) =>
+  [...html.matchAll(/<ul aria-label="[^"]*" lang="ja"[^>]*>([\s\S]*?)<\/ul>/g)]
+    .map(([, list]) => list.match(/<li>/g)?.length ?? 0)
+    .reduce((total, tiles) => total + tiles, 0)
 
 const tableRows = (html: string) =>
   [...html.matchAll(/<tbody[^>]*>([\s\S]*?)<\/tbody>/g)]
     .map(([, body]) => body.match(/<tr /g)?.length ?? 0)
     .reduce((total, rows) => total + rows, 0)
 
-const tabPanels = (html: string) =>
-  [...html.matchAll(/<div ([^>]*role="tabpanel"[^>]*)>/g)].map(([, attributes]) => ({
-    label: attributes.match(/aria-labelledby="([^"]+)"/)?.[1],
-    hidden: /\shidden=""/.test(` ${attributes}`)
-  }))
+const hiddenPanels = (html: string) =>
+  [...html.matchAll(/<div ([^>]*role="tabpanel"[^>]*)>/g)].map(([, attributes]) =>
+    /\shidden=""/.test(` ${attributes}`)
+  )
 
 function structuredData(html: string) {
   const json = html.match(/<script type="application\/ld\+json">([\s\S]*?)<\/script>/)?.[1]
@@ -34,12 +36,12 @@ const referenceRows: Record<(typeof converters)[number]['pair'], (slug: string) 
 describe('a converter page’s HTML', () => {
   test.each(
     converters.map(converter => converter.slug)
-  )('%s holds every row of its conversion table, a tab per group, the ones not shown hidden', slug => {
+  )('%s holds every kana of its conversion chart, a tab per group, the ones not shown hidden', slug => {
     const html = page(slug)
     const { pair } = converterFor(slug)
-    expect(kanaInTheTable(html)).toBe(131)
-    expect(tableRows(html)).toBe(11 + 5 + 11 + 10 + 17 + referenceRows[pair](slug))
-    expect(tabPanels(html).map(panel => panel.hidden)).toEqual([false, true, true, true, true])
+    expect(kanaInTheChart(html)).toBe(131)
+    expect(tableRows(html)).toBe(referenceRows[pair](slug))
+    expect(hiddenPanels(html)).toEqual([false, true, true, true, true])
   })
 
   test('the questions are in the page with their answers, and as FAQ structured data', () => {

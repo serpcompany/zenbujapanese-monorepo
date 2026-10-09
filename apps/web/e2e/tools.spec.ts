@@ -153,12 +153,16 @@ test.describe('a converter page', () => {
       .toBe('ＡＢＣ　カタカナ')
   })
 
-  test('the conversion table shows one group at a time in tabs, every kana in the page', async ({
+  test('the conversion chart shows one group at a time in tabs, every kana in the page', async ({
     page
   }) => {
     await page.goto('/tools/kana-to-romaji/')
     const groups = main(page).getByRole('tablist', { name: 'Kana groups' })
-    const table = (name: string) => main(page).getByRole('table', { name: new RegExp(`^${name},`) })
+    const chart = (name: string) => main(page).getByRole('list', { name, exact: true })
+    const tile = (name: string, pair: string) =>
+      chart(name)
+        .getByRole('listitem')
+        .filter({ has: page.getByText(pair, { exact: true }) })
     await expect(groups.getByRole('tab')).toHaveText([
       'Basic',
       'Marks',
@@ -166,16 +170,15 @@ test.describe('a converter page', () => {
       'Small',
       'Katakana'
     ])
-    await expect(table('Basic')).toBeVisible()
-    await expect(table('Basic').getByRole('cell', { name: 'か カ ka' })).toBeVisible()
-    await expect(main(page).locator('[data-kana]')).toHaveCount(131)
+    await expect(tile('Basic', 'か カ')).toHaveText('か カka')
+    await expect(main(page).locator('[role="tabpanel"] li:not([aria-hidden])')).toHaveCount(131)
     const small = groups.getByRole('tab', { name: 'Small' })
     await expect(async () => {
       await small.click()
       await expect(small).toHaveAttribute('aria-selected', 'true', { timeout: 1_000 })
     }).toPass({ timeout: 15_000 })
-    await expect(table('Basic')).toBeHidden()
-    await expect(table('Small kana').getByRole('cell', { name: 'xtsu, xtu, ltu' })).toBeVisible()
+    await expect(chart('Basic')).toBeHidden()
+    await expect(tile('Small kana', 'っ ッ')).toHaveText('っ ッxtsu, xtu, ltu')
     await expect(main(page).getByRole('link', { name: /^Full kana charts/ })).toHaveAttribute(
       'href',
       '/dictionary/browse/kana/'

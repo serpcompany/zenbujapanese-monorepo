@@ -1,13 +1,13 @@
 import { describe, expect, test } from 'vitest'
 import { kanaToRomaji } from './kana-to-romaji'
-import { kanaGroups } from './reference'
+import { entriesIn, kanaGroups } from './reference'
 import { romajiToKana } from './romaji-to-kana'
 
-const everyRow = kanaGroups.flatMap(group => group.rows)
+const everyRow = kanaGroups.flatMap(entriesIn)
 
 describe('the kana reference', () => {
   test('has 131 rows in five groups', () => {
-    expect(kanaGroups.map(group => [group.label, group.rows.length])).toEqual([
+    expect(kanaGroups.map(group => [group.label, entriesIn(group).length])).toEqual([
       ['Basic', 46],
       ['With marks', 25],
       ['Combinations', 33],
@@ -20,8 +20,9 @@ describe('the kana reference', () => {
   test('spells the kana in Hepburn, as the kana to romaji converter does', () => {
     const spelled = (id: string) =>
       kanaGroups
-        .find(group => group.id === id)
-        ?.rows.map(row => row.romaji)
+        .filter(group => group.id === id)
+        .flatMap(entriesIn)
+        .map(row => row.romaji)
         .join(' ')
     expect(spelled('basic')).toBe(
       'a i u e o ka ki ku ke ko sa shi su se so ta chi tsu te to na ni nu ne no ha hi fu he ho ma mi mu me mo ya yu yo ra ri ru re ro wa o n'
