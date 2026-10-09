@@ -2,21 +2,8 @@ import Testing
 @testable import SearchExperience
 
 @Suite("Search result Sort menu orders")
-struct SearchResultSortTests {
-  private let first = Self.entry(1, "一")
-  private let second = Self.entry(2, "二")
-  private let third = Self.entry(3, "三")
-  private let fourth = Self.entry(4, "四")
-  private let fifth = Self.entry(5, "五")
-
+struct SearchResultSortTests: SearchResultFixture {
   private var defaultOrder: [DictionaryEntry] { [first, second, third, fourth, fifth] }
-
-  private let jlpt = FrequencyPackDisclosure.fixture(
-    id: "zenbu.jlpt.waller.levels", displayName: "JLPT Levels", kind: .level)
-  private let youTube = FrequencyPackDisclosure.fixture(
-    id: "zenbu.tubelex.youtube.ja.unidic-3.1", displayName: "YouTube")
-  private let anime = FrequencyPackDisclosure.fixture(
-    id: "zenbu.jiten.anime.ja.ordered-v2", displayName: "Anime")
 
   @Test("each rank dictionary orders every result by its own rank, in both directions")
   func rankDictionariesOrderBothWays() throws {
@@ -195,10 +182,6 @@ struct SearchResultSortTests {
     ).map(\.id)
   }
 
-  private func ids(_ entries: DictionaryEntry...) -> [LanguageReferenceID] {
-    entries.map(\.id)
-  }
-
   private func ranks(
     in dictionaries: [FrequencyPackDisclosure],
     sorted: FrequencyPackDisclosure,
@@ -213,24 +196,5 @@ struct SearchResultSortTests {
         }
         return (entry.id, entryRanks)
       })
-  }
-
-  private static func entry(_ number: Int, _ headword: String) -> DictionaryEntry {
-    DictionaryEntry.fixture(id: String(format: "%032d", number), headword: headword)
-  }
-
-  private func result(
-    _ value: Int?, from dictionary: FrequencyPackDisclosure, for entry: DictionaryEntry
-  ) -> FrequencyLookupResult {
-    guard let value else { return .noEvidence(pack: dictionary) }
-    switch dictionary.kind {
-    case .rank:
-      return .evidence(
-        FrequencyEvidence.fixture(pack: dictionary, languageReferenceID: entry.id, rank: value))
-    case .level:
-      let level = JLPTLevel(rawValue: min(max(value, 1), 5)) ?? .n3
-      return .level(
-        FrequencyLevelEvidence(pack: dictionary, languageReferenceID: entry.id, level: level))
-    }
   }
 }

@@ -706,6 +706,11 @@ When changing Search results or frequency dictionaries, also check in the Simula
   word marked known by swiping at once. The row names the order, and **Default** in its menu
   returns to the Default order. The choice survives relaunching the app, and disabling the
   chosen dictionary under **Account → Frequency Dictionaries** returns Search to **Default**.
+- **Filter** in the same menu on `dog`, `いる`, and `miru`: **Unknown Words** with **In JLPT**
+  leaves only unknown words JLPT lists, in the chosen order; the row shows **· 2 filters** and
+  the hidden count with **Clear Filter**; a filter that hides every word shows **No Words Match
+  Your Filter**; marking a word known by swiping drops it from **Unknown Words** at once. The
+  filter survives relaunching, and disabling a checked dictionary drops only that dictionary.
 
 When changing Search's top bar or the shared field in `SearchField.swift`, also check:
 
