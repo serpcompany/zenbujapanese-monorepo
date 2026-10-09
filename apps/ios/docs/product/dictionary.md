@@ -36,7 +36,8 @@ meaning; romaji that resembles the query (ドッグ for `dog`) only breaks a tie
 
 Each row shows compact chips such as `JLPT N3` or `YouTube 812`: one for the first enabled
 dictionary, which orders the results (a dash when it doesn't rank the word), then one for each
-other dictionary that ranks it. JLPT shows only when it lists the word. At accessibility text
+other dictionary that ranks it. While Search is sorted by a dictionary (below), that
+dictionary takes the first chip's place. JLPT shows only when it lists the word. At accessibility text
 sizes, only the first dictionary's chip shows, followed by a count of the rest.
 
 A chip's dot says how common the word is: green for a rank up to 1,500, yellow to 5,000, orange
@@ -58,8 +59,38 @@ Example Sentences, discovered words, and a dedicated Kanji result for a single-k
 
 Recent text searches are stored on the device and listed under a **Recent** heading while the
 query is empty. A learner can repeat a search, remove one by swiping or long-pressing it, or clear the entire history
-from the **⋯** menu, which appears only while recent searches are listed. Result headings scroll
+from the **•••** menu, which offers **Clear Recent Searches** while recent searches are listed. Result headings scroll
 with the results instead of staying pinned over them.
+
+### Sorting results
+
+While results are showing, the **•••** menu has **Sort By**, with the current order under it
+(**Default**, **YouTube, Most Common**, **Known Words, Unknown First**). Like Notes' Sort By, it
+opens a menu with **Default**, one item for each enabled frequency dictionary by its name (JLPT,
+YouTube, Japanese Wikipedia, TV & Movies, Anime, Manga, Novels, Visual Novels, Video Games), and
+**Known Words**, one checked at a time. When a dictionary or Known Words is checked, an
+**Order** section lists its two directions; choosing a new one starts with the first.
+
+- **Default** is the order described above.
+- **A dictionary**, **Most Common First** or **Least Common First**, orders every matching word
+  by that dictionary alone, however it matched. JLPT orders by level: N5 first when most common
+  first, N1 first when least common first.
+- **Known Words**, **Known First** or **Unknown First**, puts the learner's known words before
+  or after the rest. Marking a word known or unknown moves it at once.
+
+A word the chosen dictionary doesn't rank goes after the ranked words in both directions. Ties,
+and the words without a rank, keep their Default order.
+
+While the order isn't Default, a row above the words says so (**Sorted by YouTube, Least
+Common**) with a **Reset** button that returns to Default; at Default there's no row.
+
+Switching re-sorts the visible results without searching again and announces the new order to
+VoiceOver. The choice is kept on the device across launches and applies to Japanese, English,
+and romaji searches. While ranks are loading, or if frequency data can't be read, a dictionary
+sort shows as Default and returns once the ranks load. If the chosen dictionary is disabled or
+removed, Search goes back to Default. The Kanji row, Example Sentences, the reading refinement, and Discovered Words keep their
+places; when there are no word rows to sort (only Discovered Words, or only a single kanji's
+Kanji row), the menu isn't shown.
 
 ## Dictionary and kanji details
 

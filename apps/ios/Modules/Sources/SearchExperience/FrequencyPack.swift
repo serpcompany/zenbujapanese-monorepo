@@ -92,6 +92,15 @@ enum FrequencyLookupResult: Equatable, Sendable {
     }
   }
 
+  var pack: FrequencyPackDisclosure? {
+    switch self {
+    case .evidence(let evidence): evidence.pack
+    case .level(let evidence): evidence.pack
+    case .noEvidence(let pack): pack
+    case .unavailable(let unavailable): unavailable.pack
+    }
+  }
+
   var tier: FrequencyTier? {
     switch self {
     case .evidence(let evidence): FrequencyTier(rank: evidence.rank)

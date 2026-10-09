@@ -78,17 +78,14 @@ struct SearchView: View {
     .toolbar {
       if showsRecentSearchActions {
         ToolbarItem(placement: .barTrailing) {
-          Menu {
+          SearchActionsMenu {
             Button(role: .destructive) {
               isConfirmingClearAll = true
             } label: {
               Label("Clear Recent Searches", systemImage: "trash")
             }
             .accessibilityIdentifier("recent-search.clear-all")
-          } label: {
-            Label("Search Actions", systemImage: "ellipsis")
           }
-          .accessibilityIdentifier("search.actions-menu")
         }
       }
     }
