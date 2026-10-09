@@ -8,6 +8,16 @@ extension View {
   }
 }
 
+enum SearchInputCandidate {
+  static func query(_ query: String, adding candidate: String) -> SearchQuery {
+    SearchQuery(query + candidate)
+  }
+
+  static func isSingleCharacter(_ query: SearchQuery) -> Bool {
+    query.value.count == 1
+  }
+}
+
 struct SearchInputPanel<Content: View, Actions: View>: View {
   @ViewBuilder let content: Content
   @ViewBuilder let actions: Actions
@@ -25,6 +35,34 @@ struct SearchInputPanel<Content: View, Actions: View>: View {
     .padding(.top, 12)
     .padding(.bottom, 8)
     .background(Color(uiColor: .systemGray5), ignoresSafeAreaEdges: .all)
+  }
+}
+
+struct SearchInputModeButtons: View {
+  @Binding var mode: SearchInputMode
+
+  var body: some View {
+    HStack(spacing: 12) {
+      button("Handwriting", systemImage: "pencil.and.scribble", for: .handwriting)
+      button("Radicals", systemImage: "square.grid.3x3", for: .radicals)
+    }
+    .labelStyle(.iconOnly)
+    .buttonBorderShape(.circle)
+    .controlSize(.large)
+  }
+
+  @ViewBuilder
+  private func button(_ title: String, systemImage: String, for target: SearchInputMode)
+    -> some View
+  {
+    let button = Button(title, systemImage: systemImage) { mode = target }
+      .accessibilityAddTraits(mode == target ? .isSelected : [])
+      .accessibilityIdentifier("search.input.\(title.lowercased())")
+    if mode == target {
+      button.buttonStyle(.glassProminent)
+    } else {
+      button.buttonStyle(.glass)
+    }
   }
 }
 

@@ -724,13 +724,15 @@ When changing the Handwriting or Radicals panels (`SearchInputPanel.swift`,
 `HandwritingInputView.swift`, `RadicalInputView.swift`), also check, in light and dark and at an
 accessibility text size:
 
-- the switcher under the field stays put across Keyboard, Handwriting, and Radicals, and the
-  panels cover the field and the tab bar with the switcher and **X** on top;
+- the pencil and grid buttons show at the bottom left on Recent, on results, and above the
+  keyboard, and each opens its panel over the field and the tab bar, with the same buttons at
+  its top left (the current one highlighted) and an **X** at its top right;
 - drawing 十 shows candidate tiles with meanings, three rows deep, **Undo** leaves 一's
   candidates, and **Clear** empties the pad;
 - selecting 女 fills the strip (女, 姦, 奴, 奸, 好…), **Clear** at the bottom right turns active,
-  and picking 好 closes the panel and shows its results; and
-- **Keyboard** in the panel returns to the field with the keyboard up, and **X** closes it.
+  and picking 好 closes the panel and shows its results;
+- handwriting 十, handwriting 一, then radicals 女 → 好 builds 十一好 in the field; and
+- **X** closes the panel.
 
 ## Image Search manual checks
 

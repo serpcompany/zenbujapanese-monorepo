@@ -41,22 +41,32 @@ struct SearchView: View {
     let taskID = searchTaskID
     return presentedContent
     .frame(maxWidth: .infinity, maxHeight: .infinity)
-    .fullScreenCover(isPresented: inputPanelPresentation, onDismiss: focusKeyboardIfChosen) {
-      NavigationStack {
-        inputPanelContent
-          .toolbar {
-            ToolbarItem(placement: .principal) {
-              Picker("Search input", selection: inputModeScope) { inputModeOptions }
-                .pickerStyle(.segmented)
-            }
-            ToolbarItem(placement: .topBarTrailing) {
-              Button("Close", systemImage: "xmark", role: .close) {
-                inputMode = .inactive
-              }
-            }
-          }
-          .navigationBarTitleDisplayMode(.inline)
+    .safeAreaInset(edge: .bottom, spacing: 0) {
+      HStack {
+        SearchInputModeButtons(mode: inputModeScope)
+        Spacer()
       }
+      .padding(.horizontal, 16)
+      .padding(.bottom, 8)
+    }
+    .fullScreenCover(isPresented: inputPanelPresentation) {
+      VStack(spacing: 0) {
+        HStack {
+          SearchInputModeButtons(mode: inputModeScope)
+          Spacer()
+          Button("Close", systemImage: "xmark", role: .close) {
+            inputMode = .inactive
+          }
+          .labelStyle(.iconOnly)
+          .buttonStyle(.glass)
+          .buttonBorderShape(.circle)
+          .controlSize(.large)
+        }
+        .padding(.horizontal, 16)
+        .padding(.top, 8)
+        inputPanelContent
+      }
+      .background(Color(uiColor: .systemGray5), ignoresSafeAreaEdges: .all)
     }
     .navigationTitle("Search")
     .searchField(
@@ -65,7 +75,6 @@ struct SearchView: View {
       prompt: Text(dynamicTypeSize >= .xxLarge ? "Search" : "Search Japanese or English"),
       submit: submitTypedQuery
     )
-    .searchScopes(inputModeScope, activation: .onSearchPresentation) { inputModeOptions }
     .searchFocused($isSearchFocused)
     .onChange(of: isSearchFocused) { _, focused in
       if focused { inputMode = .keyboard }
@@ -161,13 +170,6 @@ struct SearchView: View {
     }
   }
 
-  @ViewBuilder
-  private var inputModeOptions: some View {
-    Text("Keyboard").tag(SearchInputMode.keyboard)
-    Text("Handwriting").tag(SearchInputMode.handwriting)
-    Text("Radicals").tag(SearchInputMode.radicals)
-  }
-
   private var inputPanelPresentation: Binding<Bool> {
     Binding(
       get: { inputMode == .handwriting || inputMode == .radicals },
@@ -176,10 +178,6 @@ struct SearchView: View {
           inputMode = .inactive
         }
       })
-  }
-
-  private func focusKeyboardIfChosen() {
-    if inputMode == .keyboard { isSearchFocused = true }
   }
 
   @ViewBuilder
@@ -310,7 +308,8 @@ struct SearchView: View {
   }
 
   private func submitRadicalQuery(_ submittedQuery: SearchQuery) {
-    completeSubmission(submittedQuery, sparseRadical: true)
+    completeSubmission(
+      submittedQuery, sparseRadical: SearchInputCandidate.isSingleCharacter(submittedQuery))
   }
 
   private func submitTypedQuery() {

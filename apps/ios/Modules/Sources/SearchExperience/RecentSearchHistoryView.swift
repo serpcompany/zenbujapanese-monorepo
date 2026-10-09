@@ -10,8 +10,6 @@ struct RecentSearchHistoryView: View {
     List {
       if !searches.isEmpty {
         Section {
-          SearchListHeading("Recent")
-            .accessibilityIdentifier("recent-search.header")
           ForEach(Array(searches.enumerated()), id: \.element) { index, search in
             Button {
               selectSearch(search)
@@ -25,6 +23,7 @@ struct RecentSearchHistoryView: View {
             .accessibilityLabel(search.value)
             .accessibilityValue("Recent search \(index + 1)")
             .accessibilityIdentifier("recent-search.\(index)")
+            .listRowSeparator(index == 0 ? .hidden : .automatic, edges: .top)
             .swipeActions(edge: .trailing, allowsFullSwipe: false) {
               Button("Delete", role: .destructive) {
                 remove(search)
