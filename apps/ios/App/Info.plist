@@ -4,7 +4,7 @@
 <dict>
 	<key>BGTaskSchedulerPermittedIdentifiers</key>
 	<array>
-		<string>com.zenbujapanese.app.account-sync</string>
+		<string>com.zenbujapanese.dictionary.account-sync</string>
 	</array>
 	<key>UIBackgroundModes</key>
 	<array>

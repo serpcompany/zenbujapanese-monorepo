@@ -84,30 +84,30 @@ describe('readConfig', () => {
   })
 
   test("reads Apple: a key with the app's bundle ID or the web's, and the bundle ID alone only at localhost", () => {
-    expect(refusal({ ...base, APPLE_APP_BUNDLE_IDENTIFIER: 'com.zenbujapanese.app' })).toMatch(
-      /revokes its Apple sign-in/
-    )
+    expect(
+      refusal({ ...base, APPLE_APP_BUNDLE_IDENTIFIER: 'com.zenbujapanese.dictionary' })
+    ).toMatch(/revokes its Apple sign-in/)
     expect(
       readConfig({
         ...base,
         ACCOUNT_API_URL: 'http://localhost:8789',
-        APPLE_APP_BUNDLE_IDENTIFIER: 'com.zenbujapanese.app'
+        APPLE_APP_BUNDLE_IDENTIFIER: 'com.zenbujapanese.dictionary'
       }).auth.apple
     ).toEqual({
       servicesIds: [],
-      appBundleIdentifier: 'com.zenbujapanese.app',
+      appBundleIdentifier: 'com.zenbujapanese.dictionary',
       signingKey: null
     })
     const web = readConfig({
       ...base,
-      APPLE_SERVICES_IDS: 'com.zenbujapanese.web',
+      APPLE_SERVICES_IDS: 'com.zenbujapanese.website',
       APPLE_TEAM_ID: 'TEAM123456',
       APPLE_KEY_ID: 'KEY1234567',
       APPLE_PRIVATE_KEY: appleKey
     }).auth.apple
     expect(web?.signingKey).toMatchObject({ teamId: 'TEAM123456', keyId: 'KEY1234567' })
     expect(web?.signingKey?.privateKey).toMatch(/^-----BEGIN PRIVATE KEY-----\n/)
-    expect(refusal({ ...base, APPLE_SERVICES_IDS: 'com.zenbujapanese.web' })).toMatch(
+    expect(refusal({ ...base, APPLE_SERVICES_IDS: 'com.zenbujapanese.website' })).toMatch(
       /needs APPLE_TEAM_ID, APPLE_KEY_ID, and APPLE_PRIVATE_KEY/
     )
     expect(refusal({ ...base, APPLE_TEAM_ID: 'TEAM123456' })).toMatch(/set together/)

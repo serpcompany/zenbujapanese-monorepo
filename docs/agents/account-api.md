@@ -678,9 +678,9 @@ this order; each step says how to check it worked.
    ACCOUNT_API_SECRET=<openssl rand -hex 32>
    ACCOUNT_API_TRUSTED_ORIGINS=https://staging.zenbujapanese.com
    ACCOUNT_API_COOKIE_PREFIX=zenbu-staging
-   APPLE_APP_BUNDLE_IDENTIFIER=com.zenbujapanese.app
+   APPLE_APP_BUNDLE_IDENTIFIER=com.zenbujapanese.dictionary
    APPLE_SERVICES_IDS=<the website's Services ID>
-   APPLE_TEAM_ID=W3GXL2NQQP
+   APPLE_TEAM_ID=847HR8U8D9
    APPLE_KEY_ID=<the Sign in with Apple key's ID>
    APPLE_PRIVATE_KEY=<the .p8 file on one line, each line break written as \n>
    GOOGLE_CLIENT_IDS=<web client ID>,<iOS app's client ID>,<Tomodachi's client ID>
@@ -714,16 +714,18 @@ this order; each step says how to check it worked.
      session cookie stays on the API host; staging may still set
      `ACCOUNT_API_COOKIE_PREFIX=zenbu-staging`.
    - **Apple** (Apple Developer, Certificates, Identifiers & Profiles, on the team that owns the
-     app's ID, `W3GXL2NQQP` while the app ships from the backup account, #616):
-     - **The App IDs.** Identifiers → `com.zenbujapanese.app` → Capabilities → Sign in with Apple →
-       Edit → **Enable as a primary App ID** → Save. Then the same for Tomodachi's,
-       `com.zenbujapanese.tomodachi`, choosing **Group with an existing primary App ID** and
-       `com.zenbujapanese.app`, so a learner who allowed one app isn't asked again by the other.
+     app's ID, TSMC LLC's `847HR8U8D9`, #616):
+     - **The App IDs.** Identifiers → `com.zenbujapanese.dictionary` → Capabilities → Sign in with
+       Apple → Edit → **Enable as a primary App ID** → Save. Tomodachi's,
+       `com.zenbujapanese.tomodachi`, then takes **Group with an existing primary App ID** and
+       `com.zenbujapanese.dictionary`, so a learner who allowed one app isn't asked again by the
+       other. Apple groups App IDs only within a team, and Tomodachi's is still on the backup team
+       (`W3GXL2NQQP`), so that waits until it moves ([`tech-debt.md`](../tech-debt.md)).
        Set `APPLE_APP_BUNDLE_IDENTIFIER` to the iOS app's ID; the service also takes every app's
        bundle ID from `src/domain/clients.ts`. Regenerate each app's provisioning profiles after
        turning the capability on ([`ios.md`](ios.md)).
      - **The key.** Keys → + → a name such as "Zenbu Sign in with Apple" → Sign in with Apple →
-       Configure → primary App ID `com.zenbujapanese.app` → Save → Continue → Register →
+       Configure → primary App ID `com.zenbujapanese.dictionary` → Save → Continue → Register →
        Download. The `.p8` downloads once only: keep it in the owners' password manager. Its Key
        ID is on the key's page, and the team ID at the top right. Set `APPLE_TEAM_ID`,
        `APPLE_KEY_ID`, and `APPLE_PRIVATE_KEY`: deleting an account revokes its Apple sign-in with
@@ -738,14 +740,33 @@ this order; each step says how to check it worked.
        `support@zenbujapanese.com` → Register. Apple checks each domain's SPF, so do this after
        useSend has verified the domain (Email, below). Without it,
        a learner who hides their email gets no codes and no notices.
-     - Apple's user ID for a learner is the same in every app of one team, so the iOS app and
-       Tomodachi must stay in one team for an Apple sign-in to reach one account. Moving an app to
-       another team (#616's transfer to the business account) changes its learners' Apple user
-       IDs: before it, plan Apple's user migration for Sign in with Apple, and move both apps.
+     - Apple's user ID for a learner is the same in every app of one team, so the iOS app,
+       Tomodachi, and the website's Services ID must be in one team for an Apple sign-in to reach
+       one account, and the service holds one team's key.
+     - **Moving from the backup team** (#616). Staging and production were first set up on the
+       backup team (`W3GXL2NQQP`), with its key and the Services ID `com.zenbujapanese.web`. An
+       Apple user ID from that team doesn't match TSMC LLC's, and the service holds one team's
+       key, so the move is one cutover, in this order:
+       1. On TSMC LLC's team: the website's Services ID, `com.zenbujapanese.website` (Apple
+          doesn't let two teams register one identifier), the key, and the private email relay's
+          domains and address, as the steps here say.
+       2. In each environment, list the accounts that sign in with Apple (`user_identities` rows
+          whose provider is `apple`). After the move they can't sign in with Apple
+          (`oauth_link_error`) or a code (`account_not_linked`), so add another way in to each,
+          or delete it.
+       3. Each environment's file: `APPLE_APP_BUNDLE_IDENTIFIER=com.zenbujapanese.dictionary`,
+          `APPLE_SERVICES_IDS=com.zenbujapanese.website`, and TSMC LLC's `APPLE_TEAM_ID`,
+          `APPLE_KEY_ID`, and `APPLE_PRIVATE_KEY`. Within 5 minutes the deployer restarts the
+          service with them, and the iOS app's Apple sign-ins and deletions work again.
+       4. The website: #616's pull request names the new Services ID in `apps/web/wrangler.jsonc`,
+          which staging deploys on merge and production with its next `Web deploy`; and the
+          Worker's `APPLE_TEAM_ID` in both environments ([`web.md`](web.md), Environment
+          configuration). Until an environment's website deploys, its Apple button signs in as
+          the old Services ID, which the service no longer takes.
      - **For the website: a Services ID.** Identifiers → + → Services IDs → Continue, with a
        description such as "Zenbu Japanese website" and an identifier such as
-       `com.zenbujapanese.web` → Register. Open it, turn on Sign in with Apple → Configure, with
-       `com.zenbujapanese.app` as its primary App ID. Its domains are the website's and the API
+       `com.zenbujapanese.website` → Register. Open it, turn on Sign in with Apple → Configure,
+       with `com.zenbujapanese.dictionary` as its primary App ID. Its domains are the website's and the API
        host's: `zenbujapanese.com`, `staging.zenbujapanese.com`, `api.zenbujapanese.com`, and
        `api-staging.zenbujapanese.com`. Its return URLs are the account page each site signs in
        from, `https://zenbujapanese.com/account/` and
@@ -768,8 +789,9 @@ this order; each step says how to check it worked.
           `https://api-staging.zenbujapanese.com/v1/auth/callback/google` and
           `https://api.zenbujapanese.com/v1/auth/callback/google`
           (`<ACCOUNT_API_URL>/v1/auth/callback/google`);
-        - an iOS client, for the app's bundle ID (`com.zenbujapanese.app`), and one for
-          Tomodachi's.
+        - an iOS client, for the app's bundle ID (`com.zenbujapanese.dictionary`), and one for
+          Tomodachi's. The app's was made for `com.zenbujapanese.app`; changing its bundle ID
+          keeps its client ID.
 
      Then set `GOOGLE_CLIENT_IDS` (the web client's, then the iOS clients') and
      `GOOGLE_CLIENT_SECRET` (the web client's), the iOS client's ID in the app's
