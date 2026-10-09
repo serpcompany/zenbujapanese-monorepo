@@ -55,7 +55,7 @@ struct HandwritingInputView: View {
   }
 
   private func accept(_ candidate: String) {
-    let submittedQuery = SearchQuery(query + candidate)
+    let submittedQuery = SearchInputCandidate.query(query, adding: candidate)
     query = submittedQuery.value
     model.acceptCandidate()
     submit(submittedQuery)

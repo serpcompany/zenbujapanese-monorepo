@@ -21,10 +21,11 @@ Search's top bar is Player's: a small, centered **Search** title above the same 
 with the prompt **Search Japanese or English** (**Search** at the largest text sizes) and a clear
 button while it has text.
 
-- **Recent.** With nothing searched, the title bar's **•••** menu chooses the input, like
-  Sort's menu: **Keyboard** (checked by default), **Handwriting**, or **Radicals**. Under a
-  divider it offers **Clear Recent Searches** while recent searches are listed. The recent
-  searches are listed without a heading.
+- **Recent.** With nothing searched, the title bar's **•••** menu offers **Clear Recent
+  Searches** while recent searches are listed. The recent searches are listed without a heading.
+- **Input buttons.** Two round buttons, a pencil for **Handwriting** and a grid for **Radicals**,
+  sit at the bottom left on every Search screen: above the tab bar on Recent and results, and
+  above the keyboard while typing. Either opens its panel in one tap.
 - **Typing.** Tapping the field slides the screen up as Player's does: the title bar slides away,
   the field moves to the top, and an **X** appears beside it. The clear button inside the field
   clears the text.
@@ -36,10 +37,11 @@ button while it has text.
 
 ### Handwriting and Radicals
 
-Choosing **Handwriting** or **Radicals** from the **•••** menu slides a full-screen panel over the
-search field and the tab bar. Its top right has the same **•••** menu and an **X** that closes
-the panel; **Keyboard** in the menu returns to the search field with the keyboard up. Both panels share one gray background, glass candidate tiles
-and buttons (white in light mode), and a **Clear** button at the bottom right.
+Tapping the pencil or the grid slides a full-screen panel over the search field and the tab bar.
+Its top left has the same two buttons, the current one highlighted, so the other mode is one tap
+away; its top right has an **X** that closes the panel. Both panels share one gray background,
+glass candidate tiles and buttons (white in light mode), and a **Clear** button at the bottom
+right.
 
 - **Handwriting.** A white drawing pad sits under the panel's top row, with candidate tiles below it:
   five to a row, each with the kanji's first meaning. Three rows show and more scroll. **Undo**
@@ -51,8 +53,8 @@ and buttons (white in light mode), and a **Clear** button at the bottom right.
   headers, and radicals that can't combine with the selection are hidden. **Clear** is dimmed
   until a radical is selected.
 
-A handwriting candidate is added to the end of the query, so drawing one character after another
-builds a word; a radical candidate replaces the query. Either way the panel closes and the results
+A candidate from either panel is added to the end of the query, so picking one character after
+another, in any mix of handwriting and radicals, builds a word. The panel closes and the results
 show, with the query in the field. In dark mode the strip and pad are black.
 
 Japanese, English, and romaji searches show one **Results** list. Stronger matches come first;

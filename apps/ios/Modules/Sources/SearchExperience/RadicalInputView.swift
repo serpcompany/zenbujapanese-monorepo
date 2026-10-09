@@ -42,7 +42,7 @@ struct RadicalInputView: View {
   }
 
   private func accept(_ candidate: String) {
-    let submittedQuery = SearchQuery(candidate)
+    let submittedQuery = SearchInputCandidate.query(query, adding: candidate)
     query = submittedQuery.value
     submit(submittedQuery)
   }

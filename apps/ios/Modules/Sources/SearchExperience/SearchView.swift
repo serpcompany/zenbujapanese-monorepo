@@ -41,23 +41,27 @@ struct SearchView: View {
     let taskID = searchTaskID
     return presentedContent
     .frame(maxWidth: .infinity, maxHeight: .infinity)
-    .fullScreenCover(isPresented: inputPanelPresentation, onDismiss: focusKeyboardIfChosen) {
+    .safeAreaInset(edge: .bottom, spacing: 0) {
+      HStack {
+        SearchInputModeButtons(mode: inputModeScope)
+        Spacer()
+      }
+      .padding(.horizontal, 16)
+      .padding(.bottom, 8)
+    }
+    .fullScreenCover(isPresented: inputPanelPresentation) {
       VStack(spacing: 0) {
         HStack {
+          SearchInputModeButtons(mode: inputModeScope)
           Spacer()
-          SearchActionsMenu {
-            SearchInputModePicker(mode: inputModeScope)
-          }
-          .controlSize(.extraLarge)
           Button("Close", systemImage: "xmark", role: .close) {
             inputMode = .inactive
           }
+          .labelStyle(.iconOnly)
+          .buttonStyle(.glass)
+          .buttonBorderShape(.circle)
+          .controlSize(.large)
         }
-        .labelStyle(.iconOnly)
-        .menuStyle(.button)
-        .buttonStyle(.glass)
-        .buttonBorderShape(.circle)
-        .controlSize(.large)
         .padding(.horizontal, 16)
         .padding(.top, 8)
         inputPanelContent
@@ -79,10 +83,9 @@ struct SearchView: View {
       if !presented { inputMode = .inactive }
     }
     .toolbar {
-      ToolbarItem(placement: .topBarTrailing) {
-        SearchActionsMenu {
-          SearchInputModePicker(mode: inputModeScope)
-          if showsRecentSearchActions {
+      if showsRecentSearchActions {
+        ToolbarItem(placement: .topBarTrailing) {
+          SearchActionsMenu {
             Button(role: .destructive) {
               isConfirmingClearAll = true
             } label: {
@@ -175,10 +178,6 @@ struct SearchView: View {
           inputMode = .inactive
         }
       })
-  }
-
-  private func focusKeyboardIfChosen() {
-    if inputMode == .keyboard { isSearchFocused = true }
   }
 
   @ViewBuilder
@@ -309,7 +308,8 @@ struct SearchView: View {
   }
 
   private func submitRadicalQuery(_ submittedQuery: SearchQuery) {
-    completeSubmission(submittedQuery, sparseRadical: true)
+    completeSubmission(
+      submittedQuery, sparseRadical: SearchInputCandidate.isSingleCharacter(submittedQuery))
   }
 
   private func submitTypedQuery() {
