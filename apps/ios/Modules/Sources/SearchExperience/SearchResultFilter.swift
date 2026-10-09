@@ -1,18 +1,16 @@
 import Foundation
 
 struct SearchResultFilter: Hashable, Sendable, RawRepresentable {
-  var knownWords = false
-  var unknownWords = false
+  var hidesKnownWords = false
   var dictionaryFamilies: Set<String> = []
 
   static let none = SearchResultFilter()
   static let storageKey = "search.result-filter.v1"
   static let allWordsTitle = "All Words"
-  static let knownWordsTitle = "Known Words"
+  static let hideKnownWordsTitle = "Hide Known Words"
   static let unknownWordsTitle = "Unknown Words"
   private static let separator: Character = "|"
-  private static let knownToken = "known"
-  private static let unknownToken = "unknown"
+  private static let hideKnownToken = "hide-known"
   private static let dictionaryPrefix = "in:"
 
   init() {}
@@ -20,10 +18,8 @@ struct SearchResultFilter: Hashable, Sendable, RawRepresentable {
   init?(rawValue: String) {
     for token in rawValue.split(separator: Self.separator).map(String.init) {
       switch token {
-      case Self.knownToken:
-        knownWords = true
-      case Self.unknownToken:
-        unknownWords = true
+      case Self.hideKnownToken:
+        hidesKnownWords = true
       case let token where token.hasPrefix(Self.dictionaryPrefix):
         let family = String(token.dropFirst(Self.dictionaryPrefix.count))
         guard !family.isEmpty else { return nil }
@@ -35,17 +31,26 @@ struct SearchResultFilter: Hashable, Sendable, RawRepresentable {
   }
 
   var rawValue: String {
-    let known = knownWords ? [Self.knownToken] : []
-    let unknown = unknownWords ? [Self.unknownToken] : []
+    let known = hidesKnownWords ? [Self.hideKnownToken] : []
     let dictionaries = dictionaryFamilies.sorted().map { Self.dictionaryPrefix + $0 }
-    return (known + unknown + dictionaries).joined(separator: String(Self.separator))
+    return (known + dictionaries).joined(separator: String(Self.separator))
   }
 
   var count: Int {
-    (knownWords ? 1 : 0) + (unknownWords ? 1 : 0) + dictionaryFamilies.count
+    (hidesKnownWords ? 1 : 0) + dictionaryFamilies.count
   }
 
   var isOn: Bool { count > 0 }
+
+  func checking(_ family: String, _ isOn: Bool) -> SearchResultFilter {
+    var filter = self
+    if isOn {
+      filter.dictionaryFamilies.insert(family)
+    } else {
+      filter.dictionaryFamilies.remove(family)
+    }
+    return filter
+  }
 
   func keeping(_ dictionaries: [FrequencyPackDisclosure]) -> SearchResultFilter {
     var filter = self
@@ -56,11 +61,11 @@ struct SearchResultFilter: Hashable, Sendable, RawRepresentable {
   func summary(dictionaries: [FrequencyPackDisclosure]) -> String {
     let names = dictionaries.filter { dictionaryFamilies.contains($0.id.family) }.map(\.sortName)
     let dictionaryPart = names.isEmpty ? nil : "in \(names.joined(separator: ", "))"
-    switch (knownStatus, dictionaryPart) {
-    case (nil, nil): return Self.allWordsTitle
-    case (nil, let part?): return part.prefix(1).uppercased() + part.dropFirst()
-    case (let known?, nil): return known ? Self.knownWordsTitle : Self.unknownWordsTitle
-    case (let known?, let part?): return "\(known ? "Known" : "Unknown"), \(part)"
+    switch (hidesKnownWords, dictionaryPart) {
+    case (false, nil): return Self.allWordsTitle
+    case (false, let part?): return part.prefix(1).uppercased() + part.dropFirst()
+    case (true, nil): return Self.unknownWordsTitle
+    case (true, let part?): return "Unknown, \(part)"
     }
   }
 
@@ -71,17 +76,22 @@ struct SearchResultFilter: Hashable, Sendable, RawRepresentable {
     default: "\(count) filters"
     }
   }
-
-  fileprivate var knownStatus: Bool? {
-    knownWords == unknownWords ? nil : knownWords
-  }
 }
 
 enum SearchResultFiltering {
   static func applied(
-    _ filter: SearchResultFilter, dictionaries: [FrequencyPackDisclosure]?
+    _ filter: SearchResultFilter, dictionaries: [FrequencyPackDisclosure]?,
+    ranks: [LanguageReferenceID: FrequencyRanks]
   ) -> SearchResultFilter {
-    filter.keeping(dictionaries ?? [])
+    let readable = (dictionaries ?? []).filter { dictionary in
+      ranks.values.contains { entryRanks in
+        entryRanks.contains { result in
+          if case .unavailable = result { return false }
+          return result.pack?.id.family == dictionary.id.family
+        }
+      }
+    }
+    return filter.keeping(readable)
   }
 
   static func forgetsDictionaries(
@@ -98,7 +108,7 @@ enum SearchResultFiltering {
     isKnown: (LanguageReferenceID) -> Bool
   ) -> [DictionaryEntry] {
     entries.filter { entry in
-      if let known = filter.knownStatus, isKnown(entry.id) != known { return false }
+      if filter.hidesKnownWords, isKnown(entry.id) { return false }
       guard !filter.dictionaryFamilies.isEmpty else { return true }
       return ranks[entry.id]?.contains { result in
         guard let family = result.pack?.id.family else { return false }

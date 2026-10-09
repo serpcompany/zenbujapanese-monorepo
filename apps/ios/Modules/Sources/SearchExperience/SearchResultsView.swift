@@ -23,7 +23,8 @@ struct SearchResultsView: View {
       ranks: frequencyLoadState.results,
       isKnown: wordKnowledge.isKnown
     )
-    let appliedFilter = SearchResultFiltering.applied(filter, dictionaries: dictionaries)
+    let appliedFilter = SearchResultFiltering.applied(
+      filter, dictionaries: dictionaries, ranks: frequencyLoadState.results)
     let shownEntries = shown(orderedEntries, by: appliedFilter)
     let hiddenCount = orderedEntries.count - shownEntries.count
     let chosenFilter = chosenFilter(ordered: orderedEntries, dictionaries: dictionaries)
@@ -196,7 +197,9 @@ struct SearchResultsView: View {
         guard newFilter != filter else { return }
         withAnimation { filter = newFilter }
         let shownCount = shown(
-          ordered, by: SearchResultFiltering.applied(newFilter, dictionaries: dictionaries)
+          ordered,
+          by: SearchResultFiltering.applied(
+            newFilter, dictionaries: dictionaries, ranks: frequencyLoadState.results)
         ).count
         AccessibilityNotification.Announcement(
           SearchResultFiltering.announcement(shownCount: shownCount)

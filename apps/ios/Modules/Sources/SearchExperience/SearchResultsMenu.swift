@@ -40,8 +40,7 @@ struct SearchResultsMenu: View {
         .accessibilityIdentifier("search.filter.show-all")
       }
       Section {
-        Toggle(SearchResultFilter.knownWordsTitle, isOn: filterBinding(\.knownWords))
-        Toggle(SearchResultFilter.unknownWordsTitle, isOn: filterBinding(\.unknownWords))
+        Toggle(SearchResultFilter.hideKnownWordsTitle, isOn: hidesKnownWordsBinding)
       }
       Section {
         ForEach(dictionaries, id: \.id) { dictionary in
@@ -56,28 +55,16 @@ struct SearchResultsMenu: View {
     .accessibilityIdentifier("search.filter-menu")
   }
 
-  private func filterBinding(_ keyPath: WritableKeyPath<SearchResultFilter, Bool>) -> Binding<Bool> {
+  private var hidesKnownWordsBinding: Binding<Bool> {
     Binding(
-      get: { appliedFilter[keyPath: keyPath] },
-      set: { isOn in
-        var newFilter = appliedFilter
-        newFilter[keyPath: keyPath] = isOn
-        filter = newFilter
-      })
+      get: { appliedFilter.hidesKnownWords },
+      set: { filter.hidesKnownWords = $0 })
   }
 
   private func dictionaryBinding(_ family: String) -> Binding<Bool> {
     Binding(
       get: { appliedFilter.dictionaryFamilies.contains(family) },
-      set: { isOn in
-        var newFilter = appliedFilter
-        if isOn {
-          newFilter.dictionaryFamilies.insert(family)
-        } else {
-          newFilter.dictionaryFamilies.remove(family)
-        }
-        filter = newFilter
-      })
+      set: { filter = filter.checking(family, $0) })
   }
 
   private var sortKeyPicker: some View {

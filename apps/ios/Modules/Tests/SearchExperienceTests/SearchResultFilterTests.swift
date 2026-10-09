@@ -21,15 +21,13 @@ struct SearchResultFilterTests: SearchResultFixture {
       })
   }
 
-  @Test("Known Words shows only known words, Unknown Words only the rest")
-  func knownStatusAlone() {
-    #expect(filtered(SearchResultFilter(known: true)) == ids(first, third))
-    #expect(filtered(SearchResultFilter(unknown: true)) == ids(second, fourth))
+  @Test("Hide Known Words shows only the words the learner doesn't know yet")
+  func hidesKnownWords() {
+    #expect(filtered(SearchResultFilter(hidesKnown: true)) == ids(second, fourth))
   }
 
-  @Test("with both or neither known status checked, known status doesn't filter")
-  func knownStatusBothOrNeither() {
-    #expect(filtered(SearchResultFilter(known: true, unknown: true)) == entries.map(\.id))
+  @Test("with Hide Known Words unchecked, known status doesn't filter")
+  func knownWordsShownByDefault() {
     #expect(filtered(.none) == entries.map(\.id))
   }
 
@@ -50,8 +48,8 @@ struct SearchResultFilterTests: SearchResultFixture {
 
   @Test("known status and dictionaries combine")
   func combined() {
-    #expect(filtered(SearchResultFilter(unknown: true, families: [jlpt])) == ids(fourth))
-    #expect(filtered(SearchResultFilter(known: true, families: [anime])) == ids(third))
+    #expect(filtered(SearchResultFilter(hidesKnown: true, families: [jlpt])) == ids(fourth))
+    #expect(filtered(SearchResultFilter(hidesKnown: true, families: [youTube])) == ids(second))
   }
 
   @Test("filtering keeps the order it is given")
@@ -65,39 +63,72 @@ struct SearchResultFilterTests: SearchResultFixture {
 
   @Test("a filter can hide every word")
   func hidesEveryWord() {
-    #expect(filtered(SearchResultFilter(unknown: true, families: [anime])).isEmpty)
+    #expect(filtered(SearchResultFilter(hidesKnown: true, families: [anime])).isEmpty)
   }
 
   @Test("a disabled or removed dictionary drops out and the rest of the filter stays")
   func disabledDictionaryDropsOut() {
-    let filter = SearchResultFilter(unknown: true, families: [jlpt, anime])
+    let filter = SearchResultFilter(hidesKnown: true, families: [jlpt, anime])
     let kept = filter.keeping([jlpt, youTube])
-    #expect(kept == SearchResultFilter(unknown: true, families: [jlpt]))
+    #expect(kept == SearchResultFilter(hidesKnown: true, families: [jlpt]))
     #expect(SearchResultFiltering.forgetsDictionaries(filter, dictionaries: [jlpt, youTube]))
     #expect(!SearchResultFiltering.forgetsDictionaries(filter, dictionaries: [jlpt, anime]))
   }
 
   @Test("while ranks load or can't be read, the dictionary part waits and is kept")
   func unknownDictionariesKeepChoice() {
-    let filter = SearchResultFilter(unknown: true, families: [jlpt])
-    #expect(SearchResultFiltering.applied(filter, dictionaries: nil) == SearchResultFilter(unknown: true))
+    let filter = SearchResultFilter(hidesKnown: true, families: [jlpt])
+    #expect(
+      SearchResultFiltering.applied(filter, dictionaries: nil, ranks: [:])
+        == SearchResultFilter(hidesKnown: true))
     #expect(!SearchResultFiltering.forgetsDictionaries(filter, dictionaries: nil))
+  }
+
+  @Test("checking while ranks load edits the stored filter and keeps its waiting dictionaries")
+  func checkingWhileRanksLoadKeepsDictionaries() {
+    var stored = SearchResultFilter(families: [jlpt])
+    stored.hidesKnownWords = true
+    stored = stored.checking(youTube.id.family, true)
+    #expect(stored == SearchResultFilter(hidesKnown: true, families: [jlpt, youTube]))
+    #expect(
+      SearchResultFiltering.applied(stored, dictionaries: nil, ranks: [:])
+        == SearchResultFilter(hidesKnown: true))
+  }
+
+  @Test("a checked dictionary whose data can't be read waits instead of hiding every word")
+  func unreadableDictionaryWaits() {
+    var unreadable = ranks
+    for id in unreadable.keys {
+      unreadable[id] = unreadable[id]?.map { result in
+        guard result.pack?.id.family == jlpt.id.family else { return result }
+        return .unavailable(FrequencyPackUnavailable(pack: jlpt, reason: "Pack unavailable"))
+      }
+    }
+    let filter = SearchResultFilter(hidesKnown: true, families: [jlpt])
+    let applied = SearchResultFiltering.applied(
+      filter, dictionaries: [jlpt, youTube, anime], ranks: unreadable)
+    #expect(applied == SearchResultFilter(hidesKnown: true))
+    #expect(
+      SearchResultFiltering.filtered(
+        entries, by: applied, ranks: unreadable, isKnown: { known.contains($0) }
+      ).map(\.id) == ids(second, fourth))
   }
 
   @Test("the menu and the row name the filter, and the hidden count reads naturally")
   func wording() {
     let dictionaries = [jlpt, youTube]
     #expect(SearchResultFilter.none.summary(dictionaries: dictionaries) == "All Words")
-    #expect(SearchResultFilter(unknown: true).summary(dictionaries: dictionaries) == "Unknown Words")
     #expect(
-      SearchResultFilter(known: true, families: [jlpt]).summary(dictionaries: dictionaries)
-        == "Known, in JLPT")
+      SearchResultFilter(hidesKnown: true).summary(dictionaries: dictionaries) == "Unknown Words")
+    #expect(
+      SearchResultFilter(hidesKnown: true, families: [jlpt]).summary(dictionaries: dictionaries)
+        == "Unknown, in JLPT")
     #expect(
       SearchResultFilter(families: [jlpt, youTube]).summary(dictionaries: dictionaries)
         == "In JLPT, YouTube")
     #expect(SearchResultFilter.none.statusSuffix == nil)
-    #expect(SearchResultFilter(unknown: true).statusSuffix == "1 filter")
-    #expect(SearchResultFilter(unknown: true, families: [jlpt]).statusSuffix == "2 filters")
+    #expect(SearchResultFilter(hidesKnown: true).statusSuffix == "1 filter")
+    #expect(SearchResultFilter(hidesKnown: true, families: [jlpt]).statusSuffix == "2 filters")
     #expect(SearchResultFiltering.hiddenCountTitle(1) == "1 word hidden by filter")
     #expect(SearchResultFiltering.hiddenCountTitle(3) == "3 words hidden by filter")
     #expect(SearchResultFiltering.announcement(shownCount: 2) == "2 words shown")
@@ -107,8 +138,9 @@ struct SearchResultFilterTests: SearchResultFixture {
     "the filter is stored as text that reads back as the same filter",
     arguments: [
       SearchResultFilter.none,
-      SearchResultFilter(known: true),
-      SearchResultFilter(unknown: true, families: ["zenbu.jlpt.waller", "zenbu.tubelex.youtube"]),
+      SearchResultFilter(hidesKnown: true),
+      SearchResultFilter(
+        hidesKnown: true, families: ["zenbu.jlpt.waller", "zenbu.tubelex.youtube"]),
     ])
   func storedFilterRoundTrips(filter: SearchResultFilter) {
     #expect(SearchResultFilter(rawValue: filter.rawValue) == filter)
@@ -116,7 +148,7 @@ struct SearchResultFilterTests: SearchResultFixture {
 
   @Test(
     "stored text that isn't a filter is ignored, so Search shows all words",
-    arguments: ["maybe", "known|x", "in:"])
+    arguments: ["maybe", "known", "hide-known|x", "in:"])
   func unreadableStoredFilterIsIgnored(rawValue: String) {
     #expect(SearchResultFilter(rawValue: rawValue) == nil)
   }
@@ -129,16 +161,13 @@ struct SearchResultFilterTests: SearchResultFixture {
 }
 
 extension SearchResultFilter {
-  fileprivate init(
-    known: Bool = false, unknown: Bool = false, families: [FrequencyPackDisclosure] = []
-  ) {
-    self.init(known: known, unknown: unknown, families: Set(families.map(\.id.family)))
+  fileprivate init(hidesKnown: Bool = false, families: [FrequencyPackDisclosure] = []) {
+    self.init(hidesKnown: hidesKnown, families: Set(families.map(\.id.family)))
   }
 
-  fileprivate init(known: Bool = false, unknown: Bool = false, families: Set<String>) {
+  fileprivate init(hidesKnown: Bool = false, families: Set<String>) {
     self.init()
-    knownWords = known
-    unknownWords = unknown
+    hidesKnownWords = hidesKnown
     dictionaryFamilies = families
   }
 }
