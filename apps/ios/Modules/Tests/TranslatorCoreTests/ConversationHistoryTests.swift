@@ -90,6 +90,22 @@ final class ConversationHistoryTests {
     #expect(sentence.translation == "Yes.")
   }
 
+  @Test("a conversation saved muted, when muting was its own mode, reads as Conversation with its bookmarks")
+  func conversationSavedWhileMuted() throws {
+    let json = #"""
+      {"version":1,"id":"6F9619FF-8B86-D011-B42D-00CF4FC964FF","startedAt":1800000000000,
+      "updatedAt":1800000060000,"mode":"textOnly","duration":60,"turns":[{"id":"7F9619FF-8B86-D011-B42D-00CF4FC964FF",
+      "language":"ja","startedAt":1800000000000,"sentences":[{"id":"8F9619FF-8B86-D011-B42D-00CF4FC964FF",
+      "text":"はい。","translation":"Yes.","isBookmarked":true,"bookmarkedAt":1800000030000}]}]}
+      """#
+    let conversation = try JSONDecoder.translatorStore.decode(Conversation.self, from: Data(json.utf8))
+    #expect(conversation.mode == .conversation)
+    #expect(conversation.bookmarks.count == 1)
+    #expect(throws: DecodingError.self) {
+      try JSONDecoder.translatorStore.decode(TranslateMode.self, from: Data(#""sideways""#.utf8))
+    }
+  }
+
   @Test("saved conversations survive a relaunch, newest first")
   func persists() async {
     let history = await loadedHistory()

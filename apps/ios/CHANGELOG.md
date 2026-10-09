@@ -9,6 +9,8 @@ All notable user-facing changes to Zenbu Japanese are recorded here.
 - Sort search results from the **•••** menu: **Sort By** a frequency dictionary, most or least
   common first (JLPT by level), or by your known words, known or unknown first. Your choice stays
   across launches and applies to Japanese, English, and romaji searches.
+- Translate's **Listen** has the speaker button too: mute spoken translations while the
+  translated cards keep coming.
 
 ### Changed
 

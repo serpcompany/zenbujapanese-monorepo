@@ -29,12 +29,11 @@ struct LanguageDetectionTests {
     #expect(SpokenLanguage.english.joined(["Yes.", "It is."]) == "Yes. It is.")
   }
 
-  @Test("modes switch within a session only when they capture sound the same way")
-  func modeFamilies() {
-    #expect(TranslateMode.conversation.canSwitchWithinSession(to: .textOnly))
-    #expect(!TranslateMode.conversation.canSwitchWithinSession(to: .listening))
+  @Test("Conversation plays each turn when it ends, and Listening plays each translation as it arrives")
+  func modes() {
+    #expect(TranslateMode.conversation.playback == .afterEachTurn)
+    #expect(TranslateMode.listening.playback == .asTranslated)
     #expect(TranscriptionRequest(mode: .listening).languages == [.japanese, .english])
-    #expect(TranslateMode.textOnly.playback == .never)
   }
 }
 

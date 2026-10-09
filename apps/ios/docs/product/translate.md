@@ -28,7 +28,7 @@ progress (**Getting ready…**, **Downloading translation…**) shows under the 
 | Row | What tapping it does |
 | --- | --- |
 | **Conversation** | Two-way and live. Each turn is detected as Japanese or English. Translations play out loud, and the microphone keeps listening while they play, so someone who keeps talking isn't lost. A translation never starts while someone is talking. The speaker button silences them. |
-| **Listen** | One-way and live, for a TV, a guide, or announcements. Hears Japanese and English, each sentence detected as either, from a distance and without voice isolation. The translation leads each card (English under Japanese speech, Japanese under English), and each translation plays as soon as it's ready. With earphones the microphone keeps listening; on the iPhone's speaker it waits while each translation plays, so it doesn't hear itself. |
+| **Listen** | One-way and live, for a TV, a guide, or announcements. Hears Japanese and English, each sentence detected as either, from a distance and without voice isolation. The translation leads each card (English under Japanese speech, Japanese under English), and each translation plays as soon as it's ready. With earphones the microphone keeps listening; on the iPhone's speaker it waits while each translation plays, so it doesn't hear itself. The speaker button silences them, as in Conversation. |
 | **Image** | Opens a centered **Image** alert with **Take Photo**, **Photo Library**, and **Cancel**. The camera asks for access the first time; the library allows up to 8 photos. They open in [Image Search](#image-search), where tapping a word looks it up. |
 | **Text** | Opens the typing screen, ready to type or paste. |
 | **Document** | Opens the file picker for a PDF or a text file. Its text opens on the typing screen, translated. A PDF's own text is used; a scanned PDF (its first 10 pages) is read with on-device text recognition. A text file can be UTF-8, UTF-16, Shift-JIS, or EUC-JP. Only the first 5,000 characters are translated. A file with no text shows **Couldn't read this document**. |
@@ -59,8 +59,13 @@ and **Furigana**; there's no title. To change mode, leave and pick another optio
 
 Along the bottom are the conversation's controls:
 
-- a speaker button that mutes spoken translations and turns them back on
-  (not in Listening);
+- a speaker button that mutes spoken translations and turns them back on, in Conversation and
+  in Listen alike. VoiceOver reads it as **Mute Translations** or **Play Translations Aloud**.
+  While muted, translations still appear on the cards and the speech speed is dimmed. Muting
+  doesn't change the mode: a muted Listen keeps listening from a distance and is saved as
+  Listening. Turning the sound back on doesn't replay what was skipped: Listen plays the
+  translations that arrive afterward, and Conversation plays each turn that ends afterward, all
+  of it, including sentences of that turn heard while muted;
 - the speech speed, **−** and **+** in steps of 0.1 from 0.5× to 2.0×, remembered for the next
   conversation;
 - the timer with a pause button. The timer is red while listening and gray while paused, and the

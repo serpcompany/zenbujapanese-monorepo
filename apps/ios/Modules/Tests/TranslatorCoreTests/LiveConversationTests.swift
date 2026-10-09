@@ -114,19 +114,6 @@ struct LiveConversationTests {
     #expect(harness.playback.spoken.count >= 30)
   }
 
-  @Test("Text Only shows translations without playing them or closing the microphone")
-  func textOnlyPlaysNothing() async {
-    let harness = ConversationHarness(mode: .textOnly)
-    await harness.startAndWaitForListening()
-
-    await harness.hear(.japanese, tokyo)
-    await harness.pause(for: 1.3)
-
-    #expect(harness.session.conversation.turns[0].sentences[0].translation != nil)
-    #expect(harness.playback.spoken.isEmpty)
-    #expect(harness.transcription.hearing.isEmpty)
-  }
-
   @Test("Listening hears only Japanese, plays each translation as it arrives, and never closes the microphone")
   func listeningPlaysImmediately() async {
     let harness = ConversationHarness(mode: .listening)
@@ -262,23 +249,6 @@ struct LiveConversationTests {
     #expect(harness.session.status == .paused(.leaving))
   }
 
-  @Test("muting switches to Text Only and stops what was queued")
-  func mutingStopsPlayback() async {
-    let harness = ConversationHarness()
-    await harness.startAndWaitForListening()
-    await harness.hear(.japanese, tokyo)
-
-    harness.session.switchMode(to: .textOnly)
-    await harness.pause(for: 1.3)
-
-    #expect(harness.session.mode == .textOnly)
-    #expect(harness.session.conversation.mode == .textOnly)
-    #expect(harness.playback.spoken.isEmpty)
-
-    harness.session.switchMode(to: .listening)
-    #expect(harness.session.mode == .textOnly)
-  }
-
   @Test("live speech shows a provisional translation")
   func provisionalTranslation() async {
     let harness = ConversationHarness()
@@ -372,20 +342,6 @@ struct LiveConversationTests {
 
     #expect(harness.playback.spoken.count == 1)
     #expect(harness.session.speakingSentenceID == nil)
-  }
-
-  @Test("muting while a translation plays stops the queue and opens the microphone again")
-  func muteDuringPlayback() async {
-    let harness = ConversationHarness()
-    harness.playback.reachesMicrophone = true
-    await startPlayingTwoSentenceTurn(harness)
-
-    harness.session.switchMode(to: .textOnly)
-    await harness.session.settle()
-
-    #expect(harness.playback.spoken.count == 1)
-    #expect(harness.transcription.hearing.last == true)
-    #expect(harness.session.status == .live)
   }
 
   @Test("Listening on the speaker closes the microphone while each translation plays")

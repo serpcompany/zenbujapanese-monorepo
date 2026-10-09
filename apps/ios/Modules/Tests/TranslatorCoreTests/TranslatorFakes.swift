@@ -18,6 +18,7 @@ final class FakeTranscription {
   private(set) var stopCount = 0
   private(set) var finishCount = 0
   var failure: TranslatorFailure?
+  var onHearing: ((Bool) -> Void)?
   private var continuation: AsyncThrowingStream<TranscriptionEvent, any Error>.Continuation?
 
   var client: TranscriptionClient {
@@ -49,7 +50,10 @@ final class FakeTranscription {
   }
 
   private func recordFinish() { finishCount += 1 }
-  private func recordHearing(_ isHearing: Bool) { hearing.append(isHearing) }
+  private func recordHearing(_ isHearing: Bool) {
+    hearing.append(isHearing)
+    onHearing?(isHearing)
+  }
 
   private func recordStop() {
     stopCount += 1

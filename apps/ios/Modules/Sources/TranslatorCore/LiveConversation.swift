@@ -43,7 +43,8 @@ public enum ConversationActivity: Sendable, Equatable {
 public final class LiveConversation {
   public internal(set) var conversation: Conversation
   public internal(set) var status = ConversationStatus.ready
-  public internal(set) var mode: TranslateMode
+  public let mode: TranslateMode
+  public internal(set) var isMuted = false
   public internal(set) var liveSentence: LiveSentence?
   public internal(set) var openTurnID: UUID?
   public internal(set) var speakingSentenceID: UUID?
@@ -108,8 +109,12 @@ public final class LiveConversation {
     return conversation.turns.last { $0.id == openTurnID }
   }
 
+  var playback: TranslationPlayback {
+    isMuted ? .never : mode.playback
+  }
+
   public var heldSentenceCount: Int {
-    guard mode.playback == .afterEachTurn else { return 0 }
+    guard playback == .afterEachTurn else { return 0 }
     return openTurn?.sentences.count ?? 0
   }
 
@@ -158,11 +163,10 @@ public final class LiveConversation {
     lastSpeechAt = now()
   }
 
-  public func switchMode(to newMode: TranslateMode) {
-    guard newMode != mode, mode.canSwitchWithinSession(to: newMode) else { return }
-    mode = newMode
-    conversation.mode = newMode
-    guard newMode.playback == .never else { return }
+  public func setMuted(_ muted: Bool) {
+    guard muted != isMuted else { return }
+    isMuted = muted
+    guard muted else { return }
     playbackQueue.removeAll()
     if speakingSentenceID != nil {
       Task { [clients] in await clients.playback.stop() }
