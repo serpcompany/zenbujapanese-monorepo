@@ -49,24 +49,12 @@ struct SearchView: View {
       .padding(.horizontal, 16)
       .padding(.bottom, 8)
     }
-    .fullScreenCover(isPresented: inputPanelPresentation) {
-      VStack(spacing: 0) {
-        HStack {
-          SearchInputModeButtons(mode: inputModeScope)
-          Spacer()
-          Button("Close", systemImage: "xmark", role: .close) {
-            inputMode = .inactive
-          }
-          .labelStyle(.iconOnly)
-          .buttonStyle(.glass)
-          .buttonBorderShape(.circle)
-          .controlSize(.large)
-        }
-        .padding(.horizontal, 16)
-        .padding(.top, 8)
-        inputPanelContent
-      }
-      .background(Color(uiColor: .systemGray5), ignoresSafeAreaEdges: .all)
+    .sheet(isPresented: inputPanelPresentation) {
+      inputPanelContent
+        .padding(.top, 20)
+        .presentationDetents([.large])
+        .presentationDragIndicator(.visible)
+        .presentationBackground(Color(uiColor: .systemGray5))
     }
     .navigationTitle("Search")
     .searchField(
@@ -185,12 +173,14 @@ struct SearchView: View {
     if inputPanelMode == .radicals {
       RadicalInputView(
         query: $query,
+        mode: inputModeScope,
         lookupClient: radicalLookupClient,
         submit: submitRadicalQuery
       )
     } else {
       HandwritingInputView(
         query: $query,
+        mode: inputModeScope,
         recognitionClient: handwritingRecognitionClient,
         kanjiLookupClient: kanjiLookupClient,
         submit: submitComposedQuery

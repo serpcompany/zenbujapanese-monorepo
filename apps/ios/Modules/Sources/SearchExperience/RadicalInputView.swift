@@ -3,14 +3,15 @@ import SwiftUI
 struct RadicalInputView: View {
   @Environment(\.dynamicTypeSize) private var dynamicTypeSize
   @Binding var query: String
+  @Binding var mode: SearchInputMode
   let lookupClient: RadicalLookupClient
   let submit: (SearchQuery) -> Void
-  @State private var selectedRadicals: Set<String> = []
+  @State private var selectionOrder: [String] = []
   @State private var catalog: RadicalCatalog?
   @State private var loadFailed = false
 
   var body: some View {
-    SearchInputPanel {
+    SearchInputPanel(mode: $mode) {
       VStack(spacing: 12) {
         SearchCandidateStrip(
           candidates: radicalCandidates.map(\.value),
@@ -24,12 +25,11 @@ struct RadicalInputView: View {
         radicalGrid
       }
     } actions: {
-      Spacer()
-      SearchInputClearButton(isEnabled: !selectedRadicals.isEmpty) {
-        selectedRadicals.removeAll()
+      SearchInputUndoButton(isEnabled: !selectionOrder.isEmpty) {
+        selectionOrder.removeLast()
       }
-      .accessibilityLabel("Clear radical selection")
-      .accessibilityIdentifier("radical.remove")
+      .accessibilityLabel("Undo last radical")
+      .accessibilityIdentifier("radical.undo")
     }
     .task {
       guard catalog == nil else { return }
@@ -113,11 +113,15 @@ struct RadicalInputView: View {
     catalog?.componentGroups(matching: radicalCandidates) ?? []
   }
 
+  private var selectedRadicals: Set<String> {
+    Set(selectionOrder)
+  }
+
   private func toggle(_ radical: String) {
-    if selectedRadicals.contains(radical) {
-      selectedRadicals.remove(radical)
+    if let index = selectionOrder.firstIndex(of: radical) {
+      selectionOrder.remove(at: index)
     } else {
-      selectedRadicals.insert(radical)
+      selectionOrder.append(radical)
     }
   }
 }

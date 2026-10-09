@@ -19,6 +19,7 @@ enum SearchInputCandidate {
 }
 
 struct SearchInputPanel<Content: View, Actions: View>: View {
+  @Binding var mode: SearchInputMode
   @ViewBuilder let content: Content
   @ViewBuilder let actions: Actions
 
@@ -26,10 +27,12 @@ struct SearchInputPanel<Content: View, Actions: View>: View {
     VStack(spacing: 10) {
       content
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
-      HStack {
+      HStack(spacing: 12) {
+        SearchInputModeButtons(mode: $mode)
+        Spacer()
         actions
+          .buttonStyle(.plain)
       }
-      .buttonStyle(.plain)
     }
     .padding(.horizontal, 16)
     .padding(.top, 12)
@@ -66,17 +69,17 @@ struct SearchInputModeButtons: View {
   }
 }
 
-struct SearchInputClearButton: View {
+struct SearchInputUndoButton: View {
   let isEnabled: Bool
-  let clear: () -> Void
+  let undo: () -> Void
 
   var body: some View {
-    Button(action: clear) {
-      Text("Clear")
-        .font(.body.weight(.medium))
-        .padding(.horizontal, 18)
-        .frame(minHeight: 48)
-        .searchInputGlass(in: .capsule)
+    Button(action: undo) {
+      Image(systemName: "arrow.uturn.backward")
+        .font(.title3)
+        .padding(12)
+        .frame(minWidth: 48, minHeight: 48)
+        .searchInputGlass(in: .circle)
     }
     .disabled(!isEnabled)
   }
@@ -181,7 +184,8 @@ private struct SearchCandidateTile: View {
       }
       .padding(.horizontal, 4)
       .frame(maxWidth: .infinity, minHeight: height)
-      .searchInputGlass(in: .rect(cornerRadius: 14))
+      .background(Color(uiColor: .secondarySystemFill), in: .rect(cornerRadius: 8))
+      .contentShape(.rect(cornerRadius: 8))
     }
     .buttonStyle(.plain)
     .accessibilityLabel(meaning.map { "\(candidate), \($0)" } ?? candidate)

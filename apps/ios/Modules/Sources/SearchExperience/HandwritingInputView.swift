@@ -2,24 +2,27 @@ import SwiftUI
 
 struct HandwritingInputView: View {
   @Binding var query: String
+  @Binding var mode: SearchInputMode
   let kanjiLookupClient: KanjiLookupClient
   let submit: (SearchQuery) -> Void
   @State private var model: HandwritingInputModel
 
   init(
     query: Binding<String>,
+    mode: Binding<SearchInputMode>,
     recognitionClient: HandwritingRecognitionClient,
     kanjiLookupClient: KanjiLookupClient,
     submit: @escaping (SearchQuery) -> Void
   ) {
     _query = query
+    _mode = mode
     self.kanjiLookupClient = kanjiLookupClient
     self.submit = submit
     _model = State(initialValue: HandwritingInputModel(recognitionClient: recognitionClient))
   }
 
   var body: some View {
-    SearchInputPanel {
+    SearchInputPanel(mode: $mode) {
       VStack(spacing: 10) {
         HandwritingCanvas(strokes: $model.strokes, completedStroke: model.recognize)
           .aspectRatio(1, contentMode: .fit)
@@ -33,23 +36,9 @@ struct HandwritingInputView: View {
         }
       }
     } actions: {
-      Button {
-        model.undoStroke()
-      } label: {
-        Image(systemName: "arrow.uturn.backward")
-          .font(.title3)
-          .padding(12)
-          .frame(minWidth: 48, minHeight: 48)
-          .searchInputGlass(in: .circle)
-      }
-      .disabled(model.strokes.isEmpty)
-      .accessibilityLabel("Undo stroke")
-      .accessibilityIdentifier("handwriting.undo")
-
-      Spacer()
-
-      SearchInputClearButton(isEnabled: !model.strokes.isEmpty, clear: model.eraseDrawing)
-        .accessibilityIdentifier("handwriting.erase")
+      SearchInputUndoButton(isEnabled: !model.strokes.isEmpty, undo: model.undoStroke)
+        .accessibilityLabel("Undo stroke")
+        .accessibilityIdentifier("handwriting.undo")
     }
     .onDisappear { model.cancelRecognition() }
   }
@@ -70,10 +59,10 @@ struct HandwritingInputView: View {
         ProgressView().controlSize(.small)
         Text("Recognizing…")
       case .noCandidates:
-        Text("No candidates yet. Add a stroke or clear and try again.")
+        Text("No candidates yet. Add a stroke, or undo and try again.")
           .accessibilityIdentifier("handwriting.no-candidates")
       case .failed:
-        Text("Recognition unavailable. Clear and try again.")
+        Text("Recognition unavailable. Undo and try again.")
           .accessibilityIdentifier("handwriting.failure")
       }
     }

@@ -37,21 +37,23 @@ button while it has text.
 
 ### Handwriting and Radicals
 
-Tapping the pencil or the grid slides a full-screen panel over the search field and the tab bar.
-Its top left has the same two buttons, the current one highlighted, so the other mode is one tap
-away; its top right has an **X** that closes the panel. Both panels share one gray background,
-glass candidate tiles and buttons (white in light mode), and a **Clear** button at the bottom
-right.
+Tapping the pencil or the grid slides up a full-height sheet over the search field and the tab
+bar, with a grabber at the top: drag it down to close it. Drawing on the pad never drags the
+sheet. The same two buttons stay at its bottom left, in the same place as on the search screen,
+with the current one highlighted, so the other mode is one tap away. Both panels share one gray
+background, flat candidate tiles in the same fill as the radical squares, and glass buttons
+(white in light mode).
 
-- **Handwriting.** A white drawing pad sits under the panel's top row, with candidate tiles below it:
-  five to a row, each with the kanji's first meaning. Three rows show and more scroll. **Undo**
-  removes the last stroke and recognizes the rest again; **Clear** erases the drawing. Before
+- **Handwriting.** A white drawing pad sits at the top, with candidate tiles below it:
+  five to a row, each with the kanji's first meaning. Three rows show and more scroll. **Undo**,
+  at the bottom right, removes the last stroke and recognizes the rest again. Before
   there are candidates, text shows under the pad only while recognizing, when nothing matches,
   or when recognition fails.
 - **Radicals.** A white strip at the top lists the kanji that contain every selected radical,
   or says **Select one or more radicals**. Below it, the radicals scroll under pinned stroke-count
-  headers, and radicals that can't combine with the selection are hidden. **Clear** is dimmed
-  until a radical is selected.
+  headers, and radicals that can't combine with the selection are hidden. **Undo**, the same
+  button as Handwriting's at the bottom right, removes the last radical selected and is dimmed
+  until one is.
 
 A candidate from either panel is added to the end of the query, so picking one character after
 another, in any mix of handwriting and radicals, builds a word. The panel closes and the results
