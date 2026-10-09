@@ -6,7 +6,7 @@ All notable user-facing changes to Zenbu Japanese are recorded here.
 
 ### Added
 
-- Zenbu Japanese runs on iPad and on Macs with Apple silicon, as the same app: buy it once and
+- Zenbu Japanese runs on iPad and on Macs with Apple silicon, as the same app: get it once and
   sign in to the same Zenbu account to keep your known words, lists, Recent videos, and bookmarks
   the same everywhere. On iPad it turns every way and runs beside other apps; on iPad and the Mac
   the tabs become a sidebar. On the Mac, Settings (⌘,) holds your account and preferences, ⌘F

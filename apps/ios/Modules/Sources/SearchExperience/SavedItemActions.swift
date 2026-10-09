@@ -34,29 +34,27 @@ final class SavedItemNotes {
   }
 
   func beginAdding() {
-    if let editingNoteID {
-      notes = notesApplyingDraft(noteID: editingNoteID)
-      scheduleSave(notes)
-    }
+    if let editingNoteID { saveDraft(of: editingNoteID) }
     editingNoteID = UUID().uuidString
     draft = ""
   }
 
   func finishEditing() {
     guard let editingNoteID else { return }
-    notes = notesApplyingDraft(noteID: editingNoteID)
+    saveDraft(of: editingNoteID)
     self.editingNoteID = nil
     draft = ""
-    scheduleSave(notes)
   }
 
-  private func scheduleSave(_ notes: [LearnerWordNote]) {
+  private func saveDraft(of editingNoteID: String) {
+    notes = notesApplyingDraft(noteID: editingNoteID)
     guard let noteID else { return }
+    let note = LearnerWordNote(id: editingNoteID, text: draft)
     let store = store
     let precedingSave = saveTask
     saveTask = Task {
       await precedingSave?.value
-      await store.save(notes, noteID)
+      await store.save(note, noteID)
     }
   }
 

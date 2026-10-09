@@ -2,11 +2,11 @@ import Foundation
 
 struct WordNoteStore: Sendable {
   var load: @Sendable (WordNoteID) async -> [LearnerWordNote]
-  var save: @Sendable ([LearnerWordNote], WordNoteID) async -> Void
+  var save: @Sendable (LearnerWordNote, WordNoteID) async -> Void
 
   static let live = WordNoteStore(
     load: { id in await WordNoteStorage.shared.load(id) },
-    save: { notes, id in await WordNoteStorage.shared.save(notes, for: id) }
+    save: { note, id in await WordNoteStorage.shared.save(note, for: id) }
   )
 }
 
@@ -33,17 +33,16 @@ actor WordNoteStorage {
     return notes()[id.rawValue] ?? []
   }
 
-  func save(_ incomingNotes: [LearnerWordNote], for id: WordNoteID) {
+  func save(_ note: LearnerWordNote, for id: WordNoteID) {
     var stored = notes()
-    let normalized = incomingNotes.compactMap { note -> LearnerWordNote? in
-      let text = note.text.trimmingCharacters(in: .whitespacesAndNewlines)
-      return text.isEmpty ? nil : LearnerWordNote(id: note.id, text: text)
+    var word = stored[id.rawValue] ?? []
+    let text = note.text.trimmingCharacters(in: .whitespacesAndNewlines)
+    if let index = word.firstIndex(where: { $0.id == note.id }) {
+      if text.isEmpty { word.remove(at: index) } else { word[index].text = text }
+    } else if !text.isEmpty {
+      word.append(LearnerWordNote(id: note.id, text: text))
     }
-    if normalized.isEmpty {
-      stored.removeValue(forKey: id.rawValue)
-    } else {
-      stored[id.rawValue] = normalized
-    }
+    stored[id.rawValue] = word.isEmpty ? nil : word
     write(stored)
   }
 

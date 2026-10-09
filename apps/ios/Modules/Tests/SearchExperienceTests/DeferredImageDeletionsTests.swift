@@ -1,5 +1,6 @@
 import Foundation
 import Testing
+import os
 
 @testable import SearchExperience
 
@@ -188,7 +189,7 @@ struct DeferredImageDeletionsTests {
     #expect(!fixture.hasDeferredList)
   }
 
-  @Test("a launch deletes the images that are due without the Media Library being opened")
+  @Test("the images that are due go when the app opens, without the Media Library being opened")
   func deletesDueImagesAtLaunch() async throws {
     defer { fixture.remove() }
     _ = try await fixture.deletedWhileAKeptCopyNamesIt()
@@ -198,6 +199,22 @@ struct DeferredImageDeletionsTests {
 
     #expect(!fixture.keepsImage(of: fixture.photo))
     #expect(!fixture.hasDeferredList)
+  }
+
+  @Test("an app left open deletes the images that come due, at most once a day")
+  func deletesDueImagesOnceADay() async throws {
+    defer { fixture.remove() }
+    _ = try await fixture.savedThenDamaged([fixture.photo])
+    let day = OSAllocatedUnfairLock(initialState: 0.0)
+    let storage = fixture.launch(on: day)
+    await storage.deleteMedia(photoID)
+    try fixture.removeKeptCopies()
+
+    await storage.deleteImagesDue()
+    #expect(fixture.keepsImage(of: fixture.photo))
+    day.withLock { $0 = 1 }
+    await storage.deleteImagesDue()
+    #expect(!fixture.keepsImage(of: fixture.photo))
   }
 
   @Test("a listed name that isn't a photo's ID is dropped, and deletes nothing")

@@ -24,6 +24,7 @@ enum AppLifecycle {
       WordKnowledge.shared.saveIfNeeded()
       WordLists.shared.saveIfNeeded()
       ZenbuAccount.shared?.scheduler.appBecameActive()
+      Task.detached(priority: .utility) { await EncounterMediaStore.live.deleteImagesDue() }
     case .background:
       translate.sceneMovedToBackground()
       ZenbuAccount.shared?.scheduler.appEnteredBackground()

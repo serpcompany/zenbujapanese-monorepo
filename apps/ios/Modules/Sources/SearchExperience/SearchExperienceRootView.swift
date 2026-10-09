@@ -136,7 +136,6 @@ struct SearchExperienceRootView: View {
       await Task.detached(priority: .utility) {
         KanjiReadingSplitter.prepare()
         _ = try? await FrequencyPackClient.live.snapshot()
-        await EncounterMediaStorage.shared.deleteImagesDue()
       }.value
     }
     .onChange(of: selectedTab) { previous, current in

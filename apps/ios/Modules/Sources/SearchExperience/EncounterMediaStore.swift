@@ -36,6 +36,7 @@ struct EncounterMediaStore: Sendable {
   var library: @Sendable () async -> [EncounterMediaSummary]
   var media: @Sendable (String) async -> EncounterMedia?
   var deleteMedia: @Sendable (String) async -> Void
+  var deleteImagesDue: @Sendable () async -> Void
 
   static let live = EncounterMediaStore(
     encounters: { word in await EncounterMediaStorage.shared.encounters(for: word) },
@@ -43,7 +44,8 @@ struct EncounterMediaStore: Sendable {
     remove: { word, mediaID in await EncounterMediaStorage.shared.remove(word, mediaID: mediaID) },
     library: { await EncounterMediaStorage.shared.library() },
     media: { mediaID in await EncounterMediaStorage.shared.media(mediaID) },
-    deleteMedia: { mediaID in await EncounterMediaStorage.shared.deleteMedia(mediaID) }
+    deleteMedia: { mediaID in await EncounterMediaStorage.shared.deleteMedia(mediaID) },
+    deleteImagesDue: { await EncounterMediaStorage.shared.deleteImagesDue() }
   )
 
 }
@@ -75,6 +77,8 @@ actor EncounterMediaStorage {
     let blobID: String
   }
 
+  private static let retryInterval: TimeInterval = 24 * 60 * 60
+
   static let shared = EncounterMediaStorage(
     directory: defaultDirectory,
     legacyDirectory: legacyDefaultDirectory
@@ -101,7 +105,7 @@ actor EncounterMediaStorage {
   private let now: @Sendable () -> Date
   private let deferredDeletions: DeferredImageDeletions
   private var didPrepare = false
-  private var didRetryDeferredDeletions = false
+  private var lastRetry: Date?
 
   init(
     directory: URL, legacyDirectory: URL? = nil,
@@ -207,12 +211,12 @@ actor EncounterMediaStorage {
   }
 
   private func retryDeferredDeletions(named index: Index) {
-    guard !didRetryDeferredDeletions else { return }
-    didRetryDeferredDeletions = true
+    let today = now()
+    if let lastRetry, today.timeIntervalSince(lastRetry) < Self.retryInterval { return }
+    lastRetry = today
     guard let waiting = deferredDeletions.load(), !waiting.isEmpty, let kept = keptCopiesNames()
     else { return }
     let named = Set(index.media.keys).union(index.encounters.map(\.mediaID))
-    let today = now()
     var stillWaiting = waiting
     for (mediaID, deferredAt) in waiting {
       let waitIsOver = today.timeIntervalSince(deferredAt) >= DeferredImageDeletions.longestWait

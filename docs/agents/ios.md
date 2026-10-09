@@ -479,13 +479,14 @@ copy of bytes a copy already holds; a value that isn't data at all is kept aside
 `storedData(forKey:)`), and the store carries on, still writable, from the records
 it could read (each video, note, and Media Library record; the profile is one record, so it
 starts empty). A Media Library index that can't be opened or copied aside is neither read nor
-written until it can be.
+written until it can be. Word notes are saved one note at a time (`WordNoteStorage.save`), so two
+pages open on one word, in two windows on iPad or the Mac, can't write over each other's notes.
 
 The Media Library deletes only images the learner deleted. When a kept copy of the index names
 the photo, or a copy can't be read, `deleteImage` records its ID and when in
 `deferred-deletions.json` (`DeferredImageDeletions`), as it does an image it couldn't remove.
-Once a launch, after the index reads (at the latest when the root view's launch task calls
-`deleteImagesDue`), `retryDeferredDeletions` drops the IDs the index names
+At most once a day, after the index reads (at the latest when the app becomes active:
+`AppLifecycle` calls `deleteImagesDue`), `retryDeferredDeletions` drops the IDs the index names
 again, by a media record or an encounter, without deleting their images, and deletes each other
 recorded image that no kept copy names, or that has waited 30 days (`longestWait`) whatever a
 kept copy names, so a deleted photo is gone within 30 days (the
@@ -495,7 +496,7 @@ it changed. `save` takes a photo saved again off the list once the index is writ
 or a damaged list names an ID only as a whole run of 64 lowercase hex digits in its bytes
 (`DeferredImageDeletions.mediaIDs`), and a list's names that aren't such an ID are dropped as it
 loads, so no name reaches a file outside the folder. Only a missing list reads as empty: a damaged one is copied
-aside and its IDs recovered, dated again, and one that can't be read or written records and
+aside and its IDs recovered, dated again (so their 30 days start over), and one that can't be read or written records and
 retries nothing until the next launch, so a photo deleted then keeps its image, and its ID is
 logged. The store takes its copy step as `keepCopy` and its clock as `now`, so
 `EncounterMediaStorageTests` and `DeferredImageDeletionsTests` can make a copy fail and move the

@@ -197,9 +197,10 @@ Media Library is not currently a general file store, import system, analysis too
 or publishing destination.
 
 Deleting a photo, or removing it from its last word, deletes its image at once, unless a copy of
-the index kept aside (below) names the photo, or one can't be read. Then the image goes when Zenbu
-opens later, once no kept copy names it, and at most 30 days after it was deleted even if one
-still does; while a kept copy can't be read, such as before the device's first unlock, it waits.
+the index kept aside (below) names the photo, or one can't be read. Then the image goes later,
+checked at most once a day as Zenbu opens or comes back: once no kept copy names it, and once 30
+days have passed since it was deleted even if one still does; while a kept copy can't be read,
+such as before the device's first unlock, it waits.
 If Zenbu can't record the deletion, as on a full device, that image stays. Zenbu deletes an image
 only after the learner deletes its photo, or removes the photo from the last word the Media
 Library shows it with.

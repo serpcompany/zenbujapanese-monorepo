@@ -1,4 +1,5 @@
 import Foundation
+import os
 
 @testable import SearchExperience
 
@@ -29,7 +30,12 @@ struct MediaLibraryFixture {
   }
 
   func launch(onDay day: Double = 0) -> EncounterMediaStorage {
-    EncounterMediaStorage(directory: directory, now: { Self.firstDay + day * 24 * 60 * 60 })
+    launch(on: OSAllocatedUnfairLock(initialState: day))
+  }
+
+  func launch(on day: OSAllocatedUnfairLock<Double>) -> EncounterMediaStorage {
+    EncounterMediaStorage(
+      directory: directory, now: { Self.firstDay + day.withLock { $0 } * 24 * 60 * 60 })
   }
 
   func delete(
