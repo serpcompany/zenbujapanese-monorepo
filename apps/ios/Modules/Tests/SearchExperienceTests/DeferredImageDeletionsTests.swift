@@ -26,8 +26,7 @@ struct DeferredImageDeletionsTests {
   @Test("a deleted photo's image goes at a later launch, once no kept copy of the index names it")
   func removesImagesNothingNames() async throws {
     defer { fixture.remove() }
-    _ = try await fixture.savedThenDamaged([fixture.photo])
-    await fixture.launch().deleteMedia(photoID)
+    _ = try await fixture.deletedWhileAKeptCopyNamesIt()
     #expect(fixture.deferredIDs() == [photoID])
 
     _ = await fixture.launch().library()
@@ -60,8 +59,7 @@ struct DeferredImageDeletionsTests {
   @Test("a deleted photo's image goes after 30 days, even while a kept copy names it")
   func removesImagesAfterThirtyDays() async throws {
     defer { fixture.remove() }
-    _ = try await fixture.savedThenDamaged([fixture.photo])
-    await fixture.launch().deleteMedia(photoID)
+    _ = try await fixture.deletedWhileAKeptCopyNamesIt()
 
     _ = await fixture.launch(onDay: 29).library()
     #expect(fixture.keepsImage(of: fixture.photo))
@@ -73,23 +71,17 @@ struct DeferredImageDeletionsTests {
   @Test("each photo deleted while a kept copy names it is added to the list, and each goes")
   func recordsEveryDeletion() async throws {
     defer { fixture.remove() }
-    _ = try await fixture.savedThenDamaged([fixture.photo, fixture.otherPhoto])
-    await fixture.launch().deleteMedia(photoID)
+    _ = try await fixture.deletedWhileAKeptCopyNamesIt([fixture.photo, fixture.otherPhoto])
     await fixture.launch().deleteMedia(fixture.otherPhoto.sha256)
     #expect(fixture.deferredIDs() == [photoID, fixture.otherPhoto.sha256])
 
-    try fixture.removeKeptCopies()
-    _ = await fixture.launch().library()
-    #expect(!fixture.keepsImage(of: fixture.photo))
-    #expect(!fixture.keepsImage(of: fixture.otherPhoto))
+    try await expectBothGoOnceNoCopyNamesThem()
   }
 
   @Test("saving a deleted photo again takes it off the list, and keeps its image")
   func keepsAPhotoSavedAgain() async throws {
     defer { fixture.remove() }
-    _ = try await fixture.savedThenDamaged([fixture.photo])
-    let storage = fixture.launch()
-    await storage.deleteMedia(photoID)
+    let storage = try await fixture.deletedWhileAKeptCopyNamesIt()
     #expect(fixture.deferredIDs() == [photoID])
 
     await storage.save(fixture.photo, for: fixture.word)
@@ -102,9 +94,7 @@ struct DeferredImageDeletionsTests {
   @Test("a photo saved again stays on the list while its index can't be saved")
   func keepsAPhotoListedUntilItsIndexSaves() async throws {
     defer { fixture.remove() }
-    _ = try await fixture.savedThenDamaged([fixture.photo])
-    let storage = fixture.launch()
-    await storage.deleteMedia(photoID)
+    let storage = try await fixture.deletedWhileAKeptCopyNamesIt()
     try fixture.setLocked(true, at: fixture.indexURL)
 
     await storage.save(fixture.photo, for: fixture.word)
@@ -117,9 +107,7 @@ struct DeferredImageDeletionsTests {
     arguments: [false, true])
   func keepsImagesTheIndexNamesAgain(onlyByEncounter: Bool) async throws {
     defer { fixture.remove() }
-    _ = try await fixture.savedThenDamaged([fixture.photo])
-    let storage = fixture.launch()
-    await storage.deleteMedia(photoID)
+    let storage = try await fixture.deletedWhileAKeptCopyNamesIt()
     try fixture.setLocked(true, at: fixture.deferredURL)
     await storage.save(fixture.photo, for: fixture.word)
     try fixture.setLocked(false, at: fixture.deferredURL)
@@ -138,8 +126,7 @@ struct DeferredImageDeletionsTests {
   @Test("a damaged list is kept aside, and the photos it names still go")
   func keepsADamagedListAside() async throws {
     defer { fixture.remove() }
-    _ = try await fixture.savedThenDamaged([fixture.photo, fixture.otherPhoto])
-    await fixture.launch().deleteMedia(photoID)
+    _ = try await fixture.deletedWhileAKeptCopyNamesIt([fixture.photo, fixture.otherPhoto])
     let damaged = Data("damaged \(photoID) list".utf8)
     try damaged.write(to: fixture.deferredURL)
 
@@ -147,17 +134,13 @@ struct DeferredImageDeletionsTests {
 
     #expect(fixture.keptCopies(of: fixture.deferredURL) == [damaged])
     #expect(fixture.deferredIDs() == [photoID, fixture.otherPhoto.sha256])
-    try fixture.removeKeptCopies()
-    _ = await fixture.launch().library()
-    #expect(!fixture.keepsImage(of: fixture.photo))
-    #expect(!fixture.keepsImage(of: fixture.otherPhoto))
+    try await expectBothGoOnceNoCopyNamesThem()
   }
 
   @Test("a list that can't be read is neither written over nor acted on, and keeps the new photo's image")
   func leavesAListItCantRead() async throws {
     defer { fixture.remove() }
-    _ = try await fixture.savedThenDamaged([fixture.photo, fixture.otherPhoto])
-    await fixture.launch().deleteMedia(photoID)
+    _ = try await fixture.deletedWhileAKeptCopyNamesIt([fixture.photo, fixture.otherPhoto])
     try fixture.setReadable(false, at: fixture.deferredURL)
 
     let storage = fixture.launch(onDay: 31)
@@ -208,8 +191,7 @@ struct DeferredImageDeletionsTests {
   @Test("a launch with nothing to delete leaves the list as it is")
   func leavesAnUnchangedList() async throws {
     defer { fixture.remove() }
-    _ = try await fixture.savedThenDamaged([fixture.photo])
-    await fixture.launch().deleteMedia(photoID)
+    _ = try await fixture.deletedWhileAKeptCopyNamesIt()
     let earlier = Date(timeIntervalSince1970: 1_700_000_000)
     try FileManager.default.setAttributes(
       [.modificationDate: earlier], ofItemAtPath: fixture.deferredURL.path)
@@ -218,6 +200,13 @@ struct DeferredImageDeletionsTests {
 
     let attributes = try FileManager.default.attributesOfItem(atPath: fixture.deferredURL.path)
     #expect(attributes[.modificationDate] as? Date == earlier)
+  }
+
+  private func expectBothGoOnceNoCopyNamesThem() async throws {
+    try fixture.removeKeptCopies()
+    _ = await fixture.launch().library()
+    #expect(!fixture.keepsImage(of: fixture.photo))
+    #expect(!fixture.keepsImage(of: fixture.otherPhoto))
   }
 
   @Test("a kept copy names a photo by its whole ID, even where damage touches it")

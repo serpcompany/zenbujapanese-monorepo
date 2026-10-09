@@ -45,21 +45,12 @@ struct EncounterMediaStorageTests {
     #expect(fixture.keepsImage(of: fixture.photo))
   }
 
-  @Test("an index that can't be decoded at all keeps every image")
-  func keepsImagesOfAnUndecodableIndex() async throws {
+  @Test(
+    "an index that can't be decoded at all, or names no image, as an earlier version could leave, keeps every image",
+    arguments: ["", #"{"media":{},"encounters":[]}"#])
+  func keepsImagesTheIndexDoesntName(index: String) async throws {
     defer { fixture.remove() }
-    _ = try fixture.writeIndex("")
-    try fixture.photo.data.write(to: fixture.imageURL(of: fixture.photo))
-
-    _ = await fixture.launch().library()
-
-    #expect(fixture.keepsImage(of: fixture.photo))
-  }
-
-  @Test("an image nothing names, as an earlier version could leave, stays")
-  func keepsUnnamedImages() async throws {
-    defer { fixture.remove() }
-    _ = try fixture.writeIndex(#"{"media":{},"encounters":[]}"#)
+    _ = try fixture.writeIndex(index)
     try fixture.photo.data.write(to: fixture.imageURL(of: fixture.photo))
 
     _ = await fixture.launch().library()

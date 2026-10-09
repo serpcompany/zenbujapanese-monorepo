@@ -47,6 +47,15 @@ struct MediaLibraryFixture {
     return try damageIndex(replacing: #""encounters":["#, with: #""encounters":[5,"#)
   }
 
+  func deletedWhileAKeptCopyNamesIt(
+    _ photos: [EncounterMediaAttachment]? = nil
+  ) async throws -> EncounterMediaStorage {
+    _ = try await savedThenDamaged(photos ?? [photo])
+    let storage = launch()
+    await storage.deleteMedia(photo.sha256)
+    return storage
+  }
+
   func damageIndex(replacing text: String, with damage: String) throws -> Data {
     let saved = try String(contentsOf: indexURL, encoding: .utf8)
     return try writeIndex(saved.replacingOccurrences(of: text, with: damage))
