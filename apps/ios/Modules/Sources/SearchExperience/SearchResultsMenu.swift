@@ -11,7 +11,7 @@ struct SearchResultsMenu: View {
     Menu {
       sortKeyPicker
       orderPicker
-      filterMenu
+      filterPickers
     } label: {
       HStack(spacing: 4) {
         Label(status, systemImage: "arrow.up.arrow.down")
@@ -31,40 +31,41 @@ struct SearchResultsMenu: View {
     return appliedFilter.statusSuffix.map { "\(sortStatus) · \($0)" } ?? sortStatus
   }
 
-  private var filterMenu: some View {
-    Menu {
-      if appliedFilter.isOn {
-        Button("Show All Words", systemImage: "line.3.horizontal.decrease.circle") {
-          filter = .none
-        }
-        .accessibilityIdentifier("search.filter.show-all")
+  private var filterPickers: some View {
+    Section {
+      Picker(selection: wordsBinding) {
+        ForEach(KnownWordFilter.allCases, id: \.self) { Text($0.title).tag($0) }
+      } label: {
+        Text("Show")
+        Text(appliedFilter.words.title)
       }
-      Section {
-        Toggle(SearchResultFilter.hideKnownWordsTitle, isOn: hidesKnownWordsBinding)
-      }
-      Section {
+      .pickerStyle(.menu)
+      .accessibilityIdentifier("search.filter.words")
+      Picker(selection: dictionaryBinding) {
+        Text(SearchResultFilter.anyDictionaryTitle).tag(String?.none)
         ForEach(dictionaries, id: \.id) { dictionary in
-          Toggle("In \(dictionary.sortName)", isOn: dictionaryBinding(dictionary.id.family))
+          Text(dictionary.sortName).tag(Optional(dictionary.id.family))
         }
+      } label: {
+        Text("Dictionary")
+        Text(dictionaryTitle)
       }
-    } label: {
-      Label("Filter", systemImage: "line.3.horizontal.decrease")
-      Text(appliedFilter.summary(dictionaries: dictionaries))
+      .pickerStyle(.menu)
+      .accessibilityIdentifier("search.filter.dictionary")
     }
-    .menuActionDismissBehavior(.disabled)
-    .accessibilityIdentifier("search.filter-menu")
   }
 
-  private var hidesKnownWordsBinding: Binding<Bool> {
-    Binding(
-      get: { appliedFilter.hidesKnownWords },
-      set: { filter.hidesKnownWords = $0 })
+  private var dictionaryTitle: String {
+    dictionaries.first { $0.id.family == appliedFilter.dictionaryFamily }?.sortName
+      ?? SearchResultFilter.anyDictionaryTitle
   }
 
-  private func dictionaryBinding(_ family: String) -> Binding<Bool> {
-    Binding(
-      get: { appliedFilter.dictionaryFamilies.contains(family) },
-      set: { filter = filter.checking(family, $0) })
+  private var wordsBinding: Binding<KnownWordFilter> {
+    Binding(get: { appliedFilter.words }, set: { filter.words = $0 })
+  }
+
+  private var dictionaryBinding: Binding<String?> {
+    Binding(get: { appliedFilter.dictionaryFamily }, set: { filter.dictionaryFamily = $0 })
   }
 
   private var sortKeyPicker: some View {
@@ -117,22 +118,5 @@ struct SearchActionsMenu<Content: View>: View {
       Label("Search Actions", systemImage: "ellipsis")
     }
     .accessibilityIdentifier("search.actions-menu")
-  }
-}
-
-struct SearchResultsFilterStatusRow: View {
-  let hiddenCount: Int
-  let clear: () -> Void
-
-  var body: some View {
-    HStack {
-      Text(SearchResultFiltering.hiddenCountTitle(hiddenCount))
-        .foregroundStyle(.secondary)
-      Spacer()
-      Button("Clear Filter", action: clear)
-        .buttonStyle(.borderless)
-    }
-    .font(.footnote)
-    .accessibilityIdentifier("search.filter-status")
   }
 }
