@@ -42,21 +42,27 @@ struct SearchView: View {
     return presentedContent
     .frame(maxWidth: .infinity, maxHeight: .infinity)
     .fullScreenCover(isPresented: inputPanelPresentation, onDismiss: focusKeyboardIfChosen) {
-      NavigationStack {
-        inputPanelContent
-          .toolbar {
-            ToolbarItem(placement: .principal) {
-              Picker("Search input", selection: inputModeScope) { inputModeOptions }
-                .pickerStyle(.segmented)
-            }
-            ToolbarItem(placement: .topBarTrailing) {
-              Button("Close", systemImage: "xmark", role: .close) {
-                inputMode = .inactive
-              }
-            }
+      VStack(spacing: 0) {
+        HStack {
+          Spacer()
+          SearchActionsMenu {
+            SearchInputModePicker(mode: inputModeScope)
           }
-          .navigationBarTitleDisplayMode(.inline)
+          .controlSize(.extraLarge)
+          Button("Close", systemImage: "xmark", role: .close) {
+            inputMode = .inactive
+          }
+        }
+        .labelStyle(.iconOnly)
+        .menuStyle(.button)
+        .buttonStyle(.glass)
+        .buttonBorderShape(.circle)
+        .controlSize(.large)
+        .padding(.horizontal, 16)
+        .padding(.top, 8)
+        inputPanelContent
       }
+      .background(Color(uiColor: .systemGray5), ignoresSafeAreaEdges: .all)
     }
     .navigationTitle("Search")
     .searchField(
@@ -65,7 +71,6 @@ struct SearchView: View {
       prompt: Text(dynamicTypeSize >= .xxLarge ? "Search" : "Search Japanese or English"),
       submit: submitTypedQuery
     )
-    .searchScopes(inputModeScope, activation: .onSearchPresentation) { inputModeOptions }
     .searchFocused($isSearchFocused)
     .onChange(of: isSearchFocused) { _, focused in
       if focused { inputMode = .keyboard }
@@ -74,9 +79,10 @@ struct SearchView: View {
       if !presented { inputMode = .inactive }
     }
     .toolbar {
-      if showsRecentSearchActions {
-        ToolbarItem(placement: .topBarTrailing) {
-          SearchActionsMenu {
+      ToolbarItem(placement: .topBarTrailing) {
+        SearchActionsMenu {
+          SearchInputModePicker(mode: inputModeScope)
+          if showsRecentSearchActions {
             Button(role: .destructive) {
               isConfirmingClearAll = true
             } label: {
@@ -159,13 +165,6 @@ struct SearchView: View {
       }
       .accessibilityIdentifier("search.no-results")
     }
-  }
-
-  @ViewBuilder
-  private var inputModeOptions: some View {
-    Text("Keyboard").tag(SearchInputMode.keyboard)
-    Text("Handwriting").tag(SearchInputMode.handwriting)
-    Text("Radicals").tag(SearchInputMode.radicals)
   }
 
   private var inputPanelPresentation: Binding<Bool> {

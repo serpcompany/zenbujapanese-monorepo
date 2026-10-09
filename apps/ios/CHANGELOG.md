@@ -24,9 +24,9 @@ All notable user-facing changes to Zenbu Japanese are recorded here.
 - Search's top bar matches Player's: a small title and the same search field, which slides up
   while you type and keeps your query after a search, with **X** to go back to your recent
   searches.
-- Handwriting and Radicals open full screen, with the Keyboard / Handwriting / Radicals switcher
-  staying in one place. Handwriting shows bigger candidates with their meanings and has **Undo**;
-  both have the same **Clear** button.
+- Choose Keyboard, Handwriting, or Radicals from Search's **•••** menu. Handwriting and Radicals
+  open full screen; Handwriting shows bigger candidates with their meanings and has **Undo**, and
+  both have the same **Clear** button. Recent searches no longer sit under a **Recent** heading.
 
 ### Removed
 

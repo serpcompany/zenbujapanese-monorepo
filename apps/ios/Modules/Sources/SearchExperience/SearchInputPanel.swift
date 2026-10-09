@@ -28,6 +28,20 @@ struct SearchInputPanel<Content: View, Actions: View>: View {
   }
 }
 
+struct SearchInputModePicker: View {
+  @Binding var mode: SearchInputMode
+
+  var body: some View {
+    Picker("Search input", selection: $mode) {
+      Label("Keyboard", systemImage: "keyboard").tag(SearchInputMode.keyboard)
+      Label("Handwriting", systemImage: "hand.draw").tag(SearchInputMode.handwriting)
+      Label("Radicals", systemImage: "square.grid.3x3").tag(SearchInputMode.radicals)
+    }
+    .pickerStyle(.inline)
+    .accessibilityIdentifier("search.input.mode")
+  }
+}
+
 struct SearchInputClearButton: View {
   let isEnabled: Bool
   let clear: () -> Void

@@ -21,11 +21,12 @@ Search's top bar is Player's: a small, centered **Search** title above the same 
 with the prompt **Search Japanese or English** (**Search** at the largest text sizes) and a clear
 button while it has text.
 
-- **Recent.** With nothing searched, the title bar's **•••** menu offers **Clear Recent
-  Searches** while recent searches are listed.
+- **Recent.** With nothing searched, the title bar's **•••** menu chooses the input, like
+  Sort's menu: **Keyboard** (checked by default), **Handwriting**, or **Radicals**. Under a
+  divider it offers **Clear Recent Searches** while recent searches are listed. The recent
+  searches are listed without a heading.
 - **Typing.** Tapping the field slides the screen up as Player's does: the title bar slides away,
-  the field moves to the top, and an **X** appears beside it. Under the field, a **Keyboard**,
-  **Handwriting**, **Radicals** switcher stays in one place. The clear button inside the field
+  the field moves to the top, and an **X** appears beside it. The clear button inside the field
   clears the text.
 - **Results.** Submitting, or picking a recent search, the reading refinement, or a handwriting
   or radical candidate, puts the keyboard away and keeps the query in the field at the top, with
@@ -35,12 +36,12 @@ button while it has text.
 
 ### Handwriting and Radicals
 
-Choosing **Handwriting** or **Radicals** slides a full-screen panel over the search field and the
-tab bar. Its top has the same switcher and an **X** that closes it; **Keyboard** returns to the
-search field with the keyboard up. Both panels share one gray background, glass candidate tiles
+Choosing **Handwriting** or **Radicals** from the **•••** menu slides a full-screen panel over the
+search field and the tab bar. Its top right has the same **•••** menu and an **X** that closes
+the panel; **Keyboard** in the menu returns to the search field with the keyboard up. Both panels share one gray background, glass candidate tiles
 and buttons (white in light mode), and a **Clear** button at the bottom right.
 
-- **Handwriting.** A white drawing pad sits under the switcher, with candidate tiles below it:
+- **Handwriting.** A white drawing pad sits under the panel's top row, with candidate tiles below it:
   five to a row, each with the kanji's first meaning. Three rows show and more scroll. **Undo**
   removes the last stroke and recognizes the rest again; **Clear** erases the drawing. Before
   there are candidates, text shows under the pad only while recognizing, when nothing matches,
@@ -97,7 +98,7 @@ again. If frequency data can't be read, Search still shows every result and says
 dictionary is unavailable. Results can also offer a Japanese-reading refinement, related
 Example Sentences, discovered words, and a dedicated Kanji result for a single-kanji query.
 
-Recent text searches are stored on the device and listed under a **Recent** heading while the
+Recent text searches are stored on the device and listed while the
 query is empty. A learner can repeat a search, remove one by swiping or long-pressing it, or clear the entire history
 from the **•••** menu, which offers **Clear Recent Searches** while recent searches are listed. Result headings scroll
 with the results instead of staying pinned over them.
