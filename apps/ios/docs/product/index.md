@@ -40,7 +40,8 @@ sentences and captions — a tap opens the word, whose headword then offers the 
 
 Account is a supporting navigation area rather than a separate Product Experience. The tab holds
 on-device content and preferences, and signing in to a Zenbu account, which syncs known words,
-lists, Player's watch history, and Translate's bookmarked sentences. It provides:
+lists, Player's watch history, and Translate's bookmarked sentences. Like the other tabs, it has
+a small **Account** title in the bar rather than a large one. It provides:
 
 - a profile card with the learner's photo, name, and username;
 - the Zenbu account: **Sign In to Sync**, or, signed in, **Zenbu Account** with the account's email

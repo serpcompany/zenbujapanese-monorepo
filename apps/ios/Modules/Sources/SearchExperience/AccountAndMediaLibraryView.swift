@@ -121,6 +121,7 @@ struct AccountRootView: View {
     .listSectionSpacing(.compact)
     .accessibilityIdentifier("account.list")
     .navigationTitle("Account")
+    .navigationBarTitleDisplayMode(.inline)
   }
 }
 
