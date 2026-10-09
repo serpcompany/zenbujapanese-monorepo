@@ -7,9 +7,9 @@ enum KnownWordFilter: String, CaseIterable, Hashable, Sendable {
 
   var title: String {
     switch self {
-    case .all: "All Words"
-    case .known: "Known Words"
-    case .unknown: "Unknown Words"
+    case .all: SearchResultFilter.allTitle
+    case .known: "Known"
+    case .unknown: "Unknown"
     }
   }
 }
@@ -20,7 +20,7 @@ struct SearchResultFilter: Hashable, Sendable, RawRepresentable {
 
   static let none = SearchResultFilter()
   static let storageKey = "search.result-filter.v1"
-  static let anyDictionaryTitle = "Any Dictionary"
+  static let allTitle = "All"
   private static let separator: Character = "|"
   private static let dictionaryPrefix = "in:"
 

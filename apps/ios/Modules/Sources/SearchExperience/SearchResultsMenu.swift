@@ -31,23 +31,26 @@ struct SearchResultsMenu: View {
     return appliedFilter.statusSuffix.map { "\(sortStatus) · \($0)" } ?? sortStatus
   }
 
+  @ViewBuilder
   private var filterPickers: some View {
-    Section {
+    Section("Filter") {
       Picker(selection: wordsBinding) {
         ForEach(KnownWordFilter.allCases, id: \.self) { Text($0.title).tag($0) }
       } label: {
-        Text("Show")
+        Text("Words")
         Text(appliedFilter.words.title)
       }
       .pickerStyle(.menu)
       .accessibilityIdentifier("search.filter.words")
+    }
+    Section {
       Picker(selection: dictionaryBinding) {
-        Text(SearchResultFilter.anyDictionaryTitle).tag(String?.none)
+        Text(SearchResultFilter.allTitle).tag(String?.none)
         ForEach(dictionaries, id: \.id) { dictionary in
           Text(dictionary.sortName).tag(Optional(dictionary.id.family))
         }
       } label: {
-        Text("Dictionary")
+        Text("Frequency Dictionaries")
         Text(dictionaryTitle)
       }
       .pickerStyle(.menu)
@@ -57,7 +60,7 @@ struct SearchResultsMenu: View {
 
   private var dictionaryTitle: String {
     dictionaries.first { $0.id.family == appliedFilter.dictionaryFamily }?.sortName
-      ?? SearchResultFilter.anyDictionaryTitle
+      ?? SearchResultFilter.allTitle
   }
 
   private var wordsBinding: Binding<KnownWordFilter> {
@@ -84,6 +87,7 @@ struct SearchResultsMenu: View {
       Text(SearchResultSort.knownWordsTitle).tag(SearchResultSortKey.knownWords)
     }
     .pickerStyle(.inline)
+    .labelsVisibility(.visible)
   }
 
   @ViewBuilder

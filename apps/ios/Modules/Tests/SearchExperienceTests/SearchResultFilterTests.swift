@@ -105,7 +105,7 @@ struct SearchResultFilterTests: SearchResultFixture {
 
   @Test("the Sorted by row counts the filters, and the empty list's count reads naturally")
   func wording() {
-    #expect(KnownWordFilter.allCases.map(\.title) == ["All Words", "Known Words", "Unknown Words"])
+    #expect(KnownWordFilter.allCases.map(\.title) == ["All", "Known", "Unknown"])
     #expect(SearchResultFilter.none.statusSuffix == nil)
     #expect(SearchResultFilter(words: .unknown).statusSuffix == "1 filter")
     #expect(SearchResultFilter(words: .known, dictionary: jlpt).statusSuffix == "2 filters")
