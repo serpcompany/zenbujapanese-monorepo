@@ -704,17 +704,18 @@ When changing Search results or frequency dictionaries, also check in the Simula
 - With a pack made unreadable in a debug container, results stay listed and the footer names
   the unavailable dictionary.
 - Rapidly submitting `quiet`, `miru`, then `いる` leaves only `いる` results.
-- The **Sorted by …** row on `dog`, `いる`, and `miru`: each dictionary in both directions moves
+- The **Sorted by …** row on `dog`, `いる`, and `miru`: each dictionary, most common first, moves
   that dictionary's chip first and puts the words it doesn't rank last; **Known Words** moves a
   word marked known by swiping at once. The row names the order, and **Default** in its menu
   returns to the Default order. The choice survives relaunching the app, and disabling the
   chosen dictionary under **Account → Frequency Dictionaries** returns Search to **Default**.
-- The two **Filter** rows (**Words** and **Frequency Dictionaries**) in the same menu on `dog`,
-  `いる`, and `miru`: each opens a list with its choice checked; **Known** leaves only known words; **Unknown** with **JLPT**
-  leaves only unknown words JLPT lists, in the chosen order; the **Sorted by** row shows **· 2 filters** and no other row appears; a filter
-  that hides every word shows **No Words Match Your Filter**; marking a word known from its
-  long-press menu drops it at once while **Unknown** is chosen. The filter survives relaunching,
-  and disabling the chosen dictionary returns **Frequency Dictionaries** to **All**.
+- The menu shows only **Sort By** (naming the order) and **Filter · Words**. **Sort By** lists
+  the sorts with no direction to choose.
+- **Filter · Words** on `dog`, `いる`, and `miru`: **Known** leaves only known words and
+  **Unknown** only the rest, in the chosen order; the **Sorted by** row shows **· 1 filter** and no
+  other row appears; a filter that hides every word shows **No Words Match Your Filter**; marking a
+  word known from its long-press menu drops it at once while **Unknown** is chosen. The filter
+  survives relaunching.
 
 When changing Search's top bar or the shared field in `SearchField.swift`, also check:
 

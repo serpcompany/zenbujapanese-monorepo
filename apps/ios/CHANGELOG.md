@@ -7,12 +7,11 @@ All notable user-facing changes to Zenbu Japanese are recorded here.
 ### Added
 
 - Sort search results from the **Sorted by** row at the top of the results: a frequency
-  dictionary, most or least common first (JLPT by level), or your known words, known or unknown
+  dictionary, most common first (JLPT by level), or your known words, known
   first. Your choice stays across launches and applies to Japanese, English, and romaji
   searches.
-- Filter search results from the same **Sorted by** row: show only known or unknown words, and
-  only the words one frequency dictionary ranks. The row counts the filters, and your filter stays
-  across launches.
+- Filter search results to known or unknown words from the same **Sorted by** row. The row shows
+  when a filter is on, and your filter stays across launches.
 - Translate's **Listen** has the speaker button too: mute spoken translations while the
   translated cards keep coming.
 

@@ -110,21 +110,22 @@ with the results instead of staying pinned over them.
 ### Sorting results
 
 While results are showing, their first row, above Example Sentences, names the order: **Sorted
-by Default**, **Sorted by YouTube, Most Common**, **Sorted by Known Words, Unknown First**. Tapping
-it opens a menu headed **Sort By** with **Default**, one item for each enabled frequency dictionary by its name
-(JLPT, YouTube, Japanese Wikipedia, TV & Movies, Anime, Manga, Novels, Visual Novels, Video
-Games), and **Known Words**, one checked at a time. When a dictionary or Known Words is checked,
-an **Order** section lists its two directions; choosing a new one starts with the first.
+by Default**, **Sorted by YouTube**, **Sorted by Known Words**. Tapping
+it opens a short menu with two rows, **Sort By** and **Filter** ([Filtering results](#filtering-results)).
+**Sort By** names the current order underneath and opens a list with **Default**, one item for each
+enabled frequency dictionary by its name (JLPT, YouTube, Japanese Wikipedia, TV & Movies, Anime,
+Manga, Novels, Visual Novels, Video Games), and **Known Words**, one checked at a time. There is
+no direction to choose.
 
 - **Default** is the order described above.
-- **A dictionary**, **Most Common First** or **Least Common First**, orders every matching word
-  by that dictionary alone, however it matched. JLPT orders by level: N5 first when most common
-  first, N1 first when least common first.
-- **Known Words**, **Known First** or **Unknown First**, puts the learner's known words before
-  or after the rest. Marking a word known or unknown moves it at once.
+- **A dictionary** orders every matching word by that dictionary alone, most common first,
+  however it matched. JLPT orders by level, N5 first.
+- **Known Words** puts the learner's known words first. Marking a word known or unknown moves it
+  at once.
 
-A word the chosen dictionary doesn't rank goes after the ranked words in both directions. Ties,
-and the words without a rank, keep their Default order.
+A word the chosen dictionary doesn't rank goes after the ranked words. Ties, and the words without
+a rank, keep their Default order. A choice saved with a direction by an earlier build reads as
+Default.
 
 Switching re-sorts the visible results without searching again and announces the new order to
 VoiceOver. The choice is kept on the device across launches and applies to Japanese, English,
@@ -136,26 +137,20 @@ Kanji row), the row isn't shown.
 
 ### Filtering results
 
-Under **Sort By** and the order, the **Sorted by** row's menu has two **Filter** rows, named
-underneath for what they filter. Each opens a list that picks one, with the current choice checked:
+The **Sorted by** row's menu has a **Filter** row, labeled **Words** underneath, under **Sort By**.
+It opens **All**, **Known**, and **Unknown**, one checked at a time: **Known** shows only known
+words and **Unknown** only the words not yet known. Marking a word known or unknown moves it out
+of or into the list at once. Enabling and disabling frequency dictionaries happens under
+**Account → Frequency Dictionaries**, not here.
 
-- **Filter · Words:** **All**, **Known**, or **Unknown**. Marking a word known or unknown moves it
-  out of or into the list at once.
-- **Filter · Frequency Dictionaries:** **All**, or one enabled frequency dictionary by the name
-  Sort By uses, which shows only the words it ranks (JLPT at any level).
-
-The two combine: **Unknown** with **JLPT** shows the unknown words JLPT lists. While a filter
-is on, the **Sorted by** row adds how many after the order, as in **Sorted by Default · 2
-filters**; no other row is added. Filtering keeps the chosen sort. When it hides every word, the
+While a filter is on, the **Sorted by** row adds it after the order, as in **Sorted by Default · 1
+filter**; no other row is added. Filtering keeps the chosen sort. When it hides every word, the
 list shows **No Words Match Your Filter** with the count and **Clear Filter**.
 
 Changing the filter updates the visible results without searching again and announces how many
 words show to VoiceOver. The filter is kept on the device across launches and applies to
-Japanese, English, and romaji searches. While ranks are loading, or if the chosen dictionary's
-data can't be read, only **Words** applies and the dictionary comes back once the ranks load.
-If the chosen dictionary is disabled or removed, **Frequency Dictionaries** returns to **All** and
-**Words** stays. The Kanji row, Example Sentences, the reading refinement, and Discovered Words are
-never filtered.
+Japanese, English, and romaji searches. The Kanji row, Example Sentences, the reading refinement,
+and Discovered Words are never filtered.
 
 ## Dictionary and kanji details
 

@@ -10,7 +10,7 @@ struct SearchResultsView: View {
   let selectRefinement: (SearchRefinement) -> Void
   @State private var frequencyLoadState = SearchFrequencyLoadState()
   @AppStorage(SearchResultSort.storageKey) private var sort = SearchResultSort.relevance
-  @AppStorage(SearchResultFilter.storageKey) private var filter = SearchResultFilter.none
+  @AppStorage(SearchResultFilter.storageKey) private var filter = SearchResultFilter.all
   @Environment(WordKnowledge.self) private var wordKnowledge
 
   var body: some View {
@@ -23,18 +23,15 @@ struct SearchResultsView: View {
       ranks: frequencyLoadState.results,
       isKnown: wordKnowledge.isKnown
     )
-    let appliedFilter = SearchResultFiltering.applied(
-      filter, dictionaries: dictionaries, ranks: frequencyLoadState.results)
-    let shownEntries = shown(orderedEntries, by: appliedFilter)
+    let shownEntries = shown(orderedEntries, by: filter)
     let hiddenCount = orderedEntries.count - shownEntries.count
-    let chosenFilter = chosenFilter(ordered: orderedEntries, dictionaries: dictionaries)
+    let chosenFilter = chosenFilter(ordered: orderedEntries)
     List {
       if SearchResultsScreen.isSortable(results, entries: presentedEntries) {
         Section {
           SearchResultsMenu(
             sort: chosenSort(dictionaries: dictionaries ?? []), appliedSort: appliedSort,
-            filter: chosenFilter, appliedFilter: appliedFilter,
-            dictionaries: dictionaries ?? [])
+            filter: chosenFilter, dictionaries: dictionaries ?? [])
           .listRowSeparator(.hidden, edges: .top)
           .alignmentGuide(.listRowSeparatorLeading) { _ in 0 }
         }
@@ -98,7 +95,7 @@ struct SearchResultsView: View {
             } description: {
               Text(SearchResultFiltering.hiddenCountTitle(hiddenCount))
             } actions: {
-              Button("Clear Filter") { chosenFilter.wrappedValue = .none }
+              Button("Clear Filter") { chosenFilter.wrappedValue = .all }
             }
             .listRowSeparator(.hidden)
             .accessibilityIdentifier("search.filter-empty")
@@ -121,11 +118,6 @@ struct SearchResultsView: View {
     .onChange(of: dictionaries) { _, newDictionaries in
       if SearchResultSortOrdering.forgetsChoice(sort, dictionaries: newDictionaries) {
         sort = .relevance
-      }
-      if let newDictionaries,
-        SearchResultFiltering.forgetsDictionary(filter, dictionaries: newDictionaries)
-      {
-        filter = filter.keeping(newDictionaries)
       }
     }
     .task(id: frequencyTaskID) {
@@ -177,25 +169,18 @@ struct SearchResultsView: View {
   }
 
   private func shown(
-    _ entries: [DictionaryEntry], by appliedFilter: SearchResultFilter
+    _ entries: [DictionaryEntry], by filter: SearchResultFilter
   ) -> [DictionaryEntry] {
-    SearchResultFiltering.filtered(
-      entries, by: appliedFilter, ranks: frequencyLoadState.results, isKnown: wordKnowledge.isKnown)
+    SearchResultFiltering.filtered(entries, by: filter, isKnown: wordKnowledge.isKnown)
   }
 
-  private func chosenFilter(
-    ordered: [DictionaryEntry], dictionaries: [FrequencyPackDisclosure]?
-  ) -> Binding<SearchResultFilter> {
+  private func chosenFilter(ordered: [DictionaryEntry]) -> Binding<SearchResultFilter> {
     Binding(
       get: { filter },
       set: { newFilter in
         guard newFilter != filter else { return }
         withAnimation { filter = newFilter }
-        let shownCount = shown(
-          ordered,
-          by: SearchResultFiltering.applied(
-            newFilter, dictionaries: dictionaries, ranks: frequencyLoadState.results)
-        ).count
+        let shownCount = shown(ordered, by: newFilter).count
         AccessibilityNotification.Announcement(
           SearchResultFiltering.announcement(shownCount: shownCount)
         ).post()

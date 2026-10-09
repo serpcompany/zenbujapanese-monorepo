@@ -1,54 +1,9 @@
 import Foundation
 
-enum FrequencySortDirection: String, CaseIterable, Hashable, Sendable {
-  case mostCommonFirst = "most-common-first"
-  case leastCommonFirst = "least-common-first"
-
-  var title: String {
-    switch self {
-    case .mostCommonFirst: "Most Common First"
-    case .leastCommonFirst: "Least Common First"
-    }
-  }
-
-  var shortTitle: String {
-    switch self {
-    case .mostCommonFirst: "Most Common"
-    case .leastCommonFirst: "Least Common"
-    }
-  }
-}
-
-enum KnownWordSortDirection: String, CaseIterable, Hashable, Sendable {
-  case knownFirst = "known-first"
-  case unknownFirst = "unknown-first"
-
-  var title: String {
-    switch self {
-    case .knownFirst: "Known First"
-    case .unknownFirst: "Unknown First"
-    }
-  }
-}
-
-enum SearchResultSortKey: Hashable, Sendable {
+enum SearchResultSort: Hashable, Sendable, RawRepresentable {
   case relevance
   case frequency(family: String)
   case knownWords
-
-  var initialSort: SearchResultSort {
-    switch self {
-    case .relevance: .relevance
-    case .frequency(let family): .frequency(family: family, .mostCommonFirst)
-    case .knownWords: .knownWords(.knownFirst)
-    }
-  }
-}
-
-enum SearchResultSort: Hashable, Sendable, RawRepresentable {
-  case relevance
-  case frequency(family: String, FrequencySortDirection)
-  case knownWords(KnownWordSortDirection)
 
   static let storageKey = "search.result-sort.v1"
   private static let separator: Character = "|"
@@ -56,32 +11,18 @@ enum SearchResultSort: Hashable, Sendable, RawRepresentable {
   init?(rawValue: String) {
     let parts = rawValue.split(separator: Self.separator).map(String.init)
     switch (parts.first, parts.count) {
-    case ("default", 1):
-      self = .relevance
-    case ("frequency", 3):
-      guard let direction = FrequencySortDirection(rawValue: parts[2]) else { return nil }
-      self = .frequency(family: parts[1], direction)
-    case ("known-words", 2):
-      guard let direction = KnownWordSortDirection(rawValue: parts[1]) else { return nil }
-      self = .knownWords(direction)
-    default:
-      return nil
+    case ("default", 1): self = .relevance
+    case ("frequency", 2): self = .frequency(family: parts[1])
+    case ("known-words", 1): self = .knownWords
+    default: return nil
     }
   }
 
   var rawValue: String {
     switch self {
     case .relevance: "default"
-    case .frequency(let family, let direction): "frequency|\(family)|\(direction.rawValue)"
-    case .knownWords(let direction): "known-words|\(direction.rawValue)"
-    }
-  }
-
-  var key: SearchResultSortKey {
-    switch self {
-    case .relevance: .relevance
-    case .frequency(let family, _): .frequency(family: family)
-    case .knownWords: .knownWords
+    case .frequency(let family): "frequency|\(family)"
+    case .knownWords: "known-words"
     }
   }
 
@@ -90,12 +31,9 @@ enum SearchResultSort: Hashable, Sendable, RawRepresentable {
 
   func summary(dictionaries: [FrequencyPackDisclosure]) -> String {
     switch self {
-    case .relevance:
-      Self.relevanceTitle
-    case .frequency(let family, let direction):
-      "\(Self.name(of: family, in: dictionaries)), \(direction.shortTitle)"
-    case .knownWords(let direction):
-      "\(Self.knownWordsTitle), \(direction.title)"
+    case .relevance: Self.relevanceTitle
+    case .frequency(let family): Self.name(of: family, in: dictionaries)
+    case .knownWords: Self.knownWordsTitle
     }
   }
 
@@ -105,12 +43,9 @@ enum SearchResultSort: Hashable, Sendable, RawRepresentable {
 
   func announcement(dictionaries: [FrequencyPackDisclosure]) -> String {
     switch self {
-    case .relevance:
-      "Sorted by default order"
-    case .frequency(let family, let direction):
-      "Sorted by \(Self.name(of: family, in: dictionaries)), \(direction.title.lowercased())"
-    case .knownWords(let direction):
-      "Sorted by known words, \(direction.title.lowercased())"
+    case .relevance: "Sorted by default order"
+    case .frequency(let family): "Sorted by \(Self.name(of: family, in: dictionaries))"
+    case .knownWords: "Sorted by known words"
     }
   }
 
@@ -133,7 +68,7 @@ enum SearchResultSortOrdering {
   static func applied(
     _ sort: SearchResultSort, dictionaries: [FrequencyPackDisclosure]?
   ) -> SearchResultSort {
-    guard case .frequency(let family, _) = sort else { return sort }
+    guard case .frequency(let family) = sort else { return sort }
     let isEnabled = dictionaries?.contains { $0.id.family == family } ?? false
     return isEnabled ? sort : .relevance
   }
@@ -153,21 +88,19 @@ enum SearchResultSortOrdering {
     switch sort {
     case .relevance:
       return entries
-    case .frequency(let family, let direction):
+    case .frequency(let family):
       return stablySorted(entries) { entry in
         let result = ranks[entry.id]?.first { $0.pack?.id.family == family }
         guard let value = result?.sortValue else { return [1] }
-        return [0, direction == .mostCommonFirst ? value : -value]
+        return [0, value]
       }
-    case .knownWords(let direction):
-      return stablySorted(entries) { entry in
-        [isKnown(entry.id) == (direction == .knownFirst) ? 0 : 1]
-      }
+    case .knownWords:
+      return stablySorted(entries) { entry in [isKnown(entry.id) ? 0 : 1] }
     }
   }
 
   static func chipRanks(_ ranks: FrequencyRanks?, for sort: SearchResultSort) -> FrequencyRanks? {
-    guard case .frequency(let family, _) = sort, let ranks else { return ranks }
+    guard case .frequency(let family) = sort, let ranks else { return ranks }
     let isSorted: (FrequencyLookupResult) -> Bool = { $0.pack?.id.family == family }
     return ranks.filter(isSorted) + ranks.filter { !isSorted($0) }
   }
