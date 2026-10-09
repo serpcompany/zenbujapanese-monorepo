@@ -1,4 +1,4 @@
-import { absoluteUrl } from './site'
+import { absoluteUrl, servedOrigin } from './site'
 
 export type SitemapEntry = { url: string; lastModified?: Date }
 
@@ -15,7 +15,7 @@ function lastmod(date: Date | undefined) {
   return date ? `<lastmod>${date.toISOString()}</lastmod>` : ''
 }
 
-export const childSitemaps = ['/sitemap-pages.xml'] as const
+export const childSitemaps = ['/sitemap-pages.xml', '/sitemap-tools.xml'] as const
 
 export type PathRule = { source: string; destination: string }
 
@@ -81,4 +81,9 @@ export function xmlResponse(body: BodyInit) {
       'Cache-Control': 'public, max-age=3600'
     }
   })
+}
+
+export function pathsSitemapResponse(paths: readonly string[], request: Request) {
+  const origin = servedOrigin(request)
+  return xmlResponse(urlSetXml(paths.map(path => ({ url: absoluteUrl(path, origin) }))))
 }

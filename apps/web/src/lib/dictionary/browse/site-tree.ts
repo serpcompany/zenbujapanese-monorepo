@@ -6,6 +6,7 @@ import {
   schoolLists
 } from '@zenbu/dictionary-core/browse/lists'
 import { legalPages, pageFor, type SitePath } from '../../pages'
+import { converters, toolsIndex } from '../../tools/converters'
 import {
   browsePath,
   categoryIndexes,
@@ -39,6 +40,12 @@ export const homeTree: TreeNode = {
     { ...page('/legal/'), children: legalPages.map(legal => page(legal.path)) },
     page('/sitemap/')
   ]
+}
+
+export const toolsTree: TreeNode = {
+  title: toolsIndex.title,
+  path: toolsIndex.path,
+  children: converters.map(converter => ({ title: converter.name, path: converter.path }))
 }
 
 export const dictionaryTree: TreeNode = {

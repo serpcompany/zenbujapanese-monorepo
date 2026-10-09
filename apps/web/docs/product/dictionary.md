@@ -919,8 +919,9 @@ themes; text on the muted grey (the footer, the product page's demo, the homepag
   changes by keyboard, in the account menu or, on phones, the drawer", and "a saved choice is
   already applied, so the page never shows the other theme first"; `apps/web/e2e/contrast.spec.ts`,
   which runs axe's colour-contrast rule on every page type in `apps/web/e2e/page-types.ts` (every
-  page in `src/lib/pages.ts`, the account pages, search, a word with its conjugation form and kanji
-  open, kanji details, every kind of browse page, and a missing page), in both themes, at both
+  page in `src/lib/pages.ts`, the account pages, the tools pages, search, a word with its
+  conjugation form and kanji open, kanji details, every kind of browse page, and a missing page),
+  in both themes, at both
   widths, and on phones on the phone menu and each of its groups.
 
 **Menus.** Dictionary, Tools, and Products are mega menus: a featured card, three columns, and a
@@ -929,9 +930,10 @@ footer line with a link. Company is a plain dropdown.
 - **Dictionary:** a card with the App Store search screenshot that opens the dictionary home; Kana
   (Hiragana, Katakana), Word lists (JLPT vocabulary, which opens N5, and Frequency lists), and
   Kanji and grammar (Kanji by grade, Parts of speech); then Browse everything (`/dictionary/browse/`).
-- **Tools:** a card drawn with kana that leads to all tools; Reference (Dictionary, Kana charts),
-  Lists (Kanji lists, Frequency lists), and Converters (Hiragana to Katakana, Romaji to Kana, Kanji
-  to Furigana); then All free tools.
+- **Tools:** a card drawn with kana that leads to all tools (`/tools/`); Reference (Dictionary,
+  Kana charts), Lists (Kanji lists, Frequency lists), and Converters (Hiragana to Katakana and
+  Romaji to Kana, which open their pages, and Kanji to Furigana); then All free tools
+  ([Tools pages](tools.md)).
 - **Products:** a card with the App Store word screenshot for Zenbu Japanese for iPhone, with Get
   the app; Apps (Zenbu Japanese for iPhone, Browser extension), Free (Zenbu Japanese Dictionary,
   Free tools), and Learn (Reference guides, Courses); then All products.
@@ -945,8 +947,8 @@ window.
 
 - Source: #648 decision and mockups (Header switch); #650.
 - Check: `src/components/site-header.test.tsx`, "the Dictionary menu leads to the dictionary and its
-  browse pages", "the Tools menu leads to the reference pages, and its planned pages are
-  placeholders", "the Products menu leads to the products pages and the web dictionary, and its
+  browse pages", "the Tools menu leads to the tools, the reference pages, and the converters, and
+  Kanji to Furigana is a placeholder", "the Products menu leads to the products pages and the web dictionary, and its
   planned pages are placeholders", and "the Company menu leads to About, Sources, Support, Contact, and Legal";
   `apps/web/e2e/site.spec.ts`, for each menu, "the … menu opens and closes with a click", "the …
   menu opens with the keyboard and Escape closes it", and "a link in the … menu opens its page and
@@ -954,14 +956,16 @@ window.
   redirect" and "the Dictionary menu leads to the search box".
 
 **Placeholder links.** The pages the menus, footer, and [homepage](home.md) name that don't exist
-yet, and the outside addresses that aren't known yet, link to `#` for now: All free tools and Free
-tools (`/tools/`), the three converters, Browser extension, Reference guides, Courses, Log in
+yet, and the outside addresses that aren't known yet, link to `#` for now: Kanji to Furigana
+(#691), Browser extension, Reference guides, Courses, Log in
 (`/login/`) and Create an account (`/register/`) in a build whose account pages are closed, the
 App Store (the
 Get the app on the product page and on the catalog's iPhone app card), the ten social accounts, and
 See all videos (`/videos/`), which shows only once the product page has videos. Zenbu Japanese for
 iPhone and All products now open their pages, `/products/zenbu-japanese-app/` and
-`/products/` ([Products pages](products.md)), from the same entries; so do Log in and Create an
+`/products/` ([Products pages](products.md)), from the same entries, as do All free tools, Free
+tools, and All tools (`/tools/`) and the Hiragana to Katakana and Romaji to Kana converters
+([Tools pages](tools.md)); so do Log in and Create an
 account where the account pages are open, as on staging and in production
 ([Account pages](account.md#pages)), the
 build choosing their addresses as it does the footer's Sign in. #650 asked for menu items to appear only once their page
@@ -975,18 +979,19 @@ or linking the page directly once it exists.
 - Source: #648 decision (placeholder links), and the owner's decision on #650 (show planned items
   as placeholders).
 - Check: `apps/web/e2e/placeholders.spec.ts`, "every # link the site renders is a placeholder listed
-  in src/lib/site.ts", which visits every page in `src/lib/pages.ts` and a search, word, and browse
-  page at both widths, with the account menu open from 1024 pixels and the phone menu open below,
-  and prints the placeholders it found; `apps/web/e2e/site.spec.ts`, "the planned pages in the
-  Tools and Products menus are # placeholders for now, and All products opens the catalog";
+  in src/lib/site.ts", which visits every page in `src/lib/pages.ts`, the tools index, a converter,
+  and a search, word, and browse page at both widths, with the account menu open from 1024 pixels
+  and the phone menu open below, and prints the placeholders it found; `apps/web/e2e/site.spec.ts`,
+  "the Tools menu opens the tools and two converters, Kanji to Furigana and the Products menu’s
+  planned pages are # placeholders, and All products opens the catalog";
   `src/lib/site.test.ts`, "%s opens its page in a build whose account pages are open, and isn't a
   placeholder" and "%s stays a # placeholder in a build whose account pages are closed", for Log in
   and Create an account.
 
 **Current section.** The menu button of the section the page is in is in the foreground color on a
 muted background, where the others are muted text, and screen readers hear it as current
-(`aria-current="true"`): every page under `/dictionary/` is in Dictionary, and About, Sources,
-Support, Contact, and the legal pages are in Company. Home and the sitemap are in none. In the open
+(`aria-current="true"`): every page under `/dictionary/` is in Dictionary, every page under
+`/tools/` in Tools, and About, Sources, Support, Contact, and the legal pages are in Company. Home and the sitemap are in none. In the open
 menu and in the phone menu, the link to the page itself is marked as the current page
 (`aria-current="page"`).
 
@@ -1091,7 +1096,7 @@ are 24 by 24. The same holds in the phone menu, with each of its groups open.
 
 - Source: #682 (the owner's review on a phone).
 - Check: `apps/web/e2e/phone-layout.spec.ts`, "… fits a 360px phone", on every page type in
-  `apps/web/e2e/page-types.ts` (the account pages among them), each homepage area, the phone menu
+  `apps/web/e2e/page-types.ts` (the account and tools pages among them), each homepage area, the phone menu
   and each of its groups, and a missing page, with axe's `target-size` rule for the tap
   targets.
 

@@ -57,7 +57,9 @@ describe('the header marks the section the page is in', () => {
     ['/dictionary/browse/kana/', 'Dictionary'],
     ['/about/', 'Company'],
     ['/sources/', 'Company'],
-    ['/legal/privacy/', 'Company']
+    ['/legal/privacy/', 'Company'],
+    ['/tools/', 'Tools'],
+    ['/tools/hiragana-to-katakana/', 'Tools']
   ])('%s is in %s', (path, section) => {
     expect(triggers(header(path))).toEqual(
       sections.map(label => [label, label === section ? 'true' : null])
@@ -83,18 +85,21 @@ describe("the header's menus are in the page's HTML, with the current page marke
     ])
   })
 
-  test('the Tools menu leads to the reference pages, and its planned pages are placeholders', () => {
+  test('the Tools menu leads to the tools, the reference pages, and the converters, and Kanji to Furigana is a placeholder', () => {
     expect(menuLinks(header('/')).slice(8, 17)).toEqual([
-      placeholder('tools'),
+      listed('tools'),
       page('/dictionary/'),
       page('/dictionary/browse/kana/'),
       page('/dictionary/browse/kanji/'),
       page('/dictionary/browse/frequency-dictionaries/'),
-      placeholder('hiragana-to-katakana'),
-      placeholder('romaji-to-kana'),
+      listed('hiragana-to-katakana'),
+      listed('romaji-to-kana'),
       placeholder('kanji-to-furigana'),
-      placeholder('tools')
+      listed('tools')
     ])
+    expect(listed('tools')[0]).toBe('/tools/')
+    expect(listed('hiragana-to-katakana')[0]).toBe('/tools/hiragana-to-katakana/')
+    expect(listed('romaji-to-kana')[0]).toBe('/tools/romaji-to-kana/')
   })
 
   test('the Products menu leads to the products pages and the web dictionary, and its planned pages are placeholders', () => {
@@ -103,7 +108,7 @@ describe("the header's menus are in the page's HTML, with the current page marke
       listed('iphone-app'),
       placeholder('browser-extension'),
       page('/dictionary/'),
-      placeholder('tools'),
+      listed('tools'),
       placeholder('reference-guides'),
       placeholder('courses'),
       listed('products')

@@ -6,6 +6,12 @@ export interface KanaTile {
   href: string | null
   note?: string
   label?: string
+  muted?: true
+}
+
+const soundGrids = {
+  3: 'grid-cols-3 sm:grid-rows-3',
+  5: 'grid-cols-5 sm:grid-rows-5'
 }
 
 export function KanaChart({
@@ -13,12 +19,14 @@ export function KanaChart({
   tile,
   label,
   large = false,
+  sounds = 5,
   className
 }: {
   rows: readonly KanaRow[]
   tile: (cell: KanaCell) => KanaTile | null
   label: string
   large?: boolean
+  sounds?: keyof typeof soundGrids
   className?: string
 }) {
   const cells = rows.flatMap(({ consonant, cells: row }) =>
@@ -29,7 +37,8 @@ export function KanaChart({
       aria-label={label}
       lang="ja"
       className={cn(
-        'grid grid-cols-5 gap-1.5 sm:auto-cols-fr sm:grid-flow-col sm:grid-rows-5 sm:grid-cols-none',
+        'grid gap-1.5 sm:auto-cols-fr sm:grid-flow-col sm:grid-cols-none',
+        soundGrids[sounds],
         className
       )}
     >
@@ -37,13 +46,14 @@ export function KanaChart({
         const shown = cell ? tile(cell) : null
         if (!cell || !shown) return <li key={key} aria-hidden="true" />
         const tileClass = cn(
-          'flex h-full flex-col items-center justify-center gap-0.5 rounded-lg border',
+          'flex h-full flex-col items-center justify-center gap-0.5 rounded-lg border text-center',
           large ? 'min-h-16 py-1.5' : 'min-h-11',
-          shown.href ? 'hover:bg-muted' : 'border-dashed text-muted-foreground'
+          shown.href && 'hover:bg-muted',
+          shown.muted && 'border-dashed text-muted-foreground'
         )
         const contents = (
           <>
-            <span className={large ? 'text-xl leading-none sm:text-2xl' : 'text-lg leading-none'}>
+            <span className={large ? 'text-xl leading-none lg:text-2xl' : 'text-lg leading-none'}>
               {cell.kana}
             </span>
             {shown.note ? (

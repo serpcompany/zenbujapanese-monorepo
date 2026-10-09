@@ -1,17 +1,9 @@
 import { PlayIcon } from 'lucide-react'
 import Image from 'next/image'
-import Link from 'next/link'
 import type { ReactNode } from 'react'
 import { FeatureDemo } from '@/components/products/feature-demo'
+import { SectionBreadcrumbs } from '@/components/section-breadcrumbs'
 import { AppStoreButton } from '@/components/site-actions'
-import {
-  Breadcrumb,
-  BreadcrumbItem,
-  BreadcrumbLink,
-  BreadcrumbList,
-  BreadcrumbPage,
-  BreadcrumbSeparator
-} from '@/components/ui/breadcrumb'
 import { buttonVariants } from '@/components/ui/button'
 import type { ProductDemo } from '@/lib/products/product-page'
 import { linkTo } from '@/lib/site'
@@ -27,25 +19,6 @@ export interface ProductHeroContent {
   demos: readonly ProductDemo[]
 }
 
-function ProductBreadcrumbs({ title }: { title: string }) {
-  const products = linkTo('products')
-  return (
-    <Breadcrumb>
-      <BreadcrumbList className="justify-center">
-        <BreadcrumbItem>
-          <BreadcrumbLink render={<Link href={products.href} data-link-target={products.target} />}>
-            Products
-          </BreadcrumbLink>
-        </BreadcrumbItem>
-        <BreadcrumbSeparator />
-        <BreadcrumbItem>
-          <BreadcrumbPage>{title}</BreadcrumbPage>
-        </BreadcrumbItem>
-      </BreadcrumbList>
-    </Breadcrumb>
-  )
-}
-
 const heroButtonClassName = 'h-11 px-4.5 text-[15px]'
 
 export function ProductHero({
@@ -59,7 +32,11 @@ export function ProductHero({
 }) {
   return (
     <section className="mx-auto flex w-full max-w-5xl flex-col items-center gap-4.5 px-4 pt-8 pb-12 text-center md:px-5 md:pt-10 md:pb-16">
-      <ProductBreadcrumbs title={product.title} />
+      <SectionBreadcrumbs
+        section={{ title: 'Products', ...linkTo('products') }}
+        page={product.title}
+        className="justify-center"
+      />
       <Image
         src={product.icon}
         alt=""

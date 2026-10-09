@@ -66,7 +66,9 @@ home. Each chart links to its script's page with how many words it lists.
 **Charts on a phone.** Every kana chart, here, on the hub, on the dictionary home, and on a
 script's page, reads down from 640 pixels, a column for each consonant (あいうえお down the first),
 as the mockups draw it. Narrower, it reads across, five kana to a row (あいうえお, then かきくけこ),
-so each tile stays wide enough to tap and read rather than squeezing 11 columns into a phone. A
+so each tile stays wide enough to tap and read rather than squeezing 11 columns into a phone. The
+charts with romaji keep their kana at the phone size up to 1024 pixels, where the 11 columns are
+narrowest, and draw them a size larger from there. A
 script's page shows each kana's count in full at every width, and the chart's Japanese name stays
 on one line.
 
@@ -267,8 +269,8 @@ header's Dictionary and Tools menus lead to the kana, kanji, frequency, and cate
   columns).
 - Check: `src/components/site-footer.test.tsx`, "the footer groups its links under Products, Tools,
   Company, and Legal"; `src/components/site-header.test.tsx`, "the Dictionary menu leads to the
-  dictionary and its browse pages" and "the Tools menu leads to the reference pages, and its planned
-  pages are placeholders"; `e2e/site.spec.ts`, "the footer groups its links under Products, Tools,
+  dictionary and its browse pages" and "the Tools menu leads to the tools, the reference pages, and
+  the converters, and Kanji to Furigana is a placeholder"; `e2e/site.spec.ts`, "the footer groups its links under Products, Tools,
   Company, and Legal, then ends with the copyright and Sitemap" and "every link in the header menus
   opens a page the site has, with no redirect".
 
@@ -278,8 +280,9 @@ are, so the kana charts and the kanji grids fit a row; on a phone it fills the s
 - Source: #614 mockups.
 - Check: Browse spec, "a browse page is one column, at most 1,024 pixels wide".
 
-**HTML sitemap.** `/sitemap/` lists the site's pages, then the dictionary and its browse pages: the
-kana pages, each kanji list, each frequency dictionary, and the category lists.
+**HTML sitemap.** `/sitemap/` lists the site's pages, the tools index and its converters
+([Tools pages](tools.md)), then the dictionary and its browse pages: the kana pages, each kanji
+list, each frequency dictionary, and the category lists.
 
 - Source: #614 mockup "Footer + /sitemap/ (changed)".
 - Check: Browse spec, "the sitemap page lists the browse pages".

@@ -1,6 +1,7 @@
 import type { Locator, Page } from '@playwright/test'
 import { sitePages } from '../src/lib/pages'
 import { placeholderHref, placeholderLinks } from '../src/lib/site'
+import { converterPath, toolsPath } from '../src/lib/tools/paths'
 import {
   accountButton,
   accountMenu,
@@ -14,6 +15,8 @@ import {
 
 const pagesToCheck = [
   ...sitePages.map(page => page.path),
+  toolsPath,
+  converterPath('hiragana-to-katakana'),
   '/dictionary/search/iru/',
   needed.path,
   '/dictionary/browse/'

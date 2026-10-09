@@ -1,7 +1,8 @@
 import { appScreenshots } from '@/lib/app-screenshots'
 import type { SitePath } from '@/lib/pages'
 import { featuredApp, productById } from '@/lib/products/catalog'
-import type { ProductDemo, ProductPoint, ProductQuestion } from '@/lib/products/product-page'
+import type { ProductDemo, ProductPoint } from '@/lib/products/product-page'
+import type { Question } from '@/lib/questions'
 
 export const iphoneAppPage = {
   path: '/products/zenbu-japanese-app/' satisfies SitePath,
@@ -118,6 +119,6 @@ export const iphoneAppPage = {
         'It has the same entries as the app’s Search tab, free in your browser. Image Search, handwriting, Translate, and Player are in the app.',
       link: { title: 'Search the dictionary', href: '/dictionary/' }
     }
-  ] satisfies ProductQuestion[],
+  ] satisfies Question[],
   related: ['dictionary', 'browser-extension', 'kana-charts'].map(productById)
 } as const

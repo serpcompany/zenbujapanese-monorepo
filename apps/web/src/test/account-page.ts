@@ -99,10 +99,10 @@ export async function fill(container: HTMLElement, label: string, value: string)
     candidate => candidate.textContent?.trim() === label
   )
   const input = labelled
-    ? container.querySelector<HTMLInputElement>(`[id="${labelled.htmlFor}"]`)
+    ? container.querySelector<HTMLInputElement | HTMLTextAreaElement>(`[id="${labelled.htmlFor}"]`)
     : null
   if (!input) throw new Error(`No field labelled ${label}`)
-  const setValue = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')?.set
+  const setValue = Object.getOwnPropertyDescriptor(Object.getPrototypeOf(input), 'value')?.set
   await act(async () => {
     setValue?.call(input, value)
     input.dispatchEvent(new Event('input', { bubbles: true }))
