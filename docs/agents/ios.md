@@ -692,7 +692,8 @@ When changing Search results or frequency dictionaries, also check in the Simula
 - Rapidly submitting `quiet`, `miru`, then `いる` leaves only `いる` results.
 - **•••** → **Sort By** on `dog`, `いる`, and `miru`: each dictionary in both directions moves
   that dictionary's chip first and puts the words it doesn't rank last; **Known Words** moves a
-  word marked known by swiping at once. The choice survives relaunching the app, and disabling the
+  word marked known by swiping at once. A **Sorted by …** row shows above the words until
+  **Reset**. The choice survives relaunching the app, and disabling the
   chosen dictionary under **Account → Frequency Dictionaries** returns Search to **Default**.
 
 ## Image Search manual checks

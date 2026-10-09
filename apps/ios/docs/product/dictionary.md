@@ -80,6 +80,9 @@ YouTube, Japanese Wikipedia, TV & Movies, Anime, Manga, Novels, Visual Novels, V
 A word the chosen dictionary doesn't rank goes after the ranked words in both directions. Ties,
 and the words without a rank, keep their Default order.
 
+While the order isn't Default, a row above the words says so (**Sorted by YouTube, Least
+Common**) with a **Reset** button that returns to Default; at Default there's no row.
+
 Switching re-sorts the visible results without searching again and announces the new order to
 VoiceOver. The choice is kept on the device across launches and applies to Japanese, English,
 and romaji searches. While ranks are loading, or if frequency data can't be read, a dictionary

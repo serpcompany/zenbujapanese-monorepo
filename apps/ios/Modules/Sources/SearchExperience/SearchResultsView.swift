@@ -62,6 +62,13 @@ struct SearchResultsView: View {
         }
       case .ranked(let kanji, let entries):
         Section {
+          if let status = appliedSort.status(dictionaries: dictionaries ?? []) {
+            SearchResultsStatusRow(
+              text: status, systemImage: "arrow.up.arrow.down", actionTitle: "Reset",
+              action: { chosenSort(dictionaries: dictionaries ?? []).wrappedValue = .relevance }
+            )
+            .accessibilityIdentifier("search.sort-status")
+          }
           if let kanji {
             KanjiPrimaryRow(
               character: kanji,

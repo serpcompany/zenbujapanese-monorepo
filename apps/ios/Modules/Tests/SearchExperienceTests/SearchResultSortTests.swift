@@ -170,7 +170,7 @@ struct SearchResultSortTests {
     #expect(SearchResultSort(rawValue: rawValue) == nil)
   }
 
-  @Test("the menu summarizes the order under Sort By and announces it in full")
+  @Test("the menu and the list name the order unless it's Default, and VoiceOver hears it")
   func summaryAndAnnouncement() {
     let byYouTube = SearchResultSort.frequency(family: youTube.id.family, .mostCommonFirst)
     let byJLPT = SearchResultSort.frequency(family: jlpt.id.family, .leastCommonFirst)
@@ -182,6 +182,8 @@ struct SearchResultSortTests {
         == "Known Words, Unknown First")
     #expect(
       byYouTube.announcement(dictionaries: [youTube]) == "Sorted by YouTube, most common first")
+    #expect(SearchResultSort.relevance.status(dictionaries: [youTube]) == nil)
+    #expect(byYouTube.status(dictionaries: [youTube]) == "Sorted by YouTube, Most Common")
   }
 
   private func ordered(

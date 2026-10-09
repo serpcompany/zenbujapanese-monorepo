@@ -70,3 +70,22 @@ struct SearchActionsMenu<Content: View>: View {
     .accessibilityIdentifier("search.actions-menu")
   }
 }
+
+struct SearchResultsStatusRow: View {
+  let text: String
+  let systemImage: String
+  let actionTitle: String
+  let action: () -> Void
+
+  var body: some View {
+    HStack {
+      Label(text, systemImage: systemImage)
+        .foregroundStyle(.secondary)
+      Spacer()
+      Button(actionTitle, action: action)
+        .buttonStyle(.borderless)
+    }
+    .font(.footnote)
+    .listRowSeparator(.hidden)
+  }
+}

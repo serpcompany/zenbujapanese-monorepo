@@ -99,6 +99,10 @@ enum SearchResultSort: Hashable, Sendable, RawRepresentable {
     }
   }
 
+  func status(dictionaries: [FrequencyPackDisclosure]) -> String? {
+    self == .relevance ? nil : "Sorted by \(summary(dictionaries: dictionaries))"
+  }
+
   func announcement(dictionaries: [FrequencyPackDisclosure]) -> String {
     switch self {
     case .relevance:
