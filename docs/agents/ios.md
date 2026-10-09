@@ -130,7 +130,8 @@ section lists, also check:
 - On the Mac: the four tabs in the sidebar; ⌘F, ⌘⇧I, and ⌘1 to ⌘4; **Settings…** shows the profile,
   the account, Reading Aids, and Frequency Dictionaries; Image Search's **Paste Image** opens a
   copied image; an image dragged onto Search opens it; right-clicking a list in Account → Lists
-  offers Rename and Delete.
+  offers Rename and Delete; a name changed in **Settings…** → Profile shows in a window's Account
+  → Profile, even after leaving that window's Name field untouched, and isn't written back.
 
 ## Install on an iPhone
 
@@ -480,10 +481,11 @@ copy of bytes a copy already holds; a value that isn't data at all is kept aside
 it could read (each video, note, and Media Library record; the profile is one record, so it
 starts empty). A Media Library index that can't be opened or copied aside is neither read nor
 written until it can be. Word notes are saved one note at a time (`WordNoteStorage.save`), so two
-pages open on one word, in two windows on iPad or the Mac, can't write over each other's notes;
-likewise Profile saves a field only when its text changed while it had focus, and otherwise
-shows the saved value (`ProfileFieldEdit`), so the Mac's Settings and an Account tab don't write
-over each other.
+pages open on one word, in two windows on iPad or the Mac, can't drop each other's new notes
+(when both edit the same note, the last save wins); likewise Profile saves a field only when its
+text changed while it had focus, shows the newest saved value whenever the field doesn't have
+focus or is left unchanged, and keeps a rejected email as typed until it's focused again
+(`ProfileFieldEdit`), so the Mac's Settings and an Account tab don't write over each other.
 
 The Media Library deletes only images the learner deleted. When a kept copy of the index names
 the photo, or a copy can't be read, `deleteImage` records its ID and when in

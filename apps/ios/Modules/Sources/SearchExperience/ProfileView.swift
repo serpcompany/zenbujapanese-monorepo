@@ -55,20 +55,31 @@ struct ProfileCardRow: View {
 
 struct ProfileFieldEdit: Equatable {
   var text = ""
+  private var saved = ""
   private var textWhenFocused: String?
+  private var keepsRejectedText = false
 
   mutating func focus() {
     textWhenFocused = text
+    keepsRejectedText = false
   }
 
   mutating func show(_ saved: String) {
-    guard textWhenFocused == nil else { return }
+    self.saved = saved
+    guard textWhenFocused == nil, !keepsRejectedText else { return }
     text = saved
   }
 
   mutating func unfocus() -> String? {
-    defer { textWhenFocused = nil }
-    return text == textWhenFocused ? nil : text
+    guard let textWhenFocused else { return nil }
+    self.textWhenFocused = nil
+    guard text == textWhenFocused else { return text }
+    text = saved
+    return nil
+  }
+
+  mutating func reject() {
+    keepsRejectedText = true
   }
 }
 
@@ -192,20 +203,26 @@ struct ProfileView: View {
   private func commit(_ field: Field) {
     switch field {
     case .name:
-      guard let edited = name.unfocus() else { return }
-      profile.name = edited.trimmingCharacters(in: .whitespacesAndNewlines)
-    case .username:
-      guard let edited = username.unfocus() else { return }
-      profile.username = UserProfile.normalizedUsername(edited)
-    case .email:
-      guard let edited = email.unfocus() else { return }
-      let trimmed = edited.trimmingCharacters(in: .whitespacesAndNewlines)
-      guard trimmed.isEmpty || UserProfile.isValidEmail(trimmed) else {
-        showsEmailError = true
-        return
+      if let edited = name.unfocus() {
+        profile.name = edited.trimmingCharacters(in: .whitespacesAndNewlines)
       }
-      profile.email = trimmed
+      name.show(profile.name)
+    case .username:
+      if let edited = username.unfocus() {
+        profile.username = UserProfile.normalizedUsername(edited)
+      }
+      username.show(profile.username)
+    case .email:
+      if let edited = email.unfocus() {
+        let trimmed = edited.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard trimmed.isEmpty || UserProfile.isValidEmail(trimmed) else {
+          email.reject()
+          showsEmailError = true
+          return
+        }
+        profile.email = trimmed
+      }
+      email.show(profile.email)
     }
-    showSaved()
   }
 }

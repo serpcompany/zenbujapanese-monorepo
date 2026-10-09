@@ -29,6 +29,7 @@ final class SavedItemNotes {
   }
 
   func beginEditing(_ note: LearnerWordNote) {
+    if let editingNoteID, editingNoteID != note.id { saveDraft(of: editingNoteID) }
     editingNoteID = note.id
     draft = note.text
   }
@@ -47,30 +48,15 @@ final class SavedItemNotes {
   }
 
   private func saveDraft(of editingNoteID: String) {
-    notes = notesApplyingDraft(noteID: editingNoteID)
-    guard let noteID else { return }
     let note = LearnerWordNote(id: editingNoteID, text: draft)
+    notes.apply(note)
+    guard let noteID else { return }
     let store = store
     let precedingSave = saveTask
     saveTask = Task {
       await precedingSave?.value
       await store.save(note, noteID)
     }
-  }
-
-  private func notesApplyingDraft(noteID: String) -> [LearnerWordNote] {
-    let normalized = draft.trimmingCharacters(in: .whitespacesAndNewlines)
-    var updatedNotes = notes
-    if let index = updatedNotes.firstIndex(where: { $0.id == noteID }) {
-      if normalized.isEmpty {
-        updatedNotes.remove(at: index)
-      } else {
-        updatedNotes[index].text = normalized
-      }
-    } else if !normalized.isEmpty {
-      updatedNotes.append(LearnerWordNote(id: noteID, text: normalized))
-    }
-    return updatedNotes
   }
 }
 

@@ -20,6 +20,17 @@ struct LearnerWordNote: Codable, Hashable, Identifiable, Sendable {
   }
 }
 
+extension [LearnerWordNote] {
+  mutating func apply(_ note: LearnerWordNote) {
+    let text = note.text.trimmingCharacters(in: .whitespacesAndNewlines)
+    if let index = firstIndex(where: { $0.id == note.id }) {
+      if text.isEmpty { remove(at: index) } else { self[index].text = text }
+    } else if !text.isEmpty {
+      append(LearnerWordNote(id: note.id, text: text))
+    }
+  }
+}
+
 actor WordNoteStorage {
   static let shared = WordNoteStorage()
   private let defaults: UserDefaults
@@ -36,12 +47,7 @@ actor WordNoteStorage {
   func save(_ note: LearnerWordNote, for id: WordNoteID) {
     var stored = notes()
     var word = stored[id.rawValue] ?? []
-    let text = note.text.trimmingCharacters(in: .whitespacesAndNewlines)
-    if let index = word.firstIndex(where: { $0.id == note.id }) {
-      if text.isEmpty { word.remove(at: index) } else { word[index].text = text }
-    } else if !text.isEmpty {
-      word.append(LearnerWordNote(id: note.id, text: text))
-    }
+    word.apply(note)
     stored[id.rawValue] = word.isEmpty ? nil : word
     write(stored)
   }

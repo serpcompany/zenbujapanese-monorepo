@@ -75,16 +75,28 @@ struct WordNoteStorageTests {
     #expect(try await self.storage(in: temporary).load(miru).map(\.text) == ["見る"])
   }
 
+  @Test("a page saves the note it was editing when it opens another")
+  func savesADraftWhenAnotherNoteOpens() async throws {
+    let temporary = try TemporaryDefaults()
+    let (page, storage, saves) = try await pageOnTwoNotes(in: temporary)
+    var savesFinished = saves.makeAsyncIterator()
+
+    await MainActor.run {
+      page.beginEditing(page.notes[0])
+      page.draft = "よく食べる"
+      page.beginEditing(page.notes[1])
+      page.finishEditing()
+    }
+    while let saved = await savesFinished.next(), saved != "2" {}
+
+    #expect(await storage.load(taberu).map(\.text) == ["よく食べる", "朝ごはん"])
+  }
+
   @Test("a page saves the note it was editing when it adds another, and removes one emptied")
   func editsNotesThroughAPage() async throws {
     let temporary = try TemporaryDefaults()
-    let storage = try storage(in: temporary)
-    await storage.save(LearnerWordNote(id: "1", text: "毎日食べる"), for: taberu)
-    await storage.save(LearnerWordNote(id: "2", text: "朝ごはん"), for: taberu)
-    let (store, saves) = observed(storage)
+    let (page, storage, saves) = try await pageOnTwoNotes(in: temporary)
     var savesFinished = saves.makeAsyncIterator()
-    let page = await MainActor.run { SavedItemNotes(store: store) }
-    await page.load(taberu)
     let loaded = await MainActor.run { page.notes }
 
     for (note, draft) in zip(loaded, ["よく食べる", ""]) {
@@ -102,13 +114,25 @@ struct WordNoteStorageTests {
     #expect(await MainActor.run { page.notes.map(\.text) } == ["よく食べる"])
   }
 
-  private func observed(_ storage: WordNoteStorage) -> (WordNoteStore, AsyncStream<Void>) {
-    let (saves, saved) = AsyncStream<Void>.makeStream()
+  private func pageOnTwoNotes(in temporary: TemporaryDefaults) async throws
+    -> (SavedItemNotes, WordNoteStorage, AsyncStream<String>)
+  {
+    let storage = try storage(in: temporary)
+    await storage.save(LearnerWordNote(id: "1", text: "毎日食べる"), for: taberu)
+    await storage.save(LearnerWordNote(id: "2", text: "朝ごはん"), for: taberu)
+    let (store, saves) = observed(storage)
+    let page = await MainActor.run { SavedItemNotes(store: store) }
+    await page.load(taberu)
+    return (page, storage, saves)
+  }
+
+  private func observed(_ storage: WordNoteStorage) -> (WordNoteStore, AsyncStream<String>) {
+    let (saves, saved) = AsyncStream<String>.makeStream()
     let store = WordNoteStore(
       load: { await storage.load($0) },
       save: { note, id in
         await storage.save(note, for: id)
-        saved.yield()
+        saved.yield(note.id)
       })
     return (store, saves)
   }
