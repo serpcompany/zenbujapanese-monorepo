@@ -58,14 +58,17 @@ or how fast it feels. The app needs iOS 26.0 or later, and the Sudachi cache abo
 To try unreleased work without replacing the TestFlight app, build it as **Zenbu Dev**. The
 target's bundle ID ends in `ZENBU_BUNDLE_ID_SUFFIX` and its name is `ZENBU_DISPLAY_NAME` (empty and
 `Zenbu Japanese` by default), so overriding them installs a separate app with its own data and
-leaves `project.pbxproj` alone. From `apps/ios`, with the phone's UDID from
+leaves `project.pbxproj` alone. Its icon is the blue `AppIcon-Dev` (in
+`apps/ios/App/Assets.xcassets`), chosen by `ASSETCATALOG_COMPILER_APPICON_NAME`, so it's easy to
+tell from the red TestFlight app. From `apps/ios`, with the phone's UDID from
 `xcrun devicectl list devices`:
 
 ```sh
 xcodebuild -project ZenbuJapanese.xcodeproj -scheme ZenbuJapanese -configuration Debug \
   -destination 'platform=iOS,id=<device-udid>' -derivedDataPath /tmp/zenbu-dev \
   CODE_SIGN_STYLE=Automatic \
-  ZENBU_BUNDLE_ID_SUFFIX=.dev ZENBU_DISPLAY_NAME="Zenbu Dev" -allowProvisioningUpdates build
+  ZENBU_BUNDLE_ID_SUFFIX=.dev ZENBU_DISPLAY_NAME="Zenbu Dev" \
+  ASSETCATALOG_COMPILER_APPICON_NAME=AppIcon-Dev -allowProvisioningUpdates build
 xcrun devicectl device install app --device <device-udid> \
   "/tmp/zenbu-dev/Build/Products/Debug-iphoneos/Zenbu Japanese.app"
 ```
