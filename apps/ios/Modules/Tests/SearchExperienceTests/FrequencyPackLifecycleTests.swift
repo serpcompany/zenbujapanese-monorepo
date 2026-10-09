@@ -143,7 +143,7 @@ final class FrequencyPackLifecycleTests {
   private func makeManager(
     _ catalog: FrequencyPackCatalog, storage: URL, source: Data
   ) throws -> FrequencyPackManager {
-    try .bundled(catalog, storageDirectory: storage, download: { _ in source })
+    try .bundled(catalog, storageDirectory: storage, download: { _, _ in source })
   }
 
   private func packID(_ result: FrequencyLookupResult?) -> FrequencyPackID? {

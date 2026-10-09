@@ -2,10 +2,11 @@ import SwiftUI
 
 struct FrequencyDictionariesView: View {
   @State private var snapshot: FrequencyPackSnapshot?
-  @State private var workingPackID: FrequencyPackID?
+  @State private var removingPackIDs: Set<FrequencyPackID> = []
   @State private var detailPack: FrequencyPackState?
   @State private var screenFailure: String?
   let client: FrequencyPackClient
+  var downloads = FrequencyPackDownloads.shared
 
   var body: some View {
     List {
@@ -49,6 +50,9 @@ struct FrequencyDictionariesView: View {
       FrequencyPackDetailView(pack: pack)
     }
     .task { await load() }
+    .onChange(of: Set(downloads.fractions.keys)) { downloading, stillDownloading in
+      if !downloading.isSubset(of: stillDownloading) { refresh() }
+    }
   }
 
   private func enabledSection(_ snapshot: FrequencyPackSnapshot) -> some View {
@@ -86,9 +90,9 @@ struct FrequencyDictionariesView: View {
     .accessibilityElement(children: .contain)
     .accessibilityIdentifier("frequency-pack.row.\(pack.id.rawValue)")
     .swipeActions(edge: .trailing) {
-      if pack.availableActions.contains(.remove) {
+      if pack.availableActions.contains(.remove), downloads.fraction(for: pack.id) == nil {
         Button("Remove", systemImage: "trash", role: .destructive) {
-          perform(pack.id) { try await client.remove(pack.id) }
+          remove(pack.id)
         }
         .accessibilityIdentifier("frequency-pack.remove.\(pack.id.rawValue)")
       }
@@ -98,9 +102,9 @@ struct FrequencyDictionariesView: View {
       .accessibilityIdentifier("frequency-pack.details.\(pack.id.rawValue)")
     }
     .swipeActions(edge: .leading) {
-      if pack.availableActions.contains(.update) {
+      if pack.availableActions.contains(.update), downloads.fraction(for: pack.id) == nil {
         Button("Update", systemImage: "arrow.down.circle") {
-          perform(pack.id) { try await client.download(pack.id) }
+          download(pack.id)
         }
         .tint(.accentColor)
         .accessibilityIdentifier("frequency-pack.update.\(pack.id.rawValue)")
@@ -125,10 +129,11 @@ struct FrequencyDictionariesView: View {
 
   @ViewBuilder
   private func trailingControl(for pack: FrequencyPackState) -> some View {
-    if workingPackID == pack.id {
+    if let fraction = downloads.fraction(for: pack.id) {
+      downloadProgress(fraction, for: pack)
+    } else if removingPackIDs.contains(pack.id) {
       ProgressView()
-        .accessibilityLabel("Downloading \(pack.manifest.displayName)")
-        .accessibilityIdentifier("frequency-pack.progress.\(pack.id.rawValue)")
+        .accessibilityLabel("Removing \(pack.manifest.displayName)")
     } else if pack.isInstalled {
       Toggle(
         pack.manifest.displayName,
@@ -141,7 +146,7 @@ struct FrequencyDictionariesView: View {
       .accessibilityIdentifier("frequency-pack.toggle.\(pack.id.rawValue)")
     } else {
       Button {
-        perform(pack.id) { try await client.download(pack.id) }
+        download(pack.id)
       } label: {
         Image(
           systemName: pack.failureMessage == nil ? "arrow.down.circle" : "arrow.clockwise.circle"
@@ -154,6 +159,35 @@ struct FrequencyDictionariesView: View {
           ? "Download \(pack.manifest.displayName)" : "Retry \(pack.manifest.displayName)"
       )
       .accessibilityIdentifier("frequency-pack.download.\(pack.id.rawValue)")
+    }
+  }
+
+  @ViewBuilder
+  private func downloadProgress(_ fraction: Double, for pack: FrequencyPackState) -> some View {
+    if fraction < 1 {
+      Button {
+        downloads.stop(pack.id)
+      } label: {
+        Gauge(value: fraction) {
+          EmptyView()
+        } currentValueLabel: {
+          Image(systemName: "stop.fill")
+            .font(.callout)
+            .foregroundStyle(.tint)
+        }
+        .gaugeStyle(.accessoryCircularCapacity)
+        .tint(.accentColor)
+        .scaleEffect(0.5)
+        .frame(width: 28, height: 28)
+      }
+      .buttonStyle(.borderless)
+      .accessibilityLabel("Stop Downloading \(pack.manifest.displayName)")
+      .accessibilityValue(fraction.formatted(.percent.precision(.fractionLength(0))))
+      .accessibilityIdentifier("frequency-pack.progress.\(pack.id.rawValue)")
+    } else {
+      ProgressView()
+        .accessibilityLabel("Installing \(pack.manifest.displayName)")
+        .accessibilityIdentifier("frequency-pack.installing.\(pack.id.rawValue)")
     }
   }
 
@@ -185,14 +219,18 @@ struct FrequencyDictionariesView: View {
     }
   }
 
-  private func perform(
-    _ packID: FrequencyPackID,
-    operation: @escaping @MainActor () async throws -> Void
-  ) {
-    workingPackID = packID
+  private func download(_ packID: FrequencyPackID) {
+    let client = client
+    downloads.start(packID) { progress in
+      try await client.download(packID, progress)
+    }
+  }
+
+  private func remove(_ packID: FrequencyPackID) {
+    removingPackIDs.insert(packID)
     Task { @MainActor in
-      defer { workingPackID = nil }
-      try? await operation()
+      defer { removingPackIDs.remove(packID) }
+      try? await client.remove(packID)
       await load()
     }
   }

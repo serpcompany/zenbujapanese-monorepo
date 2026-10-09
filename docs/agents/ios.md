@@ -696,6 +696,9 @@ When changing Search results or frequency dictionaries, also check in the Simula
 - `いる` shows chips in the Enabled order (JLPT first by default). Reordering or disabling
   dictionaries under **Account → Frequency Dictionaries** re-sorts the visible results without
   resubmitting, and disabling every dictionary removes the chips.
+- Under **Account → Frequency Dictionaries**, tapping download on three **Available** packs in a
+  row gives each its own progress ring; tapping one ring stops only that pack, which returns to
+  its download button and doesn't install, and the others install and move to **Enabled**.
 - `静` keeps its Kanji row first; `日本語を勉強する` shows **Discovered Words**; `見る` offers
   Example Sentences; `sensei` offers the Japanese-reading refinement (「せんせい」).
 - With a pack made unreadable in a debug container, results stay listed and the footer names
