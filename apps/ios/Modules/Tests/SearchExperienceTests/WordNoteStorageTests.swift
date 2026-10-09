@@ -3,7 +3,7 @@ import Testing
 
 @testable import SearchExperience
 
-@Suite("Word notes")
+@Suite("Word notes", .timeLimit(.minutes(1)))
 struct WordNoteStorageTests {
   private let key = "lookup.word-notes.v4"
   private let taberu = WordNoteID(rawValue: "taberu-note")
@@ -39,7 +39,7 @@ struct WordNoteStorageTests {
         page.draft = text
         page.finishEditing()
       }
-      await savesFinished.next()
+      _ = await savesFinished.next()
     }
 
     #expect(Set(await storage.load(taberu).map(\.text)) == ["一つ目の窓", "二つ目の窓"])
@@ -107,7 +107,7 @@ struct WordNoteStorageTests {
         page.beginAdding()
         page.finishEditing()
       }
-      await savesFinished.next()
+      _ = await savesFinished.next()
     }
 
     #expect(await storage.load(taberu).map(\.text) == ["よく食べる"])
