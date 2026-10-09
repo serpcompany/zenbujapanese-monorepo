@@ -6,7 +6,6 @@ extension TranslateMode {
     switch self {
     case .conversation: String(localized: "Conversation")
     case .listening: String(localized: "Listening")
-    case .textOnly: String(localized: "Conversation")
     }
   }
 
@@ -14,7 +13,6 @@ extension TranslateMode {
     switch self {
     case .conversation: "bubble.left.and.bubble.right"
     case .listening: "ear"
-    case .textOnly: "text.bubble"
     }
   }
 

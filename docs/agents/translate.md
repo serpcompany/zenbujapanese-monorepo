@@ -16,7 +16,8 @@ The tab is split across three Swift targets in `apps/ios/Modules`
   - `LiveConversation` is the conversation engine: turns and sentences, provisional and final
     translations, held audio, the turn-end pause (0.8 s), the 30-second cutoff, the silence prompt
     (170 s, then 10 s), pause, resume, the background, and leaving. Times are in
-    `ConversationTiming`.
+    `ConversationTiming`. Its mode (`TranslateMode`: Conversation or Listening) is fixed for the
+    session; muting (`setMuted`) only silences playback, so a muted session keeps its mode.
   - It reaches the outside only through `TranscriptionClient`, `SentenceTranslationClient`, and
     `SpeechPlaybackClient` (`TranslatorClients.swift`), structs of closures like the app's other
     clients, so an Online engine is another set of clients, not a change to the engine.
@@ -157,11 +158,12 @@ to open.
 ## Tests
 
 `TranslatorCoreTests` covers the engine with fake clients and a fake clock (the acceptance
-fixture's J-E-J-E turns, held audio, the 30-second cutoff, Text Only, Listening, the silence
-prompt, pause and resume, the background, leaving with and without saving, muting, provisional
+fixture's J-E-J-E turns, held audio, the 30-second cutoff, Listening, the silence
+prompt, pause and resume, the background, leaving with and without saving, provisional
 translations, a stalled sentence, failures), conversation playback (echo-cancelled playback
 keeps listening, the app's own voice is ignored, playback waits while someone talks, a finished
-sentence keeps its live translation), the merger, the pause detector, typed-language detection,
+sentence keeps its live translation), muting and unmuting in both modes
+(`ConversationMutingTests`), the merger, the pause detector, typed-language detection,
 and History storage, bookmarks and the synced ones included. `SearchExperienceTests` covers what
 the app adds around it: reading a
 document's text (`DocumentTextTests`), the home's rows (`TranslateStartTests`), each conversation's known-word share
@@ -292,8 +294,11 @@ In the Simulator, with the harness:
   a conversation live (start one, then switch to Account), it isn't listed, and transcripts have
   no speaker button.
 - **Listen** leads each card with its translation (English for the Japanese announcements,
-  Japanese for the English one) and plays as it goes. After 20 seconds of silence, **Are you
-  still there?** counts down and pauses with an alert offering **Resume**.
+  Japanese for the English one) and plays as it goes. Its bottom bar matches Conversation's:
+  speaker, − 1.0× +, and the timer. The speaker turns to a slashed speaker and dims the speed;
+  the next announcements still appear, and none turns active while it would have played. After
+  20 seconds of silence, **Are you still there?** counts down and pauses with an alert offering
+  **Resume**.
 - While listening, the Simulator's screen doesn't auto-lock (Settings → Display & Brightness →
   Auto-Lock at 30 seconds); after a pause it locks as usual.
 - Sending the app home pauses with **Paused while you were away**; **Exit Without Saving** leaves
