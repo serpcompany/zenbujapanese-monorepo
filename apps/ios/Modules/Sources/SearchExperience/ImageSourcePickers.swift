@@ -4,7 +4,7 @@ import SwiftUI
 import UIKit
 import UniformTypeIdentifiers
 
-typealias ImagePickerCompletion = @MainActor @Sendable (Result<ImageTextAsset?, Error>) -> Void
+typealias ImagePickerCompletion = @MainActor @Sendable (Result<[ImageTextAsset], Error>) -> Void
 
 @MainActor
 class ImagePickerCoordinator: NSObject {
@@ -38,7 +38,7 @@ struct ImageCameraPicker: UIViewControllerRepresentable {
     UINavigationControllerDelegate
   {
     func imagePickerControllerDidCancel(_ picker: UIImagePickerController) {
-      completion(.success(nil))
+      completion(.success([]))
     }
 
     func imagePickerController(
@@ -51,12 +51,13 @@ struct ImageCameraPicker: UIViewControllerRepresentable {
         completion(.failure(ImageSourcePickerError.unreadableImage))
         return
       }
-      completion(.success(asset))
+      completion(.success([asset]))
     }
   }
 }
 
 struct ImagePhotoLibraryPicker: UIViewControllerRepresentable {
+  static let selectionLimit = 8
   let completion: ImagePickerCompletion
 
   func makeCoordinator() -> Coordinator {
@@ -66,7 +67,7 @@ struct ImagePhotoLibraryPicker: UIViewControllerRepresentable {
   func makeUIViewController(context: Context) -> PHPickerViewController {
     var configuration = PHPickerConfiguration()
     configuration.filter = .images
-    configuration.selectionLimit = 1
+    configuration.selectionLimit = ImagePhotoLibraryPicker.selectionLimit
     let picker = PHPickerViewController(configuration: configuration)
     picker.delegate = context.coordinator
     return picker
@@ -76,17 +77,27 @@ struct ImagePhotoLibraryPicker: UIViewControllerRepresentable {
 
   final class Coordinator: ImagePickerCoordinator, PHPickerViewControllerDelegate {
     func picker(_ picker: PHPickerViewController, didFinishPicking results: [PHPickerResult]) {
-      guard let provider = results.first?.itemProvider else {
-        completion(.success(nil))
+      let providers = results.map(\.itemProvider)
+      guard !providers.isEmpty else {
+        completion(.success([]))
         return
       }
-      let completion = completion
-      provider.loadFileRepresentation(forTypeIdentifier: UTType.image.identifier) { url, _ in
-        let asset = url.flatMap {
-          ImageTextAsset(photoLibraryImageAt: $0, name: $0.lastPathComponent)
+      Task {
+        var assets: [ImageTextAsset] = []
+        for provider in providers {
+          if let asset = await Self.asset(from: provider) { assets.append(asset) }
         }
-        Task { @MainActor in
-          completion(asset.map { .success($0) } ?? .failure(ImageSourcePickerError.unreadableImage))
+        completion(assets.isEmpty ? .failure(ImageSourcePickerError.unreadableImage) : .success(assets))
+      }
+    }
+
+    private static func asset(from provider: NSItemProvider) async -> ImageTextAsset? {
+      await withCheckedContinuation { continuation in
+        provider.loadFileRepresentation(forTypeIdentifier: UTType.image.identifier) { url, _ in
+          continuation.resume(
+            returning: url.flatMap {
+              ImageTextAsset(photoLibraryImageAt: $0, name: $0.lastPathComponent)
+            })
         }
       }
     }

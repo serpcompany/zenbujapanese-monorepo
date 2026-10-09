@@ -21,15 +21,15 @@ The tab's home is laid out like iOS Settings. It has a small **Translate** title
 one line on what the tab does. Below it, two grouped sections list five ways to translate:
 **Spoken** (**Conversation** and **Listen**) and **Written** (**Image**, **Text**, and
 **Document**). Each row is a tinted icon, its name, and a chevron, and all five fit on an iPhone 17
-Pro without scrolling. Tapping a row opens it; while a live mode gets ready or a document is read,
-that row shows a spinner, the rows don't respond, and the progress (**Getting ready…**,
-**Downloading translation…**) shows under the Spoken section.
+Pro without scrolling at the default text size. Tapping a row opens it. While a live mode gets
+ready or a document is read, that row shows a spinner and the rows don't respond; a live mode's
+progress (**Getting ready…**, **Downloading translation…**) shows under the Spoken section.
 
 | Row | What tapping it does |
 | --- | --- |
 | **Conversation** | Two-way and live. Each turn is detected as Japanese or English. Translations play out loud, and the microphone keeps listening while they play, so someone who keeps talking isn't lost. A translation never starts while someone is talking. The speaker button silences them. |
 | **Listen** | One-way and live, for a TV, a guide, or announcements. Hears Japanese and English, each sentence detected as either, from a distance and without voice isolation. The translation leads each card (English under Japanese speech, Japanese under English), and each translation plays as soon as it's ready. With earphones the microphone keeps listening; on the iPhone's speaker it waits while each translation plays, so it doesn't hear itself. |
-| **Image** | Opens a centered **Image** alert with **Take Photo**, **Photo Library**, and **Cancel**. The camera asks for access the first time. The photo opens in [Image Search](#image-search), where tapping a word looks it up. |
+| **Image** | Opens a centered **Image** alert with **Take Photo**, **Photo Library**, and **Cancel**. The camera asks for access the first time; the library allows up to 8 photos. They open in [Image Search](#image-search), where tapping a word looks it up. |
 | **Text** | Opens the typing screen, ready to type or paste. |
 | **Document** | Opens the file picker for a PDF or a text file. Its text opens on the typing screen, translated. A PDF's own text is used; a scanned PDF (its first 10 pages) is read with on-device text recognition. A text file can be UTF-8, UTF-16, Shift-JIS, or EUC-JP. Only the first 5,000 characters are translated. A file with no text shows **Couldn't read this document**. |
 

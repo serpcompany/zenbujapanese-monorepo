@@ -55,16 +55,13 @@ struct DocumentTextTests {
     #expect(try await DocumentText.read(url).contains("Please meet me at Shibuya Station."))
   }
 
-  @Test("a scanned PDF and a photo are read by text recognition")
-  func scannedPDFAndPhoto() async throws {
+  @Test("a scanned PDF is read by text recognition")
+  func scannedPDF() async throws {
     let sign = signImage()
     let scanned = folder.appending(path: "scan.pdf")
     try pdf { _ in sign.draw(in: CGRect(x: 0, y: 0, width: 612, height: 230)) }.write(to: scanned)
-    let photo = folder.appending(path: "sign.png")
-    try #require(sign.pngData()).write(to: photo)
 
     #expect(try await DocumentText.read(scanned).contains("改札は右側にあります"))
-    #expect(try await DocumentText.read(photo).contains("改札は右側にあります"))
   }
 
   @Test("a document without any text can't be read")

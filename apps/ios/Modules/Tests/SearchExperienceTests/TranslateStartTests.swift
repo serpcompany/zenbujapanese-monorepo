@@ -1,5 +1,4 @@
 import Testing
-import TranslatorCore
 
 @testable import SearchExperience
 
@@ -12,12 +11,5 @@ struct TranslateStartTests {
     let listed = TranslateStart.spokenRows + TranslateStart.writtenRows
     #expect(listed.count == TranslateStart.allCases.count)
     #expect(Set(listed) == Set(TranslateStart.allCases))
-  }
-
-  @Test("only Conversation and Listen start a live mode")
-  func liveModes() {
-    #expect(TranslateStart.conversation.liveMode == .conversation)
-    #expect(TranslateStart.listening.liveMode == .listening)
-    #expect(TranslateStart.writtenRows.allSatisfy { $0.liveMode == nil })
   }
 }

@@ -657,8 +657,8 @@ previews stay still.
   `sheet(isPresented:)`: with `sheet(item:)`, each new word dismissed and re-presented the sheet,
   which reopened at full height.
 - Translate's Image alert only records the choice, and the home opens the picker once the alert's
-  binding turns false: on the iOS 27 Simulator a picker presented from a dialog's button, before
-  the dialog had closed, never appeared.
+  binding turns false: on the iOS 27 Simulator, a picker presented from a `confirmationDialog`
+  button's action never appeared, while one presented from this `onChange` does.
 - `ImageTextImport` pushes Image Search only once its picker has finished closing (the sheets'
   `onDismiss`), so the photo library is a
   `PHPickerViewController` in a sheet (`ImagePhotoLibraryPicker`) rather than `photosPicker`,

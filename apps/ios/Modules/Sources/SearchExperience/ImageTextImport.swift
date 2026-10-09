@@ -35,7 +35,7 @@ struct ImageTextImport: ViewModifier {
       }
       .sheet(isPresented: $showsPhotoLibrary, onDismiss: openAssetsAwaitingPicker) {
         ImagePhotoLibraryPicker { result in
-          importPickedImage(result, failure: "The selected photo could not be read.")
+          importPickedImage(result, failure: "The selected photos could not be read.")
           showsPhotoLibrary = false
         }
         .ignoresSafeArea()
@@ -94,10 +94,10 @@ struct ImageTextImport: ViewModifier {
     showsPhotoLibrary = true
   }
 
-  private func importPickedImage(_ result: Result<ImageTextAsset?, Error>, failure: String) {
+  private func importPickedImage(_ result: Result<[ImageTextAsset], Error>, failure: String) {
     switch result {
-    case .success(let asset):
-      if let asset { open([asset]) }
+    case .success(let assets):
+      if !assets.isEmpty { open(assets) }
     case .failure:
       presentImageImportAlert(.importFailure(failure))
     }

@@ -62,7 +62,7 @@ The tab is split across three Swift targets in `apps/ios/Modules`
   and the rest of the adapters: `OnDeviceTranscriber` (an actor running `AVAudioEngine`, voice
   processing, and the audio session, and feeding the microphone to a `BilingualRecognizer`),
   `OnDeviceTranslation` (Apple Translation's availability and download prompt),
-  `SystemSpeechPlayer` (`AVSpeechSynthesizer`), and `TranslateExperience`, which owns the session, History, the
+  `SystemSpeechPlayer` (`AVSpeechSynthesizer`), and `TranslateExperience`, which owns the session, History, and the
   start checks (microphone, Apple Translation, speech assets), which
   are on-device-specific and change when an Online engine arrives. The home is
   `TranslateHomeView`, a grouped `List` with a header card and the five `TranslateStart` options
@@ -164,7 +164,7 @@ keeps listening, the app's own voice is ignored, playback waits while someone ta
 sentence keeps its live translation), the merger, the pause detector, typed-language detection,
 and History storage, bookmarks and the synced ones included. `SearchExperienceTests` covers what
 the app adds around it: reading a
-document's text (`DocumentTextTests`), each conversation's known-word share
+document's text (`DocumentTextTests`), the home's rows (`TranslateStartTests`), each conversation's known-word share
 (`ConversationWordsTests`), and the spoken translation's time limit (`SystemSpeechPlayerTests`).
 Run them from `apps/ios/Modules`:
 
@@ -303,7 +303,7 @@ On an iPhone, in a **Zenbu Dev** build ([`ios.md`](ios.md), Install on an iPhone
 app is untouched, with iPhone Mirroring closed (it silences the microphone), and without the
 harness:
 
-- The first Start asks for the microphone and downloads Apple's languages once, with progress.
+- The first Conversation or Listen asks for the microphone and downloads Apple's languages once, with progress.
 - The acceptance fixture, spoken in turn: `今日は東京駅に行きます。`,
   `Please meet me at Shibuya Station at three o'clock.`, `はい、三時に会いましょう。`,
   `Thank you. See you there.` — four turns, Japanese, English, Japanese, English, each

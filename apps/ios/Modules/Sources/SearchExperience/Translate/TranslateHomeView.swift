@@ -37,7 +37,6 @@ struct TranslateHomeView: View {
     }
     .listSectionSpacing(.compact)
     .contentMargins(.top, 4, for: .scrollContent)
-    .disabled(isBusy)
     .navigationTitle("Translate")
     .navigationBarTitleDisplayMode(.inline)
     .toolbar {
@@ -89,6 +88,7 @@ struct TranslateHomeView: View {
       rowLabel(option)
     }
     .tint(.primary)
+    .disabled(isBusy)
     .accessibilityIdentifier("translate.start.\(option.rawValue)")
   }
 
@@ -103,6 +103,7 @@ struct TranslateHomeView: View {
         Image(systemName: "chevron.forward")
           .font(.footnote.weight(.semibold))
           .foregroundStyle(.tertiary)
+          .accessibilityHidden(true)
       }
     }
     .contentShape(.rect)
@@ -110,15 +111,12 @@ struct TranslateHomeView: View {
 
   private func start(_ option: TranslateStart) {
     startingMode = option
-    if let mode = option.liveMode {
-      Task { await experience.start(mode) }
-      return
-    }
     switch option {
+    case .conversation: Task { await experience.start(.conversation) }
+    case .listening: Task { await experience.start(.listening) }
+    case .image: choosesPhotoSource = true
     case .text: openText("")
     case .document: isChoosingDocument = true
-    case .image: choosesPhotoSource = true
-    case .conversation, .listening: break
     }
   }
 
@@ -151,6 +149,9 @@ private struct TranslateHomeHeader: View {
         .lineLimit(1)
     }
     .padding(.vertical, 2)
+    .accessibilityElement(children: .combine)
+    .accessibilityAddTraits(.isHeader)
+    .accessibilityIdentifier("translate.header")
   }
 }
 

@@ -1,5 +1,4 @@
 import SwiftUI
-import TranslatorCore
 
 enum TranslateStart: String, CaseIterable, Identifiable {
   case conversation
@@ -12,14 +11,6 @@ enum TranslateStart: String, CaseIterable, Identifiable {
   static let writtenRows: [TranslateStart] = [.image, .text, .document]
 
   var id: Self { self }
-
-  var liveMode: TranslateMode? {
-    switch self {
-    case .conversation: .conversation
-    case .listening: .listening
-    case .text, .document, .image: nil
-    }
-  }
 
   var title: String {
     switch self {

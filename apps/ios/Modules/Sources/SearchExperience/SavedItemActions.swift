@@ -155,11 +155,11 @@ final class SavedItemPhotos {
     }
   }
 
-  fileprivate func saveCameraResult(_ result: Result<ImageTextAsset?, Error>) {
+  fileprivate func saveCameraResult(_ result: Result<[ImageTextAsset], Error>) {
     showsCamera = false
     switch result {
-    case .success(let asset):
-      guard let asset else { return }
+    case .success(let assets):
+      guard let asset = assets.first else { return }
       Task { await save(asset) }
     case .failure:
       cameraAlert = .saveFailure

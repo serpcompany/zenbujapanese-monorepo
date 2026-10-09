@@ -16,8 +16,6 @@ enum DocumentText {
     let text: String
     if type.conforms(to: .pdf) {
       text = try await readPDF(url)
-    } else if type.conforms(to: .image) {
-      text = try await recognize(try await ImageTextAsset.loadCopy(from: url))
     } else {
       text = try decode(Data(contentsOf: url))
     }
