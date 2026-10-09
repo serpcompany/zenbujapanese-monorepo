@@ -238,8 +238,8 @@ final class WordKnowledgeTests {
   @Test("unreadable files kept in quick succession are all kept, up to the newest 3")
   func backupsArePruned() async throws {
     try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
-    for _ in 0..<4 {
-      try Data("not json".utf8).write(to: fileURL)
+    for number in 0..<4 {
+      try Data("not json \(number)".utf8).write(to: fileURL)
       let knowledge = await loadedKnowledge()
       #expect(!knowledge.isReadOnly)
     }

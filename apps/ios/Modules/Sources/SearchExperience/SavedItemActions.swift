@@ -285,18 +285,11 @@ struct SavedItemListsSection: View {
 
   var body: some View {
     ForEach(wordLists.lists.filter { wordLists.contains(item, in: $0.id) }) { list in
-      Button {
+      LinkRow {
         openList(list.id)
       } label: {
-        HStack {
-          Label(list.name, systemImage: "list.bullet")
-          Spacer()
-          Image(systemName: "chevron.right")
-            .font(.footnote.weight(.semibold))
-            .foregroundStyle(.tertiary)
-        }
+        Label(list.name, systemImage: "list.bullet")
       }
-      .tint(.primary)
       .accessibilityIdentifier("\(identifierPrefix).list.\(list.id)")
     }
 

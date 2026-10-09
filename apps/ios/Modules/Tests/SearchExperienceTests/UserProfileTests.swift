@@ -55,4 +55,20 @@ struct UserProfileTests {
     #expect(reloaded.email == "devin@serp.co")
     #expect(reloaded.initials == "DS")
   }
+
+  @MainActor
+  @Test("a profile that can't be read is kept aside, and new fields save")
+  func keepsUnreadableProfileAside() throws {
+    let temporary = try TemporaryDefaults()
+    let unreadable = Data(#"{"name":"Devin"}"#.utf8)
+    temporary.defaults.set(unreadable, forKey: "user-profile.v1")
+    let photoURL = FileManager.default.temporaryDirectory.appending(path: "\(temporary.suite).jpg")
+
+    let profile = UserProfile(defaults: temporary.defaults, photoURL: photoURL)
+    #expect(profile.isEmpty)
+    #expect(temporary.defaults.keptCopies(of: "user-profile.v1") == [unreadable])
+    profile.name = "Devin Schumacher"
+    let reloaded = UserProfile(defaults: temporary.defaults, photoURL: photoURL)
+    #expect(reloaded.name == "Devin Schumacher")
+  }
 }

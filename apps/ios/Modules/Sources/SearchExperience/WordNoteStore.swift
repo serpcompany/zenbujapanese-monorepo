@@ -20,10 +20,14 @@ struct LearnerWordNote: Codable, Hashable, Identifiable, Sendable {
   }
 }
 
-private actor WordNoteStorage {
+actor WordNoteStorage {
   static let shared = WordNoteStorage()
-  private let defaults = UserDefaults.standard
+  private let defaults: UserDefaults
   private let storageKey = "lookup.word-notes.v4"
+
+  init(defaults: UserDefaults = .standard) {
+    self.defaults = defaults
+  }
 
   func load(_ id: WordNoteID) -> [LearnerWordNote] {
     return notes()[id.rawValue] ?? []
@@ -45,7 +49,16 @@ private actor WordNoteStorage {
 
   private func notes() -> [String: [LearnerWordNote]] {
     guard let data = defaults.data(forKey: storageKey) else { return [:] }
-    return (try? JSONDecoder().decode([String: [LearnerWordNote]].self, from: data)) ?? [:]
+    let stored = try? JSONDecoder().decode(
+      [String: LossyDecodable<[LossyDecodable<LearnerWordNote>]>].self, from: data)
+    let words = stored?.compactMapValues(\.value) ?? [:]
+    let notes = words.mapValues { $0.compactMap(\.value) }.filter { !$0.value.isEmpty }
+    let lostNone =
+      words.count == stored?.count && words.values.allSatisfy { $0.allSatisfy { $0.value != nil } }
+    guard !lostNone else { return notes }
+    UnreadableCopy.keep(storageKey, in: defaults)
+    write(notes)
+    return notes
   }
 
   private func write(_ notes: [String: [LearnerWordNote]]) {

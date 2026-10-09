@@ -1,5 +1,6 @@
 import AuthenticationServices
 import SwiftUI
+import TranslatorCore
 
 enum AccountMessage {
   static let appleUnavailableInDevBuild = String(
@@ -11,6 +12,21 @@ enum AccountMessage {
     localized:
       "This account signs in with Apple, and deleting it needs Sign in with Apple, which this development build doesn't have. Delete it from the App Store or TestFlight app."
   )
+
+  static func syncPaused(by problem: SharedBookmarksProblem) -> String {
+    switch problem {
+    case .couldNotRead:
+      String(
+        localized:
+          "Zenbu couldn't read the bookmarks synced to this \(ThisDevice.name), so syncing is paused. Reopen Zenbu to try again."
+      )
+    case .newerVersion:
+      String(
+        localized:
+          "A newer version of Zenbu saved the bookmarks synced to this \(ThisDevice.name), so syncing is paused. Update Zenbu to sync again."
+      )
+    }
+  }
 
   static func text(for error: Error) -> String? {
     if error is CancellationError { return nil }

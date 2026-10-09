@@ -43,10 +43,11 @@ final class UserProfile {
     if let data = try? Data(contentsOf: photoURL) {
       photo = ImageCoding.image(from: data)
     }
-    guard
-      let data = defaults.data(forKey: Self.storageKey),
-      let stored = try? JSONDecoder().decode(StoredProfile.self, from: data)
-    else { return }
+    guard let data = defaults.data(forKey: Self.storageKey) else { return }
+    guard let stored = try? JSONDecoder().decode(StoredProfile.self, from: data) else {
+      UnreadableCopy.keep(Self.storageKey, in: defaults)
+      return
+    }
     name = stored.name
     username = stored.username
     email = stored.email

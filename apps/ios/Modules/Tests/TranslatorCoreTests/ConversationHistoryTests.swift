@@ -292,7 +292,7 @@ final class ConversationHistoryTests {
     try newer.write(to: file)
 
     let history = await loadedHistory()
-    #expect(history.bookmarksAreReadOnly)
+    #expect(history.bookmarksProblem == .newerVersion)
     history.applySynced(shared("上書きしない", minutesAgo: 0))
     await history.flush()
 

@@ -109,12 +109,10 @@ struct ZenbuAccountView: View {
           Text(zenbuAccount.sync.queuedChangeCount, format: .number)
         }
       }
-      if zenbuAccount.sync.waitsForUnreadableBookmarks {
-        Text(
-          "Zenbu couldn't read the bookmarks synced to this \(ThisDevice.name), so syncing is paused. Reopen Zenbu to try again."
-        )
-        .foregroundStyle(.secondary)
-        .accessibilityIdentifier("zenbu-account.bookmarks-unreadable")
+      if let problem = zenbuAccount.sync.bookmarksProblem {
+        Text(AccountMessage.syncPaused(by: problem))
+          .foregroundStyle(.secondary)
+          .accessibilityIdentifier("zenbu-account.bookmarks-unreadable")
       } else if let failure = zenbuAccount.sync.lastFailure,
         let message = AccountMessage.text(for: failure)
       {

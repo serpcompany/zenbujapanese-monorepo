@@ -323,7 +323,7 @@ struct SearchExperienceRootView: View {
       RecognizedWordSheet(
         request: request,
         detent: $presentation.detent,
-        openFullEntry: { entry in openFullEntry(entry, in: stack) }
+        openFullEntry: { open(.word($0, nil), in: stack, leavingSheet: true) }
       ) { entry, encounterMedia in
         wordDetailView(
           entry: entry,
@@ -333,11 +333,6 @@ struct SearchExperienceRootView: View {
         )
       }
     }
-  }
-
-  private func openFullEntry(_ entry: DictionaryEntry, in stack: DictionaryStack) {
-    dismissRecognizedWordSheet(if: true)
-    push(.word(entry, nil), in: stack)
   }
 
   private func push(_ route: SearchExperienceRoute, in stack: DictionaryStack) {
@@ -370,13 +365,10 @@ struct SearchExperienceRootView: View {
         dismissRecognizedWordSheet(if: presentedInSheet)
         openRelated(relationship, in: stack)
       },
-      openKanji: { character, entry in
-        dismissRecognizedWordSheet(if: presentedInSheet)
-        push(.kanji(character, entry), in: stack)
-      },
-      openWord: { entry in
-        dismissRecognizedWordSheet(if: presentedInSheet)
-        push(.word(entry, nil), in: stack)
+      openKanji: { open(.kanji($0, $1), in: stack, leavingSheet: presentedInSheet) },
+      openWord: { open(.word($0, nil), in: stack, leavingSheet: presentedInSheet) },
+      openConjugations: { table in
+        open(.conjugations(entry, table), in: stack, leavingSheet: presentedInSheet)
       },
       manageFrequencyDictionaries: {
         dismissRecognizedWordSheet(if: presentedInSheet)
@@ -387,6 +379,13 @@ struct SearchExperienceRootView: View {
         openWordList(listID)
       }
     )
+  }
+
+  private func open(
+    _ route: SearchExperienceRoute, in stack: DictionaryStack, leavingSheet: Bool
+  ) {
+    dismissRecognizedWordSheet(if: leavingSheet)
+    push(route, in: stack)
   }
 
   private func dismissRecognizedWordSheet(if shouldDismiss: Bool) {

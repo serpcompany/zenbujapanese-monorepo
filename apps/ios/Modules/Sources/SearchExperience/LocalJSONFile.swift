@@ -30,14 +30,10 @@ actor LocalJSONFile {
     }
   }
 
-  private static let backupsKept = 3
   private let fileURL: URL
   private let currentVersion: Int
   private let description: String
   private let logger: Logger
-  private var backupPrefix: String {
-    "\(fileURL.deletingPathExtension().lastPathComponent).unreadable-"
-  }
 
   init(fileURL: URL, currentVersion: Int, description: String, logCategory: String) {
     self.fileURL = fileURL
@@ -77,28 +73,13 @@ actor LocalJSONFile {
   }
 
   func keepUnreadableCopy() -> Bool {
-    let stamp = Int(Date().timeIntervalSince1970 * 1000)
-    let suffix = UUID().uuidString.prefix(8)
-    let directory = fileURL.deletingLastPathComponent()
-    let backup = directory.appending(path: "\(backupPrefix)\(stamp)-\(suffix).json")
     do {
-      try FileManager.default.copyItem(at: fileURL, to: backup)
-      logger.error("Kept an unreadable \(self.description) file at \(backup.lastPathComponent)")
-      pruneBackups(in: directory)
+      try UnreadableCopy.keep(file: fileURL)
       return true
     } catch {
       logger.error(
         "Couldn't keep an unreadable \(self.description) file: \(error.localizedDescription)")
       return false
-    }
-  }
-
-  private func pruneBackups(in directory: URL) {
-    let fileManager = FileManager.default
-    guard let names = try? fileManager.contentsOfDirectory(atPath: directory.path) else { return }
-    let backups = names.filter { $0.hasPrefix(backupPrefix) }.sorted()
-    for name in backups.dropLast(Self.backupsKept) {
-      try? fileManager.removeItem(at: directory.appending(path: name))
     }
   }
 }

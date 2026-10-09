@@ -22,6 +22,7 @@ struct WordDetailView: View {
   let openRelated: (DictionaryRelationship) -> Void
   let openKanji: (KanjiCharacter, DictionaryEntry?) -> Void
   let openWord: (DictionaryEntry) -> Void
+  let openConjugations: (ConjugationTable) -> Void
   let manageFrequencyDictionaries: () -> Void
   let openList: (UUID) -> Void
 
@@ -39,6 +40,7 @@ struct WordDetailView: View {
     openRelated: @escaping (DictionaryRelationship) -> Void,
     openKanji: @escaping (KanjiCharacter, DictionaryEntry?) -> Void,
     openWord: @escaping (DictionaryEntry) -> Void,
+    openConjugations: @escaping (ConjugationTable) -> Void,
     manageFrequencyDictionaries: @escaping () -> Void,
     openList: @escaping (UUID) -> Void
   ) {
@@ -56,6 +58,7 @@ struct WordDetailView: View {
     self.openRelated = openRelated
     self.openKanji = openKanji
     self.openWord = openWord
+    self.openConjugations = openConjugations
     self.manageFrequencyDictionaries = manageFrequencyDictionaries
     self.openList = openList
   }
@@ -79,7 +82,8 @@ struct WordDetailView: View {
             removeEncounterMedia: photos.remove,
             pronounce: { speechSynthesisClient.speak(entry.reading) }
           )
-          PartOfSpeechRow(entry: entry, conjugationTable: conjugationTable)
+          PartOfSpeechRow(
+            entry: entry, conjugationTable: conjugationTable, openConjugations: openConjugations)
         }
 
         Section("MEANING") {
@@ -106,13 +110,13 @@ struct WordDetailView: View {
         if !entry.primaryKanji.isEmpty {
           Section("KANJI") {
             PrimaryKanjiSection(
-              characters: entry.primaryKanji, entry: entry)
+              characters: entry.primaryKanji, entry: entry, openKanji: openKanji)
           }
         }
 
         if !entry.alternativeKanji.isEmpty {
           Section("ALTERNATIVE KANJI") {
-            AlternativeKanjiSection(characters: entry.alternativeKanji)
+            AlternativeKanjiSection(characters: entry.alternativeKanji, openKanji: openKanji)
           }
         }
 
@@ -215,6 +219,7 @@ struct WordDetailView: View {
 private struct PrimaryKanjiSection: View {
   let characters: [String]
   let entry: DictionaryEntry
+  let openKanji: (KanjiCharacter, DictionaryEntry?) -> Void
 
   var body: some View {
     ForEach(characters, id: \.self) { character in
@@ -223,7 +228,8 @@ private struct PrimaryKanjiSection: View {
           kanji: kanji,
           destinationEntry: entry,
           accessibilityLabel: "Kanji \(character)",
-          accessibilityIdentifier: "word-detail.kanji.\(character)"
+          accessibilityIdentifier: "word-detail.kanji.\(character)",
+          openKanji: openKanji
         )
       }
     }
@@ -232,6 +238,7 @@ private struct PrimaryKanjiSection: View {
 
 private struct AlternativeKanjiSection: View {
   let characters: [String]
+  let openKanji: (KanjiCharacter, DictionaryEntry?) -> Void
 
   var body: some View {
     ForEach(characters, id: \.self) { character in
@@ -240,7 +247,8 @@ private struct AlternativeKanjiSection: View {
           kanji: kanji,
           destinationEntry: nil,
           accessibilityLabel: "Alternative kanji \(character)",
-          accessibilityIdentifier: "word-detail.alternative-kanji.\(character)"
+          accessibilityIdentifier: "word-detail.alternative-kanji.\(character)",
+          openKanji: openKanji
         )
       }
     }
@@ -252,12 +260,14 @@ private struct WordDetailKanjiLink: View {
   let destinationEntry: DictionaryEntry?
   let accessibilityLabel: String
   let accessibilityIdentifier: String
+  let openKanji: (KanjiCharacter, DictionaryEntry?) -> Void
 
   var body: some View {
-    NavigationLink(value: SearchExperienceRoute.kanji(kanji, destinationEntry)) {
+    LinkRow {
+      openKanji(kanji, destinationEntry)
+    } label: {
       Text(kanji.rawValue)
         .font(.title2.weight(.semibold))
-        .frame(maxWidth: .infinity, alignment: .leading)
     }
     .accessibilityLabel(accessibilityLabel)
     .accessibilityIdentifier(accessibilityIdentifier)
