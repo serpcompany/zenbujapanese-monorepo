@@ -1,6 +1,5 @@
 import Foundation
 import ImageIO
-import UniformTypeIdentifiers
 
 extension ImageTextAsset {
   init?(photoLibraryImageAt url: URL, name: String) {

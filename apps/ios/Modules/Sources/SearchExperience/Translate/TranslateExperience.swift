@@ -103,7 +103,7 @@ final class TranslateExperience {
     guard let mode = modeAwaitingTranslationDownload else { return }
     modeAwaitingTranslationDownload = nil
     preparation = nil
-    guard !startIsAbandoned else { return }
+    guard !droppedAbandonedStart() else { return }
     await start(mode, offeringTranslationDownload: false)
   }
 
@@ -123,6 +123,13 @@ final class TranslateExperience {
     session?.appMovedToBackground()
   }
 
+  private func droppedAbandonedStart() -> Bool {
+    guard startIsAbandoned else { return false }
+    startIsAbandoned = false
+    preparation = nil
+    return true
+  }
+
   private func start(_ mode: TranslateMode, offeringTranslationDownload: Bool) async {
     guard session == nil, preparation == nil else { return }
     startProblem = nil
@@ -132,6 +139,7 @@ final class TranslateExperience {
       finishPreparing(with: .microphoneDenied)
       return
     }
+    guard !droppedAbandonedStart() else { return }
     switch await services.translationAvailability() {
     case .installed:
       break
@@ -155,8 +163,8 @@ final class TranslateExperience {
       finishPreparing(with: .speechUnavailable)
       return
     }
+    guard !droppedAbandonedStart() else { return }
     preparation = nil
-    guard !startIsAbandoned else { return }
     let session = LiveConversation(
       mode: mode, clients: services.clients, archive: history, timing: services.timing)
     self.session = session
