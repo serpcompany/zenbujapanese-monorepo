@@ -73,6 +73,11 @@ jobs:
           xcodebuild -scheme ZenbuJapaneseModules-Package \
             -destination "platform=iOS Simulator,id=$SIMULATOR" \
             ONLY_ACTIVE_ARCH=YES test
+      - name: Build the package and its tests for the Mac
+        working-directory: apps/ios/Modules
+        run: |
+          xcodebuild -scheme ZenbuJapaneseModules-Package \
+            -destination 'platform=macOS,arch=arm64' build-for-testing
       - name: Run the recorded-audio check's scoring tests
         working-directory: apps/ios/Tools/TranslateReplay
         run: swift test

@@ -11,7 +11,8 @@ A learner can search in Japanese or English using:
 - handwriting recognition, which reads the finished drawing's shape, so stroke order and
   direction don't matter;
 - radical selection; or
-- Image Search using the camera, Photo Library, or an image file.
+- Image Search using the camera, Photo Library, or an image file, and on the Mac a pasted image
+  or Continuity Camera instead of the camera ([iPad and Mac](index.md#ipad-and-mac)).
 
 Japanese, English, and romaji searches show one **Results** list. Stronger matches come first;
 among equally good matches, the enabled frequency dictionaries decide the order, in the

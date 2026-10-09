@@ -29,6 +29,96 @@ python3 apps/ios/Tools/prepare_sudachi_core.py \
 It downloads the release `LanguageTechnologyPackCatalog.json` names from GitHub (72 MB) and checks
 its SHA-256; later builds reuse it.
 
+## iPad and Mac
+
+One target builds the app for iPhone, iPad, and the Mac ([ADR 0015](../adr/0015-build-iphone-ipad-and-mac-from-one-native-swiftui-app.md));
+what differs for a learner is in the product docs' [iPad and Mac](../../apps/ios/docs/product/index.md#ipad-and-mac).
+
+### Where the platforms differ in the code
+
+Every `#if os(...)`, every `UIKit` and `AppKit` import, and every API only one platform has lives
+in `apps/ios/Modules/Sources/SearchExperience/Platform/`, behind a small adapter or view
+extension that feature code calls: `DecodedImage` and `Image(imageData:)`, `Color.adaptive` and
+`SystemColor`, `Pasteboard`, `SystemSettings`, `ScreenAwake`, `ConversationAudioSession`,
+`WebViewRepresentable`, `PagedView`, `CameraCapture` and `ImageCameraPicker`, `BackgroundRefresh`,
+`keyWindowAnchor`, `AppleSignInButton`, `ListEditButton` and `ListEditMode`, `ThisDevice`, and
+the modifiers in `PlatformModifiers.swift` (`.inlineNavigationTitle()`, `.groupedList()`,
+`.textEntry(_:)`, `.barLeading` and `.barTrailing`, `.bottomAccessory`, `.rowActions`, and the
+rest). `pnpm verify layers` refuses a platform condition, UIKit, AppKit, or an iPhone-only API it
+knows anywhere else in `apps/ios/Modules/Sources/` or `apps/ios/App/`, and names the adapter to
+use (`tools/checks/src/layers.ts`), so feature code stays the same on every platform even while CI
+builds only for the iPhone. Image data stays `Data` or `CGImage` in models (`ImageCoding.swift`
+encodes and draws without UIKit).
+
+The app target is `ZenbuJapaneseApp.swift`, one line: `ZenbuJapaneseScenes`
+(`Platform/AppScenes.swift`) holds the window, the Reading Aids and profile every window shares,
+the scene's lifecycle, the iPhone and iPad background sync task, and on the Mac the window sizes
+(`AppWindow`), the Settings scene (`AppSettingsView`), and Continuity Camera's menu. Menu
+commands (`AppCommands`) go through `AppCommandRouter` to the window that was last active
+(`AppCommandHandling`, from `appearsActive`): SwiftUI's focused values reached the menu only
+from a view with keyboard focus, so ⌘F did nothing in a window where nothing had focus yet.
+
+### Build and run for iPad
+
+The same commands as for an iPhone, with an iPad Simulator's UDID, such as an iPad Pro 13-inch's:
+
+```sh
+xcodebuild -project apps/ios/ZenbuJapanese.xcodeproj -scheme ZenbuJapanese \
+  -destination 'platform=iOS Simulator,id=<ipad-udid>' ONLY_ACTIVE_ARCH=YES ARCHS=arm64 build
+```
+
+### Build and run on the Mac
+
+The Mac app needs Apple silicon and macOS 26, and the Sudachi cache above. Sign in with Apple and
+Associated Domains are restricted entitlements, which only a team's provisioning profile can
+sign, so a build that runs only on this Mac signs to run locally and leaves out the entitlements
+file; the App Sandbox's own entitlements come from build settings and stay:
+
+```sh
+xcodebuild -project apps/ios/ZenbuJapanese.xcodeproj -scheme ZenbuJapanese -configuration Debug \
+  -destination 'platform=macOS,arch=arm64' -derivedDataPath /tmp/zenbu-mac \
+  CODE_SIGN_IDENTITY=- CODE_SIGN_ENTITLEMENTS= build
+open "/tmp/zenbu-mac/Build/Products/Debug/Zenbu Japanese.app"
+```
+
+In Xcode, pick **My Mac** as the destination; a team under **Signing & Capabilities** signs it
+with every entitlement (don't commit the team, as Install on an iPhone says). Such a local build
+shows the Apple button, which fails without the entitlement; sign in with Google or a code. The
+Mac app runs in the App Sandbox, so its files are in
+`~/Library/Containers/com.zenbujapanese.app/Data/Library/Application Support/Zenbu Japanese/`,
+and Zenbu Dev's under `com.zenbujapanese.app.dev`.
+
+### Test on the Mac
+
+The package's tests run on the Mac too, from `apps/ios/Modules`, without a Simulator:
+
+```sh
+xcodebuild -scheme ZenbuJapaneseModules-Package -destination 'platform=macOS,arch=arm64' test
+```
+
+They run against the Mac's own Vision, Speech, and Foundation Models, so the image recognition
+tests are slow on a virtual Mac (about two minutes each).
+
+### Releasing on iPad and the Mac
+
+What a person does once, on the team that holds the app: turn on the Mac platform for the App ID
+`com.zenbujapanese.app` (and `.dev`) with Sign in with Apple and Associated Domains, so automatic
+signing makes macOS profiles; add the macOS platform to the App Store record, which keeps one
+record with universal purchase; and add iPad and Mac screenshots. A Mac build is archived with
+**Any Mac (Apple Silicon)** and uploaded the same way as the iPhone's.
+
+### iPad and Mac checks
+
+When changing the tab shell, a platform adapter, or anything the product docs' iPad and Mac
+section lists, also check:
+
+- On an iPad Simulator, in portrait and landscape: the tabs at the top open into a sidebar, every
+  tab opens, and the app runs beside another app in Split View.
+- On the Mac: the four tabs in the sidebar; ⌘F, ⌘⇧I, and ⌘1 to ⌘4; **Settings…** shows the profile,
+  the account, Reading Aids, and Frequency Dictionaries; Image Search's **Paste Image** opens a
+  copied image; an image dragged onto Search opens it; right-clicking a list in Account → Lists
+  offers Rename and Delete.
+
 ## Install on an iPhone
 
 Check a change on a real iPhone when the Simulator can't show it: the camera, Apple Translation,
@@ -173,7 +263,8 @@ xcodebuild -scheme ZenbuJapaneseModules-Package \
 ```
 
 The Translate tab has its own test target, `TranslatorCoreTests`, and its own guide,
-[`translate.md`](translate.md).
+[`translate.md`](translate.md). Both targets also run on the Mac ([Test on the
+Mac](#test-on-the-mac)).
 
 `SearchConformanceTests` checks Search against the shared conformance suite in
 `apps/ios/LanguageData/Conformance/search-retrieval.json` (see ADR 0006). Only each result's
@@ -634,12 +725,16 @@ previews stay still.
 - Lists' swipe actions allow no full swipe, and Delete has no destructive role, so a list is never
   deleted by swiping too far and its row stays while the deletion is confirmed.
 - The compiled asset catalog exposes the app icon only through the `CFBundleIcons` file names in
-  Info.plist, which Account reads to show it.
+  Info.plist, which Account reads to show it on iPhone and iPad (`AppIcon` in
+  `Platform/PlatformImage.swift`); the Mac asks the app for its icon. The Mac's icon sizes in the
+  asset catalog are the iPhone icon on a rounded plate.
 
 ## App conventions
 
 - `ZenbuTheme` holds the only app-owned colors, for learning evidence: radical selection, the
-  animated stroke, and the pitch downstep. Everything else uses SwiftUI's system styles.
+  animated stroke, and the pitch downstep, each a light and a dark Display P3 color
+  (`Color.adaptive`). Everything else uses SwiftUI's system styles, or `SystemColor` for the
+  UIKit and AppKit backgrounds and fills.
 - Account's support and privacy URLs (`AccountAndMediaLibraryView.swift`) match the App Store
   listing's in `apps/ios/metadata/`; change both together.
 - The privacy manifest (`apps/ios/App/PrivacyInfo.xcprivacy`) declares no collected data, which

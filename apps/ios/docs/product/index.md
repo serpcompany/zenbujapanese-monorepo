@@ -5,14 +5,59 @@ It is updated with the implementation and is not a roadmap or an ideas backlog. 
 is [Required, not built yet](#required-not-built-yet-563), which lists behavior the owners have
 decided the app must have but doesn't yet.
 
-The app runs in portrait on iPhone. It has four tabs:
+The app runs on iPhone in portrait, on iPad in every orientation and beside other apps, and on
+Macs with Apple silicon and macOS 26, as one app with one App Store record
+([iPad and Mac](#ipad-and-mac)). It has four tabs:
 
 - **Search** opens the [Dictionary](dictionary.md) Product Experience.
 - **Translate** opens [Translate](translate.md), a Japanese and English conversation translator
-  that runs on the iPhone.
+  that runs on the device.
 - **Player** opens [Player](player.md), where a learner watches YouTube
   videos with linked Japanese captions.
 - **Account** opens personal content, preferences, language-resource management, support, and credits.
+
+## iPad and Mac
+
+Every tab and screen is the same on iPhone, iPad, and Mac, except for what this section lists.
+Where these docs say iPhone or phone, the same holds for an iPad or a Mac. Signed in, an iPad or a
+Mac syncs through the Zenbu account like another iPhone ([Zenbu account and sync](#zenbu-account-and-sync)),
+and messages that name the device say iPad or Mac, such as "Everything stays on this Mac."
+
+- **The tabs.** iPhone has its tab bar. iPad shows the tabs at the top, and they open into a
+  sidebar; the Mac lists them in a sidebar. A Mac window opens at 1180 by 820 points, can't be
+  made smaller than 760 by 560, and File → New Window opens another.
+- **Menus and keyboard shortcuts**, on the Mac and on an iPad with a keyboard: **Find in
+  Dictionary** (⌘F) goes to Search and puts the cursor in its field, **Search an Image…** (⌘⇧I)
+  opens Image Search's sources, and ⌘1 to ⌘4 switch to Search, Translate, Player, and Account.
+  With two windows open, a shortcut acts in the one in front.
+- **Settings on the Mac.** **Zenbu Japanese → Settings…** (⌘,) opens a Settings window with
+  the profile and the Zenbu account, Reading Aids, and Frequency Dictionaries. They stay in Account
+  too, and both show the same settings.
+- **Image Search on the Mac.** Image Search offers **Photo Library**, **Files**, and **Paste
+  Image**, which takes an image or an image file from the clipboard. There's no **Take Photo**,
+  here or in a word's **•••** menu: macOS has no camera screen an app can show. A photo comes from
+  an iPhone or iPad instead, through **File → Import from iPhone or iPad → Take Photo**
+  (Continuity Camera), which opens it in Image Search. Several images are paged by swiping
+  sideways or with the dots under them.
+- **Dragging images.** On every device, an image dragged onto Search opens it in Image Search,
+  up to 8 at a time.
+- **Right-click on the Mac.** A row whose actions are behind a swipe on the iPhone also shows
+  them on right-click: renaming or deleting a list, removing a word from a list, marking a word
+  unknown, removing a video from Recent, updating or removing a frequency dictionary or showing
+  its details, and deleting a Media Library image. Search results, recent searches, and
+  Translations already open a menu on long-press, which is right-click on the Mac.
+- **Translate on the Mac** uses the Mac's microphone and speakers, and keeps the display awake
+  while it listens. Without voice isolation (Listening), the Mac assumes its speakers reach the
+  microphone, so it stops hearing while a translation plays, even with headphones.
+- **Syncing on the Mac** happens while Zenbu is open: when it opens or becomes active, after each
+  change, and on **Sync Now**. The Mac has no background refresh, so a closed app doesn't sync.
+
+Checked by `PlatformAdapterTests` (images, colors, the Settings links, and the device's name),
+`AppCommandTests` (which window a command reaches, the tabs' shortcuts, and window sizes),
+`apps/ios/Tools/tests/test_app_platforms.py` (the platforms, orientations, sandbox, privacy
+strings, entitlements, and Mac icon), and `pnpm verify layers` (no iPhone-only API outside the
+adapters), and by hand on an iPad Simulator and the Mac ([iPad and Mac
+checks](../../../../docs/agents/ios.md#ipad-and-mac-checks)).
 
 ## Furigana kanji highlight
 

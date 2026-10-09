@@ -3,7 +3,9 @@
 Translate is the app's second tab. Two people share one iPhone: either one speaks Japanese or
 English, in any order, without choosing a language. What they say appears as it is spoken, its
 translation appears under it, and after they pause the translation is spoken aloud. Every
-Japanese word on the tab opens the same dictionary sheet the Player uses.
+Japanese word on the tab opens the same dictionary sheet the Player uses. It works the same on an
+iPad and a Mac, which use their own microphone and speakers ([iPad and
+Mac](index.md#ipad-and-mac)).
 
 Everything runs on the iPhone: Apple's speech recognition, Apple Translation, and the system
 voice. Nothing anyone says is sent to a server, and nothing costs money. The one thing that leaves

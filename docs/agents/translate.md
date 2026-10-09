@@ -60,7 +60,8 @@ The tab is split across three Swift targets in `apps/ios/Modules`
     `TranslatorCore`.
 - **`SearchExperience`** (`apps/ios/Modules/Sources/SearchExperience/Translate/`) holds the screens
   and the rest of the adapters: `OnDeviceTranscriber` (an actor running `AVAudioEngine`, voice
-  processing, and the audio session, and feeding the microphone to a `BilingualRecognizer`),
+  processing, and the audio session through `ConversationAudioSession`, and feeding the microphone
+  to a `BilingualRecognizer`),
   `OnDeviceTranslation` (Apple Translation's availability and download prompt),
   `SystemSpeechPlayer` (`AVSpeechSynthesizer`), and `TranslateExperience`, which owns the session, History, the
   remembered mode, and the start checks (microphone, Apple Translation, speech assets), which
@@ -74,9 +75,9 @@ The tab is split across three Swift targets in `apps/ios/Modules`
   (Account → Translations), and `ConversationHistory.saved` leaves out the conversation still live.
   `SearchExperienceRootView` adds the tab, its navigation stack, and the word sheets for it and
   Account, and `TranslateSessionChrome` adds the session
-  bar for other tabs (`TranslateSessionAccessory`, a `tabViewBottomAccessory`, hidden while the
-  conversation is on screen), the silence prompt, the background pause, and the idle timer (off
-  while a session is live) to the whole `TabView`.
+  bar for other tabs (`TranslateSessionAccessory`, a tab bar accessory through `.bottomAccessory`,
+  hidden while the conversation is on screen), the silence prompt, the background pause, and
+  `ScreenAwake` (the screen stays on while a session is live) to the whole `TabView`.
   `TranslateChromeLayout` decides both bars: the tab bar hides only while the conversation itself
   is on screen, and the session bar shows exactly when it doesn't, so a screen pushed over a live
   conversation has both. The conversation itself puts `ConversationControlBar` (mute, speech speed,
@@ -145,8 +146,14 @@ to open.
   it.
 - Pausing always stops the recognizer, the audio engine, playback, and the timers, and releases
   the audio session back to `.soloAmbient`, the category the rest of the app uses.
-- On iOS 26.0, which lacks `tabViewBottomAccessory(isEnabled:)`, the session bar is a
-  `safeAreaInset` instead.
+- On iOS 26.0, which lacks `tabViewBottomAccessory(isEnabled:)`, and on the Mac, which has no tab
+  bar, the session bar is a `safeAreaInset` instead.
+- The audio session, its interruptions, and its media-services reset exist only on iPhone and
+  iPad. `ConversationAudioSession` (in `SearchExperience/Platform/`) does nothing on the Mac,
+  where `AVAudioEngine` takes the Mac's selected input and output, and reports that the output
+  reaches the microphone, since it can't tell speakers from headphones without Core Audio, so
+  Listening on a Mac stops hearing while it plays. Keeping the screen on is the idle timer on iOS
+  and a `ProcessInfo` activity on the Mac (`ScreenAwake`).
 
 ## Tests
 

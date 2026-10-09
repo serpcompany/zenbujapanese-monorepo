@@ -418,10 +418,13 @@ jobs:
   rebuild reads, and the recorded-audio check's recordings (`LFS_RECORDINGS`): they check the bundled packs and indexes against their pinned sources, import
   reports, and the bundled dictionary, and that each import report records the current hash of
   the tool that wrote it ([`ios.md`](ios.md)). It also checks that Release builds name no account
-  service yet ([`ios.md`](ios.md), Opening sign-in in the App Store build). Its LFS cache is keyed
-  on the pointers of the LFS patterns it fetches.
+  service yet ([`ios.md`](ios.md), Opening sign-in in the App Store build), and the app's iPhone,
+  iPad, and Mac settings (`test_app_platforms.py`: platforms, orientations, the Mac's sandbox and
+  icon, privacy strings, and entitlements). Its LFS cache is keyed on the pointers of the LFS
+  patterns it fetches.
 - `swift` runs `SearchExperienceTests` and `TranslatorCoreTests` with `xcodebuild` on the first iPhone Simulator of the
-  newest iOS runtime, then the recorded-audio check's scoring tests with `swift test` (the replay
+  newest iOS runtime, builds the package and its tests for the Mac, so a change that breaks only
+  the Mac fails ([`ios.md`](ios.md), iPad and Mac), then the recorded-audio check's scoring tests with `swift test` (the replay
   itself needs the Mac's speech models, which the runner doesn't have, so it stays a local check,
   [`translate.md`](translate.md)), on `macos-26` (Xcode 26, for the iOS 26 SDK the package needs; arm64, which
   the `sudachi-swift` binary needs). A macOS minute costs about ten times a Linux one, so it runs
