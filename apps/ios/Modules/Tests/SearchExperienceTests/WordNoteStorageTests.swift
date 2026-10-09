@@ -78,24 +78,25 @@ struct WordNoteStorageTests {
   @Test("a page saves the note it was editing when it opens another")
   func savesADraftWhenAnotherNoteOpens() async throws {
     let temporary = try TemporaryDefaults()
-    let (page, storage, saves) = try await pageOnTwoNotes(in: temporary)
+    let (page, storage, saves, _) = try await pageOnTwoNotes(in: temporary)
     var savesFinished = saves.makeAsyncIterator()
 
     await MainActor.run {
       page.beginEditing(page.notes[0])
       page.draft = "よく食べる"
       page.beginEditing(page.notes[1])
+      page.draft = "朝ごはんに食べる"
       page.finishEditing()
     }
     while let saved = await savesFinished.next(), saved != "2" {}
 
-    #expect(await storage.load(taberu).map(\.text) == ["よく食べる", "朝ごはん"])
+    #expect(await storage.load(taberu).map(\.text) == ["よく食べる", "朝ごはんに食べる"])
   }
 
   @Test("a page saves the note it was editing when it adds another, and removes one emptied")
   func editsNotesThroughAPage() async throws {
     let temporary = try TemporaryDefaults()
-    let (page, storage, saves) = try await pageOnTwoNotes(in: temporary)
+    let (page, storage, saves, _) = try await pageOnTwoNotes(in: temporary)
     var savesFinished = saves.makeAsyncIterator()
     let loaded = await MainActor.run { page.notes }
 
@@ -107,15 +108,40 @@ struct WordNoteStorageTests {
         page.finishEditing()
       }
       await savesFinished.next()
-      await savesFinished.next()
     }
 
     #expect(await storage.load(taberu).map(\.text) == ["よく食べる"])
     #expect(await MainActor.run { page.notes.map(\.text) } == ["よく食べる"])
   }
 
+  @Test("a page that opens a note and leaves it unchanged doesn't write over another page's edit")
+  func keepsAnotherPagesEdit() async throws {
+    let temporary = try TemporaryDefaults()
+    let (first, storage, saves, store) = try await pageOnTwoNotes(in: temporary)
+    var savesFinished = saves.makeAsyncIterator()
+    let second = await MainActor.run { SavedItemNotes(store: store) }
+    await second.load(taberu)
+
+    await MainActor.run {
+      second.beginEditing(second.notes[0])
+      second.draft = "よく食べる"
+      second.finishEditing()
+    }
+    _ = await savesFinished.next()
+    await MainActor.run {
+      first.beginEditing(first.notes[0])
+      first.finishEditing()
+      first.beginAdding()
+      first.draft = "新しいメモ"
+      first.finishEditing()
+    }
+    while let saved = await savesFinished.next(), saved == "1" {}
+
+    #expect(await storage.load(taberu).map(\.text) == ["よく食べる", "朝ごはん", "新しいメモ"])
+  }
+
   private func pageOnTwoNotes(in temporary: TemporaryDefaults) async throws
-    -> (SavedItemNotes, WordNoteStorage, AsyncStream<String>)
+    -> (SavedItemNotes, WordNoteStorage, AsyncStream<String>, WordNoteStore)
   {
     let storage = try storage(in: temporary)
     await storage.save(LearnerWordNote(id: "1", text: "毎日食べる"), for: taberu)
@@ -123,7 +149,7 @@ struct WordNoteStorageTests {
     let (store, saves) = observed(storage)
     let page = await MainActor.run { SavedItemNotes(store: store) }
     await page.load(taberu)
-    return (page, storage, saves)
+    return (page, storage, saves, store)
   }
 
   private func observed(_ storage: WordNoteStorage) -> (WordNoteStore, AsyncStream<String>) {

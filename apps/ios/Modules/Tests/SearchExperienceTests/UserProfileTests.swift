@@ -94,6 +94,14 @@ struct UserProfileTests {
     #expect(settings.unfocus() == "Ana Lee M")
   }
 
+  @Test("text typed into a field whose focus wasn't seen still saves")
+  func savesTextTypedWithoutFocus() {
+    var name = ProfileFieldEdit()
+    name.show("Ana")
+    name.text = "Ana Lee"
+    #expect(name.unfocus() == "Ana Lee")
+  }
+
   @Test("an email that isn't valid stays as typed until its field is focused again")
   func keepsARejectedEmail() {
     var email = ProfileFieldEdit()

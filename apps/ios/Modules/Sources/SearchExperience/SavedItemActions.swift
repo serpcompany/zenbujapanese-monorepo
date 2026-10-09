@@ -10,6 +10,7 @@ final class SavedItemNotes {
   private(set) var editingNoteID: String?
   var draft = ""
   @ObservationIgnored private var noteID: WordNoteID?
+  @ObservationIgnored private var textWhenEditingBegan = ""
   @ObservationIgnored private var saveTask: Task<Void, Never>?
   @ObservationIgnored private let store: WordNoteStore
 
@@ -32,12 +33,14 @@ final class SavedItemNotes {
     if let editingNoteID, editingNoteID != note.id { saveDraft(of: editingNoteID) }
     editingNoteID = note.id
     draft = note.text
+    textWhenEditingBegan = note.text
   }
 
   func beginAdding() {
     if let editingNoteID { saveDraft(of: editingNoteID) }
     editingNoteID = UUID().uuidString
     draft = ""
+    textWhenEditingBegan = ""
   }
 
   func finishEditing() {
@@ -48,6 +51,8 @@ final class SavedItemNotes {
   }
 
   private func saveDraft(of editingNoteID: String) {
+    let trimmed = { (text: String) in text.trimmingCharacters(in: .whitespacesAndNewlines) }
+    guard trimmed(draft) != trimmed(textWhenEditingBegan) else { return }
     let note = LearnerWordNote(id: editingNoteID, text: draft)
     notes.apply(note)
     guard let noteID else { return }

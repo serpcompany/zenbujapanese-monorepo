@@ -71,7 +71,7 @@ struct ProfileFieldEdit: Equatable {
   }
 
   mutating func unfocus() -> String? {
-    guard let textWhenFocused else { return nil }
+    guard let textWhenFocused else { return text == saved ? nil : text }
     self.textWhenFocused = nil
     guard text == textWhenFocused else { return text }
     text = saved
