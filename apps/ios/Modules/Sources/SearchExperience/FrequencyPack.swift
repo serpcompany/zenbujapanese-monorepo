@@ -60,7 +60,7 @@ struct FrequencyCapability: Sendable {
 
 struct FrequencyPackClient: Sendable {
   var snapshot: @Sendable () async throws -> FrequencyPackSnapshot
-  var download: @Sendable (FrequencyPackID) async throws -> Void
+  var download: @Sendable (FrequencyPackID, @escaping FrequencyPackManager.Progress) async throws -> Void
   var enable: @Sendable (FrequencyPackID) async throws -> Void
   var disable: @Sendable (FrequencyPackID) async throws -> Void
   var reorderEnabled: @Sendable ([FrequencyPackID]) async throws -> Void
@@ -68,7 +68,7 @@ struct FrequencyPackClient: Sendable {
 
   static let live = FrequencyPackClient(
     snapshot: { try await FrequencyPackStore.shared.snapshot() },
-    download: { try await FrequencyPackStore.shared.download($0) },
+    download: { try await FrequencyPackStore.shared.download($0, progress: $1) },
     enable: { try await FrequencyPackStore.shared.enable($0) },
     disable: { try await FrequencyPackStore.shared.disable($0) },
     reorderEnabled: { try await FrequencyPackStore.shared.reorderEnabled($0) },
@@ -213,8 +213,9 @@ private actor FrequencyPackStore {
       bundledArtifactURLs: bundledArtifactURLs,
       languageDataURL: languageDataURL,
       storageDirectory: storageDirectory,
-      download: { url in
-        let (data, response) = try await URLSession.shared.data(from: url)
+      download: { url, progress in
+        let (data, response) = try await URLSession.shared.data(
+          from: url, delegate: FrequencyPackDownloadProgress(report: progress))
         guard (response as? HTTPURLResponse)?.statusCode == 200 else {
           throw FrequencyPackError.invalidSource
         }
@@ -239,9 +240,11 @@ private actor FrequencyPackStore {
     return try await manager.snapshot()
   }
 
-  func download(_ packID: FrequencyPackID) async throws {
+  func download(
+    _ packID: FrequencyPackID, progress: @escaping FrequencyPackManager.Progress
+  ) async throws {
     guard let manager else { throw FrequencyPackError.invalidCatalog }
-    try await manager.download(packID)
+    try await manager.download(packID, progress: progress)
   }
 
   func enable(_ packID: FrequencyPackID) async throws {

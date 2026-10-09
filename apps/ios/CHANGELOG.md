@@ -39,6 +39,8 @@ All notable user-facing changes to Zenbu Japanese are recorded here.
 
 ### Fixed
 
+- Frequency Dictionaries: downloading several packs at once no longer looks like each tap cancels
+  the one before. Every downloading row keeps its own progress ring, with a stop button.
 - Radicals no longer draws over the search results.
 - Choosing **Photo Library** for Image Search opens the picker again.
 - English searches put the common word first: `dog` shows 犬 first and `water` shows 水, where rarer

@@ -89,7 +89,11 @@ sorts by the first pack, breaking ties with each next pack, unless the learner s
 from Search's **Sorted by** row ([Sorting results](dictionary.md#sorting-results)). A word the first pack doesn't rank
 places by how common the next pack that ranks it says it is (家, which YouTube doesn't rank, places
 by its JLPT N5 level), rather than after every ranked word. **Installed** holds downloaded packs that are switched off, and
-**Available** offers a download button for each remaining pack. A row's subtitle shows its
+**Available** offers a download button for each remaining pack. Several packs can download at
+once: each row shows its own progress ring with a stop button, and stopping one leaves the others
+running and its row ready to download again. When its download finishes, a row shows a spinner
+while the pack is installed, one pack at a time, and can no longer be stopped; a new pack then
+moves to **Enabled**. Remove and Update are hidden on a row while it downloads. A row's subtitle shows its
 domain and size, or a download failure. Swiping a row reveals Details and Remove, and Update
 when a newer version exists. When the app upgrades from the single active pack, that pack
 becomes the only enabled one. An update that adds a bundled pack, such as JLPT Levels, enables
