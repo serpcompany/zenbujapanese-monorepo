@@ -656,11 +656,11 @@ previews stay still.
 - The word sheet (`WordSheetPresentation` in `RecognizedWordSheet.swift`) swaps the word inside a
   `sheet(isPresented:)`: with `sheet(item:)`, each new word dismissed and re-presented the sheet,
   which reopened at full height.
-- Image Search's sources open from a `Menu` (`ImageTextSourceButtons`), not a
-  `confirmationDialog`: on the iOS 27 Simulator a picker presented from a dialog's button never
-  appeared, while a menu runs its action after it closes.
+- Translate's Image alert only records the choice, and the home opens the picker once the alert's
+  binding turns false: on the iOS 27 Simulator, a picker presented from a `confirmationDialog`
+  button's action never appeared, while one presented from this `onChange` does.
 - `ImageTextImport` pushes Image Search only once its picker has finished closing (the sheets'
-  `onDismiss`, the file importer's binding turning false), so the photo library is a
+  `onDismiss`), so the photo library is a
   `PHPickerViewController` in a sheet (`ImagePhotoLibraryPicker`) rather than `photosPicker`,
   whose binding turns false while it is still closing. Pushed any earlier, Image Search loses its
   title and shows a Back button beside its own close button.
@@ -710,7 +710,7 @@ When changing Search results or frequency dictionaries, also check in the Simula
 `Modules/Tests/SearchExperienceTests/Fixtures/ImageText`: vertical Japanese (a book-page photo,
 a proverb list, and a panel with an English subtitle) and a horizontal control. When changing
 text recognition, also open one vertical and one horizontal image in the Simulator's Image
-Search (**Translate → Camera → Start**, then Photo Library or Files) and check:
+Search (**Translate → Image → Photo Library**) and check:
 
 - every view has the same toolbar: close, and a **•••** menu;
 - **Photo** shows blue chips down vertical columns and underlines under horizontal lines, and

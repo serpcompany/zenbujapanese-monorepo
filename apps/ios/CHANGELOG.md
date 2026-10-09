@@ -12,12 +12,21 @@ All notable user-facing changes to Zenbu Japanese are recorded here.
 
 ### Changed
 
-- Image Search moved from Search's camera button to Translate: choose **Camera** on Translate's
-  home, then **Start** to take a photo or pick one, and tap any word to look it up.
+- Image Search moved from Search's camera button to Translate's **Image** row: take a photo or
+  pick one from your library, then tap any word to look it up.
+- Translate's home is laid out like Settings: a header, then **Spoken** (Conversation, Listen) and
+  **Written** (Image, Text, Document). Tapping a row opens it, with no Start button.
+  **Document** opens PDFs and text files.
+- Image Search can open up to 8 photos from your library at once.
+
+### Removed
+
+- Image Search no longer opens image files from Files; choose them from your photo library.
+- Translate's **Document** no longer reads photos; use **Image**, which also lets you tap words.
 
 ### Fixed
 
-- Choosing **Photo Library** or **Files** for Image Search opens the picker again.
+- Choosing **Photo Library** for Image Search opens the picker again.
 - English searches put the common word first: `dog` shows 犬 first and `water` shows 水, where rarer
   words whose meaning was exactly the query used to come ahead of them.
 

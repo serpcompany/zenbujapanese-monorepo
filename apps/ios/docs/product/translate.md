@@ -10,24 +10,28 @@ voice. Nothing anyone says is sent to a server, and nothing costs money. The one
 the iPhone is a sentence the learner bookmarks, once they sign in to a Zenbu account (bookmarks
 made before signing in go then too): that sentence and its translation sync to their other devices
 ([Translations](#translations)), and nothing else of the conversation does. The first conversation downloads
-Apple's Japanese and English speech recognition and translation once, with progress shown above
-the Start button; after that, Translate works without a connection. There is no Online
+Apple's Japanese and English speech recognition and translation once, with progress shown under
+the Spoken section; after that, Translate works without a connection. There is no Online
 engine yet, so there is no Online/Offline switch and no cost or model details.
 
 ## The tab's home
 
-The tab opens on five ways to translate. It has a small **Translate** title with a
-**Translations** button (a clock), an illustration of the selected option, the five options listed with a description each,
-and **Start** above the tab bar. The selected option is tinted with a checkmark, and the choice
-is remembered.
+The tab's home is laid out like iOS Settings. It has a small **Translate** title with a
+**Translations** button (a clock), then a header card with the Translate icon, **Translate**, and
+one line on what the tab does. Below it, two grouped sections list five ways to translate:
+**Spoken** (**Conversation** and **Listen**) and **Written** (**Image**, **Text**, and
+**Document**). Each row is a tinted icon, its name, and a chevron, and all five fit on an iPhone 17
+Pro without scrolling at the default text size. Tapping a row opens it. While a live mode gets
+ready or a document is read, that row shows a spinner and the rows don't respond; a live mode's
+progress (**Getting ready…**, **Downloading translation…**) shows under the Spoken section.
 
-| Option | What **Start** does |
+| Row | What tapping it does |
 | --- | --- |
 | **Conversation** | Two-way and live. Each turn is detected as Japanese or English. Translations play out loud, and the microphone keeps listening while they play, so someone who keeps talking isn't lost. A translation never starts while someone is talking. The speaker button silences them. |
-| **Listening** | One-way and live, for a TV, a guide, or announcements. Hears Japanese and English, each sentence detected as either, from a distance and without voice isolation. The translation leads each card (English under Japanese speech, Japanese under English), and each translation plays as soon as it's ready. With earphones the microphone keeps listening; on the iPhone's speaker it waits while each translation plays, so it doesn't hear itself. |
+| **Listen** | One-way and live, for a TV, a guide, or announcements. Hears Japanese and English, each sentence detected as either, from a distance and without voice isolation. The translation leads each card (English under Japanese speech, Japanese under English), and each translation plays as soon as it's ready. With earphones the microphone keeps listening; on the iPhone's speaker it waits while each translation plays, so it doesn't hear itself. |
+| **Image** | Opens a centered **Image** alert with **Take Photo**, **Photo Library**, and **Cancel**. The camera asks for access the first time; the library allows up to 8 photos. They open in [Image Search](#image-search), where tapping a word looks it up. |
 | **Text** | Opens the typing screen, ready to type or paste. |
-| **Document Upload** | Opens the file picker for a PDF, a photo, or a text file. Its text opens on the typing screen, translated. A PDF's own text is used. A scanned PDF (its first 10 pages) or a photo is read with on-device text recognition. A text file can be UTF-8, UTF-16, Shift-JIS, or EUC-JP. Only the first 5,000 characters are translated. A file with no text shows **Couldn't read this document**. |
-| **Camera** | Offers **Take Photo**, **Photo Library**, and **Files**, then opens the images in [Image Search](#image-search), where tapping a word looks it up. |
+| **Document** | Opens the file picker for a PDF or a text file. Its text opens on the typing screen, translated. A PDF's own text is used; a scanned PDF (its first 10 pages) is read with on-device text recognition. A text file can be UTF-8, UTF-16, Shift-JIS, or EUC-JP. Only the first 5,000 characters are translated. A file with no text shows **Couldn't read this document**. |
 
 ## Typing to translate
 
@@ -42,8 +46,8 @@ Apple's download prompt. The typing screen's **•••** menu holds **Furigana
 
 ## Starting a live mode
 
-The first time, **Start** brings up iOS's request for the microphone. If access was turned off,
-**Start** shows **Allow the microphone** with **Open Settings** and **Cancel**. A missing
+The first time, tapping **Conversation** or **Listen** brings up iOS's request for the
+microphone. If access was turned off, it shows **Allow the microphone** with **Open Settings** and **Cancel**. A missing
 translation download shows **Download Japanese**, and a missing speech download explains that it
 needs a connection once. Nothing stays on the home screen afterward.
 
@@ -159,8 +163,7 @@ opens the word inside the tab it was tapped in: Translate, or Account from Accou
 
 ## Image Search
 
-Translate's **Camera** option opens Image Search: **Start** offers **Take Photo**, **Photo
-Library**, and **Files**, and the chosen images open on the Image Search screen. Image Search
+A photo taken or chosen from Translate's **Image** row opens on the Image Search screen. Image Search
 recognizes Japanese text in one or more selected images. It reads both
 horizontal and vertical (縦書き) Japanese; vertical columns are read top to bottom, right to
 left, and English elsewhere in the image does not hide the Japanese.
