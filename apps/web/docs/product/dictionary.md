@@ -92,10 +92,10 @@ matches only a form's or meaning's first word, as in the app. It lists at most 6
 limit.
 
 - Source: App docs, Search; `LookupClient.swift`; ADR 0006, ADR 0008, and ADR 0009.
-- Check: SR `results` (the first 10 IDs, in order), `resolution`, and `presentation`, for 30
+- Check: SR `results` (the first 10 IDs, in order), `resolution`, and `presentation`, for 32
   queries; `apps/dictionary-api/src/conformance/full-text.test.ts`, "a long number finds glosses,
   as FTS4 stems it"; SRR's `t*` and `^t*` cases, every row. The 60-word limit: SRR `results`,
-  every row, for the 38 queries that reach it (い, `eat`, 見る, and others), and the rendered い
+  every row, for the 40 queries that reach it (い, `eat`, 見る, and others), and the rendered い
   and いる cases in `search-results.test.tsx`; SR records only the first 10 (`resultLimit: 10`).
 
 **Sentence search.** A Japanese sentence that isn't a word the dictionary holds, such as
@@ -123,7 +123,7 @@ TUBELEX packs, read by the dictionary service for all of a search's results, one
 - Source: App docs, Search; `SearchResultFrequencyOrdering.swift`; #462 (rows in
   the order the app shows with its default dictionaries).
 - Check: SRR `results` (every row's ID, in order, with its `match` group and `retrievalOrder`) for
-  54 queries, including `iru` and いる; `packages/dictionary-core/src/results/results.test.ts`,
+  56 queries, including `iru` and いる; `packages/dictionary-core/src/results/results.test.ts`,
   "orderedItems (SearchResultFrequencyOrdering.ordered)"; smoke "iru shows the refinement and its
   first rows with their chips, as the app does", which reads the rows from SRR's `iru` case.
 
@@ -166,7 +166,7 @@ row opens the sentences where the site shows them:
 - Source: App docs, Search; the examples section of `SearchResultsView` and
   `SearchResultsScreen.exampleCount` and `exampleActionTitle` in `SearchResultsScreen.swift`; ADR 0010 and
   the owner's decision on #544 (where the row leads, with no Example Sentences page).
-- Check: SRR `examples` (title, count, and primary entry) and `sections` for all 54 queries;
+- Check: SRR `examples` (title, count, and primary entry) and `sections` for all 56 queries;
   `search-results.test.tsx`, "shows the Example Sentences row, the reading refinement, then the
   rows in order with their chips", "shows only the Example Sentences when only sentences match",
   "an English search lists its Example Sentences below the words, and its row links down to them",
@@ -239,7 +239,7 @@ rare. Screen readers hear the tier after a rank, as the app's labels speak it.
 
 - Source: App docs, Search; `SearchFrequencyRankPresentationModel` in `FrequencyPresentation.swift`;
   `FrequencyRankChip.swift`.
-- Check: SRR `results[].chips` (dictionary, text, and tier) for every row of 54 queries;
+- Check: SRR `results[].chips` (dictionary, text, and tier) for every row of 56 queries;
   `search-results.test.tsx` (the chips as rendered in the SRR cases); smoke (iru's chips);
   `packages/dictionary-core/src/detail/frequency.test.ts`, "shows only dictionaries that rank or
   list the word, since JLPT is a level list" and "tierForRank (FrequencyTier(rank:))".

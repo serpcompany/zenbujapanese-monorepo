@@ -202,7 +202,7 @@
 					"$(inherited)",
 					"@executable_path/../Frameworks",
 				);
-				MARKETING_VERSION = 2.0.0;
+				MARKETING_VERSION = 2.0.1;
 				PRODUCT_BUNDLE_IDENTIFIER = "com.zenbujapanese.dictionary$(ZENBU_BUNDLE_ID_SUFFIX)";
 				PRODUCT_NAME = "Zenbu Japanese";
 				SDKROOT = auto;
@@ -308,7 +308,7 @@
 					"$(inherited)",
 					"@executable_path/../Frameworks",
 				);
-				MARKETING_VERSION = 2.0.0;
+				MARKETING_VERSION = 2.0.1;
 				PRODUCT_BUNDLE_IDENTIFIER = "com.zenbujapanese.dictionary$(ZENBU_BUNDLE_ID_SUFFIX)";
 				PRODUCT_NAME = "Zenbu Japanese";
 				SDKROOT = auto;
