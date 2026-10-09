@@ -175,7 +175,8 @@ A failing test keeps screenshots rather than a screen recording (the scheme's
 slowed the app until XCUITest's queries timed out. On a busy Mac a tab tap, a shortcut, the
 conversation's pause, or a Simulator rotation sometimes doesn't take; the tests repeat one only
 while what it should bring hasn't appeared (`open`, `press`, `pause`, `LayoutUITests.turn`), so a
-repeat can't undo it.
+repeat can't undo it. An iPad Simulator that had run the suites for hours once stopped turning at
+all, though XCUITest confirmed each turn; `xcrun simctl shutdown` and `boot` brought it back.
 
 ### Releasing on iPad and the Mac
 
