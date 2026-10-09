@@ -480,13 +480,18 @@ copy of bytes a copy already holds; a value that isn't data at all is kept aside
 it could read (each video, note, and Media Library record; the profile is one record, so it
 starts empty). A Media Library index that can't be opened or copied aside is neither read nor
 written until it can be. Word notes are saved one note at a time (`WordNoteStorage.save`), so two
-pages open on one word, in two windows on iPad or the Mac, can't write over each other's notes.
+pages open on one word, in two windows on iPad or the Mac, can't write over each other's notes;
+likewise Profile saves a field only when its text changed while it had focus, and otherwise
+shows the saved value (`ProfileFieldEdit`), so the Mac's Settings and an Account tab don't write
+over each other.
 
 The Media Library deletes only images the learner deleted. When a kept copy of the index names
 the photo, or a copy can't be read, `deleteImage` records its ID and when in
 `deferred-deletions.json` (`DeferredImageDeletions`), as it does an image it couldn't remove.
-At most once a day, after the index reads (at the latest when the app becomes active:
-`AppLifecycle` calls `deleteImagesDue`), `retryDeferredDeletions` drops the IDs the index names
+At most once a day, after the index reads (for a word's photos, the Media Library, or
+`deleteImagesDue`, which `AppLifecycle` calls when the app becomes active; on the Mac that's
+seldom, since the app stays active while any window is in front), `retryDeferredDeletions` drops
+the IDs the index names
 again, by a media record or an encounter, without deleting their images, and deletes each other
 recorded image that no kept copy names, or that has waited 30 days (`longestWait`) whatever a
 kept copy names, so a deleted photo is gone within 30 days (the

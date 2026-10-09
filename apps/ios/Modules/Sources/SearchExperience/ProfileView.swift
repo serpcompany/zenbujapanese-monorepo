@@ -53,6 +53,25 @@ struct ProfileCardRow: View {
   }
 }
 
+struct ProfileFieldEdit: Equatable {
+  var text = ""
+  private var textWhenFocused: String?
+
+  mutating func focus() {
+    textWhenFocused = text
+  }
+
+  mutating func show(_ saved: String) {
+    guard textWhenFocused == nil else { return }
+    text = saved
+  }
+
+  mutating func unfocus() -> String? {
+    defer { textWhenFocused = nil }
+    return text == textWhenFocused ? nil : text
+  }
+}
+
 struct ProfileView: View {
   private enum Field: Hashable {
     case name
@@ -62,9 +81,9 @@ struct ProfileView: View {
 
   @Environment(UserProfile.self) private var profile
   @State private var photoSelection: PhotosPickerItem?
-  @State private var name = ""
-  @State private var username = ""
-  @State private var email = ""
+  @State private var name = ProfileFieldEdit()
+  @State private var username = ProfileFieldEdit()
+  @State private var email = ProfileFieldEdit()
   @State private var showsEmailError = false
   @FocusState private var focusedField: Field?
 
@@ -81,7 +100,7 @@ struct ProfileView: View {
 
       Section {
         LabeledContent("Name") {
-          TextField("Name", text: $name, prompt: Text("Your Name"))
+          TextField("Name", text: $name.text, prompt: Text("Your Name"))
             .textContentType(.name)
             .textEntry(.capitalizedWords)
             .focused($focusedField, equals: .name)
@@ -89,7 +108,7 @@ struct ProfileView: View {
             .accessibilityIdentifier("profile.name")
         }
         LabeledContent("Username") {
-          TextField("Username", text: $username, prompt: Text("username"))
+          TextField("Username", text: $username.text, prompt: Text("username"))
             .textContentType(.username)
             .textEntry(.uncapitalized)
             .autocorrectionDisabled()
@@ -98,12 +117,12 @@ struct ProfileView: View {
             .accessibilityIdentifier("profile.username")
         }
         LabeledContent("Email") {
-          TextField("Email", text: $email, prompt: Text(verbatim: "name@example.com"))
+          TextField("Email", text: $email.text, prompt: Text(verbatim: "name@example.com"))
             .textContentType(.emailAddress)
             .textEntry(.email)
             .autocorrectionDisabled()
             .focused($focusedField, equals: .email)
-            .onChange(of: email) { showsEmailError = false }
+            .onChange(of: email.text) { showsEmailError = false }
             .multilineTextAlignment(.trailing)
             .accessibilityIdentifier("profile.email")
         }
@@ -121,13 +140,16 @@ struct ProfileView: View {
     .accessibilityIdentifier("profile.form")
     .navigationTitle("Profile")
     .inlineNavigationTitle()
-    .onAppear {
-      name = profile.name
-      username = profile.username
-      email = profile.email
-    }
-    .onChange(of: focusedField) { previous, _ in
+    .onAppear(perform: showSaved)
+    .onChange(of: [profile.name, profile.username, profile.email], showSaved)
+    .onChange(of: focusedField) { previous, current in
       if let previous { commit(previous) }
+      switch current {
+      case .name: name.focus()
+      case .username: username.focus()
+      case .email: email.focus()
+      case nil: break
+      }
     }
     .onDisappear {
       if let focusedField { commit(focusedField) }
@@ -161,21 +183,29 @@ struct ProfileView: View {
     }
   }
 
+  private func showSaved() {
+    name.show(profile.name)
+    username.show(profile.username)
+    email.show(profile.email)
+  }
+
   private func commit(_ field: Field) {
     switch field {
     case .name:
-      name = name.trimmingCharacters(in: .whitespacesAndNewlines)
-      profile.name = name
+      guard let edited = name.unfocus() else { return }
+      profile.name = edited.trimmingCharacters(in: .whitespacesAndNewlines)
     case .username:
-      username = UserProfile.normalizedUsername(username)
-      profile.username = username
+      guard let edited = username.unfocus() else { return }
+      profile.username = UserProfile.normalizedUsername(edited)
     case .email:
-      email = email.trimmingCharacters(in: .whitespacesAndNewlines)
-      guard email.isEmpty || UserProfile.isValidEmail(email) else {
+      guard let edited = email.unfocus() else { return }
+      let trimmed = edited.trimmingCharacters(in: .whitespacesAndNewlines)
+      guard trimmed.isEmpty || UserProfile.isValidEmail(trimmed) else {
         showsEmailError = true
         return
       }
-      profile.email = email
+      profile.email = trimmed
     }
+    showSaved()
   }
 }

@@ -71,4 +71,22 @@ struct UserProfileTests {
     let reloaded = UserProfile(defaults: temporary.defaults, photoURL: photoURL)
     #expect(reloaded.name == "Devin Schumacher")
   }
+
+  @Test("a profile field saves only what was typed in it, so another window's newer value stays")
+  func keepsAnotherWindowsEdit() {
+    var mainWindow = ProfileFieldEdit()
+    var settings = ProfileFieldEdit()
+    mainWindow.show("Ana")
+    settings.show("Ana")
+    mainWindow.focus()
+    settings.focus()
+    settings.text = "Ana Lee"
+
+    #expect(settings.unfocus() == "Ana Lee")
+    mainWindow.show("Ana Lee")
+    #expect(mainWindow.text == "Ana")
+    #expect(mainWindow.unfocus() == nil)
+    mainWindow.show("Ana Lee")
+    #expect(mainWindow.text == "Ana Lee")
+  }
 }
