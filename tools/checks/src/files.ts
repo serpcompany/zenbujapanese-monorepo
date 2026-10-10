@@ -49,6 +49,10 @@ const writtenByTools: readonly [RegExp, string][] = [
     /^apps\/dictionary-api\/openapi\.json$/,
     "the dictionary service's tests (pnpm test -u in apps/dictionary-api)"
   ],
+  [
+    /^apps\/ios\/Modules\/Sources\/SearchExperience\/Resources\/DictionaryCore\/dictionary-core\.js$/,
+    'esbuild (pnpm bundle:javascriptcore in packages/dictionary-core)'
+  ],
   [/\.(pbxproj|xcscheme|xcworkspacedata)$/, 'Xcode'],
   [/(^|\/)Package\.resolved$/, 'Swift Package Manager']
 ]

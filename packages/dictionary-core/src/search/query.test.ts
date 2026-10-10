@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest'
-import { deinflect } from './deinflect'
+import { acceptsPartsOfSpeech, deinflect } from './deinflect'
 import {
   compareStrings,
   isJapaneseOnly,
@@ -64,5 +64,26 @@ describe('deinflect', () => {
     expect(terms('行きました')).toContain('行く')
     expect(terms('高くて')).toContain('高い')
     expect(terms('勉強した')).toContain('勉強')
+  })
+
+  test('carries the word class the dictionary form must have, through a chain of endings', () => {
+    const classes = (text: string, term: string) =>
+      deinflect(text)
+        .filter(candidate => candidate.term === term)
+        .flatMap(candidate => candidate.wordClasses)
+    expect(classes('まけたら', 'まける')).toContain('ichidan')
+    expect(classes('まけたら', 'まけたら')).toEqual([])
+    expect(classes('食べさせられなかったら', '食べる')).toContain('ichidan')
+  })
+})
+
+describe('acceptsPartsOfSpeech', () => {
+  test('lets a word class accept only the parts of speech that inflect its way', () => {
+    expect(acceptsPartsOfSpeech('ichidan', ['ichidanVerb'])).toBe(true)
+    expect(acceptsPartsOfSpeech('ichidan', ['noun'])).toBe(false)
+    expect(acceptsPartsOfSpeech('godan', ['godanVerb'])).toBe(true)
+    expect(acceptsPartsOfSpeech('iAdjective', ['iAdjective'])).toBe(true)
+    expect(acceptsPartsOfSpeech('suruNoun', ['noun', 'takesSuru', 'transitive'])).toBe(true)
+    expect(acceptsPartsOfSpeech('suruNoun', ['noun', 'transitive'])).toBe(false)
   })
 })

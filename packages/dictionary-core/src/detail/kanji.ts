@@ -9,7 +9,7 @@ import { type RubySegment, rubySegments } from './ruby'
 import { type StrokeOrder, strokeOrder } from './strokes'
 import { hiragana, isKanjiCharacter } from './text'
 
-const kanjiWordLimit = 24
+export const kanjiWordLimit = 24
 
 export interface KanjiWord {
   entSeq: number

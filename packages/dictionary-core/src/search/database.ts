@@ -2,6 +2,15 @@ import type { PriorityProfile } from './rank'
 
 export interface SearchDatabase {
   all<Row>(sql: string, params: readonly (string | number)[]): Promise<Row[]>
+  interrupted?(): boolean
+}
+
+export type Interruptible = Pick<SearchDatabase, 'interrupted'>
+
+export const interruptedSearch = 'The search was interrupted'
+
+export function stopIfInterrupted(client: Interruptible, step: number): void {
+  if ((step & 1023) === 0 && client.interrupted?.()) throw new Error(interruptedSearch)
 }
 
 function truncatedAtNul(param: string | number): string | number {
@@ -12,7 +21,8 @@ export function withParametersTruncatedAtNul(db: SearchDatabase): SearchDatabase
   return {
     all<Row>(sql: string, params: readonly (string | number)[]): Promise<Row[]> {
       return db.all<Row>(sql, params.map(truncatedAtNul))
-    }
+    },
+    interrupted: () => db.interrupted?.() ?? false
   }
 }
 

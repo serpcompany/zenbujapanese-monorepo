@@ -55,7 +55,7 @@ function ranks(rows: readonly FrequencyRow[]): Ranks {
 
 const jlptSortValue = (level: number) => 6 - level
 
-function compareRelevance(lhs: SearchResultItem, rhs: SearchResultItem): number {
+export function compareRelevance(lhs: SearchResultItem, rhs: SearchResultItem): number {
   return lhs.sourceOrder - rhs.sourceOrder || comparePresentationRanks(lhs.matchRank, rhs.matchRank)
 }
 

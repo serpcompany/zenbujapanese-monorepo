@@ -1,4 +1,5 @@
 import { describe, expect, test, vi } from 'vitest'
+import { interruptedSearch } from './database'
 import { deinflect } from './deinflect'
 import { lookupSegments, type MorphologyWord } from './morphology'
 import { DictionarySearch, type SearchDatabase } from './search'
@@ -146,6 +147,14 @@ describe('results', () => {
     expect(params.flat().some(param => typeof param === 'string' && param.includes('\u0000'))).toBe(
       false
     )
+  })
+
+  test('a search stops, with an error that says so, once its client reports it interrupted', async () => {
+    const { db } = japaneseFormsDatabase()
+    const abandoned = new DictionarySearch({ all: db.all, interrupted: () => true })
+    await expect(abandoned.search('日本語')).rejects.toThrow(interruptedSearch)
+    const wanted = new DictionarySearch({ all: db.all, interrupted: () => false })
+    expect((await wanted.search('日本語')).items.map(item => item.entry.id)).toEqual(['a1'])
   })
 
   test('changing one result leaves later searches alone', async () => {

@@ -1,4 +1,4 @@
-import type { SearchEntry } from './database'
+import { type Interruptible, type SearchEntry, stopIfInterrupted } from './database'
 import { compareStrings } from './query'
 import { comparePresentationRanks, type Rank } from './rank'
 
@@ -19,9 +19,11 @@ export function minimum<Value>(values: Value[], compare: (lhs: Value, rhs: Value
   return best
 }
 
-export function deduplicated(ranked: RankedEntry[]): RankedEntry[] {
+export function deduplicated(ranked: RankedEntry[], client: Interruptible = {}): RankedEntry[] {
   const groups = new Map<string, RankedEntry[]>()
+  let step = 0
   for (const entry of ranked) {
+    stopIfInterrupted(client, step++)
     const group = groups.get(entry.semanticFingerprint)
     if (group) group.push(entry)
     else groups.set(entry.semanticFingerprint, [entry])

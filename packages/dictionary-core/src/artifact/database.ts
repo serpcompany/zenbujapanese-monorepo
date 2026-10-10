@@ -5,13 +5,15 @@ export type SqlValue = string | number | bigint | null | Uint8Array
 
 export interface ArtifactDatabase {
   all<Row>(sql: string, params?: readonly SqlValue[]): Row[]
+  interrupted?(): boolean
 }
 
 export function searchDatabase(db: ArtifactDatabase): SearchDatabase {
   return {
     async all<Row>(sql: string, params: readonly (string | number)[]) {
       return db.all<Row>(sql, params)
-    }
+    },
+    interrupted: () => db.interrupted?.() ?? false
   }
 }
 

@@ -4,9 +4,11 @@ import {
   type EntryRow,
   entryColumns,
   FormKind,
+  type Interruptible,
   profile,
   type SearchDatabase,
-  type SearchEntry
+  type SearchEntry,
+  stopIfInterrupted
 } from './database'
 import { compareStrings } from './query'
 import {
@@ -41,7 +43,11 @@ function containsFilter(query: string): { sql: string; params: string[] } {
   return { sql: 'instr(f.form, ?) > 0', params: [query] }
 }
 
-export function rankJapanese(query: string, rows: JapaneseRow[]): RankedEntry[] {
+export function rankJapanese(
+  query: string,
+  rows: JapaneseRow[],
+  client: Interruptible = {}
+): RankedEntry[] {
   const byEntry = new Map<
     string,
     {
@@ -51,7 +57,9 @@ export function rankJapanese(query: string, rows: JapaneseRow[]): RankedEntry[] 
       evidence: { relation: number; form: string; profile: PriorityProfile }[]
     }
   >()
+  let step = 0
   for (const row of rows) {
+    stopIfInterrupted(client, step++)
     const exact = row.form === query
     const prefix = row.form.startsWith(query)
     const relation = (row.kind === FormKind.written ? 0 : 1) + (exact ? 0 : prefix ? 2 : 4)
@@ -67,6 +75,7 @@ export function rankJapanese(query: string, rows: JapaneseRow[]): RankedEntry[] 
 
   const ranked: RankedEntry[] = []
   for (const { entry, fingerprint, senseCount, evidence } of byEntry.values()) {
+    stopIfInterrupted(client, step++)
     const selected = minimum(evidence, (lhs, rhs) => {
       if (lhs.relation !== rhs.relation) return lhs.relation - rhs.relation
       const profiles = compareProfiles(lhs.profile, rhs.profile)
@@ -90,10 +99,11 @@ export function rankJapanese(query: string, rows: JapaneseRow[]): RankedEntry[] 
       matchedSummary: null
     })
   }
-  ranked.sort((lhs, rhs) =>
-    compareJapaneseRanks(lhs.rank as JapaneseRank, rhs.rank as JapaneseRank)
-  )
-  return deduplicated(ranked)
+  ranked.sort((lhs, rhs) => {
+    stopIfInterrupted(client, step++)
+    return compareJapaneseRanks(lhs.rank as JapaneseRank, rhs.rank as JapaneseRank)
+  })
+  return deduplicated(ranked, client)
 }
 
 export async function hasFormContaining(db: SearchDatabase, query: string): Promise<boolean> {
@@ -111,7 +121,7 @@ export async function hasFormContaining(db: SearchDatabase, query: string): Prom
 
 export async function rankedJapanese(db: SearchDatabase, query: string): Promise<RankedEntry[]> {
   const filter = containsFilter(query)
-  return rankJapanese(query, await japaneseRows(db, filter.sql, filter.params))
+  return rankJapanese(query, await japaneseRows(db, filter.sql, filter.params), db)
 }
 
 export async function rankedJapaneseForms(
@@ -132,7 +142,7 @@ export async function rankedJapaneseForms(
     termRows.push(row)
     rowsByTerm.set(row.form, termRows)
   }
-  return new Map(distinct.map(term => [term, rankJapanese(term, rowsByTerm.get(term) ?? [])]))
+  return new Map(distinct.map(term => [term, rankJapanese(term, rowsByTerm.get(term) ?? [], db)]))
 }
 
 function japaneseRows(

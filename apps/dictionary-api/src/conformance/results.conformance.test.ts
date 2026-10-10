@@ -1,12 +1,7 @@
 import type { Dictionary } from '@zenbu/dictionary-core/artifact/dictionary'
 import { tierLabels } from '@zenbu/dictionary-core/detail/frequency'
 import type { SearchResultsScreen } from '@zenbu/dictionary-core/results/results'
-import {
-  EvidenceLane,
-  FormRelation,
-  isLaterSense,
-  type Rank
-} from '@zenbu/dictionary-core/search/rank'
+import { matchLabel } from '@zenbu/dictionary-core/search/rank'
 import { beforeAll, describe, expect, test } from 'vitest'
 import { artifactAvailable, dictionary, readSuite, requirePinnedArtifacts } from './support'
 
@@ -56,20 +51,6 @@ const suite = readSuite<Suite>('search-results')
 const defaultFrequencyPackIds: Record<string, string> = {
   JLPT: 'zenbu.jlpt.waller.levels',
   YouTube: 'zenbu.tubelex.youtube.ja.unidic-3.1'
-}
-
-const name = (values: Record<string, number>, value: number) =>
-  Object.keys(values).find(key => values[key] === value) ?? String(value)
-
-function describeMatch(sourceOrder: number, rank: Rank): string {
-  const match =
-    rank.kind === 'japanese'
-      ? `japanese ${name(FormRelation, rank.relation)}`
-      : `english ${name(EvidenceLane, rank.lane)} romaji=${rank.romajiSpecificityRank}` +
-        (rank.lane === EvidenceLane.strongGloss
-          ? ` sense=${isLaterSense(rank) ? 'later' : 'first'}`
-          : '')
-  return `source=${sourceOrder} ${match}`
 }
 
 function caseAsTheServiceAnswers(
@@ -130,7 +111,7 @@ function caseAsTheServiceAnswers(
           text: chip.value,
           ...(chip.tier ? { tier: tierLabels[chip.tier] } : {})
         })),
-        match: describeMatch(item.sourceOrder, item.matchRank),
+        match: matchLabel(item.sourceOrder, item.matchRank),
         retrievalOrder: row.retrievalOrder
       }
     }),
