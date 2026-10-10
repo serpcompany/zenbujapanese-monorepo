@@ -49,6 +49,7 @@ enum SystemColor {
     static let tertiaryFill = Color(nsColor: .tertiarySystemFill)
     static let panel = Color(nsColor: .windowBackgroundColor)
     static let panelContent = Color(nsColor: .controlBackgroundColor)
+    static let drawingPad = AnyShapeStyle(Color(nsColor: .controlBackgroundColor))
   #else
     static let background = Color(uiColor: .systemBackground)
     static let secondaryBackground = Color(uiColor: .secondarySystemBackground)
@@ -56,5 +57,6 @@ enum SystemColor {
     static let tertiaryFill = Color(uiColor: .tertiarySystemFill)
     static let panel = Color(uiColor: .systemGray5)
     static let panelContent = Color(uiColor: .systemBackground)
+    static let drawingPad = AnyShapeStyle(.background)
   #endif
 }

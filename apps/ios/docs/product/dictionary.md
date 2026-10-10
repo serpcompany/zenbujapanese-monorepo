@@ -85,7 +85,8 @@ button, which Escape presses too ([iPad and Mac](index.md#ipad-and-mac)).
 
 Check: UI `SearchInputUITests`: `testThePencilAndGridOpenOnePanelThatSwitchesBetweenThem` (the
 sheet, its two buttons, and closing it, dragged away on iPhone and iPad and with **Done** on the
-Mac), `testADrawnStrokeOffersKanjiUntilItsUndone` (a stroke drawn downward leaves the sheet
+Mac), `testThePanelOpensAndStaysWhileTheFieldHasTheCaret` (from above the keyboard),
+`testADrawnStrokeOffersKanjiUntilItsUndone` (a stroke drawn downward leaves the sheet
 open), and `testARadicalsKanjiJoinsTheQueryAndSearches` (**Undo**, and a second pick added to the
 first); package `HandwritingUndoTests` and `SearchInputCandidateTests`. The panel's colors are by
 hand.

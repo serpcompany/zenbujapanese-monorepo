@@ -30,6 +30,23 @@ final class KeyboardAndWindowUITests: ZenbuUITestCase {
     assertOnScreen(find("translate.header", in: app), in: app)
   }
 
+  func testSearchAnImagePressedOverASheetStillOffersItsSourcesAfterwards() throws {
+    try XCTSkipIf(device == .phone, "the iPhone has no menus or keyboard shortcuts")
+    let app = launchAndTouch()
+    tap(find("search.input.handwriting", in: app))
+    let canvas = waitFor(find("handwriting.canvas", in: app))
+    shortcut("i", [.command, .shift], in: app)
+    RunLoop.current.run(until: Date.now.addingTimeInterval(2))
+    if canvas.exists { closeInputPanel(in: app) }
+    waitUntilGone(canvas)
+    let photoLibrary = app.buttons["Photo Library"]
+    if !photoLibrary.waitForExistence(timeout: 5) {
+      open(.translate, in: app)
+      tap(find("translate.start.image", in: app))
+    }
+    waitFor(photoLibrary)
+  }
+
   func testTheSettingsWindowHoldsTheAccountReadingAidsAndFrequencyDictionaries() throws {
     try XCTSkipUnless(device == .mac, "iPhone and iPad keep these settings in Account")
     let app = launch()

@@ -70,8 +70,8 @@ and messages that name the device say iPad or Mac, such as "Everything stays on 
   Dictionary** (⌘F on the Mac) goes to Search and puts the cursor in its field; on iPad, iPadOS
   keeps ⌘F for its own Find, so Find in Dictionary is in the menu bar without a working shortcut.
   **Search an Image…** (⌘⇧I)
-  goes back to Translate's first screen and opens its **Image** alert, and ⌘1 to ⌘4 switch to
-  Search, Translate, Player, and Account.
+  opens Translate and its **Image** alert, over whatever Translate is showing, and ⌘1 to ⌘4
+  switch to Search, Translate, Player, and Account.
   With two windows open, a shortcut acts in the one used last. A website link opens in an open
   window rather than a new one.
   Check: iPad and Mac, UI `KeyboardAndWindowUITests` (⌘1 to ⌘4, ⌘⇧I, and on the Mac ⌘F and a

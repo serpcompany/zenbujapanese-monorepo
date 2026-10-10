@@ -15,6 +15,16 @@ final class SearchInputUITests: ZenbuUITestCase {
     assertOnScreen(find("search.input.handwriting", in: app), in: app)
   }
 
+  func testThePanelOpensAndStaysWhileTheFieldHasTheCaret() {
+    let app = launch()
+    open(.search, in: app)
+    tap(searchField(in: app))
+    tap(find("search.input.handwriting", in: app))
+    let canvas = waitFor(find("handwriting.canvas", in: app))
+    RunLoop.current.run(until: Date.now.addingTimeInterval(3))
+    XCTAssertTrue(canvas.exists, "the panel stays open once the field gives up the caret")
+  }
+
   func testARadicalsKanjiJoinsTheQueryAndSearches() {
     let app = launch()
     open(.search, in: app)
@@ -67,15 +77,5 @@ final class SearchInputUITests: ZenbuUITestCase {
   private func draw(on canvas: XCUIElement, from start: CGVector, to end: CGVector) {
     canvas.coordinate(withNormalizedOffset: start)
       .press(forDuration: 0.2, thenDragTo: canvas.coordinate(withNormalizedOffset: end))
-  }
-
-  private func closeInputPanel(in app: XCUIApplication) {
-    if device == .mac {
-      tap(find("sheet.done", in: app))
-      return
-    }
-    let grabber = waitFor(app.buttons["Sheet Grabber"]).coordinate(
-      withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5))
-    grabber.press(forDuration: 0.1, thenDragTo: grabber.withOffset(CGVector(dx: 0, dy: 600)))
   }
 }

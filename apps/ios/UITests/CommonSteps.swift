@@ -49,6 +49,16 @@ extension ZenbuUITestCase {
       .firstMatch
   }
 
+  func closeInputPanel(in app: XCUIApplication) {
+    if device == .mac {
+      tap(find("sheet.done", in: app))
+      return
+    }
+    let grabber = waitFor(app.buttons["Sheet Grabber"]).coordinate(
+      withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5))
+    grabber.press(forDuration: 0.1, thenDragTo: grabber.withOffset(CGVector(dx: 0, dy: 600)))
+  }
+
   @discardableResult
   func switchInputPanel(to input: String, showing content: String, in app: XCUIApplication)
     -> XCUIElement

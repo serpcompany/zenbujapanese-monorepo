@@ -6,7 +6,7 @@ struct TranslateTabRoot: View {
   let words: TranslateWordLinks
   let isConversationOnScreen: Bool
   let push: (TranslateRoute) -> Void
-  @Binding var showsImageSources: Bool
+  let chooseImage: () -> Void
 
   var body: some View {
     Group {
@@ -20,7 +20,7 @@ struct TranslateTabRoot: View {
           experience: experience,
           openHistory: { push(.history) },
           openText: { push(.text($0)) },
-          showsImageSources: $showsImageSources
+          chooseImage: chooseImage
         )
         .transition(.move(edge: .leading))
       }

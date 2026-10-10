@@ -248,8 +248,9 @@ Translate tab. Other ways in open the same screen there, from any tab:
 
 - an image dragged onto the window, on every device, up to 8 at a time, each at most 12 MB,
   12,000 pixels on a side, and 40 megapixels;
-- on the Mac and with a hardware keyboard, **Search an Image…** (⌘⇧I), which goes back to
-  Translate's first screen and opens the same **Image** alert;
+- on the Mac and with a hardware keyboard, **Search an Image…** (⌘⇧I), which opens Translate and
+  the same **Image** alert over whatever Translate is showing, so a typed text or an open image
+  stays behind the new one;
 - on the Mac, **Paste Image** in place of **Take Photo**, which macOS can't show, for an image or
   image files on the clipboard, with the same limits; and a photo taken on an iPhone or iPad
   through **File → Import from iPhone or iPad** ([iPad and Mac](index.md#ipad-and-mac)).

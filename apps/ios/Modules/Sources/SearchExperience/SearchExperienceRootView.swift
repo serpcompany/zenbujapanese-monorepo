@@ -81,9 +81,13 @@ struct SearchExperienceRootView: View {
       Task { searchFocusRequest += 1 }
     case .searchImage:
       showTranslate()
-      translatePath = NavigationPath()
-      Task { showsImageSources = true }
+      chooseImageSource()
     }
+  }
+
+  private func chooseImageSource() {
+    showsImageSources = false
+    Task { showsImageSources = true }
   }
 
   private func showSearchRoot() {
@@ -286,7 +290,7 @@ struct SearchExperienceRootView: View {
         words: translateWords(opening: wordSheets.translate),
         isConversationOnScreen: isConversationOnScreen,
         push: { translatePath.append($0) },
-        showsImageSources: $showsImageSources
+        chooseImage: chooseImageSource
       )
       .modifier(dictionaryRoutes(in: .translate))
     }

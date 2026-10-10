@@ -896,6 +896,8 @@ previews stay still.
   the choice, and the picker opens once the alert's binding turns false: on the iOS 27 Simulator,
   a picker presented from a `confirmationDialog` button's action never appeared, while one
   presented from this `onChange` does. An alert can be shown from code, so ⌘⇧I shows the same one.
+  Both ask through `chooseImageSource`, which turns the alert's binding off before on: an alert
+  asked for while another sheet is up may never show, and would leave the binding on.
 - `ImageTextImport` modifies `SearchExperienceRootView`, the window, not Translate's home, so an
   image dropped onto any tab, Continuity Camera's import, and ⌘⇧I reach it; the home's Image row
   sets its `showsSources`. Image Search sessions live only on Translate's stack, and all of them

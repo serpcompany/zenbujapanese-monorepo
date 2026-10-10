@@ -5,7 +5,7 @@ struct TranslateHomeView: View {
   @Bindable var experience: TranslateExperience
   let openHistory: () -> Void
   let openText: (String) -> Void
-  @Binding var showsImageSources: Bool
+  let chooseImage: () -> Void
   @State private var startingMode: TranslateStart?
   @State private var isChoosingDocument = false
   @State private var isReadingDocument = false
@@ -88,7 +88,7 @@ struct TranslateHomeView: View {
     switch option {
     case .conversation: Task { await experience.start(.conversation) }
     case .listening: Task { await experience.start(.listening) }
-    case .image: showsImageSources = true
+    case .image: chooseImage()
     case .text: openText("")
     case .document: isChoosingDocument = true
     }
