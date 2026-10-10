@@ -317,7 +317,8 @@ Check: UI `WordDetailUITests.testAddToListPutsTheWordInFavoritesAndANewList` (th
 the Lists section, and a list opening in Account); package `WordListsTests`.
 
 A learner can write notes for a word and associate photos with it. Notes and associated
-photos persist on the device. If saved notes can't be read, a copy is kept on the device rather
+photos persist on the device. A note written while the page is still loading its examples is
+kept like any other. If saved notes can't be read, a copy is kept on the device rather
 than written over, and every note that can be read stays, on its word or any other
 ([Saved data that can't be read](index.md#saved-data-that-cant-be-read)).
 

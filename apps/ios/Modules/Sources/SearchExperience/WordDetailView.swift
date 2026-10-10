@@ -188,6 +188,7 @@ struct WordDetailView: View {
     }
     .task(id: entry.id) {
       isLoadingExamples = true
+      await notes.load(entry.noteID)
       await photos.load(item, saving: initialEncounterMedia)
       guard !Task.isCancelled else { return }
       let loadedExamples = (try? await exampleSentenceClient.examples(entry)) ?? []
@@ -202,7 +203,6 @@ struct WordDetailView: View {
               reason: "Frequency data unavailable"
             ))
         ]
-      await notes.load(entry.noteID)
       guard !Task.isCancelled else { return }
       examples = loadedExamples
       examplesEntryID = entry.id

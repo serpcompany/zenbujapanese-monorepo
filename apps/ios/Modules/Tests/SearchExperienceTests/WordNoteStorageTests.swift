@@ -45,6 +45,36 @@ struct WordNoteStorageTests {
     #expect(Set(await storage.load(taberu).map(\.text)) == ["一つ目の窓", "二つ目の窓"])
   }
 
+  @Test("a note written or begun before its page has loaded is kept, and saved once it has")
+  func keepsNotesWrittenBeforeLoading() async throws {
+    let temporary = try TemporaryDefaults()
+    let storage = try storage(in: temporary)
+    await storage.save(LearnerWordNote(id: "1", text: "前のメモ"), for: taberu)
+    let (store, saves) = observed(storage)
+    var savesFinished = saves.makeAsyncIterator()
+    let page = await MainActor.run { SavedItemNotes(store: store) }
+    await MainActor.run {
+      page.beginAdding()
+      page.draft = "読み込み前のメモ"
+      page.finishEditing()
+      page.beginAdding()
+      page.draft = "書きかけのメモ"
+    }
+
+    await page.load(taberu)
+    _ = await savesFinished.next()
+    #expect(await page.notes.map(\.text) == ["前のメモ", "読み込み前のメモ"])
+    #expect(await page.draft == "書きかけのメモ")
+    await MainActor.run { page.finishEditing() }
+    _ = await savesFinished.next()
+
+    let kept = ["前のメモ", "読み込み前のメモ", "書きかけのメモ"]
+    #expect(await page.notes.map(\.text) == kept)
+    #expect(await storage.load(taberu).map(\.text) == kept)
+    await page.load(taberu)
+    #expect(await page.notes.map(\.text) == kept)
+  }
+
   @Test("notes that can't be read are kept aside, and new notes save")
   func keepsUnreadableNotesAside() async throws {
     let temporary = try TemporaryDefaults()
