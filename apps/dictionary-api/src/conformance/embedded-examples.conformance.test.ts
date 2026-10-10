@@ -56,6 +56,10 @@ describe.runIf(artifactAvailable)('the app’s example sentences on the artifact
     if (row) expect(row.highlightedEntry ?? undefined).toBe(recorded.highlightedEntry)
   })
 
+  test('accepts the example index and the word index the app bundles', async () => {
+    expect(await app.text<boolean>('checkExamples', '')).toBe(true)
+  })
+
   test('counts a query’s examples before its search has answered, as the results screen asks', async () => {
     expect(await app.text<number>('exampleCount', '勉強')).toBe(51)
     expect(await app.text<number>('exampleCount', 'qzxvkj')).toBe(0)

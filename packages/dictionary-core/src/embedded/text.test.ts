@@ -70,6 +70,7 @@ describe('the embedded text engine', () => {
         isFunctionWord: false,
         entry: 'a1',
         candidates: [],
+        furigana: 'にほんご',
         ruby: [{ text: '日本語', reading: 'にほんご' }],
         isPageWord: false,
         matchesQuery: false
@@ -82,6 +83,7 @@ describe('the embedded text engine', () => {
         isFunctionWord: true,
         entry: null,
         candidates: ['p1', 'p2'],
+        furigana: null,
         ruby: null,
         isPageWord: false,
         matchesQuery: false
@@ -94,6 +96,7 @@ describe('the embedded text engine', () => {
         isFunctionWord: false,
         entry: 'v1',
         candidates: [],
+        furigana: 'みた',
         ruby: [{ text: '見', reading: 'み' }, { text: 'た' }],
         isPageWord: false,
         matchesQuery: true
@@ -133,6 +136,7 @@ describe('the embedded text engine', () => {
     expect(today).toMatchObject({
       entry: 'k1',
       reading: 'コンニチ',
+      furigana: 'きょう',
       ruby: [{ text: '今日', reading: 'きょう' }]
     })
   })
@@ -147,6 +151,7 @@ describe('the embedded text engine', () => {
         isFunctionWord: false,
         entry: null,
         candidates: [],
+        furigana: null,
         ruby: null,
         isPageWord: false,
         matchesQuery: false
@@ -159,11 +164,6 @@ describe('the embedded text engine', () => {
       whole('欠けた分析')
     )
     expect(await linked(host(), { text: '', query: '', highlightedEntry: null })).toEqual([])
-  })
-
-  test('lists a text’s words as Kuromoji groups them', async () => {
-    expect(await ask(host(), 'words', '日本語を見た')).toEqual(['日本語', 'を', '見た'])
-    expect(await ask(host(), 'words', '猫')).toEqual([])
   })
 
   test('asks the host for a text’s words when it has no Kuromoji of its own', async () => {
@@ -204,6 +204,12 @@ describe('the embedded text engine', () => {
       ['見た', 'x1', '見た'],
       ['日本語', 'a1', '日本語']
     ])
+  })
+
+  test('refuses an example index that is not the one the core reads', async () => {
+    await expect(ask(host(), 'checkExamples', '')).rejects.toThrow(
+      'Refusing the language data: its retrieval_index_schema_version is undefined'
+    )
   })
 
   test('shows the text unlinked when the host cannot analyze it either', async () => {

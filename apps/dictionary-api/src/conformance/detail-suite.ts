@@ -91,6 +91,31 @@ export interface KanjiCase {
   components?: string[]
 }
 
+interface SuiteElementKanji {
+  character: string
+  codePoint: string
+  meanings: string[]
+  onReadings: string[]
+  spoken: string
+}
+
+export interface KanjiElementCase {
+  glyph: string
+  codePoint: string
+  covers: string
+  opensDetail: boolean
+  hasPage?: boolean
+  meanings?: string[]
+  explanation?: string
+  soundPatterns?: string
+  alternatives?: string[]
+  alternativeCodePoints?: string[]
+  standalone?: SuiteElementKanji
+  containing?: SuiteElementKanji[]
+  structureSource?: string
+  metadataSource?: string
+}
+
 interface Suite<Case> {
   artifacts: Artifact[]
   cases: Case[]
@@ -100,6 +125,7 @@ interface Suite<Case> {
 
 export const wordSuite = readSuite<Suite<WordCase>>('word-detail')
 export const kanjiSuite = readSuite<Suite<KanjiCase>>('kanji-detail')
+export const kanjiElementSuite = readSuite<Suite<KanjiElementCase>>('kanji-element')
 
 export function withoutFields<Case extends object>(
   expected: Case,
@@ -112,3 +138,5 @@ export function withoutFields<Case extends object>(
 
 export const codePoint = (character: string) =>
   `U+${(character.codePointAt(0) ?? 0).toString(16).toUpperCase().padStart(4, '0')}`
+
+export const codePoints = (text: string) => Array.from(text, codePoint).join(' ')

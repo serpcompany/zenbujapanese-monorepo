@@ -1,5 +1,5 @@
 import { LruCache } from '../artifact/cache'
-import { type ArtifactDatabase, searchDatabase } from '../artifact/database'
+import { type ArtifactDatabase, checkExamples, searchDatabase } from '../artifact/database'
 import {
   type EntryExamples,
   type ExampleSentence,
@@ -14,7 +14,7 @@ import {
   tokenSpans
 } from '../artifact/word-examples'
 import { type RubySegment, rubySegments } from '../detail/ruby'
-import { analyzedWords, usesForm } from '../examples/forms'
+import { usesForm } from '../examples/forms'
 import {
   displayReading,
   formsLookedUp,
@@ -61,6 +61,7 @@ export interface EmbeddedToken {
   isFunctionWord: boolean
   entry: string | null
   candidates: string[]
+  furigana: string | null
   ruby: RubySegment[] | null
   isPageWord: boolean
   matchesQuery: boolean
@@ -105,6 +106,7 @@ export class EmbeddedText {
   private readonly forms = new LruCache<string, LinkEntry[]>(20_000)
   private readonly lookup: FormLookup
   private readonly entries = new LruCache<string, ExamplesEntry>(4_000)
+  private readonly linked = new LruCache<string, EmbeddedToken[]>(512)
   private readonly searched = new LruCache<string, EntryExamples | string>(32)
   private readonly retrieved = new LruCache<string, EntryExamples | string>(64)
 
@@ -145,6 +147,11 @@ export class EmbeddedText {
     const found = entry ? retrieveEntryExamples(this.db, entry) : 'missingEntryEvidence'
     this.retrieved.set(id, found)
     return found
+  }
+
+  checkExamples(): boolean {
+    checkExamples(this.db)
+    return true
   }
 
   exampleCount(query: string): number {
@@ -200,16 +207,13 @@ export class EmbeddedText {
     return listed(sentences)
   }
 
-  async words(text: string, analyze: AnalyzeText): Promise<string[]> {
-    return analyzedWords(await this.candidates(text, analyze))
-  }
-
   private async prefetch(
     candidates: MorphologyCandidate[],
     highlighted: Highlighted | null
   ): Promise<void> {
     const alternatives = formsLookedUp(candidates, highlighted).map(forms =>
       forms.filter(form => {
+        if (this.forms.get(form) !== undefined) return true
         const query = normalizeQuery(form)
         if (query !== '' && !isASCII(query)) return true
         this.forms.set(form, [])
@@ -222,6 +226,9 @@ export class EmbeddedText {
   async linkedTokens(request: LinkRequest, analyze: AnalyzeText): Promise<EmbeddedToken[]> {
     const { text } = request
     const query = normalizeQuery(request.query)
+    const key = JSON.stringify([text, query, request.highlightedEntry])
+    const known = this.linked.get(key)
+    if (known) return known
     const candidates = await this.candidates(text, analyze)
     const entry = request.highlightedEntry
       ? (this.found([request.highlightedEntry]).get(request.highlightedEntry) ?? null)
@@ -231,9 +238,10 @@ export class EmbeddedText {
     const tokens = linkedTokens(text, candidates, highlighted, this.lookup)
     const linked = this.found(tokens.flatMap(token => (token.entry ? [token.entry.id] : [])))
     const matches = occurrences(text, query)
-    return tokenSpans(tokens).map(({ start, end }, index) => {
+    const answer = tokenSpans(tokens).map(({ start, end }, index): EmbeddedToken => {
       const token = tokens[index]
       const target = token.entry ? linked.get(token.entry.id) : undefined
+      const furigana = target ? displayReading(token, target) : null
       return {
         surface: token.surface,
         start,
@@ -242,10 +250,13 @@ export class EmbeddedText {
         isFunctionWord: isFunctionWord(token),
         entry: token.entry?.id ?? null,
         candidates: token.entry ? [] : token.candidates.map(candidate => candidate.id),
-        ruby: target ? rubySegments(token.surface, displayReading(token, target)) : null,
+        furigana,
+        ruby: furigana === null ? null : rubySegments(token.surface, furigana),
         isPageWord: entry !== null && token.entry?.id === entry.id,
         matchesQuery: matches.some(match => match.start < end && start < match.end)
       }
     })
+    if (candidates) this.linked.set(key, answer)
+    return answer
   }
 }

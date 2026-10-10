@@ -76,13 +76,19 @@ describe('kanjiElements (KanjiElementReferenceData.elements)', () => {
         character: '女',
         role: 'soundPattern',
         roleLabel: 'Sound pattern',
-        description: 'woman, female'
+        meanings: ['woman', 'female'],
+        linkedOnReadings: [],
+        description: 'woman, female',
+        spoken: 'Element 女, sound pattern, woman, female'
       },
       {
         character: '覀',
         role: 'meaningStructure',
         roleLabel: 'Meaning / structure',
-        description: 'variant of radical 146'
+        meanings: ['variant of radical 146'],
+        linkedOnReadings: [],
+        description: 'variant of radical 146',
+        spoken: 'Element 覀, meaning / structure, variant of radical 146'
       }
     ])
   })
@@ -103,12 +109,23 @@ describe('kanjiElements (KanjiElementReferenceData.elements)', () => {
       { glyph: 'x', meanings: ['letter'], commonLinkedOnReadings: [] }
     ]
     expect(kanjiElements(structure, elements)).toEqual([
-      { character: '青', role: 'sound', roleLabel: 'Sound', description: 'blue, green, young' },
+      {
+        character: '青',
+        role: 'sound',
+        roleLabel: 'Sound',
+        meanings: ['blue', 'green', 'young'],
+        linkedOnReadings: [],
+        description: 'blue, green, young',
+        spoken: 'Element 青, sound, blue, green, young'
+      },
       {
         character: '氵',
         role: 'meaningStructure',
         roleLabel: 'Meaning / structure',
-        description: 'Linked on-readings: コウ'
+        meanings: [],
+        linkedOnReadings: ['コウ'],
+        description: 'Linked on-readings: コウ',
+        spoken: 'Element 氵, meaning / structure, '
       }
     ])
     expect(kanjiElements(null, elements)).toEqual([])

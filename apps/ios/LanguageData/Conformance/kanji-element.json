@@ -1,0 +1,1211 @@
+{
+  "artifacts" : [
+    {
+      "name" : "KanjiElementReferenceData.json",
+      "sha256" : "1984078130d717d5cccf3bb0b04ef6ed0a7a20983bb40872665ba9b3a048882f"
+    }
+  ],
+  "cases" : [
+    {
+      "alternativeCodePoints" : [
+
+      ],
+      "alternatives" : [
+
+      ],
+      "codePoint" : "U+8981",
+      "containing" : [
+        {
+          "character" : "腰",
+          "codePoint" : "U+8170",
+          "meanings" : [
+            "loins",
+            "hips",
+            "waist"
+          ],
+          "onReadings" : [
+            "ヨウ"
+          ],
+          "spoken" : "腰, loins, hips, waist, low wainscoting, ヨウ"
+        }
+      ],
+      "covers" : "element that is itself a kanji, inside one other kanji",
+      "explanation" : "This element contributes forms associated with need, main point, essence, pivot, key to.",
+      "glyph" : "要",
+      "hasPage" : true,
+      "meanings" : [
+        "need",
+        "main point",
+        "essence",
+        "pivot",
+        "key to"
+      ],
+      "metadataSource" : "edrdg.kanjidic2 2026-10-05",
+      "opensDetail" : true,
+      "soundPatterns" : "Linked on-readings: ヨウ",
+      "standalone" : {
+        "character" : "要",
+        "codePoint" : "U+8981",
+        "meanings" : [
+          "need",
+          "main point",
+          "essence"
+        ],
+        "onReadings" : [
+          "ヨウ"
+        ],
+        "spoken" : "要, need, main point, essence, pivot, key to, ヨウ"
+      },
+      "structureSource" : "kanjium 8a0cdaa16d64a281a2048de2eee2ec5e3a440fa6"
+    },
+    {
+      "alternativeCodePoints" : [
+
+      ],
+      "alternatives" : [
+
+      ],
+      "codePoint" : "U+4E28",
+      "containing" : [
+        {
+          "character" : "中",
+          "codePoint" : "U+4E2D",
+          "meanings" : [
+            "in",
+            "inside",
+            "middle"
+          ],
+          "onReadings" : [
+            "チュウ"
+          ],
+          "spoken" : "中, in, inside, middle, mean, center, チュウ"
+        },
+        {
+          "character" : "引",
+          "codePoint" : "U+5F15",
+          "meanings" : [
+            "pull",
+            "tug",
+            "jerk"
+          ],
+          "onReadings" : [
+            "イン"
+          ],
+          "spoken" : "引, pull, tug, jerk, admit, install, quote, refer to, イン"
+        },
+        {
+          "character" : "旧",
+          "codePoint" : "U+65E7",
+          "meanings" : [
+            "old times",
+            "old things",
+            "old friend"
+          ],
+          "onReadings" : [
+            "キュウ"
+          ],
+          "spoken" : "旧, old times, old things, old friend, former, ex-, キュウ"
+        },
+        {
+          "character" : "弔",
+          "codePoint" : "U+5F14",
+          "meanings" : [
+            "condolences",
+            "mourning",
+            "funeral"
+          ],
+          "onReadings" : [
+            "チョウ"
+          ],
+          "spoken" : "弔, condolences, mourning, funeral, チョウ"
+        },
+        {
+          "character" : "丗",
+          "codePoint" : "U+4E17",
+          "meanings" : [
+            "thirty"
+          ],
+          "onReadings" : [
+            "セイ",
+            "セ",
+            "ソウ"
+          ],
+          "spoken" : "丗, thirty, セイ, セ, ソウ"
+        },
+        {
+          "character" : "个",
+          "codePoint" : "U+4E2A",
+          "meanings" : [
+            "counter for articles",
+            "individual"
+          ],
+          "onReadings" : [
+            "カ",
+            "コ"
+          ],
+          "spoken" : "个, counter for articles, individual, カ, コ"
+        },
+        {
+          "character" : "倏",
+          "codePoint" : "U+500F",
+          "meanings" : [
+            "quick",
+            "prompt"
+          ],
+          "onReadings" : [
+            "シュク"
+          ],
+          "spoken" : "倏, quick, prompt, シュク"
+        }
+      ],
+      "covers" : "element that is no kanji on its own",
+      "explanation" : "This element contributes forms associated with number one, line, rod radical (no. 2).",
+      "glyph" : "丨",
+      "hasPage" : true,
+      "meanings" : [
+        "number one",
+        "line",
+        "rod radical (no. 2)"
+      ],
+      "metadataSource" : "edrdg.kanjidic2 2026-10-05",
+      "opensDetail" : true,
+      "soundPatterns" : "Linked on-readings: イン, カ",
+      "structureSource" : "kanjium 8a0cdaa16d64a281a2048de2eee2ec5e3a440fa6"
+    },
+    {
+      "alternativeCodePoints" : [
+
+      ],
+      "alternatives" : [
+
+      ],
+      "codePoint" : "U+7236",
+      "containing" : [
+        {
+          "character" : "交",
+          "codePoint" : "U+4EA4",
+          "meanings" : [
+            "mingle",
+            "mixing",
+            "association"
+          ],
+          "onReadings" : [
+            "コウ"
+          ],
+          "spoken" : "交, mingle, mixing, association, coming & going, コウ"
+        },
+        {
+          "character" : "釜",
+          "codePoint" : "U+91DC",
+          "meanings" : [
+            "kettle",
+            "cauldron",
+            "iron pot"
+          ],
+          "onReadings" : [
+            "フ"
+          ],
+          "spoken" : "釜, kettle, cauldron, iron pot, フ"
+        },
+        {
+          "character" : "斧",
+          "codePoint" : "U+65A7",
+          "meanings" : [
+            "ax",
+            "hatchet"
+          ],
+          "onReadings" : [
+            "フ"
+          ],
+          "spoken" : "斧, ax, hatchet, フ"
+        },
+        {
+          "character" : "爺",
+          "codePoint" : "U+723A",
+          "meanings" : [
+            "old man",
+            "grampa"
+          ],
+          "onReadings" : [
+            "ヤ"
+          ],
+          "spoken" : "爺, old man, grampa, ヤ"
+        },
+        {
+          "character" : "纐",
+          "codePoint" : "U+7E90",
+          "meanings" : [
+            "tie-dyeing",
+            "(kokuji)"
+          ],
+          "onReadings" : [
+            "コウ"
+          ],
+          "spoken" : "纐, tie-dyeing, (kokuji), コウ"
+        }
+      ],
+      "covers" : "element that stands alone as a kanji, with on readings that link",
+      "explanation" : "This element contributes forms associated with father.",
+      "glyph" : "父",
+      "hasPage" : true,
+      "meanings" : [
+        "father"
+      ],
+      "metadataSource" : "edrdg.kanjidic2 2026-10-05",
+      "opensDetail" : true,
+      "soundPatterns" : "Linked on-readings: フ, コウ",
+      "standalone" : {
+        "character" : "父",
+        "codePoint" : "U+7236",
+        "meanings" : [
+          "father"
+        ],
+        "onReadings" : [
+          "フ"
+        ],
+        "spoken" : "父, father, フ"
+      },
+      "structureSource" : "kanjium 8a0cdaa16d64a281a2048de2eee2ec5e3a440fa6"
+    },
+    {
+      "alternativeCodePoints" : [
+        "U+559C"
+      ],
+      "alternatives" : [
+        "喜"
+      ],
+      "codePoint" : "U+3402",
+      "containing" : [
+        {
+          "character" : "嬉",
+          "codePoint" : "U+5B09",
+          "meanings" : [
+            "glad",
+            "pleased",
+            "rejoice"
+          ],
+          "onReadings" : [
+            "キ"
+          ],
+          "spoken" : "嬉, glad, pleased, rejoice, キ"
+        },
+        {
+          "character" : "僖",
+          "codePoint" : "U+50D6",
+          "meanings" : [
+            "enjoyment",
+            "pleasure"
+          ],
+          "onReadings" : [
+            "キ"
+          ],
+          "spoken" : "僖, enjoyment, pleasure, キ"
+        },
+        {
+          "character" : "憙",
+          "codePoint" : "U+6199",
+          "meanings" : [
+            "rejoice",
+            "like",
+            "prefer"
+          ],
+          "onReadings" : [
+            "キ"
+          ],
+          "spoken" : "憙, rejoice, like, prefer, exclamation, キ"
+        },
+        {
+          "character" : "橲",
+          "codePoint" : "U+6A72",
+          "meanings" : [
+            "Japanese storax",
+            "used in proper names"
+          ],
+          "onReadings" : [
+            "キ"
+          ],
+          "spoken" : "橲, Japanese storax, used in proper names, キ"
+        },
+        {
+          "character" : "熹",
+          "codePoint" : "U+71B9",
+          "meanings" : [
+            "burn",
+            "faint light"
+          ],
+          "onReadings" : [
+            "キ"
+          ],
+          "spoken" : "熹, burn, faint light, キ"
+        },
+        {
+          "character" : "禧",
+          "codePoint" : "U+79A7",
+          "meanings" : [
+            "fortunate",
+            "auspicious"
+          ],
+          "onReadings" : [
+            "キ"
+          ],
+          "spoken" : "禧, fortunate, auspicious, キ"
+        },
+        {
+          "character" : "鱚",
+          "codePoint" : "U+9C5A",
+          "meanings" : [
+            "sillaginoid",
+            "(kokuji)"
+          ],
+          "onReadings" : [
+
+          ],
+          "spoken" : "鱚, sillaginoid, (kokuji)"
+        }
+      ],
+      "covers" : "element with no meanings whose alternative stands alone",
+      "glyph" : "㐂",
+      "hasPage" : true,
+      "meanings" : [
+
+      ],
+      "metadataSource" : "edrdg.kanjidic2 2026-10-05",
+      "opensDetail" : true,
+      "soundPatterns" : "Linked on-readings: キ",
+      "standalone" : {
+        "character" : "喜",
+        "codePoint" : "U+559C",
+        "meanings" : [
+          "rejoice",
+          "take pleasure in"
+        ],
+        "onReadings" : [
+          "キ"
+        ],
+        "spoken" : "喜, rejoice, take pleasure in, キ"
+      },
+      "structureSource" : "kanjium 8a0cdaa16d64a281a2048de2eee2ec5e3a440fa6"
+    },
+    {
+      "alternativeCodePoints" : [
+        "U+4E12",
+        "U+919C"
+      ],
+      "alternatives" : [
+        "丒",
+        "醜"
+      ],
+      "codePoint" : "U+4E11",
+      "containing" : [
+        {
+          "character" : "忸",
+          "codePoint" : "U+5FF8",
+          "meanings" : [
+            "shame"
+          ],
+          "onReadings" : [
+            "ジク",
+            "ジュウ"
+          ],
+          "spoken" : "忸, shame, ジク, ジュウ"
+        },
+        {
+          "character" : "狃",
+          "codePoint" : "U+72C3",
+          "meanings" : [
+            "get used to",
+            "learn"
+          ],
+          "onReadings" : [
+            "ジュウ"
+          ],
+          "spoken" : "狃, get used to, learn, ジュウ"
+        },
+        {
+          "character" : "紐",
+          "codePoint" : "U+7D10",
+          "meanings" : [
+            "string",
+            "cord",
+            "braid"
+          ],
+          "onReadings" : [
+            "チュウ",
+            "ジュウ"
+          ],
+          "spoken" : "紐, string, cord, braid, lace, tape, strap, ribbon, チュウ, ジュウ"
+        },
+        {
+          "character" : "羞",
+          "codePoint" : "U+7F9E",
+          "meanings" : [
+            "feel ashamed"
+          ],
+          "onReadings" : [
+            "シュウ"
+          ],
+          "spoken" : "羞, feel ashamed, シュウ"
+        },
+        {
+          "character" : "衄",
+          "codePoint" : "U+8844",
+          "meanings" : [
+            "nosebleed"
+          ],
+          "onReadings" : [
+            "ジク"
+          ],
+          "spoken" : "衄, nosebleed, ジク"
+        },
+        {
+          "character" : "鈕",
+          "codePoint" : "U+9215",
+          "meanings" : [
+            "button"
+          ],
+          "onReadings" : [
+            "チュウ",
+            "ジュウ"
+          ],
+          "spoken" : "鈕, button, チュウ, ジュウ"
+        }
+      ],
+      "covers" : "element with two alternatives: the most frequent stands alone",
+      "explanation" : "This element contributes forms associated with sign of the ox or cow, 1-3AM, second sign of Chinese zodiac.",
+      "glyph" : "丑",
+      "hasPage" : true,
+      "meanings" : [
+        "sign of the ox or cow",
+        "1-3AM",
+        "second sign of Chinese zodiac"
+      ],
+      "metadataSource" : "edrdg.kanjidic2 2026-10-05",
+      "opensDetail" : true,
+      "soundPatterns" : "Linked on-readings: ジュウ, チュウ, シュウ, ジク",
+      "standalone" : {
+        "character" : "醜",
+        "codePoint" : "U+919C",
+        "meanings" : [
+          "ugly",
+          "unclean",
+          "shame"
+        ],
+        "onReadings" : [
+          "シュウ"
+        ],
+        "spoken" : "醜, ugly, unclean, shame, bad looking, シュウ"
+      },
+      "structureSource" : "kanjium 8a0cdaa16d64a281a2048de2eee2ec5e3a440fa6"
+    },
+    {
+      "alternativeCodePoints" : [
+        "U+6BEE"
+      ],
+      "alternatives" : [
+        "毮"
+      ],
+      "codePoint" : "U+6BDF",
+      "containing" : [
+        {
+          "character" : "毮",
+          "codePoint" : "U+6BEE",
+          "meanings" : [
+            "to pull out hair, etc.",
+            "(kokuji)"
+          ],
+          "onReadings" : [
+
+          ],
+          "spoken" : "毮, to pull out hair, etc., (kokuji)"
+        }
+      ],
+      "covers" : "element with meanings and no linked on-readings",
+      "explanation" : "This element contributes forms associated with pluck, pick, tear, (kokuji).",
+      "glyph" : "毟",
+      "hasPage" : true,
+      "meanings" : [
+        "pluck",
+        "pick",
+        "tear",
+        "(kokuji)"
+      ],
+      "metadataSource" : "edrdg.kanjidic2 2026-10-05",
+      "opensDetail" : true,
+      "standalone" : {
+        "character" : "毟",
+        "codePoint" : "U+6BDF",
+        "meanings" : [
+          "pluck",
+          "pick",
+          "tear"
+        ],
+        "onReadings" : [
+
+        ],
+        "spoken" : "毟, pluck, pick, tear, (kokuji)"
+      },
+      "structureSource" : "kanjium 8a0cdaa16d64a281a2048de2eee2ec5e3a440fa6"
+    },
+    {
+      "alternativeCodePoints" : [
+        "U+51A2",
+        "U+FA10"
+      ],
+      "alternatives" : [
+        "冢",
+        "塚"
+      ],
+      "codePoint" : "U+585A",
+      "containing" : [
+
+      ],
+      "covers" : "element whose compatibility twin is left out of the kanji containing it",
+      "explanation" : "This element contributes forms associated with hillock, mound.",
+      "glyph" : "塚",
+      "hasPage" : true,
+      "meanings" : [
+        "hillock",
+        "mound"
+      ],
+      "metadataSource" : "edrdg.kanjidic2 2026-10-05",
+      "opensDetail" : true,
+      "soundPatterns" : "Linked on-readings: チョウ",
+      "standalone" : {
+        "character" : "塚",
+        "codePoint" : "U+585A",
+        "meanings" : [
+          "hillock",
+          "mound"
+        ],
+        "onReadings" : [
+          "チョウ"
+        ],
+        "spoken" : "塚, hillock, mound, チョウ"
+      },
+      "structureSource" : "kanjium 8a0cdaa16d64a281a2048de2eee2ec5e3a440fa6"
+    },
+    {
+      "alternativeCodePoints" : [
+        "U+51A2",
+        "U+585A"
+      ],
+      "alternatives" : [
+        "冢",
+        "塚"
+      ],
+      "codePoint" : "U+FA10",
+      "containing" : [
+
+      ],
+      "covers" : "compatibility twin of an element: the unified kanji stands alone",
+      "explanation" : "This element contributes forms associated with cemetery, tomb.",
+      "glyph" : "塚",
+      "hasPage" : true,
+      "meanings" : [
+        "cemetery",
+        "tomb"
+      ],
+      "metadataSource" : "edrdg.kanjidic2 2026-10-05",
+      "opensDetail" : true,
+      "soundPatterns" : "Linked on-readings: チョウ",
+      "standalone" : {
+        "character" : "塚",
+        "codePoint" : "U+585A",
+        "meanings" : [
+          "hillock",
+          "mound"
+        ],
+        "onReadings" : [
+          "チョウ"
+        ],
+        "spoken" : "塚, hillock, mound, チョウ"
+      },
+      "structureSource" : "kanjium 8a0cdaa16d64a281a2048de2eee2ec5e3a440fa6"
+    },
+    {
+      "alternativeCodePoints" : [
+        "U+585A",
+        "U+FA10"
+      ],
+      "alternatives" : [
+        "塚",
+        "塚"
+      ],
+      "codePoint" : "U+51A2",
+      "containing" : [
+
+      ],
+      "covers" : "alternative of an element that has a compatibility twin",
+      "explanation" : "This element contributes forms associated with mound, hillock.",
+      "glyph" : "冢",
+      "hasPage" : true,
+      "meanings" : [
+        "mound",
+        "hillock"
+      ],
+      "metadataSource" : "edrdg.kanjidic2 2026-10-05",
+      "opensDetail" : true,
+      "soundPatterns" : "Linked on-readings: チョウ",
+      "standalone" : {
+        "character" : "塚",
+        "codePoint" : "U+585A",
+        "meanings" : [
+          "hillock",
+          "mound"
+        ],
+        "onReadings" : [
+          "チョウ"
+        ],
+        "spoken" : "塚, hillock, mound, チョウ"
+      },
+      "structureSource" : "kanjium 8a0cdaa16d64a281a2048de2eee2ec5e3a440fa6"
+    },
+    {
+      "alternativeCodePoints" : [
+        "U+FA5B"
+      ],
+      "alternatives" : [
+        "者"
+      ],
+      "codePoint" : "U+8005",
+      "containing" : [
+        {
+          "character" : "都",
+          "codePoint" : "U+90FD",
+          "meanings" : [
+            "metropolis",
+            "capital",
+            "all"
+          ],
+          "onReadings" : [
+            "ト",
+            "ツ"
+          ],
+          "spoken" : "都, metropolis, capital, all, everything, ト, ツ"
+        },
+        {
+          "character" : "諸",
+          "codePoint" : "U+8AF8",
+          "meanings" : [
+            "various",
+            "many",
+            "several"
+          ],
+          "onReadings" : [
+            "ショ"
+          ],
+          "spoken" : "諸, various, many, several, together, ショ"
+        },
+        {
+          "character" : "署",
+          "codePoint" : "U+7F72",
+          "meanings" : [
+            "signature",
+            "govt office",
+            "police station"
+          ],
+          "onReadings" : [
+            "ショ"
+          ],
+          "spoken" : "署, signature, govt office, police station, ショ"
+        },
+        {
+          "character" : "著",
+          "codePoint" : "U+8457",
+          "meanings" : [
+            "renowned",
+            "publish",
+            "write"
+          ],
+          "onReadings" : [
+            "チョ",
+            "チャク"
+          ],
+          "spoken" : "著, renowned, publish, write, remarkable, phenomenal, put on, don, wear, arrival, finish (race), counter for suits of clothing, literary work, チョ, チャク"
+        },
+        {
+          "character" : "緒",
+          "codePoint" : "U+7DD2",
+          "meanings" : [
+            "thong",
+            "beginning",
+            "inception"
+          ],
+          "onReadings" : [
+            "ショ",
+            "チョ"
+          ],
+          "spoken" : "緒, thong, beginning, inception, end, cord, strap, mental or emotional state, ショ, チョ"
+        },
+        {
+          "character" : "暑",
+          "codePoint" : "U+6691",
+          "meanings" : [
+            "sultry",
+            "hot",
+            "summer heat"
+          ],
+          "onReadings" : [
+            "ショ"
+          ],
+          "spoken" : "暑, sultry, hot, summer heat, ショ"
+        },
+        {
+          "character" : "煮",
+          "codePoint" : "U+716E",
+          "meanings" : [
+            "boil",
+            "cook"
+          ],
+          "onReadings" : [
+            "シャ"
+          ],
+          "spoken" : "煮, boil, cook, シャ"
+        },
+        {
+          "character" : "猪",
+          "codePoint" : "U+732A",
+          "meanings" : [
+            "boar"
+          ],
+          "onReadings" : [
+            "チョ"
+          ],
+          "spoken" : "猪, boar, チョ"
+        },
+        {
+          "character" : "賭",
+          "codePoint" : "U+8CED",
+          "meanings" : [
+            "gamble",
+            "wager",
+            "bet"
+          ],
+          "onReadings" : [
+            "ト"
+          ],
+          "spoken" : "賭, gamble, wager, bet, ト"
+        },
+        {
+          "character" : "箸",
+          "codePoint" : "U+7BB8",
+          "meanings" : [
+            "chopsticks"
+          ],
+          "onReadings" : [
+            "チョ",
+            "チャク"
+          ],
+          "spoken" : "箸, chopsticks, チョ, チャク"
+        },
+        {
+          "character" : "渚",
+          "codePoint" : "U+6E1A",
+          "meanings" : [
+            "strand",
+            "beach",
+            "shore"
+          ],
+          "onReadings" : [
+            "ショ"
+          ],
+          "spoken" : "渚, strand, beach, shore, ショ"
+        },
+        {
+          "character" : "偖",
+          "codePoint" : "U+5056",
+          "meanings" : [
+            "well",
+            "now"
+          ],
+          "onReadings" : [
+            "シャ"
+          ],
+          "spoken" : "偖, well, now, シャ"
+        },
+        {
+          "character" : "堵",
+          "codePoint" : "U+5835",
+          "meanings" : [
+            "fence",
+            "railing",
+            "enclosure"
+          ],
+          "onReadings" : [
+            "ト"
+          ],
+          "spoken" : "堵, fence, railing, enclosure, ト"
+        },
+        {
+          "character" : "奢",
+          "codePoint" : "U+5962",
+          "meanings" : [
+            "extravagance",
+            "luxury"
+          ],
+          "onReadings" : [
+            "シャ"
+          ],
+          "spoken" : "奢, extravagance, luxury, シャ"
+        },
+        {
+          "character" : "屠",
+          "codePoint" : "U+5C60",
+          "meanings" : [
+            "slaughter",
+            "butcher",
+            "slay"
+          ],
+          "onReadings" : [
+            "ト",
+            "チョ"
+          ],
+          "spoken" : "屠, slaughter, butcher, slay, ト, チョ"
+        },
+        {
+          "character" : "楮",
+          "codePoint" : "U+696E",
+          "meanings" : [
+            "paper mulberry"
+          ],
+          "onReadings" : [
+            "チョ"
+          ],
+          "spoken" : "楮, paper mulberry, チョ"
+        },
+        {
+          "character" : "睹",
+          "codePoint" : "U+7779",
+          "meanings" : [
+            "look at",
+            "see"
+          ],
+          "onReadings" : [
+            "ト"
+          ],
+          "spoken" : "睹, look at, see, ト"
+        },
+        {
+          "character" : "緖",
+          "codePoint" : "U+7DD6",
+          "meanings" : [
+            "end of thread",
+            "thread",
+            "clue"
+          ],
+          "onReadings" : [
+            "ショ",
+            "チョ"
+          ],
+          "spoken" : "緖, end of thread, thread, clue, ショ, チョ"
+        },
+        {
+          "character" : "覩",
+          "codePoint" : "U+89A9",
+          "meanings" : [
+            "see"
+          ],
+          "onReadings" : [
+            "ト"
+          ],
+          "spoken" : "覩, see, ト"
+        },
+        {
+          "character" : "豬",
+          "codePoint" : "U+8C6C",
+          "meanings" : [
+            "pig",
+            "hog"
+          ],
+          "onReadings" : [
+            "チョ"
+          ],
+          "spoken" : "豬, pig, hog, チョ"
+        },
+        {
+          "character" : "赭",
+          "codePoint" : "U+8D6D",
+          "meanings" : [
+            "red"
+          ],
+          "onReadings" : [
+            "シャ"
+          ],
+          "spoken" : "赭, red, シャ"
+        },
+        {
+          "character" : "闍",
+          "codePoint" : "U+95CD",
+          "meanings" : [
+            "watchtower",
+            "used phonetically"
+          ],
+          "onReadings" : [
+            "ト",
+            "ジャ"
+          ],
+          "spoken" : "闍, watchtower, used phonetically, ト, ジャ"
+        },
+        {
+          "character" : "猪",
+          "codePoint" : "U+FA16",
+          "meanings" : [
+            "pig"
+          ],
+          "onReadings" : [
+            "チョ"
+          ],
+          "spoken" : "猪, pig, チョ"
+        },
+        {
+          "character" : "諸",
+          "codePoint" : "U+FA22",
+          "meanings" : [
+            "several",
+            "many",
+            "various"
+          ],
+          "onReadings" : [
+            "ショ"
+          ],
+          "spoken" : "諸, several, many, various, ショ"
+        },
+        {
+          "character" : "都",
+          "codePoint" : "U+FA26",
+          "meanings" : [
+            "capital",
+            "metropolis"
+          ],
+          "onReadings" : [
+            "ト",
+            "ツ"
+          ],
+          "spoken" : "都, capital, metropolis, ト, ツ"
+        },
+        {
+          "character" : "暑",
+          "codePoint" : "U+FA43",
+          "meanings" : [
+
+          ],
+          "onReadings" : [
+            "ショ"
+          ],
+          "spoken" : "暑, ショ"
+        },
+        {
+          "character" : "渚",
+          "codePoint" : "U+FA46",
+          "meanings" : [
+
+          ],
+          "onReadings" : [
+            "ショ"
+          ],
+          "spoken" : "渚, ショ"
+        },
+        {
+          "character" : "煮",
+          "codePoint" : "U+FA48",
+          "meanings" : [
+            "boil",
+            "cook"
+          ],
+          "onReadings" : [
+            "シャ"
+          ],
+          "spoken" : "煮, boil, cook, シャ"
+        },
+        {
+          "character" : "署",
+          "codePoint" : "U+FA5A",
+          "meanings" : [
+            "signature",
+            "govt office",
+            "police station"
+          ],
+          "onReadings" : [
+            "ショ"
+          ],
+          "spoken" : "署, signature, govt office, police station, ショ"
+        },
+        {
+          "character" : "著",
+          "codePoint" : "U+FA5F",
+          "meanings" : [
+
+          ],
+          "onReadings" : [
+            "チョ"
+          ],
+          "spoken" : "著, チョ"
+        }
+      ],
+      "covers" : "element in thirty kanji, its twin left out",
+      "explanation" : "This element contributes forms associated with someone, person.",
+      "glyph" : "者",
+      "hasPage" : true,
+      "meanings" : [
+        "someone",
+        "person"
+      ],
+      "metadataSource" : "edrdg.kanjidic2 2026-10-05",
+      "opensDetail" : true,
+      "soundPatterns" : "Linked on-readings: ショ, チョ, ト, シャ",
+      "standalone" : {
+        "character" : "者",
+        "codePoint" : "U+8005",
+        "meanings" : [
+          "someone",
+          "person"
+        ],
+        "onReadings" : [
+          "シャ"
+        ],
+        "spoken" : "者, someone, person, シャ"
+      },
+      "structureSource" : "kanjium 8a0cdaa16d64a281a2048de2eee2ec5e3a440fa6"
+    },
+    {
+      "alternativeCodePoints" : [
+        "U+8B01"
+      ],
+      "alternatives" : [
+        "謁"
+      ],
+      "codePoint" : "U+FA62",
+      "containing" : [
+        {
+          "character" : "藹",
+          "codePoint" : "U+85F9",
+          "meanings" : [
+            "flourishing",
+            "luxuriant",
+            "harmonize"
+          ],
+          "onReadings" : [
+            "アイ"
+          ],
+          "spoken" : "藹, flourishing, luxuriant, harmonize, graceful, noble, refined, アイ"
+        },
+        {
+          "character" : "靄",
+          "codePoint" : "U+9744",
+          "meanings" : [
+            "mist",
+            "haze",
+            "fog"
+          ],
+          "onReadings" : [
+            "アイ"
+          ],
+          "spoken" : "靄, mist, haze, fog, アイ"
+        }
+      ],
+      "covers" : "unranked twins: the element itself stands alone",
+      "glyph" : "謁",
+      "hasPage" : true,
+      "meanings" : [
+
+      ],
+      "metadataSource" : "edrdg.kanjidic2 2026-10-05",
+      "opensDetail" : true,
+      "soundPatterns" : "Linked on-readings: アイ, エツ",
+      "standalone" : {
+        "character" : "謁",
+        "codePoint" : "U+FA62",
+        "meanings" : [
+
+        ],
+        "onReadings" : [
+          "エツ"
+        ],
+        "spoken" : "謁, エツ"
+      },
+      "structureSource" : "kanjium 8a0cdaa16d64a281a2048de2eee2ec5e3a440fa6"
+    },
+    {
+      "alternativeCodePoints" : [
+        "U+FA62"
+      ],
+      "alternatives" : [
+        "謁"
+      ],
+      "codePoint" : "U+8B01",
+      "containing" : [
+        {
+          "character" : "藹",
+          "codePoint" : "U+85F9",
+          "meanings" : [
+            "flourishing",
+            "luxuriant",
+            "harmonize"
+          ],
+          "onReadings" : [
+            "アイ"
+          ],
+          "spoken" : "藹, flourishing, luxuriant, harmonize, graceful, noble, refined, アイ"
+        },
+        {
+          "character" : "靄",
+          "codePoint" : "U+9744",
+          "meanings" : [
+            "mist",
+            "haze",
+            "fog"
+          ],
+          "onReadings" : [
+            "アイ"
+          ],
+          "spoken" : "靄, mist, haze, fog, アイ"
+        }
+      ],
+      "covers" : "unranked twins, from the unified side",
+      "explanation" : "This element contributes forms associated with audience, audience (with king).",
+      "glyph" : "謁",
+      "hasPage" : true,
+      "meanings" : [
+        "audience",
+        "audience (with king)"
+      ],
+      "metadataSource" : "edrdg.kanjidic2 2026-10-05",
+      "opensDetail" : true,
+      "soundPatterns" : "Linked on-readings: アイ, エツ",
+      "standalone" : {
+        "character" : "謁",
+        "codePoint" : "U+8B01",
+        "meanings" : [
+          "audience",
+          "audience (with king)"
+        ],
+        "onReadings" : [
+          "エツ"
+        ],
+        "spoken" : "謁, audience, audience (with king), エツ"
+      },
+      "structureSource" : "kanjium 8a0cdaa16d64a281a2048de2eee2ec5e3a440fa6"
+    },
+    {
+      "codePoint" : "U+4491",
+      "covers" : "kanji that is no element",
+      "glyph" : "䒑",
+      "hasPage" : false,
+      "opensDetail" : true
+    },
+    {
+      "codePoint" : "U+3042",
+      "covers" : "kana",
+      "glyph" : "あ",
+      "opensDetail" : false
+    },
+    {
+      "codePoint" : "U+65E5 U+672C",
+      "covers" : "two characters",
+      "glyph" : "日本",
+      "opensDetail" : false
+    }
+  ],
+  "formatVersion" : 1,
+  "suite" : "kanji-element"
+}

@@ -1,7 +1,9 @@
 const segmenter = new Intl.Segmenter('ja', { granularity: 'grapheme' })
 
 export function graphemes(value: string): string[] {
-  return Array.from(segmenter.segment(value), ({ segment }) => segment)
+  return everyUnitIsAGrapheme(value)
+    ? value.split('')
+    : Array.from(segmenter.segment(value), ({ segment }) => segment)
 }
 
 function isSingleUnitGrapheme(unit: number): boolean {
@@ -17,11 +19,15 @@ function isSingleUnitGrapheme(unit: number): boolean {
   )
 }
 
-export function graphemeCount(value: string): number {
+export function everyUnitIsAGrapheme(value: string): boolean {
   for (let index = 0; index < value.length; index++) {
-    if (!isSingleUnitGrapheme(value.charCodeAt(index))) return graphemes(value).length
+    if (!isSingleUnitGrapheme(value.charCodeAt(index))) return false
   }
-  return value.length
+  return true
+}
+
+export function graphemeCount(value: string): number {
+  return everyUnitIsAGrapheme(value) ? value.length : graphemes(value).length
 }
 
 const codePoints = (value: string) => Array.from(value, scalar => scalar.codePointAt(0) ?? 0)
@@ -59,4 +65,16 @@ export function listedWithAnd(items: readonly string[]): string {
   return items.length <= 2
     ? items.join(' and ')
     : `${items.slice(0, -1).join(', ')}, and ${items.at(-1)}`
+}
+
+const glossLength = 18
+
+export function shortGloss(meaning: string): string | null {
+  const withoutNotes = meaning.replace(/\s*\([^)]*\)/gu, '')
+  const first = withoutNotes.split(',').find(part => part !== '') ?? withoutNotes
+  const trimmed = first.replace(/^[\p{Zs}\t]+|[\p{Zs}\t]+$/gu, '')
+  const gloss = trimmed.startsWith('to ') ? trimmed.slice(3) : trimmed
+  if (!gloss) return null
+  const shown = graphemes(gloss)
+  return shown.length > glossLength ? `${shown.slice(0, glossLength - 1).join('')}…` : gloss
 }

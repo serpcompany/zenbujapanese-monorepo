@@ -114,10 +114,27 @@ function isWrittenAs(candidate: MorphologyCandidate, forms: Set<string> | null):
   )
 }
 
-const isLookedUp = (candidate: MorphologyCandidate) =>
-  isJapaneseOnly(normalizeQuery(candidate.surface))
+function remembered<Key extends object, Value>(compute: (key: Key) => Value): (key: Key) => Value {
+  const known = new WeakMap<Key, Value>()
+  return key => {
+    let value = known.get(key)
+    if (value === undefined) {
+      value = compute(key)
+      known.set(key, value)
+    }
+    return value
+  }
+}
 
-export function lookupForms(candidate: MorphologyCandidate): string[] {
+const grouped = remembered(groupInflections)
+
+const isLookedUp = remembered((candidate: MorphologyCandidate) =>
+  isJapaneseOnly(normalizeQuery(candidate.surface))
+)
+
+export const lookupForms = remembered(formsToLookUp)
+
+function formsToLookUp(candidate: MorphologyCandidate): string[] {
   const forms: string[] = []
   const append = (value: string) => {
     if (value !== '' && value !== '*' && !forms.includes(value)) forms.push(value)
@@ -158,7 +175,7 @@ export function formsLookedUp(
   highlighted: Highlighted | null
 ): string[][] {
   const forms = highlighted ? highlightedForms(highlighted) : null
-  return groupInflections(candidates)
+  return grouped(candidates)
     .filter(candidate => !isWrittenAs(candidate, forms) && isLookedUp(candidate))
     .map(lookupForms)
 }
@@ -214,7 +231,7 @@ export function linkedTokens(
   })
 
   const tokens: LinkedToken[] = []
-  for (const candidate of groupInflections(candidates)) {
+  for (const candidate of grouped(candidates)) {
     const resolution = resolve(candidate)
     if (resolution.candidates.length === 0 && candidate.children.length > 1) {
       const children = candidate.children.map(child => token(child, resolve(child)))

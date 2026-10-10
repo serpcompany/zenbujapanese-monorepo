@@ -33,7 +33,10 @@ export interface KanjiElement {
   character: string
   role: KanjiElementRole
   roleLabel: string
+  meanings: string[]
+  linkedOnReadings: string[]
   description: string
+  spoken: string
 }
 
 interface KanjiStat {
@@ -127,13 +130,17 @@ export function kanjiElements(
         : element.commonLinkedOnReadings.some(reading => structure.onReadings.includes(reading))
           ? 'soundPattern'
           : 'meaningStructure'
+    const meanings = element.meanings.slice(0, meaningsPerElement)
+    const linkedOnReadings = meanings.length > 0 ? [] : element.commonLinkedOnReadings
     const description =
-      element.meanings.length > 0
-        ? element.meanings.slice(0, meaningsPerElement).join(', ')
-        : element.commonLinkedOnReadings.length > 0
-          ? `Linked on-readings: ${element.commonLinkedOnReadings.join(', ')}`
+      meanings.length > 0
+        ? meanings.join(', ')
+        : linkedOnReadings.length > 0
+          ? `Linked on-readings: ${linkedOnReadings.join(', ')}`
           : ''
-    return [{ character: glyph, role, roleLabel: roleLabels[role], description }]
+    const roleLabel = roleLabels[role]
+    const spoken = `Element ${glyph}, ${roleLabel.toLowerCase()}, ${meanings.join(', ')}`
+    return [{ character: glyph, role, roleLabel, meanings, linkedOnReadings, description, spoken }]
   })
 }
 

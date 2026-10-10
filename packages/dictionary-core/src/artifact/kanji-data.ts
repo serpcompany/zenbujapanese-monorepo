@@ -1,4 +1,6 @@
 import type {
+  KanjiElementKanjiRow,
+  KanjiElementPageRows,
   KanjiElementRow,
   KanjiGlossRow,
   KanjiReadingRow,
@@ -62,6 +64,13 @@ export interface KanjiSources {
   metadataSourceIdentity: string
   componentSourceIdentity: string
   schema: string
+}
+
+export interface KanjiElementSources {
+  snapshot: string
+  structureSourceIdentity: string
+  metadataSourceIdentity: string
+  metadataSourceSnapshot: string
 }
 
 export function checkKanjiSources(sources: KanjiSources): void {
@@ -132,6 +141,35 @@ export class KanjiReference {
       onReadings: entry.onReadings,
       elementGlyphs: entry.elementGlyphs,
       explicitPhoneticElement: entry.explicitPhoneticElement
+    }
+  }
+
+  elementPageRows(glyph: string, sources: KanjiElementSources): KanjiElementPageRows | null {
+    const element = this.lookup.element(glyph)
+    if (!element) return null
+    const kanji = (characters: readonly string[]): KanjiElementKanjiRow[] =>
+      characters.flatMap(character => {
+        const entry = this.lookup.structure(character)
+        return entry
+          ? [
+              {
+                character: entry.character,
+                meanings: entry.meanings,
+                onReadings: entry.onReadings,
+                frequencyRank: entry.frequencyRank
+              }
+            ]
+          : []
+      })
+    return {
+      glyph,
+      meanings: element.meanings,
+      commonLinkedOnReadings: element.commonLinkedOnReadings,
+      alternatives: element.alternatives,
+      family: kanji([glyph, ...element.alternatives]),
+      containing: kanji(element.containingCharacters),
+      structureSource: `${sources.structureSourceIdentity} ${sources.snapshot}`,
+      metadataSource: `${sources.metadataSourceIdentity} ${sources.metadataSourceSnapshot}`
     }
   }
 

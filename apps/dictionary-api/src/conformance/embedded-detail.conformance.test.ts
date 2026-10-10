@@ -1,6 +1,10 @@
 import type { ArtifactDatabase } from '@zenbu/dictionary-core/artifact/database'
 import { entriesById } from '@zenbu/dictionary-core/artifact/words'
 import { type FrequencyLookupRow, tierLabels } from '@zenbu/dictionary-core/detail/frequency'
+import type {
+  KanjiElementContribution,
+  KanjiElementDetail
+} from '@zenbu/dictionary-core/detail/kanji-element'
 import {
   type SuiteConjugationForm,
   type SuiteConjugations,
@@ -18,7 +22,10 @@ import type { EmbeddedExamples } from '@zenbu/dictionary-core/embedded/text'
 import { beforeAll, describe, expect, test } from 'vitest'
 import {
   codePoint,
+  codePoints,
   type KanjiCase,
+  type KanjiElementCase,
+  kanjiElementSuite,
   kanjiSuite,
   type SuiteExamples,
   type SuiteWord,
@@ -46,7 +53,11 @@ describe.runIf(artifactAvailable)('the app’s word and kanji pages on the artif
   let db: ArtifactDatabase
 
   beforeAll(async () => {
-    requirePinnedArtifacts([...wordSuite.artifacts, ...kanjiSuite.artifacts])
+    requirePinnedArtifacts([
+      ...wordSuite.artifacts,
+      ...kanjiSuite.artifacts,
+      ...kanjiElementSuite.artifacts
+    ])
     app = await embedded()
     db = await artifactDatabase()
   })
@@ -239,24 +250,62 @@ describe.runIf(artifactAvailable)('the app’s word and kanji pages on the artif
           }
         : {}),
       words: page.words.map(suiteWord),
-      elements: (expected.elements ?? []).slice(0, page.elements.length)
+      elements: page.elements.map(({ character: glyph, role, meanings, linkedOnReadings }) => ({
+        glyph,
+        role,
+        meanings,
+        ...(meanings.length > 0 ? {} : { linkedOnReadings })
+      }))
     }
     expect(observed).toEqual(
       withoutFields(expected, ['covers', 'hasStrokeOrder', 'strokeOrderStrokes'])
     )
-    expect(
-      page.elements.map(element => [element.character, element.role, element.description])
-    ).toEqual(
-      (expected.elements ?? []).map(({ glyph, role, meanings, linkedOnReadings }) => [
-        glyph,
-        role,
-        meanings.length > 0
-          ? meanings.join(', ')
-          : linkedOnReadings
-            ? `Linked on-readings: ${linkedOnReadings.join(', ')}`
+    for (const element of page.elements) {
+      expect(element.description).toBe(
+        element.meanings.length > 0
+          ? element.meanings.join(', ')
+          : element.linkedOnReadings.length > 0
+            ? `Linked on-readings: ${element.linkedOnReadings.join(', ')}`
             : ''
-      ])
-    )
+      )
+      expect(element.spoken).toBe(
+        `Element ${element.character}, ${element.roleLabel.toLowerCase()}, ${element.meanings.join(', ')}`
+      )
+    }
+  })
+
+  test.each(
+    kanjiElementSuite.cases
+  )('shows the element $codePoint $glyph as the suite records: $covers', async expected => {
+    const { glyph } = expected
+    const page = await app.presentation<KanjiElementDetail | null>('kanjiElementPage', glyph)
+    const kanji = ({ character, meanings, onReadings, spoken }: KanjiElementContribution) => ({
+      character,
+      codePoint: codePoints(character),
+      meanings,
+      onReadings,
+      spoken
+    })
+    const observed: Omit<KanjiElementCase, 'covers'> = {
+      glyph,
+      codePoint: codePoints(glyph),
+      opensDetail: isKanjiCharacter(glyph),
+      ...(isKanjiCharacter(glyph) ? { hasPage: page !== null } : {}),
+      ...(page
+        ? {
+            meanings: page.meanings,
+            ...(page.explanation === null ? {} : { explanation: page.explanation }),
+            ...(page.soundPatterns === null ? {} : { soundPatterns: page.soundPatterns }),
+            alternatives: page.alternatives,
+            alternativeCodePoints: page.alternatives.map(codePoints),
+            ...(page.standalone ? { standalone: kanji(page.standalone) } : {}),
+            containing: page.containing.map(kanji),
+            structureSource: page.structureSource,
+            metadataSource: page.metadataSource
+          }
+        : {})
+    }
+    expect(observed).toEqual(withoutFields(expected, ['covers']))
   })
 
   test('puts the word a kanji page was opened from first among its words', async () => {

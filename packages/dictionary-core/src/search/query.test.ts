@@ -32,6 +32,20 @@ describe('normalizeQuery', () => {
     expect(normalizeQuery('食べ　る')).toBe('食べ る')
   })
 
+  test('joins a halfwidth kana and its voiced mark, and ends a Greek word in a final sigma', () => {
+    expect(normalizeQuery('\uff76\uff9e\uff77\uff9e')).toBe('\u30ac\u30ae')
+    expect(normalizeQuery('\uff8a\uff9f')).toBe('\u30d1')
+    expect(normalizeQuery('か\u3099')).toBe('\u304c')
+    expect(normalizeQuery('ΌΣΟΣ')).toBe('όσος')
+  })
+
+  test('leaves a query with no whitespace as folding made it', () => {
+    expect(normalizeQuery('食べる')).toBe('食べる')
+    expect(normalizeQuery('か\u3099')).toBe('\u304c')
+    expect(normalizeQuery('TABERU')).toBe('taberu')
+    expect(normalizeQuery('')).toBe('')
+  })
+
   test('drops a grapheme that starts with whitespace, as NFKC makes ゛', () => {
     expect(normalizeQuery('あ゛')).toBe('あ')
   })

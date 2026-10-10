@@ -1,9 +1,62 @@
 "use strict";
 (() => {
+  // src/detail/text.ts
+  var segmenter = new Intl.Segmenter("ja", { granularity: "grapheme" });
+  function graphemes(value) {
+    return everyUnitIsAGrapheme(value) ? value.split("") : Array.from(segmenter.segment(value), ({ segment }) => segment);
+  }
+  function isSingleUnitGrapheme(unit) {
+    return unit >= 32 && unit <= 126 || unit >= 12288 && unit <= 12543 && !(unit >= 12330 && unit <= 12335) && unit !== 12441 && unit !== 12442 || unit >= 19968 && unit <= 40959 || unit >= 65280 && unit <= 65519 && unit !== 65438 && unit !== 65439;
+  }
+  function everyUnitIsAGrapheme(value) {
+    for (let index = 0; index < value.length; index++) {
+      if (!isSingleUnitGrapheme(value.charCodeAt(index))) return false;
+    }
+    return true;
+  }
+  function graphemeCount(value) {
+    return everyUnitIsAGrapheme(value) ? value.length : graphemes(value).length;
+  }
+  var codePoints = (value) => Array.from(value, (scalar) => scalar.codePointAt(0) ?? 0);
+  function isCJKUnifiedIdeograph(character) {
+    return codePoints(character).some((code) => code >= 13312 && code <= 40959);
+  }
+  function isKanjiCharacter(value) {
+    const scalars = codePoints(value);
+    if (scalars.length !== 1) return false;
+    const [code] = scalars;
+    return code >= 13312 && code <= 19903 || code >= 19968 && code <= 40959 || code >= 63744 && code <= 64255 || code >= 131072 && code <= 195103 || code >= 196608 && code <= 205743;
+  }
+  function hiragana(value) {
+    return value.replace(
+      /[ァ-ヶ]/gu,
+      (character) => String.fromCodePoint((character.codePointAt(0) ?? 0) - 96)
+    );
+  }
+  function katakana(value) {
+    return value.replace(
+      /[ぁ-ゖ]/gu,
+      (character) => String.fromCodePoint((character.codePointAt(0) ?? 0) + 96)
+    );
+  }
+  function listedWithAnd(items) {
+    return items.length <= 2 ? items.join(" and ") : `${items.slice(0, -1).join(", ")}, and ${items.at(-1)}`;
+  }
+  var glossLength = 18;
+  function shortGloss(meaning) {
+    const withoutNotes = meaning.replace(/\s*\([^)]*\)/gu, "");
+    const first = withoutNotes.split(",").find((part) => part !== "") ?? withoutNotes;
+    const trimmed = first.replace(/^[\p{Zs}\t]+|[\p{Zs}\t]+$/gu, "");
+    const gloss = trimmed.startsWith("to ") ? trimmed.slice(3) : trimmed;
+    if (!gloss) return null;
+    const shown = graphemes(gloss);
+    return shown.length > glossLength ? `${shown.slice(0, glossLength - 1).join("")}…` : gloss;
+  }
+
   // src/search/query.ts
   var graphemeSegmenter = new Intl.Segmenter("en", { granularity: "grapheme" });
-  function graphemes(value) {
-    return Array.from(graphemeSegmenter.segment(value), (segment) => segment.segment);
+  function graphemes2(value) {
+    return everyUnitIsAGrapheme(value) ? value.split("") : Array.from(graphemeSegmenter.segment(value), (segment) => segment.segment);
   }
   function compareScalars(lhs, rhs) {
     const left = Array.from(lhs);
@@ -25,12 +78,14 @@
     }
     return lhs.length - rhs.length;
   }
+  var whitespace = /\p{White_Space}/u;
   function normalizeQuery(raw) {
     const folded = raw.normalize("NFKC").toLowerCase();
+    if (!whitespace.test(folded)) return folded;
     if (/^[\x20-\x7e]*$/.test(folded)) return folded.split(" ").filter(Boolean).join(" ");
     const words = [];
     let word = "";
-    for (const grapheme of graphemes(folded)) {
+    for (const grapheme of graphemes2(folded)) {
       if (/^\p{White_Space}/u.test(grapheme)) {
         if (word) words.push(word);
         word = "";
@@ -50,7 +105,7 @@
   function japaneseSegments(value) {
     const segments = [];
     let current = "";
-    for (const character of graphemes(value)) {
+    for (const character of graphemes2(value)) {
       if (Array.from(character).every((scalar) => isJapaneseScalar(scalar.codePointAt(0) ?? 0))) {
         current += character;
       } else if (current) {
@@ -62,8 +117,11 @@
     return segments.map(normalizeQuery);
   }
   function isJapaneseOnly(value) {
-    const segments = japaneseSegments(value);
-    return value !== "" && segments.length === 1 && segments[0] === value;
+    if (value === "") return false;
+    for (const scalar of value) {
+      if (!isJapaneseScalar(scalar.codePointAt(0) ?? 0)) return false;
+    }
+    return normalizeQuery(value) === value;
   }
   function isMixedScript(value) {
     return japaneseSegments(value).length > 0 && /[a-z]/i.test(value);
@@ -188,45 +246,89 @@
     };
   }
   var listedIds = "SELECT unhex(value) FROM json_each(?)";
-
-  // src/detail/text.ts
-  var segmenter = new Intl.Segmenter("ja", { granularity: "grapheme" });
-  function graphemes2(value) {
-    return Array.from(segmenter.segment(value), ({ segment }) => segment);
-  }
-  function isSingleUnitGrapheme(unit) {
-    return unit >= 32 && unit <= 126 || unit >= 12288 && unit <= 12543 && !(unit >= 12330 && unit <= 12335) && unit !== 12441 && unit !== 12442 || unit >= 19968 && unit <= 40959 || unit >= 65280 && unit <= 65519 && unit !== 65438 && unit !== 65439;
-  }
-  function graphemeCount(value) {
-    for (let index = 0; index < value.length; index++) {
-      if (!isSingleUnitGrapheme(value.charCodeAt(index))) return graphemes2(value).length;
+  var attachments = {
+    compound_pitch: {
+      file: "CompoundPitch.sqlite3",
+      schema: "zenbu.compound-pitch.v1",
+      languageData: true
+    },
+    jlpt: {
+      file: "JLPTLevelPack.sqlite3",
+      schema: "zenbu.level-pack.v1",
+      packId: "zenbu.jlpt.waller.levels",
+      languageData: true
+    },
+    tubelex: {
+      file: "TUBELEXFrequencyPack.sqlite3",
+      schema: "zenbu.frequency-pack.v1",
+      packId: "zenbu.tubelex.youtube.ja.unidic-3.1",
+      languageData: true
+    },
+    strokes: {
+      file: "KanjiStrokeData.sqlite3",
+      schema: "zenbu.kanji-stroke-diagrams.v1",
+      source: "kanjivg",
+      languageData: false
+    },
+    word_index: {
+      file: "ExampleWordIndex.sqlite3",
+      schema: "zenbu.example-word-index.v1",
+      languageData: true
+    },
+    ranked: {
+      file: "RankedLists.sqlite3",
+      schema: "zenbu.ranked-lists.v1",
+      languageData: true
     }
-    return value.length;
+  };
+  var exampleIndexMetadata = {
+    retrieval_index_schema_version: "zenbu.example-sentence-retrieval-index.v2",
+    retrieval_policy_version: "ExampleSentenceRetrievalPolicy/v1",
+    retrieval_porter_tokenizer: "fts4/porter",
+    retrieval_exact_tokenizer: "fts4/simple",
+    retrieval_pair_id_scheme: "esp1-sha256-128-nfc-length-prefixed"
+  };
+  function metadata(db, schema) {
+    const rows = db.all(`SELECT key, value FROM ${schema}.metadata`);
+    return new Map(rows.map((row) => [row.key, row.value]));
   }
-  var codePoints = (value) => Array.from(value, (scalar) => scalar.codePointAt(0) ?? 0);
-  function isCJKUnifiedIdeograph(character) {
-    return codePoints(character).some((code) => code >= 13312 && code <= 40959);
+  var refuse = (message2) => {
+    throw new Error(`Refusing the language data: ${message2}`);
+  };
+  function checkExampleIndex(db) {
+    const main = metadata(db, "main");
+    for (const [key, expected] of Object.entries(exampleIndexMetadata)) {
+      if (main.get(key) !== expected) refuse(`its ${key} is ${main.get(key)}, not ${expected}`);
+    }
+    for (const key of [
+      "retrieval_corpus_sha256",
+      "retrieval_index_mapping_sha256",
+      "retrieval_importer_sha256",
+      "retrieval_provenance_sha256"
+    ]) {
+      if (!/^[0-9a-f]{64}$/.test(main.get(key) ?? "")) refuse(`its ${key} isn't a SHA-256`);
+    }
+    const sentences = Number(main.get("example_sentences"));
+    const indexed = [
+      main.get("retrieval_index_row_count"),
+      main.get("retrieval_exact_index_row_count")
+    ];
+    if (!(sentences > 0) || !(Number(main.get("retrieval_provenance_row_count")) >= sentences) || indexed.some((count) => Number(count) !== sentences)) {
+      refuse("its example index counts don't match its example sentences");
+    }
   }
-  function isKanjiCharacter(value) {
-    const scalars = codePoints(value);
-    if (scalars.length !== 1) return false;
-    const [code] = scalars;
-    return code >= 13312 && code <= 19903 || code >= 19968 && code <= 40959 || code >= 63744 && code <= 64255 || code >= 131072 && code <= 195103 || code >= 196608 && code <= 205743;
+  function checkAttached(db, name2) {
+    const expected = attachments[name2];
+    const recorded = metadata(db, name2);
+    const schema = recorded.get("artifact_schema");
+    if (schema !== expected.schema) {
+      refuse(`${expected.file} is ${schema}; the core reads ${expected.schema}`);
+    }
+    return recorded;
   }
-  function hiragana(value) {
-    return value.replace(
-      /[ァ-ヶ]/gu,
-      (character) => String.fromCodePoint((character.codePointAt(0) ?? 0) - 96)
-    );
-  }
-  function katakana(value) {
-    return value.replace(
-      /[ぁ-ゖ]/gu,
-      (character) => String.fromCodePoint((character.codePointAt(0) ?? 0) + 96)
-    );
-  }
-  function listedWithAnd(items) {
-    return items.length <= 2 ? items.join(" and ") : `${items.slice(0, -1).join(", ")}, and ${items.at(-1)}`;
+  function checkExamples(db) {
+    checkExampleIndex(db);
+    checkAttached(db, "word_index");
   }
 
   // src/detail/ruby.ts
@@ -234,7 +336,7 @@
     return character === "々" || isCJKUnifiedIdeograph(character);
   }
   function rubySegments(surface, reading) {
-    const characters = graphemes2(surface);
+    const characters = graphemes(surface);
     if (!characters.some(isKanjiOrIterationMark) || surface === reading) return [{ text: surface }];
     const runs = [];
     for (const character of characters) {
@@ -249,7 +351,7 @@
     return alignedSegments(runs, reading) ?? runs.map((run) => ({ text: run.base }));
   }
   function alignedSegments(runs, reading) {
-    const originalReading = graphemes2(reading);
+    const originalReading = graphemes(reading);
     const normalizedReading = normalizedKana(reading);
     let cursor = 0;
     const segments = [];
@@ -290,7 +392,7 @@
       const voiced = katakanaWithoutPrecomposedHiragana[character];
       return voiced ?? String.fromCodePoint((character.codePointAt(0) ?? 0) - 96);
     });
-    return graphemes2(converted);
+    return graphemes(converted);
   }
   function sameCharacters(left, right) {
     return left.length === right.length && left.every((character, index) => character === right[index]);
@@ -382,8 +484,12 @@
       const element = elements.find((candidate) => candidate.glyph === glyph);
       if (!element || !isKanjiCharacter(glyph)) return [];
       const role = structure.explicitPhoneticElement === glyph ? "sound" : element.commonLinkedOnReadings.some((reading) => structure.onReadings.includes(reading)) ? "soundPattern" : "meaningStructure";
-      const description = element.meanings.length > 0 ? element.meanings.slice(0, meaningsPerElement).join(", ") : element.commonLinkedOnReadings.length > 0 ? `Linked on-readings: ${element.commonLinkedOnReadings.join(", ")}` : "";
-      return [{ character: glyph, role, roleLabel: roleLabels[role], description }];
+      const meanings = element.meanings.slice(0, meaningsPerElement);
+      const linkedOnReadings = meanings.length > 0 ? [] : element.commonLinkedOnReadings;
+      const description = meanings.length > 0 ? meanings.join(", ") : linkedOnReadings.length > 0 ? `Linked on-readings: ${linkedOnReadings.join(", ")}` : "";
+      const roleLabel = roleLabels[role];
+      const spoken = `Element ${glyph}, ${roleLabel.toLowerCase()}, ${meanings.join(", ")}`;
+      return [{ character: glyph, role, roleLabel, meanings, linkedOnReadings, description, spoken }];
     });
   }
   var readingLabels = { on: "On", kun: "Kun", name: "Name" };
@@ -729,7 +835,7 @@
   function normalizedEntryEvidence(value) {
     const words = [];
     let word = "";
-    for (const character of graphemes2(value.normalize("NFKC"))) {
+    for (const character of graphemes(value.normalize("NFKC"))) {
       if (/^\p{White_Space}/u.test(character)) {
         if (word) words.push(word);
         word = "";
@@ -1501,7 +1607,7 @@
   }
   var maximumDepth = 6;
   var length = graphemeCount;
-  var dropLast = (value) => graphemes(value).slice(0, -1).join("");
+  var dropLast = (value) => graphemes2(value).slice(0, -1).join("");
   var pastForm = (te) => dropLast(te) + (te.endsWith("で") ? "だ" : "た");
   var ikuSoundChangeStems = ["行", "い"];
   function verbPatterns() {
@@ -2028,6 +2134,31 @@
         explicitPhoneticElement: entry.explicitPhoneticElement
       };
     }
+    elementPageRows(glyph, sources) {
+      const element = this.lookup.element(glyph);
+      if (!element) return null;
+      const kanji = (characters) => characters.flatMap((character) => {
+        const entry = this.lookup.structure(character);
+        return entry ? [
+          {
+            character: entry.character,
+            meanings: entry.meanings,
+            onReadings: entry.onReadings,
+            frequencyRank: entry.frequencyRank
+          }
+        ] : [];
+      });
+      return {
+        glyph,
+        meanings: element.meanings,
+        commonLinkedOnReadings: element.commonLinkedOnReadings,
+        alternatives: element.alternatives,
+        family: kanji([glyph, ...element.alternatives]),
+        containing: kanji(element.containingCharacters),
+        structureSource: `${sources.structureSourceIdentity} ${sources.snapshot}`,
+        metadataSource: `${sources.metadataSourceIdentity} ${sources.metadataSourceSnapshot}`
+      };
+    }
     elementRows(glyphs) {
       return glyphs.flatMap((glyph) => {
         const element = this.lookup.element(glyph);
@@ -2072,10 +2203,10 @@
     }));
   }
   function dropLast2(value, count = 1) {
-    return graphemes2(value).slice(0, -count).join("");
+    return graphemes(value).slice(0, -count).join("");
   }
   function lastCharacter(value) {
-    return graphemes2(value).at(-1);
+    return graphemes(value).at(-1);
   }
   function iAdjectiveTable(entry) {
     if (entry.headword === "いい" || lastCharacter(entry.headword) !== "い" || lastCharacter(entry.reading) !== "い") {
@@ -2344,7 +2475,7 @@
 
   // src/detail/kanji-split.ts
   function hiraganaCharacters(value) {
-    return graphemes2(value).map((character) => {
+    return graphemes(value).map((character) => {
       const scalars = Array.from(character);
       const code = character.codePointAt(0) ?? 0;
       return scalars.length === 1 && code >= 12449 && code <= 12534 ? String.fromCodePoint(code - 96) : character;
@@ -2377,7 +2508,7 @@
     for (const reading of readings) {
       if (reading.kind === "name") continue;
       const pieces = hiraganaCharacters(reading.value).filter((character) => character !== "-").join("").split(".").filter((piece) => piece !== "");
-      const base = graphemes2(pieces[0] ?? "");
+      const base = graphemes(pieces[0] ?? "");
       if (base.length === 0) continue;
       const stems = [
         base,
@@ -2398,7 +2529,7 @@
     return candidate.every((character, index) => target[position + index] === character);
   }
   function splitKanjiReading(kanji, reading, readings) {
-    const characters = graphemes2(kanji);
+    const characters = graphemes(kanji);
     const target = hiraganaCharacters(reading);
     const cache = /* @__PURE__ */ new Map();
     const variantsOf = (character) => {
@@ -2429,7 +2560,7 @@
     }
     search(0, 0, null);
     if (splitLengths.length !== 1) return null;
-    const original = graphemes2(reading);
+    const original = graphemes(reading);
     let offset = 0;
     return splitLengths[0].map((length2) => {
       const part = original.slice(offset, offset + length2).join("");
@@ -2438,7 +2569,7 @@
     });
   }
   function kanjiReadings(segment, readings) {
-    if (segment.reading === void 0 || graphemes2(segment.text).length <= 1) return null;
+    if (segment.reading === void 0 || graphemes(segment.text).length <= 1) return null;
     return splitKanjiReading(segment.text, segment.reading, readings);
   }
   function withKanjiReadings(segments, readings) {
@@ -2532,6 +2663,41 @@
   }
   function sharedSpellingNote(titles) {
     return `Same spelling as ${listedWithAnd(titles)}. Context tells them apart.`;
+  }
+
+  // src/detail/kanji-element.ts
+  var meaningsPerKanji = 3;
+  var unified = (character) => character.normalize("NFC").codePointAt(0) ?? 0;
+  function mostFrequentFirst(left, right) {
+    if (left.frequencyRank !== right.frequencyRank) {
+      if (left.frequencyRank === null) return 1;
+      if (right.frequencyRank === null) return -1;
+      return left.frequencyRank - right.frequencyRank;
+    }
+    return unified(left.character) - unified(right.character);
+  }
+  function contribution(row) {
+    return {
+      character: row.character,
+      meanings: row.meanings.slice(0, meaningsPerKanji),
+      onReadings: row.onReadings,
+      spoken: [row.character, ...row.meanings, ...row.onReadings].join(", ")
+    };
+  }
+  function kanjiElementDetail(rows) {
+    const kanji = (listed3) => listed3.filter((row) => isKanjiCharacter(row.character));
+    const standalone = kanji(rows.family).sort(mostFrequentFirst).at(0);
+    return {
+      glyph: rows.glyph,
+      meanings: rows.meanings,
+      explanation: rows.meanings.length > 0 ? `This element contributes forms associated with ${rows.meanings.join(", ")}.` : null,
+      soundPatterns: rows.commonLinkedOnReadings.length > 0 ? `Linked on-readings: ${rows.commonLinkedOnReadings.join(", ")}` : null,
+      alternatives: rows.alternatives.filter(isKanjiCharacter),
+      standalone: standalone ? contribution(standalone) : null,
+      containing: kanji(rows.containing).filter((row) => !standalone || unified(row.character) !== unified(standalone.character)).map(contribution),
+      structureSource: rows.structureSource,
+      metadataSource: rows.metadataSource
+    };
   }
 
   // src/detail/examples.ts
@@ -2648,7 +2814,7 @@
   var combinedMoraWidth = 1.5;
   function morae(kana) {
     const result3 = [];
-    for (const character of graphemes2(kana)) {
+    for (const character of graphemes(kana)) {
       const last = result3.at(-1);
       if (joinsPreviousMora.has(character) && last !== void 0)
         result3[result3.length - 1] = last + character;
@@ -2665,7 +2831,7 @@
   }
   var particleWidth = 0.6;
   function pitchGraph(kana, levels) {
-    const widths = kana.map((mora) => graphemes2(mora).length > 1 ? combinedMoraWidth : moraWidth);
+    const widths = kana.map((mora) => graphemes(mora).length > 1 ? combinedMoraWidth : moraWidth);
     let x = 0;
     const points = widths.map((width, index) => {
       const point = { x: x + width / 2, high: levels.morae[index] };
@@ -2703,12 +2869,12 @@
     };
   }
   function primaryKanji(headword) {
-    return [...new Set(graphemes2(headword).filter(isCJKUnifiedIdeograph))];
+    return [...new Set(graphemes(headword).filter(isCJKUnifiedIdeograph))];
   }
   function alternativeKanji(entry) {
     const primary2 = new Set(primaryKanji(entry.headword));
     const seen = /* @__PURE__ */ new Set();
-    return entry.writtenForms.filter((form) => form.value !== entry.headword).flatMap((form) => graphemes2(form.value)).filter((character) => {
+    return entry.writtenForms.filter((form) => form.value !== entry.headword).flatMap((form) => graphemes(form.value)).filter((character) => {
       if (!isCJKUnifiedIdeograph(character) || primary2.has(character) || seen.has(character)) {
         return false;
       }
@@ -2734,16 +2900,16 @@
     return [heading, ...meanings].join("\n");
   }
   function formKanji(value) {
-    const character = graphemes2(value).find(isCJKUnifiedIdeograph);
+    const character = graphemes(value).find(isCJKUnifiedIdeograph);
     return character && isKanjiCharacter(character) ? character : null;
   }
-  var meaningsPerKanji = 2;
+  var meaningsPerKanji2 = 2;
   function wordKanji(characters, glosses) {
     return characters.filter(isKanjiCharacter).map((character) => {
       const meanings = glosses.find((gloss) => gloss.character === character)?.meanings ?? [];
       return {
         character,
-        meaning: meanings.length > 0 ? meanings.slice(0, meaningsPerKanji).join(", ") : null
+        meaning: meanings.length > 0 ? meanings.slice(0, meaningsPerKanji2).join(", ") : null
       };
     });
   }
@@ -2923,20 +3089,26 @@
       this.host = host;
     }
     host;
-    reference;
-    get kanji() {
-      if (!this.reference) {
-        const { host } = this;
+    files;
+    get kanjiFiles() {
+      if (!this.files) {
+        const host = this.host;
         const sources = host.kanjiSources?.();
         if (!sources) throw new Error("The host has no kanji files to read");
         checkKanjiSources(sources);
-        this.reference = new KanjiReference({
-          entry: (character) => host.kanjiEntry?.(character) ?? void 0,
-          structure: (character) => host.kanjiStructure?.(character) ?? void 0,
-          element: (glyph) => host.kanjiElement?.(glyph) ?? void 0
-        });
+        this.files = {
+          reference: new KanjiReference({
+            entry: (character) => host.kanjiEntry?.(character) ?? void 0,
+            structure: (character) => host.kanjiStructure?.(character) ?? void 0,
+            element: (glyph) => host.kanjiElement?.(glyph) ?? void 0
+          }),
+          elementSources: sources.elements
+        };
       }
-      return this.reference;
+      return this.files;
+    }
+    get kanji() {
+      return this.kanjiFiles.reference;
     }
     resultsScreen(request) {
       return learnerResultsScreen(
@@ -3039,6 +3211,12 @@
     }
     kanjiMeanings(character) {
       return this.kanji.row(character)?.meanings ?? [];
+    }
+    kanjiElementPage(glyph) {
+      if (!isKanjiCharacter(glyph)) return null;
+      const { reference, elementSources } = this.kanjiFiles;
+      const rows = reference.elementPageRows(glyph, elementSources);
+      return rows && kanjiElementDetail(rows);
     }
   };
 
@@ -3210,7 +3388,7 @@
   function graphemeStarts(text) {
     const starts = /* @__PURE__ */ new Map();
     let index = 0;
-    for (const [position, cluster] of graphemes2(text).entries()) {
+    for (const [position, cluster] of graphemes(text).entries()) {
       starts.set(index, position);
       index += cluster.length;
     }
@@ -3476,7 +3654,7 @@
     };
   }
   function groupInflections(candidates) {
-    const grouped = [];
+    const grouped2 = [];
     let index = 0;
     while (index < candidates.length) {
       const head = candidates[index];
@@ -3491,9 +3669,9 @@
         pieces.push(candidates[index]);
         index += 1;
       }
-      grouped.push(pieces.length === 1 ? head : joined(pieces));
+      grouped2.push(pieces.length === 1 ? head : joined(pieces));
     }
-    return grouped;
+    return grouped2;
   }
 
   // src/examples/forms.ts
@@ -3613,8 +3791,23 @@
       (form) => forms2.has(form)
     );
   }
-  var isLookedUp = (candidate) => isJapaneseOnly(normalizeQuery(candidate.surface));
-  function lookupForms(candidate) {
+  function remembered(compute) {
+    const known = /* @__PURE__ */ new WeakMap();
+    return (key) => {
+      let value = known.get(key);
+      if (value === void 0) {
+        value = compute(key);
+        known.set(key, value);
+      }
+      return value;
+    };
+  }
+  var grouped = remembered(groupInflections);
+  var isLookedUp = remembered(
+    (candidate) => isJapaneseOnly(normalizeQuery(candidate.surface))
+  );
+  var lookupForms = remembered(formsToLookUp);
+  function formsToLookUp(candidate) {
     const forms2 = [];
     const append = (value) => {
       if (value !== "" && value !== "*" && !forms2.includes(value)) forms2.push(value);
@@ -3644,7 +3837,7 @@
   }
   function formsLookedUp(candidates, highlighted) {
     const forms2 = highlighted ? highlightedForms(highlighted) : null;
-    return groupInflections(candidates).filter((candidate) => !isWrittenAs(candidate, forms2) && isLookedUp(candidate)).map(lookupForms);
+    return grouped(candidates).filter((candidate) => !isWrittenAs(candidate, forms2) && isLookedUp(candidate)).map(lookupForms);
   }
   function linkedTokens(text, candidates, highlighted, lookup) {
     if (candidates === null) {
@@ -3687,7 +3880,7 @@
       lookupForm: resolution.lookupForm
     });
     const tokens = [];
-    for (const candidate of groupInflections(candidates)) {
+    for (const candidate of grouped(candidates)) {
       const resolution = resolve(candidate);
       if (resolution.candidates.length === 0 && candidate.children.length > 1) {
         const children = candidate.children.map((child) => token(child, resolve(child)));
@@ -3785,6 +3978,7 @@
     forms = new LruCache(2e4);
     lookup;
     entries = new LruCache(4e3);
+    linked = new LruCache(512);
     searched = new LruCache(32);
     retrieved = new LruCache(64);
     found(ids) {
@@ -3816,6 +4010,10 @@
       const found = entry ? retrieveEntryExamples(this.db, entry) : "missingEntryEvidence";
       this.retrieved.set(id, found);
       return found;
+    }
+    checkExamples() {
+      checkExamples(this.db);
+      return true;
     }
     exampleCount(query) {
       const found = this.search(query);
@@ -3856,12 +4054,10 @@
       }
       return listed2(sentences);
     }
-    async words(text, analyze) {
-      return analyzedWords(await this.candidates(text, analyze));
-    }
     async prefetch(candidates, highlighted) {
       const alternatives = formsLookedUp(candidates, highlighted).map(
         (forms2) => forms2.filter((form) => {
+          if (this.forms.get(form) !== void 0) return true;
           const query = normalizeQuery(form);
           if (query !== "" && !isASCII(query)) return true;
           this.forms.set(form, []);
@@ -3873,6 +4069,9 @@
     async linkedTokens(request, analyze) {
       const { text } = request;
       const query = normalizeQuery(request.query);
+      const key = JSON.stringify([text, query, request.highlightedEntry]);
+      const known = this.linked.get(key);
+      if (known) return known;
       const candidates = await this.candidates(text, analyze);
       const entry = request.highlightedEntry ? this.found([request.highlightedEntry]).get(request.highlightedEntry) ?? null : null;
       const highlighted = entry ? { entry, query } : null;
@@ -3880,9 +4079,10 @@
       const tokens = linkedTokens(text, candidates, highlighted, this.lookup);
       const linked = this.found(tokens.flatMap((token) => token.entry ? [token.entry.id] : []));
       const matches = occurrences(text, query);
-      return tokenSpans(tokens).map(({ start, end }, index) => {
+      const answer = tokenSpans(tokens).map(({ start, end }, index) => {
         const token = tokens[index];
         const target = token.entry ? linked.get(token.entry.id) : void 0;
+        const furigana = target ? displayReading(token, target) : null;
         return {
           surface: token.surface,
           start,
@@ -3891,11 +4091,14 @@
           isFunctionWord: isFunctionWord(token),
           entry: token.entry?.id ?? null,
           candidates: token.entry ? [] : token.candidates.map((candidate) => candidate.id),
-          ruby: target ? rubySegments(token.surface, displayReading(token, target)) : null,
+          furigana,
+          ruby: furigana === null ? null : rubySegments(token.surface, furigana),
           isPageWord: entry !== null && token.entry?.id === entry.id,
           matchesQuery: matches.some((match) => match.start < end && start < match.end)
         };
       });
+      if (candidates) this.linked.set(key, answer);
+      return answer;
     }
   };
 
@@ -3917,20 +4120,22 @@
       entriesMatchingFirstForms: (alternatives) => lookup().entriesMatchingFirstForms(JSON.parse(alternatives)),
       entriesContainingKanji: (character) => lookup().entriesContainingKanji(character),
       normalizeQuery,
+      checkExamples: () => text().checkExamples(),
       exampleCount: (query) => text().exampleCount(query),
       resultsExampleCount: (request) => text().resultsExampleCount(JSON.parse(request)),
       resultsExamples: (request) => text().resultsExamples(JSON.parse(request)),
       entryExamples: (id) => text().entryExamples(id),
       formExamples: (form, analyze) => text().formExamples(form, analyze),
       linkedTokens: (request, analyze) => text().linkedTokens(JSON.parse(request), analyze),
-      words: (sentence, analyze) => text().words(sentence, analyze),
       resultsScreen: (request) => presentation().resultsScreen(JSON.parse(request)),
       wordRows: (request) => presentation().wordRows(JSON.parse(request)),
       frequencyRows: (request) => presentation().frequencyRows(JSON.parse(request)),
       ruby: (pair) => presentation().ruby(JSON.parse(pair)),
       wordPage: (entry) => presentation().wordPage(JSON.parse(entry)),
       kanjiPage: (request) => presentation().kanjiPage(JSON.parse(request)),
-      kanjiMeanings: (character) => presentation().kanjiMeanings(character)
+      kanjiMeanings: (character) => presentation().kanjiMeanings(character),
+      kanjiElementPage: (glyph) => presentation().kanjiElementPage(glyph),
+      gloss: shortGloss
     };
     return {
       begin(method, argument) {

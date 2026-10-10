@@ -3,6 +3,7 @@ import { join } from 'node:path'
 import type { ArtifactDatabase, SqlValue } from '@zenbu/dictionary-core/artifact/database'
 import type {
   KanjiElementFile,
+  KanjiElementSources,
   KanjiReferenceFile
 } from '@zenbu/dictionary-core/artifact/kanji-data'
 import { type EmbeddedEndpoint, embeddedEndpoint } from '@zenbu/dictionary-core/embedded/dictionary'
@@ -63,12 +64,12 @@ function asking(endpoint: EmbeddedEndpoint) {
 
 function kanjiHost(): EmbeddedHost {
   const reference = json('KanjiReferenceData.json') as KanjiReferenceFile
-  const elements = json('KanjiElementReferenceData.json') as KanjiElementFile
+  const elements = json('KanjiElementReferenceData.json') as KanjiElementFile & KanjiElementSources
   const entries = new Map(reference.entries.map(entry => [entry.character, entry]))
   const structures = new Map(elements.kanji.map(entry => [entry.character, entry]))
   const glyphs = new Map(elements.elements.map(entry => [entry.glyph, entry]))
   return {
-    kanjiSources: () => ({ ...reference, schema: elements.schema }),
+    kanjiSources: () => ({ ...reference, schema: elements.schema, elements }),
     kanjiEntry: character => entries.get(character) ?? null,
     kanjiStructure: character => structures.get(character) ?? null,
     kanjiElement: glyph => glyphs.get(glyph) ?? null

@@ -1,6 +1,7 @@
 import type { ArtifactDatabase, SqlValue } from '../artifact/database'
 import type {
   KanjiElementEntry,
+  KanjiElementSources,
   KanjiReferenceEntry,
   KanjiSources,
   KanjiStructureEntry
@@ -14,11 +15,15 @@ export interface HostRows {
   error?: string
 }
 
+interface HostKanjiSources extends KanjiSources {
+  elements: KanjiElementSources
+}
+
 export interface EmbeddedHost {
   all?(sql: string, parametersJSON: string): HostRows | null
   interrupted?(): boolean
   tokenize?(text: string): KuromojiToken[]
-  kanjiSources?(): KanjiSources | null
+  kanjiSources?(): HostKanjiSources | null
   kanjiEntry?(character: string): KanjiReferenceEntry | null
   kanjiStructure?(character: string): KanjiStructureEntry | null
   kanjiElement?(glyph: string): KanjiElementEntry | null

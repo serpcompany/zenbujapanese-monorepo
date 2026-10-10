@@ -54,3 +54,62 @@ describe('a kanji’s JLPT level', () => {
     expect(jlptShown('分')).toBeNull()
   })
 })
+
+describe('an element page’s rows', () => {
+  const structure = (character: string, frequencyRank: number | null) => ({
+    character,
+    meanings: [`${character} meaning`],
+    onReadings: ['シャ'],
+    frequencyRank,
+    elementGlyphs: [],
+    explicitPhoneticElement: null
+  })
+  const elements = new KanjiData(
+    {
+      metadataSourceIdentity: 'edrdg.kanjidic2',
+      componentSourceIdentity: 'edrdg.kradfile',
+      entries: []
+    },
+    {
+      schema: 'zenbu.kanji-elements.v1',
+      kanji: [structure('者', 300), structure('都', 1)],
+      elements: [
+        {
+          glyph: '者',
+          alternatives: ['耂'],
+          meanings: ['someone'],
+          onReadings: ['シャ'],
+          commonLinkedOnReadings: ['ショ'],
+          containingCharacters: ['都', '諸']
+        }
+      ]
+    }
+  )
+  const sources = {
+    snapshot: '8a0c',
+    structureSourceIdentity: 'kanjium',
+    metadataSourceIdentity: 'edrdg.kanjidic2',
+    metadataSourceSnapshot: '2026-10-05'
+  }
+
+  test('hold the element, the kanji among it and its alternatives, and the kanji containing it', () => {
+    expect(elements.elementPageRows('者', sources)).toEqual({
+      glyph: '者',
+      meanings: ['someone'],
+      commonLinkedOnReadings: ['ショ'],
+      alternatives: ['耂'],
+      family: [
+        { character: '者', meanings: ['者 meaning'], onReadings: ['シャ'], frequencyRank: 300 }
+      ],
+      containing: [
+        { character: '都', meanings: ['都 meaning'], onReadings: ['シャ'], frequencyRank: 1 }
+      ],
+      structureSource: 'kanjium 8a0c',
+      metadataSource: 'edrdg.kanjidic2 2026-10-05'
+    })
+  })
+
+  test('are absent for a glyph the file does not list as an element', () => {
+    expect(elements.elementPageRows('都', sources)).toBeNull()
+  })
+})

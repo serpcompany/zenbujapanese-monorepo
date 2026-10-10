@@ -66,15 +66,15 @@ const elements: KanjiElementFile = {
       meanings: ['tree', 'wood', 'timber', 'plank'],
       onReadings: [],
       commonLinkedOnReadings: [],
-      containingCharacters: []
+      containingCharacters: ['校', '森']
     },
     {
       glyph: '交',
-      alternatives: [],
+      alternatives: ['校'],
       meanings: [],
       onReadings: ['コウ'],
       commonLinkedOnReadings: ['コウ'],
-      containingCharacters: []
+      containingCharacters: ['校']
     },
     {
       glyph: '父',
@@ -87,8 +87,15 @@ const elements: KanjiElementFile = {
   ]
 }
 
+const elementSources = {
+  snapshot: '8a0c',
+  structureSourceIdentity: 'kanjium',
+  metadataSourceIdentity: 'edrdg.kanjidic2',
+  metadataSourceSnapshot: '2026-10-05'
+}
+
 const host: EmbeddedHost = {
-  kanjiSources: () => ({ ...reference, schema: elements.schema }),
+  kanjiSources: () => ({ ...reference, schema: elements.schema, elements: elementSources }),
   kanjiEntry: character => reference.entries.find(entry => entry.character === character) ?? null,
   kanjiStructure: character => elements.kanji.find(entry => entry.character === character) ?? null,
   kanjiElement: glyph => elements.elements.find(entry => entry.glyph === glyph) ?? null
@@ -136,7 +143,11 @@ describe('the embedded presentation engine', () => {
     )
     const other = {
       ...host,
-      kanjiSources: () => ({ ...reference, schema: 'zenbu.kanji-elements.v9' })
+      kanjiSources: () => ({
+        ...reference,
+        schema: 'zenbu.kanji-elements.v9',
+        elements: elementSources
+      })
     }
     await expect(ask(other, 'ruby', pair)).rejects.toThrow(
       'KanjiElementReferenceData.json is zenbu.kanji-elements.v9'
@@ -257,19 +268,28 @@ describe('the embedded presentation engine', () => {
         character: '木',
         role: 'meaningStructure',
         roleLabel: 'Meaning / structure',
-        description: 'tree, wood, timber'
+        meanings: ['tree', 'wood', 'timber'],
+        linkedOnReadings: [],
+        description: 'tree, wood, timber',
+        spoken: 'Element 木, meaning / structure, tree, wood, timber'
       },
       {
         character: '交',
         role: 'sound',
         roleLabel: 'Sound',
-        description: 'Linked on-readings: コウ'
+        meanings: [],
+        linkedOnReadings: ['コウ'],
+        description: 'Linked on-readings: コウ',
+        spoken: 'Element 交, sound, '
       },
       {
         character: '父',
         role: 'soundPattern',
         roleLabel: 'Sound pattern',
-        description: 'Linked on-readings: コウ, フ'
+        meanings: [],
+        linkedOnReadings: ['コウ', 'フ'],
+        description: 'Linked on-readings: コウ, フ',
+        spoken: 'Element 父, sound pattern, '
       }
     ])
     expect(page.words.map(word => word.id)).toEqual(['w3', 'w1', 'w2', 'w4', 'w5'])
@@ -315,6 +335,37 @@ describe('the embedded presentation engine', () => {
   test('gives a kanji’s meanings, none for one it has no reference for', async () => {
     expect(await ask(host, 'kanjiMeanings', '学')).toEqual(['学 meaning', 'second', 'third'])
     expect(await ask(host, 'kanjiMeanings', '㐂')).toEqual([])
+  })
+
+  test('builds an element page from the element, the kanji in its family, and those containing it', async () => {
+    expect(await ask(host, 'kanjiElementPage', '交')).toEqual({
+      glyph: '交',
+      meanings: [],
+      explanation: null,
+      soundPatterns: 'Linked on-readings: コウ',
+      alternatives: ['校'],
+      standalone: { character: '校', meanings: [], onReadings: ['コウ'], spoken: '校, コウ' },
+      containing: [],
+      structureSource: 'kanjium 8a0c',
+      metadataSource: 'edrdg.kanjidic2 2026-10-05'
+    })
+    expect(await ask(host, 'kanjiElementPage', '木')).toMatchObject({
+      explanation: 'This element contributes forms associated with tree, wood, timber, plank.',
+      soundPatterns: null,
+      standalone: null,
+      containing: [{ character: '校' }]
+    })
+  })
+
+  test('has no element page for a kanji that is no element, or for what is no kanji', async () => {
+    expect(await ask(host, 'kanjiElementPage', '学')).toBeNull()
+    expect(await ask(host, 'kanjiElementPage', 'あ')).toBeNull()
+    expect(await ask(host, 'kanjiElementPage', '交父')).toBeNull()
+  })
+
+  test('shortens a meaning to the gloss shown under a linked word', async () => {
+    expect(await ask(host, 'gloss', 'to fold (clothes, etc.), to shut')).toBe('fold')
+    expect(await ask(host, 'gloss', '(note only)')).toBeNull()
   })
 
   const youTube = {

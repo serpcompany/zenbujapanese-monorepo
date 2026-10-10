@@ -112,3 +112,129 @@ describe('groupInflections', () => {
     expect(surfaces(groupInflections(candidates))).toEqual(['明らか', 'だ'])
   })
 })
+
+type Piece = [surface: string, dictionaryForm: string, partOfSpeech: string[]]
+
+const candidate = ([surface, dictionaryForm, partOfSpeech]: Piece): MorphologyCandidate => ({
+  surface,
+  dictionaryForm,
+  normalizedForm: dictionaryForm,
+  reading: surface,
+  partOfSpeech,
+  isOutOfVocabulary: false,
+  children: [],
+  joinsInflection: false
+})
+
+const grouped = (pieces: Piece[]) => groupInflections(pieces.map(candidate))
+const joinedSurfaces = (pieces: Piece[]) => surfaces(grouped(pieces))
+
+describe('groupInflections over any analyzer’s words', () => {
+  const ipadicStem: Piece = ['静か', '静か', ['名詞', '形容動詞語幹']]
+  const unidicStem: Piece = ['静か', '静か', ['形状詞', '一般']]
+  const see: Piece = ['見', '見る', ['動詞', '自立']]
+  const te: Piece = ['て', 'て', ['助詞', '接続助詞']]
+
+  test('a verb joins its auxiliaries between the words around it', () => {
+    expect(
+      joinedSurfaces([
+        ['時計', '時計', ['名詞', '一般']],
+        ['、', '、', ['記号', '読点']],
+        see,
+        ['なかっ', 'ない', ['助動詞']],
+        ['た', 'た', ['助動詞']],
+        ['の', 'の', ['助詞', '終助詞']]
+      ])
+    ).toEqual(['時計', '、', '見なかった', 'の'])
+  })
+
+  test('na-adjective stems join な, で, or に, but not the copula', () => {
+    const person: Piece = ['人', '人', ['名詞', '一般']]
+    expect(joinedSurfaces([ipadicStem, ['な', 'だ', ['助動詞']], person])).toEqual(['静かな', '人'])
+    expect(joinedSurfaces([ipadicStem, ['に', 'に', ['助詞', '副詞化']]])).toEqual(['静かに'])
+    expect(joinedSurfaces([ipadicStem, ['で', 'だ', ['助動詞']]])).toEqual(['静かで'])
+    expect(joinedSurfaces([ipadicStem, ['だ', 'だ', ['助動詞']]])).toEqual(['静か', 'だ'])
+    expect(
+      joinedSurfaces([ipadicStem, ['でし', 'です', ['助動詞']], ['た', 'た', ['助動詞']]])
+    ).toEqual(['静か', 'でし', 'た'])
+    expect(joinedSurfaces([unidicStem, ['な', 'だ', ['助動詞']]])).toEqual(['静かな'])
+    expect(joinedSurfaces([unidicStem, ['に', 'だ', ['助動詞']]])).toEqual(['静かに'])
+    expect(
+      joinedSurfaces([
+        ['学生', '学生', ['名詞', '一般']],
+        ['な', 'だ', ['助動詞']]
+      ])
+    ).toEqual(['学生', 'な'])
+  })
+
+  test('adjectives, conditionals, and voiced te-forms join', () => {
+    expect(
+      joinedSurfaces([
+        ['高く', '高い', ['形容詞', '自立']],
+        ['なかっ', 'ない', ['助動詞']],
+        ['た', 'た', ['助動詞']]
+      ])
+    ).toEqual(['高くなかった'])
+    expect(
+      joinedSurfaces([
+        ['見れ', '見る', ['動詞', '自立']],
+        ['ば', 'ば', ['助詞', '接続助詞']]
+      ])
+    ).toEqual(['見れば'])
+    expect(
+      joinedSurfaces([
+        ['読ん', '読む', ['動詞', '自立']],
+        ['で', 'で', ['助詞', '接続助詞']],
+        ['いる', 'いる', ['動詞', '非自立']]
+      ])
+    ).toEqual(['読んでいる'])
+  })
+
+  test('an independent verb after a te-form starts a new word', () => {
+    expect(joinedSurfaces([see, te, ['帰る', '帰る', ['動詞', '自立']]])).toEqual(['見て', '帰る'])
+  })
+
+  test('only joined words are marked as joined inflections', () => {
+    expect(
+      grouped([
+        ['本', '本', ['名詞', '一般']],
+        ['しまっ', 'しまう', ['動詞', '自立']],
+        ['た', 'た', ['助動詞']]
+      ]).map(word => word.joinsInflection)
+    ).toEqual([false, true])
+  })
+
+  test('te-form, helper verbs, and suffix verbs join; other words stay separate', () => {
+    expect(
+      joinedSurfaces([see, te, ['い', 'いる', ['動詞', '非自立']], ['ない', 'ない', ['助動詞']]])
+    ).toEqual(['見ていない'])
+    expect(
+      joinedSurfaces([
+        see,
+        ['させ', 'させる', ['動詞', '接尾']],
+        ['られる', 'られる', ['動詞', '接尾']]
+      ])
+    ).toEqual(['見させられる'])
+    expect(
+      joinedSurfaces([
+        see,
+        ['ない', 'ない', ['助動詞']],
+        ['よう', 'よう', ['名詞', '非自立']],
+        ['に', 'に', ['助詞', '副詞化']]
+      ])
+    ).toEqual(['見ない', 'よう', 'に'])
+    expect(
+      joinedSurfaces([
+        ['学生', '学生', ['名詞', '一般']],
+        ['だ', 'だ', ['助動詞']]
+      ])
+    ).toEqual(['学生', 'だ'])
+    expect(
+      joinedSurfaces([
+        see,
+        ['が', 'が', ['助詞', '接続助詞']],
+        ['いる', 'いる', ['動詞', '非自立']]
+      ])
+    ).toEqual(['見', 'が', 'いる'])
+  })
+})

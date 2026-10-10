@@ -147,6 +147,24 @@ export interface KanjiElementRow {
   commonLinkedOnReadings: string[]
 }
 
+export interface KanjiElementKanjiRow {
+  character: string
+  meanings: string[]
+  onReadings: string[]
+  frequencyRank: number | null
+}
+
+export interface KanjiElementPageRows {
+  glyph: string
+  meanings: string[]
+  commonLinkedOnReadings: string[]
+  alternatives: string[]
+  family: KanjiElementKanjiRow[]
+  containing: KanjiElementKanjiRow[]
+  structureSource: string
+  metadataSource: string
+}
+
 export interface KanjiWordRow {
   id: string
   entSeq: number

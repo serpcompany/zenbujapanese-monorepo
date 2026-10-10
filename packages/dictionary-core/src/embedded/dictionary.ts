@@ -1,3 +1,4 @@
+import { shortGloss } from '../detail/text'
 import { normalizeQuery } from '../search/query'
 import type { EmbeddedHost } from './host'
 import { EmbeddedLookup } from './lookup'
@@ -35,20 +36,22 @@ export function embeddedEndpoint(host: EmbeddedHost): EmbeddedEndpoint {
       lookup().entriesMatchingFirstForms(JSON.parse(alternatives)),
     entriesContainingKanji: character => lookup().entriesContainingKanji(character),
     normalizeQuery,
+    checkExamples: () => text().checkExamples(),
     exampleCount: query => text().exampleCount(query),
     resultsExampleCount: request => text().resultsExampleCount(JSON.parse(request)),
     resultsExamples: request => text().resultsExamples(JSON.parse(request)),
     entryExamples: id => text().entryExamples(id),
     formExamples: (form, analyze) => text().formExamples(form, analyze),
     linkedTokens: (request, analyze) => text().linkedTokens(JSON.parse(request), analyze),
-    words: (sentence, analyze) => text().words(sentence, analyze),
     resultsScreen: request => presentation().resultsScreen(JSON.parse(request)),
     wordRows: request => presentation().wordRows(JSON.parse(request)),
     frequencyRows: request => presentation().frequencyRows(JSON.parse(request)),
     ruby: pair => presentation().ruby(JSON.parse(pair)),
     wordPage: entry => presentation().wordPage(JSON.parse(entry)),
     kanjiPage: request => presentation().kanjiPage(JSON.parse(request)),
-    kanjiMeanings: character => presentation().kanjiMeanings(character)
+    kanjiMeanings: character => presentation().kanjiMeanings(character),
+    kanjiElementPage: glyph => presentation().kanjiElementPage(glyph),
+    gloss: shortGloss
   }
   return {
     begin(method, argument) {

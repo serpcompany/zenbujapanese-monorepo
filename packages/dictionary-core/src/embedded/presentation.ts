@@ -1,10 +1,12 @@
-import { checkKanjiSources, KanjiReference } from '../artifact/kanji-data'
+import { checkKanjiSources, type KanjiElementSources, KanjiReference } from '../artifact/kanji-data'
 import { sharedSpellingNote } from '../detail/conjugation'
 import { type FrequencyLookupRow, frequencyLookupRow } from '../detail/frequency'
 import { type KanjiDetail, kanjiDetail } from '../detail/kanji'
+import { type KanjiElementDetail, kanjiElementDetail } from '../detail/kanji-element'
 import { withKanjiReadings } from '../detail/kanji-split'
 import type { FormRow, PitchRow } from '../detail/rows'
 import { type RubySegment, rubySegments } from '../detail/ruby'
+import { isKanjiCharacter } from '../detail/text'
 import { type WordDetail, wordDetail } from '../detail/word'
 import {
   evidenceLookups,
@@ -63,24 +65,36 @@ interface KanjiPageWord {
   summary: string
 }
 
+interface KanjiFiles {
+  reference: KanjiReference
+  elementSources: KanjiElementSources
+}
+
 export class EmbeddedPresentation {
-  private reference: KanjiReference | undefined
+  private files: KanjiFiles | undefined
 
   constructor(private readonly host: EmbeddedHost) {}
 
-  private get kanji(): KanjiReference {
-    if (!this.reference) {
-      const { host } = this
+  private get kanjiFiles(): KanjiFiles {
+    if (!this.files) {
+      const host = this.host
       const sources = host.kanjiSources?.()
       if (!sources) throw new Error('The host has no kanji files to read')
       checkKanjiSources(sources)
-      this.reference = new KanjiReference({
-        entry: character => host.kanjiEntry?.(character) ?? undefined,
-        structure: character => host.kanjiStructure?.(character) ?? undefined,
-        element: glyph => host.kanjiElement?.(glyph) ?? undefined
-      })
+      this.files = {
+        reference: new KanjiReference({
+          entry: character => host.kanjiEntry?.(character) ?? undefined,
+          structure: character => host.kanjiStructure?.(character) ?? undefined,
+          element: glyph => host.kanjiElement?.(glyph) ?? undefined
+        }),
+        elementSources: sources.elements
+      }
     }
-    return this.reference
+    return this.files
+  }
+
+  private get kanji(): KanjiReference {
+    return this.kanjiFiles.reference
   }
 
   resultsScreen(request: {
@@ -204,5 +218,12 @@ export class EmbeddedPresentation {
 
   kanjiMeanings(character: string): string[] {
     return this.kanji.row(character)?.meanings ?? []
+  }
+
+  kanjiElementPage(glyph: string): KanjiElementDetail | null {
+    if (!isKanjiCharacter(glyph)) return null
+    const { reference, elementSources } = this.kanjiFiles
+    const rows = reference.elementPageRows(glyph, elementSources)
+    return rows && kanjiElementDetail(rows)
   }
 }
