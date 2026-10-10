@@ -11,6 +11,10 @@ final class AccountUITests: ZenbuUITestCase {
   func testAccountListsEveryArea() {
     let app = launch()
     open(.account, in: app)
+    if device != .mac {
+      let bar = waitFor(app.navigationBars["Account"])
+      XCTAssertLessThan(bar.frame.height, 64, "Account has the small title the other tabs use")
+    }
     for row in Self.rows {
       reveal(find(row, in: app), in: app)
     }

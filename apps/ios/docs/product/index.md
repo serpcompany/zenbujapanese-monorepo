@@ -191,7 +191,8 @@ a small **Account** title in the bar rather than a large one. It provides:
 - the app's name, version, and description, followed by Help & Support and the Privacy Policy,
   which open the Zenbu website, and source credits and attributions.
 
-Check: UI `AccountUITests.testAccountListsEveryArea`, `testReadingAidsAndFrequencyDictionariesOpen`,
+Check: UI `AccountUITests.testAccountListsEveryArea` (every row, and the small title on iPhone and
+iPad), `testReadingAidsAndFrequencyDictionariesOpen`,
 and `testTranslationsAndCreditsOpenFromAccount`; contract `test_account_service_settings.py`
 (production in TestFlight and App Store builds, staging in Debug); package `PlayerReadingAidTests`
 and `WordMeaningTests` (the Reading Aids preferences).
@@ -252,9 +253,11 @@ becomes the only enabled one. An update that adds a bundled pack, such as JLPT L
 it once at the top of the learner's list; disabling it afterward is remembered.
 
 Check: package `FrequencyPackLifecycleTests` (enabling, ordering, disabling, removing, and the
-upgrades) and `SearchResultOrderingTests` (a word the first pack doesn't rank); UI
+upgrades), `FrequencyPackDownloadsTests` (several downloads side by side, stopping one, and a stop
+not counted as a failure), and `SearchResultOrderingTests` (a word the first pack doesn't rank); UI
 `AccountUITests.testAFrequencyDictionaryShowsItsDetailsAndTurnsOff` (a row's Details, by swipe or
-right-click, and its switch).
+right-click, and its switch). A real download needs the network: by hand
+([Search manual checks](../../../../docs/agents/ios.md#search-manual-checks)).
 
 ### Known Words
 
