@@ -52,5 +52,11 @@ final class LayoutUITests: ZenbuUITestCase {
     }
     open(.translate, in: app)
     assertOnScreen(find("translate.history", in: app), in: app)
+    for row in TranslateUITests.rows {
+      assertOnScreen(reveal(find("translate.start.\(row)", in: app), in: app), in: app)
+    }
+    open(.search, in: app)
+    assertOnScreen(searchField(in: app), in: app)
+    assertOnScreen(find("search.input.radicals", in: app), in: app)
   }
 }

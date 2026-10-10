@@ -70,9 +70,8 @@ and messages that name the device say iPad or Mac, such as "Everything stays on 
   Dictionary** (⌘F on the Mac) goes to Search and puts the cursor in its field; on iPad, iPadOS
   keeps ⌘F for its own Find, so Find in Dictionary is in the menu bar without a working shortcut.
   **Search an Image…** (⌘⇧I)
-  goes back to Translate's first screen, chooses its **Camera** option when no conversation is
-  running, and offers Image Search's sources, and ⌘1 to ⌘4 switch to Search, Translate, Player,
-  and Account.
+  goes back to Translate's first screen and opens its **Image** alert, and ⌘1 to ⌘4 switch to
+  Search, Translate, Player, and Account.
   With two windows open, a shortcut acts in the one used last. A website link opens in an open
   window rather than a new one.
   Check: iPad and Mac, UI `KeyboardAndWindowUITests` (⌘1 to ⌘4, ⌘⇧I, and on the Mac ⌘F and a
@@ -91,22 +90,33 @@ and messages that name the device say iPad or Mac, such as "Everything stays on 
   is closed; on an iPad in full width it opens as a centered sheet.
   Check: UI `ImageSearchUITests.testAnImageOpensImageSearchOnTranslateAndAWordOpensItsEntry`
   (where each device places it); package `WordSheetPresentationTests`.
-- **Image Search on the Mac.** Translate's **Camera** option offers **Photo Library**,
-  **Files**, and **Paste Image**, which takes an image, or up to 8 copied image files, from the
-  clipboard, and its description doesn't mention pointing a camera. There's no **Take Photo**,
-  here or in a word's **•••** menu: macOS has no camera screen an app can show. A photo comes from
-  an iPhone or iPad instead: from any tab, **File → Import from iPhone or iPad → Take Photo**
-  (Continuity Camera) opens the photo in Image Search on Translate. Several images are paged by
-  swiping sideways or with the dots under them.
-  Check: UI `TranslateUITests.testCameraOffersThisDevicesImageSources`,
+- **Image Search on the Mac.** Translate's **Image** alert offers **Photo Library** and
+  **Paste Image**, which takes an image, or up to 8 copied image files, from the clipboard.
+  There's no **Take Photo**, here or in a word's **•••** menu: macOS has no camera screen an app
+  can show. A photo comes from an iPhone or iPad instead: from any tab, **File → Import from
+  iPhone or iPad → Take Photo** (Continuity Camera) opens the photo in Image Search on Translate.
+  An image file is pasted or dragged in. Several images are paged by swiping sideways or with the
+  dots under them.
+  Check: UI `TranslateUITests.testImageOffersThisDevicesSources`,
   `WordDetailUITests.testTheMenuOffersThisDevicesActionsAndMarksTheWordKnown` (no **Take Photo**
   on the Mac), and `ImageSearchUITests` (a pasted image on the Mac); package `PlatformAdapterTests`
-  (the sources, the Camera option's description, pasted images and files). Continuity Camera with
-  a real iPhone is by hand; it hands over a photo the way **Paste Image** reads one.
+  (the sources, pasted images and files). Continuity Camera with a real iPhone is by hand; it
+  hands over a photo the way **Paste Image** reads one.
 - **Dragging images.** On every device, an image dragged onto the window, in any tab, opens it
-  in Image Search on Translate, up to 8 at a time, with the same limits as **Files**.
+  in Image Search on Translate, up to 8 at a time, each at most 12 MB, 12,000 pixels on a side,
+  and 40 megapixels; a pasted image file has the same limits.
   Check: package `PlatformAdapterTests` (a dropped image's limits). Dragging from another app is
   by hand.
+- **Search on iPad and the Mac.** On iPad the tabs and the title bar stay above the search field
+  while you type and beside the results, where the iPhone slides its title away, and there's no
+  **X**. On the Mac the field sits in the window's toolbar. On both, the field's own clear button
+  empties it and returns to Recent. On the Mac, Handwriting and Radicals open as a sheet of a
+  fixed size with a **Done** button, which Escape presses too, since a Mac can't drag a sheet
+  away.
+  Check: iPad and Mac, UI `SearchUITests.testTheTabsStayBesideTheResultsWhichStayAcrossTabs` and
+  `testASearchKeepsItsQueryInTheFieldAndRunsAgainFromRecent` (the clear button), and on the Mac
+  `SearchInputUITests.testThePencilAndGridOpenOnePanelThatSwitchesBetweenThem` (**Done**);
+  package `AppCommandTests` (the sheet's size).
 - **Right-click on the Mac.** A row whose actions are behind a swipe on the iPhone also shows
   them on right-click: renaming or deleting a list, removing a word from a list, marking a word
   unknown, removing a video from Recent, updating or removing a frequency dictionary or showing

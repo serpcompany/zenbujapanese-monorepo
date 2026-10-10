@@ -44,8 +44,11 @@ extension that feature code calls: `DecodedImage` and `Image(imageData:)`, `Colo
 `ImagePhotoLibraryPicker`, `importsImagesFromDevices`, `BackgroundRefresh`,
 `keyWindowAnchor`, `AppleSignInButton`, `ListEditButton` and `ListEditMode`, `ThisDevice`, and
 the modifiers in `PlatformModifiers.swift` (`.inlineNavigationTitle()`, `.groupedList()`,
-`.textEntry(_:)`, `.barLeading` and `.barTrailing`, `.bottomAccessory`, `.rowActions`, and the
-rest). `pnpm verify layers` refuses a platform condition, UIKit, AppKit, or an iPhone-only API it
+`.textEntry(_:)`, `.barLeading` and `.barTrailing`, `.bottomAccessory`, `.rowActions`,
+`.dragToCloseSheet(sizeOnMac:)`, and the rest). A sheet that iPhone and iPad close by dragging,
+as Search's Handwriting and Radicals panel does, uses `.dragToCloseSheet(sizeOnMac:)`: a Mac
+can't drag a sheet away, and sizes one from its content, so there it gets a fixed size
+(`AppWindow.inputPanelSize`) and a **Done** button that Escape presses. `pnpm verify layers` refuses a platform condition, UIKit, AppKit, or an iPhone-only API it
 knows anywhere else in `apps/ios/Modules/Sources/`, `apps/ios/Modules/Tests/`, or `apps/ios/App/`,
 and names the adapter to use (`tools/checks/src/layers.ts`), so feature code stays the same on
 every platform while CI's iPad and Mac builds are off ([`ci.md`](ci.md), iOS). Image data stays `Data` or `CGImage` in models (`ImageCoding.swift`
@@ -172,7 +175,11 @@ a platform), and each test checks its device's side rather than skipping it. A b
 lacks, such as the Mac's Settings window or menus on an iPhone, is skipped there with the reason.
 A failing test keeps screenshots rather than a screen recording (the scheme's
 `preferredScreenCaptureFormat`): recording every test kept a busy Mac's video encoder running and
-slowed the app until XCUITest's queries timed out. On a busy Mac a tab tap, a shortcut, the
+slowed the app until XCUITest's queries timed out. A wait that fails also attaches **What was on
+screen**, the app's accessibility hierarchy (`attachWhatIsOnScreen`); read it with
+`xcrun xcresulttool export attachments`. Search's **Sorted by** row is a `Menu` whose accessibility
+element spans the row, though only its text opens the menu, so `chooseFromSortedBy` taps the
+text. On a busy Mac a tab tap, a shortcut, the
 conversation's pause, or a Simulator rotation sometimes doesn't take; the tests repeat one only
 while what it should bring hasn't appeared (`open`, `press`, `pause`, `LayoutUITests.turn`), so a
 repeat can't undo it. An iPad Simulator that had run the suites for hours once stopped turning at
@@ -191,7 +198,8 @@ and add iPad and Mac screenshots. A Mac build is archived with
 
 The UI tests cover the tab shell and sidebar, every tab at the iPad's two orientations and the
 Mac's smallest window, the menu commands and their shortcuts, the Settings window, a second Mac
-window, and Image Search's sources and Paste Image. What they can't drive, check by hand when
+window, Image Search's sources and Paste Image, and the Handwriting and Radicals sheet's
+**Done**. What they can't drive, check by hand when
 changing it: the app beside another app in Split View on iPad, an image dragged in from another
 app, and **File → Import from iPhone or iPad** with a real iPhone.
 
@@ -878,6 +886,12 @@ previews stay still.
 - The word sheet (`WordSheetPresentation` in `RecognizedWordSheet.swift`) swaps the word inside a
   `sheet(isPresented:)`: with `sheet(item:)`, each new word dismissed and re-presented the sheet,
   which reopened at full height.
+- `SearchField` asks the bar to keep its content while a search is active at regular width
+  (`searchPresentationToolbarBehavior(.avoidHidingContent)`). iPadOS draws the tabs in the
+  navigation bar and hides them, with the title and the bar's buttons, while a search is active,
+  and Search keeps its search active while results show, to hold the query in the field. Without
+  it the iPad's results had no tabs until the field was cleared. At compact width, the iPhone and
+  a narrow iPad window, the title slides away as the owners chose.
 - Translate's Image alert (in `ImageTextImport`, listing `ImageTextSource.offered`) only records
   the choice, and the picker opens once the alert's binding turns false: on the iOS 27 Simulator,
   a picker presented from a `confirmationDialog` button's action never appeared, while one
@@ -919,7 +933,11 @@ previews stay still.
 ## Search manual checks
 
 Search ordering, deinflection, and frequency-chip rules are covered by `SearchExperienceTests`.
-When changing Search results or frequency dictionaries, also check in the Simulator:
+The UI tests drive the top bar and its field, recent searches, the **Sorted by** row's Sort By
+and Filter, and the Handwriting and Radicals panel on an iPhone Simulator, an iPad Simulator, and
+the Mac (`SearchUITests`, `SearchResultsUITests`, `SearchInputUITests`); the lists below are what
+to look at beyond them. When changing Search results or frequency dictionaries, also check in the
+Simulator:
 
 - `いる` shows chips in the Enabled order (JLPT first by default). Reordering or disabling
   dictionaries under **Account → Frequency Dictionaries** re-sorts the visible results without

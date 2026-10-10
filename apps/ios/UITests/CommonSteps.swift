@@ -7,19 +7,60 @@ extension ZenbuUITestCase {
     let app = launch(onMac ? [:] : ["ZENBU_CAMERA_IMAGE": fixture.path])
     if onMac { TestDevice.copyImage(try Data(contentsOf: fixture)) }
     open(.translate, in: app)
-    tap(find("translate.start.camera", in: app))
-    tap(find("translate.start", in: app))
-    tap(find(onMac ? "image-source.paste" : "image-source.camera", in: app))
+    tap(find("translate.start.image", in: app))
+    tap(app.buttons[onMac ? "Paste Image" : "Take Photo"].firstMatch)
     return app
   }
 
   @discardableResult
   func markJapanKnownFromItsResult(in app: XCUIApplication) -> XCUIElement {
     search("japan", in: app)
+    return markJapanKnown(in: app)
+  }
+
+  @discardableResult
+  func markJapanKnown(in app: XCUIApplication) -> XCUIElement {
     let row = find("result.japan", in: app)
     if device == .mac { waitFor(row).rightClick() } else { waitFor(row).swipeRight() }
     tap(find("result.japan.mark-known", in: app))
     return row
+  }
+
+  func menuChoice(_ label: String, in app: XCUIApplication) -> XCUIElement {
+    let choices = device == .mac ? app.menuItems : app.buttons
+    return choices.matching(NSPredicate(format: "label == %@ OR label BEGINSWITH %@", label, label + ","))
+      .firstMatch
+  }
+
+  func chooseFromSortedBy(_ row: String, _ choice: String, in app: XCUIApplication) {
+    let sortedBy = app.descendants(matching: .any).matching(identifier: "search.sort-menu")
+    let opened = menuChoice(row, in: app)
+    for _ in 0..<3 where !opened.exists {
+      tapWhereReachable([sortedBy.staticTexts, sortedBy], in: app)
+      _ = opened.waitForExistence(timeout: Self.patience / 3)
+    }
+    tap(opened)
+    tap(menuChoice(choice, in: app))
+  }
+
+  func sortedByRow(saying text: String, in app: XCUIApplication) -> XCUIElement {
+    app.descendants(matching: .any)
+      .matching(NSPredicate(format: "identifier == 'search.sort-menu' AND label CONTAINS %@", text))
+      .firstMatch
+  }
+
+  @discardableResult
+  func switchInputPanel(to input: String, showing content: String, in app: XCUIApplication)
+    -> XCUIElement
+  {
+    let shown = find(content, in: app)
+    let buttons = app.descendants(matching: .any).matching(identifier: "search.input.\(input)")
+    waitFor(buttons.firstMatch)
+    for index in 0..<buttons.count where !shown.exists {
+      buttons.element(boundBy: index).tap()
+      _ = shown.waitForExistence(timeout: 10)
+    }
+    return waitFor(shown)
   }
 
   func word(containing text: String, identifiedBy prefix: String, in app: XCUIApplication)

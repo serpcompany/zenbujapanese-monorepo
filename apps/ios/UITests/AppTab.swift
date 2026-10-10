@@ -8,8 +8,8 @@ enum AppTab: String, CaseIterable {
 
   var rootIdentifier: String {
     switch self {
-    case .search: "search.field"
-    case .translate: "translate.start"
+    case .search: "search.input.handwriting"
+    case .translate: "translate.header"
     case .player: "watch.empty"
     case .account: "account.profile"
     }
@@ -63,11 +63,27 @@ extension ZenbuUITestCase {
     }
   }
 
+  func searchField(in app: XCUIApplication) -> XCUIElement {
+    app.searchFields.firstMatch
+  }
+
   func search(_ query: String, in app: XCUIApplication) {
     open(.search, in: app)
-    let field = find("search.field", in: app)
-    type(query + "\n", into: field)
+    type(query + "\n", into: searchField(in: app))
     waitFor(find("search.results", in: app))
+  }
+
+  func closeSearchButton(in app: XCUIApplication) -> XCUIElement {
+    app.buttons.matching(NSPredicate(format: "label IN {'Close', 'Cancel'}")).firstMatch
+  }
+
+  func returnToRecentSearches(in app: XCUIApplication) {
+    switch device {
+    case .phone: tap(closeSearchButton(in: app))
+    case .pad: tap(labeled("Clear text", in: app))
+    case .mac: tap(searchField(in: app).buttons["cancel"])
+    }
+    waitFor(find("recent-search.0", in: app))
   }
 
   func firstElement(identifiedBy prefix: String, in app: XCUIApplication) -> XCUIElement {

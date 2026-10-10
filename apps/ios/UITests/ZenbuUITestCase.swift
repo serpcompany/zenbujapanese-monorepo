@@ -11,11 +11,13 @@ class ZenbuUITestCase: XCTestCase {
     .standardizedFileURL
 
   var device: TestDevice.Kind { TestDevice.kind }
+  private var launched: XCUIApplication?
 
   func launch(_ environment: [String: String] = [:], arguments: [String] = []) -> XCUIApplication {
     continueAfterFailure = false
     TestDevice.turn(landscape: false)
     let app = XCUIApplication()
+    launched = app
     app.launchArguments = arguments
     app.launchEnvironment = [
       "ZENBU_UI_TEST_FRESH": "1",
@@ -39,19 +41,37 @@ class ZenbuUITestCase: XCTestCase {
   func waitFor(
     _ element: XCUIElement, file: StaticString = #filePath, line: UInt = #line
   ) -> XCUIElement {
-    XCTAssertTrue(
-      element.waitForExistence(timeout: Self.patience), "\(element) never appeared",
-      file: file, line: line)
+    if !element.waitForExistence(timeout: Self.patience) {
+      attachWhatIsOnScreen()
+      XCTFail("\(element) never appeared", file: file, line: line)
+    }
     return element
+  }
+
+  func attachWhatIsOnScreen() {
+    guard let launched else { return }
+    let hierarchy = XCTAttachment(string: launched.debugDescription)
+    hierarchy.name = "What was on screen"
+    hierarchy.lifetime = .keepAlways
+    add(hierarchy)
   }
 
   func waitUntilGone(
     _ element: XCUIElement, file: StaticString = #filePath, line: UInt = #line
   ) {
-    let gone = expectation(for: NSPredicate(format: "exists == false"), evaluatedWith: element)
-    XCTAssertEqual(
-      XCTWaiter().wait(for: [gone], timeout: Self.patience), .completed,
-      "\(element) stayed", file: file, line: line)
+    waitUntil(element, "exists == false", file: file, line: line)
+  }
+
+  func waitUntil(
+    _ element: XCUIElement, _ condition: String, _ values: Any..., file: StaticString = #filePath,
+    line: UInt = #line
+  ) {
+    let met = XCTNSPredicateExpectation(
+      predicate: NSPredicate(format: condition, argumentArray: values), object: element)
+    if XCTWaiter().wait(for: [met], timeout: Self.patience) != .completed {
+      attachWhatIsOnScreen()
+      XCTFail("\(element) never met \(condition) \(values)", file: file, line: line)
+    }
   }
 
   static let scrollingContainers: Set<XCUIElement.ElementType> = [
@@ -118,7 +138,7 @@ class ZenbuUITestCase: XCTestCase {
       }
       RunLoop.current.run(until: Date.now.addingTimeInterval(0.5))
     }
-    add(XCTAttachment(string: app.debugDescription))
+    attachWhatIsOnScreen()
     XCTFail("nothing in \(queries) could be reached", file: file, line: line)
     return (queries[0].firstMatch, .zero)
   }

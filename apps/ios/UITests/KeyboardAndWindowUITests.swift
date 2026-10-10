@@ -14,21 +14,20 @@ final class KeyboardAndWindowUITests: ZenbuUITestCase {
       device == .mac, "iPadOS keeps ⌘F for its own Find, so it doesn't reach Find in Dictionary")
     let app = launchAndTouch()
     open(.account, in: app)
-    press("f", until: find("search.field", in: app), in: app)
+    press("f", until: searchField(in: app), in: app)
     app.typeText("japan\n")
     waitFor(find("result.japan", in: app))
   }
 
-  func testSearchAnImageGoesToTranslatesCameraAndOffersItsSources() throws {
+  func testSearchAnImageGoesToTranslateAndOffersItsSources() throws {
     try XCTSkipIf(device == .phone, "the iPhone has no menus or keyboard shortcuts")
     let app = launchAndTouch()
-    press("i", [.command, .shift], until: find("image-source.photo-library", in: app), in: app)
-    waitFor(find("image-source.files", in: app))
-    XCTAssertEqual(find("image-source.paste", in: app).exists, device == .mac)
-    XCTAssertEqual(find("image-source.camera", in: app).exists, device != .mac)
-    tap(find("image-source.cancel", in: app))
-    waitUntilGone(find("image-source.files", in: app))
-    XCTAssertTrue(waitFor(find("translate.start.camera", in: app)).isSelected)
+    press("i", [.command, .shift], until: app.buttons["Photo Library"], in: app)
+    XCTAssertEqual(app.buttons["Paste Image"].exists, device == .mac)
+    XCTAssertEqual(app.buttons["Take Photo"].exists, device != .mac)
+    tap(app.buttons["Cancel"].firstMatch)
+    waitUntilGone(app.buttons["Photo Library"])
+    assertOnScreen(find("translate.header", in: app), in: app)
   }
 
   func testTheSettingsWindowHoldsTheAccountReadingAidsAndFrequencyDictionaries() throws {
@@ -52,11 +51,11 @@ final class KeyboardAndWindowUITests: ZenbuUITestCase {
     expectation(for: NSPredicate(format: "count == 2"), evaluatedWith: windows)
     waitForExpectations(timeout: Self.patience)
     shortcut("2", in: app)
-    let starts = app.descendants(matching: .any).matching(identifier: "translate.start")
-    let fields = app.descendants(matching: .any).matching(identifier: "search.field")
-    expectation(for: NSPredicate(format: "count == 1"), evaluatedWith: starts)
+    let translates = app.descendants(matching: .any).matching(identifier: "translate.header")
+    let searches = app.descendants(matching: .any).matching(identifier: "search.input.handwriting")
+    expectation(for: NSPredicate(format: "count == 1"), evaluatedWith: translates)
     waitForExpectations(timeout: Self.patience)
-    XCTAssertEqual(fields.count, 1, "the first window stays on Search")
+    XCTAssertEqual(searches.count, 1, "the first window stays on Search")
   }
 
   private func launchAndTouch() -> XCUIApplication {

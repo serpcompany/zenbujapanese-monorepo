@@ -33,11 +33,11 @@ final class ImageSearchUITests: ZenbuUITestCase {
     }
   }
 
-  func testClosingImageSearchReturnsToTranslatesCamera() throws {
+  func testClosingImageSearchReturnsToTranslatesHome() throws {
     let app = try openFixtureImage()
     tap(find("image-text.close", in: app))
-    waitFor(find("translate.start", in: app))
-    XCTAssertTrue(find("translate.start.camera", in: app).isSelected)
+    assertOnScreen(find("translate.header", in: app), in: app)
+    assertOnScreen(find("translate.start.image", in: app), in: app)
   }
 
   func testTheViewsShowTheRecognizedText() throws {

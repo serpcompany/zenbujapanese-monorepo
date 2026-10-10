@@ -13,8 +13,8 @@ A learner can search in Japanese or English using:
 - radical selection.
 
 Check: UI `SearchUITests.testAnEnglishSearchListsTheWordAndOpensItsDetail` (the keyboard) and
-`testHandwritingAndRadicalsReplaceTheKeyboard` (the handwriting canvas and the radical grid);
-package `HandwritingRecognitionTests` (a drawn kanji is read whatever the stroke order) and
+`SearchInputUITests` (a drawn stroke's kanji, and a radical's, searched); package
+`HandwritingRecognitionTests` (a drawn kanji is read whatever the stroke order) and
 `RadicalLookupTests` (radicals narrow to the kanji that have them).
 
 Image Search, for Japanese in a photo, is Translate's **Image** option
@@ -42,6 +42,20 @@ button while it has text.
   ([Sorting results](#sorting-results), [Filtering results](#filtering-results)).
 - **X** clears the query and returns to Recent.
 
+On iPad, where the tabs sit at the top of the screen, nothing slides away: the title bar and the
+tabs stay above the field while typing and beside the results, and there is no **X**. On the Mac
+the field sits in the window's toolbar. On both, the clear button inside the field empties it and
+returns to Recent ([iPad and Mac](index.md#ipad-and-mac)).
+
+Check: UI `SearchUITests.testASearchKeepsItsQueryInTheFieldAndRunsAgainFromRecent` (the query kept
+in the field, both input buttons beside the results, back to Recent with **X** on iPhone and the
+clear button on iPad and the Mac, and no heading),
+`testTheFieldOffersCloseAndTheInputButtonsWhileTyping` (iPhone),
+`testTheTabsStayBesideTheResultsWhichStayAcrossTabs`,
+`SearchResultsUITests.testClearingRecentSearchesEmptiesTheList` (the **•••** menu), and
+`LayoutUITests` (the field and the input buttons at every size the device offers). How the bar
+slides on iPhone is by hand ([Search manual checks](../../../../docs/agents/ios.md#search-manual-checks)).
+
 ### Handwriting and Radicals
 
 Tapping the pencil or the grid slides up a full-height sheet over the search field and the tab
@@ -65,6 +79,16 @@ background, flat candidate tiles in the same fill as the radical squares, and gl
 A candidate from either panel is added to the end of the query, so picking one character after
 another, in any mix of handwriting and radicals, builds a word. The panel closes and the results
 show, with the query in the field. In dark mode the strip and pad are black.
+
+A Mac can't drag a sheet away, so there the panel is a sheet of a fixed size with a **Done**
+button, which Escape presses too ([iPad and Mac](index.md#ipad-and-mac)).
+
+Check: UI `SearchInputUITests`: `testThePencilAndGridOpenOnePanelThatSwitchesBetweenThem` (the
+sheet, its two buttons, and closing it, dragged away on iPhone and iPad and with **Done** on the
+Mac), `testADrawnStrokeOffersKanjiUntilItsUndone` (a stroke drawn downward leaves the sheet
+open), and `testARadicalsKanjiJoinsTheQueryAndSearches` (**Undo**, and a second pick added to the
+first); package `HandwritingUndoTests` and `SearchInputCandidateTests`. The panel's colors are by
+hand.
 
 Japanese, English, and romaji searches show one **Results** list. Stronger matches come first;
 among equally good matches, the enabled frequency dictionaries decide the order, in the
@@ -135,7 +159,7 @@ query is empty. A learner can repeat a search, remove one by swiping or long-pre
 from the **•••** menu, which offers **Clear Recent Searches** while recent searches are listed. Result headings scroll
 with the results instead of staying pinned over them.
 
-Check: UI `SearchUITests.testASearchIsListedUnderRecentAndRunsAgain`,
+Check: UI `SearchUITests.testASearchKeepsItsQueryInTheFieldAndRunsAgainFromRecent`,
 `SearchResultsUITests.testARecentSearchIsRemovedFromItsMenu` (long-press, or right-click on the
 Mac), and `SearchResultsUITests.testClearingRecentSearchesEmptiesTheList`.
 
@@ -159,8 +183,9 @@ A word the chosen dictionary doesn't rank goes after the ranked words. Ties, and
 a rank, keep their Default order. A choice saved with a direction by an earlier build reads as
 Default.
 
-Check: package `SearchResultSortTests` (the row's words); UI
-`SearchResultsUITests.testSortingByADictionarySaysSoUntilReset`.
+Check: package `SearchResultSortTests` (each order, and the row's words); UI
+`SearchResultsUITests.testTheSortedByRowNamesTheChosenOrder` (a dictionary, Known Words, and back
+to Default).
 
 Switching re-sorts the visible results without searching again and announces the new order to
 VoiceOver. The choice is kept on the device across launches and applies to Japanese, English,
@@ -169,6 +194,9 @@ sort shows as Default and returns once the ranks load. If the chosen dictionary 
 removed, Search goes back to Default. The Kanji row, Example Sentences, the reading refinement, and Discovered Words keep their
 places; when there are no word rows to sort (only Discovered Words, or only a single kanji's
 Kanji row), the row isn't shown.
+
+Check: package `SearchResultSortTests` (VoiceOver's announcement, the stored choice, loading and
+unreadable ranks, a disabled dictionary).
 
 ### Filtering results
 
@@ -187,8 +215,11 @@ words show to VoiceOver. The filter is kept on the device across launches and ap
 Japanese, English, and romaji searches. The Kanji row, Example Sentences, the reading refinement,
 and Discovered Words are never filtered.
 
-Check: package `SearchResultSortTests` (VoiceOver's announcement, the stored choice, loading and
-unreadable ranks, a disabled dictionary).
+Check: package `SearchResultFilterTests` (known or unknown words, the order kept, the count, and
+the stored filter); UI
+`SearchResultsUITests.testFilteringToKnownWordsHidesEveryWordUntilTheFilterIsCleared` (the row's
+**1 filter**, **No Words Match Your Filter**, and **Clear Filter**) and
+`testAWordLeavesTheUnknownFilterOnceItsMarkedKnown`.
 
 ## Dictionary and kanji details
 

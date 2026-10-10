@@ -2,44 +2,41 @@ import XCTest
 
 final class TranslateUITests: ZenbuUITestCase {
   static let script = ["ZENBU_TRANSLATE_SCRIPT": "station"]
-  static let options = ["conversation", "listening", "text", "document", "camera"]
+  static let rows = ["conversation", "listening", "image", "text", "document"]
 
-  func testTheHomeOffersFiveWaysAndRemembersTheChoice() {
+  func testTheHomeListsFiveWaysUnderSpokenAndWritten() {
     let app = launch()
     open(.translate, in: app)
-    for option in Self.options {
-      waitFor(find("translate.start.\(option)", in: app))
-    }
-    assertOnScreen(find("translate.start", in: app), in: app)
+    let header = find("translate.header", in: app)
+    assertOnScreen(header, in: app)
+    XCTAssertTrue(header.label.contains("on your \(device.name)"), header.label)
     assertOnScreen(find("translate.history", in: app), in: app)
-    tap(find("translate.start.text", in: app))
-    XCTAssertTrue(find("translate.start.text", in: app).isSelected)
-    app.terminate()
-    app.launchEnvironment["ZENBU_UI_TEST_FRESH"] = "0"
-    app.launch()
-    open(.translate, in: app)
-    XCTAssertTrue(waitFor(find("translate.start.text", in: app)).isSelected, "the choice is remembered")
+    let rows = Self.rows.map { find("translate.start.\($0)", in: app) }
+    for row in rows { assertOnScreen(row, in: app) }
+    let tops = rows.map(\.frame.minY)
+    XCTAssertEqual(tops, tops.sorted(), "Conversation, Listen, Image, Text, Document, top to bottom")
+    let spoken = waitFor(labeled("Spoken", in: app)).frame.minY
+    let written = waitFor(labeled("Written", in: app)).frame.minY
+    XCTAssertLessThan(spoken, tops[0], "Spoken heads Conversation and Listen")
+    XCTAssertTrue(tops[1] < written && written < tops[2], "Written heads Image, Text, and Document")
   }
 
-  func testCameraOffersThisDevicesImageSources() {
+  func testImageOffersThisDevicesSources() {
     let app = launch()
     open(.translate, in: app)
-    let camera = find("translate.start.camera", in: app)
-    tap(camera)
-    let mentionsCamera = camera.label.localizedCaseInsensitiveContains("point the camera")
-    XCTAssertEqual(mentionsCamera, device != .mac, "only a device with a camera says to point it")
-    tap(find("translate.start", in: app))
-    waitFor(find("image-source.photo-library", in: app))
-    waitFor(find("image-source.files", in: app))
-    XCTAssertEqual(find("image-source.camera", in: app).exists, device != .mac, "Take Photo")
-    XCTAssertEqual(find("image-source.paste", in: app).exists, device == .mac, "Paste Image")
+    tap(find("translate.start.image", in: app))
+    waitFor(app.buttons["Photo Library"])
+    XCTAssertEqual(app.buttons["Take Photo"].exists, device != .mac, "Take Photo")
+    XCTAssertEqual(app.buttons["Paste Image"].exists, device == .mac, "Paste Image")
+    tap(app.buttons["Cancel"].firstMatch)
+    waitUntilGone(app.buttons["Photo Library"])
+    assertOnScreen(find("translate.header", in: app), in: app)
   }
 
   func testTypedTextIsTranslatedWithItsDirection() {
     let app = launch(Self.script)
     open(.translate, in: app)
     tap(find("translate.start.text", in: app))
-    tap(find("translate.start", in: app))
     type("Where can I buy a Suica card?", into: waitFor(find("translate.typed.input", in: app)))
     let direction = waitFor(find("translate.typed.direction", in: app))
     XCTAssertTrue(direction.label.contains("English → Japanese"), direction.label)
@@ -56,7 +53,6 @@ final class TranslateUITests: ZenbuUITestCase {
     let app = launch(Self.script)
     open(.translate, in: app)
     tap(find("translate.start.conversation", in: app))
-    tap(find("translate.start", in: app))
     assertOnScreen(find("translate.live", in: app), in: app)
     waitFor(firstElement(identifiedBy: "translate.sentence.", in: app))
     if device == .phone {

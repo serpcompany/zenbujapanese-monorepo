@@ -24,9 +24,13 @@ final class ConversationUITests: ZenbuUITestCase {
     assertOnScreen(find("translate.pane.en", in: app), in: app)
   }
 
-  func testListeningRunsTheAnnouncements() {
+  func testListeningRunsTheAnnouncementsAndMutesThem() {
     let app = startConversation(option: "listening")
     waitFor(word(containing: "関東", identifiedBy: "translate.sentence.", in: app))
+    let mute = waitFor(find("translate.session.mute", in: app))
+    XCTAssertEqual(mute.label, "Mute Translations")
+    mute.tap()
+    XCTAssertEqual(waitFor(find("translate.session.mute", in: app)).label, "Play Translations Aloud")
   }
 
   func testABookmarkedSentenceIsListedUnderBookmarked() {
@@ -132,7 +136,6 @@ final class ConversationUITests: ZenbuUITestCase {
     let app = launch(TranslateUITests.script, arguments: arguments)
     open(.translate, in: app)
     tap(find("translate.start.\(option)", in: app))
-    tap(find("translate.start", in: app))
     waitFor(find("translate.live", in: app))
     waitFor(firstElement(identifiedBy: "translate.sentence.", in: app))
     return app

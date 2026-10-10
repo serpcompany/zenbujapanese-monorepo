@@ -11,6 +11,14 @@ enum TestDevice {
     case phone
     case pad
     case mac
+
+    var name: String {
+      switch self {
+      case .phone: "iPhone"
+      case .pad: "iPad"
+      case .mac: "Mac"
+      }
+    }
   }
 
   @MainActor static var kind: Kind {

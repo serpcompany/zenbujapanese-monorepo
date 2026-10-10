@@ -110,9 +110,11 @@ VoiceOver reads what's happening (**Listening**, **Hearing speech**, **2 waiting
 at larger text sizes, so they stay on screen on every iPhone; pressing and holding one shows it
 larger, as a tab bar does.
 
-Check: UI `ConversationUITests.testTheControlsMutePauseAndResume` and
+Check: UI `ConversationUITests.testTheControlsMutePauseAndResume`,
+`testListeningRunsTheAnnouncementsAndMutesThem` (Listen's speaker button), and
 `testScrollingBackOffersJumpToLatest` (every control on screen at the largest text size); package
-`LiveConversationTests` (muting, pausing, and the timer) and `SystemSpeechPlayerTests` (the speed).
+`LiveConversationTests` (pausing and the timer), `ConversationMutingTests` (muting in both modes),
+and `SystemSpeechPlayerTests` (the speed).
 
 Translate shows Japanese without furigana unless **Furigana** is on. One setting covers
 conversations, transcripts, and typed or document translations, and each of those screens has it
@@ -286,7 +288,7 @@ marks on the image.
   proverbs, isn't repeated there, since Translation already gives its meaning.
 
 Check: UI `ImageSearchUITests.testTheViewsShowTheRecognizedText` and
-`testClosingImageSearchReturnsToTranslatesCamera`; package `ImageTextRecognitionTests` (columns,
+`testClosingImageSearchReturnsToTranslatesHome`; package `ImageTextRecognitionTests` (columns,
 lines, and paragraphs) and `ImageTextContextNotesTests`.
 
 Translation uses Apple Translation, preparing Apple's language resources first when needed.
