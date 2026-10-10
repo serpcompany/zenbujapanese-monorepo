@@ -45,7 +45,9 @@ extension that feature code calls: `DecodedImage` and `Image(imageData:)`, `Colo
 `keyWindowAnchor`, `AppleSignInButton`, `ListEditButton` and `ListEditMode`, `ThisDevice`, and
 the modifiers in `PlatformModifiers.swift` (`.inlineNavigationTitle()`, `.groupedList()`,
 `.textEntry(_:)`, `.barLeading` and `.barTrailing`, `.bottomAccessory`, `.rowActions`,
-`.dragToCloseSheet(sizeOnMac:)`, `.tabShell()`, and the rest). The tab shell (`.tabShell()`) is
+`.dragToCloseSheet(sizeOnMac:)`, `.sheetSize(onMac:)`, `.sheetClose`, `SheetCloseAndAction`,
+`.barTrailingItems`, `.tileIconLabel()`, `.backButtonHidden()`, `.listedInItsMenu()`,
+`.tabShell()`, and the rest). The tab shell (`.tabShell()`) is
 the sidebar-adaptable style on iPhone and iPad and the tab-bar-only style on the Mac. On macOS 26
 the sidebar-adaptable style puts every tab's `NavigationStack` in one split-view column that keeps
 the first tab's stack: only pages registered on the first tab open (another tab's route shows
@@ -56,7 +58,28 @@ on iPhone and iPad, so the Mac has a tab bar and no sidebar; `pnpm verify layers
 `sidebarAdaptable` outside `Platform/`. A sheet that iPhone and iPad close by dragging,
 as Search's Handwriting and Radicals panel does, uses `.dragToCloseSheet(sizeOnMac:)`: a Mac
 can't drag a sheet away, and sizes one from its content, so there it gets a fixed size
-(`AppWindow.inputPanelSize`) and a **Done** button that Escape presses. `pnpm verify layers` refuses a platform condition, UIKit, AppKit, or an iPhone-only API it
+(`AppWindow.inputPanelSize`) and a **Done** button that Escape presses.
+
+Every other sheet's root takes `.sheetSize(onMac: AppWindow.sheetSize)`, but the photo library's
+picker, which reports its own size (`AppWindow.photoPickerSize`). A Mac sizes a sheet from
+its content, and a `List`, a grouped `Form`, or a `ScrollView` has no height of its own, so
+without it the word sheet opened 80 points tall. A Mac sheet also has no toolbar. Of a
+`NavigationStack`'s toolbar it shows the title, one `cancellationAction` item and one
+`confirmationAction` item as buttons along its bottom, and a `destructiveAction` item at the
+bottom's leading edge; an item placed anywhere else (`.barLeading`, `.barTrailing`) isn't shown,
+and a second item in the same placement isn't either. So a sheet's close button goes in
+`.sheetClose` (the bar's leading edge on iPhone and iPad, the cancel button on the Mac, which
+Escape presses), the word sheet's **Close** and **Open Full Entry** in `SheetCloseAndAction`
+(one leading group on iPhone and iPad; side by side in the cancel slot on the Mac, because the
+confirm slot's button is the sheet's default, and Return in a note typed in the sheet would open
+the full entry), and a
+page's trailing bar items in `.barTrailingItems`, which puts them in a row above the page when
+the page is inside a Mac sheet (`sheetSize(onMac:)` says so through the environment) and in the
+bar everywhere else. That's how a word's **Share** and **•••** reach the Mac's word sheet.
+`.tileIconLabel()` lays a row's icon tile beside its title on the Mac, where a `List` gives a
+label's icon a slot too narrow for the tile and the title was drawn over it.
+
+`pnpm verify layers` refuses a platform condition, UIKit, AppKit, or an iPhone-only API it
 knows anywhere else in `apps/ios/Modules/Sources/`, `apps/ios/Modules/Tests/`, or `apps/ios/App/`,
 and names the adapter to use (`tools/checks/src/layers.ts`), so feature code stays the same on
 every platform while CI's iPad and Mac builds are off ([`ci.md`](ci.md), iOS). Image data stays `Data` or `CGImage` in models (`ImageCoding.swift`
@@ -195,6 +218,29 @@ frequency rows load after it appears and push the rows below them down, so a tap
 earlier can land above its row. `TEST_RUNNER_ZENBU_UI_TEST_PATIENCE=30` on the `xcodebuild`
 command shortens every wait from its 90 seconds, for an idle Mac. An iPad Simulator that had run the suites for hours once stopped turning at
 all, though XCUITest confirmed each turn; `xcrun simctl shutdown` and `boot` brought it back.
+
+On the Mac, XCUITest sees AppKit's elements, and the helpers hide the difference so a test reads
+the same on every device:
+
+- A menu's choice is a menu item found by its title, and only among the window's menus
+  (`menuChoices`): the menu bar's **Edit ▸ Delete** and Continuity Camera's **Take Photo** carry
+  the titles a row's menu does. A menu item is tapped once it's hittable (`tap`), since a
+  submenu's items exist before they're laid out and a tap sent then fails inside XCUITest.
+- A sheet, and an alert that takes a name, are `app.sheets` (`sheet(_:in:)`, `prompt(in:)`).
+  `waitForSheet` also checks that a Mac sheet has room for its content and stays inside the
+  window.
+- A row's label starts with its title and goes on with its detail (`showing`); a static text's
+  words are its value (`text(of:)`); a toggle's or a segment's state is its value (`isOn`).
+- The Settings window is SwiftUI's own `com_apple_SwiftUI_Settings_window`
+  (`TestDevice.settingsWindow`); an identifier on the Settings view never reaches it.
+- A scroll wheel doesn't stop a scroll that's still animating, as a finger does, so a test that
+  scrolls a list just after it moved waits for it to settle first (`waitUntilStill`), and it
+  scrolls the list, not the window: a scroll sent to the window doesn't always land on the list.
+- A button's accessibility value isn't given to a test on the Mac, so the test of a result marked
+  known checks its menu there (`SearchUITests.testMarkingAResultKnownShowsTheKnownCapsule`).
+- A headword's kanji aren't elements of their own, so the highlight test clicks the kanji and
+  compares the headword's picture. A screenshot includes the pointer, so each picture is taken
+  with the pointer moved away (`TestDevice.movePointerAway`).
 
 ### Releasing on iPad and the Mac
 
@@ -898,6 +944,32 @@ previews stay still.
 - The word sheet (`WordSheetPresentation` in `RecognizedWordSheet.swift`) swaps the word inside a
   `sheet(isPresented:)`: with `sheet(item:)`, each new word dismissed and re-presented the sheet,
   which reopened at full height.
+- The word sheet hangs from each tab's `NavigationStack` (`WordSheetHost`), not from the stack's
+  root page. On the Mac, a sheet attached to a stack's root page doesn't open while another page
+  is pushed over it: a word clicked in the typed translation, a video's captions, or Image
+  Search opened nothing. iPhone and iPad present it either way.
+- An accessibility identifier on a `Form` (or any container that isn't an element itself) is
+  given to every control inside it on the Mac, over the control's own, so the Mac's tests
+  couldn't find a toggle or a field. `accessibilityElement(children: .contain)` before the
+  identifier makes the container its own element. An identifier on a sheet's root never
+  reaches the Mac's sheet at all; the Mac's UI tests take `app.sheets` (`sheet(_:in:)`).
+- Every `Form` is `.formStyle(.grouped)`, which is what iPhone and iPad draw anyway. The Mac's
+  own form style right-aligns labels against the window's edge, centers the form in the page,
+  and draws a `LabeledContent`'s label and its field's label side by side; the profile's fields
+  hide their own labels for the same reason.
+- A page that hides its Back button for a button of its own (Image Search's close, a
+  conversation's Back, which asks before leaving) uses `.backButtonHidden()`, which does nothing
+  on the Mac. There, a page that hides Back also leaves every page pushed over it without one:
+  a kanji opened from Image Search's word sheet had no way back. So on the Mac Image Search has
+  the window's Back beside its close; both leave it, and its session is dropped when Translate's
+  stack empties. `pnpm verify layers` refuses `navigationBarBackButtonHidden` outside
+  `Platform/`.
+- The Mac's `PagedView` lays its pages out in an `HStack`. In a `LazyHStack`, a page whose
+  content changed kept what it first drew: Image Search finished recognizing and still showed
+  **Recognizing Japanese text…** on the Mac.
+- A `Picker` in a `Menu` lists its choices in that menu on iPhone and iPad and becomes a submenu
+  on the Mac, where Player's speed button opened a menu holding one item. `.listedInItsMenu()`
+  lists them on the Mac too.
 - `SearchField` asks the bar to keep its content while a search is active at regular width
   (`searchPresentationToolbarBehavior(.avoidHidingContent)`). iPadOS draws the tabs in the
   navigation bar and hides them, with the title and the bar's buttons, while a search is active,

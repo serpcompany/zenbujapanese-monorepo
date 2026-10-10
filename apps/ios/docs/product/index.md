@@ -62,7 +62,7 @@ and messages that name the device say iPad or Mac, such as "Everything stays on 
 - **The tabs.** iPhone has its tab bar. iPad shows the tabs at the top, and they open into a
   sidebar; the Mac shows them in a bar at the top of the window, beside the search field. Each
   tab keeps its own pages on every device. A Mac window opens at 1180 by 820 points, can't be
-  made smaller than 760 by 560, and File → New Window opens another.
+  made smaller than 760 by 560 below its toolbar, and File → New Window opens another.
   Check: UI `NavigationUITests.testTheTabShellListsEveryTabInOrder`,
   `testOnlyTheIPadOpensItsTabsIntoASidebar`, and
   `testAPageOpensInEveryTabAfterVisitingTheOthers`, `LayoutUITests` (the Mac at its smallest
@@ -90,16 +90,39 @@ and messages that name the device say iPad or Mac, such as "Everything stays on 
   window), and `FrequencyPackLifecycleTests`.
 - **The word sheet.** A word tapped in Image Search, Player, or Translate opens at half height on
   iPhone. On the Mac it opens as a sheet over the window, so the page behind waits until the sheet
-  is closed; on an iPad in full width it opens as a centered sheet.
+  is closed; on an iPad in full width it opens as a centered sheet. A Mac sheet has no toolbar, so
+  there **Close**, which Escape presses, and **Open Full Entry** are buttons along the sheet's
+  bottom, and the word's **Share** and **•••** sit in a row above the entry. Return presses
+  neither, so a note typed in the sheet keeps the sheet open.
   Check: UI `ImageSearchUITests.testAnImageOpensImageSearchOnTranslateAndAWordOpensItsEntry`
-  (where each device places it); package `WordSheetPresentationTests`.
+  (where each device places it), `TranslateUITests.testTypedTextIsTranslatedWithItsDirection`
+  (its buttons, from a page pushed in the tab),
+  `testReturnInAWordSheetsNoteKeepsTheSheetOpen`, and
+  `PlayerWatchUITests.testAWordInACaptionOpensItsEntryInsidePlayer`; package
+  `WordSheetPresentationTests`.
+- **Sheets on the Mac.** Every sheet but Search's input panel and the photo library's own picker
+  (720 by 520) opens 480 points wide and 520 tall, plus its row of buttons, which fits the
+  smallest window: the word sheet, **Add to List**, a
+  frequency rank's details, a frequency dictionary's details, **Stroke Order**, a word's saved
+  images, **Sign In**, and **Delete Account**. A Mac sizes a sheet from what's in it, and a page
+  that scrolls has no size of its own.
+  Check: Mac, UI `WordDetailUITests.testAddToListPutsTheWordInFavoritesAndANewList`,
+  `testAFrequencyRankOpensItsDetailsWhichLeadToTheDictionaries`, and
+  `testAKanjiShowsItsStrokeOrderAndItsWords`,
+  `AccountUITests.testAFrequencyDictionaryShowsItsDetailsAndTurnsOff` and
+  `testAUITestBuildWithoutTheStandInSaysAppleIsUnavailable`, and
+  `SavedWordsUITests.testAnImagesWordKeepsTheImageInTheMediaLibraryUntilItsDeleted` (each has
+  room for its content and stays inside the window); package `AppCommandTests` (the size fits
+  the smallest window). **Delete Account** is checked by the same size and the package tests:
+  the Mac's signed-in UI tests don't run on a build signed to run locally.
 - **Image Search on the Mac.** Translate's **Image** alert offers **Photo Library** and
   **Paste Image**, which takes an image, or up to 8 copied image files, from the clipboard.
   There's no **Take Photo**, here or in a word's **•••** menu: macOS has no camera screen an app
   can show. A photo comes from an iPhone or iPad instead: from any tab, **File → Import from
   iPhone or iPad → Take Photo** (Continuity Camera) opens the photo in Image Search on Translate.
   An image file is pasted or dragged in. Several images are paged by swiping sideways or with the
-  dots under them.
+  dots under them. Image Search's toolbar has the window's Back button as well as its close
+  button; either leaves it (`ImageSearchUITests.testClosingImageSearchReturnsToTranslatesHome`).
   Check: UI `TranslateUITests.testImageOffersThisDevicesSources`,
   `WordDetailUITests.testTheMenuOffersThisDevicesActionsAndMarksTheWordKnown` (no **Take Photo**
   on the Mac), and `ImageSearchUITests` (a pasted image on the Mac); package `PlatformAdapterTests`

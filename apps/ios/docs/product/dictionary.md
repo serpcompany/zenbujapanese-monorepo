@@ -138,7 +138,9 @@ Swiping a row to the right, or long-pressing it, marks the word known or unknown
 opening it.
 
 Check: UI `SearchUITests.testMarkingAResultKnownShowsTheKnownCapsule` (by swipe on iPhone and
-iPad, right-click on the Mac); package `WordKnowledgeTests`.
+iPad, where it reads the row as known; by right-click on the Mac, where it checks the row's menu
+then offers **Mark as Unknown**, since a Mac row doesn't give a test its value); package
+`WordKnowledgeTests`.
 
 An inflected Japanese query such as `まけたら` or `勉強した` finds its dictionary forms on the
 device. When the query is itself a word (`いって` is 一手), that word stays first.
