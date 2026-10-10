@@ -79,6 +79,14 @@ test('names the adapter to use for an iPhone-only modifier', () => {
   ])
 })
 
+test('sends the tab shell to its adapter, since the sidebar style breaks the tabs on the Mac', () => {
+  const style = '    .tabViewStyle(.sidebarAdaptable)\n'
+  expect(checkLayers([adapters], swiftLayers, source(style))).toEqual([])
+  expect(checkLayers([feature], swiftLayers, source(style))).toEqual([
+    { path: feature, line: 1, problem: expect.stringMatching(/use \.tabShell\(\)$/) }
+  ])
+})
+
 test('refuses UIKit and AppKit types that SwiftUI reaches without an import', () => {
   const problems = checkLayers(
     [feature],

@@ -45,7 +45,15 @@ extension that feature code calls: `DecodedImage` and `Image(imageData:)`, `Colo
 `keyWindowAnchor`, `AppleSignInButton`, `ListEditButton` and `ListEditMode`, `ThisDevice`, and
 the modifiers in `PlatformModifiers.swift` (`.inlineNavigationTitle()`, `.groupedList()`,
 `.textEntry(_:)`, `.barLeading` and `.barTrailing`, `.bottomAccessory`, `.rowActions`,
-`.dragToCloseSheet(sizeOnMac:)`, and the rest). A sheet that iPhone and iPad close by dragging,
+`.dragToCloseSheet(sizeOnMac:)`, `.tabShell()`, and the rest). The tab shell (`.tabShell()`) is
+the sidebar-adaptable style on iPhone and iPad and the tab-bar-only style on the Mac. On macOS 26
+the sidebar-adaptable style puts every tab's `NavigationStack` in one split-view column that keeps
+the first tab's stack: only pages registered on the first tab open (another tab's route shows
+SwiftUI's warning triangle, and its value links do nothing), and pushing onto another tab's
+`NavigationPath` while the first tab's path is a typed array crashes in
+`NavigationColumnState.boundPathChange`. The tab-bar-only style gives each tab its own stack, as
+on iPhone and iPad, so the Mac has a tab bar and no sidebar; `pnpm verify layers` refuses
+`sidebarAdaptable` outside `Platform/`. A sheet that iPhone and iPad close by dragging,
 as Search's Handwriting and Radicals panel does, uses `.dragToCloseSheet(sizeOnMac:)`: a Mac
 can't drag a sheet away, and sizes one from its content, so there it gets a fixed size
 (`AppWindow.inputPanelSize`) and a **Done** button that Escape presses. `pnpm verify layers` refuses a platform condition, UIKit, AppKit, or an iPhone-only API it
@@ -182,7 +190,10 @@ element spans the row, though only its text opens the menu, so `chooseFromSorted
 text. On a busy Mac a tab tap, a shortcut, the
 conversation's pause, or a Simulator rotation sometimes doesn't take; the tests repeat one only
 while what it should bring hasn't appeared (`open`, `press`, `pause`, `LayoutUITests.turn`), so a
-repeat can't undo it. An iPad Simulator that had run the suites for hours once stopped turning at
+repeat can't undo it. A row on a word's page is tapped the same way (`tap(_:toShow:)`): the page's
+frequency rows load after it appears and push the rows below them down, so a tap aimed a moment
+earlier can land above its row. `TEST_RUNNER_ZENBU_UI_TEST_PATIENCE=30` on the `xcodebuild`
+command shortens every wait from its 90 seconds, for an idle Mac. An iPad Simulator that had run the suites for hours once stopped turning at
 all, though XCUITest confirmed each turn; `xcrun simctl shutdown` and `boot` brought it back.
 
 ### Releasing on iPad and the Mac
@@ -196,7 +207,8 @@ and add iPad and Mac screenshots. A Mac build is archived with
 
 ### iPad and Mac checks
 
-The UI tests cover the tab shell and sidebar, every tab at the iPad's two orientations and the
+The UI tests cover the tab shell, the iPad's sidebar, a page opened in every tab after visiting
+the others, every tab at the iPad's two orientations and the
 Mac's smallest window, the menu commands and their shortcuts, the Settings window, a second Mac
 window, Image Search's sources and Paste Image, and the Handwriting and Radicals sheet's
 **Done**. What they can't drive, check by hand when

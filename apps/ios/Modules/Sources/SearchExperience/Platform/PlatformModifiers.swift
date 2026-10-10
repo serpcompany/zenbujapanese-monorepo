@@ -64,6 +64,14 @@ extension View {
     #endif
   }
 
+  func tabShell() -> some View {
+    #if os(macOS)
+      tabViewStyle(.tabBarOnly)
+    #else
+      tabViewStyle(.sidebarAdaptable)
+    #endif
+  }
+
   func tabBarVisibility(_ visibility: Visibility) -> some View {
     #if os(macOS)
       self

@@ -60,12 +60,15 @@ Mac syncs through the Zenbu account like another iPhone ([Zenbu account and sync
 and messages that name the device say iPad or Mac, such as "Everything stays on this Mac."
 
 - **The tabs.** iPhone has its tab bar. iPad shows the tabs at the top, and they open into a
-  sidebar; the Mac lists them in a sidebar. A Mac window opens at 1180 by 820 points, can't be
+  sidebar; the Mac shows them in a bar at the top of the window, beside the search field. Each
+  tab keeps its own pages on every device. A Mac window opens at 1180 by 820 points, can't be
   made smaller than 760 by 560, and File → New Window opens another.
-  Check: UI `NavigationUITests.testTheTabShellListsEveryTabInOrder` and
-  `testWideScreensListTheTabsInASidebar`, `LayoutUITests` (the Mac at its smallest window), and on
-  the Mac `KeyboardAndWindowUITests.testANewWindowTakesTheShortcutsWhileTheFirstKeepsItsTab`;
-  package `AppCommandTests` (window sizes).
+  Check: UI `NavigationUITests.testTheTabShellListsEveryTabInOrder`,
+  `testOnlyTheIPadOpensItsTabsIntoASidebar`, and
+  `testAPageOpensInEveryTabAfterVisitingTheOthers`, `LayoutUITests` (the Mac at its smallest
+  window), and on the Mac
+  `KeyboardAndWindowUITests.testANewWindowTakesTheShortcutsWhileTheFirstKeepsItsTab`; package
+  `AppCommandTests` (window sizes).
 - **Menus and keyboard shortcuts**, on the Mac and with a hardware keyboard: **Find in
   Dictionary** (⌘F on the Mac) goes to Search and puts the cursor in its field; on iPad, iPadOS
   keeps ⌘F for its own Find, so Find in Dictionary is in the menu bar without a working shortcut.

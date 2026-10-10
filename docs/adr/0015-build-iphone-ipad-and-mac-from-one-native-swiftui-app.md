@@ -15,17 +15,19 @@ package, as a native SwiftUI app on each: not Mac Catalyst, and not the iPhone a
   iCloud or CloudKit sync.
 - **All four tabs ship on every platform.** A feature that can't work on a platform is hidden
   there, and its product doc says why. On the Mac the camera is optional: Image Search leads with
-  files, the photo library, paste, and drag and drop, with Continuity Camera from an iPhone or
-  iPad.
+  the photo library, paste, and drag and drop, with Continuity Camera from an iPhone or iPad.
 - **Platform differences live in one folder.** `SearchExperience/Platform/` holds every
   `#if os(...)`, every `UIKit` and `AppKit` import, and the small adapters and view extensions
   that hide them: images, colors, the pasteboard, the Settings link, keeping the screen awake,
   the audio session, web views, the camera, background refresh, the window that presents
   sign-in, and the iPhone-only modifiers. Feature code calls those and stays the same on every
   platform.
-- **Containers adapt; screens stay shared.** The tab shell becomes a sidebar on iPad and the Mac,
-  and the Mac adds menus, keyboard shortcuts, and a Settings window, but every detail screen is
-  the same view on every platform.
+- **Containers adapt; screens stay shared.** The tab shell is a tab bar at the top on iPad, which
+  opens into a sidebar, and a tab bar in the window's toolbar on the Mac. The Mac adds menus,
+  keyboard shortcuts, and a Settings window, but every detail screen is the same view on every
+  platform. The Mac has no sidebar because macOS's sidebar tab style runs every tab through the
+  first tab's navigation stack: only that tab's pages open, and a page pushed from another tab
+  crashes the app ([`ios.md`](../agents/ios.md), Where the platforms differ in the code).
 
 ## Why
 

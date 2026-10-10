@@ -106,7 +106,12 @@ export const swiftPlatforms: SwiftPlatforms = {
       name: 'the page tab view style',
       use: 'PagedView(selection:showsIndex:)'
     },
-    { pattern: /for: \.tabBar\b/, name: 'the tab bar placement', use: '.tabBarVisibility(_:)' }
+    { pattern: /for: \.tabBar\b/, name: 'the tab bar placement', use: '.tabBarVisibility(_:)' },
+    {
+      pattern: /\bsidebarAdaptable\b/,
+      name: 'the sidebar-adaptable tab style',
+      use: '.tabShell()'
+    }
   ]
 }
 
