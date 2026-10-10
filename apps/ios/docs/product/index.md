@@ -10,8 +10,10 @@ Macs with Apple silicon and macOS 26, as one app with one App Store record
 ([iPad and Mac](#ipad-and-mac)). It has four tabs:
 
 - **Search** opens the [Dictionary](dictionary.md) Product Experience. Its results can be
-  re-sorted by a frequency dictionary or by known words from the **•••** menu
-  ([Sorting results](dictionary.md#sorting-results)).
+  re-sorted by a frequency dictionary or by known words, and filtered to known or unknown words,
+  from the **Sorted by** row at their top
+  ([Sorting results](dictionary.md#sorting-results),
+  [Filtering results](dictionary.md#filtering-results)).
 - **Translate** opens [Translate](translate.md), a Japanese and English conversation translator
   that runs on the device, and Image Search, which reads Japanese in a photo
   ([Image Search](translate.md#image-search)).
@@ -159,7 +161,8 @@ Check: the recorded `WordDetailConformanceTests` (each conjugation's headword sp
 
 Account is a supporting navigation area rather than a separate Product Experience. The tab holds
 on-device content and preferences, and signing in to a Zenbu account, which syncs known words,
-lists, Player's watch history, and Translate's bookmarked sentences. It provides:
+lists, Player's watch history, and Translate's bookmarked sentences. Like the other tabs, it has
+a small **Account** title in the bar rather than a large one. It provides:
 
 - a profile card with the learner's photo, name, and username;
 - the Zenbu account: **Sign In to Sync**, or, signed in, **Zenbu Account** with the account's email
@@ -225,10 +228,14 @@ pinned source, ranks, and the YouTube spellings); UI `AccountUITests.testReading
 The screen lists one row per pack in three sections. **Enabled** holds packs that are
 switched on, in priority order; Edit reorders them (on the Mac, they're dragged directly). Ranks appear in this order, and Search
 sorts by the first pack, breaking ties with each next pack, unless the learner sorts by one pack
-from Search's **Sort By** menu ([Sorting results](dictionary.md#sorting-results)). A word the first pack doesn't rank
+from Search's **Sorted by** row ([Sorting results](dictionary.md#sorting-results)). A word the first pack doesn't rank
 places by how common the next pack that ranks it says it is (家, which YouTube doesn't rank, places
 by its JLPT N5 level), rather than after every ranked word. **Installed** holds downloaded packs that are switched off, and
-**Available** offers a download button for each remaining pack. A row's subtitle shows its
+**Available** offers a download button for each remaining pack. Several packs can download at
+once: each row shows its own progress ring with a stop button, and stopping one leaves the others
+running and its row ready to download again. When its download finishes, a row shows a spinner
+while the pack is installed, one pack at a time, and can no longer be stopped; a new pack then
+moves to **Enabled**. Remove and Update are hidden on a row while it downloads. A row's subtitle shows its
 domain and size, or a download failure. Swiping a row reveals Details and Remove, and Update
 when a newer version exists. When the app upgrades from the single active pack, that pack
 becomes the only enabled one. An update that adds a bundled pack, such as JLPT Levels, enables

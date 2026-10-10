@@ -1,7 +1,8 @@
 import Foundation
 
 actor FrequencyPackManager {
-  typealias Download = @Sendable (URL) async throws -> Data
+  typealias Progress = @Sendable (Double) -> Void
+  typealias Download = @Sendable (URL, @escaping Progress) async throws -> Data
 
   private let catalog: FrequencyPackCatalog
   private let bundledArtifactURLs: [FrequencyPackID: URL]
@@ -157,12 +158,14 @@ actor FrequencyPackManager {
     return ranks
   }
 
-  func download(_ packID: FrequencyPackID) async throws {
+  func download(_ packID: FrequencyPackID, progress: @escaping Progress = { _ in }) async throws {
     guard let manifest = catalog.packs.first(where: { $0.packID == packID }), !manifest.bundled
     else { throw FrequencyPackError.invalidPack }
     failures[packID] = nil
     do {
-      let source = try await downloadSource(manifest.downloadURL)
+      let source = try await downloadSource(manifest.downloadURL, progress)
+      try Task.checkCancellation()
+      progress(1)
       guard source.count == manifest.sourceBytes, source.sha256 == manifest.sourceSHA256 else {
         throw FrequencyPackError.checksumMismatch
       }
@@ -180,12 +183,17 @@ actor FrequencyPackManager {
       }
       try persist()
     } catch {
+      guard !Self.isCancellation(error) else { throw error }
       failures[packID] =
         error as? FrequencyPackError == .checksumMismatch
         ? "Downloaded file failed checksum validation."
         : "Download or validation failed. Try again."
       throw error
     }
+  }
+
+  private static func isCancellation(_ error: Error) -> Bool {
+    error is CancellationError || (error as? URLError)?.code == .cancelled
   }
 
   func enable(_ packID: FrequencyPackID) throws {

@@ -1,7 +1,7 @@
 import Foundation
 import ImageIO
 
-typealias ImagePickerCompletion = @MainActor @Sendable (Result<ImageTextAsset?, Error>) -> Void
+typealias ImagePickerCompletion = @MainActor @Sendable (Result<[ImageTextAsset], Error>) -> Void
 
 @MainActor
 class ImagePickerCoordinator: NSObject {

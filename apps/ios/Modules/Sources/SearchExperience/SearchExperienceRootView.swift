@@ -3,7 +3,6 @@ import SwiftUI
 struct SearchExperienceRootView: View {
   @State private var selectedTab = SearchExperienceTab.search
   @State private var searchFocusRequest = 0
-  @State private var requestedImageSource: ImageTextSource?
   @State private var showsImageSources = false
   @State private var frequencyRefreshID = 0
   @State private var path: [SearchExperienceRoute] = []
@@ -59,8 +58,8 @@ struct SearchExperienceRootView: View {
     appTabs
       .modifier(
         ImageTextImport(
-          requestedSource: $requestedImageSource, showsSources: $showsImageSources,
-          cameraAuthorizationClient: cameraAuthorizationClient, openImageText: openImageText)
+          showsSources: $showsImageSources, cameraAuthorizationClient: cameraAuthorizationClient,
+          openImageText: openImageText)
       )
       .modifier(
         WebsiteLinkOpening(
@@ -83,7 +82,6 @@ struct SearchExperienceRootView: View {
     case .searchImage:
       showTranslate()
       translatePath = NavigationPath()
-      if translateExperience.session == nil { translateExperience.preferredStart = .camera }
       Task { showsImageSources = true }
     }
   }
@@ -166,6 +164,7 @@ struct SearchExperienceRootView: View {
         lookupClient: lookupClient,
         recentSearchStore: recentSearchStore,
         handwritingRecognitionClient: handwritingRecognitionClient,
+        kanjiLookupClient: kanjiLookupClient,
         radicalLookupClient: .live,
         exampleSentenceClient: exampleSentenceClient,
         frequencyCapability: .live,
@@ -287,7 +286,7 @@ struct SearchExperienceRootView: View {
         words: translateWords(opening: wordSheets.translate),
         isConversationOnScreen: isConversationOnScreen,
         push: { translatePath.append($0) },
-        requestedImageSource: $requestedImageSource
+        showsImageSources: $showsImageSources
       )
       .modifier(dictionaryRoutes(in: .translate))
     }

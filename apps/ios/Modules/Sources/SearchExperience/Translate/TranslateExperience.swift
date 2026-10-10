@@ -23,7 +23,6 @@ enum TranslateStartProblem: Equatable {
 @MainActor
 @Observable
 final class TranslateExperience {
-  private static let startKey = "translate.start.v1"
   private static let layoutKey = "translate.layout.v1"
   private static let speechSpeedKey = "translate.speech-speed.v1"
   static let speechSpeeds = 0.5...2.0
@@ -34,9 +33,6 @@ final class TranslateExperience {
   private(set) var preparation: TranslatePreparation?
   private(set) var startProblem: TranslateStartProblem?
   var translationDownload: TranslationSession.Configuration?
-  var preferredStart: TranslateStart {
-    didSet { defaults.set(preferredStart.rawValue, forKey: Self.startKey) }
-  }
   var layout: ConversationLayout {
     didSet { defaults.set(layout.rawValue, forKey: Self.layoutKey) }
   }
@@ -62,9 +58,6 @@ final class TranslateExperience {
     self.services = services
     self.history = history
     self.defaults = defaults
-    preferredStart =
-      defaults.string(forKey: Self.startKey).flatMap(TranslateStart.init(rawValue:))
-      ?? .conversation
     layout =
       defaults.string(forKey: Self.layoutKey).flatMap(ConversationLayout.init(rawValue:)) ?? .cards
     let speed = defaults.object(forKey: Self.speechSpeedKey) as? Double ?? 1
@@ -85,9 +78,8 @@ final class TranslateExperience {
 
   var isPreparing: Bool { preparation != nil }
 
-  func start(_ requestedMode: TranslateMode? = nil) async {
-    await start(
-      requestedMode ?? preferredStart.liveMode ?? .conversation, offeringTranslationDownload: true)
+  func start(_ mode: TranslateMode) async {
+    await start(mode, offeringTranslationDownload: true)
   }
 
   func dismissStartProblem() {

@@ -224,14 +224,17 @@ or how fast it feels. The app needs iOS 26.0 or later, and the Sudachi cache abo
 To try unreleased work without replacing the TestFlight app, build it as **Zenbu Dev**. The
 target's bundle ID ends in `ZENBU_BUNDLE_ID_SUFFIX` and its name is `ZENBU_DISPLAY_NAME` (empty and
 `Zenbu Japanese` by default), so overriding them installs a separate app with its own data and
-leaves `project.pbxproj` alone. From `apps/ios`, with the phone's UDID from
+leaves `project.pbxproj` alone. Its icon is the blue `AppIcon-Dev` (in
+`apps/ios/App/Assets.xcassets`), chosen by `ASSETCATALOG_COMPILER_APPICON_NAME`, so it's easy to
+tell from the red TestFlight app. From `apps/ios`, with the phone's UDID from
 `xcrun devicectl list devices`:
 
 ```sh
 xcodebuild -project ZenbuJapanese.xcodeproj -scheme ZenbuJapanese -configuration Debug \
   -destination 'platform=iOS,id=<device-udid>' -derivedDataPath /tmp/zenbu-dev \
   CODE_SIGN_STYLE=Automatic \
-  ZENBU_BUNDLE_ID_SUFFIX=.dev ZENBU_DISPLAY_NAME="Zenbu Dev" -allowProvisioningUpdates build
+  ZENBU_BUNDLE_ID_SUFFIX=.dev ZENBU_DISPLAY_NAME="Zenbu Dev" \
+  ASSETCATALOG_COMPILER_APPICON_NAME=AppIcon-Dev -allowProvisioningUpdates build
 xcrun devicectl device install app --device <device-udid> \
   "/tmp/zenbu-dev/Build/Products/Debug-iphoneos/Zenbu Japanese.app"
 ```
@@ -874,17 +877,15 @@ previews stay still.
 - The word sheet (`WordSheetPresentation` in `RecognizedWordSheet.swift`) swaps the word inside a
   `sheet(isPresented:)`: with `sheet(item:)`, each new word dismissed and re-presented the sheet,
   which reopened at full height.
-- Image Search's sources open from a `Menu` (`ImageTextSourceButtons`, listing
-  `ImageTextSource.offered`), not a `confirmationDialog`: on the iOS 27 Simulator a picker
-  presented from a dialog's button never appeared, while a menu runs its action after it closes.
-  ⌘⇧I can't open a menu from code, so its chooser is a small sheet with the same buttons
-  (`ImageTextSourceChooser`), and the picker opens from that sheet's `onDismiss`, once it has
-  closed, as the photo picker's push does.
+- Translate's Image alert (in `ImageTextImport`, listing `ImageTextSource.offered`) only records
+  the choice, and the picker opens once the alert's binding turns false: on the iOS 27 Simulator,
+  a picker presented from a `confirmationDialog` button's action never appeared, while one
+  presented from this `onChange` does. An alert can be shown from code, so ⌘⇧I shows the same one.
 - `ImageTextImport` modifies `SearchExperienceRootView`, the window, not Translate's home, so an
-  image dropped onto any tab, Continuity Camera's import, and ⌘⇧I reach it; the home's menu sets
-  its requested source. Image Search sessions live only on Translate's stack, and all of them are
-  dropped whenever that stack empties, however it was popped. It pushes Image Search onto Translate's stack only once its picker has
-  finished closing (the sheets' `onDismiss`, the file importer's binding turning false), so the
+  image dropped onto any tab, Continuity Camera's import, and ⌘⇧I reach it; the home's Image row
+  sets its `showsSources`. Image Search sessions live only on Translate's stack, and all of them
+  are dropped whenever that stack empties, however it was popped. It pushes Image Search onto
+  Translate's stack only once its picker has finished closing (the sheets' `onDismiss`), so the
   photo library is a `PHPickerViewController` in a sheet (`ImagePhotoLibraryPicker`, an adapter,
   since it's a UIKit view controller on iOS and an AppKit one on the Mac) rather than
   `photosPicker`, whose binding turns false while it is still closing. Pushed any earlier, Image
@@ -922,16 +923,55 @@ When changing Search results or frequency dictionaries, also check in the Simula
 - `いる` shows chips in the Enabled order (JLPT first by default). Reordering or disabling
   dictionaries under **Account → Frequency Dictionaries** re-sorts the visible results without
   resubmitting, and disabling every dictionary removes the chips.
+- Under **Account → Frequency Dictionaries**, tapping download on three **Available** packs in a
+  row gives each its own progress ring; tapping one ring stops only that pack, which returns to
+  its download button and doesn't install, and the others install and move to **Enabled**.
 - `静` keeps its Kanji row first; `日本語を勉強する` shows **Discovered Words**; `見る` offers
   Example Sentences; `sensei` offers the Japanese-reading refinement (「せんせい」).
 - With a pack made unreadable in a debug container, results stay listed and the footer names
   the unavailable dictionary.
 - Rapidly submitting `quiet`, `miru`, then `いる` leaves only `いる` results.
-- **•••** → **Sort By** on `dog`, `いる`, and `miru`: each dictionary in both directions moves
+- The **Sorted by …** row on `dog`, `いる`, and `miru`: each dictionary, most common first, moves
   that dictionary's chip first and puts the words it doesn't rank last; **Known Words** moves a
-  word marked known by swiping at once. A **Sorted by …** row shows above the words until
-  **Reset**. The choice survives relaunching the app, and disabling the
+  word marked known by swiping at once. The row names the order, and **Default** in its menu
+  returns to the Default order. The choice survives relaunching the app, and disabling the
   chosen dictionary under **Account → Frequency Dictionaries** returns Search to **Default**.
+- The menu shows only **Sort By** and **Filter**, each naming its current choice underneath. **Sort By** lists
+  the sorts with no direction to choose.
+- **Filter** on `dog`, `いる`, and `miru`: **Known** leaves only known words and
+  **Unknown** only the rest, in the chosen order; the **Sorted by** row shows **· 1 filter** and no
+  other row appears; a filter that hides every word shows **No Words Match Your Filter**; marking a
+  word known from its long-press menu drops it at once while **Unknown** is chosen. The filter
+  survives relaunching.
+
+When changing Search's top bar or the shared field in `SearchField.swift`, also check:
+
+- on **Recent**, the **Search** title and its **•••** (**Clear Recent Searches**) show above the
+  field; tapping the field slides it to the top with **X** beside it, as on Player;
+- submitting, a recent search, the reading refinement, a handwriting candidate, and a radical
+  candidate each put the keyboard away with the query in the field and **X** beside it;
+- **X** returns to **Recent** with an empty field; the clear button inside the field clears the
+  text and keeps typing;
+- results start with **Sorted by Default**, which opens the Sort menu, then Example Sentences;
+- a website search link ([Links from the website](#links-from-the-website)) shows its query in
+  the field; and
+- Player's field looks and behaves the same.
+
+When changing the Handwriting or Radicals panels (`SearchInputPanel.swift`,
+`HandwritingInputView.swift`, `RadicalInputView.swift`), also check, in light and dark and at an
+accessibility text size:
+
+- the pencil and grid buttons show at the bottom left on Recent, on results, and above the
+  keyboard, and each opens its panel over the field and the tab bar, with the same buttons at
+  its bottom left (the current one highlighted) and a grabber at the top;
+- drawing 十 shows candidate tiles with meanings, three rows deep, **Undo** leaves 一's
+  candidates, and a second **Undo** empties the pad;
+- selecting 女 fills the strip (女, 姦, 奴, 奸, 好…), **Undo** at the bottom right turns active,
+  selecting 子 then **Undo** leaves only 女 selected, and picking 好 closes the panel and shows its
+  results;
+- handwriting 十, handwriting 一, then radicals 女 → 好 builds 十一好 in the field; and
+- dragging the grabber down closes the panel, and a downward stroke on the pad draws instead of
+  dragging.
 
 ## Image Search manual checks
 
@@ -939,7 +979,7 @@ When changing Search results or frequency dictionaries, also check in the Simula
 `Modules/Tests/SearchExperienceTests/Fixtures/ImageText`: vertical Japanese (a book-page photo,
 a proverb list, and a panel with an English subtitle) and a horizontal control. When changing
 text recognition, also open one vertical and one horizontal image in the Simulator's Image
-Search (**Translate → Camera → Start**, then Photo Library or Files) and check:
+Search (**Translate → Image → Photo Library**) and check:
 
 - every view has the same toolbar: close, and a **•••** menu;
 - **Photo** shows blue chips down vertical columns and underlines under horizontal lines, and

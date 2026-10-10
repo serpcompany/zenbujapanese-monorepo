@@ -5,21 +5,33 @@ struct TranslateHomeView: View {
   @Bindable var experience: TranslateExperience
   let openHistory: () -> Void
   let openText: (String) -> Void
-  @Binding var requestedImageSource: ImageTextSource?
+  @Binding var showsImageSources: Bool
+  @State private var startingMode: TranslateStart?
   @State private var isChoosingDocument = false
   @State private var isReadingDocument = false
   @State private var unreadableDocument = false
 
   var body: some View {
-    ScrollView {
-      VStack(spacing: 16) {
-        TranslateStartPicker(selection: $experience.preferredStart)
+    List {
+      Section {
+        TranslateHomeHeader()
       }
-      .padding(.horizontal)
-      .padding(.bottom, 24)
+      Section {
+        ForEach(TranslateStart.spokenRows) { option in row(option) }
+      } header: {
+        Text("Spoken")
+      } footer: {
+        if let preparation = experience.preparation {
+          Text(preparation.label)
+            .accessibilityIdentifier("translate.preparing")
+        }
+      }
+      Section("Written") {
+        ForEach(TranslateStart.writtenRows) { option in row(option) }
+      }
     }
-    .safeAreaInset(edge: .bottom) { startButton }
-    .background(SystemColor.background)
+    .compactSectionSpacing()
+    .contentMargins(.top, 4, for: .scrollContent)
     .navigationTitle("Translate")
     .inlineNavigationTitle()
     .toolbar {
@@ -37,22 +49,48 @@ struct TranslateHomeView: View {
     .alert("Couldn't read this document", isPresented: $unreadableDocument) {
       Button("OK", role: .cancel) {}
     } message: {
-      Text("Choose a PDF, a photo, or a text file with Japanese or English text in it.")
+      Text("Choose a PDF or a text file with Japanese or English text in it.")
     }
   }
 
   private var isBusy: Bool { experience.isPreparing || isReadingDocument }
 
-  private func start() {
-    switch experience.preferredStart {
-    case .conversation, .listening:
-      Task { await experience.start() }
-    case .text:
-      openText("")
-    case .document:
-      isChoosingDocument = true
-    case .camera:
-      break
+  private func row(_ option: TranslateStart) -> some View {
+    Button {
+      start(option)
+    } label: {
+      rowLabel(option)
+    }
+    .tint(.primary)
+    .disabled(isBusy)
+    .accessibilityIdentifier("translate.start.\(option.rawValue)")
+  }
+
+  private func rowLabel(_ option: TranslateStart) -> some View {
+    HStack {
+      SettingsRowLabel(
+        LocalizedStringKey(option.title), systemImage: option.systemImage, tint: option.tint)
+      Spacer()
+      if isBusy, startingMode == option {
+        ProgressView()
+      } else {
+        Image(systemName: "chevron.forward")
+          .font(.footnote.weight(.semibold))
+          .foregroundStyle(.tertiary)
+          .accessibilityHidden(true)
+      }
+    }
+    .contentShape(.rect)
+  }
+
+  private func start(_ option: TranslateStart) {
+    startingMode = option
+    switch option {
+    case .conversation: Task { await experience.start(.conversation) }
+    case .listening: Task { await experience.start(.listening) }
+    case .image: showsImageSources = true
+    case .text: openText("")
+    case .document: isChoosingDocument = true
     }
   }
 
@@ -65,47 +103,29 @@ struct TranslateHomeView: View {
       unreadableDocument = true
     }
   }
+}
 
-  private var startButton: some View {
-    VStack(spacing: 8) {
-      if let preparation = experience.preparation {
-        Text(preparation.label)
-          .font(.subheadline)
-          .foregroundStyle(.secondary)
-          .accessibilityIdentifier("translate.preparing")
-      }
-      Group {
-        if experience.preferredStart == .camera {
-          Menu {
-            ImageTextSourceButtons(requestedSource: $requestedImageSource)
-          } label: {
-            startLabel
-          }
-          .menuStyle(.button)
-          .menuOrder(.fixed)
-        } else {
-          Button(action: start) { startLabel }
-        }
-      }
-      .buttonStyle(.borderedProminent)
-      .buttonBorderShape(.capsule)
-      .controlSize(.large)
-      .disabled(isBusy)
-      .accessibilityIdentifier("translate.start")
-    }
-    .padding(.bottom, 8)
-  }
+private struct TranslateHomeHeader: View {
+  @ScaledMetric(relativeTo: .largeTitle) private var tileSize = 48
 
-  private var startLabel: some View {
-    Group {
-      if isBusy {
-        ProgressView()
-      } else {
-        Text("Start")
-      }
+  var body: some View {
+    VStack(alignment: .leading, spacing: 6) {
+      Image(systemName: "translate")
+        .font(.system(size: tileSize * 0.5, weight: .semibold))
+        .foregroundStyle(.white)
+        .frame(width: tileSize, height: tileSize)
+        .background(Color.blue.gradient, in: .rect(cornerRadius: tileSize * 0.23))
+        .accessibilityHidden(true)
+      Text("Translate")
+        .font(.title2.bold())
+      Text("Japanese and English, on your \(ThisDevice.name).")
+        .foregroundStyle(.secondary)
+        .lineLimit(1)
     }
-    .font(.headline)
-    .padding(.horizontal, 28)
+    .padding(.vertical, 2)
+    .accessibilityElement(children: .combine)
+    .accessibilityAddTraits(.isHeader)
+    .accessibilityIdentifier("translate.header")
   }
 }
 

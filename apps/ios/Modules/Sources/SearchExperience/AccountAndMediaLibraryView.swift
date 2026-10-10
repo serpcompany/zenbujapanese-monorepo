@@ -56,7 +56,7 @@ struct AccountRootView: View {
 
       Section {
         NavigationLink(value: AccountRoute.mediaLibrary) {
-          AccountRowLabel("Media Library", systemImage: "photo.on.rectangle.angled", tint: .orange)
+          SettingsRowLabel("Media Library", systemImage: "photo.on.rectangle.angled", tint: .orange)
         }
         .accessibilityIdentifier("account.media-library")
 
@@ -84,12 +84,12 @@ struct AccountRootView: View {
 
       Section {
         NavigationLink(value: AccountRoute.readingAids) {
-          AccountRowLabel("Reading Aids", systemImage: "character.book.closed.fill", tint: .blue)
+          SettingsRowLabel("Reading Aids", systemImage: "character.book.closed.fill", tint: .blue)
         }
         .accessibilityIdentifier("account.reading-aids")
 
         NavigationLink(value: AccountRoute.frequencyDictionaries) {
-          AccountRowLabel("Frequency Dictionaries", systemImage: "chart.bar.fill", tint: .green)
+          SettingsRowLabel("Frequency Dictionaries", systemImage: "chart.bar.fill", tint: .green)
         }
         .accessibilityIdentifier("account.frequency-dictionaries")
       }
@@ -102,17 +102,17 @@ struct AccountRootView: View {
 
       Section {
         AccountExternalLink(destination: AccountLinks.support) {
-          AccountRowLabel("Help & Support", systemImage: "questionmark.bubble.fill", tint: .red)
+          SettingsRowLabel("Help & Support", systemImage: "questionmark.bubble.fill", tint: .red)
         }
         .accessibilityIdentifier("account.support")
 
         AccountExternalLink(destination: AccountLinks.privacyPolicy) {
-          AccountRowLabel("Privacy Policy", systemImage: "hand.raised.fill", tint: .blue)
+          SettingsRowLabel("Privacy Policy", systemImage: "hand.raised.fill", tint: .blue)
         }
         .accessibilityIdentifier("account.privacy-policy")
 
         NavigationLink(value: AccountRoute.credits) {
-          AccountRowLabel("Credits & Attributions", systemImage: "text.book.closed.fill", tint: .gray)
+          SettingsRowLabel("Credits & Attributions", systemImage: "text.book.closed.fill", tint: .gray)
         }
         .accessibilityIdentifier("account.credits")
       }
@@ -120,43 +120,7 @@ struct AccountRootView: View {
     .compactSectionSpacing()
     .accessibilityIdentifier("account.list")
     .navigationTitle("Account")
-  }
-}
-
-struct AccountRowLabel: View {
-  let title: LocalizedStringKey
-  let subtitle: String?
-  let systemImage: String
-  let tint: Color
-  @ScaledMetric(relativeTo: .body) private var tileSize = 30
-  @ScaledMetric(relativeTo: .body) private var symbolSize = 15
-
-  init(
-    _ title: LocalizedStringKey, subtitle: String? = nil, systemImage: String, tint: Color
-  ) {
-    self.title = title
-    self.subtitle = subtitle
-    self.systemImage = systemImage
-    self.tint = tint
-  }
-
-  var body: some View {
-    Label {
-      VStack(alignment: .leading, spacing: 2) {
-        Text(title)
-        if let subtitle {
-          Text(subtitle)
-            .font(.footnote)
-            .foregroundStyle(.secondary)
-        }
-      }
-    } icon: {
-      Image(systemName: systemImage)
-        .font(.system(size: symbolSize, weight: .semibold))
-        .foregroundStyle(.white)
-        .frame(width: tileSize, height: tileSize)
-        .background(tint.gradient, in: .rect(cornerRadius: tileSize * 0.23))
-    }
+    .inlineNavigationTitle()
   }
 }
 
@@ -179,7 +143,7 @@ private struct AccountCountRowLabel: View {
         Text(count, format: .number)
       }
     } label: {
-      AccountRowLabel(title, systemImage: systemImage, tint: tint)
+      SettingsRowLabel(title, systemImage: systemImage, tint: tint)
     }
   }
 }

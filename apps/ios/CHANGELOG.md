@@ -10,19 +10,40 @@ All notable user-facing changes to Zenbu Japanese are recorded here.
   sign in to the same Zenbu account to keep your known words, lists, Recent videos, and bookmarks
   the same everywhere. On iPad it turns every way and runs beside other apps; on iPad and the Mac
   the tabs become a sidebar. On the Mac, Settings (⌘,) holds your account and preferences, ⌘F
-  goes to Search, ⌘⇧I opens Translate's **Camera** to search an image, and ⌘1 to ⌘4 switch tabs.
-  On the Mac, **Camera** pastes an image, and a photo taken on your iPhone with Continuity Camera
-  opens in Image Search; on every device, drag images onto the window to open them there.
-  Right-click a list, a known word, a Recent video, or a frequency dictionary on the Mac for what
-  a swipe does on the iPhone.
-- Sort search results from the **•••** menu: **Sort By** a frequency dictionary, most or least
-  common first (JLPT by level), or by your known words, known or unknown first. Your choice stays
-  across launches and applies to Japanese, English, and romaji searches.
+  goes to Search, ⌘⇧I opens Translate's **Image** to search an image, and ⌘1 to ⌘4 switch tabs.
+  On the Mac, **Image** pastes an image in place of taking a photo, and a photo taken on your
+  iPhone with Continuity Camera opens in Image Search; on every device, drag images onto the
+  window to open them there. Right-click a list, a known word, a Recent video, or a frequency
+  dictionary on the Mac for what a swipe does on the iPhone.
+- Sort search results from the **Sorted by** row at the top of the results: a frequency
+  dictionary, most common first (JLPT by level), or your known words, known
+  first. Your choice stays across launches and applies to Japanese, English, and romaji
+  searches.
+- Filter search results to known or unknown words from the same **Sorted by** row. The row shows
+  when a filter is on, and your filter stays across launches.
+- Translate's **Listen** has the speaker button too: mute spoken translations while the
+  translated cards keep coming.
 
 ### Changed
 
-- Image Search moved from Search's camera button to Translate: choose **Camera** on Translate's
-  home, then **Start** to take a photo or pick one, and tap any word to look it up.
+- Image Search moved from Search's camera button to Translate's **Image** row: take a photo or
+  pick one from your library, then tap any word to look it up.
+- Translate's home is laid out like Settings: a header, then **Spoken** (Conversation, Listen) and
+  **Written** (Image, Text, Document). Tapping a row opens it, with no Start button.
+  **Document** opens PDFs and text files.
+- Image Search can open up to 8 photos from your library at once.
+- Search's top bar matches Player's: a small title and the same search field, which slides up
+  while you type and keeps your query after a search, with **X** to go back to your recent
+  searches.
+- Search has a pencil and a grid button, always one tap away, for Handwriting and Radicals. Both
+  slide up as a sheet you can drag away, and add their pick to the end of what's in the field, so
+  you can build a word from both; Handwriting shows bigger candidates with their meanings, and both
+  have the same **Undo** button for the last stroke or radical. Recent searches no longer sit under a **Recent** heading.
+
+### Removed
+
+- Image Search no longer opens image files from Files; choose them from your photo library.
+- Translate's **Document** no longer reads photos; use **Image**, which also lets you tap words.
 
 ### Fixed
 
@@ -39,7 +60,10 @@ All notable user-facing changes to Zenbu Japanese are recorded here.
   part of speech (which opens its conjugations) now open, in the tab you're in.
 - When a newer version of Zenbu saved the bookmarks synced to your device, Zenbu Account now says
   to update Zenbu instead of reopening it.
-- Choosing **Photo Library** or **Files** for Image Search opens the picker again.
+- Frequency Dictionaries: downloading several packs at once no longer looks like each tap cancels
+  the one before. Every downloading row keeps its own progress ring, with a stop button.
+- Radicals no longer draws over the search results.
+- Choosing **Photo Library** for Image Search opens the picker again.
 - English searches put the common word first: `dog` shows 犬 first and `water` shows 水, where rarer
   words whose meaning was exactly the query used to come ahead of them.
 

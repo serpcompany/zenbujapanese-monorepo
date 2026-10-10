@@ -73,7 +73,7 @@ public struct Conversation: Codable, Sendable, Hashable, Identifiable {
   public let id: UUID
   public let startedAt: Date
   public var updatedAt: Date
-  public var mode: TranslateMode
+  public let mode: TranslateMode
   public var duration: TimeInterval
   public var turns: [ConversationTurn]
 

@@ -90,6 +90,34 @@ extension View {
   }
 }
 
+extension View {
+  func dragToCloseSheet(sizeOnMac size: CGSize) -> some View {
+    #if os(macOS)
+      safeAreaInset(edge: .bottom, spacing: 0) { SheetDoneBar() }
+        .frame(width: size.width, height: size.height)
+    #else
+      presentationDetents([.large]).presentationDragIndicator(.visible)
+    #endif
+  }
+}
+
+#if os(macOS)
+  private struct SheetDoneBar: View {
+    @Environment(\.dismiss) private var dismiss
+
+    var body: some View {
+      HStack {
+        Spacer()
+        Button("Done") { dismiss() }
+          .keyboardShortcut(.cancelAction)
+          .accessibilityIdentifier("sheet.done")
+      }
+      .padding(.horizontal, 16)
+      .padding(.bottom, 12)
+    }
+  }
+#endif
+
 extension SearchFieldPlacement {
   static var alwaysShown: SearchFieldPlacement {
     #if os(macOS)

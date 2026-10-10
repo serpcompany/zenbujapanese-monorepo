@@ -96,6 +96,7 @@ struct AppCommandTests {
     #expect(AppWindow.settingsSize.width < AppWindow.minimumSize.width)
     #expect(AppWindow.photoPickerSize.width < AppWindow.minimumSize.width)
     #expect(AppWindow.photoPickerSize.height < AppWindow.minimumSize.height)
-    #expect(AppWindow.imageSourcesSize.height < AppWindow.minimumSize.height)
+    #expect(AppWindow.inputPanelSize.width < AppWindow.minimumSize.width)
+    #expect(AppWindow.inputPanelSize.height < AppWindow.defaultSize.height)
   }
 }

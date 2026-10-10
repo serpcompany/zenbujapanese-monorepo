@@ -23,7 +23,7 @@ enum CameraCapture {
     let completion: ImagePickerCompletion
 
     var body: some View {
-      Color.clear.onAppear { completion(.success(nil)) }
+      Color.clear.onAppear { completion(.success([])) }
     }
   }
 #else
@@ -34,7 +34,7 @@ enum CameraCapture {
       if let standIn = LaunchHarness.cameraImageURL {
         Color.clear.onAppear {
           completion(
-            ImageTextAsset(cameraImageAt: standIn).map { .success($0) }
+            ImageTextAsset(cameraImageAt: standIn).map { .success([$0]) }
               ?? .failure(ImageSourcePickerError.unreadableImage))
         }
       } else {
@@ -66,7 +66,7 @@ enum CameraCapture {
       UINavigationControllerDelegate
     {
       func imagePickerControllerDidCancel(_ picker: UIImagePickerController) {
-        completion(.success(nil))
+        completion(.success([]))
       }
 
       func imagePickerController(
@@ -79,7 +79,7 @@ enum CameraCapture {
           completion(.failure(ImageSourcePickerError.unreadableImage))
           return
         }
-        completion(.success(asset))
+        completion(.success([asset]))
       }
     }
   }

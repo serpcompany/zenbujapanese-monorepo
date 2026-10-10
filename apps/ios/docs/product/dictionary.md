@@ -17,10 +17,54 @@ Check: UI `SearchUITests.testAnEnglishSearchListsTheWordAndOpensItsDetail` (the 
 package `HandwritingRecognitionTests` (a drawn kanji is read whatever the stroke order) and
 `RadicalLookupTests` (radicals narrow to the kanji that have them).
 
-Image Search, for Japanese in a photo, is Translate's **Camera** option
+Image Search, for Japanese in a photo, is Translate's **Image** option
 ([Image Search](translate.md#image-search)).
 
 Check: UI `SearchUITests` (Search has no camera button) and `ImageSearchUITests`.
+
+### Top bar
+
+Search's top bar is Player's: a small, centered **Search** title above the same search field,
+with the prompt **Search Japanese or English** (**Search** at the largest text sizes) and a clear
+button while it has text.
+
+- **Recent.** With nothing searched, the title bar's **•••** menu offers **Clear Recent
+  Searches** while recent searches are listed. The recent searches are listed without a heading.
+- **Input buttons.** Two round buttons, a pencil for **Handwriting** and a grid for **Radicals**,
+  sit at the bottom left on every Search screen: above the tab bar on Recent and results, and
+  above the keyboard while typing. Either opens its panel in one tap.
+- **Typing.** Tapping the field slides the screen up as Player's does: the title bar slides away,
+  the field moves to the top, and an **X** appears beside it. The clear button inside the field
+  clears the text.
+- **Results.** Submitting, or picking a recent search, the reading refinement, or a handwriting
+  or radical candidate, puts the keyboard away and keeps the query in the field at the top, with
+  **X** beside it. The first row of the results names the order and opens Sort and Filter
+  ([Sorting results](#sorting-results), [Filtering results](#filtering-results)).
+- **X** clears the query and returns to Recent.
+
+### Handwriting and Radicals
+
+Tapping the pencil or the grid slides up a full-height sheet over the search field and the tab
+bar, with a grabber at the top: drag it down to close it. Drawing on the pad never drags the
+sheet. The same two buttons stay at its bottom left, in the same place as on the search screen,
+with the current one highlighted, so the other mode is one tap away. Both panels share one gray
+background, flat candidate tiles in the same fill as the radical squares, and glass buttons
+(white in light mode).
+
+- **Handwriting.** A white drawing pad sits at the top, with candidate tiles below it:
+  five to a row, each with the kanji's first meaning. Three rows show and more scroll. **Undo**,
+  at the bottom right, removes the last stroke and recognizes the rest again. Before
+  there are candidates, text shows under the pad only while recognizing, when nothing matches,
+  or when recognition fails.
+- **Radicals.** A white strip at the top lists the kanji that contain every selected radical,
+  or says **Select one or more radicals**. Below it, the radicals scroll under pinned stroke-count
+  headers, and radicals that can't combine with the selection are hidden. **Undo**, the same
+  button as Handwriting's at the bottom right, removes the last radical selected and is dimmed
+  until one is.
+
+A candidate from either panel is added to the end of the query, so picking one character after
+another, in any mix of handwriting and radicals, builds a word. The panel closes and the results
+show, with the query in the field. In dark mode the strip and pad are black.
 
 Japanese, English, and romaji searches show one **Results** list. Stronger matches come first;
 among equally good matches, the enabled frequency dictionaries decide the order, in the
@@ -86,7 +130,7 @@ recorded `SearchResultsConformanceTests` (the refinement, Example Sentences, and
 `SearchResultsUITests.testARomajiQueryOffersItsJapaneseReading`,
 `testAWordOffersItsExampleSentences`, and `SearchUITests.testAQueryWithNoMatchesSaysSo`.
 
-Recent text searches are stored on the device and listed under a **Recent** heading while the
+Recent text searches are stored on the device and listed while the
 query is empty. A learner can repeat a search, remove one by swiping or long-pressing it, or clear the entire history
 from the **•••** menu, which offers **Clear Recent Searches** while recent searches are listed. Result headings scroll
 with the results instead of staying pinned over them.
@@ -97,27 +141,23 @@ Mac), and `SearchResultsUITests.testClearingRecentSearchesEmptiesTheList`.
 
 ### Sorting results
 
-While results are showing, the **•••** menu has **Sort By**, with the current order under it
-(**Default**, **YouTube, Most Common**, **Known Words, Unknown First**). Like Notes' Sort By, it
-opens a menu with **Default**, one item for each enabled frequency dictionary by its name (JLPT,
-YouTube, Japanese Wikipedia, TV & Movies, Anime, Manga, Novels, Visual Novels, Video Games), and
-**Known Words**, one checked at a time. When a dictionary or Known Words is checked, an
-**Order** section lists its two directions; choosing a new one starts with the first.
+While results are showing, their first row, above Example Sentences, names the order: **Sorted
+by Default**, **Sorted by YouTube**, **Sorted by Known Words**. Tapping
+it opens a short menu with two rows, **Sort By** and **Filter** ([Filtering results](#filtering-results)).
+**Sort By** names the current order underneath and opens a list with **Default**, one item for each
+enabled frequency dictionary by its name (JLPT, YouTube, Japanese Wikipedia, TV & Movies, Anime,
+Manga, Novels, Visual Novels, Video Games), and **Known Words**, one checked at a time. There is
+no direction to choose.
 
 - **Default** is the order described above.
-- **A dictionary**, **Most Common First** or **Least Common First**, orders every matching word
-  by that dictionary alone, however it matched. JLPT orders by level: N5 first when most common
-  first, N1 first when least common first.
-- **Known Words**, **Known First** or **Unknown First**, puts the learner's known words before
-  or after the rest. Marking a word known or unknown moves it at once.
+- **A dictionary** orders every matching word by that dictionary alone, most common first,
+  however it matched. JLPT orders by level, N5 first.
+- **Known Words** puts the learner's known words first. Marking a word known or unknown moves it
+  at once.
 
-Check: package `SearchResultSortTests`; UI `SearchResultsUITests.testSortingByADictionarySaysSoUntilReset`.
-
-A word the chosen dictionary doesn't rank goes after the ranked words in both directions. Ties,
-and the words without a rank, keep their Default order.
-
-While the order isn't Default, a row above the words says so (**Sorted by YouTube, Least
-Common**) with a **Reset** button that returns to Default; at Default there's no row.
+A word the chosen dictionary doesn't rank goes after the ranked words. Ties, and the words without
+a rank, keep their Default order. A choice saved with a direction by an earlier build reads as
+Default.
 
 Check: package `SearchResultSortTests` (the row's words); UI
 `SearchResultsUITests.testSortingByADictionarySaysSoUntilReset`.
@@ -128,7 +168,24 @@ and romaji searches. While ranks are loading, or if frequency data can't be read
 sort shows as Default and returns once the ranks load. If the chosen dictionary is disabled or
 removed, Search goes back to Default. The Kanji row, Example Sentences, the reading refinement, and Discovered Words keep their
 places; when there are no word rows to sort (only Discovered Words, or only a single kanji's
-Kanji row), the menu isn't shown.
+Kanji row), the row isn't shown.
+
+### Filtering results
+
+The **Sorted by** row's menu has a **Filter** row, naming its current choice underneath, under **Sort By**.
+It opens **All**, **Known**, and **Unknown**, one checked at a time: **Known** shows only known
+words and **Unknown** only the words not yet known. Marking a word known or unknown moves it out
+of or into the list at once. Enabling and disabling frequency dictionaries happens under
+**Account → Frequency Dictionaries**, not here.
+
+While a filter is on, the **Sorted by** row adds it after the order, as in **Sorted by Default · 1
+filter**; no other row is added. Filtering keeps the chosen sort. When it hides every word, the
+list shows **No Words Match Your Filter** with the count and **Clear Filter**.
+
+Changing the filter updates the visible results without searching again and announces how many
+words show to VoiceOver. The filter is kept on the device across launches and applies to
+Japanese, English, and romaji searches. The Kanji row, Example Sentences, the reading refinement,
+and Discovered Words are never filtered.
 
 Check: package `SearchResultSortTests` (VoiceOver's announcement, the stored choice, loading and
 unreadable ranks, a disabled dictionary).

@@ -16,7 +16,10 @@ The tab is split across three Swift targets in `apps/ios/Modules`
   - `LiveConversation` is the conversation engine: turns and sentences, provisional and final
     translations, held audio, the turn-end pause (0.8 s), the 30-second cutoff, the silence prompt
     (170 s, then 10 s), pause, resume, the background, and leaving. Times are in
-    `ConversationTiming`.
+    `ConversationTiming`. Its mode (`TranslateMode`: Conversation or Listening) is fixed for the
+    session; muting (`setMuted`) only silences playback, so a muted session keeps its mode. A
+    conversation saved muted when muting was its own mode, stored as `textOnly`, reads as
+    Conversation.
   - It reaches the outside only through `TranscriptionClient`, `SentenceTranslationClient`, and
     `SpeechPlaybackClient` (`TranslatorClients.swift`), structs of closures like the app's other
     clients, so an Online engine is another set of clients, not a change to the engine.
@@ -63,18 +66,21 @@ The tab is split across three Swift targets in `apps/ios/Modules`
   processing, and the audio session through `ConversationAudioSession`, and feeding the microphone
   to a `BilingualRecognizer`),
   `OnDeviceTranslation` (Apple Translation's availability and download prompt),
-  `SystemSpeechPlayer` (`AVSpeechSynthesizer`), and `TranslateExperience`, which owns the session, History, the
-  remembered mode, and the start checks (microphone, Apple Translation, speech assets), which
+  `SystemSpeechPlayer` (`AVSpeechSynthesizer`), and `TranslateExperience`, which owns the session, History, and the
+  start checks (microphone, Apple Translation, speech assets), which
   are on-device-specific and change when an Online engine arrives. The home is
-  `TranslateHomeView`: the five `TranslateStart` options (`TranslateStartPicker`) and Start. Camera
-  makes Start a menu of the `ImageTextSource`s the device offers (no Take Photo on the Mac, and
-  Paste Image only there), which sets the window's requested source; `ImageTextImport`, on
-  `SearchExperienceRootView` so drops, Continuity Camera, and ⌘⇧I reach it from any tab, opens the
-  camera, the photo library, Files, or the clipboard, then selects Translate and pushes Image
-  Search (`ImageTextFlowView`, the `.image` route) onto the Translate stack. Text
-  pushes `TypedTranslationScreen` with `TypedTranslationCard`; Document Upload reads the file with
-  `DocumentText` (PDFKit, then Vision text recognition for scanned pages and photos) and pushes
-  the same screen with its text. Muting a conversation still switches it to the internal Text
+  `TranslateHomeView`, a grouped `List` with a header card and the five `TranslateStart` options
+  (`TranslateStart.spokenRows`, then `TranslateStart.writtenRows`) as rows of `SettingsRowLabel`,
+  the row Account uses; a row opens its mode directly. Image shows the window's alert of the
+  `ImageTextSource`s the device offers (Take Photo and Photo Library; on the Mac, Photo Library
+  and Paste Image). `ImageTextImport`, on `SearchExperienceRootView` so drops, Continuity Camera,
+  and ⌘⇧I reach it from any tab, opens that picker once the alert has closed, then selects
+  Translate and pushes Image Search (`ImageTextFlowView`, the `.image` route) onto the Translate
+  stack once the picker has closed. Text
+  pushes `TypedTranslationScreen` with `TypedTranslationCard`; Document reads a PDF or text file
+  with `DocumentText` (PDFKit, then Vision text recognition for scanned pages) and pushes the same
+  screen with its
+  text. Muting a conversation still switches it to the internal Text
   Only mode, which the Translations screen labels Conversation. `TranslateDestinations` pushes
   the Translations screen, its transcripts, and Text for both the Translate tab and Account
   (Account → Translations), and `ConversationHistory.saved` leaves out the conversation still live.
@@ -167,14 +173,15 @@ to open.
 ## Tests
 
 `TranslatorCoreTests` covers the engine with fake clients and a fake clock (the acceptance
-fixture's J-E-J-E turns, held audio, the 30-second cutoff, Text Only, Listening, the silence
-prompt, pause and resume, the background, leaving with and without saving, muting, provisional
+fixture's J-E-J-E turns, held audio, the 30-second cutoff, Listening, the silence
+prompt, pause and resume, the background, leaving with and without saving, provisional
 translations, a stalled sentence, failures), conversation playback (echo-cancelled playback
 keeps listening, the app's own voice is ignored, playback waits while someone talks, a finished
-sentence keeps its live translation), the merger, the pause detector, typed-language detection,
+sentence keeps its live translation), muting and unmuting in both modes
+(`ConversationMutingTests`), the merger, the pause detector, typed-language detection,
 and History storage, bookmarks and the synced ones included. `SearchExperienceTests` covers what
 the app adds around it: reading a
-document's text (`DocumentTextTests`), each conversation's known-word share
+document's text (`DocumentTextTests`), the home's rows (`TranslateStartTests`), each conversation's known-word share
 (`ConversationWordsTests`), and the spoken translation's time limit (`SystemSpeechPlayerTests`).
 Run them from `apps/ios/Modules`:
 
@@ -278,12 +285,12 @@ Release builds don't contain the harness.
 
 In the Simulator, with the harness:
 
-- **Text**, **Start**, then `Where can I buy a Suica card?`, shows **English →
+- **Text**, then `Where can I buy a Suica card?`, shows **English →
   Japanese**, copy, speak, and linked Japanese; tapping a word closes the keyboard and opens Word
   Detail at half height. **•••** → **Furigana** shows furigana over the Japanese.
-- The tab opens on Conversation, Listening, Text, Document Upload, and Camera; **Start** with Camera
-  offers Files, Photo Library, and Take Photo, and a library image opens Image Search. **Start**
-  with Conversation shows the
+- The tab opens on a header card, then Spoken (Conversation, Listen) and Written (Image, Text,
+  Document), all without scrolling; **Image** shows an alert with Take Photo and Photo Library,
+  and a library photo opens Image Search (Take Photo needs an iPhone). **Conversation** shows the
   station conversation full screen, without the tab bar: an English card, then a wider gap and one
   Japanese turn of three cards whose audio waits (**N waiting for a pause**), each card turning
   active while it plays. Along the bottom are the speaker, − 1.0× +, and the red timer with a pause
@@ -301,9 +308,12 @@ In the Simulator, with the harness:
   deletion there lowers the count and leaves the Translate tab's Translations without it. With
   a conversation live (start one, then switch to Account), it isn't listed, and transcripts have
   no speaker button.
-- **Listening** leads each card with its translation (English for the Japanese announcements,
-  Japanese for the English one) and plays as it goes. After 20 seconds of silence, **Are you
-  still there?** counts down and pauses with an alert offering **Resume**.
+- **Listen** leads each card with its translation (English for the Japanese announcements,
+  Japanese for the English one) and plays as it goes. Its bottom bar matches Conversation's:
+  speaker, − 1.0× +, and the timer. The speaker turns to a slashed speaker and dims the speed;
+  the next announcements still appear, and none turns active while it would have played. After
+  20 seconds of silence, **Are you still there?** counts down and pauses with an alert offering
+  **Resume**.
 - While listening, the Simulator's screen doesn't auto-lock (Settings → Display & Brightness →
   Auto-Lock at 30 seconds); after a pause it locks as usual.
 - Sending the app home pauses with **Paused while you were away**; **Exit Without Saving** leaves
@@ -313,7 +323,7 @@ On an iPhone, in a **Zenbu Dev** build ([`ios.md`](ios.md), Install on an iPhone
 app is untouched, with iPhone Mirroring closed (it silences the microphone), and without the
 harness:
 
-- The first Start asks for the microphone and downloads Apple's languages once, with progress.
+- The first Conversation or Listen asks for the microphone and downloads Apple's languages once, with progress.
 - The acceptance fixture, spoken in turn: `今日は東京駅に行きます。`,
   `Please meet me at Shibuya Station at three o'clock.`, `はい、三時に会いましょう。`,
   `Thank you. See you there.` — four turns, Japanese, English, Japanese, English, each

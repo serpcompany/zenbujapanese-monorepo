@@ -10,6 +10,7 @@ struct SearchResultsView: View {
   let selectRefinement: (SearchRefinement) -> Void
   @State private var frequencyLoadState = SearchFrequencyLoadState()
   @AppStorage(SearchResultSort.storageKey) private var sort = SearchResultSort.relevance
+  @AppStorage(SearchResultFilter.storageKey) private var filter = SearchResultFilter.all
   @Environment(WordKnowledge.self) private var wordKnowledge
 
   var body: some View {
@@ -22,7 +23,20 @@ struct SearchResultsView: View {
       ranks: frequencyLoadState.results,
       isKnown: wordKnowledge.isKnown
     )
+    let shownEntries = shown(orderedEntries, by: filter)
+    let hiddenCount = orderedEntries.count - shownEntries.count
+    let chosenFilter = chosenFilter(ordered: orderedEntries)
     List {
+      if SearchResultsScreen.isSortable(results, entries: presentedEntries) {
+        Section {
+          SearchResultsMenu(
+            sort: chosenSort(dictionaries: dictionaries ?? []), appliedSort: appliedSort,
+            filter: chosenFilter, dictionaries: dictionaries ?? [])
+          .listRowSeparator(.hidden, edges: .top)
+          .alignmentGuide(.listRowSeparatorLeading) { _ in 0 }
+        }
+      }
+
       if exampleCount > 0 {
         Section {
           NavigationLink(
@@ -52,7 +66,7 @@ struct SearchResultsView: View {
         }
       }
 
-      switch SearchResultsScreen.list(query: query, results: results, ordered: orderedEntries) {
+      switch SearchResultsScreen.list(query: query, results: results, ordered: shownEntries) {
       case .discoveredWords(let entries):
         Section {
           SearchListHeading(LocalizedStringKey(SearchResultsScreen.discoveredWordsHeading))
@@ -62,13 +76,6 @@ struct SearchResultsView: View {
         }
       case .ranked(let kanji, let entries):
         Section {
-          if let status = appliedSort.status(dictionaries: dictionaries ?? []) {
-            SearchResultsStatusRow(
-              text: status, systemImage: "arrow.up.arrow.down", actionTitle: "Reset",
-              action: { chosenSort(dictionaries: dictionaries ?? []).wrappedValue = .relevance }
-            )
-            .accessibilityIdentifier("search.sort-status")
-          }
           if let kanji {
             KanjiPrimaryRow(
               character: kanji,
@@ -81,6 +88,17 @@ struct SearchResultsView: View {
               position: index + (kanji == nil ? 1 : 2),
               count: SearchResultsScreen.rankedCount(query: query, entries: entries)
             )
+          }
+          if entries.isEmpty, hiddenCount > 0 {
+            ContentUnavailableView {
+              Label("No Words Match Your Filter", systemImage: "line.3.horizontal.decrease.circle")
+            } description: {
+              Text(SearchResultFiltering.hiddenCountTitle(hiddenCount))
+            } actions: {
+              Button("Clear Filter") { chosenFilter.wrappedValue = .all }
+            }
+            .listRowSeparator(.hidden)
+            .accessibilityIdentifier("search.filter-empty")
           }
           if let frequencyUnavailableNotice {
             Label(frequencyUnavailableNotice, systemImage: "info.circle")
@@ -97,15 +115,6 @@ struct SearchResultsView: View {
     .listStyle(.plain)
     .id(query)
     .accessibilityIdentifier("search.results")
-    .toolbar {
-      if SearchResultsScreen.isSortable(results, entries: presentedEntries) {
-        ToolbarItem(placement: .barTrailing) {
-          SearchResultsMenu(
-            sort: chosenSort(dictionaries: dictionaries ?? []), appliedSort: appliedSort,
-            dictionaries: dictionaries ?? [])
-        }
-      }
-    }
     .onChange(of: dictionaries) { _, newDictionaries in
       if SearchResultSortOrdering.forgetsChoice(sort, dictionaries: newDictionaries) {
         sort = .relevance
@@ -156,6 +165,25 @@ struct SearchResultsView: View {
         withAnimation { sort = newSort }
         AccessibilityNotification.Announcement(newSort.announcement(dictionaries: dictionaries))
           .post()
+      })
+  }
+
+  private func shown(
+    _ entries: [DictionaryEntry], by filter: SearchResultFilter
+  ) -> [DictionaryEntry] {
+    SearchResultFiltering.filtered(entries, by: filter, isKnown: wordKnowledge.isKnown)
+  }
+
+  private func chosenFilter(ordered: [DictionaryEntry]) -> Binding<SearchResultFilter> {
+    Binding(
+      get: { filter },
+      set: { newFilter in
+        guard newFilter != filter else { return }
+        withAnimation { filter = newFilter }
+        let shownCount = shown(ordered, by: newFilter).count
+        AccessibilityNotification.Announcement(
+          SearchResultFiltering.announcement(shownCount: shownCount)
+        ).post()
       })
   }
 

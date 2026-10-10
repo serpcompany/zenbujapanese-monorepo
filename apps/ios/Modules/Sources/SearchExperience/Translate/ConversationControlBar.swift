@@ -9,7 +9,7 @@ struct ConversationControlBar: View {
   var body: some View {
     GlassEffectContainer(spacing: 12) {
       HStack(spacing: 12) {
-        if session.mode != .listening { muteButton }
+        muteButton
         speedControl
         Spacer(minLength: 0)
         timer
@@ -22,11 +22,11 @@ struct ConversationControlBar: View {
     .accessibilityIdentifier("translate.session")
   }
 
-  private var isMuted: Bool { session.mode == .textOnly }
+  private var isMuted: Bool { session.isMuted }
 
   private var muteButton: some View {
     Button {
-      session.switchMode(to: isMuted ? .conversation : .textOnly)
+      session.setMuted(!isMuted)
     } label: {
       Image(systemName: isMuted ? "speaker.slash.fill" : "speaker.wave.2.fill")
         .font(.title3)

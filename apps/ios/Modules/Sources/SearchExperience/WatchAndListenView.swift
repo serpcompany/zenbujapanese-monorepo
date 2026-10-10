@@ -2,6 +2,7 @@ import SwiftUI
 
 struct WatchAndListenView: View {
   @State private var query = ""
+  @State private var isSearching = false
   let history: WatchHistory
   let searchProvider: VideoSearchProvider
   let openVideo: (YouTubeVideoID) -> Void
@@ -45,14 +46,13 @@ struct WatchAndListenView: View {
       }
     }
     .navigationTitle("Player")
-    .searchable(
+    .searchField(
       text: $query,
-      placement: .alwaysShown,
-      prompt: "Search \(searchProvider.name) or paste a link"
+      isPresented: $isSearching,
+      prompt: Text("Search \(searchProvider.name) or paste a link"),
+      submit: submit
     )
     .textEntry(.webSearch)
-    .autocorrectionDisabled()
-    .onSubmit(of: .search, submit)
   }
 
   private func submit() {

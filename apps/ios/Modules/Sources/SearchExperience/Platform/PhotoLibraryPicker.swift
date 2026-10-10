@@ -42,24 +42,34 @@ final class PhotoLibraryPickerCoordinator: ImagePickerCoordinator, PHPickerViewC
   func makePicker() -> PHPickerViewController {
     var configuration = PHPickerConfiguration()
     configuration.filter = .images
-    configuration.selectionLimit = 1
+    configuration.selectionLimit = ImageTextSource.importLimit
     let picker = PHPickerViewController(configuration: configuration)
     picker.delegate = self
     return picker
   }
 
   func picker(_ picker: PHPickerViewController, didFinishPicking results: [PHPickerResult]) {
-    guard let provider = results.first?.itemProvider else {
-      completion(.success(nil))
+    let providers = results.map(\.itemProvider)
+    guard !providers.isEmpty else {
+      completion(.success([]))
       return
     }
-    let completion = completion
-    provider.loadFileRepresentation(forTypeIdentifier: UTType.image.identifier) { url, _ in
-      let asset = url.flatMap {
-        ImageTextAsset(photoLibraryImageAt: $0, name: $0.lastPathComponent)
+    Task {
+      var assets: [ImageTextAsset] = []
+      for provider in providers {
+        if let asset = await Self.asset(from: provider) { assets.append(asset) }
       }
-      Task { @MainActor in
-        completion(asset.map { .success($0) } ?? .failure(ImageSourcePickerError.unreadableImage))
+      completion(assets.isEmpty ? .failure(ImageSourcePickerError.unreadableImage) : .success(assets))
+    }
+  }
+
+  private static func asset(from provider: NSItemProvider) async -> ImageTextAsset? {
+    await withCheckedContinuation { continuation in
+      provider.loadFileRepresentation(forTypeIdentifier: UTType.image.identifier) { url, _ in
+        continuation.resume(
+          returning: url.flatMap {
+            ImageTextAsset(photoLibraryImageAt: $0, name: $0.lastPathComponent)
+          })
       }
     }
   }

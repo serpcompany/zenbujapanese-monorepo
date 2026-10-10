@@ -3,7 +3,7 @@ import PDFKit
 import UniformTypeIdentifiers
 
 enum DocumentText {
-  static let readableTypes: [UTType] = [.pdf, .image, .plainText]
+  static let readableTypes: [UTType] = [.pdf, .plainText]
   static let scannedPageLimit = 10
   static let characterLimit = 5_000
   static let scannedPageLongestSide = 3_000.0
@@ -15,8 +15,6 @@ enum DocumentText {
     let text: String
     if type.conforms(to: .pdf) {
       text = try await readPDF(url)
-    } else if type.conforms(to: .image) {
-      text = try await recognize(try await ImageTextAsset.loadCopy(from: url))
     } else {
       text = try decode(Data(contentsOf: url))
     }
