@@ -8,7 +8,6 @@ import TranslatorCore
 @Suite("Conversation comprehension")
 struct ConversationWordsTests {
   private let analysis = JapaneseTextAnalysisClient(
-    lookupSegments: { _ in [] },
     availability: { .full },
     linkedTokens: { text, _, _ in
       text.split(separator: " ").enumerated().map { index, word in

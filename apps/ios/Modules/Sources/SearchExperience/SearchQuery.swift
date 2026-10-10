@@ -12,63 +12,8 @@ struct SearchQuery: Hashable, Sendable {
 
   var isEmpty: Bool { value.isEmpty }
   var isASCII: Bool { value.unicodeScalars.allSatisfy(\.isASCII) }
-  var isJapaneseOnly: Bool { !isEmpty && japaneseSegments == [self] }
+  var isJapaneseOnly: Bool { !isEmpty && value.unicodeScalars.allSatisfy(Self.isJapanese) }
   var isSingleKanji: Bool { KanjiCharacter(value) != nil }
-  var isMixedScript: Bool {
-    !japaneseSegments.isEmpty
-      && value.unicodeScalars.contains { $0.isASCII && CharacterSet.letters.contains($0) }
-  }
-
-  var japaneseSegments: [SearchQuery] {
-    var segments: [String] = []
-    var current = ""
-    for character in value {
-      if character.unicodeScalars.allSatisfy(Self.isJapanese) {
-        current.append(character)
-      } else if !current.isEmpty {
-        segments.append(current)
-        current = ""
-      }
-    }
-    if !current.isEmpty { segments.append(current) }
-    return segments.map(SearchQuery.init)
-  }
-
-  var deinflectedCandidates: [SearchQuery] {
-    guard isASCII else { return [] }
-    var candidates: [SearchQuery] = []
-    func append(_ candidate: String) {
-      let query = SearchQuery(candidate)
-      guard query != self, !candidates.contains(query) else { return }
-      candidates.append(query)
-    }
-    func replaceSuffix(_ suffix: String, with endings: [String]) {
-      guard value.hasSuffix(suffix), value.count > suffix.count else { return }
-      let stem = String(value.dropLast(suffix.count))
-      for ending in endings {
-        append(stem + ending)
-      }
-    }
-
-    if value == "shita" || value == "shite" { append("suru") }
-    if value == "kita" || value == "kite" { append("kuru") }
-    if value == "itta" || value == "itte" { append("iku") }
-
-    replaceSuffix("shita", with: ["su"])
-    replaceSuffix("shite", with: ["su"])
-    replaceSuffix("tta", with: ["u", "tsu", "ru"])
-    replaceSuffix("tte", with: ["u", "tsu", "ru"])
-    replaceSuffix("nda", with: ["mu", "bu", "nu"])
-    replaceSuffix("nde", with: ["mu", "bu", "nu"])
-    replaceSuffix("ita", with: ["ku"])
-    replaceSuffix("ite", with: ["ku"])
-    replaceSuffix("ida", with: ["gu"])
-    replaceSuffix("ide", with: ["gu"])
-    replaceSuffix("sete", with: ["seru", "su"])
-    replaceSuffix("ta", with: ["ru"])
-    replaceSuffix("te", with: ["ru"])
-    return candidates
-  }
 
   private static func isJapanese(_ scalar: Unicode.Scalar) -> Bool {
     switch scalar.value {
@@ -77,17 +22,5 @@ struct SearchQuery: Hashable, Sendable {
     default:
       false
     }
-  }
-}
-
-struct LiteralSearchQueryPolicy: Sendable {
-  static let referenceCompatible = LiteralSearchQueryPolicy(
-    replacements: [SearchQuery("mondai"): SearchQuery("monday")]
-  )
-
-  private let replacements: [SearchQuery: SearchQuery]
-
-  func literalQuery(for query: SearchQuery) -> SearchQuery {
-    replacements[query] ?? query
   }
 }

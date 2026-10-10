@@ -1,22 +1,27 @@
 # Shared dictionary core working guide
 
 `packages/dictionary-core` (`@zenbu/dictionary-core`) is the one TypeScript dictionary every Zenbu
-client runs (ADR 0008, ADR 0009). Today the website runs it through the dictionary service
-([`dictionary-api.md`](dictionary-api.md)); the browser extension and the apps will run it
-offline, and it will replace the app's Swift. It is TypeScript source: each client compiles it
-(the website through Next.js's `transpilePackages`, the service through tsx and esbuild), and
-imports it by path, such as `@zenbu/dictionary-core/search/search`.
+client runs (ADR 0008, ADR 0009). The website runs it through the dictionary service
+([`dictionary-api.md`](dictionary-api.md)), and the app runs its search in JavaScriptCore, offline
+([Embedded](#embedded)); the browser extension will run it offline too. The rest of the app's
+dictionary logic (examples, word and kanji detail, and the results screen) is still Swift that the
+core ports, until issue 481 moves it over. It is TypeScript source: each client compiles it
+(the website through Next.js's `transpilePackages`, the service through tsx and esbuild, the app
+from a bundle esbuild writes), and imports it by path, such as
+`@zenbu/dictionary-core/search/search`.
 
 Run commands from `packages/dictionary-core`, after `pnpm install` at the repository root.
 
 ## What it holds
 
-Each module ports the app's Swift, in `apps/ios/Modules/Sources/SearchExperience/`;
+Search is the core's alone: the app runs `search/` and has no Swift of its own for it. Each other
+module ports the app's Swift, in `apps/ios/Modules/Sources/SearchExperience/`;
 [Swift sources](#swift-sources) says which.
 
 | Folder | What it does | Main Swift sources |
 | --- | --- | --- |
-| `search/` | Search retrieval: query normalization, deinflection, ranking, full-text phrases, and sentence search through a supplied analyzer. | `LookupClient`, `SearchQuery`, `DictionaryRanking`, `JapaneseDeinflection`, `DictionaryEntry`, `JapaneseTextAnalysisClient` |
+| `search/` | Search retrieval: query normalization, deinflection, ranking, full-text phrases, and sentence search through a supplied analyzer. | None: the app runs it. `SearchQuery` still normalizes a query for the app's screens, and a test holds it to `normalizeQuery`. |
+| `embedded/` | The entry point for a client that runs the core inside a JavaScript engine, as the app does: search, a text's words, and a kanji's words answered as JSON, and the bundle the app loads. | None |
 | `results/` | The results screen: the frequency re-sort, rows, chips, and the Example Sentences, reading-refinement, and kanji rows. | `SearchResultsView`, `SearchResultsScreen`, `SearchResultFrequencyOrdering`, `FrequencyPresentation` |
 | `detail/` | Word pages and kanji details from their rows: furigana, pitch, Frequency Details, conjugations, kanji, and examples. | `WordDetailView`, `KanjiDetailView`, `JapaneseRubyText`, `KanjiReadingSplitter`, `JapaneseConjugationClient`, `ConjugationsView` |
 | `examples/` | Example linking, inflection grouping, and the ranks example retrieval shares. | `JapaneseTextAnalysisClient`, `JapaneseInflectionGrouping`, `KuromojiMorphologyClient`, `ExampleSentenceClient` |
@@ -38,8 +43,13 @@ Each module ports the app's Swift, in `apps/ios/Modules/Sources/SearchExperience
 - **Change a port and its Swift together.** The `Search parity` workflow fails a pull request that
   changes one side of a pair it lists (`.github/workflows/search-parity.yml`) without the other.
   The `search-parity-reviewed` label says the change applies to one side only.
+- **Rebuild the app's bundle with the core.** The app runs a bundle of the core that is checked in
+  ([Embedded](#embedded)). After changing anything the bundle holds, run
+  `pnpm bundle:javascriptcore` and commit the file; `embedded/bundle.test.ts` fails until it
+  matches.
 - **The app records the answers.** When the app's behavior changes, re-record the suites on a Mac
-  ([`ios.md`](ios.md)); the port must then pass them.
+  ([`ios.md`](ios.md)); the service must then pass them. For search the app's answers are the
+  core's own, read through JavaScriptCore, so the suites pin them against a later change.
 - **Rows are a contract.** `detail/rows.ts` is what the service answers with and the fixtures
   hold. After changing a row shape, regenerate the fixtures with
   `pnpm --filter zenbujapanese-dictionary-api fixtures`.
@@ -67,28 +77,70 @@ Each module ports the app's Swift, in `apps/ios/Modules/Sources/SearchExperience
   `dictionaryForm` is `*` or empty when the analyzer has none. An analysis that throws finds no
   words, as in the app.
 
+## Embedded
+
+`embedded/dictionary.ts` is how a client runs the core inside a JavaScript engine that has no
+modules, files, or event loop of its own, which is how the app runs it in JavaScriptCore
+([`ios.md`](ios.md), The dictionary core in the app).
+
+- **The host supplies one function.** `EmbeddedHost.all(sql, parametersJSON)` runs a statement on
+  the artifact and answers a JSON string: `{"rows": [...], "blobs": [...]}`, each row an object
+  keyed by column, each BLOB as lowercase hex with its column named in `blobs`, or
+  `{"error": message}`. `hostDatabase` turns that into the `ArtifactDatabase` the rest of the core
+  reads.
+- **A search can be abandoned.** An embedded engine can't be stopped from outside while it ranks,
+  so a host may also supply `interrupted()`, true once nobody wants the answer. Ranking asks it
+  every 1,024 rows and comparisons (`stopIfInterrupted` in `search/database.ts`) and throws
+  `interruptedSearch`. Without it a learner who keeps typing would wait for each abandoned
+  prefix, such as `s`, to finish ranking its tens of thousands of candidates. A long loop added
+  to `search/` over a query's candidates needs the same check.
+- **Answers are IDs.** `EmbeddedDictionary` answers `search`, `entriesMatchingFirstForms`, and
+  `entriesContainingKanji` with Language Reference IDs, and the host reads the entries it shows
+  from the artifact itself. A search item also carries its `relevance` (its place among the
+  results by `compareRelevance`, equal for equally relevant matches, which the app's frequency
+  re-sort reads), its `fallbackOrder`, its `matchedSummary`, and the `match` label the suites
+  record (`matchLabel`).
+- **A text's words in one call.** `entriesMatchingFirstForms` takes, for each word, the forms to
+  try in order (its surface, its dictionary form, their kana), and answers every form it tried:
+  nothing for a form no entry is written or read as, and for a word's first form that has
+  entries, each as a `LinkEntry` (ID, reading, and parts of speech), ranked and deduplicated as
+  search ranks an exact form. It asks the artifact once per round, for the forms still unmatched,
+  so a sentence costs one or two statements. The host narrows the candidates by part of speech
+  and reading before it reads any entry.
+- **A call is an object.** `embeddedEndpoint(...).begin(method, argument)` starts a call and
+  returns it. Its `outcome()` is a JSON string: `{"value": ...}`, `{"error": message}`, or
+  `{"analyze": text}` when a search needs the words of a sentence. The host then analyzes the
+  text with whatever it has, answers `analyzed('{"words": [...]}')` or `analyzed('{"error": ...}')`,
+  and reads the outcome again. The host's database is synchronous, so a call settles before
+  `begin` or `analyzed` returns to the host and nothing is polled; calls keep their outcomes
+  apart, so a second can start while the first waits for its analysis.
+- **The bundle.** `embedded/javascriptcore.ts` reads the host from the global `zenbuHost` and sets
+  the endpoint as the global `zenbuDictionary`. `pnpm bundle:javascriptcore`
+  (`scripts/bundle-javascriptcore.mjs`) bundles it with esbuild into
+  `apps/ios/Modules/Sources/SearchExperience/Resources/DictionaryCore/dictionary-core.js`, which
+  is checked in so the app builds without Node. `embedded/bundle.test.ts` builds it again and
+  fails when the file differs.
+- The service replays the search suite through the endpoint too, on `node:sqlite`
+  (`apps/dictionary-api/src/conformance/embedded.conformance.test.ts`), so a change that breaks
+  the app's path fails on a pull request before any Swift runs.
+
 ## Swift sources
 
 Paths are relative to `apps/ios/Modules/Sources/SearchExperience/`. The TypeScript keeps the
 Swift names where it can. Each module's tests take their expected values from the same Swift, and
 the app-recorded suites (`apps/ios/LanguageData/Conformance/`) check the port against the app.
 
+`search/` began as a port too, of the app's `LookupClient` search, its English and Japanese
+ranking, `DictionaryRanking`, `JapaneseDeinflection`, and `SearchQuery`. The app now runs it, that
+Swift is gone (issue 481), and the modules keep its names and its ways of comparing
+([Matching the Swift](#matching-the-swift)), which the suites pin.
+
 | Module | Ports |
 | --- | --- |
-| `search/search.ts` | `searchUncached`, `searchOnce`, and `japaneseDeinflectedSources` in `LookupClient.swift`: the order in which a query tries its searches, from the reading refinement through deinflection to the analyzed segments. Results come back in dictionary order, before the frequency re-sort, as the suite pins them (ADR 0006). |
-| `search/database.ts` | `SearchFormKind`, `decodeEntry`, and `priorityProfile` in `LookupDatabase.swift`, with the entry columns its candidate queries select. `withParametersTruncatedAtNul` reads parameters as the app binds them ([Matching the Swift](#matching-the-swift), Bound text). |
-| `search/japanese.ts` | `rankedJapanese` in `LookupJapaneseRanking.swift`, with `japaneseCandidateSQL` and `exactJapaneseCandidateSQL`. |
-| `search/english.ts` | `rankedEnglish`, `glossEvidence`, `romajiEvidence`, `glossRelation`, `endsInNote`, `closingParenthesis`, `glossEvidencePrecedes`, `glossTokenPattern` (`glossToken`), and `hasSearchTerms` in `LookupEnglishRanking.swift`, with `asciiCandidateSQL` and `exactASCIICandidateSQL`. |
-| `search/ranked-entries.ts` | `RankedDictionaryEntry` and `deduplicated` in `LookupRankedEntries.swift`. |
-| `search/composition.ts` | `LookupSearchResults` (`composing`, and `empty` as `noResults`) and `LookupSearchResultItem` in `DictionaryEntry.swift`, and `resultItems` in `LookupRankedEntries.swift`. |
-| `search/query.ts` | `SearchQuery.swift` |
-| `search/rank.ts` | `DictionaryRanking.swift` |
-| `search/deinflect.ts` | `JapaneseDeinflection.swift` |
-| `search/fts.ts` | `ftsPhrase` and `ftsPrefix` in `LookupJapaneseRanking.swift`, unchanged, since the core queries the same FTS4 indexes; `\p{L}\p{M}\p{N}` stands for `CharacterSet.alphanumerics`. |
-| `search/morphology.ts` | `lookupSegments` in `JapaneseTextAnalysisClient.swift`; the analyzer itself is a capability. |
+| `search/query.ts` | `normalizeQuery` is what `SearchQuery.swift` still does for the app's screens; `DictionaryCoreTests` compares the two on the app's side. |
 | `results/results.ts` | `SearchResultsView.swift` (`orderedItems` is `SearchResultFrequencyOrdering.ordered`, in `SearchResultFrequencyOrdering.swift`; `primaryItem` is `LookupSearchResults.primaryEntry(for:)`), with `FrequencyPresentation.swift`. |
 | `detail/word.ts` | `WordDetailView.swift`, with its headline in `WordHeadline.swift` and its sections in `WordDetailSections.swift`, and `DictionaryEntry.swift` |
-| `detail/kanji.ts` | `KanjiDetailView.swift` and its sections in `KanjiDetailSections.swift`, with its words from `entries(containingKanji:)` in `LookupClient.swift` and its elements from `KanjiElementLookupClient.swift`. |
+| `detail/kanji.ts` | `KanjiDetailView.swift` and its sections in `KanjiDetailSections.swift`, with its elements from `KanjiElementLookupClient.swift`; the app asks `kanjiWords` for the kanji's words. |
 | `detail/conjugation-table.ts` | `JapaneseConjugator`, `ConjugationTable`, `ConjugationMode`, and `ConjugatedForm` in `JapaneseConjugationClient.swift`. |
 | `detail/conjugation.ts` | What `ConjugationsView.swift` shows for a `detail/conjugation-table.ts` table: `ConjugatedForm.Kind.presentation`, `sharedSpellings(of:in:)`, and `rowShowsFurigana`. The suite's `opensConjugations` and `conjugations` check both modules. |
 | `detail/frequency.ts` | `FrequencyTier`, `FrequencyPresentationModel`, and `SearchFrequencyRankPresentationModel` in `FrequencyPresentation.swift`, and `FrequencyDisclosurePresentation` in `FrequencyDisclosure.swift`. |
@@ -107,8 +159,8 @@ the app-recorded suites (`apps/ios/LanguageData/Conformance/`) check the port ag
 | `examples/retrieval.ts`, `artifact/example-retrieval.ts` | `ExampleSentenceData.retrieveEntry` and `retrieveIndexedEntry` in `ExampleSentenceEntryRetrieval.swift`, with its queries. |
 | `artifact/example-search.ts` | `ExampleSentenceData.retrieveEnglish` and `retrieveJapanese` in `ExampleSentenceSearchRetrieval.swift`, with its queries. |
 | `artifact/search-examples.ts` | `SearchResultsScreen.exampleCount` and `directExampleCount` in `SearchResultsScreen.swift`. |
-| `artifact/lookup.ts` | `LookupClient.entriesMatchingForm`: `exactJapaneseCandidateSQL`, ranked and deduplicated by the search port. |
-| `artifact/words.ts`, `artifact/kanji.ts` | `entry(_:)` in `LookupClient.swift`, and `selectedColumns` and `kanjiCandidateRowsSQL` in `LookupDatabase.swift`. |
+| `artifact/lookup.ts` | Nothing now. It is the service's lookup for a linked word: the entries written or read exactly as a Japanese form, ranked and deduplicated as search does. The app asks `embedded/` the same (`entriesMatchingFirstForms`), and the service's tests hold the two to each other. |
+| `artifact/words.ts`, `artifact/kanji.ts` | `entry(_:)` in `LookupClient.swift` and `selectedColumns` in `LookupDatabase.swift`. The app's `entriesContainingKanji` asks `kanjiCandidateRows` and `kanjiWords` for a kanji's words, through `embedded/`; `kanjiCandidateRows` keeps the app's query for them. |
 
 ## Matching the Swift
 
@@ -123,8 +175,9 @@ the app-recorded suites (`apps/ios/LanguageData/Conformance/`) check the port ag
 - **Whitespace.** `normalizeQuery` splits words as Swift's `split(whereSeparator: \.isWhitespace)`
   does: a grapheme whose first scalar is whitespace separates words and is dropped whole (NFKC
   turns ゛ into a space and a combining mark), and U+FEFF, which isn't whitespace, stays.
-- **Bound text.** The app binds text as C strings (`sqlite3_bind_text` with length -1), so SQLite
-  reads a parameter up to its first NUL; `DictionarySearch` truncates its parameters there too.
+- **Bound text.** The app's Swift search bound text as C strings (`sqlite3_bind_text` with length
+  -1), so SQLite read a parameter up to its first NUL; `DictionarySearch` truncates its parameters
+  there, whatever the client binds.
 - **Kana.** Each conversion is the one its Swift uses, so they stay separate. `examples/kana.ts` is
   ICU's Hiragana-Katakana transliterator, which Foundation's `applyingTransform` runs: it folds
   halfwidth and circled katakana, spells ヿ and ゟ out, maps the iteration marks, and composes
@@ -177,7 +230,9 @@ the app-recorded suites (`apps/ios/LanguageData/Conformance/`) check the port ag
 - **Kanji details.** `kanjiWords` groups the entries written with the kanji by semantic fingerprint
   and orders the groups by a headword starting with the kanji, the shortest headword, any common
   entry, the highest rank score, then the fingerprint; each of the first 24 groups shows as its
-  entry with the smallest ID (`normalizedEntry`). Stroke data that doesn't decode shows no stroke
+  entry with the smallest ID (`normalizedEntry`). `kanjiCandidateRows` picks those 24 groups in
+  SQL, in the same order, so a kanji written in thousands of words (日) hands `kanjiWords` a few
+  dozen rows; change the two orders together, which the kanji-detail suite checks. Stroke data that doesn't decode shows no stroke
   order rather than failing the page, since clients read `KanjiStrokeData.sqlite3` as the app
   ships it. A character with a variation selector has no kanji details, as in the app.
 - `partOfSpeechPhrase` leaves out "Unclassified", which tells a learner nothing, and a generic

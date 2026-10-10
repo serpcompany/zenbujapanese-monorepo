@@ -136,6 +136,11 @@ private struct SearchResultsObserver {
     let query = SearchQuery(recorded.query)
 
     let results = try await lookupClient.search(query)
+    let matches = Dictionary(
+      try await LanguageReferenceData.shared.coreSearch(query.value).items.map {
+        ($0.id, $0.match)
+      },
+      uniquingKeysWith: { first, _ in first })
     let exampleCount = await SearchResultsScreen.exampleCount(
       results, query: query,
       directCount: await SearchResultsScreen.directExampleCount(
@@ -212,8 +217,7 @@ private struct SearchResultsObserver {
     }
 
     observed.results = shownEntries.map { entry in
-      let relevance = results.relevance(for: entry)
-      return SearchResultsCase.Row(
+      SearchResultsCase.Row(
         languageReferenceID: entry.id.rawValue,
         entSeq: entry.sourceProvenances.map(\.sourceRecordID),
         headword: entry.headword,
@@ -228,7 +232,7 @@ private struct SearchResultsObserver {
               tier: chip.tier?.label
             )
           },
-        match: Self.describe(relevance),
+        match: matches[entry.id.rawValue] ?? "",
         retrievalOrder: results.fallbackOrder(for: entry)
       )
     }
@@ -238,17 +242,6 @@ private struct SearchResultsObserver {
     }
     observed.sections = sections
     return observed
-  }
-
-  private static func describe(_ relevance: DictionaryRelevance) -> String {
-    let match =
-      switch relevance.matchRank {
-      case .japanese(let rank): "japanese \(rank.relation)"
-      case .english(let rank):
-        "english \(rank.lane) romaji=\(rank.romajiSpecificityRank)"
-          + (rank.lane == .strongGloss ? " sense=\(rank.isLaterSense ? "later" : "first")" : "")
-      }
-    return "source=\(relevance.sourceOrder) \(match)"
   }
 }
 

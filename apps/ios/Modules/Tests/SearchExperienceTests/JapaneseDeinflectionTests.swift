@@ -8,7 +8,7 @@ struct JapaneseDeinflectionTests {
     let query = SearchQuery("まけたら")
     #expect(try await LookupClient.live.entryMatchingForm(query.value) == nil)
     let results = try await LookupClient.live.search(query)
-    #expect(results.wasDeinflected)
+    #expect(results.resolution == .deinflected)
     #expect(results.presentation == .ranked)
     #expect(results.entries.first?.headword == "負ける")
   }
@@ -30,7 +30,7 @@ struct JapaneseDeinflectionTests {
   )
   func inflections(query: String, headword: String) async throws {
     let results = try await LookupClient.live.search(SearchQuery(query))
-    #expect(results.wasDeinflected, "\(query) was not deinflected")
+    #expect(results.resolution == .deinflected, "\(query) was not deinflected")
     let leading = results.entries.prefix(results.leadingLexicalEntryCount).map(\.headword)
     #expect(leading.contains(headword), "\(query) led with \(leading), not \(headword)")
   }
@@ -44,17 +44,19 @@ struct JapaneseDeinflectionTests {
   )
   func exactWordThenLemma(query: String, lemma: String) async throws {
     let results = try await LookupClient.live.search(SearchQuery(query))
-    #expect(!results.wasDeinflected)
-    #expect(results.relevance(for: try #require(results.entries.first)).sourceOrder == 0)
+    #expect(results.resolution == .direct)
+    let matches = try await LanguageReferenceData.shared.coreSearch(query).items
+    #expect(matches.first?.match.hasPrefix("source=0 ") == true)
     let entry = try #require(
       results.entries.first { $0.headword == lemma }, "\(query) omitted \(lemma)")
-    #expect(results.relevance(for: entry).sourceOrder == 1, "\(lemma) not after exact matches")
+    let match = try #require(matches.first { $0.id == entry.id.rawValue })
+    #expect(match.match.hasPrefix("source=1 "), "\(lemma) not after exact matches")
   }
 
   @Test("ambiguous kana offers every matching verb in the leading group")
   func ambiguousKana() async throws {
     let results = try await LookupClient.live.search(SearchQuery("よんだら"))
-    #expect(results.wasDeinflected)
+    #expect(results.resolution == .deinflected)
     let leading = Set(results.entries.prefix(results.leadingLexicalEntryCount).map(\.headword))
     #expect(leading.isSuperset(of: ["読む", "呼ぶ"]))
   }
@@ -65,26 +67,6 @@ struct JapaneseDeinflectionTests {
   )
   func dictionaryFormsStayDirect(query: String) async throws {
     let results = try await LookupClient.live.search(SearchQuery(query))
-    #expect(!results.wasDeinflected)
-  }
-
-  @Test("candidate chains carry the word class the base must have")
-  func candidateWordClasses() {
-    let candidates = JapaneseDeinflector.candidates(for: "まけたら")
-    #expect(candidates.contains { $0.term == "まける" && $0.wordClasses.contains(.ichidan) })
-    #expect(candidates.allSatisfy { $0.term != "まけたら" })
-
-    let chained = JapaneseDeinflector.candidates(for: "食べさせられなかったら")
-    #expect(chained.contains { $0.term == "食べる" && $0.wordClasses.contains(.ichidan) })
-  }
-
-  @Test("word classes only accept matching dictionary parts of speech")
-  func wordClassAcceptance() {
-    #expect(JapaneseWordClass.ichidan.accepts([.ichidanVerb]))
-    #expect(!JapaneseWordClass.ichidan.accepts([.noun]))
-    #expect(JapaneseWordClass.godan.accepts([.godanVerb]))
-    #expect(JapaneseWordClass.iAdjective.accepts([.iAdjective]))
-    #expect(JapaneseWordClass.suruNoun.accepts([.noun, .takesSuru, .transitive]))
-    #expect(!JapaneseWordClass.suruNoun.accepts([.noun, .transitive]))
+    #expect(results.resolution == .direct)
   }
 }

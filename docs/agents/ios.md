@@ -436,7 +436,9 @@ the recorded list. The suite covers queries that match
 directly, deinflected queries (食べた, 見ない), romaji and English queries, wildcards (`t*`, `^t*`), and queries with no
 matches that aren't Japanese. It doesn't cover Japanese queries with no direct match or
 Discovered Words: Search splits those into words with the Sudachi dictionary the app bundles,
-which the package's test host lacks, so recording fails on them. Check those in the Simulator.
+which the package's test host lacks, so recording fails on them. `DictionaryCoreTests` runs one
+such sentence with a stand-in analysis, which checks the path but not Sudachi's words; check
+those in the Simulator.
 The screen's titles, counts, and which rows it shows come from `SearchResultsScreen` in
 `SearchResultsScreen.swift`, which the view and the suite share. Record it with
 `-only-testing:SearchExperienceTests/SearchResultsConformanceTests`; add a query by adding its
@@ -480,7 +482,7 @@ The website's dictionary service replays all five suites through the shared Type
 the same data ([`dictionary-api.md`](dictionary-api.md)), and the `Dictionary API` workflow runs
 them on pull requests that change a suite, so commit a re-recorded suite with the change to the
 core it needs. A change to a Swift file the core ports needs its port changed in the same PR
-([`dictionary-core.md`](dictionary-core.md), and Swift the shared core ports, below). One thing
+([`dictionary-core.md`](dictionary-core.md), and The dictionary core in the app, below). One thing
 the website does isn't recorded yet: sentence search (Discovered Words, above). The service
 checks it with its own test (`sentence-search.test.ts`) until a suite records it.
 
@@ -531,12 +533,64 @@ verified source file with
 The tool matches files by size and SHA-256 and re-downloads each public URL to verify it. Never
 overwrite or delete an object: trusted historical manifests still reference it.
 
-## Swift the shared core ports
+## The dictionary core in the app
 
-`packages/dictionary-core/src/` ports parts of `apps/ios/Modules/Sources/SearchExperience/`: the
-Swift sources section of [`dictionary-core.md`](dictionary-core.md) maps each module to the Swift
-it ports. The `Search parity` workflow ([`ci.md`](ci.md)) fails a pull request that changes one
-side of a pair without the other; change both, and re-record the suite that covers the change.
+Search retrieval, exact-form lookup, and a kanji's words are the shared TypeScript core's
+(`packages/dictionary-core`, [`dictionary-core.md`](dictionary-core.md)). The app runs it in
+JavaScriptCore, offline, and has no Swift of its own for them, so the app and the website find
+the same entries in the same order. The Swift keeps the screens, the entries they show, and the
+frequency re-sort.
+
+- **The host.** `DictionaryCore` (`DictionaryCore.swift`) loads the bundle,
+  `Resources/DictionaryCore/dictionary-core.js`, into a `JSContext` and gives it one function,
+  `zenbuHost.all`, which `SQLiteJSONRows` answers from the app's read-only connection to
+  `LanguageReferenceData.sqlite3`: rows as JSON, each BLOB as hex, an error as its message. The
+  bundle is checked in; after changing the core, rebuild it with `pnpm bundle:javascriptcore` in
+  `packages/dictionary-core`, which the core's tests require
+  ([`dictionary-core.md`](dictionary-core.md), Embedded).
+- **Where it runs.** `LanguageReferenceData`, the actor behind `LookupClient.live`, owns the
+  context and the connection and calls the core on its own executor, as it ran the Swift search,
+  so nothing else touches either during a call. Every read is synchronous, so a call settles
+  before `begin` returns and nothing waits on a callback.
+- **Entries.** The core answers Language Reference IDs. `entries(equivalentTo:)` reads each
+  entry with the app's own columns and decoding, as `entry(_:)` does, so an entry is the same
+  value wherever it came from; an entry JMdict lists twice (閻魔) is one entry under its smaller
+  ID, with both records' provenance.
+- **Sentences.** A search that needs a sentence's words says so in its call's outcome. The actor
+  awaits Sudachi (`JapaneseMorphologyClient`), hands the words back, and the call goes on; other
+  lookups can run while it waits.
+- **Linked words.** `JapaneseTextAnalyzer` asks for all of a text's words at once
+  (`LookupClient.entriesMatchingFirstForms`): each word's forms to try, in order. The core
+  answers each word's first form that has entries as slim candidates (ID, reading, parts of
+  speech), the analyzer narrows them by the word's part of speech and reading, and only the
+  entries it keeps are read, in one statement. A sentence costs one call to the core, where a
+  call a word would cost more than the Swift lookup it replaced.
+- **Cancelling.** `SQLiteJSONRows` checks the task between rows, as the app's other reads do,
+  and the core asks the host between batches of rows while it ranks (`zenbuHost.interrupted`),
+  so a search the learner typed past stops within a few milliseconds, not when its ranking
+  ends. The core's call then fails, the lookup throws `CancellationError`, and nothing is
+  cached.
+- **`SearchQuery`** stays the app's value for a query: what the screens compare, store, and test
+  for kanji or ASCII. Its normalization must equal the core's `normalizeQuery`;
+  `DictionaryCoreTests` compares them on widths, cases, ligatures, and whitespace.
+- **Speed.** JavaScriptCore runs without its JIT inside an app, on the Mac as on iPhone, so the
+  package's tests on a Mac run the core as a device does. `SearchLatencyTests` prints each
+  query's uncached time and the memory the searches reach; it runs only when asked:
+
+  ```sh
+  TEST_RUNNER_ZENBU_MEASURE_SEARCH=1 xcodebuild -scheme ZenbuJapaneseModules-Package \
+    -destination 'platform=macOS,arch=arm64' SWIFT_OPTIMIZATION_LEVEL=-O \
+    -only-testing:SearchExperienceTests/SearchLatencyTests test | grep SEARCH-LATENCY
+  ```
+
+  Build with `SWIFT_OPTIMIZATION_LEVEL=-O` to measure: a Debug build spends most of a broad
+  query's time in the unoptimized Swift that writes its rows.
+
+The rest of the dictionary logic (examples, word and kanji detail, and the results screen) is
+still Swift that `packages/dictionary-core/src/` ports: the Swift sources section of
+[`dictionary-core.md`](dictionary-core.md) maps each module to the Swift it ports. The
+`Search parity` workflow ([`ci.md`](ci.md)) fails a pull request that changes one side of a pair
+without the other; change both, and re-record the suite that covers the change.
 
 ## Search and linked text
 
@@ -546,22 +600,14 @@ set. An exact dictionary form stays first (した is 下 and 舌 before する),
 by chain length, so a direct conjugation (まけたら → 負ける) outranks a longer chain, then prefix
 and contains matches. Radical searches keep only the leading lexical-rank group.
 
-An English query's match groups (`EnglishDictionaryPresentationRank`) are the evidence lane, the
-romaji specificity for romaji-only matches, and whether a strong gloss is in a later sense; the
-frequency re-sort reorders within a group, so 犬's "dog (Canis (lupus) familiaris)" competes with
-ワン子's "dog" on frequency (#701). `glossRelation` counts notes in parentheses only when they run to
-the end of the gloss (`endsInNote`), so "soft (and fluffy) (e.g. bed)" is "soft" and "to (take
-out and) show" is a mention of "to". Within a group,
-`EnglishDictionaryRank` breaks ties by JMdict priority, sense, gloss order, romaji corroboration,
-headword length, and fingerprint. `EnglishSearchCommonWordTests` checks the common word leads
-dog, water, cat, eat, and house on the bundled data, independent of the recorded suites.
-
-`JapaneseDeinflector` rewrites suffixes in chains: after the first rule, a rule applies only when
-its input classes include the class the previous one produced (ない is an i-adjective, so
-なかった → ない → the base). Its candidates are hypotheses, kept only when an entry with that exact
-form has a matching part of speech. Romaji can't tell which godan base a past or te-form had, so
-`SearchQuery` offers every dictionary-form candidate, irregular verbs first (kita is also the past
-of kiru), and -sete gives both -seru and -su (makasete: 任せる, 任す, 負かす).
+How a query is matched, ranked, and deinflected is the core's
+([`dictionary-core.md`](dictionary-core.md), Search). The app reads each result's relevance as
+one number, equal for equally relevant matches, and the frequency re-sort reorders only within
+it, so 犬's "dog (Canis (lupus) familiaris)" competes with ワン子's "dog" on frequency (#701).
+`EnglishSearchCommonWordTests` checks the common word leads dog, water, cat, eat, and house on
+the bundled data, independent of the recorded suites, and `JapaneseDeinflectionTests` and
+`SearchResultOrderingTests` check common inflections the same way (まけたら → 負ける; makasete →
+任せる, 任す, 負かす).
 
 `JapaneseInflectionGrouping` joins a verb or adjective with the pieces both parsers split off, so
 見なかった links as one word: auxiliaries, the connectives て, で, and ば, IPADIC's suffix verbs

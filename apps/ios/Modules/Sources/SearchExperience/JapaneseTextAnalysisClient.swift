@@ -147,7 +147,6 @@ enum JapaneseRubyAnnotation {
 }
 
 struct JapaneseTextAnalysisClient: Sendable {
-  var lookupSegments: @Sendable (SearchQuery) async -> [SearchQuery]
   var availability: @Sendable () async -> JapaneseTextAnalysisAvailability
   var linkedTokens:
     @Sendable (
@@ -158,7 +157,6 @@ struct JapaneseTextAnalysisClient: Sendable {
   var words: @Sendable (_ text: String) async -> [String]
 
   static let characterFallback = JapaneseTextAnalysisClient(
-    lookupSegments: { _ in [] },
     availability: { .reduced },
     linkedTokens: { text, _, _ in
       guard !text.isEmpty else { return [] }
@@ -187,23 +185,6 @@ struct JapaneseTextAnalysisClient: Sendable {
       lookupClient: lookupClient
     )
     return JapaneseTextAnalysisClient(
-      lookupSegments: { query in
-        guard !query.isEmpty,
-          let analysis = try? await morphologyClient.analyze(query.value)
-        else { return [] }
-        return analysis.candidates.compactMap { candidate in
-          guard
-            SearchQuery(candidate.surface).isJapaneseOnly,
-            candidate.partOfSpeech.first.map(JapaneseTextAnalyzer.isLinkablePartOfSpeech)
-              == true,
-            candidate.isOutOfVocabulary == false
-          else { return nil }
-          let form =
-            candidate.dictionaryForm == "*" || candidate.dictionaryForm.isEmpty
-            ? candidate.surface : candidate.dictionaryForm
-          return SearchQuery(form)
-        }
-      },
       availability: morphologyClient.availability,
       linkedTokens: { text, highlightedQuery, highlightedEntry in
         await resolver.tokens(
@@ -223,7 +204,7 @@ struct JapaneseTextAnalysisClient: Sendable {
 private actor JapaneseTextAnalyzer {
   let morphologyClient: JapaneseMorphologyClient
   let lookupClient: LookupClient
-  private var entryCache: [String: [DictionaryEntry]] = [:]
+  private var matches: [LinkedWord: [DictionaryEntry]] = [:]
 
   init(morphologyClient: JapaneseMorphologyClient, lookupClient: LookupClient) {
     self.morphologyClient = morphologyClient
@@ -237,20 +218,26 @@ private actor JapaneseTextAnalyzer {
   ) async -> [JapaneseTextToken] {
     do {
       let analysis = try await morphologyClient.analyze(text)
+      let candidates = JapaneseInflectionGrouping.group(analysis.candidates)
+      let highlightedForms = highlightedEntry.map {
+        Set(Self.forms(for: $0, preferred: highlightedQuery.value))
+      }
+      await findEntries(for: candidates, except: highlightedForms)
       var tokens: [JapaneseTextToken] = []
-      for candidate in JapaneseInflectionGrouping.group(analysis.candidates) {
-        let resolution = await resolvedEntry(
+      for candidate in candidates {
+        let resolution = resolvedEntry(
           for: candidate,
-          highlightedQuery: highlightedQuery,
-          highlightedEntry: highlightedEntry
+          highlightedEntry: highlightedEntry,
+          highlightedForms: highlightedForms
         )
         if resolution.candidates.isEmpty, candidate.children.count > 1 {
+          await findEntries(for: candidate.children, except: highlightedForms)
           var childTokens: [JapaneseTextToken] = []
           for child in candidate.children {
-            let childResolution = await resolvedEntry(
+            let childResolution = resolvedEntry(
               for: child,
-              highlightedQuery: highlightedQuery,
-              highlightedEntry: highlightedEntry
+              highlightedEntry: highlightedEntry,
+              highlightedForms: highlightedForms
             )
             childTokens.append(
               token(
@@ -294,58 +281,71 @@ private actor JapaneseTextAnalyzer {
 
   private func resolvedEntry(
     for candidate: JapaneseMorphologyCandidate,
-    highlightedQuery: SearchQuery,
-    highlightedEntry: DictionaryEntry?
-  ) async -> (entry: DictionaryEntry?, candidates: [DictionaryEntry]) {
-    if let highlightedEntry {
-      let highlightedForms = Set(
-        Self.forms(for: highlightedEntry, preferred: highlightedQuery.value))
-      let evidence = [candidate.surface, candidate.dictionaryForm, candidate.normalizedForm]
-      if evidence.contains(where: { highlightedForms.contains($0) }) {
-        return (highlightedEntry, [highlightedEntry])
-      }
+    highlightedEntry: DictionaryEntry?,
+    highlightedForms: Set<String>?
+  ) -> (entry: DictionaryEntry?, candidates: [DictionaryEntry]) {
+    if let highlightedEntry, Self.isWritten(candidate, as: highlightedForms) {
+      return (highlightedEntry, [highlightedEntry])
     }
-
-    guard SearchQuery(candidate.surface).isJapaneseOnly else { return (nil, []) }
-
-    for form in Self.lookupForms(for: candidate) {
-      let family = await entries(for: form)
-      guard !family.isEmpty else { continue }
-      let preferred = preferredEntries(
-        family,
-        candidate: candidate,
-        matchesSurfaceReading: form == candidate.surface
-      )
-      let candidates = preferred.isEmpty ? family : preferred
-      if candidates.count == 1 { return (candidates[0], candidates) }
-      return (nil, candidates)
-    }
-    return (nil, [])
+    let candidates = matches[LinkedWord(candidate)] ?? []
+    return (candidates.count == 1 ? candidates[0] : nil, candidates)
   }
 
-  private func preferredEntries(
-    _ entries: [DictionaryEntry],
-    candidate: JapaneseMorphologyCandidate,
+  private static func isWritten(
+    _ candidate: JapaneseMorphologyCandidate, as forms: Set<String>?
+  ) -> Bool {
+    guard let forms else { return false }
+    return [candidate.surface, candidate.dictionaryForm, candidate.normalizedForm]
+      .contains(where: forms.contains)
+  }
+
+  private func findEntries(
+    for candidates: [JapaneseMorphologyCandidate], except highlightedForms: Set<String>?
+  ) async {
+    var unmatched: [LinkedWord] = []
+    var seen = Set<LinkedWord>()
+    for candidate in candidates
+    where SearchQuery(candidate.surface).isJapaneseOnly
+      && !Self.isWritten(candidate, as: highlightedForms)
+    {
+      let word = LinkedWord(candidate)
+      if matches[word] == nil, seen.insert(word).inserted { unmatched.append(word) }
+    }
+    let words = unmatched
+    guard !words.isEmpty else { return }
+    let found = try? await lookupClient.entriesMatchingFirstForms(
+      words.map(Self.lookupForms),
+      { index, form, family in
+        let word = words[index]
+        return Self.preferredEntries(family, word: word, matchesSurfaceReading: form == word.surface)
+          .map(\.id)
+      })
+    for (word, entries) in zip(words, found ?? []) { matches[word] = entries }
+  }
+
+  private static func preferredEntries(
+    _ entries: [DictionaryLinkCandidate],
+    word: LinkedWord,
     matchesSurfaceReading: Bool
-  ) -> [DictionaryEntry] {
+  ) -> [DictionaryLinkCandidate] {
     var filtered = entries
-    if let providerPOS = candidate.partOfSpeech.first {
+    if let providerPOS = word.partOfSpeech {
       let compatible = filtered.filter { entry in
         entry.partsOfSpeech.contains { part in Self.isCompatible(part, with: providerPOS) }
       }
       if !compatible.isEmpty { filtered = compatible }
     }
-    if matchesSurfaceReading, !candidate.reading.isEmpty, candidate.reading != "*" {
+    if matchesSurfaceReading, !word.reading.isEmpty, word.reading != "*" {
       let readingMatches = filtered.filter {
         ($0.reading.applyingTransform(.hiraganaToKatakana, reverse: false) ?? $0.reading)
-          == candidate.reading
+          == word.reading
       }
       if !readingMatches.isEmpty { filtered = readingMatches }
     }
     return filtered
   }
 
-  private static func lookupForms(for candidate: JapaneseMorphologyCandidate) -> [String] {
+  private static func lookupForms(for word: LinkedWord) -> [String] {
     var forms: [String] = []
     var seen = Set<String>()
     func append(_ value: String) {
@@ -353,9 +353,9 @@ private actor JapaneseTextAnalyzer {
       forms.append(value)
     }
     let evidence =
-      candidate.joinsInflection
-      ? [candidate.dictionaryForm, candidate.normalizedForm]
-      : [candidate.surface, candidate.dictionaryForm, candidate.normalizedForm]
+      word.joinsInflection
+      ? [word.dictionaryForm, word.normalizedForm]
+      : [word.surface, word.dictionaryForm, word.normalizedForm]
     for form in evidence {
       append(form)
       append(form.applyingTransform(.hiraganaToKatakana, reverse: true) ?? form)
@@ -404,20 +404,23 @@ private actor JapaneseTextAnalyzer {
       .filter { !$0.isEmpty && seen.insert($0).inserted }
       .sorted { $0.count > $1.count }
   }
+}
 
-  fileprivate static func isLinkablePartOfSpeech(_ value: String) -> Bool {
-    ["名詞", "動詞", "形容詞", "形状詞", "代名詞", "接頭辞", "接尾辞", "感動詞"].contains(value)
-  }
+private struct LinkedWord: Hashable, Sendable {
+  let surface: String
+  let dictionaryForm: String
+  let normalizedForm: String
+  let reading: String
+  let partOfSpeech: String?
+  let joinsInflection: Bool
 
-  private func entries(for surface: String) async -> [DictionaryEntry] {
-    if let cached = entryCache[surface] { return cached }
-    do {
-      let entries = try await lookupClient.entriesMatchingForm(surface)
-      entryCache[surface] = entries
-      return entries
-    } catch {
-      return []
-    }
+  init(_ candidate: JapaneseMorphologyCandidate) {
+    surface = candidate.surface
+    dictionaryForm = candidate.dictionaryForm
+    normalizedForm = candidate.normalizedForm
+    reading = candidate.reading
+    partOfSpeech = candidate.partOfSpeech.first
+    joinsInflection = candidate.joinsInflection
   }
 }
 

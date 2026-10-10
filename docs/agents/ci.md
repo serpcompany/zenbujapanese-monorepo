@@ -443,10 +443,13 @@ jobs:
 
 ## Search parity
 
-`.github/workflows/search-parity.yml` keeps two implementations in step. Search retrieval, the
-results screen, word pages' examples, and parts of the word page's detail (the per-kanji furigana
-highlight, the pitch graph, Frequency Details, and the conjugation table) exist twice until issue 481 makes TypeScript
-the single core (ADR 0008): Swift for the iOS app, and a TypeScript port for the website.
+`.github/workflows/search-parity.yml` keeps two implementations in step. The results screen, word
+pages' examples, and parts of the word page's detail (the per-kanji furigana highlight, the pitch
+graph, Frequency Details, and the conjugation table) exist twice until issue 481 makes TypeScript
+the single core (ADR 0008): Swift for the iOS app, and a TypeScript port for the website. Search
+retrieval no longer does: the app runs the core's ([`ios.md`](ios.md), The dictionary core in the
+app), and all that is left of that pair is how a query is normalized, which the app's screens
+still do in Swift.
 
 It runs on a pull request that changes a file of any pair below, and again when a label is added
 or removed. It fails when one side of a pair changed without the other, and lists the changed
@@ -456,7 +459,7 @@ and skips the check.
 
 | Pair | Swift sources (`<name>.swift` in `apps/ios/Modules/Sources/SearchExperience/`) | TypeScript ports |
 | --- | --- | --- |
-| search | `LookupClient`, `LookupDatabase`, `LookupEnglishRanking`, `LookupJapaneseRanking`, `LookupRankedEntries`, `SearchQuery`, `DictionaryRanking`, `JapaneseDeinflection`, `DictionaryEntry`, `JapaneseTextAnalysisClient` | Everything in `packages/dictionary-core/src/search/` |
+| query normalization | `SearchQuery` | `query.ts` in `packages/dictionary-core/src/search/`, whose `normalizeQuery` the app's `DictionaryCoreTests` compares with `SearchQuery` |
 | examples | `ExampleSentenceClient`, `ExampleSentenceDatabase`, `ExampleSentenceEntryRetrieval`, `ExampleSentenceModels`, `ExampleSentenceSearchRetrieval`, `JapaneseTextAnalysisClient`, `JapaneseInflectionGrouping`, `KuromojiMorphologyClient`, `LinkedJapaneseText` (the conjugated form's highlight) | The `.ts` files in `packages/dictionary-core/src/examples/`; `example-retrieval.ts`, `example-search.ts`, `word-examples.ts`, and `lookup.ts` in `packages/dictionary-core/src/artifact/`; `apps/dictionary-api/src/kuromoji.ts` |
 | detail | `KanjiReadingSplitter`, `JapaneseRubyText` (the per-kanji furigana highlight), `WordDetailView`, `WordHeadline`, `WordDetailSections`, `PitchAccentBadge` (`PitchContourLayout`), `FrequencyDisclosure` (`FrequencyDisclosurePresentation`), `FrequencyPack`, `FrequencyPresentation`, `JapaneseConjugationClient`, `ConjugationsView` | `kanji-split.ts`, `pitch.ts`, `frequency.ts`, `conjugation.ts`, and `conjugation-table.ts` in `packages/dictionary-core/src/detail/` |
 | results | `SearchResultsView`, `SearchResultsScreen` (the results screen's rows, titles, and counts), `SearchResultFrequencyOrdering` | The `.ts` files in `packages/dictionary-core/src/results/`, and `search-examples.ts` in `packages/dictionary-core/src/artifact/` |

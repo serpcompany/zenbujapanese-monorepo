@@ -12,15 +12,12 @@ struct SearchResultOrderingTests {
     #expect(dog.relevance(for: notedInu) == dog.relevance(for: exactWanko))
     #expect(dog.relevance(for: exactWanko) < dog.relevance(for: mention))
 
-    let noted = englishRank(priorityPresence: 0, fingerprint: "inu")
-    let exact = englishRank(priorityPresence: 1, fingerprint: "wanko")
-
     let inu = DictionaryEntry.fixture(id: "00000000000000000000000000000004", headword: "犬")
     let wanko = DictionaryEntry.fixture(id: "00000000000000000000000000000005", headword: "ワン子")
     let results = LookupSearchResults(
       items: [
-        fixtureEnglishItem(entry: wanko, rank: exact, fallbackOrder: 0),
-        fixtureEnglishItem(entry: inu, rank: noted, fallbackOrder: 1),
+        fixtureItem(entry: wanko, fallbackOrder: 0),
+        fixtureItem(entry: inu, fallbackOrder: 1),
       ]
     )
     let evidence: [LanguageReferenceID: FrequencyLookupResult] = [
@@ -35,23 +32,14 @@ struct SearchResultOrderingTests {
 
   @Test("a later meaning and a mention stay below every first meaning, whatever their frequency")
   func laterMeaningsAndMentionsStayBelow() {
-    let first = englishRank(priorityPresence: 1, fingerprint: "first")
-    let later = englishRank(priorityPresence: 0, senseOrder: 3, fingerprint: "later")
-    let mention = englishRank(lane: .tokenGloss, priorityPresence: 0, fingerprint: "mention")
-    #expect(first.presentationRank < later.presentationRank)
-    #expect(later.presentationRank < mention.presentationRank)
-    #expect(
-      englishRank(priorityPresence: 0, senseOrder: 1, fingerprint: "a").presentationRank
-        == englishRank(priorityPresence: 0, senseOrder: 4, fingerprint: "b").presentationRank)
-
     let a = DictionaryEntry.fixture(id: "00000000000000000000000000000001", headword: "甲")
     let b = DictionaryEntry.fixture(id: "00000000000000000000000000000002", headword: "乙")
     let c = DictionaryEntry.fixture(id: "00000000000000000000000000000003", headword: "丙")
     let results = LookupSearchResults(
       items: [
-        fixtureEnglishItem(entry: c, rank: mention, fallbackOrder: 0),
-        fixtureEnglishItem(entry: b, rank: later, fallbackOrder: 1),
-        fixtureEnglishItem(entry: a, rank: first, fallbackOrder: 2),
+        fixtureItem(entry: c, relevance: 2, fallbackOrder: 0),
+        fixtureItem(entry: b, relevance: 1, fallbackOrder: 1),
+        fixtureItem(entry: a, relevance: 0, fallbackOrder: 2),
       ]
     )
     let evidence: [LanguageReferenceID: FrequencyLookupResult] = [
@@ -62,70 +50,6 @@ struct SearchResultOrderingTests {
     #expect(
       SearchResultFrequencyOrdering.ordered(results, ranks: evidence.mapValues { [$0] }).map(\.id)
         == [a.id, b.id, c.id]
-    )
-  }
-
-  @Test(
-    "a meaning counts as the query only when its note in parentheses runs to the end",
-    arguments: [
-      ("dog", "dog (Canis (lupus) familiaris)", DictionaryMatch.GlossRelation.qualifiedGloss),
-      ("dog", "dog", .exactGloss),
-      ("see", "to see (a doctor)", .qualifiedInfinitive),
-      ("to", "to (take out and) show", .glossToken),
-      ("to", "to (nearly) drown", .glossToken),
-      ("dog", "dog (pejorative) days", .glossToken),
-      ("soft", "soft (and fluffy) (e.g. bed, bread, baked potato)", .qualifiedGloss),
-      ("tamagotchi", "tamagotchi (handheld digital pet) (trademark)", .qualifiedGloss),
-      ("dog", "dog (a) days (b)", .glossToken),
-    ])
-  func noteMustEndTheMeaning(
-    query: String, gloss: String, expected: DictionaryMatch.GlossRelation
-  ) throws {
-    let token = try LanguageReferenceData.glossTokenPattern(query)
-    #expect(
-      LanguageReferenceData.glossRelation(query: query, gloss: gloss, token: token) == expected)
-  }
-
-  @Test("without frequency, priority marks lead and romaji that resembles the query only breaks ties")
-  func romajiCorroborationOnlyBreaksTies() {
-    let marked = englishRank(priorityPresence: 0, corroboration: 1, fingerprint: "marked")
-    let corroborated = englishRank(priorityPresence: 1, corroboration: 0, fingerprint: "doggu")
-    let plain = englishRank(priorityPresence: 1, corroboration: 1, fingerprint: "plain")
-    #expect(corroborated.presentationRank == plain.presentationRank)
-    #expect([plain, corroborated, marked].sorted() == [marked, corroborated, plain])
-  }
-
-  @Test("legacy best-match rank is preserved for radical result bounds")
-  func legacyPresentationRank() {
-    let first = JapaneseDictionaryRank(
-      relation: .writtenExact,
-      priorityProfile: .unmarked,
-      senseBreadthRank: -2,
-      headwordLength: 1,
-      semanticFingerprint: "first"
-    )
-    let stableFallbackOnly = JapaneseDictionaryRank(
-      relation: .writtenExact,
-      priorityProfile: .unmarked,
-      senseBreadthRank: -2,
-      headwordLength: 8,
-      semanticFingerprint: "second"
-    )
-    let differentLegacyBucket = JapaneseDictionaryRank(
-      relation: .writtenExact,
-      priorityProfile: .unmarked,
-      senseBreadthRank: -1,
-      headwordLength: 1,
-      semanticFingerprint: "third"
-    )
-
-    #expect(
-      DictionaryLegacyPresentationRank.japanese(first)
-        == .japanese(stableFallbackOnly)
-    )
-    #expect(
-      DictionaryLegacyPresentationRank.japanese(first)
-        != .japanese(differentLegacyBucket)
     )
   }
 
@@ -152,9 +76,9 @@ struct SearchResultOrderingTests {
     let weaker = DictionaryEntry.fixture(id: "00000000000000000000000000000003", headword: "丙")
     let results = LookupSearchResults(
       items: [
-        fixtureItem(entry: directA, relation: .writtenExact, fallbackOrder: 0),
-        fixtureItem(entry: directB, relation: .writtenExact, fallbackOrder: 1),
-        fixtureItem(entry: weaker, relation: .writtenPrefix, fallbackOrder: 2),
+        fixtureItem(entry: directA, fallbackOrder: 0),
+        fixtureItem(entry: directB, fallbackOrder: 1),
+        fixtureItem(entry: weaker, relevance: 1, fallbackOrder: 2),
       ]
     )
     let evidence: [LanguageReferenceID: FrequencyLookupResult] = [
@@ -299,7 +223,7 @@ struct SearchResultOrderingTests {
     let query = SearchQuery("makasete")
     #expect(try await LookupClient.live.entryMatchingForm(query.value) == nil)
     let results = try await LookupClient.live.search(query)
-    #expect(results.wasDeinflected)
+    #expect(results.resolution == .deinflected)
 
     let entrusted = try #require(results.entries.first { $0.headword == "任せる" })
     let defeat = try #require(results.entries.first { $0.headword == "負かす" })
@@ -325,7 +249,7 @@ struct SearchResultOrderingTests {
     let query = SearchQuery("kaetta")
     #expect(try await LookupClient.live.entryMatchingForm(query.value) == nil)
     let results = try await LookupClient.live.search(query)
-    #expect(results.wasDeinflected)
+    #expect(results.resolution == .deinflected)
 
     try assertRelevanceOrdering(
       in: results,
@@ -333,66 +257,6 @@ struct SearchResultOrderingTests {
       sameGroup: ("嘉悦大学", "嘉悦女子短大")
     )
   }
-
-  @Test("deinflection composition preserves structured relevance metadata")
-  func deinflectionCompositionPreservesMetadata() {
-    let primary = fixtureItem(
-      id: "00000000000000000000000000000001", headword: "primary", group: 0,
-      matchedSummary: "primary match")
-    let alternateA = fixtureItem(
-      id: "00000000000000000000000000000002", headword: "alternate-a", group: 4,
-      matchedSummary: "alternate match a")
-    let alternateB = fixtureItem(
-      id: "00000000000000000000000000000003", headword: "alternate-b", group: 4,
-      matchedSummary: "alternate match b")
-
-    let results = LookupSearchResults.composing(
-      sources: [[primary], [alternateA, alternateB]],
-      leadingLexicalEntryCount: 1,
-      usesPrimaryEntryExamples: true
-    )
-
-    #expect(results.relevance(for: primary.entry).sourceOrder == 0)
-    #expect(results.relevance(for: alternateA.entry).sourceOrder == 1)
-    #expect(results.relevance(for: alternateB.entry).sourceOrder == 1)
-    #expect(results.relevance(for: alternateA.entry).matchRank == alternateA.relevance.matchRank)
-    #expect(results.relevance(for: alternateB.entry).matchRank == alternateB.relevance.matchRank)
-    #expect(results.displaySummary(for: alternateB.entry) == "alternate match b")
-  }
-
-}
-
-private func englishRank(
-  lane: DictionaryMatch.EvidenceLane = .strongGloss,
-  priorityPresence: Int,
-  senseOrder: Int = 0,
-  corroboration: Int = 1,
-  fingerprint: String
-) -> EnglishDictionaryRank {
-  EnglishDictionaryRank(
-    lane: lane,
-    corroborationRank: corroboration,
-    romajiSpecificityRank: 0,
-    senseOrder: senseOrder,
-    priorityPresenceRank: priorityPresence,
-    priorityProfile: .unmarked,
-    glossOrder: 0,
-    headwordLength: 1,
-    semanticFingerprint: fingerprint
-  )
-}
-
-private func fixtureEnglishItem(
-  entry: DictionaryEntry,
-  rank: EnglishDictionaryRank,
-  fallbackOrder: Int
-) -> LookupSearchResultItem {
-  LookupSearchResultItem(
-    entry: entry,
-    relevance: DictionaryRelevance(sourceOrder: 0, matchRank: rank.presentationRank),
-    fallbackOrder: fallbackOrder,
-    matchedSummary: entry.summary
-  )
 }
 
 private func assertLiveRelevanceOrdering(
@@ -430,33 +294,15 @@ private func assertRelevanceOrdering(
 }
 
 private func fixtureItem(
-  id: String,
-  headword: String,
-  group: Int,
-  matchedSummary: String? = nil
-) -> LookupSearchResultItem {
-  fixtureItem(
-    entry: DictionaryEntry.fixture(id: id, headword: headword),
-    sourceOrder: group,
-    matchedSummary: matchedSummary
-  )
-}
-
-private func fixtureItem(
   entry: DictionaryEntry,
-  sourceOrder: Int = 0,
-  relation: DictionaryMatch.FormRelation = .writtenExact,
-  fallbackOrder: Int = 0,
-  matchedSummary: String? = nil
+  relevance: Int = 0,
+  fallbackOrder: Int
 ) -> LookupSearchResultItem {
   LookupSearchResultItem(
     entry: entry,
-    relevance: DictionaryRelevance(
-      sourceOrder: sourceOrder,
-      matchRank: .japanese(JapaneseDictionaryPresentationRank(relation: relation))
-    ),
+    relevance: DictionaryRelevance(order: relevance),
     fallbackOrder: fallbackOrder,
-    matchedSummary: matchedSummary
+    matchedSummary: nil
   )
 }
 

@@ -6,7 +6,42 @@ struct LookupClient: Sendable {
   var entry: @Sendable (LanguageReferenceID) async throws -> DictionaryEntry?
   var entryMatchingForm: @Sendable (String) async throws -> DictionaryEntry?
   var entriesMatchingForm: @Sendable (String) async throws -> [DictionaryEntry]
+  var entriesMatchingFirstForms:
+    @Sendable ([[String]], LinkCandidateChoice) async throws -> [[DictionaryEntry]]
   var entriesContainingKanji: @Sendable (String) async throws -> [DictionaryEntry]
+
+  init(
+    search: @escaping @Sendable (SearchQuery) async throws -> LookupSearchResults,
+    entry: @escaping @Sendable (LanguageReferenceID) async throws -> DictionaryEntry?,
+    entryMatchingForm: @escaping @Sendable (String) async throws -> DictionaryEntry?,
+    entriesMatchingForm: @escaping @Sendable (String) async throws -> [DictionaryEntry],
+    entriesMatchingFirstForms: (
+      @Sendable ([[String]], LinkCandidateChoice) async throws -> [[DictionaryEntry]]
+    )? = nil,
+    entriesContainingKanji: @escaping @Sendable (String) async throws -> [DictionaryEntry]
+  ) {
+    self.search = search
+    self.entry = entry
+    self.entryMatchingForm = entryMatchingForm
+    self.entriesMatchingForm = entriesMatchingForm
+    self.entriesMatchingFirstForms =
+      entriesMatchingFirstForms ?? { alternatives, choice in
+        var matched: [[DictionaryEntry]] = []
+        for (index, forms) in alternatives.enumerated() {
+          var chosen: [DictionaryEntry] = []
+          for form in forms {
+            let family = try await entriesMatchingForm(form)
+            guard !family.isEmpty else { continue }
+            let ids = Set(choice(index, form, family.map(DictionaryLinkCandidate.init)))
+            chosen = family.filter { ids.contains($0.id.rawValue) }
+            break
+          }
+          matched.append(chosen)
+        }
+        return matched
+      }
+    self.entriesContainingKanji = entriesContainingKanji
+  }
 
   static let live: LookupClient = {
     LookupClient(
@@ -19,6 +54,10 @@ struct LookupClient: Sendable {
       entriesMatchingForm: { form in
         try await LanguageReferenceData.shared.entries(matchingForm: form)
       },
+      entriesMatchingFirstForms: { alternatives, choice in
+        try await LanguageReferenceData.shared.entries(
+          matchingFirstOf: alternatives, choosing: choice)
+      },
       entriesContainingKanji: { character in
         try await LanguageReferenceData.shared.entries(containingKanji: character)
       }
@@ -26,30 +65,29 @@ struct LookupClient: Sendable {
   }()
 }
 
+typealias LinkCandidateChoice = @Sendable (
+  _ index: Int, _ form: String, _ family: [DictionaryLinkCandidate]
+) -> [String]
+
 actor LanguageReferenceData {
   static let shared = LanguageReferenceData()
 
-  var connection: SQLiteConnection?
-  var senseRestrictionCache: [SenseRestrictionKey: Set<String>]?
+  var statements: SQLiteStatements?
+  private var core: DictionaryCore?
   private var searchResultCache: [SearchQuery: LookupSearchResults] = [:]
   private var searchCacheOrder: [SearchQuery] = []
   let databaseURL: URL?
   let validatesBundledArtifact: Bool
-  private let literalSearchQueryPolicy = LiteralSearchQueryPolicy.referenceCompatible
-  private let japaneseTextAnalysis = JapaneseTextAnalysisClient.resolving(
-    morphologyClient: .live,
-    lookupClient: LookupClient(
-      search: { _ in .empty },
-      entry: { _ in nil },
-      entryMatchingForm: { _ in nil },
-      entriesMatchingForm: { _ in [] },
-      entriesContainingKanji: { _ in [] }
-    )
-  )
+  private let morphology: JapaneseMorphologyClient
 
-  init(databaseURL: URL? = nil, validatesBundledArtifact: Bool = true) {
+  init(
+    databaseURL: URL? = nil,
+    validatesBundledArtifact: Bool = true,
+    morphology: JapaneseMorphologyClient = .live
+  ) {
     self.databaseURL = databaseURL
     self.validatesBundledArtifact = validatesBundledArtifact
+    self.morphology = morphology
   }
 
   func search(_ query: SearchQuery) async throws -> LookupSearchResults {
@@ -62,6 +100,7 @@ actor LanguageReferenceData {
 
     let results = try await searchUncached(query)
     searchResultCache[query] = results
+    searchCacheOrder.removeAll { $0 == query }
     searchCacheOrder.append(query)
     if searchCacheOrder.count > Self.searchCacheCapacity {
       searchResultCache[searchCacheOrder.removeFirst()] = nil
@@ -69,203 +108,132 @@ actor LanguageReferenceData {
     return results
   }
 
-  private func searchUncached(_ query: SearchQuery) async throws -> LookupSearchResults {
-    let exactFormEntry =
-      query.isASCII && !query.isEmpty
-      ? try rankedEnglish(query, exactFormOnly: true).first?.entry : nil
-    if let japaneseReading = exactFormEntry?.reading {
-      let refinement = SearchQuery(japaneseReading)
-      let refinedResults = try searchOnce(refinement)
-      let literalQuery = literalSearchQueryPolicy.literalQuery(for: query)
-      var literalResults = try searchLiteralEnglish(literalQuery)
-      if !refinedResults.isEmpty, !literalResults.isEmpty {
-        if let exactFormEntry,
-          literalResults.entries.contains(where: {
-            $0.id == exactFormEntry.id
-          })
-        {
-          literalResults = literalResults.usingPrimaryEntryExamples()
-        }
-        return literalResults.offeringReadingRefinement(refinement)
-      }
-    }
+  func coreSearch(_ query: String) async throws -> DictionaryCoreSearchResults {
+    try await coreAnswer("search", query)
+  }
 
-    let directResults = try searchOnce(query)
-    if !directResults.hasExactOrPrefixMatch, !query.deinflectedCandidates.isEmpty {
-      let deinflectedResults = try query.deinflectedCandidates.map(searchOnce)
-      if let primaryIndex = deinflectedResults.firstIndex(where: { !$0.entries.isEmpty }) {
-        let primaryResult = deinflectedResults[primaryIndex]
-        let primaryItems = Array(
-          primaryResult.items.prefix(primaryResult.leadingLexicalEntryCount))
-        let displacedSources = deinflectedResults.dropFirst(primaryIndex + 1).map(\.items)
-          + [directResults.items]
-        return LookupSearchResults.composing(
-          sources: [primaryItems] + displacedSources,
-          leadingLexicalEntryCount: primaryItems.count,
-          usesPrimaryEntryExamples: true,
-          resolution: .deinflected,
-          limit: 60
+  func coreNormalizedQuery(_ text: String) async throws -> String {
+    try await coreAnswer("normalizeQuery", text)
+  }
+
+  private func searchUncached(_ query: SearchQuery) async throws -> LookupSearchResults {
+    let found = try await coreSearch(query.value)
+    let ids = found.items.map { LanguageReferenceID(rawValue: $0.id) }
+    let entries = try entries(equivalentTo: ids)
+    return LookupSearchResults(
+      items: try zip(ids, found.items).map { id, item in
+        guard let entry = entries[id] else { throw LookupDatabaseError.missingEntry }
+        return LookupSearchResultItem(
+          entry: entry,
+          relevance: DictionaryRelevance(order: item.relevance),
+          fallbackOrder: item.fallbackOrder,
+          matchedSummary: item.matchedSummary
         )
-      }
-    }
-    if query.isJapaneseOnly {
-      let deinflectedSources = try japaneseDeinflectedSources(for: query)
-      if !deinflectedSources.isEmpty {
-        let exactItems = directResults.items.prefix { item in
-          guard case .japanese(let rank) = item.relevance.matchRank else { return false }
-          return rank.relation <= .readingExact
-        }
-        if !exactItems.isEmpty {
-          return LookupSearchResults.composing(
-            sources: [Array(exactItems)] + deinflectedSources
-              + [Array(directResults.items.dropFirst(exactItems.count))],
-            leadingLexicalEntryCount: directResults.leadingLexicalEntryCount,
-            usesPrimaryEntryExamples: directResults.usesPrimaryEntryExamples,
-            hasExactOrPrefixMatch: directResults.hasExactOrPrefixMatch
-          )
-        }
-        return LookupSearchResults.composing(
-          sources: deinflectedSources + [directResults.items],
-          leadingLexicalEntryCount: deinflectedSources[0].count,
-          usesPrimaryEntryExamples: true,
-          resolution: .deinflected
-        )
-      }
-    }
-    if !directResults.isEmpty,
-      let exactFormEntry,
-      directResults.entries.contains(where: { $0.id == exactFormEntry.id })
-    {
-      return directResults.usingPrimaryEntryExamples()
-    }
-    guard directResults.isEmpty else { return directResults }
-    let analyzedResults = try await japaneseTextAnalysis.lookupSegments(query).compactMap {
-      segment in
-      let segmentResults = try searchOnce(segment)
-      return segmentResults.items.first {
-        $0.entry.headword == segment.value
-      }
-        ?? segmentResults.items.first
-    }
-    if analyzedResults.count > 1 || (query.isMixedScript && !analyzedResults.isEmpty) {
-      return LookupSearchResults.composing(
-        sources: analyzedResults.map { [$0] },
-        leadingLexicalEntryCount: analyzedResults.count,
-        usesPrimaryEntryExamples: false,
-        hasExactOrPrefixMatch: false,
-        resolution: .analyzed,
-        limit: analyzedResults.count
-      )
-      .presenting(.discoveredWords)
-    }
-    if query.isMixedScript {
-      for segment in query.japaneseSegments {
-        let results = try searchOnce(segment)
-        if !results.isEmpty {
-          return results.presenting(.discoveredWords, hasExactOrPrefixMatch: false)
-        }
-      }
-    }
-    return .empty
+      },
+      leadingLexicalEntryCount: found.leadingLexicalEntryCount,
+      presentation: found.presentation,
+      resolution: found.resolution,
+      readingRefinement: found.readingRefinement.map { SearchRefinement(query: SearchQuery($0)) },
+      usesPrimaryEntryExamples: found.usesPrimaryEntryExamples
+    )
   }
 
   func entry(_ id: LanguageReferenceID) throws -> DictionaryEntry? {
-    guard let key = id.bytes else { return nil }
-    let statement = try prepare(Self.equivalentEntriesByIDSQL)
-    defer { sqlite3_finalize(statement) }
-    sqliteBind(key, at: 1, to: statement)
-    var entries: [DictionaryEntry] = []
-    while try checkedSQLiteStep(statement) == .row {
-      entries.append(try decodeEntry(from: statement))
-    }
-    return LanguageReferenceIdentity.normalizedEntry(entries)
+    try entries(equivalentTo: [id]).values.first
   }
 
-  func entry(matchingForm form: String) throws -> DictionaryEntry? {
-    try entries(matchingForm: form).first
+  func entry(matchingForm form: String) async throws -> DictionaryEntry? {
+    try await entries(matchingForm: form).first
   }
 
-  func entries(matchingForm form: String) throws -> [DictionaryEntry] {
-    let query = SearchQuery(form)
-    guard !query.isEmpty else { return [] }
-    return try
-      (query.isASCII
-      ? rankedEnglish(query, exactFormOnly: true)
-      : rankedJapanese(query, exactFormOnly: true)).map(\.entry)
+  func entries(matchingForm form: String) async throws -> [DictionaryEntry] {
+    try await entries(matchingFirstOf: [[form]]) { _, _, family in family.map(\.id) }[0]
   }
 
-  func entries(containingKanji character: String) throws -> [DictionaryEntry] {
-    let candidateStatement = try prepare(Self.kanjiCandidateRowsSQL)
-    defer { sqlite3_finalize(candidateStatement) }
-    sqliteBind(character, at: 1, to: candidateStatement)
-    sqliteBind(character, at: 2, to: candidateStatement)
-    var orderedFingerprints: [Data] = []
-    sqlite3_bind_int(candidateStatement, 3, 24)
-    while try checkedSQLiteStep(candidateStatement) == .row {
-      orderedFingerprints.append(sqliteData(candidateStatement, 0))
+  func entries(
+    matchingFirstOf alternatives: [[String]],
+    choosing choice: LinkCandidateChoice
+  ) async throws -> [[DictionaryEntry]] {
+    guard alternatives.contains(where: { !$0.isEmpty }) else { return alternatives.map { _ in [] } }
+    let families: [String: [DictionaryLinkCandidate]] = try await coreAnswer(
+      "entriesMatchingFirstForms",
+      String(decoding: try JSONEncoder().encode(alternatives), as: UTF8.self))
+    let chosen = alternatives.enumerated().map { index, forms -> [String] in
+      guard let form = forms.first(where: { families[$0]?.isEmpty == false }) else { return [] }
+      return choice(index, form, families[form] ?? [])
     }
-    guard !orderedFingerprints.isEmpty else { return [] }
+    let entries = try entries(
+      equivalentTo: chosen.joined().map(LanguageReferenceID.init(rawValue:)))
+    return chosen.map { $0.compactMap { entries[LanguageReferenceID(rawValue: $0)] } }
+  }
 
-    let placeholders = Array(repeating: "?", count: orderedFingerprints.count).joined(
-      separator: ",")
-    let statement = try prepare(
-      """
-      SELECT \(Self.selectedColumns)
-      FROM entries e
-      WHERE e.semantic_fingerprint IN (\(placeholders))
-      ORDER BY lower(hex(e.id))
-      """)
-    defer { sqlite3_finalize(statement) }
-    for (offset, fingerprint) in orderedFingerprints.enumerated() {
-      sqliteBind(fingerprint, at: Int32(offset + 1), to: statement)
+  func entries(containingKanji character: String) async throws -> [DictionaryEntry] {
+    try entries(inOrder: try await coreAnswer("entriesContainingKanji", character))
+  }
+
+  private func entries(inOrder ids: [String]) throws -> [DictionaryEntry] {
+    let ids = ids.map(LanguageReferenceID.init(rawValue:))
+    let found = try entries(equivalentTo: ids)
+    return ids.compactMap { found[$0] }
+  }
+
+  private func entries(
+    equivalentTo ids: [LanguageReferenceID]
+  ) throws -> [LanguageReferenceID: DictionaryEntry] {
+    var listed: [String] = []
+    var seen = Set<LanguageReferenceID>()
+    for id in ids where id.bytes != nil && seen.insert(id).inserted {
+      listed.append("\"\(id.rawValue)\"")
     }
+    guard !listed.isEmpty else { return [:] }
+    let statement = try openStatements().statement(Self.equivalentEntriesSQL)
+    defer { sqlite3_reset(statement) }
+    sqliteBind("[\(listed.joined(separator: ","))]", at: 1, to: statement)
     var groups: [String: [DictionaryEntry]] = [:]
     while try checkedSQLiteStep(statement) == .row {
-      let entry = try decodeEntry(from: statement)
-      let fingerprint = sqliteText(statement, 17)
-      groups[fingerprint, default: []].append(entry)
+      groups[sqliteText(statement, 15), default: []].append(try decodeEntry(from: statement))
     }
-    return orderedFingerprints.compactMap { fingerprint in
-      let fingerprintHex = fingerprint.hexString
-      return LanguageReferenceIdentity.normalizedEntry(groups[fingerprintHex] ?? [])
+    var found: [LanguageReferenceID: DictionaryEntry] = [:]
+    for members in groups.values {
+      guard let entry = LanguageReferenceIdentity.normalizedEntry(members) else { continue }
+      for member in members { found[member.id] = entry }
     }
+    return found
   }
 
-  private func searchLiteralEnglish(_ query: SearchQuery) throws -> LookupSearchResults {
-    try searchOnce(query)
-  }
-
-  private func japaneseDeinflectedSources(
-    for query: SearchQuery
-  ) throws -> [[LookupSearchResultItem]] {
-    var sourcesByDepth: [Int: [RankedDictionaryEntry]] = [:]
-    var seen = Set<LanguageReferenceID>()
-    for candidate in JapaneseDeinflector.candidates(for: query.value) {
-      let matches = try rankedJapanese(SearchQuery(candidate.term), exactFormOnly: true)
-        .filter { ranked in
-          candidate.wordClasses.contains { $0.accepts(ranked.entry.partsOfSpeech) }
+  private func coreAnswer<Answer: Decodable>(
+    _ method: String,
+    _ argument: String
+  ) async throws -> Answer {
+    do {
+      let call = try preparedCore().begin(method, argument)
+      while true {
+        switch try call.step(Answer.self) {
+        case .finished(let answer):
+          try Task<Never, Never>.checkCancellation()
+          return answer
+        case .analyzing(let text):
+          try call.analyzed(await analysisJSON(text))
         }
-      for match in matches where seen.insert(match.entry.id).inserted {
-        sourcesByDepth[candidate.depth, default: []].append(match)
       }
+    } catch {
+      try Task<Never, Never>.checkCancellation()
+      throw error
     }
-    return sourcesByDepth.keys.sorted().map { Self.resultItems(for: sourcesByDepth[$0]!) }
   }
 
-  private func searchOnce(_ query: SearchQuery) throws -> LookupSearchResults {
-    guard !query.isEmpty else { return .empty }
+  private func preparedCore() throws -> DictionaryCore {
+    if let core { return core }
+    let prepared = try DictionaryCore(statements: try openStatements())
+    core = prepared
+    return prepared
+  }
 
-    let ranked = query.isASCII ? try rankedEnglish(query) : try rankedJapanese(query)
-    guard !ranked.isEmpty else { return .empty }
-    let leadingLegacyRank = ranked[0].legacyPresentationRank
-    let leadingLexicalEntryCount = ranked.prefix {
-      $0.legacyPresentationRank == leadingLegacyRank
-    }.count
-    return LookupSearchResults(
-      items: Self.resultItems(for: Array(ranked.prefix(60))),
-      leadingLexicalEntryCount: leadingLexicalEntryCount,
-      hasExactOrPrefixMatch: ranked.contains { $0.hasExactOrPrefixMatch }
-    )
+  private func analysisJSON(_ text: String) async -> String {
+    guard let analysis = try? await morphology.analyze(text),
+      let json = try? JSONEncoder().encode(DictionaryCoreAnalysis(analysis))
+    else { return #"{"error":"The text could not be analyzed"}"# }
+    return String(decoding: json, as: UTF8.self)
   }
 
   private static let searchCacheCapacity = 32

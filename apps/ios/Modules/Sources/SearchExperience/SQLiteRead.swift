@@ -41,11 +41,6 @@ func sqliteText(_ statement: OpaquePointer, _ column: Int32) -> String {
   return String(cString: text)
 }
 
-func sqliteData(_ statement: OpaquePointer, _ column: Int32) -> Data {
-  guard let bytes = sqlite3_column_blob(statement, column) else { return Data() }
-  return Data(bytes: bytes, count: Int(sqlite3_column_bytes(statement, column)))
-}
-
 final class SQLiteConnection: @unchecked Sendable {
   let pointer: OpaquePointer
 
@@ -56,6 +51,43 @@ final class SQLiteConnection: @unchecked Sendable {
   deinit {
     sqlite3_close(pointer)
   }
+}
+
+final class SQLiteStatements {
+  let connection: SQLiteConnection
+  private var prepared: [String: OpaquePointer] = [:]
+
+  init(connection: SQLiteConnection) {
+    self.connection = connection
+  }
+
+  deinit {
+    finalizeAll()
+  }
+
+  func statement(_ sql: String) throws -> OpaquePointer {
+    if let statement = prepared[sql] {
+      sqlite3_reset(statement)
+      sqlite3_clear_bindings(statement)
+      return statement
+    }
+    if prepared.count >= Self.limit { finalizeAll() }
+    var statement: OpaquePointer?
+    guard sqlite3_prepare_v2(connection.pointer, sql, -1, &statement, nil) == SQLITE_OK,
+      let statement
+    else {
+      throw SQLiteReadError.sqlite(message: String(cString: sqlite3_errmsg(connection.pointer)))
+    }
+    prepared[sql] = statement
+    return statement
+  }
+
+  private func finalizeAll() {
+    for statement in prepared.values { sqlite3_finalize(statement) }
+    prepared.removeAll()
+  }
+
+  private static let limit = 256
 }
 
 extension Bundle {

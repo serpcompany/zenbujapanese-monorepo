@@ -30,13 +30,10 @@ struct DictionaryEntry: Hashable, Identifiable, Sendable {
     return gloss.count > limit ? String(gloss.prefix(limit - 1)) + "…" : gloss
   }
 
-  func normalizingIdentity(
-    to canonical: DictionaryEntry,
-    provenances: [LanguageReferenceProvenance]
-  ) -> DictionaryEntry {
+  func withSourceProvenances(_ provenances: [LanguageReferenceProvenance]) -> DictionaryEntry {
     DictionaryEntry(
-      id: canonical.id,
-      noteID: canonical.noteID,
+      id: id,
+      noteID: noteID,
       sourceProvenances: LanguageReferenceIdentity.sortedProvenances(provenances),
       reading: reading,
       headword: headword,
@@ -242,16 +239,8 @@ enum LanguageReferenceIdentity {
     return entries.first { $0.id == id }
   }
 
-  static func normalizedEntry(
-    _ entries: [DictionaryEntry],
-    preserving preferred: DictionaryEntry? = nil
-  ) -> DictionaryEntry? {
-    guard let canonical = canonicalEntry(entries) else { return nil }
-    let presentation = preferred ?? canonical
-    return presentation.normalizingIdentity(
-      to: canonical,
-      provenances: entries.flatMap(\.sourceProvenances)
-    )
+  static func normalizedEntry(_ entries: [DictionaryEntry]) -> DictionaryEntry? {
+    canonicalEntry(entries)?.withSourceProvenances(entries.flatMap(\.sourceProvenances))
   }
 
   static func sortedProvenances(
@@ -265,17 +254,12 @@ enum LanguageReferenceIdentity {
 }
 
 struct DictionaryRelevance: Equatable, Sendable, Comparable {
-  let sourceOrder: Int
-  let matchRank: DictionaryPresentationRank
+  let order: Int
 
-  static let maximum = Self(
-    sourceOrder: .max,
-    matchRank: .japanese(JapaneseDictionaryPresentationRank(relation: .readingContains))
-  )
+  static let maximum = Self(order: .max)
 
   static func < (lhs: Self, rhs: Self) -> Bool {
-    if lhs.sourceOrder != rhs.sourceOrder { return lhs.sourceOrder < rhs.sourceOrder }
-    return lhs.matchRank < rhs.matchRank
+    lhs.order < rhs.order
   }
 }
 
@@ -286,15 +270,6 @@ struct LookupSearchResultItem: Sendable {
   let matchedSummary: String?
 
   var displaySummary: String { matchedSummary ?? entry.summary }
-
-  func rebased(sourceOrder: Int, fallbackOrder: Int) -> Self {
-    Self(
-      entry: entry,
-      relevance: DictionaryRelevance(sourceOrder: sourceOrder, matchRank: relevance.matchRank),
-      fallbackOrder: fallbackOrder,
-      matchedSummary: matchedSummary
-    )
-  }
 }
 
 struct LookupSearchResults: Sendable {
@@ -304,7 +279,6 @@ struct LookupSearchResults: Sendable {
   let resolution: Resolution
   let readingRefinement: SearchRefinement?
   let usesPrimaryEntryExamples: Bool
-  let hasExactOrPrefixMatch: Bool
 
   init(
     items: [LookupSearchResultItem],
@@ -312,8 +286,7 @@ struct LookupSearchResults: Sendable {
     presentation: Presentation = .ranked,
     resolution: Resolution = .direct,
     readingRefinement: SearchRefinement? = nil,
-    usesPrimaryEntryExamples: Bool = false,
-    hasExactOrPrefixMatch: Bool = true
+    usesPrimaryEntryExamples: Bool = false
   ) {
     self.items = items
     self.leadingLexicalEntryCount = min(leadingLexicalEntryCount ?? items.count, items.count)
@@ -321,13 +294,11 @@ struct LookupSearchResults: Sendable {
     self.resolution = resolution
     self.readingRefinement = readingRefinement
     self.usesPrimaryEntryExamples = usesPrimaryEntryExamples
-    self.hasExactOrPrefixMatch = hasExactOrPrefixMatch
   }
 
-  static let empty = LookupSearchResults(items: [], hasExactOrPrefixMatch: false)
+  static let empty = LookupSearchResults(items: [])
 
   var entries: [DictionaryEntry] { items.map(\.entry) }
-  var wasDeinflected: Bool { resolution == .deinflected }
 
   var isEmpty: Bool {
     entries.isEmpty
@@ -349,77 +320,12 @@ struct LookupSearchResults: Sendable {
     entries.first { $0.headword == query.value } ?? entries.first
   }
 
-  func usingPrimaryEntryExamples() -> LookupSearchResults {
-    LookupSearchResults(
-      items: items,
-      leadingLexicalEntryCount: leadingLexicalEntryCount,
-      presentation: presentation,
-      resolution: resolution,
-      readingRefinement: readingRefinement,
-      usesPrimaryEntryExamples: true,
-      hasExactOrPrefixMatch: hasExactOrPrefixMatch
-    )
-  }
-
-  func offeringReadingRefinement(_ query: SearchQuery) -> LookupSearchResults {
-    LookupSearchResults(
-      items: items,
-      leadingLexicalEntryCount: leadingLexicalEntryCount,
-      presentation: presentation,
-      resolution: resolution,
-      readingRefinement: SearchRefinement(query: query),
-      usesPrimaryEntryExamples: usesPrimaryEntryExamples,
-      hasExactOrPrefixMatch: hasExactOrPrefixMatch
-    )
-  }
-
-  func presenting(
-    _ presentation: Presentation,
-    hasExactOrPrefixMatch: Bool? = nil
-  ) -> LookupSearchResults {
-    LookupSearchResults(
-      items: items,
-      leadingLexicalEntryCount: leadingLexicalEntryCount,
-      presentation: presentation,
-      resolution: resolution,
-      readingRefinement: readingRefinement,
-      usesPrimaryEntryExamples: usesPrimaryEntryExamples,
-      hasExactOrPrefixMatch: hasExactOrPrefixMatch ?? self.hasExactOrPrefixMatch
-    )
-  }
-
-  static func composing(
-    sources: [[LookupSearchResultItem]],
-    leadingLexicalEntryCount: Int,
-    usesPrimaryEntryExamples: Bool,
-    hasExactOrPrefixMatch: Bool = true,
-    resolution: Resolution = .direct,
-    limit: Int = 60
-  ) -> LookupSearchResults {
-    var items: [LookupSearchResultItem] = []
-    var seen = Set<LanguageReferenceID>()
-    for (sourceOrder, source) in sources.enumerated() {
-      for item in source where seen.insert(item.entry.id).inserted {
-        items.append(item.rebased(sourceOrder: sourceOrder, fallbackOrder: items.count))
-        if items.count == limit { break }
-      }
-      if items.count == limit { break }
-    }
-    return LookupSearchResults(
-      items: items,
-      leadingLexicalEntryCount: leadingLexicalEntryCount,
-      resolution: resolution,
-      usesPrimaryEntryExamples: usesPrimaryEntryExamples,
-      hasExactOrPrefixMatch: hasExactOrPrefixMatch
-    )
-  }
-
-  enum Presentation: Equatable, Sendable {
+  enum Presentation: String, Decodable, Equatable, Sendable {
     case ranked
     case discoveredWords
   }
 
-  enum Resolution: Equatable, Sendable {
+  enum Resolution: String, Decodable, Equatable, Sendable {
     case direct
     case deinflected
     case analyzed

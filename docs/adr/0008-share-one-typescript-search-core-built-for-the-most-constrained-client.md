@@ -39,3 +39,38 @@ that the website has no sentence search (until ADR 0009, whose service supplies 
 The discussion is in [issue 481](https://github.com/serpcompany/zenbujapanese-monorepo/issues/481)
 and [PR 478](https://github.com/serpcompany/zenbujapanese-monorepo/pull/478). This decision
 refines [ADR 0006](0006-share-language-data-as-a-versioned-artifact.md).
+
+## Amendment: the app's search runs the core
+
+The first step of
+[issue 481](https://github.com/serpcompany/zenbujapanese-monorepo/issues/481) moved the app's
+search retrieval, its lookup of a linked text's words, and a kanji's words onto the core, and
+removed the Swift that did them. The app loads a bundle of the core into JavaScriptCore and
+gives it one function, which answers the core's SQL from the app's own connection as JSON
+([`dictionary-core.md`](../agents/dictionary-core.md), Embedded;
+[`ios.md`](../agents/ios.md), The dictionary core in the app). The rest of the app's dictionary
+logic (examples, word and kanji detail, and the results screen) is still Swift the core ports,
+and moves the same way.
+
+Three choices that aren't obvious from the code:
+
+- **The core answers IDs, and the app reads its own entries.** JavaScriptCore runs without its
+  JIT inside an app, on the Mac as on iPhone, so the interpreter should carry only what it ranks
+  with. An entry is read once, natively, for the results that are shown. The Swift search decoded
+  every candidate's whole entry, which is why broad queries got faster, not slower.
+- **It runs inside the lookup actor, not on a thread of its own.** Every read is synchronous, so
+  a call settles before it returns, a cancelled task stops at the next row as it did, and one
+  connection serves the core and the app's own entry reads without a lock. A search that needs a
+  sentence's words returns to Swift to await Sudachi, then goes on.
+- **The bundle is checked in.** The app builds without Node, and the core's tests fail when the
+  file isn't what the source builds.
+
+Measured on 2026-10-10 on a Mac, in an optimized build, three runs of each, against the Swift it
+replaced: 45 uncached queries took 5.7 s in all, from 8.4 s. Forty were as fast or faster, among
+them every broad one (い 2.6 s to 1.7 s, go 440 ms to 100 ms, see 344 ms to 16 ms), and five
+were 0.1 ms to 1.6 ms slower. Reading an entry by its ID took 45 µs, from 50 µs, and a kanji's
+words 40 ms, from 41 ms. Linking the words of 200 example sentences took 125 ms the first time,
+from 120 ms, and 61 ms once the words were known, from 66 ms. A search abandoned for the next
+keystroke freed the dictionary in 2 ms to 3 ms at the median, from 6 ms to 49 ms, and 272 ms at
+worst, from 733 ms. The searches reached 251 MB of memory, from 292 MB. `SearchLatencyTests`
+repeats the measurement ([`ios.md`](../agents/ios.md), The dictionary core in the app).

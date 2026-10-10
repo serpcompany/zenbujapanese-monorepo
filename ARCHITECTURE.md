@@ -7,11 +7,11 @@ layers apart. Each part's own doc has the detail; each rule here is enforced by 
 
 | Part | What it is | Its doc |
 | --- | --- | --- |
-| `apps/ios` | The Zenbu Japanese app, in SwiftUI, built from one target for iPhone, iPad, and the Mac (ADR 0015). It reads the language data bundled with it, which its importers in `apps/ios/Tools` build, and signs in to the account service to sync known words, lists, watch history, and bookmarked translations. `apps/ios/Tools/TranslateReplay` replays recorded Translate audio on a Mac. | [`docs/agents/ios.md`](docs/agents/ios.md) |
+| `apps/ios` | The Zenbu Japanese app, in SwiftUI, built from one target for iPhone, iPad, and the Mac (ADR 0015). It reads the language data bundled with it, which its importers in `apps/ios/Tools` build, searches it with the shared core, which it runs in JavaScriptCore, and signs in to the account service to sync known words, lists, watch history, and bookmarked translations. `apps/ios/Tools/TranslateReplay` replays recorded Translate audio on a Mac. | [`docs/agents/ios.md`](docs/agents/ios.md) |
 | `apps/web` | zenbujapanese.com: Next.js on Cloudflare Workers through OpenNext. Its dictionary pages read the dictionary service; its account pages call the account service from the learner's browser. | [`docs/agents/web.md`](docs/agents/web.md) |
 | `apps/dictionary-api` | The dictionary service: Node, in a Docker image on serpcompany's server, answering the website's dictionary requests by running the shared core on the app's language data. | [`docs/agents/dictionary-api.md`](docs/agents/dictionary-api.md) |
 | `apps/account-api` | The account service: Node and Postgres on the same server, for Zenbu accounts, sign-in, and sync (ADR 0013). It signs learners in with Apple, Google, or an emailed code, through Better Auth, and issues the access tokens other services check. | [`docs/agents/account-api.md`](docs/agents/account-api.md) |
-| `packages/dictionary-core` | The shared TypeScript core: search, results, word and kanji detail, and examples, ported from the app's Swift. Every client is to run it (ADR 0008). | [`docs/agents/dictionary-core.md`](docs/agents/dictionary-core.md) |
+| `packages/dictionary-core` | The shared TypeScript core: search, results, word and kanji detail, and examples. The service runs all of it and the app runs its search; the rest is still ported from the app's Swift. Every client is to run it (ADR 0008). | [`docs/agents/dictionary-core.md`](docs/agents/dictionary-core.md) |
 | `packages/node-service` | What the two Node services share: JSON-line logs, the request log, a server that stops cleanly, and the writer of their API references (`docs/api/`). | [`docs/agents/dictionary-api.md`](docs/agents/dictionary-api.md), Code layout |
 | `deploy` | The API servers' deployer, which swaps each service's signed image into its slots. | [`docs/agents/api-servers.md`](docs/agents/api-servers.md) |
 | `language-data` | The language-data release: the manifest and the pipeline that packages and publishes the app's data as a versioned artifact (ADR 0006). | [`language-data/README.md`](language-data/README.md) |
@@ -27,6 +27,7 @@ flowchart LR
     Data --> Release["language-data release"]
     Data --> Image["Dictionary service image"]
     Core["packages/dictionary-core"] --> Image
+    Core -->|"a bundle of its search, checked in"| App
     Image --> Server["Server: two slots behind nginx"]
     Server -->|"bearer token, through Cloudflare"| Site["Website Worker"]
     Server -->|"word cards and segmentation, for an account's access token"| Apps["Signed-in apps, such as Tomodachi"]
@@ -41,7 +42,9 @@ flowchart LR
 
 The app's bundled data is the one source: the importers build it, the app bundles it, the service's
 image copies it, and the release packages it. The website reads no data of its own; it asks the
-service, which runs the same core the website renders with. A new build of the data is a new
+service, which runs the same core the website renders with. The app searches its data with that
+core too, from a bundle of it checked in beside the data, so it finds what the website finds with
+no network ([`docs/agents/ios.md`](docs/agents/ios.md), The dictionary core in the app). A new build of the data is a new
 service image, deployed without touching the site. An app that doesn't bundle the data ships word
 cards the core exports, and, signed in, fetches more cards and segmentation from the service's
 `/v1/apps` routes with its account's access token ([`language-data/word-cards.md`](language-data/word-cards.md)).
@@ -95,9 +98,11 @@ saying where the code belongs:
   the app supplies its speech, translation, and playback clients. `TranslatorOnDevice`, the
   recognizer and translation adapters the Mac's replay check shares, adds only AVFoundation,
   Speech, and Translation ([`docs/agents/translate.md`](docs/agents/translate.md)).
-- **Across parts**: the core and the app's Swift change together, which `Search parity` checks
-  ([`docs/agents/ci.md`](docs/agents/ci.md)); the website and the service share their row shapes
-  through the core; no app imports another, and apps reach a shared package by its name.
+- **Across parts**: where the app still has Swift the core ports, the two change together,
+  which `Search parity` checks ([`docs/agents/ci.md`](docs/agents/ci.md)); the app's bundle of the
+  core is rebuilt with the core, which the core's tests check; the website and the service share
+  their row shapes through the core; no app imports another, and apps reach a shared package by
+  its name.
 
 The website logs through its own `log()`, the Node services through `packages/node-service`'s, and
 the core not at all.

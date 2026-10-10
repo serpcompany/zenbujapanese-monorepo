@@ -4,15 +4,7 @@ on:
   pull_request:
     types: [opened, synchronize, reopened, labeled, unlabeled]
     paths:
-      - apps/ios/Modules/Sources/SearchExperience/LookupClient.swift
-      - apps/ios/Modules/Sources/SearchExperience/LookupDatabase.swift
-      - apps/ios/Modules/Sources/SearchExperience/LookupEnglishRanking.swift
-      - apps/ios/Modules/Sources/SearchExperience/LookupJapaneseRanking.swift
-      - apps/ios/Modules/Sources/SearchExperience/LookupRankedEntries.swift
       - apps/ios/Modules/Sources/SearchExperience/SearchQuery.swift
-      - apps/ios/Modules/Sources/SearchExperience/DictionaryRanking.swift
-      - apps/ios/Modules/Sources/SearchExperience/JapaneseDeinflection.swift
-      - apps/ios/Modules/Sources/SearchExperience/DictionaryEntry.swift
       - apps/ios/Modules/Sources/SearchExperience/JapaneseTextAnalysisClient.swift
       - apps/ios/Modules/Sources/SearchExperience/ExampleSentenceClient.swift
       - apps/ios/Modules/Sources/SearchExperience/ExampleSentenceDatabase.swift
@@ -36,7 +28,7 @@ on:
       - apps/ios/Modules/Sources/SearchExperience/SearchResultsView.swift
       - apps/ios/Modules/Sources/SearchExperience/SearchResultsScreen.swift
       - apps/ios/Modules/Sources/SearchExperience/SearchResultFrequencyOrdering.swift
-      - packages/dictionary-core/src/search/**
+      - packages/dictionary-core/src/search/query.ts
       - packages/dictionary-core/src/results/*.ts
       - packages/dictionary-core/src/examples/*.ts
       - packages/dictionary-core/src/artifact/example-retrieval.ts
@@ -86,9 +78,9 @@ jobs:
               status=1
             fi
           }
-          check search \
-            "${swift_dir}(LookupClient|LookupDatabase|LookupEnglishRanking|LookupJapaneseRanking|LookupRankedEntries|SearchQuery|DictionaryRanking|JapaneseDeinflection|DictionaryEntry|JapaneseTextAnalysisClient)\.swift$" \
-            '^packages/dictionary-core/src/search/' 'packages/dictionary-core/src/search/'
+          check 'query normalization' \
+            "${swift_dir}SearchQuery\.swift$" \
+            '^packages/dictionary-core/src/search/query\.ts$' 'packages/dictionary-core/src/search/query.ts'
           check examples \
             "${swift_dir}(ExampleSentenceClient|ExampleSentenceDatabase|ExampleSentenceEntryRetrieval|ExampleSentenceModels|ExampleSentenceSearchRetrieval|JapaneseTextAnalysisClient|JapaneseInflectionGrouping|KuromojiMorphologyClient|LinkedJapaneseText)\.swift$" \
             '^(packages/dictionary-core/src/examples/[^/]+|packages/dictionary-core/src/artifact/(example-retrieval|example-search|word-examples|lookup)|apps/dictionary-api/src/kuromoji)\.ts$' \
