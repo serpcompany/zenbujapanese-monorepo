@@ -84,10 +84,11 @@ modules, files, or event loop of its own, which is how the app runs it in JavaSc
 ([`ios.md`](ios.md), The dictionary core in the app).
 
 - **The host supplies one function.** `EmbeddedHost.all(sql, parametersJSON)` runs a statement on
-  the artifact and answers a JSON string: `{"rows": [...], "blobs": [...]}`, each row an object
-  keyed by column, each BLOB as lowercase hex with its column named in `blobs`, or
-  `{"error": message}`. `hostDatabase` turns that into the `ArtifactDatabase` the rest of the core
-  reads.
+  the artifact and answers an object (`HostRows`): `{rows: [...], blobs: [...]}`, each row an
+  object keyed by column, each BLOB as lowercase hex with its column named in `blobs`, or
+  `{error: message}`. It is an object, not JSON text, so a host can have its engine parse the
+  rows natively and keep no second copy of a broad search's tens of megabytes as a string.
+  `hostDatabase` turns the answer into the `ArtifactDatabase` the rest of the core reads.
 - **A search can be abandoned.** An embedded engine can't be stopped from outside while it ranks,
   so a host may also supply `interrupted()`, true once nobody wants the answer. Ranking asks it
   every 1,024 rows and comparisons (`stopIfInterrupted` in `search/database.ts`) and throws

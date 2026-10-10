@@ -51,15 +51,13 @@ function host(overrides: Partial<EmbeddedHost> = {}): EmbeddedHost & { asked: st
     all(sql, parametersJSON) {
       const parameters = JSON.parse(parametersJSON) as string[]
       asked.push(parameters)
-      if (!sql.includes('FROM forms f') || !sql.includes('f.kind IN (0, 1)')) {
-        return JSON.stringify({ rows: [] })
-      }
+      if (!sql.includes('FROM forms f') || !sql.includes('f.kind IN (0, 1)')) return { rows: [] }
       const matches = sql.includes('f.form = ?')
         ? (form: string) => form === parameters[0]
         : sql.includes('f.form IN')
           ? (form: string) => parameters.includes(form)
           : (form: string) => form.includes(parameters[0])
-      return JSON.stringify({ rows: formRows(matches) })
+      return { rows: formRows(matches) }
     },
     ...overrides
   }
@@ -151,8 +149,10 @@ describe('the embedded dictionary', () => {
 
   test('binds what the core asks as JSON, and reads blob columns as bytes', () => {
     const db = hostDatabase({
-      all: (_sql, parametersJSON) =>
-        JSON.stringify({ rows: [{ echoed: parametersJSON, data: '00ff10' }], blobs: ['data'] })
+      all: (_sql, parametersJSON) => ({
+        rows: [{ echoed: parametersJSON, data: '00ff10' }],
+        blobs: ['data']
+      })
     })
     const rows = db.all<{ echoed: string; data: Uint8Array }>('SELECT 1', ['日本', 3, null])
     expect(rows[0].echoed).toBe('["日本",3,null]')
@@ -160,8 +160,11 @@ describe('the embedded dictionary', () => {
   })
 
   test("reports the host's own failure", async () => {
-    const failing = host({ all: () => JSON.stringify({ error: 'The search was cancelled' }) })
+    const failing = host({ all: () => ({ error: 'The search was cancelled' }) })
     await expect(ask(failing, 'search', '日本')).rejects.toThrow('The search was cancelled')
+    await expect(ask(host({ all: () => null }), 'search', '日本')).rejects.toThrow(
+      'The host returned no rows'
+    )
   })
 
   test('stops ranking as soon as the host says the search was abandoned', async () => {

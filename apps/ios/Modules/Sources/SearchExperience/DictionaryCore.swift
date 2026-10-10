@@ -20,8 +20,9 @@ final class DictionaryCore {
       let host = JSValue(newObjectIn: context)
     else { throw DictionaryCoreError.bundleUnavailable }
     let rows = SQLiteJSONRows(statements: statements)
-    let all: @convention(block) (String, String) -> String = { sql, parametersJSON in
-      rows.answer(sql, parametersJSON: parametersJSON)
+    let all: @convention(block) (String, String) -> JSValue? = { sql, parametersJSON in
+      var json = rows.answer(sql, parametersJSON: parametersJSON)
+      return JSContext.current().flatMap { json.parsed(in: $0) }
     }
     let interrupted: @convention(block) () -> Bool = { Task<Never, Never>.isCancelled }
     host.setObject(all, forKeyedSubscript: "all" as NSString)
@@ -39,8 +40,10 @@ final class DictionaryCore {
   }
 
   func begin(_ method: String, _ argument: String) throws -> DictionaryCoreCall {
-    let call = try returned(endpoint.invokeMethod("begin", withArguments: [method, argument]))
-    return DictionaryCoreCall(call: call, core: self)
+    try autoreleasepool {
+      let call = try returned(endpoint.invokeMethod("begin", withArguments: [method, argument]))
+      return DictionaryCoreCall(call: call, core: self)
+    }
   }
 
   fileprivate func returned(_ value: JSValue?) throws -> JSValue {
@@ -50,6 +53,17 @@ final class DictionaryCore {
     }
     guard let value else { throw DictionaryCoreError.failed("The dictionary core is gone") }
     return value
+  }
+}
+
+extension JSONBytes {
+  fileprivate mutating func parsed(in context: JSContext) -> JSValue? {
+    withNulTerminatedUTF8 { utf8 in
+      guard let text = JSStringCreateWithUTF8CString(utf8) else { return nil }
+      defer { JSStringRelease(text) }
+      return JSValueMakeFromJSONString(context.jsGlobalContextRef, text)
+        .map { JSValue(jsValueRef: $0, in: context) }
+    }
   }
 }
 
@@ -74,7 +88,9 @@ final class DictionaryCoreCall {
   }
 
   func step<Value: Decodable>(_ type: Value.Type) throws -> Step<Value> {
-    let json = try core.returned(call.invokeMethod("outcome", withArguments: [])).toString() ?? ""
+    let json = try autoreleasepool {
+      try core.returned(call.invokeMethod("outcome", withArguments: [])).toString() ?? ""
+    }
     let outcome = try JSONDecoder().decode(Outcome<Value>.self, from: Data(json.utf8))
     if let value = outcome.value { return .finished(value) }
     if let text = outcome.analyze { return .analyzing(text) }
@@ -82,7 +98,9 @@ final class DictionaryCoreCall {
   }
 
   func analyzed(_ answerJSON: String) throws {
-    _ = try core.returned(call.invokeMethod("analyzed", withArguments: [answerJSON]))
+    try autoreleasepool {
+      _ = try core.returned(call.invokeMethod("analyzed", withArguments: [answerJSON]))
+    }
   }
 }
 

@@ -547,10 +547,17 @@ frequency re-sort.
 - **The host.** `DictionaryCore` (`DictionaryCore.swift`) loads the bundle,
   `Resources/DictionaryCore/dictionary-core.js`, into a `JSContext` and gives it one function,
   `zenbuHost.all`, which `SQLiteJSONRows` answers from the app's read-only connection to
-  `LanguageReferenceData.sqlite3`: rows as JSON, each BLOB as hex, an error as its message. The
-  bundle is checked in; after changing the core, rebuild it with `pnpm bundle:javascriptcore` in
-  `packages/dictionary-core`, which the core's tests require
-  ([`dictionary-core.md`](dictionary-core.md), Embedded).
+  `LanguageReferenceData.sqlite3`: rows as JSON bytes, each BLOB as hex, an error as its
+  message. JavaScriptCore parses those bytes into its own objects
+  (`JSValueMakeFromJSONString`), so a broad search's rows never also exist as a Swift string, a
+  bridged `NSString`, and a JavaScript string. The bundle is checked in; after changing the
+  core, rebuild it with `pnpm bundle:javascriptcore` in `packages/dictionary-core`, which the
+  core's tests require ([`dictionary-core.md`](dictionary-core.md), Embedded).
+- **One engine, kept.** The context lives as long as the actor. Each call into it runs in an
+  autorelease pool, since the Objective-C wrappers JavaScriptCore hands back otherwise pile up
+  on a thread that never drains them, each pinning what it wraps. Don't release the context to
+  give memory back: in testing, a context dropped after a broad search kept its whole heap, and
+  memory climbed with every such search.
 - **Where it runs.** `LanguageReferenceData`, the actor behind `LookupClient.live`, owns the
   context and the connection and calls the core on its own executor, as it ran the Swift search,
   so nothing else touches either during a call. Every read is synchronous, so a call settles
@@ -577,8 +584,11 @@ frequency re-sort.
   for kanji or ASCII. Its normalization must equal the core's `normalizeQuery`;
   `DictionaryCoreTests` compares them on widths, cases, ligatures, and whitespace.
 - **Speed.** JavaScriptCore runs without its JIT inside an app, on the Mac as on iPhone, so the
-  package's tests on a Mac run the core as a device does. `SearchLatencyTests` prints each
-  query's uncached time and the memory the searches reach; it runs only when asked:
+  package's tests on a Mac run the core as a device does. The iOS Simulator does not: its
+  JavaScriptCore has the JIT, which makes JavaScript several times faster and holds several
+  times the memory, so add `TEST_RUNNER_JSC_useJIT=false` to measure there. `SearchLatencyTests`
+  prints each query's uncached time, how long linking and an abandoned search take, and the
+  memory the searches reach; it runs only when asked:
 
   ```sh
   TEST_RUNNER_ZENBU_MEASURE_SEARCH=1 xcodebuild -scheme ZenbuJapaneseModules-Package \

@@ -4,7 +4,8 @@ import {
   EmbeddedDictionary,
   type EmbeddedEndpoint,
   type EmbeddedSearchResults,
-  embeddedEndpoint
+  embeddedEndpoint,
+  type HostRows
 } from '@zenbu/dictionary-core/embedded/dictionary'
 import type { LinkEntry } from '@zenbu/dictionary-core/examples/linking'
 import { beforeAll, describe, expect, test } from 'vitest'
@@ -23,8 +24,8 @@ const kanjiWithWords = kanjiSuite.cases.filter(expected => expected.words !== un
 
 const hex = (bytes: Uint8Array) => Buffer.from(bytes).toString('hex')
 
-function answeringInJSON(db: ArtifactDatabase) {
-  return (sql: string, parametersJSON: string): string => {
+function answering(db: ArtifactDatabase) {
+  return (sql: string, parametersJSON: string): HostRows => {
     try {
       const rows = db.all<Record<string, unknown>>(sql, JSON.parse(parametersJSON) as SqlValue[])
       const blobs = new Set<string>()
@@ -35,9 +36,9 @@ function answeringInJSON(db: ArtifactDatabase) {
           row[column] = hex(value)
         }
       }
-      return JSON.stringify({ rows, blobs: [...blobs] })
+      return { rows, blobs: [...blobs] }
     } catch (error) {
-      return JSON.stringify({ error: error instanceof Error ? error.message : String(error) })
+      return { error: error instanceof Error ? error.message : String(error) }
     }
   }
 }
@@ -48,7 +49,7 @@ describe.runIf(artifactAvailable)('the embedded dictionary on the artifact', () 
   beforeAll(async () => {
     requirePinnedArtifacts([suite.artifact, ...kanjiSuite.artifacts])
     endpoint = embeddedEndpoint(
-      new EmbeddedDictionary({ all: answeringInJSON(await artifactDatabase()) })
+      new EmbeddedDictionary({ all: answering(await artifactDatabase()) })
     )
   })
 

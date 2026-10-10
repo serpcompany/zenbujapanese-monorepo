@@ -118,6 +118,16 @@ struct DictionaryCoreTests {
     #expect(try await data.entries(matchingFirstOf: []) { _, _, _ in [] }.isEmpty)
   }
 
+  @Test("a search that reads tens of thousands of rows answers, and so do the lookups after it")
+  func lookupsAfterABroadSearch() async throws {
+    let data = LanguageReferenceData(validatesBundledArtifact: false)
+    let cat = try await data.entries(matchingForm: "猫")
+    #expect(try await data.search(SearchQuery("の")).entries.count == 60)
+    #expect(try await data.entries(matchingForm: "猫") == cat)
+    #expect(try await data.search(SearchQuery("猫")).entries.first == cat.first)
+    #expect(try await data.search(SearchQuery("の")).entries.count == 60)
+  }
+
   @Test("the core says what it cannot do, and the next call still answers")
   func coreFailure() throws {
     let core = try DictionaryCore(statements: try Self.memoryDatabase())
@@ -157,7 +167,8 @@ struct DictionaryCoreTests {
           "text": .text(""), "bytes": .text(""), "empty": .text(""),
         ],
       ])
-    #expect(rows.answer("SELECT 1 WHERE 0", parametersJSON: "[]") == #"{"rows":[],"blobs":[]}"#)
+    #expect(
+      rows.answer("SELECT 1 WHERE 0", parametersJSON: "[]").text == #"{"rows":[],"blobs":[]}"#)
   }
 
   @Test("the core's parameters bind as text, whole numbers, fractions, and null, each time anew")
@@ -187,13 +198,13 @@ struct DictionaryCoreTests {
   func failures() {
     let rows = SQLiteJSONRows(statements: try! Self.memoryDatabase())
     #expect(
-      rows.answer("SELECT * FROM missing", parametersJSON: "[]")
+      rows.answer("SELECT * FROM missing", parametersJSON: "[]").text
         == #"{"error":"no such table: missing"}"#)
     #expect(
-      rows.answer("SELECT ?", parametersJSON: #"[{"0":1}]"#)
+      rows.answer("SELECT ?", parametersJSON: #"[{"0":1}]"#).text
         == #"{"error":"Only text, numbers, and null can be bound"}"#)
     #expect(
-      rows.answer("SELECT ?", parametersJSON: "{}")
+      rows.answer("SELECT ?", parametersJSON: "{}").text
         == #"{"error":"The parameters are not a JSON array"}"#)
   }
 
@@ -202,7 +213,7 @@ struct DictionaryCoreTests {
     let answer = await Task { () -> String in
       withUnsafeCurrentTask { $0?.cancel() }
       return SQLiteJSONRows(statements: try! Self.memoryDatabase())
-        .answer("SELECT 1", parametersJSON: "[]")
+        .answer("SELECT 1", parametersJSON: "[]").text
     }.value
     #expect(answer == #"{"error":"The search was cancelled"}"#)
   }
@@ -242,8 +253,8 @@ struct DictionaryCoreTests {
     return SQLiteStatements(connection: SQLiteConnection(pointer: opened))
   }
 
-  private static func decoded(_ answer: String) throws -> Answer {
-    try JSONDecoder().decode(Answer.self, from: Data(answer.utf8))
+  private static func decoded(_ answer: JSONBytes) throws -> Answer {
+    try JSONDecoder().decode(Answer.self, from: Data(answer.text.utf8))
   }
 
   private struct Answer: Decodable {

@@ -8,7 +8,7 @@ final class SQLiteJSONRows {
     self.statements = statements
   }
 
-  func answer(_ sql: String, parametersJSON: String) -> String {
+  func answer(_ sql: String, parametersJSON: String) -> JSONBytes {
     do {
       return try rows(sql, parametersJSON: parametersJSON)
     } catch {
@@ -16,7 +16,7 @@ final class SQLiteJSONRows {
       json.append("{\"error\":")
       json.appendString(Self.message(error))
       json.append("}")
-      return json.text
+      return json
     }
   }
 
@@ -28,7 +28,7 @@ final class SQLiteJSONRows {
     }
   }
 
-  private func rows(_ sql: String, parametersJSON: String) throws -> String {
+  private func rows(_ sql: String, parametersJSON: String) throws -> JSONBytes {
     let statement = try statements.statement(sql)
     defer { sqlite3_reset(statement) }
     try bind(parametersJSON, to: statement)
@@ -80,7 +80,7 @@ final class SQLiteJSONRows {
       json.append(key.droppingLast())
     }
     json.append("]}")
-    return json.text
+    return json
   }
 
   private func bind(_ parametersJSON: String, to statement: OpaquePointer) throws {
@@ -116,6 +116,16 @@ struct JSONBytes {
 
   var text: String { String(decoding: bytes, as: UTF8.self) }
   var last: UInt8? { bytes.last }
+
+  mutating func withNulTerminatedUTF8<Result>(
+    _ body: (UnsafePointer<CChar>) -> Result
+  ) -> Result {
+    bytes.append(0)
+    defer { bytes.removeLast() }
+    return bytes.withUnsafeBufferPointer { buffer in
+      buffer.withMemoryRebound(to: CChar.self) { body($0.baseAddress!) }
+    }
+  }
 
   func droppingLast() -> JSONBytes {
     var shortened = self

@@ -1231,8 +1231,8 @@
   function hostDatabase(host) {
     return {
       all(sql, params = []) {
-        const answer = JSON.parse(host.all(sql, JSON.stringify(params)));
-        if (!answer.rows) throw new Error(answer.error ?? "The host returned no rows");
+        const answer = host.all(sql, JSON.stringify(params));
+        if (!answer?.rows) throw new Error(answer?.error ?? "The host returned no rows");
         stopIfInterrupted(host, 0);
         for (const column of answer.blobs ?? []) {
           for (const row of answer.rows) {

@@ -15,15 +15,15 @@ import { isASCII, normalizeQuery } from '../search/query'
 import { matchLabel } from '../search/rank'
 import { DictionarySearch, type SearchResultItem, type SearchResults } from '../search/search'
 
-export interface EmbeddedHost {
-  all(sql: string, parametersJSON: string): string
-  interrupted?(): boolean
-}
-
-interface HostRows<Row> {
-  rows?: Row[]
+export interface HostRows {
+  rows?: Record<string, unknown>[]
   blobs?: string[]
   error?: string
+}
+
+export interface EmbeddedHost {
+  all(sql: string, parametersJSON: string): HostRows | null
+  interrupted?(): boolean
 }
 
 function bytes(hex: string): Uint8Array {
@@ -37,10 +37,8 @@ function bytes(hex: string): Uint8Array {
 export function hostDatabase(host: EmbeddedHost): ArtifactDatabase {
   return {
     all<Row>(sql: string, params: readonly SqlValue[] = []): Row[] {
-      const answer = JSON.parse(host.all(sql, JSON.stringify(params))) as HostRows<
-        Record<string, unknown>
-      >
-      if (!answer.rows) throw new Error(answer.error ?? 'The host returned no rows')
+      const answer = host.all(sql, JSON.stringify(params))
+      if (!answer?.rows) throw new Error(answer?.error ?? 'The host returned no rows')
       stopIfInterrupted(host, 0)
       for (const column of answer.blobs ?? []) {
         for (const row of answer.rows) {

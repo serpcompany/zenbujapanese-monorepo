@@ -65,12 +65,23 @@ Three choices that aren't obvious from the code:
 - **The bundle is checked in.** The app builds without Node, and the core's tests fail when the
   file isn't what the source builds.
 
-Measured on 2026-10-10 on a Mac, in an optimized build, three runs of each, against the Swift it
-replaced: 45 uncached queries took 5.7 s in all, from 8.4 s. Forty were as fast or faster, among
-them every broad one (い 2.6 s to 1.7 s, go 440 ms to 100 ms, see 344 ms to 16 ms), and five
-were 0.1 ms to 1.6 ms slower. Reading an entry by its ID took 45 µs, from 50 µs, and a kanji's
-words 40 ms, from 41 ms. Linking the words of 200 example sentences took 125 ms the first time,
-from 120 ms, and 61 ms once the words were known, from 66 ms. A search abandoned for the next
-keystroke freed the dictionary in 2 ms to 3 ms at the median, from 6 ms to 49 ms, and 272 ms at
-worst, from 733 ms. The searches reached 251 MB of memory, from 292 MB. `SearchLatencyTests`
-repeats the measurement ([`ios.md`](../agents/ios.md), The dictionary core in the app).
+Measured on 2026-10-10 against the Swift it replaced, in optimized builds, on a Mac and on an
+iPhone Simulator with JavaScriptCore's JIT turned off, as it is on a device (the Simulator's JIT
+makes JavaScript several times faster and holds several times the memory):
+
+| | Mac, Swift | Mac, core | Simulator, Swift | Simulator, core |
+| --- | --- | --- | --- | --- |
+| 45 uncached searches | 8.4 s | 5.4 s | 9.2 s | 7.2 s |
+| 1,000 entries read by ID | 51 ms | 41 ms | 84 ms | 67 ms |
+| 8 kanji's words | 323 ms | 321 ms | 338 ms | 366 ms |
+| 200 example sentences linked, first time | 117 ms | 129 ms | 473 ms | 255 ms |
+| The same sentences linked again | 72 ms | 59 ms | 391 ms | 59 ms |
+| An abandoned search out of the next one's way, at the median | 6 ms to 49 ms | 2 ms to 7 ms | 6 ms to 40 ms | 3 ms to 8 ms |
+| Memory after the searches | 222 MB | 111 MB | 54 MB | 53 MB |
+| Memory at its highest | 293 MB | 257 MB | 223 MB | 249 MB |
+
+Forty of the 45 searches were as fast or faster on the Mac, every broad one among them (い 2.6 s
+to 1.7 s, go 440 ms to 100 ms, see 344 ms to 16 ms), and five were 0.1 ms to 1.6 ms slower. One
+word looked up alone, outside a text, costs about 0.5 ms where the Swift took 0.4 ms.
+`SearchLatencyTests` repeats the measurement
+([`ios.md`](../agents/ios.md), The dictionary core in the app). No iPhone was measured.
