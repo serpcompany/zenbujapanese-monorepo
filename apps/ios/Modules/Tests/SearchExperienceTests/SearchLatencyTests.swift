@@ -1,4 +1,5 @@
 import Foundation
+import JavaScriptCore
 import Testing
 
 @testable import SearchExperience
@@ -71,6 +72,20 @@ struct SearchLatencyTests {
       "SEARCH-LATENCY memory: \(settled.current / 1_048_576) MB after the first search, "
         + "\(Self.footprint().current / 1_048_576) MB after the last, "
         + "\(Self.footprint().peak / 1_048_576) MB at its highest")
+  }
+
+  @Test("prints how long Kuromoji takes to start")
+  func measureKuromojiStart() throws {
+    let clock = ContinuousClock()
+    var starts: [Double] = []
+    for _ in 0..<Self.passes {
+      let context = try #require(JSContext())
+      starts.append(Self.value(try clock.measure { try KuromojiEngine.install(in: context) }))
+    }
+    print(
+      "SEARCH-LATENCY Kuromoji starts in "
+        + String(format: "%.0f", starts.sorted()[Self.passes / 2]) + " ms at the median, "
+        + String(format: "%.0f", starts.max() ?? 0) + " ms at worst")
   }
 
   @Test("prints how long linking the words of 200 example sentences takes, first and again")

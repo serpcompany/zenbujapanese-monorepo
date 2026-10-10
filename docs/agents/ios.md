@@ -385,6 +385,16 @@ Detail, and the same link opens the website on a device without the app.
 The app defaults to the bundled Kuromoji engine for interactive Japanese in Image Search,
 Word Detail, and Example Sentences. Dictionary search segmentation continues to use Sudachi.
 
+Kuromoji's twelve dictionary files ship gzipped, 18 MB that unpack to 100 MB. The app unpacks
+them itself with zlib (`Gunzip.swift`), which also checks each file's checksum and length, and
+hands kuromoji.js the unpacked bytes. `KuromojiEngine.readingUnpackedFiles` takes the three
+lines that unpack a file out of kuromoji.js's loader as the script is read; the vendored file
+stays as published. An app's JavaScriptCore has no JIT, so kuromoji.js unpacking the files
+itself took 11 to 12 seconds, which the first Word Detail of a session waited for before it
+showed examples; the start now takes about half a second. A kuromoji.js whose loader no
+longer has those lines fails to start rather than starting slowly, and `KuromojiStartTests`
+fails with it.
+
 To compare the previous interactive parsing path, launch the app with
 `ZENBU_MORPHOLOGY_ENGINE=sudachi`. Omit the variable, or use any other value, to exercise
 Kuromoji. Keep `ONLY_ACTIVE_ARCH=YES` for either path.

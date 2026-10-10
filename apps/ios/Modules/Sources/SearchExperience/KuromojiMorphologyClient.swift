@@ -56,46 +56,7 @@ private final class KuromojiJapaneseMorphologyAdapter: @unchecked Sendable {
     guard let context = JSContext() else { throw JapaneseMorphologyError.packUnavailable }
     self.context = context
     context.exceptionHandler = { context, exception in context?.exception = exception }
-
-    let loadDictionary: @convention(block) (String) -> JSValue? = { filename in
-      guard KuromojiContract.dictionaryFiles.contains(filename),
-        let url = Self.resourceURL(filename),
-        let data = try? Data(contentsOf: url)
-      else { return nil }
-      let bytes = UnsafeMutableRawPointer.allocate(byteCount: data.count, alignment: 1)
-      data.copyBytes(to: bytes.assumingMemoryBound(to: UInt8.self), count: data.count)
-      var exception: JSValueRef?
-      guard
-        let buffer = JSObjectMakeArrayBufferWithBytesNoCopy(
-          context.jsGlobalContextRef,
-          bytes,
-          data.count,
-          releaseKuromojiArrayBuffer,
-          nil,
-          &exception
-        )
-      else {
-        bytes.deallocate()
-        return nil
-      }
-      return JSValue(jsValueRef: buffer, in: context)
-    }
-    context.setObject(
-      loadDictionary,
-      forKeyedSubscript: "__zenbuLoadKuromojiDictionary" as NSString
-    )
-    context.evaluateScript(Self.dictionaryLoaderSource)
-
-    guard let sourceURL = Self.resourceURL("kuromoji.js"),
-      let source = try? String(contentsOf: sourceURL, encoding: .utf8)
-    else { throw JapaneseMorphologyError.packUnavailable }
-    context.evaluateScript(source, withSourceURL: sourceURL)
-    context.evaluateScript(Self.tokenizerInitializationSource)
-
-    let error = context.objectForKeyedSubscript("__zenbuKuromojiError")
-    guard error?.isNull != false,
-      context.objectForKeyedSubscript("__zenbuKuromojiTokenizer")?.isObject == true
-    else { throw JapaneseMorphologyError.providerContractMismatch }
+    try KuromojiEngine.install(in: context)
   }
 
   func analyze(_ text: String) throws -> JapaneseMorphologyAnalysis {
@@ -155,8 +116,65 @@ private final class KuromojiJapaneseMorphologyAdapter: @unchecked Sendable {
       dictionarySHA256: KuromojiContract.dictionarySHA256
     )
   }
+}
 
-  private static func resourceURL(_ filename: String) -> URL? {
+enum KuromojiEngine {
+  static func install(in context: JSContext) throws {
+    let loadDictionary: @convention(block) (String) -> JSValue? = { filename in
+      guard KuromojiContract.dictionaryFiles.contains(filename),
+        let url = resourceURL(filename),
+        let packed = try? Data(contentsOf: url),
+        let unpacked = Gunzip.inflated(packed)
+      else { return nil }
+      var exception: JSValueRef?
+      guard
+        let buffer = JSObjectMakeArrayBufferWithBytesNoCopy(
+          context.jsGlobalContextRef,
+          unpacked.pointer,
+          unpacked.count,
+          releaseKuromojiArrayBuffer,
+          nil,
+          &exception
+        )
+      else {
+        free(unpacked.pointer)
+        return nil
+      }
+      return JSValue(jsValueRef: buffer, in: context)
+    }
+    context.setObject(
+      loadDictionary,
+      forKeyedSubscript: "__zenbuLoadKuromojiDictionary" as NSString
+    )
+    context.evaluateScript(dictionaryLoaderSource)
+
+    guard let sourceURL = resourceURL("kuromoji.js"),
+      let source = try? String(contentsOf: sourceURL, encoding: .utf8)
+    else { throw JapaneseMorphologyError.packUnavailable }
+    guard let script = readingUnpackedFiles(source) else {
+      throw JapaneseMorphologyError.providerContractMismatch
+    }
+    context.evaluateScript(script, withSourceURL: sourceURL)
+    context.evaluateScript(tokenizerInitializationSource)
+
+    let error = context.objectForKeyedSubscript("__zenbuKuromojiError")
+    guard error?.isNull != false,
+      context.objectForKeyedSubscript("__zenbuKuromojiTokenizer")?.isObject == true
+    else { throw JapaneseMorphologyError.providerContractMismatch }
+  }
+
+  static func readingUnpackedFiles(_ script: String) -> String? {
+    let pieces = script.components(separatedBy: unpackingInScript)
+    return pieces.count == 2 ? pieces.joined(separator: "callback(null, arraybuffer);") : nil
+  }
+
+  private static let unpackingInScript = [
+    "var gz = new zlib.Zlib.Gunzip(new Uint8Array(arraybuffer));",
+    "var typed_array = gz.decompress();",
+    "callback(null, typed_array.buffer);",
+  ].joined(separator: "\n        ")
+
+  static func resourceURL(_ filename: String) -> URL? {
     let name = (filename as NSString).deletingPathExtension
     let ext = (filename as NSString).pathExtension
     return Bundle.module.url(
@@ -227,5 +245,5 @@ private func releaseKuromojiArrayBuffer(
   _ bytes: UnsafeMutableRawPointer?,
   _: UnsafeMutableRawPointer?
 ) {
-  bytes?.deallocate()
+  free(bytes)
 }
