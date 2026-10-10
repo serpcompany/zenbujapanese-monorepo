@@ -58,6 +58,7 @@ struct AccountSignInView: View {
           }
         }
       }
+      .formStyle(.grouped)
       .disabled(isWorking)
       .overlay {
         if isWorking { ProgressView() }
@@ -70,6 +71,7 @@ struct AccountSignInView: View {
         }
       }
     }
+    .sheetSize(onMac: AppWindow.sheetSize)
   }
 
   private func run(_ work: @escaping () async throws -> Void) {

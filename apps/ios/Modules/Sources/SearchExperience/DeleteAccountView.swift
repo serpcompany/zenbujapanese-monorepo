@@ -46,6 +46,7 @@ struct DeleteAccountView: View {
           }
         }
       }
+      .formStyle(.grouped)
       .disabled(isWorking)
       .overlay {
         if isWorking { ProgressView() }
@@ -71,6 +72,7 @@ struct DeleteAccountView: View {
         Text("This deletes the account and everything it synced. It can't be undone.")
       }
     }
+    .sheetSize(onMac: AppWindow.sheetSize)
     .interactiveDismissDisabled(step == .deleted)
     .onAppear { email = zenbuAccount.account?.email ?? "" }
   }

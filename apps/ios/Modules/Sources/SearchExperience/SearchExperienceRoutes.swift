@@ -43,14 +43,11 @@ enum SearchExperienceRoute: Hashable {
   case image(UUID)
 }
 
-struct DictionaryRoutes<Destination: View, WordSheet: View>: ViewModifier {
-  let sheet: WordSheetPresentation?
-  let destination: (SearchExperienceRoute) -> Destination
+struct WordSheetHost<WordSheet: View>: ViewModifier {
+  let sheet: WordSheetPresentation
   let wordSheet: () -> WordSheet
 
   func body(content: Content) -> some View {
-    content
-      .navigationDestination(for: SearchExperienceRoute.self, destination: destination)
-      .sheet(isPresented: sheet?.isPresentedBinding ?? .constant(false), content: wordSheet)
+    content.sheet(isPresented: sheet.isPresentedBinding, content: wordSheet)
   }
 }

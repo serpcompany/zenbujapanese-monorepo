@@ -306,6 +306,7 @@ struct WatchSessionView: View {
           Text(Self.rateLabel(rate)).tag(rate)
         }
       }
+      .listedInItsMenu()
     } label: {
       Text(Self.rateLabel(player.playbackRate))
         .font(.footnote.weight(.semibold).monospacedDigit())

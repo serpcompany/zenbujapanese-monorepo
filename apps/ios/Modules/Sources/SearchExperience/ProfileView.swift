@@ -116,6 +116,7 @@ struct ProfileView: View {
             .textEntry(.capitalizedWords)
             .focused($focusedField, equals: .name)
             .multilineTextAlignment(.trailing)
+            .labelsHidden()
             .accessibilityIdentifier("profile.name")
         }
         LabeledContent("Username") {
@@ -125,6 +126,7 @@ struct ProfileView: View {
             .autocorrectionDisabled()
             .focused($focusedField, equals: .username)
             .multilineTextAlignment(.trailing)
+            .labelsHidden()
             .accessibilityIdentifier("profile.username")
         }
         LabeledContent("Email") {
@@ -135,6 +137,7 @@ struct ProfileView: View {
             .focused($focusedField, equals: .email)
             .onChange(of: email.text) { showsEmailError = false }
             .multilineTextAlignment(.trailing)
+            .labelsHidden()
             .accessibilityIdentifier("profile.email")
         }
       } footer: {
@@ -148,6 +151,8 @@ struct ProfileView: View {
       .submitLabel(.done)
       .onSubmit { focusedField = nil }
     }
+    .formStyle(.grouped)
+    .accessibilityElement(children: .contain)
     .accessibilityIdentifier("profile.form")
     .navigationTitle("Profile")
     .inlineNavigationTitle()

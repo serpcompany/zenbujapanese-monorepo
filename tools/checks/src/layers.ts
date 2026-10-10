@@ -111,6 +111,11 @@ export const swiftPlatforms: SwiftPlatforms = {
       pattern: /\bsidebarAdaptable\b/,
       name: 'the sidebar-adaptable tab style',
       use: '.tabShell()'
+    },
+    {
+      pattern: /\bnavigationBarBackButtonHidden\b/,
+      name: 'hiding the Back button',
+      use: '.backButtonHidden()'
     }
   ]
 }

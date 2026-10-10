@@ -175,7 +175,9 @@ struct SearchExperienceRootView: View {
         frequencyRefreshID: frequencyRefreshID,
         focusRequest: searchFocusRequest
       )
-      .modifier(dictionaryRoutes(in: .search))
+      .navigationDestination(for: SearchExperienceRoute.self) {
+        dictionaryDestination($0, in: .search)
+      }
     }
   }
 
@@ -279,8 +281,11 @@ struct SearchExperienceRootView: View {
           }
         }
       }
-      .modifier(dictionaryRoutes(in: .player))
+      .navigationDestination(for: SearchExperienceRoute.self) {
+        dictionaryDestination($0, in: .player)
+      }
     }
+    .modifier(wordSheetHost(wordSheets.player, in: .player))
   }
 
   private var translateNavigation: some View {
@@ -292,8 +297,11 @@ struct SearchExperienceRootView: View {
         push: { translatePath.append($0) },
         chooseImage: chooseImageSource
       )
-      .modifier(dictionaryRoutes(in: .translate))
+      .navigationDestination(for: SearchExperienceRoute.self) {
+        dictionaryDestination($0, in: .translate)
+      }
     }
+    .modifier(wordSheetHost(wordSheets.translate, in: .translate))
     .onChange(of: translatePath.isEmpty) { _, isEmpty in
       if isEmpty { imageTextSessionStore.removeAll() }
     }
@@ -311,28 +319,28 @@ struct SearchExperienceRootView: View {
         words: translateWords(opening: wordSheets.account),
         openItem: openSavedItem
       )
-      .modifier(dictionaryRoutes(in: .account))
+      .navigationDestination(for: SearchExperienceRoute.self) {
+        dictionaryDestination($0, in: .account)
+      }
     }
+    .modifier(wordSheetHost(wordSheets.account, in: .account))
   }
 
   private func translateWords(opening sheet: WordSheetPresentation) -> TranslateWordLinks {
     TranslateWordLinks(analysisClient: japaneseTextAnalysisClient, open: { sheet.request = $0 })
   }
 
-  private func dictionaryRoutes(in stack: DictionaryStack)
-    -> DictionaryRoutes<some View, some View>
+  private func wordSheetHost(_ presentation: WordSheetPresentation, in stack: DictionaryStack)
+    -> WordSheetHost<some View>
   {
-    DictionaryRoutes(
-      sheet: wordSheets[stack],
-      destination: { dictionaryDestination($0, in: stack) },
-      wordSheet: { wordSheet(wordSheets[stack], in: stack) })
+    WordSheetHost(sheet: presentation) { wordSheet(presentation, in: stack) }
   }
 
   @ViewBuilder
-  private func wordSheet(_ presentation: WordSheetPresentation?, in stack: DictionaryStack)
+  private func wordSheet(_ presentation: WordSheetPresentation, in stack: DictionaryStack)
     -> some View
   {
-    if let presentation, let request = presentation.displayedRequest {
+    if let request = presentation.displayedRequest {
       RecognizedWordSheet(
         request: request,
         detent: Bindable(presentation).detent,

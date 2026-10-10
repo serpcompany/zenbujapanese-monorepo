@@ -87,6 +87,7 @@ private struct EncounterMediaViewer: View {
         }
       }
     }
+    .sheetSize(onMac: AppWindow.sheetSize)
   }
 
   private func removeSelectedMedia() async {

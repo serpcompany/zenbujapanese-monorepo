@@ -72,6 +72,30 @@ extension View {
     #endif
   }
 
+  func backButtonHidden(_ hidden: Bool = true) -> some View {
+    #if os(macOS)
+      self
+    #else
+      navigationBarBackButtonHidden(hidden)
+    #endif
+  }
+
+  func listedInItsMenu() -> some View {
+    #if os(macOS)
+      pickerStyle(.inline)
+    #else
+      self
+    #endif
+  }
+
+  func tileIconLabel() -> some View {
+    #if os(macOS)
+      labelStyle(TileIconLabelStyle())
+    #else
+      self
+    #endif
+  }
+
   func tabBarVisibility(_ visibility: Visibility) -> some View {
     #if os(macOS)
       self
@@ -98,18 +122,87 @@ extension View {
   }
 }
 
+extension EnvironmentValues {
+  @Entry var isInSheetOnMac = false
+}
+
 extension View {
   func dragToCloseSheet(sizeOnMac size: CGSize) -> some View {
     #if os(macOS)
       safeAreaInset(edge: .bottom, spacing: 0) { SheetDoneBar() }
-        .frame(width: size.width, height: size.height)
+        .sheetSize(onMac: size)
     #else
       presentationDetents([.large]).presentationDragIndicator(.visible)
+    #endif
+  }
+
+  func sheetSize(onMac size: CGSize) -> some View {
+    #if os(macOS)
+      frame(width: size.width, height: size.height)
+        .environment(\.isInSheetOnMac, true)
+    #else
+      self
+    #endif
+  }
+}
+
+extension View {
+  func barTrailingItems<Items: View>(@ViewBuilder _ items: @escaping () -> Items) -> some View {
+    modifier(BarTrailingItems(items: items))
+  }
+}
+
+private struct BarTrailingItems<Items: View>: ViewModifier {
+  @Environment(\.isInSheetOnMac) private var isInSheetOnMac
+  @ViewBuilder let items: () -> Items
+
+  func body(content: Content) -> some View {
+    if isInSheetOnMac {
+      content.safeAreaInset(edge: .top, spacing: 0) {
+        HStack(spacing: 12) {
+          Spacer()
+          items()
+        }
+        .padding(.horizontal, 16)
+        .padding(.bottom, 8)
+      }
+    } else {
+      content.toolbar { ToolbarItemGroup(placement: .barTrailing, content: items) }
+    }
+  }
+}
+
+struct SheetCloseAndAction<Close: View, Action: View>: ToolbarContent {
+  @ViewBuilder let close: () -> Close
+  @ViewBuilder let action: () -> Action
+
+  var body: some ToolbarContent {
+    #if os(macOS)
+      ToolbarItem(placement: .cancellationAction) {
+        HStack {
+          close().keyboardShortcut(.cancelAction)
+          action()
+        }
+      }
+    #else
+      ToolbarItemGroup(placement: .topBarLeading) {
+        close()
+        action()
+      }
     #endif
   }
 }
 
 #if os(macOS)
+  private struct TileIconLabelStyle: LabelStyle {
+    func makeBody(configuration: Configuration) -> some View {
+      HStack(spacing: 10) {
+        configuration.icon
+        configuration.title
+      }
+    }
+  }
+
   private struct SheetDoneBar: View {
     @Environment(\.dismiss) private var dismiss
 
@@ -158,6 +251,14 @@ extension ToolbarItemPlacement {
       .primaryAction
     #else
       .topBarTrailing
+    #endif
+  }
+
+  static var sheetClose: ToolbarItemPlacement {
+    #if os(macOS)
+      .cancellationAction
+    #else
+      .topBarLeading
     #endif
   }
 }

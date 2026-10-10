@@ -65,7 +65,7 @@ struct ImageTextFlowView: View {
     .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
     .navigationTitle("Photo")
     .inlineNavigationTitle()
-    .navigationBarBackButtonHidden(true)
+    .backButtonHidden()
     .toolbar {
       ToolbarItem(placement: .cancellationAction) {
         Button {

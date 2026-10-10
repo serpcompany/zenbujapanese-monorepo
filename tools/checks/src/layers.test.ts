@@ -87,6 +87,14 @@ test('sends the tab shell to its adapter, since the sidebar style breaks the tab
   ])
 })
 
+test('sends a hidden Back button to its adapter, since the Mac then hides it on the pages above', () => {
+  const hidden = '    .navigationBarBackButtonHidden(true)\n'
+  expect(checkLayers([adapters], swiftLayers, source(hidden))).toEqual([])
+  expect(checkLayers([feature], swiftLayers, source(hidden))).toEqual([
+    { path: feature, line: 1, problem: expect.stringMatching(/use \.backButtonHidden\(\)$/) }
+  ])
+})
+
 test('refuses UIKit and AppKit types that SwiftUI reaches without an import', () => {
   const problems = checkLayers(
     [feature],

@@ -68,7 +68,7 @@ struct SearchView: View {
       if focused { inputMode = .keyboard }
     }
     .onChange(of: isSearchPresented) { _, presented in
-      if !presented { inputMode = .inactive }
+      if !presented, inputMode == .keyboard { inputMode = .inactive }
     }
     .toolbar {
       if showsRecentSearchActions {

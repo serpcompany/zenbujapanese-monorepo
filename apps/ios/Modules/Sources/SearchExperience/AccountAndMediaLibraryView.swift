@@ -289,6 +289,8 @@ struct ReadingAidSettingsView: View {
       appleTranslation = try? await NaturalTranslationClient.live.availability()
       downloadRequest = nil
     }
+    .formStyle(.grouped)
+    .accessibilityElement(children: .contain)
     .accessibilityIdentifier("reading-aids.form")
     .navigationTitle("Reading Aids")
     .inlineNavigationTitle()

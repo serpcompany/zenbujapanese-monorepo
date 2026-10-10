@@ -116,5 +116,6 @@ struct FrequencyDisclosureView: View {
         }
       }
     }
+    .sheetSize(onMac: AppWindow.sheetSize)
   }
 }

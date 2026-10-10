@@ -69,6 +69,7 @@ struct WordListPickerView: View {
       }
     }
     .presentationDetents([.medium, .large])
+    .sheetSize(onMac: AppWindow.sheetSize)
     .accessibilityIdentifier("word-list-picker.screen")
   }
 }
@@ -234,7 +235,7 @@ struct WordListView: View {
     content
       .navigationTitle(list?.name ?? "")
       .toolbar { toolbar }
-      .navigationBarBackButtonHidden(isSelecting)
+      .backButtonHidden(isSelecting)
       .listEditMode($editMode)
       .onChange(of: isSelecting) {
         if !isSelecting { selection = [] }

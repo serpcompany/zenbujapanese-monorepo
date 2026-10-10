@@ -37,7 +37,7 @@ struct LiveConversationView: View {
       Text("Save its \(session.conversation.turnCountLabel) to Translations, or leave without saving.")
     }
     .inlineNavigationTitle()
-    .navigationBarBackButtonHidden()
+    .backButtonHidden()
     .toolbar {
       ToolbarItem(placement: .barLeading) {
         Button("Back", systemImage: "chevron.backward", action: requestExit)

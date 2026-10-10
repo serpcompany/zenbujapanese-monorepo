@@ -295,5 +295,6 @@ struct KanjiStrokeOrderSheet: View {
         }
     }
     .presentationDetents([.large])
+    .sheetSize(onMac: AppWindow.sheetSize)
   }
 }

@@ -72,6 +72,7 @@ struct ZenbuAccountView: View {
         }
       }
     }
+    .formStyle(.grouped)
     .navigationTitle("Zenbu Account")
     .confirmationDialog(
       "Sign out of Zenbu?", isPresented: $confirmsSignOut, titleVisibility: .visible

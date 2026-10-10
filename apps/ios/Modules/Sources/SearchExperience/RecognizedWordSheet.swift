@@ -66,6 +66,7 @@ struct RecognizedWordSheet<EntryContent: View>: View {
     .presentationBackgroundInteraction(.enabled(upThrough: .medium))
     .presentationDragIndicator(.visible)
     .presentationBackground(SystemColor.background)
+    .sheetSize(onMac: AppWindow.sheetSize)
     .accessibilityIdentifier("recognized-word-sheet")
   }
 
@@ -84,7 +85,7 @@ struct RecognizedWordSheet<EntryContent: View>: View {
       .navigationTitle("Dictionary")
       .inlineNavigationTitle()
       .toolbar {
-        ToolbarItem(placement: .barLeading) { closeButton }
+        ToolbarItem(placement: .sheetClose) { closeButton }
       }
       .accessibilityIdentifier("recognized-word-sheet.unavailable")
     }
@@ -107,7 +108,7 @@ struct RecognizedWordSheet<EntryContent: View>: View {
         ?? [:]
     }
     .toolbar {
-      ToolbarItem(placement: .barLeading) { closeButton }
+      ToolbarItem(placement: .sheetClose) { closeButton }
     }
     .navigationTitle("Choose “\(request.surface)”")
     .inlineNavigationTitle()
@@ -126,8 +127,9 @@ struct RecognizedWordSheet<EntryContent: View>: View {
     entryContent(entry, request.encounterMedia)
       .toolbar(removing: .title)
       .toolbar {
-        ToolbarItemGroup(placement: .barLeading) {
+        SheetCloseAndAction {
           closeButton
+        } action: {
           Button("Open Full Entry", systemImage: "arrow.up.left.and.arrow.down.right") {
             openFullEntry(entry)
           }

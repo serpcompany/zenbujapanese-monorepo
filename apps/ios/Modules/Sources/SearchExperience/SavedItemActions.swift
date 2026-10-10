@@ -174,25 +174,23 @@ extension View {
     photos: SavedItemPhotos,
     showsListPicker: Binding<Bool>
   ) -> some View {
-    toolbar {
-      ToolbarItemGroup(placement: .barTrailing) {
-        if notes.isEditing {
-          Button("Done", action: notes.finishEditing)
-            .font(.body.weight(.semibold))
-            .accessibilityIdentifier("word-note.done")
-        } else {
-          ShareLink(item: shareText) {
-            Label("Share", systemImage: "square.and.arrow.up")
-          }
-          .accessibilityIdentifier("\(identifierPrefix).share")
-          SavedItemMenu(
-            item: item,
-            identifierPrefix: identifierPrefix,
-            addToList: { showsListPicker.wrappedValue = true },
-            addNote: notes.beginAdding,
-            photos: photos
-          )
+    barTrailingItems {
+      if notes.isEditing {
+        Button("Done", action: notes.finishEditing)
+          .font(.body.weight(.semibold))
+          .accessibilityIdentifier("word-note.done")
+      } else {
+        ShareLink(item: shareText) {
+          Label("Share", systemImage: "square.and.arrow.up")
         }
+        .accessibilityIdentifier("\(identifierPrefix).share")
+        SavedItemMenu(
+          item: item,
+          identifierPrefix: identifierPrefix,
+          addToList: { showsListPicker.wrappedValue = true },
+          addNote: notes.beginAdding,
+          photos: photos
+        )
       }
     }
     .savedItemPhotoPresentation(photos)

@@ -277,6 +277,7 @@ private struct FrequencyPackDetailView: View {
         }
       }
     }
+    .sheetSize(onMac: AppWindow.sheetSize)
     .accessibilityIdentifier("frequency-pack.detail")
   }
 }

@@ -11,7 +11,7 @@ struct PagedView<Selection: Hashable, Content: View>: View {
     #if os(macOS)
       Group(subviews: content) { pages in
         ScrollView(.horizontal) {
-          LazyHStack(spacing: 0) {
+          HStack(spacing: 0) {
             ForEach(pages) { page in
               page
                 .containerRelativeFrame(.horizontal)

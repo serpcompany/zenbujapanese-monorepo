@@ -36,7 +36,6 @@ struct AppSettingsView: View {
     .frame(
       minWidth: AppWindow.settingsSize.width, idealWidth: AppWindow.settingsSize.width,
       minHeight: AppWindow.settingsSize.height, idealHeight: AppWindow.settingsSize.height)
-    .accessibilityIdentifier("settings.window")
   }
 
   @ViewBuilder

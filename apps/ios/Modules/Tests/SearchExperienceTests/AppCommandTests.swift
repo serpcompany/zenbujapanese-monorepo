@@ -89,8 +89,10 @@ struct AppCommandTests {
     #expect(Set(AppSettingsPane.allCases.map(\.systemImage)).count == AppSettingsPane.allCases.count)
   }
 
-  @Test("the Mac window opens larger than its minimum, and Settings fits inside it")
+  @Test("the Mac window opens larger than its minimum, and Settings and a sheet fit inside it")
   func windowSizes() {
+    #expect(AppWindow.sheetSize.width < AppWindow.minimumSize.width)
+    #expect(AppWindow.sheetSize.height < AppWindow.minimumSize.height)
     #expect(AppWindow.defaultSize.width > AppWindow.minimumSize.width)
     #expect(AppWindow.defaultSize.height > AppWindow.minimumSize.height)
     #expect(AppWindow.settingsSize.width < AppWindow.minimumSize.width)
