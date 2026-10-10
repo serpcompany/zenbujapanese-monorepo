@@ -1,4 +1,3 @@
-import BackgroundTasks
 import Foundation
 
 enum SyncRetry {
@@ -161,8 +160,7 @@ final class AccountSyncScheduler {
 
   private func requestBackgroundRefresh() {
     guard sync.canSync else { return }
-    let request = BGAppRefreshTaskRequest(identifier: AccountBackgroundSync.taskIdentifier)
-    request.earliestBeginDate = Date(timeIntervalSinceNow: Self.staleAfter)
-    try? BGTaskScheduler.shared.submit(request)
+    BackgroundRefresh.schedule(
+      AccountBackgroundSync.taskIdentifier, notBefore: Date(timeIntervalSinceNow: Self.staleAfter))
   }
 }

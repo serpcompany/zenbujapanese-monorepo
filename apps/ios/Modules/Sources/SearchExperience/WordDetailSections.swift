@@ -1,12 +1,33 @@
 import SwiftUI
 
+struct LinkRow<Content: View>: View {
+  let action: () -> Void
+  @ViewBuilder let label: () -> Content
+
+  var body: some View {
+    Button(action: action) {
+      HStack {
+        label()
+        Spacer()
+        Image(systemName: "chevron.right")
+          .font(.footnote.weight(.semibold))
+          .foregroundStyle(.tertiary)
+      }
+    }
+    .tint(.primary)
+  }
+}
+
 struct PartOfSpeechRow: View {
   let entry: DictionaryEntry
   let conjugationTable: ConjugationTable?
+  let openConjugations: (ConjugationTable) -> Void
 
   var body: some View {
     if let conjugationTable {
-      NavigationLink(value: SearchExperienceRoute.conjugations(entry, conjugationTable)) {
+      LinkRow {
+        openConjugations(conjugationTable)
+      } label: {
         label
       }
       .accessibilityHint("Shows conjugations")

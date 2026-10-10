@@ -18,6 +18,7 @@ struct WatchAndListenView: View {
             "Search \(searchProvider.name) or paste a YouTube link, then tap any word in the Japanese captions to look it up."
           )
         }
+        .accessibilityIdentifier("watch.empty")
       } else {
         List {
           ForEach(history.videos.enumerated(), id: \.element.id) { index, video in
@@ -29,7 +30,7 @@ struct WatchAndListenView: View {
               }
               .tint(.primary)
               .listRowInsets(EdgeInsets(top: 12, leading: 12, bottom: 12, trailing: 12))
-              .swipeActions {
+              .rowActions {
                 Button("Remove", systemImage: "trash", role: .destructive) {
                   history.remove(video)
                 }
@@ -40,8 +41,8 @@ struct WatchAndListenView: View {
             }
           }
         }
-        .listSectionSpacing(12)
-        .listStyle(.insetGrouped)
+        .sectionSpacing(12)
+        .groupedList()
       }
     }
     .navigationTitle("Player")
@@ -51,7 +52,7 @@ struct WatchAndListenView: View {
       prompt: Text("Search \(searchProvider.name) or paste a link"),
       submit: submit
     )
-    .keyboardType(.webSearch)
+    .textEntry(.webSearch)
   }
 
   private func submit() {

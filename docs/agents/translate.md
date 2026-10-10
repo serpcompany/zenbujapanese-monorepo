@@ -48,7 +48,7 @@ The tab is split across three Swift targets in `apps/ios/Modules`
     conversation), and takes the account's through `applySynced`. A bookmark whose sentence isn't
     in a conversation here is kept in `Synced Bookmarks/bookmarks.json` in that folder
     (`SharedBookmarks.swift`), which is left in place, and not written, if it can't be read
-    (`bookmarksAreReadOnly`, which stops the account's sync). The
+    (`bookmarksProblem`, which stops the account's sync and says whether a newer version wrote it). The
     account side is in [`ios.md`](ios.md), Account and sync.
 - **`TranslatorOnDevice`** (`apps/ios/Modules/Sources/TranslatorOnDevice/`) holds the Apple
   adapters that don't need the microphone or the screen, and builds for iOS and macOS so the Mac
@@ -63,17 +63,20 @@ The tab is split across three Swift targets in `apps/ios/Modules`
     `TranslatorCore`.
 - **`SearchExperience`** (`apps/ios/Modules/Sources/SearchExperience/Translate/`) holds the screens
   and the rest of the adapters: `OnDeviceTranscriber` (an actor running `AVAudioEngine`, voice
-  processing, and the audio session, and feeding the microphone to a `BilingualRecognizer`),
+  processing, and the audio session through `ConversationAudioSession`, and feeding the microphone
+  to a `BilingualRecognizer`),
   `OnDeviceTranslation` (Apple Translation's availability and download prompt),
   `SystemSpeechPlayer` (`AVSpeechSynthesizer`), and `TranslateExperience`, which owns the session, History, and the
   start checks (microphone, Apple Translation, speech assets), which
   are on-device-specific and change when an Online engine arrives. The home is
   `TranslateHomeView`, a grouped `List` with a header card and the five `TranslateStart` options
   (`TranslateStart.spokenRows`, then `TranslateStart.writtenRows`) as rows of `SettingsRowLabel`,
-  the row Account uses; a row opens its mode directly. Image shows an alert of Take Photo and
-  Photo Library, and `ImageTextImport` opens that picker once the alert has closed, then pushes
-  Image Search (`ImageTextFlowView`, the `.image` route) onto the Translate stack once the picker
-  has closed. Text
+  the row Account uses; a row opens its mode directly. Image shows the window's alert of the
+  `ImageTextSource`s the device offers (Take Photo and Photo Library; on the Mac, Photo Library
+  and Paste Image). `ImageTextImport`, on `SearchExperienceRootView` so drops, Continuity Camera,
+  and ⌘⇧I reach it from any tab, opens that picker once the alert has closed, then selects
+  Translate and pushes Image Search (`ImageTextFlowView`, the `.image` route) onto the Translate
+  stack once the picker has closed. Text
   pushes `TypedTranslationScreen` with `TypedTranslationCard`; Document reads a PDF or text file
   with `DocumentText` (PDFKit, then Vision text recognition for scanned pages) and pushes the same
   screen with its
@@ -83,9 +86,13 @@ The tab is split across three Swift targets in `apps/ios/Modules`
   (Account → Translations), and `ConversationHistory.saved` leaves out the conversation still live.
   `SearchExperienceRootView` adds the tab, its navigation stack, and the word sheets for it and
   Account, and `TranslateSessionChrome` adds the session
-  bar for other tabs (`TranslateSessionAccessory`, a `tabViewBottomAccessory`, hidden while the
-  conversation is on screen), the silence prompt, the background pause, and the idle timer (off
-  while a session is live) to the whole `TabView`.
+  bar for other tabs (`TranslateSessionAccessory`, a tab bar accessory through `.bottomAccessory`,
+  hidden while the conversation is on screen), the silence prompt, and `ScreenAwake` (the screen
+  stays on while a session is live) to the whole `TabView`. Every window shares one
+  `TranslateExperience`, made by the scene (`ZenbuJapaneseScenes`), which also pauses a live
+  conversation when the app goes to the background (`AppLifecycle.sceneChanged`), and when its last
+  window closes (`AppLifecycle.lastWindowClosed`), which also drops a start still waiting on the
+  microphone or a download (`TranslateExperience.lastWindowClosed`).
   `TranslateChromeLayout` decides both bars: the tab bar hides only while the conversation itself
   is on screen, and the session bar shows exactly when it doesn't, so a screen pushed over a live
   conversation has both. The conversation itself puts `ConversationControlBar` (mute, speech speed,
@@ -154,8 +161,14 @@ to open.
   it.
 - Pausing always stops the recognizer, the audio engine, playback, and the timers, and releases
   the audio session back to `.soloAmbient`, the category the rest of the app uses.
-- On iOS 26.0, which lacks `tabViewBottomAccessory(isEnabled:)`, the session bar is a
-  `safeAreaInset` instead.
+- On iOS 26.0, which lacks `tabViewBottomAccessory(isEnabled:)`, and on the Mac, which has no tab
+  bar, the session bar is a `safeAreaInset` instead.
+- The audio session, its interruptions, and its media-services reset exist only on iPhone and
+  iPad. `ConversationAudioSession` (in `SearchExperience/Platform/`) does nothing on the Mac,
+  where `AVAudioEngine` takes the Mac's selected input and output, and reports that the output
+  reaches the microphone, since it can't tell speakers from headphones without Core Audio, so
+  Listening on a Mac stops hearing while it plays. Keeping the screen on is the idle timer on iOS
+  and a `ProcessInfo` activity on the Mac (`ScreenAwake`).
 
 ## Tests
 

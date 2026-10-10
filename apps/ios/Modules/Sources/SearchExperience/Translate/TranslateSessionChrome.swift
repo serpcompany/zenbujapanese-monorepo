@@ -15,7 +15,6 @@ struct TranslateSessionChrome: ViewModifier {
   let isTranslateSelected: Bool
   let isConversationOnScreen: Bool
   let returnToTranslate: () -> Void
-  @Environment(\.scenePhase) private var scenePhase
 
   private var showsSessionBar: Bool {
     TranslateChromeLayout(
@@ -35,27 +34,23 @@ struct TranslateSessionChrome: ViewModifier {
           )
         }
       }
-      .onChange(of: scenePhase) { _, phase in
-        if phase == .background { experience.sceneMovedToBackground() }
-      }
       .onChange(of: experience.session?.isLive == true, initial: true) { _, isLive in
-        UIApplication.shared.isIdleTimerDisabled = isLive
+        ScreenAwake.keepAwake(isLive)
       }
       .background { TranslationDownloadTask(experience: experience) }
   }
 
-  @ViewBuilder
   private func withAccessory(_ content: Content) -> some View {
-    if #available(iOS 26.1, *) {
-      content.tabViewBottomAccessory(isEnabled: showsSessionBar) { accessory }
-    } else {
+    content.bottomAccessory(isEnabled: showsSessionBar) {
+      accessory
+    } fallback: { content in
       content.safeAreaInset(edge: .bottom) {
         if showsSessionBar {
           accessory
             .padding(.vertical, 8)
             .glassEffect(.regular, in: .capsule)
             .padding(.horizontal)
-            .padding(.bottom, 60)
+            .padding(.bottom, TabBarLayout.bottomClearance)
         }
       }
     }

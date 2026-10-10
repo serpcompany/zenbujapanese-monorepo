@@ -47,18 +47,18 @@ struct VideoSearchView: View {
       }
     }
     .navigationTitle(search.query)
-    .navigationBarTitleDisplayMode(.inline)
+    .inlineNavigationTitle()
     .accessibilityIdentifier("watch.search-results")
   }
 }
 
-private struct VideoSearchWebView: UIViewRepresentable {
+private struct VideoSearchWebView: WebViewRepresentable {
   let url: URL
   let openVideo: (YouTubeVideoID) -> Void
 
   func makeCoordinator() -> Coordinator { Coordinator(openVideo: openVideo) }
 
-  func makeUIView(context: Context) -> WKWebView {
+  func makeWebView(context: Context) -> WKWebView {
     let configuration = WKWebViewConfiguration()
     configuration.mediaTypesRequiringUserActionForPlayback = .all
     let webView = WKWebView(frame: .zero, configuration: configuration)
@@ -69,7 +69,7 @@ private struct VideoSearchWebView: UIViewRepresentable {
     return webView
   }
 
-  func updateUIView(_ webView: WKWebView, context: Context) {
+  func updateWebView(_ webView: WKWebView, context: Context) {
     context.coordinator.openVideo = openVideo
   }
 

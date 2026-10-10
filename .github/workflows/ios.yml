@@ -38,7 +38,7 @@ jobs:
   swift:
     if: ${{ vars.IOS_SWIFT_TESTS == 'on' || github.event_name == 'workflow_dispatch' }}
     runs-on: macos-26
-    timeout-minutes: 60
+    timeout-minutes: 240
     steps:
       - uses: actions/checkout@v5
       - name: Restore the Git LFS files
@@ -48,10 +48,10 @@ jobs:
           key: lfs-ios-${{ hashFiles('apps/ios/Modules/Sources/SearchExperience/Resources/*.sqlite3', 'apps/ios/Modules/Sources/SearchExperience/Resources/Kuromoji/*.dat.gz', 'apps/ios/LanguageData/Sources/*.xz', 'apps/ios/LanguageData/Sources/*/*.xz') }}
       - name: Fetch the Git LFS files
         run: git lfs pull --include="$LFS_FILES" --exclude="$LFS_SNAPSHOTS,$LFS_RECORDINGS"
-      - name: Pick the first iPhone Simulator on the newest iOS runtime
+      - name: Pick the first iPhone and iPad Simulators on the newest iOS runtime
         run: |
           xcodebuild -version
-          udid=$(xcrun simctl list devices available --json | python3 -c '
+          xcrun simctl list devices available --json | python3 -c '
           import json, sys
           devices = json.load(sys.stdin)["devices"]
           runtimes = sorted(
@@ -60,19 +60,58 @@ jobs:
           )
           for runtime in reversed(runtimes):
               phones = [device for device in devices[runtime] if device["name"].startswith("iPhone")]
-              if phones:
-                  print(phones[0]["udid"])
+              pads = [device for device in devices[runtime] if device["name"].startswith("iPad")]
+              if phones and pads:
+                  print("SIMULATOR=" + phones[0]["udid"])
+                  print("IPAD_SIMULATOR=" + pads[0]["udid"])
                   break
           else:
-              sys.exit("No available iPhone Simulator")
-          ')
-          echo "SIMULATOR=$udid" >>"$GITHUB_ENV"
-      - name: Run SearchExperienceTests
+              sys.exit("No iOS runtime has both an iPhone and an iPad Simulator")
+          ' >>"$GITHUB_ENV"
+      - name: Run SearchExperienceTests and TranslatorCoreTests on the iPhone Simulator
         working-directory: apps/ios/Modules
         run: |
           xcodebuild -scheme ZenbuJapaneseModules-Package \
             -destination "platform=iOS Simulator,id=$SIMULATOR" \
             ONLY_ACTIVE_ARCH=YES test
+      - name: Run SearchExperienceTests and TranslatorCoreTests on the iPad Simulator
+        working-directory: apps/ios/Modules
+        run: |
+          xcodebuild -scheme ZenbuJapaneseModules-Package \
+            -destination "platform=iOS Simulator,id=$IPAD_SIMULATOR" \
+            ONLY_ACTIVE_ARCH=YES test
+      - name: Run SearchExperienceTests and TranslatorCoreTests on the Mac
+        working-directory: apps/ios/Modules
+        run: |
+          xcodebuild -scheme ZenbuJapaneseModules-Package \
+            -destination 'platform=macOS,arch=arm64' test
+      - name: Restore the Sudachi build cache
+        uses: actions/cache@v5
+        with:
+          path: ~/Library/Caches/com.zenbujapanese.build/SudachiCore
+          key: sudachi-core-${{ hashFiles('apps/ios/Modules/Sources/SearchExperience/Resources/LanguageTechnologyPackCatalog.json') }}
+      - name: Fill the Sudachi build cache
+        run: |
+          python3 apps/ios/Tools/prepare_sudachi_core.py \
+            --manifest apps/ios/Modules/Sources/SearchExperience/Resources/LanguageTechnologyPackCatalog.json \
+            --cache "$HOME/Library/Caches/com.zenbujapanese.build/SudachiCore" --cache-only
+      - name: Run the app's UI tests on the iPhone Simulator
+        run: |
+          xcodebuild -project apps/ios/ZenbuJapanese.xcodeproj -scheme ZenbuJapanese \
+            -destination "platform=iOS Simulator,id=$SIMULATOR" \
+            ONLY_ACTIVE_ARCH=YES ARCHS=arm64 ZENBU_BUNDLE_ID_SUFFIX=.uitests test
+      - name: Run the app's UI tests on the iPad Simulator
+        run: |
+          xcodebuild -project apps/ios/ZenbuJapanese.xcodeproj -scheme ZenbuJapanese \
+            -destination "platform=iOS Simulator,id=$IPAD_SIMULATOR" \
+            ONLY_ACTIVE_ARCH=YES ARCHS=arm64 ZENBU_BUNDLE_ID_SUFFIX=.uitests test
+      - name: Let UI tests drive the Mac
+        run: sudo automationmodetool enable-automationmode-without-authentication
+      - name: Run the app's UI tests on the Mac
+        run: |
+          xcodebuild -project apps/ios/ZenbuJapanese.xcodeproj -scheme ZenbuJapanese \
+            -destination 'platform=macOS,arch=arm64' ZENBU_BUNDLE_ID_SUFFIX=.uitests \
+            CODE_SIGN_IDENTITY=- CODE_SIGN_ENTITLEMENTS= test
       - name: Run the recorded-audio check's scoring tests
         working-directory: apps/ios/Tools/TranslateReplay
         run: swift test

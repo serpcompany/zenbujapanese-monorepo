@@ -6,6 +6,16 @@ All notable user-facing changes to Zenbu Japanese are recorded here.
 
 ### Added
 
+- Zenbu Japanese runs on iPad and on Macs with Apple silicon, as the same app: get it once and
+  sign in to the same Zenbu account to keep your known words, lists, Recent videos, and bookmarks
+  the same everywhere. On iPad it turns every way and runs beside other apps, with the tabs at
+  the top, where they open into a sidebar; on the Mac the tabs sit in a bar at the top of the
+  window. On the Mac, Settings (⌘,) holds your account and preferences, ⌘F
+  goes to Search, ⌘⇧I opens Translate's **Image** to search an image, and ⌘1 to ⌘4 switch tabs.
+  On the Mac, **Image** pastes an image in place of taking a photo, and a photo taken on your
+  iPhone with Continuity Camera opens in Image Search; on every device, drag images onto the
+  window to open them there. Right-click a list, a known word, a Recent video, or a frequency
+  dictionary on the Mac for what a swipe does on the iPhone.
 - Sort search results from the **Sorted by** row at the top of the results: a frequency
   dictionary, most common first (JLPT by level), or your known words, known
   first. Your choice stays across launches and applies to Japanese, English, and romaji
@@ -38,6 +48,19 @@ All notable user-facing changes to Zenbu Japanese are recorded here.
 
 ### Fixed
 
+- A conversation in Translate keeps following the newest line at larger text sizes, and stops
+  only when you scroll up; a tall new line used to stop it and show **Jump to Latest** on its own.
+- At larger text sizes, a conversation's controls stay on screen on iPhone, where the pause button
+  could be pushed off the edge; press and hold one to see it larger.
+- VoiceOver says which kanji is selected when you tap one in a headword to see its part of the
+  furigana.
+- Player's **Recent**, word notes, the Media Library, and the profile are no longer written over
+  when Zenbu can't read what was saved: a copy is kept on your device, and each keeps everything
+  it can read. A photo you delete is still deleted, within 30 days if a kept copy names it.
+- In the half-height word sheet in Player, Image Search, and Translate, a word's **Kanji** and its
+  part of speech (which opens its conjugations) now open, in the tab you're in.
+- When a newer version of Zenbu saved the bookmarks synced to your device, Zenbu Account now says
+  to update Zenbu instead of reopening it.
 - Frequency Dictionaries: downloading several packs at once no longer looks like each tap cancels
   the one before. Every downloading row keeps its own progress ring, with a stop button.
 - Radicals no longer draws over the search results.

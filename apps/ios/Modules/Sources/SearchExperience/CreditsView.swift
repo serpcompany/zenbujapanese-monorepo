@@ -76,7 +76,7 @@ struct CreditsView: View {
     .accessibilityIdentifier("credits.list")
     .headerProminence(.increased)
     .navigationTitle("Credits & Attributions")
-    .navigationBarTitleDisplayMode(.inline)
+    .inlineNavigationTitle()
   }
 
   private func source(_ name: String, credit: String, license: String, project: String)
@@ -124,7 +124,7 @@ private struct LicensesView: View {
       }
     }
     .navigationTitle("Licenses")
-    .navigationBarTitleDisplayMode(.inline)
+    .inlineNavigationTitle()
   }
 
   private func licenseText(
@@ -159,7 +159,7 @@ private struct TatoebaContributorCreditsView: View {
       }
     }
     .navigationTitle("Tatoeba Contributors")
-    .navigationBarTitleDisplayMode(.inline)
+    .inlineNavigationTitle()
     .task {
       guard credits.isEmpty else { return }
       credits = TatoebaAttributionClient.contributorCredits()
@@ -201,6 +201,6 @@ private struct BundledLicenseTextView: View {
       }
     }
     .navigationTitle(title)
-    .navigationBarTitleDisplayMode(.inline)
+    .inlineNavigationTitle()
   }
 }

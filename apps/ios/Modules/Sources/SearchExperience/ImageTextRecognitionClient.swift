@@ -51,9 +51,9 @@ private enum VisionTextRecognizer {
     else {
       throw ImageTextRecognitionError.invalidImage
     }
-    let orientation = imageOrientation(source)
+    let orientation = ImageCoding.orientation(of: source)
     let handler = ImageRequestHandler(image, orientation: orientation)
-    let pixelSize = orientedSize(image, orientation: orientation)
+    let pixelSize = ImageCoding.orientedSize(image, orientation: orientation)
 
     var results = try await handler.perform(
       request(languages: ["ja-JP", "en-US"], languageCorrection: true))
@@ -75,24 +75,6 @@ private enum VisionTextRecognizer {
         characterBoxes: boxes,
         isVertical: isVertical(observation.boundingBox.cgRect, characterBoxes: boxes, in: pixelSize)
       )
-    }
-  }
-
-  private static func imageOrientation(_ source: CGImageSource) -> CGImagePropertyOrientation {
-    let properties = CGImageSourceCopyPropertiesAtIndex(source, 0, nil) as? [CFString: Any]
-    let rawValue = (properties?[kCGImagePropertyOrientation] as? NSNumber)?.uint32Value ?? 1
-    return CGImagePropertyOrientation(rawValue: rawValue) ?? .up
-  }
-
-  private static func orientedSize(
-    _ image: CGImage,
-    orientation: CGImagePropertyOrientation
-  ) -> CGSize {
-    switch orientation {
-    case .left, .leftMirrored, .right, .rightMirrored:
-      CGSize(width: image.height, height: image.width)
-    default:
-      CGSize(width: image.width, height: image.height)
     }
   }
 

@@ -6,8 +6,7 @@ struct TranslateTabRoot: View {
   let words: TranslateWordLinks
   let isConversationOnScreen: Bool
   let push: (TranslateRoute) -> Void
-  let cameraAuthorizationClient: CameraAuthorizationClient
-  let openImageText: ([ImageTextAsset]) -> Void
+  let chooseImage: () -> Void
 
   var body: some View {
     Group {
@@ -21,8 +20,7 @@ struct TranslateTabRoot: View {
           experience: experience,
           openHistory: { push(.history) },
           openText: { push(.text($0)) },
-          cameraAuthorizationClient: cameraAuthorizationClient,
-          openImageText: openImageText
+          chooseImage: chooseImage
         )
         .transition(.move(edge: .leading))
       }

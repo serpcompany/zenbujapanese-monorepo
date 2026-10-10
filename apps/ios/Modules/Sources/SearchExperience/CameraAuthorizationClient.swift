@@ -1,5 +1,4 @@
 import AVFoundation
-import UIKit
 
 enum CameraAuthorizationState: Sendable {
   case authorized
@@ -16,7 +15,8 @@ struct CameraAuthorizationClient: Sendable {
 
   static let live = CameraAuthorizationClient(
     state: {
-      switch AVCaptureDevice.authorizationStatus(for: .video) {
+      guard LaunchHarness.cameraImageURL == nil else { return CameraAuthorizationState.authorized }
+      return switch AVCaptureDevice.authorizationStatus(for: .video) {
       case .authorized: .authorized
       case .notDetermined: .notDetermined
       case .denied: .denied
@@ -28,11 +28,10 @@ struct CameraAuthorizationClient: Sendable {
       await AVCaptureDevice.requestAccess(for: .video)
     },
     isCameraAvailable: {
-      UIImagePickerController.isSourceTypeAvailable(.camera)
+      CameraCapture.isAvailable
     },
     openSettings: {
-      guard let url = URL(string: UIApplication.openSettingsURLString) else { return }
-      UIApplication.shared.open(url)
+      SystemSettings.open(.camera)
     }
   )
 }

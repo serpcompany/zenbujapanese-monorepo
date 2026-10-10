@@ -37,10 +37,10 @@ struct FrequencyDictionariesView: View {
       }
     }
     .navigationTitle("Frequency Dictionaries")
-    .navigationBarTitleDisplayMode(.inline)
+    .inlineNavigationTitle()
     .toolbar {
       if (snapshot?.enabledPackIDs.count ?? 0) > 1 {
-        EditButton()
+        ListEditButton()
           .accessibilityIdentifier("frequency-packs.reorder")
       }
     }
@@ -89,7 +89,15 @@ struct FrequencyDictionariesView: View {
     }
     .accessibilityElement(children: .contain)
     .accessibilityIdentifier("frequency-pack.row.\(pack.id.rawValue)")
-    .swipeActions(edge: .trailing) {
+    .rowActions {
+      if pack.availableActions.contains(.update), downloads.fraction(for: pack.id) == nil {
+        Button("Update", systemImage: "arrow.down.circle") {
+          download(pack.id)
+        }
+        .tint(.accentColor)
+        .accessibilityIdentifier("frequency-pack.update.\(pack.id.rawValue)")
+      }
+    } trailing: {
       if pack.availableActions.contains(.remove), downloads.fraction(for: pack.id) == nil {
         Button("Remove", systemImage: "trash", role: .destructive) {
           remove(pack.id)
@@ -101,15 +109,6 @@ struct FrequencyDictionariesView: View {
       }
       .accessibilityIdentifier("frequency-pack.details.\(pack.id.rawValue)")
     }
-    .swipeActions(edge: .leading) {
-      if pack.availableActions.contains(.update), downloads.fraction(for: pack.id) == nil {
-        Button("Update", systemImage: "arrow.down.circle") {
-          download(pack.id)
-        }
-        .tint(.accentColor)
-        .accessibilityIdentifier("frequency-pack.update.\(pack.id.rawValue)")
-      }
-    }
   }
 
   @ViewBuilder
@@ -119,7 +118,7 @@ struct FrequencyDictionariesView: View {
         .foregroundStyle(.red)
         .accessibilityIdentifier("frequency-pack.failure.\(pack.id.rawValue)")
     } else if pack.updateAvailable {
-      Text("Update available · swipe right to download")
+      Text("Update available · \(ThisDevice.updateGesture) to download")
         .foregroundStyle(.tint)
     } else {
       Text(pack.detailSummary)
@@ -271,13 +270,14 @@ private struct FrequencyPackDetailView: View {
         }
       }
       .navigationTitle(pack.manifest.displayName)
-      .navigationBarTitleDisplayMode(.inline)
+      .inlineNavigationTitle()
       .toolbar {
         ToolbarItem(placement: .confirmationAction) {
           Button("Done", action: dismiss.callAsFunction)
         }
       }
     }
+    .sheetSize(onMac: AppWindow.sheetSize)
     .accessibilityIdentifier("frequency-pack.detail")
   }
 }

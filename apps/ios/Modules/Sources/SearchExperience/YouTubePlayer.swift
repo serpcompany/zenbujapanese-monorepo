@@ -97,34 +97,32 @@ final class YouTubePlayerController {
   }
 }
 
-struct YouTubePlayerView: UIViewRepresentable {
+struct YouTubePlayerView: WebViewRepresentable {
   let videoID: YouTubeVideoID
   let controller: YouTubePlayerController
 
   func makeCoordinator() -> MessageProxy { MessageProxy(controller: controller) }
 
-  func makeUIView(context: Context) -> WKWebView {
+  func makeWebView(context: Context) -> WKWebView {
     let configuration = WKWebViewConfiguration()
-    configuration.allowsInlineMediaPlayback = true
+    configuration.playsMediaInline()
     configuration.mediaTypesRequiringUserActionForPlayback = []
     configuration.userContentController.add(context.coordinator, name: "player")
     let webView = WKWebView(frame: .zero, configuration: configuration)
-    webView.isOpaque = false
-    webView.backgroundColor = .black
-    webView.scrollView.isScrollEnabled = false
-    webView.accessibilityIdentifier = "watch.player"
+    webView.showsVideoOnBlack(identifier: "watch.player")
     controller.webView = webView
     webView.loadHTMLString(Self.html(videoID), baseURL: Self.origin)
     return webView
   }
 
-  func updateUIView(_ webView: WKWebView, context: Context) {}
+  func updateWebView(_ webView: WKWebView, context: Context) {}
 
-  static func dismantleUIView(_ webView: WKWebView, coordinator: MessageProxy) {
+  static func dismantleWebView(_ webView: WKWebView, coordinator: MessageProxy) {
     webView.configuration.userContentController.removeScriptMessageHandler(forName: "player")
   }
 
   private static let origin = URL(string: "https://zenbujapanese.com")!
+  private static let youTubeScript = #"<script src="https://www.youtube.com/iframe_api"></script>"#
 
   private static func html(_ videoID: YouTubeVideoID) -> String {
     """
@@ -165,7 +163,7 @@ struct YouTubePlayerView: UIViewRepresentable {
       });
     }
     </script>
-    <script src="https://www.youtube.com/iframe_api"></script>
+    \(LaunchHarness.youTubePlayerScript ?? youTubeScript)
     </body></html>
     """
   }

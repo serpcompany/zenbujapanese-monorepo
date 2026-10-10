@@ -76,7 +76,7 @@ struct RadicalInputView: View {
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .padding(.top, 8)
                 .padding(.bottom, 6)
-                .background(Color(uiColor: .systemGray5))
+                .background(SystemColor.panel)
                 .accessibilityAddTraits(.isHeader)
                 .accessibilityIdentifier("radical.stroke.\(group.strokeCount)")
             }
@@ -95,7 +95,7 @@ struct RadicalInputView: View {
       .font(.title3)
       .frame(maxWidth: .infinity, minHeight: 44)
       .background(
-        isSelected ? ZenbuTheme.radicalSelection : Color(uiColor: .secondarySystemFill),
+        isSelected ? ZenbuTheme.radicalSelection : SystemColor.secondaryFill,
         in: .rect(cornerRadius: 8)
       )
       .foregroundStyle(isSelected ? Color.white : Color.primary)

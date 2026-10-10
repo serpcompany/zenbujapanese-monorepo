@@ -1,7 +1,6 @@
 import CoreTransferable
 import PhotosUI
 import SwiftUI
-import UIKit
 import UniformTypeIdentifiers
 
 @MainActor
@@ -11,6 +10,7 @@ final class SavedItemNotes {
   private(set) var editingNoteID: String?
   var draft = ""
   @ObservationIgnored private var noteID: WordNoteID?
+  @ObservationIgnored private var textWhenEditingBegan = ""
   @ObservationIgnored private var saveTask: Task<Void, Never>?
   @ObservationIgnored private let store: WordNoteStore
 
@@ -30,50 +30,38 @@ final class SavedItemNotes {
   }
 
   func beginEditing(_ note: LearnerWordNote) {
+    if let editingNoteID, editingNoteID != note.id { saveDraft(of: editingNoteID) }
     editingNoteID = note.id
     draft = note.text
+    textWhenEditingBegan = note.text
   }
 
   func beginAdding() {
-    if let editingNoteID {
-      notes = notesApplyingDraft(noteID: editingNoteID)
-      scheduleSave(notes)
-    }
+    if let editingNoteID { saveDraft(of: editingNoteID) }
     editingNoteID = UUID().uuidString
     draft = ""
+    textWhenEditingBegan = ""
   }
 
   func finishEditing() {
     guard let editingNoteID else { return }
-    notes = notesApplyingDraft(noteID: editingNoteID)
+    saveDraft(of: editingNoteID)
     self.editingNoteID = nil
     draft = ""
-    scheduleSave(notes)
   }
 
-  private func scheduleSave(_ notes: [LearnerWordNote]) {
+  private func saveDraft(of editingNoteID: String) {
+    let trimmed = { (text: String) in text.trimmingCharacters(in: .whitespacesAndNewlines) }
+    guard trimmed(draft) != trimmed(textWhenEditingBegan) else { return }
+    let note = LearnerWordNote(id: editingNoteID, text: draft)
+    notes.apply(note)
     guard let noteID else { return }
     let store = store
     let precedingSave = saveTask
     saveTask = Task {
       await precedingSave?.value
-      await store.save(notes, noteID)
+      await store.save(note, noteID)
     }
-  }
-
-  private func notesApplyingDraft(noteID: String) -> [LearnerWordNote] {
-    let normalized = draft.trimmingCharacters(in: .whitespacesAndNewlines)
-    var updatedNotes = notes
-    if let index = updatedNotes.firstIndex(where: { $0.id == noteID }) {
-      if normalized.isEmpty {
-        updatedNotes.remove(at: index)
-      } else {
-        updatedNotes[index].text = normalized
-      }
-    } else if !normalized.isEmpty {
-      updatedNotes.append(LearnerWordNote(id: noteID, text: normalized))
-    }
-    return updatedNotes
   }
 }
 
@@ -96,7 +84,7 @@ final class SavedItemPhotos {
   }
 
   var displayable: [EncounterMedia] {
-    media.filter { UIImage(data: $0.data) != nil }
+    media.filter { Image(imageData: $0.data) != nil }
   }
 
   func load(_ item: SavedItem, saving initial: EncounterMediaAttachment? = nil) async {
@@ -186,25 +174,23 @@ extension View {
     photos: SavedItemPhotos,
     showsListPicker: Binding<Bool>
   ) -> some View {
-    toolbar {
-      ToolbarItemGroup(placement: .topBarTrailing) {
-        if notes.isEditing {
-          Button("Done", action: notes.finishEditing)
-            .font(.body.weight(.semibold))
-            .accessibilityIdentifier("word-note.done")
-        } else {
-          ShareLink(item: shareText) {
-            Label("Share", systemImage: "square.and.arrow.up")
-          }
-          .accessibilityIdentifier("\(identifierPrefix).share")
-          SavedItemMenu(
-            item: item,
-            identifierPrefix: identifierPrefix,
-            addToList: { showsListPicker.wrappedValue = true },
-            addNote: notes.beginAdding,
-            photos: photos
-          )
+    barTrailingItems {
+      if notes.isEditing {
+        Button("Done", action: notes.finishEditing)
+          .font(.body.weight(.semibold))
+          .accessibilityIdentifier("word-note.done")
+      } else {
+        ShareLink(item: shareText) {
+          Label("Share", systemImage: "square.and.arrow.up")
         }
+        .accessibilityIdentifier("\(identifierPrefix).share")
+        SavedItemMenu(
+          item: item,
+          identifierPrefix: identifierPrefix,
+          addToList: { showsListPicker.wrappedValue = true },
+          addNote: notes.beginAdding,
+          photos: photos
+        )
       }
     }
     .savedItemPhotoPresentation(photos)
@@ -260,7 +246,9 @@ struct SavedItemMenu: View {
       }
       Section {
         Button("Add Note", systemImage: "square.and.pencil", action: addNote)
-        Button("Take Photo", systemImage: "camera", action: photos.presentCamera)
+        if CameraCapture.isOffered {
+          Button("Take Photo", systemImage: "camera", action: photos.presentCamera)
+        }
         Button("Choose Photo", systemImage: "photo.on.rectangle") {
           photos.showsPhotoPicker = true
         }
@@ -284,18 +272,11 @@ struct SavedItemListsSection: View {
 
   var body: some View {
     ForEach(wordLists.lists.filter { wordLists.contains(item, in: $0.id) }) { list in
-      Button {
+      LinkRow {
         openList(list.id)
       } label: {
-        HStack {
-          Label(list.name, systemImage: "list.bullet")
-          Spacer()
-          Image(systemName: "chevron.right")
-            .font(.footnote.weight(.semibold))
-            .foregroundStyle(.tertiary)
-        }
+        Label(list.name, systemImage: "list.bullet")
       }
-      .tint(.primary)
       .accessibilityIdentifier("\(identifierPrefix).list.\(list.id)")
     }
 

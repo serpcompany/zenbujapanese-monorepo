@@ -1,6 +1,5 @@
 import AuthenticationServices
 import CryptoKit
-import UIKit
 
 enum GoogleSignInError: Error, Equatable {
   case refused(String)
@@ -131,15 +130,4 @@ final class WebSignInPresenter: NSObject, ASWebAuthenticationPresentationContext
   func presentationAnchor(for session: ASWebAuthenticationSession) -> ASPresentationAnchor {
     keyWindowAnchor()
   }
-}
-
-@MainActor
-func keyWindowAnchor() -> ASPresentationAnchor {
-  let scenes = UIApplication.shared.connectedScenes.compactMap { $0 as? UIWindowScene }
-  let windows = scenes.flatMap(\.windows)
-  if let window = windows.first(where: \.isKeyWindow) ?? windows.first { return window }
-  guard let scene = scenes.first else {
-    preconditionFailure("Sign-in starts from a button in a window")
-  }
-  return ASPresentationAnchor(windowScene: scene)
 }

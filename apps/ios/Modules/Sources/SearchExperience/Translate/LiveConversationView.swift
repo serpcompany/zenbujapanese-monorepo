@@ -24,10 +24,10 @@ struct LiveConversationView: View {
       .environment(experience.readingAids)
       .frame(maxHeight: .infinity)
       ConversationControlBar(session: session, experience: experience)
+        .dynamicTypeSize(...DynamicTypeSize.large)
     }
-    .toolbar(
-      TranslateChromeLayout(isSessionLive: true, isConversationOnScreen: isOnScreen).tabBar,
-      for: .tabBar)
+    .tabBarVisibility(
+      TranslateChromeLayout(isSessionLive: true, isConversationOnScreen: isOnScreen).tabBar)
     .modifier(ConversationStatusAlert(session: session))
     .alert("Leave this conversation?", isPresented: $isConfirmingExit) {
       Button("Save and Exit") { leave(saving: true) }
@@ -36,14 +36,14 @@ struct LiveConversationView: View {
     } message: {
       Text("Save its \(session.conversation.turnCountLabel) to Translations, or leave without saving.")
     }
-    .navigationBarTitleDisplayMode(.inline)
-    .navigationBarBackButtonHidden()
+    .inlineNavigationTitle()
+    .backButtonHidden()
     .toolbar {
-      ToolbarItem(placement: .topBarLeading) {
+      ToolbarItem(placement: .barLeading) {
         Button("Back", systemImage: "chevron.backward", action: requestExit)
           .accessibilityIdentifier("translate.conversation.back")
       }
-      ToolbarItem(placement: .topBarTrailing) { optionsMenu }
+      ToolbarItem(placement: .barTrailing) { optionsMenu }
     }
     .onChange(of: isConfirmingExit) { _, isConfirming in
       guard !isConfirming, experience.session === session, session.status == .paused(.leaving)
@@ -69,11 +69,12 @@ struct LiveConversationView: View {
       }
       .listStyle(.plain)
       .contentMargins(.top, 8, for: .scrollContent)
-      .onScrollGeometryChange(for: Bool.self) { geometry in
-        geometry.contentOffset.y + geometry.containerSize.height
-          >= geometry.contentSize.height - 60
-      } action: { _, isNearBottom in
-        isFollowingLatest = isNearBottom
+      .onScrollGeometryChange(for: ConversationScrollPosition.self) { geometry in
+        ConversationScrollPosition(
+          offset: geometry.contentOffset.y, visibleHeight: geometry.containerSize.height,
+          contentHeight: geometry.contentSize.height)
+      } action: { earlier, position in
+        isFollowingLatest = position.keepsFollowing(isFollowingLatest, after: earlier)
       }
       .onChange(of: contentVersion) {
         guard isFollowingLatest else { return }

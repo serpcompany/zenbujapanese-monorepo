@@ -37,7 +37,8 @@ final class SystemSpeechPlayer: NSObject, AVSpeechSynthesizerDelegate {
     },
     stop: { await SystemSpeechPlayer.shared.stop() },
     reachesMicrophone: {
-      await OnDeviceTranscriber.shared.echoCancelledOutput() == nil && outputReachesMicrophone()
+      await OnDeviceTranscriber.shared.echoCancelledOutput() == nil
+        && ConversationAudioSession.outputReachesMicrophone()
     }
   )
 
@@ -53,16 +54,8 @@ final class SystemSpeechPlayer: NSObject, AVSpeechSynthesizerDelegate {
     resetObserver = Self.observeMediaServicesReset()
   }
 
-  nonisolated private static func outputReachesMicrophone() -> Bool {
-    AVAudioSession.sharedInstance().currentRoute.outputs.contains {
-      $0.portType == .builtInSpeaker || $0.portType == .builtInReceiver
-    }
-  }
-
-  nonisolated private static func observeMediaServicesReset() -> any NSObjectProtocol {
-    NotificationCenter.default.addObserver(
-      forName: AVAudioSession.mediaServicesWereResetNotification, object: nil, queue: nil
-    ) { _ in
+  nonisolated private static func observeMediaServicesReset() -> (any NSObjectProtocol)? {
+    ConversationAudioSession.observeMediaServicesReset {
       Task { @MainActor in SystemSpeechPlayer.shared.replaceSynthesizer() }
     }
   }

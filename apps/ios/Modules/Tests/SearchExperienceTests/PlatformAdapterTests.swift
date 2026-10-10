@@ -1,0 +1,164 @@
+import CoreGraphics
+import Foundation
+import ImageIO
+import SwiftUI
+import Testing
+import UniformTypeIdentifiers
+
+@testable import SearchExperience
+
+@Suite("Platform adapters")
+struct PlatformAdapterTests {
+  @MainActor
+  @Test("an adaptive color resolves to its light and dark values")
+  func adaptiveColor() {
+    let color = Color.adaptive(
+      light: DisplayP3Color(red: 1, green: 0, blue: 0),
+      dark: DisplayP3Color(red: 0, green: 0, blue: 1))
+    let light = color.resolve(in: environment(.light))
+    let dark = color.resolve(in: environment(.dark))
+    #expect(light.red > light.blue)
+    #expect(dark.blue > dark.red)
+  }
+
+  @Test("decoded image data keeps its size, and data that isn't an image decodes to nothing")
+  func decodedImage() throws {
+    let png = try pngData(width: 40, height: 20)
+    let decoded = try #require(DecodedImage(data: png))
+    #expect(decoded.size == CGSize(width: 40, height: 20))
+    #expect(DecodedImage(data: Data("not an image".utf8)) == nil)
+    #expect(Image(imageData: Data()) == nil)
+  }
+
+  @Test("a photo's orientation is applied when it's decoded, for display and for storage")
+  func orientation() throws {
+    let image = try #require(solidImage(width: 60, height: 20))
+    let data = NSMutableData()
+    let destination = try #require(
+      CGImageDestinationCreateWithData(data, UTType.jpeg.identifier as CFString, 1, nil))
+    CGImageDestinationAddImage(
+      destination, image, [kCGImagePropertyOrientation: CGImagePropertyOrientation.right.rawValue]
+        as CFDictionary)
+    #expect(CGImageDestinationFinalize(destination))
+    let decoded = try #require(ImageCoding.image(from: data as Data))
+    #expect(decoded.width == 20)
+    #expect(decoded.height == 60)
+    #expect(DecodedImage(data: data as Data)?.size == CGSize(width: 20, height: 60))
+  }
+
+  @Test("a pasted image is stored as a JPEG no larger than Image Search reads")
+  func pastedImage() throws {
+    let png = try pngData(width: 5_000, height: 100)
+    let asset = try #require(ImageTextAsset(pastedImageData: png, name: "Pasted Image"))
+    let source = try #require(CGImageSourceCreateWithData(asset.data as CFData, nil))
+    #expect(CGImageSourceGetType(source) as String? == UTType.jpeg.identifier)
+    let stored = try #require(ImageCoding.image(from: asset.data))
+    #expect(stored.width == 4_096)
+    #expect(ImageTextAsset(pastedImageData: Data("text".utf8), name: "Pasted Image") == nil)
+  }
+
+  @Test("a dropped image is read with the limits Files applies")
+  func droppedImage() async throws {
+    let folder = FileManager.default.temporaryDirectory
+      .appending(path: "dropped-\(UUID().uuidString)", directoryHint: .isDirectory)
+    try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
+    defer { try? FileManager.default.removeItem(at: folder) }
+    let sign = folder.appending(path: "sign.png")
+    try pngData(width: 300, height: 200).write(to: sign)
+    let banner = folder.appending(path: "banner.png")
+    try pngData(width: 12_001, height: 1).write(to: banner)
+
+    let signProvider = try #require(NSItemProvider(contentsOf: sign))
+    let bannerProvider = try #require(NSItemProvider(contentsOf: banner))
+    let asset = try #require(await ImageTextAsset.dropped(signProvider))
+    #expect(asset.data == (try Data(contentsOf: sign)))
+    #expect(await ImageTextAsset.dropped(bannerProvider) == nil)
+  }
+
+  @MainActor
+  @Test("a profile photo is cropped to a 512-point square and survives a reload")
+  func profilePhoto() async throws {
+    let suite = "platform-profile-\(UUID().uuidString)"
+    let defaults = try #require(UserDefaults(suiteName: suite))
+    defer { defaults.removePersistentDomain(forName: suite) }
+    let photoURL = FileManager.default.temporaryDirectory.appending(path: "\(suite).jpg")
+    defer { try? FileManager.default.removeItem(at: photoURL) }
+    let png = try pngData(width: 300, height: 200)
+
+    let profile = UserProfile(defaults: defaults, photoURL: photoURL)
+    await profile.setPhoto(png)
+    #expect(profile.photo?.width == 512)
+    #expect(profile.photo?.height == 512)
+
+    let reloaded = UserProfile(defaults: defaults, photoURL: photoURL)
+    #expect(reloaded.photo?.width == 512)
+    #expect(!reloaded.isEmpty)
+  }
+
+  @MainActor
+  @Test("Settings links exist for the camera and the microphone")
+  func settingsLinks() {
+    #expect(SystemSettings.url(for: .camera) != nil)
+    #expect(SystemSettings.url(for: .microphone) != nil)
+  }
+
+  @Test("Image offers Take Photo on iPhone and iPad, and Paste Image in its place on the Mac")
+  func imageSources() {
+    let isMac = ThisDevice.name == "Mac"
+    let expected: [ImageTextSource] = isMac ? [.photoLibrary, .paste] : [.camera, .photoLibrary]
+    #expect(ImageTextSource.offered == expected)
+  }
+
+  @Test("the device is named for the device it runs on, with the Settings app and gesture it has")
+  func deviceName() {
+    let simulated = ProcessInfo.processInfo.environment["SIMULATOR_MODEL_IDENTIFIER"]
+    let expected = simulated.map { $0.hasPrefix("iPad") ? "iPad" : "iPhone" } ?? "Mac"
+    let isMac = expected == "Mac"
+    #expect(ThisDevice.name == expected)
+    #expect(ThisDevice.settingsApp == (isMac ? "System Settings" : "Settings"))
+    #expect(ThisDevice.updateGesture == (isMac ? "right-click" : "swipe right"))
+    #expect(ThisDevice.translationLanguagesSettings.hasPrefix(ThisDevice.settingsApp))
+  }
+
+  @Test("Paste Image takes copied image files over image data, and nothing when no file is an image")
+  func pastedImageChoice() {
+    let photo = URL(filePath: "/tmp/sign.png")
+    let notes = URL(filePath: "/tmp/notes.txt")
+    let data = Data("png".utf8)
+    #expect(PastedImage.choosing(files: [notes, photo], data: data) == .files([photo]))
+    #expect(PastedImage.choosing(files: [notes], data: data) == nil)
+    #expect(PastedImage.choosing(files: [], data: data) == .data(data))
+    #expect(PastedImage.choosing(files: [], data: nil) == nil)
+  }
+
+  @Test("Translate watches the audio session on iPhone and iPad, and on the Mac hears its speakers")
+  func conversationAudio() {
+    let observers = ConversationAudioSession.observeInterruptions(
+      interrupted: {}, mediaServicesReset: {})
+    defer { observers.forEach(NotificationCenter.default.removeObserver) }
+    if ThisDevice.name == "Mac" {
+      #expect(observers.isEmpty)
+      #expect(ConversationAudioSession.outputReachesMicrophone())
+    } else {
+      #expect(observers.count == 2)
+    }
+  }
+
+  private func environment(_ scheme: ColorScheme) -> EnvironmentValues {
+    var values = EnvironmentValues()
+    values.colorScheme = scheme
+    return values
+  }
+
+  private func pngData(width: Int, height: Int) throws -> Data {
+    let image = try #require(solidImage(width: width, height: height))
+    return try #require(ImageCoding.pngData(image))
+  }
+
+  private func solidImage(width: Int, height: Int) -> CGImage? {
+    ImageCoding.drawing(width: width, height: height) { context in
+      context.setFillColor(CGColor(red: 0.2, green: 0.4, blue: 0.6, alpha: 1))
+      context.fill(CGRect(x: 0, y: 0, width: width, height: height))
+    }
+  }
+}

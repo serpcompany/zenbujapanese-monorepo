@@ -4,7 +4,7 @@ extension View {
   func searchInputGlass(in shape: some Shape) -> some View {
     contentShape(shape)
       .glassEffect(
-        .regular.tint(Color(uiColor: .systemBackground).opacity(0.7)).interactive(), in: shape)
+        .regular.tint(SystemColor.panelContent.opacity(0.7)).interactive(), in: shape)
   }
 }
 
@@ -37,7 +37,7 @@ struct SearchInputPanel<Content: View, Actions: View>: View {
     .padding(.horizontal, 16)
     .padding(.top, 12)
     .padding(.bottom, 8)
-    .background(Color(uiColor: .systemGray5), ignoresSafeAreaEdges: .all)
+    .background(SystemColor.panel, ignoresSafeAreaEdges: .all)
   }
 }
 
@@ -158,7 +158,7 @@ struct SearchCandidateStrip<Placeholder: View>: View {
     }
     .frame(minHeight: 54)
     .fixedSize(horizontal: false, vertical: true)
-    .background(Color(uiColor: .systemBackground), in: .rect(cornerRadius: 16))
+    .background(SystemColor.panelContent, in: .rect(cornerRadius: 16))
     .accessibilityIdentifier("\(identifierPrefix).candidate-strip")
   }
 }
@@ -184,7 +184,7 @@ private struct SearchCandidateTile: View {
       }
       .padding(.horizontal, 4)
       .frame(maxWidth: .infinity, minHeight: height)
-      .background(Color(uiColor: .secondarySystemFill), in: .rect(cornerRadius: 8))
+      .background(SystemColor.secondaryFill, in: .rect(cornerRadius: 8))
       .contentShape(.rect(cornerRadius: 8))
     }
     .buttonStyle(.plain)

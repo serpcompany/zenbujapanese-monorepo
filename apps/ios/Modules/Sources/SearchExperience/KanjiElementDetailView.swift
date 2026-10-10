@@ -50,7 +50,7 @@ struct KanjiElementDetailView: View {
           KanjiElementContent(entry: entry)
         }
       }
-      .listStyle(.insetGrouped)
+      .groupedList()
       .accessibilityIdentifier("kanji-element.screen")
       .onAppear { restorePreservedContribution(with: proxy) }
       .onChange(of: containingCharacters) {
@@ -58,7 +58,7 @@ struct KanjiElementDetailView: View {
       }
     }
     .navigationTitle("Element")
-    .navigationBarTitleDisplayMode(.inline)
+    .inlineNavigationTitle()
     .task(id: KanjiElementDetailLoadRequest(id: elementID, retryID: retryID)) {
       await loadEntry()
     }

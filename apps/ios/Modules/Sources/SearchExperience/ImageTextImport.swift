@@ -1,14 +1,48 @@
 import SwiftUI
+import UniformTypeIdentifiers
 
-enum ImageTextSource {
+enum ImageTextSource: CaseIterable, Identifiable {
   case camera
   case photoLibrary
+  case paste
+
+  static let importLimit = 8
+
+  static var offered: [ImageTextSource] { allCases.filter(\.isOffered) }
+
+  var id: Self { self }
+
+  var isOffered: Bool {
+    switch self {
+    case .camera: CameraCapture.isOffered
+    case .photoLibrary: true
+    case .paste: Pasteboard.offersImagePaste
+    }
+  }
+
+  var title: LocalizedStringKey {
+    switch self {
+    case .camera: "Take Photo"
+    case .photoLibrary: "Photo Library"
+    case .paste: "Paste Image"
+    }
+  }
+
+  var accessibilityIdentifier: String {
+    switch self {
+    case .camera: "translate.image.take-photo"
+    case .photoLibrary: "translate.image.photo-library"
+    case .paste: "translate.image.paste"
+    }
+  }
 }
 
 struct ImageTextImport: ViewModifier {
-  @Binding var requestedSource: ImageTextSource?
+  @Binding var showsSources: Bool
   let cameraAuthorizationClient: CameraAuthorizationClient
   let openImageText: ([ImageTextAsset]) -> Void
+  @State private var chosenSource: ImageTextSource?
+  @State private var requestedSource: ImageTextSource?
   @State private var showsCamera = false
   @State private var showsPhotoLibrary = false
   @State private var assetsAwaitingPicker: [ImageTextAsset]?
@@ -18,12 +52,33 @@ struct ImageTextImport: ViewModifier {
 
   func body(content: Content) -> some View {
     content
+      .alert("Image", isPresented: $showsSources) {
+        ForEach(ImageTextSource.offered) { source in
+          Button(source.title) { chosenSource = source }
+            .accessibilityIdentifier(source.accessibilityIdentifier)
+        }
+        Button("Cancel", role: .cancel) {}
+      } message: {
+        Text("Then tap any word to look it up.")
+      }
+      .onChange(of: showsSources) { _, shown in
+        guard !shown, let source = chosenSource else { return }
+        chosenSource = nil
+        requestedSource = source
+      }
+      .onDrop(of: [.image], isTargeted: nil) { providers in
+        guard !providers.isEmpty else { return false }
+        importDroppedImages(Array(providers.prefix(ImageTextSource.importLimit)))
+        return true
+      }
+      .importsImagesFromDevices { assets in open(assets) }
       .onChange(of: requestedSource) { _, source in
         guard let source else { return }
         requestedSource = nil
         switch source {
         case .camera: presentCamera()
         case .photoLibrary: presentPhotoLibrary()
+        case .paste: pasteImage()
         }
       }
       .sheet(isPresented: $showsCamera, onDismiss: openAssetsAwaitingPicker) {
@@ -92,6 +147,69 @@ struct ImageTextImport: ViewModifier {
 
   private func presentPhotoLibrary() {
     showsPhotoLibrary = true
+  }
+
+  private func importDroppedImages(_ providers: [NSItemProvider]) {
+    imageImportTask?.cancel()
+    imageImportTask = Task {
+      var assets: [ImageTextAsset] = []
+      for provider in providers {
+        if let asset = await ImageTextAsset.dropped(provider) { assets.append(asset) }
+      }
+      guard !Task.isCancelled else { return }
+      if assets.isEmpty {
+        presentImageImportAlert(.importFailure("The dropped files are not supported images."))
+      } else {
+        open(assets)
+      }
+      imageImportTask = nil
+    }
+  }
+
+  private func pasteImage() {
+    switch Pasteboard.image {
+    case .files(let files): importPastedFiles(files)
+    case .data(let data): importPastedImage(data)
+    case nil: presentImageImportAlert(.importFailure("The clipboard doesn't hold an image."))
+    }
+  }
+
+  private func importPastedFiles(_ urls: [URL]) {
+    imageImportTask?.cancel()
+    imageImportTask = Task {
+      var assets: [ImageTextAsset] = []
+      for url in urls.prefix(ImageTextSource.importLimit) {
+        guard !Task.isCancelled else { return }
+        let accessed = url.startAccessingSecurityScopedResource()
+        defer { if accessed { url.stopAccessingSecurityScopedResource() } }
+        if let asset = try? await ImageTextAsset.loadCopy(from: url) {
+          assets.append(asset)
+        }
+      }
+      guard !Task.isCancelled else { return }
+      if assets.isEmpty {
+        presentImageImportAlert(.importFailure("The pasted files are not supported images."))
+      } else {
+        open(assets)
+      }
+      imageImportTask = nil
+    }
+  }
+
+  private func importPastedImage(_ data: Data) {
+    imageImportTask?.cancel()
+    imageImportTask = Task {
+      let asset = await Task.detached(priority: .userInitiated) {
+        ImageTextAsset(pastedImageData: data, name: "Pasted Image.jpg")
+      }.value
+      guard !Task.isCancelled else { return }
+      if let asset {
+        open([asset])
+      } else {
+        presentImageImportAlert(.importFailure("The pasted image could not be read."))
+      }
+      imageImportTask = nil
+    }
   }
 
   private func importPickedImage(_ result: Result<[ImageTextAsset], Error>, failure: String) {
@@ -163,4 +281,3 @@ private enum ImageImportAlert: Identifiable {
     return false
   }
 }
-

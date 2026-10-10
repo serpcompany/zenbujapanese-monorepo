@@ -95,7 +95,7 @@ private struct PitchContour: View {
       for point in moraPoints {
         context.fill(dot(at: point), with: .foreground)
       }
-      context.fill(dot(at: particlePoint), with: .color(Color(.tertiarySystemFill)))
+      context.fill(dot(at: particlePoint), with: .color(SystemColor.tertiaryFill))
       context.stroke(dot(at: particlePoint), with: .foreground, lineWidth: 1.5)
     }
     .accessibilityHidden(true)

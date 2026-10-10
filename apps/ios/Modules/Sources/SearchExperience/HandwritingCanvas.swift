@@ -45,7 +45,7 @@ struct HandwritingCanvas: View {
             completedStroke(HandwritingSample(strokes: strokes))
           }
       )
-      .background(.background, in: RoundedRectangle(cornerRadius: 16))
+      .background(SystemColor.drawingPad, in: RoundedRectangle(cornerRadius: 16))
       .accessibilityElement()
       .accessibilityLabel("Drawing grid")
       .accessibilityValue(

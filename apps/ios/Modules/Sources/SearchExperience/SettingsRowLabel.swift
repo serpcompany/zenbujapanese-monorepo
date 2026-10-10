@@ -34,5 +34,6 @@ struct SettingsRowLabel: View {
         .frame(width: tileSize, height: tileSize)
         .background(tint.gradient, in: .rect(cornerRadius: tileSize * 0.23))
     }
+    .tileIconLabel()
   }
 }

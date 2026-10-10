@@ -1,6 +1,5 @@
 import Foundation
 import PDFKit
-import UIKit
 import UniformTypeIdentifiers
 
 enum DocumentText {
@@ -59,17 +58,15 @@ extension DocumentText {
     let bounds = page.bounds(for: .mediaBox)
     guard bounds.width > 0, bounds.height > 0 else { return nil }
     let scale = min(4, scannedPageLongestSide / max(bounds.width, bounds.height))
-    let format = UIGraphicsImageRendererFormat()
-    format.scale = 1
-    let renderer = UIGraphicsImageRenderer(
-      size: CGSize(width: bounds.width * scale, height: bounds.height * scale), format: format)
-    return renderer.pngData { context in
-      UIColor.white.setFill()
-      context.fill(CGRect(origin: .zero, size: context.format.bounds.size))
-      context.cgContext.translateBy(x: 0, y: bounds.height * scale)
-      context.cgContext.scaleBy(x: scale, y: -scale)
-      page.draw(with: .mediaBox, to: context.cgContext)
+    let width = Int((bounds.width * scale).rounded(.up))
+    let height = Int((bounds.height * scale).rounded(.up))
+    let image = ImageCoding.drawing(width: width, height: height) { context in
+      context.setFillColor(CGColor(gray: 1, alpha: 1))
+      context.fill(CGRect(x: 0, y: 0, width: width, height: height))
+      context.scaleBy(x: scale, y: scale)
+      page.draw(with: .mediaBox, to: context)
     }
+    return image.flatMap(ImageCoding.pngData)
   }
 
   private static func recognize(_ asset: ImageTextAsset) async throws -> String {

@@ -12,7 +12,7 @@ struct AccountSignInView: View {
       Form {
         Section {
           Text(
-            "Sign in to sync your known words and lists across your devices and Zenbu apps, and your watch history and bookmarked translations across your devices. Everything also stays on this iPhone, and Zenbu works the same signed out."
+            "Sign in to sync your known words and lists across your devices and Zenbu apps, and your watch history and bookmarked translations across your devices. Everything also stays on this \(ThisDevice.name), and Zenbu works the same signed out."
           )
           .foregroundStyle(.secondary)
           .listRowBackground(Color.clear)
@@ -58,18 +58,20 @@ struct AccountSignInView: View {
           }
         }
       }
+      .formStyle(.grouped)
       .disabled(isWorking)
       .overlay {
         if isWorking { ProgressView() }
       }
       .navigationTitle("Sign In to Zenbu")
-      .navigationBarTitleDisplayMode(.inline)
+      .inlineNavigationTitle()
       .toolbar {
         ToolbarItem(placement: .cancellationAction) {
           Button("Cancel") { dismiss() }
         }
       }
     }
+    .sheetSize(onMac: AppWindow.sheetSize)
   }
 
   private func run(_ work: @escaping () async throws -> Void) {

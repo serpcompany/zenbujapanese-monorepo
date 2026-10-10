@@ -1,16 +1,11 @@
 import SwiftUI
 import TranslatorCore
-import UIKit
 
 struct TranslateHomeView: View {
   @Bindable var experience: TranslateExperience
   let openHistory: () -> Void
   let openText: (String) -> Void
-  let cameraAuthorizationClient: CameraAuthorizationClient
-  let openImageText: ([ImageTextAsset]) -> Void
-  @State private var requestedImageSource: ImageTextSource?
-  @State private var choosesPhotoSource = false
-  @State private var chosenPhotoSource: ImageTextSource?
+  let chooseImage: () -> Void
   @State private var startingMode: TranslateStart?
   @State private var isChoosingDocument = false
   @State private var isReadingDocument = false
@@ -35,12 +30,12 @@ struct TranslateHomeView: View {
         ForEach(TranslateStart.writtenRows) { option in row(option) }
       }
     }
-    .listSectionSpacing(.compact)
+    .compactSectionSpacing()
     .contentMargins(.top, 4, for: .scrollContent)
     .navigationTitle("Translate")
-    .navigationBarTitleDisplayMode(.inline)
+    .inlineNavigationTitle()
     .toolbar {
-      ToolbarItem(placement: .topBarTrailing) {
+      ToolbarItem(placement: .barTrailing) {
         Button("Translations", systemImage: "clock.arrow.circlepath", action: openHistory)
           .accessibilityIdentifier("translate.history")
       }
@@ -51,27 +46,6 @@ struct TranslateHomeView: View {
       Task { await read(url) }
     }
     .modifier(StartProblemAlert(experience: experience))
-    .modifier(
-      ImageTextImport(
-        requestedSource: $requestedImageSource,
-        cameraAuthorizationClient: cameraAuthorizationClient,
-        openImageText: openImageText
-      )
-    )
-    .alert("Image", isPresented: $choosesPhotoSource) {
-      Button("Take Photo") { chosenPhotoSource = .camera }
-        .accessibilityIdentifier("translate.image.take-photo")
-      Button("Photo Library") { chosenPhotoSource = .photoLibrary }
-        .accessibilityIdentifier("translate.image.photo-library")
-      Button("Cancel", role: .cancel) {}
-    } message: {
-      Text("Then tap any word to look it up.")
-    }
-    .onChange(of: choosesPhotoSource) { _, shown in
-      guard !shown, let source = chosenPhotoSource else { return }
-      chosenPhotoSource = nil
-      requestedImageSource = source
-    }
     .alert("Couldn't read this document", isPresented: $unreadableDocument) {
       Button("OK", role: .cancel) {}
     } message: {
@@ -114,7 +88,7 @@ struct TranslateHomeView: View {
     switch option {
     case .conversation: Task { await experience.start(.conversation) }
     case .listening: Task { await experience.start(.listening) }
-    case .image: choosesPhotoSource = true
+    case .image: chooseImage()
     case .text: openText("")
     case .document: isChoosingDocument = true
     }
@@ -144,7 +118,7 @@ private struct TranslateHomeHeader: View {
         .accessibilityHidden(true)
       Text("Translate")
         .font(.title2.bold())
-      Text("Japanese and English, on your iPhone.")
+      Text("Japanese and English, on your \(ThisDevice.name).")
         .foregroundStyle(.secondary)
         .lineLimit(1)
     }
@@ -171,11 +145,11 @@ struct TypedTranslationScreen: View {
       .environment(experience.readingAids)
       .padding(.horizontal)
       .padding(.bottom, 12)
-      .background(Color(uiColor: .systemBackground))
+      .background(SystemColor.background)
       .navigationTitle("Text")
-      .navigationBarTitleDisplayMode(.inline)
+      .inlineNavigationTitle()
       .toolbar {
-        ToolbarItem(placement: .topBarTrailing) {
+        ToolbarItem(placement: .barTrailing) {
           Menu("Options", systemImage: "ellipsis") {
             FuriganaToggle(readingAids: experience.readingAids)
           }
@@ -196,7 +170,7 @@ private struct StartProblemAlert: ViewModifier {
       switch problem {
       case .microphoneDenied:
         Button("Open Settings") {
-          if let url = URL(string: UIApplication.openSettingsURLString) { openURL(url) }
+          if let url = SystemSettings.url(for: .microphone) { openURL(url) }
         }
         Button("Cancel", role: .cancel) {}
       case .translationUnavailable:
@@ -235,7 +209,7 @@ private struct StartProblemAlert: ViewModifier {
           "Japanese and English speech recognition need a one-time download over the internet. Try again when you're online."
       )
     case .translationUnavailable:
-      String(localized: "Translate runs on this iPhone with Apple's Japanese and English languages.")
+      String(localized: "Translate runs on this \(ThisDevice.name) with Apple's Japanese and English languages.")
     }
   }
 }

@@ -55,4 +55,66 @@ struct UserProfileTests {
     #expect(reloaded.email == "devin@serp.co")
     #expect(reloaded.initials == "DS")
   }
+
+  @MainActor
+  @Test("a profile that can't be read is kept aside, and new fields save")
+  func keepsUnreadableProfileAside() throws {
+    let temporary = try TemporaryDefaults()
+    let unreadable = Data(#"{"name":"Devin"}"#.utf8)
+    temporary.defaults.set(unreadable, forKey: "user-profile.v1")
+    let photoURL = FileManager.default.temporaryDirectory.appending(path: "\(temporary.suite).jpg")
+
+    let profile = UserProfile(defaults: temporary.defaults, photoURL: photoURL)
+    #expect(profile.isEmpty)
+    #expect(temporary.defaults.keptCopies(of: "user-profile.v1") == [unreadable])
+    profile.name = "Devin Schumacher"
+    let reloaded = UserProfile(defaults: temporary.defaults, photoURL: photoURL)
+    #expect(reloaded.name == "Devin Schumacher")
+  }
+
+  @Test("a profile field saves only what was typed in it, and shows another window's change once left")
+  func keepsAnotherWindowsEdit() {
+    var mainWindow = ProfileFieldEdit()
+    var settings = ProfileFieldEdit()
+    mainWindow.show("Ana")
+    settings.show("Ana")
+    settings.focus()
+    mainWindow.focus()
+    mainWindow.text = "Ana Lee"
+
+    #expect(mainWindow.unfocus() == "Ana Lee")
+    mainWindow.show("Ana Lee")
+    settings.show("Ana Lee")
+    #expect(settings.text == "Ana")
+    #expect(settings.unfocus() == nil)
+    #expect(settings.text == "Ana Lee")
+    #expect(settings.unfocus() == nil)
+    settings.focus()
+    settings.text = "Ana Lee M"
+    #expect(settings.unfocus() == "Ana Lee M")
+  }
+
+  @Test("text typed into a field whose focus wasn't seen still saves")
+  func savesTextTypedWithoutFocus() {
+    var name = ProfileFieldEdit()
+    name.show("Ana")
+    name.text = "Ana Lee"
+    #expect(name.unfocus() == "Ana Lee")
+  }
+
+  @Test("an email that isn't valid stays as typed until its field is focused again")
+  func keepsARejectedEmail() {
+    var email = ProfileFieldEdit()
+    email.show("ana@example.com")
+    email.focus()
+    email.text = "ana@"
+    #expect(email.unfocus() == "ana@")
+    email.reject()
+    email.show("ana@example.com")
+    #expect(email.text == "ana@")
+
+    email.focus()
+    #expect(email.unfocus() == nil)
+    #expect(email.text == "ana@example.com")
+  }
 }

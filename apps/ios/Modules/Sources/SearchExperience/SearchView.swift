@@ -11,6 +11,7 @@ struct SearchView: View {
   let exampleSentenceClient: ExampleSentenceClient
   let frequencyCapability: FrequencyCapability
   let frequencyRefreshID: Int
+  let focusRequest: Int
   @State private var results = LookupSearchResults.empty
   @State private var presentationState = SearchPresentationState.idle
   @State private var retryID = 0
@@ -52,9 +53,8 @@ struct SearchView: View {
     .sheet(isPresented: inputPanelPresentation) {
       inputPanelContent
         .padding(.top, 20)
-        .presentationDetents([.large])
-        .presentationDragIndicator(.visible)
-        .presentationBackground(Color(uiColor: .systemGray5))
+        .dragToCloseSheet(sizeOnMac: AppWindow.inputPanelSize)
+        .presentationBackground(SystemColor.panel)
     }
     .navigationTitle("Search")
     .searchField(
@@ -68,11 +68,11 @@ struct SearchView: View {
       if focused { inputMode = .keyboard }
     }
     .onChange(of: isSearchPresented) { _, presented in
-      if !presented { inputMode = .inactive }
+      if !presented, inputMode == .keyboard { inputMode = .inactive }
     }
     .toolbar {
       if showsRecentSearchActions {
-        ToolbarItem(placement: .topBarTrailing) {
+        ToolbarItem(placement: .barTrailing) {
           SearchActionsMenu {
             Button(role: .destructive) {
               isConfirmingClearAll = true
@@ -94,6 +94,7 @@ struct SearchView: View {
     .task(id: taskID) {
       await search(taskID)
     }
+    .onChange(of: focusRequest) { selectInputMode(.keyboard) }
   }
 
   @ViewBuilder

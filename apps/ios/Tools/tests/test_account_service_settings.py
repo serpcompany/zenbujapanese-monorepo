@@ -3,30 +3,14 @@ import re
 import unittest
 
 from contract_checks import ROOT
+from contract_checks import app_build_settings as app_settings
+from contract_checks import build_setting as setting
 
-PROJECT = ROOT / "apps/ios/ZenbuJapanese.xcodeproj/project.pbxproj"
 INFO_PLIST = ROOT / "apps/ios/App/Info.plist"
 BACKGROUND_SYNC = ROOT / "apps/ios/Modules/Sources/SearchExperience/AccountBackgroundSync.swift"
 APP_STORE_BUNDLE_ID = "com.zenbujapanese.dictionary"
 APP_STORE_TEAM = "847HR8U8D9"
 GOOGLE_IOS_CLIENT_ID = "881343714137-8v279fqjrkk1qeg18opnqbac41jteoqq.apps.googleusercontent.com"
-CONFIGURATION = re.compile(
-    r"isa = XCBuildConfiguration;\s*buildSettings = \{(?P<settings>.*?)\};\s*name = (?P<name>\w+);",
-    re.DOTALL,
-)
-
-
-def app_settings(name: str) -> list[str]:
-    return [
-        found["settings"]
-        for found in CONFIGURATION.finditer(PROJECT.read_text(encoding="utf-8"))
-        if found["name"] == name and "PRODUCT_BUNDLE_IDENTIFIER" in found["settings"]
-    ]
-
-
-def setting(settings: str, key: str) -> str:
-    found = re.search(rf"^\s*{key} = (.*);$", settings, re.MULTILINE)
-    return "<not set>" if found is None else found.group(1).strip('"')
 
 
 class AccountServiceSettingsTests(unittest.TestCase):

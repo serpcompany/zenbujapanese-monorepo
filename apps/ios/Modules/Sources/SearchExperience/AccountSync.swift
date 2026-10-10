@@ -88,7 +88,8 @@ final class AccountSync: LocalFileStore {
       && wordLists.canChange && translations.isLoaded && !waitsForUnreadableBookmarks
   }
 
-  var waitsForUnreadableBookmarks: Bool { translations.bookmarksAreReadOnly }
+  var bookmarksProblem: SharedBookmarksProblem? { translations.bookmarksProblem }
+  var waitsForUnreadableBookmarks: Bool { bookmarksProblem != nil }
 
   func isDue(staleAfter: TimeInterval) -> Bool {
     guard canSync else { return false }

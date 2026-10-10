@@ -1,6 +1,5 @@
 import SwiftUI
 import TranslatorCore
-import UIKit
 
 struct TranscriptActions {
   let words: TranslateWordLinks
@@ -87,17 +86,17 @@ struct TranslateConversationDetailView: View {
         }
       }
     }
-    .listStyle(.insetGrouped)
-    .listSectionSpacing(.compact)
+    .groupedList()
+    .compactSectionSpacing()
     .navigationTitle(ConversationDateLabel.text(for: conversation.startedAt))
-    .navigationBarTitleDisplayMode(.inline)
+    .inlineNavigationTitle()
     .toolbar {
-      ToolbarItem(placement: .topBarTrailing) {
+      ToolbarItem(placement: .barTrailing) {
         Menu("More", systemImage: "ellipsis") {
           FuriganaToggle(readingAids: actions.readingAids)
           Divider()
           Button("Copy Transcript", systemImage: "doc.on.doc") {
-            UIPasteboard.general.string = conversation.transcript
+            Pasteboard.copy(conversation.transcript)
           }
           ShareLink(item: conversation.transcript) {
             Label("Share", systemImage: "square.and.arrow.up")

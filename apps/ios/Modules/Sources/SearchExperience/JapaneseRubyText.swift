@@ -136,6 +136,7 @@ struct JapaneseRubyText: View {
               selectedKanji = selectedKanji == selection ? nil : selection
             }
           }
+          .accessibilityAddTraits(selectedKanji == selection ? [.isButton, .isSelected] : .isButton)
       }
     }
   }

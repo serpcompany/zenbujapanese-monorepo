@@ -47,7 +47,7 @@ struct ExampleSentencesView: View {
       }
     }
     .navigationTitle(query.value)
-    .navigationBarTitleDisplayMode(.inline)
+    .inlineNavigationTitle()
     .task(id: query) {
       isLoading = true
       analysisAvailability = await japaneseTextAnalysisClient.availability()
@@ -143,7 +143,7 @@ struct ExampleSentenceSections: View {
         } header: {
           if index == 0 { Text(title) }
         }
-        .listSectionSpacing(.compact)
+        .compactSectionSpacing()
       }
     }
   }

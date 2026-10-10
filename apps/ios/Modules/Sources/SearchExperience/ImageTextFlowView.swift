@@ -1,6 +1,5 @@
 import SwiftUI
 @preconcurrency import Translation
-import UIKit
 
 struct ImageTextFlowView: View {
   @State private var model: ImageTextFlowModel
@@ -65,8 +64,8 @@ struct ImageTextFlowView: View {
     }
     .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
     .navigationTitle("Photo")
-    .navigationBarTitleDisplayMode(.inline)
-    .navigationBarBackButtonHidden(true)
+    .inlineNavigationTitle()
+    .backButtonHidden()
     .toolbar {
       ToolbarItem(placement: .cancellationAction) {
         Button {
@@ -79,7 +78,7 @@ struct ImageTextFlowView: View {
         .accessibilityIdentifier("image-text.close")
       }
 
-      ToolbarItem(placement: .topBarTrailing) {
+      ToolbarItem(placement: .barTrailing) {
         moreMenu
       }
     }
@@ -207,9 +206,8 @@ struct ImageTextFlowView: View {
       .accessibilityIdentifier("image-text.copy-text")
 
       if let payload = model.selectedSharePayload,
-        let sharedImage = UIImage(data: payload.data)
+        let image = Image(imageData: payload.data)
       {
-        let image = Image(uiImage: sharedImage)
         ShareLink(
           item: image,
           preview: SharePreview(payload.name, image: image)
@@ -234,15 +232,15 @@ struct ImageTextFlowView: View {
   }
 
   private var pages: some View {
-    TabView(selection: selectedPage) {
+    PagedView(
+      selection: selectedPage, showsIndex: model.pages.count > 1, interactiveIndex: true
+    ) {
       ForEach(Array(model.pages.enumerated()), id: \.element.id) { index, page in
         pageContent(page)
           .tag(index)
           .accessibilityHidden(index != model.selectedPage)
       }
     }
-    .tabViewStyle(.page(indexDisplayMode: model.pages.count > 1 ? .automatic : .never))
-    .indexViewStyle(.page(backgroundDisplayMode: .interactive))
     .accessibilityIdentifier("image-text.pages")
   }
 
@@ -361,7 +359,8 @@ struct ImageTextFlowView: View {
       EmptyView()
     case .unavailable(.appleIntelligenceNotEnabled):
       contextSection {
-        contextMessage("Turn on Apple Intelligence in Settings to see what this text is about.")
+        contextMessage(
+          "Turn on Apple Intelligence in \(ThisDevice.settingsApp) to see what this text is about.")
       }
     case .unavailable(.modelNotReady):
       contextSection {

@@ -1,6 +1,5 @@
 import SwiftUI
 import TranslatorCore
-import UIKit
 
 struct TypedTranslationCard: View {
   private struct Result: Equatable {
@@ -45,7 +44,7 @@ struct TypedTranslationCard: View {
       bottomBar
     }
     .frame(maxWidth: .infinity, maxHeight: .infinity)
-    .background(Color(uiColor: .secondarySystemBackground), in: .rect(cornerRadius: 32))
+    .background(SystemColor.secondaryBackground, in: .rect(cornerRadius: 32))
     .task(id: request) { await translate(request.text) }
     .onAppear { if text.isEmpty { isEditing = true } }
     .sensoryFeedback(.success, trigger: copyCount)
@@ -93,7 +92,7 @@ struct TypedTranslationCard: View {
           .accessibilityIdentifier("translate.typed.direction")
         Spacer()
         Button("Copy", systemImage: "doc.on.doc") {
-          UIPasteboard.general.string = result.translation
+          Pasteboard.copy(result.translation)
           copyCount += 1
         }
         Button("Speak", systemImage: "speaker.wave.2") {
@@ -115,7 +114,7 @@ struct TypedTranslationCard: View {
     case .needsDownload:
       Divider()
       VStack(alignment: .leading, spacing: 6) {
-        Text("Translation runs on this iPhone once Apple's Japanese language is downloaded.")
+        Text("Translation runs on this \(ThisDevice.name) once Apple's Japanese language is downloaded.")
           .foregroundStyle(.secondary)
         Button("Download Japanese") { experience.requestTranslationDownload() }
       }
