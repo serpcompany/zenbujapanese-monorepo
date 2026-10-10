@@ -7,7 +7,10 @@ from contract_checks import BUILD_CONFIGURATION, PROJECT, ROOT, app_build_settin
 
 ENTITLEMENTS = ROOT / "apps/ios/App/ZenbuJapanese.entitlements"
 SCHEME = ROOT / "apps/ios/ZenbuJapanese.xcodeproj/xcshareddata/xcschemes/ZenbuJapanese.xcscheme"
-ICON = ROOT / "apps/ios/App/Assets.xcassets/AppIcon.appiconset/Contents.json"
+ICONS = [
+    ROOT / "apps/ios/App/Assets.xcassets" / f"{name}.appiconset" / "Contents.json"
+    for name in ("AppIcon", "AppIcon-Dev")
+]
 IPAD_ORIENTATIONS = {
     "UIInterfaceOrientationPortrait",
     "UIInterfaceOrientationPortraitUpsideDown",
@@ -81,13 +84,17 @@ class AppPlatformTests(unittest.TestCase):
             entitlements["com.apple.developer.associated-domains"], ["applinks:zenbujapanese.com"]
         )
 
-    def test_the_app_icon_has_every_mac_size(self) -> None:
-        images = json.loads(ICON.read_text(encoding="utf-8"))["images"]
-        mac = {(image["size"], image["scale"]) for image in images if image["idiom"] == "mac"}
+    def test_the_app_icon_and_zenbu_devs_have_every_mac_size(self) -> None:
         sizes = {f"{side}x{side}" for side in (16, 32, 128, 256, 512)}
-        self.assertEqual(mac, {(size, scale) for size in sizes for scale in ("1x", "2x")})
-        for image in images:
-            self.assertTrue((ICON.parent / image["filename"]).is_file(), image["filename"])
+        for icon in ICONS:
+            with self.subTest(icon=icon.parent.name):
+                images = json.loads(icon.read_text(encoding="utf-8"))["images"]
+                mac = {
+                    (image["size"], image["scale"]) for image in images if image["idiom"] == "mac"
+                }
+                self.assertEqual(mac, {(size, scale) for size in sizes for scale in ("1x", "2x")})
+                for image in images:
+                    self.assertTrue((icon.parent / image["filename"]).is_file(), image["filename"])
 
     def test_the_ui_tests_drive_the_app_on_iphone_ipad_and_the_mac(self) -> None:
         project = PROJECT.read_text(encoding="utf-8")

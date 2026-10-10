@@ -226,7 +226,8 @@ target's bundle ID ends in `ZENBU_BUNDLE_ID_SUFFIX` and its name is `ZENBU_DISPL
 `Zenbu Japanese` by default), so overriding them installs a separate app with its own data and
 leaves `project.pbxproj` alone. Its icon is the blue `AppIcon-Dev` (in
 `apps/ios/App/Assets.xcassets`), chosen by `ASSETCATALOG_COMPILER_APPICON_NAME`, so it's easy to
-tell from the red TestFlight app. From `apps/ios`, with the phone's UDID from
+tell from the red TestFlight app; it has the same Mac sizes as `AppIcon`, for a Zenbu Dev built
+for the Mac. From `apps/ios`, with the phone's UDID from
 `xcrun devicectl list devices`:
 
 ```sh
