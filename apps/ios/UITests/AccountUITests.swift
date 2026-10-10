@@ -65,6 +65,7 @@ final class AccountUITests: ZenbuUITestCase {
     let app = launch()
     open(.account, in: app)
     tap(find("account.sign-in", in: app))
+    waitForSheet("account.sign-in.google", in: app)
     waitFor(find("account.sign-in.apple-unavailable", in: app))
     waitFor(find("account.sign-in.google", in: app))
   }
@@ -103,7 +104,7 @@ final class AccountUITests: ZenbuUITestCase {
     tap(reveal(find("account.frequency-dictionaries", in: app), in: app))
     revealRowActions(on: find("frequency-pack.row.\(Self.jlpt)", in: app))
     tap(find("frequency-pack.details.\(Self.jlpt)", in: app))
-    waitFor(find("frequency-pack.detail", in: app))
+    waitForSheet("frequency-pack.detail", in: app)
     tap(app.buttons["Done"].firstMatch)
     let toggle = waitFor(find("frequency-pack.toggle.\(Self.youTube)", in: app))
     XCTAssertEqual("\(toggle.value ?? "")", "1")

@@ -42,7 +42,7 @@ final class SearchResultsUITests: ZenbuUITestCase {
     returnToRecentSearches(in: app)
     tap(find("search.actions-menu", in: app))
     tap(menuChoice("Clear Recent Searches", in: app))
-    tap(app.buttons["Clear All"])
+    tap(app.buttons["Clear All"].firstMatch)
     waitUntilGone(find("recent-search.0", in: app))
   }
 
@@ -51,7 +51,7 @@ final class SearchResultsUITests: ZenbuUITestCase {
     search("japan", in: app)
     returnToRecentSearches(in: app)
     openContextMenu(on: find("recent-search.0", in: app))
-    tap(app.buttons["Remove from Recent"].firstMatch)
+    tap(menuChoice("Remove from Recent", in: app))
     waitUntilGone(find("recent-search.0", in: app))
   }
 

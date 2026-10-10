@@ -26,10 +26,17 @@ extension ZenbuUITestCase {
     return row
   }
 
+  func menuChoices(in app: XCUIApplication) -> XCUIElementQuery {
+    device == .mac ? app.windows.menuItems : app.buttons
+  }
+
+  func menuChoices(_ label: String, in app: XCUIApplication) -> XCUIElementQuery {
+    let named = device == .mac ? "title == %@ OR title BEGINSWITH %@" : "label == %@ OR label BEGINSWITH %@"
+    return menuChoices(in: app).matching(NSPredicate(format: named, label, label + ","))
+  }
+
   func menuChoice(_ label: String, in app: XCUIApplication) -> XCUIElement {
-    let choices = device == .mac ? app.menuItems : app.buttons
-    return choices.matching(NSPredicate(format: "label == %@ OR label BEGINSWITH %@", label, label + ","))
-      .firstMatch
+    menuChoices(label, in: app).firstMatch
   }
 
   func chooseFromSortedBy(_ row: String, _ choice: String, in app: XCUIApplication) {
@@ -83,19 +90,18 @@ extension ZenbuUITestCase {
 
   func openKanji(_ kanji: String, fromWordIdentifiedBy prefix: String, in app: XCUIApplication) {
     tap(word(containing: kanji, identifiedBy: prefix, in: app))
-    tap(inWordSheet("word-detail.kanji.\(kanji)", in: app))
-    waitFor(find("kanji-detail.glyph", in: app))
-    waitUntilGone(find("recognized-word-sheet", in: app))
+    tap(inWordSheet("word-detail.kanji.\(kanji)", in: app), toShow: find("kanji-detail.glyph", in: app))
+    waitUntilGone(sheet("recognized-word-sheet", in: app))
   }
 
   func inWordSheet(_ identifier: String, in app: XCUIApplication) -> XCUIElement {
-    let sheet = waitFor(find("recognized-word-sheet", in: app))
+    let sheet = waitForSheet("recognized-word-sheet", in: app)
     waitFor(find("word-detail.screen", in: app))
     return reveal(find(identifier, in: app), in: app, within: sheet)
   }
 
   func name(_ text: String, in app: XCUIApplication, button: String = "Create") {
-    let prompt = waitFor(app.alerts.firstMatch)
+    let prompt = waitFor(prompt(in: app))
     let field = prompt.textFields.firstMatch
     tap(field)
     if let current = field.value as? String, !current.isEmpty, current != field.placeholderValue {
@@ -145,11 +151,15 @@ extension ZenbuUITestCase {
   func choose(_ segment: String, in control: XCUIElement) {
     let button = waitFor(control).descendants(matching: .any)
       .matching(NSPredicate(format: "label == %@", segment)).firstMatch
-    for _ in 0..<3 where !button.isSelected {
+    for _ in 0..<3 where !isOn(button) {
       button.tap()
       RunLoop.current.run(until: Date.now.addingTimeInterval(1))
     }
-    XCTAssertTrue(button.isSelected, "\(segment) didn't take")
+    XCTAssertTrue(isOn(button), "\(segment) didn't take")
+  }
+
+  func isOn(_ control: XCUIElement) -> Bool {
+    control.isSelected || "\(control.value ?? "")" == "1"
   }
 
   func openContextMenu(on element: XCUIElement) {

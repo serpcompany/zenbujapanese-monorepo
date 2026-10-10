@@ -6,7 +6,7 @@ final class ImageSearchUITests: ZenbuUITestCase {
     assertOnScreen(find("image-text.close", in: app), in: app)
     assertOnScreen(find("image-text.mode", in: app), in: app)
     waitFor(firstElement(identifiedBy: "image-text.region.", in: app)).tap()
-    let sheet = waitFor(find("recognized-word-sheet", in: app))
+    let sheet = waitForSheet("recognized-word-sheet", in: app)
     assertSheetPlacement(sheet, in: app)
     tap(find("recognized-word-sheet.open-full-entry", in: app))
     assertOnScreen(find("word-detail.screen", in: app), in: app)
@@ -38,6 +38,12 @@ final class ImageSearchUITests: ZenbuUITestCase {
     tap(find("image-text.close", in: app))
     assertOnScreen(find("translate.header", in: app), in: app)
     assertOnScreen(find("translate.start.image", in: app), in: app)
+    guard device == .mac else { return }
+    tap(find("translate.start.image", in: app))
+    tap(app.buttons["Paste Image"].firstMatch)
+    waitFor(find("image-text.mode", in: app))
+    goBack(in: app)
+    assertOnScreen(find("translate.header", in: app), in: app)
   }
 
   func testTheViewsShowTheRecognizedText() throws {

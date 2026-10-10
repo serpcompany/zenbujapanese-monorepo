@@ -19,7 +19,7 @@ final class ConversationUITests: ZenbuUITestCase {
     let app = startConversation()
     pause(app)
     tap(find("translate.conversation.options", in: app))
-    tap(app.buttons["Two Panes"])
+    tap(menuChoice("Two Panes", in: app))
     assertOnScreen(find("translate.pane.ja", in: app), in: app)
     assertOnScreen(find("translate.pane.en", in: app), in: app)
   }
@@ -36,7 +36,7 @@ final class ConversationUITests: ZenbuUITestCase {
   func testABookmarkedSentenceIsListedUnderBookmarked() {
     let app = startConversation()
     tap(find("translate.conversation.back", in: app))
-    tap(app.buttons["Save and Exit"])
+    tap(app.buttons["Save and Exit"].firstMatch)
     tap(find("translate.history", in: app))
     tap(find("translate.history.row", in: app))
     waitFor(find("translate.detail", in: app))
@@ -83,38 +83,41 @@ final class ConversationUITests: ZenbuUITestCase {
     waitFor(word(containing: "番", identifiedBy: "translate.sentence.", in: app))
     pause(app)
     tap(word(containing: "曲が", identifiedBy: "translate.sentence.", in: app))
-    tap(inWordSheet("word-detail.conjugations", in: app))
-    waitFor(find("conjugations.screen", in: app))
-    waitUntilGone(find("recognized-word-sheet", in: app))
+    tap(inWordSheet("word-detail.conjugations", in: app), toShow: find("conjugations.screen", in: app))
+    waitUntilGone(sheet("recognized-word-sheet", in: app))
     tap(find("translate.session.status", in: app))
     openKanji("番", fromWordIdentifiedBy: "translate.sentence.", in: app)
     waitFor(find("translate.session.status", in: app))
   }
 
   func testScrollingBackOffersJumpToLatest() {
-    let app = startConversation(arguments: TestDevice.largestTextArguments)
+    let app = startConversation(arguments: TestDevice.largestTextArguments, inTheSmallestWindow: true)
     for control in ["mute", "slower", "faster", "toggle"] {
       assertOnScreen(find("translate.session.\(control)", in: app), in: app)
     }
-    waitFor(word(containing: "ありがとう", identifiedBy: "translate.sentence.", in: app))
+    let latest = waitFor(word(containing: "ありがとう", identifiedBy: "translate.sentence.", in: app))
     pause(app)
-    if device == .mac {
-      shrinkWindow(in: app)
-      app.windows.firstMatch.scroll(byDeltaX: 0, deltaY: 800)
-    } else {
-      app.windows.firstMatch.swipeDown()
+    waitUntilStill(latest)
+    let jump = find("translate.jump-to-latest", in: app)
+    for _ in 0..<3 where !jump.exists {
+      if device == .mac {
+        app.outlines.firstMatch.scroll(byDeltaX: 0, deltaY: 800)
+      } else {
+        app.windows.firstMatch.swipeDown()
+      }
+      _ = jump.waitForExistence(timeout: Self.patience / 3)
     }
-    tap(find("translate.jump-to-latest", in: app))
-    waitUntilGone(find("translate.jump-to-latest", in: app))
+    tap(jump)
+    waitUntilGone(jump)
   }
 
   func testADeletedConversationLeavesTranslations() {
     let app = startConversation()
     tap(find("translate.conversation.back", in: app))
-    tap(app.buttons["Save and Exit"])
+    tap(app.buttons["Save and Exit"].firstMatch)
     tap(find("translate.history", in: app))
     openContextMenu(on: find("translate.history.row", in: app))
-    tap(app.buttons["Delete"].firstMatch)
+    tap(menuChoice("Delete", in: app))
     tap(app.buttons["Delete Conversation"].firstMatch)
     waitFor(labeled("No Conversations Yet", in: app))
   }
@@ -130,10 +133,11 @@ final class ConversationUITests: ZenbuUITestCase {
     XCTAssertEqual(toggle.label, "Resume", "the conversation paused")
   }
 
-  private func startConversation(option: String = "conversation", arguments: [String] = [])
-    -> XCUIApplication
-  {
+  private func startConversation(
+    option: String = "conversation", arguments: [String] = [], inTheSmallestWindow: Bool = false
+  ) -> XCUIApplication {
     let app = launch(TranslateUITests.script, arguments: arguments)
+    if inTheSmallestWindow, device == .mac { shrinkWindow(in: app) }
     open(.translate, in: app)
     tap(find("translate.start.\(option)", in: app))
     waitFor(find("translate.live", in: app))

@@ -34,19 +34,31 @@ final class TranslateUITests: ZenbuUITestCase {
   }
 
   func testTypedTextIsTranslatedWithItsDirection() {
-    let app = launch(Self.script)
-    open(.translate, in: app)
-    tap(find("translate.start.text", in: app))
-    type("Where can I buy a Suica card?", into: waitFor(find("translate.typed.input", in: app)))
+    let app = typeASentenceToTranslate()
     let direction = waitFor(find("translate.typed.direction", in: app))
-    XCTAssertTrue(direction.label.contains("English → Japanese"), direction.label)
+    XCTAssertTrue(text(of: direction).contains("English → Japanese"), text(of: direction))
     waitFor(app.buttons["Copy"])
     waitFor(app.buttons["Speak"])
     tap(word(containing: "どこ", identifiedBy: "translate.typed.result.", in: app))
-    waitFor(find("recognized-word-sheet", in: app))
+    waitForSheet("recognized-word-sheet", in: app)
+    for control in ["recognized-word-sheet.open-full-entry", "word-detail.share", "word-detail.more-menu"] {
+      assertOnScreen(find(control, in: app), in: app)
+    }
     tap(find("recognized-word-sheet.done", in: app))
     tap(find("translate.typed.clear", in: app))
     waitUntilGone(find("translate.typed.direction", in: app))
+  }
+
+  func testReturnInAWordSheetsNoteKeepsTheSheetOpen() {
+    let app = typeASentenceToTranslate()
+    tap(word(containing: "どこ", identifiedBy: "translate.typed.result.", in: app))
+    let sheet = waitForSheet("recognized-word-sheet", in: app)
+    tap(find("word-detail.more-menu", in: app))
+    tap(menuChoice("Add Note", in: app))
+    type("asked at the station\n", into: waitFor(find("word-note.editor", in: app)))
+    RunLoop.current.run(until: Date.now.addingTimeInterval(2))
+    XCTAssertTrue(sheet.exists, "Return in the note leaves the word sheet open")
+    assertOnScreen(find("recognized-word-sheet.open-full-entry", in: app), in: app)
   }
 
   func testAConversationRunsFullScreenAndIsSavedToTranslations() {
@@ -59,9 +71,17 @@ final class TranslateUITests: ZenbuUITestCase {
       XCTAssertFalse(isReachable(app.tabBars.firstMatch, in: app), "the conversation hides the tab bar")
     }
     tap(find("translate.conversation.back", in: app))
-    tap(app.buttons["Save and Exit"])
+    tap(app.buttons["Save and Exit"].firstMatch)
     tap(find("translate.history", in: app))
     assertOnScreen(find("translate.history.row", in: app), in: app)
+  }
+
+  private func typeASentenceToTranslate() -> XCUIApplication {
+    let app = launch(Self.script)
+    open(.translate, in: app)
+    tap(find("translate.start.text", in: app))
+    type("Where can I buy a Suica card?", into: waitFor(find("translate.typed.input", in: app)))
+    return app
   }
 
   func testTranslationsStartsEmpty() {

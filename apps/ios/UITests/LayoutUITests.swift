@@ -23,7 +23,8 @@ final class LayoutUITests: ZenbuUITestCase {
       shrinkWindow(in: app)
       let window = app.windows.firstMatch.frame
       XCTAssertEqual(window.width, 760, accuracy: 2, "the Mac window stops at 760 wide")
-      XCTAssertEqual(window.height, 560, accuracy: 30, "and 560 tall")
+      let toolbar = app.toolbars.firstMatch.frame.height
+      XCTAssertEqual(window.height, 560 + toolbar, accuracy: 30, "and 560 tall under its toolbar")
       assertEveryTabFits(in: app)
     }
   }

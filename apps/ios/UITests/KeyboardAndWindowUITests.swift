@@ -50,7 +50,7 @@ final class KeyboardAndWindowUITests: ZenbuUITestCase {
   func testTheSettingsWindowHoldsTheAccountReadingAidsAndFrequencyDictionaries() throws {
     try XCTSkipUnless(device == .mac, "iPhone and iPad keep these settings in Account")
     let app = launch()
-    let settings = find("settings.window", in: app)
+    let settings = app.windows[TestDevice.settingsWindow]
     press(",", until: settings, in: app)
     waitFor(find("settings.profile", in: app))
     settings.buttons["Reading Aids"].tap()
@@ -64,7 +64,7 @@ final class KeyboardAndWindowUITests: ZenbuUITestCase {
     let app = launch()
     open(.search, in: app)
     shortcut("n", in: app)
-    let windows = app.windows.matching(NSPredicate(format: "identifier != 'settings.window'"))
+    let windows = app.windows.matching(NSPredicate(format: "identifier != %@", TestDevice.settingsWindow))
     expectation(for: NSPredicate(format: "count == 2"), evaluatedWith: windows)
     waitForExpectations(timeout: Self.patience)
     shortcut("2", in: app)

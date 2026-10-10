@@ -10,41 +10,55 @@ final class NavigationUITests: ZenbuUITestCase {
     }
   }
 
+  func testAPageOpensInEveryTabAfterVisitingTheOthers() {
+    let app = launch(PlayerWatchUITests.standIn())
+    let noConversations = labeled("No Conversations Yet", in: app)
+    open(.translate, in: app)
+    tap(find("translate.history", in: app), toShow: noConversations)
+    goBack(in: app)
+    open(.account, in: app)
+    tap(reveal(find("account.known-words", in: app), in: app), toShow: find("known-words.empty", in: app))
+    goBack(in: app)
+    open(.player, in: app)
+    type(PlayerWatchUITests.link + "\n", into: waitFor(searchField(in: app)))
+    waitFor(find("watch.cue.0", in: app))
+    goBack(in: app)
+    search("japan", in: app)
+    tap(find("result.japan", in: app), toShow: find("word-detail.screen", in: app))
+    tap(find("word-detail.kanji.日", in: app), toShow: find("kanji-detail.screen", in: app))
+    goBack(in: app)
+    waitFor(find("word-detail.screen", in: app))
+    open(.translate, in: app)
+    tap(find("translate.history", in: app), toShow: noConversations)
+  }
+
   func testTheTabShellListsEveryTabInOrder() {
     let app = launch()
     let items = AppTab.allCases.map { tabItem($0, in: app) }
-    let runsAcross = device != .mac
-    let positions = items.map { runsAcross ? $0.frame.minX : $0.frame.minY }
+    let positions = items.map(\.frame.minX)
     XCTAssertEqual(positions, positions.sorted(), "the tabs are in Search, Translate, Player, Account order")
-    switch device {
-    case .phone:
+    if device == .phone {
       XCTAssertTrue(app.tabBars.firstMatch.exists, "the iPhone has its tab bar")
       XCTAssertGreaterThan(items[0].frame.minY, app.windows.firstMatch.frame.midY, "at the bottom")
-    case .pad:
+    } else {
       XCTAssertLessThan(items[0].frame.minY, app.windows.firstMatch.frame.midY, "at the top")
-    case .mac:
-      XCTAssertLessThan(items[0].frame.minX, app.windows.firstMatch.frame.midX, "in the sidebar")
     }
   }
 
-  func testWideScreensListTheTabsInASidebar() {
+  func testOnlyTheIPadOpensItsTabsIntoASidebar() {
     let app = launch()
     let sidebarToggle = app.buttons
       .matching(NSPredicate(format: "label CONTAINS[c] 'sidebar'")).firstMatch
-    switch device {
-    case .phone:
-      XCTAssertFalse(sidebarToggle.exists, "the iPhone has no sidebar")
-    case .pad:
-      tap(sidebarToggle)
-      for tab in AppTab.allCases {
-        waitFor(
-          app.collectionViews.descendants(matching: .any)
-            .matching(NSPredicate(format: "label BEGINSWITH %@", tab.rawValue)).firstMatch)
-      }
-    case .mac:
-      for tab in AppTab.allCases {
-        XCTAssertTrue(tabItem(tab, in: app).exists, "the sidebar lists \(tab.rawValue)")
-      }
+    guard device == .pad else {
+      waitFor(tabItem(.search, in: app))
+      XCTAssertFalse(sidebarToggle.exists, "the iPhone and the Mac keep their tabs in a bar")
+      return
+    }
+    tap(sidebarToggle)
+    for tab in AppTab.allCases {
+      waitFor(
+        app.collectionViews.descendants(matching: .any)
+          .matching(NSPredicate(format: "label BEGINSWITH %@", tab.rawValue)).firstMatch)
     }
   }
 }

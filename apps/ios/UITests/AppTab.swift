@@ -32,6 +32,7 @@ extension ZenbuUITestCase {
     return firstReachable(
       [
         app.tabBars.buttons.matching(label),
+        app.toolbars.radioButtons.matching(label),
         app.descendants(matching: .tab).matching(label),
         app.outlines.cells.matching(label),
         app.outlines.staticTexts.matching(label),
@@ -57,7 +58,7 @@ extension ZenbuUITestCase {
 
   func goBack(in app: XCUIApplication) {
     if device == .mac {
-      shortcut("[", in: app)
+      tap(app.toolbars.buttons["Back"].firstMatch)
     } else {
       app.navigationBars.buttons.element(boundBy: 0).tap()
     }

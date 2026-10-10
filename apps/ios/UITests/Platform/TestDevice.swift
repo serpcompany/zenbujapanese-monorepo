@@ -29,6 +29,16 @@ enum TestDevice {
     #endif
   }
 
+  static let settingsWindow = "com_apple_SwiftUI_Settings_window"
+
+  static var launchArguments: [String] {
+    #if os(macOS)
+      ["-ApplePersistenceIgnoreState", "YES"]
+    #else
+      []
+    #endif
+  }
+
   static var largestTextArguments: [String] {
     #if os(macOS)
       []
@@ -55,6 +65,12 @@ enum TestDevice {
     #else
       XCUIDevice.shared.press(.home)
       app.activate()
+    #endif
+  }
+
+  @MainActor static func movePointerAway(in app: XCUIApplication) {
+    #if os(macOS)
+      app.windows.firstMatch.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.95)).hover()
     #endif
   }
 

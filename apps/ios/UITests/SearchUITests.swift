@@ -15,7 +15,7 @@ final class SearchUITests: ZenbuUITestCase {
     let app = launch()
     search("japan", in: app)
     tap(find("result.japan", in: app))
-    tap(find("word-detail.kanji.日", in: app))
+    tap(find("word-detail.kanji.日", in: app), toShow: find("kanji-detail.screen", in: app))
     assertOnScreen(find("kanji-detail.screen", in: app), in: app)
     goBack(in: app)
     waitFor(find("word-detail.screen", in: app))
@@ -28,7 +28,7 @@ final class SearchUITests: ZenbuUITestCase {
       app.descendants(matching: .any)
         .matching(NSPredicate(format: "identifier BEGINSWITH 'result.' AND label BEGINSWITH '食べる'"))
         .firstMatch)
-    tap(find("word-detail.conjugations", in: app))
+    tap(find("word-detail.conjugations", in: app), toShow: find("conjugations.screen", in: app))
     assertOnScreen(find("conjugations.screen", in: app), in: app)
     tap(firstElement(identifiedBy: "conjugations.row.", in: app))
     assertOnScreen(firstElement(identifiedBy: "conjugations.explanation.", in: app), in: app)
@@ -90,7 +90,11 @@ final class SearchUITests: ZenbuUITestCase {
   func testMarkingAResultKnownShowsTheKnownCapsule() {
     let app = launch()
     let row = markJapanKnownFromItsResult(in: app)
-    expectation(for: NSPredicate(format: "value CONTAINS 'Known'"), evaluatedWith: row)
-    waitForExpectations(timeout: Self.patience)
+    if device == .mac {
+      row.rightClick()
+      waitFor(find("result.japan.mark-unknown", in: app))
+    } else {
+      waitUntil(row, "value CONTAINS 'Known'")
+    }
   }
 }

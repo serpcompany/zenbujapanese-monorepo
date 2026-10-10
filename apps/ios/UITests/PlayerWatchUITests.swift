@@ -9,8 +9,7 @@ final class PlayerWatchUITests: ZenbuUITestCase {
       assertOnScreen(find("watch.cue.\(line)", in: app), in: app)
     }
     let known = waitFor(find("watch.comprehension", in: app))
-    expectation(for: NSPredicate(format: "label CONTAINS 'words known'"), evaluatedWith: known)
-    waitForExpectations(timeout: Self.patience)
+    waitUntil(known, mentions: "words known")
     waitFor(labeled("There's a bookstore near the station.", in: app))
   }
 
@@ -24,9 +23,13 @@ final class PlayerWatchUITests: ZenbuUITestCase {
     XCTAssertTrue(find("watch.repeat", in: app).isSelected, "the line repeats")
     tap(find("watch.speed", in: app))
     for rate in ["0.5×", "0.75×", "1×", "1.25×", "1.5×"] {
-      waitFor(app.buttons[rate])
+      waitFor(menuChoice(rate, in: app))
     }
-    tapWhereReachable([app.buttons.matching(identifier: "1.25×")], in: app)
+    if device == .mac {
+      tap(menuChoice("1.25×", in: app))
+    } else {
+      tapWhereReachable([menuChoices("1.25×", in: app)], in: app)
+    }
     assertOnScreen(find("watch.scrubber", in: app), in: app)
   }
 
@@ -52,7 +55,7 @@ final class PlayerWatchUITests: ZenbuUITestCase {
     goBack(in: app)
     let recent = waitFor(firstElement(identifiedBy: "watch.recent.", in: app))
     revealRowActions(on: recent)
-    tap(app.buttons["Remove"])
+    tap(menuChoice("Remove", in: app))
     assertOnScreen(find("watch.empty", in: app), in: app)
   }
 

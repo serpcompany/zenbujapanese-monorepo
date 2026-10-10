@@ -6,11 +6,14 @@ final class SavedWordsUITests: ZenbuUITestCase {
     waitFor(firstElement(identifiedBy: "image-text.region.", in: app)).tap()
     tap(find("recognized-word-sheet.open-full-entry", in: app))
     waitFor(find("word-detail.screen", in: app))
+    tap(find("word-detail.image-attachment", in: app))
+    waitForSheet("word-detail.image-page", in: app)
+    tap(find("word-detail.image-attachment-done", in: app))
     open(.account, in: app)
     tap(find("account.media-library", in: app))
     let item = waitFor(firstElement(identifiedBy: "media-library.item.", in: app))
     revealRowActions(on: item)
-    tap(app.buttons["Delete"])
+    tap(menuChoice("Delete", in: app))
     assertOnScreen(find("media-library.empty", in: app), in: app)
   }
 
@@ -20,7 +23,7 @@ final class SavedWordsUITests: ZenbuUITestCase {
     open(.account, in: app)
     tap(find("account.known-words", in: app))
     revealRowActions(on: firstElement(identifiedBy: "known-words.item.", in: app))
-    tap(app.buttons["Mark as Unknown"])
+    tap(menuChoice("Mark as Unknown", in: app))
     assertOnScreen(find("known-words.empty", in: app), in: app)
   }
 
@@ -28,7 +31,7 @@ final class SavedWordsUITests: ZenbuUITestCase {
     let app = launch()
     search("japan", in: app)
     tap(find("result.japan", in: app))
-    tap(find("word-detail.kanji.日", in: app))
+    tap(find("word-detail.kanji.日", in: app), toShow: find("kanji-detail.more-menu", in: app))
     tap(find("kanji-detail.more-menu", in: app))
     tap(find("kanji-detail.mark-known", in: app))
     tap(find("kanji-detail.more-menu", in: app))
