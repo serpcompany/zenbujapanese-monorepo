@@ -3,40 +3,10 @@ import type { Dictionary } from '@zenbu/dictionary-core/artifact/dictionary'
 import { primaryItem } from '@zenbu/dictionary-core/results/results'
 import { normalizeQuery } from '@zenbu/dictionary-core/search/query'
 import { beforeAll, describe, expect, test } from 'vitest'
+import { type ExampleSearchCase, exampleSearchSuite as suite } from './example-search-suite'
 import { shownAsRecorded } from './examples'
-import {
-  artifactAvailable,
-  artifactDatabase,
-  dictionary,
-  readSuite,
-  requirePinnedArtifacts
-} from './support'
+import { artifactAvailable, artifactDatabase, dictionary, requirePinnedArtifacts } from './support'
 
-interface SuiteToken {
-  surface: string
-  entry?: string
-  candidates?: string[]
-  queryMatch?: boolean
-}
-
-interface SuiteCase {
-  query: string
-  covers: string
-  title?: string
-  count: number
-  highlightedEntry?: string
-  usesPrimaryEntryExamples: boolean
-  ids: string[]
-  shown: { id: string; japanese: string; english: string; tokens: SuiteToken[] }[]
-}
-
-interface Suite {
-  artifacts: { name: string; sha256: string }[]
-  tokenLimit: number
-  cases: SuiteCase[]
-}
-
-const suite = readSuite<Suite>('example-search')
 const rowCountForMoreThanFifty = 51
 
 describe.runIf(artifactAvailable)('example search conformance', () => {
@@ -57,7 +27,7 @@ describe.runIf(artifactAvailable)('example search conformance', () => {
     const shown = found?.rows.slice(0, suite.tokenLimit) ?? []
     const highlightedEntry = primaryItem(results, normalizeQuery(expected.query))?.entry.id
 
-    const observed: Omit<SuiteCase, 'query' | 'covers'> = {
+    const observed: Omit<ExampleSearchCase, 'query' | 'covers'> = {
       ...(row ? { title: row.title } : {}),
       count: row?.count ?? 0,
       ...(highlightedEntry ? { highlightedEntry } : {}),

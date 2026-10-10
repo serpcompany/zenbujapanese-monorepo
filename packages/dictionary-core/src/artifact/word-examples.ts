@@ -16,7 +16,7 @@ import {
 } from '../examples/linking'
 import { kuromojiCandidates, type Tokenize } from '../examples/morphology'
 import { normalizeQuery } from '../search/query'
-import type { ArtifactDatabase } from './database'
+import { type ArtifactDatabase, listedIds } from './database'
 import type { EntryExamples, ExampleSentence } from './example-retrieval'
 import type { FormLookup } from './lookup'
 
@@ -51,12 +51,8 @@ function provenance(db: ArtifactDatabase, pairIds: readonly string[]): Map<strin
   return new Map(rows.map(row => [row.pair_id, row]))
 }
 
-interface LinkedEntry {
+interface LinkedEntry extends ExamplesEntry {
   entSeq: number
-  headword: string
-  reading: string
-  writtenForms: string[]
-  readingForms: string[]
 }
 
 function linkedEntries(db: ArtifactDatabase, ids: readonly string[]): Map<string, LinkedEntry> {
@@ -66,28 +62,36 @@ function linkedEntries(db: ArtifactDatabase, ids: readonly string[]): Map<string
     ent_seq: number
     headword: string
     reading: string
+    parts_of_speech_json: string
     written_forms_json: string
     reading_forms_json: string
   }>(
     `SELECT lower(hex(id)) AS id, source_record_id AS ent_seq, headword, reading,
-       written_forms_json, reading_forms_json
-     FROM entries WHERE id IN (${ids.map(() => 'unhex(?)').join(', ')})`,
-    ids
+       parts_of_speech_json, written_forms_json, reading_forms_json
+     FROM entries WHERE id IN (${listedIds})`,
+    [JSON.stringify(ids)]
   )
   const values = (json: string) => (JSON.parse(json) as { value: string }[]).map(form => form.value)
   return new Map(
     rows.map(row => [
       row.id,
       {
+        id: row.id,
         entSeq: row.ent_seq,
         headword: row.headword,
         reading: row.reading,
+        partsOfSpeech: JSON.parse(row.parts_of_speech_json),
         writtenForms: values(row.written_forms_json),
         readingForms: values(row.reading_forms_json)
       }
     ])
   )
 }
+
+export const examplesEntries: (
+  db: ArtifactDatabase,
+  ids: readonly string[]
+) => Map<string, ExamplesEntry> = linkedEntries
 
 function tokenRows(tokens: readonly LinkedToken[]): ExampleSentenceTokenRow[] {
   return tokens.map(token => {
@@ -142,7 +146,9 @@ export interface ExampleHighlight {
   accent: 'entry' | 'query'
 }
 
-function tokenSpans(tokens: readonly LinkedToken[]): { start: number; end: number }[] {
+export function tokenSpans(
+  tokens: readonly Pick<LinkedToken, 'surface'>[]
+): { start: number; end: number }[] {
   let start = 0
   return tokens.map(token => {
     const end = start + Array.from(token.surface).length
@@ -152,7 +158,7 @@ function tokenSpans(tokens: readonly LinkedToken[]): { start: number; end: numbe
   })
 }
 
-function occurrences(text: string, query: string): { start: number; end: number }[] {
+export function occurrences(text: string, query: string): { start: number; end: number }[] {
   const scalars = Array.from(text)
   const needle = Array.from(query)
   if (needle.length === 0 || needle.length > scalars.length) return []

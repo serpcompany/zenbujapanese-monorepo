@@ -119,9 +119,9 @@ describe('kanjiDetail', () => {
   test('要: strokes, grade, then Waller’s JLPT level as the app writes it, and no components beside Kanjium elements', () => {
     const detail = kanjiDetail(kaname)
     expect(detail.stats).toEqual([
-      { label: 'Strokes', value: '9' },
-      { label: 'Grade', value: '4' },
-      { label: 'JLPT', value: 'N3' }
+      { kind: 'strokes', label: 'Strokes', value: '9', spoken: '9 Strokes' },
+      { kind: 'grade', label: 'Grade', value: '4', spoken: 'Grade 4' },
+      { kind: 'jlpt', label: 'JLPT', value: 'N3', spoken: 'JLPT N3' }
     ])
     expect(detail.meanings).toEqual(['need', 'main point', 'essence', 'pivot', 'key to'])
     expect(
@@ -135,6 +135,7 @@ describe('kanjiDetail', () => {
     expect(detail.components).toEqual([])
     expect(detail.words).toHaveLength(24)
     expect(detail.words[2]).toEqual({
+      id: 'd12d09f1107aef0f7d43b54b62f0b7e1',
       entSeq: 1546640,
       headword: '要る',
       reading: 'いる',
@@ -162,7 +163,9 @@ describe('kanjiDetail', () => {
       words: [],
       strokes: null
     })
-    expect(detail.stats).toEqual([{ label: 'Stroke', value: '1' }])
+    expect(detail.stats).toEqual([
+      { kind: 'strokes', label: 'Stroke', value: '1', spoken: '1 Stroke' }
+    ])
     expect(detail.components).toEqual(['ノ'])
     expect(detail.shareText).toBe('乁')
   })

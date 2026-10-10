@@ -51,6 +51,12 @@ export function kuromojiCandidates(
   return previousEnd === text.length ? candidates : null
 }
 
+const functionWordClasses = new Set(['助詞', '助動詞', '記号', '補助記号'])
+
+export function isFunctionWord(candidate: Pick<MorphologyCandidate, 'partOfSpeech'>): boolean {
+  return functionWordClasses.has(candidate.partOfSpeech[0] ?? '')
+}
+
 const isInflectingHead = (candidate: MorphologyCandidate) =>
   candidate.partOfSpeech[0] === '動詞' || candidate.partOfSpeech[0] === '形容詞'
 

@@ -75,9 +75,21 @@ describe('wordDetail', () => {
         notes: ['Usually written in kana']
       }
     ])
-    expect(detail.frequencyRows.map(({ details: _, ...row }) => row)).toEqual([
-      { source: 'JLPT', value: 'N5', tier: 'veryCommon', spokenTier: null },
-      { source: 'YouTube', value: '949', tier: 'veryCommon', spokenTier: 'very common' }
+    expect(detail.frequencyRows.map(({ details: _, pack: __, ...row }) => row)).toEqual([
+      {
+        source: 'JLPT',
+        value: 'N5',
+        tier: 'veryCommon',
+        spokenTier: null,
+        label: 'JLPT level N5'
+      },
+      {
+        source: 'YouTube',
+        value: '949',
+        tier: 'veryCommon',
+        spokenTier: 'very common',
+        label: 'YouTube frequency rank 949, very common'
+      }
     ])
     expect(detail.kanji).toEqual([{ character: '要', meaning: 'need, main point' }])
     expect(detail.alternatives).toEqual([])
@@ -121,9 +133,9 @@ describe('wordDetail', () => {
         entSeq: 1296400
       }
     ])
-    expect(detail.frequencyRows.map(({ details: _, ...row }) => row)).toEqual([
-      { source: 'JLPT', value: 'N5', tier: 'veryCommon', spokenTier: null },
-      { source: 'YouTube', value: 'No rank', tier: null, spokenTier: null }
+    expect(detail.frequencyRows.map(({ source, value, tier }) => [source, value, tier])).toEqual([
+      ['JLPT', 'N5', 'veryCommon'],
+      ['YouTube', 'No rank', null]
     ])
     expect(detail.frequencyRows.map(row => [row.details.section, row.details.rows])).toEqual([
       ['Level', [{ label: 'JLPT Level', value: 'N5' }]],

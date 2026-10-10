@@ -22,6 +22,7 @@ export interface LinkedToken {
   candidates: LinkEntry[]
   reading: string
   dictionaryForm: string
+  partOfSpeech: string[]
   lookupForm: string | null
 }
 
@@ -93,13 +94,28 @@ export function isCompatible(part: string, providerPOS: string): boolean {
   }
 }
 
-function highlightedForms(entry: HighlightedEntry, preferred: string): Set<string> {
+export interface Highlighted {
+  entry: HighlightedEntry
+  query: string
+}
+
+function highlightedForms({ entry, query }: Highlighted): Set<string> {
   return new Set(
-    [preferred, entry.headword, entry.reading, ...entry.writtenForms, ...entry.readingForms].filter(
+    [query, entry.headword, entry.reading, ...entry.writtenForms, ...entry.readingForms].filter(
       form => form !== ''
     )
   )
 }
+
+function isWrittenAs(candidate: MorphologyCandidate, forms: Set<string> | null): boolean {
+  if (!forms) return false
+  return [candidate.surface, candidate.dictionaryForm, candidate.normalizedForm].some(form =>
+    forms.has(form)
+  )
+}
+
+const isLookedUp = (candidate: MorphologyCandidate) =>
+  isJapaneseOnly(normalizeQuery(candidate.surface))
 
 export function lookupForms(candidate: MorphologyCandidate): string[] {
   const forms: string[] = []
@@ -137,10 +153,20 @@ function preferredEntries(
   return filtered
 }
 
+export function formsLookedUp(
+  candidates: MorphologyCandidate[],
+  highlighted: Highlighted | null
+): string[][] {
+  const forms = highlighted ? highlightedForms(highlighted) : null
+  return groupInflections(candidates)
+    .filter(candidate => !isWrittenAs(candidate, forms) && isLookedUp(candidate))
+    .map(lookupForms)
+}
+
 export function linkedTokens(
   text: string,
   candidates: MorphologyCandidate[] | null,
-  highlighted: { entry: HighlightedEntry; query: string } | null,
+  highlighted: Highlighted | null,
   lookup: EntriesMatchingForm
 ): LinkedToken[] {
   if (candidates === null) {
@@ -153,20 +179,18 @@ export function linkedTokens(
             candidates: [],
             reading: text,
             dictionaryForm: text,
+            partOfSpeech: [],
             lookupForm: null
           }
         ]
   }
-  const forms = highlighted ? highlightedForms(highlighted.entry, highlighted.query) : null
+  const forms = highlighted ? highlightedForms(highlighted) : null
 
   const resolve = (candidate: MorphologyCandidate): Resolution => {
-    if (highlighted && forms) {
-      const evidence = [candidate.surface, candidate.dictionaryForm, candidate.normalizedForm]
-      if (evidence.some(form => forms.has(form))) {
-        return { entry: highlighted.entry, candidates: [highlighted.entry], lookupForm: null }
-      }
+    if (highlighted && isWrittenAs(candidate, forms)) {
+      return { entry: highlighted.entry, candidates: [highlighted.entry], lookupForm: null }
     }
-    if (!isJapaneseOnly(normalizeQuery(candidate.surface))) {
+    if (!isLookedUp(candidate)) {
       return { entry: null, candidates: [], lookupForm: null }
     }
     for (const form of lookupForms(candidate)) {
@@ -185,6 +209,7 @@ export function linkedTokens(
     candidates: resolution.candidates,
     reading: candidate.reading,
     dictionaryForm: candidate.dictionaryForm,
+    partOfSpeech: candidate.partOfSpeech,
     lookupForm: resolution.lookupForm
   })
 

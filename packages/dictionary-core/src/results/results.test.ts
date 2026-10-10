@@ -1,8 +1,16 @@
 import { describe, expect, test, vi } from 'vitest'
+import { defaultFrequencyLookups } from '../detail/frequency'
 import type { FrequencyRow } from '../detail/rows'
 import type { Rank } from '../search/rank'
 import type { SearchDatabase, SearchResultItem, SearchResults } from '../search/search'
-import { loadFrequency, orderedItems, searchResultsScreen } from './results'
+import { orderedByFrequency } from './ordering'
+import {
+  type FrequencyByEntry,
+  listedResults,
+  loadFrequency,
+  resultsLayout,
+  searchResultsScreen
+} from './results'
 
 const readingExact: Rank = {
   kind: 'japanese',
@@ -68,10 +76,15 @@ function frequencyOf(entries: [SearchResultItem, FrequencyRow[]][]) {
   return new Map(entries.map(([entry, rows]) => [entry.entry.id, rows]))
 }
 
-const headwords = (ordered: { entry: { headword: string } }[]) =>
-  ordered.map(result => result.entry.headword)
+const headwords = (ordered: { headword: string }[]) => ordered.map(result => result.headword)
 
-describe('orderedItems (SearchResultFrequencyOrdering.ordered)', () => {
+function orderedItems(found: SearchResults, frequency: FrequencyByEntry) {
+  return orderedByFrequency(listedResults(found).items, id =>
+    defaultFrequencyLookups(frequency.get(id) ?? [])
+  )
+}
+
+describe('orderedByFrequency (SearchResultFrequencyOrdering.ordered)', () => {
   test('orders equal matches by tier, then JLPT, then YouTube, as the app orders いる', () => {
     const hairu = item('入る')
     const iru = item('要る')
@@ -134,15 +147,48 @@ describe('orderedItems (SearchResultFrequencyOrdering.ordered)', () => {
     ])
   })
 
-  test('leaves Discovered Words in their order', () => {
-    const first = item('一')
-    const second = item('二')
-    const frequency = frequencyOf([[second, [jlpt(5)]]])
+  test('gives equally relevant matches one place and a weaker match a later one', () => {
+    const gloss = item('上一', { rank: strongGloss })
+    const first = item('要る')
+    const second = item('入る')
+    const later = item('後', { sourceOrder: 1 })
     expect(
-      headwords(
-        orderedItems(results([first, second], { presentation: 'discoveredWords' }), frequency)
-      )
-    ).toEqual(['一', '二'])
+      listedResults(results([later, first, gloss, second])).items.map(listed => [
+        listed.headword,
+        listed.relevance
+      ])
+    ).toEqual([
+      ['後', 2],
+      ['要る', 1],
+      ['上一', 0],
+      ['入る', 1]
+    ])
+  })
+})
+
+describe('resultsLayout', () => {
+  test('leaves Discovered Words in their order, twelve at most', () => {
+    const many = Array.from({ length: 14 }, (_, index) => item(`語${index}`))
+    const layout = resultsLayout(
+      '猫がnyan',
+      listedResults(results(many, { presentation: 'discoveredWords' })),
+      0
+    )
+    expect(layout.isDiscovered).toBe(true)
+    expect(headwords(layout.presented)).toEqual(
+      headwords(listedResults(results(many)).items).slice(0, 12)
+    )
+  })
+
+  test('lists only the leading entries when asked, as the radical panel does for one character', () => {
+    const listed = listedResults(
+      results([item('一'), item('二'), item('三')], { leadingLexicalEntryCount: 2 })
+    )
+    expect(headwords(resultsLayout('一', listed, 0, true).presented)).toEqual(['一', '二'])
+    expect(headwords(resultsLayout('一', listed, 0).presented)).toEqual(['一', '二', '三'])
+    expect(
+      headwords(resultsLayout('一', { ...listed, leadingLexicalEntryCount: 9 }, 0, true).presented)
+    ).toEqual(['一', '二', '三'])
   })
 })
 

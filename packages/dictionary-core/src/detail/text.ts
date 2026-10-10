@@ -54,3 +54,9 @@ export function katakana(value: string): string {
     String.fromCodePoint((character.codePointAt(0) ?? 0) + 0x60)
   )
 }
+
+export function listedWithAnd(items: readonly string[]): string {
+  return items.length <= 2
+    ? items.join(' and ')
+    : `${items.slice(0, -1).join(', ')}, and ${items.at(-1)}`
+}

@@ -16,7 +16,7 @@ const kanjiOnly: SearchResultsScreen = {
 
 const yorokobi: KanjiDetailsData = {
   character: '㐂',
-  stats: [{ label: 'Strokes', value: '12' }],
+  stats: [{ kind: 'strokes', label: 'Strokes', value: '12', spoken: '12 Strokes' }],
   meanings: ['joy'],
   readings: [],
   components: [],

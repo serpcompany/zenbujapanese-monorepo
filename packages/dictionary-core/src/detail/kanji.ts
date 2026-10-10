@@ -12,6 +12,7 @@ import { hiragana, isKanjiCharacter } from './text'
 export const kanjiWordLimit = 24
 
 export interface KanjiWord {
+  id: string
   entSeq: number
   headword: string
   reading: string
@@ -35,9 +36,16 @@ export interface KanjiElement {
   description: string
 }
 
+interface KanjiStat {
+  kind: 'strokes' | 'grade' | 'jlpt'
+  label: string
+  value: string
+  spoken: string
+}
+
 export interface KanjiDetail {
   character: string
-  stats: { label: string; value: string }[]
+  stats: KanjiStat[]
   meanings: string[]
   readings: KanjiReading[]
   components: string[]
@@ -137,6 +145,37 @@ function kanjiShareText(kanji: Pick<KanjiRows['kanji'], 'character' | 'readings'
   return [heading, kanji.meanings.join(', ')].filter(Boolean).join('\n')
 }
 
+function kanjiStats(
+  kanji: Pick<KanjiRows['kanji'], 'strokeCount' | 'grade' | 'jlpt'>
+): KanjiStat[] {
+  const strokes = kanji.strokeCount === 1 ? 'Stroke' : 'Strokes'
+  const stats: KanjiStat[] = [
+    {
+      kind: 'strokes',
+      label: strokes,
+      value: `${kanji.strokeCount}`,
+      spoken: `${kanji.strokeCount} ${strokes}`
+    }
+  ]
+  if (kanji.grade !== null) {
+    stats.push({
+      kind: 'grade',
+      label: 'Grade',
+      value: `${kanji.grade}`,
+      spoken: `Grade ${kanji.grade}`
+    })
+  }
+  if (kanji.jlpt !== null) {
+    stats.push({
+      kind: 'jlpt',
+      label: 'JLPT',
+      value: `N${kanji.jlpt}`,
+      spoken: `JLPT N${kanji.jlpt}`
+    })
+  }
+  return stats
+}
+
 function drawableStrokeOrder(row: NonNullable<KanjiRows['strokes']>): StrokeOrder | null {
   try {
     return strokeOrder(row)
@@ -148,6 +187,7 @@ function drawableStrokeOrder(row: NonNullable<KanjiRows['strokes']>): StrokeOrde
 export function kanjiDetail(rows: KanjiRows): KanjiDetail {
   const { kanji } = rows
   const words: KanjiWord[] = rows.words.map(row => ({
+    id: row.id,
     entSeq: row.entSeq,
     headword: row.headword,
     reading: row.reading,
@@ -157,11 +197,7 @@ export function kanjiDetail(rows: KanjiRows): KanjiDetail {
   const elements = kanjiElements(rows.structure, rows.elements)
   return {
     character: kanji.character,
-    stats: [
-      { label: kanji.strokeCount === 1 ? 'Stroke' : 'Strokes', value: `${kanji.strokeCount}` },
-      ...(kanji.grade === null ? [] : [{ label: 'Grade', value: `${kanji.grade}` }]),
-      ...(kanji.jlpt === null ? [] : [{ label: 'JLPT', value: `N${kanji.jlpt}` }])
-    ],
+    stats: kanjiStats(kanji),
     meanings: kanji.meanings,
     readings: kanji.readings.map(reading => ({
       kind: reading.kind,

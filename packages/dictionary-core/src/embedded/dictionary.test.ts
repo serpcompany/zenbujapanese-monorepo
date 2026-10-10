@@ -1,17 +1,7 @@
 import { describe, expect, test } from 'vitest'
-import {
-  type EmbeddedCall,
-  EmbeddedDictionary,
-  type EmbeddedHost,
-  embeddedEndpoint,
-  hostDatabase
-} from './dictionary'
-
-interface FakeEntry {
-  id: string
-  headword: string
-  reading: string
-}
+import { embeddedEndpoint } from './dictionary'
+import { ask, begin, type FakeEntry, fakeHost, settled } from './fake-host'
+import { hostDatabase } from './host'
 
 const entries: FakeEntry[] = [
   { id: 'b2', headword: '日本語', reading: 'にほんご' },
@@ -19,70 +9,7 @@ const entries: FakeEntry[] = [
   { id: 'c3', headword: '本日', reading: 'ほんじつ' }
 ]
 
-function formRows(matches: (form: string) => boolean) {
-  return entries.flatMap(entry =>
-    [
-      { form: entry.headword, kind: 0 },
-      { form: entry.reading, kind: 1 }
-    ]
-      .filter(({ form }) => matches(form))
-      .map(({ form, kind }) => ({
-        id: entry.id,
-        source_record_id: 1,
-        headword: entry.headword,
-        reading: entry.reading,
-        summary: '',
-        parts_of_speech_json: '["noun"]',
-        semantic_fingerprint: entry.id,
-        primary_mask: null,
-        secondary_mask: null,
-        news_frequency_band: null,
-        form,
-        kind,
-        sense_count: 1
-      }))
-  )
-}
-
-function host(overrides: Partial<EmbeddedHost> = {}): EmbeddedHost & { asked: string[][] } {
-  const asked: string[][] = []
-  return {
-    asked,
-    all(sql, parametersJSON) {
-      const parameters = JSON.parse(parametersJSON) as string[]
-      asked.push(parameters)
-      if (!sql.includes('FROM forms f') || !sql.includes('f.kind IN (0, 1)')) return { rows: [] }
-      const matches = sql.includes('f.form = ?')
-        ? (form: string) => form === parameters[0]
-        : sql.includes('f.form IN')
-          ? (form: string) => parameters.includes(form)
-          : (form: string) => form.includes(parameters[0])
-      return { rows: formRows(matches) }
-    },
-    ...overrides
-  }
-}
-
-interface Outcome {
-  value?: unknown
-  error?: string
-  analyze?: string
-}
-
-async function settled(call: EmbeddedCall): Promise<Outcome> {
-  await new Promise(resolve => setTimeout(resolve))
-  return JSON.parse(call.outcome()) as Outcome
-}
-
-function begin(target: EmbeddedHost, method: string, argument: string): EmbeddedCall {
-  return embeddedEndpoint(new EmbeddedDictionary(target)).begin(method, argument)
-}
-
-async function ask(target: EmbeddedHost, method: string, argument: string): Promise<unknown> {
-  const { value, error } = await settled(begin(target, method, argument))
-  if (error !== undefined) throw new Error(error)
-  return value
-}
+const host = (overrides: Parameters<typeof fakeHost>[1] = {}) => fakeHost(entries, overrides)
 
 const word = (surface: string, partOfSpeech: string) => ({
   surface,
@@ -92,30 +19,47 @@ const word = (surface: string, partOfSpeech: string) => ({
 })
 
 describe('the embedded dictionary', () => {
-  test('answers a search with each entry, its place by relevance, and its match', async () => {
-    const results = (await ask(host(), 'search', '日本')) as {
-      items: { id: string; relevance: number; fallbackOrder: number; match: string }[]
-      presentation: string
-      resolution: string
-    }
-    expect(results.items).toEqual([
-      {
-        id: 'a1',
-        relevance: 0,
-        fallbackOrder: 0,
-        matchedSummary: null,
-        match: 'source=0 japanese writtenExact'
-      },
-      {
-        id: 'b2',
-        relevance: 1,
-        fallbackOrder: 1,
-        matchedSummary: null,
-        match: 'source=0 japanese writtenPrefix'
-      }
-    ])
-    expect(results.presentation).toBe('ranked')
-    expect(results.resolution).toBe('direct')
+  test('answers a search with each entry as a row, its place by relevance, and its match', async () => {
+    expect(await ask(host(), 'search', '日本')).toEqual({
+      items: [
+        {
+          id: 'a1',
+          entSeq: 1,
+          headword: '日本',
+          reading: 'にほん',
+          entrySummary: '日本 summary',
+          matchedSummary: null,
+          relevance: 0,
+          fallbackOrder: 0,
+          match: 'source=0 japanese writtenExact'
+        },
+        {
+          id: 'b2',
+          entSeq: 1,
+          headword: '日本語',
+          reading: 'にほんご',
+          entrySummary: '日本語 summary',
+          matchedSummary: null,
+          relevance: 1,
+          fallbackOrder: 1,
+          match: 'source=0 japanese writtenPrefix'
+        }
+      ],
+      presentation: 'ranked',
+      readingRefinement: null,
+      usesPrimaryEntryExamples: false,
+      leadingLexicalEntryCount: 1,
+      resolution: 'direct',
+      primaryEntry: 'a1'
+    })
+  })
+
+  test('names the first result as the primary entry when none is written as the query', async () => {
+    expect(await ask(host(), 'search', '本')).toMatchObject({ primaryEntry: 'c3' })
+    const nothing = begin(host(), 'search', 'zzz')
+    await settled(nothing)
+    nothing.analyzed('{"words":[]}')
+    expect(await settled(nothing)).toMatchObject({ value: { items: [], primaryEntry: null } })
   })
 
   test('gives entries that match equally the same relevance', async () => {
@@ -157,6 +101,10 @@ describe('the embedded dictionary', () => {
     const rows = db.all<{ echoed: string; data: Uint8Array }>('SELECT 1', ['日本', 3, null])
     expect(rows[0].echoed).toBe('["日本",3,null]')
     expect([...rows[0].data]).toEqual([0, 255, 16])
+  })
+
+  test('says so when a host without a dictionary is asked to read one', async () => {
+    await expect(ask({}, 'search', '日本')).rejects.toThrow('The host has no dictionary to read')
   })
 
   test("reports the host's own failure", async () => {
@@ -209,7 +157,7 @@ describe('the embedded dictionary', () => {
   })
 
   test('keeps each call’s outcome apart from the others', async () => {
-    const endpoint = embeddedEndpoint(new EmbeddedDictionary(host()))
+    const endpoint = embeddedEndpoint(host())
     const sentence = endpoint.begin('search', '日本と本日')
     await settled(sentence)
     const form = endpoint.begin('entriesMatchingFirstForms', '[["にほん"]]')
