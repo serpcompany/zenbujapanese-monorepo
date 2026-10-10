@@ -213,10 +213,29 @@ class ZenbuUITestCase: XCTestCase {
 
   func tap(_ element: XCUIElement, file: StaticString = #filePath, line: UInt = #line) {
     waitFor(element, file: file, line: line)
-    if device == .mac, element.elementType == .menuItem {
-      waitUntil(element, "isHittable == true", file: file, line: line)
+    guard device == .mac, element.elementType == .menuItem,
+      let window = launched?.windows.firstMatch
+    else { return element.tap() }
+    waitUntil(element, "isHittable == true", file: file, line: line)
+    let deadline = Date.now.addingTimeInterval(Self.patience)
+    var frame = element.frame
+    while !frame.isOnScreen, Date.now < deadline {
+      RunLoop.current.run(until: Date.now.addingTimeInterval(0.1))
+      frame = element.frame
     }
-    element.tap()
+    guard frame.isOnScreen else {
+      attachWhatIsOnScreen()
+      return XCTFail("\(element) was never laid out", file: file, line: line)
+    }
+    let origin = window.frame.origin
+    window.coordinate(withNormalizedOffset: .zero)
+      .withOffset(CGVector(dx: frame.midX - origin.x, dy: frame.midY - origin.y)).tap()
+  }
+
+  func isHittable(_ element: XCUIElement, within seconds: TimeInterval) -> Bool {
+    let hittable = XCTNSPredicateExpectation(
+      predicate: NSPredicate(format: "isHittable == true"), object: element)
+    return XCTWaiter().wait(for: [hittable], timeout: seconds) == .completed
   }
 
   @discardableResult
@@ -235,5 +254,11 @@ class ZenbuUITestCase: XCTestCase {
   func type(_ text: String, into element: XCUIElement) {
     tap(element)
     element.typeText(text)
+  }
+}
+
+extension CGRect {
+  fileprivate var isOnScreen: Bool {
+    !isNull && !isInfinite && !isEmpty && origin.x.isFinite && origin.y.isFinite
   }
 }
