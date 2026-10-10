@@ -43,7 +43,7 @@ fields and digests from the import reports, and the smoke test and the fields th
 against an artifact (pack version, covered rows, token total, and policy versions) from the rank
 packs' artifacts; JLPT's smoke test comes from its report.
 
-After a rebuild, re-record the five conformance suites and review their diffs, then run
+After a rebuild, re-record the six conformance suites and review their diffs, then run
 `SearchExperienceTests` ([`ios.md`](../../../docs/agents/ios.md), Current verification boundary),
 the dictionary service's checks with `ZENBU_REQUIRE_ARTIFACT=1`, and the language-data pipeline
 ([`language-data/README.md`](../../../language-data/README.md)).

@@ -61,6 +61,27 @@ final class SQLiteStatements {
     self.connection = connection
   }
 
+  convenience init(reading database: URL, attaching attached: [String: URL] = [:]) throws {
+    var opened: OpaquePointer?
+    guard
+      sqlite3_open_v2(database.path, &opened, SQLITE_OPEN_READONLY | SQLITE_OPEN_NOMUTEX, nil)
+        == SQLITE_OK,
+      let opened
+    else {
+      defer { sqlite3_close(opened) }
+      throw SQLiteReadError.sqlite(
+        message: opened.map { String(cString: sqlite3_errmsg($0)) } ?? "open failed")
+    }
+    self.init(connection: SQLiteConnection(pointer: opened))
+    for (schema, url) in attached {
+      let attach = try statement("ATTACH DATABASE ? AS \(schema)")
+      sqliteBind(url.path, at: 1, to: attach)
+      guard sqlite3_step(attach) == SQLITE_DONE else {
+        throw SQLiteReadError.sqlite(message: String(cString: sqlite3_errmsg(opened)))
+      }
+    }
+  }
+
   deinit {
     finalizeAll()
   }

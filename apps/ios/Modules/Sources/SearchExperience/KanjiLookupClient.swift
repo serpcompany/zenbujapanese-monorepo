@@ -1,16 +1,5 @@
 import Foundation
 
-struct KanjiReading: Codable, Hashable, Sendable {
-  let value: String
-  let kind: Kind
-
-  enum Kind: String, Codable, Hashable, Sendable {
-    case on
-    case kun
-    case name
-  }
-}
-
 struct KanjiCharacter: Codable, Hashable, Sendable {
   let rawValue: String
 
@@ -21,6 +10,8 @@ struct KanjiCharacter: Codable, Hashable, Sendable {
     else { return nil }
     rawValue = value
   }
+
+  var scalar: UInt32 { rawValue.unicodeScalars.first?.value ?? 0 }
 
   private static func isIdeograph(_ value: UInt32) -> Bool {
     switch value {
@@ -33,73 +24,203 @@ struct KanjiCharacter: Codable, Hashable, Sendable {
   }
 }
 
-struct KanjiReferenceEntry: Codable, Hashable, Sendable {
-  let character: String
-  let strokeCount: Int
-  let commonMiscounts: [Int]
-  let grade: Int?
-  let wallerJlptLevel: Int?
-  let frequencyRank: Int?
-  let classicalRadicalNumber: Int?
-  let meanings: [String]
-  let readings: [KanjiReading]
-  let components: [String]
+struct KanjiElementID: Codable, Hashable, Sendable {
+  let rawValue: String
 
-  var onReadings: [String] {
-    readings.filter { $0.kind == .on }.map(\.value)
-  }
-
-  var kunReadings: [String] {
-    readings.filter { $0.kind == .kun }.map(\.value)
-  }
-
-  var nameReadings: [String] {
-    readings.filter { $0.kind == .name }.map(\.value)
+  init?(_ value: String) {
+    guard let character = KanjiCharacter(value) else { return nil }
+    rawValue = character.rawValue
   }
 }
 
-struct KanjiReferenceCatalog: Codable, Sendable {
-  let snapshot: String
-  let metadataSourceIdentity: String
-  let componentSourceIdentity: String
-  let entries: [KanjiReferenceEntry]
+struct KanjiPage: Hashable, Sendable {
+  struct Stat: Decodable, Hashable, Sendable {
+    let kind: String
+    let label: String
+    let value: String
+    let spoken: String
+  }
+
+  struct Reading: Hashable, Sendable {
+    let kind: String
+    let label: String
+    let value: String
+    let words: [DictionaryEntry]
+  }
+
+  struct Element: Decodable, Hashable, Identifiable, Sendable {
+    let id: KanjiElementID
+    let role: String
+    let roleLabel: String
+    let meanings: [String]
+    let linkedOnReadings: [String]
+    let description: String
+    let spoken: String
+
+    private enum CodingKeys: String, CodingKey {
+      case character
+      case role
+      case roleLabel
+      case meanings
+      case linkedOnReadings
+      case description
+      case spoken
+    }
+
+    init(from decoder: Decoder) throws {
+      let container = try decoder.container(keyedBy: CodingKeys.self)
+      id = try container.kanji(KanjiElementID.init, forKey: .character)
+      role = try container.decode(String.self, forKey: .role)
+      roleLabel = try container.decode(String.self, forKey: .roleLabel)
+      meanings = try container.decode([String].self, forKey: .meanings)
+      linkedOnReadings = try container.decode([String].self, forKey: .linkedOnReadings)
+      description = try container.decode(String.self, forKey: .description)
+      spoken = try container.decode(String.self, forKey: .spoken)
+    }
+  }
+
+  let hasReference: Bool
+  let stats: [Stat]
+  let meanings: [String]
+  let readings: [Reading]
+  let components: [String]
+  let elements: [Element]
+  let words: [DictionaryEntry]
+  let shareText: String
+}
+
+extension KanjiPage {
+  private struct Request: Encodable {
+    struct Word: Encodable {
+      let id: String
+      let headword: String
+      let reading: String
+      let summary: String
+    }
+
+    let character: String
+    let words: [Word]
+    let leadingWord: String?
+  }
+
+  private struct Answer: Decodable {
+    struct Word: Decodable {
+      let id: String
+    }
+
+    struct Reading: Decodable {
+      let kind: String
+      let label: String
+      let value: String
+      let words: [Word]
+    }
+
+    let hasReference: Bool
+    let stats: [Stat]
+    let meanings: [String]
+    let readings: [Reading]
+    let components: [String]
+    let elements: [Element]
+    let words: [Word]
+    let shareText: String
+  }
+
+  init(
+    _ character: KanjiCharacter, words: [DictionaryEntry], openedFrom: LanguageReferenceID?
+  ) throws {
+    let answer: Answer = try PresentationCore.shared.answer(
+      "kanjiPage",
+      Request(
+        character: character.rawValue,
+        words: words.map {
+          Request.Word(
+            id: $0.id.rawValue, headword: $0.headword, reading: $0.reading, summary: $0.summary)
+        },
+        leadingWord: openedFrom?.rawValue))
+    let entries = Dictionary(words.map { ($0.id.rawValue, $0) }) { first, _ in first }
+    self.init(
+      hasReference: answer.hasReference,
+      stats: answer.stats,
+      meanings: answer.meanings,
+      readings: answer.readings.map { reading in
+        Reading(
+          kind: reading.kind, label: reading.label, value: reading.value,
+          words: reading.words.compactMap { entries[$0.id] })
+      },
+      components: answer.components,
+      elements: answer.elements,
+      words: answer.words.compactMap { entries[$0.id] },
+      shareText: answer.shareText
+    )
+  }
+}
+
+struct KanjiElementPage: Decodable, Hashable, Sendable {
+  struct Kanji: Decodable, Hashable, Identifiable, Sendable {
+    let character: KanjiCharacter
+    let meanings: [String]
+    let onReadings: [String]
+    let spoken: String
+
+    var id: UInt32 { character.scalar }
+
+    private enum CodingKeys: String, CodingKey {
+      case character
+      case meanings
+      case onReadings
+      case spoken
+    }
+
+    init(from decoder: Decoder) throws {
+      let container = try decoder.container(keyedBy: CodingKeys.self)
+      character = try container.kanji(KanjiCharacter.init, forKey: .character)
+      meanings = try container.decode([String].self, forKey: .meanings)
+      onReadings = try container.decode([String].self, forKey: .onReadings)
+      spoken = try container.decode(String.self, forKey: .spoken)
+    }
+  }
+
+  let meanings: [String]
+  let explanation: String?
+  let soundPatterns: String?
+  let alternatives: [String]
+  let standalone: Kanji?
+  let containing: [Kanji]
+  let structureSource: String
+  let metadataSource: String
+}
+
+extension KeyedDecodingContainer {
+  fileprivate func kanji<Kanji>(_ kanji: (String) -> Kanji?, forKey key: Key) throws -> Kanji {
+    guard let found = kanji(try decode(String.self, forKey: key)) else {
+      throw DecodingError.dataCorruptedError(
+        forKey: key, in: self, debugDescription: "Not a kanji")
+    }
+    return found
+  }
 }
 
 struct KanjiLookupClient: Sendable {
-  var entry: @Sendable (KanjiCharacter) async throws -> KanjiReferenceEntry?
   var relatedWords: @Sendable (KanjiCharacter) async throws -> [DictionaryEntry]
+  var page:
+    @Sendable (
+      _ character: KanjiCharacter, _ words: [DictionaryEntry], _ openedFrom: LanguageReferenceID?
+    ) throws -> KanjiPage
+  var meanings: @Sendable (KanjiCharacter) -> [String]
+  var element: @Sendable (KanjiElementID) throws -> KanjiElementPage?
 
   static func live(lookupClient: LookupClient) -> KanjiLookupClient {
     KanjiLookupClient(
-      entry: { character in try await KanjiReferenceData.shared.entry(character) },
-      relatedWords: { character in try await lookupClient.entriesContainingKanji(character.rawValue)
-      }
+      relatedWords: { character in
+        try await lookupClient.entriesContainingKanji(character.rawValue)
+      },
+      page: { character, words, openedFrom in
+        try KanjiPage(character, words: words, openedFrom: openedFrom)
+      },
+      meanings: { character in
+        (try? PresentationCore.shared.answer("kanjiMeanings", character.rawValue)) ?? []
+      },
+      element: { id in try PresentationCore.shared.answer("kanjiElementPage", id.rawValue) }
     )
   }
-}
-
-private actor KanjiReferenceData {
-  static let shared = KanjiReferenceData()
-  private var entriesByScalar: [UInt32: KanjiReferenceEntry]?
-
-  func entry(_ character: KanjiCharacter) throws -> KanjiReferenceEntry? {
-    let scalar = character.rawValue.unicodeScalars.first!.value
-    if let entriesByScalar { return entriesByScalar[scalar] }
-    guard let url = Bundle.module.url(forResource: "KanjiReferenceData", withExtension: "json")
-    else {
-      throw KanjiReferenceDataError.missingBundledData
-    }
-    let catalog = try JSONDecoder().decode(KanjiReferenceCatalog.self, from: Data(contentsOf: url))
-    let indexed = Dictionary(
-      uniqueKeysWithValues: catalog.entries.compactMap { entry in
-        entry.character.unicodeScalars.first.map { ($0.value, entry) }
-      }
-    )
-    entriesByScalar = indexed
-    return indexed[scalar]
-  }
-}
-
-private enum KanjiReferenceDataError: Error {
-  case missingBundledData
 }

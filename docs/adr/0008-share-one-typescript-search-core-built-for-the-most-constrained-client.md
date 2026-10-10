@@ -85,3 +85,68 @@ to 1.7 s, go 440 ms to 100 ms, see 344 ms to 16 ms), and five were 0.1 ms to 1.6
 word looked up alone, outside a text, costs about 0.5 ms where the Swift took 0.4 ms.
 `SearchLatencyTests` repeats the measurement
 ([`ios.md`](../agents/ios.md), The dictionary core in the app). No iPhone was measured.
+
+## Amendment: the app runs all of the core
+
+The rest of [issue 481](https://github.com/serpcompany/zenbujapanese-monorepo/issues/481) moved
+everything else the app's dictionary decides onto the core: the results screen with its
+frequency re-sort, Sort By, and Filter; example sentences and linked words; the word, kanji,
+and kanji element pages; furigana; a query's normalization; and the short meaning under a
+linked word. The Swift that did them is gone, and so is the `Search parity` check that asked
+for both sides of each to change together. The app's Swift keeps the screens, reads the files,
+and decodes the core's answers ([`dictionary-core.md`](../agents/dictionary-core.md), The app's
+side; [`ios.md`](../agents/ios.md), The dictionary core in the app).
+
+The choices that aren't obvious from the code:
+
+- **The core answers what a screen says, not only what it holds.** Titles, orders, labels,
+  counts, and what VoiceOver reads are fields of the answer. A rule decided in a view would be
+  decided again in the next client, which is what this issue ends.
+- **Three engines, split by how long a call takes.** A search or a page of linked sentences
+  takes tens of milliseconds and awaits, so each has an actor with its own engine and its own
+  SQLite connection. A row's furigana or a page's model takes under a millisecond and is needed
+  while a view is being built, so the third engine sits behind a lock and answers
+  synchronously. One engine for all three would make a row wait behind a search.
+- **Kuromoji runs in the text engine.** The core calls its `tokenize` directly, so linking a
+  text is one call, with no trip back to Swift for each sentence's words. Sudachi, which a
+  launch switch still compares, answers through the call instead.
+- **The kanji files stay with the host.** Parsed into an engine they are 16 MB of objects the
+  collector walks on every pass. The host maps the files, scans them once for each record's
+  place, and hands over a record's bytes when the core asks.
+- **The Swift's answers were recorded before it was removed.** Beside the recorded suites, each
+  part was compared with the core across the whole of the data: every kanji's page and every
+  element's page, every entry's first meaning as a short gloss, and every headword, reading,
+  and summary as a query. They agreed, apart from two things the core does by the standard and
+  Foundation did not: it joins a halfwidth kana and its voiced mark (ｶﾞ is ガ), and lowercases a
+  word's final Σ to ς. A new suite, `kanji-element.json`, holds what the Swift element page
+  showed.
+
+Measured on 2026-10-10 against the Swift it replaced, in optimized builds on a Mac, whose
+JavaScriptCore runs without its JIT as a device's does. The first four rows are the recorded
+suites run one at a time: each does everything its screen needs for every case, through the
+clients the views use.
+
+| | Swift | Core |
+| --- | --- | --- |
+| The results screen for 56 queries | 43.5 s | 31.8 s |
+| Example Sentences for 67 queries, the first five sentences of each linked | 72.4 s | 35.6 s |
+| Word Detail for 54 words, with their examples and every conjugated form's | 34.0 s | 27.5 s |
+| Kanji Detail for 33 kanji | 2.28 s | 2.20 s |
+| 200 example sentences linked, first time | 137 ms | 162 ms |
+| The same sentences linked again | 65 ms | 12 ms |
+| The kanji data read at launch | 175 ms | 14 ms |
+| The first kanji page's reference | 160 ms to 230 ms | 0.7 ms |
+| Memory after a session of searches, examples, linked sentences, and kanji pages | 308 MB | 280 MB |
+| Memory at its highest in that session | 308 MB | 289 MB |
+
+Search itself did not change (45 uncached searches: 5.7 s before and after). A screen's model
+costs the engine about a millisecond: a results screen 1.2 ms (1.5 ms sorted by a dictionary), a
+word page 0.2 ms, a kanji page 0.6 ms, an element page 0.7 ms, and a word's furigana 0.04 ms
+before it is remembered. The Swift's own time for each was not measured and will have been
+shorter; none is a frame, and the screens are faster as a whole because their examples are.
+
+One thing is slower: a sentence linked for the first time takes about 0.8 ms where it took
+0.7 ms, since the engine reads each linked entry's forms to choose its furigana and the app
+then reads the entry itself. Linked again, it takes 0.06 ms where it took 0.3 ms, because the
+core remembers it. `SearchLatencyTests` repeats every measurement
+([`ios.md`](../agents/ios.md), The dictionary core in the app). No iPhone was measured.

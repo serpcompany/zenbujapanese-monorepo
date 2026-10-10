@@ -3,10 +3,9 @@ import SwiftUI
 struct WordHeadline<Accessory: View>: View {
   @Environment(\.dynamicTypeSize) private var dynamicTypeSize
   @Environment(ReadingAidPreferences.self) private var readingAidPreferences
-  let surface: String
-  let reading: String
+  let ruby: JapaneseRuby
   var highlightedEnding = ""
-  var pitch: PitchAccent?
+  var pitch: WordPage.Pitch?
   let identifierPrefix: String
   let pronounce: () -> Void
   @ViewBuilder let accessory: () -> Accessory
@@ -66,8 +65,7 @@ struct WordHeadline<Accessory: View>: View {
   private func rubyHeadword(baseFont: Font, rubyFont: Font) -> some View {
     VStack(alignment: .leading, spacing: 2) {
       JapaneseRubyText(
-        surface: surface,
-        reading: reading,
+        ruby: ruby,
         baseFont: baseFont,
         rubyFont: rubyFont,
         highlightedEnding: highlightedEnding
@@ -76,6 +74,10 @@ struct WordHeadline<Accessory: View>: View {
       readingWithoutFurigana
     }
   }
+
+  private var surface: String { ruby.surface }
+
+  private var reading: String { ruby.reading }
 
   @ViewBuilder
   private var readingWithoutFurigana: some View {
@@ -110,16 +112,14 @@ struct WordHeadline<Accessory: View>: View {
 
 extension WordHeadline where Accessory == EmptyView {
   init(
-    surface: String,
-    reading: String,
+    ruby: JapaneseRuby,
     highlightedEnding: String = "",
-    pitch: PitchAccent? = nil,
+    pitch: WordPage.Pitch? = nil,
     identifierPrefix: String,
     pronounce: @escaping () -> Void
   ) {
     self.init(
-      surface: surface,
-      reading: reading,
+      ruby: ruby,
       highlightedEnding: highlightedEnding,
       pitch: pitch,
       identifierPrefix: identifierPrefix,

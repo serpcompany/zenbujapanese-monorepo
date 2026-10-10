@@ -127,6 +127,34 @@ final class WordDetailUITests: ZenbuUITestCase {
     reveal(firstElement(identifiedBy: "kanji-detail.word.", in: app), in: app)
   }
 
+  func testAKanjisElementShowsWhatItContributesAndAKanjiItIsIn() {
+    let app = openJapan()
+    tap(find("word-detail.kanji.本", in: app), toShow: find("kanji-detail.glyph", in: app))
+    let element = reveal(find("kanji-detail.element.木", in: app), in: app)
+    waitUntil(element, mentions: "Element 木, meaning / structure, tree, wood")
+    tap(element, toShow: find("kanji-element.screen", in: app))
+    assertOnScreen(find("kanji-element.glyph", in: app), in: app)
+    waitUntil(
+      find("kanji-element.meaning-explanation", in: app),
+      mentions: "This element contributes forms associated with tree, wood.")
+    tap(reveal(find("kanji-element.contribution.東", in: app), in: app))
+    waitUntil(find("kanji-detail.glyph", in: app), mentions: "東")
+    goBack(in: app)
+    waitFor(find("kanji-element.screen", in: app))
+  }
+
+  func testAFrequencyRowOpensItsDetails() {
+    let app = openJapan()
+    let row = reveal(
+      find("word-detail.frequency.zenbu.tubelex.youtube.ja.unidic-3.1", in: app), in: app)
+    waitUntil(row, mentions: "YouTube frequency rank ")
+    tap(row)
+    waitForSheet("frequency-detail.list", in: app)
+    waitFor(labeled("Percentile", in: app))
+    tap(app.buttons["Done"].firstMatch)
+    waitFor(find("word-detail.screen", in: app))
+  }
+
   private func openJapan() -> XCUIApplication {
     let app = launch()
     search("japan", in: app)

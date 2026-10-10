@@ -425,7 +425,7 @@ private struct EncounterMediaDetail: View {
       Section("Associated Words") {
         ForEach(item.words, id: \.id) { word in
           LabeledContent {
-            JapaneseRubyText(surface: word.headword, reading: word.reading)
+            JapaneseRubyText(ruby: JapaneseRuby(surface: word.headword, reading: word.reading))
           } label: {
             Text("Word")
           }

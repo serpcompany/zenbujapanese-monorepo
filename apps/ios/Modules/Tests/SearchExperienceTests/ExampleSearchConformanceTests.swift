@@ -41,8 +41,7 @@ struct ExampleSearchConformanceTests {
 private struct ExampleSearchObserver {
   let lookupClient = LookupClient.live
   let exampleSentenceClient = ExampleSentenceClient.live
-  let textAnalysisClient = JapaneseTextAnalysisClient.resolving(
-    morphologyClient: .kuromoji, lookupClient: .live)
+  let textAnalysisClient = JapaneseTextAnalysisClient.live()
 
   init() async throws {
     guard await textAnalysisClient.availability() == .full else {
@@ -54,32 +53,23 @@ private struct ExampleSearchObserver {
     var observed = ExampleSearchCase(query: recorded.query, covers: recorded.covers)
     let query = SearchQuery(recorded.query)
 
-    let results = try await lookupClient.search(query)
-    observed.count = await SearchResultsScreen.exampleCount(
-      results, query: query,
-      directCount: await SearchResultsScreen.directExampleCount(
-        query, using: exampleSentenceClient),
-      using: exampleSentenceClient)
-    if let count = observed.count, count > 0 {
-      observed.title = SearchResultsScreen.exampleActionTitle(count: count)
-    }
+    let searched = try await SearchedScreen.search(recorded.query)
+    let results = searched.results
+    let row = try? searched.list.examples
+    observed.count = row?.count ?? 0
+    observed.title = row?.title
 
-    let highlightedEntry = results.primaryEntry(for: query)
+    let highlightedEntry = results.primaryEntry
     observed.highlightedEntry = highlightedEntry?.id.rawValue
     observed.usesPrimaryEntryExamples = results.usesPrimaryEntryExamples
 
-    let examples = await ExampleSentencesScreen.examples(
-      query: query,
-      highlightedEntry: highlightedEntry,
-      usesHighlightedEntryExamples: results.usesPrimaryEntryExamples,
-      using: exampleSentenceClient)
+    let examples = await exampleSentenceClient.listed(
+      query, highlightedEntry, results.usesPrimaryEntryExamples)
     observed.ids = examples.map(\.id.rawValue)
     var shown: [ExampleSearchCase.Example] = []
     for example in examples.prefix(tokenLimit) {
       let tokens = await textAnalysisClient.linkedTokens(
         example.japanese, query, highlightedEntry)
-      let queryRanges = ExampleSentencesScreen.queryScalarRanges(
-        in: example.japanese, query: query.value)
       shown.append(
         ExampleSearchCase.Example(
           id: example.id.rawValue,
@@ -90,7 +80,7 @@ private struct ExampleSearchObserver {
               surface: token.surface,
               entry: token.recordedEntryID,
               candidates: token.recordedCandidateIDs,
-              queryMatch: queryRanges.contains { $0.overlaps(token.scalarRange) } ? true : nil
+              queryMatch: token.matchesQuery ? true : nil
             )
           }
         ))

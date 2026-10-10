@@ -15,10 +15,9 @@ struct ConversationWordsTests {
         return JapaneseTextToken(
           id: index, surface: String(word),
           entry: isParticle ? nil : .fixture(id: String(word), headword: String(word)),
-          partOfSpeech: isParticle ? ["助詞"] : ["名詞"])
+          isFunctionWord: isParticle)
       }
-    },
-    words: { $0.split(separator: " ").map(String.init) })
+    })
 
   @Test("counts the Japanese that was spoken, without particles or translations into Japanese")
   func countsSpokenJapanese() async {

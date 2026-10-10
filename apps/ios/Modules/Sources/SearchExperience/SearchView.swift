@@ -12,13 +12,14 @@ struct SearchView: View {
   let frequencyCapability: FrequencyCapability
   let frequencyRefreshID: Int
   let focusRequest: Int
+  @Environment(WordKnowledge.self) private var wordKnowledge
   @State private var results = LookupSearchResults.empty
+  @State private var shown: ShownResults?
   @State private var presentationState = SearchPresentationState.idle
   @State private var retryID = 0
   @State private var settledSearchTaskID: SearchTaskID?
   @State private var inputMode = SearchInputMode.inactive
   @State private var sparseRadicalQuery: SearchQuery?
-  @State private var exampleCount = 0
   @State private var isConfirmingClearAll = false
   @State private var recentSearchRefreshID = 0
   @State private var recentSearches: [SearchQuery] = []
@@ -88,7 +89,7 @@ struct SearchView: View {
       if !SearchQuery(newQuery).isEmpty, !isSearchPresented { showResultsInField() }
       settledSearchTaskID = nil
       results = .empty
-      exampleCount = 0
+      shown = nil
       presentationState = .idle
     }
     .task(id: taskID) {
@@ -114,23 +115,23 @@ struct SearchView: View {
         .accessibilityIdentifier("search.loading")
 
     case .results:
-      SearchResultsView(
-        query: searchQuery,
-        results: results,
-        exampleCount: exampleCount,
-        rankedEntryLimit: sparseRadicalQuery == searchQuery
-          ? results.leadingLexicalEntryCount : nil,
-        frequencyCapability: frequencyCapability,
-        frequencyRefreshID: frequencyRefreshID,
-        selectRefinement: selectRefinement
-      )
-      .id(
-        SearchResultsIdentity(
-          query: searchQuery,
-          entries: results.entries.map(\.id),
-          refinement: results.readingRefinement?.query
+      if let shown {
+        SearchResultsView(
+          results: results,
+          first: shown,
+          leadingOnly: sparseRadicalQuery == searchQuery,
+          frequencyCapability: frequencyCapability,
+          frequencyRefreshID: frequencyRefreshID,
+          selectRefinement: selectRefinement
         )
-      )
+        .id(
+          SearchResultsIdentity(
+            query: searchQuery,
+            entries: results.entries.map(\.id),
+            refinement: results.readingRefinement?.query
+          )
+        )
+      }
 
     case .failure:
       ScrollView {
@@ -200,7 +201,7 @@ struct SearchView: View {
       presentationState = .idle
       guard !taskQuery.isEmpty else {
         results = .empty
-        exampleCount = 0
+        shown = nil
         return
       }
       presentationState = .loading
@@ -208,25 +209,35 @@ struct SearchView: View {
         try await Task.sleep(for: .milliseconds(100))
         try Task.checkCancellation()
         async let searchedResults = lookupClient.search(taskQuery)
-        async let searchedExampleCount = SearchResultsScreen.directExampleCount(
-          taskQuery, using: exampleSentenceClient)
+        async let searchedExampleCount = exampleSentenceClient.directCount(taskQuery)
         let foundResults = try await searchedResults
         try Task.checkCancellation()
-        let directExampleCount = await searchedExampleCount
+        _ = await searchedExampleCount
         try Task.checkCancellation()
-        let foundExampleCount = await SearchResultsScreen.exampleCount(
-          foundResults, query: taskQuery, directCount: directExampleCount,
-          using: exampleSentenceClient)
+        let request = ResultsScreenRequest(
+          query: taskQuery,
+          results: foundResults.listed,
+          exampleCount: await exampleSentenceClient.count(taskQuery, foundResults),
+          learner: ResultsLearner(
+            sort: UserDefaults.standard.string(forKey: ResultsLearner.sortKey)
+              ?? ResultsLearner.defaultSort,
+            filter: UserDefaults.standard.string(forKey: ResultsLearner.filterKey)
+              ?? ResultsLearner.noFilter,
+            known: foundResults.entries.map(\.id).filter(wordKnowledge.isKnown)
+              .map(\.rawValue),
+            leadingOnly: sparseRadicalQuery == taskQuery))
+        try Task.checkCancellation()
+        let screen = try await request.screen()
         try Task.checkCancellation()
         guard searchTaskID == taskID, settledSearchTaskID != taskID else { continue }
         settledSearchTaskID = taskID
         results = foundResults
-        exampleCount = foundExampleCount
-        if SearchResultsScreen.showsNoResults(
-          foundResults, exampleCount: foundExampleCount, query: taskQuery)
-        {
+        switch screen {
+        case .noResults:
+          shown = nil
           presentationState = .noResults
-        } else {
+        case .results(let list):
+          shown = ShownResults(request: request, list: list)
           presentationState = .results
         }
       } catch is CancellationError {
@@ -237,7 +248,7 @@ struct SearchView: View {
         }
         settledSearchTaskID = taskID
         results = .empty
-        exampleCount = 0
+        shown = nil
         presentationState = .failure
       }
     }

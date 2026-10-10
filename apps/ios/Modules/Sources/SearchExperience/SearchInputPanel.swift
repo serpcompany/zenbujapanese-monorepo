@@ -192,7 +192,7 @@ private struct SearchCandidateTile: View {
     .task(id: candidate) {
       meaning = nil
       guard let character = KanjiCharacter(candidate) else { return }
-      meaning = try? await kanjiLookupClient.entry(character)?.meanings.first
+      meaning = kanjiLookupClient.meanings(character).first
     }
   }
 }

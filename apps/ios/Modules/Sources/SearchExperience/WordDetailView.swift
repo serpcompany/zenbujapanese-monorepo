@@ -8,21 +8,21 @@ struct WordDetailView: View {
   @State private var examplesEntryID: LanguageReferenceID?
   @State private var isLoadingExamples = true
   @State private var showsListPicker = false
-  @State private var frequencyDisclosure: FrequencyDisclosureItem?
+  @State private var frequencyDisclosure: FrequencyRow?
   @State private var analysisAvailability = JapaneseTextAnalysisAvailability.full
-  @State private var frequency = FrequencyRanks()
+  @State private var frequency: [FrequencyRow] = []
 
   let entry: DictionaryEntry
+  private let page: WordPage?
   let initialEncounterMedia: EncounterMediaAttachment?
   let speechSynthesisClient: SpeechSynthesisClient
   let exampleSentenceClient: ExampleSentenceClient
   let japaneseTextAnalysisClient: JapaneseTextAnalysisClient
   let frequencyCapability: FrequencyCapability
-  let conjugationTable: ConjugationTable?
   let openRelated: (DictionaryRelationship) -> Void
   let openKanji: (KanjiCharacter, DictionaryEntry?) -> Void
   let openWord: (DictionaryEntry) -> Void
-  let openConjugations: (ConjugationTable) -> Void
+  let openConjugations: (Conjugations) -> Void
   let manageFrequencyDictionaries: () -> Void
   let openList: (UUID) -> Void
 
@@ -36,11 +36,10 @@ struct WordDetailView: View {
     encounterMediaStore: EncounterMediaStore,
     cameraAuthorizationClient: CameraAuthorizationClient,
     frequencyCapability: FrequencyCapability,
-    conjugationTable: ConjugationTable?,
     openRelated: @escaping (DictionaryRelationship) -> Void,
     openKanji: @escaping (KanjiCharacter, DictionaryEntry?) -> Void,
     openWord: @escaping (DictionaryEntry) -> Void,
-    openConjugations: @escaping (ConjugationTable) -> Void,
+    openConjugations: @escaping (Conjugations) -> Void,
     manageFrequencyDictionaries: @escaping () -> Void,
     openList: @escaping (UUID) -> Void
   ) {
@@ -49,12 +48,12 @@ struct WordDetailView: View {
       initialValue: SavedItemPhotos(
         store: encounterMediaStore, cameraAuthorizationClient: cameraAuthorizationClient))
     self.entry = entry
+    page = WordPage(entry)
     self.initialEncounterMedia = initialEncounterMedia
     self.speechSynthesisClient = speechSynthesisClient
     self.exampleSentenceClient = exampleSentenceClient
     self.japaneseTextAnalysisClient = japaneseTextAnalysisClient
     self.frequencyCapability = frequencyCapability
-    self.conjugationTable = conjugationTable
     self.openRelated = openRelated
     self.openKanji = openKanji
     self.openWord = openWord
@@ -65,7 +64,7 @@ struct WordDetailView: View {
 
   private var item: SavedItem { .word(entry) }
 
-  private var shareText: String { entry.shareText }
+  private var shareText: String { page?.shareText ?? entry.headword }
 
   var body: some View {
     ScrollViewReader { proxy in
@@ -73,51 +72,54 @@ struct WordDetailView: View {
         Section {
           WordHeroView(
             entry: entry,
+            page: page,
             encounterMedia: photos.displayable,
             removeEncounterMedia: photos.remove,
             pronounce: { speechSynthesisClient.speak(entry.reading) }
           )
           PartOfSpeechRow(
-            entry: entry, conjugationTable: conjugationTable, openConjugations: openConjugations)
+            title: page?.partOfSpeech ?? "", entryID: entry.id, conjugations: page?.conjugations,
+            openConjugations: openConjugations)
         }
 
         Section("MEANING") {
-          MeaningSection(senses: entry.senses)
+          MeaningSection(senses: page?.senses ?? [])
         }
 
         if !frequency.isEmpty {
           Section("FREQUENCY") {
-            ForEach(frequency.enumerated(), id: \.offset) { _, result in
-              FrequencyRankRow(result: result) {
-                frequencyDisclosure = FrequencyDisclosureItem(result: $0)
-              }
+            ForEach(frequency.enumerated(), id: \.offset) { _, row in
+              FrequencyRankRow(row: row) { frequencyDisclosure = $0 }
             }
           }
           .accessibilityIdentifier("word-detail.frequency")
         }
 
-        if !entry.alternativeForms.isEmpty {
-          Section("ALTERNATIVES") {
-            AlternativeFormsSection(forms: entry.alternativeForms, openKanji: openKanji)
+        if let page {
+          if !page.alternatives.isEmpty {
+            Section("ALTERNATIVES") {
+              AlternativeFormsSection(forms: page.alternatives, openKanji: openKanji)
+            }
           }
-        }
 
-        if !entry.primaryKanji.isEmpty {
-          Section("KANJI") {
-            PrimaryKanjiSection(
-              characters: entry.primaryKanji, entry: entry, openKanji: openKanji)
+          if !page.kanji.isEmpty {
+            Section("KANJI") {
+              PrimaryKanjiSection(characters: page.kanji, entry: entry, openKanji: openKanji)
+            }
           }
-        }
 
-        if !entry.alternativeKanji.isEmpty {
-          Section("ALTERNATIVE KANJI") {
-            AlternativeKanjiSection(characters: entry.alternativeKanji, openKanji: openKanji)
+          if !page.alternativeKanji.isEmpty {
+            Section("ALTERNATIVE KANJI") {
+              AlternativeKanjiSection(characters: page.alternativeKanji, openKanji: openKanji)
+            }
           }
-        }
 
-        if !entry.relationships.isEmpty {
-          Section("RELATED WORDS") {
-            RelationshipsSection(relationships: entry.relationships, openRelated: openRelated)
+          if !page.related.isEmpty {
+            Section("RELATED WORDS") {
+              RelationshipsSection(
+                related: page.related, relationships: entry.relationships,
+                openRelated: openRelated)
+            }
           }
         }
 
@@ -174,9 +176,9 @@ struct WordDetailView: View {
     .savedItemActions(
       for: item, identifierPrefix: "word-detail", shareText: shareText, notes: notes,
       photos: photos, showsListPicker: $showsListPicker)
-    .sheet(item: $frequencyDisclosure) { item in
+    .sheet(item: $frequencyDisclosure) { row in
       FrequencyDisclosureView(
-        item: item,
+        details: row.details,
         manage: {
           frequencyDisclosure = nil
           manageFrequencyDictionaries()
@@ -194,15 +196,7 @@ struct WordDetailView: View {
       let loadedExamples = (try? await exampleSentenceClient.examples(entry)) ?? []
       guard !Task.isCancelled else { return }
       analysisAvailability = await japaneseTextAnalysisClient.availability()
-      frequency =
-        (try? await frequencyCapability.evidence(for: entry.id))
-        ?? [
-          .unavailable(
-            FrequencyPackUnavailable(
-              pack: nil,
-              reason: "Frequency data unavailable"
-            ))
-        ]
+      frequency = await FrequencyRow.rows(for: entry.id, using: frequencyCapability)
       guard !Task.isCancelled else { return }
       examples = loadedExamples
       examplesEntryID = entry.id
@@ -271,6 +265,7 @@ private struct WordDetailKanjiLink: View {
 
 private struct WordHeroView: View {
   let entry: DictionaryEntry
+  let page: WordPage?
   let encounterMedia: [EncounterMedia]
   let removeEncounterMedia: (String) async -> Void
   let pronounce: () -> Void
@@ -289,9 +284,8 @@ private struct WordHeroView: View {
 
   private var headline: some View {
     WordHeadline(
-      surface: entry.headword,
-      reading: entry.reading,
-      pitch: entry.pitchAccent,
+      ruby: JapaneseRuby(headwordOf: entry, on: page),
+      pitch: page?.pitch,
       identifierPrefix: "word-detail",
       pronounce: pronounce
     ) {

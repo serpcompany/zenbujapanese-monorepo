@@ -38,8 +38,8 @@ enum SearchExperienceRoute: Hashable {
   case kanji(KanjiCharacter, DictionaryEntry?)
   case kanjiElement(KanjiElementID)
   case examples(SearchQuery, DictionaryEntry?, Bool)
-  case conjugations(DictionaryEntry, ConjugationTable)
-  case conjugatedForm(DictionaryEntry, ConjugationTable, ConjugatedForm, ConjugationMode)
+  case conjugations(DictionaryEntry, Conjugations)
+  case conjugatedForm(DictionaryEntry, Conjugations.Row)
   case image(UUID)
 }
 

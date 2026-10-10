@@ -1,7 +1,7 @@
 import SwiftUI
 
 struct FrequencyRankChip: View {
-  let presentation: FrequencyPresentationModel
+  let chip: FrequencyChip
   @Environment(\.dynamicTypeSize) private var dynamicTypeSize
   @ScaledMetric(relativeTo: .caption) private var horizontalPadding = 6.0
   @ScaledMetric(relativeTo: .caption) private var verticalPadding = 2.0
@@ -14,11 +14,11 @@ struct FrequencyRankChip: View {
       : AnyLayout(HStackLayout(spacing: horizontalPadding * 0.67))
     layout {
       HStack(spacing: horizontalPadding * 0.67) {
-        FrequencyTierMarker(tier: presentation.tier)
-        Text(presentation.packName)
+        FrequencyTierMarker(tier: chip.tier)
+        Text(chip.source)
           .foregroundStyle(.secondary)
       }
-      Text(presentation.inlineText)
+      Text(chip.value)
         .monospacedDigit()
         .foregroundStyle(.primary)
         .layoutPriority(1)
@@ -42,7 +42,7 @@ struct FrequencyTierMarker: View {
   var body: some View {
     if differentiateWithoutColor {
       if let tier {
-        Text("\(tier.rawValue)★")
+        Text("\(tier.stars)★")
           .monospacedDigit()
           .foregroundStyle(.secondary)
       }
@@ -75,6 +75,16 @@ struct FrequencyAdditionalRanksChip: View {
 }
 
 extension FrequencyTier {
+  var stars: Int {
+    switch self {
+    case .veryCommon: 5
+    case .common: 4
+    case .moderate: 3
+    case .uncommon: 2
+    case .rare: 1
+    }
+  }
+
   var color: Color {
     switch self {
     case .veryCommon: .green

@@ -8,14 +8,17 @@ import os
 @Suite("The dictionary core in the app")
 struct DictionaryCoreTests {
   @Test(
-    "a query reads in Swift as the core normalizes it",
+    "a query is the core's normalization of what was typed, scalar for scalar",
     arguments: [
-      "  ＮＩＨＯＮ   go ", "Ｄｏｇ　ＤＡＹＳ", "Tōkyō", "ｶﾞｷﾞ", "日本　語", "\tneko\n", "İstanbul", "ǅ", "ß",
-      "Ⅻ", "㍿", "か゛", "e\u{301}", "食べる", "", "   ",
+      ("  ＮＩＨＯＮ   go ", "nihon go"), ("Ｄｏｇ　ＤＡＹＳ", "dog days"),
+      ("\u{FF76}\u{FF9E}\u{FF77}\u{FF9E}", "\u{30AC}\u{30AE}"), ("\u{FF8A}\u{FF9F}", "\u{30D1}"),
+      ("か\u{3099}", "\u{304C}"), ("e\u{301}", "\u{E9}"), ("日本　語", "日本 語"),
+      ("\tneko\n", "neko"), ("Ⅻ", "xii"), ("㍿", "株式会社"), ("ΌΣΟΣ", "\u{3CC}\u{3C3}\u{3BF}\u{3C2}"),
+      ("食べる", "食べる"), ("", ""), ("   ", ""),
     ])
-  func normalization(text: String) async throws {
+  func normalization(text: String, normalized: String) {
     #expect(
-      try await LanguageReferenceData.shared.coreNormalizedQuery(text) == SearchQuery(text).value)
+      Array(SearchQuery(text).value.unicodeScalars) == Array(normalized.unicodeScalars))
   }
 
   @Test("a sentence nothing matches lists the words its analysis finds, asked for once")
@@ -32,8 +35,20 @@ struct DictionaryCoreTests {
     #expect(results.presentation == .discoveredWords)
     #expect(results.entries.map(\.headword).prefix(2) == ["猫", "犬"])
     #expect(results.entries.count == 3)
-    #expect(results.leadingLexicalEntryCount == 3)
     #expect(asked.withLock { $0 } == [Self.sentence])
+    let screen = try await ResultsScreenRequest(
+      query: SearchQuery(Self.sentence), results: results.listed, exampleCount: 0,
+      learner: ResultsLearner(sort: "known-words", filter: "known")
+    ).screen()
+    guard case .results(let list) = screen else {
+      Issue.record("The sentence's words have no results screen")
+      return
+    }
+    #expect(list.heading == "Discovered Words")
+    #expect(list.sections == [.discoveredWords])
+    #expect(list.menu == nil)
+    #expect(list.rows.map(\.id) == results.entries.map(\.id.rawValue))
+    #expect(list.rows.last?.spoken == "Discovered word 3 of 3, Frequency rank loading")
 
     let direct = try await data.search(SearchQuery("猫"))
     #expect(direct.resolution == .direct)
@@ -93,29 +108,20 @@ struct DictionaryCoreTests {
     #expect(try await LookupClient.live.entry(LanguageReferenceID(rawValue: "閻魔")) == nil)
   }
 
-  @Test("a text's words are looked up together: each word's first form that has entries, narrowed")
-  func firstMatchingForms() async throws {
+  @Test("a form finds the entries written or read exactly as it, in Japanese or in romaji")
+  func exactForms() async throws {
     let data = LanguageReferenceData(validatesBundledArtifact: false)
-    let asked = OSAllocatedUnfairLock(initialState: [String]())
-    let alternatives = [["ゐゑ", "猫"], ["猫", "ねこ"], ["ゐゑ"], [], ["食べた", "食べる"], ["はし"]]
-    let matched = try await data.entries(matchingFirstOf: alternatives) { index, form, family in
-      asked.withLock { $0.append("\(index) \(form)") }
-      return index == 5 ? [family[1].id] : family.map(\.id)
-    }
-    #expect(asked.withLock { $0 } == ["0 猫", "1 猫", "4 食べる", "5 はし"])
-    #expect(matched.count == alternatives.count)
     let cat = try await data.entries(matchingForm: "猫")
     #expect(cat.first?.headword == "猫")
-    #expect(matched[0] == cat)
-    #expect(matched[1] == cat)
-    #expect(matched[2].isEmpty)
-    #expect(matched[3].isEmpty)
-    #expect(matched[4] == (try await data.entries(matchingForm: "食べる")))
-    let hashi = try await data.entries(matchingForm: "はし")
-    #expect(hashi.count > 2)
-    #expect(matched[5] == [hashi[1]])
+    #expect(try await data.entries(matchingForm: "ねこ").contains { $0.headword == "猫" })
+    #expect(try await data.entries(matchingForm: "neko").contains { $0.headword == "猫" })
+    #expect(try await data.entries(matchingForm: "はし").count > 2)
     #expect(try await data.entries(matchingForm: "食べた").isEmpty)
-    #expect(try await data.entries(matchingFirstOf: []) { _, _, _ in [] }.isEmpty)
+    #expect(try await data.entries(matchingForm: "ゐゑ").isEmpty)
+    #expect(try await data.entry(matchingForm: "猫") == cat.first)
+    let read = try await data.entries(
+      equivalentTo: cat.map(\.id) + [LanguageReferenceID(rawValue: "猫")])
+    #expect(read == Dictionary(uniqueKeysWithValues: cat.map { ($0.id, $0) }))
   }
 
   @Test("a search that reads tens of thousands of rows answers, and so do the lookups after it")

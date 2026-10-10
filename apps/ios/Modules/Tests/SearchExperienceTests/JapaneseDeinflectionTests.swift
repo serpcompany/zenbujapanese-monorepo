@@ -29,9 +29,9 @@ struct JapaneseDeinflectionTests {
     ]
   )
   func inflections(query: String, headword: String) async throws {
-    let results = try await LookupClient.live.search(SearchQuery(query))
+    let results = try await LanguageReferenceData.shared.coreSearch(SearchQuery(query).value)
     #expect(results.resolution == .deinflected, "\(query) was not deinflected")
-    let leading = results.entries.prefix(results.leadingLexicalEntryCount).map(\.headword)
+    let leading = results.items.prefix(results.leadingLexicalEntryCount).map(\.headword)
     #expect(leading.contains(headword), "\(query) led with \(leading), not \(headword)")
   }
 
@@ -55,9 +55,9 @@ struct JapaneseDeinflectionTests {
 
   @Test("ambiguous kana offers every matching verb in the leading group")
   func ambiguousKana() async throws {
-    let results = try await LookupClient.live.search(SearchQuery("よんだら"))
+    let results = try await LanguageReferenceData.shared.coreSearch("よんだら")
     #expect(results.resolution == .deinflected)
-    let leading = Set(results.entries.prefix(results.leadingLexicalEntryCount).map(\.headword))
+    let leading = Set(results.items.prefix(results.leadingLexicalEntryCount).map(\.headword))
     #expect(leading.isSuperset(of: ["読む", "呼ぶ"]))
   }
 

@@ -1,229 +1,216 @@
 import SwiftUI
 
+struct ShownResults: Hashable, Sendable {
+  let request: ResultsScreenRequest
+  let list: ResultsList
+}
+
 struct SearchResultsView: View {
-  let query: SearchQuery
   let results: LookupSearchResults
-  let exampleCount: Int
-  let rankedEntryLimit: Int?
+  let leadingOnly: Bool
   let frequencyCapability: FrequencyCapability
   let frequencyRefreshID: Int
   let selectRefinement: (SearchRefinement) -> Void
+  @State private var shown: ShownResults
   @State private var frequencyLoadState = SearchFrequencyLoadState()
-  @AppStorage(SearchResultSort.storageKey) private var sort = SearchResultSort.relevance
-  @AppStorage(SearchResultFilter.storageKey) private var filter = SearchResultFilter.all
+  @State private var frequency: LearnerFrequency?
+  @State private var animatesNextList = false
+  @AppStorage(ResultsLearner.sortKey) private var sort = ResultsLearner.defaultSort
+  @AppStorage(ResultsLearner.filterKey) private var filter = ResultsLearner.noFilter
   @Environment(WordKnowledge.self) private var wordKnowledge
 
+  init(
+    results: LookupSearchResults,
+    first: ShownResults,
+    leadingOnly: Bool,
+    frequencyCapability: FrequencyCapability,
+    frequencyRefreshID: Int,
+    selectRefinement: @escaping (SearchRefinement) -> Void
+  ) {
+    self.results = results
+    self.leadingOnly = leadingOnly
+    self.frequencyCapability = frequencyCapability
+    self.frequencyRefreshID = frequencyRefreshID
+    self.selectRefinement = selectRefinement
+    _shown = State(initialValue: first)
+  }
+
   var body: some View {
-    let dictionaries = SearchResultSortOrdering.dictionaries(in: frequencyLoadState.results)
-    let appliedSort = SearchResultSortOrdering.applied(sort, dictionaries: dictionaries)
-    let orderedEntries = SearchResultSortOrdering.ordered(
-      SearchResultFrequencyOrdering.ordered(
-        results, entries: presentedEntries, ranks: frequencyLoadState.results),
-      by: appliedSort,
-      ranks: frequencyLoadState.results,
-      isKnown: wordKnowledge.isKnown
-    )
-    let shownEntries = shown(orderedEntries, by: filter)
-    let hiddenCount = orderedEntries.count - shownEntries.count
-    let chosenFilter = chosenFilter(ordered: orderedEntries)
+    let list = shown.list
+    let entries = Dictionary(
+      results.entries.map { ($0.id.rawValue, $0) }, uniquingKeysWith: { first, _ in first })
     List {
-      if SearchResultsScreen.isSortable(results, entries: presentedEntries) {
+      if let menu = list.menu {
         Section {
-          SearchResultsMenu(
-            sort: chosenSort(dictionaries: dictionaries ?? []), appliedSort: appliedSort,
-            filter: chosenFilter, dictionaries: dictionaries ?? [])
-          .listRowSeparator(.hidden, edges: .top)
-          .alignmentGuide(.listRowSeparatorLeading) { _ in 0 }
+          SearchResultsMenu(menu: menu, chooseSort: chooseSort, chooseFilter: chooseFilter)
+            .listRowSeparator(.hidden, edges: .top)
+            .alignmentGuide(.listRowSeparatorLeading) { _ in 0 }
         }
       }
 
-      if exampleCount > 0 {
+      if let examples = list.examples {
         Section {
           NavigationLink(
             value: SearchExperienceRoute.examples(
-              query,
-              results.primaryEntry(for: query),
-              results.usesPrimaryEntryExamples
+              shown.request.query,
+              examples.highlightedEntry.flatMap { entries[$0] },
+              examples.usesHighlightedEntryExamples
             )
           ) {
-            Text(SearchResultsScreen.exampleActionTitle(count: exampleCount))
+            Text(examples.title)
               .font(.headline)
           }
           .accessibilityIdentifier("search.examples")
         }
       }
 
-      if let refinement = results.readingRefinement {
+      if let refinement = list.readingRefinement, let target = results.readingRefinement {
         Section {
           Button {
-            selectRefinement(refinement)
+            selectRefinement(target)
           } label: {
-            Text(SearchResultsScreen.readingRefinementTitle(refinement))
+            Text(refinement.title)
               .font(.headline)
           }
-          .accessibilityLabel("Search for Japanese reading \(refinement.query.value)")
+          .accessibilityLabel(refinement.spoken)
           .accessibilityIdentifier("search.reading-refinement")
         }
       }
 
-      switch SearchResultsScreen.list(query: query, results: results, ordered: shownEntries) {
-      case .discoveredWords(let entries):
+      if list.sections.contains(.discoveredWords) {
         Section {
-          SearchListHeading(LocalizedStringKey(SearchResultsScreen.discoveredWordsHeading))
-          resultRows(entries, sort: .relevance) {
-            .discovered(position: $0 + 1, count: entries.count)
+          if let heading = list.heading {
+            SearchListHeading(LocalizedStringKey(heading))
           }
+          resultRows(list.rows, entries: entries)
         }
-      case .ranked(let kanji, let entries):
+      } else if list.sections.contains(.results) {
         Section {
-          if let kanji {
+          if let kanji = list.kanji, let character = KanjiCharacter(kanji.character) {
             KanjiPrimaryRow(
-              character: kanji,
-              entry: primaryKanjiEntry,
-              resultCount: SearchResultsScreen.rankedCount(query: query, entries: entries)
-            )
+              kanji: kanji, character: character, entry: kanji.entry.flatMap { entries[$0] })
           }
-          resultRows(entries, sort: appliedSort) { index in
-            .result(
-              position: index + (kanji == nil ? 1 : 2),
-              count: SearchResultsScreen.rankedCount(query: query, entries: entries)
-            )
-          }
-          if entries.isEmpty, hiddenCount > 0 {
+          resultRows(list.rows, entries: entries)
+          if let hidden = list.hiddenByFilter {
             ContentUnavailableView {
               Label("No Words Match Your Filter", systemImage: "line.3.horizontal.decrease.circle")
             } description: {
-              Text(SearchResultFiltering.hiddenCountTitle(hiddenCount))
+              Text(hidden)
             } actions: {
-              Button("Clear Filter") { chosenFilter.wrappedValue = .all }
+              Button("Clear Filter") {
+                if let all = list.menu?.filter.options.first { chooseFilter(all) }
+              }
             }
             .listRowSeparator(.hidden)
             .accessibilityIdentifier("search.filter-empty")
           }
-          if let frequencyUnavailableNotice {
-            Label(frequencyUnavailableNotice, systemImage: "info.circle")
+          if let notice = list.frequencyNotice {
+            Label(notice, systemImage: "info.circle")
               .font(.footnote)
               .foregroundStyle(.secondary)
               .listRowSeparator(.hidden)
               .accessibilityIdentifier("search.frequency-ordering-unavailable")
           }
         }
-      case .none:
-        EmptyView()
       }
     }
     .listStyle(.plain)
-    .id(query)
+    .id(shown.request.query)
     .accessibilityIdentifier("search.results")
-    .onChange(of: dictionaries) { _, newDictionaries in
-      if SearchResultSortOrdering.forgetsChoice(sort, dictionaries: newDictionaries) {
-        sort = .relevance
-      }
+    .onChange(of: list.forgetsSort, initial: true) { _, forgets in
+      if forgets { sort = ResultsLearner.defaultSort }
     }
     .task(id: frequencyTaskID) {
       let requestID = frequencyTaskID
       frequencyLoadState.begin(requestID)
+      frequency = nil
       do {
         let response = try await SearchFrequencyLoader.load(
           requestID, using: frequencyCapability)
-        _ = frequencyLoadState.commit(response.results, for: response.request)
+        if frequencyLoadState.commit(response.results, for: response.request) {
+          frequency = LearnerFrequency(response.results, for: requestID.entryIDs)
+        }
       } catch is CancellationError {
         return
       } catch {
         guard !Task.isCancelled else { return }
-        _ = frequencyLoadState.commit(
-          FrequencyLookupResult.unavailableResults(
-            for: requestID.entryIDs, pack: nil, reason: "Frequency data unavailable"
-          ).mapValues { [$0] },
-          for: requestID
-        )
+        let unavailable = FrequencyLookupResult.unavailableResults(
+          for: requestID.entryIDs, pack: nil, reason: "Frequency data unavailable"
+        ).mapValues { [$0] }
+        if frequencyLoadState.commit(unavailable, for: requestID) {
+          frequency = LearnerFrequency(unavailable, for: requestID.entryIDs)
+        }
+      }
+    }
+    .task(id: request) {
+      let request = request
+      guard request != shown.request,
+        case .results(let list)? = try? await request.screen(),
+        !Task.isCancelled
+      else { return }
+      let animates = animatesNextList
+      animatesNextList = false
+      withAnimation(animates ? .default : nil) {
+        shown = ShownResults(request: request, list: list)
       }
     }
   }
 
+  private var request: ResultsScreenRequest {
+    var request = shown.request
+    request.learner = ResultsLearner(
+      frequency: frequency, sort: sort, filter: filter,
+      known: results.entries.map(\.id).filter(wordKnowledge.isKnown).map(\.rawValue),
+      leadingOnly: leadingOnly)
+    return request
+  }
+
   private func resultRows(
-    _ entries: [DictionaryEntry], sort: SearchResultSort,
-    rank: @escaping (Int) -> ResultRank
+    _ rows: [ListedWord], entries: [String: DictionaryEntry]
   ) -> some View {
-    ForEach(entries.enumerated(), id: \.element.id) { index, entry in
-      ResultRow(
-        entry: entry,
-        summary: results.displaySummary(for: entry),
-        frequencyRanks: SearchResultSortOrdering.chipRanks(
-          frequencyLoadState.results[entry.id], for: sort),
-        rank: rank(index),
-        link: SearchExperienceRoute.word(entry, nil)
-      )
+    ForEach(rows, id: \.id) { row in
+      if let entry = entries[row.id] {
+        ResultRow(entry: entry, row: row, link: SearchExperienceRoute.word(entry, nil))
+      }
     }
   }
 
-  private func chosenSort(dictionaries: [FrequencyPackDisclosure]) -> Binding<SearchResultSort> {
-    Binding(
-      get: { sort },
-      set: { newSort in
-        guard newSort != sort else { return }
-        withAnimation { sort = newSort }
-        AccessibilityNotification.Announcement(newSort.announcement(dictionaries: dictionaries))
-          .post()
-      })
+  private func chooseSort(_ choice: ResultsChoice) {
+    guard choice.value != sort else { return }
+    animatesNextList = true
+    sort = choice.value
+    AccessibilityNotification.Announcement(choice.announcement).post()
   }
 
-  private func shown(
-    _ entries: [DictionaryEntry], by filter: SearchResultFilter
-  ) -> [DictionaryEntry] {
-    SearchResultFiltering.filtered(entries, by: filter, isKnown: wordKnowledge.isKnown)
-  }
-
-  private func chosenFilter(ordered: [DictionaryEntry]) -> Binding<SearchResultFilter> {
-    Binding(
-      get: { filter },
-      set: { newFilter in
-        guard newFilter != filter else { return }
-        withAnimation { filter = newFilter }
-        let shownCount = shown(ordered, by: newFilter).count
-        AccessibilityNotification.Announcement(
-          SearchResultFiltering.announcement(shownCount: shownCount)
-        ).post()
-      })
-  }
-
-  private var primaryKanjiEntry: DictionaryEntry? {
-    results.primaryEntry(for: query)
-  }
-
-  private var displayedEntryIDs: [LanguageReferenceID] {
-    SearchResultsScreen.displayedEntryIDs(presentedEntries)
-  }
-
-  private var presentedEntries: [DictionaryEntry] {
-    SearchResultsScreen.presentedEntries(results, rankedEntryLimit: rankedEntryLimit)
+  private func chooseFilter(_ choice: ResultsChoice) {
+    guard choice.value != filter else { return }
+    animatesNextList = true
+    filter = choice.value
+    AccessibilityNotification.Announcement(choice.announcement).post()
   }
 
   private var frequencyTaskID: SearchFrequencyTaskID {
-    SearchFrequencyTaskID(entryIDs: displayedEntryIDs, refreshID: frequencyRefreshID)
-  }
-
-  private var frequencyUnavailableNotice: String? {
-    SearchFrequencyUnavailableNotice.text(
-      for: displayedEntryIDs.compactMap { frequencyLoadState.results[$0] })
+    SearchFrequencyTaskID(
+      entryIDs: shown.list.frequencyEntries.map(LanguageReferenceID.init(rawValue:)),
+      refreshID: frequencyRefreshID)
   }
 }
 
 private struct KanjiPrimaryRow: View {
+  let kanji: ResultsList.Kanji
   let character: KanjiCharacter
   let entry: DictionaryEntry?
-  let resultCount: Int
 
   var body: some View {
     NavigationLink(value: SearchExperienceRoute.kanji(character, entry)) {
       HStack(spacing: 10) {
-        Text(character.rawValue)
+        Text(kanji.character)
           .font(.title.weight(.light))
         VStack(alignment: .leading, spacing: 3) {
-          Text(SearchResultsScreen.kanjiLabel)
+          Text(kanji.label)
             .font(.caption2.weight(.bold))
             .foregroundStyle(.primary)
-          Text(SearchResultsScreen.kanjiSummary(entry))
+          Text(kanji.summary)
             .foregroundStyle(.primary)
             .fixedSize(horizontal: false, vertical: true)
         }
@@ -231,10 +218,8 @@ private struct KanjiPrimaryRow: View {
       }
       .contentShape(Rectangle())
     }
-    .accessibilityLabel(
-      "\(character.rawValue), \(SearchResultsScreen.kanjiLabel), "
-        + SearchResultsScreen.kanjiSummary(entry))
-    .accessibilityValue("Result 1 of \(resultCount), Kanji primary")
-    .accessibilityIdentifier("result.kanji-primary.\(character.rawValue)")
+    .accessibilityLabel("\(kanji.character), \(kanji.label), \(kanji.summary)")
+    .accessibilityValue(kanji.spoken)
+    .accessibilityIdentifier("result.kanji-primary.\(kanji.character)")
   }
 }

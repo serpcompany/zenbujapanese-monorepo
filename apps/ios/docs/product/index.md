@@ -27,11 +27,16 @@ shortcuts).
 
 ## How behavior is verified
 
-Each behavior here ends with a **Check** naming the automated tests that prove it. Four kinds run:
+Each behavior here ends with a **Check** naming the automated tests that prove it. Five kinds run:
 
 - **Package tests** (`apps/ios/Modules/Tests/`), `SearchExperienceTests` and `TranslatorCoreTests`,
-  named by type, such as `SearchResultSortTests`. They run on an iPhone Simulator, an iPad
+  named by type, such as `ResultsScreenTests`. They run on an iPhone Simulator, an iPad
   Simulator, and the Mac, so a package test checks all three.
+- **Core tests** (`packages/dictionary-core/src/`), named by file, such as
+  `results/ordering.test.ts`. What the dictionary lists, orders, labels, and says is the shared
+  core's, which the app runs
+  ([`dictionary-core.md`](../../../../docs/agents/dictionary-core.md)), so a core test checks a
+  rule for every platform and for the website.
 - **UI tests** (`apps/ios/UITests/`), `ZenbuJapaneseUITests`, which drive the built app on the
   same three, named as class and test, such as `SearchUITests.testAQueryWithNoMatchesSaysSo`. They
   use stand-ins only at the edge: an image for the camera, a sheet's answer for Apple's and
@@ -183,7 +188,8 @@ The split comes from each kanji's own readings, including the sound changes comp
 reading exactly one way. Words read as a whole, such as 大人 (おとな) or 今日 (きょう), have no
 per-kanji highlight.
 
-Check: package `KanjiReadingSplitterTests` and the recorded `WordDetailConformanceTests`.
+Check: core `detail/kanji-split.test.ts`; package `JapaneseRubyTests` and the recorded
+`WordDetailConformanceTests`.
 
 It works on any furigana that isn't itself a tap target: Word Detail and conjugation headwords,
 conjugation tables, and Media Library words. Where tapping a word already opens it — Search
@@ -257,7 +263,7 @@ level from Jonathan Waller's lists; JLPT publishes no official vocabulary list, 
 presents levels as unofficial study estimates.
 
 Check: package `FrequencyPackLifecycleTests`, `SearchResultOrderingTests`, and
-`SearchFrequencyChipTests`; contract `test_frequency_pack_runtime_contract.py` (each pack's
+`ResultsScreenTests`; core `detail/frequency.test.ts`; contract `test_frequency_pack_runtime_contract.py` (each pack's
 pinned source, ranks, and the YouTube spellings); UI `AccountUITests.testReadingAidsAndFrequencyDictionariesOpen`
 (a row for every pack, and a download for each of the seven optional ones). Downloading an optional pack needs the network: by hand, with
 `FrequencyPackLifecycleTests` installing one from a local file.

@@ -17,6 +17,12 @@ Check: UI `SearchUITests.testAnEnglishSearchListsTheWordAndOpensItsDetail` (the 
 `HandwritingRecognitionTests` (a drawn kanji is read whatever the stroke order) and
 `RadicalLookupTests` (radicals narrow to the kanji that have them).
 
+A query reads the same whatever its width or case: full-width letters search as plain ones, and
+halfwidth katakana as full-width, a voiced mark joined to its kana (ｶﾞｷﾞ searches ガギ).
+
+Check: package `DictionaryCoreTests` (a query normalized by the core, scalar for scalar); core
+`search/query.test.ts`.
+
 Image Search, for Japanese in a photo, is Translate's **Image** option
 ([Image Search](translate.md#image-search)).
 
@@ -123,15 +129,17 @@ other dictionary that ranks it. While Search is sorted by a dictionary (below), 
 dictionary takes the first chip's place. JLPT shows only when it lists the word. At accessibility text
 sizes, only the first dictionary's chip shows, followed by a count of the rest.
 
-Check: package `SearchFrequencyChipTests` and `SearchResultSortTests` (the sorted dictionary's
-chip first); the recorded `SearchResultsConformanceTests`.
+Check: core `detail/frequency.test.ts` (which chips show, and in what order) and
+`results/learner.test.ts` (the sorted dictionary's chip first); package `ResultsScreenTests` (the
+same on the bundled data, and the one chip with a count at the largest text sizes); the recorded
+`SearchResultsConformanceTests`.
 
 A chip's dot says how common the word is: green for a rank up to 1,500, yellow to 5,000, orange
 to 15,000, red to 30,000, and gray beyond. These are Migaku's star cutoffs, so learners who know
 that scale read the chips the same way. JLPT N5 and N4 are green, N3 and N2 yellow, and N1
 orange. With Differentiate Without Color on, a star count such as 5★ replaces the dot.
 
-Check: package `SearchFrequencyChipTests` (the tiers and their stars).
+Check: core `detail/frequency.test.ts` (the tiers); package `ResultsScreenTests` (their stars).
 
 A word the learner knows shows a green **✓ Known** capsule at the right of its headword.
 Swiping a row to the right, or long-pressing it, marks the word known or unknown without
@@ -152,8 +160,9 @@ again. If frequency data can't be read, Search still shows every result and says
 dictionary is unavailable. Results can also offer a Japanese-reading refinement, related
 Example Sentences, discovered words, and a dedicated Kanji result for a single-kanji query.
 
-Check: package `SearchFrequencyOrchestrationTests` and `SearchFrequencyUnavailableNoticeTests`; the
-recorded `SearchResultsConformanceTests` (the refinement, Example Sentences, and Kanji rows); UI
+Check: package `SearchFrequencyOrchestrationTests` and `ResultsScreenTests` (a dictionary that
+can't be read is named, and the others still order the list); core `detail/frequency.test.ts`
+(the notice's words); the recorded `SearchResultsConformanceTests` (the refinement, Example Sentences, and Kanji rows); UI
 `SearchResultsUITests.testARomajiQueryOffersItsJapaneseReading`,
 `testAWordOffersItsExampleSentences`, and `SearchUITests.testAQueryWithNoMatchesSaysSo`.
 
@@ -186,7 +195,8 @@ A word the chosen dictionary doesn't rank goes after the ranked words. Ties, and
 a rank, keep their Default order. A choice saved with a direction by an earlier build reads as
 Default.
 
-Check: package `SearchResultSortTests` (each order, and the row's words); UI
+Check: core `results/ordering.test.ts` (each order, and the row's words); package
+`ResultsScreenTests` (the same on the bundled data); UI
 `SearchResultsUITests.testTheSortedByRowNamesTheChosenOrder` (a dictionary, Known Words, and back
 to Default).
 
@@ -198,8 +208,10 @@ removed, Search goes back to Default. The Kanji row, Example Sentences, the read
 places; when there are no word rows to sort (only Discovered Words, or only a single kanji's
 Kanji row), the row isn't shown.
 
-Check: package `SearchResultSortTests` (VoiceOver's announcement, the stored choice, loading and
-unreadable ranks, a disabled dictionary).
+Check: core `results/ordering.test.ts` and `results/learner.test.ts` (VoiceOver's announcement,
+the stored choice, loading and unreadable ranks, a disabled dictionary); package
+`ResultsScreenTests` (the stored choice, loading, an unreadable dictionary, and a disabled one,
+on the bundled data).
 
 ### Filtering results
 
@@ -218,8 +230,9 @@ words show to VoiceOver. The filter is kept on the device across launches and ap
 Japanese, English, and romaji searches. The Kanji row, Example Sentences, the reading refinement,
 and Discovered Words are never filtered.
 
-Check: package `SearchResultFilterTests` (known or unknown words, the order kept, the count, and
-the stored filter); UI
+Check: core `results/ordering.test.ts` (known or unknown words, the order kept, the count, and
+the stored filter); package `ResultsScreenTests` (known words only, and the count a filter
+hides); UI
 `SearchResultsUITests.testFilteringToKnownWordsHidesEveryWordUntilTheFilterIsCleared` (the row's
 **1 filter**, **No Words Match Your Filter**, and **Clear Filter**) and
 `testAWordLeavesTheUnknownFilterOnceItsMarkedKnown`.
@@ -257,7 +270,7 @@ modifiers in sentence case without repeating "verb", for example "Godan verb (in
 "Noun · する verb (transitive)", "Adverb (と)", or "Pre-noun adjective".
 
 Check: the recorded `WordDetailConformanceTests` (furigana, pitch, and the part of speech);
-package `PitchAccentTests`, `CompoundPitchTests`, and `PartOfSpeechFormatterTests`; UI
+core `detail/pitch.test.ts` and `detail/part-of-speech.test.ts`; package `CompoundPitchTests`; UI
 `WordDetailUITests.testTappingAKanjiInTheHeadwordHighlightsItsReading` and
 `AccountUITests.testTurningFuriganaOffShowsTheReadingUnderTheHeadword`.
 
@@ -281,14 +294,17 @@ furigana when **Hide Furigana on Known Words** is on, but can still be selected.
 Word Meanings** on, each unknown word shows a short accent-colored meaning under it, and
 **Show Sentence Translations** controls whether example sentences show their English.
 
-Check: the recorded `ExampleSearchConformanceTests`; package `JapaneseInflectionGroupingTests`,
-`LinkedWordResolutionTests`, and `WordMeaningTests`.
+Check: the recorded `ExampleSearchConformanceTests`; core `examples/morphology.test.ts` (which
+pieces join into one word) and `detail/text.test.ts` (the short meaning); package
+`LinkedWordResolutionTests` and `WordMeaningTests`.
 
 A **Frequency** section lists each enabled dictionary's rank or JLPT level for the word.
 Selecting a row opens that dictionary's details. JLPT levels are presented as unofficial study
 estimates.
 
-Check: the recorded `WordDetailConformanceTests` (each pack's row and its details).
+Check: the recorded `WordDetailConformanceTests` (each pack's row and its details); package
+`ResultsScreenTests` (the rows' names, values, and details); UI
+`WordDetailUITests.testAFrequencyRowOpensItsDetails`.
 
 Selectable Japanese inside Word Detail and Example Sentences uses the same interactive
 word-boundary analysis as Image Search. Selecting a linked word continues into its normal
@@ -332,6 +348,17 @@ learner's place in the preceding detail.
 
 Check: the recorded `KanjiDetailConformanceTests`; package `KanjiScrollMemoryTests`; UI
 `WordDetailUITests.testAKanjiShowsItsStrokeOrderAndItsWords`.
+
+An element's page shows the element, its meanings and what it contributes, the on-readings it
+links, its alternative forms, the kanji it is on its own (the most frequent among the element
+and its alternatives), the kanji that contain it, each with up to three meanings and its
+on-readings, and the sources. A kanji opens its own detail, and coming back returns to it in
+the list.
+
+Check: the recorded `KanjiElementConformanceTests`; core `detail/kanji-element.test.ts`; package
+`KanjiScrollMemoryTests` and `KanjiFilesTests` (a compatibility kanji and the kanji it unifies
+with each keep their own page); UI
+`WordDetailUITests.testAKanjisElementShowsWhatItContributesAndAKanjiItIsIn`.
 
 Beside the kanji, a kanji detail shows its stroke count, its school grade when it has one, and
 its JLPT level when Jonathan Waller's kanji lists give one, as N5 to N1: 一 and 日 show N5. The

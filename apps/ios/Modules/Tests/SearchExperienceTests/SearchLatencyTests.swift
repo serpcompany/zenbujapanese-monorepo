@@ -93,22 +93,14 @@ struct SearchLatencyTests {
     let clock = ContinuousClock()
     var sentences: [ExampleSentence] = []
     for word in ["食べる", "行く", "学校", "水", "見る"] {
-      sentences += try await ExampleSentenceClient.live.retrieve(.directJapanese(SearchQuery(word)))
-        .sentences.prefix(40)
+      sentences += await ExampleSentenceClient.live.listed(SearchQuery(word), nil, false).prefix(40)
     }
-    var analyzed: [Double] = []
     var first: [Double] = []
     var again: [Double] = []
     for _ in 0...Self.passes {
-      analyzed.append(
-        Self.value(
-          await clock.measure {
-            for sentence in sentences {
-              _ = try? await JapaneseMorphologyClient.kuromoji.analyze(sentence.japanese)
-            }
-          }))
-      let analysis = JapaneseTextAnalysisClient.resolving(
-        morphologyClient: .kuromoji, lookupClient: .live)
+      let text = DictionaryTextData()
+      _ = await text.availability()
+      let analysis = JapaneseTextAnalysisClient.live(text: text)
       for pass in [true, false] {
         let elapsed = Self.value(
           await clock.measure {
@@ -120,7 +112,7 @@ struct SearchLatencyTests {
       }
     }
     for (label, timings) in [
-      ("Kuromoji alone", analyzed), ("linked for the first time", first), ("linked again", again),
+      ("linked for the first time", first), ("linked again", again),
     ] {
       let sorted = timings.dropFirst().sorted()
       print(
@@ -157,6 +149,130 @@ struct SearchLatencyTests {
           + String(format: "%.0f", waits.sorted()[4]) + " ms at the median, "
           + String(format: "%.0f", waits.max() ?? 0) + " ms at worst")
     }
+  }
+
+  @Test("prints how long the presentation engine takes to start and to build each screen")
+  func measureScreens() async throws {
+    let clock = ContinuousClock()
+    let files = clock.measure { _ = KanjiFiles.bundled }
+    var starts: [Double] = []
+    for _ in 0..<Self.passes {
+      let core = PresentationCore(kanji: { KanjiFiles.bundled })
+      starts.append(
+        Self.value(clock.measure { _ = core.rubySegments(surface: "日本", reading: "にほん") }))
+    }
+    print(
+      "SEARCH-LATENCY the kanji files read in \(Self.milliseconds(files)); an engine starts "
+        + "and draws its first furigana in " + Self.summary(starts))
+
+    let frequency = try FrequencyPackManager.freshInstall(storagePrefix: "SearchLatency")
+    let capability = FrequencyCapability { try await frequency.evidence(for: $0) }
+    var byDefault: [Double] = []
+    var sorted: [Double] = []
+    var entries: [DictionaryEntry] = []
+    for text in ["dog", "食べる", "い", "taberu", "日本", "water", "go", "する"] {
+      let query = SearchQuery(text)
+      let results = try await LookupClient.live.search(query)
+      entries += results.entries.prefix(12)
+      var request = ResultsScreenRequest(
+        query: query, results: results.listed,
+        exampleCount: await ExampleSentenceClient.live.count(query, results),
+        learner: ResultsLearner())
+      guard case .results(let loading) = try await request.screen() else { continue }
+      try await request.loadFrequency(for: loading, using: capability)
+      guard case .results(let list) = try await request.screen() else { continue }
+      for _ in 0..<20 {
+        byDefault.append(Self.value(try await clock.measure { _ = try await request.screen() }))
+      }
+      guard let dictionary = list.menu?.sort.options.dropFirst().first else { continue }
+      request.learner.sort = dictionary.value
+      for _ in 0..<20 {
+        sorted.append(Self.value(try await clock.measure { _ = try await request.screen() }))
+      }
+    }
+    print("SEARCH-LATENCY a results screen, by Default: " + Self.summary(byDefault))
+    print("SEARCH-LATENCY a results screen, sorted by a dictionary: " + Self.summary(sorted))
+
+    let words = Dictionary(entries.map { ($0.id, $0) }) { first, _ in first }.values
+    let pages = words.map { entry in Self.value(clock.measure { _ = WordPage(entry) }) }
+    print("SEARCH-LATENCY a word page, for \(pages.count) words: " + Self.summary(pages))
+
+    let unused = PresentationCore(kanji: { KanjiFiles.bundled })
+    _ = unused.rubySegments(surface: "日本", reading: "にほん")
+    let furigana = words.map { entry in
+      Self.value(
+        clock.measure {
+          _ = unused.rubySegments(surface: entry.headword, reading: entry.reading)
+        })
+    }
+    print("SEARCH-LATENCY a word's furigana, uncached: " + Self.summary(furigana))
+    let glosses = words.compactMap(\.meanings.first).map { meaning in
+      Self.value(clock.measure { _ = unused.gloss(meaning) })
+    }
+    print("SEARCH-LATENCY a short meaning, uncached: " + Self.summary(glosses))
+    let queries = (0..<200).map { index in
+      Self.value(clock.measure { _ = SearchQuery("ＮＩＨＯＮ　go \(index)") })
+    }
+    print("SEARCH-LATENCY a query normalized: " + Self.summary(queries))
+
+    let kanji = KanjiLookupClient.live(lookupClient: .live)
+    var kanjiPages: [Double] = []
+    var elementPages: [Double] = []
+    for text in Self.kanji {
+      let character = try #require(KanjiCharacter(text))
+      let related = try await kanji.relatedWords(character)
+      kanjiPages.append(
+        Self.value(try clock.measure { _ = try kanji.page(character, related, nil) }))
+      let element = try #require(KanjiElementID(text))
+      elementPages.append(Self.value(try clock.measure { _ = try kanji.element(element) }))
+    }
+    print("SEARCH-LATENCY a kanji page: " + Self.summary(kanjiPages))
+    print("SEARCH-LATENCY a kanji element page: " + Self.summary(elementPages))
+  }
+
+  @Test("prints the memory a session reaches, step by step; run it alone")
+  func measureSession() async throws {
+    func report(_ step: String) {
+      let memory = Self.footprint()
+      print(
+        "SEARCH-LATENCY memory after \(step): \(memory.current / 1_048_576) MB, "
+          + "\(memory.peak / 1_048_576) MB at its highest")
+    }
+    report("launch")
+    _ = JapaneseRuby(surface: "日本", reading: "にほん")
+    report("the kanji files and the presentation engine")
+    var searched: [(SearchQuery, LookupSearchResults)] = []
+    for text in ["dog", "食べる", "taberu", "日本", "water", "go", "する"] {
+      let query = SearchQuery(text)
+      searched.append((query, try await LookupClient.live.search(query)))
+    }
+    report("seven searches")
+    let broad = SearchQuery("い")
+    searched.append((broad, try await LookupClient.live.search(broad)))
+    report("a broad search, い")
+    for (query, results) in searched {
+      _ = await ExampleSentenceClient.live.count(query, results)
+    }
+    report("each search's example count")
+    let analysis = JapaneseTextAnalysisClient.live()
+    let sentences = await ExampleSentenceClient.live.listed(SearchQuery("食べる"), nil, false)
+    var words = 0
+    for sentence in sentences.prefix(40) {
+      words += await analysis.linkedTokens(sentence.japanese, SearchQuery(""), nil).count
+    }
+    report("Kuromoji's start and \(words) linked words")
+    let kanji = KanjiLookupClient.live(lookupClient: .live)
+    for text in Self.kanji {
+      let character = try #require(KanjiCharacter(text))
+      _ = try kanji.page(character, try await kanji.relatedWords(character), nil)
+    }
+    report("eight kanji pages")
+  }
+
+  private static func summary(_ timings: [Double]) -> String {
+    let sorted = timings.sorted()
+    guard let worst = sorted.last else { return "nothing measured" }
+    return String(format: "median %.2f ms, worst %.2f ms", sorted[sorted.count / 2], worst)
   }
 
   private static func value(_ duration: Duration) -> Double {

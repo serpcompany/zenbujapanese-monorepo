@@ -10,7 +10,10 @@ final class DictionaryCore {
   private let context: JSContext
   private let endpoint: JSValue
 
-  init(statements: SQLiteStatements) throws {
+  init(
+    statements: SQLiteStatements? = nil,
+    kanji: (@Sendable () -> KanjiFiles?)? = nil
+  ) throws {
     guard
       let url = Bundle.module.url(
         forResource: "dictionary-core", withExtension: "js", subdirectory: "DictionaryCore")
@@ -19,14 +22,22 @@ final class DictionaryCore {
       let context = JSContext(),
       let host = JSValue(newObjectIn: context)
     else { throw DictionaryCoreError.bundleUnavailable }
-    let rows = SQLiteJSONRows(statements: statements)
-    let all: @convention(block) (String, String) -> JSValue? = { sql, parametersJSON in
-      var json = rows.answer(sql, parametersJSON: parametersJSON)
-      return JSContext.current().flatMap { json.parsed(in: $0) }
+    if let statements {
+      let rows = SQLiteJSONRows(statements: statements)
+      let all: @convention(block) (String, String) -> JSValue? = { sql, parametersJSON in
+        var json = rows.answer(sql, parametersJSON: parametersJSON)
+        return json.withNulTerminatedUTF8 { JSValue.parsing($0) }
+      }
+      let interrupted: @convention(block) () -> Bool = { Task<Never, Never>.isCancelled }
+      host.setObject(all, forKeyedSubscript: "all" as NSString)
+      host.setObject(interrupted, forKeyedSubscript: "interrupted" as NSString)
     }
-    let interrupted: @convention(block) () -> Bool = { Task<Never, Never>.isCancelled }
-    host.setObject(all, forKeyedSubscript: "all" as NSString)
-    host.setObject(interrupted, forKeyedSubscript: "interrupted" as NSString)
+    if let kanji {
+      Self.answer(host, "kanjiSources") { _ in kanji()?.sources }
+      Self.answer(host, "kanjiEntry") { kanji()?.entry($0) }
+      Self.answer(host, "kanjiStructure") { kanji()?.structure($0) }
+      Self.answer(host, "kanjiElement") { kanji()?.element($0) }
+    }
     context.setObject(host, forKeyedSubscript: "zenbuHost" as NSString)
     context.evaluateScript(source, withSourceURL: url)
     guard context.exception == nil,
@@ -39,10 +50,58 @@ final class DictionaryCore {
     self.endpoint = endpoint
   }
 
+  private static func answer(
+    _ host: JSValue, _ name: String, with record: @escaping (String) -> [UInt8]?
+  ) {
+    let function: @convention(block) (String) -> JSValue? = { argument in
+      record(argument)?.withUnsafeBufferPointer { json in
+        json.withMemoryRebound(to: CChar.self) { $0.baseAddress.flatMap(JSValue.parsing) }
+      }
+    }
+    host.setObject(function, forKeyedSubscript: name as NSString)
+  }
+
+  func installKuromoji() throws {
+    try autoreleasepool {
+      try KuromojiEngine.install(in: context)
+      context.evaluateScript(
+        "zenbuHost.tokenize = text => __zenbuKuromojiTokenizer.tokenize(text);")
+      _ = try returned(endpoint)
+    }
+  }
+
   func begin(_ method: String, _ argument: String) throws -> DictionaryCoreCall {
     try autoreleasepool {
       let call = try returned(endpoint.invokeMethod("begin", withArguments: [method, argument]))
       return DictionaryCoreCall(call: call, core: self)
+    }
+  }
+
+  func answer<Answer: Decodable>(_ method: String, _ argument: String) throws -> Answer {
+    switch try begin(method, argument).step(Answer.self) {
+    case .finished(let answer): return answer
+    case .analyzing: throw DictionaryCoreError.failed("\(method) asked for an analysis")
+    }
+  }
+
+  func answer<Answer: Decodable>(
+    _ method: String, _ argument: String, analyzingWith morphology: JapaneseMorphologyClient?,
+    isolation: isolated (any Actor)? = #isolation
+  ) async throws -> Answer {
+    do {
+      let call = try begin(method, argument)
+      while true {
+        switch try call.step(Answer.self) {
+        case .finished(let answer):
+          try Task<Never, Never>.checkCancellation()
+          return answer
+        case .analyzing(let text):
+          try call.analyzed(await DictionaryCoreAnalysis.json(of: text, by: morphology))
+        }
+      }
+    } catch {
+      try Task<Never, Never>.checkCancellation()
+      throw error
     }
   }
 
@@ -56,14 +115,14 @@ final class DictionaryCore {
   }
 }
 
-extension JSONBytes {
-  fileprivate mutating func parsed(in context: JSContext) -> JSValue? {
-    withNulTerminatedUTF8 { utf8 in
-      guard let text = JSStringCreateWithUTF8CString(utf8) else { return nil }
-      defer { JSStringRelease(text) }
-      return JSValueMakeFromJSONString(context.jsGlobalContextRef, text)
-        .map { JSValue(jsValueRef: $0, in: context) }
-    }
+extension JSValue {
+  fileprivate static func parsing(_ nulTerminatedUTF8: UnsafePointer<CChar>) -> JSValue? {
+    guard let context = JSContext.current(),
+      let text = JSStringCreateWithUTF8CString(nulTerminatedUTF8)
+    else { return nil }
+    defer { JSStringRelease(text) }
+    return JSValueMakeFromJSONString(context.jsGlobalContextRef, text)
+      .map { JSValue(jsValueRef: $0, in: context) }
   }
 }
 
@@ -77,6 +136,19 @@ final class DictionaryCoreCall {
     let value: Value?
     let analyze: String?
     let error: String?
+
+    private enum CodingKeys: String, CodingKey {
+      case value
+      case analyze
+      case error
+    }
+
+    init(from decoder: Decoder) throws {
+      let container = try decoder.container(keyedBy: CodingKeys.self)
+      value = container.contains(.value) ? try container.decode(Value.self, forKey: .value) : nil
+      analyze = try container.decodeIfPresent(String.self, forKey: .analyze)
+      error = try container.decodeIfPresent(String.self, forKey: .error)
+    }
   }
 
   private let call: JSValue
@@ -104,12 +176,16 @@ final class DictionaryCoreCall {
   }
 }
 
-struct DictionaryCoreSearchResults: Decodable, Sendable {
-  struct Item: Decodable, Sendable {
+struct DictionaryCoreSearchResults: Codable, Sendable {
+  struct Item: Codable, Sendable {
     let id: String
+    let entSeq: Int
+    let headword: String
+    let reading: String
+    let entrySummary: String
+    let matchedSummary: String?
     let relevance: Int
     let fallbackOrder: Int
-    let matchedSummary: String?
     let match: String
   }
 
@@ -119,38 +195,44 @@ struct DictionaryCoreSearchResults: Decodable, Sendable {
   let resolution: LookupSearchResults.Resolution
   let readingRefinement: String?
   let usesPrimaryEntryExamples: Bool
+  let primaryEntry: String?
 }
 
-struct DictionaryLinkCandidate: Decodable, Equatable, Sendable {
+struct DictionaryLinkCandidate: Decodable, Sendable {
   let id: String
-  let reading: String
-  let partsOfSpeech: [PartOfSpeech]
-}
-
-extension DictionaryLinkCandidate {
-  init(_ entry: DictionaryEntry) {
-    self.init(id: entry.id.rawValue, reading: entry.reading, partsOfSpeech: entry.partsOfSpeech)
-  }
 }
 
 struct DictionaryCoreAnalysis: Encodable {
   struct Word: Encodable {
     let surface: String
     let dictionaryForm: String
+    let normalizedForm: String
+    let reading: String
     let partOfSpeech: [String]
     let isOutOfVocabulary: Bool
+    let children: [Word]
+
+    init(_ candidate: JapaneseMorphologyCandidate) {
+      surface = candidate.surface
+      dictionaryForm = candidate.dictionaryForm
+      normalizedForm = candidate.normalizedForm
+      reading = candidate.reading
+      partOfSpeech = candidate.partOfSpeech
+      isOutOfVocabulary = candidate.isOutOfVocabulary
+      children = candidate.children.map(Word.init)
+    }
   }
 
   let words: [Word]
 
   init(_ analysis: JapaneseMorphologyAnalysis) {
-    words = analysis.candidates.map {
-      Word(
-        surface: $0.surface,
-        dictionaryForm: $0.dictionaryForm,
-        partOfSpeech: $0.partOfSpeech,
-        isOutOfVocabulary: $0.isOutOfVocabulary
-      )
-    }
+    words = analysis.candidates.map(Word.init)
+  }
+
+  static func json(of text: String, by morphology: JapaneseMorphologyClient?) async -> String {
+    guard let analysis = try? await morphology?.analyze(text),
+      let json = try? JSONEncoder().encode(DictionaryCoreAnalysis(analysis))
+    else { return #"{"error":"The text could not be analyzed"}"# }
+    return String(decoding: json, as: UTF8.self)
   }
 }

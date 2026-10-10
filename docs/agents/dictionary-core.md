@@ -2,32 +2,31 @@
 
 `packages/dictionary-core` (`@zenbu/dictionary-core`) is the one TypeScript dictionary every Zenbu
 client runs (ADR 0008, ADR 0009). The website runs it through the dictionary service
-([`dictionary-api.md`](dictionary-api.md)), and the app runs its search in JavaScriptCore, offline
-([Embedded](#embedded)); the browser extension will run it offline too. The rest of the app's
-dictionary logic (examples, word and kanji detail, and the results screen) is still Swift that the
-core ports, until issue 481 moves it over. It is TypeScript source: each client compiles it
-(the website through Next.js's `transpilePackages`, the service through tsx and esbuild, the app
-from a bundle esbuild writes), and imports it by path, such as
-`@zenbu/dictionary-core/search/search`.
+([`dictionary-api.md`](dictionary-api.md)), and the app runs it in JavaScriptCore, offline
+([Embedded](#embedded)): search, the results screen, examples and linked words, and the word,
+kanji, and kanji element pages. The browser extension will run it offline too. A client keeps its
+screens and reads the files; what a screen lists, orders, labels, and says is the core's. It is
+TypeScript source: each client compiles it (the website through Next.js's `transpilePackages`, the
+service through tsx and esbuild, the app from a bundle esbuild writes), and imports it by path,
+such as `@zenbu/dictionary-core/search/search`.
 
 Run commands from `packages/dictionary-core`, after `pnpm install` at the repository root.
 
 ## What it holds
 
-Search is the core's alone: the app runs `search/` and has no Swift of its own for it. Each other
-module ports the app's Swift, in `apps/ios/Modules/Sources/SearchExperience/`;
-[Swift sources](#swift-sources) says which.
+The app's Swift, in `apps/ios/Modules/Sources/SearchExperience/`, asks `embedded/` for each of
+these and decodes the answer; [The app's side](#the-apps-side) says which type asks for what.
 
-| Folder | What it does | Main Swift sources |
+| Folder | What it does | Who asks in the app |
 | --- | --- | --- |
-| `search/` | Search retrieval: query normalization, deinflection, ranking, full-text phrases, and sentence search through a supplied analyzer. | None: the app runs it. `SearchQuery` still normalizes a query for the app's screens, and a test holds it to `normalizeQuery`. |
-| `embedded/` | The entry point for a client that runs the core inside a JavaScript engine, as the app does: search, a text's words, and a kanji's words answered as JSON, and the bundle the app loads. | None |
-| `results/` | The results screen: the frequency re-sort, rows, chips, and the Example Sentences, reading-refinement, and kanji rows. | `SearchResultsView`, `SearchResultsScreen`, `SearchResultFrequencyOrdering`, `FrequencyPresentation` |
-| `detail/` | Word pages and kanji details from their rows: furigana, pitch, Frequency Details, conjugations, kanji, and examples. | `WordDetailView`, `KanjiDetailView`, `JapaneseRubyText`, `KanjiReadingSplitter`, `JapaneseConjugationClient`, `ConjugationsView` |
-| `examples/` | Example linking, inflection grouping, and the ranks example retrieval shares. | `JapaneseTextAnalysisClient`, `JapaneseInflectionGrouping`, `KuromojiMorphologyClient`, `ExampleSentenceClient` |
-| `artifact/` | Reads `LanguageReferenceData.sqlite3` and its packs with the app's own SQL, checks them, and answers search, word, kanji, example, and sitemap requests (`Dictionary`), and the browse pages' (`DictionaryBrowse`). | `LookupClient`, `ExampleSentenceClient`, `KanjiLookupClient` |
-| `cards/` | Word cards (`zenbu.word-cards.v1`, [`language-data/word-cards.md`](../../language-data/word-cards.md)): a word as Word Detail shows it, with the JLPT chip and a chip for each of the eight ranked lists, for apps that don't bundle the language data; the word lists that name them; the suite fields a card is checked against; and a segmented text's tokens (`zenbu.segmentation.v1`). `artifact/word-cards.ts` resolves the words and reads the cards, and `segmentText` in `artifact/word-examples.ts` splits and links a text as the example sentences are. | `WordDetailView`; the chip names, `FrequencyPackDisclosure.shortName` (`FrequencyPackState.swift`, which `cards/card.test.ts` reads) |
-| `browse/` | What the website's browse pages list: the kana charts, the categories and the labels each matches, the ranked and JLPT lists, the kanji lists, and the service paths the website asks for them. The app has no browse screens; only the ranked lists' chip names, which word cards use, port the app's. | `FrequencyPackDisclosure.shortName`, for the chip names |
+| `search/` | Search retrieval: query normalization, deinflection, ranking, full-text phrases, and sentence search through a supplied analyzer. | `LookupClient`; `SearchQuery` is `normalizeQuery`'s answer. |
+| `embedded/` | The entry point for a client that runs the core inside a JavaScript engine, as the app does: every answer the app's screens show, as JSON, and the bundle the app loads. | `DictionaryCore`, and the three engines that each own one |
+| `results/` | The results screen: the frequency re-sort, Sort By and Filter, rows, chips, what VoiceOver says, and the Example Sentences, reading-refinement, and kanji rows. | `ResultsScreen` |
+| `detail/` | Word pages, kanji details, and kanji element pages from their rows: furigana, pitch, Frequency Details, conjugations, kanji, elements, share text, and the short gloss under a linked word. | `WordPage`, `KanjiPage`, `KanjiElementPage`, `JapaneseRuby`, `FrequencyRow` |
+| `examples/` | Example linking, inflection grouping, and the ranks example retrieval shares. | `DictionaryTextData` |
+| `artifact/` | Reads `LanguageReferenceData.sqlite3` and its packs, checks them, and answers search, word, kanji, example, and sitemap requests (`Dictionary`), and the browse pages' (`DictionaryBrowse`). `embedded/` runs the same queries. | Through `embedded/` |
+| `cards/` | Word cards (`zenbu.word-cards.v1`, [`language-data/word-cards.md`](../../language-data/word-cards.md)): a word as Word Detail shows it, with the JLPT chip and a chip for each of the eight ranked lists, for apps that don't bundle the language data; the word lists that name them; the suite fields a card is checked against; and a segmented text's tokens (`zenbu.segmentation.v1`). `artifact/word-cards.ts` resolves the words and reads the cards, and `segmentText` in `artifact/word-examples.ts` splits and links a text as the example sentences are. | None: the app bundles the data. A card's chip names are `frequencyShortName`'s, as the app's chips are. |
+| `browse/` | What the website's browse pages list: the kana charts, the categories and the labels each matches, the ranked and JLPT lists, the kanji lists, and the service paths the website asks for them. | None: the app has no browse screens. |
 | `fixtures/` | Rows exported from the app's data for twelve words and the kanji 要, each word and each of its conjugated forms with its first 50 examples, for local development and tests; never production. | — |
 
 ## Rules
@@ -35,21 +34,24 @@ module ports the app's Swift, in `apps/ios/Modules/Sources/SearchExperience/`;
 - **No runtime or framework.** Biome refuses `node:*`, Next.js, React, Wrangler, and Hono
   imports in `src` (tests aside), and `pnpm verify dependencies` refuses any Node built-in or
   package the core imports for more than its types. A client passes in what it has: the artifact as an
-  `ArtifactDatabase` (synchronous `all(sql, params)`), the kanji files as `KanjiData`, and its
-  capabilities: `tokenize` (the app's Kuromoji) and `morphology` (the app's Sudachi). Without
+  `ArtifactDatabase` (synchronous `all(sql, params)`), the kanji files as `KanjiData` (whole, as
+  the service holds them) or a `KanjiLookup` that answers one record at a time (as the app does),
+  and its capabilities: `tokenize` (Kuromoji) and `morphology` (the app's Sudachi). Without
   `morphology`, sentence search is off and the rest of Search is unchanged (ADR 0008).
 - **It logs nothing.** It returns what happened, as a result or an error, and the client logs it
   its own way; Biome refuses `console` in `src` (tests aside).
-- **Change a port and its Swift together.** The `Search parity` workflow fails a pull request that
-  changes one side of a pair it lists (`.github/workflows/search-parity.yml`) without the other.
-  The `search-parity-reviewed` label says the change applies to one side only.
+- **A rule lives here, once.** What a screen lists, the order, a title, a label, and what
+  VoiceOver says are answers the core gives every client, so a client never decides one itself.
+  Add a field to the answer, and have the client show it. What the app keeps native, and why, is
+  in [`ios.md`](ios.md), The dictionary core in the app.
 - **Rebuild the app's bundle with the core.** The app runs a bundle of the core that is checked in
   ([Embedded](#embedded)). After changing anything the bundle holds, run
   `pnpm bundle:javascriptcore` and commit the file; `embedded/bundle.test.ts` fails until it
   matches.
 - **The app records the answers.** When the app's behavior changes, re-record the suites on a Mac
-  ([`ios.md`](ios.md)); the service must then pass them. For search the app's answers are the
-  core's own, read through JavaScriptCore, so the suites pin them against a later change.
+  ([`ios.md`](ios.md)); the service must then pass them. The app's answers are the core's own,
+  read through JavaScriptCore, so the suites pin them against a later change, and the service
+  replays each suite twice: through its own path, and through `embedded/` as the app asks.
 - **Rows are a contract.** `detail/rows.ts` is what the service answers with and the fixtures
   hold. After changing a row shape, regenerate the fixtures with
   `pnpm --filter zenbujapanese-dictionary-api fixtures`.
@@ -83,99 +85,128 @@ module ports the app's Swift, in `apps/ios/Modules/Sources/SearchExperience/`;
 modules, files, or event loop of its own, which is how the app runs it in JavaScriptCore
 ([`ios.md`](ios.md), The dictionary core in the app).
 
-- **The host supplies one function.** `EmbeddedHost.all(sql, parametersJSON)` runs a statement on
-  the artifact and answers an object (`HostRows`): `{rows: [...], blobs: [...]}`, each row an
-  object keyed by column, each BLOB as lowercase hex with its column named in `blobs`, or
-  `{error: message}`. It is an object, not JSON text, so a host can have its engine parse the
-  rows natively and keep no second copy of a broad search's tens of megabytes as a string.
-  `hostDatabase` turns the answer into the `ArtifactDatabase` the rest of the core reads.
-- **A search can be abandoned.** An embedded engine can't be stopped from outside while it ranks,
-  so a host may also supply `interrupted()`, true once nobody wants the answer. Ranking asks it
-  every 1,024 rows and comparisons (`stopIfInterrupted` in `search/database.ts`) and throws
-  `interruptedSearch`. Without it a learner who keeps typing would wait for each abandoned
-  prefix, such as `s`, to finish ranking its tens of thousands of candidates. A long loop added
-  to `search/` over a query's candidates needs the same check.
-- **Answers are IDs.** `EmbeddedDictionary` answers `search`, `entriesMatchingFirstForms`, and
-  `entriesContainingKanji` with Language Reference IDs, and the host reads the entries it shows
-  from the artifact itself. A search item also carries its `relevance` (its place among the
-  results by `compareRelevance`, equal for equally relevant matches, which the app's frequency
-  re-sort reads), its `fallbackOrder`, its `matchedSummary`, and the `match` label the suites
-  record (`matchLabel`).
-- **A text's words in one call.** `entriesMatchingFirstForms` takes, for each word, the forms to
-  try in order (its surface, its dictionary form, their kana), and answers every form it tried:
-  nothing for a form no entry is written or read as, and for a word's first form that has
-  entries, each as a `LinkEntry` (ID, reading, and parts of speech), ranked and deduplicated as
-  search ranks an exact form. It asks the artifact once per round, for the forms still unmatched,
-  so a sentence costs one or two statements. The host narrows the candidates by part of speech
-  and reading before it reads any entry.
+- **The host supplies what it has.** Each function on `EmbeddedHost` is optional, and a part that
+  needs one the host lacks says so (`The host has no dictionary to read`):
+  - `all(sql, parametersJSON)` runs a statement on the artifact and answers an object
+    (`HostRows`): `{rows: [...], blobs: [...]}`, each row an object keyed by column, each BLOB as
+    lowercase hex with its column named in `blobs`, or `{error: message}`. It is an object, not
+    JSON text, so a host can have its engine parse the rows natively and keep no second copy of a
+    broad search's tens of megabytes as a string. `hostDatabase` turns the answer into the
+    `ArtifactDatabase` the rest of the core reads.
+  - `interrupted()` is true once nobody wants a search's answer. An embedded engine can't be
+    stopped from outside while it ranks, so ranking asks it every 1,024 rows and comparisons
+    (`stopIfInterrupted` in `search/database.ts`) and throws `interruptedSearch`. Without it a
+    learner who keeps typing would wait for each abandoned prefix, such as `s`, to finish ranking
+    its tens of thousands of candidates. A long loop added to `search/` over a query's candidates
+    needs the same check.
+  - `tokenize(text)` is kuromoji.js's own `tokenize`, when the host loads Kuromoji into the same
+    engine. A host without it is asked for a sentence's words through the call instead (below).
+  - `kanjiSources()`, `kanjiEntry(character)`, `kanjiStructure(character)`, and
+    `kanjiElement(glyph)` answer the kanji files' source identities and one record at a time, as
+    the files hold them, or null. The two files parse to 16 MB of objects, which an engine that
+    held them would walk on every collection, so the host keeps them and the core asks for the
+    few a page reads.
+- **Three parts, each built when first asked.** `EmbeddedLookup` (`lookup.ts`) searches and reads
+  forms; `EmbeddedText` (`text.ts`) retrieves examples and links a text's words; and
+  `EmbeddedPresentation` (`presentation.ts`) builds what a screen shows from what the host already
+  read, and needs no database. A host can give each its own engine, as the app does, so a long
+  search never holds up a row's furigana.
+
+  | Method | Argument | Answers |
+  | --- | --- | --- |
+  | `search` | A query | `EmbeddedSearchResults`: each result as the row the screen lists (Language Reference ID, headword, reading, summaries, `relevance`, `fallbackOrder`, and the `match` label the suites record), the reading refinement, `resolution`, and `primaryEntry` |
+  | `entriesMatchingFirstForms` | For each word, the forms to try in order | Every form tried: nothing for a form no entry is written or read as, and for a word's first form that has entries, each as a `LinkEntry` (ID, reading, parts of speech), ranked and deduplicated as search ranks an exact form. An ASCII form is looked up in English. |
+  | `entriesContainingKanji` | A kanji | The IDs of its 24 words, in the page's order |
+  | `normalizeQuery` | What was typed | The query Search reads |
+  | `checkExamples` | — | True, or the error that says which example table or pack is missing or wrong |
+  | `exampleCount`, `resultsExampleCount`, `resultsExamples` | A query, or a query with the results' primary entry | The Example Sentences row's count, and its sentences |
+  | `entryExamples`, `formExamples` | An entry's ID; a conjugated form | A word page's sentences with their count, and a form's |
+  | `linkedTokens` | A text, the page's query, and its entry | Each word with its place in the text, its entry or candidates, the furigana to draw, and whether it is the page's word or matches the query |
+  | `resultsScreen` | A search's answer, the Example Sentences count, and the learner's state (frequency evidence, Sort By, Filter, known words) | `LearnerResultsScreen`: sections, rows with chips, the menu with each choice's title and announcement, notices, and what VoiceOver reads |
+  | `wordRows`, `frequencyRows` | Entries with their evidence | A sheet's candidate rows; a word page's frequency rows with their details |
+  | `ruby` | A surface and its reading | Furigana segments, split kanji by kanji where one split fits |
+  | `wordPage` | An entry as the host read it | `EmbeddedWordPage`: furigana, part of speech, conjugations with each row's note, pitch with its graph, senses, alternatives, kanji, related words, and share text |
+  | `kanjiPage`, `kanjiMeanings` | A kanji with its words and the word the page was opened from; a kanji | `EmbeddedKanjiPage`: stats, meanings, readings with their words, elements, components, words, and share text; a kanji's meanings |
+  | `kanjiElementPage` | A glyph | `KanjiElementDetail`, or null for a kanji that is no element |
+  | `gloss` | A meaning | The short gloss shown under a linked word, or null |
+
+- **The host reads the entries it shows.** Answers name entries by Language Reference ID, and the
+  host reads each from the artifact itself. A page's method takes the entry the host read as its
+  argument.
+- **A text's words cost one or two statements.** `linkedTokens` looks every word's forms up in one
+  round (`entriesMatchingFirstForms`), then the forms still unmatched, and caches by form, so a
+  page of sentences mostly asks nothing.
 - **A call is an object.** `embeddedEndpoint(...).begin(method, argument)` starts a call and
   returns it. Its `outcome()` is a JSON string: `{"value": ...}`, `{"error": message}`, or
-  `{"analyze": text}` when a search needs the words of a sentence. The host then analyzes the
-  text with whatever it has, answers `analyzed('{"words": [...]}')` or `analyzed('{"error": ...}')`,
-  and reads the outcome again. The host's database is synchronous, so a call settles before
-  `begin` or `analyzed` returns to the host and nothing is polled; calls keep their outcomes
-  apart, so a second can start while the first waits for its analysis.
+  `{"analyze": text}` when a call needs the words of a sentence from a host that gave no
+  `tokenize`. The host then analyzes the text with whatever it has, answers
+  `analyzed('{"words": [...]}')` or `analyzed('{"error": ...}')`, and reads the outcome again.
+  The host's database is synchronous, so a call settles before `begin` or `analyzed` returns to
+  the host and nothing is polled; calls keep their outcomes apart, so a second can start while
+  the first waits for its analysis. A method may answer null (`kanjiElementPage`, `gloss`):
+  `{"value": null}` is an answer.
 - **The bundle.** `embedded/javascriptcore.ts` reads the host from the global `zenbuHost` and sets
   the endpoint as the global `zenbuDictionary`. `pnpm bundle:javascriptcore`
   (`scripts/bundle-javascriptcore.mjs`) bundles it with esbuild into
   `apps/ios/Modules/Sources/SearchExperience/Resources/DictionaryCore/dictionary-core.js`, which
   is checked in so the app builds without Node. `embedded/bundle.test.ts` builds it again and
   fails when the file differs.
-- The service replays the search suite through the endpoint too, on `node:sqlite`
-  (`apps/dictionary-api/src/conformance/embedded.conformance.test.ts`), so a change that breaks
-  the app's path fails on a pull request before any Swift runs.
+- The service replays every app-recorded suite through the endpoint too, on `node:sqlite` with the
+  real Kuromoji and kanji files (the `embedded*.conformance.test.ts` files in
+  `apps/dictionary-api/src/conformance/`), so a change that breaks the app's path fails on a pull
+  request before any Swift runs.
 
-## Swift sources
+## The app's side
 
-Paths are relative to `apps/ios/Modules/Sources/SearchExperience/`. The TypeScript keeps the
-Swift names where it can. Each module's tests take their expected values from the same Swift, and
-the app-recorded suites (`apps/ios/LanguageData/Conformance/`) check the port against the app.
+Paths are relative to `apps/ios/Modules/Sources/SearchExperience/`.
 
-`search/` began as a port too, of the app's `LookupClient` search, its English and Japanese
-ranking, `DictionaryRanking`, `JapaneseDeinflection`, and `SearchQuery`. The app now runs it, that
-Swift is gone (issue 481), and the modules keep its names and its ways of comparing
-([Matching the Swift](#matching-the-swift)), which the suites pin.
+| Swift | Asks | For |
+| --- | --- | --- |
+| `LookupClient.swift` (`LanguageReferenceData`) | `search`, `entriesMatchingFirstForms`, `entriesContainingKanji` | Search, an exact form's entries, and a kanji's words; it reads the entries itself |
+| `SearchQuery.swift` | `normalizeQuery` | The query every screen holds |
+| `DictionaryTextData.swift` (`ExampleSentenceClient`, `JapaneseTextAnalysisClient`) | `checkExamples`, the example methods, `linkedTokens` | Example sentences and linked words |
+| `ResultsScreen.swift` (`SearchResultsView`, `SearchResultsMenu`, `ResultRow`, `RecognizedWordSheet`) | `resultsScreen`, `wordRows`, `frequencyRows` | The results screen, a sheet's candidates, and a word page's frequency rows |
+| `JapaneseRuby.swift` | `ruby` | Furigana wherever a word is drawn |
+| `WordPage.swift` (`WordDetailView`, `WordDetailSections`, `WordHeadline`, `PitchAccentBadge`, `ConjugationsView`) | `wordPage` | The word page and its conjugations |
+| `KanjiLookupClient.swift` (`KanjiDetailView`, `KanjiDetailSections`, `KanjiElementDetailView`, `SearchInputPanel`) | `kanjiPage`, `kanjiMeanings`, `kanjiElementPage` | The kanji page, a handwriting candidate's meaning, and the element page |
+| `DictionaryEntry.swift` (`shortMeaning`) | `gloss` | The meaning under a linked word |
 
-| Module | Ports |
-| --- | --- |
-| `search/query.ts` | `normalizeQuery` is what `SearchQuery.swift` still does for the app's screens; `DictionaryCoreTests` compares the two on the app's side. |
-| `results/results.ts` | `SearchResultsView.swift` (`orderedItems` is `SearchResultFrequencyOrdering.ordered`, in `SearchResultFrequencyOrdering.swift`; `primaryItem` is `LookupSearchResults.primaryEntry(for:)`), with `FrequencyPresentation.swift`. |
-| `detail/word.ts` | `WordDetailView.swift`, with its headline in `WordHeadline.swift` and its sections in `WordDetailSections.swift`, and `DictionaryEntry.swift` |
-| `detail/kanji.ts` | `KanjiDetailView.swift` and its sections in `KanjiDetailSections.swift`, with its elements from `KanjiElementLookupClient.swift`; the app asks `kanjiWords` for the kanji's words. |
-| `detail/conjugation-table.ts` | `JapaneseConjugator`, `ConjugationTable`, `ConjugationMode`, and `ConjugatedForm` in `JapaneseConjugationClient.swift`. |
-| `detail/conjugation.ts` | What `ConjugationsView.swift` shows for a `detail/conjugation-table.ts` table: `ConjugatedForm.Kind.presentation`, `sharedSpellings(of:in:)`, and `rowShowsFurigana`. The suite's `opensConjugations` and `conjugations` check both modules. |
-| `detail/frequency.ts` | `FrequencyTier`, `FrequencyPresentationModel`, and `SearchFrequencyRankPresentationModel` in `FrequencyPresentation.swift`, and `FrequencyDisclosurePresentation` in `FrequencyDisclosure.swift`. |
-| `detail/pitch.ts` | `String.morae` and `PitchAccent.levels` in `DictionaryEntry.swift`, and `PitchContourLayout` in `PitchAccentBadge.swift`. |
-| `detail/ruby.ts` | `JapaneseRubyAnnotation` in `JapaneseTextAnalysisClient.swift`, which `JapaneseRubyText.swift` draws. |
-| `detail/kanji-split.ts` | `KanjiReadingSplitter.swift`, and `kanjiReadings` in `JapaneseRubyText.swift`. |
-| `detail/examples.ts` | The `.wordDetail` and `.conjugatedForm` presentations in `ExampleSentencesView.swift`, and `LinkedJapaneseText.swift`. |
-| `detail/strokes.ts` | `decodeStroke` in `KanjiStrokeOrderClient.swift`, and `KanjiStrokeShape` in `KanjiStrokeOrderView.swift`. |
-| `detail/part-of-speech.ts` | `PartOfSpeechFormatter.swift` |
-| `detail/text.ts` | `isCJKUnifiedIdeograph` in `DictionaryEntry.swift`, `KanjiCharacter.init` in `KanjiLookupClient.swift`, `hiragana` in `KanjiDetailSections.swift`, and `katakana` in `PitchAccentBadge.swift`. |
-| `detail/suite.ts` | Test-only: the fields `WordDetailConformanceTests.swift` records, for the service's replay (`apps/dictionary-api/src/conformance/detail.conformance.test.ts`) and the website's `word-page.test.tsx`. |
-| `examples/linking.ts` | `JapaneseTextAnalyzer` in `JapaneseTextAnalysisClient.swift`, and `displayReading(for:)` in `LinkedJapaneseText.swift`. |
-| `examples/morphology.ts` | The token conversion in `KuromojiMorphologyClient.swift`, and `JapaneseInflectionGrouping.swift`. |
-| `examples/forms.ts` | `ConjugatedForm.examples` in `ConjugationsView.swift`, `JapaneseTextAnalysisClient.words`, and `queryScalarRanges` and `matchesQuery` in `LinkedJapaneseText.swift`. |
-| `examples/kana.ts` | Foundation's `applyingTransform(.hiraganaToKatakana, reverse:)` |
-| `examples/retrieval.ts`, `artifact/example-retrieval.ts` | `ExampleSentenceData.retrieveEntry` and `retrieveIndexedEntry` in `ExampleSentenceEntryRetrieval.swift`, with its queries. |
-| `artifact/example-search.ts` | `ExampleSentenceData.retrieveEnglish` and `retrieveJapanese` in `ExampleSentenceSearchRetrieval.swift`, with its queries. |
-| `artifact/search-examples.ts` | `SearchResultsScreen.exampleCount` and `directExampleCount` in `SearchResultsScreen.swift`. |
-| `artifact/lookup.ts` | Nothing now. It is the service's lookup for a linked word: the entries written or read exactly as a Japanese form, ranked and deduplicated as search does. The app asks `embedded/` the same (`entriesMatchingFirstForms`), and the service's tests hold the two to each other. |
-| `artifact/words.ts`, `artifact/kanji.ts` | `entry(_:)` in `LookupClient.swift` and `selectedColumns` in `LookupDatabase.swift`. The app's `entriesContainingKanji` asks `kanjiCandidateRows` and `kanjiWords` for a kanji's words, through `embedded/`; `kanjiCandidateRows` keeps the app's query for them. |
+The core began as a port of the Swift these files replaced: `LookupClient`'s search and ranking,
+`SearchResultsView`, `SearchResultFrequencyOrdering`, `WordDetailView`, `JapaneseConjugationClient`,
+`KanjiReadingSplitter`, `JapaneseTextAnalysisClient`, and the rest. That Swift is gone (issue 481).
+The modules keep its names and its ways of comparing ([Matching the Swift](#matching-the-swift)),
+their tests still name the Swift each case came from, and the app-recorded suites
+(`apps/ios/LanguageData/Conformance/`) pin what it showed. Before each part's Swift was removed,
+the core's answer was compared with it across the whole of the data: every kanji's page and every
+element's page (13,139 characters), every entry's first meaning as a gloss (194,430), and every
+headword, reading, and summary as a query.
 
 ## Matching the Swift
 
-- **Characters.** A Swift `Character` is an extended grapheme cluster, so the ports iterate
-  `graphemes` wherever the Swift iterates Characters. `graphemeCount` skips segmenting when every
-  UTF-16 unit is a grapheme of its own (printable ASCII, and the CJK, kana, and full-width blocks
-  less their combining marks), since example retrieval counts every matching sentence.
+The core answers as the Swift it replaced did, which the suites pin.
+
+- **Characters.** A Swift `Character` is an extended grapheme cluster, so the core iterates
+  `graphemes` wherever the Swift iterated Characters. `graphemes` and `graphemeCount` skip
+  segmenting when every UTF-16 unit is a grapheme of its own (printable ASCII, and the CJK, kana,
+  and full-width blocks less their combining marks): `Intl.Segmenter` is slow in an engine
+  without a JIT, linking asks for every word's graphemes, and example retrieval counts every
+  matching sentence. `normalizeQuery` likewise returns a folded query that has no whitespace as
+  it is.
 - **Order.** `compareStrings` is Swift's `<`: by Unicode scalar, not UTF-16 unit; ranking compares
   fingerprints with it. SQLite compares a BLOB by its bytes, which lowercase hex keeps, and text by
   code point (`compareCodePoints`); its `instr()` and `length()` count code points, so `kanjiWords`
   measures headwords in code points.
 - **Whitespace.** `normalizeQuery` splits words as Swift's `split(whereSeparator: \.isWhitespace)`
   does: a grapheme whose first scalar is whitespace separates words and is dropped whole (NFKC
-  turns ゛ into a space and a combining mark), and U+FEFF, which isn't whitespace, stays.
+  turns ゛ into a space and a combining mark), and U+FEFF, which isn't whitespace, stays. It
+  differs from the Swift it replaced in two ways, both the standard's: NFKC composes a halfwidth
+  kana and its voiced mark (ｶﾞ is ガ, where Foundation left カ and a combining mark), and a
+  word's final Σ lowercases to ς.
+- **Twins.** Swift compares strings by canonical equivalence, so a CJK compatibility ideograph
+  equals the kanji it unifies with (U+FA5B and 者); the kanji files hold 74 such pairs, each with
+  its own record. `kanji-element.ts` treats a twin as the same kanji where the app did (which one
+  stands alone, and leaving it out of the kanji containing the element), and nowhere else. A host
+  keys the records by scalar, so a twin never answers for the other.
 - **Bound text.** The app's Swift search bound text as C strings (`sqlite3_bind_text` with length
   -1), so SQLite read a parameter up to its first NUL; `DictionarySearch` truncates its parameters
   there, whatever the client binds.
@@ -186,8 +217,10 @@ Swift is gone (issue 481), and the modules keep its names and its ways of compar
   `detail/text.ts` shift scalar by scalar, `kanji-split.ts` shifts only one-scalar Characters, and
   `ruby.ts` turns ヷ–ヺ, which have no precomposed hiragana, into a kana and a combining dakuten,
   still one Character each so the reading's positions don't move.
-- **Where the app throws**, the port returns an error value (`RetrievalError`,
-  `ExampleSearchError`) or null, and the page shows what the app shows then, usually no examples.
+- **Where the Swift threw**, the core returns an error value (`RetrievalError`,
+  `ExampleSearchError`) or null, and the page shows what the app showed then, usually no examples.
+  Through `embedded/` it is the call's error, which the app names as before
+  (`missingEntryEvidence`).
 
 ## Search
 
@@ -236,8 +269,14 @@ Swift is gone (issue 481), and the modules keep its names and its ways of compar
   dozen rows; change the two orders together, which the kanji-detail suite checks. Stroke data that doesn't decode shows no stroke
   order rather than failing the page, since clients read `KanjiStrokeData.sqlite3` as the app
   ships it. A character with a variation selector has no kanji details, as in the app.
+- **Kanji elements** (`kanji-element.ts`). An element's page stands alone the most frequent
+  kanji among the element and its alternatives (a ranked kanji before an unranked one, then by
+  code point), and lists the kanji containing it without that one. A kanji shows its first three
+  meanings and says all of them. The website has no element page yet.
 - `partOfSpeechPhrase` leaves out "Unclassified", which tells a learner nothing, and a generic
   "Verb", "Noun", or "Adverb" beside a phrase that already says it.
+- `shortGloss` is a meaning's first part, without a note in brackets or a leading "to", cut to
+  seventeen characters and an ellipsis: what the app shows under a linked word.
 - `wordSlug` is shared so every client builds the same word URL as the app's share links (ADR
   0007).
 
@@ -247,11 +286,12 @@ Swift is gone (issue 481), and the modules keep its names and its ways of compar
   is looked up by its forms, narrowed by part of speech and reading, and links to its one entry or
   lists its candidates. A joined inflection is looked up by its dictionary form, never its surface,
   which can be an unrelated headword (しまった is also "darn it!"); one that resolves to nothing
-  falls back to its pieces. A client's `lookup` should cache by form, as the app's analyzer does.
-- `formLookup` finds nothing for an ASCII form. The app looks one up in English, which linking
-  doesn't port, so the conformance suites would show a word the app links differently.
-- A Kuromoji analysis whose tokens don't tile the text is null (the app's `invalidProviderRange`),
-  and the sentence shows as one unlinked word.
+  falls back to its pieces. A client's `lookup` should cache by form, as `EmbeddedText` does.
+- A word is looked up only when it is written in kana and kanji, so linking never asks for an
+  ASCII form, and `formLookup` finds nothing for one. `entriesMatchingFirstForms` does look one
+  up, in English, for the app's own exact-form lookups.
+- A Kuromoji analysis whose tokens don't tile the text is null, and the sentence shows as one
+  unlinked word.
 - **A word's examples.** A kana headword such as でも also occurs inside other words (いつでも,
   何でも), so its examples come from the sentences Tatoeba's word index (`ExampleWordIndex`) links
   to the entry. A page lists at most 100, and the count is exact up to 50, with 51 meaning more

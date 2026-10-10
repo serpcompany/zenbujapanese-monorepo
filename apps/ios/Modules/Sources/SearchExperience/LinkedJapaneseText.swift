@@ -113,7 +113,6 @@ struct LinkedJapaneseText: View {
         Text(text)
           .font(.title3)
       } else {
-        let queryRanges = highlightsQuery ? queryScalarRanges : []
         LinkedTokenLayout(
           itemSpacing: 0,
           lineSpacing: readingAidPreferences.showsWordMeanings ? lineSpacing * 3 : lineSpacing
@@ -123,8 +122,8 @@ struct LinkedJapaneseText: View {
               token: token,
               identifier: "\(identifierPrefix).\(token.id).\(token.surface)",
               presentation: presentation,
-              isCurrentEntry: isCurrentEntry(token),
-              matchesQuery: Self.matchesQuery(token, queryRanges: queryRanges),
+              isCurrentEntry: highlightsCurrentEntry && token.isPageWord,
+              matchesQuery: highlightsQuery && token.matchesQuery,
               openWord: openWord,
               openCandidates: openCandidates
             )
@@ -140,21 +139,6 @@ struct LinkedJapaneseText: View {
         }
       }
     }
-  }
-
-  private var queryScalarRanges: [Range<Int>] {
-    ExampleSentencesScreen.queryScalarRanges(in: text, query: highlightedQuery.value)
-  }
-
-  nonisolated static func matchesQuery(
-    _ token: JapaneseTextToken, queryRanges: [Range<Int>]
-  ) -> Bool {
-    queryRanges.contains { $0.overlaps(token.scalarRange) }
-  }
-
-  private func isCurrentEntry(_ token: JapaneseTextToken) -> Bool {
-    guard highlightsCurrentEntry, let highlightedEntry else { return false }
-    return token.represents(highlightedEntry)
   }
 
   private var analysisIdentity: AnalysisIdentity {
@@ -179,14 +163,6 @@ private struct LinkedTokenView: View {
 
   private var isHighlighted: Bool { isCurrentEntry || matchesQuery }
 
-  private func displayReading(for entry: DictionaryEntry) -> String {
-    let forms = [entry.headword] + entry.writtenForms.map(\.value) + entry.readingForms.map(\.value)
-    guard !forms.contains(token.surface), let reading = token.reading, !reading.isEmpty else {
-      return entry.reading
-    }
-    return reading.applyingTransform(.hiraganaToKatakana, reverse: true) ?? reading
-  }
-
   private func meaning(for entry: DictionaryEntry) -> String? {
     guard readingAidPreferences.showsWordMeanings,
       !token.isFunctionWord,
@@ -210,8 +186,7 @@ private struct LinkedTokenView: View {
 
   private func rubyText(for entry: DictionaryEntry) -> some View {
     JapaneseRubyText(
-      surface: token.surface,
-      reading: displayReading(for: entry),
+      ruby: token.ruby ?? JapaneseRuby(surface: token.surface, reading: entry.reading),
       exposesAccessibility: false,
       displaysRomaji: false,
       hidesFurigana: hidesFurigana(for: entry),

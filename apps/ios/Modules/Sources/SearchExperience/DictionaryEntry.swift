@@ -16,18 +16,10 @@ struct DictionaryEntry: Hashable, Identifiable, Sendable {
   let pitchAccent: PitchAccent?
   let isCommon: Bool
 
-  var sourceProvenance: LanguageReferenceProvenance { sourceProvenances[0] }
-
   var shortMeaning: String? { Self.shortMeaning(from: meanings) }
 
-  static func shortMeaning(from meanings: [String], limit: Int = 18) -> String? {
-    guard let first = meanings.first else { return nil }
-    let withoutNotes = first.replacing(/\s*\([^)]*\)/, with: "")
-    var gloss = (withoutNotes.split(separator: ",").first.map(String.init) ?? withoutNotes)
-      .trimmingCharacters(in: .whitespaces)
-    if gloss.hasPrefix("to ") { gloss.removeFirst(3) }
-    guard !gloss.isEmpty else { return nil }
-    return gloss.count > limit ? String(gloss.prefix(limit - 1)) + "…" : gloss
+  static func shortMeaning(from meanings: [String]) -> String? {
+    meanings.first.flatMap(PresentationCore.shared.gloss)
   }
 
   func withSourceProvenances(_ provenances: [LanguageReferenceProvenance]) -> DictionaryEntry {
@@ -47,48 +39,6 @@ struct DictionaryEntry: Hashable, Identifiable, Sendable {
       pitchAccent: pitchAccent,
       isCommon: isCommon
     )
-  }
-
-  var alternativeForms: [DictionaryForm] {
-    var seen = Set<String>()
-    return (writtenForms + readingForms).filter {
-      $0.value != headword
-        && $0.value != reading
-        && !$0.labels.contains("Search only")
-        && seen.insert($0.value).inserted
-    }
-  }
-
-  var primaryKanji: [String] {
-    var seen = Set<Character>()
-    return headword.compactMap { character in
-      guard character.isCJKUnifiedIdeograph, seen.insert(character).inserted else { return nil }
-      return String(character)
-    }
-  }
-
-  var alternativeKanji: [String] {
-    let primary = Set(primaryKanji)
-    var seen = Set<String>()
-    return
-      writtenForms
-      .filter { $0.value != headword }
-      .flatMap { form in form.value.map(String.init) }
-      .filter { character in
-        character.first?.isCJKUnifiedIdeograph == true
-          && !primary.contains(character)
-          && seen.insert(character).inserted
-      }
-  }
-
-  var displayPartOfSpeech: String {
-    PartOfSpeechFormatter.phrase(for: senses.first?.partsOfSpeech ?? partsOfSpeech)
-  }
-}
-
-extension Character {
-  fileprivate var isCJKUnifiedIdeograph: Bool {
-    unicodeScalars.contains { (0x3400...0x9FFF).contains(Int($0.value)) }
   }
 }
 
@@ -175,34 +125,6 @@ struct PitchAccent: Hashable, Sendable, Codable {
   let sourceIdentity: String
 }
 
-extension PitchAccent {
-  func levels(moraCount count: Int) -> (morae: [Bool], particle: Bool) {
-    let morae = (0..<count).map { index in
-      switch downstep {
-      case 0: index > 0
-      case 1: index == 0
-      default: index > 0 && index < downstep
-      }
-    }
-    return (morae, downstep == 0)
-  }
-}
-
-extension String {
-  var morae: [String] {
-    let combining = Set("ゃゅょぁぃぅぇぉゎャュョァィゥェォヮ")
-    var result: [String] = []
-    for character in self {
-      if combining.contains(character), let last = result.popLast() {
-        result.append(last + String(character))
-      } else {
-        result.append(String(character))
-      }
-    }
-    return result
-  }
-}
-
 struct LanguageReferenceID: Hashable, Sendable {
   let rawValue: String
 
@@ -253,79 +175,29 @@ enum LanguageReferenceIdentity {
   }
 }
 
-struct DictionaryRelevance: Equatable, Sendable, Comparable {
-  let order: Int
-
-  static let maximum = Self(order: .max)
-
-  static func < (lhs: Self, rhs: Self) -> Bool {
-    lhs.order < rhs.order
-  }
-}
-
-struct LookupSearchResultItem: Sendable {
-  let entry: DictionaryEntry
-  let relevance: DictionaryRelevance
-  let fallbackOrder: Int
-  let matchedSummary: String?
-
-  var displaySummary: String { matchedSummary ?? entry.summary }
-}
-
 struct LookupSearchResults: Sendable {
-  let items: [LookupSearchResultItem]
-  let leadingLexicalEntryCount: Int
+  let entries: [DictionaryEntry]
   let presentation: Presentation
   let resolution: Resolution
   let readingRefinement: SearchRefinement?
   let usesPrimaryEntryExamples: Bool
+  let primaryEntry: DictionaryEntry?
+  let listed: String
 
-  init(
-    items: [LookupSearchResultItem],
-    leadingLexicalEntryCount: Int? = nil,
-    presentation: Presentation = .ranked,
-    resolution: Resolution = .direct,
-    readingRefinement: SearchRefinement? = nil,
-    usesPrimaryEntryExamples: Bool = false
-  ) {
-    self.items = items
-    self.leadingLexicalEntryCount = min(leadingLexicalEntryCount ?? items.count, items.count)
-    self.presentation = presentation
-    self.resolution = resolution
-    self.readingRefinement = readingRefinement
-    self.usesPrimaryEntryExamples = usesPrimaryEntryExamples
-  }
-
-  static let empty = LookupSearchResults(items: [])
-
-  var entries: [DictionaryEntry] { items.map(\.entry) }
+  static let empty = LookupSearchResults(
+    entries: [], presentation: .ranked, resolution: .direct, readingRefinement: nil,
+    usesPrimaryEntryExamples: false, primaryEntry: nil, listed: "{\"items\":[]}")
 
   var isEmpty: Bool {
     entries.isEmpty
   }
 
-  func relevance(for entry: DictionaryEntry) -> DictionaryRelevance {
-    items.first { $0.entry.id == entry.id }?.relevance ?? .maximum
-  }
-
-  func fallbackOrder(for entry: DictionaryEntry) -> Int {
-    items.first { $0.entry.id == entry.id }?.fallbackOrder ?? .max
-  }
-
-  func displaySummary(for entry: DictionaryEntry) -> String {
-    items.first { $0.entry.id == entry.id }?.displaySummary ?? entry.summary
-  }
-
-  func primaryEntry(for query: SearchQuery) -> DictionaryEntry? {
-    entries.first { $0.headword == query.value } ?? entries.first
-  }
-
-  enum Presentation: String, Decodable, Equatable, Sendable {
+  enum Presentation: String, Codable, Equatable, Sendable {
     case ranked
     case discoveredWords
   }
 
-  enum Resolution: String, Decodable, Equatable, Sendable {
+  enum Resolution: String, Codable, Equatable, Sendable {
     case direct
     case deinflected
     case analyzed

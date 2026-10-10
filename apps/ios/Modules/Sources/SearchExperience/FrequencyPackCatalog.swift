@@ -6,10 +6,6 @@ struct FrequencyPackID: Codable, Hashable, RawRepresentable, Sendable {
   init(rawValue: String) {
     self.rawValue = rawValue
   }
-
-  var family: String {
-    rawValue.split(separator: ".").prefix(3).joined(separator: ".")
-  }
 }
 
 struct FrequencyPackCatalog: Codable, Equatable, Sendable {
@@ -147,7 +143,8 @@ struct FrequencyPackManifest: Codable, Equatable, Sendable {
       domain: domain,
       domainDescription: domainDescription,
       version: packVersion,
-      attribution: attribution
+      attribution: attribution,
+      coveredSourceRows: coveredSourceRows
     )
   }
 

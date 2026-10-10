@@ -51,37 +51,9 @@ struct ExampleSentencesView: View {
     .task(id: query) {
       isLoading = true
       analysisAvailability = await japaneseTextAnalysisClient.availability()
-      examples = await ExampleSentencesScreen.examples(
-        query: query,
-        highlightedEntry: highlightedEntry,
-        usesHighlightedEntryExamples: usesHighlightedEntryExamples,
-        using: exampleSentenceClient
-      )
+      examples = await exampleSentenceClient.listed(
+        query, highlightedEntry, usesHighlightedEntryExamples)
       isLoading = false
-    }
-  }
-}
-
-enum ExampleSentencesScreen {
-  static func examples(
-    query: SearchQuery,
-    highlightedEntry: DictionaryEntry?,
-    usesHighlightedEntryExamples: Bool,
-    using client: ExampleSentenceClient
-  ) async -> [ExampleSentence] {
-    if usesHighlightedEntryExamples, let highlightedEntry {
-      return (try? await client.examples(highlightedEntry)) ?? []
-    }
-    return (try? await client.search(query)) ?? []
-  }
-
-  static func queryScalarRanges(in text: String, query: String) -> [Range<Int>] {
-    let scalars = Array(text.unicodeScalars)
-    let query = Array(query.unicodeScalars)
-    guard !query.isEmpty, query.count <= scalars.count else { return [] }
-    return (0...(scalars.count - query.count)).compactMap { start in
-      scalars[start..<(start + query.count)].elementsEqual(query)
-        ? start..<(start + query.count) : nil
     }
   }
 }
@@ -154,7 +126,7 @@ struct JapaneseExampleRowContent: View {
   enum Presentation {
     case dedicated(index: Int)
     case wordDetail(index: Int)
-    case conjugatedForm(ConjugatedForm.Kind, index: Int)
+    case conjugatedForm(String, index: Int)
 
     struct WordSelectorConfiguration {
       let label: String
@@ -211,13 +183,13 @@ struct JapaneseExampleRowContent: View {
       case .conjugatedForm(let kind, let index):
         Configuration(
           tokenPresentation: .standard,
-          tokenIdentifierPrefix: "conjugations.example-token.\(kind.rawValue).\(index)",
+          tokenIdentifierPrefix: "conjugations.example-token.\(kind).\(index)",
           japaneseIdentifier: nil,
           wordSelector: nil,
           speakerLabel: "Speak example \(index + 1)",
-          speakerIdentifier: "conjugations.example-speaker.\(kind.rawValue).\(index)",
-          englishIdentifier: "conjugations.example-english.\(kind.rawValue).\(index)",
-          rowIdentifier: "conjugations.example.\(kind.rawValue).\(index)",
+          speakerIdentifier: "conjugations.example-speaker.\(kind).\(index)",
+          englishIdentifier: "conjugations.example-english.\(kind).\(index)",
+          rowIdentifier: "conjugations.example.\(kind).\(index)",
           combinesRowAccessibility: true,
           highlightsCurrentEntry: false,
           highlightsQuery: true

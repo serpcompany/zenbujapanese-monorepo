@@ -1,5 +1,6 @@
 import CryptoKit
 import Foundation
+import JavaScriptCore
 import Testing
 
 @testable import SearchExperience
@@ -58,29 +59,36 @@ struct KuromojiStartTests {
   }
 
   @Test("finds the words kuromoji.js finds when it unpacks the files itself")
-  func analyzesSentences() async throws {
-    let plain = try await JapaneseMorphologyClient.kuromoji.analyze("猫が魚を食べました")
-    #expect(plain.candidates.map(\.surface) == ["猫", "が", "魚", "を", "食べ", "まし", "た"])
-    #expect(plain.candidates.map(\.dictionaryForm) == ["猫", "が", "魚", "を", "食べる", "ます", "た"])
-    #expect(plain.candidates.map(\.reading) == ["ネコ", "ガ", "サカナ", "ヲ", "タベ", "マシ", "タ"])
-
-    let mixed = try await JapaneseMorphologyClient.kuromoji.analyze(
-      "静かな図書館でﾊﾝｶｸとZenbuを勉強しなかった。")
+  func tokenizesSentences() throws {
+    let context = try #require(JSContext())
+    try KuromojiEngine.install(in: context)
+    func tokens(_ text: String) throws -> [[String]] {
+      context.setObject(text, forKeyedSubscript: "text" as NSString)
+      let json = try #require(
+        context.evaluateScript(
+          """
+          JSON.stringify(__zenbuKuromojiTokenizer.tokenize(text).map(token =>
+            [token.surface_form, token.basic_form, token.reading ?? '', token.pos, token.word_type]))
+          """
+        )?.toString())
+      return try JSONDecoder().decode([[String]].self, from: Data(json.utf8))
+    }
     #expect(
-      mixed.candidates.map(\.surface) == [
-        "静か", "な", "図書館", "で", "ﾊﾝｶｸ", "と", "Zenbu", "を", "勉強", "し", "なかっ", "た", "。",
+      try tokens("猫が魚を食べました") == [
+        ["猫", "猫", "ネコ", "名詞", "KNOWN"], ["が", "が", "ガ", "助詞", "KNOWN"],
+        ["魚", "魚", "サカナ", "名詞", "KNOWN"], ["を", "を", "ヲ", "助詞", "KNOWN"],
+        ["食べ", "食べる", "タベ", "動詞", "KNOWN"], ["まし", "ます", "マシ", "助動詞", "KNOWN"],
+        ["た", "た", "タ", "助動詞", "KNOWN"],
       ])
     #expect(
-      mixed.candidates.map(\.dictionaryForm) == [
-        "静か", "だ", "図書館", "で", "ﾊﾝｶｸ", "と", "Zenbu", "を", "勉強", "する", "ない", "た", "。",
+      try tokens("静かな図書館でﾊﾝｶｸとZenbuを勉強しなかった。") == [
+        ["静か", "静か", "シズカ", "名詞", "KNOWN"], ["な", "だ", "ナ", "助動詞", "KNOWN"],
+        ["図書館", "図書館", "トショカン", "名詞", "KNOWN"], ["で", "で", "デ", "助詞", "KNOWN"],
+        ["ﾊﾝｶｸ", "*", "", "名詞", "UNKNOWN"], ["と", "と", "ト", "助詞", "KNOWN"],
+        ["Zenbu", "*", "", "名詞", "UNKNOWN"], ["を", "を", "ヲ", "助詞", "KNOWN"],
+        ["勉強", "勉強", "ベンキョウ", "名詞", "KNOWN"], ["し", "する", "シ", "動詞", "KNOWN"],
+        ["なかっ", "ない", "ナカッ", "助動詞", "KNOWN"], ["た", "た", "タ", "助動詞", "KNOWN"],
+        ["。", "。", "。", "記号", "KNOWN"],
       ])
-    #expect(
-      mixed.candidates.map(\.reading) == [
-        "シズカ", "ナ", "トショカン", "デ", "ﾊﾝｶｸ", "ト", "Zenbu", "ヲ", "ベンキョウ", "シ", "ナカッ", "タ", "。",
-      ])
-    #expect(mixed.candidates.filter(\.isOutOfVocabulary).map(\.surface) == ["ﾊﾝｶｸ", "Zenbu"])
-    #expect(mixed.candidates.map { $0.partOfSpeech.first } == [
-      "名詞", "助動詞", "名詞", "助詞", "名詞", "助詞", "名詞", "助詞", "名詞", "動詞", "助動詞", "助動詞", "記号",
-    ])
   }
 }

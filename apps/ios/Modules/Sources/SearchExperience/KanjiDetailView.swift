@@ -4,7 +4,6 @@ struct KanjiDetailView: View {
   let character: KanjiCharacter
   let entry: DictionaryEntry?
   let kanjiLookupClient: KanjiLookupClient
-  let kanjiElementLookupClient: KanjiElementLookupClient
   let kanjiStrokeOrderClient: KanjiStrokeOrderClient
   let preservedWordID: LanguageReferenceID?
   let preservedElementID: KanjiElementID?
@@ -26,7 +25,6 @@ struct KanjiDetailView: View {
     character: KanjiCharacter,
     entry: DictionaryEntry?,
     kanjiLookupClient: KanjiLookupClient,
-    kanjiElementLookupClient: KanjiElementLookupClient,
     kanjiStrokeOrderClient: KanjiStrokeOrderClient,
     wordNoteStore: WordNoteStore,
     encounterMediaStore: EncounterMediaStore,
@@ -42,7 +40,6 @@ struct KanjiDetailView: View {
     self.character = character
     self.entry = entry
     self.kanjiLookupClient = kanjiLookupClient
-    self.kanjiElementLookupClient = kanjiElementLookupClient
     self.kanjiStrokeOrderClient = kanjiStrokeOrderClient
     self.preservedWordID = preservedWordID
     self.preservedElementID = preservedElementID
@@ -50,12 +47,10 @@ struct KanjiDetailView: View {
   }
 
   private var item: SavedItem {
-    .kanji(character, reading: reference?.readings.first?.value ?? "")
+    .kanji(character, reading: page?.readings.first?.value ?? "")
   }
 
-  private var shareText: String {
-    KanjiReferenceEntry.shareText(for: character, reference: reference)
-  }
+  private var shareText: String { page?.shareText ?? character.rawValue }
 
   var body: some View {
     ScrollViewReader { proxy in
@@ -63,7 +58,7 @@ struct KanjiDetailView: View {
         Section {
           KanjiOverview(
             character: character.rawValue,
-            reference: reference,
+            page: page,
             strokeDiagramLoadState: strokeDiagramLoadState,
             retryStrokeOrder: retryStrokeOrder,
             openStrokeOrder: openStrokeOrder
@@ -107,11 +102,11 @@ struct KanjiDetailView: View {
           }
         }
 
-        if let reference {
-          KanjiReadingsSection(reference: reference, relatedWords: relatedWords)
-          if elements.isEmpty, !reference.components.isEmpty {
+        if let page, page.hasReference {
+          KanjiReadingsSection(readings: page.readings)
+          if !page.components.isEmpty {
             Section("COMPONENTS") {
-              Text(reference.components.joined(separator: " · "))
+              Text(page.components.joined(separator: " · "))
                 .font(.title3)
                 .accessibilityIdentifier("kanji-detail.elements")
             }
@@ -133,18 +128,18 @@ struct KanjiDetailView: View {
             notes: notes, editorFocused: $noteEditorFocused, identifierPrefix: "kanji-detail")
         }
 
-        if !relatedWords.isEmpty {
-          KanjiWordsSection(entries: orderedRelatedWords)
+        if !words.isEmpty {
+          KanjiWordsSection(entries: words)
         }
       }
       .groupedList()
       .accessibilityIdentifier("kanji-detail.screen")
       .onAppear {
-        restorePreservedWordPosition(in: relatedWords)
+        restorePreservedWordPosition(in: words)
         restorePreservedElementPosition(in: elements)
       }
-      .onChange(of: relatedWords.map(\.id)) {
-        restorePreservedWordPosition(in: relatedWords)
+      .onChange(of: words.map(\.id)) {
+        restorePreservedWordPosition(in: words)
       }
       .onChange(of: elements.map(\.id)) {
         restorePreservedElementPosition(in: elements)
@@ -182,9 +177,10 @@ struct KanjiDetailView: View {
     }
   }
 
-  private var reference: KanjiReferenceEntry? {
+  private var page: KanjiPage? {
     switch loadState {
-    case .loaded(let reference, _, _), .failed(let reference, _, _): reference
+    case .loaded(let page): page
+    case .failed(let page): page
     case .loading: nil
     }
   }
@@ -194,24 +190,9 @@ struct KanjiDetailView: View {
     return false
   }
 
-  private var relatedWords: [DictionaryEntry] {
-    switch loadState {
-    case .loaded(_, _, let relatedWords), .failed(_, _, let relatedWords): relatedWords
-    case .loading: []
-    }
-  }
+  private var words: [DictionaryEntry] { page?.words ?? [] }
 
-  private var elements: [KanjiElementSummary] {
-    switch loadState {
-    case .loaded(_, let elements, _), .failed(_, let elements, _): elements
-    case .loading: []
-    }
-  }
-
-  private var orderedRelatedWords: [DictionaryEntry] {
-    guard let entry, relatedWords.contains(entry) else { return relatedWords }
-    return [entry] + relatedWords.filter { $0.id != entry.id }
-  }
+  private var elements: [KanjiPage.Element] { page?.elements ?? [] }
 
   private var restorationState: KanjiDetailRestorationState {
     KanjiDetailRestorationState(
@@ -238,7 +219,7 @@ struct KanjiDetailView: View {
     pendingScrollTarget = .word(preservedWordID)
   }
 
-  private func restorePreservedElementPosition(in loadedElements: [KanjiElementSummary]) {
+  private func restorePreservedElementPosition(in loadedElements: [KanjiPage.Element]) {
     guard let preservedElementID,
       loadedElements.contains(where: { $0.id == preservedElementID })
     else { return }
@@ -263,28 +244,8 @@ struct KanjiDetailView: View {
   private func loadDetail() async {
     guard loadState.requiresLoad else { return }
     loadState = .loading
-    var loadedReference: KanjiReferenceEntry?
     var loadedWords: [DictionaryEntry] = []
-    var loadedElements: [KanjiElementSummary] = []
     var loadFailed = false
-
-    do {
-      loadedReference = try await kanjiLookupClient.entry(character)
-    } catch is CancellationError {
-      return
-    } catch {
-      loadFailed = true
-    }
-    guard !Task.isCancelled else { return }
-
-    do {
-      loadedElements = try await kanjiElementLookupClient.elements(character)
-    } catch is CancellationError {
-      return
-    } catch {
-      loadFailed = true
-    }
-    guard !Task.isCancelled else { return }
 
     do {
       loadedWords = try await kanjiLookupClient.relatedWords(character)
@@ -295,19 +256,11 @@ struct KanjiDetailView: View {
     }
     guard !Task.isCancelled else { return }
 
-    if loadFailed {
-      loadState = .failed(
-        reference: loadedReference,
-        elements: loadedElements,
-        relatedWords: loadedWords
-      )
-    } else {
-      loadState = .loaded(
-        reference: loadedReference,
-        elements: loadedElements,
-        relatedWords: loadedWords
-      )
+    guard let page = try? kanjiLookupClient.page(character, loadedWords, entry?.id) else {
+      loadState = .failed(nil)
+      return
     }
+    loadState = loadFailed ? .failed(page) : .loaded(page)
   }
 }
 
@@ -353,16 +306,8 @@ enum KanjiStrokeDiagramLoadState: Equatable {
 
 enum KanjiDetailLoadState: Equatable {
   case loading
-  case loaded(
-    reference: KanjiReferenceEntry?,
-    elements: [KanjiElementSummary],
-    relatedWords: [DictionaryEntry]
-  )
-  case failed(
-    reference: KanjiReferenceEntry?,
-    elements: [KanjiElementSummary],
-    relatedWords: [DictionaryEntry]
-  )
+  case loaded(KanjiPage)
+  case failed(KanjiPage?)
 
   var requiresLoad: Bool {
     if case .loading = self { return true }
@@ -373,14 +318,12 @@ enum KanjiDetailLoadState: Equatable {
     switch self {
     case .loading:
       .loading
-    case .loaded(_, let elements, let relatedWords),
-      .failed(_, let elements, let relatedWords):
+    case .loaded(let page), .failed(let page?):
       .settled(
         availableTargets: Set(
-          relatedWords.map { .word($0.id) }
-            + elements.map { .element($0.id) }
-        )
-      )
+          page.words.map { .word($0.id) } + page.elements.map { .element($0.id) }))
+    case .failed(nil):
+      .settled(availableTargets: [])
     }
   }
 }
