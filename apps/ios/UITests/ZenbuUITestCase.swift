@@ -5,6 +5,7 @@ class ZenbuUITestCase: XCTestCase {
   static let offlineAccountService = "http://127.0.0.1:9"
   static let patience =
     ProcessInfo.processInfo.environment["ZENBU_UI_TEST_PATIENCE"].flatMap(TimeInterval.init) ?? 90
+  static let layoutPatience: TimeInterval = 5
 
   let fixtures = URL(filePath: #filePath)
     .deletingLastPathComponent()
@@ -152,7 +153,12 @@ class ZenbuUITestCase: XCTestCase {
       XCTAssertTrue(isReachable(element, in: app), "\(element) can't be reached", file: file, line: line)
     }
     let window = app.windows.firstMatch.frame
-    let frame = element.frame
+    let laidOut = Date.now.addingTimeInterval(Self.layoutPatience)
+    var frame = element.frame
+    while frame.isEmpty, Date.now < laidOut {
+      RunLoop.current.run(until: Date.now.addingTimeInterval(0.2))
+      frame = element.frame
+    }
     XCTAssertFalse(frame.isEmpty, "\(element) has no size", file: file, line: line)
     if Self.scrollingContainers.contains(element.elementType) {
       XCTAssertTrue(
@@ -253,6 +259,13 @@ class ZenbuUITestCase: XCTestCase {
 
   func type(_ text: String, into element: XCUIElement) {
     tap(element)
+    if device != .mac, let app = launched {
+      let focused = app.descendants(matching: .any)
+        .matching(NSPredicate(format: "hasKeyboardFocus == true")).firstMatch
+      for _ in 0..<2 where !focused.waitForExistence(timeout: Self.layoutPatience) {
+        element.tap()
+      }
+    }
     element.typeText(text)
   }
 }

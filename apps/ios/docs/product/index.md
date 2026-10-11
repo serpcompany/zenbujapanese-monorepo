@@ -225,7 +225,8 @@ a small **Account** title in the bar rather than a large one. It provides:
 
 Check: UI `AccountUITests.testAccountListsEveryArea` (every row, and the small title on iPhone and
 iPad), `testReadingAidsAndFrequencyDictionariesOpen`,
-and `testTranslationsAndCreditsOpenFromAccount`; contract `test_account_service_settings.py`
+`testTurningRomajiOnWritesExampleSentencesAndAKanjisReadingsInRomaji` (Romaji on, an example
+sentence and a kanji's reading written in it), and `testTranslationsAndCreditsOpenFromAccount`; contract `test_account_service_settings.py`
 (production in TestFlight and App Store builds, staging in Debug); package `PlayerReadingAidTests`
 and `WordMeaningTests` (the Reading Aids preferences), and the recorded `RomajiConformanceTests`
 with core `detail/romaji.test.ts` (how a reading and a sentence are written in romaji).

@@ -126,7 +126,7 @@ final class AccountUITests: ZenbuUITestCase {
     waitFor(find("word-detail.identity-reading", in: app))
   }
 
-  func testTurningRomajiOnWritesAKanjisReadingsAndAWordsExamplesInRomaji() {
+  func testTurningRomajiOnWritesExampleSentencesAndAKanjisReadingsInRomaji() {
     let app = launch()
     open(.account, in: app)
     tap(reveal(find("account.reading-aids", in: app), in: app))
@@ -135,17 +135,17 @@ final class AccountUITests: ZenbuUITestCase {
     expectation(for: Self.switchedOn, evaluatedWith: romaji)
     waitForExpectations(timeout: Self.patience)
     search("japan", in: app)
+    tap(find("search.examples", in: app))
+    waitFor(find("example-list.screen", in: app))
+    let sentence = waitFor(
+      app.descendants(matching: .any)
+        .matching(NSPredicate(format: "identifier ENDSWITH '.romaji'")).firstMatch)
+    waitUntil(sentence, mentions: "Romaji, ")
+    goBack(in: app)
     tap(find("result.japan", in: app))
     tap(find("word-detail.kanji.日", in: app), toShow: find("kanji-detail.glyph", in: app))
-    reveal(written("label CONTAINS 'Romaji, nichi'", in: app), in: app)
-    goBack(in: app)
-    waitFor(find("word-detail.screen", in: app))
-    reveal(
-      written("identifier ENDSWITH '.romaji' AND label BEGINSWITH 'Romaji, '", in: app), in: app)
-  }
-
-  private func written(_ format: String, in app: XCUIApplication) -> XCUIElement {
-    app.descendants(matching: .any).matching(NSPredicate(format: format)).firstMatch
+    let reading = reveal(find("kanji-detail.reading.on.ジツ", in: app), in: app)
+    waitUntil(reading, mentions: "Romaji, jitsu")
   }
 
   static let switchedOn = NSPredicate(format: "value == '1' OR value == 1")
