@@ -32,3 +32,6 @@ export const deadCodeRule =
 
 export const dependencyRule =
   'Imports point one way inside each part, and parts meet only where ARCHITECTURE.md says (docs/agents/code.md, Imports). Each finding above says where the code belongs.'
+
+export const stopRule =
+  'These are in files changed since the last commit, found before the turn ended (docs/agents/code.md, Checks). Fix each one now, or say which you are leaving and why. pnpm verify runs the same checks on the whole repository.'

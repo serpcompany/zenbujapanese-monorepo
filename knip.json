@@ -21,7 +21,7 @@
       "ignoreDependencies": ["tsx"]
     },
     "tools/checks": {
-      "entry": ["hook.mjs"],
+      "entry": ["hook.mjs", "stop-hook.mjs"],
       "ignoreDependencies": ["@secretlint/secretlint-rule-preset-recommend"]
     }
   }
