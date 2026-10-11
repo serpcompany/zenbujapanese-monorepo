@@ -504,8 +504,10 @@ needs a checkout. It:
 ## Pinned actions
 
 The release job holds the bucket's token, and the image's jobs can push to the package and sign,
-so the actions they run are pinned by commit SHA; elsewhere, actions are named by major-version
-tag, such as `actions/checkout@v5`. To update a
+so the actions they run are pinned by commit SHA. `anthropics/claude-code-action` is pinned too:
+v1.0.248, which moved it to Claude Code 2.1.296, ends every review, `@claude`, and gardening run
+about 2 seconds in with `is_error` and no model use, so it stays on v1.0.247 until a later release
+runs. Elsewhere, actions are named by major-version tag, such as `actions/checkout@v5`. To update a
 pinned one, pin the new release's commit and change this table in the same pull request.
 
 | Action | Commit | Version | Used in |
@@ -517,3 +519,4 @@ pinned one, pin the new release's commit and change this table in the same pull 
 | `docker/build-push-action` | `c3c9e263c25d99ce0380d002d59b67737d91b0dc` | v7.4.0 | `.github/workflows/dictionary-api-deploy.yml` |
 | `docker/login-action` | `dbcb813823bdd20940b903addbd779551569679f` | v4.6.0 | `.github/workflows/dictionary-api-deploy.yml` |
 | `sigstore/cosign-installer` | `6f9f17788090df1f26f669e9d70d6ae9567deba6` | v4.1.2, installing cosign v3.1.3 | `.github/workflows/dictionary-api-deploy.yml` |
+| `anthropics/claude-code-action` | `2dca132ff0e0c4094ce6048b422c6915a071210b` | v1.0.247 | `.github/workflows/code-review.yml`, `.github/workflows/claude.yml`, `.github/workflows/maintenance.yml` |
