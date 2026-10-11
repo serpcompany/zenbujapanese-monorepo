@@ -654,7 +654,8 @@ redirects (308) to it in one hop, keeping the canonical trailing-slash form, thr
 
 - `www.zenbujapanese.com`, a custom domain on the production Worker.
 - Each Worker's workers.dev URL. Wrangler enables it by default; left alone it serves a crawlable
-  duplicate of the site. Keep `workers_dev` on: CI smoke-tests these URLs.
+  duplicate of the site. Keep `workers_dev` on: CI smoke-tests these URLs. `preview_urls` is off
+  in both environments, so no versioned preview host serves another copy.
 
 `redirectHostTo` lists its file rules before `/:path+`, which would also match files, and gives
 `/` a rule of its own, since OpenNext can't fill an empty path parameter.

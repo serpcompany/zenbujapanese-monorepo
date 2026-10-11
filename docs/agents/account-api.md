@@ -446,7 +446,8 @@ and remove the old one only in a later release (#374's planning notes of 2026-09
 pnpm check
 ```
 
-It runs Biome, the typecheck, the tests, and the bundle. The tests need no database server: they
+It runs Biome, the typecheck, drizzle-kit's check that the migrations and their snapshots agree
+(`pnpm db:check`), the tests, and the bundle. The tests need no database server: they
 run Postgres in the test process with PGlite, both directly and through its socket server, which
 the service's own `pg` driver connects to. The sign-in tests (`src/auth/`) run the whole service with the dev mailbox, and stand in for
 Apple's and Google's signing keys at their own URLs, so Better Auth's checks of a real token run.
@@ -460,6 +461,9 @@ They sign new and existing learners in each way, and refuse:
 - a second way in with an account's email, and an email code into an account Apple or Google made,
   until the signed-in learner adds it, and adding one with a session over 10 minutes old;
 - a session's token after signing out, and the unsigned token;
+- a request that carries the website's cookie from another origin, or from none. Better Auth
+  turns its origin and CSRF checks off when `NODE_ENV` is `test`, so `src/auth/auth.ts` sets both
+  on, and `src/auth/website.test.ts` fails without that;
 - every Better Auth route that isn't open.
 
 The profile and sync tests (`src/http/me.test.ts` and `sync.test.ts`) sign learners in the same

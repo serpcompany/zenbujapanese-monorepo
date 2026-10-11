@@ -28,6 +28,7 @@
         "ACCOUNT_GOOGLE_SIGN_IN": "on"
       },
       "workers_dev": true,
+      "preview_urls": false,
       "routes": [{ "pattern": "staging.zenbujapanese.com", "custom_domain": true }],
       "services": [{ "binding": "WORKER_SELF_REFERENCE", "service": "zenbujapanese-web-staging" }]
     },
@@ -40,6 +41,7 @@
         "ACCOUNT_GOOGLE_SIGN_IN": "on"
       },
       "workers_dev": true,
+      "preview_urls": false,
       "routes": [
         { "pattern": "zenbujapanese.com", "custom_domain": true },
         { "pattern": "www.zenbujapanese.com", "custom_domain": true }
