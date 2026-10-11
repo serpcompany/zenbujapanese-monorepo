@@ -115,7 +115,7 @@ jobs:
       - name: Answer with Claude
         id: claude
         if: env.ANSWER == 'true'
-        uses: anthropics/claude-code-action@v1
+        uses: anthropics/claude-code-action@2dca132ff0e0c4094ce6048b422c6915a071210b
         env:
           CLAUDE_CODE_DISABLE_BACKGROUND_TASKS: "1"
           BASH_DEFAULT_TIMEOUT_MS: "900000"
