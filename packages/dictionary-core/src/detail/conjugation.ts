@@ -10,6 +10,7 @@ import {
 import { type KanjiReadings, withKanjiReadings } from './kanji-split'
 import type { EntryRow } from './rows'
 import { type RubySegment, rubySegments } from './ruby'
+import { listedWithAnd } from './text'
 
 export type { ConjugatedForm, ConjugationMode, ConjugationTable } from './conjugation-table'
 export { conjugationTable, formsFor } from './conjugation-table'
@@ -131,9 +132,5 @@ export function conjugations(
 }
 
 export function sharedSpellingNote(titles: readonly string[]): string {
-  const list =
-    titles.length <= 2
-      ? titles.join(' and ')
-      : `${titles.slice(0, -1).join(', ')}, and ${titles.at(-1)}`
-  return `Same spelling as ${list}. Context tells them apart.`
+  return `Same spelling as ${listedWithAnd(titles)}. Context tells them apart.`
 }

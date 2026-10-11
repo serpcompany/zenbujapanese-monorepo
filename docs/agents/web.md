@@ -289,10 +289,8 @@ DICTIONARY_API_TOKEN=<the token the service was started with>
 
 The service runs the search core (`packages/dictionary-core/src/search/`, the app's Search
 retrieval with its own SQL on the artifact's FTS4 indexes) and the results core
-(`packages/dictionary-core/src/results/`, ported from SearchResultsView.swift,
-SearchResultFrequencyOrdering.swift, and FrequencyPresentation.swift), and answers with the results
-screen. `orderedItems` is
-`SearchResultFrequencyOrdering.ordered`: within each match group (the result's source, then its
+(`packages/dictionary-core/src/results/`, which the app runs too), and answers with the results
+screen. `orderedByFrequency` orders it: within each match group (the result's source, then its
 coarse match rank), the more common tier from the first dictionary that has one, then each
 dictionary's value in priority order (lower first, ranked before unranked), then the retrieval
 order, then the Language Reference ID. Discovered Words keep their order.
@@ -326,9 +324,9 @@ about five; the service and the edge cache keep the answer after that.
 
 `packages/dictionary-core/src/detail/` is the detail core: pure functions, `wordDetail(rows)` and
 `kanjiDetail(rows)`, that turn the service's rows (`detail/rows.ts`) into what the word page and
-kanji details render. Each function is a port of the app's Swift (the Swift sources section of
-[`dictionary-core.md`](dictionary-core.md) names each one's source), so the pages show what the
-app shows (see the [product docs](../../apps/web/docs/product/dictionary.md)).
+kanji details render. The app builds its word and kanji pages from the same functions
+([`dictionary-core.md`](dictionary-core.md), The app's side), so the pages show what the app
+shows (see the [product docs](../../apps/web/docs/product/dictionary.md)).
 
 The word page holds everything the app drills into from a word (ADR 0010), in sections that open
 and close and stay in the HTML while closed (`components/dictionary/disclosure.tsx`):

@@ -1,9 +1,10 @@
 import { describe, expect, test } from 'vitest'
-import { deinflect } from './deinflect'
+import { acceptsPartsOfSpeech, deinflect } from './deinflect'
 import {
   compareStrings,
   isJapaneseOnly,
   isMixedScript,
+  japaneseCandidates,
   normalizeQuery,
   romajiDeinflectedCandidates
 } from './query'
@@ -32,6 +33,20 @@ describe('normalizeQuery', () => {
     expect(normalizeQuery('食べ　る')).toBe('食べ る')
   })
 
+  test('joins a halfwidth kana and its voiced mark, and ends a Greek word in a final sigma', () => {
+    expect(normalizeQuery('\uff76\uff9e\uff77\uff9e')).toBe('\u30ac\u30ae')
+    expect(normalizeQuery('\uff8a\uff9f')).toBe('\u30d1')
+    expect(normalizeQuery('か\u3099')).toBe('\u304c')
+    expect(normalizeQuery('ΌΣΟΣ')).toBe('όσος')
+  })
+
+  test('leaves a query with no whitespace as folding made it', () => {
+    expect(normalizeQuery('食べる')).toBe('食べる')
+    expect(normalizeQuery('か\u3099')).toBe('\u304c')
+    expect(normalizeQuery('TABERU')).toBe('taberu')
+    expect(normalizeQuery('')).toBe('')
+  })
+
   test('drops a grapheme that starts with whitespace, as NFKC makes ゛', () => {
     expect(normalizeQuery('あ゛')).toBe('あ')
   })
@@ -50,6 +65,14 @@ describe('scripts', () => {
   })
 })
 
+describe('japaneseCandidates', () => {
+  test('keeps what is written only in Japanese, normalized, each once, in order', () => {
+    expect(japaneseCandidates(['見る', 'ﾐﾙ', 'miru', '見る', '見る!', '', ' 木 ', 'ミル'])).toEqual(
+      ['見る', 'ミル', '木']
+    )
+  })
+})
+
 describe('romajiDeinflectedCandidates', () => {
   test('offers dictionary forms for inflected romaji', () => {
     expect(romajiDeinflectedCandidates('tabeta')).toEqual(['taberu'])
@@ -64,5 +87,26 @@ describe('deinflect', () => {
     expect(terms('行きました')).toContain('行く')
     expect(terms('高くて')).toContain('高い')
     expect(terms('勉強した')).toContain('勉強')
+  })
+
+  test('carries the word class the dictionary form must have, through a chain of endings', () => {
+    const classes = (text: string, term: string) =>
+      deinflect(text)
+        .filter(candidate => candidate.term === term)
+        .flatMap(candidate => candidate.wordClasses)
+    expect(classes('まけたら', 'まける')).toContain('ichidan')
+    expect(classes('まけたら', 'まけたら')).toEqual([])
+    expect(classes('食べさせられなかったら', '食べる')).toContain('ichidan')
+  })
+})
+
+describe('acceptsPartsOfSpeech', () => {
+  test('lets a word class accept only the parts of speech that inflect its way', () => {
+    expect(acceptsPartsOfSpeech('ichidan', ['ichidanVerb'])).toBe(true)
+    expect(acceptsPartsOfSpeech('ichidan', ['noun'])).toBe(false)
+    expect(acceptsPartsOfSpeech('godan', ['godanVerb'])).toBe(true)
+    expect(acceptsPartsOfSpeech('iAdjective', ['iAdjective'])).toBe(true)
+    expect(acceptsPartsOfSpeech('suruNoun', ['noun', 'takesSuru', 'transitive'])).toBe(true)
+    expect(acceptsPartsOfSpeech('suruNoun', ['noun', 'transitive'])).toBe(false)
   })
 })

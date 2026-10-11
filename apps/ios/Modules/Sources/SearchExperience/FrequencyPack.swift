@@ -82,33 +82,6 @@ enum FrequencyLookupResult: Equatable, Sendable {
   case noEvidence(pack: FrequencyPackDisclosure)
   case unavailable(FrequencyPackUnavailable)
 
-  var hasEvidence: Bool { sortValue != nil }
-
-  var sortValue: Int? {
-    switch self {
-    case .evidence(let evidence): evidence.rank
-    case .level(let evidence): evidence.level.sortValue
-    case .noEvidence, .unavailable: nil
-    }
-  }
-
-  var pack: FrequencyPackDisclosure? {
-    switch self {
-    case .evidence(let evidence): evidence.pack
-    case .level(let evidence): evidence.pack
-    case .noEvidence(let pack): pack
-    case .unavailable(let unavailable): unavailable.pack
-    }
-  }
-
-  var tier: FrequencyTier? {
-    switch self {
-    case .evidence(let evidence): FrequencyTier(rank: evidence.rank)
-    case .level(let evidence): FrequencyTier(level: evidence.level)
-    case .noEvidence, .unavailable: nil
-    }
-  }
-
   static func unavailableResults(
     for ids: [LanguageReferenceID],
     pack: FrequencyPackDisclosure?,
@@ -149,11 +122,6 @@ struct FrequencyEvidence: Equatable, Sendable {
     case exactWrittenPOS
     case uniqueFormFallback
   }
-
-  var topPercentDisplay: String {
-    let percent = Double(rank) / Double(coveredSourceRows) * 100
-    return "Top \(String(format: "%.2f", locale: Locale(identifier: "en_US_POSIX"), percent))%"
-  }
 }
 
 enum JLPTLevel: Int, CaseIterable, Sendable {
@@ -162,20 +130,12 @@ enum JLPTLevel: Int, CaseIterable, Sendable {
   case n3
   case n4
   case n5
-
-  var label: String { "N\(rawValue)" }
-
-  var sortValue: Int { 6 - rawValue }
 }
 
 struct FrequencyLevelEvidence: Equatable, Sendable {
   let pack: FrequencyPackDisclosure
   let languageReferenceID: LanguageReferenceID
   let level: JLPTLevel
-
-  static let explanation =
-    "JLPT levels are study estimates from Jonathan Waller's vocabulary lists. JLPT has "
-    + "published no official vocabulary list since 2010."
 }
 
 enum FrequencyPackError: Error, Equatable {

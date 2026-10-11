@@ -5,6 +5,7 @@ class ZenbuUITestCase: XCTestCase {
   static let offlineAccountService = "http://127.0.0.1:9"
   static let patience =
     ProcessInfo.processInfo.environment["ZENBU_UI_TEST_PATIENCE"].flatMap(TimeInterval.init) ?? 90
+  static let layoutPatience: TimeInterval = 5
 
   let fixtures = URL(filePath: #filePath)
     .deletingLastPathComponent()
@@ -152,7 +153,12 @@ class ZenbuUITestCase: XCTestCase {
       XCTAssertTrue(isReachable(element, in: app), "\(element) can't be reached", file: file, line: line)
     }
     let window = app.windows.firstMatch.frame
-    let frame = element.frame
+    let laidOut = Date.now.addingTimeInterval(Self.layoutPatience)
+    var frame = element.frame
+    while frame.isEmpty, Date.now < laidOut {
+      RunLoop.current.run(until: Date.now.addingTimeInterval(0.2))
+      frame = element.frame
+    }
     XCTAssertFalse(frame.isEmpty, "\(element) has no size", file: file, line: line)
     if Self.scrollingContainers.contains(element.elementType) {
       XCTAssertTrue(
@@ -213,10 +219,29 @@ class ZenbuUITestCase: XCTestCase {
 
   func tap(_ element: XCUIElement, file: StaticString = #filePath, line: UInt = #line) {
     waitFor(element, file: file, line: line)
-    if device == .mac, element.elementType == .menuItem {
-      waitUntil(element, "isHittable == true", file: file, line: line)
+    guard device == .mac, element.elementType == .menuItem,
+      let window = launched?.windows.firstMatch
+    else { return element.tap() }
+    waitUntil(element, "isHittable == true", file: file, line: line)
+    let deadline = Date.now.addingTimeInterval(Self.patience)
+    var frame = element.frame
+    while !frame.isOnScreen, Date.now < deadline {
+      RunLoop.current.run(until: Date.now.addingTimeInterval(0.1))
+      frame = element.frame
     }
-    element.tap()
+    guard frame.isOnScreen else {
+      attachWhatIsOnScreen()
+      return XCTFail("\(element) was never laid out", file: file, line: line)
+    }
+    let origin = window.frame.origin
+    window.coordinate(withNormalizedOffset: .zero)
+      .withOffset(CGVector(dx: frame.midX - origin.x, dy: frame.midY - origin.y)).tap()
+  }
+
+  func isHittable(_ element: XCUIElement, within seconds: TimeInterval) -> Bool {
+    let hittable = XCTNSPredicateExpectation(
+      predicate: NSPredicate(format: "isHittable == true"), object: element)
+    return XCTWaiter().wait(for: [hittable], timeout: seconds) == .completed
   }
 
   @discardableResult
@@ -234,6 +259,19 @@ class ZenbuUITestCase: XCTestCase {
 
   func type(_ text: String, into element: XCUIElement) {
     tap(element)
+    if device != .mac, let app = launched {
+      let focused = app.descendants(matching: .any)
+        .matching(NSPredicate(format: "hasKeyboardFocus == true")).firstMatch
+      for _ in 0..<2 where !focused.waitForExistence(timeout: Self.layoutPatience) {
+        element.tap()
+      }
+    }
     element.typeText(text)
+  }
+}
+
+extension CGRect {
+  fileprivate var isOnScreen: Bool {
+    !isNull && !isInfinite && !isEmpty && origin.x.isFinite && origin.y.isFinite
   }
 }

@@ -38,7 +38,8 @@ final class WordSheetPresentation {
 
 struct RecognizedWordSheet<EntryContent: View>: View {
   @Environment(\.dismiss) private var dismiss
-  @State private var candidateRanks: [LanguageReferenceID: FrequencyRanks] = [:]
+  @Environment(WordKnowledge.self) private var wordKnowledge
+  @State private var candidateRows: [String: ListedWord] = [:]
 
   let request: RecognizedWordSheetRequest
   @Binding var detent: PresentationDetent
@@ -92,20 +93,26 @@ struct RecognizedWordSheet<EntryContent: View>: View {
   }
 
   private var candidateList: some View {
-    List(request.candidateEntries.enumerated(), id: \.element.id) { index, candidate in
-      ResultRow(
-        entry: candidate,
-        summary: candidate.summary,
-        frequencyRanks: candidateRanks[candidate.id],
-        rank: .result(position: index + 1, count: request.candidateEntries.count),
-        link: candidate
-      )
+    let candidates = WordRowsRequest(
+      entries: request.candidateEntries.map {
+        WordRowsRequest.Entry(id: $0.id.rawValue, summary: $0.summary)
+      },
+      frequency: nil,
+      known: request.candidateEntries.map(\.id).filter(wordKnowledge.isKnown).map(\.rawValue))
+    let rows = candidateRows.isEmpty ? candidates.rowsByEntry() : candidateRows
+    return List(request.candidateEntries, id: \.id) { candidate in
+      if let row = rows[candidate.id.rawValue] {
+        ResultRow(entry: candidate, row: row, link: candidate)
+      }
     }
     .listStyle(.plain)
-    .task(id: request.id) {
-      candidateRanks =
-        (try? await FrequencyCapability.live.evidence(for: request.candidateEntries.map(\.id)))
-        ?? [:]
+    .task(id: candidates) {
+      let ids = request.candidateEntries.map(\.id)
+      var listed = candidates
+      listed.frequency = (try? await FrequencyCapability.live.evidence(for: ids))
+        .map { LearnerFrequency($0, for: ids) }
+      guard !Task.isCancelled else { return }
+      candidateRows = listed.rowsByEntry()
     }
     .toolbar {
       ToolbarItem(placement: .sheetClose) { closeButton }

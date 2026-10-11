@@ -97,6 +97,10 @@ export async function artifactKanji() {
   return (await open()).artifact.kanji
 }
 
+export async function artifactTokenize() {
+  return (await open()).tokenize
+}
+
 export async function browse(watch?: (sql: string) => void): Promise<DictionaryBrowse> {
   const { artifact } = await open()
   const db: ArtifactDatabase = watch

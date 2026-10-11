@@ -1,4 +1,6 @@
 import type {
+  KanjiElementKanjiRow,
+  KanjiElementPageRows,
   KanjiElementRow,
   KanjiGlossRow,
   KanjiReadingRow,
@@ -58,40 +60,46 @@ const isCJKUnifiedIdeograph = (character: string) => {
   return code >= 0x3400 && code <= 0x9fff
 }
 
-export class KanjiData {
-  private readonly byCharacter: Map<string, KanjiReferenceEntry>
-  private readonly structures: Map<string, KanjiStructureEntry>
-  private readonly elementsByGlyph: Map<string, KanjiElementEntry>
+export interface KanjiSources {
+  metadataSourceIdentity: string
+  componentSourceIdentity: string
+  schema: string
+}
 
-  constructor(reference: KanjiReferenceFile, elements: KanjiElementFile) {
-    for (const [key, value] of Object.entries(referenceSources)) {
-      const recorded = reference[key as keyof typeof referenceSources]
-      if (recorded !== value) {
-        throw new Error(
-          `Refusing the language data: KanjiReferenceData.json's ${key} is ${recorded}, not ${value}`
-        )
-      }
-    }
-    if (elements.schema !== elementsSchema) {
+export interface KanjiElementSources {
+  snapshot: string
+  structureSourceIdentity: string
+  metadataSourceIdentity: string
+  metadataSourceSnapshot: string
+}
+
+export function checkKanjiSources(sources: KanjiSources): void {
+  for (const [key, value] of Object.entries(referenceSources)) {
+    const recorded = sources[key as keyof typeof referenceSources]
+    if (recorded !== value) {
       throw new Error(
-        `Refusing the language data: KanjiElementReferenceData.json is ${elements.schema}; the core reads ${elementsSchema}`
+        `Refusing the language data: KanjiReferenceData.json's ${key} is ${recorded}, not ${value}`
       )
     }
-    this.byCharacter = new Map(reference.entries.map(entry => [entry.character, entry]))
-    this.structures = new Map(elements.kanji.map(entry => [entry.character, entry]))
-    this.elementsByGlyph = new Map(elements.elements.map(element => [element.glyph, element]))
   }
+  if (sources.schema !== elementsSchema) {
+    throw new Error(
+      `Refusing the language data: KanjiElementReferenceData.json is ${sources.schema}; the core reads ${elementsSchema}`
+    )
+  }
+}
 
-  has(character: string): boolean {
-    return this.byCharacter.has(character)
-  }
+export interface KanjiLookup {
+  entry(character: string): KanjiReferenceEntry | undefined
+  structure(character: string): KanjiStructureEntry | undefined
+  element(glyph: string): KanjiElementEntry | undefined
+}
 
-  entries(): KanjiReferenceEntry[] {
-    return [...this.byCharacter.values()]
-  }
+export class KanjiReference {
+  constructor(private readonly lookup: KanjiLookup) {}
 
   row(character: string): KanjiRow | null {
-    const entry = this.byCharacter.get(character)
+    const entry = this.lookup.entry(character)
     if (!entry) return null
     return {
       character: entry.character,
@@ -114,7 +122,7 @@ export class KanjiData {
       }
     }
     return characters.flatMap(character => {
-      const entry = this.byCharacter.get(character)
+      const entry = this.lookup.entry(character)
       if (!entry) return []
       return [
         {
@@ -127,7 +135,7 @@ export class KanjiData {
   }
 
   structure(character: string): KanjiStructureRow | null {
-    const entry = this.structures.get(character)
+    const entry = this.lookup.structure(character)
     if (!entry) return null
     return {
       onReadings: entry.onReadings,
@@ -136,9 +144,38 @@ export class KanjiData {
     }
   }
 
+  elementPageRows(glyph: string, sources: KanjiElementSources): KanjiElementPageRows | null {
+    const element = this.lookup.element(glyph)
+    if (!element) return null
+    const kanji = (characters: readonly string[]): KanjiElementKanjiRow[] =>
+      characters.flatMap(character => {
+        const entry = this.lookup.structure(character)
+        return entry
+          ? [
+              {
+                character: entry.character,
+                meanings: entry.meanings,
+                onReadings: entry.onReadings,
+                frequencyRank: entry.frequencyRank
+              }
+            ]
+          : []
+      })
+    return {
+      glyph,
+      meanings: element.meanings,
+      commonLinkedOnReadings: element.commonLinkedOnReadings,
+      alternatives: element.alternatives,
+      family: kanji([glyph, ...element.alternatives]),
+      containing: kanji(element.containingCharacters),
+      structureSource: `${sources.structureSourceIdentity} ${sources.snapshot}`,
+      metadataSource: `${sources.metadataSourceIdentity} ${sources.metadataSourceSnapshot}`
+    }
+  }
+
   elementRows(glyphs: string[]): KanjiElementRow[] {
     return glyphs.flatMap(glyph => {
-      const element = this.elementsByGlyph.get(glyph)
+      const element = this.lookup.element(glyph)
       return element
         ? [
             {
@@ -149,5 +186,30 @@ export class KanjiData {
           ]
         : []
     })
+  }
+}
+
+export class KanjiData extends KanjiReference {
+  private readonly byCharacter: Map<string, KanjiReferenceEntry>
+
+  constructor(reference: KanjiReferenceFile, elements: KanjiElementFile) {
+    checkKanjiSources({ ...reference, schema: elements.schema })
+    const byCharacter = new Map(reference.entries.map(entry => [entry.character, entry]))
+    const structures = new Map(elements.kanji.map(entry => [entry.character, entry]))
+    const elementsByGlyph = new Map(elements.elements.map(element => [element.glyph, element]))
+    super({
+      entry: character => byCharacter.get(character),
+      structure: character => structures.get(character),
+      element: glyph => elementsByGlyph.get(glyph)
+    })
+    this.byCharacter = byCharacter
+  }
+
+  has(character: string): boolean {
+    return this.byCharacter.has(character)
+  }
+
+  entries(): KanjiReferenceEntry[] {
+    return [...this.byCharacter.values()]
   }
 }

@@ -13,7 +13,7 @@ struct WebsiteLinkOpening: ViewModifier {
       task?.cancel()
       let (searchPath, query) = ($searchPath, $query)
       task = Task { @MainActor in
-        let route = await WebsiteLink(url).route(using: lookupClient)
+        let route = await lookupClient.websiteRoute(url)
         guard !Task.isCancelled else { return }
         route.apply(to: &searchPath.wrappedValue, query: &query.wrappedValue)
       }
@@ -21,7 +21,11 @@ struct WebsiteLinkOpening: ViewModifier {
   }
 }
 
-extension WebsiteLinkRoute {
+enum WebsiteLinkRoute: Equatable {
+  case open(SearchExperienceRoute)
+  case search(String)
+  case home
+
   func apply(to searchPath: inout [SearchExperienceRoute], query: inout String) {
     switch self {
     case .open(let route):

@@ -1,22 +1,45 @@
 import Foundation
 import SQLite3
 
-struct KanjiStrokePoint: Hashable, Sendable {
+struct KanjiStrokePoint: Decodable, Hashable, Sendable {
   let x: Double
   let y: Double
 }
 
-enum KanjiStrokePathCommand: Hashable, Sendable {
+enum KanjiStrokePathCommand: Decodable, Hashable, Sendable {
   case move(to: KanjiStrokePoint)
   case cubic(
     control1: KanjiStrokePoint,
     control2: KanjiStrokePoint,
     end: KanjiStrokePoint
   )
+
+  private enum CodingKeys: String, CodingKey {
+    case end
+    case controls
+  }
+
+  init(from decoder: Decoder) throws {
+    let container = try decoder.container(keyedBy: CodingKeys.self)
+    let end = try container.decode(KanjiStrokePoint.self, forKey: .end)
+    guard let controls = try container.decode([KanjiStrokePoint]?.self, forKey: .controls) else {
+      self = .move(to: end)
+      return
+    }
+    guard controls.count == 2 else {
+      throw DecodingError.dataCorruptedError(
+        forKey: .controls, in: container, debugDescription: "A curve has two control points")
+    }
+    self = .cubic(control1: controls[0], control2: controls[1], end: end)
+  }
 }
 
-struct KanjiStroke: Hashable, Sendable {
+struct KanjiStroke: Decodable, Hashable, Sendable {
   let commands: [KanjiStrokePathCommand]
+
+  init(from decoder: Decoder) throws {
+    commands = try decoder.singleValueContainer().decode([KanjiStrokePathCommand].self)
+  }
 }
 
 struct KanjiStrokeDiagram: Identifiable, Hashable, Sendable {
@@ -55,24 +78,24 @@ private actor KanjiStrokeData {
       throw KanjiStrokeDataError.sqlite(message: String(cString: sqlite3_errmsg(database)))
     }
 
-    let viewportSize = sqlite3_column_double(statement, 0)
-    let expectedStrokeCount = Int(sqlite3_column_int(statement, 1))
     guard let text = sqlite3_column_text(statement, 2) else {
       throw KanjiStrokeDataError.invalidArtifact("missing stroke geometry")
     }
-    let compactStrokes = try JSONDecoder().decode(
-      [[Double]].self,
-      from: Data(String(cString: text).utf8)
-    )
-    let strokes = try compactStrokes.map(Self.decodeStroke)
-    guard strokes.count == expectedStrokeCount, !strokes.isEmpty else {
-      throw KanjiStrokeDataError.invalidArtifact("stroke-count mismatch")
-    }
+    let row =
+      "{\"viewportSize\":\(sqlite3_column_double(statement, 0)),"
+      + "\"strokeCount\":\(sqlite3_column_int(statement, 1)),"
+      + "\"strokes\":\(String(cString: text))}"
+    let drawn: Drawn = try PresentationCore.shared.answer("kanjiStrokes", row)
     return KanjiStrokeDiagram(
       character: character,
-      viewportSize: viewportSize,
-      strokes: strokes
+      viewportSize: drawn.viewportSize,
+      strokes: drawn.strokes
     )
+  }
+
+  private struct Drawn: Decodable {
+    let viewportSize: Double
+    let strokes: [KanjiStroke]
   }
 
   private func openDatabase() throws -> OpaquePointer {
@@ -95,41 +118,6 @@ private actor KanjiStrokeData {
     let connection = SQLiteConnection(pointer: opened)
     self.connection = connection
     return connection.pointer
-  }
-
-  private static func decodeStroke(_ encoded: [Double]) throws -> KanjiStroke {
-    var commands: [KanjiStrokePathCommand] = []
-    var index = 0
-    while index < encoded.count {
-      let opcode = Int(encoded[index])
-      index += 1
-      switch opcode {
-      case 0:
-        guard index + 1 < encoded.count else {
-          throw KanjiStrokeDataError.invalidArtifact("incomplete move command")
-        }
-        commands.append(.move(to: KanjiStrokePoint(x: encoded[index], y: encoded[index + 1])))
-        index += 2
-      case 1:
-        guard index + 5 < encoded.count else {
-          throw KanjiStrokeDataError.invalidArtifact("incomplete cubic command")
-        }
-        commands.append(
-          .cubic(
-            control1: KanjiStrokePoint(x: encoded[index], y: encoded[index + 1]),
-            control2: KanjiStrokePoint(x: encoded[index + 2], y: encoded[index + 3]),
-            end: KanjiStrokePoint(x: encoded[index + 4], y: encoded[index + 5])
-          )
-        )
-        index += 6
-      default:
-        throw KanjiStrokeDataError.invalidArtifact("unknown path opcode")
-      }
-    }
-    guard let first = commands.first, case .move = first else {
-      throw KanjiStrokeDataError.invalidArtifact("stroke does not begin with a move")
-    }
-    return KanjiStroke(commands: commands)
   }
 }
 

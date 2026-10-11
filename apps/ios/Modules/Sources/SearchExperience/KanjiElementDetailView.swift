@@ -2,7 +2,7 @@ import SwiftUI
 
 struct KanjiElementDetailView: View {
   let elementID: KanjiElementID
-  let lookupClient: KanjiElementLookupClient
+  let lookupClient: KanjiLookupClient
   let preservedContribution: KanjiCharacter?
 
   @State private var loadState = KanjiElementDetailLoadState.loading
@@ -12,7 +12,7 @@ struct KanjiElementDetailView: View {
     ScrollViewReader { proxy in
       List {
         Section {
-          KanjiElementHeader(elementID: elementID, entry: entry)
+          KanjiElementHeader(elementID: elementID, page: page)
         }
 
         switch loadState {
@@ -46,8 +46,8 @@ struct KanjiElementDetailView: View {
                 .accessibilityIdentifier("kanji-element.retry")
             }
           }
-        case .loaded(let entry):
-          KanjiElementContent(entry: entry)
+        case .loaded(let page):
+          KanjiElementContent(page: page)
         }
       }
       .groupedList()
@@ -60,17 +60,17 @@ struct KanjiElementDetailView: View {
     .navigationTitle("Element")
     .inlineNavigationTitle()
     .task(id: KanjiElementDetailLoadRequest(id: elementID, retryID: retryID)) {
-      await loadEntry()
+      loadPage()
     }
   }
 
-  private var entry: KanjiElementEntry? {
-    guard case .loaded(let entry) = loadState else { return nil }
-    return entry
+  private var page: KanjiElementPage? {
+    guard case .loaded(let page) = loadState else { return nil }
+    return page
   }
 
   private var containingCharacters: [KanjiCharacter] {
-    entry?.containingKanji.map(\.character) ?? []
+    page?.containing.map(\.character) ?? []
   }
 
   private func retry() { retryID += 1 }
@@ -86,20 +86,14 @@ struct KanjiElementDetailView: View {
     }
   }
 
-  private func loadEntry() async {
-    loadState = .loading
+  private func loadPage() {
     do {
-      if let entry = try await lookupClient.entry(elementID) {
-        guard !Task.isCancelled else { return }
-        loadState = .loaded(entry)
+      if let page = try lookupClient.element(elementID) {
+        loadState = .loaded(page)
       } else {
-        guard !Task.isCancelled else { return }
         loadState = .missing
       }
-    } catch is CancellationError {
-      return
     } catch {
-      guard !Task.isCancelled else { return }
       loadState = .failed
     }
   }
@@ -109,15 +103,15 @@ private struct KanjiElementHeader: View {
   @ScaledMetric(relativeTo: .largeTitle) private var glyphSize = 108.0
 
   let elementID: KanjiElementID
-  let entry: KanjiElementEntry?
+  let page: KanjiElementPage?
 
   var body: some View {
     VStack(spacing: 16) {
       Text(elementID.rawValue)
         .font(.system(size: glyphSize, weight: .light))
         .accessibilityIdentifier("kanji-element.glyph")
-      if let entry, !entry.meanings.isEmpty {
-        Text(entry.meanings.joined(separator: ", "))
+      if let page, !page.meanings.isEmpty {
+        Text(page.meanings.joined(separator: ", "))
           .font(.title3.weight(.semibold))
           .multilineTextAlignment(.center)
       }
@@ -128,12 +122,13 @@ private struct KanjiElementHeader: View {
 }
 
 private struct KanjiElementContent: View {
-  let entry: KanjiElementEntry
+  let page: KanjiElementPage
 
   var body: some View {
-    if !entry.alternatives.isEmpty {
+    let alternatives = page.alternatives.compactMap(KanjiElementID.init)
+    if !alternatives.isEmpty {
       Section("ALTERNATIVE FORMS") {
-        ForEach(entry.alternatives, id: \.self) { alternative in
+        ForEach(alternatives, id: \.rawValue.unicodeScalars.first?.value) { alternative in
           NavigationLink(value: SearchExperienceRoute.kanjiElement(alternative)) {
             Text(alternative.rawValue)
               .font(.title3)
@@ -144,25 +139,23 @@ private struct KanjiElementContent: View {
       }
     }
 
-    if !entry.meanings.isEmpty {
+    if let explanation = page.explanation {
       Section {
-        Text(
-          "This element contributes forms associated with \(entry.meanings.joined(separator: ", "))."
-        )
-        .accessibilityIdentifier("kanji-element.meaning-explanation")
+        Text(explanation)
+          .accessibilityIdentifier("kanji-element.meaning-explanation")
       } header: {
         Text("MEANING / STRUCTURE")
           .accessibilityIdentifier("kanji-element.meaning-header")
       }
     }
 
-    if !entry.commonLinkedOnReadings.isEmpty {
+    if let soundPatterns = page.soundPatterns {
       Section("SOUND PATTERNS") {
-        Text("Linked on-readings: \(entry.commonLinkedOnReadings.joined(separator: ", "))")
+        Text(soundPatterns)
       }
     }
 
-    if let standalone = entry.standaloneKanji {
+    if let standalone = page.standalone {
       Section("AS A STANDALONE KANJI") {
         KanjiContributionRow(
           contribution: standalone,
@@ -171,9 +164,9 @@ private struct KanjiElementContent: View {
       }
     }
 
-    if !entry.containingKanji.isEmpty {
+    if !page.containing.isEmpty {
       Section("KANJI CONTAINING THIS ELEMENT") {
-        ForEach(entry.containingKanji) { contribution in
+        ForEach(page.containing) { contribution in
           KanjiContributionRow(
             contribution: contribution,
             identifierPrefix: "kanji-element.contribution"
@@ -184,18 +177,14 @@ private struct KanjiElementContent: View {
 
     Section("SOURCE") {
       LabeledContent("Structure") {
-        Text(
-          "\(entry.structureProvenance.sourceIdentity) \(entry.structureProvenance.sourceSnapshot)"
-        )
-        .multilineTextAlignment(.trailing)
-        .accessibilityIdentifier("kanji-element.structure-source")
+        Text(page.structureSource)
+          .multilineTextAlignment(.trailing)
+          .accessibilityIdentifier("kanji-element.structure-source")
       }
       LabeledContent("Meanings and readings") {
-        Text(
-          "\(entry.metadataProvenance.sourceIdentity) \(entry.metadataProvenance.sourceSnapshot)"
-        )
-        .multilineTextAlignment(.trailing)
-        .accessibilityIdentifier("kanji-element.metadata-source")
+        Text(page.metadataSource)
+          .multilineTextAlignment(.trailing)
+          .accessibilityIdentifier("kanji-element.metadata-source")
       }
       Text("Both sources are independently normalized into Zenbu Japanese Language Reference Data.")
         .font(.caption)
@@ -206,7 +195,7 @@ private struct KanjiElementContent: View {
 private struct KanjiContributionRow: View {
   @ScaledMetric(relativeTo: .title) private var glyphSize = 48.0
 
-  let contribution: KanjiElementContribution
+  let contribution: KanjiElementPage.Kanji
   let identifierPrefix: String
 
   var body: some View {
@@ -217,7 +206,7 @@ private struct KanjiContributionRow: View {
           .frame(minWidth: 64)
         VStack(alignment: .leading, spacing: 5) {
           if !contribution.meanings.isEmpty {
-            Text(contribution.meanings.prefix(3).joined(separator: ", "))
+            Text(contribution.meanings.joined(separator: ", "))
               .lineLimit(2)
           }
           if !contribution.onReadings.isEmpty {
@@ -227,10 +216,7 @@ private struct KanjiContributionRow: View {
         }
       }
     }
-    .accessibilityLabel(
-      ([contribution.character.rawValue] + contribution.meanings + contribution.onReadings)
-        .joined(separator: ", ")
-    )
+    .accessibilityLabel(contribution.spoken)
     .accessibilityIdentifier("\(identifierPrefix).\(contribution.character.rawValue)")
     .id(contribution.character)
   }
@@ -243,7 +229,7 @@ private struct KanjiElementDetailLoadRequest: Hashable {
 
 private enum KanjiElementDetailLoadState: Equatable {
   case loading
-  case loaded(KanjiElementEntry)
+  case loaded(KanjiElementPage)
   case missing
   case failed
 }

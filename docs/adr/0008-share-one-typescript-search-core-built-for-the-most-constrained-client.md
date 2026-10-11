@@ -39,3 +39,143 @@ that the website has no sentence search (until ADR 0009, whose service supplies 
 The discussion is in [issue 481](https://github.com/serpcompany/zenbujapanese-monorepo/issues/481)
 and [PR 478](https://github.com/serpcompany/zenbujapanese-monorepo/pull/478). This decision
 refines [ADR 0006](0006-share-language-data-as-a-versioned-artifact.md).
+
+## Amendment: the app's search runs the core
+
+The first step of
+[issue 481](https://github.com/serpcompany/zenbujapanese-monorepo/issues/481) moved the app's
+search retrieval, its lookup of a linked text's words, and a kanji's words onto the core, and
+removed the Swift that did them. The app loads a bundle of the core into JavaScriptCore and
+gives it one function, which answers the core's SQL from the app's own connection as JSON
+([`dictionary-core.md`](../agents/dictionary-core.md), Embedded;
+[`ios.md`](../agents/ios.md), The dictionary core in the app). The rest of the app's dictionary
+logic (examples, word and kanji detail, and the results screen) is still Swift the core ports,
+and moves the same way.
+
+Three choices that aren't obvious from the code:
+
+- **The core answers IDs, and the app reads its own entries.** JavaScriptCore runs without its
+  JIT inside an app, on the Mac as on iPhone, so the interpreter should carry only what it ranks
+  with. An entry is read once, natively, for the results that are shown. The Swift search decoded
+  every candidate's whole entry, which is why broad queries got faster, not slower.
+- **It runs inside the lookup actor, not on a thread of its own.** Every read is synchronous, so
+  a call settles before it returns, a cancelled task stops at the next row as it did, and one
+  connection serves the core and the app's own entry reads without a lock. A search that needs a
+  sentence's words returns to Swift to await Sudachi, then goes on.
+- **The bundle is checked in.** The app builds without Node, and the core's tests fail when the
+  file isn't what the source builds.
+
+Measured on 2026-10-10 against the Swift it replaced, in optimized builds, on a Mac and on an
+iPhone Simulator with JavaScriptCore's JIT turned off, as it is on a device (the Simulator's JIT
+makes JavaScript several times faster and holds several times the memory):
+
+| | Mac, Swift | Mac, core | Simulator, Swift | Simulator, core |
+| --- | --- | --- | --- | --- |
+| 45 uncached searches | 8.4 s | 5.4 s | 9.2 s | 7.2 s |
+| 1,000 entries read by ID | 51 ms | 41 ms | 84 ms | 67 ms |
+| 8 kanji's words | 323 ms | 321 ms | 338 ms | 366 ms |
+| 200 example sentences linked, first time | 117 ms | 129 ms | 473 ms | 255 ms |
+| The same sentences linked again | 72 ms | 59 ms | 391 ms | 59 ms |
+| An abandoned search out of the next one's way, at the median | 6 ms to 49 ms | 2 ms to 7 ms | 6 ms to 40 ms | 3 ms to 8 ms |
+| Memory after the searches | 222 MB | 111 MB | 54 MB | 53 MB |
+| Memory at its highest | 293 MB | 257 MB | 223 MB | 249 MB |
+
+Forty of the 45 searches were as fast or faster on the Mac, every broad one among them (い 2.6 s
+to 1.7 s, go 440 ms to 100 ms, see 344 ms to 16 ms), and five were 0.1 ms to 1.6 ms slower. One
+word looked up alone, outside a text, costs about 0.5 ms where the Swift took 0.4 ms.
+`SearchLatencyTests` repeats the measurement
+([`ios.md`](../agents/ios.md), The dictionary core in the app). No iPhone was measured.
+
+## Amendment: the app runs all of the core
+
+The rest of [issue 481](https://github.com/serpcompany/zenbujapanese-monorepo/issues/481) moved
+everything else the app's dictionary decides onto the core: the results screen with its
+frequency re-sort, Sort By, and Filter; example sentences and linked words; the word, kanji,
+and kanji element pages; furigana; a query's normalization; and the short meaning under a
+linked word. The Swift that did them is gone, and so is the `Search parity` check that asked
+for both sides of each to change together. The app's Swift keeps the screens, reads the files,
+and decodes the core's answers ([`dictionary-core.md`](../agents/dictionary-core.md), The app's
+side; [`ios.md`](../agents/ios.md), The dictionary core in the app).
+
+The choices that aren't obvious from the code:
+
+- **The core answers what a screen says, not only what it holds.** Titles, orders, labels,
+  counts, and what VoiceOver reads are fields of the answer. A rule decided in a view would be
+  decided again in the next client, which is what this issue ends.
+- **Three engines, split by how long a call takes.** A search or a page of linked sentences
+  takes tens of milliseconds and awaits, so each has an actor with its own engine and its own
+  SQLite connection. A row's furigana or a page's model takes under a millisecond and is needed
+  while a view is being built, so the third engine sits behind a lock and answers
+  synchronously. One engine for all three would make a row wait behind a search.
+- **Kuromoji runs in the text engine.** The core calls its `tokenize` directly, so linking a
+  text is one call, with no trip back to Swift for each sentence's words. Sudachi, which a
+  launch switch still compares, answers through the call instead.
+- **The kanji files stay with the host.** Parsed into an engine they are 16 MB of objects the
+  collector walks on every pass. The host maps the files, scans them once for each record's
+  place, and hands over a record's bytes when the core asks.
+- **The Swift's answers were recorded before it was removed.** Beside the recorded suites, each
+  part was compared with the core across the whole of the data: every kanji's page and every
+  element's page, every entry's first meaning as a short gloss, and every headword, reading,
+  and summary as a query. They agreed, apart from two things the core does by the standard and
+  Foundation did not: it joins a halfwidth kana and its voiced mark (ｶﾞ is ガ), and lowercases a
+  word's final Σ to ς. A new suite, `kanji-element.json`, holds what the Swift element page
+  showed.
+
+Measured on 2026-10-10 against the Swift it replaced, in optimized builds on a Mac, whose
+JavaScriptCore runs without its JIT as a device's does. The first four rows are the recorded
+suites run one at a time: each does everything its screen needs for every case, through the
+clients the views use.
+
+| | Swift | Core |
+| --- | --- | --- |
+| The results screen for 56 queries | 43.5 s | 31.8 s |
+| Example Sentences for 67 queries, the first five sentences of each linked | 72.4 s | 35.6 s |
+| Word Detail for 54 words, with their examples and every conjugated form's | 34.0 s | 27.5 s |
+| Kanji Detail for 33 kanji | 2.28 s | 2.20 s |
+| The example count a results screen waits for, 14 queries, none remembered | 1.76 s | 1.48 s |
+| 200 example sentences linked, first time | 137 ms | 162 ms |
+| The same sentences linked again | 65 ms | 12 ms |
+| The kanji data read at launch | 175 ms | 14 ms |
+| The first kanji page's reference | 160 ms to 230 ms | 0.7 ms |
+| Memory after a session of searches, examples, linked sentences, and kanji pages | 308 MB | 280 MB |
+| Memory at its highest in that session | 308 MB | 289 MB |
+
+Search itself did not change (45 uncached searches: 5.7 s before and after), and the first
+search after launch starts one more engine, which takes about 7 ms. A screen's model
+costs the engine about a millisecond: a results screen 1.2 ms (1.5 ms sorted by a dictionary), a
+word page 0.2 ms, a kanji page 0.6 ms, an element page 0.7 ms, and a word's furigana 0.04 ms
+before it is remembered. The Swift's own time for each was not measured and will have been
+shorter; none is a frame, and the screens are faster as a whole because their examples are.
+
+One thing is slower: a sentence linked for the first time takes about 0.8 ms where it took
+0.7 ms, since the engine reads each linked entry's forms to choose its furigana and the app
+then reads the entry itself. Linked again, it takes 0.06 ms where it took 0.3 ms, because the
+core remembers it. `SearchLatencyTests` repeats every measurement
+([`ios.md`](../agents/ios.md), The dictionary core in the app). No iPhone was measured.
+
+### The rules that were left in Swift
+
+The first pass left a few rules in Swift because each was small or drew something: whether a
+string is one kanji, decoding a stroke diagram, romaji, the radical panel, which handwriting
+candidates are offered, which linked words count toward comprehension and which punctuation
+stays with its neighbour on a line, when a radical pick narrows the results, reading a
+zenbujapanese.com link, and choosing the entry a related or a saved word opens. They moved
+too, on 2026-10-10, so that a client with no Swift (the website, a browser extension) answers
+the same without writing them again. Each was compared with its Swift across the data first
+([`dictionary-core.md`](../agents/dictionary-core.md), The app's side).
+
+Romaji had been Foundation's transliteration, which no other client has. The core now holds
+the same rules, read out of the system's ICU, and agrees with Foundation on every reading and
+every example sentence in the bundled data. It leaves other writing systems as written, where
+Foundation turned them to Latin letters too.
+
+Measured the same way: 1,798 readings take the core 53 ms the first time (Foundation took
+17 ms) and 0.5 ms once remembered; 200 linked sentences take 17 ms, then 0.4 ms, where the
+Swift transliterated every word again on each redraw; the radical panel opens in 11 ms and
+answers a pick in 1.7 ms (the Swift took 14 ms and 4.5 ms); a stroke diagram takes 0.2 ms; and
+a kanji check 0.007 ms before it is remembered.
+
+What stays in Swift is what needs the platform or belongs to the learner: reading files,
+parsing a URL, drawing, the learner's stored data and its sync, the Player's handling of
+YouTube's links and captions, and Apple's speech, recognition, translation, and Apple
+Intelligence ([`ios.md`](../agents/ios.md), What stays native, and why).

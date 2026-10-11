@@ -1,5 +1,5 @@
 import type { ConjugationRow, Conjugations } from './conjugation'
-import type { FrequencyDetails } from './frequency'
+import type { FrequencyLookupRow } from './frequency'
 import type { PitchAccent } from './pitch'
 import { type FuriganaSegment, furiganaSegments } from './ruby'
 
@@ -86,9 +86,11 @@ export function suitePitchGraph(pitch: PitchAccent): SuitePitchGraph {
   }
 }
 
-export function suiteFrequencyDetails(details: FrequencyDetails): SuiteFrequencyDetails {
+export function suiteFrequencyDetails(
+  details: FrequencyLookupRow['details']
+): SuiteFrequencyDetails {
   return {
-    pack: details.pack,
+    ...(details.pack ? { pack: details.pack } : {}),
     section: details.section,
     rows: details.rows,
     ...(details.explanation === null ? {} : { explanation: details.explanation })

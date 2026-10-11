@@ -51,12 +51,9 @@ private final class VisionHandwritingRecognitionOperation: @unchecked Sendable {
     try VNImageRequestHandler(cgImage: image).perform([request])
     try checkCancellation()
 
-    var seen = Set<String>()
-    return (request.results ?? []).flatMap { $0.topCandidates(5) }.compactMap { candidate in
-      let value = SearchQuery(candidate.string).value
-      guard SearchQuery(value).isJapaneseOnly, seen.insert(value).inserted else { return nil }
-      return HandwritingCandidate(value: value)
-    }
+    let recognized = (request.results ?? []).flatMap { $0.topCandidates(5) }.map(\.string)
+    let written: [String] = try PresentationCore.shared.answer("japaneseCandidates", recognized)
+    return written.map(HandwritingCandidate.init(value:))
   }
 
   private func checkCancellation() throws {

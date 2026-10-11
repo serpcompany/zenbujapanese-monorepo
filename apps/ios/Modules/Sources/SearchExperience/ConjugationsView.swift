@@ -1,27 +1,37 @@
 import SwiftUI
 
 struct ConjugationsView: View {
-  @State private var mode = ConjugationMode.plain
+  @State private var mode: String
 
   let entry: DictionaryEntry
-  let table: ConjugationTable
+  let conjugations: Conjugations
   let speechSynthesisClient: SpeechSynthesisClient
+
+  init(
+    entry: DictionaryEntry, conjugations: Conjugations,
+    speechSynthesisClient: SpeechSynthesisClient
+  ) {
+    self.entry = entry
+    self.conjugations = conjugations
+    self.speechSynthesisClient = speechSynthesisClient
+    _mode = State(initialValue: conjugations.modes.first ?? "")
+  }
 
   var body: some View {
     List {
       Section {
-        ConjugationHeader(entry: entry, rule: table.rule) {
+        ConjugationHeader(entry: entry, page: WordPage(entry), rule: conjugations.rule) {
           speechSynthesisClient.speak(entry.reading)
         }
       }
 
-      if table.supportsModes {
+      if conjugations.modes.count > 1 {
         Section {
           Picker("Conjugation mode", selection: $mode) {
-            ForEach(ConjugationMode.allCases, id: \.self) { option in
-              Text(option.rawValue)
+            ForEach(conjugations.modes, id: \.self) { option in
+              Text(option)
                 .tag(option)
-                .accessibilityIdentifier("conjugations.mode.\(option.rawValue.lowercased())")
+                .accessibilityIdentifier("conjugations.mode.\(option.lowercased())")
             }
           }
           .pickerStyle(.segmented)
@@ -32,10 +42,8 @@ struct ConjugationsView: View {
       }
 
       Section {
-        ForEach(table.forms(for: mode)) { form in
-          NavigationLink(
-            value: SearchExperienceRoute.conjugatedForm(entry, table, form, mode)
-          ) {
+        ForEach(conjugations.rows[mode] ?? []) { form in
+          NavigationLink(value: SearchExperienceRoute.conjugatedForm(entry, form)) {
             ConjugationRow(form: form)
           }
         }
@@ -51,22 +59,22 @@ struct ConjugationsView: View {
 
 private struct ConjugationHeader: View {
   let entry: DictionaryEntry
+  let page: WordPage?
   let rule: String
   let pronounce: () -> Void
 
   var body: some View {
     VStack(alignment: .leading, spacing: 8) {
       WordHeadline(
-        surface: entry.headword,
-        reading: entry.reading,
-        pitch: entry.pitchAccent,
+        ruby: JapaneseRuby(headwordOf: entry, on: page),
+        pitch: page?.pitch,
         identifierPrefix: "conjugations.header",
         pronounce: pronounce
       )
       Text(entry.summary)
         .foregroundStyle(.secondary)
-      if !entry.displayPartOfSpeech.isEmpty {
-        Text(entry.displayPartOfSpeech)
+      if let partOfSpeech = page?.partOfSpeech, !partOfSpeech.isEmpty {
+        Text(partOfSpeech)
           .font(.subheadline)
       }
       Text(rule)
@@ -83,24 +91,23 @@ private struct ConjugationHeader: View {
 }
 
 private struct ConjugationRow: View {
-  let form: ConjugatedForm
+  let form: Conjugations.Row
 
   var body: some View {
-    let title = form.id.presentation.title
     HStack(spacing: 12) {
-      Text(title)
+      Text(form.title)
         .foregroundStyle(.secondary)
-        .accessibilityIdentifier("conjugations.title.\(form.id.rawValue)")
+        .accessibilityIdentifier("conjugations.title.\(form.kind)")
       Spacer(minLength: 8)
       ConjugatedSurface(form: form, font: .title3, rubyFont: .caption2)
         .multilineTextAlignment(.trailing)
     }
     .contentShape(Rectangle())
     .accessibilityElement(children: .ignore)
-    .accessibilityLabel("\(title), \(form.surface)")
+    .accessibilityLabel("\(form.title), \(form.surface)")
     .accessibilityValue(form.reading)
     .accessibilityHint("Explains this form")
-    .accessibilityIdentifier("conjugations.row.\(form.id.rawValue)")
+    .accessibilityIdentifier("conjugations.row.\(form.kind)")
   }
 }
 
@@ -108,30 +115,23 @@ struct ConjugatedFormView: View {
   @State private var examples: [ExampleSentence] = []
   @State private var isLoadingExamples = true
 
-  let entry: DictionaryEntry
-  let table: ConjugationTable
-  let form: ConjugatedForm
-  let mode: ConjugationMode
+  let form: Conjugations.Row
   let exampleSentenceClient: ExampleSentenceClient
   let speechSynthesisClient: SpeechSynthesisClient
   let japaneseTextAnalysisClient: JapaneseTextAnalysisClient
   let openWord: (DictionaryEntry) -> Void
 
   var body: some View {
-    let presentation = form.id.presentation
     List {
       Section {
         VStack(alignment: .leading, spacing: 10) {
-          Text(presentation.explanation)
+          Text(form.explanation)
             .font(.title3)
-            .accessibilityIdentifier("conjugations.explanation.\(form.id.rawValue)")
-          if !sharedSpellings.isEmpty {
-            Label(
-              "Same spelling as \(sharedSpellings.formatted(.list(type: .and))). Context tells them apart.",
-              systemImage: "equal.circle"
-            )
-            .font(.footnote)
-            .foregroundStyle(.secondary)
+            .accessibilityIdentifier("conjugations.explanation.\(form.kind)")
+          if let note = form.note {
+            Label(note, systemImage: "equal.circle")
+              .font(.footnote)
+              .foregroundStyle(.secondary)
           }
         }
         .padding(.vertical, 4)
@@ -141,8 +141,7 @@ struct ConjugatedFormView: View {
 
       Section {
         WordHeadline(
-          surface: form.surface,
-          reading: form.reading,
+          ruby: form.shown,
           highlightedEnding: form.ending,
           identifierPrefix: "conjugations.form",
           pronounce: { speechSynthesisClient.speak(form.reading) }
@@ -156,178 +155,38 @@ struct ConjugatedFormView: View {
         emptyMessage: "No example sentences use this form yet.",
         highlightedQuery: SearchQuery(form.surface),
         highlightedEntry: nil,
-        presentation: { .conjugatedForm(form.id, index: $0) },
+        presentation: { .conjugatedForm(form.kind, index: $0) },
         speechSynthesisClient: speechSynthesisClient,
         japaneseTextAnalysisClient: japaneseTextAnalysisClient,
         openWord: openWord
       )
     }
     .compactSectionSpacing()
-    .navigationTitle(presentation.title)
+    .navigationTitle(form.title)
     .inlineNavigationTitle()
-    .accessibilityIdentifier("conjugations.form.\(form.id.rawValue)")
+    .accessibilityIdentifier("conjugations.form.\(form.kind)")
     .task(id: form) {
-      examples = await form.examples(
-        exampleSentenceClient: exampleSentenceClient,
-        japaneseTextAnalysisClient: japaneseTextAnalysisClient
-      )
+      examples = await exampleSentenceClient.formExamples(form.surface)
       isLoadingExamples = false
     }
   }
-
-  private var sharedSpellings: [String] { table.sharedSpellings(of: form, in: mode) }
 }
 
-extension ConjugatedForm {
-  func examples(
-    exampleSentenceClient: ExampleSentenceClient,
-    japaneseTextAnalysisClient: JapaneseTextAnalysisClient
-  ) async -> [ExampleSentence] {
-    let sentences = (try? await exampleSentenceClient.search(SearchQuery(surface))) ?? []
-    var examples: [ExampleSentence] = []
-    for sentence in sentences where sentence.japanese.contains(surface) {
-      if await japaneseTextAnalysisClient.words(sentence.japanese).contains(surface) {
-        examples.append(sentence)
-      }
-    }
-    return examples
-  }
-}
-
-extension ConjugationTable {
-  func sharedSpellings(of form: ConjugatedForm, in mode: ConjugationMode) -> [String] {
-    forms(for: mode)
-      .filter { $0.id != form.id && $0.surface == form.surface }
-      .map(\.id.presentation.title)
-  }
-}
-
-extension ConjugatedForm {
-  var rowShowsFurigana: Bool { ending.contains(where: \.isKanji) }
-}
-
-struct ConjugationKindPresentation: Identifiable {
-  let id: ConjugatedForm.Kind
-  let title: String
-  let explanation: String
-}
-
-extension ConjugatedForm.Kind {
-  var presentation: ConjugationKindPresentation {
-    switch self {
-    case .presentFuture:
-      ConjugationKindPresentation(
-        id: self,
-        title: "Present/Future",
-        explanation:
-          "The non-past form. It can describe a present habit or fact, or a future action or state."
-      )
-    case .past:
-      ConjugationKindPresentation(
-        id: self,
-        title: "Past",
-        explanation: "Describes an action or state in the past."
-      )
-    case .negative:
-      ConjugationKindPresentation(
-        id: self,
-        title: "Negative",
-        explanation: "Says that an action does not happen, or a state is not true."
-      )
-    case .pastNegative:
-      ConjugationKindPresentation(
-        id: self,
-        title: "Past Negative",
-        explanation: "Says that an action did not happen, or a state was not true."
-      )
-    case .teForm:
-      ConjugationKindPresentation(
-        id: self,
-        title: "Te-Form",
-        explanation:
-          "A connecting form. It can link actions or descriptions and, depending on context, show sequence, cause, or reason."
-      )
-    case .potential:
-      ConjugationKindPresentation(
-        id: self,
-        title: "Potential",
-        explanation:
-          "Expresses ability or possibility: that someone can do the action or that the action is possible."
-      )
-    case .passive:
-      ConjugationKindPresentation(
-        id: self,
-        title: "Passive",
-        explanation:
-          "Presents the person, thing, or event affected by an action as the focus. The exact meaning depends on context."
-      )
-    case .causative:
-      ConjugationKindPresentation(
-        id: self,
-        title: "Causative",
-        explanation:
-          "Expresses causing or allowing another person or thing to perform an action or enter a state."
-      )
-    case .conditional:
-      ConjugationKindPresentation(
-        id: self,
-        title: "Conditional",
-        explanation:
-          "Sets a condition for what follows: if this happens, the next statement can apply."
-      )
-    case .volitional:
-      ConjugationKindPresentation(
-        id: self,
-        title: "Volitional",
-        explanation:
-          "Expresses will or intention. In context, it can also propose doing something together."
-      )
-    case .imperative:
-      ConjugationKindPresentation(
-        id: self,
-        title: "Imperative",
-        explanation:
-          "Gives a strong command or instruction. It can sound forceful, so context matters."
-      )
-    case .standalone:
-      ConjugationKindPresentation(
-        id: self,
-        title: "Standalone",
-        explanation:
-          "The adjective's base form, shown on its own rather than attached to a noun or verb."
-      )
-    case .modifyingANoun:
-      ConjugationKindPresentation(
-        id: self,
-        title: "Modifying a Noun",
-        explanation: "Places the adjective before a noun to describe that noun."
-      )
-    case .adverb:
-      ConjugationKindPresentation(
-        id: self,
-        title: "Adverb",
-        explanation: "Places the adjective form before a verb to describe how an action is done."
-      )
-    case .noun:
-      ConjugationKindPresentation(
-        id: self,
-        title: "Noun",
-        explanation: "Turns the adjective into a noun that names the quality or its degree."
-      )
-    }
+extension Conjugations.Row {
+  fileprivate var shown: JapaneseRuby {
+    JapaneseRuby(surface: surface, reading: reading, segments: ruby)
   }
 }
 
 private struct ConjugatedSurface: View {
-  let form: ConjugatedForm
+  let form: Conjugations.Row
   let font: Font
   let rubyFont: Font
 
   var body: some View {
-    if form.rowShowsFurigana {
+    if form.rowFurigana {
       JapaneseRubyText(
-        surface: form.surface,
-        reading: form.reading,
+        ruby: form.shown,
         baseFont: font,
         rubyFont: rubyFont,
         highlightedEnding: form.ending,
@@ -338,11 +197,5 @@ private struct ConjugatedSurface: View {
       Text(form.surface.highlightingEnding(form.ending))
         .font(font)
     }
-  }
-}
-
-extension Character {
-  fileprivate var isKanji: Bool {
-    unicodeScalars.contains { (0x4E00...0x9FFF).contains($0.value) || $0 == "々" }
   }
 }

@@ -29,14 +29,13 @@ git lfs pull --include="apps/ios/Modules/Sources/SearchExperience/Resources/**"
   ranked frequency dictionaries; `checkArtifact` refuses a file that lacks one the core lists
   (`packages/dictionary-core/src/browse/lists.ts`).
 - `KanjiReferenceData.json` and `KanjiElementReferenceData.json`.
-- Kuromoji's files, for example word links and conjugated form examples. `src/kuromoji.ts` ports
-  `apps/ios/Modules/Sources/SearchExperience/KuromojiMorphologyClient.swift`: it runs the app's
-  kuromoji.js build in a bare V8 context, as the app runs it in a bare JavaScriptCore one, and
-  hands it each dictionary file, still gzipped, through the app's XMLHttpRequest shim. Tokens
-  come back through JSON, as the app decodes them, so an absent reading stays absent. The files
-  are pinned by SHA-256, as the word-detail suite records them: new files are a new tokenizer, so
-  record the suite again. The `Search parity` workflow fails a pull request that changes the port
-  or the Swift without the other.
+- Kuromoji's files, for example word links and conjugated form examples. `src/kuromoji.ts` runs
+  the app's kuromoji.js build in a bare V8 context, as the app runs it in a bare JavaScriptCore
+  one (`apps/ios/Modules/Sources/SearchExperience/KuromojiEngine.swift`), and hands it each
+  dictionary file, still gzipped, through an XMLHttpRequest shim; the app unpacks the files
+  itself first, since its engine has no JIT. Tokens come back through JSON, so an absent reading
+  stays absent. The files are pinned by SHA-256, as the word-detail suite records them: new
+  files are a new tokenizer, so record the suite again.
 - Sudachi's dictionary, for sentence search: the SudachiDict Core the app pins in
   `LanguageTechnologyPackCatalog.json`. `pnpm sudachi` downloads it into `.sudachi/`, checking
   the download and `system.dic` against the catalog's SHA-256s, and keeps a dictionary already
@@ -245,11 +244,19 @@ row included), example search (every listed pair ID for 67 queries, and the firs
 words, links, and marks), word detail (the first 25 examples' order, tokens, links, and
 highlights, the counts, the furigana split, the pitch graph, each frequency row's details, and
 every conjugated form's examples), and kanji detail (its metrics, Waller's JLPT level among
-them). The word-detail suite's furigana, pitch graph, frequency details, and conjugations take
+them). Each is replayed a second time through `embedded/`, the entry point the app calls, on
+`node:sqlite` with the real Kuromoji and kanji files (the `embedded*.conformance.test.ts`
+files), where the kanji element suite runs too: the website has no element page yet, so that
+is its only replay. A change that would alter what the app shows fails here before any Swift
+runs. The word-detail suite's furigana, pitch graph, frequency details, and conjugations take
 the shapes in `packages/dictionary-core/src/detail/suite.ts`, which the website's rendered-page
 test (`apps/web/src/components/dictionary/word-page.test.tsx`) shares. Each suite pins the files
 it was recorded from, and fails on others (`requirePinnedArtifacts`), since it would compare
-nothing useful. A suite the app recorded with reduced text analysis runs without Sudachi, as the
+nothing useful. The romaji suite (`romaji.json`, `romaji.conformance.test.ts`) is the exception:
+it holds readings and sentences with the romaji Foundation gave them, depends on no data file,
+so it pins none, and it is not among a language-data release's suites, whose packager refuses a
+suite that pins nothing. It is replayed through the core's `romaji` and `sentenceRomaji` and
+through the entry point the app calls. A suite the app recorded with reduced text analysis runs without Sudachi, as the
 app did. The results suite compares a row's first entry number only: the service keeps its
 Language Reference ID's, the first of the entries the app merged into the row. Where the app's
 example retrieval throws, on a headword NFKC changes such as Ｈ, the suite records the error: Word
@@ -264,7 +271,7 @@ checks the cases the app's manual checks name.
 The `Dictionary API` workflow runs `pnpm check` on pull requests with the Git LFS files and
 Sudachi's dictionary cached, then the website's rendered-page gate against the built service. The
 `Dictionary API deploy` workflow builds the Docker image and checks that it starts and answers
-(see Ship it). The `Search parity` workflow pairs the core's ports with their Swift sources.
+(see Ship it).
 
 `pnpm fixtures` regenerates the core's local fixtures (`packages/dictionary-core/src/fixtures/`),
 for `pnpm dev` without a service: the いる homographs and the words written with 要, with two

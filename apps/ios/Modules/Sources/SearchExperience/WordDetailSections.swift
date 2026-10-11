@@ -19,14 +19,15 @@ struct LinkRow<Content: View>: View {
 }
 
 struct PartOfSpeechRow: View {
-  let entry: DictionaryEntry
-  let conjugationTable: ConjugationTable?
-  let openConjugations: (ConjugationTable) -> Void
+  let title: String
+  let entryID: LanguageReferenceID
+  let conjugations: Conjugations?
+  let openConjugations: (Conjugations) -> Void
 
   var body: some View {
-    if let conjugationTable {
+    if let conjugations {
       LinkRow {
-        openConjugations(conjugationTable)
+        openConjugations(conjugations)
       } label: {
         label
       }
@@ -40,19 +41,17 @@ struct PartOfSpeechRow: View {
   private var label: some View {
     Text(title.isEmpty ? "Dictionary entry" : title)
       .fixedSize(horizontal: false, vertical: true)
-      .accessibilityIdentifier("word-detail.entry.\(entry.id.rawValue)")
+      .accessibilityIdentifier("word-detail.entry.\(entryID.rawValue)")
   }
-
-  private var title: String { entry.displayPartOfSpeech }
 }
 
 struct MeaningSection: View {
-  let senses: [DictionarySense]
+  let senses: [WordPage.Sense]
 
   var body: some View {
-    ForEach(senses, id: \.self) { sense in
+    ForEach(senses, id: \.number) { sense in
       VStack(alignment: .leading, spacing: 6) {
-        Text("\(senseNumber(for: sense)).  \(sense.meaning)")
+        Text("\(sense.number).  \(sense.meaning)")
           .font(.body.weight(.semibold))
         if !sense.notes.isEmpty {
           Text(sense.notes.joined(separator: " · "))
@@ -62,14 +61,10 @@ struct MeaningSection: View {
       }
     }
   }
-
-  private func senseNumber(for sense: DictionarySense) -> Int {
-    (senses.firstIndex(of: sense) ?? senses.startIndex) + 1
-  }
 }
 
 struct AlternativeFormsSection: View {
-  let forms: [DictionaryForm]
+  let forms: [WordPage.AlternativeForm]
   let openKanji: (KanjiCharacter, DictionaryEntry?) -> Void
 
   var body: some View {
@@ -84,12 +79,12 @@ struct AlternativeFormsSection: View {
     .frame(maxWidth: .infinity, alignment: .leading)
   }
 
-  private var writtenForms: [DictionaryForm] { forms.filter { $0.kind == .written } }
-  private var readingForms: [DictionaryForm] { forms.filter { $0.kind == .reading } }
+  private var writtenForms: [WordPage.AlternativeForm] { forms.filter { $0.kind == .written } }
+  private var readingForms: [WordPage.AlternativeForm] { forms.filter { $0.kind == .reading } }
 }
 
 private struct AlternativeFormLine: View {
-  let forms: [DictionaryForm]
+  let forms: [WordPage.AlternativeForm]
   let openKanji: (KanjiCharacter, DictionaryEntry?) -> Void
 
   var body: some View {
@@ -104,9 +99,7 @@ private struct AlternativeFormLine: View {
     ForEach(Array(forms.enumerated()), id: \.element.value) { index, form in
       HStack(spacing: 2) {
         if index > 0 { Text(",") }
-        if let character = form.value.first(where: { $0.isKanji }),
-          let kanji = KanjiCharacter(String(character))
-        {
+        if let kanji = form.kanji.flatMap(KanjiCharacter.init) {
           Button {
             openKanji(kanji, nil)
           } label: {
@@ -123,7 +116,7 @@ private struct AlternativeFormLine: View {
     }
   }
 
-  private func formLabel(_ form: DictionaryForm) -> some View {
+  private func formLabel(_ form: WordPage.AlternativeForm) -> some View {
     VStack(alignment: .leading, spacing: 2) {
       Text(form.value + (form.labels.isEmpty ? "" : " (\(form.labels.joined(separator: ", ")))"))
         .font(.body)
@@ -138,43 +131,38 @@ private struct AlternativeFormLine: View {
 }
 
 struct RelationshipsSection: View {
+  let related: [WordPage.Related]
   let relationships: [DictionaryRelationship]
   let openRelated: (DictionaryRelationship) -> Void
 
   var body: some View {
-    ForEach(relationships, id: \.self) { relationship in
+    ForEach(Array(zip(related, relationships).enumerated()), id: \.offset) { _, pair in
+      let (word, relationship) = pair
       Button {
         openRelated(relationship)
       } label: {
         VStack(alignment: .leading, spacing: 3) {
           JapaneseRubyText(
-            surface: relationship.headword,
-            reading: relationship.reading,
+            ruby: JapaneseRuby(surface: word.headword, reading: word.reading, segments: word.ruby),
             baseFont: .headline,
             rubyFont: .caption,
             exposesAccessibility: false,
             highlightsKanjiOnTap: false
           )
           .foregroundStyle(.primary)
-          .accessibilityIdentifier("word-detail.related-primary.\(relationship.headword)")
-          Text("\(relationship.relation) · \(relationship.summary)")
+          .accessibilityIdentifier("word-detail.related-primary.\(word.headword)")
+          Text("\(word.relation) · \(word.summary)")
             .font(.footnote)
             .foregroundStyle(.secondary)
             .lineLimit(2)
-            .accessibilityIdentifier("word-detail.related-support.\(relationship.headword)")
+            .accessibilityIdentifier("word-detail.related-support.\(word.headword)")
         }
       }
       .tint(.primary)
       .accessibilityLabel(
-        "\(relationship.headword), \(relationship.reading), \(relationship.relation), \(relationship.summary)"
+        "\(word.headword), \(word.reading), \(word.relation), \(word.summary)"
       )
-      .accessibilityIdentifier("word-detail.related.\(relationship.headword)")
+      .accessibilityIdentifier("word-detail.related.\(word.headword)")
     }
-  }
-}
-
-extension Character {
-  fileprivate var isKanji: Bool {
-    unicodeScalars.contains { (0x3400...0x9FFF).contains(Int($0.value)) }
   }
 }

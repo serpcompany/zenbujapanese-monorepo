@@ -164,6 +164,7 @@ struct WordMeaningTests {
     #expect(DictionaryEntry.shortMeaning(from: ["to fold (clothes, etc.), to shut"]) == "fold")
     #expect(DictionaryEntry.shortMeaning(from: ["(the) above, over, up"]) == "above")
     #expect(DictionaryEntry.shortMeaning(from: []) == nil)
+    #expect(DictionaryEntry.shortMeaning(from: ["(only a note)"]) == nil)
   }
 
   @Test("long meanings are shortened with an ellipsis")

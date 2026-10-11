@@ -6,7 +6,8 @@ extension FrequencyPackDisclosure {
   ) -> FrequencyPackDisclosure {
     FrequencyPackDisclosure(
       id: FrequencyPackID(rawValue: id), kind: kind, displayName: displayName, domain: "Fixture",
-      domainDescription: "Fixture", version: "1", attribution: "Fixture")
+      domainDescription: "Fixture", version: "1", attribution: "Fixture",
+      coveredSourceRows: 100_000)
   }
 }
 

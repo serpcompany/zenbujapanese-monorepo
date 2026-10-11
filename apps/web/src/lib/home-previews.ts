@@ -49,7 +49,7 @@ export const listPreview = {
 }
 
 export const frequencyPreview = {
-  enabled: defaultFrequencyPacks.map(pack => pack.disclosure.name),
+  enabled: defaultFrequencyPacks.map(pack => pack.name),
   available: [
     'Japanese Wikipedia',
     'TV & Movies',

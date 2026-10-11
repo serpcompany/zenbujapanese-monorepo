@@ -103,8 +103,8 @@ limit.
 the app does with its Japanese Text Analysis pack. The dictionary service runs the same Sudachi,
 with the dictionary the app pins.
 
-- Source: App docs, Search (Discovered Words); `SearchResultsView.swift` and `SearchResultsScreen.swift`;
-  `JapaneseMorphologyClient.swift`;
+- Source: App docs, Search (Discovered Words); `results/results.ts` in the core, which the app
+  runs too; `JapaneseMorphologyClient.swift`;
   ADR 0009 (the owner's decision to build what the website couldn't analyze before).
 - Check: `apps/dictionary-api/src/conformance/sentence-search.test.ts`, "「日本語を勉強する」 lists
   its words as Discovered Words" and "a word the dictionary holds is still searched as itself". SR
@@ -112,7 +112,7 @@ with the dictionary the app pins.
   app's Japanese Text Analysis pack in the Simulator.
 
 **Result order.** Words appear in the app's order: its retrieval, then equally strong matches
-re-sorted by the default dictionaries, as `SearchResultFrequencyOrdering` sorts them. Within each
+re-sorted by the default dictionaries, as the core's `orderedByFrequency` sorts them. Within each
 match group (the result's source, then its coarse match rank), the more common tier from the first
 dictionary that has one comes first, then JLPT's level (N5 first), then YouTube's rank (lower
 first), a ranked word before an unranked one, then the retrieval order. So いる lists 要る, いる,
@@ -120,11 +120,11 @@ first), a ranked word before an unranked one, then the retrieval order. So い�
 いる, 炒る, 入る, as the app and the #462 design do. The frequency comes from the app's JLPT and
 TUBELEX packs, read by the dictionary service for all of a search's results, one query per pack.
 
-- Source: App docs, Search; `SearchResultFrequencyOrdering.swift`; #462 (rows in
+- Source: App docs, Search; `orderedByFrequency` in the core's `results/ordering.ts`; #462 (rows in
   the order the app shows with its default dictionaries).
 - Check: SRR `results` (every row's ID, in order, with its `match` group and `retrievalOrder`) for
   56 queries, including `iru` and いる; `packages/dictionary-core/src/results/results.test.ts`,
-  "orderedItems (SearchResultFrequencyOrdering.ordered)"; smoke "iru shows the refinement and its
+  "orderedByFrequency (SearchResultFrequencyOrdering.ordered)"; smoke "iru shows the refinement and its
   first rows with their chips, as the app does", which reads the rows from SRR's `iru` case.
 
 **Result count.** Above the results, a line reads "N words for «query»" (one word: "1 word"). N is
@@ -163,8 +163,8 @@ row opens the sentences where the site shows them:
   a query whose sentences have no word page to open, the row leads down the results page to its
   [Example Sentences section](#example-sentences-section).
 
-- Source: App docs, Search; the examples section of `SearchResultsView` and
-  `SearchResultsScreen.exampleCount` and `exampleActionTitle` in `SearchResultsScreen.swift`; ADR 0010 and
+- Source: App docs, Search; the examples row of the core's `results/results.ts` and
+  `artifact/search-examples.ts`, which the app's results screen reads too; ADR 0010 and
   the owner's decision on #544 (where the row leads, with no Example Sentences page).
 - Check: SRR `examples` (title, count, and primary entry) and `sections` for all 56 queries;
   `search-results.test.tsx`, "shows the Example Sentences row, the reading refinement, then the
@@ -237,8 +237,8 @@ app picks them: `JLPT N5` when the JLPT list has it, and `YouTube 812` when TUBE
 chip has the app's colored dot for how common the word is: green, yellow, orange, red, or gray for
 rare. Screen readers hear the tier after a rank, as the app's labels speak it.
 
-- Source: App docs, Search; `SearchFrequencyRankPresentationModel` in `FrequencyPresentation.swift`;
-  `FrequencyRankChip.swift`.
+- Source: App docs, Search; `frequencyLookupChips` in the core's `detail/frequency.ts`; the app
+  draws a chip in `FrequencyRankChip.swift`.
 - Check: SRR `results[].chips` (dictionary, text, and tier) for every row of 56 queries;
   `search-results.test.tsx` (the chips as rendered in the SRR cases); smoke (iru's chips);
   `packages/dictionary-core/src/detail/frequency.test.ts`, "shows only dictionaries that rank or
@@ -308,10 +308,9 @@ At most the app's 100 are listed.
 The dictionary service runs the app's own search, its SQL on the app's own FTS4 indexes, so a
 search lists what the app lists however many sentences it reads.
 
-- Source: App docs, Search; `ExampleSentenceClient.swift` (`search`, `examples`);
-  `ExampleSentenceSearchRetrieval.swift` (`retrieveEnglish`, `retrieveJapanese`);
-  `ExampleSentencesScreen.examples` in
-  `ExampleSentencesView.swift`; ADR 0009 (the app's own data and queries in the dictionary
+- Source: App docs, Search; the core's `artifact/example-search.ts` (`retrieveEnglish`,
+  `retrieveJapanese`), which the app's `ExampleSentenceClient.swift` asks for the same
+  sentences; ADR 0009 (the app's own data and queries in the dictionary
   service).
 - Check: ES `ids` (every listed pair ID, in order) and `usesPrimaryEntryExamples` for 67 queries,
   including phrases, apostrophes, hyphens, prefixes (`run*`, and `t*` with over 100,000
@@ -420,8 +419,8 @@ class and its modifiers, such as "Godan verb (intransitive)", and is left out wh
 name. It comes from the first sense's parts of speech, falling back to the entry's. For a word
 with a conjugation table the row links to the page's Conjugations section (see Conjugations).
 
-- Source: App docs, Dictionary and kanji details; `WordHeadline.swift` and
-  `PitchAccentBadge.swift`; `PartOfSpeechFormatter.swift`; `DictionaryEntry.displayPartOfSpeech`;
+- Source: App docs, Dictionary and kanji details; the app's `WordHeadline.swift` and
+  `PitchAccentBadge.swift`, which draw the core's `wordDetail`; `detail/part-of-speech.ts`;
   #462; #576 (the headword is the `h1`, with its readings out of its text).
 - Check: WD `furigana`, `partOfSpeech`; `packages/dictionary-core/src/detail/word.test.ts`, "names
   one word class, then its modifiers" and "shows no part of speech when no class has a name";
@@ -440,8 +439,8 @@ the website has no page for either (ADR 0010). A word the app doesn't conjugate 
 no section.
 
 - Source: App docs, Dictionary and kanji details (the conjugation table); `PartOfSpeechRow` in
-  `WordDetailSections.swift` (a `NavigationLink`); `JapaneseConjugationClient.swift`
-  (`JapaneseConjugator`); ADR 0010 (the table on the word page).
+  `WordDetailSections.swift` (a `NavigationLink`); the core's `detail/conjugation-table.ts`;
+  ADR 0010 (the table on the word page).
 - Check: WD `opensConjugations`, compared by the service's WD replay and drawn by Conjugations
   rendered; `src/components/dictionary/conjugations.test.tsx`, "starts closed, at #conjugations,
   with the table inside" and "the part-of-speech row links to it only when the word has a table";
@@ -473,8 +472,8 @@ the page (related words, examples) links instead, as in the app. Each toggle is 
 with its kanji and reading (学, がっ), reachable by keyboard, and the color change doesn't animate when
 the reader prefers reduced motion.
 
-- Source: App docs index, Furigana kanji highlight; `KanjiReadingSplitter.swift`;
-  `JapaneseRubyText.kanjiReadings`.
+- Source: App docs index, Furigana kanji highlight; the core's `detail/kanji-split.ts`, which
+  the app's `JapaneseRubyText.swift` draws.
 - Check: WD `furigana[].kanjiReadings` (the gate compares the detail core's split, and WD rendered
   compares each toggle and its part of the drawn furigana);
   `packages/dictionary-core/src/detail/kanji-split.test.ts`;
@@ -490,8 +489,8 @@ hollow dot for the following particle. The capsule is one button that pronounces
 readers hear "Pronounce «reading». Pitch accent, downstep N, M mora", as the app's label and value
 say it: M is the source's mora count, even where it differs from the morae drawn (#511 review).
 
-- Source: App docs, Dictionary and kanji details; `PitchAccentBadge` and `PitchContourLayout` in
-  `PitchAccentBadge.swift`; #462 design.
+- Source: App docs, Dictionary and kanji details; `pitchGraph` in the core's `detail/pitch.ts`,
+  which the app's `PitchAccentBadge.swift` draws; #462 design.
 - Check: WD `pitch` (downstep, levels, mora count, particle, source, and `graph`: the morae and each
   dot's position and level); WD rendered reads each dot's position from the drawn SVG;
   `packages/dictionary-core/src/detail/pitch.test.ts`;
@@ -516,8 +515,8 @@ Frequency, Lists, Notes, and Examples.
 rank. A dictionary without the word says "Not listed" (JLPT) or "No rank" (YouTube). JLPT levels
 are unofficial estimates, as the Sources list says.
 
-- Source: App docs, Dictionary and kanji details; `FrequencyPresentationModel` in
-  `FrequencyPresentation.swift`; #464 (JLPT and TUBELEX only).
+- Source: App docs, Dictionary and kanji details; `frequencyLookupRow` in the core's
+  `detail/frequency.ts`; #464 (JLPT and TUBELEX only).
 - Check: WD `frequency`, and WD rendered (each row's name and value as listed);
   `packages/dictionary-core/src/detail/frequency.test.ts`, "lists each default dictionary, JLPT then
   YouTube" and "says what a dictionary lacks".
@@ -594,7 +593,7 @@ or with the Load more examples button. A line above the list gives the count: "N
 examples says "No source-matched examples". The section is at `#examples`, where a search's
 Example Sentences row opens it.
 
-- Source: App docs, Dictionary and kanji details; `ExampleSentenceEntryRetrieval.swift`; #464 (25, then
+- Source: App docs, Dictionary and kanji details; the core's `artifact/example-retrieval.ts`; #464 (25, then
   load more as you scroll, plus the total); #499 (readings share examples, and headwords that
   change under NFKC, such as Ｔシャツ, have none, as in the app).
 - Check: WD `examples` (`listed`, `reportedCount`, `truncated`, and the first 25 in `shown`);
@@ -668,8 +667,8 @@ gives 愛できる); that is filed as app bug #521, and the website changes with
 fixed.
 
 - Source: App docs, Dictionary and kanji details (the conjugation table); `ConjugationsView` in
-  `ConjugationsView.swift` (`rowShowsFurigana`); `JapaneseConjugationClient.swift`
-  (`JapaneseConjugator`); ADR 0010.
+  `ConjugationsView.swift`, which draws the core's `detail/conjugation.ts` (`rowFurigana`) and
+  `detail/conjugation-table.ts`; ADR 0010.
 - Check: WD `conjugations` (the summary, rule, registers, and each form's kind, title, surface,
   reading, ending, and row furigana), compared by the service's WD replay and drawn by
   Conjugations rendered, which reads back each register's rows and whether it's hidden;
@@ -808,7 +807,8 @@ appear only for a kanji without elements. An element or component that is a kanj
 kanji's search, which leads with its row and details. The app also opens an element detail
 screen; see [Required, not built yet](#required-not-built-yet-511).
 
-- Source: `KanjiElementsSection` in `KanjiDetailSections.swift`; `KanjiElementLookupClient.swift`.
+- Source: `kanjiElements` in the core's `detail/kanji.ts`, which the app's `KanjiElementsSection`
+  (`KanjiDetailSections.swift`) draws.
 - Check: KD `elements`, `components`; `packages/dictionary-core/src/detail/kanji.test.ts`,
   "kanjiElements (KanjiElementReferenceData.elements)" and "a kanji without elements lists its
   components; one stroke is singular"; the links: `src/lib/dictionary/data.test.ts`, "kanji details
@@ -1250,7 +1250,10 @@ page's section above, with its check, in the same PR.
 app does.
 
 - App source: App docs, Search; `HandwritingInputView.swift`, `OfflineHandwritingRecognizer.swift`,
-  `RadicalInputView.swift`, `RadicalLookupClient.swift`.
+  `RadicalInputView.swift`, `RadicalLookupClient.swift`. The radical panel's kanji and radicals are
+  already the core's (`RadicalLookup` in `packages/dictionary-core/src/search/radicals.ts`), and
+  so is which handwriting candidates are kept (`japaneseCandidates`); recognizing the strokes is
+  the app's.
 - Check it will get: an app-recorded suite of radical selections and their candidate kanji, and
   handwriting samples and their candidates, replayed against the website.
 
@@ -1265,8 +1268,10 @@ its leading group of equally strong matches, as the app limits it (`rankedEntryL
 
 **Kanji element detail.** An element opens its element detail screen, as in the app.
 
-- App source: `KanjiElementDetailView.swift`; `KanjiElementLookupClient.swift`.
-- Check it will get: an app-recorded element-detail suite, and a rendered-page check.
+- App source: `KanjiElementDetailView.swift`, which draws the core's `kanjiElementDetail`
+  (`detail/kanji-element.ts`).
+- Check it will get: the app-recorded element suite (`kanji-element.json`, which the service
+  already replays through the entry point the app calls), and a rendered-page check.
 
 ### Site-wide
 
@@ -1291,7 +1296,9 @@ marks it, so Word Meanings shows under every linked word.
 
 - App source: App docs index, Account (Reading Aids); App docs, Dictionary and kanji details
   (furigana off, Word Meanings, Sentence Translations); `ReadingAidPreferences.swift`,
-  `ReadingAidPresentation.swift`.
+  `ReadingAidPresentation.swift`. Romaji itself is the core's (`romaji` and `sentenceRomaji` in
+  `packages/dictionary-core/src/detail/romaji.ts`), with the app's recorded cases in
+  `romaji.json`.
 - Check it will get: a unit test pinning the defaults to `ReadingAidPreferences.swift`'s, and a
   rendered-page check of a word page (such as 見る) under each setting: ruby present or absent, the
   reading under the headword, romaji, meanings under example words, and translations. Hide Furigana

@@ -215,7 +215,14 @@ conversation's pause, or a Simulator rotation sometimes doesn't take; the tests 
 while what it should bring hasn't appeared (`open`, `press`, `pause`, `LayoutUITests.turn`), so a
 repeat can't undo it. A row on a word's page is tapped the same way (`tap(_:toShow:)`): the page's
 frequency rows load after it appears and push the rows below them down, so a tap aimed a moment
-earlier can land above its row. `TEST_RUNNER_ZENBU_UI_TEST_PATIENCE=30` on the `xcodebuild`
+earlier can land above its row. Two more waits cover what two Simulators running side by side
+showed: `type` waits, on iPhone and iPad, until something has keyboard focus before it types and
+taps the field again if nothing does (a tap that hadn't focused the field yet failed with
+"Neither element nor any descendant has keyboard focus"), and `assertOnScreen` gives an element
+that exists up to five seconds to be laid out before it measures it (a label that had just
+appeared had no size yet). A query that compares every element's value, such as
+`value CONTAINS`, times out on the Mac on a long page; ask for the element by its identifier and
+read it with `waitUntil(_:mentions:)`. `TEST_RUNNER_ZENBU_UI_TEST_PATIENCE=30` on the `xcodebuild`
 command shortens every wait from its 90 seconds, for an idle Mac. An iPad Simulator that had run the suites for hours once stopped turning at
 all, though XCUITest confirmed each turn; `xcrun simctl shutdown` and `boot` brought it back.
 
@@ -224,8 +231,11 @@ the same on every device:
 
 - A menu's choice is a menu item found by its title, and only among the window's menus
   (`menuChoices`): the menu bar's **Edit ▸ Delete** and Continuity Camera's **Take Photo** carry
-  the titles a row's menu does. A menu item is tapped once it's hittable (`tap`), since a
-  submenu's items exist before they're laid out and a tap sent then fails inside XCUITest.
+  the titles a row's menu does. A menu item is tapped once it's hittable and has a
+  real frame, by clicking the middle of that frame (`tap`): a submenu's items exist before
+  they're laid out, and XCUITest's own tap looks the item up again and fails when the menu is
+  redrawing just then, about one run in three. `chooseFromSortedBy` closes the menu and opens
+  it again when a submenu never opens.
 - A sheet, and an alert that takes a name, are `app.sheets` (`sheet(_:in:)`, `prompt(in:)`).
   `waitForSheet` also checks that a Mac sheet has room for its content and stays inside the
   window.
@@ -351,12 +361,12 @@ team, `847HR8U8D9`.
 
 SwiftUI hands a universal link to `onOpenURL` in `WebsiteLinkOpening` (`WebsiteLinkOpening.swift`),
 which `SearchExperienceRootView` applies. It switches to Search from any tab, Translate included,
-and `WebsiteLinkRoute.apply` puts the route on Search's stack. `WebsiteLink`
-(`WebsiteLink.swift`) reads it: the website's URL shapes, decoded one path segment at a time,
-and the Language Reference ID of a word URL's JMdict entry number, derived as
-`apps/ios/Tools/jmdict_normalization.py` does (the first 16 bytes of the SHA-256 of
-`edrdg.jmdict`, a NUL, and the number). It reads only the host and path, so a URL with any
-scheme and the host `zenbujapanese.com` routes the same way.
+and `WebsiteLinkRoute.apply` puts the route on Search's stack. `LookupClient.websiteRoute`
+hands the link's host and path to the core (`websiteRoute`,
+[`dictionary-core.md`](dictionary-core.md), Embedded), which reads the website's URL shapes,
+decoded one path segment at a time, with the parser the website uses, and finds a word URL's
+entry by its JMdict entry number. Only the host and path are read, so a URL with any scheme and
+the host `zenbujapanese.com` routes the same way.
 
 Check it with `WebsiteLinkTests`. The Simulator sends an `https` link to Safari until the
 association file is live, which would also load the site, so to see a link land in the app
@@ -381,9 +391,22 @@ Detail, and the same link opens the website on a device without the app.
 
 The app defaults to the bundled Kuromoji engine for interactive Japanese in Image Search,
 Word Detail, and Example Sentences. Dictionary search segmentation continues to use Sudachi.
+Kuromoji runs in the same JavaScriptCore engine as the core's text part, which calls its
+`tokenize` directly ([The dictionary core in the app](#the-dictionary-core-in-the-app)).
+
+Kuromoji's twelve dictionary files ship gzipped, 18 MB that unpack to 100 MB. The app unpacks
+them itself with zlib (`Gunzip.swift`), which also checks each file's checksum and length, and
+hands kuromoji.js the unpacked bytes. `KuromojiEngine.readingUnpackedFiles` takes the three
+lines that unpack a file out of kuromoji.js's loader as the script is read; the vendored file
+stays as published. An app's JavaScriptCore has no JIT, so kuromoji.js unpacking the files
+itself took 11 to 12 seconds, which the first Word Detail of a session waited for before it
+showed examples; the start now takes about half a second. A kuromoji.js whose loader no
+longer has those lines fails to start rather than starting slowly, and `KuromojiStartTests`
+fails with it.
 
 To compare the previous interactive parsing path, launch the app with
-`ZENBU_MORPHOLOGY_ENGINE=sudachi`. Omit the variable, or use any other value, to exercise
+`ZENBU_MORPHOLOGY_ENGINE=sudachi`: the core then asks the app for each sentence's words, and
+the app answers with Sudachi's. Omit the variable, or use any other value, to exercise
 Kuromoji. Keep `ONLY_ACTIVE_ARCH=YES` for either path.
 
 Compare both paths with the same source text and check:
@@ -424,21 +447,24 @@ change to Search results or a dictionary rebuild, record it again by adding
 
 That suite records order before frequency evidence re-sorts it. `SearchResultsConformanceTests`
 records the results screen as the app shows it, in `search-results.json`: for each query, the
-rows after `SearchResultFrequencyOrdering` re-sorts them with a fresh install's frequency
+rows after the core re-sorts them with a fresh install's frequency
 dictionaries (JLPT, then TUBELEX), each with its Language Reference ID, ent_seq, headword,
 reading, summary, frequency chips (dictionary, value, tier), match group, and retrieval position;
 the kanji row; the Example Sentences and reading-refinement rows; the frequency notice; and the
 No Dictionary Matches state. It pins the SHA-256 of every bundled artifact it reads and the
 dictionaries a fresh install enables. It records the **Default** order: the learner's Sort By
-choice (`SearchResultSortOrdering` in `SearchResultSort.swift`) re-sorts these rows in the view
-afterwards, and `SearchResultSortTests` covers it. Recent searches and known words don't change
+and Filter choices re-sort and narrow these rows in the same answer, which the core's
+`results/ordering.test.ts` and `results/learner.test.ts` cover, and `ResultsScreenTests` and
+`SearchResultOrderingTests` on the bundled data. Recent searches and known words don't change
 the recorded list. The suite covers queries that match
 directly, deinflected queries (食べた, 見ない), romaji and English queries, wildcards (`t*`, `^t*`), and queries with no
 matches that aren't Japanese. It doesn't cover Japanese queries with no direct match or
 Discovered Words: Search splits those into words with the Sudachi dictionary the app bundles,
-which the package's test host lacks, so recording fails on them. Check those in the Simulator.
-The screen's titles, counts, and which rows it shows come from `SearchResultsScreen` in
-`SearchResultsScreen.swift`, which the view and the suite share. Record it with
+which the package's test host lacks, so recording fails on them. `DictionaryCoreTests` runs one
+such sentence with a stand-in analysis, which checks the path but not Sudachi's words; check
+those in the Simulator.
+The screen's titles, counts, and which rows it shows are the core's answer, which
+`ResultsScreen.swift` decodes for the view and the suite alike. Record it with
 `-only-testing:SearchExperienceTests/SearchResultsConformanceTests`; add a query by adding its
 `query` and `covers` fields and recording.
 
@@ -448,8 +474,8 @@ the entry the screen links words to, whether it lists that entry's examples (a d
 romaji query) or the sentences that contain the query, every listed sentence's pair ID in order,
 and the first five sentences' words with their entry, candidates, and whether the screen accents
 them as the query's, read with the app's Kuromoji analysis. What the screen lists and accents
-comes from `ExampleSentencesScreen` in `ExampleSentencesView.swift`, which the view,
-`LinkedJapaneseText`, and the suite share. It pins `LanguageReferenceData.sqlite3`,
+is the core's answer (`ExampleSentenceClient.listed`, and each token's `matchesQuery`), which
+the view and the suite both read. It pins `LanguageReferenceData.sqlite3`,
 `ExampleWordIndex.sqlite3`, and the Kuromoji files. Record it with
 `-only-testing:SearchExperienceTests/ExampleSearchConformanceTests`; add a query by adding its
 `query` and `covers` fields and recording.
@@ -457,32 +483,44 @@ comes from `ExampleSentencesScreen` in `ExampleSentencesView.swift`, which the v
 `WordDetailConformanceTests` and `KanjiDetailConformanceTests` do the same for the detail
 screens, so the website's word pages and kanji details can be checked against the app. They check
 `word-detail.json` and `kanji-detail.json` in the same folder, reading each case from the
-models and clients the views use: for a word, its headword, furigana (with each kanji run's
-per-kanji split, `JapaneseRubyText.kanjiReadings`), part of speech, pitch (with the contour
-`PitchContourLayout` lays out for `PitchAccentBadge`), senses, default frequency packs (JLPT and
-TUBELEX, each with the Frequency Details it opens, `FrequencyDisclosurePresentation`), the
-conjugation table its part of speech opens (each form with the words `ConjugationsView` shows,
-`sharedSpellings(of:in:)`, and the examples its screen lists: every pair ID, in order, from
-`ConjugatedForm.examples`, and the first 3 with their linked tokens and which of them
-`LinkedJapaneseText.matchesQuery` accents), kanji, and its first 25 examples with their linked tokens; for
-a kanji, its metrics, meanings, readings with their words, elements, 24 words, and whether it
-has stroke data. The views and the suite
-share those helpers, so the suite records what the views draw. Each file pins the SHA-256 of
-every bundled artifact it was recorded against. After an intended
-change to either screen or its data, record them again with the same
+models the views draw (`WordPage`, `KanjiPage`, `FrequencyRow`, and the example clients): for a
+word, its headword, furigana (with each kanji run's per-kanji split), part of speech, pitch
+(with the contour `PitchAccentBadge` draws), senses, default frequency packs (JLPT and TUBELEX,
+each with the Frequency Details it opens), the conjugation table its part of speech opens (each
+form with the words `ConjugationsView` shows, the forms that share its spelling, and the
+examples its screen lists: every pair ID, in order, and the first 3 with their linked tokens
+and which of them the screen accents), kanji, and its first 25 examples with their linked
+tokens; for a kanji, its metrics, meanings, readings with their words, elements, 24 words, and
+whether it has stroke data. The views and the suite read the same models, so the suite records
+what the views draw. Each file pins the SHA-256 of every bundled artifact it was recorded
+against. After an intended change to either screen or its data, record them again with the same
 `TEST_RUNNER_ZENBU_RECORD_CONFORMANCE=1` prefix and
 `-only-testing:SearchExperienceTests/WordDetailConformanceTests` or
 `-only-testing:SearchExperienceTests/KanjiDetailConformanceTests`, and review the diff.
 Recording keeps each case's `id` or `character` and its `covers` note, so add a case by
 adding those two fields and recording.
 
-The website's dictionary service replays all five suites through the shared TypeScript core on
-the same data ([`dictionary-api.md`](dictionary-api.md)), and the `Dictionary API` workflow runs
-them on pull requests that change a suite, so commit a re-recorded suite with the change to the
-core it needs. A change to a Swift file the core ports needs its port changed in the same PR
-([`dictionary-core.md`](dictionary-core.md), and Swift the shared core ports, below). One thing
-the website does isn't recorded yet: sentence search (Discovered Words, above). The service
-checks it with its own test (`sentence-search.test.ts`) until a suite records it.
+`KanjiElementConformanceTests` checks the kanji element page against `kanji-element.json`: for
+each glyph, its meanings, what it contributes, its linked on-readings, its alternatives, the
+kanji that stands alone, the kanji containing it, and its sources, each kanji with its code
+point, since several cases are compatibility twins that look the same. The file was first
+written from the Swift the core replaced, so it pins what that showed. Record it with
+`-only-testing:SearchExperienceTests/KanjiElementConformanceTests`; add a glyph by adding its
+`glyph` and `covers` fields and recording.
+
+`RomajiConformanceTests` checks the Romaji reading aid against `romaji.json`: readings grouped
+by the rule they exercise, and whole sentences with their words. Its cases were recorded from
+Foundation's transliteration, which the core's romaji replaced, so the file is edited by hand,
+not re-recorded; a linked sentence's punctuation and counted words are checked in the same
+suite.
+
+The website's dictionary service replays all seven suites through the shared TypeScript core on
+the same data ([`dictionary-api.md`](dictionary-api.md)), once through its own path and once
+through the entry point the app calls, and the `Dictionary API` workflow runs them on pull
+requests that change a suite, so commit a re-recorded suite with the change to the core it
+needs. One thing the website does isn't recorded yet: sentence search (Discovered Words,
+above). The service checks it with its own test (`sentence-search.test.ts`) until a suite
+records it.
 
 The `iOS` workflow ([`ci.md`](ci.md), iOS) runs the data tools' contract tests on pull requests
 that change `apps/ios`, and, on a macOS runner, `SearchExperienceTests` and `TranslatorCoreTests`
@@ -519,7 +557,7 @@ uv run --no-project --python 3.14.8 python apps/ios/Tools/rebuild_language_data.
 
 It runs every importer in order, copies each pack's import report into its catalog manifest,
 moves the previous manifests of downloadable packs into `trustedHistoricalManifests` so packs a
-learner already installed stay trusted, and runs the contract tests. Then re-record the five
+learner already installed stay trusted, and runs the contract tests. Then re-record the six
 suites above and review their diffs. [`apps/ios/Tools/README.md`](../../apps/ios/Tools/README.md)
 says what each tool builds, why the Python is pinned, and how to move to a newer source snapshot.
 
@@ -531,51 +569,159 @@ verified source file with
 The tool matches files by size and SHA-256 and re-downloads each public URL to verify it. Never
 overwrite or delete an object: trusted historical manifests still reference it.
 
-## Swift the shared core ports
+## The dictionary core in the app
 
-`packages/dictionary-core/src/` ports parts of `apps/ios/Modules/Sources/SearchExperience/`: the
-Swift sources section of [`dictionary-core.md`](dictionary-core.md) maps each module to the Swift
-it ports. The `Search parity` workflow ([`ci.md`](ci.md)) fails a pull request that changes one
-side of a pair without the other; change both, and re-record the suite that covers the change.
+What the dictionary finds, lists, orders, labels, and says is the shared TypeScript core's
+(`packages/dictionary-core`, [`dictionary-core.md`](dictionary-core.md)): search, the results
+screen with Sort By and Filter, example sentences, linked words, and the word, kanji, and kanji
+element pages. The app runs it in JavaScriptCore, offline, and has no Swift of its own for any
+of it, so the app and the website show the same thing. The Swift keeps the screens, reads the
+files, and decodes the core's answers; [`dictionary-core.md`](dictionary-core.md), The app's
+side, lists which type asks for what.
+
+- **The host.** `DictionaryCore` (`DictionaryCore.swift`) loads the bundle,
+  `Resources/DictionaryCore/dictionary-core.js`, into a `JSContext` and gives it what its owner
+  has. `zenbuHost.all` is answered by `SQLiteJSONRows` from a read-only SQLite connection: rows
+  as JSON bytes, each BLOB as hex, an error as its message. JavaScriptCore parses those bytes
+  into its own objects (`JSValueMakeFromJSONString`), so a broad search's rows never also exist
+  as a Swift string, a bridged `NSString`, and a JavaScript string. The kanji functions are
+  answered by `KanjiFiles`, one record at a time. The bundle is checked in; after changing the
+  core, rebuild it with `pnpm bundle:javascriptcore` in `packages/dictionary-core`, which the
+  core's tests require ([`dictionary-core.md`](dictionary-core.md), Embedded).
+- **Three engines, one bundle.** Each is a `DictionaryCore` its owner keeps for its lifetime:
+
+  | Owner | Reads | Answers |
+  | --- | --- | --- |
+  | `LanguageReferenceData`, the actor behind `LookupClient.live` | `LanguageReferenceData.sqlite3` | Search, an exact form's entries, a kanji's words, what a website link opens, and the entry a related or a saved word opens |
+  | `DictionaryTextData`, the actor behind `ExampleSentenceClient` and `JapaneseTextAnalysisClient` | Its own connection to the same file, with `ExampleWordIndex.sqlite3` attached, and Kuromoji in the same engine | Example sentences and linked words |
+  | `PresentationCore`, a lock around one engine | The kanji files, through `KanjiFiles`, and the radical file | The results screen, rows and chips, furigana, the word, kanji, and element pages, the query, the gloss, romaji, the kanji check, a stroke diagram's points, the radical panel, and the handwriting candidates kept |
+
+  They are apart because of how long each takes. Linking a page of sentences or ranking a broad
+  search takes tens of milliseconds and awaits, so each has an actor; a row's furigana or a
+  page's model takes well under a millisecond and is needed while a view is being built, so
+  `PresentationCore` is synchronous and never waits behind the other two. Its slowest answers
+  are the radical panel's, which a tap asks for, not a redraw: about 11 ms to open, when the
+  core reads and checks the radical file, and about 2 ms a pick.
+- **One engine each, kept.** A context lives as long as its owner. Each call into it runs in an
+  autorelease pool, since the Objective-C wrappers JavaScriptCore hands back otherwise pile up
+  on a thread that never drains them, each pinning what it wraps. Don't release a context to
+  give memory back: in testing, a context dropped after a broad search kept its whole heap, and
+  memory climbed with every such search.
+- **Calls settle at once.** Every read is synchronous, so a call settles before `begin` returns
+  and nothing waits on a callback; `begin` and `outcome` are two calls into the engine because
+  JavaScriptCore runs a promise's reactions only when the outermost call returns.
+- **Entries.** The core names entries by Language Reference ID. `entries(equivalentTo:)` reads
+  each with the app's own columns and decoding, as `entry(_:)` does, so an entry is the same
+  value wherever it came from; an entry JMdict lists twice (閻魔) is one entry under its smaller
+  ID, with both records' provenance. A page's method takes the entry the app read
+  (`WordPage(entry)`).
+- **Sentences.** A search that needs a sentence's words says so in its call's outcome. The actor
+  awaits Sudachi (`JapaneseMorphologyClient`), hands the words back, and the call goes on; other
+  lookups can run while it waits.
+- **Linked words.** `DictionaryTextData.linkedWords` is one call for a text: the core tokenizes
+  it with Kuromoji in the same engine, looks every word's forms up in one or two statements,
+  and answers each word with its place, its entry or candidates, its furigana, and whether it
+  is the page's word or matches the query. `JapaneseTextAnalysisClient` reads the entries the
+  answer names, in one statement, and keeps 4,000. The core remembers the last 512 texts it
+  linked, so a sentence scrolled back into view costs no analysis.
+- **The kanji files.** `KanjiFiles` maps `KanjiReferenceData.json` and
+  `KanjiElementReferenceData.json` into memory and scans them once for where each record
+  starts and ends, then hands the core a record's bytes as they are in the file. It builds no
+  objects from the files: parsing their 6 MB with `JSONSerialization` took a quarter of a
+  second and left over 100 MB behind. Records are keyed by scalar, not by `String`: Swift calls
+  a compatibility kanji equal to the kanji it unifies with, and the files hold 74 such pairs,
+  each with its own strokes, grade, and readings. `KanjiFilesTests` compares every record with
+  a full parse of the files.
+- **Memoized where a view asks again.** Furigana by surface and reading (4,000), a word page by
+  entry (64), a gloss by meaning (4,000), romaji by reading (4,000) and by sentence (512), and
+  the kanji check by string (4,000), since SwiftUI rebuilds a row many times. The keys compare
+  scalar for scalar: Swift's own string equality would hand one compatibility kanji's answer to
+  its twin. `PresentationCore`'s lock is recursive, because decoding a page builds
+  `KanjiCharacter`s, each of which asks the same engine.
+- **Cancelling.** `SQLiteJSONRows` checks the task between rows, as the app's other reads do,
+  and the core asks the host between batches of rows while it ranks (`zenbuHost.interrupted`),
+  so a search the learner typed past stops within a few milliseconds, not when its ranking
+  ends. The core's call then fails, the lookup throws `CancellationError`, and nothing is
+  cached.
+- **`SearchQuery`** is the app's value for a query: what the screens compare and store. Its
+  text is the core's `normalizeQuery` of what was typed, so the app holds the query Search
+  reads.
+- **Speed.** JavaScriptCore runs without its JIT inside an app, on the Mac as on iPhone, so the
+  package's tests on a Mac run the core as a device does. The iOS Simulator does not: its
+  JavaScriptCore has the JIT, which makes JavaScript several times faster and holds several
+  times the memory, so add `TEST_RUNNER_JSC_useJIT=false` to measure there. `SearchLatencyTests`
+  prints each query's uncached time, how long linking and an abandoned search take, how long
+  the presentation engine takes to start and to build each screen, how long romaji, the
+  radical panel, a stroke diagram, and the kanji check take, and the memory a session reaches
+  step by step; it runs only when asked:
+
+  ```sh
+  TEST_RUNNER_ZENBU_MEASURE_SEARCH=1 xcodebuild -scheme ZenbuJapaneseModules-Package \
+    -destination 'platform=macOS,arch=arm64' SWIFT_OPTIMIZATION_LEVEL=-O \
+    -only-testing:SearchExperienceTests/SearchLatencyTests test | grep SEARCH-LATENCY
+  ```
+
+  Build with `SWIFT_OPTIMIZATION_LEVEL=-O` to measure: a Debug build spends most of a broad
+  query's time in the unoptimized Swift that writes its rows. Its measurements share one
+  process, and an engine a measurement drops keeps its memory, so read memory from
+  `measureSession` run alone
+  (`-only-testing:'SearchExperienceTests/SearchLatencyTests/measureSession()'`).
+
+What stays native, and why:
+
+- **Reading the files.** SQLite, the kanji and radical files, the stroke diagrams' rows, the
+  frequency packs, and decoding an entry are the host's part: the core asks, or is handed the
+  row, and decides what it means.
+- **Parsing a URL.** Foundation splits a link into its host and path; the core reads them.
+- **Drawing and layout.** SwiftUI draws what the core answers: a stroke's points become a
+  `Path`, and a word's `attaches` becomes where `LinkedTokenLayout` may break a line.
+- **Applying the learner's own state.** Which reading aids are on and which words are known
+  live in the app's stores, so a view combines them with what the core said about a word (a
+  gloss shows when Word Meanings is on, the core didn't call the word a function word, and the
+  learner hasn't marked it known), and `Comprehension` counts the known among the words the
+  core counted and formats the percentage.
+- **The learner's data.** Favorites and lists, Known Words, notes, encounter media, recent
+  searches, watch history, and account sync are stored and merged by the app, with the account
+  service as what every signed-in client agrees with ([`account-api.md`](account-api.md)).
+- **The Player's YouTube plumbing.** Reading a video's ID out of a link, choosing the Japanese
+  caption track, turning YouTube's caption XML into cards, and pairing them with YouTube's
+  translations (`YouTubeCaptions.swift`) are about YouTube's formats, and only the app has a
+  Player. Which of a caption's words count toward comprehension is the core's.
+- **Speech, handwriting and text recognition, translation, and Apple Intelligence** are Apple's
+  ([`translate.md`](translate.md)).
 
 ## Search and linked text
 
 `LookupClient` retrieves a relevance-filtered, deduplicated set in dictionary order and never
-reads frequency; `SearchResultFrequencyOrdering` reorders only that bounded
-set. An exact dictionary form stays first (した is 下 and 舌 before する), then deinflected lemmas
-by chain length, so a direct conjugation (まけたら → 負ける) outranks a longer chain, then prefix
-and contains matches. Radical searches keep only the leading lexical-rank group.
+reads frequency; the results screen reorders only that bounded set
+(`orderedByFrequency` in the core). An exact dictionary form stays first (した is 下 and 舌 before
+する), then deinflected lemmas by chain length, so a direct conjugation (まけたら → 負ける)
+outranks a longer chain, then prefix and contains matches. Radical searches keep only the
+leading lexical-rank group.
 
-An English query's match groups (`EnglishDictionaryPresentationRank`) are the evidence lane, the
-romaji specificity for romaji-only matches, and whether a strong gloss is in a later sense; the
-frequency re-sort reorders within a group, so 犬's "dog (Canis (lupus) familiaris)" competes with
-ワン子's "dog" on frequency (#701). `glossRelation` counts notes in parentheses only when they run to
-the end of the gloss (`endsInNote`), so "soft (and fluffy) (e.g. bed)" is "soft" and "to (take
-out and) show" is a mention of "to". Within a group,
-`EnglishDictionaryRank` breaks ties by JMdict priority, sense, gloss order, romaji corroboration,
-headword length, and fingerprint. `EnglishSearchCommonWordTests` checks the common word leads
-dog, water, cat, eat, and house on the bundled data, independent of the recorded suites.
+How a query is matched, ranked, and deinflected is the core's
+([`dictionary-core.md`](dictionary-core.md), Search). A result carries its relevance as
+one number, equal for equally relevant matches, and the frequency re-sort reorders only within
+it, so 犬's "dog (Canis (lupus) familiaris)" competes with ワン子's "dog" on frequency (#701).
+`EnglishSearchCommonWordTests` checks the common word leads dog, water, cat, eat, and house on
+the bundled data, independent of the recorded suites, and `JapaneseDeinflectionTests` and
+`SearchResultOrderingTests` check common inflections the same way (まけたら → 負ける; makasete →
+任せる, 任す, 負かす).
 
-`JapaneseDeinflector` rewrites suffixes in chains: after the first rule, a rule applies only when
-its input classes include the class the previous one produced (ない is an i-adjective, so
-なかった → ない → the base). Its candidates are hypotheses, kept only when an entry with that exact
-form has a matching part of speech. Romaji can't tell which godan base a past or te-form had, so
-`SearchQuery` offers every dictionary-form candidate, irregular verbs first (kita is also the past
-of kiru), and -sete gives both -seru and -su (makasete: 任せる, 任す, 負かす).
+The core joins a verb or adjective with the pieces both parsers split off
+(`examples/morphology.ts`), so 見なかった links as one word: auxiliaries, the connectives て, で,
+and ば, IPADIC's suffix verbs (れる, られる, せる, させる, tagged 接尾), and helper verbs after て
+(tagged 非自立). A na-adjective stem (IPADIC: a noun tagged 形容動詞語幹; UniDic: 形状詞) joins one
+following な, で, or に, but not the copula, so 静かだ stays 静か + だ. A joined word resolves
+through its head's forms only, since its surface can match an unrelated headword (しまった is
+also the interjection "darn it!"), and falls back to its pieces when the head resolves to
+nothing. `LinkedWordResolutionTests` checks it through the app's engine.
 
-`JapaneseInflectionGrouping` joins a verb or adjective with the pieces both parsers split off, so
-見なかった links as one word: auxiliaries, the connectives て, で, and ば, IPADIC's suffix verbs
-(れる, られる, せる, させる, tagged 接尾), and helper verbs after て (tagged 非自立). A na-adjective
-stem (IPADIC: a noun tagged 形容動詞語幹; UniDic: 形状詞) joins one following な, で, or に, but not
-the copula, so 静かだ stays 静か + だ. A joined word resolves through its head's forms only, since
-its surface can match an unrelated headword (しまった is also the interjection "darn it!"), and
-falls back to its pieces when the head resolves to nothing.
-
-`PartOfSpeech` raw values are stable identifiers the JMdict importer writes, and
-`PartOfSpeechFormatter` owns every learner-facing word for them, so rewording needs no
-language-data rebuild. Romaji is Foundation's ICU transliteration as is
-(`ReadingAidPresentation.swift`), deliberately without app-owned corrections for particles or
-long vowels.
+`PartOfSpeech` raw values are stable identifiers the JMdict importer writes, and the core's
+`detail/part-of-speech.ts` owns every learner-facing word for them, so rewording needs no
+language-data rebuild. Romaji is the core's (`detail/romaji.ts`): ICU's kana transliteration, as
+Foundation ran it, deliberately without corrections for particles or long vowels
+([`dictionary-core.md`](dictionary-core.md), Matching the Swift).
 
 ## Frequency packs
 
@@ -588,8 +734,9 @@ and the language-data release all pin those files byte for byte, so never edit o
 even a comment: every pack that pins it would fail verification.
 
 A manifest's encoding also feeds the trust hashes of installed packs, so anything outside a
-pack's contract stays out of it: `kind` is omitted for rank packs, and chip names (`shortName`)
-are matched by pack family, the ID's first three parts, so a rebuilt pack keeps its label. A
+pack's contract stays out of it: `kind` is omitted for rank packs, and chip names (the core's
+`frequencyShortName`) are matched by pack family, the ID's first three parts, so a rebuilt pack
+keeps its label. A
 historical manifest can share its pack version with the current one when only derived hashes
 changed, as after a language-data rebuild.
 

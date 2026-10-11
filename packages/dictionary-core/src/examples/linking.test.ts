@@ -141,6 +141,7 @@ describe('linkedTokens', () => {
         candidates: [],
         reading: '文',
         dictionaryForm: '文',
+        partOfSpeech: [],
         lookupForm: null
       }
     ])

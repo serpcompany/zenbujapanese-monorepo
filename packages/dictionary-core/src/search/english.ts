@@ -5,7 +5,8 @@ import {
   entryColumns,
   FormKind,
   profile,
-  type SearchDatabase
+  type SearchDatabase,
+  stopIfInterrupted
 } from './database'
 import { ftsPhrase, ftsPrefix } from './fts'
 import { normalizeQuery } from './query'
@@ -91,7 +92,9 @@ export async function rankedEnglish(
   const { rows, glossMatches, romajiMatches } = evidence
 
   const ranked: RankedEntry[] = []
+  let step = 0
   for (const row of rows) {
+    stopIfInterrupted(db, step++)
     const entry = decodeEntry(row)
     const displayedFormPriority = profile(row)
     const gloss = glossMatches.get(entry.id) ?? []
@@ -152,8 +155,11 @@ export async function rankedEnglish(
       matchedSummary: selectedGloss.meaning
     })
   }
-  ranked.sort((lhs, rhs) => compareEnglishRanks(lhs.rank as EnglishRank, rhs.rank as EnglishRank))
-  return deduplicated(ranked)
+  ranked.sort((lhs, rhs) => {
+    stopIfInterrupted(db, step++)
+    return compareEnglishRanks(lhs.rank as EnglishRank, rhs.rank as EnglishRank)
+  })
+  return deduplicated(ranked, db)
 }
 
 async function exactRomajiEvidence(db: SearchDatabase, query: string) {
@@ -225,7 +231,9 @@ async function glossEvidence(
   )
   const token = glossToken(query)
   const result = new Map<string, GlossEvidence[]>()
+  let step = 0
   for (const row of rows) {
+    stopIfInterrupted(db, step++)
     const senseWrittenForms: string[] = JSON.parse(row.written_forms)
     const senseReadings: string[] = JSON.parse(row.readings)
     const appliesToShownForms =
@@ -259,7 +267,9 @@ async function romajiEvidence(
     [match]
   )
   const result = new Map<string, number[]>()
+  let step = 0
   for (const row of rows) {
+    stopIfInterrupted(db, step++)
     const relation =
       row.form === query
         ? RomajiRelation.exact

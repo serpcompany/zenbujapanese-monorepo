@@ -2,59 +2,8 @@ import Foundation
 import SQLite3
 
 extension LanguageReferenceData {
-  func senseRestrictions() throws -> [SenseRestrictionKey: Set<String>] {
-    if let senseRestrictionCache { return senseRestrictionCache }
-    let restrictionStatement = try prepare(Self.allSenseRestrictionsSQL)
-    defer { sqlite3_finalize(restrictionStatement) }
-    var restrictions: [SenseRestrictionKey: Set<String>] = [:]
-    while try checkedSQLiteStep(restrictionStatement) == .row {
-      guard
-        let kind = SearchFormKind(
-          rawValue: Int(sqlite3_column_int(restrictionStatement, 2))
-        )
-      else {
-        throw LookupDatabaseError.invalidDictionaryRankingMetadata
-      }
-      let key = SenseRestrictionKey(
-        entryID: LanguageReferenceID(
-          rawValue: sqliteText(restrictionStatement, 0)),
-        senseOrder: Int(sqlite3_column_int(restrictionStatement, 1)),
-        kind: kind
-      )
-      restrictions[key, default: []].insert(sqliteText(restrictionStatement, 3))
-    }
-
-    senseRestrictionCache = restrictions
-    return restrictions
-  }
-
-  static func priorityProfile(
-    from statement: OpaquePointer,
-    startingAt column: Int32
-  ) -> LanguageReferencePriorityProfile {
-    LanguageReferencePriorityProfile(
-      primaryMarkers: PriorityMarkers(
-        rawValue: Int(sqlite3_column_int(statement, column))
-      ),
-      secondaryMarkers: PriorityMarkers(
-        rawValue: Int(sqlite3_column_int(statement, column + 1))
-      ),
-      newsFrequencyBand: sqlite3_column_type(statement, column + 2) == SQLITE_NULL
-        ? nil : Int(sqlite3_column_int(statement, column + 2))
-    )
-  }
-
-  func prepare(_ sql: String) throws -> OpaquePointer {
-    let database = try openDatabase()
-    var statement: OpaquePointer?
-    guard sqlite3_prepare_v2(database, sql, -1, &statement, nil) == SQLITE_OK, let statement else {
-      throw LookupDatabaseError.sqlite(message: String(cString: sqlite3_errmsg(database)))
-    }
-    return statement
-  }
-
-  private func openDatabase() throws -> OpaquePointer {
-    if let connection { return connection.pointer }
+  func openStatements() throws -> SQLiteStatements {
+    if let statements { return statements }
     guard
       let url = databaseURL
         ?? Bundle.languageReferenceDataURL
@@ -86,8 +35,9 @@ extension LanguageReferenceData {
       sqlite3_close(opened)
       throw error
     }
-    connection = SQLiteConnection(pointer: opened)
-    return opened
+    let statements = SQLiteStatements(connection: SQLiteConnection(pointer: opened))
+    self.statements = statements
+    return statements
   }
 
   private static func attachCompoundPitch(_ database: OpaquePointer) throws {
@@ -270,49 +220,20 @@ extension LanguageReferenceData {
     e.senses_json, e.relationships_json,
     COALESCE(e.pitch_accent_json,
       (SELECT c.pitch_accent_json FROM compound_pitch.entry_pitch c WHERE c.entry_id = e.id)),
-    e.is_common, e.rank_score, length(e.headword), lower(hex(e.semantic_fingerprint))
+    e.is_common, lower(hex(e.semantic_fingerprint))
     """
 
-  static let equivalentEntriesByIDSQL = """
+  static let equivalentEntriesSQL = """
     SELECT \(selectedColumns)
-    FROM entries e
-    WHERE e.semantic_fingerprint = (
-      SELECT semantic_fingerprint FROM entries WHERE id = ?
-    )
-    ORDER BY lower(hex(e.id))
+    FROM json_each(?) listed
+    JOIN entries named ON named.id = unhex(listed.value)
+    JOIN entries e ON e.semantic_fingerprint = named.semantic_fingerprint
     """
-
-  static let kanjiCandidateRowsSQL = """
-    SELECT e.semantic_fingerprint AS fingerprint
-    FROM forms f
-    JOIN entries e ON e.id = f.entry_id
-    WHERE f.kind = \(SearchFormKind.written.rawValue) AND instr(f.form, ?) > 0
-    GROUP BY e.semantic_fingerprint
-    ORDER BY
-      MIN(CASE WHEN instr(e.headword, ?) = 1 THEN 0 ELSE 1 END),
-      MIN(length(e.headword)), MAX(e.is_common) DESC, MAX(e.rank_score) DESC, e.semantic_fingerprint
-    LIMIT ?
-    """
-
-  private static let allSenseRestrictionsSQL = """
-    SELECT lower(hex(entry_id)), sense_order, kind, form FROM sense_form_restrictions
-    """
-}
-
-enum SearchFormKind: Int {
-  case written = 0
-  case reading = 1
-  case romaji = 2
-}
-
-struct SenseRestrictionKey: Hashable {
-  let entryID: LanguageReferenceID
-  let senseOrder: Int
-  let kind: SearchFormKind
 }
 
 enum LookupDatabaseError: Error {
   case missingBundledData
+  case missingEntry
   case invalidDictionaryRankingMetadata
   case sqlite(message: String)
 }

@@ -16,8 +16,7 @@ struct JapaneseRubyText: View {
     let index: Int
   }
 
-  let surface: String
-  let reading: String
+  let ruby: JapaneseRuby
   let baseFont: Font
   let rubyFont: Font
   let highlightedEnding: String
@@ -27,8 +26,7 @@ struct JapaneseRubyText: View {
   let highlightsKanjiOnTap: Bool
 
   init(
-    surface: String,
-    reading: String,
+    ruby: JapaneseRuby,
     baseFont: Font = .body,
     rubyFont: Font = .caption.weight(.semibold),
     highlightedEnding: String = "",
@@ -37,11 +35,10 @@ struct JapaneseRubyText: View {
     hidesFurigana: Bool = false,
     highlightsKanjiOnTap: Bool = true
   ) {
-    self.surface = surface
-    self.reading = reading
+    self.ruby = ruby
     self.baseFont = baseFont
     self.rubyFont = rubyFont
-    self.highlightedEnding = surface.hasSuffix(highlightedEnding) ? highlightedEnding : ""
+    self.highlightedEnding = ruby.surface.hasSuffix(highlightedEnding) ? highlightedEnding : ""
     self.exposesAccessibility = exposesAccessibility
     self.displaysRomaji = displaysRomaji
     self.hidesFurigana = hidesFurigana
@@ -100,13 +97,7 @@ struct JapaneseRubyText: View {
   }
 
   private func kanjiSplit(_ piece: Piece) -> [String]? {
-    guard highlightsKanjiOnTap else { return nil }
-    return Self.kanjiReadings(piece.segment)
-  }
-
-  static func kanjiReadings(_ segment: JapaneseRubySegment) -> [String]? {
-    guard let reading = segment.reading, segment.base.count > 1 else { return nil }
-    return KanjiReadingSplitter.split(segment.base, reading: reading)
+    highlightsKanjiOnTap ? piece.segment.kanjiReadings : nil
   }
 
   private func selectableReading(_ split: [String], piece: Int) -> AttributedString {
@@ -159,9 +150,11 @@ struct JapaneseRubyText: View {
     return result
   }
 
-  private var segments: [JapaneseRubySegment] {
-    JapaneseRubyAnnotation.segments(surface: surface, reading: reading)
-  }
+  private var surface: String { ruby.surface }
+
+  private var reading: String { ruby.reading }
+
+  private var segments: [JapaneseRubySegment] { ruby.segments }
 
   private var pieces: [Piece] {
     var offset = 0

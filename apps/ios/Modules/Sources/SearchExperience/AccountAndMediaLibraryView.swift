@@ -400,9 +400,7 @@ private struct EncounterMediaRow: View {
   }
 
   private var encounterRomaji: String? {
-    let values = item.words.compactMap {
-      AppleJapaneseRomanization.romanizeTrustedReading($0.reading)
-    }
+    let values = item.words.compactMap { PresentationCore.shared.romaji($0.reading) }
     return values.count == item.words.count ? values.joined(separator: " · ") : nil
   }
 }
@@ -425,7 +423,7 @@ private struct EncounterMediaDetail: View {
       Section("Associated Words") {
         ForEach(item.words, id: \.id) { word in
           LabeledContent {
-            JapaneseRubyText(surface: word.headword, reading: word.reading)
+            JapaneseRubyText(ruby: JapaneseRuby(surface: word.headword, reading: word.reading))
           } label: {
             Text("Word")
           }

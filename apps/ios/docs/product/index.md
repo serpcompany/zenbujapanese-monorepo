@@ -27,11 +27,16 @@ shortcuts).
 
 ## How behavior is verified
 
-Each behavior here ends with a **Check** naming the automated tests that prove it. Four kinds run:
+Each behavior here ends with a **Check** naming the automated tests that prove it. Five kinds run:
 
 - **Package tests** (`apps/ios/Modules/Tests/`), `SearchExperienceTests` and `TranslatorCoreTests`,
-  named by type, such as `SearchResultSortTests`. They run on an iPhone Simulator, an iPad
+  named by type, such as `ResultsScreenTests`. They run on an iPhone Simulator, an iPad
   Simulator, and the Mac, so a package test checks all three.
+- **Core tests** (`packages/dictionary-core/src/`), named by file, such as
+  `results/ordering.test.ts`. What the dictionary lists, orders, labels, and says is the shared
+  core's, which the app runs
+  ([`dictionary-core.md`](../../../../docs/agents/dictionary-core.md)), so a core test checks a
+  rule for every platform and for the website.
 - **UI tests** (`apps/ios/UITests/`), `ZenbuJapaneseUITests`, which drive the built app on the
   same three, named as class and test, such as `SearchUITests.testAQueryWithNoMatchesSaysSo`. They
   use stand-ins only at the edge: an image for the camera, a sheet's answer for Apple's and
@@ -183,7 +188,8 @@ The split comes from each kanji's own readings, including the sound changes comp
 reading exactly one way. Words read as a whole, such as 大人 (おとな) or 今日 (きょう), have no
 per-kanji highlight.
 
-Check: package `KanjiReadingSplitterTests` and the recorded `WordDetailConformanceTests`.
+Check: core `detail/kanji-split.test.ts`; package `JapaneseRubyTests` and the recorded
+`WordDetailConformanceTests`.
 
 It works on any furigana that isn't itself a tap target: Word Detail and conjugation headwords,
 conjugation tables, and Media Library words. Where tapping a word already opens it — Search
@@ -219,9 +225,11 @@ a small **Account** title in the bar rather than a large one. It provides:
 
 Check: UI `AccountUITests.testAccountListsEveryArea` (every row, and the small title on iPhone and
 iPad), `testReadingAidsAndFrequencyDictionariesOpen`,
-and `testTranslationsAndCreditsOpenFromAccount`; contract `test_account_service_settings.py`
+`testTurningRomajiOnWritesExampleSentencesAndAKanjisReadingsInRomaji` (Romaji on, an example
+sentence and a kanji's reading written in it), and `testTranslationsAndCreditsOpenFromAccount`; contract `test_account_service_settings.py`
 (production in TestFlight and App Store builds, staging in Debug); package `PlayerReadingAidTests`
-and `WordMeaningTests` (the Reading Aids preferences).
+and `WordMeaningTests` (the Reading Aids preferences), and the recorded `RomajiConformanceTests`
+with core `detail/romaji.test.ts` (how a reading and a sentence are written in romaji).
 
 Rows use Settings-style tinted icon tiles in grouped cards without section headings.
 
@@ -257,7 +265,7 @@ level from Jonathan Waller's lists; JLPT publishes no official vocabulary list, 
 presents levels as unofficial study estimates.
 
 Check: package `FrequencyPackLifecycleTests`, `SearchResultOrderingTests`, and
-`SearchFrequencyChipTests`; contract `test_frequency_pack_runtime_contract.py` (each pack's
+`ResultsScreenTests`; core `detail/frequency.test.ts`; contract `test_frequency_pack_runtime_contract.py` (each pack's
 pinned source, ranks, and the YouTube spellings); UI `AccountUITests.testReadingAidsAndFrequencyDictionariesOpen`
 (a row for every pack, and a download for each of the seven optional ones). Downloading an optional pack needs the network: by hand, with
 `FrequencyPackLifecycleTests` installing one from a local file.
@@ -298,7 +306,8 @@ can't be changed, and Known Words and the Mark as Known button say so. If the fi
 can't be read at launch, such as before the device's first unlock, nothing is shown or saved over
 it, and Known Words asks the learner to reopen Zenbu.
 
-Check: package `WordKnowledgeTests` and `SavedKanjiTests`; UI
+Check: package `WordKnowledgeTests`, `SavedKanjiTests`, and `WordResolutionTests` (the entry a
+saved word opens); UI
 `SavedWordsUITests.testAKnownWordIsListedAndCanBeMarkedUnknownThere`,
 `WordDetailUITests.testTheMenuOffersThisDevicesActionsAndMarksTheWordKnown`, and
 `AccountUITests.testKnownWordsAndTheMediaLibraryStartEmptyAndListsStartWithFavorites` (empty).

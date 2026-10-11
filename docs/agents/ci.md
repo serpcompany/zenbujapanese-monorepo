@@ -23,13 +23,12 @@ with `pnpm install --frozen-lockfile`.
 | `Account API` | `.github/workflows/account-api.yml` | Pull requests that change the account service or what the services share; by hand |
 | `Account API deploy` | `.github/workflows/account-api-deploy.yml` | Pushes to `main` and pull requests that change what the image holds; by hand |
 | `iOS` | `.github/workflows/ios.yml` | Pull requests that change `apps/ios`; by hand |
-| `Search parity` | `.github/workflows/search-parity.yml` | Pull requests that change a Swift source or a TypeScript port it pairs |
 | `Language data build` | `.github/workflows/language-data-build.yml` | Pull requests and pushes to `main` that change a release's inputs |
 | `Language data release` | `.github/workflows/language-data-release.yml` | Pushes to `main` that change a release's inputs; by hand |
 
 "The core" is `packages/dictionary-core`, and a change to the root `package.json`,
 `pnpm-lock.yaml`, or `pnpm-workspace.yaml` counts as changing it. A change to a workflow's own file
-starts it too, except for `Search parity`.
+starts it too.
 
 ## Repository
 
@@ -440,30 +439,6 @@ jobs:
   then nothing tests the app on iPad or the Mac before merge.
   `tools/checks/src/ios-workflow.test.ts` pins both jobs: `contracts` on every pull request,
   `swift` only when it's turned on, and that it runs every suite on every platform.
-
-## Search parity
-
-`.github/workflows/search-parity.yml` keeps two implementations in step. Search retrieval, the
-results screen, word pages' examples, and parts of the word page's detail (the per-kanji furigana
-highlight, the pitch graph, Frequency Details, and the conjugation table) exist twice until issue 481 makes TypeScript
-the single core (ADR 0008): Swift for the iOS app, and a TypeScript port for the website.
-
-It runs on a pull request that changes a file of any pair below, and again when a label is added
-or removed. It fails when one side of a pair changed without the other, and lists the changed
-files. Change both, re-recording the conformance suite ([`dictionary-core.md`](dictionary-core.md),
-Rules), or add the `search-parity-reviewed` label, which says the change applies to one side only
-and skips the check.
-
-| Pair | Swift sources (`<name>.swift` in `apps/ios/Modules/Sources/SearchExperience/`) | TypeScript ports |
-| --- | --- | --- |
-| search | `LookupClient`, `LookupDatabase`, `LookupEnglishRanking`, `LookupJapaneseRanking`, `LookupRankedEntries`, `SearchQuery`, `DictionaryRanking`, `JapaneseDeinflection`, `DictionaryEntry`, `JapaneseTextAnalysisClient` | Everything in `packages/dictionary-core/src/search/` |
-| examples | `ExampleSentenceClient`, `ExampleSentenceDatabase`, `ExampleSentenceEntryRetrieval`, `ExampleSentenceModels`, `ExampleSentenceSearchRetrieval`, `JapaneseTextAnalysisClient`, `JapaneseInflectionGrouping`, `KuromojiMorphologyClient`, `LinkedJapaneseText` (the conjugated form's highlight) | The `.ts` files in `packages/dictionary-core/src/examples/`; `example-retrieval.ts`, `example-search.ts`, `word-examples.ts`, and `lookup.ts` in `packages/dictionary-core/src/artifact/`; `apps/dictionary-api/src/kuromoji.ts` |
-| detail | `KanjiReadingSplitter`, `JapaneseRubyText` (the per-kanji furigana highlight), `WordDetailView`, `WordHeadline`, `WordDetailSections`, `PitchAccentBadge` (`PitchContourLayout`), `FrequencyDisclosure` (`FrequencyDisclosurePresentation`), `FrequencyPack`, `FrequencyPresentation`, `JapaneseConjugationClient`, `ConjugationsView` | `kanji-split.ts`, `pitch.ts`, `frequency.ts`, `conjugation.ts`, and `conjugation-table.ts` in `packages/dictionary-core/src/detail/` |
-| results | `SearchResultsView`, `SearchResultsScreen` (the results screen's rows, titles, and counts), `SearchResultFrequencyOrdering` | The `.ts` files in `packages/dictionary-core/src/results/`, and `search-examples.ts` in `packages/dictionary-core/src/artifact/` |
-
-Each pair is one `check` call in the workflow's script: the pair's name, a pattern for its Swift
-files, a pattern for its TypeScript files, and where the port is, which the error names. To change
-a pair, change the trigger's `paths`, the pair's patterns, and this table together.
 
 ## Language data build
 

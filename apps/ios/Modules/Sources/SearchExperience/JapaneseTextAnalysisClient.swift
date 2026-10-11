@@ -1,153 +1,49 @@
 import Foundation
 
-extension JapaneseTextToken {
-  var isFunctionWord: Bool {
-    ["助詞", "助動詞", "記号", "補助記号"].contains(partOfSpeech.first ?? "")
-  }
-}
-
 struct JapaneseTextToken: Identifiable, Sendable {
   let id: Int
   let surface: String
   let entry: DictionaryEntry?
-  let scalarRange: Range<Int>
-  let dictionaryForm: String?
-  let reading: String?
-  let partOfSpeech: [String]
-  let isOutOfVocabulary: Bool?
-  let candidateEntryIDs: [LanguageReferenceID]
   let candidateEntries: [DictionaryEntry]
+  let scalarRange: Range<Int>
+  let reading: String?
+  let ruby: JapaneseRuby?
+  let isFunctionWord: Bool
+  let isPageWord: Bool
+  let matchesQuery: Bool
+  let lineBreak: JapaneseTokenLineBreakBehavior
+  let isCounted: Bool
 
   init(
     id: Int,
     surface: String,
     entry: DictionaryEntry?,
+    candidateEntries: [DictionaryEntry] = [],
     scalarRange: Range<Int> = 0..<0,
-    dictionaryForm: String? = nil,
     reading: String? = nil,
-    partOfSpeech: [String] = [],
-    isOutOfVocabulary: Bool? = nil,
-    candidateEntryIDs: [LanguageReferenceID] = [],
-    candidateEntries: [DictionaryEntry] = []
+    ruby: JapaneseRuby? = nil,
+    isFunctionWord: Bool = false,
+    isPageWord: Bool = false,
+    matchesQuery: Bool = false,
+    lineBreak: JapaneseTokenLineBreakBehavior = .normal,
+    isCounted: Bool = false
   ) {
     self.id = id
     self.surface = surface
     self.entry = entry
-    self.scalarRange = scalarRange
-    self.dictionaryForm = dictionaryForm
-    self.reading = reading
-    self.partOfSpeech = partOfSpeech
-    self.isOutOfVocabulary = isOutOfVocabulary
-    self.candidateEntryIDs = candidateEntryIDs
     self.candidateEntries = candidateEntries
-  }
-
-  func represents(_ entry: DictionaryEntry) -> Bool {
-    self.entry?.id == entry.id
-  }
-}
-
-struct JapaneseRubySegment: Hashable, Sendable {
-  let base: String
-  let reading: String?
-}
-
-enum JapaneseRubyAnnotation {
-  static func segments(surface: String, reading: String) -> [JapaneseRubySegment] {
-    guard surface.contains(where: \.isKanjiOrIterationMark), surface != reading else {
-      return [JapaneseRubySegment(base: surface, reading: nil)]
-    }
-    let runs = surfaceRuns(surface)
-    guard runs.contains(where: \.isKanji), runs.contains(where: { !$0.isKanji }) else {
-      return [JapaneseRubySegment(base: surface, reading: reading)]
-    }
-    return alignedSegments(runs: runs, reading: reading)
-      ?? runs.map { JapaneseRubySegment(base: $0.base, reading: nil) }
-  }
-
-  private struct SurfaceRun {
-    var base: String
-    let isKanji: Bool
-  }
-
-  private static func surfaceRuns(_ surface: String) -> [SurfaceRun] {
-    var runs: [SurfaceRun] = []
-    for character in surface {
-      let isKanji = character.isKanjiOrIterationMark
-      if runs.last?.isKanji == isKanji {
-        runs[runs.count - 1].base.append(character)
-      } else {
-        runs.append(SurfaceRun(base: String(character), isKanji: isKanji))
-      }
-    }
-    return runs
-  }
-
-  private static func alignedSegments(
-    runs: [SurfaceRun],
-    reading: String
-  ) -> [JapaneseRubySegment]? {
-    let originalReading = Array(reading)
-    let normalizedReading = normalizedKana(reading)
-    var cursor = 0
-    var segments: [JapaneseRubySegment] = []
-
-    for (index, run) in runs.enumerated() {
-      if run.isKanji {
-        if let nextKana = runs[(index + 1)...].first(where: { !$0.isKanji }) {
-          let anchor = normalizedKana(nextKana.base)
-          guard
-            let anchorStart = firstIndex(
-              of: anchor,
-              in: normalizedReading,
-              startingAt: cursor + 1
-            )
-          else { return nil }
-          let ruby = String(originalReading[cursor..<anchorStart])
-          guard !ruby.isEmpty else { return nil }
-          segments.append(JapaneseRubySegment(base: run.base, reading: ruby))
-          cursor = anchorStart
-        } else {
-          guard cursor < originalReading.count else { return nil }
-          segments.append(
-            JapaneseRubySegment(
-              base: run.base,
-              reading: String(originalReading[cursor...])
-            )
-          )
-          cursor = originalReading.count
-        }
-      } else {
-        let anchor = normalizedKana(run.base)
-        guard cursor + anchor.count <= normalizedReading.count,
-          Array(normalizedReading[cursor..<(cursor + anchor.count)]) == anchor
-        else { return nil }
-        segments.append(JapaneseRubySegment(base: run.base, reading: nil))
-        cursor += anchor.count
-      }
-    }
-    return cursor == originalReading.count ? segments : nil
-  }
-
-  private static func normalizedKana(_ value: String) -> [Character] {
-    Array(value.applyingTransform(.hiraganaToKatakana, reverse: true) ?? value)
-  }
-
-  private static func firstIndex(
-    of needle: [Character],
-    in haystack: [Character],
-    startingAt start: Int
-  ) -> Int? {
-    guard !needle.isEmpty, start >= 0, start + needle.count <= haystack.count else { return nil }
-    for index in start...(haystack.count - needle.count) {
-      if Array(haystack[index..<(index + needle.count)]) == needle { return index }
-    }
-    return nil
+    self.scalarRange = scalarRange
+    self.reading = reading
+    self.ruby = ruby
+    self.isFunctionWord = isFunctionWord
+    self.isPageWord = isPageWord
+    self.matchesQuery = matchesQuery
+    self.lineBreak = lineBreak
+    self.isCounted = isCounted
   }
 }
 
 struct JapaneseTextAnalysisClient: Sendable {
-  var lookupSegments: @Sendable (SearchQuery) async -> [SearchQuery]
   var availability: @Sendable () async -> JapaneseTextAnalysisAvailability
   var linkedTokens:
     @Sendable (
@@ -155,277 +51,66 @@ struct JapaneseTextAnalysisClient: Sendable {
       _ highlightedQuery: SearchQuery,
       _ highlightedEntry: DictionaryEntry?
     ) async -> [JapaneseTextToken]
-  var words: @Sendable (_ text: String) async -> [String]
 
-  static let characterFallback = JapaneseTextAnalysisClient(
-    lookupSegments: { _ in [] },
-    availability: { .reduced },
-    linkedTokens: { text, _, _ in
-      guard !text.isEmpty else { return [] }
-      return [
-        JapaneseTextToken(
-          id: 0,
-          surface: text,
-          entry: nil,
-          scalarRange: 0..<text.unicodeScalars.count
-        )
-      ]
-    },
-    words: { text in text.isEmpty ? [] : [text] }
-  )
-
-  static func live(lookupClient: LookupClient) -> JapaneseTextAnalysisClient {
-    resolving(morphologyClient: .live, lookupClient: lookupClient)
-  }
-
-  static func resolving(
-    morphologyClient: JapaneseMorphologyClient,
-    lookupClient: LookupClient
+  static func live(
+    text: DictionaryTextData = .shared, lookupClient: LookupClient = .live
   ) -> JapaneseTextAnalysisClient {
-    let resolver = JapaneseTextAnalyzer(
-      morphologyClient: morphologyClient,
-      lookupClient: lookupClient
-    )
+    let linked = LinkedEntries(lookupClient: lookupClient)
     return JapaneseTextAnalysisClient(
-      lookupSegments: { query in
-        guard !query.isEmpty,
-          let analysis = try? await morphologyClient.analyze(query.value)
+      availability: { await text.availability() },
+      linkedTokens: { japanese, highlightedQuery, highlightedEntry in
+        guard
+          let words = try? await text.linkedWords(
+            LinkedText(
+              text: japanese, query: highlightedQuery.value,
+              highlightedEntry: highlightedEntry?.id.rawValue))
         else { return [] }
-        return analysis.candidates.compactMap { candidate in
-          guard
-            SearchQuery(candidate.surface).isJapaneseOnly,
-            candidate.partOfSpeech.first.map(JapaneseTextAnalyzer.isLinkablePartOfSpeech)
-              == true,
-            candidate.isOutOfVocabulary == false
-          else { return nil }
-          let form =
-            candidate.dictionaryForm == "*" || candidate.dictionaryForm.isEmpty
-            ? candidate.surface : candidate.dictionaryForm
-          return SearchQuery(form)
-        }
-      },
-      availability: morphologyClient.availability,
-      linkedTokens: { text, highlightedQuery, highlightedEntry in
-        await resolver.tokens(
-          for: text,
-          highlightedQuery: highlightedQuery,
-          highlightedEntry: highlightedEntry
-        )
-      },
-      words: { text in
-        guard let analysis = try? await morphologyClient.analyze(text) else { return [] }
-        return JapaneseInflectionGrouping.group(analysis.candidates).map(\.surface)
+        return await linked.tokens(words, highlightedEntry: highlightedEntry)
       }
     )
   }
 }
 
-private actor JapaneseTextAnalyzer {
-  let morphologyClient: JapaneseMorphologyClient
-  let lookupClient: LookupClient
-  private var entryCache: [String: [DictionaryEntry]] = [:]
+private actor LinkedEntries {
+  private let lookupClient: LookupClient
+  private var entries: [String: DictionaryEntry] = [:]
 
-  init(morphologyClient: JapaneseMorphologyClient, lookupClient: LookupClient) {
-    self.morphologyClient = morphologyClient
+  init(lookupClient: LookupClient) {
     self.lookupClient = lookupClient
   }
 
   func tokens(
-    for text: String,
-    highlightedQuery: SearchQuery,
-    highlightedEntry: DictionaryEntry?
+    _ words: [LinkedWord], highlightedEntry: DictionaryEntry?
   ) async -> [JapaneseTextToken] {
-    do {
-      let analysis = try await morphologyClient.analyze(text)
-      var tokens: [JapaneseTextToken] = []
-      for candidate in JapaneseInflectionGrouping.group(analysis.candidates) {
-        let resolution = await resolvedEntry(
-          for: candidate,
-          highlightedQuery: highlightedQuery,
-          highlightedEntry: highlightedEntry
-        )
-        if resolution.candidates.isEmpty, candidate.children.count > 1 {
-          var childTokens: [JapaneseTextToken] = []
-          for child in candidate.children {
-            let childResolution = await resolvedEntry(
-              for: child,
-              highlightedQuery: highlightedQuery,
-              highlightedEntry: highlightedEntry
-            )
-            childTokens.append(
-              token(
-                for: child,
-                resolution: childResolution,
-                id: tokens.count + childTokens.count
-              ))
-          }
-          if childTokens.contains(where: { !$0.candidateEntries.isEmpty }) {
-            tokens.append(contentsOf: childTokens)
-            continue
-          }
-        }
-        tokens.append(token(for: candidate, resolution: resolution, id: tokens.count))
-      }
-      return tokens
-    } catch {
-      return await JapaneseTextAnalysisClient.characterFallback.linkedTokens(
-        text, highlightedQuery, highlightedEntry)
+    if let highlightedEntry { entries[highlightedEntry.id.rawValue] = highlightedEntry }
+    let unread = Set(words.flatMap { $0.candidates + [$0.entry].compactMap { $0 } })
+      .filter { entries[$0] == nil }
+    if !unread.isEmpty,
+      let read = try? await lookupClient.entries(unread.map(LanguageReferenceID.init(rawValue:)))
+    {
+      if entries.count + read.count > Self.capacity { entries.removeAll(keepingCapacity: true) }
+      for (id, entry) in read { entries[id.rawValue] = entry }
     }
-  }
-
-  private func token(
-    for candidate: JapaneseMorphologyCandidate,
-    resolution: (entry: DictionaryEntry?, candidates: [DictionaryEntry]),
-    id: Int
-  ) -> JapaneseTextToken {
-    JapaneseTextToken(
-      id: id,
-      surface: candidate.surface,
-      entry: resolution.entry,
-      scalarRange: candidate.scalarRange,
-      dictionaryForm: candidate.dictionaryForm,
-      reading: candidate.reading,
-      partOfSpeech: candidate.partOfSpeech,
-      isOutOfVocabulary: candidate.isOutOfVocabulary,
-      candidateEntryIDs: resolution.candidates.map(\.id),
-      candidateEntries: resolution.candidates
-    )
-  }
-
-  private func resolvedEntry(
-    for candidate: JapaneseMorphologyCandidate,
-    highlightedQuery: SearchQuery,
-    highlightedEntry: DictionaryEntry?
-  ) async -> (entry: DictionaryEntry?, candidates: [DictionaryEntry]) {
-    if let highlightedEntry {
-      let highlightedForms = Set(
-        Self.forms(for: highlightedEntry, preferred: highlightedQuery.value))
-      let evidence = [candidate.surface, candidate.dictionaryForm, candidate.normalizedForm]
-      if evidence.contains(where: { highlightedForms.contains($0) }) {
-        return (highlightedEntry, [highlightedEntry])
-      }
-    }
-
-    guard SearchQuery(candidate.surface).isJapaneseOnly else { return (nil, []) }
-
-    for form in Self.lookupForms(for: candidate) {
-      let family = await entries(for: form)
-      guard !family.isEmpty else { continue }
-      let preferred = preferredEntries(
-        family,
-        candidate: candidate,
-        matchesSurfaceReading: form == candidate.surface
+    return words.enumerated().map { index, word in
+      let entry = word.entry.flatMap { entries[$0] }
+      return JapaneseTextToken(
+        id: index,
+        surface: word.surface,
+        entry: entry,
+        candidateEntries: entry.map { [$0] } ?? word.candidates.compactMap { entries[$0] },
+        scalarRange: word.start..<word.end,
+        reading: word.reading,
+        ruby: word.ruby.map {
+          JapaneseRuby(surface: word.surface, reading: word.furigana ?? "", segments: $0)
+        },
+        isFunctionWord: word.isFunctionWord,
+        isPageWord: word.isPageWord,
+        matchesQuery: word.matchesQuery,
+        lineBreak: JapaneseTokenLineBreakBehavior(attaching: word.attaches),
+        isCounted: word.counted
       )
-      let candidates = preferred.isEmpty ? family : preferred
-      if candidates.count == 1 { return (candidates[0], candidates) }
-      return (nil, candidates)
-    }
-    return (nil, [])
-  }
-
-  private func preferredEntries(
-    _ entries: [DictionaryEntry],
-    candidate: JapaneseMorphologyCandidate,
-    matchesSurfaceReading: Bool
-  ) -> [DictionaryEntry] {
-    var filtered = entries
-    if let providerPOS = candidate.partOfSpeech.first {
-      let compatible = filtered.filter { entry in
-        entry.partsOfSpeech.contains { part in Self.isCompatible(part, with: providerPOS) }
-      }
-      if !compatible.isEmpty { filtered = compatible }
-    }
-    if matchesSurfaceReading, !candidate.reading.isEmpty, candidate.reading != "*" {
-      let readingMatches = filtered.filter {
-        ($0.reading.applyingTransform(.hiraganaToKatakana, reverse: false) ?? $0.reading)
-          == candidate.reading
-      }
-      if !readingMatches.isEmpty { filtered = readingMatches }
-    }
-    return filtered
-  }
-
-  private static func lookupForms(for candidate: JapaneseMorphologyCandidate) -> [String] {
-    var forms: [String] = []
-    var seen = Set<String>()
-    func append(_ value: String) {
-      guard !value.isEmpty, value != "*", seen.insert(value).inserted else { return }
-      forms.append(value)
-    }
-    let evidence =
-      candidate.joinsInflection
-      ? [candidate.dictionaryForm, candidate.normalizedForm]
-      : [candidate.surface, candidate.dictionaryForm, candidate.normalizedForm]
-    for form in evidence {
-      append(form)
-      append(form.applyingTransform(.hiraganaToKatakana, reverse: true) ?? form)
-      append(form.applyingTransform(.hiraganaToKatakana, reverse: false) ?? form)
-    }
-    return forms
-  }
-
-  private static let verbs: Set<PartOfSpeech> = [
-    .verb, .godanVerb, .ichidanVerb, .suruVerb, .kuruVerb, .zuruVerb, .archaicVerb,
-    .auxiliaryVerb,
-  ]
-  private static let adjectives: Set<PartOfSpeech> = [
-    .iAdjective, .naAdjective, .taruAdjective, .archaicAdjective, .archaicNaAdjective,
-    .auxiliaryAdjective,
-  ]
-  private static let nouns: Set<PartOfSpeech> = [
-    .noun, .pronoun, .nounPrefix, .nounSuffix, .noAdjective, .prenominal, .takesSuru,
-  ]
-
-  private static func isCompatible(_ part: PartOfSpeech, with providerPOS: String) -> Bool {
-    return switch providerPOS {
-    case "動詞": verbs.contains(part)
-    case "形容詞", "形状詞": adjectives.contains(part)
-    case "名詞", "代名詞": nouns.contains(part)
-    case "副詞": part == .adverb || part == .adverbTo
-    case "助詞": part == .particle || part == .conjunction
-    case "助動詞":
-      [.auxiliary, .auxiliaryVerb, .copula, .suffix, .nounSuffix].contains(part)
-        || adjectives.contains(part)
-    case "接続詞": part == .conjunction
-    case "連体詞": part == .preNounAdjective
-    case "感動詞": part == .interjection
-    case "接頭辞": part == .prefix || part == .nounPrefix
-    case "接尾辞": part == .suffix || part == .nounSuffix
-    default: true
     }
   }
 
-  private static func forms(for entry: DictionaryEntry, preferred: String) -> [String] {
-    var seen = Set<String>()
-    return
-      ([preferred, entry.headword, entry.reading]
-      + entry.writtenForms.map(\.value)
-      + entry.readingForms.map(\.value))
-      .filter { !$0.isEmpty && seen.insert($0).inserted }
-      .sorted { $0.count > $1.count }
-  }
-
-  fileprivate static func isLinkablePartOfSpeech(_ value: String) -> Bool {
-    ["名詞", "動詞", "形容詞", "形状詞", "代名詞", "接頭辞", "接尾辞", "感動詞"].contains(value)
-  }
-
-  private func entries(for surface: String) async -> [DictionaryEntry] {
-    if let cached = entryCache[surface] { return cached }
-    do {
-      let entries = try await lookupClient.entriesMatchingForm(surface)
-      entryCache[surface] = entries
-      return entries
-    } catch {
-      return []
-    }
-  }
-}
-
-extension Character {
-  fileprivate var isKanjiOrIterationMark: Bool {
-    self == "々"
-      || unicodeScalars.contains {
-        (0x3400...0x9FFF).contains(Int($0.value))
-      }
-  }
+  private static let capacity = 4_000
 }

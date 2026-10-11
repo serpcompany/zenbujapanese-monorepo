@@ -8,20 +8,7 @@ struct FrequencyPackDisclosure: Equatable, Sendable {
   let domainDescription: String
   let version: String
   let attribution: String
-
-  var shortName: String {
-    switch id.family {
-    case "zenbu.tubelex.youtube": "YouTube"
-    case "zenbu.wikipedia.written": "Wikipedia"
-    case "zenbu.jlpt.waller": "JLPT"
-    case "zenbu.jiten.video-games": "Games"
-    default: displayName
-    }
-  }
-
-  var sortName: String {
-    kind == .level ? shortName : displayName
-  }
+  let coveredSourceRows: Int
 }
 
 struct FrequencyPackSnapshot: Equatable, Sendable {

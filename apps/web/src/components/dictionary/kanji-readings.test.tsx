@@ -34,6 +34,7 @@ function readings(kanji: KanjiCase): KanjiDetailsData['readings'] {
     label: labels[reading.kind],
     value: reading.value,
     words: reading.words.map((word, index) => ({
+      id: word.id,
       entSeq: index,
       headword: word.headword,
       reading: word.reading,

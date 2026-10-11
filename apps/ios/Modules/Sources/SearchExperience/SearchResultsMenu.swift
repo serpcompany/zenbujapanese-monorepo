@@ -1,18 +1,25 @@
 import SwiftUI
 
 struct SearchResultsMenu: View {
-  @Binding var sort: SearchResultSort
-  let appliedSort: SearchResultSort
-  @Binding var filter: SearchResultFilter
-  let dictionaries: [FrequencyPackDisclosure]
+  let menu: ResultsMenuContent
+  let chooseSort: (ResultsChoice) -> Void
+  let chooseFilter: (ResultsChoice) -> Void
 
   var body: some View {
     Menu {
-      sortPicker
-      filterPicker
+      picker(
+        "Sort By", summary: menu.sort.summary, chosen: menu.sort.chosen,
+        options: menu.sort.options, choose: chooseSort
+      )
+      .accessibilityIdentifier("search.sort-by")
+      picker(
+        "Filter", summary: menu.filter.title, chosen: menu.filter.chosen,
+        options: menu.filter.options, choose: chooseFilter
+      )
+      .accessibilityIdentifier("search.filter.words")
     } label: {
       HStack(spacing: 4) {
-        Label(status, systemImage: "arrow.up.arrow.down")
+        Label(menu.status, systemImage: "arrow.up.arrow.down")
         Image(systemName: "chevron.down")
           .imageScale(.small)
           .accessibilityHidden(true)
@@ -24,35 +31,23 @@ struct SearchResultsMenu: View {
     .accessibilityIdentifier("search.sort-menu")
   }
 
-  private var status: String {
-    let sortStatus = appliedSort.status(dictionaries: dictionaries)
-    return filter.statusSuffix.map { "\(sortStatus) · \($0)" } ?? sortStatus
-  }
-
-  private var sortPicker: some View {
-    Picker(selection: Binding(get: { appliedSort }, set: { sort = $0 })) {
-      Text(SearchResultSort.relevanceTitle).tag(SearchResultSort.relevance)
-      ForEach(dictionaries, id: \.id) { dictionary in
-        Text(dictionary.sortName).tag(SearchResultSort.frequency(family: dictionary.id.family))
-      }
-      Text(SearchResultSort.knownWordsTitle).tag(SearchResultSort.knownWords)
+  private func picker(
+    _ title: LocalizedStringKey, summary: String, chosen: String, options: [ResultsChoice],
+    choose: @escaping (ResultsChoice) -> Void
+  ) -> some View {
+    Picker(
+      selection: Binding(
+        get: { chosen },
+        set: { value in
+          if let option = options.first(where: { $0.value == value }) { choose(option) }
+        })
+    ) {
+      ForEach(options, id: \.value) { Text($0.title).tag($0.value) }
     } label: {
-      Text("Sort By")
-      Text(appliedSort.summary(dictionaries: dictionaries))
+      Text(title)
+      Text(summary)
     }
     .pickerStyle(.menu)
-    .accessibilityIdentifier("search.sort-by")
-  }
-
-  private var filterPicker: some View {
-    Picker(selection: $filter) {
-      ForEach(SearchResultFilter.allCases, id: \.self) { Text($0.title).tag($0) }
-    } label: {
-      Text("Filter")
-      Text(filter.title)
-    }
-    .pickerStyle(.menu)
-    .accessibilityIdentifier("search.filter.words")
   }
 }
 

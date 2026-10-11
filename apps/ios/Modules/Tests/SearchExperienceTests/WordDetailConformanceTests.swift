@@ -48,9 +48,7 @@ private struct WordDetailObserver {
   let lookupClient = LookupClient.live
   let exampleSentenceClient = ExampleSentenceClient.live
   let kanjiLookupClient = KanjiLookupClient.live(lookupClient: .live)
-  let conjugationClient = JapaneseConjugationClient.live
-  let textAnalysisClient = JapaneseTextAnalysisClient.resolving(
-    morphologyClient: .kuromoji, lookupClient: .live)
+  let textAnalysisClient = JapaneseTextAnalysisClient.live()
   let frequency: FrequencyPackManager
 
   init() async throws {
@@ -63,88 +61,68 @@ private struct WordDetailObserver {
     -> WordDetailCase
   {
     var observed = WordDetailCase(id: recorded.id, covers: recorded.covers)
-    guard let entry = try await lookupClient.entry(LanguageReferenceID(rawValue: recorded.id))
+    guard let entry = try await lookupClient.entry(LanguageReferenceID(rawValue: recorded.id)),
+      let page = WordPage(entry)
     else { return observed }
 
     observed.languageReferenceID = entry.id.rawValue
     observed.entSeq = entry.sourceProvenances.map(\.sourceRecordID)
     observed.headword = entry.headword
     observed.reading = entry.reading
-    observed.furigana = JapaneseRubyAnnotation.segments(
-      surface: entry.headword, reading: entry.reading
-    ).map {
-      WordDetailCase.Furigana(
-        base: $0.base, reading: $0.reading,
-        kanjiReadings: JapaneseRubyText.kanjiReadings($0))
-    }
-    observed.partOfSpeech = entry.displayPartOfSpeech
-    let conjugationTable = conjugationClient.table(entry)
-    observed.opensConjugations = conjugationTable != nil
-    if let conjugationTable {
-      var conjugations = WordDetailCase.Conjugations(entry: entry, table: conjugationTable)
-      conjugations.plain = await formExamples(
-        conjugations.plain, conjugationTable.forms(for: .plain), limit: formExampleLimit)
+    observed.furigana = page.ruby.map(WordDetailCase.Furigana.init)
+    observed.partOfSpeech = page.partOfSpeech
+    observed.opensConjugations = page.conjugations != nil
+    if let table = page.conjugations {
+      var conjugations = WordDetailCase.Conjugations(summary: entry.summary, table: table)
+      conjugations.plain = await formExamples(conjugations.plain, limit: formExampleLimit)
       if let polite = conjugations.polite {
-        conjugations.polite = await formExamples(
-          polite, conjugationTable.forms(for: .polite), limit: formExampleLimit)
+        conjugations.polite = await formExamples(polite, limit: formExampleLimit)
       }
       observed.conjugations = conjugations
     }
-    observed.pitch = entry.pitchAccent.map { pitch in
-      let levels = pitch.levels(moraCount: entry.reading.morae.count)
-      return WordDetailCase.Pitch(
+    if let pitch = page.pitch, let source = entry.pitchAccent?.sourceIdentity {
+      observed.pitch = WordDetailCase.Pitch(
         downstep: pitch.downstep,
         moraCount: pitch.moraCount,
-        levels: levels.morae.map { $0 ? "H" : "L" }.joined(),
-        particle: levels.particle ? "H" : "L",
-        source: pitch.sourceIdentity,
-        graph: WordDetailCase.PitchGraph(PitchContourLayout(reading: entry.reading, pitch: pitch))
+        levels: pitch.morae.map { $0.high ? "H" : "L" }.joined(),
+        particle: pitch.particleHigh ? "H" : "L",
+        source: source,
+        graph: WordDetailCase.PitchGraph(pitch)
       )
     }
-    observed.senses = entry.senses.map {
+    observed.senses = zip(page.senses, entry.senses).map { shown, sense in
       WordDetailCase.Sense(
-        meaning: $0.meaning, notes: $0.notes, partsOfSpeech: $0.partsOfSpeech.map(\.rawValue))
+        meaning: shown.meaning, notes: shown.notes,
+        partsOfSpeech: sense.partsOfSpeech.map(\.rawValue))
     }
-    observed.frequency = try await frequency.evidence(for: entry.id).map(Self.frequency)
-    observed.alternativeForms = entry.alternativeForms.map {
+    observed.frequency = await FrequencyRow.rows(
+      for: entry.id,
+      using: FrequencyCapability { [frequency] ids in try await frequency.evidence(for: ids) }
+    ).map(WordDetailCase.Frequency.init)
+    observed.alternativeForms = page.alternatives.map {
       WordDetailCase.Form(value: $0.value, kind: $0.kind.rawValue, labels: $0.labels)
     }
-    observed.kanji = try await kanji(entry.primaryKanji)
-    observed.alternativeKanji = try await kanji(entry.alternativeKanji)
-    observed.relatedWords = entry.relationships.map {
+    observed.kanji = kanji(page.kanji)
+    observed.alternativeKanji = kanji(page.alternativeKanji)
+    observed.relatedWords = zip(page.related, entry.relationships).map { shown, relationship in
       WordDetailCase.Related(
-        headword: $0.headword, reading: $0.reading, relation: $0.relation,
-        summary: $0.summary, targetID: $0.targetID)
+        headword: shown.headword, reading: shown.reading, relation: shown.relation,
+        summary: shown.summary, targetID: relationship.targetID)
     }
     observed.examples = try await examples(entry, limit: exampleLimit)
     return observed
   }
 
-  private static func frequency(_ result: FrequencyLookupResult) -> WordDetailCase.Frequency {
-    let presentation = FrequencyPresentationModel(result: result)
-    return WordDetailCase.Frequency(
-      pack: presentation.pack?.id.rawValue,
-      name: presentation.packName,
-      text: presentation.tier == nil ? presentation.missingText : presentation.inlineText,
-      tier: presentation.tier?.label,
-      details: WordDetailCase.FrequencyDetails(FrequencyDisclosurePresentation(result: result))
-    )
-  }
-
   private func formExamples(
-    _ recorded: [WordDetailCase.Conjugations.Form], _ forms: [ConjugatedForm], limit: Int
+    _ forms: [WordDetailCase.Conjugations.Form], limit: Int
   ) async -> [WordDetailCase.Conjugations.Form] {
-    var result = recorded
+    var result = forms
     for (index, form) in forms.enumerated() {
-      let examples = await form.examples(
-        exampleSentenceClient: exampleSentenceClient,
-        japaneseTextAnalysisClient: textAnalysisClient)
+      let examples = await exampleSentenceClient.formExamples(form.surface)
       let query = SearchQuery(form.surface)
       var shown: [WordDetailCase.FormExample] = []
       for sentence in examples.prefix(limit) {
         let tokens = await textAnalysisClient.linkedTokens(sentence.japanese, query, nil)
-        let ranges = ExampleSentencesScreen.queryScalarRanges(
-          in: sentence.japanese, query: query.value)
         shown.append(
           WordDetailCase.FormExample(
             id: sentence.id.rawValue,
@@ -155,8 +133,7 @@ private struct WordDetailObserver {
                 surface: token.surface,
                 entry: token.recordedEntryID,
                 candidates: token.recordedCandidateIDs,
-                highlighted: LinkedJapaneseText.matchesQuery(token, queryRanges: ranges)
-                  ? true : nil
+                highlighted: token.matchesQuery ? true : nil
               )
             }
           ))
@@ -167,22 +144,19 @@ private struct WordDetailObserver {
     return result
   }
 
-  private func kanji(_ characters: [String]) async throws -> [WordDetailCase.Kanji] {
-    var result: [WordDetailCase.Kanji] = []
-    for character in characters {
-      guard let kanji = KanjiCharacter(character) else { continue }
-      let reference = try await kanjiLookupClient.entry(kanji)
-      result.append(WordDetailCase.Kanji(character: character, meanings: reference?.meanings))
+  private func kanji(_ characters: [String]) -> [WordDetailCase.Kanji] {
+    characters.compactMap(KanjiCharacter.init).map { kanji in
+      WordDetailCase.Kanji(
+        character: kanji.rawValue, meanings: kanjiLookupClient.meanings(kanji))
     }
-    return result
   }
 
   private func examples(_ entry: DictionaryEntry, limit: Int) async throws
     -> WordDetailCase.Examples
   {
-    let retrieval: ExampleSentenceRetrievalResult
+    let retrieval: EntryExamples
     do {
-      retrieval = try await exampleSentenceClient.retrieve(.dictionaryEntry(entry))
+      retrieval = try await exampleSentenceClient.entryExamples(entry)
     } catch {
       return WordDetailCase.Examples(
         listed: 0, reportedCount: nil, truncated: false, error: "\(error)", shown: [])
@@ -201,20 +175,16 @@ private struct WordDetailObserver {
               surface: token.surface,
               entry: token.recordedEntryID,
               candidates: token.recordedCandidateIDs,
-              pageWord: token.represents(entry) ? true : nil
+              pageWord: token.isPageWord ? true : nil
             )
           }
         ))
     }
-    let reportedCount =
-      switch retrieval.count {
-      case .exact(let count): "\(count)"
-      case .moreThan50: "more than 50"
-      }
+    let reportedCount = retrieval.count > 50 ? "more than 50" : "\(retrieval.count)"
     return WordDetailCase.Examples(
       listed: retrieval.sentences.count,
       reportedCount: reportedCount,
-      truncated: retrieval.isTruncated,
+      truncated: retrieval.truncated,
       error: nil,
       shown: shown
     )
@@ -279,33 +249,27 @@ private struct WordDetailCase: Codable {
       var examples: FormExamples?
     }
 
-    init(entry: DictionaryEntry, table: ConjugationTable) {
-      func forms(_ mode: ConjugationMode) -> [Form] {
-        table.forms(for: mode).map { form in
-          let shared = table.sharedSpellings(of: form, in: mode)
-          return Form(
-            kind: form.id.rawValue,
-            title: form.id.presentation.title,
-            explanation: form.id.presentation.explanation,
-            surface: form.surface,
-            reading: form.reading,
-            ending: form.ending,
-            rowFurigana: form.rowShowsFurigana,
-            furigana: JapaneseRubyAnnotation.segments(surface: form.surface, reading: form.reading)
-              .map {
-                Furigana(
-                  base: $0.base, reading: $0.reading,
-                  kanjiReadings: JapaneseRubyText.kanjiReadings($0))
-              },
-            sharedSpellings: shared.isEmpty ? nil : shared
+    init(summary: String, table: SearchExperience.Conjugations) {
+      func forms(_ mode: String) -> [Form] {
+        (table.rows[mode] ?? []).map { row in
+          Form(
+            kind: row.kind,
+            title: row.title,
+            explanation: row.explanation,
+            surface: row.surface,
+            reading: row.reading,
+            ending: row.ending,
+            rowFurigana: row.rowFurigana,
+            furigana: row.ruby.map(Furigana.init),
+            sharedSpellings: row.sharedSpellings.isEmpty ? nil : row.sharedSpellings
           )
         }
       }
-      summary = entry.summary
+      self.summary = summary
       rule = table.rule
-      modes = table.supportsModes ? ConjugationMode.allCases.map(\.rawValue) : ["Plain"]
-      plain = forms(.plain)
-      polite = table.supportsModes ? forms(.polite) : nil
+      modes = table.modes
+      plain = forms("Plain")
+      polite = table.modes.contains("Polite") ? forms("Polite") : nil
     }
   }
 
@@ -313,6 +277,12 @@ private struct WordDetailCase: Codable {
     let base: String
     let reading: String?
     let kanjiReadings: [String]?
+
+    init(_ segment: JapaneseRubySegment) {
+      base = segment.base
+      reading = segment.reading
+      kanjiReadings = segment.kanjiReadings
+    }
   }
 
   struct Pitch: Codable {
@@ -334,13 +304,13 @@ private struct WordDetailCase: Codable {
       let level: String
     }
 
-    init(_ layout: PitchContourLayout) {
-      func point(_ point: PitchContourLayout.Point) -> Point {
+    init(_ pitch: WordPage.Pitch) {
+      func point(_ point: WordPage.Pitch.Point) -> Point {
         Point(x: Int((point.x * 100).rounded()), level: point.high ? "H" : "L")
       }
-      morae = layout.morae
-      points = layout.points.map(point)
-      particle = point(layout.particle)
+      morae = pitch.morae.map(\.mora)
+      points = pitch.graph.points.map(point)
+      particle = point(pitch.graph.particle)
     }
   }
 
@@ -356,6 +326,14 @@ private struct WordDetailCase: Codable {
     let text: String
     let tier: String?
     let details: FrequencyDetails?
+
+    init(_ row: FrequencyRow) {
+      pack = row.pack
+      name = row.source
+      text = row.value
+      tier = row.tier?.spoken
+      details = FrequencyDetails(row.details)
+    }
   }
 
   struct FrequencyDetails: Codable {
@@ -377,15 +355,15 @@ private struct WordDetailCase: Codable {
       let value: String
     }
 
-    init(_ presentation: FrequencyDisclosurePresentation) {
-      pack = presentation.pack.map {
+    init(_ details: FrequencyRow.Details) {
+      pack = details.pack.map {
         Pack(
           name: $0.name, domain: $0.domain, description: $0.description, version: $0.version,
           source: $0.source)
       }
-      section = presentation.section
-      rows = presentation.rows.map { Row(label: $0.label, value: $0.value) }
-      explanation = presentation.explanation
+      section = details.section
+      rows = details.rows.map { Row(label: $0.label, value: $0.value) }
+      explanation = details.explanation
     }
   }
 

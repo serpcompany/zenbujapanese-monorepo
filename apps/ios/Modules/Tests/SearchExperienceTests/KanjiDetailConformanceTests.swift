@@ -39,7 +39,6 @@ struct KanjiDetailConformanceTests {
 
 private struct KanjiDetailObserver {
   let kanjiLookupClient = KanjiLookupClient.live(lookupClient: .live)
-  let kanjiElementLookupClient = KanjiElementLookupClient.live
   let kanjiStrokeOrderClient = KanjiStrokeOrderClient.live
 
   func observe(_ recorded: KanjiDetailCase) async throws -> KanjiDetailCase {
@@ -53,37 +52,37 @@ private struct KanjiDetailObserver {
     }
     observed.opensDetail = true
 
-    let reference = try await kanjiLookupClient.entry(character)
-    let elements = try await kanjiElementLookupClient.elements(character)
     let relatedWords = try await kanjiLookupClient.relatedWords(character)
+    let page = try kanjiLookupClient.page(character, relatedWords, nil)
     let diagram = try await kanjiStrokeOrderClient.diagram(character)
+    func stat(_ kind: String) -> String? { page.stats.first { $0.kind == kind }?.value }
 
-    observed.hasReference = reference != nil
-    if let reference {
-      observed.strokeCount = reference.strokeCount
-      observed.grade = reference.grade
-      observed.jlpt = reference.stats.first { $0.identifier == "kanji-detail.jlpt" }?.value
-      observed.meanings = reference.meanings
-      observed.readings = reference.readings.map { reading in
+    observed.hasReference = page.hasReference
+    if page.hasReference {
+      observed.strokeCount = stat("strokes").flatMap(Int.init)
+      observed.grade = stat("grade").flatMap(Int.init)
+      observed.jlpt = stat("jlpt")
+      observed.meanings = page.meanings
+      observed.readings = page.readings.map { reading in
         KanjiDetailCase.Reading(
-          kind: reading.kind.rawValue,
+          kind: reading.kind,
           value: reading.value,
-          words: reading.words(in: relatedWords).map(KanjiDetailCase.Word.init)
+          words: reading.words.map(KanjiDetailCase.Word.init)
         )
       }
-      if elements.isEmpty, !reference.components.isEmpty {
-        observed.components = reference.components
+      if !page.components.isEmpty {
+        observed.components = page.components
       }
     }
-    observed.elements = elements.map { element in
+    observed.elements = page.elements.map { element in
       KanjiDetailCase.Element(
         glyph: element.id.rawValue,
-        role: element.role.rawValue,
-        meanings: Array(element.meanings.prefix(3)),
-        linkedOnReadings: element.meanings.isEmpty ? element.commonLinkedOnReadings : nil
+        role: element.role,
+        meanings: element.meanings,
+        linkedOnReadings: element.meanings.isEmpty ? element.linkedOnReadings : nil
       )
     }
-    observed.words = relatedWords.map(KanjiDetailCase.Word.init)
+    observed.words = page.words.map(KanjiDetailCase.Word.init)
     observed.hasStrokeOrder = diagram != nil
     observed.strokeOrderStrokes = diagram?.strokes.count
     return observed

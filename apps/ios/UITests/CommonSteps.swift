@@ -42,12 +42,17 @@ extension ZenbuUITestCase {
   func chooseFromSortedBy(_ row: String, _ choice: String, in app: XCUIApplication) {
     let sortedBy = app.descendants(matching: .any).matching(identifier: "search.sort-menu")
     let opened = menuChoice(row, in: app)
-    for _ in 0..<3 where !opened.exists {
-      tapWhereReachable([sortedBy.staticTexts, sortedBy], in: app)
-      _ = opened.waitForExistence(timeout: Self.patience / 3)
+    let chosen = menuChoice(choice, in: app)
+    for _ in 0..<3 {
+      for _ in 0..<3 where !opened.exists {
+        tapWhereReachable([sortedBy.staticTexts, sortedBy], in: app)
+        _ = opened.waitForExistence(timeout: Self.patience / 3)
+      }
+      tap(opened)
+      if device != .mac || isHittable(chosen, within: Self.patience / 6) { break }
+      TestDevice.closeMenu(in: app)
     }
-    tap(opened)
-    tap(menuChoice(choice, in: app))
+    tap(chosen)
   }
 
   func sortedByRow(saying text: String, in app: XCUIApplication) -> XCUIElement {

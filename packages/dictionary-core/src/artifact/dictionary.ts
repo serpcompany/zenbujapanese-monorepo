@@ -32,6 +32,7 @@ import {
   exampleCount,
   exampleLinkEntSeqs,
   exampleRows,
+  examplesEntries,
   segmentText,
   wordExampleRows
 } from './word-examples'
@@ -235,28 +236,9 @@ export class Dictionary {
 
   private examplesEntry(fingerprint: string): ExamplesEntry {
     const id = canonicalEntryId(this.db, fingerprint)
-    const [row] = this.db.all<{
-      headword: string
-      reading: string
-      parts_of_speech_json: string
-      written_forms_json: string
-      reading_forms_json: string
-    }>(
-      `SELECT headword, reading, parts_of_speech_json, written_forms_json, reading_forms_json
-       FROM entries WHERE id = unhex(?)`,
-      [id]
-    )
-    if (!row) throw new Error(`No entry ${id}`)
-    const values = (json: string) =>
-      (JSON.parse(json) as { value: string }[]).map(form => form.value)
-    return {
-      id,
-      headword: row.headword,
-      reading: row.reading,
-      partsOfSpeech: JSON.parse(row.parts_of_speech_json),
-      writtenForms: values(row.written_forms_json),
-      readingForms: values(row.reading_forms_json)
-    }
+    const entry = examplesEntries(this.db, [id]).get(id)
+    if (!entry) throw new Error(`No entry ${id}`)
+    return entry
   }
 
   word(entSeq: number): WordResponse | null {

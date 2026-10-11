@@ -13,6 +13,7 @@
       "entry": ["scripts/*.mjs"]
     },
     "packages/dictionary-core": {
+      "entry": ["scripts/*.mjs", "src/embedded/javascriptcore.ts"],
       "includeEntryExports": true
     },
     "packages/node-service": {

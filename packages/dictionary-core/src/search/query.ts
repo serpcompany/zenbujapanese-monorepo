@@ -1,7 +1,11 @@
+import { everyUnitIsAGrapheme } from '../detail/text'
+
 const graphemeSegmenter = new Intl.Segmenter('en', { granularity: 'grapheme' })
 
 export function graphemes(value: string): string[] {
-  return Array.from(graphemeSegmenter.segment(value), segment => segment.segment)
+  return everyUnitIsAGrapheme(value)
+    ? value.split('')
+    : Array.from(graphemeSegmenter.segment(value), segment => segment.segment)
 }
 
 function compareScalars(lhs: string, rhs: string): number {
@@ -27,8 +31,11 @@ export function compareStrings(lhs: string, rhs: string): number {
   return lhs.length - rhs.length
 }
 
+const whitespace = /\p{White_Space}/u
+
 export function normalizeQuery(raw: string): string {
   const folded = raw.normalize('NFKC').toLowerCase()
+  if (!whitespace.test(folded)) return folded
   if (/^[\x20-\x7e]*$/.test(folded)) return folded.split(' ').filter(Boolean).join(' ')
   const words: string[] = []
   let word = ''
@@ -73,8 +80,20 @@ export function japaneseSegments(value: string): string[] {
 }
 
 export function isJapaneseOnly(value: string): boolean {
-  const segments = japaneseSegments(value)
-  return value !== '' && segments.length === 1 && segments[0] === value
+  if (value === '') return false
+  for (const scalar of value) {
+    if (!isJapaneseScalar(scalar.codePointAt(0) ?? 0)) return false
+  }
+  return normalizeQuery(value) === value
+}
+
+export function japaneseCandidates(candidates: readonly string[]): string[] {
+  const kept = new Set<string>()
+  for (const candidate of candidates) {
+    const query = normalizeQuery(candidate)
+    if (isJapaneseOnly(query)) kept.add(query)
+  }
+  return [...kept]
 }
 
 export function isMixedScript(value: string): boolean {

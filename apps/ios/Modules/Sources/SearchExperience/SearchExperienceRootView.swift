@@ -25,8 +25,6 @@ struct SearchExperienceRootView: View {
   private let speechSynthesisClient: SpeechSynthesisClient
   private let kanjiLookupClient: KanjiLookupClient
   private let kanjiStrokeOrderClient: KanjiStrokeOrderClient
-  private let kanjiElementLookupClient: KanjiElementLookupClient
-  private let japaneseConjugationClient = JapaneseConjugationClient.live
   private let imageTextRecognitionClient: ImageTextRecognitionClient
   private let naturalTranslationClient: NaturalTranslationClient
   private let imageTextExplanationClient: ImageTextExplanationClient
@@ -34,20 +32,16 @@ struct SearchExperienceRootView: View {
 
   init() {
     lookupClient = .live
-    exampleSentenceClient = .live
-    let morphologyClient: JapaneseMorphologyClient =
+    let text =
       ProcessInfo.processInfo.environment["ZENBU_MORPHOLOGY_ENGINE"] == "sudachi"
-      ? .live : .kuromoji
-    japaneseTextAnalysisClient = .resolving(
-      morphologyClient: morphologyClient,
-      lookupClient: .live
-    )
+      ? DictionaryTextData(morphology: .live) : DictionaryTextData.shared
+    exampleSentenceClient = ExampleSentenceClient(text: text)
+    japaneseTextAnalysisClient = .live(text: text, lookupClient: .live)
     kanjiLookupClient = .live(lookupClient: .live)
     handwritingRecognitionClient = .live
     cameraAuthorizationClient = .live
     speechSynthesisClient = .live
     kanjiStrokeOrderClient = .live
-    kanjiElementLookupClient = .live
     imageTextRecognitionClient = .live
     naturalTranslationClient = .live
     imageTextExplanationClient = .live(lookupClient: lookupClient)
@@ -150,7 +144,7 @@ struct SearchExperienceRootView: View {
       ))
     .task {
       await Task.detached(priority: .utility) {
-        KanjiReadingSplitter.prepare()
+        _ = JapaneseRuby(surface: "日本", reading: "にほん")
         _ = try? await FrequencyPackClient.live.snapshot()
       }.value
     }
@@ -199,7 +193,6 @@ struct SearchExperienceRootView: View {
         character: character,
         entry: entry,
         kanjiLookupClient: kanjiLookupClient,
-        kanjiElementLookupClient: kanjiElementLookupClient,
         kanjiStrokeOrderClient: kanjiStrokeOrderClient,
         wordNoteStore: .live,
         encounterMediaStore: encounterMediaStore,
@@ -211,7 +204,7 @@ struct SearchExperienceRootView: View {
     case .kanjiElement(let id):
       KanjiElementDetailView(
         elementID: id,
-        lookupClient: kanjiElementLookupClient,
+        lookupClient: kanjiLookupClient,
         preservedContribution: kanjiScroll.contributions[id]
       )
     case .examples(let query, let highlightedEntry, let usesEntryExamples):
@@ -224,15 +217,12 @@ struct SearchExperienceRootView: View {
         speechSynthesisClient: speechSynthesisClient,
         openWord: { entry in push(.word(entry, nil), in: stack) }
       )
-    case .conjugations(let entry, let table):
+    case .conjugations(let entry, let conjugations):
       ConjugationsView(
-        entry: entry, table: table, speechSynthesisClient: speechSynthesisClient)
-    case .conjugatedForm(let entry, let table, let form, let mode):
+        entry: entry, conjugations: conjugations, speechSynthesisClient: speechSynthesisClient)
+    case .conjugatedForm(_, let form):
       ConjugatedFormView(
-        entry: entry,
-        table: table,
         form: form,
-        mode: mode,
         exampleSentenceClient: exampleSentenceClient,
         speechSynthesisClient: speechSynthesisClient,
         japaneseTextAnalysisClient: japaneseTextAnalysisClient,
@@ -381,15 +371,14 @@ struct SearchExperienceRootView: View {
       encounterMediaStore: encounterMediaStore,
       cameraAuthorizationClient: cameraAuthorizationClient,
       frequencyCapability: .live,
-      conjugationTable: japaneseConjugationClient.table(entry),
       openRelated: { relationship in
         dismissRecognizedWordSheet(if: presentedInSheet)
         openRelated(relationship, in: stack)
       },
       openKanji: { open(.kanji($0, $1), in: stack, leavingSheet: presentedInSheet) },
       openWord: { open(.word($0, nil), in: stack, leavingSheet: presentedInSheet) },
-      openConjugations: { table in
-        open(.conjugations(entry, table), in: stack, leavingSheet: presentedInSheet)
+      openConjugations: { conjugations in
+        open(.conjugations(entry, conjugations), in: stack, leavingSheet: presentedInSheet)
       },
       manageFrequencyDictionaries: {
         dismissRecognizedWordSheet(if: presentedInSheet)
@@ -427,20 +416,9 @@ struct SearchExperienceRootView: View {
 
   private func openRelated(_ relationship: DictionaryRelationship, in stack: DictionaryStack) {
     Task { @MainActor in
-      if let targetID = relationship.targetID {
-        if let entry = try? await lookupClient.entry(LanguageReferenceID(rawValue: targetID)) {
-          push(.word(entry, nil), in: stack)
-        }
-        return
+      if let entry = try? await lookupClient.relatedWord(relationship) {
+        push(.word(entry, nil), in: stack)
       }
-      guard let results = try? await lookupClient.search(SearchQuery(relationship.query)) else {
-        return
-      }
-      let entry =
-        results.entries.first {
-          $0.headword == relationship.headword && $0.reading == relationship.reading
-        } ?? results.entries.first
-      if let entry { push(.word(entry, nil), in: stack) }
     }
   }
 
@@ -451,11 +429,7 @@ struct SearchExperienceRootView: View {
       return
     }
     Task { @MainActor in
-      if let entry = try? await lookupClient.entry(LanguageReferenceID(rawValue: storedID)) {
-        path.append(.word(entry, nil))
-      } else if let entry = try? await lookupClient.search(SearchQuery(headword)).entries.first(
-        where: { $0.headword == headword && $0.reading == reading })
-      {
+      if let entry = try? await lookupClient.savedWord(storedID, headword, reading) {
         path.append(.word(entry, nil))
       } else {
         path = []

@@ -12,10 +12,6 @@ enum SearchInputCandidate {
   static func query(_ query: String, adding candidate: String) -> SearchQuery {
     SearchQuery(query + candidate)
   }
-
-  static func isSingleCharacter(_ query: SearchQuery) -> Bool {
-    query.value.count == 1
-  }
 }
 
 struct SearchInputPanel<Content: View, Actions: View>: View {
@@ -192,7 +188,7 @@ private struct SearchCandidateTile: View {
     .task(id: candidate) {
       meaning = nil
       guard let character = KanjiCharacter(candidate) else { return }
-      meaning = try? await kanjiLookupClient.entry(character)?.meanings.first
+      meaning = kanjiLookupClient.meanings(character).first
     }
   }
 }

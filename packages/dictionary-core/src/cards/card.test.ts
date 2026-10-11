@@ -1,6 +1,7 @@
 import { readFileSync } from 'node:fs'
 import { describe, expect, test } from 'vitest'
 import { rankedLists } from '../browse/lists'
+import { frequencyShortName } from '../detail/frequency'
 import { fixtureWordRows } from '../fixtures'
 import { wordCard } from './card'
 import { cardFields, type RecordedWord, recordedFields } from './suite'
@@ -22,23 +23,6 @@ const catalog = JSON.parse(
   )
 ) as { packs: { packID: string; displayName: string }[] }
 
-const shortNameSwitch = readFileSync(
-  new URL(
-    '../../../../apps/ios/Modules/Sources/SearchExperience/FrequencyPackState.swift',
-    import.meta.url
-  ),
-  'utf8'
-)
-  .split('var shortName: String {')[1]
-  .split('default:')[0]
-
-const appShortNames: Record<string, string> = Object.fromEntries(
-  [...shortNameSwitch.matchAll(/case "([^"]+)": "([^"]+)"/g)].map(([, prefix, name]) => [
-    prefix,
-    name
-  ])
-)
-
 const fixtureWords = fixtureWordRows.flatMap(rows => {
   const recorded = suite.cases.find(word => Number(word.entSeq[0]) === rows.entry.entSeq)
   return recorded ? [{ rows, recorded }] : []
@@ -56,14 +40,14 @@ describe('a word card', () => {
     expect(cardFields(wordCard(rows, new Map()))).toEqual(recordedFields(recorded))
   })
 
-  test('names each ranked list’s chip as the app’s FrequencyPackDisclosure.shortName does', () => {
-    expect(appShortNames).toMatchObject({ 'zenbu.tubelex.youtube': 'YouTube' })
+  test('names each ranked list’s chip as the learner’s dictionary of that pack is named', () => {
     const expected = rankedLists.map(list => {
       const id =
         list.source.kind === 'pack' ? list.source.packId : 'zenbu.tubelex.youtube.ja.unidic-3.1'
       const pack = catalog.packs.find(candidate => candidate.packID === id)
-      return appShortNames[id.split('.').slice(0, 3).join('.')] ?? pack?.displayName
+      return frequencyShortName({ id, name: pack?.displayName ?? '' })
     })
+    expect(expected).toContain('YouTube')
     expect(rankedLists.map(list => list.chip)).toEqual(expected)
   })
 

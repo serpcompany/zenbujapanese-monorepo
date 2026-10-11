@@ -90,7 +90,7 @@ function firstDifference(...differences: (() => number)[]): number {
   return 0
 }
 
-export const isLaterSense = (rank: EnglishRank) =>
+const isLaterSense = (rank: EnglishRank) =>
   rank.lane === EvidenceLane.strongGloss && rank.senseOrder > 0
 
 const englishPlacement = (lhs: EnglishRank, rhs: EnglishRank) => [
@@ -128,6 +128,20 @@ export function comparePresentationRanks(lhs: Rank, rhs: Rank): number {
   }
   if (lhs.kind === 'japanese' && rhs.kind === 'japanese') return lhs.relation - rhs.relation
   return lhs.kind === 'english' ? -1 : 1
+}
+
+const caseName = (cases: Record<string, number>, value: number) =>
+  Object.keys(cases).find(key => cases[key] === value) ?? String(value)
+
+export function matchLabel(sourceOrder: number, rank: Rank): string {
+  const match =
+    rank.kind === 'japanese'
+      ? `japanese ${caseName(FormRelation, rank.relation)}`
+      : `english ${caseName(EvidenceLane, rank.lane)} romaji=${rank.romajiSpecificityRank}` +
+        (rank.lane === EvidenceLane.strongGloss
+          ? ` sense=${isLaterSense(rank) ? 'later' : 'first'}`
+          : '')
+  return `source=${sourceOrder} ${match}`
 }
 
 export function sameLexicalGroup(lhs: Rank, rhs: Rank): boolean {
