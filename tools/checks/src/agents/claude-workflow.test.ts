@@ -227,7 +227,7 @@ describe('the fork check before an @claude request', () => {
     expect(sourceIndex).toBeGreaterThan(-1)
     expect(sourceIndex).toBeLessThan(checkoutIndex)
     expect(source.env?.GITHUB_TOKEN).toBe('${{ github.token }}')
-    for (const step of steps.slice(sourceIndex + 1))
+    for (const step of steps.slice(sourceIndex + 1).filter(step => step !== guard))
       expect(step.if).toContain("env.ANSWER == 'true'")
   })
 

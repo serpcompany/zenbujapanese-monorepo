@@ -209,7 +209,8 @@ describe('the code gardening job', () => {
     expect(skip.run).toContain('--base main')
     expect(skip.run).toContain('startswith("chore/code-gardening-")')
     expect(skip.run).toContain('echo "GARDEN=true"')
-    expect(rest.every(step => step.if?.includes("env.GARDEN == 'true'"))).toBe(true)
+    const gated = rest.filter(step => step !== codeGuard)
+    expect(gated.every(step => step.if?.includes("env.GARDEN == 'true'"))).toBe(true)
     expect(maintenance.jobs['code-gardening']['timeout-minutes']).toBe(60)
   })
 

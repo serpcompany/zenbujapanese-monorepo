@@ -91,8 +91,10 @@ fixed or answered and resolved. A finding can be answered with an `@claude` requ
   left no log, ended in an error, ended with subagents still running, or posted and updated
   nothing during the run; a denied tool fails it only when nothing was posted. It counts only the
   review's own output: the summary, top-level inline comments, and reviews, not an answer to an
-  `@claude` request. It runs inline because the job can mint an OIDC token, so it runs no script
-  from the pull request.
+  `@claude` request. It runs when the review step fails too, since the action's log ends with
+  only `is_error`: the check shows what Claude said, such as the API refusing the token (Claude's
+  app and token, below). It runs inline because the job can mint an OIDC token, so it runs no
+  script from the pull request.
 - **The transcript is kept** for a week as the `claude-review-transcript` artifact: the action's
   own log shows counts only. The step summary shows each run's turns, time, estimated cost, and
   models.
@@ -219,6 +221,15 @@ Claude subscription. An admin sets them up once:
 The token belongs to whoever generated it: every run counts against their plan's usage limits,
 beside the Actions minutes. If their plan changes, or runs start failing to authenticate,
 regenerate it and replace the secret.
+
+A revoked or expired token ends every review, `@claude`, and gardening run about 2 seconds in,
+after one turn, with no cost and no model used. The check after each Claude step runs even when
+that step fails, and on a 401 it fails with the API's message, such as "OAuth token revoked", and
+says to renew the token; when the step failed before Claude ran, it says to read that step's log
+(`tools/checks/src/agents/claude-guards.test.ts`, and each workflow's test through
+`tools/checks/src/agents/guards.ts`). The owner renews it: run `claude setup-token`, then
+`gh secret set CLAUDE_CODE_OAUTH_TOKEN --repo serpcompany/zenbujapanese-monorepo` and paste the
+token, then re-run a pull request's `review` job to confirm it.
 
 ## Web
 
@@ -504,10 +515,11 @@ needs a checkout. It:
 ## Pinned actions
 
 The release job holds the bucket's token, and the image's jobs can push to the package and sign,
-so the actions they run are pinned by commit SHA. `anthropics/claude-code-action` is pinned too:
-v1.0.248, which moved it to Claude Code 2.1.296, ends every review, `@claude`, and gardening run
-about 2 seconds in with `is_error` and no model use, so it stays on v1.0.247 until a later release
-runs. Elsewhere, actions are named by major-version tag, such as `actions/checkout@v5`. To update a
+so the actions they run are pinned by commit SHA. `anthropics/claude-code-action` is pinned too,
+to v1.0.247. It was pinned because v1.0.248 seemed to fail every run, but a revoked
+`CLAUDE_CODE_OAUTH_TOKEN` failed them, and v1.0.247 failed the same way (Claude's app and token,
+above). Moving it to the latest release, once a review passes with a renewed token, is in
+[`tech-debt.md`](../tech-debt.md). Elsewhere, actions are named by major-version tag, such as `actions/checkout@v5`. To update a
 pinned one, pin the new release's commit and change this table in the same pull request.
 
 | Action | Commit | Version | Used in |
