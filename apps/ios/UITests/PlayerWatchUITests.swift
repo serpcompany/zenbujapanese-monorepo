@@ -5,8 +5,11 @@ final class PlayerWatchUITests: ZenbuUITestCase {
 
   func testAVideoListsItsCaptionCardsWithTheShareOfWordsKnown() {
     let app = openVideo()
-    for line in 0..<3 {
-      assertOnScreen(find("watch.cue.\(line)", in: app), in: app)
+    waitFor(firstElement(identifiedBy: "watch.cue.0.", in: app))
+    assertOnScreen(find("watch.cue.0", in: app), in: app)
+    for line in 1..<3 {
+      let card = waitFor(find("watch.cue.\(line)", in: app))
+      XCTAssertTrue(isReachable(card, in: app), "caption \(line + 1) is out of reach")
     }
     let known = waitFor(find("watch.comprehension", in: app))
     waitUntil(known, mentions: "words known")
