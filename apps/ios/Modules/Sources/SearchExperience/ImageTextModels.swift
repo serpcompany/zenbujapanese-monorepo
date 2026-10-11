@@ -43,7 +43,7 @@ struct ImageTextAsset: Identifiable, Sendable {
     return ImageTextAsset(name: url.lastPathComponent, data: data)
   }
 
-  static func dropped(_ provider: NSItemProvider) async -> ImageTextAsset? {
+  nonisolated(nonsending) static func dropped(_ provider: NSItemProvider) async -> ImageTextAsset? {
     await withCheckedContinuation { continuation in
       _ = provider.loadFileRepresentation(for: .image, openInPlace: false) { url, _, _ in
         continuation.resume(returning: url.flatMap { try? readCopy(from: $0) })
