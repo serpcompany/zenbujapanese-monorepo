@@ -7,7 +7,6 @@
   "scripts": {
     "verify": "tsx src/cli.ts",
     "report": "tsx src/report.ts",
-    "fix-branch": "tsx src/fix-branch.ts",
     "format": "biome format --write",
     "lint": "biome check",
     "typecheck": "tsc --noEmit",

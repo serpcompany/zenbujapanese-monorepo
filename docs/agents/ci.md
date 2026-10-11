@@ -11,7 +11,8 @@ with `pnpm install --frozen-lockfile`.
 
 | Workflow | File | Starts on |
 | --- | --- | --- |
-| `Repository` | `.github/workflows/repository.yml` | Every pull request |
+| `Repository` | `.github/workflows/repository.yml` | Every pull request; the merge queue |
+| `Pull request` | `.github/workflows/pull-request.yml` | Every pull request, again when its title or body is edited; the merge queue |
 | `Code review` | `.github/workflows/code-review.yml` | Every pull request that isn't a draft |
 | `Claude` | `.github/workflows/claude.yml` | `@claude` in an issue, a pull request comment, a review, or a review comment |
 | `Weekly maintenance` | `.github/workflows/maintenance.yml` | Mondays at 14:00 UTC; by hand, every job or one |
@@ -35,10 +36,31 @@ starts it too.
 `.github/workflows/repository.yml` runs on every pull request; a new push cancels the pull
 request's last run. It installs the whole workspace, since the dead-code and import checks read
 every package, then runs the checks' own `pnpm check` (`tools/checks`), then `pnpm verify`: no
-comments, docs, file sizes, secrets, duplicate code, dead code, imports, and the linters. On a pull
-request from a `fix/` branch it then checks that the pull request changes a test (`fix-branch`,
-comparing the merge commit with its first parent, which is why it checks out two commits). What
-each enforces is in [`code.md`](code.md), Checks.
+comments, docs, file sizes, secrets, duplicate code, dead code, imports, and the linters. What
+each enforces is in [`code.md`](code.md), Checks. It also starts on `merge_group`, so once
+`main`'s ruleset requires its `verify` job, the merge queue runs it on the tree that will land;
+a queue run is never cancelled.
+
+## Pull request
+
+`.github/workflows/pull-request.yml` holds the three rules about a pull request itself
+([`code.md`](code.md), Pull requests), each as its own job so each can be a required check:
+
+- **`title`**: the title is a Conventional Commit.
+- **`issue-link`**: GitHub has linked the pull request to an issue it closes, or its body says
+  `No issue: <reason>`. GitHub links a closing keyword a moment after the event, so the job looks
+  three times, five seconds apart. The job name is the one SERP's standard requires.
+- **`fix-test`**: a pull request from a `fix/` branch, or titled `fix:`, adds or changes a test.
+  It reads the changed files from GitHub, leaving out deleted ones.
+
+It runs again when the title or body is edited, which `Repository` doesn't, so a retitled pull
+request is checked at once. Each job runs `tools/checks/pull-request.mjs`, which uses nothing but
+Node, so the job checks out that one file and installs nothing. The title and body reach it
+through the environment, never through the command line. A pull request a bot opened, such as a
+gardening one, skips all three. On `merge_group` the jobs start and pass without doing anything:
+a required check that never reports in the merge queue would block every merge, and the pull
+request has already been checked. SERP's own `pr-issue-link.yml` isn't copied unchanged for that
+reason, and because workflow files here hold no comments.
 
 ## Code review
 

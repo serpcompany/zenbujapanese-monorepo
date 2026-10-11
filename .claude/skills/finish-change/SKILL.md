@@ -67,9 +67,12 @@ the screenshot. Fix what holds up, then repeat from step 1 until a review finds 
 
 ## 6. Draft the pull request
 
-Write the description for a reviewer who hasn't seen the work: what changed and why, what step 2
-showed, which checks ran and passed, and what was left and who can finish it (for example, Swift
-that needs a Mac). Show it to the person before pushing or opening anything.
+Give it a Conventional Commit title that names the outcome a user notices, and fill in the
+template (`.github/pull_request_template.md`) for a reviewer who hasn't seen the work: the issue
+it closes, why, what changed, what was left out and who can finish it (for example, Swift that
+needs a Mac), the evidence by level (what step 2 showed, which checks ran and passed), how the
+reviews went, and its status (`docs/agents/code.md`, Pull requests). Show it to the person before
+pushing or opening anything.
 
 Once it's open, the `Code review` workflow reviews every push with the `pr-review` skill. Answer
 each finding (fix it, or reply with why not), then run this skill again before the next push. A

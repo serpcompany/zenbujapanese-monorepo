@@ -109,11 +109,34 @@ committed, have whoever issued it rotate it; deleting the line isn't enough.
 
 ## Fixes
 
-A pull request from a `fix/` branch fixes a bug, so it adds or changes the test that fails without
-the fix: a unit test, a browser test, a conformance case, or a smoke check. The `Repository`
-workflow fails one that adds or changes no test; a deleted test or a changed test helper doesn't
-count ([`tools/checks/src/fixes.ts`](../../tools/checks/src/fixes.ts) lists what does). A change with nothing to fail without it, such as a typo or a workflow setting,
-isn't a fix: name its branch for what it is (`chore/`, `docs/`).
+A pull request from a `fix/` branch, or titled `fix:`, fixes a bug, so it adds or changes the test
+that fails without the fix: a unit test, a browser test, a UI test, a conformance case, or a smoke
+check. The `Pull request` workflow fails one that adds or changes no test; a deleted test or a
+changed test helper doesn't count
+([`tools/checks/pull-request.mjs`](../../tools/checks/pull-request.mjs) lists what does). A change
+with nothing to fail without it, such as a typo or a workflow setting, isn't a fix: give it another
+type (`chore`, `docs`).
+
+## Pull requests
+
+- **One issue, one branch, one pull request.** Branch from `main` as `<type>/<issue>-<slug>`, such
+  as `fix/701-english-default-sort`, or `<type>/<slug>` when no issue covers the work. The type is
+  the title's.
+- **The title is a Conventional Commit** that names the outcome a user notices, such as
+  `fix: Escape closes the Settings window`. The types are `feat`, `fix`, `perf`, `refactor`,
+  `docs`, `test`, `build`, `ci`, and `chore`.
+- **The body follows the template** (`.github/pull_request_template.md`). It starts with
+  `Closes #<number>`, one line per issue it finishes, or says why there is none on a line of its
+  own: `No issue: <reason>`. `Part of #N` closes nothing: split the issue into sub-issues, one
+  pull request each ([`issue-tracker.md`](issue-tracker.md)). Then why, what changed, what was
+  left out, the evidence by level, the review's outcome, and Status, which a fresh agent starts
+  from.
+- **Bring a branch up to date by merging `main` into it,** not by rebasing, and merge a parent
+  down into the branches stacked on it. Group stacked work into a few pull requests by what
+  deploys together, not one per issue. `main` takes merge commits, through the merge queue.
+
+The `Pull request` workflow checks the title, the closing issue, and the test in a fix
+([`ci.md`](ci.md), Pull request).
 
 ## Docs
 
@@ -153,13 +176,13 @@ The docs are the map agents work from, so they stay correct and reachable:
 
 | Check | What it enforces | Where it runs |
 | --- | --- | --- |
-| `pnpm verify` | No comments, docs, file size, Swift layers, secrets, duplicate code, dead code, and imports ([`tools/checks`](../../tools/checks/)), then ShellCheck, actionlint, and Ruff | The `Repository` workflow, on every pull request; the pre-push hook |
+| `pnpm verify` | No comments, docs, file size, Swift layers, secrets, duplicate code, dead code, and imports ([`tools/checks`](../../tools/checks/)), then ShellCheck, actionlint, and Ruff | The `Repository` workflow, on every pull request and in the merge queue; the pre-push hook |
 | `pnpm verify <checks> [paths]` | Some of the checks (`comments`, `docs`, `sizes`, `layers`, `secrets`, `duplicates`, `deadcode`, `dependencies`, `linters`, comma-separated), on the given repository paths or on every file. `deadcode` always reads the whole workspace, and `dependencies` the packages the paths touch | By hand; the pre-commit hook runs `comments,sizes,secrets` on the staged files |
 | `pnpm maintenance:report` | A Markdown report: the checks' failures; docs whose named files changed after the doc was edited; the rows of `docs/quality.md` whose Code changed after their Graded date ("Scores to re-grade"); known debt counted by Size, with the first small item; size and duplicate exceptions; the docs over their size budget; and code files within 50 lines of the size limit (`tools/checks/src/report.ts`) | `Weekly maintenance`, on Mondays, where doc gardening and code gardening start from it ([`ci.md`](ci.md)); by hand |
 | The edit hook | No comments, file size, Swift layers, and no secrets, on each file Claude Code writes, as it writes it (`.claude/settings.json`, `tools/checks/hook.mjs`). A file in a git worktree is checked by that worktree's own copy of the checks, since Claude Code runs the hook from the checkout the session started in. A checkout whose packages aren't installed says so rather than passing | Claude Code sessions in this repository |
 | The stop hook | The same four checks on every file changed since the last commit, and the docs check, before a turn ends (`tools/checks/stop-hook.mjs`). It catches what the edit hook can't see: a file a shell command rewrote, and a doc a change elsewhere made wrong. It reports the same failures once per session, and never holds a turn twice in a row | Claude Code sessions in this repository |
 | The git hooks | Before a commit, `comments,sizes,secrets` and each package's Biome on the staged files; before a push, `pnpm verify` ([`lefthook.yml`](../../lefthook.yml)) | Every clone after `pnpm install` |
-| `pnpm --filter zenbujapanese-checks fix-branch <branch>` | A `fix/` branch changes a test ([Fixes](#fixes)) | The `Repository` workflow, on pull requests from `fix/` branches |
+| The pull request checks | A Conventional Commit title, a closing issue or a stated reason for none, and a test in every fix ([Fixes](#fixes), [Pull requests](#pull-requests)), from `tools/checks/pull-request.mjs`, which needs no install | The `Pull request` workflow, on every pull request, again when its title or body is edited |
 | `pnpm check` | `pnpm verify`, then `pnpm check` in every package | By hand, before a pull request |
 | `pnpm check` in a package | Biome (with the package's import and logging rules, and no non-null assertions), typecheck, tests, and its build | The package's workflow, on pull requests that change it |
 | Generated files | The core's fixtures match what `pnpm --filter zenbujapanese-dictionary-api fixtures` exports from the language data, and `apps/web/cloudflare-env.d.ts` matches what `pnpm cf-typegen` writes from `wrangler.jsonc` | The `Dictionary API` and `Web` workflows |

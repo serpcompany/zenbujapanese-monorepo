@@ -2,13 +2,14 @@ name: Repository
 
 on:
   pull_request:
+  merge_group:
 
 permissions:
   contents: read
 
 concurrency:
-  group: repository-${{ github.event.pull_request.number }}
-  cancel-in-progress: true
+  group: repository-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
   verify:
@@ -16,8 +17,6 @@ jobs:
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@v5
-        with:
-          fetch-depth: 2
       - uses: pnpm/action-setup@v6
         with:
           package_json_file: package.json
@@ -31,8 +30,3 @@ jobs:
         run: pnpm --filter zenbujapanese-checks check
       - name: No comments, docs, sizes, secrets, duplicates, dead code, import rules, and the pinned linters
         run: pnpm verify
-      - name: A fix/ branch changes a test
-        if: startsWith(github.head_ref, 'fix/')
-        env:
-          BRANCH: ${{ github.head_ref }}
-        run: pnpm --silent --filter zenbujapanese-checks fix-branch "$BRANCH" HEAD^1
