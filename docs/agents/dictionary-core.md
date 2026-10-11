@@ -36,7 +36,7 @@ these and decodes the answer; [The app's side](#the-apps-side) says which type a
   package the core imports for more than its types. A client passes in what it has: the artifact as an
   `ArtifactDatabase` (synchronous `all(sql, params)`), the kanji files as `KanjiData` (whole, as
   the service holds them) or a `KanjiLookup` that answers one record at a time (as the app does),
-  and its capabilities: `tokenize` (Kuromoji) and `morphology` (the app's Sudachi). Without
+  and its capabilities: `tokenize` (the core's own tokenizer) and `morphology` (the app's Sudachi). Without
   `morphology`, sentence search is off and the rest of Search is unchanged (ADR 0008).
 - **It logs nothing.** It returns what happened, as a result or an error, and the client logs it
   its own way; Biome refuses `console` in `src` (tests aside).
@@ -172,7 +172,7 @@ modules, files, or event loop of its own, which is how the app runs it in JavaSc
   is checked in so the app builds without Node. `embedded/bundle.test.ts` builds it again and
   fails when the file differs.
 - The service replays every app-recorded suite through the endpoint too, on `node:sqlite` with the
-  real Kuromoji and kanji files (the `embedded*.conformance.test.ts` files in
+  real tokenizer and kanji files (the `embedded*.conformance.test.ts` files in
   `apps/dictionary-api/src/conformance/`), so a change that breaks the app's path fails on a pull
   request before any Swift runs.
 
@@ -405,7 +405,7 @@ The core answers as the Swift it replaced did, which the suites pin.
 - A word is looked up only when it is written in kana and kanji, so linking never asks for an
   ASCII form, and `formLookup` finds nothing for one. `entriesMatchingFirstForms` does look one
   up, in English, for the app's own exact-form lookups.
-- A Kuromoji analysis whose tokens don't tile the text is null, and the sentence shows as one
+- A tokenizer's analysis whose tokens don't tile the text is null, and the sentence shows as one
   unlinked word.
 - **A word's examples.** A kana headword such as でも also occurs inside other words (いつでも,
   何でも), so its examples come from the sentences Tatoeba's word index (`ExampleWordIndex`) links
@@ -417,8 +417,8 @@ The core answers as the Swift it replaced did, which the suites pin.
   maps to UTF-16 and then grapheme positions. The results' primary entry is highlighted for every
   search, and its own examples are listed for a romaji or deinflected query.
 - **A conjugated form's examples** are the sentences the app's search for the form finds,
-  normalized (a full-width Ｈ searches English), that contain it as written and in which Kuromoji
-  reads it as one word, so 見たかった and 見た目 aren't examples of 見た. The screen accents the
+  normalized (a full-width Ｈ searches English), that contain it as written and in which the
+  tokenizer reads it as one word, so 見たかった and 見た目 aren't examples of 見た. The screen accents the
   query as normalized.
 - An example's `pairId` is the artifact's pair ID in hex; the app's ID for the pair is `esp1_` and
   it.
@@ -496,7 +496,7 @@ ready and a page's first request prepares nothing:
 - A pitch's `downstep` is 0 for flat (heiban), otherwise the mora after which pitch falls. `pitch`
   is UniDic's; `compoundPitch` is CompoundPitch's estimate, which shows when UniDic has none.
 - No `FrequencyRow` for a pack means it doesn't rank or list the entry.
-- An example token's `reading` is Kuromoji's, in hiragana, when the token has kanji, and its
+- An example token's `reading` is the tokenizer's, in hiragana, when the token has kanji, and its
   `dictionaryForm` is set when it differs from the surface: what an ambiguous word searches for.
 - An `ExampleLinkRow` with one entry in `entSeqs` is the word-detail suite's `entry`; two or more
   are its `candidates`, a word the app can't resolve to one entry (such as だ). A token with no

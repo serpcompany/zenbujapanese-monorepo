@@ -18,11 +18,11 @@ support learner-facing capabilities. The catalogs remain the complete record.
 flowchart LR
     Text["Typed Japanese"] --> Sudachi["Sudachi analysis"]
     Image["Image"] --> Vision["Apple Vision OCR"]
-    Vision --> Kuromoji["Kuromoji parsing"]
+    Vision --> Tokenizer["The core's tokenizer"]
     Drawing["Handwriting"] --> CoreML["Core ML recognition"]
 
     Sudachi --> Dictionary["Offline dictionary"]
-    Kuromoji --> Dictionary
+    Tokenizer --> Dictionary
     CoreML --> Dictionary
 
     SudachiDict[("SudachiDict Core")] -. lexical data .-> Sudachi

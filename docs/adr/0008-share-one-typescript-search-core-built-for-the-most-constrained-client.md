@@ -206,8 +206,8 @@ The tokenizer).
   the same dictionary files, a port of kuromoji.js 0.1.2 that keeps its answers exactly, its
   mistakes included: every token agreed over all 232,774 example sentences, the 655,146
   headwords, readings, and summaries, and 1.7 million random texts. It tokenizes a sentence in
-  0.09 ms where kuromoji.js took 0.38 ms, starts in a quarter of a second where Kuromoji took
-  half, and holds no second copy of the word lists as objects. A native Swift tokenizer would be
+  0.09 ms where kuromoji.js took 0.38 ms, starts in 0.18 s where Kuromoji took 0.5 s, and
+  holds no second copy of the word lists as objects. A native Swift tokenizer would be
   faster still, and was not written: it would be the app's alone, and the next client would
   need its own. The website's dictionary service, which ran kuromoji.js too, runs the core's
   tokenizer from the same change on, so there is one tokenizer. kuromoji.js's answers were
@@ -241,7 +241,7 @@ four of the core now, run in turn:
 | 20 exact forms looked up | 8.1 ms | 11.3 ms | 11.4 ms |
 | 8 kanji's words | 318 ms | 325 ms | 320 ms |
 
-Starting the tokenizer takes 0.26 s where starting Kuromoji took 0.5 s, and a session of
+Starting the tokenizer takes 0.18 s where starting Kuromoji took 0.5 s, and a session of
 searches, examples, linked sentences, and kanji pages now ends at 263 MB where the core as
 merged ended at 280 MB and the Swift at 308 MB.
 

@@ -2,7 +2,7 @@
   "name": "zenbujapanese-dictionary-api",
   "version": "0.1.0",
   "private": true,
-  "description": "The website's dictionary service: the shared core (packages/dictionary-core) on the artifact, with Kuromoji and Sudachi (ADR 0009).",
+  "description": "The website's dictionary service: the shared core (packages/dictionary-core) on the artifact, with the core's tokenizer and Sudachi (ADR 0009).",
   "type": "module",
   "scripts": {
     "dev": "node --env-file-if-exists=.env --watch --import tsx src/server.ts",

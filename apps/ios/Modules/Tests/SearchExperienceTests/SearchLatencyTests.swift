@@ -261,7 +261,7 @@ struct SearchLatencyTests {
     for sentence in sentences.prefix(40) {
       words += await analysis.linkedTokens(sentence.japanese, SearchQuery(""), nil).count
     }
-    report("Kuromoji's start and \(words) linked words")
+    report("the tokenizer's start and \(words) linked words")
     let kanji = KanjiLookupClient.live(lookupClient: .live)
     for text in Self.kanji {
       let character = try #require(KanjiCharacter(text))

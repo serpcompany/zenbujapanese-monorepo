@@ -400,8 +400,8 @@ with zlib (`Gunzip.swift`), which also checks its checksum and length, when the 
 asks for it (`TokenizerDictionary.swift`), and hands the core the unpacked bytes without
 copying them. `DictionaryTextData.availability()` asks the
 core whether it can tokenize, which reads the files. The first Word Detail, Example Sentences,
-or image text of a session asks, and waits for it before it links its sentences: about a
-quarter of a second, most of it unpacking, where starting kuromoji.js took half a second.
+or image text of a session asks, and waits for it before it links its sentences: about
+0.18 s, most of it unpacking, where starting kuromoji.js took half a second.
 `TokenizerDictionaryTests` covers the unpacking and a sentence's words.
 
 To compare the previous interactive parsing path, launch the app with
@@ -473,10 +473,10 @@ that Search's "View N Example Sentences" row opens: for each query, the row's co
 the entry the screen links words to, whether it lists that entry's examples (a deinflected or
 romaji query) or the sentences that contain the query, every listed sentence's pair ID in order,
 and the first five sentences' words with their entry, candidates, and whether the screen accents
-them as the query's, read with the app's Kuromoji analysis. What the screen lists and accents
+them as the query's, read with the tokenizer's analysis. What the screen lists and accents
 is the core's answer (`ExampleSentenceClient.listed`, and each token's `matchesQuery`), which
 the view and the suite both read. It pins `LanguageReferenceData.sqlite3`,
-`ExampleWordIndex.sqlite3`, and the Kuromoji files. Record it with
+`ExampleWordIndex.sqlite3`, and the tokenizer's dictionary files. Record it with
 `-only-testing:SearchExperienceTests/ExampleSearchConformanceTests`; add a query by adding its
 `query` and `covers` fields and recording.
 

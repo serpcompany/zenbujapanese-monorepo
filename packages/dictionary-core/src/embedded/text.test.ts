@@ -55,7 +55,7 @@ const sentences: Record<string, KuromojiToken[]> = {
 const host = () =>
   fakeHost(entries, {
     tokenize: text => {
-      if (!Object.hasOwn(sentences, text)) throw new Error(`Kuromoji has no ${text}`)
+      if (!Object.hasOwn(sentences, text)) throw new Error(`The tokenizer has no ${text}`)
       return sentences[text]
     }
   })
@@ -154,7 +154,7 @@ describe('the embedded text engine', () => {
     })
   })
 
-  test('shows a text Kuromoji cannot read, or does not cover, as one unlinked word', async () => {
+  test('shows a text the tokenizer cannot read, or does not cover, as one unlinked word', async () => {
     const whole = (text: string) => [
       {
         surface: text,
@@ -181,7 +181,7 @@ describe('the embedded text engine', () => {
     expect(await linked(host(), { text: '', query: '', highlightedEntry: null })).toEqual([])
   })
 
-  test('asks the host for a text’s words when it has no Kuromoji of its own', async () => {
+  test('asks the host for a text’s words when it has no tokenizer of its own', async () => {
     const call = begin(
       fakeHost(entries),
       'linkedTokens',

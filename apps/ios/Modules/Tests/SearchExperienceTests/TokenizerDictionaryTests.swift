@@ -57,7 +57,7 @@ struct TokenizerDictionaryTests {
     #expect(TokenizerDictionary.unpacked("../LanguageReferenceData") == nil)
   }
 
-  @Test("the bundled files tokenize a sentence into the words Kuromoji finds in it")
+  @Test("the bundled files tokenize a sentence into the words Kuromoji found in it")
   func tokenizesSentences() async throws {
     let text = DictionaryTextData()
     #expect(await text.availability() == .full)
