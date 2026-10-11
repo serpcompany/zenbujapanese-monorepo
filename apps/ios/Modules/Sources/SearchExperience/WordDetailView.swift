@@ -92,7 +92,6 @@ struct WordDetailView: View {
               FrequencyRankRow(row: row) { frequencyDisclosure = $0 }
             }
           }
-          .accessibilityIdentifier("word-detail.frequency")
         }
 
         if let page {

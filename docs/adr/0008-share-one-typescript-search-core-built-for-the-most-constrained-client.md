@@ -132,6 +132,7 @@ clients the views use.
 | Example Sentences for 67 queries, the first five sentences of each linked | 72.4 s | 35.6 s |
 | Word Detail for 54 words, with their examples and every conjugated form's | 34.0 s | 27.5 s |
 | Kanji Detail for 33 kanji | 2.28 s | 2.20 s |
+| The example count a results screen waits for, 14 queries, none remembered | 1.76 s | 1.48 s |
 | 200 example sentences linked, first time | 137 ms | 162 ms |
 | The same sentences linked again | 65 ms | 12 ms |
 | The kanji data read at launch | 175 ms | 14 ms |
@@ -139,7 +140,8 @@ clients the views use.
 | Memory after a session of searches, examples, linked sentences, and kanji pages | 308 MB | 280 MB |
 | Memory at its highest in that session | 308 MB | 289 MB |
 
-Search itself did not change (45 uncached searches: 5.7 s before and after). A screen's model
+Search itself did not change (45 uncached searches: 5.7 s before and after), and the first
+search after launch starts one more engine, which takes about 7 ms. A screen's model
 costs the engine about a millisecond: a results screen 1.2 ms (1.5 ms sorted by a dictionary), a
 word page 0.2 ms, a kanji page 0.6 ms, an element page 0.7 ms, and a word's furigana 0.04 ms
 before it is remembered. The Swift's own time for each was not measured and will have been
