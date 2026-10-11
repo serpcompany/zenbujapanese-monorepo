@@ -198,9 +198,10 @@ jobs:
           overwrite: true
 
       - name: Fail unless Claude posted a review
-        if: env.HAS_REVIEW_TOKEN == 'true'
+        if: ${{ !cancelled() && steps.review.outcome != 'skipped' }}
         env:
           EXECUTION_FILE: ${{ steps.review.outputs.execution_file }}
+          CLAUDE_OUTCOME: ${{ steps.review.outcome }}
           GITHUB_TOKEN: ${{ github.token }}
           PR_NUMBER: ${{ github.event.pull_request.number }}
           REVIEW_BOT: "claude[bot]"
@@ -213,9 +214,11 @@ jobs:
             console.log(`::error title=Claude didn't post a review::${clean(message, 900)}`)
             process.exit(1)
           }
+          const tokenAdvice = result => result.api_error_status === 401 ? " The API refused the token (401), so renew the CLAUDE_CODE_OAUTH_TOKEN secret (docs/agents/ci.md, Claude's app and token)." : ''
           const readLog = () => {
             const file = process.env.EXECUTION_FILE
             if (!file || !fs.existsSync(file)) {
+              if (process.env.CLAUDE_OUTCOME === 'failure') fail("The Claude step failed before Claude ran, so it wrote no execution log: that step's own log says why.")
               fail("The review wrote no execution log, so no review happened. The action skips a pull request that changes this workflow, which must match main's (docs/agents/ci.md, Code review).")
             }
             let messages
@@ -276,7 +279,7 @@ jobs:
             const summary = `Claude review: ${result.num_turns} turns in ${Math.round((result.duration_ms || 0) / 1000)}s, about $${Number(result.total_cost_usd || 0).toFixed(2)} (estimate), models: ${models}.`
             console.log(summary)
             if (process.env.GITHUB_STEP_SUMMARY) fs.appendFileSync(process.env.GITHUB_STEP_SUMMARY, `${summary}\n`)
-            if (result.is_error) fail(`The review ended with ${result.subtype || 'an error'}.`)
+            if (result.is_error) fail(`The review ended in an error: ${clean(result.result || result.subtype || 'no message', 400)}${tokenAdvice(result)}`)
             const taskSets = messages.filter(entry => entry?.type === 'system' && entry.subtype === 'background_tasks_changed')
             const lastSet = taskSets.at(-1)?.tasks
             const running = (Array.isArray(lastSet) ? lastSet : []).filter(task => task && !task.ambient)

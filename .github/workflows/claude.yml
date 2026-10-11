@@ -140,9 +140,10 @@ jobs:
           overwrite: true
 
       - name: Fail unless Claude pushed or replied
-        if: env.ANSWER == 'true'
+        if: ${{ !cancelled() && steps.claude.outcome != 'skipped' }}
         env:
           EXECUTION_FILE: ${{ steps.claude.outputs.execution_file }}
+          CLAUDE_OUTCOME: ${{ steps.claude.outcome }}
           CLAUDE_BRANCH: ${{ steps.claude.outputs.branch_name }}
           CLAUDE_BOT: "claude[bot]"
           GITHUB_TOKEN: ${{ github.token }}
@@ -154,9 +155,11 @@ jobs:
             console.log(`::error title=Claude didn't act on the request::${clean(message, 900)}`)
             process.exit(1)
           }
+          const tokenAdvice = result => result.api_error_status === 401 ? " The API refused the token (401), so renew the CLAUDE_CODE_OAUTH_TOKEN secret (docs/agents/ci.md, Claude's app and token)." : ''
           const readLog = () => {
             const file = process.env.EXECUTION_FILE
             if (!file || !fs.existsSync(file)) {
+              if (process.env.CLAUDE_OUTCOME === 'failure') fail("The Claude step failed before Claude ran, so it wrote no execution log: that step's own log says why.")
               fail('Claude wrote no execution log, so it never ran. The action stops before Claude when the person who asked lacks write access, when the comment has no exact @claude mention, or when this workflow differs from main\'s copy (the log then says "Skipping action due to workflow validation").')
             }
             let messages
@@ -232,7 +235,7 @@ jobs:
             const summary = `Claude: ${result.num_turns} turns in ${Math.round((result.duration_ms || 0) / 1000)}s, about $${Number(result.total_cost_usd || 0).toFixed(2)} (estimate), models: ${models}.`
             console.log(summary)
             if (process.env.GITHUB_STEP_SUMMARY) fs.appendFileSync(process.env.GITHUB_STEP_SUMMARY, `${summary}\n`)
-            if (result.is_error) fail(`Claude ended with ${result.subtype || 'an error'}.`)
+            if (result.is_error) fail(`Claude ended in an error: ${clean(result.result || result.subtype || 'no message', 400)}${tokenAdvice(result)}`)
             const sets = messages.filter(entry => entry?.type === 'system' && entry.subtype === 'background_tasks_changed')
             const running = (sets.at(-1)?.tasks || []).filter(task => task && !task.ambient)
             if (running.length) fail(`Claude ended with ${running.length} background task(s) still running.`)
