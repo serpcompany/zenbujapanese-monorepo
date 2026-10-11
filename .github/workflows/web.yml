@@ -2,20 +2,35 @@ name: Web
 
 on:
   pull_request:
-    paths:
-      - apps/web/**
-      - packages/dictionary-core/**
-      - package.json
-      - pnpm-lock.yaml
-      - pnpm-workspace.yaml
-      - .github/workflows/web.yml
+  merge_group:
+
+concurrency:
+  group: web-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 permissions:
   contents: read
 
 jobs:
-  check:
+  changes:
     runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      changed: ${{ steps.paths.outputs.changed }}
+    steps:
+      - uses: actions/checkout@v5
+      - id: paths
+        uses: ./.github/actions/changed-paths
+        with:
+          paths: >-
+            apps/web packages/dictionary-core package.json pnpm-lock.yaml pnpm-workspace.yaml
+            .github/workflows/web.yml .github/actions/changed-paths
+
+  check:
+    needs: changes
+    if: needs.changes.outputs.changed == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@v5
       - uses: pnpm/action-setup@v6
@@ -58,6 +73,8 @@ jobs:
         run: grep -q 'href="/login/">Sign in<' .next/server/app/about.html
 
   e2e:
+    needs: changes
+    if: needs.changes.outputs.changed == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 25
     steps:
@@ -91,3 +108,13 @@ jobs:
             apps/web/e2e/report
             apps/web/e2e/results
           retention-days: 7
+
+  web:
+    if: always()
+    needs: [changes, check, e2e]
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Every job passed, or had nothing to check
+        if: contains(needs.*.result, 'failure') || contains(needs.*.result, 'cancelled')
+        run: exit 1

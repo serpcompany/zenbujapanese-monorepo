@@ -2,14 +2,12 @@ name: iOS
 
 on:
   pull_request:
-    paths:
-      - apps/ios/**
-      - .github/workflows/ios.yml
+  merge_group:
   workflow_dispatch:
 
 concurrency:
   group: ios-${{ github.event.pull_request.number || github.ref }}
-  cancel-in-progress: true
+  cancel-in-progress: ${{ github.event_name != 'merge_group' }}
 
 permissions:
   contents: read
@@ -20,7 +18,22 @@ env:
   LFS_SNAPSHOTS: apps/ios/LanguageData/Sources/JMdict_e-*.gz,apps/ios/LanguageData/Sources/Tatoeba-*/*,apps/ios/LanguageData/Sources/KANJIDIC2-*/*,apps/ios/LanguageData/Sources/EDRDG-radicals-*/*,apps/ios/LanguageData/Sources/Kanji-JLPT-Waller-*/*
 
 jobs:
+  changes:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      changed: ${{ steps.paths.outputs.changed }}
+    steps:
+      - uses: actions/checkout@v5
+      - id: paths
+        uses: ./.github/actions/changed-paths
+        with:
+          paths: >-
+            apps/ios .github/workflows/ios.yml .github/actions/changed-paths
+
   contracts:
+    needs: changes
+    if: needs.changes.outputs.changed == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
@@ -36,7 +49,10 @@ jobs:
         run: python3 -m unittest discover --start-directory apps/ios/Tools/tests --pattern 'test_*.py' --verbose
 
   swift:
-    if: ${{ vars.IOS_SWIFT_TESTS == 'on' || github.event_name == 'workflow_dispatch' }}
+    needs: changes
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      (vars.IOS_SWIFT_TESTS == 'on' && needs.changes.outputs.changed == 'true')
     runs-on: macos-26
     timeout-minutes: 240
     steps:
@@ -115,3 +131,13 @@ jobs:
       - name: Run the recorded-audio check's scoring tests
         working-directory: apps/ios/Tools/TranslateReplay
         run: swift test
+
+  ios:
+    if: always()
+    needs: [changes, contracts, swift]
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Every job passed, or had nothing to check
+        if: contains(needs.*.result, 'failure') || contains(needs.*.result, 'cancelled')
+        run: exit 1

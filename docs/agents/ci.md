@@ -16,20 +16,46 @@ with `pnpm install --frozen-lockfile`.
 | `Code review` | `.github/workflows/code-review.yml` | Every pull request that isn't a draft |
 | `Claude` | `.github/workflows/claude.yml` | `@claude` in an issue, a pull request comment, a review, or a review comment |
 | `Weekly maintenance` | `.github/workflows/maintenance.yml` | Mondays at 14:00 UTC; by hand, every job or one |
-| `Web` | `.github/workflows/web.yml` | Pull requests that change the site or the core |
+| `Web` | `.github/workflows/web.yml` | Every pull request and the merge queue, working when the site or the core changed |
 | `Web deploy` | `.github/workflows/web-deploy.yml` | Pushes to `main` that change the site or the core; by hand |
-| `Dictionary core` | `.github/workflows/dictionary-core.yml` | Pull requests that change the core |
-| `Dictionary API` | `.github/workflows/dictionary-api.yml` | Pull requests that change the service or what it reads; pushes to `main` that change its cached files; by hand |
+| `Dictionary core` | `.github/workflows/dictionary-core.yml` | Every pull request and the merge queue, working when the core changed |
+| `Dictionary API` | `.github/workflows/dictionary-api.yml` | Every pull request and the merge queue, working when the service or what it reads changed; pushes to `main` that change its cached files; by hand |
 | `Dictionary API deploy` | `.github/workflows/dictionary-api-deploy.yml` | Pushes to `main` and pull requests that change what the image holds; by hand |
-| `Account API` | `.github/workflows/account-api.yml` | Pull requests that change the account service or what the services share; by hand |
+| `Account API` | `.github/workflows/account-api.yml` | Every pull request and the merge queue, working when the account service or what the services share changed; by hand |
 | `Account API deploy` | `.github/workflows/account-api-deploy.yml` | Pushes to `main` and pull requests that change what the image holds; by hand |
-| `iOS` | `.github/workflows/ios.yml` | Pull requests that change `apps/ios`; by hand |
-| `Language data build` | `.github/workflows/language-data-build.yml` | Pull requests and pushes to `main` that change a release's inputs |
+| `iOS` | `.github/workflows/ios.yml` | Every pull request and the merge queue, working when `apps/ios` changed; by hand |
+| `Language data build` | `.github/workflows/language-data-build.yml` | Every pull request and the merge queue, working when a release's inputs changed; pushes to `main` that change them |
 | `Language data release` | `.github/workflows/language-data-release.yml` | Pushes to `main` that change a release's inputs; by hand |
 
 "The core" is `packages/dictionary-core`, and a change to the root `package.json`,
 `pnpm-lock.yaml`, or `pnpm-workspace.yaml` counts as changing it. A change to a workflow's own file
 starts it too.
+
+## Checks a merge can wait for
+
+`main`'s ruleset requires no status check yet ([`tech-debt.md`](../tech-debt.md), Checks), so a
+red check stops no merge. The workflows are built so the owners can require them as they are:
+
+- **Each starts on every pull request and on `merge_group`.** A required check has to report
+  every time: a workflow that its `paths` filter skipped would leave its check pending and block
+  the merge, and one that never ran in the merge queue would block the queue.
+- **Each decides inside whether the change concerns it.** `Web`, `Dictionary core`,
+  `Dictionary API`, `Account API`, `iOS`, and `Language data build` begin with a `changes` job.
+  It asks the `changed-paths` action (`.github/actions/changed-paths/`) whether the pull request,
+  or the merge group, changed any of the workflow's paths, comparing the checked-out commit with
+  its base, which it fetches. The other jobs need it and run only on `true`. On a push or a run
+  by hand there is no base, and it answers `true`.
+- **Each ends in one job named for the workflow** (`web`, `dictionary-core`, `dictionary-api`,
+  `account-api`, `ios`, `language-data-build`). It always runs, and fails when a job it needs
+  failed or was cancelled. It is the job to require: a job skipped because the one it needs
+  failed would itself count as passing.
+- **A queue run is never cancelled.** A new push cancels a pull request's last run only.
+
+The jobs to require are `verify` (`Repository`), `title`, `issue-link`, and `fix-test`
+(`Pull request`), and the six above. `ios` passes without testing the app until the owners turn
+`IOS_SWIFT_TESTS` on (iOS, below). An owner adds them under the ruleset's required status
+checks; nothing in the repository can. `tools/checks/src/workflows.test.ts` holds every workflow
+to this shape, and runs the action against scratch repositories.
 
 ## Repository
 

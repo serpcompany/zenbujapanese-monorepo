@@ -20,6 +20,7 @@ export interface Step {
 
 interface Job {
   if?: string
+  needs?: string | string[]
   concurrency?: { group: string; 'cancel-in-progress'?: boolean }
   'timeout-minutes'?: number
   permissions?: Record<string, string>
@@ -29,7 +30,7 @@ interface Job {
 
 export interface Workflow {
   on: Record<string, unknown>
-  concurrency?: { group: string; 'cancel-in-progress'?: boolean }
+  concurrency?: { group: string; 'cancel-in-progress'?: boolean | string }
   jobs: Record<string, Job>
 }
 

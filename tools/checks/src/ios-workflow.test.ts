@@ -13,12 +13,12 @@ function runsCommand(ending: string, ...parts: string[]): boolean {
 
 describe('the iOS workflow', () => {
   test('runs the contract tests on every pull request that changes the app', () => {
-    expect(workflow.jobs.contracts?.if).toBeUndefined()
+    expect(workflow.jobs.contracts?.if).toBe("needs.changes.outputs.changed == 'true'")
   })
 
-  test('runs the Swift job only when the owners turn it on, or by hand', () => {
-    expect(workflow.jobs.swift?.if).toBe(
-      "${{ vars.IOS_SWIFT_TESTS == 'on' || github.event_name == 'workflow_dispatch' }}"
+  test('runs the Swift job only when the owners turn it on and the app changed, or by hand', () => {
+    expect(workflow.jobs.swift?.if?.replace(/\s+/g, ' ').trim()).toBe(
+      "github.event_name == 'workflow_dispatch' || (vars.IOS_SWIFT_TESTS == 'on' && needs.changes.outputs.changed == 'true')"
     )
   })
 

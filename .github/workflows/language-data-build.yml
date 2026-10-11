@@ -2,13 +2,7 @@ name: Language data build
 
 on:
   pull_request:
-    paths:
-      - 'language-data/**'
-      - '.github/workflows/language-data-build.yml'
-      - '.github/workflows/language-data-release.yml'
-      - '.github/actions/package-language-data/**'
-      - 'apps/ios/Modules/Sources/SearchExperience/Resources/**'
-      - 'apps/ios/LanguageData/**'
+  merge_group:
   push:
     branches: [main]
     paths:
@@ -20,13 +14,31 @@ on:
 
 concurrency:
   group: language-data-build-${{ github.ref }}
-  cancel-in-progress: true
+  cancel-in-progress: ${{ github.event_name != 'merge_group' }}
 
 permissions:
   contents: read
 
 jobs:
+  changes:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      changed: ${{ steps.paths.outputs.changed }}
+    steps:
+      - uses: actions/checkout@v5
+      - id: paths
+        uses: ./.github/actions/changed-paths
+        with:
+          paths: >-
+            language-data .github/workflows/language-data-release.yml
+            .github/actions/package-language-data
+            apps/ios/Modules/Sources/SearchExperience/Resources apps/ios/LanguageData
+            .github/workflows/language-data-build.yml .github/actions/changed-paths
+
   build:
+    needs: changes
+    if: needs.changes.outputs.changed == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 30
     defaults:
@@ -49,3 +61,13 @@ jobs:
           path: ${{ runner.temp }}/language-data-summary
           if-no-files-found: error
           retention-days: 7
+
+  language-data-build:
+    if: always()
+    needs: [changes, build]
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Every job passed, or had nothing to check
+        if: contains(needs.*.result, 'failure') || contains(needs.*.result, 'cancelled')
+        run: exit 1
