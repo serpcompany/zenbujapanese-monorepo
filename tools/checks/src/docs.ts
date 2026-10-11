@@ -1,8 +1,9 @@
 import { readFileSync } from 'node:fs'
 import { join, posix } from 'node:path'
 import { anchorOf, headingAnchors } from './doc-rules/anchors'
+import { budgetProblem, staleAllowances } from './doc-rules/budgets'
 import { hiddenComments } from './doc-rules/hidden'
-import { agentsLineLimit, layoutAdvice, outOfLayout } from './doc-rules/layout'
+import { layoutAdvice, misnamed, namingAdvice, outOfLayout } from './doc-rules/layout'
 import { missingScript, pnpmInvocations, workspaces } from './doc-rules/scripts'
 import { skillCatalog, skillProblems } from './doc-rules/skills'
 import { classify, repositoryFiles, root } from './files'
@@ -235,6 +236,13 @@ export function checkDocs(files: readonly string[]): DocProblem[] {
       })
     }
     if (outOfLayout(path)) problems.push({ path, problem: layoutAdvice })
+    if (misnamed(path)) problems.push({ path, problem: namingAdvice })
+    const overBudget = budgetProblem(path, text)
+    if (overBudget) problems.push({ path, problem: overBudget })
+  }
+  for (const path of staleAllowances(isFile)) {
+    requested.add(path)
+    problems.push({ path, problem: 'no longer exists: remove it from knownLongDocs' })
   }
 
   for (const path of owned) {
@@ -245,13 +253,6 @@ export function checkDocs(files: readonly string[]): DocProblem[] {
     )) {
       problems.push({ path, problem })
     }
-  }
-  const agentsLines = (texts.get('AGENTS.md') ?? '').trimEnd().split('\n').length
-  if (agentsLines > agentsLineLimit) {
-    problems.push({
-      path: 'AGENTS.md',
-      problem: `is ${agentsLines} lines; it only routes, so keep it to ${agentsLineLimit} by moving detail into the doc it routes to`
-    })
   }
   if (!owned.length || !links) {
     problems.push({

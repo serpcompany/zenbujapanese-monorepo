@@ -4,6 +4,7 @@ import { join } from 'node:path'
 import { findComments } from './comments/find'
 import { findDeadCode } from './deadcode'
 import { checkDependencies, parts } from './dependencies'
+import { knownLongDocs } from './doc-rules/budgets'
 import { checkDocs, isOwnedDoc, referencedFiles } from './docs'
 import { findDuplicates } from './duplicates'
 import { repositoryFiles, root } from './files'
@@ -73,6 +74,9 @@ process.stdout.write(
     quality: scoresToRegrade(read('docs/quality.md'), times),
     debt: summarizeDebt(read('docs/tech-debt.md')),
     sizeExceptions: Object.entries(knownLargeFiles).map(([path, { lines }]) => ({ path, lines })),
+    longDocs: Object.entries(knownLongDocs)
+      .map(([path, lines]) => ({ path, lines }))
+      .sort((a, b) => b.lines - a.lines),
     duplicateExceptions: Object.entries(knownDuplicates).map(([pair, { blocks }]) => ({
       pair,
       blocks

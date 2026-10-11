@@ -160,8 +160,9 @@ file matches `main`'s.
 failures; the docs whose named or linked files changed after the doc was last edited; the rows of
 [`quality.md`](../quality.md) whose Code changed after their Graded date ("Scores to re-grade");
 the known debt, counted by Size with the first small item named
-([`tech-debt.md`](../tech-debt.md)); the size exceptions; and the code files within 50 lines of
-the size limit (to split before a change has to). A job writes it under `tmp/`, which git
+([`tech-debt.md`](../tech-debt.md)); the size exceptions; the docs over their size budget, to
+split by topic ([`code.md`](code.md), Docs); and the code files within 50 lines of the size limit
+(to split before a change has to). A job writes it under `tmp/`, which git
 ignores: a Markdown file at the repository root would fail the docs check the report runs.
 
 - **`doc-gardening`**: unless a "Weekly doc gardening" pull request is already open, Claude takes up

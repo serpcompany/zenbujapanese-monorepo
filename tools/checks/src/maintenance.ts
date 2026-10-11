@@ -28,6 +28,7 @@ export interface MaintenanceFacts {
   quality: QualityRows
   debt: DebtSummary
   sizeExceptions: SizeExceptionRow[]
+  longDocs: SizeExceptionRow[]
   duplicateExceptions: { pair: string; blocks: number }[]
   nearLimit: SizeExceptionRow[]
 }
@@ -132,6 +133,8 @@ export function renderReport(facts: MaintenanceFacts): string {
       ...debtLines(facts.debt),
       `- Files over the size limit, each with its reason in ${code('tools/checks/src/sizes.ts')}: ${facts.sizeExceptions.length}.`,
       ...facts.sizeExceptions.map(({ path, lines }) => `  - ${code(path)}: ${lines} lines`),
+      `- Docs over their size budget, each with its allowance in ${code('tools/checks/src/doc-rules/budgets.ts')}: ${facts.longDocs.length}. Split one by topic, then lower or remove its allowance.`,
+      ...facts.longDocs.map(({ path, lines }) => `  - ${code(path)}: ${lines} lines`),
       `- Repeated blocks allowed for now, each pair with its reason in ${code('tools/checks/src/known-duplicates.ts')}: ${facts.duplicateExceptions.reduce((total, { blocks }) => total + blocks, 0)}.`,
       ...facts.duplicateExceptions.map(({ pair, blocks }) => `  - ${pair}: ${blocks}`)
     ].join('\n'),

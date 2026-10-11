@@ -18,4 +18,17 @@ export function outOfLayout(path: string): boolean {
   return !docsEntries.has(path.slice('docs/'.length).split('/')[0])
 }
 
-export const agentsLineLimit = 120
+export const namingAdvice =
+  "isn't named in kebab-case: under a docs folder, name files and folders in lowercase words joined by hyphens (README.md is the one exception)"
+
+const docsFolder = /^(?:docs|apps\/[^/]+\/docs)\/(.+)$/
+const kebab = /^[a-z0-9]+(?:-[a-z0-9]+)*$/
+
+export function misnamed(path: string): boolean {
+  const inside = docsFolder.exec(path)?.[1]
+  if (!inside) return false
+  const parts = inside.split('/')
+  const file = parts.pop() as string
+  if (parts.some(folder => !kebab.test(folder))) return true
+  return file !== 'README.md' && !kebab.test(file.replace(/\.md$/, ''))
+}

@@ -134,7 +134,15 @@ The docs are the map agents work from, so they stay correct and reachable:
   `CONTEXT.md`, `README.md`, and `CLAUDE.md`, and `docs/` only `adr/`, `agents/`, `api/`, and its
   four records. How an area works goes in `docs/agents/<area>.md`, a decision in `docs/adr/`, a
   service's API reference in `docs/api/`, and a product's behavior in `apps/<app>/docs/product/`.
-  `AGENTS.md` only routes, in at most 120 lines.
+  Under a docs folder, files and folders are named in kebab-case.
+- Every doc keeps to a size budget, counted in lines wrapped at 100 characters, since an agent
+  loads a whole doc to answer one question: 120 for a map (`AGENTS.md` and `CLAUDE.md` anywhere,
+  and the root `README.md`), which only routes, and 300 for any other doc. Split a doc that
+  outgrows it by topic. The docs over 300 when the check arrived are in `knownLongDocs` in
+  [`tools/checks/src/doc-rules/budgets.ts`](../../tools/checks/src/doc-rules/budgets.ts), each at
+  its size: one may shrink but not grow, the check asks for its entry to be lowered as it
+  shrinks, and for it to go once the doc fits. No new entry is added. The API references in
+  `docs/api/` are written from code and ADRs are records, so neither has a budget.
 - A service's API reference, `docs/api/<service>.md`, is written from its OpenAPI document by
   `packages/node-service/src/api-reference.ts`, and the service's tests fail when either file
   differs from what they write: change the routes, then run `pnpm test -u` in the service.
@@ -147,7 +155,7 @@ The docs are the map agents work from, so they stay correct and reachable:
 | --- | --- | --- |
 | `pnpm verify` | No comments, docs, file size, Swift layers, secrets, duplicate code, dead code, and imports ([`tools/checks`](../../tools/checks/)), then ShellCheck, actionlint, and Ruff | The `Repository` workflow, on every pull request; the pre-push hook |
 | `pnpm verify <checks> [paths]` | Some of the checks (`comments`, `docs`, `sizes`, `layers`, `secrets`, `duplicates`, `deadcode`, `dependencies`, `linters`, comma-separated), on the given repository paths or on every file. `deadcode` always reads the whole workspace, and `dependencies` the packages the paths touch | By hand; the pre-commit hook runs `comments,sizes,secrets` on the staged files |
-| `pnpm maintenance:report` | A Markdown report: the checks' failures; docs whose named files changed after the doc was edited; the rows of `docs/quality.md` whose Code changed after their Graded date ("Scores to re-grade"); known debt counted by Size, with the first small item; size and duplicate exceptions; and code files within 50 lines of the size limit (`tools/checks/src/report.ts`) | `Weekly maintenance`, on Mondays, where doc gardening and code gardening start from it ([`ci.md`](ci.md)); by hand |
+| `pnpm maintenance:report` | A Markdown report: the checks' failures; docs whose named files changed after the doc was edited; the rows of `docs/quality.md` whose Code changed after their Graded date ("Scores to re-grade"); known debt counted by Size, with the first small item; size and duplicate exceptions; the docs over their size budget; and code files within 50 lines of the size limit (`tools/checks/src/report.ts`) | `Weekly maintenance`, on Mondays, where doc gardening and code gardening start from it ([`ci.md`](ci.md)); by hand |
 | The edit hook | No comments, file size, Swift layers, and no secrets, on each file Claude Code writes, as it writes it (`.claude/settings.json`, `tools/checks/hook.mjs`). A file in a git worktree is checked by that worktree's own copy of the checks, since Claude Code runs the hook from the checkout the session started in. A checkout whose packages aren't installed says so rather than passing | Claude Code sessions in this repository |
 | The stop hook | The same four checks on every file changed since the last commit, and the docs check, before a turn ends (`tools/checks/stop-hook.mjs`). It catches what the edit hook can't see: a file a shell command rewrote, and a doc a change elsewhere made wrong. It reports the same failures once per session, and never holds a turn twice in a row | Claude Code sessions in this repository |
 | The git hooks | Before a commit, `comments,sizes,secrets` and each package's Biome on the staged files; before a push, `pnpm verify` ([`lefthook.yml`](../../lefthook.yml)) | Every clone after `pnpm install` |
