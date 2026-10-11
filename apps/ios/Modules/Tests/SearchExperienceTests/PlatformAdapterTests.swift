@@ -70,9 +70,19 @@ struct PlatformAdapterTests {
 
     let signProvider = try #require(NSItemProvider(contentsOf: sign))
     let bannerProvider = try #require(NSItemProvider(contentsOf: banner))
-    let asset = try #require(await ImageTextAsset.dropped(signProvider))
+    let assets = await droppedOnTheMainActor([signProvider, bannerProvider])
+    let asset = try #require(assets[0])
     #expect(asset.data == (try Data(contentsOf: sign)))
-    #expect(await ImageTextAsset.dropped(bannerProvider) == nil)
+    #expect(assets[1] == nil)
+  }
+
+  @MainActor
+  private func droppedOnTheMainActor(_ providers: [NSItemProvider]) async -> [ImageTextAsset?] {
+    var assets: [ImageTextAsset?] = []
+    for provider in providers {
+      assets.append(await ImageTextAsset.dropped(provider))
+    }
+    return assets
   }
 
   @MainActor
