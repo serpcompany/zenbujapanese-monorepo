@@ -8,6 +8,7 @@ import type {
 } from '../artifact/kanji-data'
 import type { KuromojiToken } from '../examples/morphology'
 import { stopIfInterrupted } from '../search/database'
+import type { RadicalFile } from '../search/radicals'
 
 export interface HostRows {
   rows?: Record<string, unknown>[]
@@ -27,6 +28,7 @@ export interface EmbeddedHost {
   kanjiEntry?(character: string): KanjiReferenceEntry | null
   kanjiStructure?(character: string): KanjiStructureEntry | null
   kanjiElement?(glyph: string): KanjiElementEntry | null
+  radicals?(): RadicalFile | null
 }
 
 function bytes(hex: string): Uint8Array {

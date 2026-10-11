@@ -11,6 +11,8 @@ struct JapaneseTextToken: Identifiable, Sendable {
   let isFunctionWord: Bool
   let isPageWord: Bool
   let matchesQuery: Bool
+  let lineBreak: JapaneseTokenLineBreakBehavior
+  let isCounted: Bool
 
   init(
     id: Int,
@@ -22,7 +24,9 @@ struct JapaneseTextToken: Identifiable, Sendable {
     ruby: JapaneseRuby? = nil,
     isFunctionWord: Bool = false,
     isPageWord: Bool = false,
-    matchesQuery: Bool = false
+    matchesQuery: Bool = false,
+    lineBreak: JapaneseTokenLineBreakBehavior = .normal,
+    isCounted: Bool = false
   ) {
     self.id = id
     self.surface = surface
@@ -34,6 +38,8 @@ struct JapaneseTextToken: Identifiable, Sendable {
     self.isFunctionWord = isFunctionWord
     self.isPageWord = isPageWord
     self.matchesQuery = matchesQuery
+    self.lineBreak = lineBreak
+    self.isCounted = isCounted
   }
 }
 
@@ -99,7 +105,9 @@ private actor LinkedEntries {
         },
         isFunctionWord: word.isFunctionWord,
         isPageWord: word.isPageWord,
-        matchesQuery: word.matchesQuery
+        matchesQuery: word.matchesQuery,
+        lineBreak: JapaneseTokenLineBreakBehavior(attaching: word.attaches),
+        isCounted: word.counted
       )
     }
   }

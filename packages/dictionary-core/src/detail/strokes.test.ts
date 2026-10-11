@@ -1,7 +1,7 @@
 import { describe, expect, test } from 'vitest'
 import { fixtureKanjiRows } from '../fixtures'
 import { kanjiDetail } from './kanji'
-import { decodeStroke, strokeOrder } from './strokes'
+import { decodeStroke, strokeDiagram, strokeOrder } from './strokes'
 
 describe('decodeStroke', () => {
   test('一: a move, then cubic curves, as an SVG path starting where the app puts its dot', () => {
@@ -35,6 +35,41 @@ describe('strokeOrder', () => {
     expect(order?.viewportSize).toBe(109)
     expect(order?.strokes).toHaveLength(9)
     expect(order?.strokes[0].path.startsWith('M21 17.24C')).toBe(true)
+  })
+})
+
+describe('strokeDiagram', () => {
+  test('gives each stroke as the points a client draws through', () => {
+    expect(
+      strokeDiagram({
+        viewportSize: 109,
+        strokeCount: 1,
+        strokes: [[0, 11, 54.25, 1, 14.19, 54.87, 17.25, 55, 20.73, 54.75]]
+      })
+    ).toEqual({
+      viewportSize: 109,
+      strokes: [
+        [
+          { end: { x: 11, y: 54.25 }, controls: null },
+          {
+            end: { x: 20.73, y: 54.75 },
+            controls: [
+              { x: 14.19, y: 54.87 },
+              { x: 17.25, y: 55 }
+            ]
+          }
+        ]
+      ]
+    })
+  })
+
+  test.each([
+    ['a stroke that begins with a curve', 1, [[1, 1, 2, 3, 4, 5, 6]], 'does not begin with a move'],
+    ['an unknown opcode', 1, [[0, 1, 2, 2, 1, 2]], 'unknown path opcode'],
+    ['a stroke count that differs', 2, [[0, 1, 2]], 'stroke-count mismatch'],
+    ['no strokes', 0, [], 'stroke-count mismatch']
+  ])('rejects %s', (_, strokeCount, strokes, message) => {
+    expect(() => strokeDiagram({ viewportSize: 109, strokeCount, strokes })).toThrow(message)
   })
 })
 

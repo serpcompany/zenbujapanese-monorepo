@@ -5,7 +5,7 @@ import { hostDatabase } from './host'
 
 const entries: FakeEntry[] = [
   { id: 'b2', headword: '日本語', reading: 'にほんご' },
-  { id: 'a1', headword: '日本', reading: 'にほん' },
+  { id: 'a1', entSeq: 1582710, headword: '日本', reading: 'にほん' },
   { id: 'c3', headword: '本日', reading: 'ほんじつ' }
 ]
 
@@ -85,6 +85,65 @@ describe('the embedded dictionary', () => {
       本日: noun('c3', 'ほんじつ')
     })
     expect(target.asked).toEqual([['にほん', 'ほん', 'ホン'], ['本日']])
+  })
+
+  test('routes a website link to its word, or to what the link falls back to', async () => {
+    const route = (path: string, linkHost = 'zenbujapanese.com') =>
+      ask(host(), 'websiteRoute', JSON.stringify({ host: linkHost, path }))
+    expect(await route('/dictionary/日本-1582710/')).toEqual({ kind: 'word', id: 'a1' })
+    expect(await route('/dictionary/日本-999/')).toEqual({ kind: 'search', query: '日本' })
+    expect(await route('/dictionary/999/')).toEqual({ kind: 'home' })
+    expect(await route('/dictionary/search/iru/')).toEqual({ kind: 'search', query: 'iru' })
+    expect(await route('/dictionary/kanji/本/')).toEqual({ kind: 'kanji', character: '本' })
+    expect(await route('/dictionary/日本-1582710/', 'example.com')).toEqual({ kind: 'home' })
+  })
+
+  test('opens a related word by its entry, or by searching for how it is written', async () => {
+    const related = (word: object) => ask(host(), 'relatedWord', JSON.stringify(word))
+    const written = { query: '日本', headword: '日本語', reading: 'にほんご' }
+    expect(await related({ ...written, targetID: 'zz' })).toBe('zz')
+    expect(await related({ ...written, targetID: null })).toBe('b2')
+    expect(await related({ ...written, targetID: null, reading: 'にっぽんご' })).toBe('a1')
+    const unfound = begin(
+      host(),
+      'relatedWord',
+      JSON.stringify({ ...written, targetID: null, query: '猫' })
+    )
+    expect(await settled(unfound)).toEqual({ analyze: '猫' })
+    unfound.analyzed(JSON.stringify({ words: [] }))
+    expect(await settled(unfound)).toEqual({ value: null })
+  })
+
+  test('opens a saved word by its entry, or by one written and read the same', async () => {
+    const saved = (word: object) => ask(host(), 'savedWord', JSON.stringify(word))
+    expect(await saved({ id: 'c3', headword: '消えた', reading: 'きえた' })).toBe('c3')
+    expect(await saved({ id: 'gone', headword: '日本語', reading: 'にほんご' })).toBe('b2')
+    expect(await saved({ id: 'gone', headword: '日本語', reading: 'にっぽんご' })).toBeNull()
+  })
+
+  test('keeps the handwriting candidates written in Japanese, and tells one kanji from text', async () => {
+    expect(
+      await ask(host(), 'japaneseCandidates', JSON.stringify(['見る', 'miru', 'ﾐﾙ', '見る']))
+    ).toEqual(['見る', 'ミル'])
+    expect(await ask(host(), 'isKanji', '見')).toBe(true)
+    expect(await ask(host(), 'isKanji', '見る')).toBe(false)
+    expect(await ask(host(), 'isKanji', 'み')).toBe(false)
+  })
+
+  test('writes a reading, and a sentence’s words, in romaji', async () => {
+    expect(await ask(host(), 'romaji', 'にほんご')).toBe('nihongo')
+    expect(await ask(host(), 'romaji', '日本語')).toBeNull()
+    expect(
+      await ask(
+        host(),
+        'sentenceRomaji',
+        JSON.stringify([
+          { surface: '日本語', reading: 'ニホンゴ' },
+          { surface: 'を', reading: 'ヲ' },
+          { surface: '。', reading: '。' }
+        ])
+      )
+    ).toBe('nihongo wo。')
   })
 
   test('normalizes a query as search does', async () => {

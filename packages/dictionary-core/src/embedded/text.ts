@@ -13,6 +13,7 @@ import {
   occurrences,
   tokenSpans
 } from '../artifact/word-examples'
+import { type Attachment, attachment } from '../detail/romaji'
 import { type RubySegment, rubySegments } from '../detail/ruby'
 import { usesForm } from '../examples/forms'
 import {
@@ -65,6 +66,8 @@ export interface EmbeddedToken {
   ruby: RubySegment[] | null
   isPageWord: boolean
   matchesQuery: boolean
+  attaches: Attachment | null
+  counted: boolean
 }
 
 export interface ResultsExamplesRequest {
@@ -242,18 +245,21 @@ export class EmbeddedText {
       const token = tokens[index]
       const target = token.entry ? linked.get(token.entry.id) : undefined
       const furigana = target ? displayReading(token, target) : null
+      const functionWord = isFunctionWord(token)
       return {
         surface: token.surface,
         start,
         end,
         reading: candidates ? token.reading : null,
-        isFunctionWord: isFunctionWord(token),
+        isFunctionWord: functionWord,
         entry: token.entry?.id ?? null,
         candidates: token.entry ? [] : token.candidates.map(candidate => candidate.id),
         furigana,
         ruby: furigana === null ? null : rubySegments(token.surface, furigana),
         isPageWord: entry !== null && token.entry?.id === entry.id,
-        matchesQuery: matches.some(match => match.start < end && start < match.end)
+        matchesQuery: matches.some(match => match.start < end && start < match.end),
+        attaches: attachment(token.surface),
+        counted: token.entry !== null && !functionWord
       }
     })
     if (candidates) this.linked.set(key, answer)

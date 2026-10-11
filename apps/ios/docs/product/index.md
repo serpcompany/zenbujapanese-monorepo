@@ -227,7 +227,8 @@ Check: UI `AccountUITests.testAccountListsEveryArea` (every row, and the small t
 iPad), `testReadingAidsAndFrequencyDictionariesOpen`,
 and `testTranslationsAndCreditsOpenFromAccount`; contract `test_account_service_settings.py`
 (production in TestFlight and App Store builds, staging in Debug); package `PlayerReadingAidTests`
-and `WordMeaningTests` (the Reading Aids preferences).
+and `WordMeaningTests` (the Reading Aids preferences), and the recorded `RomajiConformanceTests`
+with core `detail/romaji.test.ts` (how a reading and a sentence are written in romaji).
 
 Rows use Settings-style tinted icon tiles in grouped cards without section headings.
 
@@ -304,7 +305,8 @@ can't be changed, and Known Words and the Mark as Known button say so. If the fi
 can't be read at launch, such as before the device's first unlock, nothing is shown or saved over
 it, and Known Words asks the learner to reopen Zenbu.
 
-Check: package `WordKnowledgeTests` and `SavedKanjiTests`; UI
+Check: package `WordKnowledgeTests`, `SavedKanjiTests`, and `WordResolutionTests` (the entry a
+saved word opens); UI
 `SavedWordsUITests.testAKnownWordIsListedAndCanBeMarkedUnknownThere`,
 `WordDetailUITests.testTheMenuOffersThisDevicesActionsAndMarksTheWordKnown`, and
 `AccountUITests.testKnownWordsAndTheMediaLibraryStartEmptyAndListsStartWithFavorites` (empty).

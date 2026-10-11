@@ -9,6 +9,11 @@ struct LookupClient: Sendable {
   var entryMatchingForm: @Sendable (String) async throws -> DictionaryEntry?
   var entriesMatchingForm: @Sendable (String) async throws -> [DictionaryEntry]
   var entriesContainingKanji: @Sendable (String) async throws -> [DictionaryEntry]
+  var relatedWord: @Sendable (DictionaryRelationship) async throws -> DictionaryEntry?
+  var savedWord:
+    @Sendable (_ id: String, _ headword: String, _ reading: String) async throws
+      -> DictionaryEntry?
+  var websiteRoute: @Sendable (URL) async -> WebsiteLinkRoute
 
   init(
     search: @escaping @Sendable (SearchQuery) async throws -> LookupSearchResults,
@@ -18,7 +23,14 @@ struct LookupClient: Sendable {
     )? = nil,
     entryMatchingForm: @escaping @Sendable (String) async throws -> DictionaryEntry?,
     entriesMatchingForm: @escaping @Sendable (String) async throws -> [DictionaryEntry],
-    entriesContainingKanji: @escaping @Sendable (String) async throws -> [DictionaryEntry]
+    entriesContainingKanji: @escaping @Sendable (String) async throws -> [DictionaryEntry],
+    relatedWord: @escaping @Sendable (DictionaryRelationship) async throws -> DictionaryEntry? = {
+      _ in nil
+    },
+    savedWord: @escaping @Sendable (String, String, String) async throws -> DictionaryEntry? = {
+      _, _, _ in nil
+    },
+    websiteRoute: @escaping @Sendable (URL) async -> WebsiteLinkRoute = { _ in .home }
   ) {
     self.search = search
     self.entry = entry
@@ -31,6 +43,9 @@ struct LookupClient: Sendable {
     self.entryMatchingForm = entryMatchingForm
     self.entriesMatchingForm = entriesMatchingForm
     self.entriesContainingKanji = entriesContainingKanji
+    self.relatedWord = relatedWord
+    self.savedWord = savedWord
+    self.websiteRoute = websiteRoute
   }
 
   static let live: LookupClient = {
@@ -47,7 +62,13 @@ struct LookupClient: Sendable {
       },
       entriesContainingKanji: { character in
         try await LanguageReferenceData.shared.entries(containingKanji: character)
-      }
+      },
+      relatedWord: { try await LanguageReferenceData.shared.word(related: $0) },
+      savedWord: { id, headword, reading in
+        try await LanguageReferenceData.shared.word(
+          saved: SavedWord(id: id, headword: headword, reading: reading))
+      },
+      websiteRoute: { await LanguageReferenceData.shared.route(openingWebsite: $0) }
     )
   }()
 }
@@ -132,6 +153,34 @@ actor LanguageReferenceData {
     try entries(inOrder: try await coreAnswer("entriesContainingKanji", character))
   }
 
+  func word(related relationship: DictionaryRelationship) async throws -> DictionaryEntry? {
+    try entry(named: try await coreAnswer("relatedWord", RelatedWord(relationship)))
+  }
+
+  func word(saved word: SavedWord) async throws -> DictionaryEntry? {
+    try entry(named: try await coreAnswer("savedWord", word))
+  }
+
+  func route(openingWebsite url: URL) async -> WebsiteLinkRoute {
+    let link = WebsiteAddress(host: url.host(), path: url.path(percentEncoded: true))
+    guard let page: WebsitePage = try? await coreAnswer("websiteRoute", link) else { return .home }
+    switch page.kind {
+    case "word":
+      guard let entry = try? entry(named: page.id) else { return .home }
+      return .open(.word(entry, nil))
+    case "kanji":
+      return page.character.flatMap(KanjiCharacter.init).map { .open(.kanji($0, nil)) } ?? .home
+    case "search":
+      return page.query.map(WebsiteLinkRoute.search) ?? .home
+    default:
+      return .home
+    }
+  }
+
+  private func entry(named id: String?) throws -> DictionaryEntry? {
+    try id.flatMap { try entry(LanguageReferenceID(rawValue: $0)) }
+  }
+
   private func entries(inOrder ids: [String]) throws -> [DictionaryEntry] {
     let ids = ids.map(LanguageReferenceID.init(rawValue:))
     let found = try entries(equivalentTo: ids)
@@ -169,6 +218,14 @@ actor LanguageReferenceData {
     try await preparedCore().answer(method, argument, analyzingWith: morphology)
   }
 
+  private func coreAnswer<Answer: Decodable>(
+    _ method: String,
+    _ argument: some Encodable
+  ) async throws -> Answer {
+    try await coreAnswer(
+      method, String(decoding: try JSONEncoder().encode(argument), as: UTF8.self))
+  }
+
   private func preparedCore() throws -> DictionaryCore {
     if let core { return core }
     let prepared = try DictionaryCore(statements: try openStatements())
@@ -177,4 +234,56 @@ actor LanguageReferenceData {
   }
 
   private static let searchCacheCapacity = 32
+}
+
+struct SavedWord: Encodable, Sendable {
+  let id: String
+  let headword: String
+  let reading: String
+}
+
+private struct RelatedWord: Encodable {
+  let relationship: DictionaryRelationship
+
+  init(_ relationship: DictionaryRelationship) {
+    self.relationship = relationship
+  }
+
+  private enum CodingKeys: String, CodingKey {
+    case targetID
+    case query
+    case headword
+    case reading
+  }
+
+  func encode(to encoder: Encoder) throws {
+    var container = encoder.container(keyedBy: CodingKeys.self)
+    try container.encode(relationship.targetID, forKey: .targetID)
+    try container.encode(relationship.query, forKey: .query)
+    try container.encode(relationship.headword, forKey: .headword)
+    try container.encode(relationship.reading, forKey: .reading)
+  }
+}
+
+private struct WebsiteAddress: Encodable {
+  let host: String?
+  let path: String
+
+  private enum CodingKeys: String, CodingKey {
+    case host
+    case path
+  }
+
+  func encode(to encoder: Encoder) throws {
+    var container = encoder.container(keyedBy: CodingKeys.self)
+    try container.encode(host, forKey: .host)
+    try container.encode(path, forKey: .path)
+  }
+}
+
+private struct WebsitePage: Decodable {
+  let kind: String
+  let id: String?
+  let character: String?
+  let query: String?
 }

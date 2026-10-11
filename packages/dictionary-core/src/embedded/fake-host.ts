@@ -3,6 +3,7 @@ import type { EmbeddedHost } from './host'
 
 export interface FakeEntry {
   id: string
+  entSeq?: number
   headword: string
   reading: string
   partsOfSpeech?: string[]
@@ -61,6 +62,18 @@ export function fakeHost(
       asked.push(parameters)
       if (sql.includes('FROM entries WHERE id IN')) {
         return { rows: entryRows(entries, JSON.parse(parameters[0]) as string[]) }
+      }
+      if (sql.includes('source_record_id = ?')) {
+        return {
+          rows: entries
+            .filter(entry => entry.entSeq === Number(parameters[1]))
+            .map(({ id }) => ({ id }))
+        }
+      }
+      if (sql.includes('FROM entries WHERE id = unhex(?)')) {
+        return {
+          rows: entries.filter(entry => entry.id === parameters[0]).map(({ id }) => ({ id }))
+        }
       }
       if (!sql.includes('FROM forms f') || !sql.includes('f.kind IN (0, 1)')) return { rows: [] }
       const matches = sql.includes('f.form = ?')

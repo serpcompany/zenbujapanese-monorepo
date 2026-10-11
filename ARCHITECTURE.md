@@ -65,9 +65,11 @@ fails a shape change that doesn't raise the number
 ([`docs/agents/dictionary-core.md`](docs/agents/dictionary-core.md), Rules).
 
 The app and the website also meet at links: on an iPhone with the app, a dictionary URL opens in
-the app (universal links). The app reads the website's URLs (`WebsiteLink.swift`), and the
-website's association file and its App Store lookup name the app's bundle ID (`iosAppBundleId` in
-`apps/web/src/lib/app-links.ts`). No check ties the two: word URLs are permanent (ADR 0007), and
+the app (universal links). The app reads the website's URLs with the core's `websitePage`
+(`packages/dictionary-core/src/detail/links.ts`), which shares its word-segment parser with the
+website. The website's association file and its App Store lookup name the app's bundle ID
+(`iosAppBundleId` in `apps/web/src/lib/app-links.ts`), and no check ties that file to the app:
+word URLs are permanent (ADR 0007), and
 the bundle ID changes only with the app's App Store record (#616 moved it back to
 `com.zenbujapanese.dictionary`), when the file changes with it
 ([`docs/agents/web.md`](docs/agents/web.md), Links that open the app).

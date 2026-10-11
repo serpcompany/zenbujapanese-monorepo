@@ -1,55 +1,29 @@
 import Foundation
 
-struct RadicalComponent: Codable, Hashable, Identifiable, Sendable {
+struct RadicalComponent: Decodable, Hashable, Identifiable, Sendable {
   let id: String
   let glyph: String
-  let strokeCount: Int
 }
 
-struct RadicalCharacter: Codable, Hashable, Sendable {
-  let value: String
-  let components: [String]
-}
-
-struct RadicalCatalog: Codable, Sendable {
-  let snapshot: String
-  let sourceIdentity: String
-  let components: [RadicalComponent]
-  let characters: [RadicalCharacter]
-
-  func candidates(matching selectedComponents: Set<String>) -> [RadicalCharacter] {
-    guard !selectedComponents.isEmpty else { return [] }
-    return characters
-      .filter { selectedComponents.isSubset(of: Set($0.components)) }
-      .sorted { lhs, rhs in
-        let lhsExtraCount = lhs.components.count - selectedComponents.count
-        let rhsExtraCount = rhs.components.count - selectedComponents.count
-        if lhsExtraCount != rhsExtraCount { return lhsExtraCount < rhsExtraCount }
-        return lhs.value < rhs.value
-      }
+struct RadicalPanel: Decodable, Hashable, Sendable {
+  struct Group: Decodable, Hashable, Sendable {
+    let strokeCount: Int
+    let label: String
+    let radicals: [RadicalComponent]
   }
 
-  func componentGroups(matching candidates: [RadicalCharacter]) -> [(strokeCount: Int, values: [RadicalComponent])] {
-    let availableIDs = candidates.isEmpty
-      ? Set(components.map(\.id))
-      : Set(candidates.flatMap(\.components))
-    return Dictionary(grouping: components.filter { availableIDs.contains($0.id) }, by: \.strokeCount)
-      .map { ($0.key, $0.value) }
-      .sorted { $0.strokeCount < $1.strokeCount }
-  }
+  let candidates: [String]
+  let groups: [Group]
 }
 
 struct RadicalLookupClient: Sendable {
-  let load: @Sendable () throws -> RadicalCatalog
+  let panel: @Sendable (_ selected: [String]) throws -> RadicalPanel
 
-  static let live = RadicalLookupClient {
-    guard let resourceURL = Bundle.module.url(forResource: "RadicalReferenceData", withExtension: "json") else {
-      throw RadicalLookupError.missingBundledData
-    }
-    return try JSONDecoder().decode(RadicalCatalog.self, from: Data(contentsOf: resourceURL))
+  static let live = RadicalLookupClient { try PresentationCore.shared.answer("radicalPanel", $0) }
+
+  static func bundledFile() -> [UInt8]? {
+    Bundle.module.url(forResource: "RadicalReferenceData", withExtension: "json")
+      .flatMap { try? Data(contentsOf: $0) }
+      .map { Array($0) + [0] }
   }
-}
-
-enum RadicalLookupError: Error {
-  case missingBundledData
 }

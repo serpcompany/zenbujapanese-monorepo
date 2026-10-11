@@ -57,6 +57,8 @@ struct LinkedWord: Decodable, Sendable {
   let ruby: [JapaneseRubySegment]?
   let isPageWord: Bool
   let matchesQuery: Bool
+  let attaches: String?
+  let counted: Bool
 }
 
 actor DictionaryTextData {

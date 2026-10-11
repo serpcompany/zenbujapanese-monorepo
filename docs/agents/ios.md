@@ -354,12 +354,12 @@ team, `847HR8U8D9`.
 
 SwiftUI hands a universal link to `onOpenURL` in `WebsiteLinkOpening` (`WebsiteLinkOpening.swift`),
 which `SearchExperienceRootView` applies. It switches to Search from any tab, Translate included,
-and `WebsiteLinkRoute.apply` puts the route on Search's stack. `WebsiteLink`
-(`WebsiteLink.swift`) reads it: the website's URL shapes, decoded one path segment at a time,
-and the Language Reference ID of a word URL's JMdict entry number, derived as
-`apps/ios/Tools/jmdict_normalization.py` does (the first 16 bytes of the SHA-256 of
-`edrdg.jmdict`, a NUL, and the number). It reads only the host and path, so a URL with any
-scheme and the host `zenbujapanese.com` routes the same way.
+and `WebsiteLinkRoute.apply` puts the route on Search's stack. `LookupClient.websiteRoute`
+hands the link's host and path to the core (`websiteRoute`,
+[`dictionary-core.md`](dictionary-core.md), Embedded), which reads the website's URL shapes,
+decoded one path segment at a time, with the parser the website uses, and finds a word URL's
+entry by its JMdict entry number. Only the host and path are read, so a URL with any scheme and
+the host `zenbujapanese.com` routes the same way.
 
 Check it with `WebsiteLinkTests`. The Simulator sends an `https` link to Safari until the
 association file is live, which would also load the site, so to see a link land in the app
@@ -501,7 +501,13 @@ written from the Swift the core replaced, so it pins what that showed. Record it
 `-only-testing:SearchExperienceTests/KanjiElementConformanceTests`; add a glyph by adding its
 `glyph` and `covers` fields and recording.
 
-The website's dictionary service replays all six suites through the shared TypeScript core on
+`RomajiConformanceTests` checks the Romaji reading aid against `romaji.json`: readings grouped
+by the rule they exercise, and whole sentences with their words. Its cases were recorded from
+Foundation's transliteration, which the core's romaji replaced, so the file is edited by hand,
+not re-recorded; a linked sentence's punctuation and counted words are checked in the same
+suite.
+
+The website's dictionary service replays all seven suites through the shared TypeScript core on
 the same data ([`dictionary-api.md`](dictionary-api.md)), once through its own path and once
 through the entry point the app calls, and the `Dictionary API` workflow runs them on pull
 requests that change a suite, so commit a re-recorded suite with the change to the core it
@@ -618,7 +624,11 @@ side, lists which type asks for what.
   each with its own strokes, grade, and readings. `KanjiFilesTests` compares every record with
   a full parse of the files.
 - **Memoized where a view asks again.** Furigana by surface and reading (4,000), a word page by
-  entry (64), and a gloss by meaning (4,000), since SwiftUI rebuilds a row many times.
+  entry (64), a gloss by meaning (4,000), romaji by reading (4,000) and by sentence (512), and
+  the kanji check by string (4,000), since SwiftUI rebuilds a row many times. The keys compare
+  scalar for scalar: Swift's own string equality would hand one compatibility kanji's answer to
+  its twin. `PresentationCore`'s lock is recursive, because decoding a page builds
+  `KanjiCharacter`s, each of which asks the same engine.
 - **Cancelling.** `SQLiteJSONRows` checks the task between rows, as the app's other reads do,
   and the core asks the host between batches of rows while it ranks (`zenbuHost.interrupted`),
   so a search the learner typed past stops within a few milliseconds, not when its ranking
@@ -632,8 +642,9 @@ side, lists which type asks for what.
   JavaScriptCore has the JIT, which makes JavaScript several times faster and holds several
   times the memory, so add `TEST_RUNNER_JSC_useJIT=false` to measure there. `SearchLatencyTests`
   prints each query's uncached time, how long linking and an abandoned search take, how long
-  the presentation engine takes to start and to build each screen, and the memory a session
-  reaches step by step; it runs only when asked:
+  the presentation engine takes to start and to build each screen, how long romaji, the
+  radical panel, a stroke diagram, and the kanji check take, and the memory a session reaches
+  step by step; it runs only when asked:
 
   ```sh
   TEST_RUNNER_ZENBU_MEASURE_SEARCH=1 xcodebuild -scheme ZenbuJapaneseModules-Package \
@@ -649,17 +660,26 @@ side, lists which type asks for what.
 
 What stays native, and why:
 
-- **Reading the files.** SQLite, the kanji files, the frequency packs, and decoding an entry are
-  the host's part: the core asks, the app answers.
-- **`KanjiCharacter`.** Whether a string is one kanji is asked wherever a route or a link is
-  built, so it is a value type; the kanji and element suites pin it to the core's
-  `isKanjiCharacter` on both sides.
-- **Stroke order.** `KanjiStrokeOrderClient` decodes KanjiVG's strokes into the path SwiftUI
-  draws, where the core decodes them into an SVG path: one file format, two drawing types. The
-  kanji suite pins each case's stroke count.
-- **Romaji.** A reading aid, Foundation's ICU transliteration as is
-  (`ReadingAidPresentation.swift`).
-- **Speech, handwriting, text recognition, and translation** are Apple's.
+- **Reading the files.** SQLite, the kanji and radical files, the stroke diagrams' rows, the
+  frequency packs, and decoding an entry are the host's part: the core asks, or is handed the
+  row, and decides what it means.
+- **Parsing a URL.** Foundation splits a link into its host and path; the core reads them.
+- **Drawing and layout.** SwiftUI draws what the core answers: a stroke's points become a
+  `Path`, and a word's `attaches` becomes where `LinkedTokenLayout` may break a line.
+- **Applying the learner's own state.** Which reading aids are on and which words are known
+  live in the app's stores, so a view combines them with what the core said about a word (a
+  gloss shows when Word Meanings is on, the core didn't call the word a function word, and the
+  learner hasn't marked it known), and `Comprehension` counts the known among the words the
+  core counted and formats the percentage.
+- **The learner's data.** Favorites and lists, Known Words, notes, encounter media, recent
+  searches, watch history, and account sync are stored and merged by the app, with the account
+  service as what every signed-in client agrees with ([`account-api.md`](account-api.md)).
+- **The Player's YouTube plumbing.** Reading a video's ID out of a link, choosing the Japanese
+  caption track, turning YouTube's caption XML into cards, and pairing them with YouTube's
+  translations (`YouTubeCaptions.swift`) are about YouTube's formats, and only the app has a
+  Player. Which of a caption's words count toward comprehension is the core's.
+- **Speech, handwriting and text recognition, translation, and Apple Intelligence** are Apple's
+  ([`translate.md`](translate.md)).
 
 ## Search and linked text
 
@@ -690,9 +710,9 @@ nothing. `LinkedWordResolutionTests` checks it through the app's engine.
 
 `PartOfSpeech` raw values are stable identifiers the JMdict importer writes, and the core's
 `detail/part-of-speech.ts` owns every learner-facing word for them, so rewording needs no
-language-data rebuild. Romaji is Foundation's ICU transliteration as is
-(`ReadingAidPresentation.swift`), deliberately without app-owned corrections for particles or
-long vowels.
+language-data rebuild. Romaji is the core's (`detail/romaji.ts`): ICU's kana transliteration, as
+Foundation ran it, deliberately without corrections for particles or long vowels
+([`dictionary-core.md`](dictionary-core.md), Matching the Swift).
 
 ## Frequency packs
 

@@ -481,7 +481,7 @@ describe('the embedded presentation engine', () => {
           query: 'のむ',
           results,
           exampleCount: 3,
-          learner: { frequency, sort: 'default', filter: 'all', known: [], leadingOnly: false }
+          learner: { frequency, sort: 'default', filter: 'all', known: [], fromRadicals: false }
         })
       )
     ).toMatchObject({

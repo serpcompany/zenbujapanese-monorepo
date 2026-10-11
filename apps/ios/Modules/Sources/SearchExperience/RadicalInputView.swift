@@ -7,14 +7,14 @@ struct RadicalInputView: View {
   let lookupClient: RadicalLookupClient
   let submit: (SearchQuery) -> Void
   @State private var selectionOrder: [String] = []
-  @State private var catalog: RadicalCatalog?
+  @State private var panel: RadicalPanel?
   @State private var loadFailed = false
 
   var body: some View {
     SearchInputPanel(mode: $mode) {
       VStack(spacing: 12) {
         SearchCandidateStrip(
-          candidates: radicalCandidates.map(\.value),
+          candidates: panel?.candidates ?? [],
           identifierPrefix: "radical",
           select: accept
         ) {
@@ -26,18 +26,22 @@ struct RadicalInputView: View {
       }
     } actions: {
       SearchInputUndoButton(isEnabled: !selectionOrder.isEmpty) {
-        selectionOrder.removeLast()
+        select(selectionOrder.dropLast())
       }
       .accessibilityLabel("Undo last radical")
       .accessibilityIdentifier("radical.undo")
     }
     .task {
-      guard catalog == nil else { return }
-      do {
-        catalog = try lookupClient.load()
-      } catch {
-        loadFailed = true
-      }
+      if panel == nil { select(selectionOrder) }
+    }
+  }
+
+  private func select(_ radicals: some Sequence<String>) {
+    selectionOrder = Array(radicals)
+    do {
+      panel = try lookupClient.panel(selectionOrder)
+    } catch {
+      loadFailed = true
     }
   }
 
@@ -57,7 +61,7 @@ struct RadicalInputView: View {
         .accessibilityIdentifier("radical.load-failure")
       } else {
         LazyVStack(alignment: .leading, spacing: 0, pinnedViews: .sectionHeaders) {
-          ForEach(groups, id: \.strokeCount) { group in
+          ForEach(panel?.groups ?? [], id: \.strokeCount) { group in
             Section {
               LazyVGrid(
                 columns: Array(
@@ -66,12 +70,12 @@ struct RadicalInputView: View {
                 ),
                 spacing: 4
               ) {
-                ForEach(group.values) { radical in
+                ForEach(group.radicals) { radical in
                   radicalButton(radical)
                 }
               }
             } header: {
-              Text(group.strokeCount == 1 ? "1 Stroke" : "\(group.strokeCount) Strokes")
+              Text(group.label)
                 .font(.footnote.weight(.semibold))
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .padding(.top, 8)
@@ -89,7 +93,7 @@ struct RadicalInputView: View {
   }
 
   private func radicalButton(_ radical: RadicalComponent) -> some View {
-    let isSelected = selectedRadicals.contains(radical.id)
+    let isSelected = selectionOrder.contains(radical.id)
     return Button(radical.glyph) { toggle(radical.id) }
       .buttonStyle(.plain)
       .font(.title3)
@@ -105,24 +109,10 @@ struct RadicalInputView: View {
       .accessibilityIdentifier(radical.accessibilityIdentifier)
   }
 
-  private var radicalCandidates: [RadicalCharacter] {
-    catalog?.candidates(matching: selectedRadicals) ?? []
-  }
-
-  private var groups: [(strokeCount: Int, values: [RadicalComponent])] {
-    catalog?.componentGroups(matching: radicalCandidates) ?? []
-  }
-
-  private var selectedRadicals: Set<String> {
-    Set(selectionOrder)
-  }
-
   private func toggle(_ radical: String) {
-    if let index = selectionOrder.firstIndex(of: radical) {
-      selectionOrder.remove(at: index)
-    } else {
-      selectionOrder.append(radical)
-    }
+    select(
+      selectionOrder.contains(radical)
+        ? selectionOrder.filter { $0 != radical } : selectionOrder + [radical])
   }
 }
 

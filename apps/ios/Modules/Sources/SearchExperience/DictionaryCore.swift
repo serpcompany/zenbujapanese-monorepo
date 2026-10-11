@@ -12,7 +12,8 @@ final class DictionaryCore {
 
   init(
     statements: SQLiteStatements? = nil,
-    kanji: (@Sendable () -> KanjiFiles?)? = nil
+    kanji: (@Sendable () -> KanjiFiles?)? = nil,
+    radicals: (@Sendable () -> [UInt8]?)? = nil
   ) throws {
     guard
       let url = Bundle.module.url(
@@ -37,6 +38,9 @@ final class DictionaryCore {
       Self.answer(host, "kanjiEntry") { kanji()?.entry($0) }
       Self.answer(host, "kanjiStructure") { kanji()?.structure($0) }
       Self.answer(host, "kanjiElement") { kanji()?.element($0) }
+    }
+    if let radicals {
+      Self.answer(host, "radicals") { _ in radicals() }
     }
     context.setObject(host, forKeyedSubscript: "zenbuHost" as NSString)
     context.evaluateScript(source, withSourceURL: url)

@@ -152,3 +152,30 @@ One thing is slower: a sentence linked for the first time takes about 0.8 ms whe
 then reads the entry itself. Linked again, it takes 0.06 ms where it took 0.3 ms, because the
 core remembers it. `SearchLatencyTests` repeats every measurement
 ([`ios.md`](../agents/ios.md), The dictionary core in the app). No iPhone was measured.
+
+### The rules that were left in Swift
+
+The first pass left a few rules in Swift because each was small or drew something: whether a
+string is one kanji, decoding a stroke diagram, romaji, the radical panel, which handwriting
+candidates are offered, which linked words count toward comprehension and which punctuation
+stays with its neighbour on a line, when a radical pick narrows the results, reading a
+zenbujapanese.com link, and choosing the entry a related or a saved word opens. They moved
+too, on 2026-10-10, so that a client with no Swift (the website, a browser extension) answers
+the same without writing them again. Each was compared with its Swift across the data first
+([`dictionary-core.md`](../agents/dictionary-core.md), The app's side).
+
+Romaji had been Foundation's transliteration, which no other client has. The core now holds
+the same rules, read out of the system's ICU, and agrees with Foundation on every reading and
+every example sentence in the bundled data. It leaves other writing systems as written, where
+Foundation turned them to Latin letters too.
+
+Measured the same way: 1,798 readings take the core 53 ms the first time (Foundation took
+17 ms) and 0.5 ms once remembered; 200 linked sentences take 17 ms, then 0.4 ms, where the
+Swift transliterated every word again on each redraw; the radical panel opens in 11 ms and
+answers a pick in 1.7 ms (the Swift took 14 ms and 4.5 ms); a stroke diagram takes 0.2 ms; and
+a kanji check 0.007 ms before it is remembered.
+
+What stays in Swift is what needs the platform or belongs to the learner: reading files,
+parsing a URL, drawing, the learner's stored data and its sync, the Player's handling of
+YouTube's links and captions, and Apple's speech, recognition, translation, and Apple
+Intelligence ([`ios.md`](../agents/ios.md), What stays native, and why).

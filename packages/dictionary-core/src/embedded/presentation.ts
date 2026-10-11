@@ -4,8 +4,9 @@ import { type FrequencyLookupRow, frequencyLookupRow } from '../detail/frequency
 import { type KanjiDetail, kanjiDetail } from '../detail/kanji'
 import { type KanjiElementDetail, kanjiElementDetail } from '../detail/kanji-element'
 import { withKanjiReadings } from '../detail/kanji-split'
-import type { FormRow, PitchRow } from '../detail/rows'
+import type { FormRow, KanjiStrokesRow, PitchRow } from '../detail/rows'
 import { type RubySegment, rubySegments } from '../detail/ruby'
+import { type StrokeDiagram, strokeDiagram } from '../detail/strokes'
 import { isKanjiCharacter } from '../detail/text'
 import { type WordDetail, wordDetail } from '../detail/word'
 import {
@@ -18,6 +19,7 @@ import {
   wordRows
 } from '../results/learner'
 import type { ListedResults } from '../results/results'
+import { RadicalLookup, type RadicalPanel } from '../search/radicals'
 import type { EmbeddedHost } from './host'
 
 export interface EmbeddedEntry {
@@ -72,6 +74,7 @@ interface KanjiFiles {
 
 export class EmbeddedPresentation {
   private files: KanjiFiles | undefined
+  private radicals: RadicalLookup | undefined
 
   constructor(private readonly host: EmbeddedHost) {}
 
@@ -225,5 +228,18 @@ export class EmbeddedPresentation {
     const { reference, elementSources } = this.kanjiFiles
     const rows = reference.elementPageRows(glyph, elementSources)
     return rows && kanjiElementDetail(rows)
+  }
+
+  kanjiStrokes(row: KanjiStrokesRow): StrokeDiagram {
+    return strokeDiagram(row)
+  }
+
+  radicalPanel(selected: string[]): RadicalPanel {
+    if (!this.radicals) {
+      const file = this.host.radicals?.()
+      if (!file) throw new Error('The host has no radical file to read')
+      this.radicals = new RadicalLookup(file)
+    }
+    return this.radicals.panel(selected)
   }
 }

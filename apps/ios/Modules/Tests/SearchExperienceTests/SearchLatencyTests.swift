@@ -269,6 +269,76 @@ struct SearchLatencyTests {
     report("eight kanji pages")
   }
 
+  @Test("prints how long romaji, the radical panel, a stroke diagram and the kanji check take")
+  func measureReadingAids() async throws {
+    let clock = ContinuousClock()
+    let core = PresentationCore(
+      kanji: { KanjiFiles.bundled }, radicals: { RadicalLookupClient.bundledFile() })
+    var entries: [DictionaryEntry] = []
+    for query in Self.queries {
+      entries += try await LookupClient.live.search(SearchQuery(query)).entries
+    }
+    let readings = Array(Set(entries.map(\.reading)))
+    _ = core.romaji("あ")
+    let written = clock.measure { for reading in readings { _ = core.romaji(reading) } }
+    let again = clock.measure { for reading in readings { _ = core.romaji(reading) } }
+    let foundation = clock.measure {
+      for reading in readings { _ = reading.applyingTransform(.toLatin, reverse: false) }
+    }
+    print(
+      "SEARCH-LATENCY \(readings.count) readings in romaji: \(Self.milliseconds(written)) first, "
+        + "\(Self.milliseconds(again)) again; Foundation's own took \(Self.milliseconds(foundation))")
+
+    var sentences: [[JapaneseTextToken]] = []
+    for word in ["食べる", "行く", "学校", "水", "見る"] {
+      for sentence in await ExampleSentenceClient.live.listed(SearchQuery(word), nil, false)
+        .prefix(40)
+      {
+        sentences.append(
+          await JapaneseTextAnalysisClient.live().linkedTokens(
+            sentence.japanese, SearchQuery(""), nil))
+      }
+    }
+    let spoken = clock.measure {
+      for tokens in sentences { _ = core.romaji(of: tokens.map { ($0.surface, $0.reading) }) }
+    }
+    let spokenAgain = clock.measure {
+      for tokens in sentences { _ = core.romaji(of: tokens.map { ($0.surface, $0.reading) }) }
+    }
+    print(
+      "SEARCH-LATENCY \(sentences.count) sentences in romaji: \(Self.milliseconds(spoken)) first, "
+        + "\(Self.milliseconds(spokenAgain)) again")
+
+    let opening = try clock.measure {
+      let _: RadicalPanel = try core.answer("radicalPanel", [String]())
+    }
+    var picks: [Double] = []
+    for selection in [["一"], ["汁"], ["汁", "母"], ["口", "木"], ["一", "｜", "口"], ["日"]] {
+      picks.append(
+        Self.value(
+          try clock.measure { let _: RadicalPanel = try core.answer("radicalPanel", selection) }))
+    }
+    print(
+      "SEARCH-LATENCY radical panel: opens in \(Self.milliseconds(opening)), a pick "
+        + Self.summary(picks))
+
+    var diagrams: [Double] = []
+    for character in Self.kanji + ["鬱", "議", "驚"] {
+      let kanji = try #require(KanjiCharacter(character))
+      diagrams.append(
+        Self.value(
+          try await clock.measure { _ = try await KanjiStrokeOrderClient.live.diagram(kanji) }))
+    }
+    print("SEARCH-LATENCY a stroke diagram: " + Self.summary(diagrams))
+
+    let scalars = (0x4E00..<0x5200).compactMap(Unicode.Scalar.init).map(String.init)
+    let checked = clock.measure { for scalar in scalars { _ = core.isKanji(scalar) } }
+    let checkedAgain = clock.measure { for scalar in scalars { _ = core.isKanji(scalar) } }
+    print(
+      "SEARCH-LATENCY \(scalars.count) kanji checks: \(Self.milliseconds(checked)) first, "
+        + "\(Self.milliseconds(checkedAgain)) again")
+  }
+
   private static func summary(_ timings: [Double]) -> String {
     let sorted = timings.sorted()
     guard let worst = sorted.last else { return "nothing measured" }

@@ -71,7 +71,7 @@ export interface LearnerState {
   sort: string
   filter: string
   known: readonly string[]
-  leadingOnly: boolean
+  fromRadicals: boolean
 }
 
 export interface WordRow {
@@ -185,7 +185,7 @@ export function learnerResultsScreen(
   exampleCount: number,
   learner: LearnerState
 ): LearnerResultsScreen {
-  const layout = resultsLayout(rawQuery, results, exampleCount, learner.leadingOnly)
+  const layout = resultsLayout(rawQuery, results, exampleCount, learner.fromRadicals)
   if (layout.isEmpty) return { state: 'noResults', query: layout.query }
   const known = new Set(learner.known)
   const isKnown = (id: string) => known.has(id)

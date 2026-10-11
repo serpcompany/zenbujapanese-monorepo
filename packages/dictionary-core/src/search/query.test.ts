@@ -4,6 +4,7 @@ import {
   compareStrings,
   isJapaneseOnly,
   isMixedScript,
+  japaneseCandidates,
   normalizeQuery,
   romajiDeinflectedCandidates
 } from './query'
@@ -61,6 +62,14 @@ describe('scripts', () => {
     expect(isJapaneseOnly('食べる')).toBe(true)
     expect(isJapaneseOnly('taberu')).toBe(false)
     expect(isMixedScript('taberu 食べる')).toBe(true)
+  })
+})
+
+describe('japaneseCandidates', () => {
+  test('keeps what is written only in Japanese, normalized, each once, in order', () => {
+    expect(japaneseCandidates(['見る', 'ﾐﾙ', 'miru', '見る', '見る!', '', ' 木 ', 'ミル'])).toEqual(
+      ['見る', 'ミル', '木']
+    )
   })
 })
 

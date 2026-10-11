@@ -94,8 +94,10 @@ sheet, its two buttons, and closing it, dragged away on iPhone and iPad and with
 Mac), `testThePanelOpensAndStaysWhileTheFieldHasTheCaret` (from above the keyboard),
 `testADrawnStrokeOffersKanjiUntilItsUndone` (a stroke drawn downward leaves the sheet
 open), and `testARadicalsKanjiJoinsTheQueryAndSearches` (**Undo**, and a second pick added to the
-first); package `HandwritingUndoTests` and `SearchInputCandidateTests`. The panel's colors are by
-hand.
+first); package `HandwritingUndoTests`, `SearchInputCandidateTests` (a candidate joins the query,
+and only candidates written in Japanese are offered), and `RadicalLookupTests` (the kanji a
+pick lists and the radicals still offered, on the bundled radical file); core
+`search/radicals.test.ts` and `search/query.test.ts`. The panel's colors are by hand.
 
 Japanese, English, and romaji searches show one **Results** list. Stronger matches come first;
 among equally good matches, the enabled frequency dictionaries decide the order, in the
@@ -254,6 +256,11 @@ written forms), Kanji, Alternative Kanji, Related Words, Lists, Notes, and Examp
 Check: the recorded `WordDetailConformanceTests`; UI `WordDetailUITests` (Kanji, Lists, and Notes
 on the page).
 
+A related word opens the entry it names. One that names none is searched for, and opens the
+result written and read the same, or the first result when none is.
+
+Check: package `WordResolutionTests`; core `embedded/dictionary.test.ts`.
+
 The top of a word detail shows the headword with furigana, following the Reading Aids setting.
 Tapping one of its kanji shows which furigana belongs to it (see
 [Furigana kanji highlight](index.md#furigana-kanji-highlight)).
@@ -400,6 +407,7 @@ until the website has Zenbu's Apple team ID, links open the website.
 
 - Source: #568, part of #563.
 - Check: package `WebsiteLinkTests` (`apps/ios/Modules/Tests/SearchExperienceTests/WebsiteLinkTests.swift`)
-  for how each URL reads and what it opens, against the bundled dictionary. That iOS hands a
+  for what each URL opens, against the bundled dictionary; core `detail/links.test.ts` for how
+  each URL reads, with the parser the website reads its own word URLs with. That iOS hands a
   tapped link to Zenbu is by hand, on a device.
 

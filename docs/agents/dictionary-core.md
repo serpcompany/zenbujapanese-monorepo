@@ -19,10 +19,10 @@ these and decodes the answer; [The app's side](#the-apps-side) says which type a
 
 | Folder | What it does | Who asks in the app |
 | --- | --- | --- |
-| `search/` | Search retrieval: query normalization, deinflection, ranking, full-text phrases, and sentence search through a supplied analyzer. | `LookupClient`; `SearchQuery` is `normalizeQuery`'s answer. |
+| `search/` | Search retrieval: query normalization, deinflection, ranking, full-text phrases, and sentence search through a supplied analyzer; which handwriting candidates are kept (`japaneseCandidates`); and the radical panel (`radicals.ts`). | `LookupClient`; `SearchQuery` is `normalizeQuery`'s answer; `RadicalLookupClient`; the handwriting recognizer's adapter |
 | `embedded/` | The entry point for a client that runs the core inside a JavaScript engine, as the app does: every answer the app's screens show, as JSON, and the bundle the app loads. | `DictionaryCore`, and the three engines that each own one |
 | `results/` | The results screen: the frequency re-sort, Sort By and Filter, rows, chips, what VoiceOver says, and the Example Sentences, reading-refinement, and kanji rows. | `ResultsScreen` |
-| `detail/` | Word pages, kanji details, and kanji element pages from their rows: furigana, pitch, Frequency Details, conjugations, kanji, elements, share text, and the short gloss under a linked word. | `WordPage`, `KanjiPage`, `KanjiElementPage`, `JapaneseRuby`, `FrequencyRow` |
+| `detail/` | Word pages, kanji details, and kanji element pages from their rows: furigana, pitch, Frequency Details, conjugations, kanji, elements, share text, and the short gloss under a linked word. Also romaji (`romaji.ts`), a kanji's strokes as the points to draw (`strokes.ts`), whether a string is one kanji, and what a zenbujapanese.com link names (`links.ts`). | `WordPage`, `KanjiPage`, `KanjiElementPage`, `JapaneseRuby`, `FrequencyRow`, `KanjiCharacter`, `KanjiStrokeOrderClient`, `RomajiReadingAidText` |
 | `examples/` | Example linking, inflection grouping, and the ranks example retrieval shares. | `DictionaryTextData` |
 | `artifact/` | Reads `LanguageReferenceData.sqlite3` and its packs, checks them, and answers search, word, kanji, example, and sitemap requests (`Dictionary`), and the browse pages' (`DictionaryBrowse`). `embedded/` runs the same queries. | Through `embedded/` |
 | `cards/` | Word cards (`zenbu.word-cards.v1`, [`language-data/word-cards.md`](../../language-data/word-cards.md)): a word as Word Detail shows it, with the JLPT chip and a chip for each of the eight ranked lists, for apps that don't bundle the language data; the word lists that name them; the suite fields a card is checked against; and a segmented text's tokens (`zenbu.segmentation.v1`). `artifact/word-cards.ts` resolves the words and reads the cards, and `segmentText` in `artifact/word-examples.ts` splits and links a text as the example sentences are. | None: the app bundles the data. A card's chip names are `frequencyShortName`'s, as the app's chips are. |
@@ -106,6 +106,8 @@ modules, files, or event loop of its own, which is how the app runs it in JavaSc
     the files hold them, or null. The two files parse to 16 MB of objects, which an engine that
     held them would walk on every collection, so the host keeps them and the core asks for the
     few a page reads.
+  - `radicals()` answers the radical file (`RadicalReferenceData.json`) whole, once, when the
+    radical panel is first asked for.
 - **Three parts, each built when first asked.** `EmbeddedLookup` (`lookup.ts`) searches and reads
   forms; `EmbeddedText` (`text.ts`) retrieves examples and links a text's words; and
   `EmbeddedPresentation` (`presentation.ts`) builds what a screen shows from what the host already
@@ -117,17 +119,24 @@ modules, files, or event loop of its own, which is how the app runs it in JavaSc
   | `search` | A query | `EmbeddedSearchResults`: each result as the row the screen lists (Language Reference ID, headword, reading, summaries, `relevance`, `fallbackOrder`, and the `match` label the suites record), the reading refinement, `resolution`, and `primaryEntry` |
   | `entriesMatchingFirstForms` | For each word, the forms to try in order | Every form tried: nothing for a form no entry is written or read as, and for a word's first form that has entries, each as a `LinkEntry` (ID, reading, parts of speech), ranked and deduplicated as search ranks an exact form. An ASCII form is looked up in English. |
   | `entriesContainingKanji` | A kanji | The IDs of its 24 words, in the page's order |
+  | `websiteRoute` | A link's host and percent-encoded path, as the host's own URL parser reads them | What the link opens: a word by its Language Reference ID, a kanji, a search, or home. A word link whose entry number the data lacks searches its slug, or opens home without one. |
+  | `relatedWord`, `savedWord` | A related word (its target's ID, or how to search for it and how it is written and read); a saved word (its stored ID and how it was written and read) | The ID of the entry to open, or null. A related word with no target is searched for and opens the result written and read the same, else the first; a saved word whose entry is gone opens only a result written and read the same. |
   | `normalizeQuery` | What was typed | The query Search reads |
+  | `japaneseCandidates` | What a handwriting recognizer offered | Those written only in Japanese, normalized, each once, in order |
+  | `isKanji` | A string | Whether it is one kanji |
+  | `romaji`, `sentenceRomaji` | A reading; a sentence's words, each with its surface and reading | The reading in romaji, or null for one with kanji in it; the sentence in romaji, words spaced and punctuation kept with its word, or null when a word has no kana reading |
   | `checkExamples` | — | True, or the error that says which example table or pack is missing or wrong |
   | `exampleCount`, `resultsExampleCount`, `resultsExamples` | A query, or a query with the results' primary entry | The Example Sentences row's count, and its sentences |
   | `entryExamples`, `formExamples` | An entry's ID; a conjugated form | A word page's sentences with their count, and a form's |
-  | `linkedTokens` | A text, the page's query, and its entry | Each word with its place in the text, its entry or candidates, the furigana to draw, and whether it is the page's word or matches the query |
-  | `resultsScreen` | A search's answer, the Example Sentences count, and the learner's state (frequency evidence, Sort By, Filter, known words) | `LearnerResultsScreen`: sections, rows with chips, the menu with each choice's title and announcement, notices, and what VoiceOver reads |
+  | `linkedTokens` | A text, the page's query, and its entry | Each word with its place in the text, its entry or candidates, the furigana to draw, whether it is the page's word or matches the query, which neighbour a punctuation mark stays with on a line (`attaches`), and whether it counts toward comprehension (`counted`: linked to an entry and not a function word) |
+  | `resultsScreen` | A search's answer, the Example Sentences count, and the learner's state (frequency evidence, Sort By, Filter, known words, and whether the query was picked in the radical panel) | `LearnerResultsScreen`: sections, rows with chips, the menu with each choice's title and announcement, notices, and what VoiceOver reads. A one-character query from the radical panel lists only its leading words. |
   | `wordRows`, `frequencyRows` | Entries with their evidence | A sheet's candidate rows; a word page's frequency rows with their details |
   | `ruby` | A surface and its reading | Furigana segments, split kanji by kanji where one split fits |
   | `wordPage` | An entry as the host read it | `EmbeddedWordPage`: furigana, part of speech, conjugations with each row's note, pitch with its graph, senses, alternatives, kanji, related words, and share text |
   | `kanjiPage`, `kanjiMeanings` | A kanji with its words and the word the page was opened from; a kanji | `EmbeddedKanjiPage`: stats, meanings, readings with their words, elements, components, words, and share text; a kanji's meanings |
   | `kanjiElementPage` | A glyph | `KanjiElementDetail`, or null for a kanji that is no element |
+  | `kanjiStrokes` | A stroke diagram's row as the host read it (viewport, stroke count, and KanjiVG's packed strokes) | `StrokeDiagram`: each stroke as the points to draw through, a move then curves with their two control points; an error for a diagram that is broken |
+  | `radicalPanel` | The radicals picked, in order | `RadicalPanel`: the kanji holding all of them, fewest other radicals first, and the radicals still worth offering, grouped under their stroke counts with each group's heading |
   | `gloss` | A meaning | The short gloss shown under a linked word, or null |
 
 - **The host reads the entries it shows.** Answers name entries by Language Reference ID, and the
@@ -162,13 +171,17 @@ Paths are relative to `apps/ios/Modules/Sources/SearchExperience/`.
 
 | Swift | Asks | For |
 | --- | --- | --- |
-| `LookupClient.swift` (`LanguageReferenceData`) | `search`, `entriesMatchingFirstForms`, `entriesContainingKanji` | Search, an exact form's entries, and a kanji's words; it reads the entries itself |
+| `LookupClient.swift` (`LanguageReferenceData`) | `search`, `entriesMatchingFirstForms`, `entriesContainingKanji`, `websiteRoute`, `relatedWord`, `savedWord` | Search, an exact form's entries, a kanji's words, what a website link opens, and the entry a related or saved word opens; it reads the entries itself |
 | `SearchQuery.swift` | `normalizeQuery` | The query every screen holds |
-| `DictionaryTextData.swift` (`ExampleSentenceClient`, `JapaneseTextAnalysisClient`) | `checkExamples`, the example methods, `linkedTokens` | Example sentences and linked words |
+| `DictionaryTextData.swift` (`ExampleSentenceClient`, `JapaneseTextAnalysisClient`) | `checkExamples`, the example methods, `linkedTokens` | Example sentences and linked words, with each word's line-breaking and whether `Comprehension` counts it |
+| `PresentationCore.swift` (`RomajiReadingAidText`, `LinkedJapaneseText`) | `romaji`, `sentenceRomaji` | The Romaji reading aid, for a reading and for a sentence |
+| `RadicalLookupClient.swift` (`RadicalInputView`) | `radicalPanel` | The radical panel's kanji and radicals |
+| `KanjiStrokeOrderClient.swift` | `kanjiStrokes` | The strokes Kanji Detail draws |
+| `HandwritingRecognitionLiveAdapter.swift` | `japaneseCandidates` | Which recognized candidates the handwriting panel offers |
 | `ResultsScreen.swift` (`SearchResultsView`, `SearchResultsMenu`, `ResultRow`, `RecognizedWordSheet`) | `resultsScreen`, `wordRows`, `frequencyRows` | The results screen, a sheet's candidates, and a word page's frequency rows |
 | `JapaneseRuby.swift` | `ruby` | Furigana wherever a word is drawn |
 | `WordPage.swift` (`WordDetailView`, `WordDetailSections`, `WordHeadline`, `PitchAccentBadge`, `ConjugationsView`) | `wordPage` | The word page and its conjugations |
-| `KanjiLookupClient.swift` (`KanjiDetailView`, `KanjiDetailSections`, `KanjiElementDetailView`, `SearchInputPanel`) | `kanjiPage`, `kanjiMeanings`, `kanjiElementPage` | The kanji page, a handwriting candidate's meaning, and the element page |
+| `KanjiLookupClient.swift` (`KanjiDetailView`, `KanjiDetailSections`, `KanjiElementDetailView`, `SearchInputPanel`) | `kanjiPage`, `kanjiMeanings`, `kanjiElementPage`, `isKanji` | The kanji page, a handwriting candidate's meaning, the element page, and whether a string is one kanji (`KanjiCharacter`) |
 | `DictionaryEntry.swift` (`shortMeaning`) | `gloss` | The meaning under a linked word |
 
 The core began as a port of the Swift these files replaced: `LookupClient`'s search and ranking,
@@ -179,7 +192,11 @@ their tests still name the Swift each case came from, and the app-recorded suite
 (`apps/ios/LanguageData/Conformance/`) pin what it showed. Before each part's Swift was removed,
 the core's answer was compared with it across the whole of the data: every kanji's page and every
 element's page (13,139 characters), every entry's first meaning as a gloss (194,430), and every
-headword, reading, and summary as a query.
+headword, reading, and summary as a query. The later moves were compared the same way: romaji for
+1,028,786 strings (every headword, form, reading, conjugated form, and example-sentence word) and
+for every one of the 232,774 example sentences, every stroke diagram (6,430), 5,954 picks of
+radicals, the kanji check for every scalar, the handwriting filter over 205,758 strings, and 637
+website links, 250 related words, and 360 saved words over real entries.
 
 ## Matching the Swift
 
@@ -210,6 +227,22 @@ The core answers as the Swift it replaced did, which the suites pin.
 - **Bound text.** The app's Swift search bound text as C strings (`sqlite3_bind_text` with length
   -1), so SQLite read a parameter up to its first NUL; `DictionarySearch` truncates its parameters
   there, whatever the client binds.
+- **Romaji.** The app's romaji was Foundation's `applyingTransform(.toLatin)`, which is ICU's
+  Any-Latin. `detail/romaji.ts` is that transform for kana, rule for rule, from the rules and
+  filters the system's ICU 78 holds: the text is taken a run of one script at a time; a hiragana
+  run is turned to katakana first, and only its kana, its voiced mark, and the long mark are
+  touched; a katakana run also turns 、 and 。 into a comma and a full stop; a rule sees the
+  text on either side of its run, so っ before a katakana syllable still doubles it. It keeps
+  ICU's spellings as they were shown: kon'nichiha, toukyou, hanadji, and a tilde before a small
+  kana that forms no syllable (ウィ is u~i). On the bundled data it differs from Foundation for
+  no reading and no example sentence; it differs where a string holds another writing system,
+  which Foundation also turned to Latin letters (α to a, 한 to han, and 〇 to the Chinese líng)
+  and the core leaves as written. `apps/ios/LanguageData/Conformance/romaji.json` holds the
+  recorded cases.
+- **Links.** `websitePage` in `detail/links.ts` reads a zenbujapanese.com link as the app's
+  `WebsiteLink` did, and the website reads a word segment with the same `parseWordSegment`. A
+  word link's entry number must be one JavaScript holds exactly; the Swift accepted any that fit
+  64 bits and then found no such entry, so such a link searched its slug where it now opens home.
 - **Kana.** Each conversion is the one its Swift uses, so they stay separate. `examples/kana.ts` is
   ICU's Hiragana-Katakana transliterator, which Foundation's `applyingTransform` runs: it folds
   halfwidth and circled katakana, spells ヿ and ゟ out, maps the iteration marks, and composes

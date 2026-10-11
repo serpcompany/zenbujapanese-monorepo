@@ -63,7 +63,13 @@ describe.runIf(artifactAvailable)('the app’s results screen on the artifact', 
       primaryEntry: results.primaryEntry,
       usesPrimaryEntryExamples: results.usesPrimaryEntryExamples
     })
-    const state = { frequency: null, sort: 'default', filter: 'all', known: [], leadingOnly: false }
+    const state = {
+      frequency: null,
+      sort: 'default',
+      filter: 'all',
+      known: [],
+      fromRadicals: false
+    }
     const ask = (frequency: LearnerState['frequency']) =>
       app.presentation<LearnerResultsScreen>('resultsScreen', {
         query,

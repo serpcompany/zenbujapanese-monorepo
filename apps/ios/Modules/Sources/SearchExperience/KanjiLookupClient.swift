@@ -4,24 +4,11 @@ struct KanjiCharacter: Codable, Hashable, Sendable {
   let rawValue: String
 
   init?(_ value: String) {
-    guard value.unicodeScalars.count == 1,
-      let scalar = value.unicodeScalars.first,
-      Self.isIdeograph(scalar.value)
-    else { return nil }
+    guard PresentationCore.shared.isKanji(value) else { return nil }
     rawValue = value
   }
 
   var scalar: UInt32 { rawValue.unicodeScalars.first?.value ?? 0 }
-
-  private static func isIdeograph(_ value: UInt32) -> Bool {
-    switch value {
-    case 0x3400...0x4DBF, 0x4E00...0x9FFF, 0xF900...0xFAFF,
-      0x20000...0x2FA1F, 0x30000...0x323AF:
-      true
-    default:
-      false
-    }
-  }
 }
 
 struct KanjiElementID: Codable, Hashable, Sendable {

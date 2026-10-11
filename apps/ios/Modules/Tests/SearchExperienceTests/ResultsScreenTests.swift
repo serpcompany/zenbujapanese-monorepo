@@ -135,7 +135,10 @@ struct ResultsScreenTests: SearchResultFixture {
   @Test("the radical panel's one-character query lists only its leading words")
   func leadingOnly() async throws {
     let all = try await SearchedScreen.search("日")
-    let leading = try await SearchedScreen.search("日", leadingOnly: true)
+    let leading = try await SearchedScreen.search("日", fromRadicals: true)
+    let longer = try await SearchedScreen.search("日本", fromRadicals: true)
+    let typed = try await SearchedScreen.search("日本")
+    #expect(try longer.list.rows.map(\.id) == typed.list.rows.map(\.id))
     #expect(try leading.list.rows.count < all.list.rows.count)
     #expect(try leading.list.rows.map(\.id) == Array(all.list.rows.map(\.id).prefix(leading.list.rows.count)))
     #expect(try leading.list.frequencyEntries == leading.list.rows.map(\.id))

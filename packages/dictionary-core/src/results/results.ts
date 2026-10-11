@@ -2,7 +2,7 @@ import { frequencyByEntry, frequencyQueries } from '../artifact/frequency'
 import { defaultFrequencyLookups, type FrequencyResult, frequencyChips } from '../detail/frequency'
 import type { FrequencyRow } from '../detail/rows'
 import { type RubySegment, rubySegments } from '../detail/ruby'
-import { isKanjiCharacter } from '../detail/text'
+import { graphemeCount, isKanjiCharacter } from '../detail/text'
 import { exactExampleCountLimit } from '../examples/retrieval'
 import { normalizeQuery } from '../search/query'
 import { comparePresentationRanks } from '../search/rank'
@@ -143,9 +143,10 @@ export function resultsLayout(
   rawQuery: string,
   results: ListedResults,
   exampleCount: number,
-  leadingOnly = false
+  fromRadicals = false
 ): ResultsLayout {
   const query = normalizeQuery(rawQuery)
+  const leadingOnly = fromRadicals && graphemeCount(query) === 1
   const singleKanji = isKanjiCharacter(query)
   const isDiscovered = results.presentation === 'discoveredWords'
   const found = primary(results.items, item => item.headword, query)

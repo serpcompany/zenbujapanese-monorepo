@@ -1,6 +1,8 @@
 import { type ArtifactDatabase, searchDatabase } from '../artifact/database'
 import { kanjiCandidateRows } from '../artifact/kanji'
+import { jmdictSource } from '../artifact/words'
 import { kanjiWords } from '../detail/kanji'
+import { type WebsitePage, websitePage } from '../detail/links'
 import type { LinkEntry } from '../examples/linking'
 import { type ListedItem, type ListedResults, listedResults, primaryItem } from '../results/results'
 import { type SearchDatabase, withParametersTruncatedAtNul } from '../search/database'
@@ -17,6 +19,15 @@ export interface EmbeddedSearchResults extends ListedResults {
   resolution: SearchResults['resolution']
   primaryEntry: string | null
 }
+
+export type WebsiteRoute = Exclude<WebsitePage, { kind: 'word' }> | { kind: 'word'; id: string }
+
+interface WrittenWord {
+  headword: string
+  reading: string
+}
+
+const sameText = (left: string, right: string) => left.normalize('NFC') === right.normalize('NFC')
 
 export async function entriesMatchingFirstForms(
   db: SearchDatabase,
@@ -87,5 +98,51 @@ export class EmbeddedLookup {
 
   entriesContainingKanji(character: string): string[] {
     return kanjiWords(character, kanjiCandidateRows(this.db, character)).map(row => row.id)
+  }
+
+  websiteRoute(link: { host: string | null; path: string }): WebsiteRoute {
+    const page = websitePage(link.host, link.path)
+    if (page.kind !== 'word') return page
+    const [entry] = this.db.all<{ id: string }>(
+      `SELECT lower(hex(id)) AS id FROM entries
+       WHERE source_identity = ? AND source_record_id = ?`,
+      [jmdictSource, page.entSeq]
+    )
+    if (entry) return { kind: 'word', id: entry.id }
+    return page.slug === '' ? { kind: 'home' } : { kind: 'search', query: page.slug }
+  }
+
+  private async found(
+    query: string,
+    word: WrittenWord,
+    morphology: MorphologyAnalyzer
+  ): Promise<{ written: string | null; first: string | null }> {
+    const { items } = await new DictionarySearch(this.searchDb, { morphology }).search(query)
+    const written = items.find(
+      ({ entry }) =>
+        sameText(entry.headword, word.headword) && sameText(entry.reading, word.reading)
+    )
+    return { written: written?.entry.id ?? null, first: items[0]?.entry.id ?? null }
+  }
+
+  async relatedWord(
+    related: WrittenWord & { targetID: string | null; query: string },
+    morphology: MorphologyAnalyzer
+  ): Promise<string | null> {
+    if (related.targetID !== null) return related.targetID
+    const { written, first } = await this.found(related.query, related, morphology)
+    return written ?? first
+  }
+
+  async savedWord(
+    saved: WrittenWord & { id: string },
+    morphology: MorphologyAnalyzer
+  ): Promise<string | null> {
+    const [stored] = this.db.all<{ id: string }>(
+      'SELECT lower(hex(id)) AS id FROM entries WHERE id = unhex(?)',
+      [saved.id]
+    )
+    if (stored) return saved.id
+    return (await this.found(saved.headword, saved, morphology)).written
   }
 }

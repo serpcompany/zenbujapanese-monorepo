@@ -1250,7 +1250,10 @@ page's section above, with its check, in the same PR.
 app does.
 
 - App source: App docs, Search; `HandwritingInputView.swift`, `OfflineHandwritingRecognizer.swift`,
-  `RadicalInputView.swift`, `RadicalLookupClient.swift`.
+  `RadicalInputView.swift`, `RadicalLookupClient.swift`. The radical panel's kanji and radicals are
+  already the core's (`RadicalLookup` in `packages/dictionary-core/src/search/radicals.ts`), and
+  so is which handwriting candidates are kept (`japaneseCandidates`); recognizing the strokes is
+  the app's.
 - Check it will get: an app-recorded suite of radical selections and their candidate kanji, and
   handwriting samples and their candidates, replayed against the website.
 
@@ -1293,7 +1296,9 @@ marks it, so Word Meanings shows under every linked word.
 
 - App source: App docs index, Account (Reading Aids); App docs, Dictionary and kanji details
   (furigana off, Word Meanings, Sentence Translations); `ReadingAidPreferences.swift`,
-  `ReadingAidPresentation.swift`.
+  `ReadingAidPresentation.swift`. Romaji itself is the core's (`romaji` and `sentenceRomaji` in
+  `packages/dictionary-core/src/detail/romaji.ts`), with the app's recorded cases in
+  `romaji.json`.
 - Check it will get: a unit test pinning the defaults to `ReadingAidPreferences.swift`'s, and a
   rendered-page check of a word page (such as 見る) under each setting: ruby present or absent, the
   reading under the headword, romaji, meanings under example words, and translations. Hide Furigana

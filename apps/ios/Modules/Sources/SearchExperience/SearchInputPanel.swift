@@ -12,10 +12,6 @@ enum SearchInputCandidate {
   static func query(_ query: String, adding candidate: String) -> SearchQuery {
     SearchQuery(query + candidate)
   }
-
-  static func isSingleCharacter(_ query: SearchQuery) -> Bool {
-    query.value.count == 1
-  }
 }
 
 struct SearchInputPanel<Content: View, Actions: View>: View {

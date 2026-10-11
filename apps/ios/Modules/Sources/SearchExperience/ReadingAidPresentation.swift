@@ -1,4 +1,3 @@
-import Foundation
 import SwiftUI
 
 struct RomajiReadingAidText: View {
@@ -90,7 +89,7 @@ struct RomajiReadingAidText: View {
   private var resolvedRomaji: String? {
     switch input {
     case .trustedReading(let reading):
-      AppleJapaneseRomanization.romanizeTrustedReading(reading)
+      PresentationCore.shared.romaji(reading)
     case .romaji(let romaji):
       romaji
     }
@@ -102,58 +101,5 @@ struct RomajiReadingAidText: View {
       .foregroundStyle(.secondary)
       .lineLimit(lineLimit)
       .fixedSize(horizontal: false, vertical: true)
-  }
-}
-
-enum AppleJapaneseRomanization {
-  static func romanizeTrustedReading(_ reading: String) -> String? {
-    guard !reading.isEmpty, !reading.unicodeScalars.contains(where: \.isHanOrIterationMark)
-    else { return nil }
-    return reading.applyingTransform(.toLatin, reverse: false)
-  }
-
-  static func romanizeCompleteSentence(_ tokens: [JapaneseTextToken]) -> String? {
-    guard !tokens.isEmpty else { return nil }
-    var result = ""
-    var previousBehavior: JapaneseTokenLineBreakBehavior?
-
-    for token in tokens {
-      if token.surface.allSatisfy(\.isWhitespace) {
-        result += token.surface
-        previousBehavior = nil
-        continue
-      }
-
-      let trustedReading: String
-      if let reading = token.reading, !reading.isEmpty, reading != "*" {
-        trustedReading = reading
-      } else {
-        guard !token.surface.unicodeScalars.contains(where: \.isHanOrIterationMark)
-        else { return nil }
-        trustedReading = token.surface
-      }
-      guard let piece = romanizeTrustedReading(trustedReading) else { return nil }
-
-      let behavior = token.surface.japaneseTokenLineBreakBehavior
-      if result.isEmpty || result.last?.isWhitespace == true || behavior == .attachesToPrevious
-        || previousBehavior == .attachesToNext
-      {
-        result += piece
-      } else {
-        result += " " + piece
-      }
-      previousBehavior = behavior
-    }
-
-    return result
-  }
-}
-
-extension Unicode.Scalar {
-  fileprivate var isHanOrIterationMark: Bool {
-    value == 0x3005
-      || (0x3400...0x9FFF).contains(Int(value))
-      || (0xF900...0xFAFF).contains(Int(value))
-      || (0x20000...0x2FA1F).contains(Int(value))
   }
 }

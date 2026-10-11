@@ -14,7 +14,7 @@ struct SearchedScreen {
     sort: String = ResultsLearner.defaultSort,
     filter: String = ResultsLearner.noFilter,
     known: [LanguageReferenceID] = [],
-    leadingOnly: Bool = false
+    fromRadicals: Bool = false
   ) async throws -> SearchedScreen {
     let query = SearchQuery(text)
     let examples = ExampleSentenceClient.live
@@ -24,7 +24,7 @@ struct SearchedScreen {
       results: results.listed,
       exampleCount: await examples.count(query, results),
       learner: ResultsLearner(
-        sort: sort, filter: filter, known: known.map(\.rawValue), leadingOnly: leadingOnly))
+        sort: sort, filter: filter, known: known.map(\.rawValue), fromRadicals: fromRadicals))
     var screen = try await request.screen()
     if let capability, case .results(let loading) = screen {
       try await request.loadFrequency(for: loading, using: capability)

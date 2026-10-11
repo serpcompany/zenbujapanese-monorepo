@@ -416,20 +416,9 @@ struct SearchExperienceRootView: View {
 
   private func openRelated(_ relationship: DictionaryRelationship, in stack: DictionaryStack) {
     Task { @MainActor in
-      if let targetID = relationship.targetID {
-        if let entry = try? await lookupClient.entry(LanguageReferenceID(rawValue: targetID)) {
-          push(.word(entry, nil), in: stack)
-        }
-        return
+      if let entry = try? await lookupClient.relatedWord(relationship) {
+        push(.word(entry, nil), in: stack)
       }
-      guard let results = try? await lookupClient.search(SearchQuery(relationship.query)) else {
-        return
-      }
-      let entry =
-        results.entries.first {
-          $0.headword == relationship.headword && $0.reading == relationship.reading
-        } ?? results.entries.first
-      if let entry { push(.word(entry, nil), in: stack) }
     }
   }
 
@@ -440,11 +429,7 @@ struct SearchExperienceRootView: View {
       return
     }
     Task { @MainActor in
-      if let entry = try? await lookupClient.entry(LanguageReferenceID(rawValue: storedID)) {
-        path.append(.word(entry, nil))
-      } else if let entry = try? await lookupClient.search(SearchQuery(headword)).entries.first(
-        where: { $0.headword == headword && $0.reading == reading })
-      {
+      if let entry = try? await lookupClient.savedWord(storedID, headword, reading) {
         path.append(.word(entry, nil))
       } else {
         path = []

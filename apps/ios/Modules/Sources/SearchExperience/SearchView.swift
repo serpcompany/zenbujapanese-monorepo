@@ -19,7 +19,7 @@ struct SearchView: View {
   @State private var retryID = 0
   @State private var settledSearchTaskID: SearchTaskID?
   @State private var inputMode = SearchInputMode.inactive
-  @State private var sparseRadicalQuery: SearchQuery?
+  @State private var radicalQuery: SearchQuery?
   @State private var isConfirmingClearAll = false
   @State private var recentSearchRefreshID = 0
   @State private var recentSearches: [SearchQuery] = []
@@ -119,7 +119,7 @@ struct SearchView: View {
         SearchResultsView(
           results: results,
           first: shown,
-          leadingOnly: sparseRadicalQuery == searchQuery,
+          fromRadicals: radicalQuery == searchQuery,
           frequencyCapability: frequencyCapability,
           frequencyRefreshID: frequencyRefreshID,
           selectRefinement: selectRefinement
@@ -225,7 +225,7 @@ struct SearchView: View {
               ?? ResultsLearner.noFilter,
             known: foundResults.entries.map(\.id).filter(wordKnowledge.isKnown)
               .map(\.rawValue),
-            leadingOnly: sparseRadicalQuery == taskQuery))
+            fromRadicals: radicalQuery == taskQuery))
         try Task.checkCancellation()
         let screen = try await request.screen()
         try Task.checkCancellation()
@@ -299,7 +299,7 @@ struct SearchView: View {
   }
 
   private func selectInputMode(_ mode: SearchInputMode) {
-    sparseRadicalQuery = nil
+    radicalQuery = nil
     if mode == .handwriting || mode == .radicals { inputPanelMode = mode }
     inputMode = mode
     isSearchFocused = mode == .keyboard
@@ -310,16 +310,15 @@ struct SearchView: View {
   }
 
   private func submitRadicalQuery(_ submittedQuery: SearchQuery) {
-    completeSubmission(
-      submittedQuery, sparseRadical: SearchInputCandidate.isSingleCharacter(submittedQuery))
+    completeSubmission(submittedQuery, fromRadicals: true)
   }
 
   private func submitTypedQuery() {
     completeSubmission(SearchQuery(query))
   }
 
-  private func completeSubmission(_ submittedQuery: SearchQuery, sparseRadical: Bool = false) {
-    sparseRadicalQuery = sparseRadical ? submittedQuery : nil
+  private func completeSubmission(_ submittedQuery: SearchQuery, fromRadicals: Bool = false) {
+    radicalQuery = fromRadicals ? submittedQuery : nil
     query = submittedQuery.value
     recordRecentSearch(submittedQuery)
     showResultsInField()

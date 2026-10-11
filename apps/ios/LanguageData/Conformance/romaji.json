@@ -1,0 +1,972 @@
+{
+  "artifacts": [],
+  "cases": [
+    {
+      "covers": "plain syllables, hiragana and katakana",
+      "readings": [
+        {
+          "reading": "あおい",
+          "romaji": "aoi"
+        },
+        {
+          "reading": "さくら",
+          "romaji": "sakura"
+        },
+        {
+          "reading": "たべもの",
+          "romaji": "tabemono"
+        },
+        {
+          "reading": "カメラ",
+          "romaji": "kamera"
+        },
+        {
+          "reading": "ミルク",
+          "romaji": "miruku"
+        },
+        {
+          "reading": "わをん",
+          "romaji": "wawon"
+        },
+        {
+          "reading": "ゐゑ",
+          "romaji": "wiwe"
+        },
+        {
+          "reading": "ヰヱヲ",
+          "romaji": "wiwewo"
+        }
+      ]
+    },
+    {
+      "covers": "shi, chi, tsu, fu, and their voiced forms",
+      "readings": [
+        {
+          "reading": "しずか",
+          "romaji": "shizuka"
+        },
+        {
+          "reading": "ちず",
+          "romaji": "chizu"
+        },
+        {
+          "reading": "つづく",
+          "romaji": "tsudzuku"
+        },
+        {
+          "reading": "ふじ",
+          "romaji": "fuji"
+        },
+        {
+          "reading": "はなぢ",
+          "romaji": "hanadji"
+        },
+        {
+          "reading": "ジグザグ",
+          "romaji": "jiguzagu"
+        },
+        {
+          "reading": "ヅ",
+          "romaji": "dzu"
+        },
+        {
+          "reading": "ぢ",
+          "romaji": "dji"
+        }
+      ]
+    },
+    {
+      "covers": "palatalised syllables",
+      "readings": [
+        {
+          "reading": "きょう",
+          "romaji": "kyou"
+        },
+        {
+          "reading": "しゃしん",
+          "romaji": "shashin"
+        },
+        {
+          "reading": "ちゃ",
+          "romaji": "cha"
+        },
+        {
+          "reading": "じゅう",
+          "romaji": "juu"
+        },
+        {
+          "reading": "にゃ",
+          "romaji": "nya"
+        },
+        {
+          "reading": "ひゃく",
+          "romaji": "hyaku"
+        },
+        {
+          "reading": "みょう",
+          "romaji": "myou"
+        },
+        {
+          "reading": "りょこう",
+          "romaji": "ryokou"
+        },
+        {
+          "reading": "ぎゅうにゅう",
+          "romaji": "gyuunyuu"
+        },
+        {
+          "reading": "びょういん",
+          "romaji": "byouin"
+        },
+        {
+          "reading": "ぴょん",
+          "romaji": "pyon"
+        },
+        {
+          "reading": "ぢゃ",
+          "romaji": "dja"
+        },
+        {
+          "reading": "キャベツ",
+          "romaji": "kyabetsu"
+        },
+        {
+          "reading": "ジュース",
+          "romaji": "jūsu"
+        }
+      ]
+    },
+    {
+      "covers": "a long vowel written with the long mark takes a macron; one written with a vowel does not",
+      "readings": [
+        {
+          "reading": "らーめん",
+          "romaji": "rāmen"
+        },
+        {
+          "reading": "ラーメン",
+          "romaji": "rāmen"
+        },
+        {
+          "reading": "コーヒー",
+          "romaji": "kōhī"
+        },
+        {
+          "reading": "スーパー",
+          "romaji": "sūpā"
+        },
+        {
+          "reading": "とうきょう",
+          "romaji": "toukyou"
+        },
+        {
+          "reading": "おおきい",
+          "romaji": "ookii"
+        },
+        {
+          "reading": "えいが",
+          "romaji": "eiga"
+        },
+        {
+          "reading": "おねえさん",
+          "romaji": "oneesan"
+        },
+        {
+          "reading": "ー",
+          "romaji": "ー"
+        },
+        {
+          "reading": "んー",
+          "romaji": "n̄"
+        }
+      ]
+    },
+    {
+      "covers": "a small tsu doubles the next consonant",
+      "readings": [
+        {
+          "reading": "きって",
+          "romaji": "kitte"
+        },
+        {
+          "reading": "ざっし",
+          "romaji": "zasshi"
+        },
+        {
+          "reading": "まっちゃ",
+          "romaji": "matcha"
+        },
+        {
+          "reading": "いっぷん",
+          "romaji": "ippun"
+        },
+        {
+          "reading": "にっぽん",
+          "romaji": "nippon"
+        },
+        {
+          "reading": "ベッド",
+          "romaji": "beddo"
+        },
+        {
+          "reading": "バッグ",
+          "romaji": "baggu"
+        },
+        {
+          "reading": "カップ",
+          "romaji": "kappu"
+        },
+        {
+          "reading": "みっつ",
+          "romaji": "mittsu"
+        },
+        {
+          "reading": "あっ",
+          "romaji": "a~tsu"
+        },
+        {
+          "reading": "っ",
+          "romaji": "~tsu"
+        },
+        {
+          "reading": "ッツ",
+          "romaji": "ttsu"
+        },
+        {
+          "reading": "はっぴゃく",
+          "romaji": "happyaku"
+        }
+      ]
+    },
+    {
+      "covers": "n before a vowel, y, or n takes an apostrophe",
+      "readings": [
+        {
+          "reading": "しんぶん",
+          "romaji": "shinbun"
+        },
+        {
+          "reading": "きんえん",
+          "romaji": "kin'en"
+        },
+        {
+          "reading": "ほんや",
+          "romaji": "hon'ya"
+        },
+        {
+          "reading": "こんにちは",
+          "romaji": "kon'nichiha"
+        },
+        {
+          "reading": "おんな",
+          "romaji": "on'na"
+        },
+        {
+          "reading": "かんい",
+          "romaji": "kan'i"
+        },
+        {
+          "reading": "パンや",
+          "romaji": "panya"
+        },
+        {
+          "reading": "ん",
+          "romaji": "n"
+        },
+        {
+          "reading": "さんぽ",
+          "romaji": "sanpo"
+        }
+      ]
+    },
+    {
+      "covers": "small kana that form no syllable keep a tilde",
+      "readings": [
+        {
+          "reading": "ウィキ",
+          "romaji": "u~iki"
+        },
+        {
+          "reading": "ヴァイオリン",
+          "romaji": "vu~aiorin"
+        },
+        {
+          "reading": "トゥー",
+          "romaji": "to~ū"
+        },
+        {
+          "reading": "デュエット",
+          "romaji": "de~yuetto"
+        },
+        {
+          "reading": "フュージョン",
+          "romaji": "fu~yūjon"
+        },
+        {
+          "reading": "クォーター",
+          "romaji": "ku~ōtā"
+        },
+        {
+          "reading": "ツァー",
+          "romaji": "tsu~ā"
+        },
+        {
+          "reading": "ぁ",
+          "romaji": "~a"
+        },
+        {
+          "reading": "ヶ",
+          "romaji": "~ke"
+        },
+        {
+          "reading": "ヵ",
+          "romaji": "~ka"
+        },
+        {
+          "reading": "ゎ",
+          "romaji": "~wa"
+        }
+      ]
+    },
+    {
+      "covers": "extended katakana syllables the rules know",
+      "readings": [
+        {
+          "reading": "ティー",
+          "romaji": "tī"
+        },
+        {
+          "reading": "ディスク",
+          "romaji": "disuku"
+        },
+        {
+          "reading": "ファイル",
+          "romaji": "fairu"
+        },
+        {
+          "reading": "フィルム",
+          "romaji": "firumu"
+        },
+        {
+          "reading": "フェア",
+          "romaji": "fea"
+        },
+        {
+          "reading": "フォーク",
+          "romaji": "fōku"
+        },
+        {
+          "reading": "シェア",
+          "romaji": "shea"
+        },
+        {
+          "reading": "チェック",
+          "romaji": "chekku"
+        },
+        {
+          "reading": "ジェット",
+          "romaji": "jetto"
+        },
+        {
+          "reading": "ヴ",
+          "romaji": "vu"
+        },
+        {
+          "reading": "ヷヸヹヺ",
+          "romaji": "vavivevo"
+        }
+      ]
+    },
+    {
+      "covers": "iteration marks repeat, and voice, the syllable before",
+      "readings": [
+        {
+          "reading": "あゝ",
+          "romaji": "aa"
+        },
+        {
+          "reading": "すゞき",
+          "romaji": "suzuki"
+        },
+        {
+          "reading": "いすゞ",
+          "romaji": "isuzu"
+        },
+        {
+          "reading": "かゝ",
+          "romaji": "kaka"
+        },
+        {
+          "reading": "かゞ",
+          "romaji": "kaga"
+        },
+        {
+          "reading": "つゞく",
+          "romaji": "tsudzuku"
+        },
+        {
+          "reading": "ちゞむ",
+          "romaji": "chidjimu"
+        },
+        {
+          "reading": "こゝろ",
+          "romaji": "kokoro"
+        },
+        {
+          "reading": "やゝ",
+          "romaji": "yaa"
+        },
+        {
+          "reading": "ばゞ",
+          "romaji": "baha"
+        },
+        {
+          "reading": "ゝ",
+          "romaji": ""
+        },
+        {
+          "reading": "ヽ",
+          "romaji": ""
+        },
+        {
+          "reading": "カヽ",
+          "romaji": "kaka"
+        },
+        {
+          "reading": "サヾ",
+          "romaji": "saza"
+        }
+      ]
+    },
+    {
+      "covers": "halfwidth katakana",
+      "readings": [
+        {
+          "reading": "ｶﾀｶﾅ",
+          "romaji": "katakana"
+        },
+        {
+          "reading": "ｶﾞｷﾞｸﾞ",
+          "romaji": "gagigu"
+        },
+        {
+          "reading": "ﾊﾟﾝ",
+          "romaji": "pan"
+        },
+        {
+          "reading": "ﾗｰﾒﾝ",
+          "romaji": "rāmen"
+        },
+        {
+          "reading": "ｷｯﾌﾟ",
+          "romaji": "kippu"
+        },
+        {
+          "reading": "ｱﾞ",
+          "romaji": "a゙"
+        }
+      ]
+    },
+    {
+      "covers": "mixed scripts keep their context across the change",
+      "readings": [
+        {
+          "reading": "サボる",
+          "romaji": "saboru"
+        },
+        {
+          "reading": "ググる",
+          "romaji": "guguru"
+        },
+        {
+          "reading": "んア",
+          "romaji": "n'a"
+        },
+        {
+          "reading": "ンあ",
+          "romaji": "na"
+        },
+        {
+          "reading": "っカ",
+          "romaji": "kka"
+        },
+        {
+          "reading": "ッか",
+          "romaji": "kka"
+        },
+        {
+          "reading": "ッが",
+          "romaji": "~tsuga"
+        },
+        {
+          "reading": "っが",
+          "romaji": "gga"
+        }
+      ]
+    },
+    {
+      "covers": "punctuation and other characters",
+      "readings": [
+        {
+          "reading": "あ、い",
+          "romaji": "a、i"
+        },
+        {
+          "reading": "ア、イ",
+          "romaji": "a,i"
+        },
+        {
+          "reading": "あ。",
+          "romaji": "a。"
+        },
+        {
+          "reading": "ア。",
+          "romaji": "a."
+        },
+        {
+          "reading": "あ・い",
+          "romaji": "a・i"
+        },
+        {
+          "reading": "ア・イ",
+          "romaji": "a・i"
+        },
+        {
+          "reading": "、",
+          "romaji": "、"
+        },
+        {
+          "reading": "。",
+          "romaji": "。"
+        },
+        {
+          "reading": "あ い",
+          "romaji": "a i"
+        },
+        {
+          "reading": "ア1",
+          "romaji": "a1"
+        },
+        {
+          "reading": "ABC",
+          "romaji": "ABC"
+        },
+        {
+          "reading": "あA",
+          "romaji": "aA"
+        },
+        {
+          "reading": "〜",
+          "romaji": "〜"
+        },
+        {
+          "reading": "「あ」",
+          "romaji": "「a」"
+        }
+      ]
+    },
+    {
+      "covers": "characters outside kana stay as written",
+      "readings": [
+        {
+          "reading": "ゟ",
+          "romaji": "ゟ"
+        },
+        {
+          "reading": "ゕ",
+          "romaji": "ゕ"
+        },
+        {
+          "reading": "ゖ",
+          "romaji": "ゖ"
+        },
+        {
+          "reading": "ヿ",
+          "romaji": "ヿ"
+        },
+        {
+          "reading": "゛",
+          "romaji": "゛"
+        },
+        {
+          "reading": "゜",
+          "romaji": "゜"
+        },
+        {
+          "reading": "α",
+          "romaji": "α"
+        },
+        {
+          "reading": "βカロテン",
+          "romaji": "βkaroten"
+        },
+        {
+          "reading": "〇",
+          "romaji": "〇"
+        },
+        {
+          "reading": "한",
+          "romaji": "한"
+        }
+      ]
+    },
+    {
+      "covers": "a reading with kanji in it has no romaji",
+      "readings": [
+        {
+          "reading": "",
+          "romaji": null
+        },
+        {
+          "reading": "漢字",
+          "romaji": null
+        },
+        {
+          "reading": "食べる",
+          "romaji": null
+        },
+        {
+          "reading": "時々",
+          "romaji": null
+        },
+        {
+          "reading": "々",
+          "romaji": null
+        },
+        {
+          "reading": "あ漢",
+          "romaji": null
+        },
+        {
+          "reading": "侮",
+          "romaji": null
+        },
+        {
+          "reading": "𠀀",
+          "romaji": null
+        }
+      ]
+    }
+  ],
+  "formatVersion": 1,
+  "sentences": [
+    {
+      "covers": "a comma and a full stop stay with the word before",
+      "words": [
+        {
+          "surface": "ゴメン",
+          "reading": "ゴメン"
+        },
+        {
+          "surface": "、",
+          "reading": "、"
+        },
+        {
+          "surface": "灰皿",
+          "reading": "ハイザラ"
+        },
+        {
+          "surface": "を",
+          "reading": "ヲ"
+        },
+        {
+          "surface": "割っ",
+          "reading": "ワッ"
+        },
+        {
+          "surface": "ちゃった",
+          "reading": "チャッタ"
+        },
+        {
+          "surface": "よ",
+          "reading": "ヨ"
+        },
+        {
+          "surface": "。",
+          "reading": "。"
+        }
+      ],
+      "romaji": "gomen、 haizara wo wa~tsu chatta yo。"
+    },
+    {
+      "covers": "an opening bracket stays with the word after, a closing one with the word before",
+      "words": [
+        {
+          "surface": "「",
+          "reading": "「"
+        },
+        {
+          "surface": "ペン",
+          "reading": "ペン"
+        },
+        {
+          "surface": "を",
+          "reading": "ヲ"
+        },
+        {
+          "surface": "持っています",
+          "reading": "モッテイマス"
+        },
+        {
+          "surface": "か",
+          "reading": "カ"
+        },
+        {
+          "surface": "」",
+          "reading": "」"
+        },
+        {
+          "surface": "「",
+          "reading": "「"
+        },
+        {
+          "surface": "はい",
+          "reading": "ハイ"
+        },
+        {
+          "surface": "、",
+          "reading": "、"
+        },
+        {
+          "surface": "持っています",
+          "reading": "モッテイマス"
+        },
+        {
+          "surface": "」",
+          "reading": "」"
+        }
+      ],
+      "romaji": "「pen wo motteimasu ka」 「hai、 motteimasu」"
+    },
+    {
+      "covers": "a question mark, an exclamation mark, and a space kept as written",
+      "words": [
+        {
+          "surface": "トム",
+          "reading": "トム"
+        },
+        {
+          "surface": "！",
+          "reading": "！"
+        },
+        {
+          "surface": " ",
+          "reading": " "
+        },
+        {
+          "surface": "何",
+          "reading": "ナニ"
+        },
+        {
+          "surface": "やって",
+          "reading": "ヤッテ"
+        },
+        {
+          "surface": "ん",
+          "reading": "ン"
+        },
+        {
+          "surface": "の",
+          "reading": "ノ"
+        },
+        {
+          "surface": "？",
+          "reading": "？"
+        }
+      ],
+      "romaji": "tomu！ nani yatte n no？"
+    },
+    {
+      "covers": "a number and a Latin unit keep their spelling",
+      "words": [
+        {
+          "surface": "その",
+          "reading": "ソノ"
+        },
+        {
+          "surface": "池",
+          "reading": "イケ"
+        },
+        {
+          "surface": "は",
+          "reading": "ハ"
+        },
+        {
+          "surface": "深",
+          "reading": "フカ"
+        },
+        {
+          "surface": "さ",
+          "reading": "サ"
+        },
+        {
+          "surface": "3",
+          "reading": "3"
+        },
+        {
+          "surface": "m",
+          "reading": "m"
+        },
+        {
+          "surface": "です",
+          "reading": "デス"
+        },
+        {
+          "surface": "。",
+          "reading": "。"
+        }
+      ],
+      "romaji": "sono ike ha fuka sa 3 m desu。"
+    },
+    {
+      "covers": "a long vowel and a doubled consonant",
+      "words": [
+        {
+          "surface": "ウィスキー",
+          "reading": "ウィスキー"
+        },
+        {
+          "surface": "の",
+          "reading": "ノ"
+        },
+        {
+          "surface": "水割り",
+          "reading": "ミズワリ"
+        },
+        {
+          "surface": "を",
+          "reading": "ヲ"
+        },
+        {
+          "surface": "ガッツリ",
+          "reading": "ガッツリ"
+        },
+        {
+          "surface": "飲んだ",
+          "reading": "ノンダ"
+        },
+        {
+          "surface": "。",
+          "reading": "。"
+        }
+      ],
+      "romaji": "u~isukī no mizuwari wo gattsuri nonda。"
+    },
+    {
+      "covers": "a middle dot stays with the word before",
+      "words": [
+        {
+          "surface": "ジョナサン",
+          "reading": "ジョナサン"
+        },
+        {
+          "surface": "・",
+          "reading": "・"
+        },
+        {
+          "surface": "スウィフト",
+          "reading": "スウィフト"
+        },
+        {
+          "surface": "なら",
+          "reading": "ナラ"
+        },
+        {
+          "surface": "私",
+          "reading": "ワタシ"
+        },
+        {
+          "surface": "を",
+          "reading": "ヲ"
+        },
+        {
+          "surface": "弁護",
+          "reading": "ベンゴ"
+        },
+        {
+          "surface": "するでしょう",
+          "reading": "スルデショウ"
+        },
+        {
+          "surface": "。",
+          "reading": "。"
+        }
+      ],
+      "romaji": "jonasan・ suu~ifuto nara watashi wo bengo surudeshou。"
+    },
+    {
+      "covers": "an ellipsis stays with the word before",
+      "words": [
+        {
+          "surface": "ビックリ",
+          "reading": "ビックリ"
+        },
+        {
+          "surface": "し",
+          "reading": "シ"
+        },
+        {
+          "surface": "すぎて",
+          "reading": "スギテ"
+        },
+        {
+          "surface": "ちょっと",
+          "reading": "チョット"
+        },
+        {
+          "surface": "漏れ",
+          "reading": "モレ"
+        },
+        {
+          "surface": "ちゃった",
+          "reading": "チャッタ"
+        },
+        {
+          "surface": "…",
+          "reading": "…"
+        },
+        {
+          "surface": "。",
+          "reading": "。"
+        }
+      ],
+      "romaji": "bikkuri shi sugite chotto more chatta…。"
+    },
+    {
+      "covers": "a kanji the analyser gives no kana reading for leaves the sentence without romaji",
+      "words": [
+        {
+          "surface": "試",
+          "reading": "試"
+        },
+        {
+          "surface": "着",
+          "reading": "チャク"
+        },
+        {
+          "surface": "して",
+          "reading": "シテ"
+        },
+        {
+          "surface": "いいです",
+          "reading": "イイデス"
+        },
+        {
+          "surface": "か",
+          "reading": "カ"
+        },
+        {
+          "surface": "。",
+          "reading": "。"
+        }
+      ],
+      "romaji": null
+    },
+    {
+      "covers": "no words, no romaji",
+      "words": [],
+      "romaji": null
+    }
+  ],
+  "suite": "romaji"
+}

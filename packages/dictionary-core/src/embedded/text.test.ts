@@ -42,6 +42,12 @@ const sentences: Record<string, KuromojiToken[]> = {
     token(6, 'た', '助動詞', 'タ')
   ],
   今日: [token(1, '今日', '名詞', 'コンニチ')],
+  '「日本語を」': [
+    token(1, '「', '記号', '「'),
+    token(2, '日本語', '名詞', 'ニホンゴ'),
+    token(5, 'を', '助詞', 'ヲ'),
+    token(6, '」', '記号', '」')
+  ],
   欠けた分析: [token(1, '欠け', '動詞', 'カケ', '欠ける')]
 }
 
@@ -73,7 +79,9 @@ describe('the embedded text engine', () => {
         furigana: 'にほんご',
         ruby: [{ text: '日本語', reading: 'にほんご' }],
         isPageWord: false,
-        matchesQuery: false
+        matchesQuery: false,
+        attaches: null,
+        counted: true
       },
       {
         surface: 'を',
@@ -86,7 +94,9 @@ describe('the embedded text engine', () => {
         furigana: null,
         ruby: null,
         isPageWord: false,
-        matchesQuery: false
+        matchesQuery: false,
+        attaches: null,
+        counted: false
       },
       {
         surface: '見た',
@@ -99,7 +109,9 @@ describe('the embedded text engine', () => {
         furigana: 'みた',
         ruby: [{ text: '見', reading: 'み' }, { text: 'た' }],
         isPageWord: false,
-        matchesQuery: true
+        matchesQuery: true,
+        attaches: null,
+        counted: true
       }
     ])
   })
@@ -154,7 +166,9 @@ describe('the embedded text engine', () => {
         furigana: null,
         ruby: null,
         isPageWord: false,
-        matchesQuery: false
+        matchesQuery: false,
+        attaches: null,
+        counted: false
       }
     ]
     expect(await linked(host(), { text: '猫𠀋', query: '', highlightedEntry: null })).toEqual(
@@ -203,6 +217,20 @@ describe('the embedded text engine', () => {
     ).toEqual([
       ['見た', 'x1', '見た'],
       ['日本語', 'a1', '日本語']
+    ])
+  })
+
+  test('marks punctuation that stays with a neighbouring word, and counts only linked words', async () => {
+    const found = await linked(host(), {
+      text: '「日本語を」',
+      query: '',
+      highlightedEntry: null
+    })
+    expect(found.map(word => [word.surface, word.attaches, word.counted])).toEqual([
+      ['「', 'next', false],
+      ['日本語', null, true],
+      ['を', null, false],
+      ['」', 'previous', false]
     ])
   })
 

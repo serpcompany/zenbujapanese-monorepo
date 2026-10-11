@@ -87,6 +87,15 @@ export function isJapaneseOnly(value: string): boolean {
   return normalizeQuery(value) === value
 }
 
+export function japaneseCandidates(candidates: readonly string[]): string[] {
+  const kept = new Set<string>()
+  for (const candidate of candidates) {
+    const query = normalizeQuery(candidate)
+    if (isJapaneseOnly(query)) kept.add(query)
+  }
+  return [...kept]
+}
+
 export function isMixedScript(value: string): boolean {
   return japaneseSegments(value).length > 0 && /[a-z]/i.test(value)
 }

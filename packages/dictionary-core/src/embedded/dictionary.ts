@@ -1,5 +1,6 @@
-import { shortGloss } from '../detail/text'
-import { normalizeQuery } from '../search/query'
+import { romaji, sentenceRomaji } from '../detail/romaji'
+import { isKanjiCharacter, shortGloss } from '../detail/text'
+import { japaneseCandidates, normalizeQuery } from '../search/query'
 import type { EmbeddedHost } from './host'
 import { EmbeddedLookup } from './lookup'
 import { EmbeddedPresentation } from './presentation'
@@ -35,7 +36,14 @@ export function embeddedEndpoint(host: EmbeddedHost): EmbeddedEndpoint {
     entriesMatchingFirstForms: alternatives =>
       lookup().entriesMatchingFirstForms(JSON.parse(alternatives)),
     entriesContainingKanji: character => lookup().entriesContainingKanji(character),
+    websiteRoute: link => lookup().websiteRoute(JSON.parse(link)),
+    relatedWord: (related, analyze) => lookup().relatedWord(JSON.parse(related), { analyze }),
+    savedWord: (saved, analyze) => lookup().savedWord(JSON.parse(saved), { analyze }),
     normalizeQuery,
+    japaneseCandidates: candidates => japaneseCandidates(JSON.parse(candidates)),
+    isKanji: isKanjiCharacter,
+    romaji,
+    sentenceRomaji: words => sentenceRomaji(JSON.parse(words)),
     checkExamples: () => text().checkExamples(),
     exampleCount: query => text().exampleCount(query),
     resultsExampleCount: request => text().resultsExampleCount(JSON.parse(request)),
@@ -51,6 +59,8 @@ export function embeddedEndpoint(host: EmbeddedHost): EmbeddedEndpoint {
     kanjiPage: request => presentation().kanjiPage(JSON.parse(request)),
     kanjiMeanings: character => presentation().kanjiMeanings(character),
     kanjiElementPage: glyph => presentation().kanjiElementPage(glyph),
+    kanjiStrokes: row => presentation().kanjiStrokes(JSON.parse(row)),
+    radicalPanel: selected => presentation().radicalPanel(JSON.parse(selected)),
     gloss: shortGloss
   }
   return {

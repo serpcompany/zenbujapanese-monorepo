@@ -75,7 +75,7 @@ const learner = (state: Partial<LearnerState> = {}): LearnerState => ({
   sort: 'default',
   filter: 'all',
   known: [],
-  leadingOnly: false,
+  fromRadicals: false,
   ...state
 })
 
@@ -250,13 +250,12 @@ describe('learnerResultsScreen', () => {
   })
 
   test('lists only the leading entries of a one-character query from the radical panel', () => {
-    const shown = screen(
-      '一',
-      listed([item('一'), item('二'), item('三')], { leadingLexicalEntryCount: 1 }),
-      { leadingOnly: true }
-    )
+    const found = listed([item('一'), item('二'), item('三')], { leadingLexicalEntryCount: 1 })
+    const shown = screen('一', found, { fromRadicals: true })
     expect(shown.rows.map(row => row.id)).toEqual(['一'])
     expect(shown.frequencyEntries).toEqual(['一'])
+    expect(screen('一', found).rows).toHaveLength(3)
+    expect(screen('一二', found, { fromRadicals: true }).rows).toHaveLength(3)
   })
 
   test('offers the examples with the entry they highlight, and the Japanese reading of a romaji query', () => {

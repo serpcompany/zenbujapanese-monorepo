@@ -77,7 +77,9 @@ struct LinkedJapaneseText: View {
         japaneseContent
       }
       if readingAidPreferences.showsRomaji, didFinishAnalysis {
-        if let romaji = AppleJapaneseRomanization.romanizeCompleteSentence(tokens) {
+        if let romaji = PresentationCore.shared.romaji(
+          of: tokens.map { ($0.surface, $0.reading) })
+        {
           Text(romaji)
             .font(.callout)
             .foregroundStyle(.secondary)
@@ -129,7 +131,7 @@ struct LinkedJapaneseText: View {
             )
             .layoutValue(
               key: JapaneseTokenLineBreakBehaviorKey.self,
-              value: token.surface.japaneseTokenLineBreakBehavior
+              value: token.lineBreak
             )
             .layoutValue(
               key: JapaneseTokenAllowsInternalWrappingKey.self,

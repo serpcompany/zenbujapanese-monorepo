@@ -7,7 +7,7 @@ struct ShownResults: Hashable, Sendable {
 
 struct SearchResultsView: View {
   let results: LookupSearchResults
-  let leadingOnly: Bool
+  let fromRadicals: Bool
   let frequencyCapability: FrequencyCapability
   let frequencyRefreshID: Int
   let selectRefinement: (SearchRefinement) -> Void
@@ -22,13 +22,13 @@ struct SearchResultsView: View {
   init(
     results: LookupSearchResults,
     first: ShownResults,
-    leadingOnly: Bool,
+    fromRadicals: Bool,
     frequencyCapability: FrequencyCapability,
     frequencyRefreshID: Int,
     selectRefinement: @escaping (SearchRefinement) -> Void
   ) {
     self.results = results
-    self.leadingOnly = leadingOnly
+    self.fromRadicals = fromRadicals
     self.frequencyCapability = frequencyCapability
     self.frequencyRefreshID = frequencyRefreshID
     self.selectRefinement = selectRefinement
@@ -161,7 +161,7 @@ struct SearchResultsView: View {
     request.learner = ResultsLearner(
       frequency: frequency, sort: sort, filter: filter,
       known: results.entries.map(\.id).filter(wordKnowledge.isKnown).map(\.rawValue),
-      leadingOnly: leadingOnly)
+      fromRadicals: fromRadicals)
     return request
   }
 

@@ -15,7 +15,7 @@ struct ConversationWordsTests {
         return JapaneseTextToken(
           id: index, surface: String(word),
           entry: isParticle ? nil : .fixture(id: String(word), headword: String(word)),
-          isFunctionWord: isParticle)
+          isFunctionWord: isParticle, isCounted: !isParticle)
       }
     })
 

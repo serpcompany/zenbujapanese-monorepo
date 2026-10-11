@@ -13,10 +13,7 @@ struct Comprehension: Equatable, Sendable {
   }
 
   static func countedWords(in tokens: [JapaneseTextToken]) -> [LanguageReferenceID] {
-    tokens.compactMap { token in
-      guard !token.isFunctionWord else { return nil }
-      return token.entry?.id
-    }
+    tokens.compactMap { $0.isCounted ? $0.entry?.id : nil }
   }
 
   static func countedWords(
