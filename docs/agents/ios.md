@@ -391,14 +391,14 @@ Detail, and the same link opens the website on a device without the app.
 
 The app splits interactive Japanese in Image Search, Word Detail, and Example Sentences into
 words with Kuromoji's dictionary (IPADIC). Dictionary search segmentation continues to use
-Sudachi. The core does the tokenizing itself, in its text engine, and finds the words
-kuromoji.js finds ([`dictionary-core.md`](dictionary-core.md), The tokenizer); the app no
-longer runs kuromoji.js, which the website's dictionary service still does.
+Sudachi. The core does the tokenizing itself, in its text engine, with the tokenizer the
+website's dictionary service runs too ([`dictionary-core.md`](dictionary-core.md), The
+tokenizer). It is a port of kuromoji.js, which neither runs any more.
 
-The dictionary's twelve files ship gzipped, 18 MB that unpack to 100 MB; the tokenizer reads
-eleven of them. The app unpacks each with zlib (`Gunzip.swift`), which also checks its
-checksum and length, when the core first asks for it (`TokenizerDictionary.swift`), and hands
-the core the unpacked bytes without copying them. `DictionaryTextData.availability()` asks the
+The dictionary's eleven files ship gzipped, 18 MB that unpack to 100 MB. The app unpacks each
+with zlib (`Gunzip.swift`), which also checks its checksum and length, when the core first
+asks for it (`TokenizerDictionary.swift`), and hands the core the unpacked bytes without
+copying them. `DictionaryTextData.availability()` asks the
 core whether it can tokenize, which reads the files. The first Word Detail, Example Sentences,
 or image text of a session asks, and waits for it before it links its sentences: about a
 quarter of a second, most of it unpacking, where starting kuromoji.js took half a second.

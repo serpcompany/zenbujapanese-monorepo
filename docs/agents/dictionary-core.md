@@ -73,8 +73,8 @@ these and decodes the answer; [The app's side](#the-apps-side) says which type a
 - `tokenize` splits a sentence into words with the IPADIC files the app bundles
   (`apps/ios/Modules/Sources/SearchExperience/Resources/Kuromoji`), answering as kuromoji.js's
   `tokenize` does: `word_position` is 1-based, in UTF-16 code units, as the app's `NSRange` reads
-  it. The service passes kuromoji.js itself; the app passes the files, and the core tokenizes
-  ([The tokenizer](#the-tokenizer)).
+  it. Every client's is the core's own ([The tokenizer](#the-tokenizer)): the service builds it
+  from the files it read and passes it, and the app hands the embedded host the files.
 - `morphology` is an analyzer such as the app's Sudachi, whose dictionary is 217 MB. A
   `MorphologyWord` lists its part-of-speech tags most general first (名詞, 動詞), and its
   `dictionaryForm` is `*` or empty when the analyzer has none. An analysis that throws finds no
@@ -102,9 +102,9 @@ modules, files, or event loop of its own, which is how the app runs it in JavaSc
     needs the same check.
   - `tokenizerFile(name)` answers one of the tokenizer's dictionary files, unpacked, as an
     `ArrayBuffer`, or null. The core asks for all eleven the first time it tokenizes
-    ([The tokenizer](#the-tokenizer)). `tokenize(text)` instead is a tokenizer the host has of its
-    own, such as kuromoji.js loaded into the same engine; it wins when both are given. A host with
-    neither is asked for a sentence's words through the call (below).
+    ([The tokenizer](#the-tokenizer)). A host without the files is asked for a sentence's words
+    through the call (below). `tokenize(text)` stands in for the tokenizer in the core's own
+    tests, which hand it a sentence's tokens; no client passes it.
   - `kanjiSources()`, `kanjiEntry(character)`, `kanjiStructure(character)`, and
     `kanjiElement(glyph)` answer the kanji files' source identities and one record at a time, as
     the files hold them, or null. The two files parse to 16 MB of objects, which an engine that
@@ -183,12 +183,15 @@ from MeCab's IPADIC: the double-array word index (`base`, `check`), each word's 
 feature line (`tid`, `tid_map`, `tid_pos`), the cost of one word following another (`cc`), and
 the classes and words for text the dictionary doesn't have (`unk`, `unk_map`, `unk_pos`,
 `unk_char`, `unk_invoke`). `ipadicTokenizer(read)` asks `read` for each file, unpacked, the first
-time it tokenizes.
+time it tokenizes. It is the only tokenizer: the app runs it in JavaScriptCore, and the
+website's dictionary service runs it in Node (`apps/dictionary-api/src/tokenizer.ts`).
 
-- **It answers exactly as kuromoji.js 0.1.2 does**, which is what the service runs, so a
-  sentence links to the same words on the website and in the app. That includes what kuromoji.js
-  gets wrong, because the rest of the core already handles it (`kuromojiCandidates` shows a
-  sentence whose tokens don't tile it as one unlinked word):
+- **It is a port of kuromoji.js 0.1.2** (Apache-2.0, Takuya Asano; the license ships beside the
+  dictionary files, `Resources/Kuromoji/LICENSE-2.0.txt`), which both clients ran until
+  2026-10-11, and it answers exactly as kuromoji.js did, so no sentence links differently than
+  it used to. That includes what kuromoji.js got wrong, because the rest of the core already
+  handles it (`kuromojiCandidates` shows a sentence whose tokens don't tile it as one unlinked
+  word):
   - a sentence is split after every 、 and 。, and the words of each later part are numbered from
     the last word of the part before, which is off when that word is longer than one character;
   - a word's place counts characters, but a run of unknown characters outside the basic plane is
@@ -196,20 +199,27 @@ time it tokenizes.
   - a high surrogate without its low surrogate, a NUL, and a character whose class lists no
     words make it throw; and
   - a class's `max_length` is ignored: one unknown word spans the whole run of a grouped class.
+
+  Fixing one of these is a behavior change for every client at once: change it here, and record
+  the suite again.
 - **Why the core has its own.** In an engine without a JIT, kuromoji.js spent half of each linked
   sentence: it re-encodes the rest of the sentence at every character, decodes each word's
   feature line a byte at a time, and builds an object per lattice node. `ipadic.ts` encodes a
   sentence once, walks the index in place, keeps the lattice in typed arrays, and remembers each
   word's features. In JavaScriptCore without its JIT it tokenizes a sentence in 0.09 ms where
-  kuromoji.js took 0.38 ms, and is ready in about 0.1 s where kuromoji.js took 0.4 s (it builds
-  an object for each of the 326,000 word lists; `ipadic.ts` indexes them in place).
-- **How it is checked.** `apps/dictionary-api/src/conformance/tokenizer.conformance.test.ts` runs
-  both over a small dictionary built to reach the odd cases (`examples/ipadic.fixture.ts`) with
-  30,000 random texts, and over the bundled dictionary with a sample of the example sentences
-  and 6,000 random texts. Before the app switched, the two were compared over all 232,774
-  example sentences, the 655,146 headwords, readings, and summaries, and 1.7 million random
-  texts: every token the same, and the same 118,171 texts refused. `examples/ipadic.test.ts`
-  pins the behavior on the small dictionary without kuromoji.js.
+  kuromoji.js took 0.38 ms, and is ready in 0.03 s where kuromoji.js took 0.4 s (it built an
+  object for each of the 326,000 word lists; `ipadic.ts` indexes them in place).
+- **kuromoji.js's answers are recorded, and kuromoji.js is gone.** Before it was removed, the two
+  were compared over all 232,774 example sentences, the 655,146 headwords, readings, and
+  summaries, and 1.7 million random texts: every token the same, and the same 118,171 texts
+  refused. What pins the port now was recorded from kuromoji.js itself:
+  - `apps/ios/LanguageData/Conformance/tokenizer.json` holds its tokens for 747 texts (example
+    sentences, words, and odd cases, eleven of them refused) and its digest over 20,000 random
+    texts built from the pieces the suite lists.
+    `apps/dictionary-api/src/conformance/tokenizer.conformance.test.ts` replays it over the
+    bundled dictionary, and `pnpm tokenizer-suite` in `apps/dictionary-api` records it again.
+  - `examples/ipadic.test.ts` holds its digest over 30,000 random texts on a small dictionary
+    built to reach the odd cases (`examples/ipadic.fixture.ts`), beside cases written out.
 - The files are little-endian and are read through typed arrays, so `ipadicTokenizer` refuses to
   start on a big-endian machine instead of misreading them.
 

@@ -29,14 +29,13 @@ git lfs pull --include="apps/ios/Modules/Sources/SearchExperience/Resources/**"
   ranked frequency dictionaries; `checkArtifact` refuses a file that lacks one the core lists
   (`packages/dictionary-core/src/browse/lists.ts`).
 - `KanjiReferenceData.json` and `KanjiElementReferenceData.json`.
-- Kuromoji's files, for example word links and conjugated form examples. `src/kuromoji.ts` runs
-  the bundled kuromoji.js build in a bare V8 context and hands it each dictionary file, still
-  gzipped, through an XMLHttpRequest shim. Tokens come back through JSON, so an absent reading
-  stays absent. The files are pinned by SHA-256, as the word-detail suite records them: new
-  files are a new tokenizer, so record the suite again. The app reads the same dictionary files
-  with the core's own tokenizer (`packages/dictionary-core/src/examples/ipadic.ts`), which
-  `src/conformance/tokenizer.conformance.test.ts` holds to kuromoji.js's answers, token for
-  token ([`dictionary-core.md`](dictionary-core.md), The tokenizer).
+- The tokenizer's dictionary files (`Resources/Kuromoji/`, kuromoji.js's build of MeCab IPADIC),
+  for example word links and conjugated form examples. `src/tokenizer.ts` checks each file's
+  SHA-256 against its pin, unpacks it, and hands the files to the core's tokenizer
+  (`packages/dictionary-core/src/examples/ipadic.ts`), the same one the app runs
+  ([`dictionary-core.md`](dictionary-core.md), The tokenizer). New files are a new tokenizer:
+  record the tokenizer suite again with `pnpm tokenizer-suite`, and the word-detail and
+  example-search suites on a Mac.
 - Sudachi's dictionary, for sentence search: the SudachiDict Core the app pins in
   `LanguageTechnologyPackCatalog.json`. `pnpm sudachi` downloads it into `.sudachi/`, checking
   the download and `system.dic` against the catalog's SHA-256s, and keeps a dictionary already
@@ -179,7 +178,7 @@ The main thread hashes the artifact and Sudachi's dictionary once, checks Sudach
 HTTP (Hono on Node's HTTP server). Sudachi's native module reads its configuration from the
 process's environment, which only the main thread can set, so the main thread sets it
 (`prepareSudachi`) before any worker thread starts. Worker threads each open the artifact
-read-only, checking it, its packs, and Kuromoji's pinned files as they load, and answer calls one
+read-only, checking it, its packs, and the tokenizer's pinned files as they load, and answer calls one
 at a time: SQLite is synchronous, so a slow query holds only its own thread. Each call goes to the
 thread with the fewest in flight, and a thread that dies is replaced. Each thread keeps recent
 searches, word examples, a query's examples, kanji details, and word lookups in LRU caches, so a
@@ -214,7 +213,7 @@ the app's SQL.
 `noRestrictedImports` enforces each rule (`apps/dictionary-api/biome.json`), with a message that
 says where the code belongs; tests may import anything.
 
-- The readers (`src/artifact.ts`, `src/kuromoji.ts`, `src/sudachi.ts`, and `src/account-tokens.ts`,
+- The readers (`src/artifact.ts`, `src/tokenizer.ts`, `src/sudachi.ts`, and `src/account-tokens.ts`,
   which reads the account service's keys) and the shared modules (`src/config.ts`,
   `src/rate-limit.ts`, `src/service.ts`, the `DictionaryService` interface) are the bottom layer.
   They import neither of the others, nor Hono.
@@ -246,7 +245,7 @@ words, links, and marks), word detail (the first 25 examples' order, tokens, lin
 highlights, the counts, the furigana split, the pitch graph, each frequency row's details, and
 every conjugated form's examples), and kanji detail (its metrics, Waller's JLPT level among
 them). Each is replayed a second time through `embedded/`, the entry point the app calls, on
-`node:sqlite` with the real Kuromoji and kanji files (the `embedded*.conformance.test.ts`
+`node:sqlite` with the real tokenizer and kanji files (the `embedded*.conformance.test.ts`
 files), where the kanji element suite runs too: the website has no element page yet, so that
 is its only replay. A change that would alter what the app shows fails here before any Swift
 runs. The word-detail suite's furigana, pitch graph, frequency details, and conjugations take
@@ -273,6 +272,12 @@ The `Dictionary API` workflow runs `pnpm check` on pull requests with the Git LF
 Sudachi's dictionary cached, then the website's rendered-page gate against the built service. The
 `Dictionary API deploy` workflow builds the Docker image and checks that it starts and answers
 (see Ship it).
+
+`pnpm tokenizer-suite` records `apps/ios/LanguageData/Conformance/tokenizer.json` again from the
+tokenizer as it is: each text's tokens, the digest of its random sample, and the dictionary
+files' hashes. `src/conformance/tokenizer.conformance.test.ts` replays it. It was first recorded
+from kuromoji.js, so record it again only when the dictionary files change or the tokenizer is
+meant to answer differently, and read the diff.
 
 `pnpm fixtures` regenerates the core's local fixtures (`packages/dictionary-core/src/fixtures/`),
 for `pnpm dev` without a service: the いる homographs and the words written with 要, with two
@@ -309,7 +314,7 @@ cache of the files it reads comes on top; a container's memory reading, such as 
 counts it, but it can be reclaimed. It has a health check on `/healthz` and stops cleanly on SIGTERM.
 
 It holds one build of the data, so a new artifact is a new image. Its layers go from what changes
-least to what changes most: Kuromoji, the language data, Sudachi's dictionary, the installed
+least to what changes most: the tokenizer's dictionary, the language data, Sudachi's dictionary, the installed
 packages, the language-data release's name, and last the bundled code. A code change so makes only a new top layer of a few MB,
 which is all CI pushes and the server pulls; the language data's layers, about 1 GB, are built
 and moved only when the data changes. `scripts/build.mjs` bundles

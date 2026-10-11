@@ -4440,6 +4440,7 @@
   var beginning = 0;
   var unreached = Number.MAX_VALUE;
   var rememberedFeatures = 5e4;
+  var classesACharacterCanName = 256;
   var punctuation = /、|。/;
   function written2(bytes2) {
     let text = "";
@@ -4518,7 +4519,7 @@
     const names = [];
     const invoked = [];
     const grouped2 = [];
-    for (let at = 0; at + 1 < bytes2.length; ) {
+    for (let at = 0; at + 1 < bytes2.length && names.length < classesACharacterCanName; ) {
       invoked.push(bytes2[at]);
       grouped2.push(bytes2[at + 1]);
       const end = bytes2.indexOf(0, at + 6);

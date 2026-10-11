@@ -53,7 +53,7 @@
                   {
                     "group": [
                       "./artifact",
-                      "./kuromoji",
+                      "./tokenizer",
                       "./sudachi",
                       "./load",
                       "./pool",
@@ -77,7 +77,7 @@
     {
       "includes": [
         "src/artifact.ts",
-        "src/kuromoji.ts",
+        "src/tokenizer.ts",
         "src/sudachi.ts",
         "src/config.ts",
         "src/service.ts",
@@ -104,7 +104,7 @@
                       "@hono/**",
                       "@zenbu/node-service/http"
                     ],
-                    "message": "The readers (src/artifact.ts, src/kuromoji.ts, src/sudachi.ts, src/account-tokens.ts) and the shared modules (src/config.ts, src/rate-limit.ts, src/service.ts) are the bottom layer: the worker threads and the HTTP layer build on them, so they import neither (docs/agents/dictionary-api.md, Code layout)."
+                    "message": "The readers (src/artifact.ts, src/tokenizer.ts, src/sudachi.ts, src/account-tokens.ts) and the shared modules (src/config.ts, src/rate-limit.ts, src/service.ts) are the bottom layer: the worker threads and the HTTP layer build on them, so they import neither (docs/agents/dictionary-api.md, Code layout)."
                   }
                 ]
               }

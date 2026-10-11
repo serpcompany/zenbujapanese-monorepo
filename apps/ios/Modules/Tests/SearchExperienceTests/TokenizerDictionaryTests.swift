@@ -19,8 +19,8 @@ struct TokenizerDictionaryTests {
     arguments: [
       ("unk_char.dat.gz", 65_536, "218e90b85ece7734cfd1d10a3d3153083ff7899693060755985095d365663793"),
       (
-        "unk_compat.dat.gz", 262_144,
-        "b9f3cb34710353434dfc623300bcad22b622895dca3195af49e85d3de2438214"
+        "unk_invoke.dat.gz", 1_048_576,
+        "e9842ac062646d8da0e6728483eaeed58ee5518d2b6313d393c4fa4c16e84dbd"
       ),
     ])
   func unpacksADictionaryFile(filename: String, count: Int, sha256: String) throws {

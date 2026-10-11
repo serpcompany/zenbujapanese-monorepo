@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'vitest'
 import { ipadicTokenizer } from './ipadic'
-import { fixtureDictionary, fixtureFiles } from './ipadic.fixture'
+import { fixtureDictionary, fixtureFiles, sampleDigest, sampleTexts } from './ipadic.fixture'
 import { kuromojiCandidates } from './morphology'
 
 const files = fixtureFiles(fixtureDictionary)
@@ -75,6 +75,27 @@ describe('the tokenizer', () => {
       [5, '😀']
     ])
     expect(kuromojiCandidates(text, tokens)).toBeNull()
+  })
+
+  test('splits 30,000 random texts as kuromoji.js 0.1.2 split them', () => {
+    const pieces = [
+      ...'東京都行猫犬にねのはをがあいabXY059!?。、「」 ',
+      '東京',
+      '京都',
+      '行く',
+      '都。',
+      'ねこ',
+      '😀',
+      '𠀀',
+      String.fromCharCode(0xd83d),
+      String.fromCharCode(0xde00),
+      '語',
+      '\u{e9}',
+      '\u{0}',
+      '\u{3099}'
+    ]
+    const texts = ['', ...pieces, ...sampleTexts(pieces, 30_000, 7)]
+    expect(sampleDigest(tokenize, texts)).toBe('19e0d1029a1b2915')
   })
 
   test('reads its files once, when first asked', () => {

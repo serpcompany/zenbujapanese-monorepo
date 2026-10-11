@@ -22,6 +22,7 @@ const none = -1
 const beginning = 0
 const unreached = Number.MAX_VALUE
 const rememberedFeatures = 50_000
+const classesACharacterCanName = 0x100
 const punctuation = /、|。/
 
 function written(bytes: Uint8Array): string {
@@ -120,7 +121,7 @@ function characterClasses(categories: ArrayBuffer, definitions: ArrayBuffer): Ch
   const names: string[] = []
   const invoked: number[] = []
   const grouped: number[] = []
-  for (let at = 0; at + 1 < bytes.length; ) {
+  for (let at = 0; at + 1 < bytes.length && names.length < classesACharacterCanName; ) {
     invoked.push(bytes[at])
     grouped.push(bytes[at + 1])
     const end = bytes.indexOf(0, at + 6)

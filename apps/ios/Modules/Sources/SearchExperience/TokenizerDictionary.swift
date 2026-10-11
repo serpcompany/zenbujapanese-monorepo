@@ -1,17 +1,15 @@
 import Foundation
 
-enum KuromojiContract {
-  static let dictionaryFiles = [
-    "base.dat.gz", "cc.dat.gz", "check.dat.gz", "tid.dat.gz", "tid_map.dat.gz",
-    "tid_pos.dat.gz", "unk.dat.gz", "unk_char.dat.gz", "unk_compat.dat.gz",
-    "unk_invoke.dat.gz", "unk_map.dat.gz", "unk_pos.dat.gz",
-  ]
-}
-
 enum TokenizerDictionary {
+  static let files = [
+    "base.dat.gz", "cc.dat.gz", "check.dat.gz", "tid.dat.gz", "tid_map.dat.gz",
+    "tid_pos.dat.gz", "unk.dat.gz", "unk_char.dat.gz", "unk_invoke.dat.gz", "unk_map.dat.gz",
+    "unk_pos.dat.gz",
+  ]
+
   static func unpacked(_ file: String) -> InflatedBytes? {
     let filename = "\(file).dat.gz"
-    guard KuromojiContract.dictionaryFiles.contains(filename),
+    guard files.contains(filename),
       let url = resourceURL(filename),
       let packed = try? Data(contentsOf: url)
     else { return nil }

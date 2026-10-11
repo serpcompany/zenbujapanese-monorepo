@@ -209,8 +209,9 @@ The tokenizer).
   0.09 ms where kuromoji.js took 0.38 ms, starts in a quarter of a second where Kuromoji took
   half, and holds no second copy of the word lists as objects. A native Swift tokenizer would be
   faster still, and was not written: it would be the app's alone, and the next client would
-  need its own. The website's dictionary service still runs kuromoji.js, held to the same
-  tokens by a test, until its own change ([`tech-debt.md`](../tech-debt.md)).
+  need its own. The website's dictionary service, which ran kuromoji.js too, runs the core's
+  tokenizer from the same change on, so there is one tokenizer. kuromoji.js's answers were
+  recorded first (`tokenizer.json`), as the Swift's were, and it is no longer bundled.
 
 Measured on 2026-10-11 in optimized builds on a Mac, each number a median of seven rounds,
 across four runs of the Swift as it was before issue 481, two of the core as it merged, and

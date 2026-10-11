@@ -7,8 +7,8 @@ import Testing
 struct ExampleSearchConformanceTests {
   static let artifactNames =
     [
-      "LanguageReferenceData.sqlite3", "ExampleWordIndex.sqlite3", "Kuromoji/kuromoji.js",
-    ] + KuromojiContract.dictionaryFiles.map { "Kuromoji/\($0)" }
+      "LanguageReferenceData.sqlite3", "ExampleWordIndex.sqlite3",
+    ] + TokenizerDictionary.files.map { "Kuromoji/\($0)" }
 
   @Test("Example search shows what the suite recorded")
   func exampleSearchMatchesSuite() async throws {

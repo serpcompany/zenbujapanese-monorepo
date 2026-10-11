@@ -31,7 +31,7 @@ large to commit (UniDic, KanjiVG, and Kanjium) are downloaded by the rebuild and
 | JLPT levels | `JLPT-Waller-2025-08-26.source.json` | `import_jlpt_level_pack.py` |
 | JLPT kanji levels | `Kanji-JLPT-Waller-2020-08-06.source.json` | `import_jlpt_kanji_levels.py`, through `import_kanjidic.py` |
 | Frequency data | `TUBELEX-ja-310-lemma-pos.source.json`, `Wikipedia-ja-20221020-310-nfkc.source.json`, `Jiten-2026-09-27.source.json` (snapshots in `Jiten-2026-09-27/`); `Public-Japanese-Frequency-Catalog-2026-09-25.source.json` is historical (removed in #376) | `import_frequency_pack.py`, `build_jiten_frequency_packs.py`, on-device `FrequencyPackInstaller`; `build_ranked_lists.py` for the website's dictionary service |
-| Interactive Japanese parsing | `Kuromoji-0.1.2.source.json` | Bundled JavaScriptCore engine and compressed IPADIC resources |
+| Interactive Japanese parsing | `Kuromoji-0.1.2.source.json` | The compressed IPADIC dictionary files the shared core's tokenizer reads, and the tokenizer it is ported from |
 | App-owned word relationships | `Zenbu-Word-Relationships-v1.json` | `import_jmdict.py` |
 
 Required notices for bundled dependencies remain beside their source records

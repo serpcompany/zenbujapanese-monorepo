@@ -28,7 +28,6 @@
       "path": "resources/RadicalReferenceData.json",
       "artifact_schema": "zenbu.radical-reference.v1"
     },
-    { "name": "Kuromoji/kuromoji.js", "path": "resources/Kuromoji/kuromoji.js" },
     { "name": "Kuromoji/base.dat.gz", "path": "resources/Kuromoji/base.dat.gz" },
     { "name": "Kuromoji/cc.dat.gz", "path": "resources/Kuromoji/cc.dat.gz" },
     { "name": "Kuromoji/check.dat.gz", "path": "resources/Kuromoji/check.dat.gz" },
@@ -37,7 +36,6 @@
     { "name": "Kuromoji/tid_pos.dat.gz", "path": "resources/Kuromoji/tid_pos.dat.gz" },
     { "name": "Kuromoji/unk.dat.gz", "path": "resources/Kuromoji/unk.dat.gz" },
     { "name": "Kuromoji/unk_char.dat.gz", "path": "resources/Kuromoji/unk_char.dat.gz" },
-    { "name": "Kuromoji/unk_compat.dat.gz", "path": "resources/Kuromoji/unk_compat.dat.gz" },
     { "name": "Kuromoji/unk_invoke.dat.gz", "path": "resources/Kuromoji/unk_invoke.dat.gz" },
     { "name": "Kuromoji/unk_map.dat.gz", "path": "resources/Kuromoji/unk_map.dat.gz" },
     { "name": "Kuromoji/unk_pos.dat.gz", "path": "resources/Kuromoji/unk_pos.dat.gz" },
@@ -75,6 +73,7 @@
     "conformance/example-search.json",
     "conformance/word-detail.json",
     "conformance/kanji-detail.json",
-    "conformance/kanji-element.json"
+    "conformance/kanji-element.json",
+    "conformance/tokenizer.json"
   ]
 }

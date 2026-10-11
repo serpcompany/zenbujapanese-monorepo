@@ -1,4 +1,5 @@
 import type { IpadicFile } from './ipadic'
+import type { Tokenize } from './morphology'
 
 interface FixtureWord {
   surface: string
@@ -20,6 +21,57 @@ export interface FixtureDictionary {
   words: FixtureWord[]
   classes: FixtureClass[]
   connections: number[][]
+}
+
+export const tokenFields = [
+  'word_type',
+  'word_position',
+  'surface_form',
+  'pos',
+  'pos_detail_1',
+  'pos_detail_2',
+  'pos_detail_3',
+  'basic_form',
+  'reading'
+] as const
+
+export type FoundTokens = (string | number | null)[][] | 'refused'
+
+export function foundTokens(tokenize: Tokenize, text: string): FoundTokens {
+  try {
+    return tokenize(text).map(token => tokenFields.map(field => token[field] ?? null))
+  } catch {
+    return 'refused'
+  }
+}
+
+export function sampleTexts(pieces: readonly string[], count: number, seed: number): string[] {
+  let state = seed
+  const random = () => {
+    state = (state * 1103515245 + 12345) & 0x7fffffff
+    return state / 0x80000000
+  }
+  return Array.from({ length: count }, () => {
+    let text = ''
+    for (let piece = 1 + Math.floor(random() * 8); piece > 0; piece--) {
+      text += pieces[Math.floor(random() * pieces.length)]
+    }
+    return text
+  })
+}
+
+export function sampleDigest(tokenize: Tokenize, texts: readonly string[]): string {
+  let low = 0x811c9dc5
+  let high = 0x9747b28c
+  for (const text of texts) {
+    const found = `${JSON.stringify(foundTokens(tokenize, text))}\n`
+    for (let index = 0; index < found.length; index++) {
+      const unit = found.charCodeAt(index)
+      low = Math.imul(low ^ unit, 0x01000193)
+      high = Math.imul(high ^ unit, 0x5bd1e995) ^ (high >>> 13)
+    }
+  }
+  return [high, low].map(half => (half >>> 0).toString(16).padStart(8, '0')).join('')
 }
 
 const encoder = new TextEncoder()

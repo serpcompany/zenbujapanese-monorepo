@@ -57,7 +57,7 @@ struct CreditsView: View {
         license: "Apache-2.0 · BSD-3-Clause · MIT",
         project: "https://github.com/WorksApplications/SudachiDict")
       source(
-        "Kuromoji", credit: "Interactive text parsing by kuromoji.js with MeCab IPADIC.",
+        "Kuromoji", credit: "Interactive text parsing ported from kuromoji.js, with MeCab IPADIC.",
         license: "Apache-2.0 · IPADIC", project: "https://github.com/takuyaa/kuromoji.js")
       source(
         "Tatoeba", credit: "Example sentences by Tatoeba contributors.",
