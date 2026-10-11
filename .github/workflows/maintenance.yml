@@ -64,7 +64,7 @@ jobs:
       - name: Garden the docs with Claude
         id: garden
         if: env.HAS_CLAUDE_TOKEN == 'true'
-        uses: anthropics/claude-code-action@v1
+        uses: anthropics/claude-code-action@2dca132ff0e0c4094ce6048b422c6915a071210b
         env:
           CLAUDE_CODE_DISABLE_BACKGROUND_TASKS: "1"
           BASH_DEFAULT_TIMEOUT_MS: "900000"
@@ -119,9 +119,10 @@ jobs:
           overwrite: true
 
       - name: Fail unless doc gardening finished
-        if: env.HAS_CLAUDE_TOKEN == 'true'
+        if: ${{ !cancelled() && steps.garden.outcome != 'skipped' }}
         env:
           EXECUTION_FILE: ${{ steps.garden.outputs.execution_file }}
+          CLAUDE_OUTCOME: ${{ steps.garden.outcome }}
           GITHUB_TOKEN: ${{ github.token }}
         shell: node {0}
         run: |
@@ -131,9 +132,13 @@ jobs:
             console.log(`::error title=Doc gardening didn't finish::${clean(message, 900)}`)
             process.exit(1)
           }
+          const tokenAdvice = result => result.api_error_status === 401 ? " The API refused the token (401), so renew the CLAUDE_CODE_OAUTH_TOKEN secret (docs/agents/ci.md, Claude's app and token)." : ''
           const readResult = () => {
             const file = process.env.EXECUTION_FILE
-            if (!file || !fs.existsSync(file)) fail('Doc gardening wrote no execution log.')
+            if (!file || !fs.existsSync(file)) {
+              if (process.env.CLAUDE_OUTCOME === 'failure') fail("The Claude step failed before Claude ran, so it wrote no execution log: that step's own log says why.")
+              fail('Doc gardening wrote no execution log.')
+            }
             let messages
             try {
               messages = JSON.parse(fs.readFileSync(file, 'utf8'))
@@ -161,7 +166,7 @@ jobs:
             const { messages, result } = readResult()
             const said = String(result.result || '')
             console.log(`Doc gardening: ${result.num_turns} turns, about $${Number(result.total_cost_usd || 0).toFixed(2)}. Claude said: ${clean(said || '(nothing)', 400)}`)
-            if (result.is_error) fail(`Doc gardening ended with ${result.subtype || 'an error'}.`)
+            if (result.is_error) fail(`Doc gardening ended in an error: ${clean(said || result.subtype || 'no message', 400)}${tokenAdvice(result)}`)
             const sets = messages.filter(entry => entry?.type === 'system' && entry.subtype === 'background_tasks_changed')
             const running = (sets.at(-1)?.tasks || []).filter(task => task && !task.ambient)
             if (running.length) fail(`Doc gardening ended with ${running.length} background task(s) still running.`)
@@ -251,7 +256,7 @@ jobs:
       - name: Garden the code with Claude
         id: garden
         if: env.GARDEN == 'true'
-        uses: anthropics/claude-code-action@v1
+        uses: anthropics/claude-code-action@2dca132ff0e0c4094ce6048b422c6915a071210b
         env:
           CLAUDE_CODE_DISABLE_BACKGROUND_TASKS: "1"
           BASH_DEFAULT_TIMEOUT_MS: "900000"
@@ -302,9 +307,10 @@ jobs:
           overwrite: true
 
       - name: Fail unless code gardening opened one pull request or found nothing to garden
-        if: env.GARDEN == 'true'
+        if: ${{ !cancelled() && steps.garden.outcome != 'skipped' }}
         env:
           EXECUTION_FILE: ${{ steps.garden.outputs.execution_file }}
+          CLAUDE_OUTCOME: ${{ steps.garden.outcome }}
           GITHUB_TOKEN: ${{ github.token }}
         shell: node {0}
         run: |
@@ -314,9 +320,13 @@ jobs:
             console.log(`::error title=Code gardening didn't finish::${clean(message, 900)}`)
             process.exit(1)
           }
+          const tokenAdvice = result => result.api_error_status === 401 ? " The API refused the token (401), so renew the CLAUDE_CODE_OAUTH_TOKEN secret (docs/agents/ci.md, Claude's app and token)." : ''
           const readResult = () => {
             const file = process.env.EXECUTION_FILE
-            if (!file || !fs.existsSync(file)) fail('Code gardening wrote no execution log.')
+            if (!file || !fs.existsSync(file)) {
+              if (process.env.CLAUDE_OUTCOME === 'failure') fail("The Claude step failed before Claude ran, so it wrote no execution log: that step's own log says why.")
+              fail('Code gardening wrote no execution log.')
+            }
             let messages
             try {
               messages = JSON.parse(fs.readFileSync(file, 'utf8'))
@@ -344,7 +354,7 @@ jobs:
             const { messages, result } = readResult()
             const said = String(result.result || '')
             console.log(`Code gardening: ${result.num_turns} turns in ${Math.round((result.duration_ms || 0) / 1000)}s, about $${Number(result.total_cost_usd || 0).toFixed(2)}. Claude said: ${clean(said || '(nothing)', 400)}`)
-            if (result.is_error) fail(`Code gardening ended with ${result.subtype || 'an error'}.`)
+            if (result.is_error) fail(`Code gardening ended in an error: ${clean(said || result.subtype || 'no message', 400)}${tokenAdvice(result)}`)
             const sets = messages.filter(entry => entry?.type === 'system' && entry.subtype === 'background_tasks_changed')
             const running = (sets.at(-1)?.tasks || []).filter(task => task && !task.ambient)
             if (running.length) fail(`Code gardening ended with ${running.length} background task(s) still running.`)
