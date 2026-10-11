@@ -1,4 +1,5 @@
 import { describe, expect, test } from 'vitest'
+import { fixtureDictionary, fixtureFiles } from '../examples/ipadic.fixture'
 import type { KuromojiToken } from '../examples/morphology'
 import { embeddedEndpoint } from './dictionary'
 import { ask, begin, type FakeEntry, fakeHost, settled } from './fake-host'
@@ -54,7 +55,7 @@ const sentences: Record<string, KuromojiToken[]> = {
 const host = () =>
   fakeHost(entries, {
     tokenize: text => {
-      if (!Object.hasOwn(sentences, text)) throw new Error(`Kuromoji has no ${text}`)
+      if (!Object.hasOwn(sentences, text)) throw new Error(`The tokenizer has no ${text}`)
       return sentences[text]
     }
   })
@@ -153,7 +154,7 @@ describe('the embedded text engine', () => {
     })
   })
 
-  test('shows a text Kuromoji cannot read, or does not cover, as one unlinked word', async () => {
+  test('shows a text the tokenizer cannot read, or does not cover, as one unlinked word', async () => {
     const whole = (text: string) => [
       {
         surface: text,
@@ -180,7 +181,7 @@ describe('the embedded text engine', () => {
     expect(await linked(host(), { text: '', query: '', highlightedEntry: null })).toEqual([])
   })
 
-  test('asks the host for a text’s words when it has no Kuromoji of its own', async () => {
+  test('asks the host for a text’s words when it has no tokenizer of its own', async () => {
     const call = begin(
       fakeHost(entries),
       'linkedTokens',
@@ -218,6 +219,45 @@ describe('the embedded text engine', () => {
       ['見た', 'x1', '見た'],
       ['日本語', 'a1', '日本語']
     ])
+  })
+
+  test('tokenizes with the dictionary files a host hands it, read when first needed', async () => {
+    const files = fixtureFiles(fixtureDictionary)
+    const read: string[] = []
+    const reading = fakeHost(
+      [
+        { id: 't1', headword: '東京', reading: 'とうきょう' },
+        { id: 'i1', headword: '行く', reading: 'いく', partsOfSpeech: ['godanVerb'] }
+      ],
+      {
+        tokenizerFile: file => {
+          read.push(file)
+          return files[file]
+        }
+      }
+    )
+    const endpoint = embeddedEndpoint(reading)
+    expect(read).toEqual([])
+    expect(endpoint.answer('tokenizerReady', '')).toBe(true)
+    expect(read.length).toBe(Object.keys(files).length)
+    const call = endpoint.begin(
+      'linkedTokens',
+      JSON.stringify({ text: '東京に行く', query: '', highlightedEntry: null })
+    )
+    const { value } = await settled(call)
+    expect((value as EmbeddedToken[]).map(found => [found.surface, found.entry])).toEqual([
+      ['東京', 't1'],
+      ['に', null],
+      ['行く', 'i1']
+    ])
+    expect(read.length).toBe(Object.keys(files).length)
+  })
+
+  test("says whether it can tokenize: with a host's tokenizer, its files, or neither", () => {
+    expect(embeddedEndpoint(host()).answer('tokenizerReady', '')).toBe(true)
+    expect(embeddedEndpoint(fakeHost(entries)).answer('tokenizerReady', '')).toBe(false)
+    const withoutFiles = fakeHost(entries, { tokenizerFile: () => null })
+    expect(embeddedEndpoint(withoutFiles).answer('tokenizerReady', '')).toBe(false)
   })
 
   test('marks punctuation that stays with a neighbouring word, and counts only linked words', async () => {

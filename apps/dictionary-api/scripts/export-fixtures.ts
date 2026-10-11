@@ -13,7 +13,7 @@ import type {
   WordExampleRows
 } from '@zenbu/dictionary-core/detail/rows'
 import { artifactFile, fileSha256, openArtifact } from '../src/artifact'
-import { loadKuromoji } from '../src/kuromoji'
+import { loadTokenizer } from '../src/tokenizer'
 
 const serviceDir = resolve(fileURLToPath(new URL('.', import.meta.url)), '..')
 const output = join(serviceDir, '../../packages/dictionary-core/src/fixtures')
@@ -37,7 +37,7 @@ const artifact = openArtifact(resources, await fileSha256(join(resources, artifa
 const dictionary = new Dictionary({
   db: artifact.db,
   kanji: artifact.kanji,
-  capabilities: { tokenize: loadKuromoji(join(resources, 'Kuromoji')) }
+  capabilities: { tokenize: loadTokenizer(join(resources, 'Kuromoji')) }
 })
 
 const words = []

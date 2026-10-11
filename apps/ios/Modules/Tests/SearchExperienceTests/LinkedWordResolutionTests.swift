@@ -95,8 +95,8 @@ struct LinkedWordResolutionTests {
     #expect(await client.linkedTokens("", SearchQuery(""), nil).isEmpty)
   }
 
-  @Test("the app's own Kuromoji splits a sentence into its words and links each")
-  func kuromoji() async throws {
+  @Test("the core's tokenizer splits a sentence into its words and links each")
+  func tokenizer() async throws {
     let client = JapaneseTextAnalysisClient.live()
     #expect(await client.availability() == .full)
     let tokens = await client.linkedTokens("猫が魚を食べました。", SearchQuery("食べ"), nil)

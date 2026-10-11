@@ -11,7 +11,7 @@ import type { EmbeddedHost, HostRows } from '@zenbu/dictionary-core/embedded/hos
 import type { EmbeddedEntry } from '@zenbu/dictionary-core/embedded/presentation'
 import type { EmbeddedToken } from '@zenbu/dictionary-core/embedded/text'
 import type { FrequencyEvidence } from '@zenbu/dictionary-core/results/learner'
-import { artifactDatabase, artifactTokenize, resources } from './support'
+import { artifactDatabase, artifactTokenizerFile, resources } from './support'
 
 const hex = (bytes: Uint8Array) => Buffer.from(bytes).toString('hex')
 
@@ -80,7 +80,7 @@ export async function embedded(): Promise<Embedded> {
   const all = answering(await artifactDatabase())
   const hosts: Record<keyof Embedded, EmbeddedHost> = {
     lookup: { all },
-    text: { all, tokenize: await artifactTokenize() },
+    text: { all, tokenizerFile: await artifactTokenizerFile() },
     presentation: kanjiHost()
   }
   return {

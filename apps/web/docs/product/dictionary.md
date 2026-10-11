@@ -697,15 +697,15 @@ ending highlighted, and a speaker.
 the complete form, as the app's screen lists them. That is the first 100 sentences the app's
 search for the form finds (the sentence that is exactly the form first, then by where the form
 first occurs, the sentence's length, and pair ID; a form that is ASCII once normalized, such as
-Ｈ, searches the English translations, as the app does), keeping those whose words, as Kuromoji
-and the app's inflection grouping split them, include the form: 見たかった and 見た目 aren't
+Ｈ, searches the English translations, as the app does), keeping those whose words, as the
+tokenizer and the app's inflection grouping split them, include the form: 見たかった and 見た目 aren't
 examples of 見た. They load all at once from `/dictionary/conjugations/<form>.json` the first time
 the form opens, so the page doesn't carry every form's examples; until then the form says
 "Loading examples", and if they can't load, "Examples couldn’t load. Try again later." Each
 example links its words as the app's screen does, with no page entry, and accents the words that
 make up the form with the thicker underline; the translation and speaker are a word page's, with
 no per-sentence credits. A form without examples says "No example sentences use this form yet." The
-dictionary service runs the app's search and Kuromoji for a form when it's first asked, and keeps
+dictionary service runs the app's search and tokenizer for a form when it's first asked, and keeps
 the list; like the app, it finds a form's examples by its spelling alone.
 
 - Source: `ConjugatedForm.examples` in `ConjugationsView.swift`; `ExampleSentenceClient.search`

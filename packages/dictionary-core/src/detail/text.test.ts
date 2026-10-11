@@ -1,5 +1,12 @@
 import { describe, expect, test } from 'vitest'
-import { graphemeCount, graphemes, shortGloss } from './text'
+import {
+  graphemeCount,
+  graphemes,
+  isCJKUnifiedIdeograph,
+  isKanjiCharacter,
+  scalarCount,
+  shortGloss
+} from './text'
 
 const character = (code: number) => String.fromCharCode(code)
 
@@ -51,6 +58,43 @@ describe('graphemeCount', () => {
     expect(graphemeCount('私は毎日日本語を勉強します。')).toBe(14)
     expect(graphemeCount('I study Japanese every day.')).toBe(27)
     expect(graphemeCount('')).toBe(0)
+  })
+})
+
+describe('scalarCount', () => {
+  test('counts a pair of surrogates once, and a surrogate alone once', () => {
+    expect(scalarCount('')).toBe(0)
+    expect(scalarCount('日本語 abc')).toBe(7)
+    expect(scalarCount('𠀋が😀')).toBe(3)
+    expect(scalarCount(`${character(0xd83d)}a${character(0xde00)}`)).toBe(3)
+    expect(scalarCount(`😀${character(0xd83d)}`)).toBe(2)
+  })
+})
+
+describe('isKanjiCharacter', () => {
+  const compatibility = character(0xf900)
+
+  test('is one character, in the ideograph blocks', () => {
+    expect(['見', '㐀', compatibility, '𠀋'].map(isKanjiCharacter)).toEqual([
+      true,
+      true,
+      true,
+      true
+    ])
+    expect(
+      ['', '見る', '見見', 'み', '々', 'a', character(0xd840), '😀'].map(isKanjiCharacter)
+    ).toEqual([false, false, false, false, false, false, false, false])
+  })
+
+  test('a word has an ideograph when any of its characters is in the main blocks', () => {
+    expect(['見る', 'お茶', '㐀'].map(isCJKUnifiedIdeograph)).toEqual([true, true, true])
+    expect(['みる', '', '々', '𠀋', compatibility].map(isCJKUnifiedIdeograph)).toEqual([
+      false,
+      false,
+      false,
+      false,
+      false
+    ])
   })
 })
 

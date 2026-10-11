@@ -23,7 +23,7 @@ these and decodes the answer; [The app's side](#the-apps-side) says which type a
 | `embedded/` | The entry point for a client that runs the core inside a JavaScript engine, as the app does: every answer the app's screens show, as JSON, and the bundle the app loads. | `DictionaryCore`, and the three engines that each own one |
 | `results/` | The results screen: the frequency re-sort, Sort By and Filter, rows, chips, what VoiceOver says, and the Example Sentences, reading-refinement, and kanji rows. | `ResultsScreen` |
 | `detail/` | Word pages, kanji details, and kanji element pages from their rows: furigana, pitch, Frequency Details, conjugations, kanji, elements, share text, and the short gloss under a linked word. Also romaji (`romaji.ts`), a kanji's strokes as the points to draw (`strokes.ts`), whether a string is one kanji, and what a zenbujapanese.com link names (`links.ts`). | `WordPage`, `KanjiPage`, `KanjiElementPage`, `JapaneseRuby`, `FrequencyRow`, `KanjiCharacter`, `KanjiStrokeOrderClient`, `RomajiReadingAidText` |
-| `examples/` | Example linking, inflection grouping, and the ranks example retrieval shares. | `DictionaryTextData` |
+| `examples/` | Example linking, inflection grouping, the ranks example retrieval shares, and the tokenizer that splits a sentence into words (`ipadic.ts`, [The tokenizer](#the-tokenizer)). | `DictionaryTextData` |
 | `artifact/` | Reads `LanguageReferenceData.sqlite3` and its packs, checks them, and answers search, word, kanji, example, and sitemap requests (`Dictionary`), and the browse pages' (`DictionaryBrowse`). `embedded/` runs the same queries. | Through `embedded/` |
 | `cards/` | Word cards (`zenbu.word-cards.v1`, [`language-data/word-cards.md`](../../language-data/word-cards.md)): a word as Word Detail shows it, with the JLPT chip and a chip for each of the eight ranked lists, for apps that don't bundle the language data; the word lists that name them; the suite fields a card is checked against; and a segmented text's tokens (`zenbu.segmentation.v1`). `artifact/word-cards.ts` resolves the words and reads the cards, and `segmentText` in `artifact/word-examples.ts` splits and links a text as the example sentences are. | None: the app bundles the data. A card's chip names are `frequencyShortName`'s, as the app's chips are. |
 | `browse/` | What the website's browse pages list: the kana charts, the categories and the labels each matches, the ranked and JLPT lists, the kanji lists, and the service paths the website asks for them. | None: the app has no browse screens. |
@@ -36,7 +36,7 @@ these and decodes the answer; [The app's side](#the-apps-side) says which type a
   package the core imports for more than its types. A client passes in what it has: the artifact as an
   `ArtifactDatabase` (synchronous `all(sql, params)`), the kanji files as `KanjiData` (whole, as
   the service holds them) or a `KanjiLookup` that answers one record at a time (as the app does),
-  and its capabilities: `tokenize` (Kuromoji) and `morphology` (the app's Sudachi). Without
+  and its capabilities: `tokenize` (the core's own tokenizer) and `morphology` (the app's Sudachi). Without
   `morphology`, sentence search is off and the rest of Search is unchanged (ADR 0008).
 - **It logs nothing.** It returns what happened, as a result or an error, and the client logs it
   its own way; Biome refuses `console` in `src` (tests aside).
@@ -70,10 +70,11 @@ these and decodes the answer; [The app's side](#the-apps-side) says which type a
 - `ArtifactDatabase` is synchronous, as SQLite's own access is, since every client opens the files
   locally; `searchDatabase` wraps it as the search core's async `SearchDatabase`. Both bind
   `params` to anonymous `?` placeholders in order.
-- `tokenize` is kuromoji.js with the IPADIC files the app bundles
+- `tokenize` splits a sentence into words with the IPADIC files the app bundles
   (`apps/ios/Modules/Sources/SearchExperience/Resources/Kuromoji`), answering as kuromoji.js's
   `tokenize` does: `word_position` is 1-based, in UTF-16 code units, as the app's `NSRange` reads
-  it.
+  it. Every client's is the core's own ([The tokenizer](#the-tokenizer)): the service builds it
+  from the files it read and passes it, and the app hands the embedded host the files.
 - `morphology` is an analyzer such as the app's Sudachi, whose dictionary is 217 MB. A
   `MorphologyWord` lists its part-of-speech tags most general first (名詞, 動詞), and its
   `dictionaryForm` is `*` or empty when the analyzer has none. An analysis that throws finds no
@@ -99,8 +100,11 @@ modules, files, or event loop of its own, which is how the app runs it in JavaSc
     learner who keeps typing would wait for each abandoned prefix, such as `s`, to finish ranking
     its tens of thousands of candidates. A long loop added to `search/` over a query's candidates
     needs the same check.
-  - `tokenize(text)` is kuromoji.js's own `tokenize`, when the host loads Kuromoji into the same
-    engine. A host without it is asked for a sentence's words through the call instead (below).
+  - `tokenizerFile(name)` answers one of the tokenizer's dictionary files, unpacked, as an
+    `ArrayBuffer`, or null. The core asks for all eleven the first time it tokenizes
+    ([The tokenizer](#the-tokenizer)). A host without the files is asked for a sentence's words
+    through the call (below). `tokenize(text)` stands in for the tokenizer in the core's own
+    tests, which hand it a sentence's tokens; no client passes it.
   - `kanjiSources()`, `kanjiEntry(character)`, `kanjiStructure(character)`, and
     `kanjiElement(glyph)` answer the kanji files' source identities and one record at a time, as
     the files hold them, or null. The two files parse to 16 MB of objects, which an engine that
@@ -126,6 +130,7 @@ modules, files, or event loop of its own, which is how the app runs it in JavaSc
   | `isKanji` | A string | Whether it is one kanji |
   | `romaji`, `sentenceRomaji` | A reading; a sentence's words, each with its surface and reading | The reading in romaji, or null for one with kanji in it; the sentence in romaji, words spaced and punctuation kept with its word, or null when a word has no kana reading |
   | `checkExamples` | — | True, or the error that says which example table or pack is missing or wrong |
+  | `tokenizerReady` | — | Whether the text part can tokenize. With the host's files it reads them now, so the first sentence doesn't wait for them, and is false when one is missing or wrong. |
   | `exampleCount`, `resultsExampleCount`, `resultsExamples` | A query, or a query with the results' primary entry | The Example Sentences row's count, and its sentences |
   | `entryExamples`, `formExamples` | An entry's ID; a conjugated form | A word page's sentences with their count, and a form's |
   | `linkedTokens` | A text, the page's query, and its entry | Each word with its place in the text, its entry or candidates, the furigana to draw, whether it is the page's word or matches the query, which neighbour a punctuation mark stays with on a line (`attaches`), and whether it counts toward comprehension (`counted`: linked to an entry and not a function word) |
@@ -154,6 +159,12 @@ modules, files, or event loop of its own, which is how the app runs it in JavaSc
   the host and nothing is polled; calls keep their outcomes apart, so a second can start while
   the first waits for its analysis. A method may answer null (`kanjiElementPage`, `gloss`):
   `{"value": null}` is an answer.
+- **An answer that needs no waiting can be asked for at once.** `answer(method, argument)` runs
+  the method and returns its value, and `answerJSON(method, argument)` returns it as JSON
+  (`null` for nothing). Both throw for a method that would wait (`search`, `linkedTokens`, and the
+  others that read through the async search database) or that the core doesn't have. A host
+  uses them for what a view asks while it is being drawn: one crossing into the engine, no
+  promise, and for a string or a flag no JSON either.
 - **The bundle.** `embedded/javascriptcore.ts` reads the host from the global `zenbuHost` and sets
   the endpoint as the global `zenbuDictionary`. `pnpm bundle:javascriptcore`
   (`scripts/bundle-javascriptcore.mjs`) bundles it with esbuild into
@@ -161,9 +172,80 @@ modules, files, or event loop of its own, which is how the app runs it in JavaSc
   is checked in so the app builds without Node. `embedded/bundle.test.ts` builds it again and
   fails when the file differs.
 - The service replays every app-recorded suite through the endpoint too, on `node:sqlite` with the
-  real Kuromoji and kanji files (the `embedded*.conformance.test.ts` files in
+  real tokenizer and kanji files (the `embedded*.conformance.test.ts` files in
   `apps/dictionary-api/src/conformance/`), so a change that breaks the app's path fails on a pull
   request before any Swift runs.
+
+## The tokenizer
+
+`examples/ipadic.ts` splits a sentence into words from the dictionary files kuromoji.js builds
+from MeCab's IPADIC: the double-array word index (`base`, `check`), each word's ids, cost, and
+feature line (`tid`, `tid_map`, `tid_pos`), the cost of one word following another (`cc`), and
+the classes and words for text the dictionary doesn't have (`unk`, `unk_map`, `unk_pos`,
+`unk_char`, `unk_invoke`). `ipadicTokenizer(read)` asks `read` for each file, unpacked, the first
+time it tokenizes. It is the only tokenizer: the app runs it in JavaScriptCore, and the
+website's dictionary service runs it in Node (`apps/dictionary-api/src/tokenizer.ts`).
+
+- **It is a port of kuromoji.js 0.1.2** (Apache-2.0, Takuya Asano; the license ships beside the
+  dictionary files, `Resources/Kuromoji/LICENSE-2.0.txt`), which both clients ran until
+  2026-10-11, and it answers exactly as kuromoji.js did, so no sentence links differently than
+  it used to. That includes what kuromoji.js got wrong, because the rest of the core already
+  handles it (`kuromojiCandidates` shows a sentence whose tokens don't tile it as one unlinked
+  word):
+  - a sentence is split after every 、 and 。, and the words of each later part are numbered from
+    the last word of the part before, which is off when that word is longer than one character;
+  - a word's place counts characters, but a run of unknown characters outside the basic plane is
+    measured in UTF-16 units, so the words after it are skipped;
+  - a high surrogate without its low surrogate, a NUL, and a character whose class lists no
+    words make it throw; and
+  - a class's `max_length` is ignored: one unknown word spans the whole run of a grouped class.
+
+  Fixing one of these is a behavior change for every client at once: change it here, and record
+  the suite again.
+- **Why the core has its own.** In an engine without a JIT, kuromoji.js spent half of each linked
+  sentence: it re-encodes the rest of the sentence at every character, decodes each word's
+  feature line a byte at a time, and builds an object per lattice node. `ipadic.ts` encodes a
+  sentence once, walks the index in place, keeps the lattice in typed arrays, and remembers each
+  word's features. In JavaScriptCore without its JIT it tokenizes a sentence in 0.09 ms where
+  kuromoji.js took 0.38 ms, and is ready in 0.03 s where kuromoji.js took 0.4 s (it built an
+  object for each of the 326,000 word lists; `ipadic.ts` indexes them in place).
+- **kuromoji.js's answers are recorded, and kuromoji.js is gone.** Before it was removed, the two
+  were compared over all 232,774 example sentences, the 655,146 headwords, readings, and
+  summaries, and 1.7 million random texts: every token the same, and the same 118,171 texts
+  refused. What pins the port now was recorded from kuromoji.js itself:
+  - `apps/ios/LanguageData/Conformance/tokenizer.json` holds its tokens for 747 texts (example
+    sentences, words, and odd cases, eleven of them refused) and its digest over 20,000 random
+    texts built from the pieces the suite lists.
+    `apps/dictionary-api/src/conformance/tokenizer.conformance.test.ts` replays it over the
+    bundled dictionary, and `pnpm tokenizer-suite` in `apps/dictionary-api` records it again.
+  - `examples/ipadic.test.ts` holds its digest over 30,000 random texts on a small dictionary
+    built to reach the odd cases (`examples/ipadic.fixture.ts`), beside cases written out.
+- The files are little-endian and are read through typed arrays, so `ipadicTokenizer` refuses to
+  start on a big-endian machine instead of misreading them.
+
+## Writing for an engine without a JIT
+
+The app runs the core in JavaScriptCore's interpreter (an app's JavaScriptCore has no JIT), where
+what is cheap differs from Node and a browser. Measure there before and after a change to
+anything a list row or a linked sentence runs:
+`/System/Library/Frameworks/JavaScriptCore.framework/Versions/Current/Helpers/jsc --useJIT=false`
+runs the app's bundle on a Mac, and `startSamplingProfiler()` with
+`samplingProfilerStackTraces()` says where the time goes.
+
+- **A loop the engine runs natively beats the same loop written out.** A regular expression test
+  over a string (`everyUnitIsAGrapheme`, `isASCII`, `isJapaneseOnly`), `split`, `indexOf`,
+  `includes`, and `normalize` run in native code. A `for` loop over `charCodeAt` costs about
+  0.05 ms per thousand characters, eight times the regular expression.
+- **Array helpers that take a function are written in JavaScript in this engine.** `map`,
+  `filter`, `some`, `every`, `find`, `Array.from`, a `for...of` over `entries()`, and `replace`
+  with a function all interpret a call per element. They are fine once per screen; in what runs
+  per character or per word, loop.
+- **Remember what repeats.** A kanji's reading forms (`kanji-split.ts`), a form in hiragana and
+  katakana (`examples/kana.ts`), a kana word's romaji in pieces (`romaji.ts`), and a word's
+  dictionary line (`ipadic.ts`) are each worked out once and kept in a bounded table.
+- **A cache hit should cost a lookup.** `LruCache` moves an entry to the front only when half
+  the cache is newer than it, so reading a recent entry is one `Map.get`; an entry that is read
+  survives at least half the cache's capacity in new entries.
 
 ## The app's side
 
@@ -173,7 +255,7 @@ Paths are relative to `apps/ios/Modules/Sources/SearchExperience/`.
 | --- | --- | --- |
 | `LookupClient.swift` (`LanguageReferenceData`) | `search`, `entriesMatchingFirstForms`, `entriesContainingKanji`, `websiteRoute`, `relatedWord`, `savedWord` | Search, an exact form's entries, a kanji's words, what a website link opens, and the entry a related or saved word opens; it reads the entries itself |
 | `SearchQuery.swift` | `normalizeQuery` | The query every screen holds |
-| `DictionaryTextData.swift` (`ExampleSentenceClient`, `JapaneseTextAnalysisClient`) | `checkExamples`, the example methods, `linkedTokens` | Example sentences and linked words, with each word's line-breaking and whether `Comprehension` counts it |
+| `DictionaryTextData.swift` (`ExampleSentenceClient`, `JapaneseTextAnalysisClient`) | `checkExamples`, `tokenizerReady`, the example methods, `linkedTokens` | Example sentences and linked words, with each word's line-breaking and whether `Comprehension` counts it. It hands the core the tokenizer's files (`TokenizerDictionary.swift`). |
 | `PresentationCore.swift` (`RomajiReadingAidText`, `LinkedJapaneseText`) | `romaji`, `sentenceRomaji` | The Romaji reading aid, for a reading and for a sentence |
 | `RadicalLookupClient.swift` (`RadicalInputView`) | `radicalPanel` | The radical panel's kanji and radicals |
 | `KanjiStrokeOrderClient.swift` | `kanjiStrokes` | The strokes Kanji Detail draws |
@@ -323,7 +405,7 @@ The core answers as the Swift it replaced did, which the suites pin.
 - A word is looked up only when it is written in kana and kanji, so linking never asks for an
   ASCII form, and `formLookup` finds nothing for one. `entriesMatchingFirstForms` does look one
   up, in English, for the app's own exact-form lookups.
-- A Kuromoji analysis whose tokens don't tile the text is null, and the sentence shows as one
+- A tokenizer's analysis whose tokens don't tile the text is null, and the sentence shows as one
   unlinked word.
 - **A word's examples.** A kana headword such as でも also occurs inside other words (いつでも,
   何でも), so its examples come from the sentences Tatoeba's word index (`ExampleWordIndex`) links
@@ -335,8 +417,8 @@ The core answers as the Swift it replaced did, which the suites pin.
   maps to UTF-16 and then grapheme positions. The results' primary entry is highlighted for every
   search, and its own examples are listed for a romaji or deinflected query.
 - **A conjugated form's examples** are the sentences the app's search for the form finds,
-  normalized (a full-width Ｈ searches English), that contain it as written and in which Kuromoji
-  reads it as one word, so 見たかった and 見た目 aren't examples of 見た. The screen accents the
+  normalized (a full-width Ｈ searches English), that contain it as written and in which the
+  tokenizer reads it as one word, so 見たかった and 見た目 aren't examples of 見た. The screen accents the
   query as normalized.
 - An example's `pairId` is the artifact's pair ID in hex; the app's ID for the pair is `esp1_` and
   it.
@@ -414,7 +496,7 @@ ready and a page's first request prepares nothing:
 - A pitch's `downstep` is 0 for flat (heiban), otherwise the mora after which pitch falls. `pitch`
   is UniDic's; `compoundPitch` is CompoundPitch's estimate, which shows when UniDic has none.
 - No `FrequencyRow` for a pack means it doesn't rank or list the entry.
-- An example token's `reading` is Kuromoji's, in hiragana, when the token has kanji, and its
+- An example token's `reading` is the tokenizer's, in hiragana, when the token has kanji, and its
   `dictionaryForm` is set when it differs from the surface: what an ambiguous word searches for.
 - An `ExampleLinkRow` with one entry in `entSeqs` is the word-detail suite's `entry`; two or more
   are its `candidates`, a word the app can't resolve to one entry (such as だ). A token with no

@@ -9,8 +9,8 @@ struct WordDetailConformanceTests {
     [
       "LanguageReferenceData.sqlite3", "CompoundPitch.sqlite3", "ExampleWordIndex.sqlite3",
       "JLPTLevelPack.sqlite3", "TUBELEXFrequencyPack.sqlite3", "FrequencyPackCatalog.json",
-      "KanjiReferenceData.json", "Kuromoji/kuromoji.js",
-    ] + KuromojiContract.dictionaryFiles.map { "Kuromoji/\($0)" }
+      "KanjiReferenceData.json",
+    ] + TokenizerDictionary.files.map { "Kuromoji/\($0)" }
 
   @Test("Word Detail shows what the suite recorded")
   func wordDetailMatchesSuite() async throws {

@@ -1,22 +1,11 @@
-import { readFileSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
 import { groupInflections, kuromojiCandidates } from '@zenbu/dictionary-core/examples/morphology'
 import { describe, expect, test } from 'vitest'
-import { loadKuromoji } from './kuromoji'
+import { tokenizerDictionary, tokenizerDictionaryAvailable } from './conformance/support'
+import { loadTokenizer } from './tokenizer'
 
-const directory = fileURLToPath(
-  new URL('../../ios/Modules/Sources/SearchExperience/Resources/Kuromoji', import.meta.url)
-)
-const dictionaryPulledFromGitLfs = (() => {
-  try {
-    return !readFileSync(`${directory}/base.dat.gz`).subarray(0, 7).toString().startsWith('version')
-  } catch {
-    return false
-  }
-})()
-
-describe.runIf(dictionaryPulledFromGitLfs)("the app's Kuromoji in Node", () => {
-  const tokenize = dictionaryPulledFromGitLfs ? loadKuromoji(directory) : () => []
+describe.runIf(tokenizerDictionaryAvailable)('the tokenizer over the bundled dictionary', () => {
+  const tokenize = tokenizerDictionaryAvailable ? loadTokenizer(tokenizerDictionary) : () => []
 
   test('splits a sentence as the app records it', () => {
     const text = '見るからに明らかだよ。'
@@ -40,6 +29,6 @@ describe.runIf(dictionaryPulledFromGitLfs)("the app's Kuromoji in Node", () => {
   })
 })
 
-test('refuses Kuromoji files other than the pinned ones', () => {
-  expect(() => loadKuromoji(fileURLToPath(new URL('.', import.meta.url)))).toThrow()
+test('refuses dictionary files other than the pinned ones', () => {
+  expect(() => loadTokenizer(fileURLToPath(new URL('.', import.meta.url)))).toThrow()
 })

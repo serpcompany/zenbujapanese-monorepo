@@ -50,6 +50,33 @@ describe('romaji', () => {
     expect(romaji(reading)).toBe(written)
   })
 
+  test.each([
+    ['んあ', "n'a"],
+    ['あんい', "an'i"],
+    ['しんよう', "shin'you"],
+    ['はんのう', "han'nou"],
+    ['んんん', "n'n'n"],
+    ['んーか', 'n\u{304}ka'],
+    ['っっか', '~tsukka'],
+    ['っー', '~tsū'],
+    ['きゃっきゃ', 'kyakkya'],
+    ['いっしょうけんめい', 'isshoukenmei'],
+    ['ふぁん', 'fan'],
+    ['てぃー', 'tī'],
+    ['うぃ', 'u~i'],
+    ['ヴァ', 'vu~a'],
+    ['コンピューター', 'konpyūtā'],
+    ['ウォッカ', 'u~okka'],
+    ['ヵヶ', '~ka~ke'],
+    ['くゎ', 'ku~wa'],
+    ['ーあ', '\u{304}a'],
+    ['ぁあ', '~aa'],
+    ['んんんんんか', "n'n'n'n'nka"]
+  ])('%s reads the same in pieces as it does whole: %s', (reading, written) => {
+    expect(romaji(reading)).toBe(written)
+    expect(romaji(reading)).toBe(written)
+  })
+
   test('a small kana that forms no syllable keeps a tilde', () => {
     expect(romaji('ウィキ')).toBe('u~iki')
     expect(romaji('ティー')).toBe('tī')

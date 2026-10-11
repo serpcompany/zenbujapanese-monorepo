@@ -16,6 +16,7 @@ import {
 import { type Attachment, attachment } from '../detail/romaji'
 import { type RubySegment, rubySegments } from '../detail/ruby'
 import { usesForm } from '../examples/forms'
+import { ipadicTokenizer } from '../examples/ipadic'
 import {
   displayReading,
   formsLookedUp,
@@ -26,7 +27,8 @@ import {
 import {
   isFunctionWord,
   kuromojiCandidates,
-  type MorphologyCandidate
+  type MorphologyCandidate,
+  type Tokenize
 } from '../examples/morphology'
 import type { SearchDatabase } from '../search/database'
 import type { MorphologyWord } from '../search/morphology'
@@ -112,11 +114,22 @@ export class EmbeddedText {
   private readonly linked = new LruCache<string, EmbeddedToken[]>(512)
   private readonly searched = new LruCache<string, EntryExamples | string>(32)
   private readonly retrieved = new LruCache<string, EntryExamples | string>(64)
+  private readonly tokenize: Tokenize | undefined
+  private readonly readsItsFiles: boolean
 
-  constructor(private readonly host: EmbeddedHost) {
+  constructor(host: EmbeddedHost) {
     this.db = hostDatabase(host)
     this.searchDb = searchDatabase(this.db)
     this.lookup = formLookup(this.db, this.forms)
+    this.readsItsFiles = !host.tokenize && host.tokenizerFile !== undefined
+    this.tokenize = host.tokenize
+      ? text => host.tokenize?.(text) ?? []
+      : host.tokenizerFile &&
+        ipadicTokenizer(file => {
+          const bytes = host.tokenizerFile?.(file)
+          if (!bytes) throw new Error(`The host has no ${file} for the tokenizer`)
+          return bytes
+        })
   }
 
   private found(ids: readonly string[]): Map<string, ExamplesEntry> {
@@ -157,6 +170,15 @@ export class EmbeddedText {
     return true
   }
 
+  tokenizerReady(): boolean {
+    if (!this.readsItsFiles) return this.tokenize !== undefined
+    try {
+      return this.tokenize?.('') !== undefined
+    } catch {
+      return false
+    }
+  }
+
   exampleCount(query: string): number {
     const found = this.search(query)
     return typeof found === 'string' ? 0 : found.count
@@ -190,7 +212,7 @@ export class EmbeddedText {
     analyze: AnalyzeText
   ): Promise<MorphologyCandidate[] | null> {
     try {
-      if (this.host.tokenize) return kuromojiCandidates(text, this.host.tokenize(text))
+      if (this.tokenize) return kuromojiCandidates(text, this.tokenize(text))
       return (await analyze(text)).map(hostCandidate)
     } catch {
       return null

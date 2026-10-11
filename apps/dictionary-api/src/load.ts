@@ -4,9 +4,9 @@ import { DictionaryBrowse } from '@zenbu/dictionary-core/artifact/browse'
 import { Dictionary } from '@zenbu/dictionary-core/artifact/dictionary'
 import { wordCardInputs } from '@zenbu/dictionary-core/artifact/word-cards'
 import { artifactFile, fileSha256, openArtifact } from './artifact'
-import { loadKuromoji } from './kuromoji'
 import { inProcessService, type ServiceInfo } from './service'
 import { loadSudachi, prepareSudachi, sudachiContract } from './sudachi'
+import { loadTokenizer } from './tokenizer'
 
 export interface VerifiedFiles {
   resources: string
@@ -51,7 +51,7 @@ export async function verifyFiles(options: {
 
 export function loadService(files: VerifiedFiles) {
   const artifact = openArtifact(files.resources, files.artifactSha256)
-  const tokenize = loadKuromoji(join(files.resources, 'Kuromoji'))
+  const tokenize = loadTokenizer(join(files.resources, 'Kuromoji'))
   const morphology = files.sudachiDictionary ? loadSudachi(files.sudachiDictionary) : undefined
   const dictionary = new Dictionary({
     db: artifact.db,

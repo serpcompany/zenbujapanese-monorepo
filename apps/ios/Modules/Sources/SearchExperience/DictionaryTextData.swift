@@ -68,7 +68,6 @@ actor DictionaryTextData {
   private let wordIndexURL: URL?
   private let morphology: JapaneseMorphologyClient?
   private var core: DictionaryCore?
-  private var hasKuromoji = false
 
   init(
     databaseURL: URL? = nil,
@@ -97,21 +96,22 @@ actor DictionaryTextData {
   }
 
   func formExamples(_ form: String) async throws -> [ExampleSentence] {
-    try await answer("formExamples", form, analyzing: true)
+    try await answer("formExamples", form)
   }
 
   func linkedWords(_ text: LinkedText) async throws -> [LinkedWord] {
-    try await answer("linkedTokens", try DictionaryCore.argument(text), analyzing: true)
+    try await answer("linkedTokens", try DictionaryCore.argument(text))
   }
 
   func availability() async -> JapaneseTextAnalysisAvailability {
     if let morphology { return await morphology.availability() }
-    guard let core = try? preparedCore() else { return .reduced }
-    return installsKuromoji(in: core) ? .full : .reduced
+    guard let core = try? preparedCore(), (try? core.flag("tokenizerReady", "")) == true
+    else { return .reduced }
+    return .full
   }
 
   private func answer<Answer: Decodable>(
-    _ method: String, _ argument: String, analyzing: Bool = false
+    _ method: String, _ argument: String
   ) async throws -> Answer {
     let core: DictionaryCore
     do {
@@ -120,13 +120,7 @@ actor DictionaryTextData {
       try Task<Never, Never>.checkCancellation()
       throw error
     }
-    if analyzing, morphology == nil { _ = installsKuromoji(in: core) }
     return try await core.answer(method, argument, analyzingWith: morphology)
-  }
-
-  private func installsKuromoji(in core: DictionaryCore) -> Bool {
-    if !hasKuromoji { hasKuromoji = (try? core.installKuromoji()) != nil }
-    return hasKuromoji
   }
 
   private func preparedCore() throws -> DictionaryCore {
@@ -136,7 +130,8 @@ actor DictionaryTextData {
         ?? Bundle.module.url(forResource: "ExampleWordIndex", withExtension: "sqlite3")
     else { throw ExampleSentenceRetrievalError.retrievalUnavailable(.missingBundledData) }
     let prepared = try DictionaryCore(
-      statements: try SQLiteStatements(reading: database, attaching: ["word_index": wordIndex]))
+      statements: try SQLiteStatements(reading: database, attaching: ["word_index": wordIndex]),
+      tokenizerFile: morphology == nil ? TokenizerDictionary.unpacked : nil)
     let _: Bool = try prepared.answer("checkExamples", "")
     core = prepared
     return prepared

@@ -9,10 +9,6 @@
       "sha256" : "10f8410301bf8291faed20d85de41d1be8a01c7606751071940cda3a4329f15d"
     },
     {
-      "name" : "Kuromoji/kuromoji.js",
-      "sha256" : "ab0ac10f1c4a9b5e246e63e57b04ba14d3a6148cd7e8d62cb97a960d4f85a3e6"
-    },
-    {
       "name" : "Kuromoji/base.dat.gz",
       "sha256" : "0803327762e1c93ca731e4319ab8343340f2806bb84941207782cde9d2d5a8eb"
     },
@@ -43,10 +39,6 @@
     {
       "name" : "Kuromoji/unk_char.dat.gz",
       "sha256" : "9a8e86fd9aff32d323fbb59f5a7006f05927a11f8173c90712cc56293aeb3225"
-    },
-    {
-      "name" : "Kuromoji/unk_compat.dat.gz",
-      "sha256" : "50f60aa29bc2e86c2903ab8c825bb6fa604d2b294d96941c1d3924259791899d"
     },
     {
       "name" : "Kuromoji/unk_invoke.dat.gz",

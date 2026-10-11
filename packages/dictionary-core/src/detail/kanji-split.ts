@@ -2,15 +2,13 @@ import type { KanjiReadingRow } from './rows'
 import type { RubySegment } from './ruby'
 import { graphemes } from './text'
 
-export type KanjiReadings = ReadonlyMap<string, readonly KanjiReadingRow[]>
+export type KanjiReadings = Pick<ReadonlyMap<string, readonly KanjiReadingRow[]>, 'get'>
 
 function hiraganaCharacters(value: string): string[] {
   return graphemes(value).map(character => {
-    const scalars = Array.from(character)
-    const code = character.codePointAt(0) ?? 0
-    return scalars.length === 1 && code >= 0x30a1 && code <= 0x30f6
-      ? String.fromCodePoint(code - 0x60)
-      : character
+    if (character.length !== 1) return character
+    const code = character.charCodeAt(0)
+    return code >= 0x30a1 && code <= 0x30f6 ? String.fromCharCode(code - 0x60) : character
   })
 }
 
@@ -37,7 +35,19 @@ const soundChanges: Record<string, string[]> = {
   ほ: ['ぼ', 'ぽ']
 }
 
+const knownVariants = new WeakMap<readonly KanjiReadingRow[], string[][]>()
+const unread: readonly KanjiReadingRow[] = []
+
 function variants(readings: readonly KanjiReadingRow[]): string[][] {
+  let known = knownVariants.get(readings)
+  if (!known) {
+    known = readingVariants(readings)
+    knownVariants.set(readings, known)
+  }
+  return known
+}
+
+function readingVariants(readings: readonly KanjiReadingRow[]): string[][] {
   const forms = new Map<string, string[]>()
   for (const reading of readings) {
     if (reading.kind === 'name') continue
@@ -65,7 +75,10 @@ function variants(readings: readonly KanjiReadingRow[]): string[][] {
 }
 
 function startsWith(target: string[], position: number, candidate: string[]): boolean {
-  return candidate.every((character, index) => target[position + index] === character)
+  for (let index = 0; index < candidate.length; index++) {
+    if (target[position + index] !== candidate[index]) return false
+  }
+  return true
 }
 
 export function splitKanjiReading(
@@ -75,15 +88,6 @@ export function splitKanjiReading(
 ): string[] | null {
   const characters = graphemes(kanji)
   const target = hiraganaCharacters(reading)
-  const cache = new Map<string, string[][]>()
-  const variantsOf = (character: string) => {
-    let forms = cache.get(character)
-    if (!forms) {
-      forms = variants(readings.get(character) ?? [])
-      cache.set(character, forms)
-    }
-    return forms
-  }
   const splitLengths: number[][] = []
   const current: number[] = []
 
@@ -96,7 +100,7 @@ export function splitKanjiReading(
     const character = characters[index]
     const source = character === '々' ? previous : character
     if (source === null) return
-    for (const candidate of variantsOf(source)) {
+    for (const candidate of variants(readings.get(source) ?? unread)) {
       if (!startsWith(target, position, candidate)) continue
       current.push(candidate.length)
       search(index + 1, position + candidate.length, source)

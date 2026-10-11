@@ -36,7 +36,7 @@ const whitespace = /\p{White_Space}/u
 export function normalizeQuery(raw: string): string {
   const folded = raw.normalize('NFKC').toLowerCase()
   if (!whitespace.test(folded)) return folded
-  if (/^[\x20-\x7e]*$/.test(folded)) return folded.split(' ').filter(Boolean).join(' ')
+  if (everyUnitIsAGrapheme(folded)) return folded.split(' ').filter(Boolean).join(' ')
   const words: string[] = []
   let word = ''
   for (const grapheme of graphemes(folded)) {
@@ -52,7 +52,7 @@ export function normalizeQuery(raw: string): string {
 }
 
 export function isASCII(value: string): boolean {
-  return Array.from(value).every(character => (character.codePointAt(0) ?? 0) < 0x80)
+  return !/[\u0080-\uffff]/.test(value)
 }
 
 function isJapaneseScalar(codePoint: number): boolean {
@@ -79,12 +79,10 @@ export function japaneseSegments(value: string): string[] {
   return segments.map(normalizeQuery)
 }
 
+const japaneseScalars = /^[\u3005\u3040-\u30ff\u3400-\u4dbf\u4e00-\u9fff]+$/
+
 export function isJapaneseOnly(value: string): boolean {
-  if (value === '') return false
-  for (const scalar of value) {
-    if (!isJapaneseScalar(scalar.codePointAt(0) ?? 0)) return false
-  }
-  return normalizeQuery(value) === value
+  return japaneseScalars.test(value) && normalizeQuery(value) === value
 }
 
 export function japaneseCandidates(candidates: readonly string[]): string[] {

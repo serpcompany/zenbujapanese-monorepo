@@ -22,47 +22,63 @@
     ゞ: "ヾ",
     "ゟ": "ヨリ"
   };
-  function toHiragana(value) {
-    return fold(value).replace(/[ァ-ヿゟ]/gu, (character) => {
+  var longestRemembered = 24;
+  var remembered = 8192;
+  function remembering(convert) {
+    const known = /* @__PURE__ */ new Map();
+    return (value) => {
+      if (value.length > longestRemembered) return convert(value);
+      let converted = known.get(value);
+      if (converted === void 0) {
+        converted = convert(value);
+        if (known.size >= remembered) known.clear();
+        known.set(value, converted);
+      }
+      return converted;
+    };
+  }
+  var toHiragana = remembering(
+    (value) => fold(value).replace(/[ァ-ヿゟ]/gu, (character) => {
       const special2 = toHiraganaSpecial[character];
       if (special2 !== void 0) return special2;
       const code = character.codePointAt(0) ?? 0;
       return code <= 12532 ? String.fromCodePoint(code - 96) : character;
-    }).normalize("NFC");
-  }
-  function toKatakana(value) {
-    return fold(value).replace(/[ぁ-ゔゝ-ゟ]/gu, (character) => {
+    }).normalize("NFC")
+  );
+  var toKatakana = remembering(
+    (value) => fold(value).replace(/[ぁ-ゔゝ-ゟ]/gu, (character) => {
       const special2 = toKatakanaSpecial[character];
       if (special2 !== void 0) return special2;
       return String.fromCodePoint((character.codePointAt(0) ?? 0) + 96);
-    }).normalize("NFC");
-  }
+    }).normalize("NFC")
+  );
 
   // src/detail/text.ts
   var segmenter = new Intl.Segmenter("ja", { granularity: "grapheme" });
   function graphemes(value) {
     return everyUnitIsAGrapheme(value) ? value.split("") : Array.from(segmenter.segment(value), ({ segment }) => segment);
   }
-  function isSingleUnitGrapheme(unit) {
-    return unit >= 32 && unit <= 126 || unit >= 12288 && unit <= 12543 && !(unit >= 12330 && unit <= 12335) && unit !== 12441 && unit !== 12442 || unit >= 19968 && unit <= 40959 || unit >= 65280 && unit <= 65519 && unit !== 65438 && unit !== 65439;
-  }
+  var unitsThatAreGraphemes = /^[\x20-\x7e\u3000-\u3029\u3030-\u3098\u309b-\u30ff\u4e00-\u9fff\uff00-\uff9d\uffa0-\uffef]*$/;
   function everyUnitIsAGrapheme(value) {
-    for (let index = 0; index < value.length; index++) {
-      if (!isSingleUnitGrapheme(value.charCodeAt(index))) return false;
-    }
-    return true;
+    return unitsThatAreGraphemes.test(value);
+  }
+  var highSurrogate = /[\ud800-\udbff]/;
+  function scalarCount(value) {
+    return highSurrogate.test(value) ? Array.from(value).length : value.length;
   }
   function graphemeCount(value) {
     return everyUnitIsAGrapheme(value) ? value.length : graphemes(value).length;
   }
-  var codePoints = (value) => Array.from(value, (scalar) => scalar.codePointAt(0) ?? 0);
   function isCJKUnifiedIdeograph(character) {
-    return codePoints(character).some((code) => code >= 13312 && code <= 40959);
+    for (let index = 0; index < character.length; index++) {
+      const unit = character.charCodeAt(index);
+      if (unit >= 13312 && unit <= 40959) return true;
+    }
+    return false;
   }
   function isKanjiCharacter(value) {
-    const scalars = codePoints(value);
-    if (scalars.length !== 1) return false;
-    const [code] = scalars;
+    const code = value.codePointAt(0);
+    if (code === void 0 || value.length !== (code > 65535 ? 2 : 1)) return false;
     return code >= 13312 && code <= 19903 || code >= 19968 && code <= 40959 || code >= 63744 && code <= 64255 || code >= 131072 && code <= 195103 || code >= 196608 && code <= 205743;
   }
   function hiragana(value) {
@@ -107,14 +123,14 @@
   };
   var inOrder = (...steps) => (text, start, limit) => steps.reduce((end, step) => step(text, start, end), limit);
   var rewritten = (rewrite) => (text, start, limit) => {
-    const written2 = text.slice(start, limit).join("");
-    const changed = rewrite(written2);
-    if (changed === written2) return limit;
+    const written3 = text.slice(start, limit).join("");
+    const changed = rewrite(written3);
+    if (changed === written3) return limit;
     const replacement2 = Array.from(changed);
     text.splice(start, limit - start, ...replacement2);
     return start + replacement2.length;
   };
-  var normalized = (form) => rewritten((written2) => written2.normalize(form));
+  var normalized = (form) => rewritten((written3) => written3.normalize(form));
   var voicedMark = "゙";
   var voicingMarks = "゙゛";
   var semiVoicingMarks = "゚゜";
@@ -227,10 +243,10 @@
         position++;
         continue;
       }
-      const written2 = Array.from(found.written);
-      text.splice(position, found.length, ...written2);
-      end += written2.length - found.length;
-      position += found.advance ?? written2.length;
+      const written3 = Array.from(found.written);
+      text.splice(position, found.length, ...written3);
+      end += written3.length - found.length;
+      position += found.advance ?? written3.length;
     }
     return end;
   };
@@ -278,21 +294,81 @@
     }
     return text.join("");
   }
+  var firstKana = 12353;
+  var hiraganaLetter = 1;
+  var katakanaLetter = 2;
+  var joinsThePrevious = 4;
+  var needsTheNext = 8;
+  var kanaKinds = new Uint8Array(12540 - firstKana + 1);
+  for (let unit = 12353; unit <= 12436; unit++) kanaKinds[unit - firstKana] = hiraganaLetter;
+  for (let unit = 12449; unit <= 12534; unit++) kanaKinds[unit - firstKana] = katakanaLetter;
+  kanaKinds[12540 - firstKana] = hiraganaLetter | katakanaLetter;
+  for (const kana of "ぁぃぅぇぉゃゅょァィゥェォャュョー") {
+    kanaKinds[kana.charCodeAt(0) - firstKana] |= joinsThePrevious;
+  }
+  for (const kana of "っんッン") kanaKinds[kana.charCodeAt(0) - firstKana] |= needsTheNext;
+  var longestPiece = 4;
+  var rememberedPieces = 8192;
+  var knownPieces = /* @__PURE__ */ new Map();
+  function pieceLatin(piece) {
+    if (piece.length > longestPiece) return void 0;
+    let written3 = knownPieces.get(piece);
+    if (written3 === void 0) {
+      written3 = latin(piece);
+      if (knownPieces.size < rememberedPieces) knownPieces.set(piece, written3);
+    }
+    return written3;
+  }
+  function plainKanaLatin(reading) {
+    let scripts2 = hiraganaLetter | katakanaLetter;
+    let written3 = "";
+    let start = 0;
+    let open = true;
+    for (let index = 0; index < reading.length; index++) {
+      const kind = kanaKinds[reading.charCodeAt(index) - firstKana] ?? 0;
+      scripts2 &= kind;
+      if (scripts2 === 0) return void 0;
+      if ((kind & joinsThePrevious) === 0) {
+        if (!open) {
+          const piece = pieceLatin(reading.slice(start, index));
+          if (piece === void 0) return void 0;
+          written3 += piece;
+          start = index;
+        }
+      } else if (index === 0) {
+        return void 0;
+      }
+      open = (kind & needsTheNext) !== 0;
+    }
+    const last = pieceLatin(reading.slice(start));
+    return last === void 0 ? void 0 : written3 + last;
+  }
   var kanji = /[\u3005\u3400-\u9fff\uf900-\ufaff\u{20000}-\u{2fa1f}]/u;
   function romaji(reading) {
-    return reading === "" || kanji.test(reading) ? null : latin(reading);
+    if (reading === "") return null;
+    return plainKanaLatin(reading) ?? (kanji.test(reading) ? null : latin(reading));
+  }
+  function startsWithALetter(surface) {
+    const unit = surface.charCodeAt(0);
+    return unit >= 12353 && unit <= 12438 || unit >= 12449 && unit <= 12538 || unit >= 19968 && unit <= 40959 || unit >= 97 && unit <= 122 || unit >= 65 && unit <= 90 || unit >= 48 && unit <= 57;
   }
   function attachment(surface) {
+    if (startsWithALetter(surface)) return null;
     if (!/^[\p{Ps}\p{Pe}\p{Pi}\p{Pf}\p{Po}]+$/u.test(surface)) return null;
     return /^[\p{Ps}\p{Pi}]/u.test(surface) ? "next" : "previous";
   }
   var startsWithSpace = (character) => character !== void 0 && /^\p{White_Space}/u.test(character);
+  function endsWithSpace(sentence) {
+    const ending = sentence.slice(-2);
+    return startsWithSpace(everyUnitIsAGrapheme(ending) ? ending.at(-1) : graphemes(sentence).at(-1));
+  }
   function sentenceRomaji(words) {
     if (words.length === 0) return null;
     let sentence = "";
     let previous = null;
     for (const { surface, reading } of words) {
-      if (graphemes(surface).every(startsWithSpace)) {
+      const isAWord = startsWithALetter(surface);
+      if (!isAWord && graphemes(surface).every(startsWithSpace)) {
         sentence += surface;
         previous = null;
         continue;
@@ -301,7 +377,7 @@
       const piece = romaji(spoken);
       if (piece === null) return null;
       const attaches2 = attachment(surface);
-      const joined2 = sentence === "" || startsWithSpace(graphemes(sentence).at(-1)) || attaches2 === "previous" || previous === "next";
+      const joined2 = sentence === "" || attaches2 === "previous" || previous === "next" || endsWithSpace(sentence);
       sentence += joined2 ? piece : ` ${piece}`;
       previous = attaches2;
     }
@@ -337,7 +413,7 @@
   function normalizeQuery(raw) {
     const folded = raw.normalize("NFKC").toLowerCase();
     if (!whitespace.test(folded)) return folded;
-    if (/^[\x20-\x7e]*$/.test(folded)) return folded.split(" ").filter(Boolean).join(" ");
+    if (everyUnitIsAGrapheme(folded)) return folded.split(" ").filter(Boolean).join(" ");
     const words = [];
     let word = "";
     for (const grapheme of graphemes2(folded)) {
@@ -352,7 +428,7 @@
     return words.join(" ");
   }
   function isASCII(value) {
-    return Array.from(value).every((character) => (character.codePointAt(0) ?? 0) < 128);
+    return !/[\u0080-\uffff]/.test(value);
   }
   function isJapaneseScalar(codePoint) {
     return codePoint === 12293 || codePoint >= 12352 && codePoint <= 12543 || codePoint >= 13312 && codePoint <= 19903 || codePoint >= 19968 && codePoint <= 40959;
@@ -371,12 +447,9 @@
     if (current) segments.push(current);
     return segments.map(normalizeQuery);
   }
+  var japaneseScalars = /^[\u3005\u3040-\u30ff\u3400-\u4dbf\u4e00-\u9fff]+$/;
   function isJapaneseOnly(value) {
-    if (value === "") return false;
-    for (const scalar of value) {
-      if (!isJapaneseScalar(scalar.codePointAt(0) ?? 0)) return false;
-    }
-    return normalizeQuery(value) === value;
+    return japaneseScalars.test(value) && normalizeQuery(value) === value;
   }
   function japaneseCandidates(candidates) {
     const kept = /* @__PURE__ */ new Set();
@@ -2396,15 +2469,15 @@
     }
     async found(query, word, morphology) {
       const { items } = await new DictionarySearch(this.searchDb, { morphology }).search(query);
-      const written2 = items.find(
+      const written3 = items.find(
         ({ entry }) => sameText(entry.headword, word.headword) && sameText(entry.reading, word.reading)
       );
-      return { written: written2?.entry.id ?? null, first: items[0]?.entry.id ?? null };
+      return { written: written3?.entry.id ?? null, first: items[0]?.entry.id ?? null };
     }
     async relatedWord(related, morphology) {
       if (related.targetID !== null) return related.targetID;
-      const { written: written2, first } = await this.found(related.query, related, morphology);
-      return written2 ?? first;
+      const { written: written3, first } = await this.found(related.query, related, morphology);
+      return written3 ?? first;
     }
     async savedWord(saved, morphology) {
       const [stored] = this.db.all(
@@ -2413,6 +2486,41 @@
       );
       if (stored) return saved.id;
       return (await this.found(saved.headword, saved, morphology)).written;
+    }
+  };
+
+  // src/artifact/cache.ts
+  var LruCache = class {
+    constructor(capacity) {
+      this.capacity = capacity;
+      if (!(capacity > 0)) throw new Error("An LruCache needs a positive capacity");
+      this.settled = Math.floor(capacity / 2);
+    }
+    capacity;
+    entries = /* @__PURE__ */ new Map();
+    settled;
+    uses = 0;
+    get size() {
+      return this.entries.size;
+    }
+    get(key) {
+      const kept = this.entries.get(key);
+      if (kept === void 0) return void 0;
+      if (this.uses - kept.used >= this.settled) {
+        this.entries.delete(key);
+        kept.used = ++this.uses;
+        this.entries.set(key, kept);
+      }
+      return kept.value;
+    }
+    set(key, value) {
+      this.entries.delete(key);
+      this.entries.set(key, { value, used: ++this.uses });
+      if (this.entries.size > this.capacity) {
+        const oldest = this.entries.keys().next();
+        if (!oldest.done) this.entries.delete(oldest.value);
+      }
+      return this;
     }
   };
 
@@ -2831,9 +2939,9 @@
   // src/detail/kanji-split.ts
   function hiraganaCharacters(value) {
     return graphemes(value).map((character) => {
-      const scalars = Array.from(character);
-      const code = character.codePointAt(0) ?? 0;
-      return scalars.length === 1 && code >= 12449 && code <= 12534 ? String.fromCodePoint(code - 96) : character;
+      if (character.length !== 1) return character;
+      const code = character.charCodeAt(0);
+      return code >= 12449 && code <= 12534 ? String.fromCharCode(code - 96) : character;
     });
   }
   var soundChanges = {
@@ -2858,7 +2966,17 @@
     へ: ["べ", "ぺ"],
     ほ: ["ぼ", "ぽ"]
   };
+  var knownVariants = /* @__PURE__ */ new WeakMap();
+  var unread = [];
   function variants(readings) {
+    let known = knownVariants.get(readings);
+    if (!known) {
+      known = readingVariants(readings);
+      knownVariants.set(readings, known);
+    }
+    return known;
+  }
+  function readingVariants(readings) {
     const forms2 = /* @__PURE__ */ new Map();
     for (const reading of readings) {
       if (reading.kind === "name") continue;
@@ -2881,20 +2999,14 @@
     return [...forms2.values()].sort((left, right) => right.length - left.length);
   }
   function startsWith(target, position, candidate) {
-    return candidate.every((character, index) => target[position + index] === character);
+    for (let index = 0; index < candidate.length; index++) {
+      if (target[position + index] !== candidate[index]) return false;
+    }
+    return true;
   }
   function splitKanjiReading(kanji2, reading, readings) {
     const characters = graphemes(kanji2);
     const target = hiraganaCharacters(reading);
-    const cache = /* @__PURE__ */ new Map();
-    const variantsOf = (character) => {
-      let forms2 = cache.get(character);
-      if (!forms2) {
-        forms2 = variants(readings.get(character) ?? []);
-        cache.set(character, forms2);
-      }
-      return forms2;
-    };
     const splitLengths = [];
     const current = [];
     function search(index, position, previous) {
@@ -2906,7 +3018,7 @@
       const character = characters[index];
       const source = character === "々" ? previous : character;
       if (source === null) return;
-      for (const candidate of variantsOf(source)) {
+      for (const candidate of variants(readings.get(source) ?? unread)) {
         if (!startsWith(target, position, candidate)) continue;
         current.push(candidate.length);
         search(index + 1, position + candidate.length, source);
@@ -3492,6 +3604,7 @@
   };
 
   // src/embedded/presentation.ts
+  var rememberedKanji = 4e3;
   var EmbeddedPresentation = class {
     constructor(host) {
       this.host = host;
@@ -3499,6 +3612,20 @@
     host;
     files;
     radicals;
+    readingsByKanji = new LruCache(
+      rememberedKanji
+    );
+    kanjiReadings = {
+      get: (character) => {
+        let readings = this.readingsByKanji.get(character);
+        if (!readings) {
+          const rows = this.kanji.glossRows([character]);
+          readings = rows.find((row) => row.character === character)?.readings ?? [];
+          this.readingsByKanji.set(character, readings);
+        }
+        return readings;
+      }
+    };
     get kanjiFiles() {
       if (!this.files) {
         const host = this.host;
@@ -3544,10 +3671,7 @@
       return (evidenceLookups(request.frequency)(request.entry) ?? []).map(frequencyLookupRow);
     }
     ruby([surface, reading]) {
-      const readings = new Map(
-        this.kanji.glossRows([surface]).map(({ character, readings: readings2 }) => [character, readings2])
-      );
-      return withKanjiReadings(rubySegments(surface, reading), readings);
+      return withKanjiReadings(rubySegments(surface, reading), this.kanjiReadings);
     }
     wordPage(entry) {
       const detail = wordDetail({
@@ -3637,35 +3761,6 @@
         this.radicals = new RadicalLookup(checkedRadicalFile(file));
       }
       return this.radicals.panel(selected);
-    }
-  };
-
-  // src/artifact/cache.ts
-  var LruCache = class {
-    constructor(capacity) {
-      this.capacity = capacity;
-      if (!(capacity > 0)) throw new Error("An LruCache needs a positive capacity");
-    }
-    capacity;
-    entries = /* @__PURE__ */ new Map();
-    get size() {
-      return this.entries.size;
-    }
-    get(key) {
-      const value = this.entries.get(key);
-      if (value === void 0) return void 0;
-      this.entries.delete(key);
-      this.entries.set(key, value);
-      return value;
-    }
-    set(key, value) {
-      this.entries.delete(key);
-      this.entries.set(key, value);
-      if (this.entries.size > this.capacity) {
-        const oldest = this.entries.keys().next();
-        if (!oldest.done) this.entries.delete(oldest.value);
-      }
-      return this;
     }
   };
 
@@ -4173,7 +4268,7 @@
       (form) => forms2.has(form)
     );
   }
-  function remembered(compute) {
+  function remembered2(compute) {
     const known = /* @__PURE__ */ new WeakMap();
     return (key) => {
       let value = known.get(key);
@@ -4184,11 +4279,11 @@
       return value;
     };
   }
-  var grouped = remembered(groupInflections);
-  var isLookedUp = remembered(
+  var grouped = remembered2(groupInflections);
+  var isLookedUp = remembered2(
     (candidate) => isJapaneseOnly(normalizeQuery(candidate.surface))
   );
-  var lookupForms = remembered(formsToLookUp);
+  var lookupForms = remembered2(formsToLookUp);
   function formsToLookUp(candidate) {
     const forms2 = [];
     const append = (value) => {
@@ -4202,17 +4297,27 @@
     }
     return forms2;
   }
+  function hasCompatiblePart(entry, providerPOS) {
+    for (const part of entry.partsOfSpeech) {
+      if (isCompatible(part, providerPOS)) return true;
+    }
+    return false;
+  }
   function preferredEntries(entries, candidate, matchesSurfaceReading) {
     let filtered = entries;
     const providerPOS = candidate.partOfSpeech[0];
     if (providerPOS !== void 0) {
-      const compatible = filtered.filter(
-        (entry) => entry.partsOfSpeech.some((part) => isCompatible(part, providerPOS))
-      );
+      const compatible = [];
+      for (const entry of filtered) {
+        if (hasCompatiblePart(entry, providerPOS)) compatible.push(entry);
+      }
       if (compatible.length > 0) filtered = compatible;
     }
     if (matchesSurfaceReading && candidate.reading !== "" && candidate.reading !== "*") {
-      const readingMatches = filtered.filter((entry) => toKatakana(entry.reading) === candidate.reading);
+      const readingMatches = [];
+      for (const entry of filtered) {
+        if (toKatakana(entry.reading) === candidate.reading) readingMatches.push(entry);
+      }
       if (readingMatches.length > 0) filtered = readingMatches;
     }
     return filtered;
@@ -4310,13 +4415,14 @@
   function tokenSpans(tokens) {
     let start = 0;
     return tokens.map((token) => {
-      const end = start + Array.from(token.surface).length;
+      const end = start + scalarCount(token.surface);
       const span = { start, end };
       start = end;
       return span;
     });
   }
   function occurrences(text, query) {
+    if (query === "") return [];
     const scalars = Array.from(text);
     const needle = Array.from(query);
     if (needle.length === 0 || needle.length > scalars.length) return [];
@@ -4327,6 +4433,410 @@
       }
     }
     return found;
+  }
+
+  // src/examples/ipadic.ts
+  var none = -1;
+  var beginning = 0;
+  var unreached = Number.MAX_VALUE;
+  var rememberedFeatures = 5e4;
+  var classesACharacterCanName = 256;
+  var punctuation = /、|。/;
+  function written2(bytes2) {
+    let text = "";
+    let at = 0;
+    while (at < bytes2.length) {
+      const first = bytes2[at++];
+      let code;
+      if (first < 128) {
+        code = first;
+      } else if (first >> 5 === 6) {
+        code = (first & 31) << 6 | bytes2[at++] & 63;
+      } else if (first >> 4 === 14) {
+        const second = bytes2[at++];
+        code = (first & 15) << 12 | (second & 63) << 6 | bytes2[at++] & 63;
+      } else {
+        const second = bytes2[at++];
+        const third = bytes2[at++];
+        code = (first & 7) << 18 | (second & 63) << 12 | (third & 63) << 6 | bytes2[at++] & 63;
+      }
+      if (code < 65536) {
+        text += String.fromCharCode(code);
+      } else {
+        code -= 65536;
+        text += String.fromCharCode(55296 | code >> 10, 56320 | code & 1023);
+      }
+    }
+    return text;
+  }
+  function writtenFrom(bytes2, start) {
+    const end = bytes2.indexOf(0, start);
+    return written2(bytes2.subarray(start, end < 0 ? bytes2.length : end));
+  }
+  var Words = class {
+    shorts;
+    lists;
+    records;
+    text;
+    listOf;
+    features = /* @__PURE__ */ new Map();
+    constructor(records, text, lists) {
+      this.shorts = new Int16Array(records, 0, records.byteLength >> 1);
+      this.records = new DataView(records);
+      this.text = new Uint8Array(text);
+      this.lists = new Int32Array(lists, 0, lists.byteLength >> 2);
+      const listed3 = this.lists[0] ?? 0;
+      let listOf = new Int32Array(Math.max(listed3, 1));
+      for (let at = 1, read = 0; read < listed3; read++, at += 2 + this.lists[at + 1]) {
+        const key = this.lists[at];
+        if (key >= listOf.length) {
+          const wider = new Int32Array(Math.max(key + 1, listOf.length * 2));
+          wider.set(listOf);
+          listOf = wider;
+        }
+        if (listOf[key] !== 0) throw new Error(`The word lists name ${key} twice`);
+        if (this.lists[at + 1] > 0) listOf[key] = at + 1;
+      }
+      this.listOf = listOf;
+    }
+    list(key) {
+      const list = this.listOf[key];
+      if (!list) throw new TypeError(`No words are listed for ${key}`);
+      return list;
+    }
+    featuresOf(word) {
+      let features = this.features.get(word);
+      if (features === void 0) {
+        features = writtenFrom(this.text, this.records.getInt32(word + 6, true)).split(",");
+        if (this.features.size >= rememberedFeatures) this.features.clear();
+        this.features.set(word, features);
+      }
+      return features;
+    }
+  };
+  function characterClasses(categories, definitions) {
+    const bytes2 = new Uint8Array(definitions);
+    const names = [];
+    const invoked = [];
+    const grouped2 = [];
+    for (let at = 0; at + 1 < bytes2.length && names.length < classesACharacterCanName; ) {
+      invoked.push(bytes2[at]);
+      grouped2.push(bytes2[at + 1]);
+      const end = bytes2.indexOf(0, at + 6);
+      names.push(written2(bytes2.subarray(at + 6, end < 0 ? bytes2.length : end)));
+      at = (end < 0 ? bytes2.length : end) + 1;
+    }
+    const fallback = names.indexOf("DEFAULT");
+    const of = new Uint8Array(categories);
+    if (fallback < 0 || of.length < 65536) {
+      throw new Error("The character classes do not cover every character");
+    }
+    return {
+      of,
+      count: names.length,
+      alwaysInvoked: Uint8Array.from(invoked),
+      grouped: Uint8Array.from(grouped2),
+      named: Int32Array.from(names, (name2) => names.indexOf(name2)),
+      fallback
+    };
+  }
+  var Lattice = class {
+    starts = new Int32Array(1024);
+    lefts = new Int32Array(1024);
+    rights = new Int32Array(1024);
+    costs = new Int32Array(1024);
+    words = new Int32Array(1024);
+    spans = new Int32Array(1024);
+    following = new Int32Array(1024);
+    best = new Int32Array(1024);
+    shortest = new Float64Array(1024);
+    first = new Int32Array(0);
+    last = new Int32Array(0);
+    count = 0;
+    furthest = 0;
+    begin(positions) {
+      if (this.first.length < positions) {
+        this.first = new Int32Array(positions * 2);
+        this.last = new Int32Array(positions * 2);
+      }
+      this.first.fill(none, 0, positions);
+      this.count = 0;
+      this.furthest = 0;
+      this.shortest[this.add(0, 0, none, 0, 0, 0, none)] = 0;
+    }
+    add(position, start, word, left, right, cost, span) {
+      const node = this.count++;
+      if (node === this.starts.length) this.widen();
+      this.starts[node] = start;
+      this.words[node] = word;
+      this.lefts[node] = left;
+      this.rights[node] = right;
+      this.costs[node] = cost;
+      this.spans[node] = span;
+      this.best[node] = none;
+      this.shortest[node] = unreached;
+      this.following[node] = none;
+      if (this.first[position] === none) this.first[position] = node;
+      else this.following[this.last[position]] = node;
+      this.last[position] = node;
+      if (this.furthest < position) this.furthest = position;
+      return node;
+    }
+    widen() {
+      const size = this.starts.length * 2;
+      const wider = (old) => {
+        const array = new Int32Array(size);
+        array.set(old);
+        return array;
+      };
+      this.starts = wider(this.starts);
+      this.lefts = wider(this.lefts);
+      this.rights = wider(this.rights);
+      this.costs = wider(this.costs);
+      this.words = wider(this.words);
+      this.spans = wider(this.spans);
+      this.following = wider(this.following);
+      this.best = wider(this.best);
+      const shortest = new Float64Array(size);
+      shortest.set(this.shortest);
+      this.shortest = shortest;
+    }
+  };
+  var Ipadic = class {
+    base;
+    check;
+    known;
+    unknown;
+    connections;
+    classes;
+    lattice = new Lattice();
+    units = new Int32Array(0);
+    offsets = new Int32Array(0);
+    kinds = new Uint8Array(0);
+    ends = new Int32Array(0);
+    utf8 = new Uint8Array(0);
+    unitAt = new Int32Array(0);
+    bytes = 0;
+    constructor(read) {
+      if (new Uint8Array(new Uint16Array([1]).buffer)[0] !== 1) {
+        throw new Error("The dictionary files are little-endian, and this machine is not");
+      }
+      const base = read("base");
+      const check = read("check");
+      const connections = read("cc");
+      this.base = new Int32Array(base, 0, base.byteLength >> 2);
+      this.check = new Int32Array(check, 0, check.byteLength >> 2);
+      if (this.base.length !== this.check.length) {
+        throw new Error("The word index and its check differ in size");
+      }
+      this.known = new Words(read("tid"), read("tid_pos"), read("tid_map"));
+      this.unknown = new Words(read("unk"), read("unk_pos"), read("unk_map"));
+      this.connections = new Int16Array(connections, 0, connections.byteLength >> 1);
+      this.classes = characterClasses(read("unk_char"), read("unk_invoke"));
+    }
+    tokenize(text) {
+      const tokens = [];
+      let rest = text;
+      while (rest !== "") {
+        const stop = rest.search(punctuation);
+        this.sentence(stop < 0 ? rest : rest.substring(0, stop + 1), tokens);
+        if (stop < 0) break;
+        rest = rest.substring(stop + 1);
+      }
+      return tokens;
+    }
+    sentence(text, tokens) {
+      const characters = this.read(text);
+      const lattice = this.lattice;
+      lattice.begin(characters + text.length + 3);
+      for (let character = 0; character < characters; character++) {
+        this.unknownWords(character, this.knownWords(character));
+      }
+      const end = Math.max(1, lattice.furthest) + 1;
+      const last = lattice.add(lattice.furthest + 1, end, none, 0, 0, 0, none);
+      this.search(end);
+      this.shape(text, last, tokens);
+    }
+    read(text) {
+      const length2 = text.length;
+      if (this.units.length <= length2) {
+        this.units = new Int32Array(length2 * 2 + 1);
+        this.offsets = new Int32Array(length2 * 2 + 1);
+        this.kinds = new Uint8Array(length2 * 2 + 1);
+        this.ends = new Int32Array(length2 * 2 + 1);
+        this.utf8 = new Uint8Array(length2 * 6 + 4);
+        this.unitAt = new Int32Array(length2 * 6 + 5);
+      }
+      const { units, offsets, kinds } = this;
+      const utf8 = this.utf8;
+      const unitAt = this.unitAt;
+      const { of, fallback, named } = this.classes;
+      let characters = 0;
+      let bytes2 = 0;
+      for (let unit = 0; unit < length2; characters++) {
+        const code = text.charCodeAt(unit);
+        units[characters] = unit;
+        offsets[characters] = bytes2;
+        unitAt[bytes2] = unit;
+        if (code >= 55296 && code <= 56319) {
+          const low = text.charCodeAt(unit + 1);
+          if (!(low >= 56320 && low <= 57343)) {
+            throw new TypeError("A high surrogate stands without its low surrogate");
+          }
+          const point2 = (code - 55296) * 1024 + 65536 + (low - 56320);
+          utf8[bytes2++] = point2 >>> 18 | 240;
+          utf8[bytes2++] = point2 >> 12 & 63 | 128;
+          utf8[bytes2++] = point2 >> 6 & 63 | 128;
+          utf8[bytes2++] = point2 & 63 | 128;
+          kinds[characters] = fallback;
+          unit += 2;
+          continue;
+        }
+        if (code < 128) {
+          utf8[bytes2++] = code;
+        } else if (code < 2048) {
+          utf8[bytes2++] = code >>> 6 | 192;
+          utf8[bytes2++] = code & 63 | 128;
+        } else {
+          utf8[bytes2++] = code >>> 12 | 224;
+          utf8[bytes2++] = code >> 6 & 63 | 128;
+          utf8[bytes2++] = code & 63 | 128;
+        }
+        kinds[characters] = of[code];
+        unit++;
+      }
+      units[characters] = length2;
+      offsets[characters] = bytes2;
+      unitAt[bytes2] = length2;
+      this.bytes = bytes2;
+      const ends = this.ends;
+      for (let character = characters - 1; character >= 0; character--) {
+        const continues = character + 1 < characters && named[kinds[character + 1]] === named[kinds[character]];
+        ends[character] = continues ? ends[character + 1] : character + 1;
+      }
+      return characters;
+    }
+    knownWords(character) {
+      const { base, check, lattice } = this;
+      const utf8 = this.utf8;
+      const unitAt = this.unitAt;
+      const { shorts, lists } = this.known;
+      const from = this.units[character];
+      const limit = this.bytes;
+      let found = 0;
+      let parent = 0;
+      for (let at = this.offsets[character]; at < limit; at++) {
+        const child = base[parent] + utf8[at];
+        if (check[child] !== parent) break;
+        parent = child;
+        const terminal = base[child];
+        if (check[terminal] !== child) continue;
+        const value = base[terminal];
+        if (value > 0) throw new TypeError("A word in the index has no number");
+        found++;
+        const list = this.known.list(-value - 1);
+        const length2 = unitAt[at + 1] - from;
+        for (let listed3 = list + 1; listed3 <= list + lists[list]; listed3++) {
+          const word = lists[listed3];
+          const record = word >> 1;
+          lattice.add(
+            character + length2,
+            character + 1,
+            word,
+            shorts[record],
+            shorts[record + 1],
+            shorts[record + 2],
+            none
+          );
+        }
+      }
+      return found;
+    }
+    unknownWords(character, found) {
+      const { alwaysInvoked, grouped: grouped2, count } = this.classes;
+      const kind = this.kinds[character];
+      if (kind >= count) throw new TypeError(`No character class is numbered ${kind}`);
+      if (found !== 0 && alwaysInvoked[kind] !== 1) return;
+      const units = this.units;
+      let end = character + 1;
+      let length2 = 1;
+      if (grouped2[kind] === 1 && this.ends[character] > end) {
+        end = this.ends[character];
+        length2 = units[end] - units[character];
+      }
+      const { shorts, lists } = this.unknown;
+      const list = this.unknown.list(kind);
+      for (let listed3 = list + 1; listed3 <= list + lists[list]; listed3++) {
+        const word = lists[listed3];
+        const record = word >> 1;
+        this.lattice.add(
+          character + length2,
+          character + 1,
+          word,
+          shorts[record],
+          shorts[record + 1],
+          shorts[record + 2],
+          end
+        );
+      }
+    }
+    search(end) {
+      const { starts, lefts, rights, costs, following, best, shortest, first } = this.lattice;
+      const connections = this.connections;
+      const across = connections[1];
+      let chosen = none;
+      for (let position = 1; position <= end; position++) {
+        for (let node = first[position]; node !== none; node = following[node]) {
+          let previous = first[starts[node] - 1];
+          if (previous === none) continue;
+          const left = lefts[node] + 2;
+          const own = costs[node];
+          let cost = unreached;
+          for (; previous !== none; previous = following[previous]) {
+            const through = shortest[previous] + connections[rights[previous] * across + left] + own;
+            if (through < cost) {
+              chosen = previous;
+              cost = through;
+            }
+          }
+          best[node] = chosen;
+          shortest[node] = cost;
+        }
+      }
+    }
+    shape(text, last, tokens) {
+      const { starts, words, spans, best } = this.lattice;
+      const path = [];
+      for (let node = best[last]; node !== beginning; node = best[node]) {
+        if (node === none) return;
+        path.push(node);
+      }
+      const before = tokens.length > 0 ? tokens[tokens.length - 1].word_position : 0;
+      for (let step = path.length - 1; step >= 0; step--) {
+        const node = path[step];
+        const character = starts[node] - 1;
+        const isKnown = spans[node] === none;
+        const features = (isKnown ? this.known : this.unknown).featuresOf(words[node]);
+        tokens.push({
+          word_type: isKnown ? "KNOWN" : "UNKNOWN",
+          word_position: before + starts[node],
+          surface_form: isKnown ? features[0] : text.slice(this.units[character], this.units[spans[node]]),
+          pos: features[1],
+          pos_detail_1: features[2],
+          pos_detail_2: features[3],
+          pos_detail_3: features[4],
+          basic_form: features[7],
+          reading: isKnown ? features[8] : void 0
+        });
+      }
+    }
+  };
+  function ipadicTokenizer(read) {
+    let dictionary;
+    return (text) => {
+      dictionary ??= new Ipadic(read);
+      return dictionary.tokenize(text);
+    };
   }
 
   // src/embedded/text.ts
@@ -4348,13 +4858,6 @@
     return { sentences: listed2(found.sentences), count: found.count, truncated: found.truncated };
   }
   var EmbeddedText = class {
-    constructor(host) {
-      this.host = host;
-      this.db = hostDatabase(host);
-      this.searchDb = searchDatabase(this.db);
-      this.lookup = formLookup(this.db, this.forms);
-    }
-    host;
     db;
     searchDb;
     forms = new LruCache(2e4);
@@ -4363,15 +4866,28 @@
     linked = new LruCache(512);
     searched = new LruCache(32);
     retrieved = new LruCache(64);
+    tokenize;
+    readsItsFiles;
+    constructor(host) {
+      this.db = hostDatabase(host);
+      this.searchDb = searchDatabase(this.db);
+      this.lookup = formLookup(this.db, this.forms);
+      this.readsItsFiles = !host.tokenize && host.tokenizerFile !== void 0;
+      this.tokenize = host.tokenize ? (text) => host.tokenize?.(text) ?? [] : host.tokenizerFile && ipadicTokenizer((file) => {
+        const bytes2 = host.tokenizerFile?.(file);
+        if (!bytes2) throw new Error(`The host has no ${file} for the tokenizer`);
+        return bytes2;
+      });
+    }
     found(ids) {
       const found = /* @__PURE__ */ new Map();
-      const unread = [];
+      const unread2 = [];
       for (const id of new Set(ids)) {
         const cached = this.entries.get(id);
         if (cached) found.set(id, cached);
-        else unread.push(id);
+        else unread2.push(id);
       }
-      for (const [id, entry] of examplesEntries(this.db, unread)) {
+      for (const [id, entry] of examplesEntries(this.db, unread2)) {
         this.entries.set(id, entry);
         found.set(id, entry);
       }
@@ -4397,6 +4913,14 @@
       checkExamples(this.db);
       return true;
     }
+    tokenizerReady() {
+      if (!this.readsItsFiles) return this.tokenize !== void 0;
+      try {
+        return this.tokenize?.("") !== void 0;
+      } catch {
+        return false;
+      }
+    }
     exampleCount(query) {
       const found = this.search(query);
       return typeof found === "string" ? 0 : found.count;
@@ -4418,7 +4942,7 @@
     }
     async candidates(text, analyze) {
       try {
-        if (this.host.tokenize) return kuromojiCandidates(text, this.host.tokenize(text));
+        if (this.tokenize) return kuromojiCandidates(text, this.tokenize(text));
         return (await analyze(text)).map(hostCandidate);
       } catch {
         return null;
@@ -4513,6 +5037,7 @@
       romaji,
       sentenceRomaji: (words) => sentenceRomaji(JSON.parse(words)),
       checkExamples: () => text().checkExamples(),
+      tokenizerReady: () => text().tokenizerReady(),
       exampleCount: (query) => text().exampleCount(query),
       resultsExampleCount: (request) => text().resultsExampleCount(JSON.parse(request)),
       resultsExamples: (request) => text().resultsExamples(JSON.parse(request)),
@@ -4531,14 +5056,26 @@
       radicalPanel: (selected) => presentation().radicalPanel(JSON.parse(selected)),
       gloss: shortGloss
     };
+    const unanalyzed = () => {
+      throw new Error("An answer asked for at once cannot wait for an analysis");
+    };
+    const answer = (method, argument) => {
+      const run = Object.hasOwn(methods, method) ? methods[method] : void 0;
+      if (!run) throw new Error(`The core has no ${method}`);
+      const value = run(argument, unanalyzed);
+      if (value instanceof Promise) throw new Error(`${method} does not answer at once`);
+      return value;
+    };
     return {
+      answer,
+      answerJSON: (method, argument) => JSON.stringify(answer(method, argument) ?? null),
       begin(method, argument) {
         const unfinished = { error: `${method} did not finish within its call` };
         let outcome = unfinished;
-        let answer;
+        let answer2;
         const analyze = (sentence) => new Promise((resolve, reject) => {
           outcome = { analyze: sentence };
-          answer = (answerJSON) => {
+          answer2 = (answerJSON) => {
             const { words, error } = JSON.parse(answerJSON);
             if (words) resolve(words);
             else reject(new Error(error ?? "The host returned no words"));
@@ -4559,9 +5096,9 @@
         return {
           outcome: () => JSON.stringify(outcome),
           analyzed(answerJSON) {
-            const settle = answer;
+            const settle = answer2;
             if (!settle) throw new Error(`${method} is waiting for no analysis`);
-            answer = void 0;
+            answer2 = void 0;
             outcome = unfinished;
             settle(answerJSON);
           }

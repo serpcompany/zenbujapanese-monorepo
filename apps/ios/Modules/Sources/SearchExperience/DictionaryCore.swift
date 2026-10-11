@@ -9,11 +9,14 @@ enum DictionaryCoreError: Error, Equatable {
 final class DictionaryCore {
   private let context: JSContext
   private let endpoint: JSValue
+  private let answerNow: JSValue
+  private let answerNowJSON: JSValue
 
   init(
     statements: SQLiteStatements? = nil,
     kanji: (@Sendable () -> KanjiFiles?)? = nil,
-    radicals: (@Sendable () -> [UInt8]?)? = nil
+    radicals: (@Sendable () -> [UInt8]?)? = nil,
+    tokenizerFile: (@Sendable (String) -> InflatedBytes?)? = nil
   ) throws {
     guard
       let url = Bundle.module.url(
@@ -42,16 +45,35 @@ final class DictionaryCore {
     if let radicals {
       Self.answer(host, "radicals") { _ in radicals() }
     }
+    if let tokenizerFile {
+      let unpacked: @convention(block) (String) -> JSValue? = { file in
+        guard let context = JSContext.current(), let bytes = tokenizerFile(file) else { return nil }
+        guard
+          let buffer = JSObjectMakeArrayBufferWithBytesNoCopy(
+            context.jsGlobalContextRef, bytes.pointer, bytes.count, { bytes, _ in free(bytes) },
+            nil, nil)
+        else {
+          free(bytes.pointer)
+          return nil
+        }
+        return JSValue(jsValueRef: buffer, in: context)
+      }
+      host.setObject(unpacked, forKeyedSubscript: "tokenizerFile" as NSString)
+    }
     context.setObject(host, forKeyedSubscript: "zenbuHost" as NSString)
     context.evaluateScript(source, withSourceURL: url)
     guard context.exception == nil,
-      let endpoint = context.objectForKeyedSubscript("zenbuDictionary"), endpoint.isObject
+      let endpoint = context.objectForKeyedSubscript("zenbuDictionary"), endpoint.isObject,
+      let answerNow = endpoint.objectForKeyedSubscript("answer"), answerNow.isObject,
+      let answerNowJSON = endpoint.objectForKeyedSubscript("answerJSON"), answerNowJSON.isObject
     else {
       throw DictionaryCoreError.failed(
         context.exception?.toString() ?? "The dictionary core did not load")
     }
     self.context = context
     self.endpoint = endpoint
+    self.answerNow = answerNow
+    self.answerNowJSON = answerNowJSON
   }
 
   private static func answer(
@@ -63,15 +85,6 @@ final class DictionaryCore {
       }
     }
     host.setObject(function, forKeyedSubscript: name as NSString)
-  }
-
-  func installKuromoji() throws {
-    try autoreleasepool {
-      try KuromojiEngine.install(in: context)
-      context.evaluateScript(
-        "zenbuHost.tokenize = text => __zenbuKuromojiTokenizer.tokenize(text);")
-      _ = try returned(endpoint)
-    }
   }
 
   static func argument(_ value: some Encodable) throws -> String {
@@ -86,10 +99,62 @@ final class DictionaryCore {
   }
 
   func answer<Answer: Decodable>(_ method: String, _ argument: String) throws -> Answer {
-    switch try begin(method, argument).step(Answer.self) {
-    case .finished(let answer): return answer
-    case .analyzing: throw DictionaryCoreError.failed("\(method) asked for an analysis")
+    let json = try asked(answerNowJSON, method, argument)
+    guard let text = JSValueToStringCopy(context.jsGlobalContextRef, json, nil) else {
+      throw DictionaryCoreError.failed("\(method) answered nothing")
     }
+    defer { JSStringRelease(text) }
+    var bytes = Data(count: JSStringGetMaximumUTF8CStringSize(text))
+    let written = bytes.withUnsafeMutableBytes { buffer in
+      JSStringGetUTF8CString(text, buffer.bindMemory(to: CChar.self).baseAddress, buffer.count)
+    }
+    bytes.count = max(written - 1, 0)
+    return try JSONDecoder().decode(Answer.self, from: bytes)
+  }
+
+  func flag(_ method: String, _ argument: String) throws -> Bool {
+    JSValueToBoolean(context.jsGlobalContextRef, try asked(answerNow, method, argument))
+  }
+
+  func text(_ method: String, _ argument: String) throws -> String? {
+    let engine = context.jsGlobalContextRef
+    let answer = try asked(answerNow, method, argument)
+    guard JSValueIsString(engine, answer), let text = JSValueToStringCopy(engine, answer, nil)
+    else { return nil }
+    defer { JSStringRelease(text) }
+    return String(
+      decoding: UnsafeBufferPointer(
+        start: JSStringGetCharactersPtr(text), count: JSStringGetLength(text)),
+      as: UTF16.self)
+  }
+
+  private func asked(_ function: JSValue, _ method: String, _ argument: String) throws
+    -> JSValueRef
+  {
+    let engine = context.jsGlobalContextRef
+    let name = JSStringCreateWithUTF8CString(method)
+    defer { JSStringRelease(name) }
+    let text = Self.script(argument)
+    defer { JSStringRelease(text) }
+    var arguments = (JSValueMakeString(engine, name), JSValueMakeString(engine, text))
+    var exception: JSValueRef?
+    let answer = withUnsafePointer(to: &arguments) { pair in
+      pair.withMemoryRebound(to: JSValueRef?.self, capacity: 2) {
+        JSObjectCallAsFunction(engine, function.jsValueRef, nil, 2, $0, &exception)
+      }
+    }
+    guard let answer, exception == nil else {
+      let message = exception.flatMap { JSValue(jsValueRef: $0, in: context)?.toString() }
+      throw DictionaryCoreError.failed(message ?? "The dictionary core failed")
+    }
+    return answer
+  }
+
+  private static func script(_ text: String) -> JSStringRef {
+    let whole = text.withCString { utf8 in
+      strlen(utf8) == text.utf8.count ? JSStringCreateWithUTF8CString(utf8) : nil
+    }
+    return whole ?? JSStringCreateWithCFString(text as CFString)
   }
 
   func answer<Answer: Decodable>(

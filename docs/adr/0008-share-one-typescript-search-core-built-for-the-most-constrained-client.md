@@ -109,7 +109,8 @@ The choices that aren't obvious from the code:
   synchronously. One engine for all three would make a row wait behind a search.
 - **Kuromoji runs in the text engine.** The core calls its `tokenize` directly, so linking a
   text is one call, with no trip back to Swift for each sentence's words. Sudachi, which a
-  launch switch still compares, answers through the call instead.
+  launch switch still compares, answers through the call instead. The core has since taken
+  over the tokenizing itself ([Speed in an engine without a JIT](#speed-in-an-engine-without-a-jit)).
 - **The kanji files stay with the host.** Parsed into an engine they are 16 MB of objects the
   collector walks on every pass. The host maps the files, scans them once for each record's
   place, and hands over a record's bytes when the core asks.
@@ -179,3 +180,81 @@ What stays in Swift is what needs the platform or belongs to the learner: readin
 parsing a URL, drawing, the learner's stored data and its sync, the Player's handling of
 YouTube's links and captions, and Apple's speech, recognition, translation, and Apple
 Intelligence ([`ios.md`](../agents/ios.md), What stays native, and why).
+
+### Speed in an engine without a JIT
+
+After the move, a benchmark that ran the same inputs through the Swift as it was before issue
+481 and through the core showed the core slower at six things: linking a sentence it had not
+seen (0.94 ms where the Swift took 0.66 ms), a word's furigana the first time (0.10 ms where
+it took 0.005 ms), a reading's romaji the first time, the kanji check, a query's
+normalization, and looking up an exact form. All but the last came from running in
+JavaScriptCore's interpreter, where an app has no JIT. On 2026-10-11 they were taken up one by
+one, and each change was first compared with the code it replaced across the data
+([`dictionary-core.md`](../agents/dictionary-core.md), Writing for an engine without a JIT, and
+The tokenizer).
+
+- **What a view asks is one call.** A flag, a string, or a small model that needs no waiting is
+  returned by the call that asks for it. Starting a call object, settling a promise, and reading
+  a JSON outcome back cost 8 microseconds a question, more than most of these answers take to
+  work out.
+- **The core is written for the interpreter.** A check over a string's characters is a regular
+  expression or another native call, not a loop; what repeats is remembered (a kanji's reading
+  forms, a kana word's romaji in pieces, a form in the other kana); and a cache hit costs one
+  lookup.
+- **The core tokenizes.** Kuromoji took half of every linked sentence in both the Swift app and
+  the core, because kuromoji.js is itself interpreted. The core now has its own tokenizer over
+  the same dictionary files, a port of kuromoji.js 0.1.2 that keeps its answers exactly, its
+  mistakes included: every token agreed over all 232,774 example sentences, the 655,146
+  headwords, readings, and summaries, and 1.7 million random texts. It tokenizes a sentence in
+  0.09 ms where kuromoji.js took 0.38 ms, starts in 0.18 s where Kuromoji took 0.5 s, and
+  holds no second copy of the word lists as objects. A native Swift tokenizer would be
+  faster still, and was not written: it would be the app's alone, and the next client would
+  need its own. The website's dictionary service, which ran kuromoji.js too, runs the core's
+  tokenizer from the same change on, so there is one tokenizer. kuromoji.js's answers were
+  recorded first (`tokenizer.json`), as the Swift's were, and it is no longer bundled.
+
+Measured on 2026-10-11 in optimized builds on a Mac, each number a median of seven rounds,
+across four runs of the Swift as it was before issue 481, two of the core as it merged, and
+four of the core now, run in turn:
+
+| | Swift | Core, as merged | Core now |
+| --- | --- | --- | --- |
+| 45 uncached searches | 8.6 s | 5.8 s | 5.5 s |
+| 1,000 entries read by ID | 50 ms | 42 ms | 42 ms |
+| 200 example sentences linked, first time | 260 ms | 304 ms | 199 ms |
+| The same sentences linked again | 118 ms | 19 ms | 17 ms |
+| 500 further sentences linked, first time | 330 ms | 471 ms | 250 ms |
+| Those sentences again, after 5,000 others | 273 ms | 405 ms | 198 ms |
+| 2,000 short glosses | 48 ms | 20 ms | 6 ms |
+| 500 queries normalized, first time | 0.8 ms | 4.7 ms | 1.0 ms |
+| The same queries again | 0.8 ms | 4.5 ms | 0.07 ms |
+| 2,000 readings in romaji, first time | 7.2 ms | 65 ms | 14 ms |
+| 2,000 more, their syllables seen before | 7.2 ms | 58 ms | 10 ms |
+| The same readings again | 7.0 ms | 0.7 ms | 0.2 ms |
+| 200 sentences in romaji, first time | 3.4 ms | 36 ms | 7.1 ms |
+| The same sentences again | 3.2 ms | 0.5 ms | 0.2 ms |
+| 500 words' furigana, first time | 2.3 ms | 48 ms | 24 ms |
+| 500 more words, their kanji seen before | 3.6 ms | 50 ms | 10 ms |
+| The same words again | 2.1 ms | 0.3 ms | 0.1 ms |
+| 1,024 kanji checks, first time | 0.02 ms | 7.6 ms | 0.85 ms |
+| The same checks again | 0.02 ms | 0.2 ms | 0.1 ms |
+| 20 exact forms looked up | 8.1 ms | 11.3 ms | 11.4 ms |
+| 8 kanji's words | 318 ms | 325 ms | 320 ms |
+
+Starting the tokenizer takes 0.18 s where starting Kuromoji took 0.5 s, and a session of
+searches, examples, linked sentences, and kanji pages now ends at 263 MB where the core as
+merged ended at 280 MB and the Swift at 308 MB.
+
+What is still slower is each small answer the first time it is asked, by microseconds: a
+word's furigana takes 0.02 ms (0.05 ms when its kanji are new) where the Swift took 0.005 ms, a
+reading's romaji 0.005 ms to 0.007 ms where Foundation took 0.004 ms, and the kanji check
+0.0008 ms where a range comparison took 0.00002 ms. The Swift worked each out again on every
+redraw, and read every kanji's readings before the first furigana to do so (177 ms, once a
+launch); the core works a kanji's readings out when a word first shows it and remembers every
+answer, so from the second time a row is drawn it is about 20 to 30 times faster than the
+Swift was. An exact form's lookup, which only the explanation of text in an image asks for,
+takes 0.57 ms where it took 0.4 ms: the statement is the same, and its rows cross into the
+engine as JSON and are ranked there. Searches written in Japanese are within a millisecond
+of the Swift's 40 ms to 50 ms either way, nearly all of it SQLite's scan of the forms; that
+scan is now the largest cost of a Japanese search in either implementation, and an index for
+it is the next thing to try. No iPhone was measured.
