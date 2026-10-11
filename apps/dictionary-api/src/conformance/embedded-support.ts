@@ -42,7 +42,7 @@ export interface Embedded {
   presentation<Answer>(method: string, argument: unknown): Promise<Answer>
 }
 
-function asking(endpoint: EmbeddedEndpoint) {
+export function asking(endpoint: EmbeddedEndpoint) {
   return async <Answer>(method: string, argument: unknown): Promise<Answer> => {
     const call = endpoint.begin(
       method,

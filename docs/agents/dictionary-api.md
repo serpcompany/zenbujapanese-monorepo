@@ -252,7 +252,11 @@ runs. The word-detail suite's furigana, pitch graph, frequency details, and conj
 the shapes in `packages/dictionary-core/src/detail/suite.ts`, which the website's rendered-page
 test (`apps/web/src/components/dictionary/word-page.test.tsx`) shares. Each suite pins the files
 it was recorded from, and fails on others (`requirePinnedArtifacts`), since it would compare
-nothing useful. A suite the app recorded with reduced text analysis runs without Sudachi, as the
+nothing useful. The romaji suite (`romaji.json`, `romaji.conformance.test.ts`) is the exception:
+it holds readings and sentences with the romaji Foundation gave them, depends on no data file,
+so it pins none, and it is not among a language-data release's suites, whose packager refuses a
+suite that pins nothing. It is replayed through the core's `romaji` and `sentenceRomaji` and
+through the entry point the app calls. A suite the app recorded with reduced text analysis runs without Sudachi, as the
 app did. The results suite compares a row's first entry number only: the service keeps its
 Language Reference ID's, the first of the entries the app merged into the row. Where the app's
 example retrieval throws, on a headword NFKC changes such as Ｈ, the suite records the error: Word

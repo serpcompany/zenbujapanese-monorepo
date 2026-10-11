@@ -26,6 +26,7 @@ describe('what the embedded core decodes from a file its host reads', () => {
 
   test('lists the kanji a set of radicals builds, from the radical file the host reads', async () => {
     const radicals = () => ({
+      sourceIdentity: 'edrdg.kradfile',
       components: [
         { id: '一', glyph: '一', strokeCount: 1 },
         { id: '木', glyph: '木', strokeCount: 4 }

@@ -19,7 +19,7 @@ import {
   wordRows
 } from '../results/learner'
 import type { ListedResults } from '../results/results'
-import { RadicalLookup, type RadicalPanel } from '../search/radicals'
+import { checkedRadicalFile, RadicalLookup, type RadicalPanel } from '../search/radicals'
 import type { EmbeddedHost } from './host'
 
 export interface EmbeddedEntry {
@@ -238,7 +238,7 @@ export class EmbeddedPresentation {
     if (!this.radicals) {
       const file = this.host.radicals?.()
       if (!file) throw new Error('The host has no radical file to read')
-      this.radicals = new RadicalLookup(file)
+      this.radicals = new RadicalLookup(checkedRadicalFile(file))
     }
     return this.radicals.panel(selected)
   }

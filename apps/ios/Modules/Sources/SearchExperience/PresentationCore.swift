@@ -60,7 +60,7 @@ final class PresentationCore: @unchecked Sendable {
   }
 
   func answer<Answer: Decodable>(_ method: String, _ argument: some Encodable) throws -> Answer {
-    try answer(method, String(decoding: try JSONEncoder().encode(argument), as: UTF8.self))
+    try answer(method, try DictionaryCore.argument(argument))
   }
 
   func rubySegments(surface: String, reading: String) -> [JapaneseRubySegment] {
@@ -93,8 +93,7 @@ final class PresentationCore: @unchecked Sendable {
   func romaji(of words: [(surface: String, reading: String?)]) -> String? {
     remembered(\.sentences, words.flatMap { [$0.surface, $0.reading ?? ""] }, otherwise: nil) {
       let spoken = words.map { SpokenWord(surface: $0.surface, reading: $0.reading ?? "") }
-      return try $0.answer(
-        "sentenceRomaji", String(decoding: try JSONEncoder().encode(spoken), as: UTF8.self))
+      return try $0.answer("sentenceRomaji", try DictionaryCore.argument(spoken))
     }
   }
 

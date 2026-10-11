@@ -592,14 +592,16 @@ side, lists which type asks for what.
 
   | Owner | Reads | Answers |
   | --- | --- | --- |
-  | `LanguageReferenceData`, the actor behind `LookupClient.live` | `LanguageReferenceData.sqlite3` | Search, an exact form's entries, a kanji's words |
+  | `LanguageReferenceData`, the actor behind `LookupClient.live` | `LanguageReferenceData.sqlite3` | Search, an exact form's entries, a kanji's words, what a website link opens, and the entry a related or a saved word opens |
   | `DictionaryTextData`, the actor behind `ExampleSentenceClient` and `JapaneseTextAnalysisClient` | Its own connection to the same file, with `ExampleWordIndex.sqlite3` attached, and Kuromoji in the same engine | Example sentences and linked words |
-  | `PresentationCore`, a lock around one engine | The kanji files, through `KanjiFiles` | The results screen, rows and chips, furigana, the word, kanji, and element pages, the query, the gloss |
+  | `PresentationCore`, a lock around one engine | The kanji files, through `KanjiFiles`, and the radical file | The results screen, rows and chips, furigana, the word, kanji, and element pages, the query, the gloss, romaji, the kanji check, a stroke diagram's points, the radical panel, and the handwriting candidates kept |
 
   They are apart because of how long each takes. Linking a page of sentences or ranking a broad
   search takes tens of milliseconds and awaits, so each has an actor; a row's furigana or a
   page's model takes well under a millisecond and is needed while a view is being built, so
-  `PresentationCore` is synchronous and never waits behind the other two.
+  `PresentationCore` is synchronous and never waits behind the other two. Its slowest answers
+  are the radical panel's, which a tap asks for, not a redraw: about 11 ms to open, when the
+  core reads and checks the radical file, and about 2 ms a pick.
 - **One engine each, kept.** A context lives as long as its owner. Each call into it runs in an
   autorelease pool, since the Objective-C wrappers JavaScriptCore hands back otherwise pile up
   on a thread that never drains them, each pinning what it wraps. Don't release a context to

@@ -1,6 +1,7 @@
 import { romaji, type SpokenWord, sentenceRomaji } from '@zenbu/dictionary-core/detail/romaji'
 import { embeddedEndpoint } from '@zenbu/dictionary-core/embedded/dictionary'
 import { describe, expect, test } from 'vitest'
+import { asking } from './embedded-support'
 import { readSuite } from './support'
 
 interface RomajiSuite {
@@ -9,15 +10,7 @@ interface RomajiSuite {
 }
 
 const suite = readSuite<RomajiSuite>('romaji')
-const app = embeddedEndpoint({})
-
-async function asked(method: string, argument: string): Promise<unknown> {
-  const call = app.begin(method, argument)
-  await new Promise(resolve => setTimeout(resolve))
-  const outcome = JSON.parse(call.outcome()) as { value?: unknown; error?: string }
-  if (outcome.error !== undefined) throw new Error(outcome.error)
-  return outcome.value
-}
+const asked = asking(embeddedEndpoint({}))
 
 describe('romaji, as the suite recorded it', () => {
   test.each(suite.cases)('$covers', async ({ readings }) => {
@@ -29,6 +22,6 @@ describe('romaji, as the suite recorded it', () => {
 
   test.each(suite.sentences)('a sentence: $covers', async ({ words, romaji: expected }) => {
     expect(sentenceRomaji(words)).toBe(expected)
-    expect(await asked('sentenceRomaji', JSON.stringify(words))).toBe(expected)
+    expect(await asked('sentenceRomaji', words)).toBe(expected)
   })
 })

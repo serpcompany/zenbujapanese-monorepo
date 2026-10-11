@@ -74,6 +74,10 @@ final class DictionaryCore {
     }
   }
 
+  static func argument(_ value: some Encodable) throws -> String {
+    String(decoding: try JSONEncoder().encode(value), as: UTF8.self)
+  }
+
   func begin(_ method: String, _ argument: String) throws -> DictionaryCoreCall {
     try autoreleasepool {
       let call = try returned(endpoint.invokeMethod("begin", withArguments: [method, argument]))
@@ -235,8 +239,8 @@ struct DictionaryCoreAnalysis: Encodable {
 
   static func json(of text: String, by morphology: JapaneseMorphologyClient?) async -> String {
     guard let analysis = try? await morphology?.analyze(text),
-      let json = try? JSONEncoder().encode(DictionaryCoreAnalysis(analysis))
+      let words = try? DictionaryCore.argument(DictionaryCoreAnalysis(analysis))
     else { return #"{"error":"The text could not be analyzed"}"# }
-    return String(decoding: json, as: UTF8.self)
+    return words
   }
 }

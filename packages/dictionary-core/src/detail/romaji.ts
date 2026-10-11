@@ -1,3 +1,4 @@
+import { toKatakana } from '../examples/kana'
 import { graphemes } from './text'
 
 type Step = (text: string[], start: number, limit: number) => number
@@ -29,41 +30,22 @@ const inOrder =
   (text, start, limit) =>
     steps.reduce((end, step) => step(text, start, end), limit)
 
-const normalized =
-  (form: 'NFC' | 'NFD' | 'NFKC'): Step =>
+const rewritten =
+  (rewrite: (written: string) => string): Step =>
   (text, start, limit) => {
     const written = text.slice(start, limit).join('')
-    const normal = written.normalize(form)
-    if (normal === written) return limit
-    const replacement = Array.from(normal)
+    const changed = rewrite(written)
+    if (changed === written) return limit
+    const replacement = Array.from(changed)
     text.splice(start, limit - start, ...replacement)
     return start + replacement.length
   }
 
+const normalized = (form: 'NFC' | 'NFD') => rewritten(written => written.normalize(form))
+
 const voicedMark = '\u3099'
 const voicingMarks = '\u3099\u309b'
 const semiVoicingMarks = '\u309a\u309c'
-
-const voicedW = new Map([
-  ['わ', 'ヷ'],
-  ['ゐ', 'ヸ'],
-  ['ゑ', 'ヹ'],
-  ['を', 'ヺ']
-])
-
-const toKatakana: Step = (text, start, limit) => {
-  let end = limit
-  for (let position = start; position < end; position++) {
-    const voiced = voicedW.get(text[position])
-    if (voiced !== undefined && position + 1 < end && text[position + 1] === voicedMark) {
-      text.splice(position, 2, voiced)
-      end--
-    } else if (/^[ぁ-ゔゝゞ]$/u.test(text[position])) {
-      text[position] = String.fromCodePoint((text[position].codePointAt(0) ?? 0) + 0x60)
-    }
-  }
-  return end
-}
 
 const widened: Step = (text, start, limit) => {
   for (let position = start; position < limit; position++) {
@@ -207,15 +189,7 @@ const katakanaLatin = within(
 
 const hiraganaLatin = within(
   /^[\u3099ぁ-ゔゝゞガギグゲゴザジズゼゾダヂヅデドバビブベボヴヷ-ヺーヾ]$/u,
-  inOrder(
-    normalized('NFD'),
-    within(
-      /^[\u3099\u309a\0-~、。ァ-ー\uff61-\uff9f\p{sc=Hiragana}\p{sc=Katakana}\p{Mn}]$/u,
-      inOrder(normalized('NFKC'), toKatakana, normalized('NFC'))
-    ),
-    katakanaLatin,
-    normalized('NFC')
-  )
+  inOrder(normalized('NFD'), rewritten(toKatakana), katakanaLatin, normalized('NFC'))
 )
 
 const scripts: readonly (readonly [RegExp, Step | null])[] = [

@@ -85,11 +85,11 @@ actor DictionaryTextData {
   }
 
   func resultsExampleCount(_ request: ResultsExamplesRequest) async throws -> Int {
-    try await answer("resultsExampleCount", try Self.json(request))
+    try await answer("resultsExampleCount", try DictionaryCore.argument(request))
   }
 
   func resultsExamples(_ request: ResultsExamplesRequest) async throws -> [ExampleSentence] {
-    try await answer("resultsExamples", try Self.json(request))
+    try await answer("resultsExamples", try DictionaryCore.argument(request))
   }
 
   func entryExamples(_ id: LanguageReferenceID) async throws -> EntryExamples {
@@ -101,7 +101,7 @@ actor DictionaryTextData {
   }
 
   func linkedWords(_ text: LinkedText) async throws -> [LinkedWord] {
-    try await answer("linkedTokens", try Self.json(text), analyzing: true)
+    try await answer("linkedTokens", try DictionaryCore.argument(text), analyzing: true)
   }
 
   func availability() async -> JapaneseTextAnalysisAvailability {
@@ -140,9 +140,5 @@ actor DictionaryTextData {
     let _: Bool = try prepared.answer("checkExamples", "")
     core = prepared
     return prepared
-  }
-
-  private static func json(_ value: some Encodable) throws -> String {
-    String(decoding: try JSONEncoder().encode(value), as: UTF8.self)
   }
 }

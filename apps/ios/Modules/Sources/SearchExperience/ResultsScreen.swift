@@ -134,7 +134,7 @@ struct ResultsScreenRequest: Hashable, Sendable {
     request.append(",\"results\":")
     request.append(results)
     request.append(",\"exampleCount\":\(exampleCount),\"learner\":")
-    request.append(String(decoding: try JSONEncoder().encode(learner), as: UTF8.self))
+    request.append(try DictionaryCore.argument(learner))
     request.append("}")
     return try PresentationCore.shared.answer("resultsScreen", request.text)
   }

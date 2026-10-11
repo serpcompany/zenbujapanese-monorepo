@@ -75,7 +75,6 @@
     "conformance/example-search.json",
     "conformance/word-detail.json",
     "conformance/kanji-detail.json",
-    "conformance/kanji-element.json",
-    "conformance/romaji.json"
+    "conformance/kanji-element.json"
   ]
 }

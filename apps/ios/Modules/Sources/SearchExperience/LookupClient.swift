@@ -130,7 +130,7 @@ actor LanguageReferenceData {
       readingRefinement: found.readingRefinement.map { SearchRefinement(query: SearchQuery($0)) },
       usesPrimaryEntryExamples: found.usesPrimaryEntryExamples,
       primaryEntry: found.primaryEntry.flatMap { entries[LanguageReferenceID(rawValue: $0)] },
-      listed: String(decoding: try JSONEncoder().encode(found), as: UTF8.self)
+      listed: try DictionaryCore.argument(found)
     )
   }
 
@@ -145,7 +145,7 @@ actor LanguageReferenceData {
   func entries(matchingForm form: String) async throws -> [DictionaryEntry] {
     let families: [String: [DictionaryLinkCandidate]] = try await coreAnswer(
       "entriesMatchingFirstForms",
-      String(decoding: try JSONEncoder().encode([[form]]), as: UTF8.self))
+      try DictionaryCore.argument([[form]]))
     return try entries(inOrder: (families[form] ?? []).map(\.id))
   }
 
@@ -222,8 +222,7 @@ actor LanguageReferenceData {
     _ method: String,
     _ argument: some Encodable
   ) async throws -> Answer {
-    try await coreAnswer(
-      method, String(decoding: try JSONEncoder().encode(argument), as: UTF8.self))
+    try await coreAnswer(method, try DictionaryCore.argument(argument))
   }
 
   private func preparedCore() throws -> DictionaryCore {

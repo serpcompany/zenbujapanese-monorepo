@@ -14,6 +14,36 @@ export interface RadicalPanel {
   }[]
 }
 
+const radicalSource = 'edrdg.kradfile'
+const isText = (value: unknown): value is string => typeof value === 'string'
+
+export function checkedRadicalFile(read: unknown): RadicalFile {
+  const file = (read ?? {}) as Partial<RadicalFile> & { sourceIdentity?: unknown }
+  if (file.sourceIdentity !== radicalSource) {
+    throw new Error(
+      `Refusing the language data: RadicalReferenceData.json's sourceIdentity is ${file.sourceIdentity}, not ${radicalSource}`
+    )
+  }
+  const { components, characters } = file
+  if (
+    !Array.isArray(components) ||
+    !Array.isArray(characters) ||
+    !components.every(
+      radical =>
+        isText(radical?.id) && isText(radical?.glyph) && Number.isInteger(radical?.strokeCount)
+    ) ||
+    !characters.every(
+      kanji =>
+        isText(kanji?.value) && Array.isArray(kanji?.components) && kanji.components.every(isText)
+    )
+  ) {
+    throw new Error(
+      'Refusing the language data: RadicalReferenceData.json does not list radicals and the kanji that hold them as the core reads them'
+    )
+  }
+  return { components, characters }
+}
+
 export class RadicalLookup {
   private readonly characters: RadicalFile['characters']
 

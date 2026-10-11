@@ -1,5 +1,43 @@
 "use strict";
 (() => {
+  // src/examples/kana.ts
+  var halfwidthAndCircledKatakana = /[｡-ﾟ㋐-㋾]/gu;
+  function fold(value) {
+    return value.replace(halfwidthAndCircledKatakana, (character) => character.normalize("NFKC"));
+  }
+  var toHiraganaSpecial = {
+    ヵ: "か",
+    ヶ: "け",
+    ヷ: "わ゙",
+    ヸ: "ゐ゙",
+    ヹ: "ゑ゙",
+    ヺ: "を゙",
+    ヽ: "ゝ",
+    ヾ: "ゞ",
+    "ヿ": "こと",
+    "ゟ": "より"
+  };
+  var toKatakanaSpecial = {
+    ゝ: "ヽ",
+    ゞ: "ヾ",
+    "ゟ": "ヨリ"
+  };
+  function toHiragana(value) {
+    return fold(value).replace(/[ァ-ヿゟ]/gu, (character) => {
+      const special2 = toHiraganaSpecial[character];
+      if (special2 !== void 0) return special2;
+      const code = character.codePointAt(0) ?? 0;
+      return code <= 12532 ? String.fromCodePoint(code - 96) : character;
+    }).normalize("NFC");
+  }
+  function toKatakana(value) {
+    return fold(value).replace(/[ぁ-ゔゝ-ゟ]/gu, (character) => {
+      const special2 = toKatakanaSpecial[character];
+      if (special2 !== void 0) return special2;
+      return String.fromCodePoint((character.codePointAt(0) ?? 0) + 96);
+    }).normalize("NFC");
+  }
+
   // src/detail/text.ts
   var segmenter = new Intl.Segmenter("ja", { granularity: "grapheme" });
   function graphemes(value) {
@@ -68,36 +106,18 @@
     }
   };
   var inOrder = (...steps) => (text, start, limit) => steps.reduce((end, step) => step(text, start, end), limit);
-  var normalized = (form) => (text, start, limit) => {
+  var rewritten = (rewrite) => (text, start, limit) => {
     const written2 = text.slice(start, limit).join("");
-    const normal = written2.normalize(form);
-    if (normal === written2) return limit;
-    const replacement2 = Array.from(normal);
+    const changed = rewrite(written2);
+    if (changed === written2) return limit;
+    const replacement2 = Array.from(changed);
     text.splice(start, limit - start, ...replacement2);
     return start + replacement2.length;
   };
+  var normalized = (form) => rewritten((written2) => written2.normalize(form));
   var voicedMark = "゙";
   var voicingMarks = "゙゛";
   var semiVoicingMarks = "゚゜";
-  var voicedW = /* @__PURE__ */ new Map([
-    ["わ", "ヷ"],
-    ["ゐ", "ヸ"],
-    ["ゑ", "ヹ"],
-    ["を", "ヺ"]
-  ]);
-  var toKatakana = (text, start, limit) => {
-    let end = limit;
-    for (let position = start; position < end; position++) {
-      const voiced = voicedW.get(text[position]);
-      if (voiced !== void 0 && position + 1 < end && text[position + 1] === voicedMark) {
-        text.splice(position, 2, voiced);
-        end--;
-      } else if (/^[ぁ-ゔゝゞ]$/u.test(text[position])) {
-        text[position] = String.fromCodePoint((text[position].codePointAt(0) ?? 0) + 96);
-      }
-    }
-    return end;
-  };
   var widened = (text, start, limit) => {
     for (let position = start; position < limit; position++) {
       if (/^[\uff66-\uff9f]$/u.test(text[position])) text[position] = text[position].normalize("NFKC");
@@ -225,15 +245,7 @@
   );
   var hiraganaLatin = within(
     /^[\u3099ぁ-ゔゝゞガギグゲゴザジズゼゾダヂヅデドバビブベボヴヷ-ヺーヾ]$/u,
-    inOrder(
-      normalized("NFD"),
-      within(
-        /^[\u3099\u309a\0-~、。ァ-ー\uff61-\uff9f\p{sc=Hiragana}\p{sc=Katakana}\p{Mn}]$/u,
-        inOrder(normalized("NFKC"), toKatakana, normalized("NFC"))
-      ),
-      katakanaLatin,
-      normalized("NFC")
-    )
+    inOrder(normalized("NFD"), rewritten(toKatakana), katakanaLatin, normalized("NFC"))
   );
   var scripts = [
     [/^[\p{sc=Common}\p{sc=Inherited}]$/u, null],
@@ -3427,6 +3439,27 @@
   }
 
   // src/search/radicals.ts
+  var radicalSource = "edrdg.kradfile";
+  var isText = (value) => typeof value === "string";
+  function checkedRadicalFile(read) {
+    const file = read ?? {};
+    if (file.sourceIdentity !== radicalSource) {
+      throw new Error(
+        `Refusing the language data: RadicalReferenceData.json's sourceIdentity is ${file.sourceIdentity}, not ${radicalSource}`
+      );
+    }
+    const { components, characters } = file;
+    if (!Array.isArray(components) || !Array.isArray(characters) || !components.every(
+      (radical) => isText(radical?.id) && isText(radical?.glyph) && Number.isInteger(radical?.strokeCount)
+    ) || !characters.every(
+      (kanji2) => isText(kanji2?.value) && Array.isArray(kanji2?.components) && kanji2.components.every(isText)
+    )) {
+      throw new Error(
+        "Refusing the language data: RadicalReferenceData.json does not list radicals and the kanji that hold them as the core reads them"
+      );
+    }
+    return { components, characters };
+  }
   var RadicalLookup = class {
     constructor(file) {
       this.file = file;
@@ -3601,7 +3634,7 @@
       if (!this.radicals) {
         const file = this.host.radicals?.();
         if (!file) throw new Error("The host has no radical file to read");
-        this.radicals = new RadicalLookup(file);
+        this.radicals = new RadicalLookup(checkedRadicalFile(file));
       }
       return this.radicals.panel(selected);
     }
@@ -4069,44 +4102,6 @@
     return japanese.includes(surface) && analyzedWords(candidates).includes(surface);
   }
 
-  // src/examples/kana.ts
-  var halfwidthAndCircledKatakana = /[｡-ﾟ㋐-㋾]/gu;
-  function fold(value) {
-    return value.replace(halfwidthAndCircledKatakana, (character) => character.normalize("NFKC"));
-  }
-  var toHiraganaSpecial = {
-    ヵ: "か",
-    ヶ: "け",
-    ヷ: "わ゙",
-    ヸ: "ゐ゙",
-    ヹ: "ゑ゙",
-    ヺ: "を゙",
-    ヽ: "ゝ",
-    ヾ: "ゞ",
-    "ヿ": "こと",
-    "ゟ": "より"
-  };
-  var toKatakanaSpecial = {
-    ゝ: "ヽ",
-    ゞ: "ヾ",
-    "ゟ": "ヨリ"
-  };
-  function toHiragana(value) {
-    return fold(value).replace(/[ァ-ヿゟ]/gu, (character) => {
-      const special2 = toHiraganaSpecial[character];
-      if (special2 !== void 0) return special2;
-      const code = character.codePointAt(0) ?? 0;
-      return code <= 12532 ? String.fromCodePoint(code - 96) : character;
-    }).normalize("NFC");
-  }
-  function toKatakana2(value) {
-    return fold(value).replace(/[ぁ-ゔゝ-ゟ]/gu, (character) => {
-      const special2 = toKatakanaSpecial[character];
-      if (special2 !== void 0) return special2;
-      return String.fromCodePoint((character.codePointAt(0) ?? 0) + 96);
-    }).normalize("NFC");
-  }
-
   // src/examples/linking.ts
   var verbs = /* @__PURE__ */ new Set([
     "verb",
@@ -4203,7 +4198,7 @@
     for (const form of evidence) {
       append(form);
       append(toHiragana(form));
-      append(toKatakana2(form));
+      append(toKatakana(form));
     }
     return forms2;
   }
@@ -4217,7 +4212,7 @@
       if (compatible.length > 0) filtered = compatible;
     }
     if (matchesSurfaceReading && candidate.reading !== "" && candidate.reading !== "*") {
-      const readingMatches = filtered.filter((entry) => toKatakana2(entry.reading) === candidate.reading);
+      const readingMatches = filtered.filter((entry) => toKatakana(entry.reading) === candidate.reading);
       if (readingMatches.length > 0) filtered = readingMatches;
     }
     return filtered;
