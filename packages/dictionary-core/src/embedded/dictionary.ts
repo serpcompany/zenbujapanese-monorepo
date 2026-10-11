@@ -15,6 +15,8 @@ export interface EmbeddedCall {
 
 export interface EmbeddedEndpoint {
   begin(method: string, argument: string): EmbeddedCall
+  answer(method: string, argument: string): unknown
+  answerJSON(method: string, argument: string): string
 }
 
 const message = (error: unknown) => (error instanceof Error ? error.message : String(error))
@@ -45,6 +47,7 @@ export function embeddedEndpoint(host: EmbeddedHost): EmbeddedEndpoint {
     romaji,
     sentenceRomaji: words => sentenceRomaji(JSON.parse(words)),
     checkExamples: () => text().checkExamples(),
+    tokenizerReady: () => text().tokenizerReady(),
     exampleCount: query => text().exampleCount(query),
     resultsExampleCount: request => text().resultsExampleCount(JSON.parse(request)),
     resultsExamples: request => text().resultsExamples(JSON.parse(request)),
@@ -63,7 +66,19 @@ export function embeddedEndpoint(host: EmbeddedHost): EmbeddedEndpoint {
     radicalPanel: selected => presentation().radicalPanel(JSON.parse(selected)),
     gloss: shortGloss
   }
+  const unanalyzed: AnalyzeText = () => {
+    throw new Error('An answer asked for at once cannot wait for an analysis')
+  }
+  const answer = (method: string, argument: string): unknown => {
+    const run = Object.hasOwn(methods, method) ? methods[method] : undefined
+    if (!run) throw new Error(`The core has no ${method}`)
+    const value = run(argument, unanalyzed)
+    if (value instanceof Promise) throw new Error(`${method} does not answer at once`)
+    return value
+  }
   return {
+    answer,
+    answerJSON: (method, argument) => JSON.stringify(answer(method, argument) ?? null),
     begin(method, argument) {
       const unfinished: Outcome = { error: `${method} did not finish within its call` }
       let outcome: Outcome = unfinished

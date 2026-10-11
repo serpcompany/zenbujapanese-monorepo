@@ -6,40 +6,34 @@ export function graphemes(value: string): string[] {
     : Array.from(segmenter.segment(value), ({ segment }) => segment)
 }
 
-function isSingleUnitGrapheme(unit: number): boolean {
-  return (
-    (unit >= 0x20 && unit <= 0x7e) ||
-    (unit >= 0x3000 &&
-      unit <= 0x30ff &&
-      !(unit >= 0x302a && unit <= 0x302f) &&
-      unit !== 0x3099 &&
-      unit !== 0x309a) ||
-    (unit >= 0x4e00 && unit <= 0x9fff) ||
-    (unit >= 0xff00 && unit <= 0xffef && unit !== 0xff9e && unit !== 0xff9f)
-  )
-}
+const unitsThatAreGraphemes =
+  /^[\x20-\x7e\u3000-\u3029\u3030-\u3098\u309b-\u30ff\u4e00-\u9fff\uff00-\uff9d\uffa0-\uffef]*$/
 
 export function everyUnitIsAGrapheme(value: string): boolean {
-  for (let index = 0; index < value.length; index++) {
-    if (!isSingleUnitGrapheme(value.charCodeAt(index))) return false
-  }
-  return true
+  return unitsThatAreGraphemes.test(value)
+}
+
+const highSurrogate = /[\ud800-\udbff]/
+
+export function scalarCount(value: string): number {
+  return highSurrogate.test(value) ? Array.from(value).length : value.length
 }
 
 export function graphemeCount(value: string): number {
   return everyUnitIsAGrapheme(value) ? value.length : graphemes(value).length
 }
 
-const codePoints = (value: string) => Array.from(value, scalar => scalar.codePointAt(0) ?? 0)
-
 export function isCJKUnifiedIdeograph(character: string): boolean {
-  return codePoints(character).some(code => code >= 0x3400 && code <= 0x9fff)
+  for (let index = 0; index < character.length; index++) {
+    const unit = character.charCodeAt(index)
+    if (unit >= 0x3400 && unit <= 0x9fff) return true
+  }
+  return false
 }
 
 export function isKanjiCharacter(value: string): boolean {
-  const scalars = codePoints(value)
-  if (scalars.length !== 1) return false
-  const [code] = scalars
+  const code = value.codePointAt(0)
+  if (code === undefined || value.length !== (code > 0xffff ? 2 : 1)) return false
   return (
     (code >= 0x3400 && code <= 0x4dbf) ||
     (code >= 0x4e00 && code <= 0x9fff) ||

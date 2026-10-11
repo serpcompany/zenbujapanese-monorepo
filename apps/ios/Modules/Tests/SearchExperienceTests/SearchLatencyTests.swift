@@ -74,16 +74,17 @@ struct SearchLatencyTests {
         + "\(Self.footprint().peak / 1_048_576) MB at its highest")
   }
 
-  @Test("prints how long Kuromoji takes to start")
-  func measureKuromojiStart() throws {
+  @Test("prints how long the tokenizer takes to start")
+  func measureTokenizerStart() async throws {
     let clock = ContinuousClock()
     var starts: [Double] = []
     for _ in 0..<Self.passes {
-      let context = try #require(JSContext())
-      starts.append(Self.value(try clock.measure { try KuromojiEngine.install(in: context) }))
+      let text = DictionaryTextData()
+      _ = try await text.exampleCount("猿")
+      starts.append(Self.value(await clock.measure { _ = await text.availability() }))
     }
     print(
-      "SEARCH-LATENCY Kuromoji starts in "
+      "SEARCH-LATENCY the tokenizer starts in "
         + String(format: "%.0f", starts.sorted()[Self.passes / 2]) + " ms at the median, "
         + String(format: "%.0f", starts.max() ?? 0) + " ms at worst")
   }

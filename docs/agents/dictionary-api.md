@@ -30,12 +30,13 @@ git lfs pull --include="apps/ios/Modules/Sources/SearchExperience/Resources/**"
   (`packages/dictionary-core/src/browse/lists.ts`).
 - `KanjiReferenceData.json` and `KanjiElementReferenceData.json`.
 - Kuromoji's files, for example word links and conjugated form examples. `src/kuromoji.ts` runs
-  the app's kuromoji.js build in a bare V8 context, as the app runs it in a bare JavaScriptCore
-  one (`apps/ios/Modules/Sources/SearchExperience/KuromojiEngine.swift`), and hands it each
-  dictionary file, still gzipped, through an XMLHttpRequest shim; the app unpacks the files
-  itself first, since its engine has no JIT. Tokens come back through JSON, so an absent reading
+  the bundled kuromoji.js build in a bare V8 context and hands it each dictionary file, still
+  gzipped, through an XMLHttpRequest shim. Tokens come back through JSON, so an absent reading
   stays absent. The files are pinned by SHA-256, as the word-detail suite records them: new
-  files are a new tokenizer, so record the suite again.
+  files are a new tokenizer, so record the suite again. The app reads the same dictionary files
+  with the core's own tokenizer (`packages/dictionary-core/src/examples/ipadic.ts`), which
+  `src/conformance/tokenizer.conformance.test.ts` holds to kuromoji.js's answers, token for
+  token ([`dictionary-core.md`](dictionary-core.md), The tokenizer).
 - Sudachi's dictionary, for sentence search: the SudachiDict Core the app pins in
   `LanguageTechnologyPackCatalog.json`. `pnpm sudachi` downloads it into `.sudachi/`, checking
   the download and `system.dic` against the catalog's SHA-256s, and keeps a dictionary already

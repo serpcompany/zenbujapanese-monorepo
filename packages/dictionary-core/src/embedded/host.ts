@@ -6,6 +6,7 @@ import type {
   KanjiSources,
   KanjiStructureEntry
 } from '../artifact/kanji-data'
+import type { IpadicFile } from '../examples/ipadic'
 import type { KuromojiToken } from '../examples/morphology'
 import { stopIfInterrupted } from '../search/database'
 
@@ -23,6 +24,7 @@ export interface EmbeddedHost {
   all?(sql: string, parametersJSON: string): HostRows | null
   interrupted?(): boolean
   tokenize?(text: string): KuromojiToken[]
+  tokenizerFile?(file: IpadicFile): ArrayBuffer | null
   kanjiSources?(): HostKanjiSources | null
   kanjiEntry?(character: string): KanjiReferenceEntry | null
   kanjiStructure?(character: string): KanjiStructureEntry | null

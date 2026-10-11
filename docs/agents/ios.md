@@ -389,25 +389,25 @@ Detail, and the same link opens the website on a device without the app.
 
 ## Interactive parsing comparison harness
 
-The app defaults to the bundled Kuromoji engine for interactive Japanese in Image Search,
-Word Detail, and Example Sentences. Dictionary search segmentation continues to use Sudachi.
-Kuromoji runs in the same JavaScriptCore engine as the core's text part, which calls its
-`tokenize` directly ([The dictionary core in the app](#the-dictionary-core-in-the-app)).
+The app splits interactive Japanese in Image Search, Word Detail, and Example Sentences into
+words with Kuromoji's dictionary (IPADIC). Dictionary search segmentation continues to use
+Sudachi. The core does the tokenizing itself, in its text engine, and finds the words
+kuromoji.js finds ([`dictionary-core.md`](dictionary-core.md), The tokenizer); the app no
+longer runs kuromoji.js, which the website's dictionary service still does.
 
-Kuromoji's twelve dictionary files ship gzipped, 18 MB that unpack to 100 MB. The app unpacks
-them itself with zlib (`Gunzip.swift`), which also checks each file's checksum and length, and
-hands kuromoji.js the unpacked bytes. `KuromojiEngine.readingUnpackedFiles` takes the three
-lines that unpack a file out of kuromoji.js's loader as the script is read; the vendored file
-stays as published. An app's JavaScriptCore has no JIT, so kuromoji.js unpacking the files
-itself took 11 to 12 seconds, which the first Word Detail of a session waited for before it
-showed examples; the start now takes about half a second. A kuromoji.js whose loader no
-longer has those lines fails to start rather than starting slowly, and `KuromojiStartTests`
-fails with it.
+The dictionary's twelve files ship gzipped, 18 MB that unpack to 100 MB; the tokenizer reads
+eleven of them. The app unpacks each with zlib (`Gunzip.swift`), which also checks its
+checksum and length, when the core first asks for it (`TokenizerDictionary.swift`), and hands
+the core the unpacked bytes without copying them. `DictionaryTextData.availability()` asks the
+core whether it can tokenize, which reads the files. The first Word Detail, Example Sentences,
+or image text of a session asks, and waits for it before it links its sentences: about a
+quarter of a second, most of it unpacking, where starting kuromoji.js took half a second.
+`TokenizerDictionaryTests` covers the unpacking and a sentence's words.
 
 To compare the previous interactive parsing path, launch the app with
 `ZENBU_MORPHOLOGY_ENGINE=sudachi`: the core then asks the app for each sentence's words, and
 the app answers with Sudachi's. Omit the variable, or use any other value, to exercise
-Kuromoji. Keep `ONLY_ACTIVE_ARCH=YES` for either path.
+the bundled dictionary. Keep `ONLY_ACTIVE_ARCH=YES` for either path.
 
 Compare both paths with the same source text and check:
 
@@ -418,7 +418,7 @@ Compare both paths with the same source text and check:
 - linked-word behavior in Word Detail and Example Sentences.
 
 This switch is a local comparison harness. It does not change the TestFlight engine, which
-uses the default Kuromoji path.
+uses the bundled dictionary.
 
 ## Current verification boundary
 
@@ -593,7 +593,7 @@ side, lists which type asks for what.
   | Owner | Reads | Answers |
   | --- | --- | --- |
   | `LanguageReferenceData`, the actor behind `LookupClient.live` | `LanguageReferenceData.sqlite3` | Search, an exact form's entries, a kanji's words, what a website link opens, and the entry a related or a saved word opens |
-  | `DictionaryTextData`, the actor behind `ExampleSentenceClient` and `JapaneseTextAnalysisClient` | Its own connection to the same file, with `ExampleWordIndex.sqlite3` attached, and Kuromoji in the same engine | Example sentences and linked words |
+  | `DictionaryTextData`, the actor behind `ExampleSentenceClient` and `JapaneseTextAnalysisClient` | Its own connection to the same file, with `ExampleWordIndex.sqlite3` attached, and the tokenizer's dictionary files | Example sentences and linked words |
   | `PresentationCore`, a lock around one engine | The kanji files, through `KanjiFiles`, and the radical file | The results screen, rows and chips, furigana, the word, kanji, and element pages, the query, the gloss, romaji, the kanji check, a stroke diagram's points, the radical panel, and the handwriting candidates kept |
 
   They are apart because of how long each takes. Linking a page of sentences or ranking a broad
@@ -610,6 +610,12 @@ side, lists which type asks for what.
 - **Calls settle at once.** Every read is synchronous, so a call settles before `begin` returns
   and nothing waits on a callback; `begin` and `outcome` are two calls into the engine because
   JavaScriptCore runs a promise's reactions only when the outermost call returns.
+- **What a view asks is one call.** `PresentationCore` asks through the core's `answer`, which
+  returns a value instead of starting a call: `DictionaryCore.flag` reads a boolean,
+  `DictionaryCore.text` a string or nothing, and the synchronous `answer` a JSON string that it
+  decodes. They go through JavaScriptCore's C functions (`JSObjectCallAsFunction`) rather than
+  `JSValue`, so nothing is boxed and no autorelease pool is needed. Crossing into the engine
+  and back costs under a microsecond this way; through `begin` and `outcome` it cost eight.
 - **Entries.** The core names entries by Language Reference ID. `entries(equivalentTo:)` reads
   each with the app's own columns and decoding, as `entry(_:)` does, so an entry is the same
   value wherever it came from; an entry JMdict lists twice (閻魔) is one entry under its smaller
@@ -619,9 +625,9 @@ side, lists which type asks for what.
   awaits Sudachi (`JapaneseMorphologyClient`), hands the words back, and the call goes on; other
   lookups can run while it waits.
 - **Linked words.** `DictionaryTextData.linkedWords` is one call for a text: the core tokenizes
-  it with Kuromoji in the same engine, looks every word's forms up in one or two statements,
-  and answers each word with its place, its entry or candidates, its furigana, and whether it
-  is the page's word or matches the query. `JapaneseTextAnalysisClient` reads the entries the
+  it from the dictionary files the app hands it, looks every word's forms up in one or two
+  statements, and answers each word with its place, its entry or candidates, its furigana, and
+  whether it is the page's word or matches the query. `JapaneseTextAnalysisClient` reads the entries the
   answer names, in one statement, and keeps 4,000. The core remembers the last 512 texts it
   linked, so a sentence scrolled back into view costs no analysis.
 - **The kanji files.** `KanjiFiles` maps `KanjiReferenceData.json` and
@@ -633,10 +639,10 @@ side, lists which type asks for what.
   each with its own strokes, grade, and readings. `KanjiFilesTests` compares every record with
   a full parse of the files.
 - **Memoized where a view asks again.** Furigana by surface and reading (4,000), a word page by
-  entry (64), a gloss by meaning (4,000), romaji by reading (4,000) and by sentence (512), and
-  the kanji check by string (4,000), since SwiftUI rebuilds a row many times. The keys compare
-  scalar for scalar: Swift's own string equality would hand one compatibility kanji's answer to
-  its twin. `PresentationCore`'s lock is recursive, because decoding a page builds
+  entry (64), a gloss by meaning (4,000), romaji by reading (4,000) and by sentence (512), the
+  kanji check by string (4,000), and a query by what was typed (1,000), since SwiftUI rebuilds
+  a row many times. The keys compare, and hash, byte for byte: Swift's own string equality
+  would hand one compatibility kanji's answer to its twin. `PresentationCore`'s lock is recursive, because decoding a page builds
   `KanjiCharacter`s, each of which asks the same engine.
 - **Cancelling.** `SQLiteJSONRows` checks the task between rows, as the app's other reads do,
   and the core asks the host between batches of rows while it ranks (`zenbuHost.interrupted`),

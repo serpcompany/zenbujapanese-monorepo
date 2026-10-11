@@ -1,10 +1,11 @@
+import { LruCache } from '../artifact/cache'
 import { checkKanjiSources, type KanjiElementSources, KanjiReference } from '../artifact/kanji-data'
 import { sharedSpellingNote } from '../detail/conjugation'
 import { type FrequencyLookupRow, frequencyLookupRow } from '../detail/frequency'
 import { type KanjiDetail, kanjiDetail } from '../detail/kanji'
 import { type KanjiElementDetail, kanjiElementDetail } from '../detail/kanji-element'
-import { withKanjiReadings } from '../detail/kanji-split'
-import type { FormRow, KanjiStrokesRow, PitchRow } from '../detail/rows'
+import { type KanjiReadings, withKanjiReadings } from '../detail/kanji-split'
+import type { FormRow, KanjiReadingRow, KanjiStrokesRow, PitchRow } from '../detail/rows'
 import { type RubySegment, rubySegments } from '../detail/ruby'
 import { type StrokeDiagram, strokeDiagram } from '../detail/strokes'
 import { isKanjiCharacter } from '../detail/text'
@@ -72,9 +73,25 @@ interface KanjiFiles {
   elementSources: KanjiElementSources
 }
 
+const rememberedKanji = 4_000
+
 export class EmbeddedPresentation {
   private files: KanjiFiles | undefined
   private radicals: RadicalLookup | undefined
+  private readonly readingsByKanji = new LruCache<string, readonly KanjiReadingRow[]>(
+    rememberedKanji
+  )
+  private readonly kanjiReadings: KanjiReadings = {
+    get: character => {
+      let readings = this.readingsByKanji.get(character)
+      if (!readings) {
+        const rows = this.kanji.glossRows([character])
+        readings = rows.find(row => row.character === character)?.readings ?? []
+        this.readingsByKanji.set(character, readings)
+      }
+      return readings
+    }
+  }
 
   constructor(private readonly host: EmbeddedHost) {}
 
@@ -137,10 +154,7 @@ export class EmbeddedPresentation {
   }
 
   ruby([surface, reading]: [string, string]): RubySegment[] {
-    const readings = new Map(
-      this.kanji.glossRows([surface]).map(({ character, readings }) => [character, readings])
-    )
-    return withKanjiReadings(rubySegments(surface, reading), readings)
+    return withKanjiReadings(rubySegments(surface, reading), this.kanjiReadings)
   }
 
   wordPage(entry: EmbeddedEntry): EmbeddedWordPage {

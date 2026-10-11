@@ -6,6 +6,7 @@ import type {
   ExampleSentenceTokenRow,
   WordExampleRows
 } from '../detail/rows'
+import { scalarCount } from '../detail/text'
 import { usesForm } from '../examples/forms'
 import { toHiragana } from '../examples/kana'
 import {
@@ -151,7 +152,7 @@ export function tokenSpans(
 ): { start: number; end: number }[] {
   let start = 0
   return tokens.map(token => {
-    const end = start + Array.from(token.surface).length
+    const end = start + scalarCount(token.surface)
     const span = { start, end }
     start = end
     return span
@@ -159,6 +160,7 @@ export function tokenSpans(
 }
 
 export function occurrences(text: string, query: string): { start: number; end: number }[] {
+  if (query === '') return []
   const scalars = Array.from(text)
   const needle = Array.from(query)
   if (needle.length === 0 || needle.length > scalars.length) return []

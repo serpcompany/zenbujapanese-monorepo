@@ -150,6 +150,13 @@ function formsToLookUp(candidate: MorphologyCandidate): string[] {
   return forms
 }
 
+function hasCompatiblePart(entry: LinkEntry, providerPOS: string): boolean {
+  for (const part of entry.partsOfSpeech) {
+    if (isCompatible(part, providerPOS)) return true
+  }
+  return false
+}
+
 function preferredEntries(
   entries: LinkEntry[],
   candidate: MorphologyCandidate,
@@ -158,13 +165,17 @@ function preferredEntries(
   let filtered = entries
   const providerPOS = candidate.partOfSpeech[0]
   if (providerPOS !== undefined) {
-    const compatible = filtered.filter(entry =>
-      entry.partsOfSpeech.some(part => isCompatible(part, providerPOS))
-    )
+    const compatible: LinkEntry[] = []
+    for (const entry of filtered) {
+      if (hasCompatiblePart(entry, providerPOS)) compatible.push(entry)
+    }
     if (compatible.length > 0) filtered = compatible
   }
   if (matchesSurfaceReading && candidate.reading !== '' && candidate.reading !== '*') {
-    const readingMatches = filtered.filter(entry => toKatakana(entry.reading) === candidate.reading)
+    const readingMatches: LinkEntry[] = []
+    for (const entry of filtered) {
+      if (toKatakana(entry.reading) === candidate.reading) readingMatches.push(entry)
+    }
     if (readingMatches.length > 0) filtered = readingMatches
   }
   return filtered

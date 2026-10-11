@@ -187,6 +187,24 @@ describe('the embedded dictionary', () => {
     await expect(ask(host(), 'translate', '日本')).rejects.toThrow('The core has no translate')
   })
 
+  test('answers at once what needs no waiting, as a value or as JSON', () => {
+    const endpoint = embeddedEndpoint(host())
+    expect(endpoint.answer('isKanji', '見')).toBe(true)
+    expect(endpoint.answer('romaji', 'にほんご')).toBe('nihongo')
+    expect(endpoint.answer('romaji', '日本語')).toBeNull()
+    expect(endpoint.answerJSON('japaneseCandidates', '["見る","miru"]')).toBe('["見る"]')
+    expect(endpoint.answerJSON('gloss', '')).toBe('null')
+    expect(endpoint.answerJSON('websiteRoute', '{"host":"example.com","path":"/"}')).toBe(
+      JSON.stringify(endpoint.answer('websiteRoute', '{"host":"example.com","path":"/"}'))
+    )
+  })
+
+  test('refuses to answer at once what has to wait, or what it does not have', () => {
+    const endpoint = embeddedEndpoint(host())
+    expect(() => endpoint.answer('search', '日本')).toThrow('search does not answer at once')
+    expect(() => endpoint.answerJSON('translate', '日本')).toThrow('The core has no translate')
+  })
+
   test('has an outcome only once a call has finished', () => {
     const call = begin(host(), 'search', '日本')
     expect(JSON.parse(call.outcome())).toEqual({ error: 'search did not finish within its call' })

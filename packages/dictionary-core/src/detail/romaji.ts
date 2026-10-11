@@ -1,5 +1,5 @@
 import { toKatakana } from '../examples/kana'
-import { graphemes } from './text'
+import { everyUnitIsAGrapheme, graphemes } from './text'
 
 type Step = (text: string[], start: number, limit: number) => number
 
@@ -226,15 +226,82 @@ function latin(value: string): string {
   return text.join('')
 }
 
+const firstKana = 0x3041
+const hiraganaLetter = 1
+const katakanaLetter = 2
+const joinsThePrevious = 4
+const needsTheNext = 8
+const kanaKinds = new Uint8Array(0x30fc - firstKana + 1)
+for (let unit = 0x3041; unit <= 0x3094; unit++) kanaKinds[unit - firstKana] = hiraganaLetter
+for (let unit = 0x30a1; unit <= 0x30f6; unit++) kanaKinds[unit - firstKana] = katakanaLetter
+kanaKinds[0x30fc - firstKana] = hiraganaLetter | katakanaLetter
+for (const kana of 'ぁぃぅぇぉゃゅょァィゥェォャュョー') {
+  kanaKinds[kana.charCodeAt(0) - firstKana] |= joinsThePrevious
+}
+for (const kana of 'っんッン') kanaKinds[kana.charCodeAt(0) - firstKana] |= needsTheNext
+
+const longestPiece = 4
+const rememberedPieces = 8_192
+const knownPieces = new Map<string, string>()
+
+function pieceLatin(piece: string): string | undefined {
+  if (piece.length > longestPiece) return undefined
+  let written = knownPieces.get(piece)
+  if (written === undefined) {
+    written = latin(piece)
+    if (knownPieces.size < rememberedPieces) knownPieces.set(piece, written)
+  }
+  return written
+}
+
+function plainKanaLatin(reading: string): string | undefined {
+  let scripts = hiraganaLetter | katakanaLetter
+  let written = ''
+  let start = 0
+  let open = true
+  for (let index = 0; index < reading.length; index++) {
+    const kind = kanaKinds[reading.charCodeAt(index) - firstKana] ?? 0
+    scripts &= kind
+    if (scripts === 0) return undefined
+    if ((kind & joinsThePrevious) === 0) {
+      if (!open) {
+        const piece = pieceLatin(reading.slice(start, index))
+        if (piece === undefined) return undefined
+        written += piece
+        start = index
+      }
+    } else if (index === 0) {
+      return undefined
+    }
+    open = (kind & needsTheNext) !== 0
+  }
+  const last = pieceLatin(reading.slice(start))
+  return last === undefined ? undefined : written + last
+}
+
 const kanji = /[\u3005\u3400-\u9fff\uf900-\ufaff\u{20000}-\u{2fa1f}]/u
 
 export function romaji(reading: string): string | null {
-  return reading === '' || kanji.test(reading) ? null : latin(reading)
+  if (reading === '') return null
+  return plainKanaLatin(reading) ?? (kanji.test(reading) ? null : latin(reading))
 }
 
 export type Attachment = 'previous' | 'next'
 
+function startsWithALetter(surface: string): boolean {
+  const unit = surface.charCodeAt(0)
+  return (
+    (unit >= 0x3041 && unit <= 0x3096) ||
+    (unit >= 0x30a1 && unit <= 0x30fa) ||
+    (unit >= 0x4e00 && unit <= 0x9fff) ||
+    (unit >= 0x61 && unit <= 0x7a) ||
+    (unit >= 0x41 && unit <= 0x5a) ||
+    (unit >= 0x30 && unit <= 0x39)
+  )
+}
+
 export function attachment(surface: string): Attachment | null {
+  if (startsWithALetter(surface)) return null
   if (!/^[\p{Ps}\p{Pe}\p{Pi}\p{Pf}\p{Po}]+$/u.test(surface)) return null
   return /^[\p{Ps}\p{Pi}]/u.test(surface) ? 'next' : 'previous'
 }
@@ -247,12 +314,18 @@ export interface SpokenWord {
 const startsWithSpace = (character: string | undefined) =>
   character !== undefined && /^\p{White_Space}/u.test(character)
 
+function endsWithSpace(sentence: string): boolean {
+  const ending = sentence.slice(-2)
+  return startsWithSpace(everyUnitIsAGrapheme(ending) ? ending.at(-1) : graphemes(sentence).at(-1))
+}
+
 export function sentenceRomaji(words: readonly SpokenWord[]): string | null {
   if (words.length === 0) return null
   let sentence = ''
   let previous: Attachment | null = null
   for (const { surface, reading } of words) {
-    if (graphemes(surface).every(startsWithSpace)) {
+    const isAWord = startsWithALetter(surface)
+    if (!isAWord && graphemes(surface).every(startsWithSpace)) {
       sentence += surface
       previous = null
       continue
@@ -262,10 +335,7 @@ export function sentenceRomaji(words: readonly SpokenWord[]): string | null {
     if (piece === null) return null
     const attaches = attachment(surface)
     const joined =
-      sentence === '' ||
-      startsWithSpace(graphemes(sentence).at(-1)) ||
-      attaches === 'previous' ||
-      previous === 'next'
+      sentence === '' || attaches === 'previous' || previous === 'next' || endsWithSpace(sentence)
     sentence += joined ? piece : ` ${piece}`
     previous = attaches
   }
