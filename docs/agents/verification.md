@@ -1,7 +1,7 @@
 # Verifying a change
 
-How much to check and when, how to wait, what evidence a change needs, and which Simulator and
-build folder a checkout uses. The rules are SERP's
+How much to check and when, how to wait, what evidence a change needs, and which ports,
+Simulator, and build folder a checkout uses. The rules are SERP's
 [Verification Cadence](https://github.com/serpcompany/serp/blob/main/docs/engineering/standards/verification-cadence.md)
 and [Simulators](https://github.com/serpcompany/serp/blob/main/docs/engineering/technology/simulators.md)
 standards; this doc holds this repository's commands for them.
@@ -59,12 +59,42 @@ Every change has build and tests, from the finish gate or CI. Beyond that:
 | A page, component, route, redirect, or header of the website | The `verify-web` skill: each changed page at desktop and phone widths, and redirects and headers on `pnpm preview`. What should keep working becomes a browser test (the `browser-tests` skill). |
 | A screen or flow of the app | The `verify-app` skill: the UI tests that cover it, on this checkout's iPhone and iPad Simulators, and on the Mac when the change differs there. |
 | What a Simulator can't show: the camera, Apple Translation, live speech, a real sign-in | A run on a device ([`ios.md`](ios.md), Install on an iPhone), or the pull request says it wasn't checked. |
-| A service's route | The service run locally and the route called ([`dictionary-api.md`](dictionary-api.md), [`account-api.md`](account-api.md)). |
+| A service's route, answer, configuration, or startup | The `verify-service` skill: the service started from this checkout, the routes the change touches called, and each answer kept ([`dictionary-api.md`](dictionary-api.md), [`account-api.md`](account-api.md)). |
 | A deploy workflow, routing, the server, or a smoke test | The deploy to staging and its smoke test ([`ci-deploys.md`](ci-deploys.md)). |
 
 Proof goes under `tmp/agent/verify/<date>-<what>/`, which git ignores and housekeeping keeps:
 screenshots, recordings, result bundles, and the run's state. Show the owner the working change
 before polishing the evidence, and take screenshots once, after their changes.
+
+## This checkout's ports
+
+Two worktrees that serve on one port test each other's code: Playwright reuses a server it finds
+there. `tools/checks/ports.mjs` hands each checkout its own, and `pnpm ports` prints them:
+
+| Role | Main checkout | A worktree | Used by |
+| --- | --- | --- | --- |
+| `site` | 3000 | the first port of its block, such as 21010 | `pnpm dev` in `apps/web` |
+| `e2e` | 3100 | the next, 21011 | The server the browser tests start (`apps/web/playwright.config.ts`) |
+| `preview` | 8787 | 21012 | `pnpm preview`, and the browser tests on the production build |
+| `dictionary` | 8788 | 21013 | `pnpm dev` in `apps/dictionary-api`, the `verify-service` skill, and the rendered-page gate (`apps/web/vitest.config.ts`) |
+
+- **The main checkout** keeps the ports the docs name. So does a CI runner, whose checkout is
+  the main one, though its browser tests ask the same script.
+- **A git worktree** claims a block of ten ports the first time anything asks: a file under the
+  repository's `.git/zenbu-ports/` that names the worktree. `pnpm ports delete` gives the block
+  up when the work is finished, and `pnpm ports prune` those of worktrees that are gone, which the
+  next claim does too.
+- **Read the address rather than assume it.** `pnpm dev` prints its own, and a command that
+  needs one takes it from `pnpm ports`.
+- **A `PORT` set in the shell wins,** and so does one in the dictionary service's `.env`. A
+  server on its port already fails the next one to start, rather than sharing it.
+- **The account service is one per machine,** on port 8789, with one database: the website's
+  build names its address (`apps/web/wrangler.jsonc`). It trusts the sites its
+  `ACCOUNT_API_TRUSTED_ORIGINS` names, so name this checkout's `site` and `e2e` addresses there
+  ([`web.md`](web.md), Account pages). Giving each checkout its own is in
+  [`harness-debt.md`](../harness-debt.md).
+
+The script is tested in `tools/checks/src/ports.test.ts`.
 
 ## This checkout's Simulator and build folder
 

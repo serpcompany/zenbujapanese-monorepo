@@ -1,7 +1,7 @@
 import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { defineConfig, devices } from '@playwright/test'
-import { onProductionBuild } from './e2e/server'
+import { checkoutPorts, onProductionBuild } from './e2e/server'
 import { accountPagesFor } from './src/lib/account/availability'
 
 process.env.ZENBU_ACCOUNT_PAGES = accountPagesFor(
@@ -9,7 +9,8 @@ process.env.ZENBU_ACCOUNT_PAGES = accountPagesFor(
   process.env.SITE_ENV
 )
 
-const port = onProductionBuild ? 8787 : Number(process.env.E2E_PORT ?? 3100)
+const ports = checkoutPorts()
+const port = onProductionBuild ? ports.preview : Number(process.env.E2E_PORT ?? ports.e2e)
 const appleTeamId = 'ABCDE12345'
 const server = onProductionBuild
   ? `pnpm exec opennextjs-cloudflare preview --port ${port} --var APPLE_TEAM_ID:${appleTeamId}`

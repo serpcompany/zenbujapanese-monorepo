@@ -9,7 +9,7 @@
       "entry": ["open-next.config.ts", "e2e/**/*.ts"]
     },
     "apps/dictionary-api": {
-      "entry": ["src/worker-dev.mjs", "scripts/*.{ts,mjs}"]
+      "entry": ["src/server.ts", "src/worker-dev.mjs", "scripts/*.{ts,mjs}"]
     },
     "apps/account-api": {
       "entry": ["scripts/*.mjs"]
@@ -23,7 +23,7 @@
       "ignoreDependencies": ["tsx"]
     },
     "tools/checks": {
-      "entry": ["hook.mjs", "stop-hook.mjs", "pull-request.mjs"],
+      "entry": ["hook.mjs", "stop-hook.mjs", "pull-request.mjs", "ports.mjs"],
       "ignoreDependencies": ["@secretlint/secretlint-rule-preset-recommend"]
     }
   }

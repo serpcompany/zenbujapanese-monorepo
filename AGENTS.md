@@ -9,7 +9,7 @@ Agents never merge: there is no `Agents may merge` line. Only an owner adds or c
 ## Every change
 
 - [`docs/agents/code.md`](docs/agents/code.md) — the rules all code follows (no comments, a file size limit, no duplicate or dead code, imports that follow the layers, no secrets, a test for every fix, docs that stay reachable), the checks and git hooks behind them, the skills, and when a change is done. Run `pnpm check` before a pull request.
-- [`docs/agents/verification.md`](docs/agents/verification.md) — what to run while editing, before a push, and at the finish gate; how to wait; the evidence each kind of change needs (a preview, UI tests, a device, a deploy); and the Simulator and build folder a checkout uses.
+- [`docs/agents/verification.md`](docs/agents/verification.md) — what to run while editing, before a push, and at the finish gate; how to wait; the evidence each kind of change needs (a preview, UI tests, a device, a deploy); and the ports, Simulator, and build folder a checkout uses.
 
 ## Commands
 
@@ -18,7 +18,7 @@ Agents never merge: there is no `Agents may merge` line. Only an owner adds or c
 - **Inner loop, a pnpm package:** `pnpm --filter <package> typecheck`, and `pnpm --filter <package> exec vitest related --run <files>`.
 - **Inner loop, the app:** the tests the change touches, with `-only-testing`, on this checkout's own Simulator, whose UDID `python3 apps/ios/Tools/simulator.py` prints. Never `booted` or a default device.
 - **Before a push:** `pnpm check` in each package the change touched.
-- **In the running product:** the `verify-web` skill for the website and the `verify-app` skill for the app, both in `.claude/skills/`. Proof goes under `tmp/agent/verify/`.
+- **In the running product:** the skills `verify-web` (the website), `verify-app` (the app), and `verify-service` (the two services), in `.claude/skills/`. Proof goes under `tmp/agent/verify/`.
 
 ## Codebase
 

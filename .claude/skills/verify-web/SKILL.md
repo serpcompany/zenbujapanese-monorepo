@@ -14,20 +14,24 @@ The `chrome-devtools` MCP server in `.mcp.json` opens its own Chrome with a temp
 
 ## 1. Run the site
 
-Pick the smallest setup that shows the change. Run one site at a time on this machine.
+Pick the smallest setup that shows the change. This checkout serves on its own ports, which
+`pnpm ports` prints from the repository root (`docs/agents/verification.md`, This checkout's
+ports), so a site running in another worktree is no reason to stop.
 
-- **On fixtures**: `pnpm dev` in `apps/web` serves `http://localhost:3000/`. Without a dictionary
-  service, dictionary pages read the local fixtures (`packages/dictionary-core/src/fixtures/`):
-  twelve words and the kanji 要, such as `/dictionary/要る-1546640/` and `/dictionary/search/要/`,
-  and searches that find them, such as `/dictionary/search/いる/`. Other words are 404s here.
+- **On fixtures**: `pnpm dev` in `apps/web` serves the `site` address, and prints it
+  (`http://localhost:3000/` in the main checkout). Without a dictionary service, dictionary pages
+  read the local fixtures (`packages/dictionary-core/src/fixtures/`): twelve words and the kanji 要,
+  such as `/dictionary/要る-1546640/` and `/dictionary/search/要/`, and searches that find them, such
+  as `/dictionary/search/いる/`. Other words are 404s here.
 - **On the whole dictionary**: start the dictionary service first (`pnpm dev` in
   `apps/dictionary-api`, set up as in `docs/agents/dictionary-api.md`, Run it), wait until
-  `http://localhost:8788/healthz` answers 200, then name it in `.dev.vars` in `apps/web` (as in
-  `docs/agents/web.md`, Dictionary) and restart the site. Never print `.env` or `.dev.vars`:
-  they hold the token. Sentence search, examples, and conjugated forms need this setup.
-- **The production build**: `pnpm preview` builds with OpenNext and serves the Worker in workerd,
-  which is where redirects, headers, and caching behave as deployed. OpenNext can't build on
-  Windows; there, build in a Linux container, or check the change on staging after it deploys.
+  `/healthz` at the `dictionary` address answers 200, then name it in `.dev.vars` in `apps/web` (as
+  in `docs/agents/web.md`, Dictionary) and restart the site. Never print `.env` or `.dev.vars`: they
+  hold the token. Sentence search, examples, and conjugated forms need this setup.
+- **The production build**: `pnpm preview` builds with OpenNext and serves the Worker in workerd, at
+  the `preview` address, which is where redirects, headers, and caching behave as deployed. OpenNext
+  can't build on Windows; there, build in a Linux container, or check the change on staging after it
+  deploys.
 - **Staging**: `https://staging.zenbujapanese.com/` runs `main` after `Web deploy`. The zone's
   Bot Fight Mode can challenge an automated browser: a challenge page there says nothing about
   the site, so check locally instead.
@@ -36,10 +40,11 @@ Stop what you started when you're done: end the dev server's whole process tree.
 
 Before trusting a page, check that the server answering is this checkout's and current:
 
-- **Locally:** `lsof -nP -iTCP:3000 -sTCP:LISTEN -t` prints the process on the port, and
-  `lsof -a -p <pid> -d cwd -Fn` the folder it runs from, which should be this checkout's
-  `apps/web`. A server another worktree left on the port answers with that worktree's code.
-- **A local dictionary service:** `curl -s http://localhost:8788/healthz` names its release.
+- **Locally:** `lsof -nP -iTCP:<port> -sTCP:LISTEN -t` prints the process on the site's port,
+  and `lsof -a -p <pid> -d cwd -Fn` the folder it runs from, which should be this checkout's
+  `apps/web`. A server started with `PORT` set by hand can sit on another checkout's port, and
+  answers with that checkout's code.
+- **A local dictionary service:** `curl -s <its address>/healthz` names its release.
 - **Staging:** a word page's later examples load from a URL with `build=<build>`, the build the
   page was rendered by. `/dictionary/service.json` can show a new service several minutes before
   the pages do, so read the build from a page.
