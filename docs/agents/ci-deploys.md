@@ -5,6 +5,18 @@ action the language-data workflows share and the actions pinned by commit. Every
 starts it is in [`ci.md`](ci.md). Change a workflow's section in the same pull request as the
 workflow.
 
+## An old run started again deploys nothing
+
+Each job that deploys first asks the `latest-run` action (`.github/actions/latest-run/`) whether
+it may. A run's first attempt always may: a workflow's runs on `main` go one at a time, in order.
+A run that someone starts again may only while no later run of its workflow exists on the branch,
+since it would otherwise put old code over new, and nothing would put the new code back. To
+deploy an old build on purpose, start a new run: an image workflow's `tag` input, or a revert for
+the site. The action compares run numbers, not the commit with the branch's tip, because these
+workflows start only on pushes that change their paths, so the tip is often a commit none of them
+deploys. `tools/checks/src/deploy-workflows.test.ts` holds every deploying step to it and runs the
+action's script against a stand-in for the GitHub API.
+
 ## Web deploy
 
 `.github/workflows/web-deploy.yml` deploys the site on a push to `main` that changes the same files
@@ -152,7 +164,7 @@ pinned one, pin the new release's commit and change this table in the same pull 
 
 | Action | Commit | Version | Used in |
 | --- | --- | --- | --- |
-| `actions/checkout` | `fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09` | v5.1.0 | `.github/workflows/language-data-release.yml` |
+| `actions/checkout` | `fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09` | v5.1.0 | `.github/workflows/language-data-release.yml`; the `staging` and `production` jobs of `.github/workflows/dictionary-api-deploy.yml` and `.github/workflows/account-api-deploy.yml` |
 | `actions/setup-python` | `ece7cb06caefa5fff74198d8649806c4678c61a1` | v6.3.0 | `.github/actions/package-language-data/action.yml` |
 | `actions/cache` | `caa296126883cff596d87d8935842f9db880ef25` | v5.1.0 | `.github/actions/package-language-data/action.yml` |
 | `docker/setup-buildx-action` | `f87e5991a6d7451dcb8d9637bfbc97413f497069` | v4.4.1 | `.github/workflows/dictionary-api-deploy.yml` |

@@ -54,9 +54,16 @@ jobs:
         run: ./scripts/wait-for-dictionary-service.sh "$SITE"
       - name: Point the site at the dictionary service
         run: ./scripts/use-dictionary-service.sh "$SITE" "$DICTIONARY_API_URL"
+      - name: Stop when a later run has taken over
+        id: latest
+        uses: ./.github/actions/latest-run
+        with:
+          workflow: web-deploy.yml
       - name: Deploy
+        if: steps.latest.outputs.deploy == 'true'
         run: pnpm deploy:staging 2>&1 | tee deploy.log
       - name: Smoke test
+        if: steps.latest.outputs.deploy == 'true'
         run: ./scripts/smoke.sh "$(grep -oE 'https://[a-z0-9.-]+\.workers\.dev' deploy.log | head -1)" staging
 
   production:
@@ -90,9 +97,16 @@ jobs:
         run: ./scripts/wait-for-dictionary-service.sh "$SITE"
       - name: Point the site at the dictionary service
         run: ./scripts/use-dictionary-service.sh "$SITE" "$DICTIONARY_API_URL"
+      - name: Stop when a later run has taken over
+        id: latest
+        uses: ./.github/actions/latest-run
+        with:
+          workflow: web-deploy.yml
       - name: Deploy
+        if: steps.latest.outputs.deploy == 'true'
         run: pnpm deploy:production 2>&1 | tee deploy.log
         env:
           NEXT_PUBLIC_GTM_ID: ${{ vars.NEXT_PUBLIC_GTM_ID }}
       - name: Smoke test
+        if: steps.latest.outputs.deploy == 'true'
         run: ./scripts/smoke.sh "$(grep -oE 'https://[a-z0-9.-]+\.workers\.dev' deploy.log | head -1)" production

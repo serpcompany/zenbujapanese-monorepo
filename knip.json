@@ -2,7 +2,9 @@
   "$schema": "https://unpkg.com/knip@6/schema.json",
   "ignore": ["apps/ios/**"],
   "workspaces": {
-    ".": {},
+    ".": {
+      "entry": [".github/actions/*/*.cjs"]
+    },
     "apps/web": {
       "entry": ["open-next.config.ts", "e2e/**/*.ts"]
     },

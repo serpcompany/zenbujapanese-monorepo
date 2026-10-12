@@ -31,6 +31,7 @@ interface Job {
 export interface Workflow {
   on: Record<string, unknown>
   concurrency?: { group: string; 'cancel-in-progress'?: boolean | string }
+  permissions?: Record<string, string>
   jobs: Record<string, Job>
 }
 

@@ -1,0 +1,26 @@
+name: Latest run
+description: >-
+  Says whether a deploy job may deploy. A run's first attempt always may: runs of a workflow go
+  one at a time, in order. A run started again may only while no later run of its workflow exists
+  on its branch, since it would otherwise deploy old code over new. Needs a checkout, and
+  permission to read the repository's workflow runs.
+inputs:
+  workflow:
+    description: The workflow's file name, such as web-deploy.yml.
+    required: true
+  token:
+    description: A token that can read the repository's workflow runs.
+    default: ${{ github.token }}
+outputs:
+  deploy:
+    description: The string true when the job may deploy, and empty otherwise.
+    value: ${{ steps.latest.outputs.deploy }}
+runs:
+  using: composite
+  steps:
+    - id: latest
+      shell: bash
+      env:
+        GITHUB_TOKEN: ${{ inputs.token }}
+        WORKFLOW: ${{ inputs.workflow }}
+      run: node "$GITHUB_ACTION_PATH/latest-run.cjs"

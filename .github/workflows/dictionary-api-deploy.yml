@@ -178,6 +178,7 @@ jobs:
     timeout-minutes: 10
     environment: staging
     permissions:
+      actions: read
       contents: read
       packages: write
       id-token: write
@@ -185,6 +186,15 @@ jobs:
       IMAGE_REFERENCE: ${{ needs.image.outputs.image }}
       SIGNER: https://github.com/${{ github.repository }}/.github/workflows/dictionary-api-deploy.yml@refs/heads/main
     steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
+        with:
+          sparse-checkout: .github/actions
+          persist-credentials: false
+      - name: Stop when a later run has taken over
+        id: latest
+        uses: ./.github/actions/latest-run
+        with:
+          workflow: dictionary-api-deploy.yml
       - name: Log in to the GitHub Container Registry
         uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f
         with:
@@ -200,8 +210,10 @@ jobs:
           cosign verify --certificate-identity "$SIGNER" \
             --certificate-oidc-issuer https://token.actions.githubusercontent.com "$IMAGE_REFERENCE" >/dev/null
       - name: Sign the image
+        if: steps.latest.outputs.deploy == 'true'
         run: cosign sign --yes "$IMAGE_REFERENCE"
       - name: Move the :staging tag to the image
+        if: steps.latest.outputs.deploy == 'true'
         run: docker buildx imagetools create --prefer-index=false --tag "$IMAGE:staging" "$IMAGE_REFERENCE"
 
   production:
@@ -211,11 +223,21 @@ jobs:
     timeout-minutes: 5
     environment: production
     permissions:
+      actions: read
       contents: read
       packages: write
     env:
       IMAGE_REFERENCE: ${{ needs.image.outputs.image }}
     steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
+        with:
+          sparse-checkout: .github/actions
+          persist-credentials: false
+      - name: Stop when a later run has taken over
+        id: latest
+        uses: ./.github/actions/latest-run
+        with:
+          workflow: dictionary-api-deploy.yml
       - name: Log in to the GitHub Container Registry
         uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f
         with:
@@ -223,4 +245,5 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
       - name: Move the :production tag to the image
+        if: steps.latest.outputs.deploy == 'true'
         run: docker buildx imagetools create --prefer-index=false --tag "$IMAGE:production" "$IMAGE_REFERENCE"
