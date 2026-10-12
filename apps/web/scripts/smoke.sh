@@ -429,6 +429,11 @@ search_indexing_follows_results() {
 }
 eventually "a search that finds nothing is noindex, and a kanji's search is indexable" \
   'noindex is wrong on the searches for qzxvkj or 見' search_indexing_follows_results
+an_english_sentence_is_noindex() {
+  grep -q "$noindex" <<<"$(body /dictionary/search/where%20is%20the%20bathroom/)"
+}
+eventually "an English sentence's search is noindex" \
+  'the search for where is the bathroom is indexable' an_english_sentence_is_noindex
 fi
 
 robots_tag() { curl -sI "${smoke[@]}" "$base$1" | tr -d '\r' | grep -i '^x-robots-tag:' || true; }

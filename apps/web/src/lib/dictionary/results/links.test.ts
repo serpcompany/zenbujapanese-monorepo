@@ -169,6 +169,18 @@ describe('isIndexable', () => {
     ).toBe(true)
   })
 
+  test("never indexes an English sentence's words, which anyone could list under any title", () => {
+    const sentence = (query: string): SearchResultsScreen => ({
+      ...iru,
+      query,
+      readingRefinement: null,
+      sections: ['examples', 'discoveredWords']
+    })
+    expect(isIndexable(linkSearchScreen(sentence('where is the bathroom'), loaded))).toBe(false)
+    expect(isIndexable(linkSearchScreen(sentence('日本語を勉強する'), loaded))).toBe(true)
+    expect(isIndexable(linkSearchScreen({ ...iru, query: 'ice cream' }, loaded))).toBe(true)
+  })
+
   test('never indexes No Dictionary Matches', () => {
     expect(isIndexable({ state: 'noResults', query: 'qzxvkj' })).toBe(false)
   })

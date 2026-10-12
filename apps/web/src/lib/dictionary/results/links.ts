@@ -86,6 +86,11 @@ function kanjiHasContent(details: KanjiDetailsData | null | undefined): boolean 
   return details != null && (details.meanings.length > 0 || details.readings.length > 0)
 }
 
+function listsAnEnglishSentencesWords(data: Extract<SearchData, { state: 'results' }>): boolean {
+  return data.sections.includes('discoveredWords') && isASCII(data.query)
+}
+
 export function isIndexable(data: SearchData): boolean {
-  return data.state === 'results' && (data.rows.length > 0 || kanjiHasContent(data.kanji?.details))
+  if (data.state !== 'results' || listsAnEnglishSentencesWords(data)) return false
+  return data.rows.length > 0 || kanjiHasContent(data.kanji?.details)
 }

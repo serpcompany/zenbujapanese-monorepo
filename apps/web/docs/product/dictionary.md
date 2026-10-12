@@ -960,17 +960,15 @@ window.
 **Placeholder links.** The pages the menus, footer, and [homepage](home.md) name that don't exist
 yet, and the outside addresses that aren't known yet, link to `#` for now: All free tools and Free
 tools (`/tools/`), the three converters, Browser extension, Reference guides, Courses, Log in
-(`/login/`) and Create an account (`/register/`) in a build whose account pages are closed, the
-App Store (the
-Get the app on the product page and on the catalog's iPhone app card), the ten social accounts, and
-See all videos (`/videos/`), which shows only once the product page has videos. Zenbu Japanese for
-iPhone and All products now open their pages, `/products/zenbu-japanese-app/` and
+(`/login/`) and Create an account (`/register/`) in a build whose account pages are closed, the App
+Store (the Get the app on the product page and on the catalog's iPhone app card), the ten social
+accounts, and See all videos (`/videos/`), which shows only once the product page has videos. Zenbu
+Japanese for iPhone and All products now open their pages, `/products/zenbu-japanese-app/` and
 `/products/` ([Products pages](products.md)), from the same entries; so do Log in and Create an
 account where the account pages are open, as on staging and in production
-([Account pages](account.md#pages)), the
-build choosing their addresses as it does the footer's Sign in. #650 asked for menu items to appear only once their page
-exists; the owner chose to show them now as `#` placeholders instead (#648). Every one is in one
-list, `linkTargets` in
+([Account pages](account.md#pages)), the build choosing their addresses as it does the footer's Sign
+in. #650 asked for menu items to appear only once their page exists; the owner chose to show them
+now as `#` placeholders instead (#648). Every one is in one list, `linkTargets` in
 `src/lib/site.ts`, named for what it stands for, and its links carry `data-link-target` with its id.
 A browser test lists every `#` link the site renders and fails on one that isn't in that list, so
 none reaches production unnoticed; replacing a placeholder means giving its entry the real address,
@@ -1179,20 +1177,22 @@ encoded, so a query never looks like a file. `.` and `..` can't be paths, so the
 **Indexing.** The dictionary home, word pages, and results pages that list a word, or whose kanji
 row shows the details of a kanji with meanings or readings, are indexable. A one-kanji search that
 lists no word and whose kanji has no meanings or readings (about 475 of 13,108, such as 㐂), a search
-that finds nothing or only example sentences, `/dictionary/search/` itself, the JSON routes that
-load examples into a page (a word's, a search's, and a conjugated form's), and
-`/dictionary/service.json` (whether the site reaches its dictionary service, for CI) are `noindex`.
-Only production is indexed at all; staging sends `X-Robots-Tag: noindex` and disallows crawling (see
-[`docs/agents/web.md`](../../../../docs/agents/web.md)). Staging and production write their
-canonical URLs on their own host: staging's canonical tags name `https://staging.zenbujapanese.com`
-(smoke "canonical tags name …"); local development writes production's.
+that finds nothing or only example sentences, an English sentence's word list, `/dictionary/search/`
+itself, the JSON routes that load examples into a page (a word's, a search's, and a conjugated
+form's), and `/dictionary/service.json` (whether the site reaches its dictionary service, for CI)
+are `noindex`. Only production is indexed at all; staging sends `X-Robots-Tag: noindex` and
+disallows crawling (see [`docs/agents/web.md`](../../../../docs/agents/web.md)). Staging and
+production write their canonical URLs on their own host: staging's canonical tags name
+`https://staging.zenbujapanese.com` (smoke "canonical tags name …"); local development writes
+production's.
 
 - Source: #465; #466; the owner's decision of 2026-09-29 (a new dictionary page is indexed unless
-  the SEO review takes it out); ADR 0010 (a kanji's details keep the rule the kanji page had).
-- Check: smoke "a search that finds nothing is noindex, and a kanji's search is indexable", and in
-  production, no `X-Robots-Tag` on 見る's page, 見's search, or eat's search; the JSON routes'
-  `route.test.ts` files (`X-Robots-Tag: noindex`), including
-  `src/app/dictionary/conjugations/[file]/route.test.ts` and
+  the SEO review takes it out); ADR 0010 (a kanji's details keep the rule the kanji page had); #756
+  (anyone could make an English sentence's page, under any title).
+- Check: smoke "a search that finds nothing is noindex, and a kanji's search is indexable" and "an
+  English sentence's search is noindex", and in production, no `X-Robots-Tag` on 見る's page, 見's
+  search, or eat's search; the JSON routes' `route.test.ts` files (`X-Robots-Tag: noindex`),
+  including `src/app/dictionary/conjugations/[file]/route.test.ts` and
   `src/app/dictionary/service.json/route.test.ts`; search pages:
   `src/lib/dictionary/results/links.test.ts`, "isIndexable".
 
