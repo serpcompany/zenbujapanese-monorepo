@@ -171,20 +171,31 @@ needs a checkout. It:
 
 ## Pinned actions
 
-The release job holds the bucket's token, and the image's jobs can push to the package and sign,
-so the actions they run are pinned by commit SHA. `anthropics/claude-code-action` is pinned too,
-to v1.0.247. It was pinned because v1.0.248 seemed to fail every run, but a revoked
-`CLAUDE_CODE_OAUTH_TOKEN` failed them, and v1.0.247 failed the same way ([`ci-agents.md`](ci-agents.md), Claude's app and token). Moving it to the latest release, once a review passes with a renewed token, is in
-[`harness-debt.md`](../harness-debt.md). Elsewhere, actions are named by major-version tag, such as `actions/checkout@v5`. To update a
-pinned one, pin the new release's commit and change this table in the same pull request.
+A workflow that reads a secret runs every action at a pinned commit. A tag such as `@v5` can be
+moved to new code, which would then run with the bucket's token, the registry's, Cloudflare's, or
+Claude's. Those are the release workflow, the three deploy workflows, and the three that run
+Claude; a workflow with no secret names its actions by major-version tag.
+`tools/checks/src/workflow-rules.test.ts` holds the pins, and this table, to that.
+
+- `anthropics/claude-code-action` is at v1.0.247. It was pinned there because v1.0.248 seemed to
+  fail every run, but a revoked `CLAUDE_CODE_OAUTH_TOKEN` failed them, and v1.0.247 failed the
+  same way ([`ci-agents.md`](ci-agents.md), Claude's app and token). Moving it to the latest
+  release, once a review passes with a renewed token, is in
+  [`harness-debt.md`](../harness-debt.md).
+- `pnpm/action-setup` is at v6.0.10, the commit its `v6` tag named when it was pinned.
+
+To update one, pin the new release's commit and change this table in the same pull request.
 
 | Action | Commit | Version | Used in |
 | --- | --- | --- | --- |
-| `actions/checkout` | `fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09` | v5.1.0 | `.github/workflows/language-data-release.yml`; the `staging` and `production` jobs of `.github/workflows/dictionary-api-deploy.yml` and `.github/workflows/account-api-deploy.yml` |
+| `actions/checkout` | `fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09` | v5.1.0 | `.github/workflows/account-api-deploy.yml`, `.github/workflows/claude.yml`, `.github/workflows/code-review.yml`, `.github/workflows/dictionary-api-deploy.yml`, `.github/workflows/language-data-release.yml`, `.github/workflows/maintenance.yml`, `.github/workflows/web-deploy.yml` |
+| `actions/setup-node` | `a0853c24544627f65ddf259abe73b1d18a591444` | v5.0.0 | `.github/workflows/claude.yml`, `.github/workflows/maintenance.yml`, `.github/workflows/web-deploy.yml` |
+| `pnpm/action-setup` | `0977fd99725f1db4007ccb2928dbb4e90d06cc86` | v6.0.10 | `.github/workflows/claude.yml`, `.github/workflows/maintenance.yml`, `.github/workflows/web-deploy.yml` |
+| `actions/upload-artifact` | `cf430e030ddbb5b0abf93d22962f4752f3646cd9` | v7.0.2 | `.github/workflows/claude.yml`, `.github/workflows/code-review.yml`, `.github/workflows/maintenance.yml` |
+| `actions/cache` | `caa296126883cff596d87d8935842f9db880ef25` | v5.1.0 | `.github/workflows/dictionary-api-deploy.yml`, `.github/actions/package-language-data/action.yml` |
 | `actions/setup-python` | `ece7cb06caefa5fff74198d8649806c4678c61a1` | v6.3.0 | `.github/actions/package-language-data/action.yml` |
-| `actions/cache` | `caa296126883cff596d87d8935842f9db880ef25` | v5.1.0 | `.github/actions/package-language-data/action.yml` |
-| `docker/setup-buildx-action` | `f87e5991a6d7451dcb8d9637bfbc97413f497069` | v4.4.1 | `.github/workflows/dictionary-api-deploy.yml` |
-| `docker/build-push-action` | `c3c9e263c25d99ce0380d002d59b67737d91b0dc` | v7.4.0 | `.github/workflows/dictionary-api-deploy.yml` |
-| `docker/login-action` | `dbcb813823bdd20940b903addbd779551569679f` | v4.6.0 | `.github/workflows/dictionary-api-deploy.yml` |
-| `sigstore/cosign-installer` | `6f9f17788090df1f26f669e9d70d6ae9567deba6` | v4.1.2, installing cosign v3.1.3 | `.github/workflows/dictionary-api-deploy.yml` |
-| `anthropics/claude-code-action` | `2dca132ff0e0c4094ce6048b422c6915a071210b` | v1.0.247 | `.github/workflows/code-review.yml`, `.github/workflows/claude.yml`, `.github/workflows/maintenance.yml` |
+| `docker/setup-buildx-action` | `f87e5991a6d7451dcb8d9637bfbc97413f497069` | v4.4.1 | `.github/workflows/account-api-deploy.yml`, `.github/workflows/dictionary-api-deploy.yml` |
+| `docker/build-push-action` | `c3c9e263c25d99ce0380d002d59b67737d91b0dc` | v7.4.0 | `.github/workflows/account-api-deploy.yml`, `.github/workflows/dictionary-api-deploy.yml` |
+| `docker/login-action` | `dbcb813823bdd20940b903addbd779551569679f` | v4.6.0 | `.github/workflows/account-api-deploy.yml`, `.github/workflows/dictionary-api-deploy.yml` |
+| `sigstore/cosign-installer` | `6f9f17788090df1f26f669e9d70d6ae9567deba6` | v4.1.2, installing cosign v3.1.3 | `.github/workflows/account-api-deploy.yml`, `.github/workflows/dictionary-api-deploy.yml` |
+| `anthropics/claude-code-action` | `2dca132ff0e0c4094ce6048b422c6915a071210b` | v1.0.247 | `.github/workflows/claude.yml`, `.github/workflows/code-review.yml`, `.github/workflows/maintenance.yml` |

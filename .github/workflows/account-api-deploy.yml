@@ -68,7 +68,7 @@ jobs:
           --health-cmd "pg_isready --username account" --health-interval 2s --health-timeout 5s
           --health-retries 30
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
       - name: Refuse to deploy from an old run started again
         if: github.event_name != 'pull_request'
         uses: ./.github/actions/latest-run

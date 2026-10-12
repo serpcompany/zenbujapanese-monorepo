@@ -71,7 +71,7 @@ jobs:
     env:
       TAG: ${{ inputs.tag }}
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
       - name: Refuse to deploy from an old run started again
         if: github.event_name != 'pull_request'
         uses: ./.github/actions/latest-run
@@ -87,7 +87,7 @@ jobs:
           echo "release=${GITHUB_SHA::12}" >>"$GITHUB_OUTPUT"
       - name: Restore the Git LFS files
         if: env.TAG == ''
-        uses: actions/cache@v5
+        uses: actions/cache@caa296126883cff596d87d8935842f9db880ef25
         with:
           path: .git/lfs/objects
           key: lfs-resources-${{ hashFiles('apps/ios/Modules/Sources/SearchExperience/Resources/*.sqlite3', 'apps/ios/Modules/Sources/SearchExperience/Resources/Kuromoji/**') }}

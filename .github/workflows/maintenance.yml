@@ -32,20 +32,20 @@ jobs:
         if: env.HAS_CLAUDE_TOKEN != 'true'
         run: echo "::notice::CLAUDE_CODE_OAUTH_TOKEN isn't set, so the docs aren't gardened (docs/agents/ci-agents.md, Weekly maintenance)."
 
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
         if: env.HAS_CLAUDE_TOKEN == 'true'
         with:
           fetch-depth: 0
 
-      - uses: pnpm/action-setup@v6
+      - uses: pnpm/action-setup@0977fd99725f1db4007ccb2928dbb4e90d06cc86
         if: env.HAS_CLAUDE_TOKEN == 'true'
         with:
           package_json_file: package.json
 
-      - uses: actions/setup-node@v5
+      - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444
         if: env.HAS_CLAUDE_TOKEN == 'true'
         with:
-          node-version: 22
+          node-version-file: .node-version
           cache: pnpm
           cache-dependency-path: pnpm-lock.yaml
 
@@ -113,7 +113,7 @@ jobs:
 
       - name: Keep the doc gardening transcript
         if: always() && env.HAS_CLAUDE_TOKEN == 'true' && steps.garden.outputs.execution_file != ''
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
         with:
           name: doc-gardening-transcript
           path: ${{ steps.garden.outputs.execution_file }}
@@ -226,20 +226,20 @@ jobs:
           fi
           echo "GARDEN=true" >> "$GITHUB_ENV"
 
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
         if: env.GARDEN == 'true'
         with:
           fetch-depth: 0
 
-      - uses: pnpm/action-setup@v6
+      - uses: pnpm/action-setup@0977fd99725f1db4007ccb2928dbb4e90d06cc86
         if: env.GARDEN == 'true'
         with:
           package_json_file: package.json
 
-      - uses: actions/setup-node@v5
+      - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444
         if: env.GARDEN == 'true'
         with:
-          node-version: 22
+          node-version-file: .node-version
           cache: pnpm
           cache-dependency-path: pnpm-lock.yaml
 
@@ -301,7 +301,7 @@ jobs:
 
       - name: Keep the code gardening transcript
         if: always() && env.GARDEN == 'true' && steps.garden.outputs.execution_file != ''
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
         with:
           name: code-gardening-transcript
           path: ${{ steps.garden.outputs.execution_file }}
@@ -400,17 +400,17 @@ jobs:
       GH_TOKEN: ${{ github.token }}
       TITLE: Weekly repository maintenance
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
         with:
           fetch-depth: 0
 
-      - uses: pnpm/action-setup@v6
+      - uses: pnpm/action-setup@0977fd99725f1db4007ccb2928dbb4e90d06cc86
         with:
           package_json_file: package.json
 
-      - uses: actions/setup-node@v5
+      - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444
         with:
-          node-version: 22
+          node-version-file: .node-version
           cache: pnpm
           cache-dependency-path: pnpm-lock.yaml
 

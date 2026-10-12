@@ -72,22 +72,22 @@ jobs:
             process.exit(1)
           })
 
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
         if: env.ANSWER == 'true'
         with:
           ref: ${{ env.IS_PR == 'true' && format('refs/pull/{0}/head', env.ENTITY_NUMBER) || env.BASE_BRANCH }}
           fetch-depth: 1
           persist-credentials: false
 
-      - uses: pnpm/action-setup@v6
+      - uses: pnpm/action-setup@0977fd99725f1db4007ccb2928dbb4e90d06cc86
         if: env.ANSWER == 'true'
         with:
           package_json_file: package.json
 
-      - uses: actions/setup-node@v5
+      - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444
         if: env.ANSWER == 'true'
         with:
-          node-version: 22
+          node-version-file: .node-version
           cache: pnpm
           cache-dependency-path: pnpm-lock.yaml
 
@@ -132,7 +132,7 @@ jobs:
 
       - name: Keep the transcript
         if: always() && env.ANSWER == 'true' && steps.claude.outputs.execution_file != ''
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
         with:
           name: claude-transcript
           path: ${{ steps.claude.outputs.execution_file }}

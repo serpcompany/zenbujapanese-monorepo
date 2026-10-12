@@ -11,8 +11,9 @@ pull request as the workflow.
 - [`ci-deploys.md`](ci-deploys.md): the workflows that deploy or publish, and the pinned actions.
 
 Every job runs on `ubuntu-latest` and reads the repository's contents only, unless its section
-says otherwise. The pnpm jobs set up pnpm from the root `package.json` and Node 22, and install
-with `pnpm install --frozen-lockfile`.
+says otherwise. The pnpm jobs set up pnpm from the root `package.json` and the Node that
+`.node-version` names, and install with `pnpm install --frozen-lockfile`. Every job has a time
+limit (`tools/checks/src/workflow-rules.test.ts`).
 
 | Workflow | File | Starts on | Section in |
 | --- | --- | --- | --- |
@@ -226,10 +227,11 @@ jobs:
   [`translate.md`](translate.md)), on `macos-26` with the Xcode `.xcode-version` pins, which it selects first (arm64, which
   the `sudachi-swift` binary needs), with up to 4 hours for all of it. It runs only when the
   repository variable `IOS_SWIFT_TESTS` is `on`, or when the workflow is run by hand. Turning it
-  on is the owners' decision, and they have kept it off for the runner's cost: on a private
+  on is the owners' decision. It was first kept off for the runner's cost: on a private
   repository a macOS minute counts ten times a Linux one. This repository is public, where
-  GitHub's standard runners, `macos-26` among them, are free, so what turning it on costs now is
-  the time a run takes. Until then nothing tests the app on iPad or the Mac before merge.
+  GitHub's standard runners, `macos-26` among them, are free, so what turning it on costs is the
+  time a run takes. Asked on 2026-10-11, Francis chose to keep it off for now. Until it is on,
+  nothing tests the app on iPad or the Mac before merge.
   `tools/checks/src/ios-workflow.test.ts` pins both jobs: `contracts` on every pull request,
   `swift` only when it's turned on, and that it runs every suite on every platform.
 

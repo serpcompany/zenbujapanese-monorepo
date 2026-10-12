@@ -113,7 +113,8 @@ const languagesByName: Record<string, Language> = {
   '.editorconfig': 'hash-lines',
   '.shellcheckrc': 'hash-lines',
   '.housekeeping': 'hash-lines',
-  '.xcode-version': 'hash-lines'
+  '.xcode-version': 'hash-lines',
+  '.node-version': 'hash-lines'
 }
 
 const proseAndData = new Set([
