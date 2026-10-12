@@ -112,6 +112,10 @@ not as passed. A website change needs this evidence in its pull request (`docs/a
 - The server is enabled for this repository in `.claude/settings.json`; `npx` downloads the pinned
   version on first use. Chrome must be installed. Recording needs ffmpeg
   (`winget install ffmpeg`, `brew install ffmpeg`).
+- Without Google Chrome, the first page tool fails with `Could not find Google Chrome executable`.
+  Install Chrome, or add `--executablePath "<a Chromium>"` to the local override below: the Chrome
+  for Testing that `pnpm exec playwright install chromium` downloads works (on macOS, under
+  `~/Library/Caches/ms-playwright/`).
 - Without a display (a cloud or CI agent), add `--headless` with a local override from the
   repository root, which Claude Code prefers to the project's entry:
   `claude mcp add chrome-devtools --scope local -- npx -y chrome-devtools-mcp@1.10.1 --isolated --headless --experimental-screencast --no-usage-statistics --no-performance-crux`
