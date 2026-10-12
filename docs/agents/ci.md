@@ -36,6 +36,12 @@ with `pnpm install --frozen-lockfile`.
 `pnpm-lock.yaml`, or `pnpm-workspace.yaml` counts as changing it. A change to a workflow's own file
 starts it too.
 
+GitHub also runs four workflows that have no file here, turned on in the repository's settings:
+`CodeQL`, code scanning's default setup, on `main` and on every pull request; `Dependency Graph`;
+and Copilot's two, `Copilot` (its pull request reviewer) and `Copilot cloud agent`, which last ran
+in September 2026. `gh api repos/serpcompany/zenbujapanese-monorepo/actions/workflows` lists them.
+None is a check a merge waits for.
+
 ## Checks a merge can wait for
 
 `main`'s ruleset requires no status check yet ([`harness-debt.md`](../harness-debt.md), Checks), so a
