@@ -1,6 +1,7 @@
 import { spawn, spawnSync } from 'node:child_process'
 import {
   existsSync,
+  linkSync,
   mkdirSync,
   readdirSync,
   readFileSync,
@@ -13,6 +14,7 @@ import {
 import { join, resolve } from 'node:path'
 import { pathToFileURL } from 'node:url'
 import { parseEnv } from 'node:util'
+import { withoutGitLocation } from './route.mjs'
 
 export const mainPorts = { site: 3000, e2e: 3100, preview: 8787, dictionary: 8788 }
 export const roles = Object.keys(mainPorts)
@@ -52,7 +54,11 @@ export function portsFor(slot) {
 }
 
 function git(folder, ...command) {
-  const result = spawnSync('git', command, { cwd: folder, encoding: 'utf8' })
+  const result = spawnSync('git', command, {
+    cwd: folder,
+    encoding: 'utf8',
+    env: withoutGitLocation(process.env)
+  })
   return result.status === 0 ? result.stdout : undefined
 }
 
@@ -94,13 +100,17 @@ function claimsIn(folder) {
 const pause = milliseconds =>
   Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, milliseconds)
 
+const abandoned = lock => Date.now() - statSync(lock).mtimeMs >= lockAbandonedAfter
+
 function breakAbandoned(lock) {
+  const aside = `${lock}.${process.pid}`
   try {
-    if (Date.now() - statSync(lock).mtimeMs < lockAbandonedAfter) return
-    const aside = `${lock}.${process.pid}`
+    if (!abandoned(lock)) return
     renameSync(lock, aside)
-    rmSync(aside, { recursive: true, force: true })
+    if (abandoned(aside)) rmSync(aside, { recursive: true, force: true })
+    else renameSync(aside, lock)
   } catch (error) {
+    rmSync(aside, { recursive: true, force: true })
     if (error.code !== 'ENOENT') throw error
   }
 }
@@ -131,47 +141,64 @@ function locked(folder, work) {
 
 const release = (folder, slot) => rmSync(join(folder, String(slot)), { force: true })
 
-function removed(folder, isGone) {
-  if (!existsSync(folder)) return []
-  return locked(folder, () => {
-    const gone = claimsIn(folder).filter(isGone)
-    for (const claim of gone) release(folder, claim.slot)
-    return gone
-  })
+function releaseWhere(folder, isTheirs) {
+  const theirs = claimsIn(folder).filter(isTheirs)
+  for (const claim of theirs) release(folder, claim.slot)
+  return theirs
 }
 
-const prune = (folder, live) => (live ? removed(folder, claim => !live.has(claim.owner)) : [])
+const forgetGone = (folder, worktrees) =>
+  worktrees ? releaseWhere(folder, claim => !worktrees.has(claim.owner)) : []
 
-const giveUp = (folder, owner) => removed(folder, claim => claim.owner === owner)
+const underLock = (folder, work) => (existsSync(folder) ? locked(folder, work) : [])
+
+const prune = (folder, worktreesNow) => underLock(folder, () => forgetGone(folder, worktreesNow()))
+
+const giveUp = (folder, owner) =>
+  underLock(folder, () => releaseWhere(folder, claim => claim.owner === owner))
+
+function claim(draft, slotFile, content) {
+  try {
+    linkSync(draft, slotFile)
+  } catch (error) {
+    if (error.code === 'EEXIST') throw error
+    writeFileSync(slotFile, content, { flag: 'wx' })
+  }
+}
 
 function take(folder, owner) {
-  for (let slot = 1; slot <= lastSlot; slot += 1) {
-    try {
-      writeFileSync(join(folder, String(slot)), `${owner}\n`, { flag: 'wx' })
-      return slot
-    } catch (error) {
-      if (error.code !== 'EEXIST') throw error
+  const content = `${owner}\n`
+  const draft = join(folder, `claim.${process.pid}`)
+  writeFileSync(draft, content)
+  try {
+    for (let slot = 1; slot <= lastSlot; slot += 1) {
+      try {
+        claim(draft, join(folder, String(slot)), content)
+        return
+      } catch (error) {
+        if (error.code !== 'EEXIST') throw error
+      }
     }
+  } finally {
+    rmSync(draft, { force: true })
   }
   throw new Error(
     `Every block of ports is taken (${folder}). Run "node tools/checks/ports.mjs prune".`
   )
 }
 
-function slotOf(folder, owner, live) {
-  const mine = () => claimsIn(folder).find(claim => claim.owner === owner)
-  const held = mine()
+function slotOf(folder, owner, worktreesNow) {
+  const mine = () => claimsIn(folder).filter(each => each.owner === owner)
+  const [held] = mine()
   if (held) return held.slot
   return locked(folder, () => {
-    const claimedMeanwhile = mine()
-    if (claimedMeanwhile) return claimedMeanwhile.slot
-    const worktrees = live()
-    if (worktrees) {
-      for (const claim of claimsIn(folder)) {
-        if (!worktrees.has(claim.owner)) release(folder, claim.slot)
-      }
+    if (mine().length === 0) {
+      forgetGone(folder, worktreesNow())
+      take(folder, owner)
     }
-    return take(folder, owner)
+    const [first, ...extra] = mine()
+    for (const each of extra) release(folder, each.slot)
+    return first.slot
   })
 }
 
@@ -244,7 +271,7 @@ function main([command, ...rest], folder = process.cwd()) {
     return
   }
   if (command === 'prune') {
-    console.log(freed(checkout ? prune(checkout.claims, worktreesIn(folder)) : []))
+    console.log(freed(checkout ? prune(checkout.claims, () => worktreesIn(folder)) : []))
     return
   }
   if (command !== undefined && command !== '--json') return refuse()

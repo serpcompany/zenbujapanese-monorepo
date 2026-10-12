@@ -79,6 +79,16 @@ jobs:
           fetch-depth: 1
           persist-credentials: false
 
+      - name: Take Node's version from main on a branch from before .node-version
+        if: env.ANSWER == 'true' && hashFiles('.node-version') == ''
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh api "repos/$GITHUB_REPOSITORY/contents/.node-version?ref=$BASE_BRANCH" \
+            --header 'Accept: application/vnd.github.raw' > .node-version
+          mkdir -p .git/info
+          echo .node-version >> .git/info/exclude
+
       - uses: pnpm/action-setup@0977fd99725f1db4007ccb2928dbb4e90d06cc86
         if: env.ANSWER == 'true'
         with:

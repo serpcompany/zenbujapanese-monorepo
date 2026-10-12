@@ -279,7 +279,7 @@ dictionary from before the service; they're safe to delete.
 
 To run `pnpm dev` on the whole dictionary, start the service (see
 [`dictionary-api.md`](dictionary-api.md)) and name it in `.dev.vars` in `apps/web`, which is
-never committed. Its address is the `dictionary` line of `pnpm ports`:
+never committed. Its address is the `dictionary` line of `pnpm -w ports`:
 
 ```sh
 DICTIONARY_API_URL=<the service's address>
@@ -512,7 +512,7 @@ the account service ([`account-api.md`](account-api.md); the website's side of i
   failed load keeps it for Try again, and coming back with Back drops it.
 
 To run them locally, run the account service ([`account-api.md`](account-api.md), Run it) with
-`ACCOUNT_API_TRUSTED_ORIGINS` naming this checkout's `site` and `e2e` addresses (`pnpm ports`);
+`ACCOUNT_API_TRUSTED_ORIGINS` naming this checkout's `site` and `e2e` addresses (`pnpm -w ports`);
 `pnpm dev` reads it at `http://localhost:8789`, and `ACCOUNT_API_URL` in `.dev.vars` names another.
 Its dev mailbox, `http://localhost:8789/dev/mail`, holds the codes.
 

@@ -15,10 +15,16 @@ const real = path => {
   }
 }
 
+const gitLocation = ['GIT_DIR', 'GIT_WORK_TREE', 'GIT_INDEX_FILE', 'GIT_COMMON_DIR', 'GIT_PREFIX']
+
+export const withoutGitLocation = environment =>
+  Object.fromEntries(Object.entries(environment).filter(([name]) => !gitLocation.includes(name)))
+
 export function owningCheckout(folder) {
   const found = spawnSync('git', ['rev-parse', '--show-toplevel'], {
     cwd: folder,
-    encoding: 'utf8'
+    encoding: 'utf8',
+    env: withoutGitLocation(process.env)
   })
   const checkout = found.status === 0 ? found.stdout.trim() : ''
   return checkout || undefined

@@ -69,7 +69,8 @@ before polishing the evidence, and take screenshots once, after their changes.
 ## This checkout's ports
 
 Two worktrees that serve on one port test each other's code: Playwright reuses a server it finds
-there. `tools/checks/ports.mjs` hands each checkout its own, and `pnpm ports` prints them:
+there. `tools/checks/ports.mjs` hands each checkout its own, and `pnpm -w ports` prints them,
+from any folder:
 
 | Role | Main checkout | A worktree | Used by |
 | --- | --- | --- | --- |
@@ -81,11 +82,11 @@ there. `tools/checks/ports.mjs` hands each checkout its own, and `pnpm ports` pr
 - **The main checkout** keeps the ports the docs name. So does a CI runner, whose checkout is
   the main one, though its browser tests ask the same script.
 - **A git worktree** claims a block of ten ports the first time anything asks: a file under the
-  repository's `.git/zenbu-ports/` that names the worktree. `pnpm ports delete` gives the block
-  up when the work is finished, and `pnpm ports prune` those of worktrees that are gone, which the
+  repository's `.git/zenbu-ports/` that names the worktree. `pnpm -w ports delete` gives the block
+  up when the work is finished, and `pnpm -w ports prune` those of worktrees that are gone, which the
   next claim does too.
 - **Read the address rather than assume it.** `pnpm dev` prints its own, and a command that
-  needs one takes it from `pnpm ports`.
+  needs one takes it from `pnpm -w ports`.
 - **A `PORT` set in the shell wins,** and so does one in the dictionary service's `.env`. A
   server on its port already fails the next one to start, rather than sharing it.
 - **The account service is one per machine,** on port 8789, with one database: the website's

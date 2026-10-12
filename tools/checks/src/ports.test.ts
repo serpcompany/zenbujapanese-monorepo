@@ -1,16 +1,7 @@
 import { spawn, spawnSync } from 'node:child_process'
-import {
-  mkdirSync,
-  mkdtempSync,
-  readdirSync,
-  realpathSync,
-  rmSync,
-  utimesSync,
-  writeFileSync
-} from 'node:fs'
-import { tmpdir } from 'node:os'
+import { mkdirSync, readdirSync, readFileSync, rmSync, utimesSync, writeFileSync } from 'node:fs'
 import { join } from 'node:path'
-import { afterEach, describe, expect, test } from 'vitest'
+import { describe, expect, test } from 'vitest'
 import {
   firstWorktreePort,
   lastSlot,
@@ -20,25 +11,12 @@ import {
   portsPerWorktree,
   roles
 } from '../ports.mjs'
+import { git, outsideGit, scratchFolder } from './agents/scratch'
 import { readRepositoryFile } from './agents/workflow'
 import { root } from './files'
 
 const script = join(root, 'tools', 'checks', 'ports.mjs')
-const folders: string[] = []
-const scratch = () => {
-  const folder = realpathSync(mkdtempSync(join(tmpdir(), 'zenbu-ports-')))
-  folders.push(folder)
-  return folder
-}
-
-afterEach(() => {
-  for (const folder of folders.splice(0)) rmSync(folder, { recursive: true, force: true })
-})
-
-const git = (folder: string, ...command: string[]) =>
-  spawnSync('git', ['-c', 'user.name=Test', '-c', 'user.email=test@example.com', ...command], {
-    cwd: folder
-  })
+const scratch = () => scratchFolder('ports')
 
 function repository(): string {
   const folder = scratch()
@@ -53,16 +31,23 @@ function worktree(main: string, name: string): string {
   return folder
 }
 
-const withoutPort = () => ({ ...process.env, PORT: undefined })
+const environment = (changes: Record<string, string> = {}) =>
+  outsideGit({ PORT: undefined, ...changes })
 const ports = (folder: string, ...command: string[]) =>
   spawnSync(process.execPath, [script, ...command], {
     cwd: folder,
     encoding: 'utf8',
-    env: withoutPort()
+    env: environment()
   })
 const portsOf = (folder: string): Record<string, number> =>
   JSON.parse(ports(folder, '--json').stdout)
 const block = (slot: number) => portsFor(slot)
+
+function packageFolder(checkout: string): string {
+  const folder = join(checkout, 'apps', 'web')
+  mkdirSync(folder, { recursive: true })
+  return folder
+}
 
 function twoWorktreesWithTheirBlocks() {
   const main = repository()
@@ -79,7 +64,7 @@ const asking = (folder: string) =>
     let said = ''
     const child = spawn(process.execPath, [script, '--json'], {
       cwd: folder,
-      env: withoutPort()
+      env: environment()
     })
     child.stdout.on('data', chunk => {
       said += chunk
@@ -91,7 +76,7 @@ describe('the ports of a checkout', () => {
   test('are the documented ones in the main checkout, which claims nothing', () => {
     const main = repository()
     expect(portsOf(main)).toEqual({ site: 3000, e2e: 3100, preview: 8787, dictionary: 8788 })
-    expect(portsOf(join(main, '.git', '..'))).toEqual(mainPorts)
+    expect(portsOf(packageFolder(main))).toEqual(mainPorts)
     expect(() => claims(main)).toThrow()
   })
 
@@ -102,9 +87,23 @@ describe('the ports of a checkout', () => {
   test("are a worktree's own block, the same each time it asks, from any folder in it", () => {
     const { main, one } = twoWorktreesWithTheirBlocks()
     expect(portsOf(one)).toEqual(block(1))
-    expect(portsOf(join(one, '.git', '..'))).toEqual(block(1))
+    expect(portsOf(packageFolder(one))).toEqual(block(1))
     expect(portsOf(main)).toEqual(mainPorts)
     expect(claims(main)).toEqual(['1', '2'])
+  })
+
+  test("are the worktree's own when git has named another folder, as it does for a hook", () => {
+    const main = repository()
+    const one = worktree(main, 'one')
+    const hook = environment({ GIT_DIR: join(main, '.git', 'worktrees', 'one') })
+    const asked = spawnSync(process.execPath, [script, '--json'], {
+      cwd: packageFolder(one),
+      encoding: 'utf8',
+      env: hook
+    })
+    expect(JSON.parse(asked.stdout)).toEqual(block(1))
+    expect(claims(main)).toEqual(['1'])
+    expect(readFileSync(join(main, '.git', 'zenbu-ports', '1'), 'utf8')).toBe(`${one}\n`)
   })
 
   test('never overlap, and stay below the ports an operating system hands out itself', () => {
@@ -253,7 +252,7 @@ describe('a command run with a role', () => {
     const result = spawnSync(node, [script, 'run', 'site', '--', node, '-e', show], {
       cwd: one,
       encoding: 'utf8',
-      env: { ...process.env, PORT: '4000' }
+      env: environment({ PORT: '4000' })
     })
     expect(result.stdout).toBe('4000 ')
   })

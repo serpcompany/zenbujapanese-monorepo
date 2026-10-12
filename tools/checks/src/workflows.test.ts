@@ -1,9 +1,9 @@
 import { spawnSync } from 'node:child_process'
-import { mkdtempSync, readFileSync, realpathSync, rmSync, writeFileSync } from 'node:fs'
-import { tmpdir } from 'node:os'
+import { readFileSync, writeFileSync } from 'node:fs'
 import { join } from 'node:path'
-import { afterEach, describe, expect, test } from 'vitest'
+import { describe, expect, test } from 'vitest'
 import { parse } from 'yaml'
+import { git as runGit, scratchFolder } from './agents/scratch'
 import { readRepositoryFile, readWorkflow } from './agents/workflow'
 
 const gated = [
@@ -72,24 +72,14 @@ describe('the workflows a merge can be made to wait for', () => {
 })
 
 describe('the changed-paths action', () => {
-  const folders: string[] = []
-  afterEach(() => {
-    for (const folder of folders.splice(0)) rmSync(folder, { recursive: true, force: true })
-  })
-
   const action = parse(readRepositoryFile('.github/actions/changed-paths/action.yml')) as {
     runs: { steps: { run: string }[] }
   }
-  const git = (cwd: string, ...args: string[]) =>
-    spawnSync('git', ['-c', 'user.name=test', '-c', 'user.email=test@example.com', ...args], {
-      cwd,
-      encoding: 'utf8'
-    }).stdout.trim()
+  const git = (cwd: string, ...args: string[]) => runGit(cwd, ...args).stdout.trim()
 
   function clone(): { checkout: string; base: string } {
-    const origin = realpathSync(mkdtempSync(join(tmpdir(), 'zenbu-paths-origin-')))
-    const checkout = realpathSync(mkdtempSync(join(tmpdir(), 'zenbu-paths-clone-')))
-    folders.push(origin, checkout)
+    const origin = scratchFolder('paths-origin')
+    const checkout = scratchFolder('paths-clone')
     git(origin, 'init', '--quiet', '--initial-branch=main')
     writeFileSync(join(origin, 'web.txt'), 'one\n')
     writeFileSync(join(origin, 'app.txt'), 'one\n')

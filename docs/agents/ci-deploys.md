@@ -179,8 +179,8 @@ Claude; a workflow with no secret names its actions by major-version tag.
 
 - `anthropics/claude-code-action` is at v1.0.247. It was pinned there because v1.0.248 seemed to
   fail every run, but a revoked `CLAUDE_CODE_OAUTH_TOKEN` failed them, and v1.0.247 failed the
-  same way ([`ci-agents.md`](ci-agents.md), Claude's app and token). Moving it to the latest
-  release, once a review passes with a renewed token, is in
+  same way ([`ci-agents.md`](ci-agents.md), Claude's app and token). A review ran with the token
+  again on 2026-10-11, so nothing waits on it now; moving the pin to the latest release is in
   [`harness-debt.md`](../harness-debt.md).
 - `pnpm/action-setup` is at v6.0.10, the commit its `v6` tag named when it was pinned.
 

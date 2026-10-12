@@ -105,8 +105,8 @@ Finished work leaves nothing behind (SERP's
   with a comment that links the pull request, only if every acceptance item is done.
 - In a worktree that made Simulators, `python3 apps/ios/Tools/simulator.py delete` removes them
   and the worktree's build folder. `prune` does the same for worktrees that are already gone.
-- In a worktree that ran the site or the dictionary service, `pnpm ports delete` gives up its
-  block of local ports, and `pnpm ports prune` those of worktrees that are gone.
+- In a worktree that ran the site or the dictionary service, `pnpm -w ports delete` gives up its
+  block of local ports, and `pnpm -w ports prune` those of worktrees that are gone.
 - Run the housekeeping script's audit, read every bucket, then apply what it marks safe:
   `bash ~/.agents/skills/serp-housekeeping/scripts/housekeeping.sh`, and again with `--apply`. It
   comes with SERP's `serp-housekeeping` skill; without the skill, do by hand what the standard

@@ -1,31 +1,17 @@
 import { spawnSync } from 'node:child_process'
-import { mkdirSync, mkdtempSync, realpathSync, rmSync, writeFileSync } from 'node:fs'
-import { tmpdir } from 'node:os'
+import { mkdirSync, writeFileSync } from 'node:fs'
 import { join } from 'node:path'
-import { afterEach, expect, test } from 'vitest'
+import { expect, test } from 'vitest'
+import { git, outsideGit, scratchFolder } from './agents/scratch'
 import { root } from './files'
 
-const folders: string[] = []
-const scratch = () => {
-  const folder = realpathSync(mkdtempSync(join(tmpdir(), 'zenbu-hooks-')))
-  folders.push(folder)
-  return folder
-}
-
-afterEach(() => {
-  for (const folder of folders.splice(0)) rmSync(folder, { recursive: true, force: true })
-})
+const scratch = () => scratchFolder('hooks')
 
 const run = (script: string, input: object, inGitHubActions = false) =>
   spawnSync(process.execPath, [join(root, 'tools', 'checks', script)], {
     input: JSON.stringify(input),
     encoding: 'utf8',
-    env: { ...process.env, GITHUB_ACTIONS: inGitHubActions ? 'true' : '' }
-  })
-
-const git = (checkout: string, ...args: string[]) =>
-  spawnSync('git', ['-c', 'user.name=Test', '-c', 'user.email=test@example.com', ...args], {
-    cwd: checkout
+    env: outsideGit({ GITHUB_ACTIONS: inGitHubActions ? 'true' : '' })
   })
 
 function committed(checkout: string): string {
@@ -36,7 +22,7 @@ function committed(checkout: string): string {
 
 function otherCheckout(script: string, installed: boolean): string {
   const checkout = scratch()
-  spawnSync('git', ['init', '--quiet'], { cwd: checkout })
+  git(checkout, 'init', '--quiet')
   mkdirSync(join(checkout, 'tools', 'checks'), { recursive: true })
   writeFileSync(
     join(checkout, 'tools', 'checks', script),

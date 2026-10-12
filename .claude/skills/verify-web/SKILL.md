@@ -15,8 +15,8 @@ The `chrome-devtools` MCP server in `.mcp.json` opens its own Chrome with a temp
 ## 1. Run the site
 
 Pick the smallest setup that shows the change. This checkout serves on its own ports, which
-`pnpm ports` prints from the repository root (`docs/agents/verification.md`, This checkout's
-ports), so a site running in another worktree is no reason to stop.
+`pnpm -w ports` prints from any folder (`docs/agents/verification.md`, This checkout's ports),
+so a site running in another worktree is no reason to stop.
 
 - **On fixtures**: `pnpm dev` in `apps/web` serves the `site` address, and prints it
   (`http://localhost:3000/` in the main checkout). Without a dictionary service, dictionary pages

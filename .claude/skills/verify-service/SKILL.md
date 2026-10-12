@@ -9,8 +9,9 @@ Each service's tests call its routes in the test process. This skill is the look
 thing: the service started as `pnpm dev` starts it, asked over HTTP, with the answers kept. What
 should keep working stays a test in the service (`pnpm test` in its folder).
 
-One machine runs several checkouts. The script below starts the service from this checkout, and
-refuses to run while another process holds the port, so an answer is never another checkout's.
+One machine runs several checkouts. The script below starts the service from this checkout,
+refuses to run while anything already answers at its address, and stops if the process it
+started isn't the one answering, so an answer is never another checkout's.
 
 ## 1. Find the routes the change touches
 
@@ -38,7 +39,7 @@ The script does each part of a run:
   folder, the service, and its address.
 - **Launch.** It starts the service from this checkout, without the restart-on-change `pnpm dev`
   adds, and with its log in `service.log`. The dictionary service listens on this checkout's
-  `dictionary` port (`pnpm ports`, `docs/agents/verification.md`); the account service on 8789,
+  `dictionary` port (`pnpm -w ports`, `docs/agents/verification.md`); the account service on 8789,
   which is one per machine. `/healthz` answering 200 is the ready signal, and a service that
   never gets there stops the run and prints the end of its log.
 - **Doctor.** `doctor.txt` says which folder the process runs from, its address, the commit, and

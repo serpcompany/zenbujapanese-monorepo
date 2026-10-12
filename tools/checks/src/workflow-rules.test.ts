@@ -27,6 +27,11 @@ const filterOf = (path: string) => {
   const step = workflowSteps(path).find(each => each.uses === './.github/actions/changed-paths')
   return step ? String(step.with?.paths ?? '').split(/\s+/) : undefined
 }
+const shipsOnPush = workflows.filter(path => /-(deploy|release|build)\.yml$/.test(path))
+const versionFiles = [
+  ['node-version-file', '.node-version'],
+  ['python-version-file', '.python-version']
+]
 const byCommit = /^[\w.-]+\/[\w.-]+@[0-9a-f]{40}$/
 const pinsTable = readRepositoryFile('docs/agents/ci-deploys.md').split('\n')
 const readsASecret = workflows.filter(path => readRepositoryFile(path).includes('secrets.'))
@@ -36,6 +41,13 @@ describe('every workflow', () => {
     expect(workflows.length).toBeGreaterThan(10)
     expect(actions).toContain(`${actionsFolder}/latest-run/action.yml`)
     expect(readsASecret).toContain('.github/workflows/web-deploy.yml')
+    expect(shipsOnPush).toEqual([
+      '.github/workflows/account-api-deploy.yml',
+      '.github/workflows/dictionary-api-deploy.yml',
+      '.github/workflows/language-data-build.yml',
+      '.github/workflows/language-data-release.yml',
+      '.github/workflows/web-deploy.yml'
+    ])
   })
 
   test.each(workflows)('%s gives each job a time limit', path => {
@@ -68,6 +80,25 @@ describe('every workflow', () => {
   })
 
   test.each(
+    workflows
+  )("%s takes main's version file where a job checks out a ref of its own choosing", path => {
+    for (const [name, job] of Object.entries(readWorkflow(path).jobs)) {
+      const steps = job.steps ?? []
+      const checkout = steps.findIndex(
+        step => step.uses?.startsWith('actions/checkout@') && step.with?.ref !== undefined
+      )
+      if (checkout === -1) continue
+      for (const [key, file] of versionFiles) {
+        const setUp = steps.findIndex(step => step.with?.[key] === file)
+        if (setUp === -1) continue
+        const fallback = steps.findIndex(step => step.if?.includes(`hashFiles('${file}') == ''`))
+        expect(fallback, `${path}: ${name}`).toBeGreaterThan(checkout)
+        expect(fallback, `${path}: ${name}`).toBeLessThan(setUp)
+      }
+    }
+  })
+
+  test.each(
     workflows.filter(path => filterOf(path) !== undefined)
   )('%s works again when a version file it reads changes', path => {
     const text = [path, ...used(path).filter(isLocal).map(fileOf)]
@@ -80,6 +111,16 @@ describe('every workflow', () => {
       ['.xcode-version', '.xcode-version']
     ]) {
       if (text.includes(reads)) expect(filter, `${path}: ${file}`).toContain(file)
+    }
+  })
+
+  test.each(shipsOnPush)('%s starts on a push that changes a version file it builds with', path => {
+    const push = readWorkflow(path).on.push as { paths?: string[] } | undefined
+    const text = [path, ...used(path).filter(isLocal).map(fileOf)]
+      .map(readRepositoryFile)
+      .join('\n')
+    for (const [key, file] of versionFiles) {
+      if (text.includes(key)) expect(push?.paths, `${path}: ${file}`).toContain(file)
     }
   })
 

@@ -1,3 +1,6 @@
+import { spawnSync } from 'node:child_process'
+import { readFileSync, writeFileSync } from 'node:fs'
+import { join } from 'node:path'
 import { describe, expect, test } from 'vitest'
 import {
   claudeResult,
@@ -5,6 +8,7 @@ import {
   expectFailureUnlessClaudeFinished,
   minutesAfter
 } from './guards'
+import { git, outsideGit, scratchFolder } from './scratch'
 import {
   allowedTools,
   claudeStep,
@@ -258,6 +262,57 @@ describe('the fork check before an @claude request', () => {
     expect(status).not.toBe(0)
     expect(output).toContain('404')
     expect(files['env.txt']).toBe('')
+  })
+})
+
+describe('the Node an @claude request sets up', () => {
+  const checkoutIndex = steps.findIndex(step => step.uses?.startsWith('actions/checkout'))
+  const nodeIndex = steps.findIndex(step => step.uses?.startsWith('actions/setup-node'))
+  const fallbackIndex = steps.findIndex(step => step.run?.includes('contents/.node-version'))
+  const fallback = steps[fallbackIndex]
+
+  function olderBranch(gh: string) {
+    const checkout = scratchFolder('claude-node')
+    const tools = scratchFolder('claude-node-tools')
+    git(checkout, 'init', '--quiet')
+    git(checkout, 'commit', '--quiet', '--allow-empty', '--message', 'Before the version file')
+    writeFileSync(join(tools, 'gh'), `#!/bin/sh\n${gh}\n`, { mode: 0o755 })
+    const result = spawnSync('bash', ['-e', '-o', 'pipefail', '-c', fallback.run ?? ''], {
+      cwd: checkout,
+      encoding: 'utf8',
+      env: outsideGit({
+        PATH: `${tools}:${process.env.PATH}`,
+        GITHUB_REPOSITORY: repository,
+        BASE_BRANCH: 'main',
+        ASKED: join(tools, 'asked.txt')
+      })
+    })
+    return { checkout, tools, result }
+  }
+
+  test("is main's on a branch from before .node-version: the workflow's file is main's, the checkout the branch's", () => {
+    expect(String(steps[checkoutIndex].with?.ref)).toContain("format('refs/pull/{0}/head'")
+    expect(fallbackIndex).toBeGreaterThan(checkoutIndex)
+    expect(fallbackIndex).toBeLessThan(nodeIndex)
+    expect(fallback.if).toBe("env.ANSWER == 'true' && hashFiles('.node-version') == ''")
+    expect(fallback.env?.GH_TOKEN).toBe('${{ github.token }}')
+    expect(steps[nodeIndex].with?.['node-version-file']).toBe('.node-version')
+  })
+
+  test("writes main's version where setup-node reads it, and keeps it out of what Claude can commit", () => {
+    const { checkout, tools, result } = olderBranch('echo "$@" > "$ASKED"; echo 22')
+    expect(result.status, result.stderr).toBe(0)
+    expect(readFileSync(join(checkout, '.node-version'), 'utf8')).toBe('22\n')
+    expect(readFileSync(join(tools, 'asked.txt'), 'utf8')).toContain(
+      `api repos/${repository}/contents/.node-version?ref=main --header Accept: application/vnd.github.raw`
+    )
+    expect(git(checkout, 'status', '--porcelain', '--untracked-files=all').stdout).toBe('')
+    expect(git(checkout, 'add', '--all').status).toBe(0)
+    expect(git(checkout, 'diff', '--cached', '--name-only').stdout).toBe('')
+  })
+
+  test("fails the job when main's version can't be read", () => {
+    expect(olderBranch('exit 1').result.status).not.toBe(0)
   })
 })
 

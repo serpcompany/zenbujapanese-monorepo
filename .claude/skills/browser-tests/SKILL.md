@@ -25,7 +25,7 @@ pnpm test:e2e                                          # everything, before a pu
 Leave out the `--` pnpm scripts usually take: pnpm passes it on, and Playwright then reads every
 option after it as a file filter.
 
-- **Locally** the suite starts `next dev` on this checkout's `e2e` port (`pnpm ports`; 3100 in the
+- **Locally** the suite starts `next dev` on this checkout's `e2e` port (`pnpm -w ports`; 3100 in the
   main checkout) with `ZENBU_DICTIONARY_FIXTURES=1`, which makes the site read the fixtures even
   when `.dev.vars` names a dictionary service, and reuses a server already on that port, which only
   this checkout's runs start. `E2E_BASE_URL=<url>` runs against a server you started instead.

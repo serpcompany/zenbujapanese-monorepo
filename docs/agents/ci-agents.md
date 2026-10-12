@@ -97,14 +97,16 @@ the workflow, holds that queue, so a comment that doesn't ask can't displace a w
 GitHub keeps only one waiting run per queue, though: a third request while one runs and one
 waits replaces the waiting one, so ask again after the first finishes.
 
-- **Where it works.** On a pull request it checks out the pull request's head and may push fixes
-  to its branch, which starts a re-review (Code review, above); on an issue it branches from
-  `main` and links a pull request to open. It sets up pnpm and Node as `Repository` does and
-  installs every package (`pnpm install --frozen-lockfile --ignore-scripts --ignore-pnpmfile`, so
-  no install script or pnpmfile hook runs), since the edit hook needs the checks' dependencies and
-  a fix may touch any package. The checkout keeps no token in the working tree (`persist-credentials: false`); the
-  action sets up its own for pushing. It runs the pull request's own code when it checks it, so
-  ask it only on a pull request whose code you trust.
+- **Where it works.** On a pull request it checks out the pull request's head and may push fixes to
+  its branch, which starts a re-review (Code review, above); on an issue it branches from `main` and
+  links a pull request to open. It sets up pnpm and Node as `Repository` does and installs every
+  package (`pnpm install --frozen-lockfile --ignore-scripts --ignore-pnpmfile`, so no install script
+  or pnpmfile hook runs), since the edit hook needs the checks' dependencies and a fix may touch any
+  package. The workflow's file is `main`'s while the checkout is the branch's, so on a branch from
+  before `.node-version` it takes `main`'s copy, and keeps it out of what git sees there. The
+  checkout keeps no token in the working tree (`persist-credentials: false`); the action sets up its
+  own for pushing. It runs the pull request's own code when it checks it, so ask it only on a pull
+  request whose code you trust.
 - **The rules it follows.** A file appended to its system prompt says to follow `AGENTS.md`,
   `ARCHITECTURE.md`, [`code.md`](code.md), and `CONTEXT.md`; before pushing, to run `pnpm verify`
   and then `pnpm check` for each package it changed, and to push nothing and say why if one still

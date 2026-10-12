@@ -105,7 +105,8 @@ reason, and because workflow files here hold no comments.
 
 ## Web
 
-`.github/workflows/web.yml` checks pull requests that change `apps/web/**` or the core. In
+`.github/workflows/web.yml` checks pull requests that change `apps/web/**`, the core, or
+`tools/checks/ports.mjs`, which hands the browser tests their port. In
 `apps/web`, it runs ShellCheck 0.11 on the scripts in `apps/web/scripts/`, at warning level, in
 Docker, since the runner's own ShellCheck is older; checks that `cloudflare-env.d.ts` is what
 `pnpm cf-typegen` writes from `wrangler.jsonc`, and that it writes no other file, so a binding
@@ -139,15 +140,15 @@ the core. Those tests need no data: the app-recorded suites run through the core
 
 `.github/workflows/dictionary-api.yml` checks the dictionary service on pull requests that change
 the service, the core, what the services share (`packages/node-service/`), its API reference
-(`docs/api/dictionary-api.md`, which its tests write), the website's
-dictionary code (`apps/web/src/lib/dictionary/`,
-`apps/web/src/components/dictionary/`, `apps/web/src/test/`, `apps/web/vitest.config.ts`), the conformance suites
-(`apps/ios/LanguageData/Conformance/`), the app's resources
-(`apps/ios/Modules/Sources/SearchExperience/Resources/`), or `language-data/release.json` (the
-release the service names), and by hand. A new push cancels the pull request's last run. Its
-`scripts` job runs ShellCheck 0.11 on the server's deployer (`deploy/deployer.sh`), in Docker,
-since the runner's own ShellCheck is older; `Repository`'s `pnpm verify` runs ShellCheck on it
-too, on any pull request that changes it. Its `check` job:
+(`docs/api/dictionary-api.md`, which its tests write), the website's dictionary code
+(`apps/web/src/lib/dictionary/`, `apps/web/src/components/dictionary/`, `apps/web/src/test/`,
+`apps/web/vitest.config.ts`, and what gives the gate its address, `apps/web/e2e/server.ts` and
+`tools/checks/ports.mjs`), the conformance suites (`apps/ios/LanguageData/Conformance/`), the app's
+resources (`apps/ios/Modules/Sources/SearchExperience/Resources/`), or `language-data/release.json`
+(the release the service names), and by hand. A new push cancels the pull request's last run. Its
+`scripts` job runs ShellCheck 0.11 on the server's deployer (`deploy/deployer.sh`), in Docker, since
+the runner's own ShellCheck is older; `Repository`'s `pnpm verify` runs ShellCheck on it too, on any
+pull request that changes it. Its `check` job:
 
 1. restores and pulls the app's Git LFS files the service reads (the `.sqlite3` files and
    Kuromoji's), then Sudachi's dictionary (`pnpm sudachi`, which keeps a cached copy that matches
@@ -174,12 +175,12 @@ it. See [`dictionary-api.md`](dictionary-api.md), Check it.
 
 ## Account API
 
-`.github/workflows/account-api.yml` checks the account service on pull requests that change it,
-what the services share (`packages/node-service/`), its API reference (`docs/api/account-api.md`,
-which its tests write), or what the website's account pages are built from (`apps/web/src/`, the
-browser test against the service with `apps/web/e2e/test.ts` and `apps/web/playwright.config.ts`,
-and the site's `next.config.ts`, `package.json`, and `wrangler.jsonc`), and by hand. A new push
-cancels the pull
+`.github/workflows/account-api.yml` checks the account service on pull requests that change it, what
+the services share (`packages/node-service/`), its API reference (`docs/api/account-api.md`, which
+its tests write), or what the website's account pages are built from (`apps/web/src/`, the browser
+test against the service with `apps/web/e2e/test.ts`, `apps/web/playwright.config.ts`, and what
+gives it its port, `apps/web/e2e/server.ts` and `tools/checks/ports.mjs`, and the site's
+`next.config.ts`, `package.json`, and `wrangler.jsonc`), and by hand. A new push cancels the pull
 request's last run. The deployer and the backups script (`deploy/deployer.sh`,
 `apps/account-api/deploy/backups.sh`) are ShellChecked by `Repository`'s `pnpm verify`.
 

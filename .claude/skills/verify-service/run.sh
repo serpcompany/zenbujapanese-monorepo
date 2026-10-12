@@ -28,16 +28,23 @@ case "$service" in
   *) usage ;;
 esac
 port=${base##*:}
-run="tmp/agent/verify/$(date +%F)-$name"
-mkdir -p "$run"
-log="$root/$run/service.log"
 
-holder=$(lsof -nP -iTCP:"$port" -sTCP:LISTEN -t 2>/dev/null | head -n 1)
-if [ -n "$holder" ]; then
-  echo "Port $port is taken by process $holder, running from $(lsof -a -p "$holder" -d cwd -Fn | sed -n 's/^n//p')."
+listener() {
+  lsof -nP -iTCP:"$port" -sTCP:LISTEN -t 2>/dev/null | head -n 1
+}
+
+answered=0
+curl -s -o /dev/null --max-time 2 "$base/healthz" || answered=$?
+if [ "$answered" -ne 7 ]; then
+  holder=$(listener)
+  echo "Something already answers at $base${holder:+ (process $holder, running from $(lsof -a -p "$holder" -d cwd -Fn | sed -n 's/^n//p'))}."
   echo "Stop it first: this run checks the service this checkout starts, and no other."
   exit 1
 fi
+
+run="tmp/agent/verify/$(date +%F)-$name"
+mkdir -p "$run"
+log="$root/$run/service.log"
 
 secrets=$(mktemp -d)
 pid=
@@ -71,14 +78,15 @@ for _ in $(seq 1 120); do
   fi
   sleep 2
 done
-if [ -z "$healthy" ]; then
-  echo "The service didn't become healthy at $base/healthz. The end of its log ($run/service.log):"
+holder=$(listener)
+if [ -z "$healthy" ] || ! kill -0 "$pid" 2>/dev/null || [ "${holder:-$pid}" != "$pid" ]; then
+  echo "The service this run started isn't what answers at $base/healthz. The end of its log ($run/service.log):"
   tail -n 15 "$log"
   exit 1
 fi
 
 {
-  echo "service: $service, started from $(lsof -a -p "$pid" -d cwd -Fn | sed -n 's/^n//p')"
+  echo "service: $service, started by this run from $root/$folder"
   echo "address: $base (process $pid)"
   echo "commit: $(git rev-parse --short HEAD) on $(git branch --show-current), $(git status --porcelain | wc -l | tr -d ' ') files changed since"
   echo "health: $(cat "$run/healthz.json")"
