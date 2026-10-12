@@ -5,10 +5,10 @@ import { type RubySegment, rubySegments } from '../detail/ruby'
 import { graphemeCount, isKanjiCharacter } from '../detail/text'
 import { exactExampleCountLimit } from '../examples/retrieval'
 import { discoveredWordLimit } from '../search/composition'
-import { normalizeQuery } from '../search/query'
+import { isASCII, normalizeQuery } from '../search/query'
 import { comparePresentationRanks } from '../search/rank'
 import type { SearchDatabase, SearchResultItem, SearchResults } from '../search/search'
-import { orderedByFrequency } from './ordering'
+import { firstOfEachGroup, type LookupsByEntry, orderedByFrequency } from './ordering'
 
 export type FrequencyByEntry = ReadonlyMap<string, readonly FrequencyRow[]>
 
@@ -44,18 +44,23 @@ export interface ListedItem {
 export interface ListedResults {
   items: ListedItem[]
   presentation: SearchResults['presentation']
+  resolution: SearchResults['resolution']
   readingRefinement: string | null
   usesPrimaryEntryExamples: boolean
   leadingLexicalEntryCount: number
 }
 
+const compareWords = (lhs: SearchResultItem, rhs: SearchResultItem) =>
+  lhs.sourceOrder - rhs.sourceOrder
+
 export function listedResults(results: SearchResults): ListedResults {
-  const byRelevance = [...results.items].sort(compareRelevance)
-  const relevance = new Map<string, number>()
+  const compare = results.resolution === 'analyzed' ? compareWords : compareRelevance
+  const byRelevance = [...results.items].sort(compare)
+  const relevance = new Map<SearchResultItem, number>()
   let rank = 0
   for (const [index, item] of byRelevance.entries()) {
-    if (index > 0 && compareRelevance(byRelevance[index - 1], item) !== 0) rank += 1
-    relevance.set(item.entry.id, rank)
+    if (index > 0 && compare(byRelevance[index - 1], item) !== 0) rank += 1
+    relevance.set(item, rank)
   }
   return {
     items: results.items.map(item => ({
@@ -65,10 +70,11 @@ export function listedResults(results: SearchResults): ListedResults {
       reading: item.entry.reading,
       entrySummary: item.entry.summary,
       matchedSummary: item.matchedSummary,
-      relevance: relevance.get(item.entry.id) ?? 0,
+      relevance: relevance.get(item) ?? 0,
       fallbackOrder: item.fallbackOrder
     })),
     presentation: results.presentation,
+    resolution: results.resolution,
     readingRefinement: results.readingRefinement,
     usesPrimaryEntryExamples: results.usesPrimaryEntryExamples,
     leadingLexicalEntryCount: results.leadingLexicalEntryCount
@@ -122,8 +128,18 @@ export type SearchResultsScreen =
 const primary = <Item>(items: readonly Item[], headword: (item: Item) => string, query: string) =>
   items.find(item => headword(item) === query) ?? items[0]
 
+const listsOnePerWord = (found: Pick<ListedResults, 'presentation' | 'resolution'>) =>
+  found.presentation === 'discoveredWords' && found.resolution === 'analyzed'
+
+const isEnglishSentence = (
+  found: Pick<ListedResults, 'presentation' | 'resolution'>,
+  query: string
+) => listsOnePerWord(found) && isASCII(query)
+
 export function primaryItem(results: SearchResults, query: string): SearchResultItem | undefined {
-  return primary(results.items, item => item.entry.headword, normalizeQuery(query))
+  const normalized = normalizeQuery(query)
+  if (isEnglishSentence(results, normalized)) return undefined
+  return primary(results.items, item => item.entry.headword, normalized)
 }
 
 export interface ResultsLayout {
@@ -136,6 +152,13 @@ export interface ResultsLayout {
   primary: ListedItem | undefined
   presented: ListedItem[]
   isDiscovered: boolean
+  listsOnePerWord: boolean
+}
+
+export function discoveredWords(layout: ResultsLayout, lookups: LookupsByEntry): ListedItem[] {
+  return layout.listsOnePerWord
+    ? firstOfEachGroup(orderedByFrequency(layout.presented, lookups))
+    : layout.presented
 }
 
 export function resultsLayout(
@@ -148,7 +171,9 @@ export function resultsLayout(
   const leadingOnly = fromRadicals && graphemeCount(query) === 1
   const singleKanji = isKanjiCharacter(query)
   const isDiscovered = results.presentation === 'discoveredWords'
-  const found = primary(results.items, item => item.headword, query)
+  const found = isEnglishSentence(results, query)
+    ? undefined
+    : primary(results.items, item => item.headword, query)
   const sections: ResultsSection[] = []
   const examples =
     exampleCount > 0 ? { title: exampleActionTitle(exampleCount), count: exampleCount } : null
@@ -159,11 +184,13 @@ export function resultsLayout(
   if (readingRefinement) sections.push('readingRefinement')
   if (isDiscovered) sections.push('discoveredWords')
   else if (singleKanji || results.items.length > 0) sections.push('results')
-  const presented = isDiscovered
-    ? results.items.slice(0, discoveredWordLimit)
-    : leadingOnly
-      ? results.items.slice(0, Math.min(results.leadingLexicalEntryCount, results.items.length))
-      : results.items
+  const presented = listsOnePerWord(results)
+    ? results.items.filter(item => item.relevance < discoveredWordLimit)
+    : isDiscovered
+      ? results.items.slice(0, discoveredWordLimit)
+      : leadingOnly
+        ? results.items.slice(0, Math.min(results.leadingLexicalEntryCount, results.items.length))
+        : results.items
   return {
     query,
     isEmpty: results.items.length === 0 && exampleCount === 0 && !singleKanji,
@@ -181,7 +208,8 @@ export function resultsLayout(
         : null,
     primary: found,
     presented,
-    isDiscovered
+    isDiscovered,
+    listsOnePerWord: listsOnePerWord(results)
   }
 }
 
@@ -193,9 +221,10 @@ export function searchResultsScreen(
 ): SearchResultsScreen {
   const layout = resultsLayout(rawQuery, listedResults(results), exampleCount)
   if (layout.isEmpty) return { state: 'noResults', query: layout.query }
+  const lookups: LookupsByEntry = id => defaultFrequencyLookups(frequency.get(id) ?? [])
   const shown = layout.isDiscovered
-    ? layout.presented
-    : orderedByFrequency(layout.presented, id => defaultFrequencyLookups(frequency.get(id) ?? []))
+    ? discoveredWords(layout, lookups)
+    : orderedByFrequency(layout.presented, lookups)
   const rows = shown.map(item => ({
     id: item.id,
     entSeq: item.entSeq,

@@ -4,6 +4,7 @@ import {
   appliedSort,
   filteredResults,
   filterTitles,
+  firstOfEachGroup,
   forgetsSort,
   hiddenCountTitle,
   type LookupsByEntry,
@@ -138,6 +139,19 @@ describe('orderedByFrequency (SearchResultFrequencyOrdering.ordered)', () => {
       '丙'
     ])
     expect(order(results, {})).toEqual(['甲', '乙', '丙'])
+  })
+})
+
+describe('firstOfEachGroup', () => {
+  test('keeps what each group leads with, once, and nothing else of a group whose first is listed', () => {
+    const ordered = [
+      ranked('一', 0),
+      ranked('二', 0),
+      ranked('一', 1),
+      ranked('三', 1),
+      ranked('四', 2)
+    ]
+    expect(firstOfEachGroup(ordered).map(result => result.id)).toEqual(['一', '四'])
   })
 })
 

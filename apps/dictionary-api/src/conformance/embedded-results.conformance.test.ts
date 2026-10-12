@@ -6,6 +6,7 @@ import { type Embedded, embedded, freshInstallEvidence } from './embedded-suppor
 import {
   caseAsShown,
   describeRows,
+  firstItemOfEachEntry,
   recordedCaseAsTheCoreReports,
   type ShownScreen,
   resultsSuite as suite,
@@ -17,7 +18,7 @@ import { artifactAvailable, artifactDatabase, requirePinnedArtifacts } from './s
 type Screen = Extract<LearnerResultsScreen, { state: 'results' }>
 
 function shown(screen: Screen, results: EmbeddedSearchResults): ShownScreen {
-  const items = new Map(results.items.map(item => [item.id, item]))
+  const items = firstItemOfEachEntry(results.items, item => item.id)
   return {
     sections: screen.sections,
     heading: screen.heading,

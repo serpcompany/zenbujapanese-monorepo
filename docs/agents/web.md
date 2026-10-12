@@ -308,8 +308,8 @@ a word or its kanji row has details to show. The KANJI row opens in place to the
 A query full-text search can't read is answered as finding nothing by the service.
 
 With Sudachi, the service analyzes a Japanese sentence as the app does and lists its Discovered
-Words; an English sentence's come from the core's search, with no analyzer (#401). The Example
-Sentences row goes where the sentences are (`examplesTarget` in `results/links.ts`, ADR 0010):
+Words; an English sentence's come from the core's search and results screen, with no analyzer
+(#401). The Example Sentences row goes where the sentences are (`examplesTarget` in `results/links.ts`, ADR 0010):
 
 - To a word page's Examples (`#examples`), when the sentences are that word's: the primary
   entry's for a romaji or deinflected search, or the top result's for a Japanese one.
@@ -365,13 +365,12 @@ that URL names no build, so its answers are kept an hour rather than a day. The 
 spelling as written, since the app's form screen searches it normalized but matches it as written
 (a full-width Ｈ).
 
-Without a service, the rows are local fixtures in `packages/dictionary-core/src/fixtures/`,
-exported from the app's bundled data by the service's own readers (`pnpm --filter
-zenbujapanese-dictionary-api fixtures`), so their shapes can't drift; each fixture word and each
-of its conjugated forms keeps its first 50 examples. Rerun it after changing a row shape; the
-fixture JSON is generated, so Biome skips it. A fixture search lists its words in
-`fixtureSearchOrder`, the app's order: each is its own match group, so the frequency re-sort
-keeps that order.
+Without a service, the rows are local fixtures in `packages/dictionary-core/src/fixtures/`, exported
+from the app's bundled data by the service's own readers (`pnpm --filter
+zenbujapanese-dictionary-api fixtures`), so their shapes can't drift; each fixture word and each of
+its conjugated forms keeps its first 50 examples. Rerun it after changing a row shape; the fixture
+JSON is generated, so Biome skips it. A fixture search lists its words in `fixtureSearchOrder`, the
+app's order: each is its own match group, so the frequency re-sort keeps that order.
 
 ### Browse pages
 

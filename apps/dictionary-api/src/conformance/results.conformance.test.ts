@@ -6,6 +6,7 @@ import {
   caseAsShown,
   defaultFrequencyPackIds,
   describeRows,
+  firstItemOfEachEntry,
   recordedCaseAsTheCoreReports,
   type ShownScreen,
   resultsSuite as suite,
@@ -18,7 +19,7 @@ function shown(
   screen: Extract<SearchResultsScreen, { state: 'results' }>,
   results: Awaited<ReturnType<Dictionary['searchResults']>>
 ): ShownScreen {
-  const items = new Map(results.items.map(item => [item.entry.id, item]))
+  const items = firstItemOfEachEntry(results.items, item => item.entry.id)
   return {
     sections: screen.sections,
     heading: null,

@@ -8,6 +8,7 @@ import {
   type FrequencyByEntry,
   listedResults,
   loadFrequency,
+  primaryItem,
   resultsLayout,
   searchResultsScreen
 } from './results'
@@ -163,6 +164,76 @@ describe('orderedByFrequency (SearchResultFrequencyOrdering.ordered)', () => {
       ['上一', 0],
       ['入る', 1]
     ])
+  })
+})
+
+describe('an English sentence’s words, each with the entries that may be listed for it', () => {
+  const first = { sourceOrder: 0, rank: strongGloss }
+  const second = { sourceOrder: 1, rank: strongGloss }
+  const later = { ...strongGloss, senseOrder: 1 }
+  const atashi = item('私', { ...first, matchedSummary: 'I' })
+  const watashi = item('わたし', { ...first, matchedSummary: 'I' })
+  const boku = item('僕', { ...first, rank: later, matchedSummary: 'I' })
+  const me = item('私', { ...second, id: atashi.entry.id, matchedSummary: 'me' })
+  const ore = item('俺', { ...second, matchedSummary: 'me' })
+  const sentence = results([atashi, watashi, boku, me, ore], {
+    presentation: 'discoveredWords',
+    resolution: 'analyzed'
+  })
+
+  test('a word is one relevance group, whatever the strength of its matches, and an entry may be in two', () => {
+    expect(
+      listedResults(sentence).items.map(listed => [listed.headword, listed.relevance])
+    ).toEqual([
+      ['私', 0],
+      ['わたし', 0],
+      ['僕', 0],
+      ['私', 1],
+      ['俺', 1]
+    ])
+  })
+
+  test('each word lists what the dictionaries rank first among its entries, as its own results would', () => {
+    const shown = (frequency: FrequencyByEntry) => {
+      const screen = searchResultsScreen('i hurt me', sentence, frequency)
+      return screen.state === 'results' ? screen.rows.map(row => [row.headword, row.summary]) : []
+    }
+    expect(shown(new Map())).toEqual([['私', 'I']])
+    expect(shown(frequencyOf([[watashi, [jlpt(5)]]]))).toEqual([
+      ['わたし', 'I'],
+      ['私', 'me']
+    ])
+    expect(
+      shown(
+        frequencyOf([
+          [boku, [jlpt(5)]],
+          [ore, [youtube(9)]]
+        ])
+      )
+    ).toEqual([
+      ['僕', 'I'],
+      ['俺', 'me']
+    ])
+  })
+
+  test('twelve words are listed at most, whatever each brings', () => {
+    const words = Array.from({ length: 14 }, (_, sourceOrder) => [
+      item(`語${sourceOrder}`, { sourceOrder, rank: strongGloss }),
+      item(`他${sourceOrder}`, { sourceOrder, rank: strongGloss })
+    ]).flat()
+    const many = results(words, { presentation: 'discoveredWords', resolution: 'analyzed' })
+    const layout = resultsLayout('a long sentence', listedResults(many), 0)
+    expect(layout.presented).toHaveLength(24)
+    expect(searchResultsScreen('a long sentence', many, new Map())).toMatchObject({
+      resultCount: 12
+    })
+  })
+
+  test('no entry is the primary one of an English sentence; a Japanese sentence’s first word is', () => {
+    expect(primaryItem(sentence, 'I hurt me')).toBeUndefined()
+    expect(resultsLayout('i hurt me', listedResults(sentence), 3).primary).toBeUndefined()
+    expect(primaryItem(sentence, '私が僕を')?.entry.headword).toBe('私')
+    expect(resultsLayout('私が僕を', listedResults(sentence), 3).primary?.headword).toBe('私')
   })
 })
 

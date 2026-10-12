@@ -1,5 +1,7 @@
 import { DatabaseSync } from 'node:sqlite'
 import { describe, expect, test, vi } from 'vitest'
+import type { FrequencyRow } from '../detail/rows'
+import { searchResultsScreen } from '../results/results'
 import { FormKind } from './database'
 import { rankedByStrongGloss, rankedEnglish } from './english'
 import type { MorphologyWord } from './morphology'
@@ -103,34 +105,69 @@ const db = dictionary([
   word('寿司', 'すし', 'sushi', 'sushi'),
   word('日本語', 'にほんご', 'nihongo', 'Japanese (language)'),
   word('勉強', 'べんきょう', 'benkyou', 'study'),
-  word('する', 'する', 'suru', 'to do')
+  word('する', 'する', 'suru', 'to do'),
+  word('兎', 'うさぎ', 'usagi', 'rabbit'),
+  word('人参', 'にんじん', 'ninjin', 'carrot'),
+  word('牝鹿', 'めじか', 'mejika', 'doe'),
+  word('猫', 'ねこ', 'neko', 'cat'),
+  word('キャッツ', 'キャッツ', 'kyattsu', 'cats')
 ])
 
-const listed = (results: SearchResults) => results.items.map(item => item.entry.headword)
+const search = new DictionarySearch(db)
+
+function candidates(results: SearchResults): string[][] {
+  const words: string[][] = []
+  for (const item of results.items) {
+    words[item.sourceOrder] = [...(words[item.sourceOrder] ?? []), item.entry.headword]
+  }
+  return words
+}
+
+async function listed(
+  query: string,
+  jlptLevels: Record<string, number> = {},
+  searching = search
+): Promise<string[]> {
+  const results = await searching.search(query)
+  const frequency = new Map<string, FrequencyRow[]>()
+  for (const { entry } of results.items) {
+    const level = jlptLevels[entry.headword]
+    if (level) frequency.set(entry.id, [{ pack: 'jlpt', level }])
+  }
+  const screen = searchResultsScreen(query, results, frequency)
+  return screen.state === 'results' ? screen.rows.map(row => row.headword) : []
+}
 
 describe('an English sentence', () => {
-  const search = new DictionarySearch(db)
-
-  test('lists the word each of its words means, small words included, in the sentence’s order (#401)', async () => {
+  test('brings, for each of its words in order, small ones included, the entries that mean it (#401)', async () => {
     const results = await search.search('Where is the bathroom?')
-    expect(listed(results)).toEqual(['何処', 'だ', 'その', '浴室'])
+    expect(candidates(results)).toEqual([['何処'], ['だ'], ['その'], ['浴室', '風呂']])
     expect(results.items.map(item => item.matchedSummary)).toEqual([
       'where',
       'is',
       'the',
+      'bathroom',
       'bathroom'
     ])
     expect(results).toMatchObject({ presentation: 'discoveredWords', resolution: 'analyzed' })
   })
 
   test.each([
-    'bathroom',
-    'water',
-    'sushi'
-  ])('lists for 「%s」 the word its own search ranks first', async meaning => {
-    const [first] = (await search.search(meaning)).items
-    const sentence = await search.search(`the ${meaning}`)
-    expect(listed(sentence)).toEqual(['その', first.entry.headword])
+    ['bathroom', {}],
+    ['bathroom', { 風呂: 5 }],
+    ['water', {}],
+    ['water', { お冷や: 5 }],
+    ['sushi', {}],
+    ['sushi', { 握り: 5, 寿司: 1 }]
+  ])('lists for 「%s」 the word its own results lead with, given the JLPT levels %o', async (meaning, levels) => {
+    const [first] = await listed(meaning, levels)
+    expect(await listed(`the ${meaning}`, levels)).toEqual(['その', first])
+  })
+
+  test('lists the word the dictionaries rank as more used, not the first one found', async () => {
+    const sentence = 'where is the bathroom'
+    expect(await listed(sentence)).toEqual(['何処', 'だ', 'その', '浴室'])
+    expect(await listed(sentence, { 風呂: 5, 浴室: 1 })).toEqual(['何処', 'だ', 'その', '風呂'])
   })
 
   test.each([
@@ -150,25 +187,25 @@ describe('an English sentence', () => {
   })
 
   test('leaves out a word that no entry means, though an entry mentions it', async () => {
-    expect(listed(await search.search('his'))).toEqual(['お陰様で'])
-    expect(listed(await search.search('where is his xyzzy bathroom'))).toEqual([
-      '何処',
-      'だ',
-      '浴室'
+    expect(await listed('his')).toEqual(['お陰様で'])
+    expect(candidates(await search.search('where is his xyzzy bathroom'))).toEqual([
+      ['何処'],
+      ['だ'],
+      ['浴室', '風呂']
     ])
   })
 
-  test('lists once a word that two of its words mean, and once a word it repeats', async () => {
-    expect(listed(await search.search('is that the bathroom, the bathroom?'))).toEqual([
-      'だ',
-      'その',
-      '浴室'
-    ])
+  test('brings an entry for each word that means it, and lists it once', async () => {
+    const sentence = 'is that the bathroom, the bathroom?'
+    const results = await search.search(sentence)
+    expect(candidates(results)).toEqual([['だ'], ['その'], ['その'], ['浴室', '風呂']])
+    expect(results.items.slice(1, 3).map(item => item.matchedSummary)).toEqual(['that', 'the'])
+    expect(await listed(sentence)).toEqual(['だ', 'その', '浴室'])
   })
 
   test('is searched as itself when an entry means the whole of it', async () => {
     const results = await search.search('ice cream')
-    expect(listed(results)).toEqual(['アイスクリーム'])
+    expect(candidates(results)).toEqual([['アイスクリーム']])
     expect(results).toMatchObject({ presentation: 'ranked', resolution: 'direct' })
   })
 
@@ -184,8 +221,27 @@ describe('an English sentence', () => {
   test('needs no analyzer and asks none', async () => {
     const analyze = vi.fn(async (): Promise<MorphologyWord[]> => [])
     const analyzing = new DictionarySearch(db, { morphology: { analyze } })
-    expect(listed(await analyzing.search('where is the bathroom'))).toHaveLength(4)
+    expect(candidates(await analyzing.search('where is the bathroom'))).toHaveLength(4)
     expect(analyze).not.toHaveBeenCalled()
+  })
+})
+
+describe('an English word that no entry means as it is written', () => {
+  test('brings the entries of its base form, and an irregular form brings none', async () => {
+    const results = await search.search('The rabbits ate carrots.')
+    expect(candidates(results)).toEqual([['その'], ['兎'], ['人参']])
+    expect(results.items.map(item => item.matchedSummary)).toEqual(['the', 'rabbit', 'carrot'])
+  })
+
+  test('brings the entries of every base form it may have, and lists the more used of them', async () => {
+    const sentence = 'the cat does'
+    expect(candidates(await search.search(sentence))).toEqual([['その'], ['猫'], ['牝鹿', 'する']])
+    expect(await listed(sentence)).toEqual(['その', '猫', '牝鹿'])
+    expect(await listed(sentence, { する: 5 })).toEqual(['その', '猫', 'する'])
+  })
+
+  test('is not a word an entry does mean: 「cats」 keeps its own entry', async () => {
+    expect(candidates(await search.search('the cats'))).toEqual([['その'], ['キャッツ']])
   })
 })
 
@@ -194,21 +250,21 @@ describe('a long English sentence', () => {
     Array.from({ length: count }, (_, index) => `${String.fromCharCode(97 + index)}${ending}`)
   const known = made(13, 'ux')
   const unknown = made(24, 'oz')
-  const search = new DictionarySearch(
+  const long = new DictionarySearch(
     dictionary(known.map(meaning => word(meaning.toUpperCase(), meaning, meaning, meaning)))
   )
+  const entries = (meanings: string[]) => meanings.map(meaning => [meaning.toUpperCase()])
 
-  test('lists its first twelve words that have an entry', async () => {
-    const results = await search.search(known.join(' '))
-    expect(listed(results)).toEqual(known.slice(0, 12).map(meaning => meaning.toUpperCase()))
+  test('brings its first twelve words that have an entry', async () => {
+    expect(candidates(await long.search(known.join(' ')))).toEqual(entries(known.slice(0, 12)))
   })
 
   test('looks up its first twenty-four words and no more', async () => {
     const [first, second] = known
     const within = [...unknown.slice(0, 22), first, second].join(' ')
     const beyond = [...unknown.slice(0, 23), first, second].join(' ')
-    expect(listed(await search.search(within))).toEqual([first, second].map(m => m.toUpperCase()))
-    expect(listed(await search.search(beyond))).toEqual([])
+    expect(candidates(await long.search(within))).toEqual(entries([first, second]))
+    expect(candidates(await long.search(beyond))).toEqual([])
   })
 })
 
@@ -231,9 +287,11 @@ describe('a sentence', () => {
     ['日本語を勉強する', ['日本語', '勉強', 'する']],
     ['I do study Japanese.', ['する', '勉強', '日本語']]
   ])('lists its words as Discovered Words in Japanese and in English: 「%s」', async (sentence, words) => {
-    const search = new DictionarySearch(db, { morphology: { analyze: async () => analyzed } })
-    const results = await search.search(sentence)
-    expect(listed(results)).toEqual(words)
-    expect(results).toMatchObject({ presentation: 'discoveredWords', resolution: 'analyzed' })
+    const both = new DictionarySearch(db, { morphology: { analyze: async () => analyzed } })
+    expect(await listed(sentence, {}, both)).toEqual(words)
+    expect(await both.search(sentence)).toMatchObject({
+      presentation: 'discoveredWords',
+      resolution: 'analyzed'
+    })
   })
 })

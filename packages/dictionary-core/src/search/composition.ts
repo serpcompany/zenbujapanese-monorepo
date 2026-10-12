@@ -46,6 +46,25 @@ export function resultItems(ranked: RankedEntry[]): SearchResultItem[] {
   }))
 }
 
+export function composingWordCandidates(words: SearchResultItem[][]): SearchResults {
+  const items: SearchResultItem[] = []
+  for (const [sourceOrder, candidates] of words.entries()) {
+    const seen = new Set<string>()
+    for (const item of candidates) {
+      if (seen.has(item.entry.id)) continue
+      seen.add(item.entry.id)
+      items.push({ ...item, sourceOrder, fallbackOrder: items.length })
+    }
+  }
+  return {
+    ...noResults(),
+    items,
+    leadingLexicalEntryCount: items.length,
+    presentation: 'discoveredWords',
+    resolution: 'analyzed'
+  }
+}
+
 export function leadingExactFormCount(items: readonly SearchResultItem[]): number {
   let count = 0
   for (const item of items) {

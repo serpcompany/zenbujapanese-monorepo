@@ -62,6 +62,20 @@ export function orderedByFrequency<Result extends RankedResult>(
   })
 }
 
+export function firstOfEachGroup<Result extends RankedResult>(
+  ordered: readonly Result[]
+): Result[] {
+  const groups = new Set<number>()
+  const listed = new Set<string>()
+  return ordered.filter(result => {
+    if (groups.has(result.relevance)) return false
+    groups.add(result.relevance)
+    if (listed.has(result.id)) return false
+    listed.add(result.id)
+    return true
+  })
+}
+
 export type ResultSort =
   | { by: 'relevance' }
   | { by: 'frequency'; family: string }

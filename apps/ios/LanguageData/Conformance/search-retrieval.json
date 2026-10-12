@@ -1520,19 +1520,215 @@
           "reading" : "どこ"
         },
         {
-          "headword" : "だ",
-          "id" : "e33ad4f4da88dce059a4b3fc7b2264b4",
-          "reading" : "だ"
+          "headword" : "どちら",
+          "id" : "75eba577019f99ce98381bc106f8b7d1",
+          "reading" : "どちら"
         },
+        {
+          "headword" : "那辺",
+          "id" : "c17ae9b5c490d41c05f8c375adc9ca01",
+          "reading" : "なへん"
+        },
+        {
+          "headword" : "何処ら",
+          "id" : "565fd7e300125a7d8aa650dc725eea9e",
+          "reading" : "どこら"
+        },
+        {
+          "headword" : "どこら辺",
+          "id" : "0847838da4b83388d8a9356b9bf4a8ac",
+          "reading" : "どこらへん"
+        },
+        {
+          "headword" : "何処いら",
+          "id" : "e3127025d376941b9f9ecd3523c3a212",
+          "reading" : "どこいら"
+        },
+        {
+          "headword" : "どこら辺り",
+          "id" : "6f5201a09573ae0f23696286296be8d1",
+          "reading" : "どこらあたり"
+        },
+        {
+          "headword" : "何れ",
+          "id" : "b1be071cafaabde19184266589ba6382",
+          "reading" : "いずれ"
+        },
+        {
+          "headword" : "何方",
+          "id" : "7d2374e139fea07b35c2a05e8de64c2b",
+          "reading" : "いずち"
+        },
+        {
+          "headword" : "何方",
+          "id" : "e65554c0eb4811559aedd8b01c29156e",
+          "reading" : "いずかた"
+        }
+      ]
+    },
+    {
+      "presentation" : "discoveredWords",
+      "query" : "i want to go home",
+      "resolution" : "analyzed",
+      "results" : [
+        {
+          "headword" : "私",
+          "id" : "819a30cc88dca4967262e8051a957df9",
+          "reading" : "あたし"
+        },
+        {
+          "headword" : "私",
+          "id" : "94ad3a82a0196b6e24f8a70d2a1aa4be",
+          "reading" : "わたし"
+        },
+        {
+          "headword" : "僕",
+          "id" : "a6af8452cff4495733137e23d2332f7a",
+          "reading" : "ぼく"
+        },
+        {
+          "headword" : "俺",
+          "id" : "e81d0e09e9f806179411eb76ae898466",
+          "reading" : "おれ"
+        },
+        {
+          "headword" : "我",
+          "id" : "01cffa7d2b0dbb17d99efe7a546e289b",
+          "reading" : "われ"
+        },
+        {
+          "headword" : "当方",
+          "id" : "91e3a3a1fe928be83e492aa91280f64e",
+          "reading" : "とうほう"
+        },
+        {
+          "headword" : "吾輩",
+          "id" : "c705b1bbf7253d001a2a2d60649527a8",
+          "reading" : "わがはい"
+        },
+        {
+          "headword" : "小生",
+          "id" : "1ee2704c11575889c07ef6fca8c0708d",
+          "reading" : "しょうせい"
+        },
+        {
+          "headword" : "私",
+          "id" : "9686dda791ff6e5700a7e1b1be381ffa",
+          "reading" : "わたくし"
+        },
+        {
+          "headword" : "イッヒ",
+          "id" : "4427b5b77b2d9c76caae84fc680b7de9",
+          "reading" : "イッヒ"
+        }
+      ]
+    },
+    {
+      "presentation" : "discoveredWords",
+      "query" : "the rabbits ate carrots",
+      "resolution" : "analyzed",
+      "results" : [
         {
           "headword" : "その",
           "id" : "1cc9a84b606c82ec5a77ca0497e28107",
           "reading" : "その"
         },
         {
-          "headword" : "浴室",
-          "id" : "bf2b98df70e9851d585d505cc91eea26",
-          "reading" : "よくしつ"
+          "headword" : "あの",
+          "id" : "921632736e8008edbe0deed0df74318a",
+          "reading" : "あの"
+        },
+        {
+          "headword" : "ザ",
+          "id" : "ad74f96cba67292b49764d995ae6ce34",
+          "reading" : "ザ"
+        },
+        {
+          "headword" : "兎",
+          "id" : "0de1199b38b48167d89129ec33604e67",
+          "reading" : "うさぎ"
+        },
+        {
+          "headword" : "占子",
+          "id" : "25779bedb549c415a239ff980ab635a5",
+          "reading" : "しめこ"
+        },
+        {
+          "headword" : "ラビット",
+          "id" : "cb55436b41231d2a764e2a743ee26874",
+          "reading" : "ラビット"
+        },
+        {
+          "headword" : "人参",
+          "id" : "cb7ef93db500e6064597ed1249e04c61",
+          "reading" : "にんじん"
+        },
+        {
+          "headword" : "胡蘿蔔",
+          "id" : "524a59a319e11914c96c0afcf1675dc3",
+          "reading" : "こらふ"
+        },
+        {
+          "headword" : "キャロット",
+          "id" : "ffd4063b13529d3a5fda85c5c32be488",
+          "reading" : "キャロット"
+        }
+      ]
+    },
+    {
+      "presentation" : "discoveredWords",
+      "query" : "she gave me her book",
+      "resolution" : "analyzed",
+      "results" : [
+        {
+          "headword" : "あの人",
+          "id" : "f74d3b01cbf155ac52fae2d441045eb3",
+          "reading" : "あのひと"
+        },
+        {
+          "headword" : "こいつ",
+          "id" : "779eb0fa2924711cb0ee54f6ac47f9a6",
+          "reading" : "こいつ"
+        },
+        {
+          "headword" : "あの方",
+          "id" : "1935787b4885a150eddeb08015130548",
+          "reading" : "あのかた"
+        },
+        {
+          "headword" : "彼女",
+          "id" : "edaa373c8957b703565ae24d79c4021d",
+          "reading" : "かのじょ"
+        },
+        {
+          "headword" : "あいつ",
+          "id" : "1500bf75a7ef4c1ddd30e9654cfee0f7",
+          "reading" : "あいつ"
+        },
+        {
+          "headword" : "そいつ",
+          "id" : "e9385673ca293d624ed872595769261e",
+          "reading" : "そいつ"
+        },
+        {
+          "headword" : "同氏",
+          "id" : "5517fe180157c36821c1d9b3c5d3317b",
+          "reading" : "どうし"
+        },
+        {
+          "headword" : "きゃつ",
+          "id" : "89833b3f8840c5e49520dedd08446dd4",
+          "reading" : "きゃつ"
+        },
+        {
+          "headword" : "奴さん",
+          "id" : "fc66cbbec52c9ff2e5bf83bb82fb1faa",
+          "reading" : "やっこさん"
+        },
+        {
+          "headword" : "あやつ",
+          "id" : "0eca9f952b80ee0f96aa595b9e6eb5a1",
+          "reading" : "あやつ"
         }
       ]
     },

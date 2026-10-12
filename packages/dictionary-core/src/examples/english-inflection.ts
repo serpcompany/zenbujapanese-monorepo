@@ -54,6 +54,10 @@ function possibleBaseForms(word: string): string[] {
   ]
 }
 
+export function baseFormsOf(word: string): string[] {
+  return [...new Set(possibleBaseForms(word))].filter(base => base !== word)
+}
+
 export function sameWordInAnyForm(word: string): (other: string) => boolean {
   const lowered = word.toLowerCase()
   const bases = possibleBaseForms(lowered)

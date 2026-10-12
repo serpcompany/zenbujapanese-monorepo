@@ -56,6 +56,15 @@ export function suiteChip(
   }
 }
 
+export function firstItemOfEachEntry<Item>(
+  items: readonly Item[],
+  id: (item: Item) => string
+): Map<string, Item> {
+  const first = new Map<string, Item>()
+  for (const item of items) if (!first.has(id(item))) first.set(id(item), item)
+  return first
+}
+
 export function suiteRows<Row extends { id: string }, Item>(
   rows: readonly Row[],
   items: ReadonlyMap<string, Item>,

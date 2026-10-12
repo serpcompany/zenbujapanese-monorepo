@@ -1,10 +1,28 @@
 import { describe, expect, test } from 'vitest'
-import { sameWordInAnyForm } from './english-inflection'
+import { baseFormsOf, sameWordInAnyForm } from './english-inflection'
 
 const eitherWay = (one: string, other: string) => [
   sameWordInAnyForm(one)(other),
   sameWordInAnyForm(other)(one)
 ]
+
+describe('baseFormsOf', () => {
+  test.each([
+    ['rabbits', ['rabbit']],
+    ['carrots', ['carrot']],
+    ['does', ['doe', 'do']],
+    ['fired', ['fir', 'fire']],
+    ['stories', ['story', 'storie']],
+    ['stopped', ['stopp', 'stoppe', 'stop']],
+    ['making', ['mak', 'make']],
+    ['ate', []],
+    ['is', []],
+    ['glass', []],
+    ["rabbit's", []]
+  ])('reads 「%s」 as a form of %o', (word, bases) => {
+    expect(baseFormsOf(word)).toEqual(bases)
+  })
+})
 
 describe('sameWordInAnyForm', () => {
   test.each([

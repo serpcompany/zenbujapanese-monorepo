@@ -22741,7 +22741,7 @@
       "voiceOverCount" : 60
     },
     {
-      "covers" : "An English sentence no entry means: the first word that means each of its words, in the sentence's order, as Discovered Words (#401)",
+      "covers" : "An English sentence no entry means: for each of its words, the word that word's own results lead with, in the sentence's order, as Discovered Words (#401)",
       "examples" : {
         "count" : 8,
         "title" : "View 8 Example Sentences"
@@ -22778,16 +22778,21 @@
         },
         {
           "chips" : [
-
+            {
+              "name" : "YouTube",
+              "pack" : "zenbu.tubelex.youtube.ja.unidic-3.1",
+              "text" : "12",
+              "tier" : "very common"
+            }
           ],
           "entSeq" : [
-            "2089020"
+            "1628500"
           ],
-          "headword" : "だ",
-          "languageReferenceID" : "e33ad4f4da88dce059a4b3fc7b2264b4",
+          "headword" : "です",
+          "languageReferenceID" : "6033d456195c1da656adf7a1fa431553",
           "match" : "source=1 english strongGloss romaji=0 sense=first",
-          "reading" : "だ",
-          "retrievalOrder" : 1,
+          "reading" : "です",
+          "retrievalOrder" : 11,
           "summary" : "is"
         },
         {
@@ -22812,7 +22817,7 @@
           "languageReferenceID" : "1cc9a84b606c82ec5a77ca0497e28107",
           "match" : "source=2 english strongGloss romaji=0 sense=first",
           "reading" : "その",
-          "retrievalOrder" : 2,
+          "retrievalOrder" : 34,
           "summary" : "the"
         },
         {
@@ -22820,24 +22825,24 @@
             {
               "name" : "JLPT",
               "pack" : "zenbu.jlpt.waller.levels",
-              "text" : "N1",
-              "tier" : "moderately common"
+              "text" : "N5",
+              "tier" : "very common"
             },
             {
               "name" : "YouTube",
               "pack" : "zenbu.tubelex.youtube.ja.unidic-3.1",
-              "text" : "12,774",
-              "tier" : "moderately common"
+              "text" : "1,518",
+              "tier" : "common"
             }
           ],
           "entSeq" : [
-            "1547460"
+            "1500100"
           ],
-          "headword" : "浴室",
-          "languageReferenceID" : "bf2b98df70e9851d585d505cc91eea26",
+          "headword" : "風呂",
+          "languageReferenceID" : "433fa8a3a2ed9a0cc40a143d549d2d27",
           "match" : "source=3 english strongGloss romaji=0 sense=first",
-          "reading" : "よくしつ",
-          "retrievalOrder" : 3,
+          "reading" : "ふろ",
+          "retrievalOrder" : 38,
           "summary" : "bathroom"
         }
       ],
@@ -22847,6 +22852,316 @@
       ],
       "state" : "results",
       "voiceOverCount" : 4
+    },
+    {
+      "covers" : "An English sentence whose words' own results lead with a more used word than search finds first: 私 read わたし, and 行く (#401)",
+      "examples" : {
+        "count" : 6,
+        "title" : "View 6 Example Sentences"
+      },
+      "heading" : "Discovered Words",
+      "presentation" : "discoveredWords",
+      "query" : "i want to go home",
+      "resolution" : "analyzed",
+      "results" : [
+        {
+          "chips" : [
+            {
+              "name" : "JLPT",
+              "pack" : "zenbu.jlpt.waller.levels",
+              "text" : "N5",
+              "tier" : "very common"
+            },
+            {
+              "name" : "YouTube",
+              "pack" : "zenbu.tubelex.youtube.ja.unidic-3.1",
+              "text" : "754",
+              "tier" : "very common"
+            }
+          ],
+          "entSeq" : [
+            "1311110"
+          ],
+          "headword" : "私",
+          "languageReferenceID" : "94ad3a82a0196b6e24f8a70d2a1aa4be",
+          "match" : "source=0 english strongGloss romaji=0 sense=first",
+          "reading" : "わたし",
+          "retrievalOrder" : 1,
+          "summary" : "I"
+        },
+        {
+          "chips" : [
+            {
+              "name" : "JLPT",
+              "pack" : "zenbu.jlpt.waller.levels",
+              "text" : "N5",
+              "tier" : "very common"
+            },
+            {
+              "name" : "YouTube",
+              "pack" : "zenbu.tubelex.youtube.ja.unidic-3.1",
+              "text" : "949",
+              "tier" : "very common"
+            }
+          ],
+          "entSeq" : [
+            "1546640"
+          ],
+          "headword" : "要る",
+          "languageReferenceID" : "d12d09f1107aef0f7d43b54b62f0b7e1",
+          "match" : "source=1 english strongGloss romaji=0 sense=first",
+          "reading" : "いる",
+          "retrievalOrder" : 55,
+          "summary" : "to want"
+        },
+        {
+          "chips" : [
+            {
+              "name" : "YouTube",
+              "pack" : "zenbu.tubelex.youtube.ja.unidic-3.1",
+              "text" : "66",
+              "tier" : "very common"
+            }
+          ],
+          "entSeq" : [
+            "1525680"
+          ],
+          "headword" : "まで",
+          "languageReferenceID" : "a10db4daab6f22cdfe5dbf37595fd5d0",
+          "match" : "source=2 english strongGloss romaji=0 sense=first",
+          "reading" : "まで",
+          "retrievalOrder" : 70,
+          "summary" : "to"
+        },
+        {
+          "chips" : [
+            {
+              "name" : "JLPT",
+              "pack" : "zenbu.jlpt.waller.levels",
+              "text" : "N5",
+              "tier" : "very common"
+            },
+            {
+              "name" : "YouTube",
+              "pack" : "zenbu.tubelex.youtube.ja.unidic-3.1",
+              "text" : "31",
+              "tier" : "very common"
+            }
+          ],
+          "entSeq" : [
+            "1578850"
+          ],
+          "headword" : "行く",
+          "languageReferenceID" : "02b555a06b217e79bca2d442a5a03d86",
+          "match" : "source=3 english strongGloss romaji=0 sense=first",
+          "reading" : "いく",
+          "retrievalOrder" : 86,
+          "summary" : "to go"
+        },
+        {
+          "chips" : [
+            {
+              "name" : "JLPT",
+              "pack" : "zenbu.jlpt.waller.levels",
+              "text" : "N5",
+              "tier" : "very common"
+            },
+            {
+              "name" : "YouTube",
+              "pack" : "zenbu.tubelex.youtube.ja.unidic-3.1",
+              "text" : "1,504",
+              "tier" : "common"
+            }
+          ],
+          "entSeq" : [
+            "1192280"
+          ],
+          "headword" : "家庭",
+          "languageReferenceID" : "9ac4acf31c4f29409cc995651fef9359",
+          "match" : "source=4 english strongGloss romaji=0 sense=first",
+          "reading" : "かてい",
+          "retrievalOrder" : 110,
+          "summary" : "home"
+        }
+      ],
+      "sections" : [
+        "examples",
+        "discoveredWords"
+      ],
+      "state" : "results",
+      "voiceOverCount" : 5
+    },
+    {
+      "covers" : "An English sentence with plurals no entry means: each lists its base form's word, and the irregular ate lists none (#401)",
+      "heading" : "Discovered Words",
+      "presentation" : "discoveredWords",
+      "query" : "the rabbits ate carrots",
+      "resolution" : "analyzed",
+      "results" : [
+        {
+          "chips" : [
+            {
+              "name" : "JLPT",
+              "pack" : "zenbu.jlpt.waller.levels",
+              "text" : "N5",
+              "tier" : "very common"
+            },
+            {
+              "name" : "YouTube",
+              "pack" : "zenbu.tubelex.youtube.ja.unidic-3.1",
+              "text" : "366",
+              "tier" : "very common"
+            }
+          ],
+          "entSeq" : [
+            "1006830"
+          ],
+          "headword" : "その",
+          "languageReferenceID" : "1cc9a84b606c82ec5a77ca0497e28107",
+          "match" : "source=0 english strongGloss romaji=0 sense=first",
+          "reading" : "その",
+          "retrievalOrder" : 0,
+          "summary" : "the"
+        },
+        {
+          "chips" : [
+            {
+              "name" : "JLPT",
+              "pack" : "zenbu.jlpt.waller.levels",
+              "text" : "N3",
+              "tier" : "common"
+            },
+            {
+              "name" : "YouTube",
+              "pack" : "zenbu.tubelex.youtube.ja.unidic-3.1",
+              "text" : "2,948",
+              "tier" : "common"
+            }
+          ],
+          "entSeq" : [
+            "1443970"
+          ],
+          "headword" : "兎",
+          "languageReferenceID" : "0de1199b38b48167d89129ec33604e67",
+          "match" : "source=1 english strongGloss romaji=0 sense=first",
+          "reading" : "うさぎ",
+          "retrievalOrder" : 3,
+          "summary" : "rabbit"
+        },
+        {
+          "chips" : [
+            {
+              "name" : "YouTube",
+              "pack" : "zenbu.tubelex.youtube.ja.unidic-3.1",
+              "text" : "4,161",
+              "tier" : "common"
+            }
+          ],
+          "entSeq" : [
+            "1367800"
+          ],
+          "headword" : "人参",
+          "languageReferenceID" : "cb7ef93db500e6064597ed1249e04c61",
+          "match" : "source=2 english strongGloss romaji=0 sense=first",
+          "reading" : "にんじん",
+          "retrievalOrder" : 6,
+          "summary" : "carrot (Daucus carota)"
+        }
+      ],
+      "sections" : [
+        "discoveredWords"
+      ],
+      "state" : "results",
+      "voiceOverCount" : 3
+    },
+    {
+      "covers" : "An English sentence two of whose words lead with the same word, which is listed once (彼女 for she and for her), beside an irregular form that lists none (#401)",
+      "heading" : "Discovered Words",
+      "presentation" : "discoveredWords",
+      "query" : "she gave me her book",
+      "resolution" : "analyzed",
+      "results" : [
+        {
+          "chips" : [
+            {
+              "name" : "JLPT",
+              "pack" : "zenbu.jlpt.waller.levels",
+              "text" : "N4",
+              "tier" : "very common"
+            },
+            {
+              "name" : "YouTube",
+              "pack" : "zenbu.tubelex.youtube.ja.unidic-3.1",
+              "text" : "562",
+              "tier" : "very common"
+            }
+          ],
+          "entSeq" : [
+            "1483150"
+          ],
+          "headword" : "彼女",
+          "languageReferenceID" : "edaa373c8957b703565ae24d79c4021d",
+          "match" : "source=0 english strongGloss romaji=0 sense=first",
+          "reading" : "かのじょ",
+          "retrievalOrder" : 3,
+          "summary" : "she"
+        },
+        {
+          "chips" : [
+            {
+              "name" : "JLPT",
+              "pack" : "zenbu.jlpt.waller.levels",
+              "text" : "N5",
+              "tier" : "very common"
+            },
+            {
+              "name" : "YouTube",
+              "pack" : "zenbu.tubelex.youtube.ja.unidic-3.1",
+              "text" : "754",
+              "tier" : "very common"
+            }
+          ],
+          "entSeq" : [
+            "1311110"
+          ],
+          "headword" : "私",
+          "languageReferenceID" : "94ad3a82a0196b6e24f8a70d2a1aa4be",
+          "match" : "source=1 english strongGloss romaji=0 sense=first",
+          "reading" : "わたし",
+          "retrievalOrder" : 13,
+          "summary" : "me"
+        },
+        {
+          "chips" : [
+            {
+              "name" : "JLPT",
+              "pack" : "zenbu.jlpt.waller.levels",
+              "text" : "N5",
+              "tier" : "very common"
+            },
+            {
+              "name" : "YouTube",
+              "pack" : "zenbu.tubelex.youtube.ja.unidic-3.1",
+              "text" : "225",
+              "tier" : "very common"
+            }
+          ],
+          "entSeq" : [
+            "1522150"
+          ],
+          "headword" : "本",
+          "languageReferenceID" : "6245b12a543fe049cb5c9e623e12fb75",
+          "match" : "source=3 english strongGloss romaji=0 sense=first",
+          "reading" : "ほん",
+          "retrievalOrder" : 71,
+          "summary" : "book"
+        }
+      ],
+      "sections" : [
+        "discoveredWords"
+      ],
+      "state" : "results",
+      "voiceOverCount" : 3
     },
     {
       "covers" : "A search-retrieval.json query, after the frequency re-sort",

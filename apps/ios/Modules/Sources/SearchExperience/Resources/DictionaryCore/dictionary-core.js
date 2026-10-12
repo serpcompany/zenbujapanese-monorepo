@@ -1416,6 +1416,24 @@
       matchedSummary: entry.matchedSummary
     }));
   }
+  function composingWordCandidates(words) {
+    const items = [];
+    for (const [sourceOrder, candidates] of words.entries()) {
+      const seen = /* @__PURE__ */ new Set();
+      for (const item of candidates) {
+        if (seen.has(item.entry.id)) continue;
+        seen.add(item.entry.id);
+        items.push({ ...item, sourceOrder, fallbackOrder: items.length });
+      }
+    }
+    return {
+      ...noResults(),
+      items,
+      leadingLexicalEntryCount: items.length,
+      presentation: "discoveredWords",
+      resolution: "analyzed"
+    };
+  }
   function leadingExactFormCount(items) {
     let count = 0;
     for (const item of items) {
@@ -1481,6 +1499,17 @@
       }
       if (lhs.fallbackOrder !== rhs.fallbackOrder) return lhs.fallbackOrder - rhs.fallbackOrder;
       return lhs.id < rhs.id ? -1 : lhs.id > rhs.id ? 1 : 0;
+    });
+  }
+  function firstOfEachGroup(ordered) {
+    const groups = /* @__PURE__ */ new Set();
+    const listed3 = /* @__PURE__ */ new Set();
+    return ordered.filter((result3) => {
+      if (groups.has(result3.relevance)) return false;
+      groups.add(result3.relevance);
+      if (listed3.has(result3.id)) return false;
+      listed3.add(result3.id);
+      return true;
     });
   }
   var relevanceSort = { by: "relevance" };
@@ -1561,13 +1590,15 @@
   function compareRelevance(lhs, rhs) {
     return lhs.sourceOrder - rhs.sourceOrder || comparePresentationRanks(lhs.matchRank, rhs.matchRank);
   }
+  var compareWords = (lhs, rhs) => lhs.sourceOrder - rhs.sourceOrder;
   function listedResults(results) {
-    const byRelevance = [...results.items].sort(compareRelevance);
+    const compare = results.resolution === "analyzed" ? compareWords : compareRelevance;
+    const byRelevance = [...results.items].sort(compare);
     const relevance = /* @__PURE__ */ new Map();
     let rank = 0;
     for (const [index, item] of byRelevance.entries()) {
-      if (index > 0 && compareRelevance(byRelevance[index - 1], item) !== 0) rank += 1;
-      relevance.set(item.entry.id, rank);
+      if (index > 0 && compare(byRelevance[index - 1], item) !== 0) rank += 1;
+      relevance.set(item, rank);
     }
     return {
       items: results.items.map((item) => ({
@@ -1577,10 +1608,11 @@
         reading: item.entry.reading,
         entrySummary: item.entry.summary,
         matchedSummary: item.matchedSummary,
-        relevance: relevance.get(item.entry.id) ?? 0,
+        relevance: relevance.get(item) ?? 0,
         fallbackOrder: item.fallbackOrder
       })),
       presentation: results.presentation,
+      resolution: results.resolution,
       readingRefinement: results.readingRefinement,
       usesPrimaryEntryExamples: results.usesPrimaryEntryExamples,
       leadingLexicalEntryCount: results.leadingLexicalEntryCount
@@ -1591,15 +1623,22 @@
     return `View ${count} Example ${count === 1 ? "Sentence" : "Sentences"}`;
   }
   var primary = (items, headword, query) => items.find((item) => headword(item) === query) ?? items[0];
+  var listsOnePerWord = (found) => found.presentation === "discoveredWords" && found.resolution === "analyzed";
+  var isEnglishSentence = (found, query) => listsOnePerWord(found) && isASCII(query);
   function primaryItem(results, query) {
-    return primary(results.items, (item) => item.entry.headword, normalizeQuery(query));
+    const normalized2 = normalizeQuery(query);
+    if (isEnglishSentence(results, normalized2)) return void 0;
+    return primary(results.items, (item) => item.entry.headword, normalized2);
+  }
+  function discoveredWords(layout, lookups) {
+    return layout.listsOnePerWord ? firstOfEachGroup(orderedByFrequency(layout.presented, lookups)) : layout.presented;
   }
   function resultsLayout(rawQuery, results, exampleCount, fromRadicals = false) {
     const query = normalizeQuery(rawQuery);
     const leadingOnly = fromRadicals && graphemeCount(query) === 1;
     const singleKanji = isKanjiCharacter(query);
     const isDiscovered = results.presentation === "discoveredWords";
-    const found = primary(results.items, (item) => item.headword, query);
+    const found = isEnglishSentence(results, query) ? void 0 : primary(results.items, (item) => item.headword, query);
     const sections = [];
     const examples = exampleCount > 0 ? { title: exampleActionTitle(exampleCount), count: exampleCount } : null;
     if (examples) sections.push("examples");
@@ -1607,7 +1646,7 @@
     if (readingRefinement) sections.push("readingRefinement");
     if (isDiscovered) sections.push("discoveredWords");
     else if (singleKanji || results.items.length > 0) sections.push("results");
-    const presented = isDiscovered ? results.items.slice(0, discoveredWordLimit) : leadingOnly ? results.items.slice(0, Math.min(results.leadingLexicalEntryCount, results.items.length)) : results.items;
+    const presented = listsOnePerWord(results) ? results.items.filter((item) => item.relevance < discoveredWordLimit) : isDiscovered ? results.items.slice(0, discoveredWordLimit) : leadingOnly ? results.items.slice(0, Math.min(results.leadingLexicalEntryCount, results.items.length)) : results.items;
     return {
       query,
       isEmpty: results.items.length === 0 && exampleCount === 0 && !singleKanji,
@@ -1622,7 +1661,8 @@
       } : null,
       primary: found,
       presented,
-      isDiscovered
+      isDiscovered,
+      listsOnePerWord: listsOnePerWord(results)
     };
   }
 
@@ -2035,6 +2075,60 @@
     );
   }
 
+  // src/examples/english-inflection.ts
+  var wordThatInflects = /^[a-z]{3,}$/;
+  var vowel = /[aeiouy]/;
+  var doubledFinalConsonant = /([b-df-hj-np-tv-z])\1$/;
+  var endingThatTakesEs = /(?:[sxzo]|[cs]h)$/;
+  var twoLettersEndingInAVowel = /^[a-z][aeiou]$/;
+  var twoConsonants = /^[b-df-hj-np-tv-xz]{2}$/;
+  var fewestLettersInABase = 3;
+  var isLongEnough = (base) => base.length >= fewestLettersInABase;
+  var isLongEnoughOrLikeGo = (base) => isLongEnough(base) || twoLettersEndingInAVowel.test(base);
+  var isLongEnoughOrAnAbbreviation = (base) => isLongEnough(base) || twoConsonants.test(base);
+  function basesBeforeAnEnding(stem, isABase) {
+    if (stem.length < 2 || !vowel.test(stem)) return [];
+    const withoutItsDoubling = stem.slice(0, -1);
+    return [
+      ...isABase(stem) ? [stem] : [],
+      `${stem}e`,
+      ...doubledFinalConsonant.test(stem) && isLongEnough(withoutItsDoubling) ? [withoutItsDoubling] : []
+    ];
+  }
+  function basesOfAPluralOrThirdPerson(word) {
+    if (!word.endsWith("s") || word.endsWith("ss")) return [];
+    const withoutS = word.slice(0, -1);
+    const withoutEs = word.slice(0, -2);
+    const bases = word.endsWith("ies") ? [`${word.slice(0, -3)}y`, withoutS] : [withoutS];
+    const takesEs = word.endsWith("es") && endingThatTakesEs.test(withoutEs) && isLongEnoughOrLikeGo(withoutEs);
+    return [...bases.filter(isLongEnoughOrAnAbbreviation), ...takesEs ? [withoutEs] : []];
+  }
+  function basesOfAPast(word) {
+    if (!word.endsWith("ed")) return [];
+    const withoutEd = word.slice(0, -2);
+    return word.endsWith("ied") ? [`${word.slice(0, -3)}y`, word.slice(0, -1), withoutEd].filter(isLongEnough) : basesBeforeAnEnding(withoutEd, isLongEnough);
+  }
+  function possibleBaseForms(word) {
+    if (!wordThatInflects.test(word)) return [word];
+    return [
+      word,
+      ...basesOfAPluralOrThirdPerson(word),
+      ...basesOfAPast(word),
+      ...word.endsWith("ing") ? basesBeforeAnEnding(word.slice(0, -3), isLongEnoughOrLikeGo) : []
+    ];
+  }
+  function baseFormsOf(word) {
+    return [...new Set(possibleBaseForms(word))].filter((base) => base !== word);
+  }
+  function sameWordInAnyForm(word) {
+    const lowered = word.toLowerCase();
+    const bases = possibleBaseForms(lowered);
+    return (other) => {
+      const candidate = other.toLowerCase();
+      return candidate === lowered || possibleBaseForms(candidate).some((base) => bases.includes(base));
+    };
+  }
+
   // src/search/deinflect.ts
   function acceptsPartsOfSpeech(wordClass, parts) {
     switch (wordClass) {
@@ -2339,17 +2433,21 @@
         return { ...directResults, usesPrimaryEntryExamples: true };
       }
       if (directResults.items.length > 0) return directResults;
-      const discovered = isASCII(query) ? await this.englishSentenceItems(query) : await this.analyzedItems(query);
-      if (discovered.length > 1 || isMixedScript(query) && discovered.length > 0) {
+      if (isASCII(query)) {
+        const words = await this.englishSentenceCandidates(query);
+        return words.length > 1 ? composingWordCandidates(words) : noResults();
+      }
+      const analyzed = await this.analyzedItems(query);
+      if (analyzed.length > 1 || isMixedScript(query) && analyzed.length > 0) {
         return {
           ...composing(
-            discovered.map((item) => [item]),
+            analyzed.map((item) => [item]),
             {
-              leadingLexicalEntryCount: discovered.length,
+              leadingLexicalEntryCount: analyzed.length,
               usesPrimaryEntryExamples: false,
               hasExactOrPrefixMatch: false,
               resolution: "analyzed",
-              limit: discovered.length
+              limit: analyzed.length
             }
           ),
           presentation: "discoveredWords"
@@ -2385,16 +2483,31 @@
       if (isASCII(query)) return (await this.searchOnce(query)).items.length > 0;
       return hasFormContaining(this.db, query);
     }
-    async englishSentenceItems(query) {
-      const found = [];
+    async englishSentenceCandidates(query) {
+      const words = [];
       for (const word of englishSentenceWords(query).slice(0, sentenceWordLookupLimit)) {
-        const [strongest] = resultItems((await rankedByStrongGloss(this.db, word)).slice(0, 1));
-        if (strongest && !found.some((item) => item.entry.id === strongest.entry.id)) {
-          found.push(strongest);
-        }
-        if (found.length === discoveredWordLimit) break;
+        const candidates = await this.candidatesFor(word);
+        if (candidates.length > 0) words.push(candidates);
+        if (words.length === discoveredWordLimit) break;
       }
-      return found;
+      return words;
+    }
+    async candidatesFor(word) {
+      const own = await this.firstRowCandidates(word);
+      if (own.length > 0) return own;
+      const ofItsBaseForms = [];
+      for (const base of baseFormsOf(word)) {
+        ofItsBaseForms.push(...await this.firstRowCandidates(base));
+      }
+      return ofItsBaseForms;
+    }
+    async firstRowCandidates(word) {
+      const ranked = (await rankedByStrongGloss(this.db, word)).slice(0, searchResultLimit);
+      return resultItems(
+        ranked.filter(
+          (entry) => comparePresentationRanks(entry.presentationRank, ranked[0].presentationRank) === 0
+        )
+      );
     }
     async analyzedItems(query) {
       const morphology = this.capabilities.morphology;
@@ -2507,7 +2620,6 @@
           ...item,
           match: matchLabel(results.items[index].sourceOrder, results.items[index].matchRank)
         })),
-        resolution: results.resolution,
         primaryEntry: primaryItem(results, query)?.entry.id ?? null
       };
     }
@@ -3566,11 +3678,12 @@
     const shown = filteredResults(ordered, filter, isKnown);
     const isRanked = layout.sections.includes("results");
     const count = shown.length + (layout.kanji ? 1 : 0);
+    const discovered = discoveredWords(layout, lookups);
     const rows = layout.isDiscovered ? wordRows(
-      layout.presented,
+      discovered,
       lookups,
       isKnown,
-      (index) => `Discovered word ${index + 1} of ${layout.presented.length}`
+      (index) => `Discovered word ${index + 1} of ${discovered.length}`
     ) : isRanked ? wordRows(
       shown,
       lookups,
@@ -3926,57 +4039,6 @@
       if (!existing || compareRanks(match, existing) < 0) byPair.set(sentence.pairId, match);
     }
     return result([...byPair.values()].sort(compareRanks));
-  }
-
-  // src/examples/english-inflection.ts
-  var wordThatInflects = /^[a-z]{3,}$/;
-  var vowel = /[aeiouy]/;
-  var doubledFinalConsonant = /([b-df-hj-np-tv-z])\1$/;
-  var endingThatTakesEs = /(?:[sxzo]|[cs]h)$/;
-  var twoLettersEndingInAVowel = /^[a-z][aeiou]$/;
-  var twoConsonants = /^[b-df-hj-np-tv-xz]{2}$/;
-  var fewestLettersInABase = 3;
-  var isLongEnough = (base) => base.length >= fewestLettersInABase;
-  var isLongEnoughOrLikeGo = (base) => isLongEnough(base) || twoLettersEndingInAVowel.test(base);
-  var isLongEnoughOrAnAbbreviation = (base) => isLongEnough(base) || twoConsonants.test(base);
-  function basesBeforeAnEnding(stem, isABase) {
-    if (stem.length < 2 || !vowel.test(stem)) return [];
-    const withoutItsDoubling = stem.slice(0, -1);
-    return [
-      ...isABase(stem) ? [stem] : [],
-      `${stem}e`,
-      ...doubledFinalConsonant.test(stem) && isLongEnough(withoutItsDoubling) ? [withoutItsDoubling] : []
-    ];
-  }
-  function basesOfAPluralOrThirdPerson(word) {
-    if (!word.endsWith("s") || word.endsWith("ss")) return [];
-    const withoutS = word.slice(0, -1);
-    const withoutEs = word.slice(0, -2);
-    const bases = word.endsWith("ies") ? [`${word.slice(0, -3)}y`, withoutS] : [withoutS];
-    const takesEs = word.endsWith("es") && endingThatTakesEs.test(withoutEs) && isLongEnoughOrLikeGo(withoutEs);
-    return [...bases.filter(isLongEnoughOrAnAbbreviation), ...takesEs ? [withoutEs] : []];
-  }
-  function basesOfAPast(word) {
-    if (!word.endsWith("ed")) return [];
-    const withoutEd = word.slice(0, -2);
-    return word.endsWith("ied") ? [`${word.slice(0, -3)}y`, word.slice(0, -1), withoutEd].filter(isLongEnough) : basesBeforeAnEnding(withoutEd, isLongEnough);
-  }
-  function possibleBaseForms(word) {
-    if (!wordThatInflects.test(word)) return [word];
-    return [
-      word,
-      ...basesOfAPluralOrThirdPerson(word),
-      ...basesOfAPast(word),
-      ...word.endsWith("ing") ? basesBeforeAnEnding(word.slice(0, -3), isLongEnoughOrLikeGo) : []
-    ];
-  }
-  function sameWordInAnyForm(word) {
-    const lowered = word.toLowerCase();
-    const bases = possibleBaseForms(lowered);
-    return (other) => {
-      const candidate = other.toLowerCase();
-      return candidate === lowered || possibleBaseForms(candidate).some((base) => bases.includes(base));
-    };
   }
 
   // src/artifact/example-search.ts

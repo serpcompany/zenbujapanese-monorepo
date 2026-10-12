@@ -161,17 +161,18 @@ again. If frequency data can't be read, Search still shows every result and says
 dictionary is unavailable. Results can also offer a Japanese-reading refinement, related
 Example Sentences, discovered words, and a dedicated Kanji result for a single-kanji query. An
 English query's Example Sentences have its words in any form: `startled you` finds "startle you".
-An English sentence that no entry means as a whole lists, as **Discovered Words**, the first entry
-that means each of its words, small ones included, each with that meaning: `where is the bathroom`
-lists 何処 "where", だ "is", その "the", and 浴室 "bathroom". A word no entry means is left out.
+An English sentence that no entry means as a whole lists, as **Discovered Words**, a word for each
+of its words, small ones included: the one that word's own results lead with, with the meaning it
+matched. `where is the bathroom` lists 何処 "where", です "is", その "the", and 風呂 "bathroom". A
+word no entry means lists its base form's word (`rabbits` lists 兎), or nothing (`his`, `ate`).
 
 Check: package `SearchFrequencyOrchestrationTests` and `ResultsScreenTests` (a dictionary that
 can't be read is named, and the others still order the list); core `detail/frequency.test.ts`
 (the notice's words), `artifact/example-search.test.ts` and `examples/english-inflection.test.ts`
-(which sentences an English query finds), and `search/english-sentence.test.ts` (an English
-sentence's words); the recorded `SearchConformanceTests` and `SearchResultsConformanceTests` (the
-refinement, Example Sentences, and Kanji rows, and `where is the bathroom`) and
-`ExampleSearchConformanceTests` (`startled you` and `generously`); UI
+(which sentences an English query finds), and `search/english-sentence.test.ts` and
+`results/learner.test.ts` (an English sentence's words); the recorded `SearchConformanceTests` and
+`SearchResultsConformanceTests` (the refinement, Example Sentences, and Kanji rows, and four
+English sentences) and `ExampleSearchConformanceTests` (`startled you` and `generously`); UI
 `SearchResultsUITests.testARomajiQueryOffersItsJapaneseReading`,
 `testAWordOffersItsExampleSentences`, and `SearchUITests.testAQueryWithNoMatchesSaysSo`.
 
@@ -309,9 +310,8 @@ Check: the recorded `ExampleSearchConformanceTests`; core `examples/morphology.t
 pieces join into one word) and `detail/text.test.ts` (the short meaning); package
 `LinkedWordResolutionTests` and `WordMeaningTests`.
 
-A **Frequency** section lists each enabled dictionary's rank or JLPT level for the word.
-Selecting a row opens that dictionary's details. JLPT levels are presented as unofficial study
-estimates.
+A **Frequency** section lists each enabled dictionary's rank or JLPT level for the word. Selecting a
+row opens that dictionary's details. JLPT levels are presented as unofficial study estimates.
 
 Check: the recorded `WordDetailConformanceTests` (each pack's row and its details); package
 `ResultsScreenTests` (the rows' names, values, and details); UI

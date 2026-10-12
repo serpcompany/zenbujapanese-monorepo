@@ -26,7 +26,13 @@ import {
   sortSummary,
   storedSort
 } from './ordering'
-import { type ListedItem, type ListedResults, type ResultsSection, resultsLayout } from './results'
+import {
+  discoveredWords,
+  type ListedItem,
+  type ListedResults,
+  type ResultsSection,
+  resultsLayout
+} from './results'
 
 type EvidenceLookup =
   | { dictionary: number; value: number | null }
@@ -204,12 +210,13 @@ export function learnerResultsScreen(
   const shown = filteredResults(ordered, filter, isKnown)
   const isRanked = layout.sections.includes('results')
   const count = shown.length + (layout.kanji ? 1 : 0)
+  const discovered = discoveredWords(layout, lookups)
   const rows = layout.isDiscovered
     ? wordRows(
-        layout.presented,
+        discovered,
         lookups,
         isKnown,
-        index => `Discovered word ${index + 1} of ${layout.presented.length}`
+        index => `Discovered word ${index + 1} of ${discovered.length}`
       )
     : isRanked
       ? wordRows(

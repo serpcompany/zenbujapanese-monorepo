@@ -439,13 +439,13 @@ app's UI tests on all three ([Tests on every platform](#tests-on-every-platform)
 
 `SearchConformanceTests` checks Search against the shared conformance suite in
 `apps/ios/LanguageData/Conformance/search-retrieval.json` (see ADR 0006). Only each result's
-Language Reference ID and position are the contract; its headword and reading are there to make
-the file and failures readable. After an intended
-change to Search results or a dictionary rebuild, record it again by adding
-`TEST_RUNNER_ZENBU_RECORD_CONFORMANCE=1` before the test command above, add
-`-only-testing:SearchExperienceTests/SearchConformanceTests` after it, and review the diff.
+Language Reference ID and position are the contract; its headword and reading are there to make the
+file and failures readable. After an intended change to Search results or a dictionary rebuild,
+record it again by adding `TEST_RUNNER_ZENBU_RECORD_CONFORMANCE=1` before the test command above,
+add `-only-testing:SearchExperienceTests/SearchConformanceTests` after it, and review the diff.
 
-That suite records order before frequency evidence re-sorts it. `SearchResultsConformanceTests`
+That suite records order before frequency evidence re-sorts it, and for an English sentence the
+entries each word brings, not the one listed. `SearchResultsConformanceTests`
 records the results screen as the app shows it, in `search-results.json`: for each query, the
 rows after the core re-sorts them with a fresh install's frequency
 dictionaries (JLPT, then TUBELEX), each with its Language Reference ID, ent_seq, headword,

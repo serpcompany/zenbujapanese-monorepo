@@ -21,7 +21,7 @@ these and decodes the answer; [The app's side](#the-apps-side) says which type a
 | --- | --- | --- |
 | `search/` | Search retrieval: query normalization, deinflection, ranking, full-text phrases, and sentence search (Japanese through a supplied analyzer, English by each word's meaning); which handwriting candidates are kept (`japaneseCandidates`); and the radical panel (`radicals.ts`). | `LookupClient`; `SearchQuery` is `normalizeQuery`'s answer; `RadicalLookupClient`; the handwriting recognizer's adapter |
 | `embedded/` | The entry point for a client that runs the core inside a JavaScript engine, as the app does: every answer the app's screens show, as JSON, and the bundle the app loads. | `DictionaryCore`, and the three engines that each own one |
-| `results/` | The results screen: the frequency re-sort, Sort By and Filter, rows, chips, what VoiceOver says, and the Example Sentences, reading-refinement, and kanji rows. | `ResultsScreen` |
+| `results/` | The results screen: the frequency re-sort, which entry each word of an English sentence lists, Sort By and Filter, rows, chips, what VoiceOver says, and the Example Sentences, reading-refinement, and kanji rows. | `ResultsScreen` |
 | `detail/` | Word pages, kanji details, and kanji element pages from their rows: furigana, pitch, Frequency Details, conjugations, kanji, elements, share text, and the short gloss under a linked word. Also romaji (`romaji.ts`), a kanji's strokes as the points to draw (`strokes.ts`), whether a string is one kanji, and what a zenbujapanese.com link names (`links.ts`). | `WordPage`, `KanjiPage`, `KanjiElementPage`, `JapaneseRuby`, `FrequencyRow`, `KanjiCharacter`, `KanjiStrokeOrderClient`, `RomajiReadingAidText` |
 | `examples/` | Example linking, inflection grouping, the ranks example retrieval shares, which English words are one word's forms (`english-inflection.ts`), and the tokenizer that splits a sentence into words (`ipadic.ts`, [The tokenizer](#the-tokenizer)). | `DictionaryTextData` |
 | `artifact/` | Reads `LanguageReferenceData.sqlite3` and its packs, checks them, and answers search, word, kanji, example, and sitemap requests (`Dictionary`), and the browse pages' (`DictionaryBrowse`). `embedded/` runs the same queries. | Through `embedded/` |
@@ -184,11 +184,10 @@ time it tokenizes. It is the only tokenizer: the app runs it in JavaScriptCore, 
 website's dictionary service runs it in Node (`apps/dictionary-api/src/tokenizer.ts`).
 
 - **It is a port of kuromoji.js 0.1.2** (Apache-2.0, Takuya Asano; the license ships beside the
-  dictionary files, `Resources/Kuromoji/LICENSE-2.0.txt`), which both clients ran until
-  2026-10-11, and it answers exactly as kuromoji.js did, so no sentence links differently than
-  it used to. That includes what kuromoji.js got wrong, because the rest of the core already
-  handles it (`kuromojiCandidates` shows a sentence whose tokens don't tile it as one unlinked
-  word):
+  dictionary files, `Resources/Kuromoji/LICENSE-2.0.txt`), which both clients ran until 2026-10-11,
+  and it answers exactly as kuromoji.js did, so no sentence links differently than it used to. That
+  includes what kuromoji.js got wrong, because the rest of the core already handles it
+  (`kuromojiCandidates` shows a sentence whose tokens don't tile it as one unlinked word):
   - a sentence is split after every 、 and 。, and the words of each later part are numbered from
     the last word of the part before, which is off when that word is longer than one character;
   - a word's place counts characters, but a run of unknown characters outside the basic plane is
@@ -284,10 +283,9 @@ The core answers as the Swift it replaced did, which the suites pin.
 - **Characters.** A Swift `Character` is an extended grapheme cluster, so the core iterates
   `graphemes` wherever the Swift iterated Characters. `graphemes` and `graphemeCount` skip
   segmenting when every UTF-16 unit is a grapheme of its own (printable ASCII, and the CJK, kana,
-  and full-width blocks less their combining marks): `Intl.Segmenter` is slow in an engine
-  without a JIT, linking asks for every word's graphemes, and example retrieval counts every
-  matching sentence. `normalizeQuery` likewise returns a folded query that has no whitespace as
-  it is.
+  and full-width blocks less their combining marks): `Intl.Segmenter` is slow in an engine without a
+  JIT, linking asks for every word's graphemes, and example retrieval counts every matching
+  sentence. `normalizeQuery` likewise returns a folded query that has no whitespace as it is.
 - **Order.** `compareStrings` is Swift's `<`: by Unicode scalar, not UTF-16 unit; ranking compares
   fingerprints with it. SQLite compares a BLOB by its bytes, which lowercase hex keeps, and text by
   code point (`compareCodePoints`); its `instr()` and `length()` count code points, so `kanjiWords`
@@ -308,16 +306,15 @@ The core answers as the Swift it replaced did, which the suites pin.
   there, whatever the client binds.
 - **Romaji.** The app's romaji was Foundation's `applyingTransform(.toLatin)`, which is ICU's
   Any-Latin. `detail/romaji.ts` is that transform for kana, rule for rule, from the rules and
-  filters the system's ICU 78 holds: the text is taken a run of one script at a time; a hiragana
-  run is turned to katakana first, and only its kana, its voiced mark, and the long mark are
-  touched; a katakana run also turns 、 and 。 into a comma and a full stop; a rule sees the
-  text on either side of its run, so っ before a katakana syllable still doubles it. It keeps
-  ICU's spellings as they were shown: kon'nichiha, toukyou, hanadji, and a tilde before a small
-  kana that forms no syllable (ウィ is u~i). On the bundled data it differs from Foundation for
-  no reading and no example sentence; it differs where a string holds another writing system,
-  which Foundation also turned to Latin letters (α to a, 한 to han, and 〇 to the Chinese líng)
-  and the core leaves as written. `apps/ios/LanguageData/Conformance/romaji.json` holds the
-  recorded cases.
+  filters the system's ICU 78 holds: the text is taken a run of one script at a time; a hiragana run
+  is turned to katakana first, and only its kana, its voiced mark, and the long mark are touched; a
+  katakana run also turns 、 and 。 into a comma and a full stop; a rule sees the text on either side
+  of its run, so っ before a katakana syllable still doubles it. It keeps ICU's spellings as they
+  were shown: kon'nichiha, toukyou, hanadji, and a tilde before a small kana that forms no syllable
+  (ウィ is u~i). On the bundled data it differs from Foundation for no reading and no example
+  sentence; it differs where a string holds another writing system, which Foundation also turned to
+  Latin letters (α to a, 한 to han, and 〇 to the Chinese líng) and the core leaves as written.
+  `apps/ios/LanguageData/Conformance/romaji.json` holds the recorded cases.
 - **Links.** `websitePage` in `detail/links.ts` reads a zenbujapanese.com link as the app's
   `WebsiteLink` did, and the website reads a word segment with the same `parseWordSegment`. A
   word link's entry number must be one JavaScript holds exactly; the Swift accepted any that fit
@@ -353,12 +350,15 @@ The core answers as the Swift it replaced did, which the suites pin.
   priority, sense, gloss order, romaji corroboration, headword length, and fingerprint (#701).
 - An English query matches a sense restricted to some written forms or readings (JMdict's stagk
   and stagr) only when the entry is shown with one of them.
-- An English sentence that finds no entry lists one for each of its words (`englishSentenceItems`,
-  #401): the first entry of `rankedByStrongGloss` for each of its first 24 words, until it has 12.
-  That lookup ranks a word's strong-gloss entries as the word's own search does and reads no
-  others: SQL holds the phrase match to the meanings that are the word, and the forms index gives
-  the romaji that corroborates. In Node, `the` takes 10 ms where its own search takes 500. An ASCII
-  query never asks the analyzer, and a query with `*` or `^` is a pattern, not a sentence.
+- An English sentence that finds no entry brings, for each of its first 24 words until 12 have
+  some, the entries that word's own results could lead with (`englishSentenceCandidates`, #401):
+  the strong-gloss entries among its first 60. `rankedByStrongGloss` ranks them as the word's
+  search does and reads no others: SQL holds the phrase match to the meanings that are the word,
+  so in Node `the` takes 10 ms where its search takes 500. A word with none brings its base
+  forms' (`baseFormsOf`). The results layer, which has the frequency, lists each word's first
+  (`discoveredWords`): for an analyzed query a relevance group is a word, an entry may be in two
+  groups, and an English sentence has no primary entry. An ASCII query never asks the analyzer,
+  and one with `*` or `^` is a pattern, not a sentence.
 - `literalQuery` is the app's literal query policy: `mondai` searches as `monday`.
 
 ## Detail
@@ -476,12 +476,11 @@ ready and a page's first request prepares nothing:
 - **Common words** on the dictionary home (`summary().commonWords`) are the 24 most used common
   words that are content words (`browse/content-words.ts`): not ones whose first sense is a
   particle, auxiliary, conjunction, or copula, nor ones that are only a prefix or suffix.
-- **Kanji lists** are KANJIDIC2's school grades 1 to 6, secondary school (grade 8), jinmeiyō
-  (grades 9 and 10), the JLPT levels N5 to N1 (`wallerJlptLevel`, from Jonathan Waller's kanji
-  lists, not KANJIDIC2's `jlpt`), and the jōyō kanji (grades 1 to 6 and 8) by stroke count, each
-  most frequent first by KANJIDIC2's newspaper frequency, then by code point. Jinmeiyō holds 57
-  CJK compatibility characters, such as U+FA45 for 海; one KANJIDIC2 gives no meaning shows its
-  base kanji's.
+- **Kanji lists** are KANJIDIC2's school grades 1 to 6, secondary school (grade 8), jinmeiyō (grades
+  9 and 10), the JLPT levels N5 to N1 (`wallerJlptLevel`, from Jonathan Waller's kanji lists, not
+  KANJIDIC2's `jlpt`), and the jōyō kanji (grades 1 to 6 and 8) by stroke count, each most frequent
+  first by KANJIDIC2's newspaper frequency, then by code point. Jinmeiyō holds 57 CJK compatibility
+  characters, such as U+FA45 for 海; one KANJIDIC2 gives no meaning shows its base kanji's.
 - **Thin lists.** The sitemap answer gives every list's word count, so the website can leave out
   of the browse sitemaps the lists of fewer than `minimumIndexedWords` (10).
 

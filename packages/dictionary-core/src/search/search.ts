@@ -1,5 +1,7 @@
+import { baseFormsOf } from '../examples/english-inflection'
 import {
   composing,
+  composingWordCandidates,
   discoveredWordLimit,
   leadingExactFormCount,
   noResults,
@@ -23,7 +25,7 @@ import {
   normalizeQuery,
   romajiDeinflectedCandidates
 } from './query'
-import { sameLexicalGroup } from './rank'
+import { comparePresentationRanks, sameLexicalGroup } from './rank'
 import type { RankedEntry } from './ranked-entries'
 
 export type { SearchResultItem, SearchResults } from './composition'
@@ -134,19 +136,21 @@ export class DictionarySearch {
     }
     if (directResults.items.length > 0) return directResults
 
-    const discovered = isASCII(query)
-      ? await this.englishSentenceItems(query)
-      : await this.analyzedItems(query)
-    if (discovered.length > 1 || (isMixedScript(query) && discovered.length > 0)) {
+    if (isASCII(query)) {
+      const words = await this.englishSentenceCandidates(query)
+      return words.length > 1 ? composingWordCandidates(words) : noResults()
+    }
+    const analyzed = await this.analyzedItems(query)
+    if (analyzed.length > 1 || (isMixedScript(query) && analyzed.length > 0)) {
       return {
         ...composing(
-          discovered.map(item => [item]),
+          analyzed.map(item => [item]),
           {
-            leadingLexicalEntryCount: discovered.length,
+            leadingLexicalEntryCount: analyzed.length,
             usesPrimaryEntryExamples: false,
             hasExactOrPrefixMatch: false,
             resolution: 'analyzed',
-            limit: discovered.length
+            limit: analyzed.length
           }
         ),
         presentation: 'discoveredWords'
@@ -190,16 +194,33 @@ export class DictionarySearch {
     return hasFormContaining(this.db, query)
   }
 
-  private async englishSentenceItems(query: string): Promise<SearchResultItem[]> {
-    const found: SearchResultItem[] = []
+  private async englishSentenceCandidates(query: string): Promise<SearchResultItem[][]> {
+    const words: SearchResultItem[][] = []
     for (const word of englishSentenceWords(query).slice(0, sentenceWordLookupLimit)) {
-      const [strongest] = resultItems((await rankedByStrongGloss(this.db, word)).slice(0, 1))
-      if (strongest && !found.some(item => item.entry.id === strongest.entry.id)) {
-        found.push(strongest)
-      }
-      if (found.length === discoveredWordLimit) break
+      const candidates = await this.candidatesFor(word)
+      if (candidates.length > 0) words.push(candidates)
+      if (words.length === discoveredWordLimit) break
     }
-    return found
+    return words
+  }
+
+  private async candidatesFor(word: string): Promise<SearchResultItem[]> {
+    const own = await this.firstRowCandidates(word)
+    if (own.length > 0) return own
+    const ofItsBaseForms: SearchResultItem[] = []
+    for (const base of baseFormsOf(word)) {
+      ofItsBaseForms.push(...(await this.firstRowCandidates(base)))
+    }
+    return ofItsBaseForms
+  }
+
+  private async firstRowCandidates(word: string): Promise<SearchResultItem[]> {
+    const ranked = (await rankedByStrongGloss(this.db, word)).slice(0, searchResultLimit)
+    return resultItems(
+      ranked.filter(
+        entry => comparePresentationRanks(entry.presentationRank, ranked[0].presentationRank) === 0
+      )
+    )
   }
 
   private async analyzedItems(query: string): Promise<SearchResultItem[]> {

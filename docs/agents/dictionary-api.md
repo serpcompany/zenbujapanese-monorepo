@@ -164,11 +164,10 @@ answers, headers, and error codes, and every field of a card and a token. An app
   answers is the one declared for its status. On the app's data, every word card and segmentation
   answer the conformance suite asks for is checked against its schema.
 - **On the server.** A person makes the account service's JWKS reachable from the dictionary
-  service's slots, which reach only nginx: an nginx site on a port the server doesn't publish
-  that proxies to the account service's `/v1/auth/jwks`, so the slots read it straight, without a
-  redirect (Set up the server, step 2). Then
-  they add `ACCOUNT_API_URL` and `ACCOUNT_JWKS_URL` to each environment's settings (Set up the
-  server, step 1). Until then the app routes answer 503.
+  service's slots, which reach only nginx: an nginx site on a port the server doesn't publish that
+  proxies to the account service's `/v1/auth/jwks`, so the slots read it straight, without a
+  redirect (Set up the server, step 2). Then they add `ACCOUNT_API_URL` and `ACCOUNT_JWKS_URL` to
+  each environment's settings (Set up the server, step 1). Until then the app routes answer 503.
 
 ## How it runs
 
@@ -262,9 +261,10 @@ Detail lists no examples, and neither does the page. Without the files the suite
 the retrieval suite's Japanese sentences would skip. No suite records one yet (recording it
 needs the app's Japanese Text Analysis pack in the Simulator), so `sentence-search.test.ts`
 checks the cases the app's manual checks name. An English sentence needs no analyzer: both
-search suites record `where is the bathroom`, and every replay runs it. The results suite records
-its **Discovered Words** heading, which the app's screen answers with and the page draws itself,
-so the website's rendered-page test holds the page to it.
+search suites record four, and every replay runs them. The retrieval suite holds the entries
+each word brings and the results suite the one listed for it, under the **Discovered Words**
+heading that the app's screen answers with and the page draws itself, so the website's
+rendered-page test holds the page to it.
 `conjugation-examples.test.ts` pages a form's examples.
 `full-text.test.ts` checks English search where FTS4 differs from other engines.
 

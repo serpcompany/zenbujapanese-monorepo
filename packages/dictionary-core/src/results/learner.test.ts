@@ -48,6 +48,7 @@ function listed(items: ListedItem[], extra: Partial<ListedResults> = {}): Listed
   return {
     items: items.map((entry, fallbackOrder) => ({ ...entry, fallbackOrder })),
     presentation: 'ranked',
+    resolution: 'direct',
     readingRefinement: null,
     usesPrimaryEntryExamples: false,
     leadingLexicalEntryCount: items.length,
@@ -231,6 +232,40 @@ describe('learnerResultsScreen', () => {
       'Result 2 of 3',
       'Result 3 of 3'
     ])
+  })
+
+  test('lists one entry for each word of an English sentence: the one the learner’s dictionaries put first', () => {
+    const sentence = listed(
+      [
+        item('私', { matchedSummary: 'I' }),
+        item('わたし', { matchedSummary: 'I' }),
+        item('行く', { relevance: 1, matchedSummary: 'to go' }),
+        item('私', { relevance: 2, matchedSummary: 'me' })
+      ],
+      { presentation: 'discoveredWords', resolution: 'analyzed' }
+    )
+    const loading = screen('i go me', sentence, {}, 2)
+    expect(loading.rows.map(row => [row.id, row.summary])).toEqual([
+      ['私', 'I'],
+      ['行く', 'to go']
+    ])
+    expect(loading.rows[1].spoken).toBe('Discovered word 2 of 2, Frequency rank loading')
+    expect(loading.frequencyEntries).toEqual(['私', 'わたし', '行く'])
+    expect(loading.examples?.highlightedEntry).toBeNull()
+    expect(loading.menu).toBeNull()
+
+    const ranked = screen('i go me', sentence, {
+      frequency: evidence([jlpt], { 私: [null], わたし: [5], 行く: [5] }),
+      sort: 'known-words',
+      known: ['私']
+    })
+    expect(ranked.rows.map(row => [row.id, row.summary])).toEqual([
+      ['わたし', 'I'],
+      ['行く', 'to go'],
+      ['私', 'me']
+    ])
+    expect(ranked.rows[2].spoken).toMatch(/^Known, Discovered word 3 of 3, /)
+    expect(ranked.frequencyEntries).toEqual(loading.frequencyEntries)
   })
 
   test('lists Discovered Words in their order, twelve at most, without Sort By or a kanji row', () => {

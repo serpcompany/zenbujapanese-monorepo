@@ -11,12 +11,11 @@ import { rankedJapaneseForms } from '../search/japanese'
 import type { MorphologyAnalyzer } from '../search/morphology'
 import { isASCII, normalizeQuery } from '../search/query'
 import { matchLabel } from '../search/rank'
-import { DictionarySearch, type SearchResults } from '../search/search'
+import { DictionarySearch } from '../search/search'
 import { type EmbeddedHost, hostDatabase } from './host'
 
 export interface EmbeddedSearchResults extends ListedResults {
   items: (ListedItem & { match: string })[]
-  resolution: SearchResults['resolution']
   primaryEntry: string | null
 }
 
@@ -83,7 +82,6 @@ export class EmbeddedLookup {
         ...item,
         match: matchLabel(results.items[index].sourceOrder, results.items[index].matchRank)
       })),
-      resolution: results.resolution,
       primaryEntry: primaryItem(results, query)?.entry.id ?? null
     }
   }

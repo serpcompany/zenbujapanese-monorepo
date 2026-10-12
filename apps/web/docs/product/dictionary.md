@@ -91,32 +91,35 @@ stemmer shortens. `*` after a word matches any word it starts (`t*`), and `^` be
 only a form's or meaning's first word, as in the app. It lists at most 60 words, the app's limit.
 
 - Source: App docs, Search; `LookupClient.swift`; ADR 0006, ADR 0008, and ADR 0009.
-- Check: SR `results` (the first 10 IDs, in order), `resolution`, and `presentation`, for 33
+- Check: SR `results` (the first 10 IDs, in order), `resolution`, and `presentation`, for 36
   queries; `apps/dictionary-api/src/conformance/full-text.test.ts`, "a long number finds glosses,
   as FTS4 stems it"; SRR's `t*` and `^t*` cases, every row. The 60-word limit: SRR `results`,
   every row, for the 40 queries that reach it (い, `eat`, 見る, and others), and the rendered い
   and いる cases in `search-results.test.tsx`; SR records only the first 10 (`resultLimit: 10`).
 
-**Sentence search.** A Japanese sentence that isn't a word the dictionary holds, such as
-日本語を勉強する, lists its Discovered Words: each word the app's Sudachi finds in it, in order, as
-the app does with its Japanese Text Analysis pack. The dictionary service runs the same Sudachi,
-with the dictionary the app pins. An English sentence that no entry means as a whole lists them too,
-with no analyzer: for each of its words, small ones included, the first entry that word's own search
-retrieves, before the frequency re-sort, among the entries with a meaning that is the word ("where",
-"to go", "dog (animal)"), and its row shows that meaning. `where is the bathroom` lists 何処 "where",
-だ "is", その "the", and 浴室 "bathroom". A word that is no entry's whole meaning (`his`, `rabbits`) is
-left out, an entry two words share is listed once, and one entry alone isn't listed, nor is anything
-for a query with `*` or `^`. Search looks up a sentence's first 24 words and lists at most 12.
+**Sentence search.** A Japanese sentence that isn't a word the dictionary holds, such as 日本語を勉強する,
+lists its Discovered Words: each word the app's Sudachi finds in it, in order, as the app does with
+its Japanese Text Analysis pack. The dictionary service runs the same Sudachi, with the dictionary
+the app pins. An English sentence that no entry means as a whole lists them too, with no analyzer:
+for each of its words, small ones included, the word that word's own results lead with, chosen as
+they choose it among the entries with a meaning that is the word ("where", "to go", "dog (animal)"),
+and its row shows that meaning. `where is the bathroom` lists 何処 "where", です "is", その "the", and 風呂
+"bathroom". A word that no entry means as written takes its base form's entries (`rabbits` lists 兎,
+and `does`, of "do" and "doe", the more used する); with none (`his`, `ate`) it is left out. A word
+two of them lead with is listed once; entries for one word alone, or a query with `*` or `^`, list
+nothing. Search looks up a sentence's first 24 words and lists at most 12.
 
-- Source: App docs, Search (Discovered Words); `results/results.ts` in the core, which the app
-  runs too; `JapaneseMorphologyClient.swift`; ADR 0009 (the owner's decision to build what the
-  website couldn't analyze before); for English, #401 (the owner's decision of 2026-10-12 that
-  every word is listed) and `englishSentenceItems` in the core's `search/search.ts`.
+- Source: App docs, Search (Discovered Words); `results/results.ts` in the core, which the app runs
+  too; `JapaneseMorphologyClient.swift`; ADR 0009 (the owner's decision to build what the website
+  couldn't analyze before); for English, #401 (the owner's decisions of 2026-10-12) and the core's
+  `englishSentenceCandidates` and `discoveredWords`.
 - Check: `apps/dictionary-api/src/conformance/sentence-search.test.ts`, "lists its words as
-  Discovered Words (#401)" for both sentences and "is still searched as itself" for 勉強 and
-  `ice cream`; the core's `search/english-sentence.test.ts`; SR's and SRR's `where is the
-  bathroom` case, which `search-results.test.tsx` renders with its heading. SR records no Japanese
-  sentence yet: recording one needs the app's Japanese Text Analysis pack in the Simulator.
+  Discovered Words (#401)" for four sentences, "lists for … the row its own results lead with", and
+  "is still searched as itself" for 勉強 and `ice cream`; the core's `search/english-sentence.test.ts`
+  and `results/results.test.ts`; SR's and SRR's cases `where is the bathroom` (which
+  `search-results.test.tsx` renders with its heading), `i want to go home`, `the rabbits ate
+  carrots`, and `she gave me her book`. SR records no Japanese sentence yet: recording one needs the
+  app's Japanese Text Analysis pack in the Simulator.
 
 **Result order.** Words appear in the app's order: its retrieval, then equally strong matches
 re-sorted by the default dictionaries, as the core's `orderedByFrequency` sorts them. Within each
@@ -130,7 +133,7 @@ TUBELEX packs, read by the dictionary service for all of a search's results, one
 - Source: App docs, Search; `orderedByFrequency` in the core's `results/ordering.ts`; #462 (rows in
   the order the app shows with its default dictionaries).
 - Check: SRR `results` (every row's ID, in order, with its `match` group and `retrievalOrder`) for
-  57 queries, including `iru` and いる; `packages/dictionary-core/src/results/results.test.ts`,
+  60 queries, including `iru` and いる; `packages/dictionary-core/src/results/results.test.ts`,
   "orderedByFrequency (SearchResultFrequencyOrdering.ordered)"; smoke "iru shows the refinement and its
   first rows with their chips, as the app does", which reads the rows from SRR's `iru` case.
 
@@ -173,7 +176,7 @@ row opens the sentences where the site shows them:
 - Source: App docs, Search; the examples row of the core's `results/results.ts` and
   `artifact/search-examples.ts`, which the app's results screen reads too; ADR 0010 and
   the owner's decision on #544 (where the row leads, with no Example Sentences page).
-- Check: SRR `examples` (title, count, and primary entry) and `sections` for all 57 queries;
+- Check: SRR `examples` (title, count, and primary entry) and `sections` for all 60 queries;
   `search-results.test.tsx`, "shows the Example Sentences row, the reading refinement, then the
   rows in order with their chips", "shows only the Example Sentences when only sentences match",
   "an English search lists its Example Sentences below the words, and its row links down to them",
@@ -246,7 +249,7 @@ rare. Screen readers hear the tier after a rank, as the app's labels speak it.
 
 - Source: App docs, Search; `frequencyLookupChips` in the core's `detail/frequency.ts`; the app
   draws a chip in `FrequencyRankChip.swift`.
-- Check: SRR `results[].chips` (dictionary, text, and tier) for every row of 57 queries;
+- Check: SRR `results[].chips` (dictionary, text, and tier) for every row of 60 queries;
   `search-results.test.tsx` (the chips as rendered in the SRR cases); smoke (iru's chips);
   `packages/dictionary-core/src/detail/frequency.test.ts`, "shows only dictionaries that rank or
   list the word, since JLPT is a level list" and "tierForRank (FrequencyTier(rank:))".
@@ -1093,8 +1096,7 @@ are 24 by 24. The same holds in the phone menu, with each of its groups open.
 - Source: #682 (the owner's review on a phone).
 - Check: `apps/web/e2e/phone-layout.spec.ts`, "… fits a 360px phone", on every page type in
   `apps/web/e2e/page-types.ts` (the account pages among them), each homepage area, the phone menu
-  and each of its groups, and a missing page, with axe's `target-size` rule for the tap
-  targets.
+  and each of its groups, and a missing page, with axe's `target-size` rule for the tap targets.
 
 **App links.** The shipped iOS app, Tomodachi, and their App Store metadata link to `/privacy` and
 `/support`, so both keep working. `/privacy` redirects (308) to `/legal/privacy/` in one hop, with its query, as
@@ -1176,15 +1178,14 @@ encoded, so a query never looks like a file. `.` and `..` can't be paths, so the
 
 **Indexing.** The dictionary home, word pages, and results pages that list a word, or whose kanji
 row shows the details of a kanji with meanings or readings, are indexable. A one-kanji search that
-lists no word and whose kanji has no meanings or readings (about 475 of 13,108, such as 㐂), a
-search that finds nothing or only example sentences, `/dictionary/search/` itself, the JSON routes
-that load examples into a page (a word's, a search's, and a conjugated form's), and
-`/dictionary/service.json` (whether the site reaches its dictionary service, for CI) are
-`noindex`. Only production is indexed at all; staging sends `X-Robots-Tag: noindex` and disallows
-crawling (see [`docs/agents/web.md`](../../../../docs/agents/web.md)). Staging and production write
-their canonical URLs on their own host: staging's canonical tags name
-`https://staging.zenbujapanese.com` (smoke "canonical tags name …"); local development writes
-production's.
+lists no word and whose kanji has no meanings or readings (about 475 of 13,108, such as 㐂), a search
+that finds nothing or only example sentences, `/dictionary/search/` itself, the JSON routes that
+load examples into a page (a word's, a search's, and a conjugated form's), and
+`/dictionary/service.json` (whether the site reaches its dictionary service, for CI) are `noindex`.
+Only production is indexed at all; staging sends `X-Robots-Tag: noindex` and disallows crawling (see
+[`docs/agents/web.md`](../../../../docs/agents/web.md)). Staging and production write their
+canonical URLs on their own host: staging's canonical tags name `https://staging.zenbujapanese.com`
+(smoke "canonical tags name …"); local development writes production's.
 
 - Source: #465; #466; the owner's decision of 2026-09-29 (a new dictionary page is indexed unless
   the SEO review takes it out); ADR 0010 (a kanji's details keep the rule the kanji page had).
@@ -1297,8 +1298,7 @@ marks it, so Word Meanings shows under every linked word.
 - App source: App docs index, Account (Reading Aids); App docs, Dictionary and kanji details
   (furigana off, Word Meanings, Sentence Translations); `ReadingAidPreferences.swift`,
   `ReadingAidPresentation.swift`. Romaji itself is the core's (`romaji` and `sentenceRomaji` in
-  `packages/dictionary-core/src/detail/romaji.ts`), with the app's recorded cases in
-  `romaji.json`.
+  `packages/dictionary-core/src/detail/romaji.ts`), with the app's recorded cases in `romaji.json`.
 - Check it will get: a unit test pinning the defaults to `ReadingAidPreferences.swift`'s, and a
   rendered-page check of a word page (such as 見る) under each setting: ruby present or absent, the
   reading under the headword, romaji, meanings under example words, and translations. Hide Furigana
