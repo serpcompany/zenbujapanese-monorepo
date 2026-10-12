@@ -1,6 +1,12 @@
 import { type FindingGroup, isRepeated, repeated } from './review-findings'
 import { lineLimit, nearLimitLines } from './sizes'
-import { type DebtItem, type DebtSummary, debtFiles, type QualityRows } from './work-tracking'
+import {
+  type DebtItem,
+  type DebtSummary,
+  debtFiles,
+  type QualityRows,
+  qualityFiles
+} from './work-tracking'
 
 export interface DocReferences {
   doc: string
@@ -145,7 +151,7 @@ export function renderReport(facts: MaintenanceFacts): string {
           .join('\n')
       : 'None.',
     '## Scores to re-grade',
-    `Rows of ${code('docs/quality.md')} whose code changed after the day they were graded. Re-grade each against the code as it is now, and set its Graded date.`,
+    `Rows of ${qualityFiles.map(code).join(', ')} whose code changed after the day they were graded. Re-grade each against the code as it is now, and set its Graded date.`,
     scoresSection(facts.quality),
     '## Known debt',
     [

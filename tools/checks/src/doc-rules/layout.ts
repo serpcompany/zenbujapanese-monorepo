@@ -6,6 +6,8 @@ const docsEntries = new Set([
   'data-sources.md',
   'harness-debt.md',
   'quality.md',
+  'quality-ios.md',
+  'quality-web.md',
   'tech-debt.md',
   'technologies.md'
 ])

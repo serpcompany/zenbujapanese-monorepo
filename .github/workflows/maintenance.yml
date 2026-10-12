@@ -84,9 +84,10 @@ jobs:
             2. For each doc, read it and the code it describes. Fix what is no longer true and
                remove what no longer exists. Keep the doc's structure and its plain, specific
                style. If a doc is still accurate, change nothing in it.
-            3. Re-grade each row listed under "Scores to re-grade" in docs/quality.md. Read the
+            3. Re-grade each row listed under "Scores to re-grade" in docs/quality.md,
+               docs/quality-ios.md, or docs/quality-web.md. Read the
                code in its Code column, with its tests, CI, and docs, and grade it again on the
-               scale at the top of that file. Rewrite the row and its line under the table (the
+               scale at the top of docs/quality.md. Rewrite the row and its line under the table (the
                evidence and the main gap) to match the code as it is now, and link each gap to its
                issue or to the row of docs/tech-debt.md or docs/harness-debt.md that covers it
                (add a row, with a Size, when none does).

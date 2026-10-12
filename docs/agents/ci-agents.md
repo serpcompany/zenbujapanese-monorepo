@@ -132,7 +132,8 @@ file matches `main`'s.
 "Which job to run" picks one job or all of them. Each job starts from `pnpm maintenance:report`
 (`tools/checks/src/report.ts`), a Markdown report built only from the repository: the checks'
 failures; the docs whose named or linked files changed after the doc was last edited; the rows of
-[`quality.md`](../quality.md) whose Code changed after their Graded date ("Scores to re-grade");
+[`quality.md`](../quality.md) and the two files it leads to whose Code changed after their Graded
+date ("Scores to re-grade");
 the known debt, counted by Size with the first small item named
 ([`tech-debt.md`](../tech-debt.md), [`harness-debt.md`](../harness-debt.md)); the size exceptions; the docs over their size budget, to
 split by topic ([`code.md`](code.md), Docs); and the code files within 50 lines of the size limit

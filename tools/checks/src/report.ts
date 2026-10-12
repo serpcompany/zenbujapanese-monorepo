@@ -14,7 +14,7 @@ import { type CheckProblems, docsToReverify, lastChangeTimes, renderReport } fro
 import { groupFindings, readFindings } from './review-findings'
 import { findSecrets } from './secrets'
 import { checkSizes, filesNearLimit, knownLargeFiles } from './sizes'
-import { debtFiles, scoresToRegrade, summarizeDebt } from './work-tracking'
+import { debtFiles, qualityFiles, scoresToRegrade, summarizeDebt } from './work-tracking'
 
 const git = (...args: string[]) =>
   execFileSync('git', args, { cwd: root, encoding: 'utf8', maxBuffer: 256 * 1024 * 1024 })
@@ -73,7 +73,7 @@ process.stdout.write(
     date: new Date().toISOString().slice(0, 10),
     checks,
     staleDocs: docsToReverify(docs, times),
-    quality: scoresToRegrade(read('docs/quality.md'), times),
+    quality: scoresToRegrade(qualityFiles.map(read).join('\n'), times),
     debt: summarizeDebt(debtFiles.map(read).join('\n')),
     sizeExceptions: Object.entries(knownLargeFiles).map(([path, { lines }]) => ({ path, lines })),
     longDocs: Object.entries(knownLongDocs)

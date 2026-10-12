@@ -114,7 +114,7 @@ describe('the Weekly maintenance workflow', () => {
     const prompt = String(garden.with?.prompt)
     expect(prompt).toContain('tmp/maintenance-report.md')
     expect(prompt).toContain(
-      'Re-grade each row listed under "Scores to re-grade" in docs/quality.md'
+      'Re-grade each row listed under "Scores to re-grade" in docs/quality.md,'
     )
     expect(prompt).toContain("Set the row's Graded date to today (UTC)")
     expect(prompt).toContain('--body-file tmp/pr-body.md')
