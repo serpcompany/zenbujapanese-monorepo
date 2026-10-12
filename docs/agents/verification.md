@@ -61,6 +61,7 @@ Every change has build and tests, from the finish gate or CI. Beyond that:
 | What a Simulator can't show: the camera, Apple Translation, live speech, a real sign-in | A run on a device ([`ios.md`](ios.md), Install on an iPhone), or the pull request says it wasn't checked. |
 | A service's route, answer, configuration, or startup | The `verify-service` skill: the service started from this checkout, the routes the change touches called, and each answer kept ([`dictionary-api.md`](dictionary-api.md), [`account-api.md`](account-api.md)). |
 | A deploy workflow, routing, the server, or a smoke test | The deploy to staging and its smoke test ([`ci-deploys.md`](ci-deploys.md)). |
+| The server's deployer (`deploy/deployer.sh`) | Its tests, which run the script itself against stand-ins, with a bash of 4.4 or later ([`deployer-alerts.md`](deployer-alerts.md), Tests). A change reaches the server only when an owner installs it there, so the pull request says it hasn't run on the server. |
 
 Proof goes under `tmp/agent/verify/<date>-<what>/`, which git ignores and housekeeping keeps:
 screenshots, recordings, result bundles, and the run's state. Show the owner the working change
