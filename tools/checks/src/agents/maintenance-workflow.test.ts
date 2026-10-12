@@ -151,6 +151,19 @@ describe('the Weekly maintenance workflow', () => {
     expect(runs).toContain('gh issue create --title "$TITLE" --body-file tmp/weekly-report.md')
     expect(runs).not.toContain('--body-file report.md')
   })
+
+  test("collects Claude's own review findings before it builds the report", () => {
+    const collect = reportSteps.findIndex(step => step.run?.includes('tmp/review-findings.json'))
+    const build = reportSteps.findIndex(step => step.run?.includes('pnpm -s maintenance:report'))
+    expect(collect).toBeGreaterThan(-1)
+    expect(collect).toBeLessThan(build)
+    const run = reportSteps[collect].run ?? ''
+    expect(run).toContain('"repos/$GITHUB_REPOSITORY/pulls/comments?since=$since&per_page=100"')
+    expect(run).toContain('select(.user.login == "claude[bot]" and .in_reply_to_id == null)')
+    expect(run).toContain("date -u -d '28 days ago'")
+    expect(reportSteps[collect].shell).toBe('bash')
+    expect(maintenance.jobs.report.permissions).toMatchObject({ 'pull-requests': 'read' })
+  })
 })
 
 describe("doc gardening's guard", () => {

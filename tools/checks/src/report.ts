@@ -1,5 +1,5 @@
 import { execFileSync } from 'node:child_process'
-import { readFileSync } from 'node:fs'
+import { existsSync, readFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { findComments } from './comments/find'
 import { findDeadCode } from './deadcode'
@@ -11,6 +11,7 @@ import { repositoryFiles, root } from './files'
 import { duplicateProblems, knownDuplicates } from './known-duplicates'
 import { checkLayers } from './layers'
 import { type CheckProblems, docsToReverify, lastChangeTimes, renderReport } from './maintenance'
+import { groupFindings, readFindings } from './review-findings'
 import { findSecrets } from './secrets'
 import { checkSizes, filesNearLimit, knownLargeFiles } from './sizes'
 import { debtFiles, scoresToRegrade, summarizeDebt } from './work-tracking'
@@ -19,6 +20,7 @@ const git = (...args: string[]) =>
   execFileSync('git', args, { cwd: root, encoding: 'utf8', maxBuffer: 256 * 1024 * 1024 })
 const read = (path: string) => readFileSync(join(root, path), 'utf8')
 
+const collectedFindings = join(root, 'tmp/review-findings.json')
 const files = repositoryFiles()
 const times = lastChangeTimes(git('log', '--format=%x00%ct', '--name-only'))
 
@@ -81,6 +83,9 @@ process.stdout.write(
       pair,
       blocks
     })),
-    nearLimit: filesNearLimit(files)
+    nearLimit: filesNearLimit(files),
+    reviewFindings: existsSync(collectedFindings)
+      ? groupFindings(readFindings(JSON.parse(readFileSync(collectedFindings, 'utf8'))))
+      : null
   })
 )

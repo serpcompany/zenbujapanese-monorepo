@@ -156,8 +156,13 @@ ignores: a Markdown file at the repository root would fail the docs check the re
   the row it fixed, writes no code comments, runs `pnpm check`, and opens a pull request from
   `chore/code-gardening-<date>`, or says "Nothing to garden". It installs every package, since
   `pnpm check` checks them all, and has 60 minutes.
-- **`report`** installs every package, as doc gardening does, and posts the report as one open issue, "Weekly repository maintenance", labelled
-  `ready-for-agent`, and edits it each week rather than opening another.
+- **`report`** installs every package, as doc gardening does, and posts the report as one open
+  issue, "Weekly repository maintenance", labelled `ready-for-agent`, and edits it each week
+  rather than opening another. It first collects what Claude's review commented inline in the
+  last four weeks (`tmp/review-findings.json`), so its report can group them by the part of the
+  repository and name a part with three or more across two or more pull requests as repeated
+  (`tools/checks/src/review-findings.ts`). The other jobs' reports, and one built by hand, say the
+  findings weren't collected.
 
 Both gardening jobs pin the model (`--model`), keep subagents in the foreground, give each Bash
 command 15 minutes (`BASH_DEFAULT_TIMEOUT_MS`), leave the MCP servers out, and keep their
@@ -176,8 +181,10 @@ Work the issue in small pull requests, one item each:
 2. **Scores:** re-grade a row under "Scores to re-grade" and set its Graded date.
 3. **Debt:** pay down one row of a debt file, and delete it.
 4. **Size:** split one file the report lists as near the 500-line limit, by responsibility.
-5. **Harness:** if recent reviews repeat a mistake, add it to [`code.md`](code.md) and, where
-   possible, a check whose message says how to fix it.
+5. **Harness:** for a part the report lists as repeated under "Review findings", read its
+   findings; when they share a cause, add the rule to [`code.md`](code.md) and, where possible, a
+   check whose message says how to fix it. A rule only prose holds gets a row in
+   [`harness-debt.md`](../harness-debt.md).
 
 The gardening jobs run with `CLAUDE_CODE_OAUTH_TOKEN` too, and skip without it; the report needs
 no token.

@@ -1,6 +1,7 @@
 tmp/maintenance-report.md
 tmp/weekly-report.md
 tmp/review-summary.md
+tmp/review-findings.json
 tmp/pr-body.md
 tmp/agent/scratch
 tmp/agent/stop-hook

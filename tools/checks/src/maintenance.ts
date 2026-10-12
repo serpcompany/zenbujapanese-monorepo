@@ -1,3 +1,4 @@
+import { type FindingGroup, isRepeated, repeated } from './review-findings'
 import { lineLimit, nearLimitLines } from './sizes'
 import { type DebtItem, type DebtSummary, debtFiles, type QualityRows } from './work-tracking'
 
@@ -31,6 +32,7 @@ export interface MaintenanceFacts {
   longDocs: SizeExceptionRow[]
   duplicateExceptions: { pair: string; blocks: number }[]
   nearLimit: SizeExceptionRow[]
+  reviewFindings: FindingGroup[] | null
 }
 
 export function lastChangeTimes(log: string): Map<string, number> {
@@ -111,6 +113,23 @@ function debtLines(debt: DebtSummary): string[] {
   ]
 }
 
+function findingsSection(groups: FindingGroup[] | null): string {
+  if (!groups) {
+    return `Not collected: only the ${code('report')} job of ${code('Weekly maintenance')} reads the pull requests' comments.`
+  }
+  if (groups.length === 0) return 'None in the last four weeks.'
+  const line = ({ area, findings, pulls, blocking, examples }: FindingGroup) =>
+    `- ${code(area)}: ${findings} in ${pulls} pull request${pulls === 1 ? '' : 's'}, ${blocking} blocking. ${examples
+      .map(({ title, url }) => `[${title}](${url})`)
+      .join('; ')}`
+  const patterns = groups.filter(isRepeated)
+  const rest = groups.filter(group => !isRepeated(group))
+  return [
+    patterns.length ? `Repeated:\n\n${patterns.map(line).join('\n')}` : 'Nothing repeated.',
+    ...(rest.length ? [`Elsewhere:\n\n${rest.map(line).join('\n')}`] : [])
+  ].join('\n\n')
+}
+
 export function renderReport(facts: MaintenanceFacts): string {
   const failing = facts.checks.filter(check => check.problems.length)
   const sections = [
@@ -143,12 +162,15 @@ export function renderReport(facts: MaintenanceFacts): string {
     facts.nearLimit.length
       ? facts.nearLimit.map(({ path, lines }) => `- ${code(path)}: ${lines} lines`).join('\n')
       : 'None.',
+    '## Review findings',
+    `What Claude's review commented inline in the last four weeks, by the part of the repository. ${repeated.findings} or more in one part, across ${repeated.pulls} or more pull requests, is a pattern: write the rule into ${code('docs/agents/code.md')} and, where it can be checked, add the check.`,
+    findingsSection(facts.reviewFindings),
     "## This week's checklist",
     [
       '- [ ] Fix any failing check, and re-verify the docs listed above against the code.',
       '- [ ] Re-grade each row listed under Scores to re-grade, and set its Graded date.',
       `- [ ] Pay down one item from ${debtFiles.map(code).join(' or ')}, or split one file near the size limit, in a small pull request.`,
-      `- [ ] If a failure pattern keeps coming up in reviews, add it to ${code('docs/agents/code.md')} and, where possible, a check.`
+      `- [ ] For a part listed as repeated under Review findings, add the rule to ${code('docs/agents/code.md')} and, where possible, a check.`
     ].join('\n'),
     `Work this issue one item per small pull request, as ${code('docs/agents/ci-agents.md')} says under Weekly maintenance.`
   ]
