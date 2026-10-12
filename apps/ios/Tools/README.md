@@ -197,3 +197,8 @@ trusted historical manifest stays downloadable, and then downloads each public U
 
 **`prepare_sudachi_core.py`** fills the Sudachi Core cache the app's build reads
 ([`ios.md`](../../../docs/agents/ios.md), Build and inspect).
+
+**`simulator.py`** isn't a data tool either: it prints the UDID of the Simulator this checkout
+uses, making it when it's missing, and the checkout's build folder, and removes both when the
+work is finished ([`verification.md`](../../../docs/agents/verification.md), This checkout's
+Simulator and build folder).

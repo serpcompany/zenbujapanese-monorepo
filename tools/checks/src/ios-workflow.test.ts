@@ -1,5 +1,8 @@
+import { readFileSync } from 'node:fs'
+import { join } from 'node:path'
 import { describe, expect, test } from 'vitest'
 import { readWorkflow, workflowSteps } from './agents/workflow'
+import { root } from './files'
 
 const path = '.github/workflows/ios.yml'
 const workflow = readWorkflow(path)
@@ -13,12 +16,12 @@ function runsCommand(ending: string, ...parts: string[]): boolean {
 
 describe('the iOS workflow', () => {
   test('runs the contract tests on every pull request that changes the app', () => {
-    expect(workflow.jobs.contracts?.if).toBeUndefined()
+    expect(workflow.jobs.contracts?.if).toBe("needs.changes.outputs.changed == 'true'")
   })
 
-  test('runs the Swift job only when the owners turn it on, or by hand', () => {
-    expect(workflow.jobs.swift?.if).toBe(
-      "${{ vars.IOS_SWIFT_TESTS == 'on' || github.event_name == 'workflow_dispatch' }}"
+  test('runs the Swift job only when the owners turn it on and the app changed, or by hand', () => {
+    expect(workflow.jobs.swift?.if?.replace(/\s+/g, ' ').trim()).toBe(
+      "github.event_name == 'workflow_dispatch' || (vars.IOS_SWIFT_TESTS == 'on' && needs.changes.outputs.changed == 'true')"
     )
   })
 
@@ -29,7 +32,26 @@ describe('the iOS workflow', () => {
       true
     )
     expect(runsCommand(' test', packageScheme, 'platform=macOS,arch=arm64')).toBe(true)
-    expect(runs.some(run => run.includes('print("IPAD_SIMULATOR=" + pads[0]["udid"])'))).toBe(true)
+  })
+
+  test('selects the pinned Xcode before anything builds, and makes its Simulators with the script agents use', () => {
+    expect(readFileSync(join(root, '.xcode-version'), 'utf8')).toMatch(/^\d+\.\d+(\.\d+)?\n$/)
+    const select = runs.indexOf(
+      'sudo xcode-select -s "/Applications/Xcode_$(cat .xcode-version).app"'
+    )
+    expect(select).toBeGreaterThan(-1)
+    expect(
+      runs.findIndex(run => /\b(xcodebuild|xcrun|swift|simulator\.py)\b/.test(run))
+    ).toBeGreaterThan(select)
+    const made = runs.find(run => run.includes('>>"$GITHUB_ENV"')) ?? ''
+    expect(made).toContain('simulator=$(python3 apps/ios/Tools/simulator.py)')
+    expect(made).toContain('ipad=$(python3 apps/ios/Tools/simulator.py --device ipad)')
+    expect(made).toContain('SIMULATOR=%s\\nIPAD_SIMULATOR=%s\\n')
+    expect(
+      workflowSteps(path, 'changes').some(step =>
+        String(step.with?.paths ?? '').includes('.xcode-version')
+      )
+    ).toBe(true)
   })
 
   test("runs the app's UI tests on an iPhone Simulator, an iPad Simulator, and the Mac", () => {

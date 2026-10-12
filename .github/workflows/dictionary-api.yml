@@ -2,22 +2,7 @@ name: Dictionary API
 
 on:
   pull_request:
-    paths:
-      - apps/dictionary-api/**
-      - packages/dictionary-core/**
-      - packages/node-service/**
-      - docs/api/dictionary-api.md
-      - apps/web/src/lib/dictionary/**
-      - apps/web/src/components/dictionary/**
-      - apps/web/src/test/**
-      - apps/web/vitest.config.ts
-      - package.json
-      - pnpm-lock.yaml
-      - pnpm-workspace.yaml
-      - apps/ios/LanguageData/Conformance/**
-      - apps/ios/Modules/Sources/SearchExperience/Resources/**
-      - language-data/release.json
-      - .github/workflows/dictionary-api.yml
+  merge_group:
   push:
     branches: [main]
     paths:
@@ -29,7 +14,7 @@ on:
 
 concurrency:
   group: dictionary-api-${{ github.event.pull_request.number || github.ref }}
-  cancel-in-progress: true
+  cancel-in-progress: ${{ github.event_name != 'merge_group' }}
 
 permissions:
   contents: read
@@ -38,7 +23,29 @@ env:
   RESOURCES: apps/ios/Modules/Sources/SearchExperience/Resources
 
 jobs:
+  changes:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      changed: ${{ steps.paths.outputs.changed }}
+    steps:
+      - uses: actions/checkout@v5
+      - id: paths
+        uses: ./.github/actions/changed-paths
+        with:
+          paths: >-
+            apps/dictionary-api packages/dictionary-core packages/node-service
+            docs/api/dictionary-api.md apps/web/src/lib/dictionary
+            apps/web/src/components/dictionary apps/web/src/test apps/web/vitest.config.ts
+            apps/web/e2e/server.ts tools/checks/ports.mjs .node-version
+            package.json pnpm-lock.yaml pnpm-workspace.yaml apps/ios/LanguageData/Conformance
+            apps/ios/Modules/Sources/SearchExperience/Resources language-data/release.json
+            deploy/deployer.sh .github/workflows/dictionary-api.yml
+            .github/actions/changed-paths
+
   scripts:
+    needs: changes
+    if: needs.changes.outputs.changed == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
@@ -49,6 +56,8 @@ jobs:
           deploy/deployer.sh
 
   check:
+    needs: changes
+    if: needs.changes.outputs.changed == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 30
     env:
@@ -68,7 +77,7 @@ jobs:
           package_json_file: package.json
       - uses: actions/setup-node@v5
         with:
-          node-version: 22
+          node-version-file: .node-version
           cache: pnpm
           cache-dependency-path: pnpm-lock.yaml
       - run: pnpm install --frozen-lockfile
@@ -107,3 +116,13 @@ jobs:
       - name: Show the service's log
         if: failure()
         run: cat apps/dictionary-api/service.log || true
+
+  dictionary-api:
+    if: always()
+    needs: [changes, scripts, check]
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Every job passed, or had nothing to check
+        if: contains(needs.*.result, 'failure') || contains(needs.*.result, 'cancelled')
+        run: exit 1

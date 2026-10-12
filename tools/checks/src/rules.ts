@@ -10,7 +10,7 @@ export const unclassifiedRule =
   "The comment check doesn't know these files' language. Add each extension or name to tools/checks/src/files.ts: as code (with its comment syntax), prose or data, written by a tool, or third-party."
 
 export const docsRule =
-  "Docs are the map agents work from (docs/agents/code.md, Docs): every link, heading anchor, repository path, and pnpm script in them exists, AGENTS.md reaches every doc, each skill is described and listed, and nothing is hidden in an HTML comment. Fix or remove what's named; link a new doc from the doc that routes to its area."
+  "Docs are the map agents work from (docs/agents/code.md, Docs): every link, heading anchor, repository path, pnpm script, and test in them exists, AGENTS.md reaches every doc, each doc keeps to its size budget and its folder's naming, each skill is described and listed, and nothing is hidden in an HTML comment. Fix or remove what's named; link a new doc from the doc that routes to its area."
 
 export const sizeRule =
   'Code files stay under the line limit (docs/agents/code.md, File size). Split a file that outgrows it by responsibility, into files named for what each does. An exception needs a reason that makes splitting unsafe now; it goes in knownLargeFiles in tools/checks/src/sizes.ts with its size and that reason, and may only shrink.'
@@ -32,3 +32,6 @@ export const deadCodeRule =
 
 export const dependencyRule =
   'Imports point one way inside each part, and parts meet only where ARCHITECTURE.md says (docs/agents/code.md, Imports). Each finding above says where the code belongs.'
+
+export const stopRule =
+  'These are in files changed since the last commit, found before the turn ended (docs/agents/code.md, Checks). Fix each one now, or say which you are leaving and why. pnpm verify runs the same checks on the whole repository.'

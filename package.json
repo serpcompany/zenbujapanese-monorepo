@@ -5,7 +5,8 @@
   "scripts": {
     "verify": "pnpm --filter zenbujapanese-checks verify",
     "check": "pnpm verify && pnpm --recursive --workspace-concurrency=1 check",
-    "maintenance:report": "pnpm --silent --filter zenbujapanese-checks report"
+    "maintenance:report": "pnpm --silent --filter zenbujapanese-checks report",
+    "ports": "node tools/checks/ports.mjs"
   },
   "packageManager": "pnpm@10.17.0",
   "engines": {

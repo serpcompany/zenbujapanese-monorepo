@@ -55,17 +55,18 @@ echo "DICTIONARY_API_TOKEN=$(openssl rand -hex 24)" > .env
 pnpm dev
 ```
 
-`pnpm dev` restarts on changes and reads `.env`, which is never committed. It runs the TypeScript
-through tsx, whose loader doesn't reach worker threads by itself, so there each thread starts from
-`src/worker-dev.mjs`, which registers the loader first; the image runs the bundle. The service
-hashes the artifact and Sudachi's dictionary, starts its worker threads, and answers `/healthz`
-with 503 until every thread has loaded, then with its build. To run the website against it, name
-it in `.dev.vars` in `apps/web` (see [`web.md`](web.md), Dictionary).
+`pnpm dev` restarts on changes and reads `.env`, which is never committed. It listens on this
+checkout's `dictionary` port ([`verification.md`](verification.md)): 8788 in the main checkout. It
+runs the TypeScript through tsx, whose loader doesn't reach worker threads by itself, so each
+thread starts from `src/worker-dev.mjs`, which registers the loader first; the image runs the
+bundle. The service hashes the artifact and Sudachi's dictionary, starts its worker threads, and
+answers `/healthz` with 503 until every thread has loaded, then with its build. To run the website
+against it, name it in `.dev.vars` in `apps/web` (see [`web.md`](web.md), Dictionary).
 
 | Variable | Default | What it sets |
 | --- | --- | --- |
 | `DICTIONARY_API_TOKEN` | required | The bearer token every `/v1` request but the app routes' must carry, at least 16 characters. The website's Worker holds the same value. |
-| `PORT` | `8788` | The HTTP port. |
+| `PORT` | `8788` | The HTTP port. `pnpm dev` sets this checkout's unless the shell or `.env` has. |
 | `DICTIONARY_RESOURCES` | the app's `Resources` | Where the app's files are. |
 | `SUDACHI_DICTIONARY` | `.sudachi/system_core.dic` | Sudachi's dictionary; empty turns sentence search off. |
 | `DICTIONARY_API_WORKERS` | CPU cores, at most 4 | How many worker threads answer requests. |
@@ -84,15 +85,14 @@ Rules).
 
 ## Routes
 
-Every `/v1` route but the app routes (Apps, below) needs `Authorization: Bearer <token>` and
-answers JSON; a query or form is one
-URL-encoded path segment of at most 200 characters (`maximumQueryLength`, which the website
-checks too). The routes stay clear of `/v1/auth`, `/v1/me`, `/v1/sync`, and `/v1/health`, which the
-API host's nginx sends to the account service. A 404 means there's no such thing: no such word, kanji, or sitemap, a query without
-examples, or an unknown route. A word number or kanji that can't exist, such as word 0, a number
-past any JMdict entry, or two characters, is a 404 too. A 400 names what was malformed; a 401
-means the token is missing or wrong; a 503 means the service is still starting; a 500 says nothing
-more and logs the error.
+Every `/v1` route but the app routes (Apps, below) needs `Authorization: Bearer <token>` and answers
+JSON; a query or form is one URL-encoded path segment of at most 200 characters
+(`maximumQueryLength`, which the website checks too). The routes stay clear of `/v1/auth`, `/v1/me`,
+`/v1/sync`, and `/v1/health`, which the API host's nginx sends to the account service. A 404 means
+there's no such thing: no such word, kanji, or sitemap, a query without examples, or an unknown
+route. A word number or kanji that can't exist, such as word 0, a number past any JMdict entry, or
+two characters, is a 404 too. A 400 names what was malformed; a 401 means the token is missing or
+wrong; a 503 means the service is still starting; a 500 says nothing more and logs the error.
 
 | Route | Answer |
 | --- | --- |

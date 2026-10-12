@@ -11,8 +11,12 @@ export const removedDictionaryPages: readonly { source: string; destination: str
   { source: '/dictionary/search/:query/examples', destination: '/dictionary/search/:query/' }
 ]
 
+export function movedPath(pathname: string): string | undefined {
+  return movedPages[pathname.replace(/(.)\/$/, '$1')]
+}
+
 export function movedPageResponse(url: URL): Response | null {
-  const destination = movedPages[url.pathname.replace(/(.)\/$/, '$1')]
+  const destination = movedPath(url.pathname)
   if (!destination) return null
   const location = new URL(destination, url)
   location.search = url.search

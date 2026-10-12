@@ -1,13 +1,12 @@
 # Website working guide
 
-`apps/web` is zenbujapanese.com: Next.js served from Cloudflare Workers through OpenNext, with
-no database of its own. It reads the dictionary from the dictionary service
-(`apps/dictionary-api`, ADR 0009; see
-[`dictionary-api.md`](dictionary-api.md)). It builds with pnpm in the repository's workspace (the
-root `pnpm-workspace.yaml` and lockfile), which it shares with the dictionary core
-(`packages/dictionary-core`) and the service, and still owns its build, tests, and deploys
-(ADR 0005). Run every command below from `apps/web`. Decisions and scope live in issue #402.
-What the dictionary pages show, and the check that enforces each behavior, is in
+`apps/web` is zenbujapanese.com: Next.js served from Cloudflare Workers through OpenNext, with no
+database of its own. It reads the dictionary from the dictionary service (`apps/dictionary-api`, ADR
+0009; see [`dictionary-api.md`](dictionary-api.md)). It builds with pnpm in the repository's
+workspace (the root `pnpm-workspace.yaml` and lockfile), which it shares with the dictionary core
+(`packages/dictionary-core`) and the service, and still owns its build, tests, and deploys (ADR
+0005). Run every command below from `apps/web`. Decisions and scope live in issue #402. What the
+dictionary pages show, and the check that enforces each behavior, is in
 [`apps/web/docs/product/`](../../apps/web/docs/product/index.md).
 
 The website follows these SERP engineering standards:
@@ -28,7 +27,8 @@ Next.js version differs from older releases (see `apps/web/AGENTS.md`).
 
 ## Run and verify
 
-- `pnpm dev` runs Next.js in Node, with Cloudflare bindings and `.dev.vars` available through
+- `pnpm dev` runs Next.js in Node on this checkout's `site` port
+  ([`verification.md`](verification.md)), with Cloudflare bindings and `.dev.vars` available through
   `getCloudflareContext()` (`initOpenNextCloudflareForDev` in `next.config.ts`). Dictionary pages
   show local fixtures unless `.dev.vars` names a dictionary service (see Dictionary).
 - `pnpm preview` builds with OpenNext and serves the Worker in workerd, the production runtime.
@@ -36,12 +36,13 @@ Next.js version differs from older releases (see `apps/web/AGENTS.md`).
 - `pnpm check` runs Biome, typecheck, Vitest, and `next build`. The `Web` GitHub Actions workflow
   runs it on pull requests that change `apps/web/**` or the core.
 - `pnpm test:e2e` runs the browser tests in `apps/web/e2e/` with Playwright, at a desktop and a
-  phone width, on the dictionary fixtures. Locally it starts `next dev` on port 3100 with
-  `ZENBU_DICTIONARY_FIXTURES=1`, which makes the site read the fixtures even when `.dev.vars` names
-  a service (it's ignored on staging and production); in CI it runs on the production build in
-  workerd (`E2E_SERVER=preview`). Every test fails when a page logs a console error or throws, so a
-  hydration error anywhere a test goes fails the run. How to run one test, read a failure, and add a
-  regression test is in the `browser-tests` skill (`.claude/skills/browser-tests/SKILL.md`).
+  phone width, on the dictionary fixtures. Locally it starts `next dev` on this checkout's `e2e`
+  port with `ZENBU_DICTIONARY_FIXTURES=1`, which makes the site read the fixtures even when
+  `.dev.vars` names a service (it's ignored on staging and production); in CI it runs on the
+  production build in workerd (`E2E_SERVER=preview`). Every test fails when a page logs a console
+  error or throws, so a hydration error anywhere a test goes fails the run. How to run one test,
+  read a failure, and add a regression test is in the `browser-tests` skill
+  (`.claude/skills/browser-tests/SKILL.md`).
 - `scripts/smoke.sh <base-url> <staging|production>` checks a running site's key pages, the
   `/privacy` redirect, that environment's search-engine rules, and dictionary pages against the
   app-recorded suites. Each check retries for about 15 seconds, since for a few seconds after a
@@ -278,10 +279,10 @@ dictionary from before the service; they're safe to delete.
 
 To run `pnpm dev` on the whole dictionary, start the service (see
 [`dictionary-api.md`](dictionary-api.md)) and name it in `.dev.vars` in `apps/web`, which is
-never committed:
+never committed. Its address is the `dictionary` line of `pnpm -w ports`:
 
 ```sh
-DICTIONARY_API_URL=http://localhost:8788
+DICTIONARY_API_URL=<the service's address>
 DICTIONARY_API_TOKEN=<the token the service was started with>
 ```
 
@@ -352,10 +353,9 @@ appears that ADR 0010 doesn't list.
 
 Next.js passes a page its segment encoded but `generateMetadata` decoded: search pages tell
 `searchQuery` which it has (`decoded`), and word pages read it with `decodeSegment`
-(`apps/web/src/lib/dictionary/urls.ts`), which accepts either. The JSON routes read their text
-from the request's path as sent and decode it once
-(`apps/web/src/lib/dictionary/example-routes.ts`); a search's route answers only a query already
-in its normal form, as its page asks for it.
+(`apps/web/src/lib/dictionary/urls.ts`), which accepts either. The JSON routes read their text from
+the request's path as sent and decode it once (`apps/web/src/lib/dictionary/example-routes.ts`); a
+search's route answers only a query already in its normal form, as its page asks for it.
 
 The detail core conjugates the word's rows into the Conjugations section's table. Both
 registers' forms are in the page's HTML, the one not shown hidden, so the Plain and Polite tabs
@@ -388,19 +388,19 @@ not indexed), the ranked lists, YouTube's and anime's first bands, and JLPT N5, 
 lists, grade 4, JLPT N5's kanji, and all of jinmeiyō, with its compatibility kanji. Each word list
 is cut to its first 20 words. Any other browse page is a 404 there.
 
-`src/lib/dictionary/browse/paths.ts` builds the pages' URLs: a list's first page has no number,
-and `…/1/` redirects to it; a ranked list's page is a band of 1,000 ranks (`…/anime/1001-2000/`),
-and its name links to the first band; a JLPT level is `…/jlpt/n5/`; and a category's kana order is
+`src/lib/dictionary/browse/paths.ts` builds the pages' URLs: a list's first page has no number, and
+`…/1/` redirects to it; a ranked list's page is a band of 1,000 ranks (`…/anime/1001-2000/`), and
+its name links to the first band; a JLPT level is `…/jlpt/n5/`; and a category's kana order is
 `…/<category>/kana-order/`. A list of fewer than 10 words, and a category's kana order, are
-`noindex, follow` (`dictionaryMetadata`'s `index`) and left out of the browse sitemaps. No
-browse page links to a URL that redirects (`e2e/browse-links.spec.ts` follows every link). The
-hiragana and katakana routes, and each category's four, are one line each over the route helpers
-beside them (`kana-routes.tsx`, `category-routes.tsx`, `frequency-dictionaries/list-routes.tsx`). Pages without parameters that read the service are
-`force-dynamic`, as `/dictionary/` now is, so a build never reads it
-(`src/app/dictionary/browse/dynamic.test.ts`). The home leaves its browse sections out when the
-service can't answer (`getHomeBrowse`), as when the site deploys a few minutes ahead
-of a service without the browse routes, rather than failing the search box with them. The words show as search
-results' rows do (`components/dictionary/word-row.tsx`).
+`noindex, follow` (`dictionaryMetadata`'s `index`) and left out of the browse sitemaps. No browse
+page links to a URL that redirects (`e2e/browse-links.spec.ts` follows every link). The hiragana and
+katakana routes, and each category's four, are one line each over the route helpers beside them
+(`kana-routes.tsx`, `category-routes.tsx`, `frequency-dictionaries/list-routes.tsx`). Pages without
+parameters that read the service are `force-dynamic`, as `/dictionary/` now is, so a build never
+reads it (`src/app/dictionary/browse/dynamic.test.ts`). The home leaves its browse sections out when
+the service can't answer (`getHomeBrowse`), as when the site deploys a few minutes ahead of a
+service without the browse routes, rather than failing the search box with them. The words show as
+search results' rows do (`components/dictionary/word-row.tsx`).
 
 ### The rendered-page gate
 
@@ -433,7 +433,7 @@ so the text it reads never holds a `<` (`rendered.test.ts`). The gate's tests:
 ZENBU_DICTIONARY_API=1 ZENBU_DICTIONARY_API_TOKEN=<token> pnpm exec vitest run src/components/dictionary
 ```
 
-`ZENBU_DICTIONARY_API_URL` names another service (default `http://localhost:8788`). The
+`ZENBU_DICTIONARY_API_URL` names another service than this checkout's. The
 `Dictionary API` workflow runs the gate on pull requests against the service it builds, and
 `smoke.sh` checks the deployed pages against the search-results suite's `iru` and `eat` cases, the
 example-search suite's `eat`, and the word-detail suite's 見る and 学校 at run time.
@@ -512,9 +512,9 @@ the account service ([`account-api.md`](account-api.md); the website's side of i
   failed load keeps it for Try again, and coming back with Back drops it.
 
 To run them locally, run the account service ([`account-api.md`](account-api.md), Run it) with
-`ACCOUNT_API_TRUSTED_ORIGINS=http://localhost:3000,http://localhost:3100`; `pnpm dev` reads it at
-`http://localhost:8789`, and `ACCOUNT_API_URL` in `.dev.vars` names another. Its dev mailbox,
-`http://localhost:8789/dev/mail`, holds the codes.
+`ACCOUNT_API_TRUSTED_ORIGINS` naming this checkout's `site` and `e2e` addresses (`pnpm -w ports`);
+`pnpm dev` reads it at `http://localhost:8789`, and `ACCOUNT_API_URL` in `.dev.vars` names another.
+Its dev mailbox, `http://localhost:8789/dev/mail`, holds the codes.
 
 **Browser tests.** `e2e/account.spec.ts` stands in for the service in the browser, so it runs
 wherever the others do, CI's `Web` included. `e2e/account-service.spec.ts` drives a learner
@@ -619,14 +619,14 @@ Each value that differs by environment lives where the code that reads it runs:
 `SITE_ENV` is set in both the Worker `vars` and the build of each deployed environment
 (`deploy:staging` and `deploy:production`). It also names the environment's origin, its canonical
 host (`siteOrigin()` in `src/lib/site.ts`), which every canonical tag, Open Graph URL, and
-structured data URL is written on; local development writes production's. A build whose
-`SITE_ENV` isn't `production` sends workers.dev to staging (`next.config.ts`). Anything but
-`SITE_ENV=production` is non-production: it sends `X-Robots-Tag: noindex` and a `robots.txt` that disallows
-everything. Analytics load only in production and only when their build-time IDs are set:
+structured data URL is written on; local development writes production's. A build whose `SITE_ENV`
+isn't `production` sends workers.dev to staging (`next.config.ts`). Anything but
+`SITE_ENV=production` is non-production: it sends `X-Robots-Tag: noindex` and a `robots.txt` that
+disallows everything. Analytics load only in production and only when their build-time IDs are set:
 `NEXT_PUBLIC_GTM_ID` (Google Tag Manager, a `production` GitHub environment variable that the
 `Web deploy` workflow passes to the production build) and `NEXT_PUBLIC_CF_BEACON_TOKEN` (Cloudflare
-Web Analytics, which production doesn't set). Production's container, `GTM-MCNL5QH4`, holds one
-tag, a Custom HTML tag that loads Ahrefs Web Analytics, which uses no cookies; the
+Web Analytics, which production doesn't set). Production's container, `GTM-MCNL5QH4`, holds one tag,
+a Custom HTML tag that loads Ahrefs Web Analytics, which uses no cookies; the
 [Privacy Policy](../../apps/web/docs/product/privacy.md) names Ahrefs and Google for it, so a tag
 added there, or the Cloudflare beacon turned on, changes the policy in the same step.
 
@@ -649,25 +649,27 @@ exposed.
 
 Each environment has one canonical host: `zenbujapanese.com` for production and
 `staging.zenbujapanese.com` for staging. Every other host serving the same Worker permanently
-redirects (308) to it in one hop, keeping the canonical trailing-slash form, through
-`redirectHostTo` in `next.config.ts`:
+redirects (308) to the page's canonical URL in one hop. `otherHostResponse`
+(`src/lib/other-hosts.ts`) does it from `worker.ts`, before Next.js runs: it adds the trailing slash
+and follows a moved page in the same redirect, and keeps a path under `/_next/`, `/api`, or
+`/.well-known/` as asked. Next.js alone adds the slash on the old host first, a second hop, which an
+old URL that only a pattern in `next.config.ts` redirects still takes. The other hosts:
 
 - `www.zenbujapanese.com`, a custom domain on the production Worker.
 - Each Worker's workers.dev URL. Wrangler enables it by default; left alone it serves a crawlable
-  duplicate of the site. Keep `workers_dev` on: CI smoke-tests these URLs.
-
-`redirectHostTo` lists its file rules before `/:path+`, which would also match files, and gives
-`/` a rule of its own, since OpenNext can't fill an empty path parameter.
+  duplicate of the site. Keep `workers_dev` on: CI smoke-tests these URLs. `preview_urls` is off
+  in both environments, so no versioned preview host serves another copy.
 
 The zone is on the free plan, whose Bot Fight Mode blocks CI runners and cannot be skipped by WAF
 rules, so CI smoke-tests the workers.dev URLs with the `x-zenbu-smoke-test` header, which exempts a
 request from the host redirect. The header is not a secret. `scripts/smoke.sh` also checks, with a
-retry for edge propagation, that a plain workers.dev request 308s to the canonical host.
+retry for edge propagation, that a plain workers.dev request 308s to the canonical host, with its
+slash and without.
 
-When adding a host (a new custom domain, preview URLs), add a `redirectHostTo` rule and a smoke
-check in the same change. To test host rules locally, run `wrangler dev` without `--env production`
-and send a `Host` header: with that environment's custom domains, Wrangler rewrites `Host` to the
-route's domain and host rules never match.
+When adding a host (a new custom domain, preview URLs), add it to `otherHostResponse`, with a case
+in `e2e/urls.spec.ts` and a smoke check, in the same change. The browser tests send a `Host`
+header to the production build; under `wrangler dev --env production` Wrangler rewrites `Host`
+to the route's domain, and no other host is ever seen.
 
 `/privacy` and `/support` must keep working: the shipped iOS app, Tomodachi, and their App Store
 metadata link to them. A page that moved, such as `/privacy`, is listed in `apps/web/src/lib/moved-pages.ts`, and
@@ -698,10 +700,10 @@ standard. They are hand-written route handlers built on `src/lib/sitemap.ts`, re
   `src/lib/dictionary/sitemap-files.ts`, as the word and browse sitemaps are.
   Static pages are listed once, in `src/lib/pages.ts`, which also feeds the HTML sitemap at
   `/sitemap`.
-- Every URL is written on the origin `servedOrigin()` in `src/lib/site.ts` names: the
-  environment's canonical host on staging and production (so staging's sitemaps list
-  `https://staging.zenbujapanese.com/…`, even when CI asks through workers.dev), and the address
-  the site is served at locally (`http://localhost:3000/…`). The homepage is the origin itself,
+- Every URL is written on the origin `servedOrigin()` in `src/lib/site.ts` names: the environment's
+  canonical host on staging and production (so staging's sitemaps list
+  `https://staging.zenbujapanese.com/…`, even when CI asks through workers.dev), and the address the
+  site is served at locally (such as `http://localhost:3000/…`). The homepage is the origin itself,
   with no slash (`absoluteUrl('/')`), as in its canonical tag and `og:url`: Next.js adds a slash to
   a metadata URL for `/` under `trailingSlash`, so the homepage writes those two tags itself
   (`src/components/origin-canonical.tsx`), React moves them into the head, and `pageMetadata`

@@ -2,103 +2,39 @@ import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { describe, expect, test } from 'vitest'
 import {
-  claudeResult,
-  deniedCommand,
-  executionLog,
-  expectFailureUnlessClaudeFinished,
-  minutesAfter
-} from './guards'
-import {
-  allowedTools,
-  claudeStep,
-  guardAfter,
-  type Route,
-  readRepositoryFile,
-  readWorkflow,
-  runNodeStep,
-  workflowSteps
-} from './workflow'
+  bot,
+  environment,
+  github,
+  guard,
+  guardIndex,
+  minutesAfterStart,
+  type PullRequest,
+  pr,
+  repository,
+  requestReply,
+  review,
+  reviewIndex,
+  steps,
+  summaryBody,
+  summaryBot
+} from './code-review-support'
+import { allowedTools, readRepositoryFile, readWorkflow, runNodeStep } from './workflow'
 
-const steps = workflowSteps('.github/workflows/code-review.yml', 'review')
-const { step: review, index: reviewIndex } = claudeStep(steps)
 const claudeArgs = String(review?.with?.claude_args ?? '')
 const skill = readRepositoryFile('.claude/skills/pr-review/SKILL.md')
 const skillTools = (/^allowed-tools:\s*(.+)$/m.exec(skill)?.[1] ?? '')
   .split(',')
   .map(tool => tool.trim())
   .filter(Boolean)
-const repository = 'serpcompany/zenbujapanese-monorepo'
-const pr = '7'
-const bot = 'claude[bot]'
-const summaryBot = 'github-actions[bot]'
-const startedAt = '2026-10-01T10:00:00Z'
-const minutesAfterStart = (minutes: number) => minutesAfter(startedAt, minutes)
-const summaryBody = { body: '## Claude review\nReviewed abc1234.\n\nNo new findings.' }
-const requestReply = { body: 'Done: I renamed the helper in abc1234.' }
-
-interface Posted {
-  login: string
-  at: string
-  updatedAt?: string
-  details?: Record<string, unknown>
-}
-
-interface PullRequest {
-  issueComments?: Posted[]
-  reviewComments?: Posted[]
-  reviews?: Posted[]
-  status?: number
-}
-
-function github(pullRequest: PullRequest): Route {
-  const comments = (items: Posted[] = []) =>
-    items.map(({ login, at, updatedAt, details }) => ({
-      user: { login },
-      created_at: at,
-      updated_at: updatedAt ?? at,
-      ...details
-    }))
-  const routes: Record<string, unknown[]> = {
-    [`/repos/${repository}/issues/${pr}/comments`]: comments(pullRequest.issueComments),
-    [`/repos/${repository}/pulls/${pr}/comments`]: comments(pullRequest.reviewComments),
-    [`/repos/${repository}/pulls/${pr}/reviews`]: (pullRequest.reviews ?? []).map(
-      ({ login, at }) => ({ user: { login }, submitted_at: at })
-    )
-  }
-  return url => {
-    const body = routes[url.pathname]
-    if (!body) return undefined
-    const status = pullRequest.status ?? 200
-    return { status, body: status === 200 ? body : { message: 'Not allowed' } }
-  }
-}
-
-const environment = {
-  GITHUB_REPOSITORY: repository,
-  PR_NUMBER: pr,
-  REVIEW_BOT: bot,
-  SUMMARY_BOT: summaryBot,
-  REVIEW_STARTED_AT: startedAt
-}
-
-const { step: guard, index: guardIndex } = guardAfter(steps, review)
-
-function runGuard(log: unknown, pullRequest: PullRequest = {}) {
-  const { env, files } = executionLog(log)
-  return runNodeStep(guard, { ...environment, ...env }, github(pullRequest), files)
-}
-
-const result = claudeResult({
-  num_turns: 24,
-  duration_ms: 312_000,
-  total_cost_usd: 2.4,
-  modelUsage: { 'claude-sonnet-5-5': {} },
-  result: 'Posted 2 inline comments.'
-})
-const cleanLog = [{ type: 'system', subtype: 'init' }, result()]
-const deniedView = deniedCommand('gh pr view 7 --comments')
-
 describe('the Code review workflow', () => {
+  test('has the skill read the issue and every changed file, and say how much it read', () => {
+    expect(skillTools).toContain('Bash(gh issue view:*)')
+    expect(skill).toContain('closingIssuesReferences,changedFiles')
+    expect(skill).toContain('`Read <N> of <M> changed files.`')
+    expect(skill).toContain('`Not read:`')
+    expect(skill).toContain('`**blocking**` or\n  `**suggestion**`')
+  })
+
   test('runs the pr-review skill with every tool the skill uses', () => {
     expect(review?.id).toBeTruthy()
     expect(review.with?.prompt).toBe(
@@ -158,101 +94,6 @@ describe('the Code review workflow', () => {
     const startIndex = steps.findIndex(step => step.run?.includes('REVIEW_STARTED_AT='))
     expect(startIndex).toBeGreaterThan(-1)
     expect(startIndex).toBeLessThan(reviewIndex)
-  })
-})
-
-describe("the review's guard", () => {
-  test('fails unless Claude finished: no log, no result, an error, or subagents still running', async () => {
-    await expectFailureUnlessClaudeFinished(log => runGuard(log), result)
-  })
-
-  test('fails when Claude posted nothing, and shows what Claude said', async () => {
-    const { status, output } = await runGuard(
-      [result({ result: 'This only bumps a version, so it needs no review.' })],
-      { issueComments: [{ login: 'someone', at: minutesAfterStart(3) }] }
-    )
-    expect(status).not.toBe(0)
-    expect(output).toContain('needs no review')
-  })
-
-  test('fails and names the command when Claude was denied a tool and posted nothing', async () => {
-    const { status, output } = await runGuard([result(deniedView)])
-    expect(status).not.toBe(0)
-    expect(output).toContain('gh pr view 7 --comments')
-  })
-
-  test("fails when it can't read the pull request", async () => {
-    const { status, output } = await runGuard(cleanLog, { status: 403 })
-    expect(status).not.toBe(0)
-    expect(output).toContain('403')
-  })
-
-  test.each<[string, PullRequest]>([
-    [
-      'a summary comment',
-      { issueComments: [{ login: summaryBot, at: minutesAfterStart(4), details: summaryBody }] }
-    ],
-    ['inline comments', { reviewComments: [{ login: bot, at: minutesAfterStart(5) }] }],
-    ['a review', { reviews: [{ login: bot, at: minutesAfterStart(5) }] }],
-    [
-      'an update to its summary',
-      {
-        issueComments: [
-          {
-            login: summaryBot,
-            at: minutesAfterStart(-90),
-            updatedAt: minutesAfterStart(4),
-            details: summaryBody
-          }
-        ]
-      }
-    ]
-  ])('passes when Claude posted %s during the run', async (_, pullRequest) => {
-    const { status, output } = await runGuard(cleanLog, pullRequest)
-    expect(output).not.toContain('::error')
-    expect(output).toContain('about $2.40')
-    expect(status).toBe(0)
-  })
-
-  test("doesn't count Claude's reply to an @claude request, or in a review thread, as the review", async () => {
-    const { status, output } = await runGuard(cleanLog, {
-      issueComments: [{ login: bot, at: minutesAfterStart(3), details: requestReply }],
-      reviewComments: [
-        {
-          login: bot,
-          at: minutesAfterStart(4),
-          details: { in_reply_to_id: 11, body: 'Fixed in abc1234.' }
-        }
-      ]
-    })
-    expect(output).toContain('::error')
-    expect(status).not.toBe(0)
-  })
-
-  test("doesn't count a summary that the workflow didn't post", async () => {
-    const { status } = await runGuard(cleanLog, {
-      issueComments: [
-        { login: bot, at: minutesAfterStart(3), details: summaryBody },
-        { login: 'someone', at: minutesAfterStart(4), details: summaryBody }
-      ]
-    })
-    expect(status).not.toBe(0)
-  })
-
-  test('warns but passes when Claude posted despite a denied tool', async () => {
-    const { status, output } = await runGuard([result(deniedView)], {
-      reviewComments: [{ login: bot, at: minutesAfterStart(5) }]
-    })
-    expect(output).toContain('::warning')
-    expect(status).toBe(0)
-  })
-
-  test('fails when only an earlier push was reviewed', async () => {
-    const { status } = await runGuard(cleanLog, {
-      reviewComments: [{ login: bot, at: minutesAfterStart(-90) }],
-      issueComments: [{ login: summaryBot, at: minutesAfterStart(-90), details: summaryBody }]
-    })
-    expect(status).not.toBe(0)
   })
 })
 
@@ -334,7 +175,7 @@ describe('the earlier findings given to the review', () => {
     )
     expect(context).toContain('apps/dictionary-api/src/app.ts:9 (outdated: the code there changed)')
     expect(context).toContain(
-      'Summary comment (https://github.com/c/3): ## Claude review Reviewed abc1234.'
+      'Summary comment (https://github.com/c/3): ## Claude review Reviewed abc1234, round 1.'
     )
     expect(context).not.toContain('Not Claude.')
     expect(context).not.toContain('https://github.com/c/9')

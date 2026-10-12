@@ -5,7 +5,7 @@
   "description": "The website's dictionary service: the shared core (packages/dictionary-core) on the artifact, with the core's tokenizer and Sudachi (ADR 0009).",
   "type": "module",
   "scripts": {
-    "dev": "node --env-file-if-exists=.env --watch --import tsx src/server.ts",
+    "dev": "node ../../tools/checks/ports.mjs run dictionary --settings .env -- node --env-file-if-exists=.env --watch --import tsx src/server.ts",
     "start": "node dist/server.mjs",
     "build": "node scripts/build.mjs",
     "sudachi": "node scripts/fetch-sudachi.mjs",

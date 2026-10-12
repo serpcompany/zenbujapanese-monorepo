@@ -11,7 +11,19 @@
           {
             "type": "command",
             "command": "node \"$CLAUDE_PROJECT_DIR/tools/checks/hook.mjs\"",
-            "timeout": 30
+            "timeout": 30,
+            "onFailure": "block"
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"$CLAUDE_PROJECT_DIR/tools/checks/stop-hook.mjs\"",
+            "timeout": 120
           }
         ]
       }

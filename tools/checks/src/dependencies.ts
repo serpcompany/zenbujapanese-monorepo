@@ -269,7 +269,7 @@ const checks: Part = {
   folder: 'tools/checks',
   sources: ['src'],
   testCode: checksTestCode,
-  rules: [reachableFrom(['^src/(cli|hook|report|fix-branch)\\.ts$'], checksTestCode)]
+  rules: [reachableFrom(['^src/(cli|hook|stop-hook|report)\\.ts$'], checksTestCode)]
 }
 
 export const parts: readonly Part[] = [web, service, account, core, nodeService, checks]

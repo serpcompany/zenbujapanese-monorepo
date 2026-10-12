@@ -59,6 +59,37 @@ test.describe('URLs', () => {
     })
   }
 
+  for (const [host, origin] of [
+    ['www.zenbujapanese.com', 'https://zenbujapanese.com'],
+    ['zenbujapanese-web-staging.example.workers.dev', 'https://staging.zenbujapanese.com']
+  ] as const) {
+    for (const [from, to] of [
+      ['/about', '/about/'],
+      ['/about/', '/about/'],
+      ['/privacy', '/legal/privacy/'],
+      ['/robots.txt', '/robots.txt'],
+      ['/.well-known/change-password', '/.well-known/change-password']
+    ] as const) {
+      test(`${host}${from} reaches ${origin}${to} in one hop`, async ({ request }) => {
+        test.skip(!onProductionBuild, answeredByWorker)
+        const response = await request.get(from, { headers: { host }, maxRedirects: 0 })
+        expect(response.status()).toBe(308)
+        expect(response.headers().location).toBe(`${origin}${to}`)
+      })
+    }
+  }
+
+  test('a workers.dev request that carries the smoke test header is served there', async ({
+    request
+  }) => {
+    test.skip(!onProductionBuild, answeredByWorker)
+    const response = await request.get('/about/', {
+      headers: { host: 'zenbujapanese-web-staging.example.workers.dev', 'x-zenbu-smoke-test': '1' },
+      maxRedirects: 0
+    })
+    expect(response.status()).toBe(200)
+  })
+
   for (const path of [
     '/dictionary/search/conjugations/',
     '/dictionary/search/conjugations/examples.json?build=fixtures&from=0'

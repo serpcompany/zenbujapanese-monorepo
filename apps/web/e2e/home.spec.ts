@@ -1,8 +1,9 @@
 import type { Page } from '@playwright/test'
 import { pageEnd } from '../src/lib/app-parts'
 import { exampleSearches, homeTitle, webTools } from '../src/lib/home'
+import { productionOrigin } from '../src/lib/origins'
 import { pageFor } from '../src/lib/pages'
-import { linkTo, productionOrigin, site } from '../src/lib/site'
+import { linkTo, site } from '../src/lib/site'
 import { expect, onPhone, sourcesToggle, test } from './test'
 
 const main = (page: Page) => page.getByRole('main')

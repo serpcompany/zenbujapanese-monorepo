@@ -1,23 +1,26 @@
 import { execFileSync } from 'node:child_process'
-import { readFileSync } from 'node:fs'
+import { existsSync, readFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { findComments } from './comments/find'
 import { findDeadCode } from './deadcode'
 import { checkDependencies, parts } from './dependencies'
+import { knownLongDocs } from './doc-rules/budgets'
 import { checkDocs, isOwnedDoc, referencedFiles } from './docs'
 import { findDuplicates } from './duplicates'
 import { repositoryFiles, root } from './files'
 import { duplicateProblems, knownDuplicates } from './known-duplicates'
 import { checkLayers } from './layers'
 import { type CheckProblems, docsToReverify, lastChangeTimes, renderReport } from './maintenance'
+import { groupFindings, readFindings } from './review-findings'
 import { findSecrets } from './secrets'
 import { checkSizes, filesNearLimit, knownLargeFiles } from './sizes'
-import { scoresToRegrade, summarizeDebt } from './work-tracking'
+import { debtFiles, qualityFiles, scoresToRegrade, summarizeDebt } from './work-tracking'
 
 const git = (...args: string[]) =>
   execFileSync('git', args, { cwd: root, encoding: 'utf8', maxBuffer: 256 * 1024 * 1024 })
 const read = (path: string) => readFileSync(join(root, path), 'utf8')
 
+const collectedFindings = join(root, 'tmp/review-findings.json')
 const files = repositoryFiles()
 const times = lastChangeTimes(git('log', '--format=%x00%ct', '--name-only'))
 
@@ -70,13 +73,19 @@ process.stdout.write(
     date: new Date().toISOString().slice(0, 10),
     checks,
     staleDocs: docsToReverify(docs, times),
-    quality: scoresToRegrade(read('docs/quality.md'), times),
-    debt: summarizeDebt(read('docs/tech-debt.md')),
+    quality: scoresToRegrade(qualityFiles.map(read).join('\n'), times),
+    debt: summarizeDebt(debtFiles.map(read).join('\n')),
     sizeExceptions: Object.entries(knownLargeFiles).map(([path, { lines }]) => ({ path, lines })),
+    longDocs: Object.entries(knownLongDocs)
+      .map(([path, lines]) => ({ path, lines }))
+      .sort((a, b) => b.lines - a.lines),
     duplicateExceptions: Object.entries(knownDuplicates).map(([pair, { blocks }]) => ({
       pair,
       blocks
     })),
-    nearLimit: filesNearLimit(files)
+    nearLimit: filesNearLimit(files),
+    reviewFindings: existsSync(collectedFindings)
+      ? groupFindings(readFindings(JSON.parse(readFileSync(collectedFindings, 'utf8'))))
+      : null
   })
 )

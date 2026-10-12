@@ -1,0 +1,33 @@
+name: Changed paths
+description: >-
+  Says whether a pull request, or a merge group in the merge queue, changes anything under the
+  given paths, so a workflow that is a required check can start every time and still skip work
+  that doesn't concern it. Needs a checkout. On any other event it answers true.
+inputs:
+  paths:
+    description: Folders and files to look under, separated by spaces or new lines, from the repository root.
+    required: true
+outputs:
+  changed:
+    description: The string true or false.
+    value: ${{ steps.diff.outputs.changed }}
+runs:
+  using: composite
+  steps:
+    - id: diff
+      shell: bash
+      env:
+        BASE: ${{ github.event.merge_group.base_sha || github.event.pull_request.base.sha }}
+        PATHS: ${{ inputs.paths }}
+      run: |
+        if [ -z "$BASE" ]; then
+          echo "changed=true" >> "$GITHUB_OUTPUT"
+          exit 0
+        fi
+        git fetch --no-tags --depth=1 origin "$BASE"
+        read -r -d '' -a paths <<< "$PATHS" || true
+        if git diff --quiet "$BASE" HEAD -- "${paths[@]}"; then
+          echo "changed=false" >> "$GITHUB_OUTPUT"
+        else
+          echo "changed=true" >> "$GITHUB_OUTPUT"
+        fi

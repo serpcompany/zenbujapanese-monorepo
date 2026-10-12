@@ -78,8 +78,25 @@ describe('renderReport', () => {
       unsized: []
     },
     sizeExceptions: [{ path: 'apps/ios/SearchView.swift', lines: 1101 }],
+    longDocs: [{ path: 'docs/agents/web.md', lines: 812 }],
     duplicateExceptions: [{ pair: 'apps/ios/Tools/a.py and apps/ios/Tools/b.py', blocks: 2 }],
-    nearLimit: [{ path: 'packages/dictionary-core/src/search/english.ts', lines: 471 }]
+    nearLimit: [{ path: 'packages/dictionary-core/src/search/english.ts', lines: 471 }],
+    reviewFindings: [
+      {
+        area: 'apps/web',
+        findings: 4,
+        pulls: 3,
+        blocking: 2,
+        examples: [{ title: 'The token is logged.', url: 'https://github.com/o/r/pull/7#r1' }]
+      },
+      {
+        area: 'apps/ios',
+        findings: 1,
+        pulls: 1,
+        blocking: 0,
+        examples: [{ title: 'Name it for what it does.', url: 'https://github.com/o/r/pull/9#r2' }]
+      }
+    ]
   }
 
   test('shows a failing check with what it found, and caps each doc at five files', () => {
@@ -88,6 +105,8 @@ describe('renderReport', () => {
     expect(report).toContain('links to gone.yml')
     expect(report).toContain('- `docs/agents/web.md`: `a`, `b`, `c`, `d`, `e`, +2 more')
     expect(report).toContain('`apps/ios/SearchView.swift`: 1101 lines')
+    expect(report).toContain('budgets.ts`: 1. Split one by topic')
+    expect(report).toContain('  - `docs/agents/web.md`: 812 lines')
     expect(report).toContain('known-duplicates.ts`: 2.')
     expect(report).toContain('  - apps/ios/Tools/a.py and apps/ios/Tools/b.py: 2')
     expect(report).toContain('1 code files have 450 lines or more')
@@ -120,7 +139,7 @@ describe('renderReport', () => {
   test('lists each quality row to re-grade, with the code that changed and when', () => {
     const report = renderReport(facts)
     expect(report).toContain(
-      '## Scores to re-grade\n\nRows of `docs/quality.md` whose code changed after the day they were graded.'
+      '## Scores to re-grade\n\nRows of `docs/quality.md`, `docs/quality-ios.md`, `docs/quality-web.md` whose code changed after the day they were graded.'
     )
     expect(report).toContain(
       '- Dictionary pages (graded 2026-09-30): `apps/web/src/lib/dictionary/` changed 2026-10-03'
@@ -150,9 +169,27 @@ describe('renderReport', () => {
     expect(unsized).toContain('  - Code: Two copies of search. Issue: #481.')
   })
 
+  test("lists the review's findings by part, with the parts that repeat first", () => {
+    const report = renderReport(facts)
+    expect(report).toContain('## Review findings')
+    expect(report).toContain(
+      'Repeated:\n\n- `apps/web`: 4 in 3 pull requests, 2 blocking. [The token is logged.](https://github.com/o/r/pull/7#r1)'
+    )
+    expect(report).toContain(
+      'Elsewhere:\n\n- `apps/ios`: 1 in 1 pull request, 0 blocking. [Name it for what it does.]'
+    )
+    expect(report).toContain('- [ ] For a part listed as repeated under Review findings')
+    const quiet = renderReport({ ...facts, reviewFindings: facts.reviewFindings.slice(1) })
+    expect(quiet).toContain('Nothing repeated.\n\nElsewhere:')
+    expect(renderReport({ ...facts, reviewFindings: [] })).toContain('None in the last four weeks.')
+    expect(renderReport({ ...facts, reviewFindings: null })).toContain(
+      "Not collected: only the `report` job of `Weekly maintenance` reads the pull requests' comments."
+    )
+  })
+
   test('says how to work the issue, outside the checklist', () => {
     expect(renderReport(facts)).toMatch(
-      /a check\.\n\nWork this issue one item per small pull request, as `docs\/agents\/ci\.md` says/
+      /a check\.\n\nWork this issue one item per small pull request, as `docs\/agents\/ci-agents\.md` says/
     )
   })
 })

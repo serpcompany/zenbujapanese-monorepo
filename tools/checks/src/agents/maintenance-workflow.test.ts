@@ -114,7 +114,7 @@ describe('the Weekly maintenance workflow', () => {
     const prompt = String(garden.with?.prompt)
     expect(prompt).toContain('tmp/maintenance-report.md')
     expect(prompt).toContain(
-      'Re-grade each row listed under "Scores to re-grade" in docs/quality.md'
+      'Re-grade each row listed under "Scores to re-grade" in docs/quality.md,'
     )
     expect(prompt).toContain("Set the row's Graded date to today (UTC)")
     expect(prompt).toContain('--body-file tmp/pr-body.md')
@@ -150,6 +150,19 @@ describe('the Weekly maintenance workflow', () => {
     expect(runs).toContain('gh issue edit "$number" --body-file tmp/weekly-report.md')
     expect(runs).toContain('gh issue create --title "$TITLE" --body-file tmp/weekly-report.md')
     expect(runs).not.toContain('--body-file report.md')
+  })
+
+  test("collects Claude's own review findings before it builds the report", () => {
+    const collect = reportSteps.findIndex(step => step.run?.includes('tmp/review-findings.json'))
+    const build = reportSteps.findIndex(step => step.run?.includes('pnpm -s maintenance:report'))
+    expect(collect).toBeGreaterThan(-1)
+    expect(collect).toBeLessThan(build)
+    const run = reportSteps[collect].run ?? ''
+    expect(run).toContain('"repos/$GITHUB_REPOSITORY/pulls/comments?since=$since&per_page=100"')
+    expect(run).toContain('select(.user.login == "claude[bot]" and .in_reply_to_id == null)')
+    expect(run).toContain("date -u -d '28 days ago'")
+    expect(reportSteps[collect].shell).toBe('bash')
+    expect(maintenance.jobs.report.permissions).toMatchObject({ 'pull-requests': 'read' })
   })
 })
 
@@ -224,7 +237,9 @@ describe('the code gardening job', () => {
 
   test('fixes the first small debt row, or splits a file near the size limit, passing over what a person decides', () => {
     const prompt = String(codeGarden.with?.prompt)
-    expect(prompt).toContain('the first row of docs/tech-debt.md whose Size is `small`')
+    expect(prompt).toContain(
+      'the first row of docs/tech-debt.md, and then of docs/harness-debt.md, whose'
+    )
     expect(prompt).toContain('"Files near the size limit"')
     for (const passedOver of [
       'a deploy',

@@ -99,4 +99,33 @@ describe('the website', () => {
     const app = await as.withCode('website-app@example.com')
     expect(app.headers.get('set-auth-token')).toMatch(/\./)
   })
+
+  test("refuses a request that carries the browser's cookie from another site, or from none", async () => {
+    const { service, as } = running
+    const email = 'cross-site@example.com'
+    const signedIn = await service.call('/v1/auth/sign-in/email-otp', {
+      ...fromTheWebsite(),
+      body: { email, otp: await as.emailCode(email) }
+    })
+    const session = websiteSession(signedIn)
+    const cookie = `${sessionCookie}=${session}`
+
+    const fromAnotherSite = await service.call('/v1/auth/sign-out', {
+      client: null,
+      headers: { origin: 'https://not-zenbu.example', cookie },
+      body: {}
+    })
+    expect(fromAnotherSite.status).toBe(403)
+    const withNoOrigin = await service.call('/v1/auth/sign-out', {
+      client: null,
+      headers: { cookie },
+      body: {}
+    })
+    expect(withNoOrigin.status).toBe(403)
+
+    expect(await service.call('/v1/auth/get-session', fromTheWebsite(session))).toMatchObject({
+      status: 200,
+      body: { user: { email } }
+    })
+  })
 })

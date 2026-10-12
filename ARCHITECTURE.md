@@ -15,7 +15,7 @@ layers apart. Each part's own doc has the detail; each rule here is enforced by 
 | `packages/node-service` | What the two Node services share: JSON-line logs, the request log, a server that stops cleanly, and the writer of their API references (`docs/api/`). | [`docs/agents/dictionary-api.md`](docs/agents/dictionary-api.md), Code layout |
 | `deploy` | The API servers' deployer, which swaps each service's signed image into its slots. | [`docs/agents/api-servers.md`](docs/agents/api-servers.md) |
 | `language-data` | The language-data release: the manifest and the pipeline that packages and publishes the app's data as a versioned artifact (ADR 0006). | [`language-data/README.md`](language-data/README.md) |
-| `tools/checks` | The repository-wide checks behind `pnpm verify`. | [`docs/agents/code.md`](docs/agents/code.md) |
+| `tools/checks` | The repository-wide checks behind `pnpm verify`, and the script that hands each checkout its local ports. | [`docs/agents/code.md`](docs/agents/code.md) |
 
 ## How data moves
 

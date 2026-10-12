@@ -42,6 +42,7 @@ class AccountServiceSettingsTests(unittest.TestCase):
                 setting(configurations[0], "PRODUCT_BUNDLE_IDENTIFIER"),
                 f"{APP_STORE_BUNDLE_ID}$(ZENBU_BUNDLE_ID_SUFFIX)",
             )
+            self.assertEqual(setting(configurations[0], "ZENBU_BUNDLE_ID_SUFFIX"), "")
             self.assertEqual(setting(configurations[0], "DEVELOPMENT_TEAM"), APP_STORE_TEAM)
 
     def test_background_sync_runs_under_its_permitted_task_identifier(self) -> None:

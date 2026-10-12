@@ -1,8 +1,11 @@
 import { readFileSync } from 'node:fs'
 import { join, posix } from 'node:path'
 import { anchorOf, headingAnchors } from './doc-rules/anchors'
+import { budgetProblem, staleAllowances } from './doc-rules/budgets'
 import { hiddenComments } from './doc-rules/hidden'
-import { agentsLineLimit, layoutAdvice, outOfLayout } from './doc-rules/layout'
+import { layoutAdvice, misnamed, namingAdvice, outOfLayout } from './doc-rules/layout'
+import { isTestSource, missingTest, namedTestAdvice, testsIn } from './doc-rules/named-tests'
+import { homePackage, packagePath } from './doc-rules/package-paths'
 import { missingScript, pnpmInvocations, workspaces } from './doc-rules/scripts'
 import { skillCatalog, skillProblems } from './doc-rules/skills'
 import { classify, repositoryFiles, root } from './files'
@@ -76,6 +79,12 @@ export function codePaths(text: string): Reference[] {
       )
       .filter(path => repositoryPath.test(path))
       .map(target => ({ target }))
+  )
+}
+
+function inlineCode(text: string): Reference[] {
+  return eachLine(text, line =>
+    [...line.matchAll(/`([^`\s]+)`/g)].map(match => ({ target: match[1] }))
   )
 }
 
@@ -170,6 +179,13 @@ export function checkDocs(files: readonly string[]): DocProblem[] {
     return anchors.get(path) as Set<string>
   }
   const known = workspaces()
+  const tests = testsIn(
+    new Map(
+      [...repositoryTree().files]
+        .filter(isTestSource)
+        .map(path => [path, readFileSync(join(root, path), 'utf8')])
+    )
+  )
   let links = 0
 
   for (const path of owned) {
@@ -216,6 +232,19 @@ export function checkDocs(files: readonly string[]): DocProblem[] {
         problems.push({ path, line, problem: `names ${target}, which doesn't exist` })
       }
     }
+    const home = homePackage(path, isFolder)
+    for (const { line, target } of inlineCode(text)) {
+      const missing = missingTest(target, tests)
+      if (missing) problems.push({ path, line, problem: `${missing}: ${namedTestAdvice}` })
+      const inPackage = home ? packagePath(target, home) : undefined
+      if (inPackage && !exists(inPackage)) {
+        problems.push({
+          path,
+          line,
+          problem: `names ${target}, which doesn't exist in ${home}: fix the path, or write it from the repository root when it is in another package`
+        })
+      }
+    }
     for (const { line, code } of codeSnippets(text)) {
       for (const invocation of pnpmInvocations(code)) {
         if (missingScript(invocation, known)) {
@@ -235,6 +264,13 @@ export function checkDocs(files: readonly string[]): DocProblem[] {
       })
     }
     if (outOfLayout(path)) problems.push({ path, problem: layoutAdvice })
+    if (misnamed(path)) problems.push({ path, problem: namingAdvice })
+    const overBudget = budgetProblem(path, text)
+    if (overBudget) problems.push({ path, problem: overBudget })
+  }
+  for (const path of staleAllowances(isFile)) {
+    requested.add(path)
+    problems.push({ path, problem: 'no longer exists: remove it from knownLongDocs' })
   }
 
   for (const path of owned) {
@@ -245,13 +281,6 @@ export function checkDocs(files: readonly string[]): DocProblem[] {
     )) {
       problems.push({ path, problem })
     }
-  }
-  const agentsLines = (texts.get('AGENTS.md') ?? '').trimEnd().split('\n').length
-  if (agentsLines > agentsLineLimit) {
-    problems.push({
-      path: 'AGENTS.md',
-      problem: `is ${agentsLines} lines; it only routes, so keep it to ${agentsLineLimit} by moving detail into the doc it routes to`
-    })
   }
   if (!owned.length || !links) {
     problems.push({

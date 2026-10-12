@@ -1,7 +1,8 @@
 # Tech debt
 
-Known debt: shortcuts, duplicated code, and gaps in checks that the repository lives with for now,
-each with the issue that tracks it. Bugs and features stay in issues
+Known debt in the code: shortcuts, duplication, and missing pieces the repository lives with for
+now, each with the issue that tracks it. Debt in the checks, in delivery, and in the agent harness
+is in [`harness-debt.md`](harness-debt.md), in the same form. Bugs and features stay in issues
 ([`issue-tracker.md`](agents/issue-tracker.md)), and how well each area is tested and documented is
 in [`quality.md`](quality.md).
 
@@ -10,9 +11,9 @@ that pays it off. A row without an issue says "No issue yet"; open one before st
 
 Size is `small` (an hour or two, with no migration, deploy, or decision), `medium` (one focused
 pull request), or `large` (a plan of its own, or several pull requests). An item that needs a
-person's decision is never `small`. The weekly maintenance report counts the rows by Size and
-names the first small one from the top of this file, which the weekly code gardener takes unless
-it must pass it over ([`ci.md`](agents/ci.md), Weekly maintenance).
+person's decision is never `small`. The weekly maintenance report counts both files' rows by Size
+and names the first small one, from the top of this file and then of that one, which the weekly
+code gardener takes unless it must pass it over ([`ci-agents.md`](agents/ci-agents.md), Weekly maintenance).
 
 ## Code
 
@@ -38,21 +39,6 @@ it must pass it over ([`ci.md`](agents/ci.md), Weekly maintenance).
 | On the Mac, Search's Handwriting and Radicals sheet has a fixed size, 460 by 720 points (`AppWindow.inputPanelSize`), so the drawing pad is large enough to write on. That's taller than the smallest window (560), where the sheet hangs below the window's edge. | A learner with a small window sees the sheet reach past it. Sizing the sheet from the window, or a wider layout with the candidates beside the pad, would fit. | #661 | small |
 | Search's **Sorted by** row opens its menu only from its text, a target 16 points tall (`SearchResultsMenu.swift`); a tap elsewhere on the row does nothing. The UI tests tap the text for that reason (`chooseFromSortedBy`). | A learner tapping the row misses the menu; Apple's guidance is a 44-point target. | #380 | small |
 | Word notes and encounter media are keyed by `WordNoteID`, a hash of a word's meanings (ADR 0006). PR #480 re-keys them. | A JMdict edit to a word's meanings detaches its notes and media, and sync (#374) needs Language Reference IDs. | #474 | medium |
-
-## Checks
-
-| Debt | Why it matters | Issue | Size |
-| --- | --- | --- | --- |
-| No check is required to merge: `main`'s ruleset requires a pull request, resolved review threads, and the merge queue, but no status checks. No workflow runs on `merge_group`, and seven run only when their paths change. | A red `Repository`, `Web`, or `Dictionary API` check doesn't stop a merge, and the merge queue lands changes without running anything; the git hooks can be skipped. Making the checks requirable means running each workflow on `merge_group` and on every pull request, passing quickly when nothing relevant changed; then the owners require them in the ruleset. | No issue yet | medium |
-| `anthropics/claude-code-action` is pinned to v1.0.247 ([`ci.md`](agents/ci.md), Pinned actions). It was pinned because v1.0.248 seemed to fail every run, but a revoked `CLAUDE_CODE_OAUTH_TOKEN` failed them. | The review, `@claude`, and gardening jobs get no Claude Code fixes until someone moves the pin to the latest release, after a review passes with a renewed token. | No issue yet | small |
-| `SearchExperienceTests` runs only when someone runs it on a Mac: the `iOS` workflow's macOS job waits for the owners to set `IOS_SWIFT_TESTS` to `on` ([`ci.md`](agents/ci.md), iOS). | The Swift can drift from the recorded suites the website is held to, and a change that breaks the app's build can merge. | #381, #516 | medium |
-| The app is tested on iPhone, iPad, and the Mac in CI only when `IOS_SWIFT_TESTS` is on: the `iOS` workflow's opt-in `swift` job runs the package's tests and the app's UI tests on an iPhone Simulator, an iPad Simulator, and the Mac, and the owners keep it off for the runner's cost. `pnpm verify layers` catches only the iPhone-only APIs it lists. | A change on `main` can break the app on one platform, or use an iPhone-only API the check doesn't know, unnoticed until someone runs the tests on a Mac (ADR 0015). | #661, #381 | medium |
-| The UI tests (`apps/ios/UITests/`) drive every tab with stand-ins at the edge, but what they can't reach is still a checklist in `docs/agents/ios.md` a person walks through: YouTube's real player and results page, Apple Translation, live speech, a real Apple or Google sign-in, the system's photo and file pickers, Edit's reordering of lists, and Split View, dragging from another app, and Continuity Camera. | A change there is caught only when someone checks it by hand. | #516 | medium |
-| No app-recorded suite covers sentence search (Discovered Words). The service checks its own cases in `apps/dictionary-api/src/conformance/sentence-search.test.ts`. | The website's sentence search isn't held to what the app shows. Recording it needs the Japanese Text Analysis pack in the test host. | #470 | medium |
-| The iOS data tools' importers have no tests; only the contract tests on what they write run before merge (`apps/ios/Tools/tests/`, in the `iOS` workflow). | An importer change is checked only through a rebuild of what it writes. | No issue yet | medium |
-| Swift has no linter. `pnpm verify` runs ShellCheck, actionlint, and Ruff. | Swift mistakes that a linter would catch are left to review. | #516 | medium |
-| The website casts the dictionary service's JSON to its types without checking its shape (`apps/web/src/lib/dictionary/api.ts`), and nothing refuses a cast of parsed JSON (`JSON.parse`, `response.json()`). The site compares only the contract number. | A service answering another shape under the same contract number renders wrong pages instead of failing where the data enters. Needs a decision on how to validate without a schema library in the core. | No issue yet | medium |
-| Apple's accessibility audit found 144 Dynamic Type, 14 hit-region, and 4 clipped-text problems in the app. | Large text and small targets fail on Search, its results, Word Detail, Kanji Detail, and Examples. | #380 | large |
 
 ## Website
 
@@ -82,21 +68,3 @@ it must pass it over ([`ci.md`](agents/ci.md), Weekly maintenance).
 | The app bundles its own committed data rather than pinning a published release. | Once releases are published, nothing checks that the app holds the same files. | #473 | large |
 | Frequency-pack sources are uploaded from a workstation with `apps/ios/Tools/publish_frequency_pack_sources.py`, which ADR 0006 allowed until the release pipeline exists. The pipeline exists but doesn't upload them. | Uploads to the CDN happen outside CI, with a person's Cloudflare login. | No issue yet | medium |
 | `apps/ios/LanguageData/Sources/Zenbu-Word-Relationships-v1.json` holds two relationships with no source or reviewer, pending a removal decision ([`data-sources.md`](data-sources.md)). | They're built into `LanguageReferenceData.sqlite3`, which the app and the website read. | No issue yet | medium |
-
-## Delivery
-
-| Debt | Why it matters | Issue | Size |
-| --- | --- | --- | --- |
-| The server's deployer (`deploy/deployer.sh`) and the account service's backups (`apps/account-api/deploy/backups.sh`) have no tests: ShellCheck is all that runs before merge. | A change to either is first exercised on the server, where it deploys production or backs it up. A test would run them against stand-ins for `docker`, `cosign`, and `aws`, which their fixed `PATH` keeps out. | No issue yet | medium |
-| Tomodachi's App ID (`com.zenbujapanese.tomodachi`) is still on the backup Apple Developer team (`W3GXL2NQQP`), while the iOS app is on TSMC LLC's (`847HR8U8D9`) and the website's Services ID and the service's key move there with it ([`account-api.md`](agents/account-api.md), Moving from the backup team). | Apple gives a learner a different user ID in each team, and the service makes Apple's client secret with TSMC LLC's key once #616's cutover is done. Then an account Tomodachi makes with Apple can't be deleted from Tomodachi (Apple refuses the secret for its bundle ID: `503 apple_unavailable`), and its Apple user ID matches no Zenbu sign-in, so deleting it from the app or website answers `apple_account_mismatch`. | #616 | medium |
-| Nothing refuses an account migration that drops or renames what the running code reads. The rule is to add first and remove in a later release ([`account-api.md`](agents/account-api.md), The database). | A deploy migrates while the old image still serves, so such a migration breaks it until the new one takes over. | No issue yet | small |
-
-## Harness
-
-| Debt | Why it matters | Issue | Size |
-| --- | --- | --- | --- |
-| The website's log lines (`log()` in `apps/web/src/lib/log.ts`) stay in Workers Logs and the service's on its server, neither of which agents can query, and the smoke test has no latency budget. | An agent can't read why staging or production failed, or see a slowdown. | #516 | medium |
-| `zenbujapanese/research`, which `AGENTS.md` routes to and ADR 0005 links into, isn't readable by every maintainer: `gh` can't resolve it for at least one. | Agents working for them can't follow those links. | #516 | medium |
-| The Clipy skill, `/wayfinder`, and XcodeBuildMCP, which `docs/agents/clipy.md`, `docs/agents/issue-tracker.md`, and `docs/agents/ios.md` rely on, are installed per user. `.mcp.json` holds only the Chrome DevTools server. | Cloud agents and teammates' agents don't get them. | #516 | medium |
-| `docs/agents/web.md` is still one guide for running, the dictionary, deploys, and sitemaps. | A small page change sends an agent through all of it. | #516 | small |
-| A GitHub token exposed in issue comments isn't recorded as revoked. | A published credential stays usable until it's revoked. | #379 | small |

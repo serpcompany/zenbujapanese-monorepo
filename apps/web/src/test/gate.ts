@@ -5,7 +5,7 @@ export const gateEnabled = process.env.ZENBU_DICTIONARY_API === '1'
 
 export function gateService(): DictionaryApi {
   const api = dictionaryApi({
-    DICTIONARY_API_URL: process.env.ZENBU_DICTIONARY_API_URL ?? 'http://localhost:8788',
+    DICTIONARY_API_URL: process.env.ZENBU_DICTIONARY_API_URL,
     DICTIONARY_API_TOKEN: process.env.ZENBU_DICTIONARY_API_TOKEN
   })
   if (!api) throw new Error('ZENBU_DICTIONARY_API_URL is empty')

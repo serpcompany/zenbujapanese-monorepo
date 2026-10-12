@@ -187,7 +187,7 @@ Run them from `apps/ios/Modules`:
 
 ```sh
 xcodebuild -scheme ZenbuJapaneseModules-Package \
-  -destination 'platform=iOS Simulator,id=<booted-simulator-udid>' \
+  -destination 'platform=iOS Simulator,id=<simulator-udid>' \
   ONLY_ACTIVE_ARCH=YES -only-testing:TranslatorCoreTests -only-testing:SearchExperienceTests test
 ```
 

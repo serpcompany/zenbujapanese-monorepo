@@ -25,9 +25,10 @@ pnpm test:e2e                                          # everything, before a pu
 Leave out the `--` pnpm scripts usually take: pnpm passes it on, and Playwright then reads every
 option after it as a file filter.
 
-- **Locally** the suite starts `next dev` on port 3100 with `ZENBU_DICTIONARY_FIXTURES=1`, which
-  makes the site read the fixtures even when `.dev.vars` names a dictionary service, and reuses a
-  server already on that port. `E2E_BASE_URL=<url>` runs against a server you started instead.
+- **Locally** the suite starts `next dev` on this checkout's `e2e` port (`pnpm -w ports`; 3100 in the
+  main checkout) with `ZENBU_DICTIONARY_FIXTURES=1`, which makes the site read the fixtures even
+  when `.dev.vars` names a dictionary service, and reuses a server already on that port, which only
+  this checkout's runs start. `E2E_BASE_URL=<url>` runs against a server you started instead.
 - **In CI** (`Web`, the `e2e` job) it runs on the production build in workerd, where the Worker's
   redirects and headers behave as deployed: `pnpm exec opennextjs-cloudflare build`, then
   `E2E_SERVER=preview pnpm test:e2e`. OpenNext can't build on Windows; there, run that in a
@@ -37,9 +38,9 @@ option after it as a file filter.
   `pnpm exec opennextjs-cloudflare build && E2E_SERVER=preview pnpm test:e2e`. The tests load the
   build in `.open-next/`, not the source, so refuse to run them on a build older than your last
   change, or on one a deploy made with `SITE_ENV` set: it tests other code, and its pass means
-  nothing. Playwright also reuses a server already on port 8787, so stop a preview you started
-  earlier first. This lists what changed since the last build; rebuild when it lists anything, or
-  when it says `.open-next/worker.js` is missing:
+  nothing. Playwright also reuses a server already on this checkout's `preview` port, so stop a
+  preview you started earlier first. This lists what changed since the last build; rebuild when it
+  lists anything, or when it says `.open-next/worker.js` is missing:
 
   ```bash
   find src worker.ts next.config.ts ../../packages/dictionary-core/src -newer .open-next/worker.js -type f
