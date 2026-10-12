@@ -65,7 +65,9 @@ test('the issue-link check takes a stated reason without asking GitHub', () => {
 
 test('a pull request stacked on another branch is told why GitHub links no issue to it yet', () => {
   expect(otherBase('feat/701-parent', 'main')).toContain('based on feat/701-parent, not main')
-  expect(otherBase('feat/701-parent', 'main')).toContain('once it is retargeted')
+  expect(otherBase('feat/701-parent', 'main')).toContain(
+    'With Closes #<number> in its body, the check passes once it is retargeted'
+  )
   expect(otherBase('main', 'main')).toBe('')
   expect(otherBase(undefined, 'main')).toBe('')
   expect(otherBase('main', undefined)).toBe('')

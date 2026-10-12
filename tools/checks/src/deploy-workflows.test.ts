@@ -67,13 +67,51 @@ describe('the latest-run action', () => {
   const action = parse(readRepositoryFile('.github/actions/latest-run/action.yml'))
   const script = { run: readRepositoryFile('.github/actions/latest-run/latest-run.cjs') }
   const repository = 'serpcompany/zenbujapanese-monorepo'
-  const runsOf =
-    (runs: object[], status = 200): Route =>
-    url =>
-      url.pathname === `/repos/${repository}/actions/workflows/web-deploy.yml/runs`
-        ? { status, body: status === 200 ? { workflow_runs: runs } : { message: 'Not allowed' } }
-        : undefined
-  const run = (attempt: string, route: Route) =>
+  const runsPath = `/repos/${repository}/actions/workflows/web-deploy.yml/runs`
+
+  interface Job {
+    name: string
+    status: string
+    conclusion: string | null
+    steps?: object[]
+  }
+  interface Run {
+    id: number
+    run_number: number
+    status: string
+    event: string
+    run_attempt: number
+    conclusion?: string
+    jobs: Job[]
+  }
+
+  const done = (name: string, conclusion = 'success'): Job => ({
+    name,
+    status: 'completed',
+    conclusion,
+    steps: [{ name: 'Set up job' }]
+  })
+  const other = (number: number, jobs: Job[] = [], changes: Partial<Run> = {}): Run => ({
+    id: 9000 + number,
+    run_number: number,
+    status: 'completed',
+    event: 'push',
+    run_attempt: 1,
+    jobs,
+    ...changes
+  })
+  const github =
+    (runs: Run[], refuse?: 'runs' | 'jobs'): Route =>
+    url => {
+      const refused = { status: 403, body: { message: 'Not allowed' } }
+      if (url.pathname === runsPath) {
+        return refuse === 'runs' ? refused : { status: 200, body: { workflow_runs: runs } }
+      }
+      const run = runs.find(each => url.pathname.endsWith(`/actions/runs/${each.id}/jobs`))
+      if (!run) return undefined
+      return refuse === 'jobs' ? refused : { status: 200, body: { jobs: run.jobs } }
+    }
+  const guard = (job: string, runs: Run[], attempt = '1', refuse?: 'runs' | 'jobs') =>
     runNodeStep(
       script,
       {
@@ -81,15 +119,12 @@ describe('the latest-run action', () => {
         GITHUB_REF_NAME: 'main',
         GITHUB_RUN_NUMBER: '41',
         GITHUB_RUN_ATTEMPT: attempt,
+        GITHUB_JOB: job,
         WORKFLOW: 'web-deploy.yml'
       },
-      route
+      github(runs, refuse)
     )
-  const other = (number: number, status = 'completed', event = 'push') => ({
-    run_number: number,
-    status,
-    event
-  })
+  const mine = other(41, [], { status: 'in_progress' })
 
   test('runs its script with the token and the workflow it is given', () => {
     const [step] = action.runs.steps
@@ -102,44 +137,87 @@ describe('the latest-run action', () => {
     expect(action.outputs).toBeUndefined()
   })
 
-  test("passes a run's first attempt without asking GitHub", async () => {
-    const { status, requests } = await run('1', runsOf([other(42), other(41)]))
-    expect(status).toBe(0)
-    expect(requests).toEqual([])
-  })
-
-  test('passes the latest run when it is started again', async () => {
-    const { status, output } = await run('2', runsOf([other(41, 'in_progress'), other(40)]))
+  test('passes the latest run, asking for no jobs', async () => {
+    const { status, output, requests } = await guard('staging', [
+      mine,
+      other(40, [done('staging')])
+    ])
     expect(status).toBe(0)
     expect(output).toBe('')
+    expect(requests.map(request => request.path)).toEqual([runsPath])
+  })
+
+  test('passes while a later run only waits behind this one, asking for no jobs', async () => {
+    const queued = other(42, [], { status: 'pending' })
+    const { status, requests } = await guard('staging', [queued, mine])
+    expect(status).toBe(0)
+    expect(requests).toHaveLength(1)
   })
 
   test.each([
-    ['finished', other(42, 'completed')],
-    ['is running', other(42, 'in_progress')],
-    ['waits for an approval', other(42, 'waiting')],
-    ['was started by hand', other(42, 'completed', 'workflow_dispatch')]
-  ])('fails an old run started again after a later run that %s', async (_, later) => {
-    const { status, output } = await run('2', runsOf([later, other(41, 'in_progress')]))
+    ['on its first attempt, when GitHub started the later run first', '1'],
+    ['when it is started again', '2']
+  ])('fails a job a later run has already run, %s', async (_, attempt) => {
+    const { status, output } = await guard('staging', [other(42, [done('staging')]), mine], attempt)
     expect(status).not.toBe(0)
-    expect(output).toContain('::error title=A later run has already started::')
-    expect(output).toContain('run 42 on main started after it')
+    expect(output).toContain('::error title=A later run has already run this job::')
+    expect(output).toContain('run 42 on main, which is later, has already run its staging job')
   })
 
-  test.each([
-    ['queued', other(42, 'queued')],
-    ['pending behind it', other(42, 'pending')],
-    ["a pull request's", other(43, 'completed', 'pull_request')]
-  ])('passes a run started again while the only later run is %s', async (_, later) => {
-    const { status } = await run('3', runsOf([later, other(41, 'in_progress')]))
+  test.each<[string, Run]>([
+    [
+      'is running it now',
+      other(42, [{ name: 'staging', status: 'in_progress', conclusion: null }])
+    ],
+    ['failed in it', other(42, [done('staging', 'failure')])],
+    ['was cancelled part way through it', other(42, [done('staging', 'cancelled')])],
+    ['was started by hand', other(42, [done('staging')], { event: 'workflow_dispatch' })],
+    [
+      'ran it, then was started again and waits',
+      other(42, [done('staging')], { status: 'pending', run_attempt: 2 })
+    ]
+  ])('fails when a later run %s', async (_, later) => {
+    expect((await guard('staging', [later, mine], '2')).status).not.toBe(0)
+  })
+
+  test.each<[string, string, Run]>([
+    [
+      'stopped at staging and never ran production',
+      'production',
+      other(42, [done('staging'), done('production', 'skipped')])
+    ],
+    [
+      'failed before it reached this job',
+      'staging',
+      other(42, [done('image', 'failure'), done('staging', 'skipped')])
+    ],
+    [
+      'was replaced while it waited, with no job run',
+      'staging',
+      other(42, [], { conclusion: 'cancelled' })
+    ],
+    [
+      'had this job cancelled before it started',
+      'staging',
+      other(42, [{ name: 'staging', status: 'completed', conclusion: 'cancelled', steps: [] }])
+    ],
+    ["was a pull request's", 'image', other(43, [done('image')], { event: 'pull_request' })]
+  ])('passes when the later run %s', async (_, job, later) => {
+    const { status, output } = await guard(job, [later, mine], '2')
+    expect(output).toBe('')
     expect(status).toBe(0)
   })
 
-  test.each([
-    ['GitHub refuses the question', runsOf([], 403), '403'],
-    ['GitHub lists no runs', (() => ({ status: 200, body: {} })) as Route, 'listed no runs']
-  ])('fails, deploying nothing, when %s', async (_, route, message) => {
-    const { status, output } = await run('2', route)
+  test.each<[string, 'runs' | 'jobs', string]>([
+    ['the runs', 'runs', '/actions/workflows/web-deploy.yml/runs returned 403'],
+    ["a later run's jobs", 'jobs', '/actions/runs/9042/jobs returned 403']
+  ])('fails, deploying nothing, when GitHub refuses %s', async (_, refuse, message) => {
+    const { status, output } = await guard(
+      'staging',
+      [other(42, [done('staging')]), mine],
+      '2',
+      refuse
+    )
     expect(status).not.toBe(0)
     expect(output).toContain(message)
   })

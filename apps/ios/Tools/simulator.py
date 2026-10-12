@@ -16,7 +16,7 @@ KINDS = {
 }
 SCOPE_VARIABLE = "ZENBU_SIMULATOR_SCOPE"
 SEPARATOR = "--"
-SCOPE = re.compile(r"^[A-Za-z0-9._-]+$")
+SCOPE = re.compile(r"[A-Za-z0-9._-]+")
 BUILD_CACHE = Path.home() / "Library" / "Caches" / "com.zenbujapanese.build" / "DerivedData"
 
 
@@ -36,7 +36,7 @@ def scope_in(name: str) -> str | None:
     for base, _ in KINDS.values():
         if name.startswith(base + SEPARATOR):
             scope = name[len(base) + len(SEPARATOR) :]
-            return scope if SCOPE.match(scope) and scope.strip(".") else None
+            return scope if SCOPE.fullmatch(scope) and scope.strip(".") else None
     return None
 
 

@@ -1,9 +1,9 @@
 name: Latest run
 description: >-
-  Fails a deploy job that would put old code over new. A run's first attempt always passes: a
-  workflow's runs on a branch go one at a time, in order. A run started again passes only while
-  no later run of its workflow on the branch has started. Needs a checkout, and permission to
-  read the repository's workflow runs.
+  Fails a deploy job that would put old code over new: one whose job a later run of the same
+  workflow on the branch has already run. A later run that is still waiting, or that was
+  cancelled before it ran the job, doesn't count. Needs a checkout, and permission to read the
+  repository's workflow runs.
 inputs:
   workflow:
     description: The workflow's file name, such as web-deploy.yml.

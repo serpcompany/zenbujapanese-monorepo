@@ -15,7 +15,7 @@ export const issueRule =
 
 export const otherBase = (base, defaultBranch) =>
   base && defaultBranch && base !== defaultBranch
-    ? `This pull request is based on ${base}, not ${defaultBranch}, and GitHub links a closing keyword only on a pull request into ${defaultBranch}. The check passes once it is retargeted, which GitHub does when its parent merges.`
+    ? `This pull request is based on ${base}, not ${defaultBranch}, and GitHub links a closing keyword only on a pull request into ${defaultBranch}. With Closes #<number> in its body, the check passes once it is retargeted, which GitHub does when its parent merges.`
     : ''
 
 const testPaths = [
@@ -93,7 +93,7 @@ async function check(name, environment) {
       if (attempt < 3) await wait(5000)
     }
     const stacked = otherBase(environment.PR_BASE, environment.DEFAULT_BRANCH)
-    return { passed: false, message: stacked || issueRule }
+    return { passed: false, message: stacked ? `${issueRule}\n\n${stacked}` : issueRule }
   }
   if (name === 'fix-test') {
     const branch = environment.PR_BRANCH ?? ''

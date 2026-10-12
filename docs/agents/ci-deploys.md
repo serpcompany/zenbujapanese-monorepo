@@ -5,23 +5,30 @@ action the language-data workflows share and the actions pinned by commit. Every
 starts it is in [`ci.md`](ci.md). Change a workflow's section in the same pull request as the
 workflow.
 
-## An old run started again deploys nothing
+## A job never deploys over a later run's
 
 Each job that pushes an image or deploys starts with the `latest-run` action
-(`.github/actions/latest-run/`), which fails the job when it shouldn't. A run's first attempt
-always passes: a workflow's runs on `main` go one at a time, in order. A run that someone starts
-again passes only while no later run of its workflow on the branch has started. A later run still
-queued behind it doesn't count, since that one deploys afterwards. Otherwise the old run would put
-old code over new, and nothing would put the new code back.
+(`.github/actions/latest-run/`), which fails the job when a later run of its workflow on `main`
+has already run that same job. Deploying then would put old code over new, and nothing would put
+the new code back. It asks on every attempt: a workflow's runs go one at a time, but GitHub
+doesn't promise their order, and anyone can start an old run again.
 
+- **What counts.** A later run's job counts once it is running or has finished, in any of that
+  run's attempts, whatever its result. A later run still waiting behind this one doesn't count,
+  nor one cancelled before it ran the job, nor one that skipped it: a push stops at staging while
+  `DEPLOY_PRODUCTION` is `false`, so it never blocks an earlier run's `production` job.
 - **The job fails, rather than passing with nothing deployed.** The site's deploy reads a green
   `staging` job of the service's run as "this commit's service is deployed"
   (`apps/web/scripts/wait-for-dictionary-service.sh`), and an image job that pushed again would
   leave `sha-<release>` naming an image main never signed, which a rollback then refuses.
 - **To deploy an old build on purpose, start a new run:** an image workflow's `tag` input, or a
-  revert for the site. To try a failed deploy again, start the latest run again.
-- **It compares run numbers,** not the commit with the branch's tip: these workflows start only
-  on pushes that change their paths, so the tip is often a commit none of them deploys.
+  revert for the site.
+- **When a commit's service run can no longer deploy,** because a later one has, the commit's
+  site run stops at its wait for it. Run `Web deploy` by hand: that run deploys `main`'s tip
+  against the service as it is.
+- **Starting an old run again while another runs** takes the one waiting place GitHub keeps for
+  the workflow, which cancels a newer run that was waiting there. Start the newer run again.
+- **A run from before this guard has none:** a run uses the workflow file of its own commit.
 
 `tools/checks/src/deploy-workflows.test.ts` holds every such job to it and runs the action's
 script against a stand-in for the GitHub API.

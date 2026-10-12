@@ -90,6 +90,7 @@ class SimulatorTests(unittest.TestCase):
             "zenbu-japanese--..",
             "zenbu-japanese--.",
             "zenbu-japanese--a b",
+            "zenbu-japanese--x\n",
             "zenbu-japanese--",
         ]:
             self.assertIsNone(simulator.scope_in(name), name)
