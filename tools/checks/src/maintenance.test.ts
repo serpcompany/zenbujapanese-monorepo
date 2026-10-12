@@ -155,7 +155,7 @@ describe('renderReport', () => {
 
   test('says how to work the issue, outside the checklist', () => {
     expect(renderReport(facts)).toMatch(
-      /a check\.\n\nWork this issue one item per small pull request, as `docs\/agents\/ci\.md` says/
+      /a check\.\n\nWork this issue one item per small pull request, as `docs\/agents\/ci-agents\.md` says/
     )
   })
 })

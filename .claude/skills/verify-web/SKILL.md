@@ -34,10 +34,23 @@ Pick the smallest setup that shows the change. Run one site at a time on this ma
 
 Stop what you started when you're done: end the dev server's whole process tree.
 
+Before trusting a page, check that the server answering is this checkout's and current:
+
+- **Locally:** `lsof -nP -iTCP:3000 -sTCP:LISTEN -t` prints the process on the port, and
+  `lsof -a -p <pid> -d cwd -Fn` the folder it runs from, which should be this checkout's
+  `apps/web`. A server another worktree left on the port answers with that worktree's code.
+- **A local dictionary service:** `curl -s http://localhost:8788/healthz` names its release.
+- **Staging:** a word page's later examples load from a URL with `build=<build>`, the build the
+  page was rendered by. `/dictionary/service.json` can show a new service several minutes before
+  the pages do, so read the build from a page.
+
+Keep a run's evidence in `tmp/agent/verify/<date>-<what>/` at the repository root, which git
+ignores and housekeeping keeps. Note the server's address and process there too: a later command,
+or another agent taking the work up, has no other way to know them.
+
 ## 2. Reproduce first
 
-For a bug, open the failing page before changing code, and keep the evidence in `tmp/` at the
-repository root (git ignores it):
+For a bug, open the failing page before changing code, and keep the evidence in the run's folder:
 
 - `take_screenshot` and `take_snapshot` with a `filePath`.
 - A recording: `screencast_start` with a `filePath` ending in `.webm` or `.mp4`, go through the

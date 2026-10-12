@@ -111,7 +111,9 @@ const languagesByName: Record<string, Language> = {
   '.gitattributes': 'hash-lines',
   '.npmrc': 'hash-lines',
   '.editorconfig': 'hash-lines',
-  '.shellcheckrc': 'hash-lines'
+  '.shellcheckrc': 'hash-lines',
+  '.housekeeping': 'hash-lines',
+  '.xcode-version': 'hash-lines'
 }
 
 const proseAndData = new Set([

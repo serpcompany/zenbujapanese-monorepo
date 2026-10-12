@@ -23,7 +23,7 @@ jobs:
     steps:
       - name: Skip while the CLAUDE_CODE_OAUTH_TOKEN secret isn't set
         if: env.HAS_REVIEW_TOKEN != 'true'
-        run: echo "::notice::CLAUDE_CODE_OAUTH_TOKEN isn't set, so Claude doesn't review this pull request (docs/agents/ci.md, Code review)."
+        run: echo "::notice::CLAUDE_CODE_OAUTH_TOKEN isn't set, so Claude doesn't review this pull request (docs/agents/ci-agents.md, Code review)."
 
       - uses: actions/checkout@v5
         if: env.HAS_REVIEW_TOKEN == 'true'
@@ -144,7 +144,7 @@ jobs:
             --strict-mcp-config
             --append-system-prompt-file ${{ runner.temp }}/review-context.md
             --append-subagent-system-prompt-file ${{ runner.temp }}/review-context.md
-            --allowedTools "mcp__github_inline_comment__create_inline_comment,Bash(gh pr view:*),Bash(gh pr diff:*),Write,Task,Read,Glob,Grep"
+            --allowedTools "mcp__github_inline_comment__create_inline_comment,Bash(gh pr view:*),Bash(gh pr diff:*),Bash(gh issue view:*),Write,Task,Read,Glob,Grep"
 
       - name: Post the review's summary
         if: env.HAS_REVIEW_TOKEN == 'true' && steps.review.outcome == 'success'
@@ -197,7 +197,7 @@ jobs:
           retention-days: 7
           overwrite: true
 
-      - name: Fail unless Claude posted a review
+      - name: Fail unless Claude reviewed the whole change
         if: ${{ !cancelled() && steps.review.outcome != 'skipped' }}
         env:
           EXECUTION_FILE: ${{ steps.review.outputs.execution_file }}
@@ -211,15 +211,15 @@ jobs:
           const fs = require('node:fs')
           const clean = (value, max = 120) => String(value).replace(/[\r\n%]+/g, ' ').slice(0, max)
           const fail = message => {
-            console.log(`::error title=Claude didn't post a review::${clean(message, 900)}`)
+            console.log(`::error title=Claude didn't review the change::${clean(message, 900)}`)
             process.exit(1)
           }
-          const tokenAdvice = result => result.api_error_status === 401 ? " The API refused the token (401), so renew the CLAUDE_CODE_OAUTH_TOKEN secret (docs/agents/ci.md, Claude's app and token)." : ''
+          const tokenAdvice = result => result.api_error_status === 401 ? " The API refused the token (401), so renew the CLAUDE_CODE_OAUTH_TOKEN secret (docs/agents/ci-agents.md, Claude's app and token)." : ''
           const readLog = () => {
             const file = process.env.EXECUTION_FILE
             if (!file || !fs.existsSync(file)) {
               if (process.env.CLAUDE_OUTCOME === 'failure') fail("The Claude step failed before Claude ran, so it wrote no execution log: that step's own log says why.")
-              fail("The review wrote no execution log, so no review happened. The action skips a pull request that changes this workflow, which must match main's (docs/agents/ci.md, Code review).")
+              fail("The review wrote no execution log, so no review happened. The action skips a pull request that changes this workflow, which must match main's (docs/agents/ci-agents.md, Code review).")
             }
             let messages
             try {
@@ -258,20 +258,38 @@ jobs:
               return items
             }
             const pr = process.env.PR_NUMBER
-            const [comments, inline, reviews] = await Promise.all([
+            const [comments, inline, reviews, pullRequest] = await Promise.all([
               list(`/issues/${pr}/comments`),
               list(`/pulls/${pr}/comments`),
-              list(`/pulls/${pr}/reviews`)
+              list(`/pulls/${pr}/reviews`),
+              get(`${api}/pulls/${pr}`).then(response => response.json())
             ])
-            return [
-              ...comments
-                .filter(item => item.user?.login === summaryBot && /^## Claude review\b/.test(String(item.body || '').trim()))
-                .map(item => ({ at: item.updated_at || item.created_at })),
-              ...inline
-                .filter(item => item.user?.login === bot && !item.in_reply_to_id)
-                .map(item => ({ at: item.created_at })),
-              ...reviews.filter(item => item.user?.login === bot).map(item => ({ at: item.submitted_at }))
-            ]
+            return {
+              changedFiles: pullRequest.changed_files,
+              activity: [
+                ...comments
+                  .filter(item => item.user?.login === summaryBot && /^## Claude review\b/.test(String(item.body || '').trim()))
+                  .map(item => ({ at: item.updated_at || item.created_at, summary: String(item.body) })),
+                ...inline
+                  .filter(item => item.user?.login === bot && !item.in_reply_to_id)
+                  .map(item => ({ at: item.created_at })),
+                ...reviews.filter(item => item.user?.login === bot).map(item => ({ at: item.submitted_at }))
+              ]
+            }
+          }
+          const reviewersStarted = messages =>
+            messages
+              .flatMap(entry => (entry?.type === 'assistant' ? entry.message?.content || [] : []))
+              .filter(block => block?.type === 'tool_use' && ['Task', 'Agent'].includes(block.name)).length
+          const coverageProblem = (summary, changedFiles) => {
+            if (!summary) return "Claude posted findings but no summary, so the review doesn't say how much of the change it read."
+            const coverage = /^Read (\d+) of (\d+) changed files\./m.exec(summary)
+            if (!coverage) return 'The summary has no "Read <N> of <M> changed files." line, so it doesn\'t say how much of the change was read.'
+            const [read, total] = [Number(coverage[1]), Number(coverage[2])]
+            if (total !== changedFiles) return `The summary counts ${total} changed files, and the pull request changes ${changedFiles}.`
+            if (read > total) return `The summary says ${read} of ${total} changed files were read.`
+            if (read < total && !/^Not read:/m.test(summary)) return `The summary says ${read} of ${total} changed files were read, and names none of the rest on a "Not read:" line.`
+            return ''
           }
           const main = async () => {
             const { messages, result } = readLog()
@@ -292,23 +310,28 @@ jobs:
             ))]
             const startedAt = Date.parse(process.env.REVIEW_STARTED_AT || '')
             if (Number.isNaN(startedAt)) fail("REVIEW_STARTED_AT isn't set, so the check can't tell which comments this run posted.")
-            let activity
+            let review
             try {
-              activity = await readReviewActivity(process.env.REVIEW_BOT || 'claude[bot]', process.env.SUMMARY_BOT || 'github-actions[bot]')
+              review = await readReviewActivity(process.env.REVIEW_BOT || 'claude[bot]', process.env.SUMMARY_BOT || 'github-actions[bot]')
             } catch (error) {
-              fail(`Couldn't read the pull request's comments to check the review: ${error.message}`)
+              fail(`Couldn't read the pull request to check the review: ${error.message}`)
             }
-            const posted = activity.filter(item => Date.parse(item.at) >= startedAt - 30 * 1000).length
-            if (posted > 0) {
+            const posted = review.activity.filter(item => Date.parse(item.at) >= startedAt - 30 * 1000)
+            if (posted.length === 0) {
               if (denied.length > 0) {
-                console.log(`::warning title=Claude review was denied tools::Claude was denied ${clean(denied.join(', '), 600)}. Allow it in claude_args if the review needs it.`)
+                fail(`Claude was denied ${denied.join(', ')} and posted nothing, so the review stopped early. Allow it in claude_args (docs/agents/ci-agents.md, Code review).`)
               }
-              console.log(`Claude posted or updated ${posted} comment(s) or review(s) on this pull request.`)
-              return
+              fail(`Claude finished without posting a finding or updating its summary comment. Claude's last message: ${clean(result.result || '(none)', 400)}`)
             }
             if (denied.length > 0) {
-              fail(`Claude was denied ${denied.join(', ')} and posted nothing, so the review stopped early. Allow it in claude_args (docs/agents/ci.md, Code review).`)
+              console.log(`::warning title=Claude review was denied tools::Claude was denied ${clean(denied.join(', '), 600)}. Allow it in claude_args if the review needs it.`)
             }
-            fail(`Claude finished without posting a finding or updating its summary comment. Claude's last message: ${clean(result.result || '(none)', 400)}`)
+            const reviewers = reviewersStarted(messages)
+            if (reviewers < 3) {
+              fail(`Claude started ${reviewers} of the pr-review skill's three reviewers, so nothing read the whole change (docs/agents/ci-agents.md, Code review). Claude's last message: ${clean(result.result || '(none)', 400)}`)
+            }
+            const unread = coverageProblem(posted.map(item => item.summary).filter(Boolean).at(-1), review.changedFiles)
+            if (unread) fail(`${unread} (docs/agents/ci-agents.md, Code review)`)
+            console.log(`Claude started ${reviewers} reviewers and posted or updated ${posted.length} comment(s) or review(s) on this pull request.`)
           }
           main().catch(error => fail(`The review check failed: ${error?.message}`))

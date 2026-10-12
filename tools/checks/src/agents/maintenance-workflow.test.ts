@@ -224,7 +224,9 @@ describe('the code gardening job', () => {
 
   test('fixes the first small debt row, or splits a file near the size limit, passing over what a person decides', () => {
     const prompt = String(codeGarden.with?.prompt)
-    expect(prompt).toContain('the first row of docs/tech-debt.md whose Size is `small`')
+    expect(prompt).toContain(
+      'the first row of docs/tech-debt.md, and then of docs/harness-debt.md, whose'
+    )
     expect(prompt).toContain('"Files near the size limit"')
     for (const passedOver of [
       'a deploy',

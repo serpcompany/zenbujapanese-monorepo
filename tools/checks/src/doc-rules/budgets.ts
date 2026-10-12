@@ -11,17 +11,15 @@ export const knownLongDocs: Readonly<Record<string, number>> = {
   'apps/web/docs/product/account.md': 345,
   'apps/web/docs/product/browse.md': 333,
   'apps/web/docs/product/dictionary.md': 1344,
-  'docs/agents/account-api.md': 945,
+  'docs/agents/account-api.md': 941,
   'docs/agents/account-clients.md': 602,
   'docs/agents/api-servers.md': 318,
-  'docs/agents/ci.md': 614,
   'docs/agents/dictionary-api.md': 545,
   'docs/agents/dictionary-core.md': 605,
-  'docs/agents/ios.md': 1375,
+  'docs/agents/ios.md': 1374,
   'docs/agents/translate.md': 376,
-  'docs/agents/web.md': 813,
-  'docs/quality.md': 581,
-  'docs/tech-debt.md': 308
+  'docs/agents/web.md': 811,
+  'docs/quality.md': 581
 }
 
 export function wrappedLines(text: string): number {

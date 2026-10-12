@@ -5,12 +5,11 @@ whether CI runs them before a pull request merges, whether docs describe its beh
 change is checked by hand. Each row names the code its grade covers (Code) and the day it was
 last graded (Graded, in UTC). The line under each table gives the evidence for each grade and the
 main gap, which is what would raise it. Known debt, each item with its issue, is in
-[`tech-debt.md`](tech-debt.md).
+[`tech-debt.md`](tech-debt.md) and [`harness-debt.md`](harness-debt.md).
 
-The weekly maintenance report lists every row whose code changed after the day it was graded,
-under "Scores to re-grade", and doc gardening re-grades those rows
-([`ci.md`](agents/ci.md), Weekly maintenance). A folder in Code counts as changed when any file
-in it changes.
+The weekly maintenance report lists every row whose code changed after the day it was graded, under
+"Scores to re-grade", and doc gardening re-grades those rows ([`ci-agents.md`](agents/ci-agents.md),
+Weekly maintenance). A folder in Code counts as changed when any file in it changes.
 
 | Grade | Means |
 | --- | --- |
@@ -218,7 +217,7 @@ A change is checked by hand in a browser with the `verify-web` skill
 
 - **Repository checks, A.** They run on every pull request and in the git hooks, and each failure
   says how to fix it, the Swift layers check naming the platform adapter to use. Main gap: Swift has no linter (#516), and nothing refuses a cast of parsed
-  JSON ([`tech-debt.md`](tech-debt.md), Checks). The docs' links, anchors, paths, and scripts are
+  JSON ([`harness-debt.md`](harness-debt.md), Checks). The docs' links, anchors, paths, and scripts are
   checked on every pull request, but whether their prose still matches the code is checked only
   weekly, by doc gardening in `Weekly maintenance`.
 

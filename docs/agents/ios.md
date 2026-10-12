@@ -2,9 +2,9 @@
 
 ## Build and inspect
 
-Use XcodeBuildMCP to discover the project, scheme, and an already-booted iOS
-Simulator from the current checkout. Build and run with the `arm64` architecture,
-then inspect the launched app before reporting success.
+Use XcodeBuildMCP to discover the project and scheme from the current checkout, and run on this
+checkout's own Simulator, never a booted or default one ([`verification.md`](verification.md)).
+Build with the `arm64` architecture, then inspect the launched app before reporting success.
 
 The command-line tools must point at Xcode, not at the Command Line Tools, or `xcodebuild` and
 the Simulator tools refuse to run. `xcode-select -p` shows which; fix it once per Mac with
@@ -118,29 +118,28 @@ file; the App Sandbox's own entitlements come from build settings and stay:
 
 ```sh
 xcodebuild -project apps/ios/ZenbuJapanese.xcodeproj -scheme ZenbuJapanese -configuration Debug \
-  -destination 'platform=macOS,arch=arm64' -derivedDataPath /tmp/zenbu-mac \
-  CODE_SIGN_IDENTITY=- CODE_SIGN_ENTITLEMENTS= build
-open "/tmp/zenbu-mac/Build/Products/Debug/Zenbu Japanese.app"
+  -destination 'platform=macOS,arch=arm64' CODE_SIGN_IDENTITY=- CODE_SIGN_ENTITLEMENTS= \
+  -derivedDataPath "$(python3 apps/ios/Tools/simulator.py derived-data)" build
+open "$(python3 apps/ios/Tools/simulator.py derived-data)/Build/Products/Debug/Zenbu Japanese.app"
 ```
 
-In Xcode, pick **My Mac** as the destination: on a Mac signed in to TSMC LLC's team, the
-project's team should sign it with every entitlement ([The App Store record](#the-app-store-record)),
-once the App ID has the Mac platform (Releasing on iPad and the Mac, below). No Mac build has
-been signed with the team yet, so the first one also checks that the project's
-`CODE_SIGN_IDENTITY` (`iPhone Developer`) signs the Mac too.
-A build signed to run locally shows the Apple button, which fails without the entitlement; sign
-in with Google or a code. Its session token can't go into the data protection keychain without a
-team, so it signs in again at each launch (Account and sync, Tokens). The Mac app runs in the App
-Sandbox, so what it keeps on the iPhone under the app's `Library` is under
-`~/Library/Containers/com.zenbujapanese.dictionary/Data/Library/` on the Mac, and Zenbu Dev's
-under `com.zenbujapanese.dictionary.dev`.
+In Xcode, pick **My Mac** as the destination: on a Mac signed in to TSMC LLC's team, the project's
+team should sign it with every entitlement ([The App Store record](#the-app-store-record)), once the
+App ID has the Mac platform (Releasing on iPad and the Mac, below). No Mac build has been signed
+with the team yet, so the first one also checks that the project's `CODE_SIGN_IDENTITY`
+(`iPhone Developer`) signs the Mac too. A build signed to run locally shows the Apple button, which
+fails without the entitlement; sign in with Google or a code. Its session token can't go into the
+data protection keychain without a team, so it signs in again at each launch (Account and sync,
+Tokens). The Mac app runs in the App Sandbox, so what it keeps on the iPhone under the app's
+`Library` is under `~/Library/Containers/com.zenbujapanese.dictionary/Data/Library/` on the Mac, and
+Zenbu Dev's under `com.zenbujapanese.dictionary.dev`.
 
 ### Tests on every platform
 
 Every suite runs on the iPhone Simulator, an iPad Simulator, and the Mac, as the `iOS` workflow's
-`swift` job does ([`ci.md`](ci.md), iOS). Give each Simulator its own named device (the UI tests
-erase their app's data on it), such as an iPhone 17 Pro Max and an iPad Pro 13-inch (M5) made with
-`xcrun simctl create`.
+`swift` job does ([`ci.md`](ci.md), iOS). The Simulators are this checkout's own, an iPhone Pro
+Max and an iPad Pro 13-inch: `python3 apps/ios/Tools/simulator.py` prints the iPhone's UDID, and
+with `--device ipad` the iPad's ([`verification.md`](verification.md)).
 
 **The package's tests**, `SearchExperienceTests` and `TranslatorCoreTests`, from `apps/ios/Modules`:
 
@@ -308,12 +307,12 @@ for the Mac. From `apps/ios`, with the phone's UDID from
 
 ```sh
 xcodebuild -project ZenbuJapanese.xcodeproj -scheme ZenbuJapanese -configuration Debug \
-  -destination 'platform=iOS,id=<device-udid>' -derivedDataPath /tmp/zenbu-dev \
-  CODE_SIGN_STYLE=Automatic \
+  -destination 'platform=iOS,id=<device-udid>' CODE_SIGN_STYLE=Automatic \
+  -derivedDataPath "$(python3 Tools/simulator.py derived-data)" \
   ZENBU_BUNDLE_ID_SUFFIX=.dev ZENBU_DISPLAY_NAME="Zenbu Dev" \
   ASSETCATALOG_COMPILER_APPICON_NAME=AppIcon-Dev -allowProvisioningUpdates build
 xcrun devicectl device install app --device <device-udid> \
-  "/tmp/zenbu-dev/Build/Products/Debug-iphoneos/Zenbu Japanese.app"
+  "$(python3 Tools/simulator.py derived-data)/Build/Products/Debug-iphoneos/Zenbu Japanese.app"
 ```
 
 Zenbu Dev signs in to the account with Google or an emailed code, not with Apple (Account and sync,
@@ -328,11 +327,12 @@ is plugged into, whether it runs Windows, macOS, or Linux.
 1. On the Mac, from the repository root, build for devices without signing and package the app:
 
    ```sh
+   BUILD=$(python3 apps/ios/Tools/simulator.py derived-data)
    xcodebuild -project apps/ios/ZenbuJapanese.xcodeproj -scheme ZenbuJapanese \
      -configuration Release -destination 'generic/platform=iOS' \
-     -derivedDataPath /tmp/zenbu-device CODE_SIGNING_ALLOWED=NO build
+     -derivedDataPath "$BUILD" CODE_SIGNING_ALLOWED=NO build
    rm -rf /tmp/zenbu-ipa && mkdir -p /tmp/zenbu-ipa/Payload
-   ditto "/tmp/zenbu-device/Build/Products/Release-iphoneos/Zenbu Japanese.app" \
+   ditto "$BUILD/Build/Products/Release-iphoneos/Zenbu Japanese.app" \
      "/tmp/zenbu-ipa/Payload/Zenbu Japanese.app"
    (cd /tmp/zenbu-ipa && zip -qry ZenbuJapanese.ipa Payload)
    ```
@@ -429,7 +429,7 @@ Simulator. Run it from
 
 ```sh
 xcodebuild -scheme ZenbuJapaneseModules-Package \
-  -destination 'platform=iOS Simulator,id=<booted-simulator-udid>' \
+  -destination 'platform=iOS Simulator,id=<simulator-udid>' \
   ONLY_ACTIVE_ARCH=YES test
 ```
 

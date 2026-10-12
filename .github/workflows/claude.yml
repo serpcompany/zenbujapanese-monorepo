@@ -40,7 +40,7 @@ jobs:
     steps:
       - name: Skip while the CLAUDE_CODE_OAUTH_TOKEN secret isn't set
         if: env.HAS_CLAUDE_TOKEN != 'true'
-        run: echo "::notice::CLAUDE_CODE_OAUTH_TOKEN isn't set, so Claude doesn't answer (docs/agents/ci.md, @claude requests)."
+        run: echo "::notice::CLAUDE_CODE_OAUTH_TOKEN isn't set, so Claude doesn't answer (docs/agents/ci-agents.md, @claude requests)."
 
       - name: Skip a pull request from a fork
         if: env.HAS_CLAUDE_TOKEN == 'true'
@@ -64,7 +64,7 @@ jobs:
             if (!response.ok) throw new Error(`GET /pulls/${process.env.ENTITY_NUMBER} returned ${response.status}`)
             const head = (await response.json())?.head?.repo?.full_name
             if (head === repo) return answer(true)
-            console.log(`::notice::This pull request's branch is in ${head || 'a deleted fork'}, so Claude doesn't answer on it: checking it would run that fork's code with this repository's tokens, and Claude can't push to it (docs/agents/ci.md, @claude requests).`)
+            console.log(`::notice::This pull request's branch is in ${head || 'a deleted fork'}, so Claude doesn't answer on it: checking it would run that fork's code with this repository's tokens, and Claude can't push to it (docs/agents/ci-agents.md, @claude requests).`)
             answer(false)
           }
           main().catch(error => {
@@ -155,7 +155,7 @@ jobs:
             console.log(`::error title=Claude didn't act on the request::${clean(message, 900)}`)
             process.exit(1)
           }
-          const tokenAdvice = result => result.api_error_status === 401 ? " The API refused the token (401), so renew the CLAUDE_CODE_OAUTH_TOKEN secret (docs/agents/ci.md, Claude's app and token)." : ''
+          const tokenAdvice = result => result.api_error_status === 401 ? " The API refused the token (401), so renew the CLAUDE_CODE_OAUTH_TOKEN secret (docs/agents/ci-agents.md, Claude's app and token)." : ''
           const readLog = () => {
             const file = process.env.EXECUTION_FILE
             if (!file || !fs.existsSync(file)) {

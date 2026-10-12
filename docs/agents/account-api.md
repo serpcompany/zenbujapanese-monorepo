@@ -89,18 +89,17 @@ Better Auth upgrade adds. The profile changes through `/v1/me`, and deleting an 
 
 **Apps and scopes.** Each app that signs in is listed in `src/domain/clients.ts`, with its scopes
 and its Apple bundle IDs (#570). A sign-in names its app in the `X-Zenbu-Client` header, or comes
-from one of the website's origins, or is refused (`unknown_client`); an Apple token made for
-another app's bundle ID is refused (`client_mismatch`). The session keeps its app (`client_id`),
-and its access tokens carry the app (`azp`) and its scopes (`scope`), cut to the scopes the app
-has now. `/v1/me` needs `profile` (`403 insufficient_scope`), and sync checks each change against
-the scopes and reads only the entities they allow. The sign-in routes that manage the account
-(linking, unlinking, listing ways in and sessions, and signing sessions out) need the session's
-app to have `account`, and `get-session`, which shows the email and name, needs `profile`; a
-session whose app isn't listed gets no access token (`401 sign_in_again`). At most five sign-in
-codes go to one email in 10 minutes, from any address, counting only codes sent; the next gets
-`429 too_many_requests` with `Retry-After` and `X-Retry-After`, the seconds until one ages out. The
-apps' side, and how to add one, is the
-[client guide](account-clients.md).
+from one of the website's origins, or is refused (`unknown_client`); an Apple token made for another
+app's bundle ID is refused (`client_mismatch`). The session keeps its app (`client_id`), and its
+access tokens carry the app (`azp`) and its scopes (`scope`), cut to the scopes the app has now.
+`/v1/me` needs `profile` (`403 insufficient_scope`), and sync checks each change against the scopes
+and reads only the entities they allow. The sign-in routes that manage the account (linking,
+unlinking, listing ways in and sessions, and signing sessions out) need the session's app to have
+`account`, and `get-session`, which shows the email and name, needs `profile`; a session whose app
+isn't listed gets no access token (`401 sign_in_again`). At most five sign-in codes go to one email
+in 10 minutes, from any address, counting only codes sent; the next gets `429 too_many_requests`
+with `Retry-After` and `X-Retry-After`, the seconds until one ages out. The apps' side, and how to
+add one, is the [client guide](account-clients.md).
 
 `/v1/me` and `/v1/sync` take only an access token from `GET /v1/auth/token`, as
 `Authorization: Bearer <token>`, checked against the service's own JWKS. They refuse the session
@@ -161,12 +160,11 @@ Google made deletes the session it had made, and its cookie would replace the br
 The website's side is in the [client guide](account-clients.md#the-website).
 
 **Apple and Google, in the app.** The app asks this service for a nonce, gives it to Apple (as its
-SHA-256, as Apple asks) or Google, and sends the token it gets back with the nonce. Each nonce
-lasts 10 minutes and signs in once, so a token someone captures can't be used again. The token is
-checked against the provider's keys, issuer, audience (`APPLE_APP_BUNDLE_IDENTIFIER` and
+SHA-256, as Apple asks) or Google, and sends the token it gets back with the nonce. Each nonce lasts
+10 minutes and signs in once, so a token someone captures can't be used again. The token is checked
+against the provider's keys, issuer, audience (`APPLE_APP_BUNDLE_IDENTIFIER` and
 `APPLE_SERVICES_IDS`, or `GOOGLE_CLIENT_IDS`), the nonce, and its age: none older than an hour. An
-account is made only for an email the provider has verified. The providers' own tokens aren't
-kept.
+account is made only for an email the provider has verified. The providers' own tokens aren't kept.
 
 **One account per email, and no account taken over by one** (#374, ADR 0013):
 
@@ -183,13 +181,13 @@ kept.
 
 **Codes** are six digits, last 10 minutes, are stored only encrypted, and allow five wrong
 guesses. **Rate limits**, kept in the database so they outlast a deploy, count by the address
-Cloudflare reports (`CF-Connecting-IP`): five codes sent and ten tried per 10 minutes, 30 nonces
-and twenty Apple or Google sign-ins a minute, Better Auth's own tighter limits on some routes, and
-100 requests a minute to the rest. Each answers `429 too_many_requests` with `Retry-After`: Better
-Auth sends only `X-Retry-After`, so the service copies it (`src/http/errors.ts`). Only Cloudflare can set `CF-Connecting-IP` for a request that reaches
-the service, since nginx takes only Cloudflare's client certificate (Authenticated Origin Pulls,
-[`api-servers.md`](api-servers.md)). A request without it counts in one bucket shared by every
-such request.
+Cloudflare reports (`CF-Connecting-IP`): five codes sent and ten tried per 10 minutes, 30 nonces and
+twenty Apple or Google sign-ins a minute, Better Auth's own tighter limits on some routes, and 100
+requests a minute to the rest. Each answers `429 too_many_requests` with `Retry-After`: Better Auth
+sends only `X-Retry-After`, so the service copies it (`src/http/errors.ts`). Only Cloudflare can set
+`CF-Connecting-IP` for a request that reaches the service, since nginx takes only Cloudflare's
+client certificate (Authenticated Origin Pulls, [`api-servers.md`](api-servers.md)). A request
+without it counts in one bucket shared by every such request.
 
 ## Email
 
@@ -218,12 +216,11 @@ whether an email has an account.
 
 ## Profiles and sync
 
-Six entities sync: the profile, known words, lists, and the words in each list (#572), and, from
-the iOS app, the videos the learner watched in its Player and the Translate sentences they
-bookmarked. Each has its own rule in `src/domain`, never
-blanket last-write-wins, and none needs a clock to settle a conflict: a change says the version it
-was made to, and the rule decides what a stale one does. `PATCH /v1/me` and a sync
-mutation change the profile through the same rule.
+Six entities sync: the profile, known words, lists, and the words in each list (#572), and, from the
+iOS app, the videos the learner watched in its Player and the Translate sentences they bookmarked.
+Each has its own rule in `src/domain`, never blanket last-write-wins, and none needs a clock to
+settle a conflict: a change says the version it was made to, and the rule decides what a stale one
+does. `PATCH /v1/me` and a sync mutation change the profile through the same rule.
 
 - **Known word** (`knownWord`, by item: a Language Reference ID, or `kanji:` and the kanji in
   Unicode NFC, as the iOS app keys `word-knowledge.json`): `mark` and `clear` apply only at the word's current
@@ -724,7 +721,7 @@ this order; each step says how to check it worked.
        `com.zenbujapanese.tomodachi`, then takes **Group with an existing primary App ID** and
        `com.zenbujapanese.dictionary`, so a learner who allowed one app isn't asked again by the
        other. Apple groups App IDs only within a team, and Tomodachi's is still on the backup team
-       (`W3GXL2NQQP`), so that waits until it moves ([`tech-debt.md`](../tech-debt.md)).
+       (`W3GXL2NQQP`), so that waits until it moves ([`harness-debt.md`](../harness-debt.md)).
        Set `APPLE_APP_BUNDLE_IDENTIFIER` to the iOS app's ID; the service also takes every app's
        bundle ID from `src/domain/clients.ts`. Regenerate each app's provisioning profiles after
        turning the capability on ([`ios.md`](ios.md)).

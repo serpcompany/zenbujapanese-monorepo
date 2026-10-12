@@ -1,5 +1,5 @@
 import { lineLimit, nearLimitLines } from './sizes'
-import type { DebtItem, DebtSummary, QualityRows } from './work-tracking'
+import { type DebtItem, type DebtSummary, debtFiles, type QualityRows } from './work-tracking'
 
 export interface DocReferences {
   doc: string
@@ -100,7 +100,7 @@ const debtItem = ({ section, debt, issue }: DebtItem) =>
 function debtLines(debt: DebtSummary): string[] {
   const { small, medium, large } = debt.bySize
   return [
-    `- ${code('docs/tech-debt.md')}: ${debt.open} open items (${small} small, ${medium} medium, ${large} large).`,
+    `- ${debtFiles.map(code).join(' and ')}: ${debt.open} open items (${small} small, ${medium} medium, ${large} large).`,
     `- First small item: ${debt.firstSmall ? debtItem(debt.firstSmall) : 'none.'}`,
     ...(debt.unsized.length
       ? [
@@ -147,10 +147,10 @@ export function renderReport(facts: MaintenanceFacts): string {
     [
       '- [ ] Fix any failing check, and re-verify the docs listed above against the code.',
       '- [ ] Re-grade each row listed under Scores to re-grade, and set its Graded date.',
-      `- [ ] Pay down one item from ${code('docs/tech-debt.md')}, or split one file near the size limit, in a small pull request.`,
+      `- [ ] Pay down one item from ${debtFiles.map(code).join(' or ')}, or split one file near the size limit, in a small pull request.`,
       `- [ ] If a failure pattern keeps coming up in reviews, add it to ${code('docs/agents/code.md')} and, where possible, a check.`
     ].join('\n'),
-    `Work this issue one item per small pull request, as ${code('docs/agents/ci.md')} says under Weekly maintenance.`
+    `Work this issue one item per small pull request, as ${code('docs/agents/ci-agents.md')} says under Weekly maintenance.`
   ]
   return `# Repository maintenance report\n\nGenerated ${facts.date} by ${code('pnpm maintenance:report')}.\n\n${sections.join('\n\n')}\n`
 }

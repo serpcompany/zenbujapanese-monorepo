@@ -13,7 +13,7 @@ import { checkLayers } from './layers'
 import { type CheckProblems, docsToReverify, lastChangeTimes, renderReport } from './maintenance'
 import { findSecrets } from './secrets'
 import { checkSizes, filesNearLimit, knownLargeFiles } from './sizes'
-import { scoresToRegrade, summarizeDebt } from './work-tracking'
+import { debtFiles, scoresToRegrade, summarizeDebt } from './work-tracking'
 
 const git = (...args: string[]) =>
   execFileSync('git', args, { cwd: root, encoding: 'utf8', maxBuffer: 256 * 1024 * 1024 })
@@ -72,7 +72,7 @@ process.stdout.write(
     checks,
     staleDocs: docsToReverify(docs, times),
     quality: scoresToRegrade(read('docs/quality.md'), times),
-    debt: summarizeDebt(read('docs/tech-debt.md')),
+    debt: summarizeDebt(debtFiles.map(read).join('\n')),
     sizeExceptions: Object.entries(knownLargeFiles).map(([path, { lines }]) => ({ path, lines })),
     longDocs: Object.entries(knownLongDocs)
       .map(([path, lines]) => ({ path, lines }))

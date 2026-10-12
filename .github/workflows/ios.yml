@@ -29,7 +29,7 @@ jobs:
         uses: ./.github/actions/changed-paths
         with:
           paths: >-
-            apps/ios .github/workflows/ios.yml .github/actions/changed-paths
+            apps/ios .xcode-version .github/workflows/ios.yml .github/actions/changed-paths
 
   contracts:
     needs: changes
@@ -57,6 +57,8 @@ jobs:
     timeout-minutes: 240
     steps:
       - uses: actions/checkout@v5
+      - name: Select the pinned Xcode
+        run: sudo xcode-select -s "/Applications/Xcode_$(cat .xcode-version).app"
       - name: Restore the Git LFS files
         uses: actions/cache@v5
         with:
@@ -64,26 +66,12 @@ jobs:
           key: lfs-ios-${{ hashFiles('apps/ios/Modules/Sources/SearchExperience/Resources/*.sqlite3', 'apps/ios/Modules/Sources/SearchExperience/Resources/Kuromoji/*.dat.gz', 'apps/ios/LanguageData/Sources/*.xz', 'apps/ios/LanguageData/Sources/*/*.xz') }}
       - name: Fetch the Git LFS files
         run: git lfs pull --include="$LFS_FILES" --exclude="$LFS_SNAPSHOTS,$LFS_RECORDINGS"
-      - name: Pick the first iPhone and iPad Simulators on the newest iOS runtime
+      - name: Make the app's iPhone and iPad Simulators
         run: |
           xcodebuild -version
-          xcrun simctl list devices available --json | python3 -c '
-          import json, sys
-          devices = json.load(sys.stdin)["devices"]
-          runtimes = sorted(
-              (runtime for runtime in devices if ".SimRuntime.iOS-" in runtime),
-              key=lambda runtime: [int(part) for part in runtime.rsplit("iOS-", 1)[1].split("-")],
-          )
-          for runtime in reversed(runtimes):
-              phones = [device for device in devices[runtime] if device["name"].startswith("iPhone")]
-              pads = [device for device in devices[runtime] if device["name"].startswith("iPad")]
-              if phones and pads:
-                  print("SIMULATOR=" + phones[0]["udid"])
-                  print("IPAD_SIMULATOR=" + pads[0]["udid"])
-                  break
-          else:
-              sys.exit("No iOS runtime has both an iPhone and an iPad Simulator")
-          ' >>"$GITHUB_ENV"
+          simulator=$(python3 apps/ios/Tools/simulator.py)
+          ipad=$(python3 apps/ios/Tools/simulator.py --device ipad)
+          printf 'SIMULATOR=%s\nIPAD_SIMULATOR=%s\n' "$simulator" "$ipad" >>"$GITHUB_ENV"
       - name: Run SearchExperienceTests and TranslatorCoreTests on the iPhone Simulator
         working-directory: apps/ios/Modules
         run: |

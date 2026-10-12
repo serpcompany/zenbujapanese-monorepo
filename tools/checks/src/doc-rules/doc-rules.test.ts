@@ -28,7 +28,7 @@ describe('heading anchors', () => {
   })
 
   test('read the anchor from a link', () => {
-    expect(anchorOf('ci.md#code-review')).toBe('code-review')
+    expect(anchorOf('ci-agents.md#code-review')).toBe('code-review')
     expect(anchorOf('ci.md')).toBeNull()
   })
 })

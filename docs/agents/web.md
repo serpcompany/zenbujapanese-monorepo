@@ -388,19 +388,19 @@ not indexed), the ranked lists, YouTube's and anime's first bands, and JLPT N5, 
 lists, grade 4, JLPT N5's kanji, and all of jinmeiyō, with its compatibility kanji. Each word list
 is cut to its first 20 words. Any other browse page is a 404 there.
 
-`src/lib/dictionary/browse/paths.ts` builds the pages' URLs: a list's first page has no number,
-and `…/1/` redirects to it; a ranked list's page is a band of 1,000 ranks (`…/anime/1001-2000/`),
-and its name links to the first band; a JLPT level is `…/jlpt/n5/`; and a category's kana order is
+`src/lib/dictionary/browse/paths.ts` builds the pages' URLs: a list's first page has no number, and
+`…/1/` redirects to it; a ranked list's page is a band of 1,000 ranks (`…/anime/1001-2000/`), and
+its name links to the first band; a JLPT level is `…/jlpt/n5/`; and a category's kana order is
 `…/<category>/kana-order/`. A list of fewer than 10 words, and a category's kana order, are
-`noindex, follow` (`dictionaryMetadata`'s `index`) and left out of the browse sitemaps. No
-browse page links to a URL that redirects (`e2e/browse-links.spec.ts` follows every link). The
-hiragana and katakana routes, and each category's four, are one line each over the route helpers
-beside them (`kana-routes.tsx`, `category-routes.tsx`, `frequency-dictionaries/list-routes.tsx`). Pages without parameters that read the service are
-`force-dynamic`, as `/dictionary/` now is, so a build never reads it
-(`src/app/dictionary/browse/dynamic.test.ts`). The home leaves its browse sections out when the
-service can't answer (`getHomeBrowse`), as when the site deploys a few minutes ahead
-of a service without the browse routes, rather than failing the search box with them. The words show as search
-results' rows do (`components/dictionary/word-row.tsx`).
+`noindex, follow` (`dictionaryMetadata`'s `index`) and left out of the browse sitemaps. No browse
+page links to a URL that redirects (`e2e/browse-links.spec.ts` follows every link). The hiragana and
+katakana routes, and each category's four, are one line each over the route helpers beside them
+(`kana-routes.tsx`, `category-routes.tsx`, `frequency-dictionaries/list-routes.tsx`). Pages without
+parameters that read the service are `force-dynamic`, as `/dictionary/` now is, so a build never
+reads it (`src/app/dictionary/browse/dynamic.test.ts`). The home leaves its browse sections out when
+the service can't answer (`getHomeBrowse`), as when the site deploys a few minutes ahead of a
+service without the browse routes, rather than failing the search box with them. The words show as
+search results' rows do (`components/dictionary/word-row.tsx`).
 
 ### The rendered-page gate
 

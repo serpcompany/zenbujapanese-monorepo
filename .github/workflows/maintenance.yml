@@ -30,7 +30,7 @@ jobs:
     steps:
       - name: Skip while the CLAUDE_CODE_OAUTH_TOKEN secret isn't set
         if: env.HAS_CLAUDE_TOKEN != 'true'
-        run: echo "::notice::CLAUDE_CODE_OAUTH_TOKEN isn't set, so the docs aren't gardened (docs/agents/ci.md, Weekly maintenance)."
+        run: echo "::notice::CLAUDE_CODE_OAUTH_TOKEN isn't set, so the docs aren't gardened (docs/agents/ci-agents.md, Weekly maintenance)."
 
       - uses: actions/checkout@v5
         if: env.HAS_CLAUDE_TOKEN == 'true'
@@ -88,10 +88,11 @@ jobs:
                code in its Code column, with its tests, CI, and docs, and grade it again on the
                scale at the top of that file. Rewrite the row and its line under the table (the
                evidence and the main gap) to match the code as it is now, and link each gap to its
-               issue or to the row of docs/tech-debt.md that covers it (add a row there, with a
-               Size, when none does). Set the row's Graded date to today (UTC), even when its
-               grade stays the same. Change no other row. Remove rows of docs/tech-debt.md whose
-               debt the code has paid off.
+               issue or to the row of docs/tech-debt.md or docs/harness-debt.md that covers it
+               (add a row, with a Size, when none does).
+               Set the row's Graded date to today (UTC), even when its grade stays the same.
+               Change no other row. Remove rows of either debt file whose debt the code has
+               paid off.
             4. Edit only Markdown: AGENTS.md, ARCHITECTURE.md, README.md files, docs/ except
                docs/adr/ (ADRs record decisions; never rewrite them), apps/*/docs/, and
                .claude/skills/. Never touch code, tests, workflows, or anything a tool generates.
@@ -132,7 +133,7 @@ jobs:
             console.log(`::error title=Doc gardening didn't finish::${clean(message, 900)}`)
             process.exit(1)
           }
-          const tokenAdvice = result => result.api_error_status === 401 ? " The API refused the token (401), so renew the CLAUDE_CODE_OAUTH_TOKEN secret (docs/agents/ci.md, Claude's app and token)." : ''
+          const tokenAdvice = result => result.api_error_status === 401 ? " The API refused the token (401), so renew the CLAUDE_CODE_OAUTH_TOKEN secret (docs/agents/ci-agents.md, Claude's app and token)." : ''
           const readResult = () => {
             const file = process.env.EXECUTION_FILE
             if (!file || !fs.existsSync(file)) {
@@ -214,7 +215,7 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           if [ "$HAS_CLAUDE_TOKEN" != "true" ]; then
-            echo "::notice::CLAUDE_CODE_OAUTH_TOKEN isn't set, so no code is gardened (docs/agents/ci.md, Weekly maintenance)."
+            echo "::notice::CLAUDE_CODE_OAUTH_TOKEN isn't set, so no code is gardened (docs/agents/ci-agents.md, Weekly maintenance)."
             exit 0
           fi
           open=$(gh pr list --repo "$GITHUB_REPOSITORY" --base main --state open --limit 100 --json number,headRefName --jq '[.[] | select(.headRefName | startswith("chore/code-gardening-")) | .number] | first // empty')
@@ -268,9 +269,9 @@ jobs:
             Goal: one small piece of known debt is paid down in one small pull request into main.
 
             1. Read tmp/maintenance-report.md and pick ONE item:
-               a. the first row of docs/tech-debt.md whose Size is `small`, reading its tables
-                  from the top (the report names it under "Known debt"); or, when there is none
-                  or you must pass over it,
+               a. the first row of docs/tech-debt.md, and then of docs/harness-debt.md, whose
+                  Size is `small`, reading their tables from the top (the report names it under
+                  "Known debt"); or, when there is none or you must pass over it,
                b. one file under "Files near the size limit" in the report, split by
                   responsibility so it stays well under the limit.
                Pass over an item that needs a deploy, a language-data release or anything in R2,
@@ -281,7 +282,7 @@ jobs:
             2. Fix that item and nothing else, the way its row says, in as few lines as it needs.
                Update the tests and docs that describe the code you change. Write no code
                comments.
-            3. If the item is a row of docs/tech-debt.md, delete the row. If the fix shows debt
+            3. If the item is a row of a debt file, delete the row. If the fix shows debt
                you didn't fix, add a row for it, with a Size.
             4. Run `pnpm check` and fix what it reports. If it still fails, stop and say
                "Gardening failed:" with what fails, and open no pull request.
@@ -320,7 +321,7 @@ jobs:
             console.log(`::error title=Code gardening didn't finish::${clean(message, 900)}`)
             process.exit(1)
           }
-          const tokenAdvice = result => result.api_error_status === 401 ? " The API refused the token (401), so renew the CLAUDE_CODE_OAUTH_TOKEN secret (docs/agents/ci.md, Claude's app and token)." : ''
+          const tokenAdvice = result => result.api_error_status === 401 ? " The API refused the token (401), so renew the CLAUDE_CODE_OAUTH_TOKEN secret (docs/agents/ci-agents.md, Claude's app and token)." : ''
           const readResult = () => {
             const file = process.env.EXECUTION_FILE
             if (!file || !fs.existsSync(file)) {

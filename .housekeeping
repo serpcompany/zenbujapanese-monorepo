@@ -1,0 +1,7 @@
+tmp/maintenance-report.md
+tmp/weekly-report.md
+tmp/review-summary.md
+tmp/pr-body.md
+tmp/agent/scratch
+tmp/agent/stop-hook
+apps/web/e2e/results
