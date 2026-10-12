@@ -34,7 +34,7 @@ The app's areas are graded in [`quality-ios.md`](quality-ios.md), and the websit
 
 - **Dictionary service, A.** Every recorded suite runs on the real data on each pull request that
   changes the service, the core, a suite, or the data, and the image is checked before it ships.
-  Main gap: sentence search is held to the service's own cases, not to the app (#470).
+  Main gap: Japanese sentence search is held to the service's own cases, not to the app (#470).
 - **Shared dictionary core, A.** Unit tests, the recorded suites, and import rules that keep it
   free of any runtime all run before merge. The app runs all of it, so each rule has one
   implementation (#481). Main gap: the app's own tests of the Swift around it don't run before
