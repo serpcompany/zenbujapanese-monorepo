@@ -110,12 +110,20 @@ describe('sameWordInAnyForm', () => {
   test.each([
     ['tos', 'to'],
     ['mes', 'me'],
-    ['tvs', 'tv'],
+    ['ids', 'id'],
     ['uses', 'us'],
     ['used', 'us'],
     ['offing', 'of'],
     ['inning', 'in']
-  ])('reads %s as no form of %s: a base has three letters, or two as go has', (one, other) => {
+  ])('reads %s as no form of %s: a base of two letters is like go or TV', (one, other) => {
     expect(eitherWay(one, other)).toEqual([false, false])
+  })
+
+  test.each([
+    ['tvs', 'tv'],
+    ['cds', 'cd'],
+    ['TVs', 'TV']
+  ])('reads %s as the plural of %s, an abbreviation of two consonants', (plural, abbreviation) => {
+    expect(eitherWay(plural, abbreviation)).toEqual([true, true])
   })
 })

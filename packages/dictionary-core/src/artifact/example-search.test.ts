@@ -101,6 +101,11 @@ describe('an English query’s example sentences', () => {
     ).toEqual(['The university studies the universe.'])
   })
 
+  test('reads TVs as the plural of TV, and no two-letter word as another with an s', () => {
+    expect(listed(['We have two TV sets.'], 'two tvs')).toEqual(['We have two TV sets.'])
+    expect(listed(['I gave it to him.'], 'tos him')).toEqual([])
+  })
+
   test('lists no other number for a number the stemmer cuts short', () => {
     const binary = 'The number 2015 is represented as 11111011111 in binary.'
     expect(listed([binary], '1111111')).toEqual([])

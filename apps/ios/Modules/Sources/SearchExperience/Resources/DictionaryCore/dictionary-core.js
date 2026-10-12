@@ -3871,9 +3871,11 @@
   var doubledFinalConsonant = /([b-df-hj-np-tv-z])\1$/;
   var endingThatTakesEs = /(?:[sxzo]|[cs]h)$/;
   var twoLettersEndingInAVowel = /^[a-z][aeiou]$/;
+  var twoConsonants = /^[b-df-hj-np-tv-xz]{2}$/;
   var fewestLettersInABase = 3;
   var isLongEnough = (base) => base.length >= fewestLettersInABase;
   var isLongEnoughOrLikeGo = (base) => isLongEnough(base) || twoLettersEndingInAVowel.test(base);
+  var isLongEnoughOrAnAbbreviation = (base) => isLongEnough(base) || twoConsonants.test(base);
   function basesBeforeAnEnding(stem, isABase) {
     if (stem.length < 2 || !vowel.test(stem)) return [];
     const withoutItsDoubling = stem.slice(0, -1);
@@ -3889,7 +3891,7 @@
     const withoutEs = word.slice(0, -2);
     const bases = word.endsWith("ies") ? [`${word.slice(0, -3)}y`, withoutS] : [withoutS];
     const takesEs = word.endsWith("es") && endingThatTakesEs.test(withoutEs) && isLongEnoughOrLikeGo(withoutEs);
-    return [...bases.filter(isLongEnough), ...takesEs ? [withoutEs] : []];
+    return [...bases.filter(isLongEnoughOrAnAbbreviation), ...takesEs ? [withoutEs] : []];
   }
   function basesOfAPast(word) {
     if (!word.endsWith("ed")) return [];

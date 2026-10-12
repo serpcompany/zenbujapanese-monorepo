@@ -3,12 +3,16 @@ const vowel = /[aeiouy]/
 const doubledFinalConsonant = /([b-df-hj-np-tv-z])\1$/
 const endingThatTakesEs = /(?:[sxzo]|[cs]h)$/
 const twoLettersEndingInAVowel = /^[a-z][aeiou]$/
+const twoConsonants = /^[b-df-hj-np-tv-xz]{2}$/
 const fewestLettersInABase = 3
 
 const isLongEnough = (base: string) => base.length >= fewestLettersInABase
 
 const isLongEnoughOrLikeGo = (base: string) =>
   isLongEnough(base) || twoLettersEndingInAVowel.test(base)
+
+const isLongEnoughOrAnAbbreviation = (base: string) =>
+  isLongEnough(base) || twoConsonants.test(base)
 
 function basesBeforeAnEnding(stem: string, isABase: (stem: string) => boolean): string[] {
   if (stem.length < 2 || !vowel.test(stem)) return []
@@ -29,7 +33,7 @@ function basesOfAPluralOrThirdPerson(word: string): string[] {
   const bases = word.endsWith('ies') ? [`${word.slice(0, -3)}y`, withoutS] : [withoutS]
   const takesEs =
     word.endsWith('es') && endingThatTakesEs.test(withoutEs) && isLongEnoughOrLikeGo(withoutEs)
-  return [...bases.filter(isLongEnough), ...(takesEs ? [withoutEs] : [])]
+  return [...bases.filter(isLongEnoughOrAnAbbreviation), ...(takesEs ? [withoutEs] : [])]
 }
 
 function basesOfAPast(word: string): string[] {
