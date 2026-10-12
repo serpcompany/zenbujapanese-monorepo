@@ -13,7 +13,11 @@ readonly container_security=(
 readonly ready_seconds=180
 readonly health_timeout_ms=3000
 readonly nginx_resolve_seconds=10
+readonly alerts_file=/etc/zenbujapanese-deployer/alerts.env
+readonly alert_seconds=5
 service=deployer
+alerted=/run/zenbujapanese-deployer.alerted
+scope=run reported="" failure="" ended=""
 
 use_service() {
   service="$1"
@@ -23,6 +27,7 @@ use_service() {
   registry_file="$config_dir/registry.env"
   state_dir="/var/lib/zenbujapanese-$service"
   lock_file="/run/zenbujapanese-$service.lock"
+  alerted="/run/zenbujapanese-$service.alerted"
   slot_label="zenbujapanese.$service.slot"
   environment_label="zenbujapanese.$service.environment"
   settings_label="zenbujapanese.$service.settings"
@@ -48,17 +53,65 @@ log() {
   echo "$service: $*" >&2
 }
 
-run_dir="$(mktemp -d)" || exit 1
-trap 'rm -rf "$run_dir"' EXIT
+setting() {
+  sed -n "s/^$2=//p" "$1" | tail -n 1 | tr -d '\r[:space:]'
+}
+
+use_alerts() {
+  alert_url="" report_failures=off report_successes=off
+  [ -e "$alerts_file" ] || return 0
+  alert_url="$(setting "$alerts_file" SLACK_WEBHOOK_URL)"
+  [ -n "$alert_url" ] || return 0
+  if ! [[ "$alert_url" =~ ^https://hooks\.slack\.com/[A-Za-z0-9/_-]+$ ]]; then
+    log "SLACK_WEBHOOK_URL in $alerts_file isn't a Slack webhook address (https://hooks.slack.com/...), so no alert is sent"
+    return 0
+  fi
+  [ "$(setting "$alerts_file" REPORT_FAILURES)" = off ] || report_failures=on
+  [ "$(setting "$alerts_file" REPORT_SUCCESSES)" = off ] || report_successes=on
+}
+
+send_alert() {
+  local text answer status
+  text="$(printf '%s' "${1:0:3000}" | LC_ALL=C tr -c ' -~' ' ' |
+    sed -e 's/&/\&amp;/g' -e 's/</\&lt;/g' -e 's/>/\&gt;/g' -e 's/\\/\\\\/g' -e 's/"/\\"/g')"
+  answer="$(printf '{"text":"%s"}' "$text" |
+    curl --silent --output /dev/null --write-out '%{http_code}' --fail --proto =https \
+      --max-time "$alert_seconds" --header 'Content-Type: application/json' \
+      --data-binary @- --config <(printf 'url = "%s"\n' "$alert_url") 2>/dev/null)"
+  status=$?
+  [ "$status" = 0 ] || log "couldn't send an alert to Slack (curl's exit status $status, HTTP status ${answer:-none})"
+  return "$status"
+}
+
+report_failure() {
+  local prefix="$1: "
+  [ "$1" != run ] || prefix=""
+  log "$prefix$3${4:-}"
+  reported=yes
+  [ "$report_failures" = on ] || return 0
+  [ "$(cat "$alerted-$1" 2>/dev/null)" != "$2" ] || return 0
+  send_alert "Deploy problem: $service: $prefix$3" || return 0
+  printf '%s\n' "$2" >"$alerted-$1"
+}
+
+report_success() {
+  log "$1: deployed $2"
+  [ "$report_successes" = on ] || return 0
+  send_alert "Deployed: $service: $1: $2" || true
+}
+
+settle() {
+  rm -f "$alerted-$1"
+}
 
 use_registry_login() {
   local username token
   unset DOCKER_CONFIG
   [ -e "$registry_file" ] || return 0
-  username="$(sed -n 's/^GHCR_USERNAME=//p' "$registry_file" | tail -n 1 | tr -d '\r[:space:]')"
-  token="$(sed -n 's/^GHCR_TOKEN=//p' "$registry_file" | tail -n 1 | tr -d '\r[:space:]')"
+  username="$(setting "$registry_file" GHCR_USERNAME)"
+  token="$(setting "$registry_file" GHCR_TOKEN)"
   if [ -z "$username" ] || [ -z "$token" ]; then
-    log "$registry_file needs both GHCR_USERNAME and GHCR_TOKEN"
+    report_failure run registry "$registry_file needs both GHCR_USERNAME and GHCR_TOKEN"
     return 1
   fi
   mkdir -p "$run_dir/$service/docker"
@@ -172,7 +225,7 @@ deploy() {
     fi
   done
   [ -n "$slot" ] || {
-    log "$environment: both slots' names are taken ($name-a, $name-b); remove the one that isn't serving"
+    report_failure "$environment" slots "both slots' names are taken ($name-a, $name-b); remove the one that isn't serving"
     return 2
   }
 
@@ -182,21 +235,21 @@ deploy() {
     --label "$settings_label=$settings" \
     --network "$network" --env-file "$config_dir/$environment.env" \
     "${container_limits[@]}" "${container_logs[@]}" "${container_security[@]}" "$reference" >/dev/null; then
-    log "$environment: couldn't create a container for $reference"
     [ -s "$cidfile" ] && docker rm --force --volumes "$(cat "$cidfile")" >/dev/null 2>&1
+    report_failure "$environment" "create $reference" "couldn't create a container for $reference"
     return 2
   fi
   new="$(cat "$cidfile")"
   for private in "${private_networks[@]}"; do
     if ! docker network connect "$private" "$new" >/dev/null; then
-      log "$environment: couldn't connect $reference to the $private network; kept the running version"
       docker rm --force --volumes "$new" >/dev/null
+      report_failure "$environment" "connect $private $reference" "couldn't connect $reference to the $private network; kept the running version"
       return 2
     fi
   done
   if ! docker start "$new" >/dev/null; then
-    log "$environment: couldn't start $reference; kept the running version"
     docker rm --force --volumes "$new" >/dev/null
+    report_failure "$environment" "start $reference" "couldn't start $reference; kept the running version"
     return 2
   fi
 
@@ -204,21 +257,22 @@ deploy() {
   until build="$(build_of "$new")"; do
     if [ "$(docker inspect --format '{{.State.Running}}' "$new")" != true ] ||
       [ "$SECONDS" -ge "$deadline" ]; then
-      log "$environment: $reference didn't answer /healthz; kept the running version. Its log:"
+      log "$environment: $reference didn't answer /healthz. Its log:"
       docker logs --tail 80 "$new" 2>&1 | while read -r line; do log "  $line"; done
       docker rm --force --volumes "$new" >/dev/null
+      failure="didn't answer /healthz"
       return 1
     fi
     sleep 2
   done
   if ! answers_as "$build" "$release"; then
-    log "$environment: $reference answers as $build, not release $release; kept the running version"
     docker rm --force --volumes "$new" >/dev/null
+    failure="answers /healthz as $build, not release $release"
     return 1
   fi
   if ! give_alias "$new" "$name"; then
-    log "$environment: couldn't give $reference the network alias $name; kept the running version"
     docker rm --force --volumes "$new" >/dev/null
+    report_failure "$environment" "alias $reference" "couldn't give $reference the network alias $name; kept the running version"
     return 2
   fi
   docker update --restart unless-stopped "$new" >/dev/null
@@ -228,19 +282,20 @@ deploy() {
     replaced+=("$(docker inspect --format '{{.Image}}' "$container")")
     retire "$container"
   done
-  log "$environment: deployed $reference as $build in slot $slot"
+  report_success "$environment" "$reference as $build in slot $slot"
   prune "${replaced[@]}"
 }
 
 finish() {
-  local environment="$1" current="$2" release="$3" running="$4"
-  local name="zenbujapanese-$service-$1" build container
+  local environment="$1" current="$2" release="$3" running="$4" image="$5"
+  local name="zenbujapanese-$service-$1" build container finished=""
   build="$(build_of "$current")" || return 1
   answers_as "$build" "$release" || return 1
   if ! has_alias "$current" "$name"; then
     log "$environment: giving $current, left from a deploy cut short, the network alias"
     give_alias "$current" "$name" || return 1
     sleep "$nginx_resolve_seconds"
+    finished=yes
   fi
   [ "$(docker inspect --format '{{.HostConfig.RestartPolicy.Name}}' "$current")" = unless-stopped ] ||
     docker update --restart unless-stopped "$current" >/dev/null
@@ -248,24 +303,27 @@ finish() {
     [ "$container" = "$current" ] && continue
     log "$environment: stopping $container, left from an earlier deploy"
     retire "$container"
+    finished=yes
   done
+  [ -z "$finished" ] || report_success "$environment" "$(digest_reference_of "$image" || echo "$image") as $build in $current, finishing a deploy cut short"
 }
 
 check() {
   local environment="$1" image reference release running container current="" error settings label
   local failed_file="$state_dir/failed-$environment" failed_image failed_settings failed_at failed_why
+  local again="It's tried again when the tag moves or $config_dir/$environment.env changes, or after: rm $failed_file"
   if [ ! -r "$config_dir/$environment.env" ]; then
     log "$environment: skipped; it isn't set up on this server ($config_dir/$environment.env is missing)"
     return 0
   fi
   if ! error="$(docker pull --quiet "$repository:$environment" 2>&1 >/dev/null)"; then
-    log "$environment: couldn't read $repository:$environment from the registry: $(tr '\n' ' ' <<<"$error")"
+    report_failure "$environment" unreadable "couldn't read $repository:$environment from the registry" ": $(tr '\n' ' ' <<<"$error")"
     return 1
   fi
   image="$(docker image inspect --format '{{.Id}}' "$repository:$environment")" || return 1
   release="$(release_of "$image")"
   [[ "$release" =~ ^[A-Za-z0-9._-]+$ ]] || {
-    log "$environment: $image names no $release_variable; not deploying it"
+    report_failure "$environment" "release $image" "$image names no $release_variable; not deploying it"
     return 1
   }
 
@@ -283,9 +341,9 @@ check() {
     current="$container"
   done
   if [ -n "$current" ]; then
-    finish "$environment" "$current" "$release" "$running" && return 0
+    finish "$environment" "$current" "$release" "$running" "$image" && return 0
     if has_alias "$current" "zenbujapanese-$service-$environment"; then
-      log "$environment: $current doesn't answer /healthz as release $release; left as it is"
+      report_failure "$environment" "unanswering $current" "$current doesn't answer /healthz as release $release; left as it is"
       return 1
     fi
     log "$environment: $current, left from a deploy cut short, doesn't answer as release $release; removing it"
@@ -295,27 +353,27 @@ check() {
   if [ -r "$failed_file" ] &&
     read -r failed_image failed_settings failed_at failed_why <"$failed_file" &&
     [ "$failed_image" = "$image" ] && [ "$failed_settings" = "$settings" ]; then
-    log "$environment: skipping $image, which failed at $failed_at: $failed_why. It's tried again when the tag moves or $config_dir/$environment.env changes, or after: rm $failed_file"
+    report_failure "$environment" "failed $image $settings" "skipping $image, which failed at $failed_at: $failed_why. $again"
     return 1
   fi
   if ! reference="$(digest_reference_of "$image")"; then
-    log "$environment: $image has no digest in $repository; not deploying it"
+    report_failure "$environment" "digest $image" "$image has no digest in $repository; not deploying it"
     return 1
   fi
   if ! command -v cosign >/dev/null; then
-    log "$environment: cosign isn't installed, so no image can be verified; not deploying $reference"
+    report_failure "$environment" cosign "cosign isn't installed, so no image can be verified; not deploying $reference"
     return 1
   fi
   if ! signed_on_main "$reference"; then
-    log "$environment: $reference isn't signed by .github/workflows/$service-deploy.yml on main; not deploying it"
+    report_failure "$environment" "unsigned $reference" "$reference isn't signed by .github/workflows/$service-deploy.yml on main; not deploying it"
     return 1
   fi
   if [ "$(docker image inspect --format '{{len .Config.Volumes}}' "$image")" != 0 ]; then
-    log "$environment: $reference declares volumes, which a slot never needs; not deploying it"
+    report_failure "$environment" "volumes $reference" "$reference declares volumes, which a slot never needs; not deploying it"
     return 1
   fi
   if ! network_ready; then
-    log "$environment: the $network network is missing, isn't as internal as it should be, or doesn't have $nginx_container on it, or a private network (${private_networks[*]:-none}) is missing or reaches out, so a slot there couldn't serve; not deploying (docs/agents/api-servers.md, Set up the server)"
+    report_failure "$environment" network "the $network network is missing, isn't as internal as it should be, or doesn't have $nginx_container on it, or a private network (${private_networks[*]:-none}) is missing or reaches out, so a slot there couldn't serve; not deploying (docs/agents/api-servers.md, Set up the server)"
     return 1
   fi
 
@@ -324,6 +382,8 @@ check() {
     0) rm -f "$failed_file" ;;
     1)
       printf '%s %s %s %s\n' "$image" "$settings" "$(date -u +%FT%TZ)" "it didn't answer /healthz as release $release (see the log above it)" >"$failed_file"
+      settle "$environment"
+      report_failure "$environment" "failed $image $settings" "$reference $failure; kept the running version. $again"
       return 1
       ;;
     *) return 1 ;;
@@ -338,16 +398,27 @@ deploy_service() {
     return 0
   fi
   mkdir -p "$state_dir"
-  exec 9>>"$lock_file"
+  if ! exec 9>>"$lock_file"; then
+    report_failure run lock "couldn't open its lock, $lock_file, so it deployed nothing"
+    return 1
+  fi
   if ! flock --nonblock 9; then
     log "an earlier run is still deploying; this one skips"
     exec 9>&-
     return 0
   fi
   if use_registry_login; then
+    settle run
     for environment in staging production; do
-      check "$environment" || status=1
+      scope="$environment" reported=""
+      if check "$environment"; then
+        settle "$environment"
+      else
+        status=1
+        [ -n "$reported" ] || report_failure "$environment" unexplained "its check failed without a reason the script knows; running the deployer by hand shows the error"
+      fi
     done
+    scope=run
   else
     status=1
   fi
@@ -360,8 +431,16 @@ deploy_service() {
   exit 1
 }
 
+use_alerts
+run_dir="$(mktemp -d)" || {
+  report_failure run folder "couldn't make its working folder (mktemp -d), so it deployed nothing"
+  exit 1
+}
+settle run
+trap '[ -n "$ended" ] || report_failure "$scope" stopped "the deployer stopped before it finished, after $SECONDS seconds, at: ${BASH_COMMAND:0:200}. Cron stops a run after 25 minutes; anything sooner is an error in the script, which running it by hand shows"; rm -rf "$run_dir"' EXIT
 status=0
 for service in "${services[@]}"; do
   deploy_service "$service" || status=1
 done
+ended=yes
 exit "$status"
