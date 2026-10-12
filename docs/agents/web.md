@@ -1,13 +1,12 @@
 # Website working guide
 
-`apps/web` is zenbujapanese.com: Next.js served from Cloudflare Workers through OpenNext, with
-no database of its own. It reads the dictionary from the dictionary service
-(`apps/dictionary-api`, ADR 0009; see
-[`dictionary-api.md`](dictionary-api.md)). It builds with pnpm in the repository's workspace (the
-root `pnpm-workspace.yaml` and lockfile), which it shares with the dictionary core
-(`packages/dictionary-core`) and the service, and still owns its build, tests, and deploys
-(ADR 0005). Run every command below from `apps/web`. Decisions and scope live in issue #402.
-What the dictionary pages show, and the check that enforces each behavior, is in
+`apps/web` is zenbujapanese.com: Next.js served from Cloudflare Workers through OpenNext, with no
+database of its own. It reads the dictionary from the dictionary service (`apps/dictionary-api`, ADR
+0009; see [`dictionary-api.md`](dictionary-api.md)). It builds with pnpm in the repository's
+workspace (the root `pnpm-workspace.yaml` and lockfile), which it shares with the dictionary core
+(`packages/dictionary-core`) and the service, and still owns its build, tests, and deploys (ADR
+0005). Run every command below from `apps/web`. Decisions and scope live in issue #402. What the
+dictionary pages show, and the check that enforces each behavior, is in
 [`apps/web/docs/product/`](../../apps/web/docs/product/index.md).
 
 The website follows these SERP engineering standards:
@@ -649,26 +648,27 @@ exposed.
 
 Each environment has one canonical host: `zenbujapanese.com` for production and
 `staging.zenbujapanese.com` for staging. Every other host serving the same Worker permanently
-redirects (308) to it in one hop, keeping the canonical trailing-slash form, through
-`redirectHostTo` in `next.config.ts`:
+redirects (308) to the page's canonical URL in one hop. `otherHostResponse`
+(`src/lib/other-hosts.ts`) does it from `worker.ts`, before Next.js runs, adding the trailing
+slash and following a moved page in the same redirect; Next.js would add the slash first, on the
+old host, which is a second hop. An old URL that only a pattern in `next.config.ts` redirects
+still takes that second hop from another host. The other hosts:
 
 - `www.zenbujapanese.com`, a custom domain on the production Worker.
 - Each Worker's workers.dev URL. Wrangler enables it by default; left alone it serves a crawlable
   duplicate of the site. Keep `workers_dev` on: CI smoke-tests these URLs. `preview_urls` is off
   in both environments, so no versioned preview host serves another copy.
 
-`redirectHostTo` lists its file rules before `/:path+`, which would also match files, and gives
-`/` a rule of its own, since OpenNext can't fill an empty path parameter.
-
 The zone is on the free plan, whose Bot Fight Mode blocks CI runners and cannot be skipped by WAF
 rules, so CI smoke-tests the workers.dev URLs with the `x-zenbu-smoke-test` header, which exempts a
 request from the host redirect. The header is not a secret. `scripts/smoke.sh` also checks, with a
-retry for edge propagation, that a plain workers.dev request 308s to the canonical host.
+retry for edge propagation, that a plain workers.dev request 308s to the canonical host, with its
+slash and without.
 
-When adding a host (a new custom domain, preview URLs), add a `redirectHostTo` rule and a smoke
-check in the same change. To test host rules locally, run `wrangler dev` without `--env production`
-and send a `Host` header: with that environment's custom domains, Wrangler rewrites `Host` to the
-route's domain and host rules never match.
+When adding a host (a new custom domain, preview URLs), add it to `otherHostResponse`, with a case
+in `e2e/urls.spec.ts` and a smoke check, in the same change. The browser tests send a `Host`
+header to the production build; under `wrangler dev --env production` Wrangler rewrites `Host`
+to the route's domain, and no other host is ever seen.
 
 `/privacy` and `/support` must keep working: the shipped iOS app, Tomodachi, and their App Store
 metadata link to them. A page that moved, such as `/privacy`, is listed in `apps/web/src/lib/moved-pages.ts`, and

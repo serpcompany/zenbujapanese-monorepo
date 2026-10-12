@@ -43,6 +43,20 @@ The legal pages are under `/legal/`. [Privacy Policy](privacy.md) describes what
 `/legal/privacy/` says about the app, Tomodachi, the website, and a Zenbu account, and what the
 support page says about Tomodachi.
 
+## Hosts
+
+Production is `zenbujapanese.com` and staging is `staging.zenbujapanese.com`. Another host that
+serves the site, `www.zenbujapanese.com` or a Worker's workers.dev address, redirects (308) to the
+same page on its environment's host in one hop: with the page's trailing slash whether or not the
+request had it, and at a moved page's new address.
+
+- Source: SERP's
+  [URL trailing slash](https://github.com/serpcompany/serp/blob/main/docs/engineering/standards/url-trailing-slash.md)
+  standard; #698, which found a `www` page without its slash taking two hops.
+- Check: `src/lib/other-hosts.test.ts`; `apps/web/e2e/urls.spec.ts`, "… reaches … in one hop"
+  and "a workers.dev request that carries the smoke test header is served there" (on the
+  production build); smoke `workers.dev/legal/terms redirects to … in one hop`.
+
 ## What defines the website's behavior
 
 The app's product documentation, [`apps/ios/docs/product/`](../../../ios/docs/product/index.md),
