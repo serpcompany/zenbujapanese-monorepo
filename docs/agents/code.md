@@ -151,6 +151,10 @@ The docs are the map agents work from, so they stay correct and reachable:
   here and a run in CI agree. ADRs are records, so the path check skips them.
 - Every `pnpm <script>` a doc runs, in code, is a script some `package.json` in the workspace
   defines, or the filtered package's own with `--filter` or `-C`.
+- Every test a doc names in code exists: a test type or target (`SearchUITests`), a type's test
+  (`SearchUITests.testAQueryWithNoMatchesSaysSo`), or a test function, in Swift, Python, or
+  TypeScript. A product doc under `apps/<app>/docs/`, and a package's guide in `docs/agents/`, may
+  name a path from the package's own folder (`src/lib/site.ts`), and it exists there.
 - Every doc can be reached from `AGENTS.md` by following links. `AGENTS.md`, `CLAUDE.md`, the root
   `README.md`, and files under `.claude/` and `.github/` are entry points. A link to a folder
   reaches the Markdown files directly in it.
