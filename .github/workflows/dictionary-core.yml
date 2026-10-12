@@ -24,7 +24,7 @@ jobs:
         with:
           paths: >-
             packages/dictionary-core package.json pnpm-lock.yaml pnpm-workspace.yaml
-            .github/workflows/dictionary-core.yml .github/actions/changed-paths
+            .node-version .github/workflows/dictionary-core.yml .github/actions/changed-paths
 
   check:
     needs: changes

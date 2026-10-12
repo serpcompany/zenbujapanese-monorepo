@@ -154,7 +154,7 @@ Publishing a release.
 `.github/actions/package-language-data/action.yml` is shared by both language-data workflows, and
 needs a checkout. It:
 
-1. sets up Python 3.12, installs `language-data/pipeline/requirements.txt` with
+1. sets up the Python `.python-version` names, installs `language-data/pipeline/requirements.txt` with
    `--require-hashes`, and runs the pipeline's tests;
 2. lists the Git LFS files the release holds (`language-data/pipeline/package.py lfs-paths`),
    restores them from the cache, and pulls only those;

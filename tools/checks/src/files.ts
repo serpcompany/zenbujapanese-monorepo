@@ -114,7 +114,8 @@ const languagesByName: Record<string, Language> = {
   '.shellcheckrc': 'hash-lines',
   '.housekeeping': 'hash-lines',
   '.xcode-version': 'hash-lines',
-  '.node-version': 'hash-lines'
+  '.node-version': 'hash-lines',
+  '.python-version': 'hash-lines'
 }
 
 const proseAndData = new Set([

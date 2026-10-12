@@ -21,6 +21,12 @@ const used = (path: string) =>
 const isLocal = (action: string) => action.startsWith('./')
 const fileOf = (action: string) => `${action.slice(2)}/action.yml`
 const actionSteps = (path: string): Step[] => parse(readRepositoryFile(path)).runs.steps
+const stepsIn = (path: string) =>
+  path.startsWith(actionsFolder) ? actionSteps(path) : workflowSteps(path)
+const filterOf = (path: string) => {
+  const step = workflowSteps(path).find(each => each.uses === './.github/actions/changed-paths')
+  return step ? String(step.with?.paths ?? '').split(/\s+/) : undefined
+}
 const byCommit = /^[\w.-]+\/[\w.-]+@[0-9a-f]{40}$/
 const pinsTable = readRepositoryFile('docs/agents/ci-deploys.md').split('\n')
 const readsASecret = workflows.filter(path => readRepositoryFile(path).includes('secrets.'))
@@ -40,14 +46,57 @@ describe('every workflow', () => {
 
   test.each([...workflows, ...actions])('%s takes its Node version from .node-version', path => {
     expect(readRepositoryFile(path)).not.toMatch(/node-version:/)
-    const steps = path.startsWith(actionsFolder) ? actionSteps(path) : workflowSteps(path)
-    for (const step of steps.filter(each => each.uses?.startsWith('actions/setup-node@'))) {
+    for (const step of stepsIn(path).filter(each => each.uses?.startsWith('actions/setup-node@'))) {
       expect(step.with?.['node-version-file'], path).toBe('.node-version')
     }
   })
 
   test('.node-version names one version', () => {
     expect(readRepositoryFile('.node-version')).toMatch(/^\d+(\.\d+){0,2}\n$/)
+  })
+
+  test.each([
+    ...workflows,
+    ...actions
+  ])('%s takes its Python version from .python-version', path => {
+    expect(readRepositoryFile(path)).not.toMatch(/python-version:/)
+    for (const step of stepsIn(path).filter(each =>
+      each.uses?.startsWith('actions/setup-python@')
+    )) {
+      expect(step.with?.['python-version-file'], path).toBe('.python-version')
+    }
+  })
+
+  test.each(
+    workflows.filter(path => filterOf(path) !== undefined)
+  )('%s works again when a version file it reads changes', path => {
+    const text = [path, ...used(path).filter(isLocal).map(fileOf)]
+      .map(readRepositoryFile)
+      .join('\n')
+    const filter = filterOf(path) ?? []
+    for (const [reads, file] of [
+      ['node-version-file', '.node-version'],
+      ['python-version-file', '.python-version'],
+      ['.xcode-version', '.xcode-version']
+    ]) {
+      if (text.includes(reads)) expect(filter, `${path}: ${file}`).toContain(file)
+    }
+  })
+
+  test.each([
+    'web',
+    'dictionary-api',
+    'account-api'
+  ])("%s works again when the script that hands out the site's ports changes", name => {
+    expect(filterOf(`.github/workflows/${name}.yml`)).toContain('tools/checks/ports.mjs')
+  })
+
+  test('every workflow that starts Postgres starts the same one', () => {
+    const images = workflows.flatMap(path =>
+      [...readRepositoryFile(path).matchAll(/image: (postgres:\S+)/g)].map(found => found[1])
+    )
+    expect(images.length).toBeGreaterThan(1)
+    expect(new Set(images).size).toBe(1)
   })
 
   test.each(
@@ -79,5 +128,38 @@ describe('every workflow', () => {
     })
     expect(rows.length).toBeGreaterThan(5)
     for (const row of rows) expect(inUse, row).toContain(row)
+  })
+})
+
+describe('the version each toolchain is pinned to', () => {
+  const node = readRepositoryFile('.node-version').trim().split('.')[0]
+  const python = readRepositoryFile('.python-version').trim()
+  const packages = [
+    'package.json',
+    'apps/web/package.json',
+    'apps/dictionary-api/package.json',
+    'apps/account-api/package.json',
+    'packages/dictionary-core/package.json',
+    'packages/node-service/package.json',
+    'tools/checks/package.json'
+  ]
+
+  test('.python-version names the Python Ruff targets and the pipeline pins were compiled for', () => {
+    expect(python).toMatch(/^\d+\.\d+$/)
+    expect(readRepositoryFile('ruff.toml')).toContain(
+      `target-version = "py${python.replace('.', '')}"`
+    )
+    expect(readRepositoryFile('language-data/README.md')).toContain(`--python-version ${python} `)
+  })
+
+  test.each([
+    'apps/dictionary-api/Dockerfile',
+    'apps/account-api/Dockerfile'
+  ])('%s runs a release of the Node .node-version names', path => {
+    expect(/^ARG NODE_IMAGE=node:(\d+)\./m.exec(readRepositoryFile(path))?.[1]).toBe(node)
+  })
+
+  test.each(packages)('%s asks for that Node or a later release of it', path => {
+    expect(JSON.parse(readRepositoryFile(path)).engines.node).toMatch(new RegExp(`^>=${node}\\.`))
   })
 })

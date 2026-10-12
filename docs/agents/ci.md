@@ -12,8 +12,9 @@ pull request as the workflow.
 
 Every job runs on `ubuntu-latest` and reads the repository's contents only, unless its section
 says otherwise. The pnpm jobs set up pnpm from the root `package.json` and the Node that
-`.node-version` names, and install with `pnpm install --frozen-lockfile`. Every job has a time
-limit (`tools/checks/src/workflow-rules.test.ts`).
+`.node-version` names, and install with `pnpm install --frozen-lockfile`. A job that runs Python on
+Linux sets up the one `.python-version` names. Every job has a time limit, and a change to a
+version file starts the workflows that read it (`tools/checks/src/workflow-rules.test.ts`).
 
 | Workflow | File | Starts on | Section in |
 | --- | --- | --- | --- |
@@ -34,7 +35,7 @@ limit (`tools/checks/src/workflow-rules.test.ts`).
 | `Language data release` | `.github/workflows/language-data-release.yml` | Pushes to `main` that change a release's inputs; by hand | [`ci-deploys.md`](ci-deploys.md) |
 
 "The core" is `packages/dictionary-core`, and a change to the root `package.json`,
-`pnpm-lock.yaml`, or `pnpm-workspace.yaml` counts as changing it. A change to a workflow's own file
+`pnpm-lock.yaml`, `pnpm-workspace.yaml`, or `.node-version` counts as changing it. A change to a workflow's own file
 starts it too.
 
 GitHub also runs four workflows that have no file here, turned on in the repository's settings:

@@ -7,6 +7,7 @@ on:
     branches: [main]
     paths:
       - 'language-data/**'
+      - '.python-version'
       - '.github/workflows/language-data-build.yml'
       - '.github/actions/package-language-data/**'
       - 'apps/ios/Modules/Sources/SearchExperience/Resources/**'
@@ -31,7 +32,7 @@ jobs:
         uses: ./.github/actions/changed-paths
         with:
           paths: >-
-            language-data .github/workflows/language-data-release.yml
+            language-data .python-version .github/workflows/language-data-release.yml
             .github/actions/package-language-data
             apps/ios/Modules/Sources/SearchExperience/Resources apps/ios/LanguageData
             .github/workflows/language-data-build.yml .github/actions/changed-paths

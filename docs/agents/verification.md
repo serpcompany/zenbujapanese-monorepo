@@ -1,7 +1,7 @@
 # Verifying a change
 
-How much to check and when, how to wait, what evidence a change needs, and which ports,
-Simulator, and build folder a checkout uses. The rules are SERP's
+How much to check and when, how to wait, what evidence a change needs, which ports, Simulator,
+and build folder a checkout uses, and which version of each toolchain everything builds with. The rules are SERP's
 [Verification Cadence](https://github.com/serpcompany/serp/blob/main/docs/engineering/standards/verification-cadence.md)
 and [Simulators](https://github.com/serpcompany/serp/blob/main/docs/engineering/technology/simulators.md)
 standards; this doc holds this repository's commands for them.
@@ -123,9 +123,8 @@ Simulator another checkout made. `apps/ios/Tools/simulator.py` hands out what th
 - **Shut a Simulator down when a run ends,** and run `delete` when the work is finished. A
   Simulator with the app installed is about 3 GB, a build folder 2 GB with the Simulator's build
   and nearly 4 GB with the Mac's too, and an idle booted Simulator slows every other run.
-- **Xcode** is pinned in `.xcode-version`, which the `iOS` workflow's `swift` job selects. Build
-  with that version here too; where another Xcode is the default, set `DEVELOPER_DIR` to the
-  pinned one's `Contents/Developer`.
+- **Xcode** is the one `.xcode-version` names (Toolchain versions, below). Where another Xcode
+  is the default, set `DEVELOPER_DIR` to the pinned one's `Contents/Developer`.
 - **Bundle identifiers.** The UI tests install the app as `com.zenbujapanese.dictionary.uitests`
   and Zenbu Dev as `com.zenbujapanese.dictionary.dev`, each apart from an installed Zenbu. A plain
   Debug build keeps the release identifier, where SERP's standard gives Debug a `.debug` suffix:
@@ -135,3 +134,18 @@ Simulator another checkout made. `apps/ios/Tools/simulator.py` hands out what th
 
 The script is tested in `apps/ios/Tools/tests/test_simulator.py`, and the `iOS` workflow makes its
 Simulators with it, so CI runs the device models agents do.
+
+## Toolchain versions
+
+Each toolchain's version is in one file, which the workflows read, so a run here and a run in CI
+build with the same one. Build with it here too.
+
+| Toolchain | Where its version is |
+| --- | --- |
+| Node | `.node-version`. The services' images name an exact release of it in each `Dockerfile`, and each `package.json` asks for it or later. |
+| pnpm | `packageManager` in the root `package.json` |
+| Python | `.python-version`, for the language-data pipeline and the data tools' tests in CI. Ruff targets it (`ruff.toml`). The app's tools also run on a Mac's own `python3`, as the `iOS` workflow's `swift` job runs them. |
+| Xcode | `.xcode-version`, which the `iOS` workflow's `swift` job selects |
+
+`tools/checks/src/workflow-rules.test.ts` holds the workflows, the images, and the packages to
+these files, and a change to one starts the workflows that read it.

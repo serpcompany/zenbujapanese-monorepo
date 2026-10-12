@@ -9,6 +9,7 @@ on:
       - package.json
       - pnpm-lock.yaml
       - pnpm-workspace.yaml
+      - .node-version
       - .github/workflows/web-deploy.yml
   workflow_dispatch:
 
