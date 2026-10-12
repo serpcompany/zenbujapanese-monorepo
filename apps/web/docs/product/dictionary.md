@@ -22,9 +22,9 @@ replayed field by field by `apps/dictionary-api/src/conformance/results.conforma
 ("search results conformance"), and rendered for seven of its cases by
 `src/components/dictionary/search-results.test.tsx` ("the rendered search results page matches the
 app"). **ES** is `example-search.json`, what the Example Sentences screen that Search's examples
-row opens lists for 67 queries, replayed by
+row opens lists for 68 queries, replayed by
 `apps/dictionary-api/src/conformance/example-search.conformance.test.ts` ("example search
-conformance") and rendered for eight of its cases by
+conformance") and rendered for nine of its cases by
 `src/components/dictionary/search-examples.test.tsx` ("the rendered Example Sentences section
 matches the app"). **WD rendered** is `src/components/dictionary/word-page.test.tsx` ("the
 rendered word page matches the app"), which draws every WD case through the word page's components
@@ -170,7 +170,7 @@ row opens the sentences where the site shows them:
   `search-results.test.tsx`, "shows the Example Sentences row, the reading refinement, then the
   rows in order with their chips", "shows only the Example Sentences when only sentences match",
   "an English search lists its Example Sentences below the words, and its row links down to them",
-  and the row's title and link in the SRR cases; ES `count` and `title` for 67 queries;
+  and the row's title and link in the SRR cases; ES `count` and `title` for 68 queries;
   `search-examples.test.tsx` ("a search’s examples match its Example Sentences row"), which holds
   every SRR row to the sentences the service lists for it: as many as its count promises; where
   the row leads: `src/lib/dictionary/results/links.test.ts`, "where the Example Sentences row
@@ -298,25 +298,25 @@ Sentences screen lists for the search. The app's screen is a page of its own; th
 (ADR 0010).
 
 **Which sentences.** An ASCII query matches the English side of every Tatoeba pair the app has
-(232,703) as a phrase of stemmed words, so `eat` finds "eats" and "eating", never across the end of
-a sentence, and only when some sentence has the query's exact words. `*` after a word matches any
-word it starts (`t*`), and `^` before the first matches only a sentence's first word (`^the`), as
-FTS4 reads them. Any other query matches the Japanese side as a substring. A deinflected or romaji
-query (`食べた`, `miru`) lists its primary entry's examples instead, the ones its word page lists.
-At most the app's 100 are listed.
+(232,703) as a phrase of stemmed words, never across the end of a sentence: `eat` finds "eats" and
+"eating", `startled you` finds "startle you", and `generously` finds "generally", which the stemmer
+cuts to the same stem. `*` after a word matches any word it starts (`t*`), and `^` before the first
+matches only a sentence's first word (`^the`), as FTS4 reads them. Any other query matches the
+Japanese side as a substring. A deinflected or romaji query (`食べた`, `miru`) lists its primary
+entry's examples instead, the ones its word page lists. At most the app's 100 are listed.
 
 The dictionary service runs the app's own search, its SQL on the app's own FTS4 indexes, so a
 search lists what the app lists however many sentences it reads.
 
 - Source: App docs, Search; the core's `artifact/example-search.ts` (`retrieveEnglish`,
-  `retrieveJapanese`), which the app's `ExampleSentenceClient.swift` asks for the same
-  sentences; ADR 0009 (the app's own data and queries in the dictionary
-  service).
-- Check: ES `ids` (every listed pair ID, in order) and `usesPrimaryEntryExamples` for 67 queries,
-  including phrases, apostrophes, hyphens, prefixes (`run*`, and `t*` with over 100,000
-  candidates), first words (`^tom`, and `^the` with about 70,000), a phrase ending in a prefix
-  (`thank y*`), long numbers that FTS4's stemmer shortens, and refused queries, replayed by the
-  service's example search conformance.
+  `retrieveJapanese`), which the app's `ExampleSentenceClient.swift` asks for the same sentences;
+  ADR 0009 (the app's own data and queries in the dictionary service); #428 (the owner's decision
+  of 2026-10-12: a query in another form of a word finds the sentences).
+- Check: ES `ids` (every listed pair ID, in order) and `usesPrimaryEntryExamples` for 68 queries,
+  including phrases, one in a form no sentence has (`startled you`), apostrophes, hyphens, prefixes
+  (`run*`, and `t*` with over 100,000 candidates), first words (`^tom`, and `^the` with about
+  70,000), a phrase ending in a prefix (`thank y*`), long numbers that FTS4's stemmer shortens, and
+  refused queries, replayed by the service's example search conformance.
 
 **Order.** English matches with the exact words come first, then those that match only once
 stemmed; within each, by where the match starts, then the English sentence's length in words, the
@@ -324,7 +324,7 @@ Japanese sentence's length, and the pair ID. A Japanese query lists a sentence t
 query first, then the others by where the query starts, their length, and the pair ID.
 
 - Source: `ExampleSentenceClient.swift` (`RankTuple`).
-- Check: ES `ids`, in order, for 67 queries.
+- Check: ES `ids`, in order, for 68 queries; the core's `artifact/example-search.test.ts`.
 
 **Words.** Each sentence's words are underlined and linked as the app links them on its screen:
 a word written as one of the primary entry's forms, or as the query, is that entry; any other word

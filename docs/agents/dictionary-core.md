@@ -412,10 +412,10 @@ The core answers as the Swift it replaced did, which the suites pin.
   to the entry. A page lists at most 100, and the count is exact up to 50, with 51 meaning more
   (`ExampleSentenceResultCount`).
 - **A query's examples.** An English query matches pairs by its English phrase, Porter-stemmed,
-  and lists them only when some pair holds the exact phrase; anything else matches pairs whose
-  Japanese contains it. FTS4's `offsets()` reports UTF-8 byte offsets, which `example-search.ts`
-  maps to UTF-16 and then grapheme positions. The results' primary entry is highlighted for every
-  search, and its own examples are listed for a romaji or deinflected query.
+  and lists those with the exact phrase first (the Swift listed none without one, #428); anything
+  else matches pairs whose Japanese contains it. FTS4's `offsets()` reports UTF-8 byte offsets,
+  which `example-search.ts` maps to UTF-16, then grapheme positions. The results' primary entry is
+  highlighted for every search, and its own examples are listed for a romaji or deinflected query.
 - **A conjugated form's examples** are the sentences the app's search for the form finds,
   normalized (a full-width Ｈ searches English), that contain it as written and in which the
   tokenizer reads it as one word, so 見たかった and 見た目 aren't examples of 見た. The screen accents the

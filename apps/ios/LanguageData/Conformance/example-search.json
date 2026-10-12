@@ -10364,6 +10364,64 @@
       "usesPrimaryEntryExamples" : false
     },
     {
+      "count" : 1,
+      "covers" : "English in another form of a word: no sentence has these exact words, so the Porter match (startle you) is listed",
+      "ids" : [
+        "esp1_ef5db7c44a3d69f69709e21bbd33e2e5"
+      ],
+      "query" : "startled you",
+      "shown" : [
+        {
+          "english" : "I didn't mean to startle you.",
+          "id" : "esp1_ef5db7c44a3d69f69709e21bbd33e2e5",
+          "japanese" : "びっくりさせるつもりじゃなかった。",
+          "tokens" : [
+            {
+              "entry" : "94c574b2215055f4e6e635269f40140c",
+              "surface" : "びっくり"
+            },
+            {
+              "candidates" : [
+                "b1a37c51a5860d4f513fdad36e99bca0",
+                "27b712d1aa61f1de61ebf3c7eb9ef070",
+                "10c213c9774338580f22d1aea02399a4",
+                "f3a7628ea368a349bbc30a62f59b9fa0",
+                "3e403ed3e2b2ac9284f0a155efaaa94e"
+              ],
+              "surface" : "させる"
+            },
+            {
+              "entry" : "7b0379eb84c861df90970c7893fc0dcd",
+              "surface" : "つもり"
+            },
+            {
+              "entry" : "818c411c7720a83ee142ddfa37edc898",
+              "surface" : "じゃ"
+            },
+            {
+              "candidates" : [
+                "1320172996dffedb0e11f232b8f79360",
+                "3339a283acf7daea039bc87b898cc58f",
+                "3d4908f75d7b71234e20d190717d957a",
+                "414e7987348ad201b60719d434ff2864",
+                "354ae6fc7f745c2dfb68f349c8e58287"
+              ],
+              "surface" : "なかっ"
+            },
+            {
+              "entry" : "a7b2505ddb948d3f18aa52ca154c82e1",
+              "surface" : "た"
+            },
+            {
+              "surface" : "。"
+            }
+          ]
+        }
+      ],
+      "title" : "View 1 Example Sentence",
+      "usesPrimaryEntryExamples" : false
+    },
+    {
       "count" : 0,
       "covers" : "An irregular English past",
       "highlightedEntry" : "6d6f1814c362782730f147d1e1ef9ce1",
@@ -13340,15 +13398,74 @@
       "usesPrimaryEntryExamples" : false
     },
     {
-      "count" : 0,
-      "covers" : "Porter matches 11111011111 (both shorten to 111111), but no sentence has these exact words",
+      "count" : 1,
+      "covers" : "A long number no sentence has: Porter shortens it to 111111, as it does 11111011111, whose sentence is listed",
       "ids" : [
-
+        "esp1_de596149bbdf2537b866669af30eb23f"
       ],
       "query" : "1111111",
       "shown" : [
-
+        {
+          "english" : "The number 2015 is represented as 11111011111 in binary.",
+          "id" : "esp1_de596149bbdf2537b866669af30eb23f",
+          "japanese" : "2015という数は二進法で表すと11111011111となる。",
+          "tokens" : [
+            {
+              "surface" : "2015"
+            },
+            {
+              "entry" : "8e68346452aab9cfe9802ee3824a2cb6",
+              "surface" : "という"
+            },
+            {
+              "entry" : "1cb57ee2755a26b03512d8b390a8d25e",
+              "surface" : "数"
+            },
+            {
+              "entry" : "ad63532d193fae21a8b73d5d7880b492",
+              "surface" : "は"
+            },
+            {
+              "entry" : "452b8f2b0a2bfaa92c1fd9921cbd05f3",
+              "surface" : "二進法"
+            },
+            {
+              "candidates" : [
+                "4102685c5ecb52e7276d68ab0ff59f29",
+                "3906187791ec20829976c57d3c59727d"
+              ],
+              "surface" : "で"
+            },
+            {
+              "entry" : "336194fd44cf23f4d4d85694fa4a1f42",
+              "surface" : "表す"
+            },
+            {
+              "entry" : "d005d8641e912ee4b72714255428699d",
+              "surface" : "と"
+            },
+            {
+              "surface" : "11111011111"
+            },
+            {
+              "entry" : "d005d8641e912ee4b72714255428699d",
+              "surface" : "と"
+            },
+            {
+              "candidates" : [
+                "ba3dda17086b82269a3063375d9f8217",
+                "f317ad8065cd0fb688ba815009cc7a01",
+                "ebd60cbace14e32517029a9af1d61cfd"
+              ],
+              "surface" : "なる"
+            },
+            {
+              "surface" : "。"
+            }
+          ]
+        }
       ],
+      "title" : "View 1 Example Sentence",
       "usesPrimaryEntryExamples" : false
     },
     {
@@ -14617,15 +14734,79 @@
       "usesPrimaryEntryExamples" : false
     },
     {
-      "count" : 0,
-      "covers" : "An underscore: a Porter word character, but a delimiter for exact matches",
+      "count" : 1,
+      "covers" : "An underscore: a Porter word character, but a delimiter for exact matches, so its sentence is a Porter match",
       "ids" : [
-
+        "esp1_fe75a67776955a0907583eb40aa75132"
       ],
       "query" : "_",
       "shown" : [
-
+        {
+          "english" : "Warning: unsupported characters are displayed using the '_' character.",
+          "id" : "esp1_fe75a67776955a0907583eb40aa75132",
+          "japanese" : "注意：サポートされていない文字は「_」と表示されます。",
+          "tokens" : [
+            {
+              "entry" : "a8a5cf09fd0f33e97a0defeafbed4276",
+              "surface" : "注意"
+            },
+            {
+              "surface" : "："
+            },
+            {
+              "entry" : "3608365cb370be0510b19120f6f3864a",
+              "surface" : "サポート"
+            },
+            {
+              "candidates" : [
+                "b1a37c51a5860d4f513fdad36e99bca0",
+                "27b712d1aa61f1de61ebf3c7eb9ef070",
+                "10c213c9774338580f22d1aea02399a4",
+                "f3a7628ea368a349bbc30a62f59b9fa0",
+                "3e403ed3e2b2ac9284f0a155efaaa94e"
+              ],
+              "surface" : "されていない"
+            },
+            {
+              "entry" : "6f55042aad23729a27959815ca524a45",
+              "surface" : "文字"
+            },
+            {
+              "entry" : "ad63532d193fae21a8b73d5d7880b492",
+              "surface" : "は"
+            },
+            {
+              "surface" : "「"
+            },
+            {
+              "queryMatch" : true,
+              "surface" : "_」"
+            },
+            {
+              "entry" : "d005d8641e912ee4b72714255428699d",
+              "surface" : "と"
+            },
+            {
+              "entry" : "17a406959bdabec959c086e750a56a7c",
+              "surface" : "表示"
+            },
+            {
+              "candidates" : [
+                "b1a37c51a5860d4f513fdad36e99bca0",
+                "27b712d1aa61f1de61ebf3c7eb9ef070",
+                "10c213c9774338580f22d1aea02399a4",
+                "f3a7628ea368a349bbc30a62f59b9fa0",
+                "3e403ed3e2b2ac9284f0a155efaaa94e"
+              ],
+              "surface" : "されます"
+            },
+            {
+              "surface" : "。"
+            }
+          ]
+        }
       ],
+      "title" : "View 1 Example Sentence",
       "usesPrimaryEntryExamples" : false
     },
     {

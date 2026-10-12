@@ -4025,13 +4025,10 @@
         position: range.location,
         englishTermCount: documentTermCount(matchinfo),
         graphemeCount: graphemeCount(sentence.japanese),
-        pairId: sentence.pairId,
-        exactSurface: exactRange !== void 0
+        pairId: sentence.pairId
       });
     }
-    const candidates = [...matches.values()];
-    const anyPairHasTheExactPhrase = candidates.some((candidate) => candidate.exactSurface);
-    return anyPairHasTheExactPhrase ? result2(candidates) : result2([]);
+    return result2([...matches.values()]);
   }
   function retrieveJapanese(db, query) {
     return rankJapanese2(

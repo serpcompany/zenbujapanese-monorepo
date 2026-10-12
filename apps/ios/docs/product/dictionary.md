@@ -160,18 +160,21 @@ Check: package `JapaneseDeinflectionTests`; the recorded `SearchConformanceTests
 Changing the enabled dictionaries or their order re-sorts the visible results without searching
 again. If frequency data can't be read, Search still shows every result and says which
 dictionary is unavailable. Results can also offer a Japanese-reading refinement, related
-Example Sentences, discovered words, and a dedicated Kanji result for a single-kanji query.
+Example Sentences, discovered words, and a dedicated Kanji result for a single-kanji query. An
+English query's Example Sentences have its words in any form: `startled you` finds "startle you".
 
 Check: package `SearchFrequencyOrchestrationTests` and `ResultsScreenTests` (a dictionary that
 can't be read is named, and the others still order the list); core `detail/frequency.test.ts`
-(the notice's words); the recorded `SearchResultsConformanceTests` (the refinement, Example Sentences, and Kanji rows); UI
+(the notice's words) and `artifact/example-search.test.ts` (a word in another form); the recorded
+`SearchResultsConformanceTests` (the refinement, Example Sentences, and Kanji rows) and
+`ExampleSearchConformanceTests` (`startled you`); UI
 `SearchResultsUITests.testARomajiQueryOffersItsJapaneseReading`,
 `testAWordOffersItsExampleSentences`, and `SearchUITests.testAQueryWithNoMatchesSaysSo`.
 
-Recent text searches are stored on the device and listed while the
-query is empty. A learner can repeat a search, remove one by swiping or long-pressing it, or clear the entire history
-from the **•••** menu, which offers **Clear Recent Searches** while recent searches are listed. Result headings scroll
-with the results instead of staying pinned over them.
+Recent text searches are stored on the device and listed while the query is empty. A learner can
+repeat a search, remove one by swiping or long-pressing it, or clear the entire history from the
+**•••** menu, which offers **Clear Recent Searches** while recent searches are listed. Result
+headings scroll with the results instead of staying pinned over them.
 
 Check: UI `SearchUITests.testASearchKeepsItsQueryInTheFieldAndRunsAgainFromRecent`,
 `SearchResultsUITests.testARecentSearchIsRemovedFromItsMenu` (long-press, or right-click on the

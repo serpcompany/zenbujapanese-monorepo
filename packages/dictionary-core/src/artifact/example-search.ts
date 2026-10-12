@@ -190,7 +190,7 @@ function retrieveEnglish(db: ArtifactDatabase, query: string): EntryExamples | E
     if (range) exactRanges.set(row.pairId, range)
   }
 
-  const matches = new Map<string, Match & { exactSurface: boolean }>()
+  const matches = new Map<string, Match>()
   for (const { offsets: rawOffsets, matchinfo, ...sentence } of db.all<
     ExampleSentence & { offsets: string; matchinfo: Uint8Array }
   >(
@@ -214,13 +214,10 @@ function retrieveEnglish(db: ArtifactDatabase, query: string): EntryExamples | E
       position: range.location,
       englishTermCount: documentTermCount(matchinfo),
       graphemeCount: graphemeCount(sentence.japanese),
-      pairId: sentence.pairId,
-      exactSurface: exactRange !== undefined
+      pairId: sentence.pairId
     })
   }
-  const candidates = [...matches.values()]
-  const anyPairHasTheExactPhrase = candidates.some(candidate => candidate.exactSurface)
-  return anyPairHasTheExactPhrase ? result(candidates) : result([])
+  return result([...matches.values()])
 }
 
 function retrieveJapanese(db: ArtifactDatabase, query: string): EntryExamples {
