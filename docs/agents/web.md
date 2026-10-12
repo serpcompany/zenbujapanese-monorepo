@@ -649,10 +649,10 @@ exposed.
 Each environment has one canonical host: `zenbujapanese.com` for production and
 `staging.zenbujapanese.com` for staging. Every other host serving the same Worker permanently
 redirects (308) to the page's canonical URL in one hop. `otherHostResponse`
-(`src/lib/other-hosts.ts`) does it from `worker.ts`, before Next.js runs, adding the trailing
-slash and following a moved page in the same redirect; Next.js would add the slash first, on the
-old host, which is a second hop. An old URL that only a pattern in `next.config.ts` redirects
-still takes that second hop from another host. The other hosts:
+(`src/lib/other-hosts.ts`) does it from `worker.ts`, before Next.js runs: it adds the trailing slash
+and follows a moved page in the same redirect, and keeps a path under `/_next/`, `/api`, or
+`/.well-known/` as asked. Next.js alone adds the slash on the old host first, a second hop, which an
+old URL that only a pattern in `next.config.ts` redirects still takes. The other hosts:
 
 - `www.zenbujapanese.com`, a custom domain on the production Worker.
 - Each Worker's workers.dev URL. Wrangler enables it by default; left alone it serves a crawlable

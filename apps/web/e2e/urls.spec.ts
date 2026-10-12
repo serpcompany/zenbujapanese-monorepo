@@ -67,7 +67,8 @@ test.describe('URLs', () => {
       ['/about', '/about/'],
       ['/about/', '/about/'],
       ['/privacy', '/legal/privacy/'],
-      ['/robots.txt', '/robots.txt']
+      ['/robots.txt', '/robots.txt'],
+      ['/.well-known/change-password', '/.well-known/change-password']
     ] as const) {
       test(`${host}${from} reaches ${origin}${to} in one hop`, async ({ request }) => {
         test.skip(!onProductionBuild, answeredByWorker)

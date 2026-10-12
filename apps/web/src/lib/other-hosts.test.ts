@@ -26,7 +26,14 @@ describe('otherHostResponse', () => {
       `${production}/dictionary/examples/1259290.json?build=b1&from=5`
     ],
     [`${www}/privacy`, `${production}/legal/privacy/`],
-    [`${www}/privacy/?from=app`, `${production}/legal/privacy/?from=app`]
+    [`${www}/privacy/?from=app`, `${production}/legal/privacy/?from=app`],
+    [`${www}/_next/image?url=%2Fa.png&w=64`, `${production}/_next/image?url=%2Fa.png&w=64`],
+    [`${www}/.well-known/change-password`, `${production}/.well-known/change-password`],
+    [`${www}/api/auth/get-session`, `${production}/api/auth/get-session`],
+    [`${www}/api`, `${production}/api`],
+    [`${www}/API/x/`, `${production}/API/x/`],
+    [`${www}/apiary`, `${production}/apiary/`],
+    [`${www}/docs/api`, `${production}/docs/api/`]
   ])('sends %s to %s in one 308', (from, to) => {
     const response = answer(from, 'production')
     expect(response?.status).toBe(308)

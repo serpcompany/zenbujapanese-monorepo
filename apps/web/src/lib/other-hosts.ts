@@ -6,8 +6,10 @@ export const smokeTestHeader = 'x-zenbu-smoke-test'
 const wwwHost = 'www.zenbujapanese.com'
 const workersDevHost = /\.workers\.dev$/
 const file = /\/[^/]+\.\w+\/?$/
+const servedAsAsked = /^\/(?:_|api(?:\/|$)|\.well-known\/)/i
 
 function canonicalPath(pathname: string): string {
+  if (servedAsAsked.test(pathname)) return pathname
   const moved = movedPath(pathname)
   if (moved) return moved
   if (file.test(pathname)) return pathname.replace(/\/$/, '')
