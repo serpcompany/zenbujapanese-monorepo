@@ -55,7 +55,8 @@ interface GnuTool {
 
 const takesTheLockOnDescriptorNine =
   'use Fcntl qw(:flock); open(my $lock, ">&=", 9) or exit 1; exit(flock($lock, LOCK_EX | LOCK_NB) ? 0 : 1)'
-const runsInItsOwnProcessGroup = 'setpgrp(0, 0); shift @ARGV; exec { $ARGV[0] } @ARGV'
+const runsInItsOwnProcessGroup =
+  'setpgrp(0, 0); shift @ARGV while @ARGV && $ARGV[0] =~ /^-/; shift @ARGV; exec { $ARGV[0] } @ARGV'
 
 const withHostTool = (name: string, run: (tool: string) => string) => ({
   otherwise: (find: Find) => {

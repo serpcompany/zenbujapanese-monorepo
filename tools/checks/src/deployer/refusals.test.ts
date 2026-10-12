@@ -1,4 +1,4 @@
-import { mkdirSync, rmdirSync, rmSync } from 'node:fs'
+import { chmodSync, mkdirSync, rmdirSync, rmSync } from 'node:fs'
 import { expect, test } from 'vitest'
 import { type Image, type ImageSpec, signerOf } from './docker'
 import {
@@ -222,6 +222,22 @@ describeDeployer('the deployer', () => {
     expect(server.messages().slice(1)).toEqual([failed, failed])
   })
 
+  test.skipIf(process.getuid?.() === 0)(
+    "says once that an image didn't come up, even where it can't record that",
+    async () => {
+      const server = await serverWith()
+      const records = server.path(`var/lib/${network}`)
+      mkdirSync(records, { recursive: true })
+      chmodSync(records, 0o555)
+      server.docker.publish(dictionary, 'staging', { stays: false })
+      expect((await server.run()).status).toBe(1)
+      await server.run()
+      chmodSync(records, 0o755)
+      expect(server.read(failedFile)).toBeUndefined()
+      expect(server.messages()).toHaveLength(1)
+    }
+  )
+
   test('says once that an image is being skipped, when its failure went unsaid', async () => {
     const server = await startServer()
     server.setUp(dictionary)
@@ -238,6 +254,21 @@ describeDeployer('the deployer', () => {
       )
     ])
     expect(server.messages()[0].endsWith(again(server))).toBe(true)
+  })
+
+  test("gives up on a slot that runs but doesn't answer before the time is up", async () => {
+    const server = await serverWith()
+    const image = server.docker.publish(dictionary, 'staging', { answers: [undefined] })
+    const run = await server.run(text =>
+      text.replace('readonly ready_seconds=180', 'readonly ready_seconds=0')
+    )
+    expect(run.status).toBe(1)
+    expect(server.docker.containers).toEqual([])
+    expect(server.messages()).toEqual([
+      problem(
+        `staging: ${image.reference} didn't answer /healthz; kept the running version. ${again(server)}`
+      )
+    ])
   })
 
   test('refuses an image that answers as another release', async () => {

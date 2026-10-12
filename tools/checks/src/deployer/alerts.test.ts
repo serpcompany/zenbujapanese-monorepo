@@ -8,6 +8,7 @@ import {
   memory,
   network,
   problem,
+  type Server,
   serverWith,
   startServer,
   webhook
@@ -20,6 +21,16 @@ const stopped = (at: string) =>
   new RegExp(
     `: the deployer stopped before it finished, after \\d+ seconds, at: ${at}\\. Cron stops a run after 25 minutes; anything sooner is an error in the script, which running it by hand shows$`
   )
+
+async function aRunStoppedAsItPulls(arrange: (server: Server) => void = () => {}) {
+  const server = await serverWith()
+  server.docker.publish(dictionary, 'staging')
+  server.docker.interrupt = args => {
+    if (args[0] === 'pull') server.stop()
+  }
+  arrange(server)
+  return { server, run: await server.run() }
+}
 
 async function aDeployAndARefusal(settings?: string) {
   const server = await startServer()
@@ -90,6 +101,7 @@ describeDeployer("the deployer's Slack alerts", () => {
       ...(successes ? [told.success] : []),
       ...(failures ? [told.failure] : [])
     ])
+    expect(told.server.read(`run/${network}.alerted-production`) !== undefined).toBe(failures)
   })
 
   test('posts JSON to the webhook, with its address off the command line, and gives up in seconds', async () => {
@@ -100,7 +112,7 @@ describeDeployer("the deployer's Slack alerts", () => {
       expect(url).toBe(webhook)
       expect(Object.keys(JSON.parse(body))).toEqual(['text'])
       expect(asked).toMatch(
-        /^--silent --output \/dev\/null --write-out %\{http_code\} --fail --proto =https --max-time \d --header Content-Type: application\/json --data-binary @- --config \/dev\/fd\/\d+$/
+        /^--silent --output \/dev\/null --write-out %\{http_code\} --fail --proto =https --max-time \d --data-binary @- --header Content-Type: application\/json --config \/dev\/fd\/\d+$/
       )
     }
     expect(server.standIns.calls.flatMap(call => call.args).join('\n')).not.toContain(webhook)
@@ -203,12 +215,8 @@ describeDeployer("the deployer's Slack alerts", () => {
   })
 
   test('says once that runs are being stopped part way, until one finishes', async () => {
-    const server = await serverWith()
-    server.docker.publish(dictionary, 'staging')
-    server.docker.interrupt = args => {
-      if (args[0] === 'pull') server.stop()
-    }
-    expect((await server.run()).signal).toBe('SIGTERM')
+    const { server, run } = await aRunStoppedAsItPulls()
+    expect(run.signal).toBe('SIGTERM')
     await server.run()
     expect(server.messages()).toEqual([
       expect.stringMatching(stopped('error="\\$\\(docker pull --quiet "\\$repository:.*'))
@@ -219,6 +227,31 @@ describeDeployer("the deployer's Slack alerts", () => {
     server.docker.interrupt = undefined
     expect((await server.run()).status).toBe(0)
     expect(server.read(memory)).toBeUndefined()
+  })
+
+  test('finishes its report and its cleanup when a second signal comes as it reports', async () => {
+    const { server, run } = await aRunStoppedAsItPulls(stopped => {
+      stopped.slack.interrupt = () => stopped.stop()
+    })
+    expect(run.signal).toBe('SIGTERM')
+    expect(server.messages()).toHaveLength(1)
+    expect(server.read(memory)).toBe('stopped\n')
+    expect(readdirSync(server.path('tmp'))).toEqual([])
+  })
+
+  test("frees its lock before it reports that it was stopped, so the next run isn't kept out", async () => {
+    const next: (number | null)[] = []
+    const { server } = await aRunStoppedAsItPulls(stopped => {
+      stopped.slack.interrupt = async () => {
+        stopped.slack.interrupt = undefined
+        stopped.docker.interrupt = undefined
+        next.push((await stopped.run()).status)
+      }
+    })
+    expect(next).toEqual([0])
+    expect(server.lines().join('\n')).not.toContain('an earlier run is still deploying')
+    expect(server.slots(dictionary)).toHaveLength(1)
+    expect(server.messages()).toHaveLength(2)
   })
 
   test('says when the script itself fails, and where it stopped', async () => {

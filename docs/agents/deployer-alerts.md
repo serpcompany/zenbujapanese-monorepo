@@ -30,13 +30,16 @@ Deploy problem: dictionary-api: production: ghcr.io/serpcompany/zenbujapanese-di
   `registry.env` is missing a setting, or a slots' network or a private network is missing, isn't
   as internal as it should be, or doesn't have nginx on it.
 - **A serving slot that stops answering `/healthz`.** The deployer leaves it as it is.
+- **An old slot it can't stop and remove** after a deploy, which serves beside the new one while
+  it runs.
 - **The deployer's own errors.** A run that stopped before it finished, with how long it ran and
   the command it stopped at: cron stops a run after 25 minutes, and anything sooner is an error in
   the script. A check that failed without a reason the script knows. A service's lock it can't
   open. No working folder, as on a full disk.
 
 **Successes:** each deploy that goes live, with its service, environment, image by digest, the
-build its `/healthz` answers, and its slot, and a deploy cut short that a later run finishes.
+build its `/healthz` answers, and its slot, and an earlier deploy that a later run finishes: one
+cut short, or one whose old slot wouldn't stop.
 
 It doesn't report what isn't a failure: a service or an environment that isn't set up on the
 server, and a run that found an earlier one still deploying. Those stay in the journal.
@@ -118,10 +121,12 @@ condition.
 
 - **It forgets when the environment's check passes:** it deployed, or it runs the tag's image and
   answers. The same failure coming back later is reported again.
-- **A different failure replaces it,** and is reported.
+- **A different failure replaces it,** and is reported. It holds one condition for each
+  environment, so if the first failure then comes back, that is reported again too.
 - **A failed image is reported when it fails.** The runs that skip it afterwards say nothing more.
   After `rm /var/lib/zenbujapanese-<service>/failed-<environment>`, a second failure is reported
-  again.
+  again. Where the deployer can't write that record, as on a full disk, it tries the image on
+  every run, and still reports it once.
 - **A success isn't remembered:** each deploy is one event.
 - **To hear of a standing failure again,** delete the file.
 
@@ -135,14 +140,17 @@ read-only, is when the deployer fails on every run, and a memory it couldn't wri
 the same failure every 5 minutes; `/run` is in memory, so it stays writable. The cost is that a
 reboot empties it, so a failure still standing after a reboot is reported once more. A run reads
 and writes an environment's memory while it holds the service's lock, so two overlapping runs
-never both report.
+never both report; only a run that was stopped writes it after letting the lock go.
 
 ## A message can't hold up a deploy
 
 - **It is sent after the step it reports:** once the new slot has the alias and the old one has
   stopped, or once a failed container is removed.
-- **curl gets 5 seconds in all,** and one try. A run sends at most a message or two for each
-  environment.
+- **curl gets 5 seconds and one try,** and `timeout` kills it at 10 in case it overruns, as curl
+  can while a name resolves. A run sends at most a message or two for each environment.
+- **A run that is stopped frees its service's lock before it reports,** so the run cron starts at
+  that moment isn't kept out, and ignores a further signal until it has reported and removed its
+  working folder: `timeout` signals the script and then its whole process group.
 - **A send that fails is logged, and changes nothing else:**
   `couldn't send an alert to Slack (curl's exit status 28, HTTP status 000)` in the service's
   journal, without the address. The run carries on, and exits as it would have.

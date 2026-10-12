@@ -84,7 +84,11 @@ export async function startServer() {
   const journal: { tag: string; line: string }[] = []
   const slept: string[] = []
   const sent: { url: string; body: string; args: string[] }[] = []
-  const slack = { status: 0, code: '200' }
+  const slack = {
+    status: 0,
+    code: '200',
+    interrupt: undefined as (() => void | Promise<void>) | undefined
+  }
   const host = { user: '0', roomForFolders: true }
   const running = new Set<ChildProcess>()
   const path = (...parts: string[]) => join(root, ...parts)
@@ -106,10 +110,11 @@ export async function startServer() {
       const signedBy = docker.imageAt(reference)?.signedBy
       return { status: issuer === signerIssuer && signedBy === identity ? 0 : 1 }
     },
-    curl: args => {
+    curl: async args => {
       const body = args.pop() ?? ''
       const config = args.pop() ?? ''
       sent.push({ url: /^url = "(.*)"$/m.exec(config)?.[1] ?? '', body, args })
+      await slack.interrupt?.()
       return { status: slack.status, stdout: slack.code }
     },
     logger: ([tagOption, tag, dashes, line, ...more]) => {

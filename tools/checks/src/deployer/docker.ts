@@ -245,7 +245,8 @@ export class Docker {
     if (rest.length || (shows === 'name' && format !== '{{.Names}}')) return undefined
     if (!filters.every(([key]) => filterKeys.includes(key))) return undefined
     const states = filters.filter(([key]) => key === 'status').map(([, state]) => state)
-    const shown = this.containers.filter(each => {
+    const newestFirst = [...this.containers].reverse()
+    const shown = newestFirst.filter(each => {
       if (!values['--all'] && each.state !== 'running') return false
       if (states.length && !states.includes(each.state)) return false
       return filters.every(([key, value = '']) => {

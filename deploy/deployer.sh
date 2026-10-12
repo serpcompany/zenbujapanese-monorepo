@@ -75,9 +75,9 @@ send_alert() {
   text="$(printf '%s' "${1:0:3000}" | LC_ALL=C tr -c ' -~' ' ' |
     sed -e 's/&/\&amp;/g' -e 's/</\&lt;/g' -e 's/>/\&gt;/g' -e 's/\\/\\\\/g' -e 's/"/\\"/g')"
   answer="$(printf '{"text":"%s"}' "$text" |
-    curl --silent --output /dev/null --write-out '%{http_code}' --fail --proto =https \
-      --max-time "$alert_seconds" --header 'Content-Type: application/json' \
-      --data-binary @- --config <(printf 'url = "%s"\n' "$alert_url") 2>/dev/null)"
+    timeout --signal=KILL "$((alert_seconds * 2))" curl --silent --output /dev/null \
+      --write-out '%{http_code}' --fail --proto =https --max-time "$alert_seconds" --data-binary @- \
+      --header 'Content-Type: application/json' --config <(printf 'url = "%s"\n' "$alert_url") 2>/dev/null)"
   status=$?
   [ "$status" = 0 ] || log "couldn't send an alert to Slack (curl's exit status $status, HTTP status ${answer:-none})"
   return "$status"
@@ -96,8 +96,7 @@ report_failure() {
 
 report_success() {
   log "$1: deployed $2"
-  [ "$report_successes" = on ] || return 0
-  send_alert "Deployed: $service: $1: $2" || true
+  [ "$report_successes" != on ] || send_alert "Deployed: $service: $1: $2" || true
 }
 
 settle() {
@@ -302,10 +301,13 @@ finish() {
   for container in $running; do
     [ "$container" = "$current" ] && continue
     log "$environment: stopping $container, left from an earlier deploy"
-    retire "$container"
+    retire "$container" || {
+      report_failure "$environment" "retire $container" "couldn't stop and remove $container, left from an earlier deploy; while it runs, it serves beside $current"
+      return 1
+    }
     finished=yes
   done
-  [ -z "$finished" ] || report_success "$environment" "$(digest_reference_of "$image" || echo "$image") as $build in $current, finishing a deploy cut short"
+  [ -z "$finished" ] || report_success "$environment" "$(digest_reference_of "$image" || echo "$image") as $build in $current, finishing an earlier deploy"
 }
 
 check() {
@@ -342,6 +344,7 @@ check() {
   done
   if [ -n "$current" ]; then
     finish "$environment" "$current" "$release" "$running" "$image" && return 0
+    [ -z "$reported" ] || return 1
     if has_alias "$current" "zenbujapanese-$service-$environment"; then
       report_failure "$environment" "unanswering $current" "$current doesn't answer /healthz as release $release; left as it is"
       return 1
@@ -381,8 +384,7 @@ check() {
   case $? in
     0) rm -f "$failed_file" ;;
     1)
-      printf '%s %s %s %s\n' "$image" "$settings" "$(date -u +%FT%TZ)" "it didn't answer /healthz as release $release (see the log above it)" >"$failed_file"
-      settle "$environment"
+      printf '%s %s %s %s\n' "$image" "$settings" "$(date -u +%FT%TZ)" "it didn't answer /healthz as release $release (see the log above it)" >"$failed_file" && settle "$environment"
       report_failure "$environment" "failed $image $settings" "$reference $failure; kept the running version. $again"
       return 1
       ;;
@@ -437,7 +439,7 @@ run_dir="$(mktemp -d)" || {
   exit 1
 }
 settle run
-trap '[ -n "$ended" ] || report_failure "$scope" stopped "the deployer stopped before it finished, after $SECONDS seconds, at: ${BASH_COMMAND:0:200}. Cron stops a run after 25 minutes; anything sooner is an error in the script, which running it by hand shows"; rm -rf "$run_dir"' EXIT
+trap 'trap "" TERM INT HUP; exec 9>&-; [ -n "$ended" ] || report_failure "$scope" stopped "the deployer stopped before it finished, after $SECONDS seconds, at: ${BASH_COMMAND:0:200}. Cron stops a run after 25 minutes; anything sooner is an error in the script, which running it by hand shows"; rm -rf "$run_dir"' EXIT
 status=0
 for service in "${services[@]}"; do
   deploy_service "$service" || status=1

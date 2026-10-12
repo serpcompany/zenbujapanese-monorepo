@@ -118,6 +118,29 @@ describeDeployer('the deployer', () => {
     expect(server.messages()).toHaveLength(3)
   })
 
+  test("says once that it can't stop the old slot, and that the deploy is finished once it can", async () => {
+    const server = await serverWith()
+    server.docker.publish(dictionary, 'staging')
+    await server.run()
+    const image = server.docker.publish(dictionary, 'staging', { release: 'abc123' })
+    server.docker.refuse('stop')
+    expect((await server.run()).status).toBe(0)
+    expect((await server.run()).status).toBe(1)
+    await server.run()
+    expect(server.messages().slice(1)).toEqual([
+      deployed(`staging: ${image.reference} as abc123 in slot b`),
+      problem(
+        `staging: couldn't stop and remove ${slotA}, left from an earlier deploy; while it runs, it serves beside ${slotB}`
+      )
+    ])
+    server.docker.refusals.length = 0
+    expect((await server.run()).status).toBe(0)
+    expect(server.slots(dictionary).map(each => each.name)).toEqual([slotB])
+    expect(server.messages().at(-1)).toBe(
+      deployed(`staging: ${image.reference} as abc123 in ${slotB}, finishing an earlier deploy`)
+    )
+  })
+
   test("deploys the same image again when the environment's file changes, and not otherwise", async () => {
     const server = await serverWith()
     const image = server.docker.publish(dictionary, 'staging')
@@ -185,7 +208,7 @@ describeDeployer('the deployer', () => {
     ])
     expect(server.docker.find(slotB)?.networks.get(network)).toEqual([alias])
     expect(server.messages().slice(2)).toEqual([
-      deployed(`staging: ${image.reference} as abc123 in ${slotB}, finishing a deploy cut short`)
+      deployed(`staging: ${image.reference} as abc123 in ${slotB}, finishing an earlier deploy`)
     ])
     expect(server.read(memory)).toBeUndefined()
   })
