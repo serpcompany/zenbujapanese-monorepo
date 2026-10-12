@@ -17,7 +17,7 @@ export function searchDatabase(db: ArtifactDatabase): SearchDatabase {
   }
 }
 
-export const listedIds = 'SELECT unhex(value) FROM json_each(?)'
+export { listedIds } from '../search/database'
 
 export const attachments = {
   compound_pitch: {

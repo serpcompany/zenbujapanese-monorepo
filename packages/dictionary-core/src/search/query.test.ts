@@ -2,6 +2,7 @@ import { describe, expect, test } from 'vitest'
 import { acceptsPartsOfSpeech, deinflect } from './deinflect'
 import {
   compareStrings,
+  englishSentenceWords,
   isJapaneseOnly,
   isMixedScript,
   japaneseCandidates,
@@ -62,6 +63,24 @@ describe('scripts', () => {
     expect(isJapaneseOnly('食べる')).toBe(true)
     expect(isJapaneseOnly('taberu')).toBe(false)
     expect(isMixedScript('taberu 食べる')).toBe(true)
+  })
+})
+
+describe('englishSentenceWords', () => {
+  test('takes each word once, in order, with the apostrophe or hyphen inside it', () => {
+    expect(englishSentenceWords("where's the well-known bathroom? the bathroom, no. 2!")).toEqual([
+      "where's",
+      'the',
+      'well-known',
+      'bathroom',
+      'no',
+      '2'
+    ])
+  })
+
+  test('finds no words in a pattern, which a wildcard or a first-word mark makes of a query', () => {
+    expect(englishSentenceWords('where is the bathr*')).toEqual([])
+    expect(englishSentenceWords('^where is the bathroom')).toEqual([])
   })
 })
 

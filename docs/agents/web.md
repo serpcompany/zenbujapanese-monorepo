@@ -307,9 +307,9 @@ a word or its kanji row has details to show. The KANJI row opens in place to the
 (`components/dictionary/kanji-details.tsx`, from `getKanjiDetails`), as the word page's kanji do.
 A query full-text search can't read is answered as finding nothing by the service.
 
-With Sudachi, the service analyzes a sentence as the app does and lists its Discovered Words.
-The Example Sentences row goes where the sentences are (`examplesTarget` in `results/links.ts`,
-ADR 0010):
+With Sudachi, the service analyzes a Japanese sentence as the app does and lists its Discovered
+Words; an English sentence's come from the core's search, with no analyzer (#401). The Example
+Sentences row goes where the sentences are (`examplesTarget` in `results/links.ts`, ADR 0010):
 
 - To a word page's Examples (`#examples`), when the sentences are that word's: the primary
   entry's for a romaji or deinflected search, or the top result's for a Japanese one.

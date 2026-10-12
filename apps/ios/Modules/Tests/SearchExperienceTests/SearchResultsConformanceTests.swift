@@ -69,10 +69,10 @@ struct SearchResultsConformanceTests {
     _ observed: SearchResultsCase, textAnalysis: String
   ) throws {
     guard textAnalysis != "full" else { return }
+    guard !SearchQuery(observed.query).value.unicodeScalars.allSatisfy(\.isASCII) else { return }
     let reachedAnalysis =
       observed.resolution == "analyzed" || observed.presentation == "discoveredWords"
-      || ((observed.results ?? []).isEmpty
-        && !SearchQuery(observed.query).value.unicodeScalars.allSatisfy(\.isASCII))
+      || (observed.results ?? []).isEmpty
     if reachedAnalysis {
       throw SearchResultsObserverError.dependsOnTextAnalysis(observed.query)
     }

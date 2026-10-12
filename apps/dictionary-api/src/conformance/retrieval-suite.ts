@@ -1,3 +1,4 @@
+import { isASCII } from '@zenbu/dictionary-core/search/query'
 import { expect } from 'vitest'
 import { readSuite } from './support'
 
@@ -17,7 +18,8 @@ interface RetrievalSuite {
 
 export const retrievalSuite = readSuite<RetrievalSuite>('search-retrieval')
 
-export const needsAnalyzer = (expected: RetrievalCase) => expected.resolution === 'analyzed'
+export const needsAnalyzer = (expected: RetrievalCase) =>
+  expected.resolution === 'analyzed' && !isASCII(expected.query)
 
 export const describeEntries = (entries: { headword: string; reading: string }[]) =>
   entries.map(entry => `${entry.headword}（${entry.reading}）`).join(', ')

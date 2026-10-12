@@ -22741,6 +22741,114 @@
       "voiceOverCount" : 60
     },
     {
+      "covers" : "An English sentence no entry means: the first word that means each of its words, in the sentence's order, as Discovered Words (#401)",
+      "examples" : {
+        "count" : 8,
+        "title" : "View 8 Example Sentences"
+      },
+      "heading" : "Discovered Words",
+      "presentation" : "discoveredWords",
+      "query" : "where is the bathroom",
+      "resolution" : "analyzed",
+      "results" : [
+        {
+          "chips" : [
+            {
+              "name" : "JLPT",
+              "pack" : "zenbu.jlpt.waller.levels",
+              "text" : "N5",
+              "tier" : "very common"
+            },
+            {
+              "name" : "YouTube",
+              "pack" : "zenbu.tubelex.youtube.ja.unidic-3.1",
+              "text" : "175",
+              "tier" : "very common"
+            }
+          ],
+          "entSeq" : [
+            "1577140"
+          ],
+          "headword" : "何処",
+          "languageReferenceID" : "628ff17f0d1999707460fc690ac6dcaa",
+          "match" : "source=0 english strongGloss romaji=0 sense=first",
+          "reading" : "どこ",
+          "retrievalOrder" : 0,
+          "summary" : "where"
+        },
+        {
+          "chips" : [
+
+          ],
+          "entSeq" : [
+            "2089020"
+          ],
+          "headword" : "だ",
+          "languageReferenceID" : "e33ad4f4da88dce059a4b3fc7b2264b4",
+          "match" : "source=1 english strongGloss romaji=0 sense=first",
+          "reading" : "だ",
+          "retrievalOrder" : 1,
+          "summary" : "is"
+        },
+        {
+          "chips" : [
+            {
+              "name" : "JLPT",
+              "pack" : "zenbu.jlpt.waller.levels",
+              "text" : "N5",
+              "tier" : "very common"
+            },
+            {
+              "name" : "YouTube",
+              "pack" : "zenbu.tubelex.youtube.ja.unidic-3.1",
+              "text" : "366",
+              "tier" : "very common"
+            }
+          ],
+          "entSeq" : [
+            "1006830"
+          ],
+          "headword" : "その",
+          "languageReferenceID" : "1cc9a84b606c82ec5a77ca0497e28107",
+          "match" : "source=2 english strongGloss romaji=0 sense=first",
+          "reading" : "その",
+          "retrievalOrder" : 2,
+          "summary" : "the"
+        },
+        {
+          "chips" : [
+            {
+              "name" : "JLPT",
+              "pack" : "zenbu.jlpt.waller.levels",
+              "text" : "N1",
+              "tier" : "moderately common"
+            },
+            {
+              "name" : "YouTube",
+              "pack" : "zenbu.tubelex.youtube.ja.unidic-3.1",
+              "text" : "12,774",
+              "tier" : "moderately common"
+            }
+          ],
+          "entSeq" : [
+            "1547460"
+          ],
+          "headword" : "浴室",
+          "languageReferenceID" : "bf2b98df70e9851d585d505cc91eea26",
+          "match" : "source=3 english strongGloss romaji=0 sense=first",
+          "reading" : "よくしつ",
+          "retrievalOrder" : 3,
+          "summary" : "bathroom"
+        }
+      ],
+      "sections" : [
+        "examples",
+        "discoveredWords"
+      ],
+      "state" : "results",
+      "voiceOverCount" : 4
+    },
+    {
       "covers" : "A search-retrieval.json query, after the frequency re-sort",
       "examples" : {
         "count" : 100,

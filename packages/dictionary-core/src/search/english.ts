@@ -4,6 +4,7 @@ import {
   type EntryRow,
   entryColumns,
   FormKind,
+  listedIds,
   profile,
   type SearchDatabase,
   stopIfInterrupted
@@ -80,6 +81,12 @@ function glossEvidencePrecedes(lhs: GlossEvidence, rhs: GlossEvidence): number {
   )
 }
 
+interface EnglishEvidence {
+  rows: EntryRow[]
+  glossMatches: Map<string, GlossEvidence[]>
+  romajiMatches: Map<string, number[]>
+}
+
 export async function rankedEnglish(
   db: SearchDatabase,
   query: string,
@@ -88,9 +95,21 @@ export async function rankedEnglish(
   const evidence = exactFormOnly
     ? await exactRomajiEvidence(db, query)
     : await englishEvidence(db, query)
-  if (!evidence) return []
-  const { rows, glossMatches, romajiMatches } = evidence
+  return evidence ? rankedEvidence(db, evidence) : []
+}
 
+export async function rankedByStrongGloss(
+  db: SearchDatabase,
+  word: string
+): Promise<RankedEntry[]> {
+  const evidence = await strongGlossEvidence(db, word)
+  return evidence ? rankedEvidence(db, evidence) : []
+}
+
+function rankedEvidence(
+  db: SearchDatabase,
+  { rows, glossMatches, romajiMatches }: EnglishEvidence
+): RankedEntry[] {
   const ranked: RankedEntry[] = []
   let step = 0
   for (const row of rows) {
@@ -162,7 +181,7 @@ export async function rankedEnglish(
   return deduplicated(ranked, db)
 }
 
-async function exactRomajiEvidence(db: SearchDatabase, query: string) {
+async function exactRomajiEvidence(db: SearchDatabase, query: string): Promise<EnglishEvidence> {
   const rows = await db.all<EntryRow>(
     `SELECT ${entryColumns}, p.primary_mask, p.secondary_mask, p.news_frequency_band
        FROM forms f JOIN entries e ON e.id = f.entry_id ${displayedFormProfileJoin}
@@ -176,7 +195,34 @@ async function exactRomajiEvidence(db: SearchDatabase, query: string) {
   }
 }
 
-async function englishEvidence(db: SearchDatabase, query: string) {
+const afterEveryContinuation = '\u{10ffff}'
+
+async function strongGlossEvidence(
+  db: SearchDatabase,
+  word: string
+): Promise<EnglishEvidence | null> {
+  if (!hasSearchTerms(word)) return null
+  const glossMatches = await glossEvidence(db, word, ftsPhrase(word), strongGlossesOf(word))
+  if (glossMatches.size === 0) return null
+  const ids = JSON.stringify([...glossMatches.keys()])
+  const [rows, romajiForms] = await Promise.all([
+    db.all<EntryRow>(
+      `SELECT ${entryColumns}, p.primary_mask, p.secondary_mask, p.news_frequency_band
+       FROM entries e ${displayedFormProfileJoin}
+       WHERE e.id IN (${listedIds})`,
+      [ids]
+    ),
+    db.all<RomajiForm>(
+      `SELECT lower(hex(f.entry_id)) AS entry_id, f.form FROM forms f
+       WHERE f.form >= ? AND f.form < ? AND f.kind = ${FormKind.romaji}
+         AND f.entry_id IN (${listedIds})`,
+      [word, word + afterEveryContinuation, ids]
+    )
+  ])
+  return { rows, glossMatches, romajiMatches: romajiRelations(db, word, romajiForms) }
+}
+
+async function englishEvidence(db: SearchDatabase, query: string): Promise<EnglishEvidence | null> {
   if (!hasSearchTerms(query)) return null
   const glossMatch = ftsPhrase(query)
   const romajiMatch = ftsPrefix(query)
@@ -199,10 +245,33 @@ async function englishEvidence(db: SearchDatabase, query: string) {
   return { rows, glossMatches, romajiMatches }
 }
 
+interface GlossNarrowing {
+  sql: string
+  params: (string | number)[]
+}
+
+function strongGlossesOf(word: string): GlossNarrowing {
+  const infinitive = `to ${word}`
+  const noteAfter = (phrase: string) => `${phrase} (`
+  return {
+    sql: `AND (g.normalized_text IN (?, ?)
+         OR substr(g.normalized_text, 1, ?) = ? OR substr(g.normalized_text, 1, ?) = ?)`,
+    params: [
+      word,
+      infinitive,
+      noteAfter(word).length,
+      noteAfter(word),
+      noteAfter(infinitive).length,
+      noteAfter(infinitive)
+    ]
+  }
+}
+
 async function glossEvidence(
   db: SearchDatabase,
   query: string,
-  match: string
+  match: string,
+  strongOnly?: GlossNarrowing
 ): Promise<Map<string, GlossEvidence[]>> {
   const rows = await db.all<{
     entry_id: string
@@ -226,8 +295,8 @@ async function glossEvidence(
        JOIN gloss_atoms g ON g.rowid = x.docid
        JOIN canonical_senses s ON s.entry_id = g.entry_id AND s.sense_order = g.sense_order
        JOIN entries e ON e.id = g.entry_id
-       WHERE dictionary_gloss_fts MATCH ?`,
-    [match]
+       WHERE dictionary_gloss_fts MATCH ? ${strongOnly?.sql ?? ''}`,
+    [match, ...(strongOnly?.params ?? [])]
   )
   const token = glossToken(query)
   const result = new Map<string, GlossEvidence[]>()
@@ -242,7 +311,7 @@ async function glossEvidence(
       (senseReadings.length === 0 || senseReadings.includes(normalizeQuery(row.reading)))
     if (!appliesToShownForms) continue
     const relation = glossRelation(query, row.text, token)
-    if (relation === null) continue
+    if (relation === null || (strongOnly && relation === GlossRelation.glossToken)) continue
     const evidence = result.get(row.entry_id) ?? []
     evidence.push({
       relation,
@@ -255,17 +324,30 @@ async function glossEvidence(
   return result
 }
 
+interface RomajiForm {
+  entry_id: string
+  form: string
+}
+
 async function romajiEvidence(
   db: SearchDatabase,
   query: string,
   match: string
 ): Promise<Map<string, number[]>> {
-  const rows = await db.all<{ entry_id: string; form: string }>(
+  const rows = await db.all<RomajiForm>(
     `SELECT lower(hex(f.entry_id)) AS entry_id, f.form
        FROM dictionary_form_fts x JOIN forms f ON f.rowid = x.docid
        WHERE dictionary_form_fts MATCH ? AND f.kind = ${FormKind.romaji}`,
     [match]
   )
+  return romajiRelations(db, query, rows)
+}
+
+function romajiRelations(
+  db: SearchDatabase,
+  query: string,
+  rows: readonly RomajiForm[]
+): Map<string, number[]> {
   const result = new Map<string, number[]>()
   let step = 0
   for (const row of rows) {

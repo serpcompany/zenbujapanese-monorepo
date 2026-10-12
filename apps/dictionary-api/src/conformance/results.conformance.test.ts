@@ -21,6 +21,7 @@ function shown(
   const items = new Map(results.items.map(item => [item.entry.id, item]))
   return {
     sections: screen.sections,
+    heading: null,
     examples: screen.examples,
     readingRefinement: screen.readingRefinement,
     kanji: screen.kanji && { ...screen.kanji, entry: screen.kanji.entryId },
@@ -60,7 +61,7 @@ describe.runIf(artifactAvailable)('search results conformance', () => {
       { query: expected.query, resolution: results.resolution, presentation: results.presentation },
       screen.state === 'results' ? shown(screen, results) : null
     )
-    const wanted = recordedCaseAsTheCoreReports(expected)
+    const { heading: _titledByThePage, ...wanted } = recordedCaseAsTheCoreReports(expected)
     expect(
       actual,
       `「${expected.query}」: expected ${describeRows(wanted.results)} but found ${describeRows(actual.results)}`

@@ -19,7 +19,7 @@ these and decodes the answer; [The app's side](#the-apps-side) says which type a
 
 | Folder | What it does | Who asks in the app |
 | --- | --- | --- |
-| `search/` | Search retrieval: query normalization, deinflection, ranking, full-text phrases, and sentence search through a supplied analyzer; which handwriting candidates are kept (`japaneseCandidates`); and the radical panel (`radicals.ts`). | `LookupClient`; `SearchQuery` is `normalizeQuery`'s answer; `RadicalLookupClient`; the handwriting recognizer's adapter |
+| `search/` | Search retrieval: query normalization, deinflection, ranking, full-text phrases, and sentence search (Japanese through a supplied analyzer, English by each word's meaning); which handwriting candidates are kept (`japaneseCandidates`); and the radical panel (`radicals.ts`). | `LookupClient`; `SearchQuery` is `normalizeQuery`'s answer; `RadicalLookupClient`; the handwriting recognizer's adapter |
 | `embedded/` | The entry point for a client that runs the core inside a JavaScript engine, as the app does: every answer the app's screens show, as JSON, and the bundle the app loads. | `DictionaryCore`, and the three engines that each own one |
 | `results/` | The results screen: the frequency re-sort, Sort By and Filter, rows, chips, what VoiceOver says, and the Example Sentences, reading-refinement, and kanji rows. | `ResultsScreen` |
 | `detail/` | Word pages, kanji details, and kanji element pages from their rows: furigana, pitch, Frequency Details, conjugations, kanji, elements, share text, and the short gloss under a linked word. Also romaji (`romaji.ts`), a kanji's strokes as the points to draw (`strokes.ts`), whether a string is one kanji, and what a zenbujapanese.com link names (`links.ts`). | `WordPage`, `KanjiPage`, `KanjiElementPage`, `JapaneseRuby`, `FrequencyRow`, `KanjiCharacter`, `KanjiStrokeOrderClient`, `RomajiReadingAidText` |
@@ -37,7 +37,7 @@ these and decodes the answer; [The app's side](#the-apps-side) says which type a
   `ArtifactDatabase` (synchronous `all(sql, params)`), the kanji files as `KanjiData` (whole, as
   the service holds them) or a `KanjiLookup` that answers one record at a time (as the app does),
   and its capabilities: `tokenize` (the core's own tokenizer) and `morphology` (the app's Sudachi). Without
-  `morphology`, sentence search is off and the rest of Search is unchanged (ADR 0008).
+  `morphology`, Japanese sentence search is off and the rest of Search is unchanged (ADR 0008).
 - **It logs nothing.** It returns what happened, as a result or an error, and the client logs it
   its own way; Biome refuses `console` in `src` (tests aside).
 - **A rule lives here, once.** What a screen lists, the order, a title, a label, and what
@@ -45,9 +45,8 @@ these and decodes the answer; [The app's side](#the-apps-side) says which type a
   Add a field to the answer, and have the client show it. What the app keeps native, and why, is
   in [`ios.md`](ios.md), The dictionary core in the app.
 - **Rebuild the app's bundle with the core.** The app runs a bundle of the core that is checked in
-  ([Embedded](#embedded)). After changing anything the bundle holds, run
-  `pnpm bundle:javascriptcore` and commit the file; `embedded/bundle.test.ts` fails until it
-  matches.
+  ([Embedded](#embedded)). After changing anything the bundle holds, run `pnpm
+  bundle:javascriptcore` and commit the file; `embedded/bundle.test.ts` fails until it matches.
 - **The app records the answers.** When the app's behavior changes, re-record the suites on a Mac
   ([`ios.md`](ios.md)); the service must then pass them. The app's answers are the core's own,
   read through JavaScriptCore, so the suites pin them against a later change, and the service
@@ -58,12 +57,11 @@ these and decodes the answer; [The app's side](#the-apps-side) says which type a
 - **Every response shape has a contract number.** `artifact/contract.ts` names each answer the
   service gives (`DictionaryContract`) and the number of their current shapes
   (`dictionaryContract`), which the service sends and the website compares with its own. The site
-  and the service deploy separately, in either order, so a shape change makes them disagree for
-  a few minutes. A mismatch is logged, never refused: make a change the older side can still
-  read, such as adding a field that the newer side doesn't yet rely on. `artifact/contract.test.ts`
-  expands every shape with the TypeScript compiler and fails when one changes without a new
-  contract number: raise it by one and record the new shape under it, never changing a recorded
-  one.
+  and the service deploy separately, in either order, so a shape change makes them disagree for a
+  few minutes. A mismatch is logged, never refused: make a change the older side can still read,
+  such as adding a field that the newer side doesn't yet rely on. `artifact/contract.test.ts`
+  expands every shape with the TypeScript compiler and fails when one changes without a new contract
+  number: raise it by one and record the new shape under it, never changing a recorded one.
 
 ## What a client passes in
 
@@ -150,15 +148,14 @@ modules, files, or event loop of its own, which is how the app runs it in JavaSc
 - **A text's words cost one or two statements.** `linkedTokens` looks every word's forms up in one
   round (`entriesMatchingFirstForms`), then the forms still unmatched, and caches by form, so a
   page of sentences mostly asks nothing.
-- **A call is an object.** `embeddedEndpoint(...).begin(method, argument)` starts a call and
-  returns it. Its `outcome()` is a JSON string: `{"value": ...}`, `{"error": message}`, or
-  `{"analyze": text}` when a call needs the words of a sentence from a host that gave no
-  `tokenize`. The host then analyzes the text with whatever it has, answers
-  `analyzed('{"words": [...]}')` or `analyzed('{"error": ...}')`, and reads the outcome again.
-  The host's database is synchronous, so a call settles before `begin` or `analyzed` returns to
-  the host and nothing is polled; calls keep their outcomes apart, so a second can start while
-  the first waits for its analysis. A method may answer null (`kanjiElementPage`, `gloss`):
-  `{"value": null}` is an answer.
+- **A call is an object.** `embeddedEndpoint(...).begin(method, argument)` starts a call and returns
+  it. Its `outcome()` is a JSON string: `{"value": ...}`, `{"error": message}`, or `{"analyze":
+  text}` when a call needs the words of a sentence from a host that gave no `tokenize`. The host
+  then analyzes the text with whatever it has, answers `analyzed('{"words": [...]}')` or
+  `analyzed('{"error": ...}')`, and reads the outcome again. The host's database is synchronous, so
+  a call settles before `begin` or `analyzed` returns to the host and nothing is polled; calls keep
+  their outcomes apart, so a second can start while the first waits for its analysis. A method may
+  answer null (`kanjiElementPage`, `gloss`): `{"value": null}` is an answer.
 - **An answer that needs no waiting can be asked for at once.** `answer(method, argument)` runs
   the method and returns its value, and `answerJSON(method, argument)` returns it as JSON
   (`null` for nothing). Both throw for a method that would wait (`search`, `linkedTokens`, and the
@@ -339,11 +336,10 @@ The core answers as the Swift it replaced did, which the suites pin.
 
 ## Search
 
-- `deinflect` rewrites suffixes, chaining rules by word class: any rule applies to the surface,
-  then only a rule whose input classes include the class the previous rule produced, up to six
-  deep. Its candidates are hypotheses that lookup filters by part of speech.
-  `romajiDeinflectedCandidates` tries the irregular verbs first, since their regular-looking
-  alternatives are words too.
+- `deinflect` rewrites suffixes, chaining rules by word class: any rule applies to the surface, then
+  only a rule whose input classes include the class the previous rule produced, up to six deep. Its
+  candidates are hypotheses that lookup filters by part of speech. `romajiDeinflectedCandidates`
+  tries the irregular verbs first, since their regular-looking alternatives are words too.
 - When a Japanese query deinflects, an exact dictionary form stays first (した lists 下 and 舌
   before する), and the deinflected lemmas follow it, ahead of prefix and contains matches.
 - `deduplicated` collapses entries that share a semantic fingerprint into the lowest Language
@@ -357,6 +353,12 @@ The core answers as the Swift it replaced did, which the suites pin.
   priority, sense, gloss order, romaji corroboration, headword length, and fingerprint (#701).
 - An English query matches a sense restricted to some written forms or readings (JMdict's stagk
   and stagr) only when the entry is shown with one of them.
+- An English sentence that finds no entry lists one for each of its words (`englishSentenceItems`,
+  #401): the first entry of `rankedByStrongGloss` for each of its first 24 words, until it has 12.
+  That lookup ranks a word's strong-gloss entries as the word's own search does and reads no
+  others: SQL holds the phrase match to the meanings that are the word, and the forms index gives
+  the romaji that corroborates. In Node, `the` takes 10 ms where its own search takes 500. An ASCII
+  query never asks the analyzer, and a query with `*` or `^` is a pattern, not a sentence.
 - `literalQuery` is the app's literal query policy: `mondai` searches as `monday`.
 
 ## Detail
@@ -367,10 +369,9 @@ The core answers as the Swift it replaced did, which the suites pin.
   section ([`dictionary.md`](../../apps/web/docs/product/dictionary.md), Word page).
 - **Frequency.** The website uses only the app's default dictionaries, the bundled packs in
   `FrequencyPackCatalog.json`'s order: JLPT levels, then TUBELEX (YouTube). Tiers use Migaku's star
-  cutoffs, and JLPT levels map onto the same scale. `frequency.test.ts` pins each pack's
-  disclosure, and `coveredSourceRows` (the rows a rank's percentile divides by), to the catalog. A
-  row's label leaves out the app's "Double tap for details." hint, since the website's row opens a
-  dialog.
+  cutoffs, and JLPT levels map onto the same scale. `frequency.test.ts` pins each pack's disclosure,
+  and `coveredSourceRows` (the rows a rank's percentile divides by), to the catalog. A row's label
+  leaves out the app's "Double tap for details." hint, since the website's row opens a dialog.
 - **Furigana.** `rubySegments` anchors each kanji run on the first match of the next kana run, as
   the app does. `splitKanjiReading` splits a segment kanji by kanji only when exactly one split
   fits the kanji's KANJIDIC2 on and kun readings, taken without okurigana, with their voiced and
@@ -392,8 +393,7 @@ The core answers as the Swift it replaced did, which the suites pin.
   "Verb", "Noun", or "Adverb" beside a phrase that already says it.
 - `shortGloss` is a meaning's first part, without a note in brackets or a leading "to", cut to
   seventeen characters and an ellipsis: what the app shows under a linked word.
-- `wordSlug` is shared so every client builds the same word URL as the app's share links (ADR
-  0007).
+- `wordSlug` is shared so every client builds the same word URL as the app's share links (ADR 0007).
 
 ## Examples
 
@@ -417,10 +417,9 @@ The core answers as the Swift it replaced did, which the suites pin.
   else matches pairs whose Japanese contains it. FTS4's `offsets()` reports UTF-8 byte offsets,
   which `example-search.ts` maps to UTF-16, then grapheme positions. The results' primary entry is
   highlighted for every search, and its own examples are listed for a romaji or deinflected query.
-- **A conjugated form's examples** are the sentences the app's search for the form finds,
-  normalized (a full-width Ｈ searches English), that contain it as written and in which the
-  tokenizer reads it as one word, so 見たかった and 見た目 aren't examples of 見た. The screen accents the
-  query as normalized.
+- **A conjugated form's examples** are the sentences the app's search for the form finds, normalized
+  (a full-width Ｈ searches English), that contain it as written and in which the tokenizer reads it
+  as one word, so 見たかった and 見た目 aren't examples of 見た. The screen accents the query as normalized.
 - An example's `pairId` is the artifact's pair ID in hex; the app's ID prefixes it with `esp1_`.
 
 ## Artifact

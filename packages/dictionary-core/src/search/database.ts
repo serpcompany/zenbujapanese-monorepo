@@ -26,6 +26,8 @@ export function withParametersTruncatedAtNul(db: SearchDatabase): SearchDatabase
   }
 }
 
+export const listedIds = 'SELECT unhex(value) FROM json_each(?)'
+
 export const FormKind = { written: 0, reading: 1, romaji: 2 } as const
 
 export interface SearchEntry {

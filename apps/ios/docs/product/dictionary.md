@@ -143,9 +143,8 @@ orange. With Differentiate Without Color on, a star count such as 5★ replaces 
 
 Check: core `detail/frequency.test.ts` (the tiers); package `ResultsScreenTests` (their stars).
 
-A word the learner knows shows a green **✓ Known** capsule at the right of its headword.
-Swiping a row to the right, or long-pressing it, marks the word known or unknown without
-opening it.
+A word the learner knows shows a green **✓ Known** capsule at the right of its headword. Swiping a
+row to the right, or long-pressing it, marks the word known or unknown without opening it.
 
 Check: UI `SearchUITests.testMarkingAResultKnownShowsTheKnownCapsule` (by swipe on iPhone and
 iPad, where it reads the row as known; by right-click on the Mac, where it checks the row's menu
@@ -162,13 +161,18 @@ again. If frequency data can't be read, Search still shows every result and says
 dictionary is unavailable. Results can also offer a Japanese-reading refinement, related
 Example Sentences, discovered words, and a dedicated Kanji result for a single-kanji query. An
 English query's Example Sentences have its words in any form: `startled you` finds "startle you".
+An English sentence that no entry means as a whole lists, as **Discovered Words**, the first entry
+that means each of its words, small ones included, each with that meaning: `where is the bathroom`
+lists 何処 "where", だ "is", その "the", and 浴室 "bathroom". A word no entry means is left out.
 
 Check: package `SearchFrequencyOrchestrationTests` and `ResultsScreenTests` (a dictionary that
 can't be read is named, and the others still order the list); core `detail/frequency.test.ts`
-(the notice's words), `artifact/example-search.test.ts`, and `examples/english-inflection.test.ts`
-(which sentences an English query finds); the recorded `SearchResultsConformanceTests` (the
-refinement, Example Sentences, and Kanji rows) and `ExampleSearchConformanceTests` (`startled you`
-and `generously`); UI `SearchResultsUITests.testARomajiQueryOffersItsJapaneseReading`,
+(the notice's words), `artifact/example-search.test.ts` and `examples/english-inflection.test.ts`
+(which sentences an English query finds), and `search/english-sentence.test.ts` (an English
+sentence's words); the recorded `SearchConformanceTests` and `SearchResultsConformanceTests` (the
+refinement, Example Sentences, and Kanji rows, and `where is the bathroom`) and
+`ExampleSearchConformanceTests` (`startled you` and `generously`); UI
+`SearchResultsUITests.testARomajiQueryOffersItsJapaneseReading`,
 `testAWordOffersItsExampleSentences`, and `SearchUITests.testAQueryWithNoMatchesSaysSo`.
 
 Recent text searches are stored on the device and listed while the query is empty. A learner can
@@ -213,10 +217,9 @@ removed, Search goes back to Default. The Kanji row, Example Sentences, the read
 places; when there are no word rows to sort (only Discovered Words, or only a single kanji's
 Kanji row), the row isn't shown.
 
-Check: core `results/ordering.test.ts` and `results/learner.test.ts` (VoiceOver's announcement,
-the stored choice, loading and unreadable ranks, a disabled dictionary); package
-`ResultsScreenTests` (the stored choice, loading, an unreadable dictionary, and a disabled one,
-on the bundled data).
+Check: core `results/ordering.test.ts` and `results/learner.test.ts` (VoiceOver's announcement, the
+stored choice, loading and unreadable ranks, a disabled dictionary); package `ResultsScreenTests`
+(the stored choice, loading, an unreadable dictionary, and a disabled one, on the bundled data).
 
 ### Filtering results
 
@@ -235,21 +238,19 @@ words show to VoiceOver. The filter is kept on the device across launches and ap
 Japanese, English, and romaji searches. The Kanji row, Example Sentences, the reading refinement,
 and Discovered Words are never filtered.
 
-Check: core `results/ordering.test.ts` (known or unknown words, the order kept, the count, and
-the stored filter); package `ResultsScreenTests` (known words only, and the count a filter
-hides); UI
-`SearchResultsUITests.testFilteringToKnownWordsHidesEveryWordUntilTheFilterIsCleared` (the row's
-**1 filter**, **No Words Match Your Filter**, and **Clear Filter**) and
+Check: core `results/ordering.test.ts` (known or unknown words, the order kept, the count, and the
+stored filter); package `ResultsScreenTests` (known words only, and the count a filter hides); UI
+`SearchResultsUITests.testFilteringToKnownWordsHidesEveryWordUntilTheFilterIsCleared` (the row's **1
+filter**, **No Words Match Your Filter**, and **Clear Filter**) and
 `testAWordLeavesTheUnknownFilterOnceItsMarkedKnown`.
 
 ## Dictionary and kanji details
 
-A word detail can present its written form and reading, ordered meanings, alternative forms,
-kanji, related words, conjugations, source-matched Example Sentences, pronunciation, and
-frequency information when the corresponding data is available.
-Examples for a word written in kana, such as それで or でも, are the sentences Tatoeba's word
-index links to that word, so a kana word inside a longer one (でも in いつでも) does not count.
-Other words match their written forms and reading.
+A word detail can present its written form and reading, ordered meanings, alternative forms, kanji,
+related words, conjugations, source-matched Example Sentences, pronunciation, and frequency
+information when the corresponding data is available. Examples for a word written in kana, such as
+それで or でも, are the sentences Tatoeba's word index links to that word, so a kana word inside a longer
+one (でも in いつでも) does not count. Other words match their written forms and reading.
 
 Check: the recorded `WordDetailConformanceTests` and `ExampleSearchConformanceTests`; package
 `KanaHeadwordExampleTests`.
@@ -316,9 +317,8 @@ Check: the recorded `WordDetailConformanceTests` (each pack's row and its detail
 `ResultsScreenTests` (the rows' names, values, and details); UI
 `WordDetailUITests.testAFrequencyRowOpensItsDetails`.
 
-Selectable Japanese inside Word Detail and Example Sentences uses the same interactive
-word-boundary analysis as Image Search. Selecting a linked word continues into its normal
-dictionary entry.
+Selectable Japanese inside Word Detail and Example Sentences uses the same interactive word-boundary
+analysis as Image Search. Selecting a linked word continues into its normal dictionary entry.
 
 Check: package `LinkedWordResolutionTests`; UI `ImageSearchUITests` (a linked word opens its
 entry).

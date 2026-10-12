@@ -51,6 +51,7 @@ interface RenderedRow {
 
 export interface RenderedPage {
   sections: string[]
+  heading: string | null
   examples: { text: string; href: string | null } | null
   refinement: string | null
   kanji: { character: string; text: string } | null
@@ -80,8 +81,12 @@ export function readRenderedPage(html: string): RenderedPage {
     }
   })
   const empty = html.match(/data-slot="empty"[^>]*>([\s\S]*)$/)
+  const aboveTheWords = html.match(
+    /data-section="(?:results|discoveredWords)"[\s\S]*?(?=data-result-row|data-kanji-row|$)/
+  )
   return {
     sections,
+    heading: aboveTheWords?.[0].match(/<h2[^>]*>([^<]*)<\/h2>/)?.[1] ?? null,
     examples: examples
       ? {
           text: visibleText(`<x ${examples[0]}`),

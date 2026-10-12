@@ -1510,6 +1510,33 @@
       ]
     },
     {
+      "presentation" : "discoveredWords",
+      "query" : "where is the bathroom",
+      "resolution" : "analyzed",
+      "results" : [
+        {
+          "headword" : "何処",
+          "id" : "628ff17f0d1999707460fc690ac6dcaa",
+          "reading" : "どこ"
+        },
+        {
+          "headword" : "だ",
+          "id" : "e33ad4f4da88dce059a4b3fc7b2264b4",
+          "reading" : "だ"
+        },
+        {
+          "headword" : "その",
+          "id" : "1cc9a84b606c82ec5a77ca0497e28107",
+          "reading" : "その"
+        },
+        {
+          "headword" : "浴室",
+          "id" : "bf2b98df70e9851d585d505cc91eea26",
+          "reading" : "よくしつ"
+        }
+      ]
+    },
+    {
       "presentation" : "ranked",
       "query" : "食べた",
       "resolution" : "deinflected",

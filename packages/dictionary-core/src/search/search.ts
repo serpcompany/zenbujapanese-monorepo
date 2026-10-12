@@ -1,5 +1,6 @@
 import {
   composing,
+  discoveredWordLimit,
   leadingExactFormCount,
   noResults,
   resultItems,
@@ -9,10 +10,11 @@ import {
 } from './composition'
 import { type SearchDatabase, withParametersTruncatedAtNul } from './database'
 import { acceptsPartsOfSpeech, deinflect } from './deinflect'
-import { rankedEnglish } from './english'
+import { rankedByStrongGloss, rankedEnglish } from './english'
 import { hasFormContaining, rankedJapanese, rankedJapaneseForms } from './japanese'
 import { lookupSegments, type MorphologyAnalyzer, type MorphologyWord } from './morphology'
 import {
+  englishSentenceWords,
   isASCII,
   isJapaneseOnly,
   isMixedScript,
@@ -37,6 +39,8 @@ export interface SearchCapabilities {
 export interface SearchFeatures {
   sentenceSearch: boolean
 }
+
+const sentenceWordLookupLimit = 24
 
 function searchFeatures(capabilities: SearchCapabilities): SearchFeatures {
   return { sentenceSearch: capabilities.morphology !== undefined }
@@ -130,17 +134,19 @@ export class DictionarySearch {
     }
     if (directResults.items.length > 0) return directResults
 
-    const analyzed = await this.analyzedItems(query)
-    if (analyzed.length > 1 || (isMixedScript(query) && analyzed.length > 0)) {
+    const discovered = isASCII(query)
+      ? await this.englishSentenceItems(query)
+      : await this.analyzedItems(query)
+    if (discovered.length > 1 || (isMixedScript(query) && discovered.length > 0)) {
       return {
         ...composing(
-          analyzed.map(item => [item]),
+          discovered.map(item => [item]),
           {
-            leadingLexicalEntryCount: analyzed.length,
+            leadingLexicalEntryCount: discovered.length,
             usesPrimaryEntryExamples: false,
             hasExactOrPrefixMatch: false,
             resolution: 'analyzed',
-            limit: analyzed.length
+            limit: discovered.length
           }
         ),
         presentation: 'discoveredWords'
@@ -182,6 +188,18 @@ export class DictionarySearch {
     if (query === '') return false
     if (isASCII(query)) return (await this.searchOnce(query)).items.length > 0
     return hasFormContaining(this.db, query)
+  }
+
+  private async englishSentenceItems(query: string): Promise<SearchResultItem[]> {
+    const found: SearchResultItem[] = []
+    for (const word of englishSentenceWords(query).slice(0, sentenceWordLookupLimit)) {
+      const [strongest] = resultItems((await rankedByStrongGloss(this.db, word)).slice(0, 1))
+      if (strongest && !found.some(item => item.entry.id === strongest.entry.id)) {
+        found.push(strongest)
+      }
+      if (found.length === discoveredWordLimit) break
+    }
+    return found
   }
 
   private async analyzedItems(query: string): Promise<SearchResultItem[]> {

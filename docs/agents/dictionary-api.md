@@ -77,11 +77,10 @@ against it, name it in `.dev.vars` in `apps/web` (see [`web.md`](web.md), Dictio
 | `APP_REQUESTS_PER_MINUTE` | `60` | How many app-route requests one account may make in a minute. |
 
 The build it reports (`X-Dictionary-Build` on every `/v1` answer but the app routes', and
-`/healthz`) is the
-artifact's SHA-256 prefix and the release: a new artifact or new code is a new build. It reports
-its contract too (`X-Dictionary-Contract` and `/healthz`): the number of its answers' shapes, from
-the core, which the website compares with its own ([`dictionary-core.md`](dictionary-core.md),
-Rules).
+`/healthz`) is the artifact's SHA-256 prefix and the release: a new artifact or new code is a new
+build. It reports its contract too (`X-Dictionary-Contract` and `/healthz`): the number of its
+answers' shapes, from the core, which the website compares with its own
+([`dictionary-core.md`](dictionary-core.md), Rules).
 
 ## Routes
 
@@ -151,12 +150,11 @@ answers, headers, and error codes, and every field of a card and a token. An app
   characters (`400 bad_request` past them), and
   `APP_REQUESTS_PER_MINUTE` requests a minute for each account (`sub`), counted by each server
   process, after which a request is `429 rate_limited` with `Retry-After`.
-- **Caching.** An answer carries `languageData`, the language-data release and the SHA-256 of
-  each file a card is read from, and is `Cache-Control: private, max-age=86400` with the build as
-  its `ETag`; an error carries neither. The build changes with each deploy, so an app keeps an
-  answer a day and then revalidates with `If-None-Match`; a matching tag, strong or weak, is
-  `304` before any work. Cards stay right while `languageData` does: an app fetches again when
-  any of it changes.
+- **Caching.** An answer carries `languageData`, the language-data release and the SHA-256 of each
+  file a card is read from, and is `Cache-Control: private, max-age=86400` with the build as its
+  `ETag`; an error carries neither. The build changes with each deploy, so an app keeps an answer a
+  day and then revalidates with `If-None-Match`; a matching tag, strong or weak, is `304` before any
+  work. Cards stay right while `languageData` does: an app fetches again when any of it changes.
 - **The contract.** The routes are plain Hono, so their contract is declared beside their tests,
   in `src/conformance/app-contract.ts`, with `@hono/zod-openapi` (a dev dependency, never in the
   image). `src/openapi.test.ts` writes `openapi.json` and the API reference and fails when either
@@ -202,10 +200,9 @@ pattern, status, and time. Queries never appear in the logs.
 
 A broad query takes one to two seconds the first time: い reads 73,000 entries with the app's own
 SQL, and "to" matches 50,000 Tatoeba pairs. A one-letter wildcard's examples take longer: `a*`,
-`s*`, and `t*` take 3.5 to 5 seconds, `t*` matching over 100,000 pairs, which the app ranks in
-full. Grapheme counts and string comparisons take exact
-fast paths (`packages/dictionary-core/src/detail/text.ts`, `search/query.ts`); what remains is
-the app's SQL.
+`s*`, and `t*` take 3.5 to 5 seconds, `t*` matching over 100,000 pairs, which the app ranks in full.
+Grapheme counts and string comparisons take exact fast paths
+(`packages/dictionary-core/src/detail/text.ts`, `search/query.ts`); what remains is the app's SQL.
 
 ## Code layout
 
@@ -262,9 +259,12 @@ Language Reference ID's, the first of the entries the app merged into the row. W
 example retrieval throws, on a headword NFKC changes such as Ｈ, the suite records the error: Word
 Detail lists no examples, and neither does the page. Without the files the suites skip;
 `ZENBU_REQUIRE_ARTIFACT=1` makes them fail instead, as CI does, and without Sudachi's dictionary
-the retrieval suite's sentence-search cases skip. No suite records sentence search yet (recording
-it needs the app's Japanese Text Analysis pack in the Simulator), so `sentence-search.test.ts`
-checks the cases the app's manual checks name.
+the retrieval suite's Japanese sentences would skip. No suite records one yet (recording it
+needs the app's Japanese Text Analysis pack in the Simulator), so `sentence-search.test.ts`
+checks the cases the app's manual checks name. An English sentence needs no analyzer: both
+search suites record `where is the bathroom`, and every replay runs it. The results suite records
+its **Discovered Words** heading, which the app's screen answers with and the page draws itself,
+so the website's rendered-page test holds the page to it.
 `conjugation-examples.test.ts` pages a form's examples.
 `full-text.test.ts` checks English search where FTS4 differs from other engines.
 

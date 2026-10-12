@@ -55,6 +55,13 @@ export function isASCII(value: string): boolean {
   return !/[\u0080-\uffff]/.test(value)
 }
 
+const wildcard = /[*^]/
+const englishWord = /[0-9a-z]+(?:['-][0-9a-z]+)*/g
+
+export function englishSentenceWords(value: string): string[] {
+  return wildcard.test(value) ? [] : [...new Set(value.match(englishWord) ?? [])]
+}
+
 function isJapaneseScalar(codePoint: number): boolean {
   return (
     codePoint === 0x3005 ||

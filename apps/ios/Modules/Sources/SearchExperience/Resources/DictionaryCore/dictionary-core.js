@@ -430,6 +430,11 @@
   function isASCII(value) {
     return !/[\u0080-\uffff]/.test(value);
   }
+  var wildcard = /[*^]/;
+  var englishWord = /[0-9a-z]+(?:['-][0-9a-z]+)*/g;
+  function englishSentenceWords(value) {
+    return wildcard.test(value) ? [] : [...new Set(value.match(englishWord) ?? [])];
+  }
   function isJapaneseScalar(codePoint) {
     return codePoint === 12293 || codePoint >= 12352 && codePoint <= 12543 || codePoint >= 13312 && codePoint <= 19903 || codePoint >= 19968 && codePoint <= 40959;
   }
@@ -572,6 +577,44 @@
     jlptLevel: level
   }));
 
+  // src/search/database.ts
+  var interruptedSearch = "The search was interrupted";
+  function stopIfInterrupted(client, step) {
+    if ((step & 1023) === 0 && client.interrupted?.()) throw new Error(interruptedSearch);
+  }
+  function truncatedAtNul(param) {
+    return typeof param === "string" ? param.split("\0", 1)[0] : param;
+  }
+  function withParametersTruncatedAtNul(db) {
+    return {
+      all(sql, params) {
+        return db.all(sql, params.map(truncatedAtNul));
+      },
+      interrupted: () => db.interrupted?.() ?? false
+    };
+  }
+  var listedIds = "SELECT unhex(value) FROM json_each(?)";
+  var FormKind = { written: 0, reading: 1, romaji: 2 };
+  var entryColumns = `lower(hex(e.id)) AS id, e.source_record_id, e.headword, e.reading,
+  e.summary, e.parts_of_speech_json, lower(hex(e.semantic_fingerprint)) AS semantic_fingerprint`;
+  function decodeEntry(row) {
+    return {
+      id: row.id,
+      sourceRecordId: row.source_record_id,
+      headword: row.headword,
+      reading: row.reading,
+      summary: row.summary,
+      partsOfSpeech: JSON.parse(row.parts_of_speech_json)
+    };
+  }
+  function profile(row) {
+    return {
+      primaryMask: row.primary_mask ?? 0,
+      secondaryMask: row.secondary_mask ?? 0,
+      newsFrequencyBand: row.news_frequency_band
+    };
+  }
+
   // src/artifact/database.ts
   function searchDatabase(db) {
     return {
@@ -581,7 +624,6 @@
       interrupted: () => db.interrupted?.() ?? false
     };
   }
-  var listedIds = "SELECT unhex(value) FROM json_each(?)";
   var attachments = {
     compound_pitch: {
       file: "CompoundPitch.sqlite3",
@@ -1351,6 +1393,60 @@
     return false;
   }
 
+  // src/search/composition.ts
+  var searchResultLimit = 60;
+  var discoveredWordLimit = 12;
+  function noResults() {
+    return {
+      items: [],
+      leadingLexicalEntryCount: 0,
+      presentation: "ranked",
+      resolution: "direct",
+      readingRefinement: null,
+      usesPrimaryEntryExamples: false,
+      hasExactOrPrefixMatch: false
+    };
+  }
+  function resultItems(ranked) {
+    return ranked.map((entry, fallbackOrder) => ({
+      entry: entry.entry,
+      sourceOrder: 0,
+      matchRank: entry.presentationRank,
+      fallbackOrder,
+      matchedSummary: entry.matchedSummary
+    }));
+  }
+  function leadingExactFormCount(items) {
+    let count = 0;
+    for (const item of items) {
+      if (item.matchRank.kind !== "japanese") break;
+      if (item.matchRank.relation > FormRelation.readingExact) break;
+      count++;
+    }
+    return count;
+  }
+  function composing(sources, options) {
+    const limit = options.limit ?? searchResultLimit;
+    const items = [];
+    const seen = /* @__PURE__ */ new Set();
+    compose: for (const [sourceOrder, source] of sources.entries()) {
+      for (const item of source) {
+        if (seen.has(item.entry.id)) continue;
+        seen.add(item.entry.id);
+        items.push({ ...item, sourceOrder, fallbackOrder: items.length });
+        if (items.length === limit) break compose;
+      }
+    }
+    return {
+      ...noResults(),
+      items,
+      leadingLexicalEntryCount: Math.min(options.leadingLexicalEntryCount, items.length),
+      resolution: options.resolution ?? "direct",
+      usesPrimaryEntryExamples: options.usesPrimaryEntryExamples,
+      hasExactOrPrefixMatch: options.hasExactOrPrefixMatch ?? true
+    };
+  }
+
   // src/results/ordering.ts
   var tierValue = {
     rare: 1,
@@ -1494,7 +1590,6 @@
     if (count > exactExampleCountLimit) return `View ${exactExampleCountLimit}+ Example Sentences`;
     return `View ${count} Example ${count === 1 ? "Sentence" : "Sentences"}`;
   }
-  var discoveredWordLimit = 12;
   var primary = (items, headword, query) => items.find((item) => headword(item) === query) ?? items[0];
   function primaryItem(results, query) {
     return primary(results.items, (item) => item.entry.headword, normalizeQuery(query));
@@ -1528,43 +1623,6 @@
       primary: found,
       presented,
       isDiscovered
-    };
-  }
-
-  // src/search/database.ts
-  var interruptedSearch = "The search was interrupted";
-  function stopIfInterrupted(client, step) {
-    if ((step & 1023) === 0 && client.interrupted?.()) throw new Error(interruptedSearch);
-  }
-  function truncatedAtNul(param) {
-    return typeof param === "string" ? param.split("\0", 1)[0] : param;
-  }
-  function withParametersTruncatedAtNul(db) {
-    return {
-      all(sql, params) {
-        return db.all(sql, params.map(truncatedAtNul));
-      },
-      interrupted: () => db.interrupted?.() ?? false
-    };
-  }
-  var FormKind = { written: 0, reading: 1, romaji: 2 };
-  var entryColumns = `lower(hex(e.id)) AS id, e.source_record_id, e.headword, e.reading,
-  e.summary, e.parts_of_speech_json, lower(hex(e.semantic_fingerprint)) AS semantic_fingerprint`;
-  function decodeEntry(row) {
-    return {
-      id: row.id,
-      sourceRecordId: row.source_record_id,
-      headword: row.headword,
-      reading: row.reading,
-      summary: row.summary,
-      partsOfSpeech: JSON.parse(row.parts_of_speech_json)
-    };
-  }
-  function profile(row) {
-    return {
-      primaryMask: row.primary_mask ?? 0,
-      secondaryMask: row.secondary_mask ?? 0,
-      newsFrequencyBand: row.news_frequency_band
     };
   }
 
@@ -1658,8 +1716,13 @@
   }
   async function rankedEnglish(db, query, exactFormOnly = false) {
     const evidence = exactFormOnly ? await exactRomajiEvidence(db, query) : await englishEvidence(db, query);
-    if (!evidence) return [];
-    const { rows, glossMatches, romajiMatches } = evidence;
+    return evidence ? rankedEvidence(db, evidence) : [];
+  }
+  async function rankedByStrongGloss(db, word) {
+    const evidence = await strongGlossEvidence(db, word);
+    return evidence ? rankedEvidence(db, evidence) : [];
+  }
+  function rankedEvidence(db, { rows, glossMatches, romajiMatches }) {
     const ranked = [];
     let step = 0;
     for (const row of rows) {
@@ -1738,6 +1801,28 @@
       romajiMatches: new Map(rows.map((row) => [row.id, [RomajiRelation.exact]]))
     };
   }
+  var afterEveryContinuation = "􏿿";
+  async function strongGlossEvidence(db, word) {
+    if (!hasSearchTerms(word)) return null;
+    const glossMatches = await glossEvidence(db, word, ftsPhrase(word), strongGlossesOf(word));
+    if (glossMatches.size === 0) return null;
+    const ids = JSON.stringify([...glossMatches.keys()]);
+    const [rows, romajiForms] = await Promise.all([
+      db.all(
+        `SELECT ${entryColumns}, p.primary_mask, p.secondary_mask, p.news_frequency_band
+       FROM entries e ${displayedFormProfileJoin}
+       WHERE e.id IN (${listedIds})`,
+        [ids]
+      ),
+      db.all(
+        `SELECT lower(hex(f.entry_id)) AS entry_id, f.form FROM forms f
+       WHERE f.form >= ? AND f.form < ? AND f.kind = ${FormKind.romaji}
+         AND f.entry_id IN (${listedIds})`,
+        [word, word + afterEveryContinuation, ids]
+      )
+    ]);
+    return { rows, glossMatches, romajiMatches: romajiRelations(db, word, romajiForms) };
+  }
   async function englishEvidence(db, query) {
     if (!hasSearchTerms(query)) return null;
     const glossMatch = ftsPhrase(query);
@@ -1760,7 +1845,23 @@
     ]);
     return { rows, glossMatches, romajiMatches };
   }
-  async function glossEvidence(db, query, match) {
+  function strongGlossesOf(word) {
+    const infinitive = `to ${word}`;
+    const noteAfter = (phrase) => `${phrase} (`;
+    return {
+      sql: `AND (g.normalized_text IN (?, ?)
+         OR substr(g.normalized_text, 1, ?) = ? OR substr(g.normalized_text, 1, ?) = ?)`,
+      params: [
+        word,
+        infinitive,
+        noteAfter(word).length,
+        noteAfter(word),
+        noteAfter(infinitive).length,
+        noteAfter(infinitive)
+      ]
+    };
+  }
+  async function glossEvidence(db, query, match, strongOnly) {
     const rows = await db.all(
       `SELECT lower(hex(g.entry_id)) AS entry_id, g.sense_order, g.gloss_order, g.text,
          e.headword, e.reading,
@@ -1774,8 +1875,8 @@
        JOIN gloss_atoms g ON g.rowid = x.docid
        JOIN canonical_senses s ON s.entry_id = g.entry_id AND s.sense_order = g.sense_order
        JOIN entries e ON e.id = g.entry_id
-       WHERE dictionary_gloss_fts MATCH ?`,
-      [match]
+       WHERE dictionary_gloss_fts MATCH ? ${strongOnly?.sql ?? ""}`,
+      [match, ...strongOnly?.params ?? []]
     );
     const token = glossToken(query);
     const result3 = /* @__PURE__ */ new Map();
@@ -1787,7 +1888,7 @@
       const appliesToShownForms = (senseWrittenForms.length === 0 || senseWrittenForms.includes(normalizeQuery(row.headword))) && (senseReadings.length === 0 || senseReadings.includes(normalizeQuery(row.reading)));
       if (!appliesToShownForms) continue;
       const relation = glossRelation(query, row.text, token);
-      if (relation === null) continue;
+      if (relation === null || strongOnly && relation === GlossRelation.glossToken) continue;
       const evidence = result3.get(row.entry_id) ?? [];
       evidence.push({
         relation,
@@ -1806,6 +1907,9 @@
        WHERE dictionary_form_fts MATCH ? AND f.kind = ${FormKind.romaji}`,
       [match]
     );
+    return romajiRelations(db, query, rows);
+  }
+  function romajiRelations(db, query, rows) {
     const result3 = /* @__PURE__ */ new Map();
     let step = 0;
     for (const row of rows) {
@@ -1929,59 +2033,6 @@
          AND ${readingRestrictionFilter}`,
       params
     );
-  }
-
-  // src/search/composition.ts
-  var searchResultLimit = 60;
-  function noResults() {
-    return {
-      items: [],
-      leadingLexicalEntryCount: 0,
-      presentation: "ranked",
-      resolution: "direct",
-      readingRefinement: null,
-      usesPrimaryEntryExamples: false,
-      hasExactOrPrefixMatch: false
-    };
-  }
-  function resultItems(ranked) {
-    return ranked.map((entry, fallbackOrder) => ({
-      entry: entry.entry,
-      sourceOrder: 0,
-      matchRank: entry.presentationRank,
-      fallbackOrder,
-      matchedSummary: entry.matchedSummary
-    }));
-  }
-  function leadingExactFormCount(items) {
-    let count = 0;
-    for (const item of items) {
-      if (item.matchRank.kind !== "japanese") break;
-      if (item.matchRank.relation > FormRelation.readingExact) break;
-      count++;
-    }
-    return count;
-  }
-  function composing(sources, options) {
-    const limit = options.limit ?? searchResultLimit;
-    const items = [];
-    const seen = /* @__PURE__ */ new Set();
-    compose: for (const [sourceOrder, source] of sources.entries()) {
-      for (const item of source) {
-        if (seen.has(item.entry.id)) continue;
-        seen.add(item.entry.id);
-        items.push({ ...item, sourceOrder, fallbackOrder: items.length });
-        if (items.length === limit) break compose;
-      }
-    }
-    return {
-      ...noResults(),
-      items,
-      leadingLexicalEntryCount: Math.min(options.leadingLexicalEntryCount, items.length),
-      resolution: options.resolution ?? "direct",
-      usesPrimaryEntryExamples: options.usesPrimaryEntryExamples,
-      hasExactOrPrefixMatch: options.hasExactOrPrefixMatch ?? true
-    };
   }
 
   // src/search/deinflect.ts
@@ -2208,6 +2259,7 @@
   }
 
   // src/search/search.ts
+  var sentenceWordLookupLimit = 24;
   function searchFeatures(capabilities) {
     return { sentenceSearch: capabilities.morphology !== void 0 };
   }
@@ -2287,17 +2339,17 @@
         return { ...directResults, usesPrimaryEntryExamples: true };
       }
       if (directResults.items.length > 0) return directResults;
-      const analyzed = await this.analyzedItems(query);
-      if (analyzed.length > 1 || isMixedScript(query) && analyzed.length > 0) {
+      const discovered = isASCII(query) ? await this.englishSentenceItems(query) : await this.analyzedItems(query);
+      if (discovered.length > 1 || isMixedScript(query) && discovered.length > 0) {
         return {
           ...composing(
-            analyzed.map((item) => [item]),
+            discovered.map((item) => [item]),
             {
-              leadingLexicalEntryCount: analyzed.length,
+              leadingLexicalEntryCount: discovered.length,
               usesPrimaryEntryExamples: false,
               hasExactOrPrefixMatch: false,
               resolution: "analyzed",
-              limit: analyzed.length
+              limit: discovered.length
             }
           ),
           presentation: "discoveredWords"
@@ -2332,6 +2384,17 @@
       if (query === "") return false;
       if (isASCII(query)) return (await this.searchOnce(query)).items.length > 0;
       return hasFormContaining(this.db, query);
+    }
+    async englishSentenceItems(query) {
+      const found = [];
+      for (const word of englishSentenceWords(query).slice(0, sentenceWordLookupLimit)) {
+        const [strongest] = resultItems((await rankedByStrongGloss(this.db, word)).slice(0, 1));
+        if (strongest && !found.some((item) => item.entry.id === strongest.entry.id)) {
+          found.push(strongest);
+        }
+        if (found.length === discoveredWordLimit) break;
+      }
+      return found;
     }
     async analyzedItems(query) {
       const morphology = this.capabilities.morphology;

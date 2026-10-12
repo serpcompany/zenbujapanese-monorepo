@@ -75,6 +75,7 @@ export const defaultFrequencyPackIds: Record<string, string> = {
 
 export interface ShownScreen {
   sections: string[]
+  heading: string | null
   examples: { title: string; count: number; primaryEntry: string | null } | null
   readingRefinement: { title: string; query: string } | null
   kanji: { character: string; label: string; summary: string; entry: string | null } | null
@@ -92,6 +93,7 @@ export function caseAsShown(
     ...found,
     state: 'results',
     sections: screen.sections,
+    ...(screen.heading ? { heading: screen.heading } : {}),
     ...(examples
       ? {
           examples: {

@@ -22,6 +22,8 @@ export interface SearchResults {
 
 export const searchResultLimit = 60
 
+export const discoveredWordLimit = 12
+
 export function noResults(): SearchResults {
   return {
     items: [],

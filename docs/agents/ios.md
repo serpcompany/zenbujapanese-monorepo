@@ -457,11 +457,12 @@ and Filter choices re-sort and narrow these rows in the same answer, which the c
 `results/ordering.test.ts` and `results/learner.test.ts` cover, and `ResultsScreenTests` and
 `SearchResultOrderingTests` on the bundled data. Recent searches and known words don't change
 the recorded list. The suite covers queries that match
-directly, deinflected queries (食べた, 見ない), romaji and English queries, wildcards (`t*`, `^t*`), and queries with no
-matches that aren't Japanese. It doesn't cover Japanese queries with no direct match or
-Discovered Words: Search splits those into words with the Sudachi dictionary the app bundles,
-which the package's test host lacks, so recording fails on them. `DictionaryCoreTests` runs one
-such sentence with a stand-in analysis, which checks the path but not Sudachi's words; check
+directly, deinflected queries (食べた, 見ない), romaji and English queries, an English sentence's
+Discovered Words (`where is the bathroom`), wildcards (`t*`, `^t*`), and queries with no matches
+that aren't Japanese. It doesn't cover Japanese queries with no direct match or a Japanese
+sentence's Discovered Words: Search splits those into words with the Sudachi dictionary the app
+bundles, which the package's test host lacks, so recording fails on them.
+`DictionaryCoreTests` runs one such sentence with a stand-in analysis, which checks the path but not Sudachi's words; check
 those in the Simulator.
 The screen's titles, counts, and which rows it shows are the core's answer, which
 `ResultsScreen.swift` decodes for the view and the suite alike. Record it with
@@ -514,13 +515,12 @@ Foundation's transliteration, which the core's romaji replaced, so the file is e
 not re-recorded; a linked sentence's punctuation and counted words are checked in the same
 suite.
 
-The website's dictionary service replays all seven suites through the shared TypeScript core on
-the same data ([`dictionary-api.md`](dictionary-api.md)), once through its own path and once
-through the entry point the app calls, and the `Dictionary API` workflow runs them on pull
-requests that change a suite, so commit a re-recorded suite with the change to the core it
-needs. One thing the website does isn't recorded yet: sentence search (Discovered Words,
-above). The service checks it with its own test (`sentence-search.test.ts`) until a suite
-records it.
+The website's dictionary service replays all seven suites through the shared TypeScript core on the
+same data ([`dictionary-api.md`](dictionary-api.md)), once through its own path and once through the
+entry point the app calls, and the `Dictionary API` workflow runs them on pull requests that change
+a suite, so commit a re-recorded suite with the change to the core it needs. One thing the website
+does isn't recorded yet: Japanese sentence search (Discovered Words, above). The service checks it
+with its own test (`sentence-search.test.ts`) until a suite records it.
 
 The `iOS` workflow ([`ci.md`](ci.md), iOS) runs the data tools' contract tests on pull requests
 that change `apps/ios`, and, on a macOS runner, `SearchExperienceTests` and `TranslatorCoreTests`
@@ -1184,8 +1184,8 @@ Simulator:
 - Under **Account → Frequency Dictionaries**, tapping download on three **Available** packs in a
   row gives each its own progress ring; tapping one ring stops only that pack, which returns to
   its download button and doesn't install, and the others install and move to **Enabled**.
-- `静` keeps its Kanji row first; `日本語を勉強する` shows **Discovered Words**; `見る` offers
-  Example Sentences; `sensei` offers the Japanese-reading refinement (「せんせい」).
+- `静` keeps its Kanji row first; `日本語を勉強する` and `where is the bathroom` show **Discovered Words**;
+  `見る` offers Example Sentences; `sensei` offers the Japanese-reading refinement (「せんせい」).
 - With a pack made unreadable in a debug container, results stay listed and the footer names
   the unavailable dictionary.
 - Rapidly submitting `quiet`, `miru`, then `いる` leaves only `いる` results.

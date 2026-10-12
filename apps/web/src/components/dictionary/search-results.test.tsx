@@ -271,6 +271,7 @@ describe('the search results page', () => {
     })
     const page = readRenderedPage(html)
     expect(page.sections).toEqual(['examples', 'discoveredWords'])
+    expect(page.heading).toBe('Discovered Words')
     expect(page.examples?.href).toBe('/dictionary/日本語-1464530/#examples')
     expect(page.rows.map(row => row.headword)).toEqual(['日本語'])
   })
@@ -280,6 +281,7 @@ interface SuiteCase {
   query: string
   state?: string
   sections?: string[]
+  heading?: string
   examples?: { title: string; count: number }
   readingRefinement?: { title: string }
   kanji?: { character: string; label: string; summary: string }
@@ -291,7 +293,16 @@ interface SuiteCase {
   }[]
 }
 
-const renderedQueries = ['iru', 'いる', '日', 'eat', 'かえる', 'い', 'qzxvkj']
+const renderedQueries = [
+  'iru',
+  'いる',
+  '日',
+  'eat',
+  'かえる',
+  'い',
+  'where is the bathroom',
+  'qzxvkj'
+]
 
 const suiteCases = recordedCases<SuiteCase>('search-results.json').filter(expected =>
   renderedQueries.includes(expected.query)
@@ -333,6 +344,7 @@ describe.runIf(gateEnabled)('the rendered search results page matches the app', 
     expect(page.sections.filter(section => section !== 'searchExamples')).toEqual(
       expected.sections ?? []
     )
+    expect(page.heading).toBe(expected.heading ?? null)
     const target = data.examples?.target
     expect(page.examples).toEqual(
       expected.examples

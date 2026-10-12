@@ -4,6 +4,7 @@ import type { FrequencyRow } from '../detail/rows'
 import { type RubySegment, rubySegments } from '../detail/ruby'
 import { graphemeCount, isKanjiCharacter } from '../detail/text'
 import { exactExampleCountLimit } from '../examples/retrieval'
+import { discoveredWordLimit } from '../search/composition'
 import { normalizeQuery } from '../search/query'
 import { comparePresentationRanks } from '../search/rank'
 import type { SearchDatabase, SearchResultItem, SearchResults } from '../search/search'
@@ -104,8 +105,6 @@ function exampleActionTitle(count: number): string {
   if (count > exactExampleCountLimit) return `View ${exactExampleCountLimit}+ Example Sentences`
   return `View ${count} Example ${count === 1 ? 'Sentence' : 'Sentences'}`
 }
-
-const discoveredWordLimit = 12
 
 export type SearchResultsScreen =
   | { state: 'noResults'; query: string }

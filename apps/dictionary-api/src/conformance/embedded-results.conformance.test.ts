@@ -20,6 +20,7 @@ function shown(screen: Screen, results: EmbeddedSearchResults): ShownScreen {
   const items = new Map(results.items.map(item => [item.id, item]))
   return {
     sections: screen.sections,
+    heading: screen.heading,
     examples: screen.examples && {
       title: screen.examples.title,
       count: screen.examples.count,
@@ -97,10 +98,7 @@ describe.runIf(artifactAvailable)('the app’s results screen on the artifact', 
       actual,
       `「${expected.query}」: expected ${describeRows(wanted.results)} but found ${describeRows(actual.results)}`
     ).toEqual(wanted)
-    if (found.screen.state === 'results') {
-      expect(found.screen.frequencyNotice).toBeNull()
-      expect(found.screen.heading).toBeNull()
-    }
+    if (found.screen.state === 'results') expect(found.screen.frequencyNotice).toBeNull()
   })
 
   test('sorts 「iru」 by YouTube rank, by JLPT level, and by the words the learner knows', async () => {

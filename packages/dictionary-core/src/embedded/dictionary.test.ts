@@ -56,10 +56,14 @@ describe('the embedded dictionary', () => {
 
   test('names the first result as the primary entry when none is written as the query', async () => {
     expect(await ask(host(), 'search', '本')).toMatchObject({ primaryEntry: 'c3' })
-    const nothing = begin(host(), 'search', 'zzz')
+    const nothing = begin(host(), 'search', 'ぞぞぞ')
     await settled(nothing)
     nothing.analyzed('{"words":[]}')
     expect(await settled(nothing)).toMatchObject({ value: { items: [], primaryEntry: null } })
+  })
+
+  test('answers an English query that finds nothing without waiting for an analysis', async () => {
+    expect(await ask(host(), 'search', 'zzz yyy')).toMatchObject({ items: [], primaryEntry: null })
   })
 
   test('gives entries that match equally the same relevance', async () => {
