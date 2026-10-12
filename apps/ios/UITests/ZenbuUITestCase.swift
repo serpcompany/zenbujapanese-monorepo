@@ -6,6 +6,7 @@ class ZenbuUITestCase: XCTestCase {
   static let patience =
     ProcessInfo.processInfo.environment["ZENBU_UI_TEST_PATIENCE"].flatMap(TimeInterval.init) ?? 90
   static let layoutPatience: TimeInterval = 5
+  static let engineOptions = ProcessInfo.processInfo.environment.filter { $0.key == "JSC_useJIT" }
 
   let fixtures = URL(filePath: #filePath)
     .deletingLastPathComponent()
@@ -24,7 +25,7 @@ class ZenbuUITestCase: XCTestCase {
     app.launchEnvironment = [
       "ZENBU_UI_TEST_FRESH": "1",
       "ZENBU_ACCOUNT_API_URL": Self.offlineAccountService,
-    ].merging(environment) { $1 }
+    ].merging(Self.engineOptions) { $1 }.merging(environment) { $1 }
     app.launch()
     XCTAssertTrue(app.wait(for: .runningForeground, timeout: Self.patience))
     return app

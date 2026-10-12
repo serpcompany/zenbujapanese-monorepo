@@ -11,6 +11,36 @@ final class SearchUITests: ZenbuUITestCase {
     assertOnScreen(find("word-detail.more-menu", in: app), in: app)
   }
 
+  func testAnEnglishSentenceListsAWordForEachOfItsWordsAndOpensOne() {
+    let app = launch()
+    search("where is the bathroom", in: app)
+    let words = ["何処, どこ, where", "です, です, is", "その, その, the", "風呂, ふろ, bathroom"]
+    let rows = words.map { result(saying: $0, in: app) }
+    for row in rows {
+      assertOnScreen(row, in: app)
+    }
+    assertOnScreen(labeled("Discovered Words", in: app), in: app)
+    XCTAssertEqual(resultsListed(in: app), words.count, "one word for each word of the sentence")
+    let tops = rows.map(\.frame.minY)
+    XCTAssertEqual(tops, tops.sorted(), "in the sentence's order")
+    tap(rows[3])
+    assertOnScreen(find("word-detail.screen", in: app), in: app)
+    waitFor(labeled("風呂", in: app))
+  }
+
+  func testAnEnglishQueryFindsTheExampleSentenceWithItsWordsInAnotherForm() {
+    let app = launch()
+    search("startled you", in: app)
+    let examples = find("search.examples", in: app)
+    assertOnScreen(examples, in: app)
+    XCTAssertEqual(text(of: examples), "View 1 Example Sentence")
+    tap(examples, toShow: find("example-list.screen", in: app))
+    let sentence = app.descendants(matching: .any)
+      .matching(NSPredicate(format: "label CONTAINS %@", "I didn't mean to startle you."))
+      .firstMatch
+    assertOnScreen(sentence, in: app)
+  }
+
   func testAWordOpensItsKanjiAndBackReturnsToTheWord() {
     let app = launch()
     search("japan", in: app)
@@ -85,6 +115,21 @@ final class SearchUITests: ZenbuUITestCase {
     XCTAssertFalse(labeled("Recent", in: app).exists, "recent searches have no heading")
     tap(find("recent-search.0", in: app))
     waitFor(find("result.japan", in: app))
+  }
+
+  private func result(saying label: String, in app: XCUIApplication) -> XCUIElement {
+    app.descendants(matching: .any)
+      .matching(
+        NSPredicate(
+          format: "identifier BEGINSWITH 'result.' AND (label == %@ OR label BEGINSWITH %@)",
+          label, label + ","))
+      .firstMatch
+  }
+
+  private func resultsListed(in app: XCUIApplication) -> Int {
+    let rows = app.descendants(matching: .any)
+      .matching(NSPredicate(format: "identifier BEGINSWITH 'result.'"))
+    return Set(rows.allElementsBoundByIndex.map(\.identifier)).count
   }
 
   func testMarkingAResultKnownShowsTheKnownCapsule() {

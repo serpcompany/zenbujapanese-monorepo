@@ -174,7 +174,9 @@ can't be read is named, and the others still order the list); core `detail/frequ
 `SearchResultsConformanceTests` (the refinement, Example Sentences, and Kanji rows, and four
 English sentences) and `ExampleSearchConformanceTests` (`startled you` and `generously`); UI
 `SearchResultsUITests.testARomajiQueryOffersItsJapaneseReading`,
-`testAWordOffersItsExampleSentences`, and `SearchUITests.testAQueryWithNoMatchesSaysSo`.
+`testAWordOffersItsExampleSentences`, `SearchUITests.testAQueryWithNoMatchesSaysSo`,
+`testAnEnglishSentenceListsAWordForEachOfItsWordsAndOpensOne`, and
+`testAnEnglishQueryFindsTheExampleSentenceWithItsWordsInAnotherForm`.
 
 Recent text searches are stored on the device and listed while the query is empty. A learner can
 repeat a search, remove one by swiping or long-pressing it, or clear the entire history from the
@@ -320,8 +322,7 @@ Check: the recorded `WordDetailConformanceTests` (each pack's row and its detail
 Selectable Japanese inside Word Detail and Example Sentences uses the same interactive word-boundary
 analysis as Image Search. Selecting a linked word continues into its normal dictionary entry.
 
-Check: package `LinkedWordResolutionTests`; UI `ImageSearchUITests` (a linked word opens its
-entry).
+Check: package `LinkedWordResolutionTests`; UI `ImageSearchUITests` (a linked word opens its entry).
 
 The top-right of a word detail holds **Share**, which shares the headword, reading, and numbered
 meanings as text, and a **•••** menu. The menu starts with **Mark as Known** (or **Mark as
@@ -359,11 +360,10 @@ learner's place in the preceding detail.
 Check: the recorded `KanjiDetailConformanceTests`; package `KanjiScrollMemoryTests`; UI
 `WordDetailUITests.testAKanjiShowsItsStrokeOrderAndItsWords`.
 
-An element's page shows the element, its meanings and what it contributes, the on-readings it
-links, its alternative forms, the kanji it is on its own (the most frequent among the element
-and its alternatives), the kanji that contain it, each with up to three meanings and its
-on-readings, and the sources. A kanji opens its own detail, and coming back returns to it in
-the list.
+An element's page shows the element, its meanings and what it contributes, the on-readings it links,
+its alternative forms, the kanji it is on its own (the most frequent among the element and its
+alternatives), the kanji that contain it, each with up to three meanings and its on-readings, and
+the sources. A kanji opens its own detail, and coming back returns to it in the list.
 
 Check: the recorded `KanjiElementConformanceTests`; core `detail/kanji-element.test.ts`; package
 `KanjiScrollMemoryTests` and `KanjiFilesTests` (a compatibility kanji and the kanji it unifies
