@@ -20,7 +20,15 @@ const tests = testsIn(
       'apps/ios/Tools/tests/test_simulator.py',
       'class SimulatorTests(unittest.TestCase):\n    def test_delete(self) -> None: ...'
     ],
-    ['apps/web/e2e/page-types.ts', 'export function testEachPageType(name: string) {}']
+    [
+      'apps/ios/Tools/TranslateReplay/Tests/TranslateReplayTests/ScoreTests.swift',
+      'struct ScoreTests {\n  @Test func scoresAMatch() {}\n}'
+    ],
+    [
+      'apps/web/e2e/page-types.ts',
+      'export function testEachPageType(name: string) {}\ntest.skip(testInfo.project.name)'
+    ],
+    ['apps/web/playwright.config.ts', "export default defineConfig({ testDir: 'e2e' })"]
   ])
 )
 
@@ -32,6 +40,7 @@ describe('a test a doc names', () => {
     'apps/ios/Tools/tests/test_simulator.py',
     'apps/web/e2e/page-types.ts',
     'apps/web/src/lib/site.test.ts',
+    'apps/web/playwright.config.ts',
     'apps/dictionary-api/src/conformance/suites.ts'
   ])('is looked for in %s', path => {
     expect(isTestSource(path)).toBe(true)
@@ -50,10 +59,15 @@ describe('a test a doc names', () => {
     'SearchUITests.testTheFieldOffersClose',
     'testAQueryWithNoMatchesSaysSo',
     'testEachPageType',
+    'testInfo',
+    'testDir',
+    'test_delete',
+    'SimulatorTests.test_delete',
     'SearchUITests',
     'AppCommandTests',
     'SimulatorTests',
     'SearchExperienceTests',
+    'TranslateReplayTests',
     'ZenbuJapaneseUITests',
     'AppCommandTests.everyTabHasAShortcut',
     'pnpm test',
@@ -67,7 +81,9 @@ describe('a test a doc names', () => {
     ['SearchUITests.testItWasRenamed', 'SearchUITests has no test called testItWasRenamed'],
     ['SearchInputUITests.testAQueryWithNoMatchesSaysSo', 'SearchInputUITests has no test called'],
     ['RemovedUITests.testAQueryWithNoMatchesSaysSo', 'no test type is called RemovedUITests'],
-    ['testItWasRenamed', 'no test is called that'],
+    ['testItWasRenamed', 'no test code names that'],
+    ['test_it_was_renamed', 'no test code names that'],
+    ['SimulatorTests.test_prune', 'SimulatorTests has no test called test_prune'],
     ['RemovedUITests', 'no test type or target is called that']
   ])('reports %s, which nothing defines', (code, problem) => {
     expect(missingTest(code, tests)).toContain(problem)
@@ -95,13 +111,15 @@ describe('a path a doc names inside its package', () => {
     ['e2e/urls.spec.ts:35', 'apps/web/e2e/urls.spec.ts'],
     ['./scripts/smoke.sh,', 'apps/web/scripts/smoke.sh'],
     ['src/app/dictionary/[word]/page.tsx', 'apps/web/src/app/dictionary/[word]/page.tsx'],
-    ['src/lib/', 'apps/web/src/lib']
+    ['src/lib/', 'apps/web/src/lib'],
+    ['migrations/0001_start.sql', 'apps/web/migrations/0001_start.sql']
   ])('reads %s as %s', (code, path) => {
     expect(packagePath(code, 'apps/web')).toBe(path)
   })
 
   test.each([
     'apps/web/src/lib/site.ts',
+    'deploy/deployer.sh',
     'pnpm test',
     'src',
     'https://example.com/src/x'

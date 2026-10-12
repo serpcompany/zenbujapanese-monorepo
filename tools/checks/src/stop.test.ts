@@ -2,8 +2,7 @@ import { existsSync, mkdtempSync, rmSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { afterEach, expect, test } from 'vitest'
-import { changedPaths } from '../route.mjs'
-import { alreadyTold, toldFile } from './stop'
+import { alreadyTold, changedPaths, toldFile } from '../route.mjs'
 
 const folders: string[] = []
 const scratch = () => {

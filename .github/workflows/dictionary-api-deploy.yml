@@ -63,6 +63,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 30
     permissions:
+      actions: read
       contents: read
       packages: write
     outputs:
@@ -71,6 +72,11 @@ jobs:
       TAG: ${{ inputs.tag }}
     steps:
       - uses: actions/checkout@v5
+      - name: Refuse to deploy from an old run started again
+        if: github.event_name != 'pull_request'
+        uses: ./.github/actions/latest-run
+        with:
+          workflow: dictionary-api-deploy.yml
       - name: Name the release
         id: release
         run: |
@@ -190,8 +196,7 @@ jobs:
         with:
           sparse-checkout: .github/actions
           persist-credentials: false
-      - name: Stop when a later run has taken over
-        id: latest
+      - name: Refuse to deploy from an old run started again
         uses: ./.github/actions/latest-run
         with:
           workflow: dictionary-api-deploy.yml
@@ -210,10 +215,8 @@ jobs:
           cosign verify --certificate-identity "$SIGNER" \
             --certificate-oidc-issuer https://token.actions.githubusercontent.com "$IMAGE_REFERENCE" >/dev/null
       - name: Sign the image
-        if: steps.latest.outputs.deploy == 'true'
         run: cosign sign --yes "$IMAGE_REFERENCE"
       - name: Move the :staging tag to the image
-        if: steps.latest.outputs.deploy == 'true'
         run: docker buildx imagetools create --prefer-index=false --tag "$IMAGE:staging" "$IMAGE_REFERENCE"
 
   production:
@@ -233,8 +236,7 @@ jobs:
         with:
           sparse-checkout: .github/actions
           persist-credentials: false
-      - name: Stop when a later run has taken over
-        id: latest
+      - name: Refuse to deploy from an old run started again
         uses: ./.github/actions/latest-run
         with:
           workflow: dictionary-api-deploy.yml
@@ -245,5 +247,4 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
       - name: Move the :production tag to the image
-        if: steps.latest.outputs.deploy == 'true'
         run: docker buildx imagetools create --prefer-index=false --tag "$IMAGE:production" "$IMAGE_REFERENCE"

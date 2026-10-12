@@ -13,6 +13,11 @@ export const noIssueReason = body => /^No issue: *\S.*$/im.exec(body)?.[0]
 export const issueRule =
   'A pull request closes the issue it finishes, so an open issue always means work is left (docs/agents/code.md, Pull requests). Start the body with Closes #<number>, one line per issue, or say why there is none on a line of its own: No issue: <reason>. "Part of #N" and "Refs #N" close nothing.'
 
+export const otherBase = (base, defaultBranch) =>
+  base && defaultBranch && base !== defaultBranch
+    ? `This pull request is based on ${base}, not ${defaultBranch}, and GitHub links a closing keyword only on a pull request into ${defaultBranch}. The check passes once it is retargeted, which GitHub does when its parent merges.`
+    : ''
+
 const testPaths = [
   /\.(test|spec)\.[cm]?[jt]sx?$/,
   /(^|\/)test_[^/]+\.py$/,
@@ -87,7 +92,8 @@ async function check(name, environment) {
       if (closes) return { passed: true, message: `Closes ${closes}` }
       if (attempt < 3) await wait(5000)
     }
-    return { passed: false, message: issueRule }
+    const stacked = otherBase(environment.PR_BASE, environment.DEFAULT_BRANCH)
+    return { passed: false, message: stacked || issueRule }
   }
   if (name === 'fix-test') {
     const branch = environment.PR_BRANCH ?? ''

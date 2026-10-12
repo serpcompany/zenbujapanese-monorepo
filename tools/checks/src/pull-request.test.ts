@@ -1,7 +1,13 @@
 import { spawnSync } from 'node:child_process'
 import { join } from 'node:path'
 import { expect, test } from 'vitest'
-import { isConventionalTitle, issueRule, noIssueReason, titleRule } from '../pull-request.mjs'
+import {
+  isConventionalTitle,
+  issueRule,
+  noIssueReason,
+  otherBase,
+  titleRule
+} from '../pull-request.mjs'
 import { root } from './files'
 
 test.each([
@@ -55,4 +61,12 @@ test('the issue-link check takes a stated reason without asking GitHub', () => {
   expect(exempt.status).toBe(0)
   expect(exempt.stdout).toContain('No issue: a doc fix found on the way')
   expect(issueRule).toContain('Closes #<number>')
+})
+
+test('a pull request stacked on another branch is told why GitHub links no issue to it yet', () => {
+  expect(otherBase('feat/701-parent', 'main')).toContain('based on feat/701-parent, not main')
+  expect(otherBase('feat/701-parent', 'main')).toContain('once it is retargeted')
+  expect(otherBase('main', 'main')).toBe('')
+  expect(otherBase(undefined, 'main')).toBe('')
+  expect(otherBase('main', undefined)).toBe('')
 })

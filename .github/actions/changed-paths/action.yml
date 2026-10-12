@@ -5,7 +5,7 @@ description: >-
   that doesn't concern it. Needs a checkout. On any other event it answers true.
 inputs:
   paths:
-    description: Folders and files to look under, separated by spaces, from the repository root.
+    description: Folders and files to look under, separated by spaces or new lines, from the repository root.
     required: true
 outputs:
   changed:
@@ -25,7 +25,7 @@ runs:
           exit 0
         fi
         git fetch --no-tags --depth=1 origin "$BASE"
-        read -r -a paths <<< "$PATHS"
+        read -r -d '' -a paths <<< "$PATHS" || true
         if git diff --quiet "$BASE" HEAD -- "${paths[@]}"; then
           echo "changed=false" >> "$GITHUB_OUTPUT"
         else

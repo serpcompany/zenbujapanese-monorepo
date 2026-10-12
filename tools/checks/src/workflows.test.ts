@@ -124,6 +124,12 @@ describe('the changed-paths action', () => {
     expect(changed(checkout, base, 'app.txt docs')).toBe('changed=false')
   })
 
+  test('reads paths written one to a line as well as on one line', () => {
+    const { checkout, base } = clone()
+    expect(changed(checkout, base, 'docs\napp.txt\nweb.txt\n')).toBe('changed=true')
+    expect(changed(checkout, base, 'docs\n  app.txt\n')).toBe('changed=false')
+  })
+
   test('answers true when there is no base to compare with', () => {
     const { checkout } = clone()
     expect(changed(checkout, '', 'app.txt')).toBe('changed=true')

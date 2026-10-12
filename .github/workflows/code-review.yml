@@ -283,12 +283,12 @@ jobs:
               .filter(block => block?.type === 'tool_use' && ['Task', 'Agent'].includes(block.name)).length
           const coverageProblem = (summary, changedFiles) => {
             if (!summary) return "Claude posted findings but no summary, so the review doesn't say how much of the change it read."
-            const coverage = /^Read (\d+) of (\d+) changed files\./m.exec(summary)
+            const coverage = /^[\s>*_-]*Read (\d+) of (\d+) changed files?\b/m.exec(summary)
             if (!coverage) return 'The summary has no "Read <N> of <M> changed files." line, so it doesn\'t say how much of the change was read.'
             const [read, total] = [Number(coverage[1]), Number(coverage[2])]
             if (total !== changedFiles) return `The summary counts ${total} changed files, and the pull request changes ${changedFiles}.`
             if (read > total) return `The summary says ${read} of ${total} changed files were read.`
-            if (read < total && !/^Not read:/m.test(summary)) return `The summary says ${read} of ${total} changed files were read, and names none of the rest on a "Not read:" line.`
+            if (read < total && !/^[\s>*_-]*Not read:/m.test(summary)) return `The summary says ${read} of ${total} changed files were read, and names none of the rest on a "Not read:" line.`
             return ''
           }
           const main = async () => {

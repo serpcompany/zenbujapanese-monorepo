@@ -1,9 +1,11 @@
 import { spawnSync } from 'node:child_process'
-import { existsSync, realpathSync } from 'node:fs'
+import { createHash } from 'node:crypto'
+import { existsSync, mkdirSync, readFileSync, realpathSync, writeFileSync } from 'node:fs'
 import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
 const here = dirname(dirname(dirname(fileURLToPath(import.meta.url))))
+const sessionName = /^[A-Za-z0-9_-]{1,128}$/
 
 const real = path => {
   try {
@@ -44,25 +46,45 @@ export function changedPaths(...listings) {
   return [...paths].sort()
 }
 
+export function toldFile(checkout, session) {
+  if (!session || !sessionName.test(session)) return undefined
+  return join(checkout, 'tmp', 'agent', 'stop-hook', `${session}.txt`)
+}
+
+export function alreadyTold(file, report) {
+  if (!file) return false
+  const key = createHash('sha256').update(report).digest('hex')
+  if (existsSync(file) && readFileSync(file, 'utf8') === key) return true
+  mkdirSync(dirname(file), { recursive: true })
+  writeFileSync(file, key)
+  return false
+}
+
+export function refuseUninstalled(checkout = here, told = () => false) {
+  const advice = installAdvice(checkout)
+  if (process.env.GITHUB_ACTIONS === 'true' || told(advice)) process.exit(0)
+  process.stderr.write(`${advice}\n`)
+  process.exit(2)
+}
+
 export function follow(route, input) {
-  if (route.kind === 'here') return
   if (route.kind === 'skip') process.exit(0)
-  if (route.kind === 'install') {
-    process.stderr.write(`${installAdvice(route.checkout)}\n`)
-    process.exit(2)
-  }
-  const result = spawnSync(process.execPath, [route.script], { input, encoding: 'utf8' })
+  if (route.kind !== 'elsewhere') return
+  const result = spawnSync(process.execPath, [route.script], {
+    input,
+    encoding: 'utf8',
+    maxBuffer: 64 * 1024 * 1024
+  })
   if (result.stderr) process.stderr.write(result.stderr)
   process.exit(result.status ?? 1)
 }
 
-export async function loadChecks(load) {
+export async function loadChecks(load, refuse = refuseUninstalled) {
   let tsx
   try {
     tsx = await import('tsx/esm/api')
   } catch {
-    process.stderr.write(`${installAdvice(here)}\n`)
-    process.exit(2)
+    refuse()
   }
   tsx.register()
   return load()

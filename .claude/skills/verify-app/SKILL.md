@@ -24,7 +24,7 @@ platform).
 ## 2. Run
 
 From the repository root, in the background, since a run takes minutes. Name the run, then the
-tests as `Class` or `Class/test`:
+tests as `Class`, `Class/test`, or `Class.test` as the product docs write them:
 
 ```sh
 .claude/skills/verify-app/run.sh search SearchUITests/testAnEnglishSearchListsTheWordAndOpensItsDetail
@@ -40,7 +40,8 @@ The script does each part of a run:
   other Simulators are running. Read it before trusting a result: the Simulator's name starts
   with `zenbu-japanese`, Xcode is the version `.xcode-version` pins, and no other Simulator is
   running. Shut down one this checkout left running; another agent's is its own.
-- **Launch.** `build-for-testing` into this checkout's build folder. `** TEST BUILD SUCCEEDED **`
+- **Launch.** It boots the Simulator first, so a `prune` run elsewhere sees it in use, then runs
+  `build-for-testing` into this checkout's build folder. `** TEST BUILD SUCCEEDED **`
   in `build.log` is the ready signal, and a failed build stops the run. The app installs as
   `com.zenbujapanese.dictionary.uitests`, apart from any Zenbu a person installed.
 - **Drive.** `test-without-building`, with `-only-testing` for each test named.
@@ -48,8 +49,9 @@ The script does each part of a run:
   whole run), `shots/` (a screenshot every 3 seconds, the first 150), and `test.log`.
 - **Cleanup.** It shuts down the Simulator it booted, and nothing else.
 
-Its exit status is the tests'. A test that fails once and passes the next time is a failing test:
-fix it rather than run it again.
+Its exit status is the tests', and a run in which no test ran fails: a name that matches nothing
+would otherwise leave proof of nothing. A test that fails once and passes the next time is a
+failing test: fix it rather than run it again.
 
 ## 3. Read the proof
 

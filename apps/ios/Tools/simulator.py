@@ -16,6 +16,7 @@ KINDS = {
 }
 SCOPE_VARIABLE = "ZENBU_SIMULATOR_SCOPE"
 SEPARATOR = "--"
+SCOPE = re.compile(r"^[A-Za-z0-9._-]+$")
 BUILD_CACHE = Path.home() / "Library" / "Caches" / "com.zenbujapanese.build" / "DerivedData"
 
 
@@ -34,7 +35,8 @@ def safe_scope(scope: str) -> str:
 def scope_in(name: str) -> str | None:
     for base, _ in KINDS.values():
         if name.startswith(base + SEPARATOR):
-            return name[len(base) + len(SEPARATOR) :]
+            scope = name[len(base) + len(SEPARATOR) :]
+            return scope if SCOPE.match(scope) and scope.strip(".") else None
     return None
 
 
@@ -42,15 +44,17 @@ def scope_names(scope: str) -> set[str]:
     return {simulator_name(kind, scope) for kind in KINDS}
 
 
-def newest_device_type(kind: str, device_types: list[dict]) -> str:
+def newest_device_type(kind: str, runtime: dict) -> str:
     pattern = KINDS[kind][1]
     ranked = [
         (int(found.group(1)), device["identifier"])
-        for device in device_types
+        for device in runtime.get("supportedDeviceTypes", [])
         if (found := pattern.match(device["name"]))
     ]
     if not ranked:
-        raise SystemExit(f"No Simulator device type matches {pattern.pattern}. Install one in Xcode.")
+        raise SystemExit(
+            f"iOS {runtime['version']} runs no Simulator device that matches {pattern.pattern}."
+        )
     return max(ranked)[1]
 
 
@@ -58,9 +62,9 @@ def version(text: str) -> list[int]:
     return [int(part) for part in text.split(".")]
 
 
-def newest_runtime(runtimes: list[dict], sdk: str) -> str:
+def newest_runtime(runtimes: list[dict], sdk: str) -> dict:
     ranked = [
-        (version(runtime["version"]), runtime["identifier"])
+        (version(runtime["version"]), runtime["identifier"], runtime)
         for runtime in runtimes
         if runtime.get("isAvailable")
         and ".SimRuntime.iOS-" in runtime["identifier"]
@@ -71,7 +75,7 @@ def newest_runtime(runtimes: list[dict], sdk: str) -> str:
             f"No installed iOS Simulator runtime is iOS {sdk} or older, which is the newest "
             "the selected Xcode runs. Install one in Xcode."
         )
-    return max(ranked)[1]
+    return max(ranked, key=lambda entry: entry[:2])[2]
 
 
 def every(devices: dict[str, list[dict]]) -> list[dict]:
@@ -104,16 +108,20 @@ def derived_data(scope: str | None, cache: Path = BUILD_CACHE) -> Path:
     return cache / simulator_name("iphone", scope)
 
 
+def run(*command: str) -> str:
+    done = subprocess.run(command, capture_output=True, text=True)
+    if done.returncode != 0:
+        said = done.stderr.strip() or done.stdout.strip()
+        raise SystemExit(f"{' '.join(command)} failed: {said}")
+    return done.stdout
+
+
 def git(*arguments: str) -> str:
-    return subprocess.run(
-        ["git", *arguments], check=True, capture_output=True, text=True
-    ).stdout.strip()
+    return run("git", *arguments).strip()
 
 
 def xcrun(*arguments: str) -> str:
-    return subprocess.run(
-        ["xcrun", *arguments], check=True, capture_output=True, text=True
-    ).stdout
+    return run("xcrun", *arguments)
 
 
 def simctl(*arguments: str) -> str:
@@ -148,10 +156,9 @@ def udid(kind: str, scope: str | None) -> str:
     existing = find(listed("devices")["devices"], name)
     if existing:
         return existing
-    device_type = newest_device_type(kind, listed("devicetypes")["devicetypes"])
     sdk = xcrun("--sdk", "iphonesimulator", "--show-sdk-version").strip()
     runtime = newest_runtime(listed("runtimes")["runtimes"], sdk)
-    return simctl("create", name, device_type, runtime).strip()
+    return simctl("create", name, newest_device_type(kind, runtime), runtime["identifier"]).strip()
 
 
 def remove(scope: str, devices: dict[str, list[dict]], cache: Path = BUILD_CACHE) -> list[str]:
@@ -163,7 +170,8 @@ def remove(scope: str, devices: dict[str, list[dict]], cache: Path = BUILD_CACHE
             simctl("delete", device["udid"])
             removed.append(device["name"])
     folder = derived_data(scope, cache)
-    if folder.is_dir() and not folder.is_symlink():
+    inside = folder.resolve().parent == cache.resolve()
+    if inside and folder.is_dir() and not folder.is_symlink():
         shutil.rmtree(folder)
         removed.append(str(folder))
     return removed

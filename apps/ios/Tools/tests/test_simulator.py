@@ -16,11 +16,23 @@ DEVICE_TYPES = [
     {"name": "iPad Pro 13-inch (M5) (16GB)", "identifier": "type.iPad-Pro-13-inch-M5-16GB"},
     {"name": "iPad Pro 11-inch (M5)", "identifier": "type.iPad-Pro-11-inch-M5"},
 ]
+OLDER_DEVICE_TYPES = [DEVICE_TYPES[0], DEVICE_TYPES[3]]
+
+
+def runtime(name: str, version: str, device_types: list, is_available: bool = True) -> dict:
+    return {
+        "identifier": f"com.apple.CoreSimulator.SimRuntime.{name}",
+        "version": version,
+        "isAvailable": is_available,
+        "supportedDeviceTypes": device_types,
+    }
+
+
 RUNTIMES = [
-    {"identifier": "com.apple.CoreSimulator.SimRuntime.iOS-18-6", "version": "18.6", "isAvailable": True},
-    {"identifier": "com.apple.CoreSimulator.SimRuntime.iOS-26-2", "version": "26.2", "isAvailable": True},
-    {"identifier": "com.apple.CoreSimulator.SimRuntime.iOS-27-0", "version": "27.0", "isAvailable": False},
-    {"identifier": "com.apple.CoreSimulator.SimRuntime.watchOS-26-2", "version": "26.2", "isAvailable": True},
+    runtime("iOS-18-6", "18.6", OLDER_DEVICE_TYPES),
+    runtime("iOS-26-2", "26.2", DEVICE_TYPES),
+    runtime("iOS-27-0", "27.0", DEVICE_TYPES, is_available=False),
+    runtime("watchOS-26-2", "26.2", []),
 ]
 
 
@@ -72,27 +84,41 @@ class SimulatorTests(unittest.TestCase):
         self.assertIsNone(simulator.scope_in("keybumps--issue-9-gone"))
         self.assertIsNone(simulator.scope_in("iPhone 17 Pro Max"))
 
+    def test_a_name_that_could_lead_out_of_the_build_cache_has_no_scope(self) -> None:
+        for name in [
+            "zenbu-japanese--x/../../../..",
+            "zenbu-japanese--..",
+            "zenbu-japanese--.",
+            "zenbu-japanese--a b",
+            "zenbu-japanese--",
+        ]:
+            self.assertIsNone(simulator.scope_in(name), name)
+        hand_made = {"runtime": [device("zenbu-japanese--x/../../../..", "HAND-MADE")]}
+        self.assertEqual(simulator.prunable_scopes(hand_made, ["zenbu-japanese--x"], set()), ["x"])
+
     def test_a_new_simulator_is_the_newest_large_iphone_or_ipad(self) -> None:
-        self.assertEqual(simulator.newest_device_type("iphone", DEVICE_TYPES), "type.iPhone-17-Pro-Max")
-        self.assertEqual(simulator.newest_device_type("ipad", DEVICE_TYPES), "type.iPad-Pro-13-inch-M5")
-        with self.assertRaises(SystemExit):
-            simulator.newest_device_type("iphone", [])
+        newest, older = RUNTIMES[1], RUNTIMES[0]
+        self.assertEqual(simulator.newest_device_type("iphone", newest), "type.iPhone-17-Pro-Max")
+        self.assertEqual(simulator.newest_device_type("ipad", newest), "type.iPad-Pro-13-inch-M5")
+        self.assertEqual(simulator.newest_device_type("iphone", older), "type.iPhone-16-Pro-Max")
+        self.assertEqual(simulator.newest_device_type("ipad", older), "type.iPad-Pro-13-inch-M4")
+        with self.assertRaises(SystemExit) as none:
+            simulator.newest_device_type("iphone", RUNTIMES[3])
+        self.assertIn("iOS 26.2 runs no Simulator device", str(none.exception))
 
     def test_a_new_simulator_runs_the_newest_ios_the_selected_xcode_can(self) -> None:
         newer = [
             *RUNTIMES,
-            {"identifier": "com.apple.CoreSimulator.SimRuntime.iOS-26-5", "version": "26.5", "isAvailable": True},
-            {"identifier": "com.apple.CoreSimulator.SimRuntime.iOS-26-2-1", "version": "26.2.1", "isAvailable": True},
+            runtime("iOS-26-5", "26.5", DEVICE_TYPES),
+            runtime("iOS-26-2-1", "26.2.1", DEVICE_TYPES),
         ]
-        self.assertEqual(
-            simulator.newest_runtime(newer, "26.2"), "com.apple.CoreSimulator.SimRuntime.iOS-26-2-1"
-        )
-        self.assertEqual(
-            simulator.newest_runtime(newer, "26.6"), "com.apple.CoreSimulator.SimRuntime.iOS-26-5"
-        )
-        self.assertEqual(
-            simulator.newest_runtime(newer, "18.6"), "com.apple.CoreSimulator.SimRuntime.iOS-18-6"
-        )
+
+        def chosen(sdk: str) -> str:
+            return simulator.newest_runtime(newer, sdk)["identifier"]
+
+        self.assertEqual(chosen("26.2"), "com.apple.CoreSimulator.SimRuntime.iOS-26-2-1")
+        self.assertEqual(chosen("26.6"), "com.apple.CoreSimulator.SimRuntime.iOS-26-5")
+        self.assertEqual(chosen("18.6"), "com.apple.CoreSimulator.SimRuntime.iOS-18-6")
         with self.assertRaises(SystemExit) as none:
             simulator.newest_runtime(newer, "18.0")
         self.assertIn("iOS 18.0 or older", str(none.exception))
@@ -151,6 +177,25 @@ class SimulatorTests(unittest.TestCase):
                 sorted(entry.name for entry in cache.iterdir()),
                 ["zenbu-japanese", "zenbu-japanese--issue-12-sidebar"],
             )
+
+    def test_removing_a_scope_never_reaches_outside_the_build_cache(self) -> None:
+        with tempfile.TemporaryDirectory() as scratch:
+            cache = Path(scratch) / "cache"
+            outside = Path(scratch) / "outside"
+            (cache / "zenbu-japanese--x").mkdir(parents=True)
+            (outside / "kept").mkdir(parents=True)
+            (cache / "zenbu-japanese--linked").symlink_to(outside, target_is_directory=True)
+            with mock.patch.object(simulator, "simctl"):
+                self.assertEqual(simulator.remove("x/../..", {}, cache), [])
+                self.assertEqual(simulator.remove("linked", {}, cache), [])
+            self.assertTrue((outside / "kept").is_dir())
+            self.assertTrue((cache / "zenbu-japanese--x").is_dir())
+
+    def test_a_tool_that_fails_says_why(self) -> None:
+        with self.assertRaises(SystemExit) as failed:
+            simulator.run("git", "no-such-command")
+        self.assertIn("git no-such-command failed:", str(failed.exception))
+        self.assertIn("is not a git command", str(failed.exception))
 
     def test_a_running_simulator_is_shut_down_before_its_own_scope_deletes_it(self) -> None:
         with tempfile.TemporaryDirectory() as scratch, mock.patch.object(

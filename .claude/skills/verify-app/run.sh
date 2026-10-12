@@ -2,7 +2,7 @@
 set -u
 
 usage() {
-  echo "Usage: run.sh <name> [--device iphone|ipad] <Class[/test]>..." >&2
+  echo "Usage: run.sh <name> [--device iphone|ipad] <Class[/test] or Class.test>..." >&2
   echo "Builds the app for testing on this checkout's own Simulator, runs those UI tests," >&2
   echo "and keeps the proof in tmp/agent/verify/<date>-<name>/." >&2
   exit 2
@@ -33,6 +33,9 @@ printf 'RUN=%s\nUDID=%s\nBUILD=%s\nDEVICE=%s\n' "$run" "$udid" "$build" "$device
   echo "other Simulators running: $(xcrun simctl list devices | grep Booted | grep -vc "$udid")"
 } | tee "$run/doctor.txt"
 
+xcrun simctl boot "$udid" 2>/dev/null
+xcrun simctl bootstatus "$udid" -b >/dev/null
+
 arguments=(-project apps/ios/ZenbuJapanese.xcodeproj -scheme ZenbuJapanese
   -destination "platform=iOS Simulator,id=$udid" -derivedDataPath "$build"
   ONLY_ACTIVE_ARCH=YES ARCHS=arm64 ZENBU_BUNDLE_ID_SUFFIX=.uitests)
@@ -41,17 +44,16 @@ xcodebuild "${arguments[@]}" build-for-testing >"$run/build.log" 2>&1
 built=$?
 grep -a -E '^\*\* |: error: ' "$run/build.log"
 if [ "$built" -ne 0 ]; then
+  xcrun simctl shutdown "$udid"
   echo "The build failed. Its log is $run/build.log"
   exit 1
 fi
 
 only=()
 for test in "$@"; do
-  only+=("-only-testing:ZenbuJapaneseUITests/$test")
+  only+=("-only-testing:ZenbuJapaneseUITests/${test/.//}")
 done
 
-xcrun simctl boot "$udid" 2>/dev/null
-xcrun simctl bootstatus "$udid" -b >/dev/null
 xcrun simctl io "$udid" recordVideo --codec h264 --force "$run/run.mp4" >"$run/video.log" 2>&1 &
 video=$!
 rm -rf "$run/run.xcresult"
@@ -73,6 +75,12 @@ wait "$video" 2>/dev/null
 xcrun simctl shutdown "$udid"
 
 grep -a -E "^Test Case .* (passed|failed)|: error: " "$run/test.log"
-grep -a -E "^[[:space:]]+Executed [0-9]+ tests?, with" "$run/test.log" | tail -n 1
+executed=$(grep -a -E "^[[:space:]]+Executed [0-9]+ tests?, with" "$run/test.log" | tail -n 1)
+echo "$executed"
 echo "Proof: $run (run.xcresult, run.mp4, shots/, doctor.txt)"
+ran=$(sed -E 's/^[[:space:]]+Executed ([0-9]+) .*/\1/' <<<"$executed")
+if [ "$result" -eq 0 ] && [ "${ran:-0}" -eq 0 ]; then
+  echo "No test ran: nothing in ZenbuJapaneseUITests is named $*. The run proves nothing."
+  exit 1
+fi
 exit "$result"

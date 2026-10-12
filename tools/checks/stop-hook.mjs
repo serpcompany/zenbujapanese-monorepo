@@ -1,13 +1,23 @@
 import { spawnSync } from 'node:child_process'
 import { readFileSync } from 'node:fs'
-import { changedPaths, follow, loadChecks, owningCheckout, routeHook } from './route.mjs'
+import {
+  alreadyTold,
+  changedPaths,
+  follow,
+  loadChecks,
+  owningCheckout,
+  refuseUninstalled,
+  routeHook,
+  toldFile
+} from './route.mjs'
 
 const input = readFileSync(0, 'utf8') || '{}'
 const call = JSON.parse(input)
-if (call.stop_hook_active) process.exit(0)
+if (call.stop_hook_active || process.env.GITHUB_ACTIONS === 'true') process.exit(0)
 
 const checkout = owningCheckout(call.cwd ?? process.cwd())
-follow(routeHook(checkout, 'stop-hook.mjs'), input)
+const route = routeHook(checkout, 'stop-hook.mjs')
+follow(route, input)
 
 const git = (...args) => spawnSync('git', args, { cwd: checkout, encoding: 'utf8' }).stdout ?? ''
 const changed = changedPaths(
@@ -16,5 +26,9 @@ const changed = changedPaths(
 )
 if (!changed.length) process.exit(0)
 
-const { stopHook } = await loadChecks(() => import('./src/stop-hook.ts'))
+const refuse = () =>
+  refuseUninstalled(checkout, advice => alreadyTold(toldFile(checkout, call.session_id), advice))
+if (route.kind === 'install') refuse()
+
+const { stopHook } = await loadChecks(() => import('./src/stop-hook.ts'), refuse)
 await stopHook(changed, call.session_id)

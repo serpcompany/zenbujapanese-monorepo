@@ -1,20 +1,17 @@
-const fs = require('node:fs')
+const notStarted = new Set(['queued', 'pending', 'requested'])
 
-const fail = message => {
-  const text = String(message).replace(/[\r\n%]+/g, ' ')
-  console.log(`::error title=Couldn't tell whether a later run exists::${text}`)
+const fail = (title, message) => {
+  console.log(`::error title=${title}::${String(message).replace(/[\r\n%]+/g, ' ')}`)
   process.exit(1)
 }
 
-const deploy = () => fs.appendFileSync(process.env.GITHUB_OUTPUT, 'deploy=true\n')
-
 const main = async () => {
-  if (process.env.GITHUB_RUN_ATTEMPT === '1') return deploy()
+  if (process.env.GITHUB_RUN_ATTEMPT === '1') return
   const workflow = process.env.WORKFLOW
   const branch = process.env.GITHUB_REF_NAME
   const mine = Number(process.env.GITHUB_RUN_NUMBER)
   if (!workflow || !branch || !Number.isInteger(mine)) {
-    fail('WORKFLOW, GITHUB_REF_NAME, and GITHUB_RUN_NUMBER must be set.')
+    throw new Error('WORKFLOW, GITHUB_REF_NAME, and GITHUB_RUN_NUMBER must be set.')
   }
   const api = process.env.GITHUB_API_URL || 'https://api.github.com'
   const path = `/repos/${process.env.GITHUB_REPOSITORY}/actions/workflows/${workflow}/runs`
@@ -25,16 +22,21 @@ const main = async () => {
       'X-GitHub-Api-Version': '2022-11-28'
     }
   })
-  if (!response.ok) fail(`GET ${path} returned ${response.status}`)
+  if (!response.ok) throw new Error(`GET ${path} returned ${response.status}`)
   const runs = (await response.json()).workflow_runs
-  if (!Array.isArray(runs)) fail(`GET ${path} listed no runs`)
+  if (!Array.isArray(runs)) throw new Error(`GET ${path} listed no runs`)
   const later = runs
-    .filter(run => run.event !== 'pull_request' && run.run_number > mine)
+    .filter(
+      run =>
+        run.event !== 'pull_request' && run.run_number > mine && !notStarted.has(run.status)
+    )
     .map(run => run.run_number)
-  if (later.length === 0) return deploy()
-  console.log(
-    `::notice title=A later run has taken over::This is run ${mine} of ${workflow} started again, and run ${Math.max(...later)} on ${branch} is later, so this one deploys nothing. To put an old build back, start a new run.`
-  )
+  if (later.length > 0) {
+    fail(
+      'A later run has already started',
+      `This is run ${mine} of ${workflow} started again, and run ${Math.max(...later)} on ${branch} started after it, so this one deploys nothing: it would put old code over new. Start the latest run again, or a new one to put an old build back.`
+    )
+  }
 }
 
-main().catch(error => fail(error?.message))
+main().catch(error => fail("Couldn't tell whether a later run exists", error?.message))

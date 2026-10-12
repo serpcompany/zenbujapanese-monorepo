@@ -1,7 +1,8 @@
+import { alreadyTold, toldFile } from '../route.mjs'
 import { failureReport, runChecks, selectFiles } from './checks'
 import { root } from './files'
 import { stopRule } from './rules'
-import { alreadyTold, perFileChecks, toldFile } from './stop'
+import { perFileChecks } from './stop'
 
 export async function stopHook(changed: string[], session: string | undefined): Promise<never> {
   const touched = selectFiles(changed)

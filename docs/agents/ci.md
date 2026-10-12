@@ -65,7 +65,9 @@ red check stops no merge. The workflows are built so the owners can require them
 The jobs to require are `verify` (`Repository`), `title`, `issue-link`, and `fix-test`
 (`Pull request`), and the six above. `ios` passes without testing the app until the owners turn
 `IOS_SWIFT_TESTS` on (iOS, below). An owner adds them under the ruleset's required status
-checks; nothing in the repository can. `tools/checks/src/workflows.test.ts` holds every workflow
+checks; nothing in the repository can. The merge queue waits 90 minutes for a required check
+(`check_response_timeout_minutes`), and the `swift` job may run for four hours: raise that wait
+before turning `IOS_SWIFT_TESTS` on with `ios` required, or the queue drops every app change. `tools/checks/src/workflows.test.ts` holds every workflow
 to this shape, and runs the action against scratch repositories.
 
 ## Repository
@@ -211,8 +213,9 @@ jobs:
   settings (`test_app_platforms.py`: platforms, orientations, the Mac's sandbox and icon, privacy
   strings, and entitlements). Its LFS cache is keyed on the pointers of the LFS patterns it fetches.
 - `swift` runs the app's tests on all three platforms, one after another: `SearchExperienceTests`
-  and `TranslatorCoreTests` with `xcodebuild` on the first iPhone Simulator and the first iPad
-  Simulator of the newest iOS runtime and on the Mac; then, after filling the Sudachi build cache
+  and `TranslatorCoreTests` with `xcodebuild` on an iPhone Pro Max Simulator and an iPad Pro
+  13-inch Simulator it makes with `apps/ios/Tools/simulator.py`, the script agents use
+  ([`verification.md`](verification.md)), and on the Mac; then, after filling the Sudachi build cache
   (cached by the catalog's hash), the app's UI tests (`ZenbuJapaneseUITests`), which build the app
   as `com.zenbujapanese.dictionary.uitests` and drive it on the same iPhone and iPad Simulators
   and on the Mac, each signed to run locally (no team needed), after turning on Automation Mode
@@ -220,7 +223,7 @@ jobs:
   the app on one of them fails ([`ios.md`](ios.md), Tests on every platform). Last
   come the recorded-audio check's scoring tests with `swift test` (the replay
   itself needs the Mac's speech models, which the runner doesn't have, so it stays a local check,
-  [`translate.md`](translate.md)), on `macos-26` (Xcode 26, for the iOS 26 SDK the package needs; arm64, which
+  [`translate.md`](translate.md)), on `macos-26` with the Xcode `.xcode-version` pins, which it selects first (arm64, which
   the `sudachi-swift` binary needs), with up to 4 hours for all of it. It runs only when the
   repository variable `IOS_SWIFT_TESTS` is `on`, or when the workflow is run by hand. Turning it
   on is the owners' decision, and they have kept it off for the runner's cost: on a private

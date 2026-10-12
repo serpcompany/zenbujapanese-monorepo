@@ -83,6 +83,12 @@ describe("the review's guard", () => {
       }
     ],
     [
+      'a summary that counts one file',
+      { changedFiles: 1, ...summaryPosted('Read 1 of 1 changed file.') }
+    ],
+    ['a summary whose count is a list item', summaryPosted('- Read 4 of 4 changed files.')],
+    ['a summary whose count is in bold', summaryPosted('**Read 4 of 4 changed files.**')],
+    [
       'an update to its summary',
       {
         issueComments: [

@@ -7,15 +7,24 @@ workflow.
 
 ## An old run started again deploys nothing
 
-Each job that deploys first asks the `latest-run` action (`.github/actions/latest-run/`) whether
-it may. A run's first attempt always may: a workflow's runs on `main` go one at a time, in order.
-A run that someone starts again may only while no later run of its workflow exists on the branch,
-since it would otherwise put old code over new, and nothing would put the new code back. To
-deploy an old build on purpose, start a new run: an image workflow's `tag` input, or a revert for
-the site. The action compares run numbers, not the commit with the branch's tip, because these
-workflows start only on pushes that change their paths, so the tip is often a commit none of them
-deploys. `tools/checks/src/deploy-workflows.test.ts` holds every deploying step to it and runs the
-action's script against a stand-in for the GitHub API.
+Each job that pushes an image or deploys starts with the `latest-run` action
+(`.github/actions/latest-run/`), which fails the job when it shouldn't. A run's first attempt
+always passes: a workflow's runs on `main` go one at a time, in order. A run that someone starts
+again passes only while no later run of its workflow on the branch has started. A later run still
+queued behind it doesn't count, since that one deploys afterwards. Otherwise the old run would put
+old code over new, and nothing would put the new code back.
+
+- **The job fails, rather than passing with nothing deployed.** The site's deploy reads a green
+  `staging` job of the service's run as "this commit's service is deployed"
+  (`apps/web/scripts/wait-for-dictionary-service.sh`), and an image job that pushed again would
+  leave `sha-<release>` naming an image main never signed, which a rollback then refuses.
+- **To deploy an old build on purpose, start a new run:** an image workflow's `tag` input, or a
+  revert for the site. To try a failed deploy again, start the latest run again.
+- **It compares run numbers,** not the commit with the branch's tip: these workflows start only
+  on pushes that change their paths, so the tip is often a commit none of them deploys.
+
+`tools/checks/src/deploy-workflows.test.ts` holds every such job to it and runs the action's
+script against a stand-in for the GitHub API.
 
 ## Web deploy
 

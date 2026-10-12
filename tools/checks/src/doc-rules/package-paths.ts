@@ -1,6 +1,6 @@
 import { posix } from 'node:path'
 
-const inside = /^(?:src|e2e|scripts|deploy|migrations)\/[\w.@[\]()/-]+$/
+const inside = /^(?:src|e2e|scripts|migrations)\/[\w.@[\]()/-]+$/
 
 export function homePackage(doc: string, isFolder: (path: string) => boolean): string | undefined {
   const product = /^(apps\/[^/]+)\/docs\//.exec(doc)?.[1]

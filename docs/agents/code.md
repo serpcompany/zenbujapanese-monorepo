@@ -184,8 +184,8 @@ The docs are the map agents work from, so they stay correct and reachable:
 | `pnpm verify` | No comments, docs, file size, Swift layers, secrets, duplicate code, dead code, and imports ([`tools/checks`](../../tools/checks/)), then ShellCheck, actionlint, and Ruff | The `Repository` workflow, on every pull request and in the merge queue; the pre-push hook |
 | `pnpm verify <checks> [paths]` | Some of the checks (`comments`, `docs`, `sizes`, `layers`, `secrets`, `duplicates`, `deadcode`, `dependencies`, `linters`, comma-separated), on the given repository paths or on every file. `deadcode` always reads the whole workspace, and `dependencies` the packages the paths touch | By hand; the pre-commit hook runs `comments,sizes,secrets` on the staged files |
 | `pnpm maintenance:report` | A Markdown report: the checks' failures; docs whose named files changed after the doc was edited; the quality rows whose Code changed after their Graded date ("Scores to re-grade"); known debt counted by Size, with the first small item; size and duplicate exceptions; the docs over their size budget; code files within 50 lines of the size limit; and, in the weekly `report` job, the review's findings of the last four weeks by part, with the parts that repeat (`tools/checks/src/report.ts`) | `Weekly maintenance`, on Mondays, where doc gardening and code gardening start from it ([`ci-agents.md`](ci-agents.md)); by hand |
-| The edit hook | No comments, file size, Swift layers, and no secrets, on each file Claude Code writes, as it writes it (`.claude/settings.json`, `tools/checks/hook.mjs`). A file in a git worktree is checked by that worktree's own copy of the checks, since Claude Code runs the hook from the checkout the session started in. A checkout whose packages aren't installed says so rather than passing | Claude Code sessions in this repository |
-| The stop hook | The same four checks on every file changed since the last commit, and the docs check, before a turn ends (`tools/checks/stop-hook.mjs`). It catches what the edit hook can't see: a file a shell command rewrote, and a doc a change elsewhere made wrong. It reports the same failures once per session, and never holds a turn twice in a row | Claude Code sessions in this repository |
+| The edit hook | No comments, file size, Swift layers, and no secrets, on each file Claude Code writes, as it writes it (`.claude/settings.json`, `tools/checks/hook.mjs`). A file in a git worktree is checked by that worktree's own copy of the checks, since Claude Code runs the hook from the checkout the session started in. A checkout whose packages aren't installed says so rather than passing, except in a GitHub Actions job, which chose not to install. From Claude Code 2.1.295 a hook that crashes is reported too (`onFailure`); an older one ignores the setting | Claude Code sessions in this repository |
+| The stop hook | The same four checks on every file changed since the last commit, and the docs check, before a turn ends (`tools/checks/stop-hook.mjs`). It catches what the edit hook can't see: a file a shell command rewrote, and a doc a change elsewhere made wrong. It reports the same failures once per session, and never holds a turn twice in a row. In a GitHub Actions job it does nothing: the jobs that run Claude there run the checks themselves, on a checkout the action has partly reset | Claude Code sessions in this repository |
 | The git hooks | Before a commit, `comments,sizes,secrets` and each package's Biome on the staged files; before a push, `pnpm verify` ([`lefthook.yml`](../../lefthook.yml)) | Every clone after `pnpm install` |
 | The pull request checks | A Conventional Commit title, a closing issue or a stated reason for none, and a test in every fix ([Fixes](#fixes), [Pull requests](#pull-requests)), from `tools/checks/pull-request.mjs`, which needs no install | The `Pull request` workflow, on every pull request, again when its title or body is edited |
 | `pnpm check` | `pnpm verify`, then `pnpm check` in every package | By hand, before a pull request |
@@ -205,17 +205,8 @@ so they need the whole workspace installed (`pnpm install`).
 
 A rule is never switched off in the code it flags: an inline directive is a comment, which the
 comments check refuses. An exception is an entry in a central list, with its reason, that can only
-shrink: `knownLargeFiles`, `knownDuplicates`, and `knownLongDocs`, above. A linter rule turned off
-in a tool's config file is an exception too. These are the ones there are; add a row, with its
-reason, in the pull request that turns another off.
-
-| Where | What is off | Why |
-| --- | --- | --- |
-| `apps/web/scripts/.shellcheckrc` | ShellCheck's SC2329, for the scripts in that folder | `smoke.sh` hands its checks to `expect` and `eventually` by name, which ShellCheck reads as functions nothing calls |
-| `apps/web/biome.json`, for `src/components/ui/**` | `useSemanticElements`, `useKeyWithClickEvents`, and `useFocusableInteractive` | Those files are shadcn/ui's, kept as its CLI wrote them ([`web.md`](web.md)) |
-| `apps/web/biome.json`, for `dictionary-breadcrumbs.tsx` | `noDangerouslySetInnerHtml` | The breadcrumbs' JSON-LD is the text of a `script` element, written through `jsonThatCannotCloseItsScript` |
-| `tools/checks/biome.json`, for the checks' tests | `noTemplateCurlyInString` | The tests quote workflow expressions, which are written `${{ … }}` |
-| `knip.json` | `apps/ios/**` isn't read, and `tsx` and Secretlint's preset aren't reported as unused | The app's copy of the core is a built file; `tsx` and the preset are loaded by name, by `node --import` and by Secretlint's config |
+shrink, or a rule turned off in a tool's config file. [`exceptions.md`](exceptions.md) lists both
+kinds; add to it in the pull request that makes one.
 
 ## SERP's standards
 
