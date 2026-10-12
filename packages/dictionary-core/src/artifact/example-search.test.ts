@@ -58,6 +58,12 @@ describe('an English query’s example sentences', () => {
     expect(listed([startle, 'You startled me.', 'Thank you.'], query)).toEqual([startle])
   })
 
+  test('holds each word of a phrase to the query’s word at its place', () => {
+    expect(
+      listed(['My cat likes fish.', 'Cats like to sunbathe.', 'Cats are liked.'], 'cats likes')
+    ).toEqual(['Cats like to sunbathe.', 'My cat likes fish.'])
+  })
+
   test('lists the sentences with the exact words before those that match only once stemmed', () => {
     expect(
       listed(
@@ -65,6 +71,57 @@ describe('an English query’s example sentences', () => {
         'running'
       )
     ).toEqual(['She is running.', 'I saw him running to the station.', 'Run!', 'He runs.'])
+  })
+
+  test('beside a sentence with the exact words, lists every stemmed match, as it always has', () => {
+    expect(listed(['Generally speaking, yes.', 'He is a general.'], 'general')).toEqual([
+      'He is a general.',
+      'Generally speaking, yes.'
+    ])
+  })
+
+  test.each([
+    ['generously', ['Generally speaking, history repeats itself.', 'He is a generous man.']],
+    ['generously speaking', ['Generally speaking, history repeats itself.']],
+    ['animating', ['Animals are our friends.']],
+    ['privations', ['Private charity is only a drop in the bucket.']]
+  ])('「%s」 lists no sentence whose word only shares its stem', (query, english) => {
+    expect(listed(english, query)).toEqual([])
+  })
+
+  test('tells a word’s other forms from another word with its stem', () => {
+    expect(listed(["I'm grateful for my family.", 'She grated the cheese.'], 'grate')).toEqual([
+      'She grated the cheese.'
+    ])
+  })
+
+  test('finds the word’s form further on when an earlier word only shares its stem', () => {
+    expect(
+      listed(['The university is old.', 'The university studies the universe.'], 'universes')
+    ).toEqual(['The university studies the universe.'])
+  })
+
+  test('lists no other number for a number the stemmer cuts short', () => {
+    const binary = 'The number 2015 is represented as 11111011111 in binary.'
+    expect(listed([binary], '1111111')).toEqual([])
+    expect(listed([binary], '11111011111')).toEqual([binary])
+    expect(listed(['His annual income is more than $100000.'], '1000000')).toEqual([])
+  })
+
+  test('finds an underscore, which only the stemmed index reads as a word', () => {
+    const warning = "Warning: unsupported characters are displayed using the '_' character."
+    expect(listed([warning], '_')).toEqual([warning])
+  })
+
+  test('still asks a query with * for its exact words', () => {
+    expect(listed([startle], 'startled y*')).toEqual([])
+    expect(listed([startle], 'startle y*')).toEqual([startle])
+  })
+
+  test('holds a first word asked for with ^ to the same forms', () => {
+    expect(listed(['Startled, he dropped the cup.', 'He startled me.'], '^startles')).toEqual([
+      'Startled, he dropped the cup.'
+    ])
   })
 
   test('never matches across the end of a sentence, in any form of the words', () => {

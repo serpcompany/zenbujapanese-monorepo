@@ -165,10 +165,10 @@ English query's Example Sentences have its words in any form: `startled you` fin
 
 Check: package `SearchFrequencyOrchestrationTests` and `ResultsScreenTests` (a dictionary that
 can't be read is named, and the others still order the list); core `detail/frequency.test.ts`
-(the notice's words) and `artifact/example-search.test.ts` (a word in another form); the recorded
-`SearchResultsConformanceTests` (the refinement, Example Sentences, and Kanji rows) and
-`ExampleSearchConformanceTests` (`startled you`); UI
-`SearchResultsUITests.testARomajiQueryOffersItsJapaneseReading`,
+(the notice's words), `artifact/example-search.test.ts`, and `examples/english-inflection.test.ts`
+(which sentences an English query finds); the recorded `SearchResultsConformanceTests` (the
+refinement, Example Sentences, and Kanji rows) and `ExampleSearchConformanceTests` (`startled you`
+and `generously`); UI `SearchResultsUITests.testARomajiQueryOffersItsJapaneseReading`,
 `testAWordOffersItsExampleSentences`, and `SearchUITests.testAQueryWithNoMatchesSaysSo`.
 
 Recent text searches are stored on the device and listed while the query is empty. A learner can

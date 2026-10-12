@@ -10365,7 +10365,7 @@
     },
     {
       "count" : 1,
-      "covers" : "English in another form of a word: no sentence has these exact words, so the Porter match (startle you) is listed",
+      "covers" : "English in another form of a word: no sentence has these exact words, so the Porter match whose words are other forms of them (startle you) is listed",
       "ids" : [
         "esp1_ef5db7c44a3d69f69709e21bbd33e2e5"
       ],
@@ -10419,6 +10419,19 @@
         }
       ],
       "title" : "View 1 Example Sentence",
+      "usesPrimaryEntryExamples" : false
+    },
+    {
+      "count" : 0,
+      "covers" : "English that only shares a stem: no sentence has this word, and Porter's matches (generally, general, generation, generous) are other words, so nothing is listed",
+      "highlightedEntry" : "80e2147321c56606ccddf59ed4b18dae",
+      "ids" : [
+
+      ],
+      "query" : "generously",
+      "shown" : [
+
+      ],
       "usesPrimaryEntryExamples" : false
     },
     {
@@ -13398,74 +13411,15 @@
       "usesPrimaryEntryExamples" : false
     },
     {
-      "count" : 1,
-      "covers" : "A long number no sentence has: Porter shortens it to 111111, as it does 11111011111, whose sentence is listed",
+      "count" : 0,
+      "covers" : "Porter matches 11111011111 (both shorten to 111111), but no sentence has these exact words, and one number is no form of another",
       "ids" : [
-        "esp1_de596149bbdf2537b866669af30eb23f"
+
       ],
       "query" : "1111111",
       "shown" : [
-        {
-          "english" : "The number 2015 is represented as 11111011111 in binary.",
-          "id" : "esp1_de596149bbdf2537b866669af30eb23f",
-          "japanese" : "2015という数は二進法で表すと11111011111となる。",
-          "tokens" : [
-            {
-              "surface" : "2015"
-            },
-            {
-              "entry" : "8e68346452aab9cfe9802ee3824a2cb6",
-              "surface" : "という"
-            },
-            {
-              "entry" : "1cb57ee2755a26b03512d8b390a8d25e",
-              "surface" : "数"
-            },
-            {
-              "entry" : "ad63532d193fae21a8b73d5d7880b492",
-              "surface" : "は"
-            },
-            {
-              "entry" : "452b8f2b0a2bfaa92c1fd9921cbd05f3",
-              "surface" : "二進法"
-            },
-            {
-              "candidates" : [
-                "4102685c5ecb52e7276d68ab0ff59f29",
-                "3906187791ec20829976c57d3c59727d"
-              ],
-              "surface" : "で"
-            },
-            {
-              "entry" : "336194fd44cf23f4d4d85694fa4a1f42",
-              "surface" : "表す"
-            },
-            {
-              "entry" : "d005d8641e912ee4b72714255428699d",
-              "surface" : "と"
-            },
-            {
-              "surface" : "11111011111"
-            },
-            {
-              "entry" : "d005d8641e912ee4b72714255428699d",
-              "surface" : "と"
-            },
-            {
-              "candidates" : [
-                "ba3dda17086b82269a3063375d9f8217",
-                "f317ad8065cd0fb688ba815009cc7a01",
-                "ebd60cbace14e32517029a9af1d61cfd"
-              ],
-              "surface" : "なる"
-            },
-            {
-              "surface" : "。"
-            }
-          ]
-        }
+
       ],
-      "title" : "View 1 Example Sentence",
       "usesPrimaryEntryExamples" : false
     },
     {
@@ -14735,7 +14689,7 @@
     },
     {
       "count" : 1,
-      "covers" : "An underscore: a Porter word character, but a delimiter for exact matches, so its sentence is a Porter match",
+      "covers" : "An underscore: a Porter word character, but a delimiter for exact matches, so its sentence is listed as a Porter match of the same word",
       "ids" : [
         "esp1_fe75a67776955a0907583eb40aa75132"
       ],

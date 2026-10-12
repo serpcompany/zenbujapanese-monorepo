@@ -3865,6 +3865,55 @@
     return result([...byPair.values()].sort(compareRanks));
   }
 
+  // src/examples/english-inflection.ts
+  var wordThatInflects = /^[a-z]{3,}$/;
+  var vowel = /[aeiouy]/;
+  var doubledFinalConsonant = /([b-df-hj-np-tv-z])\1$/;
+  var endingThatTakesEs = /(?:[sxzo]|[cs]h)$/;
+  var twoLettersEndingInAVowel = /^[a-z][aeiou]$/;
+  var fewestLettersInABase = 3;
+  var isLongEnough = (base) => base.length >= fewestLettersInABase;
+  var isLongEnoughOrLikeGo = (base) => isLongEnough(base) || twoLettersEndingInAVowel.test(base);
+  function basesBeforeAnEnding(stem, isABase) {
+    if (stem.length < 2 || !vowel.test(stem)) return [];
+    const withoutItsDoubling = stem.slice(0, -1);
+    return [
+      ...isABase(stem) ? [stem] : [],
+      `${stem}e`,
+      ...doubledFinalConsonant.test(stem) && isLongEnough(withoutItsDoubling) ? [withoutItsDoubling] : []
+    ];
+  }
+  function basesOfAPluralOrThirdPerson(word) {
+    if (!word.endsWith("s") || word.endsWith("ss")) return [];
+    const withoutS = word.slice(0, -1);
+    const withoutEs = word.slice(0, -2);
+    const bases = word.endsWith("ies") ? [`${word.slice(0, -3)}y`, withoutS] : [withoutS];
+    const takesEs = word.endsWith("es") && endingThatTakesEs.test(withoutEs) && isLongEnoughOrLikeGo(withoutEs);
+    return [...bases.filter(isLongEnough), ...takesEs ? [withoutEs] : []];
+  }
+  function basesOfAPast(word) {
+    if (!word.endsWith("ed")) return [];
+    const withoutEd = word.slice(0, -2);
+    return word.endsWith("ied") ? [`${word.slice(0, -3)}y`, word.slice(0, -1), withoutEd].filter(isLongEnough) : basesBeforeAnEnding(withoutEd, isLongEnough);
+  }
+  function possibleBaseForms(word) {
+    if (!wordThatInflects.test(word)) return [word];
+    return [
+      word,
+      ...basesOfAPluralOrThirdPerson(word),
+      ...basesOfAPast(word),
+      ...word.endsWith("ing") ? basesBeforeAnEnding(word.slice(0, -3), isLongEnoughOrLikeGo) : []
+    ];
+  }
+  function sameWordInAnyForm(word) {
+    const lowered = word.toLowerCase();
+    const bases = possibleBaseForms(lowered);
+    return (other) => {
+      const candidate = other.toLowerCase();
+      return candidate === lowered || possibleBaseForms(candidate).some((base) => bases.includes(base));
+    };
+  }
+
   // src/artifact/example-search.ts
   var Relation = {
     exactSurfacePhrase: 0,
@@ -3933,7 +3982,7 @@
     }
     return offsets;
   }
-  function phraseRange(text, offsets) {
+  function phraseRange(text, offsets, accepts) {
     if (offsets.length === 0) return null;
     const termCount = Math.max(...offsets.map((offset) => offset.term)) + 1;
     const ordered = [...offsets].sort(
@@ -3961,6 +4010,8 @@
         }
       }
       if (crossesSentence) continue;
+      const words = () => phrase.map((word) => slice(word.byteOffset, word.byteOffset + word.byteLength) ?? "");
+      if (accepts && !accepts(words())) continue;
       const last = phrase[phrase.length - 1];
       const from = offsetsOf.utf16(phrase[0].byteOffset);
       const to = offsetsOf.utf16(last.byteOffset + last.byteLength);
@@ -3986,11 +4037,8 @@
     return new DataView(matchinfo.buffer, matchinfo.byteOffset, 4).getUint32(0, true);
   }
   var sentenceColumns2 = "e.rowid AS rowid, lower(hex(e.id)) AS pairId, e.japanese, e.english";
-  function retrieveEnglish(db, query) {
-    if (query.includes('"')) return "embeddedQuote";
-    const matchExpression = `"${query}"`;
-    if (!porterEmitsTerms(db, query, matchExpression)) return "noPorterTerms";
-    const exactRanges = /* @__PURE__ */ new Map();
+  function exactPhraseRanges(db, matchExpression) {
+    const ranges = /* @__PURE__ */ new Map();
     for (const row of db.all(
       `SELECT lower(hex(m.pair_id)) AS pairId, e.english, offsets(${exactTable}) AS offsets
      FROM ${exactTable} x
@@ -4001,8 +4049,22 @@
     )) {
       const offsets = parseOffsets(row.offsets);
       const range = offsets && phraseRange(row.english, offsets);
-      if (range) exactRanges.set(row.pairId, range);
+      if (range) ranges.set(row.pairId, range);
     }
+    return ranges;
+  }
+  function theQuerysWordsInAnyForm(query) {
+    const sameWords = (query.match(/[0-9a-z_]+/g) ?? []).map(sameWordInAnyForm);
+    return (words) => words.length === sameWords.length && words.every((word, index) => sameWords[index](word));
+  }
+  function retrieveEnglish(db, query) {
+    if (query.includes('"')) return "embeddedQuote";
+    const matchExpression = `"${query}"`;
+    if (!porterEmitsTerms(db, query, matchExpression)) return "noPorterTerms";
+    const exactRanges = exactPhraseRanges(db, matchExpression);
+    const someSentenceHasTheExactWords = exactRanges.size > 0;
+    if (!someSentenceHasTheExactWords && query.includes("*")) return result2([]);
+    const wantedWords = someSentenceHasTheExactWords ? void 0 : theQuerysWordsInAnyForm(query);
     const matches = /* @__PURE__ */ new Map();
     for (const { offsets: rawOffsets, matchinfo, ...sentence } of db.all(
       `SELECT ${sentenceColumns2}, offsets(${porterTable}) AS offsets,
@@ -4015,7 +4077,7 @@
     )) {
       if (matches.has(sentence.pairId)) throw new Error("The example index lists a pair twice");
       const offsets = parseOffsets(rawOffsets);
-      const porterRange = offsets && phraseRange(sentence.english, offsets);
+      const porterRange = offsets && phraseRange(sentence.english, offsets, wantedWords);
       if (!porterRange) continue;
       const exactRange = exactRanges.get(sentence.pairId);
       const range = exactRange ?? porterRange;
@@ -4028,7 +4090,12 @@
         pairId: sentence.pairId
       });
     }
-    return result2([...matches.values()]);
+    const candidates = [...matches.values()];
+    if (!someSentenceHasTheExactWords) return result2(candidates);
+    const oneOfThoseIsListed = candidates.some(
+      (candidate) => candidate.relation === Relation.exactSurfacePhrase
+    );
+    return result2(oneOfThoseIsListed ? candidates : []);
   }
   function retrieveJapanese(db, query) {
     return rankJapanese2(
