@@ -1,0 +1,123 @@
+{
+  "rule": "A username is 3 to 30 letters a to z, digits, or underscores.",
+  "accepted": [
+    {
+      "covers": "three characters, the fewest",
+      "typed": "abc",
+      "username": "abc"
+    },
+    {
+      "covers": "thirty characters, the most",
+      "typed": "abcdefghijklmnopqrstuvwxyz0123",
+      "username": "abcdefghijklmnopqrstuvwxyz0123"
+    },
+    {
+      "covers": "an uppercase letter, which is lowercased",
+      "typed": "Kana_Fan",
+      "username": "kana_fan"
+    },
+    {
+      "covers": "underscores only",
+      "typed": "___",
+      "username": "___"
+    },
+    {
+      "covers": "digits only",
+      "typed": "12345",
+      "username": "12345"
+    },
+    {
+      "covers": "spaces around it, which are trimmed",
+      "typed": "  kana_fan ",
+      "username": "kana_fan"
+    },
+    {
+      "covers": "full-width letters, digits, and underscore, which NFKC folds",
+      "typed": "ＫＡＮＡ＿１",
+      "username": "kana_1"
+    },
+    {
+      "covers": "a byte order mark before it, which is trimmed as JavaScript trims",
+      "typed": "\ufeffkana",
+      "username": "kana"
+    },
+    {
+      "covers": "thirty characters with spaces around them, counted once trimmed",
+      "typed": " abcdefghijklmnopqrstuvwxyz0123 ",
+      "username": "abcdefghijklmnopqrstuvwxyz0123"
+    },
+    {
+      "covers": "ideographic spaces around it, which NFKC folds to spaces",
+      "typed": "\u3000kana_fan\u3000",
+      "username": "kana_fan"
+    },
+    {
+      "covers": "a two-character ligature and a letter, counted once NFKC unfolds the ligature",
+      "typed": "\ufb01x",
+      "username": "fix"
+    },
+    {
+      "covers": "mathematical bold letters, outside the basic plane, which NFKC folds",
+      "typed": "\ud835\udc1a\ud835\udc1b\ud835\udc1c",
+      "username": "abc"
+    }
+  ],
+  "refused": [
+    {
+      "covers": "two characters, one too few",
+      "typed": "ab"
+    },
+    {
+      "covers": "two characters once trimmed",
+      "typed": " ab "
+    },
+    {
+      "covers": "thirty-one characters, one too many",
+      "typed": "abcdefghijklmnopqrstuvwxyz01234"
+    },
+    {
+      "covers": "a period",
+      "typed": "kana.fan"
+    },
+    {
+      "covers": "a hyphen",
+      "typed": "kana-fan"
+    },
+    {
+      "covers": "a space inside it",
+      "typed": "kana fan"
+    },
+    {
+      "covers": "a leading at sign",
+      "typed": "@kana_fan"
+    },
+    {
+      "covers": "Japanese letters",
+      "typed": "かなふぁん"
+    },
+    {
+      "covers": "a kanji outside the basic plane",
+      "typed": "kana\ud840\udc0b"
+    },
+    {
+      "covers": "an accented Latin letter",
+      "typed": "é_fan"
+    },
+    {
+      "covers": "a capital dotted I, which lowercases to i and a combining dot",
+      "typed": "İkana"
+    },
+    {
+      "covers": "a next-line control after it, which JavaScript does not trim",
+      "typed": "kana\u0085"
+    },
+    {
+      "covers": "nothing",
+      "typed": ""
+    },
+    {
+      "covers": "only spaces",
+      "typed": "   "
+    }
+  ]
+}

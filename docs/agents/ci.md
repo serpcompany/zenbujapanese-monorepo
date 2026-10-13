@@ -209,8 +209,9 @@ request's last run. The deployer and the backups script (`deploy/deployer.sh`,
 
 ## iOS
 
-`.github/workflows/ios.yml` checks the iOS app on pull requests that change `apps/ios`, in two
-jobs:
+`.github/workflows/ios.yml` checks the iOS app on pull requests that change `apps/ios`, or the
+username cases its tests share with the account service (`apps/account-api/src/domain/username-cases.json`),
+in two jobs:
 
 - `contracts` runs the data tools' contract tests (`apps/ios/Tools/tests/`) on Linux, with every
   Git LFS file under `apps/ios` but the archived source snapshots (`LFS_SNAPSHOTS`), which only a

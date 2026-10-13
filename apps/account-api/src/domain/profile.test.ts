@@ -1,7 +1,23 @@
+import { readFileSync } from 'node:fs'
 import { describe, expect, test } from 'vitest'
-import { editedProfile, normalizeName, normalizeUsername } from './profile'
+import { editedProfile, normalizeName, normalizeUsername, profileLimits } from './profile'
 
 const invalid = { code: 'invalid_fields', message: expect.any(String) }
+
+interface TypedUsername {
+  covers: string
+  typed: string
+}
+
+const usernames = JSON.parse(
+  readFileSync(new URL('./username-cases.json', import.meta.url), 'utf8')
+) as {
+  rule: string
+  accepted: (TypedUsername & { username: string })[]
+  refused: TypedUsername[]
+}
+
+const typedLengths = (cases: readonly TypedUsername[]) => cases.map(({ typed }) => typed.length)
 
 describe('a name', () => {
   test('is trimmed, its runs of spaces made one, and stored in NFC', () => {
@@ -29,18 +45,28 @@ describe('a name', () => {
 })
 
 describe('a username', () => {
-  test('is NFKC, trimmed, and lowercased before it is checked', () => {
-    expect(normalizeUsername(' Kana_Fan ')).toBe('kana_fan')
-    expect(normalizeUsername('ＫＡＮＡ＿１')).toBe('kana_1')
-    expect(normalizeUsername(null)).toBeNull()
+  test('is accepted as the cases shared with the app say, once NFKC, trimmed, and lowercased', () => {
+    for (const { covers, typed, username } of usernames.accepted) {
+      expect(normalizeUsername(typed), covers).toBe(username)
+    }
   })
 
-  test('is 3 to 30 letters a to z, digits, or underscores', () => {
-    expect(normalizeUsername('abc')).toBe('abc')
-    expect(normalizeUsername('a'.repeat(30))).toBe('a'.repeat(30))
-    for (const refused of ['ab', 'a'.repeat(31), 'kana-fan', 'kana fan', 'かな', 'é_fan', 7]) {
-      expect(normalizeUsername(refused), String(refused)).toEqual(invalid)
+  test('is refused, in the sentence the app shows too, as the cases shared with the app say', () => {
+    const refusal = { code: 'invalid_fields', message: usernames.rule }
+    for (const { covers, typed } of usernames.refused) {
+      expect(normalizeUsername(typed), covers).toEqual(refusal)
     }
+  })
+
+  test('has shared cases at both ends of its length, and one past each', () => {
+    const { min, max } = profileLimits.usernameLength
+    expect(typedLengths(usernames.accepted)).toEqual(expect.arrayContaining([min, max]))
+    expect(typedLengths(usernames.refused)).toEqual(expect.arrayContaining([min - 1, max + 1]))
+  })
+
+  test('is text, or null to remove it', () => {
+    expect(normalizeUsername(null)).toBeNull()
+    expect(normalizeUsername(7)).toEqual(invalid)
   })
 })
 
