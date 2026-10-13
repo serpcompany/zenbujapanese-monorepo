@@ -5,10 +5,10 @@ client runs (ADR 0008, ADR 0009). The website runs it through the dictionary ser
 ([`dictionary-api.md`](dictionary-api.md)), and the app runs it in JavaScriptCore, offline
 ([Embedded](#embedded)): search, the results screen, examples and linked words, and the word,
 kanji, and kanji element pages. The browser extension will run it offline too. A client keeps its
-screens and reads the files; what a screen lists, orders, labels, and says is the core's. It is
-TypeScript source: each client compiles it (the website through Next.js's `transpilePackages`, the
-service through tsx and esbuild, the app from a bundle esbuild writes), and imports it by path,
-such as `@zenbu/dictionary-core/search/search`.
+screens and reads the files; what a screen lists, orders, labels, and says is the core's, apart from
+the exceptions under [Rules](#rules). It is TypeScript source: each client compiles it (the website
+through Next.js's `transpilePackages`, the service through tsx and esbuild, the app from a bundle
+esbuild writes), and imports it by path, such as `@zenbu/dictionary-core/search/search`.
 
 Run commands from `packages/dictionary-core`, after `pnpm install` at the repository root.
 
@@ -33,17 +33,18 @@ these and decodes the answer; [The app's side](#the-apps-side) says which type a
 
 - **No runtime or framework.** Biome refuses `node:*`, Next.js, React, Wrangler, and Hono
   imports in `src` (tests aside), and `pnpm verify dependencies` refuses any Node built-in or
-  package the core imports for more than its types. A client passes in what it has: the artifact as an
-  `ArtifactDatabase` (synchronous `all(sql, params)`), the kanji files as `KanjiData` (whole, as
+  package the core imports for more than its types. A client passes in what it has: the artifact as
+  an `ArtifactDatabase` (synchronous `all(sql, params)`), the kanji files as `KanjiData` (whole, as
   the service holds them) or a `KanjiLookup` that answers one record at a time (as the app does),
-  and its capabilities: `tokenize` (the core's own tokenizer) and `morphology` (the app's Sudachi). Without
-  `morphology`, sentence search is off and the rest of Search is unchanged (ADR 0008).
+  and its capabilities: `tokenize` (the core's own tokenizer) and `morphology` (the app's Sudachi).
+  Without `morphology`, sentence search is off and the rest of Search is unchanged (ADR 0008).
 - **It logs nothing.** It returns what happened, as a result or an error, and the client logs it
   its own way; Biome refuses `console` in `src` (tests aside).
 - **A rule lives here, once.** What a screen lists, the order, a title, a label, and what
-  VoiceOver says are answers the core gives every client, so a client never decides one itself.
-  Add a field to the answer, and have the client show it. What the app keeps native, and why, is
-  in [`ios.md`](ios.md), The dictionary core in the app.
+  VoiceOver says are answers the core gives every client, so a client decides none itself, apart
+  from the rows of the table under Layers in [`ARCHITECTURE.md`](../../ARCHITECTURE.md). Add a
+  field to the answer, and have the client show it. What the app keeps native, and why, is in
+  [`ios.md`](ios.md), The dictionary core in the app.
 - **Rebuild the app's bundle with the core.** The app runs a bundle of the core that is checked in
   ([Embedded](#embedded)). After changing anything the bundle holds, run
   `pnpm bundle:javascriptcore` and commit the file; `embedded/bundle.test.ts` fails until it
@@ -261,7 +262,7 @@ Paths are relative to `apps/ios/Modules/Sources/SearchExperience/`.
 | `PresentationCore.swift` (`RomajiReadingAidText`, `LinkedJapaneseText`) | `romaji`, `sentenceRomaji` | The Romaji reading aid, for a reading and for a sentence |
 | `RadicalLookupClient.swift` (`RadicalInputView`) | `radicalPanel` | The radical panel's kanji and radicals |
 | `KanjiStrokeOrderClient.swift` | `kanjiStrokes` | The strokes Kanji Detail draws |
-| `HandwritingRecognitionLiveAdapter.swift` | `japaneseCandidates` | Which recognized candidates the handwriting panel offers |
+| `HandwritingRecognitionLiveAdapter.swift` | `japaneseCandidates` | Which of Vision's candidates the handwriting panel offers, when the bundled model (`OfflineHandwritingRecognizer.swift`) gives none. The model's own candidates are offered as they are. |
 | `ResultsScreen.swift` (`SearchResultsView`, `SearchResultsMenu`, `ResultRow`, `RecognizedWordSheet`) | `resultsScreen`, `wordRows` | The results screen and a sheet's candidates |
 | `JapaneseRuby.swift` | `ruby` | Furigana wherever a word is drawn |
 | `WordPage.swift` (`WordDetailView`, `WordDetailSections`, `WordHeadline`, `PitchAccentBadge`, `ConjugationsView`) | `wordPage` | The word page, with its frequency rows, and its conjugations |
@@ -394,8 +395,8 @@ The core answers as the Swift it replaced did, which the suites pin.
   "Verb", "Noun", or "Adverb" beside a phrase that already says it.
 - `shortGloss` is a meaning's first part, without a note in brackets or a leading "to", cut to
   seventeen characters and an ellipsis: what the app shows under a linked word.
-- `wordSlug` is shared so every client builds the same word URL as the app's share links (ADR
-  0007).
+- `wordSlug` is shared so the service and the website build the same word URL (ADR 0007). The
+  app builds none: its Share sends text, and it only reads a link (`websitePage`).
 
 ## Examples
 
