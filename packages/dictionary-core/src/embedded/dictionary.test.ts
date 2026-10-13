@@ -1,4 +1,5 @@
 import { describe, expect, test } from 'vitest'
+import { creditsShownBy } from '../sources/credits'
 import { embeddedEndpoint } from './dictionary'
 import { ask, begin, type FakeEntry, fakeHost, settled } from './fake-host'
 import { hostDatabase } from './host'
@@ -197,6 +198,15 @@ describe('the embedded dictionary', () => {
     expect(endpoint.answerJSON('websiteRoute', '{"host":"example.com","path":"/"}')).toBe(
       JSON.stringify(endpoint.answer('websiteRoute', '{"host":"example.com","path":"/"}'))
     )
+  })
+
+  test('answers a client’s source credits at once, and refuses a client it does not know', () => {
+    const endpoint = embeddedEndpoint(host())
+    expect(endpoint.answer('sourceCredits', 'app')).toEqual(creditsShownBy('app'))
+    expect(JSON.parse(endpoint.answerJSON('sourceCredits', 'website'))).toEqual(
+      creditsShownBy('website')
+    )
+    expect(() => endpoint.answer('sourceCredits', 'watch')).toThrow('No client is named watch')
   })
 
   test('refuses to answer at once what has to wait, or what it does not have', () => {

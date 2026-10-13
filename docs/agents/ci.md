@@ -139,7 +139,8 @@ for a week.
 
 `.github/workflows/dictionary-core.yml` runs `pnpm check` in `packages/dictionary-core` (Biome with
 its rule that keeps runtimes and frameworks out, typecheck, and Vitest) on pull requests that change
-the core. Those tests need no data: the app-recorded suites run through the core in
+the core, or `docs/data-sources.md`, which its source credits are held to. Those tests need no data:
+the app-recorded suites run through the core in
 `Dictionary API`, and `Web` builds the site with it. See [`dictionary-core.md`](dictionary-core.md).
 
 ## Dictionary API

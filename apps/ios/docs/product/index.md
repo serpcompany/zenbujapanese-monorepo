@@ -220,16 +220,22 @@ a small **Account** title in the bar rather than a large one. It provides:
   with a translation language (English so far) and who translates Player captions — YouTube, or
   Apple Translation on the device, which Reading Aids offers to download;
 - management of optional frequency dictionaries; and
-- the app's name, version, and description, followed by Help & Support and the Privacy Policy,
-  which open the Zenbu website, and source credits and attributions.
+- the app's name, version, and description, followed by Help & Support and the Privacy Policy, which
+  open the Zenbu website, and **Credits & Attributions**: each source's credit, license, and project
+  link, in the shared core's wording ([`data-sources.md`](../../../../docs/data-sources.md)), with
+  Jiten's notice that its rankings are adapted and shared alike. **Licenses**, under it, opens each
+  bundled license text. If the app can't read the core's list, Credits says so, and Licenses still
+  lists every text.
 
 Check: UI `AccountUITests.testAccountListsEveryArea` (every row, and the small title on iPhone and
 iPad), `testReadingAidsAndFrequencyDictionariesOpen`,
 `testTurningRomajiOnWritesExampleSentencesAndAKanjisReadingsInRomaji` (Romaji on, an example
-sentence and a kanji's reading written in it), and `testTranslationsAndCreditsOpenFromAccount`; contract `test_account_service_settings.py`
+sentence and a kanji's reading written in it), and `testTranslationsAndCreditsOpenFromAccount` (the
+first credit, Jiten's notice, and a license text); contract `test_account_service_settings.py`
 (production in TestFlight and App Store builds, staging in Debug); package `PlayerReadingAidTests`
-and `WordMeaningTests` (the Reading Aids preferences), and the recorded `RomajiConformanceTests`
-with core `detail/romaji.test.ts` (how a reading and a sentence are written in romaji).
+and `WordMeaningTests` (the Reading Aids preferences), `SourceCreditsTests` (the core's credits, and
+none it can't read), and the recorded `RomajiConformanceTests` with core `detail/romaji.test.ts`
+(how a reading and a sentence are written in romaji).
 
 Rows use Settings-style tinted icon tiles in grouped cards without section headings.
 
@@ -264,10 +270,11 @@ enables JLPT Levels first and YouTube second. JLPT Levels marks words with an es
 level from Jonathan Waller's lists; JLPT publishes no official vocabulary list, so the app
 presents levels as unofficial study estimates.
 
-Check: package `FrequencyPackLifecycleTests`, `SearchResultOrderingTests`, and
-`ResultsScreenTests`; core `detail/frequency.test.ts`; contract `test_frequency_pack_runtime_contract.py` (each pack's
-pinned source, ranks, and the YouTube spellings); UI `AccountUITests.testReadingAidsAndFrequencyDictionariesOpen`
-(a row for every pack, and a download for each of the seven optional ones). Downloading an optional pack needs the network: by hand, with
+Check: package `FrequencyPackLifecycleTests`, `SearchResultOrderingTests`, and `ResultsScreenTests`;
+core `detail/frequency.test.ts`; contract `test_frequency_pack_runtime_contract.py` (each pack's
+pinned source, ranks, and the YouTube spellings); UI
+`AccountUITests.testReadingAidsAndFrequencyDictionariesOpen` (a row for every pack, and a download
+for each of the seven optional ones). Downloading an optional pack needs the network: by hand, with
 `FrequencyPackLifecycleTests` installing one from a local file.
 
 The screen lists one row per pack in three sections. **Enabled** holds packs that are
@@ -306,19 +313,18 @@ can't be changed, and Known Words and the Mark as Known button say so. If the fi
 can't be read at launch, such as before the device's first unlock, nothing is shown or saved over
 it, and Known Words asks the learner to reopen Zenbu.
 
-Check: package `WordKnowledgeTests`, `SavedKanjiTests`, and `WordResolutionTests` (the entry a
-saved word opens); UI
-`SavedWordsUITests.testAKnownWordIsListedAndCanBeMarkedUnknownThere`,
+Check: package `WordKnowledgeTests`, `SavedKanjiTests`, and `WordResolutionTests` (the entry a saved
+word opens); UI `SavedWordsUITests.testAKnownWordIsListedAndCanBeMarkedUnknownThere`,
 `WordDetailUITests.testTheMenuOffersThisDevicesActionsAndMarksTheWordKnown`, and
 `AccountUITests.testKnownWordsAndTheMediaLibraryStartEmptyAndListsStartWithFavorites` (empty).
 
 ### Lists
 
 Lists are the learner's own named groups of dictionary words and kanji, such as "Favorites" or
-"Anime S1 vocab". A new install starts with one list, **Favorites**, which can be renamed or deleted like
-any other; once deleted it is not created again. Signed in, Favorites is one list on every device
-and Zenbu app ([Zenbu account and sync](#zenbu-account-and-sync)). Words and kanji are added from their page's **•••** menu
-(see [Dictionary](dictionary.md)).
+"Anime S1 vocab". A new install starts with one list, **Favorites**, which can be renamed or deleted
+like any other; once deleted it is not created again. Signed in, Favorites is one list on every
+device and Zenbu app ([Zenbu account and sync](#zenbu-account-and-sync)). Words and kanji are added
+from their page's **•••** menu (see [Dictionary](dictionary.md)).
 
 The Account row shows how many lists there are. Lists shows every list in the learner's order
 with its word count; two lists in one place, as after signing in on a second phone, show in the

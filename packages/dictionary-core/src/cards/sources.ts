@@ -1,3 +1,5 @@
+import { sourceCredits } from '../sources/credits'
+
 export interface WordCardSource {
   name: string
   supplies: string
@@ -6,57 +8,56 @@ export interface WordCardSource {
   notice: string
 }
 
-const ccBySa4 = 'CC BY-SA 4.0'
-const bsd3 = 'BSD-3-Clause'
+const { jmdict, kanjidic2, unidic, jlpt, tubelex, wikipedia, jiten } = sourceCredits
 
 export const wordCardLicense = {
-  name: ccBySa4,
-  url: 'https://creativecommons.org/licenses/by-sa/4.0/',
+  name: jiten.license.name,
+  url: jiten.license.url,
   statement:
     'The cards adapt CC BY-SA 4.0 data (JMdict and KANJIDIC2, the JLPT vocabulary lists, and Jiten), so they are shared under CC BY-SA 4.0, with each source credited and its notice included.'
-} as const
+}
 
 export const wordCardSources: readonly WordCardSource[] = [
   {
-    name: 'JMdict and KANJIDIC2',
+    name: `${jmdict.name} and ${kanjidic2.name}`,
     supplies: 'headwords, readings, meanings, parts of speech, and the kanji readings in furigana',
-    license: 'EDRDG licence (CC BY-SA 4.0)',
-    url: 'https://www.edrdg.org/edrdg/licence.html',
+    license: jmdict.license.name,
+    url: jmdict.license.url,
     notice: 'EDRDG-ATTRIBUTION.md'
   },
   {
-    name: 'UniDic',
+    name: unidic.name,
     supplies: 'pitch accent, and the accent types two-part compounds are estimated from',
-    license: 'BSD',
-    url: 'https://clrd.ninjal.ac.jp/unidic/',
+    license: unidic.license.name,
+    url: unidic.url,
     notice: 'UNIDIC-NEW-BSD.txt'
   },
   {
-    name: 'JLPT vocabulary lists',
+    name: jlpt.name,
     supplies: "JLPT levels, Jonathan Waller's lists matched to JMdict by stephenmk",
-    license: ccBySa4,
-    url: 'https://github.com/stephenmk/yomitan-jlpt-vocab',
+    license: jlpt.license.name,
+    url: jlpt.url,
     notice: 'JLPT-VOCABULARY-CC-BY-SA-4.0.txt'
   },
   {
-    name: 'TUBELEX',
+    name: tubelex.name,
     supplies: 'YouTube ranks',
-    license: bsd3,
-    url: 'https://github.com/naist-nlp/tubelex',
+    license: tubelex.license.name,
+    url: tubelex.url,
     notice: 'TUBELEX-BSD-3-CLAUSE.txt'
   },
   {
-    name: 'Wikipedia Word Frequency Clean',
+    name: wikipedia.name,
     supplies: 'Wikipedia ranks',
-    license: bsd3,
-    url: 'https://github.com/adno/wikipedia-word-frequency-clean',
+    license: wikipedia.license.name,
+    url: wikipedia.url,
     notice: 'WIKIPEDIA-FREQUENCY-BSD-3-CLAUSE.txt'
   },
   {
-    name: 'Jiten',
+    name: jiten.name,
     supplies: 'TV & Movies, Anime, Manga, Novels, Visual Novels, and Games ranks, adapted',
-    license: ccBySa4,
-    url: 'https://jiten.moe/frequency-dictionaries',
+    license: jiten.license.name,
+    url: jiten.url,
     notice: 'JITEN-NOTICE.txt'
   }
 ]

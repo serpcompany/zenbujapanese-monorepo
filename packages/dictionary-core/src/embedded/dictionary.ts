@@ -1,6 +1,7 @@
 import { romaji, sentenceRomaji } from '../detail/romaji'
 import { isKanjiCharacter, shortGloss } from '../detail/text'
 import { japaneseCandidates, normalizeQuery } from '../search/query'
+import { creditsShownBy } from '../sources/credits'
 import type { EmbeddedHost } from './host'
 import { EmbeddedLookup } from './lookup'
 import { EmbeddedPresentation } from './presentation'
@@ -64,7 +65,8 @@ export function embeddedEndpoint(host: EmbeddedHost): EmbeddedEndpoint {
     kanjiElementPage: glyph => presentation().kanjiElementPage(glyph),
     kanjiStrokes: row => presentation().kanjiStrokes(JSON.parse(row)),
     radicalPanel: selected => presentation().radicalPanel(JSON.parse(selected)),
-    gloss: shortGloss
+    gloss: shortGloss,
+    sourceCredits: creditsShownBy
   }
   const unanalyzed: AnalyzeText = () => {
     throw new Error('An answer asked for at once cannot wait for an analysis')

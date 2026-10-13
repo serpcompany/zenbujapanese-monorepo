@@ -1,7 +1,7 @@
 import { browseCategories, browseCategory } from '@zenbu/dictionary-core/browse/categories'
 import { rankedLists } from '@zenbu/dictionary-core/browse/lists'
+import { sourceCredits } from '@zenbu/dictionary-core/sources/credits'
 import { describe, expect, test } from 'vitest'
-import { sources } from '../sources'
 import { categoryDescriptions } from './category-intros'
 import {
   categoryHeading,
@@ -19,19 +19,19 @@ describe('ranked lists', () => {
       const credited = rankedListCopy[list.slug]?.sources ?? []
       const expected =
         list.slug === 'youtube'
-          ? sources.tubelex
+          ? sourceCredits.tubelex
           : list.slug === 'wikipedia'
-            ? sources.wikipedia
-            : sources.jiten
+            ? sourceCredits.wikipedia
+            : sourceCredits.jiten
       expect(credited, list.slug).toContain(expected)
     }
   })
 
   test('Jiten is credited under CC BY-SA 4.0 with its share-alike notice, the others BSD-3-Clause', () => {
-    expect(sources.jiten.license.name).toBe('CC BY-SA 4.0')
-    expect(sources.jiten.notice).toMatch(/shared under the same licence, CC BY-SA 4\.0/)
-    expect(sources.wikipedia.license.name).toBe('BSD-3-Clause')
-    expect(sources.tubelex.license.name).toBe('BSD-3-Clause')
+    expect(sourceCredits.jiten.license.name).toBe('CC BY-SA 4.0')
+    expect(sourceCredits.jiten.notice).toMatch(/shared under the same licence, CC BY-SA 4\.0/)
+    expect(sourceCredits.wikipedia.license.name).toBe('BSD-3-Clause')
+    expect(sourceCredits.tubelex.license.name).toBe('BSD-3-Clause')
   })
 })
 
