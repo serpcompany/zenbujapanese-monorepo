@@ -204,7 +204,7 @@ struct WordDetailView: View {
   private var holdsExamples: Bool { examples.holds(entry.id.rawValue) }
 
   private func examplesPage(from: Int) async -> ExamplePage {
-    (try? await exampleSentenceClient.examples(entry, from: from)) ?? .none
+    (try? await exampleSentenceClient.examples(entry, from: from)) ?? .empty
   }
 
   private func loadMoreExamples() async {

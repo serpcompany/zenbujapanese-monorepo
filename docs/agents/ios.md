@@ -467,17 +467,17 @@ for the view and the suite alike. Record it with
 `-only-testing:SearchExperienceTests/SearchResultsConformanceTests`; add a query by adding its
 `query` and `covers` fields and recording.
 
-`ExampleSearchConformanceTests` records, in `example-search.json`, the Example Sentences screen
-that Search's "View N Example Sentences" row opens: for each query, the row's count and title,
-the screen's count line, the entry the screen links words to, whether it lists that entry's
-examples (a deinflected or romaji query) or the sentences that contain the query, every listed
-sentence's pair ID in order, and the first five sentences' words with their entry, candidates,
-and whether the screen accents them as the query's. What the screen lists, counts, and accents
-is the core's answer (`ExampleSentenceClient.listed`, a page at a time, each word with its
-`accent`), which the view and the suite both read. It pins `LanguageReferenceData.sqlite3`,
-`ExampleWordIndex.sqlite3`, and the tokenizer's dictionary files. Record it with
-`-only-testing:SearchExperienceTests/ExampleSearchConformanceTests`; add a query by adding its
-`query` and `covers` fields and recording.
+`ExampleSearchConformanceTests` records, in `example-search.json`, the Example Sentences screen that
+Search's "View N Example Sentences" row opens: for each query, the row's count and title, the
+screen's count line, the entry the screen links words to, whether it lists that entry's examples (a
+deinflected or romaji query) or the sentences that contain the query, every listed sentence's pair
+ID in order, and the first five sentences' words with their entry, candidates, and whether the
+screen accents them as the query's, read with the tokenizer's analysis. What the screen lists,
+counts, and accents is the core's answer (`ExampleSentenceClient.listed`, a page at a time, each
+word with its `accent`), which the view and the suite both read. It pins
+`LanguageReferenceData.sqlite3`, `ExampleWordIndex.sqlite3`, and the tokenizer's dictionary files.
+Record it with `-only-testing:SearchExperienceTests/ExampleSearchConformanceTests`; add a query by
+adding its `query` and `covers` fields and recording.
 
 `WordDetailConformanceTests` and `KanjiDetailConformanceTests` do the same for the detail screens,
 so the website's word pages and kanji details can be checked against the app. They check

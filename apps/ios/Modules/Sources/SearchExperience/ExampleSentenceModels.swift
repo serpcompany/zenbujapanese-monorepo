@@ -33,7 +33,7 @@ struct LinkedExample: Identifiable, Sendable {
 }
 
 struct ExamplePage: Sendable {
-  static let none = ExamplePage(examples: [], listed: 0, countText: nil)
+  static let empty = ExamplePage(examples: [], listed: 0, countText: nil)
 
   let examples: [LinkedExample]
   let listed: Int

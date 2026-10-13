@@ -27,7 +27,7 @@ struct ExampleSentenceClient: Sendable {
       let request = ResultsExamplesRequest(
         query: query.value, primaryEntry: highlightedEntry?.id.rawValue,
         usesPrimaryEntryExamples: usesHighlightedEntryExamples, from: from)
-      guard let found = try? await text.resultsExamples(request) else { return .none }
+      guard let found = try? await text.resultsExamples(request) else { return .empty }
       return await linked.page(found, highlightedEntry: highlightedEntry)
     }
     entryExamples = { entry, from in
@@ -43,7 +43,7 @@ struct ExampleSentenceClient: Sendable {
       }
     }
     formExamples = { form, from in
-      guard let found = try? await text.formExamples(form, from: from) else { return .none }
+      guard let found = try? await text.formExamples(form, from: from) else { return .empty }
       return await linked.page(found, highlightedEntry: nil)
     }
   }

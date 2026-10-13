@@ -333,6 +333,7 @@ describe('the embedded text engine', () => {
       Array.from({ length: 10 }, (_, row) => `esp1_${pairId(50 + row)}`)
     )
     expect((await page(1, 0)).countText).toBe('1 example')
+    expect((await page(100, 0)).countText).toBe('100 examples')
     const hundred = await page(101, 75)
     expect(hundred).toMatchObject({
       listed: 100,
@@ -340,6 +341,24 @@ describe('the embedded text engine', () => {
     })
     expect(hundred.examples).toHaveLength(25)
     expect((await page(101, 100)).examples).toEqual([])
+  })
+
+  test('answers a romaji or deinflected query with its primary entry’s examples, query words accented', async () => {
+    const found = (await ask(
+      listing('見る', 30),
+      'resultsExamples',
+      JSON.stringify({
+        query: '見る',
+        primaryEntry: 'v1',
+        usesPrimaryEntryExamples: true,
+        from: 25
+      })
+    )) as EmbeddedResultsExamples
+    expect(found).toMatchObject({ listed: 30, countText: '30 examples' })
+    expect(found.examples.map(example => example.id)).toEqual(
+      Array.from({ length: 5 }, (_, row) => `esp1_${pairId(25 + row)}`)
+    )
+    expect(accents(found.examples[0].words)).toEqual([['見る', 'v1', 'query']])
   })
 
   test('answers a word’s examples a page at a time, with the word itself accented', async () => {

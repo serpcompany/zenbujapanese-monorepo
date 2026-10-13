@@ -11,6 +11,7 @@ import {
   accentedPositions,
   type ExampleHighlight,
   type ExamplesEntry,
+  exampleCount,
   examplesEntries,
   screenAccent,
   tokenSpans
@@ -247,7 +248,7 @@ export class EmbeddedText {
     }
     return {
       ...(await this.page(found.sentences, request.from, accented, analyze)),
-      countText: exampleCountText({ listed: found.sentences.length, truncated: found.truncated })
+      countText: exampleCountText(exampleCount(found))
     }
   }
 

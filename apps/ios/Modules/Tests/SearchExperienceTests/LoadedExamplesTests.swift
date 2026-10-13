@@ -63,7 +63,7 @@ struct LoadedExamplesTests {
   func anEmptyPageEndsTheList() {
     var loaded = LoadedExamples()
     loaded.add(page(0..<25, of: 60, countText: "60 examples"), from: 0, of: "見る")
-    loaded.add(.none, from: 25, of: "見る")
+    loaded.add(.empty, from: 25, of: "見る")
     #expect(loaded.examples.count == 25)
     #expect(loaded.countText == "60 examples")
     #expect(!loaded.hasMore)

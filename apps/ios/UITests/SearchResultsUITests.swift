@@ -64,7 +64,7 @@ final class SearchResultsUITests: ZenbuUITestCase {
 
   func testExampleSentencesSayHowManyAreListed() {
     for (query, count) in [
-      ("iru", "3 examples"), ("miru", "The first 100 of more than 100 examples"),
+      ("iru", "3 examples"), ("eat", "The first 100 of more than 100 examples"),
     ] {
       let app = launch()
       search(query, in: app)
