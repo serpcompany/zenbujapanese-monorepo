@@ -9,6 +9,8 @@ export interface Word {
   romaji: string
   meanings: string[]
   isCommon?: boolean
+  partsOfSpeech?: string[]
+  jmdictEntry?: number
 }
 
 type Parameter = string | number | Uint8Array
@@ -67,7 +69,15 @@ export function dictionary(database: MemoryDatabase, words: readonly Word[]): Se
   for (const [index, word] of words.entries()) {
     const id = Uint8Array.of(index + 1)
     const shownKind = word.headword === word.reading ? FormKind.reading : FormKind.written
-    entry.run(id, index + 1, word.headword, word.reading, word.meanings.join('; '), '[]', id)
+    entry.run(
+      id,
+      word.jmdictEntry ?? index + 1,
+      word.headword,
+      word.reading,
+      word.meanings.join('; '),
+      JSON.stringify(word.partsOfSpeech ?? []),
+      id
+    )
     if (shownKind === FormKind.written) form.run(id, word.headword, FormKind.written)
     form.run(id, word.reading, FormKind.reading)
     form.run(id, word.romaji, FormKind.romaji)

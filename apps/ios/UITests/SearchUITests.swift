@@ -11,19 +11,19 @@ final class SearchUITests: ZenbuUITestCase {
     assertOnScreen(find("word-detail.more-menu", in: app), in: app)
   }
 
-  func testAnEnglishSentenceListsAWordForEachOfItsWordsAndOpensOne() {
+  func testAnEnglishSentenceListsItsWordsAndOpensOne() {
     let app = launch()
     search("where is the bathroom", in: app)
-    let words = ["何処, どこ, where", "です, です, is", "その, その, the", "風呂, ふろ, bathroom"]
+    let words = ["何処, どこ, where", "です, です, is", "風呂, ふろ, bathroom"]
     let rows = words.map { result(saying: $0, in: app) }
     for row in rows {
       assertOnScreen(row, in: app)
     }
     assertOnScreen(labeled("Discovered Words", in: app), in: app)
-    XCTAssertEqual(resultsListed(in: app), words.count, "one word for each word of the sentence")
+    XCTAssertEqual(resultsListed(in: app), words.count, "a word for each word but \"the\"")
     let tops = rows.map(\.frame.minY)
     XCTAssertEqual(tops, tops.sorted(), "in the sentence's order")
-    tap(rows[3])
+    tap(rows[2])
     assertOnScreen(find("word-detail.screen", in: app), in: app)
     waitFor(labeled("風呂", in: app))
   }

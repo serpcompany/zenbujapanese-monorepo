@@ -1,26 +1,120 @@
 import { describe, expect, test } from 'vitest'
-import { baseFormsOf, sameWordInAnyForm } from './english-inflection'
+import {
+  baseFormsOf,
+  type EntriesOfABase,
+  irregularBaseFormsOf,
+  sameWordInAnyForm
+} from './english-inflection'
 
 const eitherWay = (one: string, other: string) => [
   sameWordInAnyForm(one)(other),
   sameWordInAnyForm(other)(one)
 ]
 
+const bringing = (entries: EntriesOfABase, bases: readonly string[]) =>
+  bases.map(base => ({ base, entries }))
+
 describe('baseFormsOf', () => {
   test.each([
     ['rabbits', ['rabbit']],
     ['carrots', ['carrot']],
     ['does', ['doe', 'do']],
-    ['fired', ['fir', 'fire']],
-    ['stories', ['story', 'storie']],
+    ['stories', ['story', 'storie']]
+  ])('reads the plural or third person 「%s」 as a form of %o, a noun or a verb', (word, bases) => {
+    expect(baseFormsOf(word)).toEqual(bringing('all', bases))
+  })
+
+  test.each([
+    ['walked', ['walk', 'walke']],
     ['stopped', ['stopp', 'stoppe', 'stop']],
-    ['making', ['mak', 'make']],
-    ['ate', []],
-    ['is', []],
-    ['glass', []],
-    ["rabbit's", []]
-  ])('reads 「%s」 as a form of %o', (word, bases) => {
-    expect(baseFormsOf(word)).toEqual(bases)
+    ['studied', ['study', 'studie', 'studi']],
+    ['going', ['go', 'goe']],
+    ['secreted', ['secret', 'secrete']],
+    ['incoming', ['incom', 'income']]
+  ])('reads the past or -ing form 「%s」 as a form of %o, where that is a verb', (word, bases) => {
+    expect(baseFormsOf(word)).toEqual(bringing('allIfAVerb', bases))
+  })
+
+  test.each([
+    ['fired', ['fire']],
+    ['making', ['make']],
+    ['taped', ['tape']],
+    ['hoping', ['hope']]
+  ])('reads 「%s」 as a form of %o alone: a base of one short vowel and a consonant doubles it', (word, bases) => {
+    expect(baseFormsOf(word)).toEqual(bringing('allIfAVerb', bases))
+  })
+
+  test.each([
+    ['taller', ['tall', 'talle', 'tal']],
+    ['colder', ['cold', 'colde']],
+    ['bigger', ['bigg', 'bigge', 'big']],
+    ['biggest', ['bigg', 'bigge', 'big']],
+    ['heavier', ['heavy']],
+    ['happiest', ['happy']],
+    ['largest', ['larg', 'large']],
+    ['better', ['good']],
+    ['best', ['good']],
+    ['worse', ['bad']],
+    ['worst', ['bad']]
+  ])('reads the comparative or superlative 「%s」 as a form of the adjective %o', (word, bases) => {
+    expect(baseFormsOf(word)).toEqual(bringing('adjectives', bases))
+  })
+
+  test.each([
+    ['nicer', ['nice']],
+    ['later', ['late']],
+    ['cuter', ['cute']],
+    ['peter', ['pete']]
+  ])('reads 「%s」 as %o alone, as a past is: 「pet」 would make 「petter」', (word, bases) => {
+    expect(baseFormsOf(word)).toEqual(bringing('adjectives', bases))
+  })
+
+  test.each([
+    'ate',
+    'is',
+    'glass',
+    "rabbit's",
+    'her',
+    'pier'
+  ])('gives 「%s」 no base form', word => {
+    expect(baseFormsOf(word)).toEqual([])
+  })
+})
+
+describe('irregularBaseFormsOf', () => {
+  test.each([
+    ['ate', 'eat'],
+    ['went', 'go'],
+    ['saw', 'see'],
+    ['been', 'be'],
+    ['being', 'be'],
+    ['has', 'have'],
+    ['done', 'do'],
+    ['written', 'write']
+  ])('reads 「%s」 as a form of the verb %s', (word, base) => {
+    expect(irregularBaseFormsOf(word)).toEqual(bringing('verbs', [base]))
+  })
+
+  test.each([
+    ['children', 'child'],
+    ['men', 'man'],
+    ['women', 'woman'],
+    ['feet', 'foot'],
+    ['teeth', 'tooth'],
+    ['mice', 'mouse'],
+    ['knives', 'knife']
+  ])('reads 「%s」 as the plural of the noun %s', (word, base) => {
+    expect(irregularBaseFormsOf(word)).toEqual(bringing('nouns', [base]))
+  })
+
+  test.each([
+    'rabbits',
+    'played',
+    'better',
+    'eat',
+    'xyzzy'
+  ])('gives 「%s」, which is regular, a comparative, a base or unknown, none', word => {
+    expect(irregularBaseFormsOf(word)).toEqual([])
   })
 })
 
@@ -103,6 +197,23 @@ describe('sameWordInAnyForm', () => {
     ['experimented', 'experience']
   ])('reads %s and %s, which only share a stem, as two words', (one, other) => {
     expect(eitherWay(one, other)).toEqual([false, false])
+  })
+
+  test.each([
+    ['taller', 'tall'],
+    ['better', 'good'],
+    ['went', 'go'],
+    ['children', 'child']
+  ])('reads %s as no form of %s: it knows neither comparatives nor irregular forms', (one, other) => {
+    expect(eitherWay(one, other)).toEqual([false, false])
+  })
+
+  test.each([
+    ['fired', 'fir'],
+    ['taped', 'tap'],
+    ['hoping', 'hop']
+  ])('still reads %s as a form of %s, a base that a sentence’s word leaves out', (one, other) => {
+    expect(eitherWay(one, other)).toEqual([true, true])
   })
 
   test.each([

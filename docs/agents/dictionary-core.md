@@ -350,15 +350,15 @@ The core answers as the Swift it replaced did, which the suites pin.
   priority, sense, gloss order, romaji corroboration, headword length, and fingerprint (#701).
 - An English query matches a sense restricted to some written forms or readings (JMdict's stagk
   and stagr) only when the entry is shown with one of them.
-- An English sentence that finds no entry brings, for each of its first 24 words until 12 have
-  some, the entries that word's own results could lead with (`englishSentenceCandidates`, #401):
-  the strong-gloss entries among its first 60. `rankedByStrongGloss` ranks them as the word's
-  search does and reads no others: SQL holds the phrase match to the meanings that are the word,
-  so in Node `the` takes 10 ms where its search takes 500. A word with none brings its base
-  forms' (`baseFormsOf`). The results layer, which has the frequency, lists each word's first
-  (`discoveredWords`): for an analyzed query a relevance group is a word, an entry may be in two
-  groups, and an English sentence has no primary entry. An ASCII query never asks the analyzer,
-  and one with `*` or `^` is a pattern, not a sentence.
+- An English sentence that finds no entry brings, for each of its first 24 words until 12 have some,
+  the entries that word's own results could lead with (`englishSentenceCandidates`, #401): the
+  strong-gloss entries among its first 60. `rankedByStrongGloss` ranks them as its search does and
+  reads no others: SQL holds the phrase match to the meanings that are the word, so in Node `is`
+  takes 2 ms where its search takes 500. Six words bring none, twelve a fixed entry, and an
+  inflected word its base form's ([`english-sentence-search.md`](english-sentence-search.md)). The
+  results layer, which has the frequency, lists each word's first (`discoveredWords`): for an
+  analyzed query a relevance group is a word, an entry may be in two groups, and an English sentence
+  has no primary entry. An ASCII query asks no analyzer, and one with `*` or `^` is a pattern.
 - `literalQuery` is the app's literal query policy: `mondai` searches as `monday`.
 
 ## Detail

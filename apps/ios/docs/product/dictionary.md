@@ -162,20 +162,20 @@ dictionary is unavailable. Results can also offer a Japanese-reading refinement,
 Example Sentences, discovered words, and a dedicated Kanji result for a single-kanji query. An
 English query's Example Sentences have its words in any form: `startled you` finds "startle you".
 An English sentence that no entry means as a whole lists, as **Discovered Words**, a word for each
-of its words, small ones included: the one that word's own results lead with, with the meaning it
-matched. `where is the bathroom` lists 何処 "where", です "is", その "the", and 風呂 "bathroom". A
-word no entry means lists its base form's word (`rabbits` lists 兎), or nothing (`his`, `ate`).
+of its words but `a`, `an`, `the`, `of`, `to`, and `will`: `where is the bathroom` lists 何処, です,
+and 風呂. Twelve words list a fixed one, the rest the one their own results or their base form's
+lead with, with the meaning it matched: [rules](../../../../docs/agents/english-sentence-search.md).
 
 Check: package `SearchFrequencyOrchestrationTests` and `ResultsScreenTests` (a dictionary that
 can't be read is named, and the others still order the list); core `detail/frequency.test.ts`
 (the notice's words), `artifact/example-search.test.ts` and `examples/english-inflection.test.ts`
-(which sentences an English query finds), and `search/english-sentence.test.ts` and
-`results/learner.test.ts` (an English sentence's words); the recorded `SearchConformanceTests` and
-`SearchResultsConformanceTests` (the refinement, Example Sentences, and Kanji rows, and four
-English sentences) and `ExampleSearchConformanceTests` (`startled you` and `generously`); UI
-`SearchResultsUITests.testARomajiQueryOffersItsJapaneseReading`,
+(which sentences an English query finds), and `search/english-sentence.test.ts`,
+`search/english-sentence-words.test.ts`, and `results/learner.test.ts` (an English sentence's
+words); the recorded `SearchConformanceTests` and `SearchResultsConformanceTests` (the refinement,
+Example Sentences, and Kanji rows, and four English sentences) and `ExampleSearchConformanceTests`
+(`startled you`, `generously`); UI `SearchResultsUITests.testARomajiQueryOffersItsJapaneseReading`,
 `testAWordOffersItsExampleSentences`, `SearchUITests.testAQueryWithNoMatchesSaysSo`,
-`testAnEnglishSentenceListsAWordForEachOfItsWordsAndOpensOne`, and
+`testAnEnglishSentenceListsItsWordsAndOpensOne`, and
 `testAnEnglishQueryFindsTheExampleSentenceWithItsWordsInAnotherForm`.
 
 Recent text searches are stored on the device and listed while the query is empty. A learner can

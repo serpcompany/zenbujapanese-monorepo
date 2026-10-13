@@ -1886,18 +1886,18 @@
     return { rows, glossMatches, romajiMatches };
   }
   function strongGlossesOf(word) {
-    const infinitive = `to ${word}`;
+    const infinitive2 = `to ${word}`;
     const noteAfter = (phrase) => `${phrase} (`;
     return {
       sql: `AND (g.normalized_text IN (?, ?)
          OR substr(g.normalized_text, 1, ?) = ? OR substr(g.normalized_text, 1, ?) = ?)`,
       params: [
         word,
-        infinitive,
+        infinitive2,
         noteAfter(word).length,
         noteAfter(word),
-        noteAfter(infinitive).length,
-        noteAfter(infinitive)
+        noteAfter(infinitive2).length,
+        noteAfter(infinitive2)
       ]
     };
   }
@@ -2073,60 +2073,6 @@
          AND ${readingRestrictionFilter}`,
       params
     );
-  }
-
-  // src/examples/english-inflection.ts
-  var wordThatInflects = /^[a-z]{3,}$/;
-  var vowel = /[aeiouy]/;
-  var doubledFinalConsonant = /([b-df-hj-np-tv-z])\1$/;
-  var endingThatTakesEs = /(?:[sxzo]|[cs]h)$/;
-  var twoLettersEndingInAVowel = /^[a-z][aeiou]$/;
-  var twoConsonants = /^[b-df-hj-np-tv-xz]{2}$/;
-  var fewestLettersInABase = 3;
-  var isLongEnough = (base) => base.length >= fewestLettersInABase;
-  var isLongEnoughOrLikeGo = (base) => isLongEnough(base) || twoLettersEndingInAVowel.test(base);
-  var isLongEnoughOrAnAbbreviation = (base) => isLongEnough(base) || twoConsonants.test(base);
-  function basesBeforeAnEnding(stem, isABase) {
-    if (stem.length < 2 || !vowel.test(stem)) return [];
-    const withoutItsDoubling = stem.slice(0, -1);
-    return [
-      ...isABase(stem) ? [stem] : [],
-      `${stem}e`,
-      ...doubledFinalConsonant.test(stem) && isLongEnough(withoutItsDoubling) ? [withoutItsDoubling] : []
-    ];
-  }
-  function basesOfAPluralOrThirdPerson(word) {
-    if (!word.endsWith("s") || word.endsWith("ss")) return [];
-    const withoutS = word.slice(0, -1);
-    const withoutEs = word.slice(0, -2);
-    const bases = word.endsWith("ies") ? [`${word.slice(0, -3)}y`, withoutS] : [withoutS];
-    const takesEs = word.endsWith("es") && endingThatTakesEs.test(withoutEs) && isLongEnoughOrLikeGo(withoutEs);
-    return [...bases.filter(isLongEnoughOrAnAbbreviation), ...takesEs ? [withoutEs] : []];
-  }
-  function basesOfAPast(word) {
-    if (!word.endsWith("ed")) return [];
-    const withoutEd = word.slice(0, -2);
-    return word.endsWith("ied") ? [`${word.slice(0, -3)}y`, word.slice(0, -1), withoutEd].filter(isLongEnough) : basesBeforeAnEnding(withoutEd, isLongEnough);
-  }
-  function possibleBaseForms(word) {
-    if (!wordThatInflects.test(word)) return [word];
-    return [
-      word,
-      ...basesOfAPluralOrThirdPerson(word),
-      ...basesOfAPast(word),
-      ...word.endsWith("ing") ? basesBeforeAnEnding(word.slice(0, -3), isLongEnoughOrLikeGo) : []
-    ];
-  }
-  function baseFormsOf(word) {
-    return [...new Set(possibleBaseForms(word))].filter((base) => base !== word);
-  }
-  function sameWordInAnyForm(word) {
-    const lowered = word.toLowerCase();
-    const bases = possibleBaseForms(lowered);
-    return (other) => {
-      const candidate = other.toLowerCase();
-      return candidate === lowered || possibleBaseForms(candidate).some((base) => bases.includes(base));
-    };
   }
 
   // src/search/deinflect.ts
@@ -2331,6 +2277,356 @@
     return results;
   }
 
+  // src/examples/english-irregular-forms.ts
+  function basesByForm(basesWithTheirForms) {
+    return new Map(
+      basesWithTheirForms.flatMap((row) => {
+        const [base, ...forms2] = row.split(" ");
+        return forms2.map((form) => [form, base]);
+      })
+    );
+  }
+  var verbsByIrregularForm = basesByForm([
+    "arise arose arisen",
+    "awake awoke awoken",
+    "be been being",
+    "bear bore borne",
+    "beat beaten",
+    "become became",
+    "begin began begun",
+    "bend bent",
+    "bind bound",
+    "bite bitten",
+    "blow blew blown",
+    "break broke broken",
+    "bring brought",
+    "build built",
+    "burn burnt",
+    "buy bought",
+    "catch caught",
+    "choose chose chosen",
+    "cling clung",
+    "come came",
+    "creep crept",
+    "dig dug",
+    "do done doing",
+    "draw drew drawn",
+    "dream dreamt",
+    "drink drank",
+    "drive drove driven",
+    "eat ate eaten",
+    "fall fell fallen",
+    "feed fed",
+    "feel felt",
+    "fight fought",
+    "find found",
+    "flee fled",
+    "fling flung",
+    "fly flew flown",
+    "forbid forbade forbidden",
+    "forget forgot forgotten",
+    "forgive forgave forgiven",
+    "freeze froze frozen",
+    "get got gotten",
+    "give gave given",
+    "go went gone",
+    "grow grew grown",
+    "hang hung",
+    "have has had having",
+    "hear heard",
+    "hide hid hidden",
+    "hold held",
+    "keep kept",
+    "kneel knelt",
+    "know knew known",
+    "lead led",
+    "lean leant",
+    "leap leapt",
+    "learn learnt",
+    "lend lent",
+    "light lit",
+    "lose lost",
+    "make made",
+    "mean meant",
+    "meet met",
+    "mistake mistook mistaken",
+    "overcome overcame",
+    "overhear overheard",
+    "oversleep overslept",
+    "overtake overtook overtaken",
+    "pay paid",
+    "rebuild rebuilt",
+    "redo redid redone",
+    "repay repaid",
+    "rewrite rewrote rewritten",
+    "ring rang rung",
+    "rise risen",
+    "run ran",
+    "say said",
+    "see saw seen",
+    "seek sought",
+    "sell sold",
+    "send sent",
+    "sew sewn",
+    "shake shook shaken",
+    "shoot shot",
+    "show shown",
+    "shrink shrank shrunk",
+    "sing sang sung",
+    "sink sank sunk",
+    "sit sat",
+    "sleep slept",
+    "slide slid",
+    "smell smelt",
+    "speak spoke spoken",
+    "speed sped",
+    "spell spelt",
+    "spend spent",
+    "spill spilt",
+    "spin spun",
+    "spit spat",
+    "spoil spoilt",
+    "spring sprang sprung",
+    "stand stood",
+    "steal stole stolen",
+    "stick stuck",
+    "sting stung",
+    "stink stank stunk",
+    "strike struck stricken",
+    "swear swore sworn",
+    "sweep swept",
+    "swell swollen",
+    "swim swam swum",
+    "swing swung",
+    "take took taken",
+    "teach taught",
+    "tear tore torn",
+    "tell told",
+    "think thought",
+    "throw threw thrown",
+    "undergo underwent undergone",
+    "understand understood",
+    "undo undid undone",
+    "wake woke woken",
+    "wear wore worn",
+    "weep wept",
+    "win won",
+    "withdraw withdrew withdrawn",
+    "write wrote written"
+  ]);
+  var nounsByIrregularPlural = basesByForm([
+    "child children",
+    "foot feet",
+    "half halves",
+    "knife knives",
+    "leaf leaves",
+    "life lives",
+    "man men",
+    "mouse mice",
+    "shelf shelves",
+    "thief thieves",
+    "tooth teeth",
+    "wife wives",
+    "wolf wolves",
+    "woman women"
+  ]);
+  var adjectivesByIrregularComparative = basesByForm(["good better best", "bad worse worst"]);
+
+  // src/examples/english-inflection.ts
+  var wordThatInflects = /^[a-z]{3,}$/;
+  var vowel = /[aeiouy]/;
+  var doubledFinalConsonant = /([b-df-hj-np-tv-z])\1$/;
+  var endingThatTakesEs = /(?:[sxzo]|[cs]h)$/;
+  var twoLettersEndingInAVowel = /^[a-z][aeiou]$/;
+  var twoConsonants = /^[b-df-hj-np-tv-xz]{2}$/;
+  var baseThatDoublesItsLastConsonant = /^[^aeiou]*[aeiou][b-df-hj-np-tvz]$/;
+  var fewestLettersInABase = 3;
+  var comparativeEndings = ["est", "er"];
+  var isLongEnough = (base) => base.length >= fewestLettersInABase;
+  var isLongEnoughOrLikeGo = (base) => isLongEnough(base) || twoLettersEndingInAVowel.test(base);
+  var isLongEnoughOrAnAbbreviation = (base) => isLongEnough(base) || twoConsonants.test(base);
+  var isLongEnoughAndTakesAnEndingAsWritten = (base) => isLongEnough(base) && !baseThatDoublesItsLastConsonant.test(base);
+  var isLikeGoOrTakesAnEndingAsWritten = (base) => twoLettersEndingInAVowel.test(base) || isLongEnoughAndTakesAnEndingAsWritten(base);
+  function basesBeforeAnEnding(stem, isABase) {
+    if (stem.length < 2 || !vowel.test(stem)) return [];
+    const withoutItsDoubling = stem.slice(0, -1);
+    return [
+      ...isABase(stem) ? [stem] : [],
+      `${stem}e`,
+      ...doubledFinalConsonant.test(stem) && isLongEnough(withoutItsDoubling) ? [withoutItsDoubling] : []
+    ];
+  }
+  function basesOfAPluralOrThirdPerson(word) {
+    if (!word.endsWith("s") || word.endsWith("ss")) return [];
+    const withoutS = word.slice(0, -1);
+    const withoutEs = word.slice(0, -2);
+    const bases = word.endsWith("ies") ? [`${word.slice(0, -3)}y`, withoutS] : [withoutS];
+    const takesEs = word.endsWith("es") && endingThatTakesEs.test(withoutEs) && isLongEnoughOrLikeGo(withoutEs);
+    return [...bases.filter(isLongEnoughOrAnAbbreviation), ...takesEs ? [withoutEs] : []];
+  }
+  function basesOfAPast(word, isABase = isLongEnough) {
+    if (!word.endsWith("ed")) return [];
+    const withoutEd = word.slice(0, -2);
+    return word.endsWith("ied") ? [`${word.slice(0, -3)}y`, word.slice(0, -1), withoutEd].filter(isLongEnough) : basesBeforeAnEnding(withoutEd, isABase);
+  }
+  function basesOfAnIngForm(word, isABase = isLongEnoughOrLikeGo) {
+    return word.endsWith("ing") ? basesBeforeAnEnding(word.slice(0, -3), isABase) : [];
+  }
+  function baseIn(basesByForm2, form) {
+    const base = basesByForm2.get(form);
+    return base === void 0 ? [] : [base];
+  }
+  function basesOfAComparative(word) {
+    const irregular = baseIn(adjectivesByIrregularComparative, word);
+    if (irregular.length > 0) return irregular;
+    const ending = comparativeEndings.find((candidate) => word.endsWith(candidate));
+    if (!ending) return [];
+    const stem = word.slice(0, -ending.length);
+    return stem.endsWith("i") ? [`${stem.slice(0, -1)}y`].filter(isLongEnough) : basesBeforeAnEnding(stem, isLongEnoughAndTakesAnEndingAsWritten);
+  }
+  function possibleBaseForms(word) {
+    if (!wordThatInflects.test(word)) return [word];
+    return [
+      word,
+      ...basesOfAPluralOrThirdPerson(word),
+      ...basesOfAPast(word),
+      ...basesOfAnIngForm(word)
+    ];
+  }
+  var bringing = (entries) => (base) => ({ base, entries });
+  function baseFormsOf(word) {
+    if (!wordThatInflects.test(word)) return [];
+    return [
+      ...basesOfAPluralOrThirdPerson(word).map(bringing("all")),
+      ...basesOfAPast(word, isLongEnoughAndTakesAnEndingAsWritten).map(bringing("allIfAVerb")),
+      ...basesOfAnIngForm(word, isLikeGoOrTakesAnEndingAsWritten).map(bringing("allIfAVerb")),
+      ...basesOfAComparative(word).map(bringing("adjectives"))
+    ];
+  }
+  function irregularBaseFormsOf(word) {
+    return [
+      ...baseIn(verbsByIrregularForm, word).map(bringing("verbs")),
+      ...baseIn(nounsByIrregularPlural, word).map(bringing("nouns"))
+    ];
+  }
+  function sameWordInAnyForm(word) {
+    const lowered = word.toLowerCase();
+    const bases = possibleBaseForms(lowered);
+    return (other) => {
+      const candidate = other.toLowerCase();
+      return candidate === lowered || possibleBaseForms(candidate).some((base) => bases.includes(base));
+    };
+  }
+
+  // src/search/english-function-words.ts
+  var wordsThatListNothing = /* @__PURE__ */ new Set([
+    "a",
+    "an",
+    "the",
+    "of",
+    "to",
+    "will"
+  ]);
+  var desu = 1628500;
+  var datta = 2819970;
+  var sore = 1006970;
+  var nai = 2257550;
+  var dekiru = 1340450;
+  var kesshite = 1254130;
+  var suru = 1157170;
+  var fixedEntries = /* @__PURE__ */ new Map([
+    ["am", { jmdictEntry: desu, meaning: "be" }],
+    ["is", { jmdictEntry: desu, meaning: "is" }],
+    ["are", { jmdictEntry: desu, meaning: "be" }],
+    ["was", { jmdictEntry: datta, meaning: "was" }],
+    ["were", { jmdictEntry: datta, meaning: "were" }],
+    ["it", { jmdictEntry: sore, meaning: "it" }],
+    ["not", { jmdictEntry: nai, meaning: "not" }],
+    ["can", { jmdictEntry: dekiru, meaning: "be able to do" }],
+    ["never", { jmdictEntry: kesshite, meaning: "(not) ever" }],
+    ["do", { jmdictEntry: suru, meaning: "do" }],
+    ["does", { jmdictEntry: suru, meaning: "do" }],
+    ["did", { jmdictEntry: suru, meaning: "do" }]
+  ]);
+
+  // src/search/english-sentence.ts
+  var sentenceWordLookupLimit = 24;
+  var nounParts = /* @__PURE__ */ new Set(["noun"]);
+  var adjectiveParts = /* @__PURE__ */ new Set([
+    "iAdjective",
+    "naAdjective",
+    "preNounAdjective",
+    "taruAdjective"
+  ]);
+  var infinitive = (verb) => `to ${verb}`;
+  async function firstRowCandidates(db, meaning, partsOfSpeech) {
+    const ranked = (await rankedByStrongGloss(db, meaning)).filter(
+      ({ entry }) => !partsOfSpeech || entry.partsOfSpeech.some((part) => partsOfSpeech.has(part))
+    ).slice(0, searchResultLimit);
+    return resultItems(
+      ranked.filter(
+        (entry) => comparePresentationRanks(entry.presentationRank, ranked[0].presentationRank) === 0
+      )
+    );
+  }
+  var unknownWord = void 0;
+  var noEntriesOfAKnownWord = [];
+  var entriesOrUnknownWord = (candidates) => candidates.length > 0 ? candidates : unknownWord;
+  async function candidatesOfABaseForm(db, { base, entries }) {
+    switch (entries) {
+      case "verbs":
+        return entriesOrUnknownWord(await firstRowCandidates(db, infinitive(base)));
+      case "nouns":
+        return entriesOrUnknownWord(await firstRowCandidates(db, base, nounParts));
+      case "adjectives":
+        return entriesOrUnknownWord(await firstRowCandidates(db, base, adjectiveParts));
+      case "all":
+        return entriesOrUnknownWord(await firstRowCandidates(db, base));
+      case "allIfAVerb": {
+        const all = await firstRowCandidates(db, base);
+        if (all.length === 0) return unknownWord;
+        const asAVerb = await firstRowCandidates(db, infinitive(base));
+        return asAVerb.length > 0 ? all : noEntriesOfAKnownWord;
+      }
+    }
+  }
+  async function candidatesOfBaseForms(db, baseForms) {
+    let candidates = unknownWord;
+    for (const baseForm of baseForms) {
+      const found = await candidatesOfABaseForm(db, baseForm);
+      if (found) candidates = [...candidates ?? [], ...found];
+    }
+    return candidates;
+  }
+  async function fixedCandidates(db, { jmdictEntry, meaning }) {
+    const ranked = await rankedByStrongGloss(db, meaning);
+    return resultItems(ranked.filter(({ entry }) => entry.sourceRecordId === jmdictEntry));
+  }
+  async function candidatesFor(db, word) {
+    if (wordsThatListNothing.has(word)) return noEntriesOfAKnownWord;
+    const fixed = fixedEntries.get(word);
+    if (fixed) return entriesOrUnknownWord(await fixedCandidates(db, fixed));
+    const own = await firstRowCandidates(db, word);
+    const irregular = irregularBaseFormsOf(word);
+    if (irregular.length > 0) {
+      const ofItsBaseForm = await candidatesOfBaseForms(db, irregular) ?? [];
+      return entriesOrUnknownWord([...own, ...ofItsBaseForm]);
+    }
+    return own.length > 0 ? own : candidatesOfBaseForms(db, baseFormsOf(word));
+  }
+  async function englishSentenceCandidates(db, query) {
+    const listed3 = [];
+    let knownWords = 0;
+    for (const word of englishSentenceWords(query).slice(0, sentenceWordLookupLimit)) {
+      const candidates = await candidatesFor(db, word);
+      if (candidates === unknownWord) continue;
+      knownWords++;
+      if (candidates.length > 0) listed3.push(candidates);
+      if (listed3.length === discoveredWordLimit) break;
+    }
+    return knownWords > 1 ? listed3 : [];
+  }
+
   // src/search/morphology.ts
   var linkablePartsOfSpeech = /* @__PURE__ */ new Set([
     "名詞",
@@ -2353,7 +2649,6 @@
   }
 
   // src/search/search.ts
-  var sentenceWordLookupLimit = 24;
   function searchFeatures(capabilities) {
     return { sentenceSearch: capabilities.morphology !== void 0 };
   }
@@ -2434,8 +2729,8 @@
       }
       if (directResults.items.length > 0) return directResults;
       if (isASCII(query)) {
-        const words = await this.englishSentenceCandidates(query);
-        return words.length > 1 ? composingWordCandidates(words) : noResults();
+        const words = await englishSentenceCandidates(this.db, query);
+        return words.length > 0 ? composingWordCandidates(words) : noResults();
       }
       const analyzed = await this.analyzedItems(query);
       if (analyzed.length > 1 || isMixedScript(query) && analyzed.length > 0) {
@@ -2482,32 +2777,6 @@
       if (query === "") return false;
       if (isASCII(query)) return (await this.searchOnce(query)).items.length > 0;
       return hasFormContaining(this.db, query);
-    }
-    async englishSentenceCandidates(query) {
-      const words = [];
-      for (const word of englishSentenceWords(query).slice(0, sentenceWordLookupLimit)) {
-        const candidates = await this.candidatesFor(word);
-        if (candidates.length > 0) words.push(candidates);
-        if (words.length === discoveredWordLimit) break;
-      }
-      return words;
-    }
-    async candidatesFor(word) {
-      const own = await this.firstRowCandidates(word);
-      if (own.length > 0) return own;
-      const ofItsBaseForms = [];
-      for (const base of baseFormsOf(word)) {
-        ofItsBaseForms.push(...await this.firstRowCandidates(base));
-      }
-      return ofItsBaseForms;
-    }
-    async firstRowCandidates(word) {
-      const ranked = (await rankedByStrongGloss(this.db, word)).slice(0, searchResultLimit);
-      return resultItems(
-        ranked.filter(
-          (entry) => comparePresentationRanks(entry.presentationRank, ranked[0].presentationRank) === 0
-        )
-      );
     }
     async analyzedItems(query) {
       const morphology = this.capabilities.morphology;

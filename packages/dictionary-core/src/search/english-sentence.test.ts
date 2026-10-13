@@ -9,6 +9,7 @@ import { DictionarySearch } from './search'
 const db = dictionary(new DatabaseSync(':memory:'), [
   word('何処', 'どこ', 'doko', 'where', 'what place'),
   word('だ', 'だ', 'da', 'be', 'is'),
+  { ...word('です', 'です', 'desu', 'be', 'is'), jmdictEntry: 1628500 },
   word('その', 'その', 'sono', 'that', 'the'),
   word('風呂', 'ふろ', 'furo', 'bath', 'bathroom'),
   word('浴室', 'よくしつ', 'yokushitsu', 'bathroom', 'bath'),
@@ -22,24 +23,18 @@ const db = dictionary(new DatabaseSync(':memory:'), [
   word('寿司', 'すし', 'sushi', 'sushi'),
   word('日本語', 'にほんご', 'nihongo', 'Japanese (language)'),
   word('勉強', 'べんきょう', 'benkyou', 'study'),
-  word('する', 'する', 'suru', 'to do'),
-  word('兎', 'うさぎ', 'usagi', 'rabbit'),
-  word('人参', 'にんじん', 'ninjin', 'carrot'),
-  word('牝鹿', 'めじか', 'mejika', 'doe'),
-  word('猫', 'ねこ', 'neko', 'cat'),
-  word('キャッツ', 'キャッツ', 'kyattsu', 'cats')
+  { ...word('する', 'する', 'suru', 'to do'), jmdictEntry: 1157170 }
 ])
 
 const search = new DictionarySearch(db)
 
 describe('an English sentence', () => {
-  test('brings, for each of its words in order, small ones included, the entries that mean it (#401)', async () => {
+  test('brings, for each of its words in order, the entries that mean it (#401)', async () => {
     const results = await search.search('Where is the bathroom?')
-    expect(candidates(results)).toEqual([['何処'], ['だ'], ['その'], ['浴室', '風呂']])
+    expect(candidates(results)).toEqual([['何処'], ['です'], ['浴室', '風呂']])
     expect(results.items.map(item => item.matchedSummary)).toEqual([
       'where',
       'is',
-      'the',
       'bathroom',
       'bathroom'
     ])
@@ -55,18 +50,13 @@ describe('an English sentence', () => {
     ['sushi', { 握り: 5, 寿司: 1 }]
   ])('lists for 「%s」 the word its own results lead with, given the JLPT levels %o', async (meaning, levels) => {
     const [first] = await listed(search, meaning, levels)
-    expect(await listed(search, `the ${meaning}`, levels)).toEqual(['その', first])
+    expect(await listed(search, `where ${meaning}`, levels)).toEqual(['何処', first])
   })
 
   test('lists the word the dictionaries rank as more used, not the first one found', async () => {
     const sentence = 'where is the bathroom'
-    expect(await listed(search, sentence)).toEqual(['何処', 'だ', 'その', '浴室'])
-    expect(await listed(search, sentence, { 風呂: 5, 浴室: 1 })).toEqual([
-      '何処',
-      'だ',
-      'その',
-      '風呂'
-    ])
+    expect(await listed(search, sentence)).toEqual(['何処', 'です', '浴室'])
+    expect(await listed(search, sentence, { 風呂: 5, 浴室: 1 })).toEqual(['何処', 'です', '風呂'])
   })
 
   test.each([
@@ -89,17 +79,24 @@ describe('an English sentence', () => {
     expect(await listed(search, 'his')).toEqual(['お陰様で'])
     expect(candidates(await search.search('where is his xyzzy bathroom'))).toEqual([
       ['何処'],
-      ['だ'],
+      ['です'],
       ['浴室', '風呂']
     ])
   })
 
   test('brings an entry for each word that means it, and lists it once', async () => {
-    const sentence = 'is that the bathroom, the bathroom?'
+    const sentence = 'is the bath a bathroom?'
     const results = await search.search(sentence)
-    expect(candidates(results)).toEqual([['だ'], ['その'], ['その'], ['浴室', '風呂']])
-    expect(results.items.slice(1, 3).map(item => item.matchedSummary)).toEqual(['that', 'the'])
-    expect(await listed(search, sentence)).toEqual(['だ', 'その', '浴室'])
+    expect(candidates(results)).toEqual([['です'], ['風呂', '浴室'], ['浴室', '風呂']])
+    expect(results.items.map(item => item.matchedSummary)).toEqual([
+      'is',
+      'bath',
+      'bath',
+      'bathroom',
+      'bathroom'
+    ])
+    expect(await listed(search, sentence)).toEqual(['です', '風呂', '浴室'])
+    expect(await listed(search, sentence, { 風呂: 5 })).toEqual(['です', '風呂'])
   })
 
   test('is searched as itself when an entry means the whole of it', async () => {
@@ -109,7 +106,7 @@ describe('an English sentence', () => {
   })
 
   test.each([
-    ['one of its words alone has an entry', 'the xyzzy'],
+    ['one of its words alone has an entry', 'where xyzzy'],
     ['it is one word', 'bathroom?'],
     ['it holds a wildcard, which makes it a pattern', 'where is the bathr*'],
     ['it holds FTS4’s first-word mark', '^where is the bathroom']
@@ -120,27 +117,8 @@ describe('an English sentence', () => {
   test('needs no analyzer and asks none', async () => {
     const analyze = vi.fn(async (): Promise<MorphologyWord[]> => [])
     const analyzing = new DictionarySearch(db, { morphology: { analyze } })
-    expect(candidates(await analyzing.search('where is the bathroom'))).toHaveLength(4)
+    expect(candidates(await analyzing.search('where is the bathroom'))).toHaveLength(3)
     expect(analyze).not.toHaveBeenCalled()
-  })
-})
-
-describe('an English word that no entry means as it is written', () => {
-  test('brings the entries of its base form, and an irregular form brings none', async () => {
-    const results = await search.search('The rabbits ate carrots.')
-    expect(candidates(results)).toEqual([['その'], ['兎'], ['人参']])
-    expect(results.items.map(item => item.matchedSummary)).toEqual(['the', 'rabbit', 'carrot'])
-  })
-
-  test('brings the entries of every base form it may have, and lists the more used of them', async () => {
-    const sentence = 'the cat does'
-    expect(candidates(await search.search(sentence))).toEqual([['その'], ['猫'], ['牝鹿', 'する']])
-    expect(await listed(search, sentence)).toEqual(['その', '猫', '牝鹿'])
-    expect(await listed(search, sentence, { する: 5 })).toEqual(['その', '猫', 'する'])
-  })
-
-  test('is not a word an entry does mean: 「cats」 keeps its own entry', async () => {
-    expect(candidates(await search.search('the cats'))).toEqual([['その'], ['キャッツ']])
   })
 })
 

@@ -101,25 +101,25 @@ only a form's or meaning's first word, as in the app. It lists at most 60 words,
 lists its Discovered Words: each word the app's Sudachi finds in it, in order, as the app does with
 its Japanese Text Analysis pack. The dictionary service runs the same Sudachi, with the dictionary
 the app pins. An English sentence that no entry means as a whole lists them too, with no analyzer:
-for each of its words, small ones included, the word that word's own results lead with, chosen as
-they choose it among the entries with a meaning that is the word ("where", "to go", "dog (animal)"),
-and its row shows that meaning. `where is the bathroom` lists 何処 "where", です "is", その "the", and 風呂
-"bathroom". A word that no entry means as written takes its base form's entries (`rabbits` lists 兎,
-and `does`, of "do" and "doe", the more used する); with none (`his`, `ate`) it is left out. A word
-two of them lead with is listed once; entries for one word alone, or a query with `*` or `^`, list
-nothing. Search looks up a sentence's first 24 words and lists at most 12.
+for each word, the one its own results lead with among the entries with a meaning that is the word
+("to go"), and its row shows that meaning. `a`, `an`, `the`, `of`, `to`, and `will` list nothing,
+and twelve list a fixed entry: `am`, `is`, `are` です; `was`, `were` だった; `it` それ; `not` ない; `can`
+出来る; `never` 決して; `do`, `does`, `did` する. `where is the bathroom` lists 何処 "where", です "is", and 風呂
+"bathroom". An irregular form weighs its base's entries with its own (`saw` 見る, not 鋸), and a word
+no entry means as written takes its base form's (`rabbits` 兎, `taller` 高い; `incoming`, no verb's
+form, nothing). A word two of them lead with is listed once; entries for one word alone, or a query
+with `*` or `^`, list nothing. Search looks up a sentence's first 24 words and lists at most 12.
 
 - Source: App docs, Search (Discovered Words); `results/results.ts` in the core, which the app runs
   too; `JapaneseMorphologyClient.swift`; ADR 0009 (the owner's decision to build what the website
-  couldn't analyze before); for English, #401 (the owner's decisions of 2026-10-12) and the core's
-  `englishSentenceCandidates` and `discoveredWords`.
-- Check: `apps/dictionary-api/src/conformance/sentence-search.test.ts`, "lists its words as
-  Discovered Words (#401)" for four sentences, "lists for … the row its own results lead with", and
-  "is still searched as itself" for 勉強 and `ice cream`; the core's `search/english-sentence.test.ts`
-  and `results/results.test.ts`; SR's and SRR's cases `where is the bathroom` (which
-  `search-results.test.tsx` renders with its heading), `i want to go home`, `the rabbits ate
-  carrots`, and `she gave me her book`. SR records no Japanese sentence yet: recording one needs the
-  app's Japanese Text Analysis pack in the Simulator.
+  couldn't analyze before); for English, #401 (the owner's decisions of 2026-10-12) and the rules in
+  [`english-sentence-search.md`](../../../../docs/agents/english-sentence-search.md).
+- Check: `apps/dictionary-api/src/conformance/sentence-search.test.ts` (four sentences, the words
+  each rule lists, and "is still searched as itself"); the core's `search/english-sentence.test.ts`,
+  `search/english-sentence-words.test.ts`, and `results/results.test.ts`; SR's and SRR's cases
+  `where is the bathroom` (which `search-results.test.tsx` renders with its heading), `i want to go
+  home`, `the rabbits ate carrots`, and `she gave me her book`. SR records no Japanese sentence yet:
+  recording one needs the app's Japanese Text Analysis pack in the Simulator.
 
 **Result order.** Words appear in the app's order: its retrieval, then equally strong matches
 re-sorted by the default dictionaries, as the core's `orderedByFrequency` sorts them. Within each
