@@ -156,8 +156,10 @@ private struct WordDetailObserver {
     let listed: ExamplePage
     do {
       retrieval = try await exampleSentenceClient.entryExamples(entry, 0)
-      listed = try await ExamplePage.every(upTo: limit) {
-        try await exampleSentenceClient.examples(entry, from: $0)
+      let first = retrieval.page
+      listed = try await ExamplePage.every(upTo: limit) { from in
+        if from == 0 { return first }
+        return try await exampleSentenceClient.examples(entry, from: from)
       }
     } catch {
       return WordDetailCase.Examples(

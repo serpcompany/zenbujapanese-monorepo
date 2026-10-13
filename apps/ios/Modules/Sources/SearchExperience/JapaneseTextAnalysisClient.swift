@@ -126,5 +126,5 @@ actor LinkedEntries {
     )
   }
 
-  private static let capacity = 4_000
+  static let capacity = 4_000
 }
