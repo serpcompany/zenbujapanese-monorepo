@@ -19,11 +19,22 @@ import {
 } from './guards'
 import { runNodeStep } from './workflow'
 
-function runGuard(log: unknown, pullRequest: PullRequest = {}, retryOutcome = 'skipped') {
+function runGuard(
+  log: unknown,
+  pullRequest: PullRequest = {},
+  retryOutcome = 'skipped',
+  measured = 'success success'
+) {
   const { env, files } = executionLog(log)
   return runNodeStep(
     guard,
-    { ...environment, ...env, CLAUDE_OUTCOME: 'success', RETRY_OUTCOME: retryOutcome },
+    {
+      ...environment,
+      ...env,
+      CLAUDE_OUTCOME: 'success',
+      RETRY_OUTCOME: retryOutcome,
+      MEASURED: measured
+    },
     github(pullRequest),
     files
   )
@@ -151,6 +162,23 @@ describe("the review's guard", () => {
     expect(output).toContain("::warning title=The second attempt at the review didn't finish::")
     expect(output).toContain("You've hit your usage limit.")
     expect(status).toBe(0)
+  })
+
+  test.each([
+    ['measures the first attempt', 'failure skipped'],
+    ['posts the summary', 'success failure']
+  ])('says so, and not that the summary is missing, when the step that %s failed', async (_, measured) => {
+    const { status, output } = await runGuard(
+      cleanLog,
+      { reviewComments: [{ login: bot, at: minutesAfterStart(5) }] },
+      'skipped',
+      measured
+    )
+    expect(status).not.toBe(0)
+    expect(output).toContain(
+      "The step that measures the review, or the one that posts its summary, failed, so the summary wasn't posted"
+    )
+    expect(output).not.toContain('Claude posted findings but no summary')
   })
 
   test('says no review happened when the action ran nothing', async () => {

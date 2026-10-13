@@ -12,7 +12,7 @@ jobs:
   changes:
     if: ${{ !github.event.pull_request.draft && github.event.pull_request.user.type != 'Bot' }}
     runs-on: ubuntu-latest
-    timeout-minutes: 5
+    timeout-minutes: 10
     permissions:
       pull-requests: read
     outputs:
@@ -21,31 +21,288 @@ jobs:
       - name: Find out whether the pull request changes this workflow
         id: files
         env:
-          GH_TOKEN: ${{ github.token }}
+          STEP: files
+          GITHUB_TOKEN: ${{ github.token }}
           PR_NUMBER: ${{ github.event.pull_request.number }}
-        run: |
-          workflow="${GITHUB_WORKFLOW_REF%%@*}"
-          workflow="${workflow#"$GITHUB_REPOSITORY/"}"
-          if [ -z "$workflow" ]; then
-            echo "::error title=Couldn't tell which workflow this is::GITHUB_WORKFLOW_REF doesn't name this workflow's file."
-            exit 1
-          fi
-          for attempt in 1 2 3; do
-            changed="$(gh api "repos/$GITHUB_REPOSITORY/pulls/$PR_NUMBER/files" --paginate \
-              --jq '.[] | .filename, (.previous_filename // empty)')" && break
-            if [ "$attempt" -eq 3 ]; then
-              echo "::error title=Couldn't read the pull request's files::GitHub didn't list them in three tries."
-              exit 1
-            fi
-            sleep "$((attempt * 2))"
-          done
-          if grep -Fxq -- "$workflow" <<< "$changed"; then
-            echo "reviewable=false" >> "$GITHUB_OUTPUT"
-            echo "::notice title=Claude doesn't review this pull request::This pull request changes $workflow, and Claude's review can't run on a pull request that changes the review workflow: it runs only when that file is the one on the default branch. A person reviews this pull request (docs/agents/ci-agents.md, Code review)."
-          else
-            echo "reviewable=true" >> "$GITHUB_OUTPUT"
-            echo "This pull request leaves $workflow alone, so Claude reviews it."
-          fi
+        shell: node {0}
+        run: &steps |
+          const fs = require('node:fs')
+          const path = require('node:path')
+          const env = process.env
+          const api = `${env.GITHUB_API_URL || 'https://api.github.com'}/repos/${env.GITHUB_REPOSITORY}`
+          const titles = {
+            files: "Couldn't tell whether the pull request changes the review workflow",
+            scripts: "Couldn't fetch the review's scripts",
+            first: "Couldn't measure the review",
+            last: "Couldn't post the review's summary",
+            check: "Claude didn't review the change"
+          }
+          const clean = (value, max = 120) => String(value).replace(/[\r\n%]+/g, ' ').slice(0, max)
+          const say = (kind, title, message) => console.log(`::${kind} title=${title}::${clean(message, 900)}`)
+          const fail = message => {
+            say('error', titles[env.STEP], message)
+            process.exit(1)
+          }
+          const output = values => {
+            if (env.GITHUB_OUTPUT) fs.appendFileSync(env.GITHUB_OUTPUT, Object.entries(values).map(([name, value]) => `${name}=${value}\n`).join(''))
+          }
+          const readJson = file => {
+            try {
+              return JSON.parse(fs.readFileSync(file, 'utf8'))
+            } catch {
+              return null
+            }
+          }
+          const excerpt = (text, max) => {
+            const flat = String(text || '').replace(/\s+/g, ' ').trim()
+            return flat.length > max ? `${flat.slice(0, max)}…` : flat
+          }
+          const secondsBetweenTries = [5, 15, 45]
+          const longestWait = 90
+          const secondsGitHubAsksFor = response => {
+            const after = Number(response.headers.get('retry-after'))
+            if (after > 0) return after
+            if (response.headers.get('x-ratelimit-remaining') !== '0') return null
+            return Math.max(1, Math.ceil(Number(response.headers.get('x-ratelimit-reset')) - Date.now() / 1000))
+          }
+          const request = async (url, options = {}) => {
+            const headers = { Accept: 'application/vnd.github+json', Authorization: `Bearer ${env.GITHUB_TOKEN}`, 'X-GitHub-Api-Version': '2022-11-28', ...options.headers }
+            for (let attempt = 0; ; attempt += 1) {
+              const response = await fetch(url, { ...options, headers, signal: AbortSignal.timeout(30000) }).catch(error => ({ unanswered: error.name, headers: new Headers() }))
+              if (response.ok) return response
+              const asked = secondsGitHubAsksFor(response)
+              const worthAnotherTry = asked !== null || response.status === 429 || (options.method !== 'POST' && (response.unanswered || response.status >= 500))
+              const seconds = asked ?? secondsBetweenTries[attempt]
+              const outcome = response.unanswered ? `got no answer (${response.unanswered})` : `returned ${response.status}`
+              if (!worthAnotherTry || attempt >= secondsBetweenTries.length || seconds > longestWait) throw new Error(`${options.method || 'GET'} ${new URL(url).pathname.replace(/^\/repos\/[^/]+\/[^/]+/, '')} ${outcome}`)
+              await new Promise(resolve => setTimeout(resolve, seconds * 1000))
+            }
+          }
+          const list = async (resource, pages = 10) => {
+            const items = []
+            let url = `${api}${resource}${resource.includes('?') ? '&' : '?'}per_page=100`
+            for (let page = 0; url && page < pages; page += 1) {
+              const response = await request(url)
+              items.push(...(await response.json()))
+              url = (/<([^>]+)>;\s*rel="next"/.exec(response.headers.get('link') || '') || [])[1]
+            }
+            return items
+          }
+          const files = async () => {
+            const workflow = String(env.GITHUB_WORKFLOW_REF || '').split('@')[0].slice(`${env.GITHUB_REPOSITORY}/`.length)
+            let changed
+            try {
+              if (!workflow) throw new Error("GITHUB_WORKFLOW_REF doesn't name this workflow's file")
+              changed = (await list(`/pulls/${env.PR_NUMBER}/files`, 30)).some(file => [file.filename, file.previous_filename].includes(workflow))
+            } catch (error) {
+              say('warning', titles.files, `${error.message}, so nothing says whether this pull request changes the review workflow. The review is tried all the same, and says so itself if it can't run.`)
+              return output({ reviewable: true })
+            }
+            output({ reviewable: !changed })
+            if (!changed) return console.log(`This pull request leaves ${workflow} alone, so Claude reviews it.`)
+            say('notice', "Claude doesn't review this pull request", `This pull request changes ${workflow}, and Claude's review can't run on a pull request that changes the review workflow: it runs only when that file is the one on the default branch. A person reviews this pull request (docs/agents/ci-agents.md, Code review).`)
+          }
+          const scripts = async () => {
+            const folder = path.join(env.RUNNER_TEMP, 'review-scripts')
+            let wanted = `the latest commit of ${env.DEFAULT_BRANCH}`
+            try {
+              const commit = (await (await request(`${api}/commits/${encodeURIComponent(env.DEFAULT_BRANCH)}`)).json()).sha
+              fs.mkdirSync(folder, { recursive: true })
+              for (const script of env.SCRIPTS.split(' ')) {
+                wanted = `tools/checks/${script} at ${commit} of ${env.DEFAULT_BRANCH}`
+                const copy = await request(`${api}/contents/tools/checks/${script}?ref=${commit}`, { headers: { Accept: 'application/vnd.github.raw' } })
+                fs.writeFileSync(path.join(folder, script), await copy.text())
+              }
+              console.log(`Took ${env.SCRIPTS} from ${commit} of ${env.DEFAULT_BRANCH}.`)
+            } catch (error) {
+              fail(`${wanted}: ${error.message}`)
+            }
+          }
+          const attemptOf = (log, file) => {
+            const messages = readJson(log)
+            const finished = Array.isArray(messages) && messages.some(entry => entry?.type === 'result')
+            return { messages: finished ? messages : [], finished, summary: file && fs.existsSync(file) ? fs.readFileSync(file, 'utf8') : null }
+          }
+          const blocks = (messages, from, kind) =>
+            messages
+              .filter(entry => entry?.type === from && Array.isArray(entry.message?.content))
+              .flatMap(entry => entry.message.content.filter(block => block?.type === kind).map(block => ({ ...block, topLevel: !entry.parent_tool_use_id })))
+          const callsThatWorked = messages => {
+            const failed = new Set(blocks(messages, 'user', 'tool_result').filter(block => block.is_error).map(block => block.tool_use_id))
+            return blocks(messages, 'assistant', 'tool_use').filter(block => !failed.has(block.id))
+          }
+          const coverageLine = /^[\s>*_-]*Read (\d+) of (\d+) changed files?\b/m
+          const shortfall = attempt => {
+            const changedFiles = Number(env.CHANGED_FILES || 'none')
+            if (!Number.isInteger(changedFiles)) fail("CHANGED_FILES isn't the pull request's file count, so nothing says how much of the change there was to read.")
+            if (attempt.summary === null) return 'wrote no summary'
+            const coverage = coverageLine.exec(attempt.summary)
+            if (!coverage) return 'did not say how many of the changed files it read'
+            const [read, total] = [Number(coverage[1]), Number(coverage[2])]
+            if (total !== changedFiles) return `counted ${total} changed files where the pull request has ${changedFiles}`
+            if (read > total) return `said it read ${read} of ${total} changed files`
+            const reviewers = attempt.calls.filter(block => block.topLevel && ['Task', 'Agent'].includes(block.name)).length
+            const missing = []
+            if (read < total && !/^[\s>*_-]*Not read:/m.test(attempt.summary)) missing.push('did not name the rest')
+            if (read < total && reviewers < 3) missing.push(reviewers === 0 ? 'did not run its reviewers' : `ran ${reviewers} of its three reviewers`)
+            if (missing.length === 0) return ''
+            return `read ${read} of ${total} changed files${missing.length > 1 ? ', ' : ' and '}${missing.join(' and ')}`
+          }
+          const measured = (log, file) => {
+            const attempt = attemptOf(log, file)
+            attempt.calls = callsThatWorked(attempt.messages)
+            attempt.nothing = !attempt.finished && attempt.summary === null
+            attempt.reason = attempt.nothing ? '' : shortfall(attempt)
+            return attempt
+          }
+          const listLimit = 40
+          const inCheckout = file => path.resolve(env.GITHUB_WORKSPACE || process.cwd(), String(file))
+          const neverOpened = calls => {
+            const opened = new Set(calls.filter(block => block.name === 'Read' && block.input?.file_path).map(block => inCheckout(block.input.file_path)))
+            const changed = readJson(env.CHANGE_FILE)
+            const readable = (Array.isArray(changed) ? changed : []).filter(file => file.patch || file.file)
+            return { readable, unread: readable.filter(file => ![file.patch, file.file].some(each => each && opened.has(inCheckout(each)))) }
+          }
+          const first = async () => {
+            const attempt = measured(env.EXECUTION_FILE, env.SUMMARY_FILE)
+            if (attempt.nothing) console.log('The review left no finished execution log and no summary, so there is nothing to measure: the last step says why.')
+            if (!attempt.reason) return output({ retry: false, problem: '' })
+            const problem = `Incomplete: this review ${attempt.reason}.`
+            const startedAt = Date.parse(env.REVIEW_STARTED_AT || '') - 30 * 1000
+            const bot = env.REVIEW_BOT || 'claude[bot]'
+            const posted = Number.isNaN(startedAt) ? null : await list(`/pulls/${env.PR_NUMBER}/comments?sort=created&direction=desc&since=${new Date(startedAt).toISOString()}`, 1)
+              .then(items => items.filter(item => item.user?.login === bot && !item.in_reply_to_id && Date.parse(item.created_at) >= startedAt))
+              .catch(() => null)
+            if (posted === null) {
+              say('warning', 'No second attempt at the review', "The inline comments the first attempt posted couldn't be read from GitHub, so the review isn't run again: a second attempt could post them twice.")
+              return output({ retry: false, problem })
+            }
+            const alreadyPosted = posted.slice(0, listLimit).map(item => `- ${JSON.stringify(item.path)}:${item.line ?? item.original_line}: ${excerpt(item.body, 300)}`)
+            if (posted.length > listLimit) alreadyPosted.push(`- and ${posted.length - listLimit} more, which it also posted`)
+            const { readable, unread } = neverOpened(attempt.calls)
+            const lines = [
+              '',
+              '# This is the second attempt at this review',
+              '',
+              `This section is for the reviewer that runs the pr-review skill, not for the reviewers it starts. The first attempt, on this same commit, ${attempt.reason}. This attempt is the last. Do the whole review again as the pr-review skill describes it, and write the summary again from the start: the first attempt's was set aside.`,
+              ''
+            ]
+            if (unread.length > 0) {
+              const capped = unread.length > listLimit ? ` (the first ${listLimit} are named here, and the index lists them all)` : ''
+              lines.push(`With the Read tool, the first attempt opened ${readable.length - unread.length} of the ${readable.length} changed files listed in ${env.CHANGE_INDEX}. It never opened these ${unread.length}, so read each one now${capped}:`, '')
+              for (const file of unread.slice(0, listLimit)) lines.push(`- ${JSON.stringify(file.path)}: ${file.patch || JSON.stringify(file.file)}`)
+              lines.push('')
+            }
+            lines.push(posted.length > 0 ? 'The first attempt already posted these inline comments. They are earlier findings: post none of them again.' : 'The first attempt posted no inline comments.', ...alreadyPosted)
+            fs.appendFileSync(env.CORRECTION_FILE, `${lines.join('\n')}\n`)
+            if (posted.length > 0) fs.appendFileSync(env.REVIEWERS_CONTEXT_FILE, ['', '# Inline comments already posted on this commit', '', 'The reviewer posted these a few minutes ago, on this same commit. They are earlier findings: report none of them again.', '', ...alreadyPosted, ''].join('\n'))
+            if (attempt.summary !== null) fs.renameSync(env.SUMMARY_FILE, env.FIRST_ATTEMPT_SUMMARY)
+            fs.renameSync(env.EXECUTION_FILE, env.FIRST_ATTEMPT_LOG)
+            console.log(`The first attempt ${attempt.reason}. It runs once more, told what it left out.`)
+            output({ retry: true, problem })
+          }
+          const summaryLimit = 60000
+          const last = async () => {
+            const own = measured(env.EXECUTION_FILE, env.SUMMARY_FILE)
+            const fallsBack = own.summary === null && fs.existsSync(env.FIRST_ATTEMPT_SUMMARY || '')
+            const attempt = fallsBack ? measured(env.FIRST_ATTEMPT_LOG, env.FIRST_ATTEMPT_SUMMARY) : own
+            if (attempt.nothing) {
+              console.log('The review left no finished execution log and no summary, so there is nothing to measure or post: the last step says why.')
+              return output({ retry: false, problem: '' })
+            }
+            const problem = attempt.reason ? `Incomplete: this review ${attempt.reason}.${fallsBack ? " A second attempt left no summary, so this is the first attempt's." : ''}` : ''
+            output({ retry: false, problem })
+            if (problem) {
+              say('warning', "Claude's review is incomplete", problem)
+              if (env.GITHUB_STEP_SUMMARY) fs.appendFileSync(env.GITHUB_STEP_SUMMARY, `${problem}\n`)
+            } else {
+              console.log(`Complete: the summary accounts for all ${env.CHANGED_FILES} changed files.`)
+            }
+            if (attempt.summary === null) return say('warning', 'No summary to post', `Claude wrote no ${env.SUMMARY_FILE}, so the summary comment wasn't updated.`)
+            const text = attempt.summary.trim()
+            const headed = /^## Claude review\b/.test(text)
+            if (!headed) say('warning', 'The summary had no heading', `${env.SUMMARY_FILE} didn't start with "## Claude review", which is how the next review finds it, so the workflow added it.`)
+            const [heading, ...rest] = (headed ? text : `## Claude review\n\n${text}`).split('\n')
+            const body = problem ? `${heading}\n\n**${problem}**\n\n${rest.join('\n').trim()}` : [heading, ...rest].join('\n')
+            if (body.length > summaryLimit) fail(`The summary is ${body.length} characters, over the ${summaryLimit} a comment holds.`)
+            const id = env.SUMMARY_ID
+            const [method, url] = id ? ['PATCH', `${api}/issues/comments/${id}`] : ['POST', `${api}/issues/${env.PR_NUMBER}/comments`]
+            await request(url, { method, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ body }) })
+            console.log(id ? `Updated the summary comment ${id}.` : 'Posted the summary comment.')
+          }
+          const tokenAdvice = result => result.api_error_status === 401 ? " The API refused the token (401), so renew the CLAUDE_CODE_OAUTH_TOKEN secret (docs/agents/ci-agents.md, Claude's app and token)." : ''
+          const readLog = () => {
+            const file = env.EXECUTION_FILE
+            if (!file || !fs.existsSync(file)) {
+              if ([env.CLAUDE_OUTCOME, env.RETRY_OUTCOME].includes('failure')) return { stopped: "The Claude step failed before Claude ran, or was stopped at its time limit, so it wrote no execution log: that step's own log says why." }
+              return { stopped: "The review wrote no execution log, so no review happened. The action skips a run whose copy of this workflow differs from main's, as on a pull request that changes it or is into a branch that does (docs/agents/ci-agents.md, Code review)." }
+            }
+            let messages
+            try {
+              messages = JSON.parse(fs.readFileSync(file, 'utf8'))
+            } catch (error) {
+              return { stopped: `The review's execution log isn't JSON: ${error.message}` }
+            }
+            if (!Array.isArray(messages)) return { stopped: "The review's execution log isn't a list of messages." }
+            const result = messages.filter(entry => entry?.type === 'result').at(-1)
+            if (!result) return { stopped: "The review's execution log has no result, so the review didn't finish." }
+            return { messages, result, stopped: '' }
+          }
+          const endedBadly = (messages, result) => {
+            if (result.is_error) return `The review ended in an error: ${clean(result.result || result.subtype || 'no message', 400)}${tokenAdvice(result)}`
+            const taskSets = messages.filter(entry => entry?.type === 'system' && entry.subtype === 'background_tasks_changed')
+            const lastSet = taskSets.at(-1)?.tasks
+            const running = (Array.isArray(lastSet) ? lastSet : []).filter(task => task && !task.ambient)
+            if (running.length === 0) return ''
+            const names = [...new Set(running.map(task => clean(task.description || task.task_type, 60)))]
+            return `The run ended while ${running.length} background task(s) were still running (${names.join(', ')}), so their findings were never posted. Set CLAUDE_CODE_DISABLE_BACKGROUND_TASKS=1 on the review step.`
+          }
+          const readReviewActivity = async (bot, summaryBot) => {
+            const pr = env.PR_NUMBER
+            const [comments, inline, reviews] = await Promise.all([list(`/issues/${pr}/comments`), list(`/pulls/${pr}/comments`), list(`/pulls/${pr}/reviews`)])
+            return [
+              ...comments
+                .filter(item => item.user?.login === summaryBot && /^## Claude review\b/.test(String(item.body || '').trim()))
+                .map(item => ({ at: item.updated_at || item.created_at, summary: true })),
+              ...inline
+                .filter(item => item.user?.login === bot && !item.in_reply_to_id)
+                .map(item => ({ at: item.created_at })),
+              ...reviews.filter(item => item.user?.login === bot).map(item => ({ at: item.submitted_at }))
+            ]
+          }
+          const check = async () => {
+            const retried = ['success', 'failure'].includes(env.RETRY_OUTCOME)
+            const { messages, result, stopped: unread } = readLog()
+            if (result) {
+              const models = Object.keys(result.modelUsage || {}).join(', ') || 'unknown'
+              const summary = `Claude review${retried ? ', second attempt' : ''}: ${result.num_turns} turns in ${Math.round((result.duration_ms || 0) / 1000)}s, about $${Number(result.total_cost_usd || 0).toFixed(2)} (estimate), models: ${models}.`
+              console.log(summary)
+              if (env.GITHUB_STEP_SUMMARY) fs.appendFileSync(env.GITHUB_STEP_SUMMARY, `${summary}\n`)
+            }
+            const stopped = unread || endedBadly(messages, result)
+            if (stopped && !retried) fail(stopped)
+            if (String(env.MEASURED).includes('failure')) fail("The step that measures the review, or the one that posts its summary, failed, so the summary wasn't posted: that step's own log says why.")
+            const denied = [...new Set((Array.isArray(result?.permission_denials) ? result.permission_denials : []).map(denial =>
+              denial?.tool_input?.command ? `${denial.tool_name} (${clean(denial.tool_input.command)})` : String(denial?.tool_name)
+            ))]
+            const startedAt = Date.parse(env.REVIEW_STARTED_AT || '')
+            if (Number.isNaN(startedAt)) fail("REVIEW_STARTED_AT isn't set, so the check can't tell which comments this run posted.")
+            const activity = await readReviewActivity(env.REVIEW_BOT || 'claude[bot]', env.SUMMARY_BOT || 'github-actions[bot]').catch(error => fail(`Couldn't read the pull request to check the review: ${error.message}`))
+            const posted = activity.filter(item => Date.parse(item.at) >= startedAt - 30 * 1000)
+            const summaryPosted = posted.some(item => item.summary)
+            if (stopped) {
+              if (!summaryPosted) fail(`The second attempt at the review didn't finish, and no summary was posted. ${stopped}`)
+              return say('warning', "The second attempt at the review didn't finish", `${clean(stopped, 600)} A summary was posted all the same, so the check passes.`)
+            }
+            if (posted.length === 0) {
+              if (denied.length > 0) fail(`Claude was denied ${denied.join(', ')} and posted nothing, so the review stopped early. Allow it in claude_args (docs/agents/ci-agents.md, Code review).`)
+              fail(`Claude finished without posting a finding or updating its summary comment. Claude's last message: ${clean(result.result || '(none)', 400)}`)
+            }
+            if (denied.length > 0) say('warning', 'Claude review was denied tools', `Claude was denied ${clean(denied.join(', '), 600)}. Allow it in claude_args if the review needs it.`)
+            if (!summaryPosted) fail("Claude posted findings but no summary, so the review doesn't say how much of the change it read (docs/agents/ci-agents.md, Code review).")
+            console.log(`Claude posted or updated ${posted.length} comment(s) or review(s) on this pull request.`)
+          }
+          ;({ files, scripts, first, last, check })[env.STEP]().catch(error => fail(error?.message))
 
   review:
     needs: changes
@@ -72,15 +329,12 @@ jobs:
       - name: Take the review's scripts from the default branch
         if: env.HAS_REVIEW_TOKEN == 'true'
         env:
+          STEP: scripts
           DEFAULT_BRANCH: ${{ github.event.repository.default_branch }}
-          GH_TOKEN: ${{ github.token }}
+          GITHUB_TOKEN: ${{ github.token }}
           SCRIPTS: review-context.mjs review-change.mjs pull-request.mjs
-        run: |
-          mkdir -p "$RUNNER_TEMP/review-scripts"
-          for script in $SCRIPTS; do
-            gh api "repos/$GITHUB_REPOSITORY/contents/tools/checks/$script?ref=$DEFAULT_BRANCH" \
-              --header 'Accept: application/vnd.github.raw' > "$RUNNER_TEMP/review-scripts/$script"
-          done
+        shell: node {0}
+        run: *steps
 
       - name: Give the reviewer the rules, the change, its issue, and its earlier findings
         id: earlier
@@ -107,6 +361,7 @@ jobs:
       - name: Review with Claude
         id: review
         if: env.HAS_REVIEW_TOKEN == 'true'
+        timeout-minutes: 12
         uses: anthropics/claude-code-action@2dca132ff0e0c4094ce6048b422c6915a071210b
         env: &reviewer-environment
           CLAUDE_CODE_DISABLE_BACKGROUND_TASKS: "1"
@@ -126,10 +381,12 @@ jobs:
         id: first
         if: env.HAS_REVIEW_TOKEN == 'true' && steps.review.outcome == 'success'
         env:
+          STEP: first
           CHANGED_FILES: ${{ steps.earlier.outputs.changed_files }}
           CHANGE_FILE: ${{ runner.temp }}/review-change.json
           CHANGE_INDEX: ${{ github.workspace }}/tmp/review-change/index.md
           CORRECTION_FILE: ${{ runner.temp }}/review-context.md
+          REVIEWERS_CONTEXT_FILE: ${{ runner.temp }}/review-reviewers-context.md
           EXECUTION_FILE: ${{ steps.review.outputs.execution_file }}
           FIRST_ATTEMPT_LOG: ${{ runner.temp }}/claude-review-first-attempt.json
           FIRST_ATTEMPT_SUMMARY: ${{ runner.temp }}/claude-review-first-attempt-summary.md
@@ -138,207 +395,32 @@ jobs:
           REVIEW_BOT: "claude[bot]"
           SUMMARY_FILE: tmp/review-summary.md
         shell: node {0}
-        run: &completeness |
-          const fs = require('node:fs')
-          const stop = message => {
-            console.log(`::error title=Couldn't tell how much the review read::${String(message).replace(/[\r\n%]+/g, ' ')}`)
-            process.exit(1)
-          }
-          const readJson = file => {
-            try {
-              return JSON.parse(fs.readFileSync(file, 'utf8'))
-            } catch {
-              return null
-            }
-          }
-          const excerpt = (text, max) => {
-            const flat = String(text || '').replace(/\s+/g, ' ').trim()
-            return flat.length > max ? `${flat.slice(0, max)}…` : flat
-          }
-          const attemptOf = (log, file) => {
-            const messages = readJson(log)
-            const finished = Array.isArray(messages) && messages.some(entry => entry?.type === 'result')
-            return { messages: finished ? messages : [], finished, summary: fs.existsSync(file) ? fs.readFileSync(file, 'utf8') : null }
-          }
-          const blocks = (messages, from, kind) =>
-            messages
-              .filter(entry => entry?.type === from && Array.isArray(entry.message?.content))
-              .flatMap(entry => entry.message.content.filter(block => block?.type === kind).map(block => ({ ...block, topLevel: !entry.parent_tool_use_id })))
-          const callsThatWorked = messages => {
-            const failed = new Set(blocks(messages, 'user', 'tool_result').filter(block => block.is_error).map(block => block.tool_use_id))
-            return blocks(messages, 'assistant', 'tool_use').filter(block => !failed.has(block.id))
-          }
-          const coverageLine = /^[\s>*_-]*Read (\d+) of (\d+) changed files?\b/m
-          const shortfall = (summary, changedFiles, reviewers) => {
-            if (summary === null) return 'wrote no summary'
-            const coverage = coverageLine.exec(summary)
-            if (!coverage) return 'did not say how many of the changed files it read'
-            const [read, total] = [Number(coverage[1]), Number(coverage[2])]
-            if (total !== changedFiles) return `counted ${total} changed files where the pull request has ${changedFiles}`
-            if (read > total) return `said it read ${read} of ${total} changed files`
-            const missing = []
-            if (read < total && !/^[\s>*_-]*Not read:/m.test(summary)) missing.push('did not name the rest')
-            if (read < total && reviewers < 3) missing.push(reviewers === 0 ? 'did not run its reviewers' : `ran ${reviewers} of its three reviewers`)
-            if (missing.length === 0) return ''
-            return `read ${read} of ${total} changed files${missing.length > 1 ? ', ' : ' and '}${missing.join(' and ')}`
-          }
-          const postedSince = async startedAt => {
-            if (Number.isNaN(startedAt)) return null
-            const api = `${process.env.GITHUB_API_URL || 'https://api.github.com'}/repos/${process.env.GITHUB_REPOSITORY}`
-            const url = `${api}/pulls/${process.env.PR_NUMBER}/comments?per_page=100&sort=created&direction=desc&since=${new Date(startedAt).toISOString()}`
-            const headers = {
-              Accept: 'application/vnd.github+json',
-              Authorization: `Bearer ${process.env.GITHUB_TOKEN}`,
-              'X-GitHub-Api-Version': '2022-11-28'
-            }
-            for (let attempt = 1; ; attempt += 1) {
-              const response = await fetch(url, { headers }).catch(() => null)
-              if (response?.ok) {
-                const bot = process.env.REVIEW_BOT || 'claude[bot]'
-                return (await response.json()).filter(item => item.user?.login === bot && !item.in_reply_to_id && Date.parse(item.created_at) >= startedAt)
-              }
-              if (attempt >= 3 || (response && response.status < 500)) return null
-              await new Promise(resolve => setTimeout(resolve, 2000 * attempt))
-            }
-          }
-          const listLimit = 40
-          const correction = (why, calls, posted) => {
-            const opened = new Set(calls.filter(block => block.name === 'Read').map(block => block.input?.file_path))
-            const changed = readJson(process.env.CHANGE_FILE)
-            const readable = (Array.isArray(changed) ? changed : []).filter(file => file.patch || file.file)
-            const unread = readable.filter(file => !opened.has(file.patch) && !opened.has(file.file))
-            const lines = [
-              '',
-              '# This is the second attempt at this review',
-              '',
-              `This section is for the reviewer that runs the pr-review skill, not for the reviewers it starts. The first attempt, on this same commit, ${why}. This attempt is the last. Do the whole review again as the pr-review skill describes it, and write the summary again from the start: the first attempt's was set aside.`,
-              ''
-            ]
-            if (unread.length > 0) {
-              const capped = unread.length > listLimit ? ` (the first ${listLimit} are named here, and the index lists them all)` : ''
-              lines.push(`With the Read tool, the first attempt opened ${readable.length - unread.length} of the ${readable.length} changed files listed in ${process.env.CHANGE_INDEX}. It never opened these ${unread.length}, so read each one now${capped}:`, '')
-              for (const file of unread.slice(0, listLimit)) lines.push(`- ${JSON.stringify(file.path)}: ${file.patch || JSON.stringify(file.file)}`)
-              lines.push('')
-            }
-            lines.push(posted.length > 0 ? 'The first attempt already posted these inline comments. They are earlier findings: post none of them again.' : 'The first attempt posted no inline comments.')
-            for (const item of posted.slice(0, listLimit)) lines.push(`- ${JSON.stringify(item.path)}:${item.line ?? item.original_line}: ${excerpt(item.body, 300)}`)
-            if (posted.length > listLimit) lines.push(`- and ${posted.length - listLimit} more, which it also posted`)
-            return `${lines.join('\n')}\n`
-          }
-          const output = values => {
-            if (process.env.GITHUB_OUTPUT) fs.appendFileSync(process.env.GITHUB_OUTPUT, Object.entries(values).map(([name, value]) => `${name}=${value}\n`).join(''))
-          }
-          const main = async () => {
-            const first = Boolean(process.env.CORRECTION_FILE)
-            const file = process.env.SUMMARY_FILE
-            const kept = { log: process.env.FIRST_ATTEMPT_LOG, summary: process.env.FIRST_ATTEMPT_SUMMARY }
-            let attempt = attemptOf(process.env.EXECUTION_FILE, file)
-            const fallsBack = !first && attempt.summary === null && fs.existsSync(kept.summary)
-            if (fallsBack) {
-              attempt = attemptOf(kept.log, kept.summary)
-              fs.copyFileSync(kept.summary, file)
-            }
-            if (!attempt.finished && attempt.summary === null) {
-              console.log('The review left no finished execution log and no summary, so there is nothing to measure: the last step says why.')
-              return output({ retry: false, problem: '' })
-            }
-            const changedFiles = Number(process.env.CHANGED_FILES || 'none')
-            if (!Number.isInteger(changedFiles)) stop("CHANGED_FILES isn't the pull request's file count, so nothing says how much of the change there was to read.")
-            const calls = callsThatWorked(attempt.messages)
-            const reviewers = calls.filter(block => block.topLevel && ['Task', 'Agent'].includes(block.name)).length
-            const reason = shortfall(attempt.summary, changedFiles, reviewers)
-            const headless = attempt.summary !== null && !/^## Claude review\b/.test(attempt.summary.trim())
-            const problem = reason ? `Incomplete: this review ${reason}.${fallsBack ? " A second attempt left no summary, so this is the first attempt's." : ''}` : ''
-            let retry = false
-            if (first && (reason || headless)) {
-              const posted = await postedSince(Date.parse(process.env.REVIEW_STARTED_AT || '') - 30 * 1000)
-              if (posted === null) {
-                console.log("::warning title=No second attempt at the review::The inline comments the first attempt posted couldn't be read from GitHub, so the review isn't run again: a second attempt could post them twice.")
-              } else {
-                const why = [reason, headless && 'did not start its summary with `## Claude review`'].filter(Boolean).join(', and ')
-                fs.appendFileSync(process.env.CORRECTION_FILE, correction(why, calls, posted))
-                if (attempt.summary !== null) fs.renameSync(file, kept.summary)
-                fs.renameSync(process.env.EXECUTION_FILE, kept.log)
-                console.log(`The first attempt ${why}. It runs once more, told what it left out.`)
-                retry = true
-              }
-            } else if (reason && !first) {
-              console.log(`::warning title=Claude's review is incomplete::${problem}`)
-              if (process.env.GITHUB_STEP_SUMMARY) fs.appendFileSync(process.env.GITHUB_STEP_SUMMARY, `${problem}\n`)
-            } else if (!reason) {
-              console.log(`Complete: the summary accounts for all ${changedFiles} changed files, and the review started ${reviewers} reviewers.`)
-            }
-            output({ retry, problem })
-          }
-          main().catch(error => stop(error?.message))
+        run: *steps
 
       - name: Review again with Claude
         id: retry
         if: steps.first.outputs.retry == 'true'
         continue-on-error: true
+        timeout-minutes: 10
         uses: anthropics/claude-code-action@2dca132ff0e0c4094ce6048b422c6915a071210b
         env: *reviewer-environment
         with: *reviewer
 
-      - name: Decide whether the last attempt read the whole change
+      - name: Say whether the last attempt read the whole change, and post its summary
         id: verdict
         if: env.HAS_REVIEW_TOKEN == 'true' && steps.review.outcome == 'success'
         env:
+          STEP: last
           CHANGED_FILES: ${{ steps.earlier.outputs.changed_files }}
           EXECUTION_FILE: ${{ steps.retry.outputs.execution_file || steps.review.outputs.execution_file }}
           FIRST_ATTEMPT_LOG: ${{ runner.temp }}/claude-review-first-attempt.json
           FIRST_ATTEMPT_SUMMARY: ${{ runner.temp }}/claude-review-first-attempt-summary.md
-          SUMMARY_FILE: tmp/review-summary.md
-        shell: node {0}
-        run: *completeness
-
-      - name: Post the review's summary
-        if: env.HAS_REVIEW_TOKEN == 'true' && steps.review.outcome == 'success'
-        env:
           GITHUB_TOKEN: ${{ github.token }}
           PR_NUMBER: ${{ github.event.pull_request.number }}
-          SUMMARY_ID: ${{ steps.earlier.outputs.summary_id }}
           SUMMARY_FILE: tmp/review-summary.md
-          PROBLEM: ${{ steps.verdict.outputs.problem }}
+          SUMMARY_ID: ${{ steps.earlier.outputs.summary_id }}
         shell: node {0}
-        run: |
-          const fs = require('node:fs')
-          const fail = message => {
-            console.log(`::error title=Couldn't post the review's summary::${String(message).replace(/[\r\n%]+/g, ' ')}`)
-            process.exit(1)
-          }
-          const summaryLimit = 60000
-          const main = async () => {
-            const file = process.env.SUMMARY_FILE
-            if (!fs.existsSync(file)) {
-              console.log(`::warning title=No summary to post::Claude wrote no ${file}, so the summary comment wasn't updated.`)
-              return
-            }
-            const text = fs.readFileSync(file, 'utf8').trim()
-            const headed = /^## Claude review\b/.test(text)
-            if (!headed) console.log(`::warning title=The summary had no heading::${file} didn't start with "## Claude review", which is how the next review finds it, so the workflow added it.`)
-            const written = headed ? text : `## Claude review\n\n${text}`
-            const [heading, ...rest] = written.split('\n')
-            const problem = process.env.PROBLEM
-            const body = problem ? `${heading}\n\n**${problem}**\n\n${rest.join('\n').trim()}` : written
-            if (body.length > summaryLimit) fail(`${file} is ${body.length} characters, over the ${summaryLimit} a comment holds.`)
-            const api = `${process.env.GITHUB_API_URL || 'https://api.github.com'}/repos/${process.env.GITHUB_REPOSITORY}`
-            const id = process.env.SUMMARY_ID
-            const [method, url] = id ? ['PATCH', `${api}/issues/comments/${id}`] : ['POST', `${api}/issues/${process.env.PR_NUMBER}/comments`]
-            const response = await fetch(url, {
-              method,
-              headers: {
-                Accept: 'application/vnd.github+json',
-                Authorization: `Bearer ${process.env.GITHUB_TOKEN}`,
-                'Content-Type': 'application/json',
-                'X-GitHub-Api-Version': '2022-11-28'
-              },
-              body: JSON.stringify({ body })
-            })
-            if (!response.ok) fail(`${method} ${url.replace(api, '')} returned ${response.status}`)
-            console.log(id ? `Updated the summary comment ${id}.` : 'Posted the summary comment.')
-          }
-          main().catch(error => fail(error?.message))
+        run: *steps
 
       - name: Keep the review transcript
         if: always() && env.HAS_REVIEW_TOKEN == 'true' && steps.review.outputs.execution_file != ''
@@ -348,134 +430,21 @@ jobs:
           path: |
             ${{ steps.retry.outputs.execution_file || steps.review.outputs.execution_file }}
             ${{ runner.temp }}/claude-review-first-attempt.json
+            ${{ runner.temp }}/claude-review-first-attempt-summary.md
           retention-days: 7
           overwrite: true
 
       - name: Fail unless a review ran and was posted
         if: ${{ !cancelled() && steps.review.outcome != 'skipped' }}
         env:
+          STEP: check
           EXECUTION_FILE: ${{ steps.retry.outputs.execution_file || steps.review.outputs.execution_file }}
           CLAUDE_OUTCOME: ${{ steps.review.outcome }}
           RETRY_OUTCOME: ${{ steps.retry.outcome }}
+          MEASURED: ${{ steps.first.outcome }} ${{ steps.verdict.outcome }}
           GITHUB_TOKEN: ${{ github.token }}
           PR_NUMBER: ${{ github.event.pull_request.number }}
           REVIEW_BOT: "claude[bot]"
           SUMMARY_BOT: "github-actions[bot]"
         shell: node {0}
-        run: |
-          const fs = require('node:fs')
-          const clean = (value, max = 120) => String(value).replace(/[\r\n%]+/g, ' ').slice(0, max)
-          const fail = message => {
-            console.log(`::error title=Claude didn't review the change::${clean(message, 900)}`)
-            process.exit(1)
-          }
-          const tokenAdvice = result => result.api_error_status === 401 ? " The API refused the token (401), so renew the CLAUDE_CODE_OAUTH_TOKEN secret (docs/agents/ci-agents.md, Claude's app and token)." : ''
-          const retried = ['success', 'failure'].includes(process.env.RETRY_OUTCOME)
-          const readLog = () => {
-            const file = process.env.EXECUTION_FILE
-            if (!file || !fs.existsSync(file)) {
-              if ([process.env.CLAUDE_OUTCOME, process.env.RETRY_OUTCOME].includes('failure')) return { stopped: "The Claude step failed before Claude ran, so it wrote no execution log: that step's own log says why." }
-              return { stopped: "The review wrote no execution log, so no review happened. The action skips a run whose copy of this workflow differs from main's, as on a pull request into a branch that changes it (docs/agents/ci-agents.md, Code review)." }
-            }
-            let messages
-            try {
-              messages = JSON.parse(fs.readFileSync(file, 'utf8'))
-            } catch (error) {
-              return { stopped: `The review's execution log isn't JSON: ${error.message}` }
-            }
-            if (!Array.isArray(messages)) return { stopped: "The review's execution log isn't a list of messages." }
-            const result = messages.filter(entry => entry?.type === 'result').at(-1)
-            if (!result) return { stopped: "The review's execution log has no result, so the review didn't finish." }
-            return { messages, result, stopped: '' }
-          }
-          const endedBadly = (messages, result) => {
-            if (result.is_error) return `The review ended in an error: ${clean(result.result || result.subtype || 'no message', 400)}${tokenAdvice(result)}`
-            const taskSets = messages.filter(entry => entry?.type === 'system' && entry.subtype === 'background_tasks_changed')
-            const lastSet = taskSets.at(-1)?.tasks
-            const running = (Array.isArray(lastSet) ? lastSet : []).filter(task => task && !task.ambient)
-            if (running.length === 0) return ''
-            const names = [...new Set(running.map(task => clean(task.description || task.task_type, 60)))]
-            return `The run ended while ${running.length} background task(s) were still running (${names.join(', ')}), so their findings were never posted. Set CLAUDE_CODE_DISABLE_BACKGROUND_TASKS=1 on the review step.`
-          }
-          const readReviewActivity = async (bot, summaryBot) => {
-            const api = `${process.env.GITHUB_API_URL || 'https://api.github.com'}/repos/${process.env.GITHUB_REPOSITORY}`
-            const headers = {
-              Accept: 'application/vnd.github+json',
-              Authorization: `Bearer ${process.env.GITHUB_TOKEN}`,
-              'X-GitHub-Api-Version': '2022-11-28'
-            }
-            const get = async url => {
-              for (let attempt = 1; ; attempt += 1) {
-                const response = await fetch(url, { headers })
-                if (response.ok) return response
-                if (attempt >= 3 || response.status < 500) throw new Error(`GET ${url.replace(api, '')} returned ${response.status}`)
-                await new Promise(resolve => setTimeout(resolve, 2000 * attempt))
-              }
-            }
-            const list = async path => {
-              const items = []
-              let url = `${api}${path}?per_page=100`
-              for (let page = 0; url && page < 10; page += 1) {
-                const response = await get(url)
-                items.push(...(await response.json()))
-                url = (/<([^>]+)>;\s*rel="next"/.exec(response.headers.get('link') || '') || [])[1]
-              }
-              return items
-            }
-            const pr = process.env.PR_NUMBER
-            const [comments, inline, reviews] = await Promise.all([
-              list(`/issues/${pr}/comments`),
-              list(`/pulls/${pr}/comments`),
-              list(`/pulls/${pr}/reviews`)
-            ])
-            return [
-              ...comments
-                .filter(item => item.user?.login === summaryBot && /^## Claude review\b/.test(String(item.body || '').trim()))
-                .map(item => ({ at: item.updated_at || item.created_at, summary: true })),
-              ...inline
-                .filter(item => item.user?.login === bot && !item.in_reply_to_id)
-                .map(item => ({ at: item.created_at })),
-              ...reviews.filter(item => item.user?.login === bot).map(item => ({ at: item.submitted_at }))
-            ]
-          }
-          const main = async () => {
-            const { messages, result, stopped: unread } = readLog()
-            if (result) {
-              const models = Object.keys(result.modelUsage || {}).join(', ') || 'unknown'
-              const summary = `Claude review${retried ? ', second attempt' : ''}: ${result.num_turns} turns in ${Math.round((result.duration_ms || 0) / 1000)}s, about $${Number(result.total_cost_usd || 0).toFixed(2)} (estimate), models: ${models}.`
-              console.log(summary)
-              if (process.env.GITHUB_STEP_SUMMARY) fs.appendFileSync(process.env.GITHUB_STEP_SUMMARY, `${summary}\n`)
-            }
-            const stopped = unread || endedBadly(messages, result)
-            if (stopped && !retried) fail(stopped)
-            const denied = [...new Set((Array.isArray(result?.permission_denials) ? result.permission_denials : []).map(denial =>
-              denial?.tool_input?.command ? `${denial.tool_name} (${clean(denial.tool_input.command)})` : String(denial?.tool_name)
-            ))]
-            const startedAt = Date.parse(process.env.REVIEW_STARTED_AT || '')
-            if (Number.isNaN(startedAt)) fail("REVIEW_STARTED_AT isn't set, so the check can't tell which comments this run posted.")
-            let activity
-            try {
-              activity = await readReviewActivity(process.env.REVIEW_BOT || 'claude[bot]', process.env.SUMMARY_BOT || 'github-actions[bot]')
-            } catch (error) {
-              fail(`Couldn't read the pull request to check the review: ${error.message}`)
-            }
-            const posted = activity.filter(item => Date.parse(item.at) >= startedAt - 30 * 1000)
-            const summaryPosted = posted.some(item => item.summary)
-            if (stopped) {
-              if (!summaryPosted) fail(`The second attempt at the review didn't finish, and no summary was posted. ${stopped}`)
-              console.log(`::warning title=The second attempt at the review didn't finish::${clean(stopped, 600)} A summary was posted all the same, so the check passes.`)
-              return
-            }
-            if (posted.length === 0) {
-              if (denied.length > 0) {
-                fail(`Claude was denied ${denied.join(', ')} and posted nothing, so the review stopped early. Allow it in claude_args (docs/agents/ci-agents.md, Code review).`)
-              }
-              fail(`Claude finished without posting a finding or updating its summary comment. Claude's last message: ${clean(result.result || '(none)', 400)}`)
-            }
-            if (denied.length > 0) {
-              console.log(`::warning title=Claude review was denied tools::Claude was denied ${clean(denied.join(', '), 600)}. Allow it in claude_args if the review needs it.`)
-            }
-            if (!summaryPosted) fail("Claude posted findings but no summary, so the review doesn't say how much of the change it read (docs/agents/ci-agents.md, Code review).")
-            console.log(`Claude posted or updated ${posted.length} comment(s) or review(s) on this pull request.`)
-          }
-          main().catch(error => fail(`The review check failed: ${error?.message}`))
+        run: *steps

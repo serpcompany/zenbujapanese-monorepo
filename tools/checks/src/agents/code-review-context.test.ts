@@ -17,9 +17,7 @@ import {
 } from './code-review-support'
 import { scratchFolder } from './scratch'
 
-const scriptsIndex = steps.findIndex(step =>
-  step.run?.includes('"$RUNNER_TEMP/review-scripts/$script"')
-)
+const scriptsIndex = steps.findIndex(step => step.env?.STEP === 'scripts')
 const contextIndex = steps.findIndex(step => step.env?.CONTEXT_FILE !== undefined)
 const context = steps[contextIndex]
 const files = [
@@ -64,7 +62,7 @@ describe("the review's context", () => {
     })
     expect(run.status).toBe(0)
     expect(run.context.startsWith(rulesHeading)).toBe(true)
-    expect(run.context).toContain('as they are on the base branch (feat/701-parent)')
+    expect(run.context).toContain('as they are on the base branch ("feat/701-parent")')
     expect(run.context).toContain(
       '\n## AGENTS.md\n\n# AGENTS\n\nRouting only.\n\n## ARCHITECTURE.md\n'
     )
@@ -92,7 +90,7 @@ describe("the review's context", () => {
     }
   })
 
-  test('is copied for the reviewers the reviewer starts, into a file nothing is added to later', async () => {
+  test("is copied for the reviewers the reviewer starts, into a file the second attempt's correction never reaches", async () => {
     const run = await giveContext({ files })
     expect(run.reviewersContext).toBe(run.context)
     expect(run.reviewersContext).toContain('# What every review does')
@@ -100,8 +98,10 @@ describe("the review's context", () => {
     expect(String(review.with?.claude_args)).toContain(
       `--append-subagent-system-prompt-file ${forReviewers}`
     )
-    const written = steps.flatMap(step => Object.values(step.env ?? {}))
-    expect(written.filter(value => value === forReviewers)).toHaveLength(1)
+    const naming = steps.filter(step => Object.values(step.env ?? {}).includes(forReviewers ?? ''))
+    expect(naming.map(step => step.id)).toEqual(['earlier', 'first'])
+    expect(naming[1].env?.CORRECTION_FILE).toBe(context.env?.CONTEXT_FILE)
+    expect(naming[1].env?.CORRECTION_FILE).not.toBe(forReviewers)
   })
 
   test("fails the job when the pull request can't be read", async () => {
@@ -111,11 +111,38 @@ describe("the review's context", () => {
     expect(status).not.toBe(0)
   })
 
-  test('asks again when GitHub answers that it is unavailable', async () => {
-    const run = await giveContext({ files, unavailableFor: 1 })
+  test.each<[string, { status: number; headers: Record<string, string> } | undefined]>([
+    ['is unavailable', undefined],
+    ['says too many requests', { status: 429, headers: { 'retry-after': '1' } }],
+    [
+      'says the rate limit is used up',
+      {
+        status: 403,
+        headers: {
+          'x-ratelimit-remaining': '0',
+          'x-ratelimit-reset': String(Math.ceil(Date.now() / 1000) + 2)
+        }
+      }
+    ]
+  ])('asks again when GitHub %s, after the wait it names', async (_, unavailable) => {
+    const run = await giveContext({ files, unavailableFor: 1, unavailable })
     expect(run.status).toBe(0)
     expect(run.outputs.changed_files).toBe('6')
     expect(run.requests).toHaveLength(9)
+  })
+
+  test("gives up at once on a refusal that waiting won't change", async () => {
+    const run = await giveContext({ files, unavailableFor: 1, unavailable: { status: 403 } })
+    expect(run.status).not.toBe(0)
+    expect(run.output).toContain('returned 403')
+  })
+
+  test('tells the reviewer that every inline comment it makes is posted at once', async () => {
+    const run = await giveContext({ files })
+    expect(run.context).toContain(
+      'Every call to the inline comment tool posts its comment at once, whatever `confirmed` is set to.'
+    )
+    expect(run.reviewersContext).toContain('never to try the tool')
   })
 })
 
@@ -271,7 +298,7 @@ describe('the change given to the review', () => {
       ])
     )
     const onlyView =
-      "; the review's checkout holds the base branch's copy of this path, so the patch is the only view of this pull request's version (the action keeps a copy under `.claude-pr/`)"
+      "; the review's checkout holds the base branch's copy of this path, so the patch is the only view of this pull request's version"
     expect(indexLines(run.written['index.md'])).toEqual([
       `1. ".claude/skills/pr-review/SKILL.md", modified, +1 -1: \`0001.patch\` (5 lines)${onlyView}`,
       `2. "CLAUDE.md", added, +1 -1: \`0002.patch\` (5 lines)${onlyView}`,

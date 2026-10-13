@@ -37,8 +37,8 @@ describe("tonight's reviews, from abridged copies of their logs", () => {
     expect((await run.first()).outputs).toEqual({ retry: 'false', problem: '' })
     expect(run.read('context.md')).toBe(rulesHeading)
     expect(run.read('summary.md')).toBe(kept.summary)
-    const posted = await expectPostedWithoutALine(run)
-    expect(JSON.parse(posted.requests[0].body)).toEqual({ body: kept.summary.trim() })
+    const last = await expectPostedWithoutALine(run)
+    expect(last.comments[0].body).toBe(kept.summary.trim())
   })
 
   test('#761, still incomplete after its second attempt, is labelled on its comment and in a warning, and the job passes', async () => {
@@ -50,9 +50,7 @@ describe("tonight's reviews, from abridged copies of their logs", () => {
     expect(last.outputs).toEqual({ retry: 'false', problem: thin })
     expect(last.output).toContain(`::warning title=Claude's review is incomplete::${thin}`)
     expect(run.read('step-summary.md')).toBe(`${thin}\n`)
-    const posted = await run.post(last.outputs.problem)
-    expect(posted.status).toBe(0)
-    const { body } = JSON.parse(posted.requests[0].body) as { body: string }
+    const [{ body }] = last.comments
     expect(headOf(body)).toEqual(labelledWith(thin, 'Reviewed c58455e, round 1.'))
     expect(body.endsWith(pullRequest761.summary.trim().split('\n').slice(1).join('\n'))).toBe(true)
     const checked = await run.check(summaryPostedDuringTheRun(body), 'success')
@@ -69,20 +67,19 @@ describe('a thin first attempt whose second attempt leaves no summary', () => {
     await run.first()
     run.attempt(secondLog)
     const last = await run.last()
-    const posted = await run.post(last.outputs.problem)
-    return { run, last, posted, body: JSON.parse(posted.requests[0].body).body as string }
+    return { run, last, body: last.comments[0].body }
   }
 
   test.each<[string, unknown, string]>([
     ['ended in an error', [usageLimit], 'failure'],
-    ['failed before Claude ran', undefined, 'failure'],
+    ['failed before Claude ran, or was stopped at its time limit', undefined, 'failure'],
     ['finished without writing one', [...reviewers, result()], 'success']
   ])('is posted with its line, and the job passes, when the second attempt %s', async (_, secondLog, outcome) => {
-    const { run, last, posted, body } = await thinThenNothing(secondLog)
+    const { run, last, body } = await thinThenNothing(secondLog)
     expect(last.status).toBe(0)
     expect(last.outputs).toEqual({ retry: 'false', problem: line })
     expect(last.output).toContain(`::warning title=Claude's review is incomplete::${line}`)
-    expect(posted.status).toBe(0)
+    expect(last.comments).toHaveLength(1)
     expect(headOf(body)).toEqual(labelledWith(line, 'Reviewed c58455e, round 1.'))
     const checked = await run.check(summaryPostedDuringTheRun(body), outcome)
     expect(checked.output).not.toContain('::error')
@@ -109,8 +106,8 @@ describe('a thin first attempt whose second attempt leaves no summary', () => {
     run.attempt([usageLimit])
     const last = await run.last()
     expect(last.outputs.problem).toBe('Incomplete: this review wrote no summary.')
-    const posted = await run.post(last.outputs.problem)
-    expect(posted.requests).toEqual([])
+    expect(last.output).toContain('::warning title=No summary to post::')
+    expect(last.comments).toEqual([])
     const checked = await run.check({}, 'failure')
     expect(checked.status).not.toBe(0)
     expect(checked.output).toContain(

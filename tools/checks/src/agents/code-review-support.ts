@@ -1,8 +1,7 @@
 import { existsSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
-import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { expect } from 'vitest'
-import type { ReviewCase } from './code-review-cases'
+import { type ReviewCase, runnerWorkspace } from './code-review-cases'
 import { minutesAfter } from './guards'
 import { scratchFolder } from './scratch'
 import {
@@ -22,7 +21,6 @@ const stepWithId = (id: string) => steps.find(step => step.id === id) as Step
 export const firstVerdict = stepWithId('first')
 export const retry = stepWithId('retry')
 export const lastVerdict = stepWithId('verdict')
-export const post = steps.find(step => step.name === "Post the review's summary") as Step
 export const repository = 'serpcompany/zenbujapanese-monorepo'
 export const pr = '7'
 export const bot = 'claude[bot]'
@@ -36,7 +34,6 @@ export const summaryBody = summaryOf('Read 4 of 4 changed files.')
 export const requestReply = { body: 'Done: I renamed the helper in abc1234.' }
 export const rulesHeading = '# Repository rules for this review\n'
 export const ruleFiles = ['AGENTS.md', 'ARCHITECTURE.md', 'docs/agents/code.md', 'CONTEXT.md']
-const noSuchFile = join(tmpdir(), 'no-such-folder', 'summary.md')
 
 interface Posted {
   login: string
@@ -56,9 +53,16 @@ export interface PullRequest {
   closes?: Record<string, unknown>[]
   issues?: Record<string, unknown>[]
   rules?: Record<string, string>
+  scripts?: Record<string, string>
+  defaultBranchCommit?: string
   unavailableFor?: number
+  unavailable?: { status: number; headers?: Record<string, string> }
+  linksAnsweredWithErrorsFor?: number
+  commentStatus?: number
   status?: number
 }
+
+const comeBackInASecond = { status: 502, headers: { 'retry-after': '1' } }
 
 export function github(pullRequest: PullRequest): Route {
   const comments = (items: Posted[] = []) =>
@@ -80,6 +84,7 @@ export function github(pullRequest: PullRequest): Route {
     )
   }
   let refusals = pullRequest.unavailableFor ?? 0
+  let errorsLeft = pullRequest.linksAnsweredWithErrorsFor ?? 0
   const graphql = (sent: string) => {
     const { query, variables } = JSON.parse(sent) as {
       query: string
@@ -94,6 +99,10 @@ export function github(pullRequest: PullRequest): Route {
       )
       return { data: { repository: { issue: issue ?? null } } }
     }
+    if (errorsLeft > 0) {
+      errorsLeft -= 1
+      return { errors: [{ message: 'Something went wrong while executing your query.' }] }
+    }
     return {
       data: {
         repository: {
@@ -107,14 +116,23 @@ export function github(pullRequest: PullRequest): Route {
       }
     }
   }
-  return (url, _, sent) => {
+  return (url, method, sent) => {
     const status = pullRequest.status ?? 200
     if (status !== 200) return { status, body: { message: 'Not allowed' } }
     if (refusals > 0) {
       refusals -= 1
-      return { status: 502, body: { message: 'Bad gateway' } }
+      return { ...(pullRequest.unavailable ?? comeBackInASecond), body: { message: 'Not now' } }
     }
     if (url.pathname === '/graphql') return { status, body: graphql(sent) }
+    if (method !== 'GET') return { status: pullRequest.commentStatus ?? 200, body: {} }
+    if (url.pathname === `/repos/${repository}/commits/main`) {
+      return { status, body: { sha: pullRequest.defaultBranchCommit } }
+    }
+    if (url.pathname.startsWith(`${contents}tools/checks/`)) {
+      const text = pullRequest.scripts?.[url.pathname.slice(`${contents}tools/checks/`.length)]
+      const atTheCommit = url.searchParams.get('ref') === pullRequest.defaultBranchCommit
+      return atTheCommit && text !== undefined ? { status, body: null, text } : undefined
+    }
     if (url.pathname.startsWith(contents)) {
       const text = rules[url.pathname.slice(contents.length)]
       const fromTheBase = url.searchParams.get('ref') === (pullRequest.base ?? 'main')
@@ -149,28 +167,10 @@ export const outputsOf = (written: string) =>
       .map(line => [line.slice(0, line.indexOf('=')), line.slice(line.indexOf('=') + 1)])
   )
 
-export function postSummary(
-  summary: string | undefined,
-  { id = '', problem = '', status = 201 } = {},
-  file = 'summary.md'
-) {
-  return runNodeStep(
-    post,
-    {
-      PR_NUMBER: pr,
-      GITHUB_REPOSITORY: repository,
-      SUMMARY_ID: id,
-      PROBLEM: problem,
-      SUMMARY_FILE: summary === undefined ? noSuchFile : file
-    },
-    (_, method) => (method === 'GET' ? undefined : { status, body: {} }),
-    summary === undefined || file !== 'summary.md' ? {} : { 'summary.md': summary }
-  )
-}
-
 export function reviewRun(setup: {
   changedFiles: number
   change?: unknown
+  summaryId?: string
   onGitHub?: PullRequest
 }) {
   const folder = scratchFolder('review-run')
@@ -179,6 +179,7 @@ export function reviewRun(setup: {
   const put = (name: string, text: string | undefined) =>
     text === undefined ? rmSync(at(name), { force: true }) : writeFileSync(at(name), text)
   put('context.md', rulesHeading)
+  put('reviewers-context.md', rulesHeading)
   put('change.json', JSON.stringify(setup.change ?? []))
   const shared = {
     ...environment,
@@ -187,16 +188,25 @@ export function reviewRun(setup: {
     FIRST_ATTEMPT_LOG: at('first-attempt.json'),
     FIRST_ATTEMPT_SUMMARY: at('first-attempt-summary.md'),
     GITHUB_STEP_SUMMARY: at('step-summary.md'),
+    GITHUB_WORKSPACE: runnerWorkspace,
     SUMMARY_FILE: at('summary.md')
   }
-  const decide = async (step: Step, more: Record<string, string> = {}) => {
+  const decide = async (step: Step, more: Record<string, string>) => {
     put('output.txt', '')
     const run = await runNodeStep(
       step,
       { ...shared, GITHUB_OUTPUT: at('output.txt'), ...more },
       github(setup.onGitHub ?? {})
     )
-    return { ...run, outputs: outputsOf(read('output.txt') ?? '') }
+    const written = run.requests.filter(({ method }) => method !== 'GET')
+    return {
+      ...run,
+      outputs: outputsOf(read('output.txt') ?? ''),
+      comments: written.map(({ method, path, body }) => ({
+        sent: `${method} ${path}`,
+        body: (JSON.parse(body) as { body: string }).body
+      }))
+    }
   }
   return {
     read,
@@ -204,19 +214,19 @@ export function reviewRun(setup: {
       put('log.json', log === undefined ? undefined : JSON.stringify(log))
       put('summary.md', summary)
     },
-    first: () =>
+    first: (more: Record<string, string> = {}) =>
       decide(firstVerdict, {
         CHANGE_FILE: at('change.json'),
         CHANGE_INDEX: '/checkout/tmp/review-change/index.md',
-        CORRECTION_FILE: at('context.md')
+        CORRECTION_FILE: at('context.md'),
+        REVIEWERS_CONTEXT_FILE: at('reviewers-context.md'),
+        ...more
       }),
-    last: () => decide(lastVerdict),
-    post: (problem: string) =>
-      postSummary(read('summary.md'), { id: '99', problem, status: 200 }, at('summary.md')),
-    check: (posted: PullRequest, retryOutcome: string) =>
+    last: () => decide(lastVerdict, { SUMMARY_ID: setup.summaryId ?? '' }),
+    check: (posted: PullRequest, retryOutcome: string, measured = 'success success') =>
       runNodeStep(
         guard,
-        { ...shared, CLAUDE_OUTCOME: 'success', RETRY_OUTCOME: retryOutcome },
+        { ...shared, CLAUDE_OUTCOME: 'success', RETRY_OUTCOME: retryOutcome, MEASURED: measured },
         github(posted)
       )
   }
@@ -244,7 +254,9 @@ export const labelledWith = (line: string, next: string) => [
 
 export async function expectPostedWithoutALine(run: ReturnType<typeof reviewRun>) {
   const last = await run.last()
+  expect(last.status).toBe(0)
   expect(last.outputs).toEqual({ retry: 'false', problem: '' })
-  expect(last.output).not.toContain('::warning')
-  return run.post(last.outputs.problem)
+  expect(last.output).not.toContain("::warning title=Claude's review is incomplete::")
+  expect(last.comments).toHaveLength(1)
+  return last
 }

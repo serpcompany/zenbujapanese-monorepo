@@ -1,5 +1,5 @@
 import { spawn, spawnSync } from 'node:child_process'
-import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs'
+import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
 import { createServer } from 'node:http'
 import { dirname, join, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
@@ -27,8 +27,13 @@ function answerOf(parameters, input) {
   return text
 }
 
-function forwardToGh(request, sent, response) {
+function forwardToGh(request, sent, response, kept) {
   const target = String(request.url).replace(/^\//, '')
+  if (request.method !== 'GET' && target !== 'graphql') {
+    writeFileSync(kept, JSON.parse(sent).body)
+    response.writeHead(200, { 'content-type': 'application/json' })
+    return response.end('{}')
+  }
   const accepted = ['--header', `Accept: ${request.headers.accept}`]
   const asked =
     request.method === 'POST'
@@ -44,13 +49,13 @@ function forwardToGh(request, sent, response) {
   response.end(rest.join('\n\n'))
 }
 
-async function withGitHub(work) {
+async function withGitHub(work, kept) {
   const server = createServer((request, response) => {
     let sent = ''
     request.on('data', chunk => {
       sent += chunk
     })
-    request.on('end', () => forwardToGh(request, sent, response))
+    request.on('end', () => forwardToGh(request, sent, response, kept))
   })
   await new Promise(listening => server.listen(0, '127.0.0.1', listening))
   try {
@@ -77,7 +82,8 @@ const pathsIn = out => ({
   stepSummary: join(out, 'step-summary.md'),
   log: join(out, 'attempt.json'),
   firstLog: join(out, 'first-attempt.json'),
-  firstSummary: join(out, 'first-attempt-summary.md')
+  firstSummary: join(out, 'first-attempt-summary.md'),
+  comment: join(out, 'summary-comment.md')
 })
 
 function claudeCommand(state, paths) {
@@ -112,22 +118,24 @@ async function context(pullRequest, checkoutGiven, outGiven) {
   ])
   const context = reviewJob().steps.find(step => step.id === 'earlier')
   writeFileSync(paths.contextOutputs, '')
-  const status = await withGitHub(api =>
-    run(join(here, 'review-context.mjs'), {
-      ...process.env,
-      GITHUB_API_URL: api,
-      GITHUB_REPOSITORY: state.repository,
-      GITHUB_TOKEN: 'gh-holds-the-token',
-      GITHUB_WORKSPACE: checkout,
-      GITHUB_OUTPUT: paths.contextOutputs,
-      PR_NUMBER: String(pullRequest),
-      BASE_REF: base.trim(),
-      RULES: context.env.RULES,
-      CHANGE_DIR: join(checkout, 'tmp', 'review-change'),
-      CHANGE_FILE: paths.change,
-      CONTEXT_FILE: paths.context,
-      REVIEWERS_CONTEXT_FILE: paths.reviewersContext
-    })
+  const status = await withGitHub(
+    api =>
+      run(join(here, 'review-context.mjs'), {
+        ...process.env,
+        GITHUB_API_URL: api,
+        GITHUB_REPOSITORY: state.repository,
+        GITHUB_TOKEN: 'gh-holds-the-token',
+        GITHUB_WORKSPACE: checkout,
+        GITHUB_OUTPUT: paths.contextOutputs,
+        PR_NUMBER: String(pullRequest),
+        BASE_REF: base.trim(),
+        RULES: context.env.RULES,
+        CHANGE_DIR: join(checkout, 'tmp', 'review-change'),
+        CHANGE_FILE: paths.change,
+        CONTEXT_FILE: paths.context,
+        REVIEWERS_CONTEXT_FILE: paths.reviewersContext
+      }),
+    paths.comment
   )
   if (status !== 0) return status
   const changedFiles = /^changed_files=(\d+)$/m.exec(
@@ -165,42 +173,52 @@ async function verdict(outGiven, transcript, attempt) {
   const paths = pathsIn(resolve(outGiven))
   const state = JSON.parse(readFileSync(paths.state, 'utf8'))
   const changeFolder = join(state.checkout, 'tmp', 'review-change')
+  const step = reviewJob().steps.find(
+    each => each.id === (attempt === 'last' ? 'verdict' : 'first')
+  )
   const script = join(dirname(paths.state), 'decide.cjs')
-  writeFileSync(script, reviewJob().steps.find(step => step.id === 'first').run)
+  writeFileSync(script, step.run)
   const summaryFile = join(state.checkout, 'tmp', 'review-summary.md')
   const messages = messagesOf(transcript, state.checkout)
   const written = summaryWrittenIn(messages, summaryFile)
-  if (!existsSync(summaryFile) && written !== undefined) writeFileSync(summaryFile, written)
+  if (written !== undefined) writeFileSync(summaryFile, written)
   writeFileSync(paths.log, JSON.stringify(messages))
   writeFileSync(paths.outputs, '')
   writeFileSync(paths.stepSummary, '')
-  const first = attempt !== 'last'
-  const status = await withGitHub(api =>
-    run(script, {
-      ...process.env,
-      GITHUB_API_URL: api,
-      GITHUB_REPOSITORY: state.repository,
-      GITHUB_TOKEN: 'gh-holds-the-token',
-      GITHUB_OUTPUT: paths.outputs,
-      GITHUB_STEP_SUMMARY: paths.stepSummary,
-      PR_NUMBER: String(state.pullRequest),
-      REVIEW_STARTED_AT: state.startedAt,
-      CHANGED_FILES: state.changedFiles ?? '',
-      EXECUTION_FILE: paths.log,
-      FIRST_ATTEMPT_LOG: paths.firstLog,
-      FIRST_ATTEMPT_SUMMARY: paths.firstSummary,
-      SUMMARY_FILE: summaryFile,
-      ...(first
-        ? {
-            CHANGE_FILE: paths.change,
-            CHANGE_INDEX: join(changeFolder, 'index.md'),
-            CORRECTION_FILE: paths.context
-          }
-        : {})
-    })
+  const stale =
+    attempt === 'last' ? [paths.comment] : [paths.comment, paths.firstLog, paths.firstSummary]
+  for (const file of stale) rmSync(file, { force: true })
+  const status = await withGitHub(
+    api =>
+      run(script, {
+        ...process.env,
+        STEP: step.env.STEP,
+        GITHUB_API_URL: api,
+        GITHUB_REPOSITORY: state.repository,
+        GITHUB_TOKEN: 'gh-holds-the-token',
+        GITHUB_OUTPUT: paths.outputs,
+        GITHUB_STEP_SUMMARY: paths.stepSummary,
+        GITHUB_WORKSPACE: state.checkout,
+        PR_NUMBER: String(state.pullRequest),
+        REVIEW_STARTED_AT: state.startedAt,
+        CHANGED_FILES: state.changedFiles ?? '',
+        CHANGE_FILE: paths.change,
+        CHANGE_INDEX: join(changeFolder, 'index.md'),
+        CORRECTION_FILE: paths.context,
+        REVIEWERS_CONTEXT_FILE: paths.reviewersContext,
+        EXECUTION_FILE: paths.log,
+        FIRST_ATTEMPT_LOG: paths.firstLog,
+        FIRST_ATTEMPT_SUMMARY: paths.firstSummary,
+        SUMMARY_FILE: summaryFile,
+        SUMMARY_ID: ''
+      }),
+    paths.comment
   )
   const outputs = readFileSync(paths.outputs, 'utf8')
   console.log(outputs.trim())
+  if (existsSync(paths.comment)) {
+    console.log(`\nThe summary comment it would post, and didn't, is ${paths.comment}.`)
+  }
   if (status === 0 && /^retry=true$/m.test(outputs)) {
     console.log(
       `\nA second attempt is due. Its correction is at the end of ${paths.context}. Run the reviewer again with the same command, then: verdict ${dirname(paths.state)} <its transcript> last`

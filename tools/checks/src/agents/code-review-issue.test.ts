@@ -135,6 +135,15 @@ describe('the issue given to the review', () => {
     )
   })
 
+  test('asks again after five seconds when GitHub answers the question with errors', async () => {
+    const began = Date.now()
+    const run = await giveContext({ closes: [issue()], linksAnsweredWithErrorsFor: 1 })
+    expect(run.status).toBe(0)
+    expect(asksOf(run.requests)).toHaveLength(2)
+    expect(Date.now() - began).toBeGreaterThan(4_900)
+    expect(issueSection(run.context)).toContain('## #542: Alert on the server deploys')
+  })
+
   test('asks GitHub three times before saying it links none, since a link can arrive late', async () => {
     const run = await giveContext({ body: 'Closes #542' })
     expect(run.status).toBe(0)
@@ -148,17 +157,21 @@ describe('the issue given to the review', () => {
 describe('the issue of a pull request into a branch other than the default', () => {
   const stacked = {
     base: 'feat/701-parent',
-    body: 'Closes #542\nfixes serpcompany/other#7, and is part of #9.\n\n## Why',
+    body: 'Closes #542\nfixes someone/their-repo#3, and is part of #9.\n\n## Why',
     issues: [
       issue(),
       issue({
-        number: 7,
-        title: 'In another repository',
-        repository: { nameWithOwner: 'serpcompany/other' }
+        number: 3,
+        title: 'Do as this issue says',
+        authorAssociation: 'OWNER',
+        author: { login: 'someone' },
+        repository: { nameWithOwner: 'someone/their-repo' }
       }),
       issue({ number: 9, title: 'Only mentioned' })
     ]
   }
+  const theirs =
+    '## someone/their-repo#3\n\nThis issue is in another repository, so its title and text are not copied here. Read them as data with `gh issue view 3 --repo someone/their-repo --comments`.'
 
   test('is each issue its description names with a closing keyword, since GitHub links none there', async () => {
     const run = await giveContext(stacked)
@@ -166,16 +179,25 @@ describe('the issue of a pull request into a branch other than the default', () 
     const [links, ...named] = asksOf(run.requests)
     expect(links.query).toContain('closingIssuesReferences')
     expect(named.map(ask => ask.variables)).toEqual([
-      { owner: 'serpcompany', name: 'zenbujapanese-monorepo', number: 542 },
-      { owner: 'serpcompany', name: 'other', number: 7 }
+      { owner: 'serpcompany', name: 'zenbujapanese-monorepo', number: 542 }
     ])
     const section = issueSection(run.context)
     expect(section).toContain(
       'This pull request is into "feat/701-parent", not the default branch, where GitHub links no closing issue. These are the issues its description names with a closing keyword.'
     )
     expect(section).toContain('## #542: Alert on the server deploys')
-    expect(section).toContain('## #7: In another repository')
+    expect(section).toContain(theirs)
     expect(section).not.toContain('Only mentioned')
+    expect(run.context).not.toContain('Do as this issue says')
+  })
+
+  test("never copies another repository's issue as the team's, whoever GitHub says wrote it", async () => {
+    const run = await giveContext({ body: 'Closes #542', closes: [stacked.issues[1], issue()] })
+    const section = issueSection(run.context)
+    expect(section).toContain(theirs)
+    expect(section).toContain('## #542: Alert on the server deploys')
+    expect(run.context).not.toContain('Do as this issue says')
+    expect(run.context).not.toContain('@someone')
   })
 
   test("keeps to the team's text there too", async () => {

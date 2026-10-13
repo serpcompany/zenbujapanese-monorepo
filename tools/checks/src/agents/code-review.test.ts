@@ -1,25 +1,27 @@
-import { spawnSync } from 'node:child_process'
-import { chmodSync, existsSync, readFileSync, writeFileSync } from 'node:fs'
-import { dirname, join } from 'node:path'
+import { existsSync, readFileSync } from 'node:fs'
+import { join } from 'node:path'
 import { describe, expect, test } from 'vitest'
 import {
   bot,
+  environment,
+  firstVerdict,
+  github,
   guard,
   guardIndex,
   lastVerdict,
-  post,
-  postSummary,
+  outputsOf,
+  type PullRequest,
   pr,
   repository,
+  retry,
   review,
   reviewIndex,
   steps,
-  summaryBody,
   summaryBot,
   workflowPath
 } from './code-review-support'
 import { scratchFolder } from './scratch'
-import { allowedTools, readRepositoryFile, readWorkflow } from './workflow'
+import { allowedTools, readRepositoryFile, readWorkflow, runNodeStep } from './workflow'
 
 const workflow = readWorkflow(workflowPath)
 const claudeArgs = String(review?.with?.claude_args ?? '')
@@ -28,6 +30,9 @@ const skillTools = (/^allowed-tools:\s*(.+)$/m.exec(skill)?.[1] ?? '')
   .split(',')
   .map(tool => tool.trim())
   .filter(Boolean)
+const [find] = workflow.jobs.changes.steps ?? []
+const take = steps.find(step => step.env?.STEP === 'scripts')
+const inline = find.run ?? ''
 
 describe('the Code review workflow', () => {
   test('has the skill read the issue and every changed file, and say how much it read', () => {
@@ -44,6 +49,11 @@ describe('the Code review workflow', () => {
     expect(skill).toContain("In CI your instructions already hold each\n  issue's text.")
     expect(skill).toContain('with the Agent tool (Task in older versions)')
     expect(allowedTools(review)).toContain('Bash(gh pr diff:*)')
+  })
+
+  test('has the skill find the issue of a pull request into another branch in its description', () => {
+    expect(skill).toContain('GitHub links an issue only on a pull request into the default branch')
+    expect(skill).toContain('closing keyword in its description')
   })
 
   test('runs the pr-review skill with every tool the skill uses', () => {
@@ -89,108 +99,76 @@ describe('the Code review workflow', () => {
     )
   })
 
+  test('gives each attempt a time limit that leaves the job time to post what it has', () => {
+    const [first, second] = [review, retry].map(step => Number(step['timeout-minutes']))
+    const slowestAttemptMeasured = 329 / 60
+    expect(first).toBeGreaterThan(2 * slowestAttemptMeasured)
+    expect(second).toBeGreaterThan(1.5 * slowestAttemptMeasured)
+    expect(first + second).toBeLessThanOrEqual(Number(workflow.jobs.review['timeout-minutes']) - 8)
+  })
+
   test('checks afterwards that a review ran and was posted, from when it started', () => {
     expect(guardIndex).toBe(steps.length - 1)
     expect(guard.name).toBe('Fail unless a review ran and was posted')
     expect(guard.shell).toBe('node {0}')
     expect(guard.env).toMatchObject({
+      STEP: 'check',
       EXECUTION_FILE: `\${{ steps.retry.outputs.execution_file || steps.${review.id}.outputs.execution_file }}`,
       RETRY_OUTCOME: '${{ steps.retry.outcome }}',
+      MEASURED: `\${{ steps.${firstVerdict.id}.outcome }} \${{ steps.${lastVerdict.id}.outcome }}`,
       GITHUB_TOKEN: '${{ github.token }}',
       REVIEW_BOT: bot,
       SUMMARY_BOT: summaryBot
     })
-    expect(Object.values(guard.env ?? {}).join(' ')).not.toContain('steps.verdict')
     const startIndex = steps.findIndex(step => step.run?.includes('REVIEW_STARTED_AT='))
     expect(startIndex).toBeGreaterThan(-1)
     expect(startIndex).toBeLessThan(reviewIndex)
   })
 })
 
-describe("the review's scripts", () => {
-  const take = steps.find(step => step.run?.includes('"$RUNNER_TEMP/review-scripts/$script"'))
-  const scripts = String(take?.env?.SCRIPTS).split(' ')
+describe('the script the workflow runs itself', () => {
+  const ownSteps = [find, ...steps].filter(step => step.shell === 'node {0}')
 
-  test("are the default branch's copies, fetched through the API before the review", () => {
-    expect(take?.env).toEqual({
-      DEFAULT_BRANCH: '${{ github.event.repository.default_branch }}',
-      GH_TOKEN: '${{ github.token }}',
-      SCRIPTS: 'review-context.mjs review-change.mjs pull-request.mjs'
-    })
-    expect(take?.run).toContain(
-      'gh api "repos/$GITHUB_REPOSITORY/contents/tools/checks/$script?ref=$DEFAULT_BRANCH"'
-    )
-    expect(steps.indexOf(take ?? {})).toBeLessThan(reviewIndex)
-    for (const step of steps) {
-      expect(step.run ?? '').not.toMatch(/node (?!"\$RUNNER_TEMP\/review-scripts\/)/)
-    }
+  test('is one script for every step, so each asks GitHub the same way', () => {
+    expect(ownSteps.map(step => step.env?.STEP)).toEqual([
+      'files',
+      'scripts',
+      'first',
+      'last',
+      'check'
+    ])
+    for (const step of ownSteps) expect(step.run).toBe(inline)
+    expect(inline.match(/\bfetch\(/g)).toHaveLength(1)
+    expect(inline).toContain('AbortSignal.timeout(')
+    expect(inline).toContain('const secondsBetweenTries = [5, 15, 45]')
   })
 
-  test('are every file they import from each other', () => {
-    for (const script of scripts) {
-      const imported = [
-        ...readRepositoryFile(`tools/checks/${script}`).matchAll(/from '\.\/([^']+)'/g)
-      ].map(found => found[1])
-      expect(scripts, script).toEqual(expect.arrayContaining(imported))
+  test('loads no code from the runner, where Claude could have written some', () => {
+    const required = [...inline.matchAll(/require\('([^']+)'\)/g)].map(found => found[1])
+    expect(required).toEqual(['node:fs', 'node:path'])
+    expect(inline).not.toMatch(/\bimport\(|\beval\(|new Function|child_process/)
+    for (const step of steps.slice(reviewIndex).filter(each => each.run !== undefined)) {
+      expect(step.shell).toBe('node {0}')
+      expect(['first', 'last', 'check']).toContain(step.env?.STEP)
     }
-  })
-
-  test("don't run after Claude, which could have rewritten them", () => {
-    for (const step of steps.slice(reviewIndex)) {
-      expect(step.run ?? '').not.toMatch(/review-scripts|\bgit /)
-    }
+    expect(steps.filter(step => /^node /.test(step.run ?? ''))).toHaveLength(1)
   })
 })
 
 describe('a pull request that changes the review workflow', () => {
-  const [find] = workflow.jobs.changes.steps ?? []
-  const jq = (process.env.PATH ?? '').split(':').some(folder => existsSync(join(folder, 'jq')))
-  const standInForGh = `#!/usr/bin/env node
-const { readFileSync, writeFileSync } = require('node:fs')
-const { spawnSync } = require('node:child_process')
-const asked = process.argv.slice(2)
-const state = JSON.parse(readFileSync(process.env.GH_STATE, 'utf8'))
-state.asked.push(asked.join(' '))
-const refused = state.refusals > 0
-if (refused) state.refusals -= 1
-writeFileSync(process.env.GH_STATE, JSON.stringify(state))
-if (refused) {
-  console.error('gh: Bad Gateway (HTTP 502)')
-  process.exit(1)
-}
-for (const page of state.pages) {
-  const filtered = spawnSync('jq', ['-r', asked[asked.indexOf('--jq') + 1]], {
-    input: JSON.stringify(page),
-    encoding: 'utf8'
-  })
-  process.stdout.write(filtered.stdout)
-}
-`
+  const workflowRef = `${repository}/${workflowPath}@refs/pull/${pr}/merge`
   const page = (...names: string[]) => names.map(filename => ({ filename, status: 'modified' }))
-  const findOut = (pages: Record<string, unknown>[][], refusals = 0) => {
-    const folder = scratchFolder('stand-in-gh')
-    const state = join(folder, 'state.json')
-    const output = join(folder, 'output.txt')
-    writeFileSync(join(folder, 'gh'), standInForGh)
-    chmodSync(join(folder, 'gh'), 0o755)
-    writeFileSync(state, JSON.stringify({ pages, refusals, asked: [] }))
-    writeFileSync(output, '')
-    const run = spawnSync('bash', ['-e', '-c', find.run ?? ''], {
-      encoding: 'utf8',
-      env: {
-        PATH: `${folder}:${dirname(process.execPath)}:${process.env.PATH ?? ''}`,
-        GH_STATE: state,
-        GITHUB_OUTPUT: output,
-        GITHUB_REPOSITORY: repository,
-        GITHUB_WORKFLOW_REF: `${repository}/${workflowPath}@refs/pull/${pr}/merge`,
-        PR_NUMBER: pr
-      }
-    })
-    const { asked } = JSON.parse(readFileSync(state, 'utf8')) as { asked: string[] }
-    return { status: run.status, output: run.stdout, outputs: readFileSync(output, 'utf8'), asked }
+  const findOut = async (pullRequest: PullRequest, more: Record<string, string> = {}) => {
+    const run = await runNodeStep(
+      find,
+      { ...environment, GITHUB_WORKFLOW_REF: workflowRef, GITHUB_OUTPUT: 'output.txt', ...more },
+      github(pullRequest),
+      { 'output.txt': '' }
+    )
+    return { ...run, outputs: outputsOf(run.files['output.txt']) }
   }
 
-  test('is found by a first job that reads the file list, checks nothing out, and runs no script', () => {
+  test('is found by a first job that reads the file list and checks nothing out', () => {
     expect(Object.keys(workflow.jobs)).toEqual(['changes', 'review'])
     const { changes } = workflow.jobs
     expect(changes.if).toBe(
@@ -201,9 +179,9 @@ for (const page of state.pages) {
     expect(changes.steps).toHaveLength(1)
     expect(find.id).toBe('files')
     expect(find.uses).toBeUndefined()
-    expect(find.run).not.toMatch(/\bnode\b|review-scripts/)
     expect(find.env).toEqual({
-      GH_TOKEN: '${{ github.token }}',
+      STEP: 'files',
+      GITHUB_TOKEN: '${{ github.token }}',
       PR_NUMBER: '${{ github.event.pull_request.number }}'
     })
   })
@@ -213,140 +191,182 @@ for (const page of state.pages) {
     expect(workflow.jobs.review.if).toBe("needs.changes.outputs.reviewable == 'true'")
   })
 
-  test.runIf(jq).each<[string, Record<string, unknown>[][]]>([
-    ['changes it', [page('docs/a.md', workflowPath)]],
-    ['changes it on a later page of files', [page('docs/a.md'), page(workflowPath)]],
+  test.each<[string, PullRequest]>([
+    ['changes it', { files: page('docs/a.md', workflowPath) }],
+    [
+      'changes it on a later page of files',
+      { files: page('docs/a.md', workflowPath), filesPerPage: 1 }
+    ],
     [
       'renames it',
-      [[{ filename: '.github/workflows/review.yml', previous_filename: workflowPath }]]
+      { files: [{ filename: '.github/workflows/review.yml', previous_filename: workflowPath }] }
     ]
-  ])('gets no review and a notice saying a person reviews it, when it %s', (_, pages) => {
-    const { status, output, outputs, asked } = findOut(pages)
+  ])('gets no review and a notice saying a person reviews it, when it %s', async (_, pullRequest) => {
+    const { status, output, outputs } = await findOut(pullRequest)
     expect(status).toBe(0)
-    expect(outputs).toBe('reviewable=false\n')
+    expect(outputs).toEqual({ reviewable: 'false' })
     expect(output).toContain("::notice title=Claude doesn't review this pull request::")
     expect(output).toContain(
       `This pull request changes ${workflowPath}, and Claude's review can't run on a pull request that changes the review workflow`
     )
     expect(output).toContain('A person reviews this pull request')
-    expect(asked).toEqual([
-      `api repos/${repository}/pulls/${pr}/files --paginate --jq .[] | .filename, (.previous_filename // empty)`
-    ])
   })
 
-  test.runIf(jq)(
-    'is told apart from one that leaves the workflow alone, or only names it inside another path',
-    () => {
-      const { status, output, outputs } = findOut([
-        page('docs/a.md', '.github/workflows/web.yml'),
-        page(`docs/${workflowPath}`, `${workflowPath}.md`)
-      ])
-      expect(status).toBe(0)
-      expect(outputs).toBe('reviewable=true\n')
-      expect(output).not.toContain('::notice')
-    }
-  )
+  test('is told apart from one that leaves the workflow alone, whatever its files are named', async () => {
+    const { status, output, outputs, requests } = await findOut({
+      files: page(
+        'docs/a.md',
+        '.github/workflows/web.yml',
+        `y\n${workflowPath}`,
+        `docs/${workflowPath}`,
+        `${workflowPath}.md`
+      ),
+      filesPerPage: 3
+    })
+    expect(status).toBe(0)
+    expect(outputs).toEqual({ reviewable: 'true' })
+    expect(output).not.toContain('::notice')
+    expect(requests).toHaveLength(2)
+  })
 
-  test.runIf(jq)('asks again when GitHub fails, and fails after three tries', () => {
-    const once = findOut([page(workflowPath)], 1)
-    expect(once.status).toBe(0)
-    expect(once.outputs).toBe('reviewable=false\n')
-    expect(once.asked).toHaveLength(2)
-    const always = findOut([page('docs/a.md')], 3)
-    expect(always.status).not.toBe(0)
-    expect(always.output).toContain("::error title=Couldn't read the pull request's files::")
-    expect(always.outputs).toBe('')
-    expect(always.asked).toHaveLength(3)
+  test('is never the red check: when GitHub stays unreachable it warns and lets the review try', async () => {
+    const refused = await findOut({ status: 403 })
+    expect(refused.status).toBe(0)
+    expect(refused.outputs).toEqual({ reviewable: 'true' })
+    expect(refused.output).toContain(
+      "::warning title=Couldn't tell whether the pull request changes the review workflow::GET /pulls/7/files returned 403"
+    )
+    expect(refused.output).toContain('The review is tried all the same')
+    expect(refused.requests).toHaveLength(1)
+    const unnamed = await findOut({ files: page(workflowPath) }, { GITHUB_WORKFLOW_REF: '' })
+    expect(unnamed.status).toBe(0)
+    expect(unnamed.outputs).toEqual({ reviewable: 'true' })
+    expect(unnamed.output).toContain('::warning')
   })
 })
 
-describe("the review's summary", () => {
-  const postIndex = steps.indexOf(post)
-  const summary = `${summaryBody.body}\n`
+describe('asking GitHub, from any step the workflow runs itself', () => {
+  const workflowRef = `${repository}/${workflowPath}@refs/pull/${pr}/merge`
+  const ask = async (pullRequest: PullRequest) => {
+    const began = Date.now()
+    const run = await runNodeStep(
+      find,
+      { ...environment, GITHUB_WORKFLOW_REF: workflowRef, GITHUB_OUTPUT: 'output.txt' },
+      github({ files: [{ filename: workflowPath }], ...pullRequest }),
+      { 'output.txt': '' }
+    )
+    return {
+      ...run,
+      outputs: outputsOf(run.files['output.txt']),
+      seconds: (Date.now() - began) / 1000
+    }
+  }
+  const inASecond = () => String(Math.ceil(Date.now() / 1000) + 1)
 
-  test('is posted by the workflow, between the review and its guard, with the job token', () => {
-    expect(postIndex).toBeGreaterThan(steps.indexOf(lastVerdict))
-    expect(postIndex).toBeLessThan(guardIndex)
-    expect(post.if).toContain(`steps.${review.id}.outcome == 'success'`)
-    expect(post.env).toMatchObject({
+  test('is tried again when GitHub is unavailable, after the wait it asks for', async () => {
+    const run = await ask({ unavailableFor: 2 })
+    expect(run.outputs).toEqual({ reviewable: 'false' })
+    expect(run.requests).toHaveLength(3)
+    expect(run.seconds).toBeGreaterThan(1.9)
+  })
+
+  test('is tried again after five seconds when GitHub names no wait', async () => {
+    const run = await ask({ unavailableFor: 1, unavailable: { status: 502 } })
+    expect(run.outputs).toEqual({ reviewable: 'false' })
+    expect(run.requests).toHaveLength(2)
+    expect(run.seconds).toBeGreaterThan(4.9)
+  })
+
+  test.each<[string, { status: number; headers: Record<string, string> }]>([
+    ['a 429', { status: 429, headers: { 'retry-after': '1' } }],
+    [
+      'a 403 that says the rate limit is used up',
+      { status: 403, headers: { 'x-ratelimit-remaining': '0', 'x-ratelimit-reset': inASecond() } }
+    ]
+  ])('waits out %s, until GitHub says to come back', async (_, unavailable) => {
+    const run = await ask({ unavailableFor: 1, unavailable })
+    expect(run.status).toBe(0)
+    expect(run.outputs).toEqual({ reviewable: 'false' })
+    expect(run.requests).toHaveLength(2)
+  })
+
+  test.each<[string, { status: number; headers?: Record<string, string> }]>([
+    ['a 403 that is a refusal', { status: 403 }],
+    ['a 404', { status: 404 }],
+    [
+      'a rate limit that resets too far off to wait for',
+      { status: 429, headers: { 'retry-after': '3600' } }
+    ]
+  ])('gives up at once on %s', async (_, unavailable) => {
+    const run = await ask({ unavailableFor: 1, unavailable })
+    expect(run.requests).toHaveLength(1)
+    expect(run.output).toContain(`returned ${unavailable.status}`)
+    expect(run.outputs).toEqual({ reviewable: 'true' })
+  })
+})
+
+describe("the review's scripts", () => {
+  const names = String(take?.env?.SCRIPTS).split(' ')
+  const commit = '84976a82c0ffee'
+  const takeThem = async (pullRequest: PullRequest) => {
+    const runnerTemp = scratchFolder('runner-temp')
+    const run = await runNodeStep(
+      take ?? {},
+      { ...environment, DEFAULT_BRANCH: 'main', RUNNER_TEMP: runnerTemp },
+      github({ defaultBranchCommit: commit, ...pullRequest })
+    )
+    const taken = (name: string) => join(runnerTemp, 'review-scripts', name)
+    return { ...run, taken }
+  }
+
+  test("are the default branch's copies, taken before the review by the workflow's own script", () => {
+    expect(take?.env).toEqual({
+      STEP: 'scripts',
+      DEFAULT_BRANCH: '${{ github.event.repository.default_branch }}',
       GITHUB_TOKEN: '${{ github.token }}',
-      SUMMARY_ID: '${{ steps.earlier.outputs.summary_id }}',
-      SUMMARY_FILE: 'tmp/review-summary.md',
-      PROBLEM: `\${{ steps.${lastVerdict.id}.outputs.problem }}`
+      SCRIPTS: 'review-context.mjs review-change.mjs pull-request.mjs'
     })
-    expect(workflow.jobs.review.permissions).toMatchObject({
-      contents: 'read',
-      'pull-requests': 'write'
-    })
-    const startIndex = steps.findIndex(step => step.run?.includes('REVIEW_STARTED_AT='))
-    expect(steps[startIndex].run).toContain('rm -f tmp/review-summary.md')
+    expect(steps.indexOf(take ?? {})).toBeLessThan(reviewIndex)
+    const context = steps.find(step => step.env?.CONTEXT_FILE !== undefined)
+    expect(context?.run).toBe(`node "$RUNNER_TEMP/review-scripts/${names[0]}"`)
   })
 
-  test('updates the earlier summary comment in place', async () => {
-    const { status, requests } = await postSummary(summary, { id: '99', status: 200 })
-    expect(status).toBe(0)
-    expect(requests).toEqual([
-      {
-        method: 'PATCH',
-        path: `/repos/${repository}/issues/comments/99`,
-        body: JSON.stringify({ body: summaryBody.body })
-      }
+  test('are every file they import from each other', () => {
+    for (const script of names) {
+      const imported = [
+        ...readRepositoryFile(`tools/checks/${script}`).matchAll(/from '\.\/([^']+)'/g)
+      ].map(found => found[1])
+      expect(names, script).toEqual(expect.arrayContaining(imported))
+    }
+  })
+
+  test('are all read at one commit of the default branch', async () => {
+    const run = await takeThem({
+      scripts: Object.fromEntries(names.map(name => [name, `${name}\n`]))
+    })
+    expect(run.status).toBe(0)
+    for (const name of names) expect(readFileSync(run.taken(name), 'utf8')).toBe(`${name}\n`)
+    expect(run.requests.map(({ path }) => path.replace(`/repos/${repository}`, ''))).toEqual([
+      '/commits/main',
+      ...names.map(name => `/contents/tools/checks/${name}`)
     ])
+    expect(run.output).toContain(`from ${commit} of main`)
   })
 
-  test('posts a new summary comment when there is none', async () => {
-    const { status, requests } = await postSummary(summary)
-    expect(status).toBe(0)
-    expect(requests.map(({ method, path }) => `${method} ${path}`)).toEqual([
-      `POST /repos/${repository}/issues/${pr}/comments`
-    ])
-  })
-
-  test('says first, under its heading, when the review was incomplete', async () => {
-    const problem =
-      'Incomplete: this review read 2 of 61 changed files and did not run its reviewers.'
-    const { status, requests } = await postSummary(summary, { id: '99', status: 200, problem })
-    expect(status).toBe(0)
-    expect(JSON.parse(requests[0].body).body).toBe(
-      `## Claude review\n\n**${problem}**\n\nReviewed abc1234, round 1.\nRead 4 of 4 changed files.\n\nNo new findings.`
-    )
-  })
-
-  test('gives a summary the heading it lacks, which is how the next review finds it', async () => {
-    const problem = 'Incomplete: this review did not say how many of the changed files it read.'
-    const headless = 'Reviewed abc1234.\n\nNo new findings.'
-    const { status, output, requests } = await postSummary(headless, {
-      id: '99',
-      status: 200,
-      problem
+  test('are asked for again when GitHub is unavailable', async () => {
+    const run = await takeThem({
+      scripts: Object.fromEntries(names.map(name => [name, name])),
+      unavailableFor: 1
     })
-    expect(status).toBe(0)
-    expect(output).toContain('::warning title=The summary had no heading::')
-    expect(JSON.parse(requests[0].body).body).toBe(
-      `## Claude review\n\n**${problem}**\n\n${headless}`
+    expect(run.status).toBe(0)
+    expect(existsSync(run.taken(names[2]))).toBe(true)
+  })
+
+  test('fail the job, naming the file and the commit, when one cannot be had', async () => {
+    const run = await takeThem({ scripts: { [names[0]]: 'first' } })
+    expect(run.status).not.toBe(0)
+    expect(run.output).toContain(
+      `::error title=Couldn't fetch the review's scripts::tools/checks/${names[1]} at ${commit} of main: GET /contents/tools/checks/${names[1]} returned 404`
     )
-  })
-
-  test('refuses a summary too long for a comment, and posts nothing', async () => {
-    const { status, output, requests } = await postSummary(
-      `${summaryBody.body}\n${'x'.repeat(60_001)}`,
-      { id: '99' }
-    )
-    expect(status).not.toBe(0)
-    expect(output).toContain('60000')
-    expect(requests).toEqual([])
-  })
-
-  test('fails when GitHub refuses the comment', async () => {
-    const { status, output } = await postSummary(summary, { id: '99', status: 403 })
-    expect(status).not.toBe(0)
-    expect(output).toContain('403')
-  })
-
-  test('warns and posts nothing when Claude wrote no summary', async () => {
-    const { status, output, requests } = await postSummary(undefined, { id: '99' })
-    expect(status).toBe(0)
-    expect(output).toContain('::warning')
-    expect(requests).toEqual([])
   })
 })

@@ -17,6 +17,7 @@ export interface Step {
   env?: Record<string, string>
   with?: Record<string, unknown>
   'continue-on-error'?: boolean
+  'timeout-minutes'?: number
 }
 
 interface Job {
@@ -101,7 +102,15 @@ export type Route = (
   url: URL,
   method: string,
   sent: string
-) => { status: number; body: unknown; text?: string; nextPage?: string } | undefined
+) =>
+  | {
+      status: number
+      body: unknown
+      text?: string
+      nextPage?: string
+      headers?: Record<string, string>
+    }
+  | undefined
 
 export type Script = { name: string; text: string } | { path: string; arguments?: string[] }
 
@@ -123,7 +132,13 @@ export function runNodeStep(
   route: Route,
   files: Record<string, string> = {}
 ): Promise<StepRun & { files: Record<string, string> }> {
-  return runNodeScript({ name: 'step.cjs', text: step.run ?? '' }, env, route, files)
+  const written = Object.entries(step.env ?? {}).filter(([, value]) => !value.includes('${{'))
+  return runNodeScript(
+    { name: 'step.cjs', text: step.run ?? '' },
+    { ...Object.fromEntries(written), ...env },
+    route,
+    files
+  )
 }
 
 export async function runNodeScript(
@@ -147,7 +162,11 @@ export async function runNodeScript(
       const link = answer.nextPage
         ? { link: `<http://${request.headers.host}${answer.nextPage}>; rel="next"` }
         : {}
-      response.writeHead(answer.status, { 'content-type': 'application/json', ...link })
+      response.writeHead(answer.status, {
+        'content-type': 'application/json',
+        ...link,
+        ...answer.headers
+      })
       response.end(answer.text ?? JSON.stringify(answer.body))
     })
   })

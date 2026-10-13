@@ -75,19 +75,43 @@ test('a pull request stacked on another branch is told why GitHub links no issue
   expect(otherBase('main', undefined)).toBe('')
 })
 
-test('reads the issues a description closes from its closing keywords, each once', () => {
+const ownRepository = 'serpcompany/zenbujapanese-monorepo'
+
+test('reads the issues a description closes from its closing keywords', () => {
   expect(
     closingReferences(
-      'Closes #542\nfixes: #12, Resolved serpcompany/other#7 and closes https://github.com/a/b/issues/9.\nCLOSES #542'
+      'Closes #542\nfixes: #12, Resolved serpcompany/other#7 and closes https://github.com/a/b/issues/9.\nFixes\t#22',
+      ownRepository
     )
   ).toEqual([
     { repository: '', number: 542 },
     { repository: '', number: 12 },
     { repository: 'serpcompany/other', number: 7 },
-    { repository: 'a/b', number: 9 }
+    { repository: 'a/b', number: 9 },
+    { repository: '', number: 22 }
   ])
-  expect(closingReferences('Part of #3, refs #4, encloses #5, and a prefix #6')).toEqual([])
   expect(closingReferences(undefined)).toEqual([])
+})
+
+test("names one of this repository's issues once, however it is written", () => {
+  expect(
+    closingReferences(
+      'Closes #18, closes SerpCompany/Zenbujapanese-Monorepo#18, and CLOSES https://github.com/serpcompany/zenbujapanese-monorepo/issues/18',
+      ownRepository
+    )
+  ).toEqual([{ repository: '', number: 18 }])
+})
+
+test.each([
+  ['in inline code', 'Write `Closes #13` in the body.'],
+  ['in a fenced block', 'Before\n```md\nCloses #14\n```\nafter'],
+  ['in a block fenced with tildes', '~~~\nFixes #19\n~~~'],
+  ['in an HTML comment', ['<!', '-- Closes #20 --', '>'].join('')],
+  ['on a later line than its keyword', 'the fix\n\n#16'],
+  ['after a word that only ends like a keyword', 'a bug-fix #17, a hotfix #21, a prefix #6'],
+  ['after a word that closes nothing', 'Part of #3, refs #4, encloses #5']
+])('reads no issue from a number %s, where GitHub links nothing', (_, body) => {
+  expect(closingReferences(body, ownRepository)).toEqual([])
 })
 
 test('asks again, after a pause, until there is an answer or the attempts run out', async () => {

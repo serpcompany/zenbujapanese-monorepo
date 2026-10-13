@@ -18,13 +18,23 @@ export const otherBase = (base, defaultBranch) =>
     ? `This pull request is based on ${base}, not ${defaultBranch}, and GitHub links a closing keyword only on a pull request into ${defaultBranch}. With Closes #<number> in its body, the check passes once it is retargeted, which GitHub does when its parent merges.`
     : ''
 
+const whereGitHubLinksNothing = [
+  /^(`{3,}|~{3,})[^\n]*\n[\s\S]*?^\1[ \t]*$/gm,
+  /`[^`\n]*`/g,
+  /<!--[\s\S]*?-->/g
+]
 const closingKeyword =
-  /\b(?:close[sd]?|fix(?:e[sd])?|resolve[sd]?):?\s+(?:([\w.-]+\/[\w.-]+)#|https:\/\/github\.com\/([\w.-]+\/[\w.-]+)\/issues\/|#)(\d+)\b/gi
+  /(?<![\w-])(?:close[sd]?|fix(?:e[sd])?|resolve[sd]?):?[ \t]+(?:([\w.-]+\/[\w.-]+)#|https:\/\/github\.com\/([\w.-]+\/[\w.-]+)\/issues\/|#)(\d+)\b/gi
 
-export function closingReferences(body) {
+export function closingReferences(body, ownRepository = '') {
+  const text = whereGitHubLinksNothing.reduce(
+    (rest, pattern) => rest.replace(pattern, ' '),
+    String(body ?? '')
+  )
   const named = new Map()
-  for (const [, short, linked, number] of String(body ?? '').matchAll(closingKeyword)) {
-    const repository = short ?? linked ?? ''
+  for (const [, short, linked, number] of text.matchAll(closingKeyword)) {
+    const from = short ?? linked ?? ''
+    const repository = from.toLowerCase() === ownRepository.toLowerCase() ? '' : from
     named.set(`${repository.toLowerCase()}#${number}`, { repository, number: Number(number) })
   }
   return [...named.values()]

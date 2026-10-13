@@ -109,23 +109,31 @@ describe('whether a review read the whole change', () => {
       FIRST_ATTEMPT_LOG: '${{ runner.temp }}/claude-review-first-attempt.json',
       FIRST_ATTEMPT_SUMMARY: '${{ runner.temp }}/claude-review-first-attempt-summary.md'
     }
+    const forGitHub = {
+      GITHUB_TOKEN: '${{ github.token }}',
+      PR_NUMBER: '${{ github.event.pull_request.number }}'
+    }
     expect(firstVerdict.env).toEqual({
       ...keptFromTheFirstAttempt,
+      ...forGitHub,
+      STEP: 'first',
       CHANGED_FILES: '${{ steps.earlier.outputs.changed_files }}',
       CHANGE_FILE: '${{ runner.temp }}/review-change.json',
       CHANGE_INDEX: '${{ github.workspace }}/tmp/review-change/index.md',
       CORRECTION_FILE: '${{ runner.temp }}/review-context.md',
+      REVIEWERS_CONTEXT_FILE: '${{ runner.temp }}/review-reviewers-context.md',
       EXECUTION_FILE: `\${{ steps.${review.id}.outputs.execution_file }}`,
-      GITHUB_TOKEN: '${{ github.token }}',
-      PR_NUMBER: '${{ github.event.pull_request.number }}',
       REVIEW_BOT: bot,
       SUMMARY_FILE: 'tmp/review-summary.md'
     })
     expect(lastVerdict.env).toEqual({
       ...keptFromTheFirstAttempt,
+      ...forGitHub,
+      STEP: 'last',
       CHANGED_FILES: '${{ steps.earlier.outputs.changed_files }}',
       EXECUTION_FILE: `\${{ steps.${retry.id}.outputs.execution_file || steps.${review.id}.outputs.execution_file }}`,
-      SUMMARY_FILE: 'tmp/review-summary.md'
+      SUMMARY_FILE: 'tmp/review-summary.md',
+      SUMMARY_ID: '${{ steps.earlier.outputs.summary_id }}'
     })
   })
 
@@ -146,7 +154,11 @@ describe('whether a review read the whole change', () => {
     const last = await again.last()
     expect(last.status).toBe(0)
     expect(last.outputs).toEqual({ retry: 'false', problem: first.outputs.problem })
-    expect(last.output.includes('::warning')).toBe(reason !== '')
+    expect(last.output.includes("::warning title=Claude's review is incomplete::")).toBe(
+      reason !== ''
+    )
+    expect(last.output.match(/^Complete: /gm) ?? []).toHaveLength(reason === '' ? 1 : 0)
+    expect(first.output).not.toContain('Complete: ')
   })
 
   test('counts a summary whose line is a list item or in bold', async () => {
@@ -242,12 +254,13 @@ describe('a second attempt at the review', () => {
     )
     const transcript = steps.find(step => step.name === 'Keep the review transcript')
     expect(transcript?.with?.path).toContain(firstVerdict.env?.FIRST_ATTEMPT_LOG)
+    expect(transcript?.with?.path).toContain(firstVerdict.env?.FIRST_ATTEMPT_SUMMARY)
     expect(transcript?.with?.path).toContain(`steps.${review.id}.outputs.execution_file }}`)
   })
 
-  test('counts a file as opened by its patch or by itself, whoever read it', async () => {
-    const change = changeOf761.slice(0, 3)
-    const run = reviewRun({ changedFiles: 3, change })
+  test('counts a file as opened by its patch or by itself, whoever read it and however the path was written', async () => {
+    const change = changeOf761.slice(0, 5)
+    const run = reviewRun({ changedFiles: 5, change })
     run.attempt(
       [
         called('patch', 'Read', { file_path: change[0].patch, offset: 1, limit: 400 }),
@@ -256,12 +269,18 @@ describe('a second attempt at the review', () => {
         answered('itself'),
         called('refused', 'Read', { file_path: change[2].patch }),
         answered('refused', true),
+        called('relative', 'Read', { file_path: 'tmp/review-change/0004.patch' }),
+        answered('relative'),
+        called('roundabout', 'Read', {
+          file_path: `${runnerWorkspace}/docs/../tmp/./review-change/0005.patch`
+        }),
+        answered('roundabout'),
         result()
       ],
-      summary('Read 2 of 3 changed files.')
+      summary('Read 4 of 5 changed files.')
     )
     await run.first()
-    expect(run.read('context.md')).toContain('opened 2 of the 3 changed files')
+    expect(run.read('context.md')).toContain('opened 4 of the 5 changed files')
     expect(listed(run.read('context.md'))).toEqual([
       `- "deploy/deployer.sh": ${changeFolder}/0003.patch`
     ])
@@ -361,10 +380,22 @@ describe('a second attempt at the review', () => {
     expect(correction).toContain(
       'The first attempt already posted these inline comments. They are earlier findings: post none of them again.'
     )
-    expect(listed(correction)).toEqual([
+    const alreadyPosted = [
       '- "apps/ios/docs/product/translate.md":157: **suggestion** The user-visible change isn\'t described The PR body names one.',
       '- "docs/odd\\n# name.md":4: Moved.'
-    ])
+    ]
+    expect(listed(correction)).toEqual(alreadyPosted)
+    const forReviewers = run.read('reviewers-context.md') ?? ''
+    expect(forReviewers).toBe(
+      `${rulesHeading}\n# Inline comments already posted on this commit\n\nThe reviewer posted these a few minutes ago, on this same commit. They are earlier findings: report none of them again.\n\n${alreadyPosted.join('\n')}\n`
+    )
+    expect(forReviewers).not.toContain('second attempt')
+  })
+
+  test('leaves the context of the reviewers it starts alone when the first attempt posted nothing', async () => {
+    const run = replay(pullRequest761, changeOf761)
+    await run.first()
+    expect(run.read('reviewers-context.md')).toBe(rulesHeading)
   })
 
   test("isn't asked for when GitHub can't say what the first attempt posted", async () => {
@@ -378,19 +409,22 @@ describe('a second attempt at the review', () => {
     expect(run.read('context.md')).toBe(rulesHeading)
   })
 
-  test('is asked for by a summary without its heading, which is not called incomplete', async () => {
+  test("isn't asked for by a summary that only lacks its heading, which the workflow adds", async () => {
     const headless = 'Reviewed abc1234, round 1.\nRead 4 of 4 changed files.\n\nNo new findings.'
     const run = reviewRun({ changedFiles: 4 })
     run.attempt([...threeReviewers, result()], headless)
-    const first = await run.first()
-    expect(first.outputs).toEqual({ retry: 'true', problem: '' })
-    expect(run.read('context.md')).toContain(
-      'The first attempt, on this same commit, did not start its summary with `## Claude review`.'
-    )
-    run.attempt([...threeReviewers, result()], headless)
-    const posted = await expectPostedWithoutALine(run)
-    expect(posted.status).toBe(0)
-    expect(posted.output).toContain('::warning title=The summary had no heading::')
-    expect(JSON.parse(posted.requests[0].body).body).toBe(`## Claude review\n\n${headless}`)
+    expect((await run.first()).outputs).toEqual({ retry: 'false', problem: '' })
+    expect(run.read('context.md')).toBe(rulesHeading)
+    const last = await expectPostedWithoutALine(run)
+    expect(last.output).toContain('::warning title=The summary had no heading::')
+    expect(last.comments[0].body).toBe(`## Claude review\n\n${headless}`)
+  })
+
+  test("isn't asked for when nothing says when the review started", async () => {
+    const run = replay(pullRequest761, changeOf761)
+    const first = await run.first({ REVIEW_STARTED_AT: '' })
+    expect(first.status).toBe(0)
+    expect(first.outputs.retry).toBe('false')
+    expect(first.requests).toEqual([])
   })
 })

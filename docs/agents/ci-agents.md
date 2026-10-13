@@ -22,8 +22,8 @@ change to it are in [`ci-review.md`](ci-review.md).
 - **The `review` check is red only when no review happened or its result was lost:** Claude's
   step failed or ended in an error, nothing was posted, findings were posted with no summary,
   GitHub refused the summary comment, or what the reviewer is given couldn't be built. The
-  `changes` check is red when it couldn't read the pull request's files
-  ([`ci-review.md`](ci-review.md), What turns the check red).
+  `changes` check is never red: when it can't read the pull request's files it warns, and the
+  review tries ([`ci-review.md`](ci-review.md), What turns the check red).
 - **A pull request that changes the workflow is skipped, not failed.** The action runs only when
   the workflow file is the one on `main`, so `review` shows as skipped and `changes` leaves a
   notice that a person reviews the pull request. Such a change is tried with a local dry run

@@ -70,7 +70,7 @@ function describeFile(file, position, { workspace, changeFolder }) {
     entry.patch = join(changeFolder, `${number}.patch`)
     writeFileSync(entry.patch, text)
     const view = restored
-      ? "; the review's checkout holds the base branch's copy of this path, so the patch is the only view of this pull request's version (the action keeps a copy under `.claude-pr/`)"
+      ? "; the review's checkout holds the base branch's copy of this path, so the patch is the only view of this pull request's version"
       : ''
     return {
       entry,

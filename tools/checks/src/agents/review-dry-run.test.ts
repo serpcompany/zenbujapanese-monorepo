@@ -48,8 +48,9 @@ const answers = {
   'issues/7/comments': []
 }
 const standInForGh = `#!/usr/bin/env node
-const { readFileSync } = require('node:fs')
+const { appendFileSync, readFileSync } = require('node:fs')
 const asked = process.argv.slice(2).join(' ')
+appendFileSync(process.env.GH_ANSWERS + '.asked', asked + '\\n')
 const answers = JSON.parse(readFileSync(process.env.GH_ANSWERS, 'utf8'))
 const found = Object.keys(answers).find(key => asked.includes(key))
 if (!found) {
@@ -81,7 +82,8 @@ function dryRun() {
     writeFileSync(join(out, name), messages.map(message => JSON.stringify(message)).join('\n'))
     return join(out, name)
   }
-  return { checkout, out, run, transcript }
+  const asked = () => readFileSync(join(bin, 'answers.json.asked'), 'utf8').trim().split('\n')
+  return { checkout, out, run, transcript, asked }
 }
 
 describe("a dry run of the review's reviewer", () => {
@@ -91,7 +93,7 @@ describe("a dry run of the review's reviewer", () => {
     expect(built.status, built.stderr).toBe(0)
     const context = readFileSync(join(out, 'review-context.md'), 'utf8')
     expect(context.startsWith(rulesHeading)).toBe(true)
-    expect(context).toContain('as they are on the base branch (main)')
+    expect(context).toContain('as they are on the base branch ("main")')
     expect(context).toContain('## docs/agents/code.md\n\nThe rules in this file.\n')
     expect(context).toContain(
       `whole change, as GitHub lists it, to \`${checkout}/tmp/review-change\``
@@ -138,13 +140,30 @@ describe("a dry run of the review's reviewer", () => {
       '# This is the second attempt'
     )
     expect(existsSync(summaryFile)).toBe(false)
-    writeFileSync(summaryFile, summaryOf('Read 2 of 2 changed files.').body)
+    const complete = summaryOf('Read 2 of 2 changed files.').body
+    writeFileSync(summaryFile, complete)
     const second = run('verdict', out, transcript('attempt-2.jsonl', [result()]), 'last')
     expect(second.status).toBe(0)
     expect(second.stdout).toContain('retry=false\nproblem=\n')
+    expect(second.stdout).toContain(`would post, and didn't, is ${out}/summary-comment.md`)
+    expect(readFileSync(join(out, 'summary-comment.md'), 'utf8')).toBe(complete)
   })
 
-  test('takes a transcript kept from CI, whose paths are the runner’s', () => {
+  test('posts nothing: it only reads from GitHub', () => {
+    const { checkout, out, run, transcript, asked } = dryRun()
+    run('context', '7', checkout, out)
+    writeFileSync(
+      join(checkout, 'tmp', 'review-summary.md'),
+      summaryOf('Read 2 of 2 changed files.').body
+    )
+    run('verdict', out, transcript('attempt.jsonl', [result()]), 'last')
+    expect(existsSync(join(out, 'summary-comment.md'))).toBe(true)
+    const writes = asked().filter(each => each.includes('--input') && !each.includes('graphql'))
+    expect(writes).toEqual([])
+    expect(asked().some(each => each.includes('--method'))).toBe(false)
+  })
+
+  test("takes a transcript kept from CI: its paths are read as the checkout's, and the summary it wrote is that run's, whatever an earlier run left on disk", () => {
     const { checkout, out, run, transcript } = dryRun()
     run('context', '7', checkout, out)
     const onTheRunner = '/home/runner/work/zenbujapanese-monorepo/zenbujapanese-monorepo'
@@ -159,8 +178,13 @@ describe("a dry run of the review's reviewer", () => {
       answered('summary'),
       result()
     ])
+    writeFileSync(
+      join(checkout, 'tmp', 'review-summary.md'),
+      summaryOf('Read 2 of 2 changed files.').body
+    )
     const first = run('verdict', out, kept)
     expect(first.stdout).toContain('retry=true')
+    expect(first.stdout).toContain('problem=Incomplete: this review read 1 of 2 changed files')
     const corrected = readFileSync(join(out, 'review-context.md'), 'utf8')
     expect(corrected).toContain('the first attempt opened 1 of the 2 changed files')
     expect(corrected).not.toContain('- "src/app.ts":')
