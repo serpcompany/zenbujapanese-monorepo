@@ -62,7 +62,7 @@ final class LoadedExamples {
   private var firstReadFailed = false
   private var laterReadFailed = false
   private var owesRestOfPage = false
-  @ObservationIgnored private var isReadingMore = false
+  @ObservationIgnored private var readingMoreOf: String?
 
   var hasMore: Bool { !laterReadFailed && examples.count < listed }
 
@@ -80,16 +80,16 @@ final class LoadedExamples {
       examples = first?.examples ?? []
       countText = first?.countText
       listed = first?.listed ?? 0
-      owesRestOfPage = first != nil && first?.examples.count == rowsOnScreen
+      owesRestOfPage = first.map { $0.examples.count == rowsOnScreen } ?? false
     }
     if owesRestOfPage { await loadMore(read: read) }
   }
 
   func loadMore(read: Read) async {
-    guard hasMore, !isReadingMore else { return }
-    isReadingMore = true
-    defer { isReadingMore = false }
+    guard hasMore, readingMoreOf != source else { return }
     let (source, from) = (source, examples.count)
+    readingMoreOf = source
+    defer { if readingMoreOf == source { readingMoreOf = nil } }
     let next = await read(ExampleBatch(from: from))
     guard !Task.isCancelled, self.source == source, examples.count == from else { return }
     guard let next, !next.examples.isEmpty else {

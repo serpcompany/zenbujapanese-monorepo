@@ -143,21 +143,21 @@ struct LoadedExamplesTests {
     #expect(rows(loaded) == miru.rows(0..<25))
   }
 
-  @Test("an answer for a list the screen has left is left out")
+  @Test("an answer for a list the screen has left is left out, and the new list is read in full")
   func aStaleAnswerIsLeftOut() async {
     let miru = Listing("見る", listed: 60)
-    let taberu = Listing("食べる", listed: 3)
+    let taberu = Listing("食べる", listed: 30)
     let loaded = LoadedExamples()
     await loaded.load("見る", rowsOnScreen: nil, read: miru.read)
     miru.beforeAnswering[25] = {
-      await loaded.load("食べる", rowsOnScreen: nil, read: taberu.read)
+      await loaded.load("食べる", rowsOnScreen: 8, read: taberu.read)
     }
     await loaded.loadMore(read: miru.read)
     #expect(loaded.answers("食べる"))
     #expect(!loaded.answers("見る"))
-    #expect(rows(loaded) == taberu.rows(0..<3))
-    #expect(loaded.countText == "3 examples")
-    #expect(!loaded.hasMore)
+    #expect(rows(loaded) == taberu.rows(0..<25))
+    #expect(loaded.countText == "30 examples")
+    #expect(loaded.hasMore)
   }
 
   @Test("a screen's first rows are counted from the shortest an example row can be")
