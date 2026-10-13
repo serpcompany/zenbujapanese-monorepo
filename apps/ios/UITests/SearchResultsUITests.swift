@@ -25,6 +25,20 @@ final class SearchResultsUITests: ZenbuUITestCase {
     XCTAssertFalse(drawn[0].hasPrefix("0 of"), "the results were drawn as \(drawn)")
   }
 
+  func testAJapaneseSentencesWordsAreDrawnOnceWithTheirChips() {
+    let app = launch(Self.recordingDrawnResults)
+    search("日本語を勉強する", in: app)
+    waitFor(labeled("Discovered Words", in: app))
+    if device != .mac {
+      let leveled = NSPredicate(
+        format: "identifier BEGINSWITH 'result.' AND value CONTAINS 'JLPT level N'")
+      waitFor(app.descendants(matching: .any).matching(leveled).firstMatch)
+    }
+    let drawn = drawnResults(in: app)
+    XCTAssertEqual(drawn.count, 1, "the results were drawn as \(drawn)")
+    XCTAssertFalse(drawn[0].hasPrefix("0 of"), "the results were drawn as \(drawn)")
+  }
+
   private func drawnResults(in app: XCUIApplication) -> [String] {
     waitUntilStill(find("search.results", in: app))
     let drawn = waitFor(find("search.results.drawn", in: app))
