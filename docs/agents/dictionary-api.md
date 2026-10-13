@@ -18,10 +18,10 @@ git lfs pull --include="apps/ios/Modules/Sources/SearchExperience/Resources/**"
 ```
 
 - `LanguageReferenceData.sqlite3`, with `CompoundPitch`, `JLPTLevelPack`, `TUBELEXFrequencyPack`,
-  `KanjiStrokeData`, `ExampleWordIndex`, and `RankedLists` attached read-only. At start the service
-  refuses an artifact whose transform or example index it doesn't read, or a pack that isn't the
-  one it expects (`checkArtifact`); every pack but the stroke data must be built for this
-  `LanguageReferenceData.sqlite3`.
+  `KanjiStrokeData`, `ExampleWordIndex` (a kana word's sentences, and the entry an English word's
+  sentences use), and `RankedLists` attached read-only. At start the service refuses an artifact
+  whose transform or example index it doesn't read, or a pack that isn't the one it expects
+  (`checkArtifact`); all but the stroke data must be built for this `LanguageReferenceData.sqlite3`.
 - `RankedLists.sqlite3` holds the Wikipedia and six Jiten lists' ranks, mapped to Language
   Reference IDs as the app maps them when a learner installs the pack, from their pinned sources
   ([`apps/ios/Tools/README.md`](../../apps/ios/Tools/README.md), `build_ranked_lists.py`). The app
@@ -264,9 +264,9 @@ checks the cases the app's manual checks name. An English sentence needs no anal
 search suites record four, and every replay runs them. The retrieval suite holds the entries
 each word brings and the results suite the one listed for it, under the **Discovered Words**
 heading that the app's screen answers with and the page draws itself, so the website's
-rendered-page test holds the page to it.
-`conjugation-examples.test.ts` pages a form's examples.
-`full-text.test.ts` checks English search where FTS4 differs from other engines.
+rendered-page test holds the page to it. `english-word-entries.test.ts` checks the entry the word
+index names for each word its rules were tuned on. `conjugation-examples.test.ts` pages a form's
+examples. `full-text.test.ts` checks English search where FTS4 differs from other engines.
 
 The `Dictionary API` workflow runs `pnpm check` on pull requests with the Git LFS files and
 Sudachi's dictionary cached, then the website's rendered-page gate against the built service. The

@@ -31,6 +31,7 @@ extension LanguageReferenceData {
     }
     do {
       try Self.attachCompoundPitch(opened)
+      try Self.attachWordIndex(opened)
     } catch {
       sqlite3_close(opened)
       throw error
@@ -40,23 +41,38 @@ extension LanguageReferenceData {
     return statements
   }
 
-  private static func attachCompoundPitch(_ database: OpaquePointer) throws {
-    let url = Bundle.module.url(forResource: "CompoundPitch", withExtension: "sqlite3")
+  private static func attach(
+    _ path: String, as schema: String, to database: OpaquePointer
+  ) throws {
     var statement: OpaquePointer?
     guard
-      sqlite3_prepare_v2(database, "ATTACH DATABASE ? AS compound_pitch", -1, &statement, nil)
+      sqlite3_prepare_v2(database, "ATTACH DATABASE ? AS \(schema)", -1, &statement, nil)
         == SQLITE_OK,
       let statement
     else { throw LookupDatabaseError.sqlite(message: String(cString: sqlite3_errmsg(database))) }
     defer { sqlite3_finalize(statement) }
-    sqliteBind(url?.path ?? ":memory:", at: 1, to: statement)
-    guard sqlite3_step(statement) == SQLITE_DONE,
+    sqliteBind(path, at: 1, to: statement)
+    guard sqlite3_step(statement) == SQLITE_DONE else {
+      throw LookupDatabaseError.sqlite(message: String(cString: sqlite3_errmsg(database)))
+    }
+  }
+
+  private static func attachCompoundPitch(_ database: OpaquePointer) throws {
+    let url = Bundle.module.url(forResource: "CompoundPitch", withExtension: "sqlite3")
+    try attach(url?.path ?? ":memory:", as: "compound_pitch", to: database)
+    guard
       url != nil
         || sqlite3_exec(
           database,
           "CREATE TABLE compound_pitch.entry_pitch (entry_id BLOB PRIMARY KEY, pitch_accent_json TEXT NOT NULL)",
           nil, nil, nil) == SQLITE_OK
     else { throw LookupDatabaseError.sqlite(message: String(cString: sqlite3_errmsg(database))) }
+  }
+
+  private static func attachWordIndex(_ database: OpaquePointer) throws {
+    guard let url = Bundle.module.url(forResource: "ExampleWordIndex", withExtension: "sqlite3")
+    else { throw LookupDatabaseError.missingBundledData }
+    try attach(url.path, as: "word_index", to: database)
   }
 
   private static func validateDictionaryRankingMetadata(

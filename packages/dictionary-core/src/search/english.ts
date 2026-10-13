@@ -21,7 +21,7 @@ import {
 } from './rank'
 import { deduplicated, minimum, type RankedEntry } from './ranked-entries'
 
-const displayedFormProfileJoin = `LEFT JOIN form_priority_profiles p
+export const displayedFormProfileJoin = `LEFT JOIN form_priority_profiles p
   ON p.entry_id = e.id AND p.form = e.headword
   AND p.kind = CASE WHEN e.headword = e.reading THEN ${FormKind.reading} ELSE ${FormKind.written} END`
 

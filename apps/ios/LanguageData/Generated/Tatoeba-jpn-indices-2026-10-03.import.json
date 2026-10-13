@@ -16,8 +16,8 @@
     "compatibility": "Sentence IDs are stable across Tatoeba exports. Index lines are matched to the bundled 2026-10-03 sentence pairs by Japanese and English sentence ID; lines without a bundled pair are skipped and counted in the import report."
   },
   "transform": {
-    "identity": "tatoeba-jpn-indices-to-zenbu-example-word-index-v1",
-    "artifact_schema": "zenbu.example-word-index.v1",
+    "identity": "tatoeba-jpn-indices-to-zenbu-example-word-index-v2",
+    "artifact_schema": "zenbu.example-word-index.v2",
     "index_lines": 150075,
     "index_lines_without_bundled_pair": 5950,
     "tokens": 1137972,
@@ -25,20 +25,40 @@
     "kana_headword_entries_linked": 4124,
     "entry_sentence_rows": 57953,
     "sentences_per_entry": 200,
+    "annotated_pairs": 144123,
+    "tokens_named_by_their_one_common_entry": 7117,
+    "english_words": 22656,
+    "english_words_with_entries": 2681,
+    "english_word_entry_rows": 3068,
+    "entries_per_word": 3,
+    "english_word_entry_kept_when": {
+      "pairs_with_both_at_least": 10,
+      "times_chance_at_least": 3,
+      "meant_by_the_entry": {
+        "share_of_the_words_pairs": "1/10",
+        "score": "1/200"
+      },
+      "used_without_meaning_it": {
+        "share_of_the_words_pairs": "1/3",
+        "score": "1/20"
+      },
+      "only_first_meanings_once_one_reaches_share": "1/20"
+    },
     "retained_fields": [
       "sentence-to-entry links",
-      "surface form in the sentence"
+      "surface form in the sentence",
+      "the entries an English word's sentence pairs use, with their counts"
     ],
     "excluded_fields": [
       "sense numbers",
-      "kanji-headword entries",
+      "sentence links of kanji-headword entries",
       "unresolved tokens"
     ],
     "source_sha256": "6c00f06f5f3a360107a8dff45a9cb602c73ecc754b9a697663a6c579971f9a46",
     "language_data_sha256": "290ca9d430454cafe77880d89c45500905ad168c825c71bb7676172afccf66f2",
-    "import_tool_sha256": "ef17f2015bc9a4af82c2ee2ce2f10a7e37c18cfee49da23c550507f86d026913",
+    "import_tool_sha256": "861457be3fae71583ad7158d463bb0eaacbf92b9e2fc20ffdb33dd4cdfc3df78",
     "shared_tooling_sha256": "0c0dec180f4f11f49c6d1ee6048d9a3dc4986d88ef5fc4bc6aa9302e62743b39",
-    "artifact_sha256": "10f8410301bf8291faed20d85de41d1be8a01c7606751071940cda3a4329f15d",
-    "artifact_bytes": 2904064
+    "artifact_sha256": "fcb916744db3312cfafdee6e135e9827fe2bdd27da5c13b43b484f4cb1536bbe",
+    "artifact_bytes": 3022848
   }
 }

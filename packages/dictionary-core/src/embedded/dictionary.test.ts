@@ -187,6 +187,18 @@ describe('the embedded dictionary', () => {
     })
   })
 
+  test('checks at once that the word index is the one the core reads', () => {
+    const version = (schema: string) =>
+      host({ all: () => ({ rows: [{ key: 'artifact_schema', value: schema }] }) })
+    const current = embeddedEndpoint(version('zenbu.example-word-index.v2'))
+    expect(current.answer('checkWordIndex', '')).toBe(true)
+    expect(() =>
+      embeddedEndpoint(version('zenbu.example-word-index.v1')).answer('checkWordIndex', '')
+    ).toThrow(
+      'Refusing the language data: ExampleWordIndex.sqlite3 is zenbu.example-word-index.v1; the core reads zenbu.example-word-index.v2'
+    )
+  })
+
   test('says so when asked for something it does not have', async () => {
     await expect(ask(host(), 'translate', '日本')).rejects.toThrow('The core has no translate')
   })

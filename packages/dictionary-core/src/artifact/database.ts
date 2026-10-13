@@ -45,7 +45,7 @@ export const attachments = {
   },
   word_index: {
     file: 'ExampleWordIndex.sqlite3',
-    schema: 'zenbu.example-word-index.v1',
+    schema: 'zenbu.example-word-index.v2',
     languageData: true
   },
   ranked: {
@@ -111,9 +111,13 @@ function checkAttached(db: ArtifactDatabase, name: keyof typeof attachments): Ma
   return recorded
 }
 
+export function checkWordIndex(db: ArtifactDatabase): void {
+  checkAttached(db, 'word_index')
+}
+
 export function checkExamples(db: ArtifactDatabase): void {
   checkExampleIndex(db)
-  checkAttached(db, 'word_index')
+  checkWordIndex(db)
 }
 
 export function checkArtifact(db: ArtifactDatabase, sourceSha256: string): void {

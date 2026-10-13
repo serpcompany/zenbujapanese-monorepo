@@ -134,6 +134,17 @@ struct DictionaryCoreTests {
     #expect(try await data.search(SearchQuery("の")).entries.count == 60)
   }
 
+  @Test("an English sentence lists, for a word, the entry its example sentences use")
+  func englishSentenceWords() async throws {
+    let data = LanguageReferenceData(validatesBundledArtifact: false)
+    let results = try await data.search(SearchQuery("this is a pen"))
+    let headwords = results.entries.map(\.headword)
+    #expect(results.resolution == .analyzed)
+    #expect(results.presentation == .discoveredWords)
+    #expect(headwords.contains("ペン"))
+    #expect(!headwords.contains("書く"))
+  }
+
   @Test("the core says what it cannot do, and the next call still answers")
   func coreFailure() throws {
     let core = try DictionaryCore(statements: try Self.memoryDatabase())

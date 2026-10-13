@@ -127,7 +127,7 @@ modules, files, or event loop of its own, which is how the app runs it in JavaSc
   | `japaneseCandidates` | What a handwriting recognizer offered | Those written only in Japanese, normalized, each once, in order |
   | `isKanji` | A string | Whether it is one kanji |
   | `romaji`, `sentenceRomaji` | A reading; a sentence's words, each with its surface and reading | The reading in romaji, or null for one with kanji in it; the sentence in romaji, words spaced and punctuation kept with its word, or null when a word has no kana reading |
-  | `checkExamples` | — | True, or the error that says which example table or pack is missing or wrong |
+  | `checkExamples`, `checkWordIndex` | — | True, or the error that says which example table or pack is missing or wrong; the second checks only the word index, for the part that searches |
   | `tokenizerReady` | — | Whether the text part can tokenize. With the host's files it reads them now, so the first sentence doesn't wait for them, and is false when one is missing or wrong. |
   | `exampleCount`, `resultsExampleCount`, `resultsExamples` | A query, or a query with the results' primary entry | The Example Sentences row's count, and its sentences |
   | `entryExamples`, `formExamples` | An entry's ID; a conjugated form | A word page's sentences with their count, and a form's |
@@ -249,7 +249,7 @@ Paths are relative to `apps/ios/Modules/Sources/SearchExperience/`.
 
 | Swift | Asks | For |
 | --- | --- | --- |
-| `LookupClient.swift` (`LanguageReferenceData`) | `search`, `entriesMatchingFirstForms`, `entriesContainingKanji`, `websiteRoute`, `relatedWord`, `savedWord` | Search, an exact form's entries, a kanji's words, what a website link opens, and the entry a related or saved word opens; it reads the entries itself |
+| `LookupClient.swift` (`LanguageReferenceData`) | `checkWordIndex`, `search`, `entriesMatchingFirstForms`, `entriesContainingKanji`, `websiteRoute`, `relatedWord`, `savedWord` | Search, an exact form's entries, a kanji's words, what a website link opens, and the entry a related or saved word opens; it reads the entries itself |
 | `SearchQuery.swift` | `normalizeQuery` | The query every screen holds |
 | `DictionaryTextData.swift` (`ExampleSentenceClient`, `JapaneseTextAnalysisClient`) | `checkExamples`, `tokenizerReady`, the example methods, `linkedTokens` | Example sentences and linked words, with each word's line-breaking and whether `Comprehension` counts it. It hands the core the tokenizer's files (`TokenizerDictionary.swift`). |
 | `PresentationCore.swift` (`RomajiReadingAidText`, `LinkedJapaneseText`) | `romaji`, `sentenceRomaji` | The Romaji reading aid, for a reading and for a sentence |
@@ -351,14 +351,14 @@ The core answers as the Swift it replaced did, which the suites pin.
 - An English query matches a sense restricted to some written forms or readings (JMdict's stagk
   and stagr) only when the entry is shown with one of them.
 - An English sentence that finds no entry brings, for each of its first 24 words until 12 have
-  some, the entries that word's own results could lead with (`englishSentenceCandidates`, #401):
-  the strong-gloss entries among its first 60. `rankedByStrongGloss` ranks them as the word's
-  search does and reads no others: SQL holds the phrase match to the meanings that are the word,
-  so in Node `the` takes 10 ms where its search takes 500. A word with none brings its base
-  forms' (`baseFormsOf`). The results layer, which has the frequency, lists each word's first
-  (`discoveredWords`): for an analyzed query a relevance group is a word, an entry may be in two
-  groups, and an English sentence has no primary entry. An ASCII query never asks the analyzer,
-  and one with `*` or `^` is a pattern, not a sentence.
+  some, the entry its example sentences use (`entriesExamplesUse` reads `english_word_entries`
+  in the word index, [`apps/ios/Tools/README.md`](../../apps/ios/Tools/README.md), where one is
+  attached), with the meaning that is the word if it has one. Any other word brings the entries
+  its own results could lead with (`englishSentenceCandidates`, #401): the strong-gloss entries
+  among its first 60, which `rankedByStrongGloss` ranks as its search does, reading no others (in
+  Node `the` takes 10 ms, its search 500), or its base forms' (`baseFormsOf`). The results layer
+  lists each word's most frequent (`discoveredWords`): a relevance group is a word, an entry may
+  be in two, and none is primary. No analyzer is asked, and `*` or `^` makes a query a pattern.
 - `literalQuery` is the app's literal query policy: `mondai` searches as `monday`.
 
 ## Detail

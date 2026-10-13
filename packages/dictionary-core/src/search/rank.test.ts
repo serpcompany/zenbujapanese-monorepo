@@ -99,5 +99,8 @@ describe('matchLabel', () => {
     expect(
       matchLabel(2, english('a', { lane: EvidenceLane.tokenGloss, romajiSpecificityRank: 3 }))
     ).toBe('source=2 english tokenGloss romaji=3')
+    expect(matchLabel(1, english('a', { lane: EvidenceLane.exampleSentences }))).toBe(
+      'source=1 english exampleSentences romaji=0'
+    )
   })
 })

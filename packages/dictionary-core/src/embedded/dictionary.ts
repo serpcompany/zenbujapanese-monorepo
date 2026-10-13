@@ -34,6 +34,7 @@ export function embeddedEndpoint(host: EmbeddedHost): EmbeddedEndpoint {
   const text = once(() => new EmbeddedText(host))
   const presentation = once(() => new EmbeddedPresentation(host))
   const methods: Record<string, (argument: string, analyze: AnalyzeText) => unknown> = {
+    checkWordIndex: () => lookup().checkWordIndex(),
     search: (query, analyze) => lookup().search(query, { analyze }),
     entriesMatchingFirstForms: alternatives =>
       lookup().entriesMatchingFirstForms(JSON.parse(alternatives)),

@@ -12,8 +12,8 @@ describe.runIf(artifactAvailable && sudachiAvailable)('sentence search', () => {
   test.each([
     ['日本語を勉強する', ['日本語', '勉強', 'する']],
     ['Where is the bathroom?', ['何処', 'です', 'その', '風呂']],
-    ['I want to go home.', ['私', '要る', 'まで', '行く', '家庭']],
-    ['The rabbits ate carrots.', ['その', '兎', '人参']]
+    ['I want to go home.', ['私', 'たい', 'まで', '行く', '家']],
+    ['The rabbits ate carrots.', ['その', '兎', '食べる', '人参']]
   ])('「%s」 lists its words as Discovered Words (#401)', async (sentence, words) => {
     const { screen } = await service.search(sentence)
     expect(screen.state).toBe('results')
@@ -37,8 +37,7 @@ describe.runIf(artifactAvailable && sudachiAvailable)('sentence search', () => {
     'is',
     'bathroom',
     'i',
-    'go',
-    'home'
+    'go'
   ])('an English sentence lists for 「%s」 the row its own results lead with', async word => {
     const own = await service.search(word)
     const sentence = await service.search(`${word} zebra`)

@@ -40,7 +40,12 @@ const profilesEqual = (lhs: PriorityProfile, rhs: PriorityProfile) =>
   lhs.secondaryMask === rhs.secondaryMask &&
   lhs.newsFrequencyBand === rhs.newsFrequencyBand
 
-export const EvidenceLane = { strongGloss: 0, tokenGloss: 1, romajiOnly: 2 } as const
+export const EvidenceLane = {
+  strongGloss: 0,
+  tokenGloss: 1,
+  romajiOnly: 2,
+  exampleSentences: 3
+} as const
 export const GlossRelation = {
   exactGloss: 0,
   qualifiedGloss: 1,

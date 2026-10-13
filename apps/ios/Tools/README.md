@@ -136,6 +136,34 @@ written in kana, so bare kana such as そう names an entry only when one candid
 as its headword. Each entry keeps its best 200 sentences: Word Detail shows at most 100 and counts
 past 50 as "50+".
 
+It also writes `english_word_entries` (`zenbu.example-word-index.v2`): for an English word, the
+entries the sentence pairs with that word use, which Search lists for the word in an English
+sentence ([`dictionary-core.md`](../../../docs/agents/dictionary-core.md), Search). A pair's
+English is split into words as the core splits a query (`englishSentenceWords`), and its Japanese
+counts every entry its tokens resolve to, kanji headwords included, each under the Language
+Reference ID a search lists it by. A written form several entries share names none of them above;
+here it names the one that is common, when only one is: 夜 is よる, not the counter や (7,117
+tokens, among them 男, 車, 病気, and 声). With `both` the pairs a word and an entry share, of the
+word's `withWord` and the entry's `withEntry`, an entry is kept when all of these hold:
+
+- **Enough pairs, and not by chance.** `both` is at least 10, and at least three times
+  `withWord × withEntry / pairs`, what chance alone gives. は is in two pairs of three and `the` in
+  one of three, so without this は would be `the`'s entry; with it `the` can have none.
+- **Its share and its score.** An entry that means the word (a gloss that is the word, or "to" and
+  the word, with or without closing notes, as the core's strong gloss) needs a tenth of the word's
+  pairs and a score, `both² / (withWord × withEntry)`, of 1/200. Any other needs a third and 1/20:
+  `went` has 行く in 664 of its 1,623 pairs, and `an` has 一時間 in only 168 of 3,271.
+- **The dictionary's first meanings come first.** Once an entry that means the word in its first
+  sense comes with a twentieth of the word's pairs, only first-sense meanings are kept: the
+  sentences choose among what the dictionary lists first (`pen` is ペン, not 書く, "to pen"), and
+  replace it only where they don't use it (`saw` is 見る, not 鋸; `have` is 有る, not 含む).
+
+A word keeps its best three with their counts: first-sense meanings by `both`, then later-sense
+ones, then the rest by score. Of the 22,656 words in the 144,123 annotated pairs, 2,681 have an
+entry, in 3,068 rows; `a`, `an`, `the`, and `of` have none. `tests/test_example_word_index.py`
+checks the rules, and the contract test checks every row against them, and the words the rules
+were tuned on.
+
 **`import_compound_pitch.py`** estimates pitch for two-part noun compounds UniDic doesn't list
 whole, such as 記者会見. When the compound splits one way into two UniDic nouns and the second has
 accent-combination type C2, the downstep falls on the second part's first mora (きしゃか＼いけん).

@@ -537,11 +537,12 @@ that 事, 時, 上, and 先生, spellings TUBELEX counts once although JMdict fi
 entries, carry their rank on the one entry their UniDic lemma reading names (#440).
 
 Examples for kana-headword words come from `ExampleWordIndex.sqlite3`, which is built against the
-bundled `LanguageReferenceData.sqlite3`. Run
-`python3 -m unittest discover -s apps/ios/Tools/tests -p test_example_word_index_contract.py` to verify that it
-matches that database, its pinned source, and its import report. Without the index, as with a
-test database, kana headwords get no examples rather than substring matches. Tatoeba's index
-writes both the adverb 然う and the suffix そう as bare そう, so those sentences link to neither.
+bundled `LanguageReferenceData.sqlite3`, and so does the entry a word of an English sentence lists
+(its `english_word_entries`; [`apps/ios/Tools/README.md`](../../apps/ios/Tools/README.md)). Run
+`python3 -m unittest discover -s apps/ios/Tools/tests -p 'test_example_word_index*.py'` to check
+its rules, and that it matches that database, its pinned source, and its import report. Without
+the index, as with a test database, kana headwords get no examples rather than substring matches.
+Tatoeba's index writes the adverb 然う and the suffix そう both as そう, so they link to neither.
 
 Pitch for two-part compounds UniDic doesn't list whole, such as 記者会見, comes from
 `CompoundPitch.sqlite3`, also built against that database. Run
@@ -592,7 +593,7 @@ side, lists which type asks for what.
 
   | Owner | Reads | Answers |
   | --- | --- | --- |
-  | `LanguageReferenceData`, the actor behind `LookupClient.live` | `LanguageReferenceData.sqlite3` | Search, an exact form's entries, a kanji's words, what a website link opens, and the entry a related or a saved word opens |
+  | `LanguageReferenceData`, the actor behind `LookupClient.live` | `LanguageReferenceData.sqlite3`, with `CompoundPitch.sqlite3` and `ExampleWordIndex.sqlite3` attached | Search, an exact form's entries, a kanji's words, what a website link opens, and the entry a related or a saved word opens |
   | `DictionaryTextData`, the actor behind `ExampleSentenceClient` and `JapaneseTextAnalysisClient` | Its own connection to the same file, with `ExampleWordIndex.sqlite3` attached, and the tokenizer's dictionary files | Example sentences and linked words |
   | `PresentationCore`, a lock around one engine | The kanji files, through `KanjiFiles`, and the radical file | The results screen, rows and chips, furigana, the word, kanji, and element pages, the query, the gloss, romaji, the kanji check, a stroke diagram's points, the radical panel, and the handwriting candidates kept |
 
@@ -705,14 +706,14 @@ reads frequency; the results screen reorders only that bounded set
 outranks a longer chain, then prefix and contains matches. Radical searches keep only the
 leading lexical-rank group.
 
-How a query is matched, ranked, and deinflected is the core's
-([`dictionary-core.md`](dictionary-core.md), Search). A result carries its relevance as
-one number, equal for equally relevant matches, and the frequency re-sort reorders only within
-it, so 犬's "dog (Canis (lupus) familiaris)" competes with ワン子's "dog" on frequency (#701).
-`EnglishSearchCommonWordTests` checks the common word leads dog, water, cat, eat, and house on
-the bundled data, independent of the recorded suites, and `JapaneseDeinflectionTests` and
-`SearchResultOrderingTests` check common inflections the same way (まけたら → 負ける; makasete →
-任せる, 任す, 負かす).
+Matching, ranking, and deinflection are the core's ([`dictionary-core.md`](dictionary-core.md),
+Search). A result carries its relevance as one number, equal for equally relevant matches, and the
+frequency re-sort reorders only within it, so 犬's "dog (Canis (lupus) familiaris)" competes with
+ワン子's "dog" on frequency (#701). A word of an English sentence lists the entry its example sentences
+use, from the word index, which `LanguageReferenceData` attaches too and has the core check
+(`checkWordIndex`). `EnglishSearchCommonWordTests` checks the common word leads dog, water, cat,
+eat, and house on the bundled data, and `JapaneseDeinflectionTests` and `SearchResultOrderingTests`
+common inflections (まけたら → 負ける; makasete → 任せる, 任す, 負かす).
 
 The core joins a verb or adjective with the pieces both parsers split off
 (`examples/morphology.ts`), so 見なかった links as one word: auxiliaries, the connectives て, で,

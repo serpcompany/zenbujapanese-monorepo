@@ -13,6 +13,7 @@ import {
 import { type SearchDatabase, withParametersTruncatedAtNul } from './database'
 import { acceptsPartsOfSpeech, deinflect } from './deinflect'
 import { rankedByStrongGloss, rankedEnglish } from './english'
+import { candidatesFromExamples, entriesExamplesUse } from './english-word-entries'
 import { hasFormContaining, rankedJapanese, rankedJapaneseForms } from './japanese'
 import { lookupSegments, type MorphologyAnalyzer, type MorphologyWord } from './morphology'
 import {
@@ -195,9 +196,14 @@ export class DictionarySearch {
   }
 
   private async englishSentenceCandidates(query: string): Promise<SearchResultItem[][]> {
+    const sentence = englishSentenceWords(query).slice(0, sentenceWordLookupLimit)
+    const used = await entriesExamplesUse(this.db, sentence)
     const words: SearchResultItem[][] = []
-    for (const word of englishSentenceWords(query).slice(0, sentenceWordLookupLimit)) {
-      const candidates = await this.candidatesFor(word)
+    for (const word of sentence) {
+      const entry = used.get(word)
+      const candidates = entry
+        ? await candidatesFromExamples(this.db, word, entry)
+        : await this.candidatesFor(word)
       if (candidates.length > 0) words.push(candidates)
       if (words.length === discoveredWordLimit) break
     }

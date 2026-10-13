@@ -650,7 +650,7 @@
     },
     word_index: {
       file: "ExampleWordIndex.sqlite3",
-      schema: "zenbu.example-word-index.v1",
+      schema: "zenbu.example-word-index.v2",
       languageData: true
     },
     ranked: {
@@ -704,9 +704,12 @@
     }
     return recorded;
   }
+  function checkWordIndex(db) {
+    checkAttached(db, "word_index");
+  }
   function checkExamples(db) {
     checkExampleIndex(db);
-    checkAttached(db, "word_index");
+    checkWordIndex(db);
   }
 
   // src/detail/ruby.ts
@@ -1320,7 +1323,12 @@
     return bitCount(rhs.primaryMask) - bitCount(lhs.primaryMask);
   }
   var profilesEqual = (lhs, rhs) => lhs.primaryMask === rhs.primaryMask && lhs.secondaryMask === rhs.secondaryMask && lhs.newsFrequencyBand === rhs.newsFrequencyBand;
-  var EvidenceLane = { strongGloss: 0, tokenGloss: 1, romajiOnly: 2 };
+  var EvidenceLane = {
+    strongGloss: 0,
+    tokenGloss: 1,
+    romajiOnly: 2,
+    exampleSentences: 3
+  };
   var GlossRelation = {
     exactGloss: 0,
     qualifiedGloss: 1,
@@ -2331,6 +2339,45 @@
     return results;
   }
 
+  // src/search/english-word-entries.ts
+  var wordIndex = "word_index";
+  async function hasWordIndex(db) {
+    const attached = await db.all("SELECT name FROM pragma_database_list WHERE name = ?", [wordIndex]);
+    return attached.length > 0;
+  }
+  async function entriesExamplesUse(db, words) {
+    if (words.length === 0 || !await hasWordIndex(db)) return /* @__PURE__ */ new Map();
+    const rows = await db.all(
+      `SELECT w.word, ${entryColumns}, p.primary_mask, p.secondary_mask, p.news_frequency_band
+       FROM json_each(?) listed
+       JOIN ${wordIndex}.english_word_entries w ON w.word = listed.value AND w.place = 0
+       JOIN entries e ON e.id = w.entry_id ${displayedFormProfileJoin}`,
+      [JSON.stringify(words)]
+    );
+    return new Map(rows.map((row) => [row.word, row]));
+  }
+  function usedInExamples(row) {
+    const entry = decodeEntry(row);
+    const priority = profile(row);
+    const matchRank = {
+      kind: "english",
+      lane: EvidenceLane.exampleSentences,
+      corroborationRank: 1,
+      romajiSpecificityRank: 0,
+      senseOrder: 0,
+      glossOrder: 0,
+      priorityPresenceRank: isMarked(priority) ? 0 : 1,
+      priorityProfile: priority,
+      headwordLength: graphemeCount(entry.headword),
+      semanticFingerprint: row.semantic_fingerprint
+    };
+    return { entry, sourceOrder: 0, matchRank, fallbackOrder: 0, matchedSummary: null };
+  }
+  async function candidatesFromExamples(db, word, used) {
+    const meaning = (await rankedByStrongGloss(db, word)).find((ranked) => ranked.entry.id === used.id);
+    return meaning ? resultItems([meaning]) : [usedInExamples(used)];
+  }
+
   // src/search/morphology.ts
   var linkablePartsOfSpeech = /* @__PURE__ */ new Set([
     "名詞",
@@ -2484,9 +2531,12 @@
       return hasFormContaining(this.db, query);
     }
     async englishSentenceCandidates(query) {
+      const sentence = englishSentenceWords(query).slice(0, sentenceWordLookupLimit);
+      const used = await entriesExamplesUse(this.db, sentence);
       const words = [];
-      for (const word of englishSentenceWords(query).slice(0, sentenceWordLookupLimit)) {
-        const candidates = await this.candidatesFor(word);
+      for (const word of sentence) {
+        const entry = used.get(word);
+        const candidates = entry ? await candidatesFromExamples(this.db, word, entry) : await this.candidatesFor(word);
         if (candidates.length > 0) words.push(candidates);
         if (words.length === discoveredWordLimit) break;
       }
@@ -2610,6 +2660,10 @@
     constructor(host) {
       this.db = hostDatabase(host);
       this.searchDb = withParametersTruncatedAtNul(searchDatabase(this.db));
+    }
+    checkWordIndex() {
+      checkWordIndex(this.db);
+      return true;
     }
     async search(query, morphology) {
       const results = await new DictionarySearch(this.searchDb, { morphology }).search(query);
@@ -5216,6 +5270,7 @@
     const text = once(() => new EmbeddedText(host));
     const presentation = once(() => new EmbeddedPresentation(host));
     const methods = {
+      checkWordIndex: () => lookup().checkWordIndex(),
       search: (query, analyze) => lookup().search(query, { analyze }),
       entriesMatchingFirstForms: (alternatives) => lookup().entriesMatchingFirstForms(JSON.parse(alternatives)),
       entriesContainingKanji: (character) => lookup().entriesContainingKanji(character),

@@ -1,4 +1,4 @@
-import { type ArtifactDatabase, searchDatabase } from '../artifact/database'
+import { type ArtifactDatabase, checkWordIndex, searchDatabase } from '../artifact/database'
 import { kanjiCandidateRows } from '../artifact/kanji'
 import { jmdictSource } from '../artifact/words'
 import { kanjiWords } from '../detail/kanji'
@@ -71,6 +71,11 @@ export class EmbeddedLookup {
   constructor(host: EmbeddedHost) {
     this.db = hostDatabase(host)
     this.searchDb = withParametersTruncatedAtNul(searchDatabase(this.db))
+  }
+
+  checkWordIndex(): boolean {
+    checkWordIndex(this.db)
+    return true
   }
 
   async search(query: string, morphology: MorphologyAnalyzer): Promise<EmbeddedSearchResults> {
