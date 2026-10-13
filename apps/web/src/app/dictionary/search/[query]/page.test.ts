@@ -56,7 +56,8 @@ const queriesWhoseUrlNeverMoved: [name: string, typed: string, searched: string]
   ['ideographic spaces around a word', '\u{3000}大丈夫\u{3000}', '大丈夫'],
   ['a no-break space', 'eat\u{A0}now', 'eat now'],
   ['U+FEFF around a word', '\u{FEFF}taberu\u{FEFF}', 'taberu'],
-  ['U+FEFF between words', 'eat\u{FEFF}now', 'eat now']
+  ['U+FEFF between words', 'eat\u{FEFF}now', 'eat now'],
+  ['a capital and a mark that lowercase to one letter', 'J\u{30C}', '\u{1F0}']
 ]
 
 const queriesTheWebsiteNormalizedItsOwnWay: [name: string, typed: string, searched: string][] = [

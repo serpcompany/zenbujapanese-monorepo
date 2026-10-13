@@ -73,6 +73,11 @@ describe('normalizeQuery', () => {
     expect(normalizeQuery('a\u{600}  b')).toBe('a\u{600} b')
     expect(normalizeQuery('a\u{600} \u{301}b')).toBe('a\u{600} b')
   })
+
+  test('normalizes again what lowercasing leaves uncomposed or out of order', () => {
+    expect(normalizeQuery('J\u{30C}')).toBe('\u{1F0}')
+    expect(normalizeQuery('\u{130}\u{327}')).toBe('i\u{327}\u{307}')
+  })
 })
 
 describe('normalizeQuery, on every pairing of separators, marks, and letters', () => {
@@ -81,7 +86,16 @@ describe('normalizeQuery, on every pairing of separators, marks, and letters', (
   const foldedToASpaceAndAMark = basicPlane.filter(character =>
     /^ \p{M}/u.test(character.normalize('NFKC'))
   )
-  const marks = ['\u{301}', '\u{3099}', '\u{903}', '\u{200D}', '\u{FE0F}', '\u{1F3FB}']
+  const marks = [
+    '\u{301}',
+    '\u{30C}',
+    '\u{327}',
+    '\u{3099}',
+    '\u{903}',
+    '\u{200D}',
+    '\u{FE0F}',
+    '\u{1F3FB}'
+  ]
   const characters = [
     ...whiteSpace,
     ...foldedToASpaceAndAMark,
@@ -89,6 +103,8 @@ describe('normalizeQuery, on every pairing of separators, marks, and letters', (
     '\u{600}',
     ...marks,
     'a',
+    'J',
+    '\u{130}',
     'あ'
   ]
   const pairings = characters.flatMap(first => characters.map(second => first + second))

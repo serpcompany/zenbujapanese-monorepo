@@ -295,12 +295,12 @@ The core answers as the Swift it replaced did, which the suites pin.
   fingerprints with it. SQLite compares a BLOB by its bytes, which lowercase hex keeps, and text by
   code point (`compareCodePoints`); its `instr()` and `length()` count code points, so `kanjiWords`
   measures headwords in code points.
-- **Word separators.** `normalizeQuery` separates words at white space and at U+FEFF, and a
-  combining mark right after a separator goes with it (NFKC turns ゛ into a space and a mark), so
-  its own answer normalizes to itself. Swift's `split(whereSeparator: \.isWhitespace)` went by
-  grapheme: it kept U+FEFF, a mark after a tab, and a space after a prepended mark (U+0600). NFKC
-  also composes a halfwidth kana and its voiced mark (ｶﾞ is ガ, where Foundation left カ and a
-  combining mark), and a word's final Σ lowercases to ς.
+- **Word separators.** `normalizeQuery` separates words at white space and at U+FEFF, and a mark
+  right after a separator goes with it (NFKC turns ゛ into a space and a mark). The Swift went by
+  grapheme, and kept U+FEFF, a mark after a tab, and a space after a prepended mark (U+0600).
+  `normalizeQuery` also normalizes again once lowercased (J and U+030C become ǰ), so its own answer
+  normalizes to itself. NFKC composes a halfwidth kana and its voiced mark (ｶﾞ is ガ, where
+  Foundation left カ and a combining mark), and a word's final Σ lowercases to ς.
 - **Twins.** Swift compares strings by canonical equivalence, so a CJK compatibility ideograph
   equals the kanji it unifies with (U+FA5B and 者); the kanji files hold 74 such pairs, each with
   its own record. `kanji-element.ts` treats a twin as the same kanji where the app did (which one
