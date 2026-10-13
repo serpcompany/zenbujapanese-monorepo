@@ -28,7 +28,7 @@ struct LoadedExamplesTests {
       if holding.contains(batch.from) {
         await withCheckedContinuation { held[batch.from, default: []].append($0) }
       }
-      if failing.remove(batch.from) != nil { return nil }
+      if Task.isCancelled || failing.remove(batch.from) != nil { return nil }
       let pageEnd = min(listed, (batch.from / Self.pageSize + 1) * Self.pageSize)
       let end = min(pageEnd, batch.limit.map { batch.from + $0 } ?? .max)
       return ExamplePage(
@@ -167,7 +167,10 @@ struct LoadedExamplesTests {
     await miru.untilHeld(8)
     if leavingTheScreen { screen.cancel() }
     let answering = Task { miru.answer(8) }
-    await asking?(loaded, miru)
+    if let asking {
+      await asking(loaded, miru)
+      #expect(rows(loaded) == miru.rows(0..<25))
+    }
     await answering.value
     await screen.value
     #expect(miru.asked == [ExampleBatch(from: 0, limit: 8), ExampleBatch(from: 8)])

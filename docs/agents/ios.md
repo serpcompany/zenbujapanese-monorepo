@@ -628,7 +628,7 @@ answers; [`dictionary-core.md`](dictionary-core.md), The app's side, lists which
   with its words linked and the screen's words accented. `ExampleSentenceClient` reads a batch's
   entries in one statement before any row is drawn, so a row (`LinkedJapaneseWords`) draws once.
   `LoadedExamples` asks for the rows that fit the window (`ExampleRowsOnScreen`), at once for the
-  rest of a page cut short, and at the list's end for the next page, in a task its callers share.
+  rest of a page cut short, and at the list's end for the next page; later reads share one task.
 - **Linked words.** Text that isn't the dictionary's (a caption, an image's line, a translated
   sentence) links a row at a time (`LinkedJapaneseText`): `DictionaryTextData.linkedWords` is one
   call for a text, in which the core tokenizes it from the dictionary files the app hands it, looks
