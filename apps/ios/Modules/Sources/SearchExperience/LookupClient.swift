@@ -228,7 +228,12 @@ actor LanguageReferenceData {
   private func preparedCore() throws -> DictionaryCore {
     if let core { return core }
     let prepared = try DictionaryCore(statements: try openStatements())
-    let _: Bool = try prepared.answer("checkWordIndex", "")
+    do {
+      let _: Bool = try prepared.answer("checkWordIndex", "")
+    } catch {
+      try Task<Never, Never>.checkCancellation()
+      throw error
+    }
     core = prepared
     return prepared
   }

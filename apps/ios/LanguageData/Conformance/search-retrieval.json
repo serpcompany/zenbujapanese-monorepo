@@ -1520,49 +1520,49 @@
           "reading" : "どこ"
         },
         {
-          "headword" : "どちら",
-          "id" : "75eba577019f99ce98381bc106f8b7d1",
-          "reading" : "どちら"
+          "headword" : "です",
+          "id" : "6033d456195c1da656adf7a1fa431553",
+          "reading" : "です"
         },
         {
-          "headword" : "那辺",
-          "id" : "c17ae9b5c490d41c05f8c375adc9ca01",
-          "reading" : "なへん"
+          "headword" : "浴室",
+          "id" : "bf2b98df70e9851d585d505cc91eea26",
+          "reading" : "よくしつ"
         },
         {
-          "headword" : "何処ら",
-          "id" : "565fd7e300125a7d8aa650dc725eea9e",
-          "reading" : "どこら"
+          "headword" : "風呂",
+          "id" : "433fa8a3a2ed9a0cc40a143d549d2d27",
+          "reading" : "ふろ"
         },
         {
-          "headword" : "どこら辺",
-          "id" : "0847838da4b83388d8a9356b9bf4a8ac",
-          "reading" : "どこらへん"
+          "headword" : "便所",
+          "id" : "07b135d89e7bfe0d6e96397afa24845e",
+          "reading" : "べんじょ"
         },
         {
-          "headword" : "何処いら",
-          "id" : "e3127025d376941b9f9ecd3523c3a212",
-          "reading" : "どこいら"
+          "headword" : "洗面所",
+          "id" : "9a710bfe204a86c73ab8ce559e2e7011",
+          "reading" : "せんめんじょ"
         },
         {
-          "headword" : "どこら辺り",
-          "id" : "6f5201a09573ae0f23696286296be8d1",
-          "reading" : "どこらあたり"
+          "headword" : "トイレ",
+          "id" : "9123c86710b0f1c794650664161dcefe",
+          "reading" : "トイレ"
         },
         {
-          "headword" : "何れ",
-          "id" : "b1be071cafaabde19184266589ba6382",
-          "reading" : "いずれ"
+          "headword" : "風呂場",
+          "id" : "3564656b17c9d3110264a5fe90835d42",
+          "reading" : "ふろば"
         },
         {
-          "headword" : "何方",
-          "id" : "7d2374e139fea07b35c2a05e8de64c2b",
-          "reading" : "いずち"
+          "headword" : "お手洗い",
+          "id" : "54b7563665d70c1dd6d8e4d0679619bd",
+          "reading" : "おてあらい"
         },
         {
-          "headword" : "何方",
-          "id" : "e65554c0eb4811559aedd8b01c29156e",
-          "reading" : "いずかた"
+          "headword" : "バスルーム",
+          "id" : "d37972b38d33c4e88676a5e11debe1cf",
+          "reading" : "バスルーム"
         }
       ]
     },
@@ -1629,49 +1629,19 @@
       "resolution" : "analyzed",
       "results" : [
         {
-          "headword" : "その",
-          "id" : "1cc9a84b606c82ec5a77ca0497e28107",
-          "reading" : "その"
-        },
-        {
-          "headword" : "あの",
-          "id" : "921632736e8008edbe0deed0df74318a",
-          "reading" : "あの"
-        },
-        {
-          "headword" : "ザ",
-          "id" : "ad74f96cba67292b49764d995ae6ce34",
-          "reading" : "ザ"
-        },
-        {
           "headword" : "兎",
           "id" : "0de1199b38b48167d89129ec33604e67",
           "reading" : "うさぎ"
         },
         {
-          "headword" : "占子",
-          "id" : "25779bedb549c415a239ff980ab635a5",
-          "reading" : "しめこ"
-        },
-        {
-          "headword" : "ラビット",
-          "id" : "cb55436b41231d2a764e2a743ee26874",
-          "reading" : "ラビット"
+          "headword" : "食べる",
+          "id" : "042e07f7052f611fed33ddddf37f55fd",
+          "reading" : "たべる"
         },
         {
           "headword" : "人参",
           "id" : "cb7ef93db500e6064597ed1249e04c61",
           "reading" : "にんじん"
-        },
-        {
-          "headword" : "胡蘿蔔",
-          "id" : "524a59a319e11914c96c0afcf1675dc3",
-          "reading" : "こらふ"
-        },
-        {
-          "headword" : "キャロット",
-          "id" : "ffd4063b13529d3a5fda85c5c32be488",
-          "reading" : "キャロット"
         }
       ]
     },
@@ -1681,54 +1651,54 @@
       "resolution" : "analyzed",
       "results" : [
         {
-          "headword" : "あの人",
-          "id" : "f74d3b01cbf155ac52fae2d441045eb3",
-          "reading" : "あのひと"
-        },
-        {
-          "headword" : "こいつ",
-          "id" : "779eb0fa2924711cb0ee54f6ac47f9a6",
-          "reading" : "こいつ"
-        },
-        {
-          "headword" : "あの方",
-          "id" : "1935787b4885a150eddeb08015130548",
-          "reading" : "あのかた"
-        },
-        {
           "headword" : "彼女",
           "id" : "edaa373c8957b703565ae24d79c4021d",
           "reading" : "かのじょ"
         },
         {
-          "headword" : "あいつ",
-          "id" : "1500bf75a7ef4c1ddd30e9654cfee0f7",
-          "reading" : "あいつ"
+          "headword" : "贈る",
+          "id" : "9e06725ef5a19b5d73d4c8562b788d98",
+          "reading" : "おくる"
         },
         {
-          "headword" : "そいつ",
-          "id" : "e9385673ca293d624ed872595769261e",
-          "reading" : "そいつ"
+          "headword" : "催す",
+          "id" : "d11e980a488930a6f53a31a467fba5d5",
+          "reading" : "もよおす"
         },
         {
-          "headword" : "同氏",
-          "id" : "5517fe180157c36821c1d9b3c5d3317b",
-          "reading" : "どうし"
+          "headword" : "下さる",
+          "id" : "4c9cc5cc28c466b7058384909061a2a9",
+          "reading" : "くださる"
         },
         {
-          "headword" : "きゃつ",
-          "id" : "89833b3f8840c5e49520dedd08446dd4",
-          "reading" : "きゃつ"
+          "headword" : "施す",
+          "id" : "8552ed1ce5d12dc837415419336184b5",
+          "reading" : "ほどこす"
         },
         {
-          "headword" : "奴さん",
-          "id" : "fc66cbbec52c9ff2e5bf83bb82fb1faa",
-          "reading" : "やっこさん"
+          "headword" : "与える",
+          "id" : "5716805e84865f49ab24280575c49174",
+          "reading" : "あたえる"
         },
         {
-          "headword" : "あやつ",
-          "id" : "0eca9f952b80ee0f96aa595b9e6eb5a1",
-          "reading" : "あやつ"
+          "headword" : "授ける",
+          "id" : "5be88a173fcc28e9d52433543634b802",
+          "reading" : "さずける"
+        },
+        {
+          "headword" : "くれる",
+          "id" : "80f10325b859bb9ade83c4e04325142c",
+          "reading" : "くれる"
+        },
+        {
+          "headword" : "凹む",
+          "id" : "ca6df962d556b85c618e8af3242acf54",
+          "reading" : "へこむ"
+        },
+        {
+          "headword" : "課する",
+          "id" : "afa647caffb6c78ad068a153493129e0",
+          "reading" : "かする"
         }
       ]
     },
