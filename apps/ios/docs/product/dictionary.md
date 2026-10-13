@@ -316,7 +316,7 @@ On Example Sentences, a word's Examples, and a conjugated form's examples, a sen
 with its words already linked, with their furigana, and with its romaji when Romaji is on: never
 as plain text first, and at the height it keeps. Each list shows 25 sentences and brings 25 more
 at its end; of the first 25, those that fit the screen come first and the rest follow at once. A
-list that couldn't be read is read again when the learner comes back to its screen.
+list that couldn't be read shows no examples, and is read again when the learner comes back.
 
 Check: UI `ExampleRowsUITests` (on each screen the first row, one past the first screen, and one
 of the next 25 arrive linked and keep their height, with linking slowed so a late link would
