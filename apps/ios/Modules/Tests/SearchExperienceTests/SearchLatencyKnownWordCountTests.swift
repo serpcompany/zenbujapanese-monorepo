@@ -89,9 +89,10 @@ extension SearchLatencyTests {
       "SEARCH-LATENCY the known words of \(lines.count) caption lines, counted \(Self.passes) "
         + "times each way in turn, on a fresh engine each time (JSC_useJIT is \(jit))")
     for (index, way) in ways.enumerated() {
+      let perCount = calls[index].count / Self.passes
       let held =
         calls[index].isEmpty
-        ? "" : "; each of its \(calls[index].count) calls, \(Self.summary(calls[index]))"
+        ? "" : "; each call, \(perCount) a count, \(Self.summary(calls[index]))"
       print(
         "SEARCH-LATENCY \(way.label): \(words[index]) words in \(Self.summary(first[index]))"
           + held

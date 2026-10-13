@@ -632,7 +632,7 @@ answers; [`dictionary-core.md`](dictionary-core.md), The app's side, lists which
   texts it linked, so a sentence scrolled back into view costs no analysis.
 - **Counted words.** `DictionaryTextData.countedWords` is one call for a list of lines: the IDs
   of the words that count toward comprehension, with no entry read. `Comprehension` asks twenty
-  lines a call (about 5 ms each), so a caption card's own link never waits on a whole video.
+  lines at a time (about 5 ms a call), so a caption card's own link never waits on a whole video.
 - **The kanji files.** `KanjiFiles` maps `KanjiReferenceData.json` and
   `KanjiElementReferenceData.json` into memory and scans them once for where each record
   starts and ends, then hands the core a record's bytes as they are in the file. It builds no
@@ -651,7 +651,7 @@ answers; [`dictionary-core.md`](dictionary-core.md), The app's side, lists which
   and the core asks the host between batches of rows while it ranks, and before each line it
   counts (`zenbuHost.interrupted`), so a search the learner typed past, or the count of a video
   they left, stops within a few milliseconds. The core's call then fails, the lookup throws
-  `CancellationError`, and nothing is cached.
+  `CancellationError`, and no half-made answer is kept.
 - **`SearchQuery`** is the app's value for a query: what the screens compare and store. Its
   text is the core's `normalizeQuery` of what was typed: the query Search reads.
 - **Speed.** JavaScriptCore runs without its JIT inside an app, on the Mac as on iPhone, so the

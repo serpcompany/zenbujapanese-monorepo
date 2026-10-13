@@ -42,8 +42,8 @@ All notable user-facing changes to Zenbu Japanese are recorded here.
   have the same **Undo** button for the last stroke or radical. Recent searches no longer sit under a **Recent** heading.
 - Player works out how many of a video's words you know more than twice as fast, so
   **Counting known words…** gives way to the percentage sooner on a long video, and a video you
-  go back to while Zenbu stays open shows it at once. Translate counts a conversation's words
-  the same way.
+  go back to while Zenbu stays open usually shows it at once. Translate counts a conversation's
+  words the same way.
 
 ### Removed
 
