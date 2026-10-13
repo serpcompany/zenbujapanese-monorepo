@@ -574,10 +574,10 @@ overwrite or delete an object: trusted historical manifests still reference it.
 What the dictionary finds, lists, orders, labels, and says is the shared TypeScript core's
 (`packages/dictionary-core`, [`dictionary-core.md`](dictionary-core.md)): search, the results
 screen with Sort By and Filter, example sentences, linked words, and the word, kanji, and kanji
-element pages. The app runs it in JavaScriptCore, offline, and has no Swift of its own for any
-of it, so the app and the website show the same thing. The Swift keeps the screens, reads the
-files, and decodes the core's answers; [`dictionary-core.md`](dictionary-core.md), The app's
-side, lists which type asks for what.
+element pages. The app runs it in JavaScriptCore, offline, and has no Swift of its own for
+finding or ranking; the table under Layers in [`ARCHITECTURE.md`](../../ARCHITECTURE.md) lists
+what Swift still decides. The Swift keeps the screens, reads the files, and decodes the core's
+answers; [`dictionary-core.md`](dictionary-core.md), The app's side, lists which type asks for what.
 
 - **The host.** `DictionaryCore` (`DictionaryCore.swift`) loads the bundle,
   `Resources/DictionaryCore/dictionary-core.js`, into a `JSContext` and gives it what its owner
@@ -610,12 +610,14 @@ side, lists which type asks for what.
 - **Calls settle at once.** Every read is synchronous, so a call settles before `begin` returns
   and nothing waits on a callback; `begin` and `outcome` are two calls into the engine because
   JavaScriptCore runs a promise's reactions only when the outermost call returns.
-- **What a view asks is one call.** `PresentationCore` asks through the core's `answer`, which
-  returns a value instead of starting a call: `DictionaryCore.flag` reads a boolean,
-  `DictionaryCore.text` a string or nothing, and the synchronous `answer` a JSON string that it
-  decodes. They go through JavaScriptCore's C functions (`JSObjectCallAsFunction`) rather than
-  `JSValue`, so nothing is boxed and no autorelease pool is needed. Crossing into the engine
-  and back costs under a microsecond this way; through `begin` and `outcome` it cost eight.
+- **One value a view asks for is one call.** `PresentationCore` asks through the core's
+  `answer`, which returns a value instead of starting a call: `DictionaryCore.flag` reads a
+  boolean, `DictionaryCore.text` a string or nothing, and the synchronous `answer` a JSON string
+  that it decodes. They go through JavaScriptCore's C functions (`JSObjectCallAsFunction`)
+  rather than `JSValue`, so nothing is boxed and no autorelease pool is needed. Crossing into
+  the engine and back costs under a microsecond this way; through `begin` and `outcome` it cost
+  eight. A screen makes several calls: for its results, `SearchView` asks the lookup engine for
+  matches, the text engine for an example count, and then this one for the screen.
 - **Entries.** The core names entries by Language Reference ID. `entries(equivalentTo:)` reads
   each with the app's own columns and decoding, as `entry(_:)` does, so an entry is the same
   value wherever it came from; an entry JMdict lists twice (閻魔) is one entry under its smaller
@@ -627,9 +629,9 @@ side, lists which type asks for what.
 - **Linked words.** `DictionaryTextData.linkedWords` is one call for a text: the core tokenizes
   it from the dictionary files the app hands it, looks every word's forms up in one or two
   statements, and answers each word with its place, its entry or candidates, its furigana, and
-  whether it is the page's word or matches the query. `JapaneseTextAnalysisClient` reads the entries the
-  answer names, in one statement, and keeps 4,000. The core remembers the last 512 texts it
-  linked, so a sentence scrolled back into view costs no analysis.
+  whether it is the page's word or matches the query. `JapaneseTextAnalysisClient` reads the
+  entries the answer names, in one statement, and keeps 4,000. The core remembers the last 512
+  texts it linked, so a sentence scrolled back into view costs no analysis.
 - **The kanji files.** `KanjiFiles` maps `KanjiReferenceData.json` and
   `KanjiElementReferenceData.json` into memory and scans them once for where each record
   starts and ends, then hands the core a record's bytes as they are in the file. It builds no
@@ -642,8 +644,8 @@ side, lists which type asks for what.
   entry (64), a gloss by meaning (4,000), romaji by reading (4,000) and by sentence (512), the
   kanji check by string (4,000), and a query by what was typed (1,000), since SwiftUI rebuilds
   a row many times. The keys compare, and hash, byte for byte: Swift's own string equality
-  would hand one compatibility kanji's answer to its twin. `PresentationCore`'s lock is recursive, because decoding a page builds
-  `KanjiCharacter`s, each of which asks the same engine.
+  would hand one compatibility kanji's answer to its twin. `PresentationCore`'s lock is recursive,
+  because decoding a page builds `KanjiCharacter`s, each of which asks the same engine.
 - **Cancelling.** `SQLiteJSONRows` checks the task between rows, as the app's other reads do,
   and the core asks the host between batches of rows while it ranks (`zenbuHost.interrupted`),
   so a search the learner typed past stops within a few milliseconds, not when its ranking
