@@ -9,7 +9,7 @@ import {
   type Word,
   word
 } from './english-sentence.fixture'
-import { areSplitBetween, entriesExamplesUse, mentions } from './english-word-entries'
+import { areSplitBetween, entriesExamplesUse, isASuruVerb, mentions } from './english-word-entries'
 import { matchLabel } from './rank'
 import { DictionarySearch } from './search'
 
@@ -21,6 +21,11 @@ const noun = (...meaning: Parameters<typeof word>): Word => ({
 const adjective = (...meaning: Parameters<typeof word>): Word => ({
   ...word(...meaning),
   partsOfSpeech: ['iAdjective']
+})
+
+const suruVerb = (...meaning: Parameters<typeof word>): Word => ({
+  ...word(...meaning),
+  partsOfSpeech: ['noun', 'takesSuru']
 })
 
 const words: Word[] = [
@@ -62,6 +67,9 @@ const words: Word[] = [
   word('遊ぶ', 'あそぶ', 'asobu', 'to play (games)'),
   word('教える', 'おしえる', 'oshieru', 'to teach', 'to tell'),
   word('話す', 'はなす', 'hanasu', 'to talk', 'to tell'),
+  suruVerb('結婚', 'けっこん', 'kekkon', 'marriage'),
+  word('既婚', 'きこん', 'kikon', 'married'),
+  suruVerb('説明', 'せつめい', 'setsumei', 'explanation'),
   word('ドア', 'ドア', 'doa', 'door'),
   word('ドアーズ', 'ドアーズ', 'doa-zu', 'Doors'),
   word('アメリカ', 'アメリカ', 'amerika', 'America'),
@@ -94,6 +102,9 @@ const used: ExampleUse[] = [
   ['play', '遊ぶ', 89],
   ['tell', '教える', 208],
   ['tell', '話す', 116],
+  ['married', '結婚'],
+  ['explain', '説明'],
+  ['papers', '説明'],
   ['door', 'ドア'],
   ['s', 'アメリカ']
 ]
@@ -163,6 +174,18 @@ describe('an entry example sentences use mentions a word', () => {
   ])('the first entry of 「%s」 and one of %o: %s', async (written, mentioned, found) => {
     const [first] = (await entriesFor(written)) ?? []
     expect(mentions(first, mentioned)).toBe(found)
+  })
+})
+
+describe('an entry example sentences use is a する verb', () => {
+  test.each([
+    ['married', '結婚', true],
+    ['watching', 'テレビ', false],
+    ['drinking', '酒', false]
+  ])('the first entry of 「%s」, %s: %s', async (written, headword, found) => {
+    const [first] = (await entriesFor(written)) ?? []
+    expect(first.headword).toBe(headword)
+    expect(isASuruVerb(first)).toBe(found)
   })
 })
 
@@ -236,6 +259,22 @@ describe('a word of an English sentence that is another word’s form', () => {
 
   test('passes over an entry that mentions neither it nor its base form for the next', async () => {
     expect(await inASentence('drinking')).toEqual([['飲む']])
+  })
+
+  test('lists a する verb its examples use when it is a verb’s form, though no meaning mentions it', async () => {
+    const results = await search.search('rabbit married carrot')
+    expect(candidates(results)).toEqual([['兎'], ['結婚'], ['人参']])
+    expect(results.items[1].matchedSummary).toBeNull()
+    expect(await inASentence('married', withoutAWordIndex)).toEqual([['既婚']])
+  })
+
+  test('takes a する verb its base form’s examples use, read as a verb', async () => {
+    expect(await inASentence('explaining')).toEqual([['説明']])
+    expect(await inASentence('explained')).toEqual([['説明']])
+  })
+
+  test('takes no する verb when it is no verb’s form: 「papers」 is a plural', async () => {
+    expect(await inASentence('papers')).toEqual([])
   })
 
   test('takes its base form’s entry when none of its own passes, read as a verb', async () => {

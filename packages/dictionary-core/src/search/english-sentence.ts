@@ -12,6 +12,7 @@ import {
   areSplitBetween,
   type EntryExamplesUse,
   entriesExamplesUse,
+  isASuruVerb,
   mentions,
   usedInExamples
 } from './english-word-entries'
@@ -52,6 +53,8 @@ function asTheWordReadsIt({ base, entries }: BaseForm): Meaning {
       return asWritten(base)
   }
 }
+
+const isAVerbForm = ({ entries }: BaseForm) => entries === 'verbs' || entries === 'allIfAVerb'
 
 const isAComparative = ({ entries }: BaseForm) => entries === 'adjectives'
 
@@ -128,10 +131,14 @@ function candidatesFromItsExamples(
   word: string,
   examples: ExamplesByWord
 ): Promise<SearchResultItem[]> {
-  const inAnyForm = [word, ...baseFormsOfAnyKind(word).map(({ base }) => base)]
-  const isAnotherWordsForm = inAnyForm.length > 1
-  return candidatesAmong(db, examples.get(word) ?? [], inAnyForm.map(asWritten), row =>
-    isAnotherWordsForm ? mentions(row, inAnyForm) : true
+  const baseForms = baseFormsOfAnyKind(word)
+  const inAnyForm = [word, ...baseForms.map(({ base }) => base)]
+  const isAVerbsForm = baseForms.some(isAVerbForm)
+  return candidatesAmong(
+    db,
+    examples.get(word) ?? [],
+    inAnyForm.map(asWritten),
+    row => baseForms.length === 0 || mentions(row, inAnyForm) || (isAVerbsForm && isASuruVerb(row))
   )
 }
 
@@ -142,7 +149,13 @@ function candidatesFromExamplesOfABaseForm(
 ): Promise<SearchResultItem[]> {
   if (baseForm.entries === 'all') return candidatesFromItsExamples(db, baseForm.base, examples)
   const used = examples.get(baseForm.base) ?? []
-  return candidatesAmong(db, used, [asTheWordReadsIt(baseForm)], () => false)
+  const asAVerbsForm = isAVerbForm(baseForm)
+  return candidatesAmong(
+    db,
+    used,
+    [asTheWordReadsIt(baseForm)],
+    row => asAVerbsForm && isASuruVerb(row)
+  )
 }
 
 async function candidatesFromExamples(

@@ -2,6 +2,7 @@ import { searchDatabase } from '@zenbu/dictionary-core/artifact/database'
 import {
   areSplitBetween,
   entriesExamplesUse,
+  isASuruVerb,
   mentions
 } from '@zenbu/dictionary-core/search/english-word-entries'
 import { describe, expect, test } from 'vitest'
@@ -41,6 +42,17 @@ describe.runIf(artifactAvailable)('the entries example sentences use, on the app
     const [first] = await entriesOf(word)
     expect(first.headword).toBe(headword)
     expect(mentions(first, [mentioned])).toBe(found)
+  })
+
+  test.each([
+    ['married', '結婚', true],
+    ['succeeded', '成功', true],
+    ['watching', 'テレビ', false],
+    ['drinking', '酒', false]
+  ])('the first entry of 「%s」, %s, is a する verb: %s', async (word, headword, found) => {
+    const [first] = await entriesOf(word)
+    expect(first.headword).toBe(headword)
+    expect(isASuruVerb(first)).toBe(found)
   })
 
   test.each([

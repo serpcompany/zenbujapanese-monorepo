@@ -352,10 +352,10 @@ The core answers as the Swift it replaced did, which the suites pin.
   and stagr) only when the entry is shown with one of them.
 - An English sentence that finds no entry brings, for each of its first 24 words until 12 have some,
   the entry its example sentences use (`entriesExamplesUse` reads the word index's
-  `english_word_entries`; a form's must mean or mention it), and otherwise the entries that word's
-  own results could lead with (`englishSentenceCandidates`, #401): the strong-gloss entries among
-  its first 60, which `rankedByStrongGloss` ranks as its search does, reading no others (in Node
-  `is` takes 2 ms, its search 500). Six words bring none, twelve a fixed entry, and an inflected
+  `english_word_entries`; a form's must mean or mention it, or take する), else the entries that
+  word's own results could lead with (`englishSentenceCandidates`, #401): the strong-gloss entries
+  among its first 60, which `rankedByStrongGloss` ranks as its search does, reading no others (in
+  Node `is` takes 2 ms, its search 500). Six words bring none, twelve a fixed entry, an inflected
   word its base form's ([`english-sentence-search.md`](english-sentence-search.md)). The results
   layer lists each word's most frequent (`discoveredWords`): a relevance group is a word, an entry
   may be in two, and none is primary. No analyzer is asked, and `*` or `^` makes a query a pattern.

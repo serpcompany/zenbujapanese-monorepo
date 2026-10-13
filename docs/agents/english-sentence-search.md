@@ -66,21 +66,23 @@ The first rule that fits the word decides.
      `my` 私 "I, me"; `want` たい "want to do ..."; `dead` 死ぬ "to die". An entry that means the
      word shows that meaning (`pen` ペン "pen", alone, where its own results bring 書く "to pen"
      too; `home` 家, not 家庭), and any other its own summary.
-   - **A word that is another word's form is tested**, since a form's examples often use the
-     word beside it. A word with base forms (`irregularBaseFormsOf` and `baseFormsOf`) lists the
-     first of its entries that means the word or a base form, as itself or after "to" (`went`
-     行く "to go", `saw` 見る, `studying` 勉強 "study"), or that has the word or a base form as a
-     whole word in a meaning (`looking` 探す "to look for", `tried` とする "to try to ...", and
-     `brother` 兄 "older brother", since `baseFormsOf` reads `brother` as a comparative).
-     `watching` has テレビ first and `drinking` 酒, which mention neither "watch" nor "drink", so
-     both are passed over, and `drinking` lists its next entry, 飲む.
-   - **Then its base forms' entries in the index**, each read as the word reads its base. A
-     verb's form (irregular, or in `-ed` or `-ing`) takes the first entry that means "to" and the
-     base: `watching` lists 見る, not 時計, which `watch` lists first; `fell` 落ちる, not 秋
-     "fall"; `has` and `had` 有る; `found` 見つける, not 作る "to found". `secreted` still isn't
-     "secret", which no entry has as a verb. An irregular plural takes a noun, and a word in `-s`
-     what its base lists by this rule: `doors` lists ドア, not ドアーズ, and `stations` 駅. A
-     comparative isn't taken to its base, so `best` keeps 最高 (rule 6).
+   - **A word that is another word's form is tested**, since a form's examples often use the word
+     beside it. A word with base forms (`irregularBaseFormsOf` and `baseFormsOf`) lists the first of
+     its entries that means the word or a base form, as itself or after "to" (`went` 行く "to go",
+     `saw` 見る, `studying` 勉強 "study"), or that has the word or a base form as a whole word in a
+     meaning (`looking` 探す "to look for", `tried` とする "to try to ...", and `brother` 兄 "older
+     brother", since `baseFormsOf` reads `brother` as a comparative). A verb's form (irregular, or
+     in `-ed` or `-ing`) also lists one JMdict marks as taking する, which is how its examples say the
+     verb: `married` 結婚 "marriage", `succeeded` 成功 "success", `trained` 訓練. `watching` has テレビ first
+     and `drinking` 酒: neither mentions "watch" or "drink", and neither takes する, so both are passed
+     over, and `drinking` lists its next entry, 飲む.
+   - **Then its base forms' entries in the index**, each read as the word reads its base. A verb's
+     form takes the first entry that means "to" and the base, or that takes する: `watching` lists 見る,
+     not 時計, which `watch` lists first; `fell` 落ちる, not 秋 "fall"; `has` and `had` 有る; `found` 見つける,
+     not 作る "to found"; `marrying` 結婚 and `explaining` 説明. `secreted` still isn't "secret", which no
+     entry has as a verb. An irregular plural takes a noun, and a word in `-s` what its base lists
+     by this rule: `doors` lists ドア, not ドアーズ, and `stations` 駅. A comparative isn't taken to its
+     base, so `best` keeps 最高 (rule 6).
    - **Where the examples are split, the more common entry is listed.** When two or more of
      those entries mean the word, and another is in at least 7/10 as many of the word's pairs as
      the first, the word brings each such entry, and the results layer lists the one its
@@ -90,7 +92,7 @@ The first rule that fits the word decides.
      "U.S." and "p.m.".
 
    A word the index doesn't settle goes on to the rules below: `tony`, a name, has no entry
-   there and lists nothing, and `married`, whose examples use 結婚 "marriage", lists 既婚.
+   there and lists nothing, and `harder`, whose examples use もっと "more", lists 難しい.
 4. **Its own entries and its base form's, weighed together**, for an irregular form
    (`english-irregular-forms.ts`):
    - A verb's form reads its base as a verb: the entries with a meaning `to <base>`. `gave` brings
@@ -148,10 +150,9 @@ meaning that matched: "is" beside です, "to eat" beside 食べる for `ate`.
 - A word that mostly occurs inside a compound lists the compound: `hour` lists 一時間 "one hour",
   `post` 郵便局 "post office", `forward` 楽しみにする "to look forward to", `lung` 肺がん "lung
   cancer", `processor` ワープロ, `prime` 首相, `billion` 億, and `000` 円.
-- A verb's form whose examples use a する-noun doesn't pass rule 3, and the entry the rules list
-  is often worse: `married` lists 既婚, not 結婚; `succeeded` 替わる, not 成功; `trained` 電車,
-  not 訓練. 93 first entries fail the test, 64 of them する-nouns. `succeed` is among them:
-  `baseFormsOf` reads its `-ed`.
+- A verb's form takes the する verb its examples or its base's use, and that is sometimes one phrase
+  of it, or the base as another word: `shook` lists 握手 ("shook hands"), `managed` 何とか, `passed` 合格
+  ("passed the exam"), `struck` ストライキ, `accounting` 説明, and `loaned` 借金.
 - Where examples are split, the more common entry is sometimes the less apt: `question` lists
   問題, not 質問; `express` 急行, not 表す; `confidence` 信頼, not 自信.
 - A word in `-s` that is no plural takes its base's entry: `shorts` lists 短い, `ruins` 破滅, and

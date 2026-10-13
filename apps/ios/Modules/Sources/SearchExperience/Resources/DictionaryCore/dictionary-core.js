@@ -2589,6 +2589,8 @@
       return glosses.some((gloss) => asAWholeWord.test(gloss));
     });
   }
+  var takesSuru = "takesSuru";
+  var isASuruVerb = (used) => decodeEntry(used).partsOfSpeech.includes(takesSuru);
   var sharedPairsOfASplit = { numerator: 7, denominator: 10 };
   function areSplitBetween(first, other) {
     const { numerator, denominator } = sharedPairsOfASplit;
@@ -2636,6 +2638,7 @@
         return asWritten(base);
     }
   }
+  var isAVerbForm = ({ entries }) => entries === "verbs" || entries === "allIfAVerb";
   var isAComparative = ({ entries }) => entries === "adjectives";
   var baseFormsOfAnyKind = (word) => [...irregularBaseFormsOf(word), ...baseFormsOf(word)];
   async function entriesThatMean(db, { gloss, partsOfSpeech }) {
@@ -2677,19 +2680,26 @@
     return resultItems([leading, ...sharingItsUse]);
   }
   function candidatesFromItsExamples(db, word, examples) {
-    const inAnyForm = [word, ...baseFormsOfAnyKind(word).map(({ base }) => base)];
-    const isAnotherWordsForm = inAnyForm.length > 1;
+    const baseForms = baseFormsOfAnyKind(word);
+    const inAnyForm = [word, ...baseForms.map(({ base }) => base)];
+    const isAVerbsForm = baseForms.some(isAVerbForm);
     return candidatesAmong(
       db,
       examples.get(word) ?? [],
       inAnyForm.map(asWritten),
-      (row) => isAnotherWordsForm ? mentions(row, inAnyForm) : true
+      (row) => baseForms.length === 0 || mentions(row, inAnyForm) || isAVerbsForm && isASuruVerb(row)
     );
   }
   function candidatesFromExamplesOfABaseForm(db, baseForm, examples) {
     if (baseForm.entries === "all") return candidatesFromItsExamples(db, baseForm.base, examples);
     const used = examples.get(baseForm.base) ?? [];
-    return candidatesAmong(db, used, [asTheWordReadsIt(baseForm)], () => false);
+    const asAVerbsForm = isAVerbForm(baseForm);
+    return candidatesAmong(
+      db,
+      used,
+      [asTheWordReadsIt(baseForm)],
+      (row) => asAVerbsForm && isASuruVerb(row)
+    );
   }
   async function candidatesFromExamples(db, word, examples) {
     const own = await candidatesFromItsExamples(db, word, examples);

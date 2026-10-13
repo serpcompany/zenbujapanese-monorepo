@@ -49,6 +49,11 @@ export function mentions(used: EntryExamplesUse, words: readonly string[]): bool
   })
 }
 
+const takesSuru = 'takesSuru'
+
+export const isASuruVerb = (used: EntryExamplesUse) =>
+  decodeEntry(used).partsOfSpeech.includes(takesSuru)
+
 const sharedPairsOfASplit = { numerator: 7, denominator: 10 }
 
 export function areSplitBetween(first: EntryExamplesUse, other: EntryExamplesUse): boolean {
