@@ -32,6 +32,7 @@ describe.runIf(artifactAvailable && sudachiAvailable)('sentence search', () => {
 
   test.each([
     ['日本語を勉強する', ['日本語', '勉強', 'する']],
+    ['野菜少なめにする人だ!!', ['野菜', '少なめ', 'する', '人']],
     ['Where is the bathroom?', ['何処', 'です', '風呂']],
     ['I want to go home.', ['私', 'たい', '行く', '家']],
     ['The rabbits ate carrots.', ['兎', '食べる', '人参']]
