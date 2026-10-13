@@ -94,9 +94,10 @@ Nothing here reaches the server. Its deployer (`deploy/deployer.sh`, run by cron
 [`api-servers.md`](api-servers.md)) sees a tag move and swaps the image in, keeping the old one if the new one
 doesn't come up, within 5 minutes of the tag moving. The workflow doesn't wait for that: Bot
 Fight Mode on the zone challenges CI runners asking the service, and the website's Worker when a
-runner sets it off, so nothing in CI can see which build runs. The server's journal says, and
-#542 tracks alerts for it. With `DEPLOY_PRODUCTION` set to `false`, nothing moves `:production`
-before a person has checked staging. The jobs that push or move tags have `packages: write`. The
+runner sets it off, so nothing in CI can see which build runs. The server's journal says, and so
+does Slack once the deployer has a webhook ([`deployer-alerts.md`](deployer-alerts.md)). With
+`DEPLOY_PRODUCTION` set to `false`, nothing moves `:production` before a person has checked
+staging. The jobs that push or move tags have `packages: write`. The
 image's reference reaches each step's shell through `env:`, never inside `run:`, since a
 rollback's comes from an image the run pulled. The whole deploy is in
 [`dictionary-api.md`](dictionary-api.md), How a deploy works.

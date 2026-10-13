@@ -263,7 +263,7 @@ const core: Part = {
   ]
 }
 
-const checksTestCode = '(\\.test\\.ts$|^src/agents/)'
+const checksTestCode = '(\\.test\\.ts$|^src/(agents|deployer)/)'
 
 const checks: Part = {
   folder: 'tools/checks',

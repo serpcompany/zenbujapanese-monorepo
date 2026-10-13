@@ -32,7 +32,7 @@ Agents never merge: there is no `Agents may merge` line. Only an owner adds or c
 - [`docs/agents/account-api.md`](docs/agents/account-api.md) — the account service: run, check, routes, its Postgres and migrations, the Docker image, deploying it, and backups.
 - [`docs/agents/account-clients.md`](docs/agents/account-clients.md) — building an app on the Zenbu account: its scopes, signing in, tokens, the profile, when and how to sync, errors, and deleting the account.
 - [`docs/api/`](docs/api/) — the services' API references, written from their OpenAPI documents: each route with its auth and scopes, fields and bounds, error codes, and sync entities ([`account-api.md`](docs/api/account-api.md), and the dictionary service's routes for apps, [`dictionary-api.md`](docs/api/dictionary-api.md)). Tests write them; never edit by hand.
-- [`docs/agents/api-servers.md`](docs/agents/api-servers.md) — the server the services run on: the deployer, its slots, and setting the server up.
+- [`docs/agents/api-servers.md`](docs/agents/api-servers.md) — the server the services run on: the deployer, its slots, its Slack alerts and tests, and setting the server up.
 - [`docs/agents/dictionary-core.md`](docs/agents/dictionary-core.md) — the shared TypeScript dictionary core: what it ports, its rules, and its checks.
 - [`docs/agents/ci.md`](docs/agents/ci.md) — every GitHub Actions workflow and what starts it, the checks a merge can wait for, and each workflow that checks a pull request: what it runs, and why.
 - [`docs/agents/ci-agents.md`](docs/agents/ci-agents.md) — the workflows Claude runs in: the review of every pull request, `@claude` requests, weekly maintenance, and the app and token they use.
