@@ -1,4 +1,5 @@
 import { graphemeCount, graphemes } from '../detail/text'
+import { sameWordInAnyForm } from '../examples/english-inflection'
 import { exampleLimit, reportedExampleCount } from '../examples/retrieval'
 import { isASCII, normalizeQuery } from '../search/query'
 import type { ArtifactDatabase } from './database'
@@ -109,10 +110,18 @@ function parseOffsets(raw: string): FtsOffset[] | null {
   return offsets
 }
 
+interface PhraseRange {
+  location: number
+  length: number
+}
+
+type AcceptsWords = (words: readonly string[]) => boolean
+
 function phraseRange(
   text: string,
-  offsets: FtsOffset[]
-): { location: number; length: number } | null {
+  offsets: FtsOffset[],
+  accepts?: AcceptsWords
+): PhraseRange | null {
   if (offsets.length === 0) return null
   const termCount = Math.max(...offsets.map(offset => offset.term)) + 1
   const ordered = [...offsets].sort((left, right) =>
@@ -142,6 +151,9 @@ function phraseRange(
       }
     }
     if (crossesSentence) continue
+    const words = () =>
+      phrase.map(word => slice(word.byteOffset, word.byteOffset + word.byteLength) ?? '')
+    if (accepts && !accepts(words())) continue
     const last = phrase[phrase.length - 1]
     const from = offsetsOf.utf16(phrase[0].byteOffset)
     const to = offsetsOf.utf16(last.byteOffset + last.byteLength)
@@ -171,12 +183,11 @@ function documentTermCount(matchinfo: Uint8Array): number {
 
 const sentenceColumns = 'e.rowid AS rowid, lower(hex(e.id)) AS pairId, e.japanese, e.english'
 
-function retrieveEnglish(db: ArtifactDatabase, query: string): EntryExamples | ExampleSearchError {
-  if (query.includes('"')) return 'embeddedQuote'
-  const matchExpression = `"${query}"`
-  if (!porterEmitsTerms(db, query, matchExpression)) return 'noPorterTerms'
-
-  const exactRanges = new Map<string, { location: number; length: number }>()
+function exactPhraseRanges(
+  db: ArtifactDatabase,
+  matchExpression: string
+): Map<string, PhraseRange> {
+  const ranges = new Map<string, PhraseRange>()
   for (const row of db.all<{ pairId: string; english: string; offsets: string }>(
     `SELECT lower(hex(m.pair_id)) AS pairId, e.english, offsets(${exactTable}) AS offsets
      FROM ${exactTable} x
@@ -187,10 +198,28 @@ function retrieveEnglish(db: ArtifactDatabase, query: string): EntryExamples | E
   )) {
     const offsets = parseOffsets(row.offsets)
     const range = offsets && phraseRange(row.english, offsets)
-    if (range) exactRanges.set(row.pairId, range)
+    if (range) ranges.set(row.pairId, range)
   }
+  return ranges
+}
 
-  const matches = new Map<string, Match & { exactSurface: boolean }>()
+function theQuerysWordsInAnyForm(query: string): AcceptsWords {
+  const sameWords = (query.match(/[0-9a-z_]+/g) ?? []).map(sameWordInAnyForm)
+  return words =>
+    words.length === sameWords.length && words.every((word, index) => sameWords[index](word))
+}
+
+function retrieveEnglish(db: ArtifactDatabase, query: string): EntryExamples | ExampleSearchError {
+  if (query.includes('"')) return 'embeddedQuote'
+  const matchExpression = `"${query}"`
+  if (!porterEmitsTerms(db, query, matchExpression)) return 'noPorterTerms'
+
+  const exactRanges = exactPhraseRanges(db, matchExpression)
+  const someSentenceHasTheExactWords = exactRanges.size > 0
+  if (!someSentenceHasTheExactWords && query.includes('*')) return result([])
+  const wantedWords = someSentenceHasTheExactWords ? undefined : theQuerysWordsInAnyForm(query)
+
+  const matches = new Map<string, Match>()
   for (const { offsets: rawOffsets, matchinfo, ...sentence } of db.all<
     ExampleSentence & { offsets: string; matchinfo: Uint8Array }
   >(
@@ -204,7 +233,7 @@ function retrieveEnglish(db: ArtifactDatabase, query: string): EntryExamples | E
   )) {
     if (matches.has(sentence.pairId)) throw new Error('The example index lists a pair twice')
     const offsets = parseOffsets(rawOffsets)
-    const porterRange = offsets && phraseRange(sentence.english, offsets)
+    const porterRange = offsets && phraseRange(sentence.english, offsets, wantedWords)
     if (!porterRange) continue
     const exactRange = exactRanges.get(sentence.pairId)
     const range = exactRange ?? porterRange
@@ -214,13 +243,15 @@ function retrieveEnglish(db: ArtifactDatabase, query: string): EntryExamples | E
       position: range.location,
       englishTermCount: documentTermCount(matchinfo),
       graphemeCount: graphemeCount(sentence.japanese),
-      pairId: sentence.pairId,
-      exactSurface: exactRange !== undefined
+      pairId: sentence.pairId
     })
   }
   const candidates = [...matches.values()]
-  const anyPairHasTheExactPhrase = candidates.some(candidate => candidate.exactSurface)
-  return anyPairHasTheExactPhrase ? result(candidates) : result([])
+  if (!someSentenceHasTheExactWords) return result(candidates)
+  const oneOfThoseIsListed = candidates.some(
+    candidate => candidate.relation === Relation.exactSurfacePhrase
+  )
+  return result(oneOfThoseIsListed ? candidates : [])
 }
 
 function retrieveJapanese(db: ArtifactDatabase, query: string): EntryExamples {
