@@ -8,7 +8,7 @@ import type {
 } from '../detail/rows'
 import { wordSlug } from '../detail/slug'
 import { type ArtifactDatabase, listedIds } from './database'
-import { frequencyByEntry, frequencyQueries } from './frequency'
+import { bundledFrequency } from './frequency'
 import type { KanjiData } from './kanji-data'
 
 export const jmdictSource = 'edrdg.jmdict'
@@ -86,11 +86,6 @@ export function readWord(
   const targets = entriesById(db, targetIds)
 
   const writtenForms = JSON.parse(record.written_forms_json) as FormRow[]
-  const queries = frequencyQueries([record.id])
-  const frequency = frequencyByEntry(
-    db.all(queries.levels, queries.params),
-    db.all(queries.ranks, queries.params)
-  )
   const entry: EntryRow = {
     id: record.id,
     entSeq: record.source_record_id,
@@ -124,7 +119,7 @@ export function readWord(
   }
   return {
     entry,
-    frequency: frequency.get(record.id) ?? [],
+    frequency: bundledFrequency(db, [record.id]).get(record.id) ?? [],
     kanji: kanji.glossRows([entry.headword, ...writtenForms.map(form => form.value)]),
     fingerprint: record.fingerprint,
     slug: wordSlug(entry.headword, entry.reading),

@@ -112,11 +112,13 @@ modules, files, or event loop of its own, which is how the app runs it in JavaSc
     few a page reads.
   - `radicals()` answers the radical file (`RadicalReferenceData.json`) whole, once, when the
     radical panel is first asked for.
+  - `frequencyLists()` and `frequencyListRows(list, sql, parametersJSON)` answer the learner's
+    frequency lists and one list's rows, as `all` does ([`frequency.md`](frequency.md)).
 - **Three parts, each built when first asked.** `EmbeddedLookup` (`lookup.ts`) searches and reads
   forms; `EmbeddedText` (`text.ts`) retrieves examples and links a text's words; and
   `EmbeddedPresentation` (`presentation.ts`) builds what a screen shows from what the host already
-  read, and needs no database. A host can give each its own engine, as the app does, so a long
-  search never holds up a row's furigana.
+  read and its frequency lists, and needs no database. A host can give each its own engine, as the
+  app does, so a long search never holds up a row's furigana.
 
   | Method | Argument | Answers |
   | --- | --- | --- |
@@ -134,10 +136,10 @@ modules, files, or event loop of its own, which is how the app runs it in JavaSc
   | `exampleCount`, `resultsExampleCount`, `resultsExamples` | A query, or a query with the results' primary entry | The Example Sentences row's count, and its sentences |
   | `entryExamples`, `formExamples` | An entry's ID; a conjugated form | A word page's sentences with their count, and a form's |
   | `linkedTokens` | A text, the page's query, and its entry | Each word with its place in the text, its entry or candidates, the furigana to draw, whether it is the page's word or matches the query, which neighbour a punctuation mark stays with on a line (`attaches`), and whether it counts toward comprehension (`counted`: linked to an entry and not a function word) |
-  | `resultsScreen` | A search's answer, the Example Sentences count, and the learner's state (frequency evidence, Sort By, Filter, known words, and whether the query was picked in the radical panel) | `LearnerResultsScreen`: sections, rows with chips, the menu with each choice's title and announcement, notices, and what VoiceOver reads. A one-character query from the radical panel lists only its leading words. |
-  | `wordRows`, `frequencyRows` | Entries with their evidence | A sheet's candidate rows; a word page's frequency rows with their details |
+  | `resultsScreen` | A search's answer, the Example Sentences count, and the learner's state (Sort By, Filter, known words, and whether the query was picked in the radical panel) | `LearnerResultsScreen`: sections, rows with chips, the menu with each choice's title and announcement, notices, and what VoiceOver reads. A one-character query from the radical panel lists only its leading words. |
+  | `wordRows` | Entries, and which the learner knows | A sheet's candidate rows, with their chips |
   | `ruby` | A surface and its reading | Furigana segments, split kanji by kanji where one split fits |
-  | `wordPage` | An entry as the host read it | `EmbeddedWordPage`: furigana, part of speech, conjugations with each row's note, pitch with its graph, senses, alternatives, kanji, related words, and share text |
+  | `wordPage` | An entry as the host read it | `EmbeddedWordPage`: furigana, part of speech, conjugations with each row's note, pitch with its graph, senses, frequency rows with their details, alternatives, kanji, related words, and share text |
   | `kanjiPage`, `kanjiMeanings` | A kanji with its words and the word the page was opened from; a kanji | `EmbeddedKanjiPage`: stats, meanings, readings with their words, elements, components, words, and share text; a kanji's meanings |
   | `kanjiElementPage` | A glyph | `KanjiElementDetail`, or null for a kanji that is no element |
   | `kanjiStrokes` | A stroke diagram's row as the host read it (viewport, stroke count, and KanjiVG's packed strokes) | `StrokeDiagram`: each stroke as the points to draw through, a move then curves with their two control points; an error for a diagram that is broken |
@@ -150,15 +152,15 @@ modules, files, or event loop of its own, which is how the app runs it in JavaSc
 - **A text's words cost one or two statements.** `linkedTokens` looks every word's forms up in one
   round (`entriesMatchingFirstForms`), then the forms still unmatched, and caches by form, so a
   page of sentences mostly asks nothing.
-- **A call is an object.** `embeddedEndpoint(...).begin(method, argument)` starts a call and
-  returns it. Its `outcome()` is a JSON string: `{"value": ...}`, `{"error": message}`, or
-  `{"analyze": text}` when a call needs the words of a sentence from a host that gave no
-  `tokenize`. The host then analyzes the text with whatever it has, answers
-  `analyzed('{"words": [...]}')` or `analyzed('{"error": ...}')`, and reads the outcome again.
-  The host's database is synchronous, so a call settles before `begin` or `analyzed` returns to
-  the host and nothing is polled; calls keep their outcomes apart, so a second can start while
-  the first waits for its analysis. A method may answer null (`kanjiElementPage`, `gloss`):
-  `{"value": null}` is an answer.
+- **A call is an object.** `embeddedEndpoint(...).begin(method, argument)` starts a call and returns
+  it. Its `outcome()` is a JSON string: `{"value": ...}`, `{"error": message}`, or `{"analyze":
+  text}` when a call needs the words of a sentence from a host that gave no `tokenize`. The host
+  then analyzes the text with whatever it has, answers `analyzed('{"words": [...]}')` or
+  `analyzed('{"error": ...}')`, and reads the outcome again. The host's database is synchronous, so
+  a call settles before `begin` or `analyzed` returns to the host and nothing is polled; calls keep
+  their outcomes apart, so a second can start while the first waits for its analysis. A method may
+  answer null (`kanjiElementPage`, `gloss`): `{"value": null}` is an answer. `value()` is a
+  finished call's value alone, as its own JSON text.
 - **An answer that needs no waiting can be asked for at once.** `answer(method, argument)` runs
   the method and returns its value, and `answerJSON(method, argument)` returns it as JSON
   (`null` for nothing). Both throw for a method that would wait (`search`, `linkedTokens`, and the
@@ -260,9 +262,9 @@ Paths are relative to `apps/ios/Modules/Sources/SearchExperience/`.
 | `RadicalLookupClient.swift` (`RadicalInputView`) | `radicalPanel` | The radical panel's kanji and radicals |
 | `KanjiStrokeOrderClient.swift` | `kanjiStrokes` | The strokes Kanji Detail draws |
 | `HandwritingRecognitionLiveAdapter.swift` | `japaneseCandidates` | Which recognized candidates the handwriting panel offers |
-| `ResultsScreen.swift` (`SearchResultsView`, `SearchResultsMenu`, `ResultRow`, `RecognizedWordSheet`) | `resultsScreen`, `wordRows`, `frequencyRows` | The results screen, a sheet's candidates, and a word page's frequency rows |
+| `ResultsScreen.swift` (`SearchResultsView`, `SearchResultsMenu`, `ResultRow`, `RecognizedWordSheet`) | `resultsScreen`, `wordRows` | The results screen and a sheet's candidates |
 | `JapaneseRuby.swift` | `ruby` | Furigana wherever a word is drawn |
-| `WordPage.swift` (`WordDetailView`, `WordDetailSections`, `WordHeadline`, `PitchAccentBadge`, `ConjugationsView`) | `wordPage` | The word page and its conjugations |
+| `WordPage.swift` (`WordDetailView`, `WordDetailSections`, `WordHeadline`, `PitchAccentBadge`, `ConjugationsView`) | `wordPage` | The word page, with its frequency rows, and its conjugations |
 | `KanjiLookupClient.swift` (`KanjiDetailView`, `KanjiDetailSections`, `KanjiElementDetailView`, `SearchInputPanel`) | `kanjiPage`, `kanjiMeanings`, `kanjiElementPage`, `isKanji` | The kanji page, a handwriting candidate's meaning, the element page, and whether a string is one kanji (`KanjiCharacter`) |
 | `DictionaryEntry.swift` (`shortMeaning`) | `gloss` | The meaning under a linked word |
 

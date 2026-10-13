@@ -112,12 +112,17 @@ actor LanguageReferenceData {
     return results
   }
 
-  func coreSearch(_ query: String) async throws -> DictionaryCoreSearchResults {
-    try await coreAnswer("search", query)
+  func answeredSearch(_ query: String) async throws -> String {
+    try await preparedCore().answerAsWritten("search", query, analyzingWith: morphology)
   }
 
   private func searchUncached(_ query: SearchQuery) async throws -> LookupSearchResults {
-    let found = try await coreSearch(query.value)
+    try results(answered: try await answeredSearch(query.value))
+  }
+
+  func results(answered: String) throws -> LookupSearchResults {
+    let found = try JSONDecoder().decode(
+      DictionaryCoreSearchResults.self, from: Data(answered.utf8))
     let ids = found.items.map { LanguageReferenceID(rawValue: $0.id) }
     let entries = try entries(equivalentTo: ids)
     return LookupSearchResults(
@@ -130,7 +135,7 @@ actor LanguageReferenceData {
       readingRefinement: found.readingRefinement.map { SearchRefinement(query: SearchQuery($0)) },
       usesPrimaryEntryExamples: found.usesPrimaryEntryExamples,
       primaryEntry: found.primaryEntry.flatMap { entries[LanguageReferenceID(rawValue: $0)] },
-      listed: try DictionaryCore.argument(found)
+      listed: answered
     )
   }
 

@@ -198,6 +198,9 @@ don't contain them), so they need no network, account, camera, or microphone:
   that answers the IFrame API's calls (play, pause, seek, speed, and its time), and the captions
   come from the JSON's player response and timed text, through the same parsing, track choice,
   and pairing as YouTube's (`YouTubeFetch`, `YouTubeStandInTests`).
+- `ZENBU_DRAWN_RESULTS=1` has Search say, on an element only tests read (`search.results.drawn`),
+  each results list it drew and how many of its rows had chips, so a test fails when a list is
+  drawn without its chips and then again (`SearchResultsUITests`).
 
 The tests share `ZenbuUITestCase` and `AppTab`; what differs between the devices they ask
 `TestDevice` (`apps/ios/UITests/Platform/`, the one place `pnpm verify layers` lets UI tests name
@@ -212,9 +215,8 @@ element spans the row, though only its text opens the menu, so `chooseFromSorted
 text. On a busy Mac a tab tap, a shortcut, the
 conversation's pause, or a Simulator rotation sometimes doesn't take; the tests repeat one only
 while what it should bring hasn't appeared (`open`, `press`, `pause`, `LayoutUITests.turn`), so a
-repeat can't undo it. A row on a word's page is tapped the same way (`tap(_:toShow:)`): the page's
-frequency rows load after it appears and push the rows below them down, so a tap aimed a moment
-earlier can land above its row. Two more waits cover what two Simulators running side by side
+repeat can't undo it. A row on a word's page is tapped the same way (`tap(_:toShow:)`). Two more
+waits cover what two Simulators running side by side
 showed: `type` waits, on iPhone and iPad, until something has keyboard focus before it types and
 taps the field again if nothing does (a tap that hadn't focused the field yet failed with
 "Neither element nor any descendant has keyboard focus"), and `assertOnScreen` gives an element
@@ -585,7 +587,8 @@ side, lists which type asks for what.
   as JSON bytes, each BLOB as hex, an error as its message. JavaScriptCore parses those bytes
   into its own objects (`JSValueMakeFromJSONString`), so a broad search's rows never also exist
   as a Swift string, a bridged `NSString`, and a JavaScript string. The kanji functions are
-  answered by `KanjiFiles`, one record at a time. The bundle is checked in; after changing the
+  answered by `KanjiFiles`, one record at a time, and `frequencyLists` and `frequencyListRows` by
+  `FrequencyLists` ([`frequency.md`](frequency.md)). The bundle is checked in; after changing the
   core, rebuild it with `pnpm bundle:javascriptcore` in `packages/dictionary-core`, which the
   core's tests require ([`dictionary-core.md`](dictionary-core.md), Embedded).
 - **Three engines, one bundle.** Each is a `DictionaryCore` its owner keeps for its lifetime:
@@ -594,7 +597,7 @@ side, lists which type asks for what.
   | --- | --- | --- |
   | `LanguageReferenceData`, the actor behind `LookupClient.live` | `LanguageReferenceData.sqlite3` | Search, an exact form's entries, a kanji's words, what a website link opens, and the entry a related or a saved word opens |
   | `DictionaryTextData`, the actor behind `ExampleSentenceClient` and `JapaneseTextAnalysisClient` | Its own connection to the same file, with `ExampleWordIndex.sqlite3` attached, and the tokenizer's dictionary files | Example sentences and linked words |
-  | `PresentationCore`, a lock around one engine | The kanji files, through `KanjiFiles`, and the radical file | The results screen, rows and chips, furigana, the word, kanji, and element pages, the query, the gloss, romaji, the kanji check, a stroke diagram's points, the radical panel, and the handwriting candidates kept |
+  | `PresentationCore`, a lock around one engine | The kanji files, through `KanjiFiles`, the radical file, and the learner's frequency lists, through `FrequencyLists` | The results screen, rows and chips, furigana, the word, kanji, and element pages, the query, the gloss, romaji, the kanji check, a stroke diagram's points, the radical panel, and the handwriting candidates kept |
 
   They are apart because of how long each takes. Linking a page of sentences or ranking a broad
   search takes tens of milliseconds and awaits, so each has an actor; a row's furigana or a
@@ -621,6 +624,13 @@ side, lists which type asks for what.
   value wherever it came from; an entry JMdict lists twice (閻魔) is one entry under its smaller
   ID, with both records' provenance. A page's method takes the entry the app read
   (`WordPage(entry)`).
+- **Frequency.** The core reads the learner's lists inside the call that builds a results screen,
+  a sheet's rows, or a word page, so the app reads none of them and each is drawn once, finished
+  ([`frequency.md`](frequency.md)).
+- **A search's answer is handed on as written.** `LanguageReferenceData` keeps the JSON text the
+  core's `search` answered (`DictionaryCoreCall.value()`), decodes its own copy for the entries,
+  and hands the text itself to `resultsScreen`. Writing the decoded copy out again would drop
+  every field the app doesn't know.
 - **Sentences.** A search that needs a sentence's words says so in its call's outcome. The actor
   awaits Sudachi (`JapaneseMorphologyClient`), hands the words back, and the call goes on; other
   lookups can run while it waits.
@@ -639,7 +649,7 @@ side, lists which type asks for what.
   each with its own strokes, grade, and readings. `KanjiFilesTests` compares every record with
   a full parse of the files.
 - **Memoized where a view asks again.** Furigana by surface and reading (4,000), a word page by
-  entry (64), a gloss by meaning (4,000), romaji by reading (4,000) and by sentence (512), the
+  entry (64, until the frequency lists change), a gloss by meaning (4,000), romaji by reading (4,000) and by sentence (512), the
   kanji check by string (4,000), and a query by what was typed (1,000), since SwiftUI rebuilds
   a row many times. The keys compare, and hash, byte for byte: Swift's own string equality
   would hand one compatibility kanji's answer to its twin. `PresentationCore`'s lock is recursive, because decoding a page builds
@@ -654,12 +664,12 @@ side, lists which type asks for what.
   reads.
 - **Speed.** JavaScriptCore runs without its JIT inside an app, on the Mac as on iPhone, so the
   package's tests on a Mac run the core as a device does. The iOS Simulator does not: its
-  JavaScriptCore has the JIT, which makes JavaScript several times faster and holds several
-  times the memory, so add `TEST_RUNNER_JSC_useJIT=false` to measure there. `SearchLatencyTests`
-  prints each query's uncached time, how long linking and an abandoned search take, how long
-  the presentation engine takes to start and to build each screen, how long romaji, the
-  radical panel, a stroke diagram, and the kanji check take, and the memory a session reaches
-  step by step; it runs only when asked:
+  JavaScriptCore has the JIT, which makes JavaScript several times faster and holds several times
+  the memory, so add `TEST_RUNNER_JSC_useJIT=false` to measure there. `SearchLatencyTests` prints
+  each query's uncached time, how long linking and an abandoned search take, how long the
+  presentation engine takes to start and to build each screen, how long the frequency lists take to
+  be ready, how long romaji, the radical panel, a stroke diagram, and the kanji check take, and the
+  memory a session reaches step by step; it runs only when asked:
 
   ```sh
   TEST_RUNNER_ZENBU_MEASURE_SEARCH=1 xcodebuild -scheme ZenbuJapaneseModules-Package \
@@ -699,8 +709,8 @@ What stays native, and why:
 ## Search and linked text
 
 `LookupClient` retrieves a relevance-filtered, deduplicated set in dictionary order and never
-reads frequency; the results screen reorders only that bounded set
-(`orderedByFrequency` in the core). An exact dictionary form stays first (した is 下 and 舌 before
+reads frequency; the results screen reads the learner's lists for that bounded set and reorders
+only it (`orderedByFrequency` in the core). An exact dictionary form stays first (した is 下 and 舌 before
 する), then deinflected lemmas by chain length, so a direct conjugation (まけたら → 負ける)
 outranks a longer chain, then prefix and contains matches. Radical searches keep only the
 leading lexical-rank group.
@@ -731,32 +741,8 @@ Foundation ran it, deliberately without corrections for particles or long vowels
 
 ## Frequency packs
 
-`FrequencyPackManager` trusts a pack only while its files match what its manifest pins: the
-artifact, `languageDataSHA256`, and `mappingPolicySHA256`, the bundled mapping SQL the installer
-runs on the device. `FrequencyPackMappingV1.sql` matches forms only; `FrequencyPackMappingV2.sql`
-also requires a row's reading when it has one, honoring JMdict's reading restrictions, and maps
-rows without one as V1 does. The catalog, the `search-results.json` suite, the analysis reports,
-and the language-data release all pin those files byte for byte, so never edit one in place, not
-even a comment: every pack that pins it would fail verification.
-
-A manifest's encoding also feeds the trust hashes of installed packs, so anything outside a
-pack's contract stays out of it: `kind` is omitted for rank packs, and chip names (the core's
-`frequencyShortName`) are matched by pack family, the ID's first three parts, so a rebuilt pack
-keeps its label. A
-historical manifest can share its pack version with the current one when only derived hashes
-changed, as after a language-data rebuild.
-
-An artifact's content digest (`FrequencyPackArtifactContent` in `FrequencyPackArtifact.swift`, matched by
-`import_frequency_pack.py`) hashes `zenbu.frequency-pack-content.v1` and a NUL byte, then the
-metadata sorted by key, each UTF-8 key and value prefixed with its byte length as an unsigned
-64-bit big-endian integer; `FrequencyPackContentDigestV1.json` is a test vector. Its
-`mapping_sha256` hashes every evidence row in ID order (a level pack's: each ID's 16 bytes, then
-its level as an unsigned 64-bit big-endian integer), so SQLite's page layout never changes it.
-
-Verification hashes every row, so the manager keeps verified artifacts for later lookups, and
-`SearchExperienceRootView` opens the store and loads kanji readings at launch, off the main
-actor, to keep that work out of the first search. Lookups bind the raw 16-byte ID so SQLite uses
-the primary key; `FrequencyLookupPerformanceTests` fails if they go back to scanning.
+How a pack is trusted, how its values reach a screen, and how the screens follow a change of
+dictionaries are in [`frequency.md`](frequency.md).
 
 ## Local stores
 

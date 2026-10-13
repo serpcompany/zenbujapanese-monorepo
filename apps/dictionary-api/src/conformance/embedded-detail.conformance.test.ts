@@ -1,6 +1,6 @@
 import type { ArtifactDatabase } from '@zenbu/dictionary-core/artifact/database'
 import { entriesById } from '@zenbu/dictionary-core/artifact/words'
-import { type FrequencyLookupRow, tierLabels } from '@zenbu/dictionary-core/detail/frequency'
+import { tierLabels } from '@zenbu/dictionary-core/detail/frequency'
 import type {
   KanjiElementContribution,
   KanjiElementDetail
@@ -38,7 +38,6 @@ import {
   type EmbeddedSentence,
   embedded,
   entryAsTheAppReadsIt,
-  freshInstallEvidence,
   shownAsTheAppLinks
 } from './embedded-support'
 import { artifactAvailable, artifactDatabase, requirePinnedArtifacts } from './support'
@@ -121,10 +120,6 @@ describe.runIf(artifactAvailable)('the app’s word and kanji pages on the artif
     const entry = entryAsTheAppReadsIt(db, id)
     if (!entry) throw new Error(`The artifact has no entry ${id}`)
     const page = await app.presentation<EmbeddedWordPage>('wordPage', entry)
-    const frequency = await app.presentation<FrequencyLookupRow[]>('frequencyRows', {
-      entry: id,
-      frequency: freshInstallEvidence(db, [id])
-    })
     const kanji = async (characters: string[]) => {
       const listed = []
       for (const character of characters) {
@@ -167,7 +162,7 @@ describe.runIf(artifactAvailable)('the app’s word and kanji pages on the artif
             }
           }
         : {}),
-      frequency: frequency.map(row => ({
+      frequency: page.frequency.map(row => ({
         name: row.source,
         pack: row.pack ?? '',
         text: row.value,

@@ -5,7 +5,7 @@ const mapBudget = 120
 const leafBudget = 300
 
 export const knownLongDocs: Readonly<Record<string, number>> = {
-  'apps/ios/docs/product/dictionary.md': 427,
+  'apps/ios/docs/product/dictionary.md': 425,
   'apps/ios/docs/product/index.md': 581,
   'apps/ios/docs/product/translate.md': 357,
   'apps/web/docs/product/account.md': 345,
@@ -15,8 +15,8 @@ export const knownLongDocs: Readonly<Record<string, number>> = {
   'docs/agents/account-clients.md': 602,
   'docs/agents/api-servers.md': 318,
   'docs/agents/dictionary-api.md': 544,
-  'docs/agents/dictionary-core.md': 605,
-  'docs/agents/ios.md': 1374,
+  'docs/agents/dictionary-core.md': 604,
+  'docs/agents/ios.md': 1361,
   'docs/agents/translate.md': 375,
   'docs/agents/web.md': 811
 }
