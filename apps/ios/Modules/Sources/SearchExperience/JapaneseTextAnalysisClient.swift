@@ -84,18 +84,30 @@ actor LinkedEntries {
     _ texts: [[LinkedWord]], highlightedEntry: DictionaryEntry?
   ) async -> [[JapaneseTextToken]] {
     if let highlightedEntry { entries[highlightedEntry.id.rawValue] = highlightedEntry }
-    let unread = Set(texts.joined().flatMap { $0.candidates + [$0.entry].compactMap { $0 } })
-      .filter { entries[$0] == nil }
-    if !unread.isEmpty,
-      let read = try? await lookupClient.entries(unread.map(LanguageReferenceID.init(rawValue:)))
-    {
-      if entries.count + read.count > Self.capacity { entries.removeAll(keepingCapacity: true) }
-      for (id, entry) in read { entries[id.rawValue] = entry }
+    var named: [String: DictionaryEntry] = [:]
+    var unread: [LanguageReferenceID] = []
+    for id in Set(texts.joined().flatMap { $0.candidates + [$0.entry].compactMap { $0 } }) {
+      if let entry = entries[id] {
+        named[id] = entry
+      } else {
+        unread.append(LanguageReferenceID(rawValue: id))
+      }
     }
-    return texts.map { words in words.enumerated().map { token($0.offset, $0.element) } }
+    if !unread.isEmpty, let read = try? await lookupClient.entries(unread) {
+      if entries.count + read.count > Self.capacity { entries.removeAll(keepingCapacity: true) }
+      for (id, entry) in read {
+        entries[id.rawValue] = entry
+        named[id.rawValue] = entry
+      }
+    }
+    return texts.map { words in
+      words.enumerated().map { Self.token($0.offset, $0.element, named: named) }
+    }
   }
 
-  private func token(_ index: Int, _ word: LinkedWord) -> JapaneseTextToken {
+  private static func token(
+    _ index: Int, _ word: LinkedWord, named entries: [String: DictionaryEntry]
+  ) -> JapaneseTextToken {
     let entry = word.entry.flatMap { entries[$0] }
     return JapaneseTextToken(
       id: index,
