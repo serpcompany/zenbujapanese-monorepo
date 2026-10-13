@@ -12,18 +12,16 @@ struct Comprehension: Equatable, Sendable {
     fraction.map { $0.formatted(.percent.precision(.fractionLength(0))) }
   }
 
-  static func countedWords(in tokens: [JapaneseTextToken]) -> [LanguageReferenceID] {
-    tokens.compactMap { $0.isCounted ? $0.entry?.id : nil }
-  }
+  static let linesPerCall = 50
 
   static func countedWords(
     in lines: [String], analysis: JapaneseTextAnalysisClient
   ) async -> [LanguageReferenceID]? {
     var words: [LanguageReferenceID] = []
-    for line in lines {
-      let tokens = await analysis.linkedTokens(line, SearchQuery(""), nil)
+    for start in stride(from: 0, to: lines.count, by: linesPerCall) {
+      let end = min(start + linesPerCall, lines.count)
+      words += await analysis.countedWords(Array(lines[start..<end]))
       guard !Task.isCancelled else { return nil }
-      words += countedWords(in: tokens)
     }
     return words
   }

@@ -4918,6 +4918,7 @@
       joinsInflection: false
     };
   }
+  var countsTowardComprehension = (token) => token.entry !== null && !isFunctionWord(token);
   var listed2 = (sentences) => sentences.map(({ pairId, japanese, english }) => ({ id: `esp1_${pairId}`, japanese, english }));
   function answered(found) {
     if (typeof found === "string") throw new Error(found);
@@ -5026,8 +5027,8 @@
       }
       return listed2(sentences);
     }
-    async prefetch(candidates, highlighted) {
-      const alternatives = formsLookedUp(candidates, highlighted).map(
+    async prefetch(looked) {
+      const alternatives = looked.map(
         (forms2) => forms2.filter((form) => {
           if (this.forms.get(form) !== void 0) return true;
           const query = normalizeQuery(form);
@@ -5047,7 +5048,7 @@
       const candidates = await this.candidates(text, analyze);
       const entry = request.highlightedEntry ? this.found([request.highlightedEntry]).get(request.highlightedEntry) ?? null : null;
       const highlighted = entry ? { entry, query } : null;
-      if (candidates) await this.prefetch(candidates, highlighted);
+      if (candidates) await this.prefetch(formsLookedUp(candidates, highlighted));
       const tokens = linkedTokens(text, candidates, highlighted, this.lookup);
       const linked = this.found(tokens.flatMap((token) => token.entry ? [token.entry.id] : []));
       const matches = occurrences(text, query);
@@ -5055,25 +5056,42 @@
         const token = tokens[index];
         const target = token.entry ? linked.get(token.entry.id) : void 0;
         const furigana = target ? displayReading(token, target) : null;
-        const functionWord = isFunctionWord(token);
         return {
           surface: token.surface,
           start,
           end,
           reading: candidates ? token.reading : null,
-          isFunctionWord: functionWord,
+          isFunctionWord: isFunctionWord(token),
           entry: token.entry?.id ?? null,
           candidates: token.entry ? [] : token.candidates.map((candidate) => candidate.id),
           furigana,
           ruby: furigana === null ? null : rubySegments(token.surface, furigana),
           isPageWord: entry !== null && token.entry?.id === entry.id,
           matchesQuery: matches.some((match) => match.start < end && start < match.end),
-          attaches: attachment(token.surface),
-          counted: token.entry !== null && !functionWord
+          attaches: attachment(token.surface)
         };
       });
       if (candidates) this.linked.set(key, answer);
       return answer;
+    }
+    async countedWords(lines, analyze) {
+      const analyses = [];
+      const looked = [];
+      for (const text of lines) {
+        stopIfInterrupted(this.db, 0);
+        const candidates = await this.candidates(text, analyze);
+        analyses.push(candidates);
+        if (candidates) for (const forms2 of formsLookedUp(candidates, null)) looked.push(forms2);
+      }
+      await this.prefetch(looked);
+      const counted = [];
+      for (let line = 0; line < lines.length; line++) {
+        stopIfInterrupted(this.db, 0);
+        for (const token of linkedTokens(lines[line], analyses[line], null, this.lookup)) {
+          if (countsTowardComprehension(token)) counted.push(token.entry.id);
+        }
+      }
+      return counted;
     }
   };
 
@@ -5110,6 +5128,7 @@
       entryExamples: (id) => text().entryExamples(id),
       formExamples: (form, analyze) => text().formExamples(form, analyze),
       linkedTokens: (request, analyze) => text().linkedTokens(JSON.parse(request), analyze),
+      countedWords: (lines, analyze) => text().countedWords(JSON.parse(lines), analyze),
       resultsScreen: (request) => presentation().resultsScreen(JSON.parse(request)),
       wordRows: (request) => presentation().wordRows(JSON.parse(request)),
       frequencyRows: (request) => presentation().frequencyRows(JSON.parse(request)),

@@ -1,5 +1,6 @@
 import Foundation
 import Testing
+import os
 
 @testable import SearchExperience
 
@@ -68,5 +69,64 @@ struct KnownWordCountTests {
     let words = try #require(
       await Comprehension.countedWords(in: Self.playerStandInCaptions, analysis: .live()))
     #expect(words == Array(Self.countedInOrder.prefix(12)))
+  }
+
+  @Test("one call counts the words the captions' cards link to one entry, function words aside")
+  func sameWordsAsTheCards() async {
+    let analysis = JapaneseTextAnalysisClient.live()
+    var linked: [LanguageReferenceID] = []
+    for caption in Self.captions {
+      let tokens = await analysis.linkedTokens(caption, SearchQuery(""), nil)
+      linked += tokens.compactMap { $0.isFunctionWord ? nil : $0.entry?.id }
+    }
+    #expect(await analysis.countedWords(Self.captions) == linked)
+  }
+
+  @Test("a long video's lines are asked for fifty at a time, in order")
+  func fiftyLinesACall() async {
+    let asked = OSAllocatedUnfairLock(initialState: [Int]())
+    let analysis = Self.counting { lines in asked.withLock { $0.append(lines.count) } }
+    let lines = (0..<127).map(String.init)
+    let words = await Comprehension.countedWords(in: lines, analysis: analysis)
+    #expect(words?.map(\.rawValue) == lines)
+    #expect(asked.withLock { $0 } == [50, 50, 27])
+  }
+
+  @Test("a count cancelled between calls asks for no more lines and answers nothing")
+  func cancelledBetweenCalls() async {
+    let asked = OSAllocatedUnfairLock(initialState: 0)
+    let analysis = Self.counting { _ in
+      asked.withLock { $0 += 1 }
+      withUnsafeCurrentTask { $0?.cancel() }
+    }
+    let lines = (0..<127).map(String.init)
+    let words = await Task { await Comprehension.countedWords(in: lines, analysis: analysis) }.value
+    #expect(words == nil)
+    #expect(asked.withLock { $0 } == 1)
+  }
+
+  @Test("a count cancelled before the core's call answers nothing, and the next count starts again")
+  func cancelledInsideTheCore() async {
+    let analysis = JapaneseTextAnalysisClient.live(text: DictionaryTextData())
+    #expect(await analysis.availability() == .full)
+    let words = await Task {
+      withUnsafeCurrentTask { $0?.cancel() }
+      return await Comprehension.countedWords(in: Self.captions, analysis: analysis)
+    }.value
+    #expect(words == nil)
+    let counted = await Comprehension.countedWords(in: Self.captions, analysis: analysis)
+    #expect(counted == Self.countedInOrder)
+  }
+
+  private static func counting(
+    _ asked: @escaping @Sendable ([String]) -> Void
+  ) -> JapaneseTextAnalysisClient {
+    JapaneseTextAnalysisClient(
+      availability: { .full },
+      linkedTokens: { _, _, _ in [] },
+      countedWords: { lines in
+        asked(lines)
+        return lines.map(LanguageReferenceID.init(rawValue:))
+      })
   }
 }

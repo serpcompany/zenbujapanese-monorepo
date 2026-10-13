@@ -20,8 +20,8 @@ import { ipadicTokenizer } from '../examples/ipadic'
 import {
   displayReading,
   formsLookedUp,
-  type Highlighted,
   type LinkEntry,
+  type LinkedToken,
   linkedTokens
 } from '../examples/linking'
 import {
@@ -30,7 +30,7 @@ import {
   type MorphologyCandidate,
   type Tokenize
 } from '../examples/morphology'
-import type { SearchDatabase } from '../search/database'
+import { type SearchDatabase, stopIfInterrupted } from '../search/database'
 import type { MorphologyWord } from '../search/morphology'
 import { isASCII, normalizeQuery } from '../search/query'
 import { type EmbeddedHost, hostDatabase } from './host'
@@ -69,7 +69,6 @@ export interface EmbeddedToken {
   isPageWord: boolean
   matchesQuery: boolean
   attaches: Attachment | null
-  counted: boolean
 }
 
 export interface ResultsExamplesRequest {
@@ -96,6 +95,10 @@ function hostCandidate(word: HostWord): MorphologyCandidate {
     joinsInflection: false
   }
 }
+
+const countsTowardComprehension = (
+  token: LinkedToken
+): token is LinkedToken & { entry: LinkEntry } => token.entry !== null && !isFunctionWord(token)
 
 const listed = (sentences: readonly ExampleSentence[]): EmbeddedSentence[] =>
   sentences.map(({ pairId, japanese, english }) => ({ id: `esp1_${pairId}`, japanese, english }))
@@ -232,11 +235,8 @@ export class EmbeddedText {
     return listed(sentences)
   }
 
-  private async prefetch(
-    candidates: MorphologyCandidate[],
-    highlighted: Highlighted | null
-  ): Promise<void> {
-    const alternatives = formsLookedUp(candidates, highlighted).map(forms =>
+  private async prefetch(looked: readonly string[][]): Promise<void> {
+    const alternatives = looked.map(forms =>
       forms.filter(form => {
         if (this.forms.get(form) !== undefined) return true
         const query = normalizeQuery(form)
@@ -259,7 +259,7 @@ export class EmbeddedText {
       ? (this.found([request.highlightedEntry]).get(request.highlightedEntry) ?? null)
       : null
     const highlighted = entry ? { entry, query } : null
-    if (candidates) await this.prefetch(candidates, highlighted)
+    if (candidates) await this.prefetch(formsLookedUp(candidates, highlighted))
     const tokens = linkedTokens(text, candidates, highlighted, this.lookup)
     const linked = this.found(tokens.flatMap(token => (token.entry ? [token.entry.id] : [])))
     const matches = occurrences(text, query)
@@ -267,24 +267,42 @@ export class EmbeddedText {
       const token = tokens[index]
       const target = token.entry ? linked.get(token.entry.id) : undefined
       const furigana = target ? displayReading(token, target) : null
-      const functionWord = isFunctionWord(token)
       return {
         surface: token.surface,
         start,
         end,
         reading: candidates ? token.reading : null,
-        isFunctionWord: functionWord,
+        isFunctionWord: isFunctionWord(token),
         entry: token.entry?.id ?? null,
         candidates: token.entry ? [] : token.candidates.map(candidate => candidate.id),
         furigana,
         ruby: furigana === null ? null : rubySegments(token.surface, furigana),
         isPageWord: entry !== null && token.entry?.id === entry.id,
         matchesQuery: matches.some(match => match.start < end && start < match.end),
-        attaches: attachment(token.surface),
-        counted: token.entry !== null && !functionWord
+        attaches: attachment(token.surface)
       }
     })
     if (candidates) this.linked.set(key, answer)
     return answer
+  }
+
+  async countedWords(lines: readonly string[], analyze: AnalyzeText): Promise<string[]> {
+    const analyses: (MorphologyCandidate[] | null)[] = []
+    const looked: string[][] = []
+    for (const text of lines) {
+      stopIfInterrupted(this.db, 0)
+      const candidates = await this.candidates(text, analyze)
+      analyses.push(candidates)
+      if (candidates) for (const forms of formsLookedUp(candidates, null)) looked.push(forms)
+    }
+    await this.prefetch(looked)
+    const counted: string[] = []
+    for (let line = 0; line < lines.length; line++) {
+      stopIfInterrupted(this.db, 0)
+      for (const token of linkedTokens(lines[line], analyses[line], null, this.lookup)) {
+        if (countsTowardComprehension(token)) counted.push(token.entry.id)
+      }
+    }
+    return counted
   }
 }

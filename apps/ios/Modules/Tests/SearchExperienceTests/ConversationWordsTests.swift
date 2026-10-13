@@ -9,14 +9,10 @@ import TranslatorCore
 struct ConversationWordsTests {
   private let analysis = JapaneseTextAnalysisClient(
     availability: { .full },
-    linkedTokens: { text, _, _ in
-      text.split(separator: " ").enumerated().map { index, word in
-        let isParticle = word == "は"
-        return JapaneseTextToken(
-          id: index, surface: String(word),
-          entry: isParticle ? nil : .fixture(id: String(word), headword: String(word)),
-          isFunctionWord: isParticle, isCounted: !isParticle)
-      }
+    linkedTokens: { _, _, _ in [] },
+    countedWords: { lines in
+      lines.flatMap { $0.split(separator: " ") }.filter { $0 != "は" }
+        .map { LanguageReferenceID(rawValue: String($0)) }
     })
 
   @Test("counts the Japanese that was spoken, without particles or translations into Japanese")

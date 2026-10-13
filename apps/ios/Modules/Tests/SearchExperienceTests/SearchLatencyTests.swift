@@ -340,13 +340,13 @@ struct SearchLatencyTests {
         + "\(Self.milliseconds(checkedAgain)) again")
   }
 
-  private static func summary(_ timings: [Double]) -> String {
+  static func summary(_ timings: [Double]) -> String {
     let sorted = timings.sorted()
     guard let worst = sorted.last else { return "nothing measured" }
     return String(format: "median %.2f ms, worst %.2f ms", sorted[sorted.count / 2], worst)
   }
 
-  private static func value(_ duration: Duration) -> Double {
+  static func value(_ duration: Duration) -> Double {
     Double(duration.components.seconds) * 1_000
       + Double(duration.components.attoseconds) / 1_000_000_000_000_000
   }
@@ -355,7 +355,7 @@ struct SearchLatencyTests {
     String(format: "%.1f ms", value(duration))
   }
 
-  private static func footprint() -> (current: UInt64, peak: UInt64) {
+  static func footprint() -> (current: UInt64, peak: UInt64) {
     var info = task_vm_info_data_t()
     var count = mach_msg_type_number_t(
       MemoryLayout<task_vm_info_data_t>.size / MemoryLayout<natural_t>.size)
