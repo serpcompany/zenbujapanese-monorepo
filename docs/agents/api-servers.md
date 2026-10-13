@@ -105,9 +105,10 @@ servers by changing only nginx's sites.
 Cron runs [`deploy/deployer.sh`](../../deploy/deployer.sh) as root every 5 minutes. It takes no
 input and reads no environment variable, so changing what it does takes root on the server; a
 change to the script in this repository reaches the server only when someone installs it there.
-For each service it knows, and each environment, it asks the registry which image the
-environment's tag names (`docker pull`, which fetches only the tag's manifest unless it names a new
-image), and when one changed, deploys it.
+Its tests run it against stand-ins ([`deployer-alerts.md`](deployer-alerts.md#tests)). For each
+service it knows, and each environment, it asks the registry which image the environment's tag
+names (`docker pull`, which fetches only the tag's manifest unless it names a new image), and when
+one changed, deploys it.
 
 What differs by service is in the table at the top of the script:
 
@@ -187,9 +188,8 @@ To look after it:
 
 - **See what runs:** `docker ps --filter label=zenbujapanese.<service>.slot`, such as
   `zenbujapanese.account-api.slot`. **See what the deployer did:**
-  `journalctl -t zenbujapanese-<service>`. It logs every run that skips something: a service or
-  environment that isn't set up, an image main didn't sign, an image that failed before, and a run
-  that found an earlier one still deploying.
+  `journalctl -t zenbujapanese-<service>`, or, once it has a webhook, Slack, where it posts each
+  failure once and each deploy that goes live ([`deployer-alerts.md`](deployer-alerts.md)).
 - **Retry a failed image.** An image that didn't come up is recorded, with when and why, in
   `/var/lib/zenbujapanese-<service>/failed-<environment>`, and skipped until the tag moves or the
   environment's file changes. When it failed for a reason that wasn't the image's (the server
