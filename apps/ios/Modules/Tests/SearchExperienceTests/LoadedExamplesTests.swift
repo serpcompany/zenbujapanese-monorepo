@@ -3,7 +3,7 @@ import Testing
 @testable import SearchExperience
 
 @MainActor
-@Suite("A screen's loaded examples")
+@Suite("A screen's loaded examples", .timeLimit(.minutes(1)))
 struct LoadedExamplesTests {
   @MainActor
   private final class Listing {
@@ -14,6 +14,8 @@ struct LoadedExamplesTests {
     var asked: [ExampleBatch] = []
     var failing: Set<Int> = []
     var beforeAnswering: [Int: () async -> Void] = [:]
+    private var held: [Int: [CheckedContinuation<Void, Never>]] = [:]
+    private var holding: Set<Int> = []
 
     init(_ word: String, listed: Int) {
       self.word = word
@@ -23,9 +25,12 @@ struct LoadedExamplesTests {
     func read(_ batch: ExampleBatch) async -> ExamplePage? {
       asked.append(batch)
       await beforeAnswering.removeValue(forKey: batch.from)?()
+      if holding.contains(batch.from) {
+        await withCheckedContinuation { held[batch.from, default: []].append($0) }
+      }
       if failing.remove(batch.from) != nil { return nil }
-      let pageEnd = (batch.from / Self.pageSize + 1) * Self.pageSize
-      let end = min(listed, pageEnd, batch.limit.map { batch.from + $0 } ?? .max)
+      let pageEnd = min(listed, (batch.from / Self.pageSize + 1) * Self.pageSize)
+      let end = min(pageEnd, batch.limit.map { batch.from + $0 } ?? .max)
       return ExamplePage(
         examples: (batch.from..<max(batch.from, end)).compactMap { number in
           let digits = String(number, radix: 16)
@@ -37,7 +42,21 @@ struct LoadedExamplesTests {
           }
         },
         listed: listed,
-        countText: "\(listed) examples")
+        countText: "\(listed) examples",
+        cutShort: end < pageEnd)
+    }
+
+    func hold(_ from: Int) {
+      holding.insert(from)
+    }
+
+    func untilHeld(_ from: Int) async {
+      while held[from] == nil { await Task.yield() }
+    }
+
+    func answer(_ from: Int) {
+      holding.remove(from)
+      for waiting in held.removeValue(forKey: from) ?? [] { waiting.resume() }
     }
 
     func rows(_ numbers: Range<Int>) -> [String] {
@@ -74,14 +93,18 @@ struct LoadedExamplesTests {
     #expect(!loaded.hasMore)
   }
 
-  @Test("a screen that fits a whole page, or whose size isn't known, is answered in one read")
+  @Test("a screen that fits its page or its whole list, or of unknown size, is answered in one read")
   func aWholePageIsOneRead() async {
-    for rowsOnScreen in [nil, 30] {
-      let miru = Listing("見る", listed: 60)
+    let screens: [(listed: Int, rowsOnScreen: Int?, shown: Int)] = [
+      (60, nil, 25), (60, 30, 25), (60, 25, 25), (8, 8, 8), (5, 8, 5),
+    ]
+    for (listed, rowsOnScreen, shown) in screens {
+      let miru = Listing("見る", listed: listed)
       let loaded = LoadedExamples()
       await loaded.load("見る", rowsOnScreen: rowsOnScreen, read: miru.read)
       #expect(miru.asked == [ExampleBatch(from: 0, limit: rowsOnScreen)])
-      #expect(rows(loaded) == miru.rows(0..<25))
+      #expect(rows(loaded) == miru.rows(0..<shown))
+      #expect(loaded.hasMore == (shown < listed))
     }
   }
 
@@ -133,13 +156,53 @@ struct LoadedExamplesTests {
     #expect(rows(loaded) == miru.rows(0..<50))
   }
 
-  @Test("rows are asked for once while their read is under way")
-  func aReadUnderWayIsNotRepeated() async {
+  @Test("the end of the list and the screen share one read of the rows after it")
+  func aReadUnderWayIsShared() async {
     let miru = Listing("見る", listed: 60)
     let loaded = LoadedExamples()
-    miru.beforeAnswering[8] = { await loaded.loadMore(read: miru.read) }
-    await loaded.load("見る", rowsOnScreen: 8, read: miru.read)
+    miru.hold(8)
+    let screen = Task { await loaded.load("見る", rowsOnScreen: 8, read: miru.read) }
+    await miru.untilHeld(8)
+    let endOfList = Task { await loaded.loadMore(read: miru.read) }
+    for _ in 0..<3 { await Task.yield() }
+    miru.answer(8)
+    await screen.value
+    await endOfList.value
     #expect(miru.asked == [ExampleBatch(from: 0, limit: 8), ExampleBatch(from: 8)])
+    #expect(rows(loaded) == miru.rows(0..<25))
+  }
+
+  @Test("rows being read when the screen is left are kept, and the screen has them when it is back")
+  func aReadGoesOnWhenTheScreenIsLeft() async {
+    let miru = Listing("見る", listed: 60)
+    let loaded = LoadedExamples()
+    miru.hold(8)
+    let leaving = Task { await loaded.load("見る", rowsOnScreen: 8, read: miru.read) }
+    await miru.untilHeld(8)
+    leaving.cancel()
+    let back = Task { await loaded.load("見る", rowsOnScreen: 8, read: miru.read) }
+    for _ in 0..<3 { await Task.yield() }
+    miru.answer(8)
+    await leaving.value
+    await back.value
+    #expect(miru.asked == [ExampleBatch(from: 0, limit: 8), ExampleBatch(from: 8)])
+    #expect(rows(loaded) == miru.rows(0..<25))
+  }
+
+  @Test("a first read that answers after the screen is left is left out, and read when it is back")
+  func aFirstReadIsLeftOutWhenTheScreenIsLeft() async {
+    let miru = Listing("見る", listed: 60)
+    let loaded = LoadedExamples()
+    miru.hold(0)
+    let leaving = Task { await loaded.load("見る", rowsOnScreen: nil, read: miru.read) }
+    await miru.untilHeld(0)
+    leaving.cancel()
+    miru.answer(0)
+    await leaving.value
+    #expect(!loaded.answers("見る"))
+    #expect(loaded.examples.isEmpty)
+
+    await loaded.load("見る", rowsOnScreen: nil, read: miru.read)
     #expect(rows(loaded) == miru.rows(0..<25))
   }
 

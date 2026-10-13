@@ -66,6 +66,7 @@ extension LinkedEntries {
           words: words)
       },
       listed: linked.listed,
-      countText: linked.countText)
+      countText: linked.countText,
+      cutShort: linked.cutShort)
   }
 }

@@ -76,6 +76,7 @@ export interface EmbeddedExample {
 export interface EmbeddedExamplePage {
   examples: EmbeddedExample[]
   listed: number
+  cutShort: boolean
 }
 
 export interface EmbeddedResultsExamples extends EmbeddedExamplePage {
@@ -225,8 +226,10 @@ export class EmbeddedText {
     accented: Accented,
     analyze: AnalyzeText
   ): Promise<EmbeddedExamplePage> {
-    const pageEnd = (Math.floor(from / examplesPerPage) + 1) * examplesPerPage
-    const shown = sentences.slice(from, limit ? Math.min(pageEnd, from + limit) : pageEnd)
+    const nextPage = (Math.floor(from / examplesPerPage) + 1) * examplesPerPage
+    const pageEnd = Math.min(sentences.length, nextPage)
+    const end = limit ? Math.min(pageEnd, from + limit) : pageEnd
+    const shown = sentences.slice(from, end)
     const linked = await this.link(
       shown.map(sentence => sentence.japanese),
       accented,
@@ -239,7 +242,8 @@ export class EmbeddedText {
         english,
         words: linked[index]
       })),
-      listed: sentences.length
+      listed: sentences.length,
+      cutShort: end < pageEnd
     }
   }
 
@@ -248,7 +252,9 @@ export class EmbeddedText {
     analyze: AnalyzeText
   ): Promise<EmbeddedResultsExamples> {
     const found = this.listed(request)
-    if (typeof found === 'string') return { examples: [], listed: 0, countText: null }
+    if (typeof found === 'string') {
+      return { examples: [], listed: 0, cutShort: false, countText: null }
+    }
     const accented: Accented = {
       query: request.query,
       entry: request.primaryEntry,

@@ -132,7 +132,7 @@ modules, files, or event loop of its own, which is how the app runs it in JavaSc
   | `checkExamples` | — | True, or the error that says which example table or pack is missing or wrong |
   | `tokenizerReady` | — | Whether the text part can tokenize. With the host's files it reads them now, so the first sentence doesn't wait for them, and is false when one is missing or wrong. |
   | `exampleCount`, `resultsExampleCount` | A query, or a query with the results' primary entry | The Example Sentences row's count |
-  | `resultsExamples`, `entryExamples`, `formExamples` | A query with the results' primary entry, an entry's ID, or a conjugated form, each with `from` and an optional `limit` | A page of 25 from `from`, `limit` at most: each sentence's words as `linkedTokens` answers them, the screen's accented, and the list's size (`listed`). Example Sentences adds a count line, a word `count` and `truncated` |
+  | `resultsExamples`, `entryExamples`, `formExamples` | A query with the results' primary entry, an entry's ID, or a conjugated form, each with `from` and an optional `limit` | The examples from `from` to the end of its page of 25, or `limit` of them if fewer (the answer then says `cutShort`): each sentence with its words as `linkedTokens` answers them, the screen's words accented, and the list's size (`listed`). Example Sentences adds its count line, a word its `count` and `truncated` |
   | `linkedTokens` | A text, the page's query, and its entry | Each word with its place in the text, its entry or candidates, the furigana to draw, its `accent` (`entry` on the page entry's word here; an example page says `query` on the words of its query), which neighbour a punctuation mark stays with on a line (`attaches`), and whether it counts toward comprehension (`counted`: linked to an entry and not a function word) |
   | `resultsScreen` | A search's answer, the Example Sentences count, and the learner's state (frequency evidence, Sort By, Filter, known words, and whether the query was picked in the radical panel) | `LearnerResultsScreen`: sections, rows with chips, the menu with each choice's title and announcement, notices, and what VoiceOver reads. A one-character query from the radical panel lists only its leading words. |
   | `wordRows`, `frequencyRows` | Entries with their evidence | A sheet's candidate rows; a word page's frequency rows with their details |
@@ -417,9 +417,8 @@ The core answers as the Swift it replaced did, which the suites pin.
 - **A conjugated form's examples** are the sentences the app's search for the form finds, normalized
   (a full-width Ｈ searches English), that contain it as written and in which the tokenizer reads it
   as one word, so 見たかった and 見た目 aren't examples of 見た. The screen accents the query as normalized.
-- **Accents.** `accentedPositions` (`artifact/word-examples.ts`) decides which words a sentence
-  accents, for the service and the app alike: the words linked to the page's entry, or the words
-  an occurrence of the query overlaps. `screenAccent` names which of the two each screen uses.
+- **Accents.** `accentedPositions` (`artifact/word-examples.ts`) accents, for the service and the
+  app, the words linked to the page's entry or the words the query overlaps, as `screenAccent` says.
 - An example's `pairId` is the artifact's pair ID in hex; the app's ID prefixes it with `esp1_`.
 
 ## Artifact

@@ -322,7 +322,12 @@ describe('the embedded text engine', () => {
         JSON.stringify({ query: '見た', primaryEntry: null, usesPrimaryEntryExamples: false, from })
       ) as Promise<EmbeddedResultsExamples>
 
-    expect(await page(0, 0)).toEqual({ examples: [], listed: 0, countText: null })
+    expect(await page(0, 0)).toEqual({
+      examples: [],
+      listed: 0,
+      cutShort: false,
+      countText: null
+    })
     const first = await page(60, 0)
     expect(first).toMatchObject({ listed: 60, countText: '60 examples' })
     expect(first.examples.map(example => example.id)).toEqual(
@@ -363,16 +368,20 @@ describe('the embedded text engine', () => {
         })
       )) as EmbeddedResultsExamples
       expect(found).toMatchObject({ listed: 60, countText: '60 examples' })
-      return found.examples.map(example => example.id)
+      return { ids: found.examples.map(example => example.id), cutShort: found.cutShort }
     }
-    const rows = (from: number, to: number) =>
-      Array.from({ length: to - from }, (_, row) => `esp1_${pairId(from + row)}`)
+    const rows = (from: number, to: number, cutShort = false) => ({
+      ids: Array.from({ length: to - from }, (_, row) => `esp1_${pairId(from + row)}`),
+      cutShort
+    })
 
-    expect(await batch(0, 8)).toEqual(rows(0, 8))
+    expect(await batch(0, 8)).toEqual(rows(0, 8, true))
     expect(await batch(8)).toEqual(rows(8, 25))
     expect(await batch(8, 40)).toEqual(rows(8, 25))
-    expect(await batch(25, 3)).toEqual(rows(25, 28))
+    expect(await batch(0, 25)).toEqual(rows(0, 25))
+    expect(await batch(25, 3)).toEqual(rows(25, 28, true))
     expect(await batch(50, 40)).toEqual(rows(50, 60))
+    expect(await batch(52, 8)).toEqual(rows(52, 60))
   })
 
   test('reads the words and the entries of a batch of examples from the dictionary together', async () => {
@@ -440,7 +449,7 @@ describe('the embedded text engine', () => {
         ['見た', 'v1', 'query']
       ])
     )
-    expect(await page('本語')).toEqual({ examples: [], listed: 0 })
+    expect(await page('本語')).toEqual({ examples: [], listed: 0, cutShort: false })
   })
 
   test('refuses an example index that is not the one the core reads', async () => {

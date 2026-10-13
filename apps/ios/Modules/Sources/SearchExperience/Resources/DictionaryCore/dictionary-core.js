@@ -5029,8 +5029,10 @@
       return request.usesPrimaryEntryExamples && request.primaryEntry !== null ? found.sentences.length : found.count;
     }
     async batch(sentences, { from, limit }, accented, analyze) {
-      const pageEnd = (Math.floor(from / examplesPerPage) + 1) * examplesPerPage;
-      const shown = sentences.slice(from, limit ? Math.min(pageEnd, from + limit) : pageEnd);
+      const nextPage = (Math.floor(from / examplesPerPage) + 1) * examplesPerPage;
+      const pageEnd = Math.min(sentences.length, nextPage);
+      const end = limit ? Math.min(pageEnd, from + limit) : pageEnd;
+      const shown = sentences.slice(from, end);
       const linked = await this.link(
         shown.map((sentence) => sentence.japanese),
         accented,
@@ -5043,12 +5045,15 @@
           english,
           words: linked[index]
         })),
-        listed: sentences.length
+        listed: sentences.length,
+        cutShort: end < pageEnd
       };
     }
     async resultsExamples(request, analyze) {
       const found = this.listed(request);
-      if (typeof found === "string") return { examples: [], listed: 0, countText: null };
+      if (typeof found === "string") {
+        return { examples: [], listed: 0, cutShort: false, countText: null };
+      }
       const accented = {
         query: request.query,
         entry: request.primaryEntry,

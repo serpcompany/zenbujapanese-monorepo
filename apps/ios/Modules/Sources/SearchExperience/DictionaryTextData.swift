@@ -47,6 +47,7 @@ struct LinkedExamples: Decodable, Sendable {
 
   let examples: [Example]
   let listed: Int
+  let cutShort: Bool
   let countText: String?
 }
 

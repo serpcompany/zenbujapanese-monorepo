@@ -37,6 +37,7 @@ struct ExamplePage: Sendable {
   let examples: [LinkedExample]
   let listed: Int
   let countText: String?
+  var cutShort = false
 }
 
 struct ExampleBatch: Hashable, Sendable {
@@ -62,7 +63,8 @@ final class LoadedExamples {
   private var firstReadFailed = false
   private var laterReadFailed = false
   private var owesRestOfPage = false
-  @ObservationIgnored private var readingMoreOf: String?
+  @ObservationIgnored private var readingMore:
+    (of: String?, from: Int, read: Task<ExamplePage?, Never>)?
 
   var hasMore: Bool { !laterReadFailed && examples.count < listed }
 
@@ -70,7 +72,7 @@ final class LoadedExamples {
     self.source == source
   }
 
-  func load(_ source: String, rowsOnScreen: Int?, read: Read) async {
+  func load(_ source: String, rowsOnScreen: Int?, read: @escaping Read) async {
     laterReadFailed = false
     if !answers(source) || firstReadFailed {
       let first = await read(ExampleBatch(from: 0, limit: rowsOnScreen))
@@ -80,23 +82,25 @@ final class LoadedExamples {
       examples = first?.examples ?? []
       countText = first?.countText
       listed = first?.listed ?? 0
-      owesRestOfPage = first.map { $0.examples.count == rowsOnScreen } ?? false
+      owesRestOfPage = first?.cutShort ?? false
     }
     if owesRestOfPage { await loadMore(read: read) }
   }
 
-  func loadMore(read: Read) async {
-    guard hasMore, readingMoreOf != source else { return }
+  func loadMore(read: @escaping Read) async {
+    guard hasMore else { return }
     let (source, from) = (source, examples.count)
-    readingMoreOf = source
-    defer { if readingMoreOf == source { readingMoreOf = nil } }
-    let next = await read(ExampleBatch(from: from))
-    guard !Task.isCancelled, self.source == source, examples.count == from else { return }
+    let underWay = readingMore.flatMap { $0.of == source && $0.from == from ? $0.read : nil }
+    let reading = underWay ?? Task { await read(ExampleBatch(from: from)) }
+    readingMore = (source, from, reading)
+    let next = await reading.value
+    if readingMore?.read == reading { readingMore = nil }
+    guard self.source == source, examples.count == from else { return }
     guard let next, !next.examples.isEmpty else {
       laterReadFailed = true
       return
     }
-    owesRestOfPage = false
+    owesRestOfPage = next.cutShort
     examples += next.examples
     listed = next.listed
   }
