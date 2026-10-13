@@ -82,6 +82,12 @@ each enforces is in [`code.md`](code.md), Checks. It also starts on `merge_group
 `main`'s ruleset requires its `verify` job, the merge queue runs it on the tree that will land;
 a queue run is never cancelled.
 
+The checks' tests include the server's deployer's (`tools/checks/src/deployer/`), which run
+`deploy/deployer.sh` itself against stand-ins for Docker, cosign, Slack, and the journal
+([`deployer-alerts.md`](deployer-alerts.md), Tests). So a change to the deployer is tested on
+every pull request, on the runner's own bash and GNU tools, and they fail there, rather than skip,
+without a bash new enough.
+
 ## Pull request
 
 `.github/workflows/pull-request.yml` holds the three rules about a pull request itself
@@ -147,8 +153,8 @@ the service, the core, what the services share (`packages/node-service/`), its A
 resources (`apps/ios/Modules/Sources/SearchExperience/Resources/`), or `language-data/release.json`
 (the release the service names), and by hand. A new push cancels the pull request's last run. Its
 `scripts` job runs ShellCheck 0.11 on the server's deployer (`deploy/deployer.sh`), in Docker, since
-the runner's own ShellCheck is older; `Repository`'s `pnpm verify` runs ShellCheck on it too, on any
-pull request that changes it. Its `check` job:
+the runner's own ShellCheck is older; `Repository` runs ShellCheck on it too, and its tests, on
+every pull request. Its `check` job:
 
 1. restores and pulls the app's Git LFS files the service reads (the `.sqlite3` files and
    Kuromoji's), then Sudachi's dictionary (`pnpm sudachi`, which keeps a cached copy that matches

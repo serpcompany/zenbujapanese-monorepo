@@ -13,9 +13,9 @@ layers apart. Each part's own doc has the detail; each rule here is enforced by 
 | `apps/account-api` | The account service: Node and Postgres on the same server, for Zenbu accounts, sign-in, and sync (ADR 0013). It signs learners in with Apple, Google, or an emailed code, through Better Auth, and issues the access tokens other services check. | [`docs/agents/account-api.md`](docs/agents/account-api.md) |
 | `packages/dictionary-core` | The shared TypeScript core: search, results, word and kanji detail, and examples. The service and the app both run all of it; the browser extension is to run it too (ADR 0008). | [`docs/agents/dictionary-core.md`](docs/agents/dictionary-core.md) |
 | `packages/node-service` | What the two Node services share: JSON-line logs, the request log, a server that stops cleanly, and the writer of their API references (`docs/api/`). | [`docs/agents/dictionary-api.md`](docs/agents/dictionary-api.md), Code layout |
-| `deploy` | The API servers' deployer, which swaps each service's signed image into its slots. | [`docs/agents/api-servers.md`](docs/agents/api-servers.md) |
+| `deploy` | The API servers' deployer, which swaps each service's signed image into its slots, and can tell a Slack channel what it deployed and what failed. Its tests are in `tools/checks/src/deployer/`. | [`docs/agents/api-servers.md`](docs/agents/api-servers.md), [`docs/agents/deployer-alerts.md`](docs/agents/deployer-alerts.md) |
 | `language-data` | The language-data release: the manifest and the pipeline that packages and publishes the app's data as a versioned artifact (ADR 0006). | [`language-data/README.md`](language-data/README.md) |
-| `tools/checks` | The repository-wide checks behind `pnpm verify`, and the script that hands each checkout its local ports. | [`docs/agents/code.md`](docs/agents/code.md) |
+| `tools/checks` | The repository-wide checks behind `pnpm verify`, the script that hands each checkout its local ports, and the tests of what has no package of its own: the workflows and the server's deployer. | [`docs/agents/code.md`](docs/agents/code.md) |
 
 ## How data moves
 

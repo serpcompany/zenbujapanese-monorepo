@@ -344,10 +344,10 @@ The server's deployer verifies the signature and swaps the image into the enviro
 workflow can do is publish an image and move a tag. The workflow doesn't wait to see the server
 deploy it: Bot Fight Mode on the zone challenges CI runners, both when they ask the service and
 when the website's Worker asks it for them, whatever headers they send, so nothing in CI can see
-which build the service runs. The server's journal says what it deployed, and so do the service's
-`/healthz` and the website's `/dictionary/service.json` in a browser. Nothing confirms staging
-before production either, so with `DEPLOY_PRODUCTION` set to `false`, a person checks staging, then
-runs production by hand.
+which build the service runs. The server's journal says what it deployed, as do its Slack alerts
+once on ([`deployer-alerts.md`](deployer-alerts.md)), the service's `/healthz`, and the website's
+`/dictionary/service.json` in a browser. Nothing confirms staging before production either, so
+with `DEPLOY_PRODUCTION` set to `false`, a person checks staging, then runs production by hand.
 
 The `staging` job signs keylessly: cosign gets a certificate for the run's GitHub identity, which
 names this workflow and the branch it ran from. The `staging` environment only accepts `main`, so
