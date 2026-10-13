@@ -153,13 +153,17 @@ private struct WordDetailObserver {
     -> WordDetailCase.Examples
   {
     let retrieval: EntryExamples
+    let listed: ExamplePage
     do {
       retrieval = try await exampleSentenceClient.entryExamples(entry, 0)
+      listed = try await ExamplePage.every(upTo: limit) {
+        try await exampleSentenceClient.examples(entry, from: $0)
+      }
     } catch {
       return WordDetailCase.Examples(
         listed: 0, reportedCount: nil, truncated: false, error: "\(error)", shown: [])
     }
-    let shown = retrieval.page.examples.prefix(limit).map { example in
+    let shown = listed.examples.prefix(limit).map { example in
       WordDetailCase.Example(
         id: example.id.rawValue,
         japanese: example.sentence.japanese,

@@ -20,6 +20,7 @@ import type {
 } from '@zenbu/dictionary-core/embedded/presentation'
 import type {
   EmbeddedEntryExamples,
+  EmbeddedExample,
   EmbeddedExamplePage
 } from '@zenbu/dictionary-core/embedded/text'
 import { beforeAll, describe, expect, test } from 'vitest'
@@ -66,9 +67,13 @@ describe.runIf(artifactAvailable)('the app’s word and kanji pages on the artif
   })
 
   async function examplesAsRecorded(id: string): Promise<SuiteExamples> {
-    let found: EmbeddedEntryExamples
+    const shown = wordSuite.exampleLimit ?? 0
+    let listed: { first: EmbeddedEntryExamples; examples: EmbeddedExample[] }
     try {
-      found = await app.text<EmbeddedEntryExamples>('entryExamples', { id, from: 0 })
+      listed = await everyPage(
+        from => app.text<EmbeddedEntryExamples>('entryExamples', { id, from }),
+        shown
+      )
     } catch (error) {
       const code = error instanceof Error ? error.message : String(error)
       return {
@@ -78,11 +83,12 @@ describe.runIf(artifactAvailable)('the app’s word and kanji pages on the artif
         shown: []
       }
     }
+    const { first: found, examples } = listed
     return {
       listed: found.listed,
       reportedCount: found.count > 50 ? 'more than 50' : String(found.count),
       truncated: found.truncated,
-      shown: shownAsTheAppLinks(found.examples.slice(0, wordSuite.exampleLimit ?? 0), 'pageWord')
+      shown: shownAsTheAppLinks(examples.slice(0, shown), 'pageWord')
     }
   }
 

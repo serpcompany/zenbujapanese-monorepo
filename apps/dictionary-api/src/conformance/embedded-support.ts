@@ -184,11 +184,12 @@ export function entryAsTheAppReadsIt(db: ArtifactDatabase, id: string): Embedded
 }
 
 export async function everyPage<Page extends EmbeddedExamplePage>(
-  page: (from: number) => Promise<Page>
+  page: (from: number) => Promise<Page>,
+  upTo = Number.POSITIVE_INFINITY
 ): Promise<{ first: Page; examples: EmbeddedExample[] }> {
   const first = await page(0)
   const examples = [...first.examples]
-  while (examples.length < first.listed) {
+  while (examples.length < Math.min(first.listed, upTo)) {
     const next = await page(examples.length)
     if (next.examples.length === 0) throw new Error(`No examples from ${examples.length}`)
     examples.push(...next.examples)

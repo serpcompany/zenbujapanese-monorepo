@@ -18,7 +18,7 @@ const words = (surfaces: readonly string[], entries: Record<string, string> = {}
       : null
   }))
 
-describe('the words a sentence accents for a query (queryScalarRanges, matchesQuery)', () => {
+describe('the words a sentence accents for a query', () => {
   const accented = (text: string, surfaces: readonly string[], query: string) =>
     accentedPositions(text, words(surfaces), { entry: null, query, accent: 'query' })
 
@@ -48,7 +48,7 @@ describe('the words a sentence accents for a query (queryScalarRanges, matchesQu
   })
 })
 
-describe('the words a sentence accents for a page’s entry (isPageWord)', () => {
+describe('the words a sentence accents for a page’s entry', () => {
   const linked = words(['見た', 'から', '見る'], { 見た: 'v1', から: 'p1', 見る: 'v1' })
 
   test('accents each word linked to the entry, however it is written', () => {

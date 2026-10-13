@@ -336,7 +336,7 @@ sentence's words in a Words menu beside it; the website links them inline in the
 is split across two lines (#682).
 
 - Source: `LinkedJapaneseText.swift` and `JapaneseExampleRowContent`'s `.dedicated` presentation
-  in `ExampleSentencesView.swift` (`ExampleSentencesScreen.queryScalarRanges`);
+  in `ExampleSentencesView.swift`; the core's `accentedPositions` (which words are accented);
   `JapaneseTextAnalysisClient.swift`; #462 design (inline links in example sentences; the owner's
   decision on #511 keeps them here).
 - Check: ES `shown[].tokens` (`surface`, `entry`, `candidates`, `queryMatch`) for the first 5

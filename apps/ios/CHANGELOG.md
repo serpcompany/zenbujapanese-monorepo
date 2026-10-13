@@ -50,6 +50,10 @@ All notable user-facing changes to Zenbu Japanese are recorded here.
 
 ### Fixed
 
+- Example sentences appear with their words already linked, with furigana, on Example Sentences,
+  a word's Examples, and a conjugated form's examples; a sentence used to be drawn as plain text
+  and then redrawn at another height. Long lists show 25 sentences and bring more as you scroll,
+  and Example Sentences keeps your place when you come back from a word.
 - A conversation in Translate keeps following the newest line at larger text sizes, and stops
   only when you scroll up; a tall new line used to stop it and show **Jump to Latest** on its own.
 - At larger text sizes, a conversation's controls stay on screen on iPhone, where the pause button

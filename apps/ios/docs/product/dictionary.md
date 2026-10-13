@@ -320,8 +320,8 @@ never drawn as plain text first, and doesn't change height once it is on screen.
 form's examples also show 25 sentences and bring more at the end of the list.
 
 Check: UI `ExampleRowsUITests` (a row of each of the three screens arrives with its linked words
-and keeps its height, with linking slowed so a late link would show, and a word in a form's
-example opens its entry); the recorded suites above, which read the same pages the screens draw.
+and keeps its height, with linking slowed so a late link would show; each list goes on past its
+first 25; a word in a form's example opens its entry); the recorded suites above.
 
 A **Frequency** section lists each enabled dictionary's rank or JLPT level for the word. Selecting a
 row opens that dictionary's details. JLPT levels are presented as unofficial study estimates.
