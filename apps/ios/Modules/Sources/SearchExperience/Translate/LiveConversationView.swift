@@ -9,6 +9,7 @@ struct LiveConversationView: View {
   let words: TranslateWordLinks
   let isOnScreen: Bool
   @State private var isFollowingLatest = true
+  @State private var heldRows = ConversationRowFloor()
   @State private var isConfirmingExit = false
   @State private var wasListeningBeforeExit = false
 
@@ -53,19 +54,23 @@ struct LiveConversationView: View {
   }
 
   private var cards: some View {
-    ScrollViewReader { proxy in
+    let rows = ConversationRow.rows(for: session)
+    let showsPrompt =
+      session.conversation.turns.isEmpty && session.liveSentence == nil && session.isLive
+    let rowCount = rows.count + (showsPrompt ? 1 : 0)
+    let conversation = ObjectIdentifier(session)
+    return ScrollViewReader { proxy in
       List {
-        ForEach(ConversationRow.rows(for: session)) { row in
+        ForEach(rows) { row in
           rowView(row).id(row.id)
         }
-        if session.conversation.turns.isEmpty, session.liveSentence == nil, session.isLive {
+        if showsPrompt {
           emptyPrompt
         }
-        Color.clear
-          .frame(height: 1)
-          .listRowSeparator(.hidden)
-          .listRowBackground(Color.clear)
-          .id(Self.bottomID)
+        ForEach(0..<heldRows.placeholders(for: rowCount, of: conversation), id: \.self) { _ in
+          blankRow
+        }
+        blankRow.id(Self.bottomID)
       }
       .listStyle(.plain)
       .contentMargins(.top, 8, for: .scrollContent)
@@ -75,6 +80,9 @@ struct LiveConversationView: View {
           contentHeight: geometry.contentSize.height)
       } action: { earlier, position in
         isFollowingLatest = position.keepsFollowing(isFollowingLatest, after: earlier)
+      }
+      .onChange(of: rowCount, initial: true) {
+        heldRows.hold(rowCount, of: conversation)
       }
       .onChange(of: contentVersion) {
         guard isFollowingLatest else { return }
@@ -92,6 +100,13 @@ struct LiveConversationView: View {
         }
       }
     }
+  }
+
+  private var blankRow: some View {
+    Color.clear
+      .frame(height: 1)
+      .listRowSeparator(.hidden)
+      .listRowBackground(Color.clear)
   }
 
   @ViewBuilder

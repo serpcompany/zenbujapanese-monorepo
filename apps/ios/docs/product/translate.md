@@ -154,7 +154,8 @@ Check: package `PlayerReadingAidTests` (Translate's furigana is its own setting,
 Check: package `LiveConversationTests`, `BilingualTranscriptMergerTests`, and
 `ConversationPlaybackTests` (cards, provisional translations, long speech, and playback),
 `TranslateChromeLayoutTests` (the session bar), and `ConversationScrollPositionTests` (following
-the newest line until the learner scrolls up); UI `ConversationUITests.testTwoPanesHoldEachLanguage`,
+the newest line until the learner scrolls up; a row taken away leaves a placeholder); UI
+`ConversationUITests.testTwoPanesHoldEachLanguage`, `testAPauseMidSentenceKeepsTheAppOpen`,
 `testAWordsFullEntryShowsTheSessionBarThatReturns`, and `testScrollingBackOffersJumpToLatest`
 (with the largest text, or the Mac's smallest window, so the conversation is taller than the
 screen).
