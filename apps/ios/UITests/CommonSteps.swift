@@ -143,16 +143,19 @@ extension ZenbuUITestCase {
     let area = container ?? app.windows.firstMatch
     _ = element.waitForExistence(timeout: 5)
     for _ in 0..<12 where !isReachable(element, in: app, within: container) {
-      let isAbove = element.exists && element.frame.midY < area.frame.midY
-      if device == .mac {
-        area.scroll(byDeltaX: 0, deltaY: isAbove ? 150 : -150)
-      } else if isAbove {
-        area.swipeDown(velocity: .slow)
-      } else {
-        area.swipeUp(velocity: .slow)
-      }
+      scroll(area, back: element.exists && element.frame.midY < area.frame.midY)
     }
     return waitFor(element)
+  }
+
+  func scroll(_ area: XCUIElement, back: Bool) {
+    if device == .mac {
+      area.scroll(byDeltaX: 0, deltaY: back ? 150 : -150)
+    } else if back {
+      area.swipeDown(velocity: .slow)
+    } else {
+      area.swipeUp(velocity: .slow)
+    }
   }
 
   func shrinkWindow(in app: XCUIApplication) {

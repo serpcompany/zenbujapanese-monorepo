@@ -7,38 +7,36 @@ final class ExampleRowsUITests: ZenbuUITestCase {
   }
 
   private static let laterRows = [22, 25]
-  private var linkingDelay: TimeInterval = 0
+  private static let linkingDelay: TimeInterval = 10
 
   func testAnExampleSentenceArrivesLinkedAndKeepsItsHeight() {
-    let app = launch(slowingLinkingBy: 5)
-    let rows = openMiruExamples(in: app)
-    assertArrivesLinked(rows.row(0), words: rows.words(0), in: app)
+    let app = launchWithSlowLinking()
+    assertArrivesLinked([0], of: openMiruExamples(in: app), in: app)
   }
 
   func testLaterExampleSentencesArriveLinked() {
-    let app = launch(slowingLinkingBy: 10)
-    assertLaterRowsArriveLinked(openMiruExamples(in: app), in: app)
+    let app = launchWithSlowLinking()
+    assertArrivesLinked(Self.laterRows, of: openMiruExamples(in: app), in: app)
   }
 
   func testAWordsExampleArrivesLinkedAndKeepsItsHeight() {
-    let app = launch(slowingLinkingBy: 10)
+    let app = launchWithSlowLinking()
     search("japan", in: app)
     tap(find("result.japan", in: app))
-    let rows = wordExamples(in: app)
-    assertArrivesLinked(reveal(rows.row(0), in: app), words: rows.words(0), in: app)
+    assertArrivesLinked([0], of: wordExamples(in: app), in: app)
   }
 
   func testAWordsLaterExamplesArriveLinked() {
-    let app = launch(slowingLinkingBy: 10)
+    let app = launchWithSlowLinking()
     openTaberu(in: app)
-    assertLaterRowsArriveLinked(wordExamples(in: app), in: app)
+    assertArrivesLinked(Self.laterRows, of: wordExamples(in: app), in: app)
   }
 
   func testAConjugatedFormsExampleArrivesLinkedAndItsWordOpens() {
-    let app = launch(slowingLinkingBy: 5)
+    let app = launchWithSlowLinking()
     let rows = formExamples(of: openAFormOfTaberu(in: app), in: app)
     let explanation = waitFor(firstElement(identifiedBy: "conjugations.explanation.", in: app))
-    assertArrivesLinked(reveal(rows.row(0), in: app), words: rows.words(0), in: app)
+    assertArrivesLinked([0], of: rows, in: app)
     tap(
       app.buttons.matching(
         NSPredicate(
@@ -50,8 +48,9 @@ final class ExampleRowsUITests: ZenbuUITestCase {
   }
 
   func testAConjugatedFormsLaterExamplesArriveLinked() {
-    let app = launch(slowingLinkingBy: 10)
-    assertLaterRowsArriveLinked(formExamples(of: openAFormOfTaberu(in: app), in: app), in: app)
+    let app = launchWithSlowLinking()
+    assertArrivesLinked(
+      Self.laterRows, of: formExamples(of: openAFormOfTaberu(in: app), in: app), in: app)
   }
 
   func testExampleSentencesGoOnPastTheFirstPageAsTheListScrolls() {
@@ -114,9 +113,8 @@ final class ExampleRowsUITests: ZenbuUITestCase {
 
   private static let failLinking = "ZENBU_FAIL_LINKING"
 
-  private func launch(slowingLinkingBy seconds: Int) -> XCUIApplication {
-    linkingDelay = TimeInterval(seconds)
-    return launch(["ZENBU_SLOW_LINKING": "\(seconds)"])
+  private func launchWithSlowLinking() -> XCUIApplication {
+    launch(["ZENBU_SLOW_LINKING": "\(Self.linkingDelay)"])
   }
 
   private func openMiruExamples(in app: XCUIApplication) -> Rows {
@@ -139,36 +137,25 @@ final class ExampleRowsUITests: ZenbuUITestCase {
       words: { ["conjugations.example-token.\(kind).\($0)."] })
   }
 
-  private func waitOutLinking() {
-    RunLoop.current.run(until: Date.now.addingTimeInterval(linkingDelay + 1))
-  }
-
-  private func assertLaterRowsArriveLinked(
-    _ rows: Rows, in app: XCUIApplication, file: StaticString = #filePath, line: UInt = #line
-  ) {
-    reveal(rows.row(0), in: app)
-    waitOutLinking()
-    for number in Self.laterRows {
-      assertArrivesLinked(
-        reveal(rows.row(number), in: app), words: rows.words(number), in: app, file: file,
-        line: line)
-    }
-  }
-
   private func assertArrivesLinked(
-    _ row: XCUIElement, words: [String], in app: XCUIApplication,
+    _ numbers: [Int], of rows: Rows, in app: XCUIApplication,
     file: StaticString = #filePath, line: UInt = #line
   ) {
-    waitFor(row, file: file, line: line)
-    for prefix in words {
-      XCTAssertTrue(
-        firstElement(identifiedBy: prefix, in: app).exists,
-        "the row appeared without \(prefix)", file: file, line: line)
+    for number in numbers {
+      let row = rows.row(number)
+      let deadline = Date.now.addingTimeInterval(Self.patience)
+      while !row.exists, Date.now < deadline { scroll(app.windows.firstMatch, back: false) }
+      XCTAssertTrue(row.exists, "row \(number) never appeared", file: file, line: line)
+      for prefix in rows.words(number) {
+        XCTAssertTrue(
+          firstElement(identifiedBy: prefix, in: app).exists,
+          "row \(number) appeared without \(prefix)", file: file, line: line)
+      }
+      let height = reveal(row, in: app).frame.height
+      RunLoop.current.run(until: Date.now.addingTimeInterval(Self.linkingDelay + 1))
+      XCTAssertEqual(
+        row.frame.height, height, accuracy: 0.5, "row \(number) changed height after it appeared",
+        file: file, line: line)
     }
-    let height = row.frame.height
-    waitOutLinking()
-    XCTAssertEqual(
-      row.frame.height, height, accuracy: 0.5, "the row changed height after it appeared",
-      file: file, line: line)
   }
 }
