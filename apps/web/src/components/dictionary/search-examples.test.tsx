@@ -163,7 +163,17 @@ interface ExampleSearchCase {
   }[]
 }
 
-const renderedQueries = ['見る', '食べた', 'miru', 'eat', 'すし', 't*', '^the', 'qzxvkj']
+const renderedQueries = [
+  '見る',
+  '食べた',
+  'miru',
+  'eat',
+  'startled you',
+  'すし',
+  't*',
+  '^the',
+  'qzxvkj'
+]
 
 const exampleSearchCases = recordedCases<ExampleSearchCase>('example-search.json').filter(
   expected => renderedQueries.includes(expected.query)

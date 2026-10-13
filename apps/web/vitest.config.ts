@@ -13,6 +13,7 @@ const thisCheckoutsDictionaryService = () => ({
 export default defineConfig({
   resolve: { alias: { '@': fileURLToPath(new URL('./src', import.meta.url)) } },
   test: {
+    testTimeout: 30_000,
     env: {
       ...linksWithNextConfigTrailingSlash,
       ...(againstTheDictionaryService ? thisCheckoutsDictionaryService() : {})

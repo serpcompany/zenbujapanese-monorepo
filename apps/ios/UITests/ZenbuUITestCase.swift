@@ -93,7 +93,8 @@ class ZenbuUITestCase: XCTestCase {
   ) -> XCUIElement {
     if !element.waitForExistence(timeout: Self.patience) {
       attachWhatIsOnScreen()
-      XCTFail("\(element) never appeared", file: file, line: line)
+      let stopped = launched?.state == .notRunning ? ": the app is no longer running" : ""
+      XCTFail("\(element) never appeared\(stopped)", file: file, line: line)
     }
     return element
   }

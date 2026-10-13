@@ -23,7 +23,7 @@ these and decodes the answer; [The app's side](#the-apps-side) says which type a
 | `embedded/` | The entry point for a client that runs the core inside a JavaScript engine, as the app does: every answer the app's screens show, as JSON, and the bundle the app loads. | `DictionaryCore`, and the three engines that each own one |
 | `results/` | The results screen: the frequency re-sort, Sort By and Filter, rows, chips, what VoiceOver says, and the Example Sentences, reading-refinement, and kanji rows. | `ResultsScreen` |
 | `detail/` | Word pages, kanji details, and kanji element pages from their rows: furigana, pitch, Frequency Details, conjugations, kanji, elements, share text, and the short gloss under a linked word. Also romaji (`romaji.ts`), a kanji's strokes as the points to draw (`strokes.ts`), whether a string is one kanji, and what a zenbujapanese.com link names (`links.ts`). | `WordPage`, `KanjiPage`, `KanjiElementPage`, `JapaneseRuby`, `FrequencyRow`, `KanjiCharacter`, `KanjiStrokeOrderClient`, `RomajiReadingAidText` |
-| `examples/` | Example linking, inflection grouping, the ranks example retrieval shares, and the tokenizer that splits a sentence into words (`ipadic.ts`, [The tokenizer](#the-tokenizer)). | `DictionaryTextData` |
+| `examples/` | Example linking, inflection grouping, the ranks example retrieval shares, which English words are one word's forms (`english-inflection.ts`), and the tokenizer that splits a sentence into words (`ipadic.ts`, [The tokenizer](#the-tokenizer)). | `DictionaryTextData` |
 | `artifact/` | Reads `LanguageReferenceData.sqlite3` and its packs, checks them, and answers search, word, kanji, example, and sitemap requests (`Dictionary`), and the browse pages' (`DictionaryBrowse`). `embedded/` runs the same queries. | Through `embedded/` |
 | `cards/` | Word cards (`zenbu.word-cards.v1`, [`language-data/word-cards.md`](../../language-data/word-cards.md)): a word as Word Detail shows it, with the JLPT chip and a chip for each of the eight ranked lists, for apps that don't bundle the language data; the word lists that name them; the suite fields a card is checked against; and a segmented text's tokens (`zenbu.segmentation.v1`). `artifact/word-cards.ts` resolves the words and reads the cards, and `segmentText` in `artifact/word-examples.ts` splits and links a text as the example sentences are. | None: the app bundles the data. A card's chip names are `frequencyShortName`'s, as the app's chips are. |
 | `browse/` | What the website's browse pages list: the kana charts, the categories and the labels each matches, the ranked and JLPT lists, the kanji lists, and the service paths the website asks for them. | None: the app has no browse screens. |
@@ -412,16 +412,16 @@ The core answers as the Swift it replaced did, which the suites pin.
   to the entry. A page lists at most 100, and the count is exact up to 50, with 51 meaning more
   (`ExampleSentenceResultCount`).
 - **A query's examples.** An English query matches pairs by its English phrase, Porter-stemmed,
-  and lists them only when some pair holds the exact phrase; anything else matches pairs whose
-  Japanese contains it. FTS4's `offsets()` reports UTF-8 byte offsets, which `example-search.ts`
-  maps to UTF-16 and then grapheme positions. The results' primary entry is highlighted for every
-  search, and its own examples are listed for a romaji or deinflected query.
+  the exact phrase first. Without one, a match needs each word to be the query's in another
+  inflection (`sameWordInAnyForm`), and a `*` query lists none (#428, unlike the Swift). Anything
+  else matches pairs whose Japanese contains it. FTS4's `offsets()` reports UTF-8 byte offsets,
+  which `example-search.ts` maps to UTF-16, then grapheme positions. The results' primary entry is
+  highlighted for every search, and its own examples are listed for a romaji or deinflected query.
 - **A conjugated form's examples** are the sentences the app's search for the form finds,
   normalized (a full-width Ｈ searches English), that contain it as written and in which the
   tokenizer reads it as one word, so 見たかった and 見た目 aren't examples of 見た. The screen accents the
   query as normalized.
-- An example's `pairId` is the artifact's pair ID in hex; the app's ID for the pair is `esp1_` and
-  it.
+- An example's `pairId` is the artifact's pair ID in hex; the app's ID prefixes it with `esp1_`.
 
 ## Artifact
 
