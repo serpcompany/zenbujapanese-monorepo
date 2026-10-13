@@ -624,11 +624,11 @@ answers; [`dictionary-core.md`](dictionary-core.md), The app's side, lists which
   lookups can run while it waits.
 - **Examples arrive linked.** A batch of a screen's examples is one call
   (`DictionaryTextData.resultsExamples`, `entryExamples`, `formExamples`): the sentences from a
-  position to the end of its page of 25, or fewer when the call sets a limit, each with its words
-  linked and the screen's words accented. `ExampleSentenceClient` reads the entries the batch
-  names in one statement before any row is drawn, so a row (`LinkedJapaneseWords`) draws once.
-  `LoadedExamples` asks first for as many rows as fit the window (`ExampleRowsOnScreen`), at once
-  for the rest of that page, and for the next page when the list's end scrolls into view.
+  position to the end of its page of 25, or fewer when the call sets a limit (`cutShort`), each
+  with its words linked and the screen's words accented. `ExampleSentenceClient` reads a batch's
+  entries in one statement before any row is drawn, so a row (`LinkedJapaneseWords`) draws once.
+  `LoadedExamples` asks for the rows that fit the window (`ExampleRowsOnScreen`), at once for the
+  rest of a page cut short, and at the list's end for the next page, in a task its callers share.
 - **Linked words.** Text that isn't the dictionary's (a caption, an image's line, a translated
   sentence) links a row at a time (`LinkedJapaneseText`): `DictionaryTextData.linkedWords` is one
   call for a text, in which the core tokenizes it from the dictionary files the app hands it, looks

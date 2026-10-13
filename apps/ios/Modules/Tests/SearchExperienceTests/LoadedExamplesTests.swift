@@ -157,7 +157,8 @@ struct LoadedExamplesTests {
   }
 
   private func theRestIsReadOnce(
-    leavingTheScreen: Bool, then asking: @escaping @MainActor (LoadedExamples, Listing) async -> Void
+    leavingTheScreen: Bool,
+    whileItIsRead asking: (@MainActor (LoadedExamples, Listing) async -> Void)? = nil
   ) async {
     let miru = Listing("見る", listed: 60)
     let loaded = LoadedExamples()
@@ -165,11 +166,10 @@ struct LoadedExamplesTests {
     let screen = Task { await loaded.load("見る", rowsOnScreen: 8, read: miru.read) }
     await miru.untilHeld(8)
     if leavingTheScreen { screen.cancel() }
-    let again = Task { await asking(loaded, miru) }
-    for _ in 0..<3 { await Task.yield() }
-    miru.answer(8)
+    let answering = Task { miru.answer(8) }
+    await asking?(loaded, miru)
+    await answering.value
     await screen.value
-    await again.value
     #expect(miru.asked == [ExampleBatch(from: 0, limit: 8), ExampleBatch(from: 8)])
     #expect(rows(loaded) == miru.rows(0..<25))
   }
@@ -181,8 +181,13 @@ struct LoadedExamplesTests {
     }
   }
 
-  @Test("rows being read when the screen is left are kept, and the screen has them when it is back")
-  func aReadGoesOnWhenTheScreenIsLeft() async {
+  @Test("rows being read when the screen is left are kept")
+  func aReadIsKeptWhenTheScreenIsLeft() async {
+    await theRestIsReadOnce(leavingTheScreen: true)
+  }
+
+  @Test("a screen left and come back to while its rows are read waits on that read")
+  func aScreenBackWhileItsRowsAreReadWaitsOnThatRead() async {
     await theRestIsReadOnce(leavingTheScreen: true) { loaded, miru in
       await loaded.load("見る", rowsOnScreen: 8, read: miru.read)
     }

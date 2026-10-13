@@ -382,6 +382,9 @@ describe('the embedded text engine', () => {
     expect(await batch(25, 3)).toEqual(rows(25, 28, true))
     expect(await batch(50, 40)).toEqual(rows(50, 60))
     expect(await batch(52, 8)).toEqual(rows(52, 60))
+    expect(await batch(0, 0)).toEqual(rows(0, 25))
+    expect(await batch(0, -1)).toEqual(rows(0, 25))
+    expect(await batch(75)).toEqual({ ids: [], cutShort: false })
   })
 
   test('reads the words and the entries of a batch of examples from the dictionary together', async () => {

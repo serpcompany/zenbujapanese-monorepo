@@ -37,7 +37,7 @@ struct ExamplePage: Sendable {
   let examples: [LinkedExample]
   let listed: Int
   let countText: String?
-  var cutShort = false
+  let cutShort: Bool
 }
 
 struct ExampleBatch: Hashable, Sendable {
