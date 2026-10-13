@@ -10,6 +10,7 @@ final class ExampleRowsUITests: ZenbuUITestCase {
   private static let pastTheFirstScreen = 22
   private static let onTheNextPage = 25
   private static let linkingDelay: TimeInterval = 10
+  private static let heldAnswers: TimeInterval = 3
 
   func testAnExampleSentenceArrivesLinkedAndKeepsItsHeight() {
     let app = launchWithSlowLinking()
@@ -145,9 +146,9 @@ final class ExampleRowsUITests: ZenbuUITestCase {
 
   private func scroll(toward number: Int, of rows: Rows, in app: XCUIApplication) {
     let shown = firstElement(identifiedBy: rows.prefix, in: app)
-    let isPast =
-      shown.exists && (Int(shown.identifier.dropFirst(rows.prefix.count)) ?? number) > number
-    scroll(app.windows.firstMatch, back: isPast)
+    let first = shown.exists ? Int(shown.identifier.dropFirst(rows.prefix.count)) : nil
+    guard first != number else { return }
+    scroll(app.windows.firstMatch, back: first.map { $0 > number } ?? false)
   }
 
   private func assertArrivesLinked(
@@ -155,7 +156,7 @@ final class ExampleRowsUITests: ZenbuUITestCase {
     file: StaticString = #filePath, line: UInt = #line
   ) {
     let row = rows.row(number)
-    let deadline = Date.now.addingTimeInterval(Self.patience)
+    let deadline = Date.now.addingTimeInterval(Self.patience + Self.heldAnswers * Self.linkingDelay)
     while !row.exists, Date.now < deadline { scroll(toward: number, of: rows, in: app) }
     XCTAssertTrue(row.exists, "row \(number) never appeared", file: file, line: line)
     for prefix in rows.words(number) {
