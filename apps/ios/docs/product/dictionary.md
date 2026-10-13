@@ -157,24 +157,24 @@ device. When the query is itself a word (`いって` is 一手), that word stays
 Check: package `JapaneseDeinflectionTests`; the recorded `SearchConformanceTests`.
 
 Changing the enabled dictionaries or their order re-sorts the visible results without searching
-again. If frequency data can't be read, Search still shows every result and says which
-dictionary is unavailable. Results can also offer a Japanese-reading refinement, related
-Example Sentences, discovered words, and a dedicated Kanji result for a single-kanji query. An
-English query's Example Sentences have its words in any form: `startled you` finds "startle you".
-An English sentence that no entry means as a whole lists, as **Discovered Words**, a word for each
-of its words, small ones included: the one that word's own results lead with, with the meaning it
-matched. `where is the bathroom` lists 何処 "where", です "is", その "the", and 風呂 "bathroom". A
-word no entry means lists its base form's word (`rabbits` lists 兎), or nothing (`his`, `ate`).
+again. If frequency data can't be read, Search still shows every result and says which dictionary is
+unavailable. Results can also offer a Japanese-reading refinement, related Example Sentences,
+discovered words, and a dedicated Kanji result for a single-kanji query. An English query's Example
+Sentences have its words in any form: `startled you` finds "startle you". An English sentence that
+no entry means as a whole lists, as **Discovered Words**, a word for each of its words, small ones
+included: the entry its examples agree on (`pen` is ペン, not 書く), else the one its own results lead
+with, with the meaning it matched: `where is the bathroom` lists 何処 "where", です "is", その "the", and
+風呂 "bathroom". A word no entry means lists its base form's word (`rabbits` lists 兎), or none.
 
-Check: package `SearchFrequencyOrchestrationTests` and `ResultsScreenTests` (a dictionary that
-can't be read is named, and the others still order the list); core `detail/frequency.test.ts`
-(the notice's words), `artifact/example-search.test.ts` and `examples/english-inflection.test.ts`
-(which sentences an English query finds), and `search/english-sentence.test.ts` and
-`results/learner.test.ts` (an English sentence's words); the recorded `SearchConformanceTests` and
-`SearchResultsConformanceTests` (the refinement, Example Sentences, and Kanji rows, and four
-English sentences) and `ExampleSearchConformanceTests` (`startled you` and `generously`); UI
-`SearchResultsUITests.testARomajiQueryOffersItsJapaneseReading`,
-`testAWordOffersItsExampleSentences`, `SearchUITests.testAQueryWithNoMatchesSaysSo`,
+Check: package `SearchFrequencyOrchestrationTests` and `ResultsScreenTests` (a dictionary that can't
+be read is named, and the others still order the list); core `detail/frequency.test.ts` (the
+notice's words), `artifact/example-search.test.ts` and `examples/english-inflection.test.ts` (which
+sentences an English query finds), and `search/english-sentence.test.ts`,
+`search/english-word-entries.test.ts`, and `results/learner.test.ts` (an English sentence's words);
+the recorded `SearchConformanceTests` and `SearchResultsConformanceTests` (the refinement, Example
+Sentences, and Kanji rows, and four English sentences) and `ExampleSearchConformanceTests`
+(`startled you` and `generously`); UI `SearchResultsUITests.testAWordOffersItsExampleSentences`,
+`testARomajiQueryOffersItsJapaneseReading`, `SearchUITests.testAQueryWithNoMatchesSaysSo`,
 `testAnEnglishSentenceListsAWordForEachOfItsWordsAndOpensOne`, and
 `testAnEnglishQueryFindsTheExampleSentenceWithItsWordsInAnotherForm`.
 

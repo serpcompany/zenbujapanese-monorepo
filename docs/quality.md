@@ -62,16 +62,17 @@ The app's areas are graded in [`quality-ios.md`](quality-ios.md), and the websit
 | Area | Grade | Graded | Code | Tests | CI before merge | Docs | By hand |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | Language-data pipeline | B | 2026-10-12 | `language-data/pipeline/` | `language-data/pipeline/tests/`: the packager, the publisher against a fake bucket, the schemas, and which changes start the build and release workflows | `Language data build`: the tests, then packaging and validating the release | [`language-data/README.md`](../language-data/README.md), ADR 0006 | `package.py build` and `validate` on a workstation |
-| iOS data tools | B | 2026-10-12 | `apps/ios/Tools/` | `apps/ios/Tools/tests/`: contract tests for the frequency packs, the example word index, compound pitch, the ranked lists, and the JLPT kanji levels, a provenance test that fails when a tool changes without the data it built, and `test_simulator.py` for the script that hands a checkout its Simulator | `iOS` runs the contract tests on pull requests that change `apps/ios`; Ruff lints the tools in `pnpm verify`. `Language data build` checks the pins between the files they write, when those files change | [`apps/ios/Tools/README.md`](../apps/ios/Tools/README.md), [`apps/ios/LanguageData/Sources/README.md`](../apps/ios/LanguageData/Sources/README.md), [`ios.md`](agents/ios.md), [`data-sources.md`](data-sources.md) | `rebuild_language_data.py` rebuilds everything on the pinned Python and runs the contract tests; then re-record the suites on a Mac |
+| iOS data tools | B | 2026-10-12 | `apps/ios/Tools/` | `apps/ios/Tools/tests/`: contract tests for the frequency packs, the example word index, compound pitch, the ranked lists, and the JLPT kanji levels, unit tests for the example word index's rules (`test_example_word_index.py`), a provenance test that fails when a tool changes without the data it built, and `test_simulator.py` for the script that hands a checkout its Simulator | `iOS` runs the contract tests on pull requests that change `apps/ios`; Ruff lints the tools in `pnpm verify`. `Language data build` checks the pins between the files they write, when those files change | [`apps/ios/Tools/README.md`](../apps/ios/Tools/README.md), [`apps/ios/LanguageData/Sources/README.md`](../apps/ios/LanguageData/Sources/README.md), [`ios.md`](agents/ios.md), [`data-sources.md`](data-sources.md) | `rebuild_language_data.py` rebuilds everything on the pinned Python and runs the contract tests; then re-record the suites on a Mac |
 
 - **Language-data pipeline, B.** Every pull request that changes the data or the pipeline
   rebuilds and validates the release. Main gap: publishing has run only against the fake bucket,
   since the `language-data-release` environment has no R2 token, and no client reads a release
   yet (#463, #473).
-- **iOS data tools, B.** The `iOS` workflow runs the four contract tests before merge, and a
-  rebuild is one command, on a pinned Python, from sources archived beside their records. But the
-  importers, such as `apps/ios/Tools/import_jmdict.py`, have no tests of their own. Main gap: an
-  importer change is checked only through the files it writes.
+- **iOS data tools, B.** The `iOS` workflow runs the contract tests before merge, and a rebuild
+  is one command, on a pinned Python, from sources archived beside their records. But only the
+  example word index's importer has tests of its own rules; the others, such as
+  `apps/ios/Tools/import_jmdict.py`, have none. Main gap: a change to one of those is checked only
+  through the files it writes.
 
 ## Delivery
 
