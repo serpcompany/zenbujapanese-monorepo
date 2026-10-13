@@ -4,7 +4,7 @@ type Input = Record<string, unknown>
 
 export const runnerWorkspace = '/home/runner/work/zenbujapanese-monorepo/zenbujapanese-monorepo'
 export const changeFolder = `${runnerWorkspace}/tmp/review-change`
-export const inlineComment = 'mcp__github_inline_comment__create_inline_comment'
+const inlineComment = 'mcp__github_inline_comment__create_inline_comment'
 
 export const called = (id: string, name: string, input: Input = {}) => ({
   type: 'assistant',
@@ -114,7 +114,7 @@ Read 9 of 9 changed files.
 No issue is closed (\`No issue:\` stated in the body).
 `
 
-export const findingOf757 = {
+const findingOf757 = {
   path: 'apps/ios/docs/product/translate.md',
   line: 157,
   confirmed: true,

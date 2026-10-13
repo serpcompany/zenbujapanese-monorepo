@@ -2,10 +2,12 @@ import { spawnSync } from 'node:child_process'
 import { join } from 'node:path'
 import { expect, test } from 'vitest'
 import {
+  closingReferences,
   isConventionalTitle,
   issueRule,
   noIssueReason,
   otherBase,
+  patiently,
   titleRule
 } from '../pull-request.mjs'
 import { root } from './files'
@@ -71,4 +73,32 @@ test('a pull request stacked on another branch is told why GitHub links no issue
   expect(otherBase('main', 'main')).toBe('')
   expect(otherBase(undefined, 'main')).toBe('')
   expect(otherBase('main', undefined)).toBe('')
+})
+
+test('reads the issues a description closes from its closing keywords, each once', () => {
+  expect(
+    closingReferences(
+      'Closes #542\nfixes: #12, Resolved serpcompany/other#7 and closes https://github.com/a/b/issues/9.\nCLOSES #542'
+    )
+  ).toEqual([
+    { repository: '', number: 542 },
+    { repository: '', number: 12 },
+    { repository: 'serpcompany/other', number: 7 },
+    { repository: 'a/b', number: 9 }
+  ])
+  expect(closingReferences('Part of #3, refs #4, encloses #5, and a prefix #6')).toEqual([])
+  expect(closingReferences(undefined)).toEqual([])
+})
+
+test('asks again, after a pause, until there is an answer or the attempts run out', async () => {
+  const answers = ['', '', '#12']
+  const asked: string[] = []
+  const read = () => {
+    asked.push('asked')
+    return answers[asked.length - 1]
+  }
+  expect(await patiently(read, 3, 1)).toBe('#12')
+  expect(asked).toHaveLength(3)
+  expect(await patiently(() => '', 2, 1)).toBe('')
+  expect(await patiently(() => '#7', 3, 1)).toBe('#7')
 })

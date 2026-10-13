@@ -1,3 +1,6 @@
+import { spawnSync } from 'node:child_process'
+import { chmodSync, existsSync, readFileSync, writeFileSync } from 'node:fs'
+import { dirname, join } from 'node:path'
 import { describe, expect, test } from 'vitest'
 import {
   bot,
@@ -15,7 +18,8 @@ import {
   summaryBot,
   workflowPath
 } from './code-review-support'
-import { allowedTools, type Route, readRepositoryFile, readWorkflow, runNodeStep } from './workflow'
+import { scratchFolder } from './scratch'
+import { allowedTools, readRepositoryFile, readWorkflow } from './workflow'
 
 const workflow = readWorkflow(workflowPath)
 const claudeArgs = String(review?.with?.claude_args ?? '')
@@ -72,22 +76,17 @@ describe('the Code review workflow', () => {
     expect(claudeArgs).toContain('--strict-mcp-config')
   })
 
-  test("gives Claude and its subagents the base branch's rules, outside the checkout", () => {
-    for (const step of steps) expect(step.run ?? '').not.toMatch(/>\s*"?CLAUDE\.md/)
-    const rulesIndex = steps.findIndex(step =>
-      step.run?.includes('"$RUNNER_TEMP/review-context.md"')
-    )
-    expect(rulesIndex).toBeGreaterThan(-1)
-    expect(rulesIndex).toBeLessThan(reviewIndex)
-    const rules = steps[rulesIndex]
-    expect(rules.env?.BASE_REF).toBe('${{ github.event.pull_request.base.ref }}')
-    expect(rules.env?.RULES?.split(' ')).toEqual(
+  test("gives Claude and its subagents the base branch's rules, in files outside the checkout", () => {
+    const context = steps.find(step => step.env?.CONTEXT_FILE !== undefined)
+    expect(context?.env?.BASE_REF).toBe('${{ github.event.pull_request.base.ref }}')
+    expect(context?.env?.RULES?.split(' ')).toEqual(
       expect.arrayContaining(['AGENTS.md', 'ARCHITECTURE.md', 'docs/agents/code.md', 'CONTEXT.md'])
     )
-    expect(rules.run).toContain('git show "FETCH_HEAD:$file"')
-    for (const flag of ['--append-system-prompt-file', '--append-subagent-system-prompt-file']) {
-      expect(claudeArgs).toContain(`${flag} \${{ runner.temp }}/review-context.md`)
-    }
+    expect(steps.indexOf(context ?? {})).toBeLessThan(reviewIndex)
+    expect(claudeArgs).toContain('--append-system-prompt-file ${{ runner.temp }}/review-context.md')
+    expect(claudeArgs).toContain(
+      '--append-subagent-system-prompt-file ${{ runner.temp }}/review-reviewers-context.md'
+    )
   })
 
   test('checks afterwards that a review ran and was posted, from when it started', () => {
@@ -108,51 +107,105 @@ describe('the Code review workflow', () => {
   })
 })
 
+describe("the review's scripts", () => {
+  const take = steps.find(step => step.run?.includes('"$RUNNER_TEMP/review-scripts/$script"'))
+  const scripts = String(take?.env?.SCRIPTS).split(' ')
+
+  test("are the default branch's copies, fetched through the API before the review", () => {
+    expect(take?.env).toEqual({
+      DEFAULT_BRANCH: '${{ github.event.repository.default_branch }}',
+      GH_TOKEN: '${{ github.token }}',
+      SCRIPTS: 'review-context.mjs review-change.mjs pull-request.mjs'
+    })
+    expect(take?.run).toContain(
+      'gh api "repos/$GITHUB_REPOSITORY/contents/tools/checks/$script?ref=$DEFAULT_BRANCH"'
+    )
+    expect(steps.indexOf(take ?? {})).toBeLessThan(reviewIndex)
+    for (const step of steps) {
+      expect(step.run ?? '').not.toMatch(/node (?!"\$RUNNER_TEMP\/review-scripts\/)/)
+    }
+  })
+
+  test('are every file they import from each other', () => {
+    for (const script of scripts) {
+      const imported = [
+        ...readRepositoryFile(`tools/checks/${script}`).matchAll(/from '\.\/([^']+)'/g)
+      ].map(found => found[1])
+      expect(scripts, script).toEqual(expect.arrayContaining(imported))
+    }
+  })
+
+  test("don't run after Claude, which could have rewritten them", () => {
+    for (const step of steps.slice(reviewIndex)) {
+      expect(step.run ?? '').not.toMatch(/review-scripts|\bgit /)
+    }
+  })
+})
+
 describe('a pull request that changes the review workflow', () => {
   const [find] = workflow.jobs.changes.steps ?? []
-  const workflowRef = `${repository}/${workflowPath}@refs/pull/${pr}/merge`
+  const jq = (process.env.PATH ?? '').split(':').some(folder => existsSync(join(folder, 'jq')))
+  const standInForGh = `#!/usr/bin/env node
+const { readFileSync, writeFileSync } = require('node:fs')
+const { spawnSync } = require('node:child_process')
+const asked = process.argv.slice(2)
+const state = JSON.parse(readFileSync(process.env.GH_STATE, 'utf8'))
+state.asked.push(asked.join(' '))
+const refused = state.refusals > 0
+if (refused) state.refusals -= 1
+writeFileSync(process.env.GH_STATE, JSON.stringify(state))
+if (refused) {
+  console.error('gh: Bad Gateway (HTTP 502)')
+  process.exit(1)
+}
+for (const page of state.pages) {
+  const filtered = spawnSync('jq', ['-r', asked[asked.indexOf('--jq') + 1]], {
+    input: JSON.stringify(page),
+    encoding: 'utf8'
+  })
+  process.stdout.write(filtered.stdout)
+}
+`
   const page = (...names: string[]) => names.map(filename => ({ filename, status: 'modified' }))
-  const filesOn =
-    (pages: Record<string, unknown>[][]): Route =>
-    url => {
-      if (url.pathname !== `/repos/${repository}/pulls/${pr}/files`) return undefined
-      const number = Number(url.searchParams.get('page') ?? '1')
-      const nextPage =
-        number < pages.length ? `${url.pathname}?per_page=100&page=${number + 1}` : undefined
-      return { status: 200, body: pages[number - 1], nextPage }
-    }
-  const findOut = async (route: Route) => {
-    const run = await runNodeStep(
-      find,
-      {
+  const findOut = (pages: Record<string, unknown>[][], refusals = 0) => {
+    const folder = scratchFolder('stand-in-gh')
+    const state = join(folder, 'state.json')
+    const output = join(folder, 'output.txt')
+    writeFileSync(join(folder, 'gh'), standInForGh)
+    chmodSync(join(folder, 'gh'), 0o755)
+    writeFileSync(state, JSON.stringify({ pages, refusals, asked: [] }))
+    writeFileSync(output, '')
+    const run = spawnSync('bash', ['-e', '-c', find.run ?? ''], {
+      encoding: 'utf8',
+      env: {
+        PATH: `${folder}:${dirname(process.execPath)}:${process.env.PATH ?? ''}`,
+        GH_STATE: state,
+        GITHUB_OUTPUT: output,
         GITHUB_REPOSITORY: repository,
-        GITHUB_WORKFLOW_REF: workflowRef,
-        PR_NUMBER: pr,
-        GITHUB_OUTPUT: 'output.txt'
-      },
-      route,
-      { 'output.txt': '' }
-    )
-    return { ...run, outputs: run.files['output.txt'] }
+        GITHUB_WORKFLOW_REF: `${repository}/${workflowPath}@refs/pull/${pr}/merge`,
+        PR_NUMBER: pr
+      }
+    })
+    const { asked } = JSON.parse(readFileSync(state, 'utf8')) as { asked: string[] }
+    return { status: run.status, output: run.stdout, outputs: readFileSync(output, 'utf8'), asked }
   }
 
-  test('is found by a first job that reads the file list and checks nothing out', () => {
+  test('is found by a first job that reads the file list, checks nothing out, and runs no script', () => {
     expect(Object.keys(workflow.jobs)).toEqual(['changes', 'review'])
     const { changes } = workflow.jobs
     expect(changes.if).toBe(
       "${{ !github.event.pull_request.draft && github.event.pull_request.user.type != 'Bot' }}"
     )
     expect(changes.permissions).toEqual({ 'pull-requests': 'read' })
+    expect(changes.outputs).toEqual({ reviewable: '${{ steps.files.outputs.reviewable }}' })
     expect(changes.steps).toHaveLength(1)
+    expect(find.id).toBe('files')
     expect(find.uses).toBeUndefined()
-    expect(find.shell).toBe('node {0}')
+    expect(find.run).not.toMatch(/\bnode\b|review-scripts/)
     expect(find.env).toEqual({
-      GITHUB_TOKEN: '${{ github.token }}',
+      GH_TOKEN: '${{ github.token }}',
       PR_NUMBER: '${{ github.event.pull_request.number }}'
     })
-    expect(readRepositoryFile(workflowPath)).toContain(
-      'reviewable: ${{ steps.files.outputs.reviewable }}'
-    )
   })
 
   test('is skipped by the review job, not failed by it', () => {
@@ -160,15 +213,15 @@ describe('a pull request that changes the review workflow', () => {
     expect(workflow.jobs.review.if).toBe("needs.changes.outputs.reviewable == 'true'")
   })
 
-  test.each([
+  test.runIf(jq).each<[string, Record<string, unknown>[][]]>([
     ['changes it', [page('docs/a.md', workflowPath)]],
     ['changes it on a later page of files', [page('docs/a.md'), page(workflowPath)]],
     [
       'renames it',
       [[{ filename: '.github/workflows/review.yml', previous_filename: workflowPath }]]
     ]
-  ])('gets no review and a notice saying a person reviews it, when it %s', async (_, pages) => {
-    const { status, output, outputs } = await findOut(filesOn(pages))
+  ])('gets no review and a notice saying a person reviews it, when it %s', (_, pages) => {
+    const { status, output, outputs, asked } = findOut(pages)
     expect(status).toBe(0)
     expect(outputs).toBe('reviewable=false\n')
     expect(output).toContain("::notice title=Claude doesn't review this pull request::")
@@ -176,23 +229,34 @@ describe('a pull request that changes the review workflow', () => {
       `This pull request changes ${workflowPath}, and Claude's review can't run on a pull request that changes the review workflow`
     )
     expect(output).toContain('A person reviews this pull request')
+    expect(asked).toEqual([
+      `api repos/${repository}/pulls/${pr}/files --paginate --jq .[] | .filename, (.previous_filename // empty)`
+    ])
   })
 
-  test('is told apart from one that leaves the workflow alone, which is reviewed', async () => {
-    const { status, output, outputs, requests } = await findOut(
-      filesOn([page('docs/a.md', '.github/workflows/web.yml'), page('apps/web/worker.ts')])
-    )
-    expect(status).toBe(0)
-    expect(outputs).toBe('reviewable=true\n')
-    expect(output).not.toContain('::notice')
-    expect(requests).toHaveLength(2)
-  })
+  test.runIf(jq)(
+    'is told apart from one that leaves the workflow alone, or only names it inside another path',
+    () => {
+      const { status, output, outputs } = findOut([
+        page('docs/a.md', '.github/workflows/web.yml'),
+        page(`docs/${workflowPath}`, `${workflowPath}.md`)
+      ])
+      expect(status).toBe(0)
+      expect(outputs).toBe('reviewable=true\n')
+      expect(output).not.toContain('::notice')
+    }
+  )
 
-  test("fails when the pull request's files can't be read", async () => {
-    const { status, output, outputs } = await findOut(() => ({ status: 403, body: {} }))
-    expect(status).not.toBe(0)
-    expect(output).toContain('::error')
-    expect(outputs).toBe('')
+  test.runIf(jq)('asks again when GitHub fails, and fails after three tries', () => {
+    const once = findOut([page(workflowPath)], 1)
+    expect(once.status).toBe(0)
+    expect(once.outputs).toBe('reviewable=false\n')
+    expect(once.asked).toHaveLength(2)
+    const always = findOut([page('docs/a.md')], 3)
+    expect(always.status).not.toBe(0)
+    expect(always.output).toContain("::error title=Couldn't read the pull request's files::")
+    expect(always.outputs).toBe('')
+    expect(always.asked).toHaveLength(3)
   })
 })
 
@@ -248,13 +312,28 @@ describe("the review's summary", () => {
     )
   })
 
-  test.each([
-    ['without its heading', 'Reviewed abc1234.\n\nNo new findings.', "doesn't start with"],
-    ['too long for a comment', `${summaryBody.body}\n${'x'.repeat(60_001)}`, '60000']
-  ])('refuses a summary %s, and posts nothing', async (_, file, message) => {
-    const { status, output, requests } = await postSummary(file, { id: '99' })
+  test('gives a summary the heading it lacks, which is how the next review finds it', async () => {
+    const problem = 'Incomplete: this review did not say how many of the changed files it read.'
+    const headless = 'Reviewed abc1234.\n\nNo new findings.'
+    const { status, output, requests } = await postSummary(headless, {
+      id: '99',
+      status: 200,
+      problem
+    })
+    expect(status).toBe(0)
+    expect(output).toContain('::warning title=The summary had no heading::')
+    expect(JSON.parse(requests[0].body).body).toBe(
+      `## Claude review\n\n**${problem}**\n\n${headless}`
+    )
+  })
+
+  test('refuses a summary too long for a comment, and posts nothing', async () => {
+    const { status, output, requests } = await postSummary(
+      `${summaryBody.body}\n${'x'.repeat(60_001)}`,
+      { id: '99' }
+    )
     expect(status).not.toBe(0)
-    expect(output).toContain(message)
+    expect(output).toContain('60000')
     expect(requests).toEqual([])
   })
 

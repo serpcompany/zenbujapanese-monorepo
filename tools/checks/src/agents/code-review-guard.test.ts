@@ -113,12 +113,44 @@ describe("the review's guard", () => {
     expect(output).toContain('Claude posted findings but no summary')
   })
 
-  test('reads the second attempt when there was one, and says when it failed before Claude ran', async () => {
-    const passed = await runGuard(cleanLog, summaryPosted('Read 4 of 4 changed files.'), 'success')
-    expect(passed.status).toBe(0)
-    const failed = await runGuard(undefined, summaryPosted('Read 4 of 4 changed files.'), 'failure')
-    expect(failed.status).not.toBe(0)
-    expect(failed.output).toContain('failed before Claude ran')
+  test('reads the log the second attempt left, when there was one', async () => {
+    const second = result({ num_turns: 31, total_cost_usd: 3.1 })
+    const { status, output } = await runGuard(
+      [second],
+      summaryPosted('Read 4 of 4 changed files.'),
+      'success'
+    )
+    expect(output).toContain('Claude review, second attempt: 31 turns')
+    expect(output).toContain('about $3.10')
+    expect(status).toBe(0)
+  })
+
+  test.each<[string, unknown, string]>([
+    [
+      'ended in an error',
+      [result({ is_error: true, result: "You've hit your usage limit." })],
+      "The review ended in an error: You've hit your usage limit."
+    ],
+    ['failed before Claude ran', undefined, 'failed before Claude ran']
+  ])('fails when the second attempt %s and no summary was posted', async (_, log, message) => {
+    const { status, output } = await runGuard(log, {}, 'failure')
+    expect(status).not.toBe(0)
+    expect(output).toContain(
+      "The second attempt at the review didn't finish, and no summary was posted."
+    )
+    expect(output).toContain(message)
+  })
+
+  test("passes with a warning when the second attempt failed and the first attempt's summary was posted", async () => {
+    const { status, output } = await runGuard(
+      [result({ is_error: true, result: "You've hit your usage limit." })],
+      summaryPosted('Read 2 of 61 changed files.\nNot read: the rest.'),
+      'failure'
+    )
+    expect(output).not.toContain('::error')
+    expect(output).toContain("::warning title=The second attempt at the review didn't finish::")
+    expect(output).toContain("You've hit your usage limit.")
+    expect(status).toBe(0)
   })
 
   test('says no review happened when the action ran nothing', async () => {

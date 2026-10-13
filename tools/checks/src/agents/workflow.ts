@@ -16,6 +16,7 @@ export interface Step {
   run?: string
   env?: Record<string, string>
   with?: Record<string, unknown>
+  'continue-on-error'?: boolean
 }
 
 interface Job {
@@ -24,6 +25,7 @@ interface Job {
   concurrency?: { group: string; 'cancel-in-progress'?: boolean }
   'timeout-minutes'?: number
   permissions?: Record<string, string>
+  outputs?: Record<string, string>
   env?: Record<string, string>
   steps?: Step[]
 }
@@ -97,8 +99,11 @@ export function guardAfter(steps: readonly Step[], claude: Step): { step: Step; 
 
 export type Route = (
   url: URL,
-  method: string
-) => { status: number; body: unknown; nextPage?: string } | undefined
+  method: string,
+  sent: string
+) => { status: number; body: unknown; text?: string; nextPage?: string } | undefined
+
+export type Script = { name: string; text: string } | { path: string; arguments?: string[] }
 
 interface SentRequest {
   method: string
@@ -122,7 +127,7 @@ export function runNodeStep(
 }
 
 export async function runNodeScript(
-  script: { name: string; text: string },
+  script: Script,
   env: Record<string, string>,
   route: Route,
   files: Record<string, string> = {}
@@ -138,12 +143,12 @@ export async function runNodeScript(
       const url = new URL(request.url ?? '/', 'http://localhost')
       const method = request.method ?? 'GET'
       requests.push({ method, path: url.pathname, body })
-      const answer = route(url, method) ?? { status: 404, body: { message: 'Not Found' } }
+      const answer = route(url, method, body) ?? { status: 404, body: { message: 'Not Found' } }
       const link = answer.nextPage
         ? { link: `<http://${request.headers.host}${answer.nextPage}>; rel="next"` }
         : {}
       response.writeHead(answer.status, { 'content-type': 'application/json', ...link })
-      response.end(JSON.stringify(answer.body))
+      response.end(answer.text ?? JSON.stringify(answer.body))
     })
   })
   await new Promise<void>(resolve => server.listen(0, '127.0.0.1', resolve))
@@ -155,12 +160,15 @@ export async function runNodeScript(
         return [name, path]
       })
     )
-    const scriptPath = join(workDir, script.name)
-    writeFileSync(scriptPath, script.text)
+    const command = 'path' in script ? [join(root, script.path), ...(script.arguments ?? [])] : []
+    if ('text' in script) {
+      command.push(join(workDir, script.name))
+      writeFileSync(command[0], script.text)
+    }
     const resolved = Object.fromEntries(
       Object.entries(env).map(([name, value]) => [name, paths[value] ?? value])
     )
-    const child = spawn(process.execPath, [scriptPath], {
+    const child = spawn(process.execPath, command, {
       env: {
         ...process.env,
         GITHUB_API_URL: `http://127.0.0.1:${(server.address() as AddressInfo).port}`,
