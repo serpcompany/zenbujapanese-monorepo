@@ -143,9 +143,10 @@ Check: package `PlayerReadingAidTests` (Translate's furigana is its own setting,
   order, starting about 2 seconds after the speaker stops: each sentence plays as soon as its own
   translation is ready, so a long monologue doesn't wait for the whole of it. A turn that runs for
   30 seconds without a pause plays what's waiting anyway.
-- **Scrolling.** The list follows the newest text, however tall a new line is at the learner's
-  text size. Only scrolling up stops following and shows **Jump to Latest**, which returns to the
-  newest line and follows it again.
+- **Scrolling.** The list follows the newest text, however tall a new line is at the learner's text
+  size. Only scrolling up stops following and shows **Jump to Latest**, which returns to the newest
+  line and follows it again. A pause made mid-sentence leaves a blank row's height of space below
+  the last card until the next sentence starts.
 - **Elsewhere in the app.** On a word's full entry opened from the conversation, where the tab
   bar is back, a full-width bar above the tab bar shows the timer and button with a status line,
   reading **Conversation still listening · Return** or **Conversation paused · Return** on other
@@ -154,7 +155,8 @@ Check: package `PlayerReadingAidTests` (Translate's furigana is its own setting,
 Check: package `LiveConversationTests`, `BilingualTranscriptMergerTests`, and
 `ConversationPlaybackTests` (cards, provisional translations, long speech, and playback),
 `TranslateChromeLayoutTests` (the session bar), and `ConversationScrollPositionTests` (following
-the newest line until the learner scrolls up); UI `ConversationUITests.testTwoPanesHoldEachLanguage`,
+the newest line until the learner scrolls up; a row taken away leaves a placeholder); UI
+`ConversationUITests.testTwoPanesHoldEachLanguage`, `testAPauseMidSentenceKeepsTheAppOpen`,
 `testAWordsFullEntryShowsTheSessionBarThatReturns`, and `testScrollingBackOffersJumpToLatest`
 (with the largest text, or the Mac's smallest window, so the conversation is taller than the
 screen).
@@ -204,8 +206,8 @@ button that plays its translation again, at the conversation's speech speed, and
 Check: package `ConversationHistoryTests` and `ConversationWordsTests`; UI
 `ConversationUITests.testABookmarkedSentenceIsListedUnderBookmarked`,
 `ConversationUITests.testADeletedConversationLeavesTranslations` (long-press, or right-click on the
-Mac, then Delete, which asks first),
-`TranslateUITests.testTranslationsStartsEmpty`, and `AccountUITests.testTranslationsAndCreditsOpenFromAccount`.
+Mac, then Delete, which asks first), `TranslateUITests.testTranslationsStartsEmpty`, and
+`AccountUITests.testTranslationsAndCreditsOpenFromAccount`.
 
 A conversation is saved after every translated sentence, so closing the app loses nothing; **Exit
 Without Saving** deletes it. Conversations are stored only on the device, one file each, and never
