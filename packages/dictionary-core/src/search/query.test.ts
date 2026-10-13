@@ -51,9 +51,65 @@ describe('normalizeQuery', () => {
     expect(normalizeQuery('あ゛')).toBe('あ')
   })
 
-  test('splits words where Swift does, by grapheme', () => {
-    expect(normalizeQuery('eat\u0085now')).toBe('eat now')
-    expect(normalizeQuery('﻿taberu')).toBe('﻿taberu')
+  test('separates words at white space and at U+FEFF', () => {
+    expect(normalizeQuery('eat\u{85}now')).toBe('eat now')
+    expect(normalizeQuery('eat\u{FEFF}now')).toBe('eat now')
+    expect(normalizeQuery('\u{FEFF}taberu\u{FEFF}')).toBe('taberu')
+    expect(normalizeQuery('\u{FEFF}')).toBe('')
+  })
+
+  test('drops a combining mark with the separator before it, whichever separator that is', () => {
+    expect(normalizeQuery('eat \u{301}now')).toBe('eat now')
+    expect(normalizeQuery('eat\t\u{301}now')).toBe('eat now')
+    expect(normalizeQuery('eat\n\u{3099}now')).toBe('eat now')
+    expect(normalizeQuery('eat\u{85}\u{301}now')).toBe('eat now')
+    expect(normalizeQuery('eat\u{FEFF}\u{301}now')).toBe('eat now')
+    expect(normalizeQuery('\t\u{301}now')).toBe('now')
+    expect(normalizeQuery('\u{301}now')).toBe('\u{301}now')
+  })
+
+  test('separates at a space after a prepended mark, leaving none at an end or doubled', () => {
+    expect(normalizeQuery('\u{600} ')).toBe('\u{600}')
+    expect(normalizeQuery('a\u{600}  b')).toBe('a\u{600} b')
+    expect(normalizeQuery('a\u{600} \u{301}b')).toBe('a\u{600} b')
+  })
+})
+
+describe('normalizeQuery, on every pairing of separators, marks, and letters', () => {
+  const basicPlane = Array.from({ length: 0x10000 }, (_, unit) => String.fromCharCode(unit))
+  const whiteSpace = basicPlane.filter(character => /\p{White_Space}/u.test(character))
+  const foldedToASpaceAndAMark = basicPlane.filter(character =>
+    /^ \p{M}/u.test(character.normalize('NFKC'))
+  )
+  const marks = ['\u{301}', '\u{3099}', '\u{903}', '\u{200D}', '\u{FE0F}', '\u{1F3FB}']
+  const characters = [
+    ...whiteSpace,
+    ...foldedToASpaceAndAMark,
+    '\u{FEFF}',
+    '\u{600}',
+    ...marks,
+    'a',
+    'あ'
+  ]
+  const pairings = characters.flatMap(first => characters.map(second => first + second))
+  const queries = pairings.flatMap(pair => [pair, `a${pair}`, `${pair}b`, `a${pair}b`])
+  const separator = /[\p{White_Space}\u{FEFF}]/u
+  const isWordsJoinedBySingleSpaces = (query: string) =>
+    query === '' || query.split(' ').every(word => word !== '' && !separator.test(word))
+
+  test('covers every white-space character and every character NFKC folds to a spaced mark', () => {
+    expect(whiteSpace).toHaveLength(25)
+    expect(foldedToASpaceAndAMark).toHaveLength(50)
+  })
+
+  test('returns its own answer unchanged', () => {
+    expect(
+      queries.filter(raw => normalizeQuery(normalizeQuery(raw)) !== normalizeQuery(raw))
+    ).toEqual([])
+  })
+
+  test('joins words with one space each, and leaves no other separator', () => {
+    expect(queries.filter(raw => !isWordsJoinedBySingleSpaces(normalizeQuery(raw)))).toEqual([])
   })
 })
 

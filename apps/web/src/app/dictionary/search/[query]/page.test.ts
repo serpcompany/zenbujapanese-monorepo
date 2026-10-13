@@ -54,15 +54,16 @@ const queriesWhoseUrlNeverMoved: [name: string, typed: string, searched: string]
   ['a carriage return and a newline', ' eat\r\nnow\n', 'eat now'],
   ['an ideographic space between words', '食べ\u{3000}る', '食べ る'],
   ['ideographic spaces around a word', '\u{3000}大丈夫\u{3000}', '大丈夫'],
-  ['a no-break space', 'eat\u{A0}now', 'eat now']
+  ['a no-break space', 'eat\u{A0}now', 'eat now'],
+  ['U+FEFF around a word', '\u{FEFF}taberu\u{FEFF}', 'taberu'],
+  ['U+FEFF between words', 'eat\u{FEFF}now', 'eat now']
 ]
 
 const queriesTheWebsiteNormalizedItsOwnWay: [name: string, typed: string, searched: string][] = [
-  ['U+FEFF before a word, which is no whitespace', '\u{FEFF}taberu', '\u{FEFF}taberu'],
-  ['U+FEFF between words', 'eat\u{FEFF}now', 'eat\u{FEFF}now'],
-  ['U+0085 between words, which is whitespace', 'eat\u{85}now', 'eat now'],
+  ['U+0085 between words, which is white space', 'eat\u{85}now', 'eat now'],
   ['U+0085 before a word', '\u{85}taberu', 'taberu'],
   ['a space carrying a combining mark', 'eat \u{301}now', 'eat now'],
+  ['a tab carrying a combining mark', 'eat\t\u{301}now', 'eat now'],
   ['a spacing voiced mark, which folds to a space and a mark', 'あ\u{309B}', 'あ'],
   ['an acute accent typed as an apostrophe, which folds likewise', 'don\u{B4}t', 'don t']
 ]
@@ -80,5 +81,12 @@ describe('a search lives at the query the core searches', () => {
     expect(await redirectOf(generateMetadata(decodedSegment(typed)))).toBe(typedUrlRedirectsTo)
     expect(await redirectOf(SearchResultsPage(encodedSegment(searched)))).toBeNull()
     expect((await generateMetadata(decodedSegment(searched))).alternates?.canonical).toBe(url)
+  })
+
+  test('a query of nothing but separators is no search', async () => {
+    expect(await redirectOf(SearchIndexPage(searchBox('\u{FEFF} \u{85}')))).toBeNull()
+    expect(await redirectOf(SearchResultsPage(encodedSegment('\u{FEFF} \u{85}')))).toBe(
+      '/dictionary/search/'
+    )
   })
 })
