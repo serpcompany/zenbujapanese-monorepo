@@ -126,10 +126,10 @@ Check: package `SearchResultOrderingTests` and `EnglishSearchCommonWordTests`; t
 `SearchResultsConformanceTests`.
 
 Each row shows compact chips such as `JLPT N3` or `YouTube 812`: one for the first enabled
-dictionary, which orders the results (a dash when it doesn't rank the word), then one for each
-other dictionary that ranks it. While Search is sorted by a dictionary (below), that
-dictionary takes the first chip's place. JLPT shows only when it lists the word. At accessibility text
-sizes, only the first dictionary's chip shows, followed by a count of the rest.
+dictionary, which orders the results (a dash when it doesn't rank the word), then one for each other
+dictionary that ranks it. While Search is sorted by a dictionary (below), that dictionary takes the
+first chip's place. JLPT shows only when it lists the word. At accessibility text sizes, only the
+first dictionary's chip shows, followed by a count of the rest.
 
 Check: core `detail/frequency.test.ts` (which chips show, and in what order) and
 `results/learner.test.ts` (the sorted dictionary's chip first); package `ResultsScreenTests` (the
@@ -164,7 +164,8 @@ Sentences have its words in any form: `startled you` finds "startle you". An Eng
 no entry means as a whole lists, as **Discovered Words**, a word for each of its words but `a`,
 `an`, `the`, `of`, `to`, and `will`: `where is the bathroom` lists 何処, です, and 風呂. Twelve list a
 fixed one, the rest the one their examples use (`pen` is ペン, not 書く; `station` 駅) or the one their
-results lead with: [rules](../../../../docs/agents/english-sentence-search.md).
+results lead with: [rules](../../../../docs/agents/english-sentence-search.md). It reads a word at a
+time, with no translator (#760).
 
 Check: package `SearchFrequencyOrchestrationTests` and `ResultsScreenTests` (a dictionary that can't
 be read is named, and the rest still order the list); core `detail/frequency.test.ts` (the notice's

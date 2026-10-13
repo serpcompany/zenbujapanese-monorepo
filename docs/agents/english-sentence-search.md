@@ -16,6 +16,28 @@ answers the app recorded.
 | `packages/dictionary-core/src/examples/english-inflection.ts` | `irregularBaseFormsOf` and `baseFormsOf`: a word's base forms, and which of a base's entries are the word's |
 | `packages/dictionary-core/src/results/results.ts` | `discoveredWords`: of the entries a word brings, the one listed |
 
+## A light, offline version
+
+This search reads a sentence one word at a time, from the dictionary and its example sentences.
+It needs no translator, runs offline, and lists the same words on the website and in the apps.
+It cannot use the sentence around a word: `getting` in "getting colder" is looked up as if it
+stood alone ([What it still gets wrong](#what-it-still-gets-wrong)).
+
+Translating the sentence and listing the Japanese sentence's words, as Search already does for
+Japanese, would replace the rules below: a translator reads the whole sentence. Translating takes
+a trained model, too large and too slow to run inside the core, so a host would supply it, as a
+host supplies the analyzer. #760 asks which of these to build:
+
+- **Stay with this version.** Nothing to add, and its limits stay.
+- **Each client's own model:** Apple's translation model in the apps, and for the website a model
+  run on the API host beside the dictionary service. The apps stay local-first. The same sentence
+  can list different words in an app and on the website.
+- **One hosted model for every client:** the apps ask the API host too. The words are the same
+  everywhere, and an English sentence then needs a connection, which the apps' local-first design
+  is there to avoid.
+
+In either of the last two, this version stays as what a client lists with no model at hand.
+
 ## A sentence
 
 A query is read as a sentence only when its own search finds nothing. `ice cream` is searched as

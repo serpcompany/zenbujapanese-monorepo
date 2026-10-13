@@ -100,15 +100,16 @@ only a form's or meaning's first word, as in the app. It lists at most 60 words,
 **Sentence search.** A Japanese sentence that isn't a word the dictionary holds, such as 日本語を勉強する,
 lists its Discovered Words: each word the app's Sudachi finds in it, in order, as the app does with
 its Japanese Text Analysis pack. The dictionary service runs the same Sudachi, with the dictionary
-the app pins. An English sentence that no entry means as a whole lists them too, with no analyzer:
-for each word, the entry its examples use (`home` is 家, not 家庭; `saw` 見る, not 鋸; `station` 駅), else
-the one its own results lead with among the entries with a meaning that is the word ("to go"); its
-row shows that meaning. `a`, `an`, `the`, `of`, `to`, and `will` list nothing, and twelve list a
-fixed entry: `am`, `is`, `are` です; `was`, `were` だった; `it` それ; `not` ない; `can` 出来る; `never` 決して;
-`do`, `does`, `did` する. `where is the bathroom` lists 何処 "where", です "is", and 風呂 "bathroom". A word
-neither settles takes its base form's (`rabbits` 兎; `incoming`, no verb's form, none). A word two of
-them lead with is listed once; entries for one word alone, or a query with `*` or `^`, list nothing.
-Search looks up a sentence's first 24 words and lists at most 12.
+the app pins. An English sentence that no entry means as a whole lists them too, a word at a time,
+with no analyzer or translator (#760): for each word, the entry its examples use (`home` is 家, not
+家庭; `saw` 見る, not 鋸; `station` 駅), else the one its own results lead with among the entries with a
+meaning that is the word ("to go"); its row shows that meaning. `a`, `an`, `the`, `of`, `to`, and
+`will` list nothing, and twelve list a fixed entry: `am`, `is`, `are` です; `was`, `were` だった; `it`
+それ; `not` ない; `can` 出来る; `never` 決して; `do`, `does`, `did` する. `where is the bathroom` lists 何処
+"where", です "is", and 風呂 "bathroom". A word neither settles takes its base form's (`rabbits` 兎;
+`incoming`, no verb's form, none). A word two of them lead with is listed once; entries for one word
+alone, or a query with `*` or `^`, list nothing. Search looks up a sentence's first 24 words and
+lists at most 12.
 
 - Source: App docs, Search (Discovered Words); `results/results.ts` in the core, which the app runs
   too; `JapaneseMorphologyClient.swift`; ADR 0009 (the owner's decision to build what the website
@@ -396,14 +397,14 @@ query, which the results page already shows, and has no count line.
 
 **Toolbar.** Share and a ••• menu sit at the end of the breadcrumb row, at every width; the page
 has no title row above the header card. Share sends the headword, its reading, and the numbered
-meanings, as the app's does, through the browser's share sheet; without one it copies the link.
-The menu lists Mark as Known, Add to List…, Add Note, Add Photo, Open in App, and Copy Link. The
-learner actions and Open in App open the get-the-app prompt, a dialog on wide screens and a drawer
-on phones. The prompt says lists, Known, notes, and photos are in the Zenbu app, and that saving
-lists and known words on this website comes later, which holds whether or not the site's account
-pages are open ([Account pages](account.md)); it promises nothing for notes and photos, which stay
-on the device ([Privacy Policy](privacy.md)). Open in App doesn't open the app yet (#467). Copy Link copies the page URL and shows
-"Link copied". There is no back button; the breadcrumbs replace it.
+meanings, as the app's does, through the browser's share sheet; without one it copies the link. The
+menu lists Mark as Known, Add to List…, Add Note, Add Photo, Open in App, and Copy Link. The learner
+actions and Open in App open the get-the-app prompt, a dialog on wide screens and a drawer on
+phones. The prompt says lists, Known, notes, and photos are in the Zenbu app, and that saving lists
+and known words on this website comes later, which holds whether or not the site's account pages are
+open ([Account pages](account.md)); it promises nothing for notes and photos, which stay on the
+device ([Privacy Policy](privacy.md)). Open in App doesn't open the app yet (#467). Copy Link copies
+the page URL and shows "Link copied". There is no back button; the breadcrumbs replace it.
 
 - Source: App docs, Dictionary and kanji details (Share and the ••• menu); `SavedItemActions.swift`;
   #462 (toolbar and menu items, get-the-app prompt, `Sonner` for Link copied); #484 (breadcrumbs
