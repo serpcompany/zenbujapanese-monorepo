@@ -5,6 +5,7 @@ import { changed, checkoutWith, giveContext } from './code-review-context-suppor
 import {
   bot,
   minutesAfterStart,
+  type PullRequest,
   pr,
   requestReply,
   review,
@@ -129,6 +130,18 @@ describe("the review's context", () => {
     expect(run.status).toBe(0)
     expect(run.outputs.changed_files).toBe('6')
     expect(run.requests).toHaveLength(9)
+  })
+
+  test.concurrent.each<[string, PullRequest]>([
+    ['never arrives', { lostAnswers: 1 }],
+    ['is cut short', { lostBodies: 1 }]
+  ])('asks again after five seconds when an answer %s', async (_, lost) => {
+    const began = Date.now()
+    const run = await giveContext({ files, ...lost })
+    expect(run.status).toBe(0)
+    expect(run.outputs.changed_files).toBe('6')
+    expect(run.requests).toHaveLength(9)
+    expect(Date.now() - began).toBeGreaterThan(4_900)
   })
 
   test("gives up at once on a refusal that waiting won't change", async () => {

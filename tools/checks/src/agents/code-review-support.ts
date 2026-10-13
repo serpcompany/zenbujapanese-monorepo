@@ -55,8 +55,12 @@ export interface PullRequest {
   rules?: Record<string, string>
   scripts?: Record<string, string>
   defaultBranchCommit?: string
+  state?: 'open' | 'closed'
+  merged?: boolean
   unavailableFor?: number
   unavailable?: { status: number; headers?: Record<string, string> }
+  lostAnswers?: number
+  lostBodies?: number
   linksAnsweredWithErrorsFor?: number
   commentStatus?: number
   status?: number
@@ -81,8 +85,13 @@ export function github(pullRequest: PullRequest): Route {
     [`/repos/${repository}/pulls/${pr}/comments`]: comments(pullRequest.reviewComments),
     [`/repos/${repository}/pulls/${pr}/reviews`]: (pullRequest.reviews ?? []).map(
       ({ login, at }) => ({ user: { login }, submitted_at: at })
-    )
+    ),
+    [`/repos/${repository}/pulls/${pr}`]: pullRequest.state && {
+      state: pullRequest.state,
+      merged: pullRequest.merged ?? false
+    }
   }
+  const lost = { answer: pullRequest.lostAnswers ?? 0, body: pullRequest.lostBodies ?? 0 }
   let refusals = pullRequest.unavailableFor ?? 0
   let errorsLeft = pullRequest.linksAnsweredWithErrorsFor ?? 0
   const graphql = (sent: string) => {
@@ -116,7 +125,7 @@ export function github(pullRequest: PullRequest): Route {
       }
     }
   }
-  return (url, method, sent) => {
+  const answerTo: Route = (url, method, sent, accept) => {
     const status = pullRequest.status ?? 200
     if (status !== 200) return { status, body: { message: 'Not allowed' } }
     if (refusals > 0) {
@@ -126,7 +135,8 @@ export function github(pullRequest: PullRequest): Route {
     if (url.pathname === '/graphql') return { status, body: graphql(sent) }
     if (method !== 'GET') return { status: pullRequest.commentStatus ?? 200, body: {} }
     if (url.pathname === `/repos/${repository}/commits/main`) {
-      return { status, body: { sha: pullRequest.defaultBranchCommit } }
+      const text = `${pullRequest.defaultBranchCommit}\n`
+      return accept === 'application/vnd.github.sha' ? { status, body: null, text } : undefined
     }
     if (url.pathname.startsWith(`${contents}tools/checks/`)) {
       const text = pullRequest.scripts?.[url.pathname.slice(`${contents}tools/checks/`.length)]
@@ -148,6 +158,13 @@ export function github(pullRequest: PullRequest): Route {
     }
     const body = routes[url.pathname]
     return body ? { status, body } : undefined
+  }
+  return (...asked) => {
+    const answer = answerTo(...asked)
+    const kind = (['answer', 'body'] as const).find(each => lost[each] > 0)
+    if (!answer || !kind) return answer
+    lost[kind] -= 1
+    return { ...answer, lost: kind }
   }
 }
 
@@ -222,7 +239,8 @@ export function reviewRun(setup: {
         REVIEWERS_CONTEXT_FILE: at('reviewers-context.md'),
         ...more
       }),
-    last: () => decide(lastVerdict, { SUMMARY_ID: setup.summaryId ?? '' }),
+    last: (more: Record<string, string> = {}) =>
+      decide(lastVerdict, { SUMMARY_ID: setup.summaryId ?? '', ...more }),
     check: (posted: PullRequest, retryOutcome: string, measured = 'success success') =>
       runNodeStep(
         guard,

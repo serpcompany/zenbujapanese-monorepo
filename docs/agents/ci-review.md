@@ -22,9 +22,9 @@ its checkout:
 The time limits come from measurements: on the runner an attempt took 11 to 148 seconds, and the
 slowest dry run, a second attempt on 19 files, 329. Twelve minutes is over twice that, ten nearly
 twice, and together they leave 8 of the job's 30 minutes for the other steps, which make a few
-requests each. A limit on the step matters more than its size: an attempt that hangs fails as a
-step, so the steps after it still post what there is, where the job's own limit would cancel
-them.
+requests each. A limit on the step matters more than its size: a second attempt that hangs
+fails as a step, so the steps after it still post what there is, and a first attempt that hangs
+posts nothing but has the last step say it was stopped. The job's own limit would cancel both.
 
 ## Where each part comes from
 
@@ -41,10 +41,11 @@ them.
 - **The scripts that build the reviewer's context are the default branch's too.**
   `tools/checks/review-context.mjs`, and `tools/checks/review-change.mjs` and
   `tools/checks/pull-request.mjs`, which it imports, are fetched through the API at one commit
-  of the default branch, never taken from the checkout or from the base branch: a pull request
-  into another branch would otherwise run that branch's script with the job's token. They need
-  no install, and they run only before Claude starts. Inline, they would take the workflow past
-  500 lines. `changes` uses none of them, so it works before the default branch has them.
+  of the default branch, asked for as a SHA alone, never from the checkout or the base branch:
+  a pull request into another branch would otherwise run that branch's script with the job's
+  token. They need no install, and they run only before Claude starts. Inline, they would take
+  the workflow past 500 lines. `changes` uses none of them, so it works before the default
+  branch has them.
 - **The skill and the rules are the base branch's.** The action replaces `.claude/`, `.mcp.json`,
   `.claude.json`, `.gitmodules`, `.ripgreprc`, `CLAUDE.md`, `CLAUDE.local.md`, and `.husky` with
   the base branch's copies before Claude starts (its `SENSITIVE_PATHS`), so a pull request can't
@@ -60,16 +61,19 @@ them.
 ## Asking GitHub
 
 Every request the workflow's own steps make, and every one `review-context.mjs` makes, has the
-same patience. An answer has 30 seconds to arrive. A server error, no answer, or a 429 is asked
-again up to three more times, after 5, 15, and 45 seconds, or after the wait GitHub names
+same patience. An answer has 30 seconds to arrive whole: its body is read inside the same try,
+so one that is cut short or stalls counts as no answer. A server error, no answer, or a 429 is
+asked again up to three more times, after 5, 15, and 45 seconds, or after the wait GitHub names
 (`retry-after`, or the reset of a used-up rate limit) when it names one within 90 seconds. A 403
 that names no wait is a refusal, and a 404 is an answer: neither is asked again. A GraphQL
 answer that arrives with errors and without the pull request is asked again the same way. One
-request is never repeated on a server error: the one that creates the summary comment, which may
-have been made.
+request may already have been made when it fails: the one that creates the summary comment. It
+is sent again only when GitHub refused it without acting, with a 429 or a 403 that names a
+wait, never after a server error or no answer. The answer to a write is its status alone.
 
-`changes` is never the red check. When GitHub still can't list the pull request's files, it
-warns and lets `review` try, which says so itself if no review happens.
+`changes` is never the red check, and never cancelled at its 10 minutes. When GitHub can't list
+the pull request's files, or hasn't after 300 seconds, it warns and lets `review` try, which
+says so itself if no review happens.
 
 ## What the reviewer is given
 
@@ -104,10 +108,13 @@ start a heading of its own.
 - **The issue of a pull request into another branch.** GitHub links a closing keyword only on a
   pull request into the default branch. For any other, the script takes the issues from the
   closing keywords in the description (`closingReferences` in `pull-request.mjs`), under the
-  same rules. It reads a keyword as GitHub does: not in code or an HTML comment, not across
-  lines, not at the end of another word. On a pull request into the default branch with no link
-  yet and no `No issue:` line, it asks three times, five seconds apart, as `issue-link` does,
-  since a link can arrive late, then says GitHub links none.
+  same rules. It reads a keyword as GitHub does: not in a code span, a fenced block (indented,
+  closed by a longer fence, or never closed), or an HTML comment, not across lines, not at the
+  end of another word, and not before a number too long to be an issue's. One case is left: it
+  reads a keyword in an indented code block, which it can't tell from a list item's text, so an
+  unrelated issue the team wrote can reach the context. On a pull request into the default
+  branch with no link yet and no `No issue:` line, it asks three times, five seconds apart, as
+  `issue-link` does, since a link can arrive late, then says GitHub links none.
 - **Earlier findings.** The top-level inline comments `claude[bot]` posted on the pull request,
   and the summary: the latest comment by `github-actions[bot]` that starts with
   `## Claude review`. Claude's answers to `@claude` requests, and its replies in review threads,
@@ -144,7 +151,9 @@ start a heading of its own.
 - **An incomplete first attempt gets a second.** The `first` step appends a correction to the
   reviewer's context: what the first attempt left out, up to forty of the changed files no Read
   call in its log opened, each with its patch file's path, and the inline comments it posted,
-  read from GitHub so that none is posted twice. The subagents' context gets that list of
+  each with its link, read from GitHub so that none is posted twice. They are this round's
+  findings, so the correction says to count them in the summary, which then can't say
+  `No new findings.` after a round that posted some. The subagents' context gets that list of
   comments and nothing else of the correction, which is addressed to the reviewer. If GitHub
   can't be read, there is no second attempt. The first attempt's summary and log are set aside.
 - **An incomplete last attempt is labelled, not failed.** The workflow, not Claude, puts a line
@@ -157,6 +166,15 @@ start a heading of its own.
   summary, by an error or by writing none, the first attempt's is posted with its line, which
   then also says a second attempt left none, and the last step passes with a warning that
   names the failure.
+- **A second attempt that stops after writing a summary has that summary posted,** since the
+  later review is the fuller one, under a first line that says the second attempt stopped
+  before it finished, and a second line when its own count falls short. A step stopped at its
+  time limit leaves no log, so that line then says it left no log of its reviewers. The `last`
+  step is given the second attempt's outcome for this, and the job passes with a warning.
+- **A pull request closed or merged while the review ran gets no second attempt.** The skill
+  posts nothing on a pull request that isn't open, which reads as a review with no summary. So
+  the `first` step asks for no second attempt on one that is no longer open, and when no
+  summary was posted on one, the last step passes with a notice that says so.
 
 ## What turns the check red
 
@@ -167,9 +185,10 @@ happened or its result was lost:
   limit), ended in an error (the message adds how to renew the token on a 401,
   [`ci-agents.md`](ci-agents.md), Claude's app and token), or ended with subagents still
   running;
-- nothing was posted or updated during the run, with the denied tool named when one was denied,
-  or inline findings were posted with no summary. It counts only the review's own output: the
-  summary, top-level inline comments, and reviews, not an answer to an `@claude` request;
+- nothing was posted or updated during the run on a pull request that is still open, with the
+  denied tool named when one was denied, or inline findings were posted with no summary. It
+  counts only the review's own output: the summary, top-level inline comments, and reviews, not
+  an answer to an `@claude` request;
 - a second attempt failed and no summary was posted;
 - the summary couldn't be posted: GitHub refused the comment, or it is longer than a comment
   holds. The last step then says that step failed, not that the summary is missing;
@@ -225,7 +244,9 @@ last step would post is written to a file instead.
 
 A transcript kept from a real run works too: `verdict` reads its paths as the checkout's, and
 takes the summary that transcript wrote, whatever an earlier run left on disk. That is how a
-second attempt after a real thin review is tried.
+second attempt after a real thin review is tried. `context` says when the pull request isn't
+open, since the reviewer may then stop at once, and `verdict` measures a transcript as if it
+were open, so a kept transcript of a merged pull request still gets its second attempt.
 
 ## Tests
 
@@ -234,6 +255,7 @@ GitHub API: `code-review.test.ts` (the jobs, the inline script and its patience,
 origin), `code-review-context.test.ts` and `code-review-issue.test.ts` (what the reviewer is
 given), `code-review-verdict.test.ts` (the decision and the correction),
 `code-review-summary.test.ts` (the comment), `code-review-attempts.test.ts` (both attempts end
-to end, and the sequences that end without a summary, on abridged copies of the logs of #757,
-#759, and #761), `code-review-guard.test.ts` (the last step), and `review-dry-run.test.ts` (the
-dry run, against a stand-in `gh`).
+to end, a second attempt that stops early or leaves no summary, and a pull request closed
+meanwhile, on abridged copies of the logs of #757, #759, and #761), `code-review-guard.test.ts`
+(the last step), and `review-dry-run.test.ts` (the dry run, against a stand-in `gh`). The
+stand-in can lose an answer or cut its body short, which is how the patience is tried.

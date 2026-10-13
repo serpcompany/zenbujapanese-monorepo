@@ -29,11 +29,15 @@ function answerOf(parameters, input) {
 
 function forwardToGh(request, sent, response, kept) {
   const target = String(request.url).replace(/^\//, '')
+  const answer = (status, text, more = {}) => {
+    response.writeHead(status, { 'content-type': 'application/json', ...more })
+    response.end(text)
+  }
   if (request.method !== 'GET' && target !== 'graphql') {
     writeFileSync(kept, JSON.parse(sent).body)
-    response.writeHead(200, { 'content-type': 'application/json' })
-    return response.end('{}')
+    return answer(200, '{}')
   }
+  if (/^repos\/[^/]+\/[^/]+\/pulls\/\d+$/.test(target)) return answer(200, '{"state":"open"}')
   const accepted = ['--header', `Accept: ${request.headers.accept}`]
   const asked =
     request.method === 'POST'
@@ -45,8 +49,7 @@ function forwardToGh(request, sent, response, kept) {
   const link = next
     ? { link: next.replaceAll('https://api.github.com', `http://${request.headers.host}`) }
     : {}
-  response.writeHead(status, { 'content-type': 'application/json', ...link })
-  response.end(rest.join('\n\n'))
+  answer(status, rest.join('\n\n'), link)
 }
 
 async function withGitHub(work, kept) {
@@ -110,12 +113,14 @@ async function context(pullRequest, checkoutGiven, outGiven) {
   mkdirSync(out, { recursive: true })
   const repository = answerOf(['repo', 'view', '--json', 'nameWithOwner', '--jq', '.nameWithOwner'])
   const state = { repository: repository.trim(), pullRequest, checkout }
-  const base = answerOf([
+  const [base, openOrClosed, merged] = answerOf([
     'api',
     `repos/${state.repository}/pulls/${pullRequest}`,
     '--jq',
-    '.base.ref'
+    '.base.ref, .state, .merged'
   ])
+    .trim()
+    .split('\n')
   const context = reviewJob().steps.find(step => step.id === 'earlier')
   writeFileSync(paths.contextOutputs, '')
   const status = await withGitHub(
@@ -128,7 +133,7 @@ async function context(pullRequest, checkoutGiven, outGiven) {
         GITHUB_WORKSPACE: checkout,
         GITHUB_OUTPUT: paths.contextOutputs,
         PR_NUMBER: String(pullRequest),
-        BASE_REF: base.trim(),
+        BASE_REF: base,
         RULES: context.env.RULES,
         CHANGE_DIR: join(checkout, 'tmp', 'review-change'),
         CHANGE_FILE: paths.change,
@@ -145,6 +150,11 @@ async function context(pullRequest, checkoutGiven, outGiven) {
   writeFileSync(paths.state, JSON.stringify({ ...state, changedFiles, startedAt }))
   console.log(`\nThe reviewer's context is ${paths.context}. Run the reviewer with:\n`)
   console.log(claudeCommand(state, paths))
+  if (openOrClosed !== 'open') {
+    console.log(
+      `\nPull request ${pullRequest} is ${merged === 'true' ? 'merged' : 'closed'}, and the skill reviews nothing on one that isn't open, so the reviewer may stop at once. verdict still measures a transcript as if the pull request were open.`
+    )
+  }
   return 0
 }
 

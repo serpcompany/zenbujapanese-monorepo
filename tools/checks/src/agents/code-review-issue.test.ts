@@ -210,6 +210,13 @@ describe('the issue of a pull request into a branch other than the default', () 
     expect(section).not.toContain('Posts each failure once')
   })
 
+  test('reads no issue from a number too large to be one, where asking for it would fail the job', async () => {
+    const run = await giveContext({ ...stacked, body: 'Closes #99999999999\nCloses #542' })
+    expect(run.status).toBe(0)
+    const [, ...named] = asksOf(run.requests)
+    expect(named.map(ask => ask.variables.number)).toEqual([542])
+  })
+
   test('says GitHub links none and the description names none, without waiting', async () => {
     const run = await giveContext({ base: 'feat/701-parent', body: 'Part of #9.' })
     expect(asksOf(run.requests)).toHaveLength(1)

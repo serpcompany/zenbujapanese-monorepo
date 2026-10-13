@@ -19,12 +19,12 @@ export const otherBase = (base, defaultBranch) =>
     : ''
 
 const whereGitHubLinksNothing = [
-  /^(`{3,}|~{3,})[^\n]*\n[\s\S]*?^\1[ \t]*$/gm,
-  /`[^`\n]*`/g,
+  /^[ \t]*(([`~])\2{2,})(?:(?<=~)[^\n]*|[^`\n]*)\n[\s\S]*?(?:^[ \t]*\1\2*[ \t]*$|(?![\s\S]))/gm,
+  /(?<!`)(`+)(?!`)(?:(?!\n[ \t]*\n)[\s\S])*?(?<!`)\1(?!`)/g,
   /<!--[\s\S]*?-->/g
 ]
 const closingKeyword =
-  /(?<![\w-])(?:close[sd]?|fix(?:e[sd])?|resolve[sd]?):?[ \t]+(?:([\w.-]+\/[\w.-]+)#|https:\/\/github\.com\/([\w.-]+\/[\w.-]+)\/issues\/|#)(\d+)\b/gi
+  /(?<![\w-])(?:close[sd]?|fix(?:e[sd])?|resolve[sd]?):?[ \t]+(?:([\w.-]+\/[\w.-]+)#|https:\/\/github\.com\/([\w.-]+\/[\w.-]+)\/issues\/|#)(\d{1,9})\b/gi
 
 export function closingReferences(body, ownRepository = '') {
   const text = whereGitHubLinksNothing.reduce(

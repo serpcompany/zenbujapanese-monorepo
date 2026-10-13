@@ -182,7 +182,8 @@ describe('a pull request that changes the review workflow', () => {
     expect(find.env).toEqual({
       STEP: 'files',
       GITHUB_TOKEN: '${{ github.token }}',
-      PR_NUMBER: '${{ github.event.pull_request.number }}'
+      PR_NUMBER: '${{ github.event.pull_request.number }}',
+      DEADLINE_SECONDS: '300'
     })
   })
 
@@ -243,6 +244,21 @@ describe('a pull request that changes the review workflow', () => {
     expect(unnamed.outputs).toEqual({ reviewable: 'true' })
     expect(unnamed.output).toContain('::warning')
   })
+
+  test('is never cancelled at its time limit: well inside it, it warns and lets the review try', async () => {
+    const limit = Number(workflow.jobs.changes['timeout-minutes']) * 60
+    expect(Number(find.env?.DEADLINE_SECONDS)).toBeLessThanOrEqual(limit / 2)
+    const late = await findOut(
+      { unavailableFor: 1, unavailable: { status: 502, headers: { 'retry-after': '30' } } },
+      { DEADLINE_SECONDS: '1' }
+    )
+    expect(late.status).toBe(0)
+    expect(late.outputs).toEqual({ reviewable: 'true' })
+    expect(late.output).toContain(
+      "::warning title=Couldn't tell whether the pull request changes the review workflow::GitHub hadn't listed the pull request's files after 1 seconds, so nothing says"
+    )
+    expect(late.requests).toHaveLength(1)
+  })
 })
 
 describe('asking GitHub, from any step the workflow runs itself', () => {
@@ -270,8 +286,12 @@ describe('asking GitHub, from any step the workflow runs itself', () => {
     expect(run.seconds).toBeGreaterThan(1.9)
   })
 
-  test('is tried again after five seconds when GitHub names no wait', async () => {
-    const run = await ask({ unavailableFor: 1, unavailable: { status: 502 } })
+  test.concurrent.each<[string, PullRequest]>([
+    ['GitHub names no wait', { unavailableFor: 1, unavailable: { status: 502 } }],
+    ['GitHub gives no answer', { lostAnswers: 1 }],
+    ['an answer is cut short', { lostBodies: 1 }]
+  ])('is tried again after five seconds when %s', async (_, pullRequest) => {
+    const run = await ask(pullRequest)
     expect(run.outputs).toEqual({ reviewable: 'false' })
     expect(run.requests).toHaveLength(2)
     expect(run.seconds).toBeGreaterThan(4.9)
@@ -302,6 +322,22 @@ describe('asking GitHub, from any step the workflow runs itself', () => {
     expect(run.requests).toHaveLength(1)
     expect(run.output).toContain(`returned ${unavailable.status}`)
     expect(run.outputs).toEqual({ reviewable: 'true' })
+  })
+})
+
+describe("the review's transcript", () => {
+  test('is kept whenever an attempt left a log, whatever came after it, and before the last step', () => {
+    const keep = steps.find(step => step.uses?.startsWith('actions/upload-artifact@'))
+    expect(keep?.if).toBe(
+      `always() && env.HAS_REVIEW_TOKEN == 'true' && steps.${review.id}.outputs.execution_file != ''`
+    )
+    expect(steps.indexOf(keep ?? {})).toBe(guardIndex - 1)
+    expect(String(keep?.with?.path).trim().split('\n')).toEqual([
+      guard.env?.EXECUTION_FILE,
+      firstVerdict.env?.FIRST_ATTEMPT_LOG,
+      firstVerdict.env?.FIRST_ATTEMPT_SUMMARY
+    ])
+    expect(keep?.with?.['retention-days']).toBe(7)
   })
 })
 

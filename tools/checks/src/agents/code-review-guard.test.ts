@@ -116,6 +116,17 @@ describe("the review's guard", () => {
     expect(status).toBe(0)
   })
 
+  test.each<[string, PullRequest]>([
+    ['closed', { state: 'closed' }],
+    ['merged', { state: 'closed', merged: true }],
+    ['closed', { state: 'closed', reviewComments: [{ login: bot, at: minutesAfterStart(5) }] }]
+  ])('passes with a notice when no summary was posted and the pull request was %s meanwhile', async (how, pullRequest) => {
+    const { status, output } = await runGuard(cleanLog, pullRequest)
+    expect(output).not.toContain('::error')
+    expect(output).toContain(`::notice title=The pull request was ${how} while the review ran::`)
+    expect(status).toBe(0)
+  })
+
   test('fails when the review left only inline findings and no summary', async () => {
     const { status, output } = await runGuard(cleanLog, {
       reviewComments: [{ login: bot, at: minutesAfterStart(5) }]

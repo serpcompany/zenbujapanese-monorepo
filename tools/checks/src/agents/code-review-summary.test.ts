@@ -86,14 +86,33 @@ describe("the review's summary", () => {
     )
   })
 
-  test('sends an update again when GitHub is unavailable, but never a new comment that may already be there', async () => {
+  test('sends an update again when GitHub is unavailable, and takes its status as the answer', async () => {
     const updated = await post(written, '99', { unavailableFor: 1 })
     expect(updated.status).toBe(0)
     expect(updated.comments).toHaveLength(2)
-    const created = await post(written, '', { unavailableFor: 1, unavailable: { status: 502 } })
+    const answeredInPart = await post(written, '99', { lostBodies: 1 })
+    expect(answeredInPart.status).toBe(0)
+    expect(answeredInPart.comments).toHaveLength(1)
+  })
+
+  test.each<[string, PullRequest, string]>([
+    ['a server error', { unavailableFor: 1, unavailable: { status: 502 } }, 'returned 502'],
+    ['a server error that names a wait', { unavailableFor: 1 }, 'returned 502'],
+    ['no answer', { lostAnswers: 1 }, 'got no whole answer']
+  ])('is never created again after %s, when it may already be there', async (_, onGitHub, outcome) => {
+    const created = await post(written, '', onGitHub)
     expect(created.status).not.toBe(0)
-    expect(created.output).toContain(`POST /issues/${pr}/comments returned 502`)
+    expect(created.output).toContain(`POST /issues/${pr}/comments ${outcome}`)
     expect(created.comments).toHaveLength(1)
+  })
+
+  test.each([
+    ['a 429', { status: 429, headers: { 'retry-after': '1' } }],
+    ['a 403 that names a wait', { status: 403, headers: { 'retry-after': '1' } }]
+  ])('is created again after %s, which GitHub refused without acting', async (_, unavailable) => {
+    const created = await post(written, '', { unavailableFor: 1, unavailable })
+    expect(created.status).toBe(0)
+    expect(created.comments).toHaveLength(2)
   })
 
   test('warns and posts nothing when Claude wrote no summary', async () => {

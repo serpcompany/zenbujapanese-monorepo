@@ -29,7 +29,7 @@ const files = [
 ]
 const answers = {
   'repo view': `${repository}\n`,
-  'pulls/7 --jq': 'main\n',
+  'pulls/7 --jq': 'main\nopen\nfalse\n',
   'contents/': 'The rules in this file.\n',
   'pulls/7/files': files,
   graphql: {
@@ -63,11 +63,11 @@ process.stdout.write(asked.includes('--include') ? 'HTTP/2.0 200 OK\\r\\n\\r\\n'
 `
 const result = claudeResult({ num_turns: 9, duration_ms: 30_000, total_cost_usd: 0.3 })
 
-function dryRun() {
+function dryRun(otherAnswers: Record<string, unknown> = {}) {
   const bin = scratchFolder('stand-in-gh')
   writeFileSync(join(bin, 'gh'), standInForGh)
   chmodSync(join(bin, 'gh'), 0o755)
-  writeFileSync(join(bin, 'answers.json'), JSON.stringify(answers))
+  writeFileSync(join(bin, 'answers.json'), JSON.stringify({ ...answers, ...otherAnswers }))
   const checkout = checkoutWith(['src/app.ts', 'docs/new.md'])
   const out = scratchFolder('dry-run')
   const run = (...given: string[]) =>
@@ -113,6 +113,25 @@ describe("a dry run of the review's reviewer", () => {
     expect(dryRunTools).toEqual(allowedTools(review).filter(name => !name.startsWith('mcp__')))
     expect(command).toContain(`> ${out}/attempt.jsonl`)
     expect(command).not.toContain('${{')
+    expect(built.stdout).not.toContain('the reviewer may stop at once')
+  })
+
+  test("says so when the pull request isn't open, and still measures a transcript as if it were", () => {
+    const { checkout, out, run, transcript, asked } = dryRun({
+      'pulls/7 --jq': 'main\nclosed\ntrue\n'
+    })
+    const built = run('context', '7', checkout, out)
+    expect(built.status, built.stderr).toBe(0)
+    expect(built.stdout).toContain(
+      "Pull request 7 is merged, and the skill reviews nothing on one that isn't open, so the reviewer may stop at once."
+    )
+    writeFileSync(
+      join(checkout, 'tmp', 'review-summary.md'),
+      summaryOf('Read 1 of 2 changed files.\nNot read: the doc.').body
+    )
+    const first = run('verdict', out, transcript('attempt.jsonl', [result()]))
+    expect(first.stdout).toContain('retry=true')
+    expect(asked().filter(each => /pulls\/7 /.test(each))).toHaveLength(1)
   })
 
   test("reads the workflow's own verdict from a transcript, and writes a second attempt's correction", () => {

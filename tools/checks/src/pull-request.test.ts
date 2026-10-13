@@ -106,12 +106,28 @@ test.each([
   ['in inline code', 'Write `Closes #13` in the body.'],
   ['in a fenced block', 'Before\n```md\nCloses #14\n```\nafter'],
   ['in a block fenced with tildes', '~~~\nFixes #19\n~~~'],
+  ['in code between double backticks', 'Write ``Closes #13`` or `` a ` Closes #13 `` there.'],
+  ['in inline code that runs over lines', 'see `the body\nCloses #13\nand more` there'],
+  ['in a fence indented under a list item', '- an item\n\n  ```md\n  Closes #14\n  ```\n'],
+  ['in a fence closed by a longer one', '```\nCloses #14\n`````\nafter'],
+  ['in a fence that holds a shorter one', '````\n```\nCloses #14\n```\n````'],
+  ['in a fence that is never closed', 'Before\n```\nCloses #14\nto the end'],
+  ['too large to be an issue', 'Closes #99999999999'],
   ['in an HTML comment', ['<!', '-- Closes #20 --', '>'].join('')],
   ['on a later line than its keyword', 'the fix\n\n#16'],
   ['after a word that only ends like a keyword', 'a bug-fix #17, a hotfix #21, a prefix #6'],
   ['after a word that closes nothing', 'Part of #3, refs #4, encloses #5']
 ])('reads no issue from a number %s, where GitHub links nothing', (_, body) => {
   expect(closingReferences(body, ownRepository)).toEqual([])
+})
+
+test.each([
+  ['after a fence that was closed', '```\ncode\n```\nCloses #5'],
+  ['after a blank line, which ends inline code', 'a stray ` here\n\nCloses #5, and ` there'],
+  ['after a line that only starts with inline code', '```code``` is inline\n\nCloses #5'],
+  ['in an indented code block, which it does not tell from a list item', 'Text\n\n    Closes #5']
+])('still reads an issue %s', (_, body) => {
+  expect(closingReferences(body, ownRepository)).toEqual([{ repository: '', number: 5 }])
 })
 
 test('asks again, after a pause, until there is an answer or the attempts run out', async () => {

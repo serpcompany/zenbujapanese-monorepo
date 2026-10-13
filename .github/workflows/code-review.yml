@@ -24,6 +24,7 @@ jobs:
           STEP: files
           GITHUB_TOKEN: ${{ github.token }}
           PR_NUMBER: ${{ github.event.pull_request.number }}
+          DEADLINE_SECONDS: "300"
         shell: node {0}
         run: &steps |
           const fs = require('node:fs')
@@ -65,15 +66,17 @@ jobs:
             if (response.headers.get('x-ratelimit-remaining') !== '0') return null
             return Math.max(1, Math.ceil(Number(response.headers.get('x-ratelimit-reset')) - Date.now() / 1000))
           }
-          const request = async (url, options = {}) => {
+          const request = async (url, { read = 'json', ...options } = {}) => {
             const headers = { Accept: 'application/vnd.github+json', Authorization: `Bearer ${env.GITHUB_TOKEN}`, 'X-GitHub-Api-Version': '2022-11-28', ...options.headers }
+            const whole = async response => (response.ok && !options.method ? { ok: true, headers: response.headers, body: await response[read]() } : response)
             for (let attempt = 0; ; attempt += 1) {
-              const response = await fetch(url, { ...options, headers, signal: AbortSignal.timeout(30000) }).catch(error => ({ unanswered: error.name, headers: new Headers() }))
+              const response = await fetch(url, { ...options, headers, signal: AbortSignal.timeout(30000) }).then(whole).catch(error => ({ unanswered: error.name, headers: new Headers() }))
               if (response.ok) return response
               const asked = secondsGitHubAsksFor(response)
-              const worthAnotherTry = asked !== null || response.status === 429 || (options.method !== 'POST' && (response.unanswered || response.status >= 500))
+              const refusedUnacted = response.status === 429 || (response.status === 403 && asked !== null)
+              const worthAnotherTry = refusedUnacted || (options.method !== 'POST' && (asked !== null || response.unanswered || response.status >= 500))
               const seconds = asked ?? secondsBetweenTries[attempt]
-              const outcome = response.unanswered ? `got no answer (${response.unanswered})` : `returned ${response.status}`
+              const outcome = response.unanswered ? `got no whole answer (${response.unanswered})` : `returned ${response.status}`
               if (!worthAnotherTry || attempt >= secondsBetweenTries.length || seconds > longestWait) throw new Error(`${options.method || 'GET'} ${new URL(url).pathname.replace(/^\/repos\/[^/]+\/[^/]+/, '')} ${outcome}`)
               await new Promise(resolve => setTimeout(resolve, seconds * 1000))
             }
@@ -83,21 +86,31 @@ jobs:
             let url = `${api}${resource}${resource.includes('?') ? '&' : '?'}per_page=100`
             for (let page = 0; url && page < pages; page += 1) {
               const response = await request(url)
-              items.push(...(await response.json()))
+              items.push(...response.body)
               url = (/<([^>]+)>;\s*rel="next"/.exec(response.headers.get('link') || '') || [])[1]
             }
             return items
           }
+          const endedAs = async () => {
+            const pull = await request(`${api}/pulls/${env.PR_NUMBER}`).then(answer => answer.body, () => null)
+            return pull && pull.state !== 'open' ? (pull.merged ? 'merged' : 'closed') : ''
+          }
           const files = async () => {
             const workflow = String(env.GITHUB_WORKFLOW_REF || '').split('@')[0].slice(`${env.GITHUB_REPOSITORY}/`.length)
+            const reviewAnyway = reason => {
+              say('warning', titles.files, `${reason}, so nothing says whether this pull request changes the review workflow. The review is tried all the same, and says so itself if it can't run.`)
+              output({ reviewable: true })
+              process.exit(0)
+            }
+            const deadline = setTimeout(() => reviewAnyway(`GitHub hadn't listed the pull request's files after ${env.DEADLINE_SECONDS} seconds`), env.DEADLINE_SECONDS * 1000)
             let changed
             try {
               if (!workflow) throw new Error("GITHUB_WORKFLOW_REF doesn't name this workflow's file")
               changed = (await list(`/pulls/${env.PR_NUMBER}/files`, 30)).some(file => [file.filename, file.previous_filename].includes(workflow))
             } catch (error) {
-              say('warning', titles.files, `${error.message}, so nothing says whether this pull request changes the review workflow. The review is tried all the same, and says so itself if it can't run.`)
-              return output({ reviewable: true })
+              reviewAnyway(error.message)
             }
+            clearTimeout(deadline)
             output({ reviewable: !changed })
             if (!changed) return console.log(`This pull request leaves ${workflow} alone, so Claude reviews it.`)
             say('notice', "Claude doesn't review this pull request", `This pull request changes ${workflow}, and Claude's review can't run on a pull request that changes the review workflow: it runs only when that file is the one on the default branch. A person reviews this pull request (docs/agents/ci-agents.md, Code review).`)
@@ -106,12 +119,12 @@ jobs:
             const folder = path.join(env.RUNNER_TEMP, 'review-scripts')
             let wanted = `the latest commit of ${env.DEFAULT_BRANCH}`
             try {
-              const commit = (await (await request(`${api}/commits/${encodeURIComponent(env.DEFAULT_BRANCH)}`)).json()).sha
+              const commit = (await request(`${api}/commits/${encodeURIComponent(env.DEFAULT_BRANCH)}`, { read: 'text', headers: { Accept: 'application/vnd.github.sha' } })).body.trim()
               fs.mkdirSync(folder, { recursive: true })
               for (const script of env.SCRIPTS.split(' ')) {
                 wanted = `tools/checks/${script} at ${commit} of ${env.DEFAULT_BRANCH}`
-                const copy = await request(`${api}/contents/tools/checks/${script}?ref=${commit}`, { headers: { Accept: 'application/vnd.github.raw' } })
-                fs.writeFileSync(path.join(folder, script), await copy.text())
+                const copy = await request(`${api}/contents/tools/checks/${script}?ref=${commit}`, { read: 'text', headers: { Accept: 'application/vnd.github.raw' } })
+                fs.writeFileSync(path.join(folder, script), copy.body)
               }
               console.log(`Took ${env.SCRIPTS} from ${commit} of ${env.DEFAULT_BRANCH}.`)
             } catch (error) {
@@ -144,7 +157,8 @@ jobs:
             const reviewers = attempt.calls.filter(block => block.topLevel && ['Task', 'Agent'].includes(block.name)).length
             const missing = []
             if (read < total && !/^[\s>*_-]*Not read:/m.test(attempt.summary)) missing.push('did not name the rest')
-            if (read < total && reviewers < 3) missing.push(reviewers === 0 ? 'did not run its reviewers' : `ran ${reviewers} of its three reviewers`)
+            const none = attempt.finished ? 'did not run its reviewers' : 'left no log of its reviewers'
+            if (read < total && reviewers < 3) missing.push(reviewers === 0 ? none : `ran ${reviewers} of its three reviewers`)
             if (missing.length === 0) return ''
             return `read ${read} of ${total} changed files${missing.length > 1 ? ', ' : ' and '}${missing.join(' and ')}`
           }
@@ -168,6 +182,11 @@ jobs:
             if (attempt.nothing) console.log('The review left no finished execution log and no summary, so there is nothing to measure: the last step says why.')
             if (!attempt.reason) return output({ retry: false, problem: '' })
             const problem = `Incomplete: this review ${attempt.reason}.`
+            const ended = await endedAs()
+            if (ended) {
+              console.log(`This pull request was ${ended} while the review ran, so the review isn't run again: the last step says so.`)
+              return output({ retry: false, problem })
+            }
             const startedAt = Date.parse(env.REVIEW_STARTED_AT || '') - 30 * 1000
             const bot = env.REVIEW_BOT || 'claude[bot]'
             const posted = Number.isNaN(startedAt) ? null : await list(`/pulls/${env.PR_NUMBER}/comments?sort=created&direction=desc&since=${new Date(startedAt).toISOString()}`, 1)
@@ -177,7 +196,7 @@ jobs:
               say('warning', 'No second attempt at the review', "The inline comments the first attempt posted couldn't be read from GitHub, so the review isn't run again: a second attempt could post them twice.")
               return output({ retry: false, problem })
             }
-            const alreadyPosted = posted.slice(0, listLimit).map(item => `- ${JSON.stringify(item.path)}:${item.line ?? item.original_line}: ${excerpt(item.body, 300)}`)
+            const alreadyPosted = posted.slice(0, listLimit).map(item => `- ${JSON.stringify(item.path)}:${item.line ?? item.original_line} (${item.html_url}): ${excerpt(item.body, 300)}`)
             if (posted.length > listLimit) alreadyPosted.push(`- and ${posted.length - listLimit} more, which it also posted`)
             const { readable, unread } = neverOpened(attempt.calls)
             const lines = [
@@ -193,7 +212,7 @@ jobs:
               for (const file of unread.slice(0, listLimit)) lines.push(`- ${JSON.stringify(file.path)}: ${file.patch || JSON.stringify(file.file)}`)
               lines.push('')
             }
-            lines.push(posted.length > 0 ? 'The first attempt already posted these inline comments. They are earlier findings: post none of them again.' : 'The first attempt posted no inline comments.', ...alreadyPosted)
+            lines.push(posted.length > 0 ? "The first attempt already posted these inline comments on this commit. Post none of them again. They are this round's findings, not earlier ones: count each in your summary's line of blocking findings and suggestions, with the ones you post now, so the summary never says `No new findings.` after a round that posted some." : 'The first attempt posted no inline comments.', ...alreadyPosted)
             fs.appendFileSync(env.CORRECTION_FILE, `${lines.join('\n')}\n`)
             if (posted.length > 0) fs.appendFileSync(env.REVIEWERS_CONTEXT_FILE, ['', '# Inline comments already posted on this commit', '', 'The reviewer posted these a few minutes ago, on this same commit. They are earlier findings: report none of them again.', '', ...alreadyPosted, ''].join('\n'))
             if (attempt.summary !== null) fs.renameSync(env.SUMMARY_FILE, env.FIRST_ATTEMPT_SUMMARY)
@@ -206,11 +225,15 @@ jobs:
             const own = measured(env.EXECUTION_FILE, env.SUMMARY_FILE)
             const fallsBack = own.summary === null && fs.existsSync(env.FIRST_ATTEMPT_SUMMARY || '')
             const attempt = fallsBack ? measured(env.FIRST_ATTEMPT_LOG, env.FIRST_ATTEMPT_SUMMARY) : own
-            if (attempt.nothing) {
-              console.log('The review left no finished execution log and no summary, so there is nothing to measure or post: the last step says why.')
+            const ended = attempt.summary === null && !attempt.nothing ? await endedAs() : ''
+            if (attempt.nothing || ended) {
+              console.log(ended ? `This pull request was ${ended} while the review ran, so the reviewer wrote no summary and there is none to post: the last step says so.` : 'The review left no finished execution log and no summary, so there is nothing to measure or post: the last step says why.')
               return output({ retry: false, problem: '' })
             }
-            const problem = attempt.reason ? `Incomplete: this review ${attempt.reason}.${fallsBack ? " A second attempt left no summary, so this is the first attempt's." : ''}` : ''
+            const problems = []
+            if (env.RETRY_OUTCOME === 'failure' && !fallsBack) problems.push('Incomplete: the second attempt at this review stopped before it finished.')
+            if (attempt.reason) problems.push(`Incomplete: this review ${attempt.reason}.${fallsBack ? " A second attempt left no summary, so this is the first attempt's." : ''}`)
+            const problem = problems.join(' ')
             output({ retry: false, problem })
             if (problem) {
               say('warning', "Claude's review is incomplete", problem)
@@ -223,7 +246,7 @@ jobs:
             const headed = /^## Claude review\b/.test(text)
             if (!headed) say('warning', 'The summary had no heading', `${env.SUMMARY_FILE} didn't start with "## Claude review", which is how the next review finds it, so the workflow added it.`)
             const [heading, ...rest] = (headed ? text : `## Claude review\n\n${text}`).split('\n')
-            const body = problem ? `${heading}\n\n**${problem}**\n\n${rest.join('\n').trim()}` : [heading, ...rest].join('\n')
+            const body = problem ? `${heading}\n\n${problems.map(line => `**${line}**`).join('\n\n')}\n\n${rest.join('\n').trim()}` : [heading, ...rest].join('\n')
             if (body.length > summaryLimit) fail(`The summary is ${body.length} characters, over the ${summaryLimit} a comment holds.`)
             const id = env.SUMMARY_ID
             const [method, url] = id ? ['PATCH', `${api}/issues/comments/${id}`] : ['POST', `${api}/issues/${env.PR_NUMBER}/comments`]
@@ -290,6 +313,8 @@ jobs:
             const activity = await readReviewActivity(env.REVIEW_BOT || 'claude[bot]', env.SUMMARY_BOT || 'github-actions[bot]').catch(error => fail(`Couldn't read the pull request to check the review: ${error.message}`))
             const posted = activity.filter(item => Date.parse(item.at) >= startedAt - 30 * 1000)
             const summaryPosted = posted.some(item => item.summary)
+            const ended = summaryPosted ? '' : await endedAs()
+            if (ended) return say('notice', `The pull request was ${ended} while the review ran`, `The reviewer posts nothing on a pull request that isn't open, so this run left no summary and the check passes. This pull request was ${ended} after the review started.`)
             if (stopped) {
               if (!summaryPosted) fail(`The second attempt at the review didn't finish, and no summary was posted. ${stopped}`)
               return say('warning', "The second attempt at the review didn't finish", `${clean(stopped, 600)} A summary was posted all the same, so the check passes.`)
@@ -417,6 +442,7 @@ jobs:
           FIRST_ATTEMPT_SUMMARY: ${{ runner.temp }}/claude-review-first-attempt-summary.md
           GITHUB_TOKEN: ${{ github.token }}
           PR_NUMBER: ${{ github.event.pull_request.number }}
+          RETRY_OUTCOME: ${{ steps.retry.outcome }}
           SUMMARY_FILE: tmp/review-summary.md
           SUMMARY_ID: ${{ steps.earlier.outputs.summary_id }}
         shell: node {0}

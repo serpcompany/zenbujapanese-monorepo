@@ -13,7 +13,9 @@ import {
   firstVerdict,
   lastVerdict,
   minutesAfterStart,
+  pr,
   replay,
+  repository,
   retry,
   review,
   reviewIndex,
@@ -130,6 +132,7 @@ describe('whether a review read the whole change', () => {
       ...keptFromTheFirstAttempt,
       ...forGitHub,
       STEP: 'last',
+      RETRY_OUTCOME: `\${{ steps.${retry.id}.outcome }}`,
       CHANGED_FILES: '${{ steps.earlier.outputs.changed_files }}',
       EXECUTION_FILE: `\${{ steps.${retry.id}.outputs.execution_file || steps.${review.id}.outputs.execution_file }}`,
       SUMMARY_FILE: 'tmp/review-summary.md',
@@ -340,12 +343,14 @@ describe('a second attempt at the review', () => {
           finding(bot, 2, {
             path: 'apps/ios/docs/product/translate.md',
             line: 157,
+            html_url: 'https://github.com/c/1',
             body: "**suggestion** The user-visible change isn't described\n\nThe PR body names one."
           }),
           finding(bot, 3, {
             path: 'docs/odd\n# name.md',
             line: null,
             original_line: 4,
+            html_url: 'https://github.com/c/2',
             body: 'Moved.'
           }),
           finding(bot, -90, { path: 'apps/web/worker.ts', line: 3, body: 'From an earlier push.' }),
@@ -374,15 +379,16 @@ describe('a second attempt at the review', () => {
     const first = await run.first()
     expect(first.outputs.retry).toBe('true')
     expect(first.requests.map(({ method, path }) => `${method} ${path}`)).toEqual([
-      'GET /repos/serpcompany/zenbujapanese-monorepo/pulls/7/comments'
+      `GET /repos/${repository}/pulls/${pr}`,
+      `GET /repos/${repository}/pulls/${pr}/comments`
     ])
     const correction = run.read('context.md') ?? ''
     expect(correction).toContain(
-      'The first attempt already posted these inline comments. They are earlier findings: post none of them again.'
+      "The first attempt already posted these inline comments on this commit. Post none of them again. They are this round's findings, not earlier ones: count each in your summary's line of blocking findings and suggestions, with the ones you post now, so the summary never says `No new findings.` after a round that posted some."
     )
     const alreadyPosted = [
-      '- "apps/ios/docs/product/translate.md":157: **suggestion** The user-visible change isn\'t described The PR body names one.',
-      '- "docs/odd\\n# name.md":4: Moved.'
+      '- "apps/ios/docs/product/translate.md":157 (https://github.com/c/1): **suggestion** The user-visible change isn\'t described The PR body names one.',
+      '- "docs/odd\\n# name.md":4 (https://github.com/c/2): Moved.'
     ]
     expect(listed(correction)).toEqual(alreadyPosted)
     const forReviewers = run.read('reviewers-context.md') ?? ''
@@ -425,6 +431,6 @@ describe('a second attempt at the review', () => {
     const first = await run.first({ REVIEW_STARTED_AT: '' })
     expect(first.status).toBe(0)
     expect(first.outputs.retry).toBe('false')
-    expect(first.requests).toEqual([])
+    expect(first.requests.map(({ path }) => path)).toEqual([`/repos/${repository}/pulls/${pr}`])
   })
 })

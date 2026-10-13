@@ -55,13 +55,17 @@ function secondsGitHubAsksFor(response) {
   return Math.max(1, Math.ceil(reset - Date.now() / 1000))
 }
 
-async function request(name, url, options = {}) {
+async function request(name, url, { read = 'json', ...options } = {}) {
   for (let attempt = 0; ; attempt += 1) {
     const response = await fetch(url, {
       ...options,
       headers: { ...headers, ...options.headers },
       signal: AbortSignal.timeout(answerWait)
-    }).catch(error => ({ unanswered: error.name, headers: new Headers() }))
+    })
+      .then(async answer =>
+        answer.ok ? { ok: true, headers: answer.headers, body: await answer[read]() } : answer
+      )
+      .catch(error => ({ unanswered: error.name, headers: new Headers() }))
     if (response.ok) return response
     const asked = secondsGitHubAsksFor(response)
     const worthAnotherTry =
@@ -69,7 +73,7 @@ async function request(name, url, options = {}) {
     const seconds = asked ?? secondsBetweenTries[attempt]
     if (!worthAnotherTry || attempt >= secondsBetweenTries.length || seconds > longestWait) {
       const outcome = response.unanswered
-        ? `got no answer (${response.unanswered})`
+        ? `got no whole answer (${response.unanswered})`
         : `returned ${response.status}`
       throw Object.assign(new Error(`${name} ${outcome}`), { status: response.status })
     }
@@ -82,7 +86,7 @@ async function list(path, pages) {
   let url = `${api}${path}?per_page=100`
   for (let page = 0; url && page < pages; page += 1) {
     const response = await request(`GET ${path}`, url)
-    items.push(...(await response.json()))
+    items.push(...response.body)
     url = /<([^>]+)>;\s*rel="next"/.exec(response.headers.get('link') ?? '')?.[1]
   }
   return items
@@ -97,9 +101,9 @@ async function rulesSection() {
         const copy = await request(
           `GET /contents/${file}`,
           `${api}/contents/${file}?ref=${encodeURIComponent(base)}`,
-          { headers: { Accept: 'application/vnd.github.raw' } }
+          { read: 'text', headers: { Accept: 'application/vnd.github.raw' } }
         )
-        return (await copy.text()).trimEnd()
+        return copy.body.trimEnd()
       } catch (error) {
         if (error.status !== 404) throw error
         return `The base branch has no ${file}.`
@@ -116,12 +120,11 @@ async function rulesSection() {
 
 async function graphql(query, variables, answered) {
   for (let attempt = 0; ; attempt += 1) {
-    const response = await request('POST /graphql', `${apiRoot}/graphql`, {
+    const { body: answer } = await request('POST /graphql', `${apiRoot}/graphql`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ query, variables })
     })
-    const answer = await response.json()
     if (answered(answer)) return answer
     if (attempt >= secondsBetweenTries.length) {
       throw new Error(`POST /graphql answered ${JSON.stringify(answer.errors ?? answer)}`)

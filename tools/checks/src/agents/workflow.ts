@@ -101,7 +101,8 @@ export function guardAfter(steps: readonly Step[], claude: Step): { step: Step; 
 export type Route = (
   url: URL,
   method: string,
-  sent: string
+  sent: string,
+  accept: string
 ) =>
   | {
       status: number
@@ -109,6 +110,7 @@ export type Route = (
       text?: string
       nextPage?: string
       headers?: Record<string, string>
+      lost?: 'answer' | 'body'
     }
   | undefined
 
@@ -158,16 +160,27 @@ export async function runNodeScript(
       const url = new URL(request.url ?? '/', 'http://localhost')
       const method = request.method ?? 'GET'
       requests.push({ method, path: url.pathname, body })
-      const answer = route(url, method, body) ?? { status: 404, body: { message: 'Not Found' } }
+      const answer = route(url, method, body, request.headers.accept ?? '') ?? {
+        status: 404,
+        body: { message: 'Not Found' }
+      }
+      if (answer.lost === 'answer') {
+        request.socket.destroy()
+        return
+      }
       const link = answer.nextPage
         ? { link: `<http://${request.headers.host}${answer.nextPage}>; rel="next"` }
         : {}
+      const text = answer.text ?? JSON.stringify(answer.body)
+      const longer = answer.lost ? { 'content-length': String(Buffer.byteLength(text) + 1) } : {}
       response.writeHead(answer.status, {
         'content-type': 'application/json',
         ...link,
-        ...answer.headers
+        ...answer.headers,
+        ...longer
       })
-      response.end(answer.text ?? JSON.stringify(answer.body))
+      if (answer.lost) response.write(text, () => request.socket.destroy())
+      else response.end(text)
     })
   })
   await new Promise<void>(resolve => server.listen(0, '127.0.0.1', resolve))
