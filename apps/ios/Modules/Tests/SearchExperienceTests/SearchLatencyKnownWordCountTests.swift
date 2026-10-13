@@ -69,7 +69,7 @@ extension SearchLatencyTests {
     _ = await KnownWordCount.aLineAtATime.words(lines, await FreshEngine().analysis)
 
     var first = ways.map { _ in [Double]() }
-    var longestCall = first
+    var calls = first
     var again = first
     var afterwards = first
     var words = ways.map { _ in 0 }
@@ -78,7 +78,7 @@ extension SearchLatencyTests {
         let engine = await FreshEngine()
         let counted = await clock.measure { words[index] = await way.words(lines, engine.analysis) }
         first[index].append(Self.value(counted))
-        longestCall[index].append(engine.calls.withLock { $0.max() ?? 0 })
+        calls[index] += engine.calls.withLock { $0 }
         let recounted = await clock.measure { _ = await way.words(lines, engine.analysis) }
         again[index].append(Self.value(recounted))
         afterwards[index].append(await engine.linkingTime(of: lines.prefix(20)))
@@ -89,10 +89,12 @@ extension SearchLatencyTests {
       "SEARCH-LATENCY the known words of \(lines.count) caption lines, counted \(Self.passes) "
         + "times each way in turn, on a fresh engine each time (JSC_useJIT is \(jit))")
     for (index, way) in ways.enumerated() {
-      let calls = longestCall[index].contains { $0 > 0 }
+      let held =
+        calls[index].isEmpty
+        ? "" : "; each of its \(calls[index].count) calls, \(Self.summary(calls[index]))"
       print(
         "SEARCH-LATENCY \(way.label): \(words[index]) words in \(Self.summary(first[index]))"
-          + (calls ? "; its longest call, \(Self.summary(longestCall[index]))" : "")
+          + held
           + "; counted again, \(Self.summary(again[index]))"
           + "; then 20 of its captions link in \(Self.summary(afterwards[index]))")
     }
@@ -104,7 +106,7 @@ extension SearchLatencyTests {
     for (index, way) in ways.enumerated() {
       let whole = first[index].sorted()[Self.passes / 2]
       var waits: [Double] = []
-      for tenths in [2, 5, 8] {
+      for tenths in stride(from: 1, through: 9, by: 2) {
         let engine = await FreshEngine()
         let counting = Task { await way.words(lines, engine.analysis) }
         try await Task.sleep(for: .milliseconds(Int(whole) * tenths / 10))
@@ -116,7 +118,7 @@ extension SearchLatencyTests {
           + Self.summary(waits))
     }
     print(
-      "SEARCH-LATENCY memory after \(1 + ways.count * (Self.passes + 3) + 3) engines: "
+      "SEARCH-LATENCY memory after \(1 + ways.count * (Self.passes + 5) + 3) engines: "
         + "\(Self.footprint().current / 1_048_576) MB, "
         + "\(Self.footprint().peak / 1_048_576) MB at its highest")
   }
