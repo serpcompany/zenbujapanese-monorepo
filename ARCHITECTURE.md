@@ -100,12 +100,21 @@ saying where the code belongs:
   the app supplies its speech, translation, and playback clients. `TranslatorOnDevice`, the
   recognizer and translation adapters the Mac's replay check shares, adds only AVFoundation,
   Speech, and Translation ([`docs/agents/translate.md`](docs/agents/translate.md)).
-- **Across parts**: the app has no dictionary logic of its own: it asks the core, through the
-  bundle it runs, what each dictionary screen shows
-  ([`docs/agents/dictionary-core.md`](docs/agents/dictionary-core.md), The app's side); the app's
-  bundle of the core is rebuilt with the core, which the core's tests check; the website and the service share
-  their row shapes through the core; no app imports another, and apps reach a shared package by
-  its name.
+- **Across parts**: the app finds and ranks nothing itself: it asks the core, through the bundle
+  it runs, what each dictionary screen lists, in what order, and with what labels
+  ([`docs/agents/dictionary-core.md`](docs/agents/dictionary-core.md), The app's side), apart
+  from the rows of the table below; the app's bundle of the core is rebuilt with the core, which
+  the core's tests check; the website and the service share their row shapes through the core;
+  no app imports another, and apps reach a shared package by its name.
+
+These parts of a dictionary screen are decided in more than one place, not once in the core's
+answers:
+
+| What a screen shows | Where it is decided |
+| --- | --- |
+| The source credits | Typed three times: the app's list in `apps/ios/Modules/Sources/SearchExperience/CreditsView.swift`, the website's in `apps/web/src/lib/dictionary/sources.ts`, and the word cards' in `packages/dictionary-core/src/cards/sources.ts`. |
+| The section titles of the word and kanji pages, and what a screen says when it has nothing to list | The titles, and Search's message when nothing matches, are typed in each client: in the app's views (`apps/ios/Modules/Sources/SearchExperience/WordDetailView.swift`, `apps/ios/Modules/Sources/SearchExperience/KanjiDetailSections.swift`, `apps/ios/Modules/Sources/SearchExperience/SearchView.swift`) and in the website's (`apps/web/src/app/dictionary/[word]/page.tsx`, `apps/web/src/components/dictionary/kanji-details.tsx`, `apps/web/src/components/dictionary/search-results.tsx`). The two messages for a word or a form with no examples are in the core (`packages/dictionary-core/src/detail/examples.ts`), which the website shows, and typed again in the app (`apps/ios/Modules/Sources/SearchExperience/WordDetailView.swift`, `apps/ios/Modules/Sources/SearchExperience/ConjugationsView.swift`). |
+| Which words an example sentence accents: the page's word, or the words that match the query | For the app, the core says both of every word, and a view picks which of the two its screen accents (`apps/ios/Modules/Sources/SearchExperience/ExampleSentencesView.swift`). For the website, the core picks (`exampleRows` in `packages/dictionary-core/src/artifact/word-examples.ts`). |
 
 The website logs through its own `log()`, the Node services through `packages/node-service`'s, and
 the core not at all.
