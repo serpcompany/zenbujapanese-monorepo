@@ -20,6 +20,7 @@ struct SearchLatencyTests {
     "taberu", "inu", "kau", "kou",
   ]
   static let kanji = ["要", "日", "人", "食", "行", "生", "大", "一"]
+  static let exampleWords = ["食べる", "行く", "学校", "水", "見る"]
   static let passes = 5
 
   @Test("prints each query's uncached search time and the memory the searches reach")
@@ -93,7 +94,7 @@ struct SearchLatencyTests {
   func measureLinking() async throws {
     let clock = ContinuousClock()
     var sentences: [ExampleSentence] = []
-    for word in ["食べる", "行く", "学校", "水", "見る"] {
+    for word in Self.exampleWords {
       sentences += await ExampleSentenceClient.live.listed(SearchQuery(word), nil, false).prefix(40)
     }
     var first: [Double] = []
@@ -291,7 +292,7 @@ struct SearchLatencyTests {
         + "\(Self.milliseconds(again)) again; Foundation's own took \(Self.milliseconds(foundation))")
 
     var sentences: [[JapaneseTextToken]] = []
-    for word in ["食べる", "行く", "学校", "水", "見る"] {
+    for word in Self.exampleWords {
       for sentence in await ExampleSentenceClient.live.listed(SearchQuery(word), nil, false)
         .prefix(40)
       {

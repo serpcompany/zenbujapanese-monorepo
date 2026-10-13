@@ -312,6 +312,24 @@ describe('the embedded text engine', () => {
     expect(target.asked).toHaveLength(1)
   })
 
+  test('remembers a line it has counted, and analyzes again one it could not read', async () => {
+    const tokenized: string[] = []
+    const target = fakeHost(entries, {
+      tokenize: text => {
+        tokenized.push(text)
+        if (!Object.hasOwn(sentences, text)) throw new Error(`The tokenizer has no ${text}`)
+        return sentences[text]
+      }
+    })
+    const endpoint = embeddedEndpoint(target)
+    const lines = JSON.stringify(['今日', '日本語を見た', '未知', '今日'])
+    const words = { value: ['k1', 'a1', 'v1', 'k1'] }
+    expect(await settled(endpoint.begin('countedWords', lines))).toEqual(words)
+    expect(tokenized).toEqual(['今日', '日本語を見た', '未知'])
+    expect(await settled(endpoint.begin('countedWords', lines))).toEqual(words)
+    expect(tokenized).toEqual(['今日', '日本語を見た', '未知', '未知'])
+  })
+
   test('stops counting once the host says nobody wants the answer', async () => {
     let tokenized = 0
     const target = fakeHost(entries, {

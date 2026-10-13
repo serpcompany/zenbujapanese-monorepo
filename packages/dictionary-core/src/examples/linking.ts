@@ -94,7 +94,7 @@ export function isCompatible(part: string, providerPOS: string): boolean {
   }
 }
 
-export interface Highlighted {
+interface Highlighted {
   entry: HighlightedEntry
   query: string
 }

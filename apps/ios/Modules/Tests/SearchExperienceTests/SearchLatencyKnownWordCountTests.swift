@@ -12,12 +12,7 @@ extension SearchLatencyTests {
     static let aLineAtATime = KnownWordCount(
       label: "a line at a time, reading each linked word's entry"
     ) { lines, analysis in
-      var words: [LanguageReferenceID] = []
-      for line in lines {
-        let tokens = await analysis.linkedTokens(line, SearchQuery(""), nil)
-        words += tokens.compactMap { $0.isFunctionWord ? nil : $0.entry?.id }
-      }
-      return words.count
+      await analysis.countedALineAtATime(lines).count
     }
 
     static let aFewLinesACall = KnownWordCount(
@@ -65,7 +60,7 @@ extension SearchLatencyTests {
   func measureKnownWordCount() async throws {
     let clock = ContinuousClock()
     var listed: [String] = []
-    for word in ["食べる", "行く", "学校", "水", "見る"] {
+    for word in Self.exampleWords {
       listed += await ExampleSentenceClient.live.listed(SearchQuery(word), nil, false)
         .map(\.japanese)
     }

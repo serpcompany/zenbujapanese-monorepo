@@ -67,8 +67,9 @@ describe.runIf(artifactAvailable)('the app’s example sentences on the artifact
     expect(await app.text<number>('exampleCount', '"')).toBe(0)
   })
 
-  test('counts, in one call, the words the suite’s sentences link to one entry that are no function word', async () => {
+  test('counts, in one call on an engine that has linked nothing, the words the suite’s sentences link to one entry that are no function word', async () => {
     const lines = suite.cases.flatMap(listed => listed.shown.map(shown => shown.japanese))
+    const counted = await (await embedded()).text<string[]>('countedWords', lines)
     const linked: string[] = []
     for (const text of lines) {
       const tokens = await app.text<EmbeddedToken[]>('linkedTokens', {
@@ -80,7 +81,6 @@ describe.runIf(artifactAvailable)('the app’s example sentences on the artifact
         if (token.entry !== null && !token.isFunctionWord) linked.push(token.entry)
       }
     }
-    const counted = await app.text<string[]>('countedWords', lines)
     expect(counted).toEqual(linked)
     expect(counted).toHaveLength(614)
     expect(new Set(counted).size).toBe(296)

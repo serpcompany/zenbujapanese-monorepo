@@ -4931,6 +4931,7 @@
     lookup;
     entries = new LruCache(4e3);
     linked = new LruCache(512);
+    counted = new LruCache(4e3);
     searched = new LruCache(32);
     retrieved = new LruCache(64);
     tokenize;
@@ -5075,21 +5076,34 @@
       return answer;
     }
     async countedWords(lines, analyze) {
-      const analyses = [];
+      const words = /* @__PURE__ */ new Map();
+      const analyses = /* @__PURE__ */ new Map();
       const looked = [];
       for (const text of lines) {
         stopIfInterrupted(this.db, 0);
+        if (words.has(text) || analyses.has(text)) continue;
+        const remembered3 = this.counted.get(text);
+        if (remembered3 !== void 0) {
+          words.set(text, remembered3);
+          continue;
+        }
         const candidates = await this.candidates(text, analyze);
-        analyses.push(candidates);
+        analyses.set(text, candidates);
         if (candidates) for (const forms2 of formsLookedUp(candidates, null)) looked.push(forms2);
       }
       await this.prefetch(looked);
-      const counted = [];
-      for (let line = 0; line < lines.length; line++) {
+      for (const [text, candidates] of analyses) {
         stopIfInterrupted(this.db, 0);
-        for (const token of linkedTokens(lines[line], analyses[line], null, this.lookup)) {
-          if (countsTowardComprehension(token)) counted.push(token.entry.id);
+        const ids = [];
+        for (const token of linkedTokens(text, candidates, null, this.lookup)) {
+          if (countsTowardComprehension(token)) ids.push(token.entry.id);
         }
+        if (candidates) this.counted.set(text, ids);
+        words.set(text, ids);
+      }
+      const counted = [];
+      for (const text of lines) {
+        for (const id of words.get(text) ?? []) counted.push(id);
       }
       return counted;
     }

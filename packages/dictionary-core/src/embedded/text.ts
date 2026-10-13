@@ -115,6 +115,7 @@ export class EmbeddedText {
   private readonly lookup: FormLookup
   private readonly entries = new LruCache<string, ExamplesEntry>(4_000)
   private readonly linked = new LruCache<string, EmbeddedToken[]>(512)
+  private readonly counted = new LruCache<string, readonly string[]>(4_000)
   private readonly searched = new LruCache<string, EntryExamples | string>(32)
   private readonly retrieved = new LruCache<string, EntryExamples | string>(64)
   private readonly tokenize: Tokenize | undefined
@@ -287,21 +288,34 @@ export class EmbeddedText {
   }
 
   async countedWords(lines: readonly string[], analyze: AnalyzeText): Promise<string[]> {
-    const analyses: (MorphologyCandidate[] | null)[] = []
+    const words = new Map<string, readonly string[]>()
+    const analyses = new Map<string, MorphologyCandidate[] | null>()
     const looked: string[][] = []
     for (const text of lines) {
       stopIfInterrupted(this.db, 0)
+      if (words.has(text) || analyses.has(text)) continue
+      const remembered = this.counted.get(text)
+      if (remembered !== undefined) {
+        words.set(text, remembered)
+        continue
+      }
       const candidates = await this.candidates(text, analyze)
-      analyses.push(candidates)
+      analyses.set(text, candidates)
       if (candidates) for (const forms of formsLookedUp(candidates, null)) looked.push(forms)
     }
     await this.prefetch(looked)
-    const counted: string[] = []
-    for (let line = 0; line < lines.length; line++) {
+    for (const [text, candidates] of analyses) {
       stopIfInterrupted(this.db, 0)
-      for (const token of linkedTokens(lines[line], analyses[line], null, this.lookup)) {
-        if (countsTowardComprehension(token)) counted.push(token.entry.id)
+      const ids: string[] = []
+      for (const token of linkedTokens(text, candidates, null, this.lookup)) {
+        if (countsTowardComprehension(token)) ids.push(token.entry.id)
       }
+      if (candidates) this.counted.set(text, ids)
+      words.set(text, ids)
+    }
+    const counted: string[] = []
+    for (const text of lines) {
+      for (const id of words.get(text) ?? []) counted.push(id)
     }
     return counted
   }

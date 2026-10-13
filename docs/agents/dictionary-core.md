@@ -150,7 +150,7 @@ modules, files, or event loop of its own, which is how the app runs it in JavaSc
   host reads each from the artifact itself. A page's method takes the entry the host read.
 - **A text's words cost one or two statements.** `linkedTokens` looks every word's forms up in one
   round (`entriesMatchingFirstForms`), then the forms still unmatched, and caches by form, so a
-  page of sentences mostly asks nothing. `countedWords` asks once for a whole list of lines.
+  page mostly asks nothing. `countedWords` looks all its lines up together and keeps 4,000 lines.
 - **A call is an object.** `embeddedEndpoint(...).begin(method, argument)` starts a call and
   returns it. Its `outcome()` is a JSON string: `{"value": ...}`, `{"error": message}`, or
   `{"analyze": text}` when a call needs the words of a sentence from a host that gave no

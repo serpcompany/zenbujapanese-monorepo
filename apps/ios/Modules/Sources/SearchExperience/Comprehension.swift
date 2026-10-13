@@ -12,7 +12,7 @@ struct Comprehension: Equatable, Sendable {
     fraction.map { $0.formatted(.percent.precision(.fractionLength(0))) }
   }
 
-  static let linesPerCall = 50
+  static let linesPerCall = 20
 
   static func countedWords(
     in lines: [String], analysis: JapaneseTextAnalysisClient

@@ -73,23 +73,20 @@ struct KnownWordCountTests {
 
   @Test("one call counts the words the captions' cards link to one entry, function words aside")
   func sameWordsAsTheCards() async {
-    let analysis = JapaneseTextAnalysisClient.live()
-    var linked: [LanguageReferenceID] = []
-    for caption in Self.captions {
-      let tokens = await analysis.linkedTokens(caption, SearchQuery(""), nil)
-      linked += tokens.compactMap { $0.isFunctionWord ? nil : $0.entry?.id }
-    }
-    #expect(await analysis.countedWords(Self.captions) == linked)
+    let analysis = JapaneseTextAnalysisClient.live(text: DictionaryTextData())
+    let counted = await analysis.countedWords(Self.captions)
+    #expect(await analysis.countedALineAtATime(Self.captions) == counted)
+    #expect(counted == Self.countedInOrder)
   }
 
-  @Test("a long video's lines are asked for fifty at a time, in order")
-  func fiftyLinesACall() async {
+  @Test("a long video's lines are asked for twenty at a time, in order")
+  func twentyLinesACall() async {
     let asked = OSAllocatedUnfairLock(initialState: [Int]())
     let analysis = Self.counting { lines in asked.withLock { $0.append(lines.count) } }
-    let lines = (0..<127).map(String.init)
+    let lines = (0..<47).map(String.init)
     let words = await Comprehension.countedWords(in: lines, analysis: analysis)
     #expect(words?.map(\.rawValue) == lines)
-    #expect(asked.withLock { $0 } == [50, 50, 27])
+    #expect(asked.withLock { $0 } == [20, 20, 7])
   }
 
   @Test("a count cancelled between calls asks for no more lines and answers nothing")
@@ -99,7 +96,7 @@ struct KnownWordCountTests {
       asked.withLock { $0 += 1 }
       withUnsafeCurrentTask { $0?.cancel() }
     }
-    let lines = (0..<127).map(String.init)
+    let lines = (0..<47).map(String.init)
     let words = await Task { await Comprehension.countedWords(in: lines, analysis: analysis) }.value
     #expect(words == nil)
     #expect(asked.withLock { $0 } == 1)
@@ -128,5 +125,16 @@ struct KnownWordCountTests {
         asked(lines)
         return lines.map(LanguageReferenceID.init(rawValue:))
       })
+  }
+}
+
+extension JapaneseTextAnalysisClient {
+  func countedALineAtATime(_ lines: [String]) async -> [LanguageReferenceID] {
+    var words: [LanguageReferenceID] = []
+    for line in lines {
+      let tokens = await linkedTokens(line, SearchQuery(""), nil)
+      words += tokens.compactMap { $0.isFunctionWord ? nil : $0.entry?.id }
+    }
+    return words
   }
 }
