@@ -9,8 +9,57 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  review:
+  changes:
     if: ${{ !github.event.pull_request.draft && github.event.pull_request.user.type != 'Bot' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      pull-requests: read
+    outputs:
+      reviewable: ${{ steps.files.outputs.reviewable }}
+    steps:
+      - name: Find out whether the pull request changes this workflow
+        id: files
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+        shell: node {0}
+        run: |
+          const fs = require('node:fs')
+          const repo = process.env.GITHUB_REPOSITORY
+          const workflow = String(process.env.GITHUB_WORKFLOW_REF || '').split('@')[0].slice(`${repo}/`.length)
+          const files = `/pulls/${process.env.PR_NUMBER}/files`
+          const main = async () => {
+            if (!workflow) throw new Error("GITHUB_WORKFLOW_REF doesn't name this workflow's file")
+            let url = `${process.env.GITHUB_API_URL || 'https://api.github.com'}/repos/${repo}${files}?per_page=100`
+            let changed = false
+            for (let page = 0; url && !changed && page < 30; page += 1) {
+              const response = await fetch(url, {
+                headers: {
+                  Accept: 'application/vnd.github+json',
+                  Authorization: `Bearer ${process.env.GITHUB_TOKEN}`,
+                  'X-GitHub-Api-Version': '2022-11-28'
+                }
+              })
+              if (!response.ok) throw new Error(`GET ${files} returned ${response.status}`)
+              changed = (await response.json()).some(file => [file.filename, file.previous_filename].includes(workflow))
+              url = (/<([^>]+)>;\s*rel="next"/.exec(response.headers.get('link') || '') || [])[1]
+            }
+            if (process.env.GITHUB_OUTPUT) fs.appendFileSync(process.env.GITHUB_OUTPUT, `reviewable=${!changed}\n`)
+            if (changed) {
+              console.log(`::notice title=Claude doesn't review this pull request::This pull request changes ${workflow}, and Claude's review can't run on a pull request that changes the review workflow: it runs only when that file is the one on main. A person reviews this pull request (docs/agents/ci-agents.md, Code review).`)
+            } else {
+              console.log(`This pull request leaves ${workflow} alone, so Claude reviews it.`)
+            }
+          }
+          main().catch(error => {
+            console.log(`::error title=Couldn't read the pull request's files::${String(error?.message).replace(/[\r\n%]+/g, ' ')}`)
+            process.exit(1)
+          })
+
+  review:
+    needs: changes
+    if: needs.changes.outputs.reviewable == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 30
     permissions:
@@ -30,11 +79,12 @@ jobs:
         with:
           fetch-depth: 1
 
-      - name: Give the reviewer the base branch's rules
+      - name: Take the rules and the review's script from the base branch
         if: env.HAS_REVIEW_TOKEN == 'true'
         env:
           BASE_REF: ${{ github.event.pull_request.base.ref }}
           RULES: AGENTS.md ARCHITECTURE.md docs/agents/code.md CONTEXT.md
+          CONTEXT_SCRIPT: tools/checks/review-context.mjs
         run: |
           git fetch --no-tags --depth=1 origin "$BASE_REF"
           {
@@ -48,6 +98,7 @@ jobs:
               git show "FETCH_HEAD:$file" 2>/dev/null || echo "The base branch has no $file."
             done
           } > "$RUNNER_TEMP/review-context.md"
+          git show "FETCH_HEAD:$CONTEXT_SCRIPT" > "$RUNNER_TEMP/review-context.mjs"
 
       - name: Note when the review starts
         if: env.HAS_REVIEW_TOKEN == 'true'
@@ -55,87 +106,26 @@ jobs:
           rm -f tmp/review-summary.md
           echo "REVIEW_STARTED_AT=$(date -u +%Y-%m-%dT%H:%M:%SZ)" >> "$GITHUB_ENV"
 
-      - name: Give the reviewer its earlier findings
+      - name: Give the reviewer the change, its issue, and its earlier findings
         id: earlier
         if: env.HAS_REVIEW_TOKEN == 'true'
         env:
+          CHANGE_DIR: ${{ github.workspace }}/tmp/review-change
+          CHANGE_FILE: ${{ runner.temp }}/review-change.json
           CONTEXT_FILE: ${{ runner.temp }}/review-context.md
           GITHUB_TOKEN: ${{ github.token }}
           PR_NUMBER: ${{ github.event.pull_request.number }}
           REVIEW_BOT: "claude[bot]"
           SUMMARY_BOT: "github-actions[bot]"
-        shell: node {0}
-        run: |
-          const fs = require('node:fs')
-          const repo = process.env.GITHUB_REPOSITORY
-          const api = `${process.env.GITHUB_API_URL || 'https://api.github.com'}/repos/${repo}`
-          const headers = {
-            Accept: 'application/vnd.github+json',
-            Authorization: `Bearer ${process.env.GITHUB_TOKEN}`,
-            'X-GitHub-Api-Version': '2022-11-28'
-          }
-          const bot = process.env.REVIEW_BOT || 'claude[bot]'
-          const list = async path => {
-            const items = []
-            let url = `${api}${path}?per_page=100`
-            for (let page = 0; url && page < 10; page += 1) {
-              const response = await fetch(url, { headers })
-              if (!response.ok) throw new Error(`GET ${path} returned ${response.status}`)
-              items.push(...(await response.json()))
-              url = (/<([^>]+)>;\s*rel="next"/.exec(response.headers.get('link') || '') || [])[1]
-            }
-            return items
-          }
-          const summaryBot = process.env.SUMMARY_BOT || 'github-actions[bot]'
-          const byClaude = item => item?.user?.login === bot
-          const excerpt = (text, max) => {
-            const flat = String(text || '').replace(/\s+/g, ' ').trim()
-            return flat.length > max ? `${flat.slice(0, max)}…` : flat
-          }
-          const isSummary = item => /^## Claude review\b/.test(String(item.body || '').trim())
-          const main = async () => {
-            const pr = process.env.PR_NUMBER
-            const [allInline, allComments] = await Promise.all([list(`/pulls/${pr}/comments`), list(`/issues/${pr}/comments`)])
-            const inline = allInline.filter(byClaude)
-            const comments = allComments.filter(byClaude)
-            const findings = inline.filter(item => !item.in_reply_to_id)
-            const summary = allComments.filter(item => item?.user?.login === summaryBot && isSummary(item)).at(-1)
-            const replies = [...comments.filter(item => !isSummary(item)), ...inline.filter(item => item.in_reply_to_id)]
-            const lines = ['', '# Earlier findings on this pull request', '']
-            if (findings.length === 0 && !summary) {
-              lines.push('None: this is the first review of this pull request.')
-            } else {
-              lines.push("Claude posted these on earlier commits. Don't post any of them again, including the same problem reworded or at the lines it moved to. In the summary, say for each whether the current commit fixes it or it still applies.", '')
-              for (const item of findings) {
-                const where = item.line == null ? `${item.path}:${item.original_line} (outdated: the code there changed)` : `${item.path}:${item.line}`
-                lines.push(`- ${where}, on commit ${String(item.commit_id || '').slice(0, 7)} (${item.html_url}): ${excerpt(item.body, 600)}`)
-              }
-              if (summary) lines.push(`- Summary comment (${summary.html_url}): ${excerpt(summary.body, 1500)}`)
-            }
-            lines.push('', '# Your summary comment', '')
-            lines.push(
-              `Write the summary to tmp/review-summary.md, starting with \`## Claude review\`. Don't post it yourself, and post no comment other than inline findings: after you finish, the workflow ${summary ? `updates the summary comment above (${summary.html_url}) in place` : 'posts it as this pull request\'s summary comment'}.`
-            )
-            if (process.env.GITHUB_OUTPUT) fs.appendFileSync(process.env.GITHUB_OUTPUT, `summary_id=${summary ? summary.id : ''}\n`)
-            if (replies.length > 0) {
-              lines.push('', '# Replies to @claude requests', '', "Claude also answered @claude requests on this pull request. They're context, not review findings: don't list them as earlier findings, and never edit them.", '')
-              for (const item of replies) lines.push(`- ${item.html_url}: ${excerpt(item.body, 600)}`)
-            }
-            fs.appendFileSync(process.env.CONTEXT_FILE, `${lines.join('\n')}\n`)
-            console.log(`Earlier findings passed to the review: ${findings.length} inline, ${summary ? 1 : 0} summary, ${replies.length} replies to @claude requests.`)
-          }
-          main().catch(error => {
-            console.log(`::error title=Couldn't read the earlier review::${String(error?.message).replace(/[\r\n%]+/g, ' ')}`)
-            process.exit(1)
-          })
+        run: node "$RUNNER_TEMP/review-context.mjs"
 
       - name: Review with Claude
         id: review
         if: env.HAS_REVIEW_TOKEN == 'true'
         uses: anthropics/claude-code-action@2dca132ff0e0c4094ce6048b422c6915a071210b
-        env:
+        env: &reviewer-environment
           CLAUDE_CODE_DISABLE_BACKGROUND_TASKS: "1"
-        with:
+        with: &reviewer
           claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
           allowed_bots: "claude[bot]"
           prompt: "/pr-review ${{ github.repository }}/pull/${{ github.event.pull_request.number }}"
@@ -144,7 +134,126 @@ jobs:
             --strict-mcp-config
             --append-system-prompt-file ${{ runner.temp }}/review-context.md
             --append-subagent-system-prompt-file ${{ runner.temp }}/review-context.md
-            --allowedTools "mcp__github_inline_comment__create_inline_comment,Bash(gh pr view:*),Bash(gh pr diff:*),Bash(gh issue view:*),Write,Task,Read,Glob,Grep"
+            --allowedTools "mcp__github_inline_comment__create_inline_comment,Bash(gh pr view:*),Bash(gh pr diff:*),Bash(gh issue view:*),Write,Agent,Task,Read,Glob,Grep"
+
+      - name: Decide whether the review read the whole change
+        id: first
+        if: env.HAS_REVIEW_TOKEN == 'true' && steps.review.outcome == 'success'
+        env:
+          CHANGED_FILES: ${{ steps.earlier.outputs.changed_files }}
+          CHANGE_FILE: ${{ runner.temp }}/review-change.json
+          CHANGE_INDEX: ${{ github.workspace }}/tmp/review-change/index.md
+          CORRECTION_FILE: ${{ runner.temp }}/review-context.md
+          EXECUTION_FILE: ${{ steps.review.outputs.execution_file }}
+          FIRST_ATTEMPT_LOG: ${{ runner.temp }}/claude-review-first-attempt.json
+          SUMMARY_FILE: tmp/review-summary.md
+        shell: node {0}
+        run: &completeness |
+          const fs = require('node:fs')
+          const stop = message => {
+            console.log(`::error title=Couldn't tell how much the review read::${String(message).replace(/[\r\n%]+/g, ' ')}`)
+            process.exit(1)
+          }
+          const readJson = file => {
+            try {
+              return JSON.parse(fs.readFileSync(file, 'utf8'))
+            } catch {
+              return null
+            }
+          }
+          const excerpt = (text, max) => {
+            const flat = String(text || '').replace(/\s+/g, ' ').trim()
+            return flat.length > max ? `${flat.slice(0, max)}…` : flat
+          }
+          const blocks = (messages, from, kind) =>
+            messages
+              .flatMap(entry => (entry?.type === from && Array.isArray(entry.message?.content) ? entry.message.content : []))
+              .filter(block => block?.type === kind)
+          const coverageLine = /^[\s>*_-]*Read (\d+) of (\d+) changed files?\b/m
+          const shortfall = (summary, changedFiles, reviewers) => {
+            if (summary === null) return 'wrote no summary'
+            const coverage = coverageLine.exec(summary)
+            if (!coverage) return 'did not say how many of the changed files it read'
+            const [read, total] = [Number(coverage[1]), Number(coverage[2])]
+            if (total !== changedFiles) return `counted ${total} changed files where the pull request has ${changedFiles}`
+            if (read > total) return `said it read ${read} of ${total} changed files`
+            const missing = []
+            if (read < total && !/^[\s>*_-]*Not read:/m.test(summary)) missing.push('did not name the rest')
+            if (read < total && reviewers < 3) missing.push(reviewers === 0 ? 'did not run its reviewers' : `ran ${reviewers} of its three reviewers`)
+            if (missing.length === 0) return ''
+            return `read ${read} of ${total} changed files${missing.length > 1 ? ', ' : ' and '}${missing.join(' and ')}`
+          }
+          const correction = (reason, messages, calls) => {
+            const failed = new Set(blocks(messages, 'user', 'tool_result').filter(block => block.is_error).map(block => block.tool_use_id))
+            const done = calls.filter(block => !failed.has(block.id))
+            const opened = new Set(done.filter(block => block.name === 'Read').map(block => block.input?.file_path))
+            const changed = readJson(process.env.CHANGE_FILE)
+            const readable = (Array.isArray(changed) ? changed : []).filter(file => file.patch || file.file)
+            const unread = readable.filter(file => !opened.has(file.patch) && !opened.has(file.file))
+            const findings = done.filter(block => block.name === 'mcp__github_inline_comment__create_inline_comment' && block.input?.confirmed !== false)
+            const lines = [
+              '',
+              '# This is the second attempt at this review',
+              '',
+              `The first attempt, on this same commit, ${reason}. This attempt is the last. Do the whole review again as the pr-review skill describes it, and write the summary again from the start: the first attempt's was discarded.`,
+              ''
+            ]
+            if (unread.length > 0) {
+              lines.push(`With the Read tool, the first attempt opened ${readable.length - unread.length} of the ${readable.length} changed files listed in ${process.env.CHANGE_INDEX}. It never opened these ${unread.length}, so read each one now:`, '')
+              for (const file of unread) lines.push(`- ${file.path}: ${file.patch || file.file}`)
+              lines.push('')
+            }
+            lines.push(findings.length > 0 ? 'The first attempt already posted these inline comments. They are earlier findings: post none of them again.' : 'The first attempt posted no inline comments.')
+            for (const { input } of findings) lines.push(`- ${input.path}:${input.line}: ${excerpt(input.body, 300)}`)
+            return `${lines.join('\n')}\n`
+          }
+          const output = values => {
+            if (process.env.GITHUB_OUTPUT) fs.appendFileSync(process.env.GITHUB_OUTPUT, Object.entries(values).map(([name, value]) => `${name}=${value}\n`).join(''))
+          }
+          const messages = readJson(process.env.EXECUTION_FILE)
+          if (!Array.isArray(messages) || !messages.some(entry => entry?.type === 'result')) {
+            console.log('The review left no finished execution log, so there is nothing to measure: the last step says why.')
+            output({ complete: false, retry: false, problem: '' })
+            process.exit(0)
+          }
+          const changedFiles = Number(process.env.CHANGED_FILES || 'none')
+          if (!Number.isInteger(changedFiles)) stop("CHANGED_FILES isn't the pull request's file count, so nothing says how much of the change there was to read.")
+          const calls = blocks(messages, 'assistant', 'tool_use')
+          const reviewers = calls.filter(block => ['Task', 'Agent'].includes(block.name)).length
+          const file = process.env.SUMMARY_FILE
+          const summary = fs.existsSync(file) ? fs.readFileSync(file, 'utf8') : null
+          const reason = shortfall(summary, changedFiles, reviewers)
+          const problem = reason ? `Incomplete: this review ${reason}.` : ''
+          const retry = Boolean(reason && process.env.CORRECTION_FILE)
+          if (retry) {
+            fs.appendFileSync(process.env.CORRECTION_FILE, correction(reason, messages, calls))
+            fs.rmSync(file, { force: true })
+            fs.renameSync(process.env.EXECUTION_FILE, process.env.FIRST_ATTEMPT_LOG)
+            console.log(`${problem} It runs once more, told what it left out.`)
+          } else if (reason) {
+            console.log(`::warning title=Claude's review is incomplete::${problem}`)
+            if (process.env.GITHUB_STEP_SUMMARY) fs.appendFileSync(process.env.GITHUB_STEP_SUMMARY, `${problem}\n`)
+          } else {
+            console.log(`Complete: the summary accounts for all ${changedFiles} changed files, and the review started ${reviewers} reviewers.`)
+          }
+          output({ complete: !reason, retry, problem })
+
+      - name: Review again with Claude
+        id: retry
+        if: steps.first.outputs.retry == 'true'
+        uses: anthropics/claude-code-action@2dca132ff0e0c4094ce6048b422c6915a071210b
+        env: *reviewer-environment
+        with: *reviewer
+
+      - name: Decide whether the last attempt read the whole change
+        id: verdict
+        if: env.HAS_REVIEW_TOKEN == 'true' && steps.review.outcome == 'success'
+        env:
+          CHANGED_FILES: ${{ steps.earlier.outputs.changed_files }}
+          EXECUTION_FILE: ${{ steps.retry.outputs.execution_file || steps.review.outputs.execution_file }}
+          SUMMARY_FILE: tmp/review-summary.md
+        shell: node {0}
+        run: *completeness
 
       - name: Post the review's summary
         if: env.HAS_REVIEW_TOKEN == 'true' && steps.review.outcome == 'success'
@@ -153,6 +262,7 @@ jobs:
           PR_NUMBER: ${{ github.event.pull_request.number }}
           SUMMARY_ID: ${{ steps.earlier.outputs.summary_id }}
           SUMMARY_FILE: tmp/review-summary.md
+          PROBLEM: ${{ steps.verdict.outputs.problem }}
         shell: node {0}
         run: |
           const fs = require('node:fs')
@@ -167,8 +277,11 @@ jobs:
               console.log(`::warning title=No summary to post::Claude wrote no ${file}, so the summary comment wasn't updated.`)
               return
             }
-            const body = fs.readFileSync(file, 'utf8').trim()
-            if (!/^## Claude review\b/.test(body)) fail(`${file} doesn't start with "## Claude review", which is how the next review finds it.`)
+            const written = fs.readFileSync(file, 'utf8').trim()
+            if (!/^## Claude review\b/.test(written)) fail(`${file} doesn't start with "## Claude review", which is how the next review finds it.`)
+            const [heading, ...rest] = written.split('\n')
+            const problem = process.env.PROBLEM
+            const body = problem ? `${heading}\n\n**${problem}**\n\n${rest.join('\n').trim()}` : written
             if (body.length > summaryLimit) fail(`${file} is ${body.length} characters, over the ${summaryLimit} a comment holds.`)
             const api = `${process.env.GITHUB_API_URL || 'https://api.github.com'}/repos/${process.env.GITHUB_REPOSITORY}`
             const id = process.env.SUMMARY_ID
@@ -193,15 +306,18 @@ jobs:
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
         with:
           name: claude-review-transcript
-          path: ${{ steps.review.outputs.execution_file }}
+          path: |
+            ${{ steps.retry.outputs.execution_file || steps.review.outputs.execution_file }}
+            ${{ runner.temp }}/claude-review-first-attempt.json
           retention-days: 7
           overwrite: true
 
-      - name: Fail unless Claude reviewed the whole change
+      - name: Fail unless a review ran and was posted
         if: ${{ !cancelled() && steps.review.outcome != 'skipped' }}
         env:
-          EXECUTION_FILE: ${{ steps.review.outputs.execution_file }}
+          EXECUTION_FILE: ${{ steps.retry.outputs.execution_file || steps.review.outputs.execution_file }}
           CLAUDE_OUTCOME: ${{ steps.review.outcome }}
+          RETRY_OUTCOME: ${{ steps.retry.outcome }}
           GITHUB_TOKEN: ${{ github.token }}
           PR_NUMBER: ${{ github.event.pull_request.number }}
           REVIEW_BOT: "claude[bot]"
@@ -218,8 +334,8 @@ jobs:
           const readLog = () => {
             const file = process.env.EXECUTION_FILE
             if (!file || !fs.existsSync(file)) {
-              if (process.env.CLAUDE_OUTCOME === 'failure') fail("The Claude step failed before Claude ran, so it wrote no execution log: that step's own log says why.")
-              fail("The review wrote no execution log, so no review happened. The action skips a pull request that changes this workflow, which must match main's (docs/agents/ci-agents.md, Code review).")
+              if ([process.env.CLAUDE_OUTCOME, process.env.RETRY_OUTCOME].includes('failure')) fail("The Claude step failed before Claude ran, so it wrote no execution log: that step's own log says why.")
+              fail("The review wrote no execution log, so no review happened. The action skips a run whose copy of this workflow differs from main's, as on a pull request into a branch that changes it (docs/agents/ci-agents.md, Code review).")
             }
             let messages
             try {
@@ -258,43 +374,20 @@ jobs:
               return items
             }
             const pr = process.env.PR_NUMBER
-            const [comments, inline, reviews, pullRequest] = await Promise.all([
+            const [comments, inline, reviews] = await Promise.all([
               list(`/issues/${pr}/comments`),
               list(`/pulls/${pr}/comments`),
-              list(`/pulls/${pr}/reviews`),
-              get(`${api}/pulls/${pr}`).then(response => response.json())
+              list(`/pulls/${pr}/reviews`)
             ])
-            return {
-              changedFiles: pullRequest.changed_files,
-              activity: [
-                ...comments
-                  .filter(item => item.user?.login === summaryBot && /^## Claude review\b/.test(String(item.body || '').trim()))
-                  .map(item => ({ at: item.updated_at || item.created_at, summary: String(item.body) })),
-                ...inline
-                  .filter(item => item.user?.login === bot && !item.in_reply_to_id)
-                  .map(item => ({ at: item.created_at })),
-                ...reviews.filter(item => item.user?.login === bot).map(item => ({ at: item.submitted_at }))
-              ]
-            }
-          }
-          const reviewersStarted = messages =>
-            messages
-              .flatMap(entry => (entry?.type === 'assistant' ? entry.message?.content || [] : []))
-              .filter(block => block?.type === 'tool_use' && ['Task', 'Agent'].includes(block.name)).length
-          const coverageLine = /^[\s>*_-]*Read (\d+) of (\d+) changed files?\b/m
-          const filesLeftUnread = summary => {
-            const [, read, total] = coverageLine.exec(summary)
-            return Number(total) - Number(read)
-          }
-          const coverageProblem = (summary, changedFiles) => {
-            if (!summary) return "Claude posted findings but no summary, so the review doesn't say how much of the change it read."
-            const coverage = coverageLine.exec(summary)
-            if (!coverage) return 'The summary has no "Read <N> of <M> changed files." line, so it doesn\'t say how much of the change was read.'
-            const [read, total] = [Number(coverage[1]), Number(coverage[2])]
-            if (total !== changedFiles) return `The summary counts ${total} changed files, and the pull request changes ${changedFiles}.`
-            if (read > total) return `The summary says ${read} of ${total} changed files were read.`
-            if (read < total && !/^[\s>*_-]*Not read:/m.test(summary)) return `The summary says ${read} of ${total} changed files were read, and names none of the rest on a "Not read:" line.`
-            return ''
+            return [
+              ...comments
+                .filter(item => item.user?.login === summaryBot && /^## Claude review\b/.test(String(item.body || '').trim()))
+                .map(item => ({ at: item.updated_at || item.created_at, summary: true })),
+              ...inline
+                .filter(item => item.user?.login === bot && !item.in_reply_to_id)
+                .map(item => ({ at: item.created_at })),
+              ...reviews.filter(item => item.user?.login === bot).map(item => ({ at: item.submitted_at }))
+            ]
           }
           const main = async () => {
             const { messages, result } = readLog()
@@ -315,13 +408,13 @@ jobs:
             ))]
             const startedAt = Date.parse(process.env.REVIEW_STARTED_AT || '')
             if (Number.isNaN(startedAt)) fail("REVIEW_STARTED_AT isn't set, so the check can't tell which comments this run posted.")
-            let review
+            let activity
             try {
-              review = await readReviewActivity(process.env.REVIEW_BOT || 'claude[bot]', process.env.SUMMARY_BOT || 'github-actions[bot]')
+              activity = await readReviewActivity(process.env.REVIEW_BOT || 'claude[bot]', process.env.SUMMARY_BOT || 'github-actions[bot]')
             } catch (error) {
               fail(`Couldn't read the pull request to check the review: ${error.message}`)
             }
-            const posted = review.activity.filter(item => Date.parse(item.at) >= startedAt - 30 * 1000)
+            const posted = activity.filter(item => Date.parse(item.at) >= startedAt - 30 * 1000)
             if (posted.length === 0) {
               if (denied.length > 0) {
                 fail(`Claude was denied ${denied.join(', ')} and posted nothing, so the review stopped early. Allow it in claude_args (docs/agents/ci-agents.md, Code review).`)
@@ -331,14 +424,7 @@ jobs:
             if (denied.length > 0) {
               console.log(`::warning title=Claude review was denied tools::Claude was denied ${clean(denied.join(', '), 600)}. Allow it in claude_args if the review needs it.`)
             }
-            const reviewers = reviewersStarted(messages)
-            const postedSummary = posted.map(item => item.summary).filter(Boolean).at(-1)
-            const unread = coverageProblem(postedSummary, review.changedFiles)
-            if (unread) fail(`${unread} (docs/agents/ci-agents.md, Code review)`)
-            const left = filesLeftUnread(postedSummary)
-            if (left > 0 && reviewers < 3) {
-              fail(`Claude left ${left} changed file(s) unread and started ${reviewers} of the pr-review skill's three reviewers, so nothing read the whole change (docs/agents/ci-agents.md, Code review). Claude's last message: ${clean(result.result || '(none)', 400)}`)
-            }
-            console.log(`Claude started ${reviewers} reviewers and posted or updated ${posted.length} comment(s) or review(s) on this pull request.`)
+            if (!posted.some(item => item.summary)) fail("Claude posted findings but no summary, so the review doesn't say how much of the change it read (docs/agents/ci-agents.md, Code review).")
+            console.log(`Claude posted or updated ${posted.length} comment(s) or review(s) on this pull request.`)
           }
           main().catch(error => fail(`The review check failed: ${error?.message}`))

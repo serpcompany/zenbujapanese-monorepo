@@ -19,9 +19,14 @@ import {
 } from './guards'
 import { runNodeStep } from './workflow'
 
-function runGuard(log: unknown, pullRequest: PullRequest = {}) {
+function runGuard(log: unknown, pullRequest: PullRequest = {}, retryOutcome = 'skipped') {
   const { env, files } = executionLog(log)
-  return runNodeStep(guard, { ...environment, ...env }, github(pullRequest), files)
+  return runNodeStep(
+    guard,
+    { ...environment, ...env, CLAUDE_OUTCOME: 'success', RETRY_OUTCOME: retryOutcome },
+    github(pullRequest),
+    files
+  )
 }
 
 const result = claudeResult({
@@ -31,12 +36,7 @@ const result = claudeResult({
   modelUsage: { 'claude-sonnet-5-5': {} },
   result: 'Posted 2 inline comments.'
 })
-const reviewer = (description: string, name = 'Task') => ({
-  type: 'assistant',
-  message: { content: [{ type: 'tool_use', name, input: { description } }] }
-})
-const threeReviewers = [reviewer('Bugs'), reviewer('Rules'), reviewer('The issue, tests, and docs')]
-const cleanLog = [{ type: 'system', subtype: 'init' }, ...threeReviewers, result()]
+const cleanLog = [{ type: 'system', subtype: 'init' }, result()]
 const summaryPosted = (coverage: string): PullRequest => ({
   issueComments: [{ login: summaryBot, at: minutesAfterStart(4), details: summaryOf(coverage) }]
 })
@@ -74,21 +74,6 @@ describe("the review's guard", () => {
       { issueComments: [{ login: summaryBot, at: minutesAfterStart(4), details: summaryBody }] }
     ],
     [
-      'a summary that names the files it left out',
-      {
-        changedFiles: 6,
-        ...summaryPosted(
-          'Read 4 of 6 changed files.\nNot read: pnpm-lock.yaml and a.png (not text).'
-        )
-      }
-    ],
-    [
-      'a summary that counts one file',
-      { changedFiles: 1, ...summaryPosted('Read 1 of 1 changed file.') }
-    ],
-    ['a summary whose count is a list item', summaryPosted('- Read 4 of 4 changed files.')],
-    ['a summary whose count is in bold', summaryPosted('**Read 4 of 4 changed files.**')],
-    [
       'an update to its summary',
       {
         issueComments: [
@@ -101,61 +86,46 @@ describe("the review's guard", () => {
         ]
       }
     ]
-  ])('passes when three reviewers ran and Claude posted %s during the run', async (_, pullRequest) => {
+  ])('passes when the workflow posted %s during the run', async (_, pullRequest) => {
     const { status, output } = await runGuard(cleanLog, pullRequest)
     expect(output).not.toContain('::error')
     expect(output).toContain('about $2.40')
-    expect(output).toContain('Claude started 3 reviewers')
+    expect(output).toContain('Claude posted or updated 1 comment(s) or review(s)')
     expect(status).toBe(0)
   })
 
-  test('counts a reviewer whichever name the tool that starts it has', async () => {
-    const log = [reviewer('Bugs', 'Agent'), reviewer('Rules', 'Agent'), reviewer('Docs'), result()]
-    expect((await runGuard(log, summaryPosted('Read 4 of 4 changed files.'))).status).toBe(0)
-  })
-
   test.each([
-    ['none', [result()]],
-    ['two', [reviewer('Bugs'), reviewer('Rules'), result()]]
-  ])('passes when Claude read every changed file, having started %s of the three reviewers', async (_, log) => {
-    const { status, output } = await runGuard(log, summaryPosted('Read 4 of 4 changed files.'))
+    ['left files unread without its reviewers', 'Read 2 of 61 changed files.\nNot read: the rest.'],
+    ['left files unread and unnamed', 'Read 2 of 61 changed files.'],
+    ['does not say what it read', 'No coverage here.'],
+    ['counts more files read than changed', 'Read 5 of 4 changed files.']
+  ])('passes a review that was posted but %s: its comment is labelled instead', async (_, coverage) => {
+    const { status, output } = await runGuard(cleanLog, summaryPosted(coverage))
     expect(output).not.toContain('::error')
     expect(status).toBe(0)
   })
 
-  test.each([
-    ['none', [result()], 'started 0 of'],
-    ['two', [reviewer('Bugs'), reviewer('Rules'), result()], 'started 2 of']
-  ])('fails when Claude left files unread, having started %s of the three reviewers', async (_, log, message) => {
-    const unread = summaryPosted('Read 2 of 61 changed files.\nNot read: the other 59.')
-    const { status, output } = await runGuard(log, { changedFiles: 61, ...unread })
+  test('fails when the review left only inline findings and no summary', async () => {
+    const { status, output } = await runGuard(cleanLog, {
+      reviewComments: [{ login: bot, at: minutesAfterStart(5) }]
+    })
     expect(status).not.toBe(0)
-    expect(output).toContain('left 59 changed file(s) unread')
-    expect(output).toContain(message)
+    expect(output).toContain('Claude posted findings but no summary')
   })
 
-  test.each<[string, PullRequest, string]>([
-    [
-      'only inline findings and no summary',
-      { reviewComments: [{ login: bot, at: minutesAfterStart(5) }] },
-      'no summary'
-    ],
-    ['no line saying what it read', summaryPosted('No coverage here.'), 'has no "Read'],
-    [
-      "a file count that is not the pull request's",
-      { changedFiles: 61, ...summaryPosted('Read 2 of 2 changed files.') },
-      'counts 2 changed files, and the pull request changes 61'
-    ],
-    [
-      'unread files it does not name',
-      { changedFiles: 61, ...summaryPosted('Read 2 of 61 changed files.') },
-      'names none of the rest'
-    ],
-    ['more files read than changed', summaryPosted('Read 5 of 4 changed files.'), '5 of 4']
-  ])('fails when the review left %s', async (_, pullRequest, message) => {
-    const { status, output } = await runGuard(cleanLog, pullRequest)
+  test('reads the second attempt when there was one, and says when it failed before Claude ran', async () => {
+    const passed = await runGuard(cleanLog, summaryPosted('Read 4 of 4 changed files.'), 'success')
+    expect(passed.status).toBe(0)
+    const failed = await runGuard(undefined, summaryPosted('Read 4 of 4 changed files.'), 'failure')
+    expect(failed.status).not.toBe(0)
+    expect(failed.output).toContain('failed before Claude ran')
+  })
+
+  test('says no review happened when the action ran nothing', async () => {
+    const { status, output } = await runGuard(undefined)
     expect(status).not.toBe(0)
-    expect(output).toContain(message)
+    expect(output).toContain('wrote no execution log, so no review happened')
+    expect(output).toContain("differs from main's")
   })
 
   test("doesn't count Claude's reply to an @claude request, or in a review thread, as the review", async () => {
@@ -185,7 +155,7 @@ describe("the review's guard", () => {
 
   test('warns but passes when Claude posted despite a denied tool', async () => {
     const { status, output } = await runGuard(
-      [...threeReviewers, result(deniedView)],
+      [result(deniedView)],
       summaryPosted('Read 4 of 4 changed files.')
     )
     expect(output).toContain('::warning')

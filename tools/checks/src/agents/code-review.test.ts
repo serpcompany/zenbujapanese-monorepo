@@ -1,31 +1,30 @@
-import { tmpdir } from 'node:os'
-import { join } from 'node:path'
 import { describe, expect, test } from 'vitest'
 import {
   bot,
-  environment,
-  github,
   guard,
   guardIndex,
-  minutesAfterStart,
-  type PullRequest,
+  lastVerdict,
+  post,
+  postSummary,
   pr,
   repository,
-  requestReply,
   review,
   reviewIndex,
   steps,
   summaryBody,
-  summaryBot
+  summaryBot,
+  workflowPath
 } from './code-review-support'
-import { allowedTools, readRepositoryFile, readWorkflow, runNodeStep } from './workflow'
+import { allowedTools, type Route, readRepositoryFile, readWorkflow, runNodeStep } from './workflow'
 
+const workflow = readWorkflow(workflowPath)
 const claudeArgs = String(review?.with?.claude_args ?? '')
 const skill = readRepositoryFile('.claude/skills/pr-review/SKILL.md')
 const skillTools = (/^allowed-tools:\s*(.+)$/m.exec(skill)?.[1] ?? '')
   .split(',')
   .map(tool => tool.trim())
   .filter(Boolean)
+
 describe('the Code review workflow', () => {
   test('has the skill read the issue and every changed file, and say how much it read', () => {
     expect(skillTools).toContain('Bash(gh issue view:*)')
@@ -33,6 +32,14 @@ describe('the Code review workflow', () => {
     expect(skill).toContain('`Read <N> of <M> changed files.`')
     expect(skill).toContain('`Not read:`')
     expect(skill).toContain('`**blocking**` or\n  `**suggestion**`')
+  })
+
+  test('has the skill read the change in CI from the directory the workflow writes', () => {
+    expect(skill).toContain('in CI the workflow has written it to a directory')
+    expect(skill).toContain('with `offset` and `limit`, and not `gh pr diff`')
+    expect(skill).toContain("In CI your instructions already hold each\n  issue's text.")
+    expect(skill).toContain('with the Agent tool (Task in older versions)')
+    expect(allowedTools(review)).toContain('Bash(gh pr diff:*)')
   })
 
   test('runs the pr-review skill with every tool the skill uses', () => {
@@ -83,214 +90,136 @@ describe('the Code review workflow', () => {
     }
   })
 
-  test('checks the review afterwards, from when it started', () => {
-    expect(guardIndex).toBeGreaterThan(reviewIndex)
+  test('checks afterwards that a review ran and was posted, from when it started', () => {
+    expect(guardIndex).toBe(steps.length - 1)
+    expect(guard.name).toBe('Fail unless a review ran and was posted')
     expect(guard.shell).toBe('node {0}')
     expect(guard.env).toMatchObject({
+      EXECUTION_FILE: `\${{ steps.retry.outputs.execution_file || steps.${review.id}.outputs.execution_file }}`,
+      RETRY_OUTCOME: '${{ steps.retry.outcome }}',
       GITHUB_TOKEN: '${{ github.token }}',
       REVIEW_BOT: bot,
       SUMMARY_BOT: summaryBot
     })
+    expect(Object.values(guard.env ?? {}).join(' ')).not.toContain('steps.verdict')
     const startIndex = steps.findIndex(step => step.run?.includes('REVIEW_STARTED_AT='))
     expect(startIndex).toBeGreaterThan(-1)
     expect(startIndex).toBeLessThan(reviewIndex)
   })
 })
 
-describe('the earlier findings given to the review', () => {
-  const findingsIndex = steps.findIndex(step => step.env?.CONTEXT_FILE !== undefined)
-  const findings = steps[findingsIndex]
-  const runFindings = async (pullRequest: PullRequest) => {
+describe('a pull request that changes the review workflow', () => {
+  const [find] = workflow.jobs.changes.steps ?? []
+  const workflowRef = `${repository}/${workflowPath}@refs/pull/${pr}/merge`
+  const page = (...names: string[]) => names.map(filename => ({ filename, status: 'modified' }))
+  const filesOn =
+    (pages: Record<string, unknown>[][]): Route =>
+    url => {
+      if (url.pathname !== `/repos/${repository}/pulls/${pr}/files`) return undefined
+      const number = Number(url.searchParams.get('page') ?? '1')
+      const nextPage =
+        number < pages.length ? `${url.pathname}?per_page=100&page=${number + 1}` : undefined
+      return { status: 200, body: pages[number - 1], nextPage }
+    }
+  const findOut = async (route: Route) => {
     const run = await runNodeStep(
-      findings,
-      { ...environment, CONTEXT_FILE: 'context.md', GITHUB_OUTPUT: 'output.txt' },
-      github(pullRequest),
-      { 'context.md': '# Repository rules for this review\n', 'output.txt': '' }
+      find,
+      {
+        GITHUB_REPOSITORY: repository,
+        GITHUB_WORKFLOW_REF: workflowRef,
+        PR_NUMBER: pr,
+        GITHUB_OUTPUT: 'output.txt'
+      },
+      route,
+      { 'output.txt': '' }
     )
-    return { ...run, context: run.files['context.md'], outputs: run.files['output.txt'] }
+    return { ...run, outputs: run.files['output.txt'] }
   }
 
-  test('are read before the review, after the rules', () => {
-    const rulesIndex = steps.findIndex(step =>
-      step.run?.includes('"$RUNNER_TEMP/review-context.md"')
+  test('is found by a first job that reads the file list and checks nothing out', () => {
+    expect(Object.keys(workflow.jobs)).toEqual(['changes', 'review'])
+    const { changes } = workflow.jobs
+    expect(changes.if).toBe(
+      "${{ !github.event.pull_request.draft && github.event.pull_request.user.type != 'Bot' }}"
     )
-    expect(findingsIndex).toBeGreaterThan(rulesIndex)
-    expect(findingsIndex).toBeLessThan(reviewIndex)
-    expect(findings.env).toMatchObject({
+    expect(changes.permissions).toEqual({ 'pull-requests': 'read' })
+    expect(changes.steps).toHaveLength(1)
+    expect(find.uses).toBeUndefined()
+    expect(find.shell).toBe('node {0}')
+    expect(find.env).toEqual({
       GITHUB_TOKEN: '${{ github.token }}',
-      REVIEW_BOT: bot,
-      SUMMARY_BOT: summaryBot
+      PR_NUMBER: '${{ github.event.pull_request.number }}'
     })
-  })
-
-  test("list Claude's inline comments and summary, and nobody else's", async () => {
-    const { status, context } = await runFindings({
-      reviewComments: [
-        {
-          login: bot,
-          at: minutesAfterStart(-60),
-          details: {
-            path: 'apps/web/src/lib/dictionary/api.ts',
-            line: 18,
-            commit_id: 'abc1234def',
-            html_url: 'https://github.com/c/1',
-            body: '**The token is logged.** It reaches Workers Logs.'
-          }
-        },
-        {
-          login: bot,
-          at: minutesAfterStart(-60),
-          details: {
-            path: 'apps/dictionary-api/src/app.ts',
-            line: null,
-            original_line: 9,
-            commit_id: 'abc1234def',
-            html_url: 'https://github.com/c/2',
-            body: 'Answers 500 for a 404.'
-          }
-        },
-        {
-          login: 'someone',
-          at: minutesAfterStart(-50),
-          details: { path: 'x.ts', line: 1, body: 'Not Claude.' }
-        }
-      ],
-      issueComments: [
-        {
-          login: 'someone',
-          at: minutesAfterStart(-70),
-          details: { html_url: 'https://github.com/c/9', ...summaryBody }
-        },
-        {
-          login: summaryBot,
-          at: minutesAfterStart(-60),
-          details: { html_url: 'https://github.com/c/3', ...summaryBody }
-        }
-      ]
-    })
-    expect(status).toBe(0)
-    expect(context).toContain('# Repository rules for this review')
-    expect(context).toContain(
-      'apps/web/src/lib/dictionary/api.ts:18, on commit abc1234 (https://github.com/c/1): **The token is logged.**'
+    expect(readRepositoryFile(workflowPath)).toContain(
+      'reviewable: ${{ steps.files.outputs.reviewable }}'
     )
-    expect(context).toContain('apps/dictionary-api/src/app.ts:9 (outdated: the code there changed)')
-    expect(context).toContain(
-      'Summary comment (https://github.com/c/3): ## Claude review Reviewed abc1234, round 1.'
+  })
+
+  test('is skipped by the review job, not failed by it', () => {
+    expect(workflow.jobs.review.needs).toBe('changes')
+    expect(workflow.jobs.review.if).toBe("needs.changes.outputs.reviewable == 'true'")
+  })
+
+  test.each([
+    ['changes it', [page('docs/a.md', workflowPath)]],
+    ['changes it on a later page of files', [page('docs/a.md'), page(workflowPath)]],
+    [
+      'renames it',
+      [[{ filename: '.github/workflows/review.yml', previous_filename: workflowPath }]]
+    ]
+  ])('gets no review and a notice saying a person reviews it, when it %s', async (_, pages) => {
+    const { status, output, outputs } = await findOut(filesOn(pages))
+    expect(status).toBe(0)
+    expect(outputs).toBe('reviewable=false\n')
+    expect(output).toContain("::notice title=Claude doesn't review this pull request::")
+    expect(output).toContain(
+      `This pull request changes ${workflowPath}, and Claude's review can't run on a pull request that changes the review workflow`
     )
-    expect(context).not.toContain('Not Claude.')
-    expect(context).not.toContain('https://github.com/c/9')
+    expect(output).toContain('A person reviews this pull request')
   })
 
-  test('pass on the summary comment to update in place, and give replies to @claude requests as context only', async () => {
-    const { status, context, outputs } = await runFindings({
-      issueComments: [
-        {
-          login: summaryBot,
-          at: minutesAfterStart(-60),
-          details: { id: 99, html_url: 'https://github.com/c/3', ...summaryBody }
-        },
-        {
-          login: bot,
-          at: minutesAfterStart(-30),
-          details: { id: 100, html_url: 'https://github.com/c/4', ...requestReply }
-        }
-      ],
-      reviewComments: [
-        {
-          login: bot,
-          at: minutesAfterStart(-20),
-          details: {
-            in_reply_to_id: 11,
-            html_url: 'https://github.com/c/5',
-            path: 'x.ts',
-            line: 3,
-            body: 'Fixed in abc1234.'
-          }
-        }
-      ]
-    })
+  test('is told apart from one that leaves the workflow alone, which is reviewed', async () => {
+    const { status, output, outputs, requests } = await findOut(
+      filesOn([page('docs/a.md', '.github/workflows/web.yml'), page('apps/web/worker.ts')])
+    )
     expect(status).toBe(0)
-    expect(outputs).toBe('summary_id=99\n')
-    expect(context).toContain('Write the summary to tmp/review-summary.md')
-    expect(context).toContain('updates the summary comment above (https://github.com/c/3) in place')
-    expect(context).toContain('Summary comment (https://github.com/c/3)')
-    expect(context).toContain('# Replies to @claude requests')
-    expect(context).toContain('- https://github.com/c/4: Done: I renamed the helper in abc1234.')
-    expect(context).toContain('- https://github.com/c/5: Fixed in abc1234.')
-    expect(context).not.toContain('Summary comment (https://github.com/c/4)')
-    expect(context).not.toContain('x.ts:3')
+    expect(outputs).toBe('reviewable=true\n')
+    expect(output).not.toContain('::notice')
+    expect(requests).toHaveLength(2)
   })
 
-  test('have the workflow post a new summary when there is none, and never edit the latest comment', async () => {
-    const { context, outputs } = await runFindings({
-      issueComments: [
-        {
-          login: bot,
-          at: minutesAfterStart(-30),
-          details: { id: 100, html_url: 'https://github.com/c/4', ...requestReply }
-        }
-      ]
-    })
-    expect(outputs).toBe('summary_id=\n')
-    expect(context).toContain("posts it as this pull request's summary comment")
-    expect(context).toContain('None: this is the first review of this pull request.')
-    expect(context).not.toMatch(/--edit-last|gh pr comment|gh api/)
-  })
-
-  test('say when this is the first review', async () => {
-    const { status, context } = await runFindings({})
-    expect(status).toBe(0)
-    expect(context).toContain('None: this is the first review of this pull request.')
-    expect(context).not.toContain('# Replies to @claude requests')
-  })
-
-  test("fail the job when they can't be read", async () => {
-    const { status, output } = await runFindings({ status: 403 })
-    expect(output).toContain('::error')
+  test("fails when the pull request's files can't be read", async () => {
+    const { status, output, outputs } = await findOut(() => ({ status: 403, body: {} }))
     expect(status).not.toBe(0)
+    expect(output).toContain('::error')
+    expect(outputs).toBe('')
   })
 })
 
 describe("the review's summary", () => {
-  const postIndex = steps.findIndex(step => step.name === "Post the review's summary")
-  const post = steps[postIndex]
+  const postIndex = steps.indexOf(post)
   const summary = `${summaryBody.body}\n`
-  const runPost = (summaryId: string, file: string | undefined, status = 201) =>
-    runNodeStep(
-      post,
-      {
-        PR_NUMBER: pr,
-        GITHUB_REPOSITORY: repository,
-        SUMMARY_ID: summaryId,
-        SUMMARY_FILE:
-          file === undefined ? join(tmpdir(), 'no-such-folder', 'summary.md') : 'summary.md'
-      },
-      (_, method) => (method === 'GET' ? undefined : { status, body: {} }),
-      file === undefined ? {} : { 'summary.md': file }
-    )
 
   test('is posted by the workflow, between the review and its guard, with the job token', () => {
-    expect(postIndex).toBeGreaterThan(reviewIndex)
+    expect(postIndex).toBeGreaterThan(steps.indexOf(lastVerdict))
     expect(postIndex).toBeLessThan(guardIndex)
     expect(post.if).toContain(`steps.${review.id}.outcome == 'success'`)
     expect(post.env).toMatchObject({
       GITHUB_TOKEN: '${{ github.token }}',
       SUMMARY_ID: '${{ steps.earlier.outputs.summary_id }}',
-      SUMMARY_FILE: 'tmp/review-summary.md'
+      SUMMARY_FILE: 'tmp/review-summary.md',
+      PROBLEM: `\${{ steps.${lastVerdict.id}.outputs.problem }}`
     })
-    expect(steps.find(step => step.env?.CONTEXT_FILE !== undefined)?.id).toBe('earlier')
-    expect(readWorkflow('.github/workflows/code-review.yml').jobs.review.permissions).toMatchObject(
-      {
-        contents: 'read',
-        'pull-requests': 'write'
-      }
-    )
+    expect(workflow.jobs.review.permissions).toMatchObject({
+      contents: 'read',
+      'pull-requests': 'write'
+    })
     const startIndex = steps.findIndex(step => step.run?.includes('REVIEW_STARTED_AT='))
     expect(steps[startIndex].run).toContain('rm -f tmp/review-summary.md')
   })
 
   test('updates the earlier summary comment in place', async () => {
-    const { status, requests } = await runPost('99', summary, 200)
+    const { status, requests } = await postSummary(summary, { id: '99', status: 200 })
     expect(status).toBe(0)
     expect(requests).toEqual([
       {
@@ -302,31 +231,41 @@ describe("the review's summary", () => {
   })
 
   test('posts a new summary comment when there is none', async () => {
-    const { status, requests } = await runPost('', summary)
+    const { status, requests } = await postSummary(summary)
     expect(status).toBe(0)
     expect(requests.map(({ method, path }) => `${method} ${path}`)).toEqual([
       `POST /repos/${repository}/issues/${pr}/comments`
     ])
   })
 
+  test('says first, under its heading, when the review was incomplete', async () => {
+    const problem =
+      'Incomplete: this review read 2 of 61 changed files and did not run its reviewers.'
+    const { status, requests } = await postSummary(summary, { id: '99', status: 200, problem })
+    expect(status).toBe(0)
+    expect(JSON.parse(requests[0].body).body).toBe(
+      `## Claude review\n\n**${problem}**\n\nReviewed abc1234, round 1.\nRead 4 of 4 changed files.\n\nNo new findings.`
+    )
+  })
+
   test.each([
     ['without its heading', 'Reviewed abc1234.\n\nNo new findings.', "doesn't start with"],
     ['too long for a comment', `${summaryBody.body}\n${'x'.repeat(60_001)}`, '60000']
   ])('refuses a summary %s, and posts nothing', async (_, file, message) => {
-    const { status, output, requests } = await runPost('99', file)
+    const { status, output, requests } = await postSummary(file, { id: '99' })
     expect(status).not.toBe(0)
     expect(output).toContain(message)
     expect(requests).toEqual([])
   })
 
   test('fails when GitHub refuses the comment', async () => {
-    const { status, output } = await runPost('99', summary, 403)
+    const { status, output } = await postSummary(summary, { id: '99', status: 403 })
     expect(status).not.toBe(0)
     expect(output).toContain('403')
   })
 
   test('warns and posts nothing when Claude wrote no summary', async () => {
-    const { status, output, requests } = await runPost('99', undefined)
+    const { status, output, requests } = await postSummary(undefined, { id: '99' })
     expect(status).toBe(0)
     expect(output).toContain('::warning')
     expect(requests).toEqual([])

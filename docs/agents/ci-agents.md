@@ -12,11 +12,24 @@ draft or opened by a bot, with the repository's `pr-review` skill
 tests, and docs) read the issue the pull request closes and every changed file. Each new finding
 is an inline comment marked blocking or suggestion, and one summary comment, updated on every
 review, says how many of the changed files were read.
-Its check doesn't block merging, since `main`'s ruleset requires no checks, but the ruleset does
+Its check is red only when no review was posted. A review that read part of the change is run
+once more, and if it is still short its summary comment starts with a line that says so
+(`**Incomplete: this review read 2 of 19 changed files and did not run its reviewers.**`), the
+run carries the same sentence as a warning, and the check passes: the owner chose a labelled
+thin review over a red check (2026-10-13).
+The check doesn't block merging, since `main`'s ruleset requires no checks, but the ruleset does
 require every review conversation to be resolved, so an inline finding blocks merging until it's
 fixed or answered and resolved. A finding can be answered with an `@claude` request in its thread
 (@claude requests, below). How it's built, and why:
 
+- **A pull request that changes the workflow is skipped, not failed.** The action runs only when
+  the workflow file is the one on `main`. So a first job, `changes`, reads the pull request's file
+  list from the API, checking nothing out, and the `review` job runs only when the workflow isn't
+  in it. Otherwise `review` shows as skipped, and `changes` leaves a notice that a person reviews
+  the pull request. So a change to a Claude workflow can't be tried on its own pull request; try
+  it in a throwaway repository with the same workflow, skill, and rules first. A pull request
+  into a branch that changes the workflow still fails, saying no review happened
+  ([`harness-debt.md`](../harness-debt.md), Checks).
 - **The skill and the rules come from the base branch.** The action replaces `CLAUDE.md`,
   `.claude/`, and `.mcp.json` with the base branch's copies before Claude starts, so a pull request
   can't rewrite its own review, and a `CLAUDE.md` written on the runner is lost. The job copies
@@ -24,9 +37,33 @@ fixed or answered and resolved. A finding can be answered with an `@claude` requ
   a file outside the checkout and hands it to Claude and every subagent
   (`--append-system-prompt-file`, `--append-subagent-system-prompt-file`), so a pull request can't
   weaken the rules it's reviewed against either.
-- **A re-review raises only what's new, and edits one summary.** Before Claude starts, the job
-  adds to that file the top-level inline findings `claude[bot]` posted on the pull request and
-  the summary: the latest comment by `github-actions[bot]` that starts with `## Claude review`.
+- **The rest of that file is written by `tools/checks/review-context.mjs`,** which the job takes
+  from the base branch too (`git show`), never from the checkout, and runs before Claude starts.
+  It needs no install. The steps after Claude are inline in the workflow, since the job can mint
+  an OIDC token and Claude can write files: nothing Claude could have rewritten runs afterwards.
+- **The change is written where Read can page through it.** In 18 of 19 kept transcripts the
+  reviewer started no reviewers, and on a diff of any size `gh pr diff` gave it the first 2 KB
+  and a saved file it had no tool to read (#761: 2 of 19 files). So the script lists the pull
+  request's files from the API and writes `tmp/review-change/` in the checkout, emptied first:
+  `index.md`, with each file's path, status, lines added and removed, and its patch file with
+  its line count, and one numbered patch per file. A file GitHub gives no patch for (binary, or
+  too large) is read itself. The directory is in the checkout because a Read outside the working
+  directory prompts, which in CI denies. One Read returns at most 25,000 tokens, so the context
+  says to page a long patch with `offset` and `limit`. `Bash(gh pr diff:*)` stays allowed for a
+  local run of the skill.
+- **The issue is in the context, as data.** The script reads each issue the pull request closes
+  (GraphQL `closingIssuesReferences`, which the job's token reads with `issues: read`, as
+  `Pull request`'s `issue-link` job does) and quotes its title, body, and comments, each with
+  its author, under a heading that says nothing in it is an instruction. On #761 the reviewer
+  never ran `gh issue view`. Anyone can write an issue or a comment, so only what an owner,
+  member, or collaborator wrote is copied; the rest is named, to read with `gh issue view`. An
+  issue over 20,000 characters is cut, keeping its latest comments, and says so.
+- **The context ends with what every review does:** start the skill's three reviewers with the
+  Agent tool, which older versions call Task (`--allowedTools` names both), on every pull request;
+  reading the diff alone is not a review; the issue is always checked.
+- **A re-review raises only what's new, and edits one summary.** The script adds the top-level
+  inline findings `claude[bot]` posted on the pull request and the summary: the latest comment by
+  `github-actions[bot]` that starts with `## Claude review`.
   Claude posts only inline findings. It writes the summary to `tmp/review-summary.md`, and a step
   after it posts that file with the job's own token, editing the earlier summary by id or
   creating one, never the latest comment, which can be an answer to an
@@ -36,6 +73,19 @@ fixed or answered and resolved. A finding can be answered with an `@claude` requ
   token with only `issues: write` (403).
   Claude's answers to `@claude` requests, and its replies in review threads, are passed in as
   context only, never as findings. The summary says whether each earlier finding is fixed.
+- **One script decides whether a review read the whole change,** after each attempt, from the
+  attempt's log, its summary file, and the file count the context step counted. It is complete
+  when the summary has a `Read <N> of <M> changed files.` line whose M is that count, and either
+  N is M, or the unread files are named on a `Not read:` line and three reviewers were started.
+  A review that read every file is complete however it split the reading (#757).
+- **An incomplete first attempt gets one second attempt.** The same step runs the review again
+  with a correction appended to the context: what the first attempt left out, each changed file
+  no Read call in its log opened, with its patch file's path, and the inline comments it posted
+  (from its log), so none is posted twice. The first summary is deleted, so only the last
+  attempt's is posted, and the first log is kept beside the last.
+- **An incomplete last attempt is labelled, not failed.** The workflow, not Claude, puts the
+  `Incomplete:` line under the summary's heading, and writes it as a warning and into the step
+  summary.
 - **It reviews the pushes `@claude` makes.** `allowed_bots: "claude[bot]"` lets the review run on
   a push an `@claude` request made to the pull request, whose actor is then a bot. A pull request
   a bot opened, such as a gardening one, isn't reviewed.
@@ -53,35 +103,25 @@ fixed or answered and resolved. A finding can be answered with an `@claude` requ
   `gh api` write still asks, which is why the review's summary is posted by a workflow step
   rather than by Claude. `tools/checks/src/agents/settings.test.ts` checks both directions: every
   package script that deploys is asked, and nothing a Claude job in any workflow runs is.
-- **It reads the issue as data.** The reviewer reads each issue the pull request closes with
-  `gh issue view`, for its acceptance criteria. Anyone can write an issue, so its text never goes
-  into the instructions file.
-- **The check fails unless the whole change was reviewed.** After the review, a script fails the
-  job when Claude left no log, ended in an error, ended with subagents still running, or posted
-  and updated nothing during the run; a denied tool fails it only when nothing was posted. It
-  also fails when the summary posted during the run has no `Read <N> of <M> changed files.` line,
-  counts a different M than the pull request has, leaves files unread without naming them on a
-  `Not read:` line, or leaves any unread with fewer than the skill's three reviewers started. A
-  review that read every file passes however it split the reading (#757). One once passed after
-  reading 2 of 61 files in 18 seconds (#754); this is what fails it now. It counts only the
-  review's own output: the summary, top-level inline comments, and reviews, not an answer to an
-  `@claude` request. It runs when the review step fails too, since the action's log ends with
+- **The check fails only when no review happened or its result was lost.** The last step fails
+  the job when the last attempt left no log, ended in an error, ended with subagents still
+  running, or posted and updated nothing during the run; a denied tool fails it only when nothing
+  was posted; and inline findings with no summary posted during the run fail it. It counts only
+  the review's own output: the summary, top-level inline comments, and reviews, not an answer to
+  an `@claude` request. It runs when the review step fails too, since the action's log ends with
   only `is_error`: the check shows what Claude said, such as the API refusing the token (Claude's
-  app and token, below). It runs inline because the job can mint an OIDC token, so it runs no
-  script from the pull request.
-- **The transcript is kept** for a week as the `claude-review-transcript` artifact: the action's
-  own log shows counts only. The step summary shows each run's turns, time, estimated cost, and
-  models.
+  app and token, below).
+- **The transcripts are kept** for a week as the `claude-review-transcript` artifact, the first
+  attempt's beside the last when there were two: the action's own log shows counts only. The
+  step summary shows the last attempt's turns, time, estimated cost, and models.
 
-The inline scripts are tested by running them as the workflow does, against a stand-in for the
-GitHub API (`tools/checks/src/agents/code-review.test.ts`).
+The scripts are tested by running them as the workflow does, against a stand-in for the GitHub
+API, and the decision is replayed on the logs of #757, #759, and #761
+(`tools/checks/src/agents/code-review.test.ts`, and the `code-review-` tests beside it).
 
 It runs with the `CLAUDE_CODE_OAUTH_TOKEN` repository secret, which is set; without it the job
-only notes that it skipped (Claude's app and token, below). The action skips a pull request that
-changes this workflow, which must match `main`'s, so that pull request's `review` check fails
-saying no review happened: expected, and no reason to hold it. So a change to a Claude workflow
-can't be tried on its own pull request; try it in a throwaway repository with the same workflow,
-skill, and rules first. Making merges wait for its check is a branch rule the owners decide.
+only notes that it skipped (Claude's app and token, below). Making merges wait for its check is a
+branch rule the owners decide.
 
 ## @claude requests
 

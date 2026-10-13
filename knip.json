@@ -23,7 +23,7 @@
       "ignoreDependencies": ["tsx"]
     },
     "tools/checks": {
-      "entry": ["hook.mjs", "stop-hook.mjs", "pull-request.mjs", "ports.mjs"],
+      "entry": ["hook.mjs", "stop-hook.mjs", "pull-request.mjs", "ports.mjs", "review-context.mjs"],
       "ignoreDependencies": ["@secretlint/secretlint-rule-preset-recommend"]
     }
   }
