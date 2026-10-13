@@ -1499,14 +1499,14 @@
   function primaryItem(results, query) {
     return primary(results.items, (item) => item.entry.headword, normalizeQuery(query));
   }
-  function resultsLayout(rawQuery, results, exampleCount, fromRadicals = false) {
+  function resultsLayout(rawQuery, results, exampleCount2, fromRadicals = false) {
     const query = normalizeQuery(rawQuery);
     const leadingOnly = fromRadicals && graphemeCount(query) === 1;
     const singleKanji = isKanjiCharacter(query);
     const isDiscovered = results.presentation === "discoveredWords";
     const found = primary(results.items, (item) => item.headword, query);
     const sections = [];
-    const examples = exampleCount > 0 ? { title: exampleActionTitle(exampleCount), count: exampleCount } : null;
+    const examples = exampleCount2 > 0 ? { title: exampleActionTitle(exampleCount2), count: exampleCount2 } : null;
     if (examples) sections.push("examples");
     const readingRefinement = results.readingRefinement ? { query: results.readingRefinement, title: `Search for「${results.readingRefinement}」` } : null;
     if (readingRefinement) sections.push("readingRefinement");
@@ -1515,7 +1515,7 @@
     const presented = isDiscovered ? results.items.slice(0, discoveredWordLimit) : leadingOnly ? results.items.slice(0, Math.min(results.leadingLexicalEntryCount, results.items.length)) : results.items;
     return {
       query,
-      isEmpty: results.items.length === 0 && exampleCount === 0 && !singleKanji,
+      isEmpty: results.items.length === 0 && exampleCount2 === 0 && !singleKanji,
       sections,
       examples,
       readingRefinement,
@@ -3488,8 +3488,8 @@
       }
     };
   }
-  function learnerResultsScreen(rawQuery, results, exampleCount, learner2) {
-    const layout = resultsLayout(rawQuery, results, exampleCount, learner2.fromRadicals);
+  function learnerResultsScreen(rawQuery, results, exampleCount2, learner2) {
+    const layout = resultsLayout(rawQuery, results, exampleCount2, learner2.fromRadicals);
     if (layout.isEmpty) return { state: "noResults", query: layout.query };
     const known = new Set(learner2.known);
     const isKnown = (id) => known.has(id);
@@ -4483,6 +4483,14 @@
     );
   }
   var examplesEntries = linkedEntries;
+  function exampleCount(retrieved) {
+    if (retrieved.sentences.length === 0) return null;
+    return {
+      listed: retrieved.sentences.length,
+      count: retrieved.count,
+      truncated: retrieved.truncated
+    };
+  }
   function tokenSpans(tokens) {
     let start = 0;
     return tokens.map((token) => {
@@ -5009,7 +5017,7 @@
       if (typeof found === "string") return { sentences: [], countText: null };
       return {
         sentences: listed2(found.sentences),
-        countText: exampleCountText({ listed: found.sentences.length, truncated: found.truncated })
+        countText: exampleCountText(exampleCount(found))
       };
     }
     entryExamples(id) {

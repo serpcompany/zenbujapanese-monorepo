@@ -1,7 +1,7 @@
 import SwiftUI
 
 struct ExampleSentencesView: View {
-  @State private var listed = ListedExamples.none
+  @State private var listed = ListedExamples.empty
   @State private var isLoading = true
   @State private var analysisAvailability = JapaneseTextAnalysisAvailability.full
 

@@ -26,7 +26,7 @@ struct ExampleSentence: Decodable, Hashable, Identifiable, Sendable {
 }
 
 struct ListedExamples: Decodable, Sendable {
-  static let none = ListedExamples(sentences: [], countText: nil)
+  static let empty = ListedExamples(sentences: [], countText: nil)
 
   let sentences: [ExampleSentence]
   let countText: String?

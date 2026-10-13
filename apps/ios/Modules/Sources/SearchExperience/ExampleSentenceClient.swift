@@ -25,7 +25,7 @@ struct ExampleSentenceClient: Sendable {
       let request = ResultsExamplesRequest(
         query: query.value, primaryEntry: highlightedEntry?.id.rawValue,
         usesPrimaryEntryExamples: usesHighlightedEntryExamples)
-      return (try? await text.resultsExamples(request)) ?? .none
+      return (try? await text.resultsExamples(request)) ?? .empty
     }
     entryExamples = { entry in
       do {

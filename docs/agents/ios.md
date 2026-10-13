@@ -468,14 +468,14 @@ The screen's titles, counts, and which rows it shows are the core's answer, whic
 `-only-testing:SearchExperienceTests/SearchResultsConformanceTests`; add a query by adding its
 `query` and `covers` fields and recording.
 
-`ExampleSearchConformanceTests` records, in `example-search.json`, the Example Sentences screen
-that Search's "View N Example Sentences" row opens: for each query, the row's count and title,
-the screen's count line, the entry the screen links words to, whether it lists that entry's
-examples (a deinflected or romaji query) or the sentences that contain the query, every listed
-sentence's pair ID in order, and the first five sentences' words with their entry, candidates,
-and whether the screen accents them as the query's. What the screen lists, counts, and accents
-is the core's answer (`ExampleSentenceClient.listed`, and each token's `matchesQuery`), which
-the view and the suite both read. It pins `LanguageReferenceData.sqlite3`,
+`ExampleSearchConformanceTests` records, in `example-search.json`, the Example Sentences screen that
+Search's "View N Example Sentences" row opens: for each query, the row's count and title, the
+screen's count line, the entry the screen links words to, whether it lists that entry's examples (a
+deinflected or romaji query) or the sentences that contain the query, every listed sentence's pair
+ID in order, and the first five sentences' words with their entry, candidates, and whether the
+screen accents them as the query's, read with the tokenizer's analysis. What the screen lists,
+counts, and accents is the core's answer (`ExampleSentenceClient.listed`, and each token's
+`matchesQuery`), which the view and the suite both read. It pins `LanguageReferenceData.sqlite3`,
 `ExampleWordIndex.sqlite3`, and the tokenizer's dictionary files. Record it with
 `-only-testing:SearchExperienceTests/ExampleSearchConformanceTests`; add a query by adding its
 `query` and `covers` fields and recording.

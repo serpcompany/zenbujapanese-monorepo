@@ -300,6 +300,7 @@ describe('the embedded text engine', () => {
       countText: '1 example'
     })
     expect((await listed(60)).countText).toBe('60 examples')
+    expect((await listed(100)).countText).toBe('100 examples')
     const firstHundred = await listed(101)
     expect(firstHundred.sentences).toHaveLength(100)
     expect(firstHundred.countText).toBe('The first 100 of more than 100 examples')

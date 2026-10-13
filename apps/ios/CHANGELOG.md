@@ -24,6 +24,8 @@ All notable user-facing changes to Zenbu Japanese are recorded here.
   when a filter is on, and your filter stays across launches.
 - Translate's **Listen** has the speaker button too: mute spoken translations while the
   translated cards keep coming.
+- Example Sentences says how many sentences it lists, under its title: "3 examples", or "The
+  first 100 of more than 100 examples".
 
 ### Changed
 

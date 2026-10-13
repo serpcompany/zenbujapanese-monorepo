@@ -9,6 +9,7 @@ import { searchExamples } from '../artifact/example-search'
 import { type FormLookup, formLookup } from '../artifact/lookup'
 import {
   type ExamplesEntry,
+  exampleCount,
   examplesEntries,
   occurrences,
   tokenSpans
@@ -209,7 +210,7 @@ export class EmbeddedText {
     if (typeof found === 'string') return { sentences: [], countText: null }
     return {
       sentences: listed(found.sentences),
-      countText: exampleCountText({ listed: found.sentences.length, truncated: found.truncated })
+      countText: exampleCountText(exampleCount(found))
     }
   }
 
