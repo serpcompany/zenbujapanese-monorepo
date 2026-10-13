@@ -1,7 +1,7 @@
 import SwiftUI
 
 struct ExampleSentencesView: View {
-  @State private var examples: [ExampleSentence] = []
+  @State private var listed = ListedExamples.none
   @State private var isLoading = true
   @State private var analysisAvailability = JapaneseTextAnalysisAvailability.full
 
@@ -20,6 +20,13 @@ struct ExampleSentencesView: View {
           .frame(maxWidth: .infinity, maxHeight: .infinity)
       } else {
         List {
+          if let countText = listed.countText {
+            Text(countText)
+              .font(.subheadline)
+              .foregroundStyle(.secondary)
+              .listRowSeparator(.hidden)
+              .accessibilityIdentifier("example-list.count")
+          }
           if analysisAvailability == .reduced {
             Label(
               "Japanese text analysis is unavailable. Reinstall or update Zenbu to restore word links.",
@@ -29,7 +36,7 @@ struct ExampleSentencesView: View {
             .foregroundStyle(.secondary)
             .accessibilityIdentifier("examples.reduced-analysis")
           }
-          ForEach(examples.enumerated(), id: \.element.id) { index, example in
+          ForEach(listed.sentences.enumerated(), id: \.element.id) { index, example in
             ExampleSentenceRow(
               index: index,
               example: example,
@@ -51,7 +58,7 @@ struct ExampleSentencesView: View {
     .task(id: query) {
       isLoading = true
       analysisAvailability = await japaneseTextAnalysisClient.availability()
-      examples = await exampleSentenceClient.listed(
+      listed = await exampleSentenceClient.listed(
         query, highlightedEntry, usesHighlightedEntryExamples)
       isLoading = false
     }

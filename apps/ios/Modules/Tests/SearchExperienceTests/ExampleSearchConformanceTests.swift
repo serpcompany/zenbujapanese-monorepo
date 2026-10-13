@@ -63,11 +63,12 @@ private struct ExampleSearchObserver {
     observed.highlightedEntry = highlightedEntry?.id.rawValue
     observed.usesPrimaryEntryExamples = results.usesPrimaryEntryExamples
 
-    let examples = await exampleSentenceClient.listed(
+    let listed = await exampleSentenceClient.listed(
       query, highlightedEntry, results.usesPrimaryEntryExamples)
-    observed.ids = examples.map(\.id.rawValue)
+    observed.countText = listed.countText
+    observed.ids = listed.sentences.map(\.id.rawValue)
     var shown: [ExampleSearchCase.Example] = []
-    for example in examples.prefix(tokenLimit) {
+    for example in listed.sentences.prefix(tokenLimit) {
       let tokens = await textAnalysisClient.linkedTokens(
         example.japanese, query, highlightedEntry)
       shown.append(
@@ -106,6 +107,7 @@ private struct ExampleSearchCase: Codable {
   let query: String
   let covers: String?
   var count: Int?
+  var countText: String?
   var title: String?
   var highlightedEntry: String?
   var usesPrimaryEntryExamples: Bool?

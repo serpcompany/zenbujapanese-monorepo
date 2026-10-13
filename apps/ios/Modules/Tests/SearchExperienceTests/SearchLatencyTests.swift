@@ -94,7 +94,8 @@ struct SearchLatencyTests {
     let clock = ContinuousClock()
     var sentences: [ExampleSentence] = []
     for word in ["食べる", "行く", "学校", "水", "見る"] {
-      sentences += await ExampleSentenceClient.live.listed(SearchQuery(word), nil, false).prefix(40)
+      sentences += await ExampleSentenceClient.live.listed(SearchQuery(word), nil, false)
+        .sentences.prefix(40)
     }
     var first: [Double] = []
     var again: [Double] = []
@@ -256,9 +257,9 @@ struct SearchLatencyTests {
     }
     report("each search's example count")
     let analysis = JapaneseTextAnalysisClient.live()
-    let sentences = await ExampleSentenceClient.live.listed(SearchQuery("食べる"), nil, false)
+    let listed = await ExampleSentenceClient.live.listed(SearchQuery("食べる"), nil, false)
     var words = 0
-    for sentence in sentences.prefix(40) {
+    for sentence in listed.sentences.prefix(40) {
       words += await analysis.linkedTokens(sentence.japanese, SearchQuery(""), nil).count
     }
     report("the tokenizer's start and \(words) linked words")
@@ -293,7 +294,7 @@ struct SearchLatencyTests {
     var sentences: [[JapaneseTextToken]] = []
     for word in ["食べる", "行く", "学校", "水", "見る"] {
       for sentence in await ExampleSentenceClient.live.listed(SearchQuery(word), nil, false)
-        .prefix(40)
+        .sentences.prefix(40)
       {
         sentences.append(
           await JapaneseTextAnalysisClient.live().linkedTokens(

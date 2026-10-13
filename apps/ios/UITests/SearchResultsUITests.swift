@@ -62,6 +62,19 @@ final class SearchResultsUITests: ZenbuUITestCase {
     assertOnScreen(find("example-list.screen", in: app), in: app)
   }
 
+  func testExampleSentencesSayHowManyAreListed() {
+    for (query, count) in [
+      ("iru", "3 examples"), ("miru", "The first 100 of more than 100 examples"),
+    ] {
+      let app = launch()
+      search(query, in: app)
+      tap(find("search.examples", in: app))
+      let line = app.descendants(matching: .any).matching(identifier: "example-list.count")
+        .matching(showing(count)).firstMatch
+      assertOnScreen(line, in: app)
+    }
+  }
+
   func testARomajiQueryOffersItsJapaneseReading() {
     let app = launch()
     search("sensei", in: app)

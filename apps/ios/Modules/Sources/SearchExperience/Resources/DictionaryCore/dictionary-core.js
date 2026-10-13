@@ -3206,6 +3206,11 @@
       }
     };
   }
+  function exampleCountText(count) {
+    if (!count || count.listed === 0) return null;
+    if (count.truncated) return `The first ${count.listed} of more than ${count.listed} examples`;
+    return count.listed === 1 ? "1 example" : `${count.listed} examples`;
+  }
 
   // src/detail/part-of-speech.ts
   var verbClassNames = {
@@ -5001,7 +5006,11 @@
     }
     resultsExamples(request) {
       const found = this.listed(request);
-      return typeof found === "string" ? [] : listed2(found.sentences);
+      if (typeof found === "string") return { sentences: [], countText: null };
+      return {
+        sentences: listed2(found.sentences),
+        countText: exampleCountText({ listed: found.sentences.length, truncated: found.truncated })
+      };
     }
     entryExamples(id) {
       return answered(this.retrieve(id));

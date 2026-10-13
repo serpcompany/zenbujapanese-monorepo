@@ -7,7 +7,7 @@ struct ExampleSentenceClient: Sendable {
     @Sendable (
       _ query: SearchQuery, _ highlightedEntry: DictionaryEntry?,
       _ usesHighlightedEntryExamples: Bool
-    ) async -> [ExampleSentence]
+    ) async -> ListedExamples
   var entryExamples: @Sendable (DictionaryEntry) async throws -> EntryExamples
   var formExamples: @Sendable (String) async -> [ExampleSentence]
 
@@ -25,7 +25,7 @@ struct ExampleSentenceClient: Sendable {
       let request = ResultsExamplesRequest(
         query: query.value, primaryEntry: highlightedEntry?.id.rawValue,
         usesPrimaryEntryExamples: usesHighlightedEntryExamples)
-      return (try? await text.resultsExamples(request)) ?? []
+      return (try? await text.resultsExamples(request)) ?? .none
     }
     entryExamples = { entry in
       do {

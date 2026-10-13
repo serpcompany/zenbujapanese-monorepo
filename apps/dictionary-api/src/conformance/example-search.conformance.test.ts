@@ -1,5 +1,6 @@
 import type { ArtifactDatabase } from '@zenbu/dictionary-core/artifact/database'
 import type { Dictionary } from '@zenbu/dictionary-core/artifact/dictionary'
+import { exampleCountText } from '@zenbu/dictionary-core/detail/examples'
 import { primaryItem } from '@zenbu/dictionary-core/results/results'
 import { normalizeQuery } from '@zenbu/dictionary-core/search/query'
 import { beforeAll, describe, expect, test } from 'vitest'
@@ -26,10 +27,12 @@ describe.runIf(artifactAvailable)('example search conformance', () => {
     const found = await service.searchExamples(expected.query, 0, 100)
     const shown = found?.rows.slice(0, suite.tokenLimit) ?? []
     const highlightedEntry = primaryItem(results, normalizeQuery(expected.query))?.entry.id
+    const countText = exampleCountText(found)
 
     const observed: Omit<ExampleSearchCase, 'query' | 'covers'> = {
       ...(row ? { title: row.title } : {}),
       count: row?.count ?? 0,
+      ...(countText ? { countText } : {}),
       ...(highlightedEntry ? { highlightedEntry } : {}),
       usesPrimaryEntryExamples: results.usesPrimaryEntryExamples,
       ids: found?.rows.map(({ sentence }) => `esp1_${sentence.pairId}`) ?? [],

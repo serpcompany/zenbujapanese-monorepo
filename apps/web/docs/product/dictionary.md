@@ -370,14 +370,14 @@ once. When the dictionary has been updated since the page loaded, it says so and
 
 **Title and count.** The section is titled Example Sentences. Under the title, a line says how
 many sentences it lists ("60 examples"; "The first 100 of more than 100 examples" when more match
-than the app's 100), as a word page's Examples section does. The app's screen is titled with the
-query, which the results page already shows, and has no count line.
+than the app's 100), as a word page's Examples section and the app's screen do. The app's screen
+is titled with the query, which the results page already shows.
 
-- Source: `ExampleSentencesView.swift` (`navigationTitle(query.value)`); the owner's decision of
-  2026-09-29 (keep the count line the preview showed), where the #511 review had chosen none;
-  ADR 0010 (a section in place of the page).
-- Check: `search-examples.test.tsx`, "sits at #examples, titled with its count, and shows each
-  one" and "says when it lists only the first 100 of more".
+- Source: `ExampleSentencesView.swift` (its title, and its count line since #537); the owner's
+  decision of 2026-09-29 (keep the count line the preview showed, and add it to the app).
+- Check: ES `countText` for 69 queries, replayed by the service's example search conformance and
+  rendered in the ES cases of `search-examples.test.tsx`, beside its "sits at #examples, titled
+  with its count, and shows each one" and "says when it lists only the first 100 of more".
 
 **No sentences.** A search without example sentences has no section, as it has no row.
 

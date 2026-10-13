@@ -421,8 +421,8 @@ so the text it reads never holds a `<` (`rendered.test.ts`). The gate's tests:
   chips, and link.
 - `components/dictionary/search-examples.test.tsx` holds every recorded Example Sentences row to
   the page it opens (as many examples as its count promises, 25 first, and a Japanese query
-  accented in each sentence), and renders nine example-search cases: every listed pair ID in
-  order, loading each whole list as the page does, and the first sentences' words and marks.
+  accented in each sentence), and renders nine example-search cases: the count line, every pair
+  ID in order, loading each whole list as the page does, and the first sentences' words and marks.
 - `components/dictionary/word-page.test.tsx` and `conjugations.test.tsx` draw every word-detail
   case: the per-kanji furigana split, the pitch graph's points, each Frequency row's details, and
   the conjugation table and each form's page, form by form, with the form's first examples.
