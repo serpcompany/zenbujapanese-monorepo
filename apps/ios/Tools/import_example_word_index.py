@@ -37,6 +37,9 @@ TOKEN_PATTERN = re.compile(
     r"(?P<checked>~)?$"
 )
 ENGLISH_WORD = re.compile(r"[0-9a-z]+(?:['-][0-9a-z]+)*")
+WORD_AS_WRITTEN = re.compile(r"[0-9A-Za-z]+(?:['-][0-9A-Za-z]+)*")
+SENTENCE_START = re.compile(r"""[.!?"'“‘]""")
+LETTERS = re.compile(r"[a-z]+")
 
 
 @dataclass(frozen=True)
@@ -157,6 +160,32 @@ def english_words(sentence: str) -> set[str]:
     return set(ENGLISH_WORD.findall(unicodedata.normalize("NFKC", sentence).lower()))
 
 
+def names_in(sentences) -> set[str]:
+    capitalized: set[str] = set()
+    written_small: set[str] = set()
+    for sentence in sentences:
+        text = unicodedata.normalize("NFKC", sentence)
+        end = None
+        for match in WORD_AS_WRITTEN.finditer(text):
+            starts_a_sentence = end is None or SENTENCE_START.search(text, end, match.start())
+            end = match.end()
+            if not starts_a_sentence:
+                written = match.group()
+                (capitalized if written[0].isupper() else written_small).add(written.lower())
+    return capitalized - written_small
+
+
+def without_marks(text: str) -> str:
+    if text.isascii():
+        return text
+    return "".join(c for c in unicodedata.normalize("NFKD", text) if not unicodedata.combining(c))
+
+
+def mentioned_words(gloss: str) -> set[str]:
+    plain = without_marks(gloss)
+    return set(LETTERS.findall(plain)) | set(ENGLISH_WORD.findall(plain))
+
+
 def closing_parenthesis(notes: str) -> int | None:
     depth = 0
     for index, character in enumerate(notes):
@@ -189,8 +218,11 @@ def meant_words(gloss: str) -> set[str]:
     return words
 
 
-def load_meanings(database: sqlite3.Connection, entries: Entries) -> dict[str, dict[bytes, int]]:
+def load_meanings(
+    database: sqlite3.Connection, entries: Entries, names: set[str]
+) -> tuple[dict[str, dict[bytes, int]], dict[str, set[bytes]]]:
     meanings: dict[str, dict[bytes, int]] = defaultdict(dict)
+    mentioning: dict[str, set[bytes]] = {name: set() for name in names}
     for entry_id, sense, gloss in database.execute(
         "SELECT entry_id, sense_order, normalized_text FROM gloss_atoms"
     ):
@@ -199,7 +231,9 @@ def load_meanings(database: sqlite3.Connection, entries: Entries) -> dict[str, d
             continue
         for word in meant_words(gloss):
             meanings[word][entry] = min(sense, meanings[word].get(entry, sense))
-    return meanings
+        for name in mentioned_words(gloss) & names:
+            mentioning[name].add(entry)
+    return meanings, mentioning
 
 
 def score(both: int, with_word: int, with_entry: int) -> Fraction:
@@ -249,10 +283,17 @@ def kept_entries(
     return sorted(kept, key=order)[:ENTRIES_PER_WORD]
 
 
+def about_the_name(found: Counter, meant: dict[bytes, int], mentioning: set[bytes]) -> Counter:
+    return Counter(
+        {entry: both for entry, both in found.items() if entry in meant or entry in mentioning}
+    )
+
+
 def word_entry_rows(
     pair_entries: dict[bytes, set[bytes]],
     pair_words: dict[bytes, set[str]],
     meanings: dict[str, dict[bytes, int]],
+    mentioning_names: dict[str, set[bytes]],
 ) -> list[tuple]:
     pairs = len(pair_entries)
     with_word = Counter(word for words in pair_words.values() for word in words)
@@ -266,7 +307,10 @@ def word_entry_rows(
     rows = []
     for word in sorted(both):
         meant = meanings.get(word, {})
-        kept = kept_entries(both[word], with_word[word], with_entry, pairs, meant)
+        found = both[word]
+        if word in mentioning_names:
+            found = about_the_name(found, meant, mentioning_names[word])
+        kept = kept_entries(found, with_word[word], with_entry, pairs, meant)
         rows.extend(
             (word, place, entry, count, with_word[word], with_entry[entry], meant.get(entry))
             for place, (entry, count) in enumerate(kept)
@@ -282,11 +326,11 @@ def import_index(source: Path, source_manifest: dict, language_data: Path, outpu
     try:
         entries = load_entries(database)
         pairs = load_pairs(database)
-        meanings = load_meanings(database, entries)
         japanese_lengths = dict(
             database.execute("SELECT id, length(japanese) FROM example_sentences")
         )
         english = dict(database.execute("SELECT id, english FROM example_sentences"))
+        meanings, mentioning_names = load_meanings(database, entries, names_in(english.values()))
     finally:
         database.close()
 
@@ -331,7 +375,7 @@ def import_index(source: Path, source_manifest: dict, language_data: Path, outpu
         rows.extend((entry, pair_id, surface) for pair_id, (_, surface) in ranked)
     rows.sort()
     pair_words = {pair_id: english_words(english[pair_id]) for pair_id in pair_entries}
-    word_rows = word_entry_rows(pair_entries, pair_words, meanings)
+    word_rows = word_entry_rows(pair_entries, pair_words, meanings, mentioning_names)
 
     temporary = output.with_suffix(".tmp")
     temporary.unlink(missing_ok=True)
@@ -397,6 +441,7 @@ def import_index(source: Path, source_manifest: dict, language_data: Path, outpu
         "tokens_named_by_their_one_common_entry": tokens_named_by_common_entry,
         "english_words": len({word for words in pair_words.values() for word in words}),
         "english_words_with_entries": len({row[0] for row in word_rows}),
+        "english_names_with_entries": len({row[0] for row in word_rows} & set(mentioning_names)),
         "english_word_entry_rows": len(word_rows),
         "entries_per_word": ENTRIES_PER_WORD,
         "english_word_entry_kept_when": {
@@ -411,6 +456,7 @@ def import_index(source: Path, source_manifest: dict, language_data: Path, outpu
                 "score": str(USED_SCORE),
             },
             "only_first_meanings_once_one_reaches_share": str(FIRST_MEANING_SHARE),
+            "a_name_only_an_entry_that_means_or_mentions_it": True,
         },
         "retained_fields": [
             "sentence-to-entry links",

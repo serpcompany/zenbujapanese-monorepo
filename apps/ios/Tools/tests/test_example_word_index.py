@@ -44,6 +44,41 @@ class EnglishWordsTests(unittest.TestCase):
         self.assertEqual(importer.english_words("It’s a pen."), {"it", "s", "a", "pen"})
 
 
+class NamesTests(unittest.TestCase):
+    def test_a_word_capitalized_wherever_it_does_not_start_a_sentence_is_a_name(self) -> None:
+        sentences = [
+            "I met Tony in New York.",
+            "New shoes hurt, so he bought new ones in York.",
+            "Here I am.",
+        ]
+        self.assertEqual(importer.names_in(sentences), {"tony", "york", "i"})
+
+    def test_a_word_that_starts_a_sentence_says_nothing_wherever_the_sentence_starts(self) -> None:
+        sentences = ["Hello there.", "She said no. Hello again!", 'He asked, "Hello?"', "‘Hello,’ I said."]
+        self.assertEqual(importer.names_in(sentences), {"i"})
+
+    def test_a_word_written_small_once_is_no_name(self) -> None:
+        self.assertEqual(importer.names_in(["We love Japan.", "It is japan, the lacquer."]), set())
+
+    def test_full_width_capitals_are_capitals(self) -> None:
+        self.assertEqual(importer.names_in(["We watch ＴＶ."]), {"tv"})
+
+
+class MentionedWordsTests(unittest.TestCase):
+    def test_a_gloss_mentions_each_word_in_it_whatever_is_joined_to_it(self) -> None:
+        for gloss, words in {
+            "new york": {"new", "york"},
+            "mt. fuji": {"mt", "fuji"},
+            "fuji-san": {"fuji", "san", "fuji-san"},
+            "driver's license": {"driver", "s", "license", "driver's"},
+        }.items():
+            with self.subTest(gloss):
+                self.assertEqual(importer.mentioned_words(gloss), words)
+
+    def test_a_gloss_mentions_a_name_written_with_long_vowel_marks(self) -> None:
+        self.assertIn("kyushu", importer.mentioned_words("kyūshū (southernmost main island)"))
+
+
 class MeantWordsTests(unittest.TestCase):
     def test_a_gloss_means_the_word_it_is_with_or_without_to_and_closing_notes(self) -> None:
         for gloss, words in {
@@ -148,23 +183,32 @@ class KeptEntriesTests(unittest.TestCase):
 
 
 class WordEntryRowsTests(unittest.TestCase):
-    def test_each_word_lists_its_entries_with_the_pairs_they_were_counted_in(self) -> None:
-        pair_entries = {}
-        pair_words = {}
+    evening = ("evening", 0, EVENING, 28, 28, 28, None)
+    night = ("night", 0, NIGHT, 12, 12, 12, 1)
+
+    def setUp(self) -> None:
+        self.pair_entries: dict[bytes, set[bytes]] = {}
+        self.pair_words: dict[bytes, set[str]] = {}
         for number in range(200):
             pair = number.to_bytes(2, "big")
             if number < 12:
-                pair_entries[pair], pair_words[pair] = {NIGHT}, {"night"}
+                self.pair_entries[pair], self.pair_words[pair] = {NIGHT}, {"night"}
             elif number < 40:
-                pair_entries[pair], pair_words[pair] = {EVENING}, {"evening", "the"}
+                self.pair_entries[pair], self.pair_words[pair] = {EVENING}, {"evening", "the"}
             else:
-                pair_entries[pair], pair_words[pair] = {NIGHTS}, {"the"}
-        pair_words[bytes(2)] = {"night", "rare"}
-        rows = importer.word_entry_rows(pair_entries, pair_words, {"night": {NIGHT: 1}})
-        self.assertEqual(
-            rows,
-            [("evening", 0, EVENING, 28, 28, 28, None), ("night", 0, NIGHT, 12, 12, 12, 1)],
-        )
+                self.pair_entries[pair], self.pair_words[pair] = {NIGHTS}, {"the"}
+        self.pair_words[bytes(2)] = {"night", "rare"}
+
+    def rows(self, names: dict[str, set[bytes]]) -> list[tuple]:
+        meanings = {"night": {NIGHT: 1}}
+        return importer.word_entry_rows(self.pair_entries, self.pair_words, meanings, names)
+
+    def test_each_word_lists_its_entries_with_the_pairs_they_were_counted_in(self) -> None:
+        self.assertEqual(self.rows(names={}), [self.evening, self.night])
+
+    def test_a_name_keeps_only_an_entry_that_means_it_or_mentions_it(self) -> None:
+        self.assertEqual(self.rows(names={"evening": set(), "night": set()}), [self.night])
+        self.assertEqual(self.rows(names={"evening": {EVENING}}), [self.evening, self.night])
 
 
 if __name__ == "__main__":

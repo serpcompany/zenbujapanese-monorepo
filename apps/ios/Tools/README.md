@@ -137,11 +137,10 @@ as its headword. Each entry keeps its best 200 sentences: Word Detail shows at m
 past 50 as "50+".
 
 It also writes `english_word_entries` (`zenbu.example-word-index.v2`): for an English word, the
-entries the sentence pairs with that word use. Search lists the first that means the word, for that
-word in an English sentence
-([`english-sentence-search.md`](../../../docs/agents/english-sentence-search.md), rule 3). A pair's
-English is split into words as the core splits a query (`englishSentenceWords`), and its Japanese
-counts every entry its tokens resolve to, kanji headwords included, each under the Language
+entries the sentence pairs with that word use, which Search reads for that word in an English
+sentence ([`english-sentence-search.md`](../../../docs/agents/english-sentence-search.md), rule 3).
+A pair's English is split into words as the core splits a query (`englishSentenceWords`), and its
+Japanese counts every entry its tokens resolve to, kanji headwords included, each under the Language
 Reference ID a search lists it by. A written form several entries share names none of them above;
 here it names the one that is common, when only one is: 夜 is よる, not the counter や (7,117 tokens,
 among them 男, 車, 病気, and 声). With `both` the pairs a word and an entry share, of the word's
@@ -158,10 +157,17 @@ among them 男, 車, 病気, and 声). With `both` the pairs a word and an entry
   sense comes with a twentieth of the word's pairs, only first-sense meanings are kept: the
   sentences choose among what the dictionary lists first (`pen` is ペン, not 書く, "to pen"), and
   replace it only where they don't use it (`saw` is 見る, not 鋸; `have` is 有る, not 含む).
+- **A name keeps only an entry about it.** A word that is capitalized wherever it doesn't start a
+  sentence or follow a quotation mark, in all the bundled example sentences, is a name (`Tony`,
+  `York`, `Monday`, `TV`). What its pairs use most is often the word beside it, so its entry must
+  mean it or have it as a whole word in a meaning, long vowel marks aside: `tokyo` keeps 東京, `york`
+  ニューヨーク "New York", and `kyushu` 九州 "Kyūshū", while `tony` loses 君 "Mr" and `edison` 発明
+  "invention". Eight words lose their only entry this way, and 90 names keep one. `i` and `japan`
+  are each written small somewhere, and keep 私 and 日本 as any word does.
 
 A word keeps its best three with their counts: first-sense meanings by `both`, then later-sense
-ones, then the rest by score. Of the 22,656 words in the 144,123 annotated pairs, 2,681 have an
-entry, in 3,068 rows; `a`, `an`, `the`, and `of` have none. `tests/test_example_word_index.py`
+ones, then the rest by score. Of the 22,656 words in the 144,123 annotated pairs, 2,673 have an
+entry, in 3,060 rows; `a`, `an`, `the`, and `of` have none. `tests/test_example_word_index.py`
 checks the rules, and the contract test checks every row against them, and the words the rules
 were tuned on.
 

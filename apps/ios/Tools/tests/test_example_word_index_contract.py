@@ -40,6 +40,17 @@ ENTRIES_EXAMPLES_USE = {
     "it": {"それ"},
 }
 WORDS_WITHOUT_AN_ENTRY = ("a", "an", "the", "of")
+NAMES_AND_THE_ENTRY_ABOUT_THEM = {
+    "tokyo": "東京",
+    "english": "英語",
+    "japan": "日本",
+    "monday": "月曜日",
+    "i": "私",
+    "york": "ニューヨーク",
+    "fuji": "富士山",
+    "kyushu": "九州",
+}
+NAMES_WITHOUT_AN_ENTRY = ("tony", "edison", "tom")
 
 
 class ExampleWordIndexContractTests(unittest.TestCase):
@@ -91,17 +102,27 @@ class ExampleWordIndexContractTests(unittest.TestCase):
                 importer.is_kept(both, with_word, with_entry, pairs, sense is not None), word
             )
 
-    def test_the_words_the_table_was_tuned_on_list_the_entry_their_examples_use(self) -> None:
-        first = dict(
+    def first_entries(self) -> dict[str, str]:
+        return dict(
             self.database.execute(
                 "SELECT w.word, e.headword FROM word_index.english_word_entries w "
                 "JOIN entries e ON e.id = w.entry_id WHERE w.place = 0"
             )
         )
+
+    def test_the_words_the_table_was_tuned_on_list_the_entry_their_examples_use(self) -> None:
+        first = self.first_entries()
         for word, headwords in ENTRIES_EXAMPLES_USE.items():
             self.assertIn(first.get(word), headwords, word)
         for word in WORDS_WITHOUT_AN_ENTRY:
             self.assertNotIn(word, first)
+
+    def test_a_name_lists_only_an_entry_that_means_or_mentions_it(self) -> None:
+        first = self.first_entries()
+        for name, headword in NAMES_AND_THE_ENTRY_ABOUT_THEM.items():
+            self.assertEqual(first.get(name), headword, name)
+        for name in NAMES_WITHOUT_AN_ENTRY:
+            self.assertNotIn(name, first)
 
 
 if __name__ == "__main__":
