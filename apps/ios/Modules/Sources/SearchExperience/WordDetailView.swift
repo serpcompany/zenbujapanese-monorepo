@@ -5,7 +5,7 @@ struct WordDetailView: View {
   @State private var notes: SavedItemNotes
   @State private var photos: SavedItemPhotos
   @State private var examples = LoadedExamples()
-  @State private var isLoadingExamples = true
+  @Environment(\.exampleRowsOnScreen) private var rowsOnScreen
   @State private var showsListPicker = false
   @State private var frequencyDisclosure: FrequencyRow?
   @State private var analysisAvailability = JapaneseTextAnalysisAvailability.full
@@ -146,13 +146,13 @@ struct WordDetailView: View {
         }
         ExampleSentenceSections(
           title: "EXAMPLES",
-          examples: holdsExamples ? examples.examples : [],
-          isLoading: isLoadingExamples || !holdsExamples,
+          examples: answersExamples ? examples.examples : [],
+          isLoading: !answersExamples,
           emptyMessage: "No source-matched examples",
-          hasMore: holdsExamples && examples.hasMore,
+          hasMore: answersExamples && examples.hasMore,
           presentation: { .wordDetail(index: $0) },
           speechSynthesisClient: speechSynthesisClient,
-          loadMore: loadMoreExamples,
+          loadMore: { await examples.loadMore(read: readExamples) },
           openWord: openWord
         )
       }
@@ -186,32 +186,20 @@ struct WordDetailView: View {
       notes.finishEditing()
     }
     .task(id: entry.id) {
-      isLoadingExamples = true
       await notes.load(entry.noteID)
       await photos.load(item, saving: initialEncounterMedia)
-      guard !Task.isCancelled else { return }
-      var firstExamples: ExamplePage?
-      if !holdsExamples { firstExamples = await examplesPage(from: 0) }
       guard !Task.isCancelled else { return }
       analysisAvailability = await japaneseTextAnalysisClient.availability()
       frequency = await FrequencyRow.rows(for: entry.id, using: frequencyCapability)
       guard !Task.isCancelled else { return }
-      if let firstExamples { examples.add(firstExamples, from: 0, of: entry.id.rawValue) }
-      isLoadingExamples = false
+      await examples.load(entry.id.rawValue, rowsOnScreen: rowsOnScreen, read: readExamples)
     }
   }
 
-  private var holdsExamples: Bool { examples.holds(entry.id.rawValue) }
+  private var answersExamples: Bool { examples.answers(entry.id.rawValue) }
 
-  private func examplesPage(from: Int) async -> ExamplePage {
-    (try? await exampleSentenceClient.examples(entry, from: from)) ?? .empty
-  }
-
-  private func loadMoreExamples() async {
-    let from = examples.examples.count
-    let page = await examplesPage(from: from)
-    guard !Task.isCancelled else { return }
-    examples.add(page, from: from, of: entry.id.rawValue)
+  private func readExamples(_ batch: ExampleBatch) async -> ExamplePage? {
+    try? await exampleSentenceClient.examples(entry, batch)
   }
 }
 

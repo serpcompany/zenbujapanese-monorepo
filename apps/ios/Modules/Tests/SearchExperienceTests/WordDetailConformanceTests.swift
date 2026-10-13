@@ -155,11 +155,11 @@ private struct WordDetailObserver {
     let retrieval: EntryExamples
     let listed: ExamplePage
     do {
-      retrieval = try await exampleSentenceClient.entryExamples(entry, 0)
+      retrieval = try await exampleSentenceClient.entryExamples(entry, ExampleBatch(from: 0))
       let first = retrieval.page
-      listed = try await ExamplePage.every(upTo: limit) { from in
-        if from == 0 { return first }
-        return try await exampleSentenceClient.examples(entry, from: from)
+      listed = try await ExamplePage.every(upTo: limit) { batch in
+        if batch.from == 0 { return first }
+        return try await exampleSentenceClient.examples(entry, batch)
       }
     } catch {
       return WordDetailCase.Examples(

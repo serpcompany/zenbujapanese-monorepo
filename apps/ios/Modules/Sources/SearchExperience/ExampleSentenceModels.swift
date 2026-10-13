@@ -1,4 +1,5 @@
 import Foundation
+import Observation
 
 struct ExampleSentenceID: RawRepresentable, Hashable, Sendable {
   private static let prefix = "esp1_"
@@ -33,11 +34,14 @@ struct LinkedExample: Identifiable, Sendable {
 }
 
 struct ExamplePage: Sendable {
-  static let empty = ExamplePage(examples: [], listed: 0, countText: nil)
-
   let examples: [LinkedExample]
   let listed: Int
   let countText: String?
+}
+
+struct ExampleBatch: Hashable, Sendable {
+  let from: Int
+  var limit: Int?
 }
 
 struct EntryExamples: Sendable {
@@ -46,28 +50,55 @@ struct EntryExamples: Sendable {
   let truncated: Bool
 }
 
-struct LoadedExamples: Sendable {
+@MainActor
+@Observable
+final class LoadedExamples {
+  typealias Read = @MainActor (ExampleBatch) async -> ExamplePage?
+
   private(set) var examples: [LinkedExample] = []
   private(set) var countText: String?
   private var source: String?
   private var listed = 0
+  private var firstReadFailed = false
+  private var laterReadFailed = false
+  private var owesRestOfPage = false
+  @ObservationIgnored private var isReadingMore = false
 
-  var hasMore: Bool { examples.count < listed }
+  var hasMore: Bool { !laterReadFailed && examples.count < listed }
 
-  func holds(_ source: String) -> Bool {
+  func answers(_ source: String) -> Bool {
     self.source == source
   }
 
-  mutating func add(_ page: ExamplePage, from: Int, of source: String) {
-    if from == 0 {
+  func load(_ source: String, rowsOnScreen: Int?, read: Read) async {
+    laterReadFailed = false
+    if !answers(source) || firstReadFailed {
+      let first = await read(ExampleBatch(from: 0, limit: rowsOnScreen))
+      guard !Task.isCancelled else { return }
       self.source = source
-      examples = page.examples
-      countText = page.countText
-      listed = page.listed
-    } else if holds(source), from == examples.count {
-      examples += page.examples
-      listed = page.examples.isEmpty ? examples.count : page.listed
+      firstReadFailed = first == nil
+      examples = first?.examples ?? []
+      countText = first?.countText
+      listed = first?.listed ?? 0
+      owesRestOfPage = first != nil && first?.examples.count == rowsOnScreen
     }
+    if owesRestOfPage { await loadMore(read: read) }
+  }
+
+  func loadMore(read: Read) async {
+    guard hasMore, !isReadingMore else { return }
+    isReadingMore = true
+    defer { isReadingMore = false }
+    let (source, from) = (source, examples.count)
+    let next = await read(ExampleBatch(from: from))
+    guard !Task.isCancelled, self.source == source, examples.count == from else { return }
+    guard let next, !next.examples.isEmpty else {
+      laterReadFailed = true
+      return
+    }
+    owesRestOfPage = false
+    examples += next.examples
+    listed = next.listed
   }
 }
 

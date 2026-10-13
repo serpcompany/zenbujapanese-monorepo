@@ -34,11 +34,16 @@ extension ZenbuUITestCase {
         .firstMatch)
   }
 
-  func openAFormOfTaberu(in app: XCUIApplication) {
+  @discardableResult
+  func openAFormOfTaberu(in app: XCUIApplication) -> String {
     openTaberu(in: app)
     tap(find("word-detail.conjugations", in: app), toShow: find("conjugations.screen", in: app))
     assertOnScreen(find("conjugations.screen", in: app), in: app)
-    tap(firstElement(identifiedBy: "conjugations.row.", in: app))
+    let prefix = "conjugations.row."
+    let form = waitFor(firstElement(identifiedBy: prefix, in: app))
+    let kind = String(form.identifier.dropFirst(prefix.count))
+    tap(form)
+    return kind
   }
 
   func menuChoices(in app: XCUIApplication) -> XCUIElementQuery {

@@ -196,7 +196,8 @@ don't contain them), so they need no network, account, camera, or microphone:
   Simulator harness).
 - `ZENBU_SLOW_LINKING=<seconds>` holds back every answer that links words (a page of examples, a
   caption's or a line's words) by that long, so a test can tell a row that arrives with its words
-  from one that links them after it is drawn (`ExampleRowsUITests`).
+  from one that links them after it is drawn, and `ZENBU_FAIL_LINKING=<count>` fails the first
+  that many, so it can see a screen read again what it couldn't (`ExampleRowsUITests`).
 - `ZENBU_YOUTUBE_STAND_IN=<json>` stands in for YouTube: the player page loads a local player
   that answers the IFrame API's calls (play, pause, seek, speed, and its time), and the captions
   come from the JSON's player response and timed text, through the same parsing, track choice,
@@ -534,10 +535,10 @@ entries, carry their rank on the one entry their UniDic lemma reading names (#44
 
 Examples for kana-headword words come from `ExampleWordIndex.sqlite3`, which is built against the
 bundled `LanguageReferenceData.sqlite3`. Run
-`python3 -m unittest discover -s apps/ios/Tools/tests -p test_example_word_index_contract.py` to verify that it
-matches that database, its pinned source, and its import report. Without the index, as with a
-test database, kana headwords get no examples rather than substring matches. Tatoeba's index
-writes both the adverb 然う and the suffix そう as bare そう, so those sentences link to neither.
+`python3 -m unittest discover -s apps/ios/Tools/tests -p test_example_word_index_contract.py` to
+verify that it matches that database, its pinned source, and its import report. Without the index,
+as with a test database, kana headwords get no examples rather than substring matches. Tatoeba's
+index writes both the adverb 然う and the suffix そう as bare そう, so those sentences link to neither.
 
 Pitch for two-part compounds UniDic doesn't list whole, such as 記者会見, comes from
 `CompoundPitch.sqlite3`, also built against that database. Run
@@ -621,19 +622,19 @@ answers; [`dictionary-core.md`](dictionary-core.md), The app's side, lists which
 - **Sentences.** A search that needs a sentence's words says so in its call's outcome. The actor
   awaits Sudachi (`JapaneseMorphologyClient`), hands the words back, and the call goes on; other
   lookups can run while it waits.
-- **Examples arrive linked.** A page of a screen's examples is one call
-  (`DictionaryTextData.resultsExamples`, `entryExamples`, `formExamples`): 25 sentences from a
-  position, each with its words linked and the screen's words accented. `ExampleSentenceClient`
-  reads the entries the page names in one statement before any row is drawn, so a row
-  (`LinkedJapaneseWords`) draws once, and a screen keeps its pages (`LoadedExamples`) and asks
-  for the next when the list's end scrolls into view.
+- **Examples arrive linked.** A batch of a screen's examples is one call
+  (`DictionaryTextData.resultsExamples`, `entryExamples`, `formExamples`): the sentences from a
+  position to the end of its page of 25, or fewer when the call sets a limit, each with its words
+  linked and the screen's words accented. `ExampleSentenceClient` reads the entries the batch
+  names in one statement before any row is drawn, so a row (`LinkedJapaneseWords`) draws once.
+  `LoadedExamples` asks first for as many rows as fit the window (`ExampleRowsOnScreen`), at once
+  for the rest of that page, and for the next page when the list's end scrolls into view.
 - **Linked words.** Text that isn't the dictionary's (a caption, an image's line, a translated
-  sentence) links a row at a time (`LinkedJapaneseText`): `DictionaryTextData.linkedWords` is
-  one call for a text, in which the core tokenizes it from the dictionary files the app hands
-  it, looks every word's forms up in one or two statements, and answers each word with its
-  place, its entry or candidates, its furigana, and its `accent`. Both paths read their entries
-  through `LinkedEntries`, which keeps 4,000, and the core remembers the last 512 texts it
-  linked.
+  sentence) links a row at a time (`LinkedJapaneseText`): `DictionaryTextData.linkedWords` is one
+  call for a text, in which the core tokenizes it from the dictionary files the app hands it, looks
+  every word's forms up in one or two statements, and answers each word with its place, its entry or
+  candidates, its furigana, and its `accent`. Both paths read their entries through `LinkedEntries`,
+  which keeps 4,000, and the core remembers the last 512 texts it linked.
 - **The kanji files.** `KanjiFiles` maps `KanjiReferenceData.json` and
   `KanjiElementReferenceData.json` into memory and scans them once for where each record
   starts and ends, then hands the core a record's bytes as they are in the file. It builds no
@@ -1095,8 +1096,8 @@ previews stay still.
   (`SearchListHeading`) and frequency notice are rows.
 - SwiftUI can miss the last keystroke before Return, so `SearchView` searches again when the query
   changed without SwiftUI starting a newer task; otherwise Searching stays on screen.
-- Back runs a covered screen's `.task` again. The example screens keep the pages they hold
-  (`LoadedExamples`) then, so the `List` isn't rebuilt and doesn't lose its scroll position.
+- Back runs a covered screen's `.task` again. The example screens keep their rows then
+  (`LoadedExamples`), so the `List` keeps its scroll position, and read again only what failed.
 - The word sheet (`WordSheetPresentation` in `RecognizedWordSheet.swift`) swaps the word inside a
   `sheet(isPresented:)`: with `sheet(item:)`, each new word dismissed and re-presented the sheet,
   which reopened at full height.

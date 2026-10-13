@@ -6,11 +6,11 @@ struct ExampleSentenceClient: Sendable {
   var listed:
     @Sendable (
       _ query: SearchQuery, _ highlightedEntry: DictionaryEntry?,
-      _ usesHighlightedEntryExamples: Bool, _ from: Int
-    ) async -> ExamplePage
+      _ usesHighlightedEntryExamples: Bool, _ batch: ExampleBatch
+    ) async -> ExamplePage?
   var entryExamples:
-    @Sendable (_ entry: DictionaryEntry, _ from: Int) async throws -> EntryExamples
-  var formExamples: @Sendable (_ form: String, _ from: Int) async -> ExamplePage
+    @Sendable (_ entry: DictionaryEntry, _ batch: ExampleBatch) async throws -> EntryExamples
+  var formExamples: @Sendable (_ form: String, _ batch: ExampleBatch) async -> ExamplePage?
 
   static let live = ExampleSentenceClient(
     text: .shared, linked: LinkedEntries(lookupClient: .live))
@@ -23,16 +23,16 @@ struct ExampleSentenceClient: Sendable {
         usesPrimaryEntryExamples: results.usesPrimaryEntryExamples)
       return (try? await text.resultsExampleCount(request)) ?? 0
     }
-    listed = { query, highlightedEntry, usesHighlightedEntryExamples, from in
+    listed = { query, highlightedEntry, usesHighlightedEntryExamples, batch in
       let request = ResultsExamplesRequest(
         query: query.value, primaryEntry: highlightedEntry?.id.rawValue,
-        usesPrimaryEntryExamples: usesHighlightedEntryExamples, from: from)
-      guard let found = try? await text.resultsExamples(request) else { return .empty }
+        usesPrimaryEntryExamples: usesHighlightedEntryExamples, batch: batch)
+      guard let found = try? await text.resultsExamples(request) else { return nil }
       return await linked.page(found, highlightedEntry: highlightedEntry)
     }
-    entryExamples = { entry, from in
+    entryExamples = { entry, batch in
       do {
-        let found = try await text.entryExamples(entry.id, from: from)
+        let found = try await text.entryExamples(entry.id, batch)
         return EntryExamples(
           page: await linked.page(found.page, highlightedEntry: entry), count: found.count,
           truncated: found.truncated)
@@ -42,14 +42,14 @@ struct ExampleSentenceClient: Sendable {
         throw ExampleSentenceRetrievalError.retrievalUnavailable(.queryFailed)
       }
     }
-    formExamples = { form, from in
-      guard let found = try? await text.formExamples(form, from: from) else { return .empty }
+    formExamples = { form, batch in
+      guard let found = try? await text.formExamples(form, batch) else { return nil }
       return await linked.page(found, highlightedEntry: nil)
     }
   }
 
-  func examples(_ entry: DictionaryEntry, from: Int) async throws -> ExamplePage {
-    try await entryExamples(entry, from).page
+  func examples(_ entry: DictionaryEntry, _ batch: ExampleBatch) async throws -> ExamplePage {
+    try await entryExamples(entry, batch).page
   }
 }
 

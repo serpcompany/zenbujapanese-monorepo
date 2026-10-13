@@ -31,7 +31,7 @@ import Testing
 
   private func sentences(of entry: DictionaryEntry) async throws -> [ExampleSentence] {
     try await ExamplePage.every {
-      try await ExampleSentenceClient.live.examples(entry, from: $0)
+      try await ExampleSentenceClient.live.examples(entry, $0)
     }.examples.map(\.sentence)
   }
 

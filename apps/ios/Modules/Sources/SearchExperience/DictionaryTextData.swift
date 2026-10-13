@@ -5,13 +5,14 @@ struct ResultsExamplesRequest: Encodable, Sendable {
   let query: String
   let primaryEntry: String?
   let usesPrimaryEntryExamples: Bool
-  var from = 0
+  var batch = ExampleBatch(from: 0)
 
   private enum CodingKeys: String, CodingKey {
     case query
     case primaryEntry
     case usesPrimaryEntryExamples
     case from
+    case limit
   }
 
   func encode(to encoder: Encoder) throws {
@@ -19,18 +20,21 @@ struct ResultsExamplesRequest: Encodable, Sendable {
     try container.encode(query, forKey: .query)
     try container.encode(primaryEntry, forKey: .primaryEntry)
     try container.encode(usesPrimaryEntryExamples, forKey: .usesPrimaryEntryExamples)
-    try container.encode(from, forKey: .from)
+    try container.encode(batch.from, forKey: .from)
+    try container.encodeIfPresent(batch.limit, forKey: .limit)
   }
 }
 
 private struct EntryExamplesRequest: Encodable {
   let id: String
   let from: Int
+  let limit: Int?
 }
 
 private struct FormExamplesRequest: Encodable {
   let form: String
   let from: Int
+  let limit: Int?
 }
 
 struct LinkedExamples: Decodable, Sendable {
@@ -105,6 +109,7 @@ actor DictionaryTextData {
   private let wordIndexURL: URL?
   private let morphology: JapaneseMorphologyClient?
   private var core: DictionaryCore?
+  private var linkingAnswersToFail = LaunchHarness.failsLinkingAnswers
 
   init(
     databaseURL: URL? = nil,
@@ -129,13 +134,16 @@ actor DictionaryTextData {
   }
 
   func entryExamples(
-    _ id: LanguageReferenceID, from: Int
+    _ id: LanguageReferenceID, _ batch: ExampleBatch
   ) async throws -> LinkedEntryExamples {
-    try await linked("entryExamples", EntryExamplesRequest(id: id.rawValue, from: from))
+    try await linked(
+      "entryExamples",
+      EntryExamplesRequest(id: id.rawValue, from: batch.from, limit: batch.limit))
   }
 
-  func formExamples(_ form: String, from: Int) async throws -> LinkedExamples {
-    try await linked("formExamples", FormExamplesRequest(form: form, from: from))
+  func formExamples(_ form: String, _ batch: ExampleBatch) async throws -> LinkedExamples {
+    try await linked(
+      "formExamples", FormExamplesRequest(form: form, from: batch.from, limit: batch.limit))
   }
 
   func linkedWords(_ text: LinkedText) async throws -> [LinkedWord] {
@@ -146,6 +154,10 @@ actor DictionaryTextData {
     _ method: String, _ request: some Encodable
   ) async throws -> Answer {
     if let delay = LaunchHarness.slowsLinkingBy { try await Task.sleep(for: delay) }
+    if linkingAnswersToFail > 0 {
+      linkingAnswersToFail -= 1
+      throw ExampleSentenceRetrievalError.retrievalUnavailable(.queryFailed)
+    }
     return try await answer(method, try DictionaryCore.argument(request))
   }
 

@@ -48,6 +48,11 @@ const sentences: Record<string, KuromojiToken[]> = {
     token(6, 'た', '助動詞', 'タ')
   ],
   今日: [token(1, '今日', '名詞', 'コンニチ')],
+  今日見た: [
+    token(1, '今日', '名詞', 'コンニチ'),
+    token(3, '見', '動詞', 'ミ', '見る'),
+    token(4, 'た', '助動詞', 'タ')
+  ],
   見る: [token(1, '見る', '動詞', 'ミル')],
   '「日本語を」': [
     token(1, '「', '記号', '「'),
@@ -71,7 +76,8 @@ const linked = (target: ReturnType<typeof host>, request: object) =>
 
 const pairId = (row: number) => row.toString(16).padStart(32, '0')
 
-function listing(japanese: string, matching: number) {
+function listing(japanese: string | readonly string[], matching: number) {
+  const texts = typeof japanese === 'string' ? [japanese] : japanese
   const dictionary = host()
   const all = (sql: string, parametersJSON: string) => {
     if (sql.includes('JOIN forms f ON f.entry_id = e.id')) {
@@ -90,7 +96,7 @@ function listing(japanese: string, matching: number) {
       rows: Array.from({ length: matching }, (_, row) => ({
         rowid: row + 1,
         pairId: pairId(row),
-        japanese,
+        japanese: texts[row % texts.length],
         english: `Sentence ${row}.`
       }))
     }
@@ -341,6 +347,51 @@ describe('the embedded text engine', () => {
     })
     expect(hundred.examples).toHaveLength(25)
     expect((await page(101, 100)).examples).toEqual([])
+  })
+
+  test('answers as many examples as a screen asks for, then the rest of that page', async () => {
+    const batch = async (from: number, limit?: number) => {
+      const found = (await ask(
+        listing('日本語を見た', 60),
+        'resultsExamples',
+        JSON.stringify({
+          query: '見た',
+          primaryEntry: null,
+          usesPrimaryEntryExamples: false,
+          from,
+          limit
+        })
+      )) as EmbeddedResultsExamples
+      expect(found).toMatchObject({ listed: 60, countText: '60 examples' })
+      return found.examples.map(example => example.id)
+    }
+    const rows = (from: number, to: number) =>
+      Array.from({ length: to - from }, (_, row) => `esp1_${pairId(from + row)}`)
+
+    expect(await batch(0, 8)).toEqual(rows(0, 8))
+    expect(await batch(8)).toEqual(rows(8, 25))
+    expect(await batch(8, 40)).toEqual(rows(8, 25))
+    expect(await batch(25, 3)).toEqual(rows(25, 28))
+    expect(await batch(50, 40)).toEqual(rows(50, 60))
+  })
+
+  test('reads the words and the entries of a batch of examples from the dictionary together', async () => {
+    const target = listing(['今日見た', '日本語を見た'], 2)
+    const page = (await ask(
+      target,
+      'resultsExamples',
+      JSON.stringify({
+        query: '見た',
+        primaryEntry: null,
+        usesPrimaryEntryExamples: false,
+        from: 0
+      })
+    )) as EmbeddedResultsExamples
+    expect(page.examples.map(example => example.words.map(word => word.entry))).toEqual([
+      ['k1', 'v1'],
+      ['a1', null, 'v1']
+    ])
+    expect(target.asked).toEqual([['今日', '見る', '日本語', 'を'], ['["k1","v1","a1"]']])
   })
 
   test('answers a romaji or deinflected query with its primary entry’s examples, query words accented', async () => {

@@ -2,13 +2,16 @@
 
 extension ExamplePage {
   static func every(
-    upTo limit: Int = .max, _ page: (Int) async throws -> ExamplePage
+    upTo limit: Int = .max, _ page: (ExampleBatch) async throws -> ExamplePage?
   ) async rethrows -> ExamplePage {
-    let first = try await page(0)
+    guard let first = try await page(ExampleBatch(from: 0)) else {
+      return ExamplePage(examples: [], listed: 0, countText: nil)
+    }
     var examples = first.examples
     while examples.count < min(first.listed, limit) {
-      let next = try await page(examples.count)
-      guard !next.examples.isEmpty else { break }
+      guard let next = try await page(ExampleBatch(from: examples.count)),
+        !next.examples.isEmpty
+      else { break }
       examples += next.examples
     }
     return ExamplePage(examples: examples, listed: first.listed, countText: first.countText)

@@ -26,6 +26,7 @@ import {
   formsLookedUp,
   type Highlighted,
   type LinkEntry,
+  type LinkedToken,
   linkedTokens
 } from '../examples/linking'
 import {
@@ -92,8 +93,9 @@ interface ResultsExamplesRequest {
   usesPrimaryEntryExamples: boolean
 }
 
-interface PageRequest {
+interface BatchRequest {
   from: number
+  limit?: number | null
 }
 
 interface LinkRequest {
@@ -217,26 +219,32 @@ export class EmbeddedText {
       : found.count
   }
 
-  private async page(
+  private async batch(
     sentences: readonly ExampleSentence[],
-    from: number,
+    { from, limit }: BatchRequest,
     accented: Accented,
     analyze: AnalyzeText
   ): Promise<EmbeddedExamplePage> {
-    const examples: EmbeddedExample[] = []
-    for (const { pairId, japanese, english } of sentences.slice(from, from + examplesPerPage)) {
-      examples.push({
+    const pageEnd = (Math.floor(from / examplesPerPage) + 1) * examplesPerPage
+    const shown = sentences.slice(from, limit ? Math.min(pageEnd, from + limit) : pageEnd)
+    const linked = await this.link(
+      shown.map(sentence => sentence.japanese),
+      accented,
+      analyze
+    )
+    return {
+      examples: shown.map(({ pairId, japanese, english }, index) => ({
         id: `esp1_${pairId}`,
         japanese,
         english,
-        words: await this.link(japanese, accented, analyze)
-      })
+        words: linked[index]
+      })),
+      listed: sentences.length
     }
-    return { examples, listed: sentences.length }
   }
 
   async resultsExamples(
-    request: ResultsExamplesRequest & PageRequest,
+    request: ResultsExamplesRequest & BatchRequest,
     analyze: AnalyzeText
   ): Promise<EmbeddedResultsExamples> {
     const found = this.listed(request)
@@ -247,15 +255,16 @@ export class EmbeddedText {
       accent: screenAccent.searchExamples
     }
     return {
-      ...(await this.page(found.sentences, request.from, accented, analyze)),
+      ...(await this.batch(found.sentences, request, accented, analyze)),
       countText: exampleCountText(exampleCount(found))
     }
   }
 
   async entryExamples(
-    { id, from }: { id: string } & PageRequest,
+    request: { id: string } & BatchRequest,
     analyze: AnalyzeText
   ): Promise<EmbeddedEntryExamples> {
+    const { id } = request
     const retrieved = this.retrieve(id)
     if (typeof retrieved === 'string') throw new Error(retrieved)
     const { entry, examples } = retrieved
@@ -265,7 +274,7 @@ export class EmbeddedText {
       accent: screenAccent.wordExamples
     }
     return {
-      ...(await this.page(examples.sentences, from, accented, analyze)),
+      ...(await this.batch(examples.sentences, request, accented, analyze)),
       count: examples.count,
       truncated: examples.truncated
     }
@@ -301,78 +310,112 @@ export class EmbeddedText {
   }
 
   async formExamples(
-    { form, from }: { form: string } & PageRequest,
+    request: { form: string } & BatchRequest,
     analyze: AnalyzeText
   ): Promise<EmbeddedExamplePage> {
+    const { form } = request
     const sentences = await this.sentencesUsing(form, analyze)
     const accented: Accented = { query: form, entry: null, accent: screenAccent.formExamples }
-    return this.page(sentences, from, accented, analyze)
+    return this.batch(sentences, request, accented, analyze)
   }
 
   private async prefetch(
-    candidates: MorphologyCandidate[],
+    texts: readonly (MorphologyCandidate[] | null)[],
     highlighted: Highlighted | null
   ): Promise<void> {
-    const alternatives = formsLookedUp(candidates, highlighted).map(forms =>
-      forms.filter(form => {
-        if (this.forms.get(form) !== undefined) return true
-        const query = normalizeQuery(form)
-        if (query !== '' && !isASCII(query)) return true
-        this.forms.set(form, [])
-        return false
-      })
-    )
+    const alternatives: string[][] = []
+    for (const candidates of texts) {
+      if (!candidates) continue
+      for (const forms of formsLookedUp(candidates, highlighted)) {
+        alternatives.push(
+          forms.filter(form => {
+            if (this.forms.get(form) !== undefined) return true
+            const query = normalizeQuery(form)
+            if (query !== '' && !isASCII(query)) return true
+            this.forms.set(form, [])
+            return false
+          })
+        )
+      }
+    }
     await entriesMatchingFirstForms(this.searchDb, alternatives, this.forms)
   }
 
-  linkedTokens(request: LinkRequest, analyze: AnalyzeText): Promise<EmbeddedToken[]> {
+  async linkedTokens(request: LinkRequest, analyze: AnalyzeText): Promise<EmbeddedToken[]> {
     const accented: Accented = {
       query: request.query,
       entry: request.highlightedEntry,
       accent: 'entry'
     }
-    return this.link(request.text, accented, analyze)
+    const [linked] = await this.link([request.text], accented, analyze)
+    return linked
   }
 
   private async link(
-    text: string,
+    texts: readonly string[],
     accented: Accented,
     analyze: AnalyzeText
-  ): Promise<EmbeddedToken[]> {
+  ): Promise<EmbeddedToken[][]> {
     const query = normalizeQuery(accented.query)
-    const key = JSON.stringify([text, query, accented.entry, accented.accent])
-    const known = this.linked.get(key)
-    if (known) return known
-    const candidates = await this.candidates(text, analyze)
-    const entry = accented.entry ? (this.found([accented.entry]).get(accented.entry) ?? null) : null
-    const highlighted = entry ? { entry, query } : null
-    if (candidates) await this.prefetch(candidates, highlighted)
-    const tokens = linkedTokens(text, candidates, highlighted, this.lookup)
-    const linked = this.found(tokens.flatMap(token => (token.entry ? [token.entry.id] : [])))
-    const accents = new Set(
-      accentedPositions(text, tokens, { entry, query, accent: accented.accent })
-    )
-    const answer = tokenSpans(tokens).map(({ start, end }, index): EmbeddedToken => {
-      const token = tokens[index]
-      const target = token.entry ? linked.get(token.entry.id) : undefined
-      const furigana = target ? displayReading(token, target) : null
-      const functionWord = isFunctionWord(token)
-      return {
-        surface: token.surface,
-        start,
-        end,
-        reading: candidates ? token.reading : null,
-        isFunctionWord: functionWord,
-        entry: token.entry?.id ?? null,
-        candidates: token.entry ? [] : token.candidates.map(candidate => candidate.id),
-        furigana,
-        ruby: furigana === null ? null : rubySegments(token.surface, furigana),
-        accent: accents.has(index) ? accented.accent : null,
-        attaches: attachment(token.surface),
-        counted: token.entry !== null && !functionWord
+    const key = (text: string) => JSON.stringify([text, query, accented.entry, accented.accent])
+    const answers = new Map<string, EmbeddedToken[]>()
+    const unlinked = new Map<string, MorphologyCandidate[] | null>()
+    for (const text of texts) {
+      const known = this.linked.get(key(text))
+      if (known) answers.set(text, known)
+      else if (!unlinked.has(text)) unlinked.set(text, await this.candidates(text, analyze))
+    }
+    if (unlinked.size > 0) {
+      const entry = accented.entry
+        ? (this.found([accented.entry]).get(accented.entry) ?? null)
+        : null
+      const highlighted = entry ? { entry, query } : null
+      await this.prefetch([...unlinked.values()], highlighted)
+      const tokens = new Map<string, LinkedToken[]>()
+      const named: string[] = []
+      for (const [text, candidates] of unlinked) {
+        const linked = linkedTokens(text, candidates, highlighted, this.lookup)
+        tokens.set(text, linked)
+        for (const token of linked) if (token.entry) named.push(token.entry.id)
       }
-    })
-    if (candidates) this.linked.set(key, answer)
-    return answer
+      const entries = this.found(named)
+      const highlight = { entry, query, accent: accented.accent }
+      for (const [text, candidates] of unlinked) {
+        const answer = words(text, tokens.get(text) ?? [], candidates !== null, entries, highlight)
+        if (candidates) this.linked.set(key(text), answer)
+        answers.set(text, answer)
+      }
+    }
+    return texts.map(text => answers.get(text) ?? [])
   }
+}
+
+function words(
+  text: string,
+  tokens: readonly LinkedToken[],
+  analyzed: boolean,
+  entries: ReadonlyMap<string, ExamplesEntry>,
+  highlight: ExampleHighlight
+): EmbeddedToken[] {
+  const accents = new Set(accentedPositions(text, tokens, highlight))
+  return tokenSpans(tokens).map(({ start, end }, index): EmbeddedToken => {
+    const token = tokens[index]
+    const target = token.entry ? entries.get(token.entry.id) : undefined
+    const furigana = target ? displayReading(token, target) : null
+    const functionWord = isFunctionWord(token)
+    return {
+      surface: token.surface,
+      start,
+      end,
+      reading: analyzed ? token.reading : null,
+      isFunctionWord: functionWord,
+      entry: token.entry?.id ?? null,
+      candidates: token.entry ? [] : token.candidates.map(candidate => candidate.id),
+      furigana,
+      ruby: furigana === null ? null : rubySegments(token.surface, furigana),
+      accent: accents.has(index) ? highlight.accent : null,
+      attaches: attachment(token.surface),
+      counted: token.entry !== null && !functionWord
+    }
+  })
 }

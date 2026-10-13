@@ -28,6 +28,13 @@ struct LaunchHarnessTests {
     #expect(LaunchHarness.linkingDelay([:]) == nil)
   }
 
+  @Test("linking fails only for as many answers as a launch asks for")
+  func failedLinkingCountsAnswers() {
+    #expect(LaunchHarness.linkingFailures([LaunchHarness.failLinkingKey: "2"]) == 2)
+    #expect(LaunchHarness.linkingFailures([LaunchHarness.failLinkingKey: "some"]) == 0)
+    #expect(LaunchHarness.linkingFailures([:]) == 0)
+  }
+
   @Test("the sign-in stand-in offers Apple even in a build that otherwise can't sign in with it")
   func signInStandInOffersApple() {
     #expect(LaunchHarness.standsInForSignIn([LaunchHarness.signInStandInKey: "1"]))

@@ -7,6 +7,7 @@ extension View {
       .environment(WordKnowledge.shared)
       .environment(WordLists.shared)
       .environment(ZenbuAccount.shared)
+      .modifier(ExampleRowsOnScreen(readingAids: readingAids))
   }
 }
 

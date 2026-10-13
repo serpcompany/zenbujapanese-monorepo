@@ -362,11 +362,11 @@
     const ending = sentence.slice(-2);
     return startsWithSpace(everyUnitIsAGrapheme(ending) ? ending.at(-1) : graphemes(sentence).at(-1));
   }
-  function sentenceRomaji(words) {
-    if (words.length === 0) return null;
+  function sentenceRomaji(words2) {
+    if (words2.length === 0) return null;
     let sentence = "";
     let previous = null;
-    for (const { surface, reading } of words) {
+    for (const { surface, reading } of words2) {
       const isAWord = startsWithALetter(surface);
       if (!isAWord && graphemes(surface).every(startsWithSpace)) {
         sentence += surface;
@@ -414,18 +414,18 @@
     const folded = raw.normalize("NFKC").toLowerCase();
     if (!whitespace.test(folded)) return folded;
     if (everyUnitIsAGrapheme(folded)) return folded.split(" ").filter(Boolean).join(" ");
-    const words = [];
+    const words2 = [];
     let word = "";
     for (const grapheme of graphemes2(folded)) {
       if (/^\p{White_Space}/u.test(grapheme)) {
-        if (word) words.push(word);
+        if (word) words2.push(word);
         word = "";
       } else {
         word += grapheme;
       }
     }
-    if (word) words.push(word);
-    return words.join(" ");
+    if (word) words2.push(word);
+    return words2.join(" ");
   }
   function isASCII(value) {
     return !/[\u0080-\uffff]/.test(value);
@@ -828,10 +828,10 @@
       ({ entries }) => entries.reduce((smallest, row) => row.id < smallest.id ? row : smallest)
     );
   }
-  function wordsForReading(reading, words) {
+  function wordsForReading(reading, words2) {
     const stem = hiragana(reading.value.replaceAll(".", "").replaceAll("-", ""));
     if (!stem) return [];
-    return words.filter((word) => hiragana(word.reading).startsWith(stem)).slice(0, wordsPerReading);
+    return words2.filter((word) => hiragana(word.reading).startsWith(stem)).slice(0, wordsPerReading);
   }
   var roleLabels = {
     meaningStructure: "Meaning / structure",
@@ -895,7 +895,7 @@
   }
   function kanjiDetail(rows) {
     const { kanji: kanji2 } = rows;
-    const words = rows.words.map((row) => ({
+    const words2 = rows.words.map((row) => ({
       id: row.id,
       entSeq: row.entSeq,
       headword: row.headword,
@@ -912,11 +912,11 @@
         kind: reading.kind,
         label: readingLabels[reading.kind],
         value: reading.value,
-        words: wordsForReading(reading, words)
+        words: wordsForReading(reading, words2)
       })),
       components: elements.length === 0 ? kanji2.components : [],
       elements,
-      words,
+      words: words2,
       strokeOrder: rows.strokes ? drawableStrokeOrder(rows.strokes) : null,
       shareText: kanjiShareText(kanji2)
     };
@@ -1228,18 +1228,18 @@
     reading: 6
   };
   function normalizedEntryEvidence(value) {
-    const words = [];
+    const words2 = [];
     let word = "";
     for (const character of graphemes(value.normalize("NFKC"))) {
       if (/^\p{White_Space}/u.test(character)) {
-        if (word) words.push(word);
+        if (word) words2.push(word);
         word = "";
       } else {
         word += character;
       }
     }
-    if (word) words.push(word);
-    return words.join(" ");
+    if (word) words2.push(word);
+    return words2.join(" ");
   }
   function graphemePosition(term, text) {
     const index = text.indexOf(term);
@@ -2197,8 +2197,8 @@
     "接尾辞",
     "感動詞"
   ]);
-  function lookupSegments(words) {
-    return words.flatMap((word) => {
+  function lookupSegments(words2) {
+    return words2.flatMap((word) => {
       if (!isJapaneseOnly(normalizeQuery(word.surface)) || !linkablePartsOfSpeech.has(word.partOfSpeech[0] ?? "") || word.isOutOfVocabulary) {
         return [];
       }
@@ -2336,13 +2336,13 @@
     async analyzedItems(query) {
       const morphology = this.capabilities.morphology;
       if (!morphology || query === "") return [];
-      let words;
+      let words2;
       try {
-        words = await morphology.analyze(query);
+        words2 = await morphology.analyze(query);
       } catch {
         return [];
       }
-      const segments = lookupSegments(words);
+      const segments = lookupSegments(words2);
       const results = await Promise.all(segments.map((segment) => this.searchOnce(segment)));
       return results.flatMap(({ items }, index) => {
         const item = items.find((candidate) => candidate.entry.headword === segments[index]) ?? items[0];
@@ -3721,7 +3721,7 @@
     }
     kanjiPage(request) {
       const { character } = request;
-      const words = request.words.map((word) => ({ ...word, entSeq: 0 }));
+      const words2 = request.words.map((word) => ({ ...word, entSeq: 0 }));
       const kanji2 = this.kanji.row(character);
       const structure = this.kanji.structure(character);
       const elements = structure ? this.kanji.elementRows(structure.elementGlyphs) : [];
@@ -3737,7 +3737,7 @@
         },
         structure,
         elements,
-        words,
+        words: words2,
         strokes: null
       });
       const leading = detail.words.filter((word) => word.id === request.leadingWord);
@@ -4018,8 +4018,8 @@
         }
       }
       if (crossesSentence) continue;
-      const words = () => phrase.map((word) => slice(word.byteOffset, word.byteOffset + word.byteLength) ?? "");
-      if (accepts && !accepts(words())) continue;
+      const words2 = () => phrase.map((word) => slice(word.byteOffset, word.byteOffset + word.byteLength) ?? "");
+      if (accepts && !accepts(words2())) continue;
       const last = phrase[phrase.length - 1];
       const from = offsetsOf.utf16(phrase[0].byteOffset);
       const to = offsetsOf.utf16(last.byteOffset + last.byteLength);
@@ -4063,7 +4063,7 @@
   }
   function theQuerysWordsInAnyForm(query) {
     const sameWords = (query.match(/[0-9a-z_]+/g) ?? []).map(sameWordInAnyForm);
-    return (words) => words.length === sameWords.length && words.every((word, index) => sameWords[index](word));
+    return (words2) => words2.length === sameWords.length && words2.every((word, index) => sameWords[index](word));
   }
   function retrieveEnglish(db, query) {
     if (query.includes('"')) return "embeddedQuote";
@@ -4900,7 +4900,7 @@
       }
     }
     shape(text, last, tokens) {
-      const { starts, words, spans, best } = this.lattice;
+      const { starts, words: words2, spans, best } = this.lattice;
       const path = [];
       for (let node = best[last]; node !== beginning; node = best[node]) {
         if (node === none) return;
@@ -4911,7 +4911,7 @@
         const node = path[step];
         const character = starts[node] - 1;
         const isKnown = spans[node] === none;
-        const features = (isKnown ? this.known : this.unknown).featuresOf(words[node]);
+        const features = (isKnown ? this.known : this.unknown).featuresOf(words2[node]);
         tokens.push({
           word_type: isKnown ? "KNOWN" : "UNKNOWN",
           word_position: before + starts[node],
@@ -5028,17 +5028,23 @@
       if (typeof found === "string") return 0;
       return request.usesPrimaryEntryExamples && request.primaryEntry !== null ? found.sentences.length : found.count;
     }
-    async page(sentences, from, accented, analyze) {
-      const examples = [];
-      for (const { pairId, japanese, english } of sentences.slice(from, from + examplesPerPage)) {
-        examples.push({
+    async batch(sentences, { from, limit }, accented, analyze) {
+      const pageEnd = (Math.floor(from / examplesPerPage) + 1) * examplesPerPage;
+      const shown = sentences.slice(from, limit ? Math.min(pageEnd, from + limit) : pageEnd);
+      const linked = await this.link(
+        shown.map((sentence) => sentence.japanese),
+        accented,
+        analyze
+      );
+      return {
+        examples: shown.map(({ pairId, japanese, english }, index) => ({
           id: `esp1_${pairId}`,
           japanese,
           english,
-          words: await this.link(japanese, accented, analyze)
-        });
-      }
-      return { examples, listed: sentences.length };
+          words: linked[index]
+        })),
+        listed: sentences.length
+      };
     }
     async resultsExamples(request, analyze) {
       const found = this.listed(request);
@@ -5049,11 +5055,12 @@
         accent: screenAccent.searchExamples
       };
       return {
-        ...await this.page(found.sentences, request.from, accented, analyze),
+        ...await this.batch(found.sentences, request, accented, analyze),
         countText: exampleCountText(exampleCount(found))
       };
     }
-    async entryExamples({ id, from }, analyze) {
+    async entryExamples(request, analyze) {
+      const { id } = request;
       const retrieved = this.retrieve(id);
       if (typeof retrieved === "string") throw new Error(retrieved);
       const { entry, examples } = retrieved;
@@ -5063,7 +5070,7 @@
         accent: screenAccent.wordExamples
       };
       return {
-        ...await this.page(examples.sentences, from, accented, analyze),
+        ...await this.batch(examples.sentences, request, accented, analyze),
         count: examples.count,
         truncated: examples.truncated
       };
@@ -5092,69 +5099,94 @@
       if (everySentenceWasAnalyzed) this.usingForm.set(form, sentences);
       return sentences;
     }
-    async formExamples({ form, from }, analyze) {
+    async formExamples(request, analyze) {
+      const { form } = request;
       const sentences = await this.sentencesUsing(form, analyze);
       const accented = { query: form, entry: null, accent: screenAccent.formExamples };
-      return this.page(sentences, from, accented, analyze);
+      return this.batch(sentences, request, accented, analyze);
     }
-    async prefetch(candidates, highlighted) {
-      const alternatives = formsLookedUp(candidates, highlighted).map(
-        (forms2) => forms2.filter((form) => {
-          if (this.forms.get(form) !== void 0) return true;
-          const query = normalizeQuery(form);
-          if (query !== "" && !isASCII(query)) return true;
-          this.forms.set(form, []);
-          return false;
-        })
-      );
+    async prefetch(texts, highlighted) {
+      const alternatives = [];
+      for (const candidates of texts) {
+        if (!candidates) continue;
+        for (const forms2 of formsLookedUp(candidates, highlighted)) {
+          alternatives.push(
+            forms2.filter((form) => {
+              if (this.forms.get(form) !== void 0) return true;
+              const query = normalizeQuery(form);
+              if (query !== "" && !isASCII(query)) return true;
+              this.forms.set(form, []);
+              return false;
+            })
+          );
+        }
+      }
       await entriesMatchingFirstForms(this.searchDb, alternatives, this.forms);
     }
-    linkedTokens(request, analyze) {
+    async linkedTokens(request, analyze) {
       const accented = {
         query: request.query,
         entry: request.highlightedEntry,
         accent: "entry"
       };
-      return this.link(request.text, accented, analyze);
+      const [linked] = await this.link([request.text], accented, analyze);
+      return linked;
     }
-    async link(text, accented, analyze) {
+    async link(texts, accented, analyze) {
       const query = normalizeQuery(accented.query);
-      const key = JSON.stringify([text, query, accented.entry, accented.accent]);
-      const known = this.linked.get(key);
-      if (known) return known;
-      const candidates = await this.candidates(text, analyze);
-      const entry = accented.entry ? this.found([accented.entry]).get(accented.entry) ?? null : null;
-      const highlighted = entry ? { entry, query } : null;
-      if (candidates) await this.prefetch(candidates, highlighted);
-      const tokens = linkedTokens(text, candidates, highlighted, this.lookup);
-      const linked = this.found(tokens.flatMap((token) => token.entry ? [token.entry.id] : []));
-      const accents = new Set(
-        accentedPositions(text, tokens, { entry, query, accent: accented.accent })
-      );
-      const answer = tokenSpans(tokens).map(({ start, end }, index) => {
-        const token = tokens[index];
-        const target = token.entry ? linked.get(token.entry.id) : void 0;
-        const furigana = target ? displayReading(token, target) : null;
-        const functionWord = isFunctionWord(token);
-        return {
-          surface: token.surface,
-          start,
-          end,
-          reading: candidates ? token.reading : null,
-          isFunctionWord: functionWord,
-          entry: token.entry?.id ?? null,
-          candidates: token.entry ? [] : token.candidates.map((candidate) => candidate.id),
-          furigana,
-          ruby: furigana === null ? null : rubySegments(token.surface, furigana),
-          accent: accents.has(index) ? accented.accent : null,
-          attaches: attachment(token.surface),
-          counted: token.entry !== null && !functionWord
-        };
-      });
-      if (candidates) this.linked.set(key, answer);
-      return answer;
+      const key = (text) => JSON.stringify([text, query, accented.entry, accented.accent]);
+      const answers = /* @__PURE__ */ new Map();
+      const unlinked = /* @__PURE__ */ new Map();
+      for (const text of texts) {
+        const known = this.linked.get(key(text));
+        if (known) answers.set(text, known);
+        else if (!unlinked.has(text)) unlinked.set(text, await this.candidates(text, analyze));
+      }
+      if (unlinked.size > 0) {
+        const entry = accented.entry ? this.found([accented.entry]).get(accented.entry) ?? null : null;
+        const highlighted = entry ? { entry, query } : null;
+        await this.prefetch([...unlinked.values()], highlighted);
+        const tokens = /* @__PURE__ */ new Map();
+        const named = [];
+        for (const [text, candidates] of unlinked) {
+          const linked = linkedTokens(text, candidates, highlighted, this.lookup);
+          tokens.set(text, linked);
+          for (const token of linked) if (token.entry) named.push(token.entry.id);
+        }
+        const entries = this.found(named);
+        const highlight = { entry, query, accent: accented.accent };
+        for (const [text, candidates] of unlinked) {
+          const answer = words(text, tokens.get(text) ?? [], candidates !== null, entries, highlight);
+          if (candidates) this.linked.set(key(text), answer);
+          answers.set(text, answer);
+        }
+      }
+      return texts.map((text) => answers.get(text) ?? []);
     }
   };
+  function words(text, tokens, analyzed, entries, highlight) {
+    const accents = new Set(accentedPositions(text, tokens, highlight));
+    return tokenSpans(tokens).map(({ start, end }, index) => {
+      const token = tokens[index];
+      const target = token.entry ? entries.get(token.entry.id) : void 0;
+      const furigana = target ? displayReading(token, target) : null;
+      const functionWord = isFunctionWord(token);
+      return {
+        surface: token.surface,
+        start,
+        end,
+        reading: analyzed ? token.reading : null,
+        isFunctionWord: functionWord,
+        entry: token.entry?.id ?? null,
+        candidates: token.entry ? [] : token.candidates.map((candidate) => candidate.id),
+        furigana,
+        ruby: furigana === null ? null : rubySegments(token.surface, furigana),
+        accent: accents.has(index) ? highlight.accent : null,
+        attaches: attachment(token.surface),
+        counted: token.entry !== null && !functionWord
+      };
+    });
+  }
 
   // src/embedded/dictionary.ts
   var message = (error) => error instanceof Error ? error.message : String(error);
@@ -5180,7 +5212,7 @@
       japaneseCandidates: (candidates) => japaneseCandidates(JSON.parse(candidates)),
       isKanji: isKanjiCharacter,
       romaji,
-      sentenceRomaji: (words) => sentenceRomaji(JSON.parse(words)),
+      sentenceRomaji: (words2) => sentenceRomaji(JSON.parse(words2)),
       checkExamples: () => text().checkExamples(),
       tokenizerReady: () => text().tokenizerReady(),
       exampleCount: (query) => text().exampleCount(query),
@@ -5221,8 +5253,8 @@
         const analyze = (sentence) => new Promise((resolve, reject) => {
           outcome = { analyze: sentence };
           answer2 = (answerJSON) => {
-            const { words, error } = JSON.parse(answerJSON);
-            if (words) resolve(words);
+            const { words: words2, error } = JSON.parse(answerJSON);
+            if (words2) resolve(words2);
             else reject(new Error(error ?? "The host returned no words"));
           };
         });

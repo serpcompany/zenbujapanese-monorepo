@@ -2,8 +2,8 @@ import SwiftUI
 
 struct ExampleSentencesView: View {
   @State private var examples = LoadedExamples()
-  @State private var isLoading = true
   @State private var analysisAvailability = JapaneseTextAnalysisAvailability.full
+  @Environment(\.exampleRowsOnScreen) private var rowsOnScreen
 
   let query: SearchQuery
   let highlightedEntry: DictionaryEntry?
@@ -15,7 +15,7 @@ struct ExampleSentencesView: View {
 
   var body: some View {
     Group {
-      if isLoading {
+      if !examples.answers(query.value) {
         ProgressView("Loading examples")
           .frame(maxWidth: .infinity, maxHeight: .infinity)
       } else {
@@ -45,7 +45,7 @@ struct ExampleSentencesView: View {
             )
           }
           if examples.hasMore {
-            MoreExamplesRow { await load(from: examples.examples.count) }
+            MoreExamplesRow { await examples.loadMore(read: read) }
               .id(examples.examples.count)
           }
         }
@@ -58,16 +58,12 @@ struct ExampleSentencesView: View {
     .inlineNavigationTitle()
     .task(id: query) {
       analysisAvailability = await japaneseTextAnalysisClient.availability()
-      if !examples.holds(query.value) { await load(from: 0) }
+      await examples.load(query.value, rowsOnScreen: rowsOnScreen, read: read)
     }
   }
 
-  private func load(from: Int) async {
-    let page = await exampleSentenceClient.listed(
-      query, highlightedEntry, usesHighlightedEntryExamples, from)
-    guard !Task.isCancelled else { return }
-    examples.add(page, from: from, of: query.value)
-    isLoading = false
+  private func read(_ batch: ExampleBatch) async -> ExamplePage? {
+    await exampleSentenceClient.listed(query, highlightedEntry, usesHighlightedEntryExamples, batch)
   }
 }
 
@@ -284,7 +280,7 @@ struct JapaneseExampleRowContent: View {
     Button(action: speak) {
       Image(systemName: "speaker.wave.2")
         .font(.headline)
-        .frame(minWidth: 48, minHeight: 48)
+        .frame(minWidth: Self.controlSide, minHeight: Self.controlSide)
         .contentShape(Rectangle())
     }
     .contentShape(Rectangle())
@@ -300,8 +296,8 @@ struct JapaneseExampleRowContent: View {
       } label: {
         Text("Words")
           .font(.headline)
-          .frame(minWidth: 48)
-          .frame(minHeight: 48)
+          .frame(minWidth: Self.controlSide)
+          .frame(minHeight: Self.controlSide)
           .contentShape(Rectangle())
       }
       .buttonStyle(.plain)
