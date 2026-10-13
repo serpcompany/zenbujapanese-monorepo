@@ -107,6 +107,19 @@ describe('the Code review workflow', () => {
     expect(first + second).toBeLessThanOrEqual(Number(workflow.jobs.review['timeout-minutes']) - 8)
   })
 
+  test('names the pull request and the two bots once, for every step of the job', () => {
+    expect(workflow.jobs.review.env).toEqual({
+      HAS_REVIEW_TOKEN: "${{ secrets.CLAUDE_CODE_OAUTH_TOKEN != '' }}",
+      PR_NUMBER: '${{ github.event.pull_request.number }}',
+      REVIEW_BOT: bot,
+      SUMMARY_BOT: summaryBot
+    })
+    const named = Object.keys(workflow.jobs.review.env ?? {})
+    for (const step of steps) {
+      expect(Object.keys(step.env ?? {}).filter(name => named.includes(name))).toEqual([])
+    }
+  })
+
   test('checks afterwards that a review ran and was posted, from when it started', () => {
     expect(guardIndex).toBe(steps.length - 1)
     expect(guard.name).toBe('Fail unless a review ran and was posted')
@@ -116,9 +129,7 @@ describe('the Code review workflow', () => {
       EXECUTION_FILE: `\${{ steps.retry.outputs.execution_file || steps.${review.id}.outputs.execution_file }}`,
       RETRY_OUTCOME: '${{ steps.retry.outcome }}',
       MEASURED: `\${{ steps.${firstVerdict.id}.outcome }} \${{ steps.${lastVerdict.id}.outcome }}`,
-      GITHUB_TOKEN: '${{ github.token }}',
-      REVIEW_BOT: bot,
-      SUMMARY_BOT: summaryBot
+      GITHUB_TOKEN: '${{ github.token }}'
     })
     const startIndex = steps.findIndex(step => step.run?.includes('REVIEW_STARTED_AT='))
     expect(startIndex).toBeGreaterThan(-1)

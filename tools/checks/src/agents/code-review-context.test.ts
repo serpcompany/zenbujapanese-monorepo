@@ -5,7 +5,6 @@ import { changed, checkoutWith, giveContext } from './code-review-context-suppor
 import {
   bot,
   minutesAfterStart,
-  type PullRequest,
   pr,
   requestReply,
   review,
@@ -48,10 +47,7 @@ describe("the review's context", () => {
       CHANGE_FILE: '${{ runner.temp }}/review-change.json',
       CONTEXT_FILE: '${{ runner.temp }}/review-context.md',
       REVIEWERS_CONTEXT_FILE: '${{ runner.temp }}/review-reviewers-context.md',
-      GITHUB_TOKEN: '${{ github.token }}',
-      PR_NUMBER: '${{ github.event.pull_request.number }}',
-      REVIEW_BOT: bot,
-      SUMMARY_BOT: summaryBot
+      GITHUB_TOKEN: '${{ github.token }}'
     })
   })
 
@@ -132,15 +128,17 @@ describe("the review's context", () => {
     expect(run.requests).toHaveLength(9)
   })
 
-  test.concurrent.each<[string, PullRequest]>([
-    ['never arrives', { lostAnswers: 1 }],
-    ['is cut short', { lostBodies: 1 }]
-  ])('asks again after five seconds when an answer %s', async (_, lost) => {
+  test('asks again after five seconds when an answer never arrives, or is cut short', async () => {
     const began = Date.now()
-    const run = await giveContext({ files, ...lost })
-    expect(run.status).toBe(0)
-    expect(run.outputs.changed_files).toBe('6')
-    expect(run.requests).toHaveLength(9)
+    const runs = await Promise.all([
+      giveContext({ files, lostAnswers: 1 }),
+      giveContext({ files, lostBodies: 1 })
+    ])
+    for (const run of runs) {
+      expect(run.status).toBe(0)
+      expect(run.outputs.changed_files).toBe('6')
+      expect(run.requests).toHaveLength(9)
+    }
     expect(Date.now() - began).toBeGreaterThan(4_900)
   })
 

@@ -341,6 +341,9 @@ jobs:
       id-token: write
     env:
       HAS_REVIEW_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN != '' }}
+      PR_NUMBER: ${{ github.event.pull_request.number }}
+      REVIEW_BOT: "claude[bot]"
+      SUMMARY_BOT: "github-actions[bot]"
     steps:
       - name: Skip while the CLAUDE_CODE_OAUTH_TOKEN secret isn't set
         if: env.HAS_REVIEW_TOKEN != 'true'
@@ -372,9 +375,6 @@ jobs:
           CONTEXT_FILE: ${{ runner.temp }}/review-context.md
           REVIEWERS_CONTEXT_FILE: ${{ runner.temp }}/review-reviewers-context.md
           GITHUB_TOKEN: ${{ github.token }}
-          PR_NUMBER: ${{ github.event.pull_request.number }}
-          REVIEW_BOT: "claude[bot]"
-          SUMMARY_BOT: "github-actions[bot]"
         run: node "$RUNNER_TEMP/review-scripts/review-context.mjs"
 
       - name: Note when the review starts
@@ -416,8 +416,6 @@ jobs:
           FIRST_ATTEMPT_LOG: ${{ runner.temp }}/claude-review-first-attempt.json
           FIRST_ATTEMPT_SUMMARY: ${{ runner.temp }}/claude-review-first-attempt-summary.md
           GITHUB_TOKEN: ${{ github.token }}
-          PR_NUMBER: ${{ github.event.pull_request.number }}
-          REVIEW_BOT: "claude[bot]"
           SUMMARY_FILE: tmp/review-summary.md
         shell: node {0}
         run: *steps
@@ -441,7 +439,6 @@ jobs:
           FIRST_ATTEMPT_LOG: ${{ runner.temp }}/claude-review-first-attempt.json
           FIRST_ATTEMPT_SUMMARY: ${{ runner.temp }}/claude-review-first-attempt-summary.md
           GITHUB_TOKEN: ${{ github.token }}
-          PR_NUMBER: ${{ github.event.pull_request.number }}
           RETRY_OUTCOME: ${{ steps.retry.outcome }}
           SUMMARY_FILE: tmp/review-summary.md
           SUMMARY_ID: ${{ steps.earlier.outputs.summary_id }}
@@ -469,8 +466,5 @@ jobs:
           RETRY_OUTCOME: ${{ steps.retry.outcome }}
           MEASURED: ${{ steps.first.outcome }} ${{ steps.verdict.outcome }}
           GITHUB_TOKEN: ${{ github.token }}
-          PR_NUMBER: ${{ github.event.pull_request.number }}
-          REVIEW_BOT: "claude[bot]"
-          SUMMARY_BOT: "github-actions[bot]"
         shell: node {0}
         run: *steps

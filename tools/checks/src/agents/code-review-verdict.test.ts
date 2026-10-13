@@ -111,10 +111,7 @@ describe('whether a review read the whole change', () => {
       FIRST_ATTEMPT_LOG: '${{ runner.temp }}/claude-review-first-attempt.json',
       FIRST_ATTEMPT_SUMMARY: '${{ runner.temp }}/claude-review-first-attempt-summary.md'
     }
-    const forGitHub = {
-      GITHUB_TOKEN: '${{ github.token }}',
-      PR_NUMBER: '${{ github.event.pull_request.number }}'
-    }
+    const forGitHub = { GITHUB_TOKEN: '${{ github.token }}' }
     expect(firstVerdict.env).toEqual({
       ...keptFromTheFirstAttempt,
       ...forGitHub,
@@ -125,7 +122,6 @@ describe('whether a review read the whole change', () => {
       CORRECTION_FILE: '${{ runner.temp }}/review-context.md',
       REVIEWERS_CONTEXT_FILE: '${{ runner.temp }}/review-reviewers-context.md',
       EXECUTION_FILE: `\${{ steps.${review.id}.outputs.execution_file }}`,
-      REVIEW_BOT: bot,
       SUMMARY_FILE: 'tmp/review-summary.md'
     })
     expect(lastVerdict.env).toEqual({
