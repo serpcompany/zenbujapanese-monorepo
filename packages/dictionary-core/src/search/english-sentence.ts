@@ -149,13 +149,7 @@ function candidatesFromExamplesOfABaseForm(
 ): Promise<SearchResultItem[]> {
   if (baseForm.entries === 'all') return candidatesFromItsExamples(db, baseForm.base, examples)
   const used = examples.get(baseForm.base) ?? []
-  const asAVerbsForm = isAVerbForm(baseForm)
-  return candidatesAmong(
-    db,
-    used,
-    [asTheWordReadsIt(baseForm)],
-    row => asAVerbsForm && isASuruVerb(row)
-  )
+  return candidatesAmong(db, used, [asTheWordReadsIt(baseForm)], () => false)
 }
 
 async function candidatesFromExamples(

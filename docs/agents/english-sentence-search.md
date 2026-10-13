@@ -77,12 +77,13 @@ The first rule that fits the word decides.
      and `drinking` 酒: neither mentions "watch" or "drink", and neither takes する, so both are passed
      over, and `drinking` lists its next entry, 飲む.
    - **Then its base forms' entries in the index**, each read as the word reads its base. A verb's
-     form takes the first entry that means "to" and the base, or that takes する: `watching` lists 見る,
-     not 時計, which `watch` lists first; `fell` 落ちる, not 秋 "fall"; `has` and `had` 有る; `found` 見つける,
-     not 作る "to found"; `marrying` 結婚 and `explaining` 説明. `secreted` still isn't "secret", which no
-     entry has as a verb. An irregular plural takes a noun, and a word in `-s` what its base lists
-     by this rule: `doors` lists ドア, not ドアーズ, and `stations` 駅. A comparative isn't taken to its
-     base, so `best` keeps 最高 (rule 6).
+     form takes the first entry that means "to" and the base: `watching` lists 見る, not 時計, which
+     `watch` lists first; `fell` 落ちる, not 秋 "fall"; `has` and `had` 有る; `found` 見つける, not 作る "to
+     found". It takes no する verb from its base, whose examples may use the base as another word:
+     `struck` doesn't list ストライキ, nor `loaned` 借金. `secreted` still isn't "secret", which no entry
+     has as a verb. An irregular plural takes a noun, and a word in `-s` what its base lists by this
+     rule: `doors` lists ドア, not ドアーズ, and `stations` 駅. A comparative isn't taken to its base, so
+     `best` keeps 最高 (rule 6).
    - **Where the examples are split, the more common entry is listed.** When two or more of
      those entries mean the word, and another is in at least 7/10 as many of the word's pairs as
      the first, the word brings each such entry, and the results layer lists the one its
@@ -150,9 +151,9 @@ meaning that matched: "is" beside です, "to eat" beside 食べる for `ate`.
 - A word that mostly occurs inside a compound lists the compound: `hour` lists 一時間 "one hour",
   `post` 郵便局 "post office", `forward` 楽しみにする "to look forward to", `lung` 肺がん "lung
   cancer", `processor` ワープロ, `prime` 首相, `billion` 億, and `000` 円.
-- A verb's form takes the する verb its examples or its base's use, and that is sometimes one phrase
-  of it, or the base as another word: `shook` lists 握手 ("shook hands"), `managed` 何とか, `passed` 合格
-  ("passed the exam"), `struck` ストライキ, `accounting` 説明, and `loaned` 借金.
+- A verb's form takes the する verb its own examples use, and that is sometimes one phrase of it:
+  `shook` lists 握手 ("shook hands"), `managed` 何とか, and `saving` 貯金. A form with no entry of its own
+  takes none from its base, so `marrying` lists 妻帯 and `explaining` 解明.
 - Where examples are split, the more common entry is sometimes the less apt: `question` lists
   問題, not 質問; `express` 急行, not 表す; `confidence` 信頼, not 自信.
 - A word in `-s` that is no plural takes its base's entry: `shorts` lists 短い, `ruins` 破滅, and

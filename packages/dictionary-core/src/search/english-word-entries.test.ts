@@ -268,9 +268,10 @@ describe('a word of an English sentence that is another word’s form', () => {
     expect(await inASentence('married', withoutAWordIndex)).toEqual([['既婚']])
   })
 
-  test('takes a する verb its base form’s examples use, read as a verb', async () => {
-    expect(await inASentence('explaining')).toEqual([['説明']])
-    expect(await inASentence('explained')).toEqual([['説明']])
+  test('takes no する verb from its base form’s examples, which may use the base as another word', async () => {
+    expect(await inASentence('explain')).toEqual([['説明']])
+    expect(await inASentence('explaining')).toEqual([])
+    expect(await inASentence('explained')).toEqual([])
   })
 
   test('takes no する verb when it is no verb’s form: 「papers」 is a plural', async () => {

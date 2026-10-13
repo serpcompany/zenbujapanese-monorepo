@@ -210,11 +210,18 @@ describe.runIf(artifactAvailable && sudachiAvailable)('sentence search', () => {
     ['graduated', '卒業'],
     ['trained', '訓練'],
     ['objected', '反対'],
-    ['parked', '駐車'],
-    ['marrying', '結婚'],
-    ['explaining', '説明']
-  ])('the verb’s form 「%s」 lists %s, the する verb its examples use', async (word, headword) => {
+    ['parked', '駐車']
+  ])('the verb’s form 「%s」 lists %s, the する verb its own examples use', async (word, headword) => {
     expect(await listedFor(word)).toMatchObject({ headword })
+  })
+
+  test.each([
+    ['struck', 'strike', 'ストライキ', '打つ'],
+    ['loaned', 'loan', '借金', '貸す']
+  ])('「%s」 does not list what examples use for %s, %s, but %s, which means "to" and its base', async (word, _, taken, headword) => {
+    const listed = await listedFor(word)
+    expect(listed?.headword).not.toBe(taken)
+    expect(listed).toMatchObject({ headword })
   })
 
   test.each([
