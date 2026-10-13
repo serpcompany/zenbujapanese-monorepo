@@ -156,37 +156,36 @@ struct LoadedExamplesTests {
     #expect(rows(loaded) == miru.rows(0..<50))
   }
 
-  @Test("the end of the list and the screen share one read of the rows after it")
-  func aReadUnderWayIsShared() async {
+  private func theRestIsReadOnce(
+    leavingTheScreen: Bool, then asking: @escaping @MainActor (LoadedExamples, Listing) async -> Void
+  ) async {
     let miru = Listing("見る", listed: 60)
     let loaded = LoadedExamples()
     miru.hold(8)
     let screen = Task { await loaded.load("見る", rowsOnScreen: 8, read: miru.read) }
     await miru.untilHeld(8)
-    let endOfList = Task { await loaded.loadMore(read: miru.read) }
+    if leavingTheScreen { screen.cancel() }
+    let again = Task { await asking(loaded, miru) }
     for _ in 0..<3 { await Task.yield() }
     miru.answer(8)
     await screen.value
-    await endOfList.value
+    await again.value
     #expect(miru.asked == [ExampleBatch(from: 0, limit: 8), ExampleBatch(from: 8)])
     #expect(rows(loaded) == miru.rows(0..<25))
   }
 
+  @Test("the end of the list and the screen share one read of the rows after it")
+  func aReadUnderWayIsShared() async {
+    await theRestIsReadOnce(leavingTheScreen: false) { loaded, miru in
+      await loaded.loadMore(read: miru.read)
+    }
+  }
+
   @Test("rows being read when the screen is left are kept, and the screen has them when it is back")
   func aReadGoesOnWhenTheScreenIsLeft() async {
-    let miru = Listing("見る", listed: 60)
-    let loaded = LoadedExamples()
-    miru.hold(8)
-    let leaving = Task { await loaded.load("見る", rowsOnScreen: 8, read: miru.read) }
-    await miru.untilHeld(8)
-    leaving.cancel()
-    let back = Task { await loaded.load("見る", rowsOnScreen: 8, read: miru.read) }
-    for _ in 0..<3 { await Task.yield() }
-    miru.answer(8)
-    await leaving.value
-    await back.value
-    #expect(miru.asked == [ExampleBatch(from: 0, limit: 8), ExampleBatch(from: 8)])
-    #expect(rows(loaded) == miru.rows(0..<25))
+    await theRestIsReadOnce(leavingTheScreen: true) { loaded, miru in
+      await loaded.load("見る", rowsOnScreen: 8, read: miru.read)
+    }
   }
 
   @Test("a first read that answers after the screen is left is left out, and read when it is back")
