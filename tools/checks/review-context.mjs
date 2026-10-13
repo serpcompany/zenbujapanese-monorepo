@@ -173,7 +173,7 @@ function issueLines(issue) {
   const written = fetched.filter(byTeam)
   let room = Math.max(0, issueLimit - body.length)
   const kept = []
-  for (const comment of written.toReversed()) {
+  for (const comment of [...written].reverse()) {
     const size = String(comment.body ?? '').length
     if (size > room) break
     room -= size
