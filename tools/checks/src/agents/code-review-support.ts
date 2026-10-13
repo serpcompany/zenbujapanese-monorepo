@@ -61,6 +61,7 @@ export interface PullRequest {
   unavailable?: { status: number; headers?: Record<string, string> }
   lostAnswers?: number
   lostBodies?: number
+  failingCreates?: { times: number; made?: boolean; lost?: boolean; body?: string }
   linksAnsweredWithErrorsFor?: number
   commentStatus?: number
   status?: number
@@ -80,8 +81,23 @@ export function github(pullRequest: PullRequest): Route {
   const contents = `/repos/${repository}/contents/`
   const rules =
     pullRequest.rules ?? Object.fromEntries(ruleFiles.map(file => [file, `${file}'s rules.\n`]))
+  const issueComments = `/repos/${repository}/issues/${pr}/comments`
+  let failingCreates = pullRequest.failingCreates?.times ?? 0
+  const create = (sent: string) => {
+    const { made = false, lost = false, body } = pullRequest.failingCreates ?? {}
+    const failing = failingCreates > 0
+    if (failing) failingCreates -= 1
+    if (!failing || made) {
+      const written = (failing && body) || (JSON.parse(sent) as { body: string }).body
+      pullRequest.issueComments = [
+        ...(pullRequest.issueComments ?? []),
+        { login: summaryBot, at: minutesAfterStart(6), details: { id: 4242, body: written } }
+      ]
+    }
+    if (!failing) return { status: 201, body: {} }
+    return { ...comeBackInASecond, body: {}, ...(lost ? { lost: 'answer' as const } : {}) }
+  }
   const routes: Record<string, unknown> = {
-    [`/repos/${repository}/issues/${pr}/comments`]: comments(pullRequest.issueComments),
     [`/repos/${repository}/pulls/${pr}/comments`]: comments(pullRequest.reviewComments),
     [`/repos/${repository}/pulls/${pr}/reviews`]: (pullRequest.reviews ?? []).map(
       ({ login, at }) => ({ user: { login }, submitted_at: at })
@@ -133,7 +149,11 @@ export function github(pullRequest: PullRequest): Route {
       return { ...(pullRequest.unavailable ?? comeBackInASecond), body: { message: 'Not now' } }
     }
     if (url.pathname === '/graphql') return { status, body: graphql(sent) }
+    if (method === 'POST' && pullRequest.commentStatus === undefined) return create(sent)
     if (method !== 'GET') return { status: pullRequest.commentStatus ?? 200, body: {} }
+    if (url.pathname === issueComments) {
+      return { status, body: comments(pullRequest.issueComments) }
+    }
     if (url.pathname === `/repos/${repository}/commits/main`) {
       const text = `${pullRequest.defaultBranchCommit}\n`
       return accept === 'application/vnd.github.sha' ? { status, body: null, text } : undefined

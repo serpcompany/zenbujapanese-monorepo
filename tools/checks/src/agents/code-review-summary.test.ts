@@ -2,6 +2,7 @@ import { describe, expect, test } from 'vitest'
 import {
   guardIndex,
   lastVerdict,
+  minutesAfterStart,
   type PullRequest,
   pr,
   repository,
@@ -10,6 +11,7 @@ import {
   reviewRun,
   steps,
   summaryBody,
+  summaryBot,
   summaryOf,
   workflowPath
 } from './code-review-support'
@@ -95,17 +97,6 @@ describe("the review's summary", () => {
     expect(answeredInPart.comments).toHaveLength(1)
   })
 
-  test.each<[string, PullRequest, string]>([
-    ['a server error', { unavailableFor: 1, unavailable: { status: 502 } }, 'returned 502'],
-    ['a server error that names a wait', { unavailableFor: 1 }, 'returned 502'],
-    ['no answer', { lostAnswers: 1 }, 'got no whole answer']
-  ])('is never created again after %s, when it may already be there', async (_, onGitHub, outcome) => {
-    const created = await post(written, '', onGitHub)
-    expect(created.status).not.toBe(0)
-    expect(created.output).toContain(`POST /issues/${pr}/comments ${outcome}`)
-    expect(created.comments).toHaveLength(1)
-  })
-
   test.each([
     ['a 429', { status: 429, headers: { 'retry-after': '1' } }],
     ['a 403 that names a wait', { status: 403, headers: { 'retry-after': '1' } }]
@@ -113,8 +104,94 @@ describe("the review's summary", () => {
     const created = await post(written, '', { unavailableFor: 1, unavailable })
     expect(created.status).toBe(0)
     expect(created.comments).toHaveLength(2)
+    expect(created.requests.filter(({ method }) => method === 'GET')).toEqual([])
+  })
+})
+
+describe("creating the review's summary, when GitHub answers an error or nothing", () => {
+  const create = async (onGitHub: PullRequest) => {
+    const run = reviewRun({ changedFiles: 4, onGitHub })
+    run.attempt([result()], written)
+    const posted = await run.last()
+    return {
+      ...posted,
+      run,
+      asked: posted.requests.map(({ method, path }) =>
+        `${method} ${path}`.replace(`/repos/${repository}`, '')
+      ),
+      onThePullRequest: (onGitHub.issueComments ?? []).map(each => each.details?.body)
+    }
+  }
+  const createIt = `POST /issues/${pr}/comments`
+  const lookForIt = `GET /issues/${pr}/comments`
+
+  test.each<[string, PullRequest]>([
+    ['answered a server error and made nothing', { failingCreates: { times: 1 } }],
+    ['never answered and made nothing', { failingCreates: { times: 1, lost: true } }]
+  ])('looks for the summary, finds none, and creates it again when the create %s', async (_, onGitHub) => {
+    const created = await create(onGitHub)
+    expect(created.output).not.toContain('::error')
+    expect(created.status).toBe(0)
+    expect(created.asked).toEqual([createIt, lookForIt, createIt])
+    expect(created.onThePullRequest).toEqual([summaryBody.body])
   })
 
+  test.each<[string, PullRequest]>([
+    ['answered a server error', { failingCreates: { times: 1, made: true } }],
+    ['never answered', { failingCreates: { times: 1, made: true, lost: true } }]
+  ])('finds the summary and creates no second one when the create %s but had made it, and the check passes', async (_, onGitHub) => {
+    const created = await create(onGitHub)
+    expect(created.status).toBe(0)
+    expect(created.asked).toEqual([createIt, lookForIt])
+    expect(created.onThePullRequest).toEqual([summaryBody.body])
+    const checked = await created.run.check(onGitHub, 'skipped')
+    expect(checked.output).not.toContain('::error')
+    expect(checked.status).toBe(0)
+  })
+
+  test("updates the summary a failed create made when its text isn't the one sent", async () => {
+    const created = await create({
+      failingCreates: { times: 1, made: true, body: '## Claude review\nCut short.' }
+    })
+    expect(created.status).toBe(0)
+    expect(created.asked).toEqual([createIt, lookForIt, 'PATCH /issues/comments/4242'])
+    expect(created.comments.at(-1)?.body).toBe(summaryBody.body)
+  })
+
+  test("doesn't take an earlier summary, or someone else's, for the one it is creating", async () => {
+    const created = await create({
+      failingCreates: { times: 1 },
+      issueComments: [
+        { login: summaryBot, at: minutesAfterStart(-90), details: summaryBody },
+        { login: 'someone', at: minutesAfterStart(1), details: summaryBody }
+      ]
+    })
+    expect(created.status).toBe(0)
+    expect(created.asked).toEqual([createIt, lookForIt, createIt])
+    expect(created.onThePullRequest).toHaveLength(3)
+  })
+
+  test('fails as before when every create fails, having made none', async () => {
+    const created = await create({ failingCreates: { times: 4 } })
+    expect(created.status).not.toBe(0)
+    expect(created.output).toContain(
+      `::error title=Couldn't post the review's summary::POST /issues/${pr}/comments returned 502`
+    )
+    expect(created.asked.filter(each => each === createIt)).toHaveLength(4)
+    expect(created.onThePullRequest).toEqual([])
+  })
+
+  test.each([
+    403, 404
+  ])('takes a %s as final: it neither looks nor creates again', async commentStatus => {
+    const created = await create({ commentStatus })
+    expect(created.status).not.toBe(0)
+    expect(created.output).toContain(`POST /issues/${pr}/comments returned ${commentStatus}`)
+    expect(created.asked).toEqual([createIt])
+  })
+})
+
+describe("the review's summary, as Claude wrote it", () => {
   test('warns and posts nothing when Claude wrote no summary', async () => {
     const { status, output, comments } = await post(undefined, '99')
     expect(status).toBe(0)

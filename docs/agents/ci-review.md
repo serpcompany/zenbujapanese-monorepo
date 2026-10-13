@@ -66,10 +66,14 @@ so one that is cut short or stalls counts as no answer. A server error, no answe
 asked again up to three more times, after 5, 15, and 45 seconds, or after the wait GitHub names
 (`retry-after`, or the reset of a used-up rate limit) when it names one within 90 seconds. A 403
 that names no wait is a refusal, and a 404 is an answer: neither is asked again. A GraphQL
-answer that arrives with errors and without the pull request is asked again the same way. One
-request may already have been made when it fails: the one that creates the summary comment. It
-is sent again only when GitHub refused it without acting, with a 429 or a 403 that names a
-wait, never after a server error or no answer. The answer to a write is its status alone.
+answer that arrives with errors and without the pull request is asked again the same way. The
+answer to a write is its status alone. One request may already have been made when it fails:
+the one that creates the summary comment. After a 429, or a 403 that names a wait, GitHub
+refused it without acting, so it is sent again. After a server error or no answer, the step
+waits as for any request, then looks on the pull request for a summary by the workflow's bot
+created since the review started: if one is there the create worked, and it is updated only if
+its text isn't the one sent; if none is, it is created again. So nothing is posted twice, and
+only a fourth failed create fails the step.
 
 `changes` is never the red check, and never cancelled at its 10 minutes. When GitHub can't list
 the pull request's files, or hasn't after 300 seconds, it warns and lets `review` try, which
@@ -190,8 +194,9 @@ happened or its result was lost:
   counts only the review's own output: the summary, top-level inline comments, and reviews, not
   an answer to an `@claude` request;
 - a second attempt failed and no summary was posted;
-- the summary couldn't be posted: GitHub refused the comment, or it is longer than a comment
-  holds. The last step then says that step failed, not that the summary is missing;
+- the summary couldn't be posted: GitHub refused the comment, kept failing past the patience
+  above, or the summary is longer than a comment holds. The last step then says that step
+  failed, not that the summary is missing;
 - the scripts couldn't be fetched or the context couldn't be built, after the patience above,
   or `tmp` is a symbolic link. A failed fetch names the file and the commit.
 

@@ -66,7 +66,7 @@ jobs:
             if (response.headers.get('x-ratelimit-remaining') !== '0') return null
             return Math.max(1, Math.ceil(Number(response.headers.get('x-ratelimit-reset')) - Date.now() / 1000))
           }
-          const request = async (url, { read = 'json', ...options } = {}) => {
+          const request = async (url, { read = 'json', made, ...options } = {}) => {
             const headers = { Accept: 'application/vnd.github+json', Authorization: `Bearer ${env.GITHUB_TOKEN}`, 'X-GitHub-Api-Version': '2022-11-28', ...options.headers }
             const whole = async response => (response.ok && !options.method ? { ok: true, headers: response.headers, body: await response[read]() } : response)
             for (let attempt = 0; ; attempt += 1) {
@@ -74,11 +74,13 @@ jobs:
               if (response.ok) return response
               const asked = secondsGitHubAsksFor(response)
               const refusedUnacted = response.status === 429 || (response.status === 403 && asked !== null)
-              const worthAnotherTry = refusedUnacted || (options.method !== 'POST' && (asked !== null || response.unanswered || response.status >= 500))
+              const worthAnotherTry = refusedUnacted || ((options.method !== 'POST' || made) && (asked !== null || response.unanswered || response.status >= 500))
               const seconds = asked ?? secondsBetweenTries[attempt]
               const outcome = response.unanswered ? `got no whole answer (${response.unanswered})` : `returned ${response.status}`
               if (!worthAnotherTry || attempt >= secondsBetweenTries.length || seconds > longestWait) throw new Error(`${options.method || 'GET'} ${new URL(url).pathname.replace(/^\/repos\/[^/]+\/[^/]+/, '')} ${outcome}`)
               await new Promise(resolve => setTimeout(resolve, seconds * 1000))
+              const found = made && !refusedUnacted ? await made() : null
+              if (found) return found
             }
           }
           const list = async (resource, pages = 10) => {
@@ -220,6 +222,7 @@ jobs:
             console.log(`The first attempt ${attempt.reason}. It runs once more, told what it left out.`)
             output({ retry: true, problem })
           }
+          const isSummary = item => item.user?.login === (env.SUMMARY_BOT || 'github-actions[bot]') && /^## Claude review\b/.test(String(item.body || '').trim())
           const summaryLimit = 60000
           const last = async () => {
             const own = measured(env.EXECUTION_FILE, env.SUMMARY_FILE)
@@ -249,8 +252,10 @@ jobs:
             const body = problem ? `${heading}\n\n${problems.map(line => `**${line}**`).join('\n\n')}\n\n${rest.join('\n').trim()}` : [heading, ...rest].join('\n')
             if (body.length > summaryLimit) fail(`The summary is ${body.length} characters, over the ${summaryLimit} a comment holds.`)
             const id = env.SUMMARY_ID
-            const [method, url] = id ? ['PATCH', `${api}/issues/comments/${id}`] : ['POST', `${api}/issues/${env.PR_NUMBER}/comments`]
-            await request(url, { method, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ body }) })
+            const sent = { headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ body }) }
+            const made = async () => (await list(`/issues/${env.PR_NUMBER}/comments`)).filter(item => isSummary(item) && Date.parse(item.created_at) >= Date.parse(env.REVIEW_STARTED_AT) - 30 * 1000).at(-1)
+            const found = id ? { id } : await request(`${api}/issues/${env.PR_NUMBER}/comments`, { method: 'POST', made, ...sent })
+            if (found.id && found.body !== body) await request(`${api}/issues/comments/${found.id}`, { method: 'PATCH', ...sent })
             console.log(id ? `Updated the summary comment ${id}.` : 'Posted the summary comment.')
           }
           const tokenAdvice = result => result.api_error_status === 401 ? " The API refused the token (401), so renew the CLAUDE_CODE_OAUTH_TOKEN secret (docs/agents/ci-agents.md, Claude's app and token)." : ''
@@ -280,16 +285,12 @@ jobs:
             const names = [...new Set(running.map(task => clean(task.description || task.task_type, 60)))]
             return `The run ended while ${running.length} background task(s) were still running (${names.join(', ')}), so their findings were never posted. Set CLAUDE_CODE_DISABLE_BACKGROUND_TASKS=1 on the review step.`
           }
-          const readReviewActivity = async (bot, summaryBot) => {
+          const readReviewActivity = async bot => {
             const pr = env.PR_NUMBER
             const [comments, inline, reviews] = await Promise.all([list(`/issues/${pr}/comments`), list(`/pulls/${pr}/comments`), list(`/pulls/${pr}/reviews`)])
             return [
-              ...comments
-                .filter(item => item.user?.login === summaryBot && /^## Claude review\b/.test(String(item.body || '').trim()))
-                .map(item => ({ at: item.updated_at || item.created_at, summary: true })),
-              ...inline
-                .filter(item => item.user?.login === bot && !item.in_reply_to_id)
-                .map(item => ({ at: item.created_at })),
+              ...comments.filter(isSummary).map(item => ({ at: item.updated_at || item.created_at, summary: true })),
+              ...inline.filter(item => item.user?.login === bot && !item.in_reply_to_id).map(item => ({ at: item.created_at })),
               ...reviews.filter(item => item.user?.login === bot).map(item => ({ at: item.submitted_at }))
             ]
           }
@@ -310,7 +311,7 @@ jobs:
             ))]
             const startedAt = Date.parse(env.REVIEW_STARTED_AT || '')
             if (Number.isNaN(startedAt)) fail("REVIEW_STARTED_AT isn't set, so the check can't tell which comments this run posted.")
-            const activity = await readReviewActivity(env.REVIEW_BOT || 'claude[bot]', env.SUMMARY_BOT || 'github-actions[bot]').catch(error => fail(`Couldn't read the pull request to check the review: ${error.message}`))
+            const activity = await readReviewActivity(env.REVIEW_BOT || 'claude[bot]').catch(error => fail(`Couldn't read the pull request to check the review: ${error.message}`))
             const posted = activity.filter(item => Date.parse(item.at) >= startedAt - 30 * 1000)
             const summaryPosted = posted.some(item => item.summary)
             const ended = summaryPosted ? '' : await endedAs()
