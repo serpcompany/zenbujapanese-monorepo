@@ -1,8 +1,6 @@
-import { baseFormsOf } from '../examples/english-inflection'
 import {
   composing,
   composingWordCandidates,
-  discoveredWordLimit,
   leadingExactFormCount,
   noResults,
   resultItems,
@@ -12,12 +10,11 @@ import {
 } from './composition'
 import { type SearchDatabase, withParametersTruncatedAtNul } from './database'
 import { acceptsPartsOfSpeech, deinflect } from './deinflect'
-import { rankedByStrongGloss, rankedEnglish } from './english'
-import { candidatesFromExamples, entriesExamplesUse } from './english-word-entries'
+import { rankedEnglish } from './english'
+import { englishSentenceCandidates } from './english-sentence'
 import { hasFormContaining, rankedJapanese, rankedJapaneseForms } from './japanese'
 import { lookupSegments, type MorphologyAnalyzer, type MorphologyWord } from './morphology'
 import {
-  englishSentenceWords,
   isASCII,
   isJapaneseOnly,
   isMixedScript,
@@ -26,7 +23,7 @@ import {
   normalizeQuery,
   romajiDeinflectedCandidates
 } from './query'
-import { comparePresentationRanks, sameLexicalGroup } from './rank'
+import { sameLexicalGroup } from './rank'
 import type { RankedEntry } from './ranked-entries'
 
 export type { SearchResultItem, SearchResults } from './composition'
@@ -42,8 +39,6 @@ export interface SearchCapabilities {
 export interface SearchFeatures {
   sentenceSearch: boolean
 }
-
-const sentenceWordLookupLimit = 24
 
 function searchFeatures(capabilities: SearchCapabilities): SearchFeatures {
   return { sentenceSearch: capabilities.morphology !== undefined }
@@ -138,8 +133,8 @@ export class DictionarySearch {
     if (directResults.items.length > 0) return directResults
 
     if (isASCII(query)) {
-      const words = await this.englishSentenceCandidates(query)
-      return words.length > 1 ? composingWordCandidates(words) : noResults()
+      const words = await englishSentenceCandidates(this.db, query)
+      return words.length > 0 ? composingWordCandidates(words) : noResults()
     }
     const analyzed = await this.analyzedItems(query)
     if (analyzed.length > 1 || (isMixedScript(query) && analyzed.length > 0)) {
@@ -193,40 +188,6 @@ export class DictionarySearch {
     if (query === '') return false
     if (isASCII(query)) return (await this.searchOnce(query)).items.length > 0
     return hasFormContaining(this.db, query)
-  }
-
-  private async englishSentenceCandidates(query: string): Promise<SearchResultItem[][]> {
-    const sentence = englishSentenceWords(query).slice(0, sentenceWordLookupLimit)
-    const used = await entriesExamplesUse(this.db, sentence)
-    const words: SearchResultItem[][] = []
-    for (const word of sentence) {
-      const entry = used.get(word)
-      const candidates = entry
-        ? await candidatesFromExamples(this.db, word, entry)
-        : await this.candidatesFor(word)
-      if (candidates.length > 0) words.push(candidates)
-      if (words.length === discoveredWordLimit) break
-    }
-    return words
-  }
-
-  private async candidatesFor(word: string): Promise<SearchResultItem[]> {
-    const own = await this.firstRowCandidates(word)
-    if (own.length > 0) return own
-    const ofItsBaseForms: SearchResultItem[] = []
-    for (const base of baseFormsOf(word)) {
-      ofItsBaseForms.push(...(await this.firstRowCandidates(base)))
-    }
-    return ofItsBaseForms
-  }
-
-  private async firstRowCandidates(word: string): Promise<SearchResultItem[]> {
-    const ranked = (await rankedByStrongGloss(this.db, word)).slice(0, searchResultLimit)
-    return resultItems(
-      ranked.filter(
-        entry => comparePresentationRanks(entry.presentationRank, ranked[0].presentationRank) === 0
-      )
-    )
   }
 
   private async analyzedItems(query: string): Promise<SearchResultItem[]> {

@@ -137,14 +137,15 @@ as its headword. Each entry keeps its best 200 sentences: Word Detail shows at m
 past 50 as "50+".
 
 It also writes `english_word_entries` (`zenbu.example-word-index.v2`): for an English word, the
-entries the sentence pairs with that word use, which Search lists for the word in an English
-sentence ([`dictionary-core.md`](../../../docs/agents/dictionary-core.md), Search). A pair's
+entries the sentence pairs with that word use. Search lists the first that means the word, for that
+word in an English sentence
+([`english-sentence-search.md`](../../../docs/agents/english-sentence-search.md), rule 3). A pair's
 English is split into words as the core splits a query (`englishSentenceWords`), and its Japanese
 counts every entry its tokens resolve to, kanji headwords included, each under the Language
 Reference ID a search lists it by. A written form several entries share names none of them above;
-here it names the one that is common, when only one is: 夜 is よる, not the counter や (7,117
-tokens, among them 男, 車, 病気, and 声). With `both` the pairs a word and an entry share, of the
-word's `withWord` and the entry's `withEntry`, an entry is kept when all of these hold:
+here it names the one that is common, when only one is: 夜 is よる, not the counter や (7,117 tokens,
+among them 男, 車, 病気, and 声). With `both` the pairs a word and an entry share, of the word's
+`withWord` and the entry's `withEntry`, an entry is kept when all of these hold:
 
 - **Enough pairs, and not by chance.** `both` is at least 10, and at least three times
   `withWord × withEntry / pairs`, what chance alone gives. は is in two pairs of three and `the` in

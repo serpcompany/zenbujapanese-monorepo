@@ -1,13 +1,16 @@
 import { graphemeCount } from '../detail/text'
-import { resultItems, type SearchResultItem } from './composition'
+import type { SearchResultItem } from './composition'
 import { decodeEntry, type EntryRow, entryColumns, profile, type SearchDatabase } from './database'
-import { displayedFormProfileJoin, rankedByStrongGloss } from './english'
+import { displayedFormProfileJoin } from './english'
 import { type EnglishRank, EvidenceLane, isMarked } from './rank'
 
 const wordIndex = 'word_index'
 
-interface WordEntryRow extends EntryRow {
+export interface EntryExamplesUse extends EntryRow {
   word: string
+  pairs_with_both: number
+  pairs_with_word: number
+  pairs_with_entry: number
 }
 
 async function hasWordIndex(db: SearchDatabase): Promise<boolean> {
@@ -15,22 +18,37 @@ async function hasWordIndex(db: SearchDatabase): Promise<boolean> {
   return attached.length > 0
 }
 
+const isAPieceOfAnAbbreviation = (word: string) => word.length === 1
+
 export async function entriesExamplesUse(
   db: SearchDatabase,
   words: readonly string[]
-): Promise<Map<string, EntryRow>> {
-  if (words.length === 0 || !(await hasWordIndex(db))) return new Map()
-  const rows = await db.all<WordEntryRow>(
-    `SELECT w.word, ${entryColumns}, p.primary_mask, p.secondary_mask, p.news_frequency_band
+): Promise<Map<string, EntryExamplesUse[]>> {
+  const asked = [...new Set(words)].filter(word => !isAPieceOfAnAbbreviation(word))
+  const used = new Map<string, EntryExamplesUse[]>()
+  if (asked.length === 0 || !(await hasWordIndex(db))) return used
+  const rows = await db.all<EntryExamplesUse>(
+    `SELECT w.word, w.pairs_with_both, w.pairs_with_word, w.pairs_with_entry,
+         ${entryColumns}, p.primary_mask, p.secondary_mask, p.news_frequency_band
        FROM json_each(?) listed
-       JOIN ${wordIndex}.english_word_entries w ON w.word = listed.value AND w.place = 0
-       JOIN entries e ON e.id = w.entry_id ${displayedFormProfileJoin}`,
-    [JSON.stringify(words)]
+       JOIN ${wordIndex}.english_word_entries w ON w.word = listed.value
+       JOIN entries e ON e.id = w.entry_id ${displayedFormProfileJoin}
+       ORDER BY w.word, w.place`,
+    [JSON.stringify(asked)]
   )
-  return new Map(rows.map(row => [row.word, row]))
+  for (const row of rows) used.set(row.word, [...(used.get(row.word) ?? []), row])
+  return used
 }
 
-function usedInExamples(row: EntryRow): SearchResultItem {
+const leastScoreOfAlwaysTogether = { numerator: 3, denominator: 4 }
+
+export function areAlwaysTogether(used: EntryExamplesUse): boolean {
+  const { pairs_with_both: both, pairs_with_word: withWord, pairs_with_entry: withEntry } = used
+  const { numerator, denominator } = leastScoreOfAlwaysTogether
+  return denominator * both * both >= numerator * withWord * withEntry
+}
+
+export function usedInExamples(row: EntryRow): SearchResultItem {
   const entry = decodeEntry(row)
   const priority = profile(row)
   const matchRank: EnglishRank = {
@@ -46,13 +64,4 @@ function usedInExamples(row: EntryRow): SearchResultItem {
     semanticFingerprint: row.semantic_fingerprint
   }
   return { entry, sourceOrder: 0, matchRank, fallbackOrder: 0, matchedSummary: null }
-}
-
-export async function candidatesFromExamples(
-  db: SearchDatabase,
-  word: string,
-  used: EntryRow
-): Promise<SearchResultItem[]> {
-  const meaning = (await rankedByStrongGloss(db, word)).find(ranked => ranked.entry.id === used.id)
-  return meaning ? resultItems([meaning]) : [usedInExamples(used)]
 }

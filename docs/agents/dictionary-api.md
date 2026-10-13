@@ -264,8 +264,8 @@ checks the cases the app's manual checks name. An English sentence needs no anal
 search suites record four, and every replay runs them. The retrieval suite holds the entries
 each word brings and the results suite the one listed for it, under the **Discovered Words**
 heading that the app's screen answers with and the page draws itself, so the website's
-rendered-page test holds the page to it. `english-word-entries.test.ts` checks the entry the word
-index names for each word its rules were tuned on. `conjugation-examples.test.ts` pages a form's
+rendered-page test holds the page to it. `english-word-entries.test.ts` checks the entries the word
+index names for a word and their order. `conjugation-examples.test.ts` pages a form's
 examples. `full-text.test.ts` checks English search where FTS4 differs from other engines.
 
 The `Dictionary API` workflow runs `pnpm check` on pull requests with the Git LFS files and

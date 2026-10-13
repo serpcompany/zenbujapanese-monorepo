@@ -710,10 +710,10 @@ Matching, ranking, and deinflection are the core's ([`dictionary-core.md`](dicti
 Search). A result carries its relevance as one number, equal for equally relevant matches, and the
 frequency re-sort reorders only within it, so 犬's "dog (Canis (lupus) familiaris)" competes with
 ワン子's "dog" on frequency (#701). A word of an English sentence lists the entry its example sentences
-use, from the word index, which `LanguageReferenceData` attaches too and has the core check
-(`checkWordIndex`). `EnglishSearchCommonWordTests` checks the common word leads dog, water, cat,
-eat, and house on the bundled data, and `JapaneseDeinflectionTests` and `SearchResultOrderingTests`
-common inflections (まけたら → 負ける; makasete → 任せる, 任す, 負かす).
+use when it means the word, from the word index, which `LanguageReferenceData` attaches too and has
+the core check (`checkWordIndex`). `EnglishSearchCommonWordTests` checks the common word leads dog,
+water, cat, eat, and house on the bundled data, and `JapaneseDeinflectionTests` and
+`SearchResultOrderingTests` common inflections (まけたら → 負ける; makasete → 任せる, 任す, 負かす).
 
 The core joins a verb or adjective with the pieces both parsers split off
 (`examples/morphology.ts`), so 見なかった links as one word: auxiliaries, the connectives て, で,
