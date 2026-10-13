@@ -98,13 +98,7 @@ export function dictionary(database: MemoryDatabase, words: readonly Word[]): Se
   }
 }
 
-export type ExampleUse = [
-  word: string,
-  headword: string,
-  both?: number,
-  withWord?: number,
-  withEntry?: number
-]
+export type ExampleUse = [word: string, headword: string, pairsWithBoth?: number]
 
 export function attachWordIndex(database: MemoryDatabase, uses: readonly ExampleUse[]): void {
   database.exec(`
@@ -119,13 +113,13 @@ export function attachWordIndex(database: MemoryDatabase, uses: readonly Example
   const entry = database.prepare('SELECT id FROM entries WHERE headword = ?')
   const use = database.prepare(
     `INSERT INTO word_index.english_word_entries
-       SELECT ?1, count(*), ?2, ?3, ?4, ?5, NULL
+       SELECT ?1, count(*), ?2, ?3, ?3, ?3, NULL
        FROM word_index.english_word_entries WHERE word = ?1`
   )
-  for (const [written, headword, both = 10, withWord = 100, withEntry = 100] of uses) {
+  for (const [written, headword, pairsWithBoth = 10] of uses) {
     const [named] = entry.all(headword) as { id: Uint8Array }[]
     if (!named) throw new Error(`The dictionary has no ${headword}`)
-    use.run(written, named.id, both, withWord, withEntry)
+    use.run(written, named.id, pairsWithBoth)
   }
 }
 

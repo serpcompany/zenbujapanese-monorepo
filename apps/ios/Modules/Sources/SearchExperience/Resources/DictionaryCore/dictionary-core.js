@@ -2569,7 +2569,9 @@
     const used = /* @__PURE__ */ new Map();
     if (asked.length === 0 || !await hasWordIndex(db)) return used;
     const rows = await db.all(
-      `SELECT w.word, w.pairs_with_both, w.pairs_with_word, w.pairs_with_entry,
+      `SELECT w.word, w.pairs_with_both,
+         (SELECT json_group_array(g.normalized_text) FROM gloss_atoms g
+          WHERE g.entry_id = w.entry_id) AS glosses,
          ${entryColumns}, p.primary_mask, p.secondary_mask, p.news_frequency_band
        FROM json_each(?) listed
        JOIN ${wordIndex}.english_word_entries w ON w.word = listed.value
@@ -2580,11 +2582,17 @@
     for (const row of rows) used.set(row.word, [...used.get(row.word) ?? [], row]);
     return used;
   }
-  var leastScoreOfAlwaysTogether = { numerator: 3, denominator: 4 };
-  function areAlwaysTogether(used) {
-    const { pairs_with_both: both, pairs_with_word: withWord, pairs_with_entry: withEntry } = used;
-    const { numerator, denominator } = leastScoreOfAlwaysTogether;
-    return denominator * both * both >= numerator * withWord * withEntry;
+  function mentions(used, words) {
+    const glosses = JSON.parse(used.glosses);
+    return words.some((word) => {
+      const asAWholeWord = glossToken(word);
+      return glosses.some((gloss) => asAWholeWord.test(gloss));
+    });
+  }
+  var sharedPairsOfASplit = { numerator: 7, denominator: 10 };
+  function areSplitBetween(first, other) {
+    const { numerator, denominator } = sharedPairsOfASplit;
+    return denominator * other.pairs_with_both >= numerator * first.pairs_with_both;
   }
   function usedInExamples(row) {
     const entry = decodeEntry(row);
@@ -2628,7 +2636,6 @@
         return asWritten(base);
     }
   }
-  var isAVerbForm = ({ entries }) => entries === "verbs" || entries === "allIfAVerb";
   var isAComparative = ({ entries }) => entries === "adjectives";
   var baseFormsOfAnyKind = (word) => [...irregularBaseFormsOf(word), ...baseFormsOf(word)];
   async function entriesThatMean(db, { gloss, partsOfSpeech }) {
@@ -2646,29 +2653,50 @@
   var unknownWord = void 0;
   var noEntriesOfAKnownWord = [];
   var entriesOrUnknownWord = (candidates) => candidates.length > 0 ? candidates : unknownWord;
-  async function firstEntryExamplesUse(db, used, meanings, orAlwaysTogether) {
-    const entries = [];
-    for (const row of used) {
-      for (const [order, meaning] of meanings.entries()) {
-        entries[order] ??= await entriesThatMean(db, meaning);
-        const found = entries[order].find((ranked) => ranked.entry.id === row.id);
-        if (found) return resultItems([found]);
+  async function entriesThatMeanEach(db, used, meanings) {
+    const meant = used.map(() => void 0);
+    for (const meaning of meanings) {
+      if (meant.every((entry) => entry !== void 0)) break;
+      const entries = await entriesThatMean(db, meaning);
+      for (const [place, row] of used.entries()) {
+        meant[place] ??= entries.find((ranked) => ranked.entry.id === row.id);
       }
-      if (orAlwaysTogether && areAlwaysTogether(row)) return [usedInExamples(row)];
     }
-    return [];
+    return meant;
+  }
+  async function candidatesAmong(db, used, meanings, passesUnmeant) {
+    const meant = await entriesThatMeanEach(db, used, meanings);
+    const first = used.findIndex((row, place) => meant[place] !== void 0 || passesUnmeant(row));
+    if (first < 0) return [];
+    const leading = meant[first];
+    if (!leading) return [usedInExamples(used[first])];
+    const sharingItsUse = used.flatMap((row, place) => {
+      const entry = meant[place];
+      return entry && place > first && areSplitBetween(used[first], row) ? [entry] : [];
+    });
+    return resultItems([leading, ...sharingItsUse]);
+  }
+  function candidatesFromItsExamples(db, word, examples) {
+    const inAnyForm = [word, ...baseFormsOfAnyKind(word).map(({ base }) => base)];
+    const isAnotherWordsForm = inAnyForm.length > 1;
+    return candidatesAmong(
+      db,
+      examples.get(word) ?? [],
+      inAnyForm.map(asWritten),
+      (row) => isAnotherWordsForm ? mentions(row, inAnyForm) : true
+    );
+  }
+  function candidatesFromExamplesOfABaseForm(db, baseForm, examples) {
+    if (baseForm.entries === "all") return candidatesFromItsExamples(db, baseForm.base, examples);
+    const used = examples.get(baseForm.base) ?? [];
+    return candidatesAmong(db, used, [asTheWordReadsIt(baseForm)], () => false);
   }
   async function candidatesFromExamples(db, word, examples) {
-    const baseForms = baseFormsOfAnyKind(word);
-    const inAnyForm = [word, ...baseForms.map(({ base }) => base)].map(asWritten);
-    const own = await firstEntryExamplesUse(db, examples.get(word) ?? [], inAnyForm, true);
+    const own = await candidatesFromItsExamples(db, word, examples);
     if (own.length > 0) return own;
     const ofItsBaseForms = [];
-    for (const baseForm of baseForms.filter((form) => !isAComparative(form))) {
-      const used = examples.get(baseForm.base) ?? [];
-      const meaning = [asTheWordReadsIt(baseForm)];
-      const first = await firstEntryExamplesUse(db, used, meaning, !isAVerbForm(baseForm));
-      ofItsBaseForms.push(...first);
+    for (const baseForm of baseFormsOfAnyKind(word).filter((form) => !isAComparative(form))) {
+      ofItsBaseForms.push(...await candidatesFromExamplesOfABaseForm(db, baseForm, examples));
     }
     return ofItsBaseForms;
   }

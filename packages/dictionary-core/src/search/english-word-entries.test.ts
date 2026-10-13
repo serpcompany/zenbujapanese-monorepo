@@ -5,10 +5,11 @@ import {
   candidates,
   dictionary,
   type ExampleUse,
+  listed,
   type Word,
   word
 } from './english-sentence.fixture'
-import { areAlwaysTogether, entriesExamplesUse } from './english-word-entries'
+import { areSplitBetween, entriesExamplesUse, mentions } from './english-word-entries'
 import { matchLabel } from './rank'
 import { DictionarySearch } from './search'
 
@@ -39,6 +40,12 @@ const words: Word[] = [
   word('酒', 'さけ', 'sake', 'alcohol'),
   word('飲み', 'のみ', 'nomi', 'drinking'),
   word('飲む', 'のむ', 'nomu', 'to drink'),
+  word('探す', 'さがす', 'sagasu', 'to search for', 'to look for'),
+  word('見', 'み', 'mi', 'looking'),
+  word('兄', 'あに', 'ani', 'older brother', 'elder brother'),
+  word('入満', 'イルマン', 'iruman', 'brother'),
+  word('私', 'わたし', 'watashi', 'I', 'me'),
+  word('我が', 'わが', 'waga', 'my', 'our'),
   word('駅', 'えき', 'eki', 'railway station', 'train station'),
   word('停留所', 'ていりゅうじょ', 'teiryuujo', 'station'),
   word('一時間', 'いちじかん', 'ichijikan', 'one hour'),
@@ -51,36 +58,44 @@ const words: Word[] = [
   noun('男', 'おとこ', 'otoko', 'man'),
   adjective('良い', 'よい', 'yoi', 'good'),
   adjective('最高', 'さいこう', 'saikou', 'best'),
+  word('弾く', 'ひく', 'hiku', 'to play (a stringed instrument)'),
+  word('遊ぶ', 'あそぶ', 'asobu', 'to play (games)'),
+  word('教える', 'おしえる', 'oshieru', 'to teach', 'to tell'),
+  word('話す', 'はなす', 'hanasu', 'to talk', 'to tell'),
   word('ドア', 'ドア', 'doa', 'door'),
   word('ドアーズ', 'ドアーズ', 'doa-zu', 'Doors'),
   word('アメリカ', 'アメリカ', 'amerika', 'America'),
   word('Ｓ', 'エス', 'esu', 'S')
 ]
 
-const alwaysTogether = [569, 637, 580] as const
-const oftenTogether = [177, 277, 192] as const
-
 const used: ExampleUse[] = [
   ['the', 'その'],
   ['it', 'ＩＴ'],
-  ['pen', 'ペン'],
-  ['pen', '書く'],
+  ['pen', 'ペン', 120],
+  ['pen', '書く', 20],
   ['went', '行く'],
   ['watching', 'テレビ'],
-  ['watch', '時計'],
-  ['watch', '見る'],
-  ['drinking', '酒'],
-  ['drinking', '飲む'],
-  ['station', '駅', ...alwaysTogether],
-  ['hour', '一時間', ...oftenTogether],
+  ['watch', '時計', 255],
+  ['watch', '見る', 137],
+  ['drinking', '酒', 50],
+  ['drinking', '飲む', 80],
+  ['looking', '探す'],
+  ['brother', '兄'],
+  ['my', '私'],
+  ['station', '駅'],
+  ['hour', '一時間'],
   ['secret', '秘密'],
-  ['fall', '秋'],
-  ['fall', '落ちる'],
-  ['man', '配置する'],
-  ['man', '男'],
+  ['fall', '秋', 54],
+  ['fall', '落ちる', 27],
+  ['man', '配置する', 30],
+  ['man', '男', 100],
   ['good', '良い'],
+  ['play', '弾く', 104],
+  ['play', '遊ぶ', 89],
+  ['tell', '教える', 208],
+  ['tell', '話す', 116],
   ['door', 'ドア'],
-  ['s', 'アメリカ', ...alwaysTogether]
+  ['s', 'アメリカ']
 ]
 
 function opened(uses: readonly ExampleUse[] | null) {
@@ -96,6 +111,8 @@ const withoutAWordIndex = new DictionarySearch(opened(null).db)
 
 const inASentence = async (written: string, searching = search) =>
   candidates(await searching.search(`rabbit ${written} carrot`)).slice(1, -1)
+
+const entriesFor = async (written: string) => (await entriesExamplesUse(db, [written])).get(written)
 
 describe('the entries example sentences use for English words', () => {
   const headwords = async (asked: string[], from = db) =>
@@ -113,15 +130,10 @@ describe('the entries example sentences use for English words', () => {
     })
   })
 
-  test('come with the pairs that hold the word, the entry, and both', async () => {
-    const [station] = (await entriesExamplesUse(db, ['station'])).get('station') ?? []
-    expect(station).toMatchObject({
-      word: 'station',
-      headword: '駅',
-      pairs_with_both: 569,
-      pairs_with_word: 637,
-      pairs_with_entry: 580
-    })
+  test('come with the pairs they share with the word, and with their meanings', async () => {
+    const [pen, write] = (await entriesFor('pen')) ?? []
+    expect(pen).toMatchObject({ word: 'pen', headword: 'ペン', pairs_with_both: 120 })
+    expect(JSON.parse(write.glosses)).toEqual(['to write', 'to pen'])
   })
 
   test('are none for a word of one letter, a piece of an abbreviation such as U.S.', async () => {
@@ -141,30 +153,73 @@ describe('the entries example sentences use for English words', () => {
   })
 })
 
-describe('a word and an entry are always together in example sentences', () => {
+describe('an entry example sentences use mentions a word', () => {
   test.each([
-    ['station and 駅', true, ...alwaysTogether],
-    ['hour and 一時間', false, ...oftenTogether],
-    ['all three pairs with the word, of the four with the entry', true, 3, 3, 4],
-    ['six of the seven pairs with the word, and of the seven with the entry', false, 6, 7, 7]
-  ])('%s: %s', async (_, together, both, withWord, withEntry) => {
-    const [station] = (await entriesExamplesUse(db, ['station'])).get('station') ?? []
-    const counted = {
-      ...station,
-      pairs_with_both: both,
-      pairs_with_word: withWord,
-      pairs_with_entry: withEntry
-    }
-    expect(areAlwaysTogether(counted)).toBe(together)
+    ['looking', ['look'], true],
+    ['looking', ['looking', 'loo'], false],
+    ['brother', ['brother'], true],
+    ['brother', ['broth'], false],
+    ['watching', ['watching', 'watch'], false]
+  ])('the first entry of 「%s」 and one of %o: %s', async (written, mentioned, found) => {
+    const [first] = (await entriesFor(written)) ?? []
+    expect(mentions(first, mentioned)).toBe(found)
   })
 })
 
-describe('a word of an English sentence that example sentences use', () => {
-  test('lists the entry they use most, alone, where every entry that means it was listed', async () => {
-    expect(await inASentence('pen')).toEqual([['ペン']])
+describe('example sentences are split between two entries', () => {
+  test.each([
+    ['the second is in seven pairs to the first’s ten', 10, 7, true],
+    ['the second is in six pairs to the first’s ten', 10, 6, false],
+    ['the second, a later meaning, is in more pairs', 10, 30, true]
+  ])('when %s: %s', async (_, first, second, split) => {
+    const [bow, play] = (await entriesFor('play')) ?? []
+    const counted = [
+      { ...bow, pairs_with_both: first },
+      { ...play, pairs_with_both: second }
+    ] as const
+    expect(areSplitBetween(...counted)).toBe(split)
+  })
+})
+
+describe('a word of an English sentence that is no other word’s form', () => {
+  test('lists the entry its examples use most, as it is, whatever the entry means', async () => {
+    const results = await search.search('rabbit station carrot')
+    expect(candidates(results)).toEqual([['兎'], ['駅'], ['人参']])
+    expect(results.items[1].matchedSummary).toBeNull()
+    expect(matchLabel(1, results.items[1].matchRank)).toBe(
+      'source=1 english exampleSentences romaji=0'
+    )
+    expect(await inASentence('station', withoutAWordIndex)).toEqual([['停留所']])
+  })
+
+  test.each([
+    ['hour', '一時間', '時'],
+    ['my', '私', '我が']
+  ])('「%s」 lists %s, where the entries that mean it list %s', async (written, entry, meant) => {
+    expect(await inASentence(written)).toEqual([[entry]])
+    expect(await inASentence(written, withoutAWordIndex)).toEqual([[meant]])
+  })
+
+  test('lists that entry alone, with its meaning, where every entry that means it was listed', async () => {
+    const results = await search.search('rabbit pen carrot')
+    expect(candidates(results)).toEqual([['兎'], ['ペン'], ['人参']])
+    expect(results.items[1].matchedSummary).toBe('pen')
     expect(await inASentence('pen', withoutAWordIndex)).toEqual([['ペン', '書く']])
   })
 
+  test('is not asked of the examples when it is one letter', async () => {
+    expect(await inASentence('s')).toEqual([['Ｓ']])
+  })
+
+  test.each([
+    ['the', []],
+    ['it', [['それ']]]
+  ])('「%s」 still lists nothing or its fixed entry, whatever examples use', async (written, entries) => {
+    expect(await inASentence(written)).toEqual(entries)
+  })
+})
+
+describe('a word of an English sentence that is another word’s form', () => {
   test('lists the entry that means its base form, with that meaning', async () => {
     const results = await search.search('rabbit went carrot')
     expect(candidates(results)).toEqual([['兎'], ['行く'], ['人参']])
@@ -172,11 +227,18 @@ describe('a word of an English sentence that example sentences use', () => {
     expect(await inASentence('went', withoutAWordIndex)).toEqual([['いらした', '行く']])
   })
 
-  test('passes over an entry that only keeps it company for the next that means it', async () => {
+  test.each([
+    ['looking', '探す', 'to look for'],
+    ['brother', '兄', 'older brother']
+  ])('「%s」 lists %s, a meaning of which mentions it: "%s"', async (written, entry) => {
+    expect(await inASentence(written)).toEqual([[entry]])
+  })
+
+  test('passes over an entry that mentions neither it nor its base form for the next', async () => {
     expect(await inASentence('drinking')).toEqual([['飲む']])
   })
 
-  test('takes its base form’s entry when none of its own means it, read as a verb', async () => {
+  test('takes its base form’s entry when none of its own passes, read as a verb', async () => {
     const results = await search.search('rabbit watching carrot')
     expect(candidates(results)).toEqual([['兎'], ['見る'], ['人参']])
     expect(results.items[1].matchedSummary).toBe('to watch')
@@ -187,7 +249,8 @@ describe('a word of an English sentence that example sentences use', () => {
     ['fell', 'fall', ['落ちる']],
     ['falling', 'fall', ['落ちる']],
     ['falls', 'fall', ['秋']],
-    ['men', 'man', ['男']]
+    ['men', 'man', ['男']],
+    ['stations', 'station', ['駅']]
   ])('「%s」 takes the entry examples use for %s as the word reads it, %o', async (written, _, entries) => {
     expect(await inASentence(written)).toEqual([entries])
   })
@@ -204,30 +267,25 @@ describe('a word of an English sentence that example sentences use', () => {
   test('is not taken to its base form when it is a comparative: 「best」 keeps 最高', async () => {
     expect(await inASentence('best')).toEqual([['最高']])
   })
+})
 
-  test('lists an entry that does not mean it when the two are always together', async () => {
-    const results = await search.search('rabbit station carrot')
-    expect(candidates(results)).toEqual([['兎'], ['駅'], ['人参']])
-    expect(results.items[1].matchedSummary).toBeNull()
-    expect(matchLabel(1, results.items[1].matchRank)).toBe(
-      'source=1 english exampleSentences romaji=0'
-    )
-    expect(await inASentence('stations')).toEqual([['駅']])
-    expect(await inASentence('station', withoutAWordIndex)).toEqual([['停留所']])
+describe('a word of an English sentence whose examples are split', () => {
+  test('brings each entry that means it and shares its use, and lists the more common', async () => {
+    expect(await inASentence('play')).toEqual([['弾く', '遊ぶ']])
+    expect(await listed(search, 'rabbit play')).toEqual(['兎', '弾く'])
+    expect(await listed(search, 'rabbit play', { 遊ぶ: 5 })).toEqual(['兎', '遊ぶ'])
   })
 
-  test('falls back on the entries that mean it when the two are only often together', async () => {
-    expect(await inASentence('hour')).toEqual([['時']])
-  })
-
-  test('is not asked of the examples when it is one letter', async () => {
-    expect(await inASentence('s')).toEqual([['Ｓ']])
+  test('brings them for its forms too', async () => {
+    expect(await inASentence('played')).toEqual([['弾く', '遊ぶ']])
+    expect(await listed(search, 'rabbit played', { 遊ぶ: 5 })).toEqual(['兎', '遊ぶ'])
   })
 
   test.each([
-    ['the', []],
-    ['it', [['それ']]]
-  ])('「%s」 still lists nothing or its fixed entry, whatever examples use', async (written, entries) => {
-    expect(await inASentence(written)).toEqual(entries)
+    ['tell', ['教える']],
+    ['pen', ['ペン']],
+    ['fall', ['秋']]
+  ])('「%s」 lists %o alone: the next entry that means it is in too few pairs', async (written, entries) => {
+    expect(await inASentence(written)).toEqual([entries])
   })
 })

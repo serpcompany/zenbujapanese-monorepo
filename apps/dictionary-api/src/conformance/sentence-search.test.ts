@@ -33,7 +33,7 @@ describe.runIf(artifactAvailable && sudachiAvailable)('sentence search', () => {
   test.each([
     ['日本語を勉強する', ['日本語', '勉強', 'する']],
     ['Where is the bathroom?', ['何処', 'です', '風呂']],
-    ['I want to go home.', ['私', '要る', '行く', '家']],
+    ['I want to go home.', ['私', 'たい', '行く', '家']],
     ['The rabbits ate carrots.', ['兎', '食べる', '人参']]
   ])('「%s」 lists its words as Discovered Words (#401)', async (sentence, words) => {
     const { screen } = await service.search(sentence)
@@ -133,6 +133,7 @@ describe.runIf(artifactAvailable && sudachiAvailable)('sentence search', () => {
 
   test.each([
     ['dogs', '犬'],
+    ['played', '遊ぶ'],
     ['best', '最高'],
     ['left', '左'],
     ['people', '人々']
@@ -172,23 +173,47 @@ describe.runIf(artifactAvailable && sudachiAvailable)('sentence search', () => {
   })
 
   test.each([
-    ['post', '郵便局', '投稿'],
-    ['hour', '一時間', '時'],
-    ['forward', '楽しみにする', '送る']
-  ])('「%s」 lists not %s, which only keeps it company in examples, but %s', async (word, _, headword) => {
-    expect(await listedFor(word)).toMatchObject({ headword })
-  })
-
-  test('「tony」 lists nothing, though examples call Tony 君', async () => {
-    expect(await listedFor('tony')).toBeUndefined()
+    ['station', '駅', 'railway station'],
+    ['stations', '駅', 'railway station'],
+    ['york', 'ニューヨーク', 'New York'],
+    ['brother', '兄', 'older brother'],
+    ['my', '私', 'I, me'],
+    ['his', '彼', 'he, him'],
+    ['want', 'たい', 'want to do'],
+    ['dead', '死ぬ', 'to die'],
+    ["father's", '父', 'father']
+  ])('「%s」 lists %s, the entry examples use for it, under the entry’s own meaning, "%s"', async (word, headword, meaning) => {
+    expect(await listedFor(word)).toMatchObject({
+      headword,
+      summary: expect.stringContaining(meaning)
+    })
   })
 
   test.each([
-    ['station', '駅', 'railway station, train station'],
-    ['stations', '駅', 'railway station, train station'],
-    ['york', 'ニューヨーク', 'New York']
-  ])('「%s」 lists %s, which examples always use with it, under its own meaning', async (word, headword, summary) => {
-    expect(await listedFor(word)).toMatchObject({ headword, summary })
+    ['looking', '探す', 'look'],
+    ['tried', 'とする', 'try'],
+    ['seems', 'ようだ', 'seems'],
+    ['arrived', '着く', 'arrive']
+  ])('the form 「%s」 lists %s, a meaning of which mentions "%s"', async (word, headword, mentioned) => {
+    expect(await listedFor(word)).toMatchObject({
+      headword,
+      summary: expect.stringContaining(mentioned)
+    })
+  })
+
+  test.each([
+    ['see', '見る'],
+    ['seeing', '見る'],
+    ['play', '遊ぶ'],
+    ['playing', '遊ぶ'],
+    ['friend', '友達'],
+    ['you', '貴方']
+  ])('「%s」, which examples split between two entries, lists the more common, %s', async (word, headword) => {
+    expect(await listedFor(word)).toMatchObject({ headword })
+  })
+
+  test('「tony」, a name, lists nothing: no entry examples use with it means or mentions it', async () => {
+    expect(await listedFor('tony')).toBeUndefined()
   })
 
   test.each([

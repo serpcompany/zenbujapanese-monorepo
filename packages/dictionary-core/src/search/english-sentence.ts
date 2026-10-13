@@ -9,9 +9,10 @@ import type { SearchDatabase } from './database'
 import { rankedByStrongGloss } from './english'
 import { type FixedEntry, fixedEntries, wordsThatListNothing } from './english-function-words'
 import {
-  areAlwaysTogether,
+  areSplitBetween,
   type EntryExamplesUse,
   entriesExamplesUse,
+  mentions,
   usedInExamples
 } from './english-word-entries'
 import { englishSentenceWords } from './query'
@@ -52,8 +53,6 @@ function asTheWordReadsIt({ base, entries }: BaseForm): Meaning {
   }
 }
 
-const isAVerbForm = ({ entries }: BaseForm) => entries === 'verbs' || entries === 'allIfAVerb'
-
 const isAComparative = ({ entries }: BaseForm) => entries === 'adjectives'
 
 const baseFormsOfAnyKind = (word: string) => [...irregularBaseFormsOf(word), ...baseFormsOf(word)]
@@ -90,22 +89,60 @@ const entriesOrUnknownWord = (candidates: SearchResultItem[]): EntriesOfAWord =>
 
 type ExamplesByWord = ReadonlyMap<string, readonly EntryExamplesUse[]>
 
-async function firstEntryExamplesUse(
+async function entriesThatMeanEach(
+  db: SearchDatabase,
+  used: readonly EntryExamplesUse[],
+  meanings: readonly Meaning[]
+): Promise<(RankedEntry | undefined)[]> {
+  const meant: (RankedEntry | undefined)[] = used.map(() => undefined)
+  for (const meaning of meanings) {
+    if (meant.every(entry => entry !== undefined)) break
+    const entries = await entriesThatMean(db, meaning)
+    for (const [place, row] of used.entries()) {
+      meant[place] ??= entries.find(ranked => ranked.entry.id === row.id)
+    }
+  }
+  return meant
+}
+
+async function candidatesAmong(
   db: SearchDatabase,
   used: readonly EntryExamplesUse[],
   meanings: readonly Meaning[],
-  orAlwaysTogether: boolean
+  passesUnmeant: (row: EntryExamplesUse) => boolean
 ): Promise<SearchResultItem[]> {
-  const entries: RankedEntry[][] = []
-  for (const row of used) {
-    for (const [order, meaning] of meanings.entries()) {
-      entries[order] ??= await entriesThatMean(db, meaning)
-      const found = entries[order].find(ranked => ranked.entry.id === row.id)
-      if (found) return resultItems([found])
-    }
-    if (orAlwaysTogether && areAlwaysTogether(row)) return [usedInExamples(row)]
-  }
-  return []
+  const meant = await entriesThatMeanEach(db, used, meanings)
+  const first = used.findIndex((row, place) => meant[place] !== undefined || passesUnmeant(row))
+  if (first < 0) return []
+  const leading = meant[first]
+  if (!leading) return [usedInExamples(used[first])]
+  const sharingItsUse = used.flatMap((row, place) => {
+    const entry = meant[place]
+    return entry && place > first && areSplitBetween(used[first], row) ? [entry] : []
+  })
+  return resultItems([leading, ...sharingItsUse])
+}
+
+function candidatesFromItsExamples(
+  db: SearchDatabase,
+  word: string,
+  examples: ExamplesByWord
+): Promise<SearchResultItem[]> {
+  const inAnyForm = [word, ...baseFormsOfAnyKind(word).map(({ base }) => base)]
+  const isAnotherWordsForm = inAnyForm.length > 1
+  return candidatesAmong(db, examples.get(word) ?? [], inAnyForm.map(asWritten), row =>
+    isAnotherWordsForm ? mentions(row, inAnyForm) : true
+  )
+}
+
+function candidatesFromExamplesOfABaseForm(
+  db: SearchDatabase,
+  baseForm: BaseForm,
+  examples: ExamplesByWord
+): Promise<SearchResultItem[]> {
+  if (baseForm.entries === 'all') return candidatesFromItsExamples(db, baseForm.base, examples)
+  const used = examples.get(baseForm.base) ?? []
+  return candidatesAmong(db, used, [asTheWordReadsIt(baseForm)], () => false)
 }
 
 async function candidatesFromExamples(
@@ -113,16 +150,11 @@ async function candidatesFromExamples(
   word: string,
   examples: ExamplesByWord
 ): Promise<SearchResultItem[]> {
-  const baseForms = baseFormsOfAnyKind(word)
-  const inAnyForm = [word, ...baseForms.map(({ base }) => base)].map(asWritten)
-  const own = await firstEntryExamplesUse(db, examples.get(word) ?? [], inAnyForm, true)
+  const own = await candidatesFromItsExamples(db, word, examples)
   if (own.length > 0) return own
   const ofItsBaseForms: SearchResultItem[] = []
-  for (const baseForm of baseForms.filter(form => !isAComparative(form))) {
-    const used = examples.get(baseForm.base) ?? []
-    const meaning = [asTheWordReadsIt(baseForm)]
-    const first = await firstEntryExamplesUse(db, used, meaning, !isAVerbForm(baseForm))
-    ofItsBaseForms.push(...first)
+  for (const baseForm of baseFormsOfAnyKind(word).filter(form => !isAComparative(form))) {
+    ofItsBaseForms.push(...(await candidatesFromExamplesOfABaseForm(db, baseForm, examples)))
   }
   return ofItsBaseForms
 }

@@ -1,7 +1,7 @@
 import { graphemeCount } from '../detail/text'
 import type { SearchResultItem } from './composition'
 import { decodeEntry, type EntryRow, entryColumns, profile, type SearchDatabase } from './database'
-import { displayedFormProfileJoin } from './english'
+import { displayedFormProfileJoin, glossToken } from './english'
 import { type EnglishRank, EvidenceLane, isMarked } from './rank'
 
 const wordIndex = 'word_index'
@@ -9,8 +9,7 @@ const wordIndex = 'word_index'
 export interface EntryExamplesUse extends EntryRow {
   word: string
   pairs_with_both: number
-  pairs_with_word: number
-  pairs_with_entry: number
+  glosses: string
 }
 
 async function hasWordIndex(db: SearchDatabase): Promise<boolean> {
@@ -28,7 +27,9 @@ export async function entriesExamplesUse(
   const used = new Map<string, EntryExamplesUse[]>()
   if (asked.length === 0 || !(await hasWordIndex(db))) return used
   const rows = await db.all<EntryExamplesUse>(
-    `SELECT w.word, w.pairs_with_both, w.pairs_with_word, w.pairs_with_entry,
+    `SELECT w.word, w.pairs_with_both,
+         (SELECT json_group_array(g.normalized_text) FROM gloss_atoms g
+          WHERE g.entry_id = w.entry_id) AS glosses,
          ${entryColumns}, p.primary_mask, p.secondary_mask, p.news_frequency_band
        FROM json_each(?) listed
        JOIN ${wordIndex}.english_word_entries w ON w.word = listed.value
@@ -40,12 +41,19 @@ export async function entriesExamplesUse(
   return used
 }
 
-const leastScoreOfAlwaysTogether = { numerator: 3, denominator: 4 }
+export function mentions(used: EntryExamplesUse, words: readonly string[]): boolean {
+  const glosses: string[] = JSON.parse(used.glosses)
+  return words.some(word => {
+    const asAWholeWord = glossToken(word)
+    return glosses.some(gloss => asAWholeWord.test(gloss))
+  })
+}
 
-export function areAlwaysTogether(used: EntryExamplesUse): boolean {
-  const { pairs_with_both: both, pairs_with_word: withWord, pairs_with_entry: withEntry } = used
-  const { numerator, denominator } = leastScoreOfAlwaysTogether
-  return denominator * both * both >= numerator * withWord * withEntry
+const sharedPairsOfASplit = { numerator: 7, denominator: 10 }
+
+export function areSplitBetween(first: EntryExamplesUse, other: EntryExamplesUse): boolean {
+  const { numerator, denominator } = sharedPairsOfASplit
+  return denominator * other.pairs_with_both >= numerator * first.pairs_with_both
 }
 
 export function usedInExamples(row: EntryRow): SearchResultItem {

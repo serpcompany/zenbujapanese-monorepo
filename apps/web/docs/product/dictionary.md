@@ -101,7 +101,7 @@ only a form's or meaning's first word, as in the app. It lists at most 60 words,
 lists its Discovered Words: each word the app's Sudachi finds in it, in order, as the app does with
 its Japanese Text Analysis pack. The dictionary service runs the same Sudachi, with the dictionary
 the app pins. An English sentence that no entry means as a whole lists them too, with no analyzer:
-for each word, the entry its examples use that means it (`home` is 家, not 家庭; `saw` 見る, not 鋸), else
+for each word, the entry its examples use (`home` is 家, not 家庭; `saw` 見る, not 鋸; `station` 駅), else
 the one its own results lead with among the entries with a meaning that is the word ("to go"); its
 row shows that meaning. `a`, `an`, `the`, `of`, `to`, and `will` list nothing, and twelve list a
 fixed entry: `am`, `is`, `are` です; `was`, `were` だった; `it` それ; `not` ない; `can` 出来る; `never` 決して;

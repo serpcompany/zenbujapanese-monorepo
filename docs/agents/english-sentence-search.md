@@ -11,7 +11,7 @@ answers the app recorded.
 | --- | --- |
 | `packages/dictionary-core/src/search/english-sentence.ts` | `englishSentenceCandidates`: the entries each word brings, by the rules below |
 | `packages/dictionary-core/src/search/english-function-words.ts` | The words that list nothing, and the words that list a fixed entry |
-| `packages/dictionary-core/src/search/english-word-entries.ts` | `entriesExamplesUse`: the entries example sentences use for a word, from the word index; `areAlwaysTogether` |
+| `packages/dictionary-core/src/search/english-word-entries.ts` | `entriesExamplesUse`: the entries example sentences use for a word, from the word index; `mentions` and `areSplitBetween` |
 | `packages/dictionary-core/src/examples/english-irregular-forms.ts` | The irregular verb forms, plurals, and comparatives, each under its base form |
 | `packages/dictionary-core/src/examples/english-inflection.ts` | `irregularBaseFormsOf` and `baseFormsOf`: a word's base forms, and which of a base's entries are the word's |
 | `packages/dictionary-core/src/results/results.ts` | `discoveredWords`: of the entries a word brings, the one listed |
@@ -55,38 +55,42 @@ The first rule that fits the word decides.
    found as any word's are (`rankedByStrongGloss` for that meaning), so its row is ranked and
    labelled as every other. A number the data no longer held would list nothing, so
    `sentence-search.test.ts` checks each one, with its headword, on the app's data.
-3. **The entry its example sentences use**, when it means the word. The word index holds, for an
-   English word, up to three entries the sentence pairs with that word use, the most used first
+3. **The entry its example sentences use.** The word index holds, for an English word, up to
+   three entries the sentence pairs with that word use, the most used first
    (`english_word_entries`; [`apps/ios/Tools/README.md`](../../apps/ios/Tools/README.md) says how
-   it is built). `entriesExamplesUse` reads them for the sentence's words and their base forms.
-   The app and the service attach the index; with none, as in the core's own tests, rules 4 to 6
-   decide.
-   - **Its own entries in the index, in order.** The word lists the first whose meaning is the
-     word or one of its base forms (`irregularBaseFormsOf` and `baseFormsOf`), as itself or after
-     "to". `pen` lists ペン alone, where its own results bring 書く "to pen" too; `home` lists 家,
-     not 家庭; `went` lists 行く "to go", `saw` 見る, and `studying` 勉強 "study".
-   - **An entry that only keeps the word company is passed over.** `watching` has テレビ first,
-     `drinking` 酒, `post` 郵便局 "post office", `hour` 一時間 "one hour", and `tony` 君. None
-     means the word, and `drinking` goes on to its next entry, 飲む.
-   - **Unless the two are always together.** An entry that doesn't mean the word still passes
-     when `both² / (withWord × withEntry)`, from the index's counts, is at least 3/4
-     (`areAlwaysTogether`). `station` lists 駅, glossed only "railway station, train station":
-     569 of the word's 637 pairs, and of the entry's 580, have both (0.88). `hour` and 一時間
-     come to 0.59. The row shows the entry's own summary. Twenty-one words pass this way, most of
-     them parts of place names (`york`, `fuji`); the cost is `lung`, which lists 肺がん "lung
-     cancer", as all 16 pairs with the word do.
+   it is built, and that a name keeps only an entry that means or mentions it).
+   `entriesExamplesUse` reads them for the sentence's words and their base forms. The app and
+   the service attach the index; with none, as in the core's own tests, rules 4 to 6 decide.
+   - **A word that is no other word's form lists its first entry as it is**, whatever the
+     entry's meanings say: `station` lists 駅, glossed only "railway station, train station";
+     `my` 私 "I, me"; `want` たい "want to do ..."; `dead` 死ぬ "to die". An entry that means the
+     word shows that meaning (`pen` ペン "pen", alone, where its own results bring 書く "to pen"
+     too; `home` 家, not 家庭), and any other its own summary.
+   - **A word that is another word's form is tested**, since a form's examples often use the
+     word beside it. A word with base forms (`irregularBaseFormsOf` and `baseFormsOf`) lists the
+     first of its entries that means the word or a base form, as itself or after "to" (`went`
+     行く "to go", `saw` 見る, `studying` 勉強 "study"), or that has the word or a base form as a
+     whole word in a meaning (`looking` 探す "to look for", `tried` とする "to try to ...", and
+     `brother` 兄 "older brother", since `baseFormsOf` reads `brother` as a comparative).
+     `watching` has テレビ first and `drinking` 酒, which mention neither "watch" nor "drink", so
+     both are passed over, and `drinking` lists its next entry, 飲む.
    - **Then its base forms' entries in the index**, each read as the word reads its base. A
      verb's form (irregular, or in `-ed` or `-ing`) takes the first entry that means "to" and the
      base: `watching` lists 見る, not 時計, which `watch` lists first; `fell` 落ちる, not 秋
      "fall"; `has` and `had` 有る; `found` 見つける, not 作る "to found". `secreted` still isn't
      "secret", which no entry has as a verb. An irregular plural takes a noun, and a word in `-s`
-     any entry that means its base or is always with it: `doors` lists ドア, not ドアーズ, and
-     `stations` 駅. A comparative isn't taken to its base, so `best` keeps 最高 (rule 6).
+     what its base lists by this rule: `doors` lists ドア, not ドアーズ, and `stations` 駅. A
+     comparative isn't taken to its base, so `best` keeps 最高 (rule 6).
+   - **Where the examples are split, the more common entry is listed.** When two or more of
+     those entries mean the word, and another is in at least 7/10 as many of the word's pairs as
+     the first, the word brings each such entry, and the results layer lists the one its
+     frequency order puts first (below). `see` has 会う in 482 pairs and 見る in 370, and lists
+     見る; `play` has 弾く in 104 and 遊ぶ in 89, and lists 遊ぶ, as `played` and `seeing` do.
    - A word of one letter isn't looked up: in the index `s`, `u`, `m`, and `p` are pieces of
      "U.S." and "p.m.".
 
-   A word the index doesn't settle goes on to the rules below: `hour` lists 時, `post` 投稿, and
-   `tony` nothing.
+   A word the index doesn't settle goes on to the rules below: `tony`, a name, has no entry
+   there and lists nothing, and `married`, whose examples use 結婚 "marriage", lists 既婚.
 4. **Its own entries and its base form's, weighed together**, for an irregular form
    (`english-irregular-forms.ts`):
    - A verb's form reads its base as a verb: the entries with a meaning `to <base>`. `gave` brings
@@ -135,29 +139,31 @@ The first rule that fits the word decides.
 The results layer has the learner's frequency dictionaries, so it chooses. `discoveredWords`
 orders a word's entries as a search's results are ordered (`orderedByFrequency`) and lists the
 first. Entries no dictionary tells apart keep the order they came in, the word's own before its
-base's. A word rule 3 settled brings one entry, or one for each of its base forms. An entry two
-words lead with is listed once. Each row shows the meaning that matched: "is" beside です, "to
-eat" beside 食べる for `ate`.
+base's. A word rule 3 settled brings one entry, the few its examples are split between, or one
+for each of its base forms. An entry two words lead with is listed once. Each row shows the
+meaning that matched: "is" beside です, "to eat" beside 食べる for `ate`.
 
 ## What it still gets wrong
 
-- Where examples are split between two entries that mean a word, the one in a few more pairs is
-  listed: `see` lists 会う (482 pairs to 見る's 370) and `play` 弾く (104 to 遊ぶ's 89), and their
-  forms follow (`sees`, `played`).
-- An entry the examples use is passed over when no meaning of it is the word, though it is the
-  right one: `brother` lists 入満, not 兄 "older brother"; `my` 我が, not 私; `want` 要る, not
-  たい; `his` and `their` nothing, not 彼 and 彼ら. Of the index's 772 first entries that don't
-  mean their word, 447 pass as a base form's meaning, 21 as always together, and 304 don't pass.
+- A word that mostly occurs inside a compound lists the compound: `hour` lists 一時間 "one hour",
+  `post` 郵便局 "post office", `forward` 楽しみにする "to look forward to", `lung` 肺がん "lung
+  cancer", `processor` ワープロ, `prime` 首相, `billion` 億, and `000` 円.
+- A verb's form whose examples use a する-noun doesn't pass rule 3, and the entry the rules list
+  is often worse: `married` lists 既婚, not 結婚; `succeeded` 替わる, not 成功; `trained` 電車,
+  not 訓練. 93 first entries fail the test, 64 of them する-nouns. `succeed` is among them:
+  `baseFormsOf` reads its `-ed`.
+- Where examples are split, the more common entry is sometimes the less apt: `question` lists
+  問題, not 質問; `express` 急行, not 表す; `confidence` 信頼, not 自信.
 - A word in `-s` that is no plural takes its base's entry: `shorts` lists 短い, `ruins` 破滅, and
   `odds` 変.
 - A common word the index doesn't hold wins on a side meaning: `get` and `got` list 成る, `out`
   ＯＵＴ, and `getting` 頂戴. Choosing by sense needs data the core doesn't have.
-- Contractions and possessives (`i'm`, `it's`, `tom's`), `would`, and `could` list nothing, and a
-  name is read as words.
+- Contractions and most possessives (`i'm`, `it's`, `tom's`), `would`, and `could` list nothing,
+  and a name the dictionary doesn't hold is read as words: `tom` lists 心の理論, "ToM".
 
 [`tech-debt.md`](../tech-debt.md) holds these. Over the English of the 232,774 example sentences
-(28,000 different words, 1.7 million uses), measured on 2026-10-12: 84% of uses list a word, 12%
-are the six that list nothing, and 4% list nothing.
+(28,000 different words, 1.7 million uses), measured on 2026-10-12: 85% of uses list a word, 12%
+are the six that list nothing, and 3% list nothing (84%, 12%, and 4% without the index).
 
 ## Check it
 
@@ -171,11 +177,11 @@ are the six that list nothing, and 4% list nothing.
   tables.
 - `apps/dictionary-api/src/conformance/sentence-search.test.ts`, on the app's data: each word that
   lists nothing, each fixed entry by number and headword, and words pinned for every rule (`pen`,
-  `watching`, `hour`, `station`, `ate`, `saw`, `incoming`, `dogs`).
+  `station`, `looking`, `watching`, `see`, `tony`, `ate`, `saw`, `incoming`, `dogs`).
   `apps/dictionary-api/src/conformance/english-word-entries.test.ts` checks the index's entries
-  that rule 3 turns on (`drinking`, `station`, `hour`), and
+  that rule 3 turns on (`drinking`, `see`, `york`), and
   `apps/ios/Tools/tests/test_example_word_index_contract.py` its first entry for the words its
-  own rules were tuned on.
+  own rules were tuned on, and for names.
 - The app records four English sentences in both search suites, which the service replays
   ([`dictionary-api.md`](dictionary-api.md), Check it), and
   `SearchUITests.testAnEnglishSentenceListsItsWordsAndOpensOne` drives one on the screen. A
