@@ -18,7 +18,10 @@ import type {
   EmbeddedKanjiPage,
   EmbeddedWordPage
 } from '@zenbu/dictionary-core/embedded/presentation'
-import type { EmbeddedExamples } from '@zenbu/dictionary-core/embedded/text'
+import type {
+  EmbeddedEntryExamples,
+  EmbeddedExamplePage
+} from '@zenbu/dictionary-core/embedded/text'
 import { beforeAll, describe, expect, test } from 'vitest'
 import {
   codePoint,
@@ -35,9 +38,9 @@ import {
 } from './detail-suite'
 import {
   type Embedded,
-  type EmbeddedSentence,
   embedded,
   entryAsTheAppReadsIt,
+  everyPage,
   freshInstallEvidence,
   shownAsTheAppLinks
 } from './embedded-support'
@@ -62,10 +65,10 @@ describe.runIf(artifactAvailable)('the app’s word and kanji pages on the artif
     db = await artifactDatabase()
   })
 
-  async function examplesAsRecorded(id: string, headword: string): Promise<SuiteExamples> {
-    let found: EmbeddedExamples
+  async function examplesAsRecorded(id: string): Promise<SuiteExamples> {
+    let found: EmbeddedEntryExamples
     try {
-      found = await app.text<EmbeddedExamples>('entryExamples', id)
+      found = await app.text<EmbeddedEntryExamples>('entryExamples', { id, from: 0 })
     } catch (error) {
       const code = error instanceof Error ? error.message : String(error)
       return {
@@ -76,30 +79,25 @@ describe.runIf(artifactAvailable)('the app’s word and kanji pages on the artif
       }
     }
     return {
-      listed: found.sentences.length,
+      listed: found.listed,
       reportedCount: found.count > 50 ? 'more than 50' : String(found.count),
       truncated: found.truncated,
-      shown: await shownAsTheAppLinks(
-        app,
-        found.sentences.slice(0, wordSuite.exampleLimit ?? 0),
-        { query: headword, highlightedEntry: id },
-        'pageWord'
-      )
+      shown: shownAsTheAppLinks(found.examples.slice(0, wordSuite.exampleLimit ?? 0), 'pageWord')
     }
   }
 
   async function withFormExamples(forms: SuiteConjugationForm[]): Promise<SuiteConjugationForm[]> {
     const withExamples: SuiteConjugationForm[] = []
     for (const form of forms) {
-      const sentences = await app.text<EmbeddedSentence[]>('formExamples', form.surface)
+      const { examples } = await everyPage(from =>
+        app.text<EmbeddedExamplePage>('formExamples', { form: form.surface, from })
+      )
       withExamples.push({
         ...form,
         examples: {
-          ids: sentences.map(sentence => sentence.id),
-          shown: await shownAsTheAppLinks(
-            app,
-            sentences.slice(0, wordSuite.formExampleLimit ?? 0),
-            { query: form.surface, highlightedEntry: null },
+          ids: examples.map(example => example.id),
+          shown: shownAsTheAppLinks(
+            examples.slice(0, wordSuite.formExampleLimit ?? 0),
             'highlighted'
           )
         }
@@ -185,7 +183,7 @@ describe.runIf(artifactAvailable)('the app’s word and kanji pages on the artif
         const targetID = (entry.relationships[index] as { targetID?: string | null }).targetID
         return { headword, reading, relation, summary, ...(targetID ? { targetID } : {}) }
       }),
-      examples: await examplesAsRecorded(id, entry.headword)
+      examples: await examplesAsRecorded(id)
     }
     expect(observed).toEqual(withoutFields(expected, ['covers', 'entSeq']))
     for (const mode of page.conjugations?.modes ?? []) {

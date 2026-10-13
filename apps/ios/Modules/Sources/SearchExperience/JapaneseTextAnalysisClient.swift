@@ -1,6 +1,11 @@
 import Foundation
 
 struct JapaneseTextToken: Identifiable, Sendable {
+  enum Accent: String, Decodable, Sendable {
+    case entry
+    case query
+  }
+
   let id: Int
   let surface: String
   let entry: DictionaryEntry?
@@ -9,8 +14,7 @@ struct JapaneseTextToken: Identifiable, Sendable {
   let reading: String?
   let ruby: JapaneseRuby?
   let isFunctionWord: Bool
-  let isPageWord: Bool
-  let matchesQuery: Bool
+  let accent: Accent?
   let lineBreak: JapaneseTokenLineBreakBehavior
   let isCounted: Bool
 
@@ -23,8 +27,7 @@ struct JapaneseTextToken: Identifiable, Sendable {
     reading: String? = nil,
     ruby: JapaneseRuby? = nil,
     isFunctionWord: Bool = false,
-    isPageWord: Bool = false,
-    matchesQuery: Bool = false,
+    accent: Accent? = nil,
     lineBreak: JapaneseTokenLineBreakBehavior = .normal,
     isCounted: Bool = false
   ) {
@@ -36,8 +39,7 @@ struct JapaneseTextToken: Identifiable, Sendable {
     self.reading = reading
     self.ruby = ruby
     self.isFunctionWord = isFunctionWord
-    self.isPageWord = isPageWord
-    self.matchesQuery = matchesQuery
+    self.accent = accent
     self.lineBreak = lineBreak
     self.isCounted = isCounted
   }
@@ -53,10 +55,9 @@ struct JapaneseTextAnalysisClient: Sendable {
     ) async -> [JapaneseTextToken]
 
   static func live(
-    text: DictionaryTextData = .shared, lookupClient: LookupClient = .live
+    text: DictionaryTextData = .shared, linked: LinkedEntries = LinkedEntries(lookupClient: .live)
   ) -> JapaneseTextAnalysisClient {
-    let linked = LinkedEntries(lookupClient: lookupClient)
-    return JapaneseTextAnalysisClient(
+    JapaneseTextAnalysisClient(
       availability: { await text.availability() },
       linkedTokens: { japanese, highlightedQuery, highlightedEntry in
         guard
@@ -65,13 +66,13 @@ struct JapaneseTextAnalysisClient: Sendable {
               text: japanese, query: highlightedQuery.value,
               highlightedEntry: highlightedEntry?.id.rawValue))
         else { return [] }
-        return await linked.tokens(words, highlightedEntry: highlightedEntry)
+        return await linked.tokens([words], highlightedEntry: highlightedEntry)[0]
       }
     )
   }
 }
 
-private actor LinkedEntries {
+actor LinkedEntries {
   private let lookupClient: LookupClient
   private var entries: [String: DictionaryEntry] = [:]
 
@@ -80,10 +81,10 @@ private actor LinkedEntries {
   }
 
   func tokens(
-    _ words: [LinkedWord], highlightedEntry: DictionaryEntry?
-  ) async -> [JapaneseTextToken] {
+    _ texts: [[LinkedWord]], highlightedEntry: DictionaryEntry?
+  ) async -> [[JapaneseTextToken]] {
     if let highlightedEntry { entries[highlightedEntry.id.rawValue] = highlightedEntry }
-    let unread = Set(words.flatMap { $0.candidates + [$0.entry].compactMap { $0 } })
+    let unread = Set(texts.joined().flatMap { $0.candidates + [$0.entry].compactMap { $0 } })
       .filter { entries[$0] == nil }
     if !unread.isEmpty,
       let read = try? await lookupClient.entries(unread.map(LanguageReferenceID.init(rawValue:)))
@@ -91,25 +92,26 @@ private actor LinkedEntries {
       if entries.count + read.count > Self.capacity { entries.removeAll(keepingCapacity: true) }
       for (id, entry) in read { entries[id.rawValue] = entry }
     }
-    return words.enumerated().map { index, word in
-      let entry = word.entry.flatMap { entries[$0] }
-      return JapaneseTextToken(
-        id: index,
-        surface: word.surface,
-        entry: entry,
-        candidateEntries: entry.map { [$0] } ?? word.candidates.compactMap { entries[$0] },
-        scalarRange: word.start..<word.end,
-        reading: word.reading,
-        ruby: word.ruby.map {
-          JapaneseRuby(surface: word.surface, reading: word.furigana ?? "", segments: $0)
-        },
-        isFunctionWord: word.isFunctionWord,
-        isPageWord: word.isPageWord,
-        matchesQuery: word.matchesQuery,
-        lineBreak: JapaneseTokenLineBreakBehavior(attaching: word.attaches),
-        isCounted: word.counted
-      )
-    }
+    return texts.map { words in words.enumerated().map { token($0.offset, $0.element) } }
+  }
+
+  private func token(_ index: Int, _ word: LinkedWord) -> JapaneseTextToken {
+    let entry = word.entry.flatMap { entries[$0] }
+    return JapaneseTextToken(
+      id: index,
+      surface: word.surface,
+      entry: entry,
+      candidateEntries: entry.map { [$0] } ?? word.candidates.compactMap { entries[$0] },
+      scalarRange: word.start..<word.end,
+      reading: word.reading,
+      ruby: word.ruby.map {
+        JapaneseRuby(surface: word.surface, reading: word.furigana ?? "", segments: $0)
+      },
+      isFunctionWord: word.isFunctionWord,
+      accent: word.accent,
+      lineBreak: JapaneseTokenLineBreakBehavior(attaching: word.attaches),
+      isCounted: word.counted
+    )
   }
 
   private static let capacity = 4_000

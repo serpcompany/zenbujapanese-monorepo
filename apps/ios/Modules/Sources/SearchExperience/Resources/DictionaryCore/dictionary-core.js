@@ -2437,10 +2437,10 @@
     }
     async search(query, morphology) {
       const results = await new DictionarySearch(this.searchDb, { morphology }).search(query);
-      const listed3 = listedResults(results);
+      const listed2 = listedResults(results);
       return {
-        ...listed3,
-        items: listed3.items.map((item, index) => ({
+        ...listed2,
+        items: listed2.items.map((item, index) => ({
           ...item,
           match: matchLabel(results.items[index].sourceOrder, results.items[index].matchRank)
         })),
@@ -3152,7 +3152,7 @@
     };
   }
   function kanjiElementDetail(rows) {
-    const kanji2 = (listed3) => listed3.filter((row) => isKanjiCharacter(row.character));
+    const kanji2 = (listed2) => listed2.filter((row) => isKanjiCharacter(row.character));
     const standalone = kanji2(rows.family).sort(mostFrequentFirst).at(0);
     return {
       glyph: rows.glyph,
@@ -3168,6 +3168,7 @@
   }
 
   // src/detail/examples.ts
+  var examplesPerPage = 25;
   function wordExample(rows) {
     return example(rows);
   }
@@ -4483,6 +4484,11 @@
     );
   }
   var examplesEntries = linkedEntries;
+  var screenAccent = {
+    searchExamples: "query",
+    wordExamples: "entry",
+    formExamples: "query"
+  };
   function tokenSpans(tokens) {
     let start = 0;
     return tokens.map((token) => {
@@ -4504,6 +4510,16 @@
       }
     }
     return found;
+  }
+  function accentedPositions(text, tokens, highlight) {
+    if (highlight.accent === "entry") {
+      const id = highlight.entry?.id;
+      return tokens.flatMap((token, position) => id && token.entry?.id === id ? [position] : []);
+    }
+    const found = occurrences(text, highlight.query);
+    return tokenSpans(tokens).flatMap(
+      (span, position) => found.some((match) => match.start < span.end && span.start < match.end) ? [position] : []
+    );
   }
 
   // src/examples/ipadic.ts
@@ -4556,9 +4572,9 @@
       this.records = new DataView(records);
       this.text = new Uint8Array(text);
       this.lists = new Int32Array(lists, 0, lists.byteLength >> 2);
-      const listed3 = this.lists[0] ?? 0;
-      let listOf = new Int32Array(Math.max(listed3, 1));
-      for (let at = 1, read = 0; read < listed3; read++, at += 2 + this.lists[at + 1]) {
+      const listed2 = this.lists[0] ?? 0;
+      let listOf = new Int32Array(Math.max(listed2, 1));
+      for (let at = 1, read = 0; read < listed2; read++, at += 2 + this.lists[at + 1]) {
         const key = this.lists[at];
         if (key >= listOf.length) {
           const wider = new Int32Array(Math.max(key + 1, listOf.length * 2));
@@ -4807,8 +4823,8 @@
         found++;
         const list = this.known.list(-value - 1);
         const length2 = unitAt[at + 1] - from;
-        for (let listed3 = list + 1; listed3 <= list + lists[list]; listed3++) {
-          const word = lists[listed3];
+        for (let listed2 = list + 1; listed2 <= list + lists[list]; listed2++) {
+          const word = lists[listed2];
           const record = word >> 1;
           lattice.add(
             character + length2,
@@ -4837,8 +4853,8 @@
       }
       const { shorts, lists } = this.unknown;
       const list = this.unknown.list(kind);
-      for (let listed3 = list + 1; listed3 <= list + lists[list]; listed3++) {
-        const word = lists[listed3];
+      for (let listed2 = list + 1; listed2 <= list + lists[list]; listed2++) {
+        const word = lists[listed2];
         const record = word >> 1;
         this.lattice.add(
           character + length2,
@@ -4923,11 +4939,6 @@
       joinsInflection: false
     };
   }
-  var listed2 = (sentences) => sentences.map(({ pairId, japanese, english }) => ({ id: `esp1_${pairId}`, japanese, english }));
-  function answered(found) {
-    if (typeof found === "string") throw new Error(found);
-    return { sentences: listed2(found.sentences), count: found.count, truncated: found.truncated };
-  }
   var EmbeddedText = class {
     db;
     searchDb;
@@ -4937,6 +4948,7 @@
     linked = new LruCache(512);
     searched = new LruCache(32);
     retrieved = new LruCache(64);
+    usingForm = new LruCache(32);
     tokenize;
     readsItsFiles;
     constructor(host) {
@@ -4973,12 +4985,12 @@
       return found;
     }
     retrieve(id) {
-      const cached = this.retrieved.get(id);
-      if (cached !== void 0) return cached;
       const entry = this.found([id]).get(id);
-      const found = entry ? retrieveEntryExamples(this.db, entry) : "missingEntryEvidence";
-      this.retrieved.set(id, found);
-      return found;
+      if (!entry) return "missingEntryEvidence";
+      const cached = this.retrieved.get(id);
+      const examples = cached ?? retrieveEntryExamples(this.db, entry);
+      if (cached === void 0) this.retrieved.set(id, examples);
+      return typeof examples === "string" ? examples : { entry, examples };
     }
     checkExamples() {
       checkExamples(this.db);
@@ -4997,23 +5009,56 @@
       return typeof found === "string" ? 0 : found.count;
     }
     listed(request) {
-      return request.usesPrimaryEntryExamples && request.primaryEntry !== null ? this.retrieve(request.primaryEntry) : this.search(request.query);
+      if (!request.usesPrimaryEntryExamples || request.primaryEntry === null) {
+        return this.search(request.query);
+      }
+      const retrieved = this.retrieve(request.primaryEntry);
+      return typeof retrieved === "string" ? retrieved : retrieved.examples;
     }
     resultsExampleCount(request) {
       const found = this.listed(request);
       if (typeof found === "string") return 0;
       return request.usesPrimaryEntryExamples && request.primaryEntry !== null ? found.sentences.length : found.count;
     }
-    resultsExamples(request) {
+    async page(sentences, from, accented, analyze) {
+      const examples = [];
+      for (const { pairId, japanese, english } of sentences.slice(from, from + examplesPerPage)) {
+        examples.push({
+          id: `esp1_${pairId}`,
+          japanese,
+          english,
+          words: await this.link(japanese, accented, analyze)
+        });
+      }
+      return { examples, listed: sentences.length };
+    }
+    async resultsExamples(request, analyze) {
       const found = this.listed(request);
-      if (typeof found === "string") return { sentences: [], countText: null };
+      if (typeof found === "string") return { examples: [], listed: 0, countText: null };
+      const accented = {
+        query: request.query,
+        entry: request.primaryEntry,
+        accent: screenAccent.searchExamples
+      };
       return {
-        sentences: listed2(found.sentences),
+        ...await this.page(found.sentences, request.from, accented, analyze),
         countText: exampleCountText({ listed: found.sentences.length, truncated: found.truncated })
       };
     }
-    entryExamples(id) {
-      return answered(this.retrieve(id));
+    async entryExamples({ id, from }, analyze) {
+      const retrieved = this.retrieve(id);
+      if (typeof retrieved === "string") throw new Error(retrieved);
+      const { entry, examples } = retrieved;
+      const accented = {
+        query: entry.headword,
+        entry: id,
+        accent: screenAccent.wordExamples
+      };
+      return {
+        ...await this.page(examples.sentences, from, accented, analyze),
+        count: examples.count,
+        truncated: examples.truncated
+      };
     }
     async candidates(text, analyze) {
       try {
@@ -5023,17 +5068,26 @@
         return null;
       }
     }
-    async formExamples(form, analyze) {
+    async sentencesUsing(form, analyze) {
+      const known = this.usingForm.get(form);
+      if (known) return known;
       const found = this.search(form);
       if (typeof found === "string") return [];
       const sentences = [];
+      let everySentenceWasAnalyzed = true;
       for (const sentence of found.sentences) {
         if (!sentence.japanese.includes(form)) continue;
-        if (usesForm(sentence.japanese, await this.candidates(sentence.japanese, analyze), form)) {
-          sentences.push(sentence);
-        }
+        const candidates = await this.candidates(sentence.japanese, analyze);
+        if (candidates === null) everySentenceWasAnalyzed = false;
+        if (usesForm(sentence.japanese, candidates, form)) sentences.push(sentence);
       }
-      return listed2(sentences);
+      if (everySentenceWasAnalyzed) this.usingForm.set(form, sentences);
+      return sentences;
+    }
+    async formExamples({ form, from }, analyze) {
+      const sentences = await this.sentencesUsing(form, analyze);
+      const accented = { query: form, entry: null, accent: screenAccent.formExamples };
+      return this.page(sentences, from, accented, analyze);
     }
     async prefetch(candidates, highlighted) {
       const alternatives = formsLookedUp(candidates, highlighted).map(
@@ -5047,19 +5101,28 @@
       );
       await entriesMatchingFirstForms(this.searchDb, alternatives, this.forms);
     }
-    async linkedTokens(request, analyze) {
-      const { text } = request;
-      const query = normalizeQuery(request.query);
-      const key = JSON.stringify([text, query, request.highlightedEntry]);
+    linkedTokens(request, analyze) {
+      const accented = {
+        query: request.query,
+        entry: request.highlightedEntry,
+        accent: "entry"
+      };
+      return this.link(request.text, accented, analyze);
+    }
+    async link(text, accented, analyze) {
+      const query = normalizeQuery(accented.query);
+      const key = JSON.stringify([text, query, accented.entry, accented.accent]);
       const known = this.linked.get(key);
       if (known) return known;
       const candidates = await this.candidates(text, analyze);
-      const entry = request.highlightedEntry ? this.found([request.highlightedEntry]).get(request.highlightedEntry) ?? null : null;
+      const entry = accented.entry ? this.found([accented.entry]).get(accented.entry) ?? null : null;
       const highlighted = entry ? { entry, query } : null;
       if (candidates) await this.prefetch(candidates, highlighted);
       const tokens = linkedTokens(text, candidates, highlighted, this.lookup);
       const linked = this.found(tokens.flatMap((token) => token.entry ? [token.entry.id] : []));
-      const matches = occurrences(text, query);
+      const accents = new Set(
+        accentedPositions(text, tokens, { entry, query, accent: accented.accent })
+      );
       const answer = tokenSpans(tokens).map(({ start, end }, index) => {
         const token = tokens[index];
         const target = token.entry ? linked.get(token.entry.id) : void 0;
@@ -5075,8 +5138,7 @@
           candidates: token.entry ? [] : token.candidates.map((candidate) => candidate.id),
           furigana,
           ruby: furigana === null ? null : rubySegments(token.surface, furigana),
-          isPageWord: entry !== null && token.entry?.id === entry.id,
-          matchesQuery: matches.some((match) => match.start < end && start < match.end),
+          accent: accents.has(index) ? accented.accent : null,
           attaches: attachment(token.surface),
           counted: token.entry !== null && !functionWord
         };
@@ -5115,9 +5177,9 @@
       tokenizerReady: () => text().tokenizerReady(),
       exampleCount: (query) => text().exampleCount(query),
       resultsExampleCount: (request) => text().resultsExampleCount(JSON.parse(request)),
-      resultsExamples: (request) => text().resultsExamples(JSON.parse(request)),
-      entryExamples: (id) => text().entryExamples(id),
-      formExamples: (form, analyze) => text().formExamples(form, analyze),
+      resultsExamples: (request, analyze) => text().resultsExamples(JSON.parse(request), analyze),
+      entryExamples: (request, analyze) => text().entryExamples(JSON.parse(request), analyze),
+      formExamples: (request, analyze) => text().formExamples(JSON.parse(request), analyze),
       linkedTokens: (request, analyze) => text().linkedTokens(JSON.parse(request), analyze),
       resultsScreen: (request) => presentation().resultsScreen(JSON.parse(request)),
       wordRows: (request) => presentation().wordRows(JSON.parse(request)),

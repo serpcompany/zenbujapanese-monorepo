@@ -4,8 +4,7 @@ struct WordDetailView: View {
   @FocusState private var noteEditorFocused: Bool
   @State private var notes: SavedItemNotes
   @State private var photos: SavedItemPhotos
-  @State private var examples: [ExampleSentence] = []
-  @State private var examplesEntryID: LanguageReferenceID?
+  @State private var examples = LoadedExamples()
   @State private var isLoadingExamples = true
   @State private var showsListPicker = false
   @State private var frequencyDisclosure: FrequencyRow?
@@ -147,14 +146,13 @@ struct WordDetailView: View {
         }
         ExampleSentenceSections(
           title: "EXAMPLES",
-          examples: examplesEntryID == entry.id ? examples : [],
-          isLoading: isLoadingExamples || examplesEntryID != entry.id,
+          examples: holdsExamples ? examples.examples : [],
+          isLoading: isLoadingExamples || !holdsExamples,
           emptyMessage: "No source-matched examples",
-          highlightedQuery: SearchQuery(entry.headword),
-          highlightedEntry: entry,
+          hasMore: holdsExamples && examples.hasMore,
           presentation: { .wordDetail(index: $0) },
           speechSynthesisClient: speechSynthesisClient,
-          japaneseTextAnalysisClient: japaneseTextAnalysisClient,
+          loadMore: loadMoreExamples,
           openWord: openWord
         )
       }
@@ -192,15 +190,28 @@ struct WordDetailView: View {
       await notes.load(entry.noteID)
       await photos.load(item, saving: initialEncounterMedia)
       guard !Task.isCancelled else { return }
-      let loadedExamples = (try? await exampleSentenceClient.examples(entry)) ?? []
+      var firstExamples: ExamplePage?
+      if !holdsExamples { firstExamples = await examplesPage(from: 0) }
       guard !Task.isCancelled else { return }
       analysisAvailability = await japaneseTextAnalysisClient.availability()
       frequency = await FrequencyRow.rows(for: entry.id, using: frequencyCapability)
       guard !Task.isCancelled else { return }
-      examples = loadedExamples
-      examplesEntryID = entry.id
+      if let firstExamples { examples.add(firstExamples, from: 0, of: entry.id.rawValue) }
       isLoadingExamples = false
     }
+  }
+
+  private var holdsExamples: Bool { examples.holds(entry.id.rawValue) }
+
+  private func examplesPage(from: Int) async -> ExamplePage {
+    (try? await exampleSentenceClient.examples(entry, from: from)) ?? .none
+  }
+
+  private func loadMoreExamples() async {
+    let from = examples.examples.count
+    let page = await examplesPage(from: from)
+    guard !Task.isCancelled else { return }
+    examples.add(page, from: from, of: entry.id.rawValue)
   }
 }
 

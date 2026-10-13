@@ -3,7 +3,12 @@ import { fixtureDictionary, fixtureFiles } from '../examples/ipadic.fixture'
 import type { KuromojiToken } from '../examples/morphology'
 import { embeddedEndpoint } from './dictionary'
 import { ask, begin, type FakeEntry, fakeHost, settled } from './fake-host'
-import type { EmbeddedResultsExamples, EmbeddedToken } from './text'
+import type {
+  EmbeddedEntryExamples,
+  EmbeddedExamplePage,
+  EmbeddedResultsExamples,
+  EmbeddedToken
+} from './text'
 
 const entries: FakeEntry[] = [
   { id: 'a1', headword: '日本語', reading: 'にほんご' },
@@ -43,6 +48,7 @@ const sentences: Record<string, KuromojiToken[]> = {
     token(6, 'た', '助動詞', 'タ')
   ],
   今日: [token(1, '今日', '名詞', 'コンニチ')],
+  見る: [token(1, '見る', '動詞', 'ミル')],
   '「日本語を」': [
     token(1, '「', '記号', '「'),
     token(2, '日本語', '名詞', 'ニホンゴ'),
@@ -63,6 +69,38 @@ const host = () =>
 const linked = (target: ReturnType<typeof host>, request: object) =>
   ask(target, 'linkedTokens', JSON.stringify(request)) as Promise<EmbeddedToken[]>
 
+const pairId = (row: number) => row.toString(16).padStart(32, '0')
+
+function listing(japanese: string, matching: number) {
+  const dictionary = host()
+  const all = (sql: string, parametersJSON: string) => {
+    if (sql.includes('JOIN forms f ON f.entry_id = e.id')) {
+      return {
+        rows: [
+          { reading: 'みる', form: '見る', kind: 0 },
+          { reading: 'みる', form: 'みる', kind: 1 }
+        ]
+      }
+    }
+    if (sql.includes('count(DISTINCT lower(hex(e.id)))')) return { rows: [{ count: 1 }] }
+    if (!sql.includes('FROM example_sentences e')) {
+      return dictionary.all?.(sql, parametersJSON) ?? null
+    }
+    return {
+      rows: Array.from({ length: matching }, (_, row) => ({
+        rowid: row + 1,
+        pairId: pairId(row),
+        japanese,
+        english: `Sentence ${row}.`
+      }))
+    }
+  }
+  return { ...dictionary, all }
+}
+
+const accents = (words: readonly EmbeddedToken[]) =>
+  words.map(word => [word.surface, word.entry, word.accent])
+
 describe('the embedded text engine', () => {
   test('links each word of a text to its entry, or lists the entries it could be', async () => {
     const target = host()
@@ -79,8 +117,7 @@ describe('the embedded text engine', () => {
         candidates: [],
         furigana: 'にほんご',
         ruby: [{ text: '日本語', reading: 'にほんご' }],
-        isPageWord: false,
-        matchesQuery: false,
+        accent: null,
         attaches: null,
         counted: true
       },
@@ -94,8 +131,7 @@ describe('the embedded text engine', () => {
         candidates: ['p1', 'p2'],
         furigana: null,
         ruby: null,
-        isPageWord: false,
-        matchesQuery: false,
+        accent: null,
         attaches: null,
         counted: false
       },
@@ -109,8 +145,7 @@ describe('the embedded text engine', () => {
         candidates: [],
         furigana: 'みた',
         ruby: [{ text: '見', reading: 'み' }, { text: 'た' }],
-        isPageWord: false,
-        matchesQuery: true,
+        accent: null,
         attaches: null,
         counted: true
       }
@@ -136,10 +171,10 @@ describe('the embedded text engine', () => {
       query: ' 見る ',
       highlightedEntry: 'v1'
     })
-    expect(tokens.map(found => [found.surface, found.entry, found.isPageWord])).toEqual([
-      ['日本語', 'a1', false],
-      ['を', null, false],
-      ['見た', 'v1', true]
+    expect(accents(tokens)).toEqual([
+      ['日本語', 'a1', null],
+      ['を', null, null],
+      ['見た', 'v1', 'entry']
     ])
     expect(target.asked).toEqual([['["v1"]'], ['日本語', 'を'], ['["a1"]']])
   })
@@ -166,8 +201,7 @@ describe('the embedded text engine', () => {
         candidates: [],
         furigana: null,
         ruby: null,
-        isPageWord: false,
-        matchesQuery: false,
+        accent: null,
         attaches: null,
         counted: false
       }
@@ -274,35 +308,69 @@ describe('the embedded text engine', () => {
     ])
   })
 
-  test('answers a query’s examples with the line that counts them', async () => {
-    const pairId = (row: number) => row.toString(16).padStart(32, '0')
-    const listed = (matching: number) =>
+  test('answers a query’s examples a page at a time, linked, with the query’s words accented', async () => {
+    const page = (matching: number, from: number) =>
       ask(
-        fakeHost(entries, {
-          all: sql => ({
-            rows: sql.includes('FROM example_sentences e WHERE instr(e.japanese, ?)')
-              ? Array.from({ length: matching }, (_, row) => ({
-                  rowid: row + 1,
-                  pairId: pairId(row),
-                  japanese: `見る${'。'.repeat(row)}`,
-                  english: `See ${row}.`
-                }))
-              : []
-          })
-        }),
+        listing('日本語を見た', matching),
         'resultsExamples',
-        JSON.stringify({ query: '見る', primaryEntry: null, usesPrimaryEntryExamples: false })
+        JSON.stringify({ query: '見た', primaryEntry: null, usesPrimaryEntryExamples: false, from })
       ) as Promise<EmbeddedResultsExamples>
 
-    expect(await listed(0)).toEqual({ sentences: [], countText: null })
-    expect(await listed(1)).toEqual({
-      sentences: [{ id: `esp1_${pairId(0)}`, japanese: '見る', english: 'See 0.' }],
-      countText: '1 example'
+    expect(await page(0, 0)).toEqual({ examples: [], listed: 0, countText: null })
+    const first = await page(60, 0)
+    expect(first).toMatchObject({ listed: 60, countText: '60 examples' })
+    expect(first.examples.map(example => example.id)).toEqual(
+      Array.from({ length: 25 }, (_, row) => `esp1_${pairId(row)}`)
+    )
+    expect(first.examples[0]).toMatchObject({ japanese: '日本語を見た', english: 'Sentence 0.' })
+    expect(accents(first.examples[0].words)).toEqual([
+      ['日本語', 'a1', null],
+      ['を', null, null],
+      ['見た', 'v1', 'query']
+    ])
+    const last = await page(60, 50)
+    expect(last.examples.map(example => example.id)).toEqual(
+      Array.from({ length: 10 }, (_, row) => `esp1_${pairId(50 + row)}`)
+    )
+    expect((await page(1, 0)).countText).toBe('1 example')
+    const hundred = await page(101, 75)
+    expect(hundred).toMatchObject({
+      listed: 100,
+      countText: 'The first 100 of more than 100 examples'
     })
-    expect((await listed(60)).countText).toBe('60 examples')
-    const firstHundred = await listed(101)
-    expect(firstHundred.sentences).toHaveLength(100)
-    expect(firstHundred.countText).toBe('The first 100 of more than 100 examples')
+    expect(hundred.examples).toHaveLength(25)
+    expect((await page(101, 100)).examples).toEqual([])
+  })
+
+  test('answers a word’s examples a page at a time, with the word itself accented', async () => {
+    const page = (id: string, from: number) =>
+      ask(listing('見る', 30), 'entryExamples', JSON.stringify({ id, from }))
+    const first = (await page('v1', 0)) as EmbeddedEntryExamples
+    expect(first).toMatchObject({ listed: 30, count: 30, truncated: false })
+    expect(first.examples).toHaveLength(25)
+    expect(accents(first.examples[0].words)).toEqual([['見る', 'v1', 'entry']])
+    expect(((await page('v1', 25)) as EmbeddedEntryExamples).examples).toHaveLength(5)
+    await expect(page('missing', 0)).rejects.toThrow('missingEntryEvidence')
+  })
+
+  test('answers a conjugated form’s examples, only where the form is one word, with it accented', async () => {
+    const page = (form: string) =>
+      ask(
+        listing('日本語を見た', 3),
+        'formExamples',
+        JSON.stringify({ form, from: 0 })
+      ) as Promise<EmbeddedExamplePage>
+
+    const saw = await page('見た')
+    expect(saw.listed).toBe(3)
+    expect(saw.examples.map(example => accents(example.words))).toEqual(
+      Array.from({ length: 3 }, () => [
+        ['日本語', 'a1', null],
+        ['を', null, null],
+        ['見た', 'v1', 'query']
+      ])
+    )
+    expect(await page('本語')).toEqual({ examples: [], listed: 0 })
   })
 
   test('refuses an example index that is not the one the core reads', async () => {

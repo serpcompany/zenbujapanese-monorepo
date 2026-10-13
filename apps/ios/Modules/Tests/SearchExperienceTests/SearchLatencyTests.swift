@@ -94,8 +94,7 @@ struct SearchLatencyTests {
     let clock = ContinuousClock()
     var sentences: [ExampleSentence] = []
     for word in ["食べる", "行く", "学校", "水", "見る"] {
-      sentences += await ExampleSentenceClient.live.listed(SearchQuery(word), nil, false)
-        .sentences.prefix(40)
+      sentences += await Self.listed(word).prefix(40).map(\.sentence)
     }
     var first: [Double] = []
     var again: [Double] = []
@@ -257,10 +256,9 @@ struct SearchLatencyTests {
     }
     report("each search's example count")
     let analysis = JapaneseTextAnalysisClient.live()
-    let listed = await ExampleSentenceClient.live.listed(SearchQuery("食べる"), nil, false)
     var words = 0
-    for sentence in listed.sentences.prefix(40) {
-      words += await analysis.linkedTokens(sentence.japanese, SearchQuery(""), nil).count
+    for example in await Self.listed("食べる").prefix(40) {
+      words += await analysis.linkedTokens(example.sentence.japanese, SearchQuery(""), nil).count
     }
     report("the tokenizer's start and \(words) linked words")
     let kanji = KanjiLookupClient.live(lookupClient: .live)
@@ -293,13 +291,7 @@ struct SearchLatencyTests {
 
     var sentences: [[JapaneseTextToken]] = []
     for word in ["食べる", "行く", "学校", "水", "見る"] {
-      for sentence in await ExampleSentenceClient.live.listed(SearchQuery(word), nil, false)
-        .sentences.prefix(40)
-      {
-        sentences.append(
-          await JapaneseTextAnalysisClient.live().linkedTokens(
-            sentence.japanese, SearchQuery(""), nil))
-      }
+      sentences += await Self.listed(word).prefix(40).map(\.words)
     }
     let spoken = clock.measure {
       for tokens in sentences { _ = core.romaji(of: tokens.map { ($0.surface, $0.reading) }) }
@@ -339,6 +331,12 @@ struct SearchLatencyTests {
     print(
       "SEARCH-LATENCY \(scalars.count) kanji checks: \(Self.milliseconds(checked)) first, "
         + "\(Self.milliseconds(checkedAgain)) again")
+  }
+
+  private static func listed(_ word: String) async -> [LinkedExample] {
+    await ExamplePage.every {
+      await ExampleSentenceClient.live.listed(SearchQuery(word), nil, false, $0)
+    }.examples
   }
 
   private static func summary(_ timings: [Double]) -> String {

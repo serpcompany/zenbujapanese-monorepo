@@ -1,8 +1,9 @@
+import { examplesPerPage } from '@zenbu/dictionary-core/detail/examples'
 import type { EmbeddedSearchResults } from '@zenbu/dictionary-core/embedded/lookup'
 import type { EmbeddedResultsExamples } from '@zenbu/dictionary-core/embedded/text'
 import type { LearnerResultsScreen } from '@zenbu/dictionary-core/results/learner'
 import { beforeAll, describe, expect, test } from 'vitest'
-import { type Embedded, embedded, shownAsTheAppLinks } from './embedded-support'
+import { type Embedded, embedded, everyPage, shownAsTheAppLinks } from './embedded-support'
 import { type ExampleSearchCase, exampleSearchSuite as suite } from './example-search-suite'
 import { artifactAvailable, requirePinnedArtifacts } from './support'
 
@@ -32,10 +33,10 @@ describe.runIf(artifactAvailable)('the app’s example sentences on the artifact
       learner: { frequency: null, sort: 'default', filter: 'all', known: [], fromRadicals: false }
     })
     const row = screen.state === 'results' ? screen.examples : null
-    const { sentences, countText } = await app.text<EmbeddedResultsExamples>(
-      'resultsExamples',
-      listed
+    const { first, examples } = await everyPage(from =>
+      app.text<EmbeddedResultsExamples>('resultsExamples', { ...listed, from })
     )
+    const { countText } = first
 
     const observed: Omit<ExampleSearchCase, 'query' | 'covers'> = {
       ...(row ? { title: row.title } : {}),
@@ -43,16 +44,14 @@ describe.runIf(artifactAvailable)('the app’s example sentences on the artifact
       ...(countText ? { countText } : {}),
       ...(results.primaryEntry ? { highlightedEntry: results.primaryEntry } : {}),
       usesPrimaryEntryExamples: results.usesPrimaryEntryExamples,
-      ids: sentences.map(example => example.id),
-      shown: await shownAsTheAppLinks(
-        app,
-        sentences.slice(0, suite.tokenLimit),
-        { query, highlightedEntry: results.primaryEntry },
-        'queryMatch'
-      )
+      ids: examples.map(example => example.id),
+      shown: shownAsTheAppLinks(examples.slice(0, suite.tokenLimit), 'queryMatch')
     }
     const { query: _query, covers: _covers, ...recorded } = expected
     expect(observed).toEqual(recorded)
+    expect(first.examples.length, 'a page of examples, linked in the one answer').toBe(
+      Math.min(recorded.ids.length, examplesPerPage)
+    )
     if (row) expect(row.highlightedEntry ?? undefined).toBe(recorded.highlightedEntry)
   })
 

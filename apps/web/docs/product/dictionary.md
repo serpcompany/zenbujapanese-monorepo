@@ -710,25 +710,25 @@ the list; like the app, it finds a form's examples by its spelling alone.
 
 - Source: `ConjugatedForm.examples` in `ConjugationsView.swift`; `ExampleSentenceClient.search`
   (`retrieveJapanese`, `retrieveEnglish`); `JapaneseTextAnalysisClient.words`;
-  `LinkedJapaneseText.queryScalarRanges` and `matchesQuery` (the `.conjugatedForm` presentation);
+  the core's `accentedPositions`, which the app's `.conjugatedForm` presentation also draws;
   ADR 0009 (the app's analysis in the dictionary service); ADR 0010.
 - Check: WD `conjugations[].examples` (every example's pair ID in order, and the first 3 with each
   word's entry or candidates and whether it's accented), recorded with the helpers the screen uses
-  and compared by the service's WD replay (`detail.conformance.test.ts`), and drawn by
-  Conjugations rendered, which reads back every pair ID and the first 3's words, links, and
-  accents; `apps/dictionary-api/src/conformance/conjugation-examples.test.ts` ("a conjugated form's
-  examples"); `packages/dictionary-core/src/examples/forms.test.ts`; `conjugations.test.tsx`, "a
-  form’s examples link each word and accent the form’s words"; `src/lib/dictionary/data.test.ts`,
-  "a conjugated form’s examples come from the service, all at once for its row" and "a form’s
-  examples come from the fixtures without a service, all at once";
-  `src/app/dictionary/conjugations/[file]/route.test.ts`, "returns every one of a form's examples
-  at once", "a form no sentence uses has no examples", and "reads the form as written, not
-  normalized"; `word-page.interaction.test.tsx`, "a row opens its form, which loads its examples
-  once, from the JSON route", "an opened form lists the examples its route returns", and "a form
-  says so when its examples can’t load"; `apps/web/e2e/conjugations.spec.ts`, "a form opens to its
-  explanation, its pronounced form, and its examples" and "a form without examples says so"; smoke
-  "見る's conjugations and its past's examples match the app". WD has two forms that search
-  English, Ｈ (which finds 3 examples) and ＮＧ (which finds none).
+  and compared by the service's WD replay (`detail.conformance.test.ts`), and drawn by Conjugations
+  rendered, which reads back every pair ID and the first 3's words, links, and accents;
+  `apps/dictionary-api/src/conformance/conjugation-examples.test.ts` ("a conjugated form's
+  examples"); core `examples/forms.test.ts`, `artifact/word-examples.test.ts`;
+  `conjugations.test.tsx`, "a form’s examples link each word and accent the form’s words";
+  `src/lib/dictionary/data.test.ts`, "a conjugated form’s examples come from the service, all at
+  once for its row" and "a form’s examples come from the fixtures without a service, all at once";
+  `src/app/dictionary/conjugations/[file]/route.test.ts`, "returns every one of a form's examples at
+  once", "a form no sentence uses has no examples", and "reads the form as written, not normalized";
+  `word-page.interaction.test.tsx`, "a row opens its form, which loads its examples once, from the
+  JSON route", "an opened form lists the examples its route returns", and "a form says so when its
+  examples can’t load"; `apps/web/e2e/conjugations.spec.ts`, "a form opens to its explanation, its
+  pronounced form, and its examples" and "a form without examples says so"; smoke "見る's conjugations
+  and its past's examples match the app". WD has two forms that search English, Ｈ (which finds 3
+  examples) and ＮＧ (which finds none).
 
 ## Kanji details
 

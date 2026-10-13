@@ -6,6 +6,7 @@ enum LaunchHarness {
   static let signInStandInKey = "ZENBU_SIGN_IN_STAND_IN"
   static let youTubeStandInKey = "ZENBU_YOUTUBE_STAND_IN"
   static let accountStandInKey = "ZENBU_ACCOUNT_STAND_IN"
+  static let slowLinkingKey = "ZENBU_SLOW_LINKING"
   static let uiTestBundleSuffix = ".uitests"
   static let savedStateFolders = ["Zenbu Japanese", "FrequencyPacks", "Profile"]
 
@@ -28,6 +29,16 @@ enum LaunchHarness {
       false
     #endif
   }
+
+  static func linkingDelay(_ environment: [String: String]) -> Duration? {
+    #if DEBUG
+      environment[slowLinkingKey].flatMap(Double.init).map { .seconds($0) }
+    #else
+      nil
+    #endif
+  }
+
+  static let slowsLinkingBy = linkingDelay(ProcessInfo.processInfo.environment)
 
   static var signInProviders: SignInProviders? {
     #if DEBUG

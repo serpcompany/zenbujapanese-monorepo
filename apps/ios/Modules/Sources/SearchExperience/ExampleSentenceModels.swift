@@ -19,17 +19,56 @@ struct ExampleSentenceID: RawRepresentable, Hashable, Sendable {
 
 extension ExampleSentenceID: Decodable {}
 
-struct ExampleSentence: Decodable, Hashable, Identifiable, Sendable {
+struct ExampleSentence: Hashable, Identifiable, Sendable {
   let id: ExampleSentenceID
   let japanese: String
   let english: String
 }
 
-struct ListedExamples: Decodable, Sendable {
-  static let none = ListedExamples(sentences: [], countText: nil)
+struct LinkedExample: Identifiable, Sendable {
+  let sentence: ExampleSentence
+  let words: [JapaneseTextToken]
 
-  let sentences: [ExampleSentence]
+  var id: ExampleSentenceID { sentence.id }
+}
+
+struct ExamplePage: Sendable {
+  static let none = ExamplePage(examples: [], listed: 0, countText: nil)
+
+  let examples: [LinkedExample]
+  let listed: Int
   let countText: String?
+}
+
+struct EntryExamples: Sendable {
+  let page: ExamplePage
+  let count: Int
+  let truncated: Bool
+}
+
+struct LoadedExamples: Sendable {
+  private(set) var examples: [LinkedExample] = []
+  private(set) var countText: String?
+  private var source: String?
+  private var listed = 0
+
+  var hasMore: Bool { examples.count < listed }
+
+  func holds(_ source: String) -> Bool {
+    self.source == source
+  }
+
+  mutating func add(_ page: ExamplePage, from: Int, of source: String) {
+    if from == 0 {
+      self.source = source
+      examples = page.examples
+      countText = page.countText
+      listed = page.listed
+    } else if holds(source), from == examples.count {
+      examples += page.examples
+      listed = page.examples.isEmpty ? examples.count : page.listed
+    }
+  }
 }
 
 enum ExampleSentenceInvalidQueryReason: Hashable, Sendable {

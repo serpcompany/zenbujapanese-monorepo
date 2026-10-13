@@ -33,6 +33,7 @@ import {
   exampleLinkEntSeqs,
   exampleRows,
   examplesEntries,
+  screenAccent,
   segmentText,
   wordExampleRows
 } from './word-examples'
@@ -212,7 +213,7 @@ export class Dictionary {
       this.db,
       examples.sentences.slice(from, from + limit),
       from,
-      { entry: primary, query, accent: 'query' },
+      { entry: primary, query, accent: screenAccent.searchExamples },
       this.linking
     )
     return {
@@ -300,7 +301,7 @@ export class Dictionary {
       this.db,
       sentences.slice(from, from + limit),
       from,
-      { entry: null, query: normalizeQuery(form), accent: 'query' },
+      { entry: null, query: normalizeQuery(form), accent: screenAccent.formExamples },
       this.linking
     ).map(({ sentence, example }) => ({
       sentence,

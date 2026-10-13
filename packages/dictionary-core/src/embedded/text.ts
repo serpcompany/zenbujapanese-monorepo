@@ -8,12 +8,14 @@ import {
 import { searchExamples } from '../artifact/example-search'
 import { type FormLookup, formLookup } from '../artifact/lookup'
 import {
+  accentedPositions,
+  type ExampleHighlight,
   type ExamplesEntry,
   examplesEntries,
-  occurrences,
+  screenAccent,
   tokenSpans
 } from '../artifact/word-examples'
-import { exampleCountText } from '../detail/examples'
+import { exampleCountText, examplesPerPage } from '../detail/examples'
 import { type Attachment, attachment } from '../detail/romaji'
 import { type RubySegment, rubySegments } from '../detail/ruby'
 import { usesForm } from '../examples/forms'
@@ -45,22 +47,7 @@ export interface HostWord extends MorphologyWord {
 
 export type AnalyzeText = (text: string) => Promise<HostWord[]>
 
-interface EmbeddedSentence {
-  id: string
-  japanese: string
-  english: string
-}
-
-export interface EmbeddedExamples {
-  sentences: EmbeddedSentence[]
-  count: number
-  truncated: boolean
-}
-
-export interface EmbeddedResultsExamples {
-  sentences: EmbeddedSentence[]
-  countText: string | null
-}
+type Accent = ExampleHighlight['accent']
 
 export interface EmbeddedToken {
   surface: string
@@ -72,22 +59,52 @@ export interface EmbeddedToken {
   candidates: string[]
   furigana: string | null
   ruby: RubySegment[] | null
-  isPageWord: boolean
-  matchesQuery: boolean
+  accent: Accent | null
   attaches: Attachment | null
   counted: boolean
 }
 
-export interface ResultsExamplesRequest {
+export interface EmbeddedExample {
+  id: string
+  japanese: string
+  english: string
+  words: EmbeddedToken[]
+}
+
+export interface EmbeddedExamplePage {
+  examples: EmbeddedExample[]
+  listed: number
+}
+
+export interface EmbeddedResultsExamples extends EmbeddedExamplePage {
+  countText: string | null
+}
+
+export interface EmbeddedEntryExamples extends EmbeddedExamplePage {
+  count: number
+  truncated: boolean
+}
+
+interface ResultsExamplesRequest {
   query: string
   primaryEntry: string | null
   usesPrimaryEntryExamples: boolean
 }
 
-export interface LinkRequest {
+interface PageRequest {
+  from: number
+}
+
+interface LinkRequest {
   text: string
   query: string
   highlightedEntry: string | null
+}
+
+interface Accented {
+  query: string
+  entry: string | null
+  accent: Accent
 }
 
 function hostCandidate(word: HostWord): MorphologyCandidate {
@@ -103,14 +120,6 @@ function hostCandidate(word: HostWord): MorphologyCandidate {
   }
 }
 
-const listed = (sentences: readonly ExampleSentence[]): EmbeddedSentence[] =>
-  sentences.map(({ pairId, japanese, english }) => ({ id: `esp1_${pairId}`, japanese, english }))
-
-function answered(found: EntryExamples | string): EmbeddedExamples {
-  if (typeof found === 'string') throw new Error(found)
-  return { sentences: listed(found.sentences), count: found.count, truncated: found.truncated }
-}
-
 export class EmbeddedText {
   private readonly db: ArtifactDatabase
   private readonly searchDb: SearchDatabase
@@ -120,6 +129,7 @@ export class EmbeddedText {
   private readonly linked = new LruCache<string, EmbeddedToken[]>(512)
   private readonly searched = new LruCache<string, EntryExamples | string>(32)
   private readonly retrieved = new LruCache<string, EntryExamples | string>(64)
+  private readonly usingForm = new LruCache<string, ExampleSentence[]>(32)
   private readonly tokenize: Tokenize | undefined
   private readonly readsItsFiles: boolean
 
@@ -162,13 +172,13 @@ export class EmbeddedText {
     return found
   }
 
-  private retrieve(id: string): EntryExamples | string {
-    const cached = this.retrieved.get(id)
-    if (cached !== undefined) return cached
+  private retrieve(id: string): { entry: ExamplesEntry; examples: EntryExamples } | string {
     const entry = this.found([id]).get(id)
-    const found = entry ? retrieveEntryExamples(this.db, entry) : 'missingEntryEvidence'
-    this.retrieved.set(id, found)
-    return found
+    if (!entry) return 'missingEntryEvidence'
+    const cached = this.retrieved.get(id)
+    const examples = cached ?? retrieveEntryExamples(this.db, entry)
+    if (cached === undefined) this.retrieved.set(id, examples)
+    return typeof examples === 'string' ? examples : { entry, examples }
   }
 
   checkExamples(): boolean {
@@ -191,9 +201,11 @@ export class EmbeddedText {
   }
 
   private listed(request: ResultsExamplesRequest): EntryExamples | string {
-    return request.usesPrimaryEntryExamples && request.primaryEntry !== null
-      ? this.retrieve(request.primaryEntry)
-      : this.search(request.query)
+    if (!request.usesPrimaryEntryExamples || request.primaryEntry === null) {
+      return this.search(request.query)
+    }
+    const retrieved = this.retrieve(request.primaryEntry)
+    return typeof retrieved === 'string' ? retrieved : retrieved.examples
   }
 
   resultsExampleCount(request: ResultsExamplesRequest): number {
@@ -204,17 +216,58 @@ export class EmbeddedText {
       : found.count
   }
 
-  resultsExamples(request: ResultsExamplesRequest): EmbeddedResultsExamples {
+  private async page(
+    sentences: readonly ExampleSentence[],
+    from: number,
+    accented: Accented,
+    analyze: AnalyzeText
+  ): Promise<EmbeddedExamplePage> {
+    const examples: EmbeddedExample[] = []
+    for (const { pairId, japanese, english } of sentences.slice(from, from + examplesPerPage)) {
+      examples.push({
+        id: `esp1_${pairId}`,
+        japanese,
+        english,
+        words: await this.link(japanese, accented, analyze)
+      })
+    }
+    return { examples, listed: sentences.length }
+  }
+
+  async resultsExamples(
+    request: ResultsExamplesRequest & PageRequest,
+    analyze: AnalyzeText
+  ): Promise<EmbeddedResultsExamples> {
     const found = this.listed(request)
-    if (typeof found === 'string') return { sentences: [], countText: null }
+    if (typeof found === 'string') return { examples: [], listed: 0, countText: null }
+    const accented: Accented = {
+      query: request.query,
+      entry: request.primaryEntry,
+      accent: screenAccent.searchExamples
+    }
     return {
-      sentences: listed(found.sentences),
+      ...(await this.page(found.sentences, request.from, accented, analyze)),
       countText: exampleCountText({ listed: found.sentences.length, truncated: found.truncated })
     }
   }
 
-  entryExamples(id: string): EmbeddedExamples {
-    return answered(this.retrieve(id))
+  async entryExamples(
+    { id, from }: { id: string } & PageRequest,
+    analyze: AnalyzeText
+  ): Promise<EmbeddedEntryExamples> {
+    const retrieved = this.retrieve(id)
+    if (typeof retrieved === 'string') throw new Error(retrieved)
+    const { entry, examples } = retrieved
+    const accented: Accented = {
+      query: entry.headword,
+      entry: id,
+      accent: screenAccent.wordExamples
+    }
+    return {
+      ...(await this.page(examples.sentences, from, accented, analyze)),
+      count: examples.count,
+      truncated: examples.truncated
+    }
   }
 
   private async candidates(
@@ -229,17 +282,30 @@ export class EmbeddedText {
     }
   }
 
-  async formExamples(form: string, analyze: AnalyzeText): Promise<EmbeddedSentence[]> {
+  private async sentencesUsing(form: string, analyze: AnalyzeText): Promise<ExampleSentence[]> {
+    const known = this.usingForm.get(form)
+    if (known) return known
     const found = this.search(form)
     if (typeof found === 'string') return []
     const sentences: ExampleSentence[] = []
+    let everySentenceWasAnalyzed = true
     for (const sentence of found.sentences) {
       if (!sentence.japanese.includes(form)) continue
-      if (usesForm(sentence.japanese, await this.candidates(sentence.japanese, analyze), form)) {
-        sentences.push(sentence)
-      }
+      const candidates = await this.candidates(sentence.japanese, analyze)
+      if (candidates === null) everySentenceWasAnalyzed = false
+      if (usesForm(sentence.japanese, candidates, form)) sentences.push(sentence)
     }
-    return listed(sentences)
+    if (everySentenceWasAnalyzed) this.usingForm.set(form, sentences)
+    return sentences
+  }
+
+  async formExamples(
+    { form, from }: { form: string } & PageRequest,
+    analyze: AnalyzeText
+  ): Promise<EmbeddedExamplePage> {
+    const sentences = await this.sentencesUsing(form, analyze)
+    const accented: Accented = { query: form, entry: null, accent: screenAccent.formExamples }
+    return this.page(sentences, from, accented, analyze)
   }
 
   private async prefetch(
@@ -258,21 +324,33 @@ export class EmbeddedText {
     await entriesMatchingFirstForms(this.searchDb, alternatives, this.forms)
   }
 
-  async linkedTokens(request: LinkRequest, analyze: AnalyzeText): Promise<EmbeddedToken[]> {
-    const { text } = request
-    const query = normalizeQuery(request.query)
-    const key = JSON.stringify([text, query, request.highlightedEntry])
+  linkedTokens(request: LinkRequest, analyze: AnalyzeText): Promise<EmbeddedToken[]> {
+    const accented: Accented = {
+      query: request.query,
+      entry: request.highlightedEntry,
+      accent: 'entry'
+    }
+    return this.link(request.text, accented, analyze)
+  }
+
+  private async link(
+    text: string,
+    accented: Accented,
+    analyze: AnalyzeText
+  ): Promise<EmbeddedToken[]> {
+    const query = normalizeQuery(accented.query)
+    const key = JSON.stringify([text, query, accented.entry, accented.accent])
     const known = this.linked.get(key)
     if (known) return known
     const candidates = await this.candidates(text, analyze)
-    const entry = request.highlightedEntry
-      ? (this.found([request.highlightedEntry]).get(request.highlightedEntry) ?? null)
-      : null
+    const entry = accented.entry ? (this.found([accented.entry]).get(accented.entry) ?? null) : null
     const highlighted = entry ? { entry, query } : null
     if (candidates) await this.prefetch(candidates, highlighted)
     const tokens = linkedTokens(text, candidates, highlighted, this.lookup)
     const linked = this.found(tokens.flatMap(token => (token.entry ? [token.entry.id] : [])))
-    const matches = occurrences(text, query)
+    const accents = new Set(
+      accentedPositions(text, tokens, { entry, query, accent: accented.accent })
+    )
     const answer = tokenSpans(tokens).map(({ start, end }, index): EmbeddedToken => {
       const token = tokens[index]
       const target = token.entry ? linked.get(token.entry.id) : undefined
@@ -288,8 +366,7 @@ export class EmbeddedText {
         candidates: token.entry ? [] : token.candidates.map(candidate => candidate.id),
         furigana,
         ruby: furigana === null ? null : rubySegments(token.surface, furigana),
-        isPageWord: entry !== null && token.entry?.id === entry.id,
-        matchesQuery: matches.some(match => match.start < end && start < match.end),
+        accent: accents.has(index) ? accented.accent : null,
         attaches: attachment(token.surface),
         counted: token.entry !== null && !functionWord
       }

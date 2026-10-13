@@ -59,12 +59,11 @@ these and decodes the answer; [The app's side](#the-apps-side) says which type a
 - **Every response shape has a contract number.** `artifact/contract.ts` names each answer the
   service gives (`DictionaryContract`) and the number of their current shapes
   (`dictionaryContract`), which the service sends and the website compares with its own. The site
-  and the service deploy separately, in either order, so a shape change makes them disagree for
-  a few minutes. A mismatch is logged, never refused: make a change the older side can still
-  read, such as adding a field that the newer side doesn't yet rely on. `artifact/contract.test.ts`
-  expands every shape with the TypeScript compiler and fails when one changes without a new
-  contract number: raise it by one and record the new shape under it, never changing a recorded
-  one.
+  and the service deploy separately, in either order, so a shape change makes them disagree for a
+  few minutes. A mismatch is logged, never refused: make a change the older side can still read,
+  such as adding a field that the newer side doesn't yet rely on. `artifact/contract.test.ts`
+  expands every shape with the TypeScript compiler and fails when one changes without a new contract
+  number: raise it by one and record the new shape under it, never changing a recorded one.
 
 ## What a client passes in
 
@@ -132,9 +131,9 @@ modules, files, or event loop of its own, which is how the app runs it in JavaSc
   | `romaji`, `sentenceRomaji` | A reading; a sentence's words, each with its surface and reading | The reading in romaji, or null for one with kanji in it; the sentence in romaji, words spaced and punctuation kept with its word, or null when a word has no kana reading |
   | `checkExamples` | — | True, or the error that says which example table or pack is missing or wrong |
   | `tokenizerReady` | — | Whether the text part can tokenize. With the host's files it reads them now, so the first sentence doesn't wait for them, and is false when one is missing or wrong. |
-  | `exampleCount`, `resultsExampleCount`, `resultsExamples` | A query, or a query with the results' primary entry | The Example Sentences row's count, and its sentences with their count line |
-  | `entryExamples`, `formExamples` | An entry's ID; a conjugated form | A word page's sentences with their count, and a form's |
-  | `linkedTokens` | A text, the page's query, and its entry | Each word with its place in the text, its entry or candidates, the furigana to draw, whether it is the page's word or matches the query, which neighbour a punctuation mark stays with on a line (`attaches`), and whether it counts toward comprehension (`counted`: linked to an entry and not a function word) |
+  | `exampleCount`, `resultsExampleCount` | A query, or a query with the results' primary entry | The Example Sentences row's count |
+  | `resultsExamples`, `entryExamples`, `formExamples` | A query with the results' primary entry, an entry's ID, or a conjugated form, each with a position, `from` | A page of 25 examples: each sentence with its words as `linkedTokens` answers them, the screen's words accented, and how many the list holds (`listed`). Example Sentences adds its count line, and a word its `count` and `truncated` |
+  | `linkedTokens` | A text, the page's query, and its entry | Each word with its place in the text, its entry or candidates, the furigana to draw, its `accent` (`entry` on the page entry's word here; an example page says `query` on the words of its query), which neighbour a punctuation mark stays with on a line (`attaches`), and whether it counts toward comprehension (`counted`: linked to an entry and not a function word) |
   | `resultsScreen` | A search's answer, the Example Sentences count, and the learner's state (frequency evidence, Sort By, Filter, known words, and whether the query was picked in the radical panel) | `LearnerResultsScreen`: sections, rows with chips, the menu with each choice's title and announcement, notices, and what VoiceOver reads. A one-character query from the radical panel lists only its leading words. |
   | `wordRows`, `frequencyRows` | Entries with their evidence | A sheet's candidate rows; a word page's frequency rows with their details |
   | `ruby` | A surface and its reading | Furigana segments, split kanji by kanji where one split fits |
@@ -151,15 +150,14 @@ modules, files, or event loop of its own, which is how the app runs it in JavaSc
 - **A text's words cost one or two statements.** `linkedTokens` looks every word's forms up in one
   round (`entriesMatchingFirstForms`), then the forms still unmatched, and caches by form, so a
   page of sentences mostly asks nothing.
-- **A call is an object.** `embeddedEndpoint(...).begin(method, argument)` starts a call and
-  returns it. Its `outcome()` is a JSON string: `{"value": ...}`, `{"error": message}`, or
-  `{"analyze": text}` when a call needs the words of a sentence from a host that gave no
-  `tokenize`. The host then analyzes the text with whatever it has, answers
-  `analyzed('{"words": [...]}')` or `analyzed('{"error": ...}')`, and reads the outcome again.
-  The host's database is synchronous, so a call settles before `begin` or `analyzed` returns to
-  the host and nothing is polled; calls keep their outcomes apart, so a second can start while
-  the first waits for its analysis. A method may answer null (`kanjiElementPage`, `gloss`):
-  `{"value": null}` is an answer.
+- **A call is an object.** `embeddedEndpoint(...).begin(method, argument)` starts a call and returns
+  it. Its `outcome()` is a JSON string: `{"value": ...}`, `{"error": message}`, or
+  `{"analyze": text}` when a call needs the words of a sentence from a host that gave no `tokenize`.
+  The host then analyzes the text with whatever it has, answers `analyzed('{"words": [...]}')` or
+  `analyzed('{"error": ...}')`, and reads the outcome again. The host's database is synchronous, so
+  a call settles before `begin` or `analyzed` returns to the host and nothing is polled; calls keep
+  their outcomes apart, so a second can start while the first waits for its analysis. A method may
+  answer null (`kanjiElementPage`, `gloss`): `{"value": null}` is an answer.
 - **An answer that needs no waiting can be asked for at once.** `answer(method, argument)` runs
   the method and returns its value, and `answerJSON(method, argument)` returns it as JSON
   (`null` for nothing). Both throw for a method that would wait (`search`, `linkedTokens`, and the
@@ -188,11 +186,10 @@ time it tokenizes. It is the only tokenizer: the app runs it in JavaScriptCore, 
 website's dictionary service runs it in Node (`apps/dictionary-api/src/tokenizer.ts`).
 
 - **It is a port of kuromoji.js 0.1.2** (Apache-2.0, Takuya Asano; the license ships beside the
-  dictionary files, `Resources/Kuromoji/LICENSE-2.0.txt`), which both clients ran until
-  2026-10-11, and it answers exactly as kuromoji.js did, so no sentence links differently than
-  it used to. That includes what kuromoji.js got wrong, because the rest of the core already
-  handles it (`kuromojiCandidates` shows a sentence whose tokens don't tile it as one unlinked
-  word):
+  dictionary files, `Resources/Kuromoji/LICENSE-2.0.txt`), which both clients ran until 2026-10-11,
+  and it answers exactly as kuromoji.js did, so no sentence links differently than it used to. That
+  includes what kuromoji.js got wrong, because the rest of the core already handles it
+  (`kuromojiCandidates` shows a sentence whose tokens don't tile it as one unlinked word):
   - a sentence is split after every 、 and 。, and the words of each later part are numbered from
     the last word of the part before, which is off when that word is longer than one character;
   - a word's place counts characters, but a run of unknown characters outside the basic plane is
@@ -368,10 +365,9 @@ The core answers as the Swift it replaced did, which the suites pin.
   section ([`dictionary.md`](../../apps/web/docs/product/dictionary.md), Word page).
 - **Frequency.** The website uses only the app's default dictionaries, the bundled packs in
   `FrequencyPackCatalog.json`'s order: JLPT levels, then TUBELEX (YouTube). Tiers use Migaku's star
-  cutoffs, and JLPT levels map onto the same scale. `frequency.test.ts` pins each pack's
-  disclosure, and `coveredSourceRows` (the rows a rank's percentile divides by), to the catalog. A
-  row's label leaves out the app's "Double tap for details." hint, since the website's row opens a
-  dialog.
+  cutoffs, and JLPT levels map onto the same scale. `frequency.test.ts` pins each pack's disclosure,
+  and `coveredSourceRows` (the rows a rank's percentile divides by), to the catalog. A row's label
+  leaves out the app's "Double tap for details." hint, since the website's row opens a dialog.
 - **Furigana.** `rubySegments` anchors each kanji run on the first match of the next kana run, as
   the app does. `splitKanjiReading` splits a segment kanji by kanji only when exactly one split
   fits the kanji's KANJIDIC2 on and kun readings, taken without okurigana, with their voiced and
@@ -418,10 +414,12 @@ The core answers as the Swift it replaced did, which the suites pin.
   else matches pairs whose Japanese contains it. FTS4's `offsets()` reports UTF-8 byte offsets,
   which `example-search.ts` maps to UTF-16, then grapheme positions. The results' primary entry is
   highlighted for every search, and its own examples are listed for a romaji or deinflected query.
-- **A conjugated form's examples** are the sentences the app's search for the form finds,
-  normalized (a full-width Ｈ searches English), that contain it as written and in which the
-  tokenizer reads it as one word, so 見たかった and 見た目 aren't examples of 見た. The screen accents the
-  query as normalized.
+- **A conjugated form's examples** are the sentences the app's search for the form finds, normalized
+  (a full-width Ｈ searches English), that contain it as written and in which the tokenizer reads it
+  as one word, so 見たかった and 見た目 aren't examples of 見た. The screen accents the query as normalized.
+- **Accents.** `accentedPositions` (`artifact/word-examples.ts`) decides which words a sentence
+  accents, for the service and the app alike: the words linked to the page's entry, or the words
+  an occurrence of the query overlaps. `screenAccent` names which of the two each screen uses.
 - An example's `pairId` is the artifact's pair ID in hex; the app's ID prefixes it with `esp1_`.
 
 ## Artifact
@@ -438,8 +436,8 @@ records keyed by JMdict entry number.
   `supportedTransforms`, reviewed with the re-recorded suites (ADR 0006).
 - `isUnreadableQuery` matches only FTS4's own query parser errors: a bare "syntax error" would hide
   a real SQL bug as no results.
-- A query's examples are cached, so the results page's row, its sentences section, and each page
-  of more share one retrieval. The caches of sentence lists keep a quarter as many entries, since each
+- A query's examples are cached, so the results page's row, its sentences section, and each page of
+  more share one retrieval. The caches of sentence lists keep a quarter as many entries, since each
   holds up to 100 sentences.
 - `KanjiData` refuses kanji files that aren't the versions the core reads, and a kanji with no
   meanings or readings isn't indexable (#465).

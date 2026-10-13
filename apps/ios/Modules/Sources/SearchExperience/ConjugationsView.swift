@@ -112,13 +112,12 @@ private struct ConjugationRow: View {
 }
 
 struct ConjugatedFormView: View {
-  @State private var examples: [ExampleSentence] = []
+  @State private var examples = LoadedExamples()
   @State private var isLoadingExamples = true
 
   let form: Conjugations.Row
   let exampleSentenceClient: ExampleSentenceClient
   let speechSynthesisClient: SpeechSynthesisClient
-  let japaneseTextAnalysisClient: JapaneseTextAnalysisClient
   let openWord: (DictionaryEntry) -> Void
 
   var body: some View {
@@ -150,14 +149,13 @@ struct ConjugatedFormView: View {
 
       ExampleSentenceSections(
         title: "Examples",
-        examples: examples,
+        examples: examples.examples,
         isLoading: isLoadingExamples,
         emptyMessage: "No example sentences use this form yet.",
-        highlightedQuery: SearchQuery(form.surface),
-        highlightedEntry: nil,
+        hasMore: examples.hasMore,
         presentation: { .conjugatedForm(form.kind, index: $0) },
         speechSynthesisClient: speechSynthesisClient,
-        japaneseTextAnalysisClient: japaneseTextAnalysisClient,
+        loadMore: { await loadExamples(from: examples.examples.count) },
         openWord: openWord
       )
     }
@@ -166,9 +164,15 @@ struct ConjugatedFormView: View {
     .inlineNavigationTitle()
     .accessibilityIdentifier("conjugations.form.\(form.kind)")
     .task(id: form) {
-      examples = await exampleSentenceClient.formExamples(form.surface)
-      isLoadingExamples = false
+      if !examples.holds(form.surface) { await loadExamples(from: 0) }
     }
+  }
+
+  private func loadExamples(from: Int) async {
+    let page = await exampleSentenceClient.formExamples(form.surface, from)
+    guard !Task.isCancelled else { return }
+    examples.add(page, from: from, of: form.surface)
+    isLoadingExamples = false
   }
 }
 

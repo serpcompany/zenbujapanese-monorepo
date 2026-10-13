@@ -35,8 +35,9 @@ struct SearchExperienceRootView: View {
     let text =
       ProcessInfo.processInfo.environment["ZENBU_MORPHOLOGY_ENGINE"] == "sudachi"
       ? DictionaryTextData(morphology: .live) : DictionaryTextData.shared
-    exampleSentenceClient = ExampleSentenceClient(text: text)
-    japaneseTextAnalysisClient = .live(text: text, lookupClient: .live)
+    let linked = LinkedEntries(lookupClient: .live)
+    exampleSentenceClient = ExampleSentenceClient(text: text, linked: linked)
+    japaneseTextAnalysisClient = .live(text: text, linked: linked)
     kanjiLookupClient = .live(lookupClient: .live)
     handwritingRecognitionClient = .live
     cameraAuthorizationClient = .live
@@ -225,7 +226,6 @@ struct SearchExperienceRootView: View {
         form: form,
         exampleSentenceClient: exampleSentenceClient,
         speechSynthesisClient: speechSynthesisClient,
-        japaneseTextAnalysisClient: japaneseTextAnalysisClient,
         openWord: { entry in push(.word(entry, nil), in: stack) }
       )
     case .image(let sessionID):

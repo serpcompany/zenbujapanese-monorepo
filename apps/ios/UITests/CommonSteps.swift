@@ -26,6 +26,17 @@ extension ZenbuUITestCase {
     return row
   }
 
+  func openAFormOfTaberu(in app: XCUIApplication) {
+    search("taberu", in: app)
+    tap(
+      app.descendants(matching: .any)
+        .matching(NSPredicate(format: "identifier BEGINSWITH 'result.' AND label BEGINSWITH '食べる'"))
+        .firstMatch)
+    tap(find("word-detail.conjugations", in: app), toShow: find("conjugations.screen", in: app))
+    assertOnScreen(find("conjugations.screen", in: app), in: app)
+    tap(firstElement(identifiedBy: "conjugations.row.", in: app))
+  }
+
   func menuChoices(in app: XCUIApplication) -> XCUIElementQuery {
     device == .mac ? app.windows.menuItems : app.buttons
   }

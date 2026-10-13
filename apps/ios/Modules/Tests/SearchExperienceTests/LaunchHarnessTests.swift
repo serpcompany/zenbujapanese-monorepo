@@ -21,6 +21,13 @@ struct LaunchHarnessTests {
     #expect(!LaunchHarness.erasesSavedState(environment: fresh, bundleID: nil))
   }
 
+  @Test("linking is slowed only by the seconds a launch asks for")
+  func slowLinkingTakesSeconds() {
+    #expect(LaunchHarness.linkingDelay([LaunchHarness.slowLinkingKey: "2.5"]) == .seconds(2.5))
+    #expect(LaunchHarness.linkingDelay([LaunchHarness.slowLinkingKey: "soon"]) == nil)
+    #expect(LaunchHarness.linkingDelay([:]) == nil)
+  }
+
   @Test("the sign-in stand-in offers Apple even in a build that otherwise can't sign in with it")
   func signInStandInOffersApple() {
     #expect(LaunchHarness.standsInForSignIn([LaunchHarness.signInStandInKey: "1"]))
