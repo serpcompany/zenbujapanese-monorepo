@@ -38,4 +38,31 @@ struct ConversationScrollPositionTests {
     let back = position(offset: 290, content: 800)
     #expect(back.keepsFollowing(false, after: scrolledUp))
   }
+
+  private final class Conversation {}
+
+  @Test("a row taken off the list leaves a placeholder until a new row takes its place")
+  func removedRowLeavesAPlaceholder() {
+    let conversation = Conversation()
+    let id = ObjectIdentifier(conversation)
+    var floor = ConversationRowFloor()
+    floor.hold(3, of: id)
+    #expect(floor.placeholders(for: 3, of: id) == 0)
+    #expect(floor.placeholders(for: 2, of: id) == 1)
+    floor.hold(2, of: id)
+    #expect(floor.placeholders(for: 2, of: id) == 1)
+    #expect(floor.placeholders(for: 3, of: id) == 0)
+    #expect(floor.placeholders(for: 5, of: id) == 0)
+  }
+
+  @Test("another conversation starts with no placeholders")
+  func anotherConversationStartsClean() {
+    let first = Conversation()
+    let second = Conversation()
+    var floor = ConversationRowFloor()
+    floor.hold(7, of: ObjectIdentifier(first))
+    #expect(floor.placeholders(for: 0, of: ObjectIdentifier(second)) == 0)
+    floor.hold(1, of: ObjectIdentifier(second))
+    #expect(floor.placeholders(for: 0, of: ObjectIdentifier(second)) == 1)
+  }
 }

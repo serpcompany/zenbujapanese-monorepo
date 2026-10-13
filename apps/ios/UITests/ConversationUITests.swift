@@ -15,6 +15,21 @@ final class ConversationUITests: ZenbuUITestCase {
     waitForExpectations(timeout: Self.patience)
   }
 
+  func testAPauseMidSentenceKeepsTheAppOpen() {
+    let app = startConversation()
+    let toggle = find("translate.session.toggle", in: app)
+    var pauses = 0
+    while find("translate.live", in: app).waitForExistence(timeout: Self.patience / 6) {
+      pause(app)
+      pauses += 1
+      toggle.tap()
+      expectation(for: NSPredicate(format: "label == 'Pause'"), evaluatedWith: toggle)
+      waitForExpectations(timeout: Self.patience)
+    }
+    XCTAssertGreaterThan(pauses, 1, "the script's sentences were paused while they were heard")
+    waitFor(firstElement(identifiedBy: "translate.sentence.", in: app))
+  }
+
   func testTwoPanesHoldEachLanguage() {
     let app = startConversation()
     pause(app)

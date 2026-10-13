@@ -59,11 +59,11 @@ fixed or answered and resolved. A finding can be answered with an `@claude` requ
 - **The check fails unless the whole change was reviewed.** After the review, a script fails the
   job when Claude left no log, ended in an error, ended with subagents still running, or posted
   and updated nothing during the run; a denied tool fails it only when nothing was posted. It
-  also fails when Claude started fewer than the skill's three reviewers, or when the summary
-  posted during the run has no `Read <N> of <M> changed files.` line, counts a different M than
-  the pull request has, or leaves files unread without naming them on a `Not read:` line. A
-  review once passed after reading 2 of a pull request's 61 files in 18 seconds, with no reviewer
-  started (#754); this is what fails it now. It counts only the
+  also fails when the summary posted during the run has no `Read <N> of <M> changed files.` line,
+  counts a different M than the pull request has, leaves files unread without naming them on a
+  `Not read:` line, or leaves any unread with fewer than the skill's three reviewers started. A
+  review that read every file passes however it split the reading (#757). One once passed after
+  reading 2 of 61 files in 18 seconds (#754); this is what fails it now. It counts only the
   review's own output: the summary, top-level inline comments, and reviews, not an answer to an
   `@claude` request. It runs when the review step fails too, since the action's log ends with
   only `is_error`: the check shows what Claude said, such as the API refusing the token (Claude's

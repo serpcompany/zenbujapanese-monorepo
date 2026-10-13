@@ -115,11 +115,22 @@ describe("the review's guard", () => {
   })
 
   test.each([
+    ['none', [result()]],
+    ['two', [reviewer('Bugs'), reviewer('Rules'), result()]]
+  ])('passes when Claude read every changed file, having started %s of the three reviewers', async (_, log) => {
+    const { status, output } = await runGuard(log, summaryPosted('Read 4 of 4 changed files.'))
+    expect(output).not.toContain('::error')
+    expect(status).toBe(0)
+  })
+
+  test.each([
     ['none', [result()], 'started 0 of'],
     ['two', [reviewer('Bugs'), reviewer('Rules'), result()], 'started 2 of']
-  ])('fails when Claude started %s of the three reviewers, though it posted a summary', async (_, log, message) => {
-    const { status, output } = await runGuard(log, summaryPosted('Read 4 of 4 changed files.'))
+  ])('fails when Claude left files unread, having started %s of the three reviewers', async (_, log, message) => {
+    const unread = summaryPosted('Read 2 of 61 changed files.\nNot read: the other 59.')
+    const { status, output } = await runGuard(log, { changedFiles: 61, ...unread })
     expect(status).not.toBe(0)
+    expect(output).toContain('left 59 changed file(s) unread')
     expect(output).toContain(message)
   })
 

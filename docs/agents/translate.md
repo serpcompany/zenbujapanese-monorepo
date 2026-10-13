@@ -48,8 +48,8 @@ The tab is split across three Swift targets in `apps/ios/Modules`
     conversation), and takes the account's through `applySynced`. A bookmark whose sentence isn't
     in a conversation here is kept in `Synced Bookmarks/bookmarks.json` in that folder
     (`SharedBookmarks.swift`), which is left in place, and not written, if it can't be read
-    (`bookmarksProblem`, which stops the account's sync and says whether a newer version wrote it). The
-    account side is in [`ios.md`](ios.md), Account and sync.
+    (`bookmarksProblem`, which stops the account's sync and says whether a newer version wrote it).
+    The account side is in [`ios.md`](ios.md), Account and sync.
 - **`TranslatorOnDevice`** (`apps/ios/Modules/Sources/TranslatorOnDevice/`) holds the Apple
   adapters that don't need the microphone or the screen, and builds for iOS and macOS so the Mac
   can replay recordings through them (Recorded-audio check, below):
@@ -66,9 +66,9 @@ The tab is split across three Swift targets in `apps/ios/Modules`
   processing, and the audio session through `ConversationAudioSession`, and feeding the microphone
   to a `BilingualRecognizer`),
   `OnDeviceTranslation` (Apple Translation's availability and download prompt),
-  `SystemSpeechPlayer` (`AVSpeechSynthesizer`), and `TranslateExperience`, which owns the session, History, and the
-  start checks (microphone, Apple Translation, speech assets), which
-  are on-device-specific and change when an Online engine arrives. The home is
+  `SystemSpeechPlayer` (`AVSpeechSynthesizer`), and `TranslateExperience`, which owns the session,
+  History, and the start checks (microphone, Apple Translation, speech assets), which are
+  on-device-specific and change when an Online engine arrives. The home is
   `TranslateHomeView`, a grouped `List` with a header card and the five `TranslateStart` options
   (`TranslateStart.spokenRows`, then `TranslateStart.writtenRows`) as rows of `SettingsRowLabel`,
   the row Account uses; a row opens its mode directly. Image shows the window's alert of the
@@ -132,8 +132,8 @@ to open.
   English speech, and left open through a long stretch of English it loses the start of the
   next Japanese. So at a pause `BilingualRecognizer` finalizes the Japanese analyzer when it has an
   unfinished sentence, or when it has had no result for 5 s (finalizing it at every pause cut the
-  start of the app's own voice into a phantom 「はい。」), through 0.3 s after the voice ended so
-  speech that has resumed stays in the next sentence. If its text
+  start of the app's own voice into a phantom 「はい。」), through 0.3 s after the voice ended so speech
+  that has resumed stays in the next sentence. If its text
   was still changing, it checks again every 0.3 s while the room stays quiet, up to four more
   times.
   It finalizes only the Japanese analyzer
@@ -155,12 +155,16 @@ to open.
   sets `translationDownload` and a hidden view runs `prepareTranslation()`.
 - `OnDeviceTranscriber` and `BilingualRecognizer` number each start; a `stop()` that lands while a
   start is still awaiting the analyzer makes that start give up, so a quick Resume then Pause can't
-  leave the microphone on. After a media-services reset it builds a new `AVAudioEngine`, and `SystemSpeechPlayer` a new
-  synthesizer, since the old ones no longer work.
+  leave the microphone on. After a media-services reset it builds a new `AVAudioEngine`, and
+  `SystemSpeechPlayer` a new synthesizer, since the old ones no longer work.
 - A conversation that has been left refuses to start again, so a dialog closing late can't revive
   it.
 - Pausing always stops the recognizer, the audio engine, playback, and the timers, and releases
   the audio session back to `.soloAmbient`, the category the rest of the app uses.
+- The cards' list (`LiveConversationView`) never holds fewer rows than it has held: a row that
+  goes away leaves a blank one until a new row takes its place (`ConversationRowFloor`). SwiftUI
+  applies a scroll to the bottom row a frame late, at the row's old position, so a pause that
+  took the live row away in between aborted the app in UIKit, on about one such pause in five.
 - On iOS 26.0, which lacks `tabViewBottomAccessory(isEnabled:)`, and on the Mac, which has no tab
   bar, the session bar is a `safeAreaInset` instead.
 - The audio session, its interruptions, and its media-services reset exist only on iPhone and
@@ -172,18 +176,17 @@ to open.
 
 ## Tests
 
-`TranslatorCoreTests` covers the engine with fake clients and a fake clock (the acceptance
-fixture's J-E-J-E turns, held audio, the 30-second cutoff, Listening, the silence
-prompt, pause and resume, the background, leaving with and without saving, provisional
-translations, a stalled sentence, failures), conversation playback (echo-cancelled playback
-keeps listening, the app's own voice is ignored, playback waits while someone talks, a finished
-sentence keeps its live translation), muting and unmuting in both modes
-(`ConversationMutingTests`), the merger, the pause detector, typed-language detection,
-and History storage, bookmarks and the synced ones included. `SearchExperienceTests` covers what
-the app adds around it: reading a
-document's text (`DocumentTextTests`), the home's rows (`TranslateStartTests`), each conversation's known-word share
-(`ConversationWordsTests`), and the spoken translation's time limit (`SystemSpeechPlayerTests`).
-Run them from `apps/ios/Modules`:
+`TranslatorCoreTests` covers the engine with fake clients and a fake clock (the acceptance fixture's
+J-E-J-E turns, held audio, the 30-second cutoff, Listening, the silence prompt, pause and resume,
+the background, leaving with and without saving, provisional translations, a stalled sentence,
+failures), conversation playback (echo-cancelled playback keeps listening, the app's own voice is
+ignored, playback waits while someone talks, a finished sentence keeps its live translation), muting
+and unmuting in both modes (`ConversationMutingTests`), the merger, the pause detector,
+typed-language detection, and History storage, bookmarks and the synced ones included.
+`SearchExperienceTests` covers what the app adds around it: reading a document's text
+(`DocumentTextTests`), the home's rows (`TranslateStartTests`), each conversation's known-word share
+(`ConversationWordsTests`), and the spoken translation's time limit (`SystemSpeechPlayerTests`). Run
+them from `apps/ios/Modules`:
 
 ```sh
 xcodebuild -scheme ZenbuJapaneseModules-Package \
