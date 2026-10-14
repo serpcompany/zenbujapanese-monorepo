@@ -105,7 +105,9 @@ player is by hand; the UI tests stand in for it with a local player that answers
   that line and keep playing. While it's paused, they play just that line and pause again at its
   end, so a learner can step through the video one line at a time.
   Check: UI `PlayerWatchUITests.testThePlayersOwnControlsPlayStepAndRepeat` (play, the next and
-  previous lines, repeat, the speeds, and the scrubber, against the stand-in player); package
+  previous lines, repeat, a speed chosen while a line repeats, and the scrubber, against the
+  stand-in player; the speed menu and the **•••** menu are views of their own, so the time
+  ticking five times a second doesn't redraw a menu while it is open); package
   `YouTubeCaptionsTests` (each line's times, which the controls move between).
 
 Creator-made Japanese captions are used before automatic ones. Sound descriptions such as [音楽] are

@@ -2,6 +2,7 @@ import XCTest
 
 final class PlayerWatchUITests: ZenbuUITestCase {
   static let link = "https://youtu.be/AQdI1o2D32I"
+  static let settlingLimit: TimeInterval = 60
 
   func testAVideoListsItsCaptionCardsWithTheShareOfWordsKnown() {
     let app = openVideo()
@@ -18,12 +19,15 @@ final class PlayerWatchUITests: ZenbuUITestCase {
 
   func testThePlayersOwnControlsPlayStepAndRepeat() {
     let app = openVideo()
-    let playPause = waitFor(find("watch.play-pause", in: app))
+    let playPause = find("watch.play-pause", in: app)
+    waitUntil(playPause, "isEnabled == true")
     playPause.tap()
+    waitUntil(playPause, "label == 'Pause'")
     tap(find("watch.next", in: app))
     tap(find("watch.previous", in: app))
     tap(find("watch.repeat", in: app))
     XCTAssertTrue(find("watch.repeat", in: app).isSelected, "the line repeats")
+    let opened = Date.now
     tap(find("watch.speed", in: app))
     for rate in ["0.5×", "0.75×", "1×", "1.25×", "1.5×"] {
       waitFor(menuChoice(rate, in: app))
@@ -33,6 +37,10 @@ final class PlayerWatchUITests: ZenbuUITestCase {
     } else {
       tapWhereReachable([menuChoices("1.25×", in: app)], in: app)
     }
+    waitUntil(find("watch.speed", in: app), mentions: "1.25×")
+    XCTAssertLessThan(
+      Date.now.timeIntervalSince(opened), Self.settlingLimit,
+      "the app kept animating the open speed menu while a line repeated")
     assertOnScreen(find("watch.scrubber", in: app), in: app)
   }
 

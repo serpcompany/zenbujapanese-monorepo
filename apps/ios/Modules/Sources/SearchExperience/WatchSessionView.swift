@@ -54,7 +54,7 @@ struct WatchSessionView: View {
     .navigationTitle("Player")
     .inlineNavigationTitle()
     .toolbar {
-      ToolbarItem(placement: .barTrailing) { playerMenu }
+      ToolbarItem(placement: .barTrailing) { PlayerMoreMenu(videoID: videoID) }
     }
     .task(id: videoID) {
       history.record(videoID)
@@ -75,28 +75,6 @@ struct WatchSessionView: View {
     .onChange(of: readingAidPreferences.translationSource) {
       Task { await loadCaptions() }
     }
-  }
-
-  private var playerMenu: some View {
-    @Bindable var preferences = readingAidPreferences
-    return Menu("More", systemImage: "ellipsis") {
-      Section("Show") {
-        Toggle("Furigana", isOn: $preferences.showsFurigana)
-        Toggle("Furigana on Known Words", isOn: Binding(
-          get: { !preferences.hidesFuriganaOnKnownWords },
-          set: { preferences.hidesFuriganaOnKnownWords = !$0 }
-        ))
-        .disabled(!preferences.showsFurigana)
-        Toggle("Word Meanings", isOn: $preferences.showsWordMeanings)
-        Toggle("Translations", isOn: $preferences.showsTranslations)
-      }
-      Section {
-        ShareLink(item: URL(string: "https://youtu.be/\(videoID.rawValue)")!) {
-          Label("Share Video", systemImage: "square.and.arrow.up")
-        }
-      }
-    }
-    .accessibilityIdentifier("watch.more")
   }
 
   private var comprehensionSummary: some View {
@@ -265,7 +243,7 @@ struct WatchSessionView: View {
         }
         HStack(spacing: 4) {
           repeatButton
-          speedMenu
+          PlaybackSpeedMenu(player: player)
         }
         .frame(maxWidth: .infinity, alignment: .trailing)
       }
@@ -294,32 +272,6 @@ struct WatchSessionView: View {
     .frame(minWidth: 36, minHeight: 44)
     .accessibilityAddTraits(isOn ? .isSelected : [])
     .accessibilityIdentifier("watch.repeat")
-  }
-
-  private var speedMenu: some View {
-    Menu {
-      Picker(
-        "Playback Speed",
-        selection: Binding(get: { player.playbackRate }, set: { player.setPlaybackRate($0) })
-      ) {
-        ForEach(Self.playbackRates, id: \.self) { rate in
-          Text(Self.rateLabel(rate)).tag(rate)
-        }
-      }
-      .listedInItsMenu()
-    } label: {
-      Text(Self.rateLabel(player.playbackRate))
-        .font(.footnote.weight(.semibold).monospacedDigit())
-        .frame(minWidth: 44, minHeight: 44)
-    }
-    .accessibilityLabel("Playback speed, \(Self.rateLabel(player.playbackRate))")
-    .accessibilityIdentifier("watch.speed")
-  }
-
-  private static let playbackRates: [Double] = [0.5, 0.75, 1, 1.25, 1.5]
-
-  private static func rateLabel(_ rate: Double) -> String {
-    rate.formatted(.number.precision(.fractionLength(0...2))) + "×"
   }
 
   private var loadedCues: [SubtitleCue] {
