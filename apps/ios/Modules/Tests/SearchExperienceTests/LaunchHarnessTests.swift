@@ -35,6 +35,12 @@ struct LaunchHarnessTests {
     #expect(LaunchHarness.linkingFailures([:]) == 0)
   }
 
+  @Test("the Player screen counts its draws only when a UI test asks")
+  func countedDraws() {
+    #expect(LaunchHarness.countsDraws([LaunchHarness.drawCountKey: "1"]))
+    #expect(!LaunchHarness.countsDraws([:]))
+  }
+
   @Test("each results list Search draws is recorded only when a UI test asks, with how many of its rows have chips")
   func drawnResults() {
     #expect(LaunchHarness.recordsDrawnResults([LaunchHarness.drawnResultsKey: "1"]))

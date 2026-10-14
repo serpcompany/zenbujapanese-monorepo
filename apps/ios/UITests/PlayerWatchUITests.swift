@@ -2,7 +2,7 @@ import XCTest
 
 final class PlayerWatchUITests: ZenbuUITestCase {
   static let link = "https://youtu.be/AQdI1o2D32I"
-  static let settlingLimit: TimeInterval = 60
+  static let countingDraws = ["ZENBU_COUNT_DRAWS": "1"]
 
   func testAVideoListsItsCaptionCardsWithTheShareOfWordsKnown() {
     let app = openVideo()
@@ -18,7 +18,8 @@ final class PlayerWatchUITests: ZenbuUITestCase {
   }
 
   func testThePlayersOwnControlsPlayStepAndRepeat() {
-    let app = openVideo()
+    let app = openVideo(Self.standIn().merging(Self.countingDraws) { $1 })
+    waitUntil(find("watch.comprehension", in: app), mentions: "words known")
     let playPause = find("watch.play-pause", in: app)
     waitUntil(playPause, "isEnabled == true")
     playPause.tap()
@@ -27,7 +28,10 @@ final class PlayerWatchUITests: ZenbuUITestCase {
     tap(find("watch.previous", in: app))
     tap(find("watch.repeat", in: app))
     waitUntil(find("watch.repeat", in: app), "isSelected == true")
-    let opened = Date.now
+    let redrawn = redraws(whileSecondsShown: 3, in: app)
+    XCTAssertEqual(
+      redrawn, 0,
+      "the Player screen redrew \(redrawn) times while the scrubber showed three seconds")
     tap(find("watch.speed", in: app))
     for rate in ["0.5×", "0.75×", "1×", "1.25×", "1.5×"] {
       waitFor(menuChoice(rate, in: app))
@@ -38,10 +42,19 @@ final class PlayerWatchUITests: ZenbuUITestCase {
       tapWhereReachable([menuChoices("1.25×", in: app)], in: app)
     }
     waitUntil(find("watch.speed", in: app), mentions: "1.25×")
-    XCTAssertLessThan(
-      Date.now.timeIntervalSince(opened), Self.settlingLimit,
-      "the app kept animating the open speed menu while a line repeated")
     assertOnScreen(find("watch.scrubber", in: app), in: app)
+  }
+
+  private func redraws(whileSecondsShown seconds: Int, in app: XCUIApplication) -> Int {
+    let draws = waitFor(find("watch.draws", in: app))
+    let before = Int("\(draws.value ?? "")") ?? 0
+    let scrubber = find("watch.scrubber", in: app)
+    var shown = Set<String>()
+    waitUntil("the scrubber to show \(seconds) different seconds") {
+      shown.insert("\(scrubber.value ?? "")")
+      return shown.count >= seconds
+    }
+    return (Int("\(draws.value ?? "")") ?? 0) - before
   }
 
   func testAWordInACaptionOpensItsEntryInsidePlayer() {

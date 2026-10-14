@@ -204,6 +204,8 @@ don't contain them), so they need no network, account, camera, or microphone:
 - `ZENBU_DRAWN_RESULTS=1` has Search say, on an element only tests read (`search.results.drawn`),
   each results list it drew and how many of its rows had chips, so a test fails when a list is
   drawn without its chips and then again (`SearchResultsUITests`).
+- `ZENBU_COUNT_DRAWS=1` has the Player screen count its draws on `watch.draws`, so a test fails
+  when it redraws as a video's time ticks (`PlayerWatchUITests`).
 
 The tests share `ZenbuUITestCase` and `AppTab`; what differs between the devices they ask
 `TestDevice` (`apps/ios/UITests/Platform/`, the one place `pnpm verify layers` lets UI tests name
@@ -215,17 +217,16 @@ slowed the app until XCUITest's queries timed out. A wait that fails also attach
 screen**, the app's accessibility hierarchy (`attachWhatIsOnScreen`); read it with
 `xcrun xcresulttool export attachments`. Search's **Sorted by** row is a `Menu` whose accessibility
 element spans the row, though only its text opens the menu, so `chooseFromSortedBy` taps the
-text. On a busy Mac a tab tap, a shortcut, the
-conversation's pause, or a Simulator rotation sometimes doesn't take; the tests repeat one only
-while what it should bring hasn't appeared (`open`, `press`, `pause`, `LayoutUITests.turn`), so a
-repeat can't undo it. A row on a word's page is tapped the same way (`tap(_:toShow:)`). Every
-helper waits on a condition, looking at once and going on the moment it holds, and repeats a
-gesture only while its effect hasn't shown: how, and the rules a test keeps, are in
-[`ios-ui-tests.md`](ios-ui-tests.md). A query that compares every element's value, such as
-`value CONTAINS`, times out on the Mac on a long page; ask for the element by its identifier and
-read it with `waitUntil(_:mentions:)`. `TEST_RUNNER_ZENBU_UI_TEST_PATIENCE=30` on the `xcodebuild`
-command shortens every wait from its 90 seconds, for an idle Mac. An iPad Simulator that had run the suites for hours once stopped turning at
-all, though XCUITest confirmed each turn; `xcrun simctl shutdown` and `boot` brought it back.
+text. On a busy Mac a tab tap, a shortcut, the conversation's pause, or a Simulator rotation
+sometimes doesn't take; the tests repeat one only while what it should bring hasn't appeared
+(`open`, `press`, `pause`, `LayoutUITests.turn`), so a repeat can't undo it. A row on a word's
+page is tapped the same way (`tap(_:toShow:)`). Every helper waits on a condition, looking at once
+and going on the moment it holds, and repeats a gesture only while its effect hasn't shown: how,
+and the rules a test keeps, are in [`ios-ui-tests.md`](ios-ui-tests.md). A query that compares
+every element's value, such as `value CONTAINS`, times out on the Mac on a long page; ask for the
+element by its identifier and read it with `waitUntil(_:mentions:)`. An iPad Simulator that had
+run the suites for hours once stopped turning at all, though XCUITest confirmed each turn;
+`xcrun simctl shutdown` and `boot` brought it back.
 
 On the Mac, XCUITest sees AppKit's elements, and the helpers hide the difference so a test reads
 the same on every device:

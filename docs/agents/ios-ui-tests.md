@@ -44,6 +44,12 @@ what it waited for and for how long.
   `press`, `tap(_:toShow:)`, `focus`, `choose`, and `pause` tap again only after a wait for what
   the tap should bring runs out. `for … where` tests its condition on every pass and never leaves
   early, so write such a loop with a `break`.
+- **Never assert how long something took.** A busy Mac makes everything slow, so a time limit
+  fails for the machine as often as for the app. Count what the app did instead: the Player test
+  reads how many times the screen drew itself (`ZENBU_COUNT_DRAWS`, [`ios.md`](ios.md)) while the
+  scrubber shows three seconds, and expects none. It used to assert that the speed menu was used
+  within 60 s, which caught the screen redrawing five times a second only when XCUITest's own
+  wait for the app to go idle ran out.
 - **Wait for what the next step reads.** A label, a selection, or a frame read the moment after a
   tap reads the screen before the app has answered. `assertOnScreen` waits for the element to
   have a size before it measures where it is, and a Mac sheet is measured once it has opened.

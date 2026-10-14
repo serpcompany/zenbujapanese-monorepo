@@ -15,6 +15,7 @@ struct WatchSessionView: View {
   @State private var isTranslatingMissingLines = false
   @State private var missingTranslationTask: Task<Void, Never>?
   @State private var scrubPosition: TimeInterval?
+  @State private var draws = DrawCount()
   @Binding private var presentedWord: RecognizedWordSheetRequest?
 
   private let videoID: YouTubeVideoID
@@ -75,6 +76,7 @@ struct WatchSessionView: View {
     .onChange(of: readingAidPreferences.translationSource) {
       Task { await loadCaptions() }
     }
+    .countingDraws(as: "watch.draws", in: draws)
   }
 
   private var comprehensionSummary: some View {
@@ -198,10 +200,10 @@ struct WatchSessionView: View {
       )
       HStack(spacing: 0) {
         PlaybackTimeText(player: player, scrubPosition: scrubPosition)
-        .font(.caption2.monospacedDigit())
-        .foregroundStyle(.secondary)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .accessibilityHidden(true)
+          .font(.caption2.monospacedDigit())
+          .foregroundStyle(.secondary)
+          .frame(maxWidth: .infinity, alignment: .leading)
+          .accessibilityHidden(true)
         HStack(spacing: 28) {
           Button("Previous Line", systemImage: "backward.end.fill") { step(by: -1) }
             .font(.body)
