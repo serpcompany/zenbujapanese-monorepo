@@ -513,8 +513,8 @@ written from the Swift the core replaced, so it pins what that showed. Record it
 `RomajiConformanceTests` checks the Romaji reading aid against `romaji.json`: readings grouped
 by the rule they exercise, and whole sentences with their words. Its cases were recorded from
 Foundation's transliteration, which the core's romaji replaced, so the file is edited by hand,
-not re-recorded; a linked sentence's punctuation and counted words are checked in the same
-suite.
+not re-recorded; a linked sentence's punctuation is checked in the same suite, and the words
+captions count in `KnownWordCountTests`.
 
 The website's dictionary service replays all seven suites through the shared TypeScript core on
 the same data ([`dictionary-api.md`](dictionary-api.md)), once through its own path and once
@@ -624,8 +624,7 @@ answers; [`dictionary-core.md`](dictionary-core.md), The app's side, lists which
 - **Entries.** The core names entries by Language Reference ID. `entries(equivalentTo:)` reads
   each with the app's own columns and decoding, as `entry(_:)` does, so an entry is the same
   value wherever it came from; an entry JMdict lists twice (閻魔) is one entry under its smaller
-  ID, with both records' provenance. A page's method takes the entry the app read
-  (`WordPage(entry)`).
+  ID, with both records' provenance. A page takes the entry the app read (`WordPage(entry)`).
 - **Frequency.** The core reads the learner's lists inside the call that builds a results screen,
   a sheet's rows, or a word page, so the app reads none of them and each is drawn once, finished
   ([`frequency.md`](frequency.md)).
@@ -634,14 +633,16 @@ answers; [`dictionary-core.md`](dictionary-core.md), The app's side, lists which
   and hands the text itself to `resultsScreen`. Writing the decoded copy out again would drop
   every field the app doesn't know.
 - **Sentences.** A search that needs a sentence's words says so in its call's outcome. The actor
-  awaits Sudachi (`JapaneseMorphologyClient`), hands the words back, and the call goes on; other
-  lookups can run while it waits.
+  awaits Sudachi (`JapaneseMorphologyClient`) and hands them back; other lookups run meanwhile.
 - **Linked words.** `DictionaryTextData.linkedWords` is one call for a text: the core tokenizes
   it from the dictionary files the app hands it, looks every word's forms up in one or two
   statements, and answers each word with its place, its entry or candidates, its furigana, and
   whether it is the page's word or matches the query. `JapaneseTextAnalysisClient` reads the
   entries the answer names, in one statement, and keeps 4,000. The core remembers the last 512
   texts it linked, so a sentence scrolled back into view costs no analysis.
+- **Counted words.** `DictionaryTextData.countedWords` is one call for a list of lines: the IDs
+  of the words that count toward comprehension, with no entry read. `Comprehension` asks twenty
+  lines at a time (about 5 ms a call), so a caption card's own link never waits on a whole video.
 - **The kanji files.** `KanjiFiles` maps `KanjiReferenceData.json` and
   `KanjiElementReferenceData.json` into memory and scans them once for where each record
   starts and ends, then hands the core a record's bytes as they are in the file. It builds no
@@ -657,21 +658,20 @@ answers; [`dictionary-core.md`](dictionary-core.md), The app's side, lists which
   would hand one compatibility kanji's answer to its twin. `PresentationCore`'s lock is recursive,
   because decoding a page builds `KanjiCharacter`s, each of which asks the same engine.
 - **Cancelling.** `SQLiteJSONRows` checks the task between rows, as the app's other reads do,
-  and the core asks the host between batches of rows while it ranks (`zenbuHost.interrupted`),
-  so a search the learner typed past stops within a few milliseconds, not when its ranking
-  ends. The core's call then fails, the lookup throws `CancellationError`, and nothing is
-  cached.
+  and the core asks the host between batches of rows while it ranks, and before each line it
+  counts (`zenbuHost.interrupted`), so a search the learner typed past, or the count of a video
+  they left, stops within a few milliseconds. The core's call then fails, the lookup throws
+  `CancellationError`, and no half-made answer is kept.
 - **`SearchQuery`** is the app's value for a query: what the screens compare and store. Its
-  text is the core's `normalizeQuery` of what was typed, so the app holds the query Search
-  reads.
+  text is the core's `normalizeQuery` of what was typed: the query Search reads.
 - **Speed.** JavaScriptCore runs without its JIT inside an app, on the Mac as on iPhone, so the
   package's tests on a Mac run the core as a device does. The iOS Simulator does not: its
   JavaScriptCore has the JIT, which makes JavaScript several times faster and holds several times
   the memory, so add `TEST_RUNNER_JSC_useJIT=false` to measure there. `SearchLatencyTests` prints
-  each query's uncached time, how long linking and an abandoned search take, how long the
-  presentation engine takes to start and to build each screen, how long the frequency lists take to
-  be ready, how long romaji, the radical panel, a stroke diagram, and the kanji check take, and the
-  memory a session reaches step by step; it runs only when asked:
+  each query's uncached time, how long linking, a video's known-word count, and an abandoned search
+  take, how long the presentation engine takes to start and to build each screen, how long the
+  frequency lists take to be ready, how long romaji, the radical panel, a stroke diagram, and the
+  kanji check take, and the memory a session reaches step by step; it runs only when asked:
 
   ```sh
   TEST_RUNNER_ZENBU_MEASURE_SEARCH=1 xcodebuild -scheme ZenbuJapaneseModules-Package \

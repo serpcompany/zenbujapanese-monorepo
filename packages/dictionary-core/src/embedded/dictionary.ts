@@ -56,6 +56,7 @@ export function embeddedEndpoint(host: EmbeddedHost): EmbeddedEndpoint {
     entryExamples: id => text().entryExamples(id),
     formExamples: (form, analyze) => text().formExamples(form, analyze),
     linkedTokens: (request, analyze) => text().linkedTokens(JSON.parse(request), analyze),
+    countedWords: (lines, analyze) => text().countedWords(JSON.parse(lines), analyze),
     resultsScreen: request => presentation().resultsScreen(JSON.parse(request)),
     wordRows: request => presentation().wordRows(JSON.parse(request)),
     ruby: pair => presentation().ruby(JSON.parse(pair)),

@@ -1,5 +1,5 @@
 import type { EmbeddedSearchResults } from '@zenbu/dictionary-core/embedded/lookup'
-import type { EmbeddedResultsExamples } from '@zenbu/dictionary-core/embedded/text'
+import type { EmbeddedResultsExamples, EmbeddedToken } from '@zenbu/dictionary-core/embedded/text'
 import type { LearnerResultsScreen } from '@zenbu/dictionary-core/results/learner'
 import { beforeAll, describe, expect, test } from 'vitest'
 import { type Embedded, embedded, shownAsTheAppLinks } from './embedded-support'
@@ -64,5 +64,24 @@ describe.runIf(artifactAvailable)('the app’s example sentences on the artifact
     expect(await app.text<number>('exampleCount', '勉強')).toBe(51)
     expect(await app.text<number>('exampleCount', 'qzxvkj')).toBe(0)
     expect(await app.text<number>('exampleCount', '"')).toBe(0)
+  })
+
+  test('counts, in one call on an engine that has linked nothing, the words the suite’s sentences link to one entry that are no function word', async () => {
+    const lines = suite.cases.flatMap(listed => listed.shown.map(shown => shown.japanese))
+    const counted = await (await embedded()).text<string[]>('countedWords', lines)
+    const linked: string[] = []
+    for (const text of lines) {
+      const tokens = await app.text<EmbeddedToken[]>('linkedTokens', {
+        text,
+        query: '',
+        highlightedEntry: null
+      })
+      for (const token of tokens) {
+        if (token.entry !== null && !token.isFunctionWord) linked.push(token.entry)
+      }
+    }
+    expect(counted).toEqual(linked)
+    expect(counted).toHaveLength(614)
+    expect(new Set(counted).size).toBe(296)
   })
 })

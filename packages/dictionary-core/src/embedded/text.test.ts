@@ -1,6 +1,7 @@
 import { describe, expect, test } from 'vitest'
 import { fixtureDictionary, fixtureFiles } from '../examples/ipadic.fixture'
 import type { KuromojiToken } from '../examples/morphology'
+import { interruptedSearch } from '../search/database'
 import { embeddedEndpoint } from './dictionary'
 import { ask, begin, type FakeEntry, fakeHost, settled } from './fake-host'
 import type { EmbeddedResultsExamples, EmbeddedToken } from './text'
@@ -12,7 +13,8 @@ const entries: FakeEntry[] = [
   { id: 'n1', headword: 'を', reading: 'を', partsOfSpeech: ['noun'] },
   { id: 'v1', headword: '見る', reading: 'みる', partsOfSpeech: ['ichidanVerb'] },
   { id: 'x1', headword: '見た', reading: 'みた', partsOfSpeech: ['noun'] },
-  { id: 'k1', headword: '今日', reading: 'きょう', readingForms: ['こんにち'] }
+  { id: 'k1', headword: '今日', reading: 'きょう', readingForms: ['こんにち'] },
+  { id: 'w1', headword: 'は', reading: 'は', partsOfSpeech: ['particle'] }
 ]
 
 function token(
@@ -49,7 +51,8 @@ const sentences: Record<string, KuromojiToken[]> = {
     token(5, 'を', '助詞', 'ヲ'),
     token(6, '」', '記号', '」')
   ],
-  欠けた分析: [token(1, '欠け', '動詞', 'カケ', '欠ける')]
+  欠けた分析: [token(1, '欠け', '動詞', 'カケ', '欠ける')],
+  日本語は: [token(1, '日本語', '名詞', 'ニホンゴ'), token(4, 'は', '助詞', 'ハ')]
 }
 
 const host = () =>
@@ -62,6 +65,9 @@ const host = () =>
 
 const linked = (target: ReturnType<typeof host>, request: object) =>
   ask(target, 'linkedTokens', JSON.stringify(request)) as Promise<EmbeddedToken[]>
+
+const counted = (target: ReturnType<typeof host>, lines: readonly string[]) =>
+  ask(target, 'countedWords', JSON.stringify(lines)) as Promise<string[]>
 
 describe('the embedded text engine', () => {
   test('links each word of a text to its entry, or lists the entries it could be', async () => {
@@ -81,8 +87,7 @@ describe('the embedded text engine', () => {
         ruby: [{ text: '日本語', reading: 'にほんご' }],
         isPageWord: false,
         matchesQuery: false,
-        attaches: null,
-        counted: true
+        attaches: null
       },
       {
         surface: 'を',
@@ -96,8 +101,7 @@ describe('the embedded text engine', () => {
         ruby: null,
         isPageWord: false,
         matchesQuery: false,
-        attaches: null,
-        counted: false
+        attaches: null
       },
       {
         surface: '見た',
@@ -111,8 +115,7 @@ describe('the embedded text engine', () => {
         ruby: [{ text: '見', reading: 'み' }, { text: 'た' }],
         isPageWord: false,
         matchesQuery: true,
-        attaches: null,
-        counted: true
+        attaches: null
       }
     ])
   })
@@ -168,8 +171,7 @@ describe('the embedded text engine', () => {
         ruby: null,
         isPageWord: false,
         matchesQuery: false,
-        attaches: null,
-        counted: false
+        attaches: null
       }
     ]
     expect(await linked(host(), { text: '猫𠀋', query: '', highlightedEntry: null })).toEqual(
@@ -260,17 +262,17 @@ describe('the embedded text engine', () => {
     expect(embeddedEndpoint(withoutFiles).answer('tokenizerReady', '')).toBe(false)
   })
 
-  test('marks punctuation that stays with a neighbouring word, and counts only linked words', async () => {
+  test('marks punctuation that stays with a neighbouring word', async () => {
     const found = await linked(host(), {
       text: '「日本語を」',
       query: '',
       highlightedEntry: null
     })
-    expect(found.map(word => [word.surface, word.attaches, word.counted])).toEqual([
-      ['「', 'next', false],
-      ['日本語', null, true],
-      ['を', null, false],
-      ['」', 'previous', false]
+    expect(found.map(word => [word.surface, word.attaches])).toEqual([
+      ['「', 'next'],
+      ['日本語', null],
+      ['を', null],
+      ['」', 'previous']
     ])
   })
 
@@ -304,6 +306,87 @@ describe('the embedded text engine', () => {
     const firstHundred = await listed(101)
     expect(firstHundred.sentences).toHaveLength(100)
     expect(firstHundred.countText).toBe('The first 100 of more than 100 examples')
+  })
+
+  test('counts, across a list of lines, each word linked to one entry that is no function word', async () => {
+    const lines = [
+      '日本語を見た',
+      '「日本語を」',
+      '',
+      '日本語は',
+      '欠けた分析',
+      '今日',
+      '日本語を見た'
+    ]
+    expect(await counted(host(), lines)).toEqual(['a1', 'v1', 'a1', 'a1', 'k1', 'a1', 'v1'])
+  })
+
+  test('counts the words a text’s linked tokens show as one entry and no function word', async () => {
+    const target = host()
+    for (const text of Object.keys(sentences)) {
+      const tokens = await linked(target, { text, query: '', highlightedEntry: null })
+      expect(await counted(target, [text]), text).toEqual(
+        tokens.flatMap(found =>
+          found.entry !== null && !found.isFunctionWord ? [found.entry] : []
+        )
+      )
+    }
+  })
+
+  test('asks the dictionary once for every line’s words when it counts, and reads no entry', async () => {
+    const target = host()
+    const endpoint = embeddedEndpoint(target)
+    const lines = JSON.stringify(['日本語を見た', '今日', '日本語は'])
+    const words = { value: ['a1', 'v1', 'k1', 'a1'] }
+    expect(await settled(endpoint.begin('countedWords', lines))).toEqual(words)
+    expect(target.asked).toEqual([['日本語', 'を', '見る', '今日', 'は']])
+    expect(await settled(endpoint.begin('countedWords', lines))).toEqual(words)
+    expect(target.asked).toHaveLength(1)
+  })
+
+  test('remembers a line it has counted, and analyzes again one it could not read', async () => {
+    const tokenized: string[] = []
+    const target = fakeHost(entries, {
+      tokenize: text => {
+        tokenized.push(text)
+        if (!Object.hasOwn(sentences, text)) throw new Error(`The tokenizer has no ${text}`)
+        return sentences[text]
+      }
+    })
+    const endpoint = embeddedEndpoint(target)
+    const lines = JSON.stringify(['今日', '日本語を見た', '未知', '今日'])
+    const words = { value: ['k1', 'a1', 'v1', 'k1'] }
+    expect(await settled(endpoint.begin('countedWords', lines))).toEqual(words)
+    expect(tokenized).toEqual(['今日', '日本語を見た', '未知'])
+    expect(await settled(endpoint.begin('countedWords', lines))).toEqual(words)
+    expect(tokenized).toEqual(['今日', '日本語を見た', '未知', '未知'])
+  })
+
+  test('stops counting once the host says nobody wants the answer', async () => {
+    let tokenized = 0
+    const target = fakeHost(entries, {
+      tokenize: text => {
+        tokenized++
+        return sentences[text]
+      },
+      interrupted: () => tokenized > 0
+    })
+    await expect(counted(target, ['日本語を見た', '今日'])).rejects.toThrow(interruptedSearch)
+    expect(tokenized).toBe(1)
+  })
+
+  test('asks a host without a tokenizer for each counted line’s words in turn', async () => {
+    const noun = (surface: string) => ({
+      words: [
+        { surface, dictionaryForm: surface, partOfSpeech: ['名詞'], isOutOfVocabulary: false }
+      ]
+    })
+    const call = begin(fakeHost(entries), 'countedWords', JSON.stringify(['日本語', '今日']))
+    expect(await settled(call)).toEqual({ analyze: '日本語' })
+    call.analyzed(JSON.stringify(noun('日本語')))
+    expect(await settled(call)).toEqual({ analyze: '今日' })
+    call.analyzed(JSON.stringify(noun('今日')))
+    expect(await settled(call)).toEqual({ value: ['a1', 'k1'] })
   })
 
   test('refuses an example index that is not the one the core reads', async () => {

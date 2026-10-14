@@ -58,7 +58,6 @@ struct LinkedWord: Decodable, Sendable {
   let isPageWord: Bool
   let matchesQuery: Bool
   let attaches: String?
-  let counted: Bool
 }
 
 actor DictionaryTextData {
@@ -101,6 +100,10 @@ actor DictionaryTextData {
 
   func linkedWords(_ text: LinkedText) async throws -> [LinkedWord] {
     try await answer("linkedTokens", try DictionaryCore.argument(text))
+  }
+
+  func countedWords(_ lines: [String]) async throws -> [String] {
+    try await answer("countedWords", try DictionaryCore.argument(lines))
   }
 
   func availability() async -> JapaneseTextAnalysisAvailability {
