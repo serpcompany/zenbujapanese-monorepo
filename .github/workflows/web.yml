@@ -74,7 +74,7 @@ jobs:
         run: grep -q 'href="/login/">Sign in<' .next/server/app/about.html
 
   e2e:
-    needs: changes
+    needs: [changes, check]
     if: needs.changes.outputs.changed == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 25

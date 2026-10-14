@@ -68,7 +68,7 @@ jobs:
         run: pnpm check
 
   website:
-    needs: changes
+    needs: [changes, check]
     if: needs.changes.outputs.changed == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 20
