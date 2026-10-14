@@ -123,8 +123,15 @@ extension ZenbuUITestCase {
     _ element: XCUIElement, in app: XCUIApplication, within container: XCUIElement? = nil
   ) -> XCUIElement {
     let area = container ?? app.windows.firstMatch
-    _ = element.waitForExistence(timeout: 5)
-    for _ in 0..<12 where !isReachable(element, in: app, within: container) {
+    var lastLongList: String?
+    _ = comesTrue("\(element) to exist, or a list to show it goes on below", within: 5) {
+      if element.exists { return true }
+      let longList = listGoingOnBelow(in: area)
+      defer { lastLongList = longList }
+      return longList != nil && longList == lastLongList
+    }
+    for _ in 0..<12 {
+      if isReachable(element, in: app, within: container) { break }
       let isAbove = element.exists && element.frame.midY < area.frame.midY
       if device == .mac {
         area.scroll(byDeltaX: 0, deltaY: isAbove ? 150 : -150)
@@ -135,6 +142,16 @@ extension ZenbuUITestCase {
       }
     }
     return waitFor(element)
+  }
+
+  func listGoingOnBelow(in area: XCUIElement) -> String? {
+    guard device != .mac else { return nil }
+    let longList = NSPredicate(
+      format: "label BEGINSWITH 'Vertical scroll bar,' AND NOT (label ENDSWITH ' 1 page')")
+    guard let bar = try? area.descendants(matching: .any).matching(longList).firstMatch.snapshot()
+    else { return nil }
+    let shown = "\(bar.label), \(bar.value ?? "")"
+    return shown.hasSuffix(", 100%") ? nil : shown
   }
 
   func shrinkWindow(in app: XCUIApplication) {

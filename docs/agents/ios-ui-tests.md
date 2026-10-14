@@ -19,7 +19,7 @@ gives up at its limit, and the helpers a test calls all wait through it:
 | `waitUntil(_:_:)`, `waitUntil(_:mentions:)`, `waitUntilGone` | The element meets a predicate, such as `isEnabled == true` | 90 s; `<element> never met <condition>` |
 | `waitUntil("the two lists changing places") { … }` | Anything a closure can read | 90 s; `<what> never happened` |
 | `appears(_:within:)`, `isHittable(_:within:)` | The same, as an answer, for a step that may be tried again | The caller's: a third of the 90 s for a retried tap |
-| `assertOnScreen`, `firstReachable`, `tap`, `tap(_:toShow:)`, `focus`, `type`, `name`, `open`, `choose`, `waitForSheet` | What each needs before it acts or measures | 90 s, or a third of it for each try of a retried step |
+| `assertOnScreen`, `firstReachable`, `tap`, `tap(_:toShow:)`, `focus`, `type`, `name`, `open`, `choose`, `reveal`, `waitForSheet` | What each needs before it acts or measures | 90 s, or a third of it for each try of a retried step |
 
 The 90 seconds is `patience`; `TEST_RUNNER_ZENBU_UI_TEST_PATIENCE=30` on the `xcodebuild` command
 shortens every wait, for an idle Mac. A passing test never runs to a limit, so the limit costs it
@@ -45,6 +45,12 @@ what it waited for and for how long.
 - **Wait for what the next step reads.** A label, a selection, or a frame read the moment after a
   tap reads the screen before the app has answered. `assertOnScreen` waits for the element to
   have a size before it measures where it is, and a Mac sheet is measured once it has opened.
+- **`reveal` scrolls at once toward a row a list hasn't built.** A lazy list builds a row only
+  when it scrolls near it, so waiting for one below the screen can't work. `reveal` waits up to
+  five seconds for the row, but stops as soon as the list says it goes on below: a vertical
+  scroll bar of more than one page, not at 100%, the same at two looks running, so a page still
+  growing as its sections load doesn't count. It then scrolls toward the row and stops once the
+  row is in reach. On the Mac, whose lists build their rows, it waits as before.
 
 A test that starts failing after a wait got faster was passing by luck: it read or tapped
 something a moment before it was ready, and the second XCUITest used to add hid that. Find what
