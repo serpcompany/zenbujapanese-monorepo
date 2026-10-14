@@ -169,15 +169,13 @@ refinement, Example Sentences, and Kanji rows) and `ExampleSearchConformanceTest
 and `generously`); UI `SearchResultsUITests.testARomajiQueryOffersItsJapaneseReading`,
 `testAWordOffersItsExampleSentences`, and `SearchUITests.testAQueryWithNoMatchesSaysSo`.
 
-The Example Sentences row opens the query's sentences on a screen titled with the query. Under
-the title, a line says how many it lists: "60 examples", or "The first 100 of more than 100
-examples" when more match than the 100 it lists. The website's section shows the same line. The
-screen keeps its place while a word opened from it is on screen.
+The Example Sentences row opens the query's sentences on a screen titled with the query. Under the
+title, a line says how many it lists: "60 examples", or "The first 100 of more than 100 examples"
+when more match than the 100 it lists. The website's section shows the same line.
 
-Check: the recorded `ExampleSearchConformanceTests` (`countText`, which the website is held to
-as well); core `detail/examples.test.ts` and `embedded/text.test.ts`; UI
-`SearchResultsUITests.testExampleSentencesSayHowManyAreListed` (3 examples, and over 100) and
-`ExampleRowsUITests` (the list is where it was left after a word opened from its **Words** menu).
+Check: the recorded `ExampleSearchConformanceTests` (`countText`, which the website is held to as
+well); core `detail/examples.test.ts` and `embedded/text.test.ts`; UI
+`SearchResultsUITests.testExampleSentencesSayHowManyAreListed` (3 examples, and over 100).
 
 Recent text searches are stored on the device and listed while the query is empty. A learner can
 repeat a search, remove one by swiping or long-pressing it, or clear the entire history from the
@@ -312,13 +310,15 @@ pieces join into one word), `artifact/word-examples.test.ts` (which words are ac
 `WordMeaningTests`.
 
 On Example Sentences, a word's Examples, and a form's examples, a sentence appears with its words
-linked, with furigana, and with romaji when Romaji is on: never as plain text first, and at the
-height it keeps. Each list shows 25 sentences, those that fit the screen first, and brings 25 more
-at its end. A list that couldn't be read shows no examples and is read again on coming back.
+linked, furigana, and romaji when Romaji is on: never as plain text first, and at the height it
+keeps. Each list shows 25 sentences, those that fit the screen first, then 25 more at its end.
+Example Sentences keeps its place while a word opened from it is shown. A list that couldn't be read
+says "Examples couldn’t be loaded." with **Retry**, never that it has none, and is read again on
+**Retry** or on coming back; a later page says "More examples couldn’t be loaded."
 
-Check: UI `ExampleRowsUITests` (on each screen the first row, the 23rd, and the 26th arrive linked
-while linking is held, and those on screen keep their height once it is let go; a form's word opens;
-a failed first read is read on return); package `LoadedExamplesTests`; recorded suites.
+Check: UI `ExampleRowsUITests` (rows 1, 23, and 26 of each screen arrive linked while linking is
+held, after no empty or failed message, and keep their height; a form's word opens; the place is
+kept; a failed read says so, read on return and Retry); `LoadedExamplesTests`; recorded suites.
 
 A **Frequency** section lists each enabled dictionary's rank or JLPT level for the word. It is drawn
 with the page, except just after a launch, and follows a change of dictionaries at once. Selecting a

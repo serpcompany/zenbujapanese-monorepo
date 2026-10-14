@@ -139,13 +139,13 @@ struct WordDetailView: View {
         }
         ExampleSentenceSections(
           title: "EXAMPLES",
-          examples: answersExamples ? examples.examples : [],
-          isLoading: !answersExamples,
+          examples: examples,
+          source: entry.id.rawValue,
           emptyMessage: "No source-matched examples",
-          hasMore: answersExamples && examples.hasMore,
           presentation: { .wordDetail(index: $0) },
           speechSynthesisClient: speechSynthesisClient,
-          loadMore: { await examples.loadMore(read: readExamples) },
+          read: readExamples,
+          readAgain: { await loadExamples() },
           openWord: openWord
         )
       }
@@ -185,12 +185,12 @@ struct WordDetailView: View {
       guard !Task.isCancelled else { return }
       analysisAvailability = await japaneseTextAnalysisClient.availability()
     }
-    .screenTask(id: entry.id) {
-      await examples.load(entry.id.rawValue, rowsOnScreen: rowsOnScreen, read: readExamples)
-    }
+    .screenTask(id: entry.id) { await loadExamples() }
   }
 
-  private var answersExamples: Bool { examples.answers(entry.id.rawValue) }
+  private func loadExamples() async {
+    await examples.load(entry.id.rawValue, rowsOnScreen: rowsOnScreen, read: readExamples)
+  }
 
   private func readExamples(_ batch: ExampleBatch) async -> ExamplePage? {
     try? await exampleSentenceClient.examples(entry, batch)

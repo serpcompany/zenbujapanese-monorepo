@@ -149,13 +149,13 @@ struct ConjugatedFormView: View {
 
       ExampleSentenceSections(
         title: "Examples",
-        examples: examples.examples,
-        isLoading: !examples.answers(form.surface),
+        examples: examples,
+        source: form.surface,
         emptyMessage: "No example sentences use this form yet.",
-        hasMore: examples.hasMore,
         presentation: { .conjugatedForm(form.kind, index: $0) },
         speechSynthesisClient: speechSynthesisClient,
-        loadMore: { await examples.loadMore(read: readExamples) },
+        read: readExamples,
+        readAgain: { await loadExamples() },
         openWord: openWord
       )
     }
@@ -163,9 +163,11 @@ struct ConjugatedFormView: View {
     .navigationTitle(form.title)
     .inlineNavigationTitle()
     .accessibilityIdentifier("conjugations.form.\(form.kind)")
-    .screenTask(id: form) {
-      await examples.load(form.surface, rowsOnScreen: rowsOnScreen, read: readExamples)
-    }
+    .screenTask(id: form) { await loadExamples() }
+  }
+
+  private func loadExamples() async {
+    await examples.load(form.surface, rowsOnScreen: rowsOnScreen, read: readExamples)
   }
 
   private func readExamples(_ batch: ExampleBatch) async -> ExamplePage? {

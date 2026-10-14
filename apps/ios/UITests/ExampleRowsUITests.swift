@@ -80,27 +80,44 @@ final class ExampleRowsUITests: ZenbuUITestCase {
   }
 
   func testExampleSentencesAreReadAgainOnComingBackAfterTheirFirstReadFailed() {
-    let app = launch([Self.failLinking: "1"])
+    let app = launch([Self.holdLinking: "1", Self.failLinking: "2"])
     let rows = openMiruExamples(in: app)
-    waitFor(find("example-list.screen", in: app))
+    let unread = find("examples.failed", in: app)
+    letLinkingGo(until: unread, in: app)
     XCTAssertFalse(rows.row(0).exists, "the read that was made to fail listed examples")
     open(.translate, in: app)
     tap(tabItem(.search, in: app))
-    waitFor(rows.row(0))
+    waitFor(find("examples.loading", in: app))
+    letLinkingGo(until: unread, in: app)
+    tap(find("examples.retry", in: app))
+    waitFor(find("examples.loading", in: app))
+    letLinkingGo(until: rows.row(0), in: app)
   }
 
   func testAWordsExamplesAreReadAgainOnComingBackAfterTheirFirstReadFailed() {
-    let app = launch([Self.failLinking: "1"])
+    let app = launch([Self.holdLinking: "1", Self.failLinking: "2"])
     openTaberu(in: app)
     let rows = wordExamples(in: app)
     let page = device == .mac ? rows.list : app.windows.firstMatch
-    let unread = labeled("No source-matched examples", in: app)
-    scroll(page, back: false, until: unread)
+    let unread = find("examples.failed", in: app)
+    let none = find("examples.empty", in: app)
+    for _ in 0..<12 where !unread.exists {
+      letLinkingGo(heldBefore: .now)
+      scroll(page, back: false)
+    }
     reveal(unread, in: app)
+    XCTAssertFalse(none.exists, "the page said the word has no examples when its read failed")
     let conjugations = find("word-detail.conjugations", in: app)
     scroll(page, back: true, until: conjugations)
     tap(reveal(conjugations, in: app), toShow: find("conjugations.screen", in: app))
     goBack(in: app)
+    let loading = find("examples.loading", in: app)
+    scroll(page, back: false, until: loading)
+    waitFor(loading)
+    letLinkingGo(until: unread, in: app)
+    XCTAssertFalse(none.exists, "the page said the word has no examples when its read failed")
+    tap(reveal(find("examples.retry", in: app), in: app))
+    letLinkingGo(until: rows.row(0), in: app)
     reveal(0, of: rows, in: app)
   }
 
@@ -110,6 +127,15 @@ final class ExampleRowsUITests: ZenbuUITestCase {
       scroll(page, back: back)
       swipes += 1
     }
+  }
+
+  private func letLinkingGo(until element: XCUIElement, in app: XCUIApplication) {
+    let deadline = Date.now.addingTimeInterval(Self.patience)
+    while !element.exists, Date.now < deadline {
+      letLinkingGo(heldBefore: .now)
+      RunLoop.current.run(until: Date.now.addingTimeInterval(0.3))
+    }
+    waitFor(element)
   }
 
   private func letLinkingGo(heldBefore cut: Date) {
@@ -193,7 +219,13 @@ final class ExampleRowsUITests: ZenbuUITestCase {
     let deadline = Date.now.addingTimeInterval(Self.patience)
     var looking = Date.now
     var looked: Date?
+    let unlisted = app.descendants(matching: .any).matching(
+      NSPredicate(format: "identifier IN %@", ["examples.empty", "examples.failed"])
+    ).firstMatch
     while !row.exists, Date.now < deadline {
+      XCTAssertFalse(
+        unlisted.exists,
+        "the screen said it had no examples, or couldn't load them, before row \(number)")
       if let looked { letLinkingGo(heldBefore: looked) }
       scroll(toward: number, of: rows, in: app)
       looked = looking
