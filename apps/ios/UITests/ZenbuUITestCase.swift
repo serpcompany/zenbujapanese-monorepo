@@ -5,7 +5,6 @@ class ZenbuUITestCase: XCTestCase {
   static let offlineAccountService = "http://127.0.0.1:9"
   static let patience =
     ProcessInfo.processInfo.environment["ZENBU_UI_TEST_PATIENCE"].flatMap(TimeInterval.init) ?? 90
-  static let layoutPatience: TimeInterval = 5
   static let lookInterval: TimeInterval = 0.1
   static let sheetRoom: CGFloat = 400
 

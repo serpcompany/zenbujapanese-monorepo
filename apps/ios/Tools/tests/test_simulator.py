@@ -277,9 +277,11 @@ class SimulatorTests(unittest.TestCase):
         limit = simulator.IDLE_LIMIT_SECONDS
         self.assertIsNone(simulator.reason_to_shut_down(False, limit - 1, 80, 0))
         self.assertIn("10 minutes", simulator.reason_to_shut_down(False, limit, 80, 0))
-        self.assertIn("memory was short", simulator.reason_to_shut_down(False, 5, 39, 0))
-        self.assertIn("memory was short", simulator.reason_to_shut_down(False, 5, 80, 2001))
-        self.assertIsNone(simulator.reason_to_shut_down(False, 5, 40, 2000))
+        idle = simulator.MEMORY_IDLE_SECONDS
+        self.assertIn("memory was short", simulator.reason_to_shut_down(False, idle, 39, 0))
+        self.assertIn("memory was short", simulator.reason_to_shut_down(False, idle, 80, 2001))
+        self.assertIsNone(simulator.reason_to_shut_down(False, idle, 40, 2000))
+        self.assertIsNone(simulator.reason_to_shut_down(False, idle - 1, 10, 9000))
 
     def test_a_keeper_already_watching_is_told_the_simulator_was_used_not_started_again(
         self,
@@ -311,7 +313,7 @@ class SimulatorTests(unittest.TestCase):
     def test_shutdown_stops_this_checkouts_running_simulators_and_no_others(self) -> None:
         with mock.patch.object(simulator, "simctl") as simctl, mock.patch.object(
             simulator, "empty_dead_installs", return_value=(2, 1_600_000_000)
-        ) as emptied:
+        ) as emptied, mock.patch.object(simulator, "is_in_use", return_value=False):
             stopped = simulator.shut_down("issue-8-running", DEVICES)
             self.assertEqual(simulator.shut_down("issue-12-sidebar", DEVICES), [])
         self.assertEqual(
@@ -320,6 +322,14 @@ class SimulatorTests(unittest.TestCase):
         )
         self.assertEqual([call.args for call in simctl.call_args_list], [("shutdown", "RUNNING-IPAD")])
         self.assertEqual(emptied.call_args_list, [mock.call("RUNNING-IPAD")])
+
+    def test_shutdown_leaves_a_simulator_something_is_using(self) -> None:
+        with mock.patch.object(simulator, "simctl") as simctl, mock.patch.object(
+            simulator, "is_in_use", return_value=True
+        ):
+            said = simulator.shut_down("issue-8-running", DEVICES)
+        self.assertEqual(said, ["zenbu-japanese-ipad--issue-8-running stays up, since something is using it"])
+        simctl.assert_not_called()
 
     def test_a_simulator_up_between_runs_has_its_old_installs_of_the_app_deleted(self) -> None:
         said, commands, _, _ = self.booting("ipad", "issue-8-running", dead=(46, 18_000_000_000))
@@ -338,10 +348,16 @@ class SimulatorTests(unittest.TestCase):
             (dead / "temp.abc" / "Zenbu Japanese.app" / "Zenbu Japanese").write_bytes(b"x" * 1000)
             (dead / "loose").write_bytes(b"y" * 10)
             (dead / "linked").symlink_to(outside, target_is_directory=True)
-            emptied, freed = simulator.empty_dead_installs("LIVE", simulators)
+            (dead / "temp.moving-in").mkdir()
+            for name in ["temp.abc", "loose", "linked"]:
+                os.utime(dead / name, (1, 1), follow_symlinks=False)
+            moved_in = os.stat(dead / "temp.moving-in").st_mtime
+            emptied, freed = simulator.empty_dead_installs(
+                "LIVE", simulators, now=lambda: moved_in + 1
+            )
             self.assertEqual(emptied, 3)
             self.assertGreaterEqual(freed, 1010)
-            self.assertEqual(list(dead.iterdir()), [])
+            self.assertEqual([entry.name for entry in dead.iterdir()], ["temp.moving-in"])
             self.assertTrue((outside / "kept").is_dir())
             self.assertEqual(simulator.empty_dead_installs("GONE", simulators), (0, 0))
 

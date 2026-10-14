@@ -36,8 +36,10 @@ what it waited for and for how long.
   every suite's time.
 - **Never pause to let something happen;** wait for the thing itself. The fixed pauses left are
   proofs that something does not happen (the input panel stays open, the iPhone doesn't turn, the
-  word sheet stays up), the long press and the drag's hold, which are what a finger does, and
-  `waitUntilStill`'s second between two looks at a frame.
+  word sheet stays up), the long press and the drag's hold, which are what a finger does,
+  `waitUntilStill`'s second between two looks at a frame, and three on the iPad and the Mac with
+  nothing on screen to wait for yet: a window taking keyboard focus after Escape, a shortcut
+  pressed over a sheet, and the pointer moving off a headword before its picture.
 - **Repeat a gesture only while its effect hasn't shown,** and stop as soon as it has: `open`,
   `press`, `tap(_:toShow:)`, `focus`, `choose`, and `pause` tap again only after a wait for what
   the tap should bring runs out. `for … where` tests its condition on every pass and never leaves

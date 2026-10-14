@@ -30,6 +30,8 @@ CALM_LIMIT_SECONDS = 120
 IDLE_LIMIT_SECONDS = 600
 KEEPER_PERIOD_SECONDS = 20
 LEAST_FREE_MEMORY_PERCENT = 40
+MEMORY_IDLE_SECONDS = 120
+DEAD_INSTALL_SETTLE_SECONDS = 60
 MOST_SWAP_MEGABYTES = 2000
 
 
@@ -220,7 +222,9 @@ def size_of(path: Path) -> int:
     return sum(entry.lstat().st_size for entry in path.rglob("*") if not entry.is_dir())
 
 
-def empty_dead_installs(udid: str, simulators: Path = SIMULATORS) -> tuple[int, int]:
+def empty_dead_installs(
+    udid: str, simulators: Path = SIMULATORS, now: Callable[[], float] = time.time
+) -> tuple[int, int]:
     folder = dead_installs(udid, simulators)
     if folder.is_symlink() or not folder.is_dir():
         return 0, 0
@@ -228,6 +232,8 @@ def empty_dead_installs(udid: str, simulators: Path = SIMULATORS) -> tuple[int, 
     freed = 0
     for entry in folder.iterdir():
         try:
+            if entry.lstat().st_mtime > now() - DEAD_INSTALL_SETTLE_SECONDS:
+                continue
             freed += size_of(entry)
         except OSError:
             continue
@@ -255,17 +261,18 @@ def boot(kind: str, scope: str | None) -> str:
     for other in idle_others:
         simctl("shutdown", other["udid"])
     if any(device["udid"] == target and device.get("state") == "Booted" for device in up):
+        keep(target)
         said = "was already up"
     else:
         began = time.monotonic()
         simctl("boot", target)
+        keep(target)
         simctl("bootstatus", target, "-b")
         booted = time.monotonic() - began
         waited, calm = wait_until_calm()
         said = f"booted in {booted:.0f} s, and the Mac " + (
             f"was calm {waited:.0f} s later" if calm else f"was still busy {waited:.0f} s later"
         )
-    keep(target)
     return (
         said
         + emptied
@@ -306,7 +313,8 @@ def keep(udid: str, keepers: Path = KEEPERS) -> None:
 
 
 def is_in_use(udid: str) -> bool:
-    return subprocess.run(["pgrep", "-f", f"id={udid}"], capture_output=True).returncode == 0
+    named = f"id={udid}|simctl.*{udid}"
+    return subprocess.run(["pgrep", "-f", named], capture_output=True).returncode == 0
 
 
 def free_memory_percent() -> int:
@@ -320,7 +328,8 @@ def swap_megabytes() -> float:
 def reason_to_shut_down(in_use: bool, idle_seconds: float, free: int, swap: float) -> str | None:
     if in_use:
         return None
-    if free < LEAST_FREE_MEMORY_PERCENT or swap > MOST_SWAP_MEGABYTES:
+    memory_short = free < LEAST_FREE_MEMORY_PERCENT or swap > MOST_SWAP_MEGABYTES
+    if memory_short and idle_seconds >= MEMORY_IDLE_SECONDS:
         return f"memory was short ({free}% free, {swap:.0f} MB of swap) and nothing was using it"
     if idle_seconds >= IDLE_LIMIT_SECONDS:
         return f"nothing had used it for {IDLE_LIMIT_SECONDS // 60} minutes"
@@ -345,7 +354,7 @@ def keeper(udid: str, keepers: Path = KEEPERS) -> None:
             reason = reason_to_shut_down(
                 in_use, time.time() - last_used, free_memory_percent(), swap_megabytes()
             )
-        except SystemExit as failed:
+        except (SystemExit, Exception) as failed:
             print(f"{time.strftime('%F %T')} could not look: {failed}", flush=True)
             continue
         if reason:
@@ -365,6 +374,9 @@ def note_emptied(udid: str) -> None:
 def shut_down(scope: str | None, devices: dict[str, list[dict]]) -> list[str]:
     said = []
     for device in running(scope, devices):
+        if is_in_use(device["udid"]):
+            said.append(f"{device['name']} stays up, since something is using it")
+            continue
         simctl("shutdown", device["udid"])
         said.append(device["name"] + said_emptied(*empty_dead_installs(device["udid"])))
     return said
