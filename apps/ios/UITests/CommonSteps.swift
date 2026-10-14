@@ -132,9 +132,10 @@ extension ZenbuUITestCase {
       defer { lastLongList = longList }
       return longList != nil && longList == lastLongList
     }
+    var isAbove = false
     for _ in 0..<12 {
       if isReachable(element, in: app, within: container) { break }
-      let isAbove = element.exists && element.frame.midY < area.frame.midY
+      if let laidOut = laidOutFrame(of: element) { isAbove = laidOut.midY < area.frame.midY }
       if device == .mac {
         scrolled.scroll(byDeltaX: 0, deltaY: isAbove ? 150 : -150)
       } else if isAbove {
@@ -144,6 +145,11 @@ extension ZenbuUITestCase {
       }
     }
     return waitFor(element)
+  }
+
+  func laidOutFrame(of element: XCUIElement) -> CGRect? {
+    guard let shown = try? element.snapshot(), !shown.frame.isEmpty else { return nil }
+    return shown.frame
   }
 
   func listGoingOnBelow(in area: XCUIElement) -> String? {

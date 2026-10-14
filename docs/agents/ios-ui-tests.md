@@ -51,6 +51,12 @@ what it waited for and for how long.
   scroll bar of more than one page, not at 100%, the same at two looks running, so a page still
   growing as its sections load doesn't count. It then scrolls toward the row and stops once the
   row is in reach. On the Mac, whose lists build their rows, it waits as before.
+- **`reveal` takes its direction only from a frame that has been laid out.** A Mac list keeps
+  rows in its tree before it lays them out, and such a row reports an empty frame, whose middle
+  reads as the top of the screen. `reveal` scrolls forward, toward the part of the list not yet
+  seen, until the row has a real frame above the list, and a frame that is empty for a moment
+  keeps the direction it had. Reading the empty frame as "above" once sent a Mac run back and
+  forth twelve times without reaching the row.
 
 A test that starts failing after a wait got faster was passing by luck: it read or tapped
 something a moment before it was ready, and the second XCUITest used to add hid that. Find what
