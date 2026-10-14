@@ -203,8 +203,9 @@ request's last run. The deployer and the backups script (`deploy/deployer.sh`,
   registers with an emailed code, edits the profile, signs out, signs in again, and deletes the
   account after a fresh sign-in ([`web.md`](web.md), Account pages). The `Web` workflow can't run
   it, with no service, so it runs here, as `Dictionary API` runs the website's rendered-page gate
-  against the service it builds. It doesn't retry a failed run, as the `Web` workflow does: the
-  service sends five codes from one address in 10 minutes, and a run sends three.
+  against the service it builds. A failed run is not tried again, as in the `Web` workflow, and
+  here it couldn't be: the service sends five codes from one address in 10 minutes, and a run
+  sends three.
   `ACCOUNT_API_SECRET` is a CI-only value. On a failure it prints
   the service's log and keeps the test's trace, video, and screenshot as `account-pages-report`
   for a week.
