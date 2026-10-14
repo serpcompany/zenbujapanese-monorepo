@@ -17,12 +17,16 @@ final class ConversationUITests: ZenbuUITestCase {
   func testAPauseMidSentenceKeepsTheAppOpen() {
     let app = startConversation()
     let toggle = find("translate.session.toggle", in: app)
+    let heard = app.descendants(matching: .any)
+      .matching(NSPredicate(format: "identifier MATCHES %@", #"translate\.sentence\.[^.]+"#))
     var pauses = 0
     while appears(find("translate.live", in: app), within: Self.patience / 6) {
+      let sentences = heard.count
       pause(app)
       pauses += 1
       toggle.tap()
       waitUntil(toggle, "label == 'Pause'")
+      waitUntil("the paused sentence being heard to its end") { heard.count > sentences }
     }
     XCTAssertGreaterThan(pauses, 1, "the script's sentences were paused while they were heard")
     waitFor(firstElement(identifiedBy: "translate.sentence.", in: app))
