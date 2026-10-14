@@ -21,6 +21,8 @@ SEPARATOR = "--"
 SCOPE = re.compile(r"[A-Za-z0-9._-]+")
 BUILD_CACHE = Path.home() / "Library" / "Caches" / "com.zenbujapanese.build" / "DerivedData"
 KEEPERS = BUILD_CACHE.parent / "SimulatorKeepers"
+SIMULATORS = Path.home() / "Library" / "Developer" / "CoreSimulator" / "Devices"
+DEAD_INSTALLS = Path("data") / "Library" / "Caches" / "com.apple.containermanagerd" / "Dead"
 CALM_IDLE_PERCENT = 50
 CALM_SAMPLES = 2
 CALM_SAMPLE_SECONDS = 2
@@ -208,8 +210,44 @@ def running(scope: str | None, devices: dict[str, list[dict]]) -> list[dict]:
     ]
 
 
+def dead_installs(udid: str, simulators: Path = SIMULATORS) -> Path:
+    return simulators / udid / DEAD_INSTALLS
+
+
+def size_of(path: Path) -> int:
+    if path.is_symlink() or not path.is_dir():
+        return path.lstat().st_size
+    return sum(entry.lstat().st_size for entry in path.rglob("*") if not entry.is_dir())
+
+
+def empty_dead_installs(udid: str, simulators: Path = SIMULATORS) -> tuple[int, int]:
+    folder = dead_installs(udid, simulators)
+    if folder.is_symlink() or not folder.is_dir():
+        return 0, 0
+    emptied = 0
+    freed = 0
+    for entry in folder.iterdir():
+        try:
+            freed += size_of(entry)
+        except OSError:
+            continue
+        if entry.is_dir() and not entry.is_symlink():
+            shutil.rmtree(entry, ignore_errors=True)
+        else:
+            entry.unlink(missing_ok=True)
+        emptied += 1
+    return emptied, freed
+
+
+def said_emptied(emptied: int, freed: int) -> str:
+    if not emptied:
+        return ""
+    return f"; deleted {emptied} old installs of the app ({freed / 1e9:.1f} GB) it had kept"
+
+
 def boot(kind: str, scope: str | None) -> str:
     target = udid(kind, scope)
+    emptied = said_emptied(*empty_dead_installs(target))
     up = running(scope, listed("devices")["devices"])
     idle_others = [
         device for device in up if device["udid"] != target and not is_in_use(device["udid"])
@@ -228,8 +266,12 @@ def boot(kind: str, scope: str | None) -> str:
             f"was calm {waited:.0f} s later" if calm else f"was still busy {waited:.0f} s later"
         )
     keep(target)
-    return said + "".join(
-        f"; {other['name']} was shut down, since nothing was using it" for other in idle_others
+    return (
+        said
+        + emptied
+        + "".join(
+            f"; {other['name']} was shut down, since nothing was using it" for other in idle_others
+        )
     )
 
 
@@ -296,8 +338,10 @@ def keeper(udid: str, keepers: Path = KEEPERS) -> None:
             in_use = is_in_use(udid)
             if in_use:
                 last_used = time.time()
-            elif file.exists():
-                last_used = max(last_used, file.stat().st_mtime)
+            else:
+                note_emptied(udid)
+                if file.exists():
+                    last_used = max(last_used, file.stat().st_mtime)
             reason = reason_to_shut_down(
                 in_use, time.time() - last_used, free_memory_percent(), swap_megabytes()
             )
@@ -307,15 +351,23 @@ def keeper(udid: str, keepers: Path = KEEPERS) -> None:
         if reason:
             subprocess.run(["xcrun", "simctl", "shutdown", udid], capture_output=True)
             print(f"{time.strftime('%F %T')} shut down: {reason}", flush=True)
+            note_emptied(udid)
             break
     file.unlink(missing_ok=True)
 
 
+def note_emptied(udid: str) -> None:
+    emptied = said_emptied(*empty_dead_installs(udid))
+    if emptied:
+        print(f"{time.strftime('%F %T')} {emptied.removeprefix('; ')}", flush=True)
+
+
 def shut_down(scope: str | None, devices: dict[str, list[dict]]) -> list[str]:
-    stopped = running(scope, devices)
-    for device in stopped:
+    said = []
+    for device in running(scope, devices):
         simctl("shutdown", device["udid"])
-    return [device["name"] for device in stopped]
+        said.append(device["name"] + said_emptied(*empty_dead_installs(device["udid"])))
+    return said
 
 
 def remove(scope: str, devices: dict[str, list[dict]], cache: Path = BUILD_CACHE) -> list[str]:
@@ -366,7 +418,8 @@ def main(arguments: list[str]) -> int:
             "when it isn't up, waits for the boot and for the Mac to be calm again, and has a "
             "keeper shut it down once nothing has used it for "
             f"{IDLE_LIMIT_SECONDS // 60} minutes, or sooner when memory runs short; shutdown "
-            "stops this checkout's Simulators now. delete removes this worktree's Simulators "
+            "stops this checkout's Simulators now. Both, and the keeper, delete the copies of "
+            "the app that earlier installs replaced, which the Simulator keeps. delete removes this worktree's Simulators "
             "and build folder; prune removes those of worktrees that are gone."
         )
     )

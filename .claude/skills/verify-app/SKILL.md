@@ -46,7 +46,9 @@ The script does each part of a run:
   `. tmp/agent/verify/<date>-<name>/run.env`, since a shell keeps no variables between commands.
 - **The Simulator.** `simulator.py boot` starts it only when it isn't up. After a boot it waits
   for the boot to finish and for the Mac's processors to be idle again, since tests started
-  while a fresh boot is still busy fail at launch; a Simulator that was up gets no wait.
+  while a fresh boot is still busy fail at launch; a Simulator that was up gets no wait. It also
+  deletes the copies of the app earlier runs replaced, which the Simulator keeps (about 400 MB
+  each, 18 GB on one Simulator kept up for 46 runs).
 - **Doctor.** `doctor.txt` says whether the Simulator was booted or was up, which Xcode and
   commit the run is on, and how many other Simulators are running. Read it before trusting a
   result: Xcode is the version `.xcode-version` pins, and no other Simulator is running. Shut

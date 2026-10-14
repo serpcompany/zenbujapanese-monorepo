@@ -50,7 +50,7 @@ leave_the_simulator() {
     echo "The Simulator stays up for the next run. Shut it down when the work is done:"
     echo "  python3 apps/ios/Tools/simulator.py shutdown"
   else
-    xcrun simctl shutdown "$udid"
+    python3 apps/ios/Tools/simulator.py shutdown >/dev/null
   fi
 }
 

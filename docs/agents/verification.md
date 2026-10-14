@@ -111,8 +111,8 @@ Simulator another checkout made. `apps/ios/Tools/simulator.py` hands out what th
 | `python3 apps/ios/Tools/simulator.py` | The UDID of this checkout's iPhone Simulator, made when it's missing: the newest iPhone Pro Max, on the newest installed iOS the selected Xcode runs |
 | `python3 apps/ios/Tools/simulator.py --device ipad` | The same for its iPad Simulator, the newest iPad Pro 13-inch |
 | `python3 apps/ios/Tools/simulator.py derived-data` | This checkout's build folder, for `-derivedDataPath` |
-| `python3 apps/ios/Tools/simulator.py boot` | Starts this checkout's Simulator when it isn't up (`--device ipad` for the iPad), waits for the boot and for the Mac to be calm again, and sets a keeper on it |
-| `python3 apps/ios/Tools/simulator.py shutdown` | Shuts down this checkout's Simulators now |
+| `python3 apps/ios/Tools/simulator.py boot` | Starts this checkout's Simulator when it isn't up (`--device ipad` for the iPad), waits for the boot and for the Mac to be calm again, and sets a keeper on it; deletes the old installs of the app the Simulator keeps |
+| `python3 apps/ios/Tools/simulator.py shutdown` | Shuts down this checkout's Simulators now, and deletes the old installs of the app they keep |
 | `python3 apps/ios/Tools/simulator.py delete` | Removes this worktree's Simulators and build folder |
 | `python3 apps/ios/Tools/simulator.py prune` | Removes those of every worktree that is gone, passing over a worktree with a Simulator still running |
 
@@ -166,6 +166,13 @@ swap, and this Mac has frozen for want of memory), so nothing stays up unwatched
   nothing is using it and the Mac is short of memory (under 40% free, or over 2,000 MB of
   swap). It never stops a Simulator in use. `boot` again counts as use. Its one line saying why
   is in `~/Library/Caches/com.zenbujapanese.build/SimulatorKeepers/<udid>.log`.
+- **Old installs of the app are deleted, not left for the Simulator.** Every
+  `test-without-building` installs the app again, and the Simulator moves the copy it replaces
+  (about 400 MB) into `data/Library/Caches/com.apple.containermanagerd/Dead` in its folder under
+  `~/Library/Developer/CoreSimulator/Devices/`, which it doesn't empty while it runs, nor when it
+  shuts down. On 2026-10-13 one Simulator kept up for 46 runs held 18 GB there and filled the
+  Mac's disk. `boot`, `shutdown`, and the keeper whenever nothing is using the Simulator delete
+  what is in that folder, and say how much.
 - **A Simulator booted any other way** (`simctl boot`, Xcode, a tool) has no keeper and stays up
   until someone shuts it down. Run `simulator.py boot` on it, which does nothing but set one.
 

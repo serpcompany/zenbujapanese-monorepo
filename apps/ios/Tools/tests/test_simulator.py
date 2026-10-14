@@ -209,12 +209,16 @@ class SimulatorTests(unittest.TestCase):
             [("delete", "RUNNING"), ("shutdown", "RUNNING-IPAD"), ("delete", "RUNNING-IPAD")],
         )
 
-    def booting(self, kind: str, scope: str, in_use: bool = False) -> tuple[str, list, list, list]:
+    def booting(
+        self, kind: str, scope: str, in_use: bool = False, dead: tuple[int, int] = (0, 0)
+    ) -> tuple[str, list, list, list]:
         with mock.patch.object(simulator, "listed", return_value={"devices": DEVICES}), mock.patch.object(
             simulator, "is_in_use", return_value=in_use
         ), mock.patch.object(simulator, "simctl") as simctl, mock.patch.object(
             simulator, "wait_until_calm", return_value=(41.0, True)
-        ) as wait, mock.patch.object(simulator, "keep") as keep:
+        ) as wait, mock.patch.object(simulator, "keep") as keep, mock.patch.object(
+            simulator, "empty_dead_installs", return_value=dead
+        ):
             said = simulator.boot(kind, scope)
         return said, [call.args for call in simctl.call_args_list], wait.call_args_list, keep.call_args_list
 
@@ -305,11 +309,41 @@ class SimulatorTests(unittest.TestCase):
             self.assertFalse(simulator.keeper_is_alive(keepers / "missing.pid", "LIVE"))
 
     def test_shutdown_stops_this_checkouts_running_simulators_and_no_others(self) -> None:
-        with mock.patch.object(simulator, "simctl") as simctl:
+        with mock.patch.object(simulator, "simctl") as simctl, mock.patch.object(
+            simulator, "empty_dead_installs", return_value=(2, 1_600_000_000)
+        ) as emptied:
             stopped = simulator.shut_down("issue-8-running", DEVICES)
             self.assertEqual(simulator.shut_down("issue-12-sidebar", DEVICES), [])
-        self.assertEqual(stopped, ["zenbu-japanese-ipad--issue-8-running"])
+        self.assertEqual(
+            stopped,
+            ["zenbu-japanese-ipad--issue-8-running; deleted 2 old installs of the app (1.6 GB) it had kept"],
+        )
         self.assertEqual([call.args for call in simctl.call_args_list], [("shutdown", "RUNNING-IPAD")])
+        self.assertEqual(emptied.call_args_list, [mock.call("RUNNING-IPAD")])
+
+    def test_a_simulator_up_between_runs_has_its_old_installs_of_the_app_deleted(self) -> None:
+        said, commands, _, _ = self.booting("ipad", "issue-8-running", dead=(46, 18_000_000_000))
+        self.assertEqual(commands, [])
+        self.assertEqual(
+            said, "was already up; deleted 46 old installs of the app (18.0 GB) it had kept"
+        )
+
+    def test_emptying_old_installs_deletes_only_what_is_inside_the_dead_folder(self) -> None:
+        with tempfile.TemporaryDirectory() as scratch:
+            simulators = Path(scratch) / "Devices"
+            outside = Path(scratch) / "outside"
+            (outside / "kept").mkdir(parents=True)
+            dead = simulator.dead_installs("LIVE", simulators)
+            (dead / "temp.abc" / "Zenbu Japanese.app").mkdir(parents=True)
+            (dead / "temp.abc" / "Zenbu Japanese.app" / "Zenbu Japanese").write_bytes(b"x" * 1000)
+            (dead / "loose").write_bytes(b"y" * 10)
+            (dead / "linked").symlink_to(outside, target_is_directory=True)
+            emptied, freed = simulator.empty_dead_installs("LIVE", simulators)
+            self.assertEqual(emptied, 3)
+            self.assertGreaterEqual(freed, 1010)
+            self.assertEqual(list(dead.iterdir()), [])
+            self.assertTrue((outside / "kept").is_dir())
+            self.assertEqual(simulator.empty_dead_installs("GONE", simulators), (0, 0))
 
     def test_delete_refuses_the_apps_own_simulators(self) -> None:
         with self.assertRaises(SystemExit) as refused:
