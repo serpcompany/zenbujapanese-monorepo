@@ -163,12 +163,7 @@ final class AccountUITests: ZenbuUITestCase {
 
   func testTurningRomajiOnWritesExampleSentencesAndAKanjisReadingsInRomaji() {
     let app = launch()
-    open(.account, in: app)
-    tap(reveal(find("account.reading-aids", in: app), in: app))
-    let romaji = waitFor(find("reading-aids.show-romaji", in: app))
-    flip(romaji)
-    expectation(for: Self.switchedOn, evaluatedWith: romaji)
-    waitForExpectations(timeout: Self.patience)
+    turnRomajiOn(in: app)
     search("japan", in: app)
     tap(find("search.examples", in: app))
     waitFor(find("example-list.screen", in: app))
@@ -183,7 +178,6 @@ final class AccountUITests: ZenbuUITestCase {
     waitUntil(reading, mentions: "Romaji, jitsu")
   }
 
-  static let switchedOn = NSPredicate(format: "value == '1' OR value == 1")
   static let switchedOff = NSPredicate(format: "value == '0' OR value == 0")
   static let jlpt = "zenbu.jlpt.waller.levels"
   static let youTube = "zenbu.tubelex.youtube.ja.unidic-3.1"

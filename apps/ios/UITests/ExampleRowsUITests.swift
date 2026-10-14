@@ -34,16 +34,24 @@ final class ExampleRowsUITests: ZenbuUITestCase {
     assertKeepTheirHeight(
       assertArriveLinked(Self.checkedRows, of: rows, in: app), of: rows, in: app)
     let words = find("example.words.\(Self.pastTheFirstScreen)", in: app)
-    reveal(Self.pastTheFirstScreen, of: rows, in: app)
-    tap(reveal(words, in: app, within: device == .mac ? rows.list : nil))
+    let opened = reveal(Self.pastTheFirstScreen, of: rows, in: app)
+    let shown = reveal(words, in: app, within: device == .mac ? rows.list : nil)
+    let top = opened.frame.minY - rows.list.frame.minY
+    tap(shown)
     let itsWord =
       device == .mac ? "isEnabled == true" : "identifier BEGINSWITH 'example.words.22.'"
     tap(menuChoices(in: app).matching(NSPredicate(format: itsWord)).firstMatch)
+    waitFor(find("word-detail.screen", in: app))
+    turnRomajiOn(in: app)
+    tap(tabItem(.search, in: app))
     waitFor(find("word-detail.screen", in: app))
     goBack(in: app)
     waitUntilStill(find("example-list.screen", in: app))
     letLinkingGo(heldBefore: .now)
     RunLoop.current.run(until: Date.now.addingTimeInterval(Self.settling))
+    XCTAssertEqual(
+      opened.frame.minY - rows.list.frame.minY, top, accuracy: opened.frame.height / 2,
+      "the sentence the word was opened from is where it was, though Romaji made the rows taller")
     XCTAssertTrue(isReachable(words, in: app), "the list is where it was left")
     XCTAssertFalse(isReachable(rows.row(0), in: app), "the list went back to its top")
   }
