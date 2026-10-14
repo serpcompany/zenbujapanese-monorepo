@@ -17,21 +17,41 @@ function runScript(name: string, env: Record<string, string> = {}) {
   child.stdout.on('data', collect)
   child.stderr.on('data', collect)
   const closed = new Promise<number | null>(resolve => child.on('close', resolve))
-  return { child, closed, output: () => output }
+  const lineLogged = (message: string) =>
+    output
+      .split('\n')
+      .slice(0, -1)
+      .filter(line => line.startsWith('{'))
+      .map(line => JSON.parse(line) as Record<string, unknown>)
+      .find(line => line.message === message)
+  const logged = (message: string) =>
+    new Promise<Record<string, unknown>>((resolve, reject) => {
+      const look = () => {
+        const line = lineLogged(message)
+        if (line) resolve(line)
+      }
+      child.stdout.on('data', look)
+      void closed.then(() =>
+        reject(new Error(`${name} ended without logging ${message}: ${output}`))
+      )
+      look()
+    })
+  return { child, closed, logged, output: () => output }
 }
 
 afterEach(() => vi.restoreAllMocks())
 
-function freePort(): Promise<number> {
+function heldPort(): Promise<{ port: number; release: () => Promise<void> }> {
   return new Promise((resolve, reject) => {
-    const server = createServer()
-    server.listen(0, () => {
-      const address = server.address()
-      server.close(() =>
-        typeof address === 'object' && address
-          ? resolve(address.port)
-          : reject(new Error('no port'))
-      )
+    const holder = createServer()
+    holder.on('error', reject)
+    holder.listen(0, '127.0.0.1', () => {
+      const address = holder.address()
+      if (typeof address !== 'object' || !address) return reject(new Error('no port'))
+      resolve({
+        port: address.port,
+        release: () => new Promise(released => holder.close(() => released()))
+      })
     })
   })
 }
@@ -57,19 +77,30 @@ describe('logRequests', () => {
 
 describe('serveUntilStopped', () => {
   test('serves until SIGTERM, then closes what the service holds once and exits cleanly', async () => {
-    const port = await freePort()
-    const { child, closed, output } = runScript('stopping-service.ts', {
-      PORT: String(port),
+    const { child, closed, logged, output } = runScript('stopping-service.ts', {
+      PORT: '0',
       HOSTNAME_TO_SERVE: '127.0.0.1'
     })
-    await vi.waitFor(() => expect(output()).toContain('"listening"'), { timeout: 15_000 })
-    expect(output()).toContain('"address":"127.0.0.1"')
-    expect(await (await fetch(`http://127.0.0.1:${port}/`)).text()).toBe('ok')
+    const listening = await logged('listening')
+    expect(listening).toMatchObject({ address: '127.0.0.1', release: 'test' })
+    expect(await (await fetch(`http://127.0.0.1:${listening.port}/`)).text()).toBe('ok')
     child.kill('SIGTERM')
     child.kill('SIGINT')
     expect(await closed).toBe(0)
     expect(output().match(/"message":"stopping","signal":"SIG(TERM|INT)"/g)).toHaveLength(1)
     expect(output().match(/^closed$/gm)).toHaveLength(1)
+  })
+
+  test('listens on the port it is given, and fails rather than share one already in use', async () => {
+    const held = await heldPort()
+    const { closed, output } = runScript('stopping-service.ts', {
+      PORT: String(held.port),
+      HOSTNAME_TO_SERVE: '127.0.0.1'
+    })
+    expect(await closed).toBe(1)
+    expect(output()).toContain(`EADDRINUSE: address already in use 127.0.0.1:${held.port}`)
+    expect(output()).not.toContain('"listening"')
+    await held.release()
   })
 })
 

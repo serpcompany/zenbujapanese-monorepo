@@ -49,10 +49,11 @@ private struct WordDetailObserver {
   let exampleSentenceClient = ExampleSentenceClient.live
   let kanjiLookupClient = KanjiLookupClient.live(lookupClient: .live)
   let textAnalysisClient = JapaneseTextAnalysisClient.live()
-  let frequency: FrequencyPackManager
+  let core: PresentationCore
 
   init() async throws {
-    frequency = try .freshInstall(storagePrefix: "WordDetailConformance")
+    core = PresentationCore(
+      listing: try FrequencyPackManager.freshInstall(storagePrefix: "WordDetailConformance").lists)
     let availability = await textAnalysisClient.availability()
     guard availability == .full else { throw WordDetailObserverError.textAnalysisUnavailable }
   }
@@ -62,7 +63,7 @@ private struct WordDetailObserver {
   {
     var observed = WordDetailCase(id: recorded.id, covers: recorded.covers)
     guard let entry = try await lookupClient.entry(LanguageReferenceID(rawValue: recorded.id)),
-      let page = WordPage(entry)
+      let page = WordPage(entry, using: core)
     else { return observed }
 
     observed.languageReferenceID = entry.id.rawValue
@@ -95,10 +96,7 @@ private struct WordDetailObserver {
         meaning: shown.meaning, notes: shown.notes,
         partsOfSpeech: sense.partsOfSpeech.map(\.rawValue))
     }
-    observed.frequency = await FrequencyRow.rows(
-      for: entry.id,
-      using: FrequencyCapability { [frequency] ids in try await frequency.evidence(for: ids) }
-    ).map(WordDetailCase.Frequency.init)
+    observed.frequency = page.frequency.map(WordDetailCase.Frequency.init)
     observed.alternativeForms = page.alternatives.map {
       WordDetailCase.Form(value: $0.value, kind: $0.kind.rawValue, labels: $0.labels)
     }

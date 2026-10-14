@@ -31,24 +31,24 @@ export function compareStrings(lhs: string, rhs: string): number {
   return lhs.length - rhs.length
 }
 
-const whitespace = /\p{White_Space}/u
+const wordSeparator = /[\p{White_Space}\u{FEFF}]/u
+
+function withoutMarksASpaceCarries(word: string): string {
+  return graphemes(` ${word}`).slice(1).join('')
+}
+
+function foldedWidthAndCase(raw: string): string {
+  const normalized = raw.normalize('NFKC')
+  const lowered = normalized.toLowerCase()
+  return lowered === normalized ? lowered : lowered.normalize('NFKC')
+}
 
 export function normalizeQuery(raw: string): string {
-  const folded = raw.normalize('NFKC').toLowerCase()
-  if (!whitespace.test(folded)) return folded
+  const folded = foldedWidthAndCase(raw)
+  if (!wordSeparator.test(folded)) return folded
   if (everyUnitIsAGrapheme(folded)) return folded.split(' ').filter(Boolean).join(' ')
-  const words: string[] = []
-  let word = ''
-  for (const grapheme of graphemes(folded)) {
-    if (/^\p{White_Space}/u.test(grapheme)) {
-      if (word) words.push(word)
-      word = ''
-    } else {
-      word += grapheme
-    }
-  }
-  if (word) words.push(word)
-  return words.join(' ')
+  const [first, ...afterASeparator] = folded.split(wordSeparator)
+  return [first, ...afterASeparator.map(withoutMarksASpaceCarries)].filter(Boolean).join(' ')
 }
 
 export function isASCII(value: string): boolean {

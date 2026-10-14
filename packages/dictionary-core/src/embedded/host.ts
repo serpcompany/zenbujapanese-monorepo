@@ -1,4 +1,5 @@
 import type { ArtifactDatabase, SqlValue } from '../artifact/database'
+import { type FrequencyList, readFrequency } from '../artifact/frequency'
 import type {
   KanjiElementEntry,
   KanjiElementSources,
@@ -6,6 +7,7 @@ import type {
   KanjiSources,
   KanjiStructureEntry
 } from '../artifact/kanji-data'
+import type { FrequencyDictionary, FrequencyEvidence } from '../detail/frequency'
 import type { IpadicFile } from '../examples/ipadic'
 import type { KuromojiToken } from '../examples/morphology'
 import { stopIfInterrupted } from '../search/database'
@@ -20,6 +22,13 @@ interface HostKanjiSources extends KanjiSources {
   elements: KanjiElementSources
 }
 
+interface HostFrequencyList {
+  dictionary: FrequencyDictionary
+  unavailable?: string
+}
+
+type HostFrequencyLists = { lists: HostFrequencyList[] } | { unavailable: string }
+
 export interface EmbeddedHost {
   all?(sql: string, parametersJSON: string): HostRows | null
   interrupted?(): boolean
@@ -30,6 +39,8 @@ export interface EmbeddedHost {
   kanjiStructure?(character: string): KanjiStructureEntry | null
   kanjiElement?(glyph: string): KanjiElementEntry | null
   radicals?(): unknown
+  frequencyLists?(): HostFrequencyLists | null
+  frequencyListRows?(list: string, sql: string, parametersJSON: string): HostRows | null
 }
 
 function bytes(hex: string): Uint8Array {
@@ -57,4 +68,28 @@ export function hostDatabase(host: EmbeddedHost): ArtifactDatabase {
     },
     interrupted: () => host.interrupted?.() ?? false
   }
+}
+
+function hostFrequencyLists(host: EmbeddedHost): FrequencyList[] | null {
+  if (!host.frequencyLists) return []
+  const enabled = host.frequencyLists()
+  if (!enabled) return null
+  if ('unavailable' in enabled) return [{ dictionary: null, unavailable: enabled.unavailable }]
+  return enabled.lists.map(({ dictionary, unavailable }) =>
+    unavailable === undefined
+      ? {
+          dictionary,
+          rows: (sql, params) =>
+            host.frequencyListRows?.(dictionary.id, sql, JSON.stringify(params))?.rows ?? null
+        }
+      : { dictionary, unavailable }
+  )
+}
+
+export function hostFrequency(
+  host: EmbeddedHost,
+  ids: readonly string[]
+): FrequencyEvidence | null {
+  const lists = hostFrequencyLists(host)
+  return lists && readFrequency(lists, ids)
 }

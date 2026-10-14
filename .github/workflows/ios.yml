@@ -29,8 +29,8 @@ jobs:
         uses: ./.github/actions/changed-paths
         with:
           paths: >-
-            apps/ios .xcode-version .python-version .github/workflows/ios.yml
-            .github/actions/changed-paths
+            apps/ios apps/account-api/src/domain/username-cases.json .xcode-version
+            .python-version .github/workflows/ios.yml .github/actions/changed-paths
 
   contracts:
     needs: changes

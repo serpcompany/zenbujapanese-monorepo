@@ -1,10 +1,12 @@
 import { randomUUID } from 'node:crypto'
 import { decodeJwt } from 'jose'
-import { describe, expect, test } from 'vitest'
+import { afterEach, describe, expect, test, vi } from 'vitest'
 import { useAccountService } from '../test/accounts'
 import { fromTheWebsite, sessionToken, sha256, websiteSession } from '../test/sign-in'
 
 const accounts = useAccountService()
+
+afterEach(() => vi.useRealTimers())
 
 const word = (n: number) => n.toString(16).padStart(32, '0')
 const text = { headword: '見る', reading: 'みる' }
@@ -217,12 +219,11 @@ describe("each app's access to an account", () => {
       service.call('/v1/auth/email-otp/send-verification-otp', {
         body: { email: 'Flooded@Example.com', type: 'sign-in' }
       })
+    vi.useFakeTimers({ toFake: ['Date'] })
     for (let sent = 0; sent < 5; sent++) expect((await send()).status).toBe(200)
     const refused = await send()
     expect(refused).toMatchObject({ status: 429, body: { error: { code: 'too_many_requests' } } })
-    const wait = Number(refused.headers.get('retry-after'))
-    expect(wait).toBeGreaterThan(590)
-    expect(wait).toBeLessThanOrEqual(600)
-    expect(refused.headers.get('x-retry-after')).toBe(String(wait))
+    expect(refused.headers.get('retry-after')).toBe('600')
+    expect(refused.headers.get('x-retry-after')).toBe('600')
   })
 })

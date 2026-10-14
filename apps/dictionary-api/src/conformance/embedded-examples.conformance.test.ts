@@ -33,7 +33,7 @@ describe.runIf(artifactAvailable)('the app’s example sentences on the artifact
       query,
       results,
       exampleCount: count,
-      learner: { frequency: null, sort: 'default', filter: 'all', known: [], fromRadicals: false }
+      learner: { sort: 'default', filter: 'all', known: [], fromRadicals: false }
     })
     const row = screen.state === 'results' ? screen.examples : null
     const examples = await app.text<EmbeddedSentence[]>('resultsExamples', listed)

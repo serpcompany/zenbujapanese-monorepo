@@ -10,6 +10,7 @@ type Outcome = { value: unknown } | { error: string } | { analyze: string }
 
 export interface EmbeddedCall {
   outcome(): string
+  value(): string
   analyzed(answerJSON: string): void
 }
 
@@ -56,7 +57,6 @@ export function embeddedEndpoint(host: EmbeddedHost): EmbeddedEndpoint {
     linkedTokens: (request, analyze) => text().linkedTokens(JSON.parse(request), analyze),
     resultsScreen: request => presentation().resultsScreen(JSON.parse(request)),
     wordRows: request => presentation().wordRows(JSON.parse(request)),
-    frequencyRows: request => presentation().frequencyRows(JSON.parse(request)),
     ruby: pair => presentation().ruby(JSON.parse(pair)),
     wordPage: entry => presentation().wordPage(JSON.parse(entry)),
     kanjiPage: request => presentation().kanjiPage(JSON.parse(request)),
@@ -111,6 +111,10 @@ export function embeddedEndpoint(host: EmbeddedHost): EmbeddedEndpoint {
         )
       return {
         outcome: () => JSON.stringify(outcome),
+        value() {
+          if (!('value' in outcome)) throw new Error(`${method} has answered nothing`)
+          return JSON.stringify(outcome.value ?? null)
+        },
         analyzed(answerJSON) {
           const settle = answer
           if (!settle) throw new Error(`${method} is waiting for no analysis`)

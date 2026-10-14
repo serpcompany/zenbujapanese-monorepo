@@ -86,6 +86,9 @@ from any folder:
   repository's `.git/zenbu-ports/` that names the worktree. `pnpm -w ports delete` gives the block
   up when the work is finished, and `pnpm -w ports prune` those of worktrees that are gone, which the
   next claim does too.
+- **One run claims at a time,** under a lock in that folder that names the run holding it. Another
+  run waits up to 30 seconds for it. It takes the lock over only from a run that has ended, 10
+  seconds after that run took it, and never from one still going, however slow.
 - **Read the address rather than assume it.** `pnpm dev` prints its own, and a command that
   needs one takes it from `pnpm -w ports`.
 - **A `PORT` set in the shell wins,** and so does one in the dictionary service's `.env`. A

@@ -6,6 +6,7 @@ enum LaunchHarness {
   static let signInStandInKey = "ZENBU_SIGN_IN_STAND_IN"
   static let youTubeStandInKey = "ZENBU_YOUTUBE_STAND_IN"
   static let accountStandInKey = "ZENBU_ACCOUNT_STAND_IN"
+  static let drawnResultsKey = "ZENBU_DRAWN_RESULTS"
   static let uiTestBundleSuffix = ".uitests"
   static let savedStateFolders = ["Zenbu Japanese", "FrequencyPacks", "Profile"]
 
@@ -28,6 +29,16 @@ enum LaunchHarness {
       false
     #endif
   }
+
+  static func recordsDrawnResults(_ environment: [String: String]) -> Bool {
+    #if DEBUG
+      environment[drawnResultsKey] == "1"
+    #else
+      false
+    #endif
+  }
+
+  static let recordsDrawnResults = recordsDrawnResults(ProcessInfo.processInfo.environment)
 
   static var signInProviders: SignInProviders? {
     #if DEBUG
