@@ -8,6 +8,11 @@ struct ExamplePlace: Equatable {
     abs(frame.minY - list.minY - top) > list.height / 3
   }
 
+  func isTaken(by frame: CGRect, from list: CGRect, height: CGFloat) -> Bool {
+    let middle = list.minY + top + height / 2
+    return frame.minY <= middle && middle < frame.maxY
+  }
+
   func anchor(rowHeight: CGFloat, listHeight: CGFloat) -> UnitPoint {
     let room = listHeight - rowHeight
     guard room > 0 else { return .top }
@@ -38,9 +43,10 @@ final class ExamplePlaceKeeper {
 
   func note(_ row: ExampleSentenceID, at frame: CGRect, now: Date = .now) -> ExamplePlaceCorrection? {
     rows[row] = frame
+    endSettling(ifOverAt: now)
     guard settlingUntil != nil else { return nil }
     laidOutSinceReturn.insert(row)
-    return correction(now: now)
+    return correction()
   }
 
   func leave(from row: ExampleSentenceID) {
@@ -51,10 +57,11 @@ final class ExamplePlaceKeeper {
   }
 
   func comeBack(now: Date = .now) -> ExamplePlaceCorrection? {
+    endSettling(ifOverAt: now)
     guard left != nil else { return nil }
     settlingUntil = now.addingTimeInterval(Self.settling)
     laidOutSinceReturn = []
-    return correction(now: now)
+    return correction()
   }
 
   func corrected() {
@@ -72,15 +79,20 @@ final class ExamplePlaceKeeper {
     correcting = false
   }
 
-  private func correction(now: Date) -> ExamplePlaceCorrection? {
-    guard let left, let until = settlingUntil, !correcting, let frame = rows[left.row] else {
+  private func endSettling(ifOverAt now: Date) {
+    guard let until = settlingUntil, now >= until else { return }
+    if laidOutSinceReturn.isEmpty { settlingUntil = nil } else { forget() }
+  }
+
+  private func correction() -> ExamplePlaceCorrection? {
+    guard let left, settlingUntil != nil, !correcting, let frame = rows[left.row] else {
       return nil
     }
-    guard now < until else {
-      if laidOutSinceReturn.isEmpty { settlingUntil = nil } else { forget() }
-      return nil
+    let taken = laidOutSinceReturn.contains { other in
+      other != left.row
+        && rows[other].map { left.isTaken(by: $0, from: list, height: frame.height) } == true
     }
-    let pushedAway = !laidOutSinceReturn.isEmpty && !laidOutSinceReturn.contains(left.row)
+    let pushedAway = taken && !laidOutSinceReturn.contains(left.row)
     guard pushedAway || left.isLost(frame, in: list) else { return nil }
     correcting = true
     return ExamplePlaceCorrection(

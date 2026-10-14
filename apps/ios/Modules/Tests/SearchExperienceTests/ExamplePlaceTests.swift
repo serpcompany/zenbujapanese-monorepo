@@ -52,30 +52,32 @@ struct ExamplePlaceTests {
     #expect(keeper.note(opened, at: row(at: 820), now: at(10.3)) == nil)
   }
 
-  @Test("a sentence pushed off the list, while others were laid out, is put back")
+  @Test("a sentence whose place another row took, without a word from it, is put back")
   func aSentencePushedAwayIsPutBack() {
     let keeper = leftFrom(400)
     #expect(keeper.comeBack(now: at(10)) == nil)
-    let back = keeper.note(above, at: row(at: -500), now: at(10.1))
+    #expect(keeper.note(above, at: row(at: 850), now: at(10.1)) == nil)
+    let back = keeper.note(above, at: row(at: 390), now: at(10.2))
     #expect(back == ExamplePlaceCorrection(row: opened, anchor: .center))
   }
 
-  @Test("a return while the list is covered doesn't use up the next one")
+  @Test("a return while the list is covered doesn't use up or end the next one")
   func aCoveredReturnKeepsThePlace() {
     let keeper = leftFrom(100)
     #expect(keeper.comeBack(now: at(10)) == nil)
-    #expect(keeper.comeBack(now: at(20)) == nil)
+    #expect(keeper.note(above, at: row(at: 500), now: at(20)) == nil)
     #expect(keeper.left != nil)
+    #expect(keeper.comeBack(now: at(20.05)) == nil)
     let moved = keeper.note(opened, at: row(at: 800), now: at(20.1))
     #expect(moved == ExamplePlaceCorrection(row: opened, anchor: .top))
   }
 
-  @Test("the place is forgotten once the list settles on screen, or when it is scrolled by hand")
+  @Test("the place is forgotten once a return's list has settled on screen, or is scrolled by hand")
   func thePlaceIsForgotten() {
     let settled = leftFrom(400)
     _ = settled.comeBack(now: at(10))
-    _ = settled.note(opened, at: row(at: 400), now: at(10.1))
-    _ = settled.note(above, at: row(at: 0), now: at(10 + ExamplePlaceKeeper.settling))
+    _ = settled.note(opened, at: row(at: 400.5), now: at(10.1))
+    #expect(settled.comeBack(now: at(20)) == nil)
     #expect(settled.left == nil)
 
     let scrolled = leftFrom(400)
@@ -83,6 +85,19 @@ struct ExamplePlaceTests {
     scrolled.userScrolled()
     #expect(scrolled.note(opened, at: row(at: -300), now: at(10.2)) == nil)
     #expect(scrolled.left == nil)
+  }
+
+  @Test("a word opened while a correction is pending starts from the new place")
+  func aNewPlaceReplacesAPendingCorrection() {
+    let keeper = leftFrom(700)
+    _ = keeper.comeBack(now: at(10))
+    #expect(keeper.note(opened, at: row(at: 100), now: at(10.1)) != nil)
+    _ = keeper.note(above, at: row(at: 200), now: at(10.2))
+    keeper.leave(from: above)
+    #expect(keeper.left == ExamplePlace(row: above, top: 200))
+    #expect(keeper.comeBack(now: at(20)) == nil)
+    let moved = keeper.note(above, at: row(at: 800), now: at(20.1))
+    #expect(moved == ExamplePlaceCorrection(row: above, anchor: .top))
   }
 
   @Test("nothing is put back on a first appearance, or for a sentence never laid out")
