@@ -11,7 +11,6 @@ final class ExampleRowsUITests: ZenbuUITestCase {
 
   private struct Measured {
     let number: Int
-    let row: XCUIElement
     let height: CGFloat
   }
 
@@ -35,16 +34,26 @@ final class ExampleRowsUITests: ZenbuUITestCase {
     assertKeepTheirHeight(
       assertArriveLinked(Self.checkedRows, of: rows, in: app), of: rows, in: app)
     let words = find("example.words.\(Self.pastTheFirstScreen)", in: app)
-    reveal(Self.pastTheFirstScreen, of: rows, in: app)
-    tap(reveal(words, in: app, within: device == .mac ? rows.list : nil))
+    let opened = reveal(Self.pastTheFirstScreen, of: rows, in: app)
+    let shown = reveal(words, in: app, within: device == .mac ? rows.list : nil)
+    let top = opened.frame.minY - rows.list.frame.minY
+    tap(shown)
     let itsWord =
       device == .mac ? "isEnabled == true" : "identifier BEGINSWITH 'example.words.22.'"
     tap(menuChoices(in: app).matching(NSPredicate(format: itsWord)).firstMatch)
+    waitFor(find("word-detail.screen", in: app))
+    turnRomajiOn(in: app)
+    tap(tabItem(.search, in: app))
     waitFor(find("word-detail.screen", in: app))
     goBack(in: app)
     waitUntilStill(find("example-list.screen", in: app))
     letLinkingGo(heldBefore: .now)
     RunLoop.current.run(until: Date.now.addingTimeInterval(Self.settling))
+    let list = rows.list.frame
+    let back = laidOutFrame(of: opened, within: device == .mac ? rows.list : nil, in: app)
+    XCTAssertEqual(
+      back.map { $0.minY - list.minY } ?? .infinity, top, accuracy: list.height / 3,
+      "the sentence the word was opened from is on screen near where it was, after Romaji")
     XCTAssertTrue(isReachable(words, in: app), "the list is where it was left")
     XCTAssertFalse(isReachable(rows.row(0), in: app), "the list went back to its top")
   }
@@ -62,7 +71,7 @@ final class ExampleRowsUITests: ZenbuUITestCase {
     let rows = formExamples(of: openAFormOfTaberu(in: app), in: app)
     assertKeepTheirHeight(
       assertArriveLinked(Self.checkedRows, of: rows, in: app), of: rows, in: app)
-    guard let word = reachableWord(of: rows, near: Self.onTheNextPage, in: app) else {
+    guard let word = reachableWord(of: rows, near: 0, in: app) else {
       return XCTFail("no linked word of the form's examples is in the window to be clicked")
     }
     let page = find("word-detail.screen", in: app)
@@ -281,10 +290,27 @@ final class ExampleRowsUITests: ZenbuUITestCase {
     let frame = row.exists ? row.frame : .null
     guard !frame.isNull, frame.width > 0, frame.height > 0 else {
       guard device == .mac else { return scroll(toward: number, of: rows, in: app) }
-      return flick(rows, back: lastLaidOut.map { number < $0 } ?? false, in: app)
+      let seen = laidOutNumber(of: rows) ?? lastLaidOut
+      return flick(rows, back: seen.map { number < $0 } ?? false, in: app)
     }
     let area = device == .mac ? rows.list : app.windows.firstMatch
     scroll(area, back: frame.midY < area.frame.midY)
+  }
+
+  private func laidOutNumber(of rows: Rows) -> Int? {
+    guard let list = try? rows.list.snapshot() else { return nil }
+    var unread: [any XCUIElementSnapshot] = [list]
+    while let element = unread.popLast() {
+      let frame = element.frame
+      if element.identifier.hasPrefix(rows.prefix), !frame.isNull, frame.width > 0,
+        frame.height > 0, list.frame.contains(CGPoint(x: frame.midX, y: frame.midY)),
+        let number = Int(element.identifier.dropFirst(rows.prefix.count))
+      {
+        return number
+      }
+      unread.append(contentsOf: element.children)
+    }
+    return nil
   }
 
   @discardableResult
@@ -316,7 +342,7 @@ final class ExampleRowsUITests: ZenbuUITestCase {
           firstElement(identifiedBy: prefix, in: app).exists,
           "row \(number) appeared without \(prefix)", file: file, line: line)
       }
-      measured.append(Measured(number: number, row: row, height: frame.height))
+      measured.append(Measured(number: number, height: frame.height))
     }
     return measured
   }
@@ -327,9 +353,11 @@ final class ExampleRowsUITests: ZenbuUITestCase {
   ) {
     letLinkingGo(heldBefore: .now)
     RunLoop.current.run(until: Date.now.addingTimeInterval(Self.settling))
-    let area = device == .mac ? rows.list : nil
-    for shown in measured {
-      guard let frame = laidOutFrame(of: shown.row, within: area, in: app) else { continue }
+    for shown in measured.reversed() {
+      guard let frame = laidOut(shown.number, of: rows, in: app) else {
+        XCTFail("row \(shown.number) wasn't laid out again", file: file, line: line)
+        continue
+      }
       XCTAssertEqual(
         frame.height, shown.height, accuracy: 0.5,
         "row \(shown.number) changed height after it appeared", file: file, line: line)

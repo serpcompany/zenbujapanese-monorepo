@@ -195,6 +195,17 @@ extension ZenbuUITestCase {
     corner.press(forDuration: 0.3, thenDragTo: target)
   }
 
+  static let switchedOn = "value == '1' OR value == 1"
+  static let switchedOff = "value == '0' OR value == 0"
+
+  func turnRomajiOn(in app: XCUIApplication) {
+    open(.account, in: app)
+    tap(reveal(find("account.reading-aids", in: app), in: app))
+    let romaji = waitFor(find("reading-aids.show-romaji", in: app))
+    flip(romaji)
+    waitUntil(romaji, Self.switchedOn)
+  }
+
   func flip(_ toggle: XCUIElement) {
     if device == .mac {
       waitFor(toggle).tap()
