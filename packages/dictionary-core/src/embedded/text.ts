@@ -9,10 +9,12 @@ import { searchExamples } from '../artifact/example-search'
 import { type FormLookup, formLookup } from '../artifact/lookup'
 import {
   type ExamplesEntry,
+  exampleCount,
   examplesEntries,
   occurrences,
   tokenSpans
 } from '../artifact/word-examples'
+import { exampleCountText } from '../detail/examples'
 import { type Attachment, attachment } from '../detail/romaji'
 import { type RubySegment, rubySegments } from '../detail/ruby'
 import { usesForm } from '../examples/forms'
@@ -54,6 +56,11 @@ export interface EmbeddedExamples {
   sentences: EmbeddedSentence[]
   count: number
   truncated: boolean
+}
+
+export interface EmbeddedResultsExamples {
+  sentences: EmbeddedSentence[]
+  countText: string | null
 }
 
 export interface EmbeddedToken {
@@ -202,9 +209,13 @@ export class EmbeddedText {
       : found.count
   }
 
-  resultsExamples(request: ResultsExamplesRequest): EmbeddedSentence[] {
+  resultsExamples(request: ResultsExamplesRequest): EmbeddedResultsExamples {
     const found = this.listed(request)
-    return typeof found === 'string' ? [] : listed(found.sentences)
+    if (typeof found === 'string') return { sentences: [], countText: null }
+    return {
+      sentences: listed(found.sentences),
+      countText: exampleCountText(exampleCount(found))
+    }
   }
 
   entryExamples(id: string): EmbeddedExamples {

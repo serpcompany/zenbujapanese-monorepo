@@ -11,7 +11,7 @@ standards; this doc holds this repository's commands for them.
 | Level | When | What runs |
 | --- | --- | --- |
 | Inner loop | While editing | The edit hook checks each file as it's written, and the stop hook the whole change before a turn ends ([`code.md`](code.md), Checks). Beside them, the touched part's typecheck and the tests for the changed code, below. |
-| Push | Before each push for review | `pnpm check` in each package the change touched. The `pre-push` hook runs `pnpm verify`. |
+| Push | Before each push for review | `pnpm check` in each package the change touched. The `pre-push` hook runs `pnpm verify`, then the fast check of each package the branch changes ([`code.md`](code.md)). |
 | Finish gate | Once, on the finished tree | `pnpm check` from the root, then the evidence the change needs. The `finish-change` skill walks through it. |
 
 The inner loop, by part:
@@ -86,6 +86,9 @@ from any folder:
   repository's `.git/zenbu-ports/` that names the worktree. `pnpm -w ports delete` gives the block
   up when the work is finished, and `pnpm -w ports prune` those of worktrees that are gone, which the
   next claim does too.
+- **One run claims at a time,** under a lock in that folder that names the run holding it. Another
+  run waits up to 30 seconds for it. It takes the lock over only from a run that has ended, 10
+  seconds after that run took it, and never from one still going, however slow.
 - **Read the address rather than assume it.** `pnpm dev` prints its own, and a command that
   needs one takes it from `pnpm -w ports`.
 - **A `PORT` set in the shell wins,** and so does one in the dictionary service's `.env`. A

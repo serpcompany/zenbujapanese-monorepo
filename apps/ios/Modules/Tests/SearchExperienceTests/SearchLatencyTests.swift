@@ -95,7 +95,8 @@ struct SearchLatencyTests {
     let clock = ContinuousClock()
     var sentences: [ExampleSentence] = []
     for word in Self.exampleWords {
-      sentences += await ExampleSentenceClient.live.listed(SearchQuery(word), nil, false).prefix(40)
+      sentences += await ExampleSentenceClient.live.listed(SearchQuery(word), nil, false)
+        .sentences.prefix(40)
     }
     var first: [Double] = []
     var again: [Double] = []
@@ -167,8 +168,7 @@ struct SearchLatencyTests {
       "SEARCH-LATENCY the kanji files read in \(Self.milliseconds(files)); an engine starts "
         + "and draws its first furigana in " + Self.summary(starts))
 
-    let frequency = try FrequencyPackManager.freshInstall(storagePrefix: "SearchLatency")
-    let capability = FrequencyCapability { try await frequency.evidence(for: $0) }
+    let listed = try PresentationCore.freshInstall()
     var byDefault: [Double] = []
     var sorted: [Double] = []
     var entries: [DictionaryEntry] = []
@@ -180,23 +180,25 @@ struct SearchLatencyTests {
         query: query, results: results.listed,
         exampleCount: await ExampleSentenceClient.live.count(query, results),
         learner: ResultsLearner())
-      guard case .results(let loading) = try await request.screen() else { continue }
-      try await request.loadFrequency(for: loading, using: capability)
-      guard case .results(let list) = try await request.screen() else { continue }
+      guard case .results(let list) = try await request.screen(using: listed) else { continue }
       for _ in 0..<20 {
-        byDefault.append(Self.value(try await clock.measure { _ = try await request.screen() }))
+        byDefault.append(
+          Self.value(try await clock.measure { _ = try await request.screen(using: listed) }))
       }
       guard let dictionary = list.menu?.sort.options.dropFirst().first else { continue }
       request.learner.sort = dictionary.value
       for _ in 0..<20 {
-        sorted.append(Self.value(try await clock.measure { _ = try await request.screen() }))
+        sorted.append(
+          Self.value(try await clock.measure { _ = try await request.screen(using: listed) }))
       }
     }
     print("SEARCH-LATENCY a results screen, by Default: " + Self.summary(byDefault))
     print("SEARCH-LATENCY a results screen, sorted by a dictionary: " + Self.summary(sorted))
 
     let words = Dictionary(entries.map { ($0.id, $0) }) { first, _ in first }.values
-    let pages = words.map { entry in Self.value(clock.measure { _ = WordPage(entry) }) }
+    let pages = words.map { entry in
+      Self.value(clock.measure { _ = WordPage(entry, using: listed) })
+    }
     print("SEARCH-LATENCY a word page, for \(pages.count) words: " + Self.summary(pages))
 
     let unused = PresentationCore(kanji: { KanjiFiles.bundled })
@@ -232,6 +234,56 @@ struct SearchLatencyTests {
     print("SEARCH-LATENCY a kanji element page: " + Self.summary(elementPages))
   }
 
+  @Test("prints how long the frequency lists take to be ready at launch, and a full results screen with two lists and with nine")
+  func measureFrequencyLists() async throws {
+    let clock = ContinuousClock()
+    var launches: [Double] = []
+    for round in 0..<Self.passes {
+      launches.append(
+        Self.value(
+          try clock.measure {
+            _ = try FrequencyPackManager.freshInstall(storagePrefix: "SearchLatency-\(round)")
+          }))
+    }
+    print("SEARCH-LATENCY the two bundled lists are checked and ready in " + Self.summary(launches))
+
+    let query = SearchQuery("い")
+    let results = try await LookupClient.live.search(query)
+    let request = ResultsScreenRequest(
+      query: query, results: results.listed,
+      exampleCount: await ExampleSentenceClient.live.count(query, results),
+      learner: ResultsLearner())
+    let bundled = try FrequencyPackCatalog.bundled()
+    let files = try bundled.bundledArtifactURLs()
+    let two = try bundled.packs.filter(\.bundled).map { pack in
+      EnabledFrequencyList(
+        dictionary: pack.disclosure, file: .verified(try #require(files[pack.packID])))
+    }
+    let seven = try (0..<7).map { index in
+      try FrequencyListFixture(
+        .fixture(id: "zenbu.fixture.list-\(index).ja", displayName: "List \(index)"),
+        Dictionary(
+          uniqueKeysWithValues: results.entries.enumerated().compactMap { offset, entry in
+            (offset + index) % 4 == 0 ? nil : (entry.id, 1 + offset * (index + 3))
+          })
+      ).enabled()
+    }
+    for (label, enabled) in [("two lists", two), ("nine lists", two + seven)] {
+      let lists = FrequencyLists()
+      lists.publish(enabled)
+      let core = PresentationCore(listing: lists)
+      guard case .results(let list) = try await request.screen(using: core) else { continue }
+      var screens: [Double] = []
+      for _ in 0..<60 {
+        screens.append(
+          Self.value(try await clock.measure { _ = try await request.screen(using: core) }))
+      }
+      print(
+        "SEARCH-LATENCY a results screen of \(list.rows.count) words with \(label): "
+          + Self.summary(screens))
+    }
+  }
+
   @Test("prints the memory a session reaches, step by step; run it alone")
   func measureSession() async throws {
     func report(_ step: String) {
@@ -257,9 +309,9 @@ struct SearchLatencyTests {
     }
     report("each search's example count")
     let analysis = JapaneseTextAnalysisClient.live()
-    let sentences = await ExampleSentenceClient.live.listed(SearchQuery("食べる"), nil, false)
+    let listed = await ExampleSentenceClient.live.listed(SearchQuery("食べる"), nil, false)
     var words = 0
-    for sentence in sentences.prefix(40) {
+    for sentence in listed.sentences.prefix(40) {
       words += await analysis.linkedTokens(sentence.japanese, SearchQuery(""), nil).count
     }
     report("the tokenizer's start and \(words) linked words")
@@ -294,7 +346,7 @@ struct SearchLatencyTests {
     var sentences: [[JapaneseTextToken]] = []
     for word in Self.exampleWords {
       for sentence in await ExampleSentenceClient.live.listed(SearchQuery(word), nil, false)
-        .prefix(40)
+        .sentences.prefix(40)
       {
         sentences.append(
           await JapaneseTextAnalysisClient.live().linkedTokens(

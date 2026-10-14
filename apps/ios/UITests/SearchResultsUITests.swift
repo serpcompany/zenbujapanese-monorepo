@@ -13,6 +13,40 @@ final class SearchResultsUITests: ZenbuUITestCase {
     waitFor(sortedByRow(saying: "Sorted by Default", in: app))
   }
 
+  func testAWordsResultsAreDrawnOnceWithTheirChips() {
+    let app = launch(Self.recordingDrawnResults)
+    search("japan", in: app)
+    let row = waitFor(find("result.japan", in: app))
+    if device != .mac {
+      waitUntil(row, "value CONTAINS 'JLPT level N' AND value CONTAINS 'YouTube frequency rank'")
+    }
+    let drawn = drawnResults(in: app)
+    XCTAssertEqual(drawn.count, 1, "the results were drawn as \(drawn)")
+    XCTAssertFalse(drawn[0].hasPrefix("0 of"), "the results were drawn as \(drawn)")
+  }
+
+  func testAJapaneseSentencesWordsAreDrawnOnceWithTheirChips() {
+    let app = launch(Self.recordingDrawnResults)
+    search("日本語を勉強する", in: app)
+    waitFor(labeled("Discovered Words", in: app))
+    if device != .mac {
+      let leveled = NSPredicate(
+        format: "identifier BEGINSWITH 'result.' AND value CONTAINS 'JLPT level N'")
+      waitFor(app.descendants(matching: .any).matching(leveled).firstMatch)
+    }
+    let drawn = drawnResults(in: app)
+    XCTAssertEqual(drawn.count, 1, "the results were drawn as \(drawn)")
+    XCTAssertFalse(drawn[0].hasPrefix("0 of"), "the results were drawn as \(drawn)")
+  }
+
+  private func drawnResults(in app: XCUIApplication) -> [String] {
+    waitUntilStill(find("search.results", in: app))
+    let drawn = waitFor(find("search.results.drawn", in: app))
+    return "\(drawn.value ?? "")".components(separatedBy: ", ")
+  }
+
+  static let recordingDrawnResults = ["ZENBU_DRAWN_RESULTS": "1"]
+
   func testFilteringToKnownWordsHidesEveryWordUntilTheFilterIsCleared() {
     let app = launch()
     search("japan", in: app)
@@ -60,6 +94,19 @@ final class SearchResultsUITests: ZenbuUITestCase {
     search("miru", in: app)
     tap(find("search.examples", in: app))
     assertOnScreen(find("example-list.screen", in: app), in: app)
+  }
+
+  func testExampleSentencesSayHowManyAreListed() {
+    for (query, count) in [
+      ("iru", "3 examples"), ("eat", "The first 100 of more than 100 examples"),
+    ] {
+      let app = launch()
+      search(query, in: app)
+      tap(find("search.examples", in: app))
+      let line = app.descendants(matching: .any).matching(identifier: "example-list.count")
+        .matching(showing(count)).firstMatch
+      assertOnScreen(line, in: app)
+    }
   }
 
   func testARomajiQueryOffersItsJapaneseReading() {

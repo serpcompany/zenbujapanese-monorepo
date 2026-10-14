@@ -13,6 +13,7 @@ on:
       - '!**/*.test.ts'
       - '!packages/node-service/src/test/**'
       - '!apps/account-api/deploy/**'
+      - '!apps/account-api/src/domain/username-cases.json'
   pull_request:
     paths:
       - apps/account-api/**
@@ -24,6 +25,7 @@ on:
       - '!**/*.test.ts'
       - '!packages/node-service/src/test/**'
       - '!apps/account-api/deploy/**'
+      - '!apps/account-api/src/domain/username-cases.json'
   workflow_dispatch:
     inputs:
       tag:

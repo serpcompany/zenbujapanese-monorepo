@@ -16,7 +16,7 @@ async function expectKanjiDetails(page: Page) {
   await expect(main.getByRole('term')).toHaveText(['Strokes', 'Grade', 'JLPT'])
   await expect(main.getByRole('definition')).toHaveText(['9', '4', 'N3'])
   await expect(
-    main.getByRole('link', { name: 'JLPT kanji levels', includeHidden: true })
+    main.getByRole('link', { name: 'JLPT kanji lists', includeHidden: true })
   ).toBeAttached()
   await expect(main.getByText('need, main point, essence, pivot, key to')).toBeVisible()
   for (const part of ['Readings', 'Elements', 'Lists', 'Notes', 'Words']) {

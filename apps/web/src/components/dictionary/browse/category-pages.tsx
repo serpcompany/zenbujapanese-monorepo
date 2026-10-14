@@ -4,6 +4,7 @@ import {
   type CategoryOrder,
   categoryOrders
 } from '@zenbu/dictionary-core/browse/categories'
+import { sourceCredits } from '@zenbu/dictionary-core/sources/credits'
 import Link from 'next/link'
 import {
   BrowseHeading,
@@ -29,7 +30,7 @@ import {
   categoryIndexOf,
   categoryPath
 } from '@/lib/dictionary/browse/paths'
-import { pageSources, sources } from '@/lib/dictionary/sources'
+import { pageSources } from '@/lib/dictionary/sources'
 
 function MoreWaysToBrowse({ current }: { current: string }) {
   const shown = moreWaysToBrowse
@@ -139,7 +140,7 @@ export function CategoryIndexPage({
           </ul>
         </section>
       ))}
-      <SourceCredits sources={[sources.jmdict]} />
+      <SourceCredits sources={[sourceCredits.jmdict]} />
     </BrowsePage>
   )
 }

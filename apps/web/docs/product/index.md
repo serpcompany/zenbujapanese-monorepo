@@ -105,4 +105,10 @@ from the service. Interaction tests
 "No automated check yet (#511)". #511 plans more rendered-HTML checks for the designs, and more
 smoke checks.
 
+An interaction test waits for what a click leads to, with `shows` or `vi.waitFor` around the
+expectation, when the click starts work that leaves the JavaScript thread. `click` and `submit` in
+`src/test/account-page.ts` return one turn of the event loop later. That covers the stand-in
+service, whose answers arrive without leaving the thread, and not Sign in with Apple, whose nonce
+is hashed on another thread and can take longer than that turn on a busy machine.
+
 When a behavior changes, update its entry here and its check in the same PR.

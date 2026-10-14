@@ -5,7 +5,7 @@ import {
 } from '@zenbu/dictionary-core/browse/categories'
 import { type KanjiList, rankBand } from '@zenbu/dictionary-core/browse/lists'
 import { type FrequencyTier, tierForRank } from '@zenbu/dictionary-core/detail/frequency'
-import { type Source, sources } from '../sources'
+import { type SourceCredit, sourceCredits } from '@zenbu/dictionary-core/sources/credits'
 import { categoryDescriptions } from './category-intros'
 
 const count = new Intl.NumberFormat('en-US')
@@ -88,26 +88,26 @@ export function categoryIntro(category: BrowseCategory, total: number, order: Ca
 export interface RankedListCopy {
   description: string
   unranked?: string
-  sources: Source[]
+  sources: SourceCredit[]
 }
 
 const jiten = (media: string): RankedListCopy => ({
   description: `Words ranked by how often they appear in ${media}, from Jiten's frequency lists.`,
   unranked:
     'Jiten’s lists count a spelling and its reading, not which dictionary word it is, and the app ranks a pair only when it names one word. Pairs several words share, such as に, は, and が, aren’t ranked, so the list skips their ranks.',
-  sources: [sources.jmdict, sources.jiten]
+  sources: [sourceCredits.jmdict, sourceCredits.jiten]
 })
 
 export const rankedListCopy: Record<string, RankedListCopy> = {
   youtube: {
     description: 'Words ranked by how often they’re said in YouTube videos, from TUBELEX.',
-    sources: [sources.jmdict, sources.tubelex]
+    sources: [sourceCredits.jmdict, sourceCredits.tubelex]
   },
   wikipedia: {
     description: 'Words ranked by how often they’re written in Japanese Wikipedia.',
     unranked:
       'The Wikipedia list counts written forms, not which dictionary word each is, and the app ranks a form only when it names one word. Forms several words share, such as に, は, and が, aren’t ranked, so the list skips their ranks.',
-    sources: [sources.jmdict, sources.wikipedia]
+    sources: [sourceCredits.jmdict, sourceCredits.wikipedia]
   },
   'tv-and-movies': jiten('Japanese TV dramas and films'),
   anime: jiten('anime'),
@@ -222,5 +222,5 @@ export const tierCutoffs = `The tiers are the ones the app’s chips use: ${list
 export const jlptCopy: RankedListCopy = {
   description:
     "Words from Jonathan Waller's unofficial JLPT vocabulary lists. JLPT has published no official list since 2010, so levels are study estimates.",
-  sources: [sources.jmdict, sources.jlpt]
+  sources: [sourceCredits.jmdict, sourceCredits.jlpt]
 }

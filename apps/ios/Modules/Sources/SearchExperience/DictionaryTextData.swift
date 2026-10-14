@@ -86,7 +86,7 @@ actor DictionaryTextData {
     try await answer("resultsExampleCount", try DictionaryCore.argument(request))
   }
 
-  func resultsExamples(_ request: ResultsExamplesRequest) async throws -> [ExampleSentence] {
+  func resultsExamples(_ request: ResultsExamplesRequest) async throws -> ListedExamples {
     try await answer("resultsExamples", try DictionaryCore.argument(request))
   }
 

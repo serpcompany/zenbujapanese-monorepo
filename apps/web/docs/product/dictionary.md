@@ -78,8 +78,8 @@ and reach search through the header's Dictionary menu (#561). The app searches a
 types; the website searches on Enter so that each search is its own page.
 
 - Source: #466 (search on Enter, not as you type).
-- Check: `src/lib/dictionary/urls.test.ts`, "search URLs", checks how a query is normalized and
-  encoded into its path; `apps/web/e2e/search.spec.ts`, "the dictionary home searches and lands on
+- Check: `src/app/dictionary/search/[query]/page.test.ts` checks the query the box redirects to
+  (Search URLs, below); `apps/web/e2e/search.spec.ts`, "the dictionary home searches and lands on
   the canonical results page", submits `  IRU ` and checks the redirect to `/dictionary/search/iru/`
   and the prefilled box. That typing doesn't search: No automated check yet (#511).
 
@@ -124,8 +124,8 @@ TUBELEX packs, read by the dictionary service for all of a search's results, one
   the order the app shows with its default dictionaries).
 - Check: SRR `results` (every row's ID, in order, with its `match` group and `retrievalOrder`) for
   56 queries, including `iru` and いる; `packages/dictionary-core/src/results/results.test.ts`,
-  "orderedByFrequency (SearchResultFrequencyOrdering.ordered)"; smoke "iru shows the refinement and its
-  first rows with their chips, as the app does", which reads the rows from SRR's `iru` case.
+  "orderedByFrequency (SearchResultFrequencyOrdering.ordered)"; smoke "iru shows the refinement and
+  its first rows with their chips, as the app does", which reads the rows from SRR's `iru` case.
 
 **Result count.** Above the results, a line reads "N words for «query»" (one word: "1 word"). N is
 the number of words the search lists, at most 60; the kanji row isn't counted. The app shows no
@@ -267,19 +267,25 @@ without searching: that is the dictionary service's limit, and the app has none.
   nothing for a query past the service’s 200 characters, without asking it".
 
 **Credits.** A results page that finds something ends with a Sources list: JMdict, KANJIDIC2, JLPT
-levels, and TUBELEX, each with its licence. When it shows a kanji's details, it adds RADKFILE,
-KanjiVG when the details draw stroke order, and Kanjium; when it lists example sentences, Tatoeba.
-Every page's credits match the app's Credits & Attributions, and EDRDG's licence requires them,
-with links, on every page that shows JMdict, KANJIDIC2, or RADKFILE data. The list sits in a
-Sources disclosure that starts closed; closed, its credits and links stay in the page's HTML.
+vocabulary lists, and TUBELEX, each with its licence. When it shows a kanji's details, it adds
+RADKFILE, KanjiVG when the details draw stroke order, and Kanjium; when it lists example sentences,
+Tatoeba. Each credit is worded once, in the core's list, which the app's Credits & Attributions
+shows too, and EDRDG's licence requires them, with links, on every page that shows JMdict,
+KANJIDIC2, or RADKFILE data. The list sits in a Sources disclosure that starts closed; closed, its
+credits and links stay in the page's HTML. The Sources page, `/sources/`, lists every credit the
+core gives the website: those the pages show, and Sudachi and Kuromoji, which analyze text for them.
+Jiten's carries its share-alike notice there too, under a sentence on how Zenbu converts them.
 
-- Source: #465 (credit every source a page shows, on every page); #560 (closed by default);
-  `CreditsView.swift`; the EDRDG licence; `src/lib/dictionary/sources.ts`.
+- Source: #465 (credit every source a page shows, on every page); #560 (closed by default); the
+  EDRDG licence; the list, `packages/dictionary-core/src/sources/credits.ts`; which page credits
+  what, `src/lib/dictionary/sources.ts`.
 - Check: closed, in the page, then opened to its links: `apps/web/e2e/kanji.spec.ts`, "the search
   page for 要 credits KanjiVG and Kanjium for the kanji details". What a kanji's details and the
   sentences add: `src/lib/dictionary/sources.test.ts` ("withShownData, the credits for what a page
   shows"); `apps/web/e2e/kanji.spec.ts`, that test and "/dictionary/search/iru/, without kanji
-  details, credits neither". The base list: No automated check yet (#511).
+  details, credits neither". The base list: No automated check yet (#511). The Sources page:
+  `src/app/sources/page.test.tsx` and `apps/web/e2e/sources.spec.ts`; the list:
+  `packages/dictionary-core/src/sources/credits.test.ts`.
 
 **Left out on purpose.** The website has no Recent list, camera button, or Image Search. It also
 has no ✓ Known capsule and no swipe or long-press to mark a word known, since learner data lives in
@@ -370,14 +376,14 @@ once. When the dictionary has been updated since the page loaded, it says so and
 
 **Title and count.** The section is titled Example Sentences. Under the title, a line says how
 many sentences it lists ("60 examples"; "The first 100 of more than 100 examples" when more match
-than the app's 100), as a word page's Examples section does. The app's screen is titled with the
-query, which the results page already shows, and has no count line.
+than the app's 100), as a word page's Examples section and the app's screen do. The app's screen
+is titled with the query, which the results page already shows.
 
-- Source: `ExampleSentencesView.swift` (`navigationTitle(query.value)`); the owner's decision of
-  2026-09-29 (keep the count line the preview showed), where the #511 review had chosen none;
-  ADR 0010 (a section in place of the page).
-- Check: `search-examples.test.tsx`, "sits at #examples, titled with its count, and shows each
-  one" and "says when it lists only the first 100 of more".
+- Source: `ExampleSentencesView.swift` (its title, and its count line since #537); the owner's
+  decision of 2026-09-29 (keep the count line the preview showed, and add it to the app).
+- Check: ES `countText` for 59 queries, replayed by the service's example search conformance and
+  rendered in the ES cases of `search-examples.test.tsx`, beside its "sits at #examples, titled
+  with its count, and shows each one" and "says when it lists only the first 100 of more".
 
 **No sentences.** A search without example sentences has no section, as it has no row.
 
@@ -637,10 +643,10 @@ updated since the page loaded." and offers a reload.
   examples"; `src/app/dictionary/examples/[file]/route.test.ts`, "is not found for an unknown word
   or another build". The message: No automated check yet (#511).
 
-**Credits.** A word page ends with a Sources list: JMdict, UniDic, KANJIDIC2, JLPT levels, TUBELEX,
-and Tatoeba. When it can show a kanji's details, it adds RADKFILE, KanjiVG when any of them draws
-stroke order, and Kanjium. The list starts closed, as a results page's does, with its credits and
-links in the page's HTML.
+**Credits.** A word page ends with a Sources list: JMdict, UniDic, KANJIDIC2, JLPT vocabulary lists,
+TUBELEX, and Tatoeba. When it can show a kanji's details, it adds RADKFILE, KanjiVG when any of them
+draws stroke order, and Kanjium. The list starts closed, as a results page's does, with its credits
+and links in the page's HTML.
 
 - Source: #465; #560 (closed by default); `src/lib/dictionary/sources.ts`.
 - Check: `src/app/dictionary/[word]/page.test.tsx`, "credits the kanji data its details show" and
@@ -927,8 +933,8 @@ themes; text on the muted grey (the footer, the product page's demo, the homepag
 footer line with a link. Company is a plain dropdown.
 
 - **Dictionary:** a card with the App Store search screenshot that opens the dictionary home; Kana
-  (Hiragana, Katakana), Word lists (JLPT vocabulary, which opens N5, and Frequency lists), and
-  Kanji and grammar (Kanji by grade, Parts of speech); then Browse everything (`/dictionary/browse/`).
+  (Hiragana, Katakana), Word lists (JLPT vocabulary, which opens N5, and Frequency lists), and Kanji
+  and grammar (Kanji by grade, Parts of speech); then Browse everything (`/dictionary/browse/`).
 - **Tools:** a card drawn with kana that leads to all tools; Reference (Dictionary, Kana charts),
   Lists (Kanji lists, Frequency lists), and Converters (Hiragana to Katakana, Romaji to Kana, Kanji
   to Furigana); then All free tools.
@@ -947,11 +953,11 @@ window.
 - Check: `src/components/site-header.test.tsx`, "the Dictionary menu leads to the dictionary and its
   browse pages", "the Tools menu leads to the reference pages, and its planned pages are
   placeholders", "the Products menu leads to the products pages and the web dictionary, and its
-  planned pages are placeholders", and "the Company menu leads to About, Sources, Support, Contact, and Legal";
-  `apps/web/e2e/site.spec.ts`, for each menu, "the … menu opens and closes with a click", "the …
-  menu opens with the keyboard and Escape closes it", and "a link in the … menu opens its page and
-  closes the menu", and "every link in the header menus opens a page the site has, with no
-  redirect" and "the Dictionary menu leads to the search box".
+  planned pages are placeholders", and "the Company menu leads to About, Sources, Support, Contact,
+  and Legal"; `apps/web/e2e/site.spec.ts`, for each menu, "the … menu opens and closes with a
+  click", "the … menu opens with the keyboard and Escape closes it", and "a link in the … menu opens
+  its page and closes the menu", and "every link in the header menus opens a page the site has, with
+  no redirect" and "the Dictionary menu leads to the search box".
 
 **Placeholder links.** The pages the menus, footer, and [homepage](home.md) name that don't exist
 yet, and the outside addresses that aren't known yet, link to `#` for now: All free tools and Free
@@ -1038,24 +1044,24 @@ a `#` placeholder in a build where they're closed ([Account pages](account.md#pa
   opens this page"; `apps/web/e2e/word.spec.ts`, "opens the More actions menu with the app's
   actions".
 
-**Footer.** The footer sits on the muted grey in light mode (`bg-muted`) and a slightly lighter
-grey than the page in dark mode, after a rule, so the page, the homepage's closing card, and the
-footer read as three areas; its secondary text is the `muted-surface` grey, at 4.5:1 or more in
-both themes (Theme, above). It has no theme toggle. It starts with the logo and the site name,
-linking home, and the site's one-line description. Four labelled columns follow: Products (Zenbu Japanese for iPhone,
-Dictionary, and, where the account pages are open, Sign in, or Account once signed in:
-[Account pages](account.md#pages)), Tools (Kana charts, Kanji lists, Frequency lists, All tools),
-Company (About, Support, Contact, Sources), and Legal (Privacy Policy, Terms of Use, DMCA, Affiliate
-Disclosure). From 768
-pixels the brand and the columns sit side by side; on phones they stack into one column. Below
-them, after a rule, a row of plain social icons with no boxes, each named "Zenbu Japanese on" its
-network: YouTube, X, Instagram, TikTok, Discord, Reddit, Threads, Bluesky, LinkedIn, and Facebook,
-in one row at every width. On phones the ten share the row evenly, each an 18-pixel mark in a tap
-target at least 24 pixels across (WCAG 2.5.8), so they fit a 360-pixel phone without scrolling
-sideways; from 768 pixels each is a 20-pixel mark in a 36-pixel target. Each is the brand's own mark, drawn as inline SVG in the text color: Simple
-Icons' paths (CC0), and for LinkedIn, which Simple Icons doesn't carry, a trace of the In bug from
-LinkedIn's brand downloads (`components/social-links.tsx`). The copyright line and Sitemap end it. The legal
-index (`/legal/`) is in the Company menu rather than the footer.
+**Footer.** The footer sits on the muted grey in light mode (`bg-muted`) and a slightly lighter grey
+than the page in dark mode, after a rule, so the page, the homepage's closing card, and the footer
+read as three areas; its secondary text is the `muted-surface` grey, at 4.5:1 or more in both themes
+(Theme, above). It has no theme toggle. It starts with the logo and the site name, linking home, and
+the site's one-line description. Four labelled columns follow: Products (Zenbu Japanese for iPhone,
+Dictionary, and, where the account pages are open, Sign in, or Account once signed in: [Account
+pages](account.md#pages)), Tools (Kana charts, Kanji lists, Frequency lists, All tools), Company
+(About, Support, Contact, Sources), and Legal (Privacy Policy, Terms of Use, DMCA, Affiliate
+Disclosure). From 768 pixels the brand and the columns sit side by side; on phones they stack into
+one column. Below them, after a rule, a row of plain social icons with no boxes, each named "Zenbu
+Japanese on" its network: YouTube, X, Instagram, TikTok, Discord, Reddit, Threads, Bluesky,
+LinkedIn, and Facebook, in one row at every width. On phones the ten share the row evenly, each an
+18-pixel mark in a tap target at least 24 pixels across (WCAG 2.5.8), so they fit a 360-pixel phone
+without scrolling sideways; from 768 pixels each is a 20-pixel mark in a 36-pixel target. Each is
+the brand's own mark, drawn as inline SVG in the text color: Simple Icons' paths (CC0), and for
+LinkedIn, which Simple Icons doesn't carry, a trace of the In bug from LinkedIn's brand downloads
+(`components/social-links.tsx`). The copyright line and Sitemap end it. The legal index (`/legal/`)
+is in the Company menu rather than the footer.
 
 - Source: #648 decision and mockups (footer); #650; #614 (the browse links); #664 (the background
   and the text's contrast); the owner's feedback on #679 (one compact row of icons on phones, in
@@ -1156,15 +1162,15 @@ result is Japanese, whatever language the search is in.
 - Source: ADR 0007; ADR 0010; the owner's decision on #544.
 - Check: not applicable until a second locale is built.
 
-**Search URLs.** A search lives at `/dictionary/search/<query>/`. The query is NFKC-normalized,
-lowercased, and has whitespace runs collapsed; any other form redirects (308) to it. Dots are
-encoded, so a query never looks like a file. `.` and `..` can't be paths, so they stay on
-`/dictionary/search/` as finding nothing.
+**Search URLs.** A search lives at `/dictionary/search/<query>/`, at the query the core searches:
+its `normalizeQuery` folds width and case and joins the words with one space, as in the app. Any
+other form redirects (308) to it. Dots are encoded, so a query never looks like a file. `.` and
+`..` can't be paths, so they stay on `/dictionary/search/` as finding nothing.
 
 - Source: #466.
-- Check: `src/lib/dictionary/urls.test.ts`, "search URLs"; the redirect:
-  `apps/web/e2e/urls.spec.ts`, "/dictionary/search/IRU/ redirects to /dictionary/search/iru/ in one
-  hop".
+- Check: `src/app/dictionary/search/[query]/page.test.ts`, "a search lives at the query the core
+  searches"; `src/lib/dictionary/urls.test.ts`, "search URLs"; `apps/web/e2e/urls.spec.ts`,
+  "/dictionary/search/IRU/ redirects to /dictionary/search/iru/ in one hop".
 
 **Titles and descriptions.** A word page is titled "要る (いる) meaning" and a results page
 "«query» in Japanese", each followed by "| Zenbu Japanese". Each page is its own canonical URL.

@@ -1,12 +1,5 @@
 import { describe, expect, test } from 'vitest'
-import {
-  hasSearchPath,
-  kanjiSearchPath,
-  normalizeSearchQuery,
-  searchPath,
-  wordPath,
-  wordSlug
-} from './urls'
+import { hasSearchPath, kanjiSearchPath, searchPath, wordPath, wordSlug } from './urls'
 
 describe('word URLs (ADR 0007)', () => {
   test('end in the JMdict entry number after a readable slug', () => {
@@ -22,9 +15,9 @@ describe('word URLs (ADR 0007)', () => {
 })
 
 describe('search URLs', () => {
-  test('normalize the query and encode it as one path segment', () => {
-    expect(normalizeSearchQuery('  Ｉｒｕ  Now ')).toBe('iru now')
+  test('encode the query as one path segment', () => {
     expect(searchPath('to/from')).toBe('/dictionary/search/to%2Ffrom/')
+    expect(searchPath('iru now')).toBe('/dictionary/search/iru%20now/')
   })
 
   test('encode dots, so a query never looks like a file', () => {

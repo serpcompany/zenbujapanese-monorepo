@@ -38,12 +38,15 @@ final class AccountUITests: ZenbuUITestCase {
     open(.account, in: app)
     tap(find("account.profile", in: app))
     type("Ada Lovelace", into: waitFor(find("profile.name", in: app)))
+    type("ada.l", into: waitFor(find("profile.username", in: app)))
     type("not an address", into: waitFor(find("profile.email", in: app)))
     tap(find("profile.name", in: app))
+    waitFor(labeled("A username is 3 to 30 letters a to z, digits, or underscores.", in: app))
     waitFor(labeled("Enter a valid email address, like name@example.com.", in: app))
     goBack(in: app)
     let card = waitFor(find("account.profile", in: app))
-    let named = NSPredicate(format: "label CONTAINS 'Ada Lovelace'")
+    let named = NSPredicate(
+      format: "label CONTAINS 'Ada Lovelace' AND NOT (label CONTAINS 'ada.l')")
     expectation(for: named, evaluatedWith: card)
     waitForExpectations(timeout: Self.patience)
   }
@@ -95,7 +98,14 @@ final class AccountUITests: ZenbuUITestCase {
     waitFor(labeled("No Conversations Yet", in: app))
     goBack(in: app)
     tap(reveal(find("account.credits", in: app), in: app))
-    waitFor(find("credits.list", in: app))
+    let credits = waitFor(find("credits.list", in: app))
+    assertOnScreen(find("credits.source.jmdict", in: app), in: app)
+    let jitensNotice = reveal(find("credits.notice.jiten", in: app), in: app, scrolling: credits)
+    XCTAssertTrue(isReachable(jitensNotice, in: app), "Jiten's notice is scrolled onto the screen")
+    waitUntilStill(jitensNotice)
+    tap(reveal(find("credits.licenses", in: app), in: app, scrolling: credits))
+    tap(find("licenses.text.KANJIVG-CC-BY-SA-3.0.txt", in: app))
+    waitUntil(find("credits.license-text", in: app), mentions: "CREATIVE COMMONS PUBLIC LICENSE")
   }
 
   func testAFrequencyDictionaryShowsItsDetailsAndTurnsOff() {
@@ -111,6 +121,31 @@ final class AccountUITests: ZenbuUITestCase {
     flip(toggle)
     expectation(for: Self.switchedOff, evaluatedWith: toggle)
     waitForExpectations(timeout: Self.patience)
+  }
+
+  func testTurningADictionaryOffChangesAnOpenWordAndItsResultsAtOnce() {
+    let app = launch()
+    search("japan", in: app)
+    let result = waitFor(find("result.japan", in: app))
+    if device != .mac { waitUntil(result, "value CONTAINS 'YouTube frequency rank'") }
+    tap(result)
+    let ranked = find("word-detail.frequency.\(Self.youTube)", in: app)
+    reveal(ranked, in: app)
+    open(.account, in: app)
+    tap(reveal(find("account.frequency-dictionaries", in: app), in: app))
+    let toggle = waitFor(find("frequency-pack.toggle.\(Self.youTube)", in: app))
+    flip(toggle)
+    expectation(for: Self.switchedOff, evaluatedWith: toggle)
+    waitForExpectations(timeout: Self.patience)
+    tabItem(.search, in: app).tap()
+    waitFor(find("word-detail.screen", in: app))
+    waitUntilGone(ranked)
+    waitFor(find("word-detail.frequency.\(Self.jlpt)", in: app))
+    goBack(in: app)
+    waitFor(result)
+    if device != .mac {
+      waitUntil(result, "value CONTAINS 'JLPT level N' AND NOT (value CONTAINS 'YouTube')")
+    }
   }
 
   func testTurningFuriganaOffShowsTheReadingUnderTheHeadword() {

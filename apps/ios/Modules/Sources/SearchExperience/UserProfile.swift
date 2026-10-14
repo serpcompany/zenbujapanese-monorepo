@@ -74,12 +74,47 @@ final class UserProfile {
     try? FileManager.default.removeItem(at: photoURL)
   }
 
-  nonisolated static let usernameLengthLimit = 30
+  nonisolated static let usernameLengths = 3...30
 
-  nonisolated static func normalizedUsername(_ input: String) -> String {
-    let allowed = Set("abcdefghijklmnopqrstuvwxyz0123456789_.")
-    let characters = input.drop(while: { $0 == "@" }).lowercased().filter(allowed.contains)
-    return String(characters.prefix(usernameLengthLimit))
+  nonisolated static let usernameRule =
+    "A username is \(usernameLengths.lowerBound) to \(usernameLengths.upperBound) letters a to z, digits, or underscores."
+
+  nonisolated static func acceptedUsername(_ typed: String) -> String? {
+    let folded = typed.precomposedStringWithCompatibilityMapping.unicodeScalars
+    guard let first = folded.firstIndex(where: { !isTrimmedFromAUsername($0) }),
+      let last = folded.lastIndex(where: { !isTrimmedFromAUsername($0) })
+    else { return nil }
+    let username = String(String.UnicodeScalarView(folded[first...last])).lowercased()
+    guard usernameLengths.contains(username.unicodeScalars.count),
+      username.unicodeScalars.allSatisfy(isAUsernameScalar)
+    else { return nil }
+    return username
+  }
+
+  enum UsernameEdit: Equatable, Sendable {
+    case keep
+    case save(String)
+    case refuse
+  }
+
+  nonisolated static func usernameEdit(_ typed: String, over stored: String) -> UsernameEdit {
+    if typed == stored { return .keep }
+    if typed.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty { return .save("") }
+    guard let accepted = acceptedUsername(typed) else { return .refuse }
+    return .save(accepted)
+  }
+
+  private nonisolated static let usernameLetters: ClosedRange<Unicode.Scalar> = "a"..."z"
+  private nonisolated static let usernameDigits: ClosedRange<Unicode.Scalar> = "0"..."9"
+  private nonisolated static let byteOrderMark: Unicode.Scalar = "\u{FEFF}"
+  private nonisolated static let nextLine: Unicode.Scalar = "\u{85}"
+
+  private nonisolated static func isAUsernameScalar(_ scalar: Unicode.Scalar) -> Bool {
+    usernameLetters.contains(scalar) || usernameDigits.contains(scalar) || scalar == "_"
+  }
+
+  private nonisolated static func isTrimmedFromAUsername(_ scalar: Unicode.Scalar) -> Bool {
+    scalar == byteOrderMark || (scalar.properties.isWhitespace && scalar != nextLine)
   }
 
   nonisolated static func isValidEmail(_ input: String) -> Bool {

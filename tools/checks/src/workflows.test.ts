@@ -3,19 +3,24 @@ import { readFileSync, writeFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { describe, expect, test } from 'vitest'
 import { parse } from 'yaml'
+import { jobResults, type Trigger } from './agents/job-results'
 import { git as runGit, scratchFolder } from './agents/scratch'
-import { readRepositoryFile, readWorkflow } from './agents/workflow'
+import { readRepositoryFile, readWorkflow, type Workflow } from './agents/workflow'
 
-const gated = [
-  ['web', ['check', 'e2e']],
-  ['dictionary-core', ['check']],
-  ['dictionary-api', ['scripts', 'check']],
-  ['account-api', ['check', 'website']],
-  ['ios', ['contracts', 'swift']],
-  ['language-data-build', ['build']]
-] as const
+const gated: [name: string, jobs: string[], waits: Record<string, string>][] = [
+  ['web', ['check', 'e2e'], { e2e: 'check' }],
+  ['dictionary-core', ['check'], {}],
+  ['dictionary-api', ['scripts', 'check'], { check: 'scripts' }],
+  ['account-api', ['check', 'website'], { website: 'check' }],
+  ['ios', ['contracts', 'swift'], { swift: 'contracts' }],
+  ['language-data-build', ['build'], {}]
+]
 
 const requirable = [...gated.map(([name]) => name), 'repository', 'pull-request']
+const everyJob = gated.flatMap(([name, jobs]) => jobs.map(job => [name, job]))
+const waiting = gated.flatMap(([name, , waits]) =>
+  Object.entries(waits).map(([heavy, fast]) => [name, heavy, fast])
+)
 
 describe('the workflows a merge can be made to wait for', () => {
   test.each(requirable)('%s starts on every pull request and in the merge queue', name => {
@@ -35,7 +40,7 @@ describe('the workflows a merge can be made to wait for', () => {
 
   test.each(
     gated
-  )('%s decides inside what to run, and ends in one job that always reports', (name, jobs) => {
+  )('%s decides inside what to run, and ends in one job that always reports', (name, jobs, waits) => {
     const workflow = readWorkflow(`.github/workflows/${name}.yml`)
     expect(Object.keys(workflow.jobs)).toEqual(['changes', ...jobs, name])
     const paths = workflow.jobs.changes.steps?.find(step => step.id === 'paths')
@@ -44,7 +49,8 @@ describe('the workflows a merge can be made to wait for', () => {
       expect.arrayContaining([`.github/workflows/${name}.yml`, '.github/actions/changed-paths'])
     )
     for (const job of jobs) {
-      expect(workflow.jobs[job].needs).toBe('changes')
+      const fast = waits[job]
+      expect(workflow.jobs[job].needs).toEqual(fast ? ['changes', fast] : 'changes')
       expect(workflow.jobs[job].if).toContain("needs.changes.outputs.changed == 'true'")
     }
     const gate = workflow.jobs[name]
@@ -68,6 +74,65 @@ describe('the workflows a merge can be made to wait for', () => {
       const runs = (job.steps ?? []).map(step => step.run ?? '').join('\n')
       expect(runs).not.toContain('${{')
     }
+  })
+})
+
+describe("what a workflow's last job reports, with its jobs played out as GitHub settles them", () => {
+  const settle = (name: string, trigger: Partial<Trigger>) =>
+    jobResults(readWorkflow(`.github/workflows/${name}.yml`), {
+      event: 'pull_request',
+      changed: true,
+      vars: { IOS_SWIFT_TESTS: 'on' },
+      ...trigger
+    })
+
+  describe.each(['pull_request', 'merge_group'] as const)('on %s', event => {
+    test.each(
+      gated
+    )('%s passes, having run nothing, when the change concerns none of its paths', (name, jobs) => {
+      const results = settle(name, { event, changed: false })
+      for (const job of jobs) expect(results[job], job).toBe('skipped')
+      expect(results[name]).toBe('success')
+    })
+
+    test.each(gated)('%s passes when each of its jobs passed', (name, jobs) => {
+      const results = settle(name, { event })
+      for (const job of jobs) expect(results[job], job).toBe('success')
+      expect(results[name]).toBe('success')
+    })
+
+    test.each(everyJob)('%s fails when %s failed', (name, job) => {
+      expect(settle(name, { event, failing: [job] })[name]).toBe('failure')
+    })
+
+    test.each(waiting)('%s never starts %s once %s has failed, and fails', (name, heavy, fast) => {
+      const results = settle(name, { event, failing: [fast] })
+      expect(results[fast]).toBe('failure')
+      expect(results[heavy]).toBe('skipped')
+      expect(results[name]).toBe('failure')
+    })
+  })
+
+  test('a job skipped because the one it needs failed would pass a last job that needed it alone', () => {
+    const jobs: Workflow['jobs'] = {
+      fast: {},
+      heavy: { needs: 'fast' },
+      after: { needs: 'heavy', if: "github.event_name == 'pull_request'" },
+      anyway: { needs: 'heavy', if: 'always()' },
+      last: {
+        if: 'always()',
+        needs: ['heavy'],
+        steps: [{ if: "contains(needs.*.result, 'failure')", run: 'exit 1' }]
+      }
+    }
+    const trigger: Trigger = { event: 'pull_request', changed: true, failing: ['fast'] }
+    expect(jobResults({ on: {}, jobs }, trigger)).toEqual({
+      fast: 'failure',
+      heavy: 'skipped',
+      after: 'skipped',
+      anyway: 'success',
+      last: 'success'
+    })
   })
 })
 

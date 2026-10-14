@@ -37,19 +37,19 @@ describe('the word page, read from the fixtures', () => {
       'JMdict',
       'UniDic',
       'KANJIDIC2',
-      'JLPT levels',
+      'JLPT vocabulary lists',
       'TUBELEX',
       'Tatoeba',
       'RADKFILE',
       'KanjiVG',
       'Kanjium',
-      'JLPT kanji levels'
+      'JLPT kanji lists'
     ])
     expect(credited(await renderWord('いる-1577980'))).toEqual([
       'JMdict',
       'UniDic',
       'KANJIDIC2',
-      'JLPT levels',
+      'JLPT vocabulary lists',
       'TUBELEX',
       'Tatoeba'
     ])

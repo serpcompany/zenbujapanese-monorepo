@@ -25,6 +25,13 @@ struct ExampleSentence: Decodable, Hashable, Identifiable, Sendable {
   let english: String
 }
 
+struct ListedExamples: Decodable, Sendable {
+  static let empty = ListedExamples(sentences: [], countText: nil)
+
+  let sentences: [ExampleSentence]
+  let countText: String?
+}
+
 enum ExampleSentenceInvalidQueryReason: Hashable, Sendable {
   case missingEntryEvidence
 }

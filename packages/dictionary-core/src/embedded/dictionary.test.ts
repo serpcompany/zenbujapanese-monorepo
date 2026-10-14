@@ -1,4 +1,5 @@
 import { describe, expect, test } from 'vitest'
+import { creditsShownBy } from '../sources/credits'
 import { embeddedEndpoint } from './dictionary'
 import { ask, begin, type FakeEntry, fakeHost, settled } from './fake-host'
 import { hostDatabase } from './host'
@@ -199,6 +200,15 @@ describe('the embedded dictionary', () => {
     )
   })
 
+  test('answers a client’s source credits at once, and refuses a client it does not know', () => {
+    const endpoint = embeddedEndpoint(host())
+    expect(endpoint.answer('sourceCredits', 'app')).toEqual(creditsShownBy('app'))
+    expect(JSON.parse(endpoint.answerJSON('sourceCredits', 'website'))).toEqual(
+      creditsShownBy('website')
+    )
+    expect(() => endpoint.answer('sourceCredits', 'watch')).toThrow('No client is named watch')
+  })
+
   test('refuses to answer at once what has to wait, or what it does not have', () => {
     const endpoint = embeddedEndpoint(host())
     expect(() => endpoint.answer('search', '日本')).toThrow('search does not answer at once')
@@ -208,6 +218,42 @@ describe('the embedded dictionary', () => {
   test('has an outcome only once a call has finished', () => {
     const call = begin(host(), 'search', '日本')
     expect(JSON.parse(call.outcome())).toEqual({ error: 'search did not finish within its call' })
+  })
+
+  test('hands back a finished call’s value as the text it wrote, and nothing before or without one', async () => {
+    const call = begin(host(), 'search', '日本')
+    expect(() => call.value()).toThrow('search has answered nothing')
+    const { value } = await settled(call)
+    expect(call.value()).toBe(JSON.stringify(value))
+    expect(call.outcome()).toBe(`{"value":${call.value()}}`)
+
+    const waiting = begin(host(), 'search', '日本と本日')
+    await settled(waiting)
+    expect(() => waiting.value()).toThrow('search has answered nothing')
+    const failed = begin(host(), 'translate', '日本')
+    await settled(failed)
+    expect(() => failed.value()).toThrow('translate has answered nothing')
+    const nothing = begin(host(), 'gloss', '(note only)')
+    await settled(nothing)
+    expect(nothing.value()).toBe('null')
+  })
+
+  test('a host can hand a search’s answer on as it was written, for the results screen to read', async () => {
+    const searched = begin(host(), 'search', '日本')
+    await settled(searched)
+    const answered = `{"addedLater":{"kept":true},${searched.value().slice(1)}`
+    const screen = await ask(
+      host(),
+      'resultsScreen',
+      `{"query":"日本","results":${answered},"exampleCount":0,"learner":${JSON.stringify({
+        sort: 'default',
+        filter: 'all',
+        known: [],
+        fromRadicals: false
+      })}}`
+    )
+    expect(screen).toMatchObject({ state: 'results', rows: [{ id: 'a1' }, { id: 'b2' }] })
+    expect(JSON.parse(answered)).toMatchObject({ addedLater: { kept: true }, primaryEntry: 'a1' })
   })
 
   test('asks the host for the words of a sentence, then searches each', async () => {

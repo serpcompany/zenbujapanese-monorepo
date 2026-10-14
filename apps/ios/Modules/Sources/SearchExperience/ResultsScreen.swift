@@ -91,7 +91,6 @@ struct ResultsList: Decodable, Hashable, Sendable {
   let rows: [ListedWord]
   let hiddenByFilter: String?
   let frequencyNotice: String?
-  let frequencyEntries: [String]
 }
 
 enum ResultsScreen: Decodable, Hashable, Sendable {
@@ -114,7 +113,6 @@ struct ResultsLearner: Encodable, Hashable, Sendable {
   static let defaultSort = "default"
   static let noFilter = "all"
 
-  var frequency: LearnerFrequency?
   var sort = Self.defaultSort
   var filter = Self.noFilter
   var known: [String] = []
@@ -126,8 +124,10 @@ struct ResultsScreenRequest: Hashable, Sendable {
   let results: String
   let exampleCount: Int
   var learner: ResultsLearner
+  var lists = 0
 
-  func screen() async throws -> ResultsScreen {
+  func screen(using core: PresentationCore = .shared) async throws -> ResultsScreen {
+    await core.frequencyLists?.ready()
     var request = JSONBytes()
     request.append("{\"query\":")
     request.appendString(query.value)
@@ -136,7 +136,7 @@ struct ResultsScreenRequest: Hashable, Sendable {
     request.append(",\"exampleCount\":\(exampleCount),\"learner\":")
     request.append(try DictionaryCore.argument(learner))
     request.append("}")
-    return try PresentationCore.shared.answer("resultsScreen", request.text)
+    return try core.answer("resultsScreen", request.text)
   }
 }
 
@@ -147,11 +147,10 @@ struct WordRowsRequest: Encodable, Hashable, Sendable {
   }
 
   let entries: [Entry]
-  var frequency: LearnerFrequency?
   let known: [String]
 
-  func rowsByEntry() -> [String: ListedWord] {
-    let rows: [ListedWord]? = try? PresentationCore.shared.answer("wordRows", self)
+  func rowsByEntry(using core: PresentationCore = .shared) -> [String: ListedWord] {
+    let rows: [ListedWord]? = try? core.answer("wordRows", self)
     return Dictionary((rows ?? []).map { ($0.id, $0) }, uniquingKeysWith: { first, _ in first })
   }
 }
@@ -185,20 +184,4 @@ struct FrequencyRow: Decodable, Hashable, Identifiable, Sendable {
   let details: Details
 
   var id: String { pack ?? "frequency-unavailable" }
-
-  private struct Request: Encodable {
-    let entry: String
-    let frequency: LearnerFrequency
-  }
-
-  static func rows(
-    for id: LanguageReferenceID, using capability: FrequencyCapability
-  ) async -> [FrequencyRow] {
-    let frequency =
-      (try? await capability.evidence(for: [id])).map { LearnerFrequency($0, for: [id]) }
-      ?? .unavailable(for: [id], reason: "Frequency data unavailable")
-    let rows: [FrequencyRow]? = try? PresentationCore.shared.answer(
-      "frequencyRows", Request(entry: id.rawValue, frequency: frequency))
-    return rows ?? []
-  }
 }
