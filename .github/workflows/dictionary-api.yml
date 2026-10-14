@@ -56,7 +56,7 @@ jobs:
           deploy/deployer.sh
 
   check:
-    needs: changes
+    needs: [changes, scripts]
     if: needs.changes.outputs.changed == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 30

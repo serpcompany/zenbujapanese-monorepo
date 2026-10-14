@@ -1,7 +1,8 @@
 import { examplesPerPage } from '@zenbu/dictionary-core/detail/examples'
 import { exampleLimit } from '@zenbu/dictionary-core/examples/retrieval'
+import { normalizeQuery } from '@zenbu/dictionary-core/search/query'
 import type { PageExample } from './data'
-import { decodeSegment, normalizeSearchQuery } from './urls'
+import { decodeSegment } from './urls'
 
 export function morePosition(value: string | null): number | null {
   const from = Number(value ?? examplesPerPage)
@@ -12,7 +13,7 @@ export function morePosition(value: string | null): number | null {
 
 export function pathText(pathname: string, pattern: RegExp): string | null {
   const text = pathSpelling(pathname, pattern)
-  return text !== null && normalizeSearchQuery(text) === text ? text : null
+  return text !== null && normalizeQuery(text) === text ? text : null
 }
 
 export function pathSpelling(pathname: string, pattern: RegExp): string | null {

@@ -35,6 +35,21 @@ struct LaunchHarnessTests {
     #expect(LaunchHarness.linkingFailures([:]) == 0)
   }
 
+  @Test("each results list Search draws is recorded only when a UI test asks, with how many of its rows have chips")
+  func drawnResults() {
+    #expect(LaunchHarness.recordsDrawnResults([LaunchHarness.drawnResultsKey: "1"]))
+    #expect(!LaunchHarness.recordsDrawnResults([:]))
+    let chip = FrequencyChip(pack: "list", source: "List", value: "1", tier: .veryCommon)
+    let list = ResultsList(
+      query: "q", sections: [.results], menu: nil, forgetsSort: false, examples: nil,
+      readingRefinement: nil, heading: nil, kanji: nil,
+      rows: [
+        ListedWord(id: "a", summary: "", chips: [chip], spoken: ""),
+        ListedWord(id: "b", summary: "", chips: [], spoken: ""),
+      ], hiddenByFilter: nil, frequencyNotice: nil)
+    #expect(DrawnResults.summary(of: list) == "1 of 2 with chips")
+  }
+
   @Test("the sign-in stand-in offers Apple even in a build that otherwise can't sign in with it")
   func signInStandInOffersApple() {
     #expect(LaunchHarness.standsInForSignIn([LaunchHarness.signInStandInKey: "1"]))

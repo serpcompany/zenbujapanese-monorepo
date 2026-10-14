@@ -4,7 +4,6 @@ struct SearchExperienceRootView: View {
   @State private var selectedTab = SearchExperienceTab.search
   @State private var searchFocusRequest = 0
   @State private var showsImageSources = false
-  @State private var frequencyRefreshID = 0
   @State private var path: [SearchExperienceRoute] = []
   @State private var accountPath = NavigationPath()
   @State private var query = ""
@@ -147,14 +146,10 @@ struct SearchExperienceRootView: View {
       ))
     .task {
       await Task.detached(priority: .utility) {
+        async let frequencyLists: Void = FrequencyLists.live.ready()
         _ = JapaneseRuby(surface: "日本", reading: "にほん")
-        _ = try? await FrequencyPackClient.live.snapshot()
+        await frequencyLists
       }.value
-    }
-    .onChange(of: selectedTab) { previous, current in
-      if previous != .search, current == .search {
-        frequencyRefreshID += 1
-      }
     }
   }
 
@@ -168,8 +163,6 @@ struct SearchExperienceRootView: View {
         kanjiLookupClient: kanjiLookupClient,
         radicalLookupClient: .live,
         exampleSentenceClient: exampleSentenceClient,
-        frequencyCapability: .live,
-        frequencyRefreshID: frequencyRefreshID,
         focusRequest: searchFocusRequest
       )
       .navigationDestination(for: SearchExperienceRoute.self) {
@@ -372,7 +365,6 @@ struct SearchExperienceRootView: View {
       wordNoteStore: .live,
       encounterMediaStore: encounterMediaStore,
       cameraAuthorizationClient: cameraAuthorizationClient,
-      frequencyCapability: .live,
       openRelated: { relationship in
         dismissRecognizedWordSheet(if: presentedInSheet)
         openRelated(relationship, in: stack)

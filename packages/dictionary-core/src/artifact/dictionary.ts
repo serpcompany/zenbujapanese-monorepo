@@ -5,7 +5,7 @@ import type { FormExampleRows, KanjiRows, WordExampleRows, WordRows } from '../d
 import { wordSlug } from '../detail/slug'
 import type { LinkEntry } from '../examples/linking'
 import type { Tokenize } from '../examples/morphology'
-import { loadFrequency, type SearchResultsScreen, searchResultsScreen } from '../results/results'
+import { type SearchResultsScreen, searchResultsScreen } from '../results/results'
 import { normalizeQuery } from '../search/query'
 import {
   DictionarySearch,
@@ -21,6 +21,7 @@ import {
   retrieveEntryExamples
 } from './example-retrieval'
 import { searchExamples } from './example-search'
+import { bundledFrequency } from './frequency'
 import { readKanji } from './kanji'
 import type { KanjiData } from './kanji-data'
 import { formLookup } from './lookup'
@@ -191,7 +192,10 @@ export class Dictionary {
     const cached = this.searches.get(query)
     if (cached) return cached
     const results = await this.readableResults(query)
-    const frequency = await loadFrequency(searchDatabase(this.db), results)
+    const frequency = bundledFrequency(
+      this.db,
+      results.items.map(item => item.entry.id)
+    )
     const { usesPrimaryEntryExamples, examples } = await this.examplesFor(query, results)
     const count = resultsExampleCount(usesPrimaryEntryExamples, examples)
     const response: SearchResponse = {

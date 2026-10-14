@@ -1,5 +1,5 @@
 import { spawn } from 'node:child_process'
-import { mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
+import { existsSync, mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
 import { createServer, type IncomingMessage } from 'node:http'
 import type { AddressInfo } from 'node:net'
 import { tmpdir } from 'node:os'
@@ -16,6 +16,8 @@ export interface Step {
   run?: string
   env?: Record<string, string>
   with?: Record<string, unknown>
+  'continue-on-error'?: boolean
+  'timeout-minutes'?: number
 }
 
 interface Job {
@@ -24,6 +26,7 @@ interface Job {
   concurrency?: { group: string; 'cancel-in-progress'?: boolean }
   'timeout-minutes'?: number
   permissions?: Record<string, string>
+  outputs?: Record<string, string>
   env?: Record<string, string>
   steps?: Step[]
 }
@@ -87,7 +90,7 @@ export function disallowedTools(step: Step): string[] {
 
 export function guardAfter(steps: readonly Step[], claude: Step): { step: Step; index: number } {
   const output = `steps.${claude.id}.outputs.execution_file`
-  const index = steps.findIndex(
+  const index = steps.findLastIndex(
     step =>
       step.run !== undefined &&
       Object.values(step.env ?? {}).some(value => String(value).includes(output))
@@ -95,7 +98,23 @@ export function guardAfter(steps: readonly Step[], claude: Step): { step: Step; 
   return { step: steps[index], index }
 }
 
-export type Route = (url: URL, method: string) => { status: number; body: unknown } | undefined
+export type Route = (
+  url: URL,
+  method: string,
+  sent: string,
+  accept: string
+) =>
+  | {
+      status: number
+      body: unknown
+      text?: string
+      nextPage?: string
+      headers?: Record<string, string>
+      lost?: 'answer' | 'body'
+    }
+  | undefined
+
+export type Script = { name: string; text: string } | { path: string; arguments?: string[] }
 
 interface SentRequest {
   method: string
@@ -109,8 +128,23 @@ export interface StepRun {
   requests: SentRequest[]
 }
 
-export async function runNodeStep(
+export function runNodeStep(
   step: Step,
+  env: Record<string, string>,
+  route: Route,
+  files: Record<string, string> = {}
+): Promise<StepRun & { files: Record<string, string> }> {
+  const written = Object.entries(step.env ?? {}).filter(([, value]) => !value.includes('${{'))
+  return runNodeScript(
+    { name: 'step.cjs', text: step.run ?? '' },
+    { ...Object.fromEntries(written), ...env },
+    route,
+    files
+  )
+}
+
+export async function runNodeScript(
+  script: Script,
   env: Record<string, string>,
   route: Route,
   files: Record<string, string> = {}
@@ -126,9 +160,27 @@ export async function runNodeStep(
       const url = new URL(request.url ?? '/', 'http://localhost')
       const method = request.method ?? 'GET'
       requests.push({ method, path: url.pathname, body })
-      const answer = route(url, method) ?? { status: 404, body: { message: 'Not Found' } }
-      response.writeHead(answer.status, { 'content-type': 'application/json' })
-      response.end(JSON.stringify(answer.body))
+      const answer = route(url, method, body, request.headers.accept ?? '') ?? {
+        status: 404,
+        body: { message: 'Not Found' }
+      }
+      if (answer.lost === 'answer') {
+        request.socket.destroy()
+        return
+      }
+      const link = answer.nextPage
+        ? { link: `<http://${request.headers.host}${answer.nextPage}>; rel="next"` }
+        : {}
+      const text = answer.text ?? JSON.stringify(answer.body)
+      const longer = answer.lost ? { 'content-length': String(Buffer.byteLength(text) + 1) } : {}
+      response.writeHead(answer.status, {
+        'content-type': 'application/json',
+        ...link,
+        ...answer.headers,
+        ...longer
+      })
+      if (answer.lost) response.write(text, () => request.socket.destroy())
+      else response.end(text)
     })
   })
   await new Promise<void>(resolve => server.listen(0, '127.0.0.1', resolve))
@@ -140,12 +192,15 @@ export async function runNodeStep(
         return [name, path]
       })
     )
-    const script = join(workDir, 'step.cjs')
-    writeFileSync(script, step.run ?? '')
+    const command = 'path' in script ? [join(root, script.path), ...(script.arguments ?? [])] : []
+    if ('text' in script) {
+      command.push(join(workDir, script.name))
+      writeFileSync(command[0], script.text)
+    }
     const resolved = Object.fromEntries(
       Object.entries(env).map(([name, value]) => [name, paths[value] ?? value])
     )
-    const child = spawn(process.execPath, [script], {
+    const child = spawn(process.execPath, command, {
       env: {
         ...process.env,
         GITHUB_API_URL: `http://127.0.0.1:${(server.address() as AddressInfo).port}`,
@@ -165,7 +220,9 @@ export async function runNodeStep(
     })
     const status = await new Promise<number | null>(resolve => child.on('close', resolve))
     const written = Object.fromEntries(
-      Object.entries(paths).map(([name, path]) => [name, readFileSync(path, 'utf8')])
+      Object.entries(paths)
+        .filter(([, path]) => existsSync(path))
+        .map(([name, path]) => [name, readFileSync(path, 'utf8')])
     )
     return { status, output, requests, files: written }
   } finally {

@@ -1,16 +1,10 @@
-import { describe, expect, test, vi } from 'vitest'
+import { describe, expect, test } from 'vitest'
 import { defaultFrequencyLookups } from '../detail/frequency'
 import type { FrequencyRow } from '../detail/rows'
 import type { Rank } from '../search/rank'
-import type { SearchDatabase, SearchResultItem, SearchResults } from '../search/search'
+import type { SearchResultItem, SearchResults } from '../search/search'
 import { orderedByFrequency } from './ordering'
-import {
-  type FrequencyByEntry,
-  listedResults,
-  loadFrequency,
-  resultsLayout,
-  searchResultsScreen
-} from './results'
+import { type FrequencyByEntry, listedResults, resultsLayout, searchResultsScreen } from './results'
 
 const readingExact: Rank = {
   kind: 'japanese',
@@ -266,46 +260,5 @@ describe('searchResultsScreen (SearchResultsView)', () => {
       new Map()
     )
     expect(screen).toMatchObject({ sections: ['discoveredWords'], kanji: null, resultCount: 12 })
-  })
-})
-
-describe('loadFrequency', () => {
-  test("reads every result's evidence from the JLPT and TUBELEX packs, in catalog order", async () => {
-    const all = vi.fn(async (sql: string, _params: readonly string[]) =>
-      sql.includes('jlpt.level_evidence')
-        ? [{ id: 'a', level: 5 }]
-        : [
-            { id: 'a', rank: 120 },
-            { id: 'b', rank: 9000 }
-          ]
-    )
-    const db: SearchDatabase = { all: all as SearchDatabase['all'] }
-    const frequency = await loadFrequency(
-      db,
-      results([item('一', { id: 'a' }), item('二', { id: 'b' })])
-    )
-    expect(all).toHaveBeenCalledTimes(2)
-    expect(all.mock.calls.map(([, params]) => params)).toEqual([
-      ['a', 'b'],
-      ['a', 'b']
-    ])
-    expect(frequency).toEqual(
-      new Map([
-        [
-          'a',
-          [
-            { pack: 'jlpt', level: 5 },
-            { pack: 'tubelex', rank: 120 }
-          ]
-        ],
-        ['b', [{ pack: 'tubelex', rank: 9000 }]]
-      ])
-    )
-  })
-
-  test('reads nothing without results', async () => {
-    const all = vi.fn()
-    expect(await loadFrequency({ all }, results([]))).toEqual(new Map())
-    expect(all).not.toHaveBeenCalled()
   })
 })

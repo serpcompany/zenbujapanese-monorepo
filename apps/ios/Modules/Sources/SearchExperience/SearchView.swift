@@ -9,8 +9,6 @@ struct SearchView: View {
   let kanjiLookupClient: KanjiLookupClient
   let radicalLookupClient: RadicalLookupClient
   let exampleSentenceClient: ExampleSentenceClient
-  let frequencyCapability: FrequencyCapability
-  let frequencyRefreshID: Int
   let focusRequest: Int
   @Environment(WordKnowledge.self) private var wordKnowledge
   @State private var results = LookupSearchResults.empty
@@ -120,8 +118,6 @@ struct SearchView: View {
           results: results,
           first: shown,
           fromRadicals: radicalQuery == searchQuery,
-          frequencyCapability: frequencyCapability,
-          frequencyRefreshID: frequencyRefreshID,
           selectRefinement: selectRefinement
         )
         .id(
@@ -214,10 +210,12 @@ struct SearchView: View {
         try Task.checkCancellation()
         _ = await searchedExampleCount
         try Task.checkCancellation()
+        let exampleCount = await exampleSentenceClient.count(taskQuery, foundResults)
+        await FrequencyLists.live.ready()
         let request = ResultsScreenRequest(
           query: taskQuery,
           results: foundResults.listed,
-          exampleCount: await exampleSentenceClient.count(taskQuery, foundResults),
+          exampleCount: exampleCount,
           learner: ResultsLearner(
             sort: UserDefaults.standard.string(forKey: ResultsLearner.sortKey)
               ?? ResultsLearner.defaultSort,
@@ -225,7 +223,8 @@ struct SearchView: View {
               ?? ResultsLearner.noFilter,
             known: foundResults.entries.map(\.id).filter(wordKnowledge.isKnown)
               .map(\.rawValue),
-            fromRadicals: radicalQuery == taskQuery))
+            fromRadicals: radicalQuery == taskQuery),
+          lists: FrequencyLists.live.version)
         try Task.checkCancellation()
         let screen = try await request.screen()
         try Task.checkCancellation()

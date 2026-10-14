@@ -1,8 +1,9 @@
+import { normalizeQuery } from '@zenbu/dictionary-core/search/query'
 import { permanentRedirect } from 'next/navigation'
 import { DictionaryBreadcrumbs } from '@/components/dictionary/dictionary-breadcrumbs'
 import { SearchForm } from '@/components/dictionary/search-form'
 import { dictionaryMetadata } from '@/lib/dictionary/metadata'
-import { hasSearchPath, normalizeSearchQuery, searchPath } from '@/lib/dictionary/urls'
+import { hasSearchPath, searchPath } from '@/lib/dictionary/urls'
 
 export const metadata = dictionaryMetadata(
   '/dictionary/search/',
@@ -13,7 +14,7 @@ export const metadata = dictionaryMetadata(
 
 export default async function SearchIndexPage({ searchParams }: PageProps<'/dictionary/search'>) {
   const { q } = await searchParams
-  const query = normalizeSearchQuery(typeof q === 'string' ? q : '')
+  const query = normalizeQuery(typeof q === 'string' ? q : '')
   if (query && hasSearchPath(query)) permanentRedirect(searchPath(query))
   return (
     <main className="mx-auto flex w-full max-w-3xl flex-col gap-4 px-4 pt-4 pb-6">

@@ -1,6 +1,7 @@
 import {
   type FrequencyChip,
   type FrequencyDictionary,
+  type FrequencyEvidence,
   type FrequencyLookup,
   frequencyFamily,
   frequencyLookupChips,
@@ -28,14 +29,7 @@ import {
 } from './ordering'
 import { type ListedItem, type ListedResults, type ResultsSection, resultsLayout } from './results'
 
-type EvidenceLookup =
-  | { dictionary: number; value: number | null }
-  | { dictionary: number | null; unavailable: string }
-
-export interface FrequencyEvidence {
-  dictionaries: FrequencyDictionary[]
-  entries: Record<string, EvidenceLookup[]>
-}
+export type ReadFrequency = (ids: readonly string[]) => FrequencyEvidence | null
 
 export function evidenceLookups(evidence: FrequencyEvidence | null): LookupsByEntry {
   if (!evidence) return () => null
@@ -67,7 +61,6 @@ function enabledDictionaries(
 }
 
 export interface LearnerState {
-  frequency: FrequencyEvidence | null
   sort: string
   filter: string
   known: readonly string[]
@@ -119,7 +112,6 @@ export type LearnerResultsScreen =
       rows: WordRow[]
       hiddenByFilter: string | null
       frequencyNotice: string | null
-      frequencyEntries: string[]
     }
 
 export function wordRows(
@@ -183,14 +175,15 @@ export function learnerResultsScreen(
   rawQuery: string,
   results: ListedResults,
   exampleCount: number,
-  learner: LearnerState
+  learner: LearnerState,
+  frequency: ReadFrequency
 ): LearnerResultsScreen {
   const layout = resultsLayout(rawQuery, results, exampleCount, learner.fromRadicals)
   if (layout.isEmpty) return { state: 'noResults', query: layout.query }
   const known = new Set(learner.known)
   const isKnown = (id: string) => known.has(id)
-  const lookups = evidenceLookups(learner.frequency)
   const frequencyEntries = [...new Set(layout.presented.map(item => item.id))]
+  const lookups = evidenceLookups(frequency(frequencyEntries))
   const dictionaries = enabledDictionaries(frequencyEntries, lookups)
   const chosen = resultSort(learner.sort)
   const sort = appliedSort(chosen, dictionaries)
@@ -258,7 +251,6 @@ export function learnerResultsScreen(
             return found ? [found] : []
           })
         )
-      : null,
-    frequencyEntries
+      : null
   }
 }

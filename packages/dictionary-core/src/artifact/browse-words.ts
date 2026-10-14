@@ -3,7 +3,7 @@ import { hiraganaRange, type KanaScript } from '../browse/kana'
 import { type FrequencyResult, frequencyChips } from '../detail/frequency'
 import { type RubySegment, rubySegments } from '../detail/ruby'
 import type { ArtifactDatabase, SqlValue } from './database'
-import { frequencyByEntry, listedFrequencyQueries } from './frequency'
+import { bundledFrequency } from './frequency'
 
 export interface WordLink {
   entSeq: number
@@ -93,10 +93,9 @@ export function browseWords(
 ): BrowseWord[] {
   const records = entryRecords(db, rowids)
   if (records.length === 0) return []
-  const queries = listedFrequencyQueries(records.map(record => record.id))
-  const frequency = frequencyByEntry(
-    db.all(queries.levels, queries.params),
-    db.all(queries.ranks, queries.params)
+  const frequency = bundledFrequency(
+    db,
+    records.map(record => record.id)
   )
   const meanings = senseMeanings(db, rowids, labelledSense)
   return records.map(record => ({

@@ -138,12 +138,14 @@ extension ZenbuUITestCase {
 
   @discardableResult
   func reveal(
-    _ element: XCUIElement, in app: XCUIApplication, within container: XCUIElement? = nil
+    _ element: XCUIElement, in app: XCUIApplication, within container: XCUIElement? = nil,
+    scrolling list: XCUIElement? = nil
   ) -> XCUIElement {
     let area = container ?? app.windows.firstMatch
+    let scrolled = list ?? area
     _ = element.waitForExistence(timeout: 5)
     for _ in 0..<12 where !isReachable(element, in: app, within: container) {
-      scroll(area, back: element.exists && element.frame.midY < area.frame.midY)
+      scroll(scrolled, back: element.exists && element.frame.midY < area.frame.midY)
     }
     return waitFor(element)
   }
