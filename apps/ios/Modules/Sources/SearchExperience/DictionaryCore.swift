@@ -16,7 +16,8 @@ final class DictionaryCore {
     statements: SQLiteStatements? = nil,
     kanji: (@Sendable () -> KanjiFiles?)? = nil,
     radicals: (@Sendable () -> [UInt8]?)? = nil,
-    tokenizerFile: (@Sendable (String) -> InflatedBytes?)? = nil
+    tokenizerFile: (@Sendable (String) -> InflatedBytes?)? = nil,
+    frequencyLists: FrequencyListReading? = nil
   ) throws {
     guard
       let url = Bundle.module.url(
@@ -44,6 +45,15 @@ final class DictionaryCore {
     }
     if let radicals {
       Self.answer(host, "radicals") { _ in radicals() }
+    }
+    if let frequencyLists {
+      Self.answer(host, "frequencyLists") { _ in frequencyLists.lists() }
+      let listRows: @convention(block) (String, String, String) -> JSValue? = {
+        list, sql, parametersJSON in
+        var json = frequencyLists.rows(list, sql, parametersJSON)
+        return json.withNulTerminatedUTF8 { JSValue.parsing($0) }
+      }
+      host.setObject(listRows, forKeyedSubscript: "frequencyListRows" as NSString)
     }
     if let tokenizerFile {
       let unpacked: @convention(block) (String) -> JSValue? = { file in
@@ -161,13 +171,35 @@ final class DictionaryCore {
     _ method: String, _ argument: String, analyzingWith morphology: JapaneseMorphologyClient?,
     isolation: isolated (any Actor)? = #isolation
   ) async throws -> Answer {
+    try await finished(
+      method, argument, as: Answer.self, analyzingWith: morphology, isolation: isolation
+    ).answer
+  }
+
+  func answerAsWritten(
+    _ method: String, _ argument: String, analyzingWith morphology: JapaneseMorphologyClient?,
+    isolation: isolated (any Actor)? = #isolation
+  ) async throws -> String {
+    try await finished(
+      method, argument, as: Unread.self, analyzingWith: morphology, isolation: isolation
+    ).call.value()
+  }
+
+  private struct Unread: Decodable {
+    init(from decoder: Decoder) {}
+  }
+
+  private func finished<Answer: Decodable>(
+    _ method: String, _ argument: String, as answer: Answer.Type,
+    analyzingWith morphology: JapaneseMorphologyClient?, isolation: isolated (any Actor)?
+  ) async throws -> (answer: Answer, call: DictionaryCoreCall) {
     do {
       let call = try begin(method, argument)
       while true {
         switch try call.step(Answer.self) {
         case .finished(let answer):
           try Task<Never, Never>.checkCancellation()
-          return answer
+          return (answer, call)
         case .analyzing(let text):
           try call.analyzed(await DictionaryCoreAnalysis.json(of: text, by: morphology))
         }
@@ -247,10 +279,21 @@ final class DictionaryCoreCall {
       _ = try core.returned(call.invokeMethod("analyzed", withArguments: [answerJSON]))
     }
   }
+
+  func value() throws -> String {
+    try autoreleasepool {
+      try core.returned(call.invokeMethod("value", withArguments: [])).toString() ?? ""
+    }
+  }
 }
 
-struct DictionaryCoreSearchResults: Codable, Sendable {
-  struct Item: Codable, Sendable {
+struct FrequencyListReading: Sendable {
+  let lists: @Sendable () -> [UInt8]?
+  let rows: @Sendable (_ list: String, _ sql: String, _ parametersJSON: String) -> JSONBytes
+}
+
+struct DictionaryCoreSearchResults: Decodable, Sendable {
+  struct Item: Decodable, Sendable {
     let id: String
     let entSeq: Int
     let headword: String

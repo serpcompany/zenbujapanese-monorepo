@@ -1,3 +1,4 @@
+import type { FrequencyDictionary } from '../detail/frequency'
 import { type EmbeddedCall, embeddedEndpoint } from './dictionary'
 import type { EmbeddedHost } from './host'
 
@@ -84,6 +85,62 @@ export function fakeHost(
       return { rows: formRows(entries, matches) }
     },
     ...overrides
+  }
+}
+
+export function fakeDictionary(
+  id: string,
+  name: string,
+  kind: FrequencyDictionary['kind'] = 'rank'
+): FrequencyDictionary {
+  return {
+    id,
+    kind,
+    name,
+    domain: `${name} domain`,
+    description: 'Fixture',
+    version: '2025.1',
+    source: `${name} source`,
+    coveredSourceRows: 100_000
+  }
+}
+
+export interface FakeFrequencyList {
+  dictionary: FrequencyDictionary
+  values?: Readonly<Record<string, number>>
+  unavailable?: string
+}
+
+const evidenceTables = { level: 'level_evidence', rank: 'frequency_evidence' }
+
+export function fakeFrequency(
+  lists: readonly FakeFrequencyList[]
+): Required<Pick<EmbeddedHost, 'frequencyLists' | 'frequencyListRows'>> & { read: string[][] } {
+  const read: string[][] = []
+  return {
+    read,
+    frequencyLists: () => ({
+      lists: lists.map(({ dictionary, unavailable }) =>
+        unavailable === undefined ? { dictionary } : { dictionary, unavailable }
+      )
+    }),
+    frequencyListRows(id, sql, parametersJSON) {
+      const list = lists.find(({ dictionary }) => dictionary.id === id)
+      const values = list?.values
+      if (!list || !values) return { error: 'unable to open database file' }
+      if (!sql.includes(`FROM ${evidenceTables[list.dictionary.kind]}`)) {
+        return { error: `no such table in ${sql}` }
+      }
+      const [listed] = JSON.parse(parametersJSON) as string[]
+      const ids = JSON.parse(listed) as string[]
+      read.push([id, ...ids])
+      return {
+        rows: ids
+          .filter(entry => Object.hasOwn(values, entry))
+          .map(entry => ({ id: entry, value: values[entry] })),
+        blobs: []
+      }
+    }
   }
 }
 
