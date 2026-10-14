@@ -75,6 +75,8 @@ All notable user-facing changes to Zenbu Japanese are recorded here.
   the one before. Every downloading row keeps its own progress ring, with a stop button.
 - Radicals no longer draws over the search results.
 - Choosing **Photo Library** for Image Search opens the picker again.
+- **Take Photo** opens the camera with its flash off. Turn the flash on, or to automatic, and the
+  camera opens with that choice the next time.
 - English searches put the common word first: `dog` shows 犬 first and `water` shows 水, where rarer
   words whose meaning was exactly the query used to come ahead of them.
 - A profile's username follows the rule your Zenbu account uses: 3 to 30 letters a–z, numbers, or
