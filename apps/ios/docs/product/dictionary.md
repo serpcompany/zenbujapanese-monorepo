@@ -20,10 +20,10 @@ Check: UI `SearchUITests.testAnEnglishSearchListsTheWordAndOpensItsDetail` (the 
 A query reads the same whatever its width or case (Ｎ as n, ｶﾞｷﾞ as ガギ, a voiced mark joined to
 its kana), and white space of any kind, or the U+FEFF a paste can carry, only separates its words.
 It is searched whatever its length (the website stops at 200 characters, its service's limit),
-and one that full-text search can't read finds nothing, as on the website.
+and one full-text search can't read shows Dictionary unavailable (the website finds nothing).
 
 Check: package `DictionaryCoreTests` (a query normalized by the core, scalar for scalar); core
-`search/query.test.ts`, `search/search.test.ts`, and `embedded/dictionary.test.ts`.
+`search/query.test.ts` and `embedded/dictionary.test.ts`.
 
 Image Search, for Japanese in a photo, is Translate's **Image** option
 ([Image Search](translate.md#image-search)).

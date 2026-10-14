@@ -95,6 +95,15 @@ export interface DictionaryOptions {
   cacheSize?: number
 }
 
+const fts4QueryParserErrors = /malformed MATCH|unterminated string/i
+
+export function isUnreadableQuery(error: unknown): boolean {
+  for (let cause = error; cause instanceof Error; cause = cause.cause) {
+    if (fts4QueryParserErrors.test(cause.message)) return true
+  }
+  return false
+}
+
 interface QueryExamples {
   primary: ExamplesEntry | null
   usesPrimaryEntryExamples: boolean
@@ -153,10 +162,19 @@ export class Dictionary {
     return this.searchCore.search(normalizeQuery(rawQuery))
   }
 
+  private async readableResults(query: string): Promise<SearchResults> {
+    try {
+      return await this.searchCore.search(query)
+    } catch (error) {
+      if (!isUnreadableQuery(error)) throw error
+      return this.searchCore.search('')
+    }
+  }
+
   private async examplesFor(query: string, found?: SearchResults): Promise<QueryExamples> {
     const cached = this.queryExamples.get(query)
     if (cached) return cached
-    const results = found ?? (await this.searchCore.search(query))
+    const results = found ?? (await this.readableResults(query))
     const primary = primaryExamplesEntry(this.db, query, results)
     const { usesPrimaryEntryExamples } = results
     const examples = {
@@ -172,7 +190,7 @@ export class Dictionary {
     const query = normalizeQuery(rawQuery)
     const cached = this.searches.get(query)
     if (cached) return cached
-    const results = await this.searchCore.search(query)
+    const results = await this.readableResults(query)
     const frequency = bundledFrequency(
       this.db,
       results.items.map(item => item.entry.id)

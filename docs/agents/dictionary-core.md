@@ -357,8 +357,6 @@ The core answers as the Swift it replaced did, which the suites pin.
   Reference ID (`canonicalEntry`) and takes the JMdict entry number from that same entry, so the
   two always name one entry. `rank` orders entries and sets the leading lexical group (the app's
   legacy rank); `presentationRank` is the coarse rank shown, the group's strongest after merging.
-- `DictionarySearch` answers a query FTS4's own parser refuses as finding nothing, for every
-  client (`isUnreadableQuery`): a bare "syntax error" would hide a real SQL bug as no results.
 - An English query's match groups are, strongest first: a strong gloss (the query, or "to" and
   the query, with or without notes in parentheses that end it) in the first sense; one in a later
   sense; a gloss that mentions the query; a romaji-only match, by exact, prefix, then contains.
@@ -443,6 +441,8 @@ records keyed by JMdict entry number.
   (`language_data_sha256`). `checkArtifact` checks the example index as the app's
   `validateBaseCorpus` and `validateEnglishIndex` do. Reading a new artifact version is a change to
   `supportedTransforms`, reviewed with the re-recorded suites (ADR 0006).
+- `isUnreadableQuery` matches only FTS4's own query parser errors: a bare "syntax error" would hide
+  a real SQL bug as no results.
 - A query's examples are cached, so the results page's row, its sentences section, and each page of
   more share one retrieval. The caches of sentence lists keep a quarter as many entries, since each
   holds up to 100 sentences.

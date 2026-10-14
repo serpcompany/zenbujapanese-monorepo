@@ -1838,13 +1838,6 @@
   function ftsPrefix(value) {
     return /^[\p{L}\p{M}\p{N}]+$/u.test(value) ? `${value}*` : ftsPhrase(value);
   }
-  var fts4QueryParserErrors = /malformed MATCH|unterminated string/i;
-  function isUnreadableQuery(error) {
-    for (let cause = error; cause instanceof Error; cause = cause.cause) {
-      if (fts4QueryParserErrors.test(cause.message)) return true;
-    }
-    return false;
-  }
 
   // src/search/english.ts
   var displayedFormProfileJoin = `LEFT JOIN form_priority_profiles p
@@ -2452,14 +2445,7 @@
     features;
     db;
     async search(rawQuery) {
-      try {
-        return await this.found(normalizeQuery(rawQuery));
-      } catch (error) {
-        if (!isUnreadableQuery(error)) throw error;
-        return noResults();
-      }
-    }
-    async found(query) {
+      const query = normalizeQuery(rawQuery);
       const exactFormEntry = isASCII(query) && query !== "" ? (await rankedEnglish(this.db, query, true))[0]?.entry : void 0;
       if (exactFormEntry) {
         const refinement = normalizeQuery(exactFormEntry.reading);
