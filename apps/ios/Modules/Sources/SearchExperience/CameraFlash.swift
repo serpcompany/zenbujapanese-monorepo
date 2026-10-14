@@ -5,7 +5,7 @@ enum CameraFlash: String, CaseIterable, Sendable {
   case auto
   case on
 
-  static let storageKey = "camera.flash"
+  static let storageKey = "camera.flash.v1"
 
   static func remembered(in defaults: UserDefaults = .standard) -> CameraFlash {
     defaults.string(forKey: storageKey).flatMap(CameraFlash.init(rawValue:)) ?? .off

@@ -5,38 +5,28 @@ import Testing
 
 @Suite("The camera's flash")
 struct CameraFlashTests {
-  private static func withFreshDefaults(_ body: (String) throws -> Void) throws {
-    let suite = "camera-flash-tests-\(UUID().uuidString)"
-    defer { UserDefaults(suiteName: suite)?.removePersistentDomain(forName: suite) }
-    try body(suite)
-  }
-
-  @Test("the camera opens with its flash off until the learner chooses one")
+  @Test("the flash kept for the camera is off until the learner chooses one")
   func offByDefault() throws {
-    try Self.withFreshDefaults { suite in
-      let defaults = try #require(UserDefaults(suiteName: suite))
-      #expect(CameraFlash.remembered(in: defaults) == .off)
-    }
+    let temporary = try TemporaryDefaults()
+    #expect(CameraFlash.remembered(in: temporary.defaults) == .off)
   }
 
-  @Test("the camera opens with the flash the learner last chose", arguments: CameraFlash.allCases)
+  @Test(
+    "the flash kept for the camera is the one the learner last chose",
+    arguments: CameraFlash.allCases)
   func remembersTheLearnersChoice(choice: CameraFlash) throws {
-    try Self.withFreshDefaults { suite in
-      let defaults = try #require(UserDefaults(suiteName: suite))
-      let other = CameraFlash.allCases.first { $0 != choice } ?? .off
-      other.remember(in: defaults)
-      choice.remember(in: defaults)
-      let reopened = try #require(UserDefaults(suiteName: suite))
-      #expect(CameraFlash.remembered(in: reopened) == choice)
-    }
+    let temporary = try TemporaryDefaults()
+    let other = CameraFlash.allCases.first { $0 != choice } ?? .off
+    other.remember(in: temporary.defaults)
+    choice.remember(in: temporary.defaults)
+    let reopened = try #require(UserDefaults(suiteName: temporary.suite))
+    #expect(CameraFlash.remembered(in: reopened) == choice)
   }
 
-  @Test("a saved flash this version doesn't know opens the camera with the flash off")
+  @Test("a kept flash this version doesn't know leaves the camera's flash off")
   func unknownChoiceIsOff() throws {
-    try Self.withFreshDefaults { suite in
-      let defaults = try #require(UserDefaults(suiteName: suite))
-      defaults.set("torch", forKey: CameraFlash.storageKey)
-      #expect(CameraFlash.remembered(in: defaults) == .off)
-    }
+    let temporary = try TemporaryDefaults()
+    temporary.defaults.set("torch", forKey: CameraFlash.storageKey)
+    #expect(CameraFlash.remembered(in: temporary.defaults) == .off)
   }
 }

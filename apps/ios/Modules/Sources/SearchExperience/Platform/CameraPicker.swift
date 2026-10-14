@@ -63,11 +63,16 @@ enum CameraCapture {
 
     func updateUIViewController(_ uiViewController: UIImagePickerController, context: Context) {}
 
+    static func dismantleUIViewController(
+      _ uiViewController: UIImagePickerController, coordinator: Coordinator
+    ) {
+      CameraFlash(uiViewController.cameraFlashMode).remember()
+    }
+
     final class Coordinator: ImagePickerCoordinator, UIImagePickerControllerDelegate,
       UINavigationControllerDelegate
     {
       func imagePickerControllerDidCancel(_ picker: UIImagePickerController) {
-        CameraFlash(picker.cameraFlashMode).remember()
         completion(.success([]))
       }
 
@@ -75,7 +80,6 @@ enum CameraCapture {
         _ picker: UIImagePickerController,
         didFinishPickingMediaWithInfo info: [UIImagePickerController.InfoKey: Any]
       ) {
-        CameraFlash(picker.cameraFlashMode).remember()
         guard let image = info[.originalImage] as? UIImage,
           let asset = ImageTextAsset(cameraImage: image)
         else {
