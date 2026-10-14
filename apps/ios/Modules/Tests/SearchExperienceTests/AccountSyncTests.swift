@@ -4,7 +4,7 @@ import Testing
 @testable import SearchExperience
 
 @MainActor
-@Suite("Account sync: queue, cursor, and order")
+@Suite("Account sync: queue, cursor, and order", .timeLimit(.minutes(1)))
 struct AccountSyncTests {
   private typealias Fixture = AccountFixture
 
@@ -84,7 +84,7 @@ struct AccountSyncTests {
   @Test("a failed sync is tried again once the retry's wait is over, and not before")
   func retrySyncsAfterItsWait() async throws {
     let fixture = try await signedInThroughAFailedSync()
-    #expect(fixture.retries.waits == [SyncRetry.firstDelay])
+    #expect(await fixture.retries.waited() == [SyncRetry.firstDelay])
     #expect(fixture.server.requests(to: "POST /v1/sync").count == 1)
 
     let retry = try #require(fixture.account.scheduler.waiting)

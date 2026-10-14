@@ -3,7 +3,7 @@ import Testing
 @testable import SearchExperience
 
 @MainActor
-@Suite("Handwriting undo")
+@Suite("Handwriting undo", .timeLimit(.minutes(1)))
 struct HandwritingUndoTests {
   private let horizontal = [HandwritingPoint(x: 0.2, y: 0.5), HandwritingPoint(x: 0.8, y: 0.5)]
   private let vertical = [HandwritingPoint(x: 0.5, y: 0.2), HandwritingPoint(x: 0.5, y: 0.8)]

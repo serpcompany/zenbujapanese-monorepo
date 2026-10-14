@@ -19,10 +19,16 @@ final class CallCount: @unchecked Sendable {
 final class HeldRetries {
   private(set) var waits: [TimeInterval] = []
   private var held: [AsyncStream<Void>.Continuation] = []
+  private var asking: [CheckedContinuation<Void, Never>] = []
 
   var clock: SyncRetryClock {
     SyncRetryClock(
       wait: { [weak self] seconds in await self?.wait(seconds) }, jitter: { $0.upperBound })
+  }
+
+  func waited() async -> [TimeInterval] {
+    if waits.isEmpty { await withCheckedContinuation { asking.append($0) } }
+    return waits
   }
 
   func release() {
@@ -32,6 +38,8 @@ final class HeldRetries {
 
   private func wait(_ seconds: TimeInterval) async {
     waits.append(seconds)
+    for one in asking { one.resume() }
+    asking = []
     let (released, retry) = AsyncStream.makeStream(of: Void.self)
     held.append(retry)
     for await _ in released {}

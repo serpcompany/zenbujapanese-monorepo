@@ -152,7 +152,7 @@ On the Mac they run against its own Vision, Speech, and Foundation Models, so th
 recognition tests are slow on a virtual Mac (about two minutes each). No test there names a
 platform: a test of something that differs reads `ThisDevice` and checks that device's side
 (`PlatformAdapterTests`). Two tests call the real model, only with Apple Intelligence on and
-`ZENBU_RUN_LANGUAGE_MODEL=1` (`ImageTextExplanationTests`); the rest stub it.
+`TEST_RUNNER_ZENBU_RUN_LANGUAGE_MODEL=1` (`ImageTextExplanationTests`); the rest stub it.
 
 **The UI tests**, `ZenbuJapaneseUITests` (`apps/ios/UITests/`), drive the built app through every
 tab. They're the `ZenbuJapanese` scheme's tests, built with `ZENBU_BUNDLE_ID_SUFFIX=.uitests`, so

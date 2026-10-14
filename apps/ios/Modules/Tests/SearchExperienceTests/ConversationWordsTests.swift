@@ -5,7 +5,7 @@ import TranslatorCore
 @testable import SearchExperience
 
 @MainActor
-@Suite("Conversation comprehension")
+@Suite("Conversation comprehension", .timeLimit(.minutes(1)))
 struct ConversationWordsTests {
   private let analysis = JapaneseTextAnalysisClient(
     availability: { .full },
