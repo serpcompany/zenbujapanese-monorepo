@@ -15,10 +15,20 @@ struct ExampleSentencesView: View {
 
   var body: some View {
     Group {
-      if !examples.answers(query.value) {
+      switch examples.state(of: query.value) {
+      case .loading:
         ProgressView("Loading examples")
           .frame(maxWidth: .infinity, maxHeight: .infinity)
-      } else {
+          .accessibilityIdentifier("examples.loading")
+      case .failed:
+        List {
+          UnreadExamplesRow(more: false) {
+            await examples.load(query.value, rowsOnScreen: rowsOnScreen, read: read)
+          }
+        }
+        .listStyle(.plain)
+        .accessibilityIdentifier("example-list.screen")
+      case .empty, .listed:
         List {
           if let countText = examples.countText {
             Text(countText)
@@ -47,6 +57,8 @@ struct ExampleSentencesView: View {
           if examples.hasMore {
             MoreExamplesRow { await examples.loadMore(read: read) }
               .id(examples.examples.count)
+          } else if examples.laterReadFailed {
+            UnreadExamplesRow(more: true) { await examples.readMoreAgain(read: read) }
           }
         }
         .listStyle(.plain)
@@ -78,27 +90,51 @@ struct MoreExamplesRow: View {
   }
 }
 
+struct UnreadExamplesRow: View {
+  let more: Bool
+  let readAgain: () async -> Void
+
+  var body: some View {
+    HStack {
+      Text(more ? "More examples couldn’t be loaded." : "Examples couldn’t be loaded.")
+        .foregroundStyle(.secondary)
+        .accessibilityIdentifier(more ? "examples.more-failed" : "examples.failed")
+      Spacer()
+      Button("Retry") { Task { await readAgain() } }
+        .buttonStyle(.borderless)
+        .accessibilityIdentifier(more ? "examples.more-retry" : "examples.retry")
+    }
+  }
+}
+
 struct ExampleSentenceSections: View {
   let title: String
-  let examples: [LinkedExample]
-  let isLoading: Bool
+  let examples: LoadedExamples
+  let source: String
   let emptyMessage: String
-  let hasMore: Bool
   let presentation: (Int) -> JapaneseExampleRowContent.Presentation
   let speechSynthesisClient: SpeechSynthesisClient
-  let loadMore: () async -> Void
+  let read: LoadedExamples.Read
+  let readAgain: () async -> Void
   let openWord: (DictionaryEntry) -> Void
 
   var body: some View {
-    if isLoading && examples.isEmpty {
-      Section(title) { ProgressView("Loading examples") }
-    } else if examples.isEmpty {
+    switch examples.state(of: source) {
+    case .loading:
+      Section(title) {
+        ProgressView("Loading examples")
+          .accessibilityIdentifier("examples.loading")
+      }
+    case .failed:
+      Section(title) { UnreadExamplesRow(more: false, readAgain: readAgain) }
+    case .empty:
       Section(title) {
         Text(emptyMessage)
           .foregroundStyle(.secondary)
+          .accessibilityIdentifier("examples.empty")
       }
-    } else {
-      ForEach(Array(examples.enumerated()), id: \.element.id) { index, example in
+    case .listed:
+      ForEach(Array(examples.examples.enumerated()), id: \.element.id) { index, example in
         Section {
           JapaneseExampleRowContent(
             example: example,
@@ -111,10 +147,15 @@ struct ExampleSentenceSections: View {
         }
         .compactSectionSpacing()
       }
-      if hasMore {
+      if examples.hasMore {
         Section {
-          MoreExamplesRow(load: loadMore)
-            .id(examples.count)
+          MoreExamplesRow { await examples.loadMore(read: read) }
+            .id(examples.examples.count)
+        }
+        .compactSectionSpacing()
+      } else if examples.laterReadFailed {
+        Section {
+          UnreadExamplesRow(more: true) { await examples.readMoreAgain(read: read) }
         }
         .compactSectionSpacing()
       }

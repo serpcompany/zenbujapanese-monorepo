@@ -56,12 +56,17 @@ struct EntryExamples: Sendable {
 final class LoadedExamples {
   typealias Read = @MainActor (ExampleBatch) async -> ExamplePage?
 
+  enum State: Equatable {
+    case loading, failed, empty, listed
+  }
+
   private(set) var examples: [LinkedExample] = []
   private(set) var countText: String?
+  private(set) var laterReadFailed = false
   private var source: String?
   private var listed = 0
   private var firstReadFailed = false
-  private var laterReadFailed = false
+  private var readingAgain = false
   private var owesRestOfPage = false
   @ObservationIgnored private var readingMore:
     (of: String?, from: Int, read: Task<ExamplePage?, Never>)?
@@ -72,10 +77,18 @@ final class LoadedExamples {
     self.source == source
   }
 
+  func state(of source: String) -> State {
+    guard answers(source), !readingAgain else { return .loading }
+    if firstReadFailed { return .failed }
+    return examples.isEmpty ? .empty : .listed
+  }
+
   func load(_ source: String, rowsOnScreen: Int?, read: @escaping Read) async {
     laterReadFailed = false
     if !answers(source) || firstReadFailed {
+      readingAgain = answers(source)
       let first = await read(ExampleBatch(from: 0, limit: rowsOnScreen))
+      readingAgain = false
       guard !Task.isCancelled else { return }
       self.source = source
       firstReadFailed = first == nil
@@ -103,6 +116,11 @@ final class LoadedExamples {
     owesRestOfPage = next.cutShort
     examples += next.examples
     listed = next.listed
+  }
+
+  func readMoreAgain(read: @escaping Read) async {
+    laterReadFailed = false
+    await loadMore(read: read)
   }
 }
 

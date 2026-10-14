@@ -58,6 +58,8 @@ All notable user-facing changes to Zenbu Japanese are recorded here.
   a word's Examples, and a conjugated form's examples; a sentence used to be drawn as plain text
   and then redrawn at another height. Long lists show 25 sentences and bring more as you scroll,
   and Example Sentences keeps your place when you come back from a word.
+- Example sentences that couldn’t be loaded now say so, with **Retry**; a word's page used to say
+  it had no source-matched examples.
 - **Credits & Attributions** says that Jiten's frequency lists are modified and shared under the
   same license, credits JMdict, KANJIDIC2, and RADKFILE each on its own, and calls three sources by
   their authors' names: Wikipedia Word Frequency Clean, JLPT vocabulary lists, and JLPT kanji lists.
