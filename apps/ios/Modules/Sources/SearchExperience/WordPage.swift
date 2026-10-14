@@ -93,6 +93,7 @@ struct Conjugations: Decodable, Hashable, Sendable {
     let empty: String
   }
 
+  let title: String
   struct Row: Decodable, Hashable, Identifiable, Sendable {
     let kind: String
     let surface: String
@@ -116,6 +117,21 @@ struct Conjugations: Decodable, Hashable, Sendable {
 }
 
 extension WordPage {
+  struct Frame: Decodable, Hashable, Sendable {
+    let sections: [Section]
+    let pronounce: String
+    let noExamples: String
+  }
+
+  static func frame(
+    for entry: DictionaryEntry, page: WordPage?, using core: PresentationCore = .shared
+  ) -> Frame? {
+    if let page {
+      return Frame(sections: page.sections, pronounce: page.pronounce, noExamples: page.noExamples)
+    }
+    return try? core.answer("wordPageWithoutContent", entry.reading)
+  }
+
   private struct Entry: Encodable {
     let id: String
     let headword: String

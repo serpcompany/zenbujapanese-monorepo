@@ -71,6 +71,8 @@ export function embeddedEndpoint(host: EmbeddedHost): EmbeddedEndpoint {
     wordRows: request => presentation().wordRows(JSON.parse(request)),
     ruby: pair => presentation().ruby(JSON.parse(pair)),
     wordPage: entry => presentation().wordPage(JSON.parse(entry)),
+    wordPageWithoutContent: reading => presentation().wordPageWithoutContent(reading),
+    kanjiPageWithoutContent: () => presentation().kanjiPageWithoutContent(),
     kanjiPage: request => presentation().kanjiPage(JSON.parse(request)),
     kanjiMeanings: character => presentation().kanjiMeanings(character),
     candidateMeanings: candidates => presentation().candidateMeanings(JSON.parse(candidates)),

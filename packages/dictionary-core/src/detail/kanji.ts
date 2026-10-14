@@ -61,6 +61,29 @@ const kanjiSectionTitles = {
 
 export type KanjiSectionKind = keyof typeof kanjiSectionTitles
 
+interface KanjiContent {
+  readings: readonly unknown[]
+  components: readonly unknown[]
+  elements: readonly unknown[]
+  words: readonly unknown[]
+}
+
+function kanjiSections(content: KanjiContent): Section<KanjiSectionKind>[] {
+  return sections(kanjiSectionTitles, {
+    readings: content.readings.length > 0,
+    components: content.components.length > 0,
+    elements: content.elements.length > 0,
+    words: content.words.length > 0
+  })
+}
+
+export const kanjiSectionsWithoutContent = kanjiSections({
+  readings: [],
+  components: [],
+  elements: [],
+  words: []
+})
+
 export interface KanjiDetail {
   sections: Section<KanjiSectionKind>[]
   character: string
@@ -251,12 +274,7 @@ export function kanjiDetail(rows: KanjiRows): KanjiDetail {
   const readings = kanji.readings.map(reading => kanjiReading(reading, words))
   const components = elements.length === 0 ? kanji.components : []
   return {
-    sections: sections(kanjiSectionTitles, {
-      readings: readings.length > 0,
-      components: components.length > 0,
-      elements: elements.length > 0,
-      words: words.length > 0
-    }),
+    sections: kanjiSections({ readings, components, elements, words }),
     character: kanji.character,
     stats: kanjiStats(kanji),
     meanings: kanji.meanings,

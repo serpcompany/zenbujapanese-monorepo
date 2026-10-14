@@ -60,12 +60,14 @@ struct WordDetailView: View {
 
   var body: some View {
     let page = WordPage(entry)
+    let frame = WordPage.frame(for: entry, page: page)
     ScrollViewReader { proxy in
       List {
         Section {
           WordHeroView(
             entry: entry,
             page: page,
+            pronounceLabel: frame?.pronounce ?? "",
             encounterMedia: photos.displayable,
             removeEncounterMedia: photos.remove,
             pronounce: { speechSynthesisClient.speak(entry.reading) }
@@ -75,9 +77,9 @@ struct WordDetailView: View {
             conjugations: page?.conjugations, openConjugations: openConjugations)
         }
 
-        if let page {
-          ForEach(page.sections, id: \.kind) { section in
-            pageSection(section, of: page)
+        if let frame {
+          ForEach(frame.sections, id: \.kind) { section in
+            pageSection(section, of: page, in: frame)
           }
         }
       }
@@ -129,16 +131,18 @@ struct WordDetailView: View {
 
 extension WordDetailView {
   @ViewBuilder
-  fileprivate func pageSection(_ section: WordPage.Section, of page: WordPage) -> some View {
+  fileprivate func pageSection(
+    _ section: WordPage.Section, of page: WordPage?, in frame: WordPage.Frame
+  ) -> some View {
     let title = section.title.uppercased()
     switch section.kind {
     case .meaning:
       Section(title) {
-        MeaningSection(senses: page.senses)
+        MeaningSection(senses: page?.senses ?? [])
       }
     case .frequency:
       Section(title) {
-        ForEach(page.frequency.enumerated(), id: \.offset) { _, row in
+        ForEach((page?.frequency ?? []).enumerated(), id: \.offset) { _, row in
           FrequencyRankRow(row: row) { frequencyDisclosure = $0 }
         }
       }
@@ -146,20 +150,21 @@ extension WordDetailView {
       EmptyView()
     case .alternatives:
       Section(title) {
-        AlternativeFormsSection(forms: page.alternatives, openKanji: openKanji)
+        AlternativeFormsSection(forms: page?.alternatives ?? [], openKanji: openKanji)
       }
     case .kanji:
       Section(title) {
-        PrimaryKanjiSection(characters: page.kanji, entry: entry, openKanji: openKanji)
+        PrimaryKanjiSection(characters: page?.kanji ?? [], entry: entry, openKanji: openKanji)
       }
     case .alternativeKanji:
       Section(title) {
-        AlternativeKanjiSection(characters: page.alternativeKanji, openKanji: openKanji)
+        AlternativeKanjiSection(characters: page?.alternativeKanji ?? [], openKanji: openKanji)
       }
     case .related:
       Section(title) {
         RelationshipsSection(
-          related: page.related, relationships: entry.relationships, openRelated: openRelated)
+          related: page?.related ?? [], relationships: entry.relationships,
+          openRelated: openRelated)
       }
     case .lists:
       Section(title) {
@@ -189,7 +194,7 @@ extension WordDetailView {
         title: title,
         examples: examplesEntryID == entry.id ? examples : [],
         isLoading: isLoadingExamples || examplesEntryID != entry.id,
-        emptyMessage: page.noExamples,
+        emptyMessage: frame.noExamples,
         highlightedQuery: SearchQuery(entry.headword),
         highlightedEntry: entry,
         presentation: { .wordDetail(index: $0) },
@@ -262,6 +267,7 @@ private struct WordDetailKanjiLink: View {
 private struct WordHeroView: View {
   let entry: DictionaryEntry
   let page: WordPage?
+  let pronounceLabel: String
   let encounterMedia: [EncounterMedia]
   let removeEncounterMedia: (String) async -> Void
   let pronounce: () -> Void
@@ -282,7 +288,7 @@ private struct WordHeroView: View {
     WordHeadline(
       ruby: JapaneseRuby(headwordOf: entry, on: page),
       pitch: page?.pitch,
-      pronounceLabel: page?.pronounce ?? "",
+      pronounceLabel: pronounceLabel,
       identifierPrefix: "word-detail",
       pronounce: pronounce
     ) {

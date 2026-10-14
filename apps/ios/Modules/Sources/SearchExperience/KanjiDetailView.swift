@@ -102,10 +102,8 @@ struct KanjiDetailView: View {
           }
         }
 
-        if let page {
-          ForEach(page.sections, id: \.kind) { section in
-            pageSection(section, of: page)
-          }
+        ForEach(page?.sections ?? KanjiPage.sectionsWithoutContent, id: \.kind) { section in
+          pageSection(section, of: page)
         }
       }
       .groupedList()
@@ -154,19 +152,19 @@ struct KanjiDetailView: View {
   }
 
   @ViewBuilder
-  private func pageSection(_ section: KanjiPage.Section, of page: KanjiPage) -> some View {
+  private func pageSection(_ section: KanjiPage.Section, of page: KanjiPage?) -> some View {
     let title = section.title.uppercased()
     switch section.kind {
     case .readings:
-      KanjiReadingsSection(title: title, readings: page.readings)
+      KanjiReadingsSection(title: title, readings: page?.readings ?? [])
     case .components:
       Section(title) {
-        Text(page.components.joined(separator: " · "))
+        Text((page?.components ?? []).joined(separator: " · "))
           .font(.title3)
           .accessibilityIdentifier("kanji-detail.elements")
       }
     case .elements:
-      KanjiElementsSection(title: title, elements: page.elements)
+      KanjiElementsSection(title: title, elements: elements)
     case .lists:
       Section(title) {
         SavedItemListsSection(
@@ -179,7 +177,7 @@ struct KanjiDetailView: View {
           notes: notes, editorFocused: $noteEditorFocused, identifierPrefix: "kanji-detail")
       }
     case .words:
-      KanjiWordsSection(title: title, entries: page.words)
+      KanjiWordsSection(title: title, entries: words)
     }
   }
 

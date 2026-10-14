@@ -1186,6 +1186,20 @@
     notes: "Notes",
     words: "Words"
   };
+  function kanjiSections(content) {
+    return sections(kanjiSectionTitles, {
+      readings: content.readings.length > 0,
+      components: content.components.length > 0,
+      elements: content.elements.length > 0,
+      words: content.words.length > 0
+    });
+  }
+  var kanjiSectionsWithoutContent = kanjiSections({
+    readings: [],
+    components: [],
+    elements: [],
+    words: []
+  });
   var compareLowercaseHex = (left, right) => left < right ? -1 : left > right ? 1 : 0;
   var codePointLength = (value) => [...value].length;
   var wordsPerReading = 3;
@@ -1311,12 +1325,7 @@
     const readings = kanji2.readings.map((reading) => kanjiReading(reading, words));
     const components = elements.length === 0 ? kanji2.components : [];
     return {
-      sections: sections(kanjiSectionTitles, {
-        readings: readings.length > 0,
-        components: components.length > 0,
-        elements: elements.length > 0,
-        words: words.length > 0
-      }),
+      sections: kanjiSections({ readings, components, elements, words }),
       character: kanji2.character,
       stats: kanjiStats(kanji2),
       meanings: kanji2.meanings,
@@ -3488,6 +3497,7 @@
       return code >= 19968 && code <= 40959 || scalar === "々";
     });
   }
+  var conjugationsTitle = "Conjugations";
   function conjugations(entry, readings) {
     const table = conjugationTable(entry);
     if (!table) return null;
@@ -3501,6 +3511,7 @@
       pronounce: pronounceLabel(form.reading)
     }));
     return {
+      title: conjugationsTitle,
       rule: table.rule,
       modes,
       rows: { Plain: rows("Plain"), Polite: rows("Polite") },
@@ -3688,7 +3699,7 @@
   var wordSectionTitles = {
     meaning: "Meaning",
     frequency: "Frequency",
-    conjugations: "Conjugations",
+    conjugations: conjugationsTitle,
     alternatives: "Alternatives",
     kanji: "Kanji",
     alternativeKanji: "Alternative kanji",
@@ -3697,9 +3708,19 @@
     notes: "Notes",
     examples: examplesTitle
   };
-  function wordSections(shown) {
-    return sections(wordSectionTitles, shown);
+  function wordSections(content, shown) {
+    return sections(wordSectionTitles, {
+      ...shown,
+      alternatives: content.alternatives.length > 0,
+      kanji: content.kanji.length > 0,
+      alternativeKanji: content.alternativeKanji.length > 0,
+      related: content.related.length > 0
+    });
   }
+  var wordSectionsWithoutContent = wordSections(
+    { alternatives: [], kanji: [], alternativeKanji: [], related: [] },
+    { frequency: false, conjugations: false }
+  );
   function wordSummary(entry, frequency) {
     return {
       entSeq: entry.entSeq,
@@ -3787,14 +3808,10 @@
     }));
     return {
       ...summary,
-      sections: wordSections({
-        frequency: frequencyRows.length > 0,
-        conjugations: table !== null,
-        alternatives: alternatives.length > 0,
-        kanji: kanji2.length > 0,
-        alternativeKanji: otherKanji.length > 0,
-        related: related.length > 0
-      }),
+      sections: wordSections(
+        { alternatives, kanji: kanji2, alternativeKanji: otherKanji, related },
+        { frequency: frequencyRows.length > 0, conjugations: table !== null }
+      ),
       ruby: withKanjiReadings(summary.ruby, readings),
       partOfSpeech,
       partOfSpeechRow: partOfSpeechRow(partOfSpeech, table !== null),
@@ -4097,14 +4114,7 @@
         note: row.sharedSpellings.length > 0 ? sharedSpellingNote(row.sharedSpellings) : null
       }));
       return {
-        sections: wordSections({
-          frequency: frequency.length > 0,
-          conjugations: false,
-          alternatives: detail.alternatives.length > 0,
-          kanji: detail.kanji.length > 0,
-          alternativeKanji: detail.alternativeKanji.length > 0,
-          related: detail.related.length > 0
-        }),
+        sections: wordSections(detail, { frequency: frequency.length > 0, conjugations: false }),
         ruby: detail.ruby,
         partOfSpeech: detail.partOfSpeech,
         partOfSpeechRow: detail.partOfSpeechRow,
@@ -4126,6 +4136,16 @@
         noExamples: noExamplesMessage,
         shareText: detail.shareText
       };
+    }
+    wordPageWithoutContent(reading) {
+      return {
+        sections: wordSectionsWithoutContent,
+        pronounce: pronounceLabel(reading),
+        noExamples: noExamplesMessage
+      };
+    }
+    kanjiPageWithoutContent() {
+      return { sections: kanjiSectionsWithoutContent };
     }
     kanjiPage(request) {
       const { character } = request;
@@ -5583,6 +5603,8 @@
       wordRows: (request) => presentation().wordRows(JSON.parse(request)),
       ruby: (pair) => presentation().ruby(JSON.parse(pair)),
       wordPage: (entry) => presentation().wordPage(JSON.parse(entry)),
+      wordPageWithoutContent: (reading) => presentation().wordPageWithoutContent(reading),
+      kanjiPageWithoutContent: () => presentation().kanjiPageWithoutContent(),
       kanjiPage: (request) => presentation().kanjiPage(JSON.parse(request)),
       kanjiMeanings: (character) => presentation().kanjiMeanings(character),
       candidateMeanings: (candidates) => presentation().candidateMeanings(JSON.parse(candidates)),

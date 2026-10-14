@@ -213,10 +213,10 @@ struct SearchExperienceRootView: View {
     case .conjugations(let entry, let conjugations):
       ConjugationsView(
         entry: entry, conjugations: conjugations, speechSynthesisClient: speechSynthesisClient)
-    case .conjugatedForm(let entry, let form):
+    case .conjugatedForm(_, let form, let labels):
       ConjugatedFormView(
         form: form,
-        labels: WordPage(entry)?.conjugations?.examples,
+        labels: labels,
         exampleSentenceClient: exampleSentenceClient,
         speechSynthesisClient: speechSynthesisClient,
         japaneseTextAnalysisClient: japaneseTextAnalysisClient,

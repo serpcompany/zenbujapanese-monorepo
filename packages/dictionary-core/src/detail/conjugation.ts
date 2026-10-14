@@ -110,7 +110,10 @@ export interface ConjugationRow extends ConjugatedForm {
   pronounce: string
 }
 
+export const conjugationsTitle = 'Conjugations'
+
 export interface Conjugations {
+  title: string
   rule: string
   modes: ConjugationMode[]
   rows: Record<ConjugationMode, ConjugationRow[]>
@@ -134,6 +137,7 @@ export function conjugations(
       pronounce: pronounceLabel(form.reading)
     }))
   return {
+    title: conjugationsTitle,
     rule: table.rule,
     modes,
     rows: { Plain: rows('Plain'), Polite: rows('Polite') },

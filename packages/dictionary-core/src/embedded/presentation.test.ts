@@ -127,6 +127,25 @@ describe('the embedded presentation engine', () => {
     })
   })
 
+  test('names the sections a word or kanji page shows before, or without, its answer', async () => {
+    expect(await ask(host, 'wordPageWithoutContent', 'たべる')).toEqual({
+      sections: [
+        { kind: 'meaning', title: 'Meaning' },
+        { kind: 'lists', title: 'Lists' },
+        { kind: 'notes', title: 'Notes' },
+        { kind: 'examples', title: 'Examples' }
+      ],
+      pronounce: 'Pronounce たべる',
+      noExamples: 'No source-matched examples'
+    })
+    expect(await ask(host, 'kanjiPageWithoutContent', '')).toEqual({
+      sections: [
+        { kind: 'lists', title: 'Lists' },
+        { kind: 'notes', title: 'Notes' }
+      ]
+    })
+  })
+
   test('gives a word that does not conjugate no table, and one without pitch no contour', async () => {
     const noun: EmbeddedEntry = {
       ...eat,

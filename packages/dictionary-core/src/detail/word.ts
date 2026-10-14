@@ -1,4 +1,4 @@
-import { type Conjugations, conjugations } from './conjugation'
+import { type Conjugations, conjugations, conjugationsTitle } from './conjugation'
 import { type Example, examplesTitle, wordExample } from './examples'
 import {
   type FrequencyResult,
@@ -56,7 +56,7 @@ export interface RelatedWord {
 const wordSectionTitles = {
   meaning: 'Meaning',
   frequency: 'Frequency',
-  conjugations: 'Conjugations',
+  conjugations: conjugationsTitle,
   alternatives: 'Alternatives',
   kanji: 'Kanji',
   alternativeKanji: 'Alternative kanji',
@@ -68,11 +68,25 @@ const wordSectionTitles = {
 
 export type WordSectionKind = keyof typeof wordSectionTitles
 
+type ListedContent = Pick<WordDetail, 'alternatives' | 'kanji' | 'alternativeKanji' | 'related'>
+
 export function wordSections(
-  shown: Readonly<Partial<Record<WordSectionKind, boolean>>>
+  content: ListedContent,
+  shown: { frequency: boolean; conjugations: boolean }
 ): Section<WordSectionKind>[] {
-  return sections(wordSectionTitles, shown)
+  return sections(wordSectionTitles, {
+    ...shown,
+    alternatives: content.alternatives.length > 0,
+    kanji: content.kanji.length > 0,
+    alternativeKanji: content.alternativeKanji.length > 0,
+    related: content.related.length > 0
+  })
 }
+
+export const wordSectionsWithoutContent = wordSections(
+  { alternatives: [], kanji: [], alternativeKanji: [], related: [] },
+  { frequency: false, conjugations: false }
+)
 
 export interface WordDetail extends WordSummary {
   sections: Section<WordSectionKind>[]
@@ -199,14 +213,10 @@ export function wordDetail(rows: WordRows): WordDetail {
   }))
   return {
     ...summary,
-    sections: wordSections({
-      frequency: frequencyRows.length > 0,
-      conjugations: table !== null,
-      alternatives: alternatives.length > 0,
-      kanji: kanji.length > 0,
-      alternativeKanji: otherKanji.length > 0,
-      related: related.length > 0
-    }),
+    sections: wordSections(
+      { alternatives, kanji, alternativeKanji: otherKanji, related },
+      { frequency: frequencyRows.length > 0, conjugations: table !== null }
+    ),
     ruby: withKanjiReadings(summary.ruby, readings),
     partOfSpeech,
     partOfSpeechRow: partOfSpeechRow(partOfSpeech, table !== null),

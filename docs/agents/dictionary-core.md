@@ -60,12 +60,11 @@ these and decodes the answer; [The app's side](#the-apps-side) says which type a
 - **Every response shape has a contract number.** `artifact/contract.ts` names each answer the
   service gives (`DictionaryContract`) and the number of their current shapes
   (`dictionaryContract`), which the service sends and the website compares with its own. The site
-  and the service deploy separately, in either order, so a shape change makes them disagree for
-  a few minutes. A mismatch is logged, never refused: make a change the older side can still
-  read, such as adding a field that the newer side doesn't yet rely on. `artifact/contract.test.ts`
-  expands every shape with the TypeScript compiler and fails when one changes without a new
-  contract number: raise it by one and record the new shape under it, never changing a recorded
-  one.
+  and the service deploy separately, in either order, so a shape change makes them disagree for a
+  few minutes. A mismatch is logged, never refused: make a change the older side can still read,
+  such as adding a field that the newer side doesn't yet rely on. `artifact/contract.test.ts`
+  expands every shape with the TypeScript compiler and fails when one changes without a new contract
+  number: raise it by one and record the new shape under it, never changing a recorded one.
 
 ## What a client passes in
 
@@ -140,11 +139,12 @@ modules, files, or event loop of its own, which is how the app runs it in JavaSc
   | `entryExamples`, `formExamples` | An entry's ID; a conjugated form | A word page's sentences with their count, and a form's |
   | `linkedTokens` | A text, the page's query, and its entry | Each word with its place in the text, its entry or candidates, the furigana to draw, whether it is the page's word or matches the query, and which neighbour a punctuation mark stays with on a line (`attaches`) |
   | `countedWords` | A list of lines | The ID of each word that counts toward comprehension, in order, once each time it occurs: one linked to a single entry that is not a function word |
-  | `resultsScreen` | A search's answer, the Example Sentences count, and the learner's state (Sort By, Filter, known words, and whether the query was picked in the radical panel) | `LearnerResultsScreen`: sections, rows with chips, the menu with each choice's title and announcement, notices, and what VoiceOver reads. A one-character query from the radical panel lists only its leading words. |
+  | `resultsScreen` | A search's answer, the Example Sentences count, and the learner's state (Sort By, Filter, known words, and whether the query was picked in the radical panel) | `LearnerResultsScreen`: sections, rows with chips, the menu with each choice's title and announcement, notices, and what VoiceOver reads; or No Dictionary Matches, with its message. A one-character query from the radical panel lists only its leading words. |
   | `wordRows` | Entries, and which the learner knows | A sheet's candidate rows, with their chips |
   | `ruby` | A surface and its reading | Furigana segments, kanji by kanji where one split fits |
   | `wordPage` | An entry as the host read it | `EmbeddedWordPage`: its sections in order with their titles, furigana, part of speech, conjugations with each row's note, pitch with its graph, senses, frequency rows with details, alternatives, kanji, related words, spoken labels, share text |
-  | `kanjiPage`, `kanjiMeanings`, `candidateMeanings` | A kanji, its words, and the word it was opened from; a kanji; candidates | `EmbeddedKanjiPage`: stats, meanings, readings and words, elements, components, share text, and the reading to save; its meanings; a one-kanji candidate's meaning |
+  | `kanjiPage`, `kanjiMeanings`, `candidateMeanings` | A kanji, its words, and the word it was opened from; a kanji; candidates | `EmbeddedKanjiPage`: sections, stats, meanings, readings with words and labels, elements, components, share text, the reading to save; its meanings; a one-kanji candidate's meaning |
+  | `wordPageWithoutContent`, `kanjiPageWithoutContent` | A reading; — | The sections, and the labels, a page draws before or without its answer |
   | `kanjiElementPage` | A glyph | `KanjiElementDetail`, or null for a kanji that is no element |
   | `kanjiStrokes` | A stroke diagram's row as the host read it (the kanji, viewport, stroke count, and KanjiVG's packed strokes) | `StrokeDiagram`: each stroke as the points to draw through, a move then curves with two control points, and the player's labels; an error for a broken diagram |
   | `radicalPanel` | The radicals picked, in order | `RadicalPanel`: the kanji holding all of them, fewest other radicals first, and the radicals still worth offering, grouped under their stroke counts with each group's heading |
@@ -193,11 +193,10 @@ time it tokenizes. It is the only tokenizer: the app runs it in JavaScriptCore, 
 website's dictionary service runs it in Node (`apps/dictionary-api/src/tokenizer.ts`).
 
 - **It is a port of kuromoji.js 0.1.2** (Apache-2.0, Takuya Asano; the license ships beside the
-  dictionary files, `Resources/Kuromoji/LICENSE-2.0.txt`), which both clients ran until
-  2026-10-11, and it answers exactly as kuromoji.js did, so no sentence links differently than
-  it used to. That includes what kuromoji.js got wrong, because the rest of the core already
-  handles it (`kuromojiCandidates` shows a sentence whose tokens don't tile it as one unlinked
-  word):
+  dictionary files, `Resources/Kuromoji/LICENSE-2.0.txt`), which both clients ran until 2026-10-11,
+  and it answers exactly as kuromoji.js did, so no sentence links differently than it used to. That
+  includes what kuromoji.js got wrong, because the rest of the core already handles it
+  (`kuromojiCandidates` shows a sentence whose tokens don't tile it as one unlinked word):
   - a sentence is split after every 、 and 。, and the words of each later part are numbered from
     the last word of the part before, which is off when that word is longer than one character;
   - a word's place counts characters, but a run of unknown characters outside the basic plane is
@@ -295,10 +294,9 @@ The core answers as the Swift it replaced did, which the suites pin.
 - **Characters.** A Swift `Character` is an extended grapheme cluster, so the core iterates
   `graphemes` wherever the Swift iterated Characters. `graphemes` and `graphemeCount` skip
   segmenting when every UTF-16 unit is a grapheme of its own (printable ASCII, and the CJK, kana,
-  and full-width blocks less their combining marks): `Intl.Segmenter` is slow in an engine
-  without a JIT, linking asks for every word's graphemes, and example retrieval counts every
-  matching sentence. `normalizeQuery` likewise returns a folded query that has no separator as
-  it is.
+  and full-width blocks less their combining marks): `Intl.Segmenter` is slow in an engine without a
+  JIT, linking asks for every word's graphemes, and example retrieval counts every matching
+  sentence. `normalizeQuery` likewise returns a folded query that has no separator as it is.
 - **Order.** `compareStrings` is Swift's `<`: by Unicode scalar, not UTF-16 unit; ranking compares
   fingerprints with it. SQLite compares a BLOB by its bytes, which lowercase hex keeps, and text by
   code point (`compareCodePoints`); its `instr()` and `length()` count code points, so `kanjiWords`
@@ -319,16 +317,15 @@ The core answers as the Swift it replaced did, which the suites pin.
   there, whatever the client binds.
 - **Romaji.** The app's romaji was Foundation's `applyingTransform(.toLatin)`, which is ICU's
   Any-Latin. `detail/romaji.ts` is that transform for kana, rule for rule, from the rules and
-  filters the system's ICU 78 holds: the text is taken a run of one script at a time; a hiragana
-  run is turned to katakana first, and only its kana, its voiced mark, and the long mark are
-  touched; a katakana run also turns 、 and 。 into a comma and a full stop; a rule sees the
-  text on either side of its run, so っ before a katakana syllable still doubles it. It keeps
-  ICU's spellings as they were shown: kon'nichiha, toukyou, hanadji, and a tilde before a small
-  kana that forms no syllable (ウィ is u~i). On the bundled data it differs from Foundation for
-  no reading and no example sentence; it differs where a string holds another writing system,
-  which Foundation also turned to Latin letters (α to a, 한 to han, and 〇 to the Chinese líng)
-  and the core leaves as written. `apps/ios/LanguageData/Conformance/romaji.json` holds the
-  recorded cases.
+  filters the system's ICU 78 holds: the text is taken a run of one script at a time; a hiragana run
+  is turned to katakana first, and only its kana, its voiced mark, and the long mark are touched; a
+  katakana run also turns 、 and 。 into a comma and a full stop; a rule sees the text on either side
+  of its run, so っ before a katakana syllable still doubles it. It keeps ICU's spellings as they
+  were shown: kon'nichiha, toukyou, hanadji, and a tilde before a small kana that forms no syllable
+  (ウィ is u~i). On the bundled data it differs from Foundation for no reading and no example
+  sentence; it differs where a string holds another writing system, which Foundation also turned to
+  Latin letters (α to a, 한 to han, and 〇 to the Chinese líng) and the core leaves as written.
+  `apps/ios/LanguageData/Conformance/romaji.json` holds the recorded cases.
 - **Links.** `websitePage` in `detail/links.ts` reads a zenbujapanese.com link as the app's
   `WebsiteLink` did, and the website reads a word segment with the same `parseWordSegment`. A
   word link's entry number must be one JavaScript holds exactly; the Swift accepted any that fit

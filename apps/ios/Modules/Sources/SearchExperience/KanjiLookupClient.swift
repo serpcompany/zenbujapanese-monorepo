@@ -95,6 +95,15 @@ struct KanjiPage: Hashable, Sendable {
 }
 
 extension KanjiPage {
+  private struct WithoutContent: Decodable {
+    let sections: [Section]
+  }
+
+  static var sectionsWithoutContent: [Section] {
+    (try? PresentationCore.shared.answer("kanjiPageWithoutContent", "") as WithoutContent)?
+      .sections ?? []
+  }
+
   private struct Request: Encodable {
     struct Word: Encodable {
       let id: String

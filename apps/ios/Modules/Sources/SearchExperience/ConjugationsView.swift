@@ -43,7 +43,9 @@ struct ConjugationsView: View {
 
       Section {
         ForEach(conjugations.rows[mode] ?? []) { form in
-          NavigationLink(value: SearchExperienceRoute.conjugatedForm(entry, form)) {
+          NavigationLink(
+            value: SearchExperienceRoute.conjugatedForm(entry, form, conjugations.examples)
+          ) {
             ConjugationRow(form: form)
           }
         }
@@ -52,7 +54,7 @@ struct ConjugationsView: View {
     .groupedList()
     .compactSectionSpacing()
     .accessibilityIdentifier("conjugations.screen")
-    .navigationTitle("Conjugations")
+    .navigationTitle(conjugations.title)
     .inlineNavigationTitle()
   }
 }
@@ -68,7 +70,7 @@ private struct ConjugationHeader: View {
       WordHeadline(
         ruby: JapaneseRuby(headwordOf: entry, on: page),
         pitch: page?.pitch,
-        pronounceLabel: page?.pronounce ?? "",
+        pronounceLabel: WordPage.frame(for: entry, page: page)?.pronounce ?? "",
         identifierPrefix: "conjugations.header",
         pronounce: pronounce
       )
@@ -117,7 +119,7 @@ struct ConjugatedFormView: View {
   @State private var isLoadingExamples = true
 
   let form: Conjugations.Row
-  let labels: Conjugations.Examples?
+  let labels: Conjugations.Examples
   let exampleSentenceClient: ExampleSentenceClient
   let speechSynthesisClient: SpeechSynthesisClient
   let japaneseTextAnalysisClient: JapaneseTextAnalysisClient
@@ -152,10 +154,10 @@ struct ConjugatedFormView: View {
       }
 
       ExampleSentenceSections(
-        title: labels?.title ?? "",
+        title: labels.title,
         examples: examples,
         isLoading: isLoadingExamples,
-        emptyMessage: labels?.empty ?? "",
+        emptyMessage: labels.empty,
         highlightedQuery: SearchQuery(form.surface),
         highlightedEntry: nil,
         presentation: { .conjugatedForm(form.kind, index: $0) },

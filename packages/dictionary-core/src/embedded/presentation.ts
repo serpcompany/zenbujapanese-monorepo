@@ -3,15 +3,26 @@ import { checkKanjiSources, type KanjiElementSources, KanjiReference } from '../
 import { sharedSpellingNote } from '../detail/conjugation'
 import { noExamplesMessage } from '../detail/examples'
 import { type FrequencyLookupRow, frequencyLookupRow } from '../detail/frequency'
-import { type KanjiDetail, kanjiDetail, savedKanjiReading } from '../detail/kanji'
+import {
+  type KanjiDetail,
+  kanjiDetail,
+  kanjiSectionsWithoutContent,
+  savedKanjiReading
+} from '../detail/kanji'
 import { type KanjiElementDetail, kanjiElementDetail } from '../detail/kanji-element'
 import { type KanjiReadings, withKanjiReadings } from '../detail/kanji-split'
 import { type PitchAccent, shownPitch } from '../detail/pitch'
 import type { FormRow, KanjiReadingRow, KanjiStrokesRow, PitchRow } from '../detail/rows'
 import { type RubySegment, rubySegments } from '../detail/ruby'
+import { pronounceLabel } from '../detail/sections'
 import { type StrokeDiagram, strokeDiagram } from '../detail/strokes'
 import { isKanjiCharacter } from '../detail/text'
-import { type WordDetail, wordDetail, wordSections } from '../detail/word'
+import {
+  type WordDetail,
+  wordDetail,
+  wordSections,
+  wordSectionsWithoutContent
+} from '../detail/word'
 import {
   evidenceLookups,
   type LearnerResultsScreen,
@@ -194,14 +205,7 @@ export class EmbeddedPresentation {
         note: row.sharedSpellings.length > 0 ? sharedSpellingNote(row.sharedSpellings) : null
       }))
     return {
-      sections: wordSections({
-        frequency: frequency.length > 0,
-        conjugations: false,
-        alternatives: detail.alternatives.length > 0,
-        kanji: detail.kanji.length > 0,
-        alternativeKanji: detail.alternativeKanji.length > 0,
-        related: detail.related.length > 0
-      }),
+      sections: wordSections(detail, { frequency: frequency.length > 0, conjugations: false }),
       ruby: detail.ruby,
       partOfSpeech: detail.partOfSpeech,
       partOfSpeechRow: detail.partOfSpeechRow,
@@ -223,6 +227,20 @@ export class EmbeddedPresentation {
       noExamples: noExamplesMessage,
       shareText: detail.shareText
     }
+  }
+
+  wordPageWithoutContent(
+    reading: string
+  ): Pick<EmbeddedWordPage, 'sections' | 'pronounce' | 'noExamples'> {
+    return {
+      sections: wordSectionsWithoutContent,
+      pronounce: pronounceLabel(reading),
+      noExamples: noExamplesMessage
+    }
+  }
+
+  kanjiPageWithoutContent(): Pick<EmbeddedKanjiPage, 'sections'> {
+    return { sections: kanjiSectionsWithoutContent }
   }
 
   kanjiPage(request: {

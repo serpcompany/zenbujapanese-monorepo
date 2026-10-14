@@ -1,5 +1,6 @@
 import { renderToStaticMarkup } from 'react-dom/server'
 import { describe, expect, test, vi } from 'vitest'
+import { getWordPage } from '@/lib/dictionary/data'
 import { visibleText } from '@/test/rendered'
 import WordPage from './page'
 
@@ -84,7 +85,8 @@ describe('the word page, read from the fixtures', () => {
     const titles = [
       ...html.matchAll(/data-slot="card-title"[^>]*>([^<]+)<|<h2[^>]*><button[^>]*>([^<]+)</g)
     ].map(([, card, disclosure]) => card ?? disclosure)
-    expect(titles.slice(0, 7)).toEqual([
+    const sections = (await getWordPage(1546640))?.sections.map(section => section.title) ?? []
+    expect(sections).toEqual([
       'Meaning',
       'Frequency',
       'Conjugations',
@@ -93,6 +95,7 @@ describe('the word page, read from the fixtures', () => {
       'Notes',
       'Examples'
     ])
+    expect(titles.slice(0, sections.length)).toEqual(sections)
   })
 
   test('the Examples section sits at #examples, where search results send their sentences', async () => {
