@@ -14,7 +14,8 @@ extension View {
   func countingDraws(as identifier: String, in count: DrawCount) -> some View {
     if LaunchHarness.countsDraws {
       let drawn = count.next()
-      overlay(alignment: .topLeading) {
+      ZStack(alignment: .topLeading) {
+        self
         DrawCountProbe(identifier: identifier, draws: drawn)
       }
     } else {
@@ -28,11 +29,12 @@ private struct DrawCountProbe: View {
   let draws: Int
 
   var body: some View {
-    Color.clear
+    Text(verbatim: "\(draws)")
+      .font(.system(size: 1))
+      .foregroundStyle(.clear)
+      .lineLimit(1)
       .frame(width: 1, height: 1)
       .allowsHitTesting(false)
-      .accessibilityElement()
       .accessibilityIdentifier(identifier)
-      .accessibilityValue("\(draws)")
   }
 }
