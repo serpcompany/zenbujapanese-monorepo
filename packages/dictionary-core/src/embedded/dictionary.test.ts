@@ -231,7 +231,7 @@ describe('the embedded dictionary', () => {
   test('a host can hand a search’s answer on as it was written, for the results screen to read', async () => {
     const searched = begin(host(), 'search', '日本')
     await settled(searched)
-    const answered = searched.value().replace('{', '{"addedLater":{"kept":true},')
+    const answered = `{"addedLater":{"kept":true},${searched.value().slice(1)}`
     const screen = await ask(
       host(),
       'resultsScreen',
