@@ -14,7 +14,7 @@ struct LoadedExamplesTests {
     var asked: [ExampleBatch] = []
     var failing: Set<Int> = []
     var beforeAnswering: [Int: () async -> Void] = [:]
-    private var held: [Int: [CheckedContinuation<Void, Never>]] = [:]
+    private var held: [Int: [(id: UUID, waiting: CheckedContinuation<Void, Never>)]] = [:]
     private var holding: Set<Int> = []
 
     init(_ word: String, listed: Int) {
@@ -26,7 +26,18 @@ struct LoadedExamplesTests {
       asked.append(batch)
       await beforeAnswering.removeValue(forKey: batch.from)?()
       if holding.contains(batch.from) {
-        await withCheckedContinuation { held[batch.from, default: []].append($0) }
+        let id = UUID()
+        await withTaskCancellationHandler {
+          await withCheckedContinuation { waiting in
+            if Task.isCancelled {
+              waiting.resume()
+            } else {
+              held[batch.from, default: []].append((id, waiting))
+            }
+          }
+        } onCancel: {
+          Task { @MainActor in self.giveUp(id, from: batch.from) }
+        }
       }
       if Task.isCancelled || failing.remove(batch.from) != nil { return nil }
       let pageEnd = min(listed, (batch.from / Self.pageSize + 1) * Self.pageSize)
@@ -56,7 +67,12 @@ struct LoadedExamplesTests {
 
     func answer(_ from: Int) {
       holding.remove(from)
-      for waiting in held.removeValue(forKey: from) ?? [] { waiting.resume() }
+      for read in held.removeValue(forKey: from) ?? [] { read.waiting.resume() }
+    }
+
+    private func giveUp(_ id: UUID, from: Int) {
+      guard let index = held[from]?.firstIndex(where: { $0.id == id }) else { return }
+      held[from]?.remove(at: index).waiting.resume()
     }
 
     func rows(_ numbers: Range<Int>) -> [String] {
