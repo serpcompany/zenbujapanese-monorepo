@@ -1,6 +1,6 @@
 ---
 name: verify-app
-description: Check a change to the Zenbu Japanese app in the running app on iPhone, iPad, or the Mac. Gets this checkout's own Simulator and build folder (apps/ios/Tools/simulator.py), builds the app for testing, runs the UI tests that cover the behavior, or a new one that walks a path none covers, and keeps the result bundle, a screen recording, and screenshots under tmp/agent/verify/. Use after changing a screen or flow under apps/ios, and to reproduce an app bug before fixing it.
+description: Check a change to the Zenbu Japanese app in the running app on iPhone, iPad, or the Mac. Gets this checkout's own Simulator and build folder (apps/ios/Tools/simulator.py), builds the app for testing, runs the UI tests that cover the behavior, or a new one that walks a path none covers, and keeps the result bundle under tmp/agent/verify/, with a screen recording and screenshots when asked. Run after run it keeps the Simulator up and builds only what changed, so a handful of tests answers in about a minute. Use after changing a screen or flow under apps/ios, and to reproduce an app bug before fixing it.
 ---
 
 # Check an app change in the running app
@@ -27,27 +27,40 @@ From the repository root, in the background, since a run takes minutes. Name the
 tests as `Class`, `Class/test`, or `Class.test` as the product docs write them:
 
 ```sh
-.claude/skills/verify-app/run.sh search SearchUITests/testAnEnglishSearchListsTheWordAndOpensItsDetail
-.claude/skills/verify-app/run.sh search-ipad --device ipad SearchUITests
+.claude/skills/verify-app/run.sh search --keep SearchUITests/testAnEnglishSearchListsTheWordAndOpensItsDetail
+.claude/skills/verify-app/run.sh search-ipad --device ipad --record SearchUITests
 ```
+
+**While working, pass `--keep`.** The first run boots this checkout's Simulator and leaves it
+up; each run after it finds the Simulator up, skips the boot and the wait after it, builds only
+what changed, and goes straight to the tests. The last run of the work leaves `--keep` off, or
+`python3 apps/ios/Tools/simulator.py shutdown` ends it. Who boots a Simulator, who shuts it
+down, and what stops a forgotten one are in `docs/agents/verification.md`, Who boots a Simulator
+and who shuts it down.
 
 The script does each part of a run:
 
 - **Run state.** It makes `tmp/agent/verify/<date>-<name>/` and writes `run.env` there: the run
   folder, the Simulator's UDID, and the build folder. A later command reads them with
   `. tmp/agent/verify/<date>-<name>/run.env`, since a shell keeps no variables between commands.
-- **Doctor.** `doctor.txt` says which Simulator, Xcode, and commit the run is on, and how many
-  other Simulators are running. Read it before trusting a result: the Simulator's name starts
-  with `zenbu-japanese`, Xcode is the version `.xcode-version` pins, and no other Simulator is
-  running. Shut down one this checkout left running; another agent's is its own.
-- **Launch.** It boots the Simulator first, so a `prune` run elsewhere sees it in use, then runs
-  `build-for-testing` into this checkout's build folder. `** TEST BUILD SUCCEEDED **`
-  in `build.log` is the ready signal, and a failed build stops the run. The app installs as
+- **The Simulator.** `simulator.py boot` starts it only when it isn't up. After a boot it waits
+  for the boot to finish and for the Mac's processors to be idle again, since tests started
+  while a fresh boot is still busy fail at launch; a Simulator that was up gets no wait.
+- **Doctor.** `doctor.txt` says whether the Simulator was booted or was up, which Xcode and
+  commit the run is on, and how many other Simulators are running. Read it before trusting a
+  result: Xcode is the version `.xcode-version` pins, and no other Simulator is running. Shut
+  down one this checkout left running; another agent's is its own.
+- **Build.** `build-for-testing` into this checkout's build folder, every run: Xcode rebuilds
+  only what changed, and when nothing did it only checks. `** TEST BUILD SUCCEEDED **` in
+  `build.log` is the ready signal, and a failed build stops the run. The app installs as
   `com.zenbujapanese.dictionary.uitests`, apart from any Zenbu a person installed.
 - **Drive.** `test-without-building`, with `-only-testing` for each test named.
-- **Proof.** `run.xcresult` (each test's result, and the device), `run.mp4` (the screen for the
-  whole run), `shots/` (a screenshot every 3 seconds, the first 150), and `test.log`.
-- **Cleanup.** It shuts down the Simulator it booted, and nothing else.
+- **Proof.** `run.xcresult` (each test's result, the device, and a failed test's screenshots and
+  hierarchy), `test.log`, and `doctor.txt`. `--record` adds `run.mp4` (the screen for the whole
+  run) and `shots/` (a screenshot every 3 seconds, the first 150): pass it for the run a pull
+  request cites, not while working, since recording takes processor time from the tests.
+- **The end.** Without `--keep` it shuts the Simulator down. Its last lines give each test's
+  result and how long the Simulator, the build, and the tests took.
 
 Its exit status is the tests', and a run in which no test ran fails: a name that matches nothing
 would otherwise leave proof of nothing. A test that fails once and passes the next time is a
@@ -59,15 +72,18 @@ failing test: fix it rather than run it again.
 - `xcrun xcresulttool get test-results summary --path <run>/run.xcresult` gives the totals and
   the device. `xcrun xcresulttool export attachments --path <run>/run.xcresult --output-path <folder>`
   gives a failed test's screenshot and view hierarchy.
-- Look at the screenshots that show the end state. Shrink one before reading it:
-  `sips -Z 900 <run>/shots/<time>.jpg --out <file>.jpg`.
+- Look at the screenshots that show the end state, from a run made with `--record`. Shrink one
+  before reading it: `sips -Z 900 <run>/shots/<time>.jpg --out <file>.jpg`.
 - Compare what they show with the behavior's entry in the product docs. A difference with no
   decision on file is a bug; a deliberate change updates the entry in the same pull request.
 
 ## A path no test covers
 
 Write the UI test for it: a `ZenbuUITestCase` subclass in `apps/ios/UITests/`, with `launch()`,
-`find`, and `assertOnScreen`. To see a screen while working the test out, attach
+`find`, and `assertOnScreen`. Wait only through the shared helpers (`waitFor`, `waitUntil`,
+`waitUntilGone`, `tap(_:toShow:)`), which look at once and go on the moment the condition holds;
+never pause for a fixed time to let something happen (`docs/agents/ios.md`, Tests on every
+platform). To see a screen while working the test out, attach
 `XCUIScreen.main.screenshot()` as an `XCTAttachment` whose `lifetime` is `.keepAlways` where the
 screen is up, run the test with the script, and export the attachments as above.
 
@@ -83,5 +99,6 @@ screen is up, run the test with the script, and export the attachments as above.
 
 Say which tests ran on which device, each result, and the run folder. A check that wasn't run is
 reported as not run, not as passed. Git ignores `tmp/agent/verify/`, and housekeeping keeps it.
-When the work is finished, `python3 apps/ios/Tools/simulator.py delete` removes this worktree's
+Leave no Simulator up: `python3 apps/ios/Tools/simulator.py shutdown` stops this checkout's. When
+the work is finished, `python3 apps/ios/Tools/simulator.py delete` removes this worktree's
 Simulators and its build folder.
