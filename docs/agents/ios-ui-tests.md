@@ -48,7 +48,9 @@ what it waited for and for how long.
   fails for the machine as often as for the app. Count what the app did instead: the Player test
   reads how many times the screen, its speed menu, and its captions drew themselves
   (`ZENBU_COUNT_DRAWS`, [`ios.md`](ios.md)) while the scrubber shows three seconds of a repeating
-  line, and expects none. A missing count fails the test rather than reading as none. It used to
+  line, and expects none. A missing count fails the test rather than reading as none. Each count
+  is a 1-point clear text read with `text(of:)`: the Mac never shows a value given to an empty
+  element such as `Color.clear`, though it finds the element by its identifier. It used to
   assert that the speed menu was used within 60 s, which caught the screen redrawing five times a
   second only when XCUITest's own wait for the app to go idle ran out.
 - **A time limit only guards against a hang.** The package's tests that await work they watch or

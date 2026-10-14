@@ -66,8 +66,9 @@ final class PlayerWatchUITests: ZenbuUITestCase {
   }
 
   private func draws(on probe: String, in app: XCUIApplication) throws -> Int {
-    let count = waitFor(find(probe, in: app))
-    return try XCTUnwrap(Int("\(count.value ?? "")"), "\(probe) holds no count of draws")
+    let shown = text(of: waitFor(find(probe, in: app)))
+    if Int(shown) == nil { attachWhatIsOnScreen() }
+    return try XCTUnwrap(Int(shown), "\(probe) shows \"\(shown)\", not a count of draws")
   }
 
   func testAWordInACaptionOpensItsEntryInsidePlayer() {
