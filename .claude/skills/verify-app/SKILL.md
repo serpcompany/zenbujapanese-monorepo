@@ -33,7 +33,8 @@ tests as `Class`, `Class/test`, or `Class.test` as the product docs write them:
 
 **While working, pass `--keep`.** The first run boots this checkout's Simulator and leaves it
 up; each run after it finds the Simulator up, skips the boot and the wait after it, builds only
-what changed, and goes straight to the tests. The last run of the work leaves `--keep` off, or
+what changed, and goes straight to the tests: three short tests answer in about 55 seconds, and
+in about 100 when the first run has to boot. The last run of the work leaves `--keep` off, or
 `python3 apps/ios/Tools/simulator.py shutdown` ends it. Who boots a Simulator, who shuts it
 down, and what stops a forgotten one are in `docs/agents/verification.md`, Who boots a Simulator
 and who shuts it down.
@@ -82,8 +83,7 @@ failing test: fix it rather than run it again.
 Write the UI test for it: a `ZenbuUITestCase` subclass in `apps/ios/UITests/`, with `launch()`,
 `find`, and `assertOnScreen`. Wait only through the shared helpers (`waitFor`, `waitUntil`,
 `waitUntilGone`, `tap(_:toShow:)`), which look at once and go on the moment the condition holds;
-never pause for a fixed time to let something happen (`docs/agents/ios.md`, Tests on every
-platform). To see a screen while working the test out, attach
+never pause for a fixed time to let something happen (`docs/agents/ios-ui-tests.md`). To see a screen while working the test out, attach
 `XCUIScreen.main.screenshot()` as an `XCTAttachment` whose `lifetime` is `.keepAlways` where the
 screen is up, run the test with the script, and export the attachments as above.
 

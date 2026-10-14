@@ -215,13 +215,10 @@ element spans the row, though only its text opens the menu, so `chooseFromSorted
 text. On a busy Mac a tab tap, a shortcut, the
 conversation's pause, or a Simulator rotation sometimes doesn't take; the tests repeat one only
 while what it should bring hasn't appeared (`open`, `press`, `pause`, `LayoutUITests.turn`), so a
-repeat can't undo it. A row on a word's page is tapped the same way (`tap(_:toShow:)`). Two more
-waits cover what two Simulators running side by side
-showed: `type` waits, on iPhone and iPad, until something has keyboard focus before it types and
-taps the field again if nothing does (a tap that hadn't focused the field yet failed with
-"Neither element nor any descendant has keyboard focus"), and `assertOnScreen` gives an element
-that exists up to five seconds to be laid out before it measures it (a label that had just
-appeared had no size yet). A query that compares every element's value, such as
+repeat can't undo it. A row on a word's page is tapped the same way (`tap(_:toShow:)`). Every
+helper waits on a condition, looking at once and going on the moment it holds, and repeats a
+gesture only while its effect hasn't shown: how, and the rules a test keeps, are in
+[`ios-ui-tests.md`](ios-ui-tests.md). A query that compares every element's value, such as
 `value CONTAINS`, times out on the Mac on a long page; ask for the element by its identifier and
 read it with `waitUntil(_:mentions:)`. `TEST_RUNNER_ZENBU_UI_TEST_PATIENCE=30` on the `xcodebuild`
 command shortens every wait from its 90 seconds, for an idle Mac. An iPad Simulator that had run the suites for hours once stopped turning at
