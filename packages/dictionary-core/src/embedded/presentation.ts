@@ -238,13 +238,9 @@ export class EmbeddedPresentation {
     }
   }
 
-  kanjiMeanings(character: string): string[] {
-    return this.kanji.row(character)?.meanings ?? []
-  }
-
   candidateMeanings(candidates: readonly string[]): (string | null)[] {
     return candidates.map(candidate =>
-      isKanjiCharacter(candidate) ? (this.kanjiMeanings(candidate)[0] ?? null) : null
+      isKanjiCharacter(candidate) ? (this.kanji.row(candidate)?.meanings[0] ?? null) : null
     )
   }
 
