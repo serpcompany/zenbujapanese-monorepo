@@ -117,10 +117,12 @@ describe('the ways to sign in, on the account page', () => {
     expect(page.textContent).toContain(`Signed in as ${email}`)
     expect(window.localStorage.getItem('zenbu-signed-in')).toBe('yes')
     await click(page, 'Add Apple')
-    expect(callTo(calls, 'POST /v1/auth/link-social')[1]?.body).toEqual({
-      provider: 'apple',
-      idToken: { token: idTokenFor('001.apple'), nonce: 'n1' }
-    })
+    await vi.waitFor(() =>
+      expect(callTo(calls, 'POST /v1/auth/link-social')[1]?.body).toEqual({
+        provider: 'apple',
+        idToken: { token: idTokenFor('001.apple'), nonce: 'n1' }
+      })
+    )
     await vi.waitFor(() => expect(callTo(calls, 'GET /v1/auth/list-accounts')).toHaveLength(2))
   })
 

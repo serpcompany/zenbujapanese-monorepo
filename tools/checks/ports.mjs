@@ -24,6 +24,7 @@ export const lastSlot = 999
 const claimsFolder = 'zenbu-ports'
 const slotName = /^[1-9]\d{0,2}$/
 const lockName = 'lock'
+const holderName = 'holder'
 const lockWait = 30_000
 const lockPause = 25
 const lockAbandonedAfter = 10_000
@@ -100,7 +101,27 @@ function claimsIn(folder) {
 const pause = milliseconds =>
   Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, milliseconds)
 
-const abandoned = lock => Date.now() - statSync(lock).mtimeMs >= lockAbandonedAfter
+function running(pid) {
+  if (!Number.isInteger(pid) || pid <= 0) return false
+  try {
+    process.kill(pid, 0)
+    return true
+  } catch (error) {
+    return error.code === 'EPERM'
+  }
+}
+
+function heldByARunningProcess(lock) {
+  try {
+    return running(Number(readFileSync(join(lock, holderName), 'utf8')))
+  } catch (error) {
+    if (error.code === 'ENOENT') return false
+    throw error
+  }
+}
+
+const abandoned = lock =>
+  Date.now() - statSync(lock).mtimeMs >= lockAbandonedAfter && !heldByARunningProcess(lock)
 
 function breakAbandoned(lock) {
   const aside = `${lock}.${process.pid}`
@@ -133,6 +154,7 @@ function locked(folder, work) {
     pause(lockPause)
   }
   try {
+    writeFileSync(join(lock, holderName), String(process.pid))
     return work()
   } finally {
     rmSync(lock, { recursive: true, force: true })

@@ -2,7 +2,7 @@ import { randomUUID } from 'node:crypto'
 import { PGlite } from '@electric-sql/pglite'
 import { PGLiteSocketServer } from '@electric-sql/pglite-socket'
 import pg from 'pg'
-import { afterAll, beforeAll, describe, expect, test, vi } from 'vitest'
+import { afterAll, beforeAll, describe, expect, test } from 'vitest'
 import { migrationsFolder as migrations } from '../config'
 import { createAccounts } from '../domain/accounts'
 import { scopes } from '../domain/clients'
@@ -50,8 +50,8 @@ describe('Postgres, through the driver the service runs', () => {
       expect(finished).toBe(false)
       await other.query('select pg_advisory_unlock($1)', [migrationLock])
       await other.end()
-      await vi.waitFor(() => expect(finished).toBe(true), { timeout: 10_000 })
       await migrating
+      expect(finished).toBe(true)
     }
   )
 
