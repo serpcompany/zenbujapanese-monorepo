@@ -160,19 +160,22 @@ swap, and this Mac has frozen for want of memory), so nothing stays up unwatched
   Simulator, and the reverse, unless something is using it.
 - **The run that ends the work shuts it down.** The `verify-app` script shuts the Simulator down
   when its tests end, unless `--keep` leaves it up for the next run. After the last run, or
-  after working with it by hand, `simulator.py shutdown` stops this checkout's.
-- **A keeper stops a forgotten one.** `boot` leaves a small process watching the Simulator. It
-  shuts the Simulator down once no `xcodebuild` has named it for 10 minutes, and at once when
-  nothing is using it and the Mac is short of memory (under 40% free, or over 2,000 MB of
-  swap). It never stops a Simulator in use. `boot` again counts as use. Its one line saying why
-  is in `~/Library/Caches/com.zenbujapanese.build/SimulatorKeepers/<udid>.log`.
+  after working with it by hand, `simulator.py shutdown` stops this checkout's, except one that
+  something is using.
+- **A keeper stops a forgotten one.** `boot` leaves a small process watching the Simulator.
+  Something uses the Simulator while an `xcodebuild` or `simctl` command names its UDID, and
+  `boot` again counts as use. The keeper shuts the Simulator down once nothing has used it for 10
+  minutes, or for 2 minutes when the Mac is short of memory (under 40% free, or over 2,000 MB of
+  swap), and then stops watching. Use it doesn't see, such as clicking in Simulator.app, doesn't
+  keep it up. Its one line saying why is in
+  `~/Library/Caches/com.zenbujapanese.build/SimulatorKeepers/<udid>.log`.
 - **Old installs of the app are deleted, not left for the Simulator.** Every
   `test-without-building` installs the app again, and the Simulator moves the copy it replaces
   (about 400 MB) into `data/Library/Caches/com.apple.containermanagerd/Dead` in its folder under
   `~/Library/Developer/CoreSimulator/Devices/`, which it doesn't empty while it runs, nor when it
   shuts down. On 2026-10-13 one Simulator kept up for 46 runs held 18 GB there and filled the
   Mac's disk. `boot`, `shutdown`, and the keeper whenever nothing is using the Simulator delete
-  what is in that folder, and say how much.
+  what has been in that folder for a minute, and say how much.
 - **A Simulator booted any other way** (`simctl boot`, Xcode, a tool) has no keeper and stays up
   until someone shuts it down. Run `simulator.py boot` on it, which does nothing but set one.
 

@@ -19,14 +19,15 @@ final class ConversationUITests: ZenbuUITestCase {
     let toggle = find("translate.session.toggle", in: app)
     let heard = app.descendants(matching: .any)
       .matching(NSPredicate(format: "identifier MATCHES %@", #"translate\.sentence\.[^.]+"#))
+    let newest = { heard.allElementsBoundByIndex.last?.identifier }
     var pauses = 0
     while appears(find("translate.live", in: app), within: Self.patience / 6) {
-      let sentences = heard.count
+      let lastHeard = newest()
       pause(app)
       pauses += 1
       toggle.tap()
       waitUntil(toggle, "label == 'Pause'")
-      waitUntil("the paused sentence being heard to its end") { heard.count > sentences }
+      waitUntil("the paused sentence being heard to its end") { newest() != lastHeard }
     }
     XCTAssertGreaterThan(pauses, 1, "the script's sentences were paused while they were heard")
     waitFor(firstElement(identifiedBy: "translate.sentence.", in: app))
