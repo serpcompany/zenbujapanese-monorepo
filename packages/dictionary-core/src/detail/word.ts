@@ -167,7 +167,7 @@ function wordKanji(characters: string[], glosses: readonly KanjiGlossRow[]): Wor
 
 const noPartOfSpeech = 'Dictionary entry'
 
-export function partOfSpeechRow(partOfSpeech: string, opensConjugations: boolean): string {
+function partOfSpeechRow(partOfSpeech: string, opensConjugations: boolean): string {
   return partOfSpeech || (opensConjugations ? noPartOfSpeech : '')
 }
 

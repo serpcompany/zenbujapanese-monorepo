@@ -20,7 +20,7 @@ const elementSectionTitles = {
   source: 'Source'
 }
 
-export type KanjiElementSectionKind = keyof typeof elementSectionTitles
+type KanjiElementSectionKind = keyof typeof elementSectionTitles
 
 export interface KanjiElementDetail {
   sections: Section<KanjiElementSectionKind>[]

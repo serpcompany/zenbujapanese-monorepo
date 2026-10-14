@@ -79,7 +79,7 @@ describe('the word page, read from the fixtures', () => {
     expect(html).not.toContain('data-opens-conjugations')
   })
 
-  test('its sections are the core’s, in the core’s order and with its titles', async () => {
+  test('its sections follow the core', async () => {
     const html = await renderWord('要る-1546640')
     const titles = [
       ...html.matchAll(/data-slot="card-title"[^>]*>([^<]+)<|<h2[^>]*><button[^>]*>([^<]+)</g)

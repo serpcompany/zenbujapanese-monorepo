@@ -73,11 +73,10 @@ with the current one highlighted, so the other mode is one tap away. Both panels
 background, flat candidate tiles in the same fill as the radical squares, and glass buttons
 (white in light mode).
 
-- **Handwriting.** A white drawing pad sits at the top, with candidate tiles below it:
-  five to a row, each with the kanji's first meaning. Three rows show and more scroll. **Undo**,
-  at the bottom right, removes the last stroke and recognizes the rest again. Before
-  there are candidates, text shows under the pad only while recognizing, when nothing matches,
-  or when recognition fails.
+- **Handwriting.** A white drawing pad sits at the top, with candidate tiles below it: five to a
+  row, each with the kanji's first meaning. Three rows show and more scroll. **Undo**, at the bottom
+  right, removes the last stroke and recognizes the rest again. Before there are candidates, text
+  shows under the pad only while recognizing, when nothing matches, or when recognition fails.
 - **Radicals.** A white strip at the top lists the kanji that contain every selected radical,
   or says **Select one or more radicals**. Below it, the radicals scroll under pinned stroke-count
   headers, and radicals that can't combine with the selection are hidden. **Undo**, the same
@@ -262,10 +261,11 @@ Other words match their written forms and reading.
 Check: the recorded `WordDetailConformanceTests` and `ExampleSearchConformanceTests`; package
 `KanaHeadwordExampleTests`.
 Below the top card, sections appear in this order: Meaning, Frequency, Alternatives (other
-written forms), Kanji, Alternative Kanji, Related Words, Lists, Notes, and Examples.
+written forms), Kanji, Alternative Kanji, Related Words, Lists, Notes, and Examples, as the core
+orders them. One with nothing to show is left out, except Meaning, Lists, Notes, and Examples.
 
-Check: the recorded `WordDetailConformanceTests`; UI `WordDetailUITests` (Kanji, Lists, and Notes
-on the page).
+Check: the recorded `WordDetailConformanceTests`; core `detail/word.test.ts` and
+`embedded/presentation.test.ts`; UI `WordDetailUITests` (Kanji, Lists, and Notes on the page).
 
 A related word opens the entry it names. One that names none is searched for, and opens the
 result written and read the same, or the first result when none is.
@@ -359,17 +359,17 @@ Check: UI `WordDetailUITests.testANoteIsKeptOnTheWord` and
 `WordNoteStorageTests` and `EncounterMediaStorageTests`.
 
 A kanji detail can present readings, meanings, stroke order, components, elements, and words
-that contain the kanji. Component and element links can be followed without losing the
-learner's place in the preceding detail.
+that contain the kanji, in the core's order (Readings, Components, Elements, Lists, Notes, Words),
+each left out when it has nothing to show, except Lists and Notes. Component and element links
+can be followed without losing the learner's place in the preceding detail.
 
-Check: the recorded `KanjiDetailConformanceTests`; package `KanjiScrollMemoryTests`; UI
-`WordDetailUITests.testAKanjiShowsItsStrokeOrderAndItsWords`.
+Check: the recorded `KanjiDetailConformanceTests`; core `detail/kanji.test.ts`; package
+`KanjiScrollMemoryTests`; UI `WordDetailUITests.testAKanjiShowsItsStrokeOrderAndItsWords`.
 
-An element's page shows the element, its meanings and what it contributes, the on-readings it
-links, its alternative forms, the kanji it is on its own (the most frequent among the element
-and its alternatives), the kanji that contain it, each with up to three meanings and its
-on-readings, and the sources. A kanji opens its own detail, and coming back returns to it in
-the list.
+An element's page shows the element, its meanings and what it contributes, the on-readings it links,
+its alternative forms, the kanji it is on its own (the most frequent among the element and its
+alternatives), the kanji that contain it, each with up to three meanings and its on-readings, and
+the sources. A kanji opens its own detail, and coming back returns to it in the list.
 
 Check: the recorded `KanjiElementConformanceTests`; core `detail/kanji-element.test.ts`; package
 `KanjiScrollMemoryTests` and `KanjiFilesTests` (a compatibility kanji and the kanji it unifies
