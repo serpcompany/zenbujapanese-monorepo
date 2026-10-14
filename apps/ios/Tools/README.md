@@ -148,7 +148,7 @@ so a lemma's reading names the word it counted even where JMdict files the spell
 readings; lemmas UniDic files under several readings, such as 家, get none. JMdict writes katakana
 words' readings in katakana and the rest in hiragana. A row gets a reading only where mapping V1
 can't place it, so no entry V1 ranks loses its rank or gets a worse one. The content digest is
-described in [`ios.md`](../../../docs/agents/ios.md), the frequency packs.
+described in [`frequency.md`](../../../docs/agents/frequency.md), Trust.
 
 **`import_jlpt_level_pack.py`** builds the JLPT level pack from Waller's lists with stephenmk's
 JMdict sequence numbers, by exact join. Rows without one are unmapped, and an entry listed at

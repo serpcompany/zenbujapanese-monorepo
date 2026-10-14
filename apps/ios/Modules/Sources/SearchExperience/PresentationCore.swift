@@ -2,7 +2,8 @@ import Foundation
 
 final class PresentationCore: @unchecked Sendable {
   static let shared = PresentationCore(
-    kanji: { KanjiFiles.bundled }, radicals: { RadicalLookupClient.bundledFile() })
+    kanji: { KanjiFiles.bundled }, radicals: { RadicalLookupClient.bundledFile() },
+    frequencyLists: .live)
 
   private struct Written: Hashable {
     var text: String
@@ -50,6 +51,7 @@ final class PresentationCore: @unchecked Sendable {
     }
   }
 
+  let frequencyLists: FrequencyLists?
   private let lock = NSRecursiveLock()
   private let kanji: @Sendable () -> KanjiFiles?
   private let radicals: @Sendable () -> [UInt8]?
@@ -60,13 +62,17 @@ final class PresentationCore: @unchecked Sendable {
   private var readings = Memo<Written, String?>(capacity: 4_000)
   private var sentences = Memo<[Written], String?>(capacity: 512)
   private var kanjiChecks = Memo<Written, Bool>(capacity: 4_000)
+  private var pages = Memo<LanguageReferenceID, WordPage?>(capacity: 64)
+  private var pagesListsVersion = 0
 
   init(
     kanji: @escaping @Sendable () -> KanjiFiles?,
-    radicals: @escaping @Sendable () -> [UInt8]? = { nil }
+    radicals: @escaping @Sendable () -> [UInt8]? = { nil },
+    frequencyLists: FrequencyLists? = nil
   ) {
     self.kanji = kanji
     self.radicals = radicals
+    self.frequencyLists = frequencyLists
   }
 
   func answer<Answer: Decodable>(_ method: String, _ argument: String) throws -> Answer {
@@ -132,6 +138,17 @@ final class PresentationCore: @unchecked Sendable {
     remembered(\.kanjiChecks, Written(text), otherwise: false) { try $0.flag("isKanji", text) }
   }
 
+  func wordPage(of id: LanguageReferenceID, asking entry: () throws -> String) -> WordPage? {
+    lock.withLock {
+      let listsVersion = frequencyLists?.version ?? 0
+      if listsVersion != pagesListsVersion {
+        pages = Memo(capacity: pages.capacity)
+        pagesListsVersion = listsVersion
+      }
+      return remembered(\.pages, id, otherwise: nil) { try $0.answer("wordPage", try entry()) }
+    }
+  }
+
   private func remembered<Key: Hashable, Answer>(
     _ memo: ReferenceWritableKeyPath<PresentationCore, Memo<Key, Answer>>, _ key: Key,
     otherwise fallback: Answer, _ ask: (DictionaryCore) throws -> Answer
@@ -150,7 +167,8 @@ final class PresentationCore: @unchecked Sendable {
 
   private func preparedCore() throws -> DictionaryCore {
     if let core { return core }
-    let prepared = try DictionaryCore(kanji: kanji, radicals: radicals)
+    let prepared = try DictionaryCore(
+      kanji: kanji, radicals: radicals, frequencyLists: frequencyLists?.reading)
     core = prepared
     return prepared
   }

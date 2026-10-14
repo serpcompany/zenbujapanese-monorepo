@@ -63,6 +63,15 @@ export type FrequencyLookup =
   | { dictionary: FrequencyDictionary; value: number | null }
   | { dictionary: FrequencyDictionary | null; unavailable: string }
 
+export type EvidenceLookup =
+  | { dictionary: number; value: number | null }
+  | { dictionary: number | null; unavailable: string }
+
+export interface FrequencyEvidence {
+  dictionaries: FrequencyDictionary[]
+  entries: Record<string, EvidenceLookup[]>
+}
+
 function defaultValue(pack: FrequencyRow['pack'], rows: readonly FrequencyRow[]): number | null {
   const row = rows.find(candidate => candidate.pack === pack)
   return !row ? null : row.pack === 'jlpt' ? row.level : row.rank

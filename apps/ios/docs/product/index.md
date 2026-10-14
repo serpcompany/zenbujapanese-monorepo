@@ -88,11 +88,11 @@ and messages that name the device say iPad or Mac, such as "Everything stays on 
   another app is by hand; `WebsiteLinkTests` checks where it goes.
 - **Settings on the Mac.** **Zenbu Japanese → Settings…** (⌘,) opens a Settings window with
   the profile and the Zenbu account, Reading Aids, and Frequency Dictionaries. They stay in Account
-  too, and both show the same settings; a change to Frequency Dictionaries re-sorts Search the
-  next time Search is opened.
+  too, and both show the same settings; a change to Frequency Dictionaries shows in Search, an
+  open word, and the word sheet at once.
   Check: Mac, UI `KeyboardAndWindowUITests.testTheSettingsWindowHoldsTheAccountReadingAidsAndFrequencyDictionaries`;
   package `AppCommandTests` (its panes and size), `UserProfileTests` (a field changed in another
-  window), and `FrequencyPackLifecycleTests`.
+  window), and `FrequencyPackLifecycleTests` and `FrequencyListsTests` (each change published).
 - **The word sheet.** A word tapped in Image Search, Player, or Translate opens at half height on
   iPhone. On the Mac it opens as a sheet over the window, so the page behind waits until the sheet
   is closed; on an iPad in full width it opens as a centered sheet. A Mac sheet has no toolbar, so
