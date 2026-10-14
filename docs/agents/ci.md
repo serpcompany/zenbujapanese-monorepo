@@ -8,6 +8,7 @@ pull request as the workflow.
 - **This doc:** every workflow and what starts it, the checks a merge can wait for, and each
   workflow that checks a pull request.
 - [`ci-agents.md`](ci-agents.md): the workflows Claude runs in, and the app and token they use.
+  [`ci-review.md`](ci-review.md) has the `Code review` workflow's design.
 - [`ci-deploys.md`](ci-deploys.md): the workflows that deploy or publish, and the pinned actions.
 
 Every job runs on `ubuntu-latest` and reads the repository's contents only, unless its section
@@ -20,7 +21,7 @@ version file starts the workflows that read it (`tools/checks/src/workflow-rules
 | --- | --- | --- | --- |
 | `Repository` | `.github/workflows/repository.yml` | Every pull request; the merge queue | This doc |
 | `Pull request` | `.github/workflows/pull-request.yml` | Every pull request, again when its title or body is edited; the merge queue | This doc |
-| `Code review` | `.github/workflows/code-review.yml` | Every pull request that isn't a draft | [`ci-agents.md`](ci-agents.md) |
+| `Code review` | `.github/workflows/code-review.yml` | Every pull request that isn't a draft | [`ci-agents.md`](ci-agents.md), [`ci-review.md`](ci-review.md) |
 | `Claude` | `.github/workflows/claude.yml` | `@claude` in an issue, a pull request comment, a review, or a review comment | [`ci-agents.md`](ci-agents.md) |
 | `Weekly maintenance` | `.github/workflows/maintenance.yml` | Mondays at 14:00 UTC; by hand, every job or one | [`ci-agents.md`](ci-agents.md) |
 | `Web` | `.github/workflows/web.yml` | Every pull request and the merge queue, working when the site or the core changed | This doc |
