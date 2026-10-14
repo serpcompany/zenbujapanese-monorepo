@@ -22,6 +22,7 @@ final class ExampleRowsUITests: ZenbuUITestCase {
   private static let holdLinking = "ZENBU_HOLD_LINKING"
   private static let failLinking = "ZENBU_FAIL_LINKING"
   private static let letGoNotice = "com.zenbujapanese.dictionary.uitests.let-linking-go"
+  private var lastLaidOut: Int?
   private static let letGoRegistration: Int32 = {
     var registration: Int32 = 0
     notify_register_check(letGoNotice, &registration)
@@ -31,7 +32,8 @@ final class ExampleRowsUITests: ZenbuUITestCase {
   func testExampleSentencesArriveLinkedAndKeepTheirPlaceWhileAWordIsOpen() {
     let app = launch([Self.holdLinking: "1"])
     let rows = openMiruExamples(in: app)
-    assertKeepTheirHeight(assertArriveLinked(Self.checkedRows, of: rows, in: app))
+    assertKeepTheirHeight(
+      assertArriveLinked(Self.checkedRows, of: rows, in: app), of: rows, in: app)
     let words = find("example.words.\(Self.pastTheFirstScreen)", in: app)
     reveal(Self.pastTheFirstScreen, of: rows, in: app)
     tap(reveal(words, in: app, within: device == .mac ? rows.list : nil))
@@ -50,13 +52,16 @@ final class ExampleRowsUITests: ZenbuUITestCase {
   func testAWordsExamplesArriveLinked() {
     let app = launch([Self.holdLinking: "1"])
     openTaberu(in: app)
-    assertKeepTheirHeight(assertArriveLinked(Self.checkedRows, of: wordExamples(in: app), in: app))
+    let rows = wordExamples(in: app)
+    assertKeepTheirHeight(
+      assertArriveLinked(Self.checkedRows, of: rows, in: app), of: rows, in: app)
   }
 
   func testAConjugatedFormsExamplesArriveLinkedAndAWordOpens() {
     let app = launch([Self.holdLinking: "1"])
     let rows = formExamples(of: openAFormOfTaberu(in: app), in: app)
-    assertKeepTheirHeight(assertArriveLinked(Self.checkedRows, of: rows, in: app))
+    assertKeepTheirHeight(
+      assertArriveLinked(Self.checkedRows, of: rows, in: app), of: rows, in: app)
     guard let word = reachableWord(of: rows, near: Self.onTheNextPage, in: app) else {
       return XCTFail("no linked word of the form's examples is in the window to be clicked")
     }
@@ -197,17 +202,46 @@ final class ExampleRowsUITests: ZenbuUITestCase {
     return row
   }
 
+  private func laidOutFrame(
+    of element: XCUIElement, within area: XCUIElement?, in app: XCUIApplication
+  ) -> CGRect? {
+    guard element.exists else { return nil }
+    let frame = element.frame
+    guard !frame.isNull, frame.width > 0, frame.height > 0 else { return nil }
+    let bounds = (area ?? app.windows.firstMatch).frame
+    return bounds.contains(CGPoint(x: frame.midX, y: frame.midY)) ? frame : nil
+  }
+
+  private func laidOut(_ number: Int, of rows: Rows, in app: XCUIApplication) -> CGRect? {
+    let row = rows.row(number)
+    let area = device == .mac ? rows.list : nil
+    let deadline = Date.now.addingTimeInterval(Self.patience)
+    while Date.now < deadline {
+      if let frame = laidOutFrame(of: row, within: area, in: app) {
+        lastLaidOut = number
+        return frame
+      }
+      nudge(toward: number, of: rows, in: app)
+    }
+    return nil
+  }
+
+  private func nudge(toward number: Int, of rows: Rows, in app: XCUIApplication) {
+    let row = rows.row(number)
+    let frame = row.exists ? row.frame : .null
+    guard !frame.isNull, frame.width > 0, frame.height > 0 else {
+      guard device == .mac else { return scroll(toward: number, of: rows, in: app) }
+      return flick(rows, back: lastLaidOut.map { number < $0 } ?? false, in: app)
+    }
+    let area = device == .mac ? rows.list : app.windows.firstMatch
+    scroll(area, back: frame.midY < area.frame.midY)
+  }
+
   @discardableResult
   private func reveal(_ number: Int, of rows: Rows, in app: XCUIApplication) -> XCUIElement {
     let row = awaited(number, of: rows, in: app)
-    guard device == .mac else { return reveal(row, in: app) }
-    let laidOutInPlace = Date.now.addingTimeInterval(Self.layoutPatience)
-    while row.exists, row.frame.isEmpty, Date.now < laidOutInPlace {
-      RunLoop.current.run(until: Date.now.addingTimeInterval(0.2))
-    }
-    let laidOut = Date.now.addingTimeInterval(Self.patience)
-    while row.exists, row.frame.isEmpty, Date.now < laidOut { scroll(rows.list, back: false) }
-    return reveal(row, in: app, within: rows.list)
+    if laidOut(number, of: rows, in: app) == nil { XCTFail("row \(number) never laid out") }
+    return reveal(row, in: app, within: device == .mac ? rows.list : nil)
   }
 
   private func assertArriveLinked(
@@ -223,25 +257,31 @@ final class ExampleRowsUITests: ZenbuUITestCase {
         XCTFail("row \(number) never appeared", file: file, line: line)
         continue
       }
+      guard let frame = laidOut(number, of: rows, in: app) else {
+        XCTFail("row \(number) never laid out", file: file, line: line)
+        continue
+      }
       for prefix in rows.words(number) {
         XCTAssertTrue(
           firstElement(identifiedBy: prefix, in: app).exists,
           "row \(number) appeared without \(prefix)", file: file, line: line)
       }
-      let shown = row.frame.isEmpty ? reveal(number, of: rows, in: app) : row
-      measured.append(Measured(number: number, row: row, height: shown.frame.height))
+      measured.append(Measured(number: number, row: row, height: frame.height))
     }
     return measured
   }
 
   private func assertKeepTheirHeight(
-    _ measured: [Measured], file: StaticString = #filePath, line: UInt = #line
+    _ measured: [Measured], of rows: Rows, in app: XCUIApplication,
+    file: StaticString = #filePath, line: UInt = #line
   ) {
     letLinkingGo(heldBefore: .now)
     RunLoop.current.run(until: Date.now.addingTimeInterval(Self.settling))
-    for shown in measured where shown.row.exists && !shown.row.frame.isEmpty {
+    let area = device == .mac ? rows.list : nil
+    for shown in measured {
+      guard let frame = laidOutFrame(of: shown.row, within: area, in: app) else { continue }
       XCTAssertEqual(
-        shown.row.frame.height, shown.height, accuracy: 0.5,
+        frame.height, shown.height, accuracy: 0.5,
         "row \(shown.number) changed height after it appeared", file: file, line: line)
     }
   }
