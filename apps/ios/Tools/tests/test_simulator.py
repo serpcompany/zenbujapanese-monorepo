@@ -324,12 +324,27 @@ class SimulatorTests(unittest.TestCase):
         self.assertEqual(emptied.call_args_list, [mock.call("RUNNING-IPAD")])
 
     def test_shutdown_leaves_a_simulator_something_is_using(self) -> None:
+        now = [0.0]
         with mock.patch.object(simulator, "simctl") as simctl, mock.patch.object(
             simulator, "is_in_use", return_value=True
         ):
-            said = simulator.shut_down("issue-8-running", DEVICES)
+            said = simulator.shut_down(
+                "issue-8-running", DEVICES, lambda: now[0], lambda seconds: now.__setitem__(0, now[0] + seconds)
+            )
         self.assertEqual(said, ["zenbu-japanese-ipad--issue-8-running stays up, since something is using it"])
+        self.assertEqual(now[0], simulator.RUN_ENDING_SECONDS)
         simctl.assert_not_called()
+
+    def test_shutdown_waits_for_a_run_that_is_ending_to_let_its_simulator_go(self) -> None:
+        looks = iter([True, True, False])
+        pauses = []
+        with mock.patch.object(simulator, "simctl") as simctl, mock.patch.object(
+            simulator, "empty_dead_installs", return_value=(0, 0)
+        ), mock.patch.object(simulator, "is_in_use", side_effect=lambda _: next(looks)):
+            said = simulator.shut_down("issue-8-running", DEVICES, lambda: 0.0, pauses.append)
+        self.assertEqual(said, ["zenbu-japanese-ipad--issue-8-running"])
+        self.assertEqual(pauses, [simulator.RUN_ENDING_LOOK_SECONDS] * 2)
+        self.assertEqual([call.args for call in simctl.call_args_list], [("shutdown", "RUNNING-IPAD")])
 
     def test_a_simulator_up_between_runs_has_its_old_installs_of_the_app_deleted(self) -> None:
         said, commands, _, _ = self.booting("ipad", "issue-8-running", dead=(46, 18_000_000_000))
