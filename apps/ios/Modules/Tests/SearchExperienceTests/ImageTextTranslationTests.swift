@@ -30,15 +30,7 @@ struct ImageTextTranslationTests {
     let model = ImageTextFlowModel(
       assets: [ImageTextAsset(name: "page", data: Data())],
       recognitionClient: ImageTextRecognitionClient { [observations] _ in observations },
-      textAnalysisClient: JapaneseTextAnalysisClient(
-        availability: { .reduced },
-        linkedTokens: { text, _, _ in
-          [
-            JapaneseTextToken(
-              id: 0, surface: text, entry: nil, scalarRange: 0..<text.unicodeScalars.count)
-          ]
-        },
-        countedWords: { _ in [] }),
+      textAnalysisClient: .eachLineOneWord,
       translationClient: NaturalTranslationClient(
         availability: { .installed },
         translateAllInstalled: { sources in

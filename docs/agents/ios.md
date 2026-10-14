@@ -597,7 +597,7 @@ answers; [`dictionary-core.md`](dictionary-core.md), The app's side, lists which
   | --- | --- | --- |
   | `LanguageReferenceData`, the actor behind `LookupClient.live` | `LanguageReferenceData.sqlite3` | Search, an exact form's entries, a kanji's words, what a website link, a related word, or a saved word opens, which entry stands for its equivalents, and the Tatoeba contributors |
   | `DictionaryTextData`, the actor behind `ExampleSentenceClient` and `JapaneseTextAnalysisClient` | Its own connection to the same file, with `ExampleWordIndex.sqlite3` attached, and the tokenizer's dictionary files | Example sentences and linked words |
-  | `PresentationCore`, a lock around one engine | The kanji files, through `KanjiFiles`, the radical file, and the learner's frequency lists, through `FrequencyLists` | The results screen, rows and chips, furigana, the word, kanji, and element pages, the query, gloss, romaji, kanji check, stroke points, radical panel, handwriting candidates with meanings, Image Search notes, and credits |
+  | `PresentationCore`, a lock around one engine | The kanji files, through `KanjiFiles`, the radical file, and the learner's frequency lists, through `FrequencyLists` | The results screen, rows, chips, furigana, word, kanji, and element pages, the query, gloss, romaji, kanji and Japanese-text checks, stroke points, radical panel, handwriting candidates' meanings, Image Search notes, credits |
 
   They are apart because of how long each takes. Linking a page of sentences or ranking a broad
   search takes tens of milliseconds and awaits, so each has an actor; a row's furigana or a

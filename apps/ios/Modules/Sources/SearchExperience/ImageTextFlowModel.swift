@@ -330,7 +330,7 @@ final class ImageTextFlowModel {
       var indexInLine = 0
       for token in tokens {
         let entries = token.entry.map { [$0] } ?? token.candidateEntries
-        guard token.surface.containsJapaneseText,
+        guard PresentationCore.shared.containsJapaneseText(token.surface),
           let box = boundingBox(forScalarRange: token.scalarRange, in: observation)
         else { continue }
         regions.append(
@@ -398,21 +398,10 @@ struct ImageTextPage {
     self.asset = asset
     self.observations = observations
     self.regions = regions
-    lines = observations.filter { $0.text.containsJapaneseText }.map(ImageTextLine.init)
+    lines = observations.filter { PresentationCore.shared.containsJapaneseText($0.text) }
+      .map(ImageTextLine.init)
     paragraphs = ImageTextParagraph.group(lines)
   }
 
   var hasJapaneseText: Bool { !lines.isEmpty }
-}
-
-extension String {
-  fileprivate var containsJapaneseText: Bool {
-    contains { character in
-      character.unicodeScalars.contains {
-        (0x3040...0x30FF).contains($0.value)
-          || (0x3400...0x9FFF).contains($0.value)
-          || (0x20000...0x2FA1F).contains($0.value)
-      }
-    }
-  }
 }

@@ -45,15 +45,6 @@ public enum SpokenLanguage: String, Codable, Sendable, CaseIterable, Hashable {
     let rest = current.trimmingCharacters(in: .whitespaces)
     return rest.isEmpty ? pieces : pieces + [rest]
   }
-
-  public static func detect(in text: String) -> SpokenLanguage? {
-    var hasLatinLetter = false
-    for scalar in text.unicodeScalars {
-      if scalar.isJapaneseScript { return .japanese }
-      if scalar.isASCIILetter { hasLatinLetter = true }
-    }
-    return hasLatinLetter ? .english : nil
-  }
 }
 
 extension Unicode.Scalar {
@@ -68,8 +59,6 @@ extension Unicode.Scalar {
     (0x4E00...0x9FFF).contains(value) || (0x3400...0x4DBF).contains(value)
       || (0xF900...0xFAFF).contains(value) || value == 0x3005 || value == 0x3006
   }
-
-  var isJapaneseScript: Bool { isHiragana || isKatakana || isKanji }
 
   var isASCIILetter: Bool {
     (0x41...0x5A).contains(value) || (0x61...0x7A).contains(value)
