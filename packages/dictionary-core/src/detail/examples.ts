@@ -99,6 +99,8 @@ export function exampleCountText(
   return count.listed === 1 ? '1 example' : `${count.listed} examples`
 }
 
+export const examplesTitle = 'Examples'
+
 export const noExamplesMessage = 'No source-matched examples'
 
 export const noFormExamplesMessage = 'No example sentences use this form yet.'

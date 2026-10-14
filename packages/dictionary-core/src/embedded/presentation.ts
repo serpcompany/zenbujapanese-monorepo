@@ -1,6 +1,7 @@
 import { LruCache } from '../artifact/cache'
 import { checkKanjiSources, type KanjiElementSources, KanjiReference } from '../artifact/kanji-data'
 import { sharedSpellingNote } from '../detail/conjugation'
+import { noExamplesMessage } from '../detail/examples'
 import { type FrequencyLookupRow, frequencyLookupRow } from '../detail/frequency'
 import { type KanjiDetail, kanjiDetail, savedKanjiReading } from '../detail/kanji'
 import { type KanjiElementDetail, kanjiElementDetail } from '../detail/kanji-element'
@@ -10,7 +11,7 @@ import type { FormRow, KanjiReadingRow, KanjiStrokesRow, PitchRow } from '../det
 import { type RubySegment, rubySegments } from '../detail/ruby'
 import { type StrokeDiagram, strokeDiagram } from '../detail/strokes'
 import { isKanjiCharacter } from '../detail/text'
-import { type WordDetail, wordDetail } from '../detail/word'
+import { type WordDetail, wordDetail, wordSections } from '../detail/word'
 import {
   evidenceLookups,
   type LearnerResultsScreen,
@@ -44,8 +45,17 @@ type ConjugationRows = Conjugations['rows']
 export interface EmbeddedWordPage
   extends Pick<
     WordDetail,
-    'ruby' | 'partOfSpeech' | 'senses' | 'alternatives' | 'related' | 'shareText'
+    | 'sections'
+    | 'ruby'
+    | 'partOfSpeech'
+    | 'partOfSpeechRow'
+    | 'pronounce'
+    | 'senses'
+    | 'alternatives'
+    | 'related'
+    | 'shareText'
   > {
+  noExamples: string
   pitch: (PitchAccent & { source: string }) | null
   conjugations:
     | (Omit<Conjugations, 'rows'> & {
@@ -175,14 +185,27 @@ export class EmbeddedPresentation {
       examples: [],
       exampleCount: null
     })
+    const frequency = (evidenceLookups(this.frequency([entry.id]))(entry.id) ?? []).map(
+      frequencyLookupRow
+    )
     const noted = (rows: Conjugations['rows']['Plain']) =>
       rows.map(row => ({
         ...row,
         note: row.sharedSpellings.length > 0 ? sharedSpellingNote(row.sharedSpellings) : null
       }))
     return {
+      sections: wordSections({
+        frequency: frequency.length > 0,
+        conjugations: false,
+        alternatives: detail.alternatives.length > 0,
+        kanji: detail.kanji.length > 0,
+        alternativeKanji: detail.alternativeKanji.length > 0,
+        related: detail.related.length > 0
+      }),
       ruby: detail.ruby,
       partOfSpeech: detail.partOfSpeech,
+      partOfSpeechRow: detail.partOfSpeechRow,
+      pronounce: detail.pronounce,
       conjugations: detail.conjugations && {
         ...detail.conjugations,
         rows: {
@@ -195,10 +218,9 @@ export class EmbeddedPresentation {
       alternatives: detail.alternatives,
       kanji: detail.kanji.map(({ character }) => character),
       alternativeKanji: detail.alternativeKanji.map(({ character }) => character),
-      frequency: (evidenceLookups(this.frequency([entry.id]))(entry.id) ?? []).map(
-        frequencyLookupRow
-      ),
+      frequency,
       related: detail.related,
+      noExamples: noExamplesMessage,
       shareText: detail.shareText
     }
   }

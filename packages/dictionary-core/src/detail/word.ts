@@ -1,5 +1,5 @@
 import { type Conjugations, conjugations } from './conjugation'
-import { type Example, wordExample } from './examples'
+import { type Example, examplesTitle, wordExample } from './examples'
 import {
   type FrequencyResult,
   type FrequencyRowDetail,
@@ -18,6 +18,7 @@ import type {
   WordRows
 } from './rows'
 import { type RubySegment, rubySegments } from './ruby'
+import { glossSeparator, pronounceLabel, type Section, sections } from './sections'
 import { graphemes, isCJKUnifiedIdeograph, isKanjiCharacter } from './text'
 
 export interface WordSummary {
@@ -38,6 +39,7 @@ export interface AlternativeForm {
   value: string
   kind: 'written' | 'reading'
   labels: string[]
+  labelText: string | null
   kanji: string | null
 }
 
@@ -47,14 +49,39 @@ export interface RelatedWord {
   ruby: RubySegment[]
   relation: string
   summary: string
+  description: string
   entSeq: number | null
 }
 
+const wordSectionTitles = {
+  meaning: 'Meaning',
+  frequency: 'Frequency',
+  conjugations: 'Conjugations',
+  alternatives: 'Alternatives',
+  kanji: 'Kanji',
+  alternativeKanji: 'Alternative kanji',
+  related: 'Related words',
+  lists: 'Lists',
+  notes: 'Notes',
+  examples: examplesTitle
+}
+
+export type WordSectionKind = keyof typeof wordSectionTitles
+
+export function wordSections(
+  shown: Readonly<Partial<Record<WordSectionKind, boolean>>>
+): Section<WordSectionKind>[] {
+  return sections(wordSectionTitles, shown)
+}
+
 export interface WordDetail extends WordSummary {
+  sections: Section<WordSectionKind>[]
   partOfSpeech: string
+  partOfSpeechRow: string
+  pronounce: string
   conjugations: Conjugations | null
   pitch: PitchAccent | null
-  senses: { number: number; meaning: string; notes: string[] }[]
+  senses: { number: number; meaning: string; notes: string[]; noteText: string | null }[]
   frequencyRows: FrequencyRowDetail[]
   alternatives: AlternativeForm[]
   kanji: WordKanji[]
@@ -138,39 +165,65 @@ function wordKanji(characters: string[], glosses: readonly KanjiGlossRow[]): Wor
   })
 }
 
+const noPartOfSpeech = 'Dictionary entry'
+
+export function partOfSpeechRow(partOfSpeech: string, opensConjugations: boolean): string {
+  return partOfSpeech || (opensConjugations ? noPartOfSpeech : '')
+}
+
 export function wordDetail(rows: WordRows): WordDetail {
   const { entry } = rows
   const pitch = shownPitch(entry)
   const summary = wordSummary(entry, rows.frequency)
   const readings = new Map(rows.kanji.map(({ character, readings }) => [character, readings]))
+  const partOfSpeech = displayPartOfSpeech(entry)
+  const table = conjugations(entry, readings)
+  const frequencyRows = frequencyRowDetails(rows.frequency)
+  const alternatives = alternativeForms(entry).map(form => ({
+    value: form.value,
+    kind: form.kind,
+    labels: form.labels,
+    labelText: form.labels.length > 0 ? `(${form.labels.join(', ')})` : null,
+    kanji: formKanji(form.value)
+  }))
+  const kanji = wordKanji(primaryKanji(entry.headword), rows.kanji)
+  const otherKanji = wordKanji(alternativeKanji(entry), rows.kanji)
+  const related = entry.relationships.map(relationship => ({
+    headword: relationship.headword,
+    reading: relationship.reading,
+    ruby: rubySegments(relationship.headword, relationship.reading),
+    relation: relationship.relation,
+    summary: relationship.summary,
+    description: `${relationship.relation}${glossSeparator}${relationship.summary}`,
+    entSeq: relationship.targetEntSeq
+  }))
   return {
     ...summary,
+    sections: wordSections({
+      frequency: frequencyRows.length > 0,
+      conjugations: table !== null,
+      alternatives: alternatives.length > 0,
+      kanji: kanji.length > 0,
+      alternativeKanji: otherKanji.length > 0,
+      related: related.length > 0
+    }),
     ruby: withKanjiReadings(summary.ruby, readings),
-    partOfSpeech: displayPartOfSpeech(entry),
-    conjugations: conjugations(entry, readings),
+    partOfSpeech,
+    partOfSpeechRow: partOfSpeechRow(partOfSpeech, table !== null),
+    pronounce: pronounceLabel(entry.reading),
+    conjugations: table,
     pitch: pitch ? pitchAccent(entry.reading, pitch) : null,
     senses: entry.senses.map((sense, index) => ({
       number: index + 1,
       meaning: sense.meaning,
-      notes: sense.notes
+      notes: sense.notes,
+      noteText: sense.notes.length > 0 ? sense.notes.join(glossSeparator) : null
     })),
-    frequencyRows: frequencyRowDetails(rows.frequency),
-    alternatives: alternativeForms(entry).map(form => ({
-      value: form.value,
-      kind: form.kind,
-      labels: form.labels,
-      kanji: formKanji(form.value)
-    })),
-    kanji: wordKanji(primaryKanji(entry.headword), rows.kanji),
-    alternativeKanji: wordKanji(alternativeKanji(entry), rows.kanji),
-    related: entry.relationships.map(relationship => ({
-      headword: relationship.headword,
-      reading: relationship.reading,
-      ruby: rubySegments(relationship.headword, relationship.reading),
-      relation: relationship.relation,
-      summary: relationship.summary,
-      entSeq: relationship.targetEntSeq
-    })),
+    frequencyRows,
+    alternatives,
+    kanji,
+    alternativeKanji: otherKanji,
+    related,
     examples: rows.examples.map(wordExample),
     exampleCount: rows.exampleCount,
     shareText: wordShareText(entry)

@@ -7,9 +7,11 @@ import {
   formsFor,
   supportsModes
 } from './conjugation-table'
+import { examplesTitle, noFormExamplesMessage } from './examples'
 import { type KanjiReadings, withKanjiReadings } from './kanji-split'
 import type { EntryRow } from './rows'
 import { type RubySegment, rubySegments } from './ruby'
+import { pronounceLabel } from './sections'
 import { listedWithAnd } from './text'
 
 export type { ConjugatedForm, ConjugationMode, ConjugationTable } from './conjugation-table'
@@ -105,12 +107,14 @@ export interface ConjugationRow extends ConjugatedForm {
   ruby: RubySegment[]
   rowFurigana: boolean
   sharedSpellings: string[]
+  pronounce: string
 }
 
 export interface Conjugations {
   rule: string
   modes: ConjugationMode[]
   rows: Record<ConjugationMode, ConjugationRow[]>
+  examples: { title: string; empty: string }
 }
 
 export function conjugations(
@@ -126,9 +130,15 @@ export function conjugations(
       ...conjugationKinds[form.kind],
       ruby: withKanjiReadings(rubySegments(form.surface, form.reading), readings),
       rowFurigana: rowShowsFurigana(form),
-      sharedSpellings: sharedSpellings(table, form, mode)
+      sharedSpellings: sharedSpellings(table, form, mode),
+      pronounce: pronounceLabel(form.reading)
     }))
-  return { rule: table.rule, modes, rows: { Plain: rows('Plain'), Polite: rows('Polite') } }
+  return {
+    rule: table.rule,
+    modes,
+    rows: { Plain: rows('Plain'), Polite: rows('Polite') },
+    examples: { title: examplesTitle, empty: noFormExamplesMessage }
+  }
 }
 
 export function sharedSpellingNote(titles: readonly string[]): string {
