@@ -29,13 +29,7 @@ struct LoadedExamplesTests {
       if holding.contains(batch.from) {
         let id = UUID()
         await withTaskCancellationHandler {
-          await withCheckedContinuation { waiting in
-            if Task.isCancelled {
-              waiting.resume()
-            } else {
-              held[batch.from, default: []].append((id, waiting))
-            }
-          }
+          await withCheckedContinuation { held[batch.from, default: []].append((id, $0)) }
         } onCancel: {
           Task { @MainActor in self.giveUp(id, from: batch.from) }
         }
@@ -62,13 +56,18 @@ struct LoadedExamplesTests {
       holding.insert(from)
     }
 
-    func untilHeld(_ from: Int) async {
-      while held[from] == nil { await Task.yield() }
+    func untilHeld(_ from: Int, reads: Int = 1) async {
+      while (held[from]?.count ?? 0) < reads, !Task.isCancelled { await Task.yield() }
     }
 
     func answer(_ from: Int) {
       holding.remove(from)
       for read in held.removeValue(forKey: from) ?? [] { read.waiting.resume() }
+    }
+
+    func answer(_ from: Int, read number: Int) {
+      guard held[from]?.indices.contains(number) == true else { return }
+      held[from]?.remove(at: number).waiting.resume()
     }
 
     private func giveUp(_ id: UUID, from: Int) {
@@ -83,6 +82,14 @@ struct LoadedExamplesTests {
 
   private func rows(_ loaded: LoadedExamples) -> [String] {
     loaded.examples.map(\.sentence.japanese)
+  }
+
+  private func ended(_ task: Task<Void, Never>) async {
+    await withTaskCancellationHandler {
+      await task.value
+    } onCancel: {
+      task.cancel()
+    }
   }
 
   @Test("the first answer holds a screen's rows, and the rest of its page follows at once")
@@ -166,7 +173,7 @@ struct LoadedExamplesTests {
     await miru.untilHeld(0)
     #expect(loaded.state(of: "見る") == .loading)
     miru.answer(0)
-    await readingAgain.value
+    await ended(readingAgain)
     #expect(loaded.state(of: "見る") == .listed)
     #expect(rows(loaded) == miru.rows(0..<25))
   }
@@ -178,6 +185,74 @@ struct LoadedExamplesTests {
     await loaded.load("無", rowsOnScreen: 8, read: none.read)
     #expect(loaded.state(of: "無") == .empty)
     #expect(none.asked == [ExampleBatch(from: 0, limit: 8)])
+  }
+
+  @Test("a word the core has nothing to match sentences on has none, and a read that fails has failed")
+  func aWordWithNothingToMatchHasNoExamples() async {
+    let answers: [(any Error, LoadedExamples.State)] = [
+      (ExampleSentenceRetrievalError.invalidQuery(.missingEntryEvidence), .empty),
+      (ExampleSentenceRetrievalError.retrievalUnavailable(.queryFailed), .failed),
+    ]
+    for (error, state) in answers {
+      var client = ExampleSentenceClient.live
+      client.entryExamples = { _, _ in throw error }
+      let entry = DictionaryEntry.fixture(id: "a1", headword: "ＮＧ", reading: "エヌジー")
+      let loaded = LoadedExamples()
+      await loaded.load("a1", rowsOnScreen: 8) { [client] in
+        await client.shownExamples(entry, $0)
+      }
+      #expect(loaded.state(of: "a1") == state)
+    }
+  }
+
+  @Test("a Retry tapped twice shows what the second read answers, whichever read answers first")
+  func aRetryTappedTwiceShowsTheSecondRead() async {
+    for secondAnswersFirst in [true, false] {
+      let miru = Listing("見る", listed: 60)
+      miru.failing = [0]
+      let loaded = LoadedExamples()
+      await loaded.load("見る", rowsOnScreen: nil, read: miru.read)
+      miru.hold(0)
+      let first = Task { await loaded.load("見る", rowsOnScreen: nil, read: miru.read) }
+      await miru.untilHeld(0, reads: 1)
+      let second = Task { await loaded.load("見る", rowsOnScreen: nil, read: miru.read) }
+      await miru.untilHeld(0, reads: 2)
+      if secondAnswersFirst {
+        miru.answer(0, read: 1)
+        await ended(second)
+        #expect(loaded.state(of: "見る") == .listed)
+        miru.failing = [0]
+        miru.answer(0, read: 0)
+        await ended(first)
+      } else {
+        miru.failing = [0]
+        miru.answer(0, read: 0)
+        await ended(first)
+        #expect(loaded.state(of: "見る") == .loading)
+        miru.answer(0, read: 0)
+        await ended(second)
+      }
+      #expect(loaded.state(of: "見る") == .listed)
+      #expect(rows(loaded) == miru.rows(0..<25))
+    }
+  }
+
+  @Test("a Retry of one list that answers after another list was read is left out")
+  func aRetryAnsweredAfterAnotherListIsLeftOut() async {
+    let miru = Listing("見る", listed: 60)
+    let taberu = Listing("食べる", listed: 30)
+    miru.failing = [0]
+    let loaded = LoadedExamples()
+    await loaded.load("見る", rowsOnScreen: nil, read: miru.read)
+    miru.hold(0)
+    let retry = Task { await loaded.load("見る", rowsOnScreen: nil, read: miru.read) }
+    await miru.untilHeld(0)
+    await loaded.load("食べる", rowsOnScreen: nil, read: taberu.read)
+    #expect(loaded.state(of: "食べる") == .listed)
+    miru.answer(0)
+    await ended(retry)
+    #expect(loaded.state(of: "食べる") == .listed)
+    #expect(rows(loaded) == taberu.rows(0..<25))
   }
 
   @Test("a later page that fails says so at the list's end, and is read again when asked")
@@ -232,8 +307,8 @@ struct LoadedExamplesTests {
       await asking(loaded, miru)
       #expect(rows(loaded) == miru.rows(0..<25))
     }
-    await answering.value
-    await screen.value
+    await ended(answering)
+    await ended(screen)
     #expect(miru.asked == [ExampleBatch(from: 0, limit: 8), ExampleBatch(from: 8)])
     #expect(rows(loaded) == miru.rows(0..<25))
   }
@@ -266,7 +341,7 @@ struct LoadedExamplesTests {
     await miru.untilHeld(0)
     leaving.cancel()
     miru.answer(0)
-    await leaving.value
+    await ended(leaving)
     #expect(!loaded.answers("見る"))
     #expect(loaded.examples.isEmpty)
 

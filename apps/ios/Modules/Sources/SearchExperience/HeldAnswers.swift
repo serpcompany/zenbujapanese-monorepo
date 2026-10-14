@@ -11,9 +11,7 @@ actor HeldAnswers {
   func wait(since: Date = .now) async throws {
     let id = UUID()
     await withTaskCancellationHandler {
-      await withCheckedContinuation { answer in
-        if Task.isCancelled { answer.resume() } else { waiting.append((id, since, answer)) }
-      }
+      await withCheckedContinuation { waiting.append((id, since, $0)) }
     } onCancel: {
       Task { await self.giveUp(id) }
     }
