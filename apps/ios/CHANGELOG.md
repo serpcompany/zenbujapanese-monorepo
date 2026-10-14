@@ -69,6 +69,9 @@ All notable user-facing changes to Zenbu Japanese are recorded here.
   it can read. A photo you delete is still deleted, within 30 days if a kept copy names it.
 - In the half-height word sheet in Player, Image Search, and Translate, a word's **Kanji** and its
   part of speech (which opens its conjugations) now open, in the tab you're in.
+- Player's search results show only YouTube's results, between Player's own bars: YouTube's
+  header, search field, voice search, and bottom bar (Home, Shorts, You) no longer appear, on
+  iPhone, iPad, and the Mac.
 - When a newer version of Zenbu saved the bookmarks synced to your device, Zenbu Account now says
   to update Zenbu instead of reopening it.
 - Frequency Dictionaries: downloading several packs at once no longer looks like each tap cancels
