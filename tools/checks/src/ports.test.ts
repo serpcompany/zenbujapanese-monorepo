@@ -185,26 +185,51 @@ describe('the ports of a checkout', () => {
 
 describe('the lock a claim is made under', () => {
   const lockOf = (main: string) => join(main, '.git', 'zenbu-ports', 'lock')
+  const thisRun = process.pid
+  const aRunThatEnded = () => spawnSync(process.execPath, ['--eval', '']).pid
+
+  function takenLongAgo(main: string, holder?: number) {
+    mkdirSync(lockOf(main), { recursive: true })
+    if (holder !== undefined) writeFileSync(join(lockOf(main), 'holder'), String(holder))
+    const longAgo = new Date(Date.now() - 120_000)
+    utimesSync(lockOf(main), longAgo, longAgo)
+  }
+
+  async function answerOfAWorktreeAskingUntilReleased(main: string) {
+    let released = false
+    const answer = asking(worktree(main, 'one')).then(([, said]) => ({
+      said,
+      afterRelease: released
+    }))
+    await new Promise(resolve => setTimeout(resolve, 400))
+    released = true
+    rmSync(lockOf(main), { recursive: true, force: true })
+    return answer
+  }
+
+  const itsBlockOnceReleased = { said: JSON.stringify(block(1)), afterRelease: true }
 
   test('makes a worktree wait while another run holds it', async () => {
     const main = repository()
-    const one = worktree(main, 'one')
     mkdirSync(lockOf(main), { recursive: true })
-    let released = false
-    const answer = asking(one).then(([, said]) => ({ said, afterRelease: released }))
-    await new Promise(resolve => setTimeout(resolve, 400))
-    released = true
-    rmSync(lockOf(main), { recursive: true })
-    expect(await answer).toEqual({ said: JSON.stringify(block(1)), afterRelease: true })
+    expect(await answerOfAWorktreeAskingUntilReleased(main)).toEqual(itsBlockOnceReleased)
     expect(claims(main)).toEqual(['1'])
   })
 
-  test('is taken over when the run that held it is long gone', () => {
+  test('is left with a run that is still going, however long ago it took it', async () => {
+    const main = repository()
+    takenLongAgo(main, thisRun)
+    expect(await answerOfAWorktreeAskingUntilReleased(main)).toEqual(itsBlockOnceReleased)
+    expect(claims(main)).toEqual(['1'])
+  })
+
+  test.each([
+    ['named no run', undefined],
+    ['named a run that has ended', aRunThatEnded()]
+  ])('is taken over when it was taken long ago and %s', (_, holder) => {
     const main = repository()
     const one = worktree(main, 'one')
-    mkdirSync(lockOf(main), { recursive: true })
-    const longAgo = new Date(Date.now() - 120_000)
-    utimesSync(lockOf(main), longAgo, longAgo)
+    takenLongAgo(main, holder)
     expect(portsOf(one)).toEqual(block(1))
     expect(claims(main)).toEqual(['1'])
   })
