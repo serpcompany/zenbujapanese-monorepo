@@ -10,15 +10,12 @@ struct WordDetailView: View {
   @State private var showsListPicker = false
   @State private var frequencyDisclosure: FrequencyRow?
   @State private var analysisAvailability = JapaneseTextAnalysisAvailability.full
-  @State private var frequency: [FrequencyRow] = []
 
   let entry: DictionaryEntry
-  private let page: WordPage?
   let initialEncounterMedia: EncounterMediaAttachment?
   let speechSynthesisClient: SpeechSynthesisClient
   let exampleSentenceClient: ExampleSentenceClient
   let japaneseTextAnalysisClient: JapaneseTextAnalysisClient
-  let frequencyCapability: FrequencyCapability
   let openRelated: (DictionaryRelationship) -> Void
   let openKanji: (KanjiCharacter, DictionaryEntry?) -> Void
   let openWord: (DictionaryEntry) -> Void
@@ -35,7 +32,6 @@ struct WordDetailView: View {
     wordNoteStore: WordNoteStore,
     encounterMediaStore: EncounterMediaStore,
     cameraAuthorizationClient: CameraAuthorizationClient,
-    frequencyCapability: FrequencyCapability,
     openRelated: @escaping (DictionaryRelationship) -> Void,
     openKanji: @escaping (KanjiCharacter, DictionaryEntry?) -> Void,
     openWord: @escaping (DictionaryEntry) -> Void,
@@ -48,12 +44,10 @@ struct WordDetailView: View {
       initialValue: SavedItemPhotos(
         store: encounterMediaStore, cameraAuthorizationClient: cameraAuthorizationClient))
     self.entry = entry
-    page = WordPage(entry)
     self.initialEncounterMedia = initialEncounterMedia
     self.speechSynthesisClient = speechSynthesisClient
     self.exampleSentenceClient = exampleSentenceClient
     self.japaneseTextAnalysisClient = japaneseTextAnalysisClient
-    self.frequencyCapability = frequencyCapability
     self.openRelated = openRelated
     self.openKanji = openKanji
     self.openWord = openWord
@@ -64,9 +58,8 @@ struct WordDetailView: View {
 
   private var item: SavedItem { .word(entry) }
 
-  private var shareText: String { page?.shareText ?? entry.headword }
-
   var body: some View {
+    let page = WordPage(entry)
     ScrollViewReader { proxy in
       List {
         Section {
@@ -86,7 +79,7 @@ struct WordDetailView: View {
           MeaningSection(senses: page?.senses ?? [])
         }
 
-        if !frequency.isEmpty {
+        if let frequency = page?.frequency, !frequency.isEmpty {
           Section("FREQUENCY") {
             ForEach(frequency.enumerated(), id: \.offset) { _, row in
               FrequencyRankRow(row: row) { frequencyDisclosure = $0 }
@@ -173,7 +166,8 @@ struct WordDetailView: View {
     .navigationTitle(entry.headword)
     .inlineNavigationTitle()
     .savedItemActions(
-      for: item, identifierPrefix: "word-detail", shareText: shareText, notes: notes,
+      for: item, identifierPrefix: "word-detail", shareText: page?.shareText ?? entry.headword,
+      notes: notes,
       photos: photos, showsListPicker: $showsListPicker)
     .sheet(item: $frequencyDisclosure) { row in
       FrequencyDisclosureView(
@@ -195,7 +189,6 @@ struct WordDetailView: View {
       let loadedExamples = (try? await exampleSentenceClient.examples(entry)) ?? []
       guard !Task.isCancelled else { return }
       analysisAvailability = await japaneseTextAnalysisClient.availability()
-      frequency = await FrequencyRow.rows(for: entry.id, using: frequencyCapability)
       guard !Task.isCancelled else { return }
       examples = loadedExamples
       examplesEntryID = entry.id

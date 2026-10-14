@@ -12,16 +12,16 @@ import { isKanjiCharacter } from '../detail/text'
 import { type WordDetail, wordDetail } from '../detail/word'
 import {
   evidenceLookups,
-  type FrequencyEvidence,
   type LearnerResultsScreen,
   type LearnerState,
   learnerResultsScreen,
+  type ReadFrequency,
   type WordRow,
   wordRows
 } from '../results/learner'
 import type { ListedResults } from '../results/results'
 import { checkedRadicalFile, RadicalLookup, type RadicalPanel } from '../search/radicals'
-import type { EmbeddedHost } from './host'
+import { type EmbeddedHost, hostFrequency } from './host'
 
 export interface EmbeddedEntry {
   id: string
@@ -55,6 +55,7 @@ export interface EmbeddedWordPage
     | null
   kanji: string[]
   alternativeKanji: string[]
+  frequency: FrequencyLookupRow[]
 }
 
 export interface EmbeddedKanjiPage extends Omit<KanjiDetail, 'strokeOrder'> {
@@ -78,6 +79,7 @@ const rememberedKanji = 4_000
 export class EmbeddedPresentation {
   private files: KanjiFiles | undefined
   private radicals: RadicalLookup | undefined
+  private readonly frequency: ReadFrequency = ids => hostFrequency(this.host, ids)
   private readonly readingsByKanji = new LruCache<string, readonly KanjiReadingRow[]>(
     rememberedKanji
   )
@@ -127,15 +129,12 @@ export class EmbeddedPresentation {
       request.query,
       request.results,
       request.exampleCount,
-      request.learner
+      request.learner,
+      this.frequency
     )
   }
 
-  wordRows(request: {
-    entries: { id: string; summary: string }[]
-    frequency: FrequencyEvidence | null
-    known: string[]
-  }): WordRow[] {
+  wordRows(request: { entries: { id: string; summary: string }[]; known: string[] }): WordRow[] {
     const known = new Set(request.known)
     return wordRows(
       request.entries.map(({ id, summary }) => ({
@@ -143,14 +142,10 @@ export class EmbeddedPresentation {
         entrySummary: summary,
         matchedSummary: null
       })),
-      evidenceLookups(request.frequency),
+      evidenceLookups(this.frequency(request.entries.map(({ id }) => id))),
       id => known.has(id),
       index => `Result ${index + 1} of ${request.entries.length}`
     )
-  }
-
-  frequencyRows(request: { entry: string; frequency: FrequencyEvidence }): FrequencyLookupRow[] {
-    return (evidenceLookups(request.frequency)(request.entry) ?? []).map(frequencyLookupRow)
   }
 
   ruby([surface, reading]: [string, string]): RubySegment[] {
@@ -194,6 +189,9 @@ export class EmbeddedPresentation {
       alternatives: detail.alternatives,
       kanji: detail.kanji.map(({ character }) => character),
       alternativeKanji: detail.alternativeKanji.map(({ character }) => character),
+      frequency: (evidenceLookups(this.frequency([entry.id]))(entry.id) ?? []).map(
+        frequencyLookupRow
+      ),
       related: detail.related,
       shareText: detail.shareText
     }

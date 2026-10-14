@@ -495,17 +495,17 @@ app's client in TypeScript) through offline changes on each until they hold the 
 new device. `src/http/clients.test.ts` holds each app to its scopes: only `zenbu-ios` reads or
 changes watch history and bookmarks.
 
-The domain's own tests (`src/domain/`) cover the name and username rules and the cursor;
-`src/db/database.test.ts` covers the journal's trigger and backfill, the sync tables' rules, and
-fencing two restored copies of one backup; and
+The domain's own tests (`src/domain/`) cover the name and username rules and the cursor. The
+username's cases are `src/domain/username-cases.json`, beside the rule, which the app's
+`UserProfileTests`, run by hand, read too. `src/db/database.test.ts` covers the journal's trigger
+and backfill, the sync tables' rules, and fencing two restored copies of one backup; and
 `src/http/openapi.test.ts` keeps `openapi.json` and the API reference in step with the routes and
 checks each route's scope, `src/http/sync-entities.test.ts` sends each documented sync example, and
 `src/http/sign-in-contract.test.ts` holds each sign-in answer, and each sign-in route's scope, to
-the contract. In CI, and when
-`ACCOUNT_API_TEST_DATABASE_URL` names a real Postgres database, `src/db/postgres.test.ts` also
-sends eight changes to one account at once through the `pg` pool, and one mutation six times at
-once: one change goes through, and the mutation applies once. It also watches eight videos at once
-on an account holding 48, which keeps the 50 newest.
+the contract. In CI, and when `ACCOUNT_API_TEST_DATABASE_URL` names a real Postgres database,
+`src/db/postgres.test.ts` also sends eight changes to one account at once through the `pg` pool, and
+one mutation six times at once: one change goes through, and the mutation applies once. It also
+watches eight videos at once on an account holding 48, which keeps the 50 newest.
 
 ## Ship it
 

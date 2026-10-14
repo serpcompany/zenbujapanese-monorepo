@@ -409,23 +409,21 @@
     }
     return lhs.length - rhs.length;
   }
-  var whitespace = /\p{White_Space}/u;
+  var wordSeparator = /[\p{White_Space}\u{FEFF}]/u;
+  function withoutMarksASpaceCarries(word) {
+    return graphemes2(` ${word}`).slice(1).join("");
+  }
+  function foldedWidthAndCase(raw) {
+    const normalized2 = raw.normalize("NFKC");
+    const lowered = normalized2.toLowerCase();
+    return lowered === normalized2 ? lowered : lowered.normalize("NFKC");
+  }
   function normalizeQuery(raw) {
-    const folded = raw.normalize("NFKC").toLowerCase();
-    if (!whitespace.test(folded)) return folded;
+    const folded = foldedWidthAndCase(raw);
+    if (!wordSeparator.test(folded)) return folded;
     if (everyUnitIsAGrapheme(folded)) return folded.split(" ").filter(Boolean).join(" ");
-    const words = [];
-    let word = "";
-    for (const grapheme of graphemes2(folded)) {
-      if (/^\p{White_Space}/u.test(grapheme)) {
-        if (word) words.push(word);
-        word = "";
-      } else {
-        word += grapheme;
-      }
-    }
-    if (word) words.push(word);
-    return words.join(" ");
+    const [first, ...afterASeparator] = folded.split(wordSeparator);
+    return [first, ...afterASeparator.map(withoutMarksASpaceCarries)].filter(Boolean).join(" ");
   }
   function isASCII(value) {
     return !/[\u0080-\uffff]/.test(value);
@@ -502,6 +500,149 @@
   var literalReplacements = { mondai: "monday" };
   function literalQuery(value) {
     return literalReplacements[value] ?? value;
+  }
+
+  // src/sources/credits.ts
+  var creditClients = ["app", "website"];
+  var everyClient = creditClients;
+  var ccBySa4 = { name: "CC BY-SA 4.0", url: "https://creativecommons.org/licenses/by-sa/4.0/" };
+  var bsd3 = { name: "BSD-3-Clause", url: "https://opensource.org/license/bsd-3-clause" };
+  var edrdgLicence = {
+    name: "EDRDG licence, CC BY-SA 4.0",
+    url: "https://www.edrdg.org/edrdg/licence.html"
+  };
+  var conversionNotice = "Zenbu converts each source into its own formats and shares converted Creative Commons data under the same licence.";
+  var sourceCredits = {
+    jmdict: {
+      id: "jmdict",
+      name: "JMdict",
+      url: "https://www.edrdg.org/wiki/index.php/JMdict-EDICT_Dictionary_Project",
+      credit: "Dictionary data by the Electronic Dictionary Research and Development Group.",
+      license: edrdgLicence,
+      clients: everyClient
+    },
+    kanjidic2: {
+      id: "kanjidic2",
+      name: "KANJIDIC2",
+      url: "https://www.edrdg.org/wiki/index.php/KANJIDIC_Project",
+      credit: "Kanji data by the Electronic Dictionary Research and Development Group.",
+      license: edrdgLicence,
+      clients: everyClient
+    },
+    radkfile: {
+      id: "radkfile",
+      name: "RADKFILE",
+      url: "https://www.edrdg.org/krad/kradinf.html",
+      credit: "Radical data by the Electronic Dictionary Research and Development Group.",
+      license: edrdgLicence,
+      clients: everyClient
+    },
+    kanjivg: {
+      id: "kanjivg",
+      name: "KanjiVG",
+      url: "https://kanjivg.tagaini.net/",
+      credit: "Kanji stroke data by Ulrich Apel.",
+      license: { name: "CC BY-SA 3.0", url: "https://creativecommons.org/licenses/by-sa/3.0/" },
+      clients: everyClient
+    },
+    kanjium: {
+      id: "kanjium",
+      name: "Kanjium",
+      url: "https://github.com/mifunetoshiro/kanjium",
+      credit: "Kanji structure data by Uros O.",
+      license: ccBySa4,
+      clients: everyClient
+    },
+    unidic: {
+      id: "unidic",
+      name: "UniDic",
+      url: "https://clrd.ninjal.ac.jp/unidic/",
+      credit: "Pitch-accent data by the National Institute for Japanese Language and Linguistics.",
+      license: { name: "BSD" },
+      clients: everyClient
+    },
+    jlpt: {
+      id: "jlpt",
+      name: "JLPT vocabulary lists",
+      url: "https://github.com/stephenmk/yomitan-jlpt-vocab",
+      credit: "Unofficial level estimates from Jonathan Waller's lists, matched to JMdict by stephenmk.",
+      license: ccBySa4,
+      clients: everyClient
+    },
+    jlptKanji: {
+      id: "jlptKanji",
+      name: "JLPT kanji lists",
+      url: "https://web.archive.org/web/20200806005029/http://www.tanos.co.uk/jlpt/jlpt5/kanji/",
+      credit: "Unofficial level estimates from Jonathan Waller's JLPT kanji lists (tanos.co.uk).",
+      license: { name: "CC BY" },
+      clients: everyClient
+    },
+    tubelex: {
+      id: "tubelex",
+      name: "TUBELEX",
+      url: "https://github.com/naist-nlp/tubelex",
+      credit: "YouTube frequency data by Adam Nohejl and contributors.",
+      license: bsd3,
+      clients: everyClient
+    },
+    wikipedia: {
+      id: "wikipedia",
+      name: "Wikipedia Word Frequency Clean",
+      url: "https://github.com/adno/wikipedia-word-frequency-clean",
+      credit: "Wikipedia frequency data by Adam Nohejl and contributors.",
+      license: bsd3,
+      clients: everyClient
+    },
+    jiten: {
+      id: "jiten",
+      name: "Jiten",
+      url: "https://jiten.moe/frequency-dictionaries",
+      credit: "TV and movie, anime, manga, novel, visual novel, and video game frequency data by Jiten (jiten.moe), modified.",
+      license: ccBySa4,
+      notice: "The rankings from Jiten are adapted from its data, and are shared under the same licence, CC BY-SA 4.0.",
+      clients: everyClient
+    },
+    sudachi: {
+      id: "sudachi",
+      name: "Sudachi",
+      url: "https://github.com/WorksApplications/SudachiDict",
+      credit: "Japanese word analysis for Search by Sudachi.rs and SudachiDict.",
+      license: { name: "Apache-2.0 · BSD-3-Clause · MIT" },
+      clients: everyClient
+    },
+    kuromoji: {
+      id: "kuromoji",
+      name: "Kuromoji",
+      url: "https://github.com/takuyaa/kuromoji.js",
+      credit: "Interactive text parsing ported from kuromoji.js, with MeCab IPADIC.",
+      license: { name: "Apache-2.0 · IPADIC" },
+      clients: everyClient
+    },
+    tatoeba: {
+      id: "tatoeba",
+      name: "Tatoeba",
+      url: "https://tatoeba.org/",
+      credit: "Example sentences by Tatoeba contributors.",
+      license: { name: "CC BY 2.0 FR", url: "https://creativecommons.org/licenses/by/2.0/fr/" },
+      clients: everyClient
+    },
+    dakanji: {
+      id: "dakanji",
+      name: "DaKanji",
+      url: "https://github.com/dariyooo/DaKanji-Single-Kanji-Recognition",
+      credit: "Handwriting recognition by Dario Radmann and contributors.",
+      license: { name: "MIT" },
+      clients: ["app"]
+    }
+  };
+  var everyCredit = Object.values(sourceCredits);
+  var isCreditClient = (client) => creditClients.includes(client);
+  function creditsShownBy(client) {
+    if (!isCreditClient(client)) throw new Error(`No client is named ${client}`);
+    return {
+      conversionNotice,
+      credits: everyCredit.filter((credit) => credit.clients.includes(client))
+    };
   }
 
   // src/browse/lists.ts
@@ -959,41 +1100,6 @@
     }));
   }
 
-  // src/artifact/words.ts
-  var jmdictSource = "edrdg.jmdict";
-
-  // src/detail/links.ts
-  var websiteHost = "zenbujapanese.com";
-  function decodeSegment(segment) {
-    try {
-      return decodeURIComponent(segment);
-    } catch {
-      return segment;
-    }
-  }
-  function wordSegment(decoded) {
-    const match = decoded.match(/^(?:(.*)-)?(\d+)$/u);
-    if (!match) return null;
-    const entSeq = Number(match[2]);
-    return Number.isSafeInteger(entSeq) ? { slug: match[1] ?? "", entSeq } : null;
-  }
-  var home = { kind: "home" };
-  var surroundingSpace = /^[\p{Z}\t-\r\x85]+|[\p{Z}\t-\r\x85]+$/gu;
-  function websitePage(host, path) {
-    if (host?.toLowerCase() !== websiteHost) return home;
-    const [section, page, detail] = path.split("/").filter(Boolean).map(decodeSegment);
-    if (section !== "dictionary" || page === void 0) return home;
-    if (page === "search") {
-      const query = detail?.replace(surroundingSpace, "") ?? "";
-      return query === "" ? home : { kind: "search", query };
-    }
-    if (page === "kanji") {
-      return detail !== void 0 && isKanjiCharacter(detail) ? { kind: "kanji", character: detail } : home;
-    }
-    const word = wordSegment(page);
-    return word ? { kind: "word", ...word } : home;
-  }
-
   // src/detail/frequency.ts
   function tierForRank(rank) {
     if (rank <= 1500) return "veryCommon";
@@ -1214,6 +1320,90 @@
       ({ dictionary }) => dictionary ? frequencyShortName(dictionary) : "A frequency dictionary"
     );
     return `${listedWithAnd(names)} unavailable. Search is ordered by the other enabled dictionaries.`;
+  }
+
+  // src/artifact/frequency.ts
+  var unreadableFrequency = "Frequency data unavailable";
+  var evidenceTables = {
+    level: { table: "level_evidence", value: "level" },
+    rank: { table: "frequency_evidence", value: "rank" }
+  };
+  function valuesById(rows) {
+    if (!rows) return null;
+    const values = /* @__PURE__ */ new Map();
+    for (const { id, value } of rows) {
+      if (typeof id !== "string" || typeof value !== "number" || !Number.isInteger(value)) return null;
+      values.set(id, value);
+    }
+    return values;
+  }
+  function readFrequency(lists, ids) {
+    const asked = [...new Set(ids)];
+    const listed3 = [JSON.stringify(asked)];
+    const dictionaries = [];
+    const lookups = asked.map(() => []);
+    for (const list of lists) {
+      if ("unavailable" in list) {
+        const dictionary2 = list.dictionary ? dictionaries.push(list.dictionary) - 1 : null;
+        for (const entry of lookups) entry.push({ dictionary: dictionary2, unavailable: list.unavailable });
+        continue;
+      }
+      const dictionary = dictionaries.push(list.dictionary) - 1;
+      if (asked.length === 0) continue;
+      const { table, value } = evidenceTables[list.dictionary.kind];
+      const values = valuesById(
+        list.rows(
+          `SELECT lower(hex(language_reference_id)) AS id, ${value} AS value
+         FROM ${list.schema ? `${list.schema}.` : ""}${table}
+         WHERE language_reference_id IN (${listedIds})`,
+          listed3
+        )
+      );
+      for (let index = 0; index < asked.length; index++) {
+        lookups[index].push(
+          values ? { dictionary, value: values.get(asked[index]) ?? null } : { dictionary, unavailable: unreadableFrequency }
+        );
+      }
+    }
+    return {
+      dictionaries,
+      entries: Object.fromEntries(asked.map((id, index) => [id, lookups[index]]))
+    };
+  }
+
+  // src/artifact/words.ts
+  var jmdictSource = "edrdg.jmdict";
+
+  // src/detail/links.ts
+  var websiteHost = "zenbujapanese.com";
+  function decodeSegment(segment) {
+    try {
+      return decodeURIComponent(segment);
+    } catch {
+      return segment;
+    }
+  }
+  function wordSegment(decoded) {
+    const match = decoded.match(/^(?:(.*)-)?(\d+)$/u);
+    if (!match) return null;
+    const entSeq = Number(match[2]);
+    return Number.isSafeInteger(entSeq) ? { slug: match[1] ?? "", entSeq } : null;
+  }
+  var home = { kind: "home" };
+  var surroundingSpace = /^[\p{Z}\t-\r\x85]+|[\p{Z}\t-\r\x85]+$/gu;
+  function websitePage(host, path) {
+    if (host?.toLowerCase() !== websiteHost) return home;
+    const [section, page, detail] = path.split("/").filter(Boolean).map(decodeSegment);
+    if (section !== "dictionary" || page === void 0) return home;
+    if (page === "search") {
+      const query = detail?.replace(surroundingSpace, "") ?? "";
+      return query === "" ? home : { kind: "search", query };
+    }
+    if (page === "kanji") {
+      return detail !== void 0 && isKanjiCharacter(detail) ? { kind: "kanji", character: detail } : home;
+    }
+    const word = wordSegment(page);
+    return word ? { kind: "word", ...word } : home;
   }
 
   // src/examples/retrieval.ts
@@ -2404,6 +2594,22 @@
       interrupted: () => host.interrupted?.() ?? false
     };
   }
+  function hostFrequencyLists(host) {
+    if (!host.frequencyLists) return [];
+    const enabled = host.frequencyLists();
+    if (!enabled) return null;
+    if ("unavailable" in enabled) return [{ dictionary: null, unavailable: enabled.unavailable }];
+    return enabled.lists.map(
+      ({ dictionary, unavailable }) => unavailable === void 0 ? {
+        dictionary,
+        rows: (sql, params) => host.frequencyListRows?.(dictionary.id, sql, JSON.stringify(params))?.rows ?? null
+      } : { dictionary, unavailable }
+    );
+  }
+  function hostFrequency(host, ids) {
+    const lists = hostFrequencyLists(host);
+    return lists && readFrequency(lists, ids);
+  }
 
   // src/embedded/lookup.ts
   var sameText = (left, right) => left.normalize("NFC") === right.normalize("NFC");
@@ -3488,13 +3694,13 @@
       }
     };
   }
-  function learnerResultsScreen(rawQuery, results, exampleCount2, learner2) {
+  function learnerResultsScreen(rawQuery, results, exampleCount2, learner2, frequency) {
     const layout = resultsLayout(rawQuery, results, exampleCount2, learner2.fromRadicals);
     if (layout.isEmpty) return { state: "noResults", query: layout.query };
     const known = new Set(learner2.known);
     const isKnown = (id) => known.has(id);
-    const lookups = evidenceLookups(learner2.frequency);
     const frequencyEntries = [...new Set(layout.presented.map((item) => item.id))];
+    const lookups = evidenceLookups(frequency(frequencyEntries));
     const dictionaries = enabledDictionaries(frequencyEntries, lookups);
     const chosen = resultSort(learner2.sort);
     const sort = appliedSort(chosen, dictionaries);
@@ -3550,8 +3756,7 @@
           const found = lookups(id);
           return found ? [found] : [];
         })
-      ) : null,
-      frequencyEntries
+      ) : null
     };
   }
 
@@ -3617,6 +3822,7 @@
     host;
     files;
     radicals;
+    frequency = (ids) => hostFrequency(this.host, ids);
     readingsByKanji = new LruCache(
       rememberedKanji
     );
@@ -3656,7 +3862,8 @@
         request.query,
         request.results,
         request.exampleCount,
-        request.learner
+        request.learner,
+        this.frequency
       );
     }
     wordRows(request) {
@@ -3667,13 +3874,10 @@
           entrySummary: summary,
           matchedSummary: null
         })),
-        evidenceLookups(request.frequency),
+        evidenceLookups(this.frequency(request.entries.map(({ id }) => id))),
         (id) => known.has(id),
         (index) => `Result ${index + 1} of ${request.entries.length}`
       );
-    }
-    frequencyRows(request) {
-      return (evidenceLookups(request.frequency)(request.entry) ?? []).map(frequencyLookupRow);
     }
     ruby([surface, reading]) {
       return withKanjiReadings(rubySegments(surface, reading), this.kanjiReadings);
@@ -3714,6 +3918,9 @@
         alternatives: detail.alternatives,
         kanji: detail.kanji.map(({ character }) => character),
         alternativeKanji: detail.alternativeKanji.map(({ character }) => character),
+        frequency: (evidenceLookups(this.frequency([entry.id]))(entry.id) ?? []).map(
+          frequencyLookupRow
+        ),
         related: detail.related,
         shareText: detail.shareText
       };
@@ -5129,7 +5336,6 @@
       linkedTokens: (request, analyze) => text().linkedTokens(JSON.parse(request), analyze),
       resultsScreen: (request) => presentation().resultsScreen(JSON.parse(request)),
       wordRows: (request) => presentation().wordRows(JSON.parse(request)),
-      frequencyRows: (request) => presentation().frequencyRows(JSON.parse(request)),
       ruby: (pair) => presentation().ruby(JSON.parse(pair)),
       wordPage: (entry) => presentation().wordPage(JSON.parse(entry)),
       kanjiPage: (request) => presentation().kanjiPage(JSON.parse(request)),
@@ -5137,7 +5343,8 @@
       kanjiElementPage: (glyph) => presentation().kanjiElementPage(glyph),
       kanjiStrokes: (row) => presentation().kanjiStrokes(JSON.parse(row)),
       radicalPanel: (selected) => presentation().radicalPanel(JSON.parse(selected)),
-      gloss: shortGloss
+      gloss: shortGloss,
+      sourceCredits: creditsShownBy
     };
     const unanalyzed = () => {
       throw new Error("An answer asked for at once cannot wait for an analysis");
@@ -5178,6 +5385,10 @@
         );
         return {
           outcome: () => JSON.stringify(outcome),
+          value() {
+            if (!("value" in outcome)) throw new Error(`${method} has answered nothing`);
+            return JSON.stringify(outcome.value ?? null);
+          },
           analyzed(answerJSON) {
             const settle = answer2;
             if (!settle) throw new Error(`${method} is waiting for no analysis`);

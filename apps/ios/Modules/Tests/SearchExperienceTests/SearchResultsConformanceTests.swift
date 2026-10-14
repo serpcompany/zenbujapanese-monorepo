@@ -114,9 +114,11 @@ struct SearchResultsConformanceTests {
 
 private struct SearchResultsObserver {
   let frequency: FrequencyPackManager
+  let core: PresentationCore
 
   init() async throws {
     frequency = try .freshInstall(storagePrefix: "SearchResultsConformance")
+    core = PresentationCore(listing: frequency.lists)
   }
 
   func enabledPackIDs() async throws -> [String] {
@@ -132,9 +134,7 @@ private struct SearchResultsObserver {
 
   func observe(_ recorded: SearchResultsCase) async throws -> SearchResultsCase {
     var observed = SearchResultsCase(query: recorded.query, covers: recorded.covers)
-    let searched = try await SearchedScreen.search(
-      recorded.query,
-      frequency: FrequencyCapability { [frequency] ids in try await frequency.evidence(for: ids) })
+    let searched = try await SearchedScreen.search(recorded.query, using: core)
     let results = searched.results
     observed.resolution = results.resolution.rawValue
     observed.presentation = results.presentation.rawValue

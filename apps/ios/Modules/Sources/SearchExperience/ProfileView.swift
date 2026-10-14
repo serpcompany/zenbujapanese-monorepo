@@ -95,6 +95,7 @@ struct ProfileView: View {
   @State private var name = ProfileFieldEdit()
   @State private var username = ProfileFieldEdit()
   @State private var email = ProfileFieldEdit()
+  @State private var showsUsernameError = false
   @State private var showsEmailError = false
   @FocusState private var focusedField: Field?
 
@@ -125,6 +126,7 @@ struct ProfileView: View {
             .textEntry(.uncapitalized)
             .autocorrectionDisabled()
             .focused($focusedField, equals: .username)
+            .onChange(of: username.text) { showsUsernameError = false }
             .multilineTextAlignment(.trailing)
             .labelsHidden()
             .accessibilityIdentifier("profile.username")
@@ -141,11 +143,18 @@ struct ProfileView: View {
             .accessibilityIdentifier("profile.email")
         }
       } footer: {
-        if showsEmailError {
-          Text(verbatim: "Enter a valid email address, like name@example.com.")
-            .foregroundStyle(.red)
+        if showsUsernameError || showsEmailError {
+          VStack(alignment: .leading, spacing: 4) {
+            if showsUsernameError {
+              Text(verbatim: UserProfile.usernameRule)
+            }
+            if showsEmailError {
+              Text(verbatim: "Enter a valid email address, like name@example.com.")
+            }
+          }
+          .foregroundStyle(.red)
         } else {
-          Text("Usernames use letters a–z, numbers, underscores, and periods. Your profile is stored only on this device.")
+          Text(verbatim: "\(UserProfile.usernameRule) Your profile is stored only on this device.")
         }
       }
       .submitLabel(.done)
@@ -214,7 +223,16 @@ struct ProfileView: View {
       name.show(profile.name)
     case .username:
       if let edited = username.unfocus() {
-        profile.username = UserProfile.normalizedUsername(edited)
+        switch UserProfile.usernameEdit(edited, over: profile.username) {
+        case .keep:
+          break
+        case .save(let accepted):
+          profile.username = accepted
+        case .refuse:
+          username.reject()
+          showsUsernameError = true
+          return
+        }
       }
       username.show(profile.username)
     case .email:

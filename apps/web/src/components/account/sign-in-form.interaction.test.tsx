@@ -127,7 +127,7 @@ describe('signing in on the website', () => {
     })
     const page = render(<SignInForm settings={everything} purpose="sign-in" returnedError={null} />)
     await click(page, 'Sign in with Apple')
-    expect(push).toHaveBeenCalledWith('/account/')
+    await vi.waitFor(() => expect(push).toHaveBeenCalledWith('/account/'))
     expect(calls.at(-1)?.body).toEqual({
       provider: 'apple',
       idToken: {

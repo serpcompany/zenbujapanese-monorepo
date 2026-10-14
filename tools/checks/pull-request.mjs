@@ -18,6 +18,28 @@ export const otherBase = (base, defaultBranch) =>
     ? `This pull request is based on ${base}, not ${defaultBranch}, and GitHub links a closing keyword only on a pull request into ${defaultBranch}. With Closes #<number> in its body, the check passes once it is retargeted, which GitHub does when its parent merges.`
     : ''
 
+const whereGitHubLinksNothing = [
+  /^[ \t]*(([`~])\2{2,})(?:(?<=~)[^\n]*|[^`\n]*)\n[\s\S]*?(?:^[ \t]*\1\2*[ \t]*$|(?![\s\S]))/gm,
+  /(?<!`)(`+)(?!`)(?:(?!\n[ \t]*\n)[\s\S])*?(?<!`)\1(?!`)/g,
+  /<!--[\s\S]*?-->/g
+]
+const closingKeyword =
+  /(?<![\w-])(?:close[sd]?|fix(?:e[sd])?|resolve[sd]?):?[ \t]+(?:([\w.-]+\/[\w.-]+)#|https:\/\/github\.com\/([\w.-]+\/[\w.-]+)\/issues\/|#)(\d{1,9})\b/gi
+
+export function closingReferences(body, ownRepository = '') {
+  const text = whereGitHubLinksNothing.reduce(
+    (rest, pattern) => rest.replace(pattern, ' '),
+    String(body ?? '')
+  )
+  const named = new Map()
+  for (const [, short, linked, number] of text.matchAll(closingKeyword)) {
+    const from = short ?? linked ?? ''
+    const repository = from.toLowerCase() === ownRepository.toLowerCase() ? '' : from
+    named.set(`${repository.toLowerCase()}#${number}`, { repository, number: Number(number) })
+  }
+  return [...named.values()]
+}
+
 const testPaths = [
   /\.(test|spec)\.[cm]?[jt]sx?$/,
   /(^|\/)test_[^/]+\.py$/,
@@ -39,6 +61,14 @@ export const fixWithoutTest = (branch, title, changed) =>
   isFix(branch, title) && !changed.some(isTest)
 
 const wait = milliseconds => new Promise(resolve => setTimeout(resolve, milliseconds))
+
+export async function patiently(read, attempts = 3, pause = 5000) {
+  for (let attempt = 1; ; attempt += 1) {
+    const found = await read()
+    if (found || attempt >= attempts) return found
+    await wait(pause)
+  }
+}
 
 function changedFiles(number, repository) {
   return execFileSync(
@@ -87,11 +117,10 @@ async function check(name, environment) {
   if (name === 'issue-link') {
     const reason = noIssueReason(environment.PR_BODY ?? '')
     if (reason) return { passed: true, message: reason }
-    for (let attempt = 1; attempt <= 3; attempt++) {
-      const closes = closedIssues(environment.PR_NUMBER ?? '', environment.GITHUB_REPOSITORY ?? '')
-      if (closes) return { passed: true, message: `Closes ${closes}` }
-      if (attempt < 3) await wait(5000)
-    }
+    const closes = await patiently(() =>
+      closedIssues(environment.PR_NUMBER ?? '', environment.GITHUB_REPOSITORY ?? '')
+    )
+    if (closes) return { passed: true, message: `Closes ${closes}` }
     const stacked = otherBase(environment.PR_BASE, environment.DEFAULT_BRANCH)
     return { passed: false, message: stacked ? `${issueRule}\n\n${stacked}` : issueRule }
   }

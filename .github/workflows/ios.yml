@@ -29,8 +29,8 @@ jobs:
         uses: ./.github/actions/changed-paths
         with:
           paths: >-
-            apps/ios .xcode-version .python-version .github/workflows/ios.yml
-            .github/actions/changed-paths
+            apps/ios apps/account-api/src/domain/username-cases.json .xcode-version
+            .python-version .github/workflows/ios.yml .github/actions/changed-paths
 
   contracts:
     needs: changes
@@ -53,7 +53,7 @@ jobs:
         run: python3 -m unittest discover --start-directory apps/ios/Tools/tests --pattern 'test_*.py' --verbose
 
   swift:
-    needs: changes
+    needs: [changes, contracts]
     if: >-
       github.event_name == 'workflow_dispatch' ||
       (vars.IOS_SWIFT_TESTS == 'on' && needs.changes.outputs.changed == 'true')

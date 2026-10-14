@@ -26,7 +26,7 @@ export default defineConfig({
   outputDir: 'e2e/results',
   fullyParallel: true,
   forbidOnly: inCI,
-  retries: inCI ? 1 : 0,
+  retries: 0,
   workers: onProductionBuild ? 1 : undefined,
   expect: { timeout: onProductionBuild ? 5_000 : 15_000 },
   reporter: inCI ? [['list'], ['html', { open: 'never', outputFolder: 'e2e/report' }]] : [['list']],

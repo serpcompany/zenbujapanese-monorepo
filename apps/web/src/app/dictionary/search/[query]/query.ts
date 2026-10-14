@@ -1,5 +1,6 @@
+import { normalizeQuery } from '@zenbu/dictionary-core/search/query'
 import { permanentRedirect } from 'next/navigation'
-import { decodeSegment, normalizeSearchQuery } from '@/lib/dictionary/urls'
+import { decodeSegment } from '@/lib/dictionary/urls'
 
 export async function searchQuery(
   params: Promise<{ query: string }>,
@@ -8,7 +9,7 @@ export async function searchQuery(
 ): Promise<string> {
   const segment = (await params).query
   const raw = decoded ? segment : decodeSegment(segment)
-  const query = normalizeSearchQuery(raw)
+  const query = normalizeQuery(raw)
   if (!query) permanentRedirect('/dictionary/search/')
   if (query !== raw || (!decoded && segment.includes('.'))) permanentRedirect(pathFor(query))
   return query

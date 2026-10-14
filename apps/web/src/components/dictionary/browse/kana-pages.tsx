@@ -7,6 +7,7 @@ import {
   type KanaScript
 } from '@zenbu/dictionary-core/browse/kana'
 import { pageCount } from '@zenbu/dictionary-core/browse/lists'
+import { sourceCredits } from '@zenbu/dictionary-core/sources/credits'
 import Link from 'next/link'
 import {
   BrowseHeading,
@@ -23,7 +24,7 @@ import { WordList } from '@/components/dictionary/word-row'
 import { formatCount, plural } from '@/lib/dictionary/browse/copy'
 import type { BrowseWordsPage, KanaInitialPage } from '@/lib/dictionary/browse/data'
 import { browsePath, kanaChartsPath, kanaPath, scriptPath } from '@/lib/dictionary/browse/paths'
-import { pageSources, sources } from '@/lib/dictionary/sources'
+import { pageSources } from '@/lib/dictionary/sources'
 
 const scriptNames: Record<KanaScript, string> = { hiragana: 'Hiragana', katakana: 'Katakana' }
 const browseCrumb = { label: 'Browse', path: browsePath }
@@ -134,7 +135,7 @@ export function ScriptIndex({ index, heading }: { index: KanaIndexResponse; head
           </Chips>
         </section>
       ) : null}
-      <SourceCredits sources={[sources.jmdict]} />
+      <SourceCredits sources={[sourceCredits.jmdict]} />
     </BrowsePage>
   )
 }

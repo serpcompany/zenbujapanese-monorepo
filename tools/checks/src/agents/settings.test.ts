@@ -220,6 +220,7 @@ describe('the CI Claude jobs under .claude/settings.json', () => {
     expect(jobs.map(job => job.path)).toEqual([
       '.github/workflows/claude.yml',
       '.github/workflows/code-review.yml',
+      '.github/workflows/code-review.yml',
       '.github/workflows/maintenance.yml',
       '.github/workflows/maintenance.yml'
     ])

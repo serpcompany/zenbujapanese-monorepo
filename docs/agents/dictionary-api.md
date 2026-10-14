@@ -245,8 +245,8 @@ sentences' words, links, and marks), word detail (the first 25 examples' order, 
 highlights, the counts, the furigana split, the pitch graph, each frequency row's details, and
 every conjugated form's examples), and kanji detail (its metrics, Waller's JLPT level among
 them). Each is replayed a second time through `embedded/`, the entry point the app calls, on
-`node:sqlite` with the real tokenizer and kanji files (the `embedded*.conformance.test.ts`
-files), where the kanji element suite runs too: the website has no element page yet, so that
+`node:sqlite` with the real tokenizer, kanji, and frequency files (`embedded*.conformance.test.ts`),
+where the kanji element suite runs too: the website has no element page yet, so that
 is its only replay. A change that would alter what the app shows fails here before any Swift
 runs. The word-detail suite's furigana, pitch graph, frequency details, and conjugations take
 the shapes in `packages/dictionary-core/src/detail/suite.ts`, which the website's rendered-page
@@ -264,9 +264,9 @@ Detail lists no examples, and neither does the page. Without the files the suite
 `ZENBU_REQUIRE_ARTIFACT=1` makes them fail instead, as CI does, and without Sudachi's dictionary
 the retrieval suite's sentence-search cases skip. No suite records sentence search yet (recording
 it needs the app's Japanese Text Analysis pack in the Simulator), so `sentence-search.test.ts`
-checks the cases the app's manual checks name.
-`conjugation-examples.test.ts` pages a form's examples.
-`full-text.test.ts` checks English search where FTS4 differs from other engines.
+checks the cases the app's manual checks name. `conjugation-examples.test.ts` pages a form's
+examples. `full-text.test.ts` checks English search where FTS4 differs from other engines.
+`frequency.test.ts` reads the bundled lists as the app does, one file each, and as the service does.
 
 The `Dictionary API` workflow runs `pnpm check` on pull requests with the Git LFS files and
 Sudachi's dictionary cached, then the website's rendered-page gate against the built service. The
