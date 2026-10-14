@@ -57,7 +57,7 @@ struct LoadedExamplesTests {
     }
 
     func untilHeld(_ from: Int, reads: Int = 1) async {
-      while (held[from]?.count ?? 0) < reads { await Task.yield() }
+      while (held[from]?.count ?? 0) < reads, !Task.isCancelled { await Task.yield() }
     }
 
     func answer(_ from: Int) {
@@ -66,6 +66,7 @@ struct LoadedExamplesTests {
     }
 
     func answer(_ from: Int, read number: Int) {
+      guard held[from]?.indices.contains(number) == true else { return }
       held[from]?.remove(at: number).waiting.resume()
     }
 
@@ -81,6 +82,14 @@ struct LoadedExamplesTests {
 
   private func rows(_ loaded: LoadedExamples) -> [String] {
     loaded.examples.map(\.sentence.japanese)
+  }
+
+  private func ended(_ task: Task<Void, Never>) async {
+    await withTaskCancellationHandler {
+      await task.value
+    } onCancel: {
+      task.cancel()
+    }
   }
 
   @Test("the first answer holds a screen's rows, and the rest of its page follows at once")
@@ -164,7 +173,7 @@ struct LoadedExamplesTests {
     await miru.untilHeld(0)
     #expect(loaded.state(of: "見る") == .loading)
     miru.answer(0)
-    await readingAgain.value
+    await ended(readingAgain)
     #expect(loaded.state(of: "見る") == .listed)
     #expect(rows(loaded) == miru.rows(0..<25))
   }
@@ -210,18 +219,18 @@ struct LoadedExamplesTests {
       await miru.untilHeld(0, reads: 2)
       if secondAnswersFirst {
         miru.answer(0, read: 1)
-        await second.value
+        await ended(second)
         #expect(loaded.state(of: "見る") == .listed)
         miru.failing = [0]
         miru.answer(0, read: 0)
-        await first.value
+        await ended(first)
       } else {
         miru.failing = [0]
         miru.answer(0, read: 0)
-        await first.value
+        await ended(first)
         #expect(loaded.state(of: "見る") == .loading)
         miru.answer(0, read: 0)
-        await second.value
+        await ended(second)
       }
       #expect(loaded.state(of: "見る") == .listed)
       #expect(rows(loaded) == miru.rows(0..<25))
@@ -241,7 +250,7 @@ struct LoadedExamplesTests {
     await loaded.load("食べる", rowsOnScreen: nil, read: taberu.read)
     #expect(loaded.state(of: "食べる") == .listed)
     miru.answer(0)
-    await retry.value
+    await ended(retry)
     #expect(loaded.state(of: "食べる") == .listed)
     #expect(rows(loaded) == taberu.rows(0..<25))
   }
@@ -298,8 +307,8 @@ struct LoadedExamplesTests {
       await asking(loaded, miru)
       #expect(rows(loaded) == miru.rows(0..<25))
     }
-    await answering.value
-    await screen.value
+    await ended(answering)
+    await ended(screen)
     #expect(miru.asked == [ExampleBatch(from: 0, limit: 8), ExampleBatch(from: 8)])
     #expect(rows(loaded) == miru.rows(0..<25))
   }
@@ -332,7 +341,7 @@ struct LoadedExamplesTests {
     await miru.untilHeld(0)
     leaving.cancel()
     miru.answer(0)
-    await leaving.value
+    await ended(leaving)
     #expect(!loaded.answers("見る"))
     #expect(loaded.examples.isEmpty)
 
