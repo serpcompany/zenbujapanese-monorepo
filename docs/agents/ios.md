@@ -194,10 +194,10 @@ don't contain them), so they need no network, account, camera, or microphone:
   has no keychain access group; a build signed with the team keeps it.
 - `ZENBU_TRANSLATE_SCRIPT=station` is the Translate harness ([`translate.md`](translate.md),
   Simulator harness).
-- `ZENBU_SLOW_LINKING=<seconds>` holds back every answer that links words (a page of examples, a
-  caption's or a line's words) by that long, so a test can tell a row that arrives with its words
-  from one that links them after it is drawn, and `ZENBU_FAIL_LINKING=<count>` fails the first
-  that many, so it can see a screen read again what it couldn't (`ExampleRowsUITests`).
+- `ZENBU_HOLD_LINKING=1` holds back every answer that links words (a page of examples, a caption's
+  or a line's words) until the test posts `HeldAnswers.letGoNotice`, so it can tell a row that
+  arrives with its words from one linked after it is drawn, and `ZENBU_FAIL_LINKING=<count>` fails
+  the first that many, so it can see a screen read again what it couldn't (`ExampleRowsUITests`).
 - `ZENBU_YOUTUBE_STAND_IN=<json>` stands in for YouTube: the player page loads a local player
   that answers the IFrame API's calls (play, pause, seek, speed, and its time), and the captions
   come from the JSON's player response and timed text, through the same parsing, track choice,

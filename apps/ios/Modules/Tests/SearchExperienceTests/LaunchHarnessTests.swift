@@ -21,11 +21,11 @@ struct LaunchHarnessTests {
     #expect(!LaunchHarness.erasesSavedState(environment: fresh, bundleID: nil))
   }
 
-  @Test("linking is slowed only by the seconds a launch asks for")
-  func slowLinkingTakesSeconds() {
-    #expect(LaunchHarness.linkingDelay([LaunchHarness.slowLinkingKey: "2.5"]) == .seconds(2.5))
-    #expect(LaunchHarness.linkingDelay([LaunchHarness.slowLinkingKey: "soon"]) == nil)
-    #expect(LaunchHarness.linkingDelay([:]) == nil)
+  @Test("linking answers are held only in a launch that asks for it")
+  func heldLinkingIsAskedFor() {
+    #expect(LaunchHarness.holdsLinking([LaunchHarness.holdLinkingKey: "1"]))
+    #expect(!LaunchHarness.holdsLinking([LaunchHarness.holdLinkingKey: "0"]))
+    #expect(!LaunchHarness.holdsLinking([:]))
   }
 
   @Test("linking fails only for as many answers as a launch asks for")

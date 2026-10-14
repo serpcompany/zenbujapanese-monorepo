@@ -319,9 +319,9 @@ at its end; of the first 25, those that fit the screen come first and the rest f
 list that couldn't be read shows no examples, and is read again when the learner comes back.
 
 Check: UI `ExampleRowsUITests` (on each screen the first row, one past the first screen, and one
-of the next 25 arrive linked and keep their height, with linking slowed so a late link would
-show; each list goes on past 25; a form's linked word opens its entry; a list whose first read
-was made to fail is read on coming back); package `LoadedExamplesTests`; the recorded suites.
+of the next 25 arrive linked while linking is held, and the rows on screen keep their height once
+it is let go; each list goes on past 25; a form's linked word opens its entry; a list whose first
+read was made to fail is read on coming back); package `LoadedExamplesTests`; the recorded suites.
 
 A **Frequency** section lists each enabled dictionary's rank or JLPT level for the word. Selecting a
 row opens that dictionary's details. JLPT levels are presented as unofficial study estimates.

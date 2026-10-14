@@ -154,7 +154,7 @@ actor DictionaryTextData {
   private func linked<Answer: Decodable>(
     _ method: String, _ request: some Encodable
   ) async throws -> Answer {
-    if let delay = LaunchHarness.slowsLinkingBy { try await Task.sleep(for: delay) }
+    try await LaunchHarness.heldLinking?.wait()
     if linkingAnswersToFail > 0 {
       linkingAnswersToFail -= 1
       throw ExampleSentenceRetrievalError.retrievalUnavailable(.queryFailed)
