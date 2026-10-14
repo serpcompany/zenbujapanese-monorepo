@@ -4015,12 +4015,9 @@
         words: [...leading, ...detail.words.filter((word) => word.id !== request.leadingWord)]
       };
     }
-    kanjiMeanings(character) {
-      return this.kanji.row(character)?.meanings ?? [];
-    }
     candidateMeanings(candidates) {
       return candidates.map(
-        (candidate) => isKanjiCharacter(candidate) ? this.kanjiMeanings(candidate)[0] ?? null : null
+        (candidate) => isKanjiCharacter(candidate) ? this.kanji.row(candidate)?.meanings[0] ?? null : null
       );
     }
     kanjiElementPage(glyph) {
@@ -5442,7 +5439,6 @@
       ruby: (pair) => presentation().ruby(JSON.parse(pair)),
       wordPage: (entry) => presentation().wordPage(JSON.parse(entry)),
       kanjiPage: (request) => presentation().kanjiPage(JSON.parse(request)),
-      kanjiMeanings: (character) => presentation().kanjiMeanings(character),
       candidateMeanings: (candidates) => presentation().candidateMeanings(JSON.parse(candidates)),
       kanjiElementPage: (glyph) => presentation().kanjiElementPage(glyph),
       kanjiStrokes: (row) => presentation().kanjiStrokes(JSON.parse(row)),

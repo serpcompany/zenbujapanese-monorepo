@@ -123,10 +123,12 @@ describe.runIf(artifactAvailable)('the app’s word and kanji pages on the artif
     const kanji = async (characters: string[]) => {
       const listed = []
       for (const character of characters) {
-        listed.push({
+        const { meanings } = await app.presentation<EmbeddedKanjiPage>('kanjiPage', {
           character,
-          meanings: await app.presentation<string[]>('kanjiMeanings', character)
+          words: [],
+          leadingWord: null
         })
+        listed.push({ character, meanings })
       }
       return listed
     }

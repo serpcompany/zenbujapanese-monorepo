@@ -222,11 +222,6 @@ describe('the embedded presentation engine', () => {
     expect(page.words.map(word => word.id)).toEqual(['w1'])
   })
 
-  test('gives a kanji’s meanings, none for one it has no reference for', async () => {
-    expect(await ask(host, 'kanjiMeanings', '学')).toEqual(['学 meaning', 'second', 'third'])
-    expect(await ask(host, 'kanjiMeanings', '㐂')).toEqual([])
-  })
-
   test('gives each handwriting candidate that is one kanji its first meaning, in one call', async () => {
     expect(
       await ask(host, 'candidateMeanings', JSON.stringify(['学', '学校', 'が', '㐂', '食']))
