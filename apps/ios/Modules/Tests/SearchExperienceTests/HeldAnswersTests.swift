@@ -33,13 +33,25 @@ struct HeldAnswersTests {
     try await late.value
   }
 
-  @Test("an answer whose asker gave up while it was held fails once it is let go")
-  func aCancelledAnswerFails() async {
+  @Test("an answer whose asker gives up ends at once, though nothing ever lets it go")
+  func aCancelledAnswerEnds() async {
     let held = HeldAnswers()
     let answer = Task { try await held.wait(since: at(1)) }
     #expect(await holds(1, held))
     answer.cancel()
-    #expect(await held.letGo(heldBefore: at(3)) == 1)
     await #expect(throws: CancellationError.self) { try await answer.value }
+    #expect(await held.held == 0)
+    #expect(await held.letGo(heldBefore: at(9)) == 0)
+  }
+
+  @Test("an answer asked for by a task that has already given up isn't held at all")
+  func anAnswerAskedAfterGivingUpIsNotHeld() async {
+    let held = HeldAnswers()
+    let answer = Task {
+      withUnsafeCurrentTask { $0?.cancel() }
+      try await held.wait(since: at(1))
+    }
+    await #expect(throws: CancellationError.self) { try await answer.value }
+    #expect(await held.held == 0)
   }
 }

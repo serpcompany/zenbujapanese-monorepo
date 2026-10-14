@@ -4,13 +4,25 @@ import notify
 actor HeldAnswers {
   static let letGoNotice = "com.zenbujapanese.dictionary.uitests.let-linking-go"
 
-  private var waiting: [(since: Date, answer: CheckedContinuation<Void, Never>)] = []
+  private var waiting: [(id: UUID, since: Date, answer: CheckedContinuation<Void, Never>)] = []
 
   var held: Int { waiting.count }
 
   func wait(since: Date = .now) async throws {
-    await withCheckedContinuation { waiting.append((since, $0)) }
+    let id = UUID()
+    await withTaskCancellationHandler {
+      await withCheckedContinuation { answer in
+        if Task.isCancelled { answer.resume() } else { waiting.append((id, since, answer)) }
+      }
+    } onCancel: {
+      Task { await self.giveUp(id) }
+    }
     try Task.checkCancellation()
+  }
+
+  private func giveUp(_ id: UUID) {
+    guard let index = waiting.firstIndex(where: { $0.id == id }) else { return }
+    waiting.remove(at: index).answer.resume()
   }
 
   @discardableResult
