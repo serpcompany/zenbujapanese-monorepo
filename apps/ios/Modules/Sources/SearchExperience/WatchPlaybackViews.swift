@@ -30,9 +30,10 @@ struct LiveCaptionList<Row: View>: View {
   let cues: [SubtitleCue]
   let player: YouTubePlayerController
   @ViewBuilder let row: (SubtitleCue) -> Row
+  @State private var activeCueID: Int?
+  @State private var draws = DrawCount()
 
   var body: some View {
-    let activeCueID = (cues.last { $0.start <= player.currentTime } ?? cues.first)?.id
     ScrollViewReader { proxy in
       List {
         ForEach(cues) { cue in
@@ -43,11 +44,27 @@ struct LiveCaptionList<Row: View>: View {
       }
       .listStyle(.plain)
       .contentMargins(.top, 8, for: .scrollContent)
-      .onChange(of: activeCueID) { _, id in
-        guard let id else { return }
+      .background { ActiveCueFollower(cues: cues, player: player, activeCueID: $activeCueID) }
+      .onChange(of: activeCueID) { previous, id in
+        guard previous != nil, let id else { return }
         withAnimation { proxy.scrollTo(id, anchor: .center) }
       }
       .accessibilityIdentifier("watch.captions")
     }
+    .countingDraws(as: "watch.captions.draws", in: draws)
+  }
+}
+
+private struct ActiveCueFollower: View {
+  let cues: [SubtitleCue]
+  let player: YouTubePlayerController
+  @Binding var activeCueID: Int?
+
+  var body: some View {
+    let id = (cues.last { $0.start <= player.currentTime } ?? cues.first)?.id
+    Color.clear
+      .onChange(of: id, initial: true) { _, id in
+        if activeCueID != id { activeCueID = id }
+      }
   }
 }
