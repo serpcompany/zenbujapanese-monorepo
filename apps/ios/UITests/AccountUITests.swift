@@ -38,11 +38,15 @@ final class AccountUITests: ZenbuUITestCase {
     open(.account, in: app)
     tap(find("account.profile", in: app))
     type("Ada Lovelace", into: waitFor(find("profile.name", in: app)))
+    type("ada.l", into: waitFor(find("profile.username", in: app)))
     type("not an address", into: waitFor(find("profile.email", in: app)))
     tap(find("profile.name", in: app))
+    waitFor(labeled("A username is 3 to 30 letters a to z, digits, or underscores.", in: app))
     waitFor(labeled("Enter a valid email address, like name@example.com.", in: app))
     goBack(in: app)
-    waitUntil(waitFor(find("account.profile", in: app)), "label CONTAINS 'Ada Lovelace'")
+    waitUntil(
+      waitFor(find("account.profile", in: app)),
+      "label CONTAINS 'Ada Lovelace' AND NOT (label CONTAINS 'ada.l')")
   }
 
   func testSignInOffersAppleGoogleAndACodeAndSaysWhenTheServiceCantBeReached() {
