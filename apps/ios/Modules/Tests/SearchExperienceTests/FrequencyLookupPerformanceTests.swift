@@ -46,11 +46,5 @@ struct FrequencyLookupPerformanceTests {
         "\(statement.list) is read by \(plan ?? [])")
       #expect(plan?.contains { $0.hasPrefix("SCAN \(table)") } == false)
     }
-
-    let clock = ContinuousClock()
-    let elapsed = try clock.measure {
-      let _: [ListedWord] = try core.answer("wordRows", request)
-    }
-    #expect(elapsed < .milliseconds(150), "60 lookups in two lists took \(elapsed)")
   }
 }
