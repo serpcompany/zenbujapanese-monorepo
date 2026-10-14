@@ -70,13 +70,15 @@ player is by hand; the UI tests stand in for it with a local player that answers
   Entry**, the expand button beside the word, and the sheet's links to other dictionary pages (a
   kanji, the conjugations, a related word, or a word in an example) close the sheet and open the
   page inside Player, so Back returns to the video. The same goes for the word sheet in Image
-  Search and Translate, in their own tabs.
+  Search and Translate, in their own tabs. A card's words keep their links however many lines
+  were linked before it, as an example sentence's and a Translate line's do.
   Check: UI `PlayerWatchUITests.testAWordInACaptionOpensItsEntryInsidePlayer` and
   `testAWordSheetsKanjiOpensItsPageInsidePlayer`; the same sheet in Image Search
   (`ImageSearchUITests.testAWordSheetsKanjiOpensItsPageOnTranslate`) and Translate
   (`ConversationUITests.testAWordsFullEntryShowsTheSessionBarThatReturns` and
   `testAWordSheetsConjugationsAndKanjiOpenTheirPagesInTranslate`); package
-  `WordSheetPresentationTests` and `PlayerReadingAidTests`.
+  `WordSheetPresentationTests`, `PlayerReadingAidTests`, and `LinkedEntriesTests` (a line linked
+  as the app's 4,000 kept entries run out, or while another line's empties them, keeps its own).
 - **Translations.** With Sentence Translations on, each card shows a translation beneath the
   Japanese. By default YouTube's translation is used, and Apple Translation fills lines it leaves
   out. Choosing Apple in Reading Aids translates every line on the device instead, so each
