@@ -28,7 +28,7 @@ struct LookupClient: Sendable {
       _ in nil
     },
     savedWord: @escaping @Sendable (String, String, String) async throws -> WebsiteLinkRoute = {
-      _, _, _ in .home
+      _, headword, _ in .search(headword)
     },
     websiteRoute: @escaping @Sendable (URL) async -> WebsiteLinkRoute = { _ in .home }
   ) {
@@ -163,7 +163,10 @@ actor LanguageReferenceData {
   }
 
   func route(openingSaved word: SavedWord) async throws -> WebsiteLinkRoute {
-    route(opening: try await coreAnswer("savedWord", word))
+    let page: WebsitePage = try await coreAnswer("savedWord", word)
+    guard page.kind == "word" else { return route(opening: page) }
+    guard let entry = try? entry(named: page.id) else { return .search(word.headword) }
+    return .open(.word(entry, nil))
   }
 
   func route(openingWebsite url: URL) async -> WebsiteLinkRoute {

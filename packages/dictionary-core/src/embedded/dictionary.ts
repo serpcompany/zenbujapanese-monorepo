@@ -74,7 +74,6 @@ export function embeddedEndpoint(host: EmbeddedHost): EmbeddedEndpoint {
     wordPageWithoutContent: reading => presentation().wordPageWithoutContent(reading),
     kanjiPageWithoutContent: () => presentation().kanjiPageWithoutContent(),
     kanjiPage: request => presentation().kanjiPage(JSON.parse(request)),
-    kanjiMeanings: character => presentation().kanjiMeanings(character),
     candidateMeanings: candidates => presentation().candidateMeanings(JSON.parse(candidates)),
     kanjiElementPage: glyph => presentation().kanjiElementPage(glyph),
     kanjiStrokes: row => presentation().kanjiStrokes(JSON.parse(row)),

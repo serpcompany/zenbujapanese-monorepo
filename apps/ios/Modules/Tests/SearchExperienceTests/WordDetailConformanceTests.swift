@@ -144,7 +144,8 @@ private struct WordDetailObserver {
   private func kanji(_ characters: [String]) throws -> [WordDetailCase.Kanji] {
     try characters.compactMap(KanjiCharacter.init).map { kanji in
       WordDetailCase.Kanji(
-        character: kanji.rawValue, meanings: try core.answer("kanjiMeanings", kanji.rawValue))
+        character: kanji.rawValue,
+        meanings: try KanjiPage(kanji, words: [], openedFrom: nil).meanings)
     }
   }
 
