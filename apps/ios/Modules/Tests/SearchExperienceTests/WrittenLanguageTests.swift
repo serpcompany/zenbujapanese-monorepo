@@ -48,4 +48,14 @@ struct WrittenLanguageTests {
     #expect(page.regions.map(\.surface) == japanese)
     #expect(texts.filter(PresentationCore.shared.containsJapaneseText) == japanese)
   }
+
+  @Test("the first recognition pass found Japanese only when the core reads Japanese in a line")
+  func firstPassFindsWhatTheCoreReadsAsJapanese() {
+    for text in ["\u{20BB7}", "\u{4DC0}", "Sale 50%"] {
+      #expect(!ImageTextRecognitionClient.foundJapanese(inTopCandidates: [text]))
+    }
+    for text in ["々", "ｶﾀｶﾅ", "\u{20BB7}野家"] {
+      #expect(ImageTextRecognitionClient.foundJapanese(inTopCandidates: ["Sale 50%", text]))
+    }
+  }
 }

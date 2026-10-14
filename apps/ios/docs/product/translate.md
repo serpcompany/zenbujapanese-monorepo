@@ -61,8 +61,8 @@ The file picker itself is the system's: by hand.
 ## Typing to translate
 
 The typing screen is one large card reading **Translate anything**. Translate detects the
-language as search reads it: text with any kana or kanji, halfwidth katakana included, is Japanese
-and is translated into English, and text with only Latin letters is English and is translated into
+language: text with kana or kanji, as Search reads them (halfwidth katakana too), is Japanese and is
+translated into English, and text with only Latin letters A to Z is English and is translated into
 Japanese. There is no swap button. The translation
 appears in the same card under a divider, with a label such as **English → Japanese** and
 buttons to copy and speak it; Japanese in it is underlined and tappable. An ✕ clears the text.

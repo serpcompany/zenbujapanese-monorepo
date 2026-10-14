@@ -139,7 +139,7 @@ final class PresentationCore: @unchecked Sendable {
   }
 
   func writtenLanguage(_ text: String) -> String? {
-    lock.withLock { (try? preparedCore().text("writtenLanguage", text)) ?? nil }
+    lock.withLock { try? preparedCore().text("writtenLanguage", text) }
   }
 
   func isKanji(_ text: String) -> Bool {
