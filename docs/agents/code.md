@@ -19,8 +19,12 @@ kind of change needs are in [`verification.md`](verification.md).
 
 Git hooks run the fast checks before work leaves the machine: `pnpm install` installs them
 ([`lefthook.yml`](../../lefthook.yml)). Before each commit they check the staged files for comments,
-size, and secrets, and run each package's Biome on its staged files; before each push they run
-`pnpm verify`. Fix what they report rather than skipping them; CI runs the same checks either way.
+size, and secrets, and run each package's Biome on its staged files. Before each push they run
+`pnpm verify`, then the fast check (lint, types, and unit tests, no build) of each package the
+branch changes against `origin/main`: the package itself, one that imports it, and every package
+when the root's package files change. A branch that changes only docs or the app runs
+`pnpm verify` alone. Fix what they report rather than skipping them; CI runs the same checks
+either way.
 
 ## No comments
 
@@ -187,11 +191,10 @@ The docs are the map agents work from, so they stay correct and reachable:
 | `pnpm maintenance:report` | A Markdown report: the checks' failures; docs whose named files changed after the doc was edited; the quality rows whose Code changed after their Graded date ("Scores to re-grade"); known debt counted by Size, with the first small item; size and duplicate exceptions; the docs over their size budget; code files within 50 lines of the size limit; and, in the weekly `report` job, the review's findings of the last four weeks by part, with the parts that repeat (`tools/checks/src/report.ts`) | `Weekly maintenance`, on Mondays, where doc gardening and code gardening start from it ([`ci-agents.md`](ci-agents.md)); by hand |
 | The edit hook | No comments, file size, Swift layers, and no secrets, on each file Claude Code writes, as it writes it (`.claude/settings.json`, `tools/checks/hook.mjs`). A file in a git worktree is checked by that worktree's own copy of the checks, since Claude Code runs the hook from the checkout the session started in. A checkout whose packages aren't installed says so rather than passing, except in a GitHub Actions job, which chose not to install. From Claude Code 2.1.295 a hook that crashes is reported too (`onFailure`); an older one ignores the setting | Claude Code sessions in this repository |
 | The stop hook | The same four checks on every file changed since the last commit, and the docs check, before a turn ends (`tools/checks/stop-hook.mjs`). It catches what the edit hook can't see: a file a shell command rewrote, and a doc a change elsewhere made wrong. It reports the same failures once per session, and never holds a turn twice in a row. In a GitHub Actions job it does nothing: the jobs that run Claude there run the checks themselves, on a checkout the action has partly reset | Claude Code sessions in this repository |
-| The git hooks | Before a commit, `comments,sizes,secrets` and each package's Biome on the staged files; before a push, `pnpm verify` ([`lefthook.yml`](../../lefthook.yml)) | Every clone after `pnpm install` |
+| The git hooks | Before a commit, `comments,sizes,secrets` and each package's Biome on the staged files; before a push, `pnpm verify` and each changed package's lint, typecheck, and tests, without its build or the dictionary service's recorded suites, which take over a minute and need the app's data files ([`lefthook.yml`](../../lefthook.yml), `tools/checks/src/git-hooks.test.ts`) | Every clone after `pnpm install` |
 | The pull request checks | A Conventional Commit title, a closing issue or a stated reason for none, and a test in every fix ([Fixes](#fixes), [Pull requests](#pull-requests)), from `tools/checks/pull-request.mjs`, which needs no install | The `Pull request` workflow, on every pull request, again when its title or body is edited |
 | `pnpm check` | `pnpm verify`, then `pnpm check` in every package | By hand, before a pull request |
-| `pnpm check` in a package | Biome (with the package's import and logging rules, and no non-null assertions), typecheck, tests, and its build | The package's workflow, on pull requests that change it |
-| Generated files | The core's fixtures match what `pnpm --filter zenbujapanese-dictionary-api fixtures` exports from the language data, `apps/web/cloudflare-env.d.ts` matches what `pnpm cf-typegen` writes from `wrangler.jsonc`, and the app's bundle of the core matches what `pnpm --filter @zenbu/dictionary-core bundle:javascriptcore` writes (`packages/dictionary-core/src/embedded/bundle.test.ts`) | The `Dictionary API`, `Web`, and `Dictionary core` workflows |
+| `pnpm check` in a package | Biome (with the package's import and logging rules, and no non-null assertions), typecheck, tests, and its build | The package's workflow, on pull requests that change it || Generated files | The core's fixtures match what `pnpm --filter zenbujapanese-dictionary-api fixtures` exports from the language data, `apps/web/cloudflare-env.d.ts` matches what `pnpm cf-typegen` writes from `wrangler.jsonc`, and the app's bundle of the core matches what `pnpm --filter @zenbu/dictionary-core bundle:javascriptcore` writes (`packages/dictionary-core/src/embedded/bundle.test.ts`) | The `Dictionary API`, `Web`, and `Dictionary core` workflows |
 
 `pnpm verify` lists files with `git ls-files`, so it checks new files before they're committed, and
 skips ignored ones. It runs ShellCheck, actionlint, and Ruff in Docker, at the versions pinned in
