@@ -1,5 +1,6 @@
 import { decodeSegment, parseWordSegment } from '@zenbu/dictionary-core/detail/links'
 import { wordSlug } from '@zenbu/dictionary-core/detail/slug'
+import { normalizeQuery } from '@zenbu/dictionary-core/search/query'
 
 export { decodeSegment, parseWordSegment, wordSlug }
 
@@ -12,13 +13,9 @@ export function searchPath(query: string): string {
 }
 
 export function kanjiSearchPath(character: string): string {
-  return searchPath(normalizeSearchQuery(character))
+  return searchPath(normalizeQuery(character))
 }
 
 export function hasSearchPath(query: string): boolean {
   return query !== '.' && query !== '..'
-}
-
-export function normalizeSearchQuery(raw: string): string {
-  return raw.normalize('NFKC').toLowerCase().split(/\s+/u).filter(Boolean).join(' ')
 }

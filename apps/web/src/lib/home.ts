@@ -1,4 +1,5 @@
-import { normalizeSearchQuery, searchPath } from '@/lib/dictionary/urls'
+import { normalizeQuery } from '@zenbu/dictionary-core/search/query'
+import { searchPath } from '@/lib/dictionary/urls'
 import { drawerLinks, type MegaMenu, type SiteMenu, siteMenus } from '@/lib/site-menus'
 
 export const homeTitle = 'Zenbu Japanese: Japanese Dictionary and Translator for iPhone'
@@ -6,7 +7,7 @@ export const homeTitle = 'Zenbu Japanese: Japanese Dictionary and Translator for
 const exampleSearch = (query: string, lang?: 'ja' | 'ja-Latn') => ({
   query,
   lang,
-  path: searchPath(normalizeSearchQuery(query))
+  path: searchPath(normalizeQuery(query))
 })
 
 export const exampleSearches = [
