@@ -16,7 +16,6 @@ struct JapaneseTextToken: Identifiable, Sendable {
   let isFunctionWord: Bool
   let accent: Accent?
   let lineBreak: JapaneseTokenLineBreakBehavior
-  let isCounted: Bool
 
   init(
     id: Int,
@@ -28,8 +27,7 @@ struct JapaneseTextToken: Identifiable, Sendable {
     ruby: JapaneseRuby? = nil,
     isFunctionWord: Bool = false,
     accent: Accent? = nil,
-    lineBreak: JapaneseTokenLineBreakBehavior = .normal,
-    isCounted: Bool = false
+    lineBreak: JapaneseTokenLineBreakBehavior = .normal
   ) {
     self.id = id
     self.surface = surface
@@ -41,7 +39,6 @@ struct JapaneseTextToken: Identifiable, Sendable {
     self.isFunctionWord = isFunctionWord
     self.accent = accent
     self.lineBreak = lineBreak
-    self.isCounted = isCounted
   }
 }
 
@@ -53,6 +50,7 @@ struct JapaneseTextAnalysisClient: Sendable {
       _ highlightedQuery: SearchQuery,
       _ highlightedEntry: DictionaryEntry?
     ) async -> [JapaneseTextToken]
+  var countedWords: @Sendable (_ lines: [String]) async -> [LanguageReferenceID]
 
   static func live(
     text: DictionaryTextData = .shared, linked: LinkedEntries = LinkedEntries(lookupClient: .live)
@@ -67,6 +65,9 @@ struct JapaneseTextAnalysisClient: Sendable {
               highlightedEntry: highlightedEntry?.id.rawValue))
         else { return [] }
         return await linked.tokens([words], highlightedEntry: highlightedEntry)[0]
+      },
+      countedWords: { lines in
+        ((try? await text.countedWords(lines)) ?? []).map(LanguageReferenceID.init(rawValue:))
       }
     )
   }
@@ -121,8 +122,7 @@ actor LinkedEntries {
       },
       isFunctionWord: word.isFunctionWord,
       accent: word.accent,
-      lineBreak: JapaneseTokenLineBreakBehavior(attaching: word.attaches),
-      isCounted: word.counted
+      lineBreak: JapaneseTokenLineBreakBehavior(attaching: word.attaches)
     )
   }
 

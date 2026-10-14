@@ -10,9 +10,8 @@ The command-line tools must point at Xcode, not at the Command Line Tools, or `x
 the Simulator tools refuse to run. `xcode-select -p` shows which; fix it once per Mac with
 `sudo xcode-select -s /Applications/Xcode.app/Contents/Developer`.
 
-The current `sudachi-swift` binary lacks an x86_64 Simulator slice. Use
-`ONLY_ACTIVE_ARCH=YES`; a generic dual-architecture Simulator build fails at
-link time.
+The current `sudachi-swift` binary lacks an x86_64 Simulator slice. Use `ONLY_ACTIVE_ARCH=YES`; a
+generic dual-architecture Simulator build fails at link time.
 
 The app's **Prepare bundled Sudachi Core** build phase runs offline: it copies the pinned Sudachi
 Core dictionary from `~/Library/Caches/com.zenbujapanese.build/SudachiCore` (or
@@ -249,8 +248,8 @@ the same on every device:
 - The Settings window is SwiftUI's own `com_apple_SwiftUI_Settings_window`
   (`TestDevice.settingsWindow`); an identifier on the Settings view never reaches it.
 - A scroll wheel doesn't stop a scroll that's still animating, as a finger does, so a test that
-  scrolls a list just after it moved waits for it to settle first (`waitUntilStill`), and it
-  scrolls the list, not the window: a scroll sent to the window doesn't always land on the list.
+  scrolls a list just after it moved waits for it to settle first (`waitUntilStill`), and it scrolls
+  the list, not the window (`reveal`'s `scrolling:`): a scroll sent to the window can miss the list.
 - A button's accessibility value isn't given to a test on the Mac, so the test of a result marked
   known checks its menu there (`SearchUITests.testMarkingAResultKnownShowsTheKnownCapsule`).
 - A headword's kanji aren't elements of their own, so the highlight test clicks the kanji and
@@ -401,14 +400,13 @@ Sudachi. The core does the tokenizing itself, in its text engine, with the token
 website's dictionary service runs too ([`dictionary-core.md`](dictionary-core.md), The
 tokenizer). It is a port of kuromoji.js, which neither runs any more.
 
-The dictionary's eleven files ship gzipped, 18 MB that unpack to 100 MB. The app unpacks each
-with zlib (`Gunzip.swift`), which also checks its checksum and length, when the core first
-asks for it (`TokenizerDictionary.swift`), and hands the core the unpacked bytes without
-copying them. `DictionaryTextData.availability()` asks the
-core whether it can tokenize, which reads the files. The first Word Detail, Example Sentences,
-or image text of a session asks, and waits for it before it links its sentences: about
-0.18 s, most of it unpacking, where starting kuromoji.js took half a second.
-`TokenizerDictionaryTests` covers the unpacking and a sentence's words.
+The dictionary's eleven files ship gzipped, 18 MB that unpack to 100 MB. The app unpacks each with
+zlib (`Gunzip.swift`), which also checks its checksum and length, when the core first asks for it
+(`TokenizerDictionary.swift`), and hands the core the unpacked bytes without copying them.
+`DictionaryTextData.availability()` asks the core whether it can tokenize, which reads the files.
+The first Word Detail, Example Sentences, or image text of a session asks, and waits for it before
+it links its sentences: about 0.18 s, most of it unpacking, where starting kuromoji.js took half a
+second. `TokenizerDictionaryTests` covers the unpacking and a sentence's words.
 
 To compare the previous interactive parsing path, launch the app with
 `ZENBU_MORPHOLOGY_ENGINE=sudachi`: the core then asks the app for each sentence's words, and
@@ -509,10 +507,11 @@ written from the Swift the core replaced, so it pins what that showed. Record it
 `-only-testing:SearchExperienceTests/KanjiElementConformanceTests`; add a glyph by adding its
 `glyph` and `covers` fields and recording.
 
-`RomajiConformanceTests` checks the Romaji reading aid against `romaji.json`: readings grouped by
-the rule they exercise, and whole sentences with their words. Its cases were recorded from
-Foundation's transliteration, which the core's romaji replaced, so the file is edited by hand, not
-re-recorded; a linked sentence's punctuation and counted words are checked in the same suite.
+`RomajiConformanceTests` checks the Romaji reading aid against `romaji.json`: readings grouped
+by the rule they exercise, and whole sentences with their words. Its cases were recorded from
+Foundation's transliteration, which the core's romaji replaced, so the file is edited by hand,
+not re-recorded; a linked sentence's punctuation is checked in the same suite, and the words
+captions count in `KnownWordCountTests`.
 
 The website's dictionary service replays all seven suites through the shared TypeScript core on the
 same data ([`dictionary-api.md`](dictionary-api.md)), once through its own path and once through the
@@ -643,35 +642,37 @@ answers; [`dictionary-core.md`](dictionary-core.md), The app's side, lists which
   call for a text: the core tokenizes it from the app's files, reads its words' forms in one or two
   statements, and answers each word's place, entry or candidates, furigana, and `accent`. Both paths
   read entries through `LinkedEntries` (4,000 kept); the core keeps the last 512 texts.
+- **Counted words.** `DictionaryTextData.countedWords` is one call for a list of lines: the IDs
+  of the words that count toward comprehension, with no entry read. `Comprehension` asks twenty
+  lines at a time (about 5 ms a call), so a caption card's own link never waits on a whole video.
 - **The kanji files.** `KanjiFiles` maps `KanjiReferenceData.json` and
-  `KanjiElementReferenceData.json` into memory and scans them once for where each record
-  starts and ends, then hands the core a record's bytes as they are in the file. It builds no
-  objects from the files: parsing their 6 MB with `JSONSerialization` took a quarter of a
-  second and left over 100 MB behind. Records are keyed by scalar, not by `String`: Swift calls
-  a compatibility kanji equal to the kanji it unifies with, and the files hold 74 such pairs,
-  each with its own strokes, grade, and readings. `KanjiFilesTests` compares every record with
-  a full parse of the files.
+  `KanjiElementReferenceData.json` into memory and scans them once for where each record starts and
+  ends, then hands the core a record's bytes as they are in the file. It builds no objects from the
+  files: parsing their 6 MB with `JSONSerialization` took a quarter of a second and left over 100 MB
+  behind. Records are keyed by scalar, not by `String`: Swift calls a compatibility kanji equal to
+  the kanji it unifies with, and the files hold 74 such pairs, each with its own strokes, grade, and
+  readings. `KanjiFilesTests` compares every record with a full parse of the files.
 - **Memoized where a view asks again.** Furigana by surface and reading (4,000), a word page by
   entry (64, until the frequency lists change), a gloss by meaning (4,000), romaji by reading (4,000) and by sentence (512), the
   kanji check by string (4,000), and a query by what was typed (1,000), since SwiftUI rebuilds
   a row many times. The keys compare, and hash, byte for byte: Swift's own string equality
   would hand one compatibility kanji's answer to its twin. `PresentationCore`'s lock is recursive,
   because decoding a page builds `KanjiCharacter`s, each of which asks the same engine.
-- **Cancelling.** `SQLiteJSONRows` checks the task between rows, as the app's other reads do, and
-  the core asks the host between batches of rows while it ranks (`zenbuHost.interrupted`), so a
-  search the learner typed past stops within a few milliseconds, not when its ranking ends. The
-  core's call then fails, the lookup throws `CancellationError`, and nothing is cached.
+- **Cancelling.** `SQLiteJSONRows` checks the task between rows, as the app's other reads do,
+  and the core asks the host between batches of rows while it ranks, and before each line it
+  counts (`zenbuHost.interrupted`), so a search the learner typed past, or the count of a video
+  they left, stops within a few milliseconds. The core's call then fails, the lookup throws
+  `CancellationError`, and no half-made answer is kept.
 - **`SearchQuery`** is the app's value for a query: what the screens compare and store. Its
-  text is the core's `normalizeQuery` of what was typed, so the app holds the query Search
-  reads.
+  text is the core's `normalizeQuery` of what was typed: the query Search reads.
 - **Speed.** JavaScriptCore runs without its JIT inside an app, on the Mac as on iPhone, so the
   package's tests on a Mac run the core as a device does. The iOS Simulator does not: its
   JavaScriptCore has the JIT, which makes JavaScript several times faster and holds several times
   the memory, so add `TEST_RUNNER_JSC_useJIT=false` to measure there. `SearchLatencyTests` prints
-  each query's uncached time, how long linking and an abandoned search take, how long the
-  presentation engine takes to start and to build each screen, how long the frequency lists take to
-  be ready, how long romaji, the radical panel, a stroke diagram, and the kanji check take, and the
-  memory a session reaches step by step; it runs only when asked:
+  each query's uncached time, how long linking, a video's known-word count, and an abandoned search
+  take, how long the presentation engine takes to start and to build each screen, how long the
+  frequency lists take to be ready, how long romaji, the radical panel, a stroke diagram, and the
+  kanji check take, and the memory a session reaches step by step; it runs only when asked:
 
   ```sh
   TEST_RUNNER_ZENBU_MEASURE_SEARCH=1 xcodebuild -scheme ZenbuJapaneseModules-Package \
@@ -679,10 +680,9 @@ answers; [`dictionary-core.md`](dictionary-core.md), The app's side, lists which
     -only-testing:SearchExperienceTests/SearchLatencyTests test | grep SEARCH-LATENCY
   ```
 
-  Build with `SWIFT_OPTIMIZATION_LEVEL=-O` to measure: a Debug build spends most of a broad
-  query's time in the unoptimized Swift that writes its rows. Its measurements share one
-  process, and an engine a measurement drops keeps its memory, so read memory from
-  `measureSession` run alone
+  Build with `SWIFT_OPTIMIZATION_LEVEL=-O` to measure: a Debug build spends most of a broad query's
+  time in the unoptimized Swift that writes its rows. Its measurements share one process, and an
+  engine a measurement drops keeps its memory, so read memory from `measureSession` run alone
   (`-only-testing:'SearchExperienceTests/SearchLatencyTests/measureSession()'`).
 
 What stays native, and why:

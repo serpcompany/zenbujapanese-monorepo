@@ -55,7 +55,7 @@ struct RomajiConformanceTests {
     }
   }
 
-  @Test("a linked sentence carries where its punctuation attaches and which words count")
+  @Test("a linked sentence carries where its punctuation attaches, and its function words")
   func linkedWords() async throws {
     let tokens = await JapaneseTextAnalysisClient.live().linkedTokens(
       "「ペンを持っていますか」", SearchQuery(""), nil)
@@ -65,15 +65,9 @@ struct RomajiConformanceTests {
     #expect(tokens.last?.lineBreak == .attachesToPrevious)
     let held = try #require(tokens.first { $0.surface.hasPrefix("持") })
     #expect(held.lineBreak == .normal)
-    #expect(held.isCounted)
+    #expect(!held.isFunctionWord)
     let particle = try #require(tokens.first { $0.surface == "を" })
     #expect(particle.isFunctionWord)
-    #expect(!particle.isCounted)
-    #expect(tokens.allSatisfy { $0.isCounted == ($0.entry != nil && !$0.isFunctionWord) })
-    #expect(
-      Comprehension.countedWords(in: tokens)
-        == tokens.filter(\.isCounted).compactMap(\.entry?.id))
-    #expect(Comprehension.countedWords(in: tokens).contains(try #require(held.entry?.id)))
     #expect(
       PresentationCore.shared.romaji(of: tokens.map { ($0.surface, $0.reading) })
         == "「pen wo motteimasu ka」")

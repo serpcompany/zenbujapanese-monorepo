@@ -5154,6 +5154,7 @@
       joinsInflection: false
     };
   }
+  var countsTowardComprehension = (token) => token.entry !== null && !isFunctionWord(token);
   var EmbeddedText = class {
     db;
     searchDb;
@@ -5161,6 +5162,7 @@
     lookup;
     entries = new LruCache(4e3);
     linked = new LruCache(512);
+    counted = new LruCache(4e3);
     searched = new LruCache(32);
     retrieved = new LruCache(64);
     usingForm = new LruCache(32);
@@ -5317,22 +5319,16 @@
       const accented = { query: form, entry: null, accent: screenAccent.formExamples };
       return this.batch(sentences, request, accented, analyze);
     }
-    async prefetch(texts, highlighted) {
-      const alternatives = [];
-      for (const candidates of texts) {
-        if (!candidates) continue;
-        for (const forms2 of formsLookedUp(candidates, highlighted)) {
-          alternatives.push(
-            forms2.filter((form) => {
-              if (this.forms.get(form) !== void 0) return true;
-              const query = normalizeQuery(form);
-              if (query !== "" && !isASCII(query)) return true;
-              this.forms.set(form, []);
-              return false;
-            })
-          );
-        }
-      }
+    async prefetch(looked) {
+      const alternatives = looked.map(
+        (forms2) => forms2.filter((form) => {
+          if (this.forms.get(form) !== void 0) return true;
+          const query = normalizeQuery(form);
+          if (query !== "" && !isASCII(query)) return true;
+          this.forms.set(form, []);
+          return false;
+        })
+      );
       await entriesMatchingFirstForms(this.searchDb, alternatives, this.forms);
     }
     async linkedTokens(request, analyze) {
@@ -5357,7 +5353,12 @@
       if (unlinked.size > 0) {
         const entry = accented.entry ? this.found([accented.entry]).get(accented.entry) ?? null : null;
         const highlighted = entry ? { entry, query } : null;
-        await this.prefetch([...unlinked.values()], highlighted);
+        const looked = [];
+        for (const candidates of unlinked.values()) {
+          if (candidates)
+            for (const forms2 of formsLookedUp(candidates, highlighted)) looked.push(forms2);
+        }
+        await this.prefetch(looked);
         const tokens = /* @__PURE__ */ new Map();
         const named = [];
         for (const [text, candidates] of unlinked) {
@@ -5375,6 +5376,38 @@
       }
       return texts.map((text) => answers.get(text) ?? []);
     }
+    async countedWords(lines, analyze) {
+      const words2 = /* @__PURE__ */ new Map();
+      const analyses = /* @__PURE__ */ new Map();
+      const looked = [];
+      for (const text of lines) {
+        stopIfInterrupted(this.db, 0);
+        if (words2.has(text) || analyses.has(text)) continue;
+        const remembered3 = this.counted.get(text);
+        if (remembered3 !== void 0) {
+          words2.set(text, remembered3);
+          continue;
+        }
+        const candidates = await this.candidates(text, analyze);
+        analyses.set(text, candidates);
+        if (candidates) for (const forms2 of formsLookedUp(candidates, null)) looked.push(forms2);
+      }
+      await this.prefetch(looked);
+      for (const [text, candidates] of analyses) {
+        stopIfInterrupted(this.db, 0);
+        const ids = [];
+        for (const token of linkedTokens(text, candidates, null, this.lookup)) {
+          if (countsTowardComprehension(token)) ids.push(token.entry.id);
+        }
+        if (candidates) this.counted.set(text, ids);
+        words2.set(text, ids);
+      }
+      const counted = [];
+      for (const text of lines) {
+        for (const id of words2.get(text) ?? []) counted.push(id);
+      }
+      return counted;
+    }
   };
   function words(text, tokens, analyzed, entries, highlight) {
     const accents = new Set(accentedPositions(text, tokens, highlight));
@@ -5382,20 +5415,18 @@
       const token = tokens[index];
       const target = token.entry ? entries.get(token.entry.id) : void 0;
       const furigana = target ? displayReading(token, target) : null;
-      const functionWord = isFunctionWord(token);
       return {
         surface: token.surface,
         start,
         end,
         reading: analyzed ? token.reading : null,
-        isFunctionWord: functionWord,
+        isFunctionWord: isFunctionWord(token),
         entry: token.entry?.id ?? null,
         candidates: token.entry ? [] : token.candidates.map((candidate) => candidate.id),
         furigana,
         ruby: furigana === null ? null : rubySegments(token.surface, furigana),
         accent: accents.has(index) ? highlight.accent : null,
-        attaches: attachment(token.surface),
-        counted: token.entry !== null && !functionWord
+        attaches: attachment(token.surface)
       };
     });
   }
@@ -5433,6 +5464,7 @@
       entryExamples: (request, analyze) => text().entryExamples(JSON.parse(request), analyze),
       formExamples: (request, analyze) => text().formExamples(JSON.parse(request), analyze),
       linkedTokens: (request, analyze) => text().linkedTokens(JSON.parse(request), analyze),
+      countedWords: (lines, analyze) => text().countedWords(JSON.parse(lines), analyze),
       resultsScreen: (request) => presentation().resultsScreen(JSON.parse(request)),
       wordRows: (request) => presentation().wordRows(JSON.parse(request)),
       ruby: (pair) => presentation().ruby(JSON.parse(pair)),

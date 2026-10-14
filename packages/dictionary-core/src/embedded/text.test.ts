@@ -1,78 +1,14 @@
 import { describe, expect, test } from 'vitest'
 import { fixtureDictionary, fixtureFiles } from '../examples/ipadic.fixture'
-import type { KuromojiToken } from '../examples/morphology'
 import { embeddedEndpoint } from './dictionary'
-import { ask, begin, type FakeEntry, fakeHost, settled } from './fake-host'
+import { ask, begin, fakeHost, settled } from './fake-host'
 import type {
   EmbeddedEntryExamples,
   EmbeddedExamplePage,
   EmbeddedResultsExamples,
   EmbeddedToken
 } from './text'
-
-const entries: FakeEntry[] = [
-  { id: 'a1', headword: '日本語', reading: 'にほんご' },
-  { id: 'p1', headword: 'を', reading: 'を', partsOfSpeech: ['particle'] },
-  { id: 'p2', headword: 'を', reading: 'を', partsOfSpeech: ['particle'] },
-  { id: 'n1', headword: 'を', reading: 'を', partsOfSpeech: ['noun'] },
-  { id: 'v1', headword: '見る', reading: 'みる', partsOfSpeech: ['ichidanVerb'] },
-  { id: 'x1', headword: '見た', reading: 'みた', partsOfSpeech: ['noun'] },
-  { id: 'k1', headword: '今日', reading: 'きょう', readingForms: ['こんにち'] }
-]
-
-function token(
-  position: number,
-  surface: string,
-  pos: string,
-  reading: string,
-  basicForm = surface
-): KuromojiToken {
-  return {
-    word_type: 'KNOWN',
-    word_position: position,
-    surface_form: surface,
-    pos,
-    pos_detail_1: '*',
-    pos_detail_2: '*',
-    pos_detail_3: '*',
-    basic_form: basicForm,
-    reading
-  }
-}
-
-const sentences: Record<string, KuromojiToken[]> = {
-  日本語を見た: [
-    token(1, '日本語', '名詞', 'ニホンゴ'),
-    token(4, 'を', '助詞', 'ヲ'),
-    token(5, '見', '動詞', 'ミ', '見る'),
-    token(6, 'た', '助動詞', 'タ')
-  ],
-  今日: [token(1, '今日', '名詞', 'コンニチ')],
-  今日見た: [
-    token(1, '今日', '名詞', 'コンニチ'),
-    token(3, '見', '動詞', 'ミ', '見る'),
-    token(4, 'た', '助動詞', 'タ')
-  ],
-  見る: [token(1, '見る', '動詞', 'ミル')],
-  '「日本語を」': [
-    token(1, '「', '記号', '「'),
-    token(2, '日本語', '名詞', 'ニホンゴ'),
-    token(5, 'を', '助詞', 'ヲ'),
-    token(6, '」', '記号', '」')
-  ],
-  欠けた分析: [token(1, '欠け', '動詞', 'カケ', '欠ける')]
-}
-
-const host = () =>
-  fakeHost(entries, {
-    tokenize: text => {
-      if (!Object.hasOwn(sentences, text)) throw new Error(`The tokenizer has no ${text}`)
-      return sentences[text]
-    }
-  })
-
-const linked = (target: ReturnType<typeof host>, request: object) =>
-  ask(target, 'linkedTokens', JSON.stringify(request)) as Promise<EmbeddedToken[]>
+import { entries, host, linked } from './text-fixture'
 
 const pairId = (row: number) => row.toString(16).padStart(32, '0')
 
@@ -124,8 +60,7 @@ describe('the embedded text engine', () => {
         furigana: 'にほんご',
         ruby: [{ text: '日本語', reading: 'にほんご' }],
         accent: null,
-        attaches: null,
-        counted: true
+        attaches: null
       },
       {
         surface: 'を',
@@ -138,8 +73,7 @@ describe('the embedded text engine', () => {
         furigana: null,
         ruby: null,
         accent: null,
-        attaches: null,
-        counted: false
+        attaches: null
       },
       {
         surface: '見た',
@@ -152,8 +86,7 @@ describe('the embedded text engine', () => {
         furigana: 'みた',
         ruby: [{ text: '見', reading: 'み' }, { text: 'た' }],
         accent: null,
-        attaches: null,
-        counted: true
+        attaches: null
       }
     ])
   })
@@ -208,8 +141,7 @@ describe('the embedded text engine', () => {
         furigana: null,
         ruby: null,
         accent: null,
-        attaches: null,
-        counted: false
+        attaches: null
       }
     ]
     expect(await linked(host(), { text: '猫𠀋', query: '', highlightedEntry: null })).toEqual(
@@ -300,17 +232,17 @@ describe('the embedded text engine', () => {
     expect(embeddedEndpoint(withoutFiles).answer('tokenizerReady', '')).toBe(false)
   })
 
-  test('marks punctuation that stays with a neighbouring word, and counts only linked words', async () => {
+  test('marks punctuation that stays with a neighbouring word', async () => {
     const found = await linked(host(), {
       text: '「日本語を」',
       query: '',
       highlightedEntry: null
     })
-    expect(found.map(word => [word.surface, word.attaches, word.counted])).toEqual([
-      ['「', 'next', false],
-      ['日本語', null, true],
-      ['を', null, false],
-      ['」', 'previous', false]
+    expect(found.map(word => [word.surface, word.attaches])).toEqual([
+      ['「', 'next'],
+      ['日本語', null],
+      ['を', null],
+      ['」', 'previous']
     ])
   })
 

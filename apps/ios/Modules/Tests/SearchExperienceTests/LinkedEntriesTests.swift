@@ -10,7 +10,7 @@ struct LinkedEntriesTests {
   private func word(_ entry: String) -> LinkedWord {
     LinkedWord(
       surface: entry, start: 0, end: 1, reading: nil, isFunctionWord: false, entry: entry,
-      candidates: [], furigana: nil, ruby: nil, accent: nil, attaches: nil, counted: true)
+      candidates: [], furigana: nil, ruby: nil, accent: nil, attaches: nil)
   }
 
   @Test(

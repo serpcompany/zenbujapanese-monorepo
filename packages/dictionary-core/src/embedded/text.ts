@@ -24,7 +24,6 @@ import { ipadicTokenizer } from '../examples/ipadic'
 import {
   displayReading,
   formsLookedUp,
-  type Highlighted,
   type LinkEntry,
   type LinkedToken,
   linkedTokens
@@ -35,7 +34,7 @@ import {
   type MorphologyCandidate,
   type Tokenize
 } from '../examples/morphology'
-import type { SearchDatabase } from '../search/database'
+import { type SearchDatabase, stopIfInterrupted } from '../search/database'
 import type { MorphologyWord } from '../search/morphology'
 import { isASCII, normalizeQuery } from '../search/query'
 import { type EmbeddedHost, hostDatabase } from './host'
@@ -63,7 +62,6 @@ export interface EmbeddedToken {
   ruby: RubySegment[] | null
   accent: Accent | null
   attaches: Attachment | null
-  counted: boolean
 }
 
 export interface EmbeddedExample {
@@ -124,6 +122,10 @@ function hostCandidate(word: HostWord): MorphologyCandidate {
   }
 }
 
+const countsTowardComprehension = (
+  token: LinkedToken
+): token is LinkedToken & { entry: LinkEntry } => token.entry !== null && !isFunctionWord(token)
+
 export class EmbeddedText {
   private readonly db: ArtifactDatabase
   private readonly searchDb: SearchDatabase
@@ -131,6 +133,7 @@ export class EmbeddedText {
   private readonly lookup: FormLookup
   private readonly entries = new LruCache<string, ExamplesEntry>(4_000)
   private readonly linked = new LruCache<string, EmbeddedToken[]>(512)
+  private readonly counted = new LruCache<string, readonly string[]>(4_000)
   private readonly searched = new LruCache<string, EntryExamples | string>(32)
   private readonly retrieved = new LruCache<string, EntryExamples | string>(64)
   private readonly usingForm = new LruCache<string, ExampleSentence[]>(32)
@@ -325,25 +328,16 @@ export class EmbeddedText {
     return this.batch(sentences, request, accented, analyze)
   }
 
-  private async prefetch(
-    texts: readonly (MorphologyCandidate[] | null)[],
-    highlighted: Highlighted | null
-  ): Promise<void> {
-    const alternatives: string[][] = []
-    for (const candidates of texts) {
-      if (!candidates) continue
-      for (const forms of formsLookedUp(candidates, highlighted)) {
-        alternatives.push(
-          forms.filter(form => {
-            if (this.forms.get(form) !== undefined) return true
-            const query = normalizeQuery(form)
-            if (query !== '' && !isASCII(query)) return true
-            this.forms.set(form, [])
-            return false
-          })
-        )
-      }
-    }
+  private async prefetch(looked: readonly string[][]): Promise<void> {
+    const alternatives = looked.map(forms =>
+      forms.filter(form => {
+        if (this.forms.get(form) !== undefined) return true
+        const query = normalizeQuery(form)
+        if (query !== '' && !isASCII(query)) return true
+        this.forms.set(form, [])
+        return false
+      })
+    )
     await entriesMatchingFirstForms(this.searchDb, alternatives, this.forms)
   }
 
@@ -376,7 +370,12 @@ export class EmbeddedText {
         ? (this.found([accented.entry]).get(accented.entry) ?? null)
         : null
       const highlighted = entry ? { entry, query } : null
-      await this.prefetch([...unlinked.values()], highlighted)
+      const looked: string[][] = []
+      for (const candidates of unlinked.values()) {
+        if (candidates)
+          for (const forms of formsLookedUp(candidates, highlighted)) looked.push(forms)
+      }
+      await this.prefetch(looked)
       const tokens = new Map<string, LinkedToken[]>()
       const named: string[] = []
       for (const [text, candidates] of unlinked) {
@@ -394,6 +393,39 @@ export class EmbeddedText {
     }
     return texts.map(text => answers.get(text) ?? [])
   }
+
+  async countedWords(lines: readonly string[], analyze: AnalyzeText): Promise<string[]> {
+    const words = new Map<string, readonly string[]>()
+    const analyses = new Map<string, MorphologyCandidate[] | null>()
+    const looked: string[][] = []
+    for (const text of lines) {
+      stopIfInterrupted(this.db, 0)
+      if (words.has(text) || analyses.has(text)) continue
+      const remembered = this.counted.get(text)
+      if (remembered !== undefined) {
+        words.set(text, remembered)
+        continue
+      }
+      const candidates = await this.candidates(text, analyze)
+      analyses.set(text, candidates)
+      if (candidates) for (const forms of formsLookedUp(candidates, null)) looked.push(forms)
+    }
+    await this.prefetch(looked)
+    for (const [text, candidates] of analyses) {
+      stopIfInterrupted(this.db, 0)
+      const ids: string[] = []
+      for (const token of linkedTokens(text, candidates, null, this.lookup)) {
+        if (countsTowardComprehension(token)) ids.push(token.entry.id)
+      }
+      if (candidates) this.counted.set(text, ids)
+      words.set(text, ids)
+    }
+    const counted: string[] = []
+    for (const text of lines) {
+      for (const id of words.get(text) ?? []) counted.push(id)
+    }
+    return counted
+  }
 }
 
 function words(
@@ -408,20 +440,18 @@ function words(
     const token = tokens[index]
     const target = token.entry ? entries.get(token.entry.id) : undefined
     const furigana = target ? displayReading(token, target) : null
-    const functionWord = isFunctionWord(token)
     return {
       surface: token.surface,
       start,
       end,
       reading: analyzed ? token.reading : null,
-      isFunctionWord: functionWord,
+      isFunctionWord: isFunctionWord(token),
       entry: token.entry?.id ?? null,
       candidates: token.entry ? [] : token.candidates.map(candidate => candidate.id),
       furigana,
       ruby: furigana === null ? null : rubySegments(token.surface, furigana),
       accent: accents.has(index) ? highlight.accent : null,
-      attaches: attachment(token.surface),
-      counted: token.entry !== null && !functionWord
+      attaches: attachment(token.surface)
     }
   })
 }

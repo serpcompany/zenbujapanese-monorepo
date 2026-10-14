@@ -100,7 +100,6 @@ struct LinkedWord: Decodable, Sendable {
   let ruby: [JapaneseRubySegment]?
   let accent: JapaneseTextToken.Accent?
   let attaches: String?
-  let counted: Bool
 }
 
 actor DictionaryTextData {
@@ -160,6 +159,10 @@ actor DictionaryTextData {
       throw ExampleSentenceRetrievalError.retrievalUnavailable(.queryFailed)
     }
     return try await answer(method, try DictionaryCore.argument(request))
+  }
+
+  func countedWords(_ lines: [String]) async throws -> [String] {
+    try await answer("countedWords", try DictionaryCore.argument(lines))
   }
 
   func availability() async -> JapaneseTextAnalysisAvailability {

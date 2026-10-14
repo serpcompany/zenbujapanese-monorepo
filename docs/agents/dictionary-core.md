@@ -100,7 +100,7 @@ modules, files, or event loop of its own, which is how the app runs it in JavaSc
     (`stopIfInterrupted` in `search/database.ts`) and throws `interruptedSearch`. Without it a
     learner who keeps typing would wait for each abandoned prefix, such as `s`, to finish ranking
     its tens of thousands of candidates. A long loop added to `search/` over a query's candidates
-    needs the same check.
+    needs the same check; `countedWords` asks before each line.
   - `tokenizerFile(name)` answers one of the tokenizer's dictionary files, unpacked, as an
     `ArrayBuffer`, or null. The core asks for all eleven the first time it tokenizes
     ([The tokenizer](#the-tokenizer)). A host without the files is asked for a sentence's words
@@ -136,7 +136,8 @@ modules, files, or event loop of its own, which is how the app runs it in JavaSc
   | `tokenizerReady` | — | Whether the text part can tokenize. With the host's files it reads them now, so the first sentence doesn't wait for them, and is false when one is missing or wrong. |
   | `exampleCount`, `resultsExampleCount` | A query, or a query with the results' primary entry | The Example Sentences row's count |
   | `resultsExamples`, `entryExamples`, `formExamples` | A query with the results' primary entry, an entry's ID, or a conjugated form, each with `from` and an optional `limit` | Examples from `from` to the end of its page of 25, or a `limit` of 1 or more if fewer (the answer then says `cutShort`): each sentence with its words as `linkedTokens` answers them, the screen's words accented, and the list's size (`listed`). Example Sentences adds its count line, a word its `count` and `truncated` |
-  | `linkedTokens` | A text, the page's query, and its entry | Each word with its place in the text, its entry or candidates, the furigana to draw, its `accent` (`entry` on the page entry's word here; an example page says `query` on the words of its query), which neighbour a punctuation mark stays with on a line (`attaches`), and whether it counts toward comprehension (`counted`: linked to an entry and not a function word) |
+  | `linkedTokens` | A text, the page's query, and its entry | Each word with its place in the text, its entry or candidates, the furigana to draw, its `accent` (`entry` on the page entry's word here; an example page says `query` on the words of its query), and which neighbour a punctuation mark stays with on a line (`attaches`) |
+  | `countedWords` | A list of lines | The ID of each word that counts toward comprehension, in order, once each time it occurs: one linked to a single entry that is not a function word |
   | `resultsScreen` | A search's answer, the Example Sentences count, and the learner's state (Sort By, Filter, known words, and whether the query was picked in the radical panel) | `LearnerResultsScreen`: sections, rows with chips, the menu with each choice's title and announcement, notices, and what VoiceOver reads. A one-character query from the radical panel lists only its leading words. |
   | `wordRows` | Entries, and which the learner knows | A sheet's candidate rows, with their chips |
   | `ruby` | A surface and its reading | Furigana segments, kanji by kanji where one split fits |
@@ -149,11 +150,10 @@ modules, files, or event loop of its own, which is how the app runs it in JavaSc
   | `sourceCredits` | `app` or `website` | That client's source credits and conversion notice |
 
 - **The host reads the entries it shows.** Answers name entries by Language Reference ID, and the
-  host reads each from the artifact itself. A page's method takes the entry the host read as its
-  argument.
+  host reads each from the artifact itself. A page's method takes the entry the host read.
 - **A text's words cost one or two statements.** `linkedTokens` looks every word's forms up in one
   round (`entriesMatchingFirstForms`), then the forms still unmatched, and caches by form, so a
-  page of sentences mostly asks nothing.
+  page mostly asks nothing. `countedWords` looks all its lines up together and keeps 4,000 lines.
 - **A call is an object.** `embeddedEndpoint(...).begin(method, argument)` starts a call and returns
   it. Its `outcome()` is a JSON string: `{"value": ...}`, `{"error": message}`, or `{"analyze":
   text}` when a call needs the words of a sentence from a host that gave no `tokenize`. The host
@@ -258,7 +258,7 @@ Paths are relative to `apps/ios/Modules/Sources/SearchExperience/`.
 | --- | --- | --- |
 | `LookupClient.swift` (`LanguageReferenceData`) | `search`, `entriesMatchingFirstForms`, `entriesContainingKanji`, `websiteRoute`, `relatedWord`, `savedWord` | Search, an exact form's entries, a kanji's words, what a website link opens, and the entry a related or saved word opens; it reads the entries itself |
 | `SearchQuery.swift` | `normalizeQuery` | The query every screen holds |
-| `DictionaryTextData.swift` (`ExampleSentenceClient`, `JapaneseTextAnalysisClient`) | `checkExamples`, `tokenizerReady`, the example methods, `linkedTokens` | Example sentences and linked words, with each word's line-breaking and whether `Comprehension` counts it. It hands the core the tokenizer's files (`TokenizerDictionary.swift`). |
+| `DictionaryTextData.swift` (`ExampleSentenceClient`, `JapaneseTextAnalysisClient`) | `checkExamples`, `tokenizerReady`, the example methods, `linkedTokens`, `countedWords` | Example sentences, linked words with each word's line-breaking, and the words `Comprehension` counts. It hands the core the tokenizer's files (`TokenizerDictionary.swift`). |
 | `PresentationCore.swift` (`RomajiReadingAidText`, `LinkedJapaneseText`) | `romaji`, `sentenceRomaji` | The Romaji reading aid, for a reading and for a sentence |
 | `RadicalLookupClient.swift` (`RadicalInputView`) | `radicalPanel` | The radical panel's kanji and radicals |
 | `KanjiStrokeOrderClient.swift` | `kanjiStrokes` | The strokes Kanji Detail draws |
