@@ -66,8 +66,9 @@ final class LoadedExamples {
   private var source: String?
   private var listed = 0
   private var firstReadFailed = false
-  private var readingAgain = false
+  private var readingFirst: String?
   private var owesRestOfPage = false
+  @ObservationIgnored private var loads = 0
   @ObservationIgnored private var readingMore:
     (of: String?, from: Int, read: Task<ExamplePage?, Never>)?
 
@@ -78,17 +79,21 @@ final class LoadedExamples {
   }
 
   func state(of source: String) -> State {
-    guard answers(source), !readingAgain else { return .loading }
+    guard answers(source), readingFirst != source else { return .loading }
     if firstReadFailed { return .failed }
     return examples.isEmpty ? .empty : .listed
   }
 
   func load(_ source: String, rowsOnScreen: Int?, read: @escaping Read) async {
+    loads += 1
+    let thisLoad = loads
     laterReadFailed = false
+    readingFirst = nil
     if !answers(source) || firstReadFailed {
-      readingAgain = answers(source)
+      readingFirst = source
       let first = await read(ExampleBatch(from: 0, limit: rowsOnScreen))
-      readingAgain = false
+      guard loads == thisLoad else { return }
+      readingFirst = nil
       guard !Task.isCancelled else { return }
       self.source = source
       firstReadFailed = first == nil

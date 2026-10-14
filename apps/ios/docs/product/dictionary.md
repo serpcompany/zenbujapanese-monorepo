@@ -313,8 +313,8 @@ On Example Sentences, a word's Examples, and a form's examples, a sentence appea
 linked, furigana, and romaji when Romaji is on: never as plain text first, and at the height it
 keeps. Each list shows 25 sentences, those that fit the screen first, then 25 more at its end.
 Example Sentences keeps its place while a word opened from it is shown. A list that couldn't be read
-says "Examples couldn’t be loaded." with **Retry**, never that it has none, and is read again on
-**Retry** or on coming back; a later page says "More examples couldn’t be loaded."
+says "Examples couldn’t be loaded." with **Retry**, never that it has none; a later page says "More
+examples couldn’t be loaded." with **Retry**. Each is read again on **Retry** or on coming back.
 
 Check: UI `ExampleRowsUITests` (rows 1, 23, and 26 of each screen arrive linked while linking is
 held, after no empty or failed message, and keep their height; a form's word opens; the place is

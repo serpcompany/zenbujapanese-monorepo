@@ -193,7 +193,7 @@ struct WordDetailView: View {
   }
 
   private func readExamples(_ batch: ExampleBatch) async -> ExamplePage? {
-    try? await exampleSentenceClient.examples(entry, batch)
+    await exampleSentenceClient.shownExamples(entry, batch)
   }
 }
 
