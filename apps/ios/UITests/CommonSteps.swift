@@ -120,13 +120,15 @@ extension ZenbuUITestCase {
 
   @discardableResult
   func reveal(
-    _ element: XCUIElement, in app: XCUIApplication, within container: XCUIElement? = nil
+    _ element: XCUIElement, in app: XCUIApplication, within container: XCUIElement? = nil,
+    scrolling list: XCUIElement? = nil
   ) -> XCUIElement {
     let area = container ?? app.windows.firstMatch
+    let scrolled = list ?? area
     var lastLongList: String?
     _ = comesTrue("\(element) to exist, or a list to show it goes on below", within: 5) {
       if element.exists { return true }
-      let longList = listGoingOnBelow(in: area)
+      let longList = listGoingOnBelow(in: scrolled)
       defer { lastLongList = longList }
       return longList != nil && longList == lastLongList
     }
@@ -134,11 +136,11 @@ extension ZenbuUITestCase {
       if isReachable(element, in: app, within: container) { break }
       let isAbove = element.exists && element.frame.midY < area.frame.midY
       if device == .mac {
-        area.scroll(byDeltaX: 0, deltaY: isAbove ? 150 : -150)
+        scrolled.scroll(byDeltaX: 0, deltaY: isAbove ? 150 : -150)
       } else if isAbove {
-        area.swipeDown(velocity: .slow)
+        scrolled.swipeDown(velocity: .slow)
       } else {
-        area.swipeUp(velocity: .slow)
+        scrolled.swipeUp(velocity: .slow)
       }
     }
     return waitFor(element)

@@ -23,8 +23,9 @@ jobs:
         uses: ./.github/actions/changed-paths
         with:
           paths: >-
-            packages/dictionary-core package.json pnpm-lock.yaml pnpm-workspace.yaml
-            .node-version .github/workflows/dictionary-core.yml .github/actions/changed-paths
+            packages/dictionary-core docs/data-sources.md package.json pnpm-lock.yaml
+            pnpm-workspace.yaml .node-version .github/workflows/dictionary-core.yml
+            .github/actions/changed-paths
 
   check:
     needs: changes

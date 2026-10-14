@@ -1,11 +1,26 @@
+import {
+  creditsShownBy,
+  type SourceCredit,
+  sourceCredits
+} from '@zenbu/dictionary-core/sources/credits'
 import { describe, expect, test } from 'vitest'
-import { pageSources, type Source, sources, withShownData } from './sources'
+import { pageSources, withShownData } from './sources'
 
-const names = (list: readonly Source[]) => list.map(source => source.name)
+const names = (list: readonly SourceCredit[]) => list.map(source => source.name)
 
 const withoutStrokes = { strokeOrder: null, stats: [] }
 const withStrokes = { strokeOrder: { strokes: [] }, stats: [] }
 const withJlpt = { strokeOrder: null, stats: [{ label: 'Strokes' }, { label: 'JLPT' }] }
+
+test('every page credits sources the core lists for the website', () => {
+  const shown = creditsShownBy('website').credits
+  for (const [page, credited] of Object.entries(pageSources)) {
+    expect(
+      credited.filter(source => !shown.includes(source)),
+      page
+    ).toEqual([])
+  }
+})
 
 describe('withShownData, the credits for what a page shows', () => {
   test('adds nothing when the page shows no kanji details or search examples', () => {
@@ -19,7 +34,7 @@ describe('withShownData, the credits for what a page shows', () => {
     expect(names(withShownData(pageSources.search, { kanji: [withoutStrokes] }))).toEqual([
       'JMdict',
       'KANJIDIC2',
-      'JLPT levels',
+      'JLPT vocabulary lists',
       'TUBELEX',
       'RADKFILE',
       'Kanjium'
@@ -28,7 +43,15 @@ describe('withShownData, the credits for what a page shows', () => {
 
   test('credits Waller’s JLPT kanji lists only when a shown kanji has a JLPT level', () => {
     expect(names(withShownData(pageSources.search, { kanji: [withJlpt, withoutStrokes] }))).toEqual(
-      ['JMdict', 'KANJIDIC2', 'JLPT levels', 'TUBELEX', 'RADKFILE', 'Kanjium', 'JLPT kanji levels']
+      [
+        'JMdict',
+        'KANJIDIC2',
+        'JLPT vocabulary lists',
+        'TUBELEX',
+        'RADKFILE',
+        'Kanjium',
+        'JLPT kanji lists'
+      ]
     )
   })
 
@@ -39,7 +62,7 @@ describe('withShownData, the credits for what a page shows', () => {
       'JMdict',
       'UniDic',
       'KANJIDIC2',
-      'JLPT levels',
+      'JLPT vocabulary lists',
       'TUBELEX',
       'Tatoeba',
       'RADKFILE',
@@ -52,19 +75,19 @@ describe('withShownData, the credits for what a page shows', () => {
     expect(names(withShownData(pageSources.search, { kanji: [], examples: true }))).toEqual([
       'JMdict',
       'KANJIDIC2',
-      'JLPT levels',
+      'JLPT vocabulary lists',
       'TUBELEX',
       'Tatoeba'
     ])
     expect(
       withShownData(pageSources.word, { kanji: [], examples: true }).filter(
-        source => source === sources.tatoeba
+        source => source === sourceCredits.tatoeba
       )
     ).toHaveLength(1)
   })
 
   test('adds KANJIDIC2 when the page doesn’t credit it already, and changes no list', () => {
-    const base = [sources.jmdict]
+    const base = [sourceCredits.jmdict]
     expect(names(withShownData(base, { kanji: [withStrokes], examples: true }))).toEqual([
       'JMdict',
       'KANJIDIC2',
@@ -73,6 +96,6 @@ describe('withShownData, the credits for what a page shows', () => {
       'Kanjium',
       'Tatoeba'
     ])
-    expect(base).toEqual([sources.jmdict])
+    expect(base).toEqual([sourceCredits.jmdict])
   })
 })

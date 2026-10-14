@@ -212,7 +212,7 @@ test.describe('browse pages', () => {
       page.getByRole('navigation', { name: 'Kanji lists' }).getByRole('link', { name: 'JLPT N4' })
     ).toHaveAttribute('href', browse('kanji/jlpt-n4/'))
     await sourcesToggle(page).click()
-    await expect(main.getByRole('link', { name: 'JLPT kanji levels' })).toBeVisible()
+    await expect(main.getByRole('link', { name: 'JLPT kanji lists' })).toBeVisible()
     await expect(main).toContainText('CC BY')
     await main.getByRole('link', { name: /^日/ }).click()
     await expect(page).toHaveURL(search('日'))
