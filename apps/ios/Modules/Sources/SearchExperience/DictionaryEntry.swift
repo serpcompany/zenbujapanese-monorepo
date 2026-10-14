@@ -192,12 +192,12 @@ struct LookupSearchResults: Sendable {
     entries.isEmpty
   }
 
-  enum Presentation: String, Codable, Equatable, Sendable {
+  enum Presentation: String, Decodable, Equatable, Sendable {
     case ranked
     case discoveredWords
   }
 
-  enum Resolution: String, Codable, Equatable, Sendable {
+  enum Resolution: String, Decodable, Equatable, Sendable {
     case direct
     case deinflected
     case analyzed

@@ -39,7 +39,6 @@ final class WordSheetPresentation {
 struct RecognizedWordSheet<EntryContent: View>: View {
   @Environment(\.dismiss) private var dismiss
   @Environment(WordKnowledge.self) private var wordKnowledge
-  @State private var candidateRows: [String: ListedWord] = [:]
 
   let request: RecognizedWordSheetRequest
   @Binding var detent: PresentationDetent
@@ -93,27 +92,18 @@ struct RecognizedWordSheet<EntryContent: View>: View {
   }
 
   private var candidateList: some View {
-    let candidates = WordRowsRequest(
+    let rows = WordRowsRequest(
       entries: request.candidateEntries.map {
         WordRowsRequest.Entry(id: $0.id.rawValue, summary: $0.summary)
       },
-      frequency: nil,
-      known: request.candidateEntries.map(\.id).filter(wordKnowledge.isKnown).map(\.rawValue))
-    let rows = candidateRows.isEmpty ? candidates.rowsByEntry() : candidateRows
+      known: request.candidateEntries.map(\.id).filter(wordKnowledge.isKnown).map(\.rawValue)
+    ).rowsByEntry()
     return List(request.candidateEntries, id: \.id) { candidate in
       if let row = rows[candidate.id.rawValue] {
         ResultRow(entry: candidate, row: row, link: candidate)
       }
     }
     .listStyle(.plain)
-    .task(id: candidates) {
-      let ids = request.candidateEntries.map(\.id)
-      var listed = candidates
-      listed.frequency = (try? await FrequencyCapability.live.evidence(for: ids))
-        .map { LearnerFrequency($0, for: ids) }
-      guard !Task.isCancelled else { return }
-      candidateRows = listed.rowsByEntry()
-    }
     .toolbar {
       ToolbarItem(placement: .sheetClose) { closeButton }
     }

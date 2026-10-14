@@ -1,4 +1,3 @@
-import { frequencyByEntry, frequencyQueries } from '../artifact/frequency'
 import { defaultFrequencyLookups, type FrequencyResult, frequencyChips } from '../detail/frequency'
 import type { FrequencyRow } from '../detail/rows'
 import { type RubySegment, rubySegments } from '../detail/ruby'
@@ -6,24 +5,10 @@ import { graphemeCount, isKanjiCharacter } from '../detail/text'
 import { exactExampleCountLimit } from '../examples/retrieval'
 import { normalizeQuery } from '../search/query'
 import { comparePresentationRanks } from '../search/rank'
-import type { SearchDatabase, SearchResultItem, SearchResults } from '../search/search'
+import type { SearchResultItem, SearchResults } from '../search/search'
 import { orderedByFrequency } from './ordering'
 
 export type FrequencyByEntry = ReadonlyMap<string, readonly FrequencyRow[]>
-
-export async function loadFrequency(
-  db: SearchDatabase,
-  results: SearchResults
-): Promise<Map<string, FrequencyRow[]>> {
-  const ids = [...new Set(results.items.map(item => item.entry.id))]
-  if (ids.length === 0) return new Map()
-  const queries = frequencyQueries(ids)
-  const [levels, ranks] = await Promise.all([
-    db.all<{ id: string; level: number }>(queries.levels, queries.params),
-    db.all<{ id: string; rank: number }>(queries.ranks, queries.params)
-  ])
-  return frequencyByEntry(levels, ranks)
-}
 
 function compareRelevance(lhs: SearchResultItem, rhs: SearchResultItem): number {
   return lhs.sourceOrder - rhs.sourceOrder || comparePresentationRanks(lhs.matchRank, rhs.matchRank)
