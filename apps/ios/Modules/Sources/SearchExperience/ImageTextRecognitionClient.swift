@@ -31,6 +31,10 @@ struct RecognizedImageTextObservation: Hashable, Identifiable, Sendable {
 struct ImageTextRecognitionClient: Sendable {
   var recognize: @Sendable (ImageTextAsset) async throws -> [RecognizedImageTextObservation]
 
+  static func foundJapanese(inTopCandidates texts: [String]) -> Bool {
+    texts.contains(where: PresentationCore.shared.containsJapaneseText)
+  }
+
   static let live = ImageTextRecognitionClient { asset in
     let task = Task.detached(priority: .userInitiated) {
       try await VisionTextRecognizer.recognize(asset)
@@ -79,11 +83,8 @@ private enum VisionTextRecognizer {
   }
 
   private static func containsJapaneseText(_ observations: [RecognizedTextObservation]) -> Bool {
-    observations.contains { observation in
-      observation.topCandidates(1).first.map {
-        PresentationCore.shared.containsJapaneseText($0.string)
-      } ?? false
-    }
+    ImageTextRecognitionClient.foundJapanese(
+      inTopCandidates: observations.compactMap { $0.topCandidates(1).first?.string })
   }
 
   private static func isVertical(

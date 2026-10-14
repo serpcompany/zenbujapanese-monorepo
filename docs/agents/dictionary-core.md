@@ -265,7 +265,7 @@ Paths are relative to `apps/ios/Modules/Sources/SearchExperience/`.
 | `PresentationCore.swift` (`RomajiReadingAidText`, `LinkedJapaneseText`) | `romaji`, `sentenceRomaji` | The Romaji reading aid, for a reading and for a sentence |
 | `RadicalLookupClient.swift` (`RadicalInputView`) | `radicalPanel` | The radical panel |
 | `KanjiStrokeOrderClient.swift` | `kanjiStrokes` | The strokes Kanji Detail draws |
-| `ImageTextFlowModel.swift`, `ImageTextRecognitionClient.swift`, `TypedTranslationCard.swift` | `containsJapaneseText`, `writtenLanguage` | The lines and words Image Search keeps, and typed text's language |
+| `ImageTextFlowModel.swift`, `ImageTextRecognitionClient.swift`, `Translate/TypedTranslationCard.swift` | `containsJapaneseText`, `writtenLanguage` | The lines and words Image Search keeps, and typed text's language |
 | `HandwritingRecognitionLiveAdapter.swift` | `japaneseCandidates` | Which of Vision's candidates the handwriting panel offers, when the bundled model (`OfflineHandwritingRecognizer.swift`) gives none. The model's own candidates are offered as they are. |
 | `ResultsScreen.swift` (`SearchResultsView`, `SearchResultsMenu`, `ResultRow`, `RecognizedWordSheet`) | `resultsScreen`, `wordRows` | The results screen and a sheet's candidates |
 | `JapaneseRuby.swift` | `ruby` | Furigana wherever a word is drawn |
