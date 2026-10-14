@@ -3,6 +3,7 @@ import XCTest
 final class ExampleRowsUITests: ZenbuUITestCase {
   private struct Rows {
     let prefix: String
+    let list: XCUIElement
     let row: (Int) -> XCUIElement
     let words: (Int) -> [String]
   }
@@ -51,12 +52,20 @@ final class ExampleRowsUITests: ZenbuUITestCase {
     let rows = formExamples(of: openAFormOfTaberu(in: app), in: app)
     let explanation = waitFor(firstElement(identifiedBy: "conjugations.explanation.", in: app))
     assertArrivesLinked(0, of: rows, in: app)
-    tap(
-      app.buttons.matching(
-        NSPredicate(
-          format: "identifier BEGINSWITH 'conjugations.example-token.' AND label CONTAINS ', '")
-      ).matching(NSPredicate(format: "NOT (label ENDSWITH 'choose dictionary entry')")).firstMatch)
-    waitFor(find("word-detail.screen", in: app))
+    let word = app.buttons.matching(
+      NSPredicate(
+        format: "identifier BEGINSWITH 'conjugations.example-token.' AND label CONTAINS ', '")
+    ).matching(NSPredicate(format: "NOT (label ENDSWITH 'choose dictionary entry')")).firstMatch
+    let page = find("word-detail.screen", in: app)
+    if device == .mac {
+      for _ in 0..<3 where !page.exists {
+        waitFor(word).coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.75)).tap()
+        _ = page.waitForExistence(timeout: Self.patience / 3)
+      }
+    } else {
+      tap(word)
+    }
+    waitFor(page)
     goBack(in: app)
     waitFor(explanation)
   }
@@ -77,17 +86,18 @@ final class ExampleRowsUITests: ZenbuUITestCase {
     let app = launch()
     let rows = openMiruExamples(in: app)
     waitFor(rows.row(0))
-    reveal(rows.row(27), in: app)
+    reveal(27, of: rows, in: app)
   }
 
   func testExampleSentencesKeepTheirPlaceWhileAWordIsOpen() {
     let app = launch()
     let rows = openMiruExamples(in: app)
     let words = find("example.words.22", in: app)
-    tap(reveal(words, in: app))
-    tap(
-      menuChoices(in: app)
-        .matching(NSPredicate(format: "identifier BEGINSWITH 'example.words.22.'")).firstMatch)
+    if device == .mac { reveal(22, of: rows, in: app) }
+    tap(reveal(words, in: app, within: device == .mac ? rows.list : nil))
+    let itsWord =
+      device == .mac ? "isEnabled == true" : "identifier BEGINSWITH 'example.words.22.'"
+    tap(menuChoices(in: app).matching(NSPredicate(format: itsWord)).firstMatch)
     waitFor(find("word-detail.screen", in: app))
     goBack(in: app)
     waitUntilStill(find("example-list.screen", in: app))
@@ -110,7 +120,8 @@ final class ExampleRowsUITests: ZenbuUITestCase {
     openTaberu(in: app)
     reveal(labeled("No source-matched examples", in: app), in: app)
     let conjugations = find("word-detail.conjugations", in: app)
-    for _ in 0..<12 where !conjugations.exists { scroll(app.windows.firstMatch, back: true) }
+    let page = device == .mac ? wordExamples(in: app).list : app.windows.firstMatch
+    for _ in 0..<12 where !conjugations.exists { scroll(page, back: true) }
     tap(reveal(conjugations, in: app), toShow: find("conjugations.screen", in: app))
     goBack(in: app)
     reveal(wordExamples(in: app).row(0), in: app)
@@ -125,46 +136,77 @@ final class ExampleRowsUITests: ZenbuUITestCase {
   private func openMiruExamples(in app: XCUIApplication) -> Rows {
     search("miru", in: app)
     tap(find("search.examples", in: app))
-    return rows("example.row.", in: app) { ["example.token.\($0).", "example.words.\($0)"] }
+    let onMac = device == .mac
+    return rows("example.row.", listedIn: "example-list.screen", in: app) {
+      onMac ? ["example.words.\($0)"] : ["example.token.\($0).", "example.words.\($0)"]
+    }
   }
 
   private func wordExamples(in app: XCUIApplication) -> Rows {
-    rows("word-detail.example.", in: app) { ["word-detail.example-token.\($0)."] }
+    rows("word-detail.example.", listedIn: "word-detail.screen", in: app) {
+      ["word-detail.example-token.\($0)."]
+    }
   }
 
   private func formExamples(of kind: String, in app: XCUIApplication) -> Rows {
-    rows("conjugations.example.\(kind).", in: app) {
+    rows("conjugations.example.\(kind).", listedIn: "conjugations.form.\(kind)", in: app) {
       ["conjugations.example-token.\(kind).\($0)."]
     }
   }
 
   private func rows(
-    _ prefix: String, in app: XCUIApplication, words: @escaping (Int) -> [String]
+    _ prefix: String, listedIn list: String, in app: XCUIApplication,
+    words: @escaping (Int) -> [String]
   ) -> Rows {
-    Rows(prefix: prefix, row: { self.find(prefix + String($0), in: app) }, words: words)
+    Rows(
+      prefix: prefix, list: find(list, in: app),
+      row: { self.find(prefix + String($0), in: app) }, words: words)
   }
 
   private func scroll(toward number: Int, of rows: Rows, in app: XCUIApplication) {
     let shown = firstElement(identifiedBy: rows.prefix, in: app)
     let first = shown.exists ? Int(shown.identifier.dropFirst(rows.prefix.count)) : nil
     guard first != number else { return }
-    scroll(app.windows.firstMatch, back: first.map { $0 > number } ?? false)
+    let isPast = first.map { $0 > number } ?? false
+    if device != .mac {
+      scroll(app.windows.firstMatch, back: isPast)
+    } else if rows.list.exists {
+      scroll(rows.list, back: isPast)
+    }
+  }
+
+  private func awaited(_ number: Int, of rows: Rows, in app: XCUIApplication) -> XCUIElement {
+    let row = rows.row(number)
+    let deadline = Date.now.addingTimeInterval(Self.patience + Self.heldAnswers * Self.linkingDelay)
+    while !row.exists, Date.now < deadline { scroll(toward: number, of: rows, in: app) }
+    return row
+  }
+
+  @discardableResult
+  private func reveal(_ number: Int, of rows: Rows, in app: XCUIApplication) -> XCUIElement {
+    guard device == .mac else { return reveal(rows.row(number), in: app) }
+    let row = awaited(number, of: rows, in: app)
+    let laidOutInPlace = Date.now.addingTimeInterval(Self.layoutPatience)
+    while row.exists, row.frame.isEmpty, Date.now < laidOutInPlace {
+      RunLoop.current.run(until: Date.now.addingTimeInterval(0.2))
+    }
+    let laidOut = Date.now.addingTimeInterval(Self.patience)
+    while row.exists, row.frame.isEmpty, Date.now < laidOut { scroll(rows.list, back: false) }
+    return reveal(row, in: app, within: rows.list)
   }
 
   private func assertArrivesLinked(
     _ number: Int, of rows: Rows, in app: XCUIApplication,
     file: StaticString = #filePath, line: UInt = #line
   ) {
-    let row = rows.row(number)
-    let deadline = Date.now.addingTimeInterval(Self.patience + Self.heldAnswers * Self.linkingDelay)
-    while !row.exists, Date.now < deadline { scroll(toward: number, of: rows, in: app) }
+    let row = awaited(number, of: rows, in: app)
     XCTAssertTrue(row.exists, "row \(number) never appeared", file: file, line: line)
     for prefix in rows.words(number) {
       XCTAssertTrue(
         firstElement(identifiedBy: prefix, in: app).exists,
         "row \(number) appeared without \(prefix)", file: file, line: line)
     }
-    let height = reveal(row, in: app).frame.height
+    let height = reveal(number, of: rows, in: app).frame.height
     RunLoop.current.run(until: Date.now.addingTimeInterval(Self.linkingDelay + 1))
     XCTAssertEqual(
       row.frame.height, height, accuracy: 0.5, "row \(number) changed height after it appeared",
