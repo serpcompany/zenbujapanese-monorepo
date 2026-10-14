@@ -12,6 +12,7 @@ export interface ExampleSearchCase {
   covers: string
   title?: string
   count: number
+  countText?: string
   highlightedEntry?: string
   usesPrimaryEntryExamples: boolean
   ids: string[]

@@ -126,10 +126,10 @@ Check: package `SearchResultOrderingTests` and `EnglishSearchCommonWordTests`; t
 `SearchResultsConformanceTests`.
 
 Each row shows compact chips such as `JLPT N3` or `YouTube 812`: one for the first enabled
-dictionary, which orders the results (a dash when it doesn't rank the word), then one for each
-other dictionary that ranks it. While Search is sorted by a dictionary (below), that
-dictionary takes the first chip's place. JLPT shows only when it lists the word. At accessibility text
-sizes, only the first dictionary's chip shows, followed by a count of the rest.
+dictionary, which orders the results (a dash when it doesn't rank the word), then one for each other
+dictionary that ranks it. While Search is sorted by a dictionary (below), that dictionary takes the
+first chip's place. JLPT shows only when it lists the word. At accessibility text sizes, only the
+first dictionary's chip shows, followed by a count of the rest.
 
 Check: core `detail/frequency.test.ts` (which chips show, and in what order) and
 `results/learner.test.ts` (the sorted dictionary's chip first); package `ResultsScreenTests` (the
@@ -143,9 +143,8 @@ orange. With Differentiate Without Color on, a star count such as 5★ replaces 
 
 Check: core `detail/frequency.test.ts` (the tiers); package `ResultsScreenTests` (their stars).
 
-A word the learner knows shows a green **✓ Known** capsule at the right of its headword.
-Swiping a row to the right, or long-pressing it, marks the word known or unknown without
-opening it.
+A word the learner knows shows a green **✓ Known** capsule at the right of its headword. Swiping a
+row to the right, or long-pressing it, marks the word known or unknown without opening it.
 
 Check: UI `SearchUITests.testMarkingAResultKnownShowsTheKnownCapsule` (by swipe on iPhone and
 iPad, where it reads the row as known; by right-click on the Mac, where it checks the row's menu
@@ -170,6 +169,14 @@ dictionary that can't be read named, the others still ordering); core `detail/fr
 refinement, Example Sentences, and Kanji rows) and `ExampleSearchConformanceTests` (`startled you`
 and `generously`); UI `SearchResultsUITests.testARomajiQueryOffersItsJapaneseReading`,
 `testAWordOffersItsExampleSentences`, and `SearchUITests.testAQueryWithNoMatchesSaysSo`.
+
+The Example Sentences row opens the query's sentences on a screen titled with the query. Under
+the title, a line says how many it lists: "60 examples", or "The first 100 of more than 100
+examples" when more match than the 100 it lists. The website's section shows the same line.
+
+Check: the recorded `ExampleSearchConformanceTests` (`countText`, which the website is held to
+as well); core `detail/examples.test.ts` and `embedded/text.test.ts`; UI
+`SearchResultsUITests.testExampleSentencesSayHowManyAreListed` (3 examples, and over 100).
 
 Recent text searches are stored on the device and listed while the query is empty. A learner can
 repeat a search, remove one by swiping or long-pressing it, or clear the entire history from the
@@ -315,18 +322,16 @@ Check: the recorded `WordDetailConformanceTests` (each pack's row and its detail
 `ResultsScreenTests` (the rows' names, values, and details); UI
 `WordDetailUITests.testAFrequencyRowOpensItsDetails` and `AccountUITests` (one turned off).
 
-Selectable Japanese inside Word Detail and Example Sentences uses the same interactive
-word-boundary analysis as Image Search. Selecting a linked word continues into its normal
-dictionary entry.
+Selectable Japanese inside Word Detail and Example Sentences uses the same interactive word-boundary
+analysis as Image Search. Selecting a linked word continues into its normal dictionary entry.
 
-Check: package `LinkedWordResolutionTests`; UI `ImageSearchUITests` (a linked word opens its
-entry).
+Check: package `LinkedWordResolutionTests`; UI `ImageSearchUITests` (a linked word opens its entry).
 
 The top-right of a word detail holds **Share**, which shares the headword, reading, and numbered
 meanings as text, and a **•••** menu. The menu starts with **Mark as Known** (or **Mark as
-Unknown**) and **Add to List…**, followed by Add Note, Take Photo, and Choose Photo. A known word shows the same
-**✓ Known** capsule under its headword. A word counts as unknown until the learner marks it, and
-known words persist on the device, keyed by the dictionary entry's stable identifier.
+Unknown**) and **Add to List…**, followed by Add Note, Take Photo, and Choose Photo. A known word
+shows the same **✓ Known** capsule under its headword. A word counts as unknown until the learner
+marks it, and known words persist on the device, keyed by the dictionary entry's stable identifier.
 
 Check: UI `WordDetailUITests.testTheMenuOffersThisDevicesActionsAndMarksTheWordKnown` (the menu,
 without **Take Photo** on the Mac); package `WordKnowledgeTests`; `WordDetailShareTests` (what
@@ -369,11 +374,10 @@ Check: the recorded `KanjiElementConformanceTests`; core `detail/kanji-element.t
 with each keep their own page); UI
 `WordDetailUITests.testAKanjisElementShowsWhatItContributesAndAKanjiItIsIn`.
 
-Beside the kanji, a kanji detail shows its stroke count, its school grade when it has one, and
-its JLPT level when Jonathan Waller's kanji lists give one, as N5 to N1: 一 and 日 show N5. The
-JLPT has published no kanji list since 2010, so the level is his estimate. A kanji his lists
-leave out shows no JLPT level, including 172 jōyō kanji, such as 分, that no modern list gives
-one. `KanjiStatTests` and the kanji detail conformance suite check it.
+Beside the kanji, a kanji detail shows its stroke count, its school grade when it has one, and its
+JLPT level when Jonathan Waller's kanji lists give one, as N5 to N1: 一 and 日 show N5. The JLPT has
+published no kanji list since 2010, so the level is his estimate. A kanji his lists leave out shows
+no JLPT level, including 172 jōyō kanji, such as 分, that no modern list gives one.
 
 Check: package `KanjiStatTests`; the recorded `KanjiDetailConformanceTests`.
 
@@ -402,9 +406,9 @@ going, and the bar above the tab bar returns to it. Then:
   open; and
 - any other zenbujapanese.com URL returns to the Search screen.
 
-A word's old conjugation pages open the word, and a search's old Example Sentences page the
-search, as the website redirects them. iOS opens Zenbu only for the URLs the website's
-association file claims ([website product docs](../../../web/docs/product/dictionary.md#urls-seo-and-indexing));
+A word's old conjugation pages open the word, and a search's old Example Sentences page the search,
+as the website redirects them. iOS opens Zenbu only for the URLs the website's association file
+claims ([website product docs](../../../web/docs/product/dictionary.md#urls-seo-and-indexing));
 until the website has Zenbu's Apple team ID, links open the website.
 
 - Source: #568, part of #563.
@@ -412,4 +416,3 @@ until the website has Zenbu's Apple team ID, links open the website.
   for what each URL opens, against the bundled dictionary; core `detail/links.test.ts` for how
   each URL reads, with the parser the website reads its own word URLs with. That iOS hands a
   tapped link to Zenbu is by hand, on a device.
-

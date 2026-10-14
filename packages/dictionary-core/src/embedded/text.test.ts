@@ -3,7 +3,7 @@ import { fixtureDictionary, fixtureFiles } from '../examples/ipadic.fixture'
 import type { KuromojiToken } from '../examples/morphology'
 import { embeddedEndpoint } from './dictionary'
 import { ask, begin, type FakeEntry, fakeHost, settled } from './fake-host'
-import type { EmbeddedToken } from './text'
+import type { EmbeddedResultsExamples, EmbeddedToken } from './text'
 
 const entries: FakeEntry[] = [
   { id: 'a1', headword: '日本語', reading: 'にほんご' },
@@ -272,6 +272,38 @@ describe('the embedded text engine', () => {
       ['を', null, false],
       ['」', 'previous', false]
     ])
+  })
+
+  test('answers a query’s examples with the line that counts them', async () => {
+    const pairId = (row: number) => row.toString(16).padStart(32, '0')
+    const listed = (matching: number) =>
+      ask(
+        fakeHost(entries, {
+          all: sql => ({
+            rows: sql.includes('FROM example_sentences e WHERE instr(e.japanese, ?)')
+              ? Array.from({ length: matching }, (_, row) => ({
+                  rowid: row + 1,
+                  pairId: pairId(row),
+                  japanese: `見る${'。'.repeat(row)}`,
+                  english: `See ${row}.`
+                }))
+              : []
+          })
+        }),
+        'resultsExamples',
+        JSON.stringify({ query: '見る', primaryEntry: null, usesPrimaryEntryExamples: false })
+      ) as Promise<EmbeddedResultsExamples>
+
+    expect(await listed(0)).toEqual({ sentences: [], countText: null })
+    expect(await listed(1)).toEqual({
+      sentences: [{ id: `esp1_${pairId(0)}`, japanese: '見る', english: 'See 0.' }],
+      countText: '1 example'
+    })
+    expect((await listed(60)).countText).toBe('60 examples')
+    expect((await listed(100)).countText).toBe('100 examples')
+    const firstHundred = await listed(101)
+    expect(firstHundred.sentences).toHaveLength(100)
+    expect(firstHundred.countText).toBe('The first 100 of more than 100 examples')
   })
 
   test('refuses an example index that is not the one the core reads', async () => {

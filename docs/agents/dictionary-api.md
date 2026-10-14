@@ -240,8 +240,8 @@ pnpm check
 runs Biome, typecheck, Vitest, and the bundle. The tests replay the app-recorded suites
 (`apps/ios/LanguageData/Conformance/`, ADR 0006) through the service's dictionary on the real
 files: search retrieval, search results (every row, chip, and special row, the Example Sentences
-row included), example search (every listed pair ID for 69 queries, and the first 5 sentences'
-words, links, and marks), word detail (the first 25 examples' order, tokens, links, and
+row included), example search (every pair ID for 69 queries, 59 count lines, and the first 5
+sentences' words, links, and marks), word detail (the first 25 examples' order, tokens, links, and
 highlights, the counts, the furigana split, the pitch graph, each frequency row's details, and
 every conjugated form's examples), and kanji detail (its metrics, Waller's JLPT level among
 them). Each is replayed a second time through `embedded/`, the entry point the app calls, on

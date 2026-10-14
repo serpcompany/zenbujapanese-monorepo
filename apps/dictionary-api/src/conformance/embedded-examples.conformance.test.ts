@@ -1,12 +1,8 @@
 import type { EmbeddedSearchResults } from '@zenbu/dictionary-core/embedded/lookup'
+import type { EmbeddedResultsExamples } from '@zenbu/dictionary-core/embedded/text'
 import type { LearnerResultsScreen } from '@zenbu/dictionary-core/results/learner'
 import { beforeAll, describe, expect, test } from 'vitest'
-import {
-  type Embedded,
-  type EmbeddedSentence,
-  embedded,
-  shownAsTheAppLinks
-} from './embedded-support'
+import { type Embedded, embedded, shownAsTheAppLinks } from './embedded-support'
 import { type ExampleSearchCase, exampleSearchSuite as suite } from './example-search-suite'
 import { artifactAvailable, requirePinnedArtifacts } from './support'
 
@@ -36,17 +32,21 @@ describe.runIf(artifactAvailable)('the app’s example sentences on the artifact
       learner: { sort: 'default', filter: 'all', known: [], fromRadicals: false }
     })
     const row = screen.state === 'results' ? screen.examples : null
-    const examples = await app.text<EmbeddedSentence[]>('resultsExamples', listed)
+    const { sentences, countText } = await app.text<EmbeddedResultsExamples>(
+      'resultsExamples',
+      listed
+    )
 
     const observed: Omit<ExampleSearchCase, 'query' | 'covers'> = {
       ...(row ? { title: row.title } : {}),
       count,
+      ...(countText ? { countText } : {}),
       ...(results.primaryEntry ? { highlightedEntry: results.primaryEntry } : {}),
       usesPrimaryEntryExamples: results.usesPrimaryEntryExamples,
-      ids: examples.map(example => example.id),
+      ids: sentences.map(example => example.id),
       shown: await shownAsTheAppLinks(
         app,
-        examples.slice(0, suite.tokenLimit),
+        sentences.slice(0, suite.tokenLimit),
         { query, highlightedEntry: results.primaryEntry },
         'queryMatch'
       )
