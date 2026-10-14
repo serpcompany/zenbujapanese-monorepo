@@ -4,14 +4,15 @@ struct ExamplePlace: Equatable {
   let row: ExampleSentenceID
   let top: CGFloat
 
-  func holds(_ frame: CGRect, in list: CGRect) -> Bool {
-    abs(frame.minY - list.minY - top) < 2
+  func isLost(_ frame: CGRect, in list: CGRect) -> Bool {
+    abs(frame.minY - list.minY - top) > list.height / 3
   }
 
   func anchor(rowHeight: CGFloat, listHeight: CGFloat) -> UnitPoint {
     let room = listHeight - rowHeight
     guard room > 0 else { return .top }
-    return UnitPoint(x: 0.5, y: min(max(top / room, 0), 1))
+    let share = top / room
+    return share < 1 / 3 ? .top : share < 2 / 3 ? .center : .bottom
   }
 }
 
@@ -80,7 +81,7 @@ final class ExamplePlaceKeeper {
       return nil
     }
     let pushedAway = !laidOutSinceReturn.isEmpty && !laidOutSinceReturn.contains(left.row)
-    guard pushedAway || !left.holds(frame, in: list) else { return nil }
+    guard pushedAway || left.isLost(frame, in: list) else { return nil }
     correcting = true
     return ExamplePlaceCorrection(
       row: left.row, anchor: left.anchor(rowHeight: frame.height, listHeight: list.height))

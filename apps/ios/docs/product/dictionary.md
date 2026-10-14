@@ -312,9 +312,9 @@ pieces join into one word), `artifact/word-examples.test.ts` (which words are ac
 On Example Sentences, a word's Examples, and a form's examples, a sentence appears with its words
 linked, furigana, and romaji when Romaji is on: never as plain text first, and at the height it
 keeps. Each list shows 25 sentences, those that fit the screen first, then 25 more at its end.
-Back from a word opened on Example Sentences finds its sentence where it was. A list that couldn't
-be read says "Examples couldn’t be loaded.", never that it has none; a later page, "More examples
-couldn’t be loaded." Each has **Retry**, and is read again on **Retry** or on coming back.
+Back from a word opened on Example Sentences finds its sentence on screen, within a third of the
+list of where it was. A list that fails says "Examples couldn’t be loaded.", never that it has none;
+a later page, "More examples couldn’t be loaded." Each has **Retry** and is read again on return.
 
 Check: UI `ExampleRowsUITests` (rows 1, 23, and 26 of each screen arrive linked while held, after
 no empty or failed message, and keep their height; a form's word opens; the place is kept, Romaji

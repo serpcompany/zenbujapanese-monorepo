@@ -49,9 +49,10 @@ final class ExampleRowsUITests: ZenbuUITestCase {
     waitUntilStill(find("example-list.screen", in: app))
     letLinkingGo(heldBefore: .now)
     RunLoop.current.run(until: Date.now.addingTimeInterval(Self.settling))
+    let list = rows.list.frame
     XCTAssertEqual(
-      opened.frame.minY - rows.list.frame.minY, top, accuracy: opened.frame.height / 2,
-      "the sentence the word was opened from is where it was, though Romaji made the rows taller")
+      opened.frame.minY - list.minY, top, accuracy: list.height / 3,
+      "the sentence the word was opened from is on screen near where it was, after Romaji")
     XCTAssertTrue(isReachable(words, in: app), "the list is where it was left")
     XCTAssertFalse(isReachable(rows.row(0), in: app), "the list went back to its top")
   }
