@@ -276,7 +276,7 @@ engine change on real audio without a phone or a speaker.
 Apple Translation doesn't run in the Simulator, so the live engine can't either. A Debug build
 launched with `ZENBU_TRANSLATE_SCRIPT=station` replaces the clients with a scripted station
 conversation (and TV announcements in Listening, in Japanese then English), fixture translations,
-silent playback, and a 20-second silence prompt, so every screen can be checked:
+silent playback, and a silence prompt (20 s, then two minutes), so every screen can be checked:
 
 ```sh
 SIMCTL_CHILD_ZENBU_TRANSLATE_SCRIPT=station xcrun simctl launch <udid> com.zenbujapanese.dictionary

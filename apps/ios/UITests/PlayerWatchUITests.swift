@@ -26,7 +26,7 @@ final class PlayerWatchUITests: ZenbuUITestCase {
     tap(find("watch.next", in: app))
     tap(find("watch.previous", in: app))
     tap(find("watch.repeat", in: app))
-    XCTAssertTrue(find("watch.repeat", in: app).isSelected, "the line repeats")
+    waitUntil(find("watch.repeat", in: app), "isSelected == true")
     let opened = Date.now
     tap(find("watch.speed", in: app))
     for rate in ["0.5×", "0.75×", "1×", "1.25×", "1.5×"] {
