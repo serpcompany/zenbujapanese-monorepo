@@ -2,6 +2,7 @@ import SwiftUI
 
 struct PlaybackSpeedMenu: View {
   let player: YouTubePlayerController
+  @State private var draws = DrawCount()
 
   var body: some View {
     Menu {
@@ -21,6 +22,7 @@ struct PlaybackSpeedMenu: View {
     }
     .accessibilityLabel("Playback speed, \(Self.label(player.playbackRate))")
     .accessibilityIdentifier("watch.speed")
+    .countingDraws(as: "watch.speed.draws", in: draws)
   }
 
   private static let rates: [Double] = [0.5, 0.75, 1, 1.25, 1.5]
