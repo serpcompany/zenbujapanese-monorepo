@@ -56,17 +56,14 @@ final class ExampleRowsUITests: ZenbuUITestCase {
   func testAConjugatedFormsExamplesArriveLinkedAndAWordOpens() {
     let app = launch([Self.holdLinking: "1"])
     let rows = formExamples(of: openAFormOfTaberu(in: app), in: app)
-    let explanation = waitFor(firstElement(identifiedBy: "conjugations.explanation.", in: app))
     assertKeepTheirHeight(assertArriveLinked(Self.checkedRows, of: rows, in: app))
-    reveal(0, of: rows, in: app)
-    let word = app.buttons.matching(
-      NSPredicate(
-        format: "identifier BEGINSWITH 'conjugations.example-token.' AND label CONTAINS ', '")
-    ).matching(NSPredicate(format: "NOT (label ENDSWITH 'choose dictionary entry')")).firstMatch
+    guard let word = reachableWord(of: rows, near: Self.onTheNextPage, in: app) else {
+      return XCTFail("no linked word of the form's examples is in the window to be clicked")
+    }
     let page = find("word-detail.screen", in: app)
     if device == .mac {
       for _ in 0..<3 where !page.exists {
-        waitFor(word).coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.75)).tap()
+        word.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.75)).tap()
         _ = page.waitForExistence(timeout: Self.patience / 3)
       }
     } else {
@@ -74,7 +71,7 @@ final class ExampleRowsUITests: ZenbuUITestCase {
     }
     waitFor(page)
     goBack(in: app)
-    waitFor(explanation)
+    waitFor(rows.list)
   }
 
   func testExampleSentencesAreReadAgainOnComingBackAfterTheirFirstReadFailed() {
@@ -155,6 +152,25 @@ final class ExampleRowsUITests: ZenbuUITestCase {
     } else {
       flick(rows, back: past > 0, in: app)
     }
+  }
+
+  private func reachableWord(
+    of rows: Rows, near number: Int, in app: XCUIApplication
+  ) -> XCUIElement? {
+    let linked = NSPredicate(
+      format: "label CONTAINS ', ' AND NOT (label ENDSWITH 'choose dictionary entry')")
+    let area = device == .mac ? rows.list : nil
+    let isOpenable = { (word: XCUIElement) in self.isReachable(word, in: app, within: area) }
+    for nearby in [0, -1, 1, -2, 2, -3, 3].map({ number + $0 }) {
+      let words = app.buttons.matching(
+        NSPredicate(format: "identifier BEGINSWITH %@", rows.words(nearby)[0])
+      ).matching(linked)
+      if let word = words.allElementsBoundByIndex.first(where: isOpenable) { return word }
+    }
+    let words = app.buttons.matching(
+      NSPredicate(format: "identifier BEGINSWITH %@", String(rows.words(0)[0].dropLast(2)))
+    ).matching(linked)
+    return words.allElementsBoundByIndex.first(where: isOpenable)
   }
 
   private func flick(_ rows: Rows, back: Bool, in app: XCUIApplication) {
