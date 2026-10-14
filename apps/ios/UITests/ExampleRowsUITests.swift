@@ -94,8 +94,8 @@ final class ExampleRowsUITests: ZenbuUITestCase {
     letLinkingGo(until: rows.row(0), in: app)
   }
 
-  func testAWordsExamplesAreReadAgainOnComingBackAfterTheirFirstReadFailed() {
-    let app = launch([Self.holdLinking: "1", Self.failLinking: "2"])
+  func testFailedExamplesOfAWordAndAFormAreReadAgainOnComingBackAndOnRetry() {
+    let app = launch([Self.holdLinking: "1", Self.failLinking: "3"])
     openTaberu(in: app)
     let rows = wordExamples(in: app)
     let page = device == .mac ? rows.list : app.windows.firstMatch
@@ -116,8 +116,26 @@ final class ExampleRowsUITests: ZenbuUITestCase {
     waitFor(loading)
     letLinkingGo(until: unread, in: app)
     XCTAssertFalse(none.exists, "the page said the word has no examples when its read failed")
-    tap(reveal(find("examples.retry", in: app), in: app))
-    letLinkingGo(until: rows.row(0), in: app)
+    scroll(page, back: true, until: conjugations)
+    tap(reveal(conjugations, in: app), toShow: find("conjugations.screen", in: app))
+    let prefix = "conjugations.row."
+    let form = waitFor(firstElement(identifiedBy: prefix, in: app))
+    let formRows = formExamples(of: String(form.identifier.dropFirst(prefix.count)), in: app)
+    tap(form)
+    let onTheForm: (String) -> XCUIElement = {
+      formRows.list.descendants(matching: .any).matching(identifier: $0).firstMatch
+    }
+    letLinkingGo(until: onTheForm("examples.failed"), in: app)
+    XCTAssertFalse(
+      onTheForm("examples.empty").exists, "the form said no sentence uses it when its read failed")
+    tap(reveal(onTheForm("examples.retry"), in: app))
+    letLinkingGo(until: formRows.row(0), in: app)
+    goBack(in: app)
+    goBack(in: app)
+    for _ in 0..<12 where !rows.row(0).exists {
+      letLinkingGo(heldBefore: .now)
+      scroll(page, back: false)
+    }
     reveal(0, of: rows, in: app)
   }
 
