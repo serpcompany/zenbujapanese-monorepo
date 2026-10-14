@@ -243,8 +243,8 @@ the same on every device:
 - The Settings window is SwiftUI's own `com_apple_SwiftUI_Settings_window`
   (`TestDevice.settingsWindow`); an identifier on the Settings view never reaches it.
 - A scroll wheel doesn't stop a scroll that's still animating, as a finger does, so a test that
-  scrolls a list just after it moved waits for it to settle first (`waitUntilStill`), and it
-  scrolls the list, not the window: a scroll sent to the window doesn't always land on the list.
+  scrolls a list just after it moved waits for it to settle first (`waitUntilStill`), and it scrolls
+  the list, not the window (`reveal`'s `scrolling:`): a scroll sent to the window can miss the list.
 - A button's accessibility value isn't given to a test on the Mac, so the test of a result marked
   known checks its menu there (`SearchUITests.testMarkingAResultKnownShowsTheKnownCapsule`).
 - A headword's kanji aren't elements of their own, so the highlight test clicks the kanji and
