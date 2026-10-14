@@ -157,26 +157,10 @@ struct WatchSessionView: View {
   }
 
   private func captionList(_ captions: YouTubeVideoCaptions) -> some View {
-    let activeCueID = activeCue(in: captions.cues)?.id
-    return VStack(spacing: 0) {
+    VStack(spacing: 0) {
       comprehensionSummary
       Divider()
-      ScrollViewReader { proxy in
-        List {
-          ForEach(captions.cues) { cue in
-            cueRow(cue)
-              .captionCardRow(isActive: cue.id == activeCueID)
-              .id(cue.id)
-          }
-        }
-        .listStyle(.plain)
-        .contentMargins(.top, 8, for: .scrollContent)
-        .onChange(of: activeCueID) { _, id in
-          guard let id else { return }
-          withAnimation { proxy.scrollTo(id, anchor: .center) }
-        }
-        .accessibilityIdentifier("watch.captions")
-      }
+      LiveCaptionList(cues: captions.cues, player: player) { cue in cueRow(cue) }
     }
   }
 
@@ -199,10 +183,9 @@ struct WatchSessionView: View {
 
   private var playbackControls: some View {
     VStack(spacing: 0) {
-      PlaybackScrubber(
-        position: scrubPosition ?? player.currentTime,
-        duration: player.duration,
-        scrub: { scrubPosition = $0 },
+      PlaybackPositionScrubber(
+        player: player,
+        scrubPosition: $scrubPosition,
         commit: { position in
           if player.loop != nil,
             let cue = loadedCues.last(where: { $0.start <= position }) ?? loadedCues.first
@@ -214,9 +197,7 @@ struct WatchSessionView: View {
         }
       )
       HStack(spacing: 0) {
-        Text(
-          "\(Self.timestamp(scrubPosition ?? player.currentTime)) / \(Self.timestamp(player.duration))"
-        )
+        PlaybackTimeText(player: player, scrubPosition: scrubPosition)
         .font(.caption2.monospacedDigit())
         .foregroundStyle(.secondary)
         .frame(maxWidth: .infinity, alignment: .leading)
