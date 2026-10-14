@@ -62,14 +62,19 @@ struct LoadedExamplesTests {
       holding.insert(from)
     }
 
-    func untilHeld(_ from: Int) async {
-      while held[from] == nil { await Task.yield() }
+    func untilHeld(_ from: Int, reads: Int = 1) async {
+      while (held[from]?.count ?? 0) < reads { await Task.yield() }
     }
 
     func answer(_ from: Int) {
       holding.remove(from)
       for read in held.removeValue(forKey: from) ?? [] { read.waiting.resume() }
     }
+
+    func answer(_ from: Int, read number: Int) {
+      held[from]?.remove(at: number).waiting.resume()
+    }
+
 
     private func giveUp(_ id: UUID, from: Int) {
       guard let index = held[from]?.firstIndex(where: { $0.id == id }) else { return }
@@ -196,6 +201,56 @@ struct LoadedExamplesTests {
       }
       #expect(loaded.state(of: "a1") == state)
     }
+  }
+
+  @Test("a Retry tapped twice shows what the second read answers, whichever read answers first")
+  func aRetryTappedTwiceShowsTheSecondRead() async {
+    for secondAnswersFirst in [true, false] {
+      let miru = Listing("見る", listed: 60)
+      miru.failing = [0]
+      let loaded = LoadedExamples()
+      await loaded.load("見る", rowsOnScreen: nil, read: miru.read)
+      miru.hold(0)
+      let first = Task { await loaded.load("見る", rowsOnScreen: nil, read: miru.read) }
+      await miru.untilHeld(0, reads: 1)
+      let second = Task { await loaded.load("見る", rowsOnScreen: nil, read: miru.read) }
+      await miru.untilHeld(0, reads: 2)
+      if secondAnswersFirst {
+        miru.answer(0, read: 1)
+        await second.value
+        #expect(loaded.state(of: "見る") == .listed)
+        miru.failing = [0]
+        miru.answer(0, read: 0)
+        await first.value
+      } else {
+        miru.failing = [0]
+        miru.answer(0, read: 0)
+        await first.value
+        #expect(loaded.state(of: "見る") == .loading)
+        miru.answer(0, read: 0)
+        await second.value
+      }
+      #expect(loaded.state(of: "見る") == .listed)
+      #expect(rows(loaded) == miru.rows(0..<25))
+    }
+  }
+
+  @Test("a Retry of one list that answers after another list was read is left out")
+  func aRetryAnsweredAfterAnotherListIsLeftOut() async {
+    let miru = Listing("見る", listed: 60)
+    let taberu = Listing("食べる", listed: 30)
+    miru.failing = [0]
+    let loaded = LoadedExamples()
+    await loaded.load("見る", rowsOnScreen: nil, read: miru.read)
+    miru.hold(0)
+    let retry = Task { await loaded.load("見る", rowsOnScreen: nil, read: miru.read) }
+    await miru.untilHeld(0)
+    await loaded.load("食べる", rowsOnScreen: nil, read: taberu.read)
+    #expect(loaded.state(of: "食べる") == .listed)
+    miru.answer(0)
+    await retry.value
+    #expect(loaded.state(of: "食べる") == .listed)
+    #expect(rows(loaded) == taberu.rows(0..<25))
   }
 
   @Test("a later page that fails says so at the list's end, and is read again when asked")
