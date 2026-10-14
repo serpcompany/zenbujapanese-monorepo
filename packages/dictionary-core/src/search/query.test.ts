@@ -2,11 +2,13 @@ import { describe, expect, test } from 'vitest'
 import { acceptsPartsOfSpeech, deinflect } from './deinflect'
 import {
   compareStrings,
+  containsJapaneseText,
   isJapaneseOnly,
   isMixedScript,
   japaneseCandidates,
   normalizeQuery,
-  romajiDeinflectedCandidates
+  romajiDeinflectedCandidates,
+  writtenLanguage
 } from './query'
 
 describe('compareStrings', () => {
@@ -134,6 +136,31 @@ describe('scripts', () => {
     expect(isJapaneseOnly('食べる')).toBe(true)
     expect(isJapaneseOnly('taberu')).toBe(false)
     expect(isMixedScript('taberu 食べる')).toBe(true)
+  })
+})
+
+describe('containsJapaneseText', () => {
+  test('finds kana or kanji anywhere in a text, as search reads the text', () => {
+    expect(containsJapaneseText('Suicaカード')).toBe(true)
+    expect(containsJapaneseText('ｶﾀｶﾅ')).toBe(true)
+    expect(containsJapaneseText('々')).toBe(true)
+    expect(containsJapaneseText('Where is the station?')).toBe(false)
+    expect(containsJapaneseText('  123 ？！ ')).toBe(false)
+  })
+
+  test('leaves out what search does not read as Japanese', () => {
+    expect(containsJapaneseText('\u{20BB7}')).toBe(false)
+    expect(containsJapaneseText('\u{4DC0}')).toBe(false)
+    expect(containsJapaneseText('\u{20BB7}野家')).toBe(true)
+  })
+})
+
+describe('writtenLanguage', () => {
+  test('is Japanese with any kana or kanji, English with only Latin letters, else none', () => {
+    expect(writtenLanguage('駅まで歩いて何分ですか？')).toBe('ja')
+    expect(writtenLanguage('Suicaカードはどこで買えますか')).toBe('ja')
+    expect(writtenLanguage('Where can I buy a Suica card?')).toBe('en')
+    expect(writtenLanguage('  123 ？！ ')).toBeNull()
   })
 })
 

@@ -1,7 +1,12 @@
 import { type PhraseEntry, phraseNote } from '../detail/phrase-note'
 import { romaji, sentenceRomaji } from '../detail/romaji'
 import { isKanjiCharacter, shortGloss } from '../detail/text'
-import { japaneseCandidates, normalizeQuery } from '../search/query'
+import {
+  containsJapaneseText,
+  japaneseCandidates,
+  normalizeQuery,
+  writtenLanguage
+} from '../search/query'
 import { creditsShownBy } from '../sources/credits'
 import type { EmbeddedHost } from './host'
 import { canonicalEntries, EmbeddedLookup } from './lookup'
@@ -48,6 +53,8 @@ export function embeddedEndpoint(host: EmbeddedHost): EmbeddedEndpoint {
     tatoebaContributors: () => lookup().tatoebaContributors(),
     normalizeQuery,
     japaneseCandidates: candidates => japaneseCandidates(JSON.parse(candidates)),
+    containsJapaneseText,
+    writtenLanguage,
     isKanji: isKanjiCharacter,
     romaji,
     sentenceRomaji: words => sentenceRomaji(JSON.parse(words)),

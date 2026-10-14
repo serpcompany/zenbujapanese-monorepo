@@ -223,6 +223,9 @@ describe('the embedded dictionary', () => {
     expect(endpoint.answer('romaji', '日本語')).toBeNull()
     expect(endpoint.answerJSON('japaneseCandidates', '["見る","miru"]')).toBe('["見る"]')
     expect(endpoint.answerJSON('gloss', '')).toBe('null')
+    expect(endpoint.answer('containsJapaneseText', 'ｶﾀｶﾅ')).toBe(true)
+    expect(endpoint.answer('writtenLanguage', 'how much is this?')).toBe('en')
+    expect(endpoint.answerJSON('writtenLanguage', '123')).toBe('null')
     expect(endpoint.answerJSON('websiteRoute', '{"host":"example.com","path":"/"}')).toBe(
       JSON.stringify(endpoint.answer('websiteRoute', '{"host":"example.com","path":"/"}'))
     )

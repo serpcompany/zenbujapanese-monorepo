@@ -64,6 +64,20 @@ function isJapaneseScalar(codePoint: number): boolean {
   )
 }
 
+export function containsJapaneseText(text: string): boolean {
+  for (const scalar of normalizeQuery(text)) {
+    if (isJapaneseScalar(scalar.codePointAt(0) ?? 0)) return true
+  }
+  return false
+}
+
+const latinLetter = /[A-Za-z]/
+
+export function writtenLanguage(text: string): 'ja' | 'en' | null {
+  if (containsJapaneseText(text)) return 'ja'
+  return latinLetter.test(text) ? 'en' : null
+}
+
 export function japaneseSegments(value: string): string[] {
   const segments: string[] = []
   let current = ''
