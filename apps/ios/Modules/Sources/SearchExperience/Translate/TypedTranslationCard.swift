@@ -126,7 +126,10 @@ struct TypedTranslationCard: View {
   }
 
   private func translate(_ source: String) async {
-    guard let language = SpokenLanguage.detect(in: source) else {
+    guard
+      let language = PresentationCore.shared.writtenLanguage(source).flatMap(
+        SpokenLanguage.init(rawValue:))
+    else {
       status = .idle
       return
     }

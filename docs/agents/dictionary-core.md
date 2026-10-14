@@ -132,7 +132,7 @@ modules, files, or event loop of its own, which is how the app runs it in JavaSc
   | `canonicalEntries`, `tatoebaContributors` | Groups of equivalent entries' IDs; — | Each group's smallest ID, which stands for it (`canonicalEntry`); the Tatoeba contributors, with their counts |
   | `normalizeQuery` | What was typed | The query Search reads |
   | `japaneseCandidates` | What a handwriting recognizer offered | Those written only in Japanese, normalized, each once, in order |
-  | `isKanji` | A string | Whether it is one kanji |
+  | `isKanji`, `containsJapaneseText`, `writtenLanguage` | A string | Whether it is one kanji; has kana or kanji as search reads it; `ja`, `en` (only Latin letters), or null |
   | `romaji`, `sentenceRomaji` | A reading; a sentence's words, each with its surface and reading | The reading in romaji, or null for one with kanji in it; the sentence in romaji, words spaced and punctuation kept with its word, or null when a word has no kana reading |
   | `checkExamples` | — | True, or an error saying which example table or pack is missing or wrong |
   | `tokenizerReady` | — | Whether the text part can tokenize. With the host's files it reads them now, so the first sentence doesn't wait for them, and is false when one is missing or wrong. |
@@ -265,6 +265,7 @@ Paths are relative to `apps/ios/Modules/Sources/SearchExperience/`.
 | `PresentationCore.swift` (`RomajiReadingAidText`, `LinkedJapaneseText`) | `romaji`, `sentenceRomaji` | The Romaji reading aid, for a reading and for a sentence |
 | `RadicalLookupClient.swift` (`RadicalInputView`) | `radicalPanel` | The radical panel |
 | `KanjiStrokeOrderClient.swift` | `kanjiStrokes` | The strokes Kanji Detail draws |
+| `ImageTextFlowModel.swift`, `ImageTextRecognitionClient.swift`, `TypedTranslationCard.swift` | `containsJapaneseText`, `writtenLanguage` | The lines and words Image Search keeps, and typed text's language |
 | `HandwritingRecognitionLiveAdapter.swift` | `japaneseCandidates` | Which of Vision's candidates the handwriting panel offers, when the bundled model (`OfflineHandwritingRecognizer.swift`) gives none. The model's own candidates are offered as they are. |
 | `ResultsScreen.swift` (`SearchResultsView`, `SearchResultsMenu`, `ResultRow`, `RecognizedWordSheet`) | `resultsScreen`, `wordRows` | The results screen and a sheet's candidates |
 | `JapaneseRuby.swift` | `ruby` | Furigana wherever a word is drawn |
@@ -346,11 +347,10 @@ The core answers as the Swift it replaced did, which the suites pin.
 
 ## Search
 
-- `deinflect` rewrites suffixes, chaining rules by word class: any rule applies to the surface,
-  then only a rule whose input classes include the class the previous rule produced, up to six
-  deep. Its candidates are hypotheses that lookup filters by part of speech.
-  `romajiDeinflectedCandidates` tries the irregular verbs first, since their regular-looking
-  alternatives are words too.
+- `deinflect` rewrites suffixes, chaining rules by word class: any rule applies to the surface, then
+  only a rule whose input classes include the class the previous rule produced, up to six deep. Its
+  candidates are hypotheses that lookup filters by part of speech. `romajiDeinflectedCandidates`
+  tries the irregular verbs first, since their regular-looking alternatives are words too.
 - When a Japanese query deinflects, an exact dictionary form stays first (した lists 下 and 舌
   before する), and the deinflected lemmas follow it, ahead of prefix and contains matches.
 - `deduplicated` collapses entries that share a semantic fingerprint into the lowest Language
@@ -376,10 +376,9 @@ The core answers as the Swift it replaced did, which the suites pin.
   section ([`dictionary.md`](../../apps/web/docs/product/dictionary.md), Word page).
 - **Frequency.** The website uses only the app's default dictionaries, the bundled packs in
   `FrequencyPackCatalog.json`'s order: JLPT levels, then TUBELEX (YouTube). Tiers use Migaku's star
-  cutoffs, and JLPT levels map onto the same scale. `frequency.test.ts` pins each pack's
-  disclosure, and `coveredSourceRows` (the rows a rank's percentile divides by), to the catalog. A
-  row's label leaves out the app's "Double tap for details." hint, since the website's row opens a
-  dialog.
+  cutoffs, and JLPT levels map onto the same scale. `frequency.test.ts` pins each pack's disclosure,
+  and `coveredSourceRows` (the rows a rank's percentile divides by), to the catalog. A row's label
+  leaves out the app's "Double tap for details." hint, since the website's row opens a dialog.
 - **Furigana.** `rubySegments` anchors each kanji run on the first match of the next kana run, as
   the app does. `splitKanjiReading` splits a segment kanji by kanji only when exactly one split
   fits the kanji's KANJIDIC2 on and kun readings, taken without okurigana, with their voiced and
@@ -427,10 +426,9 @@ The core answers as the Swift it replaced did, which the suites pin.
   else matches pairs whose Japanese contains it. FTS4's `offsets()` reports UTF-8 byte offsets,
   which `example-search.ts` maps to UTF-16, then grapheme positions. The results' primary entry is
   highlighted for every search, and its own examples are listed for a romaji or deinflected query.
-- **A conjugated form's examples** are the sentences the app's search for the form finds,
-  normalized (a full-width Ｈ searches English), that contain it as written and in which the
-  tokenizer reads it as one word, so 見たかった and 見た目 aren't examples of 見た. The screen accents the
-  query as normalized.
+- **A conjugated form's examples** are the sentences the app's search for the form finds, normalized
+  (a full-width Ｈ searches English), that contain it as written and in which the tokenizer reads it
+  as one word, so 見たかった and 見た目 aren't examples of 見た. The screen accents the query as normalized.
 - An example's `pairId` is the artifact's pair ID in hex; the app's ID prefixes it with `esp1_`.
 
 ## Artifact
@@ -485,12 +483,11 @@ ready and a page's first request prepares nothing:
 - **Common words** on the dictionary home (`summary().commonWords`) are the 24 most used common
   words that are content words (`browse/content-words.ts`): not ones whose first sense is a
   particle, auxiliary, conjunction, or copula, nor ones that are only a prefix or suffix.
-- **Kanji lists** are KANJIDIC2's school grades 1 to 6, secondary school (grade 8), jinmeiyō
-  (grades 9 and 10), the JLPT levels N5 to N1 (`wallerJlptLevel`, from Jonathan Waller's kanji
-  lists, not KANJIDIC2's `jlpt`), and the jōyō kanji (grades 1 to 6 and 8) by stroke count, each
-  most frequent first by KANJIDIC2's newspaper frequency, then by code point. Jinmeiyō holds 57
-  CJK compatibility characters, such as U+FA45 for 海; one KANJIDIC2 gives no meaning shows its
-  base kanji's.
+- **Kanji lists** are KANJIDIC2's school grades 1 to 6, secondary school (grade 8), jinmeiyō (grades
+  9 and 10), the JLPT levels N5 to N1 (`wallerJlptLevel`, from Jonathan Waller's kanji lists, not
+  KANJIDIC2's `jlpt`), and the jōyō kanji (grades 1 to 6 and 8) by stroke count, each most frequent
+  first by KANJIDIC2's newspaper frequency, then by code point. Jinmeiyō holds 57 CJK compatibility
+  characters, such as U+FA45 for 海; one KANJIDIC2 gives no meaning shows its base kanji's.
 - **Thin lists.** The sitemap answer gives every list's word count, so the website can leave out
   of the browse sitemaps the lists of fewer than `minimumIndexedWords` (10).
 

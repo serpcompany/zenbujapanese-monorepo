@@ -442,6 +442,17 @@
   function isJapaneseScalar(codePoint) {
     return codePoint === 12293 || codePoint >= 12352 && codePoint <= 12543 || codePoint >= 13312 && codePoint <= 19903 || codePoint >= 19968 && codePoint <= 40959;
   }
+  function containsJapaneseText(text) {
+    for (const scalar of normalizeQuery(text)) {
+      if (isJapaneseScalar(scalar.codePointAt(0) ?? 0)) return true;
+    }
+    return false;
+  }
+  var latinLetter = /[A-Za-z]/;
+  function writtenLanguage(text) {
+    if (containsJapaneseText(text)) return "ja";
+    return latinLetter.test(text) ? "en" : null;
+  }
   function japaneseSegments(value) {
     const segments = [];
     let current = "";
@@ -5412,6 +5423,8 @@
       tatoebaContributors: () => lookup().tatoebaContributors(),
       normalizeQuery,
       japaneseCandidates: (candidates) => japaneseCandidates(JSON.parse(candidates)),
+      containsJapaneseText,
+      writtenLanguage,
       isKanji: isKanjiCharacter,
       romaji,
       sentenceRomaji: (words) => sentenceRomaji(JSON.parse(words)),

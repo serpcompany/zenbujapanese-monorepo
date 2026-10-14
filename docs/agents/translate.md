@@ -181,12 +181,12 @@ J-E-J-E turns, held audio, the 30-second cutoff, Listening, the silence prompt, 
 the background, leaving with and without saving, provisional translations, a stalled sentence,
 failures), conversation playback (echo-cancelled playback keeps listening, the app's own voice is
 ignored, playback waits while someone talks, a finished sentence keeps its live translation), muting
-and unmuting in both modes (`ConversationMutingTests`), the merger, the pause detector,
-typed-language detection, and History storage, bookmarks and the synced ones included.
-`SearchExperienceTests` covers what the app adds around it: reading a document's text
-(`DocumentTextTests`), the home's rows (`TranslateStartTests`), each conversation's known-word share
-(`ConversationWordsTests`), and the spoken translation's time limit (`SystemSpeechPlayerTests`). Run
-them from `apps/ios/Modules`:
+and unmuting in both modes (`ConversationMutingTests`), the merger, the pause detector, and History
+storage, bookmarks and the synced ones included. `SearchExperienceTests` covers what the app adds
+around it: reading a document's text (`DocumentTextTests`), the home's rows (`TranslateStartTests`),
+typed text's language, the core's answer (`WrittenLanguageTests`), each conversation's known-word
+share (`ConversationWordsTests`), and the spoken translation's time limit
+(`SystemSpeechPlayerTests`). Run them from `apps/ios/Modules`:
 
 ```sh
 xcodebuild -scheme ZenbuJapaneseModules-Package \

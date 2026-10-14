@@ -134,6 +134,14 @@ final class PresentationCore: @unchecked Sendable {
     }
   }
 
+  func containsJapaneseText(_ text: String) -> Bool {
+    lock.withLock { (try? preparedCore().flag("containsJapaneseText", text)) ?? false }
+  }
+
+  func writtenLanguage(_ text: String) -> String? {
+    lock.withLock { (try? preparedCore().text("writtenLanguage", text)) ?? nil }
+  }
+
   func isKanji(_ text: String) -> Bool {
     remembered(\.kanjiChecks, Written(text), otherwise: false) { try $0.flag("isKanji", text) }
   }

@@ -3,26 +3,8 @@ import Testing
 
 @testable import TranslatorCore
 
-@Suite("Language detection")
-struct LanguageDetectionTests {
-  @Test(
-    "typed text is Japanese when it has kana or kanji, English when it has only Latin letters",
-    arguments: [
-      ("駅まで歩いて何分ですか？", SpokenLanguage.japanese),
-      ("トイレはどこですか", .japanese),
-      ("Suicaカードはどこで買えますか", .japanese),
-      ("Where can I buy a Suica card?", .english),
-      ("how much is this?", .english),
-    ])
-  func detectsTypedLanguage(text: String, expected: SpokenLanguage) {
-    #expect(SpokenLanguage.detect(in: text) == expected)
-  }
-
-  @Test("text without letters has no language")
-  func noLanguage() {
-    #expect(SpokenLanguage.detect(in: "  123 ？！ ") == nil)
-  }
-
+@Suite("Spoken languages")
+struct SpokenLanguageTests {
   @Test("sentences join without spaces in Japanese and with spaces in English")
   func joining() {
     #expect(SpokenLanguage.japanese.joined(["はい。", "そうです。"]) == "はい。そうです。")
