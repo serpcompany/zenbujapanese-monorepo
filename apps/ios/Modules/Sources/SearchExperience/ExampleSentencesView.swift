@@ -2,8 +2,10 @@ import SwiftUI
 
 struct ExampleSentencesView: View {
   @State private var examples = LoadedExamples()
+  @State private var place = ExamplePlaceKeeper()
   @State private var analysisAvailability = JapaneseTextAnalysisAvailability.full
   @Environment(\.exampleRowsOnScreen) private var rowsOnScreen
+  @Environment(ScreenReturns.self) private var returns
 
   let query: SearchQuery
   let highlightedEntry: DictionaryEntry?
@@ -14,6 +16,20 @@ struct ExampleSentencesView: View {
   let openWord: (DictionaryEntry) -> Void
 
   var body: some View {
+    ScrollViewReader { proxy in
+      screen(proxy)
+        .navigationTitle(query.value)
+        .inlineNavigationTitle()
+        .onChange(of: returns.count) { restore(place.comeBack(), with: proxy) }
+        .screenTask(id: query) {
+          analysisAvailability = await japaneseTextAnalysisClient.availability()
+          await examples.load(query.value, rowsOnScreen: rowsOnScreen, read: read)
+        }
+    }
+  }
+
+  @ViewBuilder
+  private func screen(_ proxy: ScrollViewProxy) -> some View {
     Group {
       switch examples.state(of: query.value) {
       case .loading:
@@ -51,8 +67,14 @@ struct ExampleSentencesView: View {
               example: example,
               presentation: .dedicated(index: index),
               speak: { speechSynthesisClient.speak(example.sentence.japanese) },
-              openWord: openWord
+              openWord: { entry in
+                place.leave(from: example.id)
+                openWord(entry)
+              }
             )
+            .onGeometryChange(for: CGRect.self) { $0.frame(in: .global) } action: { frame in
+              restore(place.note(example.id, at: frame), with: proxy)
+            }
           }
           if examples.hasMore {
             MoreExamplesRow { await examples.loadMore(read: read) }
@@ -63,14 +85,23 @@ struct ExampleSentencesView: View {
         }
         .listStyle(.plain)
         .scrollIndicators(.visible)
+        .onGeometryChange(for: CGRect.self) { $0.frame(in: .global) } action: { frame in
+          place.noteList(frame)
+        }
+        .onScrollPhaseChange { _, phase in
+          if phase != .idle { place.userScrolled() }
+        }
         .accessibilityIdentifier("example-list.screen")
       }
     }
-    .navigationTitle(query.value)
-    .inlineNavigationTitle()
-    .screenTask(id: query) {
-      analysisAvailability = await japaneseTextAnalysisClient.availability()
-      await examples.load(query.value, rowsOnScreen: rowsOnScreen, read: read)
+  }
+
+  private func restore(_ correction: ExamplePlaceCorrection?, with proxy: ScrollViewProxy) {
+    guard let correction else { return }
+    Task { @MainActor in
+      await Task.yield()
+      proxy.scrollTo(correction.row, anchor: correction.anchor)
+      place.corrected()
     }
   }
 
