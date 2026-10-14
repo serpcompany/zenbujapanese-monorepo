@@ -56,15 +56,19 @@ enum TestDevice {
     #endif
   }
 
-  @MainActor static func leaveAndReturn(to app: XCUIApplication) {
+  @MainActor static func leave(_ app: XCUIApplication) {
     #if os(macOS)
       app.typeKey("w", modifierFlags: .command)
-      app.activate()
-      app.typeKey("n", modifierFlags: .command)
-      app.typeKey("2", modifierFlags: .command)
     #else
       XCUIDevice.shared.press(.home)
-      app.activate()
+    #endif
+  }
+
+  @MainActor static func comeBack(to app: XCUIApplication) {
+    app.activate()
+    #if os(macOS)
+      app.typeKey("n", modifierFlags: .command)
+      app.typeKey("2", modifierFlags: .command)
     #endif
   }
 

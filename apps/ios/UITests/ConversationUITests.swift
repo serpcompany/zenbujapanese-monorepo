@@ -76,7 +76,7 @@ final class ConversationUITests: ZenbuUITestCase {
 
   func testLeavingTheAppPausesTheConversation() {
     let app = startConversation()
-    TestDevice.leaveAndReturn(to: app)
+    leaveAndReturn(to: app)
     if device == .mac {
       waitUntil(find("translate.session.toggle", in: app), "label == 'Resume'")
     } else {
