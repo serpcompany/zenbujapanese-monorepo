@@ -73,6 +73,26 @@ struct LinkedEntriesTests {
     #expect(Self.entries(tokens) == [Self.kept, Self.late])
   }
 
+  @Test("a text past the cache's capacity starts it again, so an entry it pushed out is read again")
+  func aTextPastTheCapacityStartsTheCacheAgain() async {
+    let reads = Reads()
+    let linked = Self.linked { await reads.record($0) }
+    _ = await linked.tokens([Self.word(Self.kept)], highlightedEntry: nil)
+    _ = await linked.tokens(Self.moreThanTheCacheHolds, highlightedEntry: nil)
+
+    let tokens = await linked.tokens([Self.word(Self.kept)], highlightedEntry: nil)
+    let keptReads = await reads.ids.count { $0.rawValue == Self.kept }
+
+    #expect(Self.entries(tokens) == [Self.kept])
+    #expect(keptReads == 2)
+  }
+
+  private actor Reads {
+    private(set) var ids: [LanguageReferenceID] = []
+
+    func record(_ read: [LanguageReferenceID]) { ids += read }
+  }
+
   @Test("a text links the page's own entry as the page has it")
   func aTextLinksThePagesOwnEntry() async {
     let page = DictionaryEntry.fixture(id: Self.kept, headword: "page word")
