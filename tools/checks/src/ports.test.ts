@@ -69,7 +69,7 @@ const asking = (folder: string) =>
     child.stdout.on('data', chunk => {
       said += chunk
     })
-    child.on('exit', () => done([folder, said.trim()]))
+    child.on('close', () => done([folder, said.trim()]))
   })
 
 describe('the ports of a checkout', () => {
@@ -172,16 +172,14 @@ describe('the ports of a checkout', () => {
     const names = ['a', 'b', 'c', 'd', 'e']
     const trees = names.map(name => worktree(main, name))
     const answers = await Promise.all([...trees, ...trees, ...trees, ...trees].map(asking))
-    const byTree = new Map<string, Set<string>>()
-    for (const [folder, said] of answers) {
-      byTree.set(folder, (byTree.get(folder) ?? new Set()).add(said))
-    }
-    for (const said of byTree.values()) expect(said.size).toBe(1)
-    const blocks = [...byTree.values()].map(said => [...said][0])
-    expect(new Set(blocks).size).toBe(names.length)
-    expect(claims(main)).toHaveLength(names.length)
-    for (const folder of trees)
-      expect(portsOf(folder)).toEqual(JSON.parse([...(byTree.get(folder) ?? [])][0]))
+    const saidIn = (tree: string) => [
+      ...new Set(answers.filter(([folder]) => folder === tree).map(([, said]) => said))
+    ]
+    for (const tree of trees) expect(saidIn(tree)).toHaveLength(1)
+    const firstBlocks = names.map((_, index) => JSON.stringify(block(index + 1)))
+    expect(trees.map(tree => saidIn(tree)[0]).sort()).toEqual(firstBlocks)
+    expect(claims(main)).toEqual(names.map((_, index) => String(index + 1)))
+    for (const tree of trees) expect(JSON.stringify(portsOf(tree))).toBe(saidIn(tree)[0])
   })
 })
 
