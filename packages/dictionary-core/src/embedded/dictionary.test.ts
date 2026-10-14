@@ -63,14 +63,9 @@ describe('the embedded dictionary', () => {
     expect(await settled(nothing)).toMatchObject({ value: { items: [], primaryEntry: null } })
   })
 
-  test('answers a query full-text search cannot read as an empty search, as the service does', async () => {
+  test('fails a search full-text search cannot read, as any failed search, where the service finds nothing', async () => {
     const unreadable = host({ all: () => ({ error: 'malformed MATCH expression: [eat"]' }) })
-    expect(await ask(unreadable, 'search', 'eat')).toMatchObject({
-      items: [],
-      primaryEntry: null
-    })
-    const broken = host({ all: () => ({ error: 'no such table: entries' }) })
-    await expect(ask(broken, 'search', 'eat')).rejects.toThrow('no such table: entries')
+    await expect(ask(unreadable, 'search', 'eat')).rejects.toThrow('malformed MATCH')
   })
 
   test('gives entries that match equally the same relevance', async () => {

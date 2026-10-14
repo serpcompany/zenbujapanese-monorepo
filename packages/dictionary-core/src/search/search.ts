@@ -10,7 +10,6 @@ import {
 import { type SearchDatabase, withParametersTruncatedAtNul } from './database'
 import { acceptsPartsOfSpeech, deinflect } from './deinflect'
 import { rankedEnglish } from './english'
-import { isUnreadableQuery } from './fts'
 import { hasFormContaining, rankedJapanese, rankedJapaneseForms } from './japanese'
 import { lookupSegments, type MorphologyAnalyzer, type MorphologyWord } from './morphology'
 import {
@@ -56,15 +55,7 @@ export class DictionarySearch {
   }
 
   async search(rawQuery: string): Promise<SearchResults> {
-    try {
-      return await this.found(normalizeQuery(rawQuery))
-    } catch (error) {
-      if (!isUnreadableQuery(error)) throw error
-      return noResults()
-    }
-  }
-
-  private async found(query: string): Promise<SearchResults> {
+    const query = normalizeQuery(rawQuery)
     const exactFormEntry =
       isASCII(query) && query !== ''
         ? (await rankedEnglish(this.db, query, true))[0]?.entry
