@@ -47,10 +47,11 @@ what it waited for and for how long.
 - **Never assert how long something took.** A busy Mac makes everything slow, so a time limit
   fails for the machine as often as for the app. Count what the app did instead: the Player test
   reads how many times the screen, its speed menu, and its captions drew themselves
-  (`ZENBU_COUNT_DRAWS`, [`ios.md`](ios.md)) while the scrubber shows three seconds of a repeating
+  (`ZENBU_COUNT_DRAWS`, [`ios.md`](ios.md)) while the time shows three seconds of a repeating
   line, and expects none. A missing count fails the test rather than reading as none. Each count
-  is a 1-point clear text read with `text(of:)`: the Mac never shows a value given to an empty
-  element such as `Color.clear`, though it finds the element by its identifier. It used to
+  is a 1-point clear text read with `text(of:)`: the Mac never shows a value given to an element
+  made with `.accessibilityElement()`, such as a `Color.clear` or the scrubber, though it finds
+  the element by its identifier. The seconds come from the time text for the same reason. It used to
   assert that the speed menu was used within 60 s, which caught the screen redrawing five times a
   second only when XCUITest's own wait for the app to go idle ran out.
 - **Wait for what the next step reads.** A label, a selection, or a frame read the moment after a
