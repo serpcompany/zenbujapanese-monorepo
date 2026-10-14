@@ -216,11 +216,15 @@ actor LanguageReferenceData {
     while try checkedSQLiteStep(statement) == .row {
       groups[sqliteText(statement, 15), default: []].append(try decodeEntry(from: statement))
     }
-    let equivalents = Array(groups.values)
+    var found: [LanguageReferenceID: DictionaryEntry] = [:]
+    for members in groups.values where members.count == 1 {
+      found[members[0].id] = members[0]
+    }
+    let equivalents = groups.values.filter { $0.count > 1 }
+    guard !equivalents.isEmpty else { return found }
     let canonical: [String?] = try preparedCore().answer(
       "canonicalEntries",
       try DictionaryCore.argument(equivalents.map { $0.map(\.id.rawValue) }))
-    var found: [LanguageReferenceID: DictionaryEntry] = [:]
     for (members, id) in zip(equivalents, canonical) {
       guard let entry = members.first(where: { $0.id.rawValue == id }) else { continue }
       let merged = entry.withSourceProvenances(members.flatMap(\.sourceProvenances))
