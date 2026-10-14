@@ -277,7 +277,7 @@ export class EmbeddedPresentation {
     return rows && kanjiElementDetail(rows)
   }
 
-  kanjiStrokes(row: KanjiStrokesRow): StrokeDiagram {
+  kanjiStrokes(row: KanjiStrokesRow & { character: string }): StrokeDiagram {
     return strokeDiagram(row)
   }
 

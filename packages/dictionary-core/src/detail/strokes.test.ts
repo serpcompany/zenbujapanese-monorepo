@@ -1,7 +1,7 @@
 import { describe, expect, test } from 'vitest'
 import { fixtureKanjiRows } from '../fixtures'
 import { kanjiDetail } from './kanji'
-import { decodeStroke, strokeDiagram, strokeOrder } from './strokes'
+import { decodeStroke, strokeDiagram, strokeOrder, strokeOrderLabels } from './strokes'
 
 describe('decodeStroke', () => {
   test('一: a move, then cubic curves, as an SVG path starting where the app puts its dot', () => {
@@ -42,12 +42,14 @@ describe('strokeDiagram', () => {
   test('gives each stroke as the points a client draws through', () => {
     expect(
       strokeDiagram({
+        character: '一',
         viewportSize: 109,
         strokeCount: 1,
         strokes: [[0, 11, 54.25, 1, 14.19, 54.87, 17.25, 55, 20.73, 54.75]]
       })
     ).toEqual({
       viewportSize: 109,
+      labels: strokeOrderLabels('一', 1),
       strokes: [
         [
           { end: { x: 11, y: 54.25 }, controls: null },
@@ -69,7 +71,35 @@ describe('strokeDiagram', () => {
     ['a stroke count that differs', 2, [[0, 1, 2]], 'stroke-count mismatch'],
     ['no strokes', 0, [], 'stroke-count mismatch']
   ])('rejects %s', (_, strokeCount, strokes, message) => {
-    expect(() => strokeDiagram({ viewportSize: 109, strokeCount, strokes })).toThrow(message)
+    expect(() =>
+      strokeDiagram({ character: '一', viewportSize: 109, strokeCount, strokes })
+    ).toThrow(message)
+  })
+})
+
+describe('strokeOrderLabels', () => {
+  test('names the controls, and says where the drawing is after each stroke completed', () => {
+    const labels = strokeOrderLabels('要', 2)
+    expect(labels).toMatchObject({
+      title: 'Stroke Order',
+      show: 'Show stroke order for 要',
+      grid: 'Stroke drawing grid for 要',
+      previous: 'Previous stroke',
+      play: 'Play stroke order',
+      pause: 'Pause stroke order',
+      next: 'Next stroke'
+    })
+    expect(labels.position).toEqual(['Stroke 1 of 2', 'Stroke 2 of 2', 'Stroke 2 of 2'])
+    expect(labels.complete).toEqual([
+      '0 strokes complete',
+      '1 strokes complete',
+      '2 strokes complete'
+    ])
+    expect(labels.completeOf).toEqual(['0 of 2 complete', '1 of 2 complete', '2 of 2 complete'])
+    expect(labels.drawing.slice(0, 2)).toEqual([
+      '0 strokes complete, drawing stroke 1',
+      '1 strokes complete, drawing stroke 2'
+    ])
   })
 })
 

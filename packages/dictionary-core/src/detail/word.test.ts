@@ -72,9 +72,21 @@ describe('wordDetail', () => {
       {
         number: 1,
         meaning: 'to be needed, to be necessary, to be required, to be wanted, to need, to want',
-        notes: ['Usually written in kana']
+        notes: ['Usually written in kana'],
+        noteText: 'Usually written in kana'
       }
     ])
+    expect(detail.sections.map(section => section.title)).toEqual([
+      'Meaning',
+      'Frequency',
+      'Conjugations',
+      'Kanji',
+      'Lists',
+      'Notes',
+      'Examples'
+    ])
+    expect(detail.pronounce).toBe('Pronounce いる')
+    expect(detail.partOfSpeechRow).toBe('Godan verb (intransitive)')
     expect(detail.frequencyRows.map(({ details: _, pack: __, ...row }) => row)).toEqual([
       {
         source: 'JLPT',
@@ -120,7 +132,7 @@ describe('wordDetail', () => {
     expect(detail.ruby).toEqual([{ text: 'いる' }])
     expect(detail.kanji).toEqual([])
     expect(detail.alternatives).toEqual([
-      { value: '居る', kind: 'written', labels: ['Rare'], kanji: '居' }
+      { value: '居る', kind: 'written', labels: ['Rare'], labelText: '(Rare)', kanji: '居' }
     ])
     expect(detail.alternativeKanji).toEqual([{ character: '居', meaning: 'reside, to be' }])
     expect(detail.related).toEqual([
@@ -130,8 +142,20 @@ describe('wordDetail', () => {
         ruby: [{ text: '有', reading: 'あ' }, { text: 'る' }],
         relation: 'See also',
         summary: 'to be, to exist, to live',
+        description: 'See also · to be, to exist, to live',
         entSeq: 1296400
       }
+    ])
+    expect(detail.sections.map(section => section.kind)).toEqual([
+      'meaning',
+      'frequency',
+      'conjugations',
+      'alternatives',
+      'alternativeKanji',
+      'related',
+      'lists',
+      'notes',
+      'examples'
     ])
     expect(detail.frequencyRows.map(({ source, value, tier }) => [source, value, tier])).toEqual([
       ['JLPT', 'N5', 'veryCommon'],

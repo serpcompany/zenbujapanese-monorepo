@@ -163,6 +163,19 @@ describe('kanjiDetail', () => {
       '要【ヨウ、い.る、かなめ、とし】\nneed, main point, essence, pivot, key to'
     )
     expect(savedKanjiReading(detail)).toBe('ヨウ')
+    expect(detail.sections.map(section => section.title)).toEqual([
+      'Readings',
+      'Elements',
+      'Lists',
+      'Notes',
+      'Words'
+    ])
+    const [on] = detail.readings
+    expect(on.spoken).toBe(`On reading ヨウ, ${on.words[0].headword}, ${on.words[0].summary}`)
+    expect(on.wordsText).toBe(
+      on.words.map(word => `${word.headword} · ${word.summary}`).join('   ')
+    )
+    expect(detail.readings.at(-1)).toMatchObject({ label: 'Name', spoken: null, wordsText: '' })
   })
 
   test('a kanji without elements lists its components; one stroke is singular', () => {
@@ -187,5 +200,6 @@ describe('kanjiDetail', () => {
     expect(detail.components).toEqual(['ノ'])
     expect(detail.shareText).toBe('乁')
     expect(savedKanjiReading(detail)).toBe('')
+    expect(detail.sections.map(section => section.kind)).toEqual(['components', 'lists', 'notes'])
   })
 })

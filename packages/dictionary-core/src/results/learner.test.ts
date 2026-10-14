@@ -104,7 +104,9 @@ describe('learnerResultsScreen', () => {
   test('says No Dictionary Matches for nothing found, unless the query is one kanji', () => {
     expect(learnerResultsScreen('qzxvkj', listed([]), 0, learner(), notReady)).toEqual({
       state: 'noResults',
-      query: 'qzxvkj'
+      query: 'qzxvkj',
+      title: 'No Dictionary Matches',
+      message: 'Try another Japanese or English Search query.'
     })
     expect(screen('㐂', listed([])).kanji).toEqual({
       character: '㐂',

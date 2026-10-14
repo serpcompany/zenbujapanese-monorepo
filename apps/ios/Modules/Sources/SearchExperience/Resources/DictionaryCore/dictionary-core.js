@@ -1089,7 +1089,31 @@
     return null;
   }
 
+  // src/detail/sections.ts
+  var glossSeparator = " · ";
+  function sections(titles, shown) {
+    return Object.keys(titles).filter((kind) => shown[kind] ?? true).map((kind) => ({ kind, title: titles[kind] }));
+  }
+  var pronounceLabel = (reading) => `Pronounce ${reading}`;
+
   // src/detail/strokes.ts
+  var counts = (last) => Array.from({ length: last + 1 }, (_, index) => index);
+  function strokeOrderLabels(character, strokeCount) {
+    const completed = counts(strokeCount);
+    return {
+      title: "Stroke Order",
+      show: `Show stroke order for ${character}`,
+      grid: `Stroke drawing grid for ${character}`,
+      previous: "Previous stroke",
+      play: "Play stroke order",
+      pause: "Pause stroke order",
+      next: "Next stroke",
+      position: completed.map((done) => `Stroke ${Math.min(done + 1, strokeCount)} of ${strokeCount}`),
+      complete: completed.map((done) => `${done} strokes complete`),
+      completeOf: completed.map((done) => `${done} of ${strokeCount} complete`),
+      drawing: completed.map((done) => `${done} strokes complete, drawing stroke ${done + 1}`)
+    };
+  }
   var moveOpcode = 0;
   var cubicOpcode = 1;
   var point = (encoded, index) => ({
@@ -1145,11 +1169,23 @@
   function strokeDiagram(row) {
     const strokes = row.strokes.map(strokeSegments);
     checkStrokeCount(row);
-    return { viewportSize: row.viewportSize, strokes };
+    return {
+      viewportSize: row.viewportSize,
+      strokes,
+      labels: strokeOrderLabels(row.character, strokes.length)
+    };
   }
 
   // src/detail/kanji.ts
   var kanjiWordLimit = 24;
+  var kanjiSectionTitles = {
+    readings: "Readings",
+    components: "Components",
+    elements: "Elements",
+    lists: "Lists",
+    notes: "Notes",
+    words: "Words"
+  };
   var compareLowercaseHex = (left, right) => left < right ? -1 : left > right ? 1 : 0;
   var codePointLength = (value) => [...value].length;
   var wordsPerReading = 3;
@@ -1239,6 +1275,20 @@
       return null;
     }
   }
+  var wordsTextSeparator = "   ";
+  function kanjiReading(reading, words) {
+    const label = readingLabels[reading.kind];
+    const shown = wordsForReading(reading, words);
+    const [first] = shown;
+    return {
+      kind: reading.kind,
+      label,
+      value: reading.value,
+      words: shown,
+      wordsText: shown.map((word) => `${word.headword}${glossSeparator}${word.summary}`).join(wordsTextSeparator),
+      spoken: first ? `${label} reading ${reading.value}, ${first.headword}, ${first.summary}` : null
+    };
+  }
   function savedKanjiReading(detail) {
     return detail.readings[0]?.value ?? "";
   }
@@ -1253,17 +1303,20 @@
       summary: row.summary
     }));
     const elements = kanjiElements(rows.structure, rows.elements);
+    const readings = kanji2.readings.map((reading) => kanjiReading(reading, words));
+    const components = elements.length === 0 ? kanji2.components : [];
     return {
+      sections: sections(kanjiSectionTitles, {
+        readings: readings.length > 0,
+        components: components.length > 0,
+        elements: elements.length > 0,
+        words: words.length > 0
+      }),
       character: kanji2.character,
       stats: kanjiStats(kanji2),
       meanings: kanji2.meanings,
-      readings: kanji2.readings.map((reading) => ({
-        kind: reading.kind,
-        label: readingLabels[reading.kind],
-        value: reading.value,
-        words: wordsForReading(reading, words)
-      })),
-      components: elements.length === 0 ? kanji2.components : [],
+      readings,
+      components,
       elements,
       words,
       strokeOrder: rows.strokes ? drawableStrokeOrder(rows.strokes) : null,
@@ -1765,6 +1818,12 @@
   function compareRelevance(lhs, rhs) {
     return lhs.sourceOrder - rhs.sourceOrder || comparePresentationRanks(lhs.matchRank, rhs.matchRank);
   }
+  var noMatches = {
+    title: "No Dictionary Matches",
+    message: "Try another Japanese or English Search query."
+  };
+  var discoveredWordsHeading = "Discovered Words";
+  var readingRefinementSpoken = (query) => `Search for Japanese reading ${query}`;
   function listedResults(results) {
     const byRelevance = [...results.items].sort(compareRelevance);
     const relevance = /* @__PURE__ */ new Map();
@@ -1805,18 +1864,18 @@
     const singleKanji = isKanjiCharacter(query);
     const isDiscovered = results.presentation === "discoveredWords";
     const found = primary(results.items, (item) => item.headword, query);
-    const sections = [];
+    const sections2 = [];
     const examples = exampleCount2 > 0 ? { title: exampleActionTitle(exampleCount2), count: exampleCount2 } : null;
-    if (examples) sections.push("examples");
+    if (examples) sections2.push("examples");
     const readingRefinement = results.readingRefinement ? { query: results.readingRefinement, title: `Search for「${results.readingRefinement}」` } : null;
-    if (readingRefinement) sections.push("readingRefinement");
-    if (isDiscovered) sections.push("discoveredWords");
-    else if (singleKanji || results.items.length > 0) sections.push("results");
+    if (readingRefinement) sections2.push("readingRefinement");
+    if (isDiscovered) sections2.push("discoveredWords");
+    else if (singleKanji || results.items.length > 0) sections2.push("results");
     const presented = isDiscovered ? results.items.slice(0, discoveredWordLimit) : leadingOnly ? results.items.slice(0, Math.min(results.leadingLexicalEntryCount, results.items.length)) : results.items;
     return {
       query,
       isEmpty: results.items.length === 0 && exampleCount2 === 0 && !singleKanji,
-      sections,
+      sections: sections2,
       examples,
       readingRefinement,
       kanji: singleKanji && !isDiscovered ? {
@@ -3197,6 +3256,54 @@
     return mode === "Polite" && table.polite.length > 0 ? table.polite : table.plain;
   }
 
+  // src/detail/examples.ts
+  function wordExample(rows) {
+    return example(rows);
+  }
+  function example({
+    sentence,
+    example: example2
+  }) {
+    const tokens = example2.tokens ?? sentence.tokens;
+    const links = new Map(example2.links.map((link) => [link.token, link]));
+    const highlights = new Set(example2.highlights);
+    return {
+      position: example2.position,
+      pairId: sentence.pairId,
+      text: sentence.japanese,
+      tokens: tokens.map((token, index) => {
+        const link = links.get(index);
+        const entry = link?.entSeqs.length === 1 ? link.entSeqs[0] : null;
+        const reading = link?.reading ?? token.reading;
+        return {
+          text: token.text,
+          ruby: entry !== null && reading ? rubySegments(token.text, reading) : [{ text: token.text }],
+          link: link ? entry !== null ? { entSeq: entry } : { entSeqs: link.entSeqs, query: token.dictionaryForm ?? token.text } : null,
+          isPageWord: highlights.has(index)
+        };
+      }),
+      translation: sentence.english,
+      japanese: {
+        id: sentence.japaneseTatoebaId,
+        contributor: sentence.japaneseContributor,
+        license: sentence.japaneseLicense
+      },
+      english: {
+        id: sentence.englishTatoebaId,
+        contributor: sentence.englishContributor,
+        license: sentence.englishLicense
+      }
+    };
+  }
+  function exampleCountText(count) {
+    if (!count || count.listed === 0) return null;
+    if (count.truncated) return `The first ${count.listed} of more than ${count.listed} examples`;
+    return count.listed === 1 ? "1 example" : `${count.listed} examples`;
+  }
+  var examplesTitle = "Examples";
+  var noExamplesMessage = "No source-matched examples";
+  var noFormExamplesMessage = "No example sentences use this form yet.";
+
   // src/detail/kanji-split.ts
   function hiraganaCharacters(value) {
     return graphemes(value).map((character) => {
@@ -3385,9 +3492,15 @@
       ...conjugationKinds[form.kind],
       ruby: withKanjiReadings(rubySegments(form.surface, form.reading), readings),
       rowFurigana: rowShowsFurigana(form),
-      sharedSpellings: sharedSpellings(table, form, mode)
+      sharedSpellings: sharedSpellings(table, form, mode),
+      pronounce: pronounceLabel(form.reading)
     }));
-    return { rule: table.rule, modes, rows: { Plain: rows("Plain"), Polite: rows("Polite") } };
+    return {
+      rule: table.rule,
+      modes,
+      rows: { Plain: rows("Plain"), Polite: rows("Polite") },
+      examples: { title: examplesTitle, empty: noFormExamplesMessage }
+    };
   }
   function sharedSpellingNote(titles) {
     return `Same spelling as ${listedWithAnd(titles)}. Context tells them apart.`;
@@ -3395,6 +3508,14 @@
 
   // src/detail/kanji-element.ts
   var meaningsPerKanji = 3;
+  var elementSectionTitles = {
+    alternatives: "Alternative forms",
+    explanation: "Meaning / structure",
+    soundPatterns: "Sound patterns",
+    standalone: "As a standalone kanji",
+    containing: "Kanji containing this element",
+    source: "Source"
+  };
   var unified = (character) => character.normalize("NFC").codePointAt(0) ?? 0;
   function mostFrequentFirst(left, right) {
     if (left.frequencyRank !== right.frequencyRank) {
@@ -3415,14 +3536,23 @@
   function kanjiElementDetail(rows) {
     const kanji2 = (listed3) => listed3.filter((row) => isKanjiCharacter(row.character));
     const standalone = kanji2(rows.family).sort(mostFrequentFirst).at(0);
+    const alternatives = rows.alternatives.filter(isKanjiCharacter);
+    const containing = kanji2(rows.containing).filter((row) => !standalone || unified(row.character) !== unified(standalone.character)).map(contribution);
     return {
+      sections: sections(elementSectionTitles, {
+        alternatives: alternatives.length > 0,
+        explanation: rows.meanings.length > 0,
+        soundPatterns: rows.commonLinkedOnReadings.length > 0,
+        standalone: standalone !== void 0,
+        containing: containing.length > 0
+      }),
       glyph: rows.glyph,
       meanings: rows.meanings,
       explanation: rows.meanings.length > 0 ? `This element contributes forms associated with ${rows.meanings.join(", ")}.` : null,
       soundPatterns: rows.commonLinkedOnReadings.length > 0 ? `Linked on-readings: ${rows.commonLinkedOnReadings.join(", ")}` : null,
-      alternatives: rows.alternatives.filter(isKanjiCharacter),
+      alternatives,
       standalone: standalone ? contribution(standalone) : null,
-      containing: kanji2(rows.containing).filter((row) => !standalone || unified(row.character) !== unified(standalone.character)).map(contribution),
+      containing,
       structureSource: rows.structureSource,
       metadataSource: rows.metadataSource
     };
@@ -3475,56 +3605,12 @@
       downstep: pitch.downstep,
       moraCount: pitch.moraCount,
       particleHigh: levels.particle,
-      graph: pitchGraph(kana, levels)
+      graph: pitchGraph(kana, levels),
+      spoken: `Pitch accent, downstep ${pitch.downstep}, ${pitch.moraCount} mora`
     };
   }
   function shownPitch(entry) {
     return entry.pitch ?? entry.compoundPitch;
-  }
-
-  // src/detail/examples.ts
-  function wordExample(rows) {
-    return example(rows);
-  }
-  function example({
-    sentence,
-    example: example2
-  }) {
-    const tokens = example2.tokens ?? sentence.tokens;
-    const links = new Map(example2.links.map((link) => [link.token, link]));
-    const highlights = new Set(example2.highlights);
-    return {
-      position: example2.position,
-      pairId: sentence.pairId,
-      text: sentence.japanese,
-      tokens: tokens.map((token, index) => {
-        const link = links.get(index);
-        const entry = link?.entSeqs.length === 1 ? link.entSeqs[0] : null;
-        const reading = link?.reading ?? token.reading;
-        return {
-          text: token.text,
-          ruby: entry !== null && reading ? rubySegments(token.text, reading) : [{ text: token.text }],
-          link: link ? entry !== null ? { entSeq: entry } : { entSeqs: link.entSeqs, query: token.dictionaryForm ?? token.text } : null,
-          isPageWord: highlights.has(index)
-        };
-      }),
-      translation: sentence.english,
-      japanese: {
-        id: sentence.japaneseTatoebaId,
-        contributor: sentence.japaneseContributor,
-        license: sentence.japaneseLicense
-      },
-      english: {
-        id: sentence.englishTatoebaId,
-        contributor: sentence.englishContributor,
-        license: sentence.englishLicense
-      }
-    };
-  }
-  function exampleCountText(count) {
-    if (!count || count.listed === 0) return null;
-    if (count.truncated) return `The first ${count.listed} of more than ${count.listed} examples`;
-    return count.listed === 1 ? "1 example" : `${count.listed} examples`;
   }
 
   // src/detail/part-of-speech.ts
@@ -3594,6 +3680,21 @@
   }
 
   // src/detail/word.ts
+  var wordSectionTitles = {
+    meaning: "Meaning",
+    frequency: "Frequency",
+    conjugations: "Conjugations",
+    alternatives: "Alternatives",
+    kanji: "Kanji",
+    alternativeKanji: "Alternative kanji",
+    related: "Related words",
+    lists: "Lists",
+    notes: "Notes",
+    examples: examplesTitle
+  };
+  function wordSections(shown) {
+    return sections(wordSectionTitles, shown);
+  }
   function wordSummary(entry, frequency) {
     return {
       entSeq: entry.entSeq,
@@ -3649,39 +3750,63 @@
       };
     });
   }
+  var noPartOfSpeech = "Dictionary entry";
+  function partOfSpeechRow(partOfSpeech, opensConjugations) {
+    return partOfSpeech || (opensConjugations ? noPartOfSpeech : "");
+  }
   function wordDetail(rows) {
     const { entry } = rows;
     const pitch = shownPitch(entry);
     const summary = wordSummary(entry, rows.frequency);
     const readings = new Map(rows.kanji.map(({ character, readings: readings2 }) => [character, readings2]));
+    const partOfSpeech = displayPartOfSpeech(entry);
+    const table = conjugations(entry, readings);
+    const frequencyRows = frequencyRowDetails(rows.frequency);
+    const alternatives = alternativeForms(entry).map((form) => ({
+      value: form.value,
+      kind: form.kind,
+      labels: form.labels,
+      labelText: form.labels.length > 0 ? `(${form.labels.join(", ")})` : null,
+      kanji: formKanji(form.value)
+    }));
+    const kanji2 = wordKanji(primaryKanji(entry.headword), rows.kanji);
+    const otherKanji = wordKanji(alternativeKanji(entry), rows.kanji);
+    const related = entry.relationships.map((relationship) => ({
+      headword: relationship.headword,
+      reading: relationship.reading,
+      ruby: rubySegments(relationship.headword, relationship.reading),
+      relation: relationship.relation,
+      summary: relationship.summary,
+      description: `${relationship.relation}${glossSeparator}${relationship.summary}`,
+      entSeq: relationship.targetEntSeq
+    }));
     return {
       ...summary,
+      sections: wordSections({
+        frequency: frequencyRows.length > 0,
+        conjugations: table !== null,
+        alternatives: alternatives.length > 0,
+        kanji: kanji2.length > 0,
+        alternativeKanji: otherKanji.length > 0,
+        related: related.length > 0
+      }),
       ruby: withKanjiReadings(summary.ruby, readings),
-      partOfSpeech: displayPartOfSpeech(entry),
-      conjugations: conjugations(entry, readings),
+      partOfSpeech,
+      partOfSpeechRow: partOfSpeechRow(partOfSpeech, table !== null),
+      pronounce: pronounceLabel(entry.reading),
+      conjugations: table,
       pitch: pitch ? pitchAccent(entry.reading, pitch) : null,
       senses: entry.senses.map((sense, index) => ({
         number: index + 1,
         meaning: sense.meaning,
-        notes: sense.notes
+        notes: sense.notes,
+        noteText: sense.notes.length > 0 ? sense.notes.join(glossSeparator) : null
       })),
-      frequencyRows: frequencyRowDetails(rows.frequency),
-      alternatives: alternativeForms(entry).map((form) => ({
-        value: form.value,
-        kind: form.kind,
-        labels: form.labels,
-        kanji: formKanji(form.value)
-      })),
-      kanji: wordKanji(primaryKanji(entry.headword), rows.kanji),
-      alternativeKanji: wordKanji(alternativeKanji(entry), rows.kanji),
-      related: entry.relationships.map((relationship) => ({
-        headword: relationship.headword,
-        reading: relationship.reading,
-        ruby: rubySegments(relationship.headword, relationship.reading),
-        relation: relationship.relation,
-        summary: relationship.summary,
-        entSeq: relationship.targetEntSeq
-      })),
+      frequencyRows,
+      alternatives,
+      kanji: kanji2,
+      alternativeKanji: otherKanji,
+      related,
       examples: rows.examples.map(wordExample),
       exampleCount: rows.exampleCount,
       shareText: wordShareText(entry)
@@ -3754,7 +3879,7 @@
   }
   function learnerResultsScreen(rawQuery, results, exampleCount2, learner2, frequency) {
     const layout = resultsLayout(rawQuery, results, exampleCount2, learner2.fromRadicals);
-    if (layout.isEmpty) return { state: "noResults", query: layout.query };
+    if (layout.isEmpty) return { state: "noResults", query: layout.query, ...noMatches };
     const known = new Set(learner2.known);
     const isKnown = (id) => known.has(id);
     const frequencyEntries = [...new Set(layout.presented.map((item) => item.id))];
@@ -3797,9 +3922,9 @@
       },
       readingRefinement: layout.readingRefinement && {
         ...layout.readingRefinement,
-        spoken: `Search for Japanese reading ${layout.readingRefinement.query}`
+        spoken: readingRefinementSpoken(layout.readingRefinement.query)
       },
-      heading: layout.isDiscovered ? "Discovered Words" : null,
+      heading: layout.isDiscovered ? discoveredWordsHeading : null,
       kanji: layout.kanji && {
         character: layout.kanji.character,
         label: layout.kanji.label,
@@ -3959,13 +4084,26 @@
         examples: [],
         exampleCount: null
       });
+      const frequency = (evidenceLookups(this.frequency([entry.id]))(entry.id) ?? []).map(
+        frequencyLookupRow
+      );
       const noted = (rows) => rows.map((row) => ({
         ...row,
         note: row.sharedSpellings.length > 0 ? sharedSpellingNote(row.sharedSpellings) : null
       }));
       return {
+        sections: wordSections({
+          frequency: frequency.length > 0,
+          conjugations: false,
+          alternatives: detail.alternatives.length > 0,
+          kanji: detail.kanji.length > 0,
+          alternativeKanji: detail.alternativeKanji.length > 0,
+          related: detail.related.length > 0
+        }),
         ruby: detail.ruby,
         partOfSpeech: detail.partOfSpeech,
+        partOfSpeechRow: detail.partOfSpeechRow,
+        pronounce: detail.pronounce,
         conjugations: detail.conjugations && {
           ...detail.conjugations,
           rows: {
@@ -3978,10 +4116,9 @@
         alternatives: detail.alternatives,
         kanji: detail.kanji.map(({ character }) => character),
         alternativeKanji: detail.alternativeKanji.map(({ character }) => character),
-        frequency: (evidenceLookups(this.frequency([entry.id]))(entry.id) ?? []).map(
-          frequencyLookupRow
-        ),
+        frequency,
         related: detail.related,
+        noExamples: noExamplesMessage,
         shareText: detail.shareText
       };
     }

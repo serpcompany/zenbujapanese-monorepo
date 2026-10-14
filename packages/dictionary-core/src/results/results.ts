@@ -33,6 +33,15 @@ export interface ListedResults {
   leadingLexicalEntryCount: number
 }
 
+export const noMatches = {
+  title: 'No Dictionary Matches',
+  message: 'Try another Japanese or English Search query.'
+}
+
+export const discoveredWordsHeading = 'Discovered Words'
+
+export const readingRefinementSpoken = (query: string) => `Search for Japanese reading ${query}`
+
 export function listedResults(results: SearchResults): ListedResults {
   const byRelevance = [...results.items].sort(compareRelevance)
   const relevance = new Map<string, number>()
