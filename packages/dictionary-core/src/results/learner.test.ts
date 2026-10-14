@@ -1,12 +1,6 @@
 import { describe, expect, test } from 'vitest'
-import type { FrequencyDictionary } from '../detail/frequency'
-import {
-  evidenceLookups,
-  type FrequencyEvidence,
-  type LearnerState,
-  learnerResultsScreen,
-  wordRows
-} from './learner'
+import type { FrequencyDictionary, FrequencyEvidence } from '../detail/frequency'
+import { evidenceLookups, type LearnerState, learnerResultsScreen, wordRows } from './learner'
 import type { ListedItem, ListedResults } from './results'
 
 function dictionary(
@@ -71,7 +65,6 @@ function evidence(
 }
 
 const learner = (state: Partial<LearnerState> = {}): LearnerState => ({
-  frequency: null,
   sort: 'default',
   filter: 'all',
   known: [],
@@ -79,15 +72,25 @@ const learner = (state: Partial<LearnerState> = {}): LearnerState => ({
   ...state
 })
 
+const notReady = () => null
+
 function screen(
   query: string,
   results: ListedResults,
-  state: Partial<LearnerState> = {},
+  {
+    frequency = null,
+    ...state
+  }: Partial<LearnerState> & { frequency?: FrequencyEvidence | null } = {},
   exampleCount = 0
 ) {
-  const built = learnerResultsScreen(query, results, exampleCount, learner(state))
+  const read: string[][] = []
+  const built = learnerResultsScreen(query, results, exampleCount, learner(state), ids => {
+    read.push([...ids])
+    return frequency
+  })
   if (built.state !== 'results') throw new Error(`「${query}」 has no results screen`)
-  return built
+  if (read.length !== 1) throw new Error(`「${query}」 read its frequency ${read.length} times`)
+  return { ...built, frequencyRead: read[0] }
 }
 
 const three = listed([item('甲'), item('乙'), item('丙')])
@@ -99,7 +102,7 @@ const ranks = evidence([jlpt, youTube, anime], {
 
 describe('learnerResultsScreen', () => {
   test('says No Dictionary Matches for nothing found, unless the query is one kanji', () => {
-    expect(learnerResultsScreen('qzxvkj', listed([]), 0, learner())).toEqual({
+    expect(learnerResultsScreen('qzxvkj', listed([]), 0, learner(), notReady)).toEqual({
       state: 'noResults',
       query: 'qzxvkj'
     })
@@ -126,10 +129,10 @@ describe('learnerResultsScreen', () => {
       'Result 3 of 3, JLPT level N3, YouTube frequency rank 900, very common'
     ])
     expect(shown.frequencyNotice).toBeNull()
-    expect(shown.frequencyEntries).toEqual(['甲', '乙', '丙'])
+    expect(shown.frequencyRead).toEqual(['甲', '乙', '丙'])
   })
 
-  test('shows the retrieval order and no chips while the dictionaries load', () => {
+  test('shows the retrieval order and no chips while the dictionaries are not ready', () => {
     const shown = screen('kou', three, { sort: 'frequency|zenbu.jiten.anime' })
     expect(shown.rows.map(row => [row.id, row.chips, row.spoken])).toEqual([
       ['甲', [], 'Result 1 of 3, Frequency rank loading'],
@@ -246,14 +249,14 @@ describe('learnerResultsScreen', () => {
     expect(shown.rows).toHaveLength(12)
     expect(shown.rows[3].spoken).toBe('Known, Discovered word 4 of 12, Frequency rank loading')
     expect(shown.hiddenByFilter).toBeNull()
-    expect(shown.frequencyEntries).toHaveLength(12)
+    expect(shown.frequencyRead).toHaveLength(12)
   })
 
   test('lists only the leading entries of a one-character query from the radical panel', () => {
     const found = listed([item('一'), item('二'), item('三')], { leadingLexicalEntryCount: 1 })
     const shown = screen('一', found, { fromRadicals: true })
     expect(shown.rows.map(row => row.id)).toEqual(['一'])
-    expect(shown.frequencyEntries).toEqual(['一'])
+    expect(shown.frequencyRead).toEqual(['一'])
     expect(screen('一', found).rows).toHaveLength(3)
     expect(screen('一二', found, { fromRadicals: true }).rows).toHaveLength(3)
   })

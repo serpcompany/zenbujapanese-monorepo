@@ -1,16 +1,17 @@
 import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
+import { DatabaseSync } from 'node:sqlite'
 import type { ArtifactDatabase, SqlValue } from '@zenbu/dictionary-core/artifact/database'
 import type {
   KanjiElementFile,
   KanjiElementSources,
   KanjiReferenceFile
 } from '@zenbu/dictionary-core/artifact/kanji-data'
+import type { FrequencyDictionary } from '@zenbu/dictionary-core/detail/frequency'
 import { type EmbeddedEndpoint, embeddedEndpoint } from '@zenbu/dictionary-core/embedded/dictionary'
 import type { EmbeddedHost, HostRows } from '@zenbu/dictionary-core/embedded/host'
 import type { EmbeddedEntry } from '@zenbu/dictionary-core/embedded/presentation'
 import type { EmbeddedToken } from '@zenbu/dictionary-core/embedded/text'
-import type { FrequencyEvidence } from '@zenbu/dictionary-core/results/learner'
 import { artifactDatabase, artifactTokenizerFile, resources } from './support'
 
 const hex = (bytes: Uint8Array) => Buffer.from(bytes).toString('hex')
@@ -76,20 +77,6 @@ function kanjiHost(): EmbeddedHost {
   }
 }
 
-export async function embedded(): Promise<Embedded> {
-  const all = answering(await artifactDatabase())
-  const hosts: Record<keyof Embedded, EmbeddedHost> = {
-    lookup: { all },
-    text: { all, tokenizerFile: await artifactTokenizerFile() },
-    presentation: kanjiHost()
-  }
-  return {
-    lookup: asking(embeddedEndpoint(hosts.lookup)),
-    text: asking(embeddedEndpoint(hosts.text)),
-    presentation: asking(embeddedEndpoint(hosts.presentation))
-  }
-}
-
 interface PackManifest {
   packID: string
   kind?: 'rank' | 'level'
@@ -99,47 +86,66 @@ interface PackManifest {
   packVersion: string
   attribution: string
   coveredSourceRows: number
-  bundled: boolean
+  bundledResource: string | null
+  smokeTest: { languageReferenceID: string; rank: number }
 }
 
-const evidenceTables = [
-  { schema: 'jlpt', table: 'level_evidence', column: 'level' },
-  { schema: 'tubelex', table: 'frequency_evidence', column: 'rank' }
-]
+export interface BundledList {
+  dictionary: FrequencyDictionary
+  file: ArtifactDatabase
+  pinned: { id: string; value: number }
+}
 
-export function freshInstallEvidence(
-  db: ArtifactDatabase,
-  ids: readonly string[]
-): FrequencyEvidence {
+export function bundledLists(): BundledList[] {
   const catalog = json('FrequencyPackCatalog.json') as { packs: PackManifest[] }
-  const dictionaries = catalog.packs
-    .filter(pack => pack.bundled)
-    .map(pack => ({
-      id: pack.packID,
-      kind: pack.kind ?? ('rank' as const),
-      name: pack.displayName,
-      domain: pack.domain,
-      description: pack.domainDescription,
-      version: pack.packVersion,
-      source: pack.attribution,
-      coveredSourceRows: pack.coveredSourceRows
-    }))
-  const values = evidenceTables.map(({ schema, table, column }) => {
-    const rows = db.all<{ id: string; value: number }>(
-      `SELECT lower(hex(language_reference_id)) AS id, ${column} AS value FROM ${schema}.${table}
-       WHERE language_reference_id IN (SELECT unhex(value) FROM json_each(?))`,
-      [JSON.stringify(ids)]
-    )
-    return new Map(rows.map(row => [row.id, row.value]))
+  return catalog.packs.flatMap(pack => {
+    if (!pack.bundledResource) return []
+    const database = new DatabaseSync(join(resources, `${pack.bundledResource}.sqlite3`), {
+      readOnly: true
+    })
+    return [
+      {
+        dictionary: {
+          id: pack.packID,
+          kind: pack.kind ?? 'rank',
+          name: pack.displayName,
+          domain: pack.domain,
+          description: pack.domainDescription,
+          version: pack.packVersion,
+          source: pack.attribution,
+          coveredSourceRows: pack.coveredSourceRows
+        },
+        file: {
+          all<Row>(sql: string, params: readonly SqlValue[] = []) {
+            return database.prepare(sql).all(...params) as Row[]
+          }
+        },
+        pinned: { id: pack.smokeTest.languageReferenceID, value: pack.smokeTest.rank }
+      }
+    ]
   })
+}
+
+function freshInstallLists(): EmbeddedHost {
+  const bundled = bundledLists()
+  const files = new Map(bundled.map(list => [list.dictionary.id, answering(list.file)]))
   return {
-    dictionaries,
-    entries: Object.fromEntries(
-      ids.map(id => [
-        id,
-        values.map((found, dictionary) => ({ dictionary, value: found.get(id) ?? null }))
-      ])
-    )
+    frequencyLists: () => ({ lists: bundled.map(({ dictionary }) => ({ dictionary })) }),
+    frequencyListRows: (list, sql, parametersJSON) => files.get(list)?.(sql, parametersJSON) ?? null
+  }
+}
+
+export async function embedded(): Promise<Embedded> {
+  const all = answering(await artifactDatabase())
+  const hosts: Record<keyof Embedded, EmbeddedHost> = {
+    lookup: { all },
+    text: { all, tokenizerFile: await artifactTokenizerFile() },
+    presentation: { ...kanjiHost(), ...freshInstallLists() }
+  }
+  return {
+    lookup: asking(embeddedEndpoint(hosts.lookup)),
+    text: asking(embeddedEndpoint(hosts.text)),
+    presentation: asking(embeddedEndpoint(hosts.presentation))
   }
 }
 

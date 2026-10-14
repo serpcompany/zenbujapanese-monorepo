@@ -39,7 +39,7 @@ struct DictionaryCoreTests {
     let screen = try await ResultsScreenRequest(
       query: SearchQuery(Self.sentence), results: results.listed, exampleCount: 0,
       learner: ResultsLearner(sort: "known-words", filter: "known")
-    ).screen()
+    ).screen(using: try .freshInstall())
     guard case .results(let list) = screen else {
       Issue.record("The sentence's words have no results screen")
       return
@@ -48,7 +48,8 @@ struct DictionaryCoreTests {
     #expect(list.sections == [.discoveredWords])
     #expect(list.menu == nil)
     #expect(list.rows.map(\.id) == results.entries.map(\.id.rawValue))
-    #expect(list.rows.last?.spoken == "Discovered word 3 of 3, Frequency rank loading")
+    #expect(list.rows.last?.spoken.hasPrefix("Discovered word 3 of 3, JLPT level N") == true)
+    #expect(list.rows.allSatisfy { $0.chips.first?.source == "JLPT" })
 
     let direct = try await data.search(SearchQuery("猫"))
     #expect(direct.resolution == .direct)
@@ -132,6 +133,48 @@ struct DictionaryCoreTests {
     #expect(try await data.entries(matchingForm: "猫") == cat)
     #expect(try await data.search(SearchQuery("猫")).entries.first == cat.first)
     #expect(try await data.search(SearchQuery("の")).entries.count == 60)
+  }
+
+  @Test("a search's answer reaches the results screen as the core wrote it, byte for byte")
+  func searchAnswerIsHandedOnAsWritten() async throws {
+    let data = LanguageReferenceData(validatesBundledArtifact: false)
+    let core = try DictionaryCore(statements: try Self.bundledDictionary())
+    for query in ["猫", "to eat", "食べた"] {
+      let written = try await core.answerAsWritten("search", query, analyzingWith: nil)
+      let results = try await data.search(SearchQuery(query))
+      #expect(results.listed == written, "\(query) was written again on its way")
+      #expect(!results.entries.isEmpty)
+    }
+  }
+
+  @Test("a field the core's answer holds that the app doesn't know is still in what the results screen is handed")
+  func unknownFieldsSurvive() async throws {
+    let data = LanguageReferenceData(validatesBundledArtifact: false)
+    let written = try await data.answeredSearch("猫")
+    let later = #"{"addedLater":{"kept":["a/b","猫"]},"# + String(written.dropFirst())
+    let results = try await data.results(answered: later)
+    #expect(results.listed == later)
+    #expect(results.entries.first?.headword == "猫")
+    #expect(results.entries.count == (try await data.search(SearchQuery("猫"))).entries.count)
+    let screen = try await ResultsScreenRequest(
+      query: SearchQuery("猫"), results: results.listed, exampleCount: 0,
+      learner: ResultsLearner()
+    ).screen(using: try .freshInstall())
+    guard case .results(let list) = screen else {
+      Issue.record("猫 has no results screen")
+      return
+    }
+    #expect(Set(list.rows.map(\.id)) == Set(results.entries.map(\.id.rawValue)))
+  }
+
+  @Test("a call hands back its finished value as the text the core wrote, and nothing before it has one")
+  func valueAsWritten() throws {
+    let core = try DictionaryCore(statements: try Self.memoryDatabase())
+    let call = try core.begin("normalizeQuery", " ＡＢ ")
+    #expect(try call.value() == #""ab""#)
+    #expect(throws: DictionaryCoreError.failed("Error: translate has answered nothing")) {
+      try core.begin("translate", "日本").value()
+    }
   }
 
   @Test("the core says what it cannot do, and the next call still answers")
@@ -249,6 +292,10 @@ struct DictionaryCoreTests {
       dictionary: "fixture",
       dictionarySHA256: ""
     )
+  }
+
+  private static func bundledDictionary() throws -> SQLiteStatements {
+    try SQLiteStatements(reading: try #require(Bundle.languageReferenceDataURL))
   }
 
   private static func memoryDatabase() throws -> SQLiteStatements {

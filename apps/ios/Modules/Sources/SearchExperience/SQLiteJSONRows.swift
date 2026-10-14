@@ -3,9 +3,11 @@ import SQLite3
 
 final class SQLiteJSONRows {
   private let statements: SQLiteStatements
+  private let step: (OpaquePointer) throws -> SQLiteReadStep
 
-  init(statements: SQLiteStatements) {
+  init(statements: SQLiteStatements, stoppingWhenCancelled: Bool = true) {
     self.statements = statements
+    step = stoppingWhenCancelled ? { try checkedSQLiteStep($0) } : { try sqliteStep($0) }
   }
 
   func answer(_ sql: String, parametersJSON: String) -> JSONBytes {
@@ -45,7 +47,7 @@ final class SQLiteJSONRows {
     var json = JSONBytes()
     json.append("{\"rows\":[")
     var isFirstRow = true
-    while try checkedSQLiteStep(statement) == .row {
+    while try step(statement) == .row {
       json.append(isFirstRow ? "{" : ",{")
       isFirstRow = false
       for column in columns {

@@ -61,6 +61,19 @@ final class TranslateUITests: ZenbuUITestCase {
     assertOnScreen(find("recognized-word-sheet.open-full-entry", in: app), in: app)
   }
 
+  func testAWordWithSeveralEntriesListsThemWithTheirChips() {
+    let app = typeASentenceToTranslate()
+    tap(word(containing: "カード", identifiedBy: "translate.typed.result.", in: app))
+    waitForSheet("recognized-word-sheet", in: app)
+    let entries = app.descendants(matching: .any)
+      .matching(NSPredicate(format: "identifier BEGINSWITH 'result.'"))
+    waitFor(entries.firstMatch)
+    if device != .mac {
+      let leveled = NSPredicate(format: "value CONTAINS 'JLPT level N'")
+      waitFor(entries.matching(leveled).firstMatch)
+    }
+  }
+
   func testAConversationRunsFullScreenAndIsSavedToTranslations() {
     let app = launch(Self.script)
     open(.translate, in: app)
