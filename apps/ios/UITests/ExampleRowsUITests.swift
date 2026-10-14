@@ -36,6 +36,7 @@ final class ExampleRowsUITests: ZenbuUITestCase {
     let words = find("example.words.\(Self.pastTheFirstScreen)", in: app)
     let opened = reveal(Self.pastTheFirstScreen, of: rows, in: app)
     let shown = reveal(words, in: app, within: device == .mac ? rows.list : nil)
+    bringIntoView(shown, of: rows, in: app)
     let top = opened.frame.minY - rows.list.frame.minY
     tap(shown)
     let itsWord =
@@ -217,8 +218,7 @@ final class ExampleRowsUITests: ZenbuUITestCase {
   ) -> XCUIElement? {
     let linked = NSPredicate(
       format: "label CONTAINS ', ' AND NOT (label ENDSWITH 'choose dictionary entry')")
-    let area = device == .mac ? rows.list : nil
-    let isOpenable = { (word: XCUIElement) in self.isReachable(word, in: app, within: area) }
+    let isOpenable = { (word: XCUIElement) in self.isInView(word, of: rows, in: app) }
     for nearby in [0, -1, 1, -2, 2, -3, 3].map({ number + $0 }) {
       let words = app.buttons.matching(
         NSPredicate(format: "identifier BEGINSWITH %@", rows.words(nearby)[0])
@@ -229,6 +229,24 @@ final class ExampleRowsUITests: ZenbuUITestCase {
       NSPredicate(format: "identifier BEGINSWITH %@", String(rows.words(0)[0].dropLast(2)))
     ).matching(linked)
     return words.allElementsBoundByIndex.first(where: isOpenable)
+  }
+
+  private func isInView(_ element: XCUIElement, of rows: Rows, in app: XCUIApplication) -> Bool {
+    guard device != .mac else { return isReachable(element, in: app, within: rows.list) }
+    guard let frame = reachableFrame(of: element, in: app) else { return false }
+    let window = app.windows.firstMatch.frame
+    let bar = app.navigationBars.firstMatch
+    let tabs = app.tabBars.firstMatch
+    let top = bar.exists ? bar.frame.maxY : window.minY
+    let bottom = tabs.exists ? tabs.frame.minY : window.maxY
+    return top < frame.midY && frame.midY < bottom
+  }
+
+  private func bringIntoView(_ element: XCUIElement, of rows: Rows, in app: XCUIApplication) {
+    let page = device == .mac ? rows.list : app.windows.firstMatch
+    for _ in 0..<6 where !isInView(element, of: rows, in: app) {
+      scroll(page, back: element.frame.midY < page.frame.midY)
+    }
   }
 
   private func flick(_ rows: Rows, back: Bool, in app: XCUIApplication) {
