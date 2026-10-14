@@ -16,6 +16,29 @@ final class CallCount: @unchecked Sendable {
 }
 
 @MainActor
+final class HeldRetries {
+  private(set) var waits: [TimeInterval] = []
+  private var held: [AsyncStream<Void>.Continuation] = []
+
+  var clock: SyncRetryClock {
+    SyncRetryClock(
+      wait: { [weak self] seconds in await self?.wait(seconds) }, jitter: { $0.upperBound })
+  }
+
+  func release() {
+    for retry in held { retry.finish() }
+    held = []
+  }
+
+  private func wait(_ seconds: TimeInterval) async {
+    waits.append(seconds)
+    let (released, retry) = AsyncStream.makeStream(of: Void.self)
+    held.append(retry)
+    for await _ in released {}
+  }
+}
+
+@MainActor
 final class AccountFixture {
   nonisolated static let sessionToken = "session-1.signed"
   nonisolated static let userID = "learner-1"
@@ -32,6 +55,7 @@ final class AccountFixture {
   var now = Date(timeIntervalSince1970: 1_791_000_000)
   var providers = SignInProviders.system
   var googleClientID: String?
+  let retries = HeldRetries()
   private(set) var wordKnowledge: WordKnowledge!
   private(set) var wordLists: WordLists!
   private(set) var watchHistory: WatchHistory!
@@ -65,7 +89,7 @@ final class AccountFixture {
       session: server.session, storage: storage, wordKnowledge: wordKnowledge,
       wordLists: wordLists, watchHistory: watchHistory, translations: translations,
       fileURL: directory.appending(path: "account-sync.json"), providers: providers,
-      now: { [unowned self] in now })
+      now: { [unowned self] in now }, retryClock: retries.clock)
     sync.onLocalChange = nil
     await settle()
   }

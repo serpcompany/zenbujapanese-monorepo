@@ -209,7 +209,7 @@ struct AccountSignInTests {
       guard request.header("Authorization") == "Bearer earlier.signed" else {
         return .json(200, ["token": StubTokens.access(expiresAt: renewed)])
       }
-      _ = confirmed.wait(timeout: .now() + 30)
+      confirmed.wait()
       return status == 401
         ? .error(401, "unauthorized")
         : .json(200, ["token": StubTokens.access(expiresAt: earlier)])
@@ -236,7 +236,7 @@ struct AccountSignInTests {
       guard request.header("Authorization") == "Bearer first.signed" else {
         return .json(200, ["token": StubTokens.access(expiresAt: other)])
       }
-      _ = swapped.wait(timeout: .now() + 30)
+      swapped.wait()
       return .json(200, ["token": StubTokens.access(expiresAt: expiry)])
     }
     let (tokens, refresh) = try await refreshHeld(at: server, storage: storage)
@@ -263,7 +263,7 @@ struct AccountSignInTests {
     let expiry = fixture.now + 15 * 60
     fixture.server.respond { request in
       if request.route == "GET /v1/auth/token" {
-        _ = held.wait(timeout: .now() + 30)
+        held.wait()
         return .json(200, ["token": StubTokens.access(expiresAt: expiry)])
       }
       return StubSync.answer(cursor: "cursor-2")

@@ -1,6 +1,16 @@
 import Foundation
+import Observation
 
 @testable import TranslatorCore
+
+@MainActor
+func until(_ condition: @escaping @MainActor () -> Bool) async {
+  while !condition() {
+    await withCheckedContinuation { (changed: CheckedContinuation<Void, Never>) in
+      withObservationTracking { _ = condition() } onChange: { changed.resume() }
+    }
+  }
+}
 
 @MainActor
 final class TestTime {
@@ -12,14 +22,15 @@ final class TestTime {
 }
 
 @MainActor
+@Observable
 final class FakeTranscription {
   private(set) var requests: [TranscriptionRequest] = []
   private(set) var hearing: [Bool] = []
   private(set) var stopCount = 0
   private(set) var finishCount = 0
   var failure: TranslatorFailure?
-  var onHearing: ((Bool) -> Void)?
-  private var continuation: AsyncThrowingStream<TranscriptionEvent, any Error>.Continuation?
+  @ObservationIgnored var onHearing: ((Bool) -> Void)?
+  @ObservationIgnored private var continuation: AsyncThrowingStream<TranscriptionEvent, any Error>.Continuation?
 
   var client: TranscriptionClient {
     TranscriptionClient(
@@ -104,6 +115,7 @@ final class FakeTranslator {
 }
 
 @MainActor
+@Observable
 final class FakePlayback {
   struct Utterance: Equatable {
     let text: String
@@ -114,7 +126,7 @@ final class FakePlayback {
   private(set) var stopCount = 0
   var reachesMicrophone = false
   var holdsSpeech = false
-  private var gate: CheckedContinuation<Void, Never>?
+  @ObservationIgnored private var gate: CheckedContinuation<Void, Never>?
 
   var client: SpeechPlaybackClient {
     SpeechPlaybackClient(
@@ -191,15 +203,14 @@ struct ConversationHarness {
   }
 
   func startAndWaitForListening() async {
+    let asked = transcription.requests.count
     session.start()
-    for _ in 0..<100 where transcription.requests.isEmpty {
-      await Task.yield()
-    }
+    await until { transcription.requests.count > asked }
   }
 
   func startSpeaking(count: Int) async {
     time.advance(1.3)
     session.tick()
-    for _ in 0..<100 where playback.spoken.count < count { await Task.yield() }
+    await until { playback.spoken.count >= count }
   }
 }

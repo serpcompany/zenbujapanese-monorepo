@@ -32,11 +32,9 @@ struct ConversationWordsTests {
     let known: (LanguageReferenceID) -> Bool = { $0.rawValue == "今日" }
 
     #expect(words.comprehension(of: conversation, analysis: analysis, isKnown: known) == nil)
-    for _ in 0..<50 where words.comprehension(of: conversation, analysis: analysis, isKnown: known) == nil {
-      await Task.yield()
-    }
+    await words.countingFinished()
     let comprehension = words.comprehension(of: conversation, analysis: analysis, isKnown: known)
     #expect(comprehension == Comprehension(knownCount: 1, totalCount: 2))
-    #expect(comprehension?.percentText == "50%")
+    #expect(comprehension?.fraction == 0.5)
   }
 }

@@ -68,16 +68,7 @@ struct AccountSyncTests {
 
   @Test("an answer lost on the way is asked for again under the same mutation IDs")
   func retriesKeepMutationIDs() async throws {
-    let fixture = Fixture()
-    let calls = CallCount()
-    fixture.serve { request in
-      calls.next() == 1
-        ? .error(500, "internal")
-        : StubSync.answer(results: StubSync.applied(request), cursor: "cursor-1")
-    }
-    await fixture.launch()
-    fixture.markKnown(Fixture.taberu)
-    try await fixture.signIn()
+    let fixture = try await signedInThroughAFailedSync()
     fixture.account.scheduler.stop()
     #expect(
       fixture.sync.lastFailure
@@ -88,6 +79,37 @@ struct AccountSyncTests {
     #expect(syncs.count == 2)
     #expect(syncs[0].mutations == syncs[1].mutations)
     #expect(fixture.sync.state.queue.isEmpty)
+  }
+
+  @Test("a failed sync is tried again once the retry's wait is over, and not before")
+  func retrySyncsAfterItsWait() async throws {
+    let fixture = try await signedInThroughAFailedSync()
+    #expect(fixture.retries.waits == [SyncRetry.firstDelay])
+    #expect(fixture.server.requests(to: "POST /v1/sync").count == 1)
+
+    let retry = try #require(fixture.account.scheduler.waiting)
+    fixture.retries.release()
+    await retry.value
+    await fixture.account.scheduler.settled()
+    await fixture.settle()
+
+    #expect(fixture.server.requests(to: "POST /v1/sync").count == 2)
+    #expect(fixture.sync.lastFailure == nil)
+    #expect(fixture.sync.state.queue.isEmpty)
+  }
+
+  private func signedInThroughAFailedSync() async throws -> Fixture {
+    let fixture = Fixture()
+    let calls = CallCount()
+    fixture.serve { request in
+      calls.next() == 1
+        ? .error(500, "internal")
+        : StubSync.answer(results: StubSync.applied(request), cursor: "cursor-1")
+    }
+    await fixture.launch()
+    fixture.markKnown(Fixture.taberu)
+    try await fixture.signIn()
+    return fixture
   }
 
   @Test("two changes to one word go one at a time, the second made on the first's version")

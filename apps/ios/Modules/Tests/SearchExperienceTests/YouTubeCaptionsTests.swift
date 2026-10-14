@@ -176,8 +176,8 @@ struct WordMeaningTests {
   @Test("the Word Meanings preference persists and defaults to off")
   @MainActor
   func preference() throws {
-    let defaults = try #require(UserDefaults(suiteName: "WordMeaningTests"))
-    defaults.removePersistentDomain(forName: "WordMeaningTests")
+    let temporary = try TemporaryDefaults()
+    let defaults = temporary.defaults
     #expect(ReadingAidPreferences(defaults: defaults).showsWordMeanings == false)
     ReadingAidPreferences(defaults: defaults).showsWordMeanings = true
     #expect(ReadingAidPreferences(defaults: defaults).showsWordMeanings == true)
@@ -214,8 +214,8 @@ struct PlayerReadingAidTests {
   @Test("new reading aid preferences persist with their defaults")
   @MainActor
   func preferences() throws {
-    let defaults = try #require(UserDefaults(suiteName: "PlayerReadingAidTests"))
-    defaults.removePersistentDomain(forName: "PlayerReadingAidTests")
+    let temporary = try TemporaryDefaults()
+    let defaults = temporary.defaults
     let fresh = ReadingAidPreferences(defaults: defaults)
     #expect(fresh.showsTranslations)
     #expect(fresh.translationLanguage == .english)
@@ -233,8 +233,8 @@ struct PlayerReadingAidTests {
   @Test("Translate's furigana starts off and is stored apart from the app's reading aids")
   @MainActor
   func translateFurigana() throws {
-    let defaults = try #require(UserDefaults(suiteName: "TranslateReadingAidTests"))
-    defaults.removePersistentDomain(forName: "TranslateReadingAidTests")
+    let temporary = try TemporaryDefaults()
+    let defaults = temporary.defaults
     let translate = ReadingAidPreferences(
       defaults: defaults, storageKey: "translate.reading-aids.v1", furiganaByDefault: false)
     #expect(!translate.showsFurigana)
