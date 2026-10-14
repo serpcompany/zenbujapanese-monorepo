@@ -12,6 +12,10 @@ enum SQLiteReadError: Error {
 
 func checkedSQLiteStep(_ statement: OpaquePointer) throws -> SQLiteReadStep {
   try Task<Never, Never>.checkCancellation()
+  return try sqliteStep(statement)
+}
+
+func sqliteStep(_ statement: OpaquePointer) throws -> SQLiteReadStep {
   switch sqlite3_step(statement) {
   case SQLITE_ROW:
     return .row

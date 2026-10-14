@@ -8,12 +8,8 @@ struct ShownResults: Hashable, Sendable {
 struct SearchResultsView: View {
   let results: LookupSearchResults
   let fromRadicals: Bool
-  let frequencyCapability: FrequencyCapability
-  let frequencyRefreshID: Int
   let selectRefinement: (SearchRefinement) -> Void
   @State private var shown: ShownResults
-  @State private var frequencyLoadState = SearchFrequencyLoadState()
-  @State private var frequency: LearnerFrequency?
   @State private var animatesNextList = false
   @AppStorage(ResultsLearner.sortKey) private var sort = ResultsLearner.defaultSort
   @AppStorage(ResultsLearner.filterKey) private var filter = ResultsLearner.noFilter
@@ -23,14 +19,10 @@ struct SearchResultsView: View {
     results: LookupSearchResults,
     first: ShownResults,
     fromRadicals: Bool,
-    frequencyCapability: FrequencyCapability,
-    frequencyRefreshID: Int,
     selectRefinement: @escaping (SearchRefinement) -> Void
   ) {
     self.results = results
     self.fromRadicals = fromRadicals
-    self.frequencyCapability = frequencyCapability
-    self.frequencyRefreshID = frequencyRefreshID
     self.selectRefinement = selectRefinement
     _shown = State(initialValue: first)
   }
@@ -117,30 +109,9 @@ struct SearchResultsView: View {
     .listStyle(.plain)
     .id(shown.request.query)
     .accessibilityIdentifier("search.results")
+    .modifier(DrawnResults(list: list))
     .onChange(of: list.forgetsSort, initial: true) { _, forgets in
       if forgets { sort = ResultsLearner.defaultSort }
-    }
-    .task(id: frequencyTaskID) {
-      let requestID = frequencyTaskID
-      frequencyLoadState.begin(requestID)
-      frequency = nil
-      do {
-        let response = try await SearchFrequencyLoader.load(
-          requestID, using: frequencyCapability)
-        if frequencyLoadState.commit(response.results, for: response.request) {
-          frequency = LearnerFrequency(response.results, for: requestID.entryIDs)
-        }
-      } catch is CancellationError {
-        return
-      } catch {
-        guard !Task.isCancelled else { return }
-        let unavailable = FrequencyLookupResult.unavailableResults(
-          for: requestID.entryIDs, pack: nil, reason: "Frequency data unavailable"
-        ).mapValues { [$0] }
-        if frequencyLoadState.commit(unavailable, for: requestID) {
-          frequency = LearnerFrequency(unavailable, for: requestID.entryIDs)
-        }
-      }
     }
     .task(id: request) {
       let request = request
@@ -159,9 +130,10 @@ struct SearchResultsView: View {
   private var request: ResultsScreenRequest {
     var request = shown.request
     request.learner = ResultsLearner(
-      frequency: frequency, sort: sort, filter: filter,
+      sort: sort, filter: filter,
       known: results.entries.map(\.id).filter(wordKnowledge.isKnown).map(\.rawValue),
       fromRadicals: fromRadicals)
+    request.lists = FrequencyLists.live.version
     return request
   }
 
@@ -187,12 +159,6 @@ struct SearchResultsView: View {
     animatesNextList = true
     filter = choice.value
     AccessibilityNotification.Announcement(choice.announcement).post()
-  }
-
-  private var frequencyTaskID: SearchFrequencyTaskID {
-    SearchFrequencyTaskID(
-      entryIDs: shown.list.frequencyEntries.map(LanguageReferenceID.init(rawValue:)),
-      refreshID: frequencyRefreshID)
   }
 }
 

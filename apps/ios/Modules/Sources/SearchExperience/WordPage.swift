@@ -1,5 +1,4 @@
 import Foundation
-import os
 
 struct WordPage: Decodable, Hashable, Sendable {
   struct Pitch: Decodable, Hashable, Sendable {
@@ -56,6 +55,7 @@ struct WordPage: Decodable, Hashable, Sendable {
   let alternatives: [AlternativeForm]
   let kanji: [String]
   let alternativeKanji: [String]
+  let frequency: [FrequencyRow]
   let related: [Related]
   let shareText: String
 }
@@ -108,20 +108,9 @@ extension WordPage {
     }
   }
 
-  init?(_ entry: DictionaryEntry) {
-    if let page = Self.pages.withLock({ $0[entry.id] }) {
-      self = page
-      return
-    }
-    guard let page: WordPage = try? PresentationCore.shared.answer("wordPage", Entry(entry))
+  init?(_ entry: DictionaryEntry, using core: PresentationCore = .shared) {
+    guard let page = core.wordPage(of: entry.id, asking: { try DictionaryCore.argument(Entry(entry)) })
     else { return nil }
-    Self.pages.withLock { pages in
-      if pages.count >= Self.capacity { pages.removeAll(keepingCapacity: true) }
-      pages[entry.id] = page
-    }
     self = page
   }
-
-  private static let capacity = 64
-  private static let pages = OSAllocatedUnfairLock(initialState: [LanguageReferenceID: WordPage]())
 }
