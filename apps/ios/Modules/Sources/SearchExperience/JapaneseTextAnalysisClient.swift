@@ -72,7 +72,7 @@ struct JapaneseTextAnalysisClient: Sendable {
   }
 }
 
-private actor LinkedEntries {
+actor LinkedEntries {
   private let lookupClient: LookupClient
   private var entries: [String: DictionaryEntry] = [:]
 
@@ -83,22 +83,28 @@ private actor LinkedEntries {
   func tokens(
     _ words: [LinkedWord], highlightedEntry: DictionaryEntry?
   ) async -> [JapaneseTextToken] {
-    if let highlightedEntry { entries[highlightedEntry.id.rawValue] = highlightedEntry }
-    let unread = Set(words.flatMap { $0.candidates + [$0.entry].compactMap { $0 } })
-      .filter { entries[$0] == nil }
-    if !unread.isEmpty,
-      let read = try? await lookupClient.entries(unread.map(LanguageReferenceID.init(rawValue:)))
-    {
-      if entries.count + read.count > Self.capacity { entries.removeAll(keepingCapacity: true) }
-      for (id, entry) in read { entries[id.rawValue] = entry }
+    var found: [String: DictionaryEntry] = [:]
+    if let highlightedEntry { found[highlightedEntry.id.rawValue] = highlightedEntry }
+    var unread: [LanguageReferenceID] = []
+    for id in Set(words.flatMap { $0.candidates + [$0.entry].compactMap { $0 } })
+    where found[id] == nil {
+      if let entry = entries[id] {
+        found[id] = entry
+      } else {
+        unread.append(LanguageReferenceID(rawValue: id))
+      }
     }
+    if !unread.isEmpty, let read = try? await lookupClient.entries(unread) {
+      for (id, entry) in read { found[id.rawValue] = entry }
+    }
+    keep(found)
     return words.enumerated().map { index, word in
-      let entry = word.entry.flatMap { entries[$0] }
+      let entry = word.entry.flatMap { found[$0] }
       return JapaneseTextToken(
         id: index,
         surface: word.surface,
         entry: entry,
-        candidateEntries: entry.map { [$0] } ?? word.candidates.compactMap { entries[$0] },
+        candidateEntries: entry.map { [$0] } ?? word.candidates.compactMap { found[$0] },
         scalarRange: word.start..<word.end,
         reading: word.reading,
         ruby: word.ruby.map {
@@ -112,5 +118,14 @@ private actor LinkedEntries {
     }
   }
 
-  private static let capacity = 4_000
+  private func keep(_ found: [String: DictionaryEntry]) {
+    let added = found.keys.count { entries[$0] == nil }
+    if entries.count + added > Self.capacity {
+      entries = found
+    } else {
+      entries.merge(found) { _, new in new }
+    }
+  }
+
+  static let capacity = 4_000
 }
