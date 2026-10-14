@@ -163,7 +163,7 @@ struct ConjugatedFormView: View {
     .navigationTitle(form.title)
     .inlineNavigationTitle()
     .accessibilityIdentifier("conjugations.form.\(form.kind)")
-    .task(id: form) {
+    .screenTask(id: form) {
       await examples.load(form.surface, rowsOnScreen: rowsOnScreen, read: readExamples)
     }
   }

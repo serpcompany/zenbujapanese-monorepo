@@ -191,7 +191,8 @@ struct WordDetailView: View {
       guard !Task.isCancelled else { return }
       analysisAvailability = await japaneseTextAnalysisClient.availability()
       frequency = await FrequencyRow.rows(for: entry.id, using: frequencyCapability)
-      guard !Task.isCancelled else { return }
+    }
+    .screenTask(id: entry.id) {
       await examples.load(entry.id.rawValue, rowsOnScreen: rowsOnScreen, read: readExamples)
     }
   }

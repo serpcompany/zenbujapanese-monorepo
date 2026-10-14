@@ -15,6 +15,7 @@ struct SearchExperienceRootView: View {
   @State private var translatePath = NavigationPath()
   @Environment(TranslateExperience.self) private var translateExperience
   @State private var kanjiScroll = KanjiScrollMemory()
+  @State private var screenReturns = ScreenReturns()
   private let lookupClient: LookupClient
   private let exampleSentenceClient: ExampleSentenceClient
   private let japaneseTextAnalysisClient: JapaneseTextAnalysisClient
@@ -64,6 +65,7 @@ struct SearchExperienceRootView: View {
             dismissRecognizedWordSheet(if: true)
           }))
       .modifier(AppCommandHandling(perform: perform))
+      .environment(screenReturns)
   }
 
   private func perform(_ command: AppCommand) {
@@ -248,7 +250,7 @@ struct SearchExperienceRootView: View {
   }
 
   private var watchNavigation: some View {
-    NavigationStack(path: $watchPath) {
+    NavigationStack(path: countingReturns($watchPath)) {
       WatchAndListenView(
         history: watchHistory,
         searchProvider: .youTube,
@@ -279,7 +281,7 @@ struct SearchExperienceRootView: View {
   }
 
   private var translateNavigation: some View {
-    NavigationStack(path: $translatePath) {
+    NavigationStack(path: countingReturns($translatePath)) {
       TranslateTabRoot(
         experience: translateExperience,
         words: translateWords(opening: wordSheets.translate),
@@ -302,7 +304,7 @@ struct SearchExperienceRootView: View {
   }
 
   private var accountNavigation: some View {
-    NavigationStack(path: $accountPath) {
+    NavigationStack(path: countingReturns($accountPath)) {
       AccountTabRoot(
         store: encounterMediaStore,
         translate: translateExperience,
@@ -410,7 +412,17 @@ struct SearchExperienceRootView: View {
       if newPath.count > path.count {
         kanjiScroll.remember(leaving: path.last, for: newPath.last)
       }
+      screenReturns.stackChanged(from: path.count, to: newPath.count)
       path = newPath
+    }
+  }
+
+  private func countingReturns(_ path: Binding<NavigationPath>) -> Binding<NavigationPath> {
+    Binding {
+      path.wrappedValue
+    } set: { newPath in
+      screenReturns.stackChanged(from: path.wrappedValue.count, to: newPath.count)
+      path.wrappedValue = newPath
     }
   }
 

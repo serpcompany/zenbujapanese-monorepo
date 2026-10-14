@@ -56,7 +56,7 @@ struct ExampleSentencesView: View {
     }
     .navigationTitle(query.value)
     .inlineNavigationTitle()
-    .task(id: query) {
+    .screenTask(id: query) {
       analysisAvailability = await japaneseTextAnalysisClient.availability()
       await examples.load(query.value, rowsOnScreen: rowsOnScreen, read: read)
     }

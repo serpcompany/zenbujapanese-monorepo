@@ -622,19 +622,17 @@ answers; [`dictionary-core.md`](dictionary-core.md), The app's side, lists which
 - **Sentences.** A search that needs a sentence's words says so in its call's outcome. The actor
   awaits Sudachi (`JapaneseMorphologyClient`), hands the words back, and the call goes on; other
   lookups can run while it waits.
-- **Examples arrive linked.** A batch of a screen's examples is one call
-  (`DictionaryTextData.resultsExamples`, `entryExamples`, `formExamples`): the sentences from a
-  position to the end of its page of 25, or fewer when the call sets a limit (`cutShort`), each
-  with its words linked and the screen's words accented. `ExampleSentenceClient` reads a batch's
-  entries in one statement before any row is drawn, so a row (`LinkedJapaneseWords`) draws once.
-  `LoadedExamples` asks for the rows that fit the window (`ExampleRowsOnScreen`), at once for the
-  rest of a page cut short, and at the list's end for the next page; later reads share one task.
+- **Examples arrive linked.** A batch is one call (`DictionaryTextData.resultsExamples`,
+  `entryExamples`, `formExamples`): the sentences from a position to the end of its page of 25, or
+  fewer under a limit (`cutShort`), each with its words linked and accented. `ExampleSentenceClient`
+  reads a batch's entries in one statement first, so a row (`LinkedJapaneseWords`) draws once.
+  `LoadedExamples` asks for the rows that fit the window (`ExampleRowsOnScreen`), then the rest of a
+  page cut short, then the next page at the list's end; later reads share one task.
 - **Linked words.** Text that isn't the dictionary's (a caption, an image's line, a translated
   sentence) links a row at a time (`LinkedJapaneseText`): `DictionaryTextData.linkedWords` is one
-  call for a text, in which the core tokenizes it from the dictionary files the app hands it, looks
-  every word's forms up in one or two statements, and answers each word with its place, its entry or
-  candidates, its furigana, and its `accent`. Both paths read their entries through `LinkedEntries`,
-  which keeps 4,000, and the core remembers the last 512 texts it linked.
+  call for a text: the core tokenizes it from the app's files, reads its words' forms in one or two
+  statements, and answers each word's place, entry or candidates, furigana, and `accent`. Both paths
+  read entries through `LinkedEntries` (4,000 kept); the core keeps the last 512 texts.
 - **The kanji files.** `KanjiFiles` maps `KanjiReferenceData.json` and
   `KanjiElementReferenceData.json` into memory and scans them once for where each record
   starts and ends, then hands the core a record's bytes as they are in the file. It builds no
@@ -1096,8 +1094,10 @@ previews stay still.
   (`SearchListHeading`) and frequency notice are rows.
 - SwiftUI can miss the last keystroke before Return, so `SearchView` searches again when the query
   changed without SwiftUI starting a newer task; otherwise Searching stays on screen.
-- Back runs a covered screen's `.task` again. The example screens keep their rows then
-  (`LoadedExamples`), so the `List` keeps its scroll position, and read again only what failed.
+- Back runs a covered screen's `.task` again on iPhone and iPad, not on the Mac, where a covered
+  screen never disappears. Example screens read their examples in `screenTask(id:)`, which also
+  runs when any stack's screen is closed (`ScreenReturns`), in the closing screen too: put nothing
+  else in it. Rows are kept (`LoadedExamples`): a `List` keeps its place; only failed reads repeat.
 - The word sheet (`WordSheetPresentation` in `RecognizedWordSheet.swift`) swaps the word inside a
   `sheet(isPresented:)`: with `sheet(item:)`, each new word dismissed and re-presented the sheet,
   which reopened at full height.
