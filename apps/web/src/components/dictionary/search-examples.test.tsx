@@ -1,9 +1,10 @@
 import { examplesPerPage, wordExample } from '@zenbu/dictionary-core/detail/examples'
+import { normalizeQuery } from '@zenbu/dictionary-core/search/query'
 import { renderToStaticMarkup } from 'react-dom/server'
 import { describe, expect, test } from 'vitest'
 import type { PageExample, SearchExamplesData } from '@/lib/dictionary/data'
 import { type Links, pageExample, serviceLinks } from '@/lib/dictionary/page-example'
-import { normalizeSearchQuery, searchPath } from '@/lib/dictionary/urls'
+import { searchPath } from '@/lib/dictionary/urls'
 import { gateEnabled, gateService, recordedCases } from '@/test/gate'
 import { readRenderedExamples, visibleText } from '@/test/rendered'
 import { SearchExamplesSection } from './search-results'
@@ -187,7 +188,7 @@ describe.runIf(gateEnabled)('the rendered Example Sentences section matches the 
   })
 
   test.each(exampleSearchCases)('「$query」', async expected => {
-    const query = normalizeSearchQuery(expected.query)
+    const query = normalizeQuery(expected.query)
     const service = gateService()
     const found = await service.searchExamples(query)
     const ids = expected.ids ?? []

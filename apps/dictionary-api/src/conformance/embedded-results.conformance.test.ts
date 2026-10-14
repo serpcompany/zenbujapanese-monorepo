@@ -1,8 +1,10 @@
 import type { ArtifactDatabase } from '@zenbu/dictionary-core/artifact/database'
+import { bundledFrequency } from '@zenbu/dictionary-core/artifact/frequency'
+import type { FrequencyRow } from '@zenbu/dictionary-core/detail/rows'
 import type { EmbeddedSearchResults } from '@zenbu/dictionary-core/embedded/lookup'
 import type { LearnerResultsScreen, LearnerState } from '@zenbu/dictionary-core/results/learner'
 import { beforeAll, describe, expect, test } from 'vitest'
-import { type Embedded, embedded, freshInstallEvidence } from './embedded-support'
+import { type Embedded, embedded } from './embedded-support'
 import {
   caseAsShown,
   describeRows,
@@ -63,23 +65,16 @@ describe.runIf(artifactAvailable)('the app’s results screen on the artifact', 
       primaryEntry: results.primaryEntry,
       usesPrimaryEntryExamples: results.usesPrimaryEntryExamples
     })
-    const state = {
-      frequency: null,
-      sort: 'default',
-      filter: 'all',
-      known: [],
-      fromRadicals: false
-    }
-    const ask = (frequency: LearnerState['frequency']) =>
-      app.presentation<LearnerResultsScreen>('resultsScreen', {
+    const state = { sort: 'default', filter: 'all', known: [], fromRadicals: false }
+    return {
+      results,
+      screen: await app.presentation<LearnerResultsScreen>('resultsScreen', {
         query,
         results,
         exampleCount,
-        learner: { ...state, frequency, ...learner }
+        learner: { ...state, ...learner }
       })
-    const loading = await ask(null)
-    if (loading.state === 'noResults') return { results, screen: loading }
-    return { results, screen: await ask(freshInstallEvidence(db, loading.frequencyEntries)) }
+    }
   }
 
   test.each(suite.cases)('shows 「$query」 as the suite records', async expected => {
@@ -107,10 +102,10 @@ describe.runIf(artifactAvailable)('the app’s results screen on the artifact', 
     const byDefault = await screen('iru')
     if (byDefault.screen.state !== 'results') throw new Error('「iru」 has no results')
     const ids = byDefault.screen.rows.map(row => row.id)
-    const evidence = freshInstallEvidence(db, ids)
-    const value = (id: string, dictionary: number) => {
-      const lookup = evidence.entries[id][dictionary]
-      return 'value' in lookup ? lookup.value : null
+    const frequency = bundledFrequency(db, ids)
+    const value = (id: string, pack: FrequencyRow['pack']) => {
+      const row = frequency.get(id)?.find(listed => listed.pack === pack)
+      return !row ? null : row.pack === 'jlpt' ? row.level : row.rank
     }
     const sorted = async (learner: Partial<LearnerState>) => {
       const found = (await screen('iru', learner)).screen
@@ -120,7 +115,7 @@ describe.runIf(artifactAvailable)('the app’s results screen on the artifact', 
 
     const youTube = await sorted({ sort: 'frequency|zenbu.tubelex.youtube' })
     expect(youTube.menu?.status).toBe('Sorted by YouTube')
-    const ranks = youTube.rows.map(row => value(row.id, 1))
+    const ranks = youTube.rows.map(row => value(row.id, 'tubelex'))
     const ranked = ranks.filter(rank => rank !== null)
     expect(ranked.length).toBeGreaterThan(3)
     expect(ranked).toEqual([...ranked].sort((left, right) => left - right))
@@ -128,7 +123,7 @@ describe.runIf(artifactAvailable)('the app’s results screen on the artifact', 
     expect(youTube.rows[0].chips[0].source).toBe('YouTube')
 
     const jlpt = await sorted({ sort: 'frequency|zenbu.jlpt.waller' })
-    const levels = jlpt.rows.map(row => value(row.id, 0)).filter(level => level !== null)
+    const levels = jlpt.rows.map(row => value(row.id, 'jlpt')).filter(level => level !== null)
     expect(levels.length).toBeGreaterThan(1)
     expect(levels).toEqual([...levels].sort((left, right) => right - left))
 

@@ -71,6 +71,10 @@ All notable user-facing changes to Zenbu Japanese are recorded here.
 - Choosing **Photo Library** for Image Search opens the picker again.
 - English searches put the common word first: `dog` shows 犬 first and `water` shows 水, where rarer
   words whose meaning was exactly the query used to come ahead of them.
+- A profile's username follows the rule your Zenbu account uses: 3 to 30 letters a–z, numbers, or
+  underscores. One that doesn't fit now says why and isn't saved, where a period or a one-letter
+  name used to be kept and other characters were dropped without a word. A username you already
+  saved stays as it is until you change it.
 
 ## [2.0.0] - 2026-10-09
 

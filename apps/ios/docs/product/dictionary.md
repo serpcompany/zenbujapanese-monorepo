@@ -17,8 +17,8 @@ Check: UI `SearchUITests.testAnEnglishSearchListsTheWordAndOpensItsDetail` (the 
 `HandwritingRecognitionTests` (a drawn kanji is read whatever the stroke order) and
 `RadicalLookupTests` (radicals narrow to the kanji that have them).
 
-A query reads the same whatever its width or case: full-width letters search as plain ones, and
-halfwidth katakana as full-width, a voiced mark joined to its kana (ｶﾞｷﾞ searches ガギ).
+A query reads the same whatever its width or case (Ｎ as n, ｶﾞｷﾞ as ガギ, a voiced mark joined to
+its kana), and white space of any kind, or the U+FEFF a paste can carry, only separates its words.
 
 Check: package `DictionaryCoreTests` (a query normalized by the core, scalar for scalar); core
 `search/query.test.ts`.
@@ -134,7 +134,7 @@ sizes, only the first dictionary's chip shows, followed by a count of the rest.
 Check: core `detail/frequency.test.ts` (which chips show, and in what order) and
 `results/learner.test.ts` (the sorted dictionary's chip first); package `ResultsScreenTests` (the
 same on the bundled data, and the one chip with a count at the largest text sizes); the recorded
-`SearchResultsConformanceTests`.
+`SearchResultsConformanceTests`; UI `SearchResultsUITests` (each list drawn once, with its chips).
 
 A chip's dot says how common the word is: green for a rank up to 1,500, yellow to 5,000, orange
 to 15,000, red to 30,000, and gray beyond. These are Migaku's star cutoffs, so learners who know
@@ -157,14 +157,14 @@ device. When the query is itself a word (`いって` is 一手), that word stays
 
 Check: package `JapaneseDeinflectionTests`; the recorded `SearchConformanceTests`.
 
-Changing the enabled dictionaries or their order re-sorts the visible results without searching
-again. If frequency data can't be read, Search still shows every result and says which
-dictionary is unavailable. Results can also offer a Japanese-reading refinement, related
+Results show once, in order and with their chips; changing the enabled dictionaries or their
+order re-sorts them at once. If frequency data can't be read, Search still shows every result and
+says which dictionary is unavailable. Results can also offer a Japanese-reading refinement, related
 Example Sentences, discovered words, and a dedicated Kanji result for a single-kanji query. An
 English query's Example Sentences have its words in any form: `startled you` finds "startle you".
 
-Check: package `SearchFrequencyOrchestrationTests` and `ResultsScreenTests` (a dictionary that
-can't be read is named, and the others still order the list); core `detail/frequency.test.ts`
+Check: package `ResultsScreenTests` and `FrequencyListsTests` (a finished first screen; a
+dictionary that can't be read named, the others still ordering); core `detail/frequency.test.ts`
 (the notice's words), `artifact/example-search.test.ts`, and `examples/english-inflection.test.ts`
 (which sentences an English query finds); the recorded `SearchResultsConformanceTests` (the
 refinement, Example Sentences, and Kanji rows) and `ExampleSearchConformanceTests` (`startled you`
@@ -207,16 +207,15 @@ to Default).
 
 Switching re-sorts the visible results without searching again and announces the new order to
 VoiceOver. The choice is kept on the device across launches and applies to Japanese, English,
-and romaji searches. While ranks are loading, or if frequency data can't be read, a dictionary
-sort shows as Default and returns once the ranks load. If the chosen dictionary is disabled or
-removed, Search goes back to Default. The Kanji row, Example Sentences, the reading refinement, and Discovered Words keep their
+and romaji searches. If frequency data can't be read, a dictionary sort shows as Default until it
+can be. If the chosen dictionary is disabled or removed, Search goes back to Default. The Kanji
+row, Example Sentences, the reading refinement, and Discovered Words keep their
 places; when there are no word rows to sort (only Discovered Words, or only a single kanji's
 Kanji row), the row isn't shown.
 
-Check: core `results/ordering.test.ts` and `results/learner.test.ts` (VoiceOver's announcement,
-the stored choice, loading and unreadable ranks, a disabled dictionary); package
-`ResultsScreenTests` (the stored choice, loading, an unreadable dictionary, and a disabled one,
-on the bundled data).
+Check: core `results/ordering.test.ts` and `results/learner.test.ts` (VoiceOver's announcement, the
+stored choice, unreadable ranks, a disabled dictionary); package `ResultsScreenTests` (the stored
+choice, an unreadable dictionary, a disabled one, and none enabled, on the bundled data).
 
 ### Filtering results
 
@@ -308,13 +307,13 @@ Check: the recorded `ExampleSearchConformanceTests`; core `examples/morphology.t
 pieces join into one word) and `detail/text.test.ts` (the short meaning); package
 `LinkedWordResolutionTests` and `WordMeaningTests`.
 
-A **Frequency** section lists each enabled dictionary's rank or JLPT level for the word.
-Selecting a row opens that dictionary's details. JLPT levels are presented as unofficial study
-estimates.
+A **Frequency** section lists each enabled dictionary's rank or JLPT level for the word. It is drawn
+with the page, except just after a launch, and follows a change of dictionaries at once. Selecting a
+row opens that dictionary's details. JLPT levels are presented as unofficial study estimates.
 
 Check: the recorded `WordDetailConformanceTests` (each pack's row and its details); package
 `ResultsScreenTests` (the rows' names, values, and details); UI
-`WordDetailUITests.testAFrequencyRowOpensItsDetails`.
+`WordDetailUITests.testAFrequencyRowOpensItsDetails` and `AccountUITests` (one turned off).
 
 Selectable Japanese inside Word Detail and Example Sentences uses the same interactive
 word-boundary analysis as Image Search. Selecting a linked word continues into its normal

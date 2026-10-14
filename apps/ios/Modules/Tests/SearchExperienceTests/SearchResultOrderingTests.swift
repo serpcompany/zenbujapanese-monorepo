@@ -4,18 +4,9 @@ import Testing
 
 @Suite("Search result relevance and frequency ordering")
 struct SearchResultOrderingTests {
-  private func searched(
-    _ query: String, ranks: [String: Int]
-  ) async throws -> SearchedScreen {
-    let entries = try await LookupClient.live.search(SearchQuery(query)).entries
-    let headwords = Dictionary(
-      entries.map { ($0.id, $0.headword) }, uniquingKeysWith: { first, _ in first })
-    return try await .search(query, frequency: .ranking(ranks) { headwords[$0] })
-  }
-
   @Test("a first meaning with a note in parentheses is as direct as an exact one, so frequency decides")
   func notedFirstMeaningMatchesExactFirstMeaning() async throws {
-    let dog = try await searched("dog", ranks: ["犬": 1_071, "ワン子": 16_303, "子犬": 1])
+    let dog = try await SearchedScreen.search("dog", ranking: ["犬": 1_071, "ワン子": 16_303, "子犬": 1])
     #expect(try dog.relevance(of: "犬") == dog.relevance(of: "ワン子"))
     #expect(try dog.relevance(of: "ワン子") < dog.relevance(of: "子犬"))
     #expect(try dog.place(of: "犬") < dog.place(of: "ワン子"))
@@ -24,7 +15,7 @@ struct SearchResultOrderingTests {
 
   @Test("prison keeps direct matches ahead of an incidental sense and presents the matched sense")
   func prisonRegression() async throws {
-    let prison = try await searched("prison", ranks: ["別荘": 1, "監獄": 50_000])
+    let prison = try await SearchedScreen.search("prison", ranking: ["別荘": 1, "監獄": 50_000])
     #expect(try prison.place(of: "監獄") < prison.place(of: "別荘"))
     let villa = try prison.entry(written: "別荘").id.rawValue
     #expect(try prison.list.rows.first { $0.id == villa }?.summary == "prison")
@@ -32,12 +23,9 @@ struct SearchResultOrderingTests {
 
   @Test("unavailable evidence and single-kanji lookup preserve dictionary candidates")
   func unavailableAndSingleKanjiFallback() async throws {
-    let quiet = try await SearchedScreen.search(
-      "静",
-      frequency: FrequencyCapability { ids in
-        FrequencyLookupResult.unavailableResults(for: ids, pack: nil, reason: "fixture")
-          .mapValues { [$0] }
-      })
+    let unreadable = FrequencyLists()
+    unreadable.publish(unavailable: "fixture")
+    let quiet = try await SearchedScreen.search("静", using: PresentationCore(listing: unreadable))
     #expect(!quiet.results.entries.isEmpty)
     #expect(try quiet.list.rows.map(\.id) == quiet.results.entries.map(\.id.rawValue))
     #expect(try quiet.list.kanji?.character == "静")
@@ -61,8 +49,17 @@ struct SearchResultOrderingTests {
   @Test("makasete uses frequency between equally relevant makasu matches")
   func liveInflectedRomajiGroups() async throws {
     #expect(try await LookupClient.live.entryMatchingForm("makasete") == nil)
+    let youTube = try #require(
+      try FrequencyPackCatalog.bundled().packs.first { $0.bundled && $0.packKind == .rank })
+    let onlyYouTube = FrequencyLists()
+    onlyYouTube.publish([
+      EnabledFrequencyList(
+        dictionary: youTube.disclosure,
+        file: .verified(
+          try #require(try FrequencyPackCatalog.bundled().bundledArtifactURLs()[youTube.packID])))
+    ])
     let entrusted = try await SearchedScreen.search(
-      "makasete", frequency: try .freshBundledTUBELEX())
+      "makasete", using: PresentationCore(listing: onlyYouTube))
     #expect(entrusted.results.resolution == .deinflected)
     #expect(try entrusted.relevance(of: "任せる") < entrusted.relevance(of: "負かす"))
     #expect(try entrusted.relevance(of: "負かす") == entrusted.relevance(of: "任す"))
@@ -90,9 +87,9 @@ struct SearchResultOrderingTests {
     crossGroup: (stronger: String, weaker: String),
     sameGroup: (first: String, second: String)
   ) async throws -> SearchedScreen {
-    let found = try await searched(
+    let found = try await SearchedScreen.search(
       query,
-      ranks: [
+      ranking: [
         crossGroup.stronger: 50_000, crossGroup.weaker: 1, sameGroup.first: 50_000,
         sameGroup.second: 1,
       ])

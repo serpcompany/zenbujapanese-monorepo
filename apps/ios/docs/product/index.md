@@ -88,11 +88,11 @@ and messages that name the device say iPad or Mac, such as "Everything stays on 
   another app is by hand; `WebsiteLinkTests` checks where it goes.
 - **Settings on the Mac.** **Zenbu Japanese → Settings…** (⌘,) opens a Settings window with
   the profile and the Zenbu account, Reading Aids, and Frequency Dictionaries. They stay in Account
-  too, and both show the same settings; a change to Frequency Dictionaries re-sorts Search the
-  next time Search is opened.
+  too, and both show the same settings; a change to Frequency Dictionaries shows in Search, an
+  open word, and the word sheet at once.
   Check: Mac, UI `KeyboardAndWindowUITests.testTheSettingsWindowHoldsTheAccountReadingAidsAndFrequencyDictionaries`;
   package `AppCommandTests` (its panes and size), `UserProfileTests` (a field changed in another
-  window), and `FrequencyPackLifecycleTests`.
+  window), and `FrequencyPackLifecycleTests` and `FrequencyListsTests` (each change published).
 - **The word sheet.** A word tapped in Image Search, Player, or Translate opens at half height on
   iPhone. On the Mac it opens as a sheet over the window, so the page behind waits until the sheet
   is closed; on an iPad in full width it opens as a centered sheet. A Mac sheet has no toolbar, so
@@ -242,18 +242,18 @@ Rows use Settings-style tinted icon tiles in grouped cards without section headi
 Check: UI `LayoutUITests` (Account's rows on screen at each size).
 
 The profile card opens Profile, where a learner adds or changes a photo and edits their name,
-username, and email in place. Each field saves when the learner leaves it. A username keeps only
-lowercase `a–z`, digits, `_`, and `.`, drops a leading `@`, and is capped at 30 characters; names
-in any script belong in the name. An email must be a single valid address or empty; an invalid
-one shows an error and is not saved. Without a photo, the card shows the name's initials. The
-profile is stored only on the device and is not synced to the Zenbu account. A saved profile this
-version can't read is kept aside rather than written over, and Profile starts empty
-([Saved data that can't be read](#saved-data-that-cant-be-read)).
+username, and email in place. Each field saves when the learner leaves it. A username follows the
+account service's rule: 3 to 30 of `a–z`, digits, and `_`, once NFKC-folded, trimmed, and
+lowercased, or empty for none. An email is a single valid address or empty. A username the rule
+refuses (a period, a leading `@`, kana) or an invalid email shows why and isn't saved; a username
+an earlier version saved stays as it was until it is edited. Without a photo, the card shows the
+name's initials. The profile is stored only on the device, not synced. One this version can't
+read is kept aside ([Saved data that can't be read](#saved-data-that-cant-be-read)).
 
-Check: package `UserProfileTests` (the field rules, saving on leaving, a reload, and an unreadable
-profile) and `PlatformAdapterTests` (the photo's 512-point square); UI
-`AccountUITests.testTheProfileKeepsANameAndShowsItOnTheCard` (the name on the card, and an
-invalid email's error).
+Check: package `UserProfileTests` (the field rules, the username's from the cases the account
+service's tests share, `apps/account-api/src/domain/username-cases.json`; saving on leaving; a
+reload; an earlier username kept; an unreadable profile), `PlatformAdapterTests` (the photo); UI
+`AccountUITests.testTheProfileKeepsANameAndShowsItOnTheCard` (the card, and both fields' errors).
 
 Frequency Dictionaries includes JLPT Levels and YouTube (TUBELEX) in the app and offers
 seven optional packs: Japanese Wikipedia, plus TV & Movies, Anime, Manga, Novels, Visual Novels,

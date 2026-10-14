@@ -320,9 +320,9 @@ full-screen dictionary route in the Translate tab. Words use the same
 Kuromoji parser family as the Zenbu browser extension and other linked Japanese in the app.
 
 Check: UI `ImageSearchUITests.testAnImageOpensImageSearchOnTranslateAndAWordOpensItsEntry`
-(where each device places the sheet, and Open Full Entry) and
-`testAWordSheetsKanjiOpensItsPageOnTranslate`; package `WordSheetPresentationTests` and
-`LinkedWordResolutionTests`.
+(the sheet's place on each device, Open Full Entry), `testAWordSheetsKanjiOpensItsPageOnTranslate`,
+and `TranslateUITests.testAWordWithSeveralEntriesListsThemWithTheirChips` (the **Choose** list);
+package `WordSheetPresentationTests` and `LinkedWordResolutionTests`.
 
 A learner can also copy the recognized text and share the selected source image.
 

@@ -69,7 +69,7 @@ const asking = (folder: string) =>
     child.stdout.on('data', chunk => {
       said += chunk
     })
-    child.on('exit', () => done([folder, said.trim()]))
+    child.on('close', () => done([folder, said.trim()]))
   })
 
 describe('the ports of a checkout', () => {
@@ -172,41 +172,64 @@ describe('the ports of a checkout', () => {
     const names = ['a', 'b', 'c', 'd', 'e']
     const trees = names.map(name => worktree(main, name))
     const answers = await Promise.all([...trees, ...trees, ...trees, ...trees].map(asking))
-    const byTree = new Map<string, Set<string>>()
-    for (const [folder, said] of answers) {
-      byTree.set(folder, (byTree.get(folder) ?? new Set()).add(said))
-    }
-    for (const said of byTree.values()) expect(said.size).toBe(1)
-    const blocks = [...byTree.values()].map(said => [...said][0])
-    expect(new Set(blocks).size).toBe(names.length)
-    expect(claims(main)).toHaveLength(names.length)
-    for (const folder of trees)
-      expect(portsOf(folder)).toEqual(JSON.parse([...(byTree.get(folder) ?? [])][0]))
+    const saidIn = (tree: string) => [
+      ...new Set(answers.filter(([folder]) => folder === tree).map(([, said]) => said))
+    ]
+    for (const tree of trees) expect(saidIn(tree)).toHaveLength(1)
+    const firstBlocks = names.map((_, index) => JSON.stringify(block(index + 1)))
+    expect(trees.map(tree => saidIn(tree)[0]).sort()).toEqual(firstBlocks)
+    expect(claims(main)).toEqual(names.map((_, index) => String(index + 1)))
+    for (const tree of trees) expect(JSON.stringify(portsOf(tree))).toBe(saidIn(tree)[0])
   })
 })
 
 describe('the lock a claim is made under', () => {
   const lockOf = (main: string) => join(main, '.git', 'zenbu-ports', 'lock')
+  const thisRun = process.pid
+  const aRunThatEnded = () => spawnSync(process.execPath, ['--eval', '']).pid
+
+  function takenLongAgo(main: string, holder?: number) {
+    mkdirSync(lockOf(main), { recursive: true })
+    if (holder !== undefined) writeFileSync(join(lockOf(main), 'holder'), String(holder))
+    const longAgo = new Date(Date.now() - 120_000)
+    utimesSync(lockOf(main), longAgo, longAgo)
+  }
+
+  async function answerOfAWorktreeAskingUntilReleased(main: string) {
+    let released = false
+    const answer = asking(worktree(main, 'one')).then(([, said]) => ({
+      said,
+      afterRelease: released
+    }))
+    await new Promise(resolve => setTimeout(resolve, 400))
+    released = true
+    rmSync(lockOf(main), { recursive: true, force: true })
+    return answer
+  }
+
+  const itsBlockOnceReleased = { said: JSON.stringify(block(1)), afterRelease: true }
 
   test('makes a worktree wait while another run holds it', async () => {
     const main = repository()
-    const one = worktree(main, 'one')
     mkdirSync(lockOf(main), { recursive: true })
-    let released = false
-    const answer = asking(one).then(([, said]) => ({ said, afterRelease: released }))
-    await new Promise(resolve => setTimeout(resolve, 400))
-    released = true
-    rmSync(lockOf(main), { recursive: true })
-    expect(await answer).toEqual({ said: JSON.stringify(block(1)), afterRelease: true })
+    expect(await answerOfAWorktreeAskingUntilReleased(main)).toEqual(itsBlockOnceReleased)
     expect(claims(main)).toEqual(['1'])
   })
 
-  test('is taken over when the run that held it is long gone', () => {
+  test('is left with a run that is still going, however long ago it took it', async () => {
+    const main = repository()
+    takenLongAgo(main, thisRun)
+    expect(await answerOfAWorktreeAskingUntilReleased(main)).toEqual(itsBlockOnceReleased)
+    expect(claims(main)).toEqual(['1'])
+  })
+
+  test.each([
+    ['named no run', undefined],
+    ['named a run that has ended', aRunThatEnded()]
+  ])('is taken over when it was taken long ago and %s', (_, holder) => {
     const main = repository()
     const one = worktree(main, 'one')
-    mkdirSync(lockOf(main), { recursive: true })
-    const longAgo = new Date(Date.now() - 120_000)
-    utimesSync(lockOf(main), longAgo, longAgo)
+    takenLongAgo(main, holder)
     expect(portsOf(one)).toEqual(block(1))
     expect(claims(main)).toEqual(['1'])
   })
