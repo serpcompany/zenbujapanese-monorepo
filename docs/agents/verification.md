@@ -161,7 +161,8 @@ swap, and this Mac has frozen for want of memory), so nothing stays up unwatched
 - **The run that ends the work shuts it down.** The `verify-app` script shuts the Simulator down
   when its tests end, unless `--keep` leaves it up for the next run. After the last run, or
   after working with it by hand, `simulator.py shutdown` stops this checkout's, except one that
-  something is using.
+  something is using. It gives a run that has just ended up to 30 seconds to let go first: an
+  iPad run's own processes were still naming the Simulator a few seconds after its tests ended.
 - **A keeper stops a forgotten one.** `boot` leaves a small process watching the Simulator.
   Something uses the Simulator while an `xcodebuild` or `simctl` command names its UDID, and
   `boot` again counts as use. The keeper shuts the Simulator down once nothing has used it for 10

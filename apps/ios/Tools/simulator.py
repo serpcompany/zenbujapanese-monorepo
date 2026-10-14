@@ -33,6 +33,8 @@ LEAST_FREE_MEMORY_PERCENT = 40
 MEMORY_IDLE_SECONDS = 120
 DEAD_INSTALL_SETTLE_SECONDS = 60
 MOST_SWAP_MEGABYTES = 2000
+RUN_ENDING_SECONDS = 30
+RUN_ENDING_LOOK_SECONDS = 1
 
 
 def simulator_name(kind: str, scope: str | None) -> str:
@@ -371,10 +373,29 @@ def note_emptied(udid: str) -> None:
         print(f"{time.strftime('%F %T')} {emptied.removeprefix('; ')}", flush=True)
 
 
-def shut_down(scope: str | None, devices: dict[str, list[dict]]) -> list[str]:
+def free_once_runs_end(
+    udid: str,
+    clock: Callable[[], float] = time.monotonic,
+    pause: Callable[[float], None] = time.sleep,
+    limit: float = RUN_ENDING_SECONDS,
+) -> bool:
+    began = clock()
+    while is_in_use(udid):
+        if clock() - began >= limit:
+            return False
+        pause(RUN_ENDING_LOOK_SECONDS)
+    return True
+
+
+def shut_down(
+    scope: str | None,
+    devices: dict[str, list[dict]],
+    clock: Callable[[], float] = time.monotonic,
+    pause: Callable[[float], None] = time.sleep,
+) -> list[str]:
     said = []
     for device in running(scope, devices):
-        if is_in_use(device["udid"]):
+        if not free_once_runs_end(device["udid"], clock, pause):
             said.append(f"{device['name']} stays up, since something is using it")
             continue
         simctl("shutdown", device["udid"])

@@ -203,7 +203,7 @@ struct WatchSessionView: View {
           .font(.caption2.monospacedDigit())
           .foregroundStyle(.secondary)
           .frame(maxWidth: .infinity, alignment: .leading)
-          .accessibilityHidden(true)
+          .accessibilityIdentifier("watch.time")
         HStack(spacing: 28) {
           Button("Previous Line", systemImage: "backward.end.fill") { step(by: -1) }
             .font(.body)
