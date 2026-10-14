@@ -833,17 +833,18 @@ TypeScript, and the service's tests prove that model against the real service.
   launch, a background one too, uses it. The Simulator reaches the Mac's `127.0.0.1`, and App
   Transport Security allows plain HTTP to an IP address.
 - **Apple.** `apps/ios/App/ZenbuJapanese.entitlements` asks for Sign in with Apple, which the App ID
-  (`com.zenbujapanese.dictionary`) needs in Apple Developer. The app asks the service for a nonce and gives
-  Apple its SHA-256 (`AppleSignIn.swift`), asking for the email and the name; Apple gives the name
-  only on a learner's first sign-in, and the app sends it then as `idToken.user.name`, so a new
-  account has one. Apple's token names the app's bundle ID, and the service takes only the bundle
-  IDs in `apps/account-api/src/domain/clients.ts`, its `APPLE_APP_BUNDLE_IDENTIFIER`, and its
+  (`com.zenbujapanese.dictionary`) needs in Apple Developer. The app asks the service for a nonce
+  and gives Apple its SHA-256 (`AppleSignIn.swift`), asking for the email and the name; Apple gives
+  the name only on a learner's first sign-in, and the app sends it then as `idToken.user.name`, so a
+  new account has one. Apple's token names the app's bundle ID, and the service takes only the
+  bundle IDs in `apps/account-api/src/domain/clients.ts`, its `APPLE_APP_BUNDLE_IDENTIFIER`, and its
   website Services IDs, so a Zenbu Dev build (`com.zenbujapanese.dictionary.dev`) can't sign in with
-  Apple. The app shows the Apple button whenever the build isn't Zenbu Dev, whatever the service
-  has set up: a service without Apple answers its sign-in `404 provider_not_found`. `ZENBU_BUNDLE_ID_SUFFIX` reaches the app as
-  `ZenbuBundleIDSuffix` in `apps/ios/App/Info.plist`; when it isn't empty, the sign-in sheet shows a
-  note in place of the Apple button, and deleting an Apple account says to use the App Store or
-  TestFlight app. Google and emailed codes work in Zenbu Dev.
+  Apple. The app shows the Apple button whenever the build isn't Zenbu Dev, whatever the service has
+  set up: a service without Apple answers its sign-in `404 provider_not_found`.
+  `ZENBU_BUNDLE_ID_SUFFIX` reaches the app as `ZenbuBundleIDSuffix` in `apps/ios/App/Info.plist`;
+  when it isn't empty, the sign-in sheet shows a note in place of the Apple button, and deleting an
+  Apple account says to use the App Store or TestFlight app. Google and emailed codes work in Zenbu
+  Dev.
 - **Google** needs no SDK: `ASWebAuthenticationSession` opens Google's OAuth for iOS with PKCE, the
   nonce, and the reversed client ID as the redirect, which the session catches itself, so no URL
   type is registered. The app exchanges the code at Google's token endpoint for the ID token. The
@@ -869,14 +870,14 @@ TypeScript, and the service's tests prove that model against the real service.
 - **Signing in and out.** Signing out forgets the session token but keeps the queue, cursor,
   versions, and waiting words under the account's user ID (`signedOutFrom`), and keeps queuing
   changes with their base versions. While signed out (`signedOutQueueStart`), a change replaces an
-  earlier one to the same known word or list word from the same signed-out stretch, a list's
-  renames and moves merge into its earlier `create` or `update`, and its `delete` replaces an
-  earlier `update`, so the queue holds about one change per entity however long the learner stays
-  signed out. Nothing queued before signing out is merged, since it may have been sent.
-  Signing in to the same user ID picks them up and syncs from the kept cursor. Signing in to any other account drops them, moves Favorites to its shared ID
-  (`WordLists.favoritesID`, from the oldest list if it's still named Favorites), and queues the
-  phone's marks, lists, list words, Recent videos, and bookmarked sentences at version 0 before the
-  first sync. Deleting the account drops everything.
+  earlier one to the same known word or list word from the same signed-out stretch, a list's renames
+  and moves merge into its earlier `create` or `update`, and its `delete` replaces an earlier
+  `update`, so the queue holds about one change per entity however long the learner stays signed
+  out. Nothing queued before signing out is merged, since it may have been sent. Signing in to the
+  same user ID picks them up and syncs from the kept cursor. Signing in to any other account drops
+  them, moves Favorites to its shared ID (`WordLists.favoritesID`, from the oldest list if it's
+  still named Favorites), and queues the phone's marks, lists, list words, Recent videos, and
+  bookmarked sentences at version 0 before the first sync. Deleting the account drops everything.
 - **Entities added later.** `account-sync.json` names the entities the account's first upload
   covered (`syncedEntities`; a file without it covered known words, lists, and list words). A phone
   that signed in before its app synced an entity, such as watch history, queues that entity's items
@@ -931,15 +932,15 @@ TypeScript, and the service's tests prove that model against the real service.
   the first upload, so a list the account already has stays. A pulled copy of an entity with a
   change still queued is held in the file (`deferred`) until that change's result: a conflict's
   `current` replaces it, an applied result takes it only at the same version (the change changed
-  nothing, so no newer copy comes), and a rejected one takes it. A list word whose list hasn't arrived is kept in the file until a sync
-  reaches `hasMore: false`, even across a failed page or a relaunch, then dropped if the list never
-  came. A deleted list drops its words. `410` drops the cursor and the held copies and words, and syncs
-  again, still sending the queue. A sync's answer is dropped if the learner signed out or in while
-  it was on the way.
-- **When.** `AccountSyncScheduler` syncs a second after a local change, on becoming active (once
-  the files have loaded) when changes are queued or the last sync is over 15 minutes old, in a
-  `BGAppRefreshTask` (`com.zenbujapanese.dictionary.account-sync`, scheduled 15 minutes out on going to the
-  background, and stopped when iOS ends it), and on **Sync Now**. Never on a timer. A network
+  nothing, so no newer copy comes), and a rejected one takes it. A list word whose list hasn't
+  arrived is kept in the file until a sync reaches `hasMore: false`, even across a failed page or a
+  relaunch, then dropped if the list never came. A deleted list drops its words. `410` drops the
+  cursor and the held copies and words, and syncs again, still sending the queue. A sync's answer is
+  dropped if the learner signed out or in while it was on the way.
+- **When.** `AccountSyncScheduler` syncs a second after a local change, on becoming active (once the
+  files have loaded) when changes are queued or the last sync is over 15 minutes old, in a
+  `BGAppRefreshTask` (`com.zenbujapanese.dictionary.account-sync`, scheduled 15 minutes out on going
+  to the background, and stopped when iOS ends it), and on **Sync Now**. Never on a timer. A network
   failure or `5xx` waits 2 seconds, doubling up to 5 minutes, at half to all of that at random, and
   retries by itself at most 10 times, only in the foreground; a local change or becoming active
   waits it out too, and **Sync Now** doesn't. `429` waits what `Retry-After` says, whatever starts
@@ -1246,6 +1247,11 @@ a device. The on-device model runs in a Simulator only when the runtime matches 
 iOS 26 runtime under a newer macOS, its safety check fails, so translation and Context fail
 there. Use a Simulator on the runtime that matches the Mac, with Apple Intelligence on for the
 Mac. `ImageTextExplanationTests` exercise the model only where it runs.
+
+The camera runs only on a device, and `CameraFlashTests` covers only the flash kept for it. When
+changing the camera, check on an iPhone that a fresh install's **Take Photo** opens with the flash
+off, and that a flash chosen there, then **Cancel**, **Use Photo**, or a swipe down, is the next
+camera's flash, from Translate and from a word's **•••**.
 
 ## Known words manual checks
 
