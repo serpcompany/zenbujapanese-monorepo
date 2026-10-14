@@ -3,7 +3,10 @@ import SwiftUI
 struct ExamplePlace: Equatable {
   let row: ExampleSentenceID
   let top: CGFloat
-  let height: CGFloat
+
+  func holds(_ frame: CGRect, in list: CGRect) -> Bool {
+    abs(frame.minY - list.minY - top) < 2
+  }
 
   func anchor(rowHeight: CGFloat, listHeight: CGFloat) -> UnitPoint {
     let room = listHeight - rowHeight
@@ -25,6 +28,7 @@ final class ExamplePlaceKeeper {
   private var list = CGRect.zero
   private(set) var left: ExamplePlace?
   private var settlingUntil: Date?
+  private var laidOutSinceReturn: Set<ExampleSentenceID> = []
   private var correcting = false
 
   func noteList(_ frame: CGRect) {
@@ -33,20 +37,22 @@ final class ExamplePlaceKeeper {
 
   func note(_ row: ExampleSentenceID, at frame: CGRect, now: Date = .now) -> ExamplePlaceCorrection? {
     rows[row] = frame
+    guard settlingUntil != nil else { return nil }
+    laidOutSinceReturn.insert(row)
     return correction(now: now)
   }
 
   func leave(from row: ExampleSentenceID) {
-    left = rows[row].map {
-      ExamplePlace(row: row, top: $0.minY - list.minY, height: $0.height)
-    }
+    left = rows[row].map { ExamplePlace(row: row, top: $0.minY - list.minY) }
     settlingUntil = nil
+    laidOutSinceReturn = []
     correcting = false
   }
 
   func comeBack(now: Date = .now) -> ExamplePlaceCorrection? {
     guard left != nil else { return nil }
-    if settlingUntil == nil { settlingUntil = now.addingTimeInterval(Self.settling) }
+    settlingUntil = now.addingTimeInterval(Self.settling)
+    laidOutSinceReturn = []
     return correction(now: now)
   }
 
@@ -61,18 +67,22 @@ final class ExamplePlaceKeeper {
   private func forget() {
     left = nil
     settlingUntil = nil
+    laidOutSinceReturn = []
     correcting = false
   }
 
   private func correction(now: Date) -> ExamplePlaceCorrection? {
-    guard let left, let until = settlingUntil, !correcting else { return nil }
-    guard now < until else {
-      forget()
+    guard let left, let until = settlingUntil, !correcting, let frame = rows[left.row] else {
       return nil
     }
+    guard now < until else {
+      if laidOutSinceReturn.isEmpty { settlingUntil = nil } else { forget() }
+      return nil
+    }
+    let pushedAway = !laidOutSinceReturn.isEmpty && !laidOutSinceReturn.contains(left.row)
+    guard pushedAway || !left.holds(frame, in: list) else { return nil }
     correcting = true
-    let height = rows[left.row]?.height ?? left.height
     return ExamplePlaceCorrection(
-      row: left.row, anchor: left.anchor(rowHeight: height, listHeight: list.height))
+      row: left.row, anchor: left.anchor(rowHeight: frame.height, listHeight: list.height))
   }
 }

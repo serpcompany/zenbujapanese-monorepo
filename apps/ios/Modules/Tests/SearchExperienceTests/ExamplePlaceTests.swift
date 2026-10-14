@@ -33,24 +33,30 @@ struct ExamplePlaceTests {
     return keeper
   }
 
-  @Test("the sentence a word was opened from is put back where it was when the screen comes back")
-  func theOpenedSentenceIsPutBack() {
+  @Test("a sentence that came back where it was is left alone")
+  func aSentenceInPlaceIsLeftAlone() {
     let keeper = leftFromTheOpenedRow()
-    #expect(keeper.left == ExamplePlace(row: opened, top: 400, height: 80))
-    let back = keeper.comeBack(now: at(10))
-    #expect(back == ExamplePlaceCorrection(row: opened, anchor: UnitPoint(x: 0.5, y: 400 / 720)))
+    #expect(keeper.left == ExamplePlace(row: opened, top: 400))
+    #expect(keeper.comeBack(now: at(10)) == nil)
+    #expect(keeper.note(opened, at: row(at: 400.5), now: at(10.1)) == nil)
   }
 
-  @Test("while the screen settles, each layout puts it back again, one correction at a time")
-  func eachLayoutWhileSettlingPutsItBack() {
+  @Test("a sentence that came back elsewhere is put back, one correction at a time")
+  func aMovedSentenceIsPutBack() {
     let keeper = leftFromTheOpenedRow()
-    #expect(keeper.comeBack(now: at(10)) != nil)
-    #expect(keeper.note(above, at: row(at: -300), now: at(10.1)) == nil)
+    #expect(keeper.comeBack(now: at(10)) == nil)
+    let moved = keeper.note(opened, at: row(at: -300), now: at(10.1))
+    #expect(moved == ExamplePlaceCorrection(row: opened, anchor: UnitPoint(x: 0.5, y: 400 / 720)))
+    #expect(keeper.note(opened, at: row(at: -280), now: at(10.2)) == nil)
     keeper.corrected()
-    #expect(keeper.note(above, at: row(at: -500), now: at(10.2)) != nil)
-    keeper.corrected()
-    #expect(keeper.note(above, at: row(at: -500), now: at(10 + ExamplePlaceKeeper.settling)) == nil)
-    #expect(keeper.left == nil)
+    #expect(keeper.note(opened, at: row(at: 400), now: at(10.3)) == nil)
+  }
+
+  @Test("a sentence pushed off the list, while others were laid out, is put back")
+  func aSentencePushedAwayIsPutBack() {
+    let keeper = leftFromTheOpenedRow()
+    #expect(keeper.comeBack(now: at(10)) == nil)
+    #expect(keeper.note(above, at: row(at: -500), now: at(10.1)) != nil)
   }
 
   @Test("a sentence that came back taller is put back by its new height")
@@ -61,40 +67,46 @@ struct ExamplePlaceTests {
     #expect(back == ExamplePlaceCorrection(row: opened, anchor: UnitPoint(x: 0.5, y: 400 / 700)))
   }
 
-  @Test("scrolling by hand ends putting it back")
-  func scrollingByHandEndsIt() {
+  @Test("a return while the list is covered doesn't use up the next one")
+  func aCoveredReturnKeepsThePlace() {
     let keeper = leftFromTheOpenedRow()
-    #expect(keeper.comeBack(now: at(10)) != nil)
-    keeper.corrected()
-    keeper.userScrolled()
-    #expect(keeper.note(above, at: row(at: -500), now: at(10.2)) == nil)
-    #expect(keeper.left == nil)
+    #expect(keeper.comeBack(now: at(10)) == nil)
+    #expect(keeper.comeBack(now: at(20)) == nil)
+    #expect(keeper.left != nil)
+    #expect(keeper.note(opened, at: row(at: -300), now: at(20.1)) != nil)
   }
 
-  @Test("nothing is put back on a first appearance, for a sentence never laid out, or once settled")
-  func nothingIsPutBackOtherwise() {
-    let fresh = ExamplePlaceKeeper()
-    #expect(fresh.comeBack(now: at(10)) == nil)
+  @Test("the place is forgotten once the list settles on screen, or when it is scrolled by hand")
+  func thePlaceIsForgotten() {
+    let settled = leftFromTheOpenedRow()
+    _ = settled.comeBack(now: at(10))
+    _ = settled.note(opened, at: row(at: 400), now: at(10.1))
+    _ = settled.note(above, at: row(at: 0), now: at(10 + ExamplePlaceKeeper.settling))
+    #expect(settled.left == nil)
 
+    let scrolled = leftFromTheOpenedRow()
+    _ = scrolled.comeBack(now: at(10))
+    scrolled.userScrolled()
+    #expect(scrolled.note(opened, at: row(at: -300), now: at(10.2)) == nil)
+    #expect(scrolled.left == nil)
+  }
+
+  @Test("nothing is put back on a first appearance, or for a sentence never laid out")
+  func nothingIsPutBackWithoutAPlace() {
+    #expect(ExamplePlaceKeeper().comeBack(now: at(10)) == nil)
     let unseen = ExamplePlaceKeeper()
     unseen.noteList(list)
     unseen.leave(from: opened)
     #expect(unseen.left == nil)
     #expect(unseen.comeBack(now: at(10)) == nil)
-
-    let settled = leftFromTheOpenedRow()
-    #expect(settled.comeBack(now: at(10)) != nil)
-    settled.corrected()
-    #expect(settled.comeBack(now: at(20)) == nil)
-    #expect(settled.left == nil)
   }
 
   @Test("a place near either edge of the list is held at that edge")
   func anEdgeIsHeld() {
-    let place = ExamplePlace(row: opened, top: 900, height: 80)
-    #expect(place.anchor(rowHeight: 80, listHeight: 800) == UnitPoint(x: 0.5, y: 1))
-    let overTheTop = ExamplePlace(row: opened, top: -40, height: 80)
+    let below = ExamplePlace(row: opened, top: 900)
+    #expect(below.anchor(rowHeight: 80, listHeight: 800) == UnitPoint(x: 0.5, y: 1))
+    let overTheTop = ExamplePlace(row: opened, top: -40)
     #expect(overTheTop.anchor(rowHeight: 80, listHeight: 800).y == 0)
-    #expect(place.anchor(rowHeight: 900, listHeight: 800) == .top)
+    #expect(below.anchor(rowHeight: 900, listHeight: 800) == .top)
   }
 }

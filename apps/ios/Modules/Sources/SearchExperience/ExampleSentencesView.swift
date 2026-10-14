@@ -88,7 +88,7 @@ struct ExampleSentencesView: View {
           place.noteList(frame)
         }
         .onScrollPhaseChange { _, phase in
-          if phase == .tracking || phase == .interacting { place.userScrolled() }
+          if phase != .idle { place.userScrolled() }
         }
         .accessibilityIdentifier("example-list.screen")
       }
