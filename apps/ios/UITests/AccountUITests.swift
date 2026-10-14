@@ -98,7 +98,14 @@ final class AccountUITests: ZenbuUITestCase {
     waitFor(labeled("No Conversations Yet", in: app))
     goBack(in: app)
     tap(reveal(find("account.credits", in: app), in: app))
-    waitFor(find("credits.list", in: app))
+    let credits = waitFor(find("credits.list", in: app))
+    assertOnScreen(find("credits.source.jmdict", in: app), in: app)
+    let jitensNotice = reveal(find("credits.notice.jiten", in: app), in: app, scrolling: credits)
+    XCTAssertTrue(isReachable(jitensNotice, in: app), "Jiten's notice is scrolled onto the screen")
+    waitUntilStill(jitensNotice)
+    tap(reveal(find("credits.licenses", in: app), in: app, scrolling: credits))
+    tap(find("licenses.text.KANJIVG-CC-BY-SA-3.0.txt", in: app))
+    waitUntil(find("credits.license-text", in: app), mentions: "CREATIVE COMMONS PUBLIC LICENSE")
   }
 
   func testAFrequencyDictionaryShowsItsDetailsAndTurnsOff() {

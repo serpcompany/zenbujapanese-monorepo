@@ -48,6 +48,10 @@ All notable user-facing changes to Zenbu Japanese are recorded here.
 
 ### Fixed
 
+- **Credits & Attributions** says that Jiten's frequency lists are modified and shared under the
+  same license, credits JMdict, KANJIDIC2, and RADKFILE each on its own, and calls three sources by
+  their authors' names: Wikipedia Word Frequency Clean, JLPT vocabulary lists, and JLPT kanji lists.
+  It reads the same as zenbujapanese.com's Sources page.
 - A conversation in Translate keeps following the newest line at larger text sizes, and stops
   only when you scroll up; a tall new line used to stop it and show **Jump to Latest** on its own.
 - At larger text sizes, a conversation's controls stay on screen on iPhone, where the pause button
