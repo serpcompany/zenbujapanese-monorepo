@@ -19,9 +19,11 @@ Check: UI `SearchUITests.testAnEnglishSearchListsTheWordAndOpensItsDetail` (the 
 
 A query reads the same whatever its width or case (Ｎ as n, ｶﾞｷﾞ as ガギ, a voiced mark joined to
 its kana), and white space of any kind, or the U+FEFF a paste can carry, only separates its words.
+It is searched whatever its length (the website stops at 200 characters, its service's limit),
+and one that full-text search can't read finds nothing, as on the website.
 
 Check: package `DictionaryCoreTests` (a query normalized by the core, scalar for scalar); core
-`search/query.test.ts`.
+`search/query.test.ts`, `search/search.test.ts`, and `embedded/dictionary.test.ts`.
 
 Image Search, for Japanese in a photo, is Translate's **Image** option
 ([Image Search](translate.md#image-search)).
@@ -272,18 +274,18 @@ Check: package `WordResolutionTests`; core `embedded/dictionary.test.ts`.
 
 The top of a word detail shows the headword with furigana, following the Reading Aids setting.
 Tapping one of its kanji shows which furigana belongs to it (see
-[Furigana kanji highlight](index.md#furigana-kanji-highlight)).
-When furigana is off, the reading appears under the headword instead. A long headword shrinks one size to
-keep its furigana beside the pitch accent; when even that doesn't fit, the pitch accent moves to
-its own line under a full-size headword. To the right of the
-headword are the pitch accent (the reading in katakana with an overline across the high morae and
-a hook at the downstep) in a capsule with a speaker, which pronounces the word when tapped, and
-the latest encounter photo. A word without pitch shows a standalone pronounce button. Pitch comes from
-UniDic; for a two-part compound UniDic doesn't list whole, such as 記者会見, it is estimated from
-the parts' accent-combination types, and a word with neither shows no pitch. A part-of-speech row
-follows and opens the conjugation table when one exists. It names one word class and then its
-modifiers in sentence case without repeating "verb", for example "Godan verb (intransitive)",
-"Noun · する verb (transitive)", "Adverb (と)", or "Pre-noun adjective".
+[Furigana kanji highlight](index.md#furigana-kanji-highlight)). When furigana is off, the reading
+appears under the headword instead. A long headword shrinks one size to keep its furigana beside
+the pitch accent; when even that doesn't fit, the pitch accent moves to its own line under a
+full-size headword. To the right of the headword are the pitch accent (the reading in katakana with
+an overline across the high morae and a hook at the downstep) in a capsule with a speaker, which
+pronounces the word when tapped, and the latest encounter photo. A word without pitch shows a
+standalone pronounce button. Pitch comes from UniDic; for a two-part compound UniDic doesn't list
+whole, such as 記者会見, it is estimated from the parts' accent-combination types, and a word with
+neither shows no pitch. A part-of-speech row follows and opens the conjugation table when one
+exists. It names one word class and then its modifiers in sentence case without repeating "verb",
+for example "Godan verb (intransitive)", "Noun · する verb (transitive)", "Adverb (と)", or
+"Pre-noun adjective".
 
 Check: the recorded `WordDetailConformanceTests` (furigana, pitch, and the part of speech);
 core `detail/pitch.test.ts` and `detail/part-of-speech.test.ts`; package `CompoundPitchTests`; UI

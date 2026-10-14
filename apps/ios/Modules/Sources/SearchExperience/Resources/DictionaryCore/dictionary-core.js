@@ -1,58 +1,5 @@
 "use strict";
 (() => {
-  // src/examples/kana.ts
-  var halfwidthAndCircledKatakana = /[｡-ﾟ㋐-㋾]/gu;
-  function fold(value) {
-    return value.replace(halfwidthAndCircledKatakana, (character) => character.normalize("NFKC"));
-  }
-  var toHiraganaSpecial = {
-    ヵ: "か",
-    ヶ: "け",
-    ヷ: "わ゙",
-    ヸ: "ゐ゙",
-    ヹ: "ゑ゙",
-    ヺ: "を゙",
-    ヽ: "ゝ",
-    ヾ: "ゞ",
-    "ヿ": "こと",
-    "ゟ": "より"
-  };
-  var toKatakanaSpecial = {
-    ゝ: "ヽ",
-    ゞ: "ヾ",
-    "ゟ": "ヨリ"
-  };
-  var longestRemembered = 24;
-  var remembered = 8192;
-  function remembering(convert) {
-    const known = /* @__PURE__ */ new Map();
-    return (value) => {
-      if (value.length > longestRemembered) return convert(value);
-      let converted = known.get(value);
-      if (converted === void 0) {
-        converted = convert(value);
-        if (known.size >= remembered) known.clear();
-        known.set(value, converted);
-      }
-      return converted;
-    };
-  }
-  var toHiragana = remembering(
-    (value) => fold(value).replace(/[ァ-ヿゟ]/gu, (character) => {
-      const special2 = toHiraganaSpecial[character];
-      if (special2 !== void 0) return special2;
-      const code = character.codePointAt(0) ?? 0;
-      return code <= 12532 ? String.fromCodePoint(code - 96) : character;
-    }).normalize("NFC")
-  );
-  var toKatakana = remembering(
-    (value) => fold(value).replace(/[ぁ-ゔゝ-ゟ]/gu, (character) => {
-      const special2 = toKatakanaSpecial[character];
-      if (special2 !== void 0) return special2;
-      return String.fromCodePoint((character.codePointAt(0) ?? 0) + 96);
-    }).normalize("NFC")
-  );
-
   // src/detail/text.ts
   var segmenter = new Intl.Segmenter("ja", { granularity: "grapheme" });
   function graphemes(value) {
@@ -106,6 +53,70 @@
     const shown = graphemes(gloss);
     return shown.length > glossLength ? `${shown.slice(0, glossLength - 1).join("")}…` : gloss;
   }
+
+  // src/detail/phrase-note.ts
+  var setPhraseLength = 4;
+  var meaningsPerNote = 3;
+  function isSetPhrase(phrase, entry) {
+    return entry.partsOfSpeech.includes("expression") || graphemeCount(phrase) >= setPhraseLength;
+  }
+  function phraseNote(phrase, entry) {
+    if (!isSetPhrase(phrase, entry)) return null;
+    return entry.meanings.slice(0, meaningsPerNote).join("; ");
+  }
+
+  // src/examples/kana.ts
+  var halfwidthAndCircledKatakana = /[｡-ﾟ㋐-㋾]/gu;
+  function fold(value) {
+    return value.replace(halfwidthAndCircledKatakana, (character) => character.normalize("NFKC"));
+  }
+  var toHiraganaSpecial = {
+    ヵ: "か",
+    ヶ: "け",
+    ヷ: "わ゙",
+    ヸ: "ゐ゙",
+    ヹ: "ゑ゙",
+    ヺ: "を゙",
+    ヽ: "ゝ",
+    ヾ: "ゞ",
+    "ヿ": "こと",
+    "ゟ": "より"
+  };
+  var toKatakanaSpecial = {
+    ゝ: "ヽ",
+    ゞ: "ヾ",
+    "ゟ": "ヨリ"
+  };
+  var longestRemembered = 24;
+  var remembered = 8192;
+  function remembering(convert) {
+    const known = /* @__PURE__ */ new Map();
+    return (value) => {
+      if (value.length > longestRemembered) return convert(value);
+      let converted = known.get(value);
+      if (converted === void 0) {
+        converted = convert(value);
+        if (known.size >= remembered) known.clear();
+        known.set(value, converted);
+      }
+      return converted;
+    };
+  }
+  var toHiragana = remembering(
+    (value) => fold(value).replace(/[ァ-ヿゟ]/gu, (character) => {
+      const special2 = toHiraganaSpecial[character];
+      if (special2 !== void 0) return special2;
+      const code = character.codePointAt(0) ?? 0;
+      return code <= 12532 ? String.fromCodePoint(code - 96) : character;
+    }).normalize("NFC")
+  );
+  var toKatakana = remembering(
+    (value) => fold(value).replace(/[ぁ-ゔゝ-ゟ]/gu, (character) => {
+      const special2 = toKatakanaSpecial[character];
+      if (special2 !== void 0) return special2;
+      return String.fromCodePoint((character.codePointAt(0) ?? 0) + 96);
+    }).normalize("NFC")
+  );
 
   // src/detail/romaji.ts
   var within = (accepts, step) => (text, start, limit) => {
@@ -645,6 +656,14 @@
     };
   }
 
+  // src/artifact/contributors.ts
+  function tatoebaContributors(db) {
+    return db.all(
+      `SELECT username, sentence_side_count AS sentenceSideCount
+     FROM example_sentence_contributors ORDER BY username COLLATE NOCASE`
+    );
+  }
+
   // src/browse/lists.ts
   var rankedListLimit = 1e4;
   var rankBandSize = 1e3;
@@ -808,6 +827,183 @@
     checkAttached(db, "word_index");
   }
 
+  // src/search/database.ts
+  var interruptedSearch = "The search was interrupted";
+  function stopIfInterrupted(client, step) {
+    if ((step & 1023) === 0 && client.interrupted?.()) throw new Error(interruptedSearch);
+  }
+  function truncatedAtNul(param) {
+    return typeof param === "string" ? param.split("\0", 1)[0] : param;
+  }
+  function withParametersTruncatedAtNul(db) {
+    return {
+      all(sql, params) {
+        return db.all(sql, params.map(truncatedAtNul));
+      },
+      interrupted: () => db.interrupted?.() ?? false
+    };
+  }
+  var FormKind = { written: 0, reading: 1, romaji: 2 };
+  var entryColumns = `lower(hex(e.id)) AS id, e.source_record_id, e.headword, e.reading,
+  e.summary, e.parts_of_speech_json, lower(hex(e.semantic_fingerprint)) AS semantic_fingerprint`;
+  function decodeEntry(row) {
+    return {
+      id: row.id,
+      sourceRecordId: row.source_record_id,
+      headword: row.headword,
+      reading: row.reading,
+      summary: row.summary,
+      partsOfSpeech: JSON.parse(row.parts_of_speech_json)
+    };
+  }
+  function profile(row) {
+    return {
+      primaryMask: row.primary_mask ?? 0,
+      secondaryMask: row.secondary_mask ?? 0,
+      newsFrequencyBand: row.news_frequency_band
+    };
+  }
+
+  // src/search/rank.ts
+  var special = 1;
+  var learner = 2;
+  var news = 4;
+  var loanword = 8;
+  var isMarked = (profile2) => profile2.primaryMask !== 0 || profile2.secondaryMask !== 0 || profile2.newsFrequencyBand !== null;
+  function category({ primaryMask, secondaryMask }) {
+    if (primaryMask & special) return 0;
+    if (primaryMask & learner) return 1;
+    if (primaryMask & news) return 2;
+    if (primaryMask & loanword || secondaryMask & special) return 3;
+    if (secondaryMask & (learner | news)) return 4;
+    if (secondaryMask & loanword) return 5;
+    return 9;
+  }
+  var bitCount = (value) => value.toString(2).replaceAll("0", "").length;
+  function compareProfiles(lhs, rhs) {
+    const categories = category(lhs) - category(rhs);
+    if (categories !== 0) return categories;
+    if (lhs.newsFrequencyBand !== rhs.newsFrequencyBand) {
+      return (lhs.newsFrequencyBand ?? 99) - (rhs.newsFrequencyBand ?? 99);
+    }
+    return bitCount(rhs.primaryMask) - bitCount(lhs.primaryMask);
+  }
+  var profilesEqual = (lhs, rhs) => lhs.primaryMask === rhs.primaryMask && lhs.secondaryMask === rhs.secondaryMask && lhs.newsFrequencyBand === rhs.newsFrequencyBand;
+  var EvidenceLane = { strongGloss: 0, tokenGloss: 1, romajiOnly: 2 };
+  var GlossRelation = {
+    exactGloss: 0,
+    qualifiedGloss: 1,
+    exactInfinitive: 2,
+    qualifiedInfinitive: 3,
+    glossToken: 4
+  };
+  var RomajiRelation = { exact: 0, prefix: 1, contains: 2 };
+  var FormRelation = {
+    writtenExact: 0,
+    readingExact: 1,
+    writtenPrefix: 2,
+    readingPrefix: 3,
+    writtenContains: 4,
+    readingContains: 5
+  };
+  function firstDifference(...differences) {
+    for (const difference of differences) {
+      const value = difference();
+      if (value !== 0) return value;
+    }
+    return 0;
+  }
+  var isLaterSense = (rank) => rank.lane === EvidenceLane.strongGloss && rank.senseOrder > 0;
+  var englishPlacement = (lhs, rhs) => [
+    () => lhs.lane - rhs.lane,
+    () => lhs.romajiSpecificityRank - rhs.romajiSpecificityRank,
+    () => Number(isLaterSense(lhs)) - Number(isLaterSense(rhs))
+  ];
+  function compareEnglishRanks(lhs, rhs) {
+    return firstDifference(
+      ...englishPlacement(lhs, rhs),
+      () => lhs.priorityPresenceRank - rhs.priorityPresenceRank,
+      () => compareProfiles(lhs.priorityProfile, rhs.priorityProfile),
+      () => lhs.senseOrder - rhs.senseOrder,
+      () => lhs.glossOrder - rhs.glossOrder,
+      () => lhs.corroborationRank - rhs.corroborationRank,
+      () => lhs.headwordLength - rhs.headwordLength,
+      () => compareStrings(lhs.semanticFingerprint, rhs.semanticFingerprint)
+    );
+  }
+  function compareJapaneseRanks(lhs, rhs) {
+    return firstDifference(
+      () => lhs.relation - rhs.relation,
+      () => compareProfiles(lhs.priorityProfile, rhs.priorityProfile),
+      () => lhs.senseBreadthRank - rhs.senseBreadthRank,
+      () => lhs.headwordLength - rhs.headwordLength,
+      () => compareStrings(lhs.semanticFingerprint, rhs.semanticFingerprint)
+    );
+  }
+  function comparePresentationRanks(lhs, rhs) {
+    if (lhs.kind === "english" && rhs.kind === "english") {
+      return firstDifference(...englishPlacement(lhs, rhs));
+    }
+    if (lhs.kind === "japanese" && rhs.kind === "japanese") return lhs.relation - rhs.relation;
+    return lhs.kind === "english" ? -1 : 1;
+  }
+  var caseName = (cases, value) => Object.keys(cases).find((key) => cases[key] === value) ?? String(value);
+  function matchLabel(sourceOrder, rank) {
+    const match = rank.kind === "japanese" ? `japanese ${caseName(FormRelation, rank.relation)}` : `english ${caseName(EvidenceLane, rank.lane)} romaji=${rank.romajiSpecificityRank}` + (rank.lane === EvidenceLane.strongGloss ? ` sense=${isLaterSense(rank) ? "later" : "first"}` : "");
+    return `source=${sourceOrder} ${match}`;
+  }
+  function sameLexicalGroup(lhs, rhs) {
+    if (lhs.kind === "english" && rhs.kind === "english") {
+      return firstDifference(...englishPlacement(lhs, rhs)) === 0 && lhs.priorityPresenceRank === rhs.priorityPresenceRank && profilesEqual(lhs.priorityProfile, rhs.priorityProfile) && lhs.senseOrder === rhs.senseOrder && lhs.glossOrder === rhs.glossOrder && lhs.corroborationRank === rhs.corroborationRank;
+    }
+    if (lhs.kind === "japanese" && rhs.kind === "japanese") {
+      return lhs.relation === rhs.relation && profilesEqual(lhs.priorityProfile, rhs.priorityProfile) && lhs.senseBreadthRank === rhs.senseBreadthRank;
+    }
+    return false;
+  }
+
+  // src/search/ranked-entries.ts
+  function minimum(values, compare) {
+    let best;
+    for (const value of values) {
+      if (best === void 0 || compare(value, best) < 0) best = value;
+    }
+    return best;
+  }
+  function canonicalEntry(equivalents) {
+    return minimum(equivalents, (lhs, rhs) => compareStrings(lhs.id, rhs.id));
+  }
+  function deduplicated(ranked, client = {}) {
+    const groups = /* @__PURE__ */ new Map();
+    let step = 0;
+    for (const entry of ranked) {
+      stopIfInterrupted(client, step++);
+      const group = groups.get(entry.semanticFingerprint);
+      if (group) group.push(entry);
+      else groups.set(entry.semanticFingerprint, [entry]);
+    }
+    return [...groups.values()].map((group) => {
+      const leading = group[0];
+      const strongest = minimum(
+        group,
+        (lhs, rhs) => comparePresentationRanks(lhs.presentationRank, rhs.presentationRank)
+      );
+      const canonical = canonicalEntry(group.map((ranked2) => ranked2.entry)) ?? leading.entry;
+      return {
+        entry: {
+          ...leading.entry,
+          id: canonical.id,
+          sourceRecordId: canonical.sourceRecordId
+        },
+        rank: leading.rank,
+        hasExactOrPrefixMatch: group.some((ranked2) => ranked2.hasExactOrPrefixMatch),
+        semanticFingerprint: leading.semanticFingerprint,
+        presentationRank: strongest?.presentationRank ?? leading.presentationRank,
+        matchedSummary: strongest?.matchedSummary ?? null
+      };
+    });
+  }
+
   // src/detail/ruby.ts
   function isKanjiOrIterationMark(character) {
     return character === "々" || isCJKUnifiedIdeograph(character);
@@ -965,9 +1161,7 @@
     })).sort(
       (left, right) => left.startsLater - right.startsLater || left.length - right.length || right.isCommon - left.isCommon || right.rankScore - left.rankScore || compareLowercaseHex(left.fingerprint, right.fingerprint)
     );
-    return ranked.slice(0, limit).map(
-      ({ entries }) => entries.reduce((smallest, row) => row.id < smallest.id ? row : smallest)
-    );
+    return ranked.slice(0, limit).flatMap(({ entries }) => canonicalEntry(entries) ?? []);
   }
   function wordsForReading(reading, words) {
     const stem = hiragana(reading.value.replaceAll(".", "").replaceAll("-", ""));
@@ -1033,6 +1227,9 @@
     } catch {
       return null;
     }
+  }
+  function savedKanjiReading(detail) {
+    return detail.readings[0]?.value ?? "";
   }
   function kanjiDetail(rows) {
     const { kanji: kanji2 } = rows;
@@ -1443,104 +1640,6 @@
     return left.pairId < right.pairId ? -1 : left.pairId > right.pairId ? 1 : 0;
   }
 
-  // src/search/rank.ts
-  var special = 1;
-  var learner = 2;
-  var news = 4;
-  var loanword = 8;
-  var isMarked = (profile2) => profile2.primaryMask !== 0 || profile2.secondaryMask !== 0 || profile2.newsFrequencyBand !== null;
-  function category({ primaryMask, secondaryMask }) {
-    if (primaryMask & special) return 0;
-    if (primaryMask & learner) return 1;
-    if (primaryMask & news) return 2;
-    if (primaryMask & loanword || secondaryMask & special) return 3;
-    if (secondaryMask & (learner | news)) return 4;
-    if (secondaryMask & loanword) return 5;
-    return 9;
-  }
-  var bitCount = (value) => value.toString(2).replaceAll("0", "").length;
-  function compareProfiles(lhs, rhs) {
-    const categories = category(lhs) - category(rhs);
-    if (categories !== 0) return categories;
-    if (lhs.newsFrequencyBand !== rhs.newsFrequencyBand) {
-      return (lhs.newsFrequencyBand ?? 99) - (rhs.newsFrequencyBand ?? 99);
-    }
-    return bitCount(rhs.primaryMask) - bitCount(lhs.primaryMask);
-  }
-  var profilesEqual = (lhs, rhs) => lhs.primaryMask === rhs.primaryMask && lhs.secondaryMask === rhs.secondaryMask && lhs.newsFrequencyBand === rhs.newsFrequencyBand;
-  var EvidenceLane = { strongGloss: 0, tokenGloss: 1, romajiOnly: 2 };
-  var GlossRelation = {
-    exactGloss: 0,
-    qualifiedGloss: 1,
-    exactInfinitive: 2,
-    qualifiedInfinitive: 3,
-    glossToken: 4
-  };
-  var RomajiRelation = { exact: 0, prefix: 1, contains: 2 };
-  var FormRelation = {
-    writtenExact: 0,
-    readingExact: 1,
-    writtenPrefix: 2,
-    readingPrefix: 3,
-    writtenContains: 4,
-    readingContains: 5
-  };
-  function firstDifference(...differences) {
-    for (const difference of differences) {
-      const value = difference();
-      if (value !== 0) return value;
-    }
-    return 0;
-  }
-  var isLaterSense = (rank) => rank.lane === EvidenceLane.strongGloss && rank.senseOrder > 0;
-  var englishPlacement = (lhs, rhs) => [
-    () => lhs.lane - rhs.lane,
-    () => lhs.romajiSpecificityRank - rhs.romajiSpecificityRank,
-    () => Number(isLaterSense(lhs)) - Number(isLaterSense(rhs))
-  ];
-  function compareEnglishRanks(lhs, rhs) {
-    return firstDifference(
-      ...englishPlacement(lhs, rhs),
-      () => lhs.priorityPresenceRank - rhs.priorityPresenceRank,
-      () => compareProfiles(lhs.priorityProfile, rhs.priorityProfile),
-      () => lhs.senseOrder - rhs.senseOrder,
-      () => lhs.glossOrder - rhs.glossOrder,
-      () => lhs.corroborationRank - rhs.corroborationRank,
-      () => lhs.headwordLength - rhs.headwordLength,
-      () => compareStrings(lhs.semanticFingerprint, rhs.semanticFingerprint)
-    );
-  }
-  function compareJapaneseRanks(lhs, rhs) {
-    return firstDifference(
-      () => lhs.relation - rhs.relation,
-      () => compareProfiles(lhs.priorityProfile, rhs.priorityProfile),
-      () => lhs.senseBreadthRank - rhs.senseBreadthRank,
-      () => lhs.headwordLength - rhs.headwordLength,
-      () => compareStrings(lhs.semanticFingerprint, rhs.semanticFingerprint)
-    );
-  }
-  function comparePresentationRanks(lhs, rhs) {
-    if (lhs.kind === "english" && rhs.kind === "english") {
-      return firstDifference(...englishPlacement(lhs, rhs));
-    }
-    if (lhs.kind === "japanese" && rhs.kind === "japanese") return lhs.relation - rhs.relation;
-    return lhs.kind === "english" ? -1 : 1;
-  }
-  var caseName = (cases, value) => Object.keys(cases).find((key) => cases[key] === value) ?? String(value);
-  function matchLabel(sourceOrder, rank) {
-    const match = rank.kind === "japanese" ? `japanese ${caseName(FormRelation, rank.relation)}` : `english ${caseName(EvidenceLane, rank.lane)} romaji=${rank.romajiSpecificityRank}` + (rank.lane === EvidenceLane.strongGloss ? ` sense=${isLaterSense(rank) ? "later" : "first"}` : "");
-    return `source=${sourceOrder} ${match}`;
-  }
-  function sameLexicalGroup(lhs, rhs) {
-    if (lhs.kind === "english" && rhs.kind === "english") {
-      return firstDifference(...englishPlacement(lhs, rhs)) === 0 && lhs.priorityPresenceRank === rhs.priorityPresenceRank && profilesEqual(lhs.priorityProfile, rhs.priorityProfile) && lhs.senseOrder === rhs.senseOrder && lhs.glossOrder === rhs.glossOrder && lhs.corroborationRank === rhs.corroborationRank;
-    }
-    if (lhs.kind === "japanese" && rhs.kind === "japanese") {
-      return lhs.relation === rhs.relation && profilesEqual(lhs.priorityProfile, rhs.priorityProfile) && lhs.senseBreadthRank === rhs.senseBreadthRank;
-    }
-    return false;
-  }
-
   // src/results/ordering.ts
   var tierValue = {
     rare: 1,
@@ -1721,43 +1820,6 @@
     };
   }
 
-  // src/search/database.ts
-  var interruptedSearch = "The search was interrupted";
-  function stopIfInterrupted(client, step) {
-    if ((step & 1023) === 0 && client.interrupted?.()) throw new Error(interruptedSearch);
-  }
-  function truncatedAtNul(param) {
-    return typeof param === "string" ? param.split("\0", 1)[0] : param;
-  }
-  function withParametersTruncatedAtNul(db) {
-    return {
-      all(sql, params) {
-        return db.all(sql, params.map(truncatedAtNul));
-      },
-      interrupted: () => db.interrupted?.() ?? false
-    };
-  }
-  var FormKind = { written: 0, reading: 1, romaji: 2 };
-  var entryColumns = `lower(hex(e.id)) AS id, e.source_record_id, e.headword, e.reading,
-  e.summary, e.parts_of_speech_json, lower(hex(e.semantic_fingerprint)) AS semantic_fingerprint`;
-  function decodeEntry(row) {
-    return {
-      id: row.id,
-      sourceRecordId: row.source_record_id,
-      headword: row.headword,
-      reading: row.reading,
-      summary: row.summary,
-      partsOfSpeech: JSON.parse(row.parts_of_speech_json)
-    };
-  }
-  function profile(row) {
-    return {
-      primaryMask: row.primary_mask ?? 0,
-      secondaryMask: row.secondary_mask ?? 0,
-      newsFrequencyBand: row.news_frequency_band
-    };
-  }
-
   // src/search/fts.ts
   function ftsPhrase(value) {
     return `"${value.replaceAll('"', '""')}"`;
@@ -1765,44 +1827,12 @@
   function ftsPrefix(value) {
     return /^[\p{L}\p{M}\p{N}]+$/u.test(value) ? `${value}*` : ftsPhrase(value);
   }
-
-  // src/search/ranked-entries.ts
-  function minimum(values, compare) {
-    let best;
-    for (const value of values) {
-      if (best === void 0 || compare(value, best) < 0) best = value;
+  var fts4QueryParserErrors = /malformed MATCH|unterminated string/i;
+  function isUnreadableQuery(error) {
+    for (let cause = error; cause instanceof Error; cause = cause.cause) {
+      if (fts4QueryParserErrors.test(cause.message)) return true;
     }
-    return best;
-  }
-  function deduplicated(ranked, client = {}) {
-    const groups = /* @__PURE__ */ new Map();
-    let step = 0;
-    for (const entry of ranked) {
-      stopIfInterrupted(client, step++);
-      const group = groups.get(entry.semanticFingerprint);
-      if (group) group.push(entry);
-      else groups.set(entry.semanticFingerprint, [entry]);
-    }
-    return [...groups.values()].map((group) => {
-      const leading = group[0];
-      const strongest = minimum(
-        group,
-        (lhs, rhs) => comparePresentationRanks(lhs.presentationRank, rhs.presentationRank)
-      );
-      const canonical = minimum(group, (lhs, rhs) => compareStrings(lhs.entry.id, rhs.entry.id)) ?? leading;
-      return {
-        entry: {
-          ...leading.entry,
-          id: canonical.entry.id,
-          sourceRecordId: canonical.entry.sourceRecordId
-        },
-        rank: leading.rank,
-        hasExactOrPrefixMatch: group.some((ranked2) => ranked2.hasExactOrPrefixMatch),
-        semanticFingerprint: leading.semanticFingerprint,
-        presentationRank: strongest?.presentationRank ?? leading.presentationRank,
-        matchedSummary: strongest?.matchedSummary ?? null
-      };
-    });
+    return false;
   }
 
   // src/search/english.ts
@@ -2411,7 +2441,14 @@
     features;
     db;
     async search(rawQuery) {
-      const query = normalizeQuery(rawQuery);
+      try {
+        return await this.found(normalizeQuery(rawQuery));
+      } catch (error) {
+        if (!isUnreadableQuery(error)) throw error;
+        return noResults();
+      }
+    }
+    async found(query) {
       const exactFormEntry = isASCII(query) && query !== "" ? (await rankedEnglish(this.db, query, true))[0]?.entry : void 0;
       if (exactFormEntry) {
         const refinement = normalizeQuery(exactFormEntry.reading);
@@ -2613,6 +2650,9 @@
 
   // src/embedded/lookup.ts
   var sameText = (left, right) => left.normalize("NFC") === right.normalize("NFC");
+  function canonicalEntries(groups) {
+    return groups.map((ids) => canonicalEntry(ids.map((id) => ({ id })))?.id ?? null);
+  }
   async function entriesMatchingFirstForms(db, alternatives, found) {
     let unmatched = alternatives.filter((forms2) => forms2.length > 0);
     while (unmatched.length > 0) {
@@ -2662,6 +2702,9 @@
     entriesContainingKanji(character) {
       return kanjiWords(character, kanjiCandidateRows(this.db, character)).map((row) => row.id);
     }
+    tatoebaContributors() {
+      return tatoebaContributors(this.db);
+    }
     websiteRoute(link) {
       const page = websitePage(link.host, link.path);
       if (page.kind !== "word") return page;
@@ -2690,8 +2733,9 @@
         "SELECT lower(hex(id)) AS id FROM entries WHERE id = unhex(?)",
         [saved.id]
       );
-      if (stored) return saved.id;
-      return (await this.found(saved.headword, saved, morphology)).written;
+      if (stored) return { kind: "word", id: saved.id };
+      const { written: written3 } = await this.found(saved.headword, saved, morphology);
+      return written3 ? { kind: "word", id: written3 } : { kind: "search", query: saved.headword };
     }
   };
 
@@ -3373,6 +3417,60 @@
     };
   }
 
+  // src/detail/pitch.ts
+  var joinsPreviousMora = new Set("ゃゅょぁぃぅぇぉゎャュョァィゥェォヮ");
+  var heiban = 0;
+  var atamadaka = 1;
+  var moraWidth = 1;
+  var combinedMoraWidth = 1.5;
+  function morae(kana) {
+    const result3 = [];
+    for (const character of graphemes(kana)) {
+      const last = result3.at(-1);
+      if (joinsPreviousMora.has(character) && last !== void 0)
+        result3[result3.length - 1] = last + character;
+      else result3.push(character);
+    }
+    return result3;
+  }
+  function pitchLevels(downstep, count) {
+    const levels = Array.from(
+      { length: count },
+      (_, index) => downstep === heiban ? index > 0 : downstep === atamadaka ? index === 0 : index > 0 && index < downstep
+    );
+    return { morae: levels, particle: downstep === heiban };
+  }
+  var particleWidth = 0.6;
+  function pitchGraph(kana, levels) {
+    const widths = kana.map((mora) => graphemes(mora).length > 1 ? combinedMoraWidth : moraWidth);
+    let x = 0;
+    const points = widths.map((width, index) => {
+      const point2 = { x: x + width / 2, high: levels.morae[index] };
+      x += width;
+      return point2;
+    });
+    return {
+      widths,
+      points,
+      particle: { x: x + particleWidth / 2, high: levels.particle },
+      width: x + particleWidth
+    };
+  }
+  function pitchAccent(reading, pitch) {
+    const kana = morae(katakana(reading));
+    const levels = pitchLevels(pitch.downstep, kana.length);
+    return {
+      morae: kana.map((mora, index) => ({ mora, high: levels.morae[index] })),
+      downstep: pitch.downstep,
+      moraCount: pitch.moraCount,
+      particleHigh: levels.particle,
+      graph: pitchGraph(kana, levels)
+    };
+  }
+  function shownPitch(entry) {
+    return entry.pitch ?? entry.compoundPitch;
+  }
+
   // src/detail/examples.ts
   function wordExample(rows) {
     return example(rows);
@@ -3484,57 +3582,6 @@
     return phrases.join(" · ");
   }
 
-  // src/detail/pitch.ts
-  var joinsPreviousMora = new Set("ゃゅょぁぃぅぇぉゎャュョァィゥェォヮ");
-  var heiban = 0;
-  var atamadaka = 1;
-  var moraWidth = 1;
-  var combinedMoraWidth = 1.5;
-  function morae(kana) {
-    const result3 = [];
-    for (const character of graphemes(kana)) {
-      const last = result3.at(-1);
-      if (joinsPreviousMora.has(character) && last !== void 0)
-        result3[result3.length - 1] = last + character;
-      else result3.push(character);
-    }
-    return result3;
-  }
-  function pitchLevels(downstep, count) {
-    const levels = Array.from(
-      { length: count },
-      (_, index) => downstep === heiban ? index > 0 : downstep === atamadaka ? index === 0 : index > 0 && index < downstep
-    );
-    return { morae: levels, particle: downstep === heiban };
-  }
-  var particleWidth = 0.6;
-  function pitchGraph(kana, levels) {
-    const widths = kana.map((mora) => graphemes(mora).length > 1 ? combinedMoraWidth : moraWidth);
-    let x = 0;
-    const points = widths.map((width, index) => {
-      const point2 = { x: x + width / 2, high: levels.morae[index] };
-      x += width;
-      return point2;
-    });
-    return {
-      widths,
-      points,
-      particle: { x: x + particleWidth / 2, high: levels.particle },
-      width: x + particleWidth
-    };
-  }
-  function pitchAccent(reading, pitch) {
-    const kana = morae(katakana(reading));
-    const levels = pitchLevels(pitch.downstep, kana.length);
-    return {
-      morae: kana.map((mora, index) => ({ mora, high: levels.morae[index] })),
-      downstep: pitch.downstep,
-      moraCount: pitch.moraCount,
-      particleHigh: levels.particle,
-      graph: pitchGraph(kana, levels)
-    };
-  }
-
   // src/detail/word.ts
   function wordSummary(entry, frequency) {
     return {
@@ -3593,7 +3640,7 @@
   }
   function wordDetail(rows) {
     const { entry } = rows;
-    const pitch = entry.pitch ?? entry.compoundPitch;
+    const pitch = shownPitch(entry);
     const summary = wordSummary(entry, rows.frequency);
     const readings = new Map(rows.kanji.map(({ character, readings: readings2 }) => [character, readings2]));
     return {
@@ -3883,6 +3930,8 @@
       return withKanjiReadings(rubySegments(surface, reading), this.kanjiReadings);
     }
     wordPage(entry) {
+      const pitches = { pitch: entry.pitch ?? null, compoundPitch: entry.compoundPitch ?? null };
+      const shown = shownPitch(pitches);
       const detail = wordDetail({
         entry: {
           ...entry,
@@ -3892,7 +3941,7 @@
             ...relationship,
             targetEntSeq: null
           })),
-          compoundPitch: null
+          ...pitches
         },
         frequency: [],
         kanji: this.kanji.glossRows([entry.headword, ...entry.writtenForms.map((form) => form.value)]),
@@ -3913,7 +3962,7 @@
             Polite: noted(detail.conjugations.rows.Polite)
           }
         },
-        pitch: detail.pitch,
+        pitch: detail.pitch && shown && { ...detail.pitch, source: shown.sourceIdentity },
         senses: detail.senses,
         alternatives: detail.alternatives,
         kanji: detail.kanji.map(({ character }) => character),
@@ -3950,12 +3999,18 @@
       return {
         ...detail,
         hasReference: kanji2 !== null,
+        savedReading: savedKanjiReading(detail),
         stats: kanji2 ? detail.stats : [],
         words: [...leading, ...detail.words.filter((word) => word.id !== request.leadingWord)]
       };
     }
     kanjiMeanings(character) {
       return this.kanji.row(character)?.meanings ?? [];
+    }
+    candidateMeanings(candidates) {
+      return candidates.map(
+        (candidate) => isKanjiCharacter(candidate) ? this.kanjiMeanings(candidate)[0] ?? null : null
+      );
     }
     kanjiElementPage(glyph) {
       if (!isKanjiCharacter(glyph)) return null;
@@ -5353,6 +5408,8 @@
       websiteRoute: (link) => lookup().websiteRoute(JSON.parse(link)),
       relatedWord: (related, analyze) => lookup().relatedWord(JSON.parse(related), { analyze }),
       savedWord: (saved, analyze) => lookup().savedWord(JSON.parse(saved), { analyze }),
+      canonicalEntries: (groups) => canonicalEntries(JSON.parse(groups)),
+      tatoebaContributors: () => lookup().tatoebaContributors(),
       normalizeQuery,
       japaneseCandidates: (candidates) => japaneseCandidates(JSON.parse(candidates)),
       isKanji: isKanjiCharacter,
@@ -5373,10 +5430,15 @@
       wordPage: (entry) => presentation().wordPage(JSON.parse(entry)),
       kanjiPage: (request) => presentation().kanjiPage(JSON.parse(request)),
       kanjiMeanings: (character) => presentation().kanjiMeanings(character),
+      candidateMeanings: (candidates) => presentation().candidateMeanings(JSON.parse(candidates)),
       kanjiElementPage: (glyph) => presentation().kanjiElementPage(glyph),
       kanjiStrokes: (row) => presentation().kanjiStrokes(JSON.parse(row)),
       radicalPanel: (selected) => presentation().radicalPanel(JSON.parse(selected)),
       gloss: shortGloss,
+      phraseNote: (request) => {
+        const { phrase, ...entry } = JSON.parse(request);
+        return phraseNote(phrase, entry);
+      },
       sourceCredits: creditsShownBy
     };
     const unanalyzed = () => {

@@ -12,7 +12,7 @@ struct LookupClient: Sendable {
   var relatedWord: @Sendable (DictionaryRelationship) async throws -> DictionaryEntry?
   var savedWord:
     @Sendable (_ id: String, _ headword: String, _ reading: String) async throws
-      -> DictionaryEntry?
+      -> WebsiteLinkRoute
   var websiteRoute: @Sendable (URL) async -> WebsiteLinkRoute
 
   init(
@@ -27,8 +27,8 @@ struct LookupClient: Sendable {
     relatedWord: @escaping @Sendable (DictionaryRelationship) async throws -> DictionaryEntry? = {
       _ in nil
     },
-    savedWord: @escaping @Sendable (String, String, String) async throws -> DictionaryEntry? = {
-      _, _, _ in nil
+    savedWord: @escaping @Sendable (String, String, String) async throws -> WebsiteLinkRoute = {
+      _, _, _ in .home
     },
     websiteRoute: @escaping @Sendable (URL) async -> WebsiteLinkRoute = { _ in .home }
   ) {
@@ -65,8 +65,8 @@ struct LookupClient: Sendable {
       },
       relatedWord: { try await LanguageReferenceData.shared.word(related: $0) },
       savedWord: { id, headword, reading in
-        try await LanguageReferenceData.shared.word(
-          saved: SavedWord(id: id, headword: headword, reading: reading))
+        try await LanguageReferenceData.shared.route(
+          openingSaved: SavedWord(id: id, headword: headword, reading: reading))
       },
       websiteRoute: { await LanguageReferenceData.shared.route(openingWebsite: $0) }
     )
@@ -162,13 +162,21 @@ actor LanguageReferenceData {
     try entry(named: try await coreAnswer("relatedWord", RelatedWord(relationship)))
   }
 
-  func word(saved word: SavedWord) async throws -> DictionaryEntry? {
-    try entry(named: try await coreAnswer("savedWord", word))
+  func route(openingSaved word: SavedWord) async throws -> WebsiteLinkRoute {
+    route(opening: try await coreAnswer("savedWord", word))
   }
 
   func route(openingWebsite url: URL) async -> WebsiteLinkRoute {
     let link = WebsiteAddress(host: url.host(), path: url.path(percentEncoded: true))
     guard let page: WebsitePage = try? await coreAnswer("websiteRoute", link) else { return .home }
+    return route(opening: page)
+  }
+
+  func tatoebaContributors() throws -> [TatoebaContributorCredit] {
+    try preparedCore().answer("tatoebaContributors", "")
+  }
+
+  private func route(opening page: WebsitePage) -> WebsiteLinkRoute {
     switch page.kind {
     case "word":
       guard let entry = try? entry(named: page.id) else { return .home }
@@ -208,10 +216,15 @@ actor LanguageReferenceData {
     while try checkedSQLiteStep(statement) == .row {
       groups[sqliteText(statement, 15), default: []].append(try decodeEntry(from: statement))
     }
+    let equivalents = Array(groups.values)
+    let canonical: [String?] = try preparedCore().answer(
+      "canonicalEntries",
+      try DictionaryCore.argument(equivalents.map { $0.map(\.id.rawValue) }))
     var found: [LanguageReferenceID: DictionaryEntry] = [:]
-    for members in groups.values {
-      guard let entry = LanguageReferenceIdentity.normalizedEntry(members) else { continue }
-      for member in members { found[member.id] = entry }
+    for (members, id) in zip(equivalents, canonical) {
+      guard let entry = members.first(where: { $0.id.rawValue == id }) else { continue }
+      let merged = entry.withSourceProvenances(members.flatMap(\.sourceProvenances))
+      for member in members { found[member.id] = merged }
     }
     return found
   }

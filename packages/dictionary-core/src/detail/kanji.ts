@@ -1,3 +1,4 @@
+import { canonicalEntry } from '../search/ranked-entries'
 import type {
   KanjiElementRow,
   KanjiReadingRow,
@@ -94,11 +95,7 @@ export function kanjiWords(
         right.rankScore - left.rankScore ||
         compareLowercaseHex(left.fingerprint, right.fingerprint)
     )
-  return ranked
-    .slice(0, limit)
-    .map(({ entries }) =>
-      entries.reduce((smallest, row) => (row.id < smallest.id ? row : smallest))
-    )
+  return ranked.slice(0, limit).flatMap(({ entries }) => canonicalEntry(entries) ?? [])
 }
 
 export function wordsForReading<Word extends { reading: string }>(
@@ -189,6 +186,10 @@ function drawableStrokeOrder(row: NonNullable<KanjiRows['strokes']>): StrokeOrde
   } catch {
     return null
   }
+}
+
+export function savedKanjiReading(detail: Pick<KanjiDetail, 'readings'>): string {
+  return detail.readings[0]?.value ?? ''
 }
 
 export function kanjiDetail(rows: KanjiRows): KanjiDetail {

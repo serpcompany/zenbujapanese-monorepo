@@ -3,6 +3,7 @@ import type { Dictionary, WordResponse } from '@zenbu/dictionary-core/artifact/d
 import { licenseUrl } from '@zenbu/dictionary-core/detail/examples'
 import { tierLabels } from '@zenbu/dictionary-core/detail/frequency'
 import { kanjiDetail } from '@zenbu/dictionary-core/detail/kanji'
+import { shownPitch } from '@zenbu/dictionary-core/detail/pitch'
 import type { ExampleCountRow, ExampleSentenceRow } from '@zenbu/dictionary-core/detail/rows'
 import {
   type SuiteConjugationForm,
@@ -116,7 +117,7 @@ describe.runIf(artifactAvailable)('word and kanji detail conformance', () => {
         )
         return { character, meanings }
       })
-    const pitch = entry.pitch ?? entry.compoundPitch
+    const pitch = shownPitch(entry)
     const observed: Omit<WordCase, 'covers' | 'entSeq'> = {
       id: entry.id,
       languageReferenceID: entry.id,

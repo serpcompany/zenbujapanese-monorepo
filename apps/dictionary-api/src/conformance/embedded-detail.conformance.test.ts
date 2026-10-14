@@ -150,14 +150,14 @@ describe.runIf(artifactAvailable)('the app’s word and kanji pages on the artif
         notes: sense.notes,
         partsOfSpeech: entry.senses[index].partsOfSpeech
       })),
-      ...(page.pitch && entry.pitch
+      ...(page.pitch
         ? {
             pitch: {
               downstep: page.pitch.downstep,
               levels: page.pitch.morae.map(mora => (mora.high ? 'H' : 'L')).join(''),
               moraCount: page.pitch.moraCount,
               particle: page.pitch.particleHigh ? 'H' : 'L',
-              source: entry.pitch.sourceIdentity,
+              source: page.pitch.source,
               graph: suitePitchGraph(page.pitch)
             }
           }

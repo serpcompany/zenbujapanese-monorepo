@@ -1,3 +1,4 @@
+import { type TatoebaContributor, tatoebaContributors } from '../artifact/contributors'
 import { type ArtifactDatabase, searchDatabase } from '../artifact/database'
 import { kanjiCandidateRows } from '../artifact/kanji'
 import { jmdictSource } from '../artifact/words'
@@ -11,6 +12,7 @@ import { rankedJapaneseForms } from '../search/japanese'
 import type { MorphologyAnalyzer } from '../search/morphology'
 import { isASCII, normalizeQuery } from '../search/query'
 import { matchLabel } from '../search/rank'
+import { canonicalEntry } from '../search/ranked-entries'
 import { DictionarySearch, type SearchResults } from '../search/search'
 import { type EmbeddedHost, hostDatabase } from './host'
 
@@ -22,12 +24,18 @@ export interface EmbeddedSearchResults extends ListedResults {
 
 export type WebsiteRoute = Exclude<WebsitePage, { kind: 'word' }> | { kind: 'word'; id: string }
 
+export type SavedWordRoute = Extract<WebsiteRoute, { kind: 'word' | 'search' }>
+
 interface WrittenWord {
   headword: string
   reading: string
 }
 
 const sameText = (left: string, right: string) => left.normalize('NFC') === right.normalize('NFC')
+
+export function canonicalEntries(groups: readonly (readonly string[])[]): (string | null)[] {
+  return groups.map(ids => canonicalEntry(ids.map(id => ({ id })))?.id ?? null)
+}
 
 export async function entriesMatchingFirstForms(
   db: SearchDatabase,
@@ -100,6 +108,10 @@ export class EmbeddedLookup {
     return kanjiWords(character, kanjiCandidateRows(this.db, character)).map(row => row.id)
   }
 
+  tatoebaContributors(): TatoebaContributor[] {
+    return tatoebaContributors(this.db)
+  }
+
   websiteRoute(link: { host: string | null; path: string }): WebsiteRoute {
     const page = websitePage(link.host, link.path)
     if (page.kind !== 'word') return page
@@ -137,12 +149,13 @@ export class EmbeddedLookup {
   async savedWord(
     saved: WrittenWord & { id: string },
     morphology: MorphologyAnalyzer
-  ): Promise<string | null> {
+  ): Promise<SavedWordRoute> {
     const [stored] = this.db.all<{ id: string }>(
       'SELECT lower(hex(id)) AS id FROM entries WHERE id = unhex(?)',
       [saved.id]
     )
-    if (stored) return saved.id
-    return (await this.found(saved.headword, saved, morphology)).written
+    if (stored) return { kind: 'word', id: saved.id }
+    const { written } = await this.found(saved.headword, saved, morphology)
+    return written ? { kind: 'word', id: written } : { kind: 'search', query: saved.headword }
   }
 }

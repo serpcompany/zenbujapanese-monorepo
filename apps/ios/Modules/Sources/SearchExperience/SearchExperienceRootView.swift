@@ -421,12 +421,9 @@ struct SearchExperienceRootView: View {
       return
     }
     Task { @MainActor in
-      if let entry = try? await lookupClient.savedWord(storedID, headword, reading) {
-        path.append(.word(entry, nil))
-      } else {
-        path = []
-        query = headword
-      }
+      let route =
+        (try? await lookupClient.savedWord(storedID, headword, reading)) ?? .search(headword)
+      route.apply(to: &path, query: &query)
     }
   }
 

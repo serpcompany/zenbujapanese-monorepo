@@ -157,6 +157,19 @@ describe('results', () => {
     expect((await wanted.search('日本語')).items.map(item => item.entry.id)).toEqual(['a1'])
   })
 
+  test('a query full-text search cannot read finds nothing, and any other failure still fails', async () => {
+    const failing = (message: string): SearchDatabase => ({
+      all: async () => {
+        throw new Error(message)
+      }
+    })
+    const unreadable = new DictionarySearch(failing('malformed MATCH expression: [eat"]'))
+    expect(await unreadable.search('eat')).toMatchObject({ items: [], resolution: 'direct' })
+    await expect(
+      new DictionarySearch(failing('no such table: entries')).search('eat')
+    ).rejects.toThrow('no such table: entries')
+  })
+
   test('changing one result leaves later searches alone', async () => {
     const search = new DictionarySearch(japaneseFormsDatabase().db)
     const first = await search.search('ぞ')

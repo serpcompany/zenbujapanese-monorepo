@@ -4,9 +4,28 @@ import FoundationModels
 struct ImageTextNote: Hashable, Identifiable, Sendable {
   let phrase: String
   let entry: DictionaryEntry
+  let meaning: String
 
   var id: String { phrase }
-  var meaning: String { entry.meanings.prefix(3).joined(separator: "; ") }
+
+  init(phrase: String, entry: DictionaryEntry, meaning: String) {
+    self.phrase = phrase
+    self.entry = entry
+    self.meaning = meaning
+  }
+
+  init?(phrase: String, entry: DictionaryEntry, using core: PresentationCore = .shared) {
+    let asked = PhraseNoteRequest(
+      phrase: phrase, meanings: entry.meanings, partsOfSpeech: entry.partsOfSpeech)
+    guard let meaning = try? core.answer("phraseNote", asked) as String? else { return nil }
+    self.init(phrase: phrase, entry: entry, meaning: meaning)
+  }
+}
+
+private struct PhraseNoteRequest: Encodable {
+  let phrase: String
+  let meanings: [String]
+  let partsOfSpeech: [PartOfSpeech]
 }
 
 struct ImageTextInsights: Hashable, Sendable {
@@ -93,9 +112,9 @@ private struct OnDeviceExplainer {
       let phrase = phrase.trimmingCharacters(in: .whitespacesAndNewlines)
       guard !phrase.isEmpty, text.contains(phrase), seen.insert(phrase).inserted,
         let entry = try? await lookupClient.entryMatchingForm(phrase),
-        Self.isSetPhrase(phrase, entry: entry)
+        let note = ImageTextNote(phrase: phrase, entry: entry)
       else { continue }
-      notes.append(ImageTextNote(phrase: phrase, entry: entry))
+      notes.append(note)
     }
 
     let context = try await session().respond(
@@ -135,9 +154,9 @@ private struct OnDeviceExplainer {
     var notes: [ImageTextNote] = []
     for source in sources {
       if let entry = try? await lookupClient.entryMatchingForm(source),
-        Self.isSetPhrase(source, entry: entry)
+        let note = ImageTextNote(phrase: source, entry: entry)
       {
-        notes.append(ImageTextNote(phrase: source, entry: entry))
+        notes.append(note)
       }
     }
     try Task.checkCancellation()
@@ -159,10 +178,6 @@ private struct OnDeviceExplainer {
       translations[sources[number - 1]] = match.2.trimmingCharacters(in: .whitespaces)
     }
     return translations
-  }
-
-  private static func isSetPhrase(_ phrase: String, entry: DictionaryEntry) -> Bool {
-    entry.partsOfSpeech.contains(.expression) || phrase.count >= 4
   }
 
   private static func glossary(_ notes: [ImageTextNote]) -> String {

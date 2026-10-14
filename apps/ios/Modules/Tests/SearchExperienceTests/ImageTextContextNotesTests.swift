@@ -13,7 +13,7 @@ struct ImageTextContextNotesTests {
   }
 
   private func note(_ phrase: String) -> ImageTextNote {
-    ImageTextNote(phrase: phrase, entry: .fixture(id: phrase, headword: phrase))
+    ImageTextNote(phrase: phrase, entry: .fixture(id: phrase, headword: phrase), meaning: phrase)
   }
 
   @Test("an idiom that is a whole paragraph isn't repeated under Context")
@@ -28,5 +28,15 @@ struct ImageTextContextNotesTests {
     )
 
     #expect(insights.notes(notRepeating: paragraphs).map(\.phrase) == ["背水の陣"])
+  }
+
+  @Test("the core notes an expression, or a phrase of four characters or more, with its meaning")
+  func notesSetPhrases() {
+    let expression = DictionaryEntry.fixture(
+      id: "a", headword: "猫舌", partsOfSpeech: [.expression, .noun])
+    #expect(ImageTextNote(phrase: "猫舌", entry: expression)?.meaning == "猫舌")
+    let noun = DictionaryEntry.fixture(id: "b", headword: "背水の陣", partsOfSpeech: [.noun])
+    #expect(ImageTextNote(phrase: "背水の陣", entry: noun)?.meaning == "背水の陣")
+    #expect(ImageTextNote(phrase: "背水", entry: noun) == nil)
   }
 }

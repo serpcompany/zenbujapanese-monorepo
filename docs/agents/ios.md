@@ -595,9 +595,9 @@ answers; [`dictionary-core.md`](dictionary-core.md), The app's side, lists which
 
   | Owner | Reads | Answers |
   | --- | --- | --- |
-  | `LanguageReferenceData`, the actor behind `LookupClient.live` | `LanguageReferenceData.sqlite3` | Search, an exact form's entries, a kanji's words, what a website link opens, and the entry a related or a saved word opens |
+  | `LanguageReferenceData`, the actor behind `LookupClient.live` | `LanguageReferenceData.sqlite3` | Search, an exact form's entries, a kanji's words, what a website link, a related word, or a saved word opens, which entry stands for its equivalents, and the Tatoeba contributors |
   | `DictionaryTextData`, the actor behind `ExampleSentenceClient` and `JapaneseTextAnalysisClient` | Its own connection to the same file, with `ExampleWordIndex.sqlite3` attached, and the tokenizer's dictionary files | Example sentences and linked words |
-  | `PresentationCore`, a lock around one engine | The kanji files, through `KanjiFiles`, the radical file, and the learner's frequency lists, through `FrequencyLists` | The results screen, rows and chips, furigana, the word, kanji, and element pages, the query, the gloss, romaji, the kanji check, a stroke diagram's points, the radical panel, the handwriting candidates kept, and source credits |
+  | `PresentationCore`, a lock around one engine | The kanji files, through `KanjiFiles`, the radical file, and the learner's frequency lists, through `FrequencyLists` | The results screen, rows and chips, furigana, the word, kanji, and element pages, the query, gloss, romaji, kanji check, stroke points, radical panel, handwriting candidates with meanings, Image Search notes, and credits |
 
   They are apart because of how long each takes. Linking a page of sentences or ranking a broad
   search takes tens of milliseconds and awaits, so each has an actor; a row's furigana or a
@@ -621,10 +621,10 @@ answers; [`dictionary-core.md`](dictionary-core.md), The app's side, lists which
   the engine and back costs under a microsecond this way; through `begin` and `outcome` it cost
   eight. A screen makes several calls: for its results, `SearchView` asks the lookup engine for
   matches, the text engine for an example count, and then this one for the screen.
-- **Entries.** The core names entries by Language Reference ID. `entries(equivalentTo:)` reads
-  each with the app's own columns and decoding, as `entry(_:)` does, so an entry is the same
-  value wherever it came from; an entry JMdict lists twice (閻魔) is one entry under its smaller
-  ID, with both records' provenance. A page takes the entry the app read (`WordPage(entry)`).
+- **Entries.** The core names entries by ID. `entries(equivalentTo:)` reads each as `entry(_:)`
+  does, so an entry is the same value wherever it came from; one JMdict lists twice (閻魔) is one
+  entry under the ID `canonicalEntries` names, with both records' provenance. UniDic's pitch and
+  the compound estimate are read apart, and the word page (`WordPage(entry)`) chooses.
 - **Frequency.** The core reads the learner's lists inside the call that builds a results screen,
   a sheet's rows, or a word page, so the app reads none of them and each is drawn once, finished
   ([`frequency.md`](frequency.md)).

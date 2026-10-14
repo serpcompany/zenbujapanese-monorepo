@@ -47,7 +47,6 @@ struct WordDetailConformanceTests {
 private struct WordDetailObserver {
   let lookupClient = LookupClient.live
   let exampleSentenceClient = ExampleSentenceClient.live
-  let kanjiLookupClient = KanjiLookupClient.live(lookupClient: .live)
   let textAnalysisClient = JapaneseTextAnalysisClient.live()
   let core: PresentationCore
 
@@ -81,13 +80,13 @@ private struct WordDetailObserver {
       }
       observed.conjugations = conjugations
     }
-    if let pitch = page.pitch, let source = entry.pitchAccent?.sourceIdentity {
+    if let pitch = page.pitch {
       observed.pitch = WordDetailCase.Pitch(
         downstep: pitch.downstep,
         moraCount: pitch.moraCount,
         levels: pitch.morae.map { $0.high ? "H" : "L" }.joined(),
         particle: pitch.particleHigh ? "H" : "L",
-        source: source,
+        source: pitch.source,
         graph: WordDetailCase.PitchGraph(pitch)
       )
     }
@@ -100,8 +99,8 @@ private struct WordDetailObserver {
     observed.alternativeForms = page.alternatives.map {
       WordDetailCase.Form(value: $0.value, kind: $0.kind.rawValue, labels: $0.labels)
     }
-    observed.kanji = kanji(page.kanji)
-    observed.alternativeKanji = kanji(page.alternativeKanji)
+    observed.kanji = try kanji(page.kanji)
+    observed.alternativeKanji = try kanji(page.alternativeKanji)
     observed.relatedWords = zip(page.related, entry.relationships).map { shown, relationship in
       WordDetailCase.Related(
         headword: shown.headword, reading: shown.reading, relation: shown.relation,
@@ -142,10 +141,10 @@ private struct WordDetailObserver {
     return result
   }
 
-  private func kanji(_ characters: [String]) -> [WordDetailCase.Kanji] {
-    characters.compactMap(KanjiCharacter.init).map { kanji in
+  private func kanji(_ characters: [String]) throws -> [WordDetailCase.Kanji] {
+    try characters.compactMap(KanjiCharacter.init).map { kanji in
       WordDetailCase.Kanji(
-        character: kanji.rawValue, meanings: kanjiLookupClient.meanings(kanji))
+        character: kanji.rawValue, meanings: try core.answer("kanjiMeanings", kanji.rawValue))
     }
   }
 

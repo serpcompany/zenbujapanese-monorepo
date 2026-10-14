@@ -89,6 +89,7 @@ struct SearchCandidateGrid<Placeholder: View>: View {
   @ViewBuilder let placeholder: Placeholder
   @Environment(\.dynamicTypeSize) private var dynamicTypeSize
   @ScaledMetric(relativeTo: .title) private var tileHeight: CGFloat = 60
+  @State private var meanings: [String: String] = [:]
 
   var body: some View {
     ScrollView {
@@ -104,7 +105,7 @@ struct SearchCandidateGrid<Placeholder: View>: View {
         ) {
           ForEach(Array(candidates.enumerated()), id: \.offset) { index, candidate in
             SearchCandidateTile(
-              candidate: candidate, height: tileHeight, kanjiLookupClient: kanjiLookupClient
+              candidate: candidate, meaning: meanings[candidate], height: tileHeight
             ) {
               select(candidate)
             }
@@ -116,6 +117,12 @@ struct SearchCandidateGrid<Placeholder: View>: View {
     }
     .scrollBounceBehavior(.basedOnSize)
     .frame(height: visibleHeight)
+    .task(id: candidates) {
+      let found = zip(candidates, kanjiLookupClient.candidateMeanings(candidates))
+      meanings = Dictionary(
+        found.compactMap { candidate, meaning in meaning.map { (candidate, $0) } }
+      ) { first, _ in first }
+    }
   }
 
   private var visibleHeight: CGFloat {
@@ -161,10 +168,9 @@ struct SearchCandidateStrip<Placeholder: View>: View {
 
 private struct SearchCandidateTile: View {
   let candidate: String
+  let meaning: String?
   let height: CGFloat
-  let kanjiLookupClient: KanjiLookupClient
   let select: () -> Void
-  @State private var meaning: String?
 
   var body: some View {
     Button(action: select) {
@@ -185,10 +191,5 @@ private struct SearchCandidateTile: View {
     }
     .buttonStyle(.plain)
     .accessibilityLabel(meaning.map { "\(candidate), \($0)" } ?? candidate)
-    .task(id: candidate) {
-      meaning = nil
-      guard let character = KanjiCharacter(candidate) else { return }
-      meaning = kanjiLookupClient.meanings(character).first
-    }
   }
 }

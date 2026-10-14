@@ -47,7 +47,7 @@ struct KanjiDetailView: View {
   }
 
   private var item: SavedItem {
-    .kanji(character, reading: page?.readings.first?.value ?? "")
+    .kanji(character, reading: page?.savedReading ?? "")
   }
 
   private var shareText: String { page?.shareText ?? character.rawValue }

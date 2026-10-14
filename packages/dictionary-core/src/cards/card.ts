@@ -1,5 +1,6 @@
 import { rankedLists } from '../browse/lists'
 import { type FrequencyResult, levelResult, rankResult } from '../detail/frequency'
+import { shownPitch } from '../detail/pitch'
 import type { WordRows } from '../detail/rows'
 import { type FuriganaSegment, furiganaSegments } from '../detail/ruby'
 import { wordDetail } from '../detail/word'
@@ -53,7 +54,7 @@ export type CardRows = Pick<WordRows, 'entry' | 'frequency' | 'kanji'>
 export function wordCard(rows: CardRows, ranks: ListRanks): WordCard {
   const { entry } = rows
   const detail = wordDetail({ ...rows, examples: [], exampleCount: null })
-  const pitchRow = entry.pitch ?? entry.compoundPitch
+  const pitchRow = shownPitch(entry)
   const jlpt = rows.frequency.find(row => row.pack === 'jlpt')
   const youtube = rows.frequency.find(row => row.pack === 'tubelex')
   return {

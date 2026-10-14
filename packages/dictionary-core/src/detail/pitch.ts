@@ -1,4 +1,4 @@
-import type { PitchRow } from './rows'
+import type { EntryRow, PitchRow } from './rows'
 import { graphemes, katakana } from './text'
 
 interface PitchPoint {
@@ -83,4 +83,8 @@ export function pitchAccent(reading: string, pitch: PitchRow): PitchAccent {
     particleHigh: levels.particle,
     graph: pitchGraph(kana, levels)
   }
+}
+
+export function shownPitch(entry: Pick<EntryRow, 'pitch' | 'compoundPitch'>): PitchRow | null {
+  return entry.pitch ?? entry.compoundPitch
 }

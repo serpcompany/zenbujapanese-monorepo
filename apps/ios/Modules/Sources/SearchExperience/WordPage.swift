@@ -24,6 +24,7 @@ struct WordPage: Decodable, Hashable, Sendable {
     let moraCount: Int
     let particleHigh: Bool
     let graph: Graph
+    let source: String
   }
 
   struct Sense: Decodable, Hashable, Sendable {
@@ -93,6 +94,7 @@ extension WordPage {
     let senses: [DictionarySense]
     let relationships: [DictionaryRelationship]
     let pitch: PitchAccent?
+    let compoundPitch: PitchAccent?
 
     init(_ entry: DictionaryEntry) {
       id = entry.id.rawValue
@@ -104,7 +106,8 @@ extension WordPage {
       readingForms = entry.readingForms
       senses = entry.senses
       relationships = entry.relationships
-      pitch = entry.pitchAccent
+      pitch = entry.pitch
+      compoundPitch = entry.compoundPitch
     }
   }
 

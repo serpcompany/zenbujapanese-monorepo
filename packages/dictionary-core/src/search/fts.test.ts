@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest'
-import { ftsPhrase, ftsPrefix } from './fts'
+import { ftsPhrase, ftsPrefix, isUnreadableQuery } from './fts'
 
 describe('ftsPhrase', () => {
   test('quotes the value', () => {
@@ -24,5 +24,23 @@ describe('ftsPrefix', () => {
     expect(ftsPrefix('to eat')).toBe('"to eat"')
     expect(ftsPrefix("don't")).toBe('"don\'t"')
     expect(ftsPrefix('')).toBe('""')
+  })
+})
+
+describe('isUnreadableQuery', () => {
+  test.each([
+    'malformed MATCH expression: [eat"]',
+    'unterminated string'
+  ])('reads "%s" as a query full-text search cannot read', message => {
+    expect(isUnreadableQuery(new Error(message))).toBe(true)
+    expect(isUnreadableQuery(new Error('search failed', { cause: new Error(message) }))).toBe(true)
+  })
+
+  test.each([
+    'no such table: entries',
+    'database is locked',
+    'near "SELEC": syntax error'
+  ])('reads "%s" as a failure, so a SQL bug fails loudly rather than finding nothing', message => {
+    expect(isUnreadableQuery(new Error(message))).toBe(false)
   })
 })

@@ -8,7 +8,7 @@ import {
 } from './frequency'
 import { withKanjiReadings } from './kanji-split'
 import { partOfSpeechPhrase } from './part-of-speech'
-import { type PitchAccent, pitchAccent } from './pitch'
+import { type PitchAccent, pitchAccent, shownPitch } from './pitch'
 import type {
   EntryRow,
   ExampleCountRow,
@@ -140,7 +140,7 @@ function wordKanji(characters: string[], glosses: readonly KanjiGlossRow[]): Wor
 
 export function wordDetail(rows: WordRows): WordDetail {
   const { entry } = rows
-  const pitch = entry.pitch ?? entry.compoundPitch
+  const pitch = shownPitch(entry)
   const summary = wordSummary(entry, rows.frequency)
   const readings = new Map(rows.kanji.map(({ character, readings }) => [character, readings]))
   return {

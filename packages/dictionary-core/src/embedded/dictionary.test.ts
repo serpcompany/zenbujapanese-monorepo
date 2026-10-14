@@ -63,6 +63,16 @@ describe('the embedded dictionary', () => {
     expect(await settled(nothing)).toMatchObject({ value: { items: [], primaryEntry: null } })
   })
 
+  test('answers a query full-text search cannot read as an empty search, as the service does', async () => {
+    const unreadable = host({ all: () => ({ error: 'malformed MATCH expression: [eat"]' }) })
+    expect(await ask(unreadable, 'search', 'eat')).toMatchObject({
+      items: [],
+      primaryEntry: null
+    })
+    const broken = host({ all: () => ({ error: 'no such table: entries' }) })
+    await expect(ask(broken, 'search', 'eat')).rejects.toThrow('no such table: entries')
+  })
+
   test('gives entries that match equally the same relevance', async () => {
     const results = (await ask(host(), 'search', '本')) as {
       items: { id: string; relevance: number }[]
@@ -115,11 +125,29 @@ describe('the embedded dictionary', () => {
     expect(await settled(unfound)).toEqual({ value: null })
   })
 
-  test('opens a saved word by its entry, or by one written and read the same', async () => {
+  test('opens a saved word by its entry, by one written and read the same, or else searches its headword', async () => {
     const saved = (word: object) => ask(host(), 'savedWord', JSON.stringify(word))
-    expect(await saved({ id: 'c3', headword: '消えた', reading: 'きえた' })).toBe('c3')
-    expect(await saved({ id: 'gone', headword: '日本語', reading: 'にほんご' })).toBe('b2')
-    expect(await saved({ id: 'gone', headword: '日本語', reading: 'にっぽんご' })).toBeNull()
+    expect(await saved({ id: 'c3', headword: '消えた', reading: 'きえた' })).toEqual({
+      kind: 'word',
+      id: 'c3'
+    })
+    expect(await saved({ id: 'gone', headword: '日本語', reading: 'にほんご' })).toEqual({
+      kind: 'word',
+      id: 'b2'
+    })
+    expect(await saved({ id: 'gone', headword: '日本語', reading: 'にっぽんご' })).toEqual({
+      kind: 'search',
+      query: '日本語'
+    })
+  })
+
+  test('names the entry that stands for each group of equivalent entries: the smallest ID', () => {
+    const endpoint = embeddedEndpoint(host())
+    expect(endpoint.answer('canonicalEntries', '[["b2","a1","c3"],["c3"],[]]')).toEqual([
+      'a1',
+      'c3',
+      null
+    ])
   })
 
   test('keeps the handwriting candidates written in Japanese, and tells one kanji from text', async () => {
@@ -198,6 +226,31 @@ describe('the embedded dictionary', () => {
     expect(endpoint.answerJSON('websiteRoute', '{"host":"example.com","path":"/"}')).toBe(
       JSON.stringify(endpoint.answer('websiteRoute', '{"host":"example.com","path":"/"}'))
     )
+  })
+
+  test('answers at once the Tatoeba contributors the host’s dictionary lists', () => {
+    const endpoint = embeddedEndpoint(
+      host({
+        all: sql =>
+          sql.includes('FROM example_sentence_contributors')
+            ? { rows: [{ username: 'CK', sentenceSideCount: 2 }] }
+            : { rows: [] }
+      })
+    )
+    expect(endpoint.answer('tatoebaContributors', '')).toEqual([
+      { username: 'CK', sentenceSideCount: 2 }
+    ])
+  })
+
+  test('answers an Image Search note at once, for a set phrase only', () => {
+    const endpoint = embeddedEndpoint(host())
+    const note = (phrase: string) =>
+      endpoint.answerJSON(
+        'phraseNote',
+        JSON.stringify({ phrase, meanings: ['last stand', 'b', 'c', 'd'], partsOfSpeech: ['noun'] })
+      )
+    expect(note('背水の陣')).toBe('"last stand; b; c"')
+    expect(note('背水')).toBe('null')
   })
 
   test('answers a client’s source credits at once, and refuses a client it does not know', () => {
