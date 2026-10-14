@@ -307,9 +307,9 @@ Check: the recorded `ExampleSearchConformanceTests`; core `examples/morphology.t
 pieces join into one word) and `detail/text.test.ts` (the short meaning); package
 `LinkedWordResolutionTests` and `WordMeaningTests`.
 
-A **Frequency** section lists each enabled dictionary's rank or JLPT level for the word, with the
-page except just after a launch, and follows a change of dictionaries at once. Selecting a row opens
-that dictionary's details. JLPT levels are presented as unofficial study estimates.
+A **Frequency** section lists each enabled dictionary's rank or JLPT level for the word. It is drawn
+with the page, except just after a launch, and follows a change of dictionaries at once. Selecting a
+row opens that dictionary's details. JLPT levels are presented as unofficial study estimates.
 
 Check: the recorded `WordDetailConformanceTests` (each pack's row and its details); package
 `ResultsScreenTests` (the rows' names, values, and details); UI
