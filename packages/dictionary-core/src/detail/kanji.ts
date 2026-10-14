@@ -205,19 +205,31 @@ function drawableStrokeOrder(row: NonNullable<KanjiRows['strokes']>): StrokeOrde
 
 const wordsTextSeparator = '   '
 
+type GlossedWord = Pick<KanjiWord, 'headword' | 'summary'>
+
+export function kanjiReadingText(
+  label: string,
+  value: string,
+  words: readonly GlossedWord[]
+): Pick<KanjiReading, 'wordsText' | 'spoken'> {
+  const [first] = words
+  return {
+    wordsText: words
+      .map(word => `${word.headword}${glossSeparator}${word.summary}`)
+      .join(wordsTextSeparator),
+    spoken: first ? `${label} reading ${value}, ${first.headword}, ${first.summary}` : null
+  }
+}
+
 function kanjiReading(reading: KanjiReadingRow, words: readonly KanjiWord[]): KanjiReading {
   const label = readingLabels[reading.kind]
   const shown = wordsForReading(reading, words)
-  const [first] = shown
   return {
     kind: reading.kind,
     label,
     value: reading.value,
     words: shown,
-    wordsText: shown
-      .map(word => `${word.headword}${glossSeparator}${word.summary}`)
-      .join(wordsTextSeparator),
-    spoken: first ? `${label} reading ${reading.value}, ${first.headword}, ${first.summary}` : null
+    ...kanjiReadingText(label, reading.value, shown)
   }
 }
 

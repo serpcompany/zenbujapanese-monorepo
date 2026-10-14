@@ -79,6 +79,22 @@ describe('the word page, read from the fixtures', () => {
     expect(html).not.toContain('data-opens-conjugations')
   })
 
+  test('its sections are the core’s, in the core’s order and with its titles', async () => {
+    const html = await renderWord('要る-1546640')
+    const titles = [
+      ...html.matchAll(/data-slot="card-title"[^>]*>([^<]+)<|<h2[^>]*><button[^>]*>([^<]+)</g)
+    ].map(([, card, disclosure]) => card ?? disclosure)
+    expect(titles.slice(0, 7)).toEqual([
+      'Meaning',
+      'Frequency',
+      'Conjugations',
+      'Kanji',
+      'Lists',
+      'Notes',
+      'Examples'
+    ])
+  })
+
   test('the Examples section sits at #examples, where search results send their sentences', async () => {
     const html = await renderWord('要る-1546640')
     expect(html).toMatch(/<div[^>]* id="examples"[^>]*><div[^>]*><div[^>]*>Examples<\/div>/)

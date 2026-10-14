@@ -1,4 +1,5 @@
 import { readFileSync } from 'node:fs'
+import { kanjiReadingText } from '@zenbu/dictionary-core/detail/kanji'
 import { renderToStaticMarkup } from 'react-dom/server'
 import { describe, expect, test } from 'vitest'
 import type { KanjiDetailsData } from '@/lib/dictionary/kanji-details'
@@ -33,6 +34,7 @@ function readings(kanji: KanjiCase): KanjiDetailsData['readings'] {
     kind: reading.kind,
     label: labels[reading.kind],
     value: reading.value,
+    ...kanjiReadingText(labels[reading.kind], reading.value, reading.words),
     words: reading.words.map((word, index) => ({
       id: word.id,
       entSeq: index,

@@ -117,8 +117,8 @@ describe('the Conjugations section', () => {
     act(() =>
       root.render(
         <>
-          <ConjugationsLink partOfSpeech="Ichidan verb (transitive)" />
-          <ConjugationsSection conjugations={miru} />
+          <ConjugationsLink label="Ichidan verb (transitive)" />
+          <ConjugationsSection title="Conjugations" conjugations={miru} />
         </>
       )
     )

@@ -6,7 +6,6 @@ import {
   type Conjugations,
   sharedSpellingNote
 } from '@zenbu/dictionary-core/detail/conjugation'
-import { noFormExamplesMessage } from '@zenbu/dictionary-core/detail/examples'
 import { graphemes } from '@zenbu/dictionary-core/detail/text'
 import { ChevronRightIcon, EqualIcon } from 'lucide-react'
 import { useEffect, useState } from 'react'
@@ -52,18 +51,26 @@ export function ConjugatedFormContent({ row }: { row: ConjugationRow }) {
           highlightedEnding={row.ending}
           className="text-4xl font-medium leading-tight"
         />
-        <PronounceButton text={row.reading} label={`Pronounce ${row.reading}`} />
+        <PronounceButton text={row.reading} label={row.pronounce} />
       </div>
     </div>
   )
 }
 
-export function FormExampleList({ examples }: { examples: PageExample[] }) {
+type FormExampleLabels = Conjugations['examples']
+
+export function FormExampleList({
+  examples,
+  labels
+}: {
+  examples: PageExample[]
+  labels: FormExampleLabels
+}) {
   return examples.length > 0 ? (
     <ExampleList initial={examples} listed={examples.length} path={null} />
   ) : (
     <p className="text-sm text-muted-foreground" data-no-form-examples>
-      {noFormExamplesMessage}
+      {labels.empty}
     </p>
   )
 }
@@ -73,7 +80,7 @@ type LoadedExamples =
   | { state: 'loaded'; examples: PageExample[] }
   | { state: 'failed' }
 
-function FormExamples({ surface }: { surface: string }) {
+function FormExamples({ surface, labels }: { surface: string; labels: FormExampleLabels }) {
   const [loaded, setLoaded] = useState<LoadedExamples>({ state: 'loading' })
   useEffect(() => {
     let current = true
@@ -93,19 +100,25 @@ function FormExamples({ surface }: { surface: string }) {
   }, [surface])
   return (
     <section className="flex flex-col gap-3" data-conjugation-examples={loaded.state}>
-      <h4 className="text-sm font-medium text-muted-foreground">Examples</h4>
+      <h4 className="text-sm font-medium text-muted-foreground">{labels.title}</h4>
       {loaded.state === 'loading' ? (
         <p className="text-sm text-muted-foreground">Loading examples</p>
       ) : loaded.state === 'failed' ? (
         <p className="text-sm text-muted-foreground">Examples couldn’t load. Try again later.</p>
       ) : (
-        <FormExampleList examples={loaded.examples} />
+        <FormExampleList examples={loaded.examples} labels={labels} />
       )}
     </section>
   )
 }
 
-function ConjugatedFormDisclosure({ row }: { row: ConjugationRow }) {
+function ConjugatedFormDisclosure({
+  row,
+  labels
+}: {
+  row: ConjugationRow
+  labels: FormExampleLabels
+}) {
   return (
     <Disclosure
       data-conjugation-row={row.kind}
@@ -131,7 +144,7 @@ function ConjugatedFormDisclosure({ row }: { row: ConjugationRow }) {
       {opened => (
         <div className="flex flex-col gap-4 px-2 pt-2 pb-4">
           <ConjugatedFormContent row={row} />
-          {opened ? <FormExamples surface={row.surface} /> : null}
+          {opened ? <FormExamples surface={row.surface} labels={labels} /> : null}
         </div>
       )}
     </Disclosure>
@@ -168,7 +181,7 @@ export function ConjugationTableContent({ conjugations }: { conjugations: Conjug
         >
           {conjugations.rows[option].map(row => (
             <li key={row.kind}>
-              <ConjugatedFormDisclosure row={row} />
+              <ConjugatedFormDisclosure row={row} labels={conjugations.examples} />
             </li>
           ))}
         </ul>
@@ -177,15 +190,21 @@ export function ConjugationTableContent({ conjugations }: { conjugations: Conjug
   )
 }
 
-export function ConjugationsSection({ conjugations }: { conjugations: Conjugations }) {
+export function ConjugationsSection({
+  title,
+  conjugations
+}: {
+  title: string
+  conjugations: Conjugations
+}) {
   return (
-    <DisclosureSection id={conjugationsAnchor} title="Conjugations">
+    <DisclosureSection id={conjugationsAnchor} title={title}>
       <ConjugationTableContent conjugations={conjugations} />
     </DisclosureSection>
   )
 }
 
-export function ConjugationsLink({ partOfSpeech }: { partOfSpeech: string }) {
+export function ConjugationsLink({ label }: { label: string }) {
   const href = `#${conjugationsAnchor}`
   return (
     <a
@@ -196,7 +215,7 @@ export function ConjugationsLink({ partOfSpeech }: { partOfSpeech: string }) {
         if (window.location.hash === href) window.dispatchEvent(new HashChangeEvent('hashchange'))
       }}
     >
-      <span>{partOfSpeech || 'Dictionary entry'}</span>
+      <span>{label}</span>
       <span className="sr-only">, shows conjugations</span>
       <ChevronRightIcon aria-hidden className="size-4 text-muted-foreground" />
     </a>
