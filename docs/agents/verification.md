@@ -11,7 +11,7 @@ standards; this doc holds this repository's commands for them.
 | Level | When | What runs |
 | --- | --- | --- |
 | Inner loop | While editing | The edit hook checks each file as it's written, and the stop hook the whole change before a turn ends ([`code.md`](code.md), Checks). Beside them, the touched part's typecheck and the tests for the changed code, below. |
-| Push | Before each push for review | `pnpm check` in each package the change touched. The `pre-push` hook runs `pnpm verify`. |
+| Push | Before each push for review | `pnpm check` in each package the change touched. The `pre-push` hook runs `pnpm verify`, then the fast check of each package the branch changes ([`code.md`](code.md)). |
 | Finish gate | Once, on the finished tree | `pnpm check` from the root, then the evidence the change needs. The `finish-change` skill walks through it. |
 
 The inner loop, by part:

@@ -1,6 +1,7 @@
 import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { describe, expect, test } from 'vitest'
+import { jobResults } from './agents/job-results'
 import { readWorkflow, workflowSteps } from './agents/workflow'
 import { root } from './files'
 
@@ -23,6 +24,20 @@ describe('the iOS workflow', () => {
     expect(workflow.jobs.swift?.if?.replace(/\s+/g, ' ').trim()).toBe(
       "github.event_name == 'workflow_dispatch' || (vars.IOS_SWIFT_TESTS == 'on' && needs.changes.outputs.changed == 'true')"
     )
+  })
+
+  test('passes without the Swift job while the owners keep it off', () => {
+    const results = jobResults(workflow, { event: 'pull_request', changed: true })
+    expect(results).toMatchObject({ contracts: 'success', swift: 'skipped', ios: 'success' })
+  })
+
+  test('run by hand, starts the Swift job once the contract tests pass, and never after they fail', () => {
+    const byHand = { event: 'workflow_dispatch', changed: true } as const
+    expect(jobResults(workflow, byHand)).toMatchObject({ swift: 'success', ios: 'success' })
+    expect(jobResults(workflow, { ...byHand, failing: ['contracts'] })).toMatchObject({
+      swift: 'skipped',
+      ios: 'failure'
+    })
   })
 
   test('tests the package on an iPhone Simulator, an iPad Simulator, and the Mac', () => {
