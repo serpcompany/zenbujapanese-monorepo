@@ -180,6 +180,24 @@ struct LoadedExamplesTests {
     #expect(none.asked == [ExampleBatch(from: 0, limit: 8)])
   }
 
+  @Test("a word the core has nothing to match sentences on has none, and a read that fails has failed")
+  func aWordWithNothingToMatchHasNoExamples() async {
+    let answers: [(any Error, LoadedExamples.State)] = [
+      (ExampleSentenceRetrievalError.invalidQuery(.missingEntryEvidence), .empty),
+      (ExampleSentenceRetrievalError.retrievalUnavailable(.queryFailed), .failed),
+    ]
+    for (error, state) in answers {
+      var client = ExampleSentenceClient.live
+      client.entryExamples = { _, _ in throw error }
+      let entry = DictionaryEntry.fixture(id: "a1", headword: "ＮＧ", reading: "エヌジー")
+      let loaded = LoadedExamples()
+      await loaded.load("a1", rowsOnScreen: 8) { [client] in
+        await client.shownExamples(entry, $0)
+      }
+      #expect(loaded.state(of: "a1") == state)
+    }
+  }
+
   @Test("a later page that fails says so at the list's end, and is read again when asked")
   func aFailedLaterPageIsReadAgainWhenAsked() async {
     let miru = Listing("見る", listed: 60)

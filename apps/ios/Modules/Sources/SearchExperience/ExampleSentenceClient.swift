@@ -51,6 +51,16 @@ struct ExampleSentenceClient: Sendable {
   func examples(_ entry: DictionaryEntry, _ batch: ExampleBatch) async throws -> ExamplePage {
     try await entryExamples(entry, batch).page
   }
+
+  func shownExamples(_ entry: DictionaryEntry, _ batch: ExampleBatch) async -> ExamplePage? {
+    do {
+      return try await examples(entry, batch)
+    } catch ExampleSentenceRetrievalError.invalidQuery {
+      return ExamplePage(examples: [], listed: 0, countText: nil, cutShort: false)
+    } catch {
+      return nil
+    }
+  }
 }
 
 extension LinkedEntries {
