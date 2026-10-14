@@ -50,6 +50,11 @@ what it waited for and for how long.
   scrubber shows three seconds, and expects none. It used to assert that the speed menu was used
   within 60 s, which caught the screen redrawing five times a second only when XCUITest's own
   wait for the app to go idle ran out.
+- **A time limit only guards against a hang.** The package's tests that await work they watch or
+  hold (the translator's `until`, a word count, handwriting, held sign-in and sync answers) carry
+  `.timeLimit(.minutes(1))`. Those tests take milliseconds, so the limit trips only when an await
+  never returns, which is a defect, and it stops that test instead of the whole run. It is never
+  a speed limit: put one only on tests whose normal run is under a hundredth of it.
 - **Wait for what the next step reads.** A label, a selection, or a frame read the moment after a
   tap reads the screen before the app has answered. `assertOnScreen` waits for the element to
   have a size before it measures where it is, and a Mac sheet is measured once it has opened.
