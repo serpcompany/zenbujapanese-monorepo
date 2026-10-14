@@ -49,7 +49,7 @@ struct KanjiOverview: View {
           .font(.caption.weight(.bold))
       }
       .buttonStyle(.bordered)
-      .accessibilityLabel("Show stroke order for \(character)")
+      .accessibilityLabel(strokeDiagram.labels.show)
       .accessibilityIdentifier("kanji-detail.stroke-order")
     case .failed:
       Button("Retry stroke order", action: retryStrokeOrder)
@@ -79,18 +79,17 @@ private struct KanjiMetric: View {
 }
 
 struct KanjiReadingsSection: View {
+  let title: String
   let readings: [KanjiPage.Reading]
 
   var body: some View {
-    Section("READINGS") {
+    Section(title) {
       ForEach(readings, id: \.self) { reading in
         if let destination = reading.words.first {
           NavigationLink(value: SearchExperienceRoute.word(destination, nil)) {
             KanjiReadingRow(reading: reading)
           }
-          .accessibilityLabel(
-            "\(reading.label) reading \(reading.value), \(destination.headword), \(destination.summary)"
-          )
+          .accessibilityLabel(reading.spoken ?? "")
           .accessibilityIdentifier("kanji-detail.reading.\(reading.kind).\(reading.value)")
         } else {
           KanjiReadingRow(reading: reading)
@@ -111,10 +110,8 @@ private struct KanjiReadingRow: View {
         Text(reading.value)
           .font(.headline)
         RomajiReadingAidText(trustedReading: reading.value)
-        if !reading.words.isEmpty {
-          Text(
-            reading.words.map { "\($0.headword) · \($0.summary)" }.joined(separator: "   ")
-          )
+        if !reading.wordsText.isEmpty {
+          Text(reading.wordsText)
           .font(.body)
           .fixedSize(horizontal: false, vertical: true)
           .multilineTextAlignment(.trailing)
@@ -130,10 +127,11 @@ private struct KanjiReadingRow: View {
 struct KanjiElementsSection: View {
   @ScaledMetric(relativeTo: .largeTitle) private var elementGlyphSize = 52.0
 
+  let title: String
   let elements: [KanjiPage.Element]
 
   var body: some View {
-    Section("ELEMENTS") {
+    Section(title) {
       ForEach(elements) { element in
         NavigationLink(value: SearchExperienceRoute.kanjiElement(element.id)) {
           HStack(spacing: 18) {
@@ -160,10 +158,11 @@ struct KanjiElementsSection: View {
 }
 
 struct KanjiWordsSection: View {
+  let title: String
   let entries: [DictionaryEntry]
 
   var body: some View {
-    Section("WORDS") {
+    Section(title) {
       ForEach(entries) { entry in
         NavigationLink(value: SearchExperienceRoute.word(entry, nil)) {
           HStack(spacing: 14) {
@@ -195,7 +194,7 @@ struct KanjiStrokeOrderSheet: View {
   var body: some View {
     NavigationStack {
       KanjiStrokeOrderView(diagram: diagram)
-        .navigationTitle("Stroke Order")
+        .navigationTitle(diagram.labels.title)
         .inlineNavigationTitle()
         .toolbar {
           ToolbarItem(placement: .cancellationAction) {

@@ -39,7 +39,7 @@ struct PartOfSpeechRow: View {
   }
 
   private var label: some View {
-    Text(title.isEmpty ? "Dictionary entry" : title)
+    Text(title)
       .fixedSize(horizontal: false, vertical: true)
       .accessibilityIdentifier("word-detail.entry.\(entryID.rawValue)")
   }
@@ -53,8 +53,8 @@ struct MeaningSection: View {
       VStack(alignment: .leading, spacing: 6) {
         Text("\(sense.number).  \(sense.meaning)")
           .font(.body.weight(.semibold))
-        if !sense.notes.isEmpty {
-          Text(sense.notes.joined(separator: " · "))
+        if let noteText = sense.noteText {
+          Text(noteText)
             .font(.footnote)
             .foregroundStyle(.secondary)
         }
@@ -118,9 +118,9 @@ private struct AlternativeFormLine: View {
 
   private func formLabel(_ form: WordPage.AlternativeForm) -> some View {
     VStack(alignment: .leading, spacing: 2) {
-      Text(form.value + (form.labels.isEmpty ? "" : " (\(form.labels.joined(separator: ", ")))"))
+      Text(form.value + (form.labelText.map { " \($0)" } ?? ""))
         .font(.body)
-        .foregroundStyle(form.labels.isEmpty ? Color.primary : Color.secondary)
+        .foregroundStyle(form.labelText == nil ? Color.primary : Color.secondary)
       RomajiReadingAidText(
         trustedReading: form.value,
         isEnabled: form.kind == .reading,
@@ -151,7 +151,7 @@ struct RelationshipsSection: View {
           )
           .foregroundStyle(.primary)
           .accessibilityIdentifier("word-detail.related-primary.\(word.headword)")
-          Text("\(word.relation) · \(word.summary)")
+          Text(word.description)
             .font(.footnote)
             .foregroundStyle(.secondary)
             .lineLimit(2)

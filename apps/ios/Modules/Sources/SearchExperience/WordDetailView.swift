@@ -71,85 +71,15 @@ struct WordDetailView: View {
             pronounce: { speechSynthesisClient.speak(entry.reading) }
           )
           PartOfSpeechRow(
-            title: page?.partOfSpeech ?? "", entryID: entry.id, conjugations: page?.conjugations,
-            openConjugations: openConjugations)
-        }
-
-        Section("MEANING") {
-          MeaningSection(senses: page?.senses ?? [])
-        }
-
-        if let frequency = page?.frequency, !frequency.isEmpty {
-          Section("FREQUENCY") {
-            ForEach(frequency.enumerated(), id: \.offset) { _, row in
-              FrequencyRankRow(row: row) { frequencyDisclosure = $0 }
-            }
-          }
+            title: page?.partOfSpeechRow ?? "", entryID: entry.id,
+            conjugations: page?.conjugations, openConjugations: openConjugations)
         }
 
         if let page {
-          if !page.alternatives.isEmpty {
-            Section("ALTERNATIVES") {
-              AlternativeFormsSection(forms: page.alternatives, openKanji: openKanji)
-            }
-          }
-
-          if !page.kanji.isEmpty {
-            Section("KANJI") {
-              PrimaryKanjiSection(characters: page.kanji, entry: entry, openKanji: openKanji)
-            }
-          }
-
-          if !page.alternativeKanji.isEmpty {
-            Section("ALTERNATIVE KANJI") {
-              AlternativeKanjiSection(characters: page.alternativeKanji, openKanji: openKanji)
-            }
-          }
-
-          if !page.related.isEmpty {
-            Section("RELATED WORDS") {
-              RelationshipsSection(
-                related: page.related, relationships: entry.relationships,
-                openRelated: openRelated)
-            }
+          ForEach(page.sections, id: \.kind) { section in
+            pageSection(section, of: page)
           }
         }
-
-        Section("LISTS") {
-          SavedItemListsSection(
-            item: item, identifierPrefix: "word-detail", openList: openList
-          ) { showsListPicker = true }
-        }
-
-        Section("NOTES") {
-          SavedItemNotesSection(
-            notes: notes, editorFocused: $noteEditorFocused, identifierPrefix: "word-detail")
-          .id("word-note.section")
-        }
-
-        if analysisAvailability == .reduced {
-          Section {
-            Label(
-              "Japanese text analysis is unavailable. Reinstall or update Zenbu to restore word links.",
-              systemImage: "info.circle"
-            )
-            .font(.footnote)
-            .foregroundStyle(.secondary)
-            .accessibilityIdentifier("word-detail.reduced-analysis")
-          }
-        }
-        ExampleSentenceSections(
-          title: "EXAMPLES",
-          examples: examplesEntryID == entry.id ? examples : [],
-          isLoading: isLoadingExamples || examplesEntryID != entry.id,
-          emptyMessage: "No source-matched examples",
-          highlightedQuery: SearchQuery(entry.headword),
-          highlightedEntry: entry,
-          presentation: { .wordDetail(index: $0) },
-          speechSynthesisClient: speechSynthesisClient,
-          japaneseTextAnalysisClient: japaneseTextAnalysisClient,
-          openWord: openWord
-        )
       }
       .groupedList()
       .scrollDismissesKeyboard(.immediately)
@@ -193,6 +123,80 @@ struct WordDetailView: View {
       examples = loadedExamples
       examplesEntryID = entry.id
       isLoadingExamples = false
+    }
+  }
+}
+
+extension WordDetailView {
+  @ViewBuilder
+  fileprivate func pageSection(_ section: WordPage.Section, of page: WordPage) -> some View {
+    let title = section.title.uppercased()
+    switch section.kind {
+    case .meaning:
+      Section(title) {
+        MeaningSection(senses: page.senses)
+      }
+    case .frequency:
+      Section(title) {
+        ForEach(page.frequency.enumerated(), id: \.offset) { _, row in
+          FrequencyRankRow(row: row) { frequencyDisclosure = $0 }
+        }
+      }
+    case .conjugations:
+      EmptyView()
+    case .alternatives:
+      Section(title) {
+        AlternativeFormsSection(forms: page.alternatives, openKanji: openKanji)
+      }
+    case .kanji:
+      Section(title) {
+        PrimaryKanjiSection(characters: page.kanji, entry: entry, openKanji: openKanji)
+      }
+    case .alternativeKanji:
+      Section(title) {
+        AlternativeKanjiSection(characters: page.alternativeKanji, openKanji: openKanji)
+      }
+    case .related:
+      Section(title) {
+        RelationshipsSection(
+          related: page.related, relationships: entry.relationships, openRelated: openRelated)
+      }
+    case .lists:
+      Section(title) {
+        SavedItemListsSection(
+          item: item, identifierPrefix: "word-detail", openList: openList
+        ) { showsListPicker = true }
+      }
+    case .notes:
+      Section(title) {
+        SavedItemNotesSection(
+          notes: notes, editorFocused: $noteEditorFocused, identifierPrefix: "word-detail")
+        .id("word-note.section")
+      }
+    case .examples:
+      if analysisAvailability == .reduced {
+        Section {
+          Label(
+            "Japanese text analysis is unavailable. Reinstall or update Zenbu to restore word links.",
+            systemImage: "info.circle"
+          )
+          .font(.footnote)
+          .foregroundStyle(.secondary)
+          .accessibilityIdentifier("word-detail.reduced-analysis")
+        }
+      }
+      ExampleSentenceSections(
+        title: title,
+        examples: examplesEntryID == entry.id ? examples : [],
+        isLoading: isLoadingExamples || examplesEntryID != entry.id,
+        emptyMessage: page.noExamples,
+        highlightedQuery: SearchQuery(entry.headword),
+        highlightedEntry: entry,
+        presentation: { .wordDetail(index: $0) },
+        speechSynthesisClient: speechSynthesisClient,
+        japaneseTextAnalysisClient: japaneseTextAnalysisClient,
+        openWord: openWord
+      )
     }
   }
 }
@@ -278,6 +282,7 @@ private struct WordHeroView: View {
     WordHeadline(
       ruby: JapaneseRuby(headwordOf: entry, on: page),
       pitch: page?.pitch,
+      pronounceLabel: page?.pronounce ?? "",
       identifierPrefix: "word-detail",
       pronounce: pronounce
     ) {

@@ -1276,17 +1276,22 @@
     }
   }
   var wordsTextSeparator = "   ";
+  function kanjiReadingText(label, value, words) {
+    const [first] = words;
+    return {
+      wordsText: words.map((word) => `${word.headword}${glossSeparator}${word.summary}`).join(wordsTextSeparator),
+      spoken: first ? `${label} reading ${value}, ${first.headword}, ${first.summary}` : null
+    };
+  }
   function kanjiReading(reading, words) {
     const label = readingLabels[reading.kind];
     const shown = wordsForReading(reading, words);
-    const [first] = shown;
     return {
       kind: reading.kind,
       label,
       value: reading.value,
       words: shown,
-      wordsText: shown.map((word) => `${word.headword}${glossSeparator}${word.summary}`).join(wordsTextSeparator),
-      spoken: first ? `${label} reading ${reading.value}, ${first.headword}, ${first.summary}` : null
+      ...kanjiReadingText(label, reading.value, shown)
     };
   }
   function savedKanjiReading(detail) {

@@ -93,8 +93,13 @@ struct ResultsList: Decodable, Hashable, Sendable {
   let frequencyNotice: String?
 }
 
+struct NoMatches: Decodable, Hashable, Sendable {
+  let title: String
+  let message: String
+}
+
 enum ResultsScreen: Decodable, Hashable, Sendable {
-  case noResults
+  case noResults(NoMatches)
   case results(ResultsList)
 
   private enum CodingKeys: String, CodingKey {
@@ -103,7 +108,9 @@ enum ResultsScreen: Decodable, Hashable, Sendable {
 
   init(from decoder: Decoder) throws {
     let state = try decoder.container(keyedBy: CodingKeys.self).decode(String.self, forKey: .state)
-    self = state == "noResults" ? .noResults : .results(try ResultsList(from: decoder))
+    self =
+      state == "noResults"
+      ? .noResults(try NoMatches(from: decoder)) : .results(try ResultsList(from: decoder))
   }
 }
 

@@ -125,9 +125,16 @@ private struct KanjiElementContent: View {
   let page: KanjiElementPage
 
   var body: some View {
-    let alternatives = page.alternatives.compactMap(KanjiElementID.init)
-    if !alternatives.isEmpty {
-      Section("ALTERNATIVE FORMS") {
+    ForEach(page.sections, id: \.kind) { section in
+      pageSection(section.kind, title: section.title.uppercased())
+    }
+  }
+
+  @ViewBuilder
+  private func pageSection(_ kind: KanjiElementPage.Section.Kind, title: String) -> some View {
+    switch kind {
+    case .alternatives:
+      Section(title) {
         ForEach(alternatives, id: \.rawValue.unicodeScalars.first?.value) { alternative in
           NavigationLink(value: SearchExperienceRoute.kanjiElement(alternative)) {
             Text(alternative.rawValue)
@@ -137,35 +144,29 @@ private struct KanjiElementContent: View {
           .accessibilityIdentifier("kanji-element.alternative.\(alternative.rawValue)")
         }
       }
-    }
-
-    if let explanation = page.explanation {
+    case .explanation:
       Section {
-        Text(explanation)
+        Text(page.explanation ?? "")
           .accessibilityIdentifier("kanji-element.meaning-explanation")
       } header: {
-        Text("MEANING / STRUCTURE")
+        Text(title)
           .accessibilityIdentifier("kanji-element.meaning-header")
       }
-    }
-
-    if let soundPatterns = page.soundPatterns {
-      Section("SOUND PATTERNS") {
-        Text(soundPatterns)
+    case .soundPatterns:
+      Section(title) {
+        Text(page.soundPatterns ?? "")
       }
-    }
-
-    if let standalone = page.standalone {
-      Section("AS A STANDALONE KANJI") {
-        KanjiContributionRow(
-          contribution: standalone,
-          identifierPrefix: "kanji-element.standalone"
-        )
+    case .standalone:
+      if let standalone = page.standalone {
+        Section(title) {
+          KanjiContributionRow(
+            contribution: standalone,
+            identifierPrefix: "kanji-element.standalone"
+          )
+        }
       }
-    }
-
-    if !page.containing.isEmpty {
-      Section("KANJI CONTAINING THIS ELEMENT") {
+    case .containing:
+      Section(title) {
         ForEach(page.containing) { contribution in
           KanjiContributionRow(
             contribution: contribution,
@@ -173,23 +174,25 @@ private struct KanjiElementContent: View {
           )
         }
       }
-    }
-
-    Section("SOURCE") {
-      LabeledContent("Structure") {
-        Text(page.structureSource)
-          .multilineTextAlignment(.trailing)
-          .accessibilityIdentifier("kanji-element.structure-source")
+    case .source:
+      Section(title) {
+        LabeledContent("Structure") {
+          Text(page.structureSource)
+            .multilineTextAlignment(.trailing)
+            .accessibilityIdentifier("kanji-element.structure-source")
+        }
+        LabeledContent("Meanings and readings") {
+          Text(page.metadataSource)
+            .multilineTextAlignment(.trailing)
+            .accessibilityIdentifier("kanji-element.metadata-source")
+        }
+        Text("Both sources are independently normalized into Zenbu Japanese Language Reference Data.")
+          .font(.caption)
       }
-      LabeledContent("Meanings and readings") {
-        Text(page.metadataSource)
-          .multilineTextAlignment(.trailing)
-          .accessibilityIdentifier("kanji-element.metadata-source")
-      }
-      Text("Both sources are independently normalized into Zenbu Japanese Language Reference Data.")
-        .font(.caption)
     }
   }
+
+  private var alternatives: [KanjiElementID] { page.alternatives.compactMap(KanjiElementID.init) }
 }
 
 private struct KanjiContributionRow: View {

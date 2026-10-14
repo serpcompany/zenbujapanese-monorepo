@@ -146,11 +146,11 @@ struct SearchView: View {
       }
       .accessibilityIdentifier("search.failure")
 
-    case .noResults:
+    case .noResults(let noMatches):
       ContentUnavailableView {
-        Label("No Dictionary Matches", systemImage: "magnifyingglass")
+        Label(noMatches.title, systemImage: "magnifyingglass")
       } description: {
-        Text("Try another Japanese or English Search query.")
+        Text(noMatches.message)
       }
       .accessibilityIdentifier("search.no-results")
     }
@@ -232,9 +232,9 @@ struct SearchView: View {
         settledSearchTaskID = taskID
         results = foundResults
         switch screen {
-        case .noResults:
+        case .noResults(let noMatches):
           shown = nil
-          presentationState = .noResults
+          presentationState = .noResults(noMatches)
         case .results(let list):
           shown = ShownResults(request: request, list: list)
           presentationState = .results
@@ -344,7 +344,7 @@ private enum SearchPresentationState: Equatable {
   case idle
   case loading
   case results
-  case noResults
+  case noResults(NoMatches)
   case failure
 }
 

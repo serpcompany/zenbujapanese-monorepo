@@ -68,6 +68,7 @@ private struct ConjugationHeader: View {
       WordHeadline(
         ruby: JapaneseRuby(headwordOf: entry, on: page),
         pitch: page?.pitch,
+        pronounceLabel: page?.pronounce ?? "",
         identifierPrefix: "conjugations.header",
         pronounce: pronounce
       )
@@ -116,6 +117,7 @@ struct ConjugatedFormView: View {
   @State private var isLoadingExamples = true
 
   let form: Conjugations.Row
+  let labels: Conjugations.Examples?
   let exampleSentenceClient: ExampleSentenceClient
   let speechSynthesisClient: SpeechSynthesisClient
   let japaneseTextAnalysisClient: JapaneseTextAnalysisClient
@@ -143,16 +145,17 @@ struct ConjugatedFormView: View {
         WordHeadline(
           ruby: form.shown,
           highlightedEnding: form.ending,
+          pronounceLabel: form.pronounce,
           identifierPrefix: "conjugations.form",
           pronounce: { speechSynthesisClient.speak(form.reading) }
         )
       }
 
       ExampleSentenceSections(
-        title: "Examples",
+        title: labels?.title ?? "",
         examples: examples,
         isLoading: isLoadingExamples,
-        emptyMessage: "No example sentences use this form yet.",
+        emptyMessage: labels?.empty ?? "",
         highlightedQuery: SearchQuery(form.surface),
         highlightedEntry: nil,
         presentation: { .conjugatedForm(form.kind, index: $0) },
