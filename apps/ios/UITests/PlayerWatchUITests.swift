@@ -78,10 +78,14 @@ final class PlayerWatchUITests: ZenbuUITestCase {
     open(.player, in: app)
     type("golden eggs japanese\n", into: waitFor(app.searchFields.firstMatch))
     let page = waitFor(app.webViews.firstMatch)
+    let first = waitFor(inPage("Stand-in result 1", of: page))
     let last = waitFor(inPage("Stand-in result 10", of: page))
-    for bar in ["YouTube Home", "Search YouTube", "Search with your voice", "Home", "Shorts", "You"] {
+    let bars = ["YouTube Home", "Search YouTube", "Search with your voice", "Home", "Shorts", "You"]
+    for bar in bars {
       XCTAssertFalse(inPage(bar, of: page).exists, "YouTube's \(bar) is on screen")
     }
+    XCTAssertLessThan(
+      first.frame.minY - page.frame.minY, 24, "the space for YouTube's header is left empty")
     reveal(last, in: app, scrolling: page)
     if device == .mac {
       page.scroll(byDeltaX: 0, deltaY: -600)
@@ -91,7 +95,8 @@ final class PlayerWatchUITests: ZenbuUITestCase {
     waitUntilStill(last)
     XCTAssertTrue(isReachable(last, in: app), "the last result can't be scrolled to")
     XCTAssertFalse(
-      last.frame.intersects(tabItem(.player, in: app).frame), "the last result stays under the tab bar")
+      last.frame.intersects(tabItem(.player, in: app).frame),
+      "the last result stays under the tab bar")
     tap(last)
     waitFor(find("watch.cue.0", in: app))
   }

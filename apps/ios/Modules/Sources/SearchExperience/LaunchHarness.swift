@@ -151,7 +151,11 @@ enum LaunchHarness {
           <html><head>
           <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
           <style>
-          body { margin: 0; font: 17px -apple-system, sans-serif; }
+          body {
+            margin: 0; font: 17px -apple-system, sans-serif;
+            padding: 0 env(safe-area-inset-right) env(safe-area-inset-bottom)
+              env(safe-area-inset-left);
+          }
           ytm-app, ytm-search, ytm-video-with-context-renderer { display: block; }
           ytm-app { padding-top: 48px; }
           [has-pivot-bar=true] ytm-app { padding-bottom: 56px; }

@@ -33,7 +33,8 @@ enum VideoSearchProvider: String, Hashable, CaseIterable, Sendable {
     switch self {
     case .youTube:
       """
-      ytm-header, ytm-mobile-topbar-renderer, .ytTopBarViewModelHost, ytm-pivot-bar-renderer {
+      ytm-header, ytm-header-bar, ytm-mobile-topbar-renderer, .ytTopBarViewModelHost,
+      .ytSearchboxComponentSuggestionsContainer, ytm-pivot-bar-renderer {
         display: none !important;
       }
       ytm-app { padding-top: 0 !important; padding-bottom: 0 !important; }
