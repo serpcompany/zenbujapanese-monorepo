@@ -40,7 +40,7 @@ final class KeyboardAndWindowUITests: ZenbuUITestCase {
     if canvas.exists { closeInputPanel(in: app) }
     waitUntilGone(canvas)
     let photoLibrary = app.buttons["Photo Library"]
-    if !photoLibrary.waitForExistence(timeout: 5) {
+    if !appears(photoLibrary, within: 5) {
       open(.translate, in: app)
       tap(find("translate.start.image", in: app))
     }
@@ -65,13 +65,11 @@ final class KeyboardAndWindowUITests: ZenbuUITestCase {
     open(.search, in: app)
     shortcut("n", in: app)
     let windows = app.windows.matching(NSPredicate(format: "identifier != %@", TestDevice.settingsWindow))
-    expectation(for: NSPredicate(format: "count == 2"), evaluatedWith: windows)
-    waitForExpectations(timeout: Self.patience)
+    waitUntil("a second window opening") { windows.count == 2 }
     shortcut("2", in: app)
     let translates = app.descendants(matching: .any).matching(identifier: "translate.header")
     let searches = app.descendants(matching: .any).matching(identifier: "search.input.handwriting")
-    expectation(for: NSPredicate(format: "count == 1"), evaluatedWith: translates)
-    waitForExpectations(timeout: Self.patience)
+    waitUntil("one window showing Translate") { translates.count == 1 }
     XCTAssertEqual(searches.count, 1, "the first window stays on Search")
   }
 
@@ -89,7 +87,7 @@ final class KeyboardAndWindowUITests: ZenbuUITestCase {
   ) {
     for _ in 0..<3 {
       shortcut(key, modifiers, in: app)
-      if element.waitForExistence(timeout: Self.patience / 3) { return }
+      if appears(element, within: Self.patience / 3) { return }
     }
     waitFor(element)
   }

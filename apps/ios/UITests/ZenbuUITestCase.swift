@@ -6,6 +6,8 @@ class ZenbuUITestCase: XCTestCase {
   static let patience =
     ProcessInfo.processInfo.environment["ZENBU_UI_TEST_PATIENCE"].flatMap(TimeInterval.init) ?? 90
   static let layoutPatience: TimeInterval = 5
+  static let lookInterval: TimeInterval = 0.1
+  static let sheetRoom: CGFloat = 400
 
   let fixtures = URL(filePath: #filePath)
     .deletingLastPathComponent()
@@ -53,13 +55,18 @@ class ZenbuUITestCase: XCTestCase {
   ) -> XCUIElement {
     let sheet = waitFor(sheet(identifier, in: app), file: file, line: line)
     guard device == .mac else { return sheet }
-    let frame = sheet.frame
+    var frame = CGRect.zero
+    var window = CGRect.zero
+    _ = comesTrue("the sheet to open fully inside the window", within: Self.patience) {
+      frame = sheet.frame
+      window = app.windows.firstMatch.frame
+      return min(frame.width, frame.height) > Self.sheetRoom && window.contains(frame)
+    }
     XCTAssertGreaterThan(
-      min(frame.width, frame.height), 400, "the sheet at \(frame) has no room for its content",
-      file: file, line: line)
+      min(frame.width, frame.height), Self.sheetRoom,
+      "the sheet at \(frame) has no room for its content", file: file, line: line)
     XCTAssertTrue(
-      app.windows.firstMatch.frame.contains(frame), "the sheet at \(frame) leaves the window",
-      file: file, line: line)
+      window.contains(frame), "the sheet at \(frame) leaves the window", file: file, line: line)
     return sheet
   }
 
@@ -91,7 +98,7 @@ class ZenbuUITestCase: XCTestCase {
   func waitFor(
     _ element: XCUIElement, file: StaticString = #filePath, line: UInt = #line
   ) -> XCUIElement {
-    if !element.waitForExistence(timeout: Self.patience) {
+    if !appears(element, within: Self.patience) {
       attachWhatIsOnScreen()
       let stopped = launched?.state == .notRunning ? ": the app is no longer running" : ""
       XCTFail("\(element) never appeared\(stopped)", file: file, line: line)
@@ -107,6 +114,29 @@ class ZenbuUITestCase: XCTestCase {
     add(hierarchy)
   }
 
+  func comesTrue(
+    _ awaited: @autoclosure () -> String, within limit: TimeInterval, _ condition: () -> Bool
+  ) -> Bool {
+    var looked = Date.now
+    let deadline = looked.addingTimeInterval(limit)
+    if condition() { return true }
+    let wait = "Wait up to \(String(format: "%g", limit))s for \(awaited())"
+    return XCTContext.runActivity(named: wait) { _ in
+      while Date.now < deadline {
+        let lookTook = Date.now.timeIntervalSince(looked)
+        let nextLook = Date.now.addingTimeInterval(max(Self.lookInterval, lookTook))
+        RunLoop.current.run(until: min(deadline, nextLook))
+        looked = .now
+        if condition() { return true }
+      }
+      return false
+    }
+  }
+
+  func appears(_ element: XCUIElement, within limit: TimeInterval) -> Bool {
+    comesTrue("\(element) to exist", within: limit) { element.exists }
+  }
+
   func waitUntilGone(
     _ element: XCUIElement, file: StaticString = #filePath, line: UInt = #line
   ) {
@@ -117,12 +147,20 @@ class ZenbuUITestCase: XCTestCase {
     _ element: XCUIElement, _ condition: String, _ values: Any..., file: StaticString = #filePath,
     line: UInt = #line
   ) {
-    let met = XCTNSPredicateExpectation(
-      predicate: NSPredicate(format: condition, argumentArray: values), object: element)
-    if XCTWaiter().wait(for: [met], timeout: Self.patience) != .completed {
-      attachWhatIsOnScreen()
-      XCTFail("\(element) never met \(condition) \(values)", file: file, line: line)
-    }
+    let met = NSPredicate(format: condition, argumentArray: values)
+    waitUntil(
+      "\(element) meeting \(condition) \(values)",
+      orFailSaying: "\(element) never met \(condition) \(values)", file: file, line: line
+    ) { met.evaluate(with: element) }
+  }
+
+  func waitUntil(
+    _ awaited: String, orFailSaying failure: String? = nil, file: StaticString = #filePath,
+    line: UInt = #line, _ condition: () -> Bool
+  ) {
+    if comesTrue(awaited, within: Self.patience, condition) { return }
+    attachWhatIsOnScreen()
+    XCTFail(failure ?? "\(awaited) never happened", file: file, line: line)
   }
 
   func waitUntilStill(_ element: XCUIElement) {
@@ -150,17 +188,16 @@ class ZenbuUITestCase: XCTestCase {
     line: UInt = #line
   ) {
     waitFor(element, file: file, line: line)
+    var frame = CGRect.zero
+    _ = comesTrue("\(element) to have a size", within: Self.patience) {
+      frame = element.frame
+      return !frame.isEmpty
+    }
+    XCTAssertFalse(frame.isEmpty, "\(element) has no size", file: file, line: line)
     if Self.controls.contains(element.elementType) {
       XCTAssertTrue(isReachable(element, in: app), "\(element) can't be reached", file: file, line: line)
     }
     let window = app.windows.firstMatch.frame
-    let laidOut = Date.now.addingTimeInterval(Self.layoutPatience)
-    var frame = element.frame
-    while frame.isEmpty, Date.now < laidOut {
-      RunLoop.current.run(until: Date.now.addingTimeInterval(0.2))
-      frame = element.frame
-    }
-    XCTAssertFalse(frame.isEmpty, "\(element) has no size", file: file, line: line)
     if Self.scrollingContainers.contains(element.elementType) {
       XCTAssertTrue(
         window.contains(CGPoint(x: frame.midX, y: frame.minY + 1)),
@@ -196,15 +233,19 @@ class ZenbuUITestCase: XCTestCase {
     _ queries: [XCUIElementQuery], in app: XCUIApplication, file: StaticString = #filePath,
     line: UInt = #line
   ) -> (element: XCUIElement, frame: CGRect) {
-    let deadline = Date.now.addingTimeInterval(Self.patience)
-    while Date.now < deadline {
+    var reached: (element: XCUIElement, frame: CGRect)?
+    _ = comesTrue("one of \(queries.count) queries to find something in reach", within: Self.patience) {
       for query in queries {
         for element in query.allElementsBoundByIndex {
-          if let frame = reachableFrame(of: element, in: app) { return (element, frame) }
+          if let frame = reachableFrame(of: element, in: app) {
+            reached = (element, frame)
+            return true
+          }
         }
       }
-      RunLoop.current.run(until: Date.now.addingTimeInterval(0.5))
+      return false
     }
+    if let reached { return reached }
     attachWhatIsOnScreen()
     XCTFail("nothing in \(queries) could be reached", file: file, line: line)
     return (queries[0].firstMatch, .zero)
@@ -224,13 +265,12 @@ class ZenbuUITestCase: XCTestCase {
       let window = launched?.windows.firstMatch
     else { return element.tap() }
     waitUntil(element, "isHittable == true", file: file, line: line)
-    let deadline = Date.now.addingTimeInterval(Self.patience)
-    var frame = element.frame
-    while !frame.isOnScreen, Date.now < deadline {
-      RunLoop.current.run(until: Date.now.addingTimeInterval(0.1))
+    var frame = CGRect.zero
+    let laidOut = comesTrue("\(element) to be laid out", within: Self.patience) {
       frame = element.frame
+      return frame.isOnScreen
     }
-    guard frame.isOnScreen else {
+    guard laidOut else {
       attachWhatIsOnScreen()
       return XCTFail("\(element) was never laid out", file: file, line: line)
     }
@@ -240,9 +280,7 @@ class ZenbuUITestCase: XCTestCase {
   }
 
   func isHittable(_ element: XCUIElement, within seconds: TimeInterval) -> Bool {
-    let hittable = XCTNSPredicateExpectation(
-      predicate: NSPredicate(format: "isHittable == true"), object: element)
-    return XCTWaiter().wait(for: [hittable], timeout: seconds) == .completed
+    comesTrue("\(element) to be hittable", within: seconds) { element.isHittable }
   }
 
   @discardableResult
@@ -252,22 +290,30 @@ class ZenbuUITestCase: XCTestCase {
   ) -> XCUIElement {
     guard !shown.exists else { return shown }
     tap(row, file: file, line: line)
-    for _ in 0..<2 where !shown.waitForExistence(timeout: Self.patience / 3) && row.exists {
-      row.tap()
+    for _ in 0..<2 {
+      if appears(shown, within: Self.patience / 3) { return shown }
+      if row.exists { row.tap() }
     }
     return waitFor(shown, file: file, line: line)
   }
 
-  func type(_ text: String, into element: XCUIElement) {
-    tap(element)
-    if device != .mac, let app = launched {
-      let focused = app.descendants(matching: .any)
-        .matching(NSPredicate(format: "hasKeyboardFocus == true")).firstMatch
-      for _ in 0..<2 where !focused.waitForExistence(timeout: Self.layoutPatience) {
-        element.tap()
-      }
-    }
+  func type(
+    _ text: String, into element: XCUIElement, file: StaticString = #filePath, line: UInt = #line
+  ) {
+    focus(element, file: file, line: line)
     element.typeText(text)
+  }
+
+  func focus(_ element: XCUIElement, file: StaticString = #filePath, line: UInt = #line) {
+    tap(element, file: file, line: line)
+    guard device != .mac, let app = launched else { return }
+    let focused = app.descendants(matching: .any)
+      .matching(NSPredicate(format: "hasKeyboardFocus == true")).firstMatch
+    for _ in 0..<2 {
+      if appears(focused, within: Self.patience / 3) { return }
+      element.tap()
+    }
+    waitFor(focused, file: file, line: line)
   }
 }
 

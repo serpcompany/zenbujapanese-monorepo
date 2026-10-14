@@ -44,9 +44,10 @@ extension ZenbuUITestCase {
     let opened = menuChoice(row, in: app)
     let chosen = menuChoice(choice, in: app)
     for _ in 0..<3 {
-      for _ in 0..<3 where !opened.exists {
+      for _ in 0..<3 {
+        if opened.exists { break }
         tapWhereReachable([sortedBy.staticTexts, sortedBy], in: app)
-        _ = opened.waitForExistence(timeout: Self.patience / 3)
+        if appears(opened, within: Self.patience / 3) { break }
       }
       tap(opened)
       if device != .mac || isHittable(chosen, within: Self.patience / 6) { break }
@@ -78,9 +79,10 @@ extension ZenbuUITestCase {
     let shown = find(content, in: app)
     let buttons = app.descendants(matching: .any).matching(identifier: "search.input.\(input)")
     waitFor(buttons.firstMatch)
-    for index in 0..<buttons.count where !shown.exists {
+    for index in 0..<buttons.count {
+      if shown.exists { break }
       buttons.element(boundBy: index).tap()
-      _ = shown.waitForExistence(timeout: 10)
+      if appears(shown, within: Self.patience / 3) { break }
     }
     return waitFor(shown)
   }
@@ -108,12 +110,12 @@ extension ZenbuUITestCase {
   func name(_ text: String, in app: XCUIApplication, button: String = "Create") {
     let prompt = waitFor(prompt(in: app))
     let field = prompt.textFields.firstMatch
-    tap(field)
+    focus(field)
     if let current = field.value as? String, !current.isEmpty, current != field.placeholderValue {
       field.typeText(String(repeating: XCUIKeyboardKey.delete.rawValue, count: current.count))
     }
     field.typeText(text)
-    prompt.buttons[button].firstMatch.tap()
+    tap(prompt.buttons[button].firstMatch)
   }
 
   @discardableResult
@@ -156,11 +158,13 @@ extension ZenbuUITestCase {
   func choose(_ segment: String, in control: XCUIElement) {
     let button = waitFor(control).descendants(matching: .any)
       .matching(NSPredicate(format: "label == %@", segment)).firstMatch
-    for _ in 0..<3 where !isOn(button) {
+    var chosen = isOn(button)
+    for _ in 0..<3 {
+      if chosen { break }
       button.tap()
-      RunLoop.current.run(until: Date.now.addingTimeInterval(1))
+      chosen = comesTrue("\(segment) to be chosen", within: Self.patience / 3) { isOn(button) }
     }
-    XCTAssertTrue(isOn(button), "\(segment) didn't take")
+    XCTAssertTrue(chosen, "\(segment) didn't take")
   }
 
   func isOn(_ control: XCUIElement) -> Bool {
