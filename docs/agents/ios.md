@@ -198,9 +198,10 @@ don't contain them), so they need no network, account, camera, or microphone:
   that answers the IFrame API's calls (play, pause, seek, speed, and its time), and the captions
   come from the JSON's player response and timed text, through the same parsing, track choice,
   and pairing as YouTube's (`YouTubeFetch`, `YouTubeStandInTests`).
-- `ZENBU_DRAWN_RESULTS=1` has Search say, on an element only tests read (`search.results.drawn`),
-  each results list it drew and how many of its rows had chips, so a test fails when a list is
-  drawn without its chips and then again (`SearchResultsUITests`).
+- `ZENBU_DRAWN=1` has Search and a kanji page say, in a text only tests read
+  (`search.results.drawn`, `kanji-detail.drawn`), each list or page they drew, so a test fails
+  when a results list is drawn without its chips and then again (`SearchResultsUITests`), or a
+  kanji page's facts are drawn before its words (`WordDetailUITests`), or nothing is recorded.
 
 The tests share `ZenbuUITestCase` and `AppTab`; what differs between the devices they ask
 `TestDevice` (`apps/ios/UITests/Platform/`, the one place `pnpm verify layers` lets UI tests name
@@ -238,8 +239,7 @@ the same on every device:
   redrawing just then, about one run in three. `chooseFromSortedBy` closes the menu and opens
   it again when a submenu never opens.
 - A sheet, and an alert that takes a name, are `app.sheets` (`sheet(_:in:)`, `prompt(in:)`).
-  `waitForSheet` also checks that a Mac sheet has room for its content and stays inside the
-  window.
+  `waitForSheet` also checks that a Mac sheet has room for its content and stays in the window.
 - A row's label starts with its title and goes on with its detail (`showing`); a static text's
   words are its value (`text(of:)`); a toggle's or a segment's state is its value (`isOn`).
 - The Settings window is SwiftUI's own `com_apple_SwiftUI_Settings_window`

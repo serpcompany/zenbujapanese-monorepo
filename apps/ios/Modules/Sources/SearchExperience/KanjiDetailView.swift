@@ -134,6 +134,7 @@ struct KanjiDetailView: View {
       }
       .groupedList()
       .accessibilityIdentifier("kanji-detail.screen")
+      .modifier(DrawRecorder(page, as: "kanji-detail.drawn") { $0?.drawnSummary ?? "no page" })
       .onAppear {
         restorePreservedWordPosition(in: words)
         restorePreservedElementPosition(in: elements)

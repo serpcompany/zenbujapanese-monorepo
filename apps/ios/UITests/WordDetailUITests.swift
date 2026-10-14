@@ -127,6 +127,21 @@ final class WordDetailUITests: ZenbuUITestCase {
     reveal(firstElement(identifiedBy: "kanji-detail.word.", in: app), in: app)
   }
 
+  func testAKanjiPageIsDrawnOnceWithItsFactsAndItsWords() {
+    let app = openJapan(Self.recordingDraws)
+    tap(find("word-detail.kanji.日", in: app), toShow: find("kanji-detail.glyph", in: app))
+    reveal(firstElement(identifiedBy: "kanji-detail.word.", in: app), in: app)
+    let drawn = draws(recordedBy: "kanji-detail.drawn", on: "kanji-detail.screen", in: app)
+    let withFacts = drawn.filter { $0 != "no page" }
+    XCTAssertEqual(withFacts.count, 1, "the kanji page was drawn as \(drawn)")
+    guard let page = withFacts.first?.components(separatedBy: ", "), page.count == 5 else {
+      return XCTFail("unreadable draw \(drawn)")
+    }
+    XCTAssertNotEqual(page[0], "0 stats", "the kanji page was drawn without its facts: \(drawn)")
+    XCTAssertNotEqual(page[3], "0 reading words", "the readings were drawn without words: \(drawn)")
+    XCTAssertNotEqual(page[4], "0 words", "the kanji page was drawn without its words: \(drawn)")
+  }
+
   func testAKanjisElementShowsWhatItContributesAndAKanjiItIsIn() {
     let app = openJapan()
     tap(find("word-detail.kanji.本", in: app), toShow: find("kanji-detail.glyph", in: app))
@@ -155,8 +170,8 @@ final class WordDetailUITests: ZenbuUITestCase {
     waitFor(find("word-detail.screen", in: app))
   }
 
-  private func openJapan() -> XCUIApplication {
-    let app = launch()
+  private func openJapan(_ environment: [String: String] = [:]) -> XCUIApplication {
+    let app = launch(environment)
     search("japan", in: app)
     tap(find("result.japan", in: app))
     waitFor(find("word-detail.screen", in: app))

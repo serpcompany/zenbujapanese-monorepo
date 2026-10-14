@@ -357,17 +357,17 @@ Check: UI `WordDetailUITests.testANoteIsKeptOnTheWord` and
 `WordNoteStorageTests` and `EncounterMediaStorageTests`.
 
 A kanji detail can present readings, meanings, stroke order, components, elements, and words
-that contain the kanji. Component and element links can be followed without losing the
-learner's place in the preceding detail.
+that contain the kanji, and draws its facts and those words together, once. Component and
+element links can be followed without losing the learner's place in the preceding detail.
 
 Check: the recorded `KanjiDetailConformanceTests`; package `KanjiScrollMemoryTests`; UI
-`WordDetailUITests.testAKanjiShowsItsStrokeOrderAndItsWords`.
+`WordDetailUITests.testAKanjiShowsItsStrokeOrderAndItsWords` and
+`testAKanjiPageIsDrawnOnceWithItsFactsAndItsWords`.
 
-An element's page shows the element, its meanings and what it contributes, the on-readings it
-links, its alternative forms, the kanji it is on its own (the most frequent among the element
-and its alternatives), the kanji that contain it, each with up to three meanings and its
-on-readings, and the sources. A kanji opens its own detail, and coming back returns to it in
-the list.
+An element's page shows the element, its meanings and what it contributes, the on-readings it links,
+its alternative forms, the kanji it is on its own (the most frequent among the element and its
+alternatives), the kanji that contain it, each with up to three meanings and its on-readings, and
+the sources. A kanji opens its own detail, and coming back returns to it in the list.
 
 Check: the recorded `KanjiElementConformanceTests`; core `detail/kanji-element.test.ts`; package
 `KanjiScrollMemoryTests` and `KanjiFilesTests` (a compatibility kanji and the kanji it unifies

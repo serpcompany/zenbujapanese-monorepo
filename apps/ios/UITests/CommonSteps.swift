@@ -55,6 +55,20 @@ extension ZenbuUITestCase {
     tap(chosen)
   }
 
+  static var recordingDraws: [String: String] { ["ZENBU_DRAWN": "1"] }
+
+  func draws(
+    recordedBy identifier: String, on screen: String, in app: XCUIApplication
+  ) -> [String] {
+    waitUntilStill(find(screen, in: app))
+    let record = text(of: waitFor(find(identifier, in: app)))
+    if record.isEmpty {
+      attachWhatIsOnScreen()
+      XCTFail("\(identifier) recorded no draw")
+    }
+    return record.components(separatedBy: "; ")
+  }
+
   func sortedByRow(saying text: String, in app: XCUIApplication) -> XCUIElement {
     app.descendants(matching: .any)
       .matching(NSPredicate(format: "identifier == 'search.sort-menu' AND label CONTAINS %@", text))
