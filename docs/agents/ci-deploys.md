@@ -109,8 +109,8 @@ rollback's comes from an image the run pulled. The whole deploy is in
 service's, with the same three jobs, the same signing, the same `staging` and `production`
 environments, and the same rollback by `tag`. It runs on a push to `main` that changes what the
 image holds: the service, what the services share, and the package files it installs from (the
-root ones). Tests and the backups script
-(`apps/account-api/deploy/`) aren't in the image, so they don't start it.
+root ones). Tests, the username cases they read (`apps/account-api/src/domain/username-cases.json`),
+and the backups script (`apps/account-api/deploy/`) aren't in the image, so they don't start it.
 
 Its `image` job starts the image beside a Postgres 18 service container, on the runner's network,
 with a read-only file system as the server runs it. It checks that the image migrates the empty

@@ -78,8 +78,8 @@ and reach search through the header's Dictionary menu (#561). The app searches a
 types; the website searches on Enter so that each search is its own page.
 
 - Source: #466 (search on Enter, not as you type).
-- Check: `src/lib/dictionary/urls.test.ts`, "search URLs", checks how a query is normalized and
-  encoded into its path; `apps/web/e2e/search.spec.ts`, "the dictionary home searches and lands on
+- Check: `src/app/dictionary/search/[query]/page.test.ts` checks the query the box redirects to
+  (Search URLs, below); `apps/web/e2e/search.spec.ts`, "the dictionary home searches and lands on
   the canonical results page", submits `  IRU ` and checks the redirect to `/dictionary/search/iru/`
   and the prefilled box. That typing doesn't search: No automated check yet (#511).
 
@@ -1156,15 +1156,15 @@ result is Japanese, whatever language the search is in.
 - Source: ADR 0007; ADR 0010; the owner's decision on #544.
 - Check: not applicable until a second locale is built.
 
-**Search URLs.** A search lives at `/dictionary/search/<query>/`. The query is NFKC-normalized,
-lowercased, and has whitespace runs collapsed; any other form redirects (308) to it. Dots are
-encoded, so a query never looks like a file. `.` and `..` can't be paths, so they stay on
-`/dictionary/search/` as finding nothing.
+**Search URLs.** A search lives at `/dictionary/search/<query>/`, at the query the core searches:
+its `normalizeQuery` folds width and case and joins the words with one space, as in the app. Any
+other form redirects (308) to it. Dots are encoded, so a query never looks like a file. `.` and
+`..` can't be paths, so they stay on `/dictionary/search/` as finding nothing.
 
 - Source: #466.
-- Check: `src/lib/dictionary/urls.test.ts`, "search URLs"; the redirect:
-  `apps/web/e2e/urls.spec.ts`, "/dictionary/search/IRU/ redirects to /dictionary/search/iru/ in one
-  hop".
+- Check: `src/app/dictionary/search/[query]/page.test.ts`, "a search lives at the query the core
+  searches"; `src/lib/dictionary/urls.test.ts`, "search URLs"; `apps/web/e2e/urls.spec.ts`,
+  "/dictionary/search/IRU/ redirects to /dictionary/search/iru/ in one hop".
 
 **Titles and descriptions.** A word page is titled "要る (いる) meaning" and a results page
 "«query» in Japanese", each followed by "| Zenbu Japanese". Each page is its own canonical URL.

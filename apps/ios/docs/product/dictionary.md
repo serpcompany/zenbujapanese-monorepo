@@ -17,8 +17,8 @@ Check: UI `SearchUITests.testAnEnglishSearchListsTheWordAndOpensItsDetail` (the 
 `HandwritingRecognitionTests` (a drawn kanji is read whatever the stroke order) and
 `RadicalLookupTests` (radicals narrow to the kanji that have them).
 
-A query reads the same whatever its width or case: full-width letters search as plain ones, and
-halfwidth katakana as full-width, a voiced mark joined to its kana (ｶﾞｷﾞ searches ガギ).
+A query reads the same whatever its width or case (Ｎ as n, ｶﾞｷﾞ as ガギ, a voiced mark joined to
+its kana), and white space of any kind, or the U+FEFF a paste can carry, only separates its words.
 
 Check: package `DictionaryCoreTests` (a query normalized by the core, scalar for scalar); core
 `search/query.test.ts`.

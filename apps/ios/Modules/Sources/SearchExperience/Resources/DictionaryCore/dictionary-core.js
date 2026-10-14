@@ -409,23 +409,21 @@
     }
     return lhs.length - rhs.length;
   }
-  var whitespace = /\p{White_Space}/u;
+  var wordSeparator = /[\p{White_Space}\u{FEFF}]/u;
+  function withoutMarksASpaceCarries(word) {
+    return graphemes2(` ${word}`).slice(1).join("");
+  }
+  function foldedWidthAndCase(raw) {
+    const normalized2 = raw.normalize("NFKC");
+    const lowered = normalized2.toLowerCase();
+    return lowered === normalized2 ? lowered : lowered.normalize("NFKC");
+  }
   function normalizeQuery(raw) {
-    const folded = raw.normalize("NFKC").toLowerCase();
-    if (!whitespace.test(folded)) return folded;
+    const folded = foldedWidthAndCase(raw);
+    if (!wordSeparator.test(folded)) return folded;
     if (everyUnitIsAGrapheme(folded)) return folded.split(" ").filter(Boolean).join(" ");
-    const words = [];
-    let word = "";
-    for (const grapheme of graphemes2(folded)) {
-      if (/^\p{White_Space}/u.test(grapheme)) {
-        if (word) words.push(word);
-        word = "";
-      } else {
-        word += grapheme;
-      }
-    }
-    if (word) words.push(word);
-    return words.join(" ");
+    const [first, ...afterASeparator] = folded.split(wordSeparator);
+    return [first, ...afterASeparator.map(withoutMarksASpaceCarries)].filter(Boolean).join(" ");
   }
   function isASCII(value) {
     return !/[\u0080-\uffff]/.test(value);

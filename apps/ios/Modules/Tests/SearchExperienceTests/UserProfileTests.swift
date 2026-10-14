@@ -4,25 +4,89 @@ import Testing
 
 @Suite("Profile field rules")
 struct UserProfileTests {
-  @Test("usernames drop leading @, lowercase, and keep only a–z, digits, _ and .")
-  func usernameNormalization() {
-    #expect(UserProfile.normalizedUsername("@devinschumacher") == "devinschumacher")
-    #expect(UserProfile.normalizedUsername("@@Devin Schumacher!") == "devinschumacher")
-    #expect(UserProfile.normalizedUsername("devin_s.92") == "devin_s.92")
-    #expect(UserProfile.normalizedUsername("dev@in") == "devin")
+  private struct SharedUsernames: Decodable {
+    struct Accepted: Decodable {
+      let covers: String
+      let typed: String
+      let username: String
+    }
+
+    struct Refused: Decodable {
+      let covers: String
+      let typed: String
+    }
+
+    let rule: String
+    let accepted: [Accepted]
+    let refused: [Refused]
   }
 
-  @Test("usernames drop Japanese and full-width characters")
-  func usernameScripts() {
-    #expect(UserProfile.normalizedUsername("でびん") == "")
-    #expect(UserProfile.normalizedUsername("ｄｅｖｉｎ") == "")
-    #expect(UserProfile.normalizedUsername("devinでびん") == "devin")
+  private static let sharedUsernameCases = URL(filePath: #filePath)
+    .deletingLastPathComponent()
+    .appending(path: "../../../../account-api/src/domain/username-cases.json")
+    .standardizedFileURL
+
+  private func sharedUsernames() throws -> SharedUsernames {
+    try JSONDecoder().decode(
+      SharedUsernames.self, from: Data(contentsOf: Self.sharedUsernameCases))
   }
 
-  @Test("usernames are capped at the length limit")
-  func usernameLength() {
-    let long = String(repeating: "a", count: 50)
-    #expect(UserProfile.normalizedUsername(long).count == UserProfile.usernameLengthLimit)
+  @Test("a username is accepted as the cases shared with the account service say")
+  func acceptedUsernames() throws {
+    let accepted = try sharedUsernames().accepted
+    #expect(!accepted.isEmpty)
+    for expected in accepted {
+      #expect(
+        UserProfile.acceptedUsername(expected.typed) == expected.username, "\(expected.covers)")
+    }
+  }
+
+  @Test("a username is refused as the cases shared with the account service say")
+  func refusedUsernames() throws {
+    let refused = try sharedUsernames().refused
+    #expect(!refused.isEmpty)
+    for expected in refused {
+      #expect(UserProfile.acceptedUsername(expected.typed) == nil, "\(expected.covers)")
+    }
+  }
+
+  @Test("a refused username is answered with the account service's own sentence")
+  func usernameRule() throws {
+    let shared = try sharedUsernames()
+    #expect(UserProfile.usernameRule == shared.rule)
+  }
+
+  @Test("leaving the field saves what the rule accepts, clears on nothing, and refuses the rest")
+  func usernameEdits() {
+    #expect(UserProfile.usernameEdit("Kana_Fan", over: "") == .save("kana_fan"))
+    #expect(UserProfile.usernameEdit("", over: "kana_fan") == .save(""))
+    #expect(UserProfile.usernameEdit("   ", over: "kana_fan") == .save(""))
+    #expect(UserProfile.usernameEdit("ab", over: "kana_fan") == .refuse)
+    #expect(UserProfile.usernameEdit("kana.fa", over: "kana.fan") == .refuse)
+  }
+
+  @Test("a stored username the rule refuses is kept, not refused, when it is typed back as it was")
+  func keepsARetypedUsername() {
+    #expect(UserProfile.acceptedUsername("kana.fan") == nil)
+    #expect(UserProfile.usernameEdit("kana.fan", over: "kana.fan") == .keep)
+  }
+
+  @MainActor
+  @Test("a username an earlier version saved stays as it was until it is edited")
+  func keepsAnEarlierUsername() throws {
+    let temporary = try TemporaryDefaults()
+    let photoURL = FileManager.default.temporaryDirectory.appending(path: "\(temporary.suite).jpg")
+    let earlier = UserProfile(defaults: temporary.defaults, photoURL: photoURL)
+    earlier.username = "kana.fan"
+    #expect(UserProfile.acceptedUsername(earlier.username) == nil)
+
+    let reloaded = UserProfile(defaults: temporary.defaults, photoURL: photoURL)
+    #expect(reloaded.username == "kana.fan")
+    var field = ProfileFieldEdit()
+    field.show(reloaded.username)
+    field.focus()
+    #expect(field.unfocus() == nil)
+    #expect(field.text == "kana.fan")
   }
 
   @Test("email validation accepts one address and nothing else")
