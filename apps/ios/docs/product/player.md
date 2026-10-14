@@ -111,7 +111,8 @@ player is by hand; the UI tests stand in for it with a local player that answers
   Check: UI `PlayerWatchUITests.testThePlayersOwnControlsPlayStepAndRepeat` (play, the next and
   previous lines, repeat, a speed chosen while a line repeats, and the scrubber, against the
   stand-in player; only the time, the scrubber, and the caption list follow the time as it ticks
-  five times a second, so the rest of the screen, an open menu included, isn't redrawn); package
+  five times a second, so the rest of the screen, an open menu included, isn't redrawn: the
+  screen's own count of its draws stays the same while the scrubber shows three seconds); package
   `YouTubeCaptionsTests` (each line's times, which the controls move between).
 
 Creator-made Japanese captions are used before automatic ones. Sound descriptions such as [音楽] are
