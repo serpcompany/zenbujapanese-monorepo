@@ -63,6 +63,12 @@ red check stops no merge. The workflows are built so the owners can require them
   `account-api`, `ios`, `language-data-build`). It always runs, and fails when a job it needs
   failed or was cancelled. It is the job to require: a job skipped because the one it needs
   failed would itself count as passing.
+- **A heavy job waits for its workflow's fast checks.** `e2e` needs `check` (`Web`), `website`
+  needs `check` (`Account API`), `check` needs `scripts` (`Dictionary API`), and `swift` needs
+  `contracts` (`iOS`), on a pull request and in the queue alike. A failed fast check then spends
+  no runner time on the browser tests, the suites on the real files, or a Mac: the heavy job is
+  skipped, and the last job fails for the fast one. A passing change starts the heavy job later
+  by the fast job's time: about 1.5 minutes in the first two, under 40 seconds in the others.
 - **A queue run is never cancelled.** A new push cancels a pull request's last run only.
 
 The jobs to require are `verify` (`Repository`), `title`, `issue-link`, and `fix-test`
@@ -70,8 +76,10 @@ The jobs to require are `verify` (`Repository`), `title`, `issue-link`, and `fix
 `IOS_SWIFT_TESTS` on (iOS, below). An owner adds them under the ruleset's required status
 checks; nothing in the repository can. The merge queue waits 90 minutes for a required check
 (`check_response_timeout_minutes`), and the `swift` job may run for four hours: raise that wait
-before turning `IOS_SWIFT_TESTS` on with `ios` required, or the queue drops every app change. `tools/checks/src/workflows.test.ts` holds every workflow
-to this shape, and runs the action against scratch repositories.
+before turning `IOS_SWIFT_TESTS` on with `ios` required, or the queue drops every app change.
+`tools/checks/src/workflows.test.ts` holds every workflow to this shape, plays each one's jobs
+out (nothing to check, every job passing, each job failing), and runs the action against
+scratch repositories.
 
 ## Repository
 
@@ -129,7 +137,8 @@ step names `apps/web` as its working directory, rather than the jobs setting it 
 because the dead-code check reads a step's working directory to find the scripts and binaries a
 step runs, and not a job's.
 
-Its `e2e` job runs the browser tests ([`web.md`](web.md), Run and verify) on the site as it
+Its `e2e` job starts once those checks pass (about 15 minutes of browser tests, behind about 1.5
+of checks). It runs the browser tests ([`web.md`](web.md), Run and verify) on the site as it
 deploys: it installs Chromium, builds with OpenNext without `SITE_ENV`, so the build reads the
 dictionary fixtures, and serves it in workerd with `opennextjs-cloudflare preview`. A test that
 fails is retried once, and Playwright reports one that passed on the retry as flaky. On a failure
@@ -155,7 +164,7 @@ resources (`apps/ios/Modules/Sources/SearchExperience/Resources/`), or `language
 (the release the service names), and by hand. A new push cancels the pull request's last run. Its
 `scripts` job runs ShellCheck 0.11 on the server's deployer (`deploy/deployer.sh`), in Docker, since
 the runner's own ShellCheck is older; `Repository` runs ShellCheck on it too, and its tests, on
-every pull request. Its `check` job:
+every pull request. Once `scripts` passes, its `check` job:
 
 1. restores and pulls the app's Git LFS files the service reads (the `.sqlite3` files and
    Kuromoji's), then Sudachi's dictionary (`pnpm sudachi`, which keeps a cached copy that matches
@@ -196,17 +205,17 @@ request's last run. The deployer and the backups script (`deploy/deployer.sh`,
   tests at it, so the migrations and the `pg` driver run against the Postgres the server runs,
   including two migrations started at once. The container trusts any connection and lives only as
   long as the job, so it has no password. See [`account-api.md`](account-api.md), Check it.
-- **`website`** starts the service from its source on a Postgres 18 container, with the dev
-  mailbox and the website's local origin, then runs the website's browser test against it
-  (`apps/web/e2e/account-service.spec.ts`, on `next dev`, at the desktop width): a learner
-  registers with an emailed code, edits the profile, signs out, signs in again, and deletes the
-  account after a fresh sign-in ([`web.md`](web.md), Account pages). The `Web` workflow can't run
-  it, with no service, so it runs here, as `Dictionary API` runs the website's rendered-page gate
-  against the service it builds. It doesn't retry a failed run, as the `Web` workflow does: the
-  service sends five codes from one address in 10 minutes, and a run sends three.
-  `ACCOUNT_API_SECRET` is a CI-only value. On a failure it prints
-  the service's log and keeps the test's trace, video, and screenshot as `account-pages-report`
-  for a week.
+- **`website`**, once `check` passes, starts the service from its source on a Postgres 18
+  container, with the dev mailbox and the website's local origin, then runs the website's
+  browser test against it (`apps/web/e2e/account-service.spec.ts`, on `next dev`, at the
+  desktop width): a learner registers with an emailed code, edits the profile, signs out, signs
+  in again, and deletes the account after a fresh sign-in ([`web.md`](web.md), Account pages).
+  The `Web` workflow can't run it, with no service, so it runs here, as `Dictionary API` runs
+  the website's rendered-page gate against the service it builds. It doesn't retry a failed
+  run, as the `Web` workflow does: the service sends five codes from one address in 10 minutes,
+  and a run sends three. `ACCOUNT_API_SECRET` is a CI-only value. On a failure it prints the
+  service's log and keeps the test's trace, video, and screenshot as `account-pages-report` for
+  a week.
 
 ## iOS
 
@@ -222,19 +231,20 @@ jobs:
   ([`ios.md`](ios.md), Sign-in in the App Store build), and the app's iPhone, iPad, and Mac
   settings (`test_app_platforms.py`: platforms, orientations, the Mac's sandbox and icon, privacy
   strings, and entitlements). Its LFS cache is keyed on the pointers of the LFS patterns it fetches.
-- `swift` runs the app's tests on all three platforms, one after another: `SearchExperienceTests`
-  and `TranslatorCoreTests` with `xcodebuild` on an iPhone Pro Max Simulator and an iPad Pro
-  13-inch Simulator it makes with `apps/ios/Tools/simulator.py`, the script agents use
-  ([`verification.md`](verification.md)), and on the Mac; then, after filling the Sudachi build cache
-  (cached by the catalog's hash), the app's UI tests (`ZenbuJapaneseUITests`), which build the app
-  as `com.zenbujapanese.dictionary.uitests` and drive it on the same iPhone and iPad Simulators
-  and on the Mac, each signed to run locally (no team needed), after turning on Automation Mode
-  for the Mac, which its UI tests need (`automationmodetool`). So a change that breaks
-  the app on one of them fails ([`ios.md`](ios.md), Tests on every platform). Last
-  come the recorded-audio check's scoring tests with `swift test` (the replay
-  itself needs the Mac's speech models, which the runner doesn't have, so it stays a local check,
-  [`translate.md`](translate.md)), on `macos-26` with the Xcode `.xcode-version` pins, which it selects first (arm64, which
-  the `sudachi-swift` binary needs), with up to 4 hours for all of it. It runs only when the
+- `swift`, once `contracts` passes, runs the app's tests on all three platforms, one after
+  another: `SearchExperienceTests` and `TranslatorCoreTests` with `xcodebuild` on an iPhone Pro
+  Max Simulator and an iPad Pro 13-inch Simulator it makes with `apps/ios/Tools/simulator.py`,
+  the script agents use ([`verification.md`](verification.md)), and on the Mac; then, after
+  filling the Sudachi build cache (cached by the catalog's hash), the app's UI tests
+  (`ZenbuJapaneseUITests`), which build the app as `com.zenbujapanese.dictionary.uitests` and
+  drive it on the same iPhone and iPad Simulators and on the Mac, each signed to run locally (no
+  team needed), after turning on Automation Mode for the Mac, which its UI tests need
+  (`automationmodetool`). So a change that breaks the app on one of them fails
+  ([`ios.md`](ios.md), Tests on every platform). Last come the recorded-audio check's scoring
+  tests with `swift test` (the replay itself needs the Mac's speech models, which the runner
+  doesn't have, so it stays a local check, [`translate.md`](translate.md)), on `macos-26` with
+  the Xcode `.xcode-version` pins, which it selects first (arm64, which the `sudachi-swift`
+  binary needs), with up to 4 hours for all of it. It runs only when the
   repository variable `IOS_SWIFT_TESTS` is `on`, or when the workflow is run by hand. Turning it
   on is the owners' decision. It was first kept off for the runner's cost: on a private
   repository a macOS minute counts ten times a Linux one. This repository is public, where
