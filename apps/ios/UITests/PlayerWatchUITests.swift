@@ -13,7 +13,7 @@ final class PlayerWatchUITests: ZenbuUITestCase {
       XCTAssertTrue(isReachable(card, in: app), "caption \(line + 1) is out of reach")
     }
     let known = waitFor(find("watch.comprehension", in: app))
-    waitUntil(known, mentions: "words known")
+    waitUntil(known, mentions: "0 of 12 words known")
     waitFor(labeled("There's a bookstore near the station.", in: app))
   }
 

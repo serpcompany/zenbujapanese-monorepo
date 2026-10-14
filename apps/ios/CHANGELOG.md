@@ -24,6 +24,8 @@ All notable user-facing changes to Zenbu Japanese are recorded here.
   when a filter is on, and your filter stays across launches.
 - Translate's **Listen** has the speaker button too: mute spoken translations while the
   translated cards keep coming.
+- Example Sentences says how many sentences it lists, under its title: "3 examples", or "The
+  first 100 of more than 100 examples".
 
 ### Changed
 
@@ -40,6 +42,10 @@ All notable user-facing changes to Zenbu Japanese are recorded here.
   slide up as a sheet you can drag away, and add their pick to the end of what's in the field, so
   you can build a word from both; Handwriting shows bigger candidates with their meanings, and both
   have the same **Undo** button for the last stroke or radical. Recent searches no longer sit under a **Recent** heading.
+- Player works out how many of a video's words you know more than twice as fast, so
+  **Counting known words…** gives way to the percentage sooner on a long video, and a video you
+  go back to while Zenbu stays open usually shows it at once. Translate counts a conversation's
+  words the same way.
 
 ### Removed
 
@@ -48,6 +54,10 @@ All notable user-facing changes to Zenbu Japanese are recorded here.
 
 ### Fixed
 
+- Example sentences appear with their words already linked, with furigana, on Example Sentences,
+  a word's Examples, and a conjugated form's examples; a sentence used to be drawn as plain text
+  and then redrawn at another height. Long lists show 25 sentences and bring more as you scroll,
+  and Example Sentences keeps your place when you come back from a word.
 - **Credits & Attributions** says that Jiten's frequency lists are modified and shared under the
   same license, credits JMdict, KANJIDIC2, and RADKFILE each on its own, and calls three sources by
   their authors' names: Wikipedia Word Frequency Clean, JLPT vocabulary lists, and JLPT kanji lists.

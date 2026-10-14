@@ -63,29 +63,27 @@ private struct ExampleSearchObserver {
     observed.highlightedEntry = highlightedEntry?.id.rawValue
     observed.usesPrimaryEntryExamples = results.usesPrimaryEntryExamples
 
-    let examples = await exampleSentenceClient.listed(
-      query, highlightedEntry, results.usesPrimaryEntryExamples)
-    observed.ids = examples.map(\.id.rawValue)
-    var shown: [ExampleSearchCase.Example] = []
-    for example in examples.prefix(tokenLimit) {
-      let tokens = await textAnalysisClient.linkedTokens(
-        example.japanese, query, highlightedEntry)
-      shown.append(
-        ExampleSearchCase.Example(
-          id: example.id.rawValue,
-          japanese: example.japanese,
-          english: example.english,
-          tokens: tokens.map { token in
-            ExampleSearchCase.Token(
-              surface: token.surface,
-              entry: token.recordedEntryID,
-              candidates: token.recordedCandidateIDs,
-              queryMatch: token.matchesQuery ? true : nil
-            )
-          }
-        ))
+    let listed = await ExamplePage.every {
+      await exampleSentenceClient.listed(
+        query, highlightedEntry, results.usesPrimaryEntryExamples, $0)
     }
-    observed.shown = shown
+    observed.countText = listed.countText
+    observed.ids = listed.examples.map(\.id.rawValue)
+    observed.shown = listed.examples.prefix(tokenLimit).map { example in
+      ExampleSearchCase.Example(
+        id: example.id.rawValue,
+        japanese: example.sentence.japanese,
+        english: example.sentence.english,
+        tokens: example.words.map { token in
+          ExampleSearchCase.Token(
+            surface: token.surface,
+            entry: token.recordedEntryID,
+            candidates: token.recordedCandidateIDs,
+            queryMatch: token.accent == .query ? true : nil
+          )
+        }
+      )
+    }
     return observed
   }
 }
@@ -106,6 +104,7 @@ private struct ExampleSearchCase: Codable {
   let query: String
   let covers: String?
   var count: Int?
+  var countText: String?
   var title: String?
   var highlightedEntry: String?
   var usesPrimaryEntryExamples: Bool?

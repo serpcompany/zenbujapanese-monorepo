@@ -1,9 +1,9 @@
 import SwiftUI
 
 struct ExampleSentencesView: View {
-  @State private var examples: [ExampleSentence] = []
-  @State private var isLoading = true
+  @State private var examples = LoadedExamples()
   @State private var analysisAvailability = JapaneseTextAnalysisAvailability.full
+  @Environment(\.exampleRowsOnScreen) private var rowsOnScreen
 
   let query: SearchQuery
   let highlightedEntry: DictionaryEntry?
@@ -15,11 +15,18 @@ struct ExampleSentencesView: View {
 
   var body: some View {
     Group {
-      if isLoading {
+      if !examples.answers(query.value) {
         ProgressView("Loading examples")
           .frame(maxWidth: .infinity, maxHeight: .infinity)
       } else {
         List {
+          if let countText = examples.countText {
+            Text(countText)
+              .font(.subheadline)
+              .foregroundStyle(.secondary)
+              .listRowSeparator(.hidden)
+              .accessibilityIdentifier("example-list.count")
+          }
           if analysisAvailability == .reduced {
             Label(
               "Japanese text analysis is unavailable. Reinstall or update Zenbu to restore word links.",
@@ -29,16 +36,17 @@ struct ExampleSentencesView: View {
             .foregroundStyle(.secondary)
             .accessibilityIdentifier("examples.reduced-analysis")
           }
-          ForEach(examples.enumerated(), id: \.element.id) { index, example in
-            ExampleSentenceRow(
-              index: index,
+          ForEach(examples.examples.enumerated(), id: \.element.id) { index, example in
+            JapaneseExampleRowContent(
               example: example,
-              highlightedQuery: query.value,
-              highlightedEntry: highlightedEntry,
-              japaneseTextAnalysisClient: japaneseTextAnalysisClient,
-              speak: { speechSynthesisClient.speak(example.japanese) },
+              presentation: .dedicated(index: index),
+              speak: { speechSynthesisClient.speak(example.sentence.japanese) },
               openWord: openWord
             )
+          }
+          if examples.hasMore {
+            MoreExamplesRow { await examples.loadMore(read: read) }
+              .id(examples.examples.count)
           }
         }
         .listStyle(.plain)
@@ -48,48 +56,37 @@ struct ExampleSentencesView: View {
     }
     .navigationTitle(query.value)
     .inlineNavigationTitle()
-    .task(id: query) {
-      isLoading = true
+    .screenTask(id: query) {
       analysisAvailability = await japaneseTextAnalysisClient.availability()
-      examples = await exampleSentenceClient.listed(
-        query, highlightedEntry, usesHighlightedEntryExamples)
-      isLoading = false
+      await examples.load(query.value, rowsOnScreen: rowsOnScreen, read: read)
     }
+  }
+
+  private func read(_ batch: ExampleBatch) async -> ExamplePage? {
+    await exampleSentenceClient.listed(query, highlightedEntry, usesHighlightedEntryExamples, batch)
   }
 }
 
-private struct ExampleSentenceRow: View {
-  let index: Int
-  let example: ExampleSentence
-  let highlightedQuery: String
-  let highlightedEntry: DictionaryEntry?
-  let japaneseTextAnalysisClient: JapaneseTextAnalysisClient
-  let speak: () -> Void
-  let openWord: (DictionaryEntry) -> Void
+struct MoreExamplesRow: View {
+  let load: () async -> Void
 
   var body: some View {
-    JapaneseExampleRowContent(
-      example: example,
-      highlightedQuery: SearchQuery(highlightedQuery),
-      highlightedEntry: highlightedEntry,
-      japaneseTextAnalysisClient: japaneseTextAnalysisClient,
-      presentation: .dedicated(index: index),
-      speak: speak,
-      openWord: openWord
-    )
+    ProgressView()
+      .frame(maxWidth: .infinity)
+      .task { await load() }
+      .accessibilityIdentifier("examples.more")
   }
 }
 
 struct ExampleSentenceSections: View {
   let title: String
-  let examples: [ExampleSentence]
+  let examples: [LinkedExample]
   let isLoading: Bool
   let emptyMessage: String
-  let highlightedQuery: SearchQuery
-  let highlightedEntry: DictionaryEntry?
+  let hasMore: Bool
   let presentation: (Int) -> JapaneseExampleRowContent.Presentation
   let speechSynthesisClient: SpeechSynthesisClient
-  let japaneseTextAnalysisClient: JapaneseTextAnalysisClient
+  let loadMore: () async -> Void
   let openWord: (DictionaryEntry) -> Void
 
   var body: some View {
@@ -105,15 +102,19 @@ struct ExampleSentenceSections: View {
         Section {
           JapaneseExampleRowContent(
             example: example,
-            highlightedQuery: highlightedQuery,
-            highlightedEntry: highlightedEntry,
-            japaneseTextAnalysisClient: japaneseTextAnalysisClient,
             presentation: presentation(index),
-            speak: { speechSynthesisClient.speak(example.japanese) },
+            speak: { speechSynthesisClient.speak(example.sentence.japanese) },
             openWord: openWord
           )
         } header: {
           if index == 0 { Text(title) }
+        }
+        .compactSectionSpacing()
+      }
+      if hasMore {
+        Section {
+          MoreExamplesRow(load: loadMore)
+            .id(examples.count)
         }
         .compactSectionSpacing()
       }
@@ -134,7 +135,7 @@ struct JapaneseExampleRowContent: View {
     }
 
     struct Configuration {
-      let tokenPresentation: LinkedJapaneseText.Presentation
+      let tokenPresentation: LinkedJapaneseWords.Presentation
       let tokenIdentifierPrefix: String
       let japaneseIdentifier: String?
       let wordSelector: WordSelectorConfiguration?
@@ -143,8 +144,6 @@ struct JapaneseExampleRowContent: View {
       let englishIdentifier: String
       let rowIdentifier: String
       let combinesRowAccessibility: Bool
-      let highlightsCurrentEntry: Bool
-      let highlightsQuery: Bool
     }
 
     var configuration: Configuration {
@@ -162,9 +161,7 @@ struct JapaneseExampleRowContent: View {
           speakerIdentifier: "example.speaker.\(index)",
           englishIdentifier: "example.english.\(index)",
           rowIdentifier: "example.row.\(index)",
-          combinesRowAccessibility: false,
-          highlightsCurrentEntry: false,
-          highlightsQuery: true
+          combinesRowAccessibility: false
         )
       case .wordDetail(let index):
         Configuration(
@@ -176,9 +173,7 @@ struct JapaneseExampleRowContent: View {
           speakerIdentifier: "word-detail.example-speaker.\(index)",
           englishIdentifier: "word-detail.example-english.\(index)",
           rowIdentifier: "word-detail.example.\(index)",
-          combinesRowAccessibility: true,
-          highlightsCurrentEntry: true,
-          highlightsQuery: false
+          combinesRowAccessibility: true
         )
       case .conjugatedForm(let kind, let index):
         Configuration(
@@ -190,9 +185,7 @@ struct JapaneseExampleRowContent: View {
           speakerIdentifier: "conjugations.example-speaker.\(kind).\(index)",
           englishIdentifier: "conjugations.example-english.\(kind).\(index)",
           rowIdentifier: "conjugations.example.\(kind).\(index)",
-          combinesRowAccessibility: true,
-          highlightsCurrentEntry: false,
-          highlightsQuery: true
+          combinesRowAccessibility: true
         )
       }
     }
@@ -200,12 +193,8 @@ struct JapaneseExampleRowContent: View {
 
   @Environment(\.dynamicTypeSize) private var dynamicTypeSize
   @ScaledMetric(relativeTo: .body) private var contentSpacing: CGFloat = 8
-  @State private var wordSelectionTokens: [JapaneseTextToken] = []
 
-  let example: ExampleSentence
-  let highlightedQuery: SearchQuery
-  let highlightedEntry: DictionaryEntry?
-  let japaneseTextAnalysisClient: JapaneseTextAnalysisClient
+  let example: LinkedExample
   let presentation: Presentation
   let speak: () -> Void
   let openWord: (DictionaryEntry) -> Void
@@ -215,7 +204,7 @@ struct JapaneseExampleRowContent: View {
     if configuration.combinesRowAccessibility {
       content
         .accessibilityElement(children: .contain)
-        .accessibilityLabel("\(example.japanese), \(example.english)")
+        .accessibilityLabel("\(example.sentence.japanese), \(example.sentence.english)")
         .accessibilityIdentifier(configuration.rowIdentifier)
     } else {
       content
@@ -263,7 +252,7 @@ struct JapaneseExampleRowContent: View {
       }
 
       if readingAidPreferences.showsTranslations {
-        Text(example.english)
+        Text(example.sentence.english)
           .font(.body)
           .foregroundStyle(.secondary)
           .frame(maxWidth: .infinity, alignment: .leading)
@@ -274,17 +263,14 @@ struct JapaneseExampleRowContent: View {
   }
 
   private var japanese: some View {
-    LinkedJapaneseText(
-      text: example.japanese,
-      highlightedQuery: highlightedQuery,
-      highlightedEntry: highlightedEntry,
-      japaneseTextAnalysisClient: japaneseTextAnalysisClient,
+    LinkedJapaneseWords(
+      text: example.sentence.japanese,
+      tokens: example.words,
+      isAnalyzed: true,
       identifierPrefix: configuration.tokenIdentifierPrefix,
       presentation: configuration.tokenPresentation,
       japaneseIdentifier: configuration.japaneseIdentifier,
-      highlightsCurrentEntry: configuration.highlightsCurrentEntry,
-      highlightsQuery: configuration.highlightsQuery,
-      tokensChanged: updateWordSelectionTokens,
+      openCandidates: nil,
       openWord: openWord
     )
     .frame(maxWidth: .infinity, alignment: .leading)
@@ -294,7 +280,7 @@ struct JapaneseExampleRowContent: View {
     Button(action: speak) {
       Image(systemName: "speaker.wave.2")
         .font(.headline)
-        .frame(minWidth: 48, minHeight: 48)
+        .frame(minWidth: Self.controlSide, minHeight: Self.controlSide)
         .contentShape(Rectangle())
     }
     .contentShape(Rectangle())
@@ -310,8 +296,8 @@ struct JapaneseExampleRowContent: View {
       } label: {
         Text("Words")
           .font(.headline)
-          .frame(minWidth: 48)
-          .frame(minHeight: 48)
+          .frame(minWidth: Self.controlSide)
+          .frame(minHeight: Self.controlSide)
           .contentShape(Rectangle())
       }
       .buttonStyle(.plain)
@@ -321,13 +307,11 @@ struct JapaneseExampleRowContent: View {
     }
   }
 
-  private var hasWordSelection: Bool { !wordSelectionTokens.isEmpty }
-
-  private func updateWordSelectionTokens(_ tokens: [JapaneseTextToken]) {
-    let selectable = tokens.filter { $0.entry != nil || !$0.candidateEntries.isEmpty }
-    guard selectable.map(\.id) != wordSelectionTokens.map(\.id) else { return }
-    wordSelectionTokens = selectable
+  private var wordSelectionTokens: [JapaneseTextToken] {
+    example.words.filter { $0.entry != nil || !$0.candidateEntries.isEmpty }
   }
+
+  private var hasWordSelection: Bool { !wordSelectionTokens.isEmpty }
 
   @ViewBuilder
   private func wordSelectionActions(

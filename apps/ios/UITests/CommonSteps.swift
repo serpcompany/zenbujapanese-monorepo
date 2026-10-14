@@ -26,6 +26,26 @@ extension ZenbuUITestCase {
     return row
   }
 
+  func openTaberu(in app: XCUIApplication) {
+    search("taberu", in: app)
+    tap(
+      app.descendants(matching: .any)
+        .matching(NSPredicate(format: "identifier BEGINSWITH 'result.' AND label BEGINSWITH '食べる'"))
+        .firstMatch)
+  }
+
+  @discardableResult
+  func openAFormOfTaberu(in app: XCUIApplication) -> String {
+    openTaberu(in: app)
+    tap(find("word-detail.conjugations", in: app), toShow: find("conjugations.screen", in: app))
+    assertOnScreen(find("conjugations.screen", in: app), in: app)
+    let prefix = "conjugations.row."
+    let form = waitFor(firstElement(identifiedBy: prefix, in: app))
+    let kind = String(form.identifier.dropFirst(prefix.count))
+    tap(form)
+    return kind
+  }
+
   func menuChoices(in app: XCUIApplication) -> XCUIElementQuery {
     device == .mac ? app.windows.menuItems : app.buttons
   }
@@ -136,13 +156,7 @@ extension ZenbuUITestCase {
     for _ in 0..<12 {
       if isReachable(element, in: app, within: container) { break }
       if let laidOut = laidOutFrame(of: element) { isAbove = laidOut.midY < area.frame.midY }
-      if device == .mac {
-        scrolled.scroll(byDeltaX: 0, deltaY: isAbove ? 150 : -150)
-      } else if isAbove {
-        scrolled.swipeDown(velocity: .slow)
-      } else {
-        scrolled.swipeUp(velocity: .slow)
-      }
+      scroll(scrolled, back: isAbove)
     }
     return waitFor(element)
   }
@@ -160,6 +174,16 @@ extension ZenbuUITestCase {
     else { return nil }
     let shown = "\(bar.label), \(bar.value ?? "")"
     return shown.hasSuffix(", 100%") ? nil : shown
+  }
+
+  func scroll(_ area: XCUIElement, back: Bool) {
+    if device == .mac {
+      area.scroll(byDeltaX: 0, deltaY: back ? 150 : -150)
+    } else if back {
+      area.swipeDown(velocity: .slow)
+    } else {
+      area.swipeUp(velocity: .slow)
+    }
   }
 
   func shrinkWindow(in app: XCUIApplication) {

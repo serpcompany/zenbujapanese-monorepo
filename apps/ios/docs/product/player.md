@@ -88,12 +88,16 @@ player is by hand; the UI tests stand in for it with a local player that answers
   Check: UI `PlayerWatchUITests.testAVideoListsItsCaptionCardsWithTheShareOfWordsKnown` (each
   card's translation); package `YouTubeCaptionsTests`, `SentenceTranslationPairingTests`,
   `TranslationSentenceTests`, and `CaptionCardSizeTests`.
-- **Comprehension.** Every caption line is analyzed when the video opens. The known share counts
-  each occurrence of a dictionary word, leaving out particles, auxiliaries, punctuation, and text
-  the dictionary doesn't recognize, and updates as words are marked known. Recent shows the last
-  figure as a pill on each thumbnail.
-  Check: package `PlayerReadingAidTests` (counting known words among countable occurrences); UI
-  `PlayerWatchUITests.testAVideoListsItsCaptionCardsWithTheShareOfWordsKnown`.
+- **Comprehension.** Every caption line is counted when the video opens, and the line reads
+  **Counting known words…** until the count is ready. The known share counts each occurrence of
+  a dictionary word, leaving out particles, auxiliaries, punctuation, and text the dictionary
+  doesn't recognize, and updates as words are marked known. Leaving the video stops a count
+  still running. Recent shows the last figure as a pill on each thumbnail.
+  Check: package `KnownWordCountTests` (the words fixed captions count, each by its ID, what a
+  learner who knows two of them sees, and a count that stops when it is cancelled) and
+  `PlayerReadingAidTests` (counting known words among countable occurrences); UI
+  `PlayerWatchUITests.testAVideoListsItsCaptionCardsWithTheShareOfWordsKnown` (0 of 12 words
+  known for its three captions).
 - **Playback controls.** A compact bar on its own background sits between the player and the
   caption cards. A thin scrubber along its top edge can be dragged to any point. Below it, the
   elapsed and total time sit beside buttons that go to the previous line, play or pause, and go

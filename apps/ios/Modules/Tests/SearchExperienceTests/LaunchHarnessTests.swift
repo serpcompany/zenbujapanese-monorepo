@@ -21,6 +21,20 @@ struct LaunchHarnessTests {
     #expect(!LaunchHarness.erasesSavedState(environment: fresh, bundleID: nil))
   }
 
+  @Test("linking answers are held only in a launch that asks for it")
+  func heldLinkingIsAskedFor() {
+    #expect(LaunchHarness.holdsLinking([LaunchHarness.holdLinkingKey: "1"]))
+    #expect(!LaunchHarness.holdsLinking([LaunchHarness.holdLinkingKey: "0"]))
+    #expect(!LaunchHarness.holdsLinking([:]))
+  }
+
+  @Test("linking fails only for as many answers as a launch asks for")
+  func failedLinkingCountsAnswers() {
+    #expect(LaunchHarness.linkingFailures([LaunchHarness.failLinkingKey: "2"]) == 2)
+    #expect(LaunchHarness.linkingFailures([LaunchHarness.failLinkingKey: "some"]) == 0)
+    #expect(LaunchHarness.linkingFailures([:]) == 0)
+  }
+
   @Test("each results list Search draws is recorded only when a UI test asks, with how many of its rows have chips")
   func drawnResults() {
     #expect(LaunchHarness.recordsDrawnResults([LaunchHarness.drawnResultsKey: "1"]))

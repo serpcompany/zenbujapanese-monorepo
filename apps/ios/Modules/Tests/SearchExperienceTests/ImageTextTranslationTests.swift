@@ -37,7 +37,8 @@ struct ImageTextTranslationTests {
             JapaneseTextToken(
               id: 0, surface: text, entry: nil, scalarRange: 0..<text.unicodeScalars.count)
           ]
-        }),
+        },
+        countedWords: { _ in [] }),
       translationClient: NaturalTranslationClient(
         availability: { .installed },
         translateAllInstalled: { sources in

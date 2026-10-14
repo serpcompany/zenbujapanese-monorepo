@@ -20,6 +20,7 @@ struct SearchLatencyTests {
     "taberu", "inu", "kau", "kou",
   ]
   static let kanji = ["要", "日", "人", "食", "行", "生", "大", "一"]
+  static let exampleWords = ["食べる", "行く", "学校", "水", "見る"]
   static let passes = 5
 
   @Test("prints each query's uncached search time and the memory the searches reach")
@@ -93,8 +94,8 @@ struct SearchLatencyTests {
   func measureLinking() async throws {
     let clock = ContinuousClock()
     var sentences: [ExampleSentence] = []
-    for word in ["食べる", "行く", "学校", "水", "見る"] {
-      sentences += await ExampleSentenceClient.live.listed(SearchQuery(word), nil, false).prefix(40)
+    for word in Self.exampleWords {
+      sentences += await Self.listed(word).prefix(40).map(\.sentence)
     }
     var first: [Double] = []
     var again: [Double] = []
@@ -307,10 +308,9 @@ struct SearchLatencyTests {
     }
     report("each search's example count")
     let analysis = JapaneseTextAnalysisClient.live()
-    let sentences = await ExampleSentenceClient.live.listed(SearchQuery("食べる"), nil, false)
     var words = 0
-    for sentence in sentences.prefix(40) {
-      words += await analysis.linkedTokens(sentence.japanese, SearchQuery(""), nil).count
+    for example in await Self.listed("食べる").prefix(40) {
+      words += await analysis.linkedTokens(example.sentence.japanese, SearchQuery(""), nil).count
     }
     report("the tokenizer's start and \(words) linked words")
     let kanji = KanjiLookupClient.live(lookupClient: .live)
@@ -342,14 +342,8 @@ struct SearchLatencyTests {
         + "\(Self.milliseconds(again)) again; Foundation's own took \(Self.milliseconds(foundation))")
 
     var sentences: [[JapaneseTextToken]] = []
-    for word in ["食べる", "行く", "学校", "水", "見る"] {
-      for sentence in await ExampleSentenceClient.live.listed(SearchQuery(word), nil, false)
-        .prefix(40)
-      {
-        sentences.append(
-          await JapaneseTextAnalysisClient.live().linkedTokens(
-            sentence.japanese, SearchQuery(""), nil))
-      }
+    for word in Self.exampleWords {
+      sentences += await Self.listed(word).prefix(40).map(\.words)
     }
     let spoken = clock.measure {
       for tokens in sentences { _ = core.romaji(of: tokens.map { ($0.surface, $0.reading) }) }
@@ -391,13 +385,19 @@ struct SearchLatencyTests {
         + "\(Self.milliseconds(checkedAgain)) again")
   }
 
-  private static func summary(_ timings: [Double]) -> String {
+  static func listed(_ word: String) async -> [LinkedExample] {
+    await ExamplePage.every {
+      await ExampleSentenceClient.live.listed(SearchQuery(word), nil, false, $0)
+    }.examples
+  }
+
+  static func summary(_ timings: [Double]) -> String {
     let sorted = timings.sorted()
     guard let worst = sorted.last else { return "nothing measured" }
     return String(format: "median %.2f ms, worst %.2f ms", sorted[sorted.count / 2], worst)
   }
 
-  private static func value(_ duration: Duration) -> Double {
+  static func value(_ duration: Duration) -> Double {
     Double(duration.components.seconds) * 1_000
       + Double(duration.components.attoseconds) / 1_000_000_000_000_000
   }
@@ -406,7 +406,7 @@ struct SearchLatencyTests {
     String(format: "%.1f ms", value(duration))
   }
 
-  private static func footprint() -> (current: UInt64, peak: UInt64) {
+  static func footprint() -> (current: UInt64, peak: UInt64) {
     var info = task_vm_info_data_t()
     var count = mach_msg_type_number_t(
       MemoryLayout<task_vm_info_data_t>.size / MemoryLayout<natural_t>.size)

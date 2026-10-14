@@ -60,12 +60,11 @@ these and decodes the answer; [The app's side](#the-apps-side) says which type a
 - **Every response shape has a contract number.** `artifact/contract.ts` names each answer the
   service gives (`DictionaryContract`) and the number of their current shapes
   (`dictionaryContract`), which the service sends and the website compares with its own. The site
-  and the service deploy separately, in either order, so a shape change makes them disagree for
-  a few minutes. A mismatch is logged, never refused: make a change the older side can still
-  read, such as adding a field that the newer side doesn't yet rely on. `artifact/contract.test.ts`
-  expands every shape with the TypeScript compiler and fails when one changes without a new
-  contract number: raise it by one and record the new shape under it, never changing a recorded
-  one.
+  and the service deploy separately, in either order, so a shape change makes them disagree for a
+  few minutes. A mismatch is logged, never refused: make a change the older side can still read,
+  such as adding a field that the newer side doesn't yet rely on. `artifact/contract.test.ts`
+  expands every shape with the TypeScript compiler and fails when one changes without a new contract
+  number: raise it by one and record the new shape under it, never changing a recorded one.
 
 ## What a client passes in
 
@@ -101,7 +100,7 @@ modules, files, or event loop of its own, which is how the app runs it in JavaSc
     (`stopIfInterrupted` in `search/database.ts`) and throws `interruptedSearch`. Without it a
     learner who keeps typing would wait for each abandoned prefix, such as `s`, to finish ranking
     its tens of thousands of candidates. A long loop added to `search/` over a query's candidates
-    needs the same check.
+    needs the same check; `countedWords` asks before each line.
   - `tokenizerFile(name)` answers one of the tokenizer's dictionary files, unpacked, as an
     `ArrayBuffer`, or null. The core asks for all eleven the first time it tokenizes
     ([The tokenizer](#the-tokenizer)). A host without the files is asked for a sentence's words
@@ -135,9 +134,10 @@ modules, files, or event loop of its own, which is how the app runs it in JavaSc
   | `romaji`, `sentenceRomaji` | A reading; a sentence's words, each with its surface and reading | The reading in romaji, or null for one with kanji in it; the sentence in romaji, words spaced and punctuation kept with its word, or null when a word has no kana reading |
   | `checkExamples` | — | True, or an error saying which example table or pack is missing or wrong |
   | `tokenizerReady` | — | Whether the text part can tokenize. With the host's files it reads them now, so the first sentence doesn't wait for them, and is false when one is missing or wrong. |
-  | `exampleCount`, `resultsExampleCount`, `resultsExamples` | A query, or a query with the results' primary entry | The Example Sentences row's count, and its sentences |
-  | `entryExamples`, `formExamples` | An entry's ID; a conjugated form | A word page's sentences with their count, and a form's |
-  | `linkedTokens` | A text, the page's query, and its entry | Each word with its place in the text, its entry or candidates, the furigana to draw, whether it is the page's word or matches the query, which neighbour a punctuation mark stays with on a line (`attaches`), and whether it counts toward comprehension (`counted`: linked to an entry and not a function word) |
+  | `exampleCount`, `resultsExampleCount` | A query, or a query with the results' primary entry | The Example Sentences row's count |
+  | `resultsExamples`, `entryExamples`, `formExamples` | A query with the results' primary entry, an entry's ID, or a conjugated form, each with `from` and an optional `limit` | Examples from `from` to the end of its page of 25, or a `limit` of 1 or more if fewer (the answer then says `cutShort`): each sentence with its words as `linkedTokens` answers them, the screen's words accented, and the list's size (`listed`). Example Sentences adds its count line, a word its `count` and `truncated` |
+  | `linkedTokens` | A text, the page's query, and its entry | Each word with its place in the text, its entry or candidates, the furigana to draw, its `accent` (`entry` on the page entry's word here; an example page says `query` on the words of its query), and which neighbour a punctuation mark stays with on a line (`attaches`) |
+  | `countedWords` | A list of lines | The ID of each word that counts toward comprehension, in order, once each time it occurs: one linked to a single entry that is not a function word |
   | `resultsScreen` | A search's answer, the Example Sentences count, and the learner's state (Sort By, Filter, known words, and whether the query was picked in the radical panel) | `LearnerResultsScreen`: sections, rows with chips, the menu with each choice's title and announcement, notices, and what VoiceOver reads. A one-character query from the radical panel lists only its leading words. |
   | `wordRows` | Entries, and which the learner knows | A sheet's candidate rows, with their chips |
   | `ruby` | A surface and its reading | Furigana segments, kanji by kanji where one split fits |
@@ -150,11 +150,10 @@ modules, files, or event loop of its own, which is how the app runs it in JavaSc
   | `sourceCredits` | `app` or `website` | That client's source credits and conversion notice |
 
 - **The host reads the entries it shows.** Answers name entries by Language Reference ID, and the
-  host reads each from the artifact itself. A page's method takes the entry the host read as its
-  argument.
+  host reads each from the artifact itself. A page's method takes the entry the host read.
 - **A text's words cost one or two statements.** `linkedTokens` looks every word's forms up in one
   round (`entriesMatchingFirstForms`), then the forms still unmatched, and caches by form, so a
-  page of sentences mostly asks nothing.
+  page mostly asks nothing. `countedWords` looks all its lines up together and keeps 4,000 lines.
 - **A call is an object.** `embeddedEndpoint(...).begin(method, argument)` starts a call and returns
   it. Its `outcome()` is a JSON string: `{"value": ...}`, `{"error": message}`, or `{"analyze":
   text}` when a call needs the words of a sentence from a host that gave no `tokenize`. The host
@@ -192,11 +191,10 @@ time it tokenizes. It is the only tokenizer: the app runs it in JavaScriptCore, 
 website's dictionary service runs it in Node (`apps/dictionary-api/src/tokenizer.ts`).
 
 - **It is a port of kuromoji.js 0.1.2** (Apache-2.0, Takuya Asano; the license ships beside the
-  dictionary files, `Resources/Kuromoji/LICENSE-2.0.txt`), which both clients ran until
-  2026-10-11, and it answers exactly as kuromoji.js did, so no sentence links differently than
-  it used to. That includes what kuromoji.js got wrong, because the rest of the core already
-  handles it (`kuromojiCandidates` shows a sentence whose tokens don't tile it as one unlinked
-  word):
+  dictionary files, `Resources/Kuromoji/LICENSE-2.0.txt`), which both clients ran until 2026-10-11,
+  and it answers exactly as kuromoji.js did, so no sentence links differently than it used to. That
+  includes what kuromoji.js got wrong, because the rest of the core already handles it
+  (`kuromojiCandidates` shows a sentence whose tokens don't tile it as one unlinked word):
   - a sentence is split after every 、 and 。, and the words of each later part are numbered from
     the last word of the part before, which is off when that word is longer than one character;
   - a word's place counts characters, but a run of unknown characters outside the basic plane is
@@ -260,7 +258,7 @@ Paths are relative to `apps/ios/Modules/Sources/SearchExperience/`.
 | --- | --- | --- |
 | `LookupClient.swift` (`LanguageReferenceData`) | `search`, `entriesMatchingFirstForms`, `entriesContainingKanji`, `websiteRoute`, `relatedWord`, `savedWord` | Search, an exact form's entries, a kanji's words, what a website link opens, and the entry a related or saved word opens; it reads the entries itself |
 | `SearchQuery.swift` | `normalizeQuery` | The query every screen holds |
-| `DictionaryTextData.swift` (`ExampleSentenceClient`, `JapaneseTextAnalysisClient`) | `checkExamples`, `tokenizerReady`, the example methods, `linkedTokens` | Example sentences and linked words, with each word's line-breaking and whether `Comprehension` counts it. It hands the core the tokenizer's files (`TokenizerDictionary.swift`). |
+| `DictionaryTextData.swift` (`ExampleSentenceClient`, `JapaneseTextAnalysisClient`) | `checkExamples`, `tokenizerReady`, the example methods, `linkedTokens`, `countedWords` | Example sentences, linked words with each word's line-breaking, and the words `Comprehension` counts. It hands the core the tokenizer's files (`TokenizerDictionary.swift`). |
 | `PresentationCore.swift` (`RomajiReadingAidText`, `LinkedJapaneseText`) | `romaji`, `sentenceRomaji` | The Romaji reading aid, for a reading and for a sentence |
 | `RadicalLookupClient.swift` (`RadicalInputView`) | `radicalPanel` | The radical panel's kanji and radicals |
 | `KanjiStrokeOrderClient.swift` | `kanjiStrokes` | The strokes Kanji Detail draws |
@@ -293,10 +291,9 @@ The core answers as the Swift it replaced did, which the suites pin.
 - **Characters.** A Swift `Character` is an extended grapheme cluster, so the core iterates
   `graphemes` wherever the Swift iterated Characters. `graphemes` and `graphemeCount` skip
   segmenting when every UTF-16 unit is a grapheme of its own (printable ASCII, and the CJK, kana,
-  and full-width blocks less their combining marks): `Intl.Segmenter` is slow in an engine
-  without a JIT, linking asks for every word's graphemes, and example retrieval counts every
-  matching sentence. `normalizeQuery` likewise returns a folded query that has no separator as
-  it is.
+  and full-width blocks less their combining marks): `Intl.Segmenter` is slow in an engine without a
+  JIT, linking asks for every word's graphemes, and example retrieval counts every matching
+  sentence. `normalizeQuery` likewise returns a folded query that has no separator as it is.
 - **Order.** `compareStrings` is Swift's `<`: by Unicode scalar, not UTF-16 unit; ranking compares
   fingerprints with it. SQLite compares a BLOB by its bytes, which lowercase hex keeps, and text by
   code point (`compareCodePoints`); its `instr()` and `length()` count code points, so `kanjiWords`
@@ -317,16 +314,15 @@ The core answers as the Swift it replaced did, which the suites pin.
   there, whatever the client binds.
 - **Romaji.** The app's romaji was Foundation's `applyingTransform(.toLatin)`, which is ICU's
   Any-Latin. `detail/romaji.ts` is that transform for kana, rule for rule, from the rules and
-  filters the system's ICU 78 holds: the text is taken a run of one script at a time; a hiragana
-  run is turned to katakana first, and only its kana, its voiced mark, and the long mark are
-  touched; a katakana run also turns 、 and 。 into a comma and a full stop; a rule sees the
-  text on either side of its run, so っ before a katakana syllable still doubles it. It keeps
-  ICU's spellings as they were shown: kon'nichiha, toukyou, hanadji, and a tilde before a small
-  kana that forms no syllable (ウィ is u~i). On the bundled data it differs from Foundation for
-  no reading and no example sentence; it differs where a string holds another writing system,
-  which Foundation also turned to Latin letters (α to a, 한 to han, and 〇 to the Chinese líng)
-  and the core leaves as written. `apps/ios/LanguageData/Conformance/romaji.json` holds the
-  recorded cases.
+  filters the system's ICU 78 holds: the text is taken a run of one script at a time; a hiragana run
+  is turned to katakana first, and only its kana, its voiced mark, and the long mark are touched; a
+  katakana run also turns 、 and 。 into a comma and a full stop; a rule sees the text on either side
+  of its run, so っ before a katakana syllable still doubles it. It keeps ICU's spellings as they
+  were shown: kon'nichiha, toukyou, hanadji, and a tilde before a small kana that forms no syllable
+  (ウィ is u~i). On the bundled data it differs from Foundation for no reading and no example
+  sentence; it differs where a string holds another writing system, which Foundation also turned to
+  Latin letters (α to a, 한 to han, and 〇 to the Chinese líng) and the core leaves as written.
+  `apps/ios/LanguageData/Conformance/romaji.json` holds the recorded cases.
 - **Links.** `websitePage` in `detail/links.ts` reads a zenbujapanese.com link as the app's
   `WebsiteLink` did, and the website reads a word segment with the same `parseWordSegment`. A
   word link's entry number must be one JavaScript holds exactly; the Swift accepted any that fit
@@ -373,10 +369,9 @@ The core answers as the Swift it replaced did, which the suites pin.
   section ([`dictionary.md`](../../apps/web/docs/product/dictionary.md), Word page).
 - **Frequency.** The website uses only the app's default dictionaries, the bundled packs in
   `FrequencyPackCatalog.json`'s order: JLPT levels, then TUBELEX (YouTube). Tiers use Migaku's star
-  cutoffs, and JLPT levels map onto the same scale. `frequency.test.ts` pins each pack's
-  disclosure, and `coveredSourceRows` (the rows a rank's percentile divides by), to the catalog. A
-  row's label leaves out the app's "Double tap for details." hint, since the website's row opens a
-  dialog.
+  cutoffs, and JLPT levels map onto the same scale. `frequency.test.ts` pins each pack's disclosure,
+  and `coveredSourceRows` (the rows a rank's percentile divides by), to the catalog. A row's label
+  leaves out the app's "Double tap for details." hint, since the website's row opens a dialog.
 - **Furigana.** `rubySegments` anchors each kanji run on the first match of the next kana run, as
   the app does. `splitKanjiReading` splits a segment kanji by kanji only when exactly one split
   fits the kanji's KANJIDIC2 on and kun readings, taken without okurigana, with their voiced and
@@ -423,10 +418,11 @@ The core answers as the Swift it replaced did, which the suites pin.
   else matches pairs whose Japanese contains it. FTS4's `offsets()` reports UTF-8 byte offsets,
   which `example-search.ts` maps to UTF-16, then grapheme positions. The results' primary entry is
   highlighted for every search, and its own examples are listed for a romaji or deinflected query.
-- **A conjugated form's examples** are the sentences the app's search for the form finds,
-  normalized (a full-width Ｈ searches English), that contain it as written and in which the
-  tokenizer reads it as one word, so 見たかった and 見た目 aren't examples of 見た. The screen accents the
-  query as normalized.
+- **A conjugated form's examples** are the sentences the app's search for the form finds, normalized
+  (a full-width Ｈ searches English), that contain it as written and in which the tokenizer reads it
+  as one word, so 見たかった and 見た目 aren't examples of 見た. The screen accents the query as normalized.
+- **Accents.** `accentedPositions` (`artifact/word-examples.ts`) accents, for the service and the
+  app, the words linked to the page's entry or the words the query overlaps, as `screenAccent` says.
 - An example's `pairId` is the artifact's pair ID in hex; the app's ID prefixes it with `esp1_`.
 
 ## Artifact

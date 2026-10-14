@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest'
-import { analyzedWords, queryHighlights, usesForm } from './forms'
+import { analyzedWords, usesForm } from './forms'
 import type { MorphologyCandidate } from './morphology'
 
 const candidate = (surface: string, partOfSpeech: string[]): MorphologyCandidate => ({
@@ -42,25 +42,5 @@ describe('a form’s examples (ConjugatedForm.examples)', () => {
 
   test('a failed analysis has no words, so no sentence uses the form', () => {
     expect(usesForm('猫を見た。', null, '見た')).toBe(false)
-  })
-})
-
-describe('the words a form’s screen accents (queryScalarRanges, matchesQuery)', () => {
-  test('accents each word that overlaps an occurrence of the form', () => {
-    expect(queryHighlights('猫を見た。', ['猫', 'を', '見た', '。'], '見た')).toEqual([2])
-    expect(queryHighlights('見たい', ['見', 'たい'], '見た')).toEqual([0, 1])
-    expect(queryHighlights('見た見た', ['見た', '見た'], '見た')).toEqual([0, 1])
-  })
-
-  test('counts Unicode scalars, as the app does', () => {
-    expect(queryHighlights('𠀋を見た', ['𠀋', 'を', '見た'], '見た')).toEqual([2])
-  })
-
-  test('accents nothing for a form whose query differs from its spelling, such as Ｈ (h)', () => {
-    expect(queryHighlights('Ｈです', ['Ｈ', 'です'], 'h')).toEqual([])
-  })
-
-  test('the words must spell the sentence', () => {
-    expect(() => queryHighlights('猫を見た', ['猫', '見た'], '見た')).toThrow()
   })
 })

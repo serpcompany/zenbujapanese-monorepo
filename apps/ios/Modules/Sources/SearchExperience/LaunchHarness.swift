@@ -6,6 +6,8 @@ enum LaunchHarness {
   static let signInStandInKey = "ZENBU_SIGN_IN_STAND_IN"
   static let youTubeStandInKey = "ZENBU_YOUTUBE_STAND_IN"
   static let accountStandInKey = "ZENBU_ACCOUNT_STAND_IN"
+  static let holdLinkingKey = "ZENBU_HOLD_LINKING"
+  static let failLinkingKey = "ZENBU_FAIL_LINKING"
   static let drawnResultsKey = "ZENBU_DRAWN_RESULTS"
   static let uiTestBundleSuffix = ".uitests"
   static let savedStateFolders = ["Zenbu Japanese", "FrequencyPacks", "Profile"]
@@ -29,6 +31,31 @@ enum LaunchHarness {
       false
     #endif
   }
+
+  static func holdsLinking(_ environment: [String: String]) -> Bool {
+    #if DEBUG
+      environment[holdLinkingKey] == "1"
+    #else
+      false
+    #endif
+  }
+
+  static let heldLinking: HeldAnswers? = {
+    guard holdsLinking(ProcessInfo.processInfo.environment) else { return nil }
+    let held = HeldAnswers()
+    held.letGoOnNotice()
+    return held
+  }()
+
+  static func linkingFailures(_ environment: [String: String]) -> Int {
+    #if DEBUG
+      environment[failLinkingKey].flatMap(Int.init) ?? 0
+    #else
+      0
+    #endif
+  }
+
+  static let failsLinkingAnswers = linkingFailures(ProcessInfo.processInfo.environment)
 
   static func recordsDrawnResults(_ environment: [String: String]) -> Bool {
     #if DEBUG

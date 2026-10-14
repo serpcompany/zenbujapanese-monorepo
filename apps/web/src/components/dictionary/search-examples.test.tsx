@@ -156,6 +156,7 @@ describe.runIf(gateEnabled)('a search’s examples match its Example Sentences r
 
 interface ExampleSearchCase {
   query: string
+  countText?: string
   ids?: string[]
   shown?: {
     japanese: string
@@ -217,6 +218,8 @@ describe.runIf(gateEnabled)('the rendered Example Sentences section matches the 
     const html = render(data)
     const rendered = readRenderedExamples(html)
 
+    const titleAndCount = `Example Sentences ${expected.countText} `
+    expect(visibleText(html).slice(0, titleAndCount.length)).toBe(titleAndCount)
     expect(rendered.map(example => example.position)).toEqual(
       ids.slice(0, examplesPerPage).map((_, position) => position)
     )

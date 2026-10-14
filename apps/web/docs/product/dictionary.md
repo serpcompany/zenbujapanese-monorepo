@@ -342,7 +342,7 @@ sentence's words in a Words menu beside it; the website links them inline in the
 is split across two lines (#682).
 
 - Source: `LinkedJapaneseText.swift` and `JapaneseExampleRowContent`'s `.dedicated` presentation
-  in `ExampleSentencesView.swift` (`ExampleSentencesScreen.queryScalarRanges`);
+  in `ExampleSentencesView.swift`; the core's `accentedPositions` (which words are accented);
   `JapaneseTextAnalysisClient.swift`; #462 design (inline links in example sentences; the owner's
   decision on #511 keeps them here).
 - Check: ES `shown[].tokens` (`surface`, `entry`, `candidates`, `queryMatch`) for the first 5
@@ -376,14 +376,14 @@ once. When the dictionary has been updated since the page loaded, it says so and
 
 **Title and count.** The section is titled Example Sentences. Under the title, a line says how
 many sentences it lists ("60 examples"; "The first 100 of more than 100 examples" when more match
-than the app's 100), as a word page's Examples section does. The app's screen is titled with the
-query, which the results page already shows, and has no count line.
+than the app's 100), as a word page's Examples section and the app's screen do. The app's screen
+is titled with the query, which the results page already shows.
 
-- Source: `ExampleSentencesView.swift` (`navigationTitle(query.value)`); the owner's decision of
-  2026-09-29 (keep the count line the preview showed), where the #511 review had chosen none;
-  ADR 0010 (a section in place of the page).
-- Check: `search-examples.test.tsx`, "sits at #examples, titled with its count, and shows each
-  one" and "says when it lists only the first 100 of more".
+- Source: `ExampleSentencesView.swift` (its title, and its count line since #537); the owner's
+  decision of 2026-09-29 (keep the count line the preview showed, and add it to the app).
+- Check: ES `countText` for 59 queries, replayed by the service's example search conformance and
+  rendered in the ES cases of `search-examples.test.tsx`, beside its "sits at #examples, titled
+  with its count, and shows each one" and "says when it lists only the first 100 of more".
 
 **No sentences.** A search without example sentences has no section, as it has no row.
 
@@ -716,25 +716,25 @@ the list; like the app, it finds a form's examples by its spelling alone.
 
 - Source: `ConjugatedForm.examples` in `ConjugationsView.swift`; `ExampleSentenceClient.search`
   (`retrieveJapanese`, `retrieveEnglish`); `JapaneseTextAnalysisClient.words`;
-  `LinkedJapaneseText.queryScalarRanges` and `matchesQuery` (the `.conjugatedForm` presentation);
+  the core's `accentedPositions`, which the app's `.conjugatedForm` presentation also draws;
   ADR 0009 (the app's analysis in the dictionary service); ADR 0010.
 - Check: WD `conjugations[].examples` (every example's pair ID in order, and the first 3 with each
   word's entry or candidates and whether it's accented), recorded with the helpers the screen uses
-  and compared by the service's WD replay (`detail.conformance.test.ts`), and drawn by
-  Conjugations rendered, which reads back every pair ID and the first 3's words, links, and
-  accents; `apps/dictionary-api/src/conformance/conjugation-examples.test.ts` ("a conjugated form's
-  examples"); `packages/dictionary-core/src/examples/forms.test.ts`; `conjugations.test.tsx`, "a
-  form’s examples link each word and accent the form’s words"; `src/lib/dictionary/data.test.ts`,
-  "a conjugated form’s examples come from the service, all at once for its row" and "a form’s
-  examples come from the fixtures without a service, all at once";
-  `src/app/dictionary/conjugations/[file]/route.test.ts`, "returns every one of a form's examples
-  at once", "a form no sentence uses has no examples", and "reads the form as written, not
-  normalized"; `word-page.interaction.test.tsx`, "a row opens its form, which loads its examples
-  once, from the JSON route", "an opened form lists the examples its route returns", and "a form
-  says so when its examples can’t load"; `apps/web/e2e/conjugations.spec.ts`, "a form opens to its
-  explanation, its pronounced form, and its examples" and "a form without examples says so"; smoke
-  "見る's conjugations and its past's examples match the app". WD has two forms that search
-  English, Ｈ (which finds 3 examples) and ＮＧ (which finds none).
+  and compared by the service's WD replay (`detail.conformance.test.ts`), and drawn by Conjugations
+  rendered, which reads back every pair ID and the first 3's words, links, and accents;
+  `apps/dictionary-api/src/conformance/conjugation-examples.test.ts` ("a conjugated form's
+  examples"); core `examples/forms.test.ts`, `artifact/word-examples.test.ts`;
+  `conjugations.test.tsx`, "a form’s examples link each word and accent the form’s words";
+  `src/lib/dictionary/data.test.ts`, "a conjugated form’s examples come from the service, all at
+  once for its row" and "a form’s examples come from the fixtures without a service, all at once";
+  `src/app/dictionary/conjugations/[file]/route.test.ts`, "returns every one of a form's examples at
+  once", "a form no sentence uses has no examples", and "reads the form as written, not normalized";
+  `word-page.interaction.test.tsx`, "a row opens its form, which loads its examples once, from the
+  JSON route", "an opened form lists the examples its route returns", and "a form says so when its
+  examples can’t load"; `apps/web/e2e/conjugations.spec.ts`, "a form opens to its explanation, its
+  pronounced form, and its examples" and "a form without examples says so"; smoke "見る's conjugations
+  and its past's examples match the app". WD has two forms that search English, Ｈ (which finds 3
+  examples) and ＮＧ (which finds none).
 
 ## Kanji details
 
