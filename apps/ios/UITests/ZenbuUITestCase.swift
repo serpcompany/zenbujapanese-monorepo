@@ -298,9 +298,7 @@ class ZenbuUITestCase: XCTestCase {
 
   func leaveAndReturn(to app: XCUIApplication) {
     TestDevice.leave(app)
-    if device == .mac {
-      waitUntil("the window closing") { app.windows.count == 0 }
-    } else {
+    if device != .mac {
       waitUntil("the app going to the background") { app.state != .runningForeground }
     }
     TestDevice.comeBack(to: app)

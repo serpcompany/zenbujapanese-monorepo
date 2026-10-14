@@ -1,13 +1,27 @@
 import Foundation
 import Observation
+import os
 
 @testable import TranslatorCore
 
 @MainActor
 func until(_ condition: @escaping @MainActor () -> Bool) async {
-  while !condition() {
-    await withCheckedContinuation { (changed: CheckedContinuation<Void, Never>) in
-      withObservationTracking { _ = condition() } onChange: { changed.resume() }
+  while !condition(), !Task.isCancelled {
+    let waiting = OSAllocatedUnfairLock<CheckedContinuation<Void, Never>?>(initialState: nil)
+    let resume: @Sendable () -> Void = {
+      waiting.withLock { held in
+        defer { held = nil }
+        return held
+      }?.resume()
+    }
+    await withTaskCancellationHandler {
+      await withCheckedContinuation { changed in
+        waiting.withLock { $0 = changed }
+        withObservationTracking { _ = condition() } onChange: { resume() }
+        if Task.isCancelled { resume() }
+      }
+    } onCancel: {
+      resume()
     }
   }
 }
