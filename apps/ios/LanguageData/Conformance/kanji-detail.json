@@ -54,6 +54,7 @@
       "readings" : [
         {
           "kind" : "on",
+          "spoken" : "On reading ヨウ, 要, main point, essential point, important thing",
           "value" : "ヨウ",
           "words" : [
             {
@@ -78,6 +79,7 @@
         },
         {
           "kind" : "kun",
+          "spoken" : "Kun reading い.る, 要る, to be needed, to be necessary, to be required, to be wanted, to need, to want",
           "value" : "い.る",
           "words" : [
             {
@@ -90,6 +92,7 @@
         },
         {
           "kind" : "kun",
+          "spoken" : "Kun reading かなめ, 要, pivot",
           "value" : "かなめ",
           "words" : [
             {
@@ -281,6 +284,7 @@
       "readings" : [
         {
           "kind" : "on",
+          "spoken" : "On reading ニチ, 日, Sunday",
           "value" : "ニチ",
           "words" : [
             {
@@ -312,6 +316,7 @@
         },
         {
           "kind" : "kun",
+          "spoken" : "Kun reading ひ, 日, day, days",
           "value" : "ひ",
           "words" : [
             {
@@ -343,6 +348,7 @@
         },
         {
           "kind" : "kun",
+          "spoken" : "Kun reading -か, 日, day of month",
           "value" : "-か",
           "words" : [
             {
@@ -411,6 +417,7 @@
         },
         {
           "kind" : "name",
+          "spoken" : "Name reading に, 日, Sunday",
           "value" : "に",
           "words" : [
             {
@@ -435,6 +442,7 @@
         },
         {
           "kind" : "name",
+          "spoken" : "Name reading にっ, 日光, sunlight, sunshine, sunbeams",
           "value" : "にっ",
           "words" : [
             {
@@ -660,6 +668,7 @@
       "readings" : [
         {
           "kind" : "on",
+          "spoken" : "On reading ホン, 本, book, volume, script",
           "value" : "ホン",
           "words" : [
             {
@@ -874,6 +883,7 @@
       "readings" : [
         {
           "kind" : "on",
+          "spoken" : "On reading ジン, 人, -ian (e.g. Italian), -ite (e.g. Tokyoite)",
           "value" : "ジン",
           "words" : [
             {
@@ -898,6 +908,7 @@
         },
         {
           "kind" : "on",
+          "spoken" : "On reading ニン, 人, counter for people",
           "value" : "ニン",
           "words" : [
             {
@@ -922,6 +933,7 @@
         },
         {
           "kind" : "kun",
+          "spoken" : "Kun reading ひと, 人, person, someone, somebody",
           "value" : "ひと",
           "words" : [
             {
@@ -953,6 +965,7 @@
         },
         {
           "kind" : "kun",
+          "spoken" : "Kun reading -と, 人, person",
           "value" : "-と",
           "words" : [
             {
@@ -965,6 +978,7 @@
         },
         {
           "kind" : "name",
+          "spoken" : "Name reading じ, 人, -ian (e.g. Italian), -ite (e.g. Tokyoite)",
           "value" : "じ",
           "words" : [
             {
@@ -989,6 +1003,7 @@
         },
         {
           "kind" : "name",
+          "spoken" : "Name reading と, 人, person",
           "value" : "と",
           "words" : [
             {
@@ -1205,6 +1220,7 @@
       "readings" : [
         {
           "kind" : "on",
+          "spoken" : "On reading ガク, 学, learning, scholarship, study, erudition, knowledge, education",
           "value" : "ガク",
           "words" : [
             {
@@ -1229,6 +1245,7 @@
         },
         {
           "kind" : "kun",
+          "spoken" : "Kun reading まな.ぶ, 学ぶ, to learn, to study, to take lessons in",
           "value" : "まな.ぶ",
           "words" : [
             {
@@ -1428,6 +1445,7 @@
       "readings" : [
         {
           "kind" : "on",
+          "spoken" : "On reading スイ, 水, Wednesday",
           "value" : "スイ",
           "words" : [
             {
@@ -1452,6 +1470,7 @@
         },
         {
           "kind" : "kun",
+          "spoken" : "Kun reading みず, 水, water (esp. cool or cold)",
           "value" : "みず",
           "words" : [
             {
@@ -1476,6 +1495,7 @@
         },
         {
           "kind" : "kun",
+          "spoken" : "Kun reading みず-, 水, water (esp. cool or cold)",
           "value" : "みず-",
           "words" : [
             {
@@ -1528,6 +1548,7 @@
         },
         {
           "kind" : "name",
+          "spoken" : "Name reading み, 水, water (esp. cool or cold)",
           "value" : "み",
           "words" : [
             {
@@ -1767,6 +1788,7 @@
       "readings" : [
         {
           "kind" : "on",
+          "spoken" : "On reading ケン, 見, view (of life, etc.), outlook",
           "value" : "ケン",
           "words" : [
             {
@@ -1791,6 +1813,7 @@
         },
         {
           "kind" : "kun",
+          "spoken" : "Kun reading み.る, 見る, to see, to look, to watch, to view, to observe",
           "value" : "み.る",
           "words" : [
             {
@@ -2000,6 +2023,7 @@
       "readings" : [
         {
           "kind" : "on",
+          "spoken" : "On reading ショク, 食, food, foodstuff",
           "value" : "ショク",
           "words" : [
             {
@@ -2031,6 +2055,7 @@
         },
         {
           "kind" : "kun",
+          "spoken" : "Kun reading く.う, 食う, to eat",
           "value" : "く.う",
           "words" : [
             {
@@ -2259,6 +2284,7 @@
       "readings" : [
         {
           "kind" : "on",
+          "spoken" : "On reading コウ, 高, high",
           "value" : "コウ",
           "words" : [
             {
@@ -2283,6 +2309,7 @@
         },
         {
           "kind" : "kun",
+          "spoken" : "Kun reading たか.い, 高い, high, tall",
           "value" : "たか.い",
           "words" : [
             {
@@ -2295,6 +2322,7 @@
         },
         {
           "kind" : "kun",
+          "spoken" : "Kun reading たか, 高, quantity, amount, volume, number, amount of money",
           "value" : "たか",
           "words" : [
             {
@@ -2347,6 +2375,7 @@
         },
         {
           "kind" : "name",
+          "spoken" : "Name reading こ, 高, high",
           "value" : "こ",
           "words" : [
             {
@@ -2378,6 +2407,7 @@
         },
         {
           "kind" : "name",
+          "spoken" : "Name reading た, 高, quantity, amount, volume, number, amount of money",
           "value" : "た",
           "words" : [
             {
@@ -2580,6 +2610,7 @@
       "readings" : [
         {
           "kind" : "on",
+          "spoken" : "On reading セイ, 生, life, living",
           "value" : "セイ",
           "words" : [
             {
@@ -2604,6 +2635,7 @@
         },
         {
           "kind" : "on",
+          "spoken" : "On reading ショウ, 生姜, ginger (Zingiber officinale)",
           "value" : "ショウ",
           "words" : [
             {
@@ -2671,6 +2703,7 @@
         },
         {
           "kind" : "kun",
+          "spoken" : "Kun reading う.む, 生む, to give birth, to bear (child), to lay (eggs)",
           "value" : "う.む",
           "words" : [
             {
@@ -2704,6 +2737,7 @@
         },
         {
           "kind" : "kun",
+          "spoken" : "Kun reading き, 生, pure, undiluted, raw, crude",
           "value" : "き",
           "words" : [
             {
@@ -2722,6 +2756,7 @@
         },
         {
           "kind" : "kun",
+          "spoken" : "Kun reading なま, 生, raw, uncooked, fresh",
           "value" : "なま",
           "words" : [
             {
@@ -2734,6 +2769,7 @@
         },
         {
           "kind" : "kun",
+          "spoken" : "Kun reading なま-, 生, raw, uncooked, fresh",
           "value" : "なま-",
           "words" : [
             {
@@ -2746,6 +2782,7 @@
         },
         {
           "kind" : "kun",
+          "spoken" : "Kun reading な.る, 生る, to bear fruit",
           "value" : "な.る",
           "words" : [
             {
@@ -2772,6 +2809,7 @@
         },
         {
           "kind" : "kun",
+          "spoken" : "Kun reading -う, 生む, to give birth, to bear (child), to lay (eggs)",
           "value" : "-う",
           "words" : [
             {
@@ -2798,6 +2836,7 @@
         },
         {
           "kind" : "name",
+          "spoken" : "Name reading いく, 生, vital, virile, lively",
           "value" : "いく",
           "words" : [
             {
@@ -2929,6 +2968,7 @@
         },
         {
           "kind" : "name",
+          "spoken" : "Name reading ふ, 生, area of thick growth (of trees, grass, etc.)",
           "value" : "ふ",
           "words" : [
             {
@@ -3150,6 +3190,7 @@
       "readings" : [
         {
           "kind" : "on",
+          "spoken" : "On reading コウ, 行, going, travelling, traveling, journey, trip",
           "value" : "コウ",
           "words" : [
             {
@@ -3174,6 +3215,7 @@
         },
         {
           "kind" : "on",
+          "spoken" : "On reading ギョウ, 行, line (of text), row, verse",
           "value" : "ギョウ",
           "words" : [
             {
@@ -3198,6 +3240,7 @@
         },
         {
           "kind" : "on",
+          "spoken" : "On reading アン, 行脚, pilgrimage",
           "value" : "アン",
           "words" : [
             {
@@ -3210,6 +3253,7 @@
         },
         {
           "kind" : "kun",
+          "spoken" : "Kun reading い.く, 行く, to go, to move (towards), to head (towards), to leave (for)",
           "value" : "い.く",
           "words" : [
             {
@@ -3222,6 +3266,7 @@
         },
         {
           "kind" : "kun",
+          "spoken" : "Kun reading ゆ.く, 行方, (one's) whereabouts",
           "value" : "ゆ.く",
           "words" : [
             {
@@ -3248,6 +3293,7 @@
         },
         {
           "kind" : "kun",
+          "spoken" : "Kun reading -い.き, 行き, the way there, outbound leg, outbound trip, departing leg",
           "value" : "-い.き",
           "words" : [
             {
@@ -3260,6 +3306,7 @@
         },
         {
           "kind" : "kun",
+          "spoken" : "Kun reading -いき, 行き, the way there, outbound leg, outbound trip, departing leg",
           "value" : "-いき",
           "words" : [
             {
@@ -3272,6 +3319,7 @@
         },
         {
           "kind" : "kun",
+          "spoken" : "Kun reading おこな.う, 行う, to perform, to do, to conduct oneself, to carry out",
           "value" : "おこな.う",
           "words" : [
             {
@@ -3284,6 +3332,7 @@
         },
         {
           "kind" : "kun",
+          "spoken" : "Kun reading おこ.なう, 行う, to perform, to do, to conduct oneself, to carry out",
           "value" : "おこ.なう",
           "words" : [
             {
@@ -3296,6 +3345,7 @@
         },
         {
           "kind" : "name",
+          "spoken" : "Name reading いく, 行く, to go, to move (towards), to head (towards), to leave (for)",
           "value" : "いく",
           "words" : [
             {
@@ -3336,6 +3386,7 @@
         },
         {
           "kind" : "name",
+          "spoken" : "Name reading ゆく, 行方, (one's) whereabouts",
           "value" : "ゆく",
           "words" : [
             {
@@ -3529,6 +3580,7 @@
       "readings" : [
         {
           "kind" : "on",
+          "spoken" : "On reading ダイ, 大, large, big, great, huge, vast, major, important, serious, severe",
           "value" : "ダイ",
           "words" : [
             {
@@ -3553,6 +3605,7 @@
         },
         {
           "kind" : "on",
+          "spoken" : "On reading タイ, 大, nth year in the Taishō era (1912.7.30-1926.12.25)",
           "value" : "タイ",
           "words" : [
             {
@@ -3577,6 +3630,7 @@
         },
         {
           "kind" : "kun",
+          "spoken" : "Kun reading おお-, 大, large, big, great, major, important, serious, heavy, loud",
           "value" : "おお-",
           "words" : [
             {
@@ -3622,6 +3676,7 @@
         },
         {
           "kind" : "name",
+          "spoken" : "Name reading お, 大, large, big, great, major, important, serious, heavy, loud",
           "value" : "お",
           "words" : [
             {
@@ -3653,6 +3708,7 @@
         },
         {
           "kind" : "name",
+          "spoken" : "Name reading た, 大, nth year in the Taishō era (1912.7.30-1926.12.25)",
           "value" : "た",
           "words" : [
             {
@@ -3924,6 +3980,7 @@
       "readings" : [
         {
           "kind" : "on",
+          "spoken" : "On reading ゴ, 語, word, term",
           "value" : "ゴ",
           "words" : [
             {
@@ -3948,6 +4005,7 @@
         },
         {
           "kind" : "kun",
+          "spoken" : "Kun reading かた.る, 語る, to talk about, to speak of, to tell, to narrate",
           "value" : "かた.る",
           "words" : [
             {
@@ -4149,6 +4207,7 @@
       "readings" : [
         {
           "kind" : "on",
+          "spoken" : "On reading セイ, 静, stillness",
           "value" : "セイ",
           "words" : [
             {
@@ -4173,6 +4232,7 @@
         },
         {
           "kind" : "on",
+          "spoken" : "On reading ジョウ, 静脈, vein",
           "value" : "ジョウ",
           "words" : [
             {
@@ -4185,6 +4245,7 @@
         },
         {
           "kind" : "kun",
+          "spoken" : "Kun reading しず-, 静, quiet, calm, still",
           "value" : "しず-",
           "words" : [
             {
@@ -4209,6 +4270,7 @@
         },
         {
           "kind" : "kun",
+          "spoken" : "Kun reading しず.か, 静か, quiet, silent",
           "value" : "しず.か",
           "words" : [
             {
@@ -4429,6 +4491,7 @@
       "readings" : [
         {
           "kind" : "on",
+          "spoken" : "On reading カ, 家, -ist, -er",
           "value" : "カ",
           "words" : [
             {
@@ -4453,6 +4516,7 @@
         },
         {
           "kind" : "on",
+          "spoken" : "On reading ケ, 家, house, family",
           "value" : "ケ",
           "words" : [
             {
@@ -4465,6 +4529,7 @@
         },
         {
           "kind" : "kun",
+          "spoken" : "Kun reading いえ, 家, house, residence, dwelling, home",
           "value" : "いえ",
           "words" : [
             {
@@ -4489,6 +4554,7 @@
         },
         {
           "kind" : "kun",
+          "spoken" : "Kun reading や, 家主, landlord, landlady",
           "value" : "や",
           "words" : [
             {
@@ -4507,6 +4573,7 @@
         },
         {
           "kind" : "kun",
+          "spoken" : "Kun reading うち, 家, one's house, one's home, one's family, one's household",
           "value" : "うち",
           "words" : [
             {
@@ -4736,6 +4803,7 @@
       "readings" : [
         {
           "kind" : "on",
+          "spoken" : "On reading ゼン, 前, last (i.e. immediately preceding), previous, ex-, former",
           "value" : "ゼン",
           "words" : [
             {
@@ -4760,6 +4828,7 @@
         },
         {
           "kind" : "kun",
+          "spoken" : "Kun reading まえ, 前, in front (of), before (e.g. a building)",
           "value" : "まえ",
           "words" : [
             {
@@ -4784,6 +4853,7 @@
         },
         {
           "kind" : "kun",
+          "spoken" : "Kun reading -まえ, 前, in front (of), before (e.g. a building)",
           "value" : "-まえ",
           "words" : [
             {
@@ -5012,6 +5082,7 @@
       "readings" : [
         {
           "kind" : "on",
+          "spoken" : "On reading シ, 私, private affairs, personal matter",
           "value" : "シ",
           "words" : [
             {
@@ -5036,6 +5107,7 @@
         },
         {
           "kind" : "kun",
+          "spoken" : "Kun reading わたくし, 私, I, me",
           "value" : "わたくし",
           "words" : [
             {
@@ -5048,6 +5120,7 @@
         },
         {
           "kind" : "kun",
+          "spoken" : "Kun reading わたし, 私, I, me",
           "value" : "わたし",
           "words" : [
             {
@@ -5242,6 +5315,7 @@
       "readings" : [
         {
           "kind" : "on",
+          "spoken" : "On reading ビョウ, 猫額, (as small as a) cat's forehead",
           "value" : "ビョウ",
           "words" : [
             {
@@ -5260,6 +5334,7 @@
         },
         {
           "kind" : "kun",
+          "spoken" : "Kun reading ねこ, 猫, cat (esp. the domestic cat, Felis catus), feline",
           "value" : "ねこ",
           "words" : [
             {
@@ -5477,6 +5552,7 @@
       "readings" : [
         {
           "kind" : "on",
+          "spoken" : "On reading ブン, 分, part, portion, share",
           "value" : "ブン",
           "words" : [
             {
@@ -5501,6 +5577,7 @@
         },
         {
           "kind" : "on",
+          "spoken" : "On reading フン, 分, minute (unit of time)",
           "value" : "フン",
           "words" : [
             {
@@ -5525,6 +5602,7 @@
         },
         {
           "kind" : "on",
+          "spoken" : "On reading ブ, 分, part, portion, share",
           "value" : "ブ",
           "words" : [
             {
@@ -5775,6 +5853,7 @@
       "readings" : [
         {
           "kind" : "on",
+          "spoken" : "On reading キ, 気, spirit, mind, heart",
           "value" : "キ",
           "words" : [
             {
@@ -5799,6 +5878,7 @@
         },
         {
           "kind" : "on",
+          "spoken" : "On reading ケ, 気, sign, indication, trace, touch, feeling",
           "value" : "ケ",
           "words" : [
             {
@@ -5824,6 +5904,7 @@
         },
         {
           "kind" : "kun",
+          "spoken" : "Kun reading き, 気, spirit, mind, heart",
           "value" : "き",
           "words" : [
             {
@@ -6038,6 +6119,7 @@
       "readings" : [
         {
           "kind" : "on",
+          "spoken" : "On reading カイ, 会, meeting, assembly, party, gathering, conference, athletic meet",
           "value" : "カイ",
           "words" : [
             {
@@ -6062,6 +6144,7 @@
         },
         {
           "kind" : "on",
+          "spoken" : "On reading エ, 会, gathering (esp. Buddhist, festive, etc.)",
           "value" : "エ",
           "words" : [
             {
@@ -6080,6 +6163,7 @@
         },
         {
           "kind" : "kun",
+          "spoken" : "Kun reading あ.う, 会う, to meet, to encounter, to see",
           "value" : "あ.う",
           "words" : [
             {
@@ -6290,6 +6374,7 @@
       "readings" : [
         {
           "kind" : "on",
+          "spoken" : "On reading イチ, 一, one, 1",
           "value" : "イチ",
           "words" : [
             {
@@ -6314,6 +6399,7 @@
         },
         {
           "kind" : "on",
+          "spoken" : "On reading イツ, 一, one",
           "value" : "イツ",
           "words" : [
             {
@@ -6326,6 +6412,7 @@
         },
         {
           "kind" : "kun",
+          "spoken" : "Kun reading ひと-, 一, one",
           "value" : "ひと-",
           "words" : [
             {
@@ -6350,6 +6437,7 @@
         },
         {
           "kind" : "kun",
+          "spoken" : "Kun reading ひと.つ, 一月, one month",
           "value" : "ひと.つ",
           "words" : [
             {
@@ -6369,6 +6457,7 @@
         },
         {
           "kind" : "name",
+          "spoken" : "Name reading い, 一, one, 1",
           "value" : "い",
           "words" : [
             {
@@ -6393,6 +6482,7 @@
         },
         {
           "kind" : "name",
+          "spoken" : "Name reading いっ, 一, most, best",
           "value" : "いっ",
           "words" : [
             {
@@ -6452,6 +6542,7 @@
         },
         {
           "kind" : "name",
+          "spoken" : "Name reading ひ, 一, one",
           "value" : "ひ",
           "words" : [
             {
@@ -6476,6 +6567,7 @@
         },
         {
           "kind" : "name",
+          "spoken" : "Name reading ひとつ, 一月, one month",
           "value" : "ひとつ",
           "words" : [
             {
@@ -6668,6 +6760,7 @@
       "readings" : [
         {
           "kind" : "on",
+          "spoken" : "On reading オツ, 乙, (the) second (party, rank, etc.), B (grade), the latter",
           "value" : "オツ",
           "words" : [
             {
@@ -6692,6 +6785,7 @@
         },
         {
           "kind" : "on",
+          "spoken" : "On reading イツ, 乙夜, second division of the night (approx. 9pm to 11pm)",
           "value" : "イツ",
           "words" : [
             {
@@ -6704,6 +6798,7 @@
         },
         {
           "kind" : "kun",
+          "spoken" : "Kun reading おと-, 乙子, last child",
           "value" : "おと-",
           "words" : [
             {
@@ -6728,6 +6823,7 @@
         },
         {
           "kind" : "kun",
+          "spoken" : "Kun reading きのと, 乙, second in rank, second sign of the Chinese calendar",
           "value" : "きのと",
           "words" : [
             {
@@ -6961,6 +7057,7 @@
       "readings" : [
         {
           "kind" : "on",
+          "spoken" : "On reading ウツ, 鬱, depression, low spirits",
           "value" : "ウツ",
           "words" : [
             {
@@ -6992,6 +7089,7 @@
         },
         {
           "kind" : "kun",
+          "spoken" : "Kun reading ふさ.ぐ, 鬱ぐ, to feel depressed, to be in low spirits, to mope",
           "value" : "ふさ.ぐ",
           "words" : [
             {
@@ -7191,6 +7289,7 @@
       "readings" : [
         {
           "kind" : "on",
+          "spoken" : "On reading バ, 薔薇, rose",
           "value" : "バ",
           "words" : [
             {
@@ -7425,6 +7524,7 @@
       "readings" : [
         {
           "kind" : "on",
+          "spoken" : "On reading ロウ, 廊, corridor, passage, hall",
           "value" : "ロウ",
           "words" : [
             {

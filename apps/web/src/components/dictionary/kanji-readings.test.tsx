@@ -15,7 +15,12 @@ interface SuiteWord {
 
 interface KanjiCase {
   character: string
-  readings?: { kind: 'on' | 'kun' | 'name'; value: string; words: SuiteWord[] }[]
+  readings?: {
+    kind: 'on' | 'kun' | 'name'
+    value: string
+    spoken?: string
+    words: SuiteWord[]
+  }[]
 }
 
 const suite: { cases: KanjiCase[] } = JSON.parse(
@@ -87,9 +92,7 @@ describe('the rendered kanji Readings rows match the app', () => {
       return {
         row: `${reading.kind}.${reading.value}`,
         href: first ? pathFor(first) : null,
-        label: first
-          ? `${label} reading ${reading.value}, ${first.headword}, ${first.summary}`
-          : null,
+        label: reading.spoken ?? null,
         text: [
           label,
           reading.value,

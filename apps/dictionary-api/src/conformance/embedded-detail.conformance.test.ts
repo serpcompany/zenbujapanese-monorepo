@@ -238,9 +238,10 @@ describe.runIf(artifactAvailable)('the app’s word and kanji pages on the artif
             ...(grade === undefined ? {} : { grade: Number(grade) }),
             ...(jlpt === undefined ? {} : { jlpt }),
             meanings: page.meanings,
-            readings: page.readings.map(({ kind, value, words: matching }) => ({
+            readings: page.readings.map(({ kind, value, spoken, words: matching }) => ({
               kind,
               value,
+              ...(spoken === null ? {} : { spoken }),
               words: matching.map(suiteWord)
             })),
             ...(page.components.length > 0 ? { components: page.components } : {})

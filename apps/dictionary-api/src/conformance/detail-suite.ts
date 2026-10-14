@@ -85,7 +85,7 @@ export interface KanjiCase {
   grade?: number
   jlpt?: string
   meanings?: string[]
-  readings?: { kind: string; value: string; words: SuiteWord[] }[]
+  readings?: { kind: string; value: string; spoken?: string; words: SuiteWord[] }[]
   words?: SuiteWord[]
   elements?: { glyph: string; meanings: string[]; linkedOnReadings?: string[]; role: string }[]
   components?: string[]

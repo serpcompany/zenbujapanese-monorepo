@@ -492,7 +492,7 @@ each with the Frequency Details it opens), the conjugation table its part of spe
 form with the words `ConjugationsView` shows, the forms that share its spelling, and the
 examples its screen lists: every pair ID, in order, and the first 3 with their linked tokens
 and which of them the screen accents), kanji, and its first 25 examples with their linked
-tokens; for a kanji, its metrics, meanings, readings with their words, elements, 24 words, and
+tokens; for a kanji, its metrics, meanings, readings with words and labels, elements, 24 words, and
 whether it has stroke data. The views and the suite read the same models, so the suite records
 what the views draw. Each file pins the SHA-256 of every bundled artifact it was recorded
 against. After an intended change to either screen or its data, record them again with the same

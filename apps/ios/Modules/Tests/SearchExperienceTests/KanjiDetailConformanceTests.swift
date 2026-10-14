@@ -67,6 +67,7 @@ private struct KanjiDetailObserver {
         KanjiDetailCase.Reading(
           kind: reading.kind,
           value: reading.value,
+          spoken: reading.spoken,
           words: reading.words.map(KanjiDetailCase.Word.init)
         )
       }
@@ -121,6 +122,7 @@ private struct KanjiDetailCase: Codable {
   struct Reading: Codable {
     let kind: String
     let value: String
+    let spoken: String?
     let words: [Word]
   }
 

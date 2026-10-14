@@ -220,9 +220,10 @@ describe.runIf(artifactAvailable)('word and kanji detail conformance', () => {
       ...(rows.kanji.grade === null ? {} : { grade: rows.kanji.grade }),
       ...(jlpt === undefined ? {} : { jlpt }),
       meanings: detail.meanings,
-      readings: detail.readings.map(({ kind, value, words }) => ({
+      readings: detail.readings.map(({ kind, value, spoken, words }) => ({
         kind,
         value,
+        ...(spoken === null ? {} : { spoken }),
         words: words.map(suiteWord)
       })),
       words: detail.words.map(suiteWord),
