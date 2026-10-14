@@ -3,7 +3,7 @@ import Testing
 
 @testable import SearchExperience
 
-@Suite("Held answers")
+@Suite("Held answers", .timeLimit(.minutes(1)))
 struct HeldAnswersTests {
   private func at(_ second: TimeInterval) -> Date {
     Date(timeIntervalSince1970: second)
@@ -44,8 +44,8 @@ struct HeldAnswersTests {
     #expect(await held.letGo(heldBefore: at(9)) == 0)
   }
 
-  @Test("an answer asked for by a task that has already given up isn't held at all")
-  func anAnswerAskedAfterGivingUpIsNotHeld() async {
+  @Test("an answer asked for by a task that has already given up ends, and isn't left held")
+  func anAnswerAskedAfterGivingUpEnds() async {
     let held = HeldAnswers()
     let answer = Task {
       withUnsafeCurrentTask { $0?.cancel() }

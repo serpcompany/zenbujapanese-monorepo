@@ -29,13 +29,7 @@ struct LoadedExamplesTests {
       if holding.contains(batch.from) {
         let id = UUID()
         await withTaskCancellationHandler {
-          await withCheckedContinuation { waiting in
-            if Task.isCancelled {
-              waiting.resume()
-            } else {
-              held[batch.from, default: []].append((id, waiting))
-            }
-          }
+          await withCheckedContinuation { held[batch.from, default: []].append((id, $0)) }
         } onCancel: {
           Task { @MainActor in self.giveUp(id, from: batch.from) }
         }
@@ -74,7 +68,6 @@ struct LoadedExamplesTests {
     func answer(_ from: Int, read number: Int) {
       held[from]?.remove(at: number).waiting.resume()
     }
-
 
     private func giveUp(_ id: UUID, from: Int) {
       guard let index = held[from]?.firstIndex(where: { $0.id == id }) else { return }
