@@ -48,15 +48,16 @@ Check: UI `TranslateUITests.testTheHomeListsFiveWaysUnderSpokenAndWritten`; pack
 | --- | --- |
 | **Conversation** | Two-way and live. Each turn is detected as Japanese or English. Translations play out loud, and the microphone keeps listening while they play, so someone who keeps talking isn't lost. A translation never starts while someone is talking. The speaker button silences them. |
 | **Listen** | One-way and live, for a TV, a guide, or announcements. Hears Japanese and English, each sentence detected as either, from a distance and without voice isolation. The translation leads each card (English under Japanese speech, Japanese under English), and each translation plays as soon as it's ready. With earphones the microphone keeps listening; on the iPhone's speaker it waits while each translation plays, so it doesn't hear itself. The speaker button silences them, as in Conversation. |
-| **Image** | Opens a centered **Image** alert with **Take Photo**, **Photo Library**, and **Cancel**; on the Mac, which has no camera picker, **Paste Image** takes **Take Photo**'s place. The camera asks for access the first time; the library allows up to 8 photos. They open in [Image Search](#image-search), where tapping a word looks it up. |
+| **Image** | Opens a centered **Image** alert with **Take Photo**, **Photo Library**, and **Cancel**; on the Mac, which has no camera picker, **Paste Image** takes **Take Photo**'s place. The camera asks for access the first time, and opens with its flash off, then with the flash the learner last chose; the library allows up to 8 photos. They open in [Image Search](#image-search), where tapping a word looks it up. |
 | **Text** | Opens the typing screen, ready to type or paste. |
 | **Document** | Opens the file picker for a PDF or a text file. Its text opens on the typing screen, translated. A PDF's own text is used; a scanned PDF (its first 10 pages) is read with on-device text recognition. A text file can be UTF-8, UTF-16, Shift-JIS, or EUC-JP. Only the first 5,000 characters are translated. A file with no text shows **Couldn't read this document**. |
 
 Check: UI `ConversationUITests` (Conversation and Listening, with the harness),
 `TranslateUITests.testTypedTextIsTranslatedWithItsDirection` (Text), and
 `TranslateUITests.testImageOffersThisDevicesSources` (Image); package `DocumentTextTests`
-(Document's PDFs, encodings, limit, and empty documents) and `LiveConversationTests`.
-The file picker itself is the system's: by hand.
+(Document's PDFs, encodings, limit, and empty documents), `CameraFlashTests` (the flash the camera
+opens with), and `LiveConversationTests`. The file picker and the camera are the system's: by
+hand, the camera on a device.
 
 ## Typing to translate
 
@@ -233,9 +234,9 @@ Check: package `AccountSyncBookmarkTests` and `ConversationHistoryTests`.
 
 ## Looking up words
 
-Every Japanese word in the cards, saved Translations, and typed results is underlined and opens Word Detail
-at half height, as in the Player; particles and punctuation aren't linked. **Open Full Entry**
-opens the word inside the tab it was tapped in: Translate, or Account from Account →
+Every Japanese word in the cards, saved Translations, and typed results is underlined and opens Word
+Detail at half height, as in the Player; particles and punctuation aren't linked. **Open Full
+Entry** opens the word inside the tab it was tapped in: Translate, or Account from Account →
 **Translations**. Looking a word up doesn't pause listening.
 
 Check: UI `TranslateUITests.testTypedTextIsTranslatedWithItsDirection`,
@@ -302,11 +303,11 @@ without a download; choosing Translate starts a download when one is needed.
 
 Check: package `ImageTextTranslationTests`; Apple Translation itself is by hand on a device.
 
-Context needs Apple Intelligence; when it's off or still downloading, the Translate view says so, and on
-devices that can't run it the section is hidden. The on-device model only picks idioms and
-describes the text. Idioms are shown only when they're dictionary entries, with the
-dictionary's meaning, and those meanings are given to the model whenever it translates or
-describes the text, because on its own it misreads idioms word by word.
+Context needs Apple Intelligence; when it's off or still downloading, the Translate view says so,
+and on devices that can't run it the section is hidden. The on-device model only picks idioms and
+describes the text. Idioms are shown only when they're dictionary entries, with the dictionary's
+meaning, and those meanings are given to the model whenever it translates or describes the text,
+because on its own it misreads idioms word by word.
 
 Check: package `ImageTextExplanationTests`, where Apple Intelligence is on (skipped where it
 isn't, as on a virtual Mac), and `ImageTextContextNotesTests`.

@@ -54,6 +54,7 @@ enum CameraCapture {
       let picker = UIImagePickerController()
       picker.sourceType = .camera
       picker.cameraCaptureMode = .photo
+      picker.cameraFlashMode = UIImagePickerController.CameraFlashMode(CameraFlash.remembered())
       picker.mediaTypes = [UTType.image.identifier]
       picker.delegate = context.coordinator
       picker.modalPresentationStyle = .fullScreen
@@ -66,6 +67,7 @@ enum CameraCapture {
       UINavigationControllerDelegate
     {
       func imagePickerControllerDidCancel(_ picker: UIImagePickerController) {
+        CameraFlash(picker.cameraFlashMode).remember()
         completion(.success([]))
       }
 
@@ -73,6 +75,7 @@ enum CameraCapture {
         _ picker: UIImagePickerController,
         didFinishPickingMediaWithInfo info: [UIImagePickerController.InfoKey: Any]
       ) {
+        CameraFlash(picker.cameraFlashMode).remember()
         guard let image = info[.originalImage] as? UIImage,
           let asset = ImageTextAsset(cameraImage: image)
         else {
@@ -80,6 +83,26 @@ enum CameraCapture {
           return
         }
         completion(.success([asset]))
+      }
+    }
+  }
+
+  extension CameraFlash {
+    fileprivate init(_ mode: UIImagePickerController.CameraFlashMode) {
+      switch mode {
+      case .on: self = .on
+      case .auto: self = .auto
+      default: self = .off
+      }
+    }
+  }
+
+  extension UIImagePickerController.CameraFlashMode {
+    fileprivate init(_ flash: CameraFlash) {
+      switch flash {
+      case .off: self = .off
+      case .auto: self = .auto
+      case .on: self = .on
       }
     }
   }
