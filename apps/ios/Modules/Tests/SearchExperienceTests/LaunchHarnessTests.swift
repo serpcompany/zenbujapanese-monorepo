@@ -65,7 +65,7 @@ struct LaunchHarnessTests {
         KanjiPage.Reading(kind: "on", label: "On", value: "ニチ", words: [word]),
         KanjiPage.Reading(kind: "kun", label: "Kun", value: "ひ", words: []),
       ],
-      components: [], elements: [], words: [word, word], shareText: "日")
+      components: [], elements: [], words: [word, word], shareText: "日", savedReading: "ニチ")
     #expect(
       KanjiPage.drawnSummary(page) == "1 stats, 2 readings, 0 elements, 1 reading words, 2 words")
     #expect(
