@@ -129,7 +129,7 @@ modules, files, or event loop of its own, which is how the app runs it in JavaSc
   | `entriesContainingKanji` | A kanji | The IDs of its 24 words, in the page's order |
   | `websiteRoute` | A link's host and percent-encoded path, as the host's own URL parser reads them | What the link opens: a word by its Language Reference ID, a kanji, a search, or home. A word link whose entry number the data lacks searches its slug, or opens home without one. |
   | `relatedWord`, `savedWord` | A related word (its target's ID, or how to search for it and how it is written and read); a saved word (its stored ID, writing, and reading) | The ID of the entry a related word opens, or null: with no target, the result written and read alike, else the first. What a saved word opens: its entry, else one written and read alike, else a search for its headword. |
-  | `canonicalEntries`, `tatoebaContributors` | Groups of equivalent entries' IDs; — | Each group's smallest ID, which stands for it (`canonicalEntry`); the Tatoeba contributors, with their counts |
+  | `canonicalEntries` | Groups of equivalent entries' IDs | Each group's smallest ID, which stands for it (`canonicalEntry`) |
   | `normalizeQuery` | What was typed | The query Search reads |
   | `japaneseCandidates` | What a handwriting recognizer offered | Those written only in Japanese, normalized, each once, in order |
   | `isKanji`, `containsJapaneseText`, `writtenLanguage` | A string | One kanji or not; has a scalar any client's own check counted as Japanese; `ja`, `en` (an ASCII letter), or null |
@@ -259,7 +259,7 @@ Paths are relative to `apps/ios/Modules/Sources/SearchExperience/`.
 
 | Swift | Asks | For |
 | --- | --- | --- |
-| `LookupClient.swift` (`LanguageReferenceData`, `TatoebaAttributionClient`) | `search`, `entriesMatchingFirstForms`, `entriesContainingKanji`, `websiteRoute`, `relatedWord`, `savedWord`, `canonicalEntries`, `tatoebaContributors` | Search, a form's entries, a kanji's words, what a link, a related or a saved word opens, which entry stands for equivalents (it reads entries), Tatoeba's contributors |
+| `LookupClient.swift` (`LanguageReferenceData`) | `search`, `entriesMatchingFirstForms`, `entriesContainingKanji`, `websiteRoute`, `relatedWord`, `savedWord`, `canonicalEntries` | Search, a form's entries, a kanji's words, what a link, a related or a saved word opens, which entry stands for equivalents (it reads entries) |
 | `SearchQuery.swift` | `normalizeQuery` | The query every screen holds |
 | `DictionaryTextData.swift` (`ExampleSentenceClient`, `JapaneseTextAnalysisClient`) | `checkExamples`, `tokenizerReady`, the example methods, `linkedTokens`, `countedWords` | Example sentences, linked words with each word's line-breaking, and the words `Comprehension` counts. It hands the core the tokenizer's files (`TokenizerDictionary.swift`). |
 | `PresentationCore.swift` (`RomajiReadingAidText`, `LinkedJapaneseText`) | `romaji`, `sentenceRomaji` | The Romaji reading aid, for a reading and for a sentence |

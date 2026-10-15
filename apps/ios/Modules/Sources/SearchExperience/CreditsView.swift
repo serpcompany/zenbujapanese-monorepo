@@ -132,7 +132,7 @@ private struct TatoebaContributorCreditsView: View {
     .inlineNavigationTitle()
     .task {
       guard credits.isEmpty else { return }
-      credits = await TatoebaAttributionClient.contributorCredits()
+      credits = TatoebaAttributionClient.contributorCredits()
     }
   }
 }

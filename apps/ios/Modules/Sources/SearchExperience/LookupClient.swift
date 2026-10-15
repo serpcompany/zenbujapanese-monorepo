@@ -175,10 +175,6 @@ actor LanguageReferenceData {
     return route(opening: page)
   }
 
-  func tatoebaContributors() throws -> [TatoebaContributorCredit] {
-    try preparedCore().answer("tatoebaContributors", "")
-  }
-
   private func route(opening page: WebsitePage) -> WebsiteLinkRoute {
     switch page.kind {
     case "word":
