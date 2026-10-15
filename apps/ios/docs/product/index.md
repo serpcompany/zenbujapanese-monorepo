@@ -40,8 +40,8 @@ Each behavior here ends with a **Check** naming the automated tests that prove i
 - **UI tests** (`apps/ios/UITests/`), `ZenbuJapaneseUITests`, which drive the built app on the
   same three, named as class and test, such as `SearchUITests.testAQueryWithNoMatchesSaysSo`. They
   use stand-ins only at the edge: an image for the camera, a sheet's answer for Apple's and
-  Google's sign-in, the Translate harness's script for the microphone, a local player and fixture
-  captions for YouTube, and a closed port for the offline account
+  Google's sign-in, the Translate harness's script for the microphone, a local player, fixture
+  captions, and a results page for YouTube, and a closed port for the offline account
   ([`ios.md`](../../../../docs/agents/ios.md#tests-on-every-platform)).
 - **Contract tests** (`apps/ios/Tools/tests/`), which check the project settings and the bundled
   data, the same for every platform.

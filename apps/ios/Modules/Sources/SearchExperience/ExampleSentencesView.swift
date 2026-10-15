@@ -20,7 +20,7 @@ struct ExampleSentencesView: View {
       screen(proxy)
         .navigationTitle(query.value)
         .inlineNavigationTitle()
-        .onChange(of: returns.count) { restore(place.comeBack(), with: proxy) }
+        .onChange(of: returns.count) { comeBack(.closed, with: proxy) }
         .screenTask(id: query) {
           analysisAvailability = await japaneseTextAnalysisClient.availability()
           await examples.load(query.value, rowsOnScreen: rowsOnScreen, read: read)
@@ -73,7 +73,7 @@ struct ExampleSentencesView: View {
               }
             )
             .onGeometryChange(for: CGRect.self) { $0.frame(in: .global) } action: { frame in
-              restore(place.note(example.id, at: frame), with: proxy)
+              if place.note(example.id, at: frame) { check(with: proxy) }
             }
           }
           if examples.hasMore {
@@ -91,17 +91,21 @@ struct ExampleSentencesView: View {
         .onScrollPhaseChange { _, phase in
           if phase != .idle { place.userScrolled() }
         }
+        .onAppear { comeBack(.appeared, with: proxy) }
         .accessibilityIdentifier("example-list.screen")
       }
     }
   }
 
-  private func restore(_ correction: ExamplePlaceCorrection?, with proxy: ScrollViewProxy) {
-    guard let correction else { return }
+  private func comeBack(_ way: ExamplePlaceKeeper.Return, with proxy: ScrollViewProxy) {
+    if place.comeBack(way) { check(with: proxy) }
+  }
+
+  private func check(with proxy: ScrollViewProxy) {
     Task { @MainActor in
       await Task.yield()
+      guard let correction = place.check() else { return }
       proxy.scrollTo(correction.row, anchor: correction.anchor)
-      place.corrected()
     }
   }
 

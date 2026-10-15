@@ -200,7 +200,9 @@ don't contain them), so they need no network, account, camera, or microphone:
 - `ZENBU_YOUTUBE_STAND_IN=<json>` stands in for YouTube: the player page loads a local player
   that answers the IFrame API's calls (play, pause, seek, speed, and its time), and the captions
   come from the JSON's player response and timed text, through the same parsing, track choice,
-  and pairing as YouTube's (`YouTubeFetch`, `YouTubeStandInTests`).
+  and pairing as YouTube's (`YouTubeFetch`, `YouTubeStandInTests`). A search loads a local page
+  laid out like YouTube's mobile results, by YouTube's element names, whose results change the
+  page's address without loading it, as YouTube's do.
 - `ZENBU_DRAWN_RESULTS=1` has Search say, on an element only tests read (`search.results.drawn`),
   each results list it drew and how many of its rows had chips, so a test fails when a list is
   drawn without its chips and then again (`SearchResultsUITests`).
@@ -805,16 +807,16 @@ nothing (Account and sync, below).
 
 ## Account and sync
 
-The app signs in to the account service and syncs known words, lists, watch history, and
-Translate's bookmarked sentences as the client guide says ([`account-clients.md`](account-clients.md)), as `zenbu-ios`. The code is in
-`SearchExperience`: `ZenbuAccount.swift` (sign-in, signing out, deleting),
-`AccountServiceConfiguration.swift`, `AccountAPI.swift` and `AccountSyncModels.swift` (the routes and
-their answers), `AccountTokens.swift`, `AccountSync.swift` and `AccountSyncState.swift` (the queue
-and how results and changes apply), `AccountSyncScheduler.swift` and `AccountBackgroundSync.swift`
-(when), `AppleSignIn.swift`, `GoogleSignIn.swift`, and the views `AccountSignInControls.swift`,
-`AccountSignInView.swift`, `ZenbuAccountView.swift`, and `DeleteAccountView.swift`.
-`apps/account-api/src/test/sync-client.ts` models the same client in TypeScript, and the service's
-tests prove that model against the real service.
+The app signs in to the account service and syncs known words, lists, watch history, and Translate's
+bookmarked sentences as the client guide says ([`account-clients.md`](account-clients.md)), as
+`zenbu-ios`. The code is in `SearchExperience`: `ZenbuAccount.swift` (sign-in, signing out,
+deleting), `AccountServiceConfiguration.swift`, `AccountAPI.swift` and `AccountSyncModels.swift`
+(the routes and their answers), `AccountTokens.swift`, `AccountSync.swift` and
+`AccountSyncState.swift` (the queue and how results and changes apply), `AccountSyncScheduler.swift`
+and `AccountBackgroundSync.swift` (when), `AppleSignIn.swift`, `GoogleSignIn.swift`, and the views
+`AccountSignInControls.swift`, `AccountSignInView.swift`, `ZenbuAccountView.swift`, and
+`DeleteAccountView.swift`. `apps/account-api/src/test/sync-client.ts` models the same client in
+TypeScript, and the service's tests prove that model against the real service.
 
 - **Which service.** The build setting `ZENBU_ACCOUNT_API_URL` fills `ZenbuAccountServiceURL` in
   `apps/ios/App/Info.plist`: staging (`https://api-staging.zenbujapanese.com`) in Debug, Zenbu Dev
@@ -829,17 +831,18 @@ tests prove that model against the real service.
   launch, a background one too, uses it. The Simulator reaches the Mac's `127.0.0.1`, and App
   Transport Security allows plain HTTP to an IP address.
 - **Apple.** `apps/ios/App/ZenbuJapanese.entitlements` asks for Sign in with Apple, which the App ID
-  (`com.zenbujapanese.dictionary`) needs in Apple Developer. The app asks the service for a nonce and gives
-  Apple its SHA-256 (`AppleSignIn.swift`), asking for the email and the name; Apple gives the name
-  only on a learner's first sign-in, and the app sends it then as `idToken.user.name`, so a new
-  account has one. Apple's token names the app's bundle ID, and the service takes only the bundle
-  IDs in `apps/account-api/src/domain/clients.ts`, its `APPLE_APP_BUNDLE_IDENTIFIER`, and its
+  (`com.zenbujapanese.dictionary`) needs in Apple Developer. The app asks the service for a nonce
+  and gives Apple its SHA-256 (`AppleSignIn.swift`), asking for the email and the name; Apple gives
+  the name only on a learner's first sign-in, and the app sends it then as `idToken.user.name`, so a
+  new account has one. Apple's token names the app's bundle ID, and the service takes only the
+  bundle IDs in `apps/account-api/src/domain/clients.ts`, its `APPLE_APP_BUNDLE_IDENTIFIER`, and its
   website Services IDs, so a Zenbu Dev build (`com.zenbujapanese.dictionary.dev`) can't sign in with
-  Apple. The app shows the Apple button whenever the build isn't Zenbu Dev, whatever the service
-  has set up: a service without Apple answers its sign-in `404 provider_not_found`. `ZENBU_BUNDLE_ID_SUFFIX` reaches the app as
-  `ZenbuBundleIDSuffix` in `apps/ios/App/Info.plist`; when it isn't empty, the sign-in sheet shows a
-  note in place of the Apple button, and deleting an Apple account says to use the App Store or
-  TestFlight app. Google and emailed codes work in Zenbu Dev.
+  Apple. The app shows the Apple button whenever the build isn't Zenbu Dev, whatever the service has
+  set up: a service without Apple answers its sign-in `404 provider_not_found`.
+  `ZENBU_BUNDLE_ID_SUFFIX` reaches the app as `ZenbuBundleIDSuffix` in `apps/ios/App/Info.plist`;
+  when it isn't empty, the sign-in sheet shows a note in place of the Apple button, and deleting an
+  Apple account says to use the App Store or TestFlight app. Google and emailed codes work in Zenbu
+  Dev.
 - **Google** needs no SDK: `ASWebAuthenticationSession` opens Google's OAuth for iOS with PKCE, the
   nonce, and the reversed client ID as the redirect, which the session catches itself, so no URL
   type is registered. The app exchanges the code at Google's token endpoint for the ID token. The
@@ -865,14 +868,14 @@ tests prove that model against the real service.
 - **Signing in and out.** Signing out forgets the session token but keeps the queue, cursor,
   versions, and waiting words under the account's user ID (`signedOutFrom`), and keeps queuing
   changes with their base versions. While signed out (`signedOutQueueStart`), a change replaces an
-  earlier one to the same known word or list word from the same signed-out stretch, a list's
-  renames and moves merge into its earlier `create` or `update`, and its `delete` replaces an
-  earlier `update`, so the queue holds about one change per entity however long the learner stays
-  signed out. Nothing queued before signing out is merged, since it may have been sent.
-  Signing in to the same user ID picks them up and syncs from the kept cursor. Signing in to any other account drops them, moves Favorites to its shared ID
-  (`WordLists.favoritesID`, from the oldest list if it's still named Favorites), and queues the
-  phone's marks, lists, list words, Recent videos, and bookmarked sentences at version 0 before the
-  first sync. Deleting the account drops everything.
+  earlier one to the same known word or list word from the same signed-out stretch, a list's renames
+  and moves merge into its earlier `create` or `update`, and its `delete` replaces an earlier
+  `update`, so the queue holds about one change per entity however long the learner stays signed
+  out. Nothing queued before signing out is merged, since it may have been sent. Signing in to the
+  same user ID picks them up and syncs from the kept cursor. Signing in to any other account drops
+  them, moves Favorites to its shared ID (`WordLists.favoritesID`, from the oldest list if it's
+  still named Favorites), and queues the phone's marks, lists, list words, Recent videos, and
+  bookmarked sentences at version 0 before the first sync. Deleting the account drops everything.
 - **Entities added later.** `account-sync.json` names the entities the account's first upload
   covered (`syncedEntities`; a file without it covered known words, lists, and list words). A phone
   that signed in before its app synced an entity, such as watch history, queues that entity's items
@@ -927,15 +930,15 @@ tests prove that model against the real service.
   the first upload, so a list the account already has stays. A pulled copy of an entity with a
   change still queued is held in the file (`deferred`) until that change's result: a conflict's
   `current` replaces it, an applied result takes it only at the same version (the change changed
-  nothing, so no newer copy comes), and a rejected one takes it. A list word whose list hasn't arrived is kept in the file until a sync
-  reaches `hasMore: false`, even across a failed page or a relaunch, then dropped if the list never
-  came. A deleted list drops its words. `410` drops the cursor and the held copies and words, and syncs
-  again, still sending the queue. A sync's answer is dropped if the learner signed out or in while
-  it was on the way.
-- **When.** `AccountSyncScheduler` syncs a second after a local change, on becoming active (once
-  the files have loaded) when changes are queued or the last sync is over 15 minutes old, in a
-  `BGAppRefreshTask` (`com.zenbujapanese.dictionary.account-sync`, scheduled 15 minutes out on going to the
-  background, and stopped when iOS ends it), and on **Sync Now**. Never on a timer. A network
+  nothing, so no newer copy comes), and a rejected one takes it. A list word whose list hasn't
+  arrived is kept in the file until a sync reaches `hasMore: false`, even across a failed page or a
+  relaunch, then dropped if the list never came. A deleted list drops its words. `410` drops the
+  cursor and the held copies and words, and syncs again, still sending the queue. A sync's answer is
+  dropped if the learner signed out or in while it was on the way.
+- **When.** `AccountSyncScheduler` syncs a second after a local change, on becoming active (once the
+  files have loaded) when changes are queued or the last sync is over 15 minutes old, in a
+  `BGAppRefreshTask` (`com.zenbujapanese.dictionary.account-sync`, scheduled 15 minutes out on going
+  to the background, and stopped when iOS ends it), and on **Sync Now**. Never on a timer. A network
   failure or `5xx` waits 2 seconds, doubling up to 5 minutes, at half to all of that at random, and
   retries by itself at most 10 times, only in the foreground; a local change or becoming active
   waits it out too, and **Sync Now** doesn't. `429` waits what `Retry-After` says, whatever starts
@@ -1070,7 +1073,10 @@ split across slots ("Do" and "n't"), before pairing them with lines.
 
 `VideoSearchView` watches the web view's URL as well as its loads, because YouTube's mobile site
 changes pages without loading them, and requires a tap before any media plays, so results pages'
-previews stay still.
+previews stay still. It asks for the mobile page (`app=m`), since YouTube sends the iPad's and the
+Mac's web views, which read as desktop Safari, to its desktop site. Before the page loads, a style
+(`styleHidingItsBars`) hides YouTube's header and bottom bar by their element names, which
+YouTube can change: check the live page by hand.
 
 ## SwiftUI notes
 
@@ -1151,9 +1157,9 @@ previews stay still.
   listing's in `apps/ios/metadata/`; change both together.
 - The privacy manifest (`apps/ios/App/PrivacyInfo.xcprivacy`) declares what the Zenbu account
   collects: email, name, user IDs, synced user content, session data and a profile picture's
-  address, watch history, and where each video was stopped with the share of its words known. The app's data, the App Store privacy labels, and the manifest change
-  together, as the
-  [App Store privacy labels](../../apps/web/docs/app-store-privacy-labels.md) say.
+  address, watch history, and where each video was stopped with the share of its words known. The
+  app's data, the App Store privacy labels, and the manifest change together, as the [App Store
+  privacy labels](../../apps/web/docs/app-store-privacy-labels.md) say.
 - `CreditsView` words no credit: it lays out the core's `sourceCredits`, a section for each source,
   so each EDRDG file (JMdict, KANJIDIC2, RADKFILE) has its own link, as the EDRDG licence requires.
 
@@ -1182,8 +1188,8 @@ Simulator:
   word marked known by swiping at once. The row names the order, and **Default** in its menu
   returns to the Default order. The choice survives relaunching the app, and disabling the
   chosen dictionary under **Account → Frequency Dictionaries** returns Search to **Default**.
-- The menu shows only **Sort By** and **Filter**, each naming its current choice underneath. **Sort By** lists
-  the sorts with no direction to choose.
+- The menu shows only **Sort By** and **Filter**, each naming its current choice underneath. **Sort
+  By** lists the sorts with no direction to choose.
 - **Filter** on `dog`, `いる`, and `miru`: **Known** leaves only known words and
   **Unknown** only the rest, in the chosen order; the **Sorted by** row shows **· 1 filter** and no
   other row appears; a filter that hides every word shows **No Words Match Your Filter**; marking a
@@ -1242,6 +1248,11 @@ iOS 26 runtime under a newer macOS, its safety check fails, so translation and C
 there. Use a Simulator on the runtime that matches the Mac, with Apple Intelligence on for the
 Mac. `ImageTextExplanationTests` stub the model, and call it only when asked.
 
+The camera runs only on a device, and `CameraFlashTests` covers only the flash kept for it. When
+changing the camera, check on an iPhone that a fresh install's **Take Photo** opens with the flash
+off, and that a flash chosen there, then **Cancel**, **Use Photo**, or a swipe down, is the next
+camera's flash, from Translate and from a word's **•••**.
+
 ## Known words manual checks
 
 `WordKnowledgeTests` cover known-word storage: persistence, unreadable and newer-version files,
@@ -1262,9 +1273,9 @@ word lists, also check in the Simulator:
 
 - Word Detail **•••** → **Add to List…** toggles a word in Favorites and in a list made with
   **New List**, and both survive a relaunch. The word's **Lists** section above Notes names both.
-- **Account → Lists** shows the count; a list removes a word by swipe or by **•••** → Select
-  Words, renames or deletes itself from **•••**, and opens a word in Search;
-  the index renames by swipe or by tapping a list in Edit, reorders in Edit, and asks before deleting a list that has words.
+- **Account → Lists** shows the count; a list removes a word by swipe or by **•••** → Select Words,
+  renames or deletes itself from **•••**, and opens a word in Search; the index renames by swipe or
+  by tapping a list in Edit, reorders in Edit, and asks before deleting a list that has words.
 - Lists live in `Application Support/Zenbu Japanese/word-lists.json` in the app's data container.
 
 ## Account manual checks
@@ -1308,8 +1319,8 @@ With each video, check that:
 - The repeat button replays the current line until it's turned off, and skipping or tapping a
   card moves the repeat to that line.
 - The video appears under **Recent** after going back, with its title and thumbnail.
-- Searching words in the Player search bar shows YouTube results in the app, and tapping a
-  video opens it in Player.
+- Searching words in the Player search bar shows YouTube results in the app, without YouTube's
+  header or bottom bar on iPhone, iPad, or the Mac, and tapping a video opens it in Player.
 - English lines appear beneath the Japanese, and the tab bar stays visible while watching.
 - Tapping a word pauses the video and opens the word sheet at half height; **Open Full Entry**
   opens the word inside Player, and Back returns to the video. In the sheet, a kanji and the
