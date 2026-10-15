@@ -2,7 +2,6 @@ import XCTest
 
 final class PlayerWatchUITests: ZenbuUITestCase {
   static let link = "https://youtu.be/AQdI1o2D32I"
-  static let countingDraws = ["ZENBU_COUNT_DRAWS": "1"]
   static let drawCounts = [
     "the screen": "watch.draws", "the speed menu": "watch.speed.draws",
     "the captions": "watch.captions.draws",
