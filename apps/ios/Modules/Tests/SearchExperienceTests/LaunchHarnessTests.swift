@@ -21,10 +21,28 @@ struct LaunchHarnessTests {
     #expect(!LaunchHarness.erasesSavedState(environment: fresh, bundleID: nil))
   }
 
-  @Test("each results list Search draws is recorded only when a UI test asks, with how many of its rows have chips")
+  @Test("linking answers are held only in a launch that asks for it")
+  func heldLinkingIsAskedFor() {
+    #expect(LaunchHarness.holdsLinking([LaunchHarness.holdLinkingKey: "1"]))
+    #expect(!LaunchHarness.holdsLinking([LaunchHarness.holdLinkingKey: "0"]))
+    #expect(!LaunchHarness.holdsLinking([:]))
+  }
+
+  @Test("linking fails only for as many answers as a launch asks for")
+  func failedLinkingCountsAnswers() {
+    #expect(LaunchHarness.linkingFailures([LaunchHarness.failLinkingKey: "2"]) == 2)
+    #expect(LaunchHarness.linkingFailures([LaunchHarness.failLinkingKey: "some"]) == 0)
+    #expect(LaunchHarness.linkingFailures([:]) == 0)
+  }
+
+  @Test("Player, Search, and a kanji page count or record their draws only when a UI test asks")
+  func countedDraws() {
+    #expect(LaunchHarness.countsDraws([LaunchHarness.drawCountKey: "1"]))
+    #expect(!LaunchHarness.countsDraws([:]))
+  }
+
+  @Test("each results list Search draws is recorded with how many of its rows have chips")
   func drawnResults() {
-    #expect(LaunchHarness.recordsDraws([LaunchHarness.drawnKey: "1"]))
-    #expect(!LaunchHarness.recordsDraws([:]))
     let chip = FrequencyChip(pack: "list", source: "List", value: "1", tier: .veryCommon)
     let list = ResultsList(
       query: "q", sections: [.results], menu: nil, forgetsSort: false, examples: nil,

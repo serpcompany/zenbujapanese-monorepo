@@ -52,6 +52,12 @@ final class WordDetailUITests: ZenbuUITestCase {
     type("the country, not the language", into: waitFor(find("word-note.editor", in: app)))
     tap(find("word-note.done", in: app))
     waitFor(labeled("the country, not the language", in: app))
+    tap(find("word-detail.more-menu", in: app))
+    tap(menuChoice("Add Note", in: app))
+    type("left by going back", into: waitFor(find("word-note.editor", in: app)))
+    goBack(in: app)
+    tap(find("result.japan", in: app))
+    reveal(labeled("left by going back", in: app), in: app)
   }
 
   func testTappingAKanjiInTheHeadwordHighlightsItsReading() {
@@ -128,7 +134,7 @@ final class WordDetailUITests: ZenbuUITestCase {
   }
 
   func testAKanjiPageIsDrawnOnceWithItsFactsAndItsWords() {
-    let app = openJapan(Self.recordingDraws)
+    let app = openJapan(Self.countingDraws)
     tap(find("word-detail.kanji.日", in: app), toShow: find("kanji-detail.glyph", in: app))
     reveal(firstElement(identifiedBy: "kanji-detail.word.", in: app), in: app)
     let drawn = draws(

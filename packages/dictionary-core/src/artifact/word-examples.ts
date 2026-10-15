@@ -147,6 +147,12 @@ export interface ExampleHighlight {
   accent: 'entry' | 'query'
 }
 
+export const screenAccent = {
+  searchExamples: 'query',
+  wordExamples: 'entry',
+  formExamples: 'query'
+} as const satisfies Record<string, ExampleHighlight['accent']>
+
 export function tokenSpans(
   tokens: readonly Pick<LinkedToken, 'surface'>[]
 ): { start: number; end: number }[] {
@@ -159,7 +165,7 @@ export function tokenSpans(
   })
 }
 
-export function occurrences(text: string, query: string): { start: number; end: number }[] {
+function occurrences(text: string, query: string): { start: number; end: number }[] {
   if (query === '') return []
   const scalars = Array.from(text)
   const needle = Array.from(query)
@@ -171,6 +177,21 @@ export function occurrences(text: string, query: string): { start: number; end: 
     }
   }
   return found
+}
+
+export function accentedPositions(
+  text: string,
+  tokens: readonly Pick<LinkedToken, 'surface' | 'entry'>[],
+  highlight: ExampleHighlight
+): number[] {
+  if (highlight.accent === 'entry') {
+    const id = highlight.entry?.id
+    return tokens.flatMap((token, position) => (id && token.entry?.id === id ? [position] : []))
+  }
+  const found = occurrences(text, highlight.query)
+  return tokenSpans(tokens).flatMap((span, position) =>
+    found.some(match => match.start < span.end && span.start < match.end) ? [position] : []
+  )
 }
 
 export function exampleRows(
@@ -234,25 +255,13 @@ export function exampleRows(
         })
       }
     }
-    let highlights: number[]
-    if (highlight.accent === 'entry') {
-      const id = highlight.entry?.id
-      highlights = page.flatMap((token, position) =>
-        id && token.entry?.id === id ? [position] : []
-      )
-    } else {
-      const found = occurrences(sentence.japanese, highlight.query)
-      highlights = tokenSpans(page).flatMap((span, position) =>
-        found.some(match => match.start < span.end && span.start < match.end) ? [position] : []
-      )
-    }
     return {
       sentence: exampleSentenceRow(sentence, sharedRows, credits.get(sentence.pairId)),
       example: {
         entSeq,
         position: firstPosition + index,
         sentenceId: sentence.rowid,
-        highlights,
+        highlights: accentedPositions(sentence.japanese, page, highlight),
         links,
         tokens: sameWordsAsElsewhere ? null : rows
       }
@@ -273,7 +282,7 @@ export function wordExampleRows(
     db,
     retrieved.sentences.slice(from, from + limit),
     from,
-    { entry, query: normalizeQuery(entry.headword), accent: 'entry' },
+    { entry, query: normalizeQuery(entry.headword), accent: screenAccent.wordExamples },
     capabilities,
     entSeq
   )

@@ -13,19 +13,13 @@ struct DrawRecorder<Value: Equatable>: ViewModifier {
   }
 
   func body(content: Content) -> some View {
-    if LaunchHarness.recordsDraws {
+    if LaunchHarness.countsDraws {
       content
         .onChange(of: value, initial: true) { _, value in
           drawn.append(summary(value))
         }
         .overlay(alignment: .topLeading) {
-          Text(verbatim: drawn.joined(separator: "; "))
-            .font(.system(size: 1))
-            .foregroundStyle(.clear)
-            .lineLimit(1)
-            .frame(width: 1, height: 1)
-            .allowsHitTesting(false)
-            .accessibilityIdentifier(identifier)
+          DrawCountProbe(identifier: identifier, text: drawn.joined(separator: "; "))
         }
     } else {
       content

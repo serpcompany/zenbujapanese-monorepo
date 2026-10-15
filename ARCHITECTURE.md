@@ -113,7 +113,6 @@ answers:
 | What a screen shows | Where it is decided |
 | --- | --- |
 | The section titles of the word and kanji pages, and what a screen says when it has nothing to list | The titles, and Search's message when nothing matches, are typed in each client: in the app's views (`apps/ios/Modules/Sources/SearchExperience/WordDetailView.swift`, `apps/ios/Modules/Sources/SearchExperience/KanjiDetailSections.swift`, `apps/ios/Modules/Sources/SearchExperience/SearchView.swift`) and in the website's (`apps/web/src/app/dictionary/[word]/page.tsx`, `apps/web/src/components/dictionary/kanji-details.tsx`, `apps/web/src/components/dictionary/search-results.tsx`). The two messages for a word or a form with no examples are in the core (`packages/dictionary-core/src/detail/examples.ts`), which the website shows, and typed again in the app (`apps/ios/Modules/Sources/SearchExperience/WordDetailView.swift`, `apps/ios/Modules/Sources/SearchExperience/ConjugationsView.swift`). |
-| Which words an example sentence accents: the page's word, or the words that match the query | For the app, the core says both of every word, and a view picks which of the two its screen accents (`apps/ios/Modules/Sources/SearchExperience/ExampleSentencesView.swift`). For the website, the core picks (`exampleRows` in `packages/dictionary-core/src/artifact/word-examples.ts`). |
 
 The website logs through its own `log()`, the Node services through `packages/node-service`'s, and
 the core not at all.

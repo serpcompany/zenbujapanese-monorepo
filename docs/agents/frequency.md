@@ -114,7 +114,7 @@ view is drawn and can't wait for an actor, and it never calls into the engine.
   be changed, a staged download left behind, and the smoke test), `ResultsScreenTests` (a first
   screen, a word page, and a sheet's rows, finished), and `FrequencyLookupPerformanceTests`.
 - **A screen is drawn once.** `SearchResultsUITests` reads every results list Search drew
-  (`ZENBU_DRAWN=1`) and fails when one was drawn without its chips and then again.
+  (`ZENBU_COUNT_DRAWS=1`) and fails when one was drawn without its chips and then again.
   `AccountUITests` turns a dictionary off with a word open and finds the word and its results
   changed, and `TranslateUITests` opens a word with several entries and finds them listed with
   their chips.

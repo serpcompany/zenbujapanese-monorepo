@@ -14,7 +14,7 @@ final class SearchResultsUITests: ZenbuUITestCase {
   }
 
   func testAWordsResultsAreDrawnOnceWithTheirChips() {
-    let app = launch(Self.recordingDraws)
+    let app = launch(Self.countingDraws)
     search("japan", in: app)
     let row = waitFor(find("result.japan", in: app))
     if device != .mac {
@@ -24,7 +24,7 @@ final class SearchResultsUITests: ZenbuUITestCase {
   }
 
   func testAJapaneseSentencesWordsAreDrawnOnceWithTheirChips() {
-    let app = launch(Self.recordingDraws)
+    let app = launch(Self.countingDraws)
     search("日本語を勉強する", in: app)
     waitFor(labeled("Discovered Words", in: app))
     if device != .mac {

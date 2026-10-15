@@ -14,6 +14,7 @@ struct SearchExperienceRootView: View {
   @State private var translatePath = NavigationPath()
   @Environment(TranslateExperience.self) private var translateExperience
   @State private var kanjiScroll = KanjiScrollMemory()
+  @State private var screenReturns = ScreenReturns()
   private let lookupClient: LookupClient
   private let exampleSentenceClient: ExampleSentenceClient
   private let japaneseTextAnalysisClient: JapaneseTextAnalysisClient
@@ -34,8 +35,9 @@ struct SearchExperienceRootView: View {
     let text =
       ProcessInfo.processInfo.environment["ZENBU_MORPHOLOGY_ENGINE"] == "sudachi"
       ? DictionaryTextData(morphology: .live) : DictionaryTextData.shared
-    exampleSentenceClient = ExampleSentenceClient(text: text)
-    japaneseTextAnalysisClient = .live(text: text, lookupClient: .live)
+    let linked = LinkedEntries(lookupClient: .live)
+    exampleSentenceClient = ExampleSentenceClient(text: text, linked: linked)
+    japaneseTextAnalysisClient = .live(text: text, linked: linked)
     kanjiLookupClient = .live(lookupClient: .live)
     handwritingRecognitionClient = .live
     cameraAuthorizationClient = .live
@@ -62,6 +64,7 @@ struct SearchExperienceRootView: View {
             dismissRecognizedWordSheet(if: true)
           }))
       .modifier(AppCommandHandling(perform: perform))
+      .environment(screenReturns)
   }
 
   private func perform(_ command: AppCommand) {
@@ -218,7 +221,6 @@ struct SearchExperienceRootView: View {
         form: form,
         exampleSentenceClient: exampleSentenceClient,
         speechSynthesisClient: speechSynthesisClient,
-        japaneseTextAnalysisClient: japaneseTextAnalysisClient,
         openWord: { entry in push(.word(entry, nil), in: stack) }
       )
     case .image(let sessionID):
@@ -241,7 +243,7 @@ struct SearchExperienceRootView: View {
   }
 
   private var watchNavigation: some View {
-    NavigationStack(path: $watchPath) {
+    NavigationStack(path: countingReturns($watchPath)) {
       WatchAndListenView(
         history: watchHistory,
         searchProvider: .youTube,
@@ -272,7 +274,7 @@ struct SearchExperienceRootView: View {
   }
 
   private var translateNavigation: some View {
-    NavigationStack(path: $translatePath) {
+    NavigationStack(path: countingReturns($translatePath)) {
       TranslateTabRoot(
         experience: translateExperience,
         words: translateWords(opening: wordSheets.translate),
@@ -295,7 +297,7 @@ struct SearchExperienceRootView: View {
   }
 
   private var accountNavigation: some View {
-    NavigationStack(path: $accountPath) {
+    NavigationStack(path: countingReturns($accountPath)) {
       AccountTabRoot(
         store: encounterMediaStore,
         translate: translateExperience,
@@ -402,7 +404,17 @@ struct SearchExperienceRootView: View {
       if newPath.count > path.count {
         kanjiScroll.remember(leaving: path.last, for: newPath.last)
       }
+      screenReturns.stackChanged(from: path.count, to: newPath.count)
       path = newPath
+    }
+  }
+
+  private func countingReturns(_ path: Binding<NavigationPath>) -> Binding<NavigationPath> {
+    Binding {
+      path.wrappedValue
+    } set: { newPath in
+      screenReturns.stackChanged(from: path.wrappedValue.count, to: newPath.count)
+      path.wrappedValue = newPath
     }
   }
 

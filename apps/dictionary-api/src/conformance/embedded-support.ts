@@ -11,7 +11,11 @@ import type { FrequencyDictionary } from '@zenbu/dictionary-core/detail/frequenc
 import { type EmbeddedEndpoint, embeddedEndpoint } from '@zenbu/dictionary-core/embedded/dictionary'
 import type { EmbeddedHost, HostRows } from '@zenbu/dictionary-core/embedded/host'
 import type { EmbeddedEntry } from '@zenbu/dictionary-core/embedded/presentation'
-import type { EmbeddedToken } from '@zenbu/dictionary-core/embedded/text'
+import type {
+  EmbeddedExample,
+  EmbeddedExamplePage,
+  EmbeddedToken
+} from '@zenbu/dictionary-core/embedded/text'
 import { artifactDatabase, artifactTokenizerFile, resources } from './support'
 
 const hex = (bytes: Uint8Array) => Buffer.from(bytes).toString('hex')
@@ -185,41 +189,36 @@ export function entryAsTheAppReadsIt(db: ArtifactDatabase, id: string): Embedded
   }
 }
 
-export interface EmbeddedSentence {
-  id: string
-  japanese: string
-  english: string
+export async function everyPage<Page extends EmbeddedExamplePage>(
+  page: (from: number) => Promise<Page>,
+  upTo = Number.POSITIVE_INFINITY
+): Promise<{ first: Page; examples: EmbeddedExample[] }> {
+  const first = await page(0)
+  const examples = [...first.examples]
+  while (examples.length < Math.min(first.listed, upTo)) {
+    const next = await page(examples.length)
+    if (next.examples.length === 0) throw new Error(`No examples from ${examples.length}`)
+    examples.push(...next.examples)
+  }
+  return { first, examples }
 }
 
 type Mark = 'pageWord' | 'highlighted' | 'queryMatch'
 
-const marked: Record<Mark, (token: EmbeddedToken) => boolean> = {
-  pageWord: token => token.isPageWord,
-  highlighted: token => token.matchesQuery,
-  queryMatch: token => token.matchesQuery
+const accentRecordedAs: Record<Mark, EmbeddedToken['accent']> = {
+  pageWord: 'entry',
+  highlighted: 'query',
+  queryMatch: 'query'
 }
 
-export async function shownAsTheAppLinks(
-  app: Embedded,
-  sentences: readonly EmbeddedSentence[],
-  highlighted: { query: string; highlightedEntry: string | null },
-  mark: Mark
-) {
-  const shown = []
-  for (const sentence of sentences) {
-    const tokens = await app.text<EmbeddedToken[]>('linkedTokens', {
-      text: sentence.japanese,
-      ...highlighted
-    })
-    shown.push({
-      ...sentence,
-      tokens: tokens.map(token => ({
-        surface: token.surface,
-        ...(token.entry ? { entry: token.entry } : {}),
-        ...(token.candidates.length > 0 ? { candidates: token.candidates } : {}),
-        ...(marked[mark](token) ? { [mark]: true } : {})
-      }))
-    })
-  }
-  return shown
+export function shownAsTheAppLinks(examples: readonly EmbeddedExample[], mark: Mark) {
+  return examples.map(({ words, ...sentence }) => ({
+    ...sentence,
+    tokens: words.map(word => ({
+      surface: word.surface,
+      ...(word.entry ? { entry: word.entry } : {}),
+      ...(word.candidates.length > 0 ? { candidates: word.candidates } : {}),
+      ...(word.accent === accentRecordedAs[mark] ? { [mark]: true } : {})
+    }))
+  }))
 }

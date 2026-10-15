@@ -36,11 +36,9 @@ struct CaptionCard: View {
     VStack(alignment: .leading, spacing: 6) {
       LinkedJapaneseText(
         text: text,
-        highlightedQuery: SearchQuery(""),
         highlightedEntry: highlightedEntry,
         japaneseTextAnalysisClient: japaneseTextAnalysisClient,
         identifierPrefix: identifierPrefix,
-        highlightsCurrentEntry: highlightedEntry != nil,
         openCandidates: openCandidates,
         openWord: openWord
       )
