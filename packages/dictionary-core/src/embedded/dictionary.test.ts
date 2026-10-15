@@ -1,4 +1,5 @@
 import { describe, expect, test } from 'vitest'
+import { japaneseTextRuns } from '../search/query'
 import { creditsShownBy } from '../sources/credits'
 import { embeddedEndpoint } from './dictionary'
 import { ask, begin, type FakeEntry, fakeHost, settled } from './fake-host'
@@ -218,26 +219,12 @@ describe('the embedded dictionary', () => {
     expect(endpoint.answer('romaji', '日本語')).toBeNull()
     expect(endpoint.answerJSON('japaneseCandidates', '["見る","miru"]')).toBe('["見る"]')
     expect(endpoint.answerJSON('gloss', '')).toBe('null')
-    expect(endpoint.answer('containsJapaneseText', 'ｶﾀｶﾅ')).toBe(true)
+    expect(endpoint.answerJSON('japaneseTextRuns', '')).toBe(JSON.stringify(japaneseTextRuns))
     expect(endpoint.answer('writtenLanguage', 'how much is this?')).toBe('en')
     expect(endpoint.answerJSON('writtenLanguage', '123')).toBe('null')
     expect(endpoint.answerJSON('websiteRoute', '{"host":"example.com","path":"/"}')).toBe(
       JSON.stringify(endpoint.answer('websiteRoute', '{"host":"example.com","path":"/"}'))
     )
-  })
-
-  test('answers at once the Tatoeba contributors the host’s dictionary lists', () => {
-    const endpoint = embeddedEndpoint(
-      host({
-        all: sql =>
-          sql.includes('FROM example_sentence_contributors')
-            ? { rows: [{ username: 'CK', sentenceSideCount: 2 }] }
-            : { rows: [] }
-      })
-    )
-    expect(endpoint.answer('tatoebaContributors', '')).toEqual([
-      { username: 'CK', sentenceSideCount: 2 }
-    ])
   })
 
   test('answers an Image Search note at once, for a set phrase only', () => {

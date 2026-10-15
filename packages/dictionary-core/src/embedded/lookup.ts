@@ -1,4 +1,3 @@
-import { type TatoebaContributor, tatoebaContributors } from '../artifact/contributors'
 import { type ArtifactDatabase, searchDatabase } from '../artifact/database'
 import { kanjiCandidateRows } from '../artifact/kanji'
 import { jmdictSource } from '../artifact/words'
@@ -106,10 +105,6 @@ export class EmbeddedLookup {
 
   entriesContainingKanji(character: string): string[] {
     return kanjiWords(character, kanjiCandidateRows(this.db, character)).map(row => row.id)
-  }
-
-  tatoebaContributors(): TatoebaContributor[] {
-    return tatoebaContributors(this.db)
   }
 
   websiteRoute(link: { host: string | null; path: string }): WebsiteRoute {

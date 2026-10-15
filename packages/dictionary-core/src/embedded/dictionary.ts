@@ -2,8 +2,8 @@ import { type PhraseEntry, phraseNote } from '../detail/phrase-note'
 import { romaji, sentenceRomaji } from '../detail/romaji'
 import { isKanjiCharacter, shortGloss } from '../detail/text'
 import {
-  containsJapaneseText,
   japaneseCandidates,
+  japaneseTextRuns,
   normalizeQuery,
   writtenLanguage
 } from '../search/query'
@@ -50,10 +50,9 @@ export function embeddedEndpoint(host: EmbeddedHost): EmbeddedEndpoint {
     relatedWord: (related, analyze) => lookup().relatedWord(JSON.parse(related), { analyze }),
     savedWord: (saved, analyze) => lookup().savedWord(JSON.parse(saved), { analyze }),
     canonicalEntries: groups => canonicalEntries(JSON.parse(groups)),
-    tatoebaContributors: () => lookup().tatoebaContributors(),
     normalizeQuery,
     japaneseCandidates: candidates => japaneseCandidates(JSON.parse(candidates)),
-    containsJapaneseText,
+    japaneseTextRuns: () => japaneseTextRuns,
     writtenLanguage,
     isKanji: isKanjiCharacter,
     romaji,

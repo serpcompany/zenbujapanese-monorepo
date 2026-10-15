@@ -64,16 +64,25 @@ function isJapaneseScalar(codePoint: number): boolean {
   )
 }
 
-const japaneseTextBeyondSearch =
-  /[\u{3006}\u{31f0}-\u{31ff}\u{4dc0}-\u{4dff}\u{f900}-\u{faff}\u{ff66}-\u{ff9f}\u{20000}-\u{2fa1f}]/u
+export const japaneseTextRuns: readonly (readonly [number, number])[] = [
+  [0x3005, 0x3006],
+  [0x3040, 0x30ff],
+  [0x31f0, 0x31ff],
+  [0x3400, 0x9fff],
+  [0xf900, 0xfaff],
+  [0xff66, 0xff9f],
+  [0x20000, 0x2fa1f]
+]
+
+const escaped = (scalar: number) => `\\u{${scalar.toString(16)}}`
+
+const japaneseText = new RegExp(
+  `[${japaneseTextRuns.map(([first, last]) => `${escaped(first)}-${escaped(last)}`).join('')}]`,
+  'u'
+)
 
 export function containsJapaneseText(text: string): boolean {
-  for (const scalar of text) {
-    if (isJapaneseScalar(scalar.codePointAt(0) ?? 0) || japaneseTextBeyondSearch.test(scalar)) {
-      return true
-    }
-  }
-  return false
+  return japaneseText.test(text)
 }
 
 const latinLetter = /[A-Za-z]/

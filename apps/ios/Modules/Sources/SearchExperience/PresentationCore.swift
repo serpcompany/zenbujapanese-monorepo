@@ -63,6 +63,7 @@ final class PresentationCore: @unchecked Sendable {
   private var sentences = Memo<[Written], String?>(capacity: 512)
   private var kanjiChecks = Memo<Written, Bool>(capacity: 4_000)
   private var pages = Memo<LanguageReferenceID, WordPage?>(capacity: 64)
+  private var japaneseTextRuns: [ClosedRange<UInt32>]?
   private var pagesListsVersion = 0
 
   init(
@@ -135,7 +136,16 @@ final class PresentationCore: @unchecked Sendable {
   }
 
   func containsJapaneseText(_ text: String) -> Bool {
-    lock.withLock { (try? preparedCore().flag("containsJapaneseText", text)) ?? false }
+    let runs = lock.withLock { () -> [ClosedRange<UInt32>] in
+      if let japaneseTextRuns { return japaneseTextRuns }
+      guard let answered: [[UInt32]] = try? preparedCore().answer("japaneseTextRuns", "") else {
+        return []
+      }
+      let runs = answered.compactMap { $0.count == 2 && $0[0] <= $0[1] ? $0[0]...$0[1] : nil }
+      japaneseTextRuns = runs
+      return runs
+    }
+    return text.unicodeScalars.contains { scalar in runs.contains { $0.contains(scalar.value) } }
   }
 
   func writtenLanguage(_ text: String) -> String? {

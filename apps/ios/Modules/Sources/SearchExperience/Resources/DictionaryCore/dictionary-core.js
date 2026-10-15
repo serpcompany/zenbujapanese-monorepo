@@ -442,14 +442,22 @@
   function isJapaneseScalar(codePoint) {
     return codePoint === 12293 || codePoint >= 12352 && codePoint <= 12543 || codePoint >= 13312 && codePoint <= 19903 || codePoint >= 19968 && codePoint <= 40959;
   }
-  var japaneseTextBeyondSearch = /[\u{3006}\u{31f0}-\u{31ff}\u{4dc0}-\u{4dff}\u{f900}-\u{faff}\u{ff66}-\u{ff9f}\u{20000}-\u{2fa1f}]/u;
+  var japaneseTextRuns = [
+    [12293, 12294],
+    [12352, 12543],
+    [12784, 12799],
+    [13312, 40959],
+    [63744, 64255],
+    [65382, 65439],
+    [131072, 195103]
+  ];
+  var escaped = (scalar) => `\\u{${scalar.toString(16)}}`;
+  var japaneseText = new RegExp(
+    `[${japaneseTextRuns.map(([first, last]) => `${escaped(first)}-${escaped(last)}`).join("")}]`,
+    "u"
+  );
   function containsJapaneseText(text) {
-    for (const scalar of text) {
-      if (isJapaneseScalar(scalar.codePointAt(0) ?? 0) || japaneseTextBeyondSearch.test(scalar)) {
-        return true;
-      }
-    }
-    return false;
+    return japaneseText.test(text);
   }
   var latinLetter = /[A-Za-z]/;
   function writtenLanguage(text) {
@@ -668,14 +676,6 @@
       conversionNotice,
       credits: everyCredit.filter((credit) => credit.clients.includes(client))
     };
-  }
-
-  // src/artifact/contributors.ts
-  function tatoebaContributors(db) {
-    return db.all(
-      `SELECT username, sentence_side_count AS sentenceSideCount
-     FROM example_sentence_contributors ORDER BY username COLLATE NOCASE`
-    );
   }
 
   // src/browse/lists.ts
@@ -2774,9 +2774,6 @@
     }
     entriesContainingKanji(character) {
       return kanjiWords(character, kanjiCandidateRows(this.db, character)).map((row) => row.id);
-    }
-    tatoebaContributors() {
-      return tatoebaContributors(this.db);
     }
     websiteRoute(link) {
       const page = websitePage(link.host, link.path);
@@ -5569,10 +5566,9 @@
       relatedWord: (related, analyze) => lookup().relatedWord(JSON.parse(related), { analyze }),
       savedWord: (saved, analyze) => lookup().savedWord(JSON.parse(saved), { analyze }),
       canonicalEntries: (groups) => canonicalEntries(JSON.parse(groups)),
-      tatoebaContributors: () => lookup().tatoebaContributors(),
       normalizeQuery,
       japaneseCandidates: (candidates) => japaneseCandidates(JSON.parse(candidates)),
-      containsJapaneseText,
+      japaneseTextRuns: () => japaneseTextRuns,
       writtenLanguage,
       isKanji: isKanjiCharacter,
       romaji,
