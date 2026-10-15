@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'vitest'
 import { fixtureKanjiCandidates, fixtureKanjiRows } from '../fixtures'
-import { kanjiDetail, kanjiElements, kanjiWords, wordsForReading } from './kanji'
+import { kanjiDetail, kanjiElements, kanjiWords, savedKanjiReading, wordsForReading } from './kanji'
 import type { KanjiRows, KanjiWordRow } from './rows'
 
 const kaname = fixtureKanjiRows.find(rows => rows.kanji.character === '要') as KanjiRows
@@ -162,6 +162,7 @@ describe('kanjiDetail', () => {
     expect(detail.shareText).toBe(
       '要【ヨウ、い.る、かなめ、とし】\nneed, main point, essence, pivot, key to'
     )
+    expect(savedKanjiReading(detail)).toBe('ヨウ')
   })
 
   test('a kanji without elements lists its components; one stroke is singular', () => {
@@ -185,5 +186,6 @@ describe('kanjiDetail', () => {
     ])
     expect(detail.components).toEqual(['ノ'])
     expect(detail.shareText).toBe('乁')
+    expect(savedKanjiReading(detail)).toBe('')
   })
 })

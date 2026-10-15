@@ -35,13 +35,14 @@ struct WordResolutionTests {
     #expect(try await LookupClient.live.relatedWord(related("x", "x", query: "qzxvkj")) == nil)
   }
 
-  @Test("a saved word opens by its entry, else by how it is written and read, else not at all")
+  @Test("a saved word opens by its entry, else by how it is written and read, else searches its headword")
   func saved() async throws {
+    let miru = try #require(
+      try await LookupClient.live.entry(LanguageReferenceID(rawValue: "7f490a9c9c0da94f4e9474f4efe74be1")))
     let stored = try await LookupClient.live.savedWord(
       "7f490a9c9c0da94f4e9474f4efe74be1", "anything", "anything")
-    #expect(stored?.headword == "見る")
-    let rewritten = try await LookupClient.live.savedWord("gone", "見る", "みる")
-    #expect(rewritten?.id.rawValue == "7f490a9c9c0da94f4e9474f4efe74be1")
-    #expect(try await LookupClient.live.savedWord("gone", "見る", "x") == nil)
+    #expect(stored == .open(.word(miru, nil)))
+    #expect(try await LookupClient.live.savedWord("gone", "見る", "みる") == .open(.word(miru, nil)))
+    #expect(try await LookupClient.live.savedWord("gone", "見る", "x") == .search("見る"))
   }
 }

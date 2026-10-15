@@ -21,7 +21,7 @@ A query reads the same whatever its width or case (Ｎ as n, ｶﾞｷﾞ as ガ
 its kana), and white space of any kind, or the U+FEFF a paste can carry, only separates its words.
 
 Check: package `DictionaryCoreTests` (a query normalized by the core, scalar for scalar); core
-`search/query.test.ts`.
+`search/query.test.ts` and `embedded/dictionary.test.ts`.
 
 Image Search, for Japanese in a photo, is Translate's **Image** option
 ([Image Search](translate.md#image-search)).

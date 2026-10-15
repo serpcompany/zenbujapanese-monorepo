@@ -127,10 +127,12 @@ describe.runIf(artifactAvailable)('the app’s word and kanji pages on the artif
     const kanji = async (characters: string[]) => {
       const listed = []
       for (const character of characters) {
-        listed.push({
+        const { meanings } = await app.presentation<EmbeddedKanjiPage>('kanjiPage', {
           character,
-          meanings: await app.presentation<string[]>('kanjiMeanings', character)
+          words: [],
+          leadingWord: null
         })
+        listed.push({ character, meanings })
       }
       return listed
     }
@@ -154,14 +156,14 @@ describe.runIf(artifactAvailable)('the app’s word and kanji pages on the artif
         notes: sense.notes,
         partsOfSpeech: entry.senses[index].partsOfSpeech
       })),
-      ...(page.pitch && entry.pitch
+      ...(page.pitch
         ? {
             pitch: {
               downstep: page.pitch.downstep,
               levels: page.pitch.morae.map(mora => (mora.high ? 'H' : 'L')).join(''),
               moraCount: page.pitch.moraCount,
               particle: page.pitch.particleHigh ? 'H' : 'L',
-              source: entry.pitch.sourceIdentity,
+              source: page.pitch.source,
               graph: suitePitchGraph(page.pitch)
             }
           }

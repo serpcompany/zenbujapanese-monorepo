@@ -2,9 +2,10 @@ import { LruCache } from '../artifact/cache'
 import { checkKanjiSources, type KanjiElementSources, KanjiReference } from '../artifact/kanji-data'
 import { sharedSpellingNote } from '../detail/conjugation'
 import { type FrequencyLookupRow, frequencyLookupRow } from '../detail/frequency'
-import { type KanjiDetail, kanjiDetail } from '../detail/kanji'
+import { type KanjiDetail, kanjiDetail, savedKanjiReading } from '../detail/kanji'
 import { type KanjiElementDetail, kanjiElementDetail } from '../detail/kanji-element'
 import { type KanjiReadings, withKanjiReadings } from '../detail/kanji-split'
+import { type PitchAccent, shownPitch } from '../detail/pitch'
 import type { FormRow, KanjiReadingRow, KanjiStrokesRow, PitchRow } from '../detail/rows'
 import { type RubySegment, rubySegments } from '../detail/ruby'
 import { type StrokeDiagram, strokeDiagram } from '../detail/strokes'
@@ -34,6 +35,7 @@ export interface EmbeddedEntry {
   senses: { meaning: string; notes: string[]; partsOfSpeech: string[] }[]
   relationships: { headword: string; reading: string; summary: string; relation: string }[]
   pitch: PitchRow | null
+  compoundPitch: PitchRow | null
 }
 
 type Conjugations = NonNullable<WordDetail['conjugations']>
@@ -42,8 +44,9 @@ type ConjugationRows = Conjugations['rows']
 export interface EmbeddedWordPage
   extends Pick<
     WordDetail,
-    'ruby' | 'partOfSpeech' | 'pitch' | 'senses' | 'alternatives' | 'related' | 'shareText'
+    'ruby' | 'partOfSpeech' | 'senses' | 'alternatives' | 'related' | 'shareText'
   > {
+  pitch: (PitchAccent & { source: string }) | null
   conjugations:
     | (Omit<Conjugations, 'rows'> & {
         rows: {
@@ -60,6 +63,7 @@ export interface EmbeddedWordPage
 
 export interface EmbeddedKanjiPage extends Omit<KanjiDetail, 'strokeOrder'> {
   hasReference: boolean
+  savedReading: string
 }
 
 interface KanjiPageWord {
@@ -153,6 +157,8 @@ export class EmbeddedPresentation {
   }
 
   wordPage(entry: EmbeddedEntry): EmbeddedWordPage {
+    const pitches = { pitch: entry.pitch ?? null, compoundPitch: entry.compoundPitch ?? null }
+    const shown = shownPitch(pitches)
     const detail = wordDetail({
       entry: {
         ...entry,
@@ -162,7 +168,7 @@ export class EmbeddedPresentation {
           ...relationship,
           targetEntSeq: null
         })),
-        compoundPitch: null
+        ...pitches
       },
       frequency: [],
       kanji: this.kanji.glossRows([entry.headword, ...entry.writtenForms.map(form => form.value)]),
@@ -184,7 +190,7 @@ export class EmbeddedPresentation {
           Polite: noted(detail.conjugations.rows.Polite)
         }
       },
-      pitch: detail.pitch,
+      pitch: detail.pitch && shown && { ...detail.pitch, source: shown.sourceIdentity },
       senses: detail.senses,
       alternatives: detail.alternatives,
       kanji: detail.kanji.map(({ character }) => character),
@@ -226,13 +232,16 @@ export class EmbeddedPresentation {
     return {
       ...detail,
       hasReference: kanji !== null,
+      savedReading: savedKanjiReading(detail),
       stats: kanji ? detail.stats : [],
       words: [...leading, ...detail.words.filter(word => word.id !== request.leadingWord)]
     }
   }
 
-  kanjiMeanings(character: string): string[] {
-    return this.kanji.row(character)?.meanings ?? []
+  candidateMeanings(candidates: readonly string[]): (string | null)[] {
+    return candidates.map(candidate =>
+      isKanjiCharacter(candidate) ? (this.kanji.row(candidate)?.meanings[0] ?? null) : null
+    )
   }
 
   kanjiElementPage(glyph: string): KanjiElementDetail | null {

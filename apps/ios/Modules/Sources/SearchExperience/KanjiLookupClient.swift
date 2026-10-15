@@ -74,6 +74,7 @@ struct KanjiPage: Hashable, Sendable {
   let elements: [Element]
   let words: [DictionaryEntry]
   let shareText: String
+  let savedReading: String
 }
 
 extension KanjiPage {
@@ -110,6 +111,7 @@ extension KanjiPage {
     let elements: [Element]
     let words: [Word]
     let shareText: String
+    let savedReading: String
   }
 
   init(
@@ -137,7 +139,8 @@ extension KanjiPage {
       components: answer.components,
       elements: answer.elements,
       words: answer.words.compactMap { entries[$0.id] },
-      shareText: answer.shareText
+      shareText: answer.shareText,
+      savedReading: answer.savedReading
     )
   }
 }
@@ -193,7 +196,7 @@ struct KanjiLookupClient: Sendable {
     @Sendable (
       _ character: KanjiCharacter, _ words: [DictionaryEntry], _ openedFrom: LanguageReferenceID?
     ) throws -> KanjiPage
-  var meanings: @Sendable (KanjiCharacter) -> [String]
+  var candidateMeanings: @Sendable ([String]) -> [String?]
   var element: @Sendable (KanjiElementID) throws -> KanjiElementPage?
 
   static func live(lookupClient: LookupClient) -> KanjiLookupClient {
@@ -204,8 +207,9 @@ struct KanjiLookupClient: Sendable {
       page: { character, words, openedFrom in
         try KanjiPage(character, words: words, openedFrom: openedFrom)
       },
-      meanings: { character in
-        (try? PresentationCore.shared.answer("kanjiMeanings", character.rawValue)) ?? []
+      candidateMeanings: { candidates in
+        (try? PresentationCore.shared.answer("candidateMeanings", candidates))
+          ?? candidates.map { _ in nil }
       },
       element: { id in try PresentationCore.shared.answer("kanjiElementPage", id.rawValue) }
     )

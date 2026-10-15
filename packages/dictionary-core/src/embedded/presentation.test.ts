@@ -63,6 +63,7 @@ describe('the embedded presentation engine', () => {
     expect(page.pitch).toMatchObject({
       downstep: 2,
       moraCount: 3,
+      source: 'unidic',
       particleHigh: false,
       morae: [
         { mora: 'タ', high: false },
@@ -70,6 +71,16 @@ describe('the embedded presentation engine', () => {
         { mora: 'ル', high: false }
       ]
     })
+  })
+
+  test("shows the compound estimate's pitch, and names it, only for an entry UniDic has no pitch for", async () => {
+    const estimated = { ...eat, pitch: null }
+    const page = (await ask(host, 'wordPage', JSON.stringify(estimated))) as EmbeddedWordPage
+    expect(page.pitch).toMatchObject({ downstep: 1, source: 'compound accent rule' })
+    const neither = { ...eat, pitch: null, compoundPitch: null }
+    expect(((await ask(host, 'wordPage', JSON.stringify(neither))) as EmbeddedWordPage).pitch).toBe(
+      null
+    )
   })
 
   test('gives a verb its conjugations, with the note that tells same-spelled forms apart', async () => {
@@ -101,7 +112,8 @@ describe('the embedded presentation engine', () => {
       reading: 'がっこう',
       partsOfSpeech: ['noun'],
       senses: [{ meaning: 'school', notes: [], partsOfSpeech: ['noun'] }],
-      pitch: null
+      pitch: null,
+      compoundPitch: null
     }
     const page = (await ask(host, 'wordPage', JSON.stringify(noun))) as EmbeddedWordPage
     expect(page.conjugations).toBeNull()
@@ -174,6 +186,7 @@ describe('the embedded presentation engine', () => {
       ruby: [{ text: '高校', reading: 'こうこう' }]
     })
     expect(page.shareText).toBe('校【コウ、キョウ、たかし】\n校 meaning, second, third')
+    expect(page.savedReading).toBe('コウ')
   })
 
   test('lists a kanji’s components when it has no elements, with every stat it has', async () => {
@@ -203,14 +216,16 @@ describe('the embedded presentation engine', () => {
       stats: [],
       meanings: [],
       readings: [],
+      savedReading: '',
       shareText: '㐂'
     })
     expect(page.words.map(word => word.id)).toEqual(['w1'])
   })
 
-  test('gives a kanji’s meanings, none for one it has no reference for', async () => {
-    expect(await ask(host, 'kanjiMeanings', '学')).toEqual(['学 meaning', 'second', 'third'])
-    expect(await ask(host, 'kanjiMeanings', '㐂')).toEqual([])
+  test('gives each handwriting candidate that is one kanji its first meaning, in one call', async () => {
+    expect(
+      await ask(host, 'candidateMeanings', JSON.stringify(['学', '学校', 'が', '㐂', '食']))
+    ).toEqual(['学 meaning', null, null, null, '食 meaning'])
   })
 
   test('builds an element page from the element, the kanji in its family, and those containing it', async () => {

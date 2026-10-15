@@ -1,9 +1,10 @@
+import { type PhraseEntry, phraseNote } from '../detail/phrase-note'
 import { romaji, sentenceRomaji } from '../detail/romaji'
 import { isKanjiCharacter, shortGloss } from '../detail/text'
 import { japaneseCandidates, normalizeQuery } from '../search/query'
 import { creditsShownBy } from '../sources/credits'
 import type { EmbeddedHost } from './host'
-import { EmbeddedLookup } from './lookup'
+import { canonicalEntries, EmbeddedLookup } from './lookup'
 import { EmbeddedPresentation } from './presentation'
 import { type AnalyzeText, EmbeddedText, type HostWord } from './text'
 
@@ -43,6 +44,7 @@ export function embeddedEndpoint(host: EmbeddedHost): EmbeddedEndpoint {
     websiteRoute: link => lookup().websiteRoute(JSON.parse(link)),
     relatedWord: (related, analyze) => lookup().relatedWord(JSON.parse(related), { analyze }),
     savedWord: (saved, analyze) => lookup().savedWord(JSON.parse(saved), { analyze }),
+    canonicalEntries: groups => canonicalEntries(JSON.parse(groups)),
     normalizeQuery,
     japaneseCandidates: candidates => japaneseCandidates(JSON.parse(candidates)),
     isKanji: isKanjiCharacter,
@@ -62,11 +64,15 @@ export function embeddedEndpoint(host: EmbeddedHost): EmbeddedEndpoint {
     ruby: pair => presentation().ruby(JSON.parse(pair)),
     wordPage: entry => presentation().wordPage(JSON.parse(entry)),
     kanjiPage: request => presentation().kanjiPage(JSON.parse(request)),
-    kanjiMeanings: character => presentation().kanjiMeanings(character),
+    candidateMeanings: candidates => presentation().candidateMeanings(JSON.parse(candidates)),
     kanjiElementPage: glyph => presentation().kanjiElementPage(glyph),
     kanjiStrokes: row => presentation().kanjiStrokes(JSON.parse(row)),
     radicalPanel: selected => presentation().radicalPanel(JSON.parse(selected)),
     gloss: shortGloss,
+    phraseNote: request => {
+      const { phrase, ...entry } = JSON.parse(request) as PhraseEntry & { phrase: string }
+      return phraseNote(phrase, entry)
+    },
     sourceCredits: creditsShownBy
   }
   const unanalyzed: AnalyzeText = () => {

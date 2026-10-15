@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest'
-import { morae, pitchAccent, pitchLevels } from './pitch'
+import { morae, pitchAccent, pitchLevels, shownPitch } from './pitch'
 
 const unidic = 'UniDic for Contemporary Written Japanese 3.1.0'
 
@@ -77,5 +77,19 @@ describe('pitchGraph (PitchContourLayout)', () => {
     ])
     expect(graph.particle).toEqual({ x: 2.8, high: false })
     expect(graph.width).toBeCloseTo(3.1)
+  })
+})
+
+describe('shownPitch', () => {
+  const estimate = { downstep: 3, moraCount: 6, sourceIdentity: 'compound accent rule' }
+  const listed = { downstep: 2, moraCount: 3, sourceIdentity: unidic }
+
+  test("shows UniDic's pitch when the entry has one, over the compound estimate", () => {
+    expect(shownPitch({ pitch: listed, compoundPitch: estimate })).toBe(listed)
+  })
+
+  test('shows the compound estimate when UniDic has none, and nothing without either', () => {
+    expect(shownPitch({ pitch: null, compoundPitch: estimate })).toBe(estimate)
+    expect(shownPitch({ pitch: null, compoundPitch: null })).toBeNull()
   })
 })

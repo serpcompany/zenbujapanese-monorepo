@@ -7,6 +7,7 @@ import type {
   SenseRestrictionRow
 } from '../detail/rows'
 import { wordSlug } from '../detail/slug'
+import { canonicalEntry } from '../search/ranked-entries'
 import { type ArtifactDatabase, listedIds } from './database'
 import { bundledFrequency } from './frequency'
 import type { KanjiData } from './kanji-data'
@@ -168,10 +169,11 @@ export function slugsByEntSeq(
 }
 
 export function canonicalEntryId(db: ArtifactDatabase, fingerprint: string): string {
-  const [row] = db.all<{ id: string }>(
-    `SELECT lower(hex(id)) AS id FROM entries WHERE semantic_fingerprint = unhex(?)
-     ORDER BY lower(hex(id)) LIMIT 1`,
-    [fingerprint]
+  const row = canonicalEntry(
+    db.all<{ id: string }>(
+      'SELECT lower(hex(id)) AS id FROM entries WHERE semantic_fingerprint = unhex(?)',
+      [fingerprint]
+    )
   )
   if (!row) throw new Error(`No entry has the semantic fingerprint ${fingerprint}`)
   return row.id

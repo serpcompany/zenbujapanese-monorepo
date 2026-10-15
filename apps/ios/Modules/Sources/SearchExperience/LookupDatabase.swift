@@ -179,10 +179,8 @@ extension LanguageReferenceData {
     let readingForms: [DictionaryForm] = try Self.decode(column: 10, statement: statement)
     let senses: [DictionarySense] = try Self.decode(column: 11, statement: statement)
     let relationships: [DictionaryRelationship] = try Self.decode(column: 12, statement: statement)
-    let pitchAccent: PitchAccent? =
-      sqlite3_column_type(statement, 13) == SQLITE_NULL
-      ? nil
-      : try Self.decode(column: 13, statement: statement)
+    let pitch: PitchAccent? = try Self.decodeIfPresent(column: 13, statement: statement)
+    let compoundPitch: PitchAccent? = try Self.decodeIfPresent(column: 16, statement: statement)
     return DictionaryEntry(
       id: LanguageReferenceID(rawValue: sqliteText(statement, 0)),
       noteID: WordNoteID(rawValue: sqliteText(statement, 1)),
@@ -201,7 +199,8 @@ extension LanguageReferenceData {
       readingForms: readingForms,
       senses: senses,
       relationships: relationships,
-      pitchAccent: pitchAccent,
+      pitch: pitch,
+      compoundPitch: compoundPitch,
       isCommon: sqlite3_column_int(statement, 14) == 1
     )
   }
@@ -212,15 +211,21 @@ extension LanguageReferenceData {
     try decoder.decode(Value.self, from: Data(sqliteText(statement, column).utf8))
   }
 
+  private static func decodeIfPresent<Value: Decodable>(column: Int32, statement: OpaquePointer)
+    throws -> Value?
+  {
+    sqlite3_column_type(statement, column) == SQLITE_NULL
+      ? nil : try decode(column: column, statement: statement)
+  }
+
   private static let decoder = JSONDecoder()
 
   static let selectedColumns = """
     lower(hex(e.id)), e.note_identity, e.source_identity, CAST(e.source_record_id AS TEXT), e.headword, e.reading, e.summary,
     e.meanings_json, e.parts_of_speech_json, e.written_forms_json, e.reading_forms_json,
-    e.senses_json, e.relationships_json,
-    COALESCE(e.pitch_accent_json,
-      (SELECT c.pitch_accent_json FROM compound_pitch.entry_pitch c WHERE c.entry_id = e.id)),
-    e.is_common, lower(hex(e.semantic_fingerprint))
+    e.senses_json, e.relationships_json, e.pitch_accent_json,
+    e.is_common, lower(hex(e.semantic_fingerprint)),
+    (SELECT c.pitch_accent_json FROM compound_pitch.entry_pitch c WHERE c.entry_id = e.id)
     """
 
   static let equivalentEntriesSQL = """

@@ -120,5 +120,6 @@ export const eat: EmbeddedEntry = {
   relationships: [
     { headword: '学校', reading: 'がっこう', summary: 'school', relation: 'See also' }
   ],
-  pitch: { downstep: 2, moraCount: 3, sourceIdentity: 'unidic' }
+  pitch: { downstep: 2, moraCount: 3, sourceIdentity: 'unidic' },
+  compoundPitch: { downstep: 1, moraCount: 3, sourceIdentity: 'compound accent rule' }
 }

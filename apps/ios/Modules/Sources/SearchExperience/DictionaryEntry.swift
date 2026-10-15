@@ -13,7 +13,8 @@ struct DictionaryEntry: Hashable, Identifiable, Sendable {
   let readingForms: [DictionaryForm]
   let senses: [DictionarySense]
   let relationships: [DictionaryRelationship]
-  let pitchAccent: PitchAccent?
+  let pitch: PitchAccent?
+  let compoundPitch: PitchAccent?
   let isCommon: Bool
 
   var shortMeaning: String? { Self.shortMeaning(from: meanings) }
@@ -36,7 +37,8 @@ struct DictionaryEntry: Hashable, Identifiable, Sendable {
       readingForms: readingForms,
       senses: senses,
       relationships: relationships,
-      pitchAccent: pitchAccent,
+      pitch: pitch,
+      compoundPitch: compoundPitch,
       isCommon: isCommon
     )
   }
@@ -152,19 +154,6 @@ struct LanguageReferenceProvenance: Hashable, Sendable {
 }
 
 enum LanguageReferenceIdentity {
-  static func canonicalID(_ ids: [LanguageReferenceID]) -> LanguageReferenceID? {
-    ids.min { $0.rawValue < $1.rawValue }
-  }
-
-  static func canonicalEntry(_ entries: [DictionaryEntry]) -> DictionaryEntry? {
-    guard let id = canonicalID(entries.map(\.id)) else { return nil }
-    return entries.first { $0.id == id }
-  }
-
-  static func normalizedEntry(_ entries: [DictionaryEntry]) -> DictionaryEntry? {
-    canonicalEntry(entries)?.withSourceProvenances(entries.flatMap(\.sourceProvenances))
-  }
-
   static func sortedProvenances(
     _ provenances: [LanguageReferenceProvenance]
   ) -> [LanguageReferenceProvenance] {

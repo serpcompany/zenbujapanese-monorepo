@@ -19,7 +19,8 @@ extension DictionaryEntry {
       readingForms: [],
       senses: [],
       relationships: [],
-      pitchAccent: nil,
+      pitch: nil,
+      compoundPitch: nil,
       isCommon: false
     )
   }
