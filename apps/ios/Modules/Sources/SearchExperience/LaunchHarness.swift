@@ -117,6 +117,14 @@ enum LaunchHarness {
     #endif
   }
 
+  static var youTubeResultsPage: String? {
+    #if DEBUG
+      youTubeStandIn(ProcessInfo.processInfo.environment).map { _ in YouTubeStandIn.resultsPage }
+    #else
+      nil
+    #endif
+  }
+
   #if DEBUG
     struct YouTubeStandIn: Decodable {
       let playerResponse: String
@@ -159,6 +167,52 @@ enum LaunchHarness {
           </script>
           """
       }
+
+      static let resultsPage: String = {
+        let results = (1...10).map { number in
+          #"<ytm-video-with-context-renderer><a href="/watch?v=standInV\#(100 + number)">"#
+            + "Stand-in result \(number)</a></ytm-video-with-context-renderer>"
+        }
+        return """
+          <!DOCTYPE html>
+          <html><head>
+          <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+          <style>
+          body {
+            margin: 0; font: 17px -apple-system, sans-serif;
+            padding: 0 env(safe-area-inset-right) env(safe-area-inset-bottom)
+              env(safe-area-inset-left);
+          }
+          ytm-app, ytm-search, ytm-video-with-context-renderer { display: block; }
+          ytm-app { padding-top: 48px; }
+          [has-pivot-bar=true] ytm-app { padding-bottom: 56px; }
+          ytm-mobile-topbar-renderer { position: fixed; top: 0; left: 0; right: 0; height: 48px; }
+          ytm-pivot-bar-renderer { display: flex; position: fixed; bottom: 0; left: 0; right: 0; }
+          ytm-pivot-bar-renderer div { flex: 1; height: 56px; }
+          ytm-video-with-context-renderer a { display: block; height: 240px; }
+          </style>
+          </head><body has-pivot-bar="true"><ytm-app id="app">
+          <ytm-mobile-topbar-renderer id="header-bar"><header data-mode="search">
+          <button role="link" aria-label="YouTube Home">YouTube</button>
+          <input type="text" placeholder="Search YouTube" aria-label="Search YouTube">
+          <button aria-label="Search with your voice">Voice</button>
+          </header></ytm-mobile-topbar-renderer>
+          <ytm-search>\(results.joined())</ytm-search>
+          <ytm-pivot-bar-renderer role="tablist">
+          <div role="tab">Home</div><div role="tab">Shorts</div><div role="tab">You</div>
+          </ytm-pivot-bar-renderer>
+          </ytm-app>
+          <script>
+          document.querySelectorAll('a[href^="/watch"]').forEach(function (link) {
+            link.addEventListener('click', function (event) {
+              event.preventDefault();
+              history.pushState({}, '', link.href);
+            });
+          });
+          </script>
+          </body></html>
+          """
+      }()
     }
 
     static func youTubeStandIn(_ environment: [String: String]) -> YouTubeStandIn? {

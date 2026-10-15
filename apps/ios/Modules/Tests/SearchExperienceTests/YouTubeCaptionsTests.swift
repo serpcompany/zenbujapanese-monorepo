@@ -56,11 +56,11 @@ struct YouTubeCaptionsTests {
     #expect(YouTubeVideoID(navigatingTo: googleResults) == nil)
   }
 
-  @Test("each search provider builds its results page")
+  @Test("each search provider builds its results page, YouTube's mobile one on every device")
   func searchProviders() {
     #expect(
       VideoSearchProvider.youTube.resultsURL(for: "ci japanese")?.absoluteString
-        == "https://m.youtube.com/results?search_query=ci%20japanese")
+        == "https://m.youtube.com/results?search_query=ci%20japanese&app=m")
     #expect(
       VideoSearchProvider.googleVideos.resultsURL(for: "ci japanese")?.absoluteString
         == "https://www.google.com/search?q=ci%20japanese&tbm=vid")
