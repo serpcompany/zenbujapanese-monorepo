@@ -62,8 +62,9 @@ The script does each part of a run:
   hierarchy), `test.log`, and `doctor.txt`. `--record` adds `run.mp4` (the screen for the whole
   run) and `shots/` (a screenshot every 3 seconds, the first 150): pass it for the run a pull
   request cites, not while working, since recording takes processor time from the tests.
-- **The end.** Without `--keep` it shuts the Simulator down. Its last lines give each test's
-  result and how long the Simulator, the build, and the tests took.
+- **The end.** Without `--keep` it shuts the Simulator down, and says so; one that something
+  still uses 30 seconds after the tests it leaves up, and says that instead. Its last lines give
+  each test's result and how long the Simulator, the build, and the tests took.
 
 Its exit status is the tests', and a run in which no test ran fails: a name that matches nothing
 would otherwise leave proof of nothing. A test that fails once and passes the next time is a

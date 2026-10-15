@@ -17,20 +17,77 @@ final class ConversationUITests: ZenbuUITestCase {
   func testAPauseMidSentenceKeepsTheAppOpen() {
     let app = startConversation()
     let toggle = find("translate.session.toggle", in: app)
-    let heard = app.descendants(matching: .any)
-      .matching(NSPredicate(format: "identifier MATCHES %@", #"translate\.sentence\.[^.]+"#))
-    let newest = { heard.allElementsBoundByIndex.last?.identifier }
-    var pauses = 0
-    while appears(find("translate.live", in: app), within: Self.patience / 6) {
-      let lastHeard = newest()
+    let live = find("translate.live", in: app)
+    var heardToTheirEnd = 0
+    while appears(live, within: Self.patience / 6) {
+      let paused = heardSoFar(on: live)
       pause(app)
-      pauses += 1
+      let finished = finishedSentences(in: app)
       toggle.tap()
       waitUntil(toggle, "label == 'Pause'")
-      waitUntil("the paused sentence being heard to its end") { newest() != lastHeard }
+      if let newest = finished.last, isSentence(opening(of: newest, in: app), paused) { continue }
+      var outcome = PausedSentence.notYetHeard
+      waitUntil("\"\(paused)…\" being heard to its end, or the script moving past it") {
+        outcome = self.whereItStands(paused, finishedBefore: finished, live: live, in: app)
+        return outcome != .notYetHeard
+      }
+      if outcome == .heardToItsEnd { heardToTheirEnd += 1 }
     }
-    XCTAssertGreaterThan(pauses, 1, "the script's sentences were paused while they were heard")
+    XCTAssertGreaterThan(
+      heardToTheirEnd, 1, "sentences paused while they were heard were heard to their end")
     waitFor(firstElement(identifiedBy: "translate.sentence.", in: app))
+  }
+
+  private enum PausedSentence {
+    case notYetHeard
+    case heardToItsEnd
+    case passedBy
+  }
+
+  private func whereItStands(
+    _ paused: String, finishedBefore finished: [String], live: XCUIElement,
+    in app: XCUIApplication
+  ) -> PausedSentence {
+    if let added = finishedSentences(in: app).first(where: { !finished.contains($0) }) {
+      let opening = opening(of: added, in: app)
+      if opening.isEmpty { return .notYetHeard }
+      return isSentence(opening, paused) ? .heardToItsEnd : .passedBy
+    }
+    if live.exists {
+      let now = heardSoFar(on: live)
+      if !now.isEmpty, !isSentence(now, paused) { return .passedBy }
+    }
+    return find("translate.still-there", in: app).exists ? .passedBy : .notYetHeard
+  }
+
+  private func finishedSentences(in app: XCUIApplication) -> [String] {
+    app.descendants(matching: .any)
+      .matching(NSPredicate(format: "identifier MATCHES %@", #"translate\.sentence\.[^.]+"#))
+      .allElementsBoundByIndex.map(\.identifier)
+  }
+
+  private func heardSoFar(on live: XCUIElement) -> String {
+    let shown = text(of: live)
+    return (shown.components(separatedBy: "▍").first ?? shown).trimmingCharacters(in: .whitespaces)
+  }
+
+  private func opening(of sentence: String, in app: XCUIApplication) -> String {
+    let english = find("\(sentence).source", in: app)
+    if english.exists { return text(of: english) }
+    let prefix = "\(sentence).source."
+    let words = app.descendants(matching: .any)
+      .matching(NSPredicate(format: "identifier BEGINSWITH %@", prefix))
+      .allElementsBoundByIndex
+      .compactMap { word -> (Int, String)? in
+        let parts = word.identifier.dropFirst(prefix.count).split(separator: ".", maxSplits: 1)
+        guard parts.count == 2, let index = Int(parts[0]) else { return nil }
+        return (index, String(parts[1]))
+      }
+    return words.min { $0.0 < $1.0 }?.1 ?? ""
+  }
+
+  private func isSentence(_ opening: String, _ heard: String) -> Bool {
+    !opening.isEmpty && !heard.isEmpty && (opening.hasPrefix(heard) || heard.hasPrefix(opening))
   }
 
   func testTwoPanesHoldEachLanguage() {

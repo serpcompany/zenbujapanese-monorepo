@@ -17,10 +17,12 @@ import {
   linterRule,
   secretRule,
   sizeRule,
-  unclassifiedRule
+  unclassifiedRule,
+  waitRule
 } from './rules'
 import { findSecrets } from './secrets'
 import { checkSizes } from './sizes'
+import { findUITestWaits } from './waits'
 
 export interface Outcome {
   name: string
@@ -62,6 +64,13 @@ const layers: Check = files => {
   const report = problems.map(problem => `${problem.path}:${problem.line}  ${problem.problem}`)
   if (problems.length) report.push(layerRule)
   return { name: 'layers', passed: !problems.length, report }
+}
+
+const waits: Check = files => {
+  const problems = findUITestWaits(files)
+  const report = problems.map(problem => `${problem.path}:${problem.line}  ${problem.problem}`)
+  if (problems.length) report.push(waitRule)
+  return { name: 'waits', passed: !problems.length, report }
 }
 
 const linters: Check = files => {
@@ -122,6 +131,7 @@ const checks: Record<string, Check> = {
   docs,
   sizes,
   layers,
+  waits,
   secrets,
   duplicates,
   deadcode,

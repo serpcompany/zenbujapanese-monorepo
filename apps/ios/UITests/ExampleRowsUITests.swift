@@ -77,9 +77,9 @@ final class ExampleRowsUITests: ZenbuUITestCase {
     }
     let page = find("word-detail.screen", in: app)
     if device == .mac {
-      for _ in 0..<3 where !page.exists {
+      for _ in 0..<3 {
         word.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.75)).tap()
-        _ = page.waitForExistence(timeout: Self.patience / 3)
+        if appears(page, within: Self.patience / 3) { break }
       }
     } else {
       tap(word)
@@ -158,12 +158,11 @@ final class ExampleRowsUITests: ZenbuUITestCase {
   }
 
   private func letLinkingGo(until element: XCUIElement, in app: XCUIApplication) {
-    let deadline = Date.now.addingTimeInterval(Self.patience)
-    while !element.exists, Date.now < deadline {
+    waitUntil("\(element) to exist as held answers are let go") {
+      if element.exists { return true }
       letLinkingGo(heldBefore: .now)
-      RunLoop.current.run(until: Date.now.addingTimeInterval(0.3))
+      return false
     }
-    waitFor(element)
   }
 
   private func letLinkingGo(heldBefore cut: Date) {
