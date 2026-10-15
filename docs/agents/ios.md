@@ -236,15 +236,13 @@ On the Mac, XCUITest sees AppKit's elements, and the helpers hide the difference
 the same on every device:
 
 - A menu's choice is a menu item found by its title, and only among the window's menus
-  (`menuChoices`): the menu bar's **Edit ▸ Delete** and Continuity Camera's **Take Photo** carry
-  the titles a row's menu does. A menu item is tapped once it's hittable and has a
-  real frame, by clicking the middle of that frame (`tap`): a submenu's items exist before
-  they're laid out, and XCUITest's own tap looks the item up again and fails when the menu is
-  redrawing just then, about one run in three. `chooseFromSortedBy` closes the menu and opens
-  it again when a submenu never opens, and moves the pointer straight across into the submenu
-  before it clicks a choice: XCUITest moves the pointer in a straight line, and the line from
-  **Sort By** to **Known Words** crosses **Filter**, where AppKit sometimes closed the submenu, so
-  the click landed on nothing.
+  (`menuChoices`): the menu bar's **Edit ▸ Delete** and Continuity Camera's **Take Photo** carry the
+  titles a row's menu does. A menu item is tapped once it's hittable and has a real frame, by
+  clicking the middle of that frame (`tap`): a submenu's items exist before they're laid out, and
+  XCUITest's own tap looks the item up again and fails when the menu is redrawing just then, about
+  one run in three. `chooseFromSortedBy` closes the menu and opens it again when a submenu never
+  opens, and moves the pointer into the submenu along its row before clicking a choice: the straight
+  line to **Known Words** crossed **Filter**, where AppKit sometimes shut the submenu.
 - A sheet, and an alert that takes a name, are `app.sheets` (`sheet(_:in:)`, `prompt(in:)`).
   `waitForSheet` also checks that a Mac sheet has room for its content and stays in the window.
 - A row's label starts with its title and goes on with its detail (`showing`); a static text's
@@ -271,13 +269,12 @@ and add iPad and Mac screenshots. A Mac build is archived with
 
 ### iPad and Mac checks
 
-The UI tests cover the tab shell, the iPad's sidebar, a page opened in every tab after visiting
-the others, every tab at the iPad's two orientations and the
-Mac's smallest window, the menu commands and their shortcuts, the Settings window, a second Mac
-window, Image Search's sources and Paste Image, and the Handwriting and Radicals sheet's
-**Done**. What they can't drive, check by hand when
-changing it: the app beside another app in Split View on iPad, an image dragged in from another
-app, and **File → Import from iPhone or iPad** with a real iPhone.
+The UI tests cover the tab shell, the iPad's sidebar, a page opened in every tab after visiting the
+others, every tab at the iPad's two orientations and the Mac's smallest window, the menu commands
+and their shortcuts, the Settings window, a second Mac window, Image Search's sources and Paste
+Image, and the Handwriting and Radicals sheet's **Done**. What they can't drive, check by hand when
+changing it: the app beside another app in Split View on iPad, an image dragged in from another app,
+and **File → Import from iPhone or iPad** with a real iPhone.
 
 ## Install on an iPhone
 
@@ -1194,11 +1191,10 @@ Simulator:
   chosen dictionary under **Account → Frequency Dictionaries** returns Search to **Default**.
 - The menu shows only **Sort By** and **Filter**, each naming its current choice underneath. **Sort
   By** lists the sorts with no direction to choose.
-- **Filter** on `dog`, `いる`, and `miru`: **Known** leaves only known words and
-  **Unknown** only the rest, in the chosen order; the **Sorted by** row shows **· 1 filter** and no
-  other row appears; a filter that hides every word shows **No Words Match Your Filter**; marking a
-  word known from its long-press menu drops it at once while **Unknown** is chosen. The filter
-  survives relaunching.
+- **Filter** on `dog`, `いる`, and `miru`: **Known** leaves only known words and **Unknown** only the
+  rest, in the chosen order; the **Sorted by** row shows **· 1 filter** and no other row appears; a
+  filter that hides every word shows **No Words Match Your Filter**; marking a word known from its
+  long-press menu drops it at once while **Unknown** is chosen. The filter survives relaunching.
 
 When changing Search's top bar or the shared field in `SearchField.swift`, also check:
 
