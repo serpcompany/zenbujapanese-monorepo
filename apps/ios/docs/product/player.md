@@ -12,7 +12,12 @@ dictionary sheet Image Search uses.
   results are YouTube's mobile results page on every device, without YouTube's own header (its
   search field and voice search) or its bottom bar (Home, Shorts, You). The app's navigation bar,
   with Back and the query, and its tabs are the only controls, and the last result scrolls clear
-  of the tab bar.
+  of the tab bar. Search in Player is always YouTube's: the root view gives Player its provider
+  (`searchProvider: .youTube` in `SearchExperienceRootView.swift`), and no screen offers Google
+  Videos, the other provider `VideoSearch.swift` can build. Its results page was checked for
+  #753's problem only that far: it isn't reachable, so it has no style hiding Google's own header
+  and bars, and it needs one before any screen offers it
+  ([tech debt](../../../../docs/tech-debt.md)).
   Check: package `YouTubeCaptionsTests` (which text is a video link, in every form, and each
   search provider's results page and the videos chosen from it); UI `PlayerUITests` (the search
   bar), `PlayerWatchUITests` (a pasted link opens the video, with YouTube stood in), and
