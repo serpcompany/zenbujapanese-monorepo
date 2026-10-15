@@ -64,9 +64,10 @@ extension ZenbuUITestCase {
     let opened = menuChoice(row, in: app)
     let chosen = menuChoice(choice, in: app)
     for _ in 0..<3 {
-      for _ in 0..<3 where !opened.exists {
+      for _ in 0..<3 {
+        if opened.exists { break }
         tapWhereReachable([sortedBy.staticTexts, sortedBy], in: app)
-        _ = opened.waitForExistence(timeout: Self.patience / 3)
+        if appears(opened, within: Self.patience / 3) { break }
       }
       tap(opened)
       if device != .mac || isHittable(chosen, within: Self.patience / 6) { break }
@@ -98,9 +99,10 @@ extension ZenbuUITestCase {
     let shown = find(content, in: app)
     let buttons = app.descendants(matching: .any).matching(identifier: "search.input.\(input)")
     waitFor(buttons.firstMatch)
-    for index in 0..<buttons.count where !shown.exists {
+    for index in 0..<buttons.count {
+      if shown.exists { break }
       buttons.element(boundBy: index).tap()
-      _ = shown.waitForExistence(timeout: 10)
+      if appears(shown, within: Self.patience / 3) { break }
     }
     return waitFor(shown)
   }
@@ -128,12 +130,12 @@ extension ZenbuUITestCase {
   func name(_ text: String, in app: XCUIApplication, button: String = "Create") {
     let prompt = waitFor(prompt(in: app))
     let field = prompt.textFields.firstMatch
-    tap(field)
+    focus(field)
     if let current = field.value as? String, !current.isEmpty, current != field.placeholderValue {
       field.typeText(String(repeating: XCUIKeyboardKey.delete.rawValue, count: current.count))
     }
     field.typeText(text)
-    prompt.buttons[button].firstMatch.tap()
+    tap(prompt.buttons[button].firstMatch)
   }
 
   @discardableResult
@@ -143,11 +145,35 @@ extension ZenbuUITestCase {
   ) -> XCUIElement {
     let area = container ?? app.windows.firstMatch
     let scrolled = list ?? area
-    _ = element.waitForExistence(timeout: 5)
-    for _ in 0..<12 where !isReachable(element, in: app, within: container) {
-      scroll(scrolled, back: element.exists && element.frame.midY < area.frame.midY)
+    var lastLongList: String?
+    _ = comesTrue("\(element) to exist, or a list to show it goes on below", within: 5) {
+      if element.exists { return true }
+      let longList = listGoingOnBelow(in: scrolled)
+      defer { lastLongList = longList }
+      return longList != nil && longList == lastLongList
+    }
+    var isAbove = false
+    for _ in 0..<12 {
+      if isReachable(element, in: app, within: container) { break }
+      if let laidOut = laidOutFrame(of: element) { isAbove = laidOut.midY < area.frame.midY }
+      scroll(scrolled, back: isAbove)
     }
     return waitFor(element)
+  }
+
+  func laidOutFrame(of element: XCUIElement) -> CGRect? {
+    guard let shown = try? element.snapshot(), !shown.frame.isEmpty else { return nil }
+    return shown.frame
+  }
+
+  func listGoingOnBelow(in area: XCUIElement) -> String? {
+    guard device != .mac else { return nil }
+    let longList = NSPredicate(
+      format: "label BEGINSWITH 'Vertical scroll bar,' AND NOT (label ENDSWITH ' 1 page')")
+    guard let bar = try? area.descendants(matching: .any).matching(longList).firstMatch.snapshot()
+    else { return nil }
+    let shown = "\(bar.label), \(bar.value ?? "")"
+    return shown.hasSuffix(", 100%") ? nil : shown
   }
 
   func scroll(_ area: XCUIElement, back: Bool) {
@@ -169,15 +195,15 @@ extension ZenbuUITestCase {
     corner.press(forDuration: 0.3, thenDragTo: target)
   }
 
-  static let switchedOn = NSPredicate(format: "value == '1' OR value == 1")
+  static let switchedOn = "value == '1' OR value == 1"
+  static let switchedOff = "value == '0' OR value == 0"
 
   func turnRomajiOn(in app: XCUIApplication) {
     open(.account, in: app)
     tap(reveal(find("account.reading-aids", in: app), in: app))
     let romaji = waitFor(find("reading-aids.show-romaji", in: app))
     flip(romaji)
-    expectation(for: Self.switchedOn, evaluatedWith: romaji)
-    waitForExpectations(timeout: Self.patience)
+    waitUntil(romaji, Self.switchedOn)
   }
 
   func flip(_ toggle: XCUIElement) {
@@ -192,11 +218,13 @@ extension ZenbuUITestCase {
   func choose(_ segment: String, in control: XCUIElement) {
     let button = waitFor(control).descendants(matching: .any)
       .matching(NSPredicate(format: "label == %@", segment)).firstMatch
-    for _ in 0..<3 where !isOn(button) {
+    var chosen = isOn(button)
+    for _ in 0..<3 {
+      if chosen { break }
       button.tap()
-      RunLoop.current.run(until: Date.now.addingTimeInterval(1))
+      chosen = comesTrue("\(segment) to be chosen", within: Self.patience / 3) { isOn(button) }
     }
-    XCTAssertTrue(isOn(button), "\(segment) didn't take")
+    XCTAssertTrue(chosen, "\(segment) didn't take")
   }
 
   func isOn(_ control: XCUIElement) -> Bool {

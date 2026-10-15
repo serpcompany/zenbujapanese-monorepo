@@ -25,9 +25,9 @@ final class ListsUITests: ZenbuUITestCase {
     grip.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5)).press(
       forDuration: 0.8, thenDragTo: upper.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.1)),
       withVelocity: .slow, thenHoldForDuration: 0.5)
-    let flipped = NSPredicate { _, _ in (anime.frame.minY < favorites.frame.minY) != animeWasFirst }
-    expectation(for: flipped, evaluatedWith: nil)
-    waitForExpectations(timeout: Self.patience)
+    waitUntil("the two lists changing places") {
+      (anime.frame.minY < favorites.frame.minY) != animeWasFirst
+    }
   }
 
   private func makeList(_ name: String, in app: XCUIApplication) -> XCUIElement {

@@ -2,6 +2,11 @@ import XCTest
 
 final class PlayerWatchUITests: ZenbuUITestCase {
   static let link = "https://youtu.be/AQdI1o2D32I"
+  static let countingDraws = ["ZENBU_COUNT_DRAWS": "1"]
+  static let drawCounts = [
+    "the screen": "watch.draws", "the speed menu": "watch.speed.draws",
+    "the captions": "watch.captions.draws",
+  ]
 
   func testAVideoListsItsCaptionCardsWithTheShareOfWordsKnown() {
     let app = openVideo()
@@ -16,14 +21,22 @@ final class PlayerWatchUITests: ZenbuUITestCase {
     waitFor(labeled("There's a bookstore near the station.", in: app))
   }
 
-  func testThePlayersOwnControlsPlayStepAndRepeat() {
-    let app = openVideo()
-    let playPause = waitFor(find("watch.play-pause", in: app))
+  func testThePlayersOwnControlsPlayStepAndRepeat() throws {
+    let app = openVideo(Self.standIn().merging(Self.countingDraws) { $1 })
+    waitUntil(find("watch.comprehension", in: app), mentions: "words known")
+    let playPause = find("watch.play-pause", in: app)
+    waitUntil(playPause, "isEnabled == true")
     playPause.tap()
+    waitUntil(playPause, "label == 'Pause'")
     tap(find("watch.next", in: app))
     tap(find("watch.previous", in: app))
     tap(find("watch.repeat", in: app))
-    XCTAssertTrue(find("watch.repeat", in: app).isSelected, "the line repeats")
+    waitUntil(find("watch.repeat", in: app), "isSelected == true")
+    waitUntil(playPause, "label == 'Pause'")
+    let redrawn = try redraws(whileSecondsShown: 3, in: app)
+    XCTAssertEqual(
+      redrawn, Self.drawCounts.mapValues { _ in 0 },
+      "the Player redrew while the time showed three seconds")
     tap(find("watch.speed", in: app))
     for rate in ["0.5×", "0.75×", "1×", "1.25×", "1.5×"] {
       waitFor(menuChoice(rate, in: app))
@@ -33,7 +46,30 @@ final class PlayerWatchUITests: ZenbuUITestCase {
     } else {
       tapWhereReachable([menuChoices("1.25×", in: app)], in: app)
     }
+    waitUntil(find("watch.speed", in: app), mentions: "1.25×")
     assertOnScreen(find("watch.scrubber", in: app), in: app)
+  }
+
+  private func redraws(whileSecondsShown seconds: Int, in app: XCUIApplication) throws -> [String: Int] {
+    let before = try Self.drawCounts.mapValues { try draws(on: $0, in: app) }
+    let time = find("watch.time", in: app)
+    var shown = Set<String>()
+    waitUntil("the time to show \(seconds) different seconds") {
+      let now = text(of: time)
+      if !now.isEmpty { shown.insert(now) }
+      return shown.count >= seconds
+    }
+    var redrawn: [String: Int] = [:]
+    for (part, probe) in Self.drawCounts {
+      redrawn[part] = try draws(on: probe, in: app) - (before[part] ?? 0)
+    }
+    return redrawn
+  }
+
+  private func draws(on probe: String, in app: XCUIApplication) throws -> Int {
+    let shown = text(of: waitFor(find(probe, in: app)))
+    if Int(shown) == nil { attachWhatIsOnScreen() }
+    return try XCTUnwrap(Int(shown), "\(probe) shows \"\(shown)\", not a count of draws")
   }
 
   func testAWordInACaptionOpensItsEntryInsidePlayer() {

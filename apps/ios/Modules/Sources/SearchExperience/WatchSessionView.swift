@@ -15,6 +15,7 @@ struct WatchSessionView: View {
   @State private var isTranslatingMissingLines = false
   @State private var missingTranslationTask: Task<Void, Never>?
   @State private var scrubPosition: TimeInterval?
+  @State private var draws = DrawCount()
   @Binding private var presentedWord: RecognizedWordSheetRequest?
 
   private let videoID: YouTubeVideoID
@@ -54,7 +55,7 @@ struct WatchSessionView: View {
     .navigationTitle("Player")
     .inlineNavigationTitle()
     .toolbar {
-      ToolbarItem(placement: .barTrailing) { playerMenu }
+      ToolbarItem(placement: .barTrailing) { PlayerMoreMenu(videoID: videoID) }
     }
     .task(id: videoID) {
       history.record(videoID)
@@ -75,28 +76,7 @@ struct WatchSessionView: View {
     .onChange(of: readingAidPreferences.translationSource) {
       Task { await loadCaptions() }
     }
-  }
-
-  private var playerMenu: some View {
-    @Bindable var preferences = readingAidPreferences
-    return Menu("More", systemImage: "ellipsis") {
-      Section("Show") {
-        Toggle("Furigana", isOn: $preferences.showsFurigana)
-        Toggle("Furigana on Known Words", isOn: Binding(
-          get: { !preferences.hidesFuriganaOnKnownWords },
-          set: { preferences.hidesFuriganaOnKnownWords = !$0 }
-        ))
-        .disabled(!preferences.showsFurigana)
-        Toggle("Word Meanings", isOn: $preferences.showsWordMeanings)
-        Toggle("Translations", isOn: $preferences.showsTranslations)
-      }
-      Section {
-        ShareLink(item: URL(string: "https://youtu.be/\(videoID.rawValue)")!) {
-          Label("Share Video", systemImage: "square.and.arrow.up")
-        }
-      }
-    }
-    .accessibilityIdentifier("watch.more")
+    .countingDraws(as: "watch.draws", in: draws)
   }
 
   private var comprehensionSummary: some View {
@@ -179,26 +159,10 @@ struct WatchSessionView: View {
   }
 
   private func captionList(_ captions: YouTubeVideoCaptions) -> some View {
-    let activeCueID = activeCue(in: captions.cues)?.id
-    return VStack(spacing: 0) {
+    VStack(spacing: 0) {
       comprehensionSummary
       Divider()
-      ScrollViewReader { proxy in
-        List {
-          ForEach(captions.cues) { cue in
-            cueRow(cue)
-              .captionCardRow(isActive: cue.id == activeCueID)
-              .id(cue.id)
-          }
-        }
-        .listStyle(.plain)
-        .contentMargins(.top, 8, for: .scrollContent)
-        .onChange(of: activeCueID) { _, id in
-          guard let id else { return }
-          withAnimation { proxy.scrollTo(id, anchor: .center) }
-        }
-        .accessibilityIdentifier("watch.captions")
-      }
+      LiveCaptionList(cues: captions.cues, player: player) { cue in cueRow(cue) }
     }
   }
 
@@ -221,10 +185,9 @@ struct WatchSessionView: View {
 
   private var playbackControls: some View {
     VStack(spacing: 0) {
-      PlaybackScrubber(
-        position: scrubPosition ?? player.currentTime,
-        duration: player.duration,
-        scrub: { scrubPosition = $0 },
+      PlaybackPositionScrubber(
+        player: player,
+        scrubPosition: $scrubPosition,
         commit: { position in
           if player.loop != nil,
             let cue = loadedCues.last(where: { $0.start <= position }) ?? loadedCues.first
@@ -236,13 +199,11 @@ struct WatchSessionView: View {
         }
       )
       HStack(spacing: 0) {
-        Text(
-          "\(Self.timestamp(scrubPosition ?? player.currentTime)) / \(Self.timestamp(player.duration))"
-        )
-        .font(.caption2.monospacedDigit())
-        .foregroundStyle(.secondary)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .accessibilityHidden(true)
+        PlaybackTimeText(player: player, scrubPosition: scrubPosition)
+          .font(.caption2.monospacedDigit())
+          .foregroundStyle(.secondary)
+          .frame(maxWidth: .infinity, alignment: .leading)
+          .accessibilityIdentifier("watch.time")
         HStack(spacing: 28) {
           Button("Previous Line", systemImage: "backward.end.fill") { step(by: -1) }
             .font(.body)
@@ -265,7 +226,7 @@ struct WatchSessionView: View {
         }
         HStack(spacing: 4) {
           repeatButton
-          speedMenu
+          PlaybackSpeedMenu(player: player)
         }
         .frame(maxWidth: .infinity, alignment: .trailing)
       }
@@ -294,32 +255,6 @@ struct WatchSessionView: View {
     .frame(minWidth: 36, minHeight: 44)
     .accessibilityAddTraits(isOn ? .isSelected : [])
     .accessibilityIdentifier("watch.repeat")
-  }
-
-  private var speedMenu: some View {
-    Menu {
-      Picker(
-        "Playback Speed",
-        selection: Binding(get: { player.playbackRate }, set: { player.setPlaybackRate($0) })
-      ) {
-        ForEach(Self.playbackRates, id: \.self) { rate in
-          Text(Self.rateLabel(rate)).tag(rate)
-        }
-      }
-      .listedInItsMenu()
-    } label: {
-      Text(Self.rateLabel(player.playbackRate))
-        .font(.footnote.weight(.semibold).monospacedDigit())
-        .frame(minWidth: 44, minHeight: 44)
-    }
-    .accessibilityLabel("Playback speed, \(Self.rateLabel(player.playbackRate))")
-    .accessibilityIdentifier("watch.speed")
-  }
-
-  private static let playbackRates: [Double] = [0.5, 0.75, 1, 1.25, 1.5]
-
-  private static func rateLabel(_ rate: Double) -> String {
-    rate.formatted(.number.precision(.fractionLength(0...2))) + "×"
   }
 
   private var loadedCues: [SubtitleCue] {
