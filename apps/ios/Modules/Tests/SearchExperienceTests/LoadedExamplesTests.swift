@@ -271,6 +271,23 @@ struct LoadedExamplesTests {
     #expect(rows(loaded) == miru.rows(0..<50))
   }
 
+  @Test("a later page with no sentences ends a list that has no more, and fails one that should")
+  func anEmptyLaterPage() async {
+    let miru = Listing("見る", listed: 60)
+    let ended = LoadedExamples()
+    await ended.load("見る", rowsOnScreen: nil, read: miru.read)
+    await ended.loadMore(read: Listing("見る", listed: 25).read)
+    #expect(!ended.laterReadFailed)
+    #expect(!ended.hasMore)
+    #expect(rows(ended) == miru.rows(0..<25))
+
+    let short = LoadedExamples()
+    await short.load("見る", rowsOnScreen: nil, read: miru.read)
+    await short.loadMore { _ in ExamplePage(examples: [], listed: 60, countText: nil, cutShort: false) }
+    #expect(short.laterReadFailed)
+    #expect(!short.hasMore)
+  }
+
   @Test("a later read that fails ends the list until the screen comes back")
   func aFailedLaterReadEndsTheList() async {
     let miru = Listing("見る", listed: 60)
