@@ -5,11 +5,14 @@ struct ResultsExamplesRequest: Encodable, Sendable {
   let query: String
   let primaryEntry: String?
   let usesPrimaryEntryExamples: Bool
+  var batch = ExampleBatch(from: 0)
 
   private enum CodingKeys: String, CodingKey {
     case query
     case primaryEntry
     case usesPrimaryEntryExamples
+    case from
+    case limit
   }
 
   func encode(to encoder: Encoder) throws {
@@ -17,13 +20,53 @@ struct ResultsExamplesRequest: Encodable, Sendable {
     try container.encode(query, forKey: .query)
     try container.encode(primaryEntry, forKey: .primaryEntry)
     try container.encode(usesPrimaryEntryExamples, forKey: .usesPrimaryEntryExamples)
+    try container.encode(batch.from, forKey: .from)
+    try container.encodeIfPresent(batch.limit, forKey: .limit)
   }
 }
 
-struct EntryExamples: Decodable, Sendable {
-  let sentences: [ExampleSentence]
+private struct EntryExamplesRequest: Encodable {
+  let id: String
+  let from: Int
+  let limit: Int?
+}
+
+private struct FormExamplesRequest: Encodable {
+  let form: String
+  let from: Int
+  let limit: Int?
+}
+
+struct LinkedExamples: Decodable, Sendable {
+  struct Example: Decodable, Sendable {
+    let id: ExampleSentenceID
+    let japanese: String
+    let english: String
+    let words: [LinkedWord]
+  }
+
+  let examples: [Example]
+  let listed: Int
+  let cutShort: Bool
+  let countText: String?
+}
+
+struct LinkedEntryExamples: Decodable, Sendable {
+  let page: LinkedExamples
   let count: Int
   let truncated: Bool
+
+  private enum CodingKeys: String, CodingKey {
+    case count
+    case truncated
+  }
+
+  init(from decoder: Decoder) throws {
+    let container = try decoder.container(keyedBy: CodingKeys.self)
+    page = try LinkedExamples(from: decoder)
+    count = try container.decode(Int.self, forKey: .count)
+    truncated = try container.decode(Bool.self, forKey: .truncated)
+  }
 }
 
 struct LinkedText: Encodable, Sendable {
@@ -55,8 +98,7 @@ struct LinkedWord: Decodable, Sendable {
   let candidates: [String]
   let furigana: String?
   let ruby: [JapaneseRubySegment]?
-  let isPageWord: Bool
-  let matchesQuery: Bool
+  let accent: JapaneseTextToken.Accent?
   let attaches: String?
 }
 
@@ -67,6 +109,7 @@ actor DictionaryTextData {
   private let wordIndexURL: URL?
   private let morphology: JapaneseMorphologyClient?
   private var core: DictionaryCore?
+  private var linkingAnswersToFail = LaunchHarness.failsLinkingAnswers
 
   init(
     databaseURL: URL? = nil,
@@ -86,20 +129,36 @@ actor DictionaryTextData {
     try await answer("resultsExampleCount", try DictionaryCore.argument(request))
   }
 
-  func resultsExamples(_ request: ResultsExamplesRequest) async throws -> ListedExamples {
-    try await answer("resultsExamples", try DictionaryCore.argument(request))
+  func resultsExamples(_ request: ResultsExamplesRequest) async throws -> LinkedExamples {
+    try await linked("resultsExamples", request)
   }
 
-  func entryExamples(_ id: LanguageReferenceID) async throws -> EntryExamples {
-    try await answer("entryExamples", id.rawValue)
+  func entryExamples(
+    _ id: LanguageReferenceID, _ batch: ExampleBatch
+  ) async throws -> LinkedEntryExamples {
+    try await linked(
+      "entryExamples",
+      EntryExamplesRequest(id: id.rawValue, from: batch.from, limit: batch.limit))
   }
 
-  func formExamples(_ form: String) async throws -> [ExampleSentence] {
-    try await answer("formExamples", form)
+  func formExamples(_ form: String, _ batch: ExampleBatch) async throws -> LinkedExamples {
+    try await linked(
+      "formExamples", FormExamplesRequest(form: form, from: batch.from, limit: batch.limit))
   }
 
   func linkedWords(_ text: LinkedText) async throws -> [LinkedWord] {
-    try await answer("linkedTokens", try DictionaryCore.argument(text))
+    try await linked("linkedTokens", text)
+  }
+
+  private func linked<Answer: Decodable>(
+    _ method: String, _ request: some Encodable
+  ) async throws -> Answer {
+    try await LaunchHarness.heldLinking?.wait()
+    if linkingAnswersToFail > 0 {
+      linkingAnswersToFail -= 1
+      throw ExampleSentenceRetrievalError.retrievalUnavailable(.queryFailed)
+    }
+    return try await answer(method, try DictionaryCore.argument(request))
   }
 
   func countedWords(_ lines: [String]) async throws -> [String] {

@@ -44,11 +44,9 @@ final class AccountUITests: ZenbuUITestCase {
     waitFor(labeled("A username is 3 to 30 letters a to z, digits, or underscores.", in: app))
     waitFor(labeled("Enter a valid email address, like name@example.com.", in: app))
     goBack(in: app)
-    let card = waitFor(find("account.profile", in: app))
-    let named = NSPredicate(
-      format: "label CONTAINS 'Ada Lovelace' AND NOT (label CONTAINS 'ada.l')")
-    expectation(for: named, evaluatedWith: card)
-    waitForExpectations(timeout: Self.patience)
+    waitUntil(
+      waitFor(find("account.profile", in: app)),
+      "label CONTAINS 'Ada Lovelace' AND NOT (label CONTAINS 'ada.l')")
   }
 
   func testSignInOffersAppleGoogleAndACodeAndSaysWhenTheServiceCantBeReached() {
@@ -119,8 +117,7 @@ final class AccountUITests: ZenbuUITestCase {
     let toggle = waitFor(find("frequency-pack.toggle.\(Self.youTube)", in: app))
     XCTAssertEqual("\(toggle.value ?? "")", "1")
     flip(toggle)
-    expectation(for: Self.switchedOff, evaluatedWith: toggle)
-    waitForExpectations(timeout: Self.patience)
+    waitUntil(toggle, Self.switchedOff)
   }
 
   func testTurningADictionaryOffChangesAnOpenWordAndItsResultsAtOnce() {
@@ -135,8 +132,7 @@ final class AccountUITests: ZenbuUITestCase {
     tap(reveal(find("account.frequency-dictionaries", in: app), in: app))
     let toggle = waitFor(find("frequency-pack.toggle.\(Self.youTube)", in: app))
     flip(toggle)
-    expectation(for: Self.switchedOff, evaluatedWith: toggle)
-    waitForExpectations(timeout: Self.patience)
+    waitUntil(toggle, Self.switchedOff)
     tabItem(.search, in: app).tap()
     waitFor(find("word-detail.screen", in: app))
     waitUntilGone(ranked)
@@ -154,8 +150,7 @@ final class AccountUITests: ZenbuUITestCase {
     tap(reveal(find("account.reading-aids", in: app), in: app))
     let furigana = waitFor(find("reading-aids.show-furigana", in: app))
     flip(furigana)
-    expectation(for: Self.switchedOff, evaluatedWith: furigana)
-    waitForExpectations(timeout: Self.patience)
+    waitUntil(furigana, Self.switchedOff)
     search("japan", in: app)
     tap(find("result.japan", in: app))
     waitFor(find("word-detail.identity-reading", in: app))
@@ -163,12 +158,7 @@ final class AccountUITests: ZenbuUITestCase {
 
   func testTurningRomajiOnWritesExampleSentencesAndAKanjisReadingsInRomaji() {
     let app = launch()
-    open(.account, in: app)
-    tap(reveal(find("account.reading-aids", in: app), in: app))
-    let romaji = waitFor(find("reading-aids.show-romaji", in: app))
-    flip(romaji)
-    expectation(for: Self.switchedOn, evaluatedWith: romaji)
-    waitForExpectations(timeout: Self.patience)
+    turnRomajiOn(in: app)
     search("japan", in: app)
     tap(find("search.examples", in: app))
     waitFor(find("example-list.screen", in: app))
@@ -183,8 +173,6 @@ final class AccountUITests: ZenbuUITestCase {
     waitUntil(reading, mentions: "Romaji, jitsu")
   }
 
-  static let switchedOn = NSPredicate(format: "value == '1' OR value == 1")
-  static let switchedOff = NSPredicate(format: "value == '0' OR value == 0")
   static let jlpt = "zenbu.jlpt.waller.levels"
   static let youTube = "zenbu.tubelex.youtube.ja.unidic-3.1"
 }

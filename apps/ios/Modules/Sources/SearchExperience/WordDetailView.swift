@@ -4,9 +4,8 @@ struct WordDetailView: View {
   @FocusState private var noteEditorFocused: Bool
   @State private var notes: SavedItemNotes
   @State private var photos: SavedItemPhotos
-  @State private var examples: [ExampleSentence] = []
-  @State private var examplesEntryID: LanguageReferenceID?
-  @State private var isLoadingExamples = true
+  @State private var examples = LoadedExamples()
+  @Environment(\.exampleRowsOnScreen) private var rowsOnScreen
   @State private var showsListPicker = false
   @State private var frequencyDisclosure: FrequencyRow?
   @State private var analysisAvailability = JapaneseTextAnalysisAvailability.full
@@ -140,14 +139,13 @@ struct WordDetailView: View {
         }
         ExampleSentenceSections(
           title: "EXAMPLES",
-          examples: examplesEntryID == entry.id ? examples : [],
-          isLoading: isLoadingExamples || examplesEntryID != entry.id,
+          examples: examples,
+          source: entry.id.rawValue,
           emptyMessage: "No source-matched examples",
-          highlightedQuery: SearchQuery(entry.headword),
-          highlightedEntry: entry,
           presentation: { .wordDetail(index: $0) },
           speechSynthesisClient: speechSynthesisClient,
-          japaneseTextAnalysisClient: japaneseTextAnalysisClient,
+          read: readExamples,
+          readAgain: { await loadExamples() },
           openWord: openWord
         )
       }
@@ -182,18 +180,20 @@ struct WordDetailView: View {
       notes.finishEditing()
     }
     .task(id: entry.id) {
-      isLoadingExamples = true
       await notes.load(entry.noteID)
       await photos.load(item, saving: initialEncounterMedia)
       guard !Task.isCancelled else { return }
-      let loadedExamples = (try? await exampleSentenceClient.examples(entry)) ?? []
-      guard !Task.isCancelled else { return }
       analysisAvailability = await japaneseTextAnalysisClient.availability()
-      guard !Task.isCancelled else { return }
-      examples = loadedExamples
-      examplesEntryID = entry.id
-      isLoadingExamples = false
     }
+    .screenTask(id: entry.id) { await loadExamples() }
+  }
+
+  private func loadExamples() async {
+    await examples.load(entry.id.rawValue, rowsOnScreen: rowsOnScreen, read: readExamples)
+  }
+
+  private func readExamples(_ batch: ExampleBatch) async -> ExamplePage? {
+    await exampleSentenceClient.shownExamples(entry, batch)
   }
 }
 
