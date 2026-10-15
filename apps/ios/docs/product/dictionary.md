@@ -360,10 +360,10 @@ Check: UI `WordDetailUITests.testANoteIsKeptOnTheWord` and
 
 A kanji detail can present readings, meanings, stroke order, components, elements, and words
 that contain the kanji, in the core's order (Readings, Components, Elements, Lists, Notes, Words),
-each left out when it has nothing to show, except Lists and Notes. Component and element links
-can be followed without losing the learner's place in the preceding detail.
+each left out when it has nothing to show, except Lists, Notes, and, for a kanji KANJIDIC2 lists,
+Readings. Component and element links can be followed without losing the learner's place.
 
-Check: the recorded `KanjiDetailConformanceTests`; core `detail/kanji.test.ts`; package
+Check: the recorded `KanjiDetailConformanceTests`; core `embedded/presentation.test.ts`; package
 `KanjiScrollMemoryTests`; UI `WordDetailUITests.testAKanjiShowsItsStrokeOrderAndItsWords`.
 
 An element's page shows the element, its meanings and what it contributes, the on-readings it links,

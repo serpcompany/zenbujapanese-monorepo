@@ -245,6 +245,22 @@ describe('the embedded presentation engine', () => {
     expect(page.elements).toEqual([])
   })
 
+  test('shows Readings, empty, for a kanji it has a reference for without readings, as the app did', async () => {
+    const page = (await ask(
+      host,
+      'kanjiPage',
+      JSON.stringify({ character: '乁', words: [], leadingWord: null })
+    )) as EmbeddedKanjiPage
+    expect(page).toMatchObject({ hasReference: true, readings: [], components: [] })
+    expect(page.sections.map(section => section.kind)).toEqual(['readings', 'lists', 'notes'])
+    const unreferenced = (await ask(
+      host,
+      'kanjiPage',
+      JSON.stringify({ character: '㐂', words: [], leadingWord: null })
+    )) as EmbeddedKanjiPage
+    expect(unreferenced.sections.map(section => section.kind)).toEqual(['lists', 'notes'])
+  })
+
   test('still lists the words of a kanji it has no reference for', async () => {
     const page = (await ask(
       host,

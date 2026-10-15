@@ -16,6 +16,7 @@ struct KanjiDetailConformanceTests {
     var suite = try JSONDecoder().decode(KanjiDetailSuite.self, from: Data(contentsOf: url))
     let artifacts = try DetailConformance.artifacts(Self.artifactNames)
     let observer = KanjiDetailObserver()
+    #expect(KanjiPage.sectionsWithoutContent.map { $0.title.uppercased() } == ["LISTS", "NOTES"])
 
     if DetailConformance.isRecording {
       suite.artifacts = artifacts
@@ -41,6 +42,18 @@ private struct KanjiDetailObserver {
   let kanjiLookupClient = KanjiLookupClient.live(lookupClient: .live)
   let kanjiStrokeOrderClient = KanjiStrokeOrderClient.live
 
+  static func sectionsTheViewDrew(_ page: KanjiPage) -> [String] {
+    var titles: [String] = []
+    if page.hasReference {
+      titles.append("READINGS")
+      if !page.components.isEmpty { titles.append("COMPONENTS") }
+    }
+    if !page.elements.isEmpty { titles.append("ELEMENTS") }
+    titles += ["LISTS", "NOTES"]
+    if !page.words.isEmpty { titles.append("WORDS") }
+    return titles
+  }
+
   func observe(_ recorded: KanjiDetailCase) async throws -> KanjiDetailCase {
     var observed = KanjiDetailCase(character: recorded.character, covers: recorded.covers)
     observed.codePoint = recorded.character.unicodeScalars
@@ -54,6 +67,9 @@ private struct KanjiDetailObserver {
 
     let relatedWords = try await kanjiLookupClient.relatedWords(character)
     let page = try kanjiLookupClient.page(character, relatedWords, nil)
+    #expect(
+      page.sections.map { $0.title.uppercased() } == Self.sectionsTheViewDrew(page),
+      "\(recorded.character) draws other sections than Kanji Detail did")
     let diagram = try await kanjiStrokeOrderClient.diagram(character)
     func stat(_ kind: String) -> String? { page.stats.first { $0.kind == kind }?.value }
 

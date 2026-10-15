@@ -6,6 +6,7 @@ import { type FrequencyLookupRow, frequencyLookupRow } from '../detail/frequency
 import {
   type KanjiDetail,
   kanjiDetail,
+  kanjiSections,
   kanjiSectionsWithoutContent,
   savedKanjiReading
 } from '../detail/kanji'
@@ -271,6 +272,7 @@ export class EmbeddedPresentation {
     const leading = detail.words.filter(word => word.id === request.leadingWord)
     return {
       ...detail,
+      sections: kanjiSections(detail, { readingsWhenNone: kanji !== null }),
       hasReference: kanji !== null,
       savedReading: savedKanjiReading(detail),
       stats: kanji ? detail.stats : [],

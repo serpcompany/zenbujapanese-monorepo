@@ -1189,9 +1189,9 @@
     notes: "Notes",
     words: "Words"
   };
-  function kanjiSections(content) {
+  function kanjiSections(content, { readingsWhenNone = false } = {}) {
     return sections(kanjiSectionTitles, {
-      readings: content.readings.length > 0,
+      readings: readingsWhenNone || content.readings.length > 0,
       components: content.components.length > 0,
       elements: content.elements.length > 0,
       words: content.words.length > 0
@@ -4160,6 +4160,7 @@
       const leading = detail.words.filter((word) => word.id === request.leadingWord);
       return {
         ...detail,
+        sections: kanjiSections(detail, { readingsWhenNone: kanji2 !== null }),
         hasReference: kanji2 !== null,
         savedReading: savedKanjiReading(detail),
         stats: kanji2 ? detail.stats : [],

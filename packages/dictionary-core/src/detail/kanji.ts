@@ -68,9 +68,12 @@ interface KanjiContent {
   words: readonly unknown[]
 }
 
-function kanjiSections(content: KanjiContent): Section<KanjiSectionKind>[] {
+export function kanjiSections(
+  content: KanjiContent,
+  { readingsWhenNone = false } = {}
+): Section<KanjiSectionKind>[] {
   return sections(kanjiSectionTitles, {
-    readings: content.readings.length > 0,
+    readings: readingsWhenNone || content.readings.length > 0,
     components: content.components.length > 0,
     elements: content.elements.length > 0,
     words: content.words.length > 0

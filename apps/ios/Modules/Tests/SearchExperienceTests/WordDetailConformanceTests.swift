@@ -57,6 +57,42 @@ private struct WordDetailObserver {
     guard availability == .full else { throw WordDetailObserverError.textAnalysisUnavailable }
   }
 
+  static func textTheViewWrote(_ page: WordPage, _ entry: DictionaryEntry) -> [String] {
+    var titles = ["MEANING"]
+    if !page.frequency.isEmpty { titles.append("FREQUENCY") }
+    if !page.alternatives.isEmpty { titles.append("ALTERNATIVES") }
+    if !page.kanji.isEmpty { titles.append("KANJI") }
+    if !page.alternativeKanji.isEmpty { titles.append("ALTERNATIVE KANJI") }
+    if !page.related.isEmpty { titles.append("RELATED WORDS") }
+    let row =
+      page.partOfSpeech.isEmpty && page.conjugations != nil ? "Dictionary entry" : page.partOfSpeech
+    let pitch: [String]? = page.pitch.map {
+      ["Pitch accent, downstep \($0.downstep), \($0.moraCount) mora"]
+    }
+    let notes = page.senses.map { $0.notes.isEmpty ? "" : $0.notes.joined(separator: " · ") }
+    let labels = page.alternatives.map {
+      $0.labels.isEmpty ? "" : " (\($0.labels.joined(separator: ", ")))"
+    }
+    let related = page.related.map { "\($0.relation) · \($0.summary)" }
+    var text: [String] = titles
+    text += ["LISTS", "NOTES", "EXAMPLES", row, "Pronounce \(entry.reading)"]
+    text += pitch ?? []
+    text += notes
+    text += labels
+    text += related
+    return text
+  }
+
+  static func textTheCoreGave(_ page: WordPage) -> [String] {
+    var text: [String] = page.sections.map { $0.title.uppercased() }
+    text += [page.partOfSpeechRow, page.pronounce]
+    text += page.pitch.map { [$0.spoken] } ?? []
+    text += page.senses.map { $0.noteText ?? "" }
+    text += page.alternatives.map { $0.labelText.map { " \($0)" } ?? "" }
+    text += page.related.map(\.description)
+    return text
+  }
+
   func observe(_ recorded: WordDetailCase, exampleLimit: Int, formExampleLimit: Int) async throws
     -> WordDetailCase
   {
@@ -64,6 +100,9 @@ private struct WordDetailObserver {
     guard let entry = try await lookupClient.entry(LanguageReferenceID(rawValue: recorded.id)),
       let page = WordPage(entry, using: core)
     else { return observed }
+    #expect(
+      Self.textTheViewWrote(page, entry) == Self.textTheCoreGave(page),
+      "\(recorded.id) reads otherwise than Word Detail did")
 
     observed.languageReferenceID = entry.id.rawValue
     observed.entSeq = entry.sourceProvenances.map(\.sourceRecordID)
