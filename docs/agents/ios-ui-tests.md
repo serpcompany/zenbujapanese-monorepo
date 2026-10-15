@@ -29,21 +29,22 @@ what it waited for and for how long.
 
 ## Rules for a test
 
-- **Never call XCUITest's own waits:** `waitForExistence`, `XCTNSPredicateExpectation`,
-  `XCTWaiter`, and `waitForExpectations`. Each takes a full second before its first look whether
-  or not the element is there. In 8,009 of them measured on 2026-10-13 the first look came 1.00
-  to 3.01 seconds in, 96% found their element at that look, and those seconds were 35% to 48% of
-  every suite's time. `pnpm verify waits` fails on any of them in `apps/ios/UITests/`.
+- **Never call XCUITest's own waits:** `waitForExistence`, `waitForNonExistence`,
+  `XCTNSPredicateExpectation`, `XCTWaiter`, and `waitForExpectations`. Each takes a full second
+  before its first look whether or not the element is there. In 8,009 of them measured on 2026-10-13
+  the first look came 1.00 to 3.01 seconds in, 96% found their element at that look, and those
+  seconds were 35% to 48% of every suite's time. `pnpm verify waits` fails on any of them in
+  `apps/ios/UITests/`.
 - **Never pause to let something happen;** wait for the thing itself. The fixed pauses left are
   proofs that something does not happen (the input panel stays open, the iPhone doesn't turn, the
   word sheet stays up, and in `ExampleRowsUITests` a second after the held answers are let go, in
   which no row may change its height and the opened sentence may not leave its place), the long
   press and the drag's hold, which are what a finger does, `waitUntilStill`'s second between two
-  looks at a frame, and three on the iPad and the Mac with nothing on screen to wait for yet: a
-  window taking keyboard focus after Escape, a shortcut pressed over a sheet, and the pointer moving
-  off a headword before its picture. `pnpm verify waits` counts each file's pauses against
-  `allowedPauses` in `tools/checks/src/waits.ts`, which says what each proves; a new pause goes
-  there and in this list.
+  looks at a frame, `comesTrue`'s wait between two looks, and three on the iPad and the Mac with
+  nothing on screen to wait for yet: a window taking keyboard focus after Escape, a shortcut pressed
+  over a sheet, and the pointer moving off a headword before its picture. `pnpm verify waits` counts
+  each file's run-loop pauses and sleeps, however they are spelled, against `allowedPauses` in
+  `tools/checks/src/waits.ts`, which says what each proves; a new pause goes there and in this list.
 - **Repeat a gesture only while its effect hasn't shown,** and stop as soon as it has: `open`,
   `press`, `tap(_:toShow:)`, `focus`, `choose`, and `pause` tap again only after a wait for what
   the tap should bring runs out. `for … where` tests its condition on every pass and never leaves

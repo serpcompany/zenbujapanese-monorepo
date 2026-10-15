@@ -5,11 +5,11 @@ import { root } from './files'
 const uiTestFolder = 'apps/ios/UITests/'
 
 const xcuiTestWait =
-  /\b(waitForExistence|XCTNSPredicateExpectation|XCTWaiter|waitForExpectations)\b/
+  /\b(waitForExistence|waitForNonExistence|XCTNSPredicateExpectation|XCTWaiter|waitForExpectations)\b/
 
-const fixedPause = /\bRunLoop\.current\.run\(until: Date\.now\.addingTimeInterval\(|\bu?sleep\(/
+const fixedPause = /\bRunLoop\.(?:current|main)\.run\(|\bu?sleep\(/
 
-export interface AllowedPauses {
+interface AllowedPauses {
   pauses: number
   proves: string
 }
@@ -18,8 +18,9 @@ const ui = (file: string) => `${uiTestFolder}${file}`
 
 const allowedPauses: Readonly<Record<string, AllowedPauses>> = {
   [ui('ZenbuUITestCase.swift')]: {
-    pauses: 1,
-    proves: "nothing: it is waitUntilStill's second between two looks at a frame"
+    pauses: 2,
+    proves:
+      "nothing: they are comesTrue's wait between two looks and waitUntilStill's second between two looks at a frame"
   },
   [ui('ExampleRowsUITests.swift')]: {
     pauses: 2,
@@ -44,7 +45,7 @@ const allowedPauses: Readonly<Record<string, AllowedPauses>> = {
   }
 }
 
-export interface WaitProblem {
+interface WaitProblem {
   path: string
   line: number
   problem: string

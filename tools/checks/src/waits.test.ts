@@ -6,32 +6,40 @@ const uiTest = 'apps/ios/UITests/ExampleUITests.swift'
 const source = (text: string) => () => text
 const pause = 'RunLoop.current.run(until: Date.now.addingTimeInterval(2))'
 
-test("finds each of XCUITest's own waits in a UI test, with its line", () => {
-  const text = [
-    'let page = find("word-detail.screen", in: app)',
-    '_ = page.waitForExistence(timeout: 30)',
+test.each([
+  ['_ = page.waitForExistence(timeout: 30)', 'waitForExistence'],
+  ['_ = page.waitForNonExistence(timeout: 30)', 'waitForNonExistence'],
+  [
     'let shown = XCTNSPredicateExpectation(predicate: open, object: page)',
-    'waitForExpectations(timeout: Self.patience)',
-    'XCTWaiter().wait(for: [shown], timeout: 5)'
-  ].join('\n')
+    'XCTNSPredicateExpectation'
+  ],
+  ['waitForExpectations(timeout: Self.patience)', 'waitForExpectations'],
+  ['XCTWaiter().wait(for: [shown], timeout: 5)', 'XCTWaiter']
+])("finds XCUITest's own wait in %s, with its line", (call, wait) => {
+  const text = `let page = find("word-detail.screen", in: app)\n${call}`
   expect(findUITestWaits([uiTest], source(text), {})).toEqual([
-    { path: uiTest, line: 2, problem: 'calls waitForExistence' },
-    { path: uiTest, line: 3, problem: 'calls XCTNSPredicateExpectation' },
-    { path: uiTest, line: 4, problem: 'calls waitForExpectations' },
-    { path: uiTest, line: 5, problem: 'calls XCTWaiter' }
+    { path: uiTest, line: 2, problem: `calls ${wait}` }
   ])
+})
+
+test.each([
+  'RunLoop.current.run(until: Date.now.addingTimeInterval(2))',
+  'RunLoop.main.run(until: Date().addingTimeInterval(2))',
+  'RunLoop.current.run(until: Date(timeIntervalSinceNow: 2))',
+  'RunLoop.main.run(until: settled)',
+  'Thread.sleep(forTimeInterval: 1)',
+  'try await Task.sleep(for: .seconds(1))',
+  'try await Task.sleep(nanoseconds: 1_000_000_000)',
+  'sleep(1)',
+  'usleep(500)'
+])('refuses the fixed pause %s when no allowance names it', pauseCall => {
+  const text = `tap(button)\n${pauseCall}`
+  expect(findUITestWaits([uiTest], source(text), {}).map(problem => problem.line)).toEqual([2])
 })
 
 test('passes the helpers that look at once', () => {
   const text = 'waitFor(page)\nwaitUntil(page, "exists == true")\n_ = appears(page, within: 30)'
   expect(findUITestWaits([uiTest], source(text), {})).toEqual([])
-})
-
-test('refuses a fixed pause no allowance names, and each sleep', () => {
-  const text = `tap(button)\n${pause}\nThread.sleep(forTimeInterval: 1)\nusleep(500)`
-  expect(findUITestWaits([uiTest], source(text), {}).map(problem => problem.line)).toEqual([
-    2, 3, 4
-  ])
 })
 
 test('passes the pauses an allowance names, and refuses one more', () => {
