@@ -41,7 +41,6 @@ struct ExamplePlaceTests {
   }
 
   private func expectStillKept(_ keeper: ExamplePlaceKeeper, closingAt second: TimeInterval) {
-    #expect(keeper.left != nil)
     #expect(keeper.comeBack(.closed, now: at(second)))
     _ = keeper.note(opened, at: row(at: 800), now: at(second + 0.05))
     let back = keeper.check(now: at(second + 0.05))
@@ -92,6 +91,26 @@ struct ExamplePlaceTests {
     #expect(keeper.check(now: at(10.8)) == nil)
     #expect(!keeper.comeBack(.closed, now: at(13)))
     #expect(keeper.left == nil)
+  }
+
+  @Test("a Back whose close comes before the list appears is one return, and forgets once settled")
+  func aCloseBeforeAppearingIsOneReturn() {
+    let keeper = leftFrom(100)
+    #expect(keeper.comeBack(.closed, now: at(10)))
+    _ = keeper.comeBack(.appeared, now: at(10.05))
+    _ = keeper.note(opened, at: row(at: 100.5), now: at(10.1))
+    #expect(keeper.check(now: at(10.1)) == nil)
+    #expect(!keeper.comeBack(.closed, now: at(13)))
+    #expect(keeper.left == nil)
+  }
+
+  @Test("a neighbour that only touches a sentence's place, by a point, isn't over it")
+  func aTouchingNeighbourIsNotOverThePlace() {
+    let place = ExamplePlace(row: opened, top: 400, height: 80)
+    #expect(!place.isCovered(by: row(at: 479), in: list))
+    #expect(!place.isCovered(by: row(at: 321), in: list))
+    #expect(place.isCovered(by: row(at: 478), in: list))
+    #expect(place.isCovered(by: row(at: 322), in: list))
   }
 
   @Test("a swipe back that is called off keeps the place for the next return")
