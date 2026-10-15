@@ -1,15 +1,12 @@
 import SwiftUI
 
 struct DrawRecorder<Value: Equatable>: ViewModifier {
-  private let value: () -> Value
-  private let identifier: String
-  private let summary: (Value) -> String
+  let value: Value
+  let identifier: String
+  let summary: (Value) -> String
   @State private var drawn: [String] = []
 
-  init(
-    _ value: @autoclosure @escaping () -> Value, as identifier: String,
-    summary: @escaping (Value) -> String
-  ) {
+  init(_ value: Value, as identifier: String, summary: @escaping (Value) -> String) {
     self.value = value
     self.identifier = identifier
     self.summary = summary
@@ -18,7 +15,7 @@ struct DrawRecorder<Value: Equatable>: ViewModifier {
   func body(content: Content) -> some View {
     if LaunchHarness.recordsDraws {
       content
-        .onChange(of: value(), initial: true) { _, value in
+        .onChange(of: value, initial: true) { _, value in
           drawn.append(summary(value))
         }
         .overlay(alignment: .topLeading) {
@@ -37,15 +34,16 @@ struct DrawRecorder<Value: Equatable>: ViewModifier {
 }
 
 extension ResultsList {
-  var drawnSummary: String {
-    "\(rows.count { !$0.chips.isEmpty }) of \(rows.count) with chips"
+  static func drawnSummary(_ list: ResultsList) -> String {
+    "\(list.rows.count) rows, \(list.rows.count { !$0.chips.isEmpty }) with chips"
   }
 }
 
 extension KanjiPage {
-  var drawnSummary: String {
-    let readingWords = readings.reduce(0) { $0 + $1.words.count }
-    return "\(stats.count) stats, \(readings.count) readings, \(elements.count) elements, "
-      + "\(readingWords) reading words, \(words.count) words"
+  static func drawnSummary(_ page: KanjiPage?) -> String {
+    let readingWords = page?.readings.reduce(0) { $0 + $1.words.count } ?? 0
+    return "\(page?.stats.count ?? 0) stats, \(page?.readings.count ?? 0) readings, "
+      + "\(page?.elements.count ?? 0) elements, \(readingWords) reading words, "
+      + "\(page?.words.count ?? 0) words"
   }
 }

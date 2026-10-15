@@ -58,15 +58,27 @@ extension ZenbuUITestCase {
   static var recordingDraws: [String: String] { ["ZENBU_DRAWN": "1"] }
 
   func draws(
-    recordedBy identifier: String, on screen: String, in app: XCUIApplication
-  ) -> [String] {
-    waitUntilStill(find(screen, in: app))
-    let record = text(of: waitFor(find(identifier, in: app)))
-    if record.isEmpty {
+    recordedBy identifier: String, labeled labels: Set<String>, in app: XCUIApplication,
+    file: StaticString = #filePath, line: UInt = #line
+  ) -> [[String: Int]] {
+    let record = text(of: waitFor(find(identifier, in: app), file: file, line: line))
+    let draws = record.isEmpty ? [] : record.components(separatedBy: "; ").map(Self.drawnCounts)
+    guard !draws.isEmpty, draws.allSatisfy({ $0.map { Set($0.keys) == labels } ?? false }) else {
       attachWhatIsOnScreen()
-      XCTFail("\(identifier) recorded no draw")
+      XCTFail("\(identifier) recorded \"\(record)\"", file: file, line: line)
+      return []
     }
-    return record.components(separatedBy: "; ")
+    return draws.compactMap { $0 }
+  }
+
+  private static func drawnCounts(_ draw: String) -> [String: Int]? {
+    var counts: [String: Int] = [:]
+    for part in draw.components(separatedBy: ", ") {
+      let words = part.split(separator: " ", maxSplits: 1)
+      guard words.count == 2, let count = Int(words[0]) else { return nil }
+      counts[String(words[1])] = count
+    }
+    return counts
   }
 
   func sortedByRow(saying text: String, in app: XCUIApplication) -> XCUIElement {

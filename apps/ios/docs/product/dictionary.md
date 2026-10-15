@@ -357,8 +357,8 @@ Check: UI `WordDetailUITests.testANoteIsKeptOnTheWord` and
 `WordNoteStorageTests` and `EncounterMediaStorageTests`.
 
 A kanji detail can present readings, meanings, stroke order, components, elements, and words
-that contain the kanji, and draws its facts and those words together, once. Component and
-element links can be followed without losing the learner's place in the preceding detail.
+that contain the kanji; after a spinner, all but the stroke order appear together, once. Component
+and element links can be followed without losing the learner's place in the preceding detail.
 
 Check: the recorded `KanjiDetailConformanceTests`; package `KanjiScrollMemoryTests`; UI
 `WordDetailUITests.testAKanjiShowsItsStrokeOrderAndItsWords` and

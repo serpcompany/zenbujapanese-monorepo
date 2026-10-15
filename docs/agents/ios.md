@@ -202,6 +202,7 @@ don't contain them), so they need no network, account, camera, or microphone:
   (`search.results.drawn`, `kanji-detail.drawn`), each list or page they drew, so a test fails
   when a results list is drawn without its chips and then again (`SearchResultsUITests`), or a
   kanji page's facts are drawn before its words (`WordDetailUITests`), or nothing is recorded.
+  It is a clear text, read with `text(of:)`: the Mac gives a test no plain view's value.
 
 The tests share `ZenbuUITestCase` and `AppTab`; what differs between the devices they ask
 `TestDevice` (`apps/ios/UITests/Platform/`, the one place `pnpm verify layers` lets UI tests name
@@ -283,9 +284,8 @@ or how fast it feels. The app needs iOS 26.0 or later, and the Sudachi cache abo
 2. Open `apps/ios/ZenbuJapanese.xcodeproj` and sign in under Xcode → Settings → Accounts. The
    ZenbuJapanese target signs with the team that publishes the app, TSMC LLC's `847HR8U8D9`, and
    the bundle ID that team registered, `com.zenbujapanese.dictionary` (The App Store record,
-   below). With
-   any other Apple ID, such as a free one (a Personal Team), pick your team under the target's
-   **Signing & Capabilities** and change the bundle ID to one of your own, such as
+   below). With any other Apple ID, such as a free one (a Personal Team), pick your team under the
+   target's **Signing & Capabilities** and change the bundle ID to one of your own, such as
    `com.<you>.zenbujapanese`. A Personal Team can't sign Associated Domains or Sign in with Apple
    either, so also remove those capabilities
    ([Links from the website](#links-from-the-website), [Account and sync](#account-and-sync)).

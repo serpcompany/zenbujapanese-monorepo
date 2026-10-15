@@ -33,7 +33,7 @@ struct LaunchHarnessTests {
         ListedWord(id: "a", summary: "", chips: [chip], spoken: ""),
         ListedWord(id: "b", summary: "", chips: [], spoken: ""),
       ], hiddenByFilter: nil, frequencyNotice: nil)
-    #expect(list.drawnSummary == "1 of 2 with chips")
+    #expect(ResultsList.drawnSummary(list) == "2 rows, 1 with chips")
   }
 
   @Test("each kanji page drawn is recorded with its own facts and how many of its words it has")
@@ -48,7 +48,10 @@ struct LaunchHarnessTests {
         KanjiPage.Reading(kind: "kun", label: "Kun", value: "ひ", words: []),
       ],
       components: [], elements: [], words: [word, word], shareText: "日")
-    #expect(page.drawnSummary == "1 stats, 2 readings, 0 elements, 1 reading words, 2 words")
+    #expect(
+      KanjiPage.drawnSummary(page) == "1 stats, 2 readings, 0 elements, 1 reading words, 2 words")
+    #expect(
+      KanjiPage.drawnSummary(nil) == "0 stats, 0 readings, 0 elements, 0 reading words, 0 words")
   }
 
   @Test("the sign-in stand-in offers Apple even in a build that otherwise can't sign in with it")

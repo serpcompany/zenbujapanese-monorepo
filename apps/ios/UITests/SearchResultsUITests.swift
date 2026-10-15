@@ -38,14 +38,15 @@ final class SearchResultsUITests: ZenbuUITestCase {
   private func assertResultsDrawnOnceWithChips(
     in app: XCUIApplication, file: StaticString = #filePath, line: UInt = #line
   ) {
-    let drawn = draws(recordedBy: "search.results.drawn", on: "search.results", in: app)
-    XCTAssertEqual(drawn.count, 1, "the results were drawn as \(drawn)", file: file, line: line)
-    let counts = drawn[0].split(separator: " ").compactMap { Int($0) }
-    let read = drawn[0].hasSuffix(" with chips") && counts.count == 2
-    XCTAssertTrue(read, "unreadable draw \(drawn)", file: file, line: line)
-    guard read else { return }
-    XCTAssertGreaterThan(counts[0], 0, "the results were drawn as \(drawn)", file: file, line: line)
-    XCTAssertGreaterThan(counts[1], 0, "the results were drawn as \(drawn)", file: file, line: line)
+    let drawn = draws(
+      recordedBy: "search.results.drawn", labeled: ["rows", "with chips"], in: app, file: file,
+      line: line)
+    guard drawn.count == 1, let list = drawn.first else {
+      return XCTFail("the results were drawn as \(drawn)", file: file, line: line)
+    }
+    XCTAssertGreaterThan(list["rows"] ?? 0, 0, "the results were drawn as \(drawn)", file: file, line: line)
+    XCTAssertGreaterThan(
+      list["with chips"] ?? 0, 0, "the results were drawn as \(drawn)", file: file, line: line)
   }
 
   func testFilteringToKnownWordsHidesEveryWordUntilTheFilterIsCleared() {
