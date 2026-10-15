@@ -8,7 +8,7 @@ import type {
   EmbeddedResultsExamples,
   EmbeddedToken
 } from './text'
-import { entries, host, linked } from './text-fixture'
+import { entries, host, linked, sentences } from './text-fixture'
 
 const pairId = (row: number) => row.toString(16).padStart(32, '0')
 
@@ -385,6 +385,33 @@ describe('the embedded text engine', () => {
       ])
     )
     expect(await page('本語')).toEqual({ examples: [], listed: 0, cutShort: false })
+  })
+
+  test('remembers the sentences a form is one word in, and analyzes again a list it could not read', async () => {
+    const tokenized: string[] = []
+    let unreadable = '今日見た'
+    const target = {
+      ...listing(['日本語を見た', '今日見た'], 2),
+      tokenize: (text: string) => {
+        tokenized.push(text)
+        if (text === unreadable) throw new Error(`The tokenizer can't read ${text} yet`)
+        return sentences[text]
+      }
+    }
+    const endpoint = embeddedEndpoint(target)
+    const using = async (form: string) => {
+      const { value } = await settled(
+        endpoint.begin('formExamples', JSON.stringify({ form, from: 0 }))
+      )
+      return (value as EmbeddedExamplePage).examples.map(example => example.japanese)
+    }
+
+    expect(await using('見た')).toEqual(['日本語を見た'])
+    unreadable = ''
+    expect(await using('見た')).toEqual(['今日見た', '日本語を見た'])
+    const read = tokenized.length
+    expect(await using('見た')).toEqual(['今日見た', '日本語を見た'])
+    expect(tokenized.slice(read)).toEqual([])
   })
 
   test('refuses an example index that is not the one the core reads', async () => {
