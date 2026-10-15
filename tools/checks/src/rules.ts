@@ -37,4 +37,4 @@ export const stopRule =
   'These are in files changed since the last commit, found before the turn ended (docs/agents/code.md, Checks). Fix each one now, or say which you are leaving and why. pnpm verify runs the same checks on the whole repository.'
 
 export const waitRule =
-  "UI tests wait through ZenbuUITestCase's helpers, which look at once and go on the moment what they wait for is true (docs/agents/ios-ui-tests.md, Rules for a test). Call waitFor, waitUntil, appears, or comesTrue instead: XCUITest's waitForExistence, XCTNSPredicateExpectation, XCTWaiter, and waitForExpectations first look a second after they start."
+  "UI tests wait for what they need, through ZenbuUITestCase's helpers, which look at once (docs/agents/ios-ui-tests.md, Rules for a test). Call waitFor, waitUntil, appears, or comesTrue instead of XCUITest's waitForExistence, XCTNSPredicateExpectation, XCTWaiter, or waitForExpectations, which first look a second after they start, and instead of a fixed pause. A pause that proves something doesn't happen goes in allowedPauses in tools/checks/src/waits.ts, with what it proves, and in the rule's list in docs/agents/ios-ui-tests.md."

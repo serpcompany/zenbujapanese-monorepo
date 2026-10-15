@@ -22,7 +22,7 @@ import {
 } from './rules'
 import { findSecrets } from './secrets'
 import { checkSizes } from './sizes'
-import { findXCUITestWaits } from './waits'
+import { findUITestWaits } from './waits'
 
 export interface Outcome {
   name: string
@@ -67,8 +67,8 @@ const layers: Check = files => {
 }
 
 const waits: Check = files => {
-  const problems = findXCUITestWaits(files)
-  const report = problems.map(problem => `${problem.path}:${problem.line}  calls ${problem.wait}`)
+  const problems = findUITestWaits(files)
+  const report = problems.map(problem => `${problem.path}:${problem.line}  ${problem.problem}`)
   if (problems.length) report.push(waitRule)
   return { name: 'waits', passed: !problems.length, report }
 }
