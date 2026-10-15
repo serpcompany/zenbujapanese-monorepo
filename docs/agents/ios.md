@@ -206,8 +206,8 @@ don't contain them), so they need no network, account, camera, or microphone:
 - `ZENBU_DRAWN_RESULTS=1` has Search say, on an element only tests read (`search.results.drawn`),
   each results list it drew and how many of its rows had chips, so a test fails when a list is
   drawn without its chips and then again (`SearchResultsUITests`).
-- `ZENBU_COUNT_DRAWS=1` has the Player screen, its speed menu, and its captions count their draws
-  (`watch.draws`, …), so a test fails when one redraws as the time ticks (`PlayerWatchUITests`).
+- `ZENBU_COUNT_DRAWS=1` has the Player count its draws and show its time to tests (`watch.draws`,
+  `watch.time`, …), so a test fails when it redraws as the time ticks (`PlayerWatchUITests`).
 
 The tests share `ZenbuUITestCase` and `AppTab`; what differs between the devices they ask
 `TestDevice` (`apps/ios/UITests/Platform/`, the one place `pnpm verify layers` lets UI tests name

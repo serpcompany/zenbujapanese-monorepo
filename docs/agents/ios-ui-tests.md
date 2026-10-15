@@ -56,10 +56,12 @@ what it waited for and for how long.
   expects none. A missing count fails the test rather than reading as none. Each count is a 1-point
   clear text read with `text(of:)`: the Mac never shows a value given to an element made with
   `.accessibilityElement()`, such as a `Color.clear` or the scrubber, though it finds the element by
-  its identifier. For the same reason the seconds come from the time text on the Mac, and from the
-  scrubber's value on iPhone and iPad, where VoiceOver reads the time only from the scrubber. It
-  used to assert that the speed menu was used within 60 s, which caught the screen redrawing five
-  times a second only when XCUITest's own wait for the app to go idle ran out.
+  its identifier. For the same reason the Mac test can't read the scrubber's value, which VoiceOver
+  does read; so in the launches that count draws the time text also shows itself to UI tests as
+  `watch.time`, and the Mac test reads the seconds there, while iPhone and iPad tests read the
+  scrubber. The time text stays hidden from VoiceOver in every launch. It used to assert that the
+  speed menu was used within 60 s, which caught the screen redrawing five times a second only when
+  XCUITest's own wait for the app to go idle ran out.
 - **A time limit only guards against a hang.** The package's tests that await work they watch or
   hold carry `.timeLimit(.minutes(1))`. Those tests take milliseconds, so the limit trips only when
   an await never returns, which is a defect. It is never a speed limit: put one only on tests whose
