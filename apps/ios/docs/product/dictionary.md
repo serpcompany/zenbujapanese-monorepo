@@ -202,8 +202,7 @@ Novels, Video Games), and **Known Words**, one checked at a time. There is no di
   at once.
 
 A word the chosen dictionary doesn't rank goes after the ranked words. Ties, and the words without
-a rank, keep their Default order. A choice saved with a direction by an earlier build reads as
-Default.
+a rank, keep their Default order. A choice an earlier build saved with a direction reads as Default.
 
 Check: core `results/ordering.test.ts` (each order, and the row's words); package
 `ResultsScreenTests` (the same on the bundled data); UI
@@ -363,11 +362,12 @@ Check: UI `WordDetailUITests.testANoteIsKeptOnTheWord` and
 `WordNoteStorageTests` and `EncounterMediaStorageTests`.
 
 A kanji detail can present readings, meanings, stroke order, components, elements, and words
-that contain the kanji. Component and element links can be followed without losing the
-learner's place in the preceding detail.
+that contain the kanji; after a spinner, all but the stroke order appear together, once. Component
+and element links can be followed without losing the learner's place in the preceding detail.
 
 Check: the recorded `KanjiDetailConformanceTests`; package `KanjiScrollMemoryTests`; UI
-`WordDetailUITests.testAKanjiShowsItsStrokeOrderAndItsWords`.
+`WordDetailUITests.testAKanjiShowsItsStrokeOrderAndItsWords` and
+`testAKanjiPageIsDrawnOnceWithItsFactsAndItsWords`.
 
 An element's page shows the element, its meanings and what it contributes, the on-readings it links,
 its alternative forms, the kanji it is on its own (the most frequent among the element and its

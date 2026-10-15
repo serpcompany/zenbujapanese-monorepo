@@ -109,7 +109,7 @@ struct SearchResultsView: View {
     .listStyle(.plain)
     .id(shown.request.query)
     .accessibilityIdentifier("search.results")
-    .modifier(DrawnResults(list: list))
+    .modifier(DrawRecorder(list, as: "search.results.drawn", summary: ResultsList.drawnSummary))
     .onChange(of: list.forgetsSort, initial: true) { _, forgets in
       if forgets { sort = ResultsLearner.defaultSort }
     }
