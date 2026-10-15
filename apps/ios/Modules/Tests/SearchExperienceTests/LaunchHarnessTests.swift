@@ -35,16 +35,14 @@ struct LaunchHarnessTests {
     #expect(LaunchHarness.linkingFailures([:]) == 0)
   }
 
-  @Test("the Player screen counts its draws only when a UI test asks")
+  @Test("Player, Search, and a kanji page count or record their draws only when a UI test asks")
   func countedDraws() {
     #expect(LaunchHarness.countsDraws([LaunchHarness.drawCountKey: "1"]))
     #expect(!LaunchHarness.countsDraws([:]))
   }
 
-  @Test("each results list Search draws is recorded only when a UI test asks, with how many of its rows have chips")
+  @Test("each results list Search draws is recorded with how many of its rows have chips")
   func drawnResults() {
-    #expect(LaunchHarness.recordsDrawnResults([LaunchHarness.drawnResultsKey: "1"]))
-    #expect(!LaunchHarness.recordsDrawnResults([:]))
     let chip = FrequencyChip(pack: "list", source: "List", value: "1", tier: .veryCommon)
     let list = ResultsList(
       query: "q", sections: [.results], menu: nil, forgetsSort: false, examples: nil,
@@ -53,7 +51,25 @@ struct LaunchHarnessTests {
         ListedWord(id: "a", summary: "", chips: [chip], spoken: ""),
         ListedWord(id: "b", summary: "", chips: [], spoken: ""),
       ], hiddenByFilter: nil, frequencyNotice: nil)
-    #expect(DrawnResults.summary(of: list) == "1 of 2 with chips")
+    #expect(ResultsList.drawnSummary(list) == "2 rows, 1 with chips")
+  }
+
+  @Test("each kanji page drawn is recorded with its own facts and how many of its words it has")
+  func drawnKanjiPage() {
+    let word = DictionaryEntry.fixture(id: "a", headword: "日本")
+    let page = KanjiPage(
+      hasReference: true,
+      stats: [KanjiPage.Stat(kind: "strokes", label: "Strokes", value: "4", spoken: "4 Strokes")],
+      meanings: ["day"],
+      readings: [
+        KanjiPage.Reading(kind: "on", label: "On", value: "ニチ", words: [word]),
+        KanjiPage.Reading(kind: "kun", label: "Kun", value: "ひ", words: []),
+      ],
+      components: [], elements: [], words: [word, word], shareText: "日")
+    #expect(
+      KanjiPage.drawnSummary(page) == "1 stats, 2 readings, 0 elements, 1 reading words, 2 words")
+    #expect(
+      KanjiPage.drawnSummary(nil) == "0 stats, 0 readings, 0 elements, 0 reading words, 0 words")
   }
 
   @Test("the sign-in stand-in offers Apple even in a build that otherwise can't sign in with it")
