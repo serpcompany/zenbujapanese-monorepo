@@ -35,6 +35,15 @@ enum SyncRetry {
   }
 }
 
+struct SyncRetryClock {
+  var wait: @MainActor @Sendable (TimeInterval) async -> Void = { seconds in
+    try? await Task.sleep(for: .seconds(seconds))
+  }
+  var jitter: @Sendable (ClosedRange<Double>) -> Double = { Double.random(in: $0) }
+
+  static var live: SyncRetryClock { SyncRetryClock() }
+}
+
 @MainActor
 final class AccountSyncScheduler {
   static let staleAfter: TimeInterval = 15 * 60
@@ -42,17 +51,22 @@ final class AccountSyncScheduler {
 
   private let sync: AccountSync
   private let now: @MainActor () -> Date
+  private let clock: SyncRetryClock
   private var isForeground = true
   private var failures = 0
   private(set) var waitUntil: Date?
   private var waitIsRetryAfter = false
-  private var waiting: Task<Void, Never>?
+  private(set) var waiting: Task<Void, Never>?
   private var running: Task<Void, Never>?
   private var runsAgain = false
 
-  init(sync: AccountSync, now: @escaping @MainActor () -> Date = Date.init) {
+  init(
+    sync: AccountSync, now: @escaping @MainActor () -> Date = Date.init,
+    clock: SyncRetryClock = .live
+  ) {
     self.sync = sync
     self.now = now
+    self.clock = clock
     sync.onLocalChange = { [weak self] in self?.syncSoon(after: Self.afterLocalChange) }
   }
 
@@ -122,8 +136,8 @@ final class AccountSyncScheduler {
     let delay = remainingWait(atLeast: seconds)
     guard delay > 0 else { return syncNow() }
     cancelWaiting()
-    waiting = Task { [weak self] in
-      try? await Task.sleep(for: .seconds(delay))
+    waiting = Task { [weak self, clock] in
+      await clock.wait(delay)
       guard !Task.isCancelled else { return }
       self?.syncNow()
     }
@@ -151,7 +165,8 @@ final class AccountSyncScheduler {
   }
 
   private func retry(after error: Error) {
-    guard let delay = SyncRetry.delay(after: error, failures: failures) else { return }
+    guard let delay = SyncRetry.delay(after: error, failures: failures, jitter: clock.jitter)
+    else { return }
     failures += 1
     waitUntil = now() + delay
     waitIsRetryAfter = SyncRetry.isRetryAfter(error)

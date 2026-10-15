@@ -151,8 +151,8 @@ xcodebuild -scheme ZenbuJapaneseModules-Package -destination 'platform=macOS,arc
 On the Mac they run against its own Vision, Speech, and Foundation Models, so the image
 recognition tests are slow on a virtual Mac (about two minutes each). No test there names a
 platform: a test of something that differs reads `ThisDevice` and checks that device's side
-(`PlatformAdapterTests`). Two tests need Apple Intelligence and are skipped without it
-(`ImageTextExplanationTests`), as on a virtual Mac.
+(`PlatformAdapterTests`). Two tests call the real model, only with Apple Intelligence on and
+`TEST_RUNNER_ZENBU_RUN_LANGUAGE_MODEL=1` (`ImageTextExplanationTests`); the rest stub it.
 
 **The UI tests**, `ZenbuJapaneseUITests` (`apps/ios/UITests/`), drive the built app through every
 tab. They're the `ZenbuJapanese` scheme's tests, built with `ZENBU_BUNDLE_ID_SUFFIX=.uitests`, so
@@ -644,7 +644,8 @@ answers; [`dictionary-core.md`](dictionary-core.md), The app's side, lists which
   sentence) links a row at a time (`LinkedJapaneseText`): `DictionaryTextData.linkedWords` is one
   call for a text: the core tokenizes it from the app's files, reads its words' forms in one or two
   statements, and answers each word's place, entry or candidates, furigana, and `accent`. Both paths
-  read entries through `LinkedEntries` (4,000 kept); the core keeps the last 512 texts.
+  read entries through `LinkedEntries`, which keeps 4,000, or a batch's own when it would pass
+  that; the core keeps the last 512 texts.
 - **Counted words.** `DictionaryTextData.countedWords` is one call for a list of lines: the IDs
   of the words that count toward comprehension, with no entry read. `Comprehension` asks twenty
   lines at a time (about 5 ms a call), so a caption card's own link never waits on a whole video.
@@ -1249,7 +1250,7 @@ Intelligence's on-device model (Foundation Models), labeled as such; check Apple
 a device. The on-device model runs in a Simulator only when the runtime matches the Mac: on an
 iOS 26 runtime under a newer macOS, its safety check fails, so translation and Context fail
 there. Use a Simulator on the runtime that matches the Mac, with Apple Intelligence on for the
-Mac. `ImageTextExplanationTests` exercise the model only where it runs.
+Mac. `ImageTextExplanationTests` stub the model, and call it only when asked.
 
 The camera runs only on a device, and `CameraFlashTests` covers only the flash kept for it. When
 changing the camera, check on an iPhone that a fresh install's **Take Photo** opens with the flash

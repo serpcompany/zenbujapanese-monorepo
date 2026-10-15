@@ -4,7 +4,7 @@ import Testing
 @testable import TranslatorCore
 
 @MainActor
-@Suite("Conversation playback")
+@Suite("Conversation playback", .timeLimit(.minutes(1)))
 struct ConversationPlaybackTests {
   private let tokyo = "今日は東京駅に行きます。"
   private let stairs = "この先の階段を下りてください。"

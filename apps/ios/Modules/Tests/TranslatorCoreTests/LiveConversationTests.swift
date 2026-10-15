@@ -4,7 +4,7 @@ import Testing
 @testable import TranslatorCore
 
 @MainActor
-@Suite("Live conversation")
+@Suite("Live conversation", .timeLimit(.minutes(1)))
 struct LiveConversationTests {
   private let tokyo = "今日は東京駅に行きます。"
   private let shibuya = "Please meet me at Shibuya Station at three o'clock."
@@ -191,7 +191,6 @@ struct LiveConversationTests {
     #expect(harness.session.conversation.turns.isEmpty)
 
     await harness.startAndWaitForListening()
-    for _ in 0..<100 where harness.transcription.requests.count < 2 { await Task.yield() }
     #expect(harness.session.status == .live)
     #expect(harness.transcription.requests.count == 2)
   }
@@ -304,12 +303,11 @@ struct LiveConversationTests {
     harness.transcription.failure = .speechRecognitionUnavailable
 
     harness.session.start()
-    for _ in 0..<100 where harness.session.status == .live { await Task.yield() }
+    await until { harness.session.status != .live }
     #expect(harness.session.status == .failed(.speechRecognitionUnavailable))
 
     harness.transcription.failure = nil
     await harness.startAndWaitForListening()
-    for _ in 0..<100 where harness.transcription.requests.count < 2 { await Task.yield() }
     #expect(harness.session.status == .live)
   }
 
@@ -319,7 +317,7 @@ struct LiveConversationTests {
     await harness.startAndWaitForListening()
 
     harness.transcription.emit(.final(.japanese, tokyo))
-    for _ in 0..<100 where harness.session.conversation.turns.isEmpty { await Task.yield() }
+    await until { !harness.session.conversation.turns.isEmpty }
 
     #expect(harness.session.conversation.turns.first?.text == tokyo)
   }
