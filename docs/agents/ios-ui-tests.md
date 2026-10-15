@@ -33,7 +33,7 @@ what it waited for and for how long.
   `XCTWaiter`, and `waitForExpectations`. Each takes a full second before its first look whether
   or not the element is there. In 8,009 of them measured on 2026-10-13 the first look came 1.00
   to 3.01 seconds in, 96% found their element at that look, and those seconds were 35% to 48% of
-  every suite's time.
+  every suite's time. `pnpm verify waits` fails on any of them in `apps/ios/UITests/`.
 - **Never pause to let something happen;** wait for the thing itself. The fixed pauses left are
   proofs that something does not happen (the input panel stays open, the iPhone doesn't turn, the
   word sheet stays up, and in `ExampleRowsUITests` a second after the held answers are let go, in
