@@ -115,14 +115,13 @@ private struct ConjugationRow: View {
 }
 
 struct ConjugatedFormView: View {
-  @State private var examples: [ExampleSentence] = []
-  @State private var isLoadingExamples = true
+  @State private var examples = LoadedExamples()
+  @Environment(\.exampleRowsOnScreen) private var rowsOnScreen
 
   let form: Conjugations.Row
   let labels: Conjugations.Examples
   let exampleSentenceClient: ExampleSentenceClient
   let speechSynthesisClient: SpeechSynthesisClient
-  let japaneseTextAnalysisClient: JapaneseTextAnalysisClient
   let openWord: (DictionaryEntry) -> Void
 
   var body: some View {
@@ -156,13 +155,12 @@ struct ConjugatedFormView: View {
       ExampleSentenceSections(
         title: labels.title,
         examples: examples,
-        isLoading: isLoadingExamples,
+        source: form.surface,
         emptyMessage: labels.empty,
-        highlightedQuery: SearchQuery(form.surface),
-        highlightedEntry: nil,
         presentation: { .conjugatedForm(form.kind, index: $0) },
         speechSynthesisClient: speechSynthesisClient,
-        japaneseTextAnalysisClient: japaneseTextAnalysisClient,
+        read: readExamples,
+        readAgain: { await loadExamples() },
         openWord: openWord
       )
     }
@@ -170,10 +168,15 @@ struct ConjugatedFormView: View {
     .navigationTitle(form.title)
     .inlineNavigationTitle()
     .accessibilityIdentifier("conjugations.form.\(form.kind)")
-    .task(id: form) {
-      examples = await exampleSentenceClient.formExamples(form.surface)
-      isLoadingExamples = false
-    }
+    .screenTask(id: form) { await loadExamples() }
+  }
+
+  private func loadExamples() async {
+    await examples.load(form.surface, rowsOnScreen: rowsOnScreen, read: readExamples)
+  }
+
+  private func readExamples(_ batch: ExampleBatch) async -> ExamplePage? {
+    await exampleSentenceClient.formExamples(form.surface, batch)
   }
 }
 

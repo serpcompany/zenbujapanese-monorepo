@@ -107,12 +107,5 @@ saying where the code belongs:
   the core's tests check; the website and the service share their row shapes through the core;
   no app imports another, and apps reach a shared package by its name.
 
-This part of a dictionary screen is decided in more than one place, not once in the core's
-answers:
-
-| What a screen shows | Where it is decided |
-| --- | --- |
-| Which words an example sentence accents: the page's word, or the words that match the query | For the app, the core says both of every word, and a view picks which of the two its screen accents (`apps/ios/Modules/Sources/SearchExperience/ExampleSentencesView.swift`). For the website, the core picks (`exampleRows` in `packages/dictionary-core/src/artifact/word-examples.ts`). |
-
 The website logs through its own `log()`, the Node services through `packages/node-service`'s, and
 the core not at all.

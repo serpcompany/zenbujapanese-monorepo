@@ -128,21 +128,21 @@ modules, files, or event loop of its own, which is how the app runs it in JavaSc
   | `entriesContainingKanji` | A kanji | The IDs of its 24 words, in the page's order |
   | `websiteRoute` | A link's host and percent-encoded path, as the host's own URL parser reads them | What the link opens: a word by its Language Reference ID, a kanji, a search, or home. A word link whose entry number the data lacks searches its slug, or opens home without one. |
   | `relatedWord`, `savedWord` | A related word (its target's ID, or how to search for it and how it is written and read); a saved word (its stored ID, writing, and reading) | The ID of the entry a related word opens, or null: with no target, the result written and read alike, else the first. What a saved word opens: its entry, else one written and read alike, else a search for its headword. |
-  | `canonicalEntries` | Groups of equivalent entries' IDs | Each group's smallest ID, which stands for it (`canonicalEntry`) |
+  | `canonicalEntries` | Groups of equivalent IDs | Each group's smallest ID (`canonicalEntry`) |
   | `normalizeQuery` | What was typed | The query Search reads |
   | `japaneseCandidates` | What a handwriting recognizer offered | Those written only in Japanese, normalized, each once, in order |
   | `isKanji`, `writtenLanguage`, `japaneseTextRuns` | A string; — | One kanji or not; `ja`, `en` (an ASCII letter), or null; the scalar runs any client's own check counted as Japanese |
   | `romaji`, `sentenceRomaji` | A reading; a sentence's words, each with its surface and reading | The reading in romaji, or null for one with kanji in it; the sentence in romaji, words spaced and punctuation kept with its word, or null when a word has no kana reading |
   | `checkExamples` | — | True, or an error saying which example table or pack is missing or wrong |
   | `tokenizerReady` | — | Whether the text part can tokenize. With the host's files it reads them now, so the first sentence doesn't wait for them, and is false when one is missing or wrong. |
-  | `exampleCount`, `resultsExampleCount`, `resultsExamples` | A query, or a query with the results' primary entry | The Example Sentences row's count, and its sentences with their count line |
-  | `entryExamples`, `formExamples` | An entry's ID; a conjugated form | A word page's sentences with their count, and a form's |
-  | `linkedTokens` | A text, the page's query, and its entry | Each word with its place in the text, its entry or candidates, the furigana to draw, whether it is the page's word or matches the query, and which neighbour a punctuation mark stays with on a line (`attaches`) |
+  | `exampleCount`, `resultsExampleCount` | A query, or a query with the results' primary entry | The Example Sentences row's count |
+  | `resultsExamples`, `entryExamples`, `formExamples` | A query with the results' primary entry, an entry's ID, or a conjugated form, each with `from` and an optional `limit` | Examples from `from` to the end of its page of 25, or a `limit` of 1 or more if fewer (the answer then says `cutShort`): each sentence with its words as `linkedTokens` answers them, the screen's words accented, and the list's size (`listed`). Example Sentences adds its count line, a word its `count` and `truncated` |
+  | `linkedTokens` | A text, the page's query, and its entry | Each word with its place in the text, its entry or candidates, the furigana to draw, its `accent` (`entry` on the page entry's word here; an example page says `query` on the words of its query), and which neighbour a punctuation mark stays with on a line (`attaches`) |
   | `countedWords` | A list of lines | The ID of each word that counts toward comprehension, in order, once each time it occurs: one linked to a single entry that is not a function word |
-  | `resultsScreen` | A search's answer, the Example Sentences count, and the learner's state (Sort By, Filter, known words, and whether the query was picked in the radical panel) | `LearnerResultsScreen`: sections, rows with chips, the menu with each choice's title and announcement, notices, and what VoiceOver reads; or No Dictionary Matches, with its message. A one-character query from the radical panel lists only its leading words. |
+  | `resultsScreen` | A search's answer, the Example Sentences count, and the learner's state (Sort By, Filter, known words, whether the radical panel picked the query) | `LearnerResultsScreen`: sections, rows with chips, the menu with each choice's title and announcement, notices, VoiceOver's text; or No Dictionary Matches. A radical panel's one-character query lists only its leading words. |
   | `wordRows` | Entries, and which the learner knows | A sheet's candidate rows, with their chips |
   | `ruby` | A surface and its reading | Furigana segments, kanji by kanji where one split fits |
-  | `wordPage` | An entry as the host read it | `EmbeddedWordPage`: its sections in order with their titles, furigana, part of speech, conjugations with each row's note, pitch with its graph, senses, frequency rows with details, alternatives, kanji, related words, spoken labels, share text |
+  | `wordPage` | An entry the host read | `EmbeddedWordPage`: titled sections, furigana, part of speech, conjugations, pitch, senses, frequency rows, forms, kanji, related words, labels, share text |
   | `kanjiPage`, `candidateMeanings` | A kanji, its words, and the word it was opened from; candidates | `EmbeddedKanjiPage`: sections, stats, meanings, readings with words and labels, elements, components, share text, the reading to save; a one-kanji candidate's first meaning |
   | `wordPageWithoutContent`, `kanjiPageWithoutContent` | A reading; — | The sections, and the labels, a page draws before or without its answer |
   | `kanjiElementPage` | A glyph | `KanjiElementDetail`, or null for a kanji that is no element |
@@ -264,7 +264,7 @@ Paths are relative to `apps/ios/Modules/Sources/SearchExperience/`.
 | `PresentationCore.swift` (`RomajiReadingAidText`, `LinkedJapaneseText`) | `romaji`, `sentenceRomaji` | The Romaji reading aid, for a reading and for a sentence |
 | `RadicalLookupClient.swift` (`RadicalInputView`) | `radicalPanel` | The radical panel |
 | `KanjiStrokeOrderClient.swift` | `kanjiStrokes` | The strokes Kanji Detail draws |
-| `ImageTextFlowModel.swift`, `ImageTextRecognitionClient.swift`, `Translate/TypedTranslationCard.swift` | `japaneseTextRuns`, `writtenLanguage` | The lines and words Image Search keeps (`PresentationCore` asks for the runs once and checks each scalar itself), and typed text's language |
+| `ImageTextFlowModel.swift`, `ImageTextRecognitionClient.swift`, `Translate/TypedTranslationCard.swift` | `japaneseTextRuns`, `writtenLanguage` | Image Search's Japanese; typed text's language |
 | `HandwritingRecognitionLiveAdapter.swift` | `japaneseCandidates` | Which of Vision's candidates the handwriting panel offers, when the bundled model (`OfflineHandwritingRecognizer.swift`) gives none. The model's own candidates are offered as they are. |
 | `ResultsScreen.swift` (`SearchResultsView`, `SearchResultsMenu`, `ResultRow`, `RecognizedWordSheet`) | `resultsScreen`, `wordRows` | The results screen and a sheet's candidates |
 | `JapaneseRuby.swift` | `ruby` | Furigana wherever a word is drawn |
@@ -424,6 +424,8 @@ The core answers as the Swift it replaced did, which the suites pin.
 - **A conjugated form's examples** are the sentences the app's search for the form finds, normalized
   (a full-width Ｈ searches English), that contain it as written and in which the tokenizer reads it
   as one word, so 見たかった and 見た目 aren't examples of 見た. The screen accents the query as normalized.
+- **Accents.** `accentedPositions` (`artifact/word-examples.ts`) accents, for the service and the
+  app, the words linked to the page's entry or the words the query overlaps, as `screenAccent` says.
 - An example's `pairId` is the artifact's pair ID in hex; the app's ID prefixes it with `esp1_`.
 
 ## Artifact
@@ -496,8 +498,7 @@ ready and a page's first request prepares nothing:
   is `source_record_id`, the JMdict entry number in word page URLs (ADR 0007).
 - A sense's `restrictions` (JMdict's stagk and stagr) are for Search; the app doesn't show them.
 - A pitch's `downstep` is 0 for flat (heiban), otherwise the mora after which pitch falls. `pitch`
-  is UniDic's; `compoundPitch` is CompoundPitch's estimate, which shows when UniDic has none
-  (`shownPitch`). The app reads both, and its word page chooses.
+  is UniDic's; `compoundPitch`, CompoundPitch's estimate, shows when UniDic has none (`shownPitch`).
 - No `FrequencyRow` for a pack means it doesn't rank or list the entry.
 - An example token's `reading` is the tokenizer's, in hiragana, when the token has kanji, and its
   `dictionaryForm` is set when it differs from the surface: what an ambiguous word searches for.

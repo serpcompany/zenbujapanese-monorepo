@@ -8,11 +8,23 @@ dictionary sheet Image Search uses.
 
 - The tab has a search bar like a browser's address bar. Pasting a YouTube link (`watch?v=`,
   `youtu.be/`, `shorts/`, `embed/`, or `live/`) opens the video directly. Anything else searches
-  YouTube and shows its results in the app; choosing a video from them opens it in Player.
+  YouTube and shows its results in the app; choosing a video from them opens it in Player. The
+  results are YouTube's mobile results page on every device, without YouTube's own header (its
+  search field and voice search) or its bottom bar (Home, Shorts, You). The app's navigation bar,
+  with Back and the query, and its tabs are the only controls, and the last result scrolls clear
+  of the tab bar. Search in Player is always YouTube's: the root view gives Player its provider
+  (`searchProvider: .youTube` in `SearchExperienceRootView.swift`), and no screen offers Google
+  Videos, the other provider `VideoSearch.swift` can build. Its results page was checked for
+  #753's problem only that far: it isn't reachable, so it has no style hiding Google's own header
+  and bars, and it needs one before any screen offers it
+  ([tech debt](../../../../docs/tech-debt.md)).
   Check: package `YouTubeCaptionsTests` (which text is a video link, in every form, and each
   search provider's results page and the videos chosen from it); UI `PlayerUITests` (the search
-  bar) and `PlayerWatchUITests` (a pasted link opens the video, with YouTube stood in). YouTube's
-  own results page is by hand ([Player manual checks](../../../../docs/agents/ios.md#player-manual-checks)).
+  bar), `PlayerWatchUITests` (a pasted link opens the video, with YouTube stood in), and
+  `PlayerWatchUITests.testASearchShowsYouTubesResultsWithoutYouTubesOwnBars` (a stand-in page laid
+  out like YouTube's results: its bars hidden with no gap left for them, the last result clear of
+  the tab bar, and a result opening in Player). YouTube's live results page is by hand
+  ([Player manual checks](../../../../docs/agents/ios.md#player-manual-checks)).
 - Below the bar, the tab lists recently watched videos, newest first, each as its own
   full-width card: the thumbnail with a comprehension pill (red under 25%, orange to 50%, yellow
   to 75%, green from 75%), its length, and a red bar for how far the learner watched, then the
@@ -98,10 +110,13 @@ player is by hand; the UI tests stand in for it with a local player that answers
   `PlayerReadingAidTests` (counting known words among countable occurrences); UI
   `PlayerWatchUITests.testAVideoListsItsCaptionCardsWithTheShareOfWordsKnown` (0 of 12 words
   known for its three captions).
-- **Playback controls.** A compact bar on its own background sits between the player and the
-  caption cards. A thin scrubber along its top edge can be dragged to any point. Below it, the
-  elapsed and total time sit beside buttons that go to the previous line, play or pause, and go
-  to the next line, and a speed menu plays the video at 0.5×, 0.75×, 1×, 1.25×, or 1.5×.
+- **Playback controls.** A compact bar on its own background sits between the player and the caption
+  cards. A thin scrubber along its top edge can be dragged to any point. Below it, the elapsed and
+  total time, which VoiceOver reads too, sit beside buttons that go to the previous line, play or
+  pause, and go to the next line, and a speed menu plays the video at 0.5×, 0.75×, 1×, 1.25×, or
+  1.5×. As the video plays, only the time and the scrubber follow it five times a second, and the
+  caption list redraws only when the line changes. The rest of the screen isn't redrawn, so the
+  speed and **•••** menus open and stay still while a line plays or repeats.
 - **Repeat line.** The repeat button beside the speed menu plays the current line over and over
   until it's turned off. While repeating, the previous and next line buttons, tapping a card, or
   dragging the scrubber move the repeat to that line.
@@ -109,8 +124,10 @@ player is by hand; the UI tests stand in for it with a local player that answers
   that line and keep playing. While it's paused, they play just that line and pause again at its
   end, so a learner can step through the video one line at a time.
   Check: UI `PlayerWatchUITests.testThePlayersOwnControlsPlayStepAndRepeat` (play, the next and
-  previous lines, repeat, the speeds, and the scrubber, against the stand-in player); package
-  `YouTubeCaptionsTests` (each line's times, which the controls move between).
+  previous lines, repeat, a speed chosen while a line repeats, and the scrubber, against the
+  stand-in player; the screen, the speed menu, and the caption list each count their own draws,
+  and none of the counts moves while the time shows three seconds of a repeating line);
+  package `YouTubeCaptionsTests` (each line's times, which the controls move between).
 
 Creator-made Japanese captions are used before automatic ones. Sound descriptions such as [音楽] are
 removed, and lines with nothing else are dropped, so songs show only their lyrics. A video without

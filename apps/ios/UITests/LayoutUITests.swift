@@ -33,9 +33,10 @@ final class LayoutUITests: ZenbuUITestCase {
     for attempt in 0..<3 {
       if attempt > 0 { TestDevice.turn(landscape: !landscape) }
       TestDevice.turn(landscape: landscape)
-      let turned = XCTNSPredicateExpectation(
-        predicate: NSPredicate { _, _ in self.isLandscape(app) == landscape }, object: nil)
-      if XCTWaiter().wait(for: [turned], timeout: Self.patience / 3) == .completed { return }
+      let turned = comesTrue("the iPad turning", within: Self.patience / 3) {
+        isLandscape(app) == landscape
+      }
+      if turned { return }
     }
     XCTFail("the iPad never turned \(landscape ? "landscape" : "portrait")")
   }

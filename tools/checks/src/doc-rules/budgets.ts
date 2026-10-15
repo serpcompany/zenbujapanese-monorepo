@@ -15,8 +15,8 @@ export const knownLongDocs: Readonly<Record<string, number>> = {
   'docs/agents/account-clients.md': 602,
   'docs/agents/api-servers.md': 318,
   'docs/agents/dictionary-api.md': 544,
-  'docs/agents/dictionary-core.md': 603,
-  'docs/agents/ios.md': 1361,
+  'docs/agents/dictionary-core.md': 604,
+  'docs/agents/ios.md': 1358,
   'docs/agents/translate.md': 375,
   'docs/agents/web.md': 811
 }
