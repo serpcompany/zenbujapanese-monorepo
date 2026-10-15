@@ -280,13 +280,19 @@ test.describe('site header below 1024 pixels', () => {
     await expect(menuButton(page)).toBeFocused()
   })
 
-  test('following Log in or Get the app in the drawer closes it', async ({ page }) => {
-    await page.goto('/about/')
-    for (const name of ['Log in', 'Get the app']) {
+  test('following Log in or Get the app in the drawer closes it, and opens its page', async ({
+    page
+  }) => {
+    for (const [name, path] of [
+      ['Log in', /\/login\/$/],
+      ['Get the app', /\/products\/zenbu-japanese-app\/$/]
+    ] as const) {
+      await page.goto('/about/')
       await menuButton(page).click()
       await expect(phoneMenu(page)).toBeVisible()
       await phoneMenu(page).getByRole('button', { name }).click()
       await expect(phoneMenu(page)).toBeHidden()
+      await expect(page).toHaveURL(path)
     }
   })
 

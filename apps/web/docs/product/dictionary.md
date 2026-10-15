@@ -1017,7 +1017,7 @@ widening the window to 1024 pixels closes the sheet; choosing a theme keeps it o
   groups, then Log in and Get the app", "a drawer group opens and closes with a click, and its link
   opens the page", "the drawer
   opens and its groups toggle with the keyboard, and Escape closes it", "following Log in or Get the
-  app in the drawer closes it", "the drawer closes when the
+  app in the drawer closes it, and opens its page", "the drawer closes when the
   browser goes back, and stays closed going forward", and "the drawer closes when the window reaches
   1024 pixels, and stays closed when it narrows"; `apps/web/e2e/phone-layout.spec.ts`, "About,
   /about/, fits a 360px phone" (the open menu and each group, Phone layout below); its width:
