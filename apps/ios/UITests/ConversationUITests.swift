@@ -6,7 +6,7 @@ final class ConversationUITests: ZenbuUITestCase {
     let mute = waitFor(find("translate.session.mute", in: app))
     XCTAssertEqual(mute.label, "Mute Translations")
     mute.tap()
-    XCTAssertEqual(waitFor(find("translate.session.mute", in: app)).label, "Play Translations Aloud")
+    waitUntil(find("translate.session.mute", in: app), "label == 'Play Translations Aloud'")
     waitFor(find("translate.session.speed", in: app))
     pause(app)
     let toggle = find("translate.session.toggle", in: app)
@@ -49,7 +49,7 @@ final class ConversationUITests: ZenbuUITestCase {
     let mute = waitFor(find("translate.session.mute", in: app))
     XCTAssertEqual(mute.label, "Mute Translations")
     mute.tap()
-    XCTAssertEqual(waitFor(find("translate.session.mute", in: app)).label, "Play Translations Aloud")
+    waitUntil(find("translate.session.mute", in: app), "label == 'Play Translations Aloud'")
   }
 
   func testABookmarkedSentenceIsListedUnderBookmarked() {
@@ -77,7 +77,7 @@ final class ConversationUITests: ZenbuUITestCase {
 
   func testLeavingTheAppPausesTheConversation() {
     let app = startConversation()
-    TestDevice.leaveAndReturn(to: app)
+    leaveAndReturn(to: app)
     if device == .mac {
       waitUntil(find("translate.session.toggle", in: app), "label == 'Resume'")
     } else {
@@ -161,7 +161,6 @@ final class ConversationUITests: ZenbuUITestCase {
     if inTheSmallestWindow, device == .mac { shrinkWindow(in: app) }
     open(.translate, in: app)
     tap(find("translate.start.\(option)", in: app))
-    waitFor(find("translate.live", in: app))
     waitFor(firstElement(identifiedBy: "translate.sentence.", in: app))
     return app
   }

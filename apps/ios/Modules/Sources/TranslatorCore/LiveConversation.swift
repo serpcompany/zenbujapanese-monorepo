@@ -70,6 +70,7 @@ public final class LiveConversation {
   @ObservationIgnored var provisionalTask: Task<Void, Never>?
   @ObservationIgnored var playbackTask: Task<Void, Never>?
   @ObservationIgnored var teardownTask: Task<Void, Never>?
+  @ObservationIgnored var finishUtteranceTask: Task<Void, Never>?
   @ObservationIgnored var translationTasks: [UUID: Task<Void, Never>] = [:]
 
   let clients: TranslatorClients
@@ -260,7 +261,7 @@ public final class LiveConversation {
       now.timeIntervalSince(lastVolatileChangeAt) >= timing.stalledSpeechPause
     {
       lastVolatileChangeAt = now
-      Task { [clients] in await clients.transcription.finishUtterance() }
+      finishUtteranceTask = Task { [clients] in await clients.transcription.finishUtterance() }
     }
     if isQuiet, now.timeIntervalSince(lastSpeechAt) >= timing.silenceBeforePrompt {
       silencePromptDeadline = now.addingTimeInterval(timing.promptCountdown)
@@ -286,6 +287,7 @@ public final class LiveConversation {
       for task in translationTasks.values { await task.value }
       await provisionalTask?.value
       await playbackTask?.value
+      await finishUtteranceTask?.value
       await Task.yield()
     }
   }
