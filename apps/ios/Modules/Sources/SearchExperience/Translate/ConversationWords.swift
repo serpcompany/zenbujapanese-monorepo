@@ -11,7 +11,7 @@ final class ConversationWords {
   }
 
   private var counted: [UUID: Counted] = [:]
-  @ObservationIgnored private var counting: Set<UUID> = []
+  @ObservationIgnored private var counting: [UUID: Task<Void, Never>] = [:]
 
   func comprehension(
     of conversation: Conversation, analysis: JapaneseTextAnalysisClient,
@@ -26,14 +26,17 @@ final class ConversationWords {
   }
 
   private func count(_ conversation: Conversation, analysis: JapaneseTextAnalysisClient) {
-    guard !counting.contains(conversation.id) else { return }
-    counting.insert(conversation.id)
+    guard counting[conversation.id] == nil else { return }
     let spoken = conversation.turns.filter { $0.language == .japanese }
       .flatMap(\.sentences).map(\.text)
-    Task {
+    counting[conversation.id] = Task {
       let words = await Comprehension.countedWords(in: spoken, analysis: analysis) ?? []
       counted[conversation.id] = Counted(updatedAt: conversation.updatedAt, words: words)
-      counting.remove(conversation.id)
+      counting[conversation.id] = nil
     }
+  }
+
+  func countingFinished() async {
+    for task in counting.values { await task.value }
   }
 }
