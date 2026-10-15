@@ -26,6 +26,26 @@ extension ZenbuUITestCase {
     return row
   }
 
+  func openTaberu(in app: XCUIApplication) {
+    search("taberu", in: app)
+    tap(
+      app.descendants(matching: .any)
+        .matching(NSPredicate(format: "identifier BEGINSWITH 'result.' AND label BEGINSWITH '食べる'"))
+        .firstMatch)
+  }
+
+  @discardableResult
+  func openAFormOfTaberu(in app: XCUIApplication) -> String {
+    openTaberu(in: app)
+    tap(find("word-detail.conjugations", in: app), toShow: find("conjugations.screen", in: app))
+    assertOnScreen(find("conjugations.screen", in: app), in: app)
+    let prefix = "conjugations.row."
+    let form = waitFor(firstElement(identifiedBy: prefix, in: app))
+    let kind = String(form.identifier.dropFirst(prefix.count))
+    tap(form)
+    return kind
+  }
+
   func menuChoices(in app: XCUIApplication) -> XCUIElementQuery {
     device == .mac ? app.windows.menuItems : app.buttons
   }
@@ -125,16 +145,19 @@ extension ZenbuUITestCase {
     let scrolled = list ?? area
     _ = element.waitForExistence(timeout: 5)
     for _ in 0..<12 where !isReachable(element, in: app, within: container) {
-      let isAbove = element.exists && element.frame.midY < area.frame.midY
-      if device == .mac {
-        scrolled.scroll(byDeltaX: 0, deltaY: isAbove ? 150 : -150)
-      } else if isAbove {
-        scrolled.swipeDown(velocity: .slow)
-      } else {
-        scrolled.swipeUp(velocity: .slow)
-      }
+      scroll(scrolled, back: element.exists && element.frame.midY < area.frame.midY)
     }
     return waitFor(element)
+  }
+
+  func scroll(_ area: XCUIElement, back: Bool) {
+    if device == .mac {
+      area.scroll(byDeltaX: 0, deltaY: back ? 150 : -150)
+    } else if back {
+      area.swipeDown(velocity: .slow)
+    } else {
+      area.swipeUp(velocity: .slow)
+    }
   }
 
   func shrinkWindow(in app: XCUIApplication) {
@@ -144,6 +167,17 @@ extension ZenbuUITestCase {
     let target = window.coordinate(withNormalizedOffset: CGVector(dx: 0, dy: 0))
       .withOffset(CGVector(dx: 50, dy: 50))
     corner.press(forDuration: 0.3, thenDragTo: target)
+  }
+
+  static let switchedOn = NSPredicate(format: "value == '1' OR value == 1")
+
+  func turnRomajiOn(in app: XCUIApplication) {
+    open(.account, in: app)
+    tap(reveal(find("account.reading-aids", in: app), in: app))
+    let romaji = waitFor(find("reading-aids.show-romaji", in: app))
+    flip(romaji)
+    expectation(for: Self.switchedOn, evaluatedWith: romaji)
+    waitForExpectations(timeout: Self.patience)
   }
 
   func flip(_ toggle: XCUIElement) {

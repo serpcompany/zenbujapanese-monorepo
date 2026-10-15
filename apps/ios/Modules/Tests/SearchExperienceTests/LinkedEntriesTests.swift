@@ -13,8 +13,7 @@ struct LinkedEntriesTests {
   private static func word(_ entry: String) -> LinkedWord {
     LinkedWord(
       surface: entry, start: 0, end: 1, reading: nil, isFunctionWord: false, entry: entry,
-      candidates: [], furigana: nil, ruby: nil, isPageWord: false, matchesQuery: false,
-      attaches: nil)
+      candidates: [], furigana: nil, ruby: nil, accent: nil, attaches: nil)
   }
 
   private static func linked(
@@ -37,6 +36,12 @@ struct LinkedEntriesTests {
       ))
   }
 
+  private static func link(
+    _ text: [LinkedWord], in linked: LinkedEntries, page: DictionaryEntry? = nil
+  ) async -> [JapaneseTextToken] {
+    await linked.tokens([text], highlightedEntry: page)[0]
+  }
+
   private static func entries(_ tokens: [JapaneseTextToken]) -> [String?] {
     tokens.map { $0.entry?.id.rawValue }
   }
@@ -44,10 +49,10 @@ struct LinkedEntriesTests {
   @Test("a text that takes the cache past its capacity keeps the entries already cached")
   func aTextThatFillsTheCacheKeepsItsCachedEntries() async {
     let linked = Self.linked()
-    _ = await linked.tokens([Self.word(Self.kept)], highlightedEntry: nil)
+    _ = await Self.link([Self.word(Self.kept)], in: linked)
 
     let text = [Self.word(Self.kept)] + Self.moreThanTheCacheHolds
-    let tokens = await linked.tokens(text, highlightedEntry: nil)
+    let tokens = await Self.link(text, in: linked)
 
     #expect(Self.entries(tokens) == text.map(\.entry))
   }
@@ -61,12 +66,11 @@ struct LinkedEntriesTests {
       reach.yield()
       for await _ in released { break }
     }
-    _ = await linked.tokens([Self.word(Self.kept)], highlightedEntry: nil)
+    _ = await Self.link([Self.word(Self.kept)], in: linked)
 
-    async let waiting = linked.tokens(
-      [Self.word(Self.kept), Self.word(Self.late)], highlightedEntry: nil)
+    async let waiting = Self.link([Self.word(Self.kept), Self.word(Self.late)], in: linked)
     for await _ in reached { break }
-    _ = await linked.tokens(Self.moreThanTheCacheHolds, highlightedEntry: nil)
+    _ = await Self.link(Self.moreThanTheCacheHolds, in: linked)
     release.yield()
     let tokens = await waiting
 
@@ -77,27 +81,45 @@ struct LinkedEntriesTests {
   func aTextPastTheCapacityStartsTheCacheAgain() async {
     let reads = Reads()
     let linked = Self.linked { await reads.record($0) }
-    _ = await linked.tokens([Self.word(Self.kept)], highlightedEntry: nil)
-    _ = await linked.tokens(Self.moreThanTheCacheHolds, highlightedEntry: nil)
+    _ = await Self.link([Self.word(Self.kept)], in: linked)
+    _ = await Self.link(Self.moreThanTheCacheHolds, in: linked)
 
-    let tokens = await linked.tokens([Self.word(Self.kept)], highlightedEntry: nil)
+    let tokens = await Self.link([Self.word(Self.kept)], in: linked)
     let keptReads = await reads.ids.count { $0.rawValue == Self.kept }
 
     #expect(Self.entries(tokens) == [Self.kept])
     #expect(keptReads == 2)
   }
 
+  @Test("texts linked together share one read and each keeps its cached entries past capacity")
+  func textsLinkedTogetherKeepTheirCachedEntries() async {
+    let reads = Reads()
+    let linked = Self.linked { await reads.record($0) }
+    _ = await Self.link([Self.word(Self.kept)], in: linked)
+
+    let texts = [[Self.word(Self.kept)], Self.moreThanTheCacheHolds]
+    let tokens = await linked.tokens(texts, highlightedEntry: nil)
+    let readCalls = await reads.calls
+
+    #expect(tokens.map(Self.entries) == texts.map { $0.map(\.entry) })
+    #expect(readCalls == 2)
+  }
+
   private actor Reads {
     private(set) var ids: [LanguageReferenceID] = []
+    private(set) var calls = 0
 
-    func record(_ read: [LanguageReferenceID]) { ids += read }
+    func record(_ read: [LanguageReferenceID]) {
+      ids += read
+      calls += 1
+    }
   }
 
   @Test("a text links the page's own entry as the page has it")
   func aTextLinksThePagesOwnEntry() async {
     let page = DictionaryEntry.fixture(id: Self.kept, headword: "page word")
 
-    let tokens = await Self.linked().tokens([Self.word(Self.kept)], highlightedEntry: page)
+    let tokens = await Self.link([Self.word(Self.kept)], in: Self.linked(), page: page)
 
     #expect(tokens.map { $0.entry?.headword } == ["page word"])
   }

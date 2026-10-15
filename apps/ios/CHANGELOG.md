@@ -54,6 +54,12 @@ All notable user-facing changes to Zenbu Japanese are recorded here.
 
 ### Fixed
 
+- Example sentences appear with their words already linked, with furigana, on Example Sentences,
+  a word's Examples, and a conjugated form's examples; a sentence used to be drawn as plain text
+  and then redrawn at another height. Long lists show 25 sentences and bring more as you scroll,
+  and Example Sentences keeps your place when you come back from a word.
+- Example sentences that couldn’t be loaded now say so, with **Retry**; a word's page used to say
+  it had no source-matched examples.
 - **Credits & Attributions** says that Jiten's frequency lists are modified and shared under the
   same license, credits JMdict, KANJIDIC2, and RADKFILE each on its own, and calls three sources by
   their authors' names: Wikipedia Word Frequency Clean, JLPT vocabulary lists, and JLPT kanji lists.
@@ -69,12 +75,17 @@ All notable user-facing changes to Zenbu Japanese are recorded here.
   it can read. A photo you delete is still deleted, within 30 days if a kept copy names it.
 - In the half-height word sheet in Player, Image Search, and Translate, a word's **Kanji** and its
   part of speech (which opens its conjugations) now open, in the tab you're in.
+- Player's search results show only YouTube's results, between Player's own bars: YouTube's
+  header, search field, voice search, and bottom bar (Home, Shorts, You) no longer appear, on
+  iPhone, iPad, and the Mac.
 - When a newer version of Zenbu saved the bookmarks synced to your device, Zenbu Account now says
   to update Zenbu instead of reopening it.
 - Frequency Dictionaries: downloading several packs at once no longer looks like each tap cancels
   the one before. Every downloading row keeps its own progress ring, with a stop button.
 - Radicals no longer draws over the search results.
 - Choosing **Photo Library** for Image Search opens the picker again.
+- **Take Photo** opens the camera with its flash off. Turn the flash on, or to automatic, and the
+  camera opens with that choice the next time.
 - English searches put the common word first: `dog` shows 犬 first and `water` shows 水, where rarer
   words whose meaning was exactly the query used to come ahead of them.
 - A profile's username follows the rule your Zenbu account uses: 3 to 30 letters a–z, numbers, or

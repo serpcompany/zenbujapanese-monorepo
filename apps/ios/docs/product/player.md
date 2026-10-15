@@ -8,11 +8,23 @@ dictionary sheet Image Search uses.
 
 - The tab has a search bar like a browser's address bar. Pasting a YouTube link (`watch?v=`,
   `youtu.be/`, `shorts/`, `embed/`, or `live/`) opens the video directly. Anything else searches
-  YouTube and shows its results in the app; choosing a video from them opens it in Player.
+  YouTube and shows its results in the app; choosing a video from them opens it in Player. The
+  results are YouTube's mobile results page on every device, without YouTube's own header (its
+  search field and voice search) or its bottom bar (Home, Shorts, You). The app's navigation bar,
+  with Back and the query, and its tabs are the only controls, and the last result scrolls clear
+  of the tab bar. Search in Player is always YouTube's: the root view gives Player its provider
+  (`searchProvider: .youTube` in `SearchExperienceRootView.swift`), and no screen offers Google
+  Videos, the other provider `VideoSearch.swift` can build. Its results page was checked for
+  #753's problem only that far: it isn't reachable, so it has no style hiding Google's own header
+  and bars, and it needs one before any screen offers it
+  ([tech debt](../../../../docs/tech-debt.md)).
   Check: package `YouTubeCaptionsTests` (which text is a video link, in every form, and each
   search provider's results page and the videos chosen from it); UI `PlayerUITests` (the search
-  bar) and `PlayerWatchUITests` (a pasted link opens the video, with YouTube stood in). YouTube's
-  own results page is by hand ([Player manual checks](../../../../docs/agents/ios.md#player-manual-checks)).
+  bar), `PlayerWatchUITests` (a pasted link opens the video, with YouTube stood in), and
+  `PlayerWatchUITests.testASearchShowsYouTubesResultsWithoutYouTubesOwnBars` (a stand-in page laid
+  out like YouTube's results: its bars hidden with no gap left for them, the last result clear of
+  the tab bar, and a result opening in Player). YouTube's live results page is by hand
+  ([Player manual checks](../../../../docs/agents/ios.md#player-manual-checks)).
 - Below the bar, the tab lists recently watched videos, newest first, each as its own
   full-width card: the thumbnail with a comprehension pill (red under 25%, orange to 50%, yellow
   to 75%, green from 75%), its length, and a red bar for how far the learner watched, then the

@@ -147,7 +147,6 @@ struct TranslateLinkedText: View {
     if language == .japanese {
       LinkedJapaneseText(
         text: text,
-        highlightedQuery: SearchQuery(""),
         highlightedEntry: nil,
         japaneseTextAnalysisClient: words.analysisClient,
         identifierPrefix: identifier,
