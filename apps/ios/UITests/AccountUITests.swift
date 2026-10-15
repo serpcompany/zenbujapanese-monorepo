@@ -83,10 +83,10 @@ final class AccountUITests: ZenbuUITestCase {
     waitFor(find("frequency-packs.list", in: app))
     let packs = app.descendants(matching: .any)
       .matching(NSPredicate(format: "identifier BEGINSWITH 'frequency-pack.row.'"))
-    XCTAssertGreaterThanOrEqual(packs.count, 9, "every pack in the catalog has a row")
+    waitUntil("every pack in the catalog having a row") { packs.count >= 9 }
     let downloads = app.descendants(matching: .any)
       .matching(NSPredicate(format: "identifier BEGINSWITH 'frequency-pack.download.'"))
-    XCTAssertEqual(downloads.count, 7, "Available offers each optional pack's download")
+    waitUntil("Available offering each optional pack's download") { downloads.count == 7 }
   }
 
   func testTranslationsAndCreditsOpenFromAccount() {

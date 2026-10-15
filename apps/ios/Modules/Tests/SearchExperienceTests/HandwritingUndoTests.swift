@@ -3,7 +3,7 @@ import Testing
 @testable import SearchExperience
 
 @MainActor
-@Suite("Handwriting undo")
+@Suite("Handwriting undo", .timeLimit(.minutes(1)))
 struct HandwritingUndoTests {
   private let horizontal = [HandwritingPoint(x: 0.2, y: 0.5), HandwritingPoint(x: 0.8, y: 0.5)]
   private let vertical = [HandwritingPoint(x: 0.5, y: 0.2), HandwritingPoint(x: 0.5, y: 0.8)]
@@ -17,23 +17,17 @@ struct HandwritingUndoTests {
       })
   }
 
-  private func settle(_ model: HandwritingInputModel) async {
-    for _ in 0..<200 where model.recognitionState == .recognizing {
-      try? await Task.sleep(for: .milliseconds(5))
-    }
-  }
-
   @Test("undo removes the last stroke and recognizes the rest again")
   func undoRecognizesRemainingStrokes() async {
     let recorder = StrokeCountRecorder()
     let model = model(recorder: recorder)
     model.strokes = [horizontal, vertical]
     model.recognize(HandwritingSample(strokes: model.strokes))
-    await settle(model)
+    await model.recognitionFinished()
     #expect(model.candidates.map(\.value) == ["十"])
 
     model.undoStroke()
-    await settle(model)
+    await model.recognitionFinished()
 
     #expect(model.strokes == [horizontal])
     #expect(model.candidates.map(\.value) == ["一"])
@@ -46,10 +40,10 @@ struct HandwritingUndoTests {
     let model = model(recorder: recorder)
     model.strokes = [horizontal]
     model.recognize(HandwritingSample(strokes: model.strokes))
-    await settle(model)
+    await model.recognitionFinished()
 
     model.undoStroke()
-    await settle(model)
+    await model.recognitionFinished()
 
     #expect(model.strokes.isEmpty)
     #expect(model.candidates.isEmpty)

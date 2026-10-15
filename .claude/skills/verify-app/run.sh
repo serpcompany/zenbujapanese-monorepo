@@ -50,7 +50,12 @@ leave_the_simulator() {
     echo "The Simulator stays up for the next run. Shut it down when the work is done:"
     echo "  python3 apps/ios/Tools/simulator.py shutdown"
   else
-    python3 apps/ios/Tools/simulator.py shutdown >/dev/null
+    stopped=$(python3 apps/ios/Tools/simulator.py shutdown)
+    case $stopped in
+      *"stays up"*) echo "Warning: $stopped. Shut it down when it's free: python3 apps/ios/Tools/simulator.py shutdown" ;;
+      "Nothing was running.") ;;
+      *) echo "Shut down: $stopped" ;;
+    esac
   fi
 }
 

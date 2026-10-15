@@ -46,6 +46,10 @@ final class HandwritingInputModel {
     }
   }
 
+  func recognitionFinished() async {
+    await recognitionTask?.value
+  }
+
   func eraseDrawing() {
     recognitionTask?.cancel()
     recognitionTask = nil

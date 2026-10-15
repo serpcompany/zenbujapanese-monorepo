@@ -151,8 +151,8 @@ xcodebuild -scheme ZenbuJapaneseModules-Package -destination 'platform=macOS,arc
 On the Mac they run against its own Vision, Speech, and Foundation Models, so the image
 recognition tests are slow on a virtual Mac (about two minutes each). No test there names a
 platform: a test of something that differs reads `ThisDevice` and checks that device's side
-(`PlatformAdapterTests`). Two tests need Apple Intelligence and are skipped without it
-(`ImageTextExplanationTests`), as on a virtual Mac.
+(`PlatformAdapterTests`). Two tests call the real model, only with Apple Intelligence on and
+`TEST_RUNNER_ZENBU_RUN_LANGUAGE_MODEL=1` (`ImageTextExplanationTests`); the rest stub it.
 
 **The UI tests**, `ZenbuJapaneseUITests` (`apps/ios/UITests/`), drive the built app through every
 tab. They're the `ZenbuJapanese` scheme's tests, built with `ZENBU_BUNDLE_ID_SUFFIX=.uitests`, so
@@ -206,8 +206,8 @@ don't contain them), so they need no network, account, camera, or microphone:
 - `ZENBU_DRAWN_RESULTS=1` has Search say, on an element only tests read (`search.results.drawn`),
   each results list it drew and how many of its rows had chips, so a test fails when a list is
   drawn without its chips and then again (`SearchResultsUITests`).
-- `ZENBU_COUNT_DRAWS=1` has the Player screen, its speed menu, and its captions count their draws
-  (`watch.draws`, …), so a test fails when one redraws as the time ticks (`PlayerWatchUITests`).
+- `ZENBU_COUNT_DRAWS=1` has the Player count its draws and show its time to tests (`watch.draws`,
+  `watch.time`, …), so a test fails when it redraws as the time ticks (`PlayerWatchUITests`).
 
 The tests share `ZenbuUITestCase` and `AppTab`; what differs between the devices they ask
 `TestDevice` (`apps/ios/UITests/Platform/`, the one place `pnpm verify layers` lets UI tests name
@@ -286,9 +286,8 @@ or how fast it feels. The app needs iOS 26.0 or later, and the Sudachi cache abo
 2. Open `apps/ios/ZenbuJapanese.xcodeproj` and sign in under Xcode → Settings → Accounts. The
    ZenbuJapanese target signs with the team that publishes the app, TSMC LLC's `847HR8U8D9`, and
    the bundle ID that team registered, `com.zenbujapanese.dictionary` (The App Store record,
-   below). With
-   any other Apple ID, such as a free one (a Personal Team), pick your team under the target's
-   **Signing & Capabilities** and change the bundle ID to one of your own, such as
+   below). With any other Apple ID, such as a free one (a Personal Team), pick your team under the
+   target's **Signing & Capabilities** and change the bundle ID to one of your own, such as
    `com.<you>.zenbujapanese`. A Personal Team can't sign Associated Domains or Sign in with Apple
    either, so also remove those capabilities
    ([Links from the website](#links-from-the-website), [Account and sync](#account-and-sync)).
@@ -641,7 +640,8 @@ answers; [`dictionary-core.md`](dictionary-core.md), The app's side, lists which
   sentence) links a row at a time (`LinkedJapaneseText`): `DictionaryTextData.linkedWords` is one
   call for a text: the core tokenizes it from the app's files, reads its words' forms in one or two
   statements, and answers each word's place, entry or candidates, furigana, and `accent`. Both paths
-  read entries through `LinkedEntries` (4,000 kept); the core keeps the last 512 texts.
+  read entries through `LinkedEntries`, which keeps 4,000, or a batch's own when it would pass
+  that; the core keeps the last 512 texts.
 - **Counted words.** `DictionaryTextData.countedWords` is one call for a list of lines: the IDs
   of the words that count toward comprehension, with no entry read. `Comprehension` asks twenty
   lines at a time (about 5 ms a call), so a caption card's own link never waits on a whole video.
@@ -1246,7 +1246,7 @@ Intelligence's on-device model (Foundation Models), labeled as such; check Apple
 a device. The on-device model runs in a Simulator only when the runtime matches the Mac: on an
 iOS 26 runtime under a newer macOS, its safety check fails, so translation and Context fail
 there. Use a Simulator on the runtime that matches the Mac, with Apple Intelligence on for the
-Mac. `ImageTextExplanationTests` exercise the model only where it runs.
+Mac. `ImageTextExplanationTests` stub the model, and call it only when asked.
 
 The camera runs only on a device, and `CameraFlashTests` covers only the flash kept for it. When
 changing the camera, check on an iPhone that a fresh install's **Take Photo** opens with the flash

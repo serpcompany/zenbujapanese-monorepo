@@ -56,7 +56,9 @@ struct ImageTextExplanationClient: Sendable {
     translate: { _ in [:] }
   )
 
-  static func live(lookupClient: LookupClient) -> ImageTextExplanationClient {
+  static func live(
+    lookupClient: LookupClient, model: ExplanationModel = .onDevice
+  ) -> ImageTextExplanationClient {
     ImageTextExplanationClient(
       availability: {
         switch SystemLanguageModel.default.availability {
@@ -67,19 +69,25 @@ struct ImageTextExplanationClient: Sendable {
         }
       },
       explain: { text in
-        try await OnDeviceExplainer(lookupClient: lookupClient).insights(text)
+        try await TextExplainer(lookupClient: lookupClient, model: model).insights(text)
       },
       translate: { sources in
-        try await OnDeviceExplainer(lookupClient: lookupClient).translations(sources)
+        try await TextExplainer(lookupClient: lookupClient, model: model).translations(sources)
       }
     )
   }
 }
 
-private struct OnDeviceExplainer {
-  let lookupClient: LookupClient
+struct ExplanationModel: Sendable {
+  var pickPhrases: @Sendable (_ prompt: String) async throws -> [String]
+  var respond: @Sendable (_ prompt: String) async throws -> String
 
-  private static let maximumTextLength = 1_200
+  static let onDevice = ExplanationModel(
+    pickPhrases: { prompt in
+      try await session().respond(to: prompt, generating: PhraseSelection.self).content.phrases
+    },
+    respond: { prompt in try await session().respond(to: prompt).content }
+  )
 
   private static let instructions = """
     You help an English-speaking learner read Japanese recognized in a photo.
@@ -87,27 +95,33 @@ private struct OnDeviceExplainer {
 
   private static let model = SystemLanguageModel(guardrails: .permissiveContentTransformations)
 
-  private func session() -> LanguageModelSession {
-    LanguageModelSession(model: Self.model, instructions: Self.instructions)
+  private static func session() -> LanguageModelSession {
+    LanguageModelSession(model: model, instructions: instructions)
   }
+}
+
+private struct TextExplainer {
+  let lookupClient: LookupClient
+  let model: ExplanationModel
+
+  private static let maximumTextLength = 1_200
 
   func insights(_ fullText: String) async throws -> ImageTextInsights {
     let text = String(fullText.prefix(Self.maximumTextLength))
     guard !text.isEmpty else { return ImageTextInsights(context: "", notes: []) }
 
-    let picked = try? await session().respond(
-      to: """
+    let picked = try? await model.pickPhrases(
+      """
         Pick the idioms, proverbs, and set expressions a learner is most likely to miss in \
         this text, copying each exactly as it appears.
 
         \(text)
-        """,
-      generating: PhraseSelection.self
+        """
     )
     let lines = text.split(separator: "\n").map(String.init)
     var seen = Set<String>()
     var notes: [ImageTextNote] = []
-    for phrase in (picked?.content.phrases ?? []) + lines {
+    for phrase in (picked ?? []) + lines {
       try Task.checkCancellation()
       let phrase = phrase.trimmingCharacters(in: .whitespacesAndNewlines)
       guard !phrase.isEmpty, text.contains(phrase), seen.insert(phrase).inserted,
@@ -117,8 +131,8 @@ private struct OnDeviceExplainer {
       notes.append(note)
     }
 
-    let context = try await session().respond(
-      to: """
+    let context = try await model.respond(
+      """
         \(Self.glossary(notes))In two or three plain sentences of English, tell the learner what \
         this text is and what it's for: its kind of writing, where it would appear, and what \
         it's saying overall. Reply with only those sentences.
@@ -128,7 +142,7 @@ private struct OnDeviceExplainer {
         """
     )
     return ImageTextInsights(
-      context: context.content.trimmingCharacters(in: .whitespacesAndNewlines),
+      context: context.trimmingCharacters(in: .whitespacesAndNewlines),
       notes: notes
     )
   }
@@ -161,8 +175,8 @@ private struct OnDeviceExplainer {
     }
     try Task.checkCancellation()
     let numbered = sources.enumerated().map { "\($0.offset + 1). \($0.element)" }
-    let response = try await session().respond(
-      to: """
+    let response = try await model.respond(
+      """
         \(Self.glossary(notes))Translate each numbered Japanese text into natural English. \
         Reply with one line per text, starting with its number and a period, and nothing else.
 
@@ -171,7 +185,7 @@ private struct OnDeviceExplainer {
     )
     var translations: [String: String] = [:]
     let numberedLine = /^[\s*]*(\d+)[\s*]*[.):][\s*]*(.+)$/
-    for line in response.content.split(separator: "\n") {
+    for line in response.split(separator: "\n") {
       guard let match = try? numberedLine.wholeMatch(in: line),
         let number = Int(match.1), sources.indices.contains(number - 1)
       else { continue }

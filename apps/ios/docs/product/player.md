@@ -82,13 +82,16 @@ player is by hand; the UI tests stand in for it with a local player that answers
   Entry**, the expand button beside the word, and the sheet's links to other dictionary pages (a
   kanji, the conjugations, a related word, or a word in an example) close the sheet and open the
   page inside Player, so Back returns to the video. The same goes for the word sheet in Image
-  Search and Translate, in their own tabs.
+  Search and Translate, in their own tabs. A card's words keep their links however many lines
+  were linked before it.
   Check: UI `PlayerWatchUITests.testAWordInACaptionOpensItsEntryInsidePlayer` and
   `testAWordSheetsKanjiOpensItsPageInsidePlayer`; the same sheet in Image Search
   (`ImageSearchUITests.testAWordSheetsKanjiOpensItsPageOnTranslate`) and Translate
   (`ConversationUITests.testAWordsFullEntryShowsTheSessionBarThatReturns` and
   `testAWordSheetsConjugationsAndKanjiOpenTheirPagesInTranslate`); package
-  `WordSheetPresentationTests` and `PlayerReadingAidTests`.
+  `WordSheetPresentationTests`, `PlayerReadingAidTests`, and `LinkedEntriesTests` (a line linked
+  as the app's cache of 4,000 entries fills, or while another line's read empties it, keeps its
+  own words).
 - **Translations.** With Sentence Translations on, each card shows a translation beneath the
   Japanese. By default YouTube's translation is used, and Apple Translation fills lines it leaves
   out. Choosing Apple in Reading Aids translates every line on the device instead, so each
@@ -112,11 +115,13 @@ player is by hand; the UI tests stand in for it with a local player that answers
   known for its three captions).
 - **Playback controls.** A compact bar on its own background sits between the player and the caption
   cards. A thin scrubber along its top edge can be dragged to any point. Below it, the elapsed and
-  total time, which VoiceOver reads too, sit beside buttons that go to the previous line, play or
-  pause, and go to the next line, and a speed menu plays the video at 0.5×, 0.75×, 1×, 1.25×, or
-  1.5×. As the video plays, only the time and the scrubber follow it five times a second, and the
-  caption list redraws only when the line changes. The rest of the screen isn't redrawn, so the
-  speed and **•••** menus open and stay still while a line plays or repeats.
+  total time sit beside buttons that go to the previous line, play or pause, and go to the next
+  line, and a speed menu plays the video at 0.5×, 0.75×, 1×, 1.25×, or 1.5×. As the video plays,
+  only the time and the scrubber follow it five times a second, and the caption list redraws only
+  when the line changes. The rest of the screen isn't redrawn, so the speed and **•••** menus open
+  and stay still while a line plays or repeats. VoiceOver reads the scrubber as "Playback position,
+  0:02 of 0:12", the elapsed and total time, on every device, and skips the time text beside it, so
+  it says the position and the length once.
 - **Repeat line.** The repeat button beside the speed menu plays the current line over and over
   until it's turned off. While repeating, the previous and next line buttons, tapping a card, or
   dragging the scrubber move the repeat to that line.
@@ -125,8 +130,8 @@ player is by hand; the UI tests stand in for it with a local player that answers
   end, so a learner can step through the video one line at a time.
   Check: UI `PlayerWatchUITests.testThePlayersOwnControlsPlayStepAndRepeat` (play, the next and
   previous lines, repeat, a speed chosen while a line repeats, and the scrubber, against the
-  stand-in player; the screen, the speed menu, and the caption list each count their own draws,
-  and none of the counts moves while the time shows three seconds of a repeating line);
+  stand-in player; the screen, the speed menu, and the caption list each count their own draws, and
+  none of the counts moves while the playback position shows three seconds of a repeating line);
   package `YouTubeCaptionsTests` (each line's times, which the controls move between).
 
 Creator-made Japanese captions are used before automatic ones. Sound descriptions such as [音楽] are

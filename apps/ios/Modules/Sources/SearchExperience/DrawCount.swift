@@ -16,7 +16,19 @@ extension View {
       let drawn = count.next()
       ZStack(alignment: .topLeading) {
         self
-        DrawCountProbe(identifier: identifier, draws: drawn)
+        DrawCountProbe(identifier: identifier, text: "\(drawn)")
+      }
+    } else {
+      self
+    }
+  }
+
+  @ViewBuilder
+  func showingUITests(_ text: String, as identifier: String) -> some View {
+    if LaunchHarness.countsDraws {
+      ZStack(alignment: .topLeading) {
+        self
+        DrawCountProbe(identifier: identifier, text: text)
       }
     } else {
       self
@@ -26,10 +38,10 @@ extension View {
 
 private struct DrawCountProbe: View {
   let identifier: String
-  let draws: Int
+  let text: String
 
   var body: some View {
-    Text(verbatim: "\(draws)")
+    Text(verbatim: text)
       .font(.system(size: 1))
       .foregroundStyle(.clear)
       .lineLimit(1)

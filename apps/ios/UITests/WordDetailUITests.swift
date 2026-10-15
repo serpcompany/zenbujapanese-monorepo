@@ -73,9 +73,9 @@ final class WordDetailUITests: ZenbuUITestCase {
     }
     let kanji = waitFor(find("word-detail.screen", in: app)).buttons["学"].firstMatch
     tap(kanji)
-    XCTAssertTrue(kanji.isSelected, "学 and its がっ are highlighted")
+    waitUntil(kanji, "isSelected == true")
     kanji.tap()
-    XCTAssertFalse(kanji.isSelected, "tapping it again clears the highlight")
+    waitUntil(kanji, "isSelected == false")
   }
 
   private func assertTheMacHighlightsTheHeadwordsFirstKanji(in app: XCUIApplication) {
