@@ -114,8 +114,12 @@ final class LoadedExamples {
     let next = await reading.value
     if readingMore?.read == reading { readingMore = nil }
     guard self.source == source, examples.count == from else { return }
-    guard let next, !next.examples.isEmpty else {
+    guard let next else {
       laterReadFailed = true
+      return
+    }
+    guard !next.examples.isEmpty else {
+      if next.listed <= from { listed = next.listed } else { laterReadFailed = true }
       return
     }
     owesRestOfPage = next.cutShort

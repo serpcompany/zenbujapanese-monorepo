@@ -5,7 +5,7 @@ struct ExampleSentencesView: View {
   @State private var place = ExamplePlaceKeeper()
   @State private var analysisAvailability = JapaneseTextAnalysisAvailability.full
   @Environment(\.exampleRowsOnScreen) private var rowsOnScreen
-  @Environment(ScreenReturns.self) private var returns
+  @Environment(ScreenReturns.self) private var returns: ScreenReturns?
 
   let query: SearchQuery
   let highlightedEntry: DictionaryEntry?
@@ -20,7 +20,7 @@ struct ExampleSentencesView: View {
       screen(proxy)
         .navigationTitle(query.value)
         .inlineNavigationTitle()
-        .onChange(of: returns.count) { comeBack(.closed, with: proxy) }
+        .onChange(of: returns?.count) { comeBack(.closed, with: proxy) }
         .screenTask(id: query) {
           analysisAvailability = await japaneseTextAnalysisClient.availability()
           await examples.load(query.value, rowsOnScreen: rowsOnScreen, read: read)
