@@ -57,14 +57,15 @@ struct JapaneseRubyText: View {
     }
   }
 
+  @ViewBuilder
   private var readingAidContent: some View {
-    VStack(alignment: .leading, spacing: 2) {
+    if displaysRomaji {
+      VStack(alignment: .leading, spacing: 2) {
+        furiganaContent
+        RomajiReadingAidText(trustedReading: reading, exposesAccessibility: false)
+      }
+    } else {
       furiganaContent
-      RomajiReadingAidText(
-        trustedReading: reading,
-        isEnabled: displaysRomaji,
-        exposesAccessibility: false
-      )
     }
   }
 
@@ -82,18 +83,22 @@ struct JapaneseRubyText: View {
             } else {
               VStack(spacing: 0) {
                 Text(furigana).font(rubyFont)
-                Text(highlighted(piece.segment.base, at: piece.offset)).font(baseFont)
+                base(piece.segment.base, at: piece.offset).font(baseFont)
               }
             }
           } else {
-            Text(highlighted(piece.segment.base, at: piece.offset)).font(baseFont)
+            base(piece.segment.base, at: piece.offset).font(baseFont)
           }
         }
       }
     } else {
-      Text(highlighted(surface, at: 0))
+      base(surface, at: 0)
         .font(baseFont)
     }
+  }
+
+  private func base(_ text: String, at offset: Int) -> Text {
+    highlightedEnding.isEmpty ? Text(text) : Text(highlighted(text, at: offset))
   }
 
   private func kanjiSplit(_ piece: Piece) -> [String]? {

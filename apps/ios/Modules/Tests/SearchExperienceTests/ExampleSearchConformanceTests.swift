@@ -63,30 +63,27 @@ private struct ExampleSearchObserver {
     observed.highlightedEntry = highlightedEntry?.id.rawValue
     observed.usesPrimaryEntryExamples = results.usesPrimaryEntryExamples
 
-    let listed = await exampleSentenceClient.listed(
-      query, highlightedEntry, results.usesPrimaryEntryExamples)
-    observed.countText = listed.countText
-    observed.ids = listed.sentences.map(\.id.rawValue)
-    var shown: [ExampleSearchCase.Example] = []
-    for example in listed.sentences.prefix(tokenLimit) {
-      let tokens = await textAnalysisClient.linkedTokens(
-        example.japanese, query, highlightedEntry)
-      shown.append(
-        ExampleSearchCase.Example(
-          id: example.id.rawValue,
-          japanese: example.japanese,
-          english: example.english,
-          tokens: tokens.map { token in
-            ExampleSearchCase.Token(
-              surface: token.surface,
-              entry: token.recordedEntryID,
-              candidates: token.recordedCandidateIDs,
-              queryMatch: token.matchesQuery ? true : nil
-            )
-          }
-        ))
+    let listed = await ExamplePage.every {
+      await exampleSentenceClient.listed(
+        query, highlightedEntry, results.usesPrimaryEntryExamples, $0)
     }
-    observed.shown = shown
+    observed.countText = listed.countText
+    observed.ids = listed.examples.map(\.id.rawValue)
+    observed.shown = listed.examples.prefix(tokenLimit).map { example in
+      ExampleSearchCase.Example(
+        id: example.id.rawValue,
+        japanese: example.sentence.japanese,
+        english: example.sentence.english,
+        tokens: example.words.map { token in
+          ExampleSearchCase.Token(
+            surface: token.surface,
+            entry: token.recordedEntryID,
+            candidates: token.recordedCandidateIDs,
+            queryMatch: token.accent == .query ? true : nil
+          )
+        }
+      )
+    }
     return observed
   }
 }

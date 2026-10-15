@@ -52,6 +52,12 @@ final class WordDetailUITests: ZenbuUITestCase {
     type("the country, not the language", into: waitFor(find("word-note.editor", in: app)))
     tap(find("word-note.done", in: app))
     waitFor(labeled("the country, not the language", in: app))
+    tap(find("word-detail.more-menu", in: app))
+    tap(menuChoice("Add Note", in: app))
+    type("left by going back", into: waitFor(find("word-note.editor", in: app)))
+    goBack(in: app)
+    tap(find("result.japan", in: app))
+    reveal(labeled("left by going back", in: app), in: app)
   }
 
   func testTappingAKanjiInTheHeadwordHighlightsItsReading() {
