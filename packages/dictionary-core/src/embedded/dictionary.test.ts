@@ -223,20 +223,6 @@ describe('the embedded dictionary', () => {
     )
   })
 
-  test('answers at once the Tatoeba contributors the host’s dictionary lists', () => {
-    const endpoint = embeddedEndpoint(
-      host({
-        all: sql =>
-          sql.includes('FROM example_sentence_contributors')
-            ? { rows: [{ username: 'CK', sentenceSideCount: 2 }] }
-            : { rows: [] }
-      })
-    )
-    expect(endpoint.answer('tatoebaContributors', '')).toEqual([
-      { username: 'CK', sentenceSideCount: 2 }
-    ])
-  })
-
   test('answers an Image Search note at once, for a set phrase only', () => {
     const endpoint = embeddedEndpoint(host())
     const note = (phrase: string) =>

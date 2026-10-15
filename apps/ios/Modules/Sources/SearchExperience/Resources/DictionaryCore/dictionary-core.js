@@ -656,14 +656,6 @@
     };
   }
 
-  // src/artifact/contributors.ts
-  function tatoebaContributors(db) {
-    return db.all(
-      `SELECT username, sentence_side_count AS sentenceSideCount
-     FROM example_sentence_contributors ORDER BY username COLLATE NOCASE`
-    );
-  }
-
   // src/browse/lists.ts
   var rankedListLimit = 1e4;
   var rankBandSize = 1e3;
@@ -2687,9 +2679,6 @@
     }
     entriesContainingKanji(character) {
       return kanjiWords(character, kanjiCandidateRows(this.db, character)).map((row) => row.id);
-    }
-    tatoebaContributors() {
-      return tatoebaContributors(this.db);
     }
     websiteRoute(link) {
       const page = websitePage(link.host, link.path);
@@ -5392,7 +5381,6 @@
       relatedWord: (related, analyze) => lookup().relatedWord(JSON.parse(related), { analyze }),
       savedWord: (saved, analyze) => lookup().savedWord(JSON.parse(saved), { analyze }),
       canonicalEntries: (groups) => canonicalEntries(JSON.parse(groups)),
-      tatoebaContributors: () => lookup().tatoebaContributors(),
       normalizeQuery,
       japaneseCandidates: (candidates) => japaneseCandidates(JSON.parse(candidates)),
       isKanji: isKanjiCharacter,

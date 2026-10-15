@@ -45,7 +45,6 @@ export function embeddedEndpoint(host: EmbeddedHost): EmbeddedEndpoint {
     relatedWord: (related, analyze) => lookup().relatedWord(JSON.parse(related), { analyze }),
     savedWord: (saved, analyze) => lookup().savedWord(JSON.parse(saved), { analyze }),
     canonicalEntries: groups => canonicalEntries(JSON.parse(groups)),
-    tatoebaContributors: () => lookup().tatoebaContributors(),
     normalizeQuery,
     japaneseCandidates: candidates => japaneseCandidates(JSON.parse(candidates)),
     isKanji: isKanjiCharacter,
