@@ -83,13 +83,13 @@ scratch repositories.
 
 ## Repository
 
-`.github/workflows/repository.yml` runs on every pull request; a new push cancels the pull
-request's last run. It installs the whole workspace, since the dead-code and import checks read
-every package, then runs the checks' own `pnpm check` (`tools/checks`), then `pnpm verify`: no
-comments, docs, file sizes, secrets, duplicate code, dead code, imports, and the linters. What
-each enforces is in [`code.md`](code.md), Checks. It also starts on `merge_group`, so once
-`main`'s ruleset requires its `verify` job, the merge queue runs it on the tree that will land;
-a queue run is never cancelled.
+`.github/workflows/repository.yml` runs on every pull request; a new push cancels the pull request's
+last run. It installs the whole workspace, since the dead-code and import checks read every package,
+then runs the checks' own `pnpm check` (`tools/checks`), then `pnpm verify`: no comments, docs, file
+sizes, Swift layers, no XCUITest waits or unlisted fixed pauses in the UI tests, secrets, duplicate
+code, dead code, imports, and the linters. What each enforces is in [`code.md`](code.md), Checks. It
+also starts on `merge_group`, so once `main`'s ruleset requires its `verify` job, the merge queue
+runs it on the tree that will land; a queue run is never cancelled.
 
 The checks' tests include the server's deployer's (`tools/checks/src/deployer/`), which run
 `deploy/deployer.sh` itself against stand-ins for Docker, cosign, Slack, and the journal

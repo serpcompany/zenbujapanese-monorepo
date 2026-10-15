@@ -32,7 +32,8 @@ struct PlaybackScrubber: View {
     .frame(height: 18)
     .accessibilityElement()
     .accessibilityLabel("Playback position")
-    .accessibilityValue(WatchSessionView.timestamp(position))
+    .accessibilityValue(
+      "\(WatchSessionView.timestamp(position)) of \(WatchSessionView.timestamp(duration))")
     .accessibilityAdjustableAction { direction in
       let step: TimeInterval = direction == .increment ? 10 : -10
       commit(min(max(position + step, 0), duration))

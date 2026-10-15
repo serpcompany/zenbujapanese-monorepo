@@ -36,7 +36,7 @@ final class PlayerWatchUITests: ZenbuUITestCase {
     let redrawn = try redraws(whileSecondsShown: 3, in: app)
     XCTAssertEqual(
       redrawn, Self.drawCounts.mapValues { _ in 0 },
-      "the Player redrew while the time showed three seconds")
+      "the Player redrew while the playback position showed three seconds")
     tap(find("watch.speed", in: app))
     for rate in ["0.5×", "0.75×", "1×", "1.25×", "1.5×"] {
       waitFor(menuChoice(rate, in: app))
@@ -52,13 +52,19 @@ final class PlayerWatchUITests: ZenbuUITestCase {
 
   private func redraws(whileSecondsShown seconds: Int, in app: XCUIApplication) throws -> [String: Int] {
     let before = try Self.drawCounts.mapValues { try draws(on: $0, in: app) }
+    let scrubber = find("watch.scrubber", in: app)
     let time = find("watch.time", in: app)
+    let position = { self.device == .mac ? self.text(of: time) : "\(scrubber.value ?? "")" }
     var shown = Set<String>()
-    waitUntil("the time to show \(seconds) different seconds") {
-      let now = text(of: time)
+    waitUntil("the playback position to show \(seconds) different seconds") {
+      let now = position()
       if !now.isEmpty { shown.insert(now) }
       return shown.count >= seconds
     }
+    let length = device == .mac ? " / 0:12" : " of 0:12"
+    XCTAssertTrue(
+      shown.allSatisfy { $0.hasSuffix(length) },
+      "the playback position \(shown.sorted()) gives the video's length the way \(device) reads it")
     var redrawn: [String: Int] = [:]
     for (part, probe) in Self.drawCounts {
       redrawn[part] = try draws(on: probe, in: app) - (before[part] ?? 0)
