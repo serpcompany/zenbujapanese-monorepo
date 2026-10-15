@@ -78,7 +78,7 @@ final class YouTubePlayerController {
           guard time >= stretchStart - 0.5, time < pauseTime + 1 else { break }
           self.stretchStart = nil
         }
-        currentTime = time
+        if currentTime != time { currentTime = time }
         if let pauseTime, time >= pauseTime { pause() }
         let hasEnded = message["state"] as? Int == 0
         if let loop, isPlaying || hasEnded,
@@ -87,8 +87,13 @@ final class YouTubePlayerController {
           seek(to: loop.lowerBound)
         }
       }
-      if let length = message["duration"] as? Double, length > 0 { duration = length }
-      if let playerState = message["state"] as? Int { isPlaying = playerState == 1 || playerState == 3 }
+      if let length = message["duration"] as? Double, length > 0, length != duration {
+        duration = length
+      }
+      if let playerState = message["state"] as? Int {
+        let playing = playerState == 1 || playerState == 3
+        if playing != isPlaying { isPlaying = playing }
+      }
     case "error":
       state = .failed(message["code"] as? Int ?? 0)
     default:
