@@ -112,11 +112,13 @@ player is by hand; the UI tests stand in for it with a local player that answers
   known for its three captions).
 - **Playback controls.** A compact bar on its own background sits between the player and the caption
   cards. A thin scrubber along its top edge can be dragged to any point. Below it, the elapsed and
-  total time, which VoiceOver reads too, sit beside buttons that go to the previous line, play or
-  pause, and go to the next line, and a speed menu plays the video at 0.5×, 0.75×, 1×, 1.25×, or
-  1.5×. As the video plays, only the time and the scrubber follow it five times a second, and the
-  caption list redraws only when the line changes. The rest of the screen isn't redrawn, so the
-  speed and **•••** menus open and stay still while a line plays or repeats.
+  total time sit beside buttons that go to the previous line, play or pause, and go to the next
+  line, and a speed menu plays the video at 0.5×, 0.75×, 1×, 1.25×, or 1.5×. As the video plays,
+  only the time and the scrubber follow it five times a second, and the caption list redraws only
+  when the line changes. The rest of the screen isn't redrawn, so the speed and **•••** menus open
+  and stay still while a line plays or repeats. VoiceOver reads the position from the scrubber on
+  iPhone and iPad, and from the time on the Mac, whose scrubber doesn't give its value, so it says
+  the time once on each.
 - **Repeat line.** The repeat button beside the speed menu plays the current line over and over
   until it's turned off. While repeating, the previous and next line buttons, tapping a card, or
   dragging the scrubber move the repeat to that line.
@@ -125,8 +127,8 @@ player is by hand; the UI tests stand in for it with a local player that answers
   end, so a learner can step through the video one line at a time.
   Check: UI `PlayerWatchUITests.testThePlayersOwnControlsPlayStepAndRepeat` (play, the next and
   previous lines, repeat, a speed chosen while a line repeats, and the scrubber, against the
-  stand-in player; the screen, the speed menu, and the caption list each count their own draws,
-  and none of the counts moves while the time shows three seconds of a repeating line);
+  stand-in player; the screen, the speed menu, and the caption list each count their own draws, and
+  none of the counts moves while the playback position shows three seconds of a repeating line);
   package `YouTubeCaptionsTests` (each line's times, which the controls move between).
 
 Creator-made Japanese captions are used before automatic ones. Sound descriptions such as [音楽] are
