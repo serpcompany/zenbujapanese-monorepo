@@ -119,9 +119,10 @@ player is by hand; the UI tests stand in for it with a local player that answers
   line, and a speed menu plays the video at 0.5×, 0.75×, 1×, 1.25×, or 1.5×. As the video plays,
   only the time and the scrubber follow it five times a second, and the caption list redraws only
   when the line changes. The rest of the screen isn't redrawn, so the speed and **•••** menus open
-  and stay still while a line plays or repeats. VoiceOver reads the position from the scrubber on
-  iPhone and iPad, and from the time on the Mac, whose scrubber doesn't give its value, so it says
-  the time once on each.
+  and stay still while a line plays or repeats. On iPhone and iPad VoiceOver reads the scrubber as
+  "Playback position, 0:02 of 0:12", the elapsed and total time, and skips the time text beside it.
+  On the Mac, whose scrubber gives VoiceOver no value, it reads the time text, "0:02 / 0:12", so
+  each device says the position and the length once.
 - **Repeat line.** The repeat button beside the speed menu plays the current line over and over
   until it's turned off. While repeating, the previous and next line buttons, tapping a card, or
   dragging the scrubber move the repeat to that line.
