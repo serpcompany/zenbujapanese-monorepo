@@ -57,6 +57,25 @@ struct LinkedEntriesTests {
     #expect(Self.entries(tokens) == text.map(\.entry))
   }
 
+  private static func linkKeptAgain(
+    after text: [LinkedWord]
+  ) async -> (entries: [String?], keptReads: Int) {
+    let reads = Reads()
+    let cache = Self.linked { await reads.record($0) }
+    _ = await link([word(kept)], in: cache)
+    _ = await link(text, in: cache)
+    let tokens = await link([word(kept)], in: cache)
+    return (entries(tokens), await reads.ids.count { $0.rawValue == kept })
+  }
+
+  @Test("a text that takes the cache past its capacity stays in it, so linking it again reads none")
+  func aTextThatFillsTheCacheStaysInIt() async {
+    let again = await Self.linkKeptAgain(after: [Self.word(Self.kept)] + Self.moreThanTheCacheHolds)
+
+    #expect(again.entries == [Self.kept])
+    #expect(again.keptReads == 1)
+  }
+
   @Test("a text keeps the entries it found while another text's read empties the cache")
   func aTextKeepsItsEntriesWhileAnotherTextEmptiesTheCache() async {
     let (reached, reach) = AsyncStream<Void>.makeStream()
@@ -79,16 +98,10 @@ struct LinkedEntriesTests {
 
   @Test("a text past the cache's capacity starts it again, so an entry it pushed out is read again")
   func aTextPastTheCapacityStartsTheCacheAgain() async {
-    let reads = Reads()
-    let linked = Self.linked { await reads.record($0) }
-    _ = await Self.link([Self.word(Self.kept)], in: linked)
-    _ = await Self.link(Self.moreThanTheCacheHolds, in: linked)
+    let again = await Self.linkKeptAgain(after: Self.moreThanTheCacheHolds)
 
-    let tokens = await Self.link([Self.word(Self.kept)], in: linked)
-    let keptReads = await reads.ids.count { $0.rawValue == Self.kept }
-
-    #expect(Self.entries(tokens) == [Self.kept])
-    #expect(keptReads == 2)
+    #expect(again.entries == [Self.kept])
+    #expect(again.keptReads == 2)
   }
 
   @Test("texts linked together share one read and each keeps its cached entries past capacity")
