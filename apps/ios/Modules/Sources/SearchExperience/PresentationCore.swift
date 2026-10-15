@@ -145,7 +145,10 @@ final class PresentationCore: @unchecked Sendable {
       japaneseTextRuns = runs
       return runs
     }
-    return text.unicodeScalars.contains { scalar in runs.contains { $0.contains(scalar.value) } }
+    guard let lowest = runs.first?.lowerBound else { return false }
+    return text.unicodeScalars.contains { scalar in
+      scalar.value >= lowest && runs.contains { $0.contains(scalar.value) }
+    }
   }
 
   func writtenLanguage(_ text: String) -> String? {
