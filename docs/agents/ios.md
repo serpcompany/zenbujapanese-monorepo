@@ -241,7 +241,10 @@ the same on every device:
   real frame, by clicking the middle of that frame (`tap`): a submenu's items exist before
   they're laid out, and XCUITest's own tap looks the item up again and fails when the menu is
   redrawing just then, about one run in three. `chooseFromSortedBy` closes the menu and opens
-  it again when a submenu never opens.
+  it again when a submenu never opens, and moves the pointer straight across into the submenu
+  before it clicks a choice: XCUITest moves the pointer in a straight line, and the line from
+  **Sort By** to **Known Words** crosses **Filter**, where AppKit sometimes closed the submenu, so
+  the click landed on nothing.
 - A sheet, and an alert that takes a name, are `app.sheets` (`sheet(_:in:)`, `prompt(in:)`).
   `waitForSheet` also checks that a Mac sheet has room for its content and stays in the window.
 - A row's label starts with its title and goes on with its detail (`showing`); a static text's

@@ -73,6 +73,10 @@ extension ZenbuUITestCase {
       if device != .mac || isHittable(chosen, within: Self.patience / 6) { break }
       TestDevice.closeMenu(in: app)
     }
+    if device == .mac {
+      let window = app.windows.firstMatch
+      TestDevice.hover(point(x: chosen.frame.midX, y: opened.frame.midY, in: window))
+    }
     tap(chosen)
   }
 

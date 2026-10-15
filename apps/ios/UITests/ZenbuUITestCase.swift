@@ -252,10 +252,13 @@ class ZenbuUITestCase: XCTestCase {
 
   func tapWhereReachable(_ queries: [XCUIElementQuery], in app: XCUIApplication) {
     let frame = firstReachable(queries, in: app).frame
-    let window = app.windows.firstMatch
+    point(x: frame.midX, y: frame.midY, in: app.windows.firstMatch).tap()
+  }
+
+  func point(x: CGFloat, y: CGFloat, in window: XCUIElement) -> XCUICoordinate {
     let origin = window.frame.origin
-    window.coordinate(withNormalizedOffset: .zero)
-      .withOffset(CGVector(dx: frame.midX - origin.x, dy: frame.midY - origin.y)).tap()
+    return window.coordinate(withNormalizedOffset: .zero)
+      .withOffset(CGVector(dx: x - origin.x, dy: y - origin.y))
   }
 
   func tap(_ element: XCUIElement, file: StaticString = #filePath, line: UInt = #line) {
@@ -273,9 +276,7 @@ class ZenbuUITestCase: XCTestCase {
       attachWhatIsOnScreen()
       return XCTFail("\(element) was never laid out", file: file, line: line)
     }
-    let origin = window.frame.origin
-    window.coordinate(withNormalizedOffset: .zero)
-      .withOffset(CGVector(dx: frame.midX - origin.x, dy: frame.midY - origin.y)).tap()
+    point(x: frame.midX, y: frame.midY, in: window).tap()
   }
 
   func isHittable(_ element: XCUIElement, within seconds: TimeInterval) -> Bool {

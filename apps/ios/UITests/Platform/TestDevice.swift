@@ -75,8 +75,12 @@ enum TestDevice {
   }
 
   @MainActor static func movePointerAway(in app: XCUIApplication) {
+    hover(app.windows.firstMatch.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.95)))
+  }
+
+  @MainActor static func hover(_ point: XCUICoordinate) {
     #if os(macOS)
-      app.windows.firstMatch.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.95)).hover()
+      point.hover()
     #endif
   }
 
