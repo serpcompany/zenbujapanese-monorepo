@@ -275,22 +275,30 @@ class ZenbuUITestCase: XCTestCase {
     _ row: String, _ choice: String, in app: XCUIApplication, file: StaticString = #filePath,
     line: UInt = #line
   ) {
-    guard laidOutFrame(of: menuChoice(row, in: app), file: file, line: line) != nil else { return }
-    let menu = app.windows.menus.containing(NSPredicate(format: "title == %@", row)).firstMatch
-    let rows = (try? menu.snapshot()).map(Self.choices(in:)) ?? []
-    let rowAt = rows.firstIndex { $0.title == row }
-    let submenu = rowAt.flatMap { at in rows[at].children.first { $0.elementType == .menu } }
-    let choices = submenu.map(Self.choices(in:)) ?? []
-    guard let rowAt, let choiceAt = choices.firstIndex(where: { $0.title == choice }) else {
-      attachWhatIsOnScreen()
-      return XCTFail("the open menu has no \(row) ▸ \(choice)", file: file, line: line)
-    }
-    TestDevice.press(.downArrow, times: rowAt + 1, in: app)
+    let opened = menuChoice(row, in: app)
+    let chosen = menuChoice(choice, in: app)
+    tap(opened, file: file, line: line)
+    guard laidOutFrame(of: chosen, file: file, line: line) != nil else { return }
+    let submenu = opened.menus.firstMatch
     TestDevice.press(.rightArrow, in: app)
-    guard laidOutFrame(of: menuChoice(choice, in: app), file: file, line: line) != nil else {
-      return
+    var titles: [String] = []
+    var lit: Int?
+    let entered = comesTrue("a choice under \(row) to be highlighted", within: Self.patience) {
+      let items = (try? submenu.snapshot()).map(Self.choices(in:)) ?? []
+      titles = items.map { $0.title }
+      lit = items.firstIndex { $0.isSelected }
+      return lit != nil
     }
-    TestDevice.press(.downArrow, times: choiceAt, in: app)
+    guard entered, let lit, let target = titles.firstIndex(of: choice) else {
+      attachWhatIsOnScreen()
+      return XCTFail("the keys didn't reach \(choice) in \(row)'s \(titles)", file: file, line: line)
+    }
+    TestDevice.press(target < lit ? .upArrow : .downArrow, times: abs(target - lit), in: app)
+    guard comesTrue("\(choice) to be highlighted", within: Self.patience, { chosen.isSelected })
+    else {
+      attachWhatIsOnScreen()
+      return XCTFail("\(row) ▸ \(choice) was never highlighted", file: file, line: line)
+    }
     TestDevice.press(.return, in: app)
   }
 
