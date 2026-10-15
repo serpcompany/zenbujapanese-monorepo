@@ -121,6 +121,7 @@ extension TranslateServices {
       let transcriber = ScriptedTranscriber()
       var timing = ConversationTiming.standard
       timing.silenceBeforePrompt = 20
+      timing.promptCountdown = 120
       return TranslateServices(
         clients: TranslatorClients(
           transcription: TranscriptionClient(

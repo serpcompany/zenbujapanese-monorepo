@@ -4,7 +4,7 @@ import Testing
 @testable import TranslatorCore
 
 @MainActor
-@Suite("Muting spoken translations")
+@Suite("Muting spoken translations", .timeLimit(.minutes(1)))
 struct ConversationMutingTests {
   private let tokyo = "今日は東京駅に行きます。"
   private let stairs = "この先の階段を下りてください。"

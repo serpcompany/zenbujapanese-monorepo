@@ -14,6 +14,7 @@ once it isn't needed. An entry is never raised to make a check pass.
 | `knownLargeFiles` in `tools/checks/src/sizes.ts` | Code files over 500 lines |
 | `knownDuplicates` in `tools/checks/src/known-duplicates.ts` | Pairs of files that repeat a block |
 | `knownLongDocs` in `tools/checks/src/doc-rules/budgets.ts` | Docs over their size budget when the check arrived |
+| `allowedPauses` in `tools/checks/src/waits.ts` | Fixed pauses in each UI test file, each with what it proves does not happen |
 | The file lists in `tools/checks/src/files.ts` | Files written by a tool, third-party files, and files whose bytes a checksum pins, each by name with its tool, source, or checksum. The comments check leaves them as they are |
 
 The weekly maintenance report counts the first three ([`ci-agents.md`](ci-agents.md), Weekly
