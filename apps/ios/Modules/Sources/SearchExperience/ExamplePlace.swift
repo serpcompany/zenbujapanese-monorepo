@@ -11,7 +11,7 @@ struct ExamplePlace: Equatable {
 
   func isCovered(by frame: CGRect, in list: CGRect) -> Bool {
     let start = list.minY + top
-    return frame.minY < start + height && start < frame.maxY
+    return frame.minY + 1 < start + height && start + 1 < frame.maxY
   }
 
   func anchor(rowHeight: CGFloat, listHeight: CGFloat) -> UnitPoint {
@@ -29,15 +29,19 @@ struct ExamplePlaceCorrection: Equatable {
 
 @MainActor
 final class ExamplePlaceKeeper {
+  enum Return {
+    case appeared, closed
+  }
+
   static let settling: TimeInterval = 1.5
 
   private var rows: [ExampleSentenceID: CGRect] = [:]
   private var list = CGRect.zero
   private(set) var left: ExamplePlace?
   private var settlingUntil: Date?
+  private var closedInWindow = false
   private var laidOutSinceReturn: Set<ExampleSentenceID> = []
   private var checking = false
-  private var correcting = false
 
   func noteList(_ frame: CGRect) {
     list = frame
@@ -54,15 +58,19 @@ final class ExamplePlaceKeeper {
   func leave(from row: ExampleSentenceID) {
     left = rows[row].map { ExamplePlace(row: row, top: $0.minY - list.minY, height: $0.height) }
     settlingUntil = nil
+    closedInWindow = false
     laidOutSinceReturn = []
     checking = false
-    correcting = false
   }
 
-  func comeBack(now: Date = .now) -> Bool {
+  func comeBack(_ way: Return, now: Date = .now) -> Bool {
     endSettling(ifOverAt: now)
     guard left != nil else { return false }
-    if settlingUntil == nil { laidOutSinceReturn = [] }
+    if settlingUntil == nil {
+      laidOutSinceReturn = []
+      closedInWindow = false
+    }
+    if way == .closed { closedInWindow = true }
     settlingUntil = now.addingTimeInterval(Self.settling)
     return askToCheck()
   }
@@ -70,21 +78,14 @@ final class ExamplePlaceKeeper {
   func check(now: Date = .now) -> ExamplePlaceCorrection? {
     checking = false
     endSettling(ifOverAt: now)
-    guard let left, settlingUntil != nil, !correcting, let frame = rows[left.row] else {
-      return nil
-    }
+    guard let left, settlingUntil != nil, let frame = rows[left.row] else { return nil }
     let covered = laidOutSinceReturn.contains { other in
       other != left.row && rows[other].map { left.isCovered(by: $0, in: list) } == true
     }
     let pushedAway = covered && !laidOutSinceReturn.contains(left.row)
     guard pushedAway || left.isLost(frame, in: list) else { return nil }
-    correcting = true
     return ExamplePlaceCorrection(
       row: left.row, anchor: left.anchor(rowHeight: frame.height, listHeight: list.height))
-  }
-
-  func corrected() {
-    correcting = false
   }
 
   func userScrolled() {
@@ -100,13 +101,17 @@ final class ExamplePlaceKeeper {
   private func forget() {
     left = nil
     settlingUntil = nil
+    closedInWindow = false
     laidOutSinceReturn = []
     checking = false
-    correcting = false
   }
 
   private func endSettling(ifOverAt now: Date) {
     guard let until = settlingUntil, now >= until else { return }
-    if laidOutSinceReturn.isEmpty { settlingUntil = nil } else { forget() }
+    if closedInWindow, !laidOutSinceReturn.isEmpty {
+      forget()
+    } else {
+      settlingUntil = nil
+    }
   }
 }

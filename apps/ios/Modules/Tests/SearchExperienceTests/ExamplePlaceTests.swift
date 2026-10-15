@@ -35,9 +35,17 @@ struct ExamplePlaceTests {
 
   private func returned(from top: CGFloat) -> ExamplePlaceKeeper {
     let keeper = leftFrom(top)
-    #expect(keeper.comeBack(now: at(10)))
+    #expect(keeper.comeBack(.closed, now: at(10)))
     #expect(keeper.check(now: at(10)) == nil)
     return keeper
+  }
+
+  private func expectStillKept(_ keeper: ExamplePlaceKeeper, closingAt second: TimeInterval) {
+    #expect(keeper.left != nil)
+    #expect(keeper.comeBack(.closed, now: at(second)))
+    _ = keeper.note(opened, at: row(at: 800), now: at(second + 0.05))
+    let back = keeper.check(now: at(second + 0.05))
+    #expect(back == ExamplePlaceCorrection(row: opened, anchor: .top))
   }
 
   @Test("a sentence that came back near where it was is left alone")
@@ -53,7 +61,6 @@ struct ExamplePlaceTests {
     let keeper = returned(from: 700)
     #expect(keeper.note(opened, at: row(at: 100), now: at(10.1)))
     #expect(keeper.check(now: at(10.1)) == ExamplePlaceCorrection(row: opened, anchor: .bottom))
-    keeper.corrected()
     #expect(keeper.note(opened, at: row(at: 820), now: at(10.3)))
     #expect(keeper.check(now: at(10.3)) == nil)
   }
@@ -75,36 +82,41 @@ struct ExamplePlaceTests {
     #expect(keeper.check(now: at(10.1)) == nil)
   }
 
-  @Test("a list that shows itself before the path is written, as a swipe back does, is watched")
-  func aReturnThatShowsTheListFirstIsWatched() {
+  @Test("a swipe back shows the list first, and closing it extends that return with what it saw")
+  func aSwipeBackIsOneReturn() {
     let keeper = leftFrom(100)
-    #expect(keeper.comeBack(now: at(10)))
+    #expect(keeper.comeBack(.appeared, now: at(10)))
     _ = keeper.note(opened, at: row(at: 100.5), now: at(10.1))
     #expect(keeper.check(now: at(10.1)) == nil)
-    #expect(keeper.comeBack(now: at(10.8)))
-    _ = keeper.note(above, at: row(at: 20), now: at(10.9))
-    #expect(keeper.check(now: at(10.9)) == nil)
-    _ = keeper.note(opened, at: row(at: 800), now: at(11))
-    #expect(keeper.check(now: at(11)) == ExamplePlaceCorrection(row: opened, anchor: .top))
+    #expect(keeper.comeBack(.closed, now: at(10.8)))
+    #expect(keeper.check(now: at(10.8)) == nil)
+    #expect(!keeper.comeBack(.closed, now: at(13)))
+    #expect(keeper.left == nil)
+  }
+
+  @Test("a swipe back that is called off keeps the place for the next return")
+  func aCancelledSwipeKeepsThePlace() {
+    let keeper = leftFrom(100)
+    #expect(keeper.comeBack(.appeared, now: at(10)))
+    _ = keeper.note(opened, at: row(at: 100), now: at(10.1))
+    #expect(keeper.check(now: at(10.1)) == nil)
+    expectStillKept(keeper, closingAt: 20)
   }
 
   @Test("a return while the list is covered doesn't use up or end the next one")
   func aCoveredReturnKeepsThePlace() {
     let keeper = leftFrom(100)
-    #expect(keeper.comeBack(now: at(10)))
+    #expect(keeper.comeBack(.closed, now: at(10)))
     #expect(keeper.check(now: at(10)) == nil)
     #expect(!keeper.note(above, at: row(at: 500), now: at(20)))
-    #expect(keeper.left != nil)
-    #expect(keeper.comeBack(now: at(20.05)))
-    _ = keeper.note(opened, at: row(at: 800), now: at(20.1))
-    #expect(keeper.check(now: at(20.1)) == ExamplePlaceCorrection(row: opened, anchor: .top))
+    expectStillKept(keeper, closingAt: 20.05)
   }
 
   @Test("the place is forgotten once a return's list has settled on screen, or is scrolled by hand")
   func thePlaceIsForgotten() {
     let settled = returned(from: 400)
     _ = settled.note(opened, at: row(at: 400.5), now: at(10.1))
-    #expect(!settled.comeBack(now: at(20)))
+    #expect(!settled.comeBack(.closed, now: at(20)))
     #expect(settled.left == nil)
 
     let scrolled = returned(from: 400)
@@ -114,27 +126,25 @@ struct ExamplePlaceTests {
     #expect(scrolled.left == nil)
   }
 
-  @Test("a word opened while a correction is pending starts from the new place")
-  func aNewPlaceReplacesAPendingCorrection() {
+  @Test("a word opened from another sentence replaces the place")
+  func aNewWordReplacesThePlace() {
     let keeper = returned(from: 700)
-    _ = keeper.note(opened, at: row(at: 100), now: at(10.1))
-    #expect(keeper.check(now: at(10.1)) != nil)
     _ = keeper.note(above, at: row(at: 200), now: at(10.2))
     keeper.leave(from: above)
     #expect(keeper.left == ExamplePlace(row: above, top: 200, height: 80))
-    #expect(keeper.comeBack(now: at(20)))
+    #expect(keeper.comeBack(.closed, now: at(20)))
     _ = keeper.note(above, at: row(at: 800), now: at(20.1))
     #expect(keeper.check(now: at(20.1)) == ExamplePlaceCorrection(row: above, anchor: .top))
   }
 
   @Test("nothing is put back on a first appearance, or for a sentence never laid out")
   func nothingIsPutBackWithoutAPlace() {
-    #expect(!ExamplePlaceKeeper().comeBack(now: at(10)))
+    #expect(!ExamplePlaceKeeper().comeBack(.appeared, now: at(10)))
     let unseen = ExamplePlaceKeeper()
     unseen.noteList(list)
     unseen.leave(from: opened)
     #expect(unseen.left == nil)
-    #expect(!unseen.comeBack(now: at(10)))
+    #expect(!unseen.comeBack(.closed, now: at(10)))
   }
 
   @Test("a place is held at the top, the middle, or the bottom, whichever third it was in")

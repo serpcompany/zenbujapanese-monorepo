@@ -20,7 +20,7 @@ struct ExampleSentencesView: View {
       screen(proxy)
         .navigationTitle(query.value)
         .inlineNavigationTitle()
-        .onChange(of: returns.count) { comeBack(with: proxy) }
+        .onChange(of: returns.count) { comeBack(.closed, with: proxy) }
         .screenTask(id: query) {
           analysisAvailability = await japaneseTextAnalysisClient.availability()
           await examples.load(query.value, rowsOnScreen: rowsOnScreen, read: read)
@@ -91,14 +91,14 @@ struct ExampleSentencesView: View {
         .onScrollPhaseChange { _, phase in
           if phase != .idle { place.userScrolled() }
         }
-        .onAppear { comeBack(with: proxy) }
+        .onAppear { comeBack(.appeared, with: proxy) }
         .accessibilityIdentifier("example-list.screen")
       }
     }
   }
 
-  private func comeBack(with proxy: ScrollViewProxy) {
-    if place.comeBack() { check(with: proxy) }
+  private func comeBack(_ way: ExamplePlaceKeeper.Return, with proxy: ScrollViewProxy) {
+    if place.comeBack(way) { check(with: proxy) }
   }
 
   private func check(with proxy: ScrollViewProxy) {
@@ -106,7 +106,6 @@ struct ExampleSentencesView: View {
       await Task.yield()
       guard let correction = place.check() else { return }
       proxy.scrollTo(correction.row, anchor: correction.anchor)
-      place.corrected()
     }
   }
 
