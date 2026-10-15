@@ -197,7 +197,9 @@ don't contain them), so they need no network, account, camera, or microphone:
 - `ZENBU_YOUTUBE_STAND_IN=<json>` stands in for YouTube: the player page loads a local player
   that answers the IFrame API's calls (play, pause, seek, speed, and its time), and the captions
   come from the JSON's player response and timed text, through the same parsing, track choice,
-  and pairing as YouTube's (`YouTubeFetch`, `YouTubeStandInTests`).
+  and pairing as YouTube's (`YouTubeFetch`, `YouTubeStandInTests`). A search loads a local page
+  laid out like YouTube's mobile results, by YouTube's element names, whose results change the
+  page's address without loading it, as YouTube's do.
 - `ZENBU_DRAWN_RESULTS=1` has Search say, on an element only tests read (`search.results.drawn`),
   each results list it drew and how many of its rows had chips, so a test fails when a list is
   drawn without its chips and then again (`SearchResultsUITests`).
@@ -807,16 +809,16 @@ nothing (Account and sync, below).
 
 ## Account and sync
 
-The app signs in to the account service and syncs known words, lists, watch history, and
-Translate's bookmarked sentences as the client guide says ([`account-clients.md`](account-clients.md)), as `zenbu-ios`. The code is in
-`SearchExperience`: `ZenbuAccount.swift` (sign-in, signing out, deleting),
-`AccountServiceConfiguration.swift`, `AccountAPI.swift` and `AccountSyncModels.swift` (the routes and
-their answers), `AccountTokens.swift`, `AccountSync.swift` and `AccountSyncState.swift` (the queue
-and how results and changes apply), `AccountSyncScheduler.swift` and `AccountBackgroundSync.swift`
-(when), `AppleSignIn.swift`, `GoogleSignIn.swift`, and the views `AccountSignInControls.swift`,
-`AccountSignInView.swift`, `ZenbuAccountView.swift`, and `DeleteAccountView.swift`.
-`apps/account-api/src/test/sync-client.ts` models the same client in TypeScript, and the service's
-tests prove that model against the real service.
+The app signs in to the account service and syncs known words, lists, watch history, and Translate's
+bookmarked sentences as the client guide says ([`account-clients.md`](account-clients.md)), as
+`zenbu-ios`. The code is in `SearchExperience`: `ZenbuAccount.swift` (sign-in, signing out,
+deleting), `AccountServiceConfiguration.swift`, `AccountAPI.swift` and `AccountSyncModels.swift`
+(the routes and their answers), `AccountTokens.swift`, `AccountSync.swift` and
+`AccountSyncState.swift` (the queue and how results and changes apply), `AccountSyncScheduler.swift`
+and `AccountBackgroundSync.swift` (when), `AppleSignIn.swift`, `GoogleSignIn.swift`, and the views
+`AccountSignInControls.swift`, `AccountSignInView.swift`, `ZenbuAccountView.swift`, and
+`DeleteAccountView.swift`. `apps/account-api/src/test/sync-client.ts` models the same client in
+TypeScript, and the service's tests prove that model against the real service.
 
 - **Which service.** The build setting `ZENBU_ACCOUNT_API_URL` fills `ZenbuAccountServiceURL` in
   `apps/ios/App/Info.plist`: staging (`https://api-staging.zenbujapanese.com`) in Debug, Zenbu Dev
@@ -1073,7 +1075,10 @@ split across slots ("Do" and "n't"), before pairing them with lines.
 
 `VideoSearchView` watches the web view's URL as well as its loads, because YouTube's mobile site
 changes pages without loading them, and requires a tap before any media plays, so results pages'
-previews stay still.
+previews stay still. It asks for the mobile page (`app=m`), since YouTube sends the iPad's and the
+Mac's web views, which read as desktop Safari, to its desktop site. Before the page loads, a style
+(`styleHidingItsBars`) hides YouTube's header and bottom bar by their element names, which
+YouTube can change: check the live page by hand.
 
 ## SwiftUI notes
 
@@ -1152,9 +1157,9 @@ previews stay still.
   listing's in `apps/ios/metadata/`; change both together.
 - The privacy manifest (`apps/ios/App/PrivacyInfo.xcprivacy`) declares what the Zenbu account
   collects: email, name, user IDs, synced user content, session data and a profile picture's
-  address, watch history, and where each video was stopped with the share of its words known. The app's data, the App Store privacy labels, and the manifest change
-  together, as the
-  [App Store privacy labels](../../apps/web/docs/app-store-privacy-labels.md) say.
+  address, watch history, and where each video was stopped with the share of its words known. The
+  app's data, the App Store privacy labels, and the manifest change together, as the [App Store
+  privacy labels](../../apps/web/docs/app-store-privacy-labels.md) say.
 - `CreditsView` words no credit: it lays out the core's `sourceCredits`, a section for each source,
   so each EDRDG file (JMdict, KANJIDIC2, RADKFILE) has its own link, as the EDRDG licence requires.
 
@@ -1183,8 +1188,8 @@ Simulator:
   word marked known by swiping at once. The row names the order, and **Default** in its menu
   returns to the Default order. The choice survives relaunching the app, and disabling the
   chosen dictionary under **Account → Frequency Dictionaries** returns Search to **Default**.
-- The menu shows only **Sort By** and **Filter**, each naming its current choice underneath. **Sort By** lists
-  the sorts with no direction to choose.
+- The menu shows only **Sort By** and **Filter**, each naming its current choice underneath. **Sort
+  By** lists the sorts with no direction to choose.
 - **Filter** on `dog`, `いる`, and `miru`: **Known** leaves only known words and
   **Unknown** only the rest, in the chosen order; the **Sorted by** row shows **· 1 filter** and no
   other row appears; a filter that hides every word shows **No Words Match Your Filter**; marking a
@@ -1268,9 +1273,9 @@ word lists, also check in the Simulator:
 
 - Word Detail **•••** → **Add to List…** toggles a word in Favorites and in a list made with
   **New List**, and both survive a relaunch. The word's **Lists** section above Notes names both.
-- **Account → Lists** shows the count; a list removes a word by swipe or by **•••** → Select
-  Words, renames or deletes itself from **•••**, and opens a word in Search;
-  the index renames by swipe or by tapping a list in Edit, reorders in Edit, and asks before deleting a list that has words.
+- **Account → Lists** shows the count; a list removes a word by swipe or by **•••** → Select Words,
+  renames or deletes itself from **•••**, and opens a word in Search; the index renames by swipe or
+  by tapping a list in Edit, reorders in Edit, and asks before deleting a list that has words.
 - Lists live in `Application Support/Zenbu Japanese/word-lists.json` in the app's data container.
 
 ## Account manual checks
@@ -1314,8 +1319,8 @@ With each video, check that:
 - The repeat button replays the current line until it's turned off, and skipping or tapping a
   card moves the repeat to that line.
 - The video appears under **Recent** after going back, with its title and thumbnail.
-- Searching words in the Player search bar shows YouTube results in the app, and tapping a
-  video opens it in Player.
+- Searching words in the Player search bar shows YouTube results in the app, without YouTube's
+  header or bottom bar on iPhone, iPad, or the Mac, and tapping a video opens it in Player.
 - English lines appear beneath the Japanese, and the tab bar stays visible while watching.
 - Tapping a word pauses the video and opens the word sheet at half height; **Open Full Entry**
   opens the word inside Player, and Back returns to the video. In the sheet, a kanji and the
