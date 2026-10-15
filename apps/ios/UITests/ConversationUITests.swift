@@ -21,8 +21,9 @@ final class ConversationUITests: ZenbuUITestCase {
       .matching(NSPredicate(format: "identifier MATCHES %@", #"translate\.sentence\.[^.]+"#))
     let newest = { heard.allElementsBoundByIndex.last?.identifier }
     var pauses = 0
-    while appears(find("translate.live", in: app), within: Self.patience / 6) {
+    while true {
       let lastHeard = newest()
+      guard appears(find("translate.live", in: app), within: Self.patience / 6) else { break }
       pause(app)
       pauses += 1
       toggle.tap()
