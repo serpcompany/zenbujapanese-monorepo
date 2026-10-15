@@ -99,10 +99,9 @@ extension KanjiPage {
     let sections: [Section]
   }
 
-  static var sectionsWithoutContent: [Section] {
+  static let sectionsWithoutContent: [Section] =
     (try? PresentationCore.shared.answer("kanjiPageWithoutContent", "") as WithoutContent)?
-      .sections ?? []
-  }
+    .sections ?? []
 
   private struct Request: Encodable {
     struct Word: Encodable {
