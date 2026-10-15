@@ -18,7 +18,7 @@ gives up at its limit, and the helpers a test calls all wait through it:
 | `waitFor` | The element exists | 90 s; `<element> never appeared` |
 | `waitUntil(_:_:)`, `waitUntil(_:mentions:)`, `waitUntilGone` | The element meets a predicate, such as `isEnabled == true` | 90 s; `<element> never met <condition>` |
 | `waitUntil("the two lists changing places") { … }` | Anything a closure can read | 90 s; `<what> never happened` |
-| `appears(_:within:)`, `isHittable(_:within:)` | The same, as an answer, for a step that may be tried again | The caller's: a third of the 90 s for a retried tap |
+| `appears(_:within:)` | The same, as an answer, for a step that may be tried again | The caller's: a third of the 90 s for a retried tap |
 | `assertOnScreen`, `firstReachable`, `tap`, `tap(_:toShow:)`, `focus`, `type`, `name`, `open`, `choose`, `reveal`, `waitForSheet` | What each needs before it acts or measures | 90 s, or a third of it for each try of a retried step |
 
 The 90 seconds is `patience`; `TEST_RUNNER_ZENBU_UI_TEST_PATIENCE=30` on the `xcodebuild` command

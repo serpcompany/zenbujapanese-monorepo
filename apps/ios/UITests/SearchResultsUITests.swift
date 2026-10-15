@@ -14,19 +14,17 @@ final class SearchResultsUITests: ZenbuUITestCase {
   }
 
   func testAWordsResultsAreDrawnOnceWithTheirChips() {
-    let app = launch(Self.recordingDrawnResults)
+    let app = launch(Self.countingDraws)
     search("japan", in: app)
     let row = waitFor(find("result.japan", in: app))
     if device != .mac {
       waitUntil(row, "value CONTAINS 'JLPT level N' AND value CONTAINS 'YouTube frequency rank'")
     }
-    let drawn = drawnResults(in: app)
-    XCTAssertEqual(drawn.count, 1, "the results were drawn as \(drawn)")
-    XCTAssertFalse(drawn[0].hasPrefix("0 of"), "the results were drawn as \(drawn)")
+    assertResultsDrawnOnceWithChips(in: app)
   }
 
   func testAJapaneseSentencesWordsAreDrawnOnceWithTheirChips() {
-    let app = launch(Self.recordingDrawnResults)
+    let app = launch(Self.countingDraws)
     search("日本語を勉強する", in: app)
     waitFor(labeled("Discovered Words", in: app))
     if device != .mac {
@@ -34,18 +32,22 @@ final class SearchResultsUITests: ZenbuUITestCase {
         format: "identifier BEGINSWITH 'result.' AND value CONTAINS 'JLPT level N'")
       waitFor(app.descendants(matching: .any).matching(leveled).firstMatch)
     }
-    let drawn = drawnResults(in: app)
-    XCTAssertEqual(drawn.count, 1, "the results were drawn as \(drawn)")
-    XCTAssertFalse(drawn[0].hasPrefix("0 of"), "the results were drawn as \(drawn)")
+    assertResultsDrawnOnceWithChips(in: app)
   }
 
-  private func drawnResults(in app: XCUIApplication) -> [String] {
-    waitUntilStill(find("search.results", in: app))
-    let drawn = waitFor(find("search.results.drawn", in: app))
-    return "\(drawn.value ?? "")".components(separatedBy: ", ")
+  private func assertResultsDrawnOnceWithChips(
+    in app: XCUIApplication, file: StaticString = #filePath, line: UInt = #line
+  ) {
+    let drawn = draws(
+      recordedBy: "search.results.drawn", labeled: ["rows", "with chips"], in: app, file: file,
+      line: line)
+    guard drawn.count == 1, let list = drawn.first else {
+      return XCTFail("the results were drawn as \(drawn)", file: file, line: line)
+    }
+    XCTAssertGreaterThan(list["rows"] ?? 0, 0, "the results were drawn as \(drawn)", file: file, line: line)
+    XCTAssertGreaterThan(
+      list["with chips"] ?? 0, 0, "the results were drawn as \(drawn)", file: file, line: line)
   }
-
-  static let recordingDrawnResults = ["ZENBU_DRAWN_RESULTS": "1"]
 
   func testFilteringToKnownWordsHidesEveryWordUntilTheFilterIsCleared() {
     let app = launch()

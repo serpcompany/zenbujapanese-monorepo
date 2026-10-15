@@ -203,11 +203,13 @@ don't contain them), so they need no network, account, camera, or microphone:
   and pairing as YouTube's (`YouTubeFetch`, `YouTubeStandInTests`). A search loads a local page
   laid out like YouTube's mobile results, by YouTube's element names, whose results change the
   page's address without loading it, as YouTube's do.
-- `ZENBU_DRAWN_RESULTS=1` has Search say, on an element only tests read (`search.results.drawn`),
-  each results list it drew and how many of its rows had chips, so a test fails when a list is
-  drawn without its chips and then again (`SearchResultsUITests`).
 - `ZENBU_COUNT_DRAWS=1` has the Player count its draws and show its time to tests (`watch.draws`,
   `watch.time`, …), so a test fails when it redraws as the time ticks (`PlayerWatchUITests`).
+  Search and a kanji page record each list or page they drew (`search.results.drawn`,
+  `kanji-detail.drawn`), so a test fails when a results list is drawn without its chips and then
+  again (`SearchResultsUITests`), a kanji page's facts come before its words
+  (`WordDetailUITests`), or nothing is recorded. Each is a clear text (`DrawCountProbe`) read
+  with `text(of:)`: the Mac gives a test no plain view's value.
 
 The tests share `ZenbuUITestCase` and `AppTab`; what differs between the devices they ask
 `TestDevice` (`apps/ios/UITests/Platform/`, the one place `pnpm verify layers` lets UI tests name
@@ -234,15 +236,15 @@ On the Mac, XCUITest sees AppKit's elements, and the helpers hide the difference
 the same on every device:
 
 - A menu's choice is a menu item found by its title, and only among the window's menus
-  (`menuChoices`): the menu bar's **Edit ▸ Delete** and Continuity Camera's **Take Photo** carry
-  the titles a row's menu does. A menu item is tapped once it's hittable and has a
-  real frame, by clicking the middle of that frame (`tap`): a submenu's items exist before
-  they're laid out, and XCUITest's own tap looks the item up again and fails when the menu is
-  redrawing just then, about one run in three. `chooseFromSortedBy` closes the menu and opens
-  it again when a submenu never opens.
+  (`menuChoices`): the menu bar's **Edit ▸ Delete** and Continuity Camera's **Take Photo** carry the
+  titles a row's menu does. A menu item is tapped once it's hittable and has a real frame, by
+  clicking the middle of that frame (`tap`): a submenu's items exist before they're laid out, and
+  XCUITest's own tap looks the item up again and fails when the menu is redrawing just then, about
+  one run in three. A submenu's choice is typed as one string of keys (`chooseFromSubmenu`): Down
+  to the row, Right, Down to the choice, Return. Between separate clicks or keys, an open submenu
+  sometimes shut or lost its highlight while XCUITest looked the app over before its next step.
 - A sheet, and an alert that takes a name, are `app.sheets` (`sheet(_:in:)`, `prompt(in:)`).
-  `waitForSheet` also checks that a Mac sheet has room for its content and stays inside the
-  window.
+  `waitForSheet` also checks that a Mac sheet has room for its content and stays in the window.
 - A row's label starts with its title and goes on with its detail (`showing`); a static text's
   words are its value (`text(of:)`); a toggle's or a segment's state is its value (`isOn`).
 - The Settings window is SwiftUI's own `com_apple_SwiftUI_Settings_window`
@@ -267,13 +269,12 @@ and add iPad and Mac screenshots. A Mac build is archived with
 
 ### iPad and Mac checks
 
-The UI tests cover the tab shell, the iPad's sidebar, a page opened in every tab after visiting
-the others, every tab at the iPad's two orientations and the
-Mac's smallest window, the menu commands and their shortcuts, the Settings window, a second Mac
-window, Image Search's sources and Paste Image, and the Handwriting and Radicals sheet's
-**Done**. What they can't drive, check by hand when
-changing it: the app beside another app in Split View on iPad, an image dragged in from another
-app, and **File → Import from iPhone or iPad** with a real iPhone.
+The UI tests cover the tab shell, the iPad's sidebar, a page opened in every tab after visiting the
+others, every tab at the iPad's two orientations and the Mac's smallest window, the menu commands
+and their shortcuts, the Settings window, a second Mac window, Image Search's sources and Paste
+Image, and the Handwriting and Radicals sheet's **Done**. What they can't drive, check by hand when
+changing it: the app beside another app in Split View on iPad, an image dragged in from another app,
+and **File → Import from iPhone or iPad** with a real iPhone.
 
 ## Install on an iPhone
 
@@ -1190,11 +1191,10 @@ Simulator:
   chosen dictionary under **Account → Frequency Dictionaries** returns Search to **Default**.
 - The menu shows only **Sort By** and **Filter**, each naming its current choice underneath. **Sort
   By** lists the sorts with no direction to choose.
-- **Filter** on `dog`, `いる`, and `miru`: **Known** leaves only known words and
-  **Unknown** only the rest, in the chosen order; the **Sorted by** row shows **· 1 filter** and no
-  other row appears; a filter that hides every word shows **No Words Match Your Filter**; marking a
-  word known from its long-press menu drops it at once while **Unknown** is chosen. The filter
-  survives relaunching.
+- **Filter** on `dog`, `いる`, and `miru`: **Known** leaves only known words and **Unknown** only the
+  rest, in the chosen order; the **Sorted by** row shows **· 1 filter** and no other row appears; a
+  filter that hides every word shows **No Words Match Your Filter**; marking a word known from its
+  long-press menu drops it at once while **Unknown** is chosen. The filter survives relaunching.
 
 When changing Search's top bar or the shared field in `SearchField.swift`, also check:
 

@@ -62,18 +62,40 @@ extension ZenbuUITestCase {
   func chooseFromSortedBy(_ row: String, _ choice: String, in app: XCUIApplication) {
     let sortedBy = app.descendants(matching: .any).matching(identifier: "search.sort-menu")
     let opened = menuChoice(row, in: app)
-    let chosen = menuChoice(choice, in: app)
     for _ in 0..<3 {
-      for _ in 0..<3 {
-        if opened.exists { break }
-        tapWhereReachable([sortedBy.staticTexts, sortedBy], in: app)
-        if appears(opened, within: Self.patience / 3) { break }
-      }
-      tap(opened)
-      if device != .mac || isHittable(chosen, within: Self.patience / 6) { break }
-      TestDevice.closeMenu(in: app)
+      if opened.exists { break }
+      tapWhereReachable([sortedBy.staticTexts, sortedBy], in: app)
+      if appears(opened, within: Self.patience / 3) { break }
     }
-    tap(chosen)
+    if device == .mac { return chooseFromSubmenu(row, choice, in: app) }
+    tap(opened)
+    tap(menuChoice(choice, in: app))
+  }
+
+  static var countingDraws: [String: String] { ["ZENBU_COUNT_DRAWS": "1"] }
+
+  func draws(
+    recordedBy identifier: String, labeled labels: Set<String>, in app: XCUIApplication,
+    file: StaticString = #filePath, line: UInt = #line
+  ) -> [[String: Int]] {
+    let record = text(of: waitFor(find(identifier, in: app), file: file, line: line))
+    let draws = record.isEmpty ? [] : record.components(separatedBy: "; ").map(Self.drawnCounts)
+    guard !draws.isEmpty, draws.allSatisfy({ $0.map { Set($0.keys) == labels } ?? false }) else {
+      attachWhatIsOnScreen()
+      XCTFail("\(identifier) recorded \"\(record)\"", file: file, line: line)
+      return []
+    }
+    return draws.compactMap { $0 }
+  }
+
+  private static func drawnCounts(_ draw: String) -> [String: Int]? {
+    var counts: [String: Int] = [:]
+    for part in draw.components(separatedBy: ", ") {
+      let words = part.split(separator: " ", maxSplits: 1)
+      guard words.count == 2, let count = Int(words[0]) else { return nil }
+      counts[String(words[1])] = count
+    }
+    return counts
   }
 
   func sortedByRow(saying text: String, in app: XCUIApplication) -> XCUIElement {
