@@ -60,6 +60,10 @@ final class PlayerWatchUITests: ZenbuUITestCase {
       if !now.isEmpty { shown.insert(now) }
       return shown.count >= seconds
     }
+    let length = device == .mac ? " / 0:12" : " of 0:12"
+    XCTAssertTrue(
+      shown.allSatisfy { $0.hasSuffix(length) },
+      "the playback position \(shown.sorted()) gives the video's length the way \(device) reads it")
     var redrawn: [String: Int] = [:]
     for (part, probe) in Self.drawCounts {
       redrawn[part] = try draws(on: probe, in: app) - (before[part] ?? 0)

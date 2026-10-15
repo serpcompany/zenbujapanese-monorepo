@@ -18,9 +18,7 @@ struct DrawRecorder<Value: Equatable>: ViewModifier {
         .onChange(of: value, initial: true) { _, value in
           drawn.append(summary(value))
         }
-        .overlay(alignment: .topLeading) {
-          DrawCountProbe(identifier: identifier, text: drawn.joined(separator: "; "))
-        }
+        .showingUITests(drawn.joined(separator: "; "), as: identifier)
     } else {
       content
     }

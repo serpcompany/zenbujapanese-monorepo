@@ -22,9 +22,21 @@ extension View {
       self
     }
   }
+
+  @ViewBuilder
+  func showingUITests(_ text: String, as identifier: String) -> some View {
+    if LaunchHarness.countsDraws {
+      ZStack(alignment: .topLeading) {
+        self
+        DrawCountProbe(identifier: identifier, text: text)
+      }
+    } else {
+      self
+    }
+  }
 }
 
-struct DrawCountProbe: View {
+private struct DrawCountProbe: View {
   let identifier: String
   let text: String
 

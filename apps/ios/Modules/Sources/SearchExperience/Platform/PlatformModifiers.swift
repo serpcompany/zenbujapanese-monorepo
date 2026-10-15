@@ -17,14 +17,6 @@ extension View {
     #endif
   }
 
-  func spokenOnlyOnMac() -> some View {
-    #if os(macOS)
-      self
-    #else
-      accessibilityHidden(true)
-    #endif
-  }
-
   func groupedList() -> some View {
     #if os(macOS)
       listStyle(.inset)

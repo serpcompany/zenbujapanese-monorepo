@@ -203,8 +203,8 @@ don't contain them), so they need no network, account, camera, or microphone:
   and pairing as YouTube's (`YouTubeFetch`, `YouTubeStandInTests`). A search loads a local page
   laid out like YouTube's mobile results, by YouTube's element names, whose results change the
   page's address without loading it, as YouTube's do.
-- `ZENBU_COUNT_DRAWS=1` has the Player screen, its speed menu, and its captions count their draws
-  (`watch.draws`, …), so a test fails when one redraws as the time ticks (`PlayerWatchUITests`).
+- `ZENBU_COUNT_DRAWS=1` has the Player count its draws and show its time to tests (`watch.draws`,
+  `watch.time`, …), so a test fails when it redraws as the time ticks (`PlayerWatchUITests`).
   Search and a kanji page record each list or page they drew (`search.results.drawn`,
   `kanji-detail.drawn`), so a test fails when a results list is drawn without its chips and then
   again (`SearchResultsUITests`), a kanji page's facts come before its words
