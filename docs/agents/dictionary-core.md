@@ -131,7 +131,7 @@ modules, files, or event loop of its own, which is how the app runs it in JavaSc
   | `canonicalEntries`, `tatoebaContributors` | Groups of equivalent entries' IDs; — | Each group's smallest ID, which stands for it (`canonicalEntry`); the Tatoeba contributors, with their counts |
   | `normalizeQuery` | What was typed | The query Search reads |
   | `japaneseCandidates` | What a handwriting recognizer offered | Those written only in Japanese, normalized, each once, in order |
-  | `isKanji`, `containsJapaneseText`, `writtenLanguage` | A string | Whether it is one kanji; has kana or kanji as search reads it; `ja`, `en` (only Latin letters), or null |
+  | `isKanji`, `containsJapaneseText`, `writtenLanguage` | A string | One kanji or not; has a scalar any client's own check counted as Japanese; `ja`, `en` (an ASCII letter), or null |
   | `romaji`, `sentenceRomaji` | A reading; a sentence's words, each with its surface and reading | The reading in romaji, or null for one with kanji in it; the sentence in romaji, words spaced and punctuation kept with its word, or null when a word has no kana reading |
   | `checkExamples` | — | True, or an error saying which example table or pack is missing or wrong |
   | `tokenizerReady` | — | Whether the text part can tokenize. With the host's files it reads them now, so the first sentence doesn't wait for them, and is false when one is missing or wrong. |
@@ -354,8 +354,6 @@ The core answers as the Swift it replaced did, which the suites pin.
   Reference ID (`canonicalEntry`) and takes the JMdict entry number from that same entry, so the
   two always name one entry. `rank` orders entries and sets the leading lexical group (the app's
   legacy rank); `presentationRank` is the coarse rank shown, the group's strongest after merging.
-- `DictionarySearch` answers a query FTS4's own parser refuses as finding nothing, for every
-  client (`isUnreadableQuery`): a bare "syntax error" would hide a real SQL bug as no results.
 - An English query's match groups are, strongest first: a strong gloss (the query, or "to" and
   the query, with or without notes in parentheses that end it) in the first sense; one in a later
   sense; a gloss that mentions the query; a romaji-only match, by exact, prefix, then contains.
@@ -440,6 +438,8 @@ records keyed by JMdict entry number.
   (`language_data_sha256`). `checkArtifact` checks the example index as the app's
   `validateBaseCorpus` and `validateEnglishIndex` do. Reading a new artifact version is a change to
   `supportedTransforms`, reviewed with the re-recorded suites (ADR 0006).
+- `isUnreadableQuery` matches only FTS4's own query parser errors: a bare "syntax error" would hide
+  a real SQL bug as no results.
 - A query's examples are cached, so the results page's row, its sentences section, and each page of
   more share one retrieval. The caches of sentence lists keep a quarter as many entries, since each
   holds up to 100 sentences.

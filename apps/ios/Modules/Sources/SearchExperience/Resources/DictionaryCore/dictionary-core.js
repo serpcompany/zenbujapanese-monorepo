@@ -442,9 +442,12 @@
   function isJapaneseScalar(codePoint) {
     return codePoint === 12293 || codePoint >= 12352 && codePoint <= 12543 || codePoint >= 13312 && codePoint <= 19903 || codePoint >= 19968 && codePoint <= 40959;
   }
+  var japaneseTextBeyondSearch = /[\u{3006}\u{31f0}-\u{31ff}\u{4dc0}-\u{4dff}\u{f900}-\u{faff}\u{ff66}-\u{ff9f}\u{20000}-\u{2fa1f}]/u;
   function containsJapaneseText(text) {
-    for (const scalar of normalizeQuery(text)) {
-      if (isJapaneseScalar(scalar.codePointAt(0) ?? 0)) return true;
+    for (const scalar of text) {
+      if (isJapaneseScalar(scalar.codePointAt(0) ?? 0) || japaneseTextBeyondSearch.test(scalar)) {
+        return true;
+      }
     }
     return false;
   }
@@ -1911,13 +1914,6 @@
   function ftsPrefix(value) {
     return /^[\p{L}\p{M}\p{N}]+$/u.test(value) ? `${value}*` : ftsPhrase(value);
   }
-  var fts4QueryParserErrors = /malformed MATCH|unterminated string/i;
-  function isUnreadableQuery(error) {
-    for (let cause = error; cause instanceof Error; cause = cause.cause) {
-      if (fts4QueryParserErrors.test(cause.message)) return true;
-    }
-    return false;
-  }
 
   // src/search/english.ts
   var displayedFormProfileJoin = `LEFT JOIN form_priority_profiles p
@@ -2525,14 +2521,7 @@
     features;
     db;
     async search(rawQuery) {
-      try {
-        return await this.found(normalizeQuery(rawQuery));
-      } catch (error) {
-        if (!isUnreadableQuery(error)) throw error;
-        return noResults();
-      }
-    }
-    async found(query) {
+      const query = normalizeQuery(rawQuery);
       const exactFormEntry = isASCII(query) && query !== "" ? (await rankedEnglish(this.db, query, true))[0]?.entry : void 0;
       if (exactFormEntry) {
         const refinement = normalizeQuery(exactFormEntry.reading);
