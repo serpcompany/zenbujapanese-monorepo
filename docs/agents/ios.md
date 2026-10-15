@@ -286,9 +286,8 @@ or how fast it feels. The app needs iOS 26.0 or later, and the Sudachi cache abo
 2. Open `apps/ios/ZenbuJapanese.xcodeproj` and sign in under Xcode → Settings → Accounts. The
    ZenbuJapanese target signs with the team that publishes the app, TSMC LLC's `847HR8U8D9`, and
    the bundle ID that team registered, `com.zenbujapanese.dictionary` (The App Store record,
-   below). With
-   any other Apple ID, such as a free one (a Personal Team), pick your team under the target's
-   **Signing & Capabilities** and change the bundle ID to one of your own, such as
+   below). With any other Apple ID, such as a free one (a Personal Team), pick your team under the
+   target's **Signing & Capabilities** and change the bundle ID to one of your own, such as
    `com.<you>.zenbujapanese`. A Personal Team can't sign Associated Domains or Sign in with Apple
    either, so also remove those capabilities
    ([Links from the website](#links-from-the-website), [Account and sync](#account-and-sync)).
@@ -641,7 +640,8 @@ answers; [`dictionary-core.md`](dictionary-core.md), The app's side, lists which
   sentence) links a row at a time (`LinkedJapaneseText`): `DictionaryTextData.linkedWords` is one
   call for a text: the core tokenizes it from the app's files, reads its words' forms in one or two
   statements, and answers each word's place, entry or candidates, furigana, and `accent`. Both paths
-  read entries through `LinkedEntries` (4,000 kept); the core keeps the last 512 texts.
+  read entries through `LinkedEntries`, which keeps 4,000, or a batch's own when it would pass
+  that; the core keeps the last 512 texts.
 - **Counted words.** `DictionaryTextData.countedWords` is one call for a list of lines: the IDs
   of the words that count toward comprehension, with no entry read. `Comprehension` asks twenty
   lines at a time (about 5 ms a call), so a caption card's own link never waits on a whole video.
