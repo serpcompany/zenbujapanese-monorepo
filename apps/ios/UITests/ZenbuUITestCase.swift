@@ -267,6 +267,40 @@ class ZenbuUITestCase: XCTestCase {
       let window = launched?.windows.firstMatch
     else { return element.tap() }
     waitUntil(element, "isHittable == true", file: file, line: line)
+    guard let frame = laidOutFrame(of: element, file: file, line: line) else { return }
+    point(x: frame.midX, y: frame.midY, in: window).tap()
+  }
+
+  func chooseFromSubmenu(
+    _ row: String, _ choice: String, in app: XCUIApplication, file: StaticString = #filePath,
+    line: UInt = #line
+  ) {
+    guard laidOutFrame(of: menuChoice(row, in: app), file: file, line: line) != nil else { return }
+    let menu = app.windows.menus.containing(NSPredicate(format: "title == %@", row)).firstMatch
+    let rows = (try? menu.snapshot()).map(Self.choices(in:)) ?? []
+    let rowAt = rows.firstIndex { $0.title == row }
+    let submenu = rowAt.flatMap { at in rows[at].children.first { $0.elementType == .menu } }
+    let choices = submenu.map(Self.choices(in:)) ?? []
+    guard let rowAt, let choiceAt = choices.firstIndex(where: { $0.title == choice }) else {
+      attachWhatIsOnScreen()
+      return XCTFail("the open menu has no \(row) ▸ \(choice)", file: file, line: line)
+    }
+    TestDevice.press(.downArrow, times: rowAt + 1, in: app)
+    TestDevice.press(.rightArrow, in: app)
+    guard laidOutFrame(of: menuChoice(choice, in: app), file: file, line: line) != nil else {
+      return
+    }
+    TestDevice.press(.downArrow, times: choiceAt, in: app)
+    TestDevice.press(.return, in: app)
+  }
+
+  private static func choices(in menu: XCUIElementSnapshot) -> [XCUIElementSnapshot] {
+    menu.children.filter { $0.elementType == .menuItem && $0.isEnabled && !$0.title.isEmpty }
+  }
+
+  private func laidOutFrame(
+    of element: XCUIElement, file: StaticString, line: UInt
+  ) -> CGRect? {
     var frame = CGRect.zero
     let laidOut = comesTrue("\(element) to be laid out", within: Self.patience) {
       frame = element.frame
@@ -274,13 +308,10 @@ class ZenbuUITestCase: XCTestCase {
     }
     guard laidOut else {
       attachWhatIsOnScreen()
-      return XCTFail("\(element) was never laid out", file: file, line: line)
+      XCTFail("\(element) was never laid out", file: file, line: line)
+      return nil
     }
-    point(x: frame.midX, y: frame.midY, in: window).tap()
-  }
-
-  func isHittable(_ element: XCUIElement, within seconds: TimeInterval) -> Bool {
-    comesTrue("\(element) to be hittable", within: seconds) { element.isHittable }
+    return frame
   }
 
   @discardableResult

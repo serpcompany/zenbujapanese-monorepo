@@ -62,22 +62,14 @@ extension ZenbuUITestCase {
   func chooseFromSortedBy(_ row: String, _ choice: String, in app: XCUIApplication) {
     let sortedBy = app.descendants(matching: .any).matching(identifier: "search.sort-menu")
     let opened = menuChoice(row, in: app)
-    let chosen = menuChoice(choice, in: app)
     for _ in 0..<3 {
-      for _ in 0..<3 {
-        if opened.exists { break }
-        tapWhereReachable([sortedBy.staticTexts, sortedBy], in: app)
-        if appears(opened, within: Self.patience / 3) { break }
-      }
-      tap(opened)
-      if device != .mac || isHittable(chosen, within: Self.patience / 6) { break }
-      TestDevice.closeMenu(in: app)
+      if opened.exists { break }
+      tapWhereReachable([sortedBy.staticTexts, sortedBy], in: app)
+      if appears(opened, within: Self.patience / 3) { break }
     }
-    if device == .mac {
-      let window = app.windows.firstMatch
-      TestDevice.hover(point(x: chosen.frame.midX, y: opened.frame.midY, in: window))
-    }
-    tap(chosen)
+    if device == .mac { return chooseFromSubmenu(row, choice, in: app) }
+    tap(opened)
+    tap(menuChoice(choice, in: app))
   }
 
   static var countingDraws: [String: String] { ["ZENBU_COUNT_DRAWS": "1"] }

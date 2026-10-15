@@ -72,19 +72,17 @@ enum TestDevice {
     #endif
   }
 
-  @MainActor static func closeMenu(in app: XCUIApplication) {
+  @MainActor static func press(_ key: XCUIKeyboardKey, times: Int = 1, in app: XCUIApplication) {
     #if os(macOS)
-      app.typeKey(.escape, modifierFlags: [])
+      for _ in 0..<times {
+        app.typeKey(key, modifierFlags: [])
+      }
     #endif
   }
 
   @MainActor static func movePointerAway(in app: XCUIApplication) {
-    hover(app.windows.firstMatch.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.95)))
-  }
-
-  @MainActor static func hover(_ point: XCUICoordinate) {
     #if os(macOS)
-      point.hover()
+      app.windows.firstMatch.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.95)).hover()
     #endif
   }
 

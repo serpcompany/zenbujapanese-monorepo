@@ -240,9 +240,9 @@ the same on every device:
   titles a row's menu does. A menu item is tapped once it's hittable and has a real frame, by
   clicking the middle of that frame (`tap`): a submenu's items exist before they're laid out, and
   XCUITest's own tap looks the item up again and fails when the menu is redrawing just then, about
-  one run in three. `chooseFromSortedBy` closes the menu and opens it again when a submenu never
-  opens, and moves the pointer into the submenu along its row before clicking a choice: the straight
-  line to **Known Words** crossed **Filter**, where AppKit sometimes shut the submenu.
+  one run in three. A submenu's choice is made with keys (`chooseFromSubmenu`): Down to its row,
+  Right, Down to the choice once it's laid out, and Return. Clicks there hung on the pointer's path:
+  crossing **Filter** sometimes shut the **Sort By** submenu, and resting in one left it unhittable.
 - A sheet, and an alert that takes a name, are `app.sheets` (`sheet(_:in:)`, `prompt(in:)`).
   `waitForSheet` also checks that a Mac sheet has room for its content and stays in the window.
 - A row's label starts with its title and goes on with its detail (`showing`); a static text's
