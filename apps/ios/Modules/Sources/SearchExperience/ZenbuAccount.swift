@@ -39,7 +39,8 @@ final class ZenbuAccount {
     translations: ConversationHistory,
     fileURL: URL = AccountSync.defaultFileURL,
     providers: SignInProviders = .system,
-    now: @escaping @MainActor () -> Date = Date.init
+    now: @escaping @MainActor () -> Date = Date.init,
+    retryClock: SyncRetryClock = .live
   ) {
     let api = AccountAPI(baseURL: configuration.serviceURL, session: session)
     self.configuration = configuration
@@ -50,7 +51,7 @@ final class ZenbuAccount {
       api: api, tokens: AccountTokens(api: api, storage: storage, now: now),
       wordKnowledge: wordKnowledge, wordLists: wordLists, watchHistory: watchHistory,
       translations: translations, fileURL: fileURL, now: now)
-    scheduler = AccountSyncScheduler(sync: sync, now: now)
+    scheduler = AccountSyncScheduler(sync: sync, now: now, clock: retryClock)
   }
 
   var account: SignedInAccount? { sync.account }

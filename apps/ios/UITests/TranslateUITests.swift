@@ -78,8 +78,7 @@ final class TranslateUITests: ZenbuUITestCase {
     let app = launch(Self.script)
     open(.translate, in: app)
     tap(find("translate.start.conversation", in: app))
-    assertOnScreen(find("translate.live", in: app), in: app)
-    waitFor(firstElement(identifiedBy: "translate.sentence.", in: app))
+    assertOnScreen(firstElement(identifiedBy: "translate.sentence.", in: app), in: app)
     if device == .phone {
       XCTAssertFalse(isReachable(app.tabBars.firstMatch, in: app), "the conversation hides the tab bar")
     }

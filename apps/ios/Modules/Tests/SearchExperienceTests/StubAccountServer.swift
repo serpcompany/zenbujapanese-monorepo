@@ -97,6 +97,27 @@ final class StubAccountServer: @unchecked Sendable {
   }
 }
 
+final class HeldReply: @unchecked Sendable {
+  static let limit: DispatchTimeInterval = .seconds(30)
+  private let letGoSignal = DispatchSemaphore(value: 0)
+  private let lock = NSLock()
+  private var expired = false
+
+  var wasNeverLetGo: Bool { lock.withLock { expired } }
+
+  func letGo() {
+    letGoSignal.signal()
+  }
+
+  func after(_ reply: @autoclosure () -> StubReply) -> StubReply {
+    guard letGoSignal.wait(timeout: .now() + Self.limit) == .success else {
+      lock.withLock { expired = true }
+      return .error(500, "held_reply_never_let_go")
+    }
+    return reply()
+  }
+}
+
 final class StubURLProtocol: URLProtocol {
   override class func canInit(with request: URLRequest) -> Bool { true }
   override class func canonicalRequest(for request: URLRequest) -> URLRequest { request }
