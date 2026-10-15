@@ -312,8 +312,10 @@ final class ExampleRowsUITests: ZenbuUITestCase {
       let seen = laidOutNumber(of: rows) ?? lastLaidOut
       return flick(rows, back: seen.map { number < $0 } ?? false, in: app)
     }
-    let area = device == .mac ? rows.list : app.windows.firstMatch
-    scroll(area, back: frame.midY < area.frame.midY)
+    guard device == .mac else {
+      return scroll(app.windows.firstMatch, back: frame.midY < app.windows.firstMatch.frame.midY)
+    }
+    rows.list.scroll(byDeltaX: 0, deltaY: rows.list.frame.midY - frame.midY)
   }
 
   private func laidOutNumber(of rows: Rows) -> Int? {
