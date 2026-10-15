@@ -64,9 +64,14 @@ function isJapaneseScalar(codePoint: number): boolean {
   )
 }
 
+const japaneseTextBeyondSearch =
+  /[\u{3006}\u{31f0}-\u{31ff}\u{4dc0}-\u{4dff}\u{f900}-\u{faff}\u{ff66}-\u{ff9f}\u{20000}-\u{2fa1f}]/u
+
 export function containsJapaneseText(text: string): boolean {
-  for (const scalar of normalizeQuery(text)) {
-    if (isJapaneseScalar(scalar.codePointAt(0) ?? 0)) return true
+  for (const scalar of text) {
+    if (isJapaneseScalar(scalar.codePointAt(0) ?? 0) || japaneseTextBeyondSearch.test(scalar)) {
+      return true
+    }
   }
   return false
 }

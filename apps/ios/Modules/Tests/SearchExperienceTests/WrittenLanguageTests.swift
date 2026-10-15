@@ -14,6 +14,8 @@ struct WrittenLanguageTests {
       ("トイレはどこですか", "ja"),
       ("Suicaカードはどこで買えますか", "ja"),
       ("ｶﾀｶﾅ", "ja"),
+      ("\u{4DC0}", "ja"),
+      ("\u{20BB7}", "ja"),
       ("Where can I buy a Suica card?", "en"),
       ("how much is this?", "en"),
     ])
@@ -24,11 +26,12 @@ struct WrittenLanguageTests {
   @Test("text without letters has no language")
   func noLanguage() {
     #expect(PresentationCore.shared.writtenLanguage("  123 ？！ ") == nil)
+    #expect(PresentationCore.shared.writtenLanguage("ＳＵＩＣＡ") == nil)
   }
 
   @Test("Image Search keeps a line, and marks a word, only where the core reads Japanese")
   func imageSearchKeepsWhatTheCoreReadsAsJapanese() async throws {
-    let texts = ["\u{20BB7}", "々", "ｶﾀｶﾅ", "\u{4DC0}", "\u{20BB7}野家"]
+    let texts = ["\u{20BB7}", "々", "ｶﾀｶﾅ", "Sale 50%", "\u{4DC0}", "\u{20BB7}野家"]
     let observations = texts.enumerated().map { index, text in
       RecognizedImageTextObservation(
         id: index, text: text,
@@ -43,19 +46,42 @@ struct WrittenLanguageTests {
         availability: { .installed }, translateAllInstalled: { _ in [:] }))
     await model.load()
     let page = try #require(model.selectedLoadedPage)
-    let japanese = ["々", "ｶﾀｶﾅ", "\u{20BB7}野家"]
+    let japanese = texts.filter { $0 != "Sale 50%" }
     #expect(page.lines.map(\.text) == japanese)
     #expect(page.regions.map(\.surface) == japanese)
-    #expect(texts.filter(PresentationCore.shared.containsJapaneseText) == japanese)
   }
 
   @Test("the first recognition pass found Japanese only when the core reads Japanese in a line")
   func firstPassFindsWhatTheCoreReadsAsJapanese() {
-    for text in ["\u{20BB7}", "\u{4DC0}", "Sale 50%"] {
-      #expect(!ImageTextRecognitionClient.foundJapanese(inTopCandidates: [text]))
-    }
-    for text in ["々", "ｶﾀｶﾅ", "\u{20BB7}野家"] {
+    #expect(!ImageTextRecognitionClient.foundJapanese(inTopCandidates: ["Sale 50%", "ＳＵＩＣＡ"]))
+    for text in ["々", "ｶﾀｶﾅ", "\u{4DC0}", "\u{20BB7}", "\u{20BB7}野家"] {
       #expect(ImageTextRecognitionClient.foundJapanese(inTopCandidates: ["Sale 50%", text]))
     }
+  }
+
+  @Test(
+    "a scalar at either edge of a run some old check counted is Japanese wherever the app asks",
+    arguments: [
+      0x3005, 0x3006, 0x3040, 0x3041, 0x309F, 0x30A0, 0x30FF, 0x31F0, 0x31FF, 0x3400, 0x4DBF,
+      0x4DC0, 0x4DFF, 0x4E00, 0x9FFF, 0xF900, 0xFAFF, 0xFF66, 0xFF9F, 0x20000, 0x2FA1F,
+    ])
+  func everyEdgeOfAnOldRunIsJapanese(scalar: UInt32) throws {
+    let text = String(try #require(Unicode.Scalar(scalar)))
+    #expect(PresentationCore.shared.containsJapaneseText(text))
+    #expect(ImageTextRecognitionClient.foundJapanese(inTopCandidates: [text]))
+    #expect(PresentationCore.shared.writtenLanguage(text) == "ja")
+  }
+
+  @Test(
+    "a scalar just outside the runs the old checks counted is not Japanese wherever the app asks",
+    arguments: [
+      0x3004, 0x3007, 0x303F, 0x3100, 0x31EF, 0x3200, 0x33FF, 0xA000, 0xF8FF, 0xFB00, 0xFF65,
+      0xFFA0, 0x1FFFF, 0x2FA20,
+    ])
+  func scalarsOutsideTheRunsAreNotJapanese(scalar: UInt32) throws {
+    let text = String(try #require(Unicode.Scalar(scalar)))
+    #expect(!PresentationCore.shared.containsJapaneseText(text))
+    #expect(!ImageTextRecognitionClient.foundJapanese(inTopCandidates: [text]))
+    #expect(PresentationCore.shared.writtenLanguage(text) == nil)
   }
 }

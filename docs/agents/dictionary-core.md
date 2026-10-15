@@ -132,7 +132,7 @@ modules, files, or event loop of its own, which is how the app runs it in JavaSc
   | `canonicalEntries`, `tatoebaContributors` | Groups of equivalent entries' IDs; — | Each group's smallest ID, which stands for it (`canonicalEntry`); the Tatoeba contributors, with their counts |
   | `normalizeQuery` | What was typed | The query Search reads |
   | `japaneseCandidates` | What a handwriting recognizer offered | Those written only in Japanese, normalized, each once, in order |
-  | `isKanji`, `containsJapaneseText`, `writtenLanguage` | A string | Whether it is one kanji; has kana or kanji as search reads it; `ja`, `en` (only Latin letters), or null |
+  | `isKanji`, `containsJapaneseText`, `writtenLanguage` | A string | One kanji or not; has a scalar any client's own check counted as Japanese; `ja`, `en` (an ASCII letter), or null |
   | `romaji`, `sentenceRomaji` | A reading; a sentence's words, each with its surface and reading | The reading in romaji, or null for one with kanji in it; the sentence in romaji, words spaced and punctuation kept with its word, or null when a word has no kana reading |
   | `checkExamples` | — | True, or an error saying which example table or pack is missing or wrong |
   | `tokenizerReady` | — | Whether the text part can tokenize. With the host's files it reads them now, so the first sentence doesn't wait for them, and is false when one is missing or wrong. |

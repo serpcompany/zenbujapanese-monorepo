@@ -139,27 +139,101 @@ describe('scripts', () => {
   })
 })
 
+type ScalarRun = [number, number]
+
+const scriptChecksBeforeTheCore: [string, ScalarRun[]][] = [
+  [
+    'Image Search’s lines and words',
+    [
+      [0x3040, 0x30ff],
+      [0x3400, 0x9fff],
+      [0x20000, 0x2fa1f]
+    ]
+  ],
+  [
+    'Image Search’s first recognition pass',
+    [
+      [0x3040, 0x30ff],
+      [0x3400, 0x9fff]
+    ]
+  ],
+  [
+    'Translate',
+    [
+      [0x3041, 0x309f],
+      [0x30a0, 0x30ff],
+      [0x31f0, 0x31ff],
+      [0xff66, 0xff9f],
+      [0x4e00, 0x9fff],
+      [0x3400, 0x4dbf],
+      [0xf900, 0xfaff],
+      [0x3005, 0x3006]
+    ]
+  ],
+  [
+    'search',
+    [
+      [0x3005, 0x3005],
+      [0x3040, 0x30ff],
+      [0x3400, 0x4dbf],
+      [0x4e00, 0x9fff]
+    ]
+  ]
+]
+
+function scalarsIn(runs: ScalarRun[]): number[] {
+  return runs.flatMap(([first, last]) =>
+    Array.from({ length: last - first + 1 }, (_, offset) => first + offset)
+  )
+}
+
+function countedRuns(): ScalarRun[] {
+  const runs: ScalarRun[] = []
+  for (let scalar = 0; scalar <= 0x10ffff; scalar++) {
+    if (scalar >= 0xd800 && scalar <= 0xdfff) continue
+    if (!containsJapaneseText(String.fromCodePoint(scalar))) continue
+    const last = runs.at(-1)
+    if (last && last[1] === scalar - 1) last[1] = scalar
+    else runs.push([scalar, scalar])
+  }
+  return runs
+}
+
 describe('containsJapaneseText', () => {
-  test('finds kana or kanji anywhere in a text, as search reads the text', () => {
-    expect(containsJapaneseText('Suicaカード')).toBe(true)
-    expect(containsJapaneseText('ｶﾀｶﾅ')).toBe(true)
-    expect(containsJapaneseText('々')).toBe(true)
-    expect(containsJapaneseText('Where is the station?')).toBe(false)
-    expect(containsJapaneseText('  123 ？！ ')).toBe(false)
+  test.each(scriptChecksBeforeTheCore)('counts every scalar %s counted', (_, runs) => {
+    const lost = scalarsIn(runs).filter(
+      scalar => !containsJapaneseText(String.fromCodePoint(scalar))
+    )
+    expect(lost).toEqual([])
   })
 
-  test('leaves out what search does not read as Japanese', () => {
-    expect(containsJapaneseText('\u{20BB7}')).toBe(false)
-    expect(containsJapaneseText('\u{4DC0}')).toBe(false)
+  test('counts exactly the scalars some check counted, as they were written', () => {
+    expect(countedRuns()).toEqual([
+      [0x3005, 0x3006],
+      [0x3040, 0x30ff],
+      [0x31f0, 0x31ff],
+      [0x3400, 0x9fff],
+      [0xf900, 0xfaff],
+      [0xff66, 0xff9f],
+      [0x20000, 0x2fa1f]
+    ])
+  })
+
+  test('finds one anywhere in a text', () => {
+    expect(containsJapaneseText('Suicaカード')).toBe(true)
     expect(containsJapaneseText('\u{20BB7}野家')).toBe(true)
+    expect(containsJapaneseText('Where is the station?')).toBe(false)
+    expect(containsJapaneseText('  123 ？！ ')).toBe(false)
   })
 })
 
 describe('writtenLanguage', () => {
-  test('is Japanese with any kana or kanji, English with only Latin letters, else none', () => {
+  test('is Japanese with any scalar a check counted, English with an ASCII letter, else none', () => {
     expect(writtenLanguage('駅まで歩いて何分ですか？')).toBe('ja')
     expect(writtenLanguage('Suicaカードはどこで買えますか')).toBe('ja')
+    expect(writtenLanguage('\u{4DC0} and \u{20BB7}')).toBe('ja')
     expect(writtenLanguage('Where can I buy a Suica card?')).toBe('en')
+    expect(writtenLanguage('ＳＵＩＣＡ')).toBeNull()
     expect(writtenLanguage('  123 ？！ ')).toBeNull()
   })
 })

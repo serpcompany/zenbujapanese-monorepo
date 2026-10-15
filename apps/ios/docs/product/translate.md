@@ -61,9 +61,9 @@ The file picker itself is the system's: by hand.
 ## Typing to translate
 
 The typing screen is one large card reading **Translate anything**. Translate detects the
-language: text with kana or kanji, as Search reads them (halfwidth katakana too), is Japanese and is
-translated into English, and text with only Latin letters A to Z is English and is translated into
-Japanese. There is no swap button. The translation
+language: text with kana or kanji (halfwidth katakana, and kanji past U+20000 such as 𠮷, too) is
+Japanese and is translated into English, and text with only Latin letters A to Z is English and is
+translated into Japanese. There is no swap button. The translation
 appears in the same card under a divider, with a label such as **English → Japanese** and
 buttons to copy and speak it; Japanese in it is underlined and tappable. An ✕ clears the text.
 If Apple's Japanese language isn't downloaded, the card offers **Download Japanese**, which shows
@@ -266,7 +266,7 @@ system's, dragging from another app is by hand, and so is Continuity Camera.
 Image Search recognizes Japanese text in one or more selected images. It reads both
 horizontal and vertical (縦書き) Japanese; vertical columns are read top to bottom, right to
 left, and English elsewhere in the image does not hide the Japanese. A line or a word is Japanese
-when search would read kana or kanji in it: 々 and ｶﾀｶﾅ are, a kanji past U+20000 such as 𠮷 isn't.
+by typed text's rule ([Typing to translate](#typing-to-translate)): 々, ｶﾀｶﾅ, and 𠮷 all are.
 
 Check: package `ImageTextRecognitionTests` and `WrittenLanguageTests`.
 

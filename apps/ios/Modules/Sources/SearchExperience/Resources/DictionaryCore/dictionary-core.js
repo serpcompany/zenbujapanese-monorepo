@@ -442,9 +442,12 @@
   function isJapaneseScalar(codePoint) {
     return codePoint === 12293 || codePoint >= 12352 && codePoint <= 12543 || codePoint >= 13312 && codePoint <= 19903 || codePoint >= 19968 && codePoint <= 40959;
   }
+  var japaneseTextBeyondSearch = /[\u{3006}\u{31f0}-\u{31ff}\u{4dc0}-\u{4dff}\u{f900}-\u{faff}\u{ff66}-\u{ff9f}\u{20000}-\u{2fa1f}]/u;
   function containsJapaneseText(text) {
-    for (const scalar of normalizeQuery(text)) {
-      if (isJapaneseScalar(scalar.codePointAt(0) ?? 0)) return true;
+    for (const scalar of text) {
+      if (isJapaneseScalar(scalar.codePointAt(0) ?? 0) || japaneseTextBeyondSearch.test(scalar)) {
+        return true;
+      }
     }
     return false;
   }
