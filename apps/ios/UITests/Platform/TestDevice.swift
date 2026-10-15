@@ -72,14 +72,6 @@ enum TestDevice {
     #endif
   }
 
-  @MainActor static func press(_ key: XCUIKeyboardKey, times: Int = 1, in app: XCUIApplication) {
-    #if os(macOS)
-      for _ in 0..<times {
-        app.typeKey(key, modifierFlags: [])
-      }
-    #endif
-  }
-
   @MainActor static func movePointerAway(in app: XCUIApplication) {
     #if os(macOS)
       app.windows.firstMatch.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.95)).hover()
