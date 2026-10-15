@@ -92,6 +92,9 @@ All notable user-facing changes to Zenbu Japanese are recorded here.
   underscores. One that doesn't fit now says why and isn't saved, where a period or a one-letter
   name used to be kept and other characters were dropped without a word. A username you already
   saved stays as it is until you change it.
+- After many sentences have been linked in one session, a caption card, an example sentence, a
+  Translate line, or a line of Image Search's text no longer shows some of its words as plain
+  text, with no meaning and nothing to tap.
 
 ## [2.0.0] - 2026-10-09
 

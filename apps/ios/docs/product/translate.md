@@ -309,8 +309,8 @@ describes the text. Idioms are shown only when they're dictionary entries, with 
 meaning, and those meanings are given to the model whenever it translates or describes the text,
 because on its own it misreads idioms word by word.
 
-Check: package `ImageTextExplanationTests`, where Apple Intelligence is on (skipped where it
-isn't, as on a virtual Mac), and `ImageTextContextNotesTests`.
+Check: package `ImageTextContextNotesTests` and `ImageTextExplanationTests` (a stubbed model;
+the real one with `TEST_RUNNER_ZENBU_RUN_LANGUAGE_MODEL=1` and Apple Intelligence on).
 
 Tapping a word in any view opens its Word Detail in a half-height sheet that can be dragged to
 full height, as in the Player. The view behind stays usable, so tapping another word switches

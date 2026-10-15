@@ -20,9 +20,11 @@ struct PlaybackTimeText: View {
   let scrubPosition: TimeInterval?
 
   var body: some View {
-    Text(
+    let shown =
       "\(WatchSessionView.timestamp(scrubPosition ?? player.currentTime)) / \(WatchSessionView.timestamp(player.duration))"
-    )
+    Text(shown)
+      .accessibilityHidden(true)
+      .showingUITests(shown, as: "watch.time")
   }
 }
 

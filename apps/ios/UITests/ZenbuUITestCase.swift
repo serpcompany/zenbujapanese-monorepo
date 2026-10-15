@@ -296,6 +296,14 @@ class ZenbuUITestCase: XCTestCase {
     return waitFor(shown, file: file, line: line)
   }
 
+  func leaveAndReturn(to app: XCUIApplication) {
+    TestDevice.leave(app)
+    if device != .mac {
+      waitUntil("the app going to the background") { app.state != .runningForeground }
+    }
+    TestDevice.comeBack(to: app)
+  }
+
   func type(
     _ text: String, into element: XCUIElement, file: StaticString = #filePath, line: UInt = #line
   ) {

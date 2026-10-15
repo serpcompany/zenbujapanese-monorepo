@@ -95,14 +95,20 @@ actor LinkedEntries {
       }
     }
     if !unread.isEmpty, let read = try? await lookupClient.entries(unread) {
-      if entries.count + read.count > Self.capacity { entries.removeAll(keepingCapacity: true) }
-      for (id, entry) in read {
-        entries[id.rawValue] = entry
-        named[id.rawValue] = entry
-      }
+      for (id, entry) in read { named[id.rawValue] = entry }
     }
+    keep(named)
     return texts.map { words in
       words.enumerated().map { Self.token($0.offset, $0.element, named: named) }
+    }
+  }
+
+  private func keep(_ named: [String: DictionaryEntry]) {
+    let added = named.keys.count { entries[$0] == nil }
+    if entries.count + added > Self.capacity {
+      entries = named
+    } else {
+      entries.merge(named) { _, new in new }
     }
   }
 
