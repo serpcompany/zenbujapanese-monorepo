@@ -311,12 +311,12 @@ In the Simulator, with the harness:
   deletion there lowers the count and leaves the Translate tab's Translations without it. With
   a conversation live (start one, then switch to Account), it isn't listed, and transcripts have
   no speaker button.
-- **Listen** leads each card with its translation (English for the Japanese announcements,
-  Japanese for the English one) and plays as it goes. Its bottom bar matches Conversation's:
-  speaker, − 1.0× +, and the timer. The speaker turns to a slashed speaker and dims the speed;
-  the next announcements still appear, and none turns active while it would have played. After
-  20 seconds of silence, **Are you still there?** counts down and pauses with an alert offering
-  **Resume**.
+- **Listen** leads each card with its translation (English for the Japanese announcements, Japanese
+  for the English one) and plays as it goes. Its bottom bar matches Conversation's: speaker, − 1.0×
+  +, and the timer. The speaker turns to a slashed speaker and dims the speed; the next
+  announcements still appear, and none turns active while it would have played. After 20 seconds of
+  silence, **Are you still there?** counts down two minutes, the harness's countdown (the app's own
+  is 10 seconds), and then pauses with an alert offering **Resume**.
 - While listening, the Simulator's screen doesn't auto-lock (Settings → Display & Brightness →
   Auto-Lock at 30 seconds); after a pause it locks as usual.
 - Sending the app home pauses with **Paused while you were away**; **Exit Without Saving** leaves
