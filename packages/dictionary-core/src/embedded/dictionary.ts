@@ -2,8 +2,8 @@ import { type PhraseEntry, phraseNote } from '../detail/phrase-note'
 import { romaji, sentenceRomaji } from '../detail/romaji'
 import { isKanjiCharacter, shortGloss } from '../detail/text'
 import {
-  containsJapaneseText,
   japaneseCandidates,
+  japaneseTextRuns,
   normalizeQuery,
   writtenLanguage
 } from '../search/query'
@@ -52,7 +52,7 @@ export function embeddedEndpoint(host: EmbeddedHost): EmbeddedEndpoint {
     canonicalEntries: groups => canonicalEntries(JSON.parse(groups)),
     normalizeQuery,
     japaneseCandidates: candidates => japaneseCandidates(JSON.parse(candidates)),
-    containsJapaneseText,
+    japaneseTextRuns: () => japaneseTextRuns,
     writtenLanguage,
     isKanji: isKanjiCharacter,
     romaji,

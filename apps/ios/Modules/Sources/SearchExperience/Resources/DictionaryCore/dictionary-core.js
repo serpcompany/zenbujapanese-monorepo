@@ -442,14 +442,22 @@
   function isJapaneseScalar(codePoint) {
     return codePoint === 12293 || codePoint >= 12352 && codePoint <= 12543 || codePoint >= 13312 && codePoint <= 19903 || codePoint >= 19968 && codePoint <= 40959;
   }
-  var japaneseTextBeyondSearch = /[\u{3006}\u{31f0}-\u{31ff}\u{4dc0}-\u{4dff}\u{f900}-\u{faff}\u{ff66}-\u{ff9f}\u{20000}-\u{2fa1f}]/u;
+  var japaneseTextRuns = [
+    [12293, 12294],
+    [12352, 12543],
+    [12784, 12799],
+    [13312, 40959],
+    [63744, 64255],
+    [65382, 65439],
+    [131072, 195103]
+  ];
+  var escaped = (scalar) => `\\u{${scalar.toString(16)}}`;
+  var japaneseText = new RegExp(
+    `[${japaneseTextRuns.map(([first, last]) => `${escaped(first)}-${escaped(last)}`).join("")}]`,
+    "u"
+  );
   function containsJapaneseText(text) {
-    for (const scalar of text) {
-      if (isJapaneseScalar(scalar.codePointAt(0) ?? 0) || japaneseTextBeyondSearch.test(scalar)) {
-        return true;
-      }
-    }
-    return false;
+    return japaneseText.test(text);
   }
   var latinLetter = /[A-Za-z]/;
   function writtenLanguage(text) {
@@ -5397,7 +5405,7 @@
       canonicalEntries: (groups) => canonicalEntries(JSON.parse(groups)),
       normalizeQuery,
       japaneseCandidates: (candidates) => japaneseCandidates(JSON.parse(candidates)),
-      containsJapaneseText,
+      japaneseTextRuns: () => japaneseTextRuns,
       writtenLanguage,
       isKanji: isKanjiCharacter,
       romaji,
