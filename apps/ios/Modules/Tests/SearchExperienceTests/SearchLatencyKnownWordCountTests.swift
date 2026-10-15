@@ -61,8 +61,7 @@ extension SearchLatencyTests {
     let clock = ContinuousClock()
     var listed: [String] = []
     for word in Self.exampleWords {
-      listed += await ExampleSentenceClient.live.listed(SearchQuery(word), nil, false)
-        .sentences.map(\.japanese)
+      listed += await Self.listed(word).map(\.sentence.japanese)
     }
     let lines = listed
     let ways = [KnownWordCount.aLineAtATime, .aFewLinesACall, .everyLineInOneCall]

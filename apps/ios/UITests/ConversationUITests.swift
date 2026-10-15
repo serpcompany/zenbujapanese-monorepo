@@ -11,20 +11,23 @@ final class ConversationUITests: ZenbuUITestCase {
     pause(app)
     let toggle = find("translate.session.toggle", in: app)
     toggle.tap()
-    expectation(for: NSPredicate(format: "label == 'Pause'"), evaluatedWith: toggle)
-    waitForExpectations(timeout: Self.patience)
+    waitUntil(toggle, "label == 'Pause'")
   }
 
   func testAPauseMidSentenceKeepsTheAppOpen() {
     let app = startConversation()
     let toggle = find("translate.session.toggle", in: app)
+    let heard = app.descendants(matching: .any)
+      .matching(NSPredicate(format: "identifier MATCHES %@", #"translate\.sentence\.[^.]+"#))
+    let newest = { heard.allElementsBoundByIndex.last?.identifier }
     var pauses = 0
-    while find("translate.live", in: app).waitForExistence(timeout: Self.patience / 6) {
+    while appears(find("translate.live", in: app), within: Self.patience / 6) {
+      let lastHeard = newest()
       pause(app)
       pauses += 1
       toggle.tap()
-      expectation(for: NSPredicate(format: "label == 'Pause'"), evaluatedWith: toggle)
-      waitForExpectations(timeout: Self.patience)
+      waitUntil(toggle, "label == 'Pause'")
+      waitUntil("the paused sentence being heard to its end") { newest() != lastHeard }
     }
     XCTAssertGreaterThan(pauses, 1, "the script's sentences were paused while they were heard")
     waitFor(firstElement(identifiedBy: "translate.sentence.", in: app))
@@ -75,8 +78,7 @@ final class ConversationUITests: ZenbuUITestCase {
     let app = startConversation()
     TestDevice.leaveAndReturn(to: app)
     if device == .mac {
-      expectation(for: NSPredicate(format: "label == 'Resume'"), evaluatedWith: find("translate.session.toggle", in: app))
-      waitForExpectations(timeout: Self.patience)
+      waitUntil(find("translate.session.toggle", in: app), "label == 'Resume'")
     } else {
       waitFor(app.staticTexts["Paused while you were away"])
     }
@@ -114,13 +116,14 @@ final class ConversationUITests: ZenbuUITestCase {
     pause(app)
     waitUntilStill(latest)
     let jump = find("translate.jump-to-latest", in: app)
-    for _ in 0..<3 where !jump.exists {
+    for _ in 0..<3 {
+      if jump.exists { break }
       if device == .mac {
         app.outlines.firstMatch.scroll(byDeltaX: 0, deltaY: 800)
       } else {
         app.windows.firstMatch.swipeDown()
       }
-      _ = jump.waitForExistence(timeout: Self.patience / 3)
+      if appears(jump, within: Self.patience / 3) { break }
     }
     tap(jump)
     waitUntilGone(jump)
@@ -139,11 +142,13 @@ final class ConversationUITests: ZenbuUITestCase {
 
   private func pause(_ app: XCUIApplication) {
     let toggle = find("translate.session.toggle", in: app)
-    for _ in 0..<3 where waitFor(toggle).label != "Resume" {
+    for _ in 0..<3 {
+      if waitFor(toggle).label == "Resume" { break }
       toggle.tap()
-      let paused = XCTNSPredicateExpectation(
-        predicate: NSPredicate(format: "label == 'Resume'"), object: toggle)
-      _ = XCTWaiter().wait(for: [paused], timeout: Self.patience / 3)
+      let paused = comesTrue("the conversation pausing", within: Self.patience / 3) {
+        toggle.label == "Resume"
+      }
+      if paused { break }
     }
     XCTAssertEqual(toggle.label, "Resume", "the conversation paused")
   }

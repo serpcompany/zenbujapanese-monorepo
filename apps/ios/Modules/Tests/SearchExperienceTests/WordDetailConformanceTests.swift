@@ -115,25 +115,23 @@ private struct WordDetailObserver {
   ) async -> [WordDetailCase.Conjugations.Form] {
     var result = forms
     for (index, form) in forms.enumerated() {
-      let examples = await exampleSentenceClient.formExamples(form.surface)
-      let query = SearchQuery(form.surface)
-      var shown: [WordDetailCase.FormExample] = []
-      for sentence in examples.prefix(limit) {
-        let tokens = await textAnalysisClient.linkedTokens(sentence.japanese, query, nil)
-        shown.append(
-          WordDetailCase.FormExample(
-            id: sentence.id.rawValue,
-            japanese: sentence.japanese,
-            english: sentence.english,
-            tokens: tokens.map { token in
-              WordDetailCase.FormToken(
-                surface: token.surface,
-                entry: token.recordedEntryID,
-                candidates: token.recordedCandidateIDs,
-                highlighted: token.matchesQuery ? true : nil
-              )
-            }
-          ))
+      let examples = await ExamplePage.every {
+        await exampleSentenceClient.formExamples(form.surface, $0)
+      }.examples
+      let shown = examples.prefix(limit).map { example in
+        WordDetailCase.FormExample(
+          id: example.id.rawValue,
+          japanese: example.sentence.japanese,
+          english: example.sentence.english,
+          tokens: example.words.map { token in
+            WordDetailCase.FormToken(
+              surface: token.surface,
+              entry: token.recordedEntryID,
+              candidates: token.recordedCandidateIDs,
+              highlighted: token.accent == .query ? true : nil
+            )
+          }
+        )
       }
       result[index].examples = WordDetailCase.FormExamples(
         ids: examples.map(\.id.rawValue), shown: shown)
@@ -153,34 +151,36 @@ private struct WordDetailObserver {
     -> WordDetailCase.Examples
   {
     let retrieval: EntryExamples
+    let listed: ExamplePage
     do {
-      retrieval = try await exampleSentenceClient.entryExamples(entry)
+      retrieval = try await exampleSentenceClient.entryExamples(entry, ExampleBatch(from: 0))
+      let first = retrieval.page
+      listed = try await ExamplePage.every(upTo: limit) { batch in
+        if batch.from == 0 { return first }
+        return try await exampleSentenceClient.examples(entry, batch)
+      }
     } catch {
       return WordDetailCase.Examples(
         listed: 0, reportedCount: nil, truncated: false, error: "\(error)", shown: [])
     }
-    var shown: [WordDetailCase.Example] = []
-    for sentence in retrieval.sentences.prefix(limit) {
-      let tokens = await textAnalysisClient.linkedTokens(
-        sentence.japanese, SearchQuery(entry.headword), entry)
-      shown.append(
-        WordDetailCase.Example(
-          id: sentence.id.rawValue,
-          japanese: sentence.japanese,
-          english: sentence.english,
-          tokens: tokens.map { token in
-            WordDetailCase.Token(
-              surface: token.surface,
-              entry: token.recordedEntryID,
-              candidates: token.recordedCandidateIDs,
-              pageWord: token.isPageWord ? true : nil
-            )
-          }
-        ))
+    let shown = listed.examples.prefix(limit).map { example in
+      WordDetailCase.Example(
+        id: example.id.rawValue,
+        japanese: example.sentence.japanese,
+        english: example.sentence.english,
+        tokens: example.words.map { token in
+          WordDetailCase.Token(
+            surface: token.surface,
+            entry: token.recordedEntryID,
+            candidates: token.recordedCandidateIDs,
+            pageWord: token.accent == .entry ? true : nil
+          )
+        }
+      )
     }
     let reportedCount = retrieval.count > 50 ? "more than 50" : "\(retrieval.count)"
     return WordDetailCase.Examples(
-      listed: retrieval.sentences.count,
+      listed: retrieval.page.listed,
       reportedCount: reportedCount,
       truncated: retrieval.truncated,
       error: nil,

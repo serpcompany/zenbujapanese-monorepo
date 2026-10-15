@@ -29,17 +29,24 @@ extension ZenbuUITestCase {
   func tabItem(_ tab: AppTab, in app: XCUIApplication) -> XCUIElement {
     let label = NSPredicate(
       format: "label == %@ OR label BEGINSWITH %@", tab.rawValue, tab.rawValue + ",")
+    let onThisDevice =
+      switch device {
+      case .phone: app.tabBars.buttons
+      case .pad: app.buttons
+      case .mac: app.toolbars.radioButtons
+      }
+    let anywhere = [
+      app.tabBars.buttons,
+      app.toolbars.radioButtons,
+      app.descendants(matching: .tab),
+      app.outlines.cells,
+      app.outlines.staticTexts,
+      app.collectionViews.cells,
+      app.collectionViews.buttons,
+      app.buttons,
+    ]
     return firstReachable(
-      [
-        app.tabBars.buttons.matching(label),
-        app.toolbars.radioButtons.matching(label),
-        app.descendants(matching: .tab).matching(label),
-        app.outlines.cells.matching(label),
-        app.outlines.staticTexts.matching(label),
-        app.collectionViews.cells.matching(label),
-        app.collectionViews.buttons.matching(label),
-        app.buttons.matching(label),
-      ], in: app
+      ([onThisDevice] + anywhere).map { $0.matching(label) }, in: app
     ).element
   }
 
@@ -47,7 +54,7 @@ extension ZenbuUITestCase {
     let root = find(tab.rootIdentifier, in: app)
     for _ in 0..<3 {
       tabItem(tab, in: app).tap()
-      if root.waitForExistence(timeout: Self.patience / 3) { return }
+      if appears(root, within: Self.patience / 3) { return }
     }
     waitFor(root)
   }
@@ -60,7 +67,7 @@ extension ZenbuUITestCase {
     if device == .mac {
       tap(app.toolbars.buttons["Back"].firstMatch)
     } else {
-      app.navigationBars.buttons.element(boundBy: 0).tap()
+      tap(app.navigationBars.buttons.element(boundBy: 0))
     }
   }
 

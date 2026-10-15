@@ -19,8 +19,6 @@ Check: UI `SearchUITests.testAnEnglishSearchListsTheWordAndOpensItsDetail` (the 
 
 A query reads the same whatever its width or case (Ｎ as n, ｶﾞｷﾞ as ガギ, a voiced mark joined to
 its kana), and white space of any kind, or the U+FEFF a paste can carry, only separates its words.
-It is searched whatever its length (the website stops at 200 characters, its service's limit),
-and one full-text search can't read shows Dictionary unavailable (the website finds nothing).
 
 Check: package `DictionaryCoreTests` (a query normalized by the core, scalar for scalar); core
 `search/query.test.ts` and `embedded/dictionary.test.ts`.
@@ -73,11 +71,10 @@ with the current one highlighted, so the other mode is one tap away. Both panels
 background, flat candidate tiles in the same fill as the radical squares, and glass buttons
 (white in light mode).
 
-- **Handwriting.** A white drawing pad sits at the top, with candidate tiles below it:
-  five to a row, each with the kanji's first meaning. Three rows show and more scroll. **Undo**,
-  at the bottom right, removes the last stroke and recognizes the rest again. Before
-  there are candidates, text shows under the pad only while recognizing, when nothing matches,
-  or when recognition fails.
+- **Handwriting.** A white drawing pad sits at the top, with candidate tiles below it: five to a
+  row, each with the kanji's first meaning. Three rows show and more scroll. **Undo**, at the bottom
+  right, removes the last stroke and recognizes the rest again. Before there are candidates, text
+  shows under the pad only while recognizing, when nothing matches, or when recognition fails.
 - **Radicals.** A white strip at the top lists the kanji that contain every selected radical,
   or says **Select one or more radicals**. Below it, the radicals scroll under pinned stroke-count
   headers, and radicals that can't combine with the selection are hidden. **Undo**, the same
@@ -172,12 +169,12 @@ refinement, Example Sentences, and Kanji rows) and `ExampleSearchConformanceTest
 and `generously`); UI `SearchResultsUITests.testARomajiQueryOffersItsJapaneseReading`,
 `testAWordOffersItsExampleSentences`, and `SearchUITests.testAQueryWithNoMatchesSaysSo`.
 
-The Example Sentences row opens the query's sentences on a screen titled with the query. Under
-the title, a line says how many it lists: "60 examples", or "The first 100 of more than 100
-examples" when more match than the 100 it lists. The website's section shows the same line.
+The Example Sentences row opens the query's sentences on a screen titled with the query. Under the
+title, a line says how many it lists: "60 examples", or "The first 100 of more than 100 examples"
+when more match than the 100 it lists. The website's section shows the same line.
 
-Check: the recorded `ExampleSearchConformanceTests` (`countText`, which the website is held to
-as well); core `detail/examples.test.ts` and `embedded/text.test.ts`; UI
+Check: the recorded `ExampleSearchConformanceTests` (`countText`, which the website is held to as
+well); core `detail/examples.test.ts` and `embedded/text.test.ts`; UI
 `SearchResultsUITests.testExampleSentencesSayHowManyAreListed` (3 examples, and over 100).
 
 Recent text searches are stored on the device and listed while the query is empty. A learner can
@@ -191,13 +188,12 @@ Mac), and `SearchResultsUITests.testClearingRecentSearchesEmptiesTheList`.
 
 ### Sorting results
 
-While results are showing, their first row, above Example Sentences, names the order: **Sorted
-by Default**, **Sorted by YouTube**, **Sorted by Known Words**. Tapping
-it opens a short menu with two rows, **Sort By** and **Filter** ([Filtering results](#filtering-results)).
-**Sort By** names the current order underneath and opens a list with **Default**, one item for each
-enabled frequency dictionary by its name (JLPT, YouTube, Japanese Wikipedia, TV & Movies, Anime,
-Manga, Novels, Visual Novels, Video Games), and **Known Words**, one checked at a time. There is
-no direction to choose.
+While results are showing, their first row, above Example Sentences, names the order: **Sorted by
+Default**, **Sorted by YouTube**, **Sorted by Known Words**. Tapping it opens a short menu with two
+rows, **Sort By** and **Filter** ([Filtering results](#filtering-results)). **Sort By** names the
+current order underneath and opens a list with **Default**, one item for each enabled frequency
+dictionary by its name (JLPT, YouTube, Japanese Wikipedia, TV & Movies, Anime, Manga, Novels, Visual
+Novels, Video Games), and **Known Words**, one checked at a time. There is no direction to choose.
 
 - **Default** is the order described above.
 - **A dictionary** orders every matching word by that dictionary alone, most common first,
@@ -215,12 +211,11 @@ Check: core `results/ordering.test.ts` (each order, and the row's words); packag
 to Default).
 
 Switching re-sorts the visible results without searching again and announces the new order to
-VoiceOver. The choice is kept on the device across launches and applies to Japanese, English,
-and romaji searches. If frequency data can't be read, a dictionary sort shows as Default until it
-can be. If the chosen dictionary is disabled or removed, Search goes back to Default. The Kanji
-row, Example Sentences, the reading refinement, and Discovered Words keep their
-places; when there are no word rows to sort (only Discovered Words, or only a single kanji's
-Kanji row), the row isn't shown.
+VoiceOver. The choice is kept on the device across launches and applies to Japanese, English, and
+romaji searches. If frequency data can't be read, a dictionary sort shows as Default until it can
+be. If the chosen dictionary is disabled or removed, Search goes back to Default. The Kanji row,
+Example Sentences, the reading refinement, and Discovered Words keep their places; when there are no
+word rows to sort (only Discovered Words, or only a single kanji's Kanji row), the row isn't shown.
 
 Check: core `results/ordering.test.ts` and `results/learner.test.ts` (VoiceOver's announcement, the
 stored choice, unreadable ranks, a disabled dictionary); package `ResultsScreenTests` (the stored
@@ -228,10 +223,10 @@ choice, an unreadable dictionary, a disabled one, and none enabled, on the bundl
 
 ### Filtering results
 
-The **Sorted by** row's menu has a **Filter** row, naming its current choice underneath, under **Sort By**.
-It opens **All**, **Known**, and **Unknown**, one checked at a time: **Known** shows only known
-words and **Unknown** only the words not yet known. Marking a word known or unknown moves it out
-of or into the list at once. Enabling and disabling frequency dictionaries happens under
+The **Sorted by** row's menu has a **Filter** row, naming its current choice underneath, under
+**Sort By**. It opens **All**, **Known**, and **Unknown**, one checked at a time: **Known** shows
+only known words and **Unknown** only the words not yet known. Marking a word known or unknown moves
+it out of or into the list at once. Enabling and disabling frequency dictionaries happens under
 **Account → Frequency Dictionaries**, not here.
 
 While a filter is on, the **Sorted by** row adds it after the order, as in **Sorted by Default · 1
@@ -243,21 +238,19 @@ words show to VoiceOver. The filter is kept on the device across launches and ap
 Japanese, English, and romaji searches. The Kanji row, Example Sentences, the reading refinement,
 and Discovered Words are never filtered.
 
-Check: core `results/ordering.test.ts` (known or unknown words, the order kept, the count, and
-the stored filter); package `ResultsScreenTests` (known words only, and the count a filter
-hides); UI
-`SearchResultsUITests.testFilteringToKnownWordsHidesEveryWordUntilTheFilterIsCleared` (the row's
-**1 filter**, **No Words Match Your Filter**, and **Clear Filter**) and
+Check: core `results/ordering.test.ts` (known or unknown words, the order kept, the count, and the
+stored filter); package `ResultsScreenTests` (known words only, and the count a filter hides); UI
+`SearchResultsUITests.testFilteringToKnownWordsHidesEveryWordUntilTheFilterIsCleared` (the row's **1
+filter**, **No Words Match Your Filter**, and **Clear Filter**) and
 `testAWordLeavesTheUnknownFilterOnceItsMarkedKnown`.
 
 ## Dictionary and kanji details
 
-A word detail can present its written form and reading, ordered meanings, alternative forms,
-kanji, related words, conjugations, source-matched Example Sentences, pronunciation, and
-frequency information when the corresponding data is available.
-Examples for a word written in kana, such as それで or でも, are the sentences Tatoeba's word
-index links to that word, so a kana word inside a longer one (でも in いつでも) does not count.
-Other words match their written forms and reading.
+A word detail can present its written form and reading, ordered meanings, alternative forms, kanji,
+related words, conjugations, source-matched Example Sentences, pronunciation, and frequency
+information when the corresponding data is available. Examples for a word written in kana, such as
+それで or でも, are the sentences Tatoeba's word index links to that word, so a kana word inside a longer
+one (でも in いつでも) does not count. Other words match their written forms and reading.
 
 Check: the recorded `WordDetailConformanceTests` and `ExampleSearchConformanceTests`; package
 `KanaHeadwordExampleTests`.
@@ -273,33 +266,32 @@ result written and read the same, or the first result when none is.
 Check: package `WordResolutionTests`; core `embedded/dictionary.test.ts`.
 
 The top of a word detail shows the headword with furigana, following the Reading Aids setting.
-Tapping one of its kanji shows which furigana belongs to it (see
-[Furigana kanji highlight](index.md#furigana-kanji-highlight)). When furigana is off, the reading
-appears under the headword instead. A long headword shrinks one size to keep its furigana beside
-the pitch accent; when even that doesn't fit, the pitch accent moves to its own line under a
-full-size headword. To the right of the headword are the pitch accent (the reading in katakana with
-an overline across the high morae and a hook at the downstep) in a capsule with a speaker, which
-pronounces the word when tapped, and the latest encounter photo. A word without pitch shows a
-standalone pronounce button. Pitch comes from UniDic; for a two-part compound UniDic doesn't list
-whole, such as 記者会見, it is estimated from the parts' accent-combination types, and a word with
-neither shows no pitch. A part-of-speech row follows and opens the conjugation table when one
-exists. It names one word class and then its modifiers in sentence case without repeating "verb",
-for example "Godan verb (intransitive)", "Noun · する verb (transitive)", "Adverb (と)", or
-"Pre-noun adjective".
+Tapping one of its kanji shows which furigana belongs to it (see [Furigana kanji
+highlight](index.md#furigana-kanji-highlight)). When furigana is off, the reading appears under the
+headword instead. A long headword shrinks one size to keep its furigana beside the pitch accent;
+when even that doesn't fit, the pitch accent moves to its own line under a full-size headword. To
+the right of the headword are the pitch accent (the reading in katakana with an overline across the
+high morae and a hook at the downstep) in a capsule with a speaker, which pronounces the word when
+tapped, and the latest encounter photo. A word without pitch shows a standalone pronounce button.
+Pitch comes from UniDic; for a two-part compound UniDic doesn't list whole, such as 記者会見, it is
+estimated from the parts' accent-combination types, and a word with neither shows no pitch. A
+part-of-speech row follows and opens the conjugation table when one exists. It names one word class
+and then its modifiers in sentence case without repeating "verb", for example "Godan verb
+(intransitive)", "Noun · する verb (transitive)", "Adverb (と)", or "Pre-noun adjective".
 
 Check: the recorded `WordDetailConformanceTests` (furigana, pitch, and the part of speech);
 core `detail/pitch.test.ts` and `detail/part-of-speech.test.ts`; package `CompoundPitchTests`; UI
 `WordDetailUITests.testTappingAKanjiInTheHeadwordHighlightsItsReading` and
 `AccountUITests.testTurningFuriganaOffShowsTheReadingUnderTheHeadword`.
 
-The conjugation table starts with the word, its reading and meaning, its word class, and a
-one-line rule for how that class conjugates. A Plain/Polite control switches register when both
-exist. Each row names the form and shows it with the changed ending highlighted. Selecting a row
-opens that form's screen. It leads with what the form means, then shows the form the way Word
-Detail shows a word (furigana and a pronounce button) with its ending highlighted, and then every
-Example Sentence that uses the complete form, in the same list Word Detail uses. Forms that share a spelling, such as potential and
-passive 見られる, say so. Selecting a word in the example opens its Word Detail, and Back returns
-to the form.
+The conjugation table starts with the word, its reading and meaning, its word class, and a one-line
+rule for how that class conjugates. A Plain/Polite control switches register when both exist. Each
+row names the form and shows it with the changed ending highlighted. Selecting a row opens that
+form's screen. It leads with what the form means, then shows the form the way Word Detail shows a
+word (furigana and a pronounce button) with its ending highlighted, and then every Example Sentence
+that uses the complete form, in the same list Word Detail uses. Forms that share a spelling, such as
+potential and passive 見られる, say so. Selecting a word in the example opens its Word Detail, and Back
+returns to the form.
 
 Check: the recorded `WordDetailConformanceTests` (each table's forms and their examples); UI
 `SearchUITests.testAVerbOpensItsConjugationsAndAForm`.
@@ -313,8 +305,20 @@ Word Meanings** on, each unknown word shows a short accent-colored meaning under
 **Show Sentence Translations** controls whether example sentences show their English.
 
 Check: the recorded `ExampleSearchConformanceTests`; core `examples/morphology.test.ts` (which
-pieces join into one word) and `detail/text.test.ts` (the short meaning); package
-`LinkedWordResolutionTests` and `WordMeaningTests`.
+pieces join into one word), `artifact/word-examples.test.ts` (which words are accented), and
+`detail/text.test.ts` (the short meaning); package `LinkedWordResolutionTests` and
+`WordMeaningTests`.
+
+On Example Sentences, a word's Examples, and a form's examples, a sentence appears with its words
+linked, furigana, and romaji when Romaji is on: never as plain text first, and at the height it
+keeps. Each list shows 25 sentences, those that fit the screen first, then 25 more at its end.
+Back from a word opened on Example Sentences finds its sentence on screen, within a third of the
+list of where it was. A list that fails says "Examples couldn’t be loaded.", never that it has none;
+a later page, "More examples couldn’t be loaded." Each has **Retry** and is read again on return.
+
+Check: UI `ExampleRowsUITests` (rows 1, 23, and 26 of each screen arrive linked while held, after
+no empty or failed message, and keep their height; a form's word opens; the place is kept, Romaji
+on; a failed read says so, read on return and Retry); `LoadedExamplesTests`, `ExamplePlaceTests`.
 
 A **Frequency** section lists each enabled dictionary's rank or JLPT level for the word. It is drawn
 with the page, except just after a launch, and follows a change of dictionaries at once. Selecting a
@@ -365,11 +369,10 @@ learner's place in the preceding detail.
 Check: the recorded `KanjiDetailConformanceTests`; package `KanjiScrollMemoryTests`; UI
 `WordDetailUITests.testAKanjiShowsItsStrokeOrderAndItsWords`.
 
-An element's page shows the element, its meanings and what it contributes, the on-readings it
-links, its alternative forms, the kanji it is on its own (the most frequent among the element
-and its alternatives), the kanji that contain it, each with up to three meanings and its
-on-readings, and the sources. A kanji opens its own detail, and coming back returns to it in
-the list.
+An element's page shows the element, its meanings and what it contributes, the on-readings it links,
+its alternative forms, the kanji it is on its own (the most frequent among the element and its
+alternatives), the kanji that contain it, each with up to three meanings and its on-readings, and
+the sources. A kanji opens its own detail, and coming back returns to it in the list.
 
 Check: the recorded `KanjiElementConformanceTests`; core `detail/kanji-element.test.ts`; package
 `KanjiScrollMemoryTests` and `KanjiFilesTests` (a compatibility kanji and the kanji it unifies
