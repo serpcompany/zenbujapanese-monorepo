@@ -235,10 +235,11 @@ final class ExampleRowsUITests: ZenbuUITestCase {
     guard device != .mac else { return isReachable(element, in: app, within: rows.list) }
     guard let frame = reachableFrame(of: element, in: app) else { return false }
     let window = app.windows.firstMatch.frame
-    let bar = app.navigationBars.firstMatch
-    let tabs = app.tabBars.firstMatch
-    let top = bar.exists ? bar.frame.maxY : window.minY
-    let bottom = tabs.exists ? tabs.frame.minY : window.maxY
+    var (top, bottom) = (window.minY, window.maxY)
+    for bar in [app.navigationBars.firstMatch, app.tabBars.firstMatch] where bar.exists {
+      let edge = bar.frame
+      if edge.midY < window.midY { top = max(top, edge.maxY) } else { bottom = min(bottom, edge.minY) }
+    }
     return top < frame.midY && frame.midY < bottom
   }
 
@@ -311,8 +312,10 @@ final class ExampleRowsUITests: ZenbuUITestCase {
       let seen = laidOutNumber(of: rows) ?? lastLaidOut
       return flick(rows, back: seen.map { number < $0 } ?? false, in: app)
     }
-    let area = device == .mac ? rows.list : app.windows.firstMatch
-    scroll(area, back: frame.midY < area.frame.midY)
+    guard device == .mac else {
+      return scroll(app.windows.firstMatch, back: frame.midY < app.windows.firstMatch.frame.midY)
+    }
+    rows.list.scroll(byDeltaX: 0, deltaY: rows.list.frame.midY - frame.midY)
   }
 
   private func laidOutNumber(of rows: Rows) -> Int? {
