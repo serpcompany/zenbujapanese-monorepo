@@ -4,9 +4,9 @@ Every Zenbu app will read one versioned language-data release from R2
 ([ADR 0006](../docs/adr/0006-share-language-data-as-a-versioned-artifact.md),
 [issue 463](https://github.com/serpcompany/zenbujapanese-monorepo/issues/463)). This folder
 holds the pipeline that packages a release and publishes it to the `zenbujapanese-language-data`
-R2 bucket, and each release's pinned manifest. No app reads the bucket: the app bundles the files
-of the release `release.json` names, ADR 0009's dictionary service copies them into its image, and
-checks hold both to that release's pinned manifest before merge
+R2 bucket, and each release's pinned manifest. No app reads the bucket: what the app bundles, and
+what ADR 0009's dictionary service copies into its image, are files of the release `release.json`
+names, and checks hold both to that release's pinned manifest before merge
 ([Pinned releases](#pinned-releases), [issue 473](https://github.com/serpcompany/zenbujapanese-monorepo/issues/473)).
 The source data, tools, and conformance suites still live under `apps/ios` until #469 moves them.
 
@@ -95,7 +95,7 @@ writes from a build. It's the build's manifest without the fields that don't com
 left out rather than set to `null`, which would claim a build outside Git or a first release. So
 any commit holding the same files builds the pinned release.
 
-The app bundles, and the dictionary service's image copies, the files of the release
+What the app bundles, and what the dictionary service's image copies, are files of the release
 `release.json` names. These hold them to its pin, so CI never reads the bucket:
 
 - **`package.py check-pin`**, in the `pins` job of `Language data build`, without Git LFS. It
@@ -106,15 +106,17 @@ The app bundles, and the dictionary service's image copies, the files of the rel
     `not_released`;
   - a Dockerfile in `images` copies such a file from under any root;
   - `release.json` names a release earlier than one already pinned;
-  - with `--base`, a pull request's base: the pull request changes or deletes a pin the base
-    holds. A merged pin never changes, since it may already be published.
+  - with `--base`, a pull request's base: the pull request changes, deletes, or adds a file in
+    a release folder whose pin the base holds. A merged pin never changes, since it may already be
+    published.
 - **`package.py check-pin --built OUT`**, in the shared action after each build: the built
   manifest equals the pin, but for the fields above. The build has checked every file's bytes
   against HEAD, so the app, the image, and the release hold byte-identical files.
 - **`publish.py`:** `publish` refuses a staged release that isn't its pin before uploading
   anything, and `verify` refuses a published manifest that isn't.
-- **The dictionary service** refuses to start on files whose SHA-256s aren't the pinned
-  release's ([`dictionary-api.md`](../docs/agents/dictionary-api.md), What it reads).
+- **The dictionary service** refuses to start when a file a word card is read from isn't the
+  pinned release's, by its SHA-256 ([`dictionary-api.md`](../docs/agents/dictionary-api.md), How
+  it runs).
 
 ## Running it
 

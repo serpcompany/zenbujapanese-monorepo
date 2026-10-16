@@ -48,6 +48,23 @@ def check_latest(releases: Path, release: str) -> None:
         )
 
 
+def is_pin(pinned: object) -> bool:
+    if not isinstance(pinned, dict) or not isinstance(pinned.get("ids"), dict):
+        return False
+    files = pinned.get("files")
+    return (
+        isinstance(pinned["ids"].get("ent_seq_sha256"), str)
+        and isinstance(files, list)
+        and all(
+            isinstance(record, dict)
+            and isinstance(record.get("name"), str)
+            and isinstance(record.get("sha256"), str)
+            and isinstance(record.get("bytes"), int)
+            for record in files
+        )
+    )
+
+
 def load_pinned(releases: Path, release: str) -> dict:
     path = pinned_path(releases, release)
     if not path.is_file():
@@ -56,6 +73,8 @@ def load_pinned(releases: Path, release: str) -> dict:
             "package.py pin on it"
         )
     pinned = json.loads(path.read_text())
+    if not is_pin(pinned):
+        raise Refusal(f"{path} isn't a pinned manifest: write it with package.py pin")
     if pinned.get("release") != release:
         raise Refusal(f"{path} pins release {pinned.get('release')!r}, not {release}")
     run_fields = [name for name in RUN_FIELDS if name in pinned]

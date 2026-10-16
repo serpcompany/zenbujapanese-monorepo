@@ -79,7 +79,14 @@ class CommittedFilesTests(PinnedTestCase):
             {"path": "res/NOTICE.txt", "why": "a notice"},
         ]
         self.refused(r"not_released names data/res/Gone, which isn't committed")
-        self.refused(r"not_released names data/res/NOTICE\.txt, which is a release file")
+        self.refused(r"not_released names data/res/NOTICE\.txt, which holds release files")
+
+    def test_not_released_names_no_folder_that_holds_release_files(self):
+        self.scratch.inputs["files"].append({"name": "weights.bin", "path": "res/Model/weights.bin"})
+        self.refused(
+            r"not_released names data/res/Model, which holds release files: "
+            r"\['data/res/Model/weights\.bin'\]"
+        )
 
     def test_a_file_added_to_or_dropped_from_the_release_needs_a_new_pin(self):
         self.scratch.drop("Mapping.sql")
@@ -135,6 +142,12 @@ class PinnedManifestTests(PinnedTestCase):
         with self.assertRaisesRegex(Refusal, r"release 2026\.11\.1 has no pinned manifest"):
             load_pinned(self.scratch.releases, "2026.11.1")
 
+    def test_a_malformed_pin_is_refused_rather_than_read(self):
+        path = pinned_path(self.scratch.releases, "2026.10.1")
+        path.write_text(json.dumps({"release": "2026.10.1", "files": [{"name": "x"}]}))
+        with self.assertRaisesRegex(Refusal, r"isn't a pinned manifest: write it with package"):
+            self.pinned()
+
     def test_a_pin_holding_run_fields_or_another_release_is_refused(self):
         path = pinned_path(self.scratch.releases, "2026.10.1")
         path.write_text(json.dumps({**self.pinned(), "git_commit": "f" * 40}))
@@ -168,6 +181,12 @@ class PinHistoryTests(PinnedTestCase):
         self.path.unlink()
         self.scratch.commit()
         with self.assertRaisesRegex(Refusal, r"releases/2026\.10\.1/manifest\.json"):
+            self.unchanged()
+
+    def test_no_file_in_a_merged_release_folder_changes_or_is_added(self):
+        (self.path.parent / "notes.json").write_text("{}")
+        self.scratch.commit()
+        with self.assertRaisesRegex(Refusal, r"differ from .*: language-data/releases/2026\.10\.1/"):
             self.unchanged()
 
     def test_a_new_release_is_pinned_beside_the_merged_ones(self):
@@ -236,7 +255,7 @@ class DockerfileTests(unittest.TestCase):
             "FROM node AS build\n"
             "COPY a.json b/ ./\n"
             "COPY --from=build /x /y\n"
-            "COPY --chown=node \\\n  c/d.txt \\\n  e /z/\n"
+            "COPY --chown=node \\\n  # a comment Docker drops\n  c/d.txt \\\n  e /z/\n"
             'ADD ["f g.txt", "/h/"]\n'
             "RUN echo COPY not/this\n"
         )
