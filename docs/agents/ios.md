@@ -573,8 +573,8 @@ What the dictionary finds, lists, orders, labels, and says is the shared TypeScr
 (`packages/dictionary-core`, [`dictionary-core.md`](dictionary-core.md)): search, the results
 screen with Sort By and Filter, example sentences, linked words, and the word, kanji, and kanji
 element pages. The app runs it in JavaScriptCore, offline, and has no Swift of its own for
-finding or ranking; the table under Layers in [`ARCHITECTURE.md`](../../ARCHITECTURE.md) lists
-what Swift still decides. The Swift keeps the screens, reads the files, and decodes the core's
+finding or ranking; it still writes a few labels, such as the kanji element page's Source rows.
+The Swift keeps the screens, reads the files, and decodes the core's
 answers; [`dictionary-core.md`](dictionary-core.md), The app's side, lists which type asks for what.
 
 - **The host.** `DictionaryCore` (`DictionaryCore.swift`) loads the bundle,

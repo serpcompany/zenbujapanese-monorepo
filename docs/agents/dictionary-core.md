@@ -43,7 +43,7 @@ these and decodes the answer; [The app's side](#the-apps-side) says which type a
   its own way; Biome refuses `console` in `src` (tests aside).
 - **A rule lives here, once.** What a screen lists, the order, a title, a label, and what
   VoiceOver says are answers the core gives every client, so a client decides none itself, apart
-  from the rows of the table under Layers in [`ARCHITECTURE.md`](../../ARCHITECTURE.md). Add a
+  from a few labels a client still writes, such as the app's kanji element Source rows. Add a
   field to the answer, and have the client show it. What the app keeps native, and why, is in
   [`ios.md`](ios.md), The dictionary core in the app.
 - **Rebuild the app's bundle with the core.** The app runs a bundle of the core that is checked in

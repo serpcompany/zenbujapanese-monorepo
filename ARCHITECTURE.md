@@ -103,7 +103,8 @@ saying where the code belongs:
 - **Across parts**: the app finds and ranks nothing itself: it asks the core, through the bundle
   it runs, what each dictionary screen lists, in what order, and with what labels
   ([`docs/agents/dictionary-core.md`](docs/agents/dictionary-core.md), The app's side), apart
-  from the rows of the table below; the app's bundle of the core is rebuilt with the core, which
+  from a few labels it still writes, such as the kanji element page's Source rows; the app's
+  bundle of the core is rebuilt with the core, which
   the core's tests check; the website and the service share their row shapes through the core;
   no app imports another, and apps reach a shared package by its name.
 
