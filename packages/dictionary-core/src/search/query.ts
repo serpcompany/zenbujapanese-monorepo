@@ -64,6 +64,34 @@ function isJapaneseScalar(codePoint: number): boolean {
   )
 }
 
+export const japaneseTextRuns: readonly (readonly [number, number])[] = [
+  [0x3005, 0x3006],
+  [0x3040, 0x30ff],
+  [0x31f0, 0x31ff],
+  [0x3400, 0x9fff],
+  [0xf900, 0xfaff],
+  [0xff66, 0xff9f],
+  [0x20000, 0x2fa1f]
+]
+
+const escaped = (scalar: number) => `\\u{${scalar.toString(16)}}`
+
+const japaneseText = new RegExp(
+  `[${japaneseTextRuns.map(([first, last]) => `${escaped(first)}-${escaped(last)}`).join('')}]`,
+  'u'
+)
+
+export function containsJapaneseText(text: string): boolean {
+  return japaneseText.test(text)
+}
+
+const latinLetter = /[A-Za-z]/
+
+export function writtenLanguage(text: string): 'ja' | 'en' | null {
+  if (containsJapaneseText(text)) return 'ja'
+  return latinLetter.test(text) ? 'en' : null
+}
+
 export function japaneseSegments(value: string): string[] {
   const segments: string[] = []
   let current = ''

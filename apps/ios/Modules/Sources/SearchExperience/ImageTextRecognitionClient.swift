@@ -31,6 +31,10 @@ struct RecognizedImageTextObservation: Hashable, Identifiable, Sendable {
 struct ImageTextRecognitionClient: Sendable {
   var recognize: @Sendable (ImageTextAsset) async throws -> [RecognizedImageTextObservation]
 
+  static func foundJapanese(inTopCandidates texts: [String]) -> Bool {
+    texts.contains(where: PresentationCore.shared.containsJapaneseText)
+  }
+
   static let live = ImageTextRecognitionClient { asset in
     let task = Task.detached(priority: .userInitiated) {
       try await VisionTextRecognizer.recognize(asset)
@@ -57,7 +61,7 @@ private enum VisionTextRecognizer {
 
     var results = try await handler.perform(
       request(languages: ["ja-JP", "en-US"], languageCorrection: true))
-    if !results.containsJapaneseText {
+    if !containsJapaneseText(results) {
       try Task.checkCancellation()
       let fallback = try await handler.perform(
         request(languages: ["ja-JP"], languageCorrection: false))
@@ -76,6 +80,11 @@ private enum VisionTextRecognizer {
         isVertical: isVertical(observation.boundingBox.cgRect, characterBoxes: boxes, in: pixelSize)
       )
     }
+  }
+
+  private static func containsJapaneseText(_ observations: [RecognizedTextObservation]) -> Bool {
+    ImageTextRecognitionClient.foundJapanese(
+      inTopCandidates: observations.compactMap { $0.topCandidates(1).first?.string })
   }
 
   private static func isVertical(
@@ -112,22 +121,6 @@ private enum VisionTextRecognizer {
     request.usesLanguageCorrection = languageCorrection
     request.minimumTextHeightFraction = languageCorrection ? 0.01 : 0.005
     return request
-  }
-}
-
-private extension [RecognizedTextObservation] {
-  var containsJapaneseText: Bool {
-    contains { observation in
-      observation.topCandidates(1).first?.string.contains(where: \.isJapaneseText) == true
-    }
-  }
-}
-
-private extension Character {
-  var isJapaneseText: Bool {
-    unicodeScalars.contains {
-      (0x3040...0x30FF).contains(Int($0.value)) || (0x3400...0x9FFF).contains(Int($0.value))
-    }
   }
 }
 

@@ -61,17 +61,16 @@ hand, the camera and its flash on a device.
 
 ## Typing to translate
 
-The typing screen is one large card reading **Translate anything**. Translate detects the
-language:
-text with any kana or kanji is Japanese and is translated into English, and text with only Latin
-letters is English and is translated into Japanese. There is no swap button. The translation
-appears in the same card under a divider, with a label such as **English → Japanese** and
-buttons to copy and speak it; Japanese in it is underlined and tappable. An ✕ clears the text.
-If Apple's Japanese language isn't downloaded, the card offers **Download Japanese**, which shows
-Apple's download prompt. The typing screen's **•••** menu holds **Furigana**.
+The typing screen is one large card reading **Translate anything**. Translate detects the language:
+text with any kana or kanji (𠮷 and halfwidth katakana too) is Japanese and is translated into
+English, and text with only Latin letters A to Z is English and is translated into Japanese. There
+is no swap button. The translation appears in the same card under a divider, with a label such as
+**English → Japanese** and buttons to copy and speak it; Japanese in it is underlined and tappable.
+An ✕ clears the text. If Apple's Japanese language isn't downloaded, the card offers **Download
+Japanese**, which shows Apple's prompt. The typing screen's **•••** menu holds **Furigana**.
 
 Check: UI `TranslateUITests.testTypedTextIsTranslatedWithItsDirection` (the direction, Copy, Speak,
-a tappable word, and ✕); package `LanguageDetectionTests` (which text is Japanese).
+a tappable word, and ✕); package `WrittenLanguageTests` (which text is Japanese).
 
 ## Starting a live mode
 
@@ -266,9 +265,10 @@ system's, dragging from another app is by hand, and so is Continuity Camera.
 
 Image Search recognizes Japanese text in one or more selected images. It reads both
 horizontal and vertical (縦書き) Japanese; vertical columns are read top to bottom, right to
-left, and English elsewhere in the image does not hide the Japanese.
+left, and English elsewhere in the image does not hide the Japanese. A line or a word is Japanese
+by typed text's rule ([Typing to translate](#typing-to-translate)): 々, ｶﾀｶﾅ, and 𠮷 all are.
 
-Check: package `ImageTextRecognitionTests`.
+Check: package `ImageTextRecognitionTests` and `WrittenLanguageTests`.
 
 A segmented control switches between four views, and Image Search remembers the last one
 (**Both** at first). The toolbar is the same in every view: a close button and a **•••** menu

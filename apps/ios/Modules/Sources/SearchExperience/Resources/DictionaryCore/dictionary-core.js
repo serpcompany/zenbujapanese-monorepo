@@ -442,6 +442,28 @@
   function isJapaneseScalar(codePoint) {
     return codePoint === 12293 || codePoint >= 12352 && codePoint <= 12543 || codePoint >= 13312 && codePoint <= 19903 || codePoint >= 19968 && codePoint <= 40959;
   }
+  var japaneseTextRuns = [
+    [12293, 12294],
+    [12352, 12543],
+    [12784, 12799],
+    [13312, 40959],
+    [63744, 64255],
+    [65382, 65439],
+    [131072, 195103]
+  ];
+  var escaped = (scalar) => `\\u{${scalar.toString(16)}}`;
+  var japaneseText = new RegExp(
+    `[${japaneseTextRuns.map(([first, last]) => `${escaped(first)}-${escaped(last)}`).join("")}]`,
+    "u"
+  );
+  function containsJapaneseText(text) {
+    return japaneseText.test(text);
+  }
+  var latinLetter = /[A-Za-z]/;
+  function writtenLanguage(text) {
+    if (containsJapaneseText(text)) return "ja";
+    return latinLetter.test(text) ? "en" : null;
+  }
   function japaneseSegments(value) {
     const segments = [];
     let current = "";
@@ -5481,6 +5503,8 @@
       canonicalEntries: (groups) => canonicalEntries(JSON.parse(groups)),
       normalizeQuery,
       japaneseCandidates: (candidates) => japaneseCandidates(JSON.parse(candidates)),
+      japaneseTextRuns: () => japaneseTextRuns,
+      writtenLanguage,
       isKanji: isKanjiCharacter,
       romaji,
       sentenceRomaji: (words2) => sentenceRomaji(JSON.parse(words2)),
