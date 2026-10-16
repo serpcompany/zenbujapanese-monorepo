@@ -87,6 +87,17 @@ def ent_seq_ids(path: Path) -> tuple[int, str]:
     return len(ids), ent_seq_sha256(ids)
 
 
+def declared_schema(path: Path) -> object:
+    with open_sqlite(path) as connection:
+        has_metadata = connection.execute(
+            "SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = 'metadata'"
+        ).fetchone()
+        row = has_metadata and connection.execute(
+            "SELECT value FROM metadata WHERE key = 'artifact_schema'"
+        ).fetchone()
+    return json_value(row[0]) if row else None
+
+
 def jmdict_entries(path: Path) -> dict[int, tuple[str, str]]:
     with open_sqlite(path) as connection:
         rows = connection.execute(

@@ -67,6 +67,16 @@ def lfs_paths(repo: Path, inputs: Inputs) -> list[str]:
     return [entry["path"] for entry in inputs.files if heads[entry["path"]].lfs_oid]
 
 
+def sha256_of(body: bytes | Path) -> str:
+    if isinstance(body, bytes):
+        return hashlib.sha256(body).hexdigest()
+    digest = hashlib.sha256()
+    with body.open("rb") as file:
+        while chunk := file.read(CHUNK):
+            digest.update(chunk)
+    return digest.hexdigest()
+
+
 def git_blob_id(data: bytes) -> str:
     return hashlib.sha1(f"blob {len(data)}\0".encode() + data).hexdigest()
 

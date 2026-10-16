@@ -2,8 +2,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from bucket_objects import sha256_of
-from committed_files import git
+from committed_files import git, sha256_of
 from pinned_release import check_latest, load_pinned
 from refusal import Refusal
 from release_build import LANGUAGE_REFERENCE_SCHEMA
@@ -16,18 +15,25 @@ from retired_entries import (
     release_steps,
     retired_document,
 )
-from sqlite_files import ent_seq_sha256, is_sqlite, jmdict_entries
+from sqlite_files import declared_schema, ent_seq_sha256, is_sqlite, jmdict_entries
 
 
-def language_reference(inputs: Inputs) -> dict:
-    planned = [
+def schema_of(repo: Path, entry: dict) -> object:
+    path = repo / entry["path"]
+    if entry.get("artifact_schema") or not entry["name"].endswith(".sqlite3"):
+        return entry.get("artifact_schema")
+    return declared_schema(path) if path.is_file() and is_sqlite(path) else None
+
+
+def language_reference(repo: Path, inputs: Inputs) -> dict:
+    found = [
         entry
         for entry in inputs.files
-        if LANGUAGE_REFERENCE_SCHEMA.match(entry.get("artifact_schema") or "")
+        if LANGUAGE_REFERENCE_SCHEMA.match(str(schema_of(repo, entry) or ""))
     ]
-    if len(planned) != 1:
-        raise Refusal("release-inputs.json must plan exactly one zenbu.language-reference file")
-    return planned[0]
+    if len(found) != 1:
+        raise Refusal(f"the release needs exactly one zenbu.language-reference file, not {len(found)}")
+    return found[0]
 
 
 def lfs_object(repo: Path, oid: str) -> Path:
@@ -67,7 +73,7 @@ def retire(
     if not inputs.retired_entries:
         raise Refusal("release-inputs.json names no retired_entries file")
     check_latest(releases, release)
-    path = repo / language_reference(inputs)["path"]
+    path = repo / language_reference(repo, inputs)["path"]
     if not is_sqlite(path):
         raise Refusal(f"{path} isn't a SQLite database: run git lfs pull")
     language_sha256, current = sha256_of(path), jmdict_entries(path)

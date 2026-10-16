@@ -1128,7 +1128,7 @@ number past any JMdict entry.
 
 **Retired word URLs.** A word whose entry was retired returns 410 Gone, or redirects (308) to its
 replacement in one hop when the dictionary holds the replacement. Each language-data release
-records the entries it drops (`language-data/retired-entries.md`); 2026.10.2 retires none.
+records the entries it drops (`language-data/retired-entries.md`).
 
 - Source: ADR 0007; #465; #463.
 - Check: `src/lib/dictionary/retired.test.ts`, "retiredWordResponse".

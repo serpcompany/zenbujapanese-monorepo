@@ -14,6 +14,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 import ranking_contract
 import release_build
 import release_inputs
+import release_manifest
 from refusal import Refusal
 
 
@@ -267,13 +268,13 @@ class Scratch:
         self.plain["data/res/Contract.json"] = json.dumps(self.contract).encode()
 
     def set_retired(self) -> None:
-        self.plain[self.RETIRED] = json.dumps(
+        self.plain[self.RETIRED] = release_manifest.manifest_bytes(
             {
                 "schema": "zenbu.retired-entries.v1",
                 "language_data_sha256": self.language_sha,
                 "entries": [],
             }
-        ).encode()
+        )
 
     def set_language(self, language: bytes) -> None:
         self.lfs["data/res/Language.sqlite3"] = language

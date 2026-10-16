@@ -1,8 +1,10 @@
 from __future__ import annotations
 
 import json
+import sqlite3
 import sys
 import unittest
+from contextlib import closing
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
@@ -152,6 +154,34 @@ class TwoReleasesTests(ScratchBuildTestCase):
                 {"ent_seq": 2830800, "retired_in": "2026.12.1", "replacement": None},
             ],
         )
+
+    def test_the_build_refuses_a_merged_release_s_changes_edited_later(self):
+        self.second_release()
+        self.retire(self.first)
+        second = self.scratch.lfs["data/res/Language.sqlite3"]
+        write_pinned(self.scratch.releases, self.scratch.build(self.out))
+        self.scratch.commit()
+        self.next_release("2026.12.1", {1000000: KURIKAESHI, 1000240: TABERU, 2830705: NAMA})
+        path = self.changes_path("2026.11.1")
+        changes = json.loads(path.read_text())
+        changes["dropped"][0]["replacement"] = 2830800
+        path.write_text(json.dumps(changes))
+        self.retire(second)
+        self.out = self.out.with_name("third")
+        self.refused(
+            r"the entry changes up to release 2026\.11\.1 don't make the RetiredEntries\.json its "
+            r"pin holds"
+        )
+
+    def test_retire_finds_a_database_that_declares_its_own_schema(self):
+        del self.scratch.inputs["files"][0]["artifact_schema"]
+        with closing(sqlite3.connect(self.scratch.root / "data/res/Language.sqlite3")) as database:
+            database.execute(
+                "INSERT INTO metadata VALUES ('artifact_schema', '\"zenbu.language-reference.v2\"')"
+            )
+            database.commit()
+        found = retirement.language_reference(self.scratch.root, self.scratch.loaded_inputs())
+        self.assertEqual(found["name"], "Language.sqlite3")
 
     def test_retire_reads_the_previous_database_from_the_git_lfs_store(self):
         store = retirement.lfs_object(self.scratch.root, sha256(self.first))

@@ -3,19 +3,17 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
+from committed_files import sha256_of
 from pinned_release import load_pinned, pinned_releases
 from refusal import Refusal
+from release_manifest import manifest_bytes as document_bytes
 from releases_index import release_key
 from sqlite_files import ent_seq_sha256
 
 RETIRED_SCHEMA = "zenbu.retired-entries.v1"
 CHANGES_SCHEMA = "zenbu.ent-seq-changes.v1"
 CHANGES_FILE = "ent-seq-changes.json"
-HOW_TO_RETIRE = "Run package.py retire (language-data/README.md, Retired entries)."
-
-
-def document_bytes(document: dict) -> bytes:
-    return (json.dumps(document, indent=2, ensure_ascii=False) + "\n").encode()
+HOW_TO_RETIRE = "Run package.py retire (language-data/retired-entries.md, Making them)."
 
 
 def changes_path(releases: Path, release: str) -> Path:
@@ -155,15 +153,34 @@ def check_replacements(steps: list[tuple[str, dict]], current: dict[int, tuple[s
         )
 
 
+def check_merged_retired_entries(
+    releases: Path, release: str, steps: list[tuple[str, dict]], name: str
+) -> None:
+    chain = [*earlier_releases(releases, release), release]
+    for index, earlier in enumerate(chain[:-1]):
+        pin = load_pinned(releases, earlier)
+        records = {record["name"]: record for record in pin["files"]}
+        if name not in records:
+            continue
+        made = retired_document(steps[:index], records[pin["ids"]["file"]]["sha256"])
+        if sha256_of(document_bytes(made)) != records[name]["sha256"]:
+            raise Refusal(
+                f"the entry changes up to release {earlier} don't make the {name} its pin holds: "
+                "a merged release's changes never change. " + HOW_TO_RETIRE
+            )
+
+
 def check_retired_entries(
     releases: Path,
     release: str,
     document: object,
     current: dict[int, tuple[str, str]],
     language_sha256: str,
+    name: str,
 ) -> list[tuple[str, dict]]:
     steps = release_steps(releases, release)
     check_history(releases, steps, current)
+    check_merged_retired_entries(releases, release, steps, name)
     check_replacements(steps, current)
     expected = retired_document(steps, language_sha256)
     if document != expected:

@@ -178,6 +178,7 @@ def build_into(repo: Path, inputs: Inputs, release: dict, out: Path, log, releas
             json_by_name[retired],
             jmdict_entries(reference_path),
             reference["sha256"],
+            retired,
         )
         depend(records[retired], reference["name"])
     core_sha256, core = (

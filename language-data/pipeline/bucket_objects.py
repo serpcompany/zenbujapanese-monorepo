@@ -1,9 +1,7 @@
 from __future__ import annotations
 
-import hashlib
 from pathlib import Path
 
-from committed_files import CHUNK
 from object_store import Head, PreconditionFailed, Store, StoreError
 from refusal import Refusal
 
@@ -17,16 +15,6 @@ CONTENT_TYPES = {
     ".txt": "text/plain; charset=utf-8",
     ".sql": "application/sql",
 }
-
-
-def sha256_of(body: bytes | Path) -> str:
-    if isinstance(body, bytes):
-        return hashlib.sha256(body).hexdigest()
-    digest = hashlib.sha256()
-    with body.open("rb") as file:
-        while chunk := file.read(CHUNK):
-            digest.update(chunk)
-    return digest.hexdigest()
 
 
 def content_type(name: str) -> str:

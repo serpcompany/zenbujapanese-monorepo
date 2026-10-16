@@ -62,4 +62,7 @@ reads no other.
   dropped or added entry is missed or invented, back to the first release.
 - Every replacement is an entry its release holds, and the newest release's are exactly what the
   rule gives from the recorded headwords and readings.
+- Each earlier release whose pin holds a `RetiredEntries.json` is what the changes up to it make,
+  byte for byte, so a merged release's changes can't be edited later. (`check-pin --base` refuses
+  any change in a merged release's folder too.)
 - `RetiredEntries.json` is what the changes make, for the database it builds.

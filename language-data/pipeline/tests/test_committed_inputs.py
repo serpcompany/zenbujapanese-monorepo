@@ -114,14 +114,13 @@ class RealInputsTests(unittest.TestCase):
     def test_the_retired_entries_are_what_the_pinned_releases_entry_changes_make(self):
         release = release_inputs.load_release(REPO / "language-data" / "release.json")["release"]
         releases = REPO / "language-data" / "releases"
-        reference = retirement.language_reference(self.inputs)
+        reference = retirement.language_reference(REPO, self.inputs)
         oid = committed_files.committed(REPO, [reference["path"]])[reference["path"]].lfs_oid
         retired = json.loads((REPO / self.inputs.retired_entries).read_text())
         steps = retired_entries.release_steps(releases, release)
         self.assertEqual(retired, retired_entries.retired_document(steps, oid))
-        self.assertEqual(steps[0][1]["dropped"], [])
-        self.assertEqual(steps[0][1]["added"], [])
-        self.assertEqual(retired["entries"], [])
+        second = dict(steps)["2026.10.2"]
+        self.assertEqual((second["dropped"], second["added"]), ([], []))
 
     def test_lfs_paths_prints_a_comma_separated_list(self):
         output = io.StringIO()
