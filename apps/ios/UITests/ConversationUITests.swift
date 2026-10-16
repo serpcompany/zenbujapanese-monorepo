@@ -24,7 +24,7 @@ final class ConversationUITests: ZenbuUITestCase {
     let live = find("translate.live", in: app)
     var heardToTheirEnd = 0
     while appears(live, within: Self.patience / 6) {
-      let paused = heardSoFar(on: live)
+      guard let paused = heardSoFar(on: live) else { continue }
       pause(app)
       let finished = finishedSentences(in: app)
       toggle.tap()
@@ -57,10 +57,7 @@ final class ConversationUITests: ZenbuUITestCase {
       if opening.isEmpty { return .notYetHeard }
       return isSentence(opening, paused) ? .heardToItsEnd : .passedBy
     }
-    if live.exists {
-      let now = heardSoFar(on: live)
-      if !now.isEmpty, !isSentence(now, paused) { return .passedBy }
-    }
+    if let now = heardSoFar(on: live), !now.isEmpty, !isSentence(now, paused) { return .passedBy }
     return find("translate.still-there", in: app).exists ? .passedBy : .notYetHeard
   }
 
@@ -70,8 +67,9 @@ final class ConversationUITests: ZenbuUITestCase {
       .allElementsBoundByIndex.map(\.identifier)
   }
 
-  private func heardSoFar(on live: XCUIElement) -> String {
-    let shown = text(of: live)
+  private func heardSoFar(on live: XCUIElement) -> String? {
+    guard let card = try? live.snapshot() else { return nil }
+    let shown = card.label.isEmpty && device == .mac ? card.value as? String ?? card.title : card.label
     return (shown.components(separatedBy: "▍").first ?? shown).trimmingCharacters(in: .whitespaces)
   }
 
