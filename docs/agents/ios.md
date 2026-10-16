@@ -210,10 +210,11 @@ don't contain them), so they need no network, account, camera, or microphone:
 - `ZENBU_COUNT_DRAWS=1` has the Player count its draws and show its time to tests (`watch.draws`,
   `watch.time`, …), so a test fails when it redraws as the time ticks (`PlayerWatchUITests`).
   Search and a kanji page record each list or page they drew (`search.results.drawn`,
-  `kanji-detail.drawn`), so a test fails when a results list is drawn without its chips and then
-  again (`SearchResultsUITests`), a kanji page's facts come before its words
-  (`WordDetailUITests`), or nothing is recorded. Each is a clear text (`DrawCountProbe`) read
-  with `text(of:)`: the Mac gives a test no plain view's value.
+  `search.notes.drawn`, `kanji-detail.drawn`), so a test fails when a results list is drawn without
+  its chips and then again (`SearchResultsUITests`), Search's notes come after its results
+  (`NotesInSearchUITests`), a kanji page's facts come before its words (`WordDetailUITests`), or
+  nothing is recorded. Each is a clear text (`DrawCountProbe`) read with `text(of:)`: the Mac gives
+  a test no plain view's value.
 
 The tests share `ZenbuUITestCase` and `AppTab`; what differs between the devices they ask
 `TestDevice` (`apps/ios/UITests/Platform/`, the one place `pnpm verify layers` lets UI tests name
@@ -597,7 +598,7 @@ answers; [`dictionary-core.md`](dictionary-core.md), The app's side, lists which
   | --- | --- | --- |
   | `LanguageReferenceData`, the actor behind `LookupClient.live` | `LanguageReferenceData.sqlite3` | Search, an exact form's entries, a kanji's words, what a website link, a related word, or a saved word opens, and which entry stands for its equivalents |
   | `DictionaryTextData`, the actor behind `ExampleSentenceClient` and `JapaneseTextAnalysisClient` | Its own connection to the same file, with `ExampleWordIndex.sqlite3` attached, and the tokenizer's dictionary files | Example sentences and linked words |
-  | `PresentationCore`, a lock around one engine | The kanji files, through `KanjiFiles`, the radical file, and the learner's frequency lists, through `FrequencyLists` | The results screen, rows, chips, furigana, word, kanji, element pages, query, gloss, romaji, kanji and Japanese-text checks, stroke points, radical panel, handwriting candidates and their meanings, Image Search notes, credits |
+  | `PresentationCore`, a lock around one engine | The kanji files, through `KanjiFiles`, the radical file, and the learner's frequency lists, through `FrequencyLists` | The results screen, rows, chips, furigana, word, kanji, element pages, query, gloss, romaji, kanji and Japanese-text checks, stroke points, radical panel, handwriting candidates and their meanings, Image Search notes, Search's notes, credits |
 
   They are apart because of how long each takes. Linking a page of sentences or ranking a broad
   search takes tens of milliseconds and awaits, so each has an actor; a row's furigana or a
@@ -715,12 +716,11 @@ What stays native, and why:
 
 ## Search and linked text
 
-`LookupClient` retrieves a relevance-filtered, deduplicated set in dictionary order and never
-reads frequency; the results screen reads the learner's lists for that bounded set and reorders
-only it (`orderedByFrequency` in the core). An exact dictionary form stays first (した is 下 and 舌 before
-する), then deinflected lemmas by chain length, so a direct conjugation (まけたら → 負ける)
-outranks a longer chain, then prefix and contains matches. Radical searches keep only the
-leading lexical-rank group.
+`LookupClient` retrieves a relevance-filtered, deduplicated set in dictionary order and never reads
+frequency; the results screen reads the learner's lists for that bounded set and reorders only it
+(`orderedByFrequency` in the core). An exact dictionary form stays first (した is 下 and 舌 before する),
+then deinflected lemmas by chain length, so a direct conjugation (まけたら → 負ける) outranks a longer
+chain, then prefix and contains matches. Radical searches keep only the leading lexical-rank group.
 
 How a query is matched, ranked, and deinflected is the core's
 ([`dictionary-core.md`](dictionary-core.md), Search). A result carries its relevance as
@@ -1120,10 +1120,10 @@ YouTube can change: check the live page by hand.
 
 Search ordering, deinflection, and frequency-chip rules are covered by `SearchExperienceTests`.
 The UI tests drive the top bar and its field, recent searches, the **Sorted by** row's Sort By
-and Filter, and the Handwriting and Radicals panel on an iPhone Simulator, an iPad Simulator, and
-the Mac (`SearchUITests`, `SearchResultsUITests`, `SearchInputUITests`); the lists below are what
-to look at beyond them. When changing Search results or frequency dictionaries, also check in the
-Simulator:
+and Filter, the Handwriting and Radicals panel, and In your notes on an iPhone Simulator, an iPad
+Simulator, and the Mac (`SearchUITests`, `SearchResultsUITests`, `SearchInputUITests`,
+`NotesInSearchUITests`); the lists below are what to look at beyond them. When changing Search
+results or frequency dictionaries, also check in the Simulator:
 
 - `いる` shows chips in the Enabled order (JLPT first by default). Reordering or disabling
   dictionaries under **Account → Frequency Dictionaries** re-sorts the visible results without

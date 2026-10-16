@@ -117,13 +117,18 @@ describe('notesInSearch', () => {
     })
   })
 
-  test('shows a note from its start when its folded words no longer line up with it', () => {
-    expect(shown('οδος', 'ΟΔΟΣ')).toEqual({ before: '', match: '', after: 'ΟΔΟΣ' })
+  test('shows the word that matched when how a letter folds depends on the word around it', () => {
+    expect(shown('οδος', 'ΟΔΟΣ')).toEqual({ before: '', match: 'ΟΔΟΣ', after: '' })
+    expect(shown('ος', 'το ΟΔΟΣ μου')).toEqual({ before: 'το ', match: 'ΟΔΟΣ', after: ' μου' })
     expect(shown('squish', 'ΟΔΟΣ squish')).toEqual({
       before: 'ΟΔΟΣ ',
       match: 'squish',
       after: ''
     })
+  })
+
+  test('shows a note from its start when no part of it can be told to be the match', () => {
+    expect(shown('a b', 'a\n\u{3099}b')).toEqual({ before: '', match: '', after: 'a \u{3099}b' })
   })
 
   test('lists nothing for a query no note has, or one with no words', () => {

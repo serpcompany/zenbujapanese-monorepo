@@ -574,7 +574,28 @@
     if (lineUp) return piecesAt(throughTheMatch, at, query.length);
     const whole = foldedPieces(pieces);
     const inWhole = whole.text.indexOf(query);
-    return inWhole < 0 ? nothingMatched : piecesAt(whole, inWhole, query.length);
+    if (inWhole >= 0) return piecesAt(whole, inWhole, query.length);
+    return matchedWords(pieces, query);
+  }
+  function matchedWords(pieces, query) {
+    const words2 = [];
+    const starts = [];
+    let separates;
+    for (let index = 0; index < pieces.length; index++) {
+      const separator = separatorOnly.test(pieces[index]);
+      if (separator !== separates) {
+        words2.push("");
+        starts.push(index);
+        separates = separator;
+      }
+      words2[words2.length - 1] += pieces[index];
+    }
+    starts.push(pieces.length);
+    const byWord = foldedPieces(words2);
+    const at = byWord.text.indexOf(query);
+    if (at < 0) return nothingMatched;
+    const matched = piecesAt(byWord, at, query.length);
+    return { first: starts[matched.first], end: starts[matched.end] };
   }
   var spaced = (text) => text.replace(separatorRun, " ");
   function startOfAWord(pieces, from, to) {

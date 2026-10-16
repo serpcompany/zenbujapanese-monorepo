@@ -118,10 +118,15 @@ Search lists the notes whose words the dictionary has
 reads them: after the move above, every note under a Language Reference ID or a kanji, and none
 under a note identity or a key `withoutAWord`. It reads them once at launch, and again after each
 save through `WordNoteStore` (`kept(in:searchedBy:)`, which `live` is), once the note is written,
-so a Search screen already showing the group, in any window, draws the change. `SearchView` waits
-for the first read before it shows a search's results, so the group arrives with them and never
-after. Which notes match, their order, and the part shown are the core's (`notesInSearch`,
-[`dictionary-core.md`](dictionary-core.md)); `LearnerNotes` hands it the query and every note, and
-keeps its last answer until either changes. Notes never sync: nothing here reaches the account
-([Account and sync](ios.md#account-and-sync)). `LearnerNotesTests` saves, changes, and deletes a
-note through a page's `SavedItemNotes` and reads Search's answer after each save.
+and its `revision` goes up when they change. A note with no headword to show, which only a
+launch that couldn't read the dictionary leaves, isn't listed. Which notes match, their order,
+and the part shown are the core's (`notesInSearch`, [`dictionary-core.md`](dictionary-core.md)):
+`LearnerNotes.inSearch` hands it the query and every note off the main thread, as the results
+screen's request is, and answers `ShownNotes`, stamped with the revision it read. `SearchView`
+waits for the first read, then asks for the notes after the results screen and sets both
+together, so the group is drawn with the results and never after (`search.notes.drawn` records
+each one drawn); a task keyed on both revisions asks again when they differ, so a Search screen
+already showing the group, in any window, draws the change. Notes never sync: nothing here
+reaches the account ([Account and sync](ios.md#account-and-sync)). `LearnerNotesTests` saves,
+changes, and deletes a note through a page's `SavedItemNotes` and reads Search's answer after
+each save.

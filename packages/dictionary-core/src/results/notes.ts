@@ -83,7 +83,29 @@ function matchedPieces(pieces: readonly string[], folded: string, query: string)
   if (lineUp) return piecesAt(throughTheMatch, at, query.length)
   const whole = foldedPieces(pieces)
   const inWhole = whole.text.indexOf(query)
-  return inWhole < 0 ? nothingMatched : piecesAt(whole, inWhole, query.length)
+  if (inWhole >= 0) return piecesAt(whole, inWhole, query.length)
+  return matchedWords(pieces, query)
+}
+
+function matchedWords(pieces: readonly string[], query: string): MatchedPieces {
+  const words: string[] = []
+  const starts: number[] = []
+  let separates: boolean | undefined
+  for (let index = 0; index < pieces.length; index++) {
+    const separator = separatorOnly.test(pieces[index])
+    if (separator !== separates) {
+      words.push('')
+      starts.push(index)
+      separates = separator
+    }
+    words[words.length - 1] += pieces[index]
+  }
+  starts.push(pieces.length)
+  const byWord = foldedPieces(words)
+  const at = byWord.text.indexOf(query)
+  if (at < 0) return nothingMatched
+  const matched = piecesAt(byWord, at, query.length)
+  return { first: starts[matched.first], end: starts[matched.end] }
 }
 
 const spaced = (text: string) => text.replace(separatorRun, ' ')

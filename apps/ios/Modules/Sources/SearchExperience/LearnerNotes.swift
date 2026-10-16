@@ -29,7 +29,9 @@ struct NotesInSearch: Decodable, Hashable, Sendable {
 
     var place: String { "\(key).\(id)" }
 
-    var text: String { before + match + after }
+    var spoken: String {
+      [headword, reading, before + match + after].filter { !$0.isEmpty }.joined(separator: ", ")
+    }
 
     var excerpt: AttributedString {
       var matched = AttributedString(match)
@@ -47,15 +49,19 @@ private struct NotesInSearchRequest: Encodable {
   let notes: [SearchableNote]
 }
 
+struct ShownNotes: Hashable, Sendable {
+  let query: SearchQuery
+  let revision: Int
+  let notes: NotesInSearch?
+
+  static func drawnSummary(_ shown: ShownNotes?) -> String {
+    shown.map { "\($0.notes?.rows.count ?? 0) notes" } ?? "no search"
+  }
+}
+
 @MainActor
 @Observable
 final class LearnerNotes {
-  private struct Answered {
-    let query: SearchQuery
-    let revision: Int
-    let notes: NotesInSearch?
-  }
-
   static let shared: LearnerNotes = {
     let shared = LearnerNotes(reading: storedNotes)
     Task { await shared.ready() }
@@ -67,12 +73,11 @@ final class LearnerNotes {
   }
 
   private(set) var notes: [SearchableNote] = []
+  private(set) var revision = 0
   @ObservationIgnored private let reading: @Sendable () async -> [SearchableNote]
   @ObservationIgnored private var firstRead: Task<Void, Never>?
   @ObservationIgnored private var latestRead = 0
   @ObservationIgnored private var appliedRead = 0
-  @ObservationIgnored private var revision = 0
-  @ObservationIgnored private var answered: Answered?
 
   init(reading: @escaping @Sendable () async -> [SearchableNote]) {
     self.reading = reading
@@ -94,19 +99,19 @@ final class LearnerNotes {
     revision += 1
   }
 
-  func inSearch(for query: SearchQuery, using core: PresentationCore = .shared) -> NotesInSearch? {
+  func inSearch(for query: SearchQuery, using core: PresentationCore = .shared) async
+    -> ShownNotes
+  {
     let notes = notes
-    if let answered, answered.query == query, answered.revision == revision {
-      return answered.notes
-    }
-    let found = notes.isEmpty ? nil : Self.answer(for: query, in: notes, using: core)
-    answered = Answered(query: query, revision: revision, notes: found)
-    return found
+    let revision = revision
+    guard !notes.isEmpty else { return ShownNotes(query: query, revision: revision, notes: nil) }
+    let found = await Self.answer(for: query, in: notes, using: core)
+    return ShownNotes(query: query, revision: revision, notes: found)
   }
 
-  private static func answer(
+  private nonisolated static func answer(
     for query: SearchQuery, in notes: [SearchableNote], using core: PresentationCore
-  ) -> NotesInSearch? {
+  ) async -> NotesInSearch? {
     let asked = NotesInSearchRequest(query: query.value, notes: notes)
     return try? core.answer("notesInSearch", asked) as NotesInSearch?
   }

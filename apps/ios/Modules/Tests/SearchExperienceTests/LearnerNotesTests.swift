@@ -69,6 +69,23 @@ struct LearnerNotesTests {
     #expect(await found(relaunched, "plmqz").map(\.id) == ["1"])
   }
 
+  @Test("while the dictionary can't be read, a note with no word to name isn't in Search")
+  func leavesOutNotesWithNoName() async throws {
+    let temporary = try TemporaryDefaults()
+    let storage = WordNoteStorage(
+      defaults: try #require(UserDefaults(suiteName: temporary.suite)),
+      placing: SavedWords.unreadable)
+    await storage.save(LearnerWordNote(id: "1", text: "plmqz unnamed"), for: taberu)
+    await storage.save(
+      LearnerWordNote(id: "2", text: "plmqz named", headword: "見る", reading: "みる"),
+      for: SavedWords.miru)
+
+    let (search, _, _) = await searched(in: storage)
+    await search.ready()
+
+    #expect(await found(search, "plmqz").map(\.id) == ["2"])
+  }
+
   private func relaunch(in temporary: TemporaryDefaults) async throws -> LearnerNotes {
     let storage = try storage(in: temporary)
     let (search, _, _) = await searched(in: storage)
@@ -83,9 +100,8 @@ struct LearnerNotesTests {
     page.finishEditing()
   }
 
-  @MainActor
-  private func found(_ search: LearnerNotes, _ query: String) -> [NotesInSearch.Row] {
-    search.inSearch(for: SearchQuery(query))?.rows ?? []
+  private func found(_ search: LearnerNotes, _ query: String) async -> [NotesInSearch.Row] {
+    await search.inSearch(for: SearchQuery(query)).notes?.rows ?? []
   }
 
   @MainActor
@@ -93,13 +109,7 @@ struct LearnerNotesTests {
     -> (LearnerNotes, WordNoteStore, AsyncStream<String>)
   {
     let search = LearnerNotes(reading: { await storage.onTheirWords() })
-    let kept = WordNoteStore.kept(in: storage, searchedBy: { search })
-    let (saves, saved) = AsyncStream<String>.makeStream()
-    var store = kept
-    store.save = { note, id in
-      await kept.save(note, id)
-      saved.yield(note.id)
-    }
+    let (store, saves) = SavedWords.observed(WordNoteStore.kept(in: storage, searchedBy: { search }))
     return (search, store, saves)
   }
 

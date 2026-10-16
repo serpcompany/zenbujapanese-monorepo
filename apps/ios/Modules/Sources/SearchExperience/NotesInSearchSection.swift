@@ -28,7 +28,7 @@ struct NotesInSearchSection: View {
           .frame(maxWidth: .infinity, alignment: .leading)
           .contentShape(Rectangle())
         }
-        .accessibilityLabel("\(row.headword), \(row.reading), \(row.text)")
+        .accessibilityLabel(row.spoken)
         .accessibilityIdentifier("search.note.\(row.place)")
       }
     }

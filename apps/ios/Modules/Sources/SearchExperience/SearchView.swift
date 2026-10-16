@@ -15,6 +15,7 @@ struct SearchView: View {
   @Environment(LearnerNotes.self) private var learnerNotes
   @State private var results = LookupSearchResults.empty
   @State private var shown: ShownResults?
+  @State private var shownNotes: ShownNotes?
   @State private var presentationState = SearchPresentationState.idle
   @State private var retryID = 0
   @State private var settledSearchTaskID: SearchTaskID?
@@ -90,11 +91,16 @@ struct SearchView: View {
       settledSearchTaskID = nil
       results = .empty
       shown = nil
+      shownNotes = nil
       presentationState = .idle
     }
     .task(id: taskID) {
       await search(taskID)
     }
+    .task(id: NotesRevisions(read: learnerNotes.revision, shown: shownNotes?.revision)) {
+      await refreshNotes()
+    }
+    .modifier(DrawRecorder(shownNotes, as: "search.notes.drawn", summary: ShownNotes.drawnSummary))
     .onChange(of: focusRequest) { selectInputMode(.keyboard) }
   }
 
@@ -120,7 +126,7 @@ struct SearchView: View {
           results: results,
           first: shown,
           fromRadicals: radicalQuery == searchQuery,
-          notes: learnerNotes.inSearch(for: searchQuery),
+          notes: shownNotes?.notes,
           selectRefinement: selectRefinement,
           openNote: openNote
         )
@@ -151,7 +157,7 @@ struct SearchView: View {
       .accessibilityIdentifier("search.failure")
 
     case .noResults(let noMatches):
-      if let notes = learnerNotes.inSearch(for: searchQuery) {
+      if let notes = shownNotes?.notes {
         List {
           Section {
             noDictionaryMatches(noMatches)
@@ -218,6 +224,7 @@ struct SearchView: View {
       guard !taskQuery.isEmpty else {
         results = .empty
         shown = nil
+        shownNotes = nil
         return
       }
       presentationState = .loading
@@ -248,10 +255,12 @@ struct SearchView: View {
           lists: FrequencyLists.live.version)
         try Task.checkCancellation()
         let screen = try await request.screen()
+        let notes = await learnerNotes.inSearch(for: taskQuery)
         try Task.checkCancellation()
         guard searchTaskID == taskID, settledSearchTaskID != taskID else { continue }
         settledSearchTaskID = taskID
         results = foundResults
+        shownNotes = notes
         switch screen {
         case .noResults(let noMatches):
           shown = nil
@@ -269,9 +278,17 @@ struct SearchView: View {
         settledSearchTaskID = taskID
         results = .empty
         shown = nil
+        shownNotes = nil
         presentationState = .failure
       }
     }
+  }
+
+  private func refreshNotes() async {
+    guard let shownNotes, shownNotes.revision != learnerNotes.revision else { return }
+    let refreshed = await learnerNotes.inSearch(for: shownNotes.query)
+    guard !Task.isCancelled, self.shownNotes?.query == shownNotes.query else { return }
+    self.shownNotes = refreshed
   }
 
   private var inputModeScope: Binding<SearchInputMode> {
@@ -354,6 +371,11 @@ struct SearchView: View {
       inputMode = .inactive
     }
   }
+}
+
+private struct NotesRevisions: Hashable {
+  let read: Int
+  let shown: Int?
 }
 
 private struct SearchTaskID: Hashable {

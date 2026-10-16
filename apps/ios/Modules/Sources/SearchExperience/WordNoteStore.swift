@@ -111,6 +111,7 @@ actor WordNoteStorage {
     await placeEarlierNotes()
     return words { !$0.isNoteIdentity && !keysWithoutAWord.contains($0) }
       .flatMap { word in word.notes.map { SearchableNote(key: word.key, note: $0) } }
+      .filter { !$0.headword.isEmpty }
   }
 
   private func words(where kept: (SavedItemID) -> Bool)
