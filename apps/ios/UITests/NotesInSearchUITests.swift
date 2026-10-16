@@ -131,7 +131,7 @@ final class NotesInSearchUITests: ZenbuUITestCase {
     let editor = waitFor(find("word-note.editor", in: app))
     let written = editor.value as? String ?? ""
     focus(editor)
-    editor.coordinate(withNormalizedOffset: CGVector(dx: 0.97, dy: 0.5)).tap()
+    if device != .mac { editor.coordinate(withNormalizedOffset: CGVector(dx: 0.97, dy: 0.5)).tap() }
     editor.typeText(String(repeating: XCUIKeyboardKey.delete.rawValue, count: written.count) + replacement)
     tap(find("word-note.done", in: app))
     if !replacement.isEmpty { waitFor(labeled(replacement, in: app)) }
