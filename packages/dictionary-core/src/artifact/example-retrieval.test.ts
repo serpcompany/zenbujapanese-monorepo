@@ -1,8 +1,9 @@
 import { DatabaseSync } from 'node:sqlite'
 import { describe, expect, test } from 'vitest'
 import type { RetrievalEntry } from '../examples/retrieval'
-import type { ArtifactDatabase, SqlValue } from './database'
+import type { ArtifactDatabase } from './database'
 import { retrieveEntryExamples } from './example-retrieval'
+import { sqliteDatabase } from './sqlite-database'
 
 interface StoredEntry extends RetrievalEntry {
   storedForms: { written?: string[]; reading: string[] }
@@ -39,11 +40,7 @@ function artifact(entries: readonly StoredEntry[], sentences: readonly string[])
     for (const value of storedForms.reading) form.run(id, value, spoken)
     for (const link of links) indexed.run(id, pairId(link.sentence), link.surface)
   }
-  return {
-    all<Row>(sql: string, params: readonly SqlValue[] = []): Row[] {
-      return database.prepare(sql).all(...params) as Row[]
-    }
-  }
+  return sqliteDatabase(database)
 }
 
 function listed(db: ArtifactDatabase, entry: RetrievalEntry): string[] {
