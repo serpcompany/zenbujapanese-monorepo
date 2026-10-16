@@ -1,5 +1,6 @@
 import { z } from '@hono/zod-openapi'
 import { bookmarkLimits } from '../domain/bookmarks'
+import { languageHeader } from '../domain/language'
 import { profileLimits } from '../domain/profile'
 import { syncLimits } from '../domain/sync'
 import { watchLimits } from '../domain/watch-history'
@@ -77,6 +78,14 @@ export const DeleteAccountSchema = z
     })
   })
   .openapi('DeleteAccount')
+
+export const PageLanguageHeaders = z.object({
+  [languageHeader]: z.string().optional().openapi({
+    example: 'ja',
+    description:
+      "The language of the page the request comes from: `ja` or `en`. The email the request sends is in it, and an account the request makes keeps it for the emails sent later without one. Any other value, or none, means the account's language, or English. `Accept-Language` is never read."
+  })
+})
 
 export const ProfileConflictSchema = z
   .object({ error: errorObject(['version_conflict']), current: ProfileSchema })

@@ -53,8 +53,8 @@ export function useAccountService(options: { appleKey?: boolean } = {}) {
   return {
     running,
     cursors: cursors(cursorKey(testSecret)),
-    async learner(email: string, client = 'zenbu-ios'): Promise<Learner> {
-      const signedIn = await running.as.withCode(email, { client })
+    async learner(email: string, client = 'zenbu-ios', language?: string): Promise<Learner> {
+      const signedIn = await running.as.withCode(email, { client, language })
       const session = sessionToken(signedIn)
       const issued = await call('/v1/auth/token', { token: session })
       return { userId: userIdOf(signedIn), session, token: String(issued.body?.token) }

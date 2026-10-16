@@ -1,4 +1,5 @@
 import type { Principal } from './clients'
+import { emailLanguage, type Language } from './language'
 import type { AccountStore } from './store'
 
 const freshSignInMinutes = 10
@@ -21,7 +22,7 @@ export interface AppleRevoker {
 }
 
 export interface DeletionNotices {
-  accountDeleted(email: string): void
+  accountDeleted(email: string, language: Language): void
 }
 
 export type Deletion =
@@ -36,7 +37,8 @@ export type Deletion =
 export function accountDeleter(store: AccountStore, apple: AppleRevoker, notices: DeletionNotices) {
   return async (
     principal: Principal,
-    authorization: AppleAuthorization = {}
+    authorization: AppleAuthorization = {},
+    requestedLanguage: Language | null = null
   ): Promise<Deletion> => {
     if (Date.now() - principal.signedInAt.getTime() > freshSignInMinutes * 60 * 1000) {
       return 'sign_in_again'
@@ -59,8 +61,9 @@ export function accountDeleter(store: AccountStore, apple: AppleRevoker, notices
       if (revoked === 'other_apple_id') return 'apple_account_mismatch'
       if (revoked === 'unavailable') return 'apple_unavailable'
     }
+    const language = emailLanguage(requestedLanguage, await store.language(principal.userId))
     await store.deleteAccount(principal.userId, profile.email)
-    notices.accountDeleted(profile.email)
+    notices.accountDeleted(profile.email, language)
     return 'deleted'
   }
 }

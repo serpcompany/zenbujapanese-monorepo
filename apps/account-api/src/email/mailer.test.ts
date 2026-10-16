@@ -6,7 +6,7 @@ import { createMailer } from './mailer'
 import { signInCodeMessage } from './sign-in-code'
 
 const from = 'Zenbu Japanese <support@zenbujapanese.com>'
-const message = signInCodeMessage('learner@example.com', '482913')
+const message = signInCodeMessage('learner@example.com', '482913', 'en')
 const config = (
   provider: EmailProvider | null,
   allowedRecipients: string[] | null = null
@@ -80,8 +80,8 @@ describe('the mailer', () => {
       fetch
     )
     expect(await mailer.send(message)).toBe('skipped')
-    expect(await mailer.send(signInCodeMessage('tester@serp.co', '1'))).toBe('sent')
-    expect(await mailer.send(signInCodeMessage('Dev@ZenbuJapanese.com', '1'))).toBe('sent')
+    expect(await mailer.send(signInCodeMessage('tester@serp.co', '1', 'en'))).toBe('sent')
+    expect(await mailer.send(signInCodeMessage('Dev@ZenbuJapanese.com', '1', 'en'))).toBe('sent')
     expect(fetch).toHaveBeenCalledTimes(2)
   })
 
