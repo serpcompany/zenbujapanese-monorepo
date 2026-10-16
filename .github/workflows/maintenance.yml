@@ -276,7 +276,9 @@ jobs:
                b. one file under "Files near the size limit" in the report, split by
                   responsibility so it stays well under the limit.
                Pass over an item that needs a deploy, a language-data release or anything in R2,
-               a change under apps/ios or in Swift (this runner can't build or test it), a change
+               a change under apps/ios or in Swift (this runner can't build or test it), a
+               change to a tool in language-data/tools (each records its own SHA-256 in the data
+               it built, so changing one means rebuilding that data), a change
                to the behavior or wording a product doc describes, an ADR-level decision
                (docs/agents/domain.md), or another decision AGENTS.md leaves to a person, and
                take the next one. If nothing qualifies, stop and say "Nothing to garden".

@@ -11,6 +11,8 @@ import tempfile
 import urllib.request
 from pathlib import Path
 
+import build_jiten_frequency_packs
+import import_frequency_pack
 from language_data_tools import file_sha256
 
 TOOLS = Path(__file__).resolve().parent
@@ -340,6 +342,26 @@ def build_ranked_lists(wikipedia_artifact: Path, archives: Path) -> None:
     )
 
 
+def tools_built_in_paths() -> list[Path]:
+    return [
+        import_frequency_pack.RESOURCES,
+        build_jiten_frequency_packs.RESOURCES,
+        build_jiten_frequency_packs.SOURCE_RECORD,
+        build_jiten_frequency_packs.ANALYSIS.parent,
+    ]
+
+
+def refuse_missing_tool_paths() -> None:
+    missing = [path for path in tools_built_in_paths() if not path.exists()]
+    if missing:
+        raise SystemExit(
+            "a tool reads a path it derives from its own folder, and it doesn't exist: "
+            + ", ".join(str(path) for path in missing)
+            + ". Point the tool at the language data's folders first "
+            "(language-data/tools/README.md, Rebuild everything)"
+        )
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(
         description="Rebuild every artifact the language-data tools write, in dependency order, and update the catalog."
@@ -352,6 +374,7 @@ def main() -> None:
             f"the data tools are pinned to Python {PINNED_PYTHON_TEXT}: "
             f"uv run --no-project --python {PINNED_PYTHON_TEXT} python {Path(__file__).relative_to(REPOSITORY)}"
         )
+    refuse_missing_tool_paths()
     published = published_jiten_sources()
     unidic = fixed_download(only("UniDic-*.source.json"), arguments.download)
     with tempfile.TemporaryDirectory() as directory:

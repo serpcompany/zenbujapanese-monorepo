@@ -15,14 +15,20 @@ recorded-audio check, `TranslateReplay/` ([`translate.md`](../../docs/agents/tra
 uv run --no-project --python 3.14.8 python language-data/tools/rebuild_language_data.py --download
 ```
 
-The tools moved here from `apps/ios/Tools/` unchanged, so the hashes the data records stay true,
-and two still look for their inputs beside the old folder: `import_frequency_pack.py` for the
-mapping SQL (`RESOURCES`), and `build_jiten_frequency_packs.py` for every file it reads and writes.
-Neither takes those paths on the command line, so the next rebuild fails at the TUBELEX pack until
-its pull request points them at `apps/ios/Modules/Sources/SearchExperience/Resources/`,
+The tools whose SHA-256 the data records moved here from `apps/ios/Tools/` unchanged, so those
+records stay true, and two of them still look for their inputs beside the old folder:
+`import_frequency_pack.py` for the mapping SQL (`RESOURCES`), and `build_jiten_frequency_packs.py`
+for every file it reads and writes. Neither takes those paths on the command line, so
+`rebuild_language_data.py` refuses to start, naming each missing path, until the next rebuild's
+pull request points them at `apps/ios/Modules/Sources/SearchExperience/Resources/`,
 `language-data/sources/`, and `language-data/generated/`. Each records its own SHA-256, so the edit
 belongs to that rebuild, which records the new ones
 ([`tech-debt.md`](../../docs/tech-debt.md), Language data).
+
+A checkout from before the move keeps its earlier downloads (UniDic, KanjiVG, and Kanjium) in the
+app's old `LanguageData/Sources/` folder, which `apps/ios/.gitignore` still ignores so none is
+committed by mistake. Move them into `language-data/sources/` to use them rather than download
+them again.
 
 `rebuild_language_data.py` runs every importer in dependency order: the radicals, KANJIDIC2, kanji
 elements, and stroke diagrams; then `LanguageReferenceData.sqlite3` and its ranking contract; then

@@ -3,3 +3,4 @@ Modules/.build/
 Modules/.swiftpm/
 xcuserdata/
 Tools/**/__pycache__/
+LanguageData/

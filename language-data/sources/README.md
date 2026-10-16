@@ -10,8 +10,9 @@ snapshot, download location, checksum, and import configuration. The importers u
 `language-data/tools/` define the transformations ([their README](../tools/README.md), which says
 how to rebuild everything and refresh a snapshot). Generated runtime artifacts live
 under `apps/ios/Modules/Sources/SearchExperience/Resources/`. Records written while this directory
-was in the app's folder (#469 moved it) still name files by their paths there. Their bytes stay as
-recorded, since import reports and the catalog embed them.
+was in the app's folder (#469 moved it) still name files by their paths there. They stay as they
+were recorded: TUBELEX's and Wikipedia's are pinned by SHA-256 in their import reports, and the
+others, Kuromoji's and the historical public catalog's, are records of what was imported.
 
 Sources published only as the latest file at a fixed URL are committed, in Git LFS, beside their
 records: `JMdict_e-2026-08-10.gz`, and the `Tatoeba-2026-10-03/`, `Tatoeba-jpn-indices-2026-10-03/`,
