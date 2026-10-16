@@ -184,9 +184,9 @@ hands-free conversation isn't paused by Auto-Lock; once it pauses or ends, Auto-
 
 Check: package `LiveConversationTests` (pausing, leaving, the silence prompt, the background, and a
 recognizer that stops); UI `ConversationUITests.testSilenceAsksWhetherAnyoneIsStillThere` (the
-countdown going down), `testNobodyAnsweringTheSilencePromptPausesTheConversation` (the harness
-skips its countdown; the prompt's **Pause**), `testLeavingTheAppPausesTheConversation`,
-`testExitWithoutSavingLeavesNothingInTranslations`, and
+countdown going down), `testNobodyAnsweringTheSilencePromptPausesTheConversation` and
+`testThePromptsPausePausesTheConversation` (the harness skips its clock),
+`testLeavingTheAppPausesTheConversation`, `testExitWithoutSavingLeavesNothingInTranslations`, and
 `TranslateUITests.testAConversationRunsFullScreenAndIsSavedToTranslations` (Save and Exit). A call
 taking the microphone is by hand.
 

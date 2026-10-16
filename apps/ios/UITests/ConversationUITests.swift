@@ -124,11 +124,18 @@ final class ConversationUITests: ZenbuUITestCase {
     let toggle = find("translate.session.toggle", in: app)
     XCTAssertEqual(toggle.label, "Resume", "the conversation paused")
     tap(paused.buttons.matching(showing("Resume")).firstMatch)
-    waitUntil(toggle, "label == 'Pause'")
+    waitUntil("the conversation listening again") {
+      stillThere.exists || (toggle.exists && toggle.label == "Pause")
+    }
+  }
+
+  func testThePromptsPausePausesTheConversation() {
+    let app = startConversation(silent: true)
     skipTheSilenceCountdown()
+    let stillThere = waitFor(find("translate.still-there", in: app))
     tap(find("translate.still-there.pause", in: app))
     waitUntilGone(stillThere)
-    waitUntil(toggle, "label == 'Resume'")
+    waitUntil(find("translate.session.toggle", in: app), "label == 'Resume'")
   }
 
   func testExitWithoutSavingLeavesNothingInTranslations() {
