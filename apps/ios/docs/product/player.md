@@ -41,7 +41,7 @@ dictionary sheet Image Search uses.
   comprehension, and one removed on one is removed on all. Only this app syncs it; the website
   and other Zenbu apps don't see it. If a saved video can't be read, Recent keeps a copy of what
   was saved on the device rather than writing over it, keeps every video it can read, and keeps
-  syncing ([Saved data that can't be read](index.md#saved-data-that-cant-be-read)).
+  syncing ([Saved data that can't be read](saved-data.md#saved-data-that-cant-be-read)).
   Check: package `AccountSyncWatchHistoryTests` (the 50, sync, and an unreadable Recent).
 
 ## Watching

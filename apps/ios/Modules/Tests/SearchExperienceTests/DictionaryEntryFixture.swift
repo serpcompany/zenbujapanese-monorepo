@@ -6,7 +6,6 @@ extension DictionaryEntry {
   ) -> DictionaryEntry {
     DictionaryEntry(
       id: LanguageReferenceID(rawValue: id),
-      noteID: WordNoteID(rawValue: id),
       sourceProvenances: [
         LanguageReferenceProvenance(sourceIdentity: "fixture", sourceRecordID: id)
       ],

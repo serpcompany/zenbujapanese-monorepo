@@ -9,7 +9,7 @@ final class SavedItemNotes {
   private(set) var notes: [LearnerWordNote] = []
   private(set) var editingNoteID: String?
   var draft = ""
-  @ObservationIgnored private var noteID: WordNoteID?
+  @ObservationIgnored private var itemID: SavedItemID?
   @ObservationIgnored private var writtenBeforeLoading: [LearnerWordNote] = []
   @ObservationIgnored private var textWhenEditingBegan = ""
   @ObservationIgnored private var saveTask: Task<Void, Never>?
@@ -21,16 +21,16 @@ final class SavedItemNotes {
 
   var isEditing: Bool { editingNoteID != nil }
 
-  func load(_ noteID: WordNoteID) async {
-    let loaded = await store.load(noteID)
+  func load(_ itemID: SavedItemID) async {
+    let loaded = await store.load(itemID)
     guard !Task.isCancelled else { return }
-    let hadLoaded = self.noteID != nil
-    self.noteID = noteID
+    let hadLoaded = self.itemID != nil
+    self.itemID = itemID
     notes = loaded
     guard hadLoaded else {
       for note in writtenBeforeLoading {
         notes.apply(note)
-        save(note, to: noteID)
+        save(note, to: itemID)
       }
       writtenBeforeLoading = []
       return
@@ -65,19 +65,19 @@ final class SavedItemNotes {
     guard trimmed(draft) != trimmed(textWhenEditingBegan) else { return }
     let note = LearnerWordNote(id: editingNoteID, text: draft)
     notes.apply(note)
-    guard let noteID else {
+    guard let itemID else {
       writtenBeforeLoading.append(note)
       return
     }
-    save(note, to: noteID)
+    save(note, to: itemID)
   }
 
-  private func save(_ note: LearnerWordNote, to noteID: WordNoteID) {
+  private func save(_ note: LearnerWordNote, to itemID: SavedItemID) {
     let store = store
     let precedingSave = saveTask
     saveTask = Task {
       await precedingSave?.value
-      await store.save(note, noteID)
+      await store.save(note, itemID)
     }
   }
 }

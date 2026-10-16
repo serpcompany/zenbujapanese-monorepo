@@ -139,7 +139,7 @@ struct KanjiDetailView: View {
     .task(id: character) {
       let item = SavedItem.kanji(character, reading: "")
       await photos.load(item)
-      await notes.load(item.noteID)
+      await notes.load(item.id)
     }
     .sheet(item: $presentedStrokeDiagram) { diagram in
       KanjiStrokeOrderSheet(diagram: diagram)

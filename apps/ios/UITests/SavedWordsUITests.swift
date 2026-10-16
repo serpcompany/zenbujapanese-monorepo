@@ -17,6 +17,21 @@ final class SavedWordsUITests: ZenbuUITestCase {
     assertOnScreen(find("media-library.empty", in: app), in: app)
   }
 
+  func testANoteWhoseWordIsGoneIsListedUntilItsDeleted() {
+    let gone = "wn1:" + String(repeating: "0", count: 64)
+    let app = launch(earlierNotes([gone: ["gone": "its word is gone"]]))
+    open(.account, in: app)
+    tap(reveal(find("account.notes-without-a-word", in: app), in: app))
+    let note = waitFor(find("notes-without-a-word.note.gone", in: app))
+    waitUntil(note, mentions: "its word is gone")
+    revealRowActions(on: note)
+    tap(menuChoice("Delete", in: app))
+    assertOnScreen(find("notes-without-a-word.empty", in: app), in: app)
+    goBack(in: app)
+    waitFor(find("account.translations", in: app))
+    waitUntilGone(find("account.notes-without-a-word", in: app))
+  }
+
   func testAKnownWordIsListedAndCanBeMarkedUnknownThere() {
     let app = launch()
     markJapanKnownFromItsResult(in: app)

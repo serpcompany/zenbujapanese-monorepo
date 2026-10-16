@@ -351,15 +351,8 @@ Notes names every list holding the word, each opening that list in Account, foll
 Check: UI `WordDetailUITests.testAddToListPutsTheWordInFavoritesAndANewList` (the sheet, New List,
 the Lists section, and a list opening in Account); package `WordListsTests`.
 
-A learner can write notes for a word and associate photos with it. Notes and associated
-photos persist on the device. A note written while the page is still loading its examples is
-kept like any other. If saved notes can't be read, a copy is kept on the device rather
-than written over, and every note that can be read stays, on its word or any other
-([Saved data that can't be read](index.md#saved-data-that-cant-be-read)).
-
-Check: UI `WordDetailUITests.testANoteIsKeptOnTheWord` and
-`SavedWordsUITests.testAnImagesWordKeepsTheImageInTheMediaLibraryUntilItsDeleted`; package
-`WordNoteStorageTests` and `EncounterMediaStorageTests`.
+A learner can write notes for a word and associate photos with it, which stay on the word
+([Notes and photos](saved-data.md#notes-and-photos)).
 
 A kanji detail presents readings, meanings, stroke order, components, elements, and words that
 contain the kanji, in the core's order: an empty one is left out, but not Lists, Notes, or a listed

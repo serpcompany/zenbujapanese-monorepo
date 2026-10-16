@@ -301,6 +301,7 @@ struct SearchExperienceRootView: View {
     NavigationStack(path: countingReturns($accountPath)) {
       AccountTabRoot(
         store: encounterMediaStore,
+        notes: .live,
         translate: translateExperience,
         words: translateWords(opening: wordSheets.account),
         openItem: openSavedItem

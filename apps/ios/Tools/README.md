@@ -94,7 +94,9 @@ Data, with UniDic pitch, Tatoeba examples, and app-owned word relationships.
 - `jmdict_normalization.py`: every JMdict part-of-speech entity code maps to stable app-owned
   category identifiers; the wording belongs to the app's part-of-speech formatter, so stored
   identifiers never carry display text. The retired description-substring labels are reproduced
-  only for durable-note identity, since saved notes are keyed by it; nothing displays them.
+  only for the note identity, which keyed notes and photos before Language Reference IDs did; the
+  app reads it to move those to their word (`docs/agents/ios-local-stores.md`), and nothing
+  displays them.
   Cross-references keep JMdict's form, optional reading, and optional target sense. A Language
   Reference ID is the SHA-256 of the source identity and record ID, so a provider's key is never
   exposed, and a note identity hashes an app-owned semantic signature, never provider coordinates.

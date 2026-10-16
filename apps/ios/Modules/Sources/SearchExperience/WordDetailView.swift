@@ -113,7 +113,7 @@ struct WordDetailView: View {
       notes.finishEditing()
     }
     .task(id: entry.id) {
-      await notes.load(entry.noteID)
+      await notes.load(item.id)
       await photos.load(item, saving: initialEncounterMedia)
       guard !Task.isCancelled else { return }
       analysisAvailability = await japaneseTextAnalysisClient.availability()

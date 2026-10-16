@@ -10,7 +10,7 @@ struct EncounterMediaAttachment: Hashable, Sendable {
 }
 
 struct EncounterWordReference: Codable, Hashable, Sendable {
-  let id: WordNoteID
+  let id: SavedItemID
   let headword: String
   let reading: String
 }
@@ -81,7 +81,8 @@ actor EncounterMediaStorage {
 
   static let shared = EncounterMediaStorage(
     directory: defaultDirectory,
-    legacyDirectory: legacyDefaultDirectory
+    legacyDirectory: legacyDefaultDirectory,
+    placing: .live
   )
 
   private static let defaultDirectory = FileManager.default.urls(
@@ -103,17 +104,19 @@ actor EncounterMediaStorage {
   private let indexURL: URL
   private let keepCopy: @Sendable (URL) throws -> Void
   private let now: @Sendable () -> Date
+  private let placing: NoteIdentityLookup
   private let deferredDeletions: DeferredImageDeletions
-  private var didPrepare = false
+  private var preparation: Task<Void, Never>?
   private var lastRetry: Date?
 
   init(
-    directory: URL, legacyDirectory: URL? = nil,
+    directory: URL, legacyDirectory: URL? = nil, placing: NoteIdentityLookup,
     keepCopy: @escaping @Sendable (URL) throws -> Void = { _ = try UnreadableCopy.keep(file: $0) },
     now: @escaping @Sendable () -> Date = Date.init
   ) {
     self.directory = directory
     self.legacyDirectory = legacyDirectory
+    self.placing = placing
     self.keepCopy = keepCopy
     self.now = now
     indexURL = directory.appending(path: "index.json")
@@ -121,8 +124,8 @@ actor EncounterMediaStorage {
       fileURL: directory.appending(path: "deferred-deletions.json"), keepCopy: keepCopy, now: now)
   }
 
-  func encounters(for word: EncounterWordReference) -> [EncounterMedia] {
-    prepareIfNeeded()
+  func encounters(for word: EncounterWordReference) async -> [EncounterMedia] {
+    await prepared()
     guard var current = index() else { return [] }
     var changed = false
     current.encounters = current.encounters.map { encounter in
@@ -137,8 +140,8 @@ actor EncounterMediaStorage {
       .compactMap { loadMedia($0.mediaID, record: current.media[$0.mediaID]) }
   }
 
-  func save(_ attachment: EncounterMediaAttachment, for word: EncounterWordReference) {
-    prepareIfNeeded()
+  func save(_ attachment: EncounterMediaAttachment, for word: EncounterWordReference) async {
+    await prepared()
     guard !attachment.data.isEmpty, var current = index() else { return }
     let mediaID = attachment.sha256
     let now = Date()
@@ -156,8 +159,8 @@ actor EncounterMediaStorage {
     deferredDeletions.remove(mediaID)
   }
 
-  func remove(_ word: EncounterWordReference, mediaID: String) {
-    prepareIfNeeded()
+  func remove(_ word: EncounterWordReference, mediaID: String) async {
+    await prepared()
     guard var current = index() else { return }
     current.encounters.removeAll { $0.word.id == word.id && $0.mediaID == mediaID }
     let removesMedia = !current.encounters.contains { $0.mediaID == mediaID }
@@ -166,8 +169,8 @@ actor EncounterMediaStorage {
     if removesMedia { deleteImage(mediaID) }
   }
 
-  func library() -> [EncounterMediaSummary] {
-    prepareIfNeeded()
+  func library() async -> [EncounterMediaSummary] {
+    await prepared()
     guard let current = index() else { return [] }
     return current.media.compactMap { mediaID, record in
       guard blobExists(mediaID) else { return nil }
@@ -186,13 +189,13 @@ actor EncounterMediaStorage {
     }.sorted { $0.savedAt > $1.savedAt }
   }
 
-  func media(_ mediaID: String) -> EncounterMedia? {
-    prepareIfNeeded()
+  func media(_ mediaID: String) async -> EncounterMedia? {
+    await prepared()
     return loadMedia(mediaID, record: index()?.media[mediaID])
   }
 
-  func deleteMedia(_ mediaID: String) {
-    prepareIfNeeded()
+  func deleteMedia(_ mediaID: String) async {
+    await prepared()
     guard var current = index() else { return }
     current.encounters.removeAll { $0.mediaID == mediaID }
     current.media[mediaID] = nil
@@ -200,8 +203,8 @@ actor EncounterMediaStorage {
     deleteImage(mediaID)
   }
 
-  func deleteImagesDue() {
-    prepareIfNeeded()
+  func deleteImagesDue() async {
+    await prepared()
     _ = index()
   }
 
@@ -249,9 +252,34 @@ actor EncounterMediaStorage {
     return names
   }
 
-  private func prepareIfNeeded() {
-    guard !didPrepare else { return }
-    didPrepare = true
+  private func prepared() async {
+    if preparation == nil {
+      preparation = Task {
+        prepareDirectory()
+        await placeEarlierWords()
+      }
+    }
+    await preparation?.value
+  }
+
+  private func placeEarlierWords() async {
+    guard var current = index() else { return }
+    let placed = await placing.wordIDs(for: current.encounters.map(\.word.id))
+    guard !placed.isEmpty else { return }
+    var kept = Set<[String]>()
+    current.encounters = current.encounters.compactMap { encounter in
+      let word = placed[encounter.word.id].map {
+        EncounterWordReference(
+          id: $0, headword: encounter.word.headword, reading: encounter.word.reading)
+      }
+      let moved = EncounterRecord(
+        word: word ?? encounter.word, mediaID: encounter.mediaID, savedAt: encounter.savedAt)
+      return kept.insert([moved.word.id.rawValue, moved.mediaID]).inserted ? moved : nil
+    }
+    _ = write(current)
+  }
+
+  private func prepareDirectory() {
     if !FileManager.default.fileExists(atPath: directory.path),
       let legacyDirectory,
       FileManager.default.fileExists(atPath: legacyDirectory.path)
@@ -308,7 +336,7 @@ actor EncounterMediaStorage {
       migrated.encounters.append(
         EncounterRecord(
           word: EncounterWordReference(
-            id: WordNoteID(rawValue: wordID), headword: "Saved Word", reading: ""),
+            id: SavedItemID(rawValue: wordID), headword: "Saved Word", reading: ""),
           mediaID: record.blobID,
           savedAt: date
         )

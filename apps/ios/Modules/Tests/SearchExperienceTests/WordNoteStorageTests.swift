@@ -5,9 +5,9 @@ import Testing
 
 @Suite("Word notes", .timeLimit(.minutes(1)))
 struct WordNoteStorageTests {
-  private let key = "lookup.word-notes.v4"
-  private let taberu = WordNoteID(rawValue: "taberu-note")
-  private let miru = WordNoteID(rawValue: "miru-note")
+  private let key = WordNoteStorage.storageKey
+  private let taberu = SavedWords.taberu
+  private let miru = SavedWords.miru
 
   @Test("a note is saved trimmed, read back, changed in place, and removed when emptied")
   func savesAndRemoves() async throws {
@@ -90,12 +90,14 @@ struct WordNoteStorageTests {
   @Test(
     "a note that can't be read is kept aside, and every readable note stays, on its word or another",
     arguments: [
-      #"{"miru-note":[{"id":"1","text":"見る"}],"taberu-note":"not notes"}"#,
-      #"{"miru-note":[{"id":"1","text":"見る"},{"id":5}],"taberu-note":[{"id":5}]}"#,
+      #"{"MIRU":[{"id":"1","text":"見る"}],"TABERU":"not notes"}"#,
+      #"{"MIRU":[{"id":"1","text":"見る"},{"id":5}],"TABERU":[{"id":5}]}"#,
     ])
   func keepsReadableNotes(stored json: String) async throws {
     let temporary = try TemporaryDefaults()
-    let stored = Data(json.utf8)
+    let stored = Data(
+      json.replacingOccurrences(of: "MIRU", with: miru.rawValue)
+        .replacingOccurrences(of: "TABERU", with: taberu.rawValue).utf8)
     temporary.defaults.set(stored, forKey: key)
     let storage = try storage(in: temporary)
 
@@ -194,6 +196,7 @@ struct WordNoteStorageTests {
   }
 
   private func storage(in temporary: TemporaryDefaults) throws -> WordNoteStorage {
-    WordNoteStorage(defaults: try #require(UserDefaults(suiteName: temporary.suite)))
+    WordNoteStorage(
+      defaults: try #require(UserDefaults(suiteName: temporary.suite)), placing: SavedWords.lookup)
   }
 }
