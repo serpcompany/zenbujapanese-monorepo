@@ -122,15 +122,15 @@ reason, and because workflow files here hold no comments.
 ## Web
 
 `.github/workflows/web.yml` checks pull requests that change `apps/web/**`, the core, or
-`tools/checks/ports.mjs`, which hands the browser tests their port. In
-`apps/web`, it runs ShellCheck 0.11 on the scripts in `apps/web/scripts/`, at warning level, in
-Docker, since the runner's own ShellCheck is older; checks that `cloudflare-env.d.ts` is what
-`pnpm cf-typegen` writes from `wrangler.jsonc`, and that it writes no other file, so a binding
-changed without regenerating the types fails here; then `pnpm check` ([`web.md`](web.md), Run and verify); then it builds twice more, with
-`SITE_ENV=staging` and with `SITE_ENV=production`. `pnpm check` builds without `SITE_ENV`, but
-static pages and prerendering differ by environment, so a route that reads a binding at build time
-fails only in that environment's build. Neither build reaches the dictionary service: deployed
-pages read it only at request time. After each, it checks the prerendered `/about/` has the
+`tools/checks/ports.mjs`, which hands the browser tests their port. In `apps/web`, it runs
+ShellCheck 0.11 on the scripts in `apps/web/scripts/`, at warning level, in Docker, since the
+runner's own ShellCheck is older; checks that `cloudflare-env.d.ts` is what `pnpm cf-typegen` writes
+from `wrangler.jsonc`, and that it writes no other file, so a binding changed without regenerating
+the types fails here; then `pnpm check` ([`web.md`](web.md), Run and verify); then it builds twice
+more, with `SITE_ENV=staging` and with `SITE_ENV=production`. `pnpm check` builds without
+`SITE_ENV`, but static pages and prerendering differ by environment, so a route that reads a binding
+at build time fails only in that environment's build. Neither build reaches the dictionary service:
+deployed pages read it only at request time. After each, it checks the prerendered `/about/` has the
 footer's Sign in linking `/login/`, since staging's and production's account pages are open
 ([`web.md`](web.md), Account pages); the header's Log in is in the account menu, which the browser
 draws, so `src/lib/site.test.ts` checks its address with the account pages open and closed. Each
@@ -164,10 +164,11 @@ the service, the core, what the services share (`packages/node-service/`), its A
 `apps/web/vitest.config.ts`, and what gives the gate its address, `apps/web/e2e/server.ts` and
 `tools/checks/ports.mjs`), the conformance suites (`apps/ios/LanguageData/Conformance/`), the app's
 resources (`apps/ios/Modules/Sources/SearchExperience/Resources/`), or `language-data/release.json`
-(the release the service names) and its pins (`language-data/releases/`), and by hand. A new push
-cancels the pull request's last run. Its `scripts` job runs ShellCheck 0.11 on the server's deployer
-(`deploy/deployer.sh`), in Docker, since the runner's own ShellCheck is older; `Repository` runs
-ShellCheck on it too, and its tests, on every pull request. Once `scripts` passes, its `check` job:
+(the release the service names), its pins (`language-data/releases/`), and its retired entries
+(`language-data/derived/`), and by hand. A new push cancels the pull request's last run. Its
+`scripts` job runs ShellCheck 0.11 on the server's deployer (`deploy/deployer.sh`), in Docker, since
+the runner's own ShellCheck is older; `Repository` runs ShellCheck on it too, and its tests, on
+every pull request. Once `scripts` passes, its `check` job:
 
 1. restores and pulls the app's Git LFS files the service reads (the `.sqlite3` files and
    Kuromoji's), then Sudachi's dictionary (`pnpm sudachi`, which keeps a cached copy that matches

@@ -66,8 +66,9 @@ Environments and deploys.
 image holds: the service, the core, what the services share, the package files it installs from
 (the root ones and `apps/web/package.json`), the app's files it copies (the `.sqlite3` files, the
 `Kanji*ReferenceData.json` files, the pack catalog, and Kuromoji's),
-`language-data/release.json`, the release the app routes name, and the pinned manifests
-(`language-data/releases/*/manifest.json`), which the service checks its files against. Tests and the service's
+`language-data/release.json`, the release the app routes name, the pinned manifests
+(`language-data/releases/*/manifest.json`), which the service checks its files against, and the
+release's retired entries (`language-data/derived/RetiredEntries.json`). Tests and the service's
 conformance code (`apps/dictionary-api/src/conformance/`) aren't in the image, so they don't start
 it. A pull request that
 changes the same files runs only the `image` job, which builds and checks without pushing; a new

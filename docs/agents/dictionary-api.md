@@ -46,7 +46,7 @@ git lfs pull --include="apps/ios/Modules/Sources/SearchExperience/Resources/**"
   `SudachiJapaneseMorphologyAdapter` does. Without the dictionary the service won't start; set
   `SUDACHI_DICTIONARY=` (empty) to run it with sentence search off, where a sentence finds only
   direct matches.
-- `language-data/release.json`, and that release's pin in `language-data/releases/`.
+- `language-data/release.json`, its pin in `language-data/releases/`, and its retired entries.
 
 ## Run it
 
@@ -74,6 +74,7 @@ against it, name it in `.dev.vars` in `apps/web` (see [`web.md`](web.md), Dictio
 | `DICTIONARY_API_RELEASE` | `local` | A name for this build of the code, such as its commit. |
 | `LANGUAGE_DATA_RELEASE_FILE` | `language-data/release.json` | The language-data release the files belong to, which the app routes name (the image copies it to `/service/language-data/release.json`). |
 | `LANGUAGE_DATA_RELEASES` | `language-data/releases` | The pins, beside it in the image. |
+| `LANGUAGE_DATA_DERIVED` | `language-data/derived` | Its `RetiredEntries.json`, in the image too. |
 | `ACCOUNT_API_URL` | none | The account service's public URL, such as `https://api.zenbujapanese.com`: an app token's `iss` and `aud` must be exactly this. Unset, the app routes answer 503. |
 | `ACCOUNT_JWKS_URL` | `<ACCOUNT_API_URL>/v1/auth/jwks` | Where the service reads the account service's signing keys. A slot reaches only nginx, so on the server this is a URL nginx answers with the account service's JWKS (Apps, below). It must answer `200` itself: the service follows no redirect. |
 | `APP_REQUESTS_PER_MINUTE` | `60` | How many app-route requests one account may make in a minute. |
@@ -108,7 +109,7 @@ wrong; a 503 means the service is still starting; a 500 says nothing more and lo
 | `GET /v1/kanji/<character>` | A kanji's rows for its details, the slugs of the words it lists, and which of its components and elements have details (`kanjiPages`). |
 | `GET /v1/sitemaps/words` | Each word sitemap's `ent_seq` range. |
 | `GET /v1/sitemaps/words/<n>?after=&limit=` | A sitemap's words after `after`, with their slugs. |
-| `GET /v1/retired` | Retired entries and their replacements; empty until #463. |
+| `GET /v1/retired` | The release's retired entries, each with its replacement or `null`. |
 | `GET /v1/browse` | The browse pages' totals: entries, each kana script's words, common words and the 24 most used content words among them (no particles, auxiliaries, conjunctions, copulas, or bare prefixes and suffixes), the kanji lists' sizes and grade 1's kanji, and the JLPT levels' words. |
 | `GET /v1/browse/kana/<script>` | `hiragana` or `katakana`: how many words start with each kana. |
 | `GET /v1/browse/kana/<script>/<kana>` | A kana's two-kana groups with their counts, the words read as that kana alone, and the kanas before and after it. |
@@ -231,8 +232,8 @@ says where the code belongs; tests may import anything.
 comes from `packages/node-service` (`@zenbu/node-service`): `log()`, which writes JSON lines (a
 level, a message naming the event, and fields) that the server's journal and Docker keep; the
 request log, which names a route by its pattern; and the server that stops cleanly on SIGTERM.
-Nothing else calls `console`, which Biome's `noRestrictedGlobals` enforces outside tests. The scripts in `apps/dictionary-api/scripts/` print
-progress to a person, so they may.
+Nothing else calls `console`, which Biome's `noRestrictedGlobals` enforces outside tests. The
+scripts in `apps/dictionary-api/scripts/` print progress to a person, so they may.
 
 ## Check it
 

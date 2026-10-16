@@ -43,7 +43,9 @@ flowchart LR
 The app's bundled data is the one source: the importers build it, the app bundles it, the service's
 image copies it, and the release packages it. Each release's manifest is pinned in
 `language-data/releases/`, and checks before merge hold the app's files and the image's copies to
-it ([`language-data/README.md`](language-data/README.md), Pinned releases). The website reads no data of its own; it asks the
+it ([`language-data/README.md`](language-data/README.md), Pinned releases). Each release also
+records the JMdict entries it retires, which the service answers the website's retired word URLs
+from ([`language-data/retired-entries.md`](language-data/retired-entries.md)). The website reads no data of its own; it asks the
 service, which runs the same core the website renders with. The app answers its dictionary
 screens with that core too, from a bundle of it checked in beside the data, so it shows what the
 website shows with no network ([`docs/agents/ios.md`](docs/agents/ios.md), The dictionary core in the app). A new build of the data is a new
