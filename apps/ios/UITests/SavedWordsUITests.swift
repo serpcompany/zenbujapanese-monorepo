@@ -19,14 +19,22 @@ final class SavedWordsUITests: ZenbuUITestCase {
 
   func testANoteWhoseWordIsGoneIsListedUntilItsDeleted() throws {
     let gone = "wn1:" + String(repeating: "0", count: 64)
-    let app = launch(try earlierNotes([gone: ["gone": "its word is gone"]]))
+    let dropped = String(repeating: "f", count: 32)
+    let app = launch(
+      try earlierNotes(
+        [gone: ["gone": "its word is gone"], dropped: ["dropped": "its entry was dropped"]],
+        headwords: [dropped: "消えた語"]))
     open(.account, in: app)
     tap(reveal(find("account.notes-without-a-word", in: app), in: app))
-    let note = waitFor(find("notes-without-a-word.note.gone", in: app))
-    waitUntil(note, mentions: "its word is gone")
-    revealRowActions(on: note)
-    waitFor(menuChoice("Copy", in: app))
-    tap(menuChoice("Delete", in: app))
+    waitUntil(waitFor(find("notes-without-a-word.note.dropped", in: app)), mentions: "消えた語")
+    for (id, text) in [("gone", "its word is gone"), ("dropped", "its entry was dropped")] {
+      let note = waitFor(find("notes-without-a-word.note.\(id)", in: app))
+      waitUntil(note, mentions: text)
+      revealRowActions(on: note)
+      waitFor(menuChoice("Copy", in: app))
+      tap(menuChoice("Delete", in: app))
+      waitUntilGone(note)
+    }
     assertOnScreen(find("notes-without-a-word.empty", in: app), in: app)
     goBack(in: app)
     waitFor(find("account.translations", in: app))

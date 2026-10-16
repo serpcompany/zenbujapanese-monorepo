@@ -204,18 +204,28 @@ extension LanguageReferenceData {
     )
   }
 
-  func words(named noteIdentities: [String]) throws -> [String: LanguageReferenceID] {
+  func words(named noteIdentities: [String]) throws -> [String: SavedWordLabel] {
     guard !noteIdentities.isEmpty else { return [:] }
     let statement = try openStatements().statement(Self.noteIdentitiesSQL)
     defer { sqlite3_reset(statement) }
     let listed = String(decoding: try JSONEncoder().encode(noteIdentities), as: UTF8.self)
     sqliteBind(listed, at: 1, to: statement)
-    var named: [String: LanguageReferenceID] = [:]
+    var named: [String: String] = [:]
     while try checkedSQLiteStep(statement) == .row {
-      named[sqliteText(statement, 0)] = LanguageReferenceID(rawValue: sqliteText(statement, 1))
+      named[sqliteText(statement, 0)] = sqliteText(statement, 1)
     }
-    let shown = try entries(equivalentTo: Array(Set(named.values)))
-    return named.compactMapValues { shown[$0]?.id }
+    let shown = try shownWords(Array(Set(named.values)))
+    return named.compactMapValues { shown[$0] }
+  }
+
+  func shownWords(_ ids: [String]) throws -> [String: SavedWordLabel] {
+    let shown = try entries(equivalentTo: ids.map(LanguageReferenceID.init(rawValue:)))
+    var words: [String: SavedWordLabel] = [:]
+    for (id, entry) in shown {
+      words[id.rawValue] = SavedWordLabel(
+        id: SavedItem.word(entry).id, headword: entry.headword, reading: entry.reading)
+    }
+    return words
   }
 
   static func decode<Value: Decodable>(column: Int32, statement: OpaquePointer) throws

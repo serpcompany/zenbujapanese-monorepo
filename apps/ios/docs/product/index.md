@@ -372,7 +372,7 @@ stand-in account service; UI `AccountUITests` (offline, the app signed out).
 What doesn't sync, and why:
 
 - **Word notes**, which the account service doesn't hold yet (it answers a note `unknown_entity`),
-  keyed by Language Reference ID but for those under Notes Without a Word, which keep their hash.
+  keyed by Language Reference ID but for those an earlier version saved that no word took.
 - **Media Library photos**, which need file storage the account service doesn't have.
 - **Translate conversations**, which hold other people's words: only the sentences the learner
   bookmarks sync, each on its own.

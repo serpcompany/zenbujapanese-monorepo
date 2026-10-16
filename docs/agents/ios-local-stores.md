@@ -71,26 +71,34 @@ days on.
 ## Notes and photos an earlier version saved
 
 Word notes and the Media Library's encounters are keyed as known words and lists are
-(`SavedItem.id`, a `SavedItemID`). Until #474 they were keyed by the word's note identity, the `wn1:` hash of its
-headword, forms, senses, and parts of speech that `import_jmdict.py` writes to `note_identity`,
-so an edit to a word's meanings detached them; notes were under `lookup.word-notes.v4`. A key
-that is neither a Language Reference ID nor a kanji's is a note identity, and each store moves
-those before it first reads or writes in a launch, one task the store's other calls wait for:
-`NoteIdentityLookup` asks `LanguageReferenceData.words(named:)`, which looks the hashes up in
-`note_identity` (an indexed column of `LanguageReferenceData.sqlite3`) and answers each one's
-entry through `entries(equivalentTo:)`, so a word JMdict lists twice moves to the ID its page
-shows. `WordNoteStorage` first merges `lookup.word-notes.v4` into v5, where a note already in v5
-keeps v5's text, moves the notes, and removes v4 once v5 is written; a v4 that can't be read in
-full is kept aside as any store is. A hash the dictionary doesn't have stays as its key, in v5 or
-in the index, and is looked up again at each launch: its notes are `withoutAWord`, which Account's
-**Notes Without a Word** lists (`NotesWithoutAWord`, loaded once at launch into the app's
-environment, so the row is there when Account is first drawn, unless Account opens before the
-move finishes and the row appears when it does; the screen's deletions change it, so the row goes
-on the Mac too, where a covered screen's `.task` doesn't run again). A full swipe doesn't delete a
-note there, since a deletion can't be undone. Its photos stay in the
-Media Library with their headword. When the dictionary can't be read, `NoteIdentityLookup`
-answers nothing: nothing moves, `withoutAWord` lists nothing, and the next launch that can read
-it moves them.
+(`SavedItem.id`, a `SavedItemID`), and each note also keeps its word's headword and reading
+(`LearnerWordNote`). Until #474 they were keyed by the word's note identity, the `wn1:` hash of
+its headword, forms, senses, and parts of speech that `import_jmdict.py` writes to
+`note_identity`, so an edit to a word's meanings detached them; notes were under
+`lookup.word-notes.v4`. A key that is neither a Language Reference ID nor a kanji's is a note
+identity.
+
+Before a store first reads or writes in a launch, in one task its other calls wait for, it places
+every key it holds through `SavedKeyLookup`, which answers each key's word or marks it missing:
+a note identity through `LanguageReferenceData.words(named:)`, which looks the hashes up in
+`note_identity` (an indexed column of `LanguageReferenceData.sqlite3`); a Language Reference ID
+through `shownWords`; both by `entries(equivalentTo:)`, so a key moves to the ID its word's page
+shows, the smaller of the two for a word JMdict lists twice; and a kanji by whether
+`KanjiFiles` has its record. `WordNoteStorage` first merges `lookup.word-notes.v4` into v5, where
+a note already in v5 keeps v5's text, then moves each key's notes to their word, labeling them
+with its headword and reading, and removes v4 once v5 is written; a v4 that can't be read in full
+is kept aside as any store is. The Media Library moves an encounter whose word's ID differs from
+its key, and keeps the headword it was saved with.
+
+A missing key's notes stay under it, and each launch asks again. They are `withoutAWord`, which
+Account's **Notes Without a Word** lists by the headword a note was saved on, the kanji, or else the
+key (`NotesWithoutAWord`, loaded once at launch into the app's environment, so the row is there
+when Account is first drawn, unless Account opens before the move finishes and the row appears
+when it does; the screen's deletions change it, so the row goes on the Mac too, where a covered
+screen's `.task` doesn't run again). A full swipe doesn't delete a note there, since a deletion
+can't be undone. A missing key's photos stay in the Media Library with their headword. When the
+dictionary can't be read, `SavedKeyLookup` answers nothing: nothing moves, `withoutAWord` lists
+nothing, and the next launch that can read it places them.
 
 The mapping holds only while each entry keeps the `note_identity` the version that saved a note
 gave it, and a learner can update from 1.0.0 straight to any later version. In the bundled

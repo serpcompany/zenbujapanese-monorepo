@@ -46,6 +46,7 @@ struct EarlierWordKeysTests {
     let storage = try storage(in: temporary, placing: .live)
 
     #expect(await storage.load(SavedWords.taberu).map(\.text) == ["毎日食べる"])
+    #expect(await storage.load(SavedWords.taberu).first?.headword == "食べる")
     #expect(await storage.load(SavedWords.miru).map(\.text) == ["よく見る"])
     #expect(await storage.load(shoku).map(\.text) == ["食べ物の食"])
     #expect(await storage.withoutAWord().isEmpty)
@@ -66,6 +67,42 @@ struct EarlierWordKeysTests {
 
     #expect(await storage.load(SavedWords.enma).map(\.text) == ["一つ目の閻魔", "二つ目の閻魔"])
     #expect(try storedKeys(in: temporary) == [SavedWords.enma])
+  }
+
+  @Test("a note under the other entry of a word JMdict lists twice moves to the one its page shows")
+  func movesANoteToTheEntryItsPageShows() async throws {
+    let temporary = try TemporaryDefaults()
+    let note = LearnerWordNote(id: "1", text: "閻魔の別の見出し")
+    try save([SavedWords.enmaOtherEntry.rawValue: [note]], in: temporary)
+    let storage = try storage(in: temporary, placing: .live)
+
+    #expect(await storage.load(SavedWords.enma) == [note.on("閻魔", reading: "えんま")])
+    #expect(try storedKeys(in: temporary) == [SavedWords.enma])
+  }
+
+  @Test("a note without a word names the headword its page saved, a kanji's character, or else its key")
+  @MainActor
+  func namesTheWordOfANoteWithoutOne() async throws {
+    let temporary = try TemporaryDefaults()
+    try keep([SavedWords.goneNoteIdentity: [SavedWords.goneNote.note]], in: temporary)
+    let storage = try storage(in: temporary, placing: SavedWords.lookup)
+    let (store, saves) = SavedWords.observed(storage)
+    var saved = saves.makeAsyncIterator()
+    let page = SavedItemNotes(store: store)
+    let dropped = SavedItem(
+      kind: .word(LanguageReferenceID(rawValue: SavedWords.droppedWord.rawValue)),
+      headword: "消えた語", reading: "きえたご")
+
+    await page.load(dropped)
+    page.beginAdding()
+    page.draft = "辞書から消えた語"
+    page.finishEditing()
+    _ = await saved.next()
+    await storage.save(LearnerWordNote(text: "辞書にない漢字"), for: SavedWords.droppedKanji)
+
+    let relaunched = try self.storage(in: temporary, placing: SavedWords.lookup)
+    let words = await relaunched.withoutAWord().map(\.word)
+    #expect(words == ["消えた語", "丢", SavedWords.goneNoteIdentity])
   }
 
   @Test(
@@ -110,10 +147,7 @@ struct EarlierWordKeysTests {
   @Test("a note in both stores keeps its newer text, and the earlier store's other notes join it")
   func keepsTheNewerText() async throws {
     let temporary = try TemporaryDefaults()
-    temporary.defaults.set(
-      try SavedWords.earlierNotes([
-        SavedWords.taberu.rawValue: [LearnerWordNote(id: "1", text: "よく食べる")]
-      ]), forKey: WordNoteStorage.storageKey)
+    try save([SavedWords.taberu.rawValue: [LearnerWordNote(id: "1", text: "よく食べる")]], in: temporary)
     try keep(
       [
         SavedWords.taberuNoteIdentity: [
@@ -235,7 +269,11 @@ struct EarlierWordKeysTests {
     temporary.defaults.set(try SavedWords.earlierNotes(notes), forKey: earlierKey)
   }
 
-  private func storage(in temporary: TemporaryDefaults, placing: NoteIdentityLookup) throws
+  private func save(_ notes: [String: [LearnerWordNote]], in temporary: TemporaryDefaults) throws {
+    temporary.defaults.set(try SavedWords.earlierNotes(notes), forKey: WordNoteStorage.storageKey)
+  }
+
+  private func storage(in temporary: TemporaryDefaults, placing: SavedKeyLookup) throws
     -> WordNoteStorage
   {
     WordNoteStorage(

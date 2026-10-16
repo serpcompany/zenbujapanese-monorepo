@@ -194,7 +194,7 @@ don't contain them), so they need no network, account, camera, or microphone:
 - `ZENBU_TRANSLATE_SCRIPT=station` is the Translate harness ([`translate.md`](translate.md),
   Simulator harness).
 - `ZENBU_EARLIER_NOTES=<json>` stands in for notes an earlier version saved: with
-  `ZENBU_UI_TEST_FRESH=1`, it writes the JSON, a note identity's notes by key, under
+  `ZENBU_UI_TEST_FRESH=1`, it writes the JSON, each key's notes, under
   `lookup.word-notes.v4` after the erase, so the app moves them as it would a learner's
   (`WordDetailUITests`, `SavedWordsUITests`; [`ios-local-stores.md`](ios-local-stores.md)).
 - `ZENBU_HOLD_LINKING=1` holds back every answer that links words (a page of examples, a caption's

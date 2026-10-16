@@ -47,11 +47,19 @@ struct NotesWithoutAWordView: View {
         List {
           Section {
             ForEach(saved.notes) { note in
-              Text(note.note.text)
-                .italic()
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .fixedSize(horizontal: false, vertical: true)
-                .accessibilityIdentifier("notes-without-a-word.note.\(note.note.id)")
+              VStack(alignment: .leading, spacing: 4) {
+                Text(note.note.text)
+                  .italic()
+                  .fixedSize(horizontal: false, vertical: true)
+                Text(note.word)
+                  .font(.footnote)
+                  .foregroundStyle(.secondary)
+                  .lineLimit(1)
+                  .truncationMode(.middle)
+              }
+              .frame(maxWidth: .infinity, alignment: .leading)
+              .accessibilityElement(children: .combine)
+              .accessibilityIdentifier("notes-without-a-word.note.\(note.note.id)")
                 .rowActions(allowsFullSwipe: false) {
                   Button("Delete", role: .destructive) {
                     Task { await saved.delete(note) }
@@ -63,7 +71,7 @@ struct NotesWithoutAWordView: View {
             }
           } footer: {
             Text(
-              "An earlier version of Zenbu saved these notes for words this dictionary doesn’t have, so they can’t be shown on a word. Copy a note to add it to another word, or delete it."
+              "These notes were saved for words or kanji this dictionary doesn’t have, so they can’t be shown on a page. Copy a note to add it to another word, or delete it."
             )
           }
         }

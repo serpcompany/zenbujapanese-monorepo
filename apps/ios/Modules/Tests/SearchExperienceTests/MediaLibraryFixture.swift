@@ -39,7 +39,7 @@ struct MediaLibraryFixture {
       now: { Self.firstDay + day.withLock { $0 } * 24 * 60 * 60 })
   }
 
-  func launch(placing: NoteIdentityLookup) -> EncounterMediaStorage {
+  func launch(placing: SavedKeyLookup) -> EncounterMediaStorage {
     EncounterMediaStorage(directory: directory, placing: placing)
   }
 

@@ -42,10 +42,14 @@ struct SavedItem: Hashable, Sendable {
 struct SavedItemID: Codable, Hashable, Comparable, Sendable {
   let rawValue: String
 
-  var isNoteIdentity: Bool {
-    !rawValue.hasPrefix(SavedItem.kanjiPrefix)
-      && LanguageReferenceID(rawValue: rawValue).bytes == nil
+  var kanji: String? {
+    rawValue.hasPrefix(SavedItem.kanjiPrefix)
+      ? String(rawValue.dropFirst(SavedItem.kanjiPrefix.count)) : nil
   }
+
+  var isLanguageReferenceID: Bool { LanguageReferenceID(rawValue: rawValue).bytes != nil }
+
+  var isNoteIdentity: Bool { kanji == nil && !isLanguageReferenceID }
 
   static func < (lhs: SavedItemID, rhs: SavedItemID) -> Bool { lhs.rawValue < rhs.rawValue }
 }

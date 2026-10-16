@@ -15,10 +15,20 @@ struct WordNoteStore: Sendable {
 struct LearnerWordNote: Codable, Hashable, Identifiable, Sendable {
   let id: String
   var text: String
+  var headword: String?
+  var reading: String?
 
-  init(id: String = UUID().uuidString, text: String) {
+  init(
+    id: String = UUID().uuidString, text: String, headword: String? = nil, reading: String? = nil
+  ) {
     self.id = id
     self.text = text
+    self.headword = headword
+    self.reading = reading
+  }
+
+  func on(_ headword: String, reading: String) -> LearnerWordNote {
+    LearnerWordNote(id: id, text: text, headword: headword, reading: reading)
   }
 }
 
@@ -27,15 +37,23 @@ struct NoteWithoutAWord: Identifiable, Hashable, Sendable {
   let note: LearnerWordNote
 
   var id: String { "\(key.rawValue) \(note.id)" }
+
+  var word: String { note.headword ?? key.kanji ?? key.rawValue }
 }
 
 extension [LearnerWordNote] {
   mutating func apply(_ note: LearnerWordNote) {
     let text = note.text.trimmingCharacters(in: .whitespacesAndNewlines)
     if let index = firstIndex(where: { $0.id == note.id }) {
-      if text.isEmpty { remove(at: index) } else { self[index].text = text }
+      if text.isEmpty {
+        remove(at: index)
+      } else {
+        self[index].text = text
+        self[index].headword = note.headword ?? self[index].headword
+        self[index].reading = note.reading ?? self[index].reading
+      }
     } else if !text.isEmpty {
-      append(LearnerWordNote(id: note.id, text: text))
+      append(LearnerWordNote(id: note.id, text: text, headword: note.headword, reading: note.reading))
     }
   }
 
@@ -51,11 +69,11 @@ actor WordNoteStorage {
   static let storageKey = "lookup.word-notes.v5"
   static let earlierStorageKey = "lookup.word-notes.v4"
   private let defaults: UserDefaults
-  private let placing: NoteIdentityLookup
+  private let placing: SavedKeyLookup
   private var earlierNotesPlaced: Task<Void, Never>?
-  private var dictionaryAnswered = true
+  private var keysWithoutAWord: Set<SavedItemID> = []
 
-  init(defaults: UserDefaults = .standard, placing: NoteIdentityLookup) {
+  init(defaults: UserDefaults = .standard, placing: SavedKeyLookup) {
     self.defaults = defaults
     self.placing = placing
   }
@@ -76,10 +94,9 @@ actor WordNoteStorage {
 
   func withoutAWord() async -> [NoteWithoutAWord] {
     await placeEarlierNotes()
-    guard dictionaryAnswered else { return [] }
     return notes(under: Self.storageKey)
       .map { (key: SavedItemID(rawValue: $0.key), notes: $0.value) }
-      .filter { $0.key.isNoteIdentity }
+      .filter { keysWithoutAWord.contains($0.key) }
       .sorted { $0.key < $1.key }
       .flatMap { word in word.notes.map { NoteWithoutAWord(key: word.key, note: $0) } }
   }
@@ -99,14 +116,10 @@ actor WordNoteStorage {
         stored[key, default: []].keep(earlier)
       }
     }
-    let answer = await placing.wordIDs(for: stored.keys.map(SavedItemID.init(rawValue:)))
-    dictionaryAnswered = answer != nil
-    let placed = answer ?? [:]
-    for (earlier, word) in placed.sorted(by: { $0.key < $1.key }) {
-      guard let moving = stored.removeValue(forKey: earlier.rawValue) else { continue }
-      stored[word.rawValue, default: []].keep(moving)
-    }
-    guard hasEarlierStore || !placed.isEmpty, write(stored, under: Self.storageKey) else { return }
+    let places = await placing.places(for: stored.keys.map(SavedItemID.init(rawValue:)))
+    keysWithoutAWord = places?.missing ?? []
+    let placed = stored.placing(places?.words ?? [:])
+    guard hasEarlierStore || placed != stored, write(placed, under: Self.storageKey) else { return }
     defaults.removeObject(forKey: Self.earlierStorageKey)
   }
 
@@ -129,5 +142,21 @@ actor WordNoteStorage {
     guard let data = try? JSONEncoder().encode(notes) else { return false }
     defaults.set(data, forKey: key)
     return true
+  }
+}
+
+extension [String: [LearnerWordNote]] {
+  fileprivate func placing(_ words: [SavedItemID: SavedWordLabel]) -> Self {
+    var placed = self
+    var moving: [(word: SavedWordLabel, notes: [LearnerWordNote])] = []
+    for (key, word) in words.sorted(by: { $0.key < $1.key }) {
+      guard let notes = placed.removeValue(forKey: key.rawValue) else { continue }
+      moving.append((word, notes))
+    }
+    for (word, notes) in moving {
+      let labeled = notes.map { $0.on(word.headword, reading: word.reading) }
+      placed[word.id.rawValue, default: []].keep(labeled)
+    }
+    return placed
   }
 }

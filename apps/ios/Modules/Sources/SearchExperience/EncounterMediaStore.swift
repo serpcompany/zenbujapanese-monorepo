@@ -104,13 +104,13 @@ actor EncounterMediaStorage {
   private let indexURL: URL
   private let keepCopy: @Sendable (URL) throws -> Void
   private let now: @Sendable () -> Date
-  private let placing: NoteIdentityLookup
+  private let placing: SavedKeyLookup
   private let deferredDeletions: DeferredImageDeletions
   private var preparation: Task<Void, Never>?
   private var lastRetry: Date?
 
   init(
-    directory: URL, legacyDirectory: URL? = nil, placing: NoteIdentityLookup,
+    directory: URL, legacyDirectory: URL? = nil, placing: SavedKeyLookup,
     keepCopy: @escaping @Sendable (URL) throws -> Void = { _ = try UnreadableCopy.keep(file: $0) },
     now: @escaping @Sendable () -> Date = Date.init
   ) {
@@ -264,13 +264,14 @@ actor EncounterMediaStorage {
 
   private func placeEarlierWords() async {
     guard var current = index() else { return }
-    let answer = await placing.wordIDs(for: current.encounters.map(\.word.id))
-    guard let placed = answer, !placed.isEmpty else { return }
+    let places = await placing.places(for: current.encounters.map(\.word.id))
+    let placed = (places?.words ?? [:]).filter { $0.key != $0.value.id }
+    guard !placed.isEmpty else { return }
     var kept = Set<[String]>()
     current.encounters = current.encounters.compactMap { encounter in
       let word = placed[encounter.word.id].map {
         EncounterWordReference(
-          id: $0, headword: encounter.word.headword, reading: encounter.word.reading)
+          id: $0.id, headword: encounter.word.headword, reading: encounter.word.reading)
       }
       let moved = EncounterRecord(
         word: word ?? encounter.word, mediaID: encounter.mediaID, savedAt: encounter.savedAt)

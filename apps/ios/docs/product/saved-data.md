@@ -10,7 +10,9 @@ Lists are under [Account](index.md#account).
 
 A learner can write notes for a word and associate photos with it. Notes and associated
 photos persist on the device, keyed by the word's Language Reference ID, as known words and lists
-are, so a dictionary update that edits the word's meanings keeps them on it. A note written while
+are, so a dictionary update that edits the word's meanings keeps them on it. Each note keeps its
+word's headword and reading too, so it can still be named if the dictionary drops the word, and a
+note under an entry JMdict lists twice moves to the one the word's page shows. A note written while
 the page is still loading its examples is kept like any other. If saved notes can't be read, a
 copy is kept on the device rather than written over, and every note that can be read stays, on
 its word or any other ([Saved data that can't be read](#saved-data-that-cant-be-read)).
@@ -18,7 +20,8 @@ its word or any other ([Saved data that can't be read](#saved-data-that-cant-be-
 Check: UI `WordDetailUITests.testANoteIsKeptOnTheWord` and
 `SavedWordsUITests.testAnImagesWordKeepsTheImageInTheMediaLibraryUntilItsDeleted`; package
 `WordNoteStorageTests`, `EncounterMediaStorageTests`, and `EarlierWordKeysTests` (a word's key is
-its Language Reference ID, which an edit to its meanings doesn't change).
+its Language Reference ID, which an edit to its meanings doesn't change, and a note under the
+other entry of 閻魔 moves to the one its page shows).
 
 ## Notes and photos an earlier version saved
 
@@ -44,15 +47,21 @@ contract `test_note_identity_contract.py` (every entry's hash pinned as those ve
 
 ## Notes Without a Word
 
-Account shows a **Notes Without a Word** row, with how many, only while some note an earlier
-version saved names no word in the app's dictionary. It opens a list of those notes' text, with a
-line below them saying why they aren't on a word. A swipe (right-click on the Mac) offers
+Account shows a **Notes Without a Word** row, with how many, only while some note is under a key
+the app's dictionary has no page for: a hash an earlier version saved that names no word, or a
+Language Reference ID or kanji the dictionary no longer has. Each launch asks the dictionary again.
+The row opens a list of those notes, each with its text and, under it, the headword it was saved
+on, the kanji, or else its key, and a line below them saying why they aren't on a page. A swipe
+(right-click on the Mac) offers
 **Delete** and **Copy**, which copies the note's text; a full swipe doesn't delete, since a deleted
 note can't be brought back. Once none are left, the list says so, and the row is gone from
 Account.
 
-Check: UI `SavedWordsUITests.testANoteWhoseWordIsGoneIsListedUntilItsDeleted`; package
-`EarlierWordKeysTests.listsNotesWithoutAWordUntilDeleted`.
+Check: UI `SavedWordsUITests.testANoteWhoseWordIsGoneIsListedUntilItsDeleted` (a hash's note and
+a dropped word's, named by its headword); package `DroppedWordNotesTests` (a dropped word's and a
+dropped kanji's notes listed, not those of a word or kanji the dictionary has),
+`EarlierWordKeysTests.listsNotesWithoutAWordUntilDeleted`, and
+`EarlierWordKeysTests.namesTheWordOfANoteWithoutOne`.
 
 ## Media Library
 
