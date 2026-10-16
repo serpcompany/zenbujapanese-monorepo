@@ -110,12 +110,12 @@ struct EarlierWordKeysTests {
   @Test("a note in both stores keeps its newer text, and the earlier store's other notes join it")
   func keepsTheNewerText() async throws {
     let temporary = try TemporaryDefaults()
-    try keep(
-      [
-        SavedWords.taberu.rawValue: [LearnerWordNote(id: "1", text: "よく食べる")]
-      ]), forKey: WordNoteStorage.storageKey)
     temporary.defaults.set(
       try SavedWords.earlierNotes([
+        SavedWords.taberu.rawValue: [LearnerWordNote(id: "1", text: "よく食べる")]
+      ]), forKey: WordNoteStorage.storageKey)
+    try keep(
+      [
         SavedWords.taberuNoteIdentity: [
           LearnerWordNote(id: "1", text: "毎日食べる"), LearnerWordNote(id: "2", text: "朝ごはん"),
         ]
@@ -225,7 +225,7 @@ struct EarlierWordKeysTests {
       records.append(#"{"word":\#(word),"mediaID":"\#(id)","savedAt":\#(encounter.savedAt)}"#)
     }
     _ = try fixture.writeIndex(
-      #"{"media":{\#(media.joined(separator: ",")),"encounters":[\#(records.joined(separator: ","))]}"#)
+      #"{"media":{\#(media.joined(separator: ","))},"encounters":[\#(records.joined(separator: ","))]}"#)
     for attachment in [fixture.photo, fixture.otherPhoto] {
       try attachment.data.write(to: fixture.imageURL(of: attachment))
     }

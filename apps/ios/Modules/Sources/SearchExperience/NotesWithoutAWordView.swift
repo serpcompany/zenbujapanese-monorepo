@@ -52,7 +52,7 @@ struct NotesWithoutAWordView: View {
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .fixedSize(horizontal: false, vertical: true)
                 .accessibilityIdentifier("notes-without-a-word.note.\(note.note.id)")
-                .rowActions {
+                .rowActions(allowsFullSwipe: false) {
                   Button("Delete", role: .destructive) {
                     Task { await saved.delete(note) }
                   }
