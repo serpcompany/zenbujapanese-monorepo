@@ -47,8 +47,9 @@ contract `test_note_identity_contract.py` (every entry's hash pinned as those ve
 Account shows a **Notes Without a Word** row, with how many, only while some note an earlier
 version saved names no word in the app's dictionary. It opens a list of those notes' text, with a
 line below them saying why they aren't on a word. A swipe (right-click on the Mac) offers
-**Delete** and **Copy**, which copies the note's text. Once none are left, the list says so, and
-the row is gone from Account.
+**Delete** and **Copy**, which copies the note's text; a full swipe doesn't delete, since a deleted
+note can't be brought back. Once none are left, the list says so, and the row is gone from
+Account.
 
 Check: UI `SavedWordsUITests.testANoteWhoseWordIsGoneIsListedUntilItsDeleted`; package
 `EarlierWordKeysTests.listsNotesWithoutAWordUntilDeleted`.

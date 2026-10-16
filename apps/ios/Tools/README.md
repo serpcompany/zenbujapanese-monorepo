@@ -68,9 +68,11 @@ record: JMdict's as `JMdict_e-<date>.gz`, and the others in a folder named like 
    versions saved under it to their word (`docs/agents/ios-local-stores.md`), and
    `test_note_identity_contract.py` fails on any changed value. The importer computes it from the
    entry today, so it first has to write each entry the previous database has with that
-   database's value. Pin the test again once, with the previous database attached as `old`,
-   `SELECT count(*) FROM old.entries o LEFT JOIN entries e ON e.id = o.id WHERE e.note_identity
-   IS NOT o.note_identity` answers 0.
+   database's value. Pin the test again once, after `ATTACH '<previous>.sqlite3' AS old`,
+   `SELECT count(*) FROM old.entries o JOIN entries e USING (id) WHERE e.note_identity <>
+   o.note_identity` answers 0, and list in the pull request the entries the new JMdict drops
+   (`SELECT o.id FROM old.entries o LEFT JOIN entries e USING (id) WHERE e.id IS NULL`), whose
+   notes go to Notes Without a Word.
 5. Rebuild everything, re-record the suites, and list in the pull request what changed for
    learners: entries, examples added and removed, and kanji.
 

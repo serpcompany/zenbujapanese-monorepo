@@ -84,9 +84,10 @@ keeps v5's text, moves the notes, and removes v4 once v5 is written; a v4 that c
 full is kept aside as any store is. A hash the dictionary doesn't have stays as its key, in v5 or
 in the index, and is looked up again at each launch: its notes are `withoutAWord`, which Account's
 **Notes Without a Word** lists (`NotesWithoutAWord`, loaded once at launch into the app's
-environment, so the row is there when Account is first drawn unless Account opens before the move
-finishes, and changed by the screen's deletions, so the row goes on the Mac too, where a covered
-screen's `.task` doesn't run again). A full swipe doesn't delete one, since it can't be undone. Its photos stay in the
+environment, so the row is there when Account is first drawn, unless Account opens before the
+move finishes and the row appears when it does; the screen's deletions change it, so the row goes
+on the Mac too, where a covered screen's `.task` doesn't run again). A full swipe doesn't delete a
+note there, since a deletion can't be undone. Its photos stay in the
 Media Library with their headword. When the dictionary can't be read, `NoteIdentityLookup`
 answers nothing: nothing moves, `withoutAWord` lists nothing, and the next launch that can read
 it moves them.
