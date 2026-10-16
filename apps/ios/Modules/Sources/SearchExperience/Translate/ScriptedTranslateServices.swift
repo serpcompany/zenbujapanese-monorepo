@@ -110,7 +110,7 @@ extension TranslateServices {
       guard let holds else {
         return try await Task.sleep(for: .seconds(line.continuesTurn ? 0.4 : 2))
       }
-      if !isFirstLine, !line.continuesTurn { try await holds.hearing.wait() }
+      if !isFirstLine || holds.startsSilent, !line.continuesTurn { try await holds.hearing.wait() }
     }
 
     func stop() {
@@ -138,7 +138,7 @@ extension TranslateServices {
       let transcriber = ScriptedTranscriber(holds: holds)
       let clock = ScriptedClock()
       var timing = ConversationTiming.standard
-      timing.silenceBeforePrompt = holds == nil ? 20 : Self.longerThanAnyTest
+      timing.silenceBeforePrompt = holds.map { $0.startsSilent ? 20 : Self.longerThanAnyTest } ?? 20
       timing.longestTurn = holds == nil ? timing.longestTurn : Self.longerThanAnyTest
       timing.promptCountdown = 120
       clock.skipsAheadOnNotice(by: timing.promptCountdown)

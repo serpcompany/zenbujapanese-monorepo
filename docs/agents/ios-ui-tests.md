@@ -91,10 +91,10 @@ heard is on screen as the live card (`translate.live`) for only a second or so, 
 wait for what stays: a finished sentence card, the prompt, or the controls. A test that needs a
 passing state, a line half heard, a turn's audio waiting, or a translation playing, holds the
 script (`HeldConversationUITests`): the state stays until the test posts the notice to go on, so
-nothing depends on how fast the Mac is. The harness's silence prompt counts down for two minutes,
-longer than the tests' 90-second patience, so tapping **Keep Listening** never races it, and the
-test of nobody answering doesn't wait those two minutes: it posts the notice that moves the
-harness's clock past the countdown, then waits for the pause.
+nothing depends on how fast the Mac is. The silence tests start on a silent script and post the
+notice that moves the harness's clock two minutes ahead, past the 20 s of silence and then past the
+prompt's countdown, so they wait for no real time; the countdown is longer than the tests'
+90-second patience, so tapping **Keep Listening** never races it.
 
 A test that starts failing after a wait got faster was passing by luck: it read or tapped
 something a moment before it was ready, and the second XCUITest used to add hid that. Find what

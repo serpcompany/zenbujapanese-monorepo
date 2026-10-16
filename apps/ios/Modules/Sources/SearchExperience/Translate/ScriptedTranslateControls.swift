@@ -83,12 +83,13 @@ import Foundation
     static let hearOnNotice = "com.zenbujapanese.dictionary.uitests.translate-hear-on"
     static let playOnNotice = "com.zenbujapanese.dictionary.uitests.translate-play-on"
 
+    let startsSilent: Bool
     let hearing = ScriptedHold()
     let playing = ScriptedHold()
 
     static func forThisLaunch(_ environment: [String: String]) -> ScriptedHolds? {
-      guard environment[environmentKey] == "1" else { return nil }
-      let holds = ScriptedHolds()
+      guard let held = environment[environmentKey], held == "1" || held == "silent" else { return nil }
+      let holds = ScriptedHolds(startsSilent: held == "silent")
       holds.hearing.letsOneGoOnNotice(hearOnNotice)
       holds.playing.letsOneGoOnNotice(playOnNotice)
       return holds

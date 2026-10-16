@@ -289,7 +289,8 @@ waiting. With `ZENBU_TRANSLATE_HOLD=1` as well, the script waits for the test
 (`ScriptedTranslateControls.swift`): each line stops halfway until the notice `…translate-hear-on`,
 a line that starts a new turn waits for one too, except the first after a start or a resume, each
 translation plays only after `…translate-play-on` (or a mute), and there is no silence prompt or
-30-second cutoff. A notice posted before its wait is kept for it, but two posted at once may
+30-second cutoff. `ZENBU_TRANSLATE_HOLD=silent` waits for a notice before the first line too, and
+keeps the 20 s prompt, so a test can skip straight to it. A notice posted before its wait is kept for it, but two posted at once may
 arrive as one, so a test posts one and waits for what it lets happen. Release builds don't contain
 the harness.
 

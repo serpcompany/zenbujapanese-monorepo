@@ -97,7 +97,8 @@ final class ConversationUITests: ZenbuUITestCase {
   }
 
   func testSilenceAsksWhetherAnyoneIsStillThere() {
-    let app = startConversation()
+    let app = startConversation(silent: true)
+    skipTheSilenceCountdown()
     let prompt = waitFor(find("translate.still-there", in: app))
     let countdown = waitFor(find("translate.still-there.countdown", in: app))
     let shown = reading(of: countdown)
@@ -110,7 +111,8 @@ final class ConversationUITests: ZenbuUITestCase {
   }
 
   func testNobodyAnsweringTheSilencePromptPausesTheConversation() {
-    let app = startConversation()
+    let app = startConversation(silent: true)
+    skipTheSilenceCountdown()
     let stillThere = waitFor(find("translate.still-there", in: app))
     skipTheSilenceCountdown()
     let paused = waitFor(prompt(in: app))

@@ -2,18 +2,20 @@ import XCTest
 import notify
 
 extension ZenbuUITestCase {
-  static let holdingTheScript = ["ZENBU_TRANSLATE_HOLD": "1"]
-
   func startConversation(
     option: String = "conversation", arguments: [String] = [], inTheSmallestWindow: Bool = false,
-    holding: Bool = false
+    holding: Bool = false, silent: Bool = false
   ) -> XCUIApplication {
-    let environment = TranslateUITests.script.merging(holding ? Self.holdingTheScript : [:]) { $1 }
-    let app = launch(environment, arguments: arguments)
+    let held = silent ? ["ZENBU_TRANSLATE_HOLD": "silent"] : holding ? ["ZENBU_TRANSLATE_HOLD": "1"] : [:]
+    let app = launch(TranslateUITests.script.merging(held) { $1 }, arguments: arguments)
     if inTheSmallestWindow, device == .mac { shrinkWindow(in: app) }
     open(.translate, in: app)
     tap(find("translate.start.\(option)", in: app))
-    waitFor(holding ? find("translate.live", in: app) : firstElement(identifiedBy: "translate.sentence.", in: app))
+    if silent {
+      waitUntil(find("translate.session.toggle", in: app), "label == 'Pause'")
+    } else {
+      waitFor(holding ? find("translate.live", in: app) : firstElement(identifiedBy: "translate.sentence.", in: app))
+    }
     return app
   }
 
