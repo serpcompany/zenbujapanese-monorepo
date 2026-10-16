@@ -535,6 +535,107 @@
     return literalReplacements[value] ?? value;
   }
 
+  // src/results/notes.ts
+  var notesInSearchTitle = "In your notes";
+  var contextBeforeMatch = 20;
+  var excerptLength = 80;
+  var ellipsis = "…";
+  var separatorRun = /[\p{White_Space}\u{FEFF}]+/gu;
+  var separatorOnly = /^[\p{White_Space}\u{FEFF}]+$/u;
+  function foldedPieces(pieces, until = Number.POSITIVE_INFINITY) {
+    let text = "";
+    const piece = [];
+    let separator = -1;
+    for (let index = 0; index < pieces.length && text.length < until; index++) {
+      const folded = normalizeQuery(pieces[index]);
+      if (folded === "") {
+        if (text !== "" && separator < 0) separator = index;
+        continue;
+      }
+      if (separator >= 0) {
+        text += " ";
+        piece.push(separator);
+        separator = -1;
+      }
+      text += folded;
+      for (let unit = 0; unit < folded.length; unit++) piece.push(index);
+    }
+    return { text, piece };
+  }
+  var nothingMatched = { first: 0, end: 0 };
+  function piecesAt(byPiece, at, length2) {
+    return { first: byPiece.piece[at], end: byPiece.piece[at + length2 - 1] + 1 };
+  }
+  function matchedPieces(pieces, folded, query) {
+    const at = folded.indexOf(query);
+    const end = at + query.length;
+    const throughTheMatch = foldedPieces(pieces, end);
+    const lineUp = throughTheMatch.text.length >= end && folded.startsWith(throughTheMatch.text);
+    if (lineUp) return piecesAt(throughTheMatch, at, query.length);
+    const whole = foldedPieces(pieces);
+    const inWhole = whole.text.indexOf(query);
+    return inWhole < 0 ? nothingMatched : piecesAt(whole, inWhole, query.length);
+  }
+  var spaced = (text) => text.replace(separatorRun, " ");
+  function startOfAWord(pieces, from, to) {
+    for (let index = from; index < to; index++) {
+      if (separatorOnly.test(pieces[index])) return index + 1;
+    }
+    return from;
+  }
+  function endOfAWord(pieces, from, to) {
+    for (let index = to - 1; index > from; index--) {
+      if (separatorOnly.test(pieces[index])) return index;
+    }
+    return to;
+  }
+  function noteExcerpt(pieces, matched) {
+    const { first, end } = matched;
+    const windowStart = Math.max(0, first - contextBeforeMatch);
+    const start = windowStart > 0 ? startOfAWord(pieces, windowStart, first) : 0;
+    const windowStop = Math.min(pieces.length, end + Math.max(0, excerptLength - (end - start)));
+    const stop = windowStop < pieces.length ? endOfAWord(pieces, end, windowStop) : windowStop;
+    const before = spaced(pieces.slice(start, first).join("")).trimStart();
+    const after = spaced(pieces.slice(end, stop).join("")).trimEnd();
+    return {
+      before: start > 0 ? ellipsis + before : before,
+      match: spaced(pieces.slice(first, end).join("")),
+      after: stop < pieces.length ? after + ellipsis : after
+    };
+  }
+  function closeness(folded, query) {
+    if (folded === query) return 0;
+    return folded.startsWith(query) ? 1 : 2;
+  }
+  function compareFound(lhs, rhs) {
+    return lhs.closeness - rhs.closeness || compareStrings(lhs.note.headword, rhs.note.headword) || compareStrings(lhs.note.reading, rhs.note.reading) || compareStrings(lhs.note.text, rhs.note.text) || compareStrings(lhs.note.key, rhs.note.key) || compareStrings(lhs.note.id, rhs.note.id);
+  }
+  function notesInSearch(request) {
+    const query = normalizeQuery(request.query);
+    if (query === "") return null;
+    const found = [];
+    for (const note of request.notes) {
+      const folded = normalizeQuery(note.text);
+      if (!folded.includes(query)) continue;
+      const pieces = graphemes2(note.text);
+      const matched = matchedPieces(pieces, folded, query);
+      found.push({
+        note,
+        closeness: closeness(folded, query),
+        row: {
+          key: note.key,
+          id: note.id,
+          headword: note.headword,
+          reading: note.reading,
+          ...noteExcerpt(pieces, matched)
+        }
+      });
+    }
+    if (found.length === 0) return null;
+    found.sort(compareFound);
+    return { title: notesInSearchTitle, rows: found.map((each) => each.row) };
+  }
+
   // src/sources/credits.ts
   var creditClients = ["app", "website"];
   var everyClient = creditClients;
@@ -5682,6 +5783,7 @@
       countedWords: (lines, analyze) => text().countedWords(JSON.parse(lines), analyze),
       resultsScreen: (request) => presentation().resultsScreen(JSON.parse(request)),
       wordRows: (request) => presentation().wordRows(JSON.parse(request)),
+      notesInSearch: (request) => notesInSearch(JSON.parse(request)),
       ruby: (pair) => presentation().ruby(JSON.parse(pair)),
       wordPage: (entry) => presentation().wordPage(JSON.parse(entry)),
       wordPageWithoutContent: (reading) => presentation().wordPageWithoutContent(reading),
