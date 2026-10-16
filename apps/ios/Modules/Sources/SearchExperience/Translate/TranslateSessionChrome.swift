@@ -157,6 +157,7 @@ private struct StillThereCard: View {
         .glassEffect(.regular, in: .rect(cornerRadius: 30))
       }
     }
+    .accessibilityElement(children: .contain)
     .accessibilityAddTraits(.isModal)
     .accessibilityIdentifier("translate.still-there")
   }
