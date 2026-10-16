@@ -40,7 +40,7 @@ jobs:
             apps/web/e2e/server.ts tools/checks/ports.mjs .node-version
             package.json pnpm-lock.yaml pnpm-workspace.yaml apps/ios/LanguageData/Conformance
             apps/ios/Modules/Sources/SearchExperience/Resources language-data/release.json
-            language-data/releases
+            language-data/releases language-data/derived
             deploy/deployer.sh .github/workflows/dictionary-api.yml
             .github/actions/changed-paths
 
