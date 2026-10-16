@@ -35,18 +35,25 @@ def parse_lfs_pointer(content: bytes) -> tuple[str, int] | None:
     return oid.removeprefix("sha256:"), int(size)
 
 
-def committed(repo: Path, paths: list[str]) -> dict[str, Committed]:
-    listing = git(repo, "ls-tree", "-z", "-l", "--full-tree", "HEAD", "--", *paths)
-    found: dict[str, Committed] = {}
+def tree_blobs(repo: Path, paths: list[str], recursive: bool = False) -> list[tuple[str, str, int]]:
+    depth = ["-r"] if recursive else []
+    listing = git(repo, "ls-tree", "-z", "-l", *depth, "--full-tree", "HEAD", "--", *paths)
+    blobs = []
     for record in listing.split(b"\0"):
         if not record:
             continue
         meta, name = record.decode().split("\t", 1)
-        mode, kind, blob, size = meta.split()
-        if kind != "blob":
-            continue
+        _, kind, blob, size = meta.split()
+        if kind == "blob":
+            blobs.append((name, blob, int(size)))
+    return blobs
+
+
+def committed(repo: Path, paths: list[str]) -> dict[str, Committed]:
+    found: dict[str, Committed] = {}
+    for name, blob, size in tree_blobs(repo, paths):
         pointer = None
-        if int(size) < 1024:
+        if size < 1024:
             pointer = parse_lfs_pointer(git(repo, "cat-file", "blob", blob))
         found[name] = Committed(blob, *(pointer or (None, None)))
     missing = [path for path in paths if path not in found]

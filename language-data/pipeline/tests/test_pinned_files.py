@@ -37,7 +37,7 @@ class PinnedTestCase(ScratchBuildTestCase):
 
 class CommittedFilesTests(PinnedTestCase):
     def test_the_committed_files_match_the_release_they_were_pinned_from(self):
-        self.assertEqual(self.check(), {"files": 8, "bundled": 9, "copied": 4})
+        self.assertEqual(self.check(), {"files": 9, "bundled": 10, "copied": 4})
 
     def test_a_changed_lfs_file_needs_a_new_pin(self):
         self.scratch.lfs["data/res/Pack.sqlite3"] += b"\0"
@@ -99,6 +99,7 @@ class PinnedManifestTests(PinnedTestCase):
             "git_commit",
             "workflow_run",
             "core_sha256",
+            "core",
             "previous_release",
             "previous_manifest_sha256",
         ):
@@ -114,6 +115,7 @@ class PinnedManifestTests(PinnedTestCase):
             "previous_release": "2026.09.1",
             "previous_manifest_sha256": "e" * 64,
             "core_sha256": "d" * 64,
+            "core": {"bundle": {"sha256": "d" * 64}},
         }
         check_pinned(built, self.pinned(), "the build")
 
@@ -202,7 +204,7 @@ class CommandLineTests(PinnedTestCase):
         self.scratch.commit()
         status, stdout, stderr = self.run_package("check-pin", "--built", str(self.out))
         self.assertEqual((status, stderr), (0, ""))
-        self.assertIn("8 release files, 9 files the app bundles", stdout)
+        self.assertIn("9 release files, 10 files the app bundles", stdout)
         self.assertIn("is the pinned one", stdout)
 
     def test_check_pin_refuses_a_build_of_other_content(self):

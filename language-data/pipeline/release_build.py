@@ -9,12 +9,14 @@ from pathlib import Path
 
 from committed_files import check_committed, committed, git, git_blob_id, stage
 from conformance_suites import conformance_pins
+from core_provenance import core_provenance
 from frequency_catalog import frequency_sources
 from ranking_contract import check_ranking_contract
 from refusal import Refusal
 from release_inputs import Inputs
 from release_manifest import ENT_SEQ_DIGEST, MANIFEST_SCHEMA, write_manifest
-from sqlite_files import ent_seq_ids, is_sqlite, json_value, sqlite_facts
+from retired_entries import check_retired_entries
+from sqlite_files import ent_seq_ids, is_sqlite, jmdict_entries, json_value, sqlite_facts
 
 LANGUAGE_REFERENCE_SCHEMA = re.compile(r"^zenbu\.language-reference\.v[1-9][0-9]*$")
 RANKING_CONTRACT_SCHEMA = "zenbu.dictionary-ranking-contract.v1"
@@ -36,13 +38,17 @@ def workflow_run() -> dict | None:
     }
 
 
-def build(repo: Path, inputs: Inputs, release: dict, out: Path, log=print) -> dict:
+def build(
+    repo: Path, inputs: Inputs, release: dict, out: Path, log=print, releases: Path | None = None
+) -> dict:
     if out.exists() and any(out.iterdir()):
         raise Refusal(f"{out} isn't empty")
     created = not out.exists()
     out.mkdir(parents=True, exist_ok=True)
     try:
-        return build_into(repo, inputs, release, out, log)
+        return build_into(
+            repo, inputs, release, out, log, releases or repo / "language-data" / "releases"
+        )
     except BaseException:
         for child in out.iterdir():
             shutil.rmtree(child) if child.is_dir() else child.unlink()
@@ -51,7 +57,7 @@ def build(repo: Path, inputs: Inputs, release: dict, out: Path, log=print) -> di
         raise
 
 
-def build_into(repo: Path, inputs: Inputs, release: dict, out: Path, log) -> dict:
+def build_into(repo: Path, inputs: Inputs, release: dict, out: Path, log, releases: Path) -> dict:
     conformance, pins = conformance_pins(repo, inputs.conformance)
     file_paths = [entry["path"] for entry in inputs.files]
     catalog_only = [inputs.catalog] if inputs.catalog and inputs.catalog not in file_paths else []
@@ -164,6 +170,21 @@ def build_into(repo: Path, inputs: Inputs, release: dict, out: Path, log) -> dic
 
     sources = frequency_sources(repo, inputs, heads, records, by_sha, language_reference, depend)
     count_, digest = ent_seq_ids(reference_path)
+    if inputs.retired_entries:
+        retired = next(e["name"] for e in inputs.files if e["path"] == inputs.retired_entries)
+        check_retired_entries(
+            releases,
+            release["release"],
+            json_by_name[retired],
+            jmdict_entries(reference_path),
+            reference["sha256"],
+        )
+        depend(records[retired], reference["name"])
+    core_sha256, core = (
+        core_provenance(repo, inputs.core["source"], inputs.core["bundle"])
+        if inputs.core
+        else (None, None)
+    )
 
     manifest = {
         "manifest_schema": MANIFEST_SCHEMA,
@@ -181,7 +202,8 @@ def build_into(repo: Path, inputs: Inputs, release: dict, out: Path, log) -> dic
             "ent_seq_sha256": digest,
         },
         "conformance": conformance,
-        "core_sha256": None,
+        "core_sha256": core_sha256,
+        **({"core": core} if core else {}),
     }
     if unread:
         log(f"Pinned by a conformance suite, but not read or packaged: {', '.join(unread)}")

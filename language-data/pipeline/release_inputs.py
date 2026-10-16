@@ -21,6 +21,8 @@ class Inputs:
     app_bundles: list[str] = field(default_factory=list)
     images: list[str] = field(default_factory=list)
     not_released: list[str] = field(default_factory=list)
+    retired_entries: str | None = None
+    core: dict[str, str] | None = None
 
 
 def check_name(name: object, what: str) -> str:
@@ -79,7 +81,27 @@ def load_inputs(path: Path) -> Inputs:
         app_bundles=[bundled_root(roots, root) for root in config.get("app_bundles", [])],
         images=[check_relative(image, "image") for image in config.get("images", [])],
         not_released=[not_released(roots, entry) for entry in config.get("not_released", [])],
+        retired_entries=retired_entries(roots, files, config.get("retired_entries")),
+        core=core(roots, config.get("core")),
     )
+
+
+def retired_entries(roots: dict[str, str], files: list[dict], path: str | None) -> str | None:
+    if path is None:
+        return None
+    resolved = resolve(roots, path)
+    if resolved not in [entry["path"] for entry in files]:
+        raise Refusal(f"retired_entries names {path}, which isn't a file in the release")
+    return resolved
+
+
+def core(roots: dict[str, str], config: dict | None) -> dict[str, str] | None:
+    if config is None:
+        return None
+    return {
+        "source": check_relative(config.get("source"), "core source").rstrip("/"),
+        "bundle": resolve(roots, config.get("bundle")),
+    }
 
 
 def bundled_root(roots: dict[str, str], root: object) -> str:
