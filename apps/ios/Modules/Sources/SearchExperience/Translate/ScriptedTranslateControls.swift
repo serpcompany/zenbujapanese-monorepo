@@ -23,6 +23,7 @@ import Foundation
     private var permits = 0
     private var waiting: [(id: UUID, continuation: CheckedContinuation<Void, Never>)] = []
     private var letGo: Set<UUID> = []
+    private var cut: Set<UUID> = []
 
     func wait() async throws {
       try Task.checkCancellation()
@@ -42,8 +43,12 @@ import Foundation
       } onCancel: {
         Task { await self.giveUp(id) }
       }
-      if letGo.remove(id) != nil, Task.isCancelled { permits += 1 }
-      try Task.checkCancellation()
+      let wasLetGo = letGo.remove(id) != nil
+      if Task.isCancelled {
+        if wasLetGo { letOneGo() }
+        throw CancellationError()
+      }
+      if cut.remove(id) != nil { throw CancellationError() }
     }
 
     func letOneGo() {
@@ -54,6 +59,13 @@ import Foundation
       let next = waiting.removeFirst()
       letGo.insert(next.id)
       next.continuation.resume()
+    }
+
+    func cutShort() {
+      for one in waiting { cut.insert(one.id) }
+      let stopped = waiting
+      waiting.removeAll()
+      for one in stopped { one.continuation.resume() }
     }
 
     private func giveUp(_ id: UUID) {

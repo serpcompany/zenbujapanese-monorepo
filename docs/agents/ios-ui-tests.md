@@ -46,8 +46,8 @@ what it waited for and for how long.
   each file's run-loop pauses and sleeps, however they are spelled, against `allowedPauses` in
   `tools/checks/src/waits.ts`, which says what each proves; a new pause goes there and in this list.
 - **Repeat a gesture only while its effect hasn't shown,** and stop as soon as it has: `open`,
-  `press`, `tap(_:toShow:)`, `focus`, `choose`, and `pause` tap again only after a wait for what
-  the tap should bring runs out. `for … where` tests its condition on every pass and never leaves
+  `press`, `tap(_:toShow:)`, `focus`, `choose`, `pause`, and `resume` tap again only after a wait
+  for what the tap should bring runs out. `for … where` tests its condition on every pass and never leaves
   early, so write such a loop with a `break`.
 - **Never assert how long something took.** A busy Mac makes everything slow, so a time limit fails
   for the machine as often as for the app. Count what the app did instead: the Player test reads how

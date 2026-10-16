@@ -71,8 +71,8 @@ language isn't downloaded, the card offers **Download Japanese**, which shows Ap
 typing screen's **•••** menu holds **Furigana**.
 
 Check: UI `TranslateUITests.testTypedTextIsTranslatedWithItsDirection` (the direction, Copy, Speak,
-a word's sheet at half height with the keyboard closed, and ✕); package `WrittenLanguageTests`
-(which text is Japanese).
+a word's sheet at half height, closing the keyboard when one is up, and ✕); package
+`WrittenLanguageTests` (which text is Japanese).
 
 ## Starting a live mode
 
@@ -116,8 +116,9 @@ larger, as a tab bar does.
 Check: UI `ConversationUITests.testTheControlsMutePauseAndResume`,
 `testListeningRunsTheAnnouncementsAndMutesThem` (Listen's controls, translation first, and muted),
 `testScrollingBackOffersJumpToLatest` (every control on screen at the largest text size), and
-`HeldConversationUITests` (what's happening); package `LiveConversationTests` (pausing and the
-timer), `ConversationMutingTests` (muting in both modes), and `SystemSpeechPlayerTests` (the speed).
+`HeldConversationUITests` (what's happening, as the session bar shows it); package
+`LiveConversationTests` (pausing and the timer), `ConversationMutingTests`, and
+`SystemSpeechPlayerTests` (the speed).
 
 Translate shows Japanese without furigana unless **Furigana** is on. One setting covers
 conversations, transcripts, and typed or document translations, and each of those screens has it
@@ -182,10 +183,10 @@ hands-free conversation isn't paused by Auto-Lock; once it pauses or ends, Auto-
   happened, with **Try Again**.
 
 Check: package `LiveConversationTests` (pausing, leaving, the silence prompt, the background, and a
-recognizer that stops); UI `ConversationUITests.testSilenceAsksWhetherAnyoneIsStillThere`,
-`testNobodyAnsweringTheSilencePromptPausesTheConversation` (the harness skips its countdown; the
-prompt's **Pause**),
-`testLeavingTheAppPausesTheConversation`, `testExitWithoutSavingLeavesNothingInTranslations`, and
+recognizer that stops); UI `ConversationUITests.testSilenceAsksWhetherAnyoneIsStillThere` (the
+countdown going down), `testNobodyAnsweringTheSilencePromptPausesTheConversation` (the harness
+skips its countdown; the prompt's **Pause**), `testLeavingTheAppPausesTheConversation`,
+`testExitWithoutSavingLeavesNothingInTranslations`, and
 `TranslateUITests.testAConversationRunsFullScreenAndIsSavedToTranslations` (Save and Exit). A call
 taking the microphone is by hand.
 
@@ -208,15 +209,14 @@ every Japanese word is tappable. Each sentence has a speaker button that plays i
 again, at the conversation's speech speed, and a bookmark. Its **•••** menu offers **Furigana**,
 **Copy Transcript**, **Share**, and **Delete Conversation**.
 
-Check: package `ConversationHistoryTests` and `ConversationWordsTests`; UI
-`ConversationUITests.testABookmarkedSentenceIsListedUnderBookmarked` (a speaker and a bookmark on
-each sentence), `testADeletedConversationLeavesTranslations` (long-press, or right-click on the Mac,
-then Delete, which asks first), Account's count and **Delete All…** in
-`testDeletingInAccountsTranslationsLowersItsCountAndLeavesTranslateWithout`, and
-`testAccountsTranslationsLeavesOutTheLiveConversationAndItsSpeakers` (a word there at half height,
-inside Account); and
-`TranslateUITests.testAConversationRunsFullScreenAndIsSavedToTranslations` (the row's line),
-`testTranslationsStartsEmpty`, and `AccountUITests.testTranslationsAndCreditsOpenFromAccount`.
+Check: package `ConversationHistoryTests`, `ConversationWordsTests`, `ConversationDateLabelTests`;
+UI `ConversationUITests.testABookmarkedSentenceIsListedUnderBookmarked` (a speaker and a bookmark
+on each sentence), `testADeletedConversationLeavesTranslations` (long-press or right-click, then
+Delete, which asks), `testDeletingInAccountsTranslationsLowersItsCountAndLeavesTranslateWithout`
+(**Delete All…**), `testAccountsTranslationsLeavesOutTheLiveConversationAndItsSpeakers` (a word
+there at half height), `TranslateUITests.testAConversationRunsFullScreenAndIsSavedToTranslations`
+(the row's line), `testTranslationsStartsEmpty`, and
+`AccountUITests.testTranslationsAndCreditsOpenFromAccount`.
 
 A conversation is saved after every translated sentence, so closing the app loses nothing; **Exit
 Without Saving** deletes it. Conversations are stored only on the device, one file each, and never

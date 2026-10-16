@@ -3,16 +3,14 @@ import XCTest
 final class HeldConversationUITests: ZenbuUITestCase {
   func testAPauseMidSentenceKeepsTheAppOpen() {
     let app = startConversation(holding: true)
-    let toggle = find("translate.session.toggle", in: app)
     let live = find("translate.live", in: app)
     for line in 0..<2 {
       if line > 0 { letTheScriptGoOn() }
       waitFor(live)
       let paused = heardSoFar(on: live) ?? ""
       let finished = sentenceCards(in: app).count
-      pauseTheConversation(app)
-      toggle.tap()
-      waitUntil(toggle, "label == 'Pause'")
+      pause(app)
+      resume(app)
       letTheScriptGoOn()
       waitUntil("\"\(paused)…\" being heard to its end") {
         let cards = self.sentenceCards(in: app).allElementsBoundByIndex.map(\.identifier)
@@ -25,7 +23,7 @@ final class HeldConversationUITests: ZenbuUITestCase {
   func testATurnsAudioWaitsForAPauseAndPlaysOnceItEnds() {
     let app = startConversation(holding: true)
     letTheScriptGoOn()
-    tap(waitFor(word(containing: ".translation.", identifiedBy: "translate.sentence.", in: app)))
+    tap(spokenWord("東京", in: app))
     tap(find("recognized-word-sheet.open-full-entry", in: app))
     waitFor(find("word-detail.screen", in: app))
     waitUntilTheSessionSays("Speaking Japanese", in: app)

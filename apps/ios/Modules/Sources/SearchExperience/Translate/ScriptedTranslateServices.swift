@@ -159,7 +159,7 @@ extension TranslateServices {
               do { try await holds?.playing.wait() } catch { return }
               try? await Task.sleep(for: .seconds(max(1, Double(text.count) * 0.06)))
             },
-            stop: {},
+            stop: { await holds?.playing.cutShort() },
             reachesMicrophone: { false }
           )
         ),

@@ -29,17 +29,31 @@ extension ZenbuUITestCase {
     notify_post("com.zenbujapanese.dictionary.uitests.skip-translate-countdown")
   }
 
-  func pauseTheConversation(_ app: XCUIApplication) {
+  func pause(_ app: XCUIApplication) {
+    turnTheConversation(to: "Resume", saying: "the conversation pausing", in: app)
+  }
+
+  func resume(_ app: XCUIApplication) {
+    turnTheConversation(to: "Pause", saying: "the conversation listening again", in: app)
+  }
+
+  private func turnTheConversation(to label: String, saying what: String, in app: XCUIApplication) {
     let toggle = find("translate.session.toggle", in: app)
     for _ in 0..<3 {
-      if waitFor(toggle).label == "Resume" { break }
+      if waitFor(toggle).label == label { break }
       toggle.tap()
-      let paused = comesTrue("the conversation pausing", within: Self.patience / 3) {
-        toggle.label == "Resume"
-      }
-      if paused { break }
+      if comesTrue(what, within: Self.patience / 3, { toggle.label == label }) { break }
     }
-    XCTAssertEqual(toggle.label, "Resume", "the conversation paused")
+    XCTAssertEqual(toggle.label, label, what)
+  }
+
+  func spokenWord(_ text: String, in app: XCUIApplication) -> XCUIElement {
+    waitFor(word(containing: text, identifiedBy: "translate.sentence.", in: app))
+  }
+
+  func letTheScriptGoOn(until shown: () -> Bool, saying what: String) {
+    letTheScriptGoOn()
+    waitUntil(what, shown)
   }
 
   func saveAndExit(_ app: XCUIApplication) {

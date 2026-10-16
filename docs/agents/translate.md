@@ -287,23 +287,25 @@ The conversation, its timer, and the prompt's countdown read the harness's own c
 moves that clock two minutes ahead, past the countdown, so a UI test sees it run out without
 waiting. With `ZENBU_TRANSLATE_HOLD=1` as well, the script waits for the test
 (`ScriptedTranslateControls.swift`): each line stops halfway until the notice `…translate-hear-on`,
-a new turn's line starts only on it, each translation plays only after `…translate-play-on`, and
-there is no silence prompt or 30-second cutoff. A notice that comes early is kept for the next
-wait, so a test can't lose one. Release builds don't contain the harness.
+a line that starts a new turn waits for one too, except the first after a start or a resume, each
+translation plays only after `…translate-play-on` (or a mute), and there is no silence prompt or
+30-second cutoff. A notice posted before its wait is kept for it, but two posted at once may
+arrive as one, so a test posts one and waits for what it lets happen. Release builds don't contain
+the harness.
 
 ## Translate manual checks
 
-`TranslateUITests` and `ConversationUITests` walk every screen on the harness, on the iPhone, the
-iPad, and the Mac; the product docs name the test for each behavior. What they can't see is
+`TranslateUITests`, `ConversationUITests`, and `HeldConversationUITests` walk every screen on the
+harness, on the iPhone, the iPad, and the Mac; the product docs name the test for each behavior. What they can't see is
 checked by eye:
 
 - **How it looks**, in the Simulator with the harness. The card being heard, and each card while
   its translation plays, has a tinted fill and an accent outline, and a new turn starts after a
   wider gap. The timer is red while listening and gray while paused, and its button a red pause or
-  a blue play. **Two Panes**' panes are dark and light. The session bar spans the width above the
-  tab bar. **•••** → **Furigana** puts readings over the Japanese in the conversation, its
-  transcript, and Text. The tests read what the screen says, not its colors or sizes, and furigana
-  isn't an accessibility element.
+  a blue play; muting dims the speed. **Two Panes**' panes are dark and light. The session bar
+  spans the width above the tab bar. **•••** → **Furigana** puts readings over the Japanese in the
+  conversation, its transcript, and Text. The tests read what the screen says, not its colors or
+  sizes, and furigana isn't an accessibility element.
 - **Auto-Lock.** While listening, the screen doesn't lock (Settings → Display & Brightness →
   Auto-Lock at 30 seconds); after a pause it locks as usual. XCUITest can't read the idle timer.
 

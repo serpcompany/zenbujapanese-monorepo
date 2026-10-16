@@ -131,6 +131,7 @@ private struct StillThereCard: View {
             Text("\(seconds)").font(.title2.weight(.bold).monospacedDigit())
           }
           .gaugeStyle(.accessoryCircularCapacity)
+          .accessibilityIdentifier("translate.still-there.countdown")
           .tint(.accentColor)
           .scaleEffect(1.3)
           .padding(8)
