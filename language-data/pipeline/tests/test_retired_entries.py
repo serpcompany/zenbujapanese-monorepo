@@ -100,6 +100,15 @@ class TwoReleasesTests(ScratchBuildTestCase):
     def second_release(self) -> None:
         self.next_release("2026.11.1", {1000000: KURIKAESHI, 1000230: TABERU, 2830800: IRU})
 
+    def third_release(self) -> bytes:
+        self.second_release()
+        self.retire(self.first)
+        second = self.scratch.lfs["data/res/Language.sqlite3"]
+        write_pinned(self.scratch.releases, self.scratch.build(self.out))
+        self.scratch.commit()
+        self.next_release("2026.12.1", {1000000: KURIKAESHI, 1000240: TABERU, 2830705: NAMA})
+        return second
+
     def test_release_one_retires_nothing(self):
         self.assertEqual(self.retired()["entries"], [])
         self.assertFalse(self.changes_path("2026.10.1").exists())
@@ -138,12 +147,7 @@ class TwoReleasesTests(ScratchBuildTestCase):
         self.assertEqual(retired["depends_on"], ["Language.sqlite3"])
 
     def test_a_third_release_carries_the_retired_entries_forward(self):
-        self.second_release()
-        self.retire(self.first)
-        second = self.scratch.lfs["data/res/Language.sqlite3"]
-        write_pinned(self.scratch.releases, self.scratch.build(self.out))
-        self.scratch.commit()
-        self.next_release("2026.12.1", {1000000: KURIKAESHI, 1000240: TABERU, 2830705: NAMA})
+        second = self.third_release()
         self.retire(second)
         self.scratch.build(self.out.with_name("third"))
         self.assertEqual(
@@ -156,12 +160,7 @@ class TwoReleasesTests(ScratchBuildTestCase):
         )
 
     def test_the_build_refuses_a_merged_release_s_changes_edited_later(self):
-        self.second_release()
-        self.retire(self.first)
-        second = self.scratch.lfs["data/res/Language.sqlite3"]
-        write_pinned(self.scratch.releases, self.scratch.build(self.out))
-        self.scratch.commit()
-        self.next_release("2026.12.1", {1000000: KURIKAESHI, 1000240: TABERU, 2830705: NAMA})
+        second = self.third_release()
         path = self.changes_path("2026.11.1")
         changes = json.loads(path.read_text())
         changes["dropped"][0]["replacement"] = 2830800
