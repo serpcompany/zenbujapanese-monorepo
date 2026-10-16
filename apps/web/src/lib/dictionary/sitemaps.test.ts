@@ -10,7 +10,9 @@ import {
   wordUrl
 } from './sitemaps'
 
-vi.mock('@opennextjs/cloudflare', () => ({ getCloudflareContext: async () => ({ ctx: {} }) }))
+vi.mock('@opennextjs/cloudflare', () => ({
+  getCloudflareContext: async () => ({ ctx: { waitUntil: (work: Promise<unknown>) => work } })
+}))
 vi.mock('./data', () => ({ dictionaryService: vi.fn() }))
 
 function fakeService(count: number, perSitemap: number) {
@@ -275,6 +277,22 @@ describe('with a dictionary service', () => {
     expect(second[0]).toBe(`${local}/dictionary/w&amp;25001-25001/`)
     expect(await wordSitemapResponse(request('/x'), 3)).toBeNull()
   })
+})
+
+test('a sitemap is kept in the edge cache under its dictionary build and its languages', async () => {
+  const keys: string[] = []
+  vi.stubGlobal('caches', {
+    default: {
+      match: async () => undefined,
+      put: async (key: Request) => {
+        keys.push(key.url)
+      }
+    }
+  })
+  vi.mocked(dictionaryService).mockResolvedValue(fakeService(3, 2) as never)
+  await wordSitemapResponse(request('/sitemaps/dictionary/1.xml'), 1)
+  vi.unstubAllGlobals()
+  expect(keys).toEqual([`${local}/sitemaps/dictionary/1.xml?build=abc123&languages=en,ja`])
 })
 
 test('canonical URLs match the pages', () => {

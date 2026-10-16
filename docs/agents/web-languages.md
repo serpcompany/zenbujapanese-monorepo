@@ -89,7 +89,12 @@ No keyword volumes are measured yet.
 - `localizedSitemapEntries(path, origin)`: a page's URL in each language, each with the same
   `xhtml:link` alternates. The pages, browse, and word sitemaps all use it. A word sitemap holds
   `wordsPerSitemap` (25,000) words, so each of the service's 50,000-word files becomes two
-  (`wordSitemapFiles` in `src/lib/dictionary/sitemaps.ts`).
+  (`wordSitemapFiles` in `src/lib/dictionary/sitemaps.ts`). The edge cache keys a dictionary
+  sitemap by the dictionary build and the languages, so the deploy that added Japanese didn't
+  serve the old English-only files for their hour.
+- The header marks the current section from the public path: on the server, a page reads the
+  rewritten `/en/…`, so `isCurrentSection` and `isCurrentPage` (`src/lib/site-menus.ts`) drop the
+  prefix first, and the server's HTML and the browser's agree.
 
 ## The switcher
 

@@ -100,7 +100,7 @@ async function cachedForBuild(
   const cache = edgeCache()
   if (!cache) return render()
   const url = new URL(request.url)
-  url.search = `?build=${encodeURIComponent(build)}`
+  url.search = `?build=${encodeURIComponent(build)}&languages=${pageLocales().join(',')}`
   const key = new Request(url.toString(), { method: 'GET' })
   const hit = await cache.match(key)
   if (hit) return hit

@@ -1,3 +1,5 @@
+import { getDictionary } from '../i18n/dictionary'
+import { localizedPath, pathLocale } from '../i18n/paths'
 import { type DictionaryApi, type DictionaryApiEnvironment, dictionaryApi } from './api'
 import { parseWordSegment } from './urls'
 
@@ -18,15 +20,17 @@ export async function retiredWordResponse(
   url: URL,
   lookup: RetiredLookup
 ): Promise<Response | null> {
-  const entSeq = wordEntSeq(url.pathname)
+  const { locale, path } = pathLocale(url.pathname)
+  const entSeq = wordEntSeq(path)
   if (entSeq === null) return null
   const retired = await lookup.retired(entSeq)
   if (!retired) return null
   if (retired.replacement) {
     const { entSeq: replacement, slug } = retired.replacement
-    return Response.redirect(new URL(encodeURI(`/dictionary/${slug}-${replacement}/`), url), 308)
+    const moved = localizedPath(encodeURI(`/dictionary/${slug}-${replacement}/`), locale)
+    return Response.redirect(new URL(moved, url), 308)
   }
-  return new Response('This word is no longer in the dictionary.\n', {
+  return new Response(getDictionary(locale).word.retired, {
     status: 410,
     headers: { 'Content-Type': 'text/plain; charset=utf-8', 'X-Robots-Tag': 'noindex' }
   })

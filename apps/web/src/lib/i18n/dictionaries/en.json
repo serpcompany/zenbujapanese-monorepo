@@ -1676,6 +1676,7 @@
     "formLabels": "({labels})",
     "labelSeparator": ", ",
     "formSeparator": ", ",
-    "kanjiRowLabel": "{character}, {meaning}, shows kanji details"
+    "kanjiRowLabel": "{character}, {meaning}, shows kanji details",
+    "retired": "This word is no longer in the dictionary.\n"
   }
 }

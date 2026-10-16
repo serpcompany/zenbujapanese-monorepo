@@ -1676,6 +1676,7 @@
     "formLabels": "（{labels}）",
     "labelSeparator": "、",
     "formSeparator": "、",
-    "kanjiRowLabel": "{character}、{meaning}、漢字の詳細を表示"
+    "kanjiRowLabel": "{character}、{meaning}、漢字の詳細を表示",
+    "retired": "この言葉は、もう辞書にありません。\n"
   }
 }

@@ -58,7 +58,9 @@ describe('the header marks the section the page is in', () => {
     ['/dictionary/browse/kana/', 'Dictionary'],
     ['/about/', 'Company'],
     ['/sources/', 'Company'],
-    ['/legal/privacy/', 'Company']
+    ['/legal/privacy/', 'Company'],
+    ['/en/about/', 'Company'],
+    ['/en/dictionary/search/iru/', 'Dictionary']
   ])('%s is in %s', (path, section) => {
     expect(triggers(header(path))).toEqual(
       sections.map(label => [label, label === section ? 'true' : null])

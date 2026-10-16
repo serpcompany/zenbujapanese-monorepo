@@ -11,6 +11,7 @@ import type { Locale } from '@/lib/i18n/config'
 import { getDictionary } from '@/lib/i18n/dictionary'
 import { fill } from '@/lib/i18n/format'
 import { localizedPath } from '@/lib/i18n/paths'
+import { withoutDefaultLocale } from '@/lib/i18n/routing'
 import { pageFor, type SitePath } from '@/lib/pages'
 import { type LinkTargetId, type LinkTo, linkTo, site } from '@/lib/site'
 
@@ -236,16 +237,18 @@ export function siteMenusIn(locale: Locale): SiteMenu[] {
 
 const withSlash = (path: string) => (path.endsWith('/') ? path : `${path}/`)
 
+const publicPath = (pathname: string) => withSlash(withoutDefaultLocale(pathname) ?? pathname)
+
 export const drawerLinks = (menu: MegaMenu): MenuLink[] => [
   ...(menu.lead ? [menu.lead] : []),
   ...menu.columns.flatMap(column => column.links)
 ]
 
 export function isCurrentSection(menu: SiteMenu, pathname: string): boolean {
-  const path = withSlash(pathname)
+  const path = publicPath(pathname)
   return menu.kind === 'mega'
     ? path.startsWith(menu.section)
     : menu.links.some(link => path.startsWith(link.href))
 }
 
-export const isCurrentPage = (href: string, pathname: string) => withSlash(pathname) === href
+export const isCurrentPage = (href: string, pathname: string) => publicPath(pathname) === href

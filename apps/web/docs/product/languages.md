@@ -32,6 +32,13 @@ one hop, with a page's trailing slash and a file's none.
   in one 308"; URLs spec, "/en/about/ redirects to /about/ in one hop" and the other `/en` cases;
   smoke `308 /en/about/ -> /about/`.
 
+**Retired words in Japanese.** A retired word's Japanese URL answers as its English one does: 410,
+with the notice in Japanese, or 308 to its replacement's Japanese page.
+
+- Source: ADR 0007 (retired entries); SERP localization standard, URLs.
+- Check: `src/lib/dictionary/retired.test.ts`, "a retired word on a Japanese page is gone, or
+  redirects, in Japanese".
+
 **Files have no language.** `robots.txt`, the sitemaps, and the JSON a page loads keep one URL,
 with no prefix: `/ja/robots.txt` and `/ja/dictionary/examples/<n>.json` are 404.
 

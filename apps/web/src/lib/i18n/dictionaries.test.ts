@@ -60,7 +60,7 @@ describe('the Japanese dictionary pairs with the English one (SERP localization 
       .map(([key]) => key)
     expect(
       stale,
-      'These keys’ English changed (or is new) since their Japanese was written. Update their Japanese in ja.json, then record it with `pnpm i18n:stamp ja <key>…` (docs/agents/web.md, Languages)'
+      'These keys’ English changed (or is new) since their Japanese was written. Update their Japanese in ja.json, then record it with `pnpm i18n:stamp ja <key>…` (docs/agents/web-languages.md, Review)'
     ).toEqual([])
     expect(Object.keys(written).filter(key => !english.has(key))).toEqual([])
   })
