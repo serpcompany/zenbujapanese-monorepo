@@ -164,10 +164,10 @@ the service, the core, what the services share (`packages/node-service/`), its A
 `apps/web/vitest.config.ts`, and what gives the gate its address, `apps/web/e2e/server.ts` and
 `tools/checks/ports.mjs`), the conformance suites (`apps/ios/LanguageData/Conformance/`), the app's
 resources (`apps/ios/Modules/Sources/SearchExperience/Resources/`), or `language-data/release.json`
-(the release the service names), and by hand. A new push cancels the pull request's last run. Its
-`scripts` job runs ShellCheck 0.11 on the server's deployer (`deploy/deployer.sh`), in Docker, since
-the runner's own ShellCheck is older; `Repository` runs ShellCheck on it too, and its tests, on
-every pull request. Once `scripts` passes, its `check` job:
+(the release the service names) and its pins (`language-data/releases/`), and by hand. A new push
+cancels the pull request's last run. Its `scripts` job runs ShellCheck 0.11 on the server's deployer
+(`deploy/deployer.sh`), in Docker, since the runner's own ShellCheck is older; `Repository` runs
+ShellCheck on it too, and its tests, on every pull request. Once `scripts` passes, its `check` job:
 
 1. restores and pulls the app's Git LFS files the service reads (the `.sqlite3` files and
    Kuromoji's), then Sudachi's dictionary (`pnpm sudachi`, which keeps a cached copy that matches
