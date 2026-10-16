@@ -1,6 +1,7 @@
 import CoreGraphics
 import Foundation
 import Testing
+import os
 
 @testable import SearchExperience
 
@@ -21,6 +22,22 @@ struct WrittenLanguageTests {
     ])
   func typedLanguage(text: String, language: String) {
     #expect(PresentationCore.shared.writtenLanguage(text) == language)
+  }
+
+  @Test("an answer the core couldn't give is asked for again, as the Japanese-text runs are")
+  func aFailedAnswerIsAskedAgain() {
+    let reads = OSAllocatedUnfairLock(initialState: 0)
+    let core = PresentationCore(kanji: {
+      let first = reads.withLock { count in
+        count += 1
+        return count == 1
+      }
+      return first ? nil : KanjiFiles.bundled
+    })
+    let unread = core.rubySegments(surface: "日本", reading: "にほん")
+    #expect(unread == [JapaneseRubySegment(base: "日本", reading: nil, kanjiReadings: nil)])
+    #expect(core.rubySegments(surface: "日本", reading: "にほん") != unread)
+    #expect(core.containsJapaneseText("日本"))
   }
 
   @Test("text without letters has no language")
