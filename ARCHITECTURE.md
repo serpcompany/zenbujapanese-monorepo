@@ -66,8 +66,8 @@ fails a shape change that doesn't raise the number
 
 The app and the website also meet at links: on an iPhone with the app, a dictionary URL opens in
 the app (universal links). The app reads the website's URLs with the core's `websitePage`
-(`packages/dictionary-core/src/detail/links.ts`), which shares its word-segment parser with the
-website. The website's association file and its App Store lookup name the app's bundle ID
+(`packages/dictionary-core/src/detail/links.ts`), and its Share sends the URLs that file builds
+with the website's own URL rules, which the website builds its pages' paths with too. The website's association file and its App Store lookup name the app's bundle ID
 (`iosAppBundleId` in `apps/web/src/lib/app-links.ts`), and no check ties that file to the app:
 word URLs are permanent (ADR 0007), and
 the bundle ID changes only with the app's App Store record (#616 moved it back to

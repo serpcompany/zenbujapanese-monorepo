@@ -1,11 +1,10 @@
 import type { ArtifactDatabase } from '@zenbu/dictionary-core/artifact/database'
-import { entriesById } from '@zenbu/dictionary-core/artifact/words'
+import { entriesById, slugsByEntSeq } from '@zenbu/dictionary-core/artifact/words'
 import { tierLabels } from '@zenbu/dictionary-core/detail/frequency'
 import type {
   KanjiElementContribution,
   KanjiElementDetail
 } from '@zenbu/dictionary-core/detail/kanji-element'
-import { wordURL } from '@zenbu/dictionary-core/detail/links'
 import {
   type SuiteConjugationForm,
   type SuiteConjugations,
@@ -46,6 +45,8 @@ import {
   shownAsTheAppLinks
 } from './embedded-support'
 import { artifactAvailable, artifactDatabase, requirePinnedArtifacts } from './support'
+
+const websiteOrigin = 'https://zenbujapanese.com'
 
 const errorsAsTheAppNamesThem: Record<string, string> = {
   missingEntryEvidence:
@@ -190,12 +191,10 @@ describe.runIf(artifactAvailable)('the app’s word and kanji pages on the artif
       examples: await examplesAsRecorded(id)
     }
     expect(observed).toEqual(withoutFields(expected, ['covers', 'entSeq']))
+    const entSeq = Number(expected.entSeq[0])
+    const slug = slugsByEntSeq(db, [entSeq]).get(entSeq)
     expect(page.shareURL, 'Share sends the page the website serves the word at').toBe(
-      wordURL({
-        headword: entry.headword,
-        reading: entry.reading,
-        entSeq: Number(expected.entSeq[0])
-      })
+      `${websiteOrigin}${encodeURI(`/dictionary/${slug}-${entSeq}/`)}`
     )
     for (const mode of page.conjugations?.modes ?? []) {
       for (const row of page.conjugations?.rows[mode] ?? []) {

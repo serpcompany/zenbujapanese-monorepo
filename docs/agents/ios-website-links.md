@@ -33,10 +33,12 @@ take a web link plus text; a page without a link, such as a kanji whose page has
 its text alone. `WordDetailShareTests` checks each link against the canonical URL and reads it
 back through `websiteRoute`, and `WordDetailUITests.testShareOffersTheWordsWebLink` and
 `testShareOffersTheKanjisWebLink` open the share sheet and find **Add to Reading List**, which iOS
-and macOS offer only for a web link, titled with the page on iPhone and iPad. No test can read the
-link out of the sheet, so on a device share a word to Messages or Notes, check that the text and
-the link arrive together, and tap the link: it opens the word in Zenbu once the association file
-is live, and the website before then.
+and macOS offer only for a web link, titled with the page on iPhone and iPad (the title is
+LinkPresentation's caption, `LP.CaptionBar.TopCaption`, which an iOS release could rename). On
+the Simulator, **Copy** puts both on the pasteboard, a `public.url` and the text, but no test can
+read what other destinations get, so on a device share a word to Messages, Notes, Mail, AirDrop,
+and a messaging app such as LINE, check that the text and the link arrive together, and tap the
+link: it opens the word in Zenbu once the association file is live, and the website before then.
 
 Check it with `WebsiteLinkTests`. The Simulator sends an `https` link to Safari until the
 association file is live, which would also load the site, so to see a link land in the app
