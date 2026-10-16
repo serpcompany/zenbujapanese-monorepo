@@ -1,0 +1,243 @@
+{
+  "chrome": {
+    "mainNav": "Main",
+    "menu": "Menu",
+    "close": "Close",
+    "sections": "Sections",
+    "getTheApp": "Get the app",
+    "logIn": "Log in",
+    "theme": {
+      "label": "Theme",
+      "light": "Light",
+      "dark": "Dark",
+      "system": "System"
+    },
+    "account": {
+      "account": "Account",
+      "signedIn": "Account, signed in",
+      "yourAccount": "Your account",
+      "logIn": "Log in",
+      "register": "Create an account",
+      "signOut": "Sign out"
+    },
+    "switcher": {
+      "label": "{language}, change language",
+      "heading": "Language"
+    },
+    "social": {
+      "elsewhere": "{name} elsewhere",
+      "on": "{name} on {network}"
+    },
+    "notFound": {
+      "message": "This page could not be found."
+    }
+  },
+  "footer": {
+    "products": "Products",
+    "tools": "Tools",
+    "company": "Company",
+    "legal": "Legal",
+    "dictionary": "Dictionary",
+    "kanaCharts": "Kana charts",
+    "kanjiLists": "Kanji lists",
+    "frequencyLists": "Frequency lists",
+    "allTools": "All tools",
+    "dmca": "DMCA",
+    "sitemap": "Sitemap",
+    "copyright": "© {year} {name}",
+    "account": {
+      "account": "Account",
+      "signIn": "Sign in"
+    }
+  },
+  "menus": {
+    "iphoneApp": "Zenbu Japanese for iPhone",
+    "dictionary": {
+      "label": "Dictionary",
+      "link": {
+        "title": "Dictionary",
+        "description": "Words and kanji in any script"
+      },
+      "lead": {
+        "title": "Search",
+        "description": "Japanese, kana, romaji, or English"
+      },
+      "feature": {
+        "title": "Japanese dictionary",
+        "description": "More than 200,000 words, searched in Japanese, kana, romaji, or English.",
+        "action": "Open the dictionary"
+      },
+      "kana": "Kana",
+      "hiragana": {
+        "title": "Hiragana",
+        "description": "Words for every hiragana"
+      },
+      "katakana": {
+        "title": "Katakana",
+        "description": "Words for every katakana"
+      },
+      "wordLists": "Word lists",
+      "jlpt": {
+        "title": "JLPT vocabulary",
+        "description": "N5 to N1, most used first"
+      },
+      "frequency": {
+        "title": "Frequency lists",
+        "description": "YouTube, anime, manga, and more"
+      },
+      "kanjiAndGrammar": "Kanji and grammar",
+      "kanjiByGrade": {
+        "title": "Kanji by grade",
+        "description": "School grades 1 to 6, and more"
+      },
+      "partsOfSpeech": {
+        "title": "Parts of speech",
+        "description": "Verbs, adjectives, particles, and more"
+      },
+      "footer": {
+        "note": "Free on the web, the same entries as the app.",
+        "title": "Browse everything"
+      }
+    },
+    "tools": {
+      "label": "Tools",
+      "feature": {
+        "title": "Free Japanese tools",
+        "description": "Charts, lists, and converters in your browser. Nothing to install.",
+        "action": "See all tools"
+      },
+      "reference": "Reference",
+      "kanaCharts": {
+        "title": "Kana charts",
+        "description": "Hiragana and katakana"
+      },
+      "lists": "Lists",
+      "kanjiLists": {
+        "title": "Kanji lists",
+        "description": "Grades, JLPT, jinmeiyō"
+      },
+      "frequencyLists": {
+        "title": "Frequency lists",
+        "description": "JLPT, YouTube, anime"
+      },
+      "converters": "Converters",
+      "hiraganaToKatakana": {
+        "title": "Hiragana to Katakana",
+        "description": "Convert as you type"
+      },
+      "romajiToKana": {
+        "title": "Romaji to Kana",
+        "description": "Type kana on any keyboard"
+      },
+      "kanjiToFurigana": {
+        "title": "Kanji to Furigana",
+        "description": "Readings above any text"
+      },
+      "footer": {
+        "note": "Free, in your browser, from the app’s dictionary.",
+        "title": "All free tools"
+      }
+    },
+    "products": {
+      "label": "Products",
+      "feature": {
+        "description": "The dictionary, Image Search, Translate, and Player. Works offline.",
+        "action": "Get the app"
+      },
+      "apps": "Apps",
+      "iphoneApp": {
+        "description": "Dictionary, Image Search, Translate, Player"
+      },
+      "browserExtension": {
+        "title": "Browser extension",
+        "description": "Look up Japanese on any web page"
+      },
+      "free": "Free",
+      "dictionary": {
+        "title": "{name} Dictionary",
+        "description": "Free on the web"
+      },
+      "freeTools": {
+        "title": "Free tools",
+        "description": "Kana, kanji, and frequency lists"
+      },
+      "learn": "Learn",
+      "referenceGuides": {
+        "title": "Reference guides",
+        "description": "Printable sheets"
+      },
+      "courses": {
+        "title": "Courses",
+        "description": "Lessons built from real clips"
+      },
+      "footer": {
+        "note": "Apps, extensions, free tools, guides, and courses.",
+        "title": "All products"
+      }
+    },
+    "company": {
+      "label": "Company"
+    }
+  },
+  "pages": {
+    "/": {
+      "title": "Home",
+      "description": "Look up Japanese words offline, read menus and signs with your camera, draw kanji you can’t type, and translate conversations on iPhone. Free on the web too."
+    },
+    "/dictionary/": {
+      "title": "Japanese dictionary",
+      "description": "Look up Japanese words and kanji in Japanese, kana, romaji, or English."
+    },
+    "/products/": {
+      "title": "Products",
+      "description": "Zenbu Japanese apps and free tools for reading, writing, and speaking Japanese, all built on one dictionary."
+    },
+    "/products/zenbu-japanese-app/": {
+      "title": "Zenbu Japanese for iPhone",
+      "description": "An offline Japanese dictionary for iPhone with Image Search, handwriting, a live conversation translator, and YouTube with linked captions."
+    },
+    "/about/": {
+      "title": "About",
+      "description": "About Zenbu Japanese."
+    },
+    "/support/": {
+      "title": "Support",
+      "description": "Get help with Zenbu Japanese and Tomodachi."
+    },
+    "/contact/": {
+      "title": "Contact",
+      "description": "Contact the Zenbu Japanese team."
+    },
+    "/legal/": {
+      "title": "Legal",
+      "description": "Zenbu Japanese legal policies."
+    },
+    "/legal/privacy/": {
+      "title": "Privacy Policy",
+      "description": "How Zenbu Japanese handles information in its apps, Tomodachi included, on this website, and in a Zenbu account."
+    },
+    "/legal/terms/": {
+      "title": "Terms of Use",
+      "description": "Terms for using Zenbu Japanese and this website."
+    },
+    "/legal/dmca/": {
+      "title": "DMCA Copyright Policy",
+      "description": "How to report claimed copyright infringement to Zenbu Japanese."
+    },
+    "/legal/affiliate-disclosure/": {
+      "title": "Affiliate Disclosure",
+      "description": "How Zenbu Japanese discloses affiliate relationships."
+    },
+    "/sources/": {
+      "title": "Sources",
+      "description": "The open data behind the Zenbu Japanese dictionary, with credits and licences."
+    },
+    "/sitemap/": {
+      "title": "Sitemap",
+      "description": "Every page on zenbujapanese.com."
+    }
+  },
+  "site": {
+    "description": "An offline-first Japanese dictionary, image-text reader, and translator for iPhone."
+  }
+}

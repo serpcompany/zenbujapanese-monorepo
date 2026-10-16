@@ -1,6 +1,12 @@
 import { absoluteUrl } from './site'
 
-export type SitemapEntry = { url: string; lastModified?: Date }
+export type SitemapAlternate = { hreflang: string; url: string }
+
+export type SitemapEntry = {
+  url: string
+  lastModified?: Date
+  alternates?: readonly SitemapAlternate[]
+}
 
 function escapeXml(value: string) {
   return value
@@ -36,12 +42,24 @@ export function sitemapIndexXml(paths: readonly string[], origin: string) {
 }
 
 const urlSetOpen =
-  '<?xml version="1.0" encoding="UTF-8"?><urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">'
+  '<?xml version="1.0" encoding="UTF-8"?><urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:xhtml="http://www.w3.org/1999/xhtml">'
 const urlSetClose = '</urlset>'
+
+function alternateLinks(alternates: readonly SitemapAlternate[] = []) {
+  return alternates
+    .map(
+      alternate =>
+        `<xhtml:link rel="alternate" hreflang="${escapeXml(alternate.hreflang)}" href="${escapeXml(alternate.url)}"/>`
+    )
+    .join('')
+}
 
 function urlItems(entries: readonly SitemapEntry[]) {
   return entries
-    .map(entry => `<url><loc>${escapeXml(entry.url)}</loc>${lastmod(entry.lastModified)}</url>`)
+    .map(
+      entry =>
+        `<url><loc>${escapeXml(entry.url)}</loc>${lastmod(entry.lastModified)}${alternateLinks(entry.alternates)}</url>`
+    )
     .join('')
 }
 

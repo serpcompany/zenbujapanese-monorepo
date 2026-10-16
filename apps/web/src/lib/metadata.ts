@@ -1,10 +1,12 @@
 import type { Metadata } from 'next'
+import type { Locale } from './i18n/config'
+import { getDictionary } from './i18n/dictionary'
+import { localizedPath } from './i18n/paths'
 import { pageFor, type SitePath } from './pages'
-import { site } from './site'
+import { localizedAlternates, siteOpenGraph } from './seo'
+import { site, siteOrigin } from './site'
 
-export const siteOpenGraph = { siteName: site.name, type: 'website', locale: 'en_US' } as const
-
-export const siteIcons = {
+const siteIcons = {
   icon: [
     { url: '/favicon.ico', sizes: 'any' },
     { url: '/zenbu-icon-flat-vector.svg', type: 'image/svg+xml' },
@@ -14,14 +16,30 @@ export const siteIcons = {
   apple: { url: '/apple-touch-icon.png', sizes: '180x180' }
 } satisfies Metadata['icons']
 
-export const siteManifest = '/site.webmanifest'
+const siteManifest = '/site.webmanifest'
 
-export function pageMetadata(path: Exclude<SitePath, '/'>): Metadata {
-  const page = pageFor(path)
+export function siteMetadata(locale: Locale): Metadata {
+  return {
+    metadataBase: new URL(siteOrigin()),
+    title: { default: site.name, template: `%s | ${site.name}` },
+    description: getDictionary(locale).site.description,
+    openGraph: siteOpenGraph(locale),
+    icons: siteIcons,
+    manifest: siteManifest
+  }
+}
+
+export function pageMetadata(path: Exclude<SitePath, '/'>, locale: Locale): Metadata {
+  const page = pageFor(path, locale)
   return {
     title: page.title,
     description: page.description,
-    alternates: { canonical: path },
-    openGraph: { ...siteOpenGraph, title: page.title, description: page.description, url: path }
+    alternates: localizedAlternates(path, locale),
+    openGraph: {
+      ...siteOpenGraph(locale),
+      title: page.title,
+      description: page.description,
+      url: localizedPath(path, locale)
+    }
   }
 }

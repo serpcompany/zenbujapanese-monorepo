@@ -1,0 +1,243 @@
+{
+  "chrome": {
+    "mainNav": "メイン",
+    "menu": "メニュー",
+    "close": "閉じる",
+    "sections": "セクション",
+    "getTheApp": "アプリを入手",
+    "logIn": "ログイン",
+    "theme": {
+      "label": "テーマ",
+      "light": "ライト",
+      "dark": "ダーク",
+      "system": "システム"
+    },
+    "account": {
+      "account": "アカウント",
+      "signedIn": "アカウント（ログイン中）",
+      "yourAccount": "アカウント",
+      "logIn": "ログイン",
+      "register": "アカウントを作成",
+      "signOut": "ログアウト"
+    },
+    "switcher": {
+      "label": "{language}、表示言語を切り替える",
+      "heading": "言語"
+    },
+    "social": {
+      "elsewhere": "{name}のSNS",
+      "on": "{network}の{name}"
+    },
+    "notFound": {
+      "message": "お探しのページは見つかりませんでした。"
+    }
+  },
+  "footer": {
+    "products": "製品",
+    "tools": "ツール",
+    "company": "会社情報",
+    "legal": "規約",
+    "dictionary": "辞書",
+    "kanaCharts": "五十音表",
+    "kanjiLists": "漢字リスト",
+    "frequencyLists": "頻出語リスト",
+    "allTools": "すべてのツール",
+    "dmca": "DMCA著作権ポリシー",
+    "sitemap": "サイトマップ",
+    "copyright": "© {year} {name}",
+    "account": {
+      "account": "アカウント",
+      "signIn": "ログイン"
+    }
+  },
+  "menus": {
+    "iphoneApp": "iPhone版 Zenbu Japanese",
+    "dictionary": {
+      "label": "辞書",
+      "link": {
+        "title": "辞書",
+        "description": "単語と漢字を、どの文字でも"
+      },
+      "lead": {
+        "title": "検索",
+        "description": "漢字・かな・ローマ字・英語で"
+      },
+      "feature": {
+        "title": "和英辞典",
+        "description": "20万語以上を、漢字・かな・ローマ字・英語で検索できます。",
+        "action": "辞書を開く"
+      },
+      "kana": "かな",
+      "hiragana": {
+        "title": "ひらがな",
+        "description": "ひらがな一文字ごとの単語"
+      },
+      "katakana": {
+        "title": "カタカナ",
+        "description": "カタカナ一文字ごとの単語"
+      },
+      "wordLists": "単語リスト",
+      "jlpt": {
+        "title": "JLPT単語",
+        "description": "N5からN1まで、よく使う順"
+      },
+      "frequency": {
+        "title": "頻出語リスト",
+        "description": "YouTube、アニメ、マンガなど"
+      },
+      "kanjiAndGrammar": "漢字と文法",
+      "kanjiByGrade": {
+        "title": "学年別漢字",
+        "description": "小学1〜6年生ほか"
+      },
+      "partsOfSpeech": {
+        "title": "品詞",
+        "description": "動詞、形容詞、助詞など"
+      },
+      "footer": {
+        "note": "ウェブで無料。見出し語はアプリと同じです。",
+        "title": "すべて見る"
+      }
+    },
+    "tools": {
+      "label": "ツール",
+      "feature": {
+        "title": "無料の日本語ツール",
+        "description": "ブラウザで使える表・リスト・変換ツール。インストールは不要です。",
+        "action": "ツール一覧へ"
+      },
+      "reference": "資料",
+      "kanaCharts": {
+        "title": "五十音表",
+        "description": "ひらがなとカタカナ"
+      },
+      "lists": "リスト",
+      "kanjiLists": {
+        "title": "漢字リスト",
+        "description": "学年別、JLPT、人名用漢字"
+      },
+      "frequencyLists": {
+        "title": "頻出語リスト",
+        "description": "JLPT、YouTube、アニメ"
+      },
+      "converters": "変換ツール",
+      "hiraganaToKatakana": {
+        "title": "ひらがな→カタカナ変換",
+        "description": "入力しながら変換"
+      },
+      "romajiToKana": {
+        "title": "ローマ字→かな変換",
+        "description": "どのキーボードでもかな入力"
+      },
+      "kanjiToFurigana": {
+        "title": "漢字→ふりがな変換",
+        "description": "どんな文章にもふりがなを"
+      },
+      "footer": {
+        "note": "アプリの辞書をもとにした、ブラウザで使える無料ツール。",
+        "title": "すべての無料ツール"
+      }
+    },
+    "products": {
+      "label": "製品",
+      "feature": {
+        "description": "辞書、画像検索、翻訳、プレイヤー。オフラインで使えます。",
+        "action": "アプリを入手"
+      },
+      "apps": "アプリ",
+      "iphoneApp": {
+        "description": "辞書・画像検索・翻訳・プレイヤー"
+      },
+      "browserExtension": {
+        "title": "ブラウザ拡張機能",
+        "description": "どのウェブページでも日本語を調べられる"
+      },
+      "free": "無料",
+      "dictionary": {
+        "title": "{name} 辞書",
+        "description": "ウェブで無料"
+      },
+      "freeTools": {
+        "title": "無料ツール",
+        "description": "かな・漢字・頻出語のリスト"
+      },
+      "learn": "学ぶ",
+      "referenceGuides": {
+        "title": "学習ガイド",
+        "description": "印刷できるシート"
+      },
+      "courses": {
+        "title": "講座",
+        "description": "実際の映像から作ったレッスン"
+      },
+      "footer": {
+        "note": "アプリ、拡張機能、無料ツール、ガイド、講座。",
+        "title": "すべての製品"
+      }
+    },
+    "company": {
+      "label": "会社情報"
+    }
+  },
+  "pages": {
+    "/": {
+      "title": "ホーム",
+      "description": "オフラインで引ける和英辞典に、カメラで読むメニューや看板、手書きで調べる漢字、会話の翻訳まで。iPhoneで使えて、ウェブ版も無料です。"
+    },
+    "/dictionary/": {
+      "title": "和英辞典",
+      "description": "日本語の単語や漢字を、漢字・かな・ローマ字・英語のどれでも調べられる和英辞典。"
+    },
+    "/products/": {
+      "title": "製品一覧",
+      "description": "Zenbu Japaneseのアプリと無料ツール。読む・書く・話す日本語を、ひとつの辞書が支えます。"
+    },
+    "/products/zenbu-japanese-app/": {
+      "title": "iPhone版 Zenbu Japanese",
+      "description": "オフラインで使えるiPhone向けの和英辞典。画像検索、手書き入力、会話のリアルタイム翻訳、字幕と連動するYouTube再生に対応。"
+    },
+    "/about/": {
+      "title": "Zenbu Japaneseについて",
+      "description": "Zenbu Japaneseの紹介。"
+    },
+    "/support/": {
+      "title": "サポート",
+      "description": "Zenbu JapaneseとTomodachiのサポート。"
+    },
+    "/contact/": {
+      "title": "お問い合わせ",
+      "description": "Zenbu Japaneseチームへのお問い合わせ。"
+    },
+    "/legal/": {
+      "title": "規約とポリシー",
+      "description": "Zenbu Japaneseの規約とポリシー。"
+    },
+    "/legal/privacy/": {
+      "title": "プライバシーポリシー",
+      "description": "Zenbu Japaneseのアプリ（Tomodachiを含む）、このウェブサイト、Zenbuアカウントにおける情報の取り扱いについて。"
+    },
+    "/legal/terms/": {
+      "title": "利用規約",
+      "description": "Zenbu Japaneseとこのウェブサイトの利用規約。"
+    },
+    "/legal/dmca/": {
+      "title": "DMCA著作権ポリシー",
+      "description": "Zenbu Japaneseへ著作権侵害を通知する方法。"
+    },
+    "/legal/affiliate-disclosure/": {
+      "title": "アフィリエイトについて",
+      "description": "Zenbu Japaneseのアフィリエイト提携の開示について。"
+    },
+    "/sources/": {
+      "title": "データの出典",
+      "description": "Zenbu Japaneseの辞書を支えるオープンデータと、そのクレジットおよびライセンス。"
+    },
+    "/sitemap/": {
+      "title": "サイトマップ",
+      "description": "zenbujapanese.comの全ページ。"
+    }
+  },
+  "site": {
+    "description": "iPhone向けの、オフラインで使える和英辞典・画像テキストリーダー・翻訳アプリ。"
+  }
+}

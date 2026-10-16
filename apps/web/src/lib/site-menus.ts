@@ -7,8 +7,12 @@ import {
   kanjiListsPath,
   scriptPath
 } from '@/lib/dictionary/browse/paths'
+import type { Locale } from '@/lib/i18n/config'
+import { getDictionary } from '@/lib/i18n/dictionary'
+import { fill } from '@/lib/i18n/format'
+import { localizedPath } from '@/lib/i18n/paths'
 import { pageFor, type SitePath } from '@/lib/pages'
-import { type LinkTo, linkTo, site } from '@/lib/site'
+import { type LinkTargetId, type LinkTo, linkTo, site } from '@/lib/site'
 
 export type MenuSymbol =
   | 'search'
@@ -30,8 +34,11 @@ export type MenuLink = LinkTo & {
   mark: { glyph: string; solid?: true } | { symbol: MenuSymbol } | { image: string }
 }
 
+export type MenuId = 'dictionary' | 'tools' | 'products' | 'company'
+
 export type MegaMenu = {
   kind: 'mega'
+  id: MenuId
   label: string
   section: string
   lead?: MenuLink
@@ -48,255 +55,184 @@ export type MegaMenu = {
 
 export type LinkMenu = {
   kind: 'links'
+  id: MenuId
   label: string
   links: { title: string; href: string }[]
 }
 
 export type SiteMenu = MegaMenu | LinkMenu
 
-export const pageLinkTo = (path: SitePath, title = pageFor(path).title) => ({ title, href: path })
-
-const dictionaryLink: MenuLink = {
-  title: 'Dictionary',
-  description: 'Words and kanji in any script',
-  href: '/dictionary/',
-  mark: { symbol: 'search' }
+export function pageLinkTo(path: SitePath, locale: Locale, title = pageFor(path, locale).title) {
+  return { title, href: localizedPath(path, locale) }
 }
 
-const dictionaryMenu: MegaMenu = {
-  kind: 'mega',
-  label: 'Dictionary',
-  section: '/dictionary/',
-  lead: {
-    title: 'Search',
-    description: 'Japanese, kana, romaji, or English',
-    href: '/dictionary/',
+export function siteMenusIn(locale: Locale): SiteMenu[] {
+  const t = getDictionary(locale).menus
+  const page = (href: string): LinkTo => ({ href: localizedPath(href, locale) })
+  const target = (id: LinkTargetId): LinkTo => {
+    const link = linkTo(id)
+    return { ...link, href: localizedPath(link.href, locale) }
+  }
+  const dictionaryLink: MenuLink = {
+    ...t.dictionary.link,
+    ...page('/dictionary/'),
     mark: { symbol: 'search' }
-  },
-  feature: {
-    title: 'Japanese dictionary',
-    description: 'More than 200,000 words, searched in Japanese, kana, romaji, or English.',
-    action: 'Open the dictionary',
-    symbol: 'search',
-    art: { screenshot: '/screenshots/search-results.webp' },
-    href: '/dictionary/'
-  },
-  columns: [
-    {
-      heading: 'Kana',
-      links: [
-        {
-          title: 'Hiragana',
-          description: 'Words for every hiragana',
-          href: scriptPath('hiragana'),
-          mark: { glyph: 'あ' }
-        },
-        {
-          title: 'Katakana',
-          description: 'Words for every katakana',
-          href: scriptPath('katakana'),
-          mark: { glyph: 'ア' }
-        }
-      ]
-    },
-    {
-      heading: 'Word lists',
-      links: [
-        {
-          title: 'JLPT vocabulary',
-          description: 'N5 to N1, most used first',
-          href: jlptVocabularyPath(5),
-          mark: { symbol: 'chart' }
-        },
-        {
-          title: 'Frequency lists',
-          description: 'YouTube, anime, manga, and more',
-          href: frequencyDictionariesPath,
-          mark: { symbol: 'list' }
-        }
-      ]
-    },
-    {
-      heading: 'Kanji and grammar',
-      links: [
-        {
-          title: 'Kanji by grade',
-          description: 'School grades 1 to 6, and more',
-          href: kanjiListsPath,
-          mark: { glyph: '漢' }
-        },
-        {
-          title: 'Parts of speech',
-          description: 'Verbs, adjectives, particles, and more',
-          href: categoryIndexes.partOfSpeech.path,
-          mark: { symbol: 'tag' }
-        }
-      ]
-    }
-  ],
-  footer: {
-    note: 'Free on the web, the same entries as the app.',
-    title: 'Browse everything',
-    href: browsePath
   }
-}
-
-const toolsMenu: MegaMenu = {
-  kind: 'mega',
-  label: 'Tools',
-  section: '/tools/',
-  feature: {
-    title: 'Free Japanese tools',
-    description: 'Charts, lists, and converters in your browser. Nothing to install.',
-    action: 'See all tools',
-    symbol: 'grid',
-    art: { kana: 'あいうえおかきくけこ' },
-    ...linkTo('tools')
-  },
-  columns: [
-    {
-      heading: 'Reference',
-      links: [
-        dictionaryLink,
-        {
-          title: 'Kana charts',
-          description: 'Hiragana and katakana',
-          href: kanaChartsPath,
-          mark: { symbol: 'type' }
-        }
-      ]
+  const dictionaryMenu: MegaMenu = {
+    kind: 'mega',
+    id: 'dictionary',
+    label: t.dictionary.label,
+    section: localizedPath('/dictionary/', locale),
+    lead: { ...t.dictionary.lead, ...page('/dictionary/'), mark: { symbol: 'search' } },
+    feature: {
+      ...t.dictionary.feature,
+      symbol: 'search',
+      art: { screenshot: '/screenshots/search-results.webp' },
+      ...page('/dictionary/')
     },
-    {
-      heading: 'Lists',
-      links: [
-        {
-          title: 'Kanji lists',
-          description: 'Grades, JLPT, jinmeiyō',
-          href: kanjiListsPath,
-          mark: { symbol: 'grid' }
-        },
-        {
-          title: 'Frequency lists',
-          description: 'JLPT, YouTube, anime',
-          href: frequencyDictionariesPath,
-          mark: { symbol: 'chart' }
-        }
-      ]
-    },
-    {
-      heading: 'Converters',
-      links: [
-        {
-          title: 'Hiragana to Katakana',
-          description: 'Convert as you type',
-          mark: { symbol: 'swap' },
-          ...linkTo('hiragana-to-katakana')
-        },
-        {
-          title: 'Romaji to Kana',
-          description: 'Type kana on any keyboard',
-          mark: { symbol: 'type' },
-          ...linkTo('romaji-to-kana')
-        },
-        {
-          title: 'Kanji to Furigana',
-          description: 'Readings above any text',
-          mark: { symbol: 'book' },
-          ...linkTo('kanji-to-furigana')
-        }
-      ]
-    }
-  ],
-  footer: {
-    note: 'Free, in your browser, from the app’s dictionary.',
-    title: 'All free tools',
-    ...linkTo('tools')
+    columns: [
+      {
+        heading: t.dictionary.kana,
+        links: [
+          { ...t.dictionary.hiragana, ...page(scriptPath('hiragana')), mark: { glyph: 'あ' } },
+          { ...t.dictionary.katakana, ...page(scriptPath('katakana')), mark: { glyph: 'ア' } }
+        ]
+      },
+      {
+        heading: t.dictionary.wordLists,
+        links: [
+          { ...t.dictionary.jlpt, ...page(jlptVocabularyPath(5)), mark: { symbol: 'chart' } },
+          {
+            ...t.dictionary.frequency,
+            ...page(frequencyDictionariesPath),
+            mark: { symbol: 'list' }
+          }
+        ]
+      },
+      {
+        heading: t.dictionary.kanjiAndGrammar,
+        links: [
+          { ...t.dictionary.kanjiByGrade, ...page(kanjiListsPath), mark: { glyph: '漢' } },
+          {
+            ...t.dictionary.partsOfSpeech,
+            ...page(categoryIndexes.partOfSpeech.path),
+            mark: { symbol: 'tag' }
+          }
+        ]
+      }
+    ],
+    footer: { ...t.dictionary.footer, ...page(browsePath) }
   }
-}
-
-export const iphoneAppTitle = 'Zenbu Japanese for iPhone'
-
-const productsMenu: MegaMenu = {
-  kind: 'mega',
-  label: 'Products',
-  section: '/products/',
-  feature: {
-    title: iphoneAppTitle,
-    description: 'The dictionary, Image Search, Translate, and Player. Works offline.',
-    action: 'Get the app',
-    symbol: 'phone',
-    art: { screenshot: '/screenshots/word-detail.webp' },
-    ...linkTo('iphone-app')
-  },
-  columns: [
-    {
-      heading: 'Apps',
-      links: [
-        {
-          title: iphoneAppTitle,
-          description: 'Dictionary, Image Search, Translate, Player',
-          mark: { image: '/app-icon.webp' },
-          ...linkTo('iphone-app')
-        },
-        {
-          title: 'Browser extension',
-          description: 'Look up Japanese on any web page',
-          mark: { symbol: 'puzzle' },
-          ...linkTo('browser-extension')
-        }
-      ]
+  const toolsMenu: MegaMenu = {
+    kind: 'mega',
+    id: 'tools',
+    label: t.tools.label,
+    section: localizedPath('/tools/', locale),
+    feature: {
+      ...t.tools.feature,
+      symbol: 'grid',
+      art: { kana: 'あいうえおかきくけこ' },
+      ...target('tools')
     },
-    {
-      heading: 'Free',
-      links: [
-        {
-          title: `${site.name} Dictionary`,
-          description: 'Free on the web',
-          href: '/dictionary/',
-          mark: { glyph: site.mark, solid: true }
-        },
-        {
-          title: 'Free tools',
-          description: 'Kana, kanji, and frequency lists',
-          mark: { symbol: 'grid' },
-          ...linkTo('tools')
-        }
-      ]
-    },
-    {
-      heading: 'Learn',
-      links: [
-        {
-          title: 'Reference guides',
-          description: 'Printable sheets',
-          mark: { symbol: 'file' },
-          ...linkTo('reference-guides')
-        },
-        {
-          title: 'Courses',
-          description: 'Lessons built from real clips',
-          mark: { symbol: 'play' },
-          ...linkTo('courses')
-        }
-      ]
-    }
-  ],
-  footer: {
-    note: 'Apps, extensions, free tools, guides, and courses.',
-    title: 'All products',
-    ...linkTo('products')
+    columns: [
+      {
+        heading: t.tools.reference,
+        links: [
+          dictionaryLink,
+          { ...t.tools.kanaCharts, ...page(kanaChartsPath), mark: { symbol: 'type' } }
+        ]
+      },
+      {
+        heading: t.tools.lists,
+        links: [
+          { ...t.tools.kanjiLists, ...page(kanjiListsPath), mark: { symbol: 'grid' } },
+          {
+            ...t.tools.frequencyLists,
+            ...page(frequencyDictionariesPath),
+            mark: { symbol: 'chart' }
+          }
+        ]
+      },
+      {
+        heading: t.tools.converters,
+        links: [
+          {
+            ...t.tools.hiraganaToKatakana,
+            mark: { symbol: 'swap' },
+            ...target('hiragana-to-katakana')
+          },
+          { ...t.tools.romajiToKana, mark: { symbol: 'type' }, ...target('romaji-to-kana') },
+          { ...t.tools.kanjiToFurigana, mark: { symbol: 'book' }, ...target('kanji-to-furigana') }
+        ]
+      }
+    ],
+    footer: { ...t.tools.footer, ...target('tools') }
   }
+  const productsMenu: MegaMenu = {
+    kind: 'mega',
+    id: 'products',
+    label: t.products.label,
+    section: localizedPath('/products/', locale),
+    feature: {
+      title: t.iphoneApp,
+      ...t.products.feature,
+      symbol: 'phone',
+      art: { screenshot: '/screenshots/word-detail.webp' },
+      ...target('iphone-app')
+    },
+    columns: [
+      {
+        heading: t.products.apps,
+        links: [
+          {
+            title: t.iphoneApp,
+            ...t.products.iphoneApp,
+            mark: { image: '/app-icon.webp' },
+            ...target('iphone-app')
+          },
+          {
+            ...t.products.browserExtension,
+            mark: { symbol: 'puzzle' },
+            ...target('browser-extension')
+          }
+        ]
+      },
+      {
+        heading: t.products.free,
+        links: [
+          {
+            title: fill(t.products.dictionary.title, { name: site.name }),
+            description: t.products.dictionary.description,
+            ...page('/dictionary/'),
+            mark: { glyph: site.mark, solid: true }
+          },
+          { ...t.products.freeTools, mark: { symbol: 'grid' }, ...target('tools') }
+        ]
+      },
+      {
+        heading: t.products.learn,
+        links: [
+          {
+            ...t.products.referenceGuides,
+            mark: { symbol: 'file' },
+            ...target('reference-guides')
+          },
+          { ...t.products.courses, mark: { symbol: 'play' }, ...target('courses') }
+        ]
+      }
+    ],
+    footer: { ...t.products.footer, ...target('products') }
+  }
+  const companyMenu: LinkMenu = {
+    kind: 'links',
+    id: 'company',
+    label: t.company.label,
+    links: (['/about/', '/sources/', '/support/', '/contact/', '/legal/'] as const).map(path =>
+      pageLinkTo(path, locale)
+    )
+  }
+  return [dictionaryMenu, toolsMenu, productsMenu, companyMenu]
 }
-
-const companyMenu: LinkMenu = {
-  kind: 'links',
-  label: 'Company',
-  links: (['/about/', '/sources/', '/support/', '/contact/', '/legal/'] as const).map(path =>
-    pageLinkTo(path)
-  )
-}
-
-export const siteMenus: readonly SiteMenu[] = [dictionaryMenu, toolsMenu, productsMenu, companyMenu]
 
 const withSlash = (path: string) => (path.endsWith('/') ? path : `${path}/`)
 

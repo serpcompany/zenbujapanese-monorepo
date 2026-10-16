@@ -1,5 +1,3 @@
-import type { Metadata } from 'next'
-
 export const accountPages = {
   signIn: {
     path: '/login/',
@@ -30,14 +28,4 @@ export function returnedError(
 ): string | null {
   const error = searchParams.error
   return typeof error === 'string' && /^[\w'-]{1,80}$/.test(error) ? error : null
-}
-
-export function accountMetadata(page: AccountPage): Metadata {
-  const { path, title, description } = accountPages[page]
-  return {
-    title,
-    description,
-    alternates: { canonical: path },
-    robots: { index: false, follow: false }
-  }
 }
