@@ -5,7 +5,8 @@ import Testing
 
 @Suite("A saved conversation's day")
 struct ConversationDateLabelTests {
-  private let now = Date(timeIntervalSince1970: 1_800_000_000)
+  private let now = Calendar.current.date(
+    from: DateComponents(year: 2027, month: 1, day: 15, hour: 12)) ?? .distantFuture
   private let hour: TimeInterval = 3600
 
   @Test("today and yesterday are named, with the time")
