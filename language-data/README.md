@@ -1,4 +1,4 @@
-# Language data releases
+# Language data
 
 Every Zenbu app will read one versioned language-data release from R2
 ([ADR 0006](../docs/adr/0006-share-language-data-as-a-versioned-artifact.md),
