@@ -1,5 +1,6 @@
 import { describe, expect, test } from 'vitest'
-import { parseWordSegment, websitePage } from './links'
+import { kanjiSearchURL, parseWordSegment, websitePage, wordPath, wordURL } from './links'
+import { wordSlug } from './slug'
 
 const page = (path: string, host: string | null = 'zenbujapanese.com') => websitePage(host, path)
 
@@ -82,5 +83,46 @@ describe('websitePage', () => {
     ['/legal/privacy/', 'zenbujapanese.com']
   ])('%s on %s is the home page', (path, host) => {
     expect(page(path, host)).toEqual({ kind: 'home' })
+  })
+})
+
+describe('the links the app shares', () => {
+  const readBack = (link: string) => {
+    const url = new URL(link)
+    return websitePage(url.host, url.pathname)
+  }
+
+  test.each([
+    { headword: '見る', reading: 'みる', entSeq: 1259290 },
+    { headword: 'Ｔシャツ', reading: 'ティーシャツ', entSeq: 1000160 },
+    { headword: 'A/B ?C#%', reading: 'えー', entSeq: 1 },
+    { headword: '[a|b]^', reading: 'えー', entSeq: 2 },
+    { headword: '/', reading: 'すらっしゅ', entSeq: 3 }
+  ])('a word’s is its canonical URL, $headword, which reads back as that word', word => {
+    const canonical = new URL(encodeURI(wordPath(word)), 'https://zenbujapanese.com').href
+    expect(wordURL(word)).toBe(canonical)
+    expect(readBack(wordURL(word))).toEqual({
+      kind: 'word',
+      entSeq: word.entSeq,
+      slug: wordSlug(word.headword, word.reading)
+    })
+  })
+
+  test('見る’s is its page, as the website’s canonical tag writes it', () => {
+    expect(wordURL({ headword: '見る', reading: 'みる', entSeq: 1259290 })).toBe(
+      'https://zenbujapanese.com/dictionary/%E8%A6%8B%E3%82%8B-1259290/'
+    )
+  })
+
+  test.each([
+    ['要', '要'],
+    ['\u{F928}', '廊'],
+    ['\u{FA45}', '海'],
+    ['𠀋', '𠀋']
+  ])('a kanji’s is the search for it, %s, which reads back as a search for %s', (kanji, query) => {
+    expect(kanjiSearchURL(kanji)).toBe(
+      `https://zenbujapanese.com/dictionary/search/${encodeURIComponent(query)}/`
+    )
+    expect(readBack(kanjiSearchURL(kanji))).toEqual({ kind: 'search', query })
   })
 })

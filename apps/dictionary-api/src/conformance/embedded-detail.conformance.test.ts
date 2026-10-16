@@ -5,6 +5,7 @@ import type {
   KanjiElementContribution,
   KanjiElementDetail
 } from '@zenbu/dictionary-core/detail/kanji-element'
+import { wordURL } from '@zenbu/dictionary-core/detail/links'
 import {
   type SuiteConjugationForm,
   type SuiteConjugations,
@@ -189,6 +190,13 @@ describe.runIf(artifactAvailable)('the app’s word and kanji pages on the artif
       examples: await examplesAsRecorded(id)
     }
     expect(observed).toEqual(withoutFields(expected, ['covers', 'entSeq']))
+    expect(page.shareURL, 'Share sends the page the website serves the word at').toBe(
+      wordURL({
+        headword: entry.headword,
+        reading: entry.reading,
+        entSeq: Number(expected.entSeq[0])
+      })
+    )
     for (const mode of page.conjugations?.modes ?? []) {
       for (const row of page.conjugations?.rows[mode] ?? []) {
         expect(row.note === null, `${row.title} has a note only beside same-spelled forms`).toBe(

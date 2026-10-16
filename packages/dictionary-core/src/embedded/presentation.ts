@@ -1,5 +1,6 @@
 import { LruCache } from '../artifact/cache'
 import { checkKanjiSources, type KanjiElementSources, KanjiReference } from '../artifact/kanji-data'
+import { jmdictSource } from '../artifact/words'
 import { sharedSpellingNote } from '../detail/conjugation'
 import { noExamplesMessage } from '../detail/examples'
 import { type FrequencyLookupRow, frequencyLookupRow } from '../detail/frequency'
@@ -12,6 +13,7 @@ import {
 } from '../detail/kanji'
 import { type KanjiElementDetail, kanjiElementDetail } from '../detail/kanji-element'
 import { type KanjiReadings, withKanjiReadings } from '../detail/kanji-split'
+import { kanjiSearchURL, wordURL } from '../detail/links'
 import { type PitchAccent, shownPitch } from '../detail/pitch'
 import type { FormRow, KanjiReadingRow, KanjiStrokesRow, PitchRow } from '../detail/rows'
 import { type RubySegment, rubySegments } from '../detail/ruby'
@@ -49,6 +51,8 @@ export interface EmbeddedEntry {
   relationships: { headword: string; reading: string; summary: string; relation: string }[]
   pitch: PitchRow | null
   compoundPitch: PitchRow | null
+  sourceIdentity: string
+  sourceRecordID: string
 }
 
 type Conjugations = NonNullable<WordDetail['conjugations']>
@@ -81,11 +85,13 @@ export interface EmbeddedWordPage
   kanji: string[]
   alternativeKanji: string[]
   frequency: FrequencyLookupRow[]
+  shareURL: string | null
 }
 
 export interface EmbeddedKanjiPage extends Omit<KanjiDetail, 'strokeOrder'> {
   hasReference: boolean
   savedReading: string
+  shareURL: string
 }
 
 interface KanjiPageWord {
@@ -101,6 +107,12 @@ interface KanjiFiles {
 }
 
 const rememberedKanji = 4_000
+
+function wordPageURL(entry: EmbeddedEntry): string | null {
+  if (entry.sourceIdentity !== jmdictSource) return null
+  const { headword, reading } = entry
+  return wordURL({ headword, reading, entSeq: Number(entry.sourceRecordID) })
+}
 
 export class EmbeddedPresentation {
   private files: KanjiFiles | undefined
@@ -226,7 +238,8 @@ export class EmbeddedPresentation {
       frequency,
       related: detail.related,
       noExamples: noExamplesMessage,
-      shareText: detail.shareText
+      shareText: detail.shareText,
+      shareURL: wordPageURL(entry)
     }
   }
 
@@ -276,7 +289,8 @@ export class EmbeddedPresentation {
       hasReference: kanji !== null,
       savedReading: savedKanjiReading(detail),
       stats: kanji ? detail.stats : [],
-      words: [...leading, ...detail.words.filter(word => word.id !== request.leadingWord)]
+      words: [...leading, ...detail.words.filter(word => word.id !== request.leadingWord)],
+      shareURL: kanjiSearchURL(character)
     }
   }
 

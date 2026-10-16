@@ -1,6 +1,39 @@
+import { normalizeQuery } from '../search/query'
+import { wordSlug } from './slug'
 import { isKanjiCharacter } from './text'
 
 const websiteHost = 'zenbujapanese.com'
+const websiteOrigin = `https://${websiteHost}`
+
+interface LinkedWord {
+  headword: string
+  reading: string
+  entSeq: number
+}
+
+export function wordPath(entry: LinkedWord): string {
+  return `/dictionary/${wordSlug(entry.headword, entry.reading)}-${entry.entSeq}/`
+}
+
+export function searchPath(query: string): string {
+  return `/dictionary/search/${encodeURIComponent(query).replaceAll('.', '%2E')}/`
+}
+
+export function kanjiSearchPath(character: string): string {
+  return searchPath(normalizeQuery(character))
+}
+
+export function hasSearchPath(query: string): boolean {
+  return query !== '.' && query !== '..'
+}
+
+export function wordURL(entry: LinkedWord): string {
+  return `${websiteOrigin}${encodeURI(wordPath(entry))}`
+}
+
+export function kanjiSearchURL(character: string): string {
+  return `${websiteOrigin}${kanjiSearchPath(character)}`
+}
 
 export function decodeSegment(segment: string): string {
   try {
