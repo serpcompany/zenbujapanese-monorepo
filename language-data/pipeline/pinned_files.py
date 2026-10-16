@@ -28,7 +28,9 @@ def committed_digest(repo: Path, head: Committed) -> tuple[str, int]:
 def instructions(dockerfile: str) -> list[str]:
     joined, current = [], ""
     for line in dockerfile.splitlines():
-        stripped = line.rstrip()
+        stripped = line.strip()
+        if stripped.startswith("#"):
+            continue
         if stripped.endswith("\\"):
             current += stripped[:-1] + " "
             continue
@@ -36,7 +38,7 @@ def instructions(dockerfile: str) -> list[str]:
         current = ""
     if current.strip():
         joined.append(current.strip())
-    return [line for line in joined if line and not line.startswith("#")]
+    return [line for line in joined if line]
 
 
 def copied_sources(dockerfile: str, image: str) -> list[str]:
@@ -65,10 +67,16 @@ def covered(path: str, prefixes: list[str]) -> bool:
 
 def check_pins_unchanged(repo: Path, releases: Path, base: str) -> None:
     folder = releases.resolve().relative_to(repo.resolve()).as_posix()
-    listing = git(
-        repo, "diff", "--name-only", "--no-renames", "--diff-filter=MD", base, "HEAD", "--", folder
-    )
-    changed = [path for path in listing.decode().splitlines() if path.endswith(f"/{PINNED_FILE}")]
+    held = git(repo, "ls-tree", "-r", "--name-only", "--full-tree", base, "--", folder)
+    merged = {
+        path.rsplit("/", 1)[0]
+        for path in held.decode().splitlines()
+        if path.endswith(f"/{PINNED_FILE}")
+    }
+    listing = git(repo, "diff", "--name-only", "--no-renames", base, "HEAD", "--", folder)
+    changed = [
+        path for path in listing.decode().splitlines() if path.rsplit("/", 1)[0] in merged
+    ]
     if changed:
         raise Refusal(
             f"a pinned release never changes once it's merged, but these differ from {base}: "
@@ -102,8 +110,9 @@ def check_committed_pins(repo: Path, inputs: Inputs, pinned: dict) -> dict:
     released = {entry["path"] for entry in inputs.files}
     accounted = sorted(released) + inputs.not_released
     for path in inputs.not_released:
-        if path in released:
-            problems.append(f"not_released names {path}, which is a release file")
+        holds = sorted(file for file in released if covered(file, [path]))
+        if holds:
+            problems.append(f"not_released names {path}, which holds release files: {holds}")
         elif not tracked(repo, path):
             problems.append(f"not_released names {path}, which isn't committed at HEAD")
 
