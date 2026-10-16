@@ -99,7 +99,7 @@ export function AccountView({
   settings: AccountSettings
   returnedError: string | null
 }) {
-  const api = useMemo(() => accountApi(settings.apiUrl), [settings.apiUrl])
+  const api = useMemo(() => accountApi(settings.apiUrl, locale), [settings.apiUrl, locale])
   const tokens = useMemo(() => accessTokens(api), [api])
   const [view, setView] = useState<View>({ kind: 'loading' })
   const [signOutProblem, setSignOutProblem] = useState<string | null>(null)

@@ -51,6 +51,10 @@ command from `apps/web`.
   through `coreText` (`src/lib/i18n/core-text.ts`), keyed by the core's English; a label it doesn't
   know stays English, and its test fails on any label the fixtures show untranslated. JMdict's
   meanings and Tatoeba's translations are data, not labels: they stay English, with `lang="en"`.
+- **Account requests name the page's language.** `accountApi(apiUrl, locale)`
+  (`src/lib/account/client.ts`) sends `Content-Language: en` or `ja` on every call, a header the
+  browser sends cross-origin without a preflight for those values, so the account service writes
+  its emails in the reader's language and stores a new account's.
 - **Checks:** `src/lib/i18n/dictionaries.test.ts` (parity: the same keys, no empty value, no
   English value but the names it lists), `src/lib/i18n/hardcoded-strings.test.ts` (no literal
   English in JSX text, `alt`, `aria-label`, `title`, `placeholder`, `label`, or route metadata,

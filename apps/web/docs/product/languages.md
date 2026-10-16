@@ -79,6 +79,18 @@ marked as advertising, in line with 景品表示法's stealth-marketing rule (in
   version prevails, and links it" and "the Japanese affiliate disclosure says its links are marked
   as advertising under 景品表示法".
 
+**Account emails.** Every request the account pages and the account menu send the account service
+names the page's language (`Content-Language: en` or `ja`), so the service writes a sign-in code
+or an account notice in the language of the page that asked for it, and stores a new account's
+language from the page it signed up on. The service's side is its own pull request, from
+`feat/666-account-emails-in-japanese`; until it merges, the service ignores the header and writes
+English.
+
+- Source: SERP localization standard, Strings (emails in the recipient's language); the owner's
+  decision on #666.
+- Check: `src/lib/account/client.test.ts`, "names the page’s language on every request, so the
+  service writes its emails in it".
+
 **The Japanese is a draft until reviewed.** The Japanese copy and its keyword briefs
 (`content/briefs/ja/`) are drafts that a native speaker reviews on staging. Until then
 `content/reviews/ja.json` names no reviewer, and its checksums tie each Japanese string to

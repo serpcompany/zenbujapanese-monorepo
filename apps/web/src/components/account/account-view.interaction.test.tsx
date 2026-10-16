@@ -62,7 +62,7 @@ function confirmingWith(
   identity: Omit<Identity, 'id'>,
   onConfirmed: Parameters<typeof ConfirmItsYou>[0]['onConfirmed'] = () => undefined
 ) {
-  const api = accountApi(apiUrl)
+  const api = accountApi(apiUrl, 'en')
   return render(
     <ConfirmItsYou
       api={api}

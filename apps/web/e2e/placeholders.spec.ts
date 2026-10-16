@@ -33,7 +33,9 @@ async function placeholdersOn(page: Page | Locator) {
 
 async function placeholdersInPhoneMenu(page: Page) {
   await menuButton(page).click()
-  const groups = phoneMenu(page).getByRole('navigation', { name: 'Sections' }).getByRole('button')
+  const groups = phoneMenu(page)
+    .getByRole('navigation', { name: /^(Sections|セクション)$/ })
+    .getByRole('button')
   await expect(groups.first()).toBeVisible()
   const links: string[] = []
   for (const group of await groups.all()) {

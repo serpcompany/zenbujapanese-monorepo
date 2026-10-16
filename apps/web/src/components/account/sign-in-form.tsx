@@ -33,7 +33,7 @@ export function SignInForm({
   purpose: keyof typeof wording
   returnedError: string | null
 }) {
-  const api = useMemo(() => accountApi(settings.apiUrl), [settings.apiUrl])
+  const api = useMemo(() => accountApi(settings.apiUrl, locale), [settings.apiUrl, locale])
   const router = useRouter()
   const signedIn = useSeemsSignedIn()
   const here = purpose === 'register' ? accountPages.register.path : accountPages.signIn.path

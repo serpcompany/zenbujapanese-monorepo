@@ -36,7 +36,7 @@ function useSignedInHere(): string | null {
 }
 
 async function signOut(messages: AccountMessages, locale: Locale) {
-  const problem = await signOutFromTheAccountMenu()
+  const problem = await signOutFromTheAccountMenu(locale)
   if (problem) toast.error(failureMessage(problem, messages, locale))
 }
 
