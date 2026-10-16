@@ -20,7 +20,10 @@ struct SavedKeyLookup: Sendable {
   static let live = SavedKeyLookup(
     noteIdentities: { try await LanguageReferenceData.shared.words(named: $0) },
     words: { try await LanguageReferenceData.shared.shownWords($0) },
-    kanji: { characters in Set(characters.filter { KanjiFiles.bundled?.entry($0) != nil }) }
+    kanji: { characters in
+      guard let files = KanjiFiles.bundled else { throw LookupDatabaseError.missingBundledData }
+      return Set(characters.filter { files.entry($0) != nil })
+    }
   )
 
   private static let logger = Logger(
