@@ -10,7 +10,9 @@ struct SearchView: View {
   let radicalLookupClient: RadicalLookupClient
   let exampleSentenceClient: ExampleSentenceClient
   let focusRequest: Int
+  let openNote: (NotesInSearch.Row) -> Void
   @Environment(WordKnowledge.self) private var wordKnowledge
+  @Environment(LearnerNotes.self) private var learnerNotes
   @State private var results = LookupSearchResults.empty
   @State private var shown: ShownResults?
   @State private var presentationState = SearchPresentationState.idle
@@ -118,7 +120,9 @@ struct SearchView: View {
           results: results,
           first: shown,
           fromRadicals: radicalQuery == searchQuery,
-          selectRefinement: selectRefinement
+          notes: learnerNotes.inSearch(for: searchQuery),
+          selectRefinement: selectRefinement,
+          openNote: openNote
         )
         .id(
           SearchResultsIdentity(
@@ -147,13 +151,29 @@ struct SearchView: View {
       .accessibilityIdentifier("search.failure")
 
     case .noResults(let noMatches):
-      ContentUnavailableView {
-        Label(noMatches.title, systemImage: "magnifyingglass")
-      } description: {
-        Text(noMatches.message)
+      if let notes = learnerNotes.inSearch(for: searchQuery) {
+        List {
+          Section {
+            noDictionaryMatches(noMatches)
+              .listRowSeparator(.hidden)
+          }
+          NotesInSearchSection(notes: notes, open: openNote)
+        }
+        .listStyle(.plain)
+        .accessibilityIdentifier("search.notes")
+      } else {
+        noDictionaryMatches(noMatches)
       }
-      .accessibilityIdentifier("search.no-results")
     }
+  }
+
+  private func noDictionaryMatches(_ noMatches: NoMatches) -> some View {
+    ContentUnavailableView {
+      Label(noMatches.title, systemImage: "magnifyingglass")
+    } description: {
+      Text(noMatches.message)
+    }
+    .accessibilityIdentifier("search.no-results")
   }
 
   private var inputPanelPresentation: Binding<Bool> {
@@ -212,6 +232,7 @@ struct SearchView: View {
         try Task.checkCancellation()
         let exampleCount = await exampleSentenceClient.count(taskQuery, foundResults)
         await FrequencyLists.live.ready()
+        await learnerNotes.ready()
         let request = ResultsScreenRequest(
           query: taskQuery,
           results: foundResults.listed,

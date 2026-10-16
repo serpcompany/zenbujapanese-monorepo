@@ -163,7 +163,8 @@ struct SearchExperienceRootView: View {
         kanjiLookupClient: kanjiLookupClient,
         radicalLookupClient: .live,
         exampleSentenceClient: exampleSentenceClient,
-        focusRequest: searchFocusRequest
+        focusRequest: searchFocusRequest,
+        openNote: { openSavedItem($0.key, headword: $0.headword, reading: $0.reading) }
       )
       .navigationDestination(for: SearchExperienceRoute.self) {
         dictionaryDestination($0, in: .search)

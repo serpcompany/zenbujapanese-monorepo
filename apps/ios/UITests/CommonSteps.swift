@@ -46,6 +46,14 @@ extension ZenbuUITestCase {
     return kind
   }
 
+  func addNote(_ text: String, in app: XCUIApplication) {
+    tap(find("word-detail.more-menu", in: app))
+    tap(menuChoice("Add Note", in: app))
+    type(text, into: waitFor(find("word-note.editor", in: app)))
+    tap(find("word-note.done", in: app))
+    waitFor(labeled(text, in: app))
+  }
+
   func menuChoices(in app: XCUIApplication) -> XCUIElementQuery {
     device == .mac ? app.windows.menuItems : app.buttons
   }
