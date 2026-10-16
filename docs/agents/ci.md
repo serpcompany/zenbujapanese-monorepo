@@ -64,10 +64,11 @@ red check stops no merge. The workflows are built so the owners can require them
   failed or was cancelled. It is the job to require: a job skipped because the one it needs
   failed would itself count as passing.
 - **A heavy job waits for its workflow's fast checks.** `e2e` needs `check` (`Web`), `website`
-  needs `check` (`Account API`), `check` needs `scripts` (`Dictionary API`), and `swift` needs
-  `contracts` (`iOS`), on a pull request and in the queue alike. A failed fast check then spends
-  no runner time on the browser tests, the suites on the real files, or a Mac: the heavy job is
-  skipped, and the last job fails for the fast one. A passing change starts the heavy job later
+  needs `check` (`Account API`), `check` needs `scripts` (`Dictionary API`), `swift` needs
+  `contracts` (`iOS`), and `build` needs `pins` (`Language data build`), on a pull request and in
+  the queue alike. A failed fast check then spends no runner time on the browser tests, the suites
+  or the release on the real files, or a Mac: the heavy job is skipped, and the last job fails for
+  the fast one. A passing change starts the heavy job later
   by the fast job's time: about 1.5 minutes in the first two, under 40 seconds in the others.
 - **A queue run is never cancelled.** A new push cancels a pull request's last run only.
 
@@ -261,15 +262,17 @@ in two jobs:
 
 `.github/workflows/language-data-build.yml` packages the next language-data release from the
 committed files (issue 463, step 2). It runs on pull requests and pushes to `main` that change
-`language-data/**`, the app's resources, `apps/ios/LanguageData/**`, the shared action, or the
-workflow (and, on pull requests, the release workflow). Tests in `language-data/pipeline/tests/`
-fail when a release input doesn't start it.
+`language-data/**`, the app's resources, `apps/ios/LanguageData/**`, the dictionary service's
+Dockerfile, the shared action, or the workflow (and, on pull requests, the release workflow),
+and tests in `language-data/pipeline/tests/` fail when an input or the Dockerfile doesn't start it.
 
-It packages through the shared action ([`ci-deploys.md`](ci-deploys.md), The
-package-language-data action), then keeps only `manifest.json` and `files.tsv` (each staged
+Its `pins` job runs `package.py check-pin` first, without Git LFS: the committed files, the app's
+bundle, and the image's copies against the pinned release, and no change to a pin the base holds
+([`language-data/README.md`](../../language-data/README.md), Pinned releases and Running it).
+Then `build` packages through the shared action ([`ci-deploys.md`](ci-deploys.md), The
+package-language-data action) and keeps only `manifest.json` and `files.tsv` (each staged
 file's size and path) as the Actions artifact `language-data-manifest-<commit>`, for 7 days. It
 has no credentials and publishes nothing. The files themselves (516 MiB) aren't kept:
 `Language data release` rebuilds them rather than trusting this output. The job names
-`shell: bash` so pipefail is on. See [`language-data/README.md`](../../language-data/README.md),
-Running it.
+`shell: bash` so pipefail is on.
 

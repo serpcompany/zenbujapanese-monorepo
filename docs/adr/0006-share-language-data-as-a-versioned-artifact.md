@@ -29,6 +29,11 @@ rather than in the repository, and is only ever appended to. The bucket is
 `zenbujapanese-language-data`; its public domain isn't set up yet. The layout and rules are in
 [`language-data/README.md`](../../language-data/README.md).
 
+Amended (issue 473): the app and the dictionary service's image hold a release's files from the
+repository rather than downloading them. Each release's manifest, without the fields that depend on
+the run or the bucket, is committed in `language-data/releases/`, and checks before merge hold the
+committed files to it. So no check reads the bucket, and none waits for its public domain.
+
 ## Language Reference IDs are permanent
 
 A rebuild never changes or reuses a Language Reference ID. Anything a learner saves about a
